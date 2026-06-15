@@ -1,0 +1,15 @@
+FROM ghcr.io/jorgensd/dolfinx_mpc:v0.10.5
+
+USER root
+
+ENV PYTHONUNBUFFERED=1
+ENV PYVISTA_OFF_SCREEN=true
+ENV MPLBACKEND=Agg
+ENV XDG_CACHE_HOME=/tmp/dolfinx-cache
+
+RUN python3 -m pip install --no-cache-dir --timeout 300 \
+  -i https://pypi.tuna.tsinghua.edu.cn/simple \
+  pyvista
+
+WORKDIR /work
+

@@ -1,0 +1,59 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Simulation results
+results/
+outputs/
+output/
+*.vtu
+*.pvtu
+*.pvd
+*.xdmf
+*.h5
+*.hdf5
+*.bp
+*.bp4
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.csv
+
+# Keep small reference CSV files when deliberately placed here
+!tests/
+!tests/reference_data/
+!tests/reference_data/**/*.csv
+
+# Large mesh / generated files
+*.msh
+*.vtk
+*.vtkhdf
+
+# Logs
+*.log
+run.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
