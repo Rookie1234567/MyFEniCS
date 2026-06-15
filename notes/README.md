@@ -153,6 +153,16 @@ power_metrics.json 是否生成
 ```
 
 MPI 下旧的 dof mismatch 诊断可能显示 `nan`，这是因为左右边界 dof 分布在不同 rank 上，旧的串行索引方式不再适用；它不等于 Floquet 边界没有施加。
+## 2026-06-15 更新：Git 可视化入门
+
+如果你从未用过 Git，建议先读：
+
+```text
+quick_start/git_visual_workflow_guide.md
+```
+
+它用图示解释了工作区、暂存区、commit、tag、branch、baseline 和当前 `feature/te-complex-absorption` 分支之间的关系。
+
 ## 2026-06-15 更新：TE、复折射率和吸收
 
 本次新增文档：
