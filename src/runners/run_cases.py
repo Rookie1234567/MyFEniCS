@@ -198,9 +198,19 @@ def main(argv: list[str] | None = None):
         "--port-order-count",
         type=int,
         default=None,
-        help=(
-            "Override config.port_dtn_order_count. For DtN: include Floquet diffraction orders from -N to +N."
-        ),
+        help="Legacy/search cap metadata for DtN order studies; automatic DtN order selection has its own switch.",
+    )
+    parser.add_argument(
+        "--port-dtn-assembly",
+        choices=("explicit", "auxiliary"),
+        default=None,
+        help="Override config.port_dtn_assembly for Fourier DtN ports.",
+    )
+    parser.add_argument(
+        "--port-use-diffraction-orders",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="False: order 0 only. True: automatically include clearly propagating DtN diffraction orders.",
     )
     parser.add_argument(
         "--port-use-pml",
@@ -221,6 +231,12 @@ def main(argv: list[str] | None = None):
     scattering_background = args.scattering_background or defaults.scattering_background
     port_boundary_model = args.port_boundary_model or defaults.port_boundary_model
     port_dtn_order_count = args.port_order_count if args.port_order_count is not None else defaults.port_dtn_order_count
+    port_dtn_assembly = args.port_dtn_assembly or defaults.port_dtn_assembly
+    port_use_diffraction_orders = (
+        defaults.port_use_diffraction_orders
+        if args.port_use_diffraction_orders is None
+        else args.port_use_diffraction_orders
+    )
     port_use_pml = defaults.port_use_pml if args.port_use_pml is None else args.port_use_pml
     unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
     polarization_type = args.polarization_type or defaults.polarization_type
@@ -229,6 +245,8 @@ def main(argv: list[str] | None = None):
         raise SystemExit("port_total does not use the dolfinx_mpc automatic helper; use manual, mpc_official, or both.")
     if port_dtn_order_count < 0:
         raise SystemExit("port_dtn_order_count / --port-order-count must be non-negative.")
+    if port_dtn_assembly not in ("explicit", "auxiliary"):
+        raise SystemExit("port_dtn_assembly must be 'explicit' or 'auxiliary'.")
 
     root = project_root()
     results_root = root / "results"
@@ -252,7 +270,8 @@ def main(argv: list[str] | None = None):
     if "port_total" in formulations:
         group_parts.append(f"pt{port_boundary_model}")
         if port_boundary_model in ("dtn", "all"):
-            group_parts.append(f"dtn{port_dtn_order_count}")
+            group_parts.append("dtnauto" if port_use_diffraction_orders else "dtn0")
+            group_parts.append("aux" if port_dtn_assembly == "auxiliary" else "exp")
     group_parts.append(f"p{nedelec_for_name}")
     group_parts.append(_number_tag("h", mesh_for_name))
     group_parts.append(_number_tag("t", angle_for_name))
@@ -300,7 +319,8 @@ def main(argv: list[str] | None = None):
                 if args.nedelec_degree is not None:
                     case_parts.append(f"p{args.nedelec_degree}")
                 if port_model == "dtn":
-                    case_parts.append(f"orders{port_dtn_order_count}")
+                    case_parts.append("auto" if port_use_diffraction_orders else "order0")
+                    case_parts.append("aux" if port_dtn_assembly == "auxiliary" else "explicit")
                 if port_use_pml:
                     case_parts.append("with_pml")
                 port_updates = dict(common_updates)
@@ -312,6 +332,8 @@ def main(argv: list[str] | None = None):
                         "constraint_backend": backend,
                         "port_boundary_model": port_model,
                         "port_dtn_order_count": port_dtn_order_count,
+                        "port_dtn_assembly": port_dtn_assembly,
+                        "port_use_diffraction_orders": port_use_diffraction_orders,
                         "use_pml": port_use_pml,
                         "port_use_pml": port_use_pml,
                         "scattering_background": scattering_background,
@@ -350,6 +372,12 @@ def main(argv: list[str] | None = None):
                         "poynting_R_plus_T_from_net_flux"
                     ),
                     "poynting_energy_residual": item.get("power_metrics", {}).get("poynting_energy_residual"),
+                    "dtn_port_R_total": item.get("dtn_port_power_metrics", {}).get("R_total"),
+                    "dtn_port_T_total": item.get("dtn_port_power_metrics", {}).get("T_total"),
+                    "dtn_port_R_plus_T": item.get("dtn_port_power_metrics", {}).get("R_plus_T"),
+                    "dtn_auxiliary_R_total": item.get("dtn_auxiliary_power_metrics", {}).get("R_total"),
+                    "dtn_auxiliary_T_total": item.get("dtn_auxiliary_power_metrics", {}).get("T_total"),
+                    "dtn_auxiliary_R_plus_T": item.get("dtn_auxiliary_power_metrics", {}).get("R_plus_T"),
                 }
                 for item in summaries
             ],
@@ -359,6 +387,8 @@ def main(argv: list[str] | None = None):
             "polarization_type": polarization_type,
             "port_boundary_model": port_boundary_model,
             "port_dtn_order_count": port_dtn_order_count,
+            "port_dtn_assembly": port_dtn_assembly,
+            "port_use_diffraction_orders": port_use_diffraction_orders,
             "note": "每次默认生成新的 2D_grating_* 结果文件夹；单个 case 直接输出在该目录，多 case 才创建短子目录。使用 --no-unique-output 可恢复固定目录写法。",
         }
         groups: dict[str, list[dict[str, object]]] = {}
@@ -371,7 +401,8 @@ def main(argv: list[str] | None = None):
                     cfg_data.get("port_boundary_model", ""),
                 ]
                 if cfg_data.get("port_boundary_model") == "dtn":
-                    key_parts.append(f"dtn{cfg_data.get('port_dtn_order_count')}")
+                    key_parts.append("dtnauto" if cfg_data.get("port_use_diffraction_orders") else "dtn0")
+                    key_parts.append(str(cfg_data.get("port_dtn_assembly", "")))
             else:
                 key_parts = [
                     cfg_data.get("polarization_type", ""),

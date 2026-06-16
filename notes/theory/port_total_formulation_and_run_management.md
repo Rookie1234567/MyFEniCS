@@ -914,12 +914,49 @@ dtn_port_diffraction_orders.json
 
 另外，DtN 端口矩阵项现在也改成了一次性 COO 稀疏矩阵构造。旧写法是每个级次生成一个稀疏矩阵后反复相加，容易产生额外中间矩阵；新写法是先收集所有级次的 `rows/cols/data`，最后统一构造 `A_port`。这不改变数学公式，只降低多级次端口时的临时内存峰值。
 
+2026-06-16 后，DtN 端口又新增了辅助变量法：
+
+```python
+port_dtn_assembly = "auxiliary"   # 默认推荐
+port_dtn_assembly = "explicit"    # 旧显式外积 reference
+```
+
+旧的 explicit 方法直接装配：
+
+```text
+A_port = sum_m (q_m/L) ell_m ell_m^H
+```
+
+新的 auxiliary 方法引入端口模态未知量：
+
+```text
+A u + q_m ell_m a_m = b
+a_m - (1/L) ell_m^H u = 0
+```
+
+消去 `a_m` 后会回到 explicit 外积形式，所以两者数学等价。区别在于 auxiliary 不直接生成端口自由度两两耦合的密集外积块，更适合作为后续 3D 大规模实现的起点。
+
+衍射级控制也新增了：
+
+```python
+port_use_diffraction_orders = False   # 只用 0 级
+port_use_diffraction_orders = True    # 自动选择明确传播级
+```
+
+详细推导和验证见：
+
+```text
+dtn_auxiliary_and_auto_orders.md
+```
+
 `run_summary.json` 中会同时保存：
 
 ```text
 power_metrics                         水平探测线法
 dtn_port_power_metrics                DtN 端口面法
+dtn_auxiliary_power_metrics           辅助变量直接模态幅值法
 dtn_port_vs_probe_power_difference    两者的 R/T 差值
+dtn_auxiliary_vs_trace_power_difference 辅助变量法减去 trace 端口面法的 R/T 差值
 ```
 
 本次粗网格验证：

@@ -652,3 +652,131 @@ src/runners/run_cases.py
 ```
 
 顶层 `src` 现在只保留 `main.py` 作为 PyCharm/命令行统一入口，真正实现已经移动到各功能子目录。并行 Floquet 的重点在 `src/constraints/floquet_constraint.py`：MPI 下每个 rank 只约束自己拥有的右边界 slave，自由度 master 使用全局编号和 owner rank。
+
+## 2026-06-16 代码补充：DtN 辅助变量法
+
+这次主要改动在三个文件。
+
+### `src/common/config.py`
+
+新增三个配置：
+
+```python
+port_dtn_assembly: str = "auxiliary"
+port_use_diffraction_orders: bool = False
+port_rayleigh_tolerance: float = 1.0e-6
+```
+
+`port_dtn_assembly` 控制 DtN 端口装配方式：
+
+```text
+explicit   旧的显式外积 Q^*YQ 方法
+auxiliary  新的辅助变量块系统方法
+```
+
+`port_use_diffraction_orders=False` 时只选 0 级；`True` 时自动选择上、下端口各自明确传播的衍射级。
+
+### `src/solvers/solve_port_maxwell.py`
+
+阅读顺序建议如下。
+
+1. `_select_dtn_port_modes(...)`
+
+这个函数根据：
+
+```text
+alpha_m = kx + 2*pi*m/L
+|alpha_m| < n_j*k0
+```
+
+分别判断顶部和底部哪些级次传播，并把候选级次、是否传播、是否接近 Rayleigh anomaly 写入 metadata。
+
+2. `_build_dtn_trace_data(...)`
+
+这个函数对选中的每个端口级次生成压缩投影向量：
+
+```text
+ell_m,i = integral_Gamma exp(i alpha_m x) conjugate(phi_i,x) dGamma
+```
+
+只保存非零自由度编号 `indices` 和对应复数值 `values`，避免保存完整 dense 向量。
+
+3. `_add_fourier_port_operators_explicit(...)`
+
+这是旧方法的新入口。它仍然装配：
+
+```text
+A_port,m = (q_m/L) ell_m ell_m^H
+```
+
+主要用于和新方法对照。
+
+4. `_add_fourier_port_operators_auxiliary(...)`
+
+这是新增方法。它引入辅助未知量 `a_m`：
+
+```text
+A u + q_m ell_m a_m = b
+a_m - (1/L) ell_m^H u = 0
+```
+
+矩阵是块系统：
+
+```text
+[ A   B ] [ u ] = [ b ]
+[ C   I ] [ a ]   [ 0 ]
+```
+
+消去 `a` 后会回到 explicit 的外积形式，因此两者应当给出相同解。
+
+5. `_solve_manual_with_auxiliary(...)`
+
+这个函数把 Floquet 约束只施加到有限元自由度 `u` 上，对辅助变量使用单位矩阵：
+
+```text
+C_aug = block_diag(C_fem, I_aux)
+```
+
+然后求：
+
+```text
+C_aug^H A_aug C_aug x = C_aug^H b_aug
+```
+
+### `src/postprocessing/power_metrics.py`
+
+新增的共同计算核心是：
+
+```python
+_compute_tm_dtn_power_from_coefficients(...)
+```
+
+它只需要顶部和底部的端口模态幅值字典：
+
+```python
+top_ex_coeff[order]
+bottom_ex_coeff[order]
+```
+
+然后按同一套公式计算 R/T。
+
+`compute_dtn_port_power_metrics(...)` 从压缩 trace 向量重新计算：
+
+```text
+a_m = (1/L) ell_m^H u
+```
+
+`compute_dtn_auxiliary_power_metrics(...)` 直接读取辅助未知量 `a_m`。这两组结果在小模型中应当一致；如果不一致，优先检查块系统符号、端口投影归一化和线性求解残差。
+
+### 小验证结论
+
+粗网格验证中：
+
+```text
+explicit + 0级:    R+T = 1.000000000000
+auxiliary + 0级:   R+T = 1.000000000000
+explicit + auto:  R+T = 1.000000000000
+auxiliary + auto: R+T = 1.000000000000
+```
+
+同一组衍射级下，explicit 和 auxiliary 的端口面 R/T 完全一致到显示精度。

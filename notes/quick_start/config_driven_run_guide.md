@@ -411,3 +411,85 @@ mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --constraint-backend mpc_official \
   --port-boundary-model robin
 ```
+
+## 2026-06-16 更新：DtN explicit / auxiliary 与自动衍射级
+
+现在 TM 的 Fourier-DtN 端口有两种装配后端：
+
+```python
+port_dtn_assembly: str = "auxiliary"
+```
+
+这是新的默认推荐值。它给每个端口 Floquet 模态增加一个辅助未知量 `a_m`，避免直接构造端口边界自由度之间的密集外积块，更适合以后扩展到 3D。
+
+```python
+port_dtn_assembly: str = "explicit"
+```
+
+这是旧的显式外积法，会直接形成类似 `Q^*YQ` 的端口矩阵。它保留作为 reference/debug，用来和 auxiliary 对照。
+
+PyCharm 中直接改 `src/main.py`：
+
+```python
+PORT_BOUNDARY_MODEL = "dtn"
+PORT_DTN_ASSEMBLY = "auxiliary"   # auxiliary / explicit
+```
+
+衍射级选择也新增了一个更直观的开关：
+
+```python
+PORT_USE_DIFFRACTION_ORDERS = False
+```
+
+只使用 0 级：
+
+```text
+top = [0]
+bottom = [0]
+```
+
+```python
+PORT_USE_DIFFRACTION_ORDERS = True
+```
+
+程序会根据：
+
+```text
+|kx + 2*pi*m/L| < n_j*k0
+```
+
+分别自动判断上端口空气侧和下端口基座侧有哪些明确传播级次。0 级始终保留。如果某个级次接近 Rayleigh anomaly，程序会在日志和 `run_summary.json` 中记录 warning 信息。
+
+运行后结果文件夹名称也会反映设置，例如：
+
+```text
+2D_grating_tm_port_ptdtn_dtn0_aux_...
+2D_grating_tm_port_ptdtn_dtnauto_aux_...
+2D_grating_tm_port_ptdtn_dtn0_exp_...
+```
+
+其中：
+
+```text
+dtn0      只使用 0 级
+dtnauto   自动传播衍射级
+aux       auxiliary 辅助变量法
+exp       explicit 显式外积法
+```
+
+如果使用 auxiliary，会额外输出：
+
+```text
+dtn_auxiliary_amplitudes.json
+dtn_auxiliary_power_metrics.json
+dtn_auxiliary_diffraction_orders.csv
+```
+
+和 COMSOL Periodic Port 对比时，DtN 结果优先看：
+
+```text
+dtn_port_power_metrics.json
+dtn_auxiliary_power_metrics.json
+```
+
+两者理论上应基本一致。`power_metrics.json` 的水平探测线法仍然保留，但它更适合作为内部场诊断。

@@ -13,7 +13,10 @@
 3. `theory/reflection_transmission_metrics.md`
    想理解反射率、透射率、衍射级次和能量守恒时看这个。
 
-4. `reference/code_walkthrough.md`
+4. `theory/dtn_auxiliary_and_auto_orders.md`
+   想理解 Fourier-DtN 端口、辅助变量法、自动衍射级和未来 3D 稀疏化路线时看这个。
+
+5. `reference/code_walkthrough.md`
    想逐行读代码时看这个。
 
 ## 快速运行
@@ -71,6 +74,15 @@ dtn_port_diffraction_orders.csv
 dtn_port_diffraction_orders.json
 ```
 
+如果使用 `port_dtn_assembly="auxiliary"`，还会多出辅助变量版本：
+
+```text
+dtn_auxiliary_amplitudes.json
+dtn_auxiliary_power_metrics.json
+dtn_auxiliary_diffraction_orders.csv
+dtn_auxiliary_diffraction_orders.json
+```
+
 如果一次运行多个 case，例如 `all` 或 `both`，才会在结果目录下建立短子目录：
 
 ```text
@@ -112,6 +124,7 @@ theory/implementation_notes.md
 theory/layered_background_theory_and_code_walkthrough.md
 theory/port_total_formulation_and_run_management.md
 theory/reflection_transmission_metrics.md
+theory/dtn_auxiliary_and_auto_orders.md
 theory/pml_complex_coordinate_update.md
 theory/pml_scattered_field_diagnostics.md
 ```

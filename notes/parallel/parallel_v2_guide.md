@@ -341,6 +341,21 @@ rows / cols / data
 
 最后一次性构造 `A_port`，减少中间稀疏矩阵副本。
 
+第三类是 2026-06-16 新增的 DtN 辅助变量法。旧的 explicit 方法会形成：
+
+```text
+A_port = sum_m (q_m/L) ell_m ell_m^H
+```
+
+这会让端口边界自由度之间出现接近密集的外积耦合。新的 auxiliary 方法改成：
+
+```text
+A u + q_m ell_m a_m = b
+a_m - (1/L) ell_m^H u = 0
+```
+
+矩阵新增的是端口 dof 和少量模态未知量 `a_m` 之间的耦合行列，不再直接制造端口 dof 两两耦合的大块。当前它仍然在串行 manual 后端中验证，但矩阵结构更接近未来可并行的 PETSc FieldSplit 或矩阵自由低秩算子。
+
 另外，ParaView 后处理现在只对 DG 可视化空间调用一次 `plot.vtk_mesh(V_dg)`，然后分别读取 `E_inc`、`E_scat`、`E_total` 的系数数组。这样输出内容不变，但避免为三个场重复构造同一份 VTK 网格拓扑和坐标。
 
 需要注意：`manual` 后端仍然是串行验证路线，它要构造约束降阶系统 `C^H A C` 并用 SuperLU 解线性方程。这个后端适合验证 official MPC、检查 DtN 公式和小中型算例，不适合作为真正的大规模并行求解器。
@@ -350,9 +365,11 @@ rows / cols / data
 下一步如果继续推进，我建议按这个顺序：
 
 1. 把 DtN 端口重写成 PETSc 分布式低秩边界算子；
-2. 如果以后需要单文件 VTU，可以增加 rank0 gather 写出版本，但大模型更推荐 `.pvd + rank*.vtu` 或 `.bp`；
-3. 给 PyVista PNG 增加可选 gather 渲染，主要用于小模型快速预览；
-4. 把 2D 的并行约束经验迁移到未来 3D：两个周期方向、完整三维 H(curl)、二维 Floquet 级次 `(m,n)`。
+2. 把 auxiliary 模态未知量作为独立 field，使用 PETSc FieldSplit 或 Schur complement 预条件；
+3. 做分布式端口投影：每个 rank 只保存本地端口自由度片段，通过 MPI allreduce 得到 `a_m`；
+4. 如果以后需要单文件 VTU，可以增加 rank0 gather 写出版本，但大模型更推荐 `.pvd + rank*.vtu` 或 `.bp`；
+5. 给 PyVista PNG 增加可选 gather 渲染，主要用于小模型快速预览；
+6. 把 2D 的并行约束经验迁移到未来 3D：两个周期方向、完整三维 H(curl)、二维 Floquet 级次 `(m,n)`。
 
 ## 10. 快捷脚本
 

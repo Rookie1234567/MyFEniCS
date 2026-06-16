@@ -44,6 +44,15 @@ SCATTERING_BACKGROUND = "layered"
 #   "all"   = run both where supported
 PORT_BOUNDARY_MODEL = "dtn"
 
+# Fourier DtN port implementation:
+#   "auxiliary" = sparse auxiliary modal-amplitude unknowns, recommended
+#   "explicit"  = old Q^*YQ outer-product reference/debug implementation
+PORT_DTN_ASSEMBLY = "auxiliary"
+
+# False = only order 0; True = automatically include clearly propagating
+# diffraction orders on the top and bottom ports.
+PORT_USE_DIFFRACTION_ORDERS = False
+
 # Common numerical choices.  None means "use src/common/config.py".
 NEDELEC_DEGREE = 2
 VISUALIZATION_DEGREE = 3
@@ -101,6 +110,8 @@ def _pycharm_args() -> list[str]:
         SCATTERING_BACKGROUND,
         "--port-boundary-model",
         PORT_BOUNDARY_MODEL,
+        "--port-dtn-assembly",
+        PORT_DTN_ASSEMBLY,
     ]
     _add_value(args, "--nedelec-degree", NEDELEC_DEGREE)
     _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE)
@@ -109,6 +120,7 @@ def _pycharm_args() -> list[str]:
     _add_value(args, "--diffraction-order-count", DIFFRACTION_ORDER_COUNT)
     _add_value(args, "--power-probe-num-points", POWER_PROBE_NUM_POINTS)
     _add_bool(args, "--compute-power-metrics", COMPUTE_POWER_METRICS)
+    _add_bool(args, "--port-use-diffraction-orders", PORT_USE_DIFFRACTION_ORDERS)
     _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
     _add_bool(args, "--port-use-pml", PORT_USE_PML)
     return args

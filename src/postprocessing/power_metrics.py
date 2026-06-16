@@ -697,42 +697,30 @@ def _trace_modal_coefficient(
     return complex(np.dot(solution[indices], np.conj(values)) / cfg.period_x)
 
 
-def compute_dtn_port_power_metrics(
+def _compute_tm_dtn_power_from_coefficients(
     mesh_data,
     cfg: SimulationConfig,
     E_total,
     out_dir: Path,
-    trace_vectors: dict[str, dict[int, dict[str, object]]],
+    *,
+    top_ex_coeff: dict[int, complex],
+    bottom_ex_coeff: dict[int, complex],
+    metrics_filename: str,
+    orders_json_filename: str,
+    orders_csv_filename: str,
+    sampling_method: str,
+    postprocess_family: str,
+    projection_source: str,
+    extra_metadata: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    """Compute R/T by reusing the DtN boundary-integral projection vectors."""
-    if not cfg.compute_power_metrics:
-        return {}
-    if cfg.port_boundary_model != "dtn":
-        return {"skipped": True, "reason": "dtn_port_power_metrics requires port_boundary_model='dtn'."}
-    if cfg.use_pml:
-        return {
-            "skipped": True,
-            "reason": "dtn_port_power_metrics is defined for the no-PML DtN port boundary placement.",
-        }
-    if MPI.COMM_WORLD.size != 1:
-        return {
-            "skipped": True,
-            "reason": "dtn_port_power_metrics currently reuses serial manual DtN trace vectors.",
-        }
-
-    order_count = int(cfg.port_dtn_order_count)
-    if order_count < 0:
-        raise ValueError("port_dtn_order_count must be non-negative.")
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    solution = np.asarray(E_total.x.array, dtype=np.complex128)
     top_y = float(cfg.y_max)
     bottom_y = float(cfg.y_min)
-    top_ex_coeff: dict[int, complex] = {}
-    bottom_ex_coeff: dict[int, complex] = {}
-    for order in range(-order_count, order_count + 1):
-        top_ex_coeff[order] = _trace_modal_coefficient(trace_vectors, "top", order, solution, cfg)
-        bottom_ex_coeff[order] = _trace_modal_coefficient(trace_vectors, "bottom", order, solution, cfg)
+    top_orders = sorted(int(order) for order in top_ex_coeff.keys())
+    bottom_orders = sorted(int(order) for order in bottom_ex_coeff.keys())
+    all_orders = sorted(set(top_orders) | set(bottom_orders))
+    if not all_orders:
+        raise RuntimeError("No DtN port modal coefficients were provided.")
 
     incident_ex = complex(cfg.port_incident_amplitude) * cfg.polarization[0]
     k_air = complex(cfg.k0 * cfg.n_air)
@@ -746,19 +734,31 @@ def compute_dtn_port_power_metrics(
     rows: list[dict[str, object]] = []
     reflected_total = 0.0
     transmitted_total = 0.0
-    for order in range(-order_count, order_count + 1):
+    for order in all_orders:
         alpha = cfg.kx + 2.0 * np.pi * order / cfg.period_x
         beta_top = _positive_sqrt(k_air**2 - alpha**2)
         beta_bottom = _positive_sqrt(k_sub**2 - alpha**2)
         y_top_admittance = _modal_admittance(k_air, beta_top)
         y_bottom_admittance = _modal_admittance(k_sub, beta_bottom)
+        top_included = order in top_ex_coeff
+        bottom_included = order in bottom_ex_coeff
+        top_total = top_ex_coeff.get(order, 0.0 + 0.0j)
+        bottom_total = bottom_ex_coeff.get(order, 0.0 + 0.0j)
 
         incident_line_coeff = 0.0 + 0.0j
         if order == 0:
             incident_line_coeff = incident_ex * np.exp(-1j * beta_top * top_y)
 
-        reflected_amp = (top_ex_coeff[order] - incident_line_coeff) * np.exp(-1j * beta_top * top_y)
-        transmitted_amp = bottom_ex_coeff[order] * np.exp(1j * beta_bottom * bottom_y)
+        reflected_amp = (
+            (top_total - incident_line_coeff) * np.exp(-1j * beta_top * top_y)
+            if top_included
+            else 0.0 + 0.0j
+        )
+        transmitted_amp = (
+            bottom_total * np.exp(1j * beta_bottom * bottom_y)
+            if bottom_included
+            else 0.0 + 0.0j
+        )
 
         top_propagating = _is_propagating(beta_top)
         bottom_propagating = _is_propagating(beta_bottom)
@@ -789,14 +789,16 @@ def compute_dtn_port_power_metrics(
                 "bottom_modal_admittance_imag": y_bottom_admittance.imag,
                 "top_propagating": top_propagating,
                 "bottom_propagating": bottom_propagating,
+                "top_order_included": top_included,
+                "bottom_order_included": bottom_included,
                 "incident_Ex_abs": abs(incident_ex) if order == 0 else 0.0,
                 "incident_Ex_line_abs": abs(incident_line_coeff) if order == 0 else 0.0,
-                "top_total_Ex_port_real": top_ex_coeff[order].real,
-                "top_total_Ex_port_imag": top_ex_coeff[order].imag,
-                "top_total_Ex_port_abs": abs(top_ex_coeff[order]),
-                "bottom_total_Ex_port_real": bottom_ex_coeff[order].real,
-                "bottom_total_Ex_port_imag": bottom_ex_coeff[order].imag,
-                "bottom_total_Ex_port_abs": abs(bottom_ex_coeff[order]),
+                "top_total_Ex_port_real": top_total.real,
+                "top_total_Ex_port_imag": top_total.imag,
+                "top_total_Ex_port_abs": abs(top_total),
+                "bottom_total_Ex_port_real": bottom_total.real,
+                "bottom_total_Ex_port_imag": bottom_total.imag,
+                "bottom_total_Ex_port_abs": abs(bottom_total),
                 "reflected_Ex_real": reflected_amp.real,
                 "reflected_Ex_imag": reflected_amp.imag,
                 "reflected_Ex_abs": abs(reflected_amp),
@@ -816,14 +818,24 @@ def compute_dtn_port_power_metrics(
         "method": cfg.calculation_method,
         "polarization_type": "TM",
         "field_model": "in-plane vector E=(Ex,Ey)",
-        "sampling_method": "dtn_port_boundary_integral_projection",
-        "postprocess_family": "dtn_port_trace",
-        "projection_source": "same_compressed_trace_vectors_used_to_assemble_fourier_dtn_port_matrix",
+        "sampling_method": sampling_method,
+        "postprocess_family": postprocess_family,
+        "projection_source": projection_source,
         "trace_vector_storage": "compressed_nonzero_indices_and_values",
         "scattering_background": cfg.scattering_background,
         "port_boundary_model": cfg.port_boundary_model,
-        "port_dtn_order_count": order_count,
-        "modal_order_count_used": order_count,
+        "port_dtn_order_count": int(cfg.port_dtn_order_count),
+        "port_dtn_assembly": cfg.port_dtn_assembly,
+        "port_use_diffraction_orders": cfg.port_use_diffraction_orders,
+        "modal_order_count_used": {
+            "top": top_orders,
+            "bottom": bottom_orders,
+            "combined": all_orders,
+        },
+        "port_orders_by_side": {
+            "top": top_orders,
+            "bottom": bottom_orders,
+        },
         "top_port_y": float(cfg.y_max),
         "bottom_port_y": float(cfg.y_min),
         "top_sample_y": top_y,
@@ -847,23 +859,126 @@ def compute_dtn_port_power_metrics(
             "to R/T; evanescent orders still keep their complex amplitudes in the order table."
         ),
     }
+    if extra_metadata:
+        metrics.update(extra_metadata)
     _attach_absorption_metrics(metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey")
 
     if MPI.COMM_WORLD.rank == 0:
-        (out_dir / "dtn_port_power_metrics.json").write_text(
+        (out_dir / metrics_filename).write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        (out_dir / "dtn_port_diffraction_orders.json").write_text(
+        (out_dir / orders_json_filename).write_text(
             json.dumps(rows, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        with (out_dir / "dtn_port_diffraction_orders.csv").open("w", newline="", encoding="utf-8") as fp:
+        with (out_dir / orders_csv_filename).open("w", newline="", encoding="utf-8") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
             writer.writeheader()
             writer.writerows(rows)
 
     return metrics
+
+
+def compute_dtn_port_power_metrics(
+    mesh_data,
+    cfg: SimulationConfig,
+    E_total,
+    out_dir: Path,
+    trace_vectors: dict[str, dict[int, dict[str, object]]],
+) -> dict[str, object]:
+    """Compute R/T by reusing the DtN boundary-integral projection vectors."""
+    if not cfg.compute_power_metrics:
+        return {}
+    if cfg.port_boundary_model != "dtn":
+        return {"skipped": True, "reason": "dtn_port_power_metrics requires port_boundary_model='dtn'."}
+    if cfg.use_pml:
+        return {
+            "skipped": True,
+            "reason": "dtn_port_power_metrics is defined for the no-PML DtN port boundary placement.",
+        }
+    if MPI.COMM_WORLD.size != 1:
+        return {
+            "skipped": True,
+            "reason": "dtn_port_power_metrics currently reuses serial manual DtN trace vectors.",
+        }
+
+    solution = np.asarray(E_total.x.array, dtype=np.complex128)
+    top_ex_coeff = {
+        int(order): _trace_modal_coefficient(trace_vectors, "top", int(order), solution, cfg)
+        for order in sorted(trace_vectors.get("top", {}).keys())
+    }
+    bottom_ex_coeff = {
+        int(order): _trace_modal_coefficient(trace_vectors, "bottom", int(order), solution, cfg)
+        for order in sorted(trace_vectors.get("bottom", {}).keys())
+    }
+
+    return _compute_tm_dtn_power_from_coefficients(
+        mesh_data,
+        cfg,
+        E_total,
+        out_dir,
+        top_ex_coeff=top_ex_coeff,
+        bottom_ex_coeff=bottom_ex_coeff,
+        metrics_filename="dtn_port_power_metrics.json",
+        orders_json_filename="dtn_port_diffraction_orders.json",
+        orders_csv_filename="dtn_port_diffraction_orders.csv",
+        sampling_method="dtn_port_boundary_integral_projection",
+        postprocess_family="dtn_port_trace",
+        projection_source="same_compressed_trace_vectors_used_to_assemble_fourier_dtn_port_matrix",
+    )
+
+
+def compute_dtn_auxiliary_power_metrics(
+    mesh_data,
+    cfg: SimulationConfig,
+    E_total,
+    out_dir: Path,
+    auxiliary_coefficients: dict[str, dict[int, complex]],
+    port_metadata: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Compute R/T directly from the auxiliary modal-amplitude unknowns."""
+    if not cfg.compute_power_metrics:
+        return {}
+    if cfg.port_boundary_model != "dtn":
+        return {"skipped": True, "reason": "dtn_auxiliary_power_metrics requires port_boundary_model='dtn'."}
+    if cfg.port_dtn_assembly != "auxiliary":
+        return {"skipped": True, "reason": "auxiliary modal amplitudes exist only for port_dtn_assembly='auxiliary'."}
+    if cfg.use_pml:
+        return {
+            "skipped": True,
+            "reason": "dtn_auxiliary_power_metrics is defined for the no-PML DtN port boundary placement.",
+        }
+    if MPI.COMM_WORLD.size != 1:
+        return {
+            "skipped": True,
+            "reason": "dtn_auxiliary_power_metrics currently uses serial manual DtN auxiliary values.",
+        }
+
+    return _compute_tm_dtn_power_from_coefficients(
+        mesh_data,
+        cfg,
+        E_total,
+        out_dir,
+        top_ex_coeff={int(order): complex(value) for order, value in auxiliary_coefficients.get("top", {}).items()},
+        bottom_ex_coeff={
+            int(order): complex(value) for order, value in auxiliary_coefficients.get("bottom", {}).items()
+        },
+        metrics_filename="dtn_auxiliary_power_metrics.json",
+        orders_json_filename="dtn_auxiliary_diffraction_orders.json",
+        orders_csv_filename="dtn_auxiliary_diffraction_orders.csv",
+        sampling_method="dtn_auxiliary_modal_amplitudes",
+        postprocess_family="dtn_auxiliary_trace",
+        projection_source="auxiliary_unknowns_in_the_expanded_fourier_dtn_block_system",
+        extra_metadata={
+            "auxiliary_power_note": (
+                "The auxiliary unknown a_m is constrained by a_m=(1/L)*ell_m^H*u, so this power metric should "
+                "match dtn_port_power_metrics.json up to linear-solve roundoff."
+            ),
+            "port_order_candidates": (port_metadata or {}).get("mode_candidates", []),
+            "port_rayleigh_warnings": (port_metadata or {}).get("rayleigh_warnings", []),
+        },
+    )
 
 
 def compute_te_dtn_port_power_metrics(

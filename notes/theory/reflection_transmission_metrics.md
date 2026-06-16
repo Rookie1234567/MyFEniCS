@@ -590,11 +590,12 @@ port dtn manual:            R=0.022117491, T=0.980299708, R+T=1.002417199, Poynt
 
 ## 13. DtN 端口面法如何计算 R/T
 
-2026-06-15 后，DtN 端口法会同时给出两套 R/T：
+2026-06-15 后，DtN 端口法会同时给出两套 R/T；2026-06-16 辅助变量法加入后，auxiliary 路径还会多给出第三套直接模态幅值 R/T：
 
 ```text
 power_metrics.json              水平探测线法
 dtn_port_power_metrics.json     DtN 端口面法
+dtn_auxiliary_power_metrics.json 辅助变量直接幅值法
 ```
 
 水平探测线法仍然保留，因为它是所有求解方法共用的后处理，可以检查端口外的场分解是否和内部均匀区域一致。
@@ -654,6 +655,28 @@ Ex_m = (1/period) sum_{j in indices} u_j conj(values_j)
 ```
 
 因此结果的数学定义没有改变，但内存占用从“跟全局自由度数成正比”变成“跟端口边界相关自由度数成正比”。
+
+如果使用：
+
+```python
+port_dtn_assembly = "auxiliary"
+```
+
+求解器会把每个选中端口级次的 `Ex_m` 直接作为辅助未知量：
+
+```text
+a_m = Ex_m = (1/period) ell_m^H u
+```
+
+后处理会同时保存：
+
+```text
+dtn_auxiliary_amplitudes.json
+dtn_auxiliary_power_metrics.json
+dtn_auxiliary_diffraction_orders.csv
+```
+
+`dtn_port_power_metrics.json` 是“求解完以后用 trace 向量重新投影”；`dtn_auxiliary_power_metrics.json` 是“直接读取线性系统里的辅助未知量”。它们使用同一个功率公式，所以小模型中应当一致。
 
 上端口位于空气中，已知入射基模为：
 

@@ -58,6 +58,12 @@ class SimulationConfig:
     # port_dtn_order_count=N 表示 DtN 端口保留 m=-N...N 的 Floquet 衍射级次。
     port_incident_amplitude: complex = 1.0 + 0.0j
     port_dtn_order_count: int = 2
+    # Fourier-DtN port: explicit 保留旧的 Q^*YQ 外积参考实现；
+    # auxiliary 新增端口模态幅值辅助未知量，后续更适合扩展到大规模 3D。
+    port_dtn_assembly: str = "auxiliary"
+    # False 只使用 0 级；True 自动识别上下端口各自明确传播的衍射级。
+    port_use_diffraction_orders: bool = False
+    port_rayleigh_tolerance: float = 1.0e-6
 
     # True: 每次运行生成新的 results/run_..._YYYYMMDD_HHMMSS 文件夹。
     unique_output: bool = True

@@ -530,3 +530,101 @@ python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
 ```
 
 程序应在装配前报错。当前这是预期行为，因为端口法还没有实现 PML 体积分。
+
+## 2026-06-16 验证：DtN auxiliary 与自动衍射级
+
+新增 auxiliary 后，建议用下面 5 个检查确认功能没有跑偏。
+
+### Test 1：只使用 0 级
+
+设置：
+
+```python
+PORT_BOUNDARY_MODEL = "dtn"
+PORT_DTN_ASSEMBLY = "auxiliary"
+PORT_USE_DIFFRACTION_ORDERS = False
+```
+
+或者命令行：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_cases \
+  --formulation port \
+  --constraint-backend manual \
+  --port-boundary-model dtn \
+  --port-dtn-assembly auxiliary \
+  --no-port-use-diffraction-orders
+```
+
+`run_summary.json` 中应看到：
+
+```text
+port_orders_by_side = {"top": [0], "bottom": [0]}
+```
+
+### Test 2：自动衍射级
+
+设置：
+
+```python
+PORT_USE_DIFFRACTION_ORDERS = True
+```
+
+当前默认参数、15 度入射、空气/基座折射率下，小网格验证得到：
+
+```text
+top    = [-1, 0]
+bottom = [-1, 0, 1]
+```
+
+这是合理的，因为底部基座折射率更高，可以支持更多传播级次。
+
+### Test 3：explicit 与 auxiliary 等价
+
+分别跑：
+
+```python
+PORT_DTN_ASSEMBLY = "explicit"
+PORT_DTN_ASSEMBLY = "auxiliary"
+```
+
+在同一组衍射级下，比较：
+
+```text
+dtn_port_power_metrics.json
+max_abs_E_total
+R_total
+T_total
+R_plus_T
+```
+
+本次粗网格验证结果：
+
+| 方法 | 自动衍射级 | R_port | T_port | R+T_port |
+|---|---:|---:|---:|---:|
+| explicit | False | 0.020207960694 | 0.979792039306 | 1.000000000000 |
+| auxiliary | False | 0.020207960694 | 0.979792039306 | 1.000000000000 |
+| explicit | True | 0.025026127839 | 0.974973872161 | 1.000000000000 |
+| auxiliary | True | 0.025026127839 | 0.974973872161 | 1.000000000000 |
+
+### Test 4：auxiliary 幅值与 trace 投影一致
+
+auxiliary 结果目录里会有：
+
+```text
+dtn_port_power_metrics.json
+dtn_auxiliary_power_metrics.json
+dtn_auxiliary_amplitudes.json
+```
+
+检查 `run_summary.json`：
+
+```text
+dtn_auxiliary_vs_trace_power_difference
+```
+
+其中 R/T/R+T 差值应接近 0。若差值明显不为 0，优先检查块系统符号和 `a_m=(1/L)ell_m^H u` 的归一化。
+
+### Test 5：端口面法与水平探测线法
+
+`power_metrics.json` 是水平探测线法，`dtn_port_power_metrics.json` 是端口面法。它们不一定完全相同，尤其粗网格时差异可能明显。与 COMSOL Periodic Port 对比时，优先使用端口面法；水平探测线法保留用于诊断内部均匀区域的场分解是否稳定。
