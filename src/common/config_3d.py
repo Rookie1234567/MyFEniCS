@@ -8,8 +8,6 @@ import numpy as np
 
 
 VACUUM_C = 299_792_458.0
-VACUUM_MU0 = 4.0e-7 * pi
-VACUUM_ETA0 = VACUUM_MU0 * VACUUM_C
 
 
 @dataclass(frozen=True)
@@ -207,7 +205,6 @@ class SimulationConfig3D:
         data["k0"] = self.k0
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)
-        data["vacuum_eta0_ohm"] = VACUUM_ETA0
         return data
 
 

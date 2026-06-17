@@ -128,10 +128,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         **field_metrics,
     }
     log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
-    log(f"max |eta0 H| = {field_metrics['max_abs_eta0_H']:.6e}")
-    log(f"max |H| [A/m] = {field_metrics['max_abs_H_SI_A_per_m']:.6e}")
+    log(f"max |H| = {field_metrics['max_abs_H']:.6e}")
     log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
-    log(f"eta0 H relative max error = {field_metrics['relative_max_abs_eta0_H_error']:.6e}")
+    log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
     log(f"Poynting direction cosine = {field_metrics['poynting_direction_cosine']:.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log(f"elapsed seconds = {elapsed:.3f}")

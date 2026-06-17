@@ -113,13 +113,21 @@ fields_3d_for_paraview.vtu
 
 ```text
 E_real, E_imag, E_abs
-E_exact_real, E_exact_imag, E_exact_abs
-E_error_real, E_error_imag, E_error_abs
-eta0_H_real, eta0_H_imag, eta0_H_abs
-H_SI_A_per_m_real, H_SI_A_per_m_imag, H_SI_A_per_m_abs
+E_exact_abs, E_error_abs
+H_real, H_imag, H_abs
+H_exact_abs, H_error_abs
+domain_tag
 ```
 
-`eta0_H` 是归一化磁场，和电场同量级，适合做数值检查。`H_SI_A_per_m` 是按 SI 单位换算后的磁场。
+这里的 `H` 不是额外换成 SI 单位的 A/m，而是和本项目 2D 后处理一致的代码单位磁场：
+
+```text
+H = curl_um(E) / (i*k0*mu_r)
+```
+
+因为 `k0` 和 `curl` 都按微米单位使用，所以这个量适合直接检查方向、相位和相对误差。
+
+`E_real/E_imag/H_real/H_imag` 是 3 分量 vector 数组。需要看 `Ex`、`Ey`、`Ez` 或 `Hx`、`Hy`、`Hz` 时，在 ParaView 里选择对应 vector component 即可，不再额外输出一大串分量变量。
 
 ## 验收看什么
 
@@ -131,7 +139,7 @@ mesh cells
 3D N1curl dofs
 solver residual norm
 relative_max_abs_E_error
-relative_max_abs_eta0_H_error
+relative_max_abs_H_error
 poynting_direction_cosine
 paraview_file
 ```

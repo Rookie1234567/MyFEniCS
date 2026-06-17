@@ -9,7 +9,7 @@ from mpi4py import MPI
 
 from dolfinx import fem, io, plot
 
-from ..common.config_3d import SimulationConfig3D, VACUUM_ETA0
+from ..common.config_3d import SimulationConfig3D
 
 
 def _field_grid(V_dg):
@@ -40,12 +40,10 @@ def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
     grid.point_data[f"{prefix}_real"] = _vec_real(values)
     grid.point_data[f"{prefix}_imag"] = _vec_imag(values)
     grid.point_data[f"{prefix}_abs"] = _norm(values).astype(np.float64)
-    components = ("x", "y", "z")
-    for i, name in enumerate(components):
-        grid.point_data[f"{prefix}_{name}_real"] = values[:, i].real.astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_imag"] = values[:, i].imag.astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_abs"] = np.abs(values[:, i]).astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_phase"] = np.angle(values[:, i]).astype(np.float64)
+
+
+def _add_abs_scalar(grid, name: str, values: np.ndarray) -> None:
+    grid.point_data[name] = _norm(values).astype(np.float64)
 
 
 def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
@@ -55,12 +53,12 @@ def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarra
     return cfg.incident_amplitude * phase[:, None] * p[None, :]
 
 
-def _exact_eta0_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
+def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     k = cfg.wavevector
     p = cfg.polarization_vector
     phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
-    eta0_h = np.cross(k, p) / (cfg.k0 * cfg.mu_r)
-    return cfg.incident_amplitude * phase[:, None] * eta0_h[None, :]
+    h_code = np.cross(k, p) / (cfg.k0 * cfg.mu_r)
+    return cfg.incident_amplitude * phase[:, None] * h_code[None, :]
 
 
 def _write_parallel_vtu_collection(out_dir: Path, size: int):
@@ -98,7 +96,12 @@ def _interpolation_points(V):
 
 
 def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_dir: Path) -> dict[str, object]:
-    """Save 3D E/H fields and return reconstruction metrics."""
+    """Save compact 3D E/H fields and return reconstruction metrics.
+
+    H is the code-normalized magnetic field
+    H_code = curl_um(E) / (i * k0 * mu_r), so the whole workflow stays in the
+    same micrometer-based convention as the rest of this project.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
     V_dg = fem.functionspace(mesh_data.mesh, ("DG", cfg.visualization_degree, (3,)))
@@ -109,17 +112,17 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     E_exact_dg = fem.Function(V_dg, name="E_exact")
     E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
 
-    eta0_h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
-    eta0_H_dg = fem.Function(V_dg, name="eta0_H_from_curl")
-    eta0_H_dg.interpolate(fem.Expression(eta0_h_expr, _interpolation_points(V_dg)))
+    h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
+    H_dg = fem.Function(V_dg, name="H_from_curl")
+    H_dg.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
 
-    eta0_H_exact_dg = fem.Function(V_dg, name="eta0_H_exact")
-    eta0_H_exact_dg.interpolate(lambda x: _exact_eta0_h_values(cfg, x.T).T)
+    H_exact_dg = fem.Function(V_dg, name="H_exact")
+    H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
 
     try:
         with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
             writer.write(0.0)
-        with io.VTXWriter(comm, out_dir / "eta0_H_3d_from_curl.bp", eta0_H_dg) as writer:
+        with io.VTXWriter(comm, out_dir / "H_3d_from_curl.bp", H_dg) as writer:
             writer.write(0.0)
     except Exception as exc:  # pragma: no cover - best-effort artifact
         if comm.rank == 0:
@@ -129,22 +132,19 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     e_num = _values(E_num_dg, grid.n_points)
     e_exact = _values(E_exact_dg, grid.n_points)
     e_error = e_num - e_exact
-    eta0_h = _values(eta0_H_dg, grid.n_points)
-    eta0_h_exact = _values(eta0_H_exact_dg, grid.n_points)
-    eta0_h_error = eta0_h - eta0_h_exact
-    h_si = eta0_h / VACUUM_ETA0
+    h_num = _values(H_dg, grid.n_points)
+    h_exact = _values(H_exact_dg, grid.n_points)
+    h_error = h_num - h_exact
 
     paraview_grid = grid.copy()
     _add_complex_vector(paraview_grid, "E", e_num)
-    _add_complex_vector(paraview_grid, "E_exact", e_exact)
-    _add_complex_vector(paraview_grid, "E_error", e_error)
-    _add_complex_vector(paraview_grid, "eta0_H", eta0_h)
-    _add_complex_vector(paraview_grid, "eta0_H_exact", eta0_h_exact)
-    _add_complex_vector(paraview_grid, "eta0_H_error", eta0_h_error)
-    _add_complex_vector(paraview_grid, "H_SI_A_per_m", h_si)
+    _add_abs_scalar(paraview_grid, "E_exact_abs", e_exact)
+    _add_abs_scalar(paraview_grid, "E_error_abs", e_error)
+    _add_complex_vector(paraview_grid, "H", h_num)
+    _add_abs_scalar(paraview_grid, "H_exact_abs", h_exact)
+    _add_abs_scalar(paraview_grid, "H_error_abs", h_error)
     paraview_grid.cell_data["domain_tag"] = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
     paraview_grid.field_data["length_unit_um"] = np.array([1.0], dtype=np.float64)
-    paraview_grid.field_data["vacuum_eta0_ohm"] = np.array([VACUUM_ETA0], dtype=np.float64)
 
     if comm.size > 1:
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
@@ -159,12 +159,11 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     max_e_exact = _global_max_norm(comm, e_exact)
     max_e_num = _global_max_norm(comm, e_num)
     max_e_error = _global_max_norm(comm, e_error)
-    max_eta0_h = _global_max_norm(comm, eta0_h)
-    max_eta0_h_exact = _global_max_norm(comm, eta0_h_exact)
-    max_eta0_h_error = _global_max_norm(comm, eta0_h_error)
-    max_h_si = max_eta0_h / VACUUM_ETA0
+    max_h = _global_max_norm(comm, h_num)
+    max_h_exact = _global_max_norm(comm, h_exact)
+    max_h_error = _global_max_norm(comm, h_error)
 
-    poynting = 0.5 * np.real(np.cross(e_num, np.conj(eta0_h)))
+    poynting = 0.5 * np.real(np.cross(e_num, np.conj(h_num)))
     mean_poynting = _global_mean_vector(comm, poynting)
     direction = cfg.direction_vector
     mean_norm = float(np.linalg.norm(mean_poynting))
@@ -175,11 +174,10 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
         "max_abs_E": max_e_num,
         "max_abs_E_error": max_e_error,
         "relative_max_abs_E_error": max_e_error / max(max_e_exact, 1.0e-30),
-        "max_abs_eta0_H": max_eta0_h,
-        "max_abs_eta0_H_exact": max_eta0_h_exact,
-        "max_abs_eta0_H_error": max_eta0_h_error,
-        "relative_max_abs_eta0_H_error": max_eta0_h_error / max(max_eta0_h_exact, 1.0e-30),
-        "max_abs_H_SI_A_per_m": max_h_si,
+        "max_abs_H": max_h,
+        "max_abs_H_exact": max_h_exact,
+        "max_abs_H_error": max_h_error,
+        "relative_max_abs_H_error": max_h_error / max(max_h_exact, 1.0e-30),
         "mean_normalized_poynting": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
