@@ -50,7 +50,7 @@ def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarra
     k = cfg.wavevector
     p = cfg.polarization_vector
     phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
-    return cfg.incident_amplitude * phase[:, None] * p[None, :]
+    return cfg.electric_field_scale_V_per_m * cfg.incident_amplitude * phase[:, None] * p[None, :]
 
 
 def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
@@ -58,7 +58,7 @@ def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     p = cfg.polarization_vector
     phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
     h_code = np.cross(k, p) / (cfg.k0 * cfg.mu_r)
-    return cfg.incident_amplitude * phase[:, None] * h_code[None, :]
+    return cfg.magnetic_field_scale_A_per_m * cfg.incident_amplitude * phase[:, None] * h_code[None, :]
 
 
 def _write_parallel_vtu_collection(out_dir: Path, size: int):
@@ -98,31 +98,34 @@ def _interpolation_points(V):
 def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_dir: Path) -> dict[str, object]:
     """Save compact 3D E/H fields and return reconstruction metrics.
 
-    H is the code-normalized magnetic field
-    H_code = curl_nm(E) / (i * k0 * mu_r), so the whole workflow stays in the
-    same nanometer-based convention as the rest of this project.
+    The solve uses normalized field amplitudes internally.  ParaView output uses
+    E in V/m and H in A/m, with incident_e0_v_per_m as the physical scale.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
     V_dg = fem.functionspace(mesh_data.mesh, ("DG", cfg.visualization_degree, (3,)))
 
-    E_num_dg = fem.Function(V_dg, name="E_numerical")
-    E_num_dg.interpolate(E_numerical)
+    E_code_dg = fem.Function(V_dg, name="E_code")
+    E_code_dg.interpolate(E_numerical)
 
-    E_exact_dg = fem.Function(V_dg, name="E_exact")
+    E_num_dg = fem.Function(V_dg, name="E_V_per_m")
+    E_num_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_code_dg.x.array[:]
+    E_num_dg.x.scatter_forward()
+
+    E_exact_dg = fem.Function(V_dg, name="E_exact_V_per_m")
     E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
 
-    h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
-    H_dg = fem.Function(V_dg, name="H_from_curl")
+    h_expr = (cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
+    H_dg = fem.Function(V_dg, name="H_A_per_m_from_curl")
     H_dg.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
 
-    H_exact_dg = fem.Function(V_dg, name="H_exact")
+    H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
     H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
 
     try:
         with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
             writer.write(0.0)
-        with io.VTXWriter(comm, out_dir / "H_3d_from_curl.bp", H_dg) as writer:
+        with io.VTXWriter(comm, out_dir / "H_3d_A_per_m_from_curl.bp", H_dg) as writer:
             writer.write(0.0)
     except Exception as exc:  # pragma: no cover - best-effort artifact
         if comm.rank == 0:
@@ -137,15 +140,21 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     h_error = h_num - h_exact
 
     paraview_grid = grid.copy()
-    _add_complex_vector(paraview_grid, "E", e_num)
-    _add_abs_scalar(paraview_grid, "E_exact_abs", e_exact)
-    _add_abs_scalar(paraview_grid, "E_error_abs", e_error)
-    _add_complex_vector(paraview_grid, "H", h_num)
-    _add_abs_scalar(paraview_grid, "H_exact_abs", h_exact)
-    _add_abs_scalar(paraview_grid, "H_error_abs", h_error)
+    _add_complex_vector(paraview_grid, "E_V_per_m", e_num)
+    _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
+    _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
+    _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
+    _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
+    _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
     paraview_grid.cell_data["domain_tag"] = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
     paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
-    paraview_grid.field_data["electric_field_normalization_E0"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
+    paraview_grid.field_data["magnetic_field_unit_A_per_m"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["magnetic_field_scale_A_per_m"] = np.array(
+        [cfg.magnetic_field_scale_A_per_m],
+        dtype=np.float64,
+    )
 
     if comm.size > 1:
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
@@ -179,7 +188,7 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
         "max_abs_H_exact": max_h_exact,
         "max_abs_H_error": max_h_error,
         "relative_max_abs_H_error": max_h_error / max(max_h_exact, 1.0e-30),
-        "mean_normalized_poynting": mean_poynting.tolist(),
+        "mean_poynting_W_per_m2": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
         "paraview_file": str(paraview_path),

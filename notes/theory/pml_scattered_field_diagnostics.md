@@ -182,7 +182,7 @@ fenics_vector_maxwell_floquet_demo_v2_parallel/results/pml_flat_substrate_diagno
 
 1. 只在物理区域比较，不把 PML 区域作为物理结果比较。
 2. 优先比较 `E_total_abs`，而不是直接比较 `E_scat_abs`。
-3. 确认 COMSOL 中入射场振幅是否为 1 V/m；本代码输出是归一化场，默认入射振幅为 1。
+3. 确认 COMSOL 中入射场振幅是否为 1 V/m；本代码求解内部归一化，但 ParaView 默认按 `incident_e0_v_per_m=1.0` 显示为 V/m。
 4. 如果 COMSOL 使用的是平坦基座作为背景场，那么本代码也应改成“分层背景场散射公式”，右端项只包含光栅相对平坦基座的扰动。
 
 更接近 COMSOL 周期端口设置的公式应该是：

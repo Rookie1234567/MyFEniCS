@@ -112,22 +112,22 @@ fields_3d_for_paraview.vtu
 里面包含：
 
 ```text
-E_real, E_imag, E_abs
-E_exact_abs, E_error_abs
-H_real, H_imag, H_abs
-H_exact_abs, H_error_abs
+E_V_per_m_real, E_V_per_m_imag, E_V_per_m_abs
+E_exact_abs_V_per_m, E_error_abs_V_per_m
+H_A_per_m_real, H_A_per_m_imag, H_A_per_m_abs
+H_exact_abs_A_per_m, H_error_abs_A_per_m
 domain_tag
 ```
 
-这里的 `H` 不是额外换成 SI 单位的 A/m，而是和本项目 2D 后处理一致的代码单位磁场：
+ParaView 输出采用 COMSOL 风格的物理单位显示。默认 `incident_e0_v_per_m = 1.0`，所以：
 
 ```text
-H = curl_nm(E) / (i*k0*mu_r)
+E_V_per_m = E_code * 1.0 [V/m]
+H_A_per_m = H_code / eta0 [A/m]
+eta0 = 376.730313668 ohm
 ```
 
-因为 `k0` 和 `curl` 都按纳米单位使用，所以这个量适合直接检查方向、相位和相对误差。
-
-`E_real/E_imag/H_real/H_imag` 是 3 分量 vector 数组。需要看 `Ex`、`Ey`、`Ez` 或 `Hx`、`Hy`、`Hz` 时，在 ParaView 里选择对应 vector component 即可，不再额外输出一大串分量变量。
+`E_V_per_m_real/E_V_per_m_imag/H_A_per_m_real/H_A_per_m_imag` 是 3 分量 vector 数组。需要看 `Ex`、`Ey`、`Ez` 或 `Hx`、`Hy`、`Hz` 时，在 ParaView 里选择对应 vector component 即可，不再额外输出一大串分量变量。
 
 ## 验收看什么
 

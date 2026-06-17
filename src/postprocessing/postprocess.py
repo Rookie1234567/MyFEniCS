@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pyvista
+import ufl
 
 from dolfinx import fem, io, plot
 from mpi4py import MPI
@@ -60,6 +61,11 @@ def _field_values(field, num_points: int) -> np.ndarray:
     return values[:, :2]
 
 
+def _interpolation_points(V):
+    points = V.element.interpolation_points
+    return points() if callable(points) else points
+
+
 def _scalar_field_values(field, num_points: int) -> np.ndarray:
     values = field.x.array.reshape(num_points, -1)
     if values.shape[1] < 1:
@@ -80,7 +86,8 @@ def _save_scalar(grid, name: str, data: np.ndarray, path: Path, cmap: str = "RdB
 
 def _save_quiver(grid, coords, vectors, scalar, path: Path):
     background = grid.copy()
-    background.point_data["|E_total|"] = scalar
+    scalar_name = "|E_total| [V/m]"
+    background.point_data[scalar_name] = scalar
     stride = max(1, coords.shape[0] // 260)
     points = coords[::stride]
     vec2 = vectors[::stride]
@@ -91,9 +98,9 @@ def _save_quiver(grid, coords, vectors, scalar, path: Path):
     glyphs = pdata.glyph(orient="E_real", scale="E_real", factor=0.10)
 
     plotter = _plotter()
-    plotter.add_mesh(background, scalars="|E_total|", cmap="viridis", opacity=0.82, show_scalar_bar=False)
+    plotter.add_mesh(background, scalars=scalar_name, cmap="viridis", opacity=0.82, show_scalar_bar=False)
     plotter.add_mesh(glyphs, color="black")
-    plotter.add_scalar_bar(title="|E_total|")
+    plotter.add_scalar_bar(title=scalar_name)
     plotter.view_xy()
     plotter.screenshot(str(path))
     plotter.close()
@@ -124,6 +131,11 @@ def _add_complex_field_arrays(grid, prefix: str, values: np.ndarray, norm: np.nd
     grid.point_data[f"{prefix}_Ey_abs"] = np.abs(values[:, 1]).astype(np.float64)
     grid.point_data[f"{prefix}_Ex_phase"] = np.angle(values[:, 0]).astype(np.float64)
     grid.point_data[f"{prefix}_Ey_phase"] = np.angle(values[:, 1]).astype(np.float64)
+
+
+def _add_optional_point_scalar(grid, name: str, values: np.ndarray | None) -> None:
+    if values is not None and len(values) == grid.n_points:
+        grid.point_data[name] = np.asarray(values, dtype=np.float64)
 
 
 def _add_complex_scalar_field_arrays(grid, prefix: str, values: np.ndarray):
@@ -163,9 +175,49 @@ def _add_domain_cell_arrays(grid, mesh_data, cfg: SimulationConfig):
         grid.cell_data[name] = values
 
 
-def _add_numeric_metadata(grid):
+def _scale_e_values(cfg: SimulationConfig, values: np.ndarray) -> np.ndarray:
+    return values * cfg.electric_field_scale_V_per_m
+
+
+def _scale_e_norm(cfg: SimulationConfig, values: np.ndarray) -> np.ndarray:
+    return values * abs(cfg.electric_field_scale_V_per_m)
+
+
+def _add_numeric_metadata(grid, cfg: SimulationConfig):
     grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
-    grid.field_data["electric_field_normalization_E0"] = np.array([1.0], dtype=np.float64)
+    grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
+    grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
+    grid.field_data["magnetic_field_unit_A_per_m"] = np.array([1.0], dtype=np.float64)
+    grid.field_data["magnetic_field_scale_A_per_m"] = np.array([cfg.magnetic_field_scale_A_per_m], dtype=np.float64)
+
+
+def _tm_h_total_abs_A_per_m(E_total, cfg: SimulationConfig, expected_points: int) -> np.ndarray | None:
+    V_h = fem.functionspace(E_total.function_space.mesh, ("DG", cfg.visualization_degree))
+    hz_expr = (
+        cfg.magnetic_field_scale_A_per_m
+        / (1j * cfg.k0)
+        * (ufl.Dx(E_total[1], 0) - ufl.Dx(E_total[0], 1))
+    )
+    H_z = fem.Function(V_h, name="H_total_Hz_A_per_m")
+    H_z.interpolate(fem.Expression(hz_expr, _interpolation_points(V_h)))
+    values = np.abs(H_z.x.array).astype(np.float64)
+    return values if len(values) == expected_points else None
+
+
+def _te_h_total_abs_A_per_m(E_total, cfg: SimulationConfig, expected_points: int) -> np.ndarray | None:
+    V_h = fem.functionspace(E_total.function_space.mesh, ("DG", cfg.visualization_degree, (2,)))
+    h_expr = ufl.as_vector(
+        (
+            cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0) * ufl.Dx(E_total, 1),
+            -cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0) * ufl.Dx(E_total, 0),
+        )
+    )
+    H = fem.Function(V_h, name="H_total_A_per_m")
+    H.interpolate(fem.Expression(h_expr, _interpolation_points(V_h)))
+    values = H.x.array.reshape(expected_points, -1) if H.x.array.size == expected_points * 2 else None
+    if values is None:
+        return None
+    return np.sqrt(np.sum(np.abs(values[:, :2]) ** 2, axis=1)).astype(np.float64)
 
 
 def _save_paraview_fields(
@@ -178,14 +230,31 @@ def _save_paraview_fields(
     inc_norm,
     scat_norm,
     total_norm,
+    h_total_abs,
     out_dir: Path,
 ):
     paraview_grid = grid.copy()
-    _add_complex_field_arrays(paraview_grid, "E_inc", inc_values, inc_norm)
-    _add_complex_field_arrays(paraview_grid, "E_scat", scat_values, scat_norm)
-    _add_complex_field_arrays(paraview_grid, "E_total", total_values, total_norm)
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_inc",
+        _scale_e_values(cfg, inc_values),
+        _scale_e_norm(cfg, inc_norm),
+    )
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_scat",
+        _scale_e_values(cfg, scat_values),
+        _scale_e_norm(cfg, scat_norm),
+    )
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_total",
+        _scale_e_values(cfg, total_values),
+        _scale_e_norm(cfg, total_norm),
+    )
+    _add_optional_point_scalar(paraview_grid, "H_total_abs_A_per_m", h_total_abs)
     _add_domain_cell_arrays(paraview_grid, mesh_data, cfg)
-    _add_numeric_metadata(paraview_grid)
+    _add_numeric_metadata(paraview_grid, cfg)
     paraview_grid.save(out_dir / "fields_for_paraview.vtu")
 
 
@@ -211,6 +280,7 @@ def _save_parallel_paraview_fields(
     E_inc_dg,
     E_scat_dg,
     E_total_dg,
+    h_total_abs,
     out_dir: Path,
 ):
     comm = mesh_data.mesh.comm
@@ -224,11 +294,27 @@ def _save_parallel_paraview_fields(
     inc_norm = np.sqrt(np.abs(inc_values[:, 0]) ** 2 + np.abs(inc_values[:, 1]) ** 2)
 
     paraview_grid = grid.copy()
-    _add_complex_field_arrays(paraview_grid, "E_inc", inc_values, inc_norm)
-    _add_complex_field_arrays(paraview_grid, "E_scat", scat_values, scat_norm)
-    _add_complex_field_arrays(paraview_grid, "E_total", total_values, total_norm)
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_inc",
+        _scale_e_values(cfg, inc_values),
+        _scale_e_norm(cfg, inc_norm),
+    )
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_scat",
+        _scale_e_values(cfg, scat_values),
+        _scale_e_norm(cfg, scat_norm),
+    )
+    _add_complex_field_arrays(
+        paraview_grid,
+        "E_total",
+        _scale_e_values(cfg, total_values),
+        _scale_e_norm(cfg, total_norm),
+    )
+    _add_optional_point_scalar(paraview_grid, "H_total_abs_A_per_m", h_total_abs)
     _add_domain_cell_arrays(paraview_grid, mesh_data, cfg)
-    _add_numeric_metadata(paraview_grid)
+    _add_numeric_metadata(paraview_grid, cfg)
     paraview_grid.save(out_dir / f"fields_for_paraview_rank{comm.rank:04d}.vtu")
     comm.barrier()
     if comm.rank == 0:
@@ -242,6 +328,7 @@ def _save_parallel_scalar_paraview_fields(
     E_inc_dg,
     E_scat_dg,
     E_total_dg,
+    h_total_abs,
     out_dir: Path,
 ):
     comm = mesh_data.mesh.comm
@@ -251,11 +338,12 @@ def _save_parallel_scalar_paraview_fields(
     inc_values = _scalar_field_values(E_inc_dg, grid.n_points)
 
     paraview_grid = grid.copy()
-    _add_complex_scalar_field_arrays(paraview_grid, "E_inc", inc_values)
-    _add_complex_scalar_field_arrays(paraview_grid, "E_scat", scat_values)
-    _add_complex_scalar_field_arrays(paraview_grid, "E_total", total_values)
+    _add_complex_scalar_field_arrays(paraview_grid, "E_inc", _scale_e_values(cfg, inc_values))
+    _add_complex_scalar_field_arrays(paraview_grid, "E_scat", _scale_e_values(cfg, scat_values))
+    _add_complex_scalar_field_arrays(paraview_grid, "E_total", _scale_e_values(cfg, total_values))
+    _add_optional_point_scalar(paraview_grid, "H_total_abs_A_per_m", h_total_abs)
     _add_domain_cell_arrays(paraview_grid, mesh_data, cfg)
-    _add_numeric_metadata(paraview_grid)
+    _add_numeric_metadata(paraview_grid, cfg)
     paraview_grid.save(out_dir / f"fields_for_paraview_rank{comm.rank:04d}.vtu")
     comm.barrier()
     if comm.rank == 0:
@@ -292,12 +380,15 @@ def save_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat, E_tot
             return 0.0
         return float(np.max(np.sqrt(np.sum(np.abs(values) ** 2, axis=1))))
 
-    max_abs_E_inc = comm.allreduce(local_max_norm(E_inc_dg), op=MPI.MAX)
-    max_abs_E_scat = comm.allreduce(local_max_norm(E_scat_dg), op=MPI.MAX)
-    max_abs_E_total = comm.allreduce(local_max_norm(E_total_dg), op=MPI.MAX)
+    e_scale_abs = abs(cfg.electric_field_scale_V_per_m)
+    max_abs_E_inc = e_scale_abs * comm.allreduce(local_max_norm(E_inc_dg), op=MPI.MAX)
+    max_abs_E_scat = e_scale_abs * comm.allreduce(local_max_norm(E_scat_dg), op=MPI.MAX)
+    max_abs_E_total = e_scale_abs * comm.allreduce(local_max_norm(E_total_dg), op=MPI.MAX)
 
     if comm.size > 1:
-        _save_parallel_paraview_fields(V_dg, mesh_data, cfg, E_inc_dg, E_scat_dg, E_total_dg, out_dir)
+        preview_grid, _ = _field_grid(V_dg)
+        h_total_abs = _tm_h_total_abs_A_per_m(E_total, cfg, preview_grid.n_points)
+        _save_parallel_paraview_fields(V_dg, mesh_data, cfg, E_inc_dg, E_scat_dg, E_total_dg, h_total_abs, out_dir)
         if comm.rank == 0:
             (out_dir / "postprocess_parallel_note.txt").write_text(
                 "MPI run: VTX .bp field files were written collectively. "
@@ -321,17 +412,32 @@ def save_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat, E_tot
     total_norm = np.sqrt(np.abs(total_values[:, 0]) ** 2 + np.abs(total_values[:, 1]) ** 2)
     scat_norm = np.sqrt(np.abs(scat_values[:, 0]) ** 2 + np.abs(scat_values[:, 1]) ** 2)
     inc_norm = np.sqrt(np.abs(inc_values[:, 0]) ** 2 + np.abs(inc_values[:, 1]) ** 2)
+    h_total_abs = _tm_h_total_abs_A_per_m(E_total, cfg, grid.n_points)
 
     _save_paraview_fields(
-        grid, mesh_data, cfg, inc_values, scat_values, total_values, inc_norm, scat_norm, total_norm, out_dir
+        grid,
+        mesh_data,
+        cfg,
+        inc_values,
+        scat_values,
+        total_values,
+        inc_norm,
+        scat_norm,
+        total_norm,
+        h_total_abs,
+        out_dir,
     )
 
-    _save_scalar(grid, "Re Ex", total_values[:, 0].real, out_dir / "Ex_real.png")
-    _save_scalar(grid, "Im Ex", total_values[:, 0].imag, out_dir / "Ex_imag.png")
-    _save_scalar(grid, "Re Ey", total_values[:, 1].real, out_dir / "Ey_real.png")
-    _save_scalar(grid, "Im Ey", total_values[:, 1].imag, out_dir / "Ey_imag.png")
-    _save_scalar(grid, "|E_total|", total_norm, out_dir / "E_total_norm.png", cmap="viridis")
-    _save_scalar(grid, "|E_scat|", scat_norm, out_dir / "E_scat_norm.png", cmap="magma")
+    total_values_physical = _scale_e_values(cfg, total_values)
+    scat_norm_physical = _scale_e_norm(cfg, scat_norm)
+    total_norm_physical = _scale_e_norm(cfg, total_norm)
+
+    _save_scalar(grid, "Re Ex [V/m]", total_values_physical[:, 0].real, out_dir / "Ex_real.png")
+    _save_scalar(grid, "Im Ex [V/m]", total_values_physical[:, 0].imag, out_dir / "Ex_imag.png")
+    _save_scalar(grid, "Re Ey [V/m]", total_values_physical[:, 1].real, out_dir / "Ey_real.png")
+    _save_scalar(grid, "Im Ey [V/m]", total_values_physical[:, 1].imag, out_dir / "Ey_imag.png")
+    _save_scalar(grid, "|E_total| [V/m]", total_norm_physical, out_dir / "E_total_norm.png", cmap="viridis")
+    _save_scalar(grid, "|E_scat| [V/m]", scat_norm_physical, out_dir / "E_scat_norm.png", cmap="magma")
     _save_scalar(
         grid,
         "arg Ex_total",
@@ -339,7 +445,7 @@ def save_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat, E_tot
         out_dir / "E_total_phase_or_component_phase.png",
         cmap="twilight",
     )
-    _save_quiver(grid, coords, total_values, total_norm, out_dir / "E_vector_quiver_real.png")
+    _save_quiver(grid, coords, total_values_physical, total_norm_physical, out_dir / "E_vector_quiver_real.png")
 
     return {
         "max_abs_E_inc": max_abs_E_inc,
@@ -378,12 +484,24 @@ def save_scalar_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat
             return 0.0
         return float(np.max(np.abs(values)))
 
-    max_abs_E_inc = comm.allreduce(local_max_abs(E_inc_dg), op=MPI.MAX)
-    max_abs_E_scat = comm.allreduce(local_max_abs(E_scat_dg), op=MPI.MAX)
-    max_abs_E_total = comm.allreduce(local_max_abs(E_total_dg), op=MPI.MAX)
+    e_scale_abs = abs(cfg.electric_field_scale_V_per_m)
+    max_abs_E_inc = e_scale_abs * comm.allreduce(local_max_abs(E_inc_dg), op=MPI.MAX)
+    max_abs_E_scat = e_scale_abs * comm.allreduce(local_max_abs(E_scat_dg), op=MPI.MAX)
+    max_abs_E_total = e_scale_abs * comm.allreduce(local_max_abs(E_total_dg), op=MPI.MAX)
 
     if comm.size > 1:
-        _save_parallel_scalar_paraview_fields(V_dg, mesh_data, cfg, E_inc_dg, E_scat_dg, E_total_dg, out_dir)
+        preview_grid, _ = _field_grid(V_dg)
+        h_total_abs = _te_h_total_abs_A_per_m(E_total, cfg, preview_grid.n_points)
+        _save_parallel_scalar_paraview_fields(
+            V_dg,
+            mesh_data,
+            cfg,
+            E_inc_dg,
+            E_scat_dg,
+            E_total_dg,
+            h_total_abs,
+            out_dir,
+        )
         if comm.rank == 0:
             (out_dir / "postprocess_parallel_note.txt").write_text(
                 "MPI run: scalar TE VTX .bp field files were written collectively. "
@@ -402,18 +520,22 @@ def save_scalar_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat
     total_values = _scalar_field_values(E_total_dg, grid.n_points)
     scat_values = _scalar_field_values(E_scat_dg, grid.n_points)
     inc_values = _scalar_field_values(E_inc_dg, grid.n_points)
+    h_total_abs = _te_h_total_abs_A_per_m(E_total, cfg, grid.n_points)
 
-    _add_complex_scalar_field_arrays(grid, "E_inc", inc_values)
-    _add_complex_scalar_field_arrays(grid, "E_scat", scat_values)
-    _add_complex_scalar_field_arrays(grid, "E_total", total_values)
+    _add_complex_scalar_field_arrays(grid, "E_inc", _scale_e_values(cfg, inc_values))
+    _add_complex_scalar_field_arrays(grid, "E_scat", _scale_e_values(cfg, scat_values))
+    _add_complex_scalar_field_arrays(grid, "E_total", _scale_e_values(cfg, total_values))
+    _add_optional_point_scalar(grid, "H_total_abs_A_per_m", h_total_abs)
     _add_domain_cell_arrays(grid, mesh_data, cfg)
-    _add_numeric_metadata(grid)
+    _add_numeric_metadata(grid, cfg)
     grid.save(out_dir / "fields_for_paraview.vtu")
 
-    _save_scalar(grid, "Re Ez", total_values.real, out_dir / "Ez_real.png")
-    _save_scalar(grid, "Im Ez", total_values.imag, out_dir / "Ez_imag.png")
-    _save_scalar(grid, "|E_total|", np.abs(total_values), out_dir / "E_total_norm.png", cmap="viridis")
-    _save_scalar(grid, "|E_scat|", np.abs(scat_values), out_dir / "E_scat_norm.png", cmap="magma")
+    total_values_physical = _scale_e_values(cfg, total_values)
+    scat_values_physical = _scale_e_values(cfg, scat_values)
+    _save_scalar(grid, "Re Ez [V/m]", total_values_physical.real, out_dir / "Ez_real.png")
+    _save_scalar(grid, "Im Ez [V/m]", total_values_physical.imag, out_dir / "Ez_imag.png")
+    _save_scalar(grid, "|E_total| [V/m]", np.abs(total_values_physical), out_dir / "E_total_norm.png", cmap="viridis")
+    _save_scalar(grid, "|E_scat| [V/m]", np.abs(scat_values_physical), out_dir / "E_scat_norm.png", cmap="magma")
     _save_scalar(
         grid,
         "arg Ez_total",

@@ -199,7 +199,7 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 | 66-84 | 保存总场实部箭头图。 |
 | 88-112 | 给 ParaView 输出准备 point data：`E_total_abs`、`E_total_Ex_real`、`E_total_real` 等完整前缀数组。 |
 | 115-130 | 给 ParaView 输出准备 cell data。目前只保存 `domain_tag` 和 `material_id`。 |
-| 138-141 | 写入单位相关 field data：长度单位为 `nm`，电场按 `E0=1` 归一化。 |
+| 138-141 | 写入单位相关 field data：长度单位为 `nm`，ParaView 电场按 `V/m` 显示，磁场按 `A/m` 显示。 |
 | 144-162 | 保存单文件 `fields_for_paraview.vtu`。这是当前推荐打开的 ParaView 文件。 |
 | 165-185 | 把 Nedelec 场插值到 DG 向量空间，写出 `E_inc.bp`、`E_scat.bp`、`E_total.bp`。 |
 | MPI 分支 | 并行运行时额外写出 `fields_for_paraview_parallel.pvd` 和 `fields_for_paraview_rankXXXX.vtu`。在 ParaView 中打开 `.pvd` 可看到完整分布式结果。 |

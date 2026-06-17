@@ -6,8 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-
-VACUUM_C = 299_792_458.0
+from .units import VACUUM_C, VACUUM_ETA0
 
 
 @dataclass(frozen=True)
@@ -66,8 +65,10 @@ class SimulationConfig3D:
     incident_phi_deg: float = 0.0
     polarization_kind: str = "custom"  # "s", "p", or "custom"
     custom_polarization: tuple[complex, complex, complex] | None = (1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
-    # E0=1 means normalized electric field output, matching the 2D convention.
+    # incident_e0_v_per_m only controls physical-unit visualization.
+    # The finite-element solve still uses incident_amplitude as the normalized field amplitude.
     incident_amplitude: complex = 1.0 + 0.0j
+    incident_e0_v_per_m: float = 1.0
 
     nedelec_degree: int = 2
     visualization_degree: int = 2
@@ -86,6 +87,14 @@ class SimulationConfig3D:
     @property
     def omega(self) -> float:
         return 2.0 * pi * VACUUM_C / (self.lambda0 * 1.0e-9)
+
+    @property
+    def electric_field_scale_V_per_m(self) -> float:
+        return float(self.incident_e0_v_per_m)
+
+    @property
+    def magnetic_field_scale_A_per_m(self) -> float:
+        return self.electric_field_scale_V_per_m / VACUUM_ETA0
 
     @property
     def x_min(self) -> float:
@@ -208,7 +217,9 @@ class SimulationConfig3D:
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)
         data["length_unit"] = "nm"
-        data["electric_field_normalization"] = "E0=1"
+        data["electric_field_unit"] = "V/m"
+        data["magnetic_field_unit"] = "A/m"
+        data["magnetic_field_scale_A_per_m"] = self.magnetic_field_scale_A_per_m
         return data
 
 

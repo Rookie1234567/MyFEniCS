@@ -6,6 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .units import VACUUM_C, VACUUM_ETA0
+
 
 @dataclass(frozen=True)
 class Tags:
@@ -55,10 +57,11 @@ class SimulationConfig:
     use_pml: bool = True
     port_use_pml: bool = False
 
-    # port_incident_amplitude 是入射端口电场振幅；1 表示输出为归一化电场。
+    # port_incident_amplitude 是求解中的归一化入射端口电场振幅。
     # port_dtn_order_count=N 表示 DtN 端口保留 m=-N...N 的 Floquet 衍射级次。
-    # E0=1 means normalized electric field output, matching the existing 2D convention.
+    # incident_e0_v_per_m 只控制后处理的物理单位显示：1 个代码电场单位显示为多少 V/m。
     port_incident_amplitude: complex = 1.0 + 0.0j
+    incident_e0_v_per_m: float = 1.0
     port_dtn_order_count: int = 2
     # Fourier-DtN port: explicit 保留旧的 Q^*YQ 外积参考实现；
     # auxiliary 新增端口模态幅值辅助未知量，后续更适合扩展到大规模 3D。
@@ -103,7 +106,15 @@ class SimulationConfig:
 
     @property
     def omega(self) -> float:
-        return 2.0 * pi * 299_792_458.0 / (self.lambda0 * 1e-9)
+        return 2.0 * pi * VACUUM_C / (self.lambda0 * 1e-9)
+
+    @property
+    def electric_field_scale_V_per_m(self) -> float:
+        return float(self.incident_e0_v_per_m)
+
+    @property
+    def magnetic_field_scale_A_per_m(self) -> float:
+        return self.electric_field_scale_V_per_m / VACUUM_ETA0
 
     @property
     def kx(self) -> complex:
@@ -189,7 +200,9 @@ class SimulationConfig:
         data["eps_substrate"] = [self.eps_substrate.real, self.eps_substrate.imag]
         data["eps_grating"] = [self.eps_grating.real, self.eps_grating.imag]
         data["length_unit"] = "nm"
-        data["electric_field_normalization"] = "E0=1"
+        data["electric_field_unit"] = "V/m"
+        data["magnetic_field_unit"] = "A/m"
+        data["magnetic_field_scale_A_per_m"] = self.magnetic_field_scale_A_per_m
         return data
 
 

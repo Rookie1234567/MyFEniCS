@@ -167,12 +167,18 @@ results/air_substrate_grating_mpc_official/E_vector_quiver_real.png
 
 ## 9. 和 COMSOL 对比什么
 
-先确认单位约定。本项目默认入射场振幅为 `E0=1`，这里的 `1` 是归一化参考幅值，不是在代码内部强行声明成 `1 V/m`。因此 `E_total_abs`、`E_scat_abs` 等默认都是相对于入射电场幅值的无量纲归一化结果。
-
-如果要和 COMSOL 的物理单位结果逐点对比，先确认 COMSOL 使用的背景入射场幅值。若 COMSOL 中设置的是 `E0 = 1 V/m`，则数值大小可以直接一一比较；若 COMSOL 设置的是其他入射幅值，例如 `E0 = 1000 V/m`，则本项目归一化结果需要乘以这个物理幅值后再对比：
+先确认单位约定。本项目求解内部仍然使用归一化场，但 ParaView 输出默认按 COMSOL 风格显示物理单位：
 
 ```text
-E_physical[V/m] = E_code * E0[V/m]
+incident_e0_v_per_m = 1.0
+E unit = V/m
+H unit = A/m
+```
+
+也就是说，默认情况下 `E_total_abs`、`E_scat_abs` 等电场数组可以直接按 `V/m` 理解。如果 COMSOL 中设置的是其他入射幅值，例如 `E0 = 1000 V/m`，则应把本项目配置里的 `incident_e0_v_per_m` 也改成 `1000.0` 后再输出 ParaView 文件：
+
+```text
+E_physical[V/m] = E_code * incident_e0_v_per_m
 ```
 
 如果已知入射光强 `I`，可用：
@@ -181,7 +187,7 @@ E_physical[V/m] = E_code * E0[V/m]
 E0 = sqrt(2 I / (n epsilon0 c))
 ```
 
-把归一化电场换算成 `V/m`。
+然后把 `incident_e0_v_per_m` 改成这个物理幅值。
 
 第一轮建议先对比这些量：
 
@@ -210,6 +216,7 @@ E_total_Ex_real      Ex 实部
 E_total_Ex_imag      Ex 虚部
 E_total_Ey_real      Ey 实部
 E_total_Ey_imag      Ey 虚部
+H_total_abs_A_per_m  总磁场模值，单位 A/m
 ```
 
 材料和区域数组是 cell data。当前只保存两个材料相关数组：

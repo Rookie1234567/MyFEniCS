@@ -119,15 +119,32 @@ k0        ：1/nm
 curl      ：按 1/nm 求导
 ```
 
-因此 3D 后处理不再默认输出 SI 单位的 `H[A/m]`。为了和已有 2D 后处理保持一致，代码输出归一化磁场：
+求解内部仍然使用归一化电场幅值，这样矩阵和误差检查保持简单。ParaView 输出时再套用物理显示尺度，默认：
 
 ```text
-H = curl_nm(E) / (i*k0*mu_r)
+incident_e0_v_per_m = 1.0
 ```
 
-这个 `H` 省掉了共同的物理常数，和电场同量级，适合检查方向、相位、Poynting 方向和相对误差。
+因此电场数组按 `V/m` 显示：
 
-如果以后要和实验绝对单位或 COMSOL 的 A/m 数值做逐点对比，再单独加一个显式的 SI 换算开关；默认输出保持纳米代码单位，避免和 2D 结果口径不一致。
+```text
+E_V_per_m = E_code * incident_e0_v_per_m
+```
+
+磁场先在代码单位中由 curl 得到：
+
+```text
+H_code = curl_nm(E_code) / (i*k0*mu_r)
+```
+
+再通过真空阻抗换成 `A/m`：
+
+```text
+H_A_per_m = H_code * incident_e0_v_per_m / eta0
+eta0 = 376.730313668 ohm
+```
+
+所以默认 `incident_e0_v_per_m=1.0` 时，电场数值可按 `V/m` 看，磁场数值可按 `A/m` 看。若以后要模拟其他入射场幅值，只改 `incident_e0_v_per_m` 即可。
 
 ## 本阶段的边界
 
