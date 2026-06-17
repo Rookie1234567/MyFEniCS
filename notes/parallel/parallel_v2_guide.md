@@ -93,7 +93,7 @@ python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --help
 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation scattered \
   --constraint-backend mpc_official \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 1 \
   --scattering-background layered
 ```
@@ -104,7 +104,7 @@ python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation scattered \
   --constraint-backend manual \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 1 \
   --scattering-background layered
 ```
@@ -115,7 +115,7 @@ MPI 散射场，一阶边元：
 mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation scattered \
   --constraint-backend mpc_official \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 1 \
   --scattering-background layered
 ```
@@ -126,7 +126,7 @@ MPI 散射场，二阶边元：
 mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation scattered \
   --constraint-backend mpc_official \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 2 \
   --scattering-background layered
 ```
@@ -138,7 +138,7 @@ mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation port \
   --constraint-backend mpc_official \
   --port-boundary-model robin \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 1
 ```
 
@@ -149,7 +149,7 @@ mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
   --formulation all \
   --constraint-backend both \
   --port-boundary-model all \
-  --mesh-target-size 0.05 \
+  --mesh-target-size 50.0 \
   --nedelec-degree 1 \
   --scattering-background layered
 ```
@@ -184,7 +184,7 @@ MPI 下程序会自动只运行可并行的 `mpc_official` 和 Robin 端口，�
 formulation          = scattered
 scattering_background = layered
 constraint_backend   = mpc_official
-mesh_target_size     = 0.015
+mesh_target_size     = 15.0
 nedelec_degree       = 2
 incident_angle_deg   = 15
 cells                = 9680
@@ -299,7 +299,7 @@ mesh.h5 does not exist
 当前已经修正为：rank0 先决定唯一结果目录，然后通过 MPI broadcast 发给所有 rank。并行目录名还会带进程数，例如：
 
 ```text
-2D_grating_sc_lay_p2_h0p01_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
+2D_grating_sc_lay_p2_h10p0_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
 ```
 
 因此同一次 8 进程运行中，所有输出都会集中在同一层：
@@ -315,10 +315,10 @@ power_metrics.json
 run_summary.json
 ```
 
-我已实际验证 `mpirun -n 8`、`nedelec_degree=2`、`mesh_target_size=0.01` 可以正常运行，无 HDF5 报错，输出目录为：
+我已实际验证 `mpirun -n 8`、`nedelec_degree=2`、`mesh_target_size=10.0` 可以正常运行，无 HDF5 报错，输出目录为：
 
 ```text
-results/2D_grating_sc_lay_p2_h0p01_t15p0_mpc_np8_20260612_010910/
+results/2D_grating_sc_lay_p2_h10p0_t15p0_mpc_np8_20260612_010910/
 ```
 
 ### 8.2 内存优化记录

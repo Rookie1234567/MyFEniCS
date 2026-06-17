@@ -41,14 +41,14 @@ physical_y_max = air_height
 默认值为：
 
 ```text
-physical_y_min = -0.35 um
-physical_y_max =  0.85 um
+physical_y_min = -350 nm
+physical_y_max =  850 nm
 ```
 
 中心是：
 
 ```text
-y_center = (physical_y_min + physical_y_max)/2 = 0.25 um
+y_center = (physical_y_min + physical_y_max)/2 = 250 nm
 ```
 
 所以代码先定义：
@@ -204,7 +204,7 @@ calculation_method = "all"
 constraint_backend = "both"
 port_boundary_model = "all"
 scattering_background = "layered"
-mesh_target_size = 0.015
+mesh_target_size = 15.0
 nedelec_degree = 2
 ```
 

@@ -36,15 +36,16 @@ class SimulationConfig:
     scattering_background: str = "layered"
     polarization_type: str = "TM"
 
-    # 所有长度单位均为 um；下面的默认值是纳米级结构。
-    period_x: float = 0.60
-    air_height: float = 0.85
-    substrate_thickness: float = 0.35
-    pml_top_thickness: float = 0.30
-    pml_bottom_thickness: float = 0.30
-    grating_width: float = 0.30
-    grating_height: float = 0.18
-    lambda0: float = 0.633
+    # 所有几何、网格和波长单位均为 nm。
+    # All geometry, mesh, and wavelength values are in nm.
+    period_x: float = 600.0
+    air_height: float = 850.0
+    substrate_thickness: float = 350.0
+    pml_top_thickness: float = 300.0
+    pml_bottom_thickness: float = 300.0
+    grating_width: float = 300.0
+    grating_height: float = 180.0
+    lambda0: float = 633.0
     incident_angle_deg: float = 15.0
     n_air: complex = 1.0 + 0.0j
     n_substrate: complex = 1.45 + 0.0j
@@ -56,6 +57,7 @@ class SimulationConfig:
 
     # port_incident_amplitude 是入射端口电场振幅；1 表示输出为归一化电场。
     # port_dtn_order_count=N 表示 DtN 端口保留 m=-N...N 的 Floquet 衍射级次。
+    # E0=1 means normalized electric field output, matching the existing 2D convention.
     port_incident_amplitude: complex = 1.0 + 0.0j
     port_dtn_order_count: int = 2
     # Fourier-DtN port: explicit 保留旧的 Q^*YQ 外积参考实现；
@@ -75,7 +77,7 @@ class SimulationConfig:
 
     nedelec_degree: int = 2
     visualization_degree: int = 3
-    mesh_target_size: float = 0.025
+    mesh_target_size: float = 25.0
     pml_alpha: float = 5.0
     tags: Tags = field(default_factory=Tags)
 
@@ -101,7 +103,7 @@ class SimulationConfig:
 
     @property
     def omega(self) -> float:
-        return 2.0 * pi * 299_792_458.0 / (self.lambda0 * 1e-6)
+        return 2.0 * pi * 299_792_458.0 / (self.lambda0 * 1e-9)
 
     @property
     def kx(self) -> complex:
@@ -186,6 +188,8 @@ class SimulationConfig:
         data["eps_air"] = [self.eps_air.real, self.eps_air.imag]
         data["eps_substrate"] = [self.eps_substrate.real, self.eps_substrate.imag]
         data["eps_grating"] = [self.eps_grating.real, self.eps_grating.imag]
+        data["length_unit"] = "nm"
+        data["electric_field_normalization"] = "E0=1"
         return data
 
 

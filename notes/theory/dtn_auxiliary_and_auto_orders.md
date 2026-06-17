@@ -298,7 +298,7 @@ dtn_auxiliary_power_metrics ~= dtn_port_power_metrics
 我用很粗的验证网格跑了 4 个小算例，参数为：
 
 ```text
-mesh_target_size = 0.12
+mesh_target_size = 120.0
 nedelec_degree = 1
 incident_angle_deg = 15
 port_boundary_model = dtn

@@ -57,7 +57,7 @@ PORT_USE_DIFFRACTION_ORDERS = True
 # Common numerical choices.  None means "use src/common/config.py".
 NEDELEC_DEGREE = 2
 VISUALIZATION_DEGREE = 3
-MESH_TARGET_SIZE = 0.025
+MESH_TARGET_SIZE = 25.0
 INCIDENT_ANGLE_DEG = 30.0
 
 # R/T postprocessing.  Keep this enabled if you want power_metrics.json,
@@ -82,7 +82,7 @@ INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
 NEDELEC_DEGREE_3D = 2
 VISUALIZATION_DEGREE_3D = 2
-MESH_TARGET_SIZE_3D = 0.14
+MESH_TARGET_SIZE_3D = 140.0
 LAMBDA0_3D = None
 
 

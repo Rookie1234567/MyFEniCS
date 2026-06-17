@@ -174,7 +174,7 @@ def main(argv: list[str] | None = None):
     )
     parser.add_argument("--nedelec-degree", type=int, default=None, help="Nedelec edge element degree.")
     parser.add_argument("--visualization-degree", type=int, default=None, help="DG visualization degree.")
-    parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in um.")
+    parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
     parser.add_argument("--incident-angle-deg", type=float, default=None, help="Incident angle in degrees.")
     parser.add_argument(
         "--diffraction-order-count",

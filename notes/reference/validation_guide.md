@@ -167,13 +167,9 @@ results/air_substrate_grating_mpc_official/E_vector_quiver_real.png
 
 ## 9. 和 COMSOL 对比什么
 
-先确认单位约定。本项目默认入射场振幅为 1，因此电场是归一化电场。如果 COMSOL 中背景入射场设置为：
+先确认单位约定。本项目默认入射场振幅为 `E0=1`，这里的 `1` 是归一化参考幅值，不是在代码内部强行声明成 `1 V/m`。因此 `E_total_abs`、`E_scat_abs` 等默认都是相对于入射电场幅值的无量纲归一化结果。
 
-```text
-E0 = 1[V/m]
-```
-
-那么本项目输出的 `E_total_abs` 数值可以直接按 `V/m` 理解。如果 COMSOL 中设置的是其他入射振幅，例如 `E0 = 1000[V/m]`，那么本项目结果需要乘以 1000 后再对比：
+如果要和 COMSOL 的物理单位结果逐点对比，先确认 COMSOL 使用的背景入射场幅值。若 COMSOL 中设置的是 `E0 = 1 V/m`，则数值大小可以直接一一比较；若 COMSOL 设置的是其他入射幅值，例如 `E0 = 1000 V/m`，则本项目归一化结果需要乘以这个物理幅值后再对比：
 
 ```text
 E_physical[V/m] = E_code * E0[V/m]
@@ -257,7 +253,7 @@ Periodic conditions for vector valued spaces are not implemented
 
 建议后续做：
 
-- 网格收敛：把 `mesh_target_size` 从 `0.025` 降到 `0.020` 或 `0.015`；
+- 网格收敛：把 `mesh_target_size` 从 `25.0` 降到 `20.0` 或 `15.0`；
 - PML 扫描：改变 PML 厚度和 `pml_alpha`，检查物理区场是否稳定；
 - 材料扫描：让 `n_grating` 和 `n_substrate` 不同，观察散射变化；
 - 解析基准：用圆柱散射问题和 Mie 型解析解做定量验证。
@@ -289,7 +285,7 @@ E_total_Ey_real / E_total_Ey_imag
 推荐验证命令：
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation port_total --constraint-backend both --mesh-target-size 0.08 --visualization-degree 1"
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation port_total --constraint-backend both --mesh-target-size 80.0 --visualization-degree 1"
 ```
 
 应检查：
@@ -307,7 +303,7 @@ E_total_Ey_real / E_total_Ey_imag
 现在已经提供了一个手写矩阵版 Fourier 多级次端口入口：
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation port_total --constraint-backend manual --mesh-target-size 0.12 --visualization-degree 1 --port-order-count 1"
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation port_total --constraint-backend manual --mesh-target-size 120.0 --visualization-degree 1 --port-order-count 1"
 ```
 
 这个命令会包含 `m=-1,0,1` 三个 Floquet 级次。验证时看：
@@ -404,19 +400,19 @@ bottom_up_Ex_abs
 4. 如果仍有偏差，逐步加密 `mesh_target_size`，并增大 `diffraction_order_count` 与 `port_dtn_order_count`。
 5. 如果使用散射场法带 PML，注意 PML 是数值吸收层，能量守恒检查应优先参考物理区域内的探测线和 DtN 端口法。
 
-新版实际验证中，粗网格 `mesh_target_size=0.12` 的全组合结果仍有明显偏差，只能作为后端一致性检查；更细的 DtN 端口单案例更有参考价值：
+新版实际验证中，粗网格 `mesh_target_size=120.0` 的全组合结果仍有明显偏差，只能作为后端一致性检查；更细的 DtN 端口单案例更有参考价值：
 
 ```text
-mesh_target_size = 0.06, port dtn manual:
+mesh_target_size = 60.0, port dtn manual:
 R+T = 1.036683576
 poynting_R_plus_T_from_net_flux = 1.018692855
 
-mesh_target_size = 0.04, port dtn manual:
+mesh_target_size = 40.0, port dtn manual:
 R+T = 0.991471291
 poynting_R_plus_T_from_net_flux = 0.992615839
 ```
 
-因此当前结论是：功率后处理已经朝能量守恒方向收敛，但定量对比 COMSOL 时不应使用 `0.12` 粗网格。建议至少使用 `mesh_target_size=0.04`，更严格时继续加密到 `0.03` 或 `0.025`。
+因此当前结论是：功率后处理已经朝能量守恒方向收敛，但定量对比 COMSOL 时不应使用 `120.0 nm` 粗网格。建议至少使用 `mesh_target_size=40.0`，更严格时继续加密到 `30.0` 或 `25.0`。
 
 ## 14. 新 PML 复坐标公式后的默认全方法验证
 

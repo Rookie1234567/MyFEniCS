@@ -52,7 +52,7 @@ AIRBOX3D_CASE = "both"
 INCIDENT_THETA_DEG_3D = None
 INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None
-MESH_TARGET_SIZE_3D = 0.14
+MESH_TARGET_SIZE_3D = 140.0
 ```
 
 ## 输出目录
@@ -60,13 +60,13 @@ MESH_TARGET_SIZE_3D = 0.14
 新结果目录已改为短路径命名，例如：
 
 ```text
-results/2D_grating_sc_lay_p2_h0p025_t85p0_mpc_YYYYMMDD_HHMMSS/
+results/2D_grating_sc_lay_p2_h25p0_t85p0_mpc_YYYYMMDD_HHMMSS/
 ```
 
 MPI 并行运行时会额外带上进程数，例如 8 进程：
 
 ```text
-results/2D_grating_sc_lay_p2_h0p01_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
+results/2D_grating_sc_lay_p2_h10p0_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
 ```
 
 如果只运行一个 case，结果文件直接放在这个目录下：
@@ -224,6 +224,6 @@ POLARIZATION_TYPE = "TM"  # 或 "TE"
 结果目录会带上 `tm` 或 `te`，例如：
 
 ```text
-results/2D_grating_tm_sc_lay_p2_h0p025_t15p0_mpc_YYYYMMDD_HHMMSS/
-results/2D_grating_te_port_ptdtn_dtn1_p1_h0p12_t15p0_man_YYYYMMDD_HHMMSS/
+results/2D_grating_tm_sc_lay_p2_h25p0_t15p0_mpc_YYYYMMDD_HHMMSS/
+results/2D_grating_te_port_ptdtn_dtn1_p1_h120p0_t15p0_man_YYYYMMDD_HHMMSS/
 ```

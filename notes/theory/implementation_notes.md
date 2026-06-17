@@ -10,19 +10,19 @@
 - 上下分别加 PML；
 - 左右为 Floquet 准周期边界。
 
-默认尺寸均以 `um` 为单位：
+默认尺寸均以 `nm` 为单位：
 
 ```text
-period_x             = 0.60
-air_height           = 0.85
-substrate_thickness  = 0.35
-grating_width        = 0.30
-grating_height       = 0.18
-pml_top_thickness    = 0.30
-pml_bottom_thickness = 0.30
+period_x             = 600.0
+air_height           = 850.0
+substrate_thickness  = 350.0
+grating_width        = 300.0
+grating_height       = 180.0
+pml_top_thickness    = 300.0
+pml_bottom_thickness = 300.0
+lambda0              = 633.0
+mesh_target_size     = 25.0
 ```
-
-这些值对应纳米级结构，例如 `0.30 um = 300 nm`。
 
 ## 材料
 

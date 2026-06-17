@@ -63,7 +63,7 @@ CONSTRAINT_BACKEND = "both"
 修改网格、边元阶次、入射角：
 
 ```python
-MESH_TARGET_SIZE = 0.025
+MESH_TARGET_SIZE = 25.0
 NEDELEC_DEGREE = 2
 INCIDENT_ANGLE_DEG = 15.0
 ```
@@ -94,7 +94,7 @@ src/main.py
 每次运行会在 v2 目录下新建短名字结果目录，例如：
 
 ```text
-results/2D_grating_sc_lay_p2_h0p025_t85p0_mpc_YYYYMMDD_HHMMSS/
+results/2D_grating_sc_lay_p2_h25p0_t85p0_mpc_YYYYMMDD_HHMMSS/
 ```
 
 如果只运行一个 case，`fields_for_paraview.vtu`、`power_metrics.json` 等文件会直接放在这个目录里。如果一次运行 `all` 或 `both` 产生多个 case，才会额外建立短子目录，例如 `sc_lay_mpc/`、`sc_lay_man/`、`port_robin_mpc/`。
@@ -102,7 +102,7 @@ results/2D_grating_sc_lay_p2_h0p025_t85p0_mpc_YYYYMMDD_HHMMSS/
 MPI 并行运行时，目录名会额外带上进程数，例如：
 
 ```text
-results/2D_grating_sc_lay_p2_h0p01_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
+results/2D_grating_sc_lay_p2_h10p0_t15p0_mpc_np8_YYYYMMDD_HHMMSS/
 ```
 
 这里的 `np8` 表示 `mpirun -n 8`。当前版本会由 rank0 统一决定这个目录，再广播给所有 rank，所以同一次 MPI 运行的 `.pvd`、各 rank 的 `.vtu`、`mesh.h5` 和 R/T 文件都会在同一个目录里。

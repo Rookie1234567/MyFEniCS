@@ -68,7 +68,7 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--case", choices=("normal", "oblique", "both"), default="both")
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
-    parser.add_argument("--mesh-target-size", type=float, default=None)
+    parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
     parser.add_argument("--lambda0", type=float, default=None)
     parser.add_argument(
         "--incident-theta-deg",

@@ -406,7 +406,7 @@ fenics_vector_maxwell_floquet_demo_v2_parallel/results/
 现在 v2 的新结果目录已改成更短的名字，例如：
 
 ```text
-2D_grating_sc_lay_p2_h0p025_t85p0_mpc_YYYYMMDD_HHMMSS
+2D_grating_sc_lay_p2_h25p0_t85p0_mpc_YYYYMMDD_HHMMSS
 ```
 
 如果只运行一个 case，`.vtu`、`power_metrics.json`、`run_summary.json` 会直接在这个目录下；一次运行多个 case 时才会建立短子目录。

@@ -97,7 +97,7 @@ def run_homogeneous_air_check(out_dir: Path, backend: str) -> dict[str, object]:
         n_air=1.0,
         n_substrate=1.0,
         n_grating=1.0,
-        mesh_target_size=0.03,
+        mesh_target_size=30.0,
         visualization_degree=2,
     )
     summary = run_case(cfg, out_dir, constraint_backend=backend)
@@ -112,7 +112,7 @@ def run_flat_substrate_check(out_dir: Path, backend: str) -> dict[str, object]:
         n_air=1.0,
         n_substrate=1.45,
         n_grating=1.0,
-        mesh_target_size=0.03,
+        mesh_target_size=30.0,
         visualization_degree=2,
     )
     summary = run_case(cfg, out_dir, constraint_backend=backend)

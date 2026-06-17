@@ -580,7 +580,7 @@ x = C q
 如果只是快速检查程序是否能跑，可以先粗一些：
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --constraint-backend both --scattering-background layered --nedelec-degree 2 --mesh-target-size 0.06 --visualization-degree 2"
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --constraint-backend both --scattering-background layered --nedelec-degree 2 --mesh-target-size 60.0 --visualization-degree 2"
 ```
 
 ## 14. 常用参数怎么改
@@ -588,14 +588,14 @@ x = C q
 这些参数在 `src/common/config.py` 中：
 
 ```text
-period_x               周期长度，单位 um
-air_height             物理空气层高度，单位 um
-substrate_thickness    基座厚度，单位 um
-pml_top_thickness      顶部 PML 厚度，单位 um
-pml_bottom_thickness   底部 PML 厚度，单位 um
-grating_width          光栅宽度，单位 um
-grating_height         光栅高度，单位 um
-lambda0                真空波长，单位 um
+period_x               周期长度，单位 nm
+air_height             物理空气层高度，单位 nm
+substrate_thickness    基座厚度，单位 nm
+pml_top_thickness      顶部 PML 厚度，单位 nm
+pml_bottom_thickness   底部 PML 厚度，单位 nm
+grating_width          光栅宽度，单位 nm
+grating_height         光栅高度，单位 nm
+lambda0                真空波长，单位 nm
 incident_angle_deg     入射角，单位 degree
 n_air                  空气折射率
 n_substrate            基座折射率
@@ -603,7 +603,7 @@ n_grating              光栅折射率
 scattering_background  air 或 layered
 nedelec_degree         Nedelec 边元阶次
 visualization_degree   输出到 ParaView 前插值用的 DG 阶次
-mesh_target_size       网格目标尺寸，单位 um
+mesh_target_size       网格目标尺寸，单位 nm
 pml_alpha              PML 吸收强度
 ```
 
@@ -612,8 +612,8 @@ pml_alpha              PML 吸收强度
 ```text
 想更接近 COMSOL 周期端口结果: scattering_background = layered
 想提高有限元精度: nedelec_degree = 2
-想先快速试跑: mesh_target_size 调大，例如 0.05 或 0.06
-想正式算图: mesh_target_size 调小，例如 0.015 或 0.01
+想先快速试跑: mesh_target_size 调大，例如 50.0 或 60.0
+想正式算图: mesh_target_size 调小，例如 15.0 或 10.0
 PML 不够吸收: 优先加厚 pml_top_thickness/pml_bottom_thickness
 PML 反射变差: 不要盲目把 pml_alpha 加到很大
 ```
@@ -627,7 +627,7 @@ PML 反射变差: 不要盲目把 pml_alpha 加到很大
 | 7 | 导入 NumPy，用于复指数和数组。 |
 | 10-20 | 定义区域标签。空气是 1，基座是 2，光栅是 3，上下 PML 是 4 和 5，左右 Floquet 边界是 11 和 12。 |
 | 23-25 | 定义 `SimulationConfig`，所有算例参数集中放在这里。 |
-| 27-38 | 设置几何、波长、入射角和材料折射率。长度单位都是微米。 |
+| 27-38 | 设置几何、波长、入射角和材料折射率。长度单位都是纳米。 |
 | 39 | 本次新增的 `scattering_background`。`air` 是旧版，`layered` 是新版。 |
 | 41 | `nedelec_degree` 控制 Nedelec 边元阶次，现在可以调到 2 或更高阶进行测试。 |
 | 42 | `visualization_degree` 控制输出到 ParaView 前的 DG 插值阶次，不是求解阶次。 |

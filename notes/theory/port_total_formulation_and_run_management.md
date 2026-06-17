@@ -444,7 +444,7 @@ python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation
 ### 14.5 快速排错用粗网格
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation both --constraint-backend manual --scattering-background layered --mesh-target-size 0.08 --visualization-degree 1"
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --formulation both --constraint-backend manual --scattering-background layered --mesh-target-size 80.0 --visualization-degree 1"
 ```
 
 ## 15. 参数解释
@@ -804,7 +804,7 @@ m = -2, -1, 0, 1, 2
 ```text
 --formulation port_total
 --constraint-backend manual
---mesh-target-size 0.12
+--mesh-target-size 120.0
 --visualization-degree 1
 --port-order-count 1
 ```

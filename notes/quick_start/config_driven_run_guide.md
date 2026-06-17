@@ -220,7 +220,7 @@ unique_output: bool = True
 每次运行都会生成类似：
 
 ```text
-results/2D_grating_all_lay_ptall_dtn1_p2_h0p025_t85p0_YYYYMMDD_HHMMSS/
+results/2D_grating_all_lay_ptall_dtn1_p2_h25p0_t85p0_YYYYMMDD_HHMMSS/
 ```
 
 文件夹名字会反映本次选择：
@@ -231,7 +231,7 @@ lay                 散射场背景为 layered
 ptall               端口法同时跑 robin 和 dtn
 dtn1                DtN 保留 m=-1,0,+1
 p2                  二阶 Nedelec 边元
-h0p025              mesh_target_size = 0.025
+h25p0               mesh_target_size = 25.0
 t85p0               incident_angle_deg = 85.0
 ```
 

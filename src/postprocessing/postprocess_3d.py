@@ -99,8 +99,8 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     """Save compact 3D E/H fields and return reconstruction metrics.
 
     H is the code-normalized magnetic field
-    H_code = curl_um(E) / (i * k0 * mu_r), so the whole workflow stays in the
-    same micrometer-based convention as the rest of this project.
+    H_code = curl_nm(E) / (i * k0 * mu_r), so the whole workflow stays in the
+    same nanometer-based convention as the rest of this project.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
@@ -144,7 +144,8 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     _add_abs_scalar(paraview_grid, "H_exact_abs", h_exact)
     _add_abs_scalar(paraview_grid, "H_error_abs", h_error)
     paraview_grid.cell_data["domain_tag"] = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
-    paraview_grid.field_data["length_unit_um"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["electric_field_normalization_E0"] = np.array([1.0], dtype=np.float64)
 
     if comm.size > 1:
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"

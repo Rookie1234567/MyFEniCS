@@ -105,7 +105,7 @@ epsilon_grating - epsilon_air
 如果二阶算例太慢，可以先用较粗网格检查流程：
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --constraint-backend both --scattering-background layered --nedelec-degree 2 --mesh-target-size 0.06 --visualization-degree 2"
+& "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work code-dolfinx-mpc:latest sh -lc ". dolfinx-complex-mode && python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main --constraint-backend both --scattering-background layered --nedelec-degree 2 --mesh-target-size 60.0 --visualization-degree 2"
 ```
 
 ## 6. 本次验证结果
@@ -115,7 +115,7 @@ epsilon_grating - epsilon_air
 ```text
 constraint_backend = both
 scattering_background = layered
-mesh_target_size = 0.04
+mesh_target_size = 40.0
 visualization_degree = 2
 
 官方 MPC 和手写矩阵版本均运行成功。
@@ -129,7 +129,7 @@ Floquet mismatch 约为 1e-15。
 constraint_backend = both
 scattering_background = layered
 nedelec_degree = 2
-mesh_target_size = 0.06
+mesh_target_size = 60.0
 visualization_degree = 2
 
 官方 MPC 和手写矩阵版本均运行成功。

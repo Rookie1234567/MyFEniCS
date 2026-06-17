@@ -106,7 +106,7 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 |---|---|
 | 10-20 | `Tags` 定义物理标签：空气、基座、光栅、上下 PML、左右 Floquet 边界、外上下边界。 |
 | 23-25 | `SimulationConfig` 是全部参数的集中入口。默认算例名为 `air_substrate_grating`。 |
-| 27-38 | 设置纳米级几何和材料参数。虽然单位是 `um`，但 `0.30 um` 就是 `300 nm`。 |
+| 27-38 | 设置几何、波长和材料参数。几何、网格和波长统一使用 `nm`。 |
 | 40-44 | 设置 Nedelec 阶数、可视化阶数、网格目标尺寸、PML 吸收强度和标签。 |
 | 46-56 | 根据折射率计算介电常数：`epsilon = n^2`。 |
 | 58-68 | 计算角度、真空波数 `k0 = 2*pi/lambda0` 和角频率 `omega`。 |
@@ -199,7 +199,7 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 | 66-84 | 保存总场实部箭头图。 |
 | 88-112 | 给 ParaView 输出准备 point data：`E_total_abs`、`E_total_Ex_real`、`E_total_real` 等完整前缀数组。 |
 | 115-130 | 给 ParaView 输出准备 cell data。目前只保存 `domain_tag` 和 `material_id`。 |
-| 138-141 | 写入单位相关 field data：长度单位为 `um`，电场为入射振幅归一化单位。 |
+| 138-141 | 写入单位相关 field data：长度单位为 `nm`，电场按 `E0=1` 归一化。 |
 | 144-162 | 保存单文件 `fields_for_paraview.vtu`。这是当前推荐打开的 ParaView 文件。 |
 | 165-185 | 把 Nedelec 场插值到 DG 向量空间，写出 `E_inc.bp`、`E_scat.bp`、`E_total.bp`。 |
 | MPI 分支 | 并行运行时额外写出 `fields_for_paraview_parallel.pvd` 和 `fields_for_paraview_rankXXXX.vtu`。在 ParaView 中打开 `.pvd` 可看到完整分布式结果。 |

@@ -164,9 +164,8 @@ def _add_domain_cell_arrays(grid, mesh_data, cfg: SimulationConfig):
 
 
 def _add_numeric_metadata(grid):
-    grid.field_data["length_unit_um"] = np.array([1.0], dtype=np.float64)
-    grid.field_data["electric_field_code_unit_to_V_per_m"] = np.array([1.0], dtype=np.float64)
-    grid.field_data["incident_field_amplitude_code_unit"] = np.array([1.0], dtype=np.float64)
+    grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
+    grid.field_data["electric_field_normalization_E0"] = np.array([1.0], dtype=np.float64)
 
 
 def _save_paraview_fields(

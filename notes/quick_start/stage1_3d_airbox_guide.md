@@ -36,7 +36,7 @@ INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None   # None 表示使用预设；也可以是 "s" 或 "p"
 NEDELEC_DEGREE_3D = 2
 VISUALIZATION_DEGREE_3D = 2
-MESH_TARGET_SIZE_3D = 0.14
+MESH_TARGET_SIZE_3D = 140.0
 UNIQUE_OUTPUT = True
 ```
 
@@ -85,7 +85,7 @@ python3 fenics_vector_maxwell_floquet_demo_v2_parallel/src/main.py 3d --case bot
 结果会写到类似下面的目录：
 
 ```text
-results/3D_airbox_stage1_normal_oblique_p2_h0p14_YYYYMMDD_HHMMSS/
+results/3D_airbox_stage1_normal_oblique_p2_h140p0_YYYYMMDD_HHMMSS/
 ```
 
 如果跑 `both`，里面会有两个子目录：
@@ -122,10 +122,10 @@ domain_tag
 这里的 `H` 不是额外换成 SI 单位的 A/m，而是和本项目 2D 后处理一致的代码单位磁场：
 
 ```text
-H = curl_um(E) / (i*k0*mu_r)
+H = curl_nm(E) / (i*k0*mu_r)
 ```
 
-因为 `k0` 和 `curl` 都按微米单位使用，所以这个量适合直接检查方向、相位和相对误差。
+因为 `k0` 和 `curl` 都按纳米单位使用，所以这个量适合直接检查方向、相位和相对误差。
 
 `E_real/E_imag/H_real/H_imag` 是 3 分量 vector 数组。需要看 `Ex`、`Ey`、`Ez` 或 `Hx`、`Hy`、`Hz` 时，在 ParaView 里选择对应 vector component 即可，不再额外输出一大串分量变量。
 

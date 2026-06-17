@@ -36,19 +36,20 @@ class SimulationConfig3D:
 
     case_name: str = "airbox3d_normal"
     geometry_kind: str = "airbox"
-    lambda0: float = 0.633
+    lambda0: float = 633.0
     n_air: complex = 1.0 + 0.0j
     mu_r: complex = 1.0 + 0.0j
 
+    # All geometry, mesh, and wavelength values are in nm.
     # Future 3D periodic-cell dimensions.  Stage 1 treats them as the air-box
     # x/y sizes; later stages will use them as the two Floquet periods.
-    period_x: float = 0.60
-    period_y: float = 0.50
-    z_min: float = -0.55
-    z_max: float = 0.35
+    period_x: float = 600.0
+    period_y: float = 500.0
+    z_min: float = -550.0
+    z_max: float = 350.0
 
     # Future layered/grating parameters.  They are inactive for airbox runs.
-    air_height: float = 0.35
+    air_height: float = 350.0
     substrate_thickness: float = 0.0
     grating_height: float = 0.0
     grating_width_x: float = 0.0
@@ -65,11 +66,12 @@ class SimulationConfig3D:
     incident_phi_deg: float = 0.0
     polarization_kind: str = "custom"  # "s", "p", or "custom"
     custom_polarization: tuple[complex, complex, complex] | None = (1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+    # E0=1 means normalized electric field output, matching the 2D convention.
     incident_amplitude: complex = 1.0 + 0.0j
 
     nedelec_degree: int = 2
     visualization_degree: int = 2
-    mesh_target_size: float = 0.14
+    mesh_target_size: float = 140.0
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)
 
@@ -83,7 +85,7 @@ class SimulationConfig3D:
 
     @property
     def omega(self) -> float:
-        return 2.0 * pi * VACUUM_C / (self.lambda0 * 1.0e-6)
+        return 2.0 * pi * VACUUM_C / (self.lambda0 * 1.0e-9)
 
     @property
     def x_min(self) -> float:
@@ -205,6 +207,8 @@ class SimulationConfig3D:
         data["k0"] = self.k0
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)
+        data["length_unit"] = "nm"
+        data["electric_field_normalization"] = "E0=1"
         return data
 
 

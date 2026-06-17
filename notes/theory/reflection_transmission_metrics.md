@@ -510,9 +510,9 @@ poynting_R_plus_T_from_net_flux -> R_total + T_total
 第三组，收敛性：
 
 ```text
-mesh_target_size = 0.12
-mesh_target_size = 0.08
-mesh_target_size = 0.05
+mesh_target_size = 120.0
+mesh_target_size = 80.0
+mesh_target_size = 50.0
 ```
 
 观察 `R_total/T_total/R_plus_T` 是否逐步稳定。只有网格收敛后，才适合与 COMSOL 做定量误差比较。
@@ -524,7 +524,7 @@ mesh_target_size = 0.05
 粗网格全组合：
 
 ```text
-mesh_target_size = 0.12
+mesh_target_size = 120.0
 visualization_degree = 1
 ```
 
@@ -549,21 +549,21 @@ port dtn manual:            R=0.024118213, T=0.899487852, R+T=0.923606065, Poynt
 随后我只对更接近 COMSOL 周期端口的 `port dtn manual` 做网格加密：
 
 ```text
-mesh_target_size = 0.06:
+mesh_target_size = 60.0:
 R=0.021751048, T=1.014932528, R+T=1.036683576, Poynting=1.018692855
 
-mesh_target_size = 0.04:
+mesh_target_size = 40.0:
 R=0.022157946, T=0.969313345, R+T=0.991471291, Poynting=0.992615839
 ```
 
-`0.04` 网格已经把 `R+T` 拉回到距离 1 约 `0.85%` 的范围，直接 Poynting 检查也在约 `0.74%` 范围内。说明新版功率统计是朝能量守恒方向收敛的；后续若要和 COMSOL 做定量比较，建议继续使用 `port dtn manual` 并把 `mesh_target_size` 进一步降到 `0.03` 或 `0.025`。
+`40.0 nm` 网格已经把 `R+T` 拉回到距离 1 约 `0.85%` 的范围，直接 Poynting 检查也在约 `0.74%` 范围内。说明新版功率统计是朝能量守恒方向收敛的；后续若要和 COMSOL 做定量比较，建议继续使用 `port dtn manual` 并把 `mesh_target_size` 进一步降到 `30.0` 或 `25.0`。
 
 ## 12. PML 复坐标更新后的默认精细运行
 
 PML 公式改为官方 DOLFINx demo 复坐标形式后，我重新运行了当前默认配置：
 
 ```text
-mesh_target_size = 0.015
+mesh_target_size = 15.0
 nedelec_degree = 2
 calculation_method = all
 constraint_backend = both
@@ -720,7 +720,7 @@ T_total = sum_m T_order,m
 本次小网格验证使用：
 
 ```text
-mesh_target_size = 0.08
+mesh_target_size = 80.0
 nedelec_degree = 1
 port_dtn_order_count = 1
 diffraction_order_count = 1
@@ -729,7 +729,7 @@ diffraction_order_count = 1
 结果目录：
 
 ```text
-results/2D_grating_port_ptdtn_dtn1_p1_h0p08_t15p0_man_20260615_070608/
+results/2D_grating_port_ptdtn_dtn1_p1_h80p0_t15p0_man_20260615_070608/
 ```
 
 两种后处理结果为：
