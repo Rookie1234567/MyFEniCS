@@ -7,7 +7,7 @@ from pathlib import Path
 from mpi4py import MPI
 
 from ..common.config_3d import (
-    AirBox3DConfig,
+    SimulationConfig3D,
     normal_incidence_airbox_config,
     oblique_incidence_airbox_config,
     project_root,
@@ -41,10 +41,18 @@ def _config_updates(args) -> dict[str, object]:
         updates["mesh_target_size"] = args.mesh_target_size
     if args.lambda0 is not None:
         updates["lambda0"] = args.lambda0
+    if args.incident_theta_deg is not None:
+        updates["incident_theta_deg"] = args.incident_theta_deg
+    if args.incident_phi_deg is not None:
+        updates["incident_phi_deg"] = args.incident_phi_deg
+    if args.polarization_kind is not None:
+        updates["polarization_kind"] = args.polarization_kind
+        if args.polarization_kind != "custom":
+            updates["custom_polarization"] = None
     return updates
 
 
-def _case_configs(case: str, updates: dict[str, object]) -> list[AirBox3DConfig]:
+def _case_configs(case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
     if case == "normal":
         return [normal_incidence_airbox_config(**updates)]
     if case == "oblique":
@@ -55,13 +63,31 @@ def _case_configs(case: str, updates: dict[str, object]) -> list[AirBox3DConfig]
 
 
 def main(argv: list[str] | None = None):
-    defaults = AirBox3DConfig()
+    defaults = SimulationConfig3D()
     parser = argparse.ArgumentParser(description="Run stage-1 3D Maxwell uniform-air-box verification.")
     parser.add_argument("--case", choices=("normal", "oblique", "both"), default="both")
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
     parser.add_argument("--mesh-target-size", type=float, default=None)
     parser.add_argument("--lambda0", type=float, default=None)
+    parser.add_argument(
+        "--incident-theta-deg",
+        type=float,
+        default=None,
+        help="3D polar incidence angle: tilt away from downward -z propagation.",
+    )
+    parser.add_argument(
+        "--incident-phi-deg",
+        type=float,
+        default=None,
+        help="3D azimuth angle in the x-y plane.",
+    )
+    parser.add_argument(
+        "--polarization-kind",
+        choices=("s", "p", "custom"),
+        default=None,
+        help="3D incident polarization. Stage-1 normal incidence uses custom Ex by default.",
+    )
     parser.add_argument(
         "--unique-output",
         action=argparse.BooleanOptionalAction,

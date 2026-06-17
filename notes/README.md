@@ -8,7 +8,7 @@
    先看这个。它说明在 PyCharm 中只运行 `src/main.py`，以及应该修改哪些变量。
 
 2. `quick_start/stage1_3d_airbox_guide.md`
-   3D 扩展第一步的快速入口。它说明如何运行 `src/main_3d_airbox.py`，以及如何在 ParaView 打开 3D 空气盒子的结果。
+   3D 扩展第一步的快速入口。它说明如何在 `src/main.py` 中切换 2D/3D，以及如何在 ParaView 打开 3D 空气盒子的结果。
 
 3. `parallel/parallel_v2_guide.md`
    需要 MPI 并行时看这个。它说明并行 Floquet、并行 `.vtu/.pvd` 输出、R/T 后处理和性能对比。
@@ -33,6 +33,7 @@ src/main.py
 `main.py` 文件开头的大写变量是日常控制入口：
 
 ```python
+SIMULATION_DIMENSION = "2d"  # 改成 "3d" 可运行 3D 分步路线
 CALCULATION_METHOD = "scattered"
 CONSTRAINT_BACKEND = "mpc_official"
 SCATTERING_BACKGROUND = "layered"
@@ -43,7 +44,16 @@ INCIDENT_ANGLE_DEG = None
 COMPUTE_POWER_METRICS = True
 ```
 
-`None` 表示沿用 `src/common/config.py` 中的默认值。
+`None` 表示沿用 config 中的默认值。3D 第一阶段主要改这些变量：
+
+```python
+SIMULATION_DIMENSION = "3d"
+AIRBOX3D_CASE = "both"
+INCIDENT_THETA_DEG_3D = None
+INCIDENT_PHI_DEG_3D = None
+POLARIZATION_KIND_3D = None
+MESH_TARGET_SIZE_3D = 0.14
+```
 
 ## 输出目录
 

@@ -13,13 +13,13 @@ from petsc4py import PETSc
 from dolfinx import default_real_type, default_scalar_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
-from ..common.config_3d import AirBox3DConfig
+from ..common.config_3d import SimulationConfig3D
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
 from .solve_vector_maxwell import _json_default
 
 
-def plane_wave_electric_field(V, cfg: AirBox3DConfig) -> fem.Function:
+def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
     field = fem.Function(V, name="E_exact")
     k = cfg.wavevector
     p = cfg.polarization_vector
@@ -33,7 +33,7 @@ def plane_wave_electric_field(V, cfg: AirBox3DConfig) -> fem.Function:
     return field
 
 
-def run_airbox_3d_case(cfg: AirBox3DConfig, out_dir: Path) -> dict[str, object]:
+def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
     start = time.perf_counter()

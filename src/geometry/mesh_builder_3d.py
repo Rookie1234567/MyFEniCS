@@ -8,7 +8,7 @@ from mpi4py import MPI
 
 from dolfinx import io, mesh
 
-from ..common.config_3d import AirBox3DConfig
+from ..common.config_3d import SimulationConfig3D
 
 
 @dataclass
@@ -18,7 +18,7 @@ class AirBox3DMesh:
     boundary_facets: np.ndarray
 
 
-def _mark_boundary_facets(msh: mesh.Mesh, cfg: AirBox3DConfig) -> tuple[mesh.MeshTags, np.ndarray]:
+def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
     fdim = msh.topology.dim - 1
     markers = (
         (cfg.tags.x_min, lambda x: np.isclose(x[0], cfg.x_min)),
@@ -48,7 +48,7 @@ def _mark_boundary_facets(msh: mesh.Mesh, cfg: AirBox3DConfig) -> tuple[mesh.Mes
     return mesh.meshtags(msh, fdim, indices, values), np.unique(indices)
 
 
-def build_airbox_mesh_3d(cfg: AirBox3DConfig, out_dir: Path) -> AirBox3DMesh:
+def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
     """Build a simple tetrahedral 3D air box mesh for stage-1 verification."""
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD

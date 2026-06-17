@@ -9,7 +9,7 @@ from mpi4py import MPI
 
 from dolfinx import fem, io, plot
 
-from ..common.config_3d import AirBox3DConfig, VACUUM_ETA0
+from ..common.config_3d import SimulationConfig3D, VACUUM_ETA0
 
 
 def _field_grid(V_dg):
@@ -48,14 +48,14 @@ def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
         grid.point_data[f"{prefix}_{name}_phase"] = np.angle(values[:, i]).astype(np.float64)
 
 
-def _plane_wave_values(cfg: AirBox3DConfig, coords: np.ndarray) -> np.ndarray:
+def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     k = cfg.wavevector
     p = cfg.polarization_vector
     phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
     return cfg.incident_amplitude * phase[:, None] * p[None, :]
 
 
-def _exact_eta0_h_values(cfg: AirBox3DConfig, coords: np.ndarray) -> np.ndarray:
+def _exact_eta0_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     k = cfg.wavevector
     p = cfg.polarization_vector
     phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
@@ -97,7 +97,7 @@ def _interpolation_points(V):
     return points() if callable(points) else points
 
 
-def save_airbox_3d_fields(mesh_data, cfg: AirBox3DConfig, E_numerical, out_dir: Path) -> dict[str, object]:
+def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_dir: Path) -> dict[str, object]:
     """Save 3D E/H fields and return reconstruction metrics."""
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm

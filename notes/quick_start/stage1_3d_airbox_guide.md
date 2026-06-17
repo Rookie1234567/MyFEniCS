@@ -4,29 +4,39 @@
 
 ## 运行哪个文件
 
-原来的 2D 光栅入口仍然是：
+2D 和 3D 现在统一从同一个入口运行：
 
 ```text
 src/main.py
 ```
 
-新的 3D 空气盒子入口是：
+打开 `src/main.py`，用这个开关选择运行哪条路线：
 
-```text
-src/main_3d_airbox.py
+```python
+SIMULATION_DIMENSION = "2d"  # 原来的 2D 光栅路线
+SIMULATION_DIMENSION = "3d"  # 新的 3D 分步路线
 ```
 
-这样做的原因是：2D 程序不改名、不搬家、不打断；3D 学习路线从独立入口开始，后续再逐步加 Floquet、PML、benchmark 和衍射级后处理。
+这样做的原因是：日常只需要记住一个 `main.py`，但 2D 和 3D 仍然在 runner/config/solver 层分开，不会互相改坏。
 
 ## PyCharm 里怎么改参数
 
-打开 `src/main_3d_airbox.py`，主要改这几个大写变量：
+打开 `src/main.py`，先把：
+
+```python
+SIMULATION_DIMENSION = "3d"
+```
+
+然后主要改这几个 3D 大写变量：
 
 ```python
 AIRBOX3D_CASE = "both"        # "normal", "oblique", or "both"
-NEDELEC_DEGREE = 2
-VISUALIZATION_DEGREE = 2
-MESH_TARGET_SIZE = 0.14
+INCIDENT_THETA_DEG_3D = None  # None 表示使用 normal/oblique 预设
+INCIDENT_PHI_DEG_3D = None
+POLARIZATION_KIND_3D = None   # None 表示使用预设；也可以是 "s" 或 "p"
+NEDELEC_DEGREE_3D = 2
+VISUALIZATION_DEGREE_3D = 2
+MESH_TARGET_SIZE_3D = 0.14
 UNIQUE_OUTPUT = True
 ```
 
@@ -35,6 +45,13 @@ UNIQUE_OUTPUT = True
 ```text
 normal  ：k = (0, 0, -k0)，p = (1, 0, 0)
 oblique ：一个简单斜入射方向，偏振选成和 k 垂直
+```
+
+如果自己指定角度，约定是：
+
+```text
+INCIDENT_THETA_DEG_3D：从向下 -z 方向偏开的角度。0 度就是正入射。
+INCIDENT_PHI_DEG_3D  ：在 x-y 平面里的方位角。0 度朝 +x，90 度朝 +y。
 ```
 
 ## 命令行怎么跑
@@ -55,6 +72,12 @@ python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_air
 
 ```bash
 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox --case oblique
+```
+
+也可以从统一入口运行：
+
+```bash
+python3 fenics_vector_maxwell_floquet_demo_v2_parallel/src/main.py 3d --case both
 ```
 
 ## 输出看哪里

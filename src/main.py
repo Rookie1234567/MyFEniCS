@@ -12,11 +12,12 @@ from pathlib import Path
 #
 #   fenics_vector_maxwell_floquet_demo_v2_parallel/src/main.py
 #
-# The variables below are converted to the same options used by the batch runner
-# in src/runners/run_cases.py.  Use None for numeric options when you want to
-# keep the value from src/common/config.py.
+# The variables below are converted to runner options.  Keep
+# SIMULATION_DIMENSION="2d" for the original grating workflow.  Switch it to
+# "3d" for the staged 3D Maxwell air-box workflow.
 
 USE_PYCHARM_SETTINGS_WHEN_NO_ARGS = True
+SIMULATION_DIMENSION = "2d"  # "2d" or "3d"
 
 # Main physics switch:
 #   "scattered"  = background-field scattering formulation
@@ -47,17 +48,17 @@ PORT_BOUNDARY_MODEL = "dtn"
 # Fourier DtN port implementation:
 #   "auxiliary" = sparse auxiliary modal-amplitude unknowns, recommended
 #   "explicit"  = old Q^*YQ outer-product reference/debug implementation
-PORT_DTN_ASSEMBLY = "auxiliary"
+PORT_DTN_ASSEMBLY = "explicit"
 
 # False = only order 0; True = automatically include clearly propagating
 # diffraction orders on the top and bottom ports.
-PORT_USE_DIFFRACTION_ORDERS = False
+PORT_USE_DIFFRACTION_ORDERS = True
 
 # Common numerical choices.  None means "use src/common/config.py".
 NEDELEC_DEGREE = 2
 VISUALIZATION_DEGREE = 3
 MESH_TARGET_SIZE = 0.025
-INCIDENT_ANGLE_DEG = 15.0
+INCIDENT_ANGLE_DEG = 30.0
 
 # R/T postprocessing.  Keep this enabled if you want power_metrics.json,
 # diffraction_orders.csv, and R_total/T_total in run_summary.json.
@@ -70,6 +71,19 @@ UNIQUE_OUTPUT = True
 
 # Port-only option.
 PORT_USE_PML = None
+
+# =============================================================================
+# 3D Stage-1 air-box settings
+# =============================================================================
+
+AIRBOX3D_CASE = "both"  # "normal", "oblique", or "both"
+INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
+INCIDENT_PHI_DEG_3D = None
+POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
+NEDELEC_DEGREE_3D = 2
+VISUALIZATION_DEGREE_3D = 2
+MESH_TARGET_SIZE_3D = 0.14
+LAMBDA0_3D = None
 
 
 def _workspace_root() -> Path:
@@ -98,7 +112,7 @@ def _add_bool(args: list[str], positive_flag: str, value: bool | None) -> None:
         args.append("--no-" + positive_flag.removeprefix("--"))
 
 
-def _pycharm_args() -> list[str]:
+def _pycharm_args_2d() -> list[str]:
     args: list[str] = [
         "--formulation",
         CALCULATION_METHOD,
@@ -126,16 +140,45 @@ def _pycharm_args() -> list[str]:
     return args
 
 
+def _pycharm_args_3d() -> list[str]:
+    args = ["--case", AIRBOX3D_CASE]
+    _add_value(args, "--nedelec-degree", NEDELEC_DEGREE_3D)
+    _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE_3D)
+    _add_value(args, "--mesh-target-size", MESH_TARGET_SIZE_3D)
+    _add_value(args, "--lambda0", LAMBDA0_3D)
+    _add_value(args, "--incident-theta-deg", INCIDENT_THETA_DEG_3D)
+    _add_value(args, "--incident-phi-deg", INCIDENT_PHI_DEG_3D)
+    _add_value(args, "--polarization-kind", POLARIZATION_KIND_3D)
+    _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
+    return args
+
+
 def main() -> None:
     _ensure_package_importable()
-    from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_cases import (
-        main as run_cases_main,
+    from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox import (
+        main as run_3d_airbox_main,
     )
+    from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_cases import main as run_cases_main
 
     if USE_PYCHARM_SETTINGS_WHEN_NO_ARGS and len(sys.argv) == 1:
-        run_cases_main(_pycharm_args())
-    else:
-        run_cases_main()
+        if SIMULATION_DIMENSION.lower() == "3d":
+            run_3d_airbox_main(_pycharm_args_3d())
+        elif SIMULATION_DIMENSION.lower() == "2d":
+            run_cases_main(_pycharm_args_2d())
+        else:
+            raise SystemExit('SIMULATION_DIMENSION must be "2d" or "3d".')
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ("2d", "3d"):
+        dimension = sys.argv[1].lower()
+        runner_args = sys.argv[2:]
+        if dimension == "3d":
+            run_3d_airbox_main(runner_args)
+        else:
+            run_cases_main(runner_args)
+        return
+
+    run_cases_main()
 
 
 if __name__ == "__main__":
