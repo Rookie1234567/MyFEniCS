@@ -1,12 +1,13 @@
 ## 2026-06-17 更新：3D Stage 1、nm 单位和 ParaView 物理单位显示
 
-最新更新放在文档最上方。当前这一段主要记录四件事：
+最新更新放在文档最上方。当前这一段主要记录五件事：
 
 ```text
 1. 3D Stage 1 空气盒子最小 Maxwell 框架
 2. 2D/3D 几何、网格、波长统一使用 nm
 3. ParaView 输出按 COMSOL 风格显示 E[V/m] 和 H[A/m]
 4. 最新 3D 空气盒和原始 2D 流程的 Python 阅读顺序
+5. 3D 空气盒输出分阶段 wall time，便于定位网格、装配、求解和后处理耗时
 ```
 
 新增或重点更新的 Python 文件如下：
@@ -15,7 +16,7 @@
 |---|---|
 | `src/common/config_3d.py` | 3D 配置入口。包含空气盒子、未来光栅/基座/PML 参数、入射角、偏振、`incident_e0_v_per_m`。 |
 | `src/geometry/mesh_builder_3d.py` | 生成 Stage 1 结构化 3D 空气盒子网格，并标记 3D 外边界。 |
-| `src/solvers/solve_airbox_maxwell_3d.py` | 3D Nedelec 全矢量 Maxwell 空气盒子求解器，用解析平面波切向边界做 manufactured-solution 验证。 |
+| `src/solvers/solve_airbox_maxwell_3d.py` | 3D Nedelec 全矢量 Maxwell 空气盒子求解器，用解析平面波切向边界做 manufactured-solution 验证，并打印分阶段耗时。 |
 | `src/runners/run_3d_airbox.py` | 3D Stage 1 命令行 runner，支持 normal/oblique/both、角度、偏振、网格尺寸等覆盖参数。 |
 | `src/postprocessing/postprocess_3d.py` | 3D ParaView 后处理，输出 `E_V_per_m_*`、`H_A_per_m_*`、误差数组和 Poynting 方向指标。 |
 | `src/common/units.py` | 集中定义真空光速 `VACUUM_C` 和真空阻抗 `VACUUM_ETA0`。 |
@@ -52,6 +53,20 @@ curl(mu^-1 curl E) - k0^2 eps_r E = 0
 ```
 
 并用强切向电场边界做 manufactured-solution 验证。
+
+这个文件还会在 MPI 同步后记录各阶段耗时。并行运行时，打印的是所有 rank 中最慢的 wall time，字段会同时写入 `run_summary.json` 的 `timings_seconds`：
+
+```text
+config_validation
+mesh_build
+function_space_setup
+boundary_condition_setup
+variational_form_setup
+linear_problem_setup
+linear_problem_solve
+postprocess
+elapsed_seconds
+```
 
 6. `src/postprocessing/postprocess_3d.py`
 

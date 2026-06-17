@@ -144,6 +144,22 @@ poynting_direction_cosine
 paraview_file
 ```
 
+现在 `solver_log.txt` 也会像总耗时一样打印各阶段耗时；`run_summary.json` 中对应字段是 `timings_seconds`：
+
+```text
+config_validation
+mesh_build
+function_space_setup
+boundary_condition_setup
+variational_form_setup
+linear_problem_setup
+linear_problem_solve
+postprocess
+elapsed_seconds
+```
+
+MPI 并行运行时，这些阶段耗时会取所有 rank 里的最大 wall time，因此可以用来判断真正慢的是建网格、建立函数空间、线性求解，还是后处理。
+
 `poynting_direction_cosine` 越接近 1，说明平均能流方向越接近设定的传播方向。
 
 `relative_max_abs_E_error` 不是机器零，因为解析平面波不是有限元空间里的精确多项式；网格变细或 Nédélec 阶数提高后，它应该下降。
