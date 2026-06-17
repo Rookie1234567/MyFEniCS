@@ -23,7 +23,9 @@ TE port:
 | `src/solvers/solve_te_maxwell.py` | 新增 TE 标量 `Ez` 求解器，包含 scattered、Robin port、DtN port。 |
 | `src/constraints/floquet_scalar_constraint.py` | 新增标量 Floquet 手写消元约束。标量 Lagrange dof 没有 Nedelec 方向符号，因此只按 y 坐标配对并乘 Floquet 相位。 |
 | `src/common/pml.py` | 新增 `top_scalar_pml_coefficients()` 和 `bottom_scalar_pml_coefficients()`，用于 TE scalar PML。 |
-| `src/postprocessing/postprocess.py` | 新增 `save_scalar_fields_and_plots()`，输出 `Ez_real/Ez_imag/E_total_abs` 等 ParaView 数组。 |
+| `src/common/units.py` | 集中放真空光速 `VACUUM_C` 和真空阻抗 `VACUUM_ETA0`，供 SI 单位显示使用。 |
+| `src/postprocessing/postprocess.py` | 新增 `save_scalar_fields_and_plots()`，输出 `Ez_real/Ez_imag/E_total_abs` 等 ParaView 数组；同时把 2D 电场按 `V/m`、磁场模按 `A/m` 写出。 |
+| `src/postprocessing/postprocess_3d.py` | 3D 空气盒子 ParaView 后处理；输出 `E_V_per_m_*` 和 `H_A_per_m_*`。 |
 | `src/postprocessing/power_metrics.py` | `compute_power_metrics()` 现在会根据 `cfg.polarization_type` 在 TM 和 TE 后处理之间分支，并输出吸收率。 |
 | `src/runners/run_cases.py` | 新增 `--polarization-type`，输出目录名新增 `tm` 或 `te`。 |
 | `src/main.py` | 新增 `POLARIZATION_TYPE`，PyCharm 直接运行时可切换 TM/TE。 |
@@ -56,6 +58,59 @@ port_use_pml=True
 ```
 
 因为当前端口弱式只在 `air/substrate/grating` 上装配体积分，没有给 PML 单元装配 Maxwell/PML 项。直接禁止比生成一个看似正常但自由度悬空的结果更可靠。
+
+## 2026-06-17 更新：nm 单位和 ParaView 物理单位显示
+
+当前代码内部长度统一使用 `nm`：
+
+```text
+period_x, air_height, pml thickness, lambda0, mesh_target_size -> nm
+k0 -> 1/nm
+```
+
+求解内部仍然使用归一化场，默认一个代码电场单位对应：
+
+```python
+incident_e0_v_per_m = 1.0
+```
+
+这个参数只控制后处理显示，不改变 Maxwell 方程的矩阵装配。ParaView 输出时使用：
+
+```text
+E_physical[V/m] = E_code * incident_e0_v_per_m
+H_physical[A/m] = H_code * incident_e0_v_per_m / eta0
+eta0 = 376.730313668 ohm
+```
+
+相关文件关系是：
+
+| 文件 | 单位相关职责 |
+|---|---|
+| `src/common/units.py` | 定义 `VACUUM_C` 和 `VACUUM_ETA0`。 |
+| `src/common/config.py` | 2D 配置里新增 `incident_e0_v_per_m`、`electric_field_scale_V_per_m`、`magnetic_field_scale_A_per_m`。 |
+| `src/common/config_3d.py` | 3D 配置里使用同样的物理显示尺度。 |
+| `src/postprocessing/postprocess.py` | 2D VTU 中电场数组按 `V/m` 写出，并新增 `H_total_abs_A_per_m`。 |
+| `src/postprocessing/postprocess_3d.py` | 3D VTU 中写出 `E_V_per_m_real/imag/abs` 和 `H_A_per_m_real/imag/abs`。 |
+
+2D ParaView 里常看的数组现在是：
+
+```text
+E_total_abs            总电场模值，单位 V/m
+E_total_Ex_real        Ex 实部，单位 V/m
+E_total_Ey_real        Ey 实部，单位 V/m
+H_total_abs_A_per_m    总磁场模值，单位 A/m
+domain_tag             区域标签
+```
+
+3D ParaView 里常看的数组是：
+
+```text
+E_V_per_m_abs          电场模值，单位 V/m
+H_A_per_m_abs          磁场模值，单位 A/m
+E_error_abs_V_per_m    电场误差模值，单位 V/m
+H_error_abs_A_per_m    磁场误差模值，单位 A/m
+domain_tag             区域标签
+```
 
 # 当前代码讲解
 
@@ -102,20 +157,18 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 
 ## `src/common/config.py`
 
-| 行号 | 讲解 |
+| 功能块 | 讲解 |
 |---|---|
-| 10-20 | `Tags` 定义物理标签：空气、基座、光栅、上下 PML、左右 Floquet 边界、外上下边界。 |
-| 23-25 | `SimulationConfig` 是全部参数的集中入口。默认算例名为 `air_substrate_grating`。 |
-| 27-38 | 设置几何、波长和材料参数。几何、网格和波长统一使用 `nm`。 |
-| 40-44 | 设置 Nedelec 阶数、可视化阶数、网格目标尺寸、PML 吸收强度和标签。 |
-| 46-56 | 根据折射率计算介电常数：`epsilon = n^2`。 |
-| 58-68 | 计算角度、真空波数 `k0 = 2*pi/lambda0` 和角频率 `omega`。 |
-| 70-80 | 计算向下传播斜入射波的 `kx`、`ky` 和偏振向量 `p`。 |
-| 82-84 | 计算 Floquet 相位 `exp(i*kx*period_x)`。 |
-| 86-104 | 计算总高度、物理区域上下边界、包含 PML 后的上下边界。 |
-| 106-136 | 给出 x 方向周期边界、光栅左右边界、基座上下边界和光栅上下边界。 |
-| 138-149 | 把参数整理为可写入 JSON 的格式。复数拆为 `[real, imag]`。 |
-| 152-153 | 返回 demo 根目录。 |
+| `Tags` | 定义物理标签：空气、基座、光栅、上下 PML、左右 Floquet 边界、外上下边界。 |
+| 几何和波长 | `period_x`、`air_height`、PML 厚度、光栅尺寸、`lambda0`、`mesh_target_size` 全部使用 `nm`。 |
+| 材料 | `n_air`、`n_substrate`、`n_grating` 通过 `epsilon = n^2` 转成相对介电常数。 |
+| 运行选择 | `calculation_method`、`constraint_backend`、`port_boundary_model`、`polarization_type` 控制散射场/端口法、官方 MPC/手写消元、TM/TE。 |
+| 端口和衍射级 | `port_incident_amplitude` 是求解中的归一化入射幅值；`port_dtn_order_count` 和 `port_use_diffraction_orders` 控制 DtN 端口级次。 |
+| 物理单位显示 | `incident_e0_v_per_m` 控制 ParaView 物理单位显示；默认 1 个代码电场单位显示为 `1 V/m`。 |
+| 派生量 | `k0=2*pi/lambda0`，单位 `1/nm`；`omega` 用 `lambda0 * 1e-9` 换回 SI；`magnetic_field_scale_A_per_m = incident_e0_v_per_m / eta0`。 |
+| Floquet | `kx`、`ky`、偏振向量和 `floquet_phase=exp(i*kx*period_x)` 都由入射角和周期自动计算。 |
+| 几何边界 | 统一给出物理区域、PML 区域、周期边界、基座和光栅上下左右边界。 |
+| `as_jsonable()` | 把复数拆成 `[real, imag]`，并记录 `length_unit=nm`、`electric_field_unit=V/m`、`magnetic_field_unit=A/m`。 |
 
 ## `src/geometry/mesh_builder.py`
 
@@ -191,22 +244,27 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 
 ## `src/postprocessing/postprocess.py`
 
-| 行号 | 讲解 |
+| 功能块 | 讲解 |
 |---|---|
-| 13-15 | 创建离屏 PyVista plotter，适合 Docker 无显示器环境。 |
-| 18-45 | 保存 `mesh.png` 和 `material_domains.png`。 |
-| 48-63 | 把场转为 PyVista grid 并保存标量图。 |
-| 66-84 | 保存总场实部箭头图。 |
-| 88-112 | 给 ParaView 输出准备 point data：`E_total_abs`、`E_total_Ex_real`、`E_total_real` 等完整前缀数组。 |
-| 115-130 | 给 ParaView 输出准备 cell data。目前只保存 `domain_tag` 和 `material_id`。 |
-| 138-141 | 写入单位相关 field data：长度单位为 `nm`，ParaView 电场按 `V/m` 显示，磁场按 `A/m` 显示。 |
-| 144-162 | 保存单文件 `fields_for_paraview.vtu`。这是当前推荐打开的 ParaView 文件。 |
-| 165-185 | 把 Nedelec 场插值到 DG 向量空间，写出 `E_inc.bp`、`E_scat.bp`、`E_total.bp`。 |
-| MPI 分支 | 并行运行时额外写出 `fields_for_paraview_parallel.pvd` 和 `fields_for_paraview_rankXXXX.vtu`。在 ParaView 中打开 `.pvd` 可看到完整分布式结果。 |
-| 192-194 | 计算 `|E| = sqrt(|Ex|^2 + |Ey|^2)`。 |
-| 196-198 | 调用 ParaView 输出函数写入场和材料数组。 |
-| 200-213 | 保存 Ex/Ey 实虚部、总场模值、散射场模值、相位和箭头图。 |
-| 215-219 | 返回最大场强指标。 |
+| PyVista plotter | 使用离屏渲染，适合 Docker 无显示器环境。 |
+| 网格和材料图 | 保存 `mesh.png` 和 `material_domains.png`。 |
+| 电场数组 | 给 ParaView 输出 `E_total_abs`、`E_total_Ex_real`、`E_total_real` 等完整前缀数组，数值按 `V/m` 显示。 |
+| 区域数组 | 给 ParaView 输出 cell data，目前保存 `domain_tag` 和 `material_id`。 |
+| 单位 metadata | 写入 `length_unit_nm`、`electric_field_unit_V_per_m`、`incident_e0_V_per_m`、`magnetic_field_unit_A_per_m`、`magnetic_field_scale_A_per_m`。 |
+| 2D 磁场模 | TM 用 `Hz = curl(E)/(i*k0)`，TE 用平面内 `H = (dEz/dy, -dEz/dx)/(i*k0)`，再乘 `incident_e0_v_per_m/eta0`，写成 `H_total_abs_A_per_m`。 |
+| 单文件输出 | 串行时保存 `fields_for_paraview.vtu`，这是当前推荐打开的 ParaView 文件。 |
+| MPI 输出 | 并行时写出 `fields_for_paraview_parallel.pvd` 和 `fields_for_paraview_rankXXXX.vtu`。在 ParaView 中打开 `.pvd` 可看到完整分布式结果。 |
+| TM 路径 | 把 Nedelec 场插值到 DG 向量空间，写出 `E_inc.bp`、`E_scat.bp`、`E_total.bp`，并保存 Ex/Ey、总场模值、散射场模值和箭头图。 |
+| TE 路径 | 标量 Ez 后处理，写出 Ez 实虚部、总场模值、散射场模值，并额外输出 TE 的 `H_total_abs_A_per_m`。 |
+
+## `src/postprocessing/postprocess_3d.py`
+
+| 功能 | 讲解 |
+|---|---|
+| `_plane_wave_values()` | 解析电场按 `incident_e0_v_per_m` 缩放后写成 `V/m`。 |
+| `_exact_h_values()` | 解析磁场先用 `k x p / k0` 得到代码单位，再乘 `incident_e0_v_per_m/eta0` 写成 `A/m`。 |
+| `save_airbox_3d_fields()` | 将 Nedelec 解插值到 DG 向量空间；输出 `E_V_per_m_*`、`H_A_per_m_*`、误差数组和 `domain_tag`。 |
+| `run_summary.json` | 记录 `max_abs_E`、`max_abs_H`、`mean_poynting_W_per_m2` 和 `poynting_direction_cosine`。 |
 
 ## `src/main.py`
 
