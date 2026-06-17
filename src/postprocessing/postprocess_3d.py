@@ -1,0 +1,187 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import numpy as np
+import pyvista
+import ufl
+from mpi4py import MPI
+
+from dolfinx import fem, io, plot
+
+from ..common.config_3d import AirBox3DConfig, VACUUM_ETA0
+
+
+def _field_grid(V_dg):
+    cells, cell_types, coords = plot.vtk_mesh(V_dg)
+    return pyvista.UnstructuredGrid(cells, cell_types, coords), coords
+
+
+def _values(field, num_points: int) -> np.ndarray:
+    values = field.x.array.reshape(num_points, -1)
+    if values.shape[1] < 3:
+        raise RuntimeError("Expected a 3D vector field.")
+    return values[:, :3]
+
+
+def _norm(values: np.ndarray) -> np.ndarray:
+    return np.sqrt(np.sum(np.abs(values) ** 2, axis=1))
+
+
+def _vec_real(values: np.ndarray) -> np.ndarray:
+    return values.real.astype(np.float64)
+
+
+def _vec_imag(values: np.ndarray) -> np.ndarray:
+    return values.imag.astype(np.float64)
+
+
+def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
+    grid.point_data[f"{prefix}_real"] = _vec_real(values)
+    grid.point_data[f"{prefix}_imag"] = _vec_imag(values)
+    grid.point_data[f"{prefix}_abs"] = _norm(values).astype(np.float64)
+    components = ("x", "y", "z")
+    for i, name in enumerate(components):
+        grid.point_data[f"{prefix}_{name}_real"] = values[:, i].real.astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_imag"] = values[:, i].imag.astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_abs"] = np.abs(values[:, i]).astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_phase"] = np.angle(values[:, i]).astype(np.float64)
+
+
+def _plane_wave_values(cfg: AirBox3DConfig, coords: np.ndarray) -> np.ndarray:
+    k = cfg.wavevector
+    p = cfg.polarization_vector
+    phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
+    return cfg.incident_amplitude * phase[:, None] * p[None, :]
+
+
+def _exact_eta0_h_values(cfg: AirBox3DConfig, coords: np.ndarray) -> np.ndarray:
+    k = cfg.wavevector
+    p = cfg.polarization_vector
+    phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
+    eta0_h = np.cross(k, p) / (cfg.k0 * cfg.mu_r)
+    return cfg.incident_amplitude * phase[:, None] * eta0_h[None, :]
+
+
+def _write_parallel_vtu_collection(out_dir: Path, size: int):
+    lines = [
+        '<?xml version="1.0"?>',
+        '<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">',
+        "  <Collection>",
+    ]
+    for rank in range(size):
+        lines.append(
+            f'    <DataSet timestep="0" group="" part="{rank}" '
+            f'file="fields_3d_for_paraview_rank{rank:04d}.vtu"/>'
+        )
+    lines.extend(["  </Collection>", "</VTKFile>", ""])
+    (out_dir / "fields_3d_for_paraview_parallel.pvd").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _global_max_norm(comm, values: np.ndarray) -> float:
+    local = float(np.max(_norm(values))) if values.size else 0.0
+    return comm.allreduce(local, op=MPI.MAX)
+
+
+def _global_mean_vector(comm, values: np.ndarray) -> np.ndarray:
+    local_sum = np.sum(values, axis=0) if len(values) else np.zeros(3, dtype=np.float64)
+    total_sum = comm.allreduce(local_sum, op=MPI.SUM)
+    total_count = comm.allreduce(len(values), op=MPI.SUM)
+    if total_count == 0:
+        return np.zeros(3, dtype=np.float64)
+    return np.asarray(total_sum, dtype=np.float64) / float(total_count)
+
+
+def _interpolation_points(V):
+    points = V.element.interpolation_points
+    return points() if callable(points) else points
+
+
+def save_airbox_3d_fields(mesh_data, cfg: AirBox3DConfig, E_numerical, out_dir: Path) -> dict[str, object]:
+    """Save 3D E/H fields and return reconstruction metrics."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    comm = mesh_data.mesh.comm
+    V_dg = fem.functionspace(mesh_data.mesh, ("DG", cfg.visualization_degree, (3,)))
+
+    E_num_dg = fem.Function(V_dg, name="E_numerical")
+    E_num_dg.interpolate(E_numerical)
+
+    E_exact_dg = fem.Function(V_dg, name="E_exact")
+    E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
+
+    eta0_h_expr = (1.0 / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
+    eta0_H_dg = fem.Function(V_dg, name="eta0_H_from_curl")
+    eta0_H_dg.interpolate(fem.Expression(eta0_h_expr, _interpolation_points(V_dg)))
+
+    eta0_H_exact_dg = fem.Function(V_dg, name="eta0_H_exact")
+    eta0_H_exact_dg.interpolate(lambda x: _exact_eta0_h_values(cfg, x.T).T)
+
+    try:
+        with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
+            writer.write(0.0)
+        with io.VTXWriter(comm, out_dir / "eta0_H_3d_from_curl.bp", eta0_H_dg) as writer:
+            writer.write(0.0)
+    except Exception as exc:  # pragma: no cover - best-effort artifact
+        if comm.rank == 0:
+            (out_dir / "vtx_3d_warning.txt").write_text(str(exc), encoding="utf-8")
+
+    grid, coords = _field_grid(V_dg)
+    e_num = _values(E_num_dg, grid.n_points)
+    e_exact = _values(E_exact_dg, grid.n_points)
+    e_error = e_num - e_exact
+    eta0_h = _values(eta0_H_dg, grid.n_points)
+    eta0_h_exact = _values(eta0_H_exact_dg, grid.n_points)
+    eta0_h_error = eta0_h - eta0_h_exact
+    h_si = eta0_h / VACUUM_ETA0
+
+    paraview_grid = grid.copy()
+    _add_complex_vector(paraview_grid, "E", e_num)
+    _add_complex_vector(paraview_grid, "E_exact", e_exact)
+    _add_complex_vector(paraview_grid, "E_error", e_error)
+    _add_complex_vector(paraview_grid, "eta0_H", eta0_h)
+    _add_complex_vector(paraview_grid, "eta0_H_exact", eta0_h_exact)
+    _add_complex_vector(paraview_grid, "eta0_H_error", eta0_h_error)
+    _add_complex_vector(paraview_grid, "H_SI_A_per_m", h_si)
+    paraview_grid.cell_data["domain_tag"] = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
+    paraview_grid.field_data["length_unit_um"] = np.array([1.0], dtype=np.float64)
+    paraview_grid.field_data["vacuum_eta0_ohm"] = np.array([VACUUM_ETA0], dtype=np.float64)
+
+    if comm.size > 1:
+        paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
+        paraview_grid.save(out_dir / f"fields_3d_for_paraview_rank{comm.rank:04d}.vtu")
+        comm.barrier()
+        if comm.rank == 0:
+            _write_parallel_vtu_collection(out_dir, comm.size)
+    else:
+        paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
+        paraview_path = out_dir / "fields_3d_for_paraview.vtu"
+
+    max_e_exact = _global_max_norm(comm, e_exact)
+    max_e_num = _global_max_norm(comm, e_num)
+    max_e_error = _global_max_norm(comm, e_error)
+    max_eta0_h = _global_max_norm(comm, eta0_h)
+    max_eta0_h_exact = _global_max_norm(comm, eta0_h_exact)
+    max_eta0_h_error = _global_max_norm(comm, eta0_h_error)
+    max_h_si = max_eta0_h / VACUUM_ETA0
+
+    poynting = 0.5 * np.real(np.cross(e_num, np.conj(eta0_h)))
+    mean_poynting = _global_mean_vector(comm, poynting)
+    direction = cfg.direction_vector
+    mean_norm = float(np.linalg.norm(mean_poynting))
+    poynting_cosine = float(np.dot(mean_poynting, direction) / mean_norm) if mean_norm > 0.0 else float("nan")
+
+    return {
+        "max_abs_E_exact": max_e_exact,
+        "max_abs_E": max_e_num,
+        "max_abs_E_error": max_e_error,
+        "relative_max_abs_E_error": max_e_error / max(max_e_exact, 1.0e-30),
+        "max_abs_eta0_H": max_eta0_h,
+        "max_abs_eta0_H_exact": max_eta0_h_exact,
+        "max_abs_eta0_H_error": max_eta0_h_error,
+        "relative_max_abs_eta0_H_error": max_eta0_h_error / max(max_eta0_h_exact, 1.0e-30),
+        "max_abs_H_SI_A_per_m": max_h_si,
+        "mean_normalized_poynting": mean_poynting.tolist(),
+        "poynting_direction_cosine": poynting_cosine,
+        "curl_postprocess_success": True,
+        "paraview_file": str(paraview_path),
+    }

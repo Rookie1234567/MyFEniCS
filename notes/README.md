@@ -7,16 +7,19 @@
 1. `quick_start/pycharm_main_run_guide.md`
    先看这个。它说明在 PyCharm 中只运行 `src/main.py`，以及应该修改哪些变量。
 
-2. `parallel/parallel_v2_guide.md`
+2. `quick_start/stage1_3d_airbox_guide.md`
+   3D 扩展第一步的快速入口。它说明如何运行 `src/main_3d_airbox.py`，以及如何在 ParaView 打开 3D 空气盒子的结果。
+
+3. `parallel/parallel_v2_guide.md`
    需要 MPI 并行时看这个。它说明并行 Floquet、并行 `.vtu/.pvd` 输出、R/T 后处理和性能对比。
 
-3. `theory/reflection_transmission_metrics.md`
+4. `theory/reflection_transmission_metrics.md`
    想理解反射率、透射率、衍射级次和能量守恒时看这个。
 
-4. `theory/dtn_auxiliary_and_auto_orders.md`
+5. `theory/dtn_auxiliary_and_auto_orders.md`
    想理解 Fourier-DtN 端口、辅助变量法、自动衍射级和未来 3D 稀疏化路线时看这个。
 
-5. `reference/code_walkthrough.md`
+6. `reference/code_walkthrough.md`
    想逐行读代码时看这个。
 
 ## 快速运行
