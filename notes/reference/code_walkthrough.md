@@ -1,11 +1,12 @@
 ## 2026-06-17 更新：3D Stage 1、nm 单位和 ParaView 物理单位显示
 
-最新更新放在文档最上方。当前这一轮主要做三件事：
+最新更新放在文档最上方。当前这一段主要记录四件事：
 
 ```text
 1. 3D Stage 1 空气盒子最小 Maxwell 框架
 2. 2D/3D 几何、网格、波长统一使用 nm
 3. ParaView 输出按 COMSOL 风格显示 E[V/m] 和 H[A/m]
+4. 最新 3D 空气盒和原始 2D 流程的 Python 阅读顺序
 ```
 
 新增或重点更新的 Python 文件如下：
@@ -21,6 +22,86 @@
 | `src/common/config.py` | 2D 配置也统一到 nm，并新增 `incident_e0_v_per_m` 和电/磁场物理显示比例。 |
 | `src/postprocessing/postprocess.py` | 2D VTU 中电场数组按 `V/m` 写出，并新增 `H_total_abs_A_per_m`。 |
 | `src/main.py` | 保持唯一入口，通过 `SIMULATION_DIMENSION="2d"/"3d"` 切换 2D/3D 路线。 |
+
+建议按下面顺序读代码。
+
+### 最新 3D 空气盒 Stage 1 阅读顺序
+
+1. `src/main.py`
+
+先看 `SIMULATION_DIMENSION="3d"` 这一支。这里不会直接写求解公式，只负责把 PyCharm 顶部变量转成 3D runner 的命令行参数。
+
+2. `src/runners/run_3d_airbox.py`
+
+再看 3D runner 怎么选择 `normal`、`oblique` 或 `both`，以及如何把命令行覆盖项合并到 `SimulationConfig3D`。这个文件回答“这次要跑哪些 3D case，结果写到哪里”。
+
+3. `src/common/config_3d.py`
+
+然后看 3D 配置。重点是 `SimulationConfig3D`、`incident_theta_deg`、`incident_phi_deg`、`polarization_kind`、`direction_vector`、`wavevector`、`polarization_vector`。这里定义的是物理参数和派生量，不装配矩阵。
+
+4. `src/geometry/mesh_builder_3d.py`
+
+接着看 3D 空气盒网格。Stage 1 只生成一个均匀空气长方体，标记 `x_min/x_max/y_min/y_max/z_min/z_max` 六个外边界，后续双周期 Floquet 和上下 PML 会沿着这个边界标签体系继续长出来。
+
+5. `src/solvers/solve_airbox_maxwell_3d.py`
+
+这是 3D Stage 1 的核心。阅读顺序是 `plane_wave_electric_field(...)`，再到 `run_airbox_3d_case(...)`。这里建立 Nedelec 空间，构造解析平面波边界值，装配
+
+```text
+curl(mu^-1 curl E) - k0^2 eps_r E = 0
+```
+
+并用强切向电场边界做 manufactured-solution 验证。
+
+6. `src/postprocessing/postprocess_3d.py`
+
+最后看 3D 后处理。这里把 Nedelec 解插值到可视化空间，写出 ParaView 文件，并计算 `E_V_per_m_*`、`H_A_per_m_*`、误差和 Poynting 方向指标。
+
+7. `src/common/units.py`
+
+如果只想理解单位显示，最后补看这个小文件。它只放真空常数，`E` 的显示比例来自 `incident_e0_v_per_m`，`H` 的显示比例来自 `incident_e0_v_per_m / eta0`。
+
+### 原始 2D 流程阅读顺序
+
+1. `src/main.py`
+
+先看 `SIMULATION_DIMENSION="2d"` 这一支。这里的 `CALCULATION_METHOD`、`POLARIZATION_TYPE`、`CONSTRAINT_BACKEND`、`PORT_BOUNDARY_MODEL` 决定后面会走 2D 的哪条 solver 分支。
+
+2. `src/runners/run_cases.py`
+
+再看 2D runner。这个文件把用户选择展开成实际 case：例如 scattered、port_total、manual、mpc_official、TE、TM、Robin port、DtN port。它负责循环跑 case、创建输出目录、收集 `run_summary.json`。
+
+3. `src/common/config.py`
+
+然后看 2D 配置。这里定义周期、空气层、基底、光栅、PML、波长、入射角、材料折射率、Floquet 相位、`kx/ky`、`k0`、后处理单位比例。现在这些几何和波长参数都统一是 `nm`。
+
+4. `src/geometry/mesh_builder.py`
+
+接着看 2D Gmsh 网格。这个文件生成矩形周期单元，标记空气、基底、光栅、上下 PML，以及左右 Floquet 边界、上下外边界。
+
+5. `src/common/materials.py` 和 `src/common/pml.py`
+
+然后看材料和 PML。`materials.py` 决定每个区域的介电常数；`pml.py` 给 TM/TE、上/下 PML 生成复坐标拉伸张量或标量系数。
+
+6. `src/constraints/floquet_constraint.py` 或 `src/constraints/floquet_scalar_constraint.py`
+
+再看 Floquet 约束。TM 矢量场主要看 `floquet_constraint.py`；TE 标量场主要看 `floquet_scalar_constraint.py`。这里处理左右周期边界自由度配对和相位因子。
+
+7. `src/solvers/solve_vector_maxwell.py`
+
+如果读 2D TM scattered-field 路线，看这个文件。核心函数是 `run_case(...)`，它会调用 2D mesh、材料、PML、Floquet 约束，然后求散射场，最后和背景场合成总场输出。
+
+8. `src/solvers/solve_port_maxwell.py`
+
+如果读 2D TM port-total 路线，看这个文件。核心函数是 `run_port_case(...)`。Robin 端口和 Fourier DtN 端口都在这里；新的 auxiliary modal port 也是从这里开始理解。
+
+9. `src/solvers/solve_te_maxwell.py`
+
+如果读 2D TE 标量路线，看这个文件。它和 TM 共享很多配置、网格、PML、后处理思想，但未知量是 `Ez` 标量。
+
+10. `src/postprocessing/postprocess.py` 和 `src/postprocessing/power_metrics.py`
+
+最后看 2D 后处理。`postprocess.py` 写 ParaView 场数据和图片；`power_metrics.py` 计算 R/T、衍射级、Poynting 通量等能量诊断。
 
 当前代码内部长度统一使用 `nm`：
 
