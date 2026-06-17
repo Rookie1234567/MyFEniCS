@@ -974,6 +974,7 @@ port dtn 边界积分端口法:         R+T 约 1.000000
 ```text
 reflection_transmission_metrics.md
 ```
+
 ## 2026-06-15 更新：为什么端口法禁止 port_use_pml=True
 
 当前端口总场法把上、下外边界直接当成端口边界，使用 Robin 或 Fourier DtN 条件。因此正常设置是：

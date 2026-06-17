@@ -1,3 +1,196 @@
+## 2026-06-17 更新：3D Stage 1、nm 单位和 ParaView 物理单位显示
+
+最新更新放在文档最上方。当前这一轮主要做三件事：
+
+```text
+1. 3D Stage 1 空气盒子最小 Maxwell 框架
+2. 2D/3D 几何、网格、波长统一使用 nm
+3. ParaView 输出按 COMSOL 风格显示 E[V/m] 和 H[A/m]
+```
+
+新增或重点更新的 Python 文件如下：
+
+| 文件 | 作用 |
+|---|---|
+| `src/common/config_3d.py` | 3D 配置入口。包含空气盒子、未来光栅/基座/PML 参数、入射角、偏振、`incident_e0_v_per_m`。 |
+| `src/geometry/mesh_builder_3d.py` | 生成 Stage 1 结构化 3D 空气盒子网格，并标记 3D 外边界。 |
+| `src/solvers/solve_airbox_maxwell_3d.py` | 3D Nedelec 全矢量 Maxwell 空气盒子求解器，用解析平面波切向边界做 manufactured-solution 验证。 |
+| `src/runners/run_3d_airbox.py` | 3D Stage 1 命令行 runner，支持 normal/oblique/both、角度、偏振、网格尺寸等覆盖参数。 |
+| `src/postprocessing/postprocess_3d.py` | 3D ParaView 后处理，输出 `E_V_per_m_*`、`H_A_per_m_*`、误差数组和 Poynting 方向指标。 |
+| `src/common/units.py` | 集中定义真空光速 `VACUUM_C` 和真空阻抗 `VACUUM_ETA0`。 |
+| `src/common/config.py` | 2D 配置也统一到 nm，并新增 `incident_e0_v_per_m` 和电/磁场物理显示比例。 |
+| `src/postprocessing/postprocess.py` | 2D VTU 中电场数组按 `V/m` 写出，并新增 `H_total_abs_A_per_m`。 |
+| `src/main.py` | 保持唯一入口，通过 `SIMULATION_DIMENSION="2d"/"3d"` 切换 2D/3D 路线。 |
+
+当前代码内部长度统一使用 `nm`：
+
+```text
+period_x, air_height, pml thickness, lambda0, mesh_target_size -> nm
+k0 -> 1/nm
+```
+
+求解内部仍然使用归一化场，默认一个代码电场单位对应：
+
+```python
+incident_e0_v_per_m = 1.0
+```
+
+这个参数只控制后处理显示，不改变 Maxwell 方程的矩阵装配。ParaView 输出时使用：
+
+```text
+E_physical[V/m] = E_code * incident_e0_v_per_m
+H_physical[A/m] = H_code * incident_e0_v_per_m / eta0
+eta0 = 376.730313668 ohm
+```
+
+2D ParaView 里常看的数组现在是：
+
+```text
+E_total_abs            总电场模值，单位 V/m
+E_total_Ex_real        Ex 实部，单位 V/m
+E_total_Ey_real        Ey 实部，单位 V/m
+H_total_abs_A_per_m    总磁场模值，单位 A/m
+domain_tag             区域标签
+```
+
+3D ParaView 里常看的数组是：
+
+```text
+E_V_per_m_abs          电场模值，单位 V/m
+H_A_per_m_abs          磁场模值，单位 A/m
+E_error_abs_V_per_m    电场误差模值，单位 V/m
+H_error_abs_A_per_m    磁场误差模值，单位 A/m
+domain_tag             区域标签
+```
+
+## 2026-06-16 代码补充：DtN 辅助变量法
+
+这次主要改动在三个文件。
+
+### `src/common/config.py`
+
+新增三个配置：
+
+```python
+port_dtn_assembly: str = "auxiliary"
+port_use_diffraction_orders: bool = False
+port_rayleigh_tolerance: float = 1.0e-6
+```
+
+`port_dtn_assembly` 控制 DtN 端口装配方式：
+
+```text
+explicit   旧的显式外积 Q^*YQ 方法
+auxiliary  新的辅助变量块系统方法
+```
+
+`port_use_diffraction_orders=False` 时只选 0 级；`True` 时自动选择上、下端口各自明确传播的衍射级。
+
+### `src/solvers/solve_port_maxwell.py`
+
+阅读顺序建议如下。
+
+1. `_select_dtn_port_modes(...)`
+
+这个函数根据：
+
+```text
+alpha_m = kx + 2*pi*m/L
+|alpha_m| < n_j*k0
+```
+
+分别判断顶部和底部哪些级次传播，并把候选级次、是否传播、是否接近 Rayleigh anomaly 写入 metadata。
+
+2. `_build_dtn_trace_data(...)`
+
+这个函数对选中的每个端口级次生成压缩投影向量：
+
+```text
+ell_m,i = integral_Gamma exp(i alpha_m x) conjugate(phi_i,x) dGamma
+```
+
+只保存非零自由度编号 `indices` 和对应复数值 `values`，避免保存完整 dense 向量。
+
+3. `_add_fourier_port_operators_explicit(...)`
+
+这是旧方法的新入口。它仍然装配：
+
+```text
+A_port,m = (q_m/L) ell_m ell_m^H
+```
+
+主要用于和新方法对照。
+
+4. `_add_fourier_port_operators_auxiliary(...)`
+
+这是新增方法。它引入辅助未知量 `a_m`：
+
+```text
+A u + q_m ell_m a_m = b
+a_m - (1/L) ell_m^H u = 0
+```
+
+矩阵是块系统：
+
+```text
+[ A   B ] [ u ] = [ b ]
+[ C   I ] [ a ]   [ 0 ]
+```
+
+消去 `a` 后会回到 explicit 的外积形式，因此两者应当给出相同解。
+
+5. `_solve_manual_with_auxiliary(...)`
+
+这个函数把 Floquet 约束只施加到有限元自由度 `u` 上，对辅助变量使用单位矩阵：
+
+```text
+C_aug = block_diag(C_fem, I_aux)
+```
+
+然后求：
+
+```text
+C_aug^H A_aug C_aug x = C_aug^H b_aug
+```
+
+### `src/postprocessing/power_metrics.py`
+
+新增的共同计算核心是：
+
+```python
+_compute_tm_dtn_power_from_coefficients(...)
+```
+
+它只需要顶部和底部的端口模态幅值字典：
+
+```python
+top_ex_coeff[order]
+bottom_ex_coeff[order]
+```
+
+然后按同一套公式计算 R/T。
+
+`compute_dtn_port_power_metrics(...)` 从压缩 trace 向量重新计算：
+
+```text
+a_m = (1/L) ell_m^H u
+```
+
+`compute_dtn_auxiliary_power_metrics(...)` 直接读取辅助未知量 `a_m`。这两组结果在小模型中应当一致；如果不一致，优先检查块系统符号、端口投影归一化和线性求解残差。
+
+### 小验证结论
+
+粗网格验证中：
+
+```text
+explicit + 0级:    R+T = 1.000000000000
+auxiliary + 0级:   R+T = 1.000000000000
+explicit + auto:  R+T = 1.000000000000
+auxiliary + auto: R+T = 1.000000000000
+```
+
+同一组衍射级下，explicit 和 auxiliary 的端口面 R/T 完全一致到显示精度。
+
 ## 2026-06-15 更新：新增 TE 分支和吸收后处理
 
 本次代码主线变为：
@@ -23,9 +216,7 @@ TE port:
 | `src/solvers/solve_te_maxwell.py` | 新增 TE 标量 `Ez` 求解器，包含 scattered、Robin port、DtN port。 |
 | `src/constraints/floquet_scalar_constraint.py` | 新增标量 Floquet 手写消元约束。标量 Lagrange dof 没有 Nedelec 方向符号，因此只按 y 坐标配对并乘 Floquet 相位。 |
 | `src/common/pml.py` | 新增 `top_scalar_pml_coefficients()` 和 `bottom_scalar_pml_coefficients()`，用于 TE scalar PML。 |
-| `src/common/units.py` | 集中放真空光速 `VACUUM_C` 和真空阻抗 `VACUUM_ETA0`，供 SI 单位显示使用。 |
-| `src/postprocessing/postprocess.py` | 新增 `save_scalar_fields_and_plots()`，输出 `Ez_real/Ez_imag/E_total_abs` 等 ParaView 数组；同时把 2D 电场按 `V/m`、磁场模按 `A/m` 写出。 |
-| `src/postprocessing/postprocess_3d.py` | 3D 空气盒子 ParaView 后处理；输出 `E_V_per_m_*` 和 `H_A_per_m_*`。 |
+| `src/postprocessing/postprocess.py` | 新增 `save_scalar_fields_and_plots()`，输出 `Ez_real/Ez_imag/E_total_abs` 等 ParaView 数组。 |
 | `src/postprocessing/power_metrics.py` | `compute_power_metrics()` 现在会根据 `cfg.polarization_type` 在 TM 和 TE 后处理之间分支，并输出吸收率。 |
 | `src/runners/run_cases.py` | 新增 `--polarization-type`，输出目录名新增 `tm` 或 `te`。 |
 | `src/main.py` | 新增 `POLARIZATION_TYPE`，PyCharm 直接运行时可切换 TM/TE。 |
@@ -58,59 +249,6 @@ port_use_pml=True
 ```
 
 因为当前端口弱式只在 `air/substrate/grating` 上装配体积分，没有给 PML 单元装配 Maxwell/PML 项。直接禁止比生成一个看似正常但自由度悬空的结果更可靠。
-
-## 2026-06-17 更新：nm 单位和 ParaView 物理单位显示
-
-当前代码内部长度统一使用 `nm`：
-
-```text
-period_x, air_height, pml thickness, lambda0, mesh_target_size -> nm
-k0 -> 1/nm
-```
-
-求解内部仍然使用归一化场，默认一个代码电场单位对应：
-
-```python
-incident_e0_v_per_m = 1.0
-```
-
-这个参数只控制后处理显示，不改变 Maxwell 方程的矩阵装配。ParaView 输出时使用：
-
-```text
-E_physical[V/m] = E_code * incident_e0_v_per_m
-H_physical[A/m] = H_code * incident_e0_v_per_m / eta0
-eta0 = 376.730313668 ohm
-```
-
-相关文件关系是：
-
-| 文件 | 单位相关职责 |
-|---|---|
-| `src/common/units.py` | 定义 `VACUUM_C` 和 `VACUUM_ETA0`。 |
-| `src/common/config.py` | 2D 配置里新增 `incident_e0_v_per_m`、`electric_field_scale_V_per_m`、`magnetic_field_scale_A_per_m`。 |
-| `src/common/config_3d.py` | 3D 配置里使用同样的物理显示尺度。 |
-| `src/postprocessing/postprocess.py` | 2D VTU 中电场数组按 `V/m` 写出，并新增 `H_total_abs_A_per_m`。 |
-| `src/postprocessing/postprocess_3d.py` | 3D VTU 中写出 `E_V_per_m_real/imag/abs` 和 `H_A_per_m_real/imag/abs`。 |
-
-2D ParaView 里常看的数组现在是：
-
-```text
-E_total_abs            总电场模值，单位 V/m
-E_total_Ex_real        Ex 实部，单位 V/m
-E_total_Ey_real        Ey 实部，单位 V/m
-H_total_abs_A_per_m    总磁场模值，单位 A/m
-domain_tag             区域标签
-```
-
-3D ParaView 里常看的数组是：
-
-```text
-E_V_per_m_abs          电场模值，单位 V/m
-H_A_per_m_abs          磁场模值，单位 A/m
-E_error_abs_V_per_m    电场误差模值，单位 V/m
-H_error_abs_A_per_m    磁场误差模值，单位 A/m
-domain_tag             区域标签
-```
 
 # 当前代码讲解
 
@@ -300,6 +438,182 @@ E(x + period_x, y) = exp(i kx period_x) E(x, y)
 5. `floquet_constraint.py` 第 70-81 行仍然用探针场处理 Nedelec 方向符号。
 6. `run_summary.json` 里的 `floquet_mismatch_total_dof` 应接近 `1e-15`。
 7. `backend_comparison.json` 里的两个后端最大场强差应接近 `1e-14` 量级。
+
+## 2026-06-15 代码补充：DtN 端口面 R/T 后处理
+
+本次新增的目标是：当端口法使用 `port_boundary_model="dtn"` 时，除了保留原来的水平探测线 R/T，还要直接复用 DtN 端口矩阵中的边界积分投影向量，计算一组端口模态 R/T。
+
+主要改动在：
+
+```text
+src/postprocessing/power_metrics.py
+src/solvers/solve_port_maxwell.py
+```
+
+### `power_metrics.py`
+
+新增函数：
+
+```python
+compute_dtn_port_power_metrics(mesh_data, cfg, E_total, out_dir)
+```
+
+它只在 DtN 端口法中使用，输出：
+
+```text
+dtn_port_power_metrics.json
+dtn_port_diffraction_orders.csv
+dtn_port_diffraction_orders.json
+```
+
+计算步骤是：
+
+```text
+1. DtN 端口矩阵装配时，对每个级次 m 已经生成 ell_m 边界积分向量
+2. 代码马上把 dense ell_m 压缩成 indices + values
+3. 后处理复用压缩 ell_m，对有限元解向量 u 做内积，得到 Ex_top,m 和 Ex_bottom,m
+4. 上端口：Ex_top,m 减去已知入射基模，得到反射模态幅值
+5. 下端口：Ex_bottom,m 直接作为透射模态幅值
+6. 用 Y_m = (k0 n)^2 / beta_m 把模态幅值转换成功率
+```
+
+对应公式：
+
+```text
+ell_m,j = ∫_port exp(i alpha_m x) conj(phi_j,x) ds
+Ex_m = (1/period) sum_j u_j conj(ell_m,j)
+R_amp,m = [Ex_top,m - delta_m0 Ex_inc,m] exp(-i beta_top,m y_top)
+T_amp,m = Ex_bottom,m exp(i beta_bottom,m y_bottom)
+P_m = period * 1/2 * Re(Y_m) * |amplitude_m|^2
+```
+
+这样做比“在端口附近再画一条采样线”更干净，因为后处理和 DtN 边界条件使用同一个投影算子，避免了额外点采样、插值和边界碰撞判断误差。
+
+### 压缩 trace 向量
+
+早期代码为了写起来简单，曾经直接保存：
+
+```python
+trace_vectors[side][order] = ell.copy()
+```
+
+其中 `ell` 是完整 dense 向量，长度等于整个有限元空间的自由度数。大规模算例中这个做法不合适，因为端口 trace 向量的非零项只集中在端口边界自由度附近。
+
+现在代码改为：
+
+```python
+trace = _compress_trace_vector(ell)
+trace_vectors[side][order] = trace
+```
+
+`trace` 内部只保存：
+
+```text
+indices  非零自由度编号
+values   非零复数值
+size     原始 dense 长度
+cutoff   压缩阈值
+```
+
+矩阵外积由：
+
+```python
+_compressed_outer_trace_triplets(trace, coefficient)
+```
+
+生成 COO 三元组。它不再访问完整 `ell`，而是直接使用：
+
+```text
+rows = repeat(indices)
+cols = tile(indices)
+data = coefficient * values_i * conj(values_j)
+```
+
+早期写法是每个端口、每个级次都先生成一个稀疏矩阵，然后反复做：
+
+```python
+A_port = A_port + A_mode
+```
+
+这会制造很多中间稀疏矩阵副本。现在改为把所有级次的 `rows/cols/data` 暂存在列表里，最后一次性构造：
+
+```python
+A_port = sparse.coo_matrix((all_data, (all_rows, all_cols)), shape=A_csr.shape).tocsr()
+```
+
+这样总的非零项数学上不变，但减少了多次稀疏矩阵相加带来的临时内存峰值。
+
+入射端口源项也使用：
+
+```python
+_add_compressed_trace_to_rhs(...)
+```
+
+只更新 `b_out[indices]`。DtN 端口 R/T 后处理同样只用压缩向量：
+
+```text
+Ex_m = (1/period) sum(solution[indices] * conj(values))
+```
+
+运行摘要 `run_summary.json` 的 `port_modes` 中会记录：
+
+```text
+num_trace_dofs
+port_outer_nnz
+dense_trace_size
+trace_compression_ratio
+trace_vector_storage
+trace_cutoff
+```
+
+这些字段可以用来确认压缩是否生效。比如小网格验证中，`dense_trace_size=433`，`num_trace_dofs=8`，`port_outer_nnz=64`，压缩比例约为 `0.0185`。
+
+### ParaView 后处理网格复用
+
+早期 `postprocess.py` 在保存 ParaView 数据时，会为 `E_total`、`E_scat`、`E_inc` 各调用一次：
+
+```python
+plot.vtk_mesh(V_dg)
+```
+
+这会重复生成同一个 DG 可视化网格的拓扑、单元类型和坐标数组。现在改成：
+
+```python
+grid, coords = _field_grid(V_dg)
+total_values = _field_values(E_total_dg, grid.n_points)
+scat_values = _field_values(E_scat_dg, grid.n_points)
+inc_values = _field_values(E_inc_dg, grid.n_points)
+```
+
+也就是可视化网格只构造一次，三个场只读取各自的系数数组。输出文件内容不变，但大网格后处理时少了两份重复的 VTK 网格临时数组。
+
+### `solve_port_maxwell.py`
+
+端口法求解完成后仍然先调用：
+
+```python
+power_metrics = compute_power_metrics(mesh_data, cfg, E_total, out_dir)
+```
+
+这会生成原来的水平探测线结果。
+
+如果当前端口模型是 DtN，`_add_fourier_port_operators(...)` 会返回 `port_trace_vectors`，随后额外调用：
+
+```python
+dtn_port_power_metrics = compute_dtn_port_power_metrics(
+    mesh_data, cfg, E_total, out_dir, port_trace_vectors
+)
+```
+
+并把结果写进 `run_summary.json`：
+
+```text
+power_metrics                         水平探测线法
+dtn_port_power_metrics                DtN 端口面法
+dtn_port_vs_probe_power_difference    端口面法减去水平线法的 R/T 差值
+```
+
+因此，同一个 DtN 结果目录里现在会同时看到两套 R/T 数据。和 COMSOL 的 Periodic Port 对比时，优先看 `dtn_port_power_metrics.json`；调试内部场分解和采样线稳定性时，再看 `power_metrics.json`。
 
 ## 2026-06-09 代码补充：端口总场法
 
@@ -519,181 +833,6 @@ bottom_flux_y_weighted
 
 如果 `R_plus_T` 和 `poynting_R_plus_T_from_net_flux` 都接近 1，说明功率守恒比较可信；如果二者互相差很多，优先检查网格、探测线位置、衍射级次数和边界条件。
 
-## 2026-06-15 代码补充：DtN 端口面 R/T 后处理
-
-本次新增的目标是：当端口法使用 `port_boundary_model="dtn"` 时，除了保留原来的水平探测线 R/T，还要直接复用 DtN 端口矩阵中的边界积分投影向量，计算一组端口模态 R/T。
-
-主要改动在：
-
-```text
-src/postprocessing/power_metrics.py
-src/solvers/solve_port_maxwell.py
-```
-
-### `power_metrics.py`
-
-新增函数：
-
-```python
-compute_dtn_port_power_metrics(mesh_data, cfg, E_total, out_dir)
-```
-
-它只在 DtN 端口法中使用，输出：
-
-```text
-dtn_port_power_metrics.json
-dtn_port_diffraction_orders.csv
-dtn_port_diffraction_orders.json
-```
-
-计算步骤是：
-
-```text
-1. DtN 端口矩阵装配时，对每个级次 m 已经生成 ell_m 边界积分向量
-2. 代码马上把 dense ell_m 压缩成 indices + values
-3. 后处理复用压缩 ell_m，对有限元解向量 u 做内积，得到 Ex_top,m 和 Ex_bottom,m
-4. 上端口：Ex_top,m 减去已知入射基模，得到反射模态幅值
-5. 下端口：Ex_bottom,m 直接作为透射模态幅值
-6. 用 Y_m = (k0 n)^2 / beta_m 把模态幅值转换成功率
-```
-
-对应公式：
-
-```text
-ell_m,j = ∫_port exp(i alpha_m x) conj(phi_j,x) ds
-Ex_m = (1/period) sum_j u_j conj(ell_m,j)
-R_amp,m = [Ex_top,m - delta_m0 Ex_inc,m] exp(-i beta_top,m y_top)
-T_amp,m = Ex_bottom,m exp(i beta_bottom,m y_bottom)
-P_m = period * 1/2 * Re(Y_m) * |amplitude_m|^2
-```
-
-这样做比“在端口附近再画一条采样线”更干净，因为后处理和 DtN 边界条件使用同一个投影算子，避免了额外点采样、插值和边界碰撞判断误差。
-
-### 压缩 trace 向量
-
-早期代码为了写起来简单，曾经直接保存：
-
-```python
-trace_vectors[side][order] = ell.copy()
-```
-
-其中 `ell` 是完整 dense 向量，长度等于整个有限元空间的自由度数。大规模算例中这个做法不合适，因为端口 trace 向量的非零项只集中在端口边界自由度附近。
-
-现在代码改为：
-
-```python
-trace = _compress_trace_vector(ell)
-trace_vectors[side][order] = trace
-```
-
-`trace` 内部只保存：
-
-```text
-indices  非零自由度编号
-values   非零复数值
-size     原始 dense 长度
-cutoff   压缩阈值
-```
-
-矩阵外积由：
-
-```python
-_compressed_outer_trace_triplets(trace, coefficient)
-```
-
-生成 COO 三元组。它不再访问完整 `ell`，而是直接使用：
-
-```text
-rows = repeat(indices)
-cols = tile(indices)
-data = coefficient * values_i * conj(values_j)
-```
-
-早期写法是每个端口、每个级次都先生成一个稀疏矩阵，然后反复做：
-
-```python
-A_port = A_port + A_mode
-```
-
-这会制造很多中间稀疏矩阵副本。现在改为把所有级次的 `rows/cols/data` 暂存在列表里，最后一次性构造：
-
-```python
-A_port = sparse.coo_matrix((all_data, (all_rows, all_cols)), shape=A_csr.shape).tocsr()
-```
-
-这样总的非零项数学上不变，但减少了多次稀疏矩阵相加带来的临时内存峰值。
-
-入射端口源项也使用：
-
-```python
-_add_compressed_trace_to_rhs(...)
-```
-
-只更新 `b_out[indices]`。DtN 端口 R/T 后处理同样只用压缩向量：
-
-```text
-Ex_m = (1/period) sum(solution[indices] * conj(values))
-```
-
-运行摘要 `run_summary.json` 的 `port_modes` 中会记录：
-
-```text
-num_trace_dofs
-port_outer_nnz
-dense_trace_size
-trace_compression_ratio
-trace_vector_storage
-trace_cutoff
-```
-
-这些字段可以用来确认压缩是否生效。比如小网格验证中，`dense_trace_size=433`，`num_trace_dofs=8`，`port_outer_nnz=64`，压缩比例约为 `0.0185`。
-
-### ParaView 后处理网格复用
-
-早期 `postprocess.py` 在保存 ParaView 数据时，会为 `E_total`、`E_scat`、`E_inc` 各调用一次：
-
-```python
-plot.vtk_mesh(V_dg)
-```
-
-这会重复生成同一个 DG 可视化网格的拓扑、单元类型和坐标数组。现在改成：
-
-```python
-grid, coords = _field_grid(V_dg)
-total_values = _field_values(E_total_dg, grid.n_points)
-scat_values = _field_values(E_scat_dg, grid.n_points)
-inc_values = _field_values(E_inc_dg, grid.n_points)
-```
-
-也就是可视化网格只构造一次，三个场只读取各自的系数数组。输出文件内容不变，但大网格后处理时少了两份重复的 VTK 网格临时数组。
-
-### `solve_port_maxwell.py`
-
-端口法求解完成后仍然先调用：
-
-```python
-power_metrics = compute_power_metrics(mesh_data, cfg, E_total, out_dir)
-```
-
-这会生成原来的水平探测线结果。
-
-如果当前端口模型是 DtN，`_add_fourier_port_operators(...)` 会返回 `port_trace_vectors`，随后额外调用：
-
-```python
-dtn_port_power_metrics = compute_dtn_port_power_metrics(
-    mesh_data, cfg, E_total, out_dir, port_trace_vectors
-)
-```
-
-并把结果写进 `run_summary.json`：
-
-```text
-power_metrics                         水平探测线法
-dtn_port_power_metrics                DtN 端口面法
-dtn_port_vs_probe_power_difference    端口面法减去水平线法的 R/T 差值
-```
-
-因此，同一个 DtN 结果目录里现在会同时看到两套 R/T 数据。和 COMSOL 的 Periodic Port 对比时，优先看 `dtn_port_power_metrics.json`；调试内部场分解和采样线稳定性时，再看 `power_metrics.json`。
 # v2 代码阅读提示
 
 v2 已经把旧版 `src` 里的代码按功能拆开。阅读时建议先看：
@@ -710,131 +849,3 @@ src/runners/run_cases.py
 ```
 
 顶层 `src` 现在只保留 `main.py` 作为 PyCharm/命令行统一入口，真正实现已经移动到各功能子目录。并行 Floquet 的重点在 `src/constraints/floquet_constraint.py`：MPI 下每个 rank 只约束自己拥有的右边界 slave，自由度 master 使用全局编号和 owner rank。
-
-## 2026-06-16 代码补充：DtN 辅助变量法
-
-这次主要改动在三个文件。
-
-### `src/common/config.py`
-
-新增三个配置：
-
-```python
-port_dtn_assembly: str = "auxiliary"
-port_use_diffraction_orders: bool = False
-port_rayleigh_tolerance: float = 1.0e-6
-```
-
-`port_dtn_assembly` 控制 DtN 端口装配方式：
-
-```text
-explicit   旧的显式外积 Q^*YQ 方法
-auxiliary  新的辅助变量块系统方法
-```
-
-`port_use_diffraction_orders=False` 时只选 0 级；`True` 时自动选择上、下端口各自明确传播的衍射级。
-
-### `src/solvers/solve_port_maxwell.py`
-
-阅读顺序建议如下。
-
-1. `_select_dtn_port_modes(...)`
-
-这个函数根据：
-
-```text
-alpha_m = kx + 2*pi*m/L
-|alpha_m| < n_j*k0
-```
-
-分别判断顶部和底部哪些级次传播，并把候选级次、是否传播、是否接近 Rayleigh anomaly 写入 metadata。
-
-2. `_build_dtn_trace_data(...)`
-
-这个函数对选中的每个端口级次生成压缩投影向量：
-
-```text
-ell_m,i = integral_Gamma exp(i alpha_m x) conjugate(phi_i,x) dGamma
-```
-
-只保存非零自由度编号 `indices` 和对应复数值 `values`，避免保存完整 dense 向量。
-
-3. `_add_fourier_port_operators_explicit(...)`
-
-这是旧方法的新入口。它仍然装配：
-
-```text
-A_port,m = (q_m/L) ell_m ell_m^H
-```
-
-主要用于和新方法对照。
-
-4. `_add_fourier_port_operators_auxiliary(...)`
-
-这是新增方法。它引入辅助未知量 `a_m`：
-
-```text
-A u + q_m ell_m a_m = b
-a_m - (1/L) ell_m^H u = 0
-```
-
-矩阵是块系统：
-
-```text
-[ A   B ] [ u ] = [ b ]
-[ C   I ] [ a ]   [ 0 ]
-```
-
-消去 `a` 后会回到 explicit 的外积形式，因此两者应当给出相同解。
-
-5. `_solve_manual_with_auxiliary(...)`
-
-这个函数把 Floquet 约束只施加到有限元自由度 `u` 上，对辅助变量使用单位矩阵：
-
-```text
-C_aug = block_diag(C_fem, I_aux)
-```
-
-然后求：
-
-```text
-C_aug^H A_aug C_aug x = C_aug^H b_aug
-```
-
-### `src/postprocessing/power_metrics.py`
-
-新增的共同计算核心是：
-
-```python
-_compute_tm_dtn_power_from_coefficients(...)
-```
-
-它只需要顶部和底部的端口模态幅值字典：
-
-```python
-top_ex_coeff[order]
-bottom_ex_coeff[order]
-```
-
-然后按同一套公式计算 R/T。
-
-`compute_dtn_port_power_metrics(...)` 从压缩 trace 向量重新计算：
-
-```text
-a_m = (1/L) ell_m^H u
-```
-
-`compute_dtn_auxiliary_power_metrics(...)` 直接读取辅助未知量 `a_m`。这两组结果在小模型中应当一致；如果不一致，优先检查块系统符号、端口投影归一化和线性求解残差。
-
-### 小验证结论
-
-粗网格验证中：
-
-```text
-explicit + 0级:    R+T = 1.000000000000
-auxiliary + 0级:   R+T = 1.000000000000
-explicit + auto:  R+T = 1.000000000000
-auxiliary + auto: R+T = 1.000000000000
-```
-
-同一组衍射级下，explicit 和 auxiliary 的端口面 R/T 完全一致到显示精度。

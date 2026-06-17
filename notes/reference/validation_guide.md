@@ -442,97 +442,6 @@ port dtn manual:            R+T = 1.002417199, Poynting = 1.002577824
 其中散射场法和 DtN 端口法的能量守恒已经非常接近 1。Robin 端口的 `R+T` 略高一些，但直接 Poynting 通量诊断仍接近 1，这说明主要偏差来自 Robin 单模端口和模态投影统计，而不是 PML 改动导致求解失败。
 
 同一物理方法下，official/manual 后端差异仍接近机器精度，因此新的 PML 公式没有破坏 Floquet 约束实现。
-## 2026-06-15 更新：TE、复折射率和吸收验证
-
-新增功能建议按下面顺序验证。
-
-1. TM 无损回归：
-
-```bash
-python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
-  --formulation scattered \
-  --constraint-backend manual \
-  --polarization-type TM
-```
-
-确认旧 TM 路径仍能生成 `fields_for_paraview.vtu`、`power_metrics.json` 和 `run_summary.json`。
-
-2. TE scattered：
-
-```bash
-python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
-  --formulation scattered \
-  --constraint-backend manual \
-  --polarization-type TE
-```
-
-确认输出中有：
-
-```text
-Ez_real.png
-Ez_imag.png
-E_total_norm.png
-fields_for_paraview.vtu
-```
-
-ParaView 中应能看到 `E_total_Ez_real`、`E_total_Ez_imag`、`E_total_abs`。
-
-3. TE official MPC：
-
-```bash
-python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
-  --formulation scattered \
-  --constraint-backend mpc_official \
-  --polarization-type TE
-```
-
-串行时可和 manual 比较最大场值；MPI 时优先用这个后端。
-
-4. TE DtN port：
-
-```bash
-python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
-  --formulation port \
-  --constraint-backend manual \
-  --port-boundary-model dtn \
-  --polarization-type TE
-```
-
-优先查看：
-
-```text
-dtn_port_power_metrics.json
-```
-
-其中无损材料时 `R_plus_T` 应比水平探测线 `power_metrics.json` 更接近 1。
-
-5. 有损材料：
-
-在 `src/common/config.py` 中设置：
-
-```python
-n_grating = 1.45 + 0.02j
-```
-
-然后重新运行。合理趋势是：
-
-```text
-R_total + T_total < 1
-A_balance > 0
-A_volume > 0
-```
-
-如果 `A_balance` 和 `A_volume` 不一致，先检查网格、端口级次数、探测线位置和材料虚部是否只加在真实材料区。
-
-6. 端口 PML 禁用检查：
-
-```bash
-python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
-  --formulation port \
-  --port-use-pml
-```
-
-程序应在装配前报错。当前这是预期行为，因为端口法还没有实现 PML 体积分。
 
 ## 2026-06-16 验证：DtN auxiliary 与自动衍射级
 
@@ -631,3 +540,95 @@ dtn_auxiliary_vs_trace_power_difference
 ### Test 5：端口面法与水平探测线法
 
 `power_metrics.json` 是水平探测线法，`dtn_port_power_metrics.json` 是端口面法。它们不一定完全相同，尤其粗网格时差异可能明显。与 COMSOL Periodic Port 对比时，优先使用端口面法；水平探测线法保留用于诊断内部均匀区域的场分解是否稳定。
+
+## 2026-06-15 更新：TE、复折射率和吸收验证
+
+新增功能建议按下面顺序验证。
+
+1. TM 无损回归：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
+  --formulation scattered \
+  --constraint-backend manual \
+  --polarization-type TM
+```
+
+确认旧 TM 路径仍能生成 `fields_for_paraview.vtu`、`power_metrics.json` 和 `run_summary.json`。
+
+2. TE scattered：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
+  --formulation scattered \
+  --constraint-backend manual \
+  --polarization-type TE
+```
+
+确认输出中有：
+
+```text
+Ez_real.png
+Ez_imag.png
+E_total_norm.png
+fields_for_paraview.vtu
+```
+
+ParaView 中应能看到 `E_total_Ez_real`、`E_total_Ez_imag`、`E_total_abs`。
+
+3. TE official MPC：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
+  --formulation scattered \
+  --constraint-backend mpc_official \
+  --polarization-type TE
+```
+
+串行时可和 manual 比较最大场值；MPI 时优先用这个后端。
+
+4. TE DtN port：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
+  --formulation port \
+  --constraint-backend manual \
+  --port-boundary-model dtn \
+  --polarization-type TE
+```
+
+优先查看：
+
+```text
+dtn_port_power_metrics.json
+```
+
+其中无损材料时 `R_plus_T` 应比水平探测线 `power_metrics.json` 更接近 1。
+
+5. 有损材料：
+
+在 `src/common/config.py` 中设置：
+
+```python
+n_grating = 1.45 + 0.02j
+```
+
+然后重新运行。合理趋势是：
+
+```text
+R_total + T_total < 1
+A_balance > 0
+A_volume > 0
+```
+
+如果 `A_balance` 和 `A_volume` 不一致，先检查网格、端口级次数、探测线位置和材料虚部是否只加在真实材料区。
+
+6. 端口 PML 禁用检查：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main \
+  --formulation port \
+  --port-use-pml
+```
+
+程序应在装配前报错。当前这是预期行为，因为端口法还没有实现 PML 体积分。
