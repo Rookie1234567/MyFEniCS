@@ -25,7 +25,8 @@ Fresnel 回归:
   oblique Floquet MPI 2 h300 通过，mismatch 约 4e-15。
   PML theta=30/60、alpha=10、thickness=350 均跑通，bottom decay 对参数有响应。
   Fresnel n_sub=1 的 no PML/Floquet 隔离 sanity 通过：R/T = 3.16e-4 / 1.010。
-  但 n_sub=1 加回 Floquet+PML 后仍未过硬门槛，下一步应定位 PML/Floquet 与 R/T 拟合。
+  Fresnel n_sub=1 的 Floquet-only 也通过：R/T = 2.12e-4 / 1.008。
+  PML-only 与 Floquet+PML 仍未过硬门槛，下一步应定位 PML total-field 注入和 R/T 采样。
 ```
 
 最新验证细节看：

@@ -47,11 +47,15 @@ PML p1/h900:
 Fresnel sanity:
   n_sub=1, no PML/Floquet, p2/h200:
     R/T/R+T = 3.16e-4 / 1.0101 / 1.0105，通过隔离 sanity
+  n_sub=1, Floquet only, p2/h200:
+    R/T/R+T = 2.12e-4 / 1.0078 / 1.0080，通过，Floquet 不是失败源
+  n_sub=1, PML only, p2/h300:
+    R/T/R+T = 0.0348 / 1.1811 / 1.2159，未通过
   n_sub=1, Floquet+PML, p2/h300:
     R/T/R+T = 0.0657 / 1.0783 / 1.1440，未通过
 ```
 
-这个对比很关键：Fresnel 体方程和基本 R/T 拟合不是完全错误，主要风险转移到 Floquet+PML 组合后的采样平面、PML 入口附近场拟合，以及 p 偏振功率分解。
+这个对比很关键：Fresnel 体方程和基本 R/T 拟合不是完全错误，Floquet 本身也不是主要失败源。当前风险主要转移到 PML+total-field 口径：入射波从上方穿过 top PML 时，按 `exp(i k·z_tilde)` 的复坐标延拓会增长，粗网格下容易污染 R/T 拟合。后续如果要让 PML+Fresnel 成为硬门槛，需要改成更合理的 scattered/source 口径，或重新定义远离 PML 入口的采样平面。
 
 ## 2026-06-18 历史记录：Fresnel 收敛趋势和 MPI Floquet 风险
 

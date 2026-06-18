@@ -66,10 +66,10 @@ Level 9：Fresnel + PML
 
 Level 10：最终组合 sanity
 
-重点检查 `n_sub=1` 情形，理论上界面消失，应有 `R≈0`、`T≈1`。这是 Stage 2 后续进入光栅前的硬门槛。
+重点检查 `n_sub=1` 情形，理论上界面消失，应有 `R≈0`、`T≈1`。当前硬门槛先定义在 no PML/Floquet 或 Floquet-only 的隔离路径上，因为 total-field 入射波穿过 top PML 时会在复坐标延拓中增长，PML+总场版本仍是待定位项。
 
 ## 当前验收原则
 
 Level 0 到 Level 3 是公式和工具层测试，必须严格通过。
 
-Level 4 到 Level 10 先作为小网格 PDE 验证和扫描入口。粗网格误差不强行要求一开始低于 1%，但必须记录误差、趋势和失败原因。若 `n_sub=1` sanity 失败，不进入 Stage 3。
+Level 4 到 Level 10 先作为小网格 PDE 验证和扫描入口。粗网格误差不强行要求一开始低于 1%，但必须记录误差、趋势和失败原因。若 no PML/Floquet 或 Floquet-only 的 `n_sub=1` sanity 失败，不进入 Stage 3；PML+总场 sanity 需要等 PML 注入/采样口径修好后再升级为硬门槛。

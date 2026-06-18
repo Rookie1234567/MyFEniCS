@@ -27,6 +27,10 @@ Fresnel:
     R/T=0.0657/1.0783，改善但仍未过硬门槛
   n_sub=1.0, p2/h200, no PML/Floquet:
     R/T=3.16e-4/1.0101，通过隔离 sanity
+  n_sub=1.0, p2/h200, Floquet only:
+    R/T=2.12e-4/1.0078，通过，Floquet 不是主要问题
+  n_sub=1.0, p2/h300, PML only:
+    R/T=0.0348/1.1811，未通过，问题主要指向 PML/总场口径
   n_sub=1.45, p2/h200, no PML/Floquet:
     theta=0 s:  R/T=0.0621/0.9648
     theta=0 p:  R/T=0.2106/0.9182
@@ -38,15 +42,15 @@ Fresnel:
 
 ```text
 1. Fresnel n_sub=1 在 no PML/Floquet 隔离路径通过，但加回 Floquet+PML 后仍不通过。
-2. PML proxy 对参数有响应，但数值偏大，不能作为最终吸收验收。
+2. Floquet-only 也通过，PML-only 失败，说明主要问题来自 PML/总场解析延拓/采样口径。
 3. p 偏振 normal incidence 的 no PML/Floquet R/T 偏差仍大，需要检查 p 偏振后处理或采样拟合。
 ```
 
 下一轮建议：
 
 ```text
-1. 优先定位 Fresnel+PML 的 R/T 采样平面和入/出射波拟合：避开 PML 入口和材料界面附近。
-2. 对 n_sub=1 case 做 no PML/Floquet、Floquet only、PML only、Floquet+PML 四种组合的 p2/h200 或 p2/h300 对比。
+1. 优先重新设计 PML+入射场验证口径：当前 total-field incident wave 在 top PML 复坐标中会增长。
+2. 短期先把 no PML/Floquet 或 Floquet-only 的 n_sub=1 sanity 作为 Stage 2 的硬门槛。
 3. 检查 p 偏振 R/T fitting 是否正确使用了 E/H 的切向分量和 Poynting 符号。
 ```
 

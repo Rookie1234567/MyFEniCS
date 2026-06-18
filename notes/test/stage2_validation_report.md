@@ -85,6 +85,29 @@ Fresnel 判断：
 3. n_sub=1.45 的 no PML/Floquet 小扫描显示 s/p、theta=0/30 都有趋势，但 p-normal 和 s-theta30 的误差仍需细网格或后处理修正。
 ```
 
+进一步隔离：
+
+```text
+n_sub=1.0, theta=0, s, p2, h200, Floquet only:
+  result_dir = results/3D_fresnel_interface_normal_p2_h200p0_20260618_234837
+  R/T/R+T = 2.12e-4 / 1.0078 / 1.0080
+  判定：通过，Floquet 本身不是 n_sub=1 失败源
+
+n_sub=1.0, theta=0, s, p2, h300, PML only:
+  result_dir = results/3D_fresnel_interface_normal_p2_h300p0_20260618_234912
+  R/T/R+T = 0.0348 / 1.1811 / 1.2159
+  pml_reflection_proxy = 0.0663
+  判定：未通过，主要偏差来自 PML/总场解析延拓/采样口径
+```
+
+PML-only 定位结论：
+
+```text
+当前 PML 验证仍是总场形式：入射波从上方穿过 top PML 时，按 exp(i k·z_tilde) 的复坐标延拓会在 top PML 中增长，而不是衰减。这会造成 PML 区域场幅值很大，粗网格下 R/T 拟合容易被污染。
+
+因此 Stage 2 当前硬 sanity 应以 no PML/Floquet 或 Floquet-only 的 n_sub=1 为准；PML+总场版本先记为待定位，不作为进入 Stage 3 的硬门槛。真正让 PML+Fresnel 成为硬门槛前，需要改成更合理的 scattered/source 口径，或重新定义远离 PML 入口的 R/T 拟合位置。
+```
+
 ## 2026-06-19 更新：MPI Floquet side-wide 约束修复后的验证结果
 
 额度恢复后已经补跑上一轮未完成的验证。`src/constraints/floquet_3d.py` 现在在 MPI 下不再逐三角面配对，而是对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这样可以避开 `create_box` 在相对侧面使用不同三角剖分时造成的 facet pairing 错误。
@@ -298,6 +321,8 @@ RUN_STAGE2_PDE_TESTS=1 python3 -m unittest discover -s src/test -p "test_*.py"
 | 2026-06-19 | PML 参数扫描 | alpha=10, thickness=350 | smoke 通过 | bottom decay≈0.055/0.045 |
 | 2026-06-19 | Fresnel n_sub=1 sanity | no PML/Floquet, p2, h200 | 通过 | R/T=3.16e-4/1.010 |
 | 2026-06-19 | Fresnel n_sub=1 + PML/Floquet | p2, h300 | 未通过 | R/T=0.0657/1.078，需要定位 |
+| 2026-06-19 | Fresnel n_sub=1 Floquet only | p2, h200 | 通过 | R/T=2.12e-4/1.008 |
+| 2026-06-19 | Fresnel n_sub=1 PML only | p2, h300 | 未通过 | R/T=0.0348/1.181，定位到 PML |
 | 2026-06-19 | Fresnel n_sub=1.45 小扫描 | no PML/Floquet, p2, h200 | 趋势通过 | theta=0/30, s/p 均完成 |
 | 2026-06-19 | compileall + Level 0-3 单元测试 | `python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"` | 通过 | 19 tests, skipped 7 PDE |
 | 2026-06-19 | floquet_airbox MPI 2 h500 | normal, p1, h500 | 通过 | mismatch=1.18e-15/1.34e-15 |
