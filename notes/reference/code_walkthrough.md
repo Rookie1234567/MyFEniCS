@@ -165,17 +165,18 @@ floquet_airbox normal serial p1 h300 direct
 floquet_airbox oblique serial p1 h300 direct
 floquet_airbox normal MPI 2 p1 h900 direct
 pml_airbox normal serial p1 h350 direct
+fresnel_interface normal serial p1 h700 direct, s/p
 ```
 
-尚未实跑：
+未完成或未通过：
 
 ```text
-fresnel_interface smoke test
-floquet_airbox MPI 2 h300
-pml_airbox MPI 2
+fresnel_interface smoke test 已运行但 R/T 偏差很大，不能验收
+floquet_airbox MPI 2 h300 已尝试但 5 分钟超时，无 run_summary.json
+pml_airbox MPI 2 尚未实跑
 ```
 
-原因是本轮 Docker 执行额度在 Fresnel 验证前被系统拒绝。下一轮应优先补跑这些 case。
+下一轮应先定位 Fresnel R/T 偏差，再把 MPI smoke 退回 h700/h900 确认能稳定输出 summary。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 

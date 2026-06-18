@@ -64,7 +64,7 @@ src/geometry/mesh_builder_3d.py     3D cell tags: air/substrate/top_pml/bottom_p
 src/solvers/solve_airbox_maxwell_3d.py  Stage 1/2 共用 3D 求解路径
 ```
 
-已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行。Fresnel smoke test 因本轮 Docker 执行额度耗尽还需要下一轮继续跑。
+已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行、2C Fresnel normal s/p 粗网格。注意：2C Fresnel 已能运行但 R/T 与解析值偏差很大，不能验收。`floquet_airbox MPI 2 h300` 已尝试但 5 分钟超时，`pml_airbox MPI 2` 还没跑。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 

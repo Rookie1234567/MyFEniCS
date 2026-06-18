@@ -178,16 +178,17 @@ floquet_airbox normal, serial, p1, h300 nm, direct
 floquet_airbox oblique, serial, p1, h300 nm, direct
 floquet_airbox normal, MPI 2, p1, h900 nm, direct
 pml_airbox normal, serial, p1, h350 nm, direct
+fresnel_interface normal, serial, p1, h700 nm, direct, s/p
 ```
 
-尚未完成实跑：
+未完成或未通过：
 
 ```text
-fresnel_interface smoke test
-floquet_airbox MPI 2, h300 nm
-pml_airbox MPI 2
+fresnel_interface smoke test 已运行，但 R/T 与 Fresnel 解析值严重不一致，不能验收
+floquet_airbox MPI 2, h300 nm 已尝试，但 5 分钟超时且没有 run_summary.json
+pml_airbox MPI 2 尚未实跑
 ```
 
-原因是本轮 Docker 执行额度在 Fresnel 验证前被系统拒绝。代码路径已经写入，但这些 case 需要下一轮继续跑。
+下一轮不建议直接进入大扫描，应先定位 Fresnel 边界、材料界面弱式或 R/T 拟合口径的问题。
 
 当前 MPI 版 3D Floquet 已能跑极小网格 smoke test；更细网格会明显变慢。后续如果要把它作为大规模生产路径，需要继续优化低层约束构造中的探针插值和 facet 数据交换。
