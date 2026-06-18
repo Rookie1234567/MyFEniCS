@@ -1,5 +1,53 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-18 更新：Fresnel 收敛趋势和 MPI Floquet 风险
+
+本轮继续定位后，2C 的结论需要更新：
+
+```text
+p1/h700 的 Fresnel smoke 不可信。
+原因包括网格过粗，以及旧网格没有强制 interface/PML 入口成为单元面。
+```
+
+串行修正后，`mesh_builder_3d.py` 会让 z 方向包含：
+
+```text
+domain_z_min
+physical_z_min
+interface_z
+physical_z_max
+domain_z_max
+```
+
+Fresnel normal s 的收敛定位结果：
+
+```text
+p2/h300, no PML, no Floquet: R/T = 0.061439 / 1.229299
+p2/h200, no PML, no Floquet: R/T = 0.062094 / 0.964772
+p2/h150, no PML, no Floquet: R/T = 0.037266 / 0.940779
+Fresnel analytic R/T:          0.033736 / 0.966264
+```
+
+加回 Floquet 和 PML 的粗网格结果：
+
+```text
+p2/h300, Floquet only:        R/T = 0.018938 / 0.955782
+p2/h300, Floquet + PML:      R/T = 0.018669 / 0.935656
+```
+
+因此当前判断是：串行 Fresnel 路径有收敛趋势，PML 版可以作为粗 smoke，但还需要更细网格或更稳的后处理才能定量验收。
+
+MPI 方面当前仍有风险：
+
+```text
+floquet_airbox MPI 2 h900: mismatch ≈ 1e-15
+floquet_airbox MPI 2 h500: mismatch ≈ 0.57 / 0.68
+floquet_airbox MPI 2 h300: 超时
+pml_airbox MPI 2 h900: completed，但 mismatch ≈ 0.51
+```
+
+所以在修好 3D MPI Floquet 的多 facet pairing/probe transform 前，MPI 结果只能作为路径 smoke，不能作为物理验收。
+
 ## 2026-06-18 更新：数值指标和十层测试口径
 
 本轮把 Stage 2 验证拆成十层测试，测试代码放在：
@@ -179,16 +227,21 @@ floquet_airbox oblique, serial, p1, h300 nm, direct
 floquet_airbox normal, MPI 2, p1, h900 nm, direct
 pml_airbox normal, serial, p1, h350 nm, direct
 fresnel_interface normal, serial, p1, h700 nm, direct, s/p
+fresnel_interface normal, serial, p2, h150 nm, direct, s
+fresnel_interface normal, serial, p2, h300 nm, direct, s, Floquet+PML
+floquet_airbox normal, MPI 2, p1, h900 nm, direct
+pml_airbox normal, MPI 2, p1, h900 nm, direct
 ```
 
 未完成或未通过：
 
 ```text
-fresnel_interface smoke test 已运行，但 R/T 与 Fresnel 解析值严重不一致，不能验收
+早期 fresnel_interface p1/h700 与 Fresnel 解析值严重不一致，不能验收
+fresnel_interface p2/h150 串行已有收敛趋势，但仍需更细定量扫描
 floquet_airbox MPI 2, h300 nm 已尝试，但 5 分钟超时且没有 run_summary.json
-pml_airbox MPI 2 尚未实跑
+pml_airbox MPI 2 h900 已运行，但 Floquet mismatch 很大，只能算路径 smoke
 ```
 
-下一轮不建议直接进入大扫描，应先定位 Fresnel 边界、材料界面弱式或 R/T 拟合口径的问题。
+下一轮不建议直接进入大扫描，应优先修 3D MPI Floquet 多 facet 约束；串行 Fresnel 可继续做 p2/h150 以下的收敛测试。
 
 当前 MPI 版 3D Floquet 已能跑极小网格 smoke test；更细网格会明显变慢。后续如果要把它作为大规模生产路径，需要继续优化低层约束构造中的探针插值和 facet 数据交换。

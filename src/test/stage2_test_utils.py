@@ -39,9 +39,9 @@ def stage1_smoke_config(**updates) -> SimulationConfig3D:
         "geometry_kind": "airbox",
         "use_floquet_xy": False,
         "use_pml": False,
-        "nedelec_degree": 1,
-        "visualization_degree": 1,
-        "mesh_target_size": 600.0,
+        "nedelec_degree": 2,
+        "visualization_degree": 2,
+        "mesh_target_size": 300.0,
         "solver_profile": "direct",
     }
     values.update(updates)
@@ -54,9 +54,9 @@ def floquet_smoke_config(case: str = "normal", **updates) -> SimulationConfig3D:
         "geometry_kind": "airbox",
         "use_floquet_xy": True,
         "use_pml": False,
-        "nedelec_degree": 1,
-        "visualization_degree": 1,
-        "mesh_target_size": 600.0,
+        "nedelec_degree": 2,
+        "visualization_degree": 2,
+        "mesh_target_size": 300.0,
         "solver_profile": "direct",
     }
     values.update(updates)
@@ -72,9 +72,9 @@ def pml_smoke_config(**updates) -> SimulationConfig3D:
         "use_pml": True,
         "pml_top_thickness": 250.0,
         "pml_bottom_thickness": 250.0,
-        "nedelec_degree": 1,
-        "visualization_degree": 1,
-        "mesh_target_size": 700.0,
+        "nedelec_degree": 2,
+        "visualization_degree": 2,
+        "mesh_target_size": 300.0,
         "solver_profile": "direct",
     }
     values.update(updates)
@@ -92,9 +92,9 @@ def fresnel_smoke_config(**updates) -> SimulationConfig3D:
         "n_substrate": 1.45 + 0.0j,
         "polarization_kind": "s",
         "custom_polarization": None,
-        "nedelec_degree": 1,
-        "visualization_degree": 1,
-        "mesh_target_size": 700.0,
+        "nedelec_degree": 2,
+        "visualization_degree": 2,
+        "mesh_target_size": 300.0,
         "solver_profile": "direct",
     }
     values.update(updates)

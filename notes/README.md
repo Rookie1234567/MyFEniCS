@@ -1,5 +1,31 @@
 # v2 文档索引
 
+## 2026-06-18 更新：Stage 2 继续定位后的状态
+
+本轮按“只有额度不足才暂停”的新规则继续定位。最新结论：
+
+```text
+串行 Fresnel:
+  p2/h150，无 PML、无 Floquet，R/T = 0.037266 / 0.940779
+  已看到合理收敛趋势。
+
+串行 Fresnel + Floquet + PML:
+  p2/h300，R/T = 0.018669 / 0.935656
+  可作为粗网格 smoke，还不是最终定量验收。
+
+MPI Floquet:
+  h900 可完成且 mismatch 约 1e-15。
+  h500 mismatch 约 0.57/0.68，h300 超时。
+  因此 MPI Floquet 仍需专门修正。
+```
+
+测试和续接文件仍看：
+
+```text
+notes/test/stage2_validation_report.md
+notes/test/stage2_resume_log.md
+```
+
 ## 2026-06-18 更新：Stage 2 十层测试框架与续接日志
 
 Stage 2 现在新增专门的测试目录：
@@ -64,7 +90,7 @@ src/geometry/mesh_builder_3d.py     3D cell tags: air/substrate/top_pml/bottom_p
 src/solvers/solve_airbox_maxwell_3d.py  Stage 1/2 共用 3D 求解路径
 ```
 
-已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行、2C Fresnel normal s/p 粗网格。注意：2C Fresnel 已能运行但 R/T 与解析值偏差很大，不能验收。`floquet_airbox MPI 2 h300` 已尝试但 5 分钟超时，`pml_airbox MPI 2` 还没跑。
+已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行、2C Fresnel normal s/p 粗网格。注意：早期 p1/h700 的 2C Fresnel 不可信；p2/h150 串行已有收敛趋势。`floquet_airbox MPI 2 h300` 已尝试但 5 分钟超时，`pml_airbox MPI 2 h900` 已跑通但 Floquet mismatch 大，只能算路径 smoke。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 

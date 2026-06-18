@@ -1,3 +1,18 @@
+## 2026-06-18 更新：Stage 2 mesh 和 MPI 状态
+
+最新更新放在文档最上方。为了让 Fresnel 界面和 PML 入口在粗网格中也是真实单元面，串行 `src/geometry/mesh_builder_3d.py` 现在使用 z 关键平面对齐的结构化四面体网格。
+
+MPI 下当前暂时回退到 `dolfinx.mesh.create_box`。原因是自定义分布式 z-aligned mesh 在当前 Docker/DOLFINx 栈中触发底层 segfault。这个 fallback 让 MPI smoke 可以继续跑，但 MPI Fresnel/PML 的定量验证仍然不能依赖 z-aligned mesh。
+
+当前建议阅读顺序：
+
+```text
+src/geometry/mesh_builder_3d.py     先看串行 z-aligned mesh 和 MPI fallback
+src/constraints/floquet_3d.py       再看当前 h500/h300 MPI Floquet 问题所在
+src/solvers/solve_airbox_maxwell_3d.py
+notes/test/stage2_validation_report.md
+```
+
 ## 2026-06-18 更新：Stage 2 测试与注释阅读顺序
 
 最新更新放在文档最上方。Stage 2 重点代码已经加入结构注释，建议按下面顺序读：
@@ -166,17 +181,22 @@ floquet_airbox oblique serial p1 h300 direct
 floquet_airbox normal MPI 2 p1 h900 direct
 pml_airbox normal serial p1 h350 direct
 fresnel_interface normal serial p1 h700 direct, s/p
+fresnel_interface normal serial p2 h150 direct, s
+fresnel_interface normal serial p2 h300 direct, s, Floquet+PML
+floquet_airbox normal MPI 2 p1 h900 direct
+pml_airbox normal MPI 2 p1 h900 direct
 ```
 
 未完成或未通过：
 
 ```text
-fresnel_interface smoke test 已运行但 R/T 偏差很大，不能验收
+早期 fresnel_interface p1/h700 已运行但 R/T 偏差很大，不能验收
+fresnel_interface p2/h150 串行已有收敛趋势，但还需要更细定量扫描
 floquet_airbox MPI 2 h300 已尝试但 5 分钟超时，无 run_summary.json
-pml_airbox MPI 2 尚未实跑
+pml_airbox MPI 2 h900 已运行，但 Floquet mismatch 很大，只能算路径 smoke
 ```
 
-下一轮应先定位 Fresnel R/T 偏差，再把 MPI smoke 退回 h700/h900 确认能稳定输出 summary。
+下一轮应优先修 3D MPI Floquet 多 facet 约束，再继续做 MPI 下的物理验收。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 
