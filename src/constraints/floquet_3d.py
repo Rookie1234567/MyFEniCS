@@ -13,6 +13,7 @@ from ..common.config_3d import SimulationConfig3D
 
 @dataclass
 class DoubleFloquet3DData:
+    """Bookkeeping returned by the low-level 3D H(curl) Floquet builder."""
     mpc: Any
     local_slave_dofs: np.ndarray
     num_local_slaves: int
@@ -59,6 +60,7 @@ def _axis_key(midpoint: np.ndarray, axis: str) -> tuple[int, int]:
 
 
 def _local_facet_records(V, mesh_data, tag: int, axis: str) -> dict[tuple[int, int], dict[str, object]]:
+    """Collect local facet midpoint, dof, owner, and rank data for one face."""
     msh = mesh_data.mesh
     fdim = msh.topology.dim - 1
     facets = np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32)
@@ -147,6 +149,12 @@ def _transform(master_values: np.ndarray, slave_values: np.ndarray, phase: compl
 
 
 def _axis_raw_maps(V, mesh_data, cfg: SimulationConfig3D, axis: str):
+    """Build raw slave-to-master maps for one periodic axis.
+
+    Each MPI rank only emits constraints for slave dofs it owns locally.  Master
+    dofs may live on another rank, so global dof numbers and owner ranks are
+    gathered before calling dolfinx_mpc.
+    """
     comm = mesh_data.mesh.comm
     if axis == "x":
         master_tag = cfg.tags.x_min
@@ -297,6 +305,7 @@ def _resolve_mapping(
     owner_hint: int,
     seen: set[int] | None = None,
 ) -> list[tuple[int, int, complex]]:
+    """Resolve x/y corner chains so a dof is constrained only once."""
     if seen is None:
         seen = set()
     if dof in seen:
@@ -357,6 +366,7 @@ def _orientation_stats(values: np.ndarray, x_probe_error: float, y_probe_error: 
 
 
 def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) -> DoubleFloquet3DData:
+    """Create double-periodic x/y Floquet constraints for 3D Nedelec dofs."""
     try:
         import dolfinx_mpc
     except ModuleNotFoundError as exc:

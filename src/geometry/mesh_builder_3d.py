@@ -20,6 +20,7 @@ class AirBox3DMesh:
 
 
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
+    """Tag the six exterior box faces used by Dirichlet and Floquet logic."""
     fdim = msh.topology.dim - 1
     markers = (
         (cfg.tags.x_min, lambda x: np.isclose(x[0], cfg.x_min)),
@@ -50,6 +51,7 @@ def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh
 
 
 def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
+    """Tag air, substrate, top PML, and bottom PML cells by cell midpoint."""
     tdim = msh.topology.dim
     index_map = msh.topology.index_map(tdim)
     num_cells = index_map.size_local + index_map.num_ghosts
@@ -72,7 +74,12 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
 
 
 def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
-    """Build a structured tetrahedral 3D box mesh for staged verification."""
+    """Build a structured tetrahedral 3D box mesh for staged verification.
+
+    The mesh is intentionally simple in Stage 2: all complexity is in the
+    material tags and boundary conditions, which makes failures easier to
+    localize before grating geometry is introduced in Stage 3.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD
     points = [

@@ -23,6 +23,7 @@ def _number_tag(prefix: str, value: object) -> str:
 
 
 def _shared_run_dir(results_root: Path, base_name: str, unique_output: bool) -> Path:
+    """Choose one output directory on rank0 and broadcast it to all MPI ranks."""
     comm = MPI.COMM_WORLD
     if comm.rank == 0:
         chosen = unique_run_dir(results_root, base_name, enabled=unique_output)
@@ -77,6 +78,7 @@ def _config_updates(args) -> dict[str, object]:
 
 
 def _stage_defaults(stage_case: str) -> dict[str, object]:
+    """Apply the Stage-2 case switches without creating separate config classes."""
     if stage_case == "stage1_airbox":
         return {"stage_case": stage_case, "geometry_kind": "airbox", "use_floquet_xy": False, "use_pml": False}
     if stage_case == "floquet_airbox":
@@ -110,6 +112,7 @@ def _stage_list(stage_case: str) -> list[str]:
 
 
 def _case_configs(case: str, stage_case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
+    """Expand one preset such as "both" into concrete SimulationConfig3D cases."""
     configs: list[SimulationConfig3D] = []
     if case == "normal":
         builders = [normal_incidence_airbox_config]

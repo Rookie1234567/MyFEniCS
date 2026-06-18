@@ -370,6 +370,62 @@ def _relative_norm_error(actual: np.ndarray, expected: np.ndarray) -> float:
     return float(np.linalg.norm(diff) / denom)
 
 
+def _positive_sqrt(value: complex) -> complex:
+    root = np.sqrt(complex(value))
+    if root.imag < -1.0e-14 or (abs(root.imag) < 1.0e-14 and root.real < 0.0):
+        root = -root
+    return complex(root)
+
+
+def _mode_basis(cfg: SimulationConfig3D, n_medium: complex, vertical_sign: int) -> tuple[np.ndarray, np.ndarray]:
+    q = _positive_sqrt((cfg.k0 * complex(n_medium)) ** 2 - cfg.kx**2 - cfg.ky**2)
+    kvec = np.asarray((cfg.kx, cfg.ky, vertical_sign * q), dtype=np.complex128)
+    kind = cfg.polarization_kind.lower()
+    if kind == "s":
+        polarization = cfg.s_polarization_vector
+    elif kind == "p":
+        direction = kvec / (cfg.k0 * complex(n_medium))
+        polarization = np.cross(direction, cfg.s_polarization_vector)
+    else:
+        polarization = np.asarray(cfg.polarization_vector, dtype=np.complex128)
+        if abs(kvec[0]) + abs(kvec[1]) > 1.0e-14:
+            denom = np.dot(kvec, kvec)
+            if abs(denom) > 1.0e-30:
+                polarization = polarization - kvec * (np.dot(kvec, polarization) / denom)
+    norm = np.sqrt(np.sum(np.abs(polarization) ** 2))
+    if norm <= 0.0:
+        raise ValueError("Cannot build a nonzero 3D modal polarization vector.")
+    return kvec, polarization / norm
+
+
+def _sample_grid_points(cfg: SimulationConfig3D, z_values: np.ndarray, nx: int = 4, ny: int = 4) -> np.ndarray:
+    x_values = np.linspace(cfg.x_min + 0.2 * (cfg.x_max - cfg.x_min), cfg.x_min + 0.8 * (cfg.x_max - cfg.x_min), nx)
+    y_values = np.linspace(cfg.y_min + 0.2 * (cfg.y_max - cfg.y_min), cfg.y_min + 0.8 * (cfg.y_max - cfg.y_min), ny)
+    points = [[x, y, z] for z in z_values for x in x_values for y in y_values]
+    return np.asarray(points, dtype=np.float64)
+
+
+def _fit_plane_wave_modes(E, cfg: SimulationConfig3D, points: np.ndarray, modes: list[tuple[str, np.ndarray, np.ndarray]]):
+    values = _sample_field_at_points(E, points)
+    rows = []
+    rhs = []
+    for point, value in zip(points, values):
+        phase_xy = cfg.kx * point[0] + cfg.ky * point[1]
+        for component in range(3):
+            rows.append(
+                [
+                    mode_polarization[component] * np.exp(1j * (phase_xy + mode_k[2] * point[2]))
+                    for _, mode_k, mode_polarization in modes
+                ]
+            )
+            rhs.append(value[component])
+    A = np.asarray(rows, dtype=np.complex128)
+    b = np.asarray(rhs, dtype=np.complex128)
+    amplitudes, *_ = np.linalg.lstsq(A, b, rcond=None)
+    residual = float(np.linalg.norm(A @ amplitudes - b) / max(float(np.linalg.norm(b)), 1.0e-30))
+    return {name: complex(value) for value, (name, _, _) in zip(amplitudes, modes)}, residual
+
+
 def _floquet_probe_metrics(floquet_data: DoubleFloquet3DData) -> dict[str, float]:
     stats = floquet_data.orientation_factor_stats
     x_mismatch = float(stats.get("x_max_probe_error", float("nan")))
@@ -397,7 +453,30 @@ def _pml_probe_metrics(E, cfg: SimulationConfig3D) -> dict[str, float | None]:
     physical_points = np.asarray([[center_x, center_y, z] for z in physical_z], dtype=np.float64)
     numerical = _sample_field_at_points(E, physical_points)
     exact = electric_field_code_values(cfg, physical_points)
-    metrics["pml_reflection_proxy"] = _relative_norm_error(numerical, exact)
+    metrics["pml_reference_relative_error"] = _relative_norm_error(numerical, exact)
+
+    # Fit the numerical physical-region field to downward/upward plane waves.
+    # The ratio |A_up|/|A_down| is a more meaningful PML reflection proxy than
+    # simply comparing against the manufactured field point by point.
+    k_down, p_down = _mode_basis(cfg, cfg.n_air, vertical_sign=-1)
+    k_up, p_up = _mode_basis(cfg, cfg.n_air, vertical_sign=1)
+    fit_z = np.linspace(
+        cfg.physical_z_min + 0.2 * (cfg.physical_z_max - cfg.physical_z_min),
+        cfg.physical_z_max - 0.2 * (cfg.physical_z_max - cfg.physical_z_min),
+        5,
+    )
+    amplitudes, fit_residual = _fit_plane_wave_modes(
+        E,
+        cfg,
+        _sample_grid_points(cfg, fit_z, nx=3, ny=3),
+        [("down", k_down, p_down), ("up", k_up, p_up)],
+    )
+    down_abs = abs(amplitudes["down"])
+    up_abs = abs(amplitudes["up"])
+    metrics["pml_reflection_proxy"] = float(up_abs / max(down_abs, 1.0e-30))
+    metrics["pml_mode_fit_residual"] = fit_residual
+    metrics["pml_downward_amplitude_abs"] = float(down_abs)
+    metrics["pml_upward_amplitude_abs"] = float(up_abs)
 
     if cfg.pml_top_thickness > 0.0:
         top_inner = np.asarray([[center_x, center_y, cfg.physical_z_max + 0.05 * cfg.pml_top_thickness]])
@@ -420,23 +499,66 @@ def _pml_probe_metrics(E, cfg: SimulationConfig3D) -> dict[str, float | None]:
     return metrics
 
 
-def _stage2_reference_metrics(cfg: SimulationConfig3D, field_metrics: dict[str, Any]) -> dict[str, Any]:
+def _fresnel_numerical_metrics(E, cfg: SimulationConfig3D) -> dict[str, Any]:
+    """Extract Fresnel R/T from the solved 3D field by modal fitting."""
+    ref = fresnel_reference(cfg)
+    n1 = complex(cfg.n_air)
+    n2 = complex(cfg.substrate_index)
+    k_inc, p_inc = _mode_basis(cfg, n1, vertical_sign=-1)
+    k_ref, p_ref = _mode_basis(cfg, n1, vertical_sign=1)
+    k_trn, p_trn = _mode_basis(cfg, n2, vertical_sign=-1)
+
+    top_height = cfg.physical_z_max - cfg.interface_z
+    bottom_height = cfg.interface_z - cfg.physical_z_min
+    top_z = np.linspace(cfg.interface_z + 0.25 * top_height, cfg.interface_z + 0.75 * top_height, 4)
+    bottom_z = np.linspace(cfg.interface_z - 0.75 * bottom_height, cfg.interface_z - 0.25 * bottom_height, 4)
+    top_amplitudes, top_fit_residual = _fit_plane_wave_modes(
+        E,
+        cfg,
+        _sample_grid_points(cfg, top_z, nx=4, ny=4),
+        [("incident", k_inc, p_inc), ("reflected", k_ref, p_ref)],
+    )
+    bottom_amplitudes, bottom_fit_residual = _fit_plane_wave_modes(
+        E,
+        cfg,
+        _sample_grid_points(cfg, bottom_z, nx=4, ny=4),
+        [("transmitted", k_trn, p_trn)],
+    )
+
+    incident = top_amplitudes["incident"]
+    reflected = top_amplitudes["reflected"]
+    transmitted = bottom_amplitudes["transmitted"]
+    cos_i = max(float(np.cos(cfg.theta_rad)), 1.0e-30)
+    sin_t = n1 / n2 * np.sin(cfg.theta_rad)
+    cos_t = _positive_sqrt(1.0 - sin_t**2)
+    admittance_ratio = float(np.real((n2 * cos_t) / (n1 * cos_i)))
+    # These are numerical postprocess values.  The analytic Fresnel values are
+    # only used below as the reference to compute errors.
+    R_total = float(abs(reflected / incident) ** 2)
+    T_total = float(admittance_ratio * abs(transmitted / incident) ** 2)
+    return {
+        "R_total": R_total,
+        "T_total": T_total,
+        "R_plus_T": R_total + T_total,
+        "fresnel_R": ref["R"],
+        "fresnel_T": ref["T"],
+        "fresnel_R_error": abs(R_total - float(ref["R"])),
+        "fresnel_T_error": abs(T_total - float(ref["T"])),
+        "fresnel_R_plus_T_error": abs(R_total + T_total - float(ref["R_plus_T"])),
+        "fresnel_reference": ref,
+        "fresnel_incident_amplitude_abs": float(abs(incident)),
+        "fresnel_reflected_amplitude_abs": float(abs(reflected)),
+        "fresnel_transmitted_amplitude_abs": float(abs(transmitted)),
+        "fresnel_top_mode_fit_residual": top_fit_residual,
+        "fresnel_bottom_mode_fit_residual": bottom_fit_residual,
+        "rt_metric_note": "R/T are fitted from the numerical 3D field in uniform layers and compared with Fresnel theory.",
+    }
+
+
+def _stage2_reference_metrics(E, cfg: SimulationConfig3D, field_metrics: dict[str, Any]) -> dict[str, Any]:
     metrics: dict[str, Any] = {}
     if cfg.geometry_kind == "fresnel_interface":
-        ref = fresnel_reference(cfg)
-        metrics.update(
-            {
-                "R_total": ref["R"],
-                "T_total": ref["T"],
-                "R_plus_T": ref["R_plus_T"],
-                "fresnel_R": ref["R"],
-                "fresnel_T": ref["T"],
-                "fresnel_R_error": 0.0,
-                "fresnel_T_error": 0.0,
-                "fresnel_reference": ref,
-                "rt_metric_note": "Stage-2 first version uses the analytic Fresnel field as the manufactured reference.",
-            }
-        )
+        metrics.update(_fresnel_numerical_metrics(E, cfg))
     elif cfg.use_pml:
         metrics.update(
             {
@@ -459,7 +581,36 @@ def _stage_label(cfg: SimulationConfig3D) -> str:
     return f"stage2_3d_{cfg.stage_case}"
 
 
+def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[str, Any]:
+    """Small duplicated-at-top fields used by test scripts and reports.
+
+    The complete configuration remains under ``summary["config"]``.  These
+    top-level copies keep validation scripts simple and avoid fragile lookups
+    through the nested JSON structure.
+    """
+    return {
+        "stage_case": cfg.stage_case,
+        "geometry_kind": cfg.geometry_kind,
+        "mpi_size": comm.size,
+        "mpi_rank": comm.rank,
+        "mesh_target_size": cfg.mesh_target_size,
+        "nedelec_degree": cfg.nedelec_degree,
+        "visualization_degree": cfg.visualization_degree,
+        "incident_theta_deg": cfg.incident_theta_deg,
+        "incident_phi_deg": cfg.incident_phi_deg,
+        "polarization_kind": cfg.polarization_kind,
+        "length_unit": "nm",
+        "electric_field_unit": "V/m",
+        "magnetic_field_unit": "A/m",
+    }
+
+
 def _build_variational_forms(msh, mesh_data, cfg: SimulationConfig3D, V):
+    """Assemble the shared Stage-1/Stage-2 curl-curl Maxwell weak form.
+
+    Cell tags decide which material tensor is used.  The x/y periodicity is not
+    part of this form; it is imposed later through ``dolfinx_mpc`` constraints.
+    """
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
@@ -477,6 +628,9 @@ def _build_variational_forms(msh, mesh_data, cfg: SimulationConfig3D, V):
     a += add_isotropic(cfg.tags.air, cfg.eps_r)
     a += add_isotropic(cfg.tags.substrate, cfg.substrate_index**2)
 
+    # PML cells use the same unknown E, but with the z-stretched material
+    # tensors.  Top and bottom are tagged separately so the sign convention is
+    # testable and visible in ParaView through domain_tag.
     x = ufl.SpatialCoordinate(msh)
     if cfg.use_pml and cfg.pml_top_thickness > 0.0:
         eps_top, mu_top = z_pml_tensors(x, cfg, "top", cfg.eps_r)
@@ -564,6 +718,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         summary = {
             "case_name": cfg.case_name,
             "stage": _stage_label(cfg),
+            **_summary_base_fields(cfg, comm),
             "config": cfg.as_jsonable(),
             "case_status": "failed_disabled_solver_profile",
             "official_result": False,
@@ -622,6 +777,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     E_exact = plane_wave_electric_field(V, cfg)
     floquet_data: DoubleFloquet3DData | None = None
     if cfg.use_floquet_xy:
+        # Floquet constraints own the x/y side walls.  Strong H(curl)
+        # Dirichlet data is therefore only applied on z faces, with slave dofs
+        # removed to avoid prescribing the same unknown twice.
         floquet_data = build_double_floquet_mpc(V, mesh_data, cfg, log)
         boundary_facets = _z_boundary_facets(mesh_data, cfg)
         raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
@@ -695,6 +853,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     summary = {
         "case_name": cfg.case_name,
         "stage": _stage_label(cfg),
+        **_summary_base_fields(cfg, comm),
         "config": cfg.as_jsonable(),
         "case_status": "completed" if converged else "failed_not_converged",
         "official_result": converged,
@@ -777,9 +936,15 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         stage2_metrics.update(_floquet_probe_metrics(floquet_data))
     if cfg.use_pml:
         stage2_metrics.update(_pml_probe_metrics(E, cfg))
-    stage2_metrics.update(_stage2_reference_metrics(cfg, field_metrics))
+    stage2_metrics.update(_stage2_reference_metrics(E, cfg, field_metrics))
     summary.update(stage2_metrics)
-    if comm.rank == 0 and {"R_total", "T_total", "R_plus_T"}.issubset(stage2_metrics):
+    has_power_metrics = (
+        {"R_total", "T_total", "R_plus_T"}.issubset(stage2_metrics)
+        and stage2_metrics.get("R_total") is not None
+        and stage2_metrics.get("T_total") is not None
+        and stage2_metrics.get("R_plus_T") is not None
+    )
+    if comm.rank == 0 and has_power_metrics:
         (out_dir / "power_metrics_3d.json").write_text(
             json.dumps(
                 {key: stage2_metrics[key] for key in ("R_total", "T_total", "R_plus_T", "fresnel_R", "fresnel_T", "fresnel_R_error", "fresnel_T_error") if key in stage2_metrics},
@@ -803,6 +968,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log(f"PML top decay ratio = {summary['pml_decay_ratio_top']}")
         log(f"PML bottom decay ratio = {summary['pml_decay_ratio_bottom']}")
     if cfg.geometry_kind == "fresnel_interface":
+        log(f"Numerical R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"Fresnel R/T = {summary['fresnel_R']:.6e} / {summary['fresnel_T']:.6e}")
         log(f"R+T = {summary['R_plus_T']:.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")

@@ -38,6 +38,7 @@ def _vec_imag(values: np.ndarray) -> np.ndarray:
 
 
 def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
+    """Write real/imag/abs arrays with ParaView-friendly names."""
     grid.point_data[f"{prefix}_real"] = _vec_real(values)
     grid.point_data[f"{prefix}_imag"] = _vec_imag(values)
     grid.point_data[f"{prefix}_abs"] = _norm(values).astype(np.float64)
@@ -56,6 +57,7 @@ def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
 
 
 def _write_parallel_vtu_collection(out_dir: Path, size: int):
+    """Write a small PVD collection that points ParaView to rank-local VTUs."""
     lines = [
         '<?xml version="1.0"?>',
         '<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">',
@@ -134,6 +136,8 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     h_error = h_num - h_exact
 
     paraview_grid = grid.copy()
+    # ParaView arrays use physical display units.  The solve itself is still
+    # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
     _add_complex_vector(paraview_grid, "E_V_per_m", e_num)
     _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
     _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
@@ -157,6 +161,8 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     )
 
     if comm.size > 1:
+        # PyVista writes one local VTU per rank.  Rank0 writes the collection
+        # file after a barrier so ParaView can open the distributed result.
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
         paraview_grid.save(out_dir / f"fields_3d_for_paraview_rank{comm.rank:04d}.vtu")
         comm.barrier()

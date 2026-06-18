@@ -5,6 +5,8 @@ import numpy as np
 from .config_3d import SimulationConfig3D
 
 
+# All analytic fields in this file use exp(i k·r) with exp(-i omega t).
+# Geometry and wavelength are in nm, matching SimulationConfig3D.k0.
 def _positive_sqrt(value: complex) -> complex:
     root = np.sqrt(complex(value))
     if root.imag < -1.0e-14 or (abs(root.imag) < 1.0e-14 and root.real < 0.0):
@@ -13,6 +15,7 @@ def _positive_sqrt(value: complex) -> complex:
 
 
 def pml_complex_z(cfg: SimulationConfig3D, z_values: np.ndarray) -> np.ndarray:
+    """Map real z positions to the complex PML coordinate z_tilde."""
     z = np.asarray(z_values, dtype=np.float64)
     zeta = z.astype(np.complex128)
     if cfg.use_pml and cfg.pml_top_thickness > 0.0:
@@ -40,6 +43,7 @@ def _p_vector(kvec: np.ndarray, s_vector: np.ndarray, n_medium: complex, cfg: Si
 
 
 def fresnel_reference(cfg: SimulationConfig3D) -> dict[str, complex | float]:
+    """Return analytic flat-interface Fresnel coefficients and power factors."""
     n1 = complex(cfg.n_air)
     n2 = complex(cfg.substrate_index)
     sin_i = np.sin(cfg.theta_rad)
@@ -78,6 +82,7 @@ def fresnel_reference(cfg: SimulationConfig3D) -> dict[str, complex | float]:
 
 
 def _fresnel_components(cfg: SimulationConfig3D):
+    """Build incident/reflected/transmitted k vectors and E amplitudes."""
     n1 = complex(cfg.n_air)
     n2 = complex(cfg.substrate_index)
     kx = cfg.kx
@@ -104,6 +109,7 @@ def _fresnel_components(cfg: SimulationConfig3D):
 
 
 def electric_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
+    """Evaluate the normalized analytic E field used by BCs and validation."""
     coords = np.asarray(coords, dtype=np.float64)
     if cfg.geometry_kind == "fresnel_interface":
         k_inc, k_ref, k_trn, e_inc, e_ref, e_trn = _fresnel_components(cfg)
@@ -127,6 +133,7 @@ def electric_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> n
 
 
 def magnetic_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
+    """Evaluate normalized H = (k x E)/(k0 mu_r) in code units."""
     coords = np.asarray(coords, dtype=np.float64)
     if cfg.geometry_kind == "fresnel_interface":
         k_inc, k_ref, k_trn, e_inc, e_ref, e_trn = _fresnel_components(cfg)

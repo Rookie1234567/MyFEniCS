@@ -238,6 +238,12 @@ class SimulationConfig3D:
         return complex(self.n_air if self.n_substrate is None else self.n_substrate)
 
     def as_jsonable(self) -> dict[str, object]:
+        """Return a JSON-friendly snapshot used by run_summary.json.
+
+        Keep this as the single place where derived 3D quantities are exposed
+        to reports: wave vector, Floquet phases, domain extents, and field
+        units all come from the same config used by the solver.
+        """
         data = asdict(self)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
             data[key] = _complex_or_none(data[key])
@@ -280,6 +286,7 @@ def _vector_or_none(values: tuple[complex, complex, complex] | None) -> list[lis
 
 
 def normal_incidence_airbox_config(**updates) -> SimulationConfig3D:
+    """Preset for downward normal incidence with Ex normalized to E0=1."""
     values = {
         "case_name": "airbox3d_normal",
         "geometry_kind": "airbox",
@@ -293,6 +300,7 @@ def normal_incidence_airbox_config(**updates) -> SimulationConfig3D:
 
 
 def oblique_incidence_airbox_config(**updates) -> SimulationConfig3D:
+    """Preset for an oblique TE-like plane wave used in Stage-1/2 checks."""
     values = {
         "case_name": "airbox3d_oblique",
         "geometry_kind": "airbox",

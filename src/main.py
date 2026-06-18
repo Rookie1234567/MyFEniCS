@@ -76,6 +76,9 @@ PORT_USE_PML = None
 # 3D staged air-box / Floquet / PML settings
 # =============================================================================
 
+# Stage 2 still uses one public entry point.  The variables below are converted
+# into the same CLI flags used by src/runners/run_3d_airbox.py, so PyCharm and
+# command-line runs exercise the same code path.
 STAGE_CASE_3D = "floquet_airbox"  # stage1_airbox, floquet_airbox, pml_airbox, fresnel_interface, stage2_all
 AIRBOX3D_CASE = "normal"  # "normal", "oblique", or "both"
 INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
@@ -153,6 +156,7 @@ def _pycharm_args_2d() -> list[str]:
 
 
 def _pycharm_args_3d() -> list[str]:
+    """Translate the editable 3D variables above into runner CLI arguments."""
     args = ["--stage-case", STAGE_CASE_3D, "--case", AIRBOX3D_CASE]
     _add_value(args, "--nedelec-degree", NEDELEC_DEGREE_3D)
     _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE_3D)
