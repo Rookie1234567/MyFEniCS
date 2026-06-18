@@ -1,14 +1,17 @@
-## 2026-06-18 更新：3D 空气盒求解器 profile
+## 2026-06-18 更新：3D 求解器 profile 修正
 
-最新更新放在文档最上方。本次更新没有替换原来的直接法，而是在 3D 空气盒求解器里增加可选 solver profile：
+最新更新放在文档最上方。本次修正保留直接法，并把它明确为当前 3D 空气盒唯一可靠默认基准：
 
 ```text
-default                 原来的 preonly + lu 直接法，也是默认值
-direct_lu               直接法别名
-iterative_asm_ilu       fgmres + asm + local ilu
-iterative_bjacobi_ilu   fgmres + bjacobi + local ilu
-iterative_jacobi        fgmres + jacobi
-iterative_hypre         fgmres + hypre boomeramg，实验选项
+direct                       当前可靠默认，preonly + lu
+default                      兼容别名，等价于 direct
+direct_lu                    兼容别名，等价于 direct
+iterative_asm_lu             实验，fgmres + asm + local lu
+iterative_asm_lu_overlap2    实验，overlap=2，更强但更吃内存
+iterative_asm_ilu            诊断，已观察到不可靠收敛
+iterative_bjacobi_ilu        诊断，已观察到不可靠收敛
+iterative_jacobi             诊断，预条件太弱
+iterative_hypre              禁用，避免 BoomerAMG 底层崩溃
 ```
 
 阅读顺序建议如下：
@@ -18,14 +21,14 @@ iterative_hypre         fgmres + hypre boomeramg，实验选项
 先看 3D 区块新增的：
 
 ```python
-SOLVER_PROFILE_3D = "default"
+SOLVER_PROFILE_3D = "direct"
 SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
 SOLVER_MAX_IT_3D = 1000
 SOLVER_MONITOR_3D = False
 ```
 
-这些变量会被 `_pycharm_args_3d()` 转成命令行参数。`default` 保持原来的直接法，所以不改变量时，原来的小规模基准行为不变。
+这些变量会被 `_pycharm_args_3d()` 转成命令行参数。`direct` 是当前可信基准；实验性迭代结果必须和 direct 对比。
 
 2. `src/runners/run_3d_airbox.py`
 
@@ -37,13 +40,20 @@ SOLVER_MONITOR_3D = False
 
 4. `src/solvers/solve_airbox_maxwell_3d.py`
 
-最后看核心实现。`_solver_profile_options(...)` 把 profile 映射成 PETSc options；`run_airbox_3d_case(...)` 会记录请求的 profile、解析后的 profile、实际 PETSc options、KSP 类型、PC 类型、收敛原因、迭代步数、残差、分阶段耗时和最大内存占用。
+最后看核心实现。`_solver_profile_settings(...)` 把 profile 映射成 PETSc options 和可靠性状态；`run_airbox_3d_case(...)` 会记录请求的 profile、解析后的 profile、实际 PETSc options、KSP 类型、PC 类型、收敛原因、迭代步数、残差、矩阵统计、分阶段耗时和最大内存占用。如果 KSP 不收敛，它会把 case 标记为 failed，并跳过正式后处理和 ParaView 场输出。
 
 `run_summary.json` 新增或重点字段：
 
 ```text
+case_status
+official_result
+diagnostic_only
+postprocess_skipped
 solver_profile
 solver_profile_resolved
+solver_reliability
+solver_experimental
+solver_disabled
 solver_petsc_options
 actual_ksp_type
 actual_pc_type
@@ -51,6 +61,7 @@ ksp_converged
 ksp_converged_reason_name
 ksp_iterations
 solver_residual_norm
+matrix_stats
 max_rss_mb
 timings_seconds
 ```

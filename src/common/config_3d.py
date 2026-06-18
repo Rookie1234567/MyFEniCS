@@ -73,7 +73,7 @@ class SimulationConfig3D:
     nedelec_degree: int = 2
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
-    solver_profile: str = "default"
+    solver_profile: str = "direct"
     solver_rtol: float = 1.0e-8
     solver_atol: float = 1.0e-12
     solver_max_it: int = 1000

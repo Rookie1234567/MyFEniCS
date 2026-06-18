@@ -5,14 +5,14 @@
 如果 `SIMULATION_DIMENSION = "3d"`，可以在 `src/main.py` 的 3D 区块直接选择求解器：
 
 ```python
-SOLVER_PROFILE_3D = "default"
+SOLVER_PROFILE_3D = "direct"
 SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
 SOLVER_MAX_IT_3D = 1000
 SOLVER_MONITOR_3D = False
 ```
 
-`default` 保持原来的直接法；压力测试时可以改成 `iterative_asm_ilu` 或 `iterative_bjacobi_ilu` 先试低内存迭代路径。运行结果会在 `solver_log.txt` 和 `run_summary.json` 里记录实际 PETSc options、迭代步数、残差、耗时和最大内存占用。
+`direct` 是当前可靠默认基准；`default` 和 `direct_lu` 只是兼容别名。压力测试时可以实验性改成 `iterative_asm_lu` 或 `iterative_asm_lu_overlap2`。如果 KSP 不收敛，结果会被标记为 failed，并跳过正式 ParaView 场输出。运行结果会在 `solver_log.txt` 和 `run_summary.json` 里记录实际 PETSc options、迭代步数、残差、矩阵统计、耗时和最大内存占用。
 
 本文只回答一个问题：在 PyCharm 里到底运行哪个文件。
 

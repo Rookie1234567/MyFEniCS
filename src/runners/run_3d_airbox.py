@@ -102,14 +102,17 @@ def main(argv: list[str] | None = None):
         "--solver-profile",
         choices=(
             "default",
+            "direct",
             "direct_lu",
+            "iterative_asm_lu",
+            "iterative_asm_lu_overlap2",
             "iterative_asm_ilu",
             "iterative_bjacobi_ilu",
             "iterative_jacobi",
             "iterative_hypre",
         ),
         default=None,
-        help="3D linear solver profile. default keeps the original direct LU solve.",
+        help="3D linear solver profile. direct is the reliable default benchmark.",
     )
     parser.add_argument("--solver-rtol", type=float, default=None, help="KSP relative tolerance for iterative profiles.")
     parser.add_argument("--solver-atol", type=float, default=None, help="KSP absolute tolerance for iterative profiles.")

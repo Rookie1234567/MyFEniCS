@@ -1,11 +1,11 @@
 # v2 文档索引
 
-## 2026-06-18 更新：3D 空气盒求解器 profile
+## 2026-06-18 更新：3D 求解器 profile 修正
 
-3D Stage 1 现在保留直接法作为默认求解器，同时新增可选迭代求解器 profile。日常仍然从 `src/main.py` 运行；如果要切换求解器，优先改 3D 区块里的这些变量：
+3D Stage 1 现在把 `direct` 明确作为当前唯一可靠默认求解器。普通 Jacobi/ILU/ASM 迭代 profile 只能作为实验或诊断，不能当成可信物理解来源。日常仍然从 `src/main.py` 运行；如果要切换求解器，优先改 3D 区块里的这些变量：
 
 ```python
-SOLVER_PROFILE_3D = "default"       # 默认直接法，等价于 direct_lu
+SOLVER_PROFILE_3D = "direct"        # 当前可靠默认基准
 SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
 SOLVER_MAX_IT_3D = 1000
@@ -15,15 +15,18 @@ SOLVER_MONITOR_3D = False
 可选值：
 
 ```text
-default                 保持原来的 preonly + lu 直接法
-direct_lu               显式选择直接法
-iterative_asm_ilu       fgmres + asm + local ilu
-iterative_bjacobi_ilu   fgmres + bjacobi + local ilu
-iterative_jacobi        fgmres + jacobi，低内存基线
-iterative_hypre         fgmres + hypre boomeramg，实验选项
+direct                       可靠默认，preonly + lu
+default                      兼容别名，等价于 direct
+direct_lu                    兼容别名，等价于 direct
+iterative_asm_lu             实验，fgmres + asm + local lu
+iterative_asm_lu_overlap2    实验，overlap=2，更强但更吃内存
+iterative_asm_ilu            诊断，已观察到不可靠收敛
+iterative_bjacobi_ilu        诊断，已观察到不可靠收敛
+iterative_jacobi             诊断，预条件太弱
+iterative_hypre              禁用，BoomerAMG 对当前 H(curl) Maxwell 不可靠
 ```
 
-`run_summary.json` 和 `solver_log.txt` 会记录 `solver_profile`、实际 PETSc options、KSP 收敛原因、迭代步数、残差、各阶段耗时和最大内存占用。
+`run_summary.json` 和 `solver_log.txt` 会记录 `solver_profile`、实际 PETSc options、KSP 收敛原因、迭代步数、残差、矩阵 nnz/内存、各阶段耗时和最大内存占用。若 KSP 不收敛，本次 case 会被标记为 failed，并跳过正式 ParaView 场输出和物理误差后处理。
 
 本目录是 `fenics_vector_maxwell_floquet_demo_v2_parallel` 的中文说明文档。现在文档按用途分组，日常阅读不需要从头翻全部文件。
 
@@ -44,7 +47,10 @@ iterative_hypre         fgmres + hypre boomeramg，实验选项
 5. `theory/dtn_auxiliary_and_auto_orders.md`
    想理解 Fourier-DtN 端口、辅助变量法、自动衍射级和未来 3D 稀疏化路线时看这个。
 
-6. `reference/code_walkthrough.md`
+6. `theory/solver_profiles_3d.md`
+   想理解 3D 求解器 profile、direct/iterative 的区别、不收敛处理和矩阵统计时看这个。
+
+7. `reference/code_walkthrough.md`
    想逐行读代码时看这个。
 
 ## 快速运行
@@ -163,6 +169,8 @@ theory/layered_background_theory_and_code_walkthrough.md
 theory/port_total_formulation_and_run_management.md
 theory/reflection_transmission_metrics.md
 theory/dtn_auxiliary_and_auto_orders.md
+theory/stage1_3d_maxwell_airbox.md
+theory/solver_profiles_3d.md
 theory/pml_complex_coordinate_update.md
 theory/pml_scattered_field_diagnostics.md
 ```
