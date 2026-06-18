@@ -1,6 +1,54 @@
 # Stage 2 验证报告
 
-## 2026-06-18 更新：继续定位后的结论
+## 2026-06-19 更新：MPI Floquet side-wide 约束修复后的验证结果
+
+额度恢复后已经补跑上一轮未完成的验证。`src/constraints/floquet_3d.py` 现在在 MPI 下不再逐三角面配对，而是对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这样可以避开 `create_box` 在相对侧面使用不同三角剖分时造成的 facet pairing 错误。
+
+本轮已完成验证：
+
+```text
+compileall + 默认 unittest:
+  Ran 19 tests, OK, skipped=7
+
+floquet_airbox normal, MPI 2, p1, h500:
+  result_dir = results/3D_floquet_airbox_normal_p1_h500p0_np2_20260618_231036
+  elapsed = 3.412 s, max_rss = 310.9 MB
+  floquet_x/y mismatch = 1.18e-15 / 1.34e-15
+  判定：通过，已修复之前 h500 mismatch 约 0.57/0.68 的问题
+
+floquet_airbox normal, MPI 2, p1, h300:
+  result_dir = results/3D_floquet_airbox_normal_p1_h300p0_np2_20260618_231101
+  elapsed = 3.084 s, max_rss = 310.7 MB
+  floquet_x/y mismatch = 3.75e-15 / 4.72e-15
+  判定：通过，已修复之前 h300 超时且无 summary 的问题
+
+pml_airbox normal, MPI 2, p1, h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_np2_20260618_231124
+  elapsed = 83.406 s, max_rss = 2672.8 MB
+  floquet_x/y mismatch = 6.20e-16 / 7.13e-16
+  pml_reflection_proxy = 0.8223
+  pml_decay_ratio_bottom = 0.0561
+  判定：并行 Floquet 约束通过；PML 路径可作为 2B MPI smoke，但 PML proxy 还不能作为最终吸收性能验收
+
+fresnel_interface normal s, serial, p2, h300, Floquet+PML:
+  result_dir = results/3D_fresnel_interface_normal_p2_h300p0_20260618_231312
+  elapsed = 187.920 s, max_rss = 3344.7 MB
+  floquet_x/y mismatch = 2.22e-15 / 2.27e-15
+  R/T/R+T = 0.018669 / 0.935656 / 0.954324
+  Fresnel analytic R/T = 0.033736 / 0.966264
+  判定：串行回归与上一轮一致；仍属于粗网格 smoke，不是最终定量验收
+```
+
+当前结论：
+
+```text
+1. Stage 2 的 MPI Floquet 约束路径已经从“h500/h300 不可靠”修正为“h500/h300 smoke 通过”。
+2. pml_airbox MPI 2 h900 的 Floquet mismatch 已恢复到约 1e-15，说明 PML case 的并行周期约束不再是主要问题。
+3. Fresnel+PML 的定量误差仍需后续做更细网格或更稳后处理扫描；本轮没有把它标记为最终通过。
+4. 后续可以继续 Stage 2 参数扫描，但应优先控制 p2/h150 以下的内存压力。
+```
+
+## 2026-06-18 历史记录：继续定位后的结论
 
 按新规则，本轮没有因为超时或物理误差暂停，而是继续定位。
 
@@ -160,17 +208,22 @@ RUN_STAGE2_PDE_TESTS=1 python3 -m unittest discover -s src/test -p "test_*.py"
 
 | 时间 | 测试 | 参数 | 结果 | 备注 |
 |---|---|---|---|---|
+| 2026-06-19 | compileall + Level 0-3 单元测试 | `python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"` | 通过 | 19 tests, skipped 7 PDE |
+| 2026-06-19 | floquet_airbox MPI 2 h500 | normal, p1, h500 | 通过 | mismatch=1.18e-15/1.34e-15 |
+| 2026-06-19 | floquet_airbox MPI 2 h300 | normal, p1, h300 | 通过 | mismatch=3.75e-15/4.72e-15 |
+| 2026-06-19 | pml_airbox MPI 2 h900 | normal, p1, h900 | smoke 通过 | mismatch=6.20e-16/7.13e-16，bottom decay=0.0561 |
+| 2026-06-19 | Fresnel+Floquet+PML 回归 | serial, s, p2, h300 | smoke 通过 | R/T=0.0187/0.9357，仍需定量扫描 |
 | 2026-06-18 | compileall | `python3 -m compileall -q src` | 通过 | Docker complex 环境 |
 | 2026-06-18 | Level 0-3 单元测试 | `python3 -m unittest discover -s src/test -p "test_*.py"` | 通过 | 19 tests, skipped 7 PDE |
 | 2026-06-18 | fresnel_interface smoke s | serial, p1, h700 | 未通过 | 程序完成，但 R/T 偏差大 |
 | 2026-06-18 | fresnel_interface smoke p | serial, p1, h700 | 未通过 | 程序完成，但 R/T 偏差大 |
-| 2026-06-18 | floquet_airbox MPI 2 h300 | normal, p1, h300 | 超时未完成 | 只生成 mesh 文件，无 summary |
-| 2026-06-18 | pml_airbox MPI 2 h900 | p1 | 路径通过/物理未通过 | mismatch 约 0.51 |
+| 2026-06-18 | floquet_airbox MPI 2 h300 | normal, p1, h300 | 历史未完成 | 修复前只生成 mesh 文件，无 summary |
+| 2026-06-18 | pml_airbox MPI 2 h900 | p1 | 历史 smoke | 修复前 mismatch 约 0.51 |
 | 2026-06-18 | Fresnel 收敛定位 | serial, s, p2, h150 | 趋势通过 | R/T=0.0373/0.9408 |
 | 2026-06-18 | Fresnel+Floquet+PML | serial, s, p2, h300 | smoke 通过 | R/T=0.0187/0.9357 |
 | 2026-06-18 | floquet MPI 2 h900 | p1 | 路径通过 | mismatch 约 1e-15 |
-| 2026-06-18 | floquet MPI 2 h500 | p1 | 未通过 | mismatch 约 0.57/0.68 |
-| 2026-06-18 | pml MPI 2 h900 | p1 | 路径通过/物理未通过 | mismatch 约 0.51 |
+| 2026-06-18 | floquet MPI 2 h500 | p1 | 历史未通过 | 修复前 mismatch 约 0.57/0.68 |
+| 2026-06-18 | pml MPI 2 h900 | p1 | 历史 smoke | 修复前 mismatch 约 0.51 |
 
 ## 判定口径
 

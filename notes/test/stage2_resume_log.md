@@ -1,5 +1,140 @@
 # Stage 2 续接日志
 
+## 2026-06-19 额度恢复后的完成情况
+
+本轮从上一条“额度不足暂停点”恢复后，已完成验证并准备提交：
+
+```text
+已修改：
+  src/constraints/floquet_3d.py
+    - MPI 下改用 side-wide Floquet transform。
+    - 不再逐三角 facet 配对，而是对整张周期侧面拟合 Nedelec 约束变换。
+
+  notes/test/stage2_validation_report.md
+  notes/test/stage2_resume_log.md
+  notes/README.md
+  notes/reference/code_walkthrough.md
+  notes/theory/stage2_3d_floquet_pml_fresnel.md
+    - 按“最新更新在上方”原则记录 h500/h300 修复结果。
+```
+
+已跑命令和结果：
+
+```text
+compileall + 默认 unittest:
+  Ran 19 tests, OK, skipped=7
+
+floquet_airbox MPI 2 h500:
+  result_dir = results/3D_floquet_airbox_normal_p1_h500p0_np2_20260618_231036
+  elapsed = 3.412 s
+  floquet_x/y mismatch = 1.18e-15 / 1.34e-15
+
+floquet_airbox MPI 2 h300:
+  result_dir = results/3D_floquet_airbox_normal_p1_h300p0_np2_20260618_231101
+  elapsed = 3.084 s
+  floquet_x/y mismatch = 3.75e-15 / 4.72e-15
+
+pml_airbox MPI 2 h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_np2_20260618_231124
+  elapsed = 83.406 s
+  floquet_x/y mismatch = 6.20e-16 / 7.13e-16
+  pml_decay_ratio_bottom = 0.0561
+
+fresnel_interface serial p2/h300, Floquet+PML:
+  result_dir = results/3D_fresnel_interface_normal_p2_h300p0_20260618_231312
+  R/T/R+T = 0.018669 / 0.935656 / 0.954324
+```
+
+当前未完成：
+
+```text
+1. 更细的 Fresnel+PML 定量扫描。
+2. Stage 2 第一轮完整角度/偏振/PML 厚度参数扫描。
+3. 更高阶或更细网格下 side-wide MPI Floquet 约束的内存和性能优化。
+```
+
+下一轮建议：
+
+```text
+1. 先做小网格参数扫描：theta = 0/30/60，s/p，PML 厚度和 alpha 各两组。
+2. 对 Fresnel sanity 增加 n_sub=1 的 PDE 实跑，目标 R≈0、T≈1。
+3. 再考虑 p2/h150 或更细的 Fresnel+PML 结果，注意内存。
+```
+
+## 2026-06-18 历史记录：额度不足暂停点
+
+本轮停止原因：
+
+```text
+Docker 验证命令被系统拒绝，提示已达到 usage limit。
+按用户规则：只有额度不足才暂停；因此本轮不再继续运行程序。
+```
+
+本轮已完成但尚未提交的代码/文档改动：
+
+```text
+src/geometry/mesh_builder_3d.py
+  - 串行 3D mesh builder 改为 z 关键平面对齐。
+  - MPI 下暂时 fallback 到 dolfinx.mesh.create_box，避免自定义分布式 mesh segfault。
+
+src/test/stage2_test_utils.py
+  - PDE 测试默认参数从 p1/h700 调整为 p2/h300。
+
+notes/README.md
+notes/reference/code_walkthrough.md
+notes/theory/stage2_3d_floquet_pml_fresnel.md
+notes/test/stage2_validation_report.md
+notes/test/stage2_resume_log.md
+  - 已记录串行 Fresnel 收敛趋势、MPI h500 mismatch、pml MPI h900 路径 smoke。
+
+src/constraints/floquet_3d.py
+  - 新增 MPI side-wide Floquet transform 方案：
+    MPI 下不再逐三角 facet 配对，而是整张周期面一次拟合 slave-to-master 变换。
+```
+
+本轮已经验证过的结果：
+
+```text
+1. 修改 mesh builder 之前/之后，默认 compileall + unittest 曾通过。
+2. 串行 Fresnel normal s：
+   p2/h150, no PML, no Floquet -> R/T = 0.037266/0.940779
+   Fresnel 解析 R/T = 0.0337359/0.966264
+   说明串行 Fresnel 有收敛趋势。
+3. 串行 Fresnel + Floquet + PML：
+   p2/h300 -> R/T = 0.018669/0.935656
+   可作为粗网格 smoke。
+4. MPI fallback 到 create_box 后：
+   floquet h900 completed, mismatch 约 1e-15
+   floquet h500 completed, mismatch 约 0.57/0.68
+   pml h900 completed, mismatch 约 0.51
+```
+
+尚未验证、下一轮必须先做：
+
+```text
+1. src/constraints/floquet_3d.py 的 MPI side-wide Floquet transform 代码尚未通过 compileall。
+2. 尚未重跑默认 unittest。
+3. 尚未重跑 floquet_airbox MPI 2 h500/h300 来验证 mismatch 是否被修复。
+4. 尚未重跑 pml_airbox MPI 2 h900 来验证 2B 并行 smoke 是否改善。
+5. 本轮未提交，因为额度不足发生在验证新 MPI Floquet 代码之前。
+```
+
+下一轮恢复后请从这里开始：
+
+```bash
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox --stage-case floquet_airbox --case normal --nedelec-degree 1 --visualization-degree 1 --mesh-target-size 500 --solver-profile direct
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox --stage-case floquet_airbox --case normal --nedelec-degree 1 --visualization-degree 1 --mesh-target-size 300 --solver-profile direct
+```
+
+注意：
+
+```text
+如果 side-wide transform 编译或运行失败，优先修 src/constraints/floquet_3d.py。
+如果 h500 mismatch 仍大，说明问题不只是三角 facet 配对，而可能是 side dof global ordering、probe span 或 Nedelec orientation 的 MPI 处理。
+```
+
 ## 2026-06-18 继续定位后的续接点
 
 按用户新规则，普通超时和物理误差不再暂停。本轮继续完成：

@@ -155,6 +155,9 @@ def _axis_raw_maps(V, mesh_data, cfg: SimulationConfig3D, axis: str):
     dofs may live on another rank, so global dof numbers and owner ranks are
     gathered before calling dolfinx_mpc.
     """
+    if mesh_data.mesh.comm.size > 1:
+        return _axis_raw_maps_plane(V, mesh_data, cfg, axis)
+
     comm = mesh_data.mesh.comm
     if axis == "x":
         master_tag = cfg.tags.x_min
@@ -295,6 +298,108 @@ def _axis_raw_maps(V, mesh_data, cfg: SimulationConfig3D, axis: str):
         "local_owned": local_owned,
         "orientation_values": np.asarray(orientation_values, dtype=np.complex128),
         "pair_error": float(comm.allreduce(local_pair_error, op=MPI.MAX)),
+        "probe_error": float(comm.allreduce(local_probe_error, op=MPI.MAX)),
+    }
+
+
+def _axis_raw_maps_plane(V, mesh_data, cfg: SimulationConfig3D, axis: str):
+    """MPI fallback: fit one dense transform for the whole periodic side face.
+
+    ``create_box`` can triangulate opposite side faces with different diagonals.
+    Pairing triangle facets one-by-one is then fragile.  For MPI smoke tests we
+    recover one side-wide Nedelec transform from probe functions over all side
+    dofs at once.  This is denser than facet-wise pairing, but it is robust for
+    the current Stage 2 MPI validation meshes.
+    """
+    comm = mesh_data.mesh.comm
+    fdim = mesh_data.mesh.topology.dim - 1
+    midpoint = np.asarray(
+        (
+            0.5 * (cfg.x_min + cfg.x_max),
+            0.5 * (cfg.y_min + cfg.y_max),
+            0.5 * (cfg.domain_z_min + cfg.domain_z_max),
+        ),
+        dtype=np.float64,
+    )
+    if axis == "x":
+        master_tag = cfg.tags.x_min
+        slave_tag = cfg.tags.x_max
+        phase = complex(cfg.floquet_phase_x)
+    else:
+        master_tag = cfg.tags.y_min
+        slave_tag = cfg.tags.y_max
+        phase = complex(cfg.floquet_phase_y)
+
+    master_facets = np.asarray(mesh_data.facet_tags.find(master_tag), dtype=np.int32)
+    slave_facets = np.asarray(mesh_data.facet_tags.find(slave_tag), dtype=np.int32)
+    master_dofs_local = np.unique(fem.locate_dofs_topological(V, fdim, master_facets)).astype(np.int32)
+    slave_dofs_local_all = np.unique(fem.locate_dofs_topological(V, fdim, slave_facets)).astype(np.int32)
+
+    master_globals_local, master_owners_local, _ = _local_dof_global_info(V, master_dofs_local)
+    slave_globals_all, _, slave_owned_all = _local_dof_global_info(V, slave_dofs_local_all)
+    slave_dofs_local = slave_dofs_local_all[slave_owned_all]
+    slave_globals = slave_globals_all[slave_owned_all]
+
+    gathered_master_info = comm.allgather((master_globals_local, master_owners_local))
+    master_owner_by_global: dict[int, int] = {}
+    for packet_globals, packet_owners in gathered_master_info:
+        for global_dof, owner in zip(np.asarray(packet_globals, dtype=np.int64), np.asarray(packet_owners, dtype=np.int32)):
+            master_owner_by_global.setdefault(int(global_dof), int(owner))
+    master_globals = np.asarray(sorted(master_owner_by_global), dtype=np.int64)
+    if len(master_globals) == 0:
+        raise RuntimeError(f"No 3D Floquet master dofs were found for axis={axis}.")
+    num_probes = max(2 * max(len(master_globals), len(slave_globals)) + 4, 8)
+
+    local_master_values = _probe_values(V, cfg, master_dofs_local, axis, midpoint, num_probes)
+    gathered_master_values = comm.allgather((master_globals_local, local_master_values))
+    row_by_global = {int(global_dof): row for row, global_dof in enumerate(master_globals)}
+    master_values = np.zeros((len(master_globals), num_probes), dtype=np.complex128)
+    master_filled = np.zeros(len(master_globals), dtype=bool)
+    for packet_globals, packet_values in gathered_master_values:
+        packet_globals = np.asarray(packet_globals, dtype=np.int64)
+        packet_values = np.asarray(packet_values, dtype=np.complex128)
+        for packet_row, global_dof in enumerate(packet_globals):
+            row = row_by_global.get(int(global_dof))
+            if row is not None and not master_filled[row]:
+                master_values[row] = packet_values[packet_row]
+                master_filled[row] = True
+    if not np.all(master_filled):
+        raise RuntimeError(f"No rank produced all side-wide 3D Floquet master probe rows for axis={axis}.")
+
+    slave_values = _probe_values(V, cfg, slave_dofs_local, axis, midpoint, num_probes)
+    if len(slave_dofs_local) == 0:
+        local_probe_error = 0.0
+        transform = np.zeros((0, len(master_globals)), dtype=np.complex128)
+    else:
+        transform, local_probe_error = _transform(master_values, slave_values, phase)
+
+    master_owners = np.asarray([master_owner_by_global[int(global_dof)] for global_dof in master_globals], dtype=np.int32)
+    raw_maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    local_owned: dict[int, int] = {}
+    orientation_values: list[complex] = []
+    cutoff = max(1.0e-12, 1.0e-10 * float(np.max(np.abs(transform))) if transform.size else 1.0e-12)
+    for row, (slave_global, slave_local) in enumerate(zip(slave_globals, slave_dofs_local)):
+        coefficients = phase * transform[row]
+        keep = np.abs(coefficients) > cutoff
+        if not np.any(keep):
+            keep[int(np.argmax(np.abs(coefficients)))] = True
+        raw_maps[int(slave_global)] = (
+            master_globals[keep].astype(np.int64),
+            master_owners[keep].astype(np.int32),
+            coefficients[keep].astype(np.complex128),
+        )
+        local_owned[int(slave_global)] = int(slave_local)
+        orientation_values.extend((coefficients[keep] / phase).tolist())
+
+    gathered_maps = comm.allgather(raw_maps)
+    global_raw_maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    for maps in gathered_maps:
+        global_raw_maps.update(maps)
+    return {
+        "global_raw_maps": global_raw_maps,
+        "local_owned": local_owned,
+        "orientation_values": np.asarray(orientation_values, dtype=np.complex128),
+        "pair_error": 0.0,
         "probe_error": float(comm.allreduce(local_probe_error, op=MPI.MAX)),
     }
 

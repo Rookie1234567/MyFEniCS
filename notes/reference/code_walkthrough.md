@@ -1,3 +1,41 @@
+## 2026-06-19 更新：Stage 2 MPI Floquet side-wide 约束阅读入口
+
+最新更新放在文档最上方。MPI 下 `src/constraints/floquet_3d.py` 已经从逐三角 facet 配对，改为对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这个改动修复了 `floquet_airbox MPI 2 h500` 的大 mismatch 和 `h300` 超时问题。
+
+建议按这个顺序读最新 3D Stage 2 并行路径：
+
+```text
+src/main.py
+  先看 STAGE_CASE_3D、AIRBOX3D_CASE、SOLVER_PROFILE_3D。
+
+src/runners/run_3d_airbox.py
+  看 stage_case 如何自动打开 Floquet、PML 和 Fresnel 几何。
+
+src/common/config_3d.py
+  看周期相位、PML 厚度、物理区和计算域 z 范围。
+
+src/geometry/mesh_builder_3d.py
+  串行看 z-aligned mesh；MPI 下目前仍 fallback 到 create_box。
+
+src/constraints/floquet_3d.py
+  重点看 _axis_raw_maps(...) 和 _axis_raw_maps_plane(...)。
+  串行走 facet-wise transform；MPI 走 side-wide transform。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  看 build_double_floquet_mpc(...) 如何接入求解器，以及 summary 如何记录 mismatch。
+
+src/postprocessing/postprocess_3d.py
+  看 ParaView 的 E_V_per_m、H_A_per_m 和 domain_tag 输出。
+```
+
+最新验证结果：
+
+```text
+floquet_airbox MPI 2 h500: mismatch = 1.18e-15 / 1.34e-15
+floquet_airbox MPI 2 h300: mismatch = 3.75e-15 / 4.72e-15
+pml_airbox MPI 2 h900:     mismatch = 6.20e-16 / 7.13e-16
+```
+
 ## 2026-06-18 更新：Stage 2 mesh 和 MPI 状态
 
 最新更新放在文档最上方。为了让 Fresnel 界面和 PML 入口在粗网格中也是真实单元面，串行 `src/geometry/mesh_builder_3d.py` 现在使用 z 关键平面对齐的结构化四面体网格。
@@ -8,7 +46,7 @@ MPI 下当前暂时回退到 `dolfinx.mesh.create_box`。原因是自定义分�
 
 ```text
 src/geometry/mesh_builder_3d.py     先看串行 z-aligned mesh 和 MPI fallback
-src/constraints/floquet_3d.py       再看当前 h500/h300 MPI Floquet 问题所在
+src/constraints/floquet_3d.py       再看 h500/h300 MPI Floquet 已修复的 side-wide 约束
 src/solvers/solve_airbox_maxwell_3d.py
 notes/test/stage2_validation_report.md
 ```
@@ -184,6 +222,8 @@ fresnel_interface normal serial p1 h700 direct, s/p
 fresnel_interface normal serial p2 h150 direct, s
 fresnel_interface normal serial p2 h300 direct, s, Floquet+PML
 floquet_airbox normal MPI 2 p1 h900 direct
+floquet_airbox normal MPI 2 p1 h500 direct
+floquet_airbox normal MPI 2 p1 h300 direct
 pml_airbox normal MPI 2 p1 h900 direct
 ```
 
@@ -192,11 +232,11 @@ pml_airbox normal MPI 2 p1 h900 direct
 ```text
 早期 fresnel_interface p1/h700 已运行但 R/T 偏差很大，不能验收
 fresnel_interface p2/h150 串行已有收敛趋势，但还需要更细定量扫描
-floquet_airbox MPI 2 h300 已尝试但 5 分钟超时，无 run_summary.json
-pml_airbox MPI 2 h900 已运行，但 Floquet mismatch 很大，只能算路径 smoke
+pml_airbox MPI 2 h900 的 Floquet mismatch 已通过，但 PML proxy 仍需参数扫描解释
+fresnel_interface p2/h300 Floquet+PML 目前只是粗网格 smoke，R/T 还不能作为最终定量验收
 ```
 
-下一轮应优先修 3D MPI Floquet 多 facet 约束，再继续做 MPI 下的物理验收。
+下一轮可以继续 Stage 2 小网格参数扫描；如果进入更细网格，应同时关注 side-wide Floquet transform 的内存和耗时。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 

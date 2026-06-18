@@ -1,6 +1,36 @@
 # v2 文档索引
 
-## 2026-06-18 更新：Stage 2 继续定位后的状态
+## 2026-06-19 更新：Stage 2 MPI Floquet h500/h300 已修复
+
+最新状态先看这里。上一轮记录中的 `floquet_airbox MPI 2 h500 mismatch 大` 和 `h300 超时` 已经修复：MPI 下 3D Floquet 现在对整张周期侧面拟合 Nedelec 变换，不再依赖逐三角面配对。
+
+```text
+默认编译和单元测试:
+  compileall + unittest 通过，Ran 19 tests, OK, skipped=7
+
+MPI Floquet:
+  h500，MPI 2，mismatch = 1.18e-15 / 1.34e-15
+  h300，MPI 2，mismatch = 3.75e-15 / 4.72e-15
+
+MPI PML:
+  pml_airbox h900，MPI 2，mismatch = 6.20e-16 / 7.13e-16
+  bottom decay ratio = 0.0561
+  PML 路径 smoke 通过，但吸收性能仍需后续参数扫描。
+
+Fresnel 回归:
+  serial p2/h300 + Floquet + PML，R/T = 0.018669 / 0.935656
+  与上一轮一致；仍是粗网格 smoke，不是最终定量验收。
+```
+
+最新验证细节看：
+
+```text
+notes/test/stage2_validation_report.md
+notes/test/stage2_resume_log.md
+notes/theory/stage2_3d_floquet_pml_fresnel.md
+```
+
+## 2026-06-18 历史记录：Stage 2 继续定位后的状态
 
 本轮按“只有额度不足才暂停”的新规则继续定位。最新结论：
 
@@ -55,7 +85,7 @@ python3 -m unittest discover -s src/test -p "test_*.py"
 RUN_STAGE2_PDE_TESTS=1 python3 -m unittest discover -s src/test -p "test_*.py"
 ```
 
-如果 Docker、MPI、内存或额度中断，先更新 `notes/test/stage2_resume_log.md`，下一轮从这个文件继续。
+如果额度不足或工具调用被系统拒绝，先更新 `notes/test/stage2_resume_log.md`，下一轮从这个文件继续。普通超时或物理误差不要暂停，应继续降级网格或定位原因。
 
 ## 2026-06-18 更新：3D Stage 2 Floquet/PML/Fresnel 第一版
 
@@ -90,7 +120,7 @@ src/geometry/mesh_builder_3d.py     3D cell tags: air/substrate/top_pml/bottom_p
 src/solvers/solve_airbox_maxwell_3d.py  Stage 1/2 共用 3D 求解路径
 ```
 
-已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行、2C Fresnel normal s/p 粗网格。注意：早期 p1/h700 的 2C Fresnel 不可信；p2/h150 串行已有收敛趋势。`floquet_airbox MPI 2 h300` 已尝试但 5 分钟超时，`pml_airbox MPI 2 h900` 已跑通但 Floquet mismatch 大，只能算路径 smoke。
+已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A MPI 2 h500/h300、2B normal 串行、2B MPI 2 h900、2C Fresnel normal s/p 粗网格。注意：早期 p1/h700 的 2C Fresnel 不可信；p2/h150 串行已有收敛趋势。当前 MPI Floquet h500/h300 的约束 mismatch 已恢复到 1e-15 量级；PML 和 Fresnel 仍需要更细网格或参数扫描做定量验收。
 
 ## 2026-06-18 更新：3D 求解器 profile 修正
 
