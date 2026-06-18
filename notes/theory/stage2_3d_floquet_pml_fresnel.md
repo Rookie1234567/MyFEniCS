@@ -1,5 +1,44 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-18 更新：数值指标和十层测试口径
+
+本轮把 Stage 2 验证拆成十层测试，测试代码放在：
+
+```text
+src/test/
+```
+
+测试说明和实跑结果放在：
+
+```text
+notes/test/
+```
+
+同时修正 2B/2C 指标口径：
+
+```text
+pml_reflection_proxy
+```
+
+现在表示物理区数值场拟合出的向上波/向下波幅值比，不再只是点值误差。
+
+```text
+R_total / T_total
+```
+
+现在由 `fresnel_interface` 求解后的数值场拟合得到，再与 Fresnel 解析值比较；不能把解析值直接写入数值结果。
+
+当前验收顺序是：
+
+```text
+Level 0-3 公式和工具函数
+Level 4-6 空气盒与 Floquet PDE
+Level 7 PML 空气盒
+Level 8-10 Fresnel、PML 和最终 sanity
+```
+
+其中 `n_sub=1` 的 Fresnel sanity 是硬门槛：平界面消失时应有 `R≈0`、`T≈1`。
+
 ## 2026-06-18 更新：Stage 2 第一版实现口径
 
 本阶段先把 3D 周期边界和上下开放边界的基础设施搭起来，不提前实现 3D modal port、衍射级功率分解或真实 3D 光栅。

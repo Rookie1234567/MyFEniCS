@@ -1,3 +1,38 @@
+## 2026-06-18 更新：Stage 2 测试与注释阅读顺序
+
+最新更新放在文档最上方。Stage 2 重点代码已经加入结构注释，建议按下面顺序读：
+
+```text
+src/main.py
+src/runners/run_3d_airbox.py
+src/common/config_3d.py
+src/common/analytic_fields_3d.py
+src/common/pml_3d.py
+src/geometry/mesh_builder_3d.py
+src/constraints/floquet_3d.py
+src/solvers/solve_airbox_maxwell_3d.py
+src/postprocessing/postprocess_3d.py
+src/test/
+```
+
+新增测试目录：
+
+```text
+src/test/test_00_units_and_conventions.py
+src/test/test_01_plane_wave_tools.py
+src/test/test_02_pml_tensor.py
+src/test/test_03_fresnel_coefficients.py
+src/test/test_04_airbox_dirichlet_pde.py
+src/test/test_05_floquet_dof_constraints.py
+src/test/test_06_airbox_double_floquet_pde.py
+src/test/test_07_pml_airbox_decay.py
+src/test/test_08_fresnel_total_field.py
+src/test/test_09_fresnel_pml.py
+src/test/test_10_stage2_combined.py
+```
+
+Level 0 到 Level 3 是默认严格单元测试；Level 4 到 Level 10 是 PDE/综合测试入口，默认跳过，避免普通检查直接占用大量内存。
+
 ## 2026-06-18 更新：3D Stage 2 代码阅读顺序
 
 最新更新放在文档最上方。Stage 2 新增 3D 双周期 Floquet、z 向 PML 和 Fresnel 平界面 manufactured reference。建议按下面顺序读：

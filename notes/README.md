@@ -1,5 +1,36 @@
 # v2 文档索引
 
+## 2026-06-18 更新：Stage 2 十层测试框架与续接日志
+
+Stage 2 现在新增专门的测试目录：
+
+```text
+src/test/       十层测试代码
+notes/test/     测试目标、验证报告、续接日志
+```
+
+快速阅读顺序：
+
+```text
+notes/test/stage2_testing_framework_cn.md
+notes/test/stage2_validation_report.md
+notes/test/stage2_resume_log.md
+```
+
+默认测试命令：
+
+```bash
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+默认只严格运行 Level 0 到 Level 3。PDE 小算例需要显式打开：
+
+```bash
+RUN_STAGE2_PDE_TESTS=1 python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+如果 Docker、MPI、内存或额度中断，先更新 `notes/test/stage2_resume_log.md`，下一轮从这个文件继续。
+
 ## 2026-06-18 更新：3D Stage 2 Floquet/PML/Fresnel 第一版
 
 3D 路线进入 Stage 2。当前新增：
