@@ -1,3 +1,62 @@
+## 2026-06-18 更新：3D 空气盒求解器 profile
+
+最新更新放在文档最上方。本次更新没有替换原来的直接法，而是在 3D 空气盒求解器里增加可选 solver profile：
+
+```text
+default                 原来的 preonly + lu 直接法，也是默认值
+direct_lu               直接法别名
+iterative_asm_ilu       fgmres + asm + local ilu
+iterative_bjacobi_ilu   fgmres + bjacobi + local ilu
+iterative_jacobi        fgmres + jacobi
+iterative_hypre         fgmres + hypre boomeramg，实验选项
+```
+
+阅读顺序建议如下：
+
+1. `src/main.py`
+
+先看 3D 区块新增的：
+
+```python
+SOLVER_PROFILE_3D = "default"
+SOLVER_RTOL_3D = 1.0e-8
+SOLVER_ATOL_3D = 1.0e-12
+SOLVER_MAX_IT_3D = 1000
+SOLVER_MONITOR_3D = False
+```
+
+这些变量会被 `_pycharm_args_3d()` 转成命令行参数。`default` 保持原来的直接法，所以不改变量时，原来的小规模基准行为不变。
+
+2. `src/runners/run_3d_airbox.py`
+
+再看命令行参数。这里新增 `--solver-profile`、`--solver-rtol`、`--solver-atol`、`--solver-max-it`、`--solver-monitor`，然后把覆盖项写入 `SimulationConfig3D`。
+
+3. `src/common/config_3d.py`
+
+然后看 `SimulationConfig3D`。求解器相关字段和几何、入射角、偏振放在同一个 3D 配置类里，后续 3D 光栅、Floquet、PML 会继续沿用这一套配置，不会另起一套入口。
+
+4. `src/solvers/solve_airbox_maxwell_3d.py`
+
+最后看核心实现。`_solver_profile_options(...)` 把 profile 映射成 PETSc options；`run_airbox_3d_case(...)` 会记录请求的 profile、解析后的 profile、实际 PETSc options、KSP 类型、PC 类型、收敛原因、迭代步数、残差、分阶段耗时和最大内存占用。
+
+`run_summary.json` 新增或重点字段：
+
+```text
+solver_profile
+solver_profile_resolved
+solver_petsc_options
+actual_ksp_type
+actual_pc_type
+ksp_converged
+ksp_converged_reason_name
+ksp_iterations
+solver_residual_norm
+max_rss_mb
+timings_seconds
+```
+
+并行注意：这些 profile 仍然走 DOLFINx/PETSc 的分布式装配和求解路径；结果目录仍由 rank0 决定后广播；计时和最大内存用 MPI reduction 汇总。
+
 ## 2026-06-17 更新：3D Stage 1、nm 单位和 ParaView 物理单位显示
 
 最新更新放在文档最上方。当前这一段主要记录五件事：

@@ -1,5 +1,76 @@
 # Stage 1：3D 空气盒子快速运行指南
 
+## 2026-06-18 更新：求解器 profile 怎么选
+
+当前默认求解器仍然是原来的直接法：
+
+```python
+SOLVER_PROFILE_3D = "default"
+```
+
+`default` 等价于 `direct_lu`，内部仍然使用：
+
+```text
+ksp_type = preonly
+pc_type = lu
+```
+
+也就是说，不改这个变量时，小规模空气盒子的基准行为不变。
+
+如果压力测试遇到内存不足，可以先尝试这些迭代 profile：
+
+```python
+SOLVER_PROFILE_3D = "iterative_asm_ilu"
+```
+
+或者：
+
+```python
+SOLVER_PROFILE_3D = "iterative_bjacobi_ilu"
+```
+
+完整可选值如下：
+
+| profile | 含义 | 适合用途 |
+|---|---|---|
+| `default` | 原来的直接法 | 小模型基准、确认公式和边界条件 |
+| `direct_lu` | 显式直接法 | 和 `default` 一样，只是名字更明确 |
+| `iterative_asm_ilu` | `fgmres + asm + local ilu` | 优先尝试的低内存并行方案 |
+| `iterative_bjacobi_ilu` | `fgmres + bjacobi + local ilu` | 更简单的并行预条件方案 |
+| `iterative_jacobi` | `fgmres + jacobi` | 很省内存的基线，主要用于判断迭代能不能推进 |
+| `iterative_hypre` | `fgmres + hypre boomeramg` | 实验选项，检查当前 PETSc/HYPRE 对复数问题的支持 |
+
+相关容差变量也放在 `src/main.py` 的 3D 区块：
+
+```python
+SOLVER_RTOL_3D = 1.0e-8
+SOLVER_ATOL_3D = 1.0e-12
+SOLVER_MAX_IT_3D = 1000
+SOLVER_MONITOR_3D = False
+```
+
+命令行也可以临时覆盖：
+
+```text
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox --case normal --solver-profile iterative_asm_ilu --solver-rtol 1e-8 --solver-max-it 1000
+```
+
+运行后重点看：
+
+```text
+solver_profile
+solver_profile_resolved
+solver_petsc_options
+ksp_converged
+ksp_converged_reason_name
+ksp_iterations
+solver_residual_norm
+max_rss_mb
+timings_seconds
+```
+
+这些字段会同时写入 `run_summary.json`，并在 `solver_log.txt` 中打印。
+
 这个文件对应四步路线里的第一步：先建立一个最小 3D 全矢量 Maxwell 求解框架，并用均匀空气盒子里的解析平面波检查它。
 
 ## 运行哪个文件

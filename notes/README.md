@@ -1,5 +1,30 @@
 # v2 文档索引
 
+## 2026-06-18 更新：3D 空气盒求解器 profile
+
+3D Stage 1 现在保留直接法作为默认求解器，同时新增可选迭代求解器 profile。日常仍然从 `src/main.py` 运行；如果要切换求解器，优先改 3D 区块里的这些变量：
+
+```python
+SOLVER_PROFILE_3D = "default"       # 默认直接法，等价于 direct_lu
+SOLVER_RTOL_3D = 1.0e-8
+SOLVER_ATOL_3D = 1.0e-12
+SOLVER_MAX_IT_3D = 1000
+SOLVER_MONITOR_3D = False
+```
+
+可选值：
+
+```text
+default                 保持原来的 preonly + lu 直接法
+direct_lu               显式选择直接法
+iterative_asm_ilu       fgmres + asm + local ilu
+iterative_bjacobi_ilu   fgmres + bjacobi + local ilu
+iterative_jacobi        fgmres + jacobi，低内存基线
+iterative_hypre         fgmres + hypre boomeramg，实验选项
+```
+
+`run_summary.json` 和 `solver_log.txt` 会记录 `solver_profile`、实际 PETSc options、KSP 收敛原因、迭代步数、残差、各阶段耗时和最大内存占用。
+
 本目录是 `fenics_vector_maxwell_floquet_demo_v2_parallel` 的中文说明文档。现在文档按用途分组，日常阅读不需要从头翻全部文件。
 
 ## 推荐阅读顺序

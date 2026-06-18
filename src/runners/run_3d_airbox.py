@@ -49,6 +49,16 @@ def _config_updates(args) -> dict[str, object]:
         updates["polarization_kind"] = args.polarization_kind
         if args.polarization_kind != "custom":
             updates["custom_polarization"] = None
+    if args.solver_profile is not None:
+        updates["solver_profile"] = args.solver_profile
+    if args.solver_rtol is not None:
+        updates["solver_rtol"] = args.solver_rtol
+    if args.solver_atol is not None:
+        updates["solver_atol"] = args.solver_atol
+    if args.solver_max_it is not None:
+        updates["solver_max_it"] = args.solver_max_it
+    if args.solver_monitor is not None:
+        updates["solver_monitor"] = args.solver_monitor
     return updates
 
 
@@ -87,6 +97,28 @@ def main(argv: list[str] | None = None):
         choices=("s", "p", "custom"),
         default=None,
         help="3D incident polarization. Stage-1 normal incidence uses custom Ex by default.",
+    )
+    parser.add_argument(
+        "--solver-profile",
+        choices=(
+            "default",
+            "direct_lu",
+            "iterative_asm_ilu",
+            "iterative_bjacobi_ilu",
+            "iterative_jacobi",
+            "iterative_hypre",
+        ),
+        default=None,
+        help="3D linear solver profile. default keeps the original direct LU solve.",
+    )
+    parser.add_argument("--solver-rtol", type=float, default=None, help="KSP relative tolerance for iterative profiles.")
+    parser.add_argument("--solver-atol", type=float, default=None, help="KSP absolute tolerance for iterative profiles.")
+    parser.add_argument("--solver-max-it", type=int, default=None, help="KSP maximum iterations for iterative profiles.")
+    parser.add_argument(
+        "--solver-monitor",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Print PETSc KSP residual monitoring for iterative profiles.",
     )
     parser.add_argument(
         "--unique-output",

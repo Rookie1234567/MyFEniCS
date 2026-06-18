@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
+from typing import Any
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - Windows host fallback; Docker/Linux has resource.
+    resource = None
 
 import numpy as np
 import ufl
@@ -19,6 +26,16 @@ from ..postprocessing.postprocess_3d import save_airbox_3d_fields
 from .solve_vector_maxwell import _json_default
 
 
+SUPPORTED_SOLVER_PROFILES = (
+    "default",
+    "direct_lu",
+    "iterative_asm_ilu",
+    "iterative_bjacobi_ilu",
+    "iterative_jacobi",
+    "iterative_hypre",
+)
+
+
 def _start_timed_stage(comm) -> float:
     comm.barrier()
     return time.perf_counter()
@@ -29,6 +46,91 @@ def _finish_timed_stage(comm, timings: dict[str, float], name: str, started: flo
     elapsed = float(comm.allreduce(local_elapsed, op=MPI.MAX))
     timings[name] = elapsed
     log(f"{name} seconds = {elapsed:.3f}")
+
+
+def _max_rss_mb() -> float | None:
+    if resource is None:
+        return None
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    # Linux reports ru_maxrss in KiB; macOS reports bytes. The Docker runtime
+    # used for this project is Linux, but keep the conversion harmless elsewhere.
+    if sys.platform == "darwin":
+        return float(usage.ru_maxrss) / (1024.0 * 1024.0)
+    return float(usage.ru_maxrss) / 1024.0
+
+
+def _global_max_rss_mb(comm) -> float | None:
+    local = _max_rss_mb()
+    if local is None:
+        return None
+    return float(comm.allreduce(local, op=MPI.MAX))
+
+
+def _solver_profile_options(cfg: SimulationConfig3D) -> tuple[str, dict[str, Any]]:
+    profile = cfg.solver_profile.strip().lower()
+    if profile not in SUPPORTED_SOLVER_PROFILES:
+        raise ValueError(
+            f"Unknown 3D solver_profile={cfg.solver_profile!r}. "
+            f"Supported profiles are: {', '.join(SUPPORTED_SOLVER_PROFILES)}."
+        )
+
+    if profile in ("default", "direct_lu"):
+        return "direct_lu", {
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            "ksp_error_if_not_converged": True,
+        }
+
+    common = {
+        "ksp_type": "fgmres",
+        "ksp_rtol": cfg.solver_rtol,
+        "ksp_atol": cfg.solver_atol,
+        "ksp_max_it": cfg.solver_max_it,
+        "ksp_error_if_not_converged": False,
+    }
+    if cfg.solver_monitor:
+        common["ksp_monitor"] = None
+
+    if profile == "iterative_asm_ilu":
+        return profile, {
+            **common,
+            "pc_type": "asm",
+            "pc_asm_overlap": 1,
+            "sub_ksp_type": "preonly",
+            "sub_pc_type": "ilu",
+        }
+    if profile == "iterative_bjacobi_ilu":
+        return profile, {
+            **common,
+            "pc_type": "bjacobi",
+            "sub_ksp_type": "preonly",
+            "sub_pc_type": "ilu",
+        }
+    if profile == "iterative_jacobi":
+        return profile, {
+            **common,
+            "pc_type": "jacobi",
+        }
+    if profile == "iterative_hypre":
+        return profile, {
+            **common,
+            "pc_type": "hypre",
+            "pc_hypre_type": "boomeramg",
+        }
+
+    raise AssertionError(f"Unhandled solver profile {profile!r}.")
+
+
+def _ksp_reason_name(reason: int) -> str:
+    for name in dir(PETSc.KSP.ConvergedReason):
+        if name.startswith("_"):
+            continue
+        try:
+            if int(getattr(PETSc.KSP.ConvergedReason, name)) == reason:
+                return name
+        except (TypeError, ValueError):
+            continue
+    return str(reason)
 
 
 def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
@@ -76,6 +178,10 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"polarization = {p.tolist()}")
     log(f"dot(k, p) = {dot_k_p:.6e}")
     log(f"mesh target size = {cfg.mesh_target_size}")
+    solver_profile_resolved, petsc_options = _solver_profile_options(cfg)
+    log(f"solver profile requested = {cfg.solver_profile}")
+    log(f"solver profile resolved = {solver_profile_resolved}")
+    log(f"PETSc solver options = {petsc_options}")
 
     stage_start = _start_timed_stage(comm)
     mesh_data = build_airbox_mesh_3d(cfg, out_dir)
@@ -119,12 +225,8 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         L,
         bcs=[bc],
         u=E,
-        petsc_options_prefix=f"airbox3d_{cfg.case_name}_",
-        petsc_options={
-            "ksp_type": "preonly",
-            "pc_type": "lu",
-            "ksp_error_if_not_converged": True,
-        },
+        petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_",
+        petsc_options=petsc_options,
     )
     _finish_timed_stage(comm, timings, "linear_problem_setup", stage_start, log)
 
@@ -132,16 +234,25 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     E = problem.solve()
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
     reason = int(problem.solver.getConvergedReason())
+    reason_name = _ksp_reason_name(reason)
     iterations = int(problem.solver.getIterationNumber())
     residual_norm = float(problem.solver.getResidualNorm())
+    ksp_type = problem.solver.getType()
+    pc_type = problem.solver.getPC().getType()
     log(f"solver converged reason = {reason}")
+    log(f"solver converged reason name = {reason_name}")
     log(f"solver iterations = {iterations}")
     log(f"solver residual norm = {residual_norm:.6e}")
+    log(f"actual KSP type = {ksp_type}")
+    log(f"actual PC type = {pc_type}")
+    if reason < 0:
+        log("WARNING: PETSc KSP did not converge. Treat the field output as a diagnostic iterate.")
 
     stage_start = _start_timed_stage(comm)
     field_metrics = save_airbox_3d_fields(mesh_data, cfg, E, out_dir)
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
+    max_rss_mb = _global_max_rss_mb(comm)
 
     summary = {
         "case_name": cfg.case_name,
@@ -152,12 +263,20 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "petsc_scalar_type": str(PETSc.ScalarType),
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": "dolfinx.fem.petsc.LinearProblem with strong tangential E plane-wave boundary data",
+        "solver_profile": cfg.solver_profile,
+        "solver_profile_resolved": solver_profile_resolved,
+        "solver_petsc_options": petsc_options,
+        "actual_ksp_type": ksp_type,
+        "actual_pc_type": pc_type,
+        "ksp_converged": reason > 0,
         "ksp_converged_reason": reason,
+        "ksp_converged_reason_name": reason_name,
         "ksp_iterations": iterations,
         "solver_residual_norm": residual_norm,
         "incident_transversality_dot_k_p": dot_k_p,
         "timings_seconds": timings,
         "elapsed_seconds": elapsed,
+        "max_rss_mb": max_rss_mb,
         **field_metrics,
     }
     log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
@@ -169,6 +288,8 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log("timing summary seconds:")
     for name, value in timings.items():
         log(f"  {name}: {value:.3f}")
+    if max_rss_mb is not None:
+        log(f"max RSS across ranks = {max_rss_mb:.1f} MB")
     log(f"elapsed seconds = {elapsed:.3f}")
 
     if comm.rank == 0:

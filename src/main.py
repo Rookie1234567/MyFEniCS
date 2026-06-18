@@ -84,6 +84,11 @@ NEDELEC_DEGREE_3D = 2
 VISUALIZATION_DEGREE_3D = 2
 MESH_TARGET_SIZE_3D = 140.0
 LAMBDA0_3D = None
+SOLVER_PROFILE_3D = "default"
+SOLVER_RTOL_3D = 1.0e-8
+SOLVER_ATOL_3D = 1.0e-12
+SOLVER_MAX_IT_3D = 1000
+SOLVER_MONITOR_3D = False
 
 
 def _workspace_root() -> Path:
@@ -149,6 +154,11 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--incident-theta-deg", INCIDENT_THETA_DEG_3D)
     _add_value(args, "--incident-phi-deg", INCIDENT_PHI_DEG_3D)
     _add_value(args, "--polarization-kind", POLARIZATION_KIND_3D)
+    _add_value(args, "--solver-profile", SOLVER_PROFILE_3D)
+    _add_value(args, "--solver-rtol", SOLVER_RTOL_3D)
+    _add_value(args, "--solver-atol", SOLVER_ATOL_3D)
+    _add_value(args, "--solver-max-it", SOLVER_MAX_IT_3D)
+    _add_bool(args, "--solver-monitor", SOLVER_MONITOR_3D)
     _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
     return args
 
