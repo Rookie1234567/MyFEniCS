@@ -1,5 +1,55 @@
 # Stage 2 续接日志
 
+## 2026-06-19 Stage 2 小网格扫描补跑后的续接点
+
+本轮在 `6f92eba Fix 3D MPI Floquet side constraints` 之后继续补跑了第一轮小网格扫描，并准备再提交文档记录。
+
+新增已跑结果：
+
+```text
+Floquet:
+  oblique MPI 2 h300 通过，mismatch = 3.75e-15 / 4.73e-15
+
+PML:
+  theta=30 deg, s, p1/h900:
+    proxy=0.4437, bottom decay=0.1939
+  theta=60 deg, s, p1/h900:
+    proxy=0.5830, bottom decay=0.1901
+  alpha=10, theta=0, p1/h900:
+    proxy=0.5580, bottom decay=0.0551
+  thickness=350 nm, theta=0, p1/h900:
+    proxy=0.7118, bottom decay=0.0451
+
+Fresnel:
+  n_sub=1.0, p2/h900, Floquet+PML:
+    R/T=0.5026/0.1935，未通过
+  n_sub=1.0, p2/h300, Floquet+PML:
+    R/T=0.0657/1.0783，改善但仍未过硬门槛
+  n_sub=1.0, p2/h200, no PML/Floquet:
+    R/T=3.16e-4/1.0101，通过隔离 sanity
+  n_sub=1.45, p2/h200, no PML/Floquet:
+    theta=0 s:  R/T=0.0621/0.9648
+    theta=0 p:  R/T=0.2106/0.9182
+    theta=30 s: R/T=0.0534/1.0287
+    theta=30 p: R/T=0.0368/0.9623
+```
+
+当前最重要的剩余问题：
+
+```text
+1. Fresnel n_sub=1 在 no PML/Floquet 隔离路径通过，但加回 Floquet+PML 后仍不通过。
+2. PML proxy 对参数有响应，但数值偏大，不能作为最终吸收验收。
+3. p 偏振 normal incidence 的 no PML/Floquet R/T 偏差仍大，需要检查 p 偏振后处理或采样拟合。
+```
+
+下一轮建议：
+
+```text
+1. 优先定位 Fresnel+PML 的 R/T 采样平面和入/出射波拟合：避开 PML 入口和材料界面附近。
+2. 对 n_sub=1 case 做 no PML/Floquet、Floquet only、PML only、Floquet+PML 四种组合的 p2/h200 或 p2/h300 对比。
+3. 检查 p 偏振 R/T fitting 是否正确使用了 E/H 的切向分量和 Poynting 符号。
+```
+
 ## 2026-06-19 额度恢复后的完成情况
 
 本轮从上一条“额度不足暂停点”恢复后，已完成验证并准备提交：

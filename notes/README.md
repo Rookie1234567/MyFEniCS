@@ -20,6 +20,12 @@ MPI PML:
 Fresnel 回归:
   serial p2/h300 + Floquet + PML，R/T = 0.018669 / 0.935656
   与上一轮一致；仍是粗网格 smoke，不是最终定量验收。
+
+新增小扫描:
+  oblique Floquet MPI 2 h300 通过，mismatch 约 4e-15。
+  PML theta=30/60、alpha=10、thickness=350 均跑通，bottom decay 对参数有响应。
+  Fresnel n_sub=1 的 no PML/Floquet 隔离 sanity 通过：R/T = 3.16e-4 / 1.010。
+  但 n_sub=1 加回 Floquet+PML 后仍未过硬门槛，下一步应定位 PML/Floquet 与 R/T 拟合。
 ```
 
 最新验证细节看：

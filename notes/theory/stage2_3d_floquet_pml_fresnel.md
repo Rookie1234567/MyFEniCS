@@ -34,6 +34,25 @@ fresnel_interface serial p2/h300, Floquet+PML:
 
 因此当前判断是：2A 的 MPI Floquet smoke 已通过；2B 的 MPI PML 路径可继续用于小网格验证；2C Fresnel 仍需更细网格或更稳的 R/T 后处理才能作为定量验收。
 
+同一轮又补跑了第一组小扫描：
+
+```text
+oblique Floquet MPI 2 h300:
+  mismatch ≈ 4e-15，通过
+
+PML p1/h900:
+  theta=30/60、alpha=10、thickness=350 都能完成，Floquet mismatch 约 1e-15
+  bottom decay ratio 随厚度增加有改善，但 pml_reflection_proxy 仍偏大
+
+Fresnel sanity:
+  n_sub=1, no PML/Floquet, p2/h200:
+    R/T/R+T = 3.16e-4 / 1.0101 / 1.0105，通过隔离 sanity
+  n_sub=1, Floquet+PML, p2/h300:
+    R/T/R+T = 0.0657 / 1.0783 / 1.1440，未通过
+```
+
+这个对比很关键：Fresnel 体方程和基本 R/T 拟合不是完全错误，主要风险转移到 Floquet+PML 组合后的采样平面、PML 入口附近场拟合，以及 p 偏振功率分解。
+
 ## 2026-06-18 历史记录：Fresnel 收敛趋势和 MPI Floquet 风险
 
 本轮继续定位后，2C 的结论需要更新：

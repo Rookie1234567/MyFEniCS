@@ -1,5 +1,90 @@
 # Stage 2 验证报告
 
+## 2026-06-19 更新：Stage 2 第一轮小网格扫描补跑
+
+在修复 MPI Floquet 之后，又补跑了 PML 角度/参数 smoke 和 Fresnel sanity 扫描。这里先记录结论：这些结果用于定位，不代表 Stage 2 已经完成最终定量验收。
+
+Floquet oblique MPI：
+
+```text
+floquet_airbox oblique, MPI 2, p1, h300:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h300p0_np2_20260618_233033
+  floquet_x/y mismatch = 3.75e-15 / 4.73e-15
+  elapsed = 65.979 s, max_rss = 311.3 MB
+  判定：通过。非零 kx/ky 相位在 side-wide MPI 约束下稳定。
+```
+
+PML 小扫描：
+
+```text
+pml_airbox theta=30 deg, s, p1, h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_20260618_233215
+  mismatch = 3.53e-15 / 3.17e-15
+  pml_reflection_proxy = 0.4437
+  bottom decay ratio = 0.1939
+
+pml_airbox theta=60 deg, s, p1, h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_20260618_233353
+  mismatch = 3.53e-15 / 3.17e-15
+  pml_reflection_proxy = 0.5830
+  bottom decay ratio = 0.1901
+
+pml_airbox theta=0 deg, alpha=10, p1, h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_20260618_233541
+  mismatch = 3.53e-15 / 3.17e-15
+  pml_reflection_proxy = 0.5580
+  bottom decay ratio = 0.0551
+
+pml_airbox theta=0 deg, thickness=350 nm, p1, h900:
+  result_dir = results/3D_pml_airbox_normal_p1_h900p0_20260618_233721
+  mismatch = 3.53e-15 / 3.17e-15
+  pml_reflection_proxy = 0.7118
+  bottom decay ratio = 0.0451
+```
+
+PML 判断：
+
+```text
+1. PML case 中 Floquet mismatch 均在 1e-15 量级，周期约束不再是当前主要问题。
+2. bottom decay ratio 对角度、alpha 和厚度有响应；厚度 350 nm 下 bottom decay 从默认约 0.056 降到约 0.045。
+3. pml_reflection_proxy 仍偏大，不能作为“PML 已定量通过”的证据；后续要结合更细网格和更稳的平面波拟合位置继续看。
+```
+
+Fresnel sanity 和小扫描：
+
+```text
+n_sub=1.0, theta=0, s, p2, h900, Floquet+PML:
+  R/T = 0.5026 / 0.1935，未通过
+
+n_sub=1.0, theta=0, s, p2, h300, Floquet+PML:
+  R/T = 0.0657 / 1.0783，明显改善但仍未过硬门槛
+
+n_sub=1.0, theta=0, s, p2, h200, no PML, no Floquet:
+  result_dir = results/3D_fresnel_interface_normal_p2_h200p0_20260618_234431
+  R/T/R+T = 3.16e-4 / 1.0101 / 1.0105
+  判定：硬 sanity 在无 PML/Floquet 隔离路径上通过
+
+n_sub=1.45, theta=0, s, p2, h200, no PML, no Floquet:
+  R/T = 0.0621 / 0.9648，解析 R/T = 0.0337 / 0.9663
+
+n_sub=1.45, theta=0, p, p2, h200, no PML, no Floquet:
+  R/T = 0.2106 / 0.9182，解析 R/T = 0.0337 / 0.9663，p 偏振 normal 仍偏差大
+
+n_sub=1.45, theta=30, s, p2, h200, no PML, no Floquet:
+  R/T = 0.0534 / 1.0287，解析 R/T = 0.0494 / 0.9506
+
+n_sub=1.45, theta=30, p, p2, h200, no PML, no Floquet:
+  R/T = 0.0368 / 0.9623，解析 R/T = 0.0209 / 0.9791，R+T = 0.9990
+```
+
+Fresnel 判断：
+
+```text
+1. n_sub=1 的无 PML/Floquet 隔离 sanity 通过，说明 Fresnel 体方程和 R/T 拟合方向不是完全错误。
+2. 一旦加回 PML+Floquet，n_sub=1 仍有明显 R/T 偏差，后续应优先定位 PML 区域场拟合位置、总场边界和 R/T 采样平面的相容性。
+3. n_sub=1.45 的 no PML/Floquet 小扫描显示 s/p、theta=0/30 都有趋势，但 p-normal 和 s-theta30 的误差仍需细网格或后处理修正。
+```
+
 ## 2026-06-19 更新：MPI Floquet side-wide 约束修复后的验证结果
 
 额度恢复后已经补跑上一轮未完成的验证。`src/constraints/floquet_3d.py` 现在在 MPI 下不再逐三角面配对，而是对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这样可以避开 `create_box` 在相对侧面使用不同三角剖分时造成的 facet pairing 错误。
@@ -208,6 +293,12 @@ RUN_STAGE2_PDE_TESTS=1 python3 -m unittest discover -s src/test -p "test_*.py"
 
 | 时间 | 测试 | 参数 | 结果 | 备注 |
 |---|---|---|---|---|
+| 2026-06-19 | floquet_airbox oblique MPI 2 h300 | oblique, p1, h300 | 通过 | mismatch=3.75e-15/4.73e-15 |
+| 2026-06-19 | PML 角度扫描 | theta=30/60, s, p1, h900 | smoke 通过 | bottom decay≈0.194/0.190 |
+| 2026-06-19 | PML 参数扫描 | alpha=10, thickness=350 | smoke 通过 | bottom decay≈0.055/0.045 |
+| 2026-06-19 | Fresnel n_sub=1 sanity | no PML/Floquet, p2, h200 | 通过 | R/T=3.16e-4/1.010 |
+| 2026-06-19 | Fresnel n_sub=1 + PML/Floquet | p2, h300 | 未通过 | R/T=0.0657/1.078，需要定位 |
+| 2026-06-19 | Fresnel n_sub=1.45 小扫描 | no PML/Floquet, p2, h200 | 趋势通过 | theta=0/30, s/p 均完成 |
 | 2026-06-19 | compileall + Level 0-3 单元测试 | `python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"` | 通过 | 19 tests, skipped 7 PDE |
 | 2026-06-19 | floquet_airbox MPI 2 h500 | normal, p1, h500 | 通过 | mismatch=1.18e-15/1.34e-15 |
 | 2026-06-19 | floquet_airbox MPI 2 h300 | normal, p1, h300 | 通过 | mismatch=3.75e-15/4.72e-15 |
