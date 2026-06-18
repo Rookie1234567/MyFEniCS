@@ -17,7 +17,7 @@ from pathlib import Path
 # "3d" for the staged 3D Maxwell air-box workflow.
 
 USE_PYCHARM_SETTINGS_WHEN_NO_ARGS = True
-SIMULATION_DIMENSION = "2d"  # "2d" or "3d"
+SIMULATION_DIMENSION = "3d"  # "2d" or "3d"
 
 # Main physics switch:
 #   "scattered"  = background-field scattering formulation
@@ -73,17 +73,24 @@ UNIQUE_OUTPUT = True
 PORT_USE_PML = None
 
 # =============================================================================
-# 3D Stage-1 air-box settings
+# 3D staged air-box / Floquet / PML settings
 # =============================================================================
 
-AIRBOX3D_CASE = "both"  # "normal", "oblique", or "both"
+STAGE_CASE_3D = "floquet_airbox"  # stage1_airbox, floquet_airbox, pml_airbox, fresnel_interface, stage2_all
+AIRBOX3D_CASE = "normal"  # "normal", "oblique", or "both"
 INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
 INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
 NEDELEC_DEGREE_3D = 2
-VISUALIZATION_DEGREE_3D = 2
-MESH_TARGET_SIZE_3D = 140.0
+VISUALIZATION_DEGREE_3D = 3
+MESH_TARGET_SIZE_3D = 40.0
 LAMBDA0_3D = None
+USE_FLOQUET_XY_3D = None  # None lets STAGE_CASE_3D choose the default.
+USE_PML_3D = None
+PML_TOP_THICKNESS_3D = None
+PML_BOTTOM_THICKNESS_3D = None
+PML_ALPHA_3D = None
+N_SUBSTRATE_3D = None
 SOLVER_PROFILE_3D = "direct"
 SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
@@ -146,7 +153,7 @@ def _pycharm_args_2d() -> list[str]:
 
 
 def _pycharm_args_3d() -> list[str]:
-    args = ["--case", AIRBOX3D_CASE]
+    args = ["--stage-case", STAGE_CASE_3D, "--case", AIRBOX3D_CASE]
     _add_value(args, "--nedelec-degree", NEDELEC_DEGREE_3D)
     _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE_3D)
     _add_value(args, "--mesh-target-size", MESH_TARGET_SIZE_3D)
@@ -160,6 +167,12 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--solver-max-it", SOLVER_MAX_IT_3D)
     _add_bool(args, "--solver-monitor", SOLVER_MONITOR_3D)
     _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
+    _add_bool(args, "--use-floquet-xy", USE_FLOQUET_XY_3D)
+    _add_bool(args, "--use-pml", USE_PML_3D)
+    _add_value(args, "--pml-top-thickness", PML_TOP_THICKNESS_3D)
+    _add_value(args, "--pml-bottom-thickness", PML_BOTTOM_THICKNESS_3D)
+    _add_value(args, "--pml-alpha", PML_ALPHA_3D)
+    _add_value(args, "--n-substrate", N_SUBSTRATE_3D)
     return args
 
 

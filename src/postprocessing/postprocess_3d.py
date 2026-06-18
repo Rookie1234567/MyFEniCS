@@ -9,6 +9,7 @@ from mpi4py import MPI
 
 from dolfinx import fem, io, plot
 
+from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.config_3d import SimulationConfig3D
 
 
@@ -47,18 +48,11 @@ def _add_abs_scalar(grid, name: str, values: np.ndarray) -> None:
 
 
 def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
-    k = cfg.wavevector
-    p = cfg.polarization_vector
-    phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
-    return cfg.electric_field_scale_V_per_m * cfg.incident_amplitude * phase[:, None] * p[None, :]
+    return cfg.electric_field_scale_V_per_m * electric_field_code_values(cfg, coords)
 
 
 def _exact_h_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
-    k = cfg.wavevector
-    p = cfg.polarization_vector
-    phase = np.exp(1j * (k[0] * coords[:, 0] + k[1] * coords[:, 1] + k[2] * coords[:, 2]))
-    h_code = np.cross(k, p) / (cfg.k0 * cfg.mu_r)
-    return cfg.magnetic_field_scale_A_per_m * cfg.incident_amplitude * phase[:, None] * h_code[None, :]
+    return cfg.magnetic_field_scale_A_per_m * magnetic_field_code_values(cfg, coords)
 
 
 def _write_parallel_vtu_collection(out_dir: Path, size: int):
@@ -146,7 +140,13 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
     _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
     _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
-    paraview_grid.cell_data["domain_tag"] = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
+    domain_tags = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
+    if hasattr(mesh_data, "cell_tags"):
+        indices = np.asarray(mesh_data.cell_tags.indices, dtype=np.int32)
+        values = np.asarray(mesh_data.cell_tags.values, dtype=np.int32)
+        valid = indices < paraview_grid.n_cells
+        domain_tags[indices[valid]] = values[valid]
+    paraview_grid.cell_data["domain_tag"] = domain_tags
     paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)

@@ -33,6 +33,8 @@ def _shared_run_dir(results_root: Path, base_name: str, unique_output: bool) -> 
 
 def _config_updates(args) -> dict[str, object]:
     updates: dict[str, object] = {}
+    if args.stage_case is not None:
+        updates["stage_case"] = args.stage_case
     if args.nedelec_degree is not None:
         updates["nedelec_degree"] = args.nedelec_degree
     if args.visualization_degree is not None:
@@ -59,22 +61,84 @@ def _config_updates(args) -> dict[str, object]:
         updates["solver_max_it"] = args.solver_max_it
     if args.solver_monitor is not None:
         updates["solver_monitor"] = args.solver_monitor
+    if args.use_floquet_xy is not None:
+        updates["use_floquet_xy"] = args.use_floquet_xy
+    if args.use_pml is not None:
+        updates["use_pml"] = args.use_pml
+    if args.pml_top_thickness is not None:
+        updates["pml_top_thickness"] = args.pml_top_thickness
+    if args.pml_bottom_thickness is not None:
+        updates["pml_bottom_thickness"] = args.pml_bottom_thickness
+    if args.pml_alpha is not None:
+        updates["pml_alpha"] = args.pml_alpha
+    if args.n_substrate is not None:
+        updates["n_substrate"] = complex(args.n_substrate)
     return updates
 
 
-def _case_configs(case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
+def _stage_defaults(stage_case: str) -> dict[str, object]:
+    if stage_case == "stage1_airbox":
+        return {"stage_case": stage_case, "geometry_kind": "airbox", "use_floquet_xy": False, "use_pml": False}
+    if stage_case == "floquet_airbox":
+        return {"stage_case": stage_case, "geometry_kind": "airbox", "use_floquet_xy": True, "use_pml": False}
+    if stage_case == "pml_airbox":
+        return {
+            "stage_case": stage_case,
+            "geometry_kind": "airbox",
+            "use_floquet_xy": True,
+            "use_pml": True,
+            "pml_top_thickness": 250.0,
+            "pml_bottom_thickness": 250.0,
+        }
+    if stage_case == "fresnel_interface":
+        return {
+            "stage_case": stage_case,
+            "geometry_kind": "fresnel_interface",
+            "use_floquet_xy": True,
+            "use_pml": True,
+            "pml_top_thickness": 250.0,
+            "pml_bottom_thickness": 250.0,
+            "n_substrate": 1.45 + 0.0j,
+        }
+    raise ValueError("Unsupported 3D stage_case.")
+
+
+def _stage_list(stage_case: str) -> list[str]:
+    if stage_case == "stage2_all":
+        return ["floquet_airbox", "pml_airbox", "fresnel_interface"]
+    return [stage_case]
+
+
+def _case_configs(case: str, stage_case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
+    configs: list[SimulationConfig3D] = []
     if case == "normal":
-        return [normal_incidence_airbox_config(**updates)]
-    if case == "oblique":
-        return [oblique_incidence_airbox_config(**updates)]
-    if case == "both":
-        return [normal_incidence_airbox_config(**updates), oblique_incidence_airbox_config(**updates)]
-    raise ValueError("case must be 'normal', 'oblique', or 'both'.")
+        builders = [normal_incidence_airbox_config]
+    elif case == "oblique":
+        builders = [oblique_incidence_airbox_config]
+    elif case == "both":
+        builders = [normal_incidence_airbox_config, oblique_incidence_airbox_config]
+    else:
+        raise ValueError("case must be 'normal', 'oblique', or 'both'.")
+
+    for stage in _stage_list(stage_case):
+        stage_updates = _stage_defaults(stage)
+        stage_updates.update(updates)
+        stage_updates["stage_case"] = stage
+        for builder in builders:
+            cfg = builder(**stage_updates)
+            cfg.case_name = f"{cfg.case_name}_{stage}"
+            configs.append(cfg)
+    return configs
 
 
 def main(argv: list[str] | None = None):
     defaults = SimulationConfig3D()
-    parser = argparse.ArgumentParser(description="Run stage-1 3D Maxwell uniform-air-box verification.")
+    parser = argparse.ArgumentParser(description="Run staged 3D Maxwell airbox/Floquet/PML/Fresnel verification.")
+    parser.add_argument(
+        "--stage-case",
+        choices=("stage1_airbox", "floquet_airbox", "pml_airbox", "fresnel_interface", "stage2_all"),
+        default="stage1_airbox",
+    )
     parser.add_argument("--case", choices=("normal", "oblique", "both"), default="both")
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
@@ -129,18 +193,24 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Use timestamped results/3D_airbox_* directories.",
     )
+    parser.add_argument("--use-floquet-xy", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--use-pml", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--pml-top-thickness", type=float, default=None, help="Top PML thickness in nm.")
+    parser.add_argument("--pml-bottom-thickness", type=float, default=None, help="Bottom PML thickness in nm.")
+    parser.add_argument("--pml-alpha", type=float, default=None)
+    parser.add_argument("--n-substrate", default=None, help="Substrate refractive index for Fresnel stage.")
     args = parser.parse_args(argv)
 
     unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
     updates = _config_updates(args)
-    configs = _case_configs(args.case, updates)
+    configs = _case_configs(args.case, args.stage_case, updates)
 
     root = project_root()
     results_root = root / "results"
     p = args.nedelec_degree if args.nedelec_degree is not None else defaults.nedelec_degree
     h = args.mesh_target_size if args.mesh_target_size is not None else defaults.mesh_target_size
     case_tag = "normal_oblique" if args.case == "both" else args.case
-    group_parts = ["3D_airbox_stage1", case_tag, f"p{p}", _number_tag("h", h)]
+    group_parts = ["3D", args.stage_case, case_tag, f"p{p}", _number_tag("h", h)]
     if MPI.COMM_WORLD.size > 1:
         group_parts.append(f"np{MPI.COMM_WORLD.size}")
     run_root = _shared_run_dir(results_root, "_".join(group_parts), unique_output)

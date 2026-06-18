@@ -34,6 +34,7 @@ class SimulationConfig3D:
     """
 
     case_name: str = "airbox3d_normal"
+    stage_case: str = "stage1_airbox"
     geometry_kind: str = "airbox"
     lambda0: float = 633.0
     n_air: complex = 1.0 + 0.0j
@@ -55,9 +56,12 @@ class SimulationConfig3D:
     grating_width_y: float = 0.0
     n_substrate: complex | None = None
     n_grating: complex | None = None
+    interface_z: float = 0.0
+    use_floquet_xy: bool = False
     use_pml: bool = False
     pml_top_thickness: float = 0.0
     pml_bottom_thickness: float = 0.0
+    pml_alpha: float = 5.0
 
     # Incident direction uses spherical angles relative to the height axis:
     # theta = tilt away from downward -z propagation, phi = azimuth in x-y.
@@ -118,11 +122,27 @@ class SimulationConfig3D:
         return self.period_y
 
     @property
+    def physical_z_min(self) -> float:
+        return self.z_min
+
+    @property
+    def physical_z_max(self) -> float:
+        return self.z_max
+
+    @property
+    def domain_z_min(self) -> float:
+        return self.physical_z_min - self.pml_bottom_thickness if self.use_pml else self.physical_z_min
+
+    @property
+    def domain_z_max(self) -> float:
+        return self.physical_z_max + self.pml_top_thickness if self.use_pml else self.physical_z_max
+
+    @property
     def box_lengths(self) -> tuple[float, float, float]:
         return (
             self.x_max - self.x_min,
             self.y_max - self.y_min,
-            self.z_max - self.z_min,
+            self.domain_z_max - self.domain_z_min,
         )
 
     @property
@@ -205,6 +225,18 @@ class SimulationConfig3D:
     def kz(self) -> complex:
         return complex(self.wavevector[2])
 
+    @property
+    def floquet_phase_x(self) -> complex:
+        return np.exp(1j * self.kx * (self.x_max - self.x_min))
+
+    @property
+    def floquet_phase_y(self) -> complex:
+        return np.exp(1j * self.ky * (self.y_max - self.y_min))
+
+    @property
+    def substrate_index(self) -> complex:
+        return complex(self.n_air if self.n_substrate is None else self.n_substrate)
+
     def as_jsonable(self) -> dict[str, object]:
         data = asdict(self)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
@@ -215,9 +247,15 @@ class SimulationConfig3D:
         data["x_max"] = self.x_max
         data["y_min"] = self.y_min
         data["y_max"] = self.y_max
+        data["physical_z_min"] = self.physical_z_min
+        data["physical_z_max"] = self.physical_z_max
+        data["domain_z_min"] = self.domain_z_min
+        data["domain_z_max"] = self.domain_z_max
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [[value.real, value.imag] for value in self.polarization_vector]
         data["wavevector"] = [[value.real, value.imag] for value in self.wavevector]
+        data["floquet_phase_x"] = _complex_or_none(self.floquet_phase_x)
+        data["floquet_phase_y"] = _complex_or_none(self.floquet_phase_y)
         data["k0"] = self.k0
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)
