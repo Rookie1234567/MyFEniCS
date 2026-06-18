@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -216,14 +217,19 @@ def _petsc_matrix_stats(A) -> dict[str, Any]:
     info = A.getInfo()
     nnz_used = info.get("nz_used")
     average_nnz_per_row = None
+    memory_estimate_bytes = None
     if nnz_used is not None and rows > 0:
         average_nnz_per_row = float(nnz_used) / float(rows)
+        # Rough AIJ/CSR storage estimate: complex128 value, column index, and
+        # row pointer. PETSc's own memory field can be zero for some builds.
+        memory_estimate_bytes = float(nnz_used) * (16.0 + 8.0) + float(rows + 1) * 8.0
     return {
         "matrix_rows": int(rows),
         "matrix_cols": int(cols),
         "matrix_nnz_used": float(nnz_used) if nnz_used is not None else None,
         "matrix_average_nnz_per_row": average_nnz_per_row,
         "matrix_memory_bytes": float(info.get("memory")) if info.get("memory") is not None else None,
+        "matrix_memory_estimate_bytes": memory_estimate_bytes,
     }
 
 
@@ -234,6 +240,7 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     if matrix_stats["matrix_average_nnz_per_row"] is not None:
         log(f"average nnz per row = {matrix_stats['matrix_average_nnz_per_row']:.2f}")
     log(f"PETSc matrix memory bytes = {matrix_stats['matrix_memory_bytes']}")
+    log(f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}")
 
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
@@ -269,6 +276,32 @@ def _write_case_outputs(out_dir: Path, summary: dict[str, Any], log_lines: list[
             encoding="utf-8",
         )
         (out_dir / "solver_log.txt").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+        if summary.get("diagnostic_only"):
+            (out_dir / "NO_OFFICIAL_FIELD_OUTPUT.txt").write_text(
+                "This case did not produce official field output because the solver did not produce a valid solution.\n"
+                "Read run_summary.json and solver_log.txt for the failure reason.\n",
+                encoding="utf-8",
+            )
+        else:
+            (out_dir / "NO_OFFICIAL_FIELD_OUTPUT.txt").unlink(missing_ok=True)
+
+
+def _clear_official_field_outputs(out_dir: Path, comm) -> None:
+    if comm.rank == 0:
+        patterns = (
+            "fields_3d_for_paraview*.vtu",
+            "fields_3d_for_paraview_parallel.pvd",
+            "E_3d_numerical.bp",
+            "H_3d_A_per_m_from_curl.bp",
+            "vtx_3d_warning.txt",
+        )
+        for pattern in patterns:
+            for path in out_dir.glob(pattern):
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink(missing_ok=True)
+    comm.barrier()
 
 
 def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
@@ -327,6 +360,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"PETSc solver options = {petsc_options}")
 
     if solver_settings["disabled"]:
+        _clear_official_field_outputs(out_dir, comm)
         elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
         max_rss_mb = _global_max_rss_mb(comm)
         summary = {
@@ -478,6 +512,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     }
 
     if not converged:
+        _clear_official_field_outputs(out_dir, comm)
         log("WARNING: PETSc KSP did not converge.")
         log("WARNING: This field is only a diagnostic iterate and must not be used as a valid solution.")
         log("WARNING: Official postprocess and ParaView output are skipped for this failed case.")

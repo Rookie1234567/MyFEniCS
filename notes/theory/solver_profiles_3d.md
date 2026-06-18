@@ -115,9 +115,11 @@ matrix_cols
 matrix_nnz_used
 matrix_average_nnz_per_row
 matrix_memory_bytes
+matrix_memory_estimate_bytes
 ```
 
 这些字段用于判断自由度规模、矩阵稀疏程度、矩阵内存和求解器内存压力。
+其中 `matrix_memory_bytes` 来自 PETSc 自身统计；如果当前 PETSc build 返回 0，可以参考 `matrix_memory_estimate_bytes`，它按 AIJ/CSR 结构粗略估算复数矩阵值、列索引和行指针的存储量。
 
 ## 推荐测试顺序
 
