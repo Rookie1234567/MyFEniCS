@@ -31,16 +31,16 @@ fresnel_interface normal p, p1, h700, serial
 e9ea394 Refine 3D stage 2 metrics and comments
 815dad0 Add 3D stage 2 test framework
 b6629b7 Document 3D stage 2 test plan
+62d79f6 Record 3D stage 2 smoke results
 ```
 
 当前未完成：
 
 ```text
-1. 提交本次 validation_report/resume_log 的实跑结果更新。
-2. 定位 2C Fresnel R/T 严重偏差。
-3. 重新设计或放粗 MPI h300 smoke，避免 5 分钟无 summary。
-4. pml_airbox MPI 2 尚未跑。
-5. 完整扫描第一轮尚未跑。
+1. 定位 2C Fresnel R/T 严重偏差。
+2. 重新设计或放粗 MPI h300 smoke，避免 5 分钟无 summary。
+3. pml_airbox MPI 2 尚未跑。
+4. 完整扫描第一轮尚未跑。
 ```
 
 下一轮建议不要直接继续大扫描，先定位：
@@ -66,11 +66,10 @@ b6629b7 Document 3D stage 2 test plan
 尚未完成：
 
 ```text
-1. notes/test 文档提交。
-2. fresnel_interface smoke test。
-3. floquet_airbox MPI 2 h300。
-4. pml_airbox MPI 2。
-5. 完整扫描第一轮。
+1. fresnel_interface 物理偏差定位。
+2. floquet_airbox MPI 2 h300 超时后的降级 smoke。
+3. pml_airbox MPI 2。
+4. 完整扫描第一轮。
 ```
 
 下一轮或下一步优先命令：
