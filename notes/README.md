@@ -1,5 +1,40 @@
 # v2 文档索引
 
+## 2026-06-18 更新：3D Stage 2 Floquet/PML/Fresnel 第一版
+
+3D 路线进入 Stage 2。当前新增：
+
+```text
+2A floquet_airbox       3D x/y 双周期 Floquet
+2B pml_airbox           3D x/y Floquet + 上下 z-PML
+2C fresnel_interface    平界面 Fresnel manufactured reference
+```
+
+日常仍然从 `src/main.py` 运行。3D 区块新增核心变量：
+
+```python
+STAGE_CASE_3D = "floquet_airbox"  # stage1_airbox / floquet_airbox / pml_airbox / fresnel_interface / stage2_all
+SOLVER_PROFILE_3D = "direct"
+```
+
+新增理论说明：
+
+```text
+theory/stage2_3d_floquet_pml_fresnel.md
+```
+
+新增或重点文件：
+
+```text
+src/constraints/floquet_3d.py       3D 双周期 Nedelec Floquet 低层 MPC 约束
+src/common/analytic_fields_3d.py    3D 平面波、PML 复坐标和 Fresnel 解析参考场
+src/common/pml_3d.py                z 向 PML 张量
+src/geometry/mesh_builder_3d.py     3D cell tags: air/substrate/top_pml/bottom_pml
+src/solvers/solve_airbox_maxwell_3d.py  Stage 1/2 共用 3D 求解路径
+```
+
+已实跑：Stage 1 小网格回归、2A normal/oblique 串行、2A 极小 MPI 2、2B normal 串行。Fresnel smoke test 因本轮 Docker 执行额度耗尽还需要下一轮继续跑。
+
 ## 2026-06-18 更新：3D 求解器 profile 修正
 
 3D Stage 1 现在把 `direct` 明确作为当前唯一可靠默认求解器。普通 Jacobi/ILU/ASM 迭代 profile 只能作为实验或诊断，不能当成可信物理解来源。日常仍然从 `src/main.py` 运行；如果要切换求解器，优先改 3D 区块里的这些变量：

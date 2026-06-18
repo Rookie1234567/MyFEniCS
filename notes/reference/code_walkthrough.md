@@ -1,3 +1,147 @@
+## 2026-06-18 更新：3D Stage 2 代码阅读顺序
+
+最新更新放在文档最上方。Stage 2 新增 3D 双周期 Floquet、z 向 PML 和 Fresnel 平界面 manufactured reference。建议按下面顺序读：
+
+1. `src/main.py`
+
+先看 3D 区块：
+
+```python
+STAGE_CASE_3D = "floquet_airbox"
+AIRBOX3D_CASE = "normal"
+USE_FLOQUET_XY_3D = None
+USE_PML_3D = None
+SOLVER_PROFILE_3D = "direct"
+```
+
+`STAGE_CASE_3D` 决定跑哪一段：
+
+```text
+stage1_airbox
+floquet_airbox
+pml_airbox
+fresnel_interface
+stage2_all
+```
+
+2. `src/runners/run_3d_airbox.py`
+
+这里把 `--stage-case` 展开成真正的 3D config。重点看 `_stage_defaults(...)`：
+
+```text
+floquet_airbox       自动打开 use_floquet_xy
+pml_airbox           自动打开 use_floquet_xy 和 use_pml
+fresnel_interface    自动设置 geometry_kind="fresnel_interface" 和 n_substrate=1.45
+```
+
+3. `src/common/config_3d.py`
+
+这里新增了 Stage 2 的公共参数和派生量：
+
+```text
+stage_case
+use_floquet_xy
+use_pml
+pml_alpha
+physical_z_min / physical_z_max
+domain_z_min / domain_z_max
+floquet_phase_x / floquet_phase_y
+```
+
+`z_min/z_max` 仍表示物理区上下边界；如果打开 PML，真正计算域由 `domain_z_min/domain_z_max` 向外扩展。
+
+4. `src/geometry/mesh_builder_3d.py`
+
+Stage 2 后这个文件不再只是空气盒外边界标记。它还会生成 cell tags：
+
+```text
+air
+substrate
+top_pml
+bottom_pml
+```
+
+并且 3D box 网格使用 `shared_facet` ghost mode，为 MPI 边界约束保留邻接信息。
+
+5. `src/constraints/floquet_3d.py`
+
+这是 2A 的核心。当前不能使用 `dolfinx_mpc` 高层 periodic helper，因为它不支持当前 Nedelec H(curl) 向量空间。代码改用低层路线：
+
+```text
+facet 配对
+探针场插值
+Nedelec 面自由度变换重构
+add_constraint(slaves, masters, coeffs, owners, offsets)
+```
+
+summary 里的 `floquet_x_face_mismatch` 和 `floquet_y_face_mismatch` 来自约束构造 probe residual，不是粗网格内部采样误差。
+
+6. `src/common/analytic_fields_3d.py`
+
+这里集中放 3D 解析参考场：
+
+```text
+uniform plane wave
+PML complex z coordinate
+Fresnel reflection/transmission coefficients
+Fresnel total E/H reference field
+```
+
+后处理和边界条件都复用这里，避免边界给的是一套公式、误差对比又是另一套公式。
+
+7. `src/common/pml_3d.py`
+
+这里生成 z-only PML 张量。PML 只沿 z 拉伸，x/y 仍然由 Floquet 约束处理。
+
+8. `src/solvers/solve_airbox_maxwell_3d.py`
+
+Stage 1 和 Stage 2 现在共用这个求解入口。阅读重点：
+
+```text
+plane_wave_electric_field(...)       插值当前 stage 的解析 E 场
+_build_variational_forms(...)        根据 cell tags 装配 air/substrate/PML 弱式
+build_double_floquet_mpc(...)        打开 x/y Floquet 时构造 MPC
+_floquet_probe_metrics(...)          写入 Floquet mismatch
+_pml_probe_metrics(...)              写入 PML proxy 和 decay ratio
+_stage2_reference_metrics(...)       写入 Fresnel R/T 字段
+```
+
+如果 `use_floquet_xy=True`，强 Dirichlet 边界只施加在 z_min/z_max，且会排除 Floquet slave dof，避免强边界和周期约束互相冲突。
+
+9. `src/postprocessing/postprocess_3d.py`
+
+ParaView 输出继续使用：
+
+```text
+E_V_per_m_*
+H_A_per_m_*
+domain_tag
+```
+
+`domain_tag` 现在能区分 air/substrate/top_pml/bottom_pml。
+
+### 已验证情况
+
+本次已实跑：
+
+```text
+stage1_airbox serial p1 h300 direct
+floquet_airbox normal serial p1 h300 direct
+floquet_airbox oblique serial p1 h300 direct
+floquet_airbox normal MPI 2 p1 h900 direct
+pml_airbox normal serial p1 h350 direct
+```
+
+尚未实跑：
+
+```text
+fresnel_interface smoke test
+floquet_airbox MPI 2 h300
+pml_airbox MPI 2
+```
+
+原因是本轮 Docker 执行额度在 Fresnel 验证前被系统拒绝。下一轮应优先补跑这些 case。
+
 ## 2026-06-18 更新：3D 求解器 profile 修正
 
 最新更新放在文档最上方。本次修正保留直接法，并把它明确为当前 3D 空气盒唯一可靠默认基准：
