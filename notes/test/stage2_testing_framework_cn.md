@@ -66,10 +66,32 @@ Level 9：Fresnel + PML
 
 Level 10：最终组合 sanity
 
-重点检查 `n_sub=1` 情形，理论上界面消失，应有 `R≈0`、`T≈1`。当前硬门槛先定义在 no PML/Floquet 或 Floquet-only 的隔离路径上，因为 total-field 入射波穿过 top PML 时会在复坐标延拓中增长，PML+总场版本仍是待定位项。
+重点检查 `n_sub=1` 情形，理论上界面消失，应有 `R≈0`、`T≈1`。当前硬门槛定义在 no PML/Floquet 和 Floquet-only 两条隔离路径上，因为 total-field 入射波穿过 top PML 时会在复坐标延拓中增长，PML+总场版本仍是 smoke/诊断项。
 
 ## 当前验收原则
 
 Level 0 到 Level 3 是公式和工具层测试，必须严格通过。
 
 Level 4 到 Level 10 先作为小网格 PDE 验证和扫描入口。粗网格误差不强行要求一开始低于 1%，但必须记录误差、趋势和失败原因。若 no PML/Floquet 或 Floquet-only 的 `n_sub=1` sanity 失败，不进入 Stage 3；PML+总场 sanity 需要等 PML 注入/采样口径修好后再升级为硬门槛。
+
+## 2026-06-19 Stage 2 当前验收状态
+
+```text
+Level 0-3:
+  默认单元测试通过。
+
+Level 4-6:
+  stage1_airbox、floquet_airbox normal/oblique、MPI 2 h300/h500 smoke 通过。
+
+Level 7:
+  PML airbox smoke 通过，bottom decay ratio 对角度、alpha 和厚度有响应。
+
+Level 8:
+  Fresnel no PML/Floquet 小扫描完成，n_sub=1 sanity 通过。
+
+Level 9:
+  Fresnel+PML 能跑通并输出 R/T，但 total-field+PML 口径仍是诊断项，不作为当前硬门槛。
+
+Level 10:
+  n_sub=1 no PML/Floquet 与 Floquet-only sanity 均通过；测试代码已经覆盖这两条。
+```

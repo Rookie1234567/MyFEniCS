@@ -6,7 +6,7 @@
 
 ```text
 默认编译和单元测试:
-  compileall + unittest 通过，Ran 19 tests, OK, skipped=7
+  compileall + unittest 通过，Ran 20 tests, OK, skipped=8
 
 MPI Floquet:
   h500，MPI 2，mismatch = 1.18e-15 / 1.34e-15
@@ -26,8 +26,12 @@ Fresnel 回归:
   PML theta=30/60、alpha=10、thickness=350 均跑通，bottom decay 对参数有响应。
   Fresnel n_sub=1 的 no PML/Floquet 隔离 sanity 通过：R/T = 3.16e-4 / 1.010。
   Fresnel n_sub=1 的 Floquet-only 也通过：R/T = 2.12e-4 / 1.008。
-  PML-only 与 Floquet+PML 仍未过硬门槛，下一步应定位 PML total-field 注入和 R/T 采样。
+  p-normal Floquet-only 趋势通过：R/T = 0.0522 / 0.9378，R+T = 0.990。
+  Level 10 PDE sanity 已通过：no PML/Floquet 与 Floquet-only 两个 n_sub=1 测试均 OK。
+  PML-only 与 Floquet+PML 保留为 smoke/诊断项；PML+total-field 功率硬门槛延后到更合理的 source/modal 口径。
 ```
+
+Stage 2 当前判定为“基础边界条件阶段完成”：双周期 Floquet、z-PML 结构、PML 参数响应、Fresnel 平界面 no-PML/Floquet 与 Floquet-only sanity 已经闭合。尚未作为硬门槛的是 PML+Fresnel 的总场功率验收，因为当前入射波穿过 top PML 会在复坐标中增长，这不适合作为最终 R/T 定量口径。
 
 最新验证细节看：
 

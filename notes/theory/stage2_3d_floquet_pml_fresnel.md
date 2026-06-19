@@ -53,9 +53,24 @@ Fresnel sanity:
     R/T/R+T = 0.0348 / 1.1811 / 1.2159，未通过
   n_sub=1, Floquet+PML, p2/h300:
     R/T/R+T = 0.0657 / 1.0783 / 1.1440，未通过
+  n_sub=1.45, p-normal, Floquet only, p2/h200:
+    R/T/R+T = 0.0522 / 0.9378 / 0.9900，有合理趋势
 ```
 
 这个对比很关键：Fresnel 体方程和基本 R/T 拟合不是完全错误，Floquet 本身也不是主要失败源。当前风险主要转移到 PML+total-field 口径：入射波从上方穿过 top PML 时，按 `exp(i k·z_tilde)` 的复坐标延拓会增长，粗网格下容易污染 R/T 拟合。后续如果要让 PML+Fresnel 成为硬门槛，需要改成更合理的 scattered/source 口径，或重新定义远离 PML 入口的采样平面。
+
+Stage 2 的完成边界因此定义为：
+
+```text
+已完成：
+  2A 双周期 Floquet 基础和 MPI smoke。
+  2B z-PML 网格、张量、domain_tag、衰减指标和参数响应 smoke。
+  2C Fresnel 平界面 no-PML/Floquet 与 Floquet-only R/T sanity。
+
+保留到后续端口/source 口径：
+  PML+Fresnel 的总场功率硬验收。
+  3D diffraction orders 和 modal/auxiliary port。
+```
 
 ## 2026-06-18 历史记录：Fresnel 收敛趋势和 MPI Floquet 风险
 
