@@ -1,5 +1,43 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-22 更新：2C incident-scattered 诊断字段怎么用
+
+运行 2C 后，先看 `run_summary.json` 里的这些字段，确认求解口径没有被意外改回 reference：
+
+```text
+field_formulation = incident_scattered
+reference_added_to_solution = false
+incident_added_to_solution = true
+fresnel_reference_used_for_solution = false
+fresnel_reference_used_for_comparison_only = true
+```
+
+再看 RHS 和模态拟合诊断：
+
+```text
+rhs_source_sign
+rhs_source_region
+rhs_source_tag_ids
+rhs_source_tag_volumes
+rhs_source_norm
+E_inc_norm / E_sca_norm / E_total_norm
+fresnel_top_mode_fit_residual
+fresnel_bottom_mode_fit_residual
+fresnel_incident_amplitude_abs
+fresnel_reflected_amplitude_abs
+fresnel_transmitted_amplitude_abs
+fresnel_top_sampling_z_min/max
+fresnel_bottom_sampling_z_min/max
+```
+
+本轮 analytic postprocess sanity 已经验证：把完整 Fresnel 解析场直接插值进同一个 Nédélec 空间后，h100/h50/h25 的 R/T 可以回到 Fresnel 解析值。因此当前 2C 的主要误差不在 R/T 后处理公式，而在 incident-scattered PDE/边界/PML 口径。
+
+最新实跑表放在：
+
+```text
+notes/test/stage2_validation_report.md
+```
+
 ## 2026-06-22 更新：2C Fresnel 现在是 incident-scattered physical benchmark
 
 当前三个 Stage 2 case 的口径是：

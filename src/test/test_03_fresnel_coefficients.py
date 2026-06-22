@@ -11,7 +11,9 @@ from src.solvers.solve_airbox_maxwell_3d import (
     _mode_basis,
     _use_incident_scattered_formulation,
     _use_reference_correction_formulation,
+    run_fresnel_analytic_postprocess_sanity,
 )
+from src.test.stage2_test_utils import temp_output_dir
 
 
 class TestFresnelCoefficients(unittest.TestCase):
@@ -85,6 +87,27 @@ class TestFresnelCoefficients(unittest.TestCase):
         self.assertFalse(_use_reference_correction_formulation(fresnel))
         self.assertTrue(_use_incident_scattered_formulation(fresnel))
         self.assertEqual(_field_formulation_label(fresnel, False, True), "incident_scattered")
+
+    def test_fresnel_analytic_total_field_postprocess_sanity(self):
+        cfg = normal_incidence_airbox_config(
+            stage_case="fresnel_interface",
+            geometry_kind="fresnel_interface",
+            use_floquet_xy=True,
+            use_pml=True,
+            pml_top_thickness=250.0,
+            pml_bottom_thickness=250.0,
+            n_substrate=1.45 + 0.0j,
+            polarization_kind="s",
+            custom_polarization=None,
+            nedelec_degree=1,
+            mesh_target_size=100.0,
+        )
+        summary = run_fresnel_analytic_postprocess_sanity(cfg, temp_output_dir("fresnel_analytic_postprocess"))
+        self.assertTrue(summary["fresnel_postprocess_sanity_pass"])
+        self.assertLess(float(summary["fresnel_R_error"]), 1.0e-10)
+        self.assertLess(float(summary["fresnel_T_error"]), 1.0e-10)
+        self.assertLess(float(summary["fresnel_top_mode_fit_residual"]), 1.0e-1)
+        self.assertLess(float(summary["fresnel_bottom_mode_fit_residual"]), 1.0e-1)
 
 
 if __name__ == "__main__":

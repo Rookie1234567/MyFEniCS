@@ -1,5 +1,37 @@
 # v2 文档索引
 
+## 2026-06-22 更新：2C Fresnel 误差诊断已补齐
+
+本轮按“先诊断、不大改模型”的顺序完成：
+
+```text
+1. summary 增加 2C formulation、reference/incident added、RHS source、E_inc/E_sca/E_total norm。
+2. 增加 Fresnel analytic postprocess sanity：不求解 Maxwell，只插值完整 Fresnel analytic total field 并复用同一套 R/T 拟合。
+3. 打印 Fresnel mode fit residual、incident/reflected/transmitted amplitude、采样 z 范围。
+4. 输出 RHS source sign、source region、source tag volume 和 rhs_source_norm。
+5. 实跑 h50/h35/h25 mesh sweep，以及 h50 的 PML alpha/厚度对比。
+```
+
+当前结论：
+
+```text
+analytic postprocess sanity: h100/h50/h25 的 R/T 回到 Fresnel 解析值
+正式 2C h50: R/T = 0.016527 / 1.041854, R+T = 1.058382
+正式 2C h35: R/T = 0.034476 / 0.907417, R+T = 0.941893
+正式 2C h25: R/T = 0.100094 / 0.645146, R+T = 0.745240
+h50 PML 厚度 350: R/T = 0.012358 / 0.964541, R+T = 0.976899
+```
+
+判断：R/T 后处理本身基本正确；当前主要误差在 incident-scattered PDE 的边界/PML/source 口径。下一步仍不要把 Fresnel reference 加回解里，应继续定位 scattered-field 边界条件或引入更标准的 TFSF/modal port。
+
+先读：
+
+```text
+test/stage2_validation_report.md
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+```
+
 ## 2026-06-22 更新：2C Fresnel 已切到 incident-scattered 物理口径
 
 本轮按新的要求只改 `fresnel_interface`，保留：

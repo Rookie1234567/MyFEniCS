@@ -1,5 +1,84 @@
 # Stage 2 续接日志
 
+## 2026-06-22 2C incident-scattered 诊断与收敛续接点
+
+本轮完成：
+
+```text
+1. run_summary.json 增加并确认：
+   field_formulation
+   reference_added_to_solution
+   incident_added_to_solution
+   fresnel_reference_used_for_solution
+   fresnel_reference_used_for_comparison_only
+   rhs_source_sign / rhs_source_region / rhs_source_tag_volumes / rhs_source_norm
+   E_inc_norm / E_sca_norm / E_total_norm
+2. _fresnel_numerical_metrics 增加：
+   fresnel_top/bottom_mode_fit_residual
+   fresnel_incident/reflected/transmitted_amplitude_abs
+   fresnel_top/bottom_sampling_z_min/max
+3. 新增 run_fresnel_analytic_postprocess_sanity(...)
+4. 新增 unittest:
+   src/test/test_03_fresnel_coefficients.py::test_fresnel_analytic_total_field_postprocess_sanity
+5. Docker unittest 已通过：
+   Ran 23 tests, OK, skipped=8
+```
+
+analytic postprocess sanity 结果：
+
+```text
+h100/h50/h35/h25 的 R/T 均回到 Fresnel 解析值，说明 modal fitting、polarization basis 和 T normalization 基本正确。
+h200 太粗，R+T=0.991873，不作为通过。
+```
+
+正式 PDE mesh sweep：
+
+```text
+h50:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_141321
+  R/T = 0.016527 / 1.041854
+  R+T = 1.058382
+  top/bottom fit residual = 0.157827 / 0.405313
+
+h35:
+  result_dir = results/3D_fresnel_interface_normal_p1_h35p0_np2_20260622_141700
+  R/T = 0.034476 / 0.907417
+  R+T = 0.941893
+  top/bottom fit residual = 0.097722 / 0.298271
+  注意：日志中有 z 分层未对齐 warning。
+
+h25:
+  result_dir = results/3D_fresnel_interface_normal_p1_h25p0_np2_20260622_142235
+  R/T = 0.100094 / 0.645146
+  R+T = 0.745240
+  top/bottom fit residual = 0.291706 / 0.566076
+```
+
+PML 参数检查：
+
+```text
+h50, alpha=10, thickness=250:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_143345
+  R/T = 0.022254 / 1.035328
+  R+T = 1.057582
+
+h50, alpha=5, thickness=350:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_143646
+  R/T = 0.012358 / 0.964541
+  R+T = 0.976899
+  top/bottom fit residual = 0.071412 / 0.238775
+```
+
+当前判断：
+
+```text
+1. 误差不主要来自 Fresnel R/T 后处理。
+2. RHS 当前是 +k0^2*(eps_sub-eps_air)*inner(E_inc,v)，区域只在 physical substrate。
+3. full PDE 不呈现单调 mesh convergence，说明不能靠简单加密解决。
+4. 增大 PML 厚度能改善 T 和 residual，但 R 仍偏低，PML/边界/source 口径仍需继续诊断。
+5. 下一轮不要把 Fresnel analytic reference 加回求解结果。
+```
+
 ## 2026-06-22 2C Fresnel incident-scattered 修改完成
 
 本轮根据新的文本要求，只继续修改 `fresnel_interface`，保留 2A 和 2B 的当前口径：

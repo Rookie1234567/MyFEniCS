@@ -1,3 +1,36 @@
+## 2026-06-22 更新：2C Fresnel 诊断代码路径
+
+最新 2C 诊断不要先看 PDE 组装，先按下面路径确认后处理和 source 是否健康：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  run_fresnel_analytic_postprocess_sanity(cfg, out_dir)
+     不求解 Maxwell
+     构建同一个 mesh 和 Nédélec space
+     插值完整 Fresnel analytic total field
+     调用同一个 _fresnel_numerical_metrics(...)
+
+  _fresnel_numerical_metrics(E, cfg)
+     拟合 incident/reflected/transmitted 模态
+     输出 R/T、fit residual、模态幅值和采样 z 范围
+
+  _cell_tag_volumes(...)
+     输出 air/substrate/top_pml/bottom_pml 的 cell tag 体积
+
+  _build_variational_forms(..., field_formulation="incident_scattered")
+     RHS 仍是 +k0^2*(eps_sub-eps_air)*inner(E_inc, v)
+     source 只在 cfg.tags.substrate
+```
+
+对应的回归测试在：
+
+```text
+src/test/test_03_fresnel_coefficients.py
+  test_fresnel_analytic_total_field_postprocess_sanity
+```
+
+这条测试说明：如果完整 Fresnel 解析场都拟合不回 Fresnel R/T，就先修 `_fresnel_numerical_metrics`；如果它通过，而 PDE 解不通过，就优先看 scattered-field source、PML 和边界条件。
+
 ## 2026-06-22 更新：2C incident-scattered Fresnel 代码路径
 
 最新 2C `fresnel_interface` 已经不是 reference-correction。阅读代码时按这个路径看：

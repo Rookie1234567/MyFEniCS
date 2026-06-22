@@ -1,5 +1,80 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：2C incident-scattered 误差诊断与收敛检查
+
+本轮没有把 Fresnel analytic reference 加回求解结果，仍保持：
+
+```text
+E_total = E_inc + E_sca
+Fresnel reference only for comparison
+```
+
+新增诊断字段已经写入 `run_summary.json`，并在运行日志中打印：
+
+```text
+field_formulation
+reference_added_to_solution
+incident_added_to_solution
+fresnel_reference_used_for_solution
+fresnel_reference_used_for_comparison_only
+rhs_source_sign
+rhs_source_region
+rhs_source_tag_ids / rhs_source_tag_volumes
+rhs_source_norm
+E_inc_norm / E_sca_norm / E_total_norm
+fresnel_top_mode_fit_residual / fresnel_bottom_mode_fit_residual
+fresnel_incident_amplitude_abs
+fresnel_reflected_amplitude_abs
+fresnel_transmitted_amplitude_abs
+fresnel_top_sampling_z_min/max
+fresnel_bottom_sampling_z_min/max
+```
+
+RHS 检查结果：
+
+```text
+source sign   = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)
+source region = physical_substrate
+source tag    = substrate
+source volume = 1.65e8 nm^3 for aligned h50/h25
+```
+
+Fresnel analytic postprocess sanity：
+
+这个检查不求解 Maxwell，只把完整 Fresnel analytic total field 插值到同一个 Nédélec 空间，然后调用同一个 `_fresnel_numerical_metrics`。结果说明：h100 及更细网格下，R/T 拟合和 T normalization 本身是正确的。
+
+| case | R_total | T_total | R+T | top residual | bottom residual | 判断 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| analytic h200 | 0.031463 | 0.960410 | 0.991873 | 0.162715 | 0.562616 | 太粗，不作为通过 |
+| analytic h100 | 0.03373594 | 0.96626406 | 1.000000 | 0.048640 | 0.059324 | 通过 |
+| analytic h50 | 0.03373594 | 0.96626406 | 1.000000 | 0.005214 | 0.009010 | 通过 |
+| analytic h35 | 0.03373594 | 0.96626406 | 1.000000 | 0.005274 | 0.009605 | R/T 通过，但 z 面未对齐 |
+| analytic h25 | 0.03373594 | 0.96626406 | 1.000000 | 0.001509 | 0.003684 | 通过 |
+
+正式 incident-scattered PDE mesh sweep：
+
+| case | dofs | R_total | T_total | R+T | top residual | bottom residual | result_dir |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| h50 default | 11602 | 0.016527 | 1.041854 | 1.058382 | 0.157827 | 0.405313 | `results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_141321` |
+| h35 default | 35653 | 0.034476 | 0.907417 | 0.941893 | 0.097722 | 0.298271 | `results/3D_fresnel_interface_normal_p1_h35p0_np2_20260622_141700` |
+| h25 default | 86628 | 0.100094 | 0.645146 | 0.745240 | 0.291706 | 0.566076 | `results/3D_fresnel_interface_normal_p1_h25p0_np2_20260622_142235` |
+
+PML 参数检查：
+
+| case | R_total | T_total | R+T | pml proxy | top residual | bottom residual | result_dir |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| h50 alpha=5, thickness=250 | 0.016527 | 1.041854 | 1.058382 | 0.182809 | 0.157827 | 0.405313 | `results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_141321` |
+| h50 alpha=10, thickness=250 | 0.022254 | 1.035328 | 1.057582 | 0.192943 | 0.150355 | 0.395346 | `results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_143345` |
+| h50 alpha=5, thickness=350 | 0.012358 | 0.964541 | 0.976899 | 0.126908 | 0.071412 | 0.238775 | `results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_143646` |
+
+当前判断：
+
+1. Fresnel postprocess sanity 已经通过；目前主要问题不在 modal fitting、polarization basis 或 T normalization。
+2. RHS 符号和区域符合当前 incident-scattered 公式，source 没有包含 air 或 PML。
+3. 正式 PDE 结果没有呈现单调 mesh convergence；h25 反而更差，说明当前 2C 误差更像边界/PML/scattered-field 注入口径问题，而不是简单网格误差。
+4. 增大 PML 厚度到 350 nm 明显改善 `T_total` 和 fit residual，但 `R_total` 仍偏低，说明 PML/边界处理确实参与误差，但还不是唯一因素。
+5. 下一步不要把 Fresnel analytic reference 加回解里；更合理的方向是继续诊断 scattered-field 边界条件、PML 中背景入射场的处理，或引入更标准的 TFSF/modal port。
+
 ## 2026-06-22 更新：2C Fresnel 已改为 incident-scattered physical benchmark
 
 本轮按新的物理口径修改了 Stage 2 的 `fresnel_interface`。现在：

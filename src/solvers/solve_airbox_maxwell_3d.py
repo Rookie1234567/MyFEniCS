@@ -314,7 +314,13 @@ def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
         return electric_field_code_values(cfg, x.T).T
 
     field.interpolate(eval_field)
+    field.x.scatter_forward()
     return field
+
+
+def _create_nedelec_space(msh, cfg: SimulationConfig3D):
+    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
+    return fem.functionspace(msh, curl_el)
 
 
 def _add_reference_field_to_solution(E: fem.Function, cfg: SimulationConfig3D) -> None:
@@ -473,6 +479,22 @@ def _sample_grid_points(cfg: SimulationConfig3D, z_values: np.ndarray, nx: int =
     return np.asarray(points, dtype=np.float64)
 
 
+def _cell_tag_volumes(msh, mesh_data, cfg: SimulationConfig3D) -> dict[str, float]:
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
+    tag_items = {
+        "air": cfg.tags.air,
+        "substrate": cfg.tags.substrate,
+        "top_pml": cfg.tags.top_pml,
+        "bottom_pml": cfg.tags.bottom_pml,
+    }
+    volumes: dict[str, float] = {}
+    for name, tag in tag_items.items():
+        local = fem.assemble_scalar(fem.form(ufl.as_ufl(1.0) * dx(tag)))
+        global_value = msh.comm.allreduce(local, op=MPI.SUM)
+        volumes[name] = float(np.real(global_value))
+    return volumes
+
+
 def _interpolated_mode_field(function_space, mode_k: np.ndarray, mode_polarization: np.ndarray) -> fem.Function:
     field = fem.Function(function_space, name="mode_calibration")
 
@@ -624,16 +646,18 @@ def _fresnel_numerical_metrics(E, cfg: SimulationConfig3D) -> dict[str, Any]:
     bottom_height = cfg.interface_z - cfg.physical_z_min
     top_z = np.linspace(cfg.interface_z + 0.25 * top_height, cfg.interface_z + 0.75 * top_height, 4)
     bottom_z = np.linspace(cfg.interface_z - 0.75 * bottom_height, cfg.interface_z - 0.25 * bottom_height, 4)
+    top_points = _sample_grid_points(cfg, top_z, nx=4, ny=4)
+    bottom_points = _sample_grid_points(cfg, bottom_z, nx=4, ny=4)
     top_amplitudes, top_fit_residual = _fit_plane_wave_modes(
         E,
         cfg,
-        _sample_grid_points(cfg, top_z, nx=4, ny=4),
+        top_points,
         [("incident", k_inc, p_inc), ("reflected", k_ref, p_ref)],
     )
     bottom_amplitudes, bottom_fit_residual = _fit_plane_wave_modes(
         E,
         cfg,
-        _sample_grid_points(cfg, bottom_z, nx=4, ny=4),
+        bottom_points,
         [("transmitted", k_trn, p_trn)],
     )
 
@@ -663,6 +687,16 @@ def _fresnel_numerical_metrics(E, cfg: SimulationConfig3D) -> dict[str, Any]:
         "fresnel_transmitted_amplitude_abs": float(abs(transmitted)),
         "fresnel_top_mode_fit_residual": top_fit_residual,
         "fresnel_bottom_mode_fit_residual": bottom_fit_residual,
+        "fresnel_top_sampling_z_min": float(np.min(top_z)),
+        "fresnel_top_sampling_z_max": float(np.max(top_z)),
+        "fresnel_bottom_sampling_z_min": float(np.min(bottom_z)),
+        "fresnel_bottom_sampling_z_max": float(np.max(bottom_z)),
+        "fresnel_top_sampling_point_count": int(len(top_points)),
+        "fresnel_bottom_sampling_point_count": int(len(bottom_points)),
+        "fresnel_top_sampling_margin_to_interface": float(np.min(top_z) - cfg.interface_z),
+        "fresnel_top_sampling_margin_to_top_pml": float(cfg.physical_z_max - np.max(top_z)),
+        "fresnel_bottom_sampling_margin_to_interface": float(cfg.interface_z - np.max(bottom_z)),
+        "fresnel_bottom_sampling_margin_to_bottom_pml": float(np.min(bottom_z) - cfg.physical_z_min),
         "rt_metric_note": "R/T are fitted from the numerical 3D field in uniform layers and compared with Fresnel theory.",
     }
 
@@ -685,6 +719,71 @@ def _stage2_reference_metrics(E, cfg: SimulationConfig3D, field_metrics: dict[st
         )
     metrics["fresnel_field_relative_max_error"] = field_metrics.get("relative_max_abs_E_error")
     return metrics
+
+
+def run_fresnel_analytic_postprocess_sanity(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, Any]:
+    """Check Fresnel R/T fitting by interpolating the analytic total field only.
+
+    This diagnostic intentionally does not assemble or solve Maxwell.  It uses
+    the same mesh, Nedelec function space, and ``_fresnel_numerical_metrics``
+    modal fitting path as the real 2C solve.  If this sanity check fails, the
+    issue is in postprocessing, polarization basis, sampling, or T
+    normalization rather than in the PDE solve.
+    """
+
+    if cfg.geometry_kind != "fresnel_interface":
+        raise ValueError("Fresnel analytic postprocess sanity requires geometry_kind='fresnel_interface'.")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    comm = MPI.COMM_WORLD
+    start = time.perf_counter()
+    mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    msh = mesh_data.mesh
+    V = _create_nedelec_space(msh, cfg)
+    E_analytic = plane_wave_electric_field(V, cfg)
+    metrics = _fresnel_numerical_metrics(E_analytic, cfg)
+    field_norm = _function_coefficient_norm(E_analytic)
+    elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
+    summary: dict[str, Any] = {
+        "case_name": cfg.case_name,
+        "stage": "stage2_3d_fresnel_analytic_postprocess_sanity",
+        **_summary_base_fields(cfg, comm),
+        "config": cfg.as_jsonable(),
+        "case_status": "completed",
+        "official_result": False,
+        "diagnostic_only": True,
+        "postprocess_only": True,
+        "postprocess_sanity_kind": "fresnel_analytic_total_field_interpolation",
+        "num_mesh_cells": msh.topology.index_map(msh.topology.dim).size_global,
+        "num_nedelec_dofs": V.dofmap.index_map.size_global * V.dofmap.index_map_bs,
+        "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
+        "mesh_cells_resolved": mesh_data.mesh_cells_resolved,
+        "z_alignment_warnings": mesh_data.z_alignment_warnings,
+        "domain_tag_volumes": _cell_tag_volumes(msh, mesh_data, cfg),
+        "E_analytic_norm": field_norm,
+        "elapsed_seconds": elapsed,
+        "max_rss_mb": _global_max_rss_mb(comm),
+        **metrics,
+    }
+    summary["fresnel_postprocess_sanity_thresholds"] = {
+        "fresnel_R_error": 1.0e-8,
+        "fresnel_T_error": 1.0e-8,
+        "fresnel_top_mode_fit_residual": 1.0e-1,
+        "fresnel_bottom_mode_fit_residual": 1.0e-1,
+    }
+    summary["fresnel_postprocess_sanity_pass"] = bool(
+        summary["fresnel_R_error"] < summary["fresnel_postprocess_sanity_thresholds"]["fresnel_R_error"]
+        and summary["fresnel_T_error"] < summary["fresnel_postprocess_sanity_thresholds"]["fresnel_T_error"]
+        and summary["fresnel_top_mode_fit_residual"]
+        < summary["fresnel_postprocess_sanity_thresholds"]["fresnel_top_mode_fit_residual"]
+        and summary["fresnel_bottom_mode_fit_residual"]
+        < summary["fresnel_postprocess_sanity_thresholds"]["fresnel_bottom_mode_fit_residual"]
+    )
+    if comm.rank == 0:
+        (out_dir / "fresnel_analytic_postprocess_sanity.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default),
+            encoding="utf-8",
+        )
+    return summary
 
 
 def _stage_label(cfg: SimulationConfig3D) -> str:
@@ -944,10 +1043,10 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     tdim = msh.topology.dim
     fdim = tdim - 1
     num_cells = msh.topology.index_map(tdim).size_global
+    domain_tag_volumes = _cell_tag_volumes(msh, mesh_data, cfg)
 
     stage_start = _start_timed_stage(comm)
-    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
-    V = fem.functionspace(msh, curl_el)
+    V = _create_nedelec_space(msh, cfg)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
     log(f"mesh cells = {num_cells}")
@@ -979,6 +1078,11 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
     log(f"field formulation = {field_formulation}")
+    if solve_incident_scattered:
+        log("incident-scattered RHS sign = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)")
+        log(f"incident-scattered RHS source region = physical_substrate")
+        log(f"incident-scattered RHS source tag volumes = {{'substrate': {domain_tag_volumes['substrate']:.6e}}}")
+        log(f"incident-scattered RHS source norm = {rhs_source_norm:.6e}")
 
     stage_start = _start_timed_stage(comm)
     a, L = _build_variational_forms(
@@ -1074,7 +1178,13 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "fresnel_reference_used_for_solution": False,
         "fresnel_reference_used_for_comparison_only": cfg.geometry_kind == "fresnel_interface",
         "rhs_source_region": "physical_substrate" if solve_incident_scattered else None,
+        "rhs_source_sign": "+k0^2*(eps_sub-eps_air)*inner(E_inc,v)" if solve_incident_scattered else None,
+        "rhs_source_contrast": complex(cfg.substrate_index**2 - cfg.eps_r) if solve_incident_scattered else None,
+        "rhs_source_tag_ids": {"substrate": cfg.tags.substrate} if solve_incident_scattered else {},
+        "rhs_source_tag_volumes": {"substrate": domain_tag_volumes["substrate"]} if solve_incident_scattered else {},
+        "rhs_source_excludes_air_and_pml": bool(solve_incident_scattered),
         "rhs_source_norm": rhs_source_norm,
+        "domain_tag_volumes": domain_tag_volumes,
         "solver_profile": cfg.solver_profile,
         "solver_profile_resolved": solver_profile_resolved,
         "solver_petsc_options": petsc_options,
@@ -1211,6 +1321,16 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log(f"Numerical R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"Fresnel R/T = {summary['fresnel_R']:.6e} / {summary['fresnel_T']:.6e}")
         log(f"R+T = {summary['R_plus_T']:.6e}")
+        log(f"Fresnel top mode fit residual = {summary['fresnel_top_mode_fit_residual']:.6e}")
+        log(f"Fresnel bottom mode fit residual = {summary['fresnel_bottom_mode_fit_residual']:.6e}")
+        log(f"Fresnel incident amplitude abs = {summary['fresnel_incident_amplitude_abs']:.6e}")
+        log(f"Fresnel reflected amplitude abs = {summary['fresnel_reflected_amplitude_abs']:.6e}")
+        log(f"Fresnel transmitted amplitude abs = {summary['fresnel_transmitted_amplitude_abs']:.6e}")
+        log(
+            "Fresnel sampling z ranges = "
+            f"top [{summary['fresnel_top_sampling_z_min']:.6g}, {summary['fresnel_top_sampling_z_max']:.6g}] nm, "
+            f"bottom [{summary['fresnel_bottom_sampling_z_min']:.6g}, {summary['fresnel_bottom_sampling_z_max']:.6g}] nm"
+        )
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log("timing summary seconds:")
     for name, value in timings.items():
