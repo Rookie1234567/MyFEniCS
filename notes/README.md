@@ -1,12 +1,50 @@
 # v2 文档索引
 
-## 2026-06-22 更新：Stage 2 h50/p1 当前已收口
+## 2026-06-22 更新：2C Fresnel 已切到 incident-scattered 物理口径
+
+本轮按新的要求只改 `fresnel_interface`，保留：
+
+```text
+2A floquet_airbox       incident_correction
+2B pml_airbox           reference_correction
+2C fresnel_interface    incident_scattered
+```
+
+2C 现在不再把完整 Fresnel 解析场加回数值解。程序求的是散射场 `E_sca`，只用空气入射平面波 `E_inc` 作为背景源，最后输出和后处理使用：
+
+```text
+E_total = E_inc + E_sca
+```
+
+`h=50 nm, p=1, MPI 2` 的当前结果：
+
+```text
+field_formulation = incident_scattered
+R/T = 1.652730e-02 / 1.041854e+00
+Fresnel R/T = 3.373594e-02 / 9.662641e-01
+R+T = 1.058382
+Docker unittest: Ran 22 tests, OK, skipped=8
+```
+
+这个结果已经不再是“把解析答案加回去”的机器精度 sanity，而是一个真实入射-散射 benchmark。误差仍然偏粗，下一步若要继续压低 2C 误差，优先应补全 PML 区域中的 incident-field source/stretching，或进入更标准的 modal port/TFSF 注入。
+
+先读：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+theory/stage2_3d_floquet_pml_fresnel.md
+test/stage2_validation_report.md
+test/stage2_resume_log.md
+```
+
+## 2026-06-22 历史记录：Stage 2 h50/p1 reference-correction 收口
 
 本轮修复：
 
 ```text
 1. 修复 MPI/MPC 下 reference field 加回 total field 时的数组长度 broadcast 错误。
-2. Stage 2 三个解析验证 case 统一使用 correction 口径。
+2. 当时 Stage 2 三个解析验证 case 统一使用 correction 口径；最新 2C 已改为 incident_scattered。
 3. 2C Fresnel 默认 s 偏振，并修正 custom/s modal fit 不一致。
 4. R/T modal fit 增加 FE 插值响应校准。
 ```

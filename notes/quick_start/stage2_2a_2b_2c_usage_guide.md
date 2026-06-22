@@ -1,8 +1,63 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
-## 2026-06-22 更新：Stage 2 当前推荐验证口径
+## 2026-06-22 更新：2C Fresnel 现在是 incident-scattered physical benchmark
 
-当前 Stage 2 三个解析验证 case 都使用 correction 口径，避免闭合周期盒在粗网格低阶离散下放大腔模：
+当前三个 Stage 2 case 的口径是：
+
+```text
+2A floquet_airbox       incident_correction      # 保持 2A sanity check
+2B pml_airbox           reference_correction     # 暂时保持原 PML sanity check
+2C fresnel_interface    incident_scattered       # 本轮改为物理 benchmark
+```
+
+运行 2C 时，数值解不再使用完整 Fresnel 解析场。程序只构造空气中的入射平面波 `E_inc`，求解散射场 `E_sca`，然后输出：
+
+```text
+E_total = E_inc + E_sca
+```
+
+检查 `run_summary.json` 时重点看：
+
+```text
+field_formulation = incident_scattered
+incident_added_to_solution = true
+reference_added_to_solution = false
+fresnel_reference_used_for_solution = false
+fresnel_reference_used_for_comparison_only = true
+rhs_source_region = physical_substrate
+rhs_source_norm
+E_sca_norm / E_inc_norm / E_total_norm
+R_total / T_total / R_plus_T
+fresnel_R_error / fresnel_T_error
+```
+
+推荐 2C 命令：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case fresnel_interface \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+当前 h50/p1/MPI2 的 physical benchmark 结果约为：
+
+```text
+R/T = 1.65e-02 / 1.04
+Fresnel R/T = 3.37e-02 / 9.66e-01
+R+T = 1.058
+```
+
+这已经不是把解析答案加回去的 sanity test，所以不会再出现机器精度 R/T。当前主要剩余误差来自第一版 RHS 只在 physical substrate 加 source，bottom PML 暂时没有 incident-field stretching/source。后续若要继续压低 R/T 误差，优先改 PML scattered-field source 或引入 modal port/TFSF 注入。
+
+## 2026-06-22 历史记录：上一版 Stage 2 reference-correction 口径
+
+这一节记录的是上一版做 reference sanity check 时的口径。最新实现以上一节为准：2C `fresnel_interface` 已改成 `incident_scattered`，不再是 `reference_correction`。
+
+当时 Stage 2 三个解析验证 case 都使用 correction 口径，避免闭合周期盒在粗网格低阶离散下放大腔模：
 
 ```text
 2A floquet_airbox       field_formulation = incident_correction

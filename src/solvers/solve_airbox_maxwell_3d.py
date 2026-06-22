@@ -337,6 +337,28 @@ def _add_reference_field_to_solution(E: fem.Function, cfg: SimulationConfig3D) -
     E.x.scatter_forward()
 
 
+def _combine_fields(primary: fem.Function, added: fem.Function, name: str) -> fem.Function:
+    if primary.x.array.shape != added.x.array.shape:
+        raise RuntimeError(
+            f"Cannot combine fields {primary.name!r} and {added.name!r}; local vector shapes differ: "
+            f"{primary.x.array.shape} vs {added.x.array.shape}."
+        )
+    total = fem.Function(primary.function_space, name=name)
+    total.x.array[:] = primary.x.array
+    total.x.array[:] += added.x.array
+    total.x.scatter_forward()
+    return total
+
+
+def _function_coefficient_norm(field: fem.Function) -> float:
+    index_map = field.function_space.dofmap.index_map
+    block_size = field.function_space.dofmap.index_map_bs
+    owned_size = index_map.size_local * block_size
+    owned = np.asarray(field.x.array[:owned_size], dtype=np.complex128)
+    local = float(np.real(np.vdot(owned, owned)))
+    return float(np.sqrt(field.function_space.mesh.comm.allreduce(local, op=MPI.SUM)))
+
+
 def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
     msh = function.function_space.mesh
     comm = msh.comm
@@ -421,6 +443,27 @@ def _mode_basis(cfg: SimulationConfig3D, n_medium: complex, vertical_sign: int) 
     if norm <= 0.0:
         raise ValueError("Cannot build a nonzero 3D modal polarization vector.")
     return kvec, polarization / norm
+
+
+def incident_air_plane_wave_field(V, cfg: SimulationConfig3D) -> fem.Function:
+    """Incident air-region plane wave used by the Fresnel scattered-field solve.
+
+    This field contains only the known incoming wave in the air background.  It
+    deliberately excludes Fresnel reflected and transmitted analytic fields.
+    """
+
+    k_inc, p_inc = _mode_basis(cfg, cfg.n_air, vertical_sign=-1)
+    amplitude = complex(cfg.incident_amplitude)
+    field = fem.Function(V, name="E_incident_air")
+
+    def eval_field(x):
+        coords = x.T
+        phase = np.exp(1j * (k_inc[0] * coords[:, 0] + k_inc[1] * coords[:, 1] + k_inc[2] * coords[:, 2]))
+        return (amplitude * phase[:, None] * p_inc[None, :]).T
+
+    field.interpolate(eval_field)
+    field.x.scatter_forward()
+    return field
 
 
 def _sample_grid_points(cfg: SimulationConfig3D, z_values: np.ndarray, nx: int = 4, ny: int = 4) -> np.ndarray:
@@ -677,7 +720,15 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
     }
 
 
-def _build_variational_forms(msh, mesh_data, cfg: SimulationConfig3D, V):
+def _build_variational_forms(
+    msh,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    V,
+    *,
+    field_formulation: str = "total_field",
+    incident_field: fem.Function | None = None,
+):
     """Assemble the shared Stage-1/Stage-2 curl-curl Maxwell weak form.
 
     Cell tags decide which material tensor is used.  The x/y periodicity is not
@@ -714,24 +765,49 @@ def _build_variational_forms(msh, mesh_data, cfg: SimulationConfig3D, V):
         a += ufl.inner(ufl.inv(mu_bottom) * curl_u, curl_v) * dx(cfg.tags.bottom_pml)
         a += -cfg.k0**2 * ufl.inner(eps_bottom * u, v) * dx(cfg.tags.bottom_pml)
     L = ufl.inner(zero, v) * dx
+    if field_formulation == "incident_scattered":
+        if incident_field is None:
+            raise ValueError("incident_scattered formulation requires an incident_field.")
+        contrast = PETSc.ScalarType(cfg.substrate_index**2 - cfg.eps_r)
+        L += cfg.k0**2 * contrast * ufl.inner(incident_field, v) * dx(cfg.tags.substrate)
     return a, L
 
 
+def _incident_scattered_rhs_source_norm(msh, mesh_data, cfg: SimulationConfig3D, incident_field: fem.Function | None) -> float | None:
+    if incident_field is None:
+        return None
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
+    energy_form = fem.form(ufl.inner(incident_field, incident_field) * dx(cfg.tags.substrate))
+    local_energy = fem.assemble_scalar(energy_form)
+    energy = msh.comm.allreduce(local_energy, op=MPI.SUM)
+    contrast = cfg.k0**2 * complex(cfg.substrate_index**2 - cfg.eps_r)
+    return float(abs(contrast) * np.sqrt(max(float(np.real(energy)), 0.0)))
+
+
 def _use_reference_correction_formulation(cfg: SimulationConfig3D) -> bool:
-    """Use a correction unknown for analytic Stage-2 validation cases.
+    """Use a correction unknown for analytic Stage-2 reference sanity cases.
 
     Solving homogeneous total-field problems with z-face Dirichlet data and
     x/y Floquet constraints creates a closed periodic cavity.  Near discrete
     cavity modes the total field can be badly amplified even when the boundary
-    constraints are correct.  Stage 2 is an analytic-reference verification
-    layer, so solve for E_total - E_reference and reconstruct the reported
-    total field after the linear solve.
+    constraints are correct.  Keep this sanity path for 2A and 2B, but not for
+    the 2C Fresnel physical benchmark.
     """
 
-    return cfg.stage_case in {"floquet_airbox", "pml_airbox", "fresnel_interface"}
+    return cfg.stage_case in {"floquet_airbox", "pml_airbox"}
 
 
-def _field_formulation_label(cfg: SimulationConfig3D, use_reference_correction: bool) -> str:
+def _use_incident_scattered_formulation(cfg: SimulationConfig3D) -> bool:
+    return cfg.stage_case == "fresnel_interface" and cfg.geometry_kind == "fresnel_interface"
+
+
+def _field_formulation_label(
+    cfg: SimulationConfig3D,
+    use_reference_correction: bool,
+    use_incident_scattered: bool,
+) -> str:
+    if use_incident_scattered:
+        return "incident_scattered"
     if not use_reference_correction:
         return "total_field"
     if cfg.stage_case == "floquet_airbox":
@@ -878,10 +954,14 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"3D N1curl dofs = {num_dofs}")
 
     stage_start = _start_timed_stage(comm)
-    E_exact = plane_wave_electric_field(V, cfg)
     solve_reference_correction = _use_reference_correction_formulation(cfg)
-    field_formulation = _field_formulation_label(cfg, solve_reference_correction)
-    E_bc = fem.Function(V, name="E_correction_zero_bc") if solve_reference_correction else E_exact
+    solve_incident_scattered = _use_incident_scattered_formulation(cfg)
+    field_formulation = _field_formulation_label(cfg, solve_reference_correction, solve_incident_scattered)
+    solve_with_zero_bc = solve_reference_correction or solve_incident_scattered
+    E_incident_for_rhs = incident_air_plane_wave_field(V, cfg) if solve_incident_scattered else None
+    rhs_source_norm = _incident_scattered_rhs_source_norm(msh, mesh_data, cfg, E_incident_for_rhs)
+    E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
+    E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     floquet_data: DoubleFloquet3DData | None = None
     if cfg.use_floquet_xy:
         # Floquet constraints own the x/y side walls.  Strong H(curl)
@@ -901,7 +981,14 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"field formulation = {field_formulation}")
 
     stage_start = _start_timed_stage(comm)
-    a, L = _build_variational_forms(msh, mesh_data, cfg, V)
+    a, L = _build_variational_forms(
+        msh,
+        mesh_data,
+        cfg,
+        V,
+        field_formulation=field_formulation,
+        incident_field=E_incident_for_rhs,
+    )
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
@@ -934,8 +1021,14 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
 
     stage_start = _start_timed_stage(comm)
     E = problem.solve()
+    E_sca = E if solve_incident_scattered else None
+    E_incident_solution = None
+    E_total = E
     if solve_reference_correction:
         _add_reference_field_to_solution(E, cfg)
+    elif solve_incident_scattered:
+        E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
+        E_total = _combine_fields(E_sca, E_incident_solution, "E_total")
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
@@ -976,6 +1069,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
+        "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
+        "reference_added_to_solution": field_formulation == "reference_correction",
+        "fresnel_reference_used_for_solution": False,
+        "fresnel_reference_used_for_comparison_only": cfg.geometry_kind == "fresnel_interface",
+        "rhs_source_region": "physical_substrate" if solve_incident_scattered else None,
+        "rhs_source_norm": rhs_source_norm,
         "solver_profile": cfg.solver_profile,
         "solver_profile_resolved": solver_profile_resolved,
         "solver_petsc_options": petsc_options,
@@ -1056,7 +1155,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         return summary
 
     stage_start = _start_timed_stage(comm)
-    field_metrics = save_airbox_3d_fields(mesh_data, cfg, E, out_dir)
+    field_metrics = save_airbox_3d_fields(mesh_data, cfg, E_total, out_dir)
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
     max_rss_mb = _global_max_rss_mb(comm)
@@ -1064,12 +1163,20 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     summary["elapsed_seconds"] = elapsed
     summary["max_rss_mb"] = max_rss_mb
     summary.update(field_metrics)
+    if solve_incident_scattered:
+        summary["E_sca_norm"] = _function_coefficient_norm(E_sca)
+        summary["E_inc_norm"] = _function_coefficient_norm(E_incident_solution)
+        summary["E_total_norm"] = _function_coefficient_norm(E_total)
+    else:
+        summary["E_sca_norm"] = None
+        summary["E_inc_norm"] = None
+        summary["E_total_norm"] = _function_coefficient_norm(E)
     stage2_metrics: dict[str, Any] = {}
     if floquet_data is not None:
         stage2_metrics.update(_floquet_probe_metrics(floquet_data))
     if cfg.use_pml:
-        stage2_metrics.update(_pml_probe_metrics(E, cfg))
-    stage2_metrics.update(_stage2_reference_metrics(E, cfg, field_metrics))
+        stage2_metrics.update(_pml_probe_metrics(E_total, cfg))
+    stage2_metrics.update(_stage2_reference_metrics(E_total, cfg, field_metrics))
     summary.update(stage2_metrics)
     has_power_metrics = (
         {"R_total", "T_total", "R_plus_T"}.issubset(stage2_metrics)

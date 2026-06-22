@@ -1,8 +1,61 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
-## 2026-06-22 更新：Stage 2 解析验证统一为 correction 口径
+## 2026-06-22 更新：2C Fresnel 改为 incident-scattered 物理 benchmark
 
-当前 Stage 2 的定位是解析参考验证，而不是最终开放边界/端口物理求解。因此三个 case 都采用 correction unknown：
+最新 2C `fresnel_interface` 不再把完整 Fresnel 解析解作为 `E_reference` 加回数值场。新的未知量是散射场：
+
+```text
+E_total = E_inc + E_sca
+```
+
+其中 `E_inc` 是空气背景中的入射平面波，不含 Fresnel 解析反射场，也不含 Fresnel 解析透射场。这样做的目的，是让 2C 从“解析答案回灌 sanity”变成真正由材料界面激发的物理 benchmark。
+
+频域 Maxwell 方程使用当前代码的归一化形式：
+
+```text
+curl(mu_r^-1 curl E) - k0^2 eps_r E = 0
+```
+
+设背景空气介电常数为 `eps_air`，基底介电常数为 `eps_sub`。空气入射场满足背景方程：
+
+```text
+curl curl E_inc - k0^2 eps_air E_inc = 0
+```
+
+令 `E = E_inc + E_sca`，代回真实材料方程后，散射场的一阶弱式右端来自材料反差：
+
+```text
+curl curl E_sca - k0^2 eps_r E_sca
+  = k0^2 (eps_r - eps_air) E_inc
+```
+
+当前第一版实现只在 physical substrate tag 上加入这个源项：
+
+```text
+rhs_source_region = physical_substrate
+```
+
+解析 Fresnel 系数现在只用于后处理比较：
+
+```text
+R_total / T_total       数值场拟合得到
+fresnel_R / fresnel_T   解析公式得到
+fresnel_error           两者差值
+```
+
+`h=50 nm, p=1, MPI 2` 当前结果：
+
+```text
+R/T = 1.652730e-02 / 1.041854e+00
+Fresnel R/T = 3.373594e-02 / 9.662641e-01
+R+T = 1.058382
+```
+
+这个误差比上一版 reference-correction sanity 大是合理的，因为解析 Fresnel 场已经不再参与构造解。剩余主要误差来源很可能是 PML 区域的 incident-field source/stretching 还没有完整纳入；如果后续要把 2C 作为严格功率验收，需要继续补这部分，或切换到更标准的 modal port/TFSF 注入。
+
+## 2026-06-22 历史记录：Stage 2 解析验证统一为 correction 口径
+
+这一节记录上一版验证口径。它对理解 2A/2B 仍然有帮助，但 2C 已被上方的 `incident_scattered` 口径替代。历史版本中三个 case 都采用 correction unknown：
 
 ```text
 E_total = E_reference + E_correction
@@ -21,12 +74,12 @@ E_total = E_reference + E_correction
 
 2C fresnel_interface:
   E_reference = Fresnel 解析入射 + 反射 + 透射场
-  field_formulation = reference_correction
+  field_formulation = reference_correction  # 历史版本；最新为 incident_scattered
 ```
 
 这样做的原因是：只用 z 顶/底强边界和 x/y Floquet 约束时，粗网格低阶离散会形成闭合周期盒，容易把验证算例变成腔模幅值放大测试。correction 口径把 Stage 2 的误差重点放回它真正要检查的对象：Floquet 相位和边拓扑配对、PML 复坐标延拓、Fresnel R/T 后处理、ParaView 输出字段。
 
-2C 的 R/T 后处理现在还包含一个有限元插值响应校准。低阶 Nédélec 场不是点值型自由度；直接用点采样做模态拟合会把一个正确的 p1 插值场拟合出几百分点幅值偏差。现在程序会把每个单位模态先插值到当前 H(curl) 空间，再在相同采样点拟合，形成一个小的响应矩阵并校正数值模态幅值。
+2C 的 R/T 后处理仍保留有限元插值响应校准。低阶 Nédélec 场不是点值型自由度；直接用点采样做模态拟合会把一个正确的 p1 插值场拟合出几百分点幅值偏差。现在程序会把每个单位模态先插值到当前 H(curl) 空间，再在相同采样点拟合，形成一个小的响应矩阵并校正数值模态幅值。
 
 当前 `h=50 nm, p=1` 的验证结果：
 
@@ -41,7 +94,7 @@ E_total = E_reference + E_correction
   R+T = 1.0
 ```
 
-剩余物理边界说明：这个口径还不是最终 Stage 4 的 modal port / diffraction-order 求解；真实 3D 结构仍需要后续端口或辐射条件。Stage 2 先保证解析参考链条本身是自洽的。
+这些 2C 数值是历史 reference-correction sanity 结果，不代表最新 incident-scattered 物理 benchmark 的误差。
 
 ## 2026-06-22 更新：2A 纯空气 Floquet airbox 的验证口径
 

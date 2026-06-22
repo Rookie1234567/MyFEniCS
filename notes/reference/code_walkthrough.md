@@ -1,21 +1,65 @@
-## 2026-06-22 更新：Stage 2 correction 与 Fresnel R/T 校准阅读路径
+## 2026-06-22 更新：2C incident-scattered Fresnel 代码路径
 
-当前 Stage 2 三个解析验证 case 的代码路径如下：
+最新 2C `fresnel_interface` 已经不是 reference-correction。阅读代码时按这个路径看：
 
 ```text
 src/solvers/solve_airbox_maxwell_3d.py
   _use_reference_correction_formulation(cfg)
-     floquet_airbox / pml_airbox / fresnel_interface 返回 True
+     只保留 floquet_airbox / pml_airbox
 
-  _field_formulation_label(cfg, use_reference_correction)
+  _use_incident_scattered_formulation(cfg)
+     fresnel_interface 返回 True
+
+  incident_air_plane_wave_field(V, cfg)
+     只构造空气入射平面波 E_inc
+     不包含 Fresnel 解析反射/透射场
+
+  _build_variational_forms(..., field_formulation="incident_scattered", incident_field=E_inc)
+     左端仍使用真实 material/PML
+     右端只在 cfg.tags.substrate 上加 k0^2(eps_sub-eps_air) E_inc
+
+  run_airbox_3d_case(...)
+     E = problem.solve()         # 这里的 E 是 E_sca
+     E_inc = incident_air_plane_wave_field(E.function_space, cfg)
+     E_total = E_sca + E_inc
+     save_airbox_3d_fields(..., E_total, ...)
+     _fresnel_numerical_metrics(E_total, cfg)
+```
+
+关键 summary 字段：
+
+```text
+field_formulation = incident_scattered
+incident_added_to_solution = true
+reference_added_to_solution = false
+fresnel_reference_used_for_solution = false
+fresnel_reference_used_for_comparison_only = true
+rhs_source_region = physical_substrate
+rhs_source_norm
+E_sca_norm / E_inc_norm / E_total_norm
+```
+
+当前 `h=50 nm, p=1, MPI 2` 的 2C physical benchmark 已经能跑通并收敛，`R+T` 约 `1.058`。这不是 previous reference sanity 的机器精度结果；后续要继续压误差，应看 PML 中 incident-field source/stretching 或 modal port/TFSF。
+
+## 2026-06-22 历史记录：Stage 2 correction 与 Fresnel R/T 校准阅读路径
+
+这一节记录的是上一版 reference-correction sanity 路径。最新代码中，2A/2B 仍沿用 correction 思路，但 2C `fresnel_interface` 已经改为本文最上方的 `incident_scattered` 路径；阅读 2C 时不要再从本节进入。
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  _use_reference_correction_formulation(cfg)
+     历史版本中 floquet_airbox / pml_airbox / fresnel_interface 返回 True
+     最新版本只保留 floquet_airbox / pml_airbox
+
+  _field_formulation_label(...)
      floquet_airbox    -> incident_correction
      pml_airbox        -> reference_correction
-     fresnel_interface -> reference_correction
+     fresnel_interface -> incident_scattered
 
   _add_reference_field_to_solution(E, cfg)
      在 E.function_space 中重新插值解析参考场
      再做 E += reference
-     这是修复 MPI/MPC broadcast shape mismatch 的关键
+     这是修复 MPI/MPC broadcast shape mismatch 的关键；最新 2C 不再走这一步
 
   _mode_basis(...)
      fresnel_interface 中非 p 一律按 s 基底拟合
@@ -42,7 +86,7 @@ pml_reflection_proxy
 Docker unittest: Ran 22 tests, OK, skipped=8
 2A h50 p1 MPI4 normal: E error = 2.77e-14
 2B h50 p1 MPI2:        E error = 2.45e-14, proxy = 7.63e-16
-2C h50 p1 MPI2 PML:    R+T = 1.0, R/T 与 Fresnel 解析一致
+2C reference-correction 历史结果: R+T = 1.0, R/T 与 Fresnel 解析一致
 ```
 
 ## 2026-06-22 更新：2A Floquet airbox 场幅值修复后的阅读路径
@@ -52,7 +96,7 @@ Docker unittest: Ran 22 tests, OK, skipped=8
 ```text
 src/solvers/solve_airbox_maxwell_3d.py
   _use_reference_correction_formulation(cfg)
-     当前 Stage 2 三个解析验证 case 都返回 True
+     当前正式路径只对 floquet_airbox / pml_airbox 返回 True
 
   run_airbox_3d_case(...)
      E_exact = plane_wave_electric_field(V, cfg)
@@ -63,7 +107,7 @@ src/solvers/solve_airbox_maxwell_3d.py
      summary["field_formulation"] = "incident_correction"
 ```
 
-这个设计的含义是：线性系统求的是 `E_total - E_incident`，但后处理和 ParaView 仍然看 `E_total`。这一段是 2A 修复时的历史记录；最新实现已经扩展为上方所述的 Stage 2 统一 correction 口径，其中 2B/2C 使用 `reference_correction`。
+这个设计的含义是：线性系统求的是 `E_total - E_incident`，但后处理和 ParaView 仍然看 `E_total`。这一段是 2A 修复时的历史记录；最新实现中 2B 仍使用 `reference_correction`，2C 已切换到本文最上方的 `incident_scattered`。
 
 本轮 `h=50 nm, p=1, MPI 2` 结果：
 

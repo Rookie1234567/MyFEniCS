@@ -1,15 +1,84 @@
 # Stage 2 续接日志
 
-## 2026-06-22 Stage 2 h50/p1 误差收口完成
+## 2026-06-22 2C Fresnel incident-scattered 修改完成
+
+本轮根据新的文本要求，只继续修改 `fresnel_interface`，保留 2A 和 2B 的当前口径：
+
+```text
+2A floquet_airbox       incident_correction
+2B pml_airbox           reference_correction
+2C fresnel_interface    incident_scattered
+```
+
+已完成代码：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  新增 incident_air_plane_wave_field(...)
+  新增 incident_scattered 弱式右端
+  2C 不再构造完整 Fresnel reference 作为求解场
+  solve 后把 E_inc 加到 E_sca 得到 E_total
+  新增 rhs_source_norm、E_sca_norm、E_inc_norm、E_total_norm 等 summary 字段
+
+src/test/test_03_fresnel_coefficients.py
+  更新 formulation 标签测试，防止 2C 退回 reference_correction
+```
+
+已跑验证：
+
+```text
+Docker:
+  python3 -m compileall -q src
+  python3 -m unittest discover -s src/test -p "test_*.py"
+  Ran 22 tests, OK, skipped=8
+
+2A regression, h50 p1 MPI2:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_132425
+  field_formulation = incident_correction
+  E error = 2.947405e-14
+
+2C incident-scattered + PML, h50 p1 MPI2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_134945
+  field_formulation = incident_scattered
+  rhs_source_region = physical_substrate
+  rhs_source_norm = 1.3669714482302966
+  R/T = 1.652730e-02 / 1.041854e+00
+  Fresnel R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.058382
+  floquet_total = 0.330 s
+  linear_problem_setup + solve = 176.000 s
+  max_rss = 4066.9 MB
+```
+
+当前判断：
+
+```text
+1. 2C 已经从 reference-correction sanity 改成真实 incident-scattered benchmark。
+2. 解析 Fresnel 场只用于 comparison，不再用于 solution。
+3. h50 p1 下能量误差约 5.8%，R/T 与解析值同量级但还不够小。
+4. 下一步若要继续降低 2C 误差，应补 PML 区域 incident-field source/stretching，或进入 modal port/TFSF。
+5. 工作区里 src/main.py 仍有本地未提交改动，本轮不要提交它。
+```
+
+未采用的诊断实验：
+
+```text
+曾尝试把入射场改成 PML 复坐标延拓，并在 bottom PML 加 tensor-contrast source。
+result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_134451
+结果：max |E| ≈ 1.48e2, R/T = 7.65e-02 / 1.038, R+T = 1.115
+判断：这个 naive PML source 比 physical-substrate-only 更差，已回退。
+```
+
+## 2026-06-22 历史记录：Stage 2 h50/p1 reference-correction 误差收口
 
 本轮完成：
 
 ```text
 1. 修复 MPI/MPC 下 E.x.array += E_exact.x.array 的 broadcast 错误。
-2. Stage 2 三个解析验证 case 统一使用 correction 口径：
+2. 当时 Stage 2 三个解析验证 case 统一使用 correction 口径；最新 2C 已改为 incident_scattered：
    floquet_airbox    -> incident_correction
    pml_airbox        -> reference_correction
-   fresnel_interface -> reference_correction
+   fresnel_interface -> reference_correction  # 历史版本
 3. Fresnel 默认偏振改为 s，旧 custom Fresnel 拟合也统一按 s 基底处理。
 4. Fresnel/PML modal fit 增加有限元插值响应校准，消除 p1 Nédélec 点采样导致的幅值偏置。
 5. 新增 2 个轻量 unittest，防止 Fresnel custom/s 基底和 Stage 2 formulation 标签回归。

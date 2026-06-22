@@ -1,6 +1,94 @@
 # Stage 2 验证报告
 
-## 2026-06-22 更新：Stage 2 h50/p1 误差收口和 broadcast 修复
+## 2026-06-22 更新：2C Fresnel 已改为 incident-scattered physical benchmark
+
+本轮按新的物理口径修改了 Stage 2 的 `fresnel_interface`。现在：
+
+```text
+2A floquet_airbox       field_formulation = incident_correction      # 保持不变
+2B pml_airbox           field_formulation = reference_correction     # 暂时不继续改
+2C fresnel_interface    field_formulation = incident_scattered       # 本轮修改
+```
+
+2C 不再把完整 Fresnel 解析场作为 `E_reference` 加回数值解。新的求解未知量是散射场：
+
+```text
+E_total = E_inc + E_sca
+```
+
+其中 `E_inc` 只是空气背景中的入射平面波，不包含 Fresnel reflected/transmitted analytic fields。右端第一版只在 physical substrate tag 上加入 material contrast source：
+
+```text
+L(v) = k0^2 (eps_sub - eps_air) int_{physical substrate} E_inc · conj(v) dx
+```
+
+注意：bottom PML 暂时没有加入 incident-field stretching/source；这是当前物理误差的主要剩余来源之一。完整 PML scattered-field 口径后续可能需要把入射波在 PML 中的背景算子一起处理。
+
+新增/更正的 summary 字段：
+
+```text
+field_formulation = incident_scattered
+incident_added_to_solution = True
+reference_added_to_solution = False
+fresnel_reference_used_for_solution = False
+fresnel_reference_used_for_comparison_only = True
+rhs_source_region = physical_substrate
+rhs_source_norm > 0
+E_sca_norm > 0
+E_inc_norm > 0
+E_total_norm > 0
+```
+
+实跑结果：
+
+```text
+2A regression, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_132425
+  field_formulation = incident_correction
+  relative_max_abs_E_error = 2.947405e-14
+  floquet_x/y/corner mismatch = 0
+
+2C incident-scattered, h=120 nm, p=1, MPI 2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h120p0_np2_20260622_132446
+  field_formulation = incident_scattered
+  solver converged
+  rhs_source_norm = positive
+  但 z 分层面没有落在 hexa 网格面上，R/T 不作为误差验收
+
+2C incident-scattered, no-PML, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_132705
+  field_formulation = incident_scattered
+  solver converged
+  R/T 不可信，因为 z 上下没有吸收边界，E_sca=0 外边界会强行约束反射/透射
+
+2C incident-scattered + PML, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_134945
+  field_formulation = incident_scattered
+  rhs_source_region = physical_substrate
+  rhs_source_norm = 1.366971
+  E_sca_norm = 2931.656799
+  E_inc_norm = 3070.016287
+  E_total_norm = 3266.501640
+  R/T = 1.652730e-02 / 1.041854e+00
+  Fresnel R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.058382e+00
+  fresnel_R_error = 1.720865e-02
+  fresnel_T_error = 7.559023e-02
+  floquet_total = 0.330 s
+  linear_problem_setup + solve = 176.000 s
+  max_rss = 4066.9 MB
+
+2C incident-scattered + PML, h=50 nm, p=1, MPI 2, pml_alpha=10:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_133118
+  R/T = 2.225423e-02 / 1.035328e+00
+  R+T = 1.057582e+00
+```
+
+当前判断：2C 已经从“把 Fresnel 解析答案加回去”的 reference sanity，改成真正由入射波和 substrate contrast source 激发的 physical benchmark。`h=50 nm, p=1` 下 R/T 已到同量级，能量误差约 `5.8%`，但还没有达到之前 reference-correction 的机器精度；这个差异是预期的，因为现在解析 Fresnel 只用于比较，不再用于构造解。后续若要进一步压低误差，应优先补全 PML 中 incident-field source/stretching，或引入更标准的 modal port/TFSF 注入。
+
+额外诊断：本轮尝试过一个简单的 bottom-PML tensor-contrast source 版本，命令同 h50/p1/MPI2，结果目录为 `results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_134451`。该实验使 `max |E|` 增大到约 `1.48e2`，`R/T = 7.65e-02 / 1.038`，`R+T = 1.115`，比 physical-substrate-only 版本更差。因此这个 naive PML source 没有保留到正式代码里。后续若要补 PML source，需要更完整地定义 background PML incident field 和界面注入方式，而不是只在 bottom PML 叠加一个介质张量差。
+
+## 2026-06-22 历史记录：Stage 2 h50/p1 reference-correction 误差收口和 broadcast 修复
 
 本轮修复了用户运行时出现的数组广播错误：
 
@@ -16,15 +104,15 @@ reference = plane_wave_electric_field(E.function_space, cfg)
 E.x.array[:] += reference.x.array
 ```
 
-同时，本轮把 Stage 2 解析验证统一为 correction 口径：
+同时，当时把 Stage 2 解析验证统一为 correction 口径。注意：最新代码已经把 2C `fresnel_interface` 改为本文最上方的 `incident_scattered`，所以下面的 2C 结果只作为历史 reference sanity 记录：
 
 ```text
 2A floquet_airbox       field_formulation = incident_correction
 2B pml_airbox           field_formulation = reference_correction
-2C fresnel_interface    field_formulation = reference_correction
+2C fresnel_interface    field_formulation = reference_correction  # 历史版本
 ```
 
-这样 Stage 2 不再把闭合周期盒误判成腔模幅值测试，而是聚焦验证 Floquet 约束、PML 延拓、Fresnel R/T 后处理和 ParaView 输出链条。2C 还修正了一个重要口径：`fresnel_interface` 的默认偏振现在显式设为 `s`；如果旧配置传入 `custom`，Fresnel modal fit 也会按 s 基底处理，避免解析场用 s、拟合却用 Ex 的不一致。R/T 后处理新增有限元插值响应校准，消除 p1 Nédélec 点采样拟合造成的幅值偏置。
+这个历史口径不再用于判断最新 2C 物理误差，但仍有用：它验证了 Floquet 约束、PML 延拓、Fresnel R/T 后处理和 ParaView 输出链条本身可以闭合。2C 的默认偏振显式设为 `s`；如果旧配置传入 `custom`，Fresnel modal fit 也会按 s 基底处理，避免解析场用 s、拟合却用 Ex 的不一致。R/T 后处理新增有限元插值响应校准，消除 p1 Nédélec 点采样拟合造成的幅值偏置。
 
 当前代码实跑结果如下。
 

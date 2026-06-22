@@ -9,6 +9,7 @@ from src.common.config_3d import normal_incidence_airbox_config, oblique_inciden
 from src.solvers.solve_airbox_maxwell_3d import (
     _field_formulation_label,
     _mode_basis,
+    _use_incident_scattered_formulation,
     _use_reference_correction_formulation,
 )
 
@@ -67,19 +68,23 @@ class TestFresnelCoefficients(unittest.TestCase):
     def test_stage2_reference_correction_formulation_labels(self):
         stage1 = normal_incidence_airbox_config(stage_case="stage1_airbox")
         self.assertFalse(_use_reference_correction_formulation(stage1))
-        self.assertEqual(_field_formulation_label(stage1, False), "total_field")
+        self.assertFalse(_use_incident_scattered_formulation(stage1))
+        self.assertEqual(_field_formulation_label(stage1, False, False), "total_field")
 
         floquet = normal_incidence_airbox_config(stage_case="floquet_airbox")
         self.assertTrue(_use_reference_correction_formulation(floquet))
-        self.assertEqual(_field_formulation_label(floquet, True), "incident_correction")
+        self.assertFalse(_use_incident_scattered_formulation(floquet))
+        self.assertEqual(_field_formulation_label(floquet, True, False), "incident_correction")
 
         pml = normal_incidence_airbox_config(stage_case="pml_airbox")
         self.assertTrue(_use_reference_correction_formulation(pml))
-        self.assertEqual(_field_formulation_label(pml, True), "reference_correction")
+        self.assertFalse(_use_incident_scattered_formulation(pml))
+        self.assertEqual(_field_formulation_label(pml, True, False), "reference_correction")
 
         fresnel = normal_incidence_airbox_config(stage_case="fresnel_interface", geometry_kind="fresnel_interface")
-        self.assertTrue(_use_reference_correction_formulation(fresnel))
-        self.assertEqual(_field_formulation_label(fresnel, True), "reference_correction")
+        self.assertFalse(_use_reference_correction_formulation(fresnel))
+        self.assertTrue(_use_incident_scattered_formulation(fresnel))
+        self.assertEqual(_field_formulation_label(fresnel, False, True), "incident_scattered")
 
 
 if __name__ == "__main__":
