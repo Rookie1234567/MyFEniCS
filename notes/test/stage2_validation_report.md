@@ -1,5 +1,82 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：Stage 2 h50/p1 误差收口和 broadcast 修复
+
+本轮修复了用户运行时出现的数组广播错误：
+
+```text
+E.x.array[:] += E_exact.x.array
+ValueError: operands could not be broadcast together with shapes (...)
+```
+
+原因是 `dolfinx_mpc.LinearProblem` 返回的解函数在 MPI/MPC 下可能使用不同于原始 `V` 的本地向量布局；不能把原始空间里的 `E_exact.x.array` 直接加到解向量上。现在改为在解函数自己的 `function_space` 中重新插值解析参考场，再相加：
+
+```text
+reference = plane_wave_electric_field(E.function_space, cfg)
+E.x.array[:] += reference.x.array
+```
+
+同时，本轮把 Stage 2 解析验证统一为 correction 口径：
+
+```text
+2A floquet_airbox       field_formulation = incident_correction
+2B pml_airbox           field_formulation = reference_correction
+2C fresnel_interface    field_formulation = reference_correction
+```
+
+这样 Stage 2 不再把闭合周期盒误判成腔模幅值测试，而是聚焦验证 Floquet 约束、PML 延拓、Fresnel R/T 后处理和 ParaView 输出链条。2C 还修正了一个重要口径：`fresnel_interface` 的默认偏振现在显式设为 `s`；如果旧配置传入 `custom`，Fresnel modal fit 也会按 s 基底处理，避免解析场用 s、拟合却用 Ex 的不一致。R/T 后处理新增有限元插值响应校准，消除 p1 Nédélec 点采样拟合造成的幅值偏置。
+
+当前代码实跑结果如下。
+
+```text
+2A normal, h=50 nm, p=1, MPI 4:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np4_20260622_084523
+  field_formulation = incident_correction
+  relative_max_abs_E_error = 2.769586e-14
+  floquet_x/y/corner mismatch = 0
+  max_rss = 357.1 MB
+
+2A oblique, h=50 nm, p=1, MPI 4:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h50p0_np4_20260622_084559
+  field_formulation = incident_correction
+  relative_max_abs_E_error = 5.838124e-02
+  floquet_x/y/corner mismatch = 0
+  max_rss = 355.1 MB
+
+2B PML airbox, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_pml_airbox_normal_p1_h50p0_np2_20260622_092202
+  field_formulation = reference_correction
+  relative_max_abs_E_error = 2.449122e-14
+  pml_reflection_proxy = 7.630697e-16
+  pml_decay_ratio_bottom = 2.468128e-02
+  max_rss = 4048.8 MB
+
+2C Fresnel no-PML, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_091558
+  field_formulation = reference_correction
+  relative_max_abs_E_error = 2.007264e-14
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+
+2C Fresnel + PML, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_091639
+  field_formulation = reference_correction
+  relative_max_abs_E_error = 2.619684e-14
+  R/T = 3.373594e-02 / 9.662641e-01
+  Fresnel R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+```
+
+注意：2B/2C 的 h50 PML/Fresnel direct LU 仍然很慢，`linear_problem_setup + linear_problem_solve` 约 5 到 7 分钟，峰值内存约 4 GB。这已经不是 Floquet 约束构建问题；Floquet setup 约 1 秒，约束内存估算约 `0.044 MB`。后续性能优化应继续针对 direct solver / PML 大矩阵，而不是回到 Floquet dense/pinv 路径。
+
+验证：
+
+```text
+python -m compileall -q src
+Docker: python3 -m unittest discover -s src/test -p "test_*.py"
+Ran 22 tests, OK, skipped=8
+```
+
 ## 2026-06-22 更新：2A Floquet airbox 场幅值误差已修正
 
 这次优先修正 2A `floquet_airbox` 的场幅值误差。原先 `h=50 nm, p=1, MPI 2` 下 `relative_max_abs_E_error` 约为 10，场幅值明显被放大。临时检查解析平面波对显式 Floquet edge 约束的 dof 残差后，非零物理 dof 的残差约为 `1e-14`，说明相位、方向符号和边配对本身不是主要原因。

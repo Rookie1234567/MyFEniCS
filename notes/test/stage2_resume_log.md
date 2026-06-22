@@ -1,5 +1,70 @@
 # Stage 2 续接日志
 
+## 2026-06-22 Stage 2 h50/p1 误差收口完成
+
+本轮完成：
+
+```text
+1. 修复 MPI/MPC 下 E.x.array += E_exact.x.array 的 broadcast 错误。
+2. Stage 2 三个解析验证 case 统一使用 correction 口径：
+   floquet_airbox    -> incident_correction
+   pml_airbox        -> reference_correction
+   fresnel_interface -> reference_correction
+3. Fresnel 默认偏振改为 s，旧 custom Fresnel 拟合也统一按 s 基底处理。
+4. Fresnel/PML modal fit 增加有限元插值响应校准，消除 p1 Nédélec 点采样导致的幅值偏置。
+5. 新增 2 个轻量 unittest，防止 Fresnel custom/s 基底和 Stage 2 formulation 标签回归。
+```
+
+当前实跑结果：
+
+```text
+2A normal h50 p1 MPI4:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np4_20260622_084523
+  E error = 2.769586e-14
+
+2A oblique h50 p1 MPI4:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h50p0_np4_20260622_084559
+  E error = 5.838124e-02
+
+2B PML h50 p1 MPI2:
+  result_dir = results/3D_pml_airbox_normal_p1_h50p0_np2_20260622_092202
+  E error = 2.449122e-14
+  pml_reflection_proxy = 7.630697e-16
+  bottom decay ratio = 2.468128e-02
+
+2C Fresnel no-PML h50 p1 MPI2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_091558
+  E error = 2.007264e-14
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+
+2C Fresnel+PML h50 p1 MPI2:
+  result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_091639
+  E error = 2.619684e-14
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+```
+
+验证：
+
+```text
+本地:
+  python -m compileall -q src
+
+Docker:
+  python3 -m unittest discover -s src/test -p "test_*.py"
+  Ran 22 tests, OK, skipped=8
+```
+
+当前剩余注意事项：
+
+```text
+1. h50 p1 的 2B/2C PML direct LU 仍然很慢，峰值内存约 4 GB。
+2. 这不是 Floquet 约束 OOM；Floquet setup 约 1 秒，约束内存约 0.044 MB。
+3. H 误差仍偏大，因为 H 由低阶 E 的 curl 后处理得到；Stage 2 当前以 E、Floquet mismatch、PML proxy、R/T 为主要验收。
+4. 工作区里 src/main.py 仍有本地未提交改动，本轮没有提交它。
+```
+
 ## 2026-06-22 2A Floquet airbox 场幅值误差修复后的续接点
 
 本轮完成：

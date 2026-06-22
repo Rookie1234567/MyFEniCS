@@ -1,5 +1,39 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-22 更新：Stage 2 当前推荐验证口径
+
+当前 Stage 2 三个解析验证 case 都使用 correction 口径，避免闭合周期盒在粗网格低阶离散下放大腔模：
+
+```text
+2A floquet_airbox       field_formulation = incident_correction
+2B pml_airbox           field_formulation = reference_correction
+2C fresnel_interface    field_formulation = reference_correction
+```
+
+这意味着线性系统里的未知量是 correction field，ParaView、误差评估和 R/T 输出仍然使用重建后的 total field。MPC/MPI 下重建 total field 时，程序会在解函数自己的 `function_space` 里重新插值解析参考场，避免不同 rank 上本地数组长度不一致导致的 broadcast 错误。
+
+2C 的默认偏振现在显式是 `s`；旧配置若还传 `custom`，Fresnel modal fit 也会按 s 基底处理，避免解析场和 R/T 拟合基底不一致。R/T 拟合还增加了有限元插值响应校准，所以 `h=50 nm, p=1` 的 Fresnel R/T 已能稳定回到解析值：
+
+```text
+2C Fresnel+PML h50 p1 MPI2:
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+```
+
+推荐快速检查：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+2B/2C 的 `h=50 nm, p=1` PML direct LU 仍然会比较慢，单个 case 约 5 到 7 分钟、峰值内存约 4 GB。若只是确认功能，可以先用 `--mesh-target-size 100`；若要复现实测表，再用 h50。
+
 ## 2026-06-22 更新：2A airbox 改为 incident-correction 口径
 
 2A `floquet_airbox` 现在不再直接求 total-field 齐次周期腔问题，而是只在纯空气 Floquet 传播验证中求：

@@ -1,5 +1,35 @@
 # v2 文档索引
 
+## 2026-06-22 更新：Stage 2 h50/p1 当前已收口
+
+本轮修复：
+
+```text
+1. 修复 MPI/MPC 下 reference field 加回 total field 时的数组长度 broadcast 错误。
+2. Stage 2 三个解析验证 case 统一使用 correction 口径。
+3. 2C Fresnel 默认 s 偏振，并修正 custom/s modal fit 不一致。
+4. R/T modal fit 增加 FE 插值响应校准。
+```
+
+当前 h50/p1 实跑结论：
+
+```text
+2A normal MPI4:        E error = 2.77e-14
+2A oblique MPI4:       E error = 5.84e-02
+2B PML MPI2:           E error = 2.45e-14, PML proxy = 7.63e-16
+2C Fresnel+PML MPI2:   R/T = 0.03373594 / 0.96626406, R+T = 1.0
+Docker unittest:       Ran 22 tests, OK, skipped=8
+```
+
+先读：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+test/stage2_validation_report.md
+test/stage2_resume_log.md
+```
+
 ## 2026-06-22 更新：2A Floquet airbox 场幅值误差已修正
 
 2A `floquet_airbox` 现在对纯空气双周期传播 benchmark 使用 incident-correction 口径：线性系统求 `E_total - E_incident`，求解后再把解析入射场加回去，因此 ParaView 和误差评估仍然是 total field。

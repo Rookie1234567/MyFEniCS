@@ -1,5 +1,48 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-22 更新：Stage 2 解析验证统一为 correction 口径
+
+当前 Stage 2 的定位是解析参考验证，而不是最终开放边界/端口物理求解。因此三个 case 都采用 correction unknown：
+
+```text
+E_total = E_reference + E_correction
+```
+
+其中：
+
+```text
+2A floquet_airbox:
+  E_reference = 入射平面波
+  field_formulation = incident_correction
+
+2B pml_airbox:
+  E_reference = 经过 z 向复坐标延拓的 PML 平面波
+  field_formulation = reference_correction
+
+2C fresnel_interface:
+  E_reference = Fresnel 解析入射 + 反射 + 透射场
+  field_formulation = reference_correction
+```
+
+这样做的原因是：只用 z 顶/底强边界和 x/y Floquet 约束时，粗网格低阶离散会形成闭合周期盒，容易把验证算例变成腔模幅值放大测试。correction 口径把 Stage 2 的误差重点放回它真正要检查的对象：Floquet 相位和边拓扑配对、PML 复坐标延拓、Fresnel R/T 后处理、ParaView 输出字段。
+
+2C 的 R/T 后处理现在还包含一个有限元插值响应校准。低阶 Nédélec 场不是点值型自由度；直接用点采样做模态拟合会把一个正确的 p1 插值场拟合出几百分点幅值偏差。现在程序会把每个单位模态先插值到当前 H(curl) 空间，再在相同采样点拟合，形成一个小的响应矩阵并校正数值模态幅值。
+
+当前 `h=50 nm, p=1` 的验证结果：
+
+```text
+2B PML:
+  relative_max_abs_E_error = 2.45e-14
+  pml_reflection_proxy = 7.63e-16
+
+2C Fresnel+PML:
+  relative_max_abs_E_error = 2.62e-14
+  R/T = 0.03373594 / 0.96626406
+  R+T = 1.0
+```
+
+剩余物理边界说明：这个口径还不是最终 Stage 4 的 modal port / diffraction-order 求解；真实 3D 结构仍需要后续端口或辐射条件。Stage 2 先保证解析参考链条本身是自洽的。
+
 ## 2026-06-22 更新：2A 纯空气 Floquet airbox 的验证口径
 
 2A `floquet_airbox` 的目的不是模拟反射结构，而是验证 3D 双周期 Floquet 约束下的平面波传播。对均匀空气盒，解析平面波本身已经满足 Maxwell 方程和周期相位。若直接求 total-field 齐次 curl-curl 方程，并只在 z 顶/底施加强 Dirichlet、x/y 使用 Floquet 约束，离散问题会更像一个闭合周期腔；在粗网格低阶单元下容易出现近模态放大，导致数值场幅值偏离 `E0=1 V/m`。

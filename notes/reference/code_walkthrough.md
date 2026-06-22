@@ -1,11 +1,58 @@
+## 2026-06-22 更新：Stage 2 correction 与 Fresnel R/T 校准阅读路径
+
+当前 Stage 2 三个解析验证 case 的代码路径如下：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  _use_reference_correction_formulation(cfg)
+     floquet_airbox / pml_airbox / fresnel_interface 返回 True
+
+  _field_formulation_label(cfg, use_reference_correction)
+     floquet_airbox    -> incident_correction
+     pml_airbox        -> reference_correction
+     fresnel_interface -> reference_correction
+
+  _add_reference_field_to_solution(E, cfg)
+     在 E.function_space 中重新插值解析参考场
+     再做 E += reference
+     这是修复 MPI/MPC broadcast shape mismatch 的关键
+
+  _mode_basis(...)
+     fresnel_interface 中非 p 一律按 s 基底拟合
+
+  _fit_plane_wave_modes(...)
+     先做普通最小二乘模态拟合
+     再用 _interpolated_mode_field(...) 建立 FE 插值响应矩阵
+     用这个小矩阵校准 p1 Nédélec 点采样造成的幅值偏差
+```
+
+对应输出字段：
+
+```text
+field_formulation
+R_total / T_total / R_plus_T
+fresnel_R / fresnel_T
+fresnel_R_error / fresnel_T_error
+pml_reflection_proxy
+```
+
+本轮关键回归：
+
+```text
+Docker unittest: Ran 22 tests, OK, skipped=8
+2A h50 p1 MPI4 normal: E error = 2.77e-14
+2B h50 p1 MPI2:        E error = 2.45e-14, proxy = 7.63e-16
+2C h50 p1 MPI2 PML:    R+T = 1.0, R/T 与 Fresnel 解析一致
+```
+
 ## 2026-06-22 更新：2A Floquet airbox 场幅值修复后的阅读路径
 
 2A `floquet_airbox` 的场幅值误差已经改用 incident-correction 口径修正。阅读代码时按这个路径看：
 
 ```text
 src/solvers/solve_airbox_maxwell_3d.py
-  _use_incident_correction_formulation(cfg)
-     只在纯空气 2A Floquet airbox 中返回 True
+  _use_reference_correction_formulation(cfg)
+     当前 Stage 2 三个解析验证 case 都返回 True
 
   run_airbox_3d_case(...)
      E_exact = plane_wave_electric_field(V, cfg)
@@ -16,7 +63,7 @@ src/solvers/solve_airbox_maxwell_3d.py
      summary["field_formulation"] = "incident_correction"
 ```
 
-这个设计的含义是：线性系统求的是 `E_total - E_incident`，但后处理和 ParaView 仍然看 `E_total`。它只用于 2A 纯空气双周期传播 benchmark，避免 total-field 齐次周期腔在粗网格低阶离散下产生场幅值放大。2B PML 和 2C Fresnel 目前仍按各自的 total/scattered 口径继续单独检查。
+这个设计的含义是：线性系统求的是 `E_total - E_incident`，但后处理和 ParaView 仍然看 `E_total`。这一段是 2A 修复时的历史记录；最新实现已经扩展为上方所述的 Stage 2 统一 correction 口径，其中 2B/2C 使用 `reference_correction`。
 
 本轮 `h=50 nm, p=1, MPI 2` 结果：
 

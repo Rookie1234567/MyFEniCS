@@ -317,6 +317,26 @@ def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
     return field
 
 
+def _add_reference_field_to_solution(E: fem.Function, cfg: SimulationConfig3D) -> None:
+    """Reconstruct total field from a correction solve on E's own dof layout.
+
+    ``dolfinx_mpc.LinearProblem`` may return a Function whose local vector
+    layout differs from the original unconstrained function space used for
+    boundary data.  Interpolate the analytic reference field on the solution
+    space before adding it, so MPI-local array lengths always match.
+    """
+
+    reference = plane_wave_electric_field(E.function_space, cfg)
+    if E.x.array.shape != reference.x.array.shape:
+        raise RuntimeError(
+            "Cannot reconstruct 3D reference-correction total field because the "
+            "solution and reference-field local vectors still have different "
+            f"shapes: {E.x.array.shape} vs {reference.x.array.shape}."
+        )
+    E.x.array[:] += reference.x.array
+    E.x.scatter_forward()
+
+
 def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
     msh = function.function_space.mesh
     comm = msh.comm
@@ -381,7 +401,12 @@ def _mode_basis(cfg: SimulationConfig3D, n_medium: complex, vertical_sign: int) 
     q = _positive_sqrt((cfg.k0 * complex(n_medium)) ** 2 - cfg.kx**2 - cfg.ky**2)
     kvec = np.asarray((cfg.kx, cfg.ky, vertical_sign * q), dtype=np.complex128)
     kind = cfg.polarization_kind.lower()
-    if kind == "s":
+    if cfg.geometry_kind == "fresnel_interface" and kind != "p":
+        # Fresnel reference fields are defined for s/p polarizations.  Treat a
+        # legacy "custom" preset as s so the numerical modal fit uses the same
+        # basis as analytic_fields_3d._fresnel_components.
+        polarization = cfg.s_polarization_vector
+    elif kind == "s":
         polarization = cfg.s_polarization_vector
     elif kind == "p":
         direction = kvec / (cfg.k0 * complex(n_medium))
@@ -405,7 +430,26 @@ def _sample_grid_points(cfg: SimulationConfig3D, z_values: np.ndarray, nx: int =
     return np.asarray(points, dtype=np.float64)
 
 
-def _fit_plane_wave_modes(E, cfg: SimulationConfig3D, points: np.ndarray, modes: list[tuple[str, np.ndarray, np.ndarray]]):
+def _interpolated_mode_field(function_space, mode_k: np.ndarray, mode_polarization: np.ndarray) -> fem.Function:
+    field = fem.Function(function_space, name="mode_calibration")
+
+    def eval_field(x):
+        coords = x.T
+        phase = np.exp(1j * (mode_k[0] * coords[:, 0] + mode_k[1] * coords[:, 1] + mode_k[2] * coords[:, 2]))
+        return (phase[:, None] * mode_polarization[None, :]).T
+
+    field.interpolate(eval_field)
+    return field
+
+
+def _fit_plane_wave_modes(
+    E,
+    cfg: SimulationConfig3D,
+    points: np.ndarray,
+    modes: list[tuple[str, np.ndarray, np.ndarray]],
+    *,
+    calibrate_fe_response: bool = True,
+):
     values = _sample_field_at_points(E, points)
     rows = []
     rhs = []
@@ -423,6 +467,29 @@ def _fit_plane_wave_modes(E, cfg: SimulationConfig3D, points: np.ndarray, modes:
     b = np.asarray(rhs, dtype=np.complex128)
     amplitudes, *_ = np.linalg.lstsq(A, b, rcond=None)
     residual = float(np.linalg.norm(A @ amplitudes - b) / max(float(np.linalg.norm(b)), 1.0e-30))
+
+    if calibrate_fe_response and modes:
+        # Point-sampling a low-order Nedelec interpolation of a plane wave can
+        # bias modal amplitudes by several percent even when the field itself is
+        # the correct FE representation.  Calibrate the fit by measuring how
+        # each unit-amplitude mode is seen after interpolation in this exact
+        # function space, then invert that small response matrix.
+        response_columns = []
+        for _, mode_k, mode_polarization in modes:
+            mode_field = _interpolated_mode_field(E.function_space, mode_k, mode_polarization)
+            apparent, _ = _fit_plane_wave_modes(
+                mode_field,
+                cfg,
+                points,
+                modes,
+                calibrate_fe_response=False,
+            )
+            response_columns.append([apparent[name] for name, _, _ in modes])
+        response = np.asarray(response_columns, dtype=np.complex128).T
+        if response.size:
+            condition = np.linalg.cond(response)
+            if np.isfinite(condition) and condition < 1.0e12:
+                amplitudes = np.linalg.solve(response, amplitudes)
     return {name: complex(value) for value, (name, _, _) in zip(amplitudes, modes)}, residual
 
 
@@ -650,23 +717,26 @@ def _build_variational_forms(msh, mesh_data, cfg: SimulationConfig3D, V):
     return a, L
 
 
-def _use_incident_correction_formulation(cfg: SimulationConfig3D) -> bool:
-    """Use a scattered-field style unknown for the Floquet airbox benchmark.
+def _use_reference_correction_formulation(cfg: SimulationConfig3D) -> bool:
+    """Use a correction unknown for analytic Stage-2 validation cases.
 
-    Solving the homogeneous total-field curl-curl equation with only z-face
-    Dirichlet data creates a closed periodic cavity.  Near discrete cavity
-    modes, the total field can be badly amplified even though the Floquet dof
-    constraints are correct.  For the pure-air Floquet propagation benchmark we
-    instead solve for E_total - E_incident; in a uniform air box this correction
-    is zero, and the reported field is the reconstructed total field.
+    Solving homogeneous total-field problems with z-face Dirichlet data and
+    x/y Floquet constraints creates a closed periodic cavity.  Near discrete
+    cavity modes the total field can be badly amplified even when the boundary
+    constraints are correct.  Stage 2 is an analytic-reference verification
+    layer, so solve for E_total - E_reference and reconstruct the reported
+    total field after the linear solve.
     """
 
-    return (
-        cfg.stage_case == "floquet_airbox"
-        and cfg.geometry_kind == "airbox"
-        and cfg.use_floquet_xy
-        and not cfg.use_pml
-    )
+    return cfg.stage_case in {"floquet_airbox", "pml_airbox", "fresnel_interface"}
+
+
+def _field_formulation_label(cfg: SimulationConfig3D, use_reference_correction: bool) -> str:
+    if not use_reference_correction:
+        return "total_field"
+    if cfg.stage_case == "floquet_airbox":
+        return "incident_correction"
+    return "reference_correction"
 
 
 def _z_boundary_facets(mesh_data, cfg: SimulationConfig3D) -> np.ndarray:
@@ -809,8 +879,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
 
     stage_start = _start_timed_stage(comm)
     E_exact = plane_wave_electric_field(V, cfg)
-    solve_incident_correction = _use_incident_correction_formulation(cfg)
-    E_bc = fem.Function(V, name="E_correction_zero_bc") if solve_incident_correction else E_exact
+    solve_reference_correction = _use_reference_correction_formulation(cfg)
+    field_formulation = _field_formulation_label(cfg, solve_reference_correction)
+    E_bc = fem.Function(V, name="E_correction_zero_bc") if solve_reference_correction else E_exact
     floquet_data: DoubleFloquet3DData | None = None
     if cfg.use_floquet_xy:
         # Floquet constraints own the x/y side walls.  Strong H(curl)
@@ -827,7 +898,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     bc = fem.dirichletbc(E_bc, boundary_dofs)
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
-    log(f"field formulation = {'incident_correction' if solve_incident_correction else 'total_field'}")
+    log(f"field formulation = {field_formulation}")
 
     stage_start = _start_timed_stage(comm)
     a, L = _build_variational_forms(msh, mesh_data, cfg, V)
@@ -863,9 +934,8 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
 
     stage_start = _start_timed_stage(comm)
     E = problem.solve()
-    if solve_incident_correction:
-        E.x.array[:] += E_exact.x.array
-        E.x.scatter_forward()
+    if solve_reference_correction:
+        _add_reference_field_to_solution(E, cfg)
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
@@ -905,7 +975,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "petsc_scalar_type": str(PETSc.ScalarType),
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
-        "field_formulation": "incident_correction" if solve_incident_correction else "total_field",
+        "field_formulation": field_formulation,
         "solver_profile": cfg.solver_profile,
         "solver_profile_resolved": solver_profile_resolved,
         "solver_petsc_options": petsc_options,

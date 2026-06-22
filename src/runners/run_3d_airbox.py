@@ -105,6 +105,8 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "pml_top_thickness": 250.0,
             "pml_bottom_thickness": 250.0,
             "n_substrate": 1.45 + 0.0j,
+            "polarization_kind": "s",
+            "custom_polarization": None,
         }
     raise ValueError("Unsupported 3D stage_case.")
 
