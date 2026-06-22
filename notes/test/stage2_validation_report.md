@@ -1,5 +1,84 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：3D Floquet 三段约束计时验证
+
+本轮只验证新增计时输出，不作为物理精度验收。
+
+编译检查：
+
+```bash
+. dolfinx-complex-mode
+python3 -m compileall -q src
+```
+
+单元测试：
+
+```bash
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 20 tests in 0.003s
+OK (skipped=8)
+```
+
+串行 smoke：
+
+```bash
+python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 900 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+关键输出：
+
+```text
+building 3D Floquet x-direction low-level constraints seconds = 0.012
+building 3D Floquet y-direction low-level constraints seconds = 0.008
+resolving 3D double-Floquet corner/master chain seconds = 0.000
+finalizing 3D double-Floquet MPC seconds = 0.002
+floquet_total = 0.022
+```
+
+MPI 2 smoke：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 900 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+关键输出：
+
+```text
+building 3D Floquet x-direction low-level constraints seconds = 0.006
+building 3D Floquet y-direction low-level constraints seconds = 0.005
+resolving 3D double-Floquet corner/master chain seconds = 0.000
+finalizing 3D double-Floquet MPC seconds = 0.001
+floquet_total = 0.013
+```
+
+对应 `run_summary.json` 已包含：
+
+```text
+floquet_constraint_timings_seconds
+timings_seconds.floquet_build_x_constraints
+timings_seconds.floquet_build_y_constraints
+timings_seconds.floquet_resolve_corner_master_chains
+timings_seconds.floquet_mpc_finalize
+timings_seconds.floquet_total
+```
+
 ## 2026-06-19 更新：Stage 2 第一轮小网格扫描补跑
 
 在修复 MPI Floquet 之后，又补跑了 PML 角度/参数 smoke 和 Fresnel sanity 扫描。这里先记录结论：这些结果用于定位，不代表 Stage 2 已经完成最终定量验收。
@@ -395,81 +474,3 @@ max_rss_mb / elapsed_seconds
 ```
 
 如果 PDE 误差偏大，本文件必须标记为“未通过/待定位”，不能因为程序跑完就写成通过。
-## 2026-06-22 更新：3D Floquet 三段约束计时验证
-
-本轮只验证新增计时输出，不作为物理精度验收。
-
-编译检查：
-
-```bash
-. dolfinx-complex-mode
-python3 -m compileall -q src
-```
-
-单元测试：
-
-```bash
-python3 -m unittest discover -s src/test -p "test_*.py"
-```
-
-结果：
-
-```text
-Ran 20 tests in 0.003s
-OK (skipped=8)
-```
-
-串行 smoke：
-
-```bash
-python3 -m src.runners.run_3d_airbox \
-  --stage-case floquet_airbox \
-  --case normal \
-  --mesh-target-size 900 \
-  --nedelec-degree 1 \
-  --visualization-degree 1 \
-  --solver-profile direct
-```
-
-关键输出：
-
-```text
-building 3D Floquet x-direction low-level constraints seconds = 0.012
-building 3D Floquet y-direction low-level constraints seconds = 0.008
-resolving 3D double-Floquet corner/master chain seconds = 0.000
-finalizing 3D double-Floquet MPC seconds = 0.002
-floquet_total = 0.022
-```
-
-MPI 2 smoke：
-
-```bash
-mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
-  --stage-case floquet_airbox \
-  --case normal \
-  --mesh-target-size 900 \
-  --nedelec-degree 1 \
-  --visualization-degree 1 \
-  --solver-profile direct
-```
-
-关键输出：
-
-```text
-building 3D Floquet x-direction low-level constraints seconds = 0.006
-building 3D Floquet y-direction low-level constraints seconds = 0.005
-resolving 3D double-Floquet corner/master chain seconds = 0.000
-finalizing 3D double-Floquet MPC seconds = 0.001
-floquet_total = 0.013
-```
-
-对应 `run_summary.json` 已包含：
-
-```text
-floquet_constraint_timings_seconds
-timings_seconds.floquet_build_x_constraints
-timings_seconds.floquet_build_y_constraints
-timings_seconds.floquet_resolve_corner_master_chains
-timings_seconds.floquet_mpc_finalize
-timings_seconds.floquet_total
-```
