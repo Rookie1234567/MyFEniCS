@@ -1,5 +1,165 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：h50/p1 下 2A、2B、2C 跑通性和误差评估
+
+本轮命令使用统一设置：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage2_all \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+补充诊断：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case oblique \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case fresnel_interface \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --no-use-pml \
+  --use-floquet-xy
+```
+
+结论先写在前面：
+
+```text
+1. 2A、2B、2C 都能跑通，PETSc direct 均收敛。
+2. 新的 3D Floquet edge topology 约束构建稳定：
+   max_masters_per_slave = 1
+   edge pairing error = 0
+   constraint memory 约 0.029 到 0.044 MB
+3. 2A 的场幅值误差仍很大，normal/oblique 的 relative E max error 都约 10。
+4. 2B 的 PML 空气盒能跑通，E max error 约 0.117，bottom PML 有明显衰减；top ratio > 1 与当前入射波穿过 top PML 的解析延拓口径有关。
+5. 2C 默认 Floquet+PML Fresnel 能跑通但 R/T 完全不可信，R+T 约 52。
+6. 2C 关掉 PML、保留 Floquet 后 R/T 仍不可信，R+T 约 10；因此当前 h50/p1 Fresnel 定量误差不能作为通过。
+7. 临时直接检查解析平面波是否满足新的 edge constraints：有物理幅值的 dof 残差约 1e-14，说明大误差不是因为 Floquet edge 配对相位/方向符号错。
+```
+
+2A normal，`floquet_airbox`：
+
+```text
+result_dir = results/3D_stage2_all_normal_p1_h50p0_np2_20260622_055106/airbox3d_normal_floquet_airbox
+case_status = completed
+num_mesh_cells = 2160
+num_nedelec_dofs = 7552
+relative_max_abs_E_error = 9.986
+relative_max_abs_H_error = 18.976
+poynting_direction_cosine = 0.99998
+floquet_num_constraints = 832
+floquet_max_masters_per_slave = 1
+floquet_estimated_constraint_memory_mb = 0.0286
+elapsed = 3.83 s
+max_rss = 364.7 MB
+```
+
+2A oblique 诊断：
+
+```text
+result_dir = results/3D_floquet_airbox_oblique_p1_h50p0_np2_20260622_055715
+case_status = completed
+relative_max_abs_E_error = 10.036
+relative_max_abs_H_error = 13.288
+poynting_direction_cosine = 0.99759
+floquet_num_constraints = 832
+floquet_max_masters_per_slave = 1
+floquet_estimated_constraint_memory_mb = 0.0286
+```
+
+2B normal，`pml_airbox`：
+
+```text
+result_dir = results/3D_stage2_all_normal_p1_h50p0_np2_20260622_055106/airbox3d_normal_pml_airbox
+case_status = completed
+num_mesh_cells = 3360
+num_nedelec_dofs = 11602
+relative_max_abs_E_error = 0.1166
+relative_max_abs_H_error = 2.209
+pml_reflection_proxy = 0.0684
+pml_reference_relative_error = 1.162
+pml_decay_ratio_top = 123.249
+pml_decay_ratio_bottom = 0.01999
+floquet_num_constraints = 1282
+floquet_max_masters_per_slave = 1
+floquet_estimated_constraint_memory_mb = 0.0440
+elapsed = 159.6 s
+max_rss = 4087.6 MB
+```
+
+2C normal，默认 `fresnel_interface`，Floquet+PML：
+
+```text
+result_dir = results/3D_stage2_all_normal_p1_h50p0_np2_20260622_055106/airbox3d_normal_fresnel_interface
+case_status = completed
+num_mesh_cells = 3360
+num_nedelec_dofs = 11602
+relative_max_abs_E_error = 0.0921
+relative_max_abs_H_error = 2.210
+R_total = 15.166
+T_total = 36.886
+R_plus_T = 52.053
+fresnel_R/T = 0.03374 / 0.96626
+floquet_num_constraints = 1282
+floquet_max_masters_per_slave = 1
+floquet_estimated_constraint_memory_mb = 0.0440
+elapsed = 156.6 s
+max_rss = 4117.5 MB
+```
+
+2C normal，关 PML、保留 Floquet 的隔离诊断：
+
+```text
+result_dir = results/3D_fresnel_interface_normal_p1_h50p0_np2_20260622_055721
+case_status = completed
+relative_max_abs_E_error = 25.655
+relative_max_abs_H_error = 17.437
+R_total = 0.877
+T_total = 9.258
+R_plus_T = 10.135
+fresnel_R/T = 0.03374 / 0.96626
+```
+
+本轮判断：
+
+```text
+跑通性：
+  2A 通过
+  2B 通过
+  2C 通过
+
+Floquet 约束构建：
+  通过。h50/p1 下约束构建不再是内存瓶颈。
+
+物理误差：
+  2A 不通过定量误差验收。
+  2B 只能作为 PML 路径 smoke，不作为严格吸收性能验收。
+  2C 不通过 R/T 定量验收。
+```
+
+下一步建议：
+
+```text
+1. 先修 2A airbox 的场幅值误差，因为它是 2B/2C 的基础。
+2. 保留当前 edge topology Floquet，不要回退到 probe/pinv；临时约束残差检查显示解析场满足新约束。
+3. 2A 建议新增/保留一个测试：插值解析平面波后检查 MPC raw constraint residual，只统计 |dof| 足够大的自由度，避免零 dof 分母放大。
+4. 2C 的 R/T 后处理暂时不要作为通过标准；等 2A 场幅值问题解决后，再分别重跑 Floquet-only、PML-only、Floquet+PML 三组隔离 case。
+```
+
 ## 2026-06-22 更新：3D Floquet 显式边拓扑约束验证
 
 本轮修改目标：正式禁用 probe function + pseudo-inverse / dense whole-plane transform，改为 degree=1 N1curl 的显式 mesh edge 周期配对。
