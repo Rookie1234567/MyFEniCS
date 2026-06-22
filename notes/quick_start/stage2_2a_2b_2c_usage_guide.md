@@ -330,3 +330,28 @@ src/test/test_10_stage2_combined.py
 再跑 2C n_sub=1.45 的 s/p、theta=0/30
 再读 fresnel_reference(...) 和 _fresnel_numerical_metrics(...)
 ```
+# 2026-06-22 更新：Floquet 三段约束计时怎么看
+现在运行 2A/2B/2C 时，只要打开了 `USE_FLOQUET_XY_3D=True`，终端日志会在构造 3D Floquet 约束时即时打印这几段耗时：
+
+```text
+building 3D Floquet x-direction low-level constraints seconds = ...
+building 3D Floquet y-direction low-level constraints seconds = ...
+resolving 3D double-Floquet corner/master chain seconds = ...
+finalizing 3D double-Floquet MPC seconds = ...
+3D Floquet total constraint setup seconds = ...
+```
+
+前三行就是最容易耗时和占内存的 Floquet 约束步骤。`x/y-direction low-level constraints` 主要在做周期侧面的 Nedelec 自由度采集、匹配和局部变换；`corner/master chain` 主要在处理双周期角点、边线和 master 链压缩；`finalizing` 是 `dolfinx_mpc` 真正接收并 finalize 约束的阶段。
+
+跑完后也可以在输出目录的 `run_summary.json` 里查：
+
+```text
+floquet_constraint_timings_seconds
+timings_seconds.floquet_build_x_constraints
+timings_seconds.floquet_build_y_constraints
+timings_seconds.floquet_resolve_corner_master_chains
+timings_seconds.floquet_mpc_finalize
+timings_seconds.floquet_total
+```
+
+并行运行时这些时间采用 MPI 所有 rank 的最大值，所以它反映的是最慢进程的耗时，更适合定位卡顿或内存不足发生在哪个阶段。

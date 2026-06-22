@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import time
 from typing import Any
 
 import numpy as np
@@ -23,6 +24,7 @@ class DoubleFloquet3DData:
     max_face_pairing_coordinate_error: float
     edge_corner_phase_mismatch: float
     orientation_factor_stats: dict[str, object]
+    timings_seconds: dict[str, float]
 
 
 def _facet_dofs(V, facet_dim: int, facet: int) -> np.ndarray:
@@ -477,48 +479,88 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
     except ModuleNotFoundError as exc:
         raise RuntimeError("请求使用 dolfinx_mpc，但当前 Python 环境未安装 dolfinx_mpc。") from exc
 
-    if log is not None:
-        log("building 3D Floquet x-direction low-level constraints")
-    x_data = _axis_raw_maps(V, mesh_data, cfg, "x")
-    if log is not None:
-        log("building 3D Floquet y-direction low-level constraints")
-    y_data = _axis_raw_maps(V, mesh_data, cfg, "y")
-    if log is not None:
-        log("resolving 3D double-Floquet corner/master chains")
-    maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
-    maps.update(y_data["global_raw_maps"])
-    maps.update(x_data["global_raw_maps"])
-    local_owned: dict[int, int] = {}
-    local_owned.update(y_data["local_owned"])
-    local_owned.update(x_data["local_owned"])
+    comm = V.mesh.comm
+    timings: dict[str, float] = {}
+    comm.barrier()
+    total_start = time.perf_counter()
 
-    slave_dofs: list[int] = []
-    master_dofs: list[int] = []
-    master_owners: list[int] = []
-    coefficients: list[complex] = []
-    offsets: list[int] = [0]
-    for slave_global, slave_local in sorted(local_owned.items()):
-        if slave_global not in maps:
-            continue
-        masters, owners, coeffs = _compress_terms(_resolve_mapping(slave_global, maps, owner_hint=V.mesh.comm.rank))
-        if len(masters) == 0:
-            continue
-        slave_dofs.append(int(slave_local))
-        master_dofs.extend(int(value) for value in masters)
-        master_owners.extend(int(value) for value in owners)
-        coefficients.extend(complex(value) for value in coeffs)
-        offsets.append(len(master_dofs))
+    def _timed_step(key: str, message: str, callback):
+        """Time one MPI collective Floquet step and report the slowest rank."""
+        if log is not None:
+            log(message)
+        comm.barrier()
+        step_start = time.perf_counter()
+        result = callback()
+        elapsed = float(comm.allreduce(time.perf_counter() - step_start, op=MPI.MAX))
+        timings[key] = elapsed
+        if log is not None:
+            log(f"{message} seconds = {elapsed:.3f}")
+        return result
 
-    mpc = dolfinx_mpc.MultiPointConstraint(V)
-    mpc.add_constraint(
-        V,
-        np.asarray(slave_dofs, dtype=np.int32),
-        np.asarray(master_dofs, dtype=np.int64),
-        np.asarray(coefficients, dtype=np.complex128),
-        np.asarray(master_owners, dtype=np.int32),
-        np.asarray(offsets, dtype=np.int32),
+    x_data = _timed_step(
+        "floquet_build_x_constraints",
+        "building 3D Floquet x-direction low-level constraints",
+        lambda: _axis_raw_maps(V, mesh_data, cfg, "x"),
     )
-    mpc.finalize()
+    y_data = _timed_step(
+        "floquet_build_y_constraints",
+        "building 3D Floquet y-direction low-level constraints",
+        lambda: _axis_raw_maps(V, mesh_data, cfg, "y"),
+    )
+
+    def _resolve_corner_master_chains():
+        maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+        maps.update(y_data["global_raw_maps"])
+        maps.update(x_data["global_raw_maps"])
+        local_owned: dict[int, int] = {}
+        local_owned.update(y_data["local_owned"])
+        local_owned.update(x_data["local_owned"])
+
+        slave_dofs: list[int] = []
+        master_dofs: list[int] = []
+        master_owners: list[int] = []
+        coefficients: list[complex] = []
+        offsets: list[int] = [0]
+        for slave_global, slave_local in sorted(local_owned.items()):
+            if slave_global not in maps:
+                continue
+            masters, owners, coeffs = _compress_terms(
+                _resolve_mapping(slave_global, maps, owner_hint=comm.rank)
+            )
+            if len(masters) == 0:
+                continue
+            slave_dofs.append(int(slave_local))
+            master_dofs.extend(int(value) for value in masters)
+            master_owners.extend(int(value) for value in owners)
+            coefficients.extend(complex(value) for value in coeffs)
+            offsets.append(len(master_dofs))
+        return slave_dofs, master_dofs, master_owners, coefficients, offsets
+
+    slave_dofs, master_dofs, master_owners, coefficients, offsets = _timed_step(
+        "floquet_resolve_corner_master_chains",
+        "resolving 3D double-Floquet corner/master chain",
+        _resolve_corner_master_chains,
+    )
+
+    def _finalize_mpc():
+        mpc = dolfinx_mpc.MultiPointConstraint(V)
+        mpc.add_constraint(
+            V,
+            np.asarray(slave_dofs, dtype=np.int32),
+            np.asarray(master_dofs, dtype=np.int64),
+            np.asarray(coefficients, dtype=np.complex128),
+            np.asarray(master_owners, dtype=np.int32),
+            np.asarray(offsets, dtype=np.int32),
+        )
+        mpc.finalize()
+        return mpc
+
+    mpc = _timed_step(
+        "floquet_mpc_finalize",
+        "finalizing 3D double-Floquet MPC",
+        _finalize_mpc,
+    )
+    timings["floquet_total"] = float(comm.allreduce(time.perf_counter() - total_start, op=MPI.MAX))
 
     local_slave_dofs = np.asarray(slave_dofs, dtype=np.int32)
     phase_x = complex(cfg.floquet_phase_x)
@@ -539,6 +581,7 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         log(f"3D Floquet local slave dofs = {len(local_slave_dofs)}")
         log(f"3D Floquet max face pairing coordinate error = {max_pair_error:.3e}")
         log(f"3D Floquet x/y max probe error = {x_data['probe_error']:.3e} / {y_data['probe_error']:.3e}")
+        log(f"3D Floquet total constraint setup seconds = {timings['floquet_total']:.3f}")
 
     return DoubleFloquet3DData(
         mpc=mpc,
@@ -550,4 +593,5 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         max_face_pairing_coordinate_error=max_pair_error,
         edge_corner_phase_mismatch=0.0,
         orientation_factor_stats=orientation_stats,
+        timings_seconds=timings,
     )

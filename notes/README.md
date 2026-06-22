@@ -416,3 +416,18 @@ POLARIZATION_TYPE = "TM"  # 或 "TE"
 results/2D_grating_tm_sc_lay_p2_h25p0_t15p0_mpc_YYYYMMDD_HHMMSS/
 results/2D_grating_te_port_ptdtn_dtn1_p1_h120p0_t15p0_man_YYYYMMDD_HHMMSS/
 ```
+## 2026-06-22 更新：3D Floquet 三段约束计时
+2A/2B/2C 中只要启用 `USE_FLOQUET_XY_3D=True`，运行日志现在会输出 3D Floquet 约束构建的关键耗时：
+
+```text
+building 3D Floquet x-direction low-level constraints seconds = ...
+building 3D Floquet y-direction low-level constraints seconds = ...
+resolving 3D double-Floquet corner/master chain seconds = ...
+```
+
+更多说明看：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+```

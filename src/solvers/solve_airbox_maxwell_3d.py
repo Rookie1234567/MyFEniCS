@@ -781,6 +781,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         # Dirichlet data is therefore only applied on z faces, with slave dofs
         # removed to avoid prescribing the same unknown twice.
         floquet_data = build_double_floquet_mpc(V, mesh_data, cfg, log)
+        timings.update(floquet_data.timings_seconds)
         boundary_facets = _z_boundary_facets(mesh_data, cfg)
         raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
         boundary_dofs = np.setdiff1d(raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False).astype(np.int32)
@@ -894,6 +895,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "floquet_edge_corner_constraint_phase_mismatch": None
         if floquet_data is None
         else floquet_data.edge_corner_phase_mismatch,
+        "floquet_constraint_timings_seconds": None if floquet_data is None else floquet_data.timings_seconds,
         "pml_parameters": {
             "pml_alpha": cfg.pml_alpha,
             "pml_top_thickness": cfg.pml_top_thickness,

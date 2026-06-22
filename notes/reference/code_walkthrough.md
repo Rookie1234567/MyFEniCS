@@ -1343,3 +1343,34 @@ src/runners/run_cases.py
 ```
 
 顶层 `src` 现在只保留 `main.py` 作为 PyCharm/命令行统一入口，真正实现已经移动到各功能子目录。并行 Floquet 的重点在 `src/constraints/floquet_constraint.py`：MPI 下每个 rank 只约束自己拥有的右边界 slave，自由度 master 使用全局编号和 owner rank。
+## 2026-06-22 更新：3D Floquet 约束计时的代码路径
+
+如果运行时卡在 3D Floquet 约束构建，先看这条代码路径：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  solve_airbox_maxwell_3d(...)
+  -> build_double_floquet_mpc(V, mesh_data, cfg, log)
+
+src/constraints/floquet_3d.py
+  build_double_floquet_mpc(...)
+  -> _axis_raw_maps(..., "x")
+     打印 building 3D Floquet x-direction low-level constraints seconds
+  -> _axis_raw_maps(..., "y")
+     打印 building 3D Floquet y-direction low-level constraints seconds
+  -> _resolve_corner_master_chains()
+     打印 resolving 3D double-Floquet corner/master chain seconds
+  -> dolfinx_mpc.MultiPointConstraint.add_constraint/finalize()
+     打印 finalizing 3D double-Floquet MPC seconds
+```
+
+这些计时都在 `src/constraints/floquet_3d.py` 内部用 MPI barrier 包住，并用所有 rank 的最大值作为输出。`DoubleFloquet3DData.timings_seconds` 会把这些时间带回求解器；`src/solvers/solve_airbox_maxwell_3d.py` 再把它们写入 `run_summary.json` 的 `floquet_constraint_timings_seconds`，同时合并进总的 `timings_seconds`。
+
+排查顺序建议：
+
+```text
+1. x-direction 很慢：优先怀疑 x 周期侧面的自由度采集、侧面拟合和 MPI gather。
+2. y-direction 很慢：同理检查 y 周期侧面。
+3. corner/master chain 很慢：优先看角点/边线重复约束、master 链压缩和 slave 数量。
+4. finalize 很慢：优先看 dolfinx_mpc 约束装配、通信和内存峰值。
+```
