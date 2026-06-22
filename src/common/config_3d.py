@@ -77,6 +77,8 @@ class SimulationConfig3D:
     nedelec_degree: int = 2
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
+    mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
+    floquet_constraint_mode: str = "auto"  # "auto", "topological_edges", or legacy alias "sparse_facet"
     solver_profile: str = "direct"
     solver_rtol: float = 1.0e-8
     solver_atol: float = 1.0e-12
@@ -148,6 +150,29 @@ class SimulationConfig3D:
     @property
     def mesh_cells(self) -> tuple[int, int, int]:
         return tuple(max(1, int(ceil(length / self.mesh_target_size))) for length in self.box_lengths)
+
+    @property
+    def mesh_cell_type_resolved(self) -> str:
+        mode = self.mesh_cell_type.lower()
+        if mode == "auto":
+            return "hexahedron" if self.use_floquet_xy else "tetrahedron"
+        if mode not in {"tetrahedron", "hexahedron"}:
+            raise ValueError("mesh_cell_type must be 'auto', 'tetrahedron', or 'hexahedron'.")
+        return mode
+
+    @property
+    def floquet_constraint_mode_requested(self) -> str:
+        mode = self.floquet_constraint_mode.lower()
+        if mode == "dense_side_fit":
+            raise ValueError(
+                "floquet_constraint_mode='dense_side_fit' is disabled. "
+                "Use 'auto' or 'topological_edges' for explicit degree=1 N1curl edge pairing."
+            )
+        if mode not in {"auto", "topological_edges", "sparse_facet"}:
+            raise ValueError(
+                "floquet_constraint_mode must be 'auto', 'topological_edges', or legacy alias 'sparse_facet'."
+            )
+        return mode
 
     @property
     def theta_rad(self) -> float:
@@ -257,6 +282,8 @@ class SimulationConfig3D:
         data["physical_z_max"] = self.physical_z_max
         data["domain_z_min"] = self.domain_z_min
         data["domain_z_max"] = self.domain_z_max
+        data["mesh_cell_type_resolved"] = self.mesh_cell_type_resolved
+        data["floquet_constraint_mode_requested"] = self.floquet_constraint_mode_requested
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [[value.real, value.imag] for value in self.polarization_vector]
         data["wavevector"] = [[value.real, value.imag] for value in self.wavevector]

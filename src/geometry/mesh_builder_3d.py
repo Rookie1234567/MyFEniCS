@@ -19,6 +19,9 @@ class AirBox3DMesh:
     cell_tags: mesh.MeshTags
     facet_tags: mesh.MeshTags
     boundary_facets: np.ndarray
+    mesh_cell_type_resolved: str
+    mesh_cells_resolved: tuple[int, int, int]
+    z_alignment_warnings: list[str]
 
 
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
@@ -147,6 +150,49 @@ def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> me
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
+def _required_z_planes(cfg: SimulationConfig3D) -> list[tuple[str, float]]:
+    planes: list[tuple[str, float]] = []
+    if cfg.use_pml:
+        planes.append(("physical_z_min", cfg.physical_z_min))
+        planes.append(("physical_z_max", cfg.physical_z_max))
+    if cfg.geometry_kind == "fresnel_interface":
+        planes.append(("interface_z", cfg.interface_z))
+    return planes
+
+
+def _hexa_mesh_cells(cfg: SimulationConfig3D, comm_size: int) -> tuple[int, int, int]:
+    """Keep periodic hexa smoke meshes from creating empty MPI ranks."""
+    cells = [int(value) for value in cfg.mesh_cells]
+    if cfg.use_floquet_xy:
+        cells[0] = max(cells[0], 2)
+        cells[1] = max(cells[1], 2)
+        cells[2] = max(cells[2], 2)
+    axis = 2
+    while cells[0] * cells[1] * cells[2] < comm_size:
+        cells[axis] += 1
+        axis = (axis + 2) % 3
+    return tuple(cells)
+
+
+def _z_alignment_warnings(cfg: SimulationConfig3D, mesh_cells_resolved: tuple[int, int, int]) -> list[str]:
+    """Report when uniform hexahedral z planes do not contain material breaks."""
+    if cfg.mesh_cell_type_resolved != "hexahedron":
+        return []
+    required = _required_z_planes(cfg)
+    if not required:
+        return []
+    z_grid = np.linspace(cfg.domain_z_min, cfg.domain_z_max, mesh_cells_resolved[2] + 1)
+    tol = 1.0e-10 * max(abs(cfg.domain_z_max - cfg.domain_z_min), 1.0)
+    warnings: list[str] = []
+    for name, value in required:
+        if not np.any(np.isclose(z_grid, value, atol=tol, rtol=0.0)):
+            warnings.append(
+                f"{name}={value:g} nm is not on a hexahedral z grid plane for "
+                f"mesh_target_size={cfg.mesh_target_size:g} nm; cell tags use midpoint classification."
+            )
+    return warnings
+
+
 def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
     """Build a structured tetrahedral 3D box mesh for staged verification.
 
@@ -156,7 +202,11 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD
-    if comm.size > 1:
+    mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
+    mesh_cells_resolved = _hexa_mesh_cells(cfg, comm.size) if mesh_cell_type_resolved == "hexahedron" else cfg.mesh_cells
+    z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
+
+    if mesh_cell_type_resolved == "hexahedron":
         points = [
             np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
             np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
@@ -164,7 +214,26 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         msh = mesh.create_box(
             comm,
             points,
-            cfg.mesh_cells,
+            mesh_cells_resolved,
+            cell_type=mesh.CellType.hexahedron,
+            ghost_mode=mesh.GhostMode.shared_facet,
+        )
+        if comm.rank == 0:
+            note_lines = [
+                "Using dolfinx.mesh.create_box with hexahedron cells.",
+                "This is the default low-memory Stage-2 Floquet mesh because opposite periodic faces are structured.",
+            ]
+            note_lines.extend(f"WARNING: {message}" for message in z_alignment_warnings)
+            (out_dir / "mesh_3d_partition_note.txt").write_text("\n".join(note_lines) + "\n", encoding="utf-8")
+    elif comm.size > 1:
+        points = [
+            np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
+            np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
+        ]
+        msh = mesh.create_box(
+            comm,
+            points,
+            mesh_cells_resolved,
             cell_type=mesh.CellType.tetrahedron,
             ghost_mode=mesh.GhostMode.shared_facet,
         )
@@ -197,4 +266,12 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
             encoding="utf-8",
         )
 
-    return AirBox3DMesh(mesh=msh, cell_tags=cell_tags, facet_tags=facet_tags, boundary_facets=boundary_facets)
+    return AirBox3DMesh(
+        mesh=msh,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        boundary_facets=boundary_facets,
+        mesh_cell_type_resolved=mesh_cell_type_resolved,
+        mesh_cells_resolved=mesh_cells_resolved,
+        z_alignment_warnings=z_alignment_warnings,
+    )

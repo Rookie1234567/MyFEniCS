@@ -1,5 +1,32 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-22 更新：3D Floquet 约束理论口径改为显式边拓扑
+
+当前 3D Floquet 正式实现不再使用 probe function、pseudo-inverse 或整张周期面 dense transform。旧的 side-wide 拟合段落只作为历史记录保留，不能再作为当前代码理解入口。
+
+现在第一版只支持 degree=1 的 hexahedron `N1curl` 单元。因为此时每条 mesh edge 正好对应一个 H(curl) 自由度，所以周期约束可以直接写成：
+
+```text
+slave_dof = phase * orientation_sign * master_dof
+```
+
+其中：
+
+```text
+x=Lx 面上的边自由度:
+  phase = beta_x = exp(i kx Lx)
+
+y=Ly 面上的边自由度:
+  phase = beta_y = exp(i ky Ly)
+
+同时位于 x=Lx 和 y=Ly 的角边自由度:
+  phase = beta_x * beta_y
+```
+
+`orientation_sign` 来自 slave edge 和 master edge 的几何切向方向比较。如果两条边的全局方向一致，符号为 `+1`；方向相反，符号为 `-1`。这一版显式检查周期面 edge midpoint 是否能一一配对；找不到 master edge 时直接报错，不 fallback。
+
+这个设计把约束内存从整面 dense transform 的近似 `O(N_side^2)` 降为近似 `O(N_boundary)`。本轮 `h=50 nm, p=1, MPI 2/4` 已通过构建和求解 smoke，`max_masters_per_slave = 1`。
+
 ## 2026-06-22 更新：先看使用指南，再看理论细节
 
 如果目标是运行 2A/2B/2C 或查代码路径，先看：
@@ -21,7 +48,9 @@ notes/reference/code_walkthrough.md
 
 ## 2026-06-19 更新：MPI Floquet 整面拟合约束已通过 h500/h300 smoke
 
-上一轮的主要风险是：MPI 下 `create_box` 生成的相对侧面三角剖分不完全一致，逐 facet 配对会在 h500/h300 时产生很大的 Floquet mismatch 或超时。现在 MPI 路径已改成整张周期侧面拟合一个 Nedelec slave-to-master 变换：
+历史记录：这一节描述的是 2026-06-19 的整面拟合方案。它已经在 2026-06-22 被显式 edge topology 配对替换，不能作为当前正式实现来理解。
+
+当时的主要风险是：MPI 下 `create_box` 生成的相对侧面三角剖分不完全一致，逐 facet 配对会在 h500/h300 时产生很大的 Floquet mismatch 或超时。当时 MPI 路径曾临时改成整张周期侧面拟合一个 Nedelec slave-to-master 变换：
 
 ```text
 master side dofs -> probe matrix
@@ -29,7 +58,7 @@ slave side dofs  -> probe matrix
 slave = phase * transform * master
 ```
 
-这条路径保留了串行 facet-wise 约束逻辑；只有 MPI 多进程时使用 side-wide transform。
+这条路径现在只作为历史记录保留；当前代码不再把 side-wide transform 作为正式路径。
 
 最新实跑：
 
@@ -256,7 +285,7 @@ nedelec_orientation_factor_stats
 floquet_num_local_slaves
 ```
 
-这里的 `floquet_x_face_mismatch` 和 `floquet_y_face_mismatch` 是约束构造的 probe residual，不是粗网格内部采样误差。
+这里的 `floquet_x_face_mismatch` 和 `floquet_y_face_mismatch` 当前来自 edge midpoint pairing error；旧 probe residual 已不再作为 3D Floquet 正式指标。
 
 ## 2B：z 向 PML
 
@@ -348,4 +377,4 @@ fresnel_interface p2/h300 Floquet+PML 目前只是粗网格 smoke，R/T 还不�
 
 下一轮可以继续 Stage 2 参数扫描，但不建议直接上大网格。更稳的顺序是先做小网格角度/偏振/厚度扫描，再用串行 p2/h150 或更细网格确认 Fresnel+PML 的 R/T 趋势。
 
-当前 MPI 版 3D Floquet 已能跑 h500/h300 smoke test。后续如果要把它作为大规模生产路径，还需要继续优化 side-wide transform 的探针插值、dense transform 内存，以及更高阶单元下的约束稀疏性。
+当前 MPI 版 3D Floquet 已能跑 h50/p1 的 MPI 2/4 smoke test。后续如果要支持更高阶单元，需要实现高阶 N1curl edge/face moment 的显式拓扑映射，不能恢复 probe/pinv 或 dense transform 作为正式路径。

@@ -1,5 +1,62 @@
 # Stage 2 续接日志
 
+## 2026-06-22 3D Floquet 显式边拓扑约束已完成
+
+本轮完成：
+
+```text
+1. src/constraints/floquet_3d.py 已改为正式使用 degree=1 N1curl mesh edge 拓扑配对。
+2. probe function + pseudo-inverse / whole-plane dense transform 已从正式路径禁用。
+3. corner edge 不再走 x 后 y 的 master chain，而是直接映射到 x=0,y=0，phase=beta_x*beta_y。
+4. 每个 slave dof 只对应一个 master dof；max_masters_per_slave 实测为 1。
+5. 如果 nedelec_degree > 1，直接 NotImplementedError。
+6. run_summary.json 已新增：
+   floquet_num_slave_edges
+   floquet_num_matched_master_edges
+   floquet_num_constraints
+   floquet_max_edge_midpoint_pairing_error
+   floquet_num_x_constraints
+   floquet_num_y_constraints
+   floquet_num_corner_constraints
+```
+
+已跑命令和结果：
+
+```text
+compileall + unittest:
+  Ran 20 tests, OK, skipped=8
+
+MPI 2, h=50 nm, p=1:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_035247
+  x/y/corner seconds = 0.200 / 0.009 / 0.001
+  constraints = 832
+  estimated constraint memory = 0.029 MB
+  max_masters_per_slave = 1
+
+MPI 4, h=50 nm, p=1:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np4_20260622_035311
+  x/y/corner seconds = 0.178 / 0.009 / 0.001
+  constraints = 832
+  estimated constraint memory = 0.029 MB
+  max_masters_per_slave = 1
+
+MPI 2, oblique, h=100 nm, p=1:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h100p0_np2_20260622_035337
+  beta_x / beta_y / beta_x*beta_y 复相位路径通过。
+
+degree=2 负向检查:
+  按预期 NotImplementedError，不 fallback 到 dense。
+```
+
+当前注意事项：
+
+```text
+1. 只要 use_floquet_xy=True，当前 3D Floquet 正式路径就要求 nedelec_degree=1。
+2. 后续若要支持 p=2，需要实现高阶 N1curl edge/face moment 的显式拓扑映射，不能恢复 probe/pinv 作为正式方法。
+3. 当前 h=50 nm p=1 小模型 direct solver 也能跑完；更大模型如果 OOM，应先看 linear_problem_setup/solve/postprocess，而不是 Floquet building/resolving。
+4. Stage 2 PML/Fresnel 的物理误差问题和本轮 Floquet 约束内存问题是两个问题，后续不要混在一起判断。
+```
+
 ## 2026-06-19 Stage 2 小网格扫描补跑后的续接点
 
 本轮在 `6f92eba Fix 3D MPI Floquet side constraints` 之后继续补跑了第一轮小网格扫描，并准备再提交文档记录。
@@ -393,3 +450,193 @@ python3 -m unittest discover -s src/test -p "test_*.py"
 ```
 
 然后再补跑 Stage 2 的 Docker/MPI case。
+# 2026-06-22 续接记录：3D Floquet 低内存重构中途暂停
+
+## 当前暂停原因
+
+Docker 验证命令触发额度/审批限制，无法继续运行容器实测。按约定，额度不足时暂停后续实跑，并先记录当前状态。
+
+## 本轮已经修改的文件
+
+```text
+src/common/config_3d.py
+src/runners/run_3d_airbox.py
+src/main.py
+src/geometry/mesh_builder_3d.py
+src/constraints/floquet_3d.py
+src/solvers/solve_airbox_maxwell_3d.py
+notes/test/stage2_resume_log.md
+```
+
+注意：`src/main.py` 在本轮开始前已有用户未提交改动：
+
+```text
+NEDELEC_DEGREE_3D = 1
+MESH_TARGET_SIZE_3D = 50.0
+```
+
+本轮只在这个区域追加了：
+
+```text
+MESH_CELL_TYPE_3D = "auto"
+FLOQUET_CONSTRAINT_MODE_3D = "auto"
+```
+
+## 已完成的实现内容
+
+```text
+1. 新增 3D 配置字段：
+   mesh_cell_type
+   floquet_constraint_mode
+   floquet_dense_memory_limit_mb
+   floquet_dense_max_masters_per_slave
+
+2. 新增 CLI 参数：
+   --mesh-cell-type
+   --floquet-constraint-mode
+
+3. Stage 2 Floquet 默认 mesh_cell_type=auto 时解析为 hexahedron。
+   hexahedron 网格会保证 Floquet smoke 至少 2x2x2 cells，避免 MPI rank 没有 cell 时卡住。
+
+4. mesh builder 会输出：
+   mesh_cell_type_resolved
+   mesh_cells_resolved
+   z_alignment_warnings
+
+5. Floquet summary 新增：
+   floquet_constraint_mode_resolved
+   floquet_raw_map_nnz
+   floquet_max_masters_per_slave
+   floquet_estimated_constraint_memory_mb
+
+6. 保留 dense_side_fit fallback，并加入 dense 内存阈值和每个 slave master 数截断。
+```
+
+## 已跑过且通过的命令
+
+编译通过：
+
+```bash
+. dolfinx-complex-mode
+python3 -m compileall -q src
+```
+
+单元测试通过：
+
+```bash
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 20 tests
+OK (skipped=8)
+```
+
+串行 hexa+sparse/floquet smoke 曾跑通：
+
+```bash
+python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 900 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+MPI 2 h900/p1 在 hexa+dense auto 调整前后曾跑通，关键现象：
+
+```text
+mesh cells resolved = (2, 2, 2)
+floquet_build_x_constraints ≈ 0.04 s
+floquet_build_y_constraints ≈ 0.04 s
+floquet_resolve_corner_master_chains ≈ 0.00 s
+floquet_mpc_finalize ≈ 0.001 s
+```
+
+MPI 2 h300/p1 hexa+dense_side_fit 回归通过，关键结果：
+
+```text
+floquet_constraint_mode_resolved = dense_side_fit
+floquet_raw_map_nnz = 151
+floquet_max_masters_per_slave = 9
+floquet_estimated_constraint_memory_mb ≈ 0.004
+floquet_x_face_mismatch ≈ 2.95e-15
+floquet_y_face_mismatch ≈ 3.14e-15
+```
+
+## 已发现的问题
+
+```text
+1. dolfinx_mpc 内置 periodic helper 不可用：
+   geometrical helper 对 Nedelec 报 Cannot evaluate dof coordinates。
+   topological helper 对 vector valued periodic 报 not implemented。
+
+2. hexa+p1 edge 一对一路径不可直接用：
+   DOLFINx hexa Nedelec 在分区边上的 dof 数并不总是一条 edge 一个 dof。
+   该辅助函数目前保留在 floquet_3d.py，但 active auto 路径不走它。
+
+3. hexa+sparse_facet probe 小块路径内存低，但 h300/p1 的 x probe mismatch 仍约 0.7 到 0.9。
+   因此它目前不能作为默认可信路径。
+
+4. hexa+dense_side_fit 在 h300/p1 精度好，但 h50/p1 MPI 2 仍在 resolving corner/master chain 处被 signal 9 kill。
+   初步判断：x/y raw maps 构建完成后，corner chain 展开时每个 slave 保留过多 master，角线复合导致内存峰值。
+```
+
+## 暂停前最后一个代码状态
+
+已经把默认 `floquet_dense_max_masters_per_slave` 从 32 改成 8，但还没来得及验证。
+
+下一轮第一件事应先跑：
+
+```bash
+. dolfinx-complex-mode
+python3 -m compileall -q src
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 300 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+验收：
+
+```text
+确认 K=8 后 h300/p1 的 floquet_x/y_face_mismatch 是否仍接近 1e-15。
+如果 mismatch 明显变差，需要把 K 调到 12 或 16 后重试。
+```
+
+然后再跑硬验收：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+判断标准：
+
+```text
+1. 必须完成 building x / building y / resolving corner-master chain / finalizing MPC。
+2. 如果失败仍发生在 resolving corner/master chain，继续降低 K 或改 corner chain 解析为 bounded top-k 压缩。
+3. 如果 Floquet 完成但 linear_problem_setup/solve OOM，则记录为直接求解器阶段问题，不再归因 Floquet。
+```
+
+## 下一轮建议
+
+```text
+优先实现 bounded corner-chain compression：
+在 _resolve_mapping 或 _compress_terms 后增加 top-k 压缩，避免 8x8、16x16 的角线组合继续膨胀。
+建议字段：
+  floquet_corner_max_masters_per_slave = 16
+
+然后再次验证 h300 和 h50。
+```

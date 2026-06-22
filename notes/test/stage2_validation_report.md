@@ -1,5 +1,126 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：3D Floquet 显式边拓扑约束验证
+
+本轮修改目标：正式禁用 probe function + pseudo-inverse / dense whole-plane transform，改为 degree=1 N1curl 的显式 mesh edge 周期配对。
+
+基础检查：
+
+```bash
+python -m compileall -q src
+
+. dolfinx-complex-mode
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 20 tests in 0.003s
+OK (skipped=8)
+```
+
+硬验收 smoke：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果：
+
+```text
+result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_035247
+constraint_mode_resolved = topological_edges
+mesh_cells = 2160
+N1curl dofs = 7552
+x/y/corner constraints seconds = 0.200 / 0.009 / 0.001
+floquet_total = 0.212 s
+slave_edges = matched_master_edges = constraints = 832
+x/y/corner constraints = 370 / 444 / 18
+max_edge_midpoint_pairing_error = 0
+max_masters_per_slave = 1
+estimated_constraint_memory_mb = 0.029
+case_status = completed
+max_rss = 367.1 MB
+```
+
+MPI 4 smoke：
+
+```bash
+mpiexec -n 4 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果：
+
+```text
+result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np4_20260622_035311
+x/y/corner constraints seconds = 0.178 / 0.009 / 0.001
+floquet_total = 0.192 s
+slave_edges = matched_master_edges = constraints = 832
+max_masters_per_slave = 1
+case_status = completed
+max_rss = 356.5 MB
+```
+
+斜入射相位 smoke：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果：
+
+```text
+result_dir = results/3D_floquet_airbox_oblique_p1_h100p0_np2_20260622_035337
+beta_x = -0.213960199402 + 0.976842378827j
+beta_y = 0.546635756127 + 0.837370497524j
+beta_x * beta_y = -0.934937284142 + 0.354813013743j
+constraints = 218
+max_masters_per_slave = 1
+case_status = completed
+```
+
+负向检查：
+
+```bash
+python3 -m src.runners.run_3d_airbox \
+  --stage-case floquet_airbox \
+  --case normal \
+  --mesh-target-size 300 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果：按预期直接报错：
+
+```text
+NotImplementedError:
+3D explicit Floquet edge topology constraints currently support only degree=1 N1curl.
+Requested degree=2.
+```
+
+判定：本轮解决的是 Floquet 约束构建阶段的内存复杂度。`h=50 nm, p=1, MPI 2/4` 已经不再死在 building/resolving 阶段；若后续更大模型 OOM，应优先区分为线性求解器或后处理内存，而不是 Floquet constraint 构建。
+
 ## 2026-06-22 更新：3D Floquet 三段约束计时验证
 
 本轮只验证新增计时输出，不作为物理精度验收。

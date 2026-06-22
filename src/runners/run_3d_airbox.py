@@ -42,6 +42,10 @@ def _config_updates(args) -> dict[str, object]:
         updates["visualization_degree"] = args.visualization_degree
     if args.mesh_target_size is not None:
         updates["mesh_target_size"] = args.mesh_target_size
+    if args.mesh_cell_type is not None:
+        updates["mesh_cell_type"] = args.mesh_cell_type
+    if args.floquet_constraint_mode is not None:
+        updates["floquet_constraint_mode"] = args.floquet_constraint_mode
     if args.lambda0 is not None:
         updates["lambda0"] = args.lambda0
     if args.incident_theta_deg is not None:
@@ -146,6 +150,21 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
     parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
+    parser.add_argument(
+        "--mesh-cell-type",
+        choices=("auto", "tetrahedron", "hexahedron"),
+        default=None,
+        help="3D cell type. auto uses hexahedron for Floquet cases and tetrahedron otherwise.",
+    )
+    parser.add_argument(
+        "--floquet-constraint-mode",
+        choices=("auto", "topological_edges", "sparse_facet"),
+        default=None,
+        help=(
+            "3D Floquet builder. auto/topological_edges use explicit degree=1 N1curl edge pairing; "
+            "sparse_facet is kept as a legacy alias."
+        ),
+    )
     parser.add_argument("--lambda0", type=float, default=None)
     parser.add_argument(
         "--incident-theta-deg",

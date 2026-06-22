@@ -1,5 +1,53 @@
 # v2 文档索引
 
+## 2026-06-22 更新：3D Floquet 正式路径改为显式边拓扑约束
+
+为了降低内存，3D Floquet 约束现在不再使用 probe function + pseudo-inverse，也不再使用整张周期面 dense transform。当前正式路径只支持 `degree=1` 的 `N1curl` hexahedron 网格：
+
+```text
+floquet_constraint_mode = auto/topological_edges
+mesh_cell_type = auto/hexahedron
+NEDELEC_DEGREE_3D = 1
+```
+
+新的约束是一对一边自由度映射：
+
+```text
+slave_dof = phase * orientation_sign * master_dof
+x=Lx -> x=0: phase = beta_x
+y=Ly -> y=0: phase = beta_y
+corner edge: phase = beta_x * beta_y
+```
+
+关键日志和 summary 字段：
+
+```text
+3D Floquet number of slave edges
+3D Floquet number of matched master edges
+3D Floquet number of constraints
+3D Floquet max edge midpoint pairing error
+3D Floquet number of x/y/corner constraints
+floquet_max_masters_per_slave
+floquet_estimated_constraint_memory_mb
+```
+
+本轮实测 `floquet_airbox, h=50 nm, p=1`：
+
+```text
+MPI 2: Floquet setup 0.212 s, estimated constraint memory 0.029 MB, max_masters_per_slave = 1
+MPI 4: Floquet setup 0.192 s, estimated constraint memory 0.029 MB, max_masters_per_slave = 1
+oblique MPI 2 h100: beta_x/beta_y/beta_x*beta_y 复相位路径通过
+degree=2: 按预期直接 NotImplementedError，不 fallback 到 dense
+```
+
+先读：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+test/stage2_validation_report.md
+```
+
 ## 2026-06-22 更新：3D Floquet 三段约束计时
 2A/2B/2C 中只要启用 `USE_FLOQUET_XY_3D=True`，运行日志现在会输出 3D Floquet 约束构建的关键耗时：
 

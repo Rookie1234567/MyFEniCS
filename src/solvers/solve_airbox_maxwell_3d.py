@@ -427,9 +427,11 @@ def _fit_plane_wave_modes(E, cfg: SimulationConfig3D, points: np.ndarray, modes:
 
 
 def _floquet_probe_metrics(floquet_data: DoubleFloquet3DData) -> dict[str, float]:
-    stats = floquet_data.orientation_factor_stats
-    x_mismatch = float(stats.get("x_max_probe_error", float("nan")))
-    y_mismatch = float(stats.get("y_max_probe_error", float("nan")))
+    # Stage 2 now uses explicit edge topology for Floquet constraints, so the
+    # old probe-fit mismatch is replaced by the maximum edge midpoint pairing
+    # error measured during dof matching.
+    x_mismatch = float(floquet_data.max_edge_midpoint_pairing_error)
+    y_mismatch = float(floquet_data.max_edge_midpoint_pairing_error)
     return {
         "floquet_x_face_mismatch": x_mismatch,
         "floquet_y_face_mismatch": y_mismatch,
@@ -594,6 +596,9 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
         "mpi_size": comm.size,
         "mpi_rank": comm.rank,
         "mesh_target_size": cfg.mesh_target_size,
+        "mesh_cell_type": cfg.mesh_cell_type,
+        "mesh_cell_type_resolved": cfg.mesh_cell_type_resolved,
+        "floquet_constraint_mode_requested": cfg.floquet_constraint_mode_requested,
         "nedelec_degree": cfg.nedelec_degree,
         "visualization_degree": cfg.visualization_degree,
         "incident_theta_deg": cfg.incident_theta_deg,
@@ -686,6 +691,8 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         raise ValueError("3D PML cases require positive pml_top_thickness and pml_bottom_thickness.")
     k = cfg.wavevector
     p = cfg.polarization_vector
+    mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
+    floquet_constraint_mode_requested = cfg.floquet_constraint_mode_requested
     dot_k_p = np.dot(k, p)
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
 
@@ -701,6 +708,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"polarization = {p.tolist()}")
     log(f"dot(k, p) = {dot_k_p:.6e}")
     log(f"mesh target size = {cfg.mesh_target_size}")
+    log(f"mesh cell type requested = {cfg.mesh_cell_type}")
+    log(f"mesh cell type resolved = {mesh_cell_type_resolved}")
+    log(f"Floquet constraint mode requested = {floquet_constraint_mode_requested}")
     solver_settings = _solver_profile_settings(cfg)
     solver_profile_resolved = solver_settings["profile_resolved"]
     petsc_options = solver_settings["petsc_options"]
@@ -759,6 +769,11 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     stage_start = _start_timed_stage(comm)
     mesh_data = build_airbox_mesh_3d(cfg, out_dir)
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
+    log(f"mesh cell type actual = {mesh_data.mesh_cell_type_resolved}")
+    log(f"mesh cells requested = {cfg.mesh_cells}")
+    log(f"mesh cells resolved = {mesh_data.mesh_cells_resolved}")
+    for warning in mesh_data.z_alignment_warnings:
+        log(f"WARNING: {warning}")
 
     msh = mesh_data.mesh
     tdim = msh.topology.dim
@@ -885,6 +900,28 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "use_floquet_xy": cfg.use_floquet_xy,
         "use_pml": cfg.use_pml,
         "floquet_num_local_slaves": None if floquet_data is None else floquet_data.num_local_slaves,
+        "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
+        "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
+        "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
+        "floquet_estimated_constraint_memory_mb": None
+        if floquet_data is None
+        else floquet_data.estimated_constraint_memory_mb,
+        "floquet_num_slave_edges": None if floquet_data is None else floquet_data.num_slave_edges,
+        "floquet_num_matched_master_edges": None
+        if floquet_data is None
+        else floquet_data.num_matched_master_edges,
+        "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
+        "floquet_max_edge_midpoint_pairing_error": None
+        if floquet_data is None
+        else floquet_data.max_edge_midpoint_pairing_error,
+        "floquet_num_x_constraints": None if floquet_data is None else floquet_data.num_x_constraints,
+        "floquet_num_y_constraints": None if floquet_data is None else floquet_data.num_y_constraints,
+        "floquet_num_corner_constraints": None
+        if floquet_data is None
+        else floquet_data.num_corner_constraints,
+        "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
+        "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
+        "mesh_z_alignment_warnings": mesh_data.z_alignment_warnings,
         "max_face_pairing_coordinate_error": None
         if floquet_data is None
         else floquet_data.max_face_pairing_coordinate_error,

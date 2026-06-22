@@ -84,9 +84,11 @@ AIRBOX3D_CASE = "normal"  # "normal", "oblique", or "both"
 INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
 INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
-NEDELEC_DEGREE_3D = 2
+NEDELEC_DEGREE_3D = 1
 VISUALIZATION_DEGREE_3D = 3
-MESH_TARGET_SIZE_3D = 40.0
+MESH_TARGET_SIZE_3D = 30.0
+MESH_CELL_TYPE_3D = "auto"  # auto / tetrahedron / hexahedron
+FLOQUET_CONSTRAINT_MODE_3D = "auto"  # auto / topological_edges / sparse_facet legacy alias
 LAMBDA0_3D = None
 USE_FLOQUET_XY_3D = None  # None lets STAGE_CASE_3D choose the default.
 USE_PML_3D = None
@@ -161,6 +163,8 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--nedelec-degree", NEDELEC_DEGREE_3D)
     _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE_3D)
     _add_value(args, "--mesh-target-size", MESH_TARGET_SIZE_3D)
+    _add_value(args, "--mesh-cell-type", MESH_CELL_TYPE_3D)
+    _add_value(args, "--floquet-constraint-mode", FLOQUET_CONSTRAINT_MODE_3D)
     _add_value(args, "--lambda0", LAMBDA0_3D)
     _add_value(args, "--incident-theta-deg", INCIDENT_THETA_DEG_3D)
     _add_value(args, "--incident-phi-deg", INCIDENT_PHI_DEG_3D)

@@ -1,4 +1,55 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
+
+## 2026-06-22 更新：3D Floquet 已切换为显式边拓扑配对
+
+现在 3D Floquet 正式约束路径不再使用 probe function + pseudo-inverse，也不再使用整张周期面 dense transform。当前第一版只支持：
+
+```text
+mesh_cell_type = auto/hexahedron
+nedelec_degree = 1
+floquet_constraint_mode = auto/topological_edges
+```
+
+约束形式固定为：
+
+```text
+slave_dof = phase * orientation_sign * master_dof
+x=Lx -> x=0: phase = beta_x
+y=Ly -> y=0: phase = beta_y
+x=Lx 且 y=Ly 的角边: phase = beta_x * beta_y
+```
+
+如果 `nedelec_degree > 1`，程序会直接 `NotImplementedError`，不会 fallback 到 dense/pinv。运行后重点看这些新字段：
+
+```text
+floquet_constraint_mode_resolved = topological_edges
+floquet_num_slave_edges
+floquet_num_matched_master_edges
+floquet_num_constraints
+floquet_max_edge_midpoint_pairing_error
+floquet_num_x_constraints
+floquet_num_y_constraints
+floquet_num_corner_constraints
+floquet_max_masters_per_slave   # 应为 1
+```
+
+最新实跑结果：
+
+```text
+MPI 2, h=50 nm, p=1:
+  x/y/corner constraints seconds = 0.200 / 0.009 / 0.001
+  slave_edges = matched_master_edges = constraints = 832
+  max_masters_per_slave = 1
+  estimated_constraint_memory_mb = 0.029
+
+MPI 4, h=50 nm, p=1:
+  x/y/corner constraints seconds = 0.178 / 0.009 / 0.001
+  slave_edges = matched_master_edges = constraints = 832
+  max_masters_per_slave = 1
+
+MPI 2, oblique, h=100 nm, p=1:
+  beta_x、beta_y、beta_x*beta_y 均正确进入日志和约束。
+```
 ## 2026-06-22 更新：Floquet 三段约束计时怎么看
 现在运行 2A/2B/2C 时，只要打开了 `USE_FLOQUET_XY_3D=True`，终端日志会在构造 3D Floquet 约束时即时打印这几段耗时：
 
@@ -59,7 +110,7 @@ STAGE_CASE_3D = "fresnel_interface"   # 2C
 ```python
 AIRBOX3D_CASE = "normal"       # normal / oblique / both
 MESH_TARGET_SIZE_3D = 300.0    # 单位 nm；越小越细，内存越高
-NEDELEC_DEGREE_3D = 2
+NEDELEC_DEGREE_3D = 1      # 当前 3D Floquet 显式边拓扑约束只支持 degree=1
 VISUALIZATION_DEGREE_3D = 1
 SOLVER_PROFILE_3D = "direct"
 
@@ -111,7 +162,7 @@ power_metrics_3d.json                 # 2C 有 R/T 时
 python3 -m src.runners.run_3d_airbox \
   --stage-case floquet_airbox \
   --case normal \
-  --nedelec-degree 2 \
+  --nedelec-degree 1 \
   --visualization-degree 1 \
   --mesh-target-size 300 \
   --solver-profile direct
@@ -123,7 +174,7 @@ python3 -m src.runners.run_3d_airbox \
 python3 -m src.runners.run_3d_airbox \
   --stage-case floquet_airbox \
   --case oblique \
-  --nedelec-degree 2 \
+  --nedelec-degree 1 \
   --visualization-degree 1 \
   --mesh-target-size 300 \
   --solver-profile direct
@@ -165,7 +216,7 @@ python3 -m src.runners.run_3d_airbox \
   --case normal \
   --n-substrate 1.45 \
   --polarization-kind s \
-  --nedelec-degree 2 \
+  --nedelec-degree 1 \
   --visualization-degree 1 \
   --mesh-target-size 200 \
   --no-use-pml \
@@ -181,7 +232,7 @@ python3 -m src.runners.run_3d_airbox \
   --case normal \
   --n-substrate 1.0 \
   --polarization-kind s \
-  --nedelec-degree 2 \
+  --nedelec-degree 1 \
   --visualization-degree 1 \
   --mesh-target-size 200 \
   --no-use-pml \
@@ -282,8 +333,9 @@ src/geometry/mesh_builder_3d.py
 
 src/constraints/floquet_3d.py
   2A 核心。读 build_double_floquet_mpc(...)。
-  串行看 _axis_raw_maps(...)。
-  MPI 看 _axis_raw_maps_plane(...)。
+  当前正式路径是显式 degree=1 N1curl mesh edge 配对：
+  _build_edge_dof_map_p1(...)
+  _build_constraints_for_kind(..., "x" / "y" / "corner")
 
 src/solvers/solve_airbox_maxwell_3d.py
   读 build_double_floquet_mpc(...) 如何接入求解器，以及 summary 字段如何写出。

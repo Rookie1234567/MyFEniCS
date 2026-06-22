@@ -1,3 +1,36 @@
+## 2026-06-22 更新：3D Floquet 显式边拓扑约束阅读路径
+
+最新 3D Floquet 正式路径已经禁用 probe function + pseudo-inverse，也禁用整张周期面 dense transform。阅读时先看 `src/constraints/floquet_3d.py`：
+
+```text
+build_double_floquet_mpc(...)
+  -> _require_supported_topological_edges(...)
+     只允许 hexahedron + degree=1 N1curl
+  -> _build_topological_edge_context(...)
+     从 cell->edge 和 N1curl entity_dofs 建立 mesh edge -> dof 映射
+  -> _build_constraints_for_kind(..., "x")
+     x=Lx -> x=0，phase=beta_x
+  -> _build_constraints_for_kind(..., "y")
+     y=Ly -> y=0，phase=beta_y
+  -> _build_constraints_for_kind(..., "corner")
+     x=Lx 且 y=Ly 的角边 -> x=0,y=0，phase=beta_x*beta_y
+```
+
+每个 slave dof 只允许一个 master dof。重点看这些字段：
+
+```text
+floquet_num_slave_edges
+floquet_num_matched_master_edges
+floquet_num_constraints
+floquet_num_x_constraints
+floquet_num_y_constraints
+floquet_num_corner_constraints
+floquet_max_masters_per_slave = 1
+floquet_max_edge_midpoint_pairing_error
+```
+
+实跑结论：`h=50 nm, p=1, MPI 2/4` 已不再卡在 building/resolving 阶段；`degree=2` 会直接 `NotImplementedError`，不会 fallback 到 dense/probe。
+
 ## 2026-06-22 更新：3D Floquet 约束计时的代码路径
 
 如果运行时卡在 3D Floquet 约束构建，先看这条代码路径：
@@ -9,11 +42,11 @@ src/solvers/solve_airbox_maxwell_3d.py
 
 src/constraints/floquet_3d.py
   build_double_floquet_mpc(...)
-  -> _axis_raw_maps(..., "x")
+  -> _build_constraints_for_kind(..., "x")
      打印 building 3D Floquet x-direction low-level constraints seconds
-  -> _axis_raw_maps(..., "y")
+  -> _build_constraints_for_kind(..., "y")
      打印 building 3D Floquet y-direction low-level constraints seconds
-  -> _resolve_corner_master_chains()
+  -> _build_constraints_for_kind(..., "corner")
      打印 resolving 3D double-Floquet corner/master chain seconds
   -> dolfinx_mpc.MultiPointConstraint.add_constraint/finalize()
      打印 finalizing 3D double-Floquet MPC seconds
@@ -24,9 +57,9 @@ src/constraints/floquet_3d.py
 排查顺序建议：
 
 ```text
-1. x-direction 很慢：优先怀疑 x 周期侧面的自由度采集、侧面拟合和 MPI gather。
-2. y-direction 很慢：同理检查 y 周期侧面。
-3. corner/master chain 很慢：优先看角点/边线重复约束、master 链压缩和 slave 数量。
+1. x-direction 很慢：优先看 x=Lx 边自由度采集、edge midpoint 配对和 MPI allgather。
+2. y-direction 很慢：同理检查 y=Ly 边自由度采集和 edge 配对。
+3. corner/master chain 很慢：现在这里是角边 direct mapping，不再做 dense master-chain；若变慢，优先看角边数量和 owner-rank 约束发射。
 4. finalize 很慢：优先看 dolfinx_mpc 约束装配、通信和内存峰值。
 ```
 
@@ -57,8 +90,8 @@ src/geometry/mesh_builder_3d.py
 
 src/constraints/floquet_3d.py
   2A 核心。build_double_floquet_mpc(...) 构造双周期约束。
-  串行重点看 _axis_raw_maps(...)。
-  MPI 重点看 _axis_raw_maps_plane(...)。
+  当前串行和 MPI 都看 _build_edge_dof_map_p1(...)。
+  再看 _build_constraints_for_kind(..., "x" / "y" / "corner")。
 
 src/solvers/solve_airbox_maxwell_3d.py
   看 build_double_floquet_mpc(...) 如何接入求解器，以及 floquet_x/y_face_mismatch 如何写入 summary。
@@ -120,7 +153,7 @@ src/test/test_10_stage2_combined.py
 
 ## 2026-06-19 更新：Stage 2 MPI Floquet side-wide 约束阅读入口
 
-最新更新放在文档最上方。MPI 下 `src/constraints/floquet_3d.py` 已经从逐三角 facet 配对，改为对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这个改动修复了 `floquet_airbox MPI 2 h500` 的大 mismatch 和 `h300` 超时问题。
+历史记录：这一节记录的是 2026-06-19 的 side-wide 拟合方案，不是当前正式路径。2026-06-22 以后，3D Floquet 已改为显式 edge topology 配对；请优先看本文最上方的新段落。
 
 建议按这个顺序读最新 3D Stage 2 并行路径：
 
@@ -138,8 +171,8 @@ src/geometry/mesh_builder_3d.py
   串行看 z-aligned mesh；MPI 下目前仍 fallback 到 create_box。
 
 src/constraints/floquet_3d.py
-  重点看 _axis_raw_maps(...) 和 _axis_raw_maps_plane(...)。
-  串行走 facet-wise transform；MPI 走 side-wide transform。
+  历史方案看 _axis_raw_maps(...) 和 _axis_raw_maps_plane(...)。
+  当前方案看 _build_edge_dof_map_p1(...) 和 _build_constraints_for_kind(...)。
 
 src/solvers/solve_airbox_maxwell_3d.py
   看 build_double_floquet_mpc(...) 如何接入求解器，以及 summary 如何记录 mismatch。
@@ -273,16 +306,16 @@ bottom_pml
 
 5. `src/constraints/floquet_3d.py`
 
-这是 2A 的核心。当前不能使用 `dolfinx_mpc` 高层 periodic helper，因为它不支持当前 Nedelec H(curl) 向量空间。代码改用低层路线：
+这是 2A 的核心。当前不能使用 `dolfinx_mpc` 高层 periodic helper，因为它不支持当前 Nedelec H(curl) 向量空间。2026-06-22 以后，3D 正式路线是显式边拓扑配对：
 
 ```text
-facet 配对
-探针场插值
-Nedelec 面自由度变换重构
+mesh edge -> degree=1 N1curl dof
+x/y/corner slave edge -> one master edge
+slave = phase * orientation_sign * master
 add_constraint(slaves, masters, coeffs, owners, offsets)
 ```
 
-summary 里的 `floquet_x_face_mismatch` 和 `floquet_y_face_mismatch` 来自约束构造 probe residual，不是粗网格内部采样误差。
+summary 里的 `floquet_x_face_mismatch` 和 `floquet_y_face_mismatch` 现在记录 edge midpoint pairing error；旧 probe residual 已不再作为 3D Floquet 正式指标。
 
 6. `src/common/analytic_fields_3d.py`
 
