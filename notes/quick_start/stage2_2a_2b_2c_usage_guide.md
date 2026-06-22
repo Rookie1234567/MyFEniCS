@@ -1,5 +1,42 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-22 更新：2A airbox 改为 incident-correction 口径
+
+2A `floquet_airbox` 现在不再直接求 total-field 齐次周期腔问题，而是只在纯空气 Floquet 传播验证中求：
+
+```text
+E_correction = E_total - E_incident
+```
+
+边界上令 `E_correction=0`，求解后再把解析入射场 `E_incident` 加回去输出。因此 ParaView、误差评估和 `run_summary.json` 中看到的仍然是 total E/H；只是线性系统里的未知量换成了 correction field。这个口径只对下面条件同时满足时启用：
+
+```text
+stage_case = floquet_airbox
+geometry_kind = airbox
+use_floquet_xy = True
+use_pml = False
+```
+
+运行结束后看：
+
+```text
+field_formulation = incident_correction
+```
+
+本轮 `h=50 nm, p=1, MPI 2` 实跑结果：
+
+```text
+normal:
+  relative_max_abs_E_error = 2.95e-14
+  max |E| = 1.0
+
+oblique:
+  relative_max_abs_E_error = 5.84e-02
+  max |E| = 1.0
+```
+
+这说明之前 2A 中约 10 倍的场幅值放大已经修正。H 误差仍明显大于 E，是因为当前 H 由低阶 E 的 curl 后处理得到，后续需要单独做 H 的网格/阶次收敛判断。
+
 ## 2026-06-22 更新：3D Floquet 已切换为显式边拓扑配对
 
 现在 3D Floquet 正式约束路径不再使用 probe function + pseudo-inverse，也不再使用整张周期面 dense transform。当前第一版只支持：

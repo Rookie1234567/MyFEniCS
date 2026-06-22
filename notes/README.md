@@ -1,5 +1,25 @@
 # v2 文档索引
 
+## 2026-06-22 更新：2A Floquet airbox 场幅值误差已修正
+
+2A `floquet_airbox` 现在对纯空气双周期传播 benchmark 使用 incident-correction 口径：线性系统求 `E_total - E_incident`，求解后再把解析入射场加回去，因此 ParaView 和误差评估仍然是 total field。
+
+本轮 `h=50 nm, p=1, MPI 2` 实跑：
+
+```text
+normal:  E error = 2.95e-14, max |E| = 1.0
+oblique: E error = 5.84e-02, max |E| = 1.0
+```
+
+先读：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+reference/code_walkthrough.md
+test/stage2_validation_report.md
+test/stage2_resume_log.md
+```
+
 ## 2026-06-22 更新：3D Floquet 正式路径改为显式边拓扑约束
 
 为了降低内存，3D Floquet 约束现在不再使用 probe function + pseudo-inverse，也不再使用整张周期面 dense transform。当前正式路径只支持 `degree=1` 的 `N1curl` hexahedron 网格：

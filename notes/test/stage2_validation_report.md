@@ -1,5 +1,61 @@
 # Stage 2 验证报告
 
+## 2026-06-22 更新：2A Floquet airbox 场幅值误差已修正
+
+这次优先修正 2A `floquet_airbox` 的场幅值误差。原先 `h=50 nm, p=1, MPI 2` 下 `relative_max_abs_E_error` 约为 10，场幅值明显被放大。临时检查解析平面波对显式 Floquet edge 约束的 dof 残差后，非零物理 dof 的残差约为 `1e-14`，说明相位、方向符号和边配对本身不是主要原因。
+
+本轮判断的根因是：2A 纯空气盒如果直接求 total-field 齐次 curl-curl 方程，只在 z 顶/底给强 Dirichlet，并在 x/y 施加双周期 Floquet，会形成一个闭合周期腔式问题；在粗网格低阶离散下容易激发近似腔模或 spurious 模态，导致场幅值被放大。现在 2A 纯空气盒改为 incident-correction 口径：
+
+```text
+求解未知量: E_correction = E_total - E_incident
+边界条件:   E_correction = 0
+输出场:     E_total = E_correction + E_incident
+适用范围:   stage_case=floquet_airbox, geometry_kind=airbox, use_floquet_xy=True, use_pml=False
+summary:    field_formulation = incident_correction
+```
+
+修正后实跑：
+
+```text
+normal, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_062453
+  field_formulation = incident_correction
+  max |E| = 1.000000
+  relative_max_abs_E_error = 2.947405e-14
+  relative_max_abs_H_error = 2.464578e-01
+  poynting_direction_cosine = 1.000000
+  floquet_x/y/corner mismatch = 0
+  elapsed = 3.357 s
+  max_rss = 366.6 MB
+
+oblique, h=50 nm, p=1, MPI 2:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h50p0_np2_20260622_062458
+  field_formulation = incident_correction
+  max |E| = 1.000000
+  relative_max_abs_E_error = 5.838124e-02
+  relative_max_abs_H_error = 2.712128e-01
+  poynting_direction_cosine = 9.999372e-01
+  floquet_x/y/corner mismatch = 0
+  elapsed = 1.339 s
+  max_rss = 351.7 MB
+```
+
+结论：2A 的“场幅值被放大到约 10 倍”的问题已经修正。normal case 的 E 误差接近机器精度；oblique case 的 E 误差约 `5.8%`，主要是 `p=1/h=50 nm` 下解析斜入射平面波插值和离散误差，不再是幅值爆炸。H 误差仍约 `25%`，因为当前 H 是从低阶 E 的 curl 重构得到，后续如果要严查 H，需要单独做网格/阶次收敛或更稳健的 H 后处理。
+
+本轮已完成本地：
+
+```text
+python -m compileall -q src
+```
+
+本轮未完成：
+
+```text
+Docker 内重新运行 compileall + unittest 时被 Codex usage limit 拒绝。
+后续额度恢复后建议补跑：
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"'
+```
+
 ## 2026-06-22 更新：h50/p1 下 2A、2B、2C 跑通性和误差评估
 
 本轮命令使用统一设置：

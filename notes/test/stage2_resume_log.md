@@ -1,5 +1,63 @@
 # Stage 2 续接日志
 
+## 2026-06-22 2A Floquet airbox 场幅值误差修复后的续接点
+
+本轮完成：
+
+```text
+1. src/solvers/solve_airbox_maxwell_3d.py 增加 2A incident-correction 公式。
+2. 仅对 stage_case=floquet_airbox、geometry_kind=airbox、use_floquet_xy=True、use_pml=False 生效。
+3. 2A 边界条件从 total-field 解析 E 改为 correction=0。
+4. 求解后把 E_incident 加回到 E_correction，ParaView 和 summary 仍输出 total E。
+5. run_summary.json 新增 field_formulation，2A 修正路径中为 incident_correction。
+6. 删除了多余的手动 mpc.backsubstitution(E)；dolfinx_mpc.LinearProblem.solve() 内部已经做 backsubstitution。
+```
+
+已跑命令和结果：
+
+```text
+本地编译检查:
+  python -m compileall -q src
+  通过
+
+MPI 2, normal, h=50 nm, p=1:
+  result_dir = results/3D_floquet_airbox_normal_p1_h50p0_np2_20260622_062453
+  relative_max_abs_E_error = 2.947405e-14
+  relative_max_abs_H_error = 2.464578e-01
+  max |E| = 1.000000
+  floquet_x/y/corner mismatch = 0
+  elapsed = 3.357 s
+  max_rss = 366.6 MB
+
+MPI 2, oblique, h=50 nm, p=1:
+  result_dir = results/3D_floquet_airbox_oblique_p1_h50p0_np2_20260622_062458
+  relative_max_abs_E_error = 5.838124e-02
+  relative_max_abs_H_error = 2.712128e-01
+  max |E| = 1.000000
+  floquet_x/y/corner mismatch = 0
+  elapsed = 1.339 s
+  max_rss = 351.7 MB
+```
+
+当前暂停原因：
+
+```text
+尝试在 Docker 内补跑 compileall + unittest 时被 Codex usage limit 拒绝。
+这是额度/调用限制，不是代码运行报错。
+```
+
+下一轮建议先补跑：
+
+```bash
+docker run --rm \
+  -v "C:\Users\admin\Desktop\Code:/work" \
+  -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel \
+  code-dolfinx-mpc:latest \
+  sh -lc '. dolfinx-complex-mode && python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"'
+```
+
+如果单元测试通过，再继续回到 2B/2C 的 PML 和 Fresnel 定量误差修正。当前 2A 的 E 幅值错误已经不再阻塞 Stage 2 后续分析。
+
 ## 2026-06-22 3D Floquet 显式边拓扑约束已完成
 
 本轮完成：

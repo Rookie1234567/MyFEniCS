@@ -1,3 +1,30 @@
+## 2026-06-22 更新：2A Floquet airbox 场幅值修复后的阅读路径
+
+2A `floquet_airbox` 的场幅值误差已经改用 incident-correction 口径修正。阅读代码时按这个路径看：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  _use_incident_correction_formulation(cfg)
+     只在纯空气 2A Floquet airbox 中返回 True
+
+  run_airbox_3d_case(...)
+     E_exact = plane_wave_electric_field(V, cfg)
+     E_bc = 0 correction field
+     bc = dirichletbc(E_bc, z-boundary dofs)
+     E = problem.solve()
+     E += E_exact
+     summary["field_formulation"] = "incident_correction"
+```
+
+这个设计的含义是：线性系统求的是 `E_total - E_incident`，但后处理和 ParaView 仍然看 `E_total`。它只用于 2A 纯空气双周期传播 benchmark，避免 total-field 齐次周期腔在粗网格低阶离散下产生场幅值放大。2B PML 和 2C Fresnel 目前仍按各自的 total/scattered 口径继续单独检查。
+
+本轮 `h=50 nm, p=1, MPI 2` 结果：
+
+```text
+normal:  relative_max_abs_E_error = 2.95e-14
+oblique: relative_max_abs_E_error = 5.84e-02
+```
+
 ## 2026-06-22 更新：3D Floquet 显式边拓扑约束阅读路径
 
 最新 3D Floquet 正式路径已经禁用 probe function + pseudo-inverse，也禁用整张周期面 dense transform。阅读时先看 `src/constraints/floquet_3d.py`：

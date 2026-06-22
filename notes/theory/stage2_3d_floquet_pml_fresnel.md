@@ -1,5 +1,19 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-22 更新：2A 纯空气 Floquet airbox 的验证口径
+
+2A `floquet_airbox` 的目的不是模拟反射结构，而是验证 3D 双周期 Floquet 约束下的平面波传播。对均匀空气盒，解析平面波本身已经满足 Maxwell 方程和周期相位。若直接求 total-field 齐次 curl-curl 方程，并只在 z 顶/底施加强 Dirichlet、x/y 使用 Floquet 约束，离散问题会更像一个闭合周期腔；在粗网格低阶单元下容易出现近模态放大，导致数值场幅值偏离 `E0=1 V/m`。
+
+因此当前 2A 的正式验证口径改为 incident-correction：
+
+```text
+E_total = E_incident + E_correction
+```
+
+在纯空气中 `E_correction` 的解析值应为 0。程序实际求解的是 correction field，边界给 `E_correction=0`，求解结束后再把 `E_incident` 加回去用于 ParaView、误差评估和 H 场后处理。这样既保留了双周期 Floquet 约束和 3D H(curl) 求解路径，又避免把 2A 变成不稳定的周期腔幅值测试。
+
+本轮 `h=50 nm, p=1, MPI 2` 中，normal 入射的 E 误差已从约 10 降到 `2.95e-14`；oblique 入射的 E 误差为 `5.84e-02`，主要反映一阶 hexa Nedelec 空间对斜入射相位的插值/离散误差。
+
 ## 2026-06-22 更新：3D Floquet 约束理论口径改为显式边拓扑
 
 当前 3D Floquet 正式实现不再使用 probe function、pseudo-inverse 或整张周期面 dense transform。旧的 side-wide 拟合段落只作为历史记录保留，不能再作为当前代码理解入口。
