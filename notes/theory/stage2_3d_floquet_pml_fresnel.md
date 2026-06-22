@@ -1,5 +1,24 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-22 更新：先看使用指南，再看理论细节
+
+如果目标是运行 2A/2B/2C 或查代码路径，先看：
+
+```text
+notes/quick_start/stage2_2a_2b_2c_usage_guide.md
+notes/reference/code_walkthrough.md
+```
+
+这两个文档已经把三段功能对应到代码入口：
+
+```text
+2A floquet_airbox       运行和阅读 3D 双周期 Floquet 空气盒
+2B pml_airbox           运行和阅读 z-PML 空气盒
+2C fresnel_interface    运行和阅读 Fresnel 平界面验证
+```
+
+本文继续作为理论说明，主要解释 Floquet 相位、PML 张量、Fresnel 参考解和当前验收口径。
+
 ## 2026-06-19 更新：MPI Floquet 整面拟合约束已通过 h500/h300 smoke
 
 上一轮的主要风险是：MPI 下 `create_box` 生成的相对侧面三角剖分不完全一致，逐 facet 配对会在 h500/h300 时产生很大的 Floquet mismatch 或超时。现在 MPI 路径已改成整张周期侧面拟合一个 Nedelec slave-to-master 变换：

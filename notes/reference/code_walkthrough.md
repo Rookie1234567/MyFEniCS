@@ -1,3 +1,91 @@
+## 2026-06-22 更新：2A / 2B / 2C 代码阅读路径
+
+最新更新放在文档最上方。Stage 2 的使用说明先看：
+
+```text
+notes/quick_start/stage2_2a_2b_2c_usage_guide.md
+```
+
+如果直接读代码，按下面三个路径看。
+
+### 2A：`floquet_airbox`
+
+```text
+src/main.py
+  看 STAGE_CASE_3D = "floquet_airbox" 以及入射角、网格、求解器变量。
+
+src/runners/run_3d_airbox.py
+  看 _stage_defaults("floquet_airbox") 如何设置 use_floquet_xy=True。
+
+src/common/config_3d.py
+  看 direction_vector、kx/ky、floquet_phase_x/y。
+
+src/geometry/mesh_builder_3d.py
+  看 x_min/x_max、y_min/y_max、z_min/z_max 外边界 tags。
+
+src/constraints/floquet_3d.py
+  2A 核心。build_double_floquet_mpc(...) 构造双周期约束。
+  串行重点看 _axis_raw_maps(...)。
+  MPI 重点看 _axis_raw_maps_plane(...)。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  看 build_double_floquet_mpc(...) 如何接入求解器，以及 floquet_x/y_face_mismatch 如何写入 summary。
+```
+
+### 2B：`pml_airbox`
+
+```text
+src/main.py
+  看 PML_TOP_THICKNESS_3D、PML_BOTTOM_THICKNESS_3D、PML_ALPHA_3D。
+
+src/runners/run_3d_airbox.py
+  看 _stage_defaults("pml_airbox") 如何同时打开 use_floquet_xy 和 use_pml。
+
+src/common/config_3d.py
+  看 physical_z_min/max 与 domain_z_min/max 的区别。
+
+src/geometry/mesh_builder_3d.py
+  看 top_pml、bottom_pml cell tags 如何由 cell midpoint 标记。
+
+src/common/pml_3d.py
+  2B 核心。z_stretch_derivative_value(...) 定义 z 向复拉伸；
+  z_pml_tensors(...) 把复拉伸写成 Maxwell 张量。
+
+src/common/analytic_fields_3d.py
+  看 pml_complex_z(...) 如何给解析参考场做复坐标延拓。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  看 _build_variational_forms(...) 中 top/bottom PML 体积分；
+  看 _pml_probe_metrics(...) 中 PML proxy 和 decay ratio 如何计算。
+```
+
+### 2C：`fresnel_interface`
+
+```text
+src/main.py
+  看 N_SUBSTRATE_3D、POLARIZATION_KIND_3D、INCIDENT_THETA_DEG_3D。
+
+src/runners/run_3d_airbox.py
+  看 _stage_defaults("fresnel_interface") 如何设置 geometry_kind="fresnel_interface"。
+
+src/common/config_3d.py
+  看 s_polarization_vector、p_polarization_vector、substrate_index。
+
+src/common/analytic_fields_3d.py
+  2C 核心。fresnel_reference(...) 计算解析 R/T；
+  electric_field_code_values(...) 生成平界面总场参考解。
+
+src/geometry/mesh_builder_3d.py
+  看 interface_z 如何进入 z-aligned mesh，以及 substrate cell tag 如何标记。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  看 _fresnel_numerical_metrics(...) 如何从数值场拟合 R/T；
+  看 _stage2_reference_metrics(...) 如何写出 power_metrics_3d.json。
+
+src/test/test_10_stage2_combined.py
+  看 n_sub=1 的 no-PML/Floquet 与 Floquet-only 硬 sanity。
+```
+
 ## 2026-06-19 更新：Stage 2 MPI Floquet side-wide 约束阅读入口
 
 最新更新放在文档最上方。MPI 下 `src/constraints/floquet_3d.py` 已经从逐三角 facet 配对，改为对整张周期侧面拟合一个 Nedelec slave-to-master 变换。这个改动修复了 `floquet_airbox MPI 2 h500` 的大 mismatch 和 `h300` 超时问题。

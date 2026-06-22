@@ -1,5 +1,23 @@
 # v2 文档索引
 
+## 2026-06-22 更新：Stage 2 的 2A / 2B / 2C 怎么用
+
+新增一份快速指南，专门说明 Stage 2 三个功能如何运行、看哪些输出、阅读代码时按什么路径看：
+
+```text
+quick_start/stage2_2a_2b_2c_usage_guide.md
+```
+
+对应关系：
+
+```text
+2A floquet_airbox       3D 双周期 Floquet 空气盒
+2B pml_airbox           3D 双周期 Floquet + 上下 z-PML 空气盒
+2C fresnel_interface    3D 平界面 Fresnel 验证
+```
+
+如果只是想使用功能，先看这份 quick start；如果想追代码实现，再看 `reference/code_walkthrough.md` 顶部的 2A/2B/2C 阅读路径。
+
 ## 2026-06-19 更新：Stage 2 MPI Floquet h500/h300 已修复
 
 最新状态先看这里。上一轮记录中的 `floquet_airbox MPI 2 h500 mismatch 大` 和 `h300 超时` 已经修复：MPI 下 3D Floquet 现在对整张周期侧面拟合 Nedelec 变换，不再依赖逐三角面配对。
@@ -171,19 +189,22 @@ iterative_hypre              禁用，BoomerAMG 对当前 H(curl) Maxwell 不可
 2. `quick_start/stage1_3d_airbox_guide.md`
    3D 扩展第一步的快速入口。它说明如何在 `src/main.py` 中切换 2D/3D，以及如何在 ParaView 打开 3D 空气盒子的结果。
 
-3. `parallel/parallel_v2_guide.md`
+3. `quick_start/stage2_2a_2b_2c_usage_guide.md`
+   Stage 2 的 2A/2B/2C 快速入口。它说明如何运行 Floquet、PML 和 Fresnel 验证，以及先读哪些代码文件。
+
+4. `parallel/parallel_v2_guide.md`
    需要 MPI 并行时看这个。它说明并行 Floquet、并行 `.vtu/.pvd` 输出、R/T 后处理和性能对比。
 
-4. `theory/reflection_transmission_metrics.md`
+5. `theory/reflection_transmission_metrics.md`
    想理解反射率、透射率、衍射级次和能量守恒时看这个。
 
-5. `theory/dtn_auxiliary_and_auto_orders.md`
+6. `theory/dtn_auxiliary_and_auto_orders.md`
    想理解 Fourier-DtN 端口、辅助变量法、自动衍射级和未来 3D 稀疏化路线时看这个。
 
-6. `theory/solver_profiles_3d.md`
+7. `theory/solver_profiles_3d.md`
    想理解 3D 求解器 profile、direct/iterative 的区别、不收敛处理和矩阵统计时看这个。
 
-7. `reference/code_walkthrough.md`
+8. `reference/code_walkthrough.md`
    想逐行读代码时看这个。
 
 ## 快速运行
@@ -282,6 +303,7 @@ port_robin_mpc/
 quick_start/pycharm_main_run_guide.md
 quick_start/pycharm_mpc_docker_setup.md
 quick_start/config_driven_run_guide.md
+quick_start/stage2_2a_2b_2c_usage_guide.md
 ```
 
 ### parallel
