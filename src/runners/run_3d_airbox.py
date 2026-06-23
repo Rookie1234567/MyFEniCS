@@ -86,6 +86,12 @@ def _config_updates(args) -> dict[str, object]:
         updates["period_x"] = args.period_x
     if args.period_y is not None:
         updates["period_y"] = args.period_y
+    if args.air_height is not None:
+        updates["air_height"] = args.air_height
+        updates["z_max"] = args.air_height
+    if args.substrate_thickness is not None:
+        updates["substrate_thickness"] = args.substrate_thickness
+        updates["z_min"] = -args.substrate_thickness
     if args.grating_width_x is not None:
         updates["grating_width_x"] = args.grating_width_x
     if args.grating_width_y is not None:
@@ -153,10 +159,12 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "scattering_background": "layered",
             "stage4_boundary_model": "pml",
             "lambda0": 633.0,
-            "period_x": 350.0,
-            "period_y": 300.0,
-            "z_min": -550.0,
-            "z_max": 350.0,
+            "period_x": 600.0,
+            "period_y": 500.0,
+            "air_height": 850.0,
+            "substrate_thickness": 350.0,
+            "z_min": -350.0,
+            "z_max": 850.0,
             "interface_z": 0.0,
             "use_floquet_xy": True,
             "use_pml": True,
@@ -165,10 +173,10 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "pml_alpha": 5.0,
             "n_substrate": 1.45 + 0.0j,
             "n_grating": 2.0 + 0.0j,
-            "grating_width_x": 150.0,
-            "grating_width_y": 100.0,
+            "grating_width_x": 300.0,
+            "grating_width_y": 200.0,
             "grating_height": 150.0,
-            "incident_phi_deg": 90.0,
+            "incident_phi_deg": 0.0,
             "polarization_kind": "s",
             "custom_polarization": None,
             "mesh_target_size": 50.0,
@@ -177,7 +185,7 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "mesh_cell_type": "auto",
             "floquet_constraint_mode": "auto",
             "solver_profile": "direct",
-            "diffraction_zero_order_only": True,
+            "diffraction_zero_order_only": False,
             "diffraction_sample_count_x": 24,
             "diffraction_sample_count_y": 24,
         }
@@ -328,6 +336,13 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--n-grating", default=None, help="Rectangular-block grating refractive index for Stage 4.")
     parser.add_argument("--period-x", type=float, default=None, help="3D periodic cell size in x, nm.")
     parser.add_argument("--period-y", type=float, default=None, help="3D periodic cell size in y, nm.")
+    parser.add_argument("--air-height", type=float, default=None, help="Physical air height above z=0 in nm.")
+    parser.add_argument(
+        "--substrate-thickness",
+        type=float,
+        default=None,
+        help="Physical substrate thickness below z=0 in nm.",
+    )
     parser.add_argument("--grating-width-x", type=float, default=None, help="Stage-4 block width in x, nm.")
     parser.add_argument("--grating-width-y", type=float, default=None, help="Stage-4 block width in y, nm.")
     parser.add_argument("--grating-height", type=float, default=None, help="Stage-4 block height above interface z=0, nm.")

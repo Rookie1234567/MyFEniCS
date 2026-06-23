@@ -1,5 +1,96 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：600/500 nm COMSOL 对比单胞的推荐用法
+
+当前 Stage 4 默认参数已经切换到这组 COMSOL 对比案例：
+
+```text
+period_x = 600 nm
+period_y = 500 nm
+grating_width_x = 300 nm
+grating_width_y = 200 nm
+grating_height = 150 nm
+air_height = 850 nm
+substrate_thickness = 350 nm
+pml_top_thickness = 250 nm
+pml_bottom_thickness = 250 nm
+polarization_kind = s
+incident_phi_deg = 0 deg   # normal incidence 下 S 偏振对应 Ey
+diffraction_zero_order_only = False
+```
+
+推荐先跑 h50/p1：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+斜入射检查：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --incident-theta-deg 10 \
+  --incident-phi-deg 0 \
+  --polarization-kind s \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+如果要从命令行临时改几何，可以直接加：
+
+```bash
+--period-x 600 --period-y 500 \
+--air-height 850 --substrate-thickness 350 \
+--grating-width-x 300 --grating-width-y 200 --grating-height 150 \
+--pml-top-thickness 250 --pml-bottom-thickness 250
+```
+
+现在 summary 中正式看：
+
+```text
+diffraction_total_power_source = e_fourier_orders
+R_total / T_total / R_plus_T
+R_total_from_e_fourier / T_total_from_e_fourier / R_plus_T_from_e_fourier
+```
+
+旧的：
+
+```text
+R_total_from_modal_orders / T_total_from_modal_orders
+```
+
+只作为诊断。h50/p1 中它可能因为 FE-curl 的 H 后处理高阶误差而给出 `R+T>1`，不要把它当作正式功率。
+
+COMSOL-like 三图输出：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.tools.render_stage4_comsol_views \
+  results/3D_stage4_block_grating_normal_p1_h50p0_YYYYMMDD_HHMMSS/fields_3d_for_paraview.vtu
+```
+
+它会生成：
+
+```text
+stage4_comsol_like_outer_surface.png
+stage4_comsol_like_slice_yz_x_mid.png
+stage4_comsol_like_slice_xz_y_mid.png
+stage4_comsol_like_views.json
+```
+
+每张图单独取颜色范围，适合和 COMSOL 的外表面、y-z 切面、x-z 切面对比形态。
+
 ## 2026-06-23 更新：ParaView 变量已精简
 
 当前 3D ParaView 文件不再输出一大串重复/派生数组。打开 `fields_3d_for_paraview.vtu` 或 MPI 的 `fields_3d_for_paraview_parallel.pvd` 后，优先看：

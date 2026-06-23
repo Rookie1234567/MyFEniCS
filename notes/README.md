@@ -1,5 +1,73 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 已切换到 600/500 nm COMSOL 对比单胞
+
+本轮按 COMSOL 新案例更新 Stage 4 默认输入：
+
+```text
+lambda0 = 633 nm
+period_x / period_y = 600 / 500 nm
+grating_width_x / grating_width_y / grating_height = 300 / 200 / 150 nm
+air_height = 850 nm
+substrate_thickness = 350 nm
+pml_top / pml_bottom = 250 / 250 nm
+normal incidence, S polarization -> 默认 incident_phi_deg = 0 deg, 即 E 主要沿 y
+```
+
+重要修正：
+
+```text
+1. 新增 --air-height 和 --substrate-thickness。
+   Stage 4 会同步设置 z_max=air_height、z_min=-substrate_thickness。
+
+2. 新周期下基底中会打开高阶衍射通道。
+   默认不再使用 zero-order-only，而是自动枚举传播级次。
+
+3. 正式 R/T 改为 E-Fourier probe-plane 功率。
+   旧的 E/H modal least-squares 仍保留为 diagnostic，因为 H 来自 FE curl，
+   在 h50/p1 的高阶通道上会把 T 放大到 R+T>1。
+
+4. lossless Stage 4 的能量检查收紧。
+   只要正式 R+T 超过 1+1e-8，就标记为 failed_stage4_energy_balance。
+```
+
+最新实跑：
+
+```text
+flat-layer sanity, h50/p1:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h50p0_20260623_133806
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+
+block grating, normal, h50/p1:
+  results/3D_stage4_block_grating_normal_p1_h50p0_20260623_135921
+  official E-Fourier R/T = 2.600070e-03 / 9.334178e-01
+  official R+T = 9.360178e-01
+  old modal diagnostic R+T = 1.065764e+00
+
+block grating, theta=10 deg, phi=0 deg, S, h50/p1:
+  results/3D_stage4_block_grating_normal_p1_h50p0_20260623_140352
+  official E-Fourier R/T = 9.938852e-03 / 9.276119e-01
+  official R+T = 9.375507e-01
+```
+
+h25 direct 已尝试，但 15 分钟内未完成并手动停止残留容器；这属于当前 Docker/direct LU 资源限制，不能作为物理失败。`linear_problem_setup` 慢是正常的大头之一：`dolfinx_mpc.LinearProblem` 会构造带 Floquet MPC 的受约束线性系统、触发表达式/矩阵装配和 PETSc 对象创建；h50 约 90 s，h25 会急剧增长。
+
+COMSOL-like 对比图生成工具：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.tools.render_stage4_comsol_views \
+  results/3D_stage4_block_grating_normal_p1_h50p0_20260623_135921/fields_3d_for_paraview.vtu
+```
+
+输出三张图：
+
+```text
+stage4_comsol_like_outer_surface.png
+stage4_comsol_like_slice_yz_x_mid.png
+stage4_comsol_like_slice_xz_y_mid.png
+```
+
 ## 2026-06-23 更新：3D ParaView 输出已精简
 
 本轮按“ParaView 变量太多”的反馈精简了 3D 输出：

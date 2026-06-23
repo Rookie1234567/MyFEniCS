@@ -1,5 +1,64 @@
 # Stage 4 验证报告
 
+## 2026-06-23 更新：600/500 nm COMSOL 对比单胞 h50 验证
+
+本轮按 COMSOL 新案例更新了 Stage 4 默认几何：
+
+```text
+period_x / period_y = 600 / 500 nm
+block = 300 x 200 x 150 nm
+air_height = 850 nm
+substrate_thickness = 350 nm
+pml_top / pml_bottom = 250 / 250 nm
+normal incidence S polarization: incident_phi_deg = 0 deg, E 主要沿 y
+```
+
+同时修正了 R/T 后处理：
+
+```text
+official R/T source = e_fourier_orders
+old E/H modal-order powers = diagnostic only
+lossless R+T pass tolerance = 1e-8
+```
+
+flat-layer sanity:
+
+```text
+results/3D_stage4_flat_layer_sanity_normal_p1_h50p0_20260623_133806
+R/T = 3.373594e-02 / 9.662641e-01
+R+T = 1.000000e+00
+case_status = completed
+```
+
+block grating normal:
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_20260623_135921
+official E-Fourier R/T = 2.600070e-03 / 9.334178e-01
+official R+T = 9.360178e-01
+old modal diagnostic R+T = 1.065764e+00
+case_status = completed
+```
+
+block grating theta=10 deg:
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_20260623_140352
+official E-Fourier R/T = 9.938852e-03 / 9.276119e-01
+official R+T = 9.375507e-01
+old modal diagnostic R+T = 1.060111e+00
+case_status = completed
+```
+
+h25 direct 尝试：
+
+```text
+15 分钟内未完成，残留 Docker 容器已停止。
+判断：当前 Docker/direct LU 资源不足，不能作为物理失败。
+```
+
+关于 `linear_problem_setup`：本轮 h50/p1 中它约 90-100 s，`linear_problem_solve` 约 129 s。这不是单纯的 Python 函数调用耗时，而是 `dolfinx_mpc.LinearProblem` 构造受 Floquet MPC 约束后的线性系统、创建 PETSc 对象、触发表达式/矩阵装配等操作。h25 的矩阵和 LU 因子化成本会远高于 h50，因此当前直接法不适合继续把 h25 当作常规 smoke。
+
 ## 2026-06-23 更新：PML 流程回到 2D-like，evanescent fitting 修正 R+T 爆掉
 
 本轮根据 COMSOL 电场模截图和“lossless R+T 不应超过 1”的要求继续修正 Stage 4。核心变化：

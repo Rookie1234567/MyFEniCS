@@ -1050,7 +1050,7 @@ def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict
         abs(complex(index).imag) < 1.0e-12
         for index in (cfg.n_air, cfg.substrate_index, cfg.grating_index)
     )
-    tolerance = 1.0e-2
+    tolerance = 1.0e-8
     r_plus_t = float(summary["R_plus_T"])
     passed = (not lossless) or r_plus_t <= 1.0 + tolerance
     return {

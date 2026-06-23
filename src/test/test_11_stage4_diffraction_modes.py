@@ -26,7 +26,7 @@ def _mode_samples(points, kvec, e_vec, h_vec, amplitude: complex) -> tuple[np.nd
 
 class Stage4DiffractionModeTests(unittest.TestCase):
     def test_zero_order_only_catalog(self):
-        cfg = stage4_block_config()
+        cfg = stage4_block_config(diffraction_zero_order_only=True)
         orders = enumerate_diffraction_orders_3d(cfg)
         self.assertEqual([(order.m, order.n) for order in orders], [(0, 0)])
         self.assertTrue(orders[0].top_propagating)
@@ -56,7 +56,7 @@ class Stage4DiffractionModeTests(unittest.TestCase):
             self.assertLess(abs(np.dot(kvec, pol)), 1.0e-12)
 
     def test_analytic_sample_fit_recovers_zero_order_amplitudes(self):
-        cfg = stage4_block_config()
+        cfg = stage4_block_config(diffraction_zero_order_only=True)
         order = enumerate_diffraction_orders_3d(cfg)[0]
         points = _sample_plane(cfg, z=250.0)
         top_basis = dict(polarization_basis_3d(order.alpha, order.gamma, order.beta_top, cfg.n_air, -1, cfg))

@@ -82,10 +82,16 @@ def enumerate_diffraction_orders_3d(
         n_max = max(abs(complex(cfg.n_air)), abs(complex(cfg.substrate_index)))
         max_m = cfg.diffraction_order_max_m
         max_n = cfg.diffraction_order_max_n
+        # Official power orders should cover propagating candidates, not an
+        # extra evanescent buffer.  Adding far-evanescent orders to the main
+        # least-squares fit can make the modal matrix badly conditioned and
+        # corrupt the propagating R/T values.  The small-period zero-order
+        # benchmark still adds nearest evanescent neighbors separately in
+        # _orders_for_modal_fit().
         if max_m is None:
-            max_m = int(np.ceil((n_max * cfg.k0 + abs(cfg.kx)) * (cfg.x_max - cfg.x_min) / (2.0 * np.pi))) + 1
+            max_m = int(np.floor((n_max * cfg.k0 + abs(cfg.kx)) * (cfg.x_max - cfg.x_min) / (2.0 * np.pi) + 1.0e-12))
         if max_n is None:
-            max_n = int(np.ceil((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi))) + 1
+            max_n = int(np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12))
     if max_m < 0 or max_n < 0:
         raise ValueError("diffraction_order_max_m/n must be non-negative.")
 
@@ -202,6 +208,102 @@ def _sampled_flux_code_units(e_values: np.ndarray, h_values: np.ndarray, normal:
     normal = np.asarray(normal, dtype=np.float64)
     area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
     return float(np.mean(poynting @ normal) * area)
+
+
+def _fourier_e_coefficient(points: np.ndarray, e_values: np.ndarray, alpha: complex, gamma: complex) -> np.ndarray:
+    phase = np.exp(-1j * (alpha * points[:, 0] + gamma * points[:, 1]))
+    return np.mean(e_values * phase[:, None], axis=0)
+
+
+def _project_e_amplitudes(coefficient: np.ndarray, basis: list[tuple[str, np.ndarray]]) -> tuple[dict[str, complex], float]:
+    matrix = np.column_stack([vec for _, vec in basis]).astype(np.complex128)
+    rhs = np.asarray(coefficient, dtype=np.complex128).reshape(3)
+    amplitudes, *_ = np.linalg.lstsq(matrix, rhs, rcond=None)
+    residual = float(np.linalg.norm(matrix @ amplitudes - rhs) / max(float(np.linalg.norm(rhs)), 1.0e-30))
+    return {name: complex(value) for value, (name, _) in zip(amplitudes, basis)}, residual
+
+
+def _e_fourier_order_powers(
+    cfg: SimulationConfig3D,
+    power_orders: list[DiffractionOrder3D],
+    top_points: np.ndarray,
+    top_e: np.ndarray,
+    bottom_points: np.ndarray,
+    bottom_e: np.ndarray,
+    incident_power: float,
+) -> tuple[dict[tuple[int, int, str], dict[str, float | complex]], dict[str, float]]:
+    """Compute propagating R/T from 2D Fourier coefficients of E on probe planes.
+
+    This is the official Stage-4 power path for coarse Nedelec runs.  The older
+    E/H least-squares modal fit is still reported as a diagnostic because H is
+    reconstructed from the FE curl and can over-amplify high-order channels.
+    """
+
+    top_z = float(top_points[0, 2])
+    bottom_z = float(bottom_points[0, 2])
+    top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
+    bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+    incident_coeff = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
+
+    rows: dict[tuple[int, int, str], dict[str, float | complex]] = {}
+    R_total = 0.0
+    T_total = 0.0
+    top_residuals: list[float] = []
+    bottom_residuals: list[float] = []
+    for order in power_orders:
+        top_coeff = _fourier_e_coefficient(top_points, top_e, order.alpha, order.gamma)
+        bottom_coeff = _fourier_e_coefficient(bottom_points, bottom_e, order.alpha, order.gamma)
+        if order.m == 0 and order.n == 0:
+            top_coeff = top_coeff - incident_coeff * np.exp(-1j * order.beta_top * top_z)
+
+        top_basis = polarization_basis_3d(order.alpha, order.gamma, order.beta_top, cfg.n_air, 1, cfg)
+        bottom_basis = polarization_basis_3d(order.alpha, order.gamma, order.beta_bottom, cfg.substrate_index, -1, cfg)
+        top_amp, top_res = _project_e_amplitudes(top_coeff * np.exp(-1j * order.beta_top * top_z), top_basis)
+        bottom_amp, bottom_res = _project_e_amplitudes(
+            bottom_coeff * np.exp(1j * order.beta_bottom * bottom_z),
+            bottom_basis,
+        )
+        top_residuals.append(top_res)
+        bottom_residuals.append(bottom_res)
+        top_by_name = {name: vec for name, vec in top_basis}
+        bottom_by_name = {name: vec for name, vec in bottom_basis}
+        for pol_name in sorted(set(top_by_name) | set(bottom_by_name)):
+            ref_amp = top_amp.get(pol_name, 0.0 + 0.0j)
+            trn_amp = bottom_amp.get(pol_name, 0.0 + 0.0j)
+            R = 0.0
+            T = 0.0
+            if order.top_propagating and pol_name in top_by_name:
+                top_k, top_e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, order.beta_top, top_by_name[pol_name], 1, cfg)
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
+                R_total += float(R)
+            if order.bottom_propagating and pol_name in bottom_by_name:
+                bottom_k, bottom_e_vec, _ = mode_eh_vectors(
+                    order.alpha,
+                    order.gamma,
+                    order.beta_bottom,
+                    bottom_by_name[pol_name],
+                    -1,
+                    cfg,
+                )
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
+                T_total += float(T)
+            rows[(order.m, order.n, pol_name)] = {
+                "reflected_amplitude_e_fourier": ref_amp,
+                "transmitted_amplitude_e_fourier": trn_amp,
+                "R_e_fourier": float(R),
+                "T_e_fourier": float(T),
+                "top_e_fourier_projection_residual": float(top_res),
+                "bottom_e_fourier_projection_residual": float(bottom_res),
+            }
+    metrics = {
+        "R_total_from_e_fourier": float(R_total),
+        "T_total_from_e_fourier": float(T_total),
+        "R_plus_T_from_e_fourier": float(R_total + T_total),
+        "A_balance_from_e_fourier": float(1.0 - R_total - T_total),
+        "diffraction_top_e_fourier_projection_residual_max": float(max(top_residuals) if top_residuals else 0.0),
+        "diffraction_bottom_e_fourier_projection_residual_max": float(max(bottom_residuals) if bottom_residuals else 0.0),
+    }
+    return rows, metrics
 
 
 def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
@@ -478,6 +580,15 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     bottom_e = _sample_field_at_points(E_total, bottom_points)
     bottom_h = _sample_field_at_points(H_total, bottom_points)
     incident_power = _incident_power(cfg)
+    e_fourier_rows, e_fourier_metrics = _e_fourier_order_powers(
+        cfg,
+        power_orders,
+        top_points,
+        top_e,
+        bottom_points,
+        bottom_e,
+        incident_power,
+    )
     top_flux_outward = _sampled_flux_code_units(top_e, top_h, np.asarray((0.0, 0.0, 1.0)), cfg)
     bottom_flux_outward = _sampled_flux_code_units(bottom_e, bottom_h, np.asarray((0.0, 0.0, -1.0)), cfg)
     R_from_net_flux = 1.0 + top_flux_outward / incident_power
@@ -555,6 +666,7 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
                     "transmitted_amplitude": trn_amp,
                     "R": float(R),
                     "T": float(T),
+                    **e_fourier_rows.get((order.m, order.n, pol_name), {}),
                     "top_fit_residual": top_residual,
                     "bottom_fit_residual": bottom_residual,
                 }
@@ -563,16 +675,24 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     modal_R_total = float(R_total)
     modal_T_total = float(T_total)
     modal_R_plus_T = float(modal_R_total + modal_T_total)
+    official_R_total = float(e_fourier_metrics["R_total_from_e_fourier"])
+    official_T_total = float(e_fourier_metrics["T_total_from_e_fourier"])
+    official_R_plus_T = float(e_fourier_metrics["R_plus_T_from_e_fourier"])
     flux_R_total = float(R_from_net_flux)
     flux_T_total = float(T_from_net_flux)
     flux_R_plus_T = float(flux_R_total + flux_T_total)
     metrics = {
-        "R_total": modal_R_total,
-        "T_total": modal_T_total,
-        "R_plus_T": modal_R_plus_T,
-        "A_balance": float(1.0 - modal_R_plus_T),
-        "diffraction_total_power_source": "modal_orders",
-        "diffraction_modal_order_powers_diagnostic_only": False,
+        "R_total": official_R_total,
+        "T_total": official_T_total,
+        "R_plus_T": official_R_plus_T,
+        "A_balance": float(1.0 - official_R_plus_T),
+        "diffraction_total_power_source": "e_fourier_orders",
+        "diffraction_e_fourier_note": (
+            "Official Stage-4 R/T uses Fourier coefficients of E on uniform probe planes. "
+            "The older E/H least-squares modal powers remain diagnostic because H is reconstructed from FE curl."
+        ),
+        **e_fourier_metrics,
+        "diffraction_modal_order_powers_diagnostic_only": True,
         "R_total_from_modal_orders": modal_R_total,
         "T_total_from_modal_orders": modal_T_total,
         "R_plus_T_from_modal_orders": modal_R_plus_T,

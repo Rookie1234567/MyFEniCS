@@ -1,3 +1,40 @@
+## 2026-06-23 更新：600/500 nm Stage 4 COMSOL 对比代码路径
+
+这轮主要改 Stage 4 输入、功率后处理和 COMSOL-like 图片工具。阅读顺序建议：
+
+```text
+1. src/main.py
+   看 PyCharm 入口变量：
+   PERIOD_X_3D / PERIOD_Y_3D
+   AIR_HEIGHT_3D / SUBSTRATE_THICKNESS_3D
+   GRATING_WIDTH_X_3D / GRATING_WIDTH_Y_3D / GRATING_HEIGHT_3D
+   DIFFRACTION_ZERO_ORDER_ONLY_3D = False
+
+2. src/runners/run_3d_airbox.py
+   看 _stage_defaults("stage4_block_grating")。
+   这里定义 Stage 4 默认几何、S 偏振 incident_phi_deg=0、PML 厚度和 direct solver。
+   CLI 新增 --air-height、--substrate-thickness。
+
+3. src/geometry/mesh_builder_3d.py
+   看 _validate_stage4_hexa_alignment()。
+   它保证 block 边界、interface、PML 入口都落在 hexa 网格面上。
+
+4. src/solvers/solve_airbox_maxwell_3d.py
+   看 _build_variational_forms() 和 run_airbox_3d_case()。
+   Stage 4 仍是 layered_scattered：
+   RHS = +k0^2 * (eps_true - eps_bg) * inner(E_bg, v)，source 只在 grating tag。
+   lossless 能量门槛现在是 R+T <= 1 + 1e-8。
+
+5. src/postprocessing/diffraction_3d.py
+   看 enumerate_diffraction_orders_3d() 和 _e_fourier_order_powers()。
+   新周期会打开基底高阶衍射，所以默认不再只算 0 级。
+   正式 R/T 来自 e_fourier_orders；旧 E/H modal fit 只保留为 diagnostic。
+
+6. src/tools/render_stage4_comsol_views.py
+   输入 fields_3d_for_paraview.vtu，输出外表面、y-z 中心切面、x-z 中心切面三张 PNG。
+   每张图单独取颜色范围，用于和 COMSOL 电场模截图做形态对比。
+```
+
 ## 2026-06-23 更新：3D ParaView 输出瘦身后的代码路径
 
 这轮只改 3D 后处理输出，不改求解方程。阅读时看：

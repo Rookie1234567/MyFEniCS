@@ -87,9 +87,9 @@ POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "
 NEDELEC_DEGREE_3D = 1
 VISUALIZATION_DEGREE_3D = 1
 # Stage 4 hexa meshes require material/block planes to land on grid planes.
-# For the default 350 x 300 nm period and 150 x 100 x 150 nm block, h=50 nm
-# and h=25 nm align; h=30 nm does not.
-MESH_TARGET_SIZE_3D = 50.0
+# For the current COMSOL comparison cell, h=50 nm and h=25 nm align with the
+# 600 x 500 nm period, 300 x 200 x 150 nm block, z=0 interface, and PML planes.
+MESH_TARGET_SIZE_3D = 25.0
 MESH_CELL_TYPE_3D = "auto"  # auto / tetrahedron / hexahedron
 FLOQUET_CONSTRAINT_MODE_3D = "auto"  # auto / topological_edges / sparse_facet legacy alias
 LAMBDA0_3D = 633
@@ -108,15 +108,17 @@ DIVERGENCE_PENALTY_3D = 0.0
 
 # Stage 4 rectangular block grating settings.  These are ignored by Stage 1/2
 # cases unless their matching CLI flags are consumed by the selected runner.
-PERIOD_X_3D = 350.0
-PERIOD_Y_3D = 300.0
+PERIOD_X_3D = 600.0
+PERIOD_Y_3D = 500.0
+AIR_HEIGHT_3D = 850.0
+SUBSTRATE_THICKNESS_3D = 350.0
 N_GRATING_3D = 2.0
-GRATING_WIDTH_X_3D = 150.0
-GRATING_WIDTH_Y_3D = 100.0
+GRATING_WIDTH_X_3D = 300.0
+GRATING_WIDTH_Y_3D = 200.0
 GRATING_HEIGHT_3D = 150.0
 SCATTERING_BACKGROUND_3D = "layered"
 STAGE4_BOUNDARY_MODEL_3D = "pml"  # "pml" or diagnostic "robin0"
-DIFFRACTION_ZERO_ORDER_ONLY_3D = True
+DIFFRACTION_ZERO_ORDER_ONLY_3D = False
 DIFFRACTION_ORDER_MAX_M_3D = None
 DIFFRACTION_ORDER_MAX_N_3D = None
 DIFFRACTION_SAMPLE_COUNT_X_3D = 24
@@ -207,6 +209,8 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--n-substrate", N_SUBSTRATE_3D)
     _add_value(args, "--period-x", PERIOD_X_3D)
     _add_value(args, "--period-y", PERIOD_Y_3D)
+    _add_value(args, "--air-height", AIR_HEIGHT_3D)
+    _add_value(args, "--substrate-thickness", SUBSTRATE_THICKNESS_3D)
     _add_value(args, "--n-grating", N_GRATING_3D)
     _add_value(args, "--grating-width-x", GRATING_WIDTH_X_3D)
     _add_value(args, "--grating-width-y", GRATING_WIDTH_Y_3D)
