@@ -85,6 +85,7 @@ class SimulationConfig3D:
     solver_atol: float = 1.0e-12
     solver_max_it: int = 1000
     solver_monitor: bool = False
+    divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None
     diffraction_order_max_n: int | None = None

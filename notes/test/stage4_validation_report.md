@@ -1,5 +1,128 @@
 # Stage 4 验证报告
 
+## 2026-06-23 更新：PML 外边界强截断与 2.5D 对照复跑
+
+本轮继续响应“PML 外边界不应有电场、lossless 情况下 R+T 不应超过 1”的检查。已完成：
+
+```text
+1. Stage 4 求解后显式 E.x.scatter_forward()，避免 MPI 后处理读取未同步 ghost dof。
+2. Stage 4 PML 外边界施加零切向 E，summary 字段 stage4_outer_pml_zero_tangential_e_bc=true。
+3. Floquet low-level builder 改为在本 rank 可见的 slave dof 上登记本地约束，同时保留全局唯一 slave 统计。
+4. 2.5D 对照 JSON 增加 max_abs_Ey、max_abs_E_sca_Ey、energy guard 字段。
+```
+
+代码检查：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+
+Ran 27 tests in 1.092s
+OK (skipped=8)
+```
+
+实跑结论：
+
+| 算例 | 结果目录 | 关键结果 | 判定 |
+| --- | --- | --- | --- |
+| flat-layer sanity h50/p1/MPI2 | `results/3D_stage4_flat_layer_sanity_normal_p1_h50p0_np2_20260623_073657` | R+T = 1.000000 | 通过 |
+| block grating h50/p1/MPI2 | `results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_073428` | R+T = 1.084467 | 失败，diagnostic only |
+| 2.5D serial h50/p1 | `results/stage4_2p5d_compare_h50p0_p1_np1_20260623_074217` | 3D R+T = 1.117862, max Ey = 8.5e-7 | 仍未和 2D TM 一致 |
+| 2.5D MPI2 h50/p1 | `results/stage4_2p5d_compare_h50p0_p1_np2_20260623_074950` | 3D R+T = 1.220574, max Ey = 9.21e-1 | 失败，MPI 下额外偏振更明显 |
+
+判断：PML 背景显示和外边界截断问题已经修正；flat-layer sanity 证明 0 级衍射拟合和 Fresnel 背景口径可用。但真实 grating 的 scattered-field full-vector 3D 路径仍不可信，尤其是 2.5D y-extruded benchmark 尚不能复现旧 2D TM。后续必须先修复 2.5D 对照，再继续真实 3D 定量 benchmark。
+
+## 2026-06-23 更新：2.5D 对照暴露 Stage 4 全矢量解问题
+
+本轮根据“R+T 不能超过 1”的原则重新检查 Stage 4。结论：当前 Stage 4 block grating 不能作为正确结果。
+
+已完成代码检查：
+
+```bash
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 27 tests in 1.111s
+OK (skipped=8)
+```
+
+### Stage 4 默认 block grating
+
+命令：
+
+```bash
+mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果目录：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_072542
+```
+
+关键结果：
+
+| 指标 | 数值 |
+| --- | ---: |
+| R | 9.381001e-03 |
+| T | 1.075089e+00 |
+| R+T | 1.084470e+00 |
+| stage4_energy_balance_pass | False |
+| official_result | False |
+| case_status | failed_stage4_energy_balance |
+| max abs(Ex/Ey/Ez) | 2.749835e+00 / 3.337442e+00 / 2.054251e+00 |
+
+说明：程序现在会把 lossless 且 `R+T > 1.01` 的 Stage 4 结果标记为失败诊断结果，不再把它当 official。
+
+### 2.5D 对照
+
+新增脚本：
+
+```bash
+mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.test.stage4_2p5d_compare \
+  --mesh-target-size 50 \
+  --nedelec-degree 1
+```
+
+结果目录：
+
+```text
+results/stage4_2p5d_compare_h50p0_p1_np2_20260623_065320
+```
+
+对照结果：
+
+| 指标 | 2D TM | 3D y-extruded |
+| --- | ---: | ---: |
+| R | 5.958643e-04 | 7.524211e-03 |
+| T | 8.747995e-01 | 1.399502e+00 |
+| R+T | 8.753954e-01 | 1.407026e+00 |
+
+3D y-extruded case 中 `max |E_scat_y|` 约为 `1.27`，但这个 2.5D 结构和入射条件下 `Ey` 理论上应接近 0。说明当前 3D 全矢量 Stage 4 解混入了非物理偏振/模式，不能只靠后处理修正。
+
+### 本轮修正
+
+```text
+1. Stage 4 的 E_b 在 PML 区域置零，避免 E_tot 外边界被背景场染亮。
+2. Stage 4 layered-scattered 现在对 PML 外边界施加零切向 E，避免散射场在外截断面自由漂移。
+3. ParaView/summary 增加 Ex/Ey/Ez 分量最大值。
+4. 增加 2.5D 对照脚本。
+5. 增加 Stage 4 lossless energy-balance guard。
+6. 增加 divergence_penalty 配置作为诊断项；h50 试验中 penalty=1 对当前问题无明显改善。
+```
+
+下一步硬门槛：先让 `stage4_2p5d_compare.py` 中 3D y-extruded case 的 `Ey` 接近 0，并且 R/T 与 2D TM 同趋势，再恢复真实 3D block grating。
+
 ## 2026-06-23 更新：PML/E_exact 修正后的最终验证
 
 本轮目标是修正两个误导性问题：

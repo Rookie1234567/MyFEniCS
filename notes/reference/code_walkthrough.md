@@ -1,3 +1,70 @@
+## 2026-06-23 更新：Stage 4 当前阅读路径与已知失败点
+
+如果现在阅读 Stage 4，请按这个顺序看，不要从旧 Stage 2 的 2B/2C 逻辑进入：
+
+```text
+1. src/test/stage4_2p5d_compare.py
+   先看 2D TM reference 和 3D y-extruded config 如何对应。
+
+2. src/runners/run_3d_airbox.py
+   看 _stage_defaults("stage4_block_grating") 和 stage4_flat_layer_sanity。
+
+3. src/geometry/mesh_builder_3d.py
+   看 _validate_stage4_hexa_alignment(...) 和 _mark_cells(...)。
+
+4. src/constraints/floquet_3d.py
+   看 build_double_floquet_mpc(...)。当前正式路径是 degree=1 N1curl edge topology，
+   dense probe/pinv 已禁用。MPI 下仍需重点排查本地 slave/ghost slave 约束一致性。
+
+5. src/solvers/solve_airbox_maxwell_3d.py
+   看 stage4_layered_background_field(...)、_build_variational_forms(..., layered_scattered)
+   和 run_airbox_3d_case(...)。Stage 4 现在会：
+   - 求解 E_scat；
+   - E_b 在 PML 输出中置零；
+   - E_total = E_b + E_scat；
+   - PML 外边界施加零切向 E；
+   - solve 后显式 scatter_forward；
+   - lossless R+T > 1.01 时标记 failed_stage4_energy_balance。
+
+6. src/postprocessing/postprocess_3d.py
+   看 E_tot/E_b/E_sca 以及 physical/PML mask 数组如何写入 ParaView。
+
+7. src/postprocessing/diffraction_3d.py
+   看 0 级/多级 diffraction fitting。flat-layer sanity 已验证 0 级 Fresnel R+T=1，
+   但真实 grating 仍不能作为可信物理结果。
+```
+
+最新实跑判定：`stage4_flat_layer_sanity` 通过；`stage4_block_grating` 和 `stage4_2p5d_compare` 失败。下一步修复目标是先让 3D y-extruded 与旧 2D TM 对齐。
+
+## 2026-06-23 更新：Stage 4 现阶段应先读 2.5D 对照和能量守恒 guard
+
+当前 Stage 4 block grating 的 `R+T > 1`，已经被判定为不可信。阅读代码时先看这些位置：
+
+```text
+src/test/stage4_2p5d_compare.py
+  build_2d_reference_config(...)
+    构造与 Stage 4 y-extruded 几何对应的 2D TM scattered config。
+  build_3d_extruded_config(...)
+    构造 y 方向完全拉伸的 3D Stage 4 config。
+  main(...)
+    依次运行 2D 和 3D，并写 stage4_2p5d_comparison.json。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  stage4_layered_background_field(...)
+    Stage 4 背景场只在物理 z 区域非零，PML 中置零。
+  _stage4_lossless_energy_balance_check(...)
+    lossless Stage 4 若 R+T > 1.01，标记为 failed_stage4_energy_balance。
+  run_airbox_3d_case(...)
+    Stage 4 layered_scattered 求解 E_scat，并在 PML 外边界施加零切向 E。
+    summary/log 会输出 max |Ex|, |Ey|, |Ez|。
+
+src/postprocessing/postprocess_3d.py
+  save_airbox_3d_fields(...)
+    写出 Ex/Ey/Ez 分量数组和 max_abs_E_sca_Ey 等 summary 字段。
+```
+
+当前判断：先不要从 `stage4_block_grating` 的 R/T 学物理结论；先用 2.5D 对照定位为什么 3D y-extruded 会出现明显 `Ey`。
+
 ## 2026-06-23 更新：Stage 4 物理区/PML区输出和功率诊断
 
 本轮新增两个阅读点：

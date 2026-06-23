@@ -319,6 +319,34 @@ def plane_wave_electric_field(V, cfg: SimulationConfig3D) -> fem.Function:
     return field
 
 
+def stage4_layered_background_field(V, cfg: SimulationConfig3D) -> fem.Function:
+    """Stage-4 layered background used only inside the physical domain.
+
+    The 2D scattered solver uses the background to form the grating contrast
+    source and to reconstruct the physical total field.  It does not need a
+    meaningful background field in the artificial PML.  Keeping the analytic
+    Fresnel background in the PML made the ParaView total field look nonzero at
+    the outer truncation boundary even when the scattered field was absorbed.
+    For Stage 4, zero the background outside the physical z interval and let
+    the PML display the solved scattered field only.
+    """
+
+    field = fem.Function(V, name="E_background_layered_physical_only")
+
+    def eval_field(x):
+        coords = x.T
+        values = electric_field_code_values(cfg, coords)
+        mask = (coords[:, 2] >= cfg.physical_z_min - 1.0e-12) & (
+            coords[:, 2] <= cfg.physical_z_max + 1.0e-12
+        )
+        values[~mask] = 0.0
+        return values.T
+
+    field.interpolate(eval_field)
+    field.x.scatter_forward()
+    return field
+
+
 def _create_nedelec_space(msh, cfg: SimulationConfig3D):
     curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
     return fem.functionspace(msh, curl_el)
@@ -900,6 +928,9 @@ def _build_variational_forms(
     a += add_isotropic(cfg.tags.air, cfg.eps_r)
     a += add_isotropic(cfg.tags.substrate, cfg.substrate_index**2)
     a += add_isotropic(cfg.tags.grating, cfg.grating_index**2)
+    if float(cfg.divergence_penalty) > 0.0:
+        d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+        a += PETSc.ScalarType(cfg.divergence_penalty) * ufl.inner(ufl.div(u), ufl.div(v)) * d_physical
 
     # PML cells use the same unknown E, but with the z-stretched material
     # tensors.  Top and bottom are tagged separately so the sign convention is
@@ -997,6 +1028,26 @@ def _use_layered_scattered_formulation(cfg: SimulationConfig3D) -> bool:
     return cfg.stage_case in {"stage4_block_grating", "stage4_flat_layer_sanity"} and cfg.geometry_kind == "rectangular_block_grating"
 
 
+def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict[str, Any]) -> dict[str, Any]:
+    """Return an explicit pass/fail flag for lossless Stage-4 R/T metrics."""
+
+    if cfg.geometry_kind != "rectangular_block_grating" or summary.get("R_plus_T") is None:
+        return {}
+    lossless = all(
+        abs(complex(index).imag) < 1.0e-12
+        for index in (cfg.n_air, cfg.substrate_index, cfg.grating_index)
+    )
+    tolerance = 1.0e-2
+    r_plus_t = float(summary["R_plus_T"])
+    passed = (not lossless) or r_plus_t <= 1.0 + tolerance
+    return {
+        "stage4_lossless_energy_balance_checked": bool(lossless),
+        "stage4_energy_balance_tolerance": tolerance,
+        "stage4_energy_balance_pass": bool(passed),
+        "stage4_energy_balance_excess": float(r_plus_t - 1.0) if lossless else None,
+    }
+
+
 def _field_formulation_label(
     cfg: SimulationConfig3D,
     use_reference_correction: bool,
@@ -1082,6 +1133,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     petsc_options = solver_settings["petsc_options"]
     log(f"solver profile requested = {solver_settings['profile_requested']}")
     log(f"solver profile resolved = {solver_profile_resolved}")
+    log(f"divergence penalty = {cfg.divergence_penalty}")
     log(f"solver reliability = {solver_settings['reliability']}")
     for warning in solver_settings["warnings"]:
         log(f"WARNING: {warning}")
@@ -1160,32 +1212,44 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     solve_layered_scattered = _use_layered_scattered_formulation(cfg)
     field_formulation = _field_formulation_label(cfg, solve_reference_correction, solve_incident_scattered)
     solve_with_zero_bc = solve_reference_correction or solve_incident_scattered or solve_layered_scattered
+    # The unknown is a correction/scattered field in all non-total-field paths.
+    # For PML truncation we still close the outer top/bottom faces with zero
+    # tangential E.  Floquet owns the x/y side walls, so those dofs are removed
+    # from the z-boundary dof list after the constraint builder runs.
+    apply_strong_boundary_bc = True
     E_source_for_rhs = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
         rhs_source_norm = _incident_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
     elif solve_layered_scattered:
-        E_source_for_rhs = plane_wave_electric_field(V, cfg)
+        E_source_for_rhs = stage4_layered_background_field(V, cfg)
         rhs_source_norm = _layered_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
     else:
         rhs_source_norm = None
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     floquet_data: DoubleFloquet3DData | None = None
+    boundary_dofs = np.asarray([], dtype=np.int32)
     if cfg.use_floquet_xy:
         # Floquet constraints own the x/y side walls.  Strong H(curl)
         # Dirichlet data is therefore only applied on z faces, with slave dofs
         # removed to avoid prescribing the same unknown twice.
         floquet_data = build_double_floquet_mpc(V, mesh_data, cfg, log)
         timings.update(floquet_data.timings_seconds)
-        boundary_facets = _z_boundary_facets(mesh_data, cfg)
-        raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
-        boundary_dofs = np.setdiff1d(raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False).astype(np.int32)
-        log(f"Dirichlet H(curl) z-boundary dofs before slave removal = {len(raw_boundary_dofs)}")
-    else:
+        if apply_strong_boundary_bc:
+            boundary_facets = _z_boundary_facets(mesh_data, cfg)
+            raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
+            boundary_dofs = np.setdiff1d(
+                raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False
+            ).astype(np.int32)
+            log(f"Dirichlet H(curl) z-boundary dofs before slave removal = {len(raw_boundary_dofs)}")
+        else:
+            log("No z-boundary Dirichlet dofs were located for this Floquet run.")
+    elif apply_strong_boundary_bc:
         boundary_dofs = fem.locate_dofs_topological(V, fdim, mesh_data.boundary_facets)
-    bc = fem.dirichletbc(E_bc, boundary_dofs)
+    bcs = [fem.dirichletbc(E_bc, boundary_dofs)] if apply_strong_boundary_bc else []
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
+    log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
     log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
     log(f"field formulation = {field_formulation}")
     if solve_incident_scattered:
@@ -1217,12 +1281,16 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         problem = fem_petsc.LinearProblem(
             a,
             L,
-            bcs=[bc],
+            bcs=bcs,
             u=E,
             petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_",
             petsc_options=petsc_options,
         )
-        solver_backend = "dolfinx.fem.petsc.LinearProblem with strong tangential E boundary data"
+        solver_backend = (
+            "dolfinx.fem.petsc.LinearProblem with strong tangential E boundary data"
+            if apply_strong_boundary_bc
+            else "dolfinx.fem.petsc.LinearProblem without strong tangential E boundary data"
+        )
     else:
         import dolfinx_mpc
 
@@ -1231,16 +1299,21 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             a,
             L,
             floquet_data.mpc,
-            bcs=[bc],
+            bcs=bcs,
             u=E,
             petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_mpc_",
             petsc_options=petsc_options,
         )
-        solver_backend = "dolfinx_mpc.LinearProblem with x/y double Floquet and z boundary data"
+        solver_backend = (
+            "dolfinx_mpc.LinearProblem with x/y double Floquet and z boundary data"
+            if apply_strong_boundary_bc
+            else "dolfinx_mpc.LinearProblem with x/y double Floquet and no strong tangential E boundary data"
+        )
     _finish_timed_stage(comm, timings, "linear_problem_setup", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
     E = problem.solve()
+    E.x.scatter_forward()
     E_sca = E if (solve_incident_scattered or solve_layered_scattered) else None
     E_incident_solution = None
     E_background_solution = None
@@ -1251,8 +1324,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_incident_solution, "E_total")
     elif solve_layered_scattered:
-        E_background_solution = plane_wave_electric_field(E.function_space, cfg)
-        E_background_solution.name = "E_background_layered"
+        E_background_solution = stage4_layered_background_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_background_solution, "E_total")
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
 
@@ -1294,8 +1366,13 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
+        "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
+        "strong_z_boundary_dirichlet_dofs": int(len(boundary_dofs)),
+        "stage4_matches_2d_scattered_pml_boundary_flow": False,
+        "stage4_outer_pml_zero_tangential_e_bc": bool(solve_layered_scattered and apply_strong_boundary_bc),
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
         "background_added_to_solution": field_formulation == "layered_scattered",
+        "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),
         "reference_added_to_solution": field_formulation == "reference_correction",
         "fresnel_reference_used_for_solution": False,
         "fresnel_reference_used_for_comparison_only": cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"},
@@ -1462,6 +1539,13 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         diffraction_metrics = compute_diffraction_orders_3d(mesh_data, cfg, E_total, out_dir)
         _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
         summary.update(diffraction_metrics)
+        summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
+        if summary.get("stage4_energy_balance_pass") is False:
+            summary["official_result"] = False
+            summary["diagnostic_only"] = True
+            summary["case_status"] = "failed_stage4_energy_balance"
+            summary["postprocess_skipped"] = False
+            summary["postprocess_skip_reason"] = None
         summary["timings_seconds"] = timings
     has_power_metrics = (
         {"R_total", "T_total", "R_plus_T"}.issubset(summary)
@@ -1480,6 +1564,10 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             encoding="utf-8",
         )
     log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
+    log(
+        "max component |Ex|/|Ey|/|Ez| = "
+        f"{field_metrics['max_abs_Ex']:.6e} / {field_metrics['max_abs_Ey']:.6e} / {field_metrics['max_abs_Ez']:.6e}"
+    )
     if field_metrics.get("max_abs_E_physical_z_region") is not None:
         log(f"max |E| in physical z-region = {field_metrics['max_abs_E_physical_z_region']:.6e}")
     if field_metrics.get("max_abs_E_pml_z_region") is not None:
@@ -1492,6 +1580,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log("exact reference unavailable for this case; E_exact/H_exact error fields are not written.")
         if field_metrics.get("max_abs_E_sca") is not None:
             log(f"max |E_scat| = {field_metrics['max_abs_E_sca']:.6e}")
+            log(
+                "max E_scat component |Ex|/|Ey|/|Ez| = "
+                f"{field_metrics['max_abs_E_sca_Ex']:.6e} / "
+                f"{field_metrics['max_abs_E_sca_Ey']:.6e} / "
+                f"{field_metrics['max_abs_E_sca_Ez']:.6e}"
+            )
         if field_metrics.get("max_abs_E_sca_physical_z_region") is not None:
             log(f"max |E_scat| in physical z-region = {field_metrics['max_abs_E_sca_physical_z_region']:.6e}")
         if field_metrics.get("max_abs_E_sca_pml_z_region") is not None:
@@ -1532,6 +1626,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
         log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
+        if summary.get("stage4_lossless_energy_balance_checked"):
+            log(f"Stage 4 lossless energy-balance pass = {summary['stage4_energy_balance_pass']}")
+            log(f"Stage 4 R+T excess over 1 = {summary['stage4_energy_balance_excess']:.6e}")
         if summary.get("R_total_from_net_flux") is not None:
             log(
                 "3D sampled net-flux diagnostic R/T = "

@@ -120,7 +120,7 @@ def _build_edge_dof_map_p1(V) -> dict[int, dict[str, object]]:
     cell_to_edge = msh.topology.connectivity(tdim, 1)
     cell_map = msh.topology.index_map(tdim)
     num_cells = cell_map.size_local + cell_map.num_ghosts
-    edge_entity_dofs = V.element.basix_element.entity_dofs[1]
+    edge_entity_dofs = [V.dofmap.dof_layout.entity_dofs(1, i) for i in range(12)]
 
     edge_dof_map: dict[int, dict[str, object]] = {}
     for cell in range(num_cells):
@@ -201,11 +201,10 @@ def _build_topological_edge_context(V, mesh_data, cfg: SimulationConfig3D) -> di
     msh = mesh_data.mesh
     comm = msh.comm
     tol = _geometry_tolerance(cfg)
-    edge_dof_map = _build_edge_dof_map_p1(V)
-
     periodic_edges = _periodic_boundary_edges(mesh_data, cfg)
     if len(periodic_edges) == 0:
         raise RuntimeError("No periodic x/y boundary edges were found for 3D Floquet constraints.")
+    edge_dof_map = _build_edge_dof_map_p1(V)
 
     msh.topology.create_connectivity(1, 0)
     midpoints = mesh.compute_midpoints(msh, 1, periodic_edges)
@@ -322,8 +321,8 @@ def _build_constraints_for_kind(
 
     tol = float(context["tol"])
     global_by_key = context["global_by_key"]
-    raw_maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
-    local_owned: dict[int, int] = {}
+    owned_raw_maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    local_maps: dict[int, tuple[int, np.ndarray, np.ndarray, np.ndarray]] = {}
     orientation_values: list[complex] = []
     pair_errors: list[float] = []
     local_slave_globals: list[int] = []
@@ -371,25 +370,31 @@ def _build_constraints_for_kind(
         pair_errors.append(pair_error)
         orientation_values.append(orientation_sign + 0.0j)
 
-        if not bool(record["owned"]):
-            continue
-        if slave_global in raw_maps:
-            raise RuntimeError(
-                f"3D Floquet slave dof {slave_global} would be constrained twice in kind={kind}."
-            )
-        raw_maps[slave_global] = (
+        terms = (
             np.asarray([master_global], dtype=np.int64),
             np.asarray([int(master["owner"])], dtype=np.int32),
             np.asarray([phase * orientation_sign], dtype=np.complex128),
         )
-        local_owned[slave_global] = int(record["local_dof"])
+        slave_local = int(record["local_dof"])
+        if slave_local in local_maps:
+            raise RuntimeError(
+                f"Local 3D Floquet slave dof {slave_local} would be constrained twice in kind={kind}."
+            )
+        local_maps[slave_local] = (slave_global, *terms)
+
+        if bool(record["owned"]):
+            if slave_global in owned_raw_maps:
+                raise RuntimeError(
+                    f"3D Floquet slave dof {slave_global} would be constrained twice in kind={kind}."
+                )
+            owned_raw_maps[slave_global] = terms
 
     gathered_slave_globals = comm.allgather(local_slave_globals)
     gathered_master_globals = comm.allgather(local_matched_master_globals)
     global_slave_edges = sorted({int(value) for packet in gathered_slave_globals for value in packet})
     global_matched_master_edges = sorted({int(value) for packet in gathered_master_globals for value in packet})
 
-    gathered_maps = comm.allgather(raw_maps)
+    gathered_maps = comm.allgather(owned_raw_maps)
     global_raw_maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
     for maps in gathered_maps:
         for slave_global, terms in maps.items():
@@ -414,7 +419,7 @@ def _build_constraints_for_kind(
 
     return {
         "global_raw_maps": global_raw_maps,
-        "local_owned": local_owned,
+        "local_maps": local_maps,
         "orientation_values": np.asarray(orientation_values, dtype=np.complex128),
         "pair_error": float(comm.allreduce(max(pair_errors, default=0.0), op=MPI.MAX)),
         "num_slave_edges": global_slave_count,
@@ -532,7 +537,7 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
 
     def _assemble_constraint_arrays():
         maps: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
-        local_owned: dict[int, int] = {}
+        local_maps: dict[int, tuple[int, np.ndarray, np.ndarray, np.ndarray]] = {}
         for label, data in (("x", x_data), ("y", y_data), ("corner", corner_data)):
             for slave_global, terms in data["global_raw_maps"].items():
                 if int(slave_global) in maps:
@@ -540,20 +545,34 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
                         f"3D Floquet slave dof {int(slave_global)} would be constrained twice after {label} merge."
                     )
                 maps[int(slave_global)] = terms
-            for slave_global, slave_local in data["local_owned"].items():
-                if int(slave_global) in local_owned:
+            for slave_local, local_terms in data["local_maps"].items():
+                if int(slave_local) in local_maps:
                     raise RuntimeError(
-                        f"Local 3D Floquet slave dof {int(slave_global)} would be constrained twice."
+                        f"Local 3D Floquet slave dof {int(slave_local)} would be constrained twice."
                     )
-                local_owned[int(slave_global)] = int(slave_local)
+                local_maps[int(slave_local)] = local_terms
 
         slave_dofs: list[int] = []
         master_dofs: list[int] = []
         master_owners: list[int] = []
         coefficients: list[complex] = []
         offsets: list[int] = [0]
-        for slave_global, slave_local in sorted(local_owned.items()):
-            masters, owners, coeffs = maps[int(slave_global)]
+        for slave_local, local_terms in sorted(local_maps.items()):
+            slave_global, masters, owners, coeffs = local_terms
+            global_terms = maps.get(int(slave_global))
+            if global_terms is None:
+                raise RuntimeError(
+                    f"Local 3D Floquet slave dof {int(slave_local)} maps to global dof "
+                    f"{int(slave_global)}, but no owned global constraint was emitted."
+                )
+            if not (
+                np.array_equal(global_terms[0], masters)
+                and np.array_equal(global_terms[1], owners)
+                and np.allclose(global_terms[2], coeffs)
+            ):
+                raise RuntimeError(
+                    f"Local/global 3D Floquet terms disagree for slave global dof {int(slave_global)}."
+                )
             if len(masters) != 1:
                 raise RuntimeError(
                     f"3D explicit Floquet constraint expected one master for slave {slave_global}, "

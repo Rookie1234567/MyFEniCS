@@ -92,6 +92,13 @@ def _global_max_norm(comm, values: np.ndarray, mask: np.ndarray | None = None) -
     return comm.allreduce(local, op=MPI.MAX)
 
 
+def _global_max_component_abs(comm, values: np.ndarray, component: int, mask: np.ndarray | None = None) -> float:
+    if mask is not None:
+        values = values[np.asarray(mask, dtype=bool)]
+    local = float(np.max(np.abs(values[:, component]))) if values.size else 0.0
+    return comm.allreduce(local, op=MPI.MAX)
+
+
 def _global_mean_vector(comm, values: np.ndarray) -> np.ndarray:
     local_sum = np.sum(values, axis=0) if len(values) else np.zeros(3, dtype=np.float64)
     total_sum = comm.allreduce(local_sum, op=MPI.SUM)
@@ -255,6 +262,9 @@ def save_airbox_3d_fields(
     result = {
         "max_abs_E_exact": max_e_exact,
         "max_abs_E": max_e_num,
+        "max_abs_Ex": _global_max_component_abs(comm, e_num, 0),
+        "max_abs_Ey": _global_max_component_abs(comm, e_num, 1),
+        "max_abs_Ez": _global_max_component_abs(comm, e_num, 2),
         "max_abs_E_physical_z_region": max_e_num_physical,
         "max_abs_E_pml_z_region": max_e_num_pml,
         "max_abs_E_error": max_e_error,
@@ -288,10 +298,16 @@ def save_airbox_3d_fields(
     }
     if e_sca is not None:
         result["max_abs_E_sca"] = _global_max_norm(comm, e_sca)
+        result["max_abs_E_sca_Ex"] = _global_max_component_abs(comm, e_sca, 0)
+        result["max_abs_E_sca_Ey"] = _global_max_component_abs(comm, e_sca, 1)
+        result["max_abs_E_sca_Ez"] = _global_max_component_abs(comm, e_sca, 2)
         result["max_abs_E_sca_physical_z_region"] = _global_max_norm(comm, e_sca, physical_point_mask)
         result["max_abs_E_sca_pml_z_region"] = _global_max_norm(comm, e_sca, pml_point_mask)
     if e_bg is not None:
         result["max_abs_E_b"] = _global_max_norm(comm, e_bg)
+        result["max_abs_E_b_Ex"] = _global_max_component_abs(comm, e_bg, 0)
+        result["max_abs_E_b_Ey"] = _global_max_component_abs(comm, e_bg, 1)
+        result["max_abs_E_b_Ez"] = _global_max_component_abs(comm, e_bg, 2)
         result["max_abs_E_b_physical_z_region"] = _global_max_norm(comm, e_bg, physical_point_mask)
         result["max_abs_E_b_pml_z_region"] = _global_max_norm(comm, e_bg, pml_point_mask)
     return result

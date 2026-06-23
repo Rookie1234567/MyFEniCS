@@ -104,6 +104,7 @@ SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
 SOLVER_MAX_IT_3D = 1000
 SOLVER_MONITOR_3D = False
+DIVERGENCE_PENALTY_3D = 0.0
 
 # Stage 4 rectangular block grating settings.  These are ignored by Stage 1/2
 # cases unless their matching CLI flags are consumed by the selected runner.
@@ -195,6 +196,7 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--solver-atol", SOLVER_ATOL_3D)
     _add_value(args, "--solver-max-it", SOLVER_MAX_IT_3D)
     _add_bool(args, "--solver-monitor", SOLVER_MONITOR_3D)
+    _add_value(args, "--divergence-penalty", DIVERGENCE_PENALTY_3D)
     _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
     _add_bool(args, "--use-floquet-xy", USE_FLOQUET_XY_3D)
     _add_bool(args, "--use-pml", USE_PML_3D)

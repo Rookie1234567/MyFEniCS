@@ -1,5 +1,74 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：当前 Stage 4 只能作为诊断输出
+
+最新检查结果：
+
+```text
+stage4_flat_layer_sanity h50/p1/MPI2:
+  R/T = 3.373594e-02 / 9.662641e-01
+  R+T = 1.000000e+00
+
+stage4_block_grating h50/p1/MPI2:
+  R/T = 9.380284e-03 / 1.075087e+00
+  R+T = 1.084467e+00
+  official_result = False
+  case_status = failed_stage4_energy_balance
+
+stage4_2p5d_compare h50/p1:
+  serial 3D y-extruded: R+T = 1.117862
+  MPI2 3D y-extruded: R+T = 1.220574
+```
+
+因此现在不要把真实 grating 的 R/T 当作物理结果。推荐先跑：
+
+```bash
+python3 -m src.test.stage4_2p5d_compare --mesh-target-size 50 --nedelec-degree 1
+mpiexec -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.test.stage4_2p5d_compare --mesh-target-size 50 --nedelec-degree 1
+```
+
+ParaView 中优先看：
+
+```text
+E_tot_physical_abs_V_per_m
+E_sca_physical_abs_V_per_m
+E_b_physical_abs_V_per_m
+domain_tag
+is_physical_z_region
+is_pml_z_region
+```
+
+PML 外边界现在对散射场施加零切向 E；注意 Nedelec 强边界控制的是切向分量，不是把 `|E|` 的三个分量全部钉成 0。判断 PML 吸收优先看 `E_sca_pml_abs_V_per_m` 和 summary 里的 `pml_scattered_decay_ratio_top/bottom`。
+
+## 2026-06-23 更新：当前 Stage 4 不再标记为可信结果
+
+当前 Stage 4 block grating 还能跑完并输出 ParaView，但 lossless 情况下 `R+T > 1`，因此程序现在会把它标记为：
+
+```text
+official_result = False
+diagnostic_only = True
+case_status = failed_stage4_energy_balance
+```
+
+你现在可以用它看网格、tag、Floquet 约束、PML 衰减和场分量诊断，但不要把 `R/T` 当作真实物理结果。
+
+新增 2.5D 对照命令：
+
+```bash
+mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.test.stage4_2p5d_compare \
+  --mesh-target-size 50 \
+  --nedelec-degree 1
+```
+
+这个命令会跑：
+
+```text
+reference_2d_tm       # 原 2D TM scattered solver
+extruded_3d_stage4    # y 方向完全拉伸的 3D Stage 4
+```
+
+当前 h50/p1 诊断显示 3D y-extruded case 与 2D 不一致，并出现明显 `Ey` 分量。这说明下一步应该先修 2.5D 对照，而不是继续相信真实 3D block 的 R/T。
+
 ## 2026-06-23 更新：ParaView 中如何避免被 PML 背景场误导
 
 Stage 4 的 `E_b` 是分层 Fresnel 背景场。它会在 PML 中做复坐标延拓，所以 PML 里的 `E_b` 或 `E_tot` 可能很大；这不是“散射场 PML 没有吸收”。看结构附近的真实物理场时，优先用新增的物理区数组：

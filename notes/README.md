@@ -1,5 +1,48 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 最新判定，先不要信真实 grating 的 R/T
+
+本轮继续检查 Stage 4，结论需要明确写在最前面：
+
+```text
+1. flat-layer sanity 通过：h50/p1/MPI2 下 R+T = 1.000000，说明分层背景场和 0 级衍射拟合本身不是主错。
+2. stage4_block_grating 仍失败：h50/p1/MPI2 下 R+T = 1.084467，程序会标记为 failed_stage4_energy_balance。
+3. 2.5D y-extruded 对照仍失败：串行比 MPI 好，但 3D 与 2D TM 仍不一致；MPI 下还会出现明显不该有的 Ey。
+4. Stage 4 的 PML 外边界现在施加零切向 E，summary 字段为 stage4_outer_pml_zero_tangential_e_bc=true。
+5. E_b 已在 PML 输出中置零，ParaView 看物理结果优先看 E_tot_physical_abs_V_per_m、E_sca_physical_abs_V_per_m。
+```
+
+当前可信范围：可以用 Stage 4 看网格、tag、Floquet 约束、PML 衰减和场分量诊断；不能把真实 block grating 的 `R_total/T_total` 当作物理正确结果。下一步硬门槛仍然是先让 `src/test/stage4_2p5d_compare.py` 的 3D y-extruded case 与旧 2D TM 通道一致，再恢复真实 3D benchmark。
+
+## 2026-06-23 更新：Stage 4 当前结果判定为不可信，已加入 2.5D 对照
+
+本轮按 2D scattered-field 流程重新审查 Stage 4，结论比较明确：
+
+```text
+1. Stage 4 不再把分层背景场延拓到 PML 里显示，E_b 在 PML 区域置零。
+2. Stage 4 layered-scattered 现在对 PML 外边界施加零切向 E，避免外边界散射场自由漂移。
+3. summary 新增 Ex/Ey/Ez 分量最大值，专门检查非物理偏振混入。
+4. 新增 src/test/stage4_2p5d_compare.py，用 y 方向拉伸 3D 结构对比 2D TM scattered 结果。
+5. lossless Stage 4 如果 R+T > 1.01，会被标记为 failed_stage4_energy_balance，不再算 official_result。
+```
+
+最新诊断结果：
+
+```text
+stage4_block_grating h50/p1/MPI2:
+  R/T = 9.381001e-03 / 1.075089e+00
+  R+T = 1.084470e+00
+  official_result = False
+  case_status = failed_stage4_energy_balance
+
+2.5D 对照 h50/p1/MPI2:
+  2D TM: R+T = 8.753954e-01
+  3D y-extruded: R+T = 1.407026e+00
+  3D 中 max |E_scat_y| 约 1.27，说明混入了 2.5D 中不应出现的 y 偏振/模式。
+```
+
+当前判断：Stage 4 的几何、输出、PML 显示口径已经更正，但全矢量 3D 求解仍存在结构性问题；真实 grating 结果暂时只能作为诊断输出，不能作为物理正确结果。下一步应优先修复 2.5D y-extruded 对照，使它与 2D TM 场和 R/T 接近，再恢复真实 3D benchmark。
+
 ## 2026-06-23 更新：Stage 4 三场输出、PML 物理区显示和 h50 验证结论
 
 本轮继续修正 Stage 4 真实 grating 的可视化和验证口径：

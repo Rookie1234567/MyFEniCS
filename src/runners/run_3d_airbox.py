@@ -66,6 +66,8 @@ def _config_updates(args) -> dict[str, object]:
         updates["solver_max_it"] = args.solver_max_it
     if args.solver_monitor is not None:
         updates["solver_monitor"] = args.solver_monitor
+    if args.divergence_penalty is not None:
+        updates["divergence_penalty"] = args.divergence_penalty
     if args.use_floquet_xy is not None:
         updates["use_floquet_xy"] = args.use_floquet_xy
     if args.use_pml is not None:
@@ -297,6 +299,12 @@ def main(argv: list[str] | None = None):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Print PETSc KSP residual monitoring for iterative profiles.",
+    )
+    parser.add_argument(
+        "--divergence-penalty",
+        type=float,
+        default=None,
+        help="Optional grad-div stabilization for experimental 3D H(curl) Maxwell diagnostics.",
     )
     parser.add_argument(
         "--unique-output",
