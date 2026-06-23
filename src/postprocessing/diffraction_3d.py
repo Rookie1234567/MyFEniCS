@@ -170,6 +170,15 @@ def _incident_power(cfg: SimulationConfig3D) -> float:
     return max(float(-s_vec[2]) * area, 1.0e-30)
 
 
+def _sampled_flux_code_units(e_values: np.ndarray, h_values: np.ndarray, normal: np.ndarray, cfg: SimulationConfig3D) -> float:
+    """Return average sampled Poynting flux through one horizontal probe plane."""
+
+    poynting = 0.5 * np.real(np.cross(e_values, np.conj(h_values)))
+    normal = np.asarray(normal, dtype=np.float64)
+    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+    return float(np.mean(poynting @ normal) * area)
+
+
 def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
     if cfg.diffraction_top_probe_z is not None:
         top_z = float(cfg.diffraction_top_probe_z)
@@ -442,6 +451,11 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     top_h = _sample_field_at_points(H_total, top_points)
     bottom_e = _sample_field_at_points(E_total, bottom_points)
     bottom_h = _sample_field_at_points(H_total, bottom_points)
+    incident_power = _incident_power(cfg)
+    top_flux_outward = _sampled_flux_code_units(top_e, top_h, np.asarray((0.0, 0.0, 1.0)), cfg)
+    bottom_flux_outward = _sampled_flux_code_units(bottom_e, bottom_h, np.asarray((0.0, 0.0, -1.0)), cfg)
+    R_from_net_flux = 1.0 + top_flux_outward / incident_power
+    T_from_net_flux = bottom_flux_outward / incident_power
     top_amp, top_residual = fit_diffraction_amplitudes_from_samples(
         cfg, orders, top_points, top_e, top_h, side="top"
     )
@@ -465,7 +479,6 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         side="bottom",
     )
 
-    incident_power = _incident_power(cfg)
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
     rows: list[dict[str, Any]] = []
@@ -523,6 +536,17 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "T_total": float(T_total),
         "R_plus_T": float(R_total + T_total),
         "A_balance": float(1.0 - R_total - T_total),
+        "top_net_flux_code_units": float(top_flux_outward),
+        "bottom_net_flux_code_units": float(bottom_flux_outward),
+        "sampled_net_flux_diagnostic_only": True,
+        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples; official R/T uses calibrated modal amplitudes.",
+        "R_total_from_net_flux": float(R_from_net_flux),
+        "T_total_from_net_flux": float(T_from_net_flux),
+        "R_plus_T_from_net_flux": float(R_from_net_flux + T_from_net_flux),
+        "A_balance_from_net_flux": float(1.0 - R_from_net_flux - T_from_net_flux),
+        "modal_minus_flux_R_total": float(R_total - R_from_net_flux),
+        "modal_minus_flux_T_total": float(T_total - T_from_net_flux),
+        "modal_minus_flux_R_plus_T": float((R_total + T_total) - (R_from_net_flux + T_from_net_flux)),
         "diffraction_order_count": len(orders),
         "diffraction_channel_count": len(rows),
         "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),

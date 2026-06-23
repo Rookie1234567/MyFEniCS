@@ -635,6 +635,52 @@ def _pml_probe_metrics(E, cfg: SimulationConfig3D) -> dict[str, float | None]:
     return metrics
 
 
+def _stage4_scattered_pml_metrics(E_sca, cfg: SimulationConfig3D) -> dict[str, float | None | str]:
+    """Measure PML behavior from the scattered field, not the total field.
+
+    In Stage 4, ``E_total = E_bg + E_scat``.  The PML is meant to absorb the
+    outgoing scattered field.  The layered background field is analytically
+    continued into the artificial PML and may have nonzero or even large
+    magnitude there, so judging the PML from ``E_total`` is misleading.
+    """
+
+    metrics: dict[str, float | None | str] = {
+        "pml_metric_field": "E_scat",
+        "pml_metric_note": "Stage 4 PML diagnostics use E_scat; E_total/E_b in PML are artificial-coordinate fields.",
+        "pml_reference_relative_error": None,
+        "pml_reflection_proxy": None,
+        "pml_decay_ratio_top": None,
+        "pml_decay_ratio_bottom": None,
+        "pml_scattered_decay_ratio_top": None,
+        "pml_scattered_decay_ratio_bottom": None,
+    }
+    if E_sca is None or not cfg.use_pml:
+        return metrics
+
+    center_x = 0.5 * (cfg.x_min + cfg.x_max)
+    center_y = 0.5 * (cfg.y_min + cfg.y_max)
+    if cfg.pml_top_thickness > 0.0:
+        top_inner = np.asarray([[center_x, center_y, cfg.physical_z_max + 0.05 * cfg.pml_top_thickness]])
+        top_outer = np.asarray([[center_x, center_y, cfg.domain_z_max - 0.05 * cfg.pml_top_thickness]])
+        top_inner_norm = float(np.linalg.norm(_sample_field_at_points(E_sca, top_inner)))
+        top_outer_norm = float(np.linalg.norm(_sample_field_at_points(E_sca, top_outer)))
+        metrics["pml_scattered_inner_norm_top"] = top_inner_norm
+        metrics["pml_scattered_outer_norm_top"] = top_outer_norm
+        metrics["pml_scattered_decay_ratio_top"] = top_outer_norm / max(top_inner_norm, 1.0e-30)
+        metrics["pml_decay_ratio_top"] = metrics["pml_scattered_decay_ratio_top"]
+
+    if cfg.pml_bottom_thickness > 0.0:
+        bottom_inner = np.asarray([[center_x, center_y, cfg.physical_z_min - 0.05 * cfg.pml_bottom_thickness]])
+        bottom_outer = np.asarray([[center_x, center_y, cfg.domain_z_min + 0.05 * cfg.pml_bottom_thickness]])
+        bottom_inner_norm = float(np.linalg.norm(_sample_field_at_points(E_sca, bottom_inner)))
+        bottom_outer_norm = float(np.linalg.norm(_sample_field_at_points(E_sca, bottom_outer)))
+        metrics["pml_scattered_inner_norm_bottom"] = bottom_inner_norm
+        metrics["pml_scattered_outer_norm_bottom"] = bottom_outer_norm
+        metrics["pml_scattered_decay_ratio_bottom"] = bottom_outer_norm / max(bottom_inner_norm, 1.0e-30)
+        metrics["pml_decay_ratio_bottom"] = metrics["pml_scattered_decay_ratio_bottom"]
+    return metrics
+
+
 def _fresnel_numerical_metrics(E, cfg: SimulationConfig3D) -> dict[str, Any]:
     """Extract Fresnel R/T from the solved 3D field by modal fitting."""
     ref = fresnel_reference(cfg)
@@ -1404,7 +1450,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     stage2_metrics: dict[str, Any] = {}
     if floquet_data is not None:
         stage2_metrics.update(_floquet_probe_metrics(floquet_data))
-    if cfg.use_pml:
+    if cfg.use_pml and solve_layered_scattered:
+        stage2_metrics.update(_stage4_scattered_pml_metrics(E_sca, cfg))
+    elif cfg.use_pml:
         stage2_metrics.update(_pml_probe_metrics(E_total, cfg))
     stage2_metrics.update(_stage2_reference_metrics(E_total, cfg, field_metrics))
     summary.update(stage2_metrics)
@@ -1432,16 +1480,38 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             encoding="utf-8",
         )
     log(f"max |E| = {field_metrics['max_abs_E']:.6e}")
+    if field_metrics.get("max_abs_E_physical_z_region") is not None:
+        log(f"max |E| in physical z-region = {field_metrics['max_abs_E_physical_z_region']:.6e}")
+    if field_metrics.get("max_abs_E_pml_z_region") is not None:
+        log(f"max |E| in PML z-region = {field_metrics['max_abs_E_pml_z_region']:.6e}")
     log(f"max |H| = {field_metrics['max_abs_H']:.6e}")
-    log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
-    log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
+    if field_metrics.get("exact_reference_available"):
+        log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
+        log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
+    else:
+        log("exact reference unavailable for this case; E_exact/H_exact error fields are not written.")
+        if field_metrics.get("max_abs_E_sca") is not None:
+            log(f"max |E_scat| = {field_metrics['max_abs_E_sca']:.6e}")
+        if field_metrics.get("max_abs_E_sca_physical_z_region") is not None:
+            log(f"max |E_scat| in physical z-region = {field_metrics['max_abs_E_sca_physical_z_region']:.6e}")
+        if field_metrics.get("max_abs_E_sca_pml_z_region") is not None:
+            log(f"max |E_scat| in PML z-region = {field_metrics['max_abs_E_sca_pml_z_region']:.6e}")
+        if field_metrics.get("max_abs_E_b") is not None:
+            log(f"max |E_bg| = {field_metrics['max_abs_E_b']:.6e}")
+        if field_metrics.get("max_abs_E_b_physical_z_region") is not None:
+            log(f"max |E_bg| in physical z-region = {field_metrics['max_abs_E_b_physical_z_region']:.6e}")
+        if field_metrics.get("max_abs_E_b_pml_z_region") is not None:
+            log(f"max |E_bg| in PML z-region = {field_metrics['max_abs_E_b_pml_z_region']:.6e}")
     log(f"Poynting direction cosine = {field_metrics['poynting_direction_cosine']:.6e}")
     if floquet_data is not None:
         log(f"Floquet x-face mismatch = {summary['floquet_x_face_mismatch']:.6e}")
         log(f"Floquet y-face mismatch = {summary['floquet_y_face_mismatch']:.6e}")
         log(f"Floquet edge/corner mismatch = {summary['floquet_edge_corner_mismatch']:.6e}")
     if cfg.use_pml:
-        log(f"PML reflection proxy = {summary['pml_reflection_proxy']:.6e}")
+        if summary.get("pml_reflection_proxy") is not None:
+            log(f"PML reflection proxy = {summary['pml_reflection_proxy']:.6e}")
+        if summary.get("pml_metric_field"):
+            log(f"PML metric field = {summary['pml_metric_field']}")
         log(f"PML top decay ratio = {summary['pml_decay_ratio_top']}")
         log(f"PML bottom decay ratio = {summary['pml_decay_ratio_bottom']}")
     if cfg.geometry_kind == "fresnel_interface":
@@ -1462,6 +1532,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
         log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
+        if summary.get("R_total_from_net_flux") is not None:
+            log(
+                "3D sampled net-flux diagnostic R/T = "
+                f"{summary['R_total_from_net_flux']:.6e} / {summary['T_total_from_net_flux']:.6e}"
+            )
+            log(f"3D sampled net-flux diagnostic R+T = {summary['R_plus_T_from_net_flux']:.6e}")
         log(f"3D diffraction top fit residual = {summary['diffraction_top_fit_residual']:.6e}")
         log(f"3D diffraction bottom fit residual = {summary['diffraction_bottom_fit_residual']:.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")

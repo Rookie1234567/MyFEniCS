@@ -1,5 +1,60 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 三场输出、PML 物理区显示和 h50 验证结论
+
+本轮继续修正 Stage 4 真实 grating 的可视化和验证口径：
+
+```text
+1. Stage 4 仍然不输出 E_exact/H_exact/error。
+2. ParaView 新增物理区/PML 分开的场模数组：
+   E_tot_physical_abs_V_per_m
+   E_tot_pml_abs_V_per_m
+   E_sca_physical_abs_V_per_m
+   E_sca_pml_abs_V_per_m
+   E_b_physical_abs_V_per_m
+   E_b_pml_abs_V_per_m
+3. summary 新增 max_abs_E_*_physical_z_region 和 max_abs_E_*_pml_z_region。
+4. diffraction 后处理新增 sampled net-flux diagnostic，但它只是诊断量，正式 R/T 仍看 calibrated modal amplitudes。
+```
+
+最新实跑：
+
+```text
+compileall: 通过
+unittest: Ran 27 tests, OK (skipped=8)
+
+stage4_flat_layer_sanity h50/p1/MPI2:
+  modal R/T = 3.373594e-02 / 9.662641e-01
+  modal R+T = 1.000000e+00
+
+stage4_block_grating h50/p1/MPI2:
+  modal R/T = 9.380284e-03 / 1.075087e+00
+  modal R+T = 1.084467e+00
+  E_scat PML decay top/bottom = 1.8179e-02 / 6.2495e-03
+```
+
+结论：Stage 4 的三场输出、PML 诊断和 flat-layer Fresnel sanity 已经修正；默认 h50 block grating 仍不能作为高精度定量结果，能量平衡偏差约 8.4%，后续需要 h25 或 modal port/更高阶边界继续收敛。
+
+## 2026-06-23 更新：Stage 4 PML 与 E_exact 口径修正
+
+本轮修正一个容易误解的问题：
+
+```text
+Stage 4 真实 grating 没有 E_exact。
+E_b 是分层背景场，不是精确解。
+PML 吸收目标是 E_sca，不是 E_b 或 E_total。
+```
+
+现在 ParaView 中：
+
+```text
+E_tot_V_per_m_*   总场
+E_b_V_per_m_*     背景场
+E_sca_V_per_m_*   散射场
+```
+
+Stage 4 不再输出 `E_exact_abs_V_per_m` 和 `E_error_abs_V_per_m`。PML 指标改为 `pml_metric_field = E_scat`，优先看 `pml_scattered_decay_ratio_top/bottom`。
+
 ## 2026-06-23 更新：Stage 4 main.py 与 ParaView 输出补充
 
 本轮修正：

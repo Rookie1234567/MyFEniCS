@@ -1,3 +1,53 @@
+## 2026-06-23 更新：Stage 4 物理区/PML区输出和功率诊断
+
+本轮新增两个阅读点：
+
+```text
+src/postprocessing/postprocess_3d.py
+  save_airbox_3d_fields(...)
+    Stage 4 不输出 E_exact/H_exact/error。
+    ParaView 同时写：
+      E_tot_V_per_m_*
+      E_b_V_per_m_*
+      E_sca_V_per_m_*
+    还额外写物理区/PML区标量：
+      E_tot_physical_abs_V_per_m
+      E_tot_pml_abs_V_per_m
+      E_sca_physical_abs_V_per_m
+      E_sca_pml_abs_V_per_m
+      E_b_physical_abs_V_per_m
+      E_b_pml_abs_V_per_m
+      is_physical_z_region
+      is_pml_z_region
+
+src/postprocessing/diffraction_3d.py
+  compute_diffraction_orders_3d(...)
+    官方 R/T 来自 calibrated modal amplitudes。
+    sampled net-flux 只作为 diagnostic-only，因为 H 来自 FE curl 重建，
+    flat sanity 中它也不如 modal amplitude 稳定。
+```
+
+## 2026-06-23 更新：Stage 4 不再把背景场叫精确解
+
+本轮把 Stage 4 的后处理口径改成和 2D scattered-field 一致：
+
+```text
+src/postprocessing/postprocess_3d.py
+  save_airbox_3d_fields(...)
+    Stage 4:
+      不写 E_exact/H_exact/error
+      写 E_tot_V_per_m_*
+      写 E_b_V_per_m_*
+      写 E_sca_V_per_m_*
+
+src/solvers/solve_airbox_maxwell_3d.py
+  _stage4_scattered_pml_metrics(E_sca, cfg)
+    PML decay 指标使用 E_scat
+    不再用 E_total 判断 Stage 4 PML
+```
+
+原因：真实矩形柱 grating 没有解析精确解；`E_b` 只是空气/基底平界面的分层背景场。PML 中的 `E_b` 和 `E_total` 是人工复坐标区域里的延拓场，不能要求它们为零。判断吸收层时看 `E_sca_V_per_m_abs`。
+
 ## 2026-06-23 更新：Stage 4 main.py 与 ParaView 输出路径
 
 本轮修正了 `src/main.py` 与 `src/common/config_3d.py` 的职责分工：

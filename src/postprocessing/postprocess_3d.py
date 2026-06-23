@@ -42,10 +42,23 @@ def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
     grid.point_data[f"{prefix}_real"] = _vec_real(values)
     grid.point_data[f"{prefix}_imag"] = _vec_imag(values)
     grid.point_data[f"{prefix}_abs"] = _norm(values).astype(np.float64)
+    for column, name in enumerate(("Ex", "Ey", "Ez")):
+        component = values[:, column]
+        grid.point_data[f"{prefix}_{name}_real"] = component.real.astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_imag"] = component.imag.astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_abs"] = np.abs(component).astype(np.float64)
+        grid.point_data[f"{prefix}_{name}_phase"] = np.angle(component).astype(np.float64)
 
 
 def _add_abs_scalar(grid, name: str, values: np.ndarray) -> None:
     grid.point_data[name] = _norm(values).astype(np.float64)
+
+
+def _add_masked_abs_scalar(grid, name: str, values: np.ndarray, mask: np.ndarray) -> None:
+    data = np.full(len(values), np.nan, dtype=np.float64)
+    if len(values):
+        data[np.asarray(mask, dtype=bool)] = _norm(values[np.asarray(mask, dtype=bool)]).astype(np.float64)
+    grid.point_data[name] = data
 
 
 def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
@@ -72,7 +85,9 @@ def _write_parallel_vtu_collection(out_dir: Path, size: int):
     (out_dir / "fields_3d_for_paraview_parallel.pvd").write_text("\n".join(lines), encoding="utf-8")
 
 
-def _global_max_norm(comm, values: np.ndarray) -> float:
+def _global_max_norm(comm, values: np.ndarray, mask: np.ndarray | None = None) -> float:
+    if mask is not None:
+        values = values[np.asarray(mask, dtype=bool)]
     local = float(np.max(_norm(values))) if values.size else 0.0
     return comm.allreduce(local, op=MPI.MAX)
 
@@ -108,6 +123,7 @@ def save_airbox_3d_fields(
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
     V_dg = fem.functionspace(mesh_data.mesh, ("DG", cfg.visualization_degree, (3,)))
+    has_exact_reference = not cfg.stage_case.startswith("stage4_")
 
     E_code_dg = fem.Function(V_dg, name="E_code")
     E_code_dg.interpolate(E_numerical)
@@ -132,15 +148,19 @@ def save_airbox_3d_fields(
         E_bg_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_bg_code_dg.x.array[:]
         E_bg_dg.x.scatter_forward()
 
-    E_exact_dg = fem.Function(V_dg, name="E_exact_V_per_m")
-    E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
+    E_exact_dg = None
+    if has_exact_reference:
+        E_exact_dg = fem.Function(V_dg, name="E_exact_V_per_m")
+        E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
 
     h_expr = (cfg.magnetic_field_scale_A_per_m / (1j * cfg.k0 * cfg.mu_r)) * ufl.curl(E_numerical)
     H_dg = fem.Function(V_dg, name="H_A_per_m_from_curl")
     H_dg.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
 
-    H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
-    H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
+    H_exact_dg = None
+    if has_exact_reference:
+        H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
+        H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
 
     try:
         with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
@@ -155,26 +175,38 @@ def save_airbox_3d_fields(
     e_num = _values(E_num_dg, grid.n_points)
     e_sca = _values(E_sca_dg, grid.n_points) if E_sca_dg is not None else None
     e_bg = _values(E_bg_dg, grid.n_points) if E_bg_dg is not None else None
-    e_exact = _values(E_exact_dg, grid.n_points)
-    e_error = e_num - e_exact
+    e_exact = _values(E_exact_dg, grid.n_points) if E_exact_dg is not None else None
+    e_error = e_num - e_exact if e_exact is not None else None
     h_num = _values(H_dg, grid.n_points)
-    h_exact = _values(H_exact_dg, grid.n_points)
-    h_error = h_num - h_exact
+    h_exact = _values(H_exact_dg, grid.n_points) if H_exact_dg is not None else None
+    h_error = h_num - h_exact if h_exact is not None else None
 
     paraview_grid = grid.copy()
+    z_values = np.asarray(paraview_grid.points[:, 2], dtype=np.float64)
+    z_tol = 1.0e-8 * max(cfg.domain_z_max - cfg.domain_z_min, 1.0)
+    physical_point_mask = (z_values >= cfg.physical_z_min - z_tol) & (z_values <= cfg.physical_z_max + z_tol)
+    pml_point_mask = ~physical_point_mask
     # ParaView arrays use physical display units.  The solve itself is still
     # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
     _add_complex_vector(paraview_grid, "E_V_per_m", e_num)
     _add_complex_vector(paraview_grid, "E_tot_V_per_m", e_num)
+    _add_masked_abs_scalar(paraview_grid, "E_tot_physical_abs_V_per_m", e_num, physical_point_mask)
+    _add_masked_abs_scalar(paraview_grid, "E_tot_pml_abs_V_per_m", e_num, pml_point_mask)
     if e_sca is not None:
         _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
+        _add_masked_abs_scalar(paraview_grid, "E_sca_physical_abs_V_per_m", e_sca, physical_point_mask)
+        _add_masked_abs_scalar(paraview_grid, "E_sca_pml_abs_V_per_m", e_sca, pml_point_mask)
     if e_bg is not None:
         _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
-    _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
-    _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
+        _add_masked_abs_scalar(paraview_grid, "E_b_physical_abs_V_per_m", e_bg, physical_point_mask)
+        _add_masked_abs_scalar(paraview_grid, "E_b_pml_abs_V_per_m", e_bg, pml_point_mask)
+    if e_exact is not None:
+        _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
+        _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
     _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
-    _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
-    _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
+    if h_exact is not None:
+        _add_abs_scalar(paraview_grid, "H_exact_abs_A_per_m", h_exact)
+        _add_abs_scalar(paraview_grid, "H_error_abs_A_per_m", h_error)
     domain_tags = np.full(paraview_grid.n_cells, cfg.tags.air, dtype=np.int32)
     if hasattr(mesh_data, "cell_tags"):
         indices = np.asarray(mesh_data.cell_tags.indices, dtype=np.int32)
@@ -182,6 +214,8 @@ def save_airbox_3d_fields(
         valid = indices < paraview_grid.n_cells
         domain_tags[indices[valid]] = values[valid]
     paraview_grid.cell_data["domain_tag"] = domain_tags
+    paraview_grid.point_data["is_physical_z_region"] = physical_point_mask.astype(np.int8)
+    paraview_grid.point_data["is_pml_z_region"] = pml_point_mask.astype(np.int8)
     paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
@@ -203,12 +237,14 @@ def save_airbox_3d_fields(
         paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
         paraview_path = out_dir / "fields_3d_for_paraview.vtu"
 
-    max_e_exact = _global_max_norm(comm, e_exact)
+    max_e_exact = _global_max_norm(comm, e_exact) if e_exact is not None else None
     max_e_num = _global_max_norm(comm, e_num)
-    max_e_error = _global_max_norm(comm, e_error)
+    max_e_num_physical = _global_max_norm(comm, e_num, physical_point_mask)
+    max_e_num_pml = _global_max_norm(comm, e_num, pml_point_mask)
+    max_e_error = _global_max_norm(comm, e_error) if e_error is not None else None
     max_h = _global_max_norm(comm, h_num)
-    max_h_exact = _global_max_norm(comm, h_exact)
-    max_h_error = _global_max_norm(comm, h_error)
+    max_h_exact = _global_max_norm(comm, h_exact) if h_exact is not None else None
+    max_h_error = _global_max_norm(comm, h_error) if h_error is not None else None
 
     poynting = 0.5 * np.real(np.cross(e_num, np.conj(h_num)))
     mean_poynting = _global_mean_vector(comm, poynting)
@@ -219,25 +255,43 @@ def save_airbox_3d_fields(
     result = {
         "max_abs_E_exact": max_e_exact,
         "max_abs_E": max_e_num,
+        "max_abs_E_physical_z_region": max_e_num_physical,
+        "max_abs_E_pml_z_region": max_e_num_pml,
         "max_abs_E_error": max_e_error,
-        "relative_max_abs_E_error": max_e_error / max(max_e_exact, 1.0e-30),
+        "relative_max_abs_E_error": None
+        if max_e_error is None or max_e_exact is None
+        else max_e_error / max(max_e_exact, 1.0e-30),
         "max_abs_H": max_h,
         "max_abs_H_exact": max_h_exact,
         "max_abs_H_error": max_h_error,
-        "relative_max_abs_H_error": max_h_error / max(max_h_exact, 1.0e-30),
+        "relative_max_abs_H_error": None
+        if max_h_error is None or max_h_exact is None
+        else max_h_error / max(max_h_exact, 1.0e-30),
         "mean_poynting_W_per_m2": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
         "paraview_file": str(paraview_path),
+        "exact_reference_available": has_exact_reference,
+        "exact_reference_note": None
+        if has_exact_reference
+        else "Stage 4真实grating没有解析精确解；E_b是分层背景场，不再输出E_exact。",
         "paraview_e_field_arrays": [
             "E_V_per_m_*",
             "E_tot_V_per_m_*",
+            "E_tot_physical_abs_V_per_m",
+            "E_tot_pml_abs_V_per_m",
             *([] if e_sca is None else ["E_sca_V_per_m_*"]),
+            *([] if e_sca is None else ["E_sca_physical_abs_V_per_m", "E_sca_pml_abs_V_per_m"]),
             *([] if e_bg is None else ["E_b_V_per_m_*"]),
+            *([] if e_bg is None else ["E_b_physical_abs_V_per_m", "E_b_pml_abs_V_per_m"]),
         ],
     }
     if e_sca is not None:
         result["max_abs_E_sca"] = _global_max_norm(comm, e_sca)
+        result["max_abs_E_sca_physical_z_region"] = _global_max_norm(comm, e_sca, physical_point_mask)
+        result["max_abs_E_sca_pml_z_region"] = _global_max_norm(comm, e_sca, pml_point_mask)
     if e_bg is not None:
         result["max_abs_E_b"] = _global_max_norm(comm, e_bg)
+        result["max_abs_E_b_physical_z_region"] = _global_max_norm(comm, e_bg, physical_point_mask)
+        result["max_abs_E_b_pml_z_region"] = _global_max_norm(comm, e_bg, pml_point_mask)
     return result

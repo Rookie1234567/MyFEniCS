@@ -1,5 +1,78 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：ParaView 中如何避免被 PML 背景场误导
+
+Stage 4 的 `E_b` 是分层 Fresnel 背景场。它会在 PML 中做复坐标延拓，所以 PML 里的 `E_b` 或 `E_tot` 可能很大；这不是“散射场 PML 没有吸收”。看结构附近的真实物理场时，优先用新增的物理区数组：
+
+```text
+E_tot_physical_abs_V_per_m
+E_sca_physical_abs_V_per_m
+E_b_physical_abs_V_per_m
+```
+
+看 PML 是否吸收散射场时，优先用：
+
+```text
+E_sca_pml_abs_V_per_m
+run_summary.json:
+  pml_metric_field = E_scat
+  pml_scattered_decay_ratio_top
+  pml_scattered_decay_ratio_bottom
+```
+
+辅助筛选数组：
+
+```text
+domain_tag
+is_physical_z_region
+is_pml_z_region
+```
+
+最新 h50/p1/MPI2 验证中，flat-layer sanity 的 calibrated modal R/T 精确回到 Fresnel：
+
+```text
+R/T = 3.373594e-02 / 9.662641e-01
+R+T = 1.000000e+00
+```
+
+默认 block grating 的 calibrated modal R+T 仍为 `1.084467`，说明 h50 粗网格结果目前只能作为 smoke/流程验证，不能当最终定量 benchmark。下一个对齐细化网格是 `h=25 nm`，直接法可能会明显增加内存。
+
+`R_total_from_net_flux/T_total_from_net_flux` 是 diagnostic-only：它用采样点上的 FE-curl 重建 H 做直接 Poynting 通量，flat sanity 中也不如 calibrated modal amplitudes 稳定。正式报告仍看 `R_total/T_total/R_plus_T`。
+
+## 2026-06-23 更新：PML 和 E_exact 的正确查看方式
+
+Stage 4 真实 grating 没有解析精确解，所以现在不再输出：
+
+```text
+E_exact_abs_V_per_m
+E_error_abs_V_per_m
+H_exact_abs_A_per_m
+H_error_abs_A_per_m
+```
+
+ParaView 里应该按 2D scattered-field 的口径看三套场：
+
+```text
+E_tot_V_per_m_*   # 总场 E_total = E_b + E_sca，只建议在物理区解释
+E_b_V_per_m_*     # 分层背景场 E_bg，不是精确解
+E_sca_V_per_m_*   # 散射场，判断 PML 吸收时优先看它
+```
+
+PML 是人工层。Stage 4 的 PML 目标是吸收 `E_sca`，不是让 `E_b` 或 `E_tot` 在 PML 中为零。背景场在 PML 中经过复坐标延拓，可能有明显模值；这不代表 PML 没吸收散射场。
+
+因此检查 PML 时优先看：
+
+```text
+run_summary.json:
+  pml_metric_field = E_scat
+  pml_scattered_decay_ratio_top
+  pml_scattered_decay_ratio_bottom
+
+ParaView:
+  E_sca_V_per_m_abs
+  domain_tag
+```
+
 ## 2026-06-23 更新：main.py 配置和 ParaView 场变量
 
 如果从 `src/main.py` 直接运行 Stage 4，推荐先用：
@@ -7,8 +80,8 @@
 ```text
 STAGE_CASE_3D = "stage4_block_grating"
 MESH_TARGET_SIZE_3D = 50.0
-PML_TOP_THICKNESS_3D = 300.0
-PML_BOTTOM_THICKNESS_3D = 300.0
+PML_TOP_THICKNESS_3D = 250.0
+PML_BOTTOM_THICKNESS_3D = 250.0
 PERIOD_X_3D = 350.0
 PERIOD_Y_3D = 300.0
 GRATING_WIDTH_X_3D = 150.0
@@ -25,14 +98,6 @@ h = 30 nm  不对齐，会报错
 ```
 
 这是故意的保护，不是程序崩溃。它防止 block 边界被 midpoint tag 静默标错。
-
-ParaView 里现在可以直接查看：
-
-```text
-E_tot_V_per_m_real / imag / abs   # 总场 E_total
-E_b_V_per_m_real / imag / abs     # 分层背景场 E_bg
-E_sca_V_per_m_real / imag / abs   # 散射场 E_scat
-```
 
 旧的 `E_V_per_m_*` 仍然保留，含义等同于 `E_tot_V_per_m_*`。
 

@@ -1,5 +1,108 @@
 # Stage 4 验证报告
 
+## 2026-06-23 更新：PML/E_exact 修正后的最终验证
+
+本轮目标是修正两个误导性问题：
+
+```text
+1. Stage 4 真实 grating 没有 E_exact，不能把 E_b 当精确解输出。
+2. Stage 4 PML 吸收的是 E_scat，不能用 PML 中的 E_b/E_tot 模值判断吸收失败。
+```
+
+已完成代码检查：
+
+```bash
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 27 tests in 1.247s
+OK (skipped=8)
+```
+
+已完成实跑：
+
+```bash
+mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_all \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct
+```
+
+结果目录：
+
+```text
+results/3D_stage4_all_normal_p1_h50p0_np2_20260623_062048
+```
+
+### flat-layer sanity
+
+```text
+case: airbox3d_normal_stage4_flat_layer_sanity
+mesh cells: 1176
+N1curl dofs: 4381
+Floquet constraints: 769
+E_scat: 0
+PML metric field: E_scat
+```
+
+| 指标 | 数值 |
+| --- | ---: |
+| modal R | 3.373594e-02 |
+| modal T | 9.662641e-01 |
+| modal R+T | 1.000000e+00 |
+| top fit residual | 6.202768e-15 |
+| bottom fit residual | 5.371332e-15 |
+
+结论：无 grating/source 时，calibrated diffraction modal postprocess 能精确回到 Fresnel 0 级。因此 Stage 4 的 `E_b`、Fresnel 背景和模态 R/T 后处理口径是自洽的。
+
+### block grating h50/p1
+
+```text
+case: airbox3d_normal_stage4_block_grating
+mesh cells: 1176
+N1curl dofs: 4381
+Floquet constraints: 769
+estimated Floquet memory: 0.026 MB
+linear_problem_setup: 80.582 s
+linear_problem_solve: 25.454 s
+max RSS: 4149.5 MB
+```
+
+| 指标 | 数值 |
+| --- | ---: |
+| modal R | 9.380284e-03 |
+| modal T | 1.075087e+00 |
+| modal R+T | 1.084467e+00 |
+| A_balance | -8.446713e-02 |
+| top fit residual | 1.667669e-02 |
+| bottom fit residual | 7.202705e-03 |
+| E_scat PML decay top | 1.817922e-02 |
+| E_scat PML decay bottom | 6.249538e-03 |
+| max abs(E_tot) physical z-region | 4.787418e+00 |
+| max abs(E_tot) PML z-region | 1.484122e+02 |
+| max abs(E_scat) physical z-region | 4.375600e+00 |
+| max abs(E_scat) PML z-region | 1.789548e-01 |
+
+结论：PML 对散射场有明显衰减，ParaView 中 PML 区域 `E_tot/E_b` 大主要来自背景场的 PML 复坐标延拓。默认 h50 block grating 的能量平衡仍偏大，`R+T` 高出约 8.4%，因此它目前是流程 smoke，不是最终高精度定量 benchmark。
+
+### h40 对齐检查
+
+尝试 `mesh_target_size=40 nm` 时程序主动拒绝：
+
+```text
+Stage-4 hexa meshes do not use midpoint approximation for material boundaries.
+grating_x_min=100 nm is not on the uniform x-grid ...
+```
+
+这是预期保护。默认几何下 `h=50 nm` 和 `h=25 nm` 对齐，`h=40 nm` 不对齐。下一轮如果要做真实收敛，优先考虑 `h=25 nm`，但直接法内存会显著增加。
+
 ## 2026-06-23 更新：main.py 入口与 ParaView 三场输出
 
 本轮修正后，从 `src.main` 直接运行 Stage 4 已通过：
