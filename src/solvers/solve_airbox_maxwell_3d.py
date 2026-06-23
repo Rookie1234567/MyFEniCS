@@ -914,6 +914,7 @@ def _build_variational_forms(
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
+    ds = ufl.Measure("ds", domain=msh, subdomain_data=mesh_data.facet_tags)
     zero = fem.Constant(msh, np.zeros(3, dtype=default_scalar_type))
     curl_u = ufl.curl(u)
     curl_v = ufl.curl(v)
@@ -949,6 +950,18 @@ def _build_variational_forms(
         eps_bottom, mu_bottom = z_pml_tensors(x, cfg, "bottom", eps_bottom_background)
         a += ufl.inner(ufl.inv(mu_bottom) * curl_u, curl_v) * dx(cfg.tags.bottom_pml)
         a += -cfg.k0**2 * ufl.inner(eps_bottom * u, v) * dx(cfg.tags.bottom_pml)
+    if (
+        field_formulation == "layered_scattered"
+        and cfg.stage4_boundary_model.lower() == "robin0"
+    ):
+        # Diagnostic truncation for Stage 4 only: no PML cells are present, so
+        # a zero-order impedance term approximates outgoing waves at the top
+        # and bottom planes.  The official Stage-4 path remains the 2D-like PML
+        # weak form without this surface term.
+        u_t = ufl.as_vector((u[0], u[1], 0.0))
+        v_t = ufl.as_vector((v[0], v[1], 0.0))
+        a += PETSc.ScalarType(1j * cfg.k0 * complex(cfg.n_air)) * ufl.inner(u_t, v_t) * ds(cfg.tags.z_max)
+        a += PETSc.ScalarType(1j * cfg.k0 * complex(cfg.substrate_index)) * ufl.inner(u_t, v_t) * ds(cfg.tags.z_min)
     L = ufl.inner(zero, v) * dx
     if field_formulation == "incident_scattered":
         if incident_field is None:
@@ -1212,11 +1225,19 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     solve_layered_scattered = _use_layered_scattered_formulation(cfg)
     field_formulation = _field_formulation_label(cfg, solve_reference_correction, solve_incident_scattered)
     solve_with_zero_bc = solve_reference_correction or solve_incident_scattered or solve_layered_scattered
+    stage4_boundary_model = cfg.stage4_boundary_model.lower()
+    if solve_layered_scattered and stage4_boundary_model not in {"pml", "robin0"}:
+        raise ValueError("stage4_boundary_model must be 'pml' or 'robin0' for Stage-4 layered scattering.")
+    if solve_layered_scattered and stage4_boundary_model == "robin0" and cfg.use_pml:
+        raise ValueError("stage4_boundary_model='robin0' requires use_pml=False.")
     # The unknown is a correction/scattered field in all non-total-field paths.
-    # For PML truncation we still close the outer top/bottom faces with zero
-    # tangential E.  Floquet owns the x/y side walls, so those dofs are removed
-    # from the z-boundary dof list after the constraint builder runs.
-    apply_strong_boundary_bc = True
+    # Stage 4 with PML follows the established 2D scattered-flow convention:
+    # the PML is part of the weak form and the outer z faces are left with the
+    # natural boundary.  The optional robin0 diagnostic also avoids strong
+    # z-face Dirichlet data because the radiation term itself is the truncation.
+    stage4_pml_natural_boundary = solve_layered_scattered and stage4_boundary_model == "pml"
+    stage4_robin_boundary = solve_layered_scattered and stage4_boundary_model == "robin0"
+    apply_strong_boundary_bc = not (stage4_pml_natural_boundary or stage4_robin_boundary)
     E_source_for_rhs = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
@@ -1252,6 +1273,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
     log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
     log(f"field formulation = {field_formulation}")
+    if solve_layered_scattered:
+        log(f"stage4 boundary model = {stage4_boundary_model}")
+        if stage4_pml_natural_boundary:
+            log("stage4 PML boundary flow = 2D-like natural outer boundary; no strong z-face Dirichlet data")
+        if stage4_robin_boundary:
+            log("stage4 diagnostic robin0 boundary = zero-order impedance term without PML")
     if solve_incident_scattered:
         log("incident-scattered RHS sign = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)")
         log(f"incident-scattered RHS source region = physical_substrate")
@@ -1366,10 +1393,14 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
+        "stage4_boundary_model": stage4_boundary_model if solve_layered_scattered else None,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(len(boundary_dofs)),
-        "stage4_matches_2d_scattered_pml_boundary_flow": False,
-        "stage4_outer_pml_zero_tangential_e_bc": bool(solve_layered_scattered and apply_strong_boundary_bc),
+        "stage4_matches_2d_scattered_pml_boundary_flow": bool(stage4_pml_natural_boundary),
+        "stage4_outer_pml_zero_tangential_e_bc": bool(
+            solve_layered_scattered and cfg.use_pml and apply_strong_boundary_bc
+        ),
+        "stage4_robin0_zero_order_boundary_enabled": bool(stage4_robin_boundary),
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
         "background_added_to_solution": field_formulation == "layered_scattered",
         "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),
@@ -1623,18 +1654,25 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             f"bottom [{summary['fresnel_bottom_sampling_z_min']:.6g}, {summary['fresnel_bottom_sampling_z_max']:.6g}] nm"
         )
     if cfg.geometry_kind == "rectangular_block_grating":
+        log(f"3D diffraction total power source = {summary.get('diffraction_total_power_source')}")
         log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
         log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
         if summary.get("stage4_lossless_energy_balance_checked"):
             log(f"Stage 4 lossless energy-balance pass = {summary['stage4_energy_balance_pass']}")
             log(f"Stage 4 R+T excess over 1 = {summary['stage4_energy_balance_excess']:.6e}")
+        if summary.get("R_total_from_modal_orders") is not None:
+            log(
+                "3D modal-order diagnostic R/T = "
+                f"{summary['R_total_from_modal_orders']:.6e} / {summary['T_total_from_modal_orders']:.6e}"
+            )
+            log(f"3D modal-order diagnostic R+T = {summary['R_plus_T_from_modal_orders']:.6e}")
         if summary.get("R_total_from_net_flux") is not None:
             log(
-                "3D sampled net-flux diagnostic R/T = "
+                "3D sampled net-flux R/T = "
                 f"{summary['R_total_from_net_flux']:.6e} / {summary['T_total_from_net_flux']:.6e}"
             )
-            log(f"3D sampled net-flux diagnostic R+T = {summary['R_plus_T_from_net_flux']:.6e}")
+            log(f"3D sampled net-flux R+T = {summary['R_plus_T_from_net_flux']:.6e}")
         log(f"3D diffraction top fit residual = {summary['diffraction_top_fit_residual']:.6e}")
         log(f"3D diffraction bottom fit residual = {summary['diffraction_bottom_fit_residual']:.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")

@@ -58,7 +58,12 @@ def _near_rayleigh(beta: complex, n_medium: complex, cfg: SimulationConfig3D) ->
     return abs(complex(beta)) / scale < cfg.diffraction_rayleigh_tol
 
 
-def enumerate_diffraction_orders_3d(cfg: SimulationConfig3D) -> list[DiffractionOrder3D]:
+def enumerate_diffraction_orders_3d(
+    cfg: SimulationConfig3D,
+    *,
+    max_m_override: int | None = None,
+    max_n_override: int | None = None,
+) -> list[DiffractionOrder3D]:
     """Enumerate transverse Floquet orders for the 3D periodic cell.
 
     The first Stage-4 benchmark defaults to zero-order-only because the
@@ -67,7 +72,10 @@ def enumerate_diffraction_orders_3d(cfg: SimulationConfig3D) -> list[Diffraction
     max_m/max_n exposes the same catalog used later by an auxiliary modal port.
     """
 
-    if cfg.diffraction_zero_order_only:
+    if max_m_override is not None or max_n_override is not None:
+        max_m = 0 if max_m_override is None else int(max_m_override)
+        max_n = 0 if max_n_override is None else int(max_n_override)
+    elif cfg.diffraction_zero_order_only:
         max_m = 0
         max_n = 0
     else:
@@ -105,6 +113,23 @@ def enumerate_diffraction_orders_3d(cfg: SimulationConfig3D) -> list[Diffraction
                 )
             )
     return orders
+
+
+def _orders_for_modal_fit(cfg: SimulationConfig3D, power_orders: list[DiffractionOrder3D]) -> tuple[list[DiffractionOrder3D], bool]:
+    """Return modal-fit orders, optionally adding evanescent neighbors.
+
+    The default Stage-4 benchmark has only the zero order propagating, but the
+    field on a finite probe plane still contains evanescent grating harmonics.
+    Including the nearest non-propagating orders in the least-squares basis
+    prevents those near-field terms from being folded into the zero-order
+    reflected/transmitted amplitudes.
+    """
+
+    if not (cfg.diffraction_zero_order_only and cfg.has_grating_block):
+        return power_orders, False
+    max_m = 1 if cfg.diffraction_order_max_m is None else max(1, int(cfg.diffraction_order_max_m))
+    max_n = 1 if cfg.diffraction_order_max_n is None else max(1, int(cfg.diffraction_order_max_n))
+    return enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n), True
 
 
 def polarization_basis_3d(
@@ -442,7 +467,8 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
 
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
-    orders = enumerate_diffraction_orders_3d(cfg)
+    power_orders = enumerate_diffraction_orders_3d(cfg)
+    orders, fit_includes_evanescent_neighbors = _orders_for_modal_fit(cfg, power_orders)
     top_z, bottom_z = _probe_z_locations(cfg)
     top_points = _plane_points(cfg, top_z)
     bottom_points = _plane_points(cfg, bottom_z)
@@ -481,6 +507,7 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
 
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+    power_order_keys = {(order.m, order.n) for order in power_orders}
     rows: list[dict[str, Any]] = []
     R_total = 0.0
     T_total = 0.0
@@ -502,10 +529,11 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
             )
             R = 0.0
             T = 0.0
-            if order.top_propagating:
+            include_in_total_power = (order.m, order.n) in power_order_keys
+            if include_in_total_power and order.top_propagating:
                 R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
                 R_total += float(R)
-            if order.bottom_propagating:
+            if include_in_total_power and order.bottom_propagating:
                 T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
                 T_total += float(T)
             rows.append(
@@ -519,6 +547,7 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
                     "beta_bottom": order.beta_bottom,
                     "top_propagating": order.top_propagating,
                     "bottom_propagating": order.bottom_propagating,
+                    "included_in_total_power": include_in_total_power,
                     "rayleigh_warning": order.rayleigh_warning_top or order.rayleigh_warning_bottom,
                     "rayleigh_warning_top": order.rayleigh_warning_top,
                     "rayleigh_warning_bottom": order.rayleigh_warning_bottom,
@@ -531,25 +560,39 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
                 }
             )
 
+    modal_R_total = float(R_total)
+    modal_T_total = float(T_total)
+    modal_R_plus_T = float(modal_R_total + modal_T_total)
+    flux_R_total = float(R_from_net_flux)
+    flux_T_total = float(T_from_net_flux)
+    flux_R_plus_T = float(flux_R_total + flux_T_total)
     metrics = {
-        "R_total": float(R_total),
-        "T_total": float(T_total),
-        "R_plus_T": float(R_total + T_total),
-        "A_balance": float(1.0 - R_total - T_total),
+        "R_total": modal_R_total,
+        "T_total": modal_T_total,
+        "R_plus_T": modal_R_plus_T,
+        "A_balance": float(1.0 - modal_R_plus_T),
+        "diffraction_total_power_source": "modal_orders",
+        "diffraction_modal_order_powers_diagnostic_only": False,
+        "R_total_from_modal_orders": modal_R_total,
+        "T_total_from_modal_orders": modal_T_total,
+        "R_plus_T_from_modal_orders": modal_R_plus_T,
+        "A_balance_from_modal_orders": float(1.0 - modal_R_plus_T),
         "top_net_flux_code_units": float(top_flux_outward),
         "bottom_net_flux_code_units": float(bottom_flux_outward),
         "sampled_net_flux_diagnostic_only": True,
-        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples; official R/T uses calibrated modal amplitudes.",
-        "R_total_from_net_flux": float(R_from_net_flux),
-        "T_total_from_net_flux": float(T_from_net_flux),
-        "R_plus_T_from_net_flux": float(R_from_net_flux + T_from_net_flux),
-        "A_balance_from_net_flux": float(1.0 - R_from_net_flux - T_from_net_flux),
-        "modal_minus_flux_R_total": float(R_total - R_from_net_flux),
-        "modal_minus_flux_T_total": float(T_total - T_from_net_flux),
-        "modal_minus_flux_R_plus_T": float((R_total + T_total) - (R_from_net_flux + T_from_net_flux)),
-        "diffraction_order_count": len(orders),
+        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples. Official Stage-4 R/T uses modal amplitudes.",
+        "R_total_from_net_flux": flux_R_total,
+        "T_total_from_net_flux": flux_T_total,
+        "R_plus_T_from_net_flux": flux_R_plus_T,
+        "A_balance_from_net_flux": float(1.0 - flux_R_plus_T),
+        "modal_minus_flux_R_total": float(modal_R_total - flux_R_total),
+        "modal_minus_flux_T_total": float(modal_T_total - flux_T_total),
+        "modal_minus_flux_R_plus_T": float(modal_R_plus_T - flux_R_plus_T),
+        "diffraction_order_count": len(power_orders),
+        "diffraction_fit_order_count": len(orders),
         "diffraction_channel_count": len(rows),
         "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),
+        "diffraction_fit_includes_evanescent_neighbors": bool(fit_includes_evanescent_neighbors),
         "diffraction_top_probe_z": top_z,
         "diffraction_bottom_probe_z": bottom_z,
         "diffraction_sample_count_x": int(cfg.diffraction_sample_count_x),

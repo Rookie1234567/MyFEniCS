@@ -1,5 +1,52 @@
 # Stage 4 理论说明：3D 周期矩形柱与衍射级后处理
 
+## 2026-06-23 更新：为什么 0 级传播时仍要拟合 evanescent 级次
+
+默认矩形柱参数为：
+
+```text
+lambda0 = 633 nm
+period_x = 350 nm
+period_y = 300 nm
+n_air = 1
+n_substrate = 1.45
+```
+
+在这个周期下，远场传播功率基本只需要统计 `(m,n)=(0,0)` 级，因为更高阶在空气/基底中多为 evanescent，不携带远场功率。
+
+但是探测面离 grating 有限距离，数值场仍包含非传播近场谐波：
+
+```text
+E_probe = E_00_propagating + sum(E_mn_evanescent)
+```
+
+如果拟合基只放 0 级，evanescent 近场会被最小二乘错误地塞进 0 级幅值，导致：
+
+```text
+R/T 偏大
+R+T 可能超过 1
+fit residual 较高
+```
+
+因此当前 Stage 4 的做法是：
+
+```text
+1. 默认仍只把传播级次计入 R/T 总功率；
+2. 但对 block grating 的模态拟合，额外加入邻近 evanescent 级次；
+3. evanescent 级次的行会写入 diffraction_orders_3d.json/csv，
+   但 included_in_total_power=false，不进入 R_total/T_total。
+```
+
+最新 h50/p1 串行结果显示这个修正是必要的：
+
+```text
+只拟合 0 级时：R+T 约 1.054
+加入邻近 evanescent 拟合后：R+T = 0.982634
+top fit residual 从约 1.6e-2 降到约 4.1e-3
+```
+
+这并不代表 h50/p1 已可做最终定量 benchmark；它只说明后处理不再把近场谐波误认为传播功率。最终还需要网格收敛、探测面位置收敛和 2.5D 对照继续验证。
+
 ## 2026-06-23 更新：第一版公式口径
 
 Stage 4 不再继续推进 2.5D 复现，也不把 Stage 2 的 2B/2C 当作硬门槛。新的主线是直接求解一个真实 3D 周期单胞：

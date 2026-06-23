@@ -1,5 +1,53 @@
 # Stage 4 验证报告
 
+## 2026-06-23 更新：PML 流程回到 2D-like，evanescent fitting 修正 R+T 爆掉
+
+本轮根据 COMSOL 电场模截图和“lossless R+T 不应超过 1”的要求继续修正 Stage 4。核心变化：
+
+```text
+1. Stage 4 正式 PML 分支不再对 z 外边界强加 Dirichlet，
+   而是回到 2D scattered solver 类似的 PML 弱式 + natural outer boundary。
+
+2. stage4_boundary_model="robin0" 保留为无 PML 诊断分支，
+   不作为正式结果。
+
+3. diffraction_3d 的默认 block grating 拟合中加入邻近 evanescent 级次。
+   这些非传播级次只用于分离近场谐波，不计入传播功率。
+
+4. ParaView 物理区电场模切片已经生成：
+   results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409/stage4_Etot_physical_slices.png
+```
+
+代码检查：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+
+Ran 27 tests in 1.189s
+OK (skipped=8)
+```
+
+实跑结果：
+
+| 算例 | 结果目录 | 关键结果 | 判定 |
+| --- | --- | --- | --- |
+| block grating h50/p1/serial | `results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409` | R+T = 9.826341e-01, fit_order_count=9 | 通过，场分布可用于诊断 |
+| block grating h50/p1/MPI2 | `results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_084643` | R+T = 9.142503e-01, fit_order_count=9 | 通过，但与串行仍有定量差异 |
+| flat-layer sanity h50/p1/MPI2 | `results/3D_stage4_flat_layer_sanity_normal_p1_h50p0_np2_20260623_083941` | modal R+T = 1.000000 | 通过；注意 sampled net flux 仍只是诊断量 |
+| 2.5D serial h50/p1 | `results/stage4_2p5d_compare_h50p0_p1_np1_20260623_084908` | max Ey ≈ 3.9e-14，但 3D R+T = 1.042795 | 未通过定量对齐 |
+
+当前判断：
+
+```text
+1. COMSOL 参考图要求的“热点在柱子侧壁/界面附近，而不是 PML 支配显示”已经基本满足。
+2. 真实 block grating h50/p1 不再出现 R+T>1，说明之前 0 级拟合被 evanescent 近场污染。
+3. MPI2 与 serial 的 R/T 仍不完全一致，后续需要做更细网格、更多采样面位置和可能的并行后处理对照。
+4. 2.5D y-extruded 的非物理 Ey 已消失，但 R/T 仍未复现旧 2D TM，因此还不能宣称 Stage 4 已完成最终定量验证。
+```
+
+下面更早的条目保留为历史排查记录；如果边界条件或 R/T 结论与本节冲突，以本节为准。
+
 ## 2026-06-23 更新：PML 外边界强截断与 2.5D 对照复跑
 
 本轮继续响应“PML 外边界不应有电场、lossless 情况下 R+T 不应超过 1”的检查。已完成：

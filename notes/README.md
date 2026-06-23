@@ -1,5 +1,45 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 h50/p1 已修正到可诊断运行，真实定量仍需谨慎
+
+本轮根据 COMSOL 电场模截图继续修 Stage 4，最新结论放在最上方：
+
+```text
+1. 正式 Stage 4 PML 分支改回更接近 2D scattered solver 的流程：
+   PML 作为弱式吸收层，z 外边界不再额外强加 Dirichlet。
+   summary 中 strong_z_boundary_dirichlet_enabled=false，
+   stage4_matches_2d_scattered_pml_boundary_flow=true。
+
+2. 真实 block grating 的 diffraction fitting 现在默认在拟合中加入邻近 evanescent 级次。
+   它们不计入传播功率，但会防止近场谐波污染 0 级幅值。
+
+3. h50/p1 串行 block grating 已不再出现 R+T>1：
+   results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409
+   R/T = 6.088269e-03 / 9.765458e-01
+   R+T = 9.826341e-01
+   case_status = completed
+
+4. h50/p1 MPI2 block grating 也不再出现 R+T>1：
+   results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_084643
+   R/T = 7.279671e-03 / 9.069706e-01
+   R+T = 9.142503e-01
+   case_status = completed
+
+5. 2.5D y-extruded 串行对照中 Ey 已接近 0，但 R/T 仍未和旧 2D TM 对齐：
+   results/stage4_2p5d_compare_h50p0_p1_np1_20260623_084908
+   3D R+T = 1.042795，仍被标记为 failed_stage4_energy_balance。
+```
+
+当前可信范围：`stage4_block_grating` 可以作为 h50/p1 的流程、场分布和 ParaView 诊断算例；物理区 `E_tot_physical_abs_V_per_m` 已能看到柱子侧壁/界面附近的热点形态。严格定量 benchmark 仍需要继续做网格收敛和 2.5D R/T 对齐。
+
+最新参考图：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409/stage4_Etot_physical_slices.png
+```
+
+下面更早的 Stage 4 条目是历史排查记录；若与本节冲突，以本节为准。
+
 ## 2026-06-23 更新：Stage 4 最新判定，先不要信真实 grating 的 R/T
 
 本轮继续检查 Stage 4，结论需要明确写在最前面：

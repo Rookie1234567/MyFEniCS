@@ -115,6 +115,7 @@ GRATING_WIDTH_X_3D = 150.0
 GRATING_WIDTH_Y_3D = 100.0
 GRATING_HEIGHT_3D = 150.0
 SCATTERING_BACKGROUND_3D = "layered"
+STAGE4_BOUNDARY_MODEL_3D = "pml"  # "pml" or diagnostic "robin0"
 DIFFRACTION_ZERO_ORDER_ONLY_3D = True
 DIFFRACTION_ORDER_MAX_M_3D = None
 DIFFRACTION_ORDER_MAX_N_3D = None
@@ -211,6 +212,7 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--grating-width-y", GRATING_WIDTH_Y_3D)
     _add_value(args, "--grating-height", GRATING_HEIGHT_3D)
     _add_value(args, "--scattering-background", SCATTERING_BACKGROUND_3D)
+    _add_value(args, "--stage4-boundary-model", STAGE4_BOUNDARY_MODEL_3D)
     _add_bool(args, "--diffraction-zero-order-only", DIFFRACTION_ZERO_ORDER_ONLY_3D)
     _add_value(args, "--diffraction-order-max-m", DIFFRACTION_ORDER_MAX_M_3D)
     _add_value(args, "--diffraction-order-max-n", DIFFRACTION_ORDER_MAX_N_3D)

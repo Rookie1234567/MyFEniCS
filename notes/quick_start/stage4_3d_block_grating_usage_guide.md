@@ -1,5 +1,72 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：h50/p1 当前推荐运行方式与查看口径
+
+本轮修正后，默认 Stage 4 block grating 在 h50/p1 下已经可以作为流程和场分布诊断算例运行：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+MPI2 版本：
+
+```bash
+mpiexec -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+最新实跑：
+
+```text
+serial:
+  results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409
+  R/T = 6.088269e-03 / 9.765458e-01
+  R+T = 9.826341e-01
+
+MPI2:
+  results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_084643
+  R/T = 7.279671e-03 / 9.069706e-01
+  R+T = 9.142503e-01
+```
+
+ParaView 中优先看这个数组来对照 COMSOL 电场模截图：
+
+```text
+E_tot_physical_abs_V_per_m
+```
+
+它只看物理 z 区域，避免 PML 显示干扰。最新切片预览图在：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_20260623_084409/stage4_Etot_physical_slices.png
+```
+
+重要说明：
+
+```text
+1. Stage 4 正式 PML 分支现在是 2D-like natural boundary：
+   strong_z_boundary_dirichlet_enabled=false。
+2. diffraction fitting 会额外加入邻近 evanescent 级次做拟合，
+   但只把传播级次计入 R/T。
+3. 2.5D y-extruded 对照的 Ey 已接近 0，但 R/T 仍未和旧 2D TM 完全一致。
+   因此 h50/p1 的真实 3D 结果仍不建议做最终定量 benchmark。
+```
+
+下面更早的条目是历史排查记录；如果和本节冲突，以本节为准。
+
 ## 2026-06-23 更新：当前 Stage 4 只能作为诊断输出
 
 最新检查结果：

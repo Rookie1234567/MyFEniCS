@@ -1,3 +1,52 @@
+## 2026-06-23 更新：Stage 4 当前代码阅读路径，evanescent fitting 已接入
+
+如果现在阅读 Stage 4，请按这个顺序：
+
+```text
+1. src/runners/run_3d_airbox.py
+   看 _stage_defaults("stage4_block_grating")。
+   stage4_boundary_model 默认是 "pml"。
+
+2. src/common/config_3d.py
+   看 stage4_boundary_model、diffraction_zero_order_only、
+   diffraction_order_max_m/n、physical_z_min/max、domain_z_min/max。
+
+3. src/geometry/mesh_builder_3d.py
+   看 hexa 网格、air/substrate/grating/top_pml/bottom_pml tags。
+
+4. src/constraints/floquet_3d.py
+   看 build_double_floquet_mpc(...)。
+   正式路径仍是 degree=1 N1curl edge topology，不使用 probe/pinv。
+
+5. src/solvers/solve_airbox_maxwell_3d.py
+   看 stage4_layered_background_field(...) 和 _build_variational_forms(...)。
+   Stage 4 正式 PML 分支现在是：
+     E_total = E_b + E_scat
+     source 只在 grating tag
+     PML 采用弱式吸收
+     z 外边界不再额外强加 Dirichlet
+
+6. src/postprocessing/diffraction_3d.py
+   看 _orders_for_modal_fit(...)。
+   默认 block grating 虽然只统计 0 级传播功率，但拟合时会加入邻近 evanescent 级次，
+   防止近场谐波被误塞进 0 级 R/T。
+
+7. src/postprocessing/postprocess_3d.py
+   看 E_tot/E_sca/E_b 的 physical/PML mask 输出。
+   ParaView 对照 COMSOL 时优先看 E_tot_physical_abs_V_per_m。
+
+8. src/test/stage4_2p5d_compare.py
+   这是 2.5D 对照脚本。当前 Ey 已接近 0，但 R/T 仍未完全对齐 2D TM。
+```
+
+最新 h50/p1 判定：
+
+```text
+serial block grating: R+T = 9.826341e-01，completed
+MPI2 block grating:   R+T = 9.142503e-01，completed，但与串行仍有定量差异
+2.5D serial:          Ey 接近 0，但 R+T = 1.042795，仍需继续修
+```
+
 ## 2026-06-23 更新：Stage 4 当前阅读路径与已知失败点
 
 如果现在阅读 Stage 4，请按这个顺序看，不要从旧 Stage 2 的 2B/2C 逻辑进入：

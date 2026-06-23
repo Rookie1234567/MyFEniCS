@@ -58,6 +58,7 @@ class SimulationConfig3D:
     n_grating: complex | None = None
     interface_z: float = 0.0
     scattering_background: str = "layered"
+    stage4_boundary_model: str = "pml"  # "pml" or diagnostic "robin0"
     use_floquet_xy: bool = False
     use_pml: bool = False
     pml_top_thickness: float = 0.0

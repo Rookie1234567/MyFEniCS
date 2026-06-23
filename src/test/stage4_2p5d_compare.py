@@ -54,8 +54,13 @@ def build_2d_reference_config(mesh_target_size: float, nedelec_degree: int) -> S
     )
 
 
-def build_3d_extruded_config(mesh_target_size: float, nedelec_degree: int) -> SimulationConfig3D:
+def build_3d_extruded_config(
+    mesh_target_size: float,
+    nedelec_degree: int,
+    stage4_boundary_model: str = "pml",
+) -> SimulationConfig3D:
     """Return a Stage-4 cell that is invariant in y and should match the 2D TM case."""
+    use_pml = stage4_boundary_model == "pml"
 
     return SimulationConfig3D(
         case_name="stage4_2p5d_extruded_3d",
@@ -69,10 +74,11 @@ def build_3d_extruded_config(mesh_target_size: float, nedelec_degree: int) -> Si
         z_max=350.0,
         interface_z=0.0,
         use_floquet_xy=True,
-        use_pml=True,
-        pml_top_thickness=250.0,
-        pml_bottom_thickness=250.0,
+        use_pml=use_pml,
+        pml_top_thickness=250.0 if use_pml else 0.0,
+        pml_bottom_thickness=250.0 if use_pml else 0.0,
         pml_alpha=5.0,
+        stage4_boundary_model=stage4_boundary_model,
         n_air=1.0 + 0.0j,
         n_substrate=1.45 + 0.0j,
         n_grating=2.0 + 0.0j,
@@ -107,6 +113,12 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Compare Stage-4 y-extruded 3D cell against the 2D TM solver.")
     parser.add_argument("--mesh-target-size", type=float, default=50.0)
     parser.add_argument("--nedelec-degree", type=int, default=1)
+    parser.add_argument(
+        "--stage4-boundary-model",
+        choices=("pml", "robin0"),
+        default="pml",
+        help="3D Stage-4 boundary model. 'pml' is the official 2D-like path; 'robin0' is diagnostic.",
+    )
     parser.add_argument("--unique-output", action=argparse.BooleanOptionalAction, default=True)
     args = parser.parse_args(argv)
 
@@ -118,7 +130,11 @@ def main(argv: list[str] | None = None) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cfg_2d = build_2d_reference_config(args.mesh_target_size, args.nedelec_degree)
-    cfg_3d = build_3d_extruded_config(args.mesh_target_size, args.nedelec_degree)
+    cfg_3d = build_3d_extruded_config(
+        args.mesh_target_size,
+        args.nedelec_degree,
+        args.stage4_boundary_model,
+    )
 
     summary_2d = run_2d_tm_case(cfg_2d, out_dir / "reference_2d_tm", constraint_backend="mpc_official")
     summary_3d = run_airbox_3d_case(cfg_3d, out_dir / "extruded_3d_stage4")
@@ -131,6 +147,10 @@ def main(argv: list[str] | None = None) -> None:
         "mesh_target_size": args.mesh_target_size,
         "nedelec_degree": args.nedelec_degree,
         "mpi_size": comm.size,
+        "stage4_boundary_model": args.stage4_boundary_model,
+        "stage4_boundary_model_note": (
+            "pml is comparable to the 2D scattered PML flow; robin0 is a 3D diagnostic and is not expected to match the 2D PML reference exactly."
+        ),
         "reference_2d_dir": str(out_dir / "reference_2d_tm"),
         "extruded_3d_dir": str(out_dir / "extruded_3d_stage4"),
         "R_2d": r2d,

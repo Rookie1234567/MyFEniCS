@@ -94,6 +94,12 @@ def _config_updates(args) -> dict[str, object]:
         updates["grating_height"] = args.grating_height
     if args.scattering_background is not None:
         updates["scattering_background"] = args.scattering_background
+    if args.stage4_boundary_model is not None:
+        updates["stage4_boundary_model"] = args.stage4_boundary_model
+        if args.stage4_boundary_model == "robin0":
+            updates["use_pml"] = False
+            updates["pml_top_thickness"] = 0.0
+            updates["pml_bottom_thickness"] = 0.0
     if args.diffraction_zero_order_only is not None:
         updates["diffraction_zero_order_only"] = args.diffraction_zero_order_only
     if args.diffraction_order_max_m is not None:
@@ -145,6 +151,7 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "stage_case": stage_case,
             "geometry_kind": "rectangular_block_grating",
             "scattering_background": "layered",
+            "stage4_boundary_model": "pml",
             "lambda0": 633.0,
             "period_x": 350.0,
             "period_y": 300.0,
@@ -329,6 +336,12 @@ def main(argv: list[str] | None = None):
         choices=("layered",),
         default=None,
         help="Stage-4 scattered-field background. The first version supports only layered Fresnel background.",
+    )
+    parser.add_argument(
+        "--stage4-boundary-model",
+        choices=("pml", "robin0"),
+        default=None,
+        help="Stage-4 vertical truncation. 'robin0' is a diagnostic zero-order radiation boundary without PML.",
     )
     parser.add_argument(
         "--diffraction-zero-order-only",

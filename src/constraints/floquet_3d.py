@@ -365,6 +365,7 @@ def _build_constraints_for_kind(
 
         slave_global = int(record["global_dof"])
         master_global = int(master["global_dof"])
+        slave_local = int(record["local_dof"])
         local_slave_globals.append(slave_global)
         local_matched_master_globals.append(master_global)
         pair_errors.append(pair_error)
@@ -375,7 +376,6 @@ def _build_constraints_for_kind(
             np.asarray([int(master["owner"])], dtype=np.int32),
             np.asarray([phase * orientation_sign], dtype=np.complex128),
         )
-        slave_local = int(record["local_dof"])
         if slave_local in local_maps:
             raise RuntimeError(
                 f"Local 3D Floquet slave dof {slave_local} would be constrained twice in kind={kind}."
