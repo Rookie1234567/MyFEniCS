@@ -1,5 +1,41 @@
 # v2 文档索引
 
+## 2026-06-23 更新：3D ParaView 输出已精简
+
+本轮按“ParaView 变量太多”的反馈精简了 3D 输出：
+
+```text
+1. 删除重复别名 E_V_per_m_*。
+   E_V_per_m 和 E_tot_V_per_m 表示同一个总电场，现在只保留 E_tot_V_per_m_*。
+
+2. 删除 component 展开的长变量名。
+   不再写 E_tot_V_per_m_Ex_real、E_tot_V_per_m_Ey_abs 这类数组。
+
+3. 保留向量数组：
+   E_tot_V_per_m_real / E_tot_V_per_m_imag
+   E_sca_V_per_m_real / E_sca_V_per_m_imag
+   E_b_V_per_m_real / E_b_V_per_m_imag
+   H_A_per_m_real / H_A_per_m_imag
+
+4. 每个 real/imag 都是 3 分量 vector。
+   在 ParaView 中先选 E_tot_V_per_m_real，再在 component 里选 X/Y/Z。
+
+5. 删除 ParaView 里的 physical/pml 派生数组。
+   如果要看 PML 或物理区，直接用 domain_tag 自己筛选。
+```
+
+目前 3D VTU 里主要看：
+
+```text
+E_tot_V_per_m_abs       # 总电场模，最常用
+E_tot_V_per_m_real      # 总电场实部 vector，可选 X/Y/Z
+E_tot_V_per_m_imag      # 总电场虚部 vector，可选 X/Y/Z
+E_sca_V_per_m_abs       # Stage 4 散射场模
+E_b_V_per_m_abs         # Stage 4 分层背景场模
+H_A_per_m_abs           # 磁场模
+domain_tag              # cell tag，用于筛 air/substrate/grating/PML
+```
+
 ## 2026-06-23 更新：Stage 4 h50/p1 已修正到可诊断运行，真实定量仍需谨慎
 
 本轮根据 COMSOL 电场模截图继续修 Stage 4，最新结论放在最上方：

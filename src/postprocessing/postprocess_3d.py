@@ -38,27 +38,19 @@ def _vec_imag(values: np.ndarray) -> np.ndarray:
 
 
 def _add_complex_vector(grid, prefix: str, values: np.ndarray) -> None:
-    """Write real/imag/abs arrays with ParaView-friendly names."""
+    """Write one vector real/imag pair plus one magnitude scalar.
+
+    ParaView treats the real/imag arrays as 3-component vectors, so Ex/Ey/Ez
+    can be selected from the component menu instead of writing separate scalar
+    arrays for every component.
+    """
     grid.point_data[f"{prefix}_real"] = _vec_real(values)
     grid.point_data[f"{prefix}_imag"] = _vec_imag(values)
     grid.point_data[f"{prefix}_abs"] = _norm(values).astype(np.float64)
-    for column, name in enumerate(("Ex", "Ey", "Ez")):
-        component = values[:, column]
-        grid.point_data[f"{prefix}_{name}_real"] = component.real.astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_imag"] = component.imag.astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_abs"] = np.abs(component).astype(np.float64)
-        grid.point_data[f"{prefix}_{name}_phase"] = np.angle(component).astype(np.float64)
 
 
 def _add_abs_scalar(grid, name: str, values: np.ndarray) -> None:
     grid.point_data[name] = _norm(values).astype(np.float64)
-
-
-def _add_masked_abs_scalar(grid, name: str, values: np.ndarray, mask: np.ndarray) -> None:
-    data = np.full(len(values), np.nan, dtype=np.float64)
-    if len(values):
-        data[np.asarray(mask, dtype=bool)] = _norm(values[np.asarray(mask, dtype=bool)]).astype(np.float64)
-    grid.point_data[name] = data
 
 
 def _plane_wave_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
@@ -135,7 +127,7 @@ def save_airbox_3d_fields(
     E_code_dg = fem.Function(V_dg, name="E_code")
     E_code_dg.interpolate(E_numerical)
 
-    E_num_dg = fem.Function(V_dg, name="E_V_per_m")
+    E_num_dg = fem.Function(V_dg, name="E_tot_V_per_m")
     E_num_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_code_dg.x.array[:]
     E_num_dg.x.scatter_forward()
 
@@ -195,18 +187,13 @@ def save_airbox_3d_fields(
     pml_point_mask = ~physical_point_mask
     # ParaView arrays use physical display units.  The solve itself is still
     # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
-    _add_complex_vector(paraview_grid, "E_V_per_m", e_num)
+    # E_numerical is already the total field for this writer, so the older
+    # E_V_per_m alias is not written anymore.
     _add_complex_vector(paraview_grid, "E_tot_V_per_m", e_num)
-    _add_masked_abs_scalar(paraview_grid, "E_tot_physical_abs_V_per_m", e_num, physical_point_mask)
-    _add_masked_abs_scalar(paraview_grid, "E_tot_pml_abs_V_per_m", e_num, pml_point_mask)
     if e_sca is not None:
         _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
-        _add_masked_abs_scalar(paraview_grid, "E_sca_physical_abs_V_per_m", e_sca, physical_point_mask)
-        _add_masked_abs_scalar(paraview_grid, "E_sca_pml_abs_V_per_m", e_sca, pml_point_mask)
     if e_bg is not None:
         _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
-        _add_masked_abs_scalar(paraview_grid, "E_b_physical_abs_V_per_m", e_bg, physical_point_mask)
-        _add_masked_abs_scalar(paraview_grid, "E_b_pml_abs_V_per_m", e_bg, pml_point_mask)
     if e_exact is not None:
         _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
         _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
@@ -221,8 +208,6 @@ def save_airbox_3d_fields(
         valid = indices < paraview_grid.n_cells
         domain_tags[indices[valid]] = values[valid]
     paraview_grid.cell_data["domain_tag"] = domain_tags
-    paraview_grid.point_data["is_physical_z_region"] = physical_point_mask.astype(np.int8)
-    paraview_grid.point_data["is_pml_z_region"] = pml_point_mask.astype(np.int8)
     paraview_grid.field_data["length_unit_nm"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["electric_field_unit_V_per_m"] = np.array([1.0], dtype=np.float64)
     paraview_grid.field_data["incident_e0_V_per_m"] = np.array([cfg.electric_field_scale_V_per_m], dtype=np.float64)
@@ -286,14 +271,11 @@ def save_airbox_3d_fields(
         if has_exact_reference
         else "Stage 4真实grating没有解析精确解；E_b是分层背景场，不再输出E_exact。",
         "paraview_e_field_arrays": [
-            "E_V_per_m_*",
-            "E_tot_V_per_m_*",
-            "E_tot_physical_abs_V_per_m",
-            "E_tot_pml_abs_V_per_m",
-            *([] if e_sca is None else ["E_sca_V_per_m_*"]),
-            *([] if e_sca is None else ["E_sca_physical_abs_V_per_m", "E_sca_pml_abs_V_per_m"]),
-            *([] if e_bg is None else ["E_b_V_per_m_*"]),
-            *([] if e_bg is None else ["E_b_physical_abs_V_per_m", "E_b_pml_abs_V_per_m"]),
+            "E_tot_V_per_m_real",
+            "E_tot_V_per_m_imag",
+            "E_tot_V_per_m_abs",
+            *([] if e_sca is None else ["E_sca_V_per_m_real", "E_sca_V_per_m_imag", "E_sca_V_per_m_abs"]),
+            *([] if e_bg is None else ["E_b_V_per_m_real", "E_b_V_per_m_imag", "E_b_V_per_m_abs"]),
         ],
     }
     if e_sca is not None:

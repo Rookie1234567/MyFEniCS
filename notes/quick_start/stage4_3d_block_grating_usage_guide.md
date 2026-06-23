@@ -1,5 +1,30 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：ParaView 变量已精简
+
+当前 3D ParaView 文件不再输出一大串重复/派生数组。打开 `fields_3d_for_paraview.vtu` 或 MPI 的 `fields_3d_for_paraview_parallel.pvd` 后，优先看：
+
+```text
+E_tot_V_per_m_abs       # 总电场模，默认最适合对照 COMSOL 电场模
+E_tot_V_per_m_real      # 总电场实部 vector，ParaView 里再选 X/Y/Z component
+E_tot_V_per_m_imag      # 总电场虚部 vector，ParaView 里再选 X/Y/Z component
+E_sca_V_per_m_abs       # 散射场模
+E_b_V_per_m_abs         # 分层背景场模
+H_A_per_m_abs           # 磁场模
+domain_tag              # 用来筛选 air/substrate/grating/PML
+```
+
+已经删除：
+
+```text
+E_V_per_m_*                         # 和 E_tot 重复
+*_Ex_real / *_Ey_real / *_Ez_real   # 改为 vector component 选择
+*_physical_* / *_pml_*              # 这类筛选场不再写入 ParaView
+is_physical_z_region / is_pml_z_region
+```
+
+说明：`E_tot_V_per_m_real` 和 `E_tot_V_per_m_imag` 是三分量 vector。你在 ParaView 里先选这个量，再在后面的 component 里选 `X/Y/Z`，就能看 Ex/Ey/Ez。
+
 ## 2026-06-23 更新：h50/p1 当前推荐运行方式与查看口径
 
 本轮修正后，默认 Stage 4 block grating 在 h50/p1 下已经可以作为流程和场分布诊断算例运行：

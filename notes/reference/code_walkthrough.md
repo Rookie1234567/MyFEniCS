@@ -1,3 +1,32 @@
+## 2026-06-23 更新：3D ParaView 输出瘦身后的代码路径
+
+这轮只改 3D 后处理输出，不改求解方程。阅读时看：
+
+```text
+src/postprocessing/postprocess_3d.py
+  _add_complex_vector(...)
+    现在只写：
+      <field>_real   # 3 分量 vector
+      <field>_imag   # 3 分量 vector
+      <field>_abs    # 模值 scalar
+
+  save_airbox_3d_fields(...)
+    不再写 E_V_per_m_*，只写 E_tot_V_per_m_*。
+    不再写 *_physical_*、*_pml_*、is_physical_z_region、is_pml_z_region。
+    仍保留 domain_tag，方便在 ParaView 里自己筛材料区域。
+```
+
+ParaView 中现在的阅读方式：
+
+```text
+看总电场模：选 E_tot_V_per_m_abs
+看 Ex/Ey/Ez：选 E_tot_V_per_m_real 或 E_tot_V_per_m_imag，然后选 X/Y/Z component
+看散射场：选 E_sca_V_per_m_abs / real / imag
+看背景场：选 E_b_V_per_m_abs / real / imag
+看磁场：选 H_A_per_m_abs / real / imag
+筛选区域：用 cell data 里的 domain_tag
+```
+
 ## 2026-06-23 更新：Stage 4 当前代码阅读路径，evanescent fitting 已接入
 
 如果现在阅读 Stage 4，请按这个顺序：
