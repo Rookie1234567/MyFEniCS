@@ -1,5 +1,41 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-23 更新：main.py 配置和 ParaView 场变量
+
+如果从 `src/main.py` 直接运行 Stage 4，推荐先用：
+
+```text
+STAGE_CASE_3D = "stage4_block_grating"
+MESH_TARGET_SIZE_3D = 50.0
+PML_TOP_THICKNESS_3D = 300.0
+PML_BOTTOM_THICKNESS_3D = 300.0
+PERIOD_X_3D = 350.0
+PERIOD_Y_3D = 300.0
+GRATING_WIDTH_X_3D = 150.0
+GRATING_WIDTH_Y_3D = 100.0
+GRATING_HEIGHT_3D = 150.0
+```
+
+不要直接把 `MESH_TARGET_SIZE_3D` 改成 `30.0`。原因是 Stage 4 当前使用均匀 hexa 网格，并且要求材料界面和 block 边界必须落在网格面上。默认几何下：
+
+```text
+h = 50 nm  对齐
+h = 25 nm  对齐
+h = 30 nm  不对齐，会报错
+```
+
+这是故意的保护，不是程序崩溃。它防止 block 边界被 midpoint tag 静默标错。
+
+ParaView 里现在可以直接查看：
+
+```text
+E_tot_V_per_m_real / imag / abs   # 总场 E_total
+E_b_V_per_m_real / imag / abs     # 分层背景场 E_bg
+E_sca_V_per_m_real / imag / abs   # 散射场 E_scat
+```
+
+旧的 `E_V_per_m_*` 仍然保留，含义等同于 `E_tot_V_per_m_*`。
+
 ## 2026-06-23 更新：第一版 Stage 4 已接入
 
 这一版先实现一个固定、可验证的真实 3D 周期结构：
@@ -105,6 +141,9 @@ fields_3d_for_paraview_parallel.pvd
 ```text
 domain_tag
 E_V_per_m_real / E_V_per_m_imag / E_V_per_m_abs
+E_tot_V_per_m_real / E_tot_V_per_m_imag / E_tot_V_per_m_abs
+E_b_V_per_m_real / E_b_V_per_m_imag / E_b_V_per_m_abs
+E_sca_V_per_m_real / E_sca_V_per_m_imag / E_sca_V_per_m_abs
 H_A_per_m_real / H_A_per_m_imag / H_A_per_m_abs
 ```
 

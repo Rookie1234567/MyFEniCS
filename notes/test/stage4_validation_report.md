@@ -1,5 +1,43 @@
 # Stage 4 验证报告
 
+## 2026-06-23 更新：main.py 入口与 ParaView 三场输出
+
+本轮修正后，从 `src.main` 直接运行 Stage 4 已通过：
+
+```bash
+mpirun -n 2 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.main
+```
+
+结果目录：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260623_020702
+```
+
+关键检查：
+
+| item | value |
+| --- | ---: |
+| mesh target size | 50 nm |
+| mesh cells resolved | 7 x 6 x 30 |
+| N1curl dofs | 4687 |
+| Floquet constraints | 823 |
+| estimated Floquet memory | 0.028 MB |
+| linear problem setup | 85.467 s |
+| direct solve | 30.802 s |
+| max RSS | 4065.9 MB |
+
+`run_summary.json` 已记录 ParaView 电场数组：
+
+```text
+E_V_per_m_*       # 兼容旧字段，等同总场
+E_tot_V_per_m_*   # 总场
+E_sca_V_per_m_*   # 散射场
+E_b_V_per_m_*     # 分层背景场
+```
+
+说明：本次 `main.py` 使用 `PML_ALPHA_3D=10`、PML 厚度 300 nm。背景场在 PML 中会做复坐标延拓，因此 `max_abs_E_b` 可能被 PML 区域放大；看结构附近场分布时优先用 ParaView 的 `domain_tag` 聚焦物理区。
+
 ## 2026-06-23 更新：第一轮 smoke 与后处理校准
 
 本轮完成：

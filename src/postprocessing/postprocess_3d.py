@@ -91,7 +91,15 @@ def _interpolation_points(V):
     return points() if callable(points) else points
 
 
-def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_dir: Path) -> dict[str, object]:
+def save_airbox_3d_fields(
+    mesh_data,
+    cfg: SimulationConfig3D,
+    E_numerical,
+    out_dir: Path,
+    *,
+    E_scattered=None,
+    E_background=None,
+) -> dict[str, object]:
     """Save compact 3D E/H fields and return reconstruction metrics.
 
     The solve uses normalized field amplitudes internally.  ParaView output uses
@@ -107,6 +115,22 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     E_num_dg = fem.Function(V_dg, name="E_V_per_m")
     E_num_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_code_dg.x.array[:]
     E_num_dg.x.scatter_forward()
+
+    E_sca_dg = None
+    if E_scattered is not None:
+        E_sca_code_dg = fem.Function(V_dg, name="E_sca_code")
+        E_sca_code_dg.interpolate(E_scattered)
+        E_sca_dg = fem.Function(V_dg, name="E_sca_V_per_m")
+        E_sca_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_sca_code_dg.x.array[:]
+        E_sca_dg.x.scatter_forward()
+
+    E_bg_dg = None
+    if E_background is not None:
+        E_bg_code_dg = fem.Function(V_dg, name="E_b_code")
+        E_bg_code_dg.interpolate(E_background)
+        E_bg_dg = fem.Function(V_dg, name="E_b_V_per_m")
+        E_bg_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_bg_code_dg.x.array[:]
+        E_bg_dg.x.scatter_forward()
 
     E_exact_dg = fem.Function(V_dg, name="E_exact_V_per_m")
     E_exact_dg.interpolate(lambda x: _plane_wave_values(cfg, x.T).T)
@@ -129,6 +153,8 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
 
     grid, coords = _field_grid(V_dg)
     e_num = _values(E_num_dg, grid.n_points)
+    e_sca = _values(E_sca_dg, grid.n_points) if E_sca_dg is not None else None
+    e_bg = _values(E_bg_dg, grid.n_points) if E_bg_dg is not None else None
     e_exact = _values(E_exact_dg, grid.n_points)
     e_error = e_num - e_exact
     h_num = _values(H_dg, grid.n_points)
@@ -139,6 +165,11 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     # ParaView arrays use physical display units.  The solve itself is still
     # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
     _add_complex_vector(paraview_grid, "E_V_per_m", e_num)
+    _add_complex_vector(paraview_grid, "E_tot_V_per_m", e_num)
+    if e_sca is not None:
+        _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
+    if e_bg is not None:
+        _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
     _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
     _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
     _add_complex_vector(paraview_grid, "H_A_per_m", h_num)
@@ -185,7 +216,7 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
     mean_norm = float(np.linalg.norm(mean_poynting))
     poynting_cosine = float(np.dot(mean_poynting, direction) / mean_norm) if mean_norm > 0.0 else float("nan")
 
-    return {
+    result = {
         "max_abs_E_exact": max_e_exact,
         "max_abs_E": max_e_num,
         "max_abs_E_error": max_e_error,
@@ -198,4 +229,15 @@ def save_airbox_3d_fields(mesh_data, cfg: SimulationConfig3D, E_numerical, out_d
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
         "paraview_file": str(paraview_path),
+        "paraview_e_field_arrays": [
+            "E_V_per_m_*",
+            "E_tot_V_per_m_*",
+            *([] if e_sca is None else ["E_sca_V_per_m_*"]),
+            *([] if e_bg is None else ["E_b_V_per_m_*"]),
+        ],
     }
+    if e_sca is not None:
+        result["max_abs_E_sca"] = _global_max_norm(comm, e_sca)
+    if e_bg is not None:
+        result["max_abs_E_b"] = _global_max_norm(comm, e_bg)
+    return result

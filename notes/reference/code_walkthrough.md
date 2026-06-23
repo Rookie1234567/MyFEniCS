@@ -1,3 +1,36 @@
+## 2026-06-23 更新：Stage 4 main.py 与 ParaView 输出路径
+
+本轮修正了 `src/main.py` 与 `src/common/config_3d.py` 的职责分工：
+
+```text
+src/common/config_3d.py
+  保持中性默认值，不默认打开 Stage 4 grating/PML/Floquet。
+
+src/runners/run_3d_airbox.py
+  _stage_defaults("stage4_block_grating") 给出 Stage 4 benchmark 默认值。
+
+src/main.py
+  只作为 PyCharm/直接运行入口，把你在顶部改的变量转换成 CLI 参数。
+  Stage 4 的 period、block 尺寸、n_grating、diffraction 参数都在这里显式列出。
+```
+
+如果 `MESH_TARGET_SIZE_3D=30.0`，默认 Stage 4 几何会报 hexa grid alignment error。这个错误说明 block/interface 平面没有落在网格面上；默认建议用 `50.0`，需要更细时用 `25.0`。
+
+ParaView 场变量来自：
+
+```text
+src/solvers/solve_airbox_maxwell_3d.py
+  run_airbox_3d_case(...)
+     E_total = E_background_layered + E_scat
+     save_airbox_3d_fields(..., E_scattered=E_sca, E_background=E_background_layered)
+
+src/postprocessing/postprocess_3d.py
+  save_airbox_3d_fields(...)
+     E_tot_V_per_m_*  总场
+     E_b_V_per_m_*    背景场
+     E_sca_V_per_m_*  散射场
+```
+
 ## 2026-06-23 更新：Stage 4 真实 3D 矩形柱代码阅读路径
 
 如果你现在要读 Stage 4，请先按这个顺序看，不要从旧的 2C Fresnel 诊断开始：

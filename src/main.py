@@ -76,31 +76,52 @@ PORT_USE_PML = None
 # 3D staged air-box / Floquet / PML settings
 # =============================================================================
 
-# Stage 2 still uses one public entry point.  The variables below are converted
-# into the same CLI flags used by src/runners/run_3d_airbox.py, so PyCharm and
-# command-line runs exercise the same code path.
-STAGE_CASE_3D = "floquet_airbox"  # stage1_airbox, floquet_airbox, pml_airbox, fresnel_interface, stage2_all
+# The variables below are converted into the same CLI flags used by
+# src/runners/run_3d_airbox.py, so PyCharm and command-line runs exercise the
+# same code path.
+STAGE_CASE_3D = "stage4_block_grating"  # stage1_airbox, floquet_airbox, pml_airbox, fresnel_interface, stage2_all, stage4_block_grating
 AIRBOX3D_CASE = "normal"  # "normal", "oblique", or "both"
 INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
 INCIDENT_PHI_DEG_3D = None
 POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
 NEDELEC_DEGREE_3D = 1
-VISUALIZATION_DEGREE_3D = 3
-MESH_TARGET_SIZE_3D = 30.0
+VISUALIZATION_DEGREE_3D = 1
+# Stage 4 hexa meshes require material/block planes to land on grid planes.
+# For the default 350 x 300 nm period and 150 x 100 x 150 nm block, h=50 nm
+# and h=25 nm align; h=30 nm does not.
+MESH_TARGET_SIZE_3D = 50.0
 MESH_CELL_TYPE_3D = "auto"  # auto / tetrahedron / hexahedron
 FLOQUET_CONSTRAINT_MODE_3D = "auto"  # auto / topological_edges / sparse_facet legacy alias
-LAMBDA0_3D = None
+LAMBDA0_3D = 633
 USE_FLOQUET_XY_3D = None  # None lets STAGE_CASE_3D choose the default.
-USE_PML_3D = None
-PML_TOP_THICKNESS_3D = None
-PML_BOTTOM_THICKNESS_3D = None
-PML_ALPHA_3D = None
-N_SUBSTRATE_3D = None
+USE_PML_3D = True
+PML_TOP_THICKNESS_3D = 300.0
+PML_BOTTOM_THICKNESS_3D = 300.0
+PML_ALPHA_3D = 10.0
+N_SUBSTRATE_3D = 1.45
 SOLVER_PROFILE_3D = "direct"
 SOLVER_RTOL_3D = 1.0e-8
 SOLVER_ATOL_3D = 1.0e-12
 SOLVER_MAX_IT_3D = 1000
 SOLVER_MONITOR_3D = False
+
+# Stage 4 rectangular block grating settings.  These are ignored by Stage 1/2
+# cases unless their matching CLI flags are consumed by the selected runner.
+PERIOD_X_3D = 350.0
+PERIOD_Y_3D = 300.0
+N_GRATING_3D = 2.0
+GRATING_WIDTH_X_3D = 150.0
+GRATING_WIDTH_Y_3D = 100.0
+GRATING_HEIGHT_3D = 150.0
+SCATTERING_BACKGROUND_3D = "layered"
+DIFFRACTION_ZERO_ORDER_ONLY_3D = True
+DIFFRACTION_ORDER_MAX_M_3D = None
+DIFFRACTION_ORDER_MAX_N_3D = None
+DIFFRACTION_SAMPLE_COUNT_X_3D = 24
+DIFFRACTION_SAMPLE_COUNT_Y_3D = 24
+DIFFRACTION_TOP_PROBE_Z_3D = None
+DIFFRACTION_BOTTOM_PROBE_Z_3D = None
+DIFFRACTION_RAYLEIGH_TOL_3D = None
 
 
 def _workspace_root() -> Path:
@@ -181,6 +202,21 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--pml-bottom-thickness", PML_BOTTOM_THICKNESS_3D)
     _add_value(args, "--pml-alpha", PML_ALPHA_3D)
     _add_value(args, "--n-substrate", N_SUBSTRATE_3D)
+    _add_value(args, "--period-x", PERIOD_X_3D)
+    _add_value(args, "--period-y", PERIOD_Y_3D)
+    _add_value(args, "--n-grating", N_GRATING_3D)
+    _add_value(args, "--grating-width-x", GRATING_WIDTH_X_3D)
+    _add_value(args, "--grating-width-y", GRATING_WIDTH_Y_3D)
+    _add_value(args, "--grating-height", GRATING_HEIGHT_3D)
+    _add_value(args, "--scattering-background", SCATTERING_BACKGROUND_3D)
+    _add_bool(args, "--diffraction-zero-order-only", DIFFRACTION_ZERO_ORDER_ONLY_3D)
+    _add_value(args, "--diffraction-order-max-m", DIFFRACTION_ORDER_MAX_M_3D)
+    _add_value(args, "--diffraction-order-max-n", DIFFRACTION_ORDER_MAX_N_3D)
+    _add_value(args, "--diffraction-sample-count-x", DIFFRACTION_SAMPLE_COUNT_X_3D)
+    _add_value(args, "--diffraction-sample-count-y", DIFFRACTION_SAMPLE_COUNT_Y_3D)
+    _add_value(args, "--diffraction-top-probe-z", DIFFRACTION_TOP_PROBE_Z_3D)
+    _add_value(args, "--diffraction-bottom-probe-z", DIFFRACTION_BOTTOM_PROBE_Z_3D)
+    _add_value(args, "--diffraction-rayleigh-tol", DIFFRACTION_RAYLEIGH_TOL_3D)
     return args
 
 

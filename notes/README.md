@@ -1,5 +1,23 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 main.py 与 ParaView 输出补充
+
+本轮修正：
+
+```text
+1. config_3d.py 恢复为中性默认配置，Stage 4 benchmark 参数不再散落到基类默认值里。
+2. main.py 增加 Stage 4 的 period、block、n_grating、diffraction 参数入口。
+3. main.py 默认 MESH_TARGET_SIZE_3D 改为 50 nm；默认几何下 h=30 nm 不对齐，会被程序主动拒绝。
+4. ParaView 输出增加 E_tot / E_b / E_sca 三套电场数组。
+```
+
+优先阅读：
+
+```text
+quick_start/stage4_3d_block_grating_usage_guide.md
+reference/code_walkthrough.md
+```
+
 ## 2026-06-23 更新：Stage 4 真实 3D 周期矩形柱已接入
 
 本轮跳过 2.5D，新增真实 3D 周期结构主线：

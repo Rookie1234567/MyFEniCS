@@ -1371,7 +1371,14 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         return summary
 
     stage_start = _start_timed_stage(comm)
-    field_metrics = save_airbox_3d_fields(mesh_data, cfg, E_total, out_dir)
+    field_metrics = save_airbox_3d_fields(
+        mesh_data,
+        cfg,
+        E_total,
+        out_dir,
+        E_scattered=E_sca if solve_layered_scattered else None,
+        E_background=E_background_solution if solve_layered_scattered else None,
+    )
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
     max_rss_mb = _global_max_rss_mb(comm)
