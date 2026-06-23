@@ -1,5 +1,39 @@
 # v2 文档索引
 
+## 2026-06-23 更新：Stage 4 真实 3D 周期矩形柱已接入
+
+本轮跳过 2.5D，新增真实 3D 周期结构主线：
+
+```text
+中心矩形柱 grating + substrate + air + top/bottom PML + x/y Floquet
+field_formulation = layered_scattered
+E_total = E_bg + E_scat
+```
+
+优先阅读：
+
+```text
+quick_start/stage4_3d_block_grating_usage_guide.md
+theory/stage4_3d_block_grating_diffraction.md
+test/stage4_validation_report.md
+reference/code_walkthrough.md
+```
+
+实跑结论：
+
+```text
+stage4_flat_layer_sanity h50/p1/MPI4:
+  R/T = 3.373594e-02 / 9.662641e-01, R+T = 1.0
+
+stage4_block_grating h50/p1/MPI2 normal:
+  R/T = 9.380284e-03 / 1.075087e+00, R+T = 1.084467
+
+stage4_block_grating h50/p1/MPI2 theta=10 deg:
+  R/T = 8.928319e-03 / 1.069460e+00, R+T = 1.078389
+```
+
+当前判断：主线已跑通，Floquet 低内存约束不再是瓶颈；block grating 的能量平衡仍是第一轮粗网格/PML/边界误差，后续再做收敛和 modal port。
+
 ## 2026-06-22 更新：2C Fresnel 误差诊断已补齐
 
 本轮按“先诊断、不大改模型”的顺序完成：

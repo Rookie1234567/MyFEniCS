@@ -56,7 +56,7 @@ def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh
 
 
 def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
-    """Tag air, substrate, top PML, and bottom PML cells by cell midpoint."""
+    """Tag air, substrate, grating, top PML, and bottom PML cells by midpoint."""
     tdim = msh.topology.dim
     index_map = msh.topology.index_map(tdim)
     num_cells = index_map.size_local + index_map.num_ghosts
@@ -71,9 +71,23 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
         values[z < cfg.physical_z_min - tol] = cfg.tags.bottom_pml
     if cfg.use_pml and cfg.pml_top_thickness > 0.0:
         values[z > cfg.physical_z_max + tol] = cfg.tags.top_pml
-    if cfg.geometry_kind == "fresnel_interface":
+    if cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"}:
         physical = (z >= cfg.physical_z_min - tol) & (z <= cfg.physical_z_max + tol)
         values[physical & (z < cfg.interface_z)] = cfg.tags.substrate
+    if cfg.geometry_kind == "rectangular_block_grating" and cfg.has_grating_block:
+        x = midpoints[:, 0]
+        y = midpoints[:, 1]
+        physical = (z >= cfg.physical_z_min - tol) & (z <= cfg.physical_z_max + tol)
+        in_block = (
+            physical
+            & (x >= cfg.grating_x_min - tol)
+            & (x <= cfg.grating_x_max + tol)
+            & (y >= cfg.grating_y_min - tol)
+            & (y <= cfg.grating_y_max + tol)
+            & (z >= cfg.grating_z_min - tol)
+            & (z <= cfg.grating_z_max + tol)
+        )
+        values[in_block] = cfg.tags.grating
 
     return mesh.meshtags(msh, tdim, cells, values)
 
@@ -155,8 +169,10 @@ def _required_z_planes(cfg: SimulationConfig3D) -> list[tuple[str, float]]:
     if cfg.use_pml:
         planes.append(("physical_z_min", cfg.physical_z_min))
         planes.append(("physical_z_max", cfg.physical_z_max))
-    if cfg.geometry_kind == "fresnel_interface":
+    if cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"}:
         planes.append(("interface_z", cfg.interface_z))
+    if cfg.geometry_kind == "rectangular_block_grating" and cfg.has_grating_block:
+        planes.append(("grating_z_max", cfg.grating_z_max))
     return planes
 
 
@@ -193,6 +209,61 @@ def _z_alignment_warnings(cfg: SimulationConfig3D, mesh_cells_resolved: tuple[in
     return warnings
 
 
+def _grid_contains(grid: np.ndarray, value: float, tol: float) -> bool:
+    return bool(np.any(np.isclose(grid, value, atol=tol, rtol=0.0)))
+
+
+def _validate_stage4_hexa_alignment(cfg: SimulationConfig3D, mesh_cells_resolved: tuple[int, int, int]) -> None:
+    """Require every Stage-4 material break to lie on a hexahedral grid plane."""
+    if cfg.geometry_kind != "rectangular_block_grating":
+        return
+    if cfg.mesh_cell_type_resolved != "hexahedron":
+        raise ValueError("stage4_block_grating requires a hexahedron mesh for explicit edge Floquet constraints.")
+    if cfg.nedelec_degree != 1:
+        raise NotImplementedError("stage4_block_grating currently supports only degree=1 N1curl.")
+    if cfg.scattering_background.lower() != "layered":
+        raise ValueError("stage4_block_grating currently requires scattering_background='layered'.")
+    if cfg.grating_width_x < 0.0 or cfg.grating_width_y < 0.0 or cfg.grating_height < 0.0:
+        raise ValueError("Stage-4 grating dimensions must be non-negative.")
+    if cfg.has_grating_block:
+        if not (cfg.x_min <= cfg.grating_x_min < cfg.grating_x_max <= cfg.x_max):
+            raise ValueError("Stage-4 grating x bounds must lie inside one periodic cell.")
+        if not (cfg.y_min <= cfg.grating_y_min < cfg.grating_y_max <= cfg.y_max):
+            raise ValueError("Stage-4 grating y bounds must lie inside one periodic cell.")
+        if not (cfg.physical_z_min <= cfg.grating_z_min < cfg.grating_z_max <= cfg.physical_z_max):
+            raise ValueError("Stage-4 grating z bounds must lie inside the physical z domain.")
+
+    axes = {
+        "x": (
+            np.linspace(cfg.x_min, cfg.x_max, mesh_cells_resolved[0] + 1),
+            [("grating_x_min", cfg.grating_x_min), ("grating_x_max", cfg.grating_x_max)] if cfg.has_grating_block else [],
+        ),
+        "y": (
+            np.linspace(cfg.y_min, cfg.y_max, mesh_cells_resolved[1] + 1),
+            [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)] if cfg.has_grating_block else [],
+        ),
+        "z": (
+            np.linspace(cfg.domain_z_min, cfg.domain_z_max, mesh_cells_resolved[2] + 1),
+            _required_z_planes(cfg),
+        ),
+    }
+    messages: list[str] = []
+    for axis_name, (grid, required) in axes.items():
+        tol = 1.0e-10 * max(abs(float(grid[-1] - grid[0])), 1.0)
+        for name, value in required:
+            if not _grid_contains(grid, value, tol):
+                messages.append(
+                    f"{name}={value:g} nm is not on the uniform {axis_name}-grid; "
+                    f"resolved {axis_name}-cell count is {len(grid) - 1}."
+                )
+    if messages:
+        hint = (
+            "Stage-4 hexa meshes do not use midpoint approximation for material boundaries. "
+            "Choose mesh_target_size or period/block dimensions so every interface is a grid plane."
+        )
+        raise ValueError(hint + " " + " ".join(messages))
+
+
 def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
     """Build a structured tetrahedral 3D box mesh for staged verification.
 
@@ -204,6 +275,7 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     comm = MPI.COMM_WORLD
     mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
     mesh_cells_resolved = _hexa_mesh_cells(cfg, comm.size) if mesh_cell_type_resolved == "hexahedron" else cfg.mesh_cells
+    _validate_stage4_hexa_alignment(cfg, mesh_cells_resolved)
     z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
 
     if mesh_cell_type_resolved == "hexahedron":
@@ -221,8 +293,12 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         if comm.rank == 0:
             note_lines = [
                 "Using dolfinx.mesh.create_box with hexahedron cells.",
-                "This is the default low-memory Stage-2 Floquet mesh because opposite periodic faces are structured.",
+                "This is the default low-memory 3D Floquet mesh because opposite periodic faces are structured.",
             ]
+            if cfg.geometry_kind == "rectangular_block_grating":
+                note_lines.append(
+                    "Stage-4 rectangular block tags are aligned to hexahedral grid planes; no midpoint fallback is used."
+                )
             note_lines.extend(f"WARNING: {message}" for message in z_alignment_warnings)
             (out_dir / "mesh_3d_partition_note.txt").write_text("\n".join(note_lines) + "\n", encoding="utf-8")
     elif comm.size > 1:

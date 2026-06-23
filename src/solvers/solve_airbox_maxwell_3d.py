@@ -26,6 +26,7 @@ from ..common.config_3d import SimulationConfig3D
 from ..common.pml_3d import z_pml_tensors
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
+from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
 from .solve_vector_maxwell import _json_default
 
@@ -385,7 +386,7 @@ def _sample_field_at_points(function, points: np.ndarray) -> np.ndarray:
         local_values = function.eval(local_points, np.asarray(local_cells, dtype=np.int32))
         local_values = np.asarray(local_values, dtype=np.complex128)
         if local_values.ndim == 1:
-            local_values = local_values.reshape((-1, 1))
+            local_values = local_values.reshape((len(local_points), -1))
     else:
         local_values = np.zeros((0, 0), dtype=np.complex128)
 
@@ -484,6 +485,7 @@ def _cell_tag_volumes(msh, mesh_data, cfg: SimulationConfig3D) -> dict[str, floa
     tag_items = {
         "air": cfg.tags.air,
         "substrate": cfg.tags.substrate,
+        "grating": cfg.tags.grating,
         "top_pml": cfg.tags.top_pml,
         "bottom_pml": cfg.tags.bottom_pml,
     }
@@ -789,6 +791,8 @@ def run_fresnel_analytic_postprocess_sanity(cfg: SimulationConfig3D, out_dir: Pa
 def _stage_label(cfg: SimulationConfig3D) -> str:
     if cfg.stage_case == "stage1_airbox":
         return "stage1_3d_airbox"
+    if cfg.stage_case.startswith("stage4_"):
+        return f"stage4_3d_{cfg.stage_case.removeprefix('stage4_')}"
     return f"stage2_3d_{cfg.stage_case}"
 
 
@@ -849,6 +853,7 @@ def _build_variational_forms(
 
     a += add_isotropic(cfg.tags.air, cfg.eps_r)
     a += add_isotropic(cfg.tags.substrate, cfg.substrate_index**2)
+    a += add_isotropic(cfg.tags.grating, cfg.grating_index**2)
 
     # PML cells use the same unknown E, but with the z-stretched material
     # tensors.  Top and bottom are tagged separately so the sign convention is
@@ -859,7 +864,11 @@ def _build_variational_forms(
         a += ufl.inner(ufl.inv(mu_top) * curl_u, curl_v) * dx(cfg.tags.top_pml)
         a += -cfg.k0**2 * ufl.inner(eps_top * u, v) * dx(cfg.tags.top_pml)
     if cfg.use_pml and cfg.pml_bottom_thickness > 0.0:
-        eps_bottom_background = cfg.substrate_index**2 if cfg.geometry_kind == "fresnel_interface" else cfg.eps_r
+        eps_bottom_background = (
+            cfg.substrate_index**2
+            if cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"}
+            else cfg.eps_r
+        )
         eps_bottom, mu_bottom = z_pml_tensors(x, cfg, "bottom", eps_bottom_background)
         a += ufl.inner(ufl.inv(mu_bottom) * curl_u, curl_v) * dx(cfg.tags.bottom_pml)
         a += -cfg.k0**2 * ufl.inner(eps_bottom * u, v) * dx(cfg.tags.bottom_pml)
@@ -869,18 +878,56 @@ def _build_variational_forms(
             raise ValueError("incident_scattered formulation requires an incident_field.")
         contrast = PETSc.ScalarType(cfg.substrate_index**2 - cfg.eps_r)
         L += cfg.k0**2 * contrast * ufl.inner(incident_field, v) * dx(cfg.tags.substrate)
+    elif field_formulation == "layered_scattered":
+        if incident_field is None:
+            raise ValueError("layered_scattered formulation requires a layered background field.")
+        contrast = PETSc.ScalarType(cfg.eps_grating - cfg.grating_background_eps)
+        L += cfg.k0**2 * contrast * ufl.inner(incident_field, v) * dx(cfg.tags.grating)
     return a, L
 
 
-def _incident_scattered_rhs_source_norm(msh, mesh_data, cfg: SimulationConfig3D, incident_field: fem.Function | None) -> float | None:
-    if incident_field is None:
+def _rhs_source_norm_for_tag(
+    msh,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    source_field: fem.Function | None,
+    tag: int,
+    contrast: complex,
+) -> float | None:
+    if source_field is None:
         return None
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
-    energy_form = fem.form(ufl.inner(incident_field, incident_field) * dx(cfg.tags.substrate))
+    energy_form = fem.form(ufl.inner(source_field, source_field) * dx(tag))
     local_energy = fem.assemble_scalar(energy_form)
     energy = msh.comm.allreduce(local_energy, op=MPI.SUM)
-    contrast = cfg.k0**2 * complex(cfg.substrate_index**2 - cfg.eps_r)
-    return float(abs(contrast) * np.sqrt(max(float(np.real(energy)), 0.0)))
+    scaled_contrast = cfg.k0**2 * complex(contrast)
+    return float(abs(scaled_contrast) * np.sqrt(max(float(np.real(energy)), 0.0)))
+
+
+def _incident_scattered_rhs_source_norm(
+    msh, mesh_data, cfg: SimulationConfig3D, incident_field: fem.Function | None
+) -> float | None:
+    return _rhs_source_norm_for_tag(
+        msh,
+        mesh_data,
+        cfg,
+        incident_field,
+        cfg.tags.substrate,
+        cfg.substrate_index**2 - cfg.eps_r,
+    )
+
+
+def _layered_scattered_rhs_source_norm(
+    msh, mesh_data, cfg: SimulationConfig3D, background_field: fem.Function | None
+) -> float | None:
+    return _rhs_source_norm_for_tag(
+        msh,
+        mesh_data,
+        cfg,
+        background_field,
+        cfg.tags.grating,
+        cfg.eps_grating - cfg.grating_background_eps,
+    )
 
 
 def _use_reference_correction_formulation(cfg: SimulationConfig3D) -> bool:
@@ -900,6 +947,10 @@ def _use_incident_scattered_formulation(cfg: SimulationConfig3D) -> bool:
     return cfg.stage_case == "fresnel_interface" and cfg.geometry_kind == "fresnel_interface"
 
 
+def _use_layered_scattered_formulation(cfg: SimulationConfig3D) -> bool:
+    return cfg.stage_case in {"stage4_block_grating", "stage4_flat_layer_sanity"} and cfg.geometry_kind == "rectangular_block_grating"
+
+
 def _field_formulation_label(
     cfg: SimulationConfig3D,
     use_reference_correction: bool,
@@ -907,6 +958,8 @@ def _field_formulation_label(
 ) -> str:
     if use_incident_scattered:
         return "incident_scattered"
+    if _use_layered_scattered_formulation(cfg):
+        return "layered_scattered"
     if not use_reference_correction:
         return "total_field"
     if cfg.stage_case == "floquet_airbox":
@@ -947,9 +1000,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "floquet_airbox",
         "pml_airbox",
         "fresnel_interface",
+        "stage4_block_grating",
+        "stage4_flat_layer_sanity",
     }:
         raise ValueError(
-            "3D stage_case must be 'stage1_airbox', 'floquet_airbox', 'pml_airbox', or 'fresnel_interface'."
+            "3D stage_case must be 'stage1_airbox', 'floquet_airbox', 'pml_airbox', "
+            "'fresnel_interface', 'stage4_block_grating', or 'stage4_flat_layer_sanity'."
         )
     if cfg.use_pml and (cfg.pml_top_thickness <= 0.0 or cfg.pml_bottom_thickness <= 0.0):
         raise ValueError("3D PML cases require positive pml_top_thickness and pml_bottom_thickness.")
@@ -1055,10 +1111,18 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     stage_start = _start_timed_stage(comm)
     solve_reference_correction = _use_reference_correction_formulation(cfg)
     solve_incident_scattered = _use_incident_scattered_formulation(cfg)
+    solve_layered_scattered = _use_layered_scattered_formulation(cfg)
     field_formulation = _field_formulation_label(cfg, solve_reference_correction, solve_incident_scattered)
-    solve_with_zero_bc = solve_reference_correction or solve_incident_scattered
-    E_incident_for_rhs = incident_air_plane_wave_field(V, cfg) if solve_incident_scattered else None
-    rhs_source_norm = _incident_scattered_rhs_source_norm(msh, mesh_data, cfg, E_incident_for_rhs)
+    solve_with_zero_bc = solve_reference_correction or solve_incident_scattered or solve_layered_scattered
+    E_source_for_rhs = None
+    if solve_incident_scattered:
+        E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
+        rhs_source_norm = _incident_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
+    elif solve_layered_scattered:
+        E_source_for_rhs = plane_wave_electric_field(V, cfg)
+        rhs_source_norm = _layered_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
+    else:
+        rhs_source_norm = None
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     floquet_data: DoubleFloquet3DData | None = None
@@ -1083,6 +1147,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         log(f"incident-scattered RHS source region = physical_substrate")
         log(f"incident-scattered RHS source tag volumes = {{'substrate': {domain_tag_volumes['substrate']:.6e}}}")
         log(f"incident-scattered RHS source norm = {rhs_source_norm:.6e}")
+    if solve_layered_scattered:
+        log("layered-scattered RHS sign = +k0^2*(eps_true - eps_bg)*inner(E_bg, v)")
+        log("layered-scattered RHS source region = physical_grating")
+        log(f"layered-scattered RHS source tag volumes = {{'grating': {domain_tag_volumes['grating']:.6e}}}")
+        log(f"layered-scattered RHS source contrast = {cfg.eps_grating - cfg.grating_background_eps!r}")
+        log(f"layered-scattered RHS source norm = {rhs_source_norm:.6e}")
 
     stage_start = _start_timed_stage(comm)
     a, L = _build_variational_forms(
@@ -1091,7 +1161,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         cfg,
         V,
         field_formulation=field_formulation,
-        incident_field=E_incident_for_rhs,
+        incident_field=E_source_for_rhs,
     )
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
 
@@ -1125,14 +1195,19 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
 
     stage_start = _start_timed_stage(comm)
     E = problem.solve()
-    E_sca = E if solve_incident_scattered else None
+    E_sca = E if (solve_incident_scattered or solve_layered_scattered) else None
     E_incident_solution = None
+    E_background_solution = None
     E_total = E
     if solve_reference_correction:
         _add_reference_field_to_solution(E, cfg)
     elif solve_incident_scattered:
         E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_incident_solution, "E_total")
+    elif solve_layered_scattered:
+        E_background_solution = plane_wave_electric_field(E.function_space, cfg)
+        E_background_solution.name = "E_background_layered"
+        E_total = _combine_fields(E_sca, E_background_solution, "E_total")
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
@@ -1174,15 +1249,46 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
+        "background_added_to_solution": field_formulation == "layered_scattered",
         "reference_added_to_solution": field_formulation == "reference_correction",
         "fresnel_reference_used_for_solution": False,
-        "fresnel_reference_used_for_comparison_only": cfg.geometry_kind == "fresnel_interface",
-        "rhs_source_region": "physical_substrate" if solve_incident_scattered else None,
-        "rhs_source_sign": "+k0^2*(eps_sub-eps_air)*inner(E_inc,v)" if solve_incident_scattered else None,
-        "rhs_source_contrast": complex(cfg.substrate_index**2 - cfg.eps_r) if solve_incident_scattered else None,
-        "rhs_source_tag_ids": {"substrate": cfg.tags.substrate} if solve_incident_scattered else {},
-        "rhs_source_tag_volumes": {"substrate": domain_tag_volumes["substrate"]} if solve_incident_scattered else {},
-        "rhs_source_excludes_air_and_pml": bool(solve_incident_scattered),
+        "fresnel_reference_used_for_comparison_only": cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"},
+        "rhs_source_region": (
+            "physical_substrate"
+            if solve_incident_scattered
+            else "physical_grating"
+            if solve_layered_scattered
+            else None
+        ),
+        "rhs_source_sign": (
+            "+k0^2*(eps_sub-eps_air)*inner(E_inc,v)"
+            if solve_incident_scattered
+            else "+k0^2*(eps_true-eps_bg)*inner(E_bg,v)"
+            if solve_layered_scattered
+            else None
+        ),
+        "rhs_source_contrast": (
+            complex(cfg.substrate_index**2 - cfg.eps_r)
+            if solve_incident_scattered
+            else complex(cfg.eps_grating - cfg.grating_background_eps)
+            if solve_layered_scattered
+            else None
+        ),
+        "rhs_source_tag_ids": (
+            {"substrate": cfg.tags.substrate}
+            if solve_incident_scattered
+            else {"grating": cfg.tags.grating}
+            if solve_layered_scattered
+            else {}
+        ),
+        "rhs_source_tag_volumes": (
+            {"substrate": domain_tag_volumes["substrate"]}
+            if solve_incident_scattered
+            else {"grating": domain_tag_volumes["grating"]}
+            if solve_layered_scattered
+            else {}
+        ),
+        "rhs_source_excludes_air_and_pml": bool(solve_incident_scattered or solve_layered_scattered),
         "rhs_source_norm": rhs_source_norm,
         "domain_tag_volumes": domain_tag_volumes,
         "solver_profile": cfg.solver_profile,
@@ -1276,10 +1382,17 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     if solve_incident_scattered:
         summary["E_sca_norm"] = _function_coefficient_norm(E_sca)
         summary["E_inc_norm"] = _function_coefficient_norm(E_incident_solution)
+        summary["E_bg_norm"] = None
+        summary["E_total_norm"] = _function_coefficient_norm(E_total)
+    elif solve_layered_scattered:
+        summary["E_sca_norm"] = _function_coefficient_norm(E_sca)
+        summary["E_inc_norm"] = None
+        summary["E_bg_norm"] = _function_coefficient_norm(E_background_solution)
         summary["E_total_norm"] = _function_coefficient_norm(E_total)
     else:
         summary["E_sca_norm"] = None
         summary["E_inc_norm"] = None
+        summary["E_bg_norm"] = None
         summary["E_total_norm"] = _function_coefficient_norm(E)
     stage2_metrics: dict[str, Any] = {}
     if floquet_data is not None:
@@ -1288,16 +1401,23 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         stage2_metrics.update(_pml_probe_metrics(E_total, cfg))
     stage2_metrics.update(_stage2_reference_metrics(E_total, cfg, field_metrics))
     summary.update(stage2_metrics)
+    diffraction_metrics: dict[str, Any] = {}
+    if cfg.geometry_kind == "rectangular_block_grating":
+        stage_start = _start_timed_stage(comm)
+        diffraction_metrics = compute_diffraction_orders_3d(mesh_data, cfg, E_total, out_dir)
+        _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
+        summary.update(diffraction_metrics)
+        summary["timings_seconds"] = timings
     has_power_metrics = (
-        {"R_total", "T_total", "R_plus_T"}.issubset(stage2_metrics)
-        and stage2_metrics.get("R_total") is not None
-        and stage2_metrics.get("T_total") is not None
-        and stage2_metrics.get("R_plus_T") is not None
+        {"R_total", "T_total", "R_plus_T"}.issubset(summary)
+        and summary.get("R_total") is not None
+        and summary.get("T_total") is not None
+        and summary.get("R_plus_T") is not None
     )
-    if comm.rank == 0 and has_power_metrics:
+    if comm.rank == 0 and has_power_metrics and cfg.geometry_kind != "rectangular_block_grating":
         (out_dir / "power_metrics_3d.json").write_text(
             json.dumps(
-                {key: stage2_metrics[key] for key in ("R_total", "T_total", "R_plus_T", "fresnel_R", "fresnel_T", "fresnel_R_error", "fresnel_T_error") if key in stage2_metrics},
+                {key: summary[key] for key in ("R_total", "T_total", "R_plus_T", "fresnel_R", "fresnel_T", "fresnel_R_error", "fresnel_T_error") if key in summary},
                 ensure_ascii=False,
                 indent=2,
                 default=_json_default,
@@ -1331,6 +1451,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             f"top [{summary['fresnel_top_sampling_z_min']:.6g}, {summary['fresnel_top_sampling_z_max']:.6g}] nm, "
             f"bottom [{summary['fresnel_bottom_sampling_z_min']:.6g}, {summary['fresnel_bottom_sampling_z_max']:.6g}] nm"
         )
+    if cfg.geometry_kind == "rectangular_block_grating":
+        log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
+        log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
+        log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
+        log(f"3D diffraction top fit residual = {summary['diffraction_top_fit_residual']:.6e}")
+        log(f"3D diffraction bottom fit residual = {summary['diffraction_bottom_fit_residual']:.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log("timing summary seconds:")
     for name, value in timings.items():

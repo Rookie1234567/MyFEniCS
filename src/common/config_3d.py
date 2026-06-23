@@ -57,6 +57,7 @@ class SimulationConfig3D:
     n_substrate: complex | None = None
     n_grating: complex | None = None
     interface_z: float = 0.0
+    scattering_background: str = "layered"
     use_floquet_xy: bool = False
     use_pml: bool = False
     pml_top_thickness: float = 0.0
@@ -84,6 +85,14 @@ class SimulationConfig3D:
     solver_atol: float = 1.0e-12
     solver_max_it: int = 1000
     solver_monitor: bool = False
+    diffraction_zero_order_only: bool = True
+    diffraction_order_max_m: int | None = None
+    diffraction_order_max_n: int | None = None
+    diffraction_sample_count_x: int = 24
+    diffraction_sample_count_y: int = 24
+    diffraction_top_probe_z: float | None = None
+    diffraction_bottom_probe_z: float | None = None
+    diffraction_rayleigh_tol: float = 1.0e-6
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)
 
@@ -262,6 +271,60 @@ class SimulationConfig3D:
     def substrate_index(self) -> complex:
         return complex(self.n_air if self.n_substrate is None else self.n_substrate)
 
+    @property
+    def grating_index(self) -> complex:
+        return complex(self.n_air if self.n_grating is None else self.n_grating)
+
+    @property
+    def eps_air(self) -> complex:
+        return complex(self.n_air**2)
+
+    @property
+    def eps_substrate(self) -> complex:
+        return complex(self.substrate_index**2)
+
+    @property
+    def eps_grating(self) -> complex:
+        return complex(self.grating_index**2)
+
+    @property
+    def grating_x_min(self) -> float:
+        return 0.5 * (self.x_min + self.x_max) - 0.5 * self.grating_width_x
+
+    @property
+    def grating_x_max(self) -> float:
+        return 0.5 * (self.x_min + self.x_max) + 0.5 * self.grating_width_x
+
+    @property
+    def grating_y_min(self) -> float:
+        return 0.5 * (self.y_min + self.y_max) - 0.5 * self.grating_width_y
+
+    @property
+    def grating_y_max(self) -> float:
+        return 0.5 * (self.y_min + self.y_max) + 0.5 * self.grating_width_y
+
+    @property
+    def grating_z_min(self) -> float:
+        return self.interface_z
+
+    @property
+    def grating_z_max(self) -> float:
+        return self.interface_z + self.grating_height
+
+    @property
+    def has_grating_block(self) -> bool:
+        return (
+            self.geometry_kind == "rectangular_block_grating"
+            and self.grating_width_x > 0.0
+            and self.grating_width_y > 0.0
+            and self.grating_height > 0.0
+        )
+
+    @property
+    def grating_background_eps(self) -> complex:
+        center_z = 0.5 * (self.grating_z_min + self.grating_z_max)
+        return self.eps_air if center_z >= self.interface_z else self.eps_substrate
+
     def as_jsonable(self) -> dict[str, object]:
         """Return a JSON-friendly snapshot used by run_summary.json.
 
@@ -289,6 +352,19 @@ class SimulationConfig3D:
         data["wavevector"] = [[value.real, value.imag] for value in self.wavevector]
         data["floquet_phase_x"] = _complex_or_none(self.floquet_phase_x)
         data["floquet_phase_y"] = _complex_or_none(self.floquet_phase_y)
+        data["eps_air"] = _complex_or_none(self.eps_air)
+        data["eps_substrate"] = _complex_or_none(self.eps_substrate)
+        data["eps_grating"] = _complex_or_none(self.eps_grating)
+        data["grating_index"] = _complex_or_none(self.grating_index)
+        data["grating_bounds"] = {
+            "x_min": self.grating_x_min,
+            "x_max": self.grating_x_max,
+            "y_min": self.grating_y_min,
+            "y_max": self.grating_y_max,
+            "z_min": self.grating_z_min,
+            "z_max": self.grating_z_max,
+        }
+        data["grating_background_eps"] = _complex_or_none(self.grating_background_eps)
         data["k0"] = self.k0
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)

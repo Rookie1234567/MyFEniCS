@@ -78,6 +78,36 @@ def _config_updates(args) -> dict[str, object]:
         updates["pml_alpha"] = args.pml_alpha
     if args.n_substrate is not None:
         updates["n_substrate"] = complex(args.n_substrate)
+    if args.n_grating is not None:
+        updates["n_grating"] = complex(args.n_grating)
+    if args.period_x is not None:
+        updates["period_x"] = args.period_x
+    if args.period_y is not None:
+        updates["period_y"] = args.period_y
+    if args.grating_width_x is not None:
+        updates["grating_width_x"] = args.grating_width_x
+    if args.grating_width_y is not None:
+        updates["grating_width_y"] = args.grating_width_y
+    if args.grating_height is not None:
+        updates["grating_height"] = args.grating_height
+    if args.scattering_background is not None:
+        updates["scattering_background"] = args.scattering_background
+    if args.diffraction_zero_order_only is not None:
+        updates["diffraction_zero_order_only"] = args.diffraction_zero_order_only
+    if args.diffraction_order_max_m is not None:
+        updates["diffraction_order_max_m"] = args.diffraction_order_max_m
+    if args.diffraction_order_max_n is not None:
+        updates["diffraction_order_max_n"] = args.diffraction_order_max_n
+    if args.diffraction_sample_count_x is not None:
+        updates["diffraction_sample_count_x"] = args.diffraction_sample_count_x
+    if args.diffraction_sample_count_y is not None:
+        updates["diffraction_sample_count_y"] = args.diffraction_sample_count_y
+    if args.diffraction_top_probe_z is not None:
+        updates["diffraction_top_probe_z"] = args.diffraction_top_probe_z
+    if args.diffraction_bottom_probe_z is not None:
+        updates["diffraction_bottom_probe_z"] = args.diffraction_bottom_probe_z
+    if args.diffraction_rayleigh_tol is not None:
+        updates["diffraction_rayleigh_tol"] = args.diffraction_rayleigh_tol
     return updates
 
 
@@ -108,12 +138,60 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "polarization_kind": "s",
             "custom_polarization": None,
         }
+    if stage_case == "stage4_block_grating":
+        return {
+            "stage_case": stage_case,
+            "geometry_kind": "rectangular_block_grating",
+            "scattering_background": "layered",
+            "lambda0": 633.0,
+            "period_x": 350.0,
+            "period_y": 300.0,
+            "z_min": -550.0,
+            "z_max": 350.0,
+            "interface_z": 0.0,
+            "use_floquet_xy": True,
+            "use_pml": True,
+            "pml_top_thickness": 250.0,
+            "pml_bottom_thickness": 250.0,
+            "pml_alpha": 5.0,
+            "n_substrate": 1.45 + 0.0j,
+            "n_grating": 2.0 + 0.0j,
+            "grating_width_x": 150.0,
+            "grating_width_y": 100.0,
+            "grating_height": 150.0,
+            "incident_phi_deg": 90.0,
+            "polarization_kind": "s",
+            "custom_polarization": None,
+            "mesh_target_size": 50.0,
+            "nedelec_degree": 1,
+            "visualization_degree": 1,
+            "mesh_cell_type": "auto",
+            "floquet_constraint_mode": "auto",
+            "solver_profile": "direct",
+            "diffraction_zero_order_only": True,
+            "diffraction_sample_count_x": 24,
+            "diffraction_sample_count_y": 24,
+        }
+    if stage_case == "stage4_flat_layer_sanity":
+        values = _stage_defaults("stage4_block_grating")
+        values.update(
+            {
+                "stage_case": stage_case,
+                "grating_width_x": 0.0,
+                "grating_width_y": 0.0,
+                "grating_height": 0.0,
+                "n_grating": 1.0 + 0.0j,
+            }
+        )
+        return values
     raise ValueError("Unsupported 3D stage_case.")
 
 
 def _stage_list(stage_case: str) -> list[str]:
     if stage_case == "stage2_all":
         return ["floquet_airbox", "pml_airbox", "fresnel_interface"]
+    if stage_case == "stage4_all":
+        return ["stage4_flat_layer_sanity", "stage4_block_grating"]
     return [stage_case]
 
 
@@ -145,7 +223,16 @@ def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="Run staged 3D Maxwell airbox/Floquet/PML/Fresnel verification.")
     parser.add_argument(
         "--stage-case",
-        choices=("stage1_airbox", "floquet_airbox", "pml_airbox", "fresnel_interface", "stage2_all"),
+        choices=(
+            "stage1_airbox",
+            "floquet_airbox",
+            "pml_airbox",
+            "fresnel_interface",
+            "stage2_all",
+            "stage4_flat_layer_sanity",
+            "stage4_block_grating",
+            "stage4_all",
+        ),
         default="stage1_airbox",
     )
     parser.add_argument("--case", choices=("normal", "oblique", "both"), default="both")
@@ -223,6 +310,31 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--pml-bottom-thickness", type=float, default=None, help="Bottom PML thickness in nm.")
     parser.add_argument("--pml-alpha", type=float, default=None)
     parser.add_argument("--n-substrate", default=None, help="Substrate refractive index for Fresnel stage.")
+    parser.add_argument("--n-grating", default=None, help="Rectangular-block grating refractive index for Stage 4.")
+    parser.add_argument("--period-x", type=float, default=None, help="3D periodic cell size in x, nm.")
+    parser.add_argument("--period-y", type=float, default=None, help="3D periodic cell size in y, nm.")
+    parser.add_argument("--grating-width-x", type=float, default=None, help="Stage-4 block width in x, nm.")
+    parser.add_argument("--grating-width-y", type=float, default=None, help="Stage-4 block width in y, nm.")
+    parser.add_argument("--grating-height", type=float, default=None, help="Stage-4 block height above interface z=0, nm.")
+    parser.add_argument(
+        "--scattering-background",
+        choices=("layered",),
+        default=None,
+        help="Stage-4 scattered-field background. The first version supports only layered Fresnel background.",
+    )
+    parser.add_argument(
+        "--diffraction-zero-order-only",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Use only the (0,0) order in Stage-4 diffraction postprocess.",
+    )
+    parser.add_argument("--diffraction-order-max-m", type=int, default=None)
+    parser.add_argument("--diffraction-order-max-n", type=int, default=None)
+    parser.add_argument("--diffraction-sample-count-x", type=int, default=None)
+    parser.add_argument("--diffraction-sample-count-y", type=int, default=None)
+    parser.add_argument("--diffraction-top-probe-z", type=float, default=None)
+    parser.add_argument("--diffraction-bottom-probe-z", type=float, default=None)
+    parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
     args = parser.parse_args(argv)
 
     unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
@@ -231,8 +343,8 @@ def main(argv: list[str] | None = None):
 
     root = project_root()
     results_root = root / "results"
-    p = args.nedelec_degree if args.nedelec_degree is not None else defaults.nedelec_degree
-    h = args.mesh_target_size if args.mesh_target_size is not None else defaults.mesh_target_size
+    p = configs[0].nedelec_degree if configs else defaults.nedelec_degree
+    h = configs[0].mesh_target_size if configs else defaults.mesh_target_size
     case_tag = "normal_oblique" if args.case == "both" else args.case
     group_parts = ["3D", args.stage_case, case_tag, f"p{p}", _number_tag("h", h)]
     if MPI.COMM_WORLD.size > 1:

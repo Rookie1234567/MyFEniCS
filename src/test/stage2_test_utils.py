@@ -99,3 +99,37 @@ def fresnel_smoke_config(**updates) -> SimulationConfig3D:
     }
     values.update(updates)
     return normal_incidence_airbox_config(**values)
+
+
+def stage4_block_config(**updates) -> SimulationConfig3D:
+    values = {
+        "stage_case": "stage4_block_grating",
+        "geometry_kind": "rectangular_block_grating",
+        "scattering_background": "layered",
+        "lambda0": 633.0,
+        "period_x": 350.0,
+        "period_y": 300.0,
+        "z_min": -550.0,
+        "z_max": 350.0,
+        "interface_z": 0.0,
+        "use_floquet_xy": True,
+        "use_pml": True,
+        "pml_top_thickness": 250.0,
+        "pml_bottom_thickness": 250.0,
+        "pml_alpha": 5.0,
+        "n_substrate": 1.45 + 0.0j,
+        "n_grating": 2.0 + 0.0j,
+        "grating_width_x": 150.0,
+        "grating_width_y": 100.0,
+        "grating_height": 150.0,
+        "incident_phi_deg": 90.0,
+        "polarization_kind": "s",
+        "custom_polarization": None,
+        "nedelec_degree": 1,
+        "visualization_degree": 1,
+        "mesh_target_size": 50.0,
+        "solver_profile": "direct",
+        "diffraction_zero_order_only": True,
+    }
+    values.update(updates)
+    return normal_incidence_airbox_config(**values)

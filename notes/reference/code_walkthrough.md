@@ -1,3 +1,65 @@
+## 2026-06-23 更新：Stage 4 真实 3D 矩形柱代码阅读路径
+
+如果你现在要读 Stage 4，请先按这个顺序看，不要从旧的 2C Fresnel 诊断开始：
+
+```text
+1. src/runners/run_3d_airbox.py
+   看 _stage_defaults("stage4_block_grating")
+   这里定义默认几何、材料、PML、Floquet、求解器和 diffraction 参数。
+
+2. src/common/config_3d.py
+   看 SimulationConfig3D 的 grating_* 属性：
+   grating_x_min/max, grating_y_min/max, grating_z_min/max,
+   eps_grating, grating_background_eps。
+
+3. src/geometry/mesh_builder_3d.py
+   看 _validate_stage4_hexa_alignment(...)
+   看 _mark_cells(...)
+   这里负责 hexa 对齐检查和 air/substrate/grating/top_pml/bottom_pml cell tags。
+
+4. src/common/analytic_fields_3d.py
+   看 uses_layered_fresnel_background(...)
+   看 electric_field_code_values(...)
+   Stage 4 的 E_bg 复用 air/substrate 平界面 Fresnel 分层背景场。
+
+5. src/constraints/floquet_3d.py
+   看 build_double_floquet_mpc(...)
+   当前正式路径是 degree=1 N1curl edge topology：
+   slave_dof = phase * orientation_sign * master_dof。
+
+6. src/solvers/solve_airbox_maxwell_3d.py
+   看 _use_layered_scattered_formulation(...)
+   看 _build_variational_forms(..., field_formulation="layered_scattered")
+   看 run_airbox_3d_case(...)
+   这里完成 E_scat 求解，并重建 E_total = E_bg + E_scat。
+
+7. src/postprocessing/diffraction_3d.py
+   看 enumerate_diffraction_orders_3d(...)
+   看 fit_diffraction_amplitudes_from_samples(...)
+   看 compute_diffraction_orders_3d(...)
+   这里输出 diffraction_orders_3d.json/csv 和 R_total/T_total/A_balance。
+
+8. src/postprocessing/postprocess_3d.py
+   看 save_airbox_3d_fields(...)
+   这里写 ParaView 用的 E/H 物理单位场和 domain_tag。
+```
+
+对应测试：
+
+```text
+src/test/test_11_stage4_diffraction_modes.py
+```
+
+对应文档：
+
+```text
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/theory/stage4_3d_block_grating_diffraction.md
+notes/test/stage4_validation_report.md
+```
+
+当前第一版结论：flat-layer sanity 已经回到 Fresnel R/T；block grating h50/p1 能跑通并输出 diffraction 表，但 `R+T` 仍偏离 1，后续重点是 PML、网格和 modal port 收敛。
+
 ## 2026-06-22 更新：2C Fresnel 诊断代码路径
 
 最新 2C 诊断不要先看 PDE 组装，先按下面路径确认后处理和 source 是否健康：

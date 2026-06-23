@@ -108,10 +108,15 @@ def _fresnel_components(cfg: SimulationConfig3D):
     return k_inc, k_ref, k_trn, amp * pol_inc, amp * complex(ref["r"]) * pol_ref, amp * complex(ref["t"]) * pol_trn
 
 
+def uses_layered_fresnel_background(cfg: SimulationConfig3D) -> bool:
+    """Return true when analytic fields mean the flat air/substrate background."""
+    return cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"}
+
+
 def electric_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     """Evaluate the normalized analytic E field used by BCs and validation."""
     coords = np.asarray(coords, dtype=np.float64)
-    if cfg.geometry_kind == "fresnel_interface":
+    if uses_layered_fresnel_background(cfg):
         k_inc, k_ref, k_trn, e_inc, e_ref, e_trn = _fresnel_components(cfg)
         zeta = pml_complex_z(cfg, coords[:, 2])
         top = coords[:, 2] >= cfg.interface_z
@@ -135,7 +140,7 @@ def electric_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> n
 def magnetic_field_code_values(cfg: SimulationConfig3D, coords: np.ndarray) -> np.ndarray:
     """Evaluate normalized H = (k x E)/(k0 mu_r) in code units."""
     coords = np.asarray(coords, dtype=np.float64)
-    if cfg.geometry_kind == "fresnel_interface":
+    if uses_layered_fresnel_background(cfg):
         k_inc, k_ref, k_trn, e_inc, e_ref, e_trn = _fresnel_components(cfg)
         zeta = pml_complex_z(cfg, coords[:, 2])
         top = coords[:, 2] >= cfg.interface_z
