@@ -1,3 +1,39 @@
+## 2026-06-24 更新：h=2.5 诊断后下一步读代码重点
+
+最新 h=2.5、np=16 的 Stage 4 结果仍然 `R+T>1`，但已经排除了几类问题：
+
+```text
+1. direct LU 正常收敛，true relative residual 约 1e-11。
+2. Floquet 约束构建完成，约束数 12960，未再出现 building/resolving 阶段 OOM。
+3. natural 与 zero_tangential PML outer BC 结果几乎一致。
+4. zero_tangential 的 z 外边界 Dirichlet dof 已用全局统计确认确实施加。
+```
+
+继续排查时优先读这条路径：
+
+```text
+1. src/solvers/solve_maxwell_3d_stage_4_grating.py
+   Stage 4 入口，只负责把 grating case 转到 common core。
+
+2. src/solvers/solve_maxwell_3d_common.py
+   重点看 _run_maxwell_3d_case_core 中的 layered_scattered 分支：
+     E_total = E_scat + E_bg
+     RHS = +k0^2 * (eps_true - eps_bg) * inner(E_bg, v)
+   以及 PML 张量、source tag、boundary_condition_setup、summary 字段。
+
+3. src/common/analytic_fields_3d.py
+   看 stage4_layered_background_field 和 stage4_layered_background_value。
+   这里定义了没有光栅时的 air/substrate Fresnel 分层背景。
+
+4. src/common/pml_3d.py
+   看 z 向复拉伸张量是否和弱式中的 curl-curl / mass 项匹配。
+
+5. src/postprocessing/diffraction_3d.py
+   看 probe plane 采样、传播级枚举、E-Fourier R/T 和 sampled net-flux 诊断。
+```
+
+本轮还修正了一个容易误读的 summary 字段：`strong_z_boundary_dirichlet_dofs` 现在记录 MPI 全局 dof 数，旧的 rank0 本地数不再作为主字段使用；原始全局数保留在 `strong_z_boundary_dirichlet_raw_dofs_global`。
+
 ## 2026-06-24 更新：Stage 4 R/T 修正后的阅读入口
 
 本轮先看这几处：

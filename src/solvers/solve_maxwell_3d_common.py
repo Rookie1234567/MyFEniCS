@@ -1237,6 +1237,8 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     floquet_data: DoubleFloquet3DData | None = None
     boundary_dofs = np.asarray([], dtype=np.int32)
+    raw_boundary_dofs_global = 0
+    boundary_dofs_global = 0
     if cfg.use_floquet_xy:
         # Floquet constraints own the x/y side walls.  Strong H(curl)
         # Dirichlet data is therefore only applied on z faces, with slave dofs
@@ -1249,16 +1251,23 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             boundary_dofs = np.setdiff1d(
                 raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False
             ).astype(np.int32)
-            log(f"Dirichlet H(curl) z-boundary dofs before slave removal = {len(raw_boundary_dofs)}")
+            raw_boundary_dofs_global = int(comm.allreduce(len(raw_boundary_dofs), op=MPI.SUM))
+            boundary_dofs_global = int(comm.allreduce(len(boundary_dofs), op=MPI.SUM))
+            log(
+                "Dirichlet H(curl) z-boundary dofs before slave removal "
+                f"local/global = {len(raw_boundary_dofs)} / {raw_boundary_dofs_global}"
+            )
         else:
             log("No z-boundary Dirichlet dofs were located for this Floquet run.")
     elif apply_strong_boundary_bc:
         boundary_dofs = fem.locate_dofs_topological(V, fdim, mesh_data.boundary_facets)
+        raw_boundary_dofs_global = int(comm.allreduce(len(boundary_dofs), op=MPI.SUM))
+        boundary_dofs_global = raw_boundary_dofs_global
     bcs = [fem.dirichletbc(E_bc, boundary_dofs)] if apply_strong_boundary_bc else []
     problem_bcs = bcs if bcs else None
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
-    log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
+    log(f"Dirichlet H(curl) boundary dofs local/global = {len(boundary_dofs)} / {boundary_dofs_global}")
     log(f"field formulation = {field_formulation}")
     if solve_layered_scattered:
         log(f"stage4 boundary model = {stage4_boundary_model}")
@@ -1395,7 +1404,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         "stage4_boundary_model": stage4_boundary_model if solve_layered_scattered else None,
         "stage4_pml_outer_bc": stage4_pml_outer_bc if solve_layered_scattered else None,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
-        "strong_z_boundary_dirichlet_dofs": int(len(boundary_dofs)),
+        "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "stage4_matches_2d_scattered_pml_boundary_flow": False,
         "stage4_outer_pml_zero_tangential_e_bc": bool(
             solve_layered_scattered and cfg.use_pml and stage4_pml_zero_outer_boundary
@@ -1404,6 +1413,8 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             solve_layered_scattered and cfg.use_pml and stage4_boundary_model == "pml" and not stage4_pml_zero_outer_boundary
         ),
         "stage4_robin0_zero_order_boundary_enabled": bool(stage4_robin_boundary),
+        "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
+        "strong_z_boundary_dirichlet_dofs_global": int(boundary_dofs_global),
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
         "background_added_to_solution": field_formulation == "layered_scattered",
         "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),

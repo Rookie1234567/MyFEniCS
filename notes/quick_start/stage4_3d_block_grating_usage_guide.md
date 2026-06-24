@@ -1,5 +1,29 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：h=2.5 nm 运行状态与当前风险
+
+当前 h=2.5 nm、p1、np=16 可以完整跑完，但能量验收未通过：
+
+```text
+natural:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_124802
+  R/T/R+T = 0.068117 / 2.534148 / 2.602265
+
+zero_tangential:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_133711
+  R/T/R+T = 0.069171 / 2.535508 / 2.604678
+```
+
+两个外边界选项给出的结果几乎相同，所以目前不要把问题归因成“natural 外边界没有吸收”。当前更可靠的结论是：
+
+```text
+1. Floquet 约束和 direct LU 都跑完了；
+2. R+T 严重大于 1，结果只能用于诊断；
+3. 后续需要继续检查 Stage 4 弱式、PML 张量、背景场源项和 probe/modal 分解的一致性。
+```
+
+注意 h=2.5 nm 仍不满足光栅材料内波长 `lambda0 / n_grating / 6 = 1.125 nm` 的保守经验网格。因此即便模型修好，想和 COMSOL 对齐，仍需要更细网格或更高阶单元；这会明显增加 direct LU 内存压力。
+
 ## 2026-06-24 更新：当前推荐命令和 R/T 判断口径
 
 当前 3D 代码已经移除 `--solver-profile`。Stage 4 运行命令示例：

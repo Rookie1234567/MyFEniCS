@@ -1,5 +1,34 @@
 # v2 文档索引
 
+## 2026-06-24 更新：Stage 4 h=2.5 nm、16 核重跑仍未通过能量验收
+
+本轮已用当前修正版代码完成 `stage4_block_grating` 的 h=2.5 nm、p1、np=16 重跑：
+
+```text
+natural PML outer BC:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_124802
+  R/T/R+T = 0.068117 / 2.534148 / 2.602265
+  sampled net-flux R+T = 1.823622
+  true relative residual = 9.12e-12
+
+zero_tangential PML outer BC:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_133711
+  R/T/R+T = 0.069171 / 2.535508 / 2.604678
+  sampled net-flux R+T = 1.870036
+  true relative residual = 5.64e-12
+```
+
+结论：当前失败不是 direct LU 未收敛，也不是 Floquet 约束构建失败；`zero_tangential` 和 `natural` 的结果几乎相同，因此也不是 PML 最外边界类型本身造成的。结果仍标记为 `failed_stage4_energy_balance`，不能作为物理结果使用。
+
+本轮代码小修正：summary 中 `strong_z_boundary_dirichlet_dofs` 现在记录 MPI 全局 dof 数，不再记录 rank0 本地数。否则在 `np=16` 时 rank0 可能显示 0，让人误以为 zero-tangential 边界没有施加。
+
+详细记录见：
+
+```text
+notes/test/stage4_validation_report.md
+notes/test/stage4_resume_log.md
+```
+
 ## 2026-06-24 更新：Stage 4 R/T 后处理修正与 solver 入口移除
 
 本轮把 3D 代码里的 `solver_profile` / `--solver-profile` 公开入口全部移除。当前 3D 路径只保留内部固定直接法：
@@ -62,7 +91,7 @@ stage4_pml_outer_bc = "zero_tangential"  # 旧诊断选项
 
 默认 `natural` 不再把 PML 最外层强行设成零切向散射场。这样如果 PML 太薄，ParaView 和 summary 里的 PML 指标会更真实地暴露问题。h25/p1 的 smoke 对比显示：natural 和 zero_tangential 的正式 E-Fourier R/T 很接近，但 natural 的 PML 区散射场更明显，符合“不要用外边界零值掩盖 PML 反射”的目的。
 
-求解器入口也已收敛为 direct-only。CLI 仍接受 `--solver-profile direct`，但迭代 profile 已从当前代码路径中移除。
+求解器入口也已收敛为 direct-only。CLI 已删除 `--solver-profile`，迭代 profile 已从当前代码路径中移除。
 
 ## 2026-06-24 更新：3D 求解器入口已按 Stage 拆分
 

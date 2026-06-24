@@ -1,5 +1,61 @@
 # Stage 4 续接记录
 
+## 2026-06-24 续接记录：h=2.5 nm、np=16 已跑完但能量失败
+
+本轮已完成：
+
+```text
+1. Docker 全量单元测试重新执行：
+   . dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+   结果：Ran 32 tests, OK (skipped=8)
+
+2. stage4_block_grating, h=2.5 nm, p1, np=16, natural PML outer BC：
+   results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_124802
+   R/T/R+T = 0.068117 / 2.534148 / 2.602265
+   sampled net-flux R+T = 1.823622
+   true relative residual = 9.12e-12
+   elapsed = 2431.8 s
+
+3. stage4_block_grating, h=2.5 nm, p1, np=16, zero_tangential PML outer BC：
+   results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_133711
+   R/T/R+T = 0.069171 / 2.535508 / 2.604678
+   sampled net-flux R+T = 1.870036
+   true relative residual = 5.64e-12
+   elapsed = 2432.7 s
+
+4. 代码补充：
+   src/solvers/solve_maxwell_3d_common.py
+   - strong_z_boundary_dirichlet_dofs 改为 summary 全局 dof 数。
+   - 新增/保留 raw 与 slave removal 后的全局 z-boundary dof 统计。
+```
+
+当前结论：
+
+```text
+1. h=2.5 当前版本可以跑完，不是 Floquet 构造阶段 OOM。
+2. zero_tangential 和 natural 结果几乎一致，PML 最外边界类型不是当前 R+T 爆炸主因。
+3. direct LU 残差很小，问题更可能在 Stage 4 弱式/PML 张量/分层背景源项/场分解的一致性。
+4. 这两组结果都必须标记为 failed_stage4_energy_balance，不能用于物理结论或 COMSOL 定量比较。
+```
+
+下一轮建议：
+
+```text
+1. 先固定小但可解释的 flat/interface case，逐项验证 PML 张量弱式：
+   - 无光栅 flat_layer：E_scat 应接近 0，R/T 为 Fresnel。
+   - grating contrast -> 0：E_scat 应连续趋近 0。
+   - pml_alpha = 0 且无 PML 区：检查弱式退化。
+
+2. 对 Stage 4 source 做体积分项诊断：
+   - grating source 是否只在 tag=3。
+   - PML cell 是否完全没有 source。
+   - eps_true / eps_bg 在 grating、air、substrate 的值是否逐 cell 正确。
+
+3. 检查 PML 复拉伸张量：
+   - curl-curl 项和 mass 项是否使用互逆张量组合。
+   - top/bottom PML 的背景介质 eps 是否分别为空气/基底。
+```
+
 ## 2026-06-24 续接记录：R/T 后处理修正完成，Docker 全量测试因额度限制暂停
 
 本轮已完成：

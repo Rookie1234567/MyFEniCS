@@ -1,5 +1,49 @@
 # Stage 4 验证报告
 
+## 2026-06-24 更新：h=2.5 nm、np=16 正式重跑结论
+
+本轮在资源空闲后重新跑了 13.5 nm 小周期 `stage4_block_grating`，参数为：
+
+```text
+lambda0 = 13.5 nm
+period_x = period_y = 100 nm
+block = 50 x 50 x 50 nm
+substrate_thickness = 50 nm
+air_height = 100 nm
+pml_top/bottom = 25 / 25 nm
+mesh_target_size = 2.5 nm
+nedelec_degree = 1
+MPI ranks = 16
+diffraction_sample_count_x/y = 64 / 64
+```
+
+结果对比：
+
+| PML outer BC | result dir | R | T | R+T | net-flux R+T | true residual | setup s | solve s | max \|E_scat\| in PML | 结论 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| natural | `results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_124802` | 0.068117 | 2.534148 | 2.602265 | 1.823622 | 9.12e-12 | 194.99 | 2096.60 | 2.864955 | failed_stage4_energy_balance |
+| zero_tangential | `results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260624_133711` | 0.069171 | 2.535508 | 2.604678 | 1.870036 | 5.64e-12 | 198.93 | 2158.22 | 2.850564 | failed_stage4_energy_balance |
+
+本轮判断：
+
+```text
+1. direct LU 已正常收敛，true relative residual 约 1e-11。
+2. Floquet 约束构建完成，没有再卡在 building/resolving 阶段；h=2.5 的约束数为 12960。
+3. zero_tangential 与 natural 的 R/T 几乎相同，因此“PML 外边界是否强制零切向 E_scat”不是当前 R+T 爆炸主因。
+4. E-Fourier R+T 和采样净通量 R+T 都大于 1，说明问题不是单一 R/T 公式的显示误差。
+5. h=2.5 nm 对 13.5 nm 真空波长只略粗于 lambda0/6，对 n=2 光栅内波长则明显不足；
+   但误差大到 2.6，不能简单归因于普通网格收敛误差，后续应继续查弱式/PML 张量/分层背景源项的一致性。
+```
+
+`zero_tangential` 结果还验证了 z 外边界强边界确实全局施加：
+
+```text
+strong_z_boundary_dirichlet_raw_dofs_global = 7376
+strong_z_boundary_dirichlet_dofs_global = 7216
+```
+
+旧 summary 中 `strong_z_boundary_dirichlet_dofs` 曾只记录 rank0 本地 dof，rank0 没有 z 边界 dof 时会显示 0；代码已改为记录全局数，避免误读。
+
 ## 2026-06-24 更新：R/T 后处理修正后的 sanity 结果
 
 代码变更：
