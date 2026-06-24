@@ -1,5 +1,41 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：衍射级采样面改为物理层 95% 位置
+
+Stage 4 衍射级后处理现在默认在物理区域上下均匀层的 95% 位置采样：
+
+```text
+top_probe_z    = interface_z + 0.95 * (physical_z_max - interface_z)
+bottom_probe_z = interface_z + 0.95 * (physical_z_min - interface_z)
+```
+
+对当前 600/500 nm COMSOL 对比案例，`interface_z=0`，所以就是：
+
+```text
+top_probe_z    = 0.95 * 850  = 807.5 nm
+bottom_probe_z = 0.95 * -350 = -332.5 nm
+```
+
+命令行里仍然可以手动覆盖：
+
+```bash
+--diffraction-top-probe-z 807.5 --diffraction-bottom-probe-z -332.5
+```
+
+summary 里会记录：
+
+```text
+diffraction_top_probe_z
+diffraction_bottom_probe_z
+diffraction_probe_position_fraction_from_interface_to_physical_boundary
+diffraction_sample_count_x / diffraction_sample_count_y
+diffraction_sample_point_count_per_plane
+diffraction_min_sample_count_x_for_fit_orders
+diffraction_min_sample_count_y_for_fit_orders
+```
+
+如果采样点数低于当前拟合级次所需的最低 Fourier 点数，程序会直接报错，而不是继续给出不可靠的衍射级功率。
+
 ## 2026-06-23 更新：600/500 nm COMSOL 对比单胞的推荐用法
 
 当前 Stage 4 默认参数已经切换到这组 COMSOL 对比案例：

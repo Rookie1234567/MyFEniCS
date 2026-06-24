@@ -1,3 +1,30 @@
+## 2026-06-24 更新：Stage 4 衍射级采样面代码路径
+
+这轮只改 Stage 4 diffraction 后处理的默认 probe plane，不改 Maxwell 方程和网格。阅读顺序：
+
+```text
+1. src/postprocessing/diffraction_3d.py
+   看 _probe_z_locations(cfg)：
+     top_probe_z    = interface_z + 0.95 * (physical_z_max - interface_z)
+     bottom_probe_z = interface_z + 0.95 * (physical_z_min - interface_z)
+   对 interface_z=0 的常用 Stage 4 单胞，即 z=0.95*z_max 和 z=0.95*z_min。
+
+   看 _validate_sample_counts(cfg, orders)：
+     根据拟合级次的 max |m| / max |n| 记录最低 Fourier 采样点数；
+     采样点数不足时直接报错。
+
+2. src/test/test_11_stage4_diffraction_modes.py
+   看 test_default_probe_planes_use_95_percent_of_physical_layers()。
+   这个测试锁定 600/500 nm 案例的 top=807.5 nm、bottom=-332.5 nm 默认采样面。
+
+3. run_summary.json / power_metrics_3d.json
+   新增字段：
+     diffraction_probe_position_fraction_from_interface_to_physical_boundary
+     diffraction_sample_point_count_per_plane
+     diffraction_min_sample_count_x_for_fit_orders
+     diffraction_min_sample_count_y_for_fit_orders
+```
+
 ## 2026-06-23 更新：600/500 nm Stage 4 COMSOL 对比代码路径
 
 这轮主要改 Stage 4 输入、功率后处理和 COMSOL-like 图片工具。阅读顺序建议：

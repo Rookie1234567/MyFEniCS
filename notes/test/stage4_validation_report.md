@@ -1,5 +1,40 @@
 # Stage 4 验证报告
 
+## 2026-06-24 更新：衍射级 probe plane 默认位置修正
+
+根据新的检查结论，逐衍射级 R/T 对 bottom probe plane 位置较敏感，而总 Poynting flux 已经接近 0.997。为了更靠近物理层外侧的均匀远场区域，Stage 4 默认衍射级采样面已改为：
+
+```text
+top_probe_z    = interface_z + 0.95 * (physical_z_max - interface_z)
+bottom_probe_z = interface_z + 0.95 * (physical_z_min - interface_z)
+```
+
+当前 600/500 nm 案例对应：
+
+```text
+top_probe_z = 807.5 nm
+bottom_probe_z = -332.5 nm
+```
+
+本次同时新增采样诊断字段：
+
+```text
+diffraction_sample_point_count_per_plane
+diffraction_min_sample_count_x_for_fit_orders
+diffraction_min_sample_count_y_for_fit_orders
+```
+
+后续重新实跑 h50/p1 时，需要重点比较：
+
+```text
+R_total_from_e_fourier / T_total_from_e_fourier / R_plus_T_from_e_fourier
+R_total_from_net_flux / T_total_from_net_flux / R_plus_T_from_net_flux
+diffraction_top_e_fourier_projection_residual_max
+diffraction_bottom_e_fourier_projection_residual_max
+```
+
+若 E-Fourier 逐衍射级求和仍明显低于 net-flux 能量守恒值，则应继续把逐衍射级功率标为 diagnostic，并优先推进真正的 modal port 或更稳健的面投影后处理。
+
 ## 2026-06-23 更新：600/500 nm COMSOL 对比单胞 h50 验证
 
 本轮按 COMSOL 新案例更新了 Stage 4 默认几何：

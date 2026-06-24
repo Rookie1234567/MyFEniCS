@@ -307,15 +307,15 @@ def _e_fourier_order_powers(
 
 
 def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
+    probe_fraction = 0.95
     if cfg.diffraction_top_probe_z is not None:
         top_z = float(cfg.diffraction_top_probe_z)
     else:
-        top_floor = max(cfg.interface_z, cfg.grating_z_max if cfg.has_grating_block else cfg.interface_z)
-        top_z = top_floor + 0.65 * (cfg.physical_z_max - top_floor)
+        top_z = cfg.interface_z + probe_fraction * (cfg.physical_z_max - cfg.interface_z)
     if cfg.diffraction_bottom_probe_z is not None:
         bottom_z = float(cfg.diffraction_bottom_probe_z)
     else:
-        bottom_z = cfg.interface_z - 0.65 * (cfg.interface_z - cfg.physical_z_min)
+        bottom_z = cfg.interface_z + probe_fraction * (cfg.physical_z_min - cfg.interface_z)
 
     if not (cfg.interface_z < top_z < cfg.physical_z_max):
         raise ValueError(
@@ -330,6 +330,23 @@ def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
             f"Bottom diffraction probe z={bottom_z:g} nm must be in the uniform substrate layer before the bottom PML."
         )
     return top_z, bottom_z
+
+
+def _sample_count_requirements(orders: list[DiffractionOrder3D]) -> tuple[int, int]:
+    max_m = max((abs(order.m) for order in orders), default=0)
+    max_n = max((abs(order.n) for order in orders), default=0)
+    return 2 * int(max_m) + 1, 2 * int(max_n) + 1
+
+
+def _validate_sample_counts(cfg: SimulationConfig3D, orders: list[DiffractionOrder3D]) -> tuple[int, int]:
+    min_x, min_y = _sample_count_requirements(orders)
+    if int(cfg.diffraction_sample_count_x) < min_x or int(cfg.diffraction_sample_count_y) < min_y:
+        raise ValueError(
+            "diffraction_sample_count_x/y are too small for the requested diffraction catalog: "
+            f"got {cfg.diffraction_sample_count_x} x {cfg.diffraction_sample_count_y}, "
+            f"need at least {min_x} x {min_y}."
+        )
+    return min_x, min_y
 
 
 def _plane_points(cfg: SimulationConfig3D, z: float) -> np.ndarray:
@@ -571,6 +588,7 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     comm = mesh_data.mesh.comm
     power_orders = enumerate_diffraction_orders_3d(cfg)
     orders, fit_includes_evanescent_neighbors = _orders_for_modal_fit(cfg, power_orders)
+    min_sample_count_x, min_sample_count_y = _validate_sample_counts(cfg, orders)
     top_z, bottom_z = _probe_z_locations(cfg)
     top_points = _plane_points(cfg, top_z)
     bottom_points = _plane_points(cfg, bottom_z)
@@ -715,8 +733,12 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "diffraction_fit_includes_evanescent_neighbors": bool(fit_includes_evanescent_neighbors),
         "diffraction_top_probe_z": top_z,
         "diffraction_bottom_probe_z": bottom_z,
+        "diffraction_probe_position_fraction_from_interface_to_physical_boundary": 0.95,
         "diffraction_sample_count_x": int(cfg.diffraction_sample_count_x),
         "diffraction_sample_count_y": int(cfg.diffraction_sample_count_y),
+        "diffraction_sample_point_count_per_plane": int(cfg.diffraction_sample_count_x) * int(cfg.diffraction_sample_count_y),
+        "diffraction_min_sample_count_x_for_fit_orders": int(min_sample_count_x),
+        "diffraction_min_sample_count_y_for_fit_orders": int(min_sample_count_y),
         "diffraction_top_fit_residual": top_residual,
         "diffraction_bottom_fit_residual": bottom_residual,
         "diffraction_top_fe_response_condition": top_response_condition,

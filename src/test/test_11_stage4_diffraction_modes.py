@@ -9,6 +9,7 @@ from src.postprocessing.diffraction_3d import (
     fit_diffraction_amplitudes_from_samples,
     mode_eh_vectors,
     polarization_basis_3d,
+    _probe_z_locations,
 )
 from src.test.stage2_test_utils import stage4_block_config
 
@@ -78,6 +79,20 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(amplitudes[(0, 0, "x", "up")].real, 0.25, places=10)
         self.assertAlmostEqual(amplitudes[(0, 0, "x", "up")].imag, -0.1, places=10)
         self.assertLess(abs(amplitudes[(0, 0, "y", "down")]), 1.0e-12)
+
+    def test_default_probe_planes_use_95_percent_of_physical_layers(self):
+        cfg = stage4_block_config(
+            diffraction_zero_order_only=False,
+            z_min=-350.0,
+            z_max=850.0,
+            interface_z=0.0,
+            grating_height=150.0,
+        )
+        top_z, bottom_z = _probe_z_locations(cfg)
+        self.assertAlmostEqual(top_z, 0.95 * cfg.physical_z_max, places=12)
+        self.assertAlmostEqual(bottom_z, 0.95 * cfg.physical_z_min, places=12)
+        self.assertGreater(top_z, cfg.grating_z_max)
+        self.assertLess(bottom_z, cfg.interface_z)
 
 
 if __name__ == "__main__":
