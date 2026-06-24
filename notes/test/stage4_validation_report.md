@@ -1,5 +1,40 @@
 # Stage 4 验证报告
 
+## 2026-06-24 更新：Stage 4 h50/p1 串行与 MPI 2/4/8/12/16 对比
+
+本轮固定当前正式 600/500 nm block grating 案例：
+
+```text
+stage_case = stage4_block_grating
+case = normal
+mesh_target_size = 50 nm
+nedelec_degree = 1
+visualization_degree = 1
+solver_profile = direct
+stage4_boundary_model = pml
+probe planes = 95% physical layers, top/bottom = 807.5 / -332.5 nm
+```
+
+尝试 `h=100 nm` 时被 hexa alignment 检查拒绝，因为当前几何要求 block 边界、interface、PML 入口全部落在网格面上；该几何的 z 方向分层最小需要 `nz=34`，也就是当前 `h=50 nm`。
+
+对比结果如下：
+
+| MPI ranks | 结果目录 | case_status | E-Fourier R+T | 相对串行差值 | net-flux R+T | max \|E\| | max \|E\| / serial | PML top/bottom decay | elapsed s |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `results/3D_stage4_block_grating_normal_p1_h50p0_20260624_013712` | completed | 0.952775 | 0 | 1.014386 | 1.910820 | 1.00 | 0.175714 / 0.040724 | 223.7 |
+| 2 | `results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260624_015216` | completed | 0.921741 | -0.031034 | 0.982857 | 1.877129 | 0.98 | 0.212881 / 0.040493 | 150.1 |
+| 4 | `results/3D_stage4_block_grating_normal_p1_h50p0_np4_20260624_015509` | failed_stage4_energy_balance | 2.073427 | +1.120651 | 2.150272 | 23.617497 | 12.36 | 1.061739 / 0.187570 | 169.9 |
+| 8 | `results/3D_stage4_block_grating_normal_p1_h50p0_np8_20260624_015823` | completed | 0.914782 | -0.037993 | 1.010485 | 11.706217 | 6.13 | 0.358386 / 0.066189 | 201.7 |
+| 12 | `results/3D_stage4_block_grating_normal_p1_h50p0_np12_20260624_020211` | failed_stage4_energy_balance | 1.111209 | +0.158434 | 1.302703 | 9.874917 | 5.17 | 0.815837 / 0.243159 | 269.2 |
+| 16 | `results/3D_stage4_block_grating_normal_p1_h50p0_np16_20260624_020710` | failed_stage4_energy_balance | 1.186946 | +0.234170 | 1.369332 | 7.655168 | 4.01 | 0.726095 / 0.685615 | 241.8 |
+
+结论：
+
+1. 当前 Stage 4 MPI 路径不满足串并行一致性。`np=2` 的场幅值接近串行，但 E-Fourier `R+T` 已偏低约 0.031；`np=4/12/16` 明确失败并出现 `R+T>1`。
+2. `np=4/8/12/16` 的 `max|E|` 是串行的 4 到 12 倍，说明问题不是单纯的 diffraction 后处理，而是并行求解得到的场本身已经依赖 MPI 分区。
+3. Floquet 总约束统计在各并行数中仍显示 `num_constraints=1552`、`max edge midpoint pairing error=0`，但 rank0 看到的 local slave dofs 随 MPI 数变化很大，`np=16` 时 rank0 为 0。后续应重点检查 `dolfinx_mpc` 低层约束数组在分布式所有权、ghost/master ownership、rank-local slave 注册上的一致性。
+4. 在修复 MPI 串并行一致性前，Stage 4 物理结果应优先使用串行 direct；MPI 结果只能作为流程/性能诊断，不能作为物理验收。
+
 ## 2026-06-24 更新：衍射级 probe plane 默认位置修正
 
 根据新的检查结论，逐衍射级 R/T 对 bottom probe plane 位置较敏感，而总 Poynting flux 已经接近 0.997。为了更靠近物理层外侧的均匀远场区域，Stage 4 默认衍射级采样面已改为：
