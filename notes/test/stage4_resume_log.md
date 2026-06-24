@@ -1,5 +1,52 @@
 # Stage 4 续接记录
 
+## 2026-06-24 续接记录：13.5 nm 小周期、natural PML 外边界和 direct-only 清理
+
+本轮修改：
+
+```text
+1. Stage 4 默认几何改为：
+   lambda0 = 13.5 nm
+   period_x = period_y = 100 nm
+   block = 50 x 50 x 50 nm
+   substrate_thickness = 50 nm
+   air_height = 100 nm
+   pml_top = pml_bottom = 25 nm
+   mesh_target_size = 5 nm
+
+2. Stage 4 PML 外边界新增变量：
+   stage4_pml_outer_bc = "natural"          # 默认
+   stage4_pml_outer_bc = "zero_tangential"  # 旧诊断
+
+3. diffraction probe 默认从 0.95 改为 0.75：
+   top_probe_z = 75 nm
+   bottom_probe_z = -37.5 nm
+
+4. 3D solver profile 清理为 direct-only。
+   CLI 仍接受 --solver-profile direct/default/direct_lu，但迭代 profile 已从正式代码路径移除。
+
+5. Stage 4 默认关闭旧 E/H modal diagnostic。
+   正式 R/T 继续使用 E-Fourier diffraction orders。
+```
+
+h25/p1 smoke 结果：
+
+```text
+natural:
+  results/3D_stage4_block_grating_normal_p1_h25p0_20260624_073407
+  R/T/R+T = 0.045960 / 0.278516 / 0.324476
+  max |E_scat| in PML = 3.12e-2
+  linear_problem_setup ≈ 94 s
+
+zero_tangential:
+  results/3D_stage4_block_grating_normal_p1_h25p0_20260624_073105
+  R/T/R+T = 0.045685 / 0.278052 / 0.323737
+  max |E_scat| in PML = 7.02e-4
+  linear_problem_setup ≈ 0.004 s
+```
+
+结论：natural 默认能更真实暴露 PML 截断残余场；正式 E-Fourier R/T 与 zero_tangential 在这个粗网格 smoke 中接近。natural 目前在 `dolfinx_mpc + no z Dirichlet + direct` 下 setup 明显更慢，后续如果要正式跑 h=5，需要优先在服务器或并行环境评估资源。
+
 ## 2026-06-24 续接记录：3D 求解器入口按 Stage 拆分
 
 本轮是代码结构整理，不改变 Stage 4 的物理公式和已验证的 MPI/Floquet 修复结论。

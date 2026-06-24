@@ -1,5 +1,17 @@
 # 3D Maxwell 求解器 profile 原理和使用说明
 
+## 2026-06-24 更新：当前代码已改为 direct-only
+
+为了降低阅读和调试复杂度，当前 3D 代码路径只保留直接法：
+
+```text
+solver_profile = direct
+ksp_type = preonly
+pc_type = lu
+```
+
+CLI 仍兼容 `--solver-profile direct`，`default` 和 `direct_lu` 也只是 direct 别名。下面关于 ASM/ILU/Jacobi/HYPRE 的内容是历史记录，不再对应当前正式代码入口；后续如果重新做求解器优化，应新开一个独立分支或文档，不要混入 Stage 4 物理验证路径。
+
 ## 2026-06-18 更新：当前可靠性结论
 
 对当前 3D complex full-vector Maxwell H(curl) 空气盒 benchmark，直接法仍然是唯一可靠默认求解器：

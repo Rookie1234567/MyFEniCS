@@ -97,10 +97,6 @@ class Stage1AirboxInputs3D:
     floquet_constraint_mode: str = "auto"
     lambda0: float = 633.0
     solver_profile: str = "direct"
-    solver_rtol: float = 1.0e-8
-    solver_atol: float = 1.0e-12
-    solver_max_it: int = 1000
-    solver_monitor: bool = False
     divergence_penalty: float = 0.0
     unique_output: bool = True
 
@@ -125,10 +121,6 @@ class Stage2NoGratingInputs3D:
     pml_alpha: float = 5.0
     n_substrate: float = 1.45
     solver_profile: str = "direct"
-    solver_rtol: float = 1.0e-8
-    solver_atol: float = 1.0e-12
-    solver_max_it: int = 1000
-    solver_monitor: bool = False
     divergence_penalty: float = 0.0
     unique_output: bool = True
 
@@ -142,42 +134,41 @@ class Stage4GratingInputs3D:
     polarization_kind: str | None = None
     nedelec_degree: int = 1
     visualization_degree: int = 1
-    # Hexa meshes require material/block planes to land on grid planes.  For
-    # the current COMSOL comparison cell, h=50 nm and h=25 nm align with the
-    # 600 x 500 nm period, 300 x 200 x 150 nm block, interface, and PML planes.
-    mesh_target_size: float = 25.0
+    # Hexa meshes require material/block planes to land on grid planes.  The
+    # current EUV cell aligns cleanly for h=5 nm: 100 x 100 nm period,
+    # 50 x 50 x 50 nm cube, z=0 interface, and 25 nm PML layers.
+    mesh_target_size: float = 5.0
     mesh_cell_type: str = "auto"
     floquet_constraint_mode: str = "auto"
-    lambda0: float = 633.0
-    use_floquet_xy: bool | None = None
+    lambda0: float = 13.5
+    use_floquet_xy: bool | None = True
     use_pml: bool | None = True
-    pml_top_thickness: float = 250.0
-    pml_bottom_thickness: float = 250.0
+    pml_top_thickness: float = 25.0
+    pml_bottom_thickness: float = 25.0
     pml_alpha: float = 5.0
     n_substrate: float = 1.45
     solver_profile: str = "direct"
-    solver_rtol: float = 1.0e-8
-    solver_atol: float = 1.0e-12
-    solver_max_it: int = 1000
-    solver_monitor: bool = False
     divergence_penalty: float = 0.0
-    period_x: float = 600.0
-    period_y: float = 500.0
-    air_height: float = 850.0
-    substrate_thickness: float = 350.0
+    period_x: float = 100.0
+    period_y: float = 100.0
+    air_height: float = 100.0
+    substrate_thickness: float = 50.0
     n_grating: float = 2.0
-    grating_width_x: float = 300.0
-    grating_width_y: float = 200.0
-    grating_height: float = 150.0
+    grating_width_x: float = 50.0
+    grating_width_y: float = 50.0
+    grating_height: float = 50.0
     scattering_background: str = "layered"
     stage4_boundary_model: str = "pml"  # pml / robin0
+    stage4_pml_outer_bc: str = "natural"  # natural / zero_tangential
     diffraction_zero_order_only: bool = False
     diffraction_order_max_m: int | None = None
     diffraction_order_max_n: int | None = None
-    diffraction_sample_count_x: int = 24
-    diffraction_sample_count_y: int = 24
+    diffraction_sample_count_x: int = 32
+    diffraction_sample_count_y: int = 32
     diffraction_top_probe_z: float | None = None
     diffraction_bottom_probe_z: float | None = None
+    diffraction_probe_fraction: float = 0.75
+    diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float | None = None
     unique_output: bool = True
 
@@ -273,10 +264,6 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--incident-phi-deg", _setting_value(settings, "incident_phi_deg"))
     _add_value(args, "--polarization-kind", _setting_value(settings, "polarization_kind"))
     _add_value(args, "--solver-profile", _setting_value(settings, "solver_profile"))
-    _add_value(args, "--solver-rtol", _setting_value(settings, "solver_rtol"))
-    _add_value(args, "--solver-atol", _setting_value(settings, "solver_atol"))
-    _add_value(args, "--solver-max-it", _setting_value(settings, "solver_max_it"))
-    _add_bool(args, "--solver-monitor", _setting_value(settings, "solver_monitor"))
     _add_value(args, "--divergence-penalty", _setting_value(settings, "divergence_penalty"))
     _add_bool(args, "--unique-output", _setting_value(settings, "unique_output"))
     _add_bool(args, "--use-floquet-xy", _setting_value(settings, "use_floquet_xy"))
@@ -295,6 +282,7 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--grating-height", _setting_value(settings, "grating_height"))
     _add_value(args, "--scattering-background", _setting_value(settings, "scattering_background"))
     _add_value(args, "--stage4-boundary-model", _setting_value(settings, "stage4_boundary_model"))
+    _add_value(args, "--stage4-pml-outer-bc", _setting_value(settings, "stage4_pml_outer_bc"))
     _add_bool(args, "--diffraction-zero-order-only", _setting_value(settings, "diffraction_zero_order_only"))
     _add_value(args, "--diffraction-order-max-m", _setting_value(settings, "diffraction_order_max_m"))
     _add_value(args, "--diffraction-order-max-n", _setting_value(settings, "diffraction_order_max_n"))
@@ -302,6 +290,12 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--diffraction-sample-count-y", _setting_value(settings, "diffraction_sample_count_y"))
     _add_value(args, "--diffraction-top-probe-z", _setting_value(settings, "diffraction_top_probe_z"))
     _add_value(args, "--diffraction-bottom-probe-z", _setting_value(settings, "diffraction_bottom_probe_z"))
+    _add_value(args, "--diffraction-probe-fraction", _setting_value(settings, "diffraction_probe_fraction"))
+    _add_bool(
+        args,
+        "--diffraction-compute-modal-diagnostic",
+        _setting_value(settings, "diffraction_compute_modal_diagnostic"),
+    )
     _add_value(args, "--diffraction-rayleigh-tol", _setting_value(settings, "diffraction_rayleigh_tol"))
     return args
 

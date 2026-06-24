@@ -1,5 +1,32 @@
 # Stage 4 验证报告
 
+## 2026-06-24 更新：13.5 nm 小周期 h25 smoke 与 PML 外边界对比
+
+本轮默认案例改为 13.5 nm 波长、100 x 100 nm 周期、50 nm 立方体。h25/p1 只是流程 smoke，不作为精度结论。
+
+```text
+physical domain = 100 x 100 x 150 nm
+pml_top/bottom = 25 / 25 nm
+diffraction_probe_fraction = 0.75
+top_probe_z / bottom_probe_z = 75 / -37.5 nm
+diffraction_compute_modal_diagnostic = false
+```
+
+| PML outer BC | result dir | R | T | R+T | max \|E_scat\| in PML | linear_problem_setup |
+|---|---|---:|---:|---:|---:|---:|
+| natural | `results/3D_stage4_block_grating_normal_p1_h25p0_20260624_073407` | 0.045960 | 0.278516 | 0.324476 | 3.12e-2 | 93.95 s |
+| zero_tangential | `results/3D_stage4_block_grating_normal_p1_h25p0_20260624_073105` | 0.045685 | 0.278052 | 0.323737 | 7.02e-4 | 0.004 s |
+
+结论：
+
+```text
+1. 默认 natural 不再用外边界零值掩盖 PML 残余场。
+2. 两种外边界在 h25 粗网格上的正式 E-Fourier R/T 很接近。
+3. natural 当前在 dolfinx_mpc + no z Dirichlet + direct 路径下 setup 明显更慢。
+4. 13.5 nm、100 nm 周期会打开很多传播衍射级；旧 E/H modal diagnostic 默认关闭，
+   否则会在多级次情况下拖慢甚至卡住后处理。
+```
+
 ## 2026-06-24 更新：Stage 4 MPI 串并行一致性已修复
 
 本轮修复了 `stage4_block_grating, h50, p1` 在 MPI 下场幅值爆炸、`R+T>1` 的问题。根因不是 RHS，也不是 MUMPS 本身，而是 3D Nedelec Floquet 约束中边方向使用了未置换的几何边顺序；在并行重编号后，约束矩阵会出现很小但足以激发病态解的分区相关差异。

@@ -71,14 +71,6 @@ def _config_updates(args) -> dict[str, object]:
             updates["custom_polarization"] = None
     if args.solver_profile is not None:
         updates["solver_profile"] = args.solver_profile
-    if args.solver_rtol is not None:
-        updates["solver_rtol"] = args.solver_rtol
-    if args.solver_atol is not None:
-        updates["solver_atol"] = args.solver_atol
-    if args.solver_max_it is not None:
-        updates["solver_max_it"] = args.solver_max_it
-    if args.solver_monitor is not None:
-        updates["solver_monitor"] = args.solver_monitor
     if args.divergence_penalty is not None:
         updates["divergence_penalty"] = args.divergence_penalty
     if args.use_floquet_xy is not None:
@@ -119,6 +111,8 @@ def _config_updates(args) -> dict[str, object]:
             updates["use_pml"] = False
             updates["pml_top_thickness"] = 0.0
             updates["pml_bottom_thickness"] = 0.0
+    if args.stage4_pml_outer_bc is not None:
+        updates["stage4_pml_outer_bc"] = args.stage4_pml_outer_bc
     if args.diffraction_zero_order_only is not None:
         updates["diffraction_zero_order_only"] = args.diffraction_zero_order_only
     if args.diffraction_order_max_m is not None:
@@ -133,6 +127,10 @@ def _config_updates(args) -> dict[str, object]:
         updates["diffraction_top_probe_z"] = args.diffraction_top_probe_z
     if args.diffraction_bottom_probe_z is not None:
         updates["diffraction_bottom_probe_z"] = args.diffraction_bottom_probe_z
+    if args.diffraction_probe_fraction is not None:
+        updates["diffraction_probe_fraction"] = args.diffraction_probe_fraction
+    if args.diffraction_compute_modal_diagnostic is not None:
+        updates["diffraction_compute_modal_diagnostic"] = args.diffraction_compute_modal_diagnostic
     if args.diffraction_rayleigh_tol is not None:
         updates["diffraction_rayleigh_tol"] = args.diffraction_rayleigh_tol
     return updates
@@ -171,36 +169,39 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "geometry_kind": "rectangular_block_grating",
             "scattering_background": "layered",
             "stage4_boundary_model": "pml",
-            "lambda0": 633.0,
-            "period_x": 600.0,
-            "period_y": 500.0,
-            "air_height": 850.0,
-            "substrate_thickness": 350.0,
-            "z_min": -350.0,
-            "z_max": 850.0,
+            "stage4_pml_outer_bc": "natural",
+            "lambda0": 13.5,
+            "period_x": 100.0,
+            "period_y": 100.0,
+            "air_height": 100.0,
+            "substrate_thickness": 50.0,
+            "z_min": -50.0,
+            "z_max": 100.0,
             "interface_z": 0.0,
             "use_floquet_xy": True,
             "use_pml": True,
-            "pml_top_thickness": 250.0,
-            "pml_bottom_thickness": 250.0,
+            "pml_top_thickness": 25.0,
+            "pml_bottom_thickness": 25.0,
             "pml_alpha": 5.0,
             "n_substrate": 1.45 + 0.0j,
             "n_grating": 2.0 + 0.0j,
-            "grating_width_x": 300.0,
-            "grating_width_y": 200.0,
-            "grating_height": 150.0,
+            "grating_width_x": 50.0,
+            "grating_width_y": 50.0,
+            "grating_height": 50.0,
             "incident_phi_deg": 0.0,
             "polarization_kind": "s",
             "custom_polarization": None,
-            "mesh_target_size": 50.0,
+            "mesh_target_size": 5.0,
             "nedelec_degree": 1,
             "visualization_degree": 1,
             "mesh_cell_type": "auto",
             "floquet_constraint_mode": "auto",
             "solver_profile": "direct",
             "diffraction_zero_order_only": False,
-            "diffraction_sample_count_x": 24,
-            "diffraction_sample_count_y": 24,
+            "diffraction_sample_count_x": 32,
+            "diffraction_sample_count_y": 32,
+            "diffraction_probe_fraction": 0.75,
+            "diffraction_compute_modal_diagnostic": False,
         }
     if stage_case == "stage4_flat_layer_sanity":
         values = _stage_defaults("stage4_block_grating")
@@ -305,28 +306,9 @@ def main(argv: list[str] | None = None):
     )
     parser.add_argument(
         "--solver-profile",
-        choices=(
-            "default",
-            "direct",
-            "direct_lu",
-            "iterative_asm_lu",
-            "iterative_asm_lu_overlap2",
-            "iterative_asm_ilu",
-            "iterative_bjacobi_ilu",
-            "iterative_jacobi",
-            "iterative_hypre",
-        ),
+        choices=("default", "direct", "direct_lu"),
         default=None,
-        help="3D linear solver profile. direct is the reliable default benchmark.",
-    )
-    parser.add_argument("--solver-rtol", type=float, default=None, help="KSP relative tolerance for iterative profiles.")
-    parser.add_argument("--solver-atol", type=float, default=None, help="KSP absolute tolerance for iterative profiles.")
-    parser.add_argument("--solver-max-it", type=int, default=None, help="KSP maximum iterations for iterative profiles.")
-    parser.add_argument(
-        "--solver-monitor",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Print PETSc KSP residual monitoring for iterative profiles.",
+        help="3D linear solver profile. The current code is direct-only; aliases map to preonly+lu.",
     )
     parser.add_argument(
         "--divergence-penalty",
@@ -372,6 +354,12 @@ def main(argv: list[str] | None = None):
         help="Stage-4 vertical truncation. 'robin0' is a diagnostic zero-order radiation boundary without PML.",
     )
     parser.add_argument(
+        "--stage4-pml-outer-bc",
+        choices=("natural", "zero_tangential"),
+        default=None,
+        help="Outer z-face treatment for Stage-4 PML. Default natural leaves the PML truncation visible.",
+    )
+    parser.add_argument(
         "--diffraction-zero-order-only",
         action=argparse.BooleanOptionalAction,
         default=None,
@@ -383,6 +371,13 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--diffraction-sample-count-y", type=int, default=None)
     parser.add_argument("--diffraction-top-probe-z", type=float, default=None)
     parser.add_argument("--diffraction-bottom-probe-z", type=float, default=None)
+    parser.add_argument("--diffraction-probe-fraction", type=float, default=None)
+    parser.add_argument(
+        "--diffraction-compute-modal-diagnostic",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Compute the old E/H modal-fit diagnostic. Default is off because EUV cells may have many orders.",
+    )
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
     args = parser.parse_args(argv)
 

@@ -307,7 +307,9 @@ def _e_fourier_order_powers(
 
 
 def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
-    probe_fraction = 0.95
+    probe_fraction = float(cfg.diffraction_probe_fraction)
+    if not (0.0 < probe_fraction < 1.0):
+        raise ValueError("diffraction_probe_fraction must be between 0 and 1.")
     if cfg.diffraction_top_probe_z is not None:
         top_z = float(cfg.diffraction_top_probe_z)
     else:
@@ -611,28 +613,37 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     bottom_flux_outward = _sampled_flux_code_units(bottom_e, bottom_h, np.asarray((0.0, 0.0, -1.0)), cfg)
     R_from_net_flux = 1.0 + top_flux_outward / incident_power
     T_from_net_flux = bottom_flux_outward / incident_power
-    top_amp, top_residual = fit_diffraction_amplitudes_from_samples(
-        cfg, orders, top_points, top_e, top_h, side="top"
-    )
-    bottom_amp, bottom_residual = fit_diffraction_amplitudes_from_samples(
-        cfg, orders, bottom_points, bottom_e, bottom_h, side="bottom"
-    )
-    top_amp, top_response_condition = _calibrated_amplitudes(
-        top_amp,
-        E_total,
-        cfg,
-        orders,
-        top_points,
-        side="top",
-    )
-    bottom_amp, bottom_response_condition = _calibrated_amplitudes(
-        bottom_amp,
-        E_total,
-        cfg,
-        orders,
-        bottom_points,
-        side="bottom",
-    )
+    compute_modal_diagnostic = bool(cfg.diffraction_compute_modal_diagnostic)
+    if compute_modal_diagnostic:
+        top_amp, top_residual = fit_diffraction_amplitudes_from_samples(
+            cfg, orders, top_points, top_e, top_h, side="top"
+        )
+        bottom_amp, bottom_residual = fit_diffraction_amplitudes_from_samples(
+            cfg, orders, bottom_points, bottom_e, bottom_h, side="bottom"
+        )
+        top_amp, top_response_condition = _calibrated_amplitudes(
+            top_amp,
+            E_total,
+            cfg,
+            orders,
+            top_points,
+            side="top",
+        )
+        bottom_amp, bottom_response_condition = _calibrated_amplitudes(
+            bottom_amp,
+            E_total,
+            cfg,
+            orders,
+            bottom_points,
+            side="bottom",
+        )
+    else:
+        top_amp = {}
+        bottom_amp = {}
+        top_residual = None
+        bottom_residual = None
+        top_response_condition = None
+        bottom_response_condition = None
 
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
@@ -690,9 +701,9 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
                 }
             )
 
-    modal_R_total = float(R_total)
-    modal_T_total = float(T_total)
-    modal_R_plus_T = float(modal_R_total + modal_T_total)
+    modal_R_total = float(R_total) if compute_modal_diagnostic else None
+    modal_T_total = float(T_total) if compute_modal_diagnostic else None
+    modal_R_plus_T = float(modal_R_total + modal_T_total) if compute_modal_diagnostic else None
     official_R_total = float(e_fourier_metrics["R_total_from_e_fourier"])
     official_T_total = float(e_fourier_metrics["T_total_from_e_fourier"])
     official_R_plus_T = float(e_fourier_metrics["R_plus_T_from_e_fourier"])
@@ -705,27 +716,25 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "R_plus_T": official_R_plus_T,
         "A_balance": float(1.0 - official_R_plus_T),
         "diffraction_total_power_source": "e_fourier_orders",
-        "diffraction_e_fourier_note": (
-            "Official Stage-4 R/T uses Fourier coefficients of E on uniform probe planes. "
-            "The older E/H least-squares modal powers remain diagnostic because H is reconstructed from FE curl."
-        ),
+        "diffraction_e_fourier_note": "Official Stage-4 R/T uses Fourier coefficients of E on uniform probe planes.",
         **e_fourier_metrics,
         "diffraction_modal_order_powers_diagnostic_only": True,
+        "diffraction_modal_diagnostic_computed": compute_modal_diagnostic,
         "R_total_from_modal_orders": modal_R_total,
         "T_total_from_modal_orders": modal_T_total,
         "R_plus_T_from_modal_orders": modal_R_plus_T,
-        "A_balance_from_modal_orders": float(1.0 - modal_R_plus_T),
+        "A_balance_from_modal_orders": None if modal_R_plus_T is None else float(1.0 - modal_R_plus_T),
         "top_net_flux_code_units": float(top_flux_outward),
         "bottom_net_flux_code_units": float(bottom_flux_outward),
         "sampled_net_flux_diagnostic_only": True,
-        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples. Official Stage-4 R/T uses modal amplitudes.",
+        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples. Official Stage-4 R/T uses E-Fourier modal powers.",
         "R_total_from_net_flux": flux_R_total,
         "T_total_from_net_flux": flux_T_total,
         "R_plus_T_from_net_flux": flux_R_plus_T,
         "A_balance_from_net_flux": float(1.0 - flux_R_plus_T),
-        "modal_minus_flux_R_total": float(modal_R_total - flux_R_total),
-        "modal_minus_flux_T_total": float(modal_T_total - flux_T_total),
-        "modal_minus_flux_R_plus_T": float(modal_R_plus_T - flux_R_plus_T),
+        "modal_minus_flux_R_total": None if modal_R_total is None else float(modal_R_total - flux_R_total),
+        "modal_minus_flux_T_total": None if modal_T_total is None else float(modal_T_total - flux_T_total),
+        "modal_minus_flux_R_plus_T": None if modal_R_plus_T is None else float(modal_R_plus_T - flux_R_plus_T),
         "diffraction_order_count": len(power_orders),
         "diffraction_fit_order_count": len(orders),
         "diffraction_channel_count": len(rows),
@@ -733,7 +742,11 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "diffraction_fit_includes_evanescent_neighbors": bool(fit_includes_evanescent_neighbors),
         "diffraction_top_probe_z": top_z,
         "diffraction_bottom_probe_z": bottom_z,
-        "diffraction_probe_position_fraction_from_interface_to_physical_boundary": 0.95,
+        "diffraction_probe_position_fraction_from_interface_to_physical_boundary": float(cfg.diffraction_probe_fraction),
+        "diffraction_top_probe_distance_to_pml_start": float(cfg.physical_z_max - top_z),
+        "diffraction_bottom_probe_distance_to_pml_start": float(bottom_z - cfg.physical_z_min),
+        "diffraction_top_probe_distance_above_block": float(top_z - cfg.grating_z_max) if cfg.has_grating_block else None,
+        "diffraction_bottom_probe_distance_below_interface": float(cfg.interface_z - bottom_z),
         "diffraction_sample_count_x": int(cfg.diffraction_sample_count_x),
         "diffraction_sample_count_y": int(cfg.diffraction_sample_count_y),
         "diffraction_sample_point_count_per_plane": int(cfg.diffraction_sample_count_x) * int(cfg.diffraction_sample_count_y),

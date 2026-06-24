@@ -1,5 +1,31 @@
 # v2 文档索引
 
+## 2026-06-24 更新：Stage 4 默认切到 13.5 nm 小周期立方体
+
+当前 Stage 4 默认几何输入已经改成：
+
+```text
+lambda0 = 13.5 nm
+period_x = period_y = 100 nm
+block = 50 x 50 x 50 nm
+substrate_thickness = 50 nm
+air_height = 100 nm
+physical domain = 100 x 100 x 150 nm
+pml_top = pml_bottom = 25 nm
+mesh_target_size = 5 nm
+```
+
+Stage 4 PML 外边界新增：
+
+```text
+stage4_pml_outer_bc = "natural"          # 默认
+stage4_pml_outer_bc = "zero_tangential"  # 旧诊断选项
+```
+
+默认 `natural` 不再把 PML 最外层强行设成零切向散射场。这样如果 PML 太薄，ParaView 和 summary 里的 PML 指标会更真实地暴露问题。h25/p1 的 smoke 对比显示：natural 和 zero_tangential 的正式 E-Fourier R/T 很接近，但 natural 的 PML 区散射场更明显，符合“不要用外边界零值掩盖 PML 反射”的目的。
+
+求解器入口也已收敛为 direct-only。CLI 仍接受 `--solver-profile direct`，但迭代 profile 已从当前代码路径中移除。
+
 ## 2026-06-24 更新：3D 求解器入口已按 Stage 拆分
 
 最新代码阅读入口：

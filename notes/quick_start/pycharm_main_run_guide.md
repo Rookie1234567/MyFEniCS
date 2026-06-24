@@ -1,5 +1,35 @@
 # PyCharm 直接运行 main.py 指南
 
+## 2026-06-24 更新：Stage 4 默认参数已切到 13.5 nm 案例
+
+如果研究当前真实 3D 光栅案例，`src/main.py` 里保持：
+
+```python
+ACTIVE_3D_INPUT_GROUP = "stage4_grating"
+```
+
+当前 `Stage4GratingInputs3D` 默认已经是：
+
+```python
+Stage4GratingInputs3D(
+    lambda0=13.5,
+    period_x=100.0,
+    period_y=100.0,
+    air_height=100.0,
+    substrate_thickness=50.0,
+    grating_width_x=50.0,
+    grating_width_y=50.0,
+    grating_height=50.0,
+    pml_top_thickness=25.0,
+    pml_bottom_thickness=25.0,
+    mesh_target_size=5.0,
+    stage4_pml_outer_bc="natural",
+    diffraction_probe_fraction=0.75,
+)
+```
+
+当前 3D 求解器是 direct-only，`main.py` 里不再暴露迭代求解器的 rtol/max-it/monitor 变量。
+
 ## 2026-06-24 更新：3D 输入已按案例拆成 dataclass
 
 如果 `SIMULATION_DIMENSION = "3d"`，现在先看这一行：

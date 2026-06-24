@@ -1,5 +1,64 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：13.5 nm 小周期立方体默认案例
+
+当前 Stage 4 默认案例已经切到：
+
+```text
+lambda0 = 13.5 nm
+period_x = period_y = 100 nm
+block = 50 x 50 x 50 nm
+substrate_thickness = 50 nm
+air_height = 100 nm
+physical domain = 100 x 100 x 150 nm
+pml_top = pml_bottom = 25 nm
+mesh_target_size = 5 nm
+```
+
+PML 外边界默认：
+
+```text
+stage4_pml_outer_bc = "natural"
+```
+
+也就是 PML 最外层不再强行设为零切向 `E_scat`。如果要恢复旧诊断行为，可以命令行加：
+
+```bash
+--stage4-pml-outer-bc zero_tangential
+```
+
+衍射级 probe 面默认也从 95% 改成 75%：
+
+```text
+top_probe_z = 0.75 * physical_z_max = 75 nm
+bottom_probe_z = 0.75 * physical_z_min = -37.5 nm
+```
+
+这样 top probe 离 PML 入口 25 nm，离方块顶面 25 nm；bottom probe 离下方 PML 入口 12.5 nm。summary 会记录这些距离：
+
+```text
+diffraction_top_probe_distance_to_pml_start
+diffraction_bottom_probe_distance_to_pml_start
+diffraction_top_probe_distance_above_block
+diffraction_bottom_probe_distance_below_interface
+```
+
+h25/p1 smoke 对比：
+
+```text
+natural:
+  R/T/R+T = 0.045960 / 0.278516 / 0.324476
+  max |E_scat| in PML = 3.12e-2
+  linear_problem_setup ≈ 94 s
+
+zero_tangential:
+  R/T/R+T = 0.045685 / 0.278052 / 0.323737
+  max |E_scat| in PML = 7.02e-4
+  linear_problem_setup ≈ 0.004 s
+```
+
+结论：正式 E-Fourier R/T 对这个粗网格 smoke 变化很小，但 natural 更容易暴露 PML 截断处的残余场；代价是当前 `dolfinx_mpc + natural z outer boundary + direct` 的 setup 明显更慢。h25 只是流程验证，不是 13.5 nm 的精度网格。
+
 ## 2026-06-24 更新：Stage 4 代码入口已单独拆出
 
 研究真实 3D 光栅时，优先只看这一条路径：

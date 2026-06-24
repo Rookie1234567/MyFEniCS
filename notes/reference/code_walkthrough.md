@@ -1,3 +1,36 @@
+## 2026-06-24 更新：Stage 4 13.5 nm 案例阅读重点
+
+当前 Stage 4 默认已经切到 100 nm x 100 nm 周期、50 nm 立方体、13.5 nm 波长。阅读时先看：
+
+```text
+1. src/main.py
+   Stage4GratingInputs3D:
+     lambda0 = 13.5
+     period_x = period_y = 100
+     grating_width_x/y/height = 50
+     air_height = 100
+     substrate_thickness = 50
+     pml_top/bottom = 25
+     mesh_target_size = 5
+     stage4_pml_outer_bc = "natural"
+     diffraction_probe_fraction = 0.75
+
+2. src/runners/run_3d_airbox.py
+   _stage_defaults("stage4_block_grating") 里有同一套 CLI 默认值。
+
+3. src/solvers/solve_maxwell_3d_common.py
+   看 boundary_condition_setup：
+     stage4_pml_outer_bc="natural" 时，不对 z 外边界加零切向 E_scat；
+     stage4_pml_outer_bc="zero_tangential" 时，恢复旧的零切向诊断。
+
+4. src/postprocessing/diffraction_3d.py
+   _probe_z_locations(cfg) 使用 cfg.diffraction_probe_fraction。
+   现在默认 top/bottom probe 是 75 nm / -37.5 nm，并记录到 PML 入口的距离。
+   默认跳过旧 E/H modal diagnostic，只保留正式 E-Fourier R/T，避免 13.5 nm 多衍射级后处理过慢。
+```
+
+当前求解器路径是 direct-only。旧迭代 profile 文档仅作为历史记录。
+
 ## 2026-06-24 更新：3D 求解器拆分后的阅读路径
 
 现在 3D 求解器不再要求先读一个巨大的 `solve_airbox_maxwell_3d.py`。建议按你当前研究的阶段直接进入：

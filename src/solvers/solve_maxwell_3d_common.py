@@ -35,28 +35,9 @@ SUPPORTED_SOLVER_PROFILES = (
     "default",
     "direct",
     "direct_lu",
-    "iterative_asm_lu",
-    "iterative_asm_lu_overlap2",
-    "iterative_asm_ilu",
-    "iterative_bjacobi_ilu",
-    "iterative_jacobi",
-    "iterative_hypre",
 )
 
 DIRECT_SOLVER_ALIASES = ("default", "direct", "direct_lu")
-EXPERIMENTAL_SOLVER_PROFILES = (
-    "iterative_asm_lu",
-    "iterative_asm_lu_overlap2",
-    "iterative_asm_ilu",
-    "iterative_bjacobi_ilu",
-    "iterative_jacobi",
-)
-DISABLED_SOLVER_PROFILES = {
-    "iterative_hypre": (
-        "hypre BoomerAMG is disabled for this complex Nedelec H(curl) Maxwell "
-        "system because it has shown low-level crashes in the current runtime."
-    ),
-}
 
 
 def _start_timed_stage(comm) -> float:
@@ -93,113 +74,23 @@ def _solver_profile_settings(cfg: SimulationConfig3D) -> dict[str, Any]:
     profile = cfg.solver_profile.strip().lower()
     if profile not in SUPPORTED_SOLVER_PROFILES:
         raise ValueError(
-            f"Unknown 3D solver_profile={cfg.solver_profile!r}. "
-            f"Supported profiles are: {', '.join(SUPPORTED_SOLVER_PROFILES)}."
+            "The 3D solver is currently direct-only. "
+            f"Got solver_profile={cfg.solver_profile!r}; use 'direct'."
         )
-
-    if profile in DISABLED_SOLVER_PROFILES:
-        return {
-            "profile_requested": cfg.solver_profile,
-            "profile_resolved": profile,
-            "petsc_options": {},
-            "reliability": "disabled",
-            "experimental": True,
-            "disabled": True,
-            "disabled_reason": DISABLED_SOLVER_PROFILES[profile],
-            "warnings": [
-                DISABLED_SOLVER_PROFILES[profile],
-                "BoomerAMG is mainly intended for scalar H1-type elliptic problems, "
-                "not as a default preconditioner for this complex H(curl) Maxwell system.",
-            ],
-        }
-
-    if profile in DIRECT_SOLVER_ALIASES:
-        return {
-            "profile_requested": cfg.solver_profile,
-            "profile_resolved": "direct",
-            "petsc_options": {
-                "ksp_type": "preonly",
-                "pc_type": "lu",
-                "ksp_error_if_not_converged": True,
-            },
-            "reliability": "reliable_reference",
-            "experimental": False,
-            "disabled": False,
-            "disabled_reason": None,
-            "warnings": [],
-        }
-
-    common = {
-        "ksp_type": "fgmres",
-        "ksp_rtol": cfg.solver_rtol,
-        "ksp_atol": cfg.solver_atol,
-        "ksp_max_it": cfg.solver_max_it,
-        "ksp_error_if_not_converged": False,
-    }
-    if cfg.solver_monitor:
-        common["ksp_monitor"] = None
-
-    if profile == "iterative_asm_lu":
-        petsc_options = {
-            **common,
-            "pc_type": "asm",
-            "pc_asm_overlap": 1,
-            "sub_ksp_type": "preonly",
-            "sub_pc_type": "lu",
-        }
-    elif profile == "iterative_asm_lu_overlap2":
-        petsc_options = {
-            **common,
-            "pc_type": "asm",
-            "pc_asm_overlap": 2,
-            "sub_ksp_type": "preonly",
-            "sub_pc_type": "lu",
-        }
-    elif profile == "iterative_asm_ilu":
-        petsc_options = {
-            **common,
-            "pc_type": "asm",
-            "pc_asm_overlap": 1,
-            "sub_ksp_type": "preonly",
-            "sub_pc_type": "ilu",
-        }
-    elif profile == "iterative_bjacobi_ilu":
-        petsc_options = {
-            **common,
-            "pc_type": "bjacobi",
-            "sub_ksp_type": "preonly",
-            "sub_pc_type": "ilu",
-        }
-    elif profile == "iterative_jacobi":
-        petsc_options = {
-            **common,
-            "pc_type": "jacobi",
-        }
-    else:
-        raise AssertionError(f"Unhandled solver profile {profile!r}.")
-
-    warnings = [
-        "This iterative solver profile is experimental for the complex 3D H(curl) Maxwell system.",
-        "Compare any converged iterative result against the direct solver before using it as a benchmark.",
-    ]
-    if profile == "iterative_asm_ilu":
-        warnings.append("ASM+ILU has been observed to run but not converge for tested degree-2 airbox cases.")
-    elif profile == "iterative_bjacobi_ilu":
-        warnings.append("Block-Jacobi+ILU has been observed to run but not converge for tested degree-2 airbox cases.")
-    elif profile == "iterative_jacobi":
-        warnings.append("Jacobi is too weak for this Maxwell system and should be used only as a diagnostic baseline.")
-    elif profile == "iterative_asm_lu_overlap2":
-        warnings.append("ASM overlap=2 strengthens the preconditioner but increases memory use.")
 
     return {
         "profile_requested": cfg.solver_profile,
-        "profile_resolved": profile,
-        "petsc_options": petsc_options,
-        "reliability": "experimental_compare_with_direct",
-        "experimental": profile in EXPERIMENTAL_SOLVER_PROFILES,
+        "profile_resolved": "direct",
+        "petsc_options": {
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            "ksp_error_if_not_converged": True,
+        },
+        "reliability": "direct_only_reference",
+        "experimental": False,
         "disabled": False,
         "disabled_reason": None,
-        "warnings": warnings,
+        "warnings": [],
     }
 
 
@@ -1356,18 +1247,23 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     stage4_boundary_model = cfg.stage4_boundary_model.lower()
     if solve_layered_scattered and stage4_boundary_model not in {"pml", "robin0"}:
         raise ValueError("stage4_boundary_model must be 'pml' or 'robin0' for Stage-4 layered scattering.")
+    stage4_pml_outer_bc = cfg.stage4_pml_outer_bc.lower()
+    if solve_layered_scattered and stage4_pml_outer_bc not in {"natural", "zero_tangential"}:
+        raise ValueError("stage4_pml_outer_bc must be 'natural' or 'zero_tangential'.")
     if solve_layered_scattered and stage4_boundary_model == "robin0" and cfg.use_pml:
         raise ValueError("stage4_boundary_model='robin0' requires use_pml=False.")
     # The unknown is a correction/scattered field in all non-total-field paths.
-    # Stage 4 solves the scattered field.  The PML absorbs that scattered
-    # field, and the artificial outer z faces use zero tangential E as the
-    # truncation.  This matches the user's ParaView expectation that the outer
-    # PML boundary carries no solved electric field and also removes a
-    # partition-sensitive open-boundary nullspace seen in MPI block-grating
-    # tests.  The robin0 diagnostic remains a no-PML radiation-boundary path.
-    stage4_pml_zero_outer_boundary = solve_layered_scattered and stage4_boundary_model == "pml"
+    # Stage 4 solves the scattered field.  The default PML truncation is now a
+    # natural outer boundary so a too-thin PML remains visible in diagnostics
+    # instead of being hidden by an imposed zero tangential field.  The old zero
+    # outer boundary is still available as an explicit diagnostic switch.
+    stage4_pml_zero_outer_boundary = (
+        solve_layered_scattered
+        and stage4_boundary_model == "pml"
+        and stage4_pml_outer_bc == "zero_tangential"
+    )
     stage4_robin_boundary = solve_layered_scattered and stage4_boundary_model == "robin0"
-    apply_strong_boundary_bc = not stage4_robin_boundary
+    apply_strong_boundary_bc = not (stage4_robin_boundary or (solve_layered_scattered and not stage4_pml_zero_outer_boundary))
     E_source_for_rhs = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
@@ -1399,14 +1295,18 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     elif apply_strong_boundary_bc:
         boundary_dofs = fem.locate_dofs_topological(V, fdim, mesh_data.boundary_facets)
     bcs = [fem.dirichletbc(E_bc, boundary_dofs)] if apply_strong_boundary_bc else []
+    problem_bcs = bcs if bcs else None
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
     log(f"Dirichlet H(curl) boundary dofs = {len(boundary_dofs)}")
     log(f"field formulation = {field_formulation}")
     if solve_layered_scattered:
         log(f"stage4 boundary model = {stage4_boundary_model}")
+        log(f"stage4 PML outer boundary condition = {stage4_pml_outer_bc}")
         if stage4_pml_zero_outer_boundary:
             log("stage4 PML boundary flow = zero tangential scattered E on outer z PML faces")
+        elif stage4_boundary_model == "pml":
+            log("stage4 PML boundary flow = natural outer z boundary")
         if stage4_robin_boundary:
             log("stage4 diagnostic robin0 boundary = zero-order impedance term without PML")
     if solve_incident_scattered:
@@ -1440,7 +1340,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         problem = fem_petsc.LinearProblem(
             a,
             L,
-            bcs=bcs,
+            bcs=problem_bcs,
             u=E,
             petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_",
             petsc_options=petsc_options,
@@ -1458,7 +1358,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             a,
             L,
             floquet_data.mpc,
-            bcs=bcs,
+            bcs=problem_bcs,
             u=E,
             petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_mpc_",
             petsc_options=petsc_options,
@@ -1533,11 +1433,15 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
         "stage4_boundary_model": stage4_boundary_model if solve_layered_scattered else None,
+        "stage4_pml_outer_bc": stage4_pml_outer_bc if solve_layered_scattered else None,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(len(boundary_dofs)),
         "stage4_matches_2d_scattered_pml_boundary_flow": False,
         "stage4_outer_pml_zero_tangential_e_bc": bool(
-            solve_layered_scattered and cfg.use_pml and apply_strong_boundary_bc
+            solve_layered_scattered and cfg.use_pml and stage4_pml_zero_outer_boundary
+        ),
+        "stage4_outer_pml_natural_bc": bool(
+            solve_layered_scattered and cfg.use_pml and stage4_boundary_model == "pml" and not stage4_pml_zero_outer_boundary
         ),
         "stage4_robin0_zero_order_boundary_enabled": bool(stage4_robin_boundary),
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
@@ -1825,14 +1729,19 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
                 f"{summary['R_total_from_modal_orders']:.6e} / {summary['T_total_from_modal_orders']:.6e}"
             )
             log(f"3D modal-order diagnostic R+T = {summary['R_plus_T_from_modal_orders']:.6e}")
+        else:
+            log("3D modal-order diagnostic skipped")
         if summary.get("R_total_from_net_flux") is not None:
             log(
                 "3D sampled net-flux R/T = "
                 f"{summary['R_total_from_net_flux']:.6e} / {summary['T_total_from_net_flux']:.6e}"
             )
             log(f"3D sampled net-flux R+T = {summary['R_plus_T_from_net_flux']:.6e}")
-        log(f"3D diffraction top fit residual = {summary['diffraction_top_fit_residual']:.6e}")
-        log(f"3D diffraction bottom fit residual = {summary['diffraction_bottom_fit_residual']:.6e}")
+        if summary.get("diffraction_top_fit_residual") is not None:
+            log(f"3D diffraction top fit residual = {summary['diffraction_top_fit_residual']:.6e}")
+            log(f"3D diffraction bottom fit residual = {summary['diffraction_bottom_fit_residual']:.6e}")
+        else:
+            log("3D diffraction modal fit residual skipped")
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log("timing summary seconds:")
     for name, value in timings.items():

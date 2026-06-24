@@ -59,6 +59,7 @@ class SimulationConfig3D:
     interface_z: float = 0.0
     scattering_background: str = "layered"
     stage4_boundary_model: str = "pml"  # "pml" or diagnostic "robin0"
+    stage4_pml_outer_bc: str = "natural"  # "natural" or "zero_tangential"
     use_floquet_xy: bool = False
     use_pml: bool = False
     pml_top_thickness: float = 0.0
@@ -82,10 +83,6 @@ class SimulationConfig3D:
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
     floquet_constraint_mode: str = "auto"  # "auto", "topological_edges", or legacy alias "sparse_facet"
     solver_profile: str = "direct"
-    solver_rtol: float = 1.0e-8
-    solver_atol: float = 1.0e-12
-    solver_max_it: int = 1000
-    solver_monitor: bool = False
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None
@@ -94,6 +91,8 @@ class SimulationConfig3D:
     diffraction_sample_count_y: int = 24
     diffraction_top_probe_z: float | None = None
     diffraction_bottom_probe_z: float | None = None
+    diffraction_probe_fraction: float = 0.75
+    diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)

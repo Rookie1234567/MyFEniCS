@@ -36,11 +36,6 @@ class Stage4DiffractionModeTests(unittest.TestCase):
     def test_auto_catalog_finds_higher_orders_for_large_period(self):
         cfg = stage4_block_config(
             diffraction_zero_order_only=False,
-            period_x=1200.0,
-            period_y=1000.0,
-            grating_width_x=200.0,
-            grating_width_y=200.0,
-            mesh_target_size=50.0,
         )
         orders = enumerate_diffraction_orders_3d(cfg)
         propagating = [(order.m, order.n) for order in orders if order.top_propagating or order.bottom_propagating]
@@ -80,17 +75,18 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(amplitudes[(0, 0, "x", "up")].imag, -0.1, places=10)
         self.assertLess(abs(amplitudes[(0, 0, "y", "down")]), 1.0e-12)
 
-    def test_default_probe_planes_use_95_percent_of_physical_layers(self):
+    def test_default_probe_planes_use_configured_fraction_of_physical_layers(self):
         cfg = stage4_block_config(
             diffraction_zero_order_only=False,
-            z_min=-350.0,
-            z_max=850.0,
+            z_min=-50.0,
+            z_max=100.0,
             interface_z=0.0,
-            grating_height=150.0,
+            grating_height=50.0,
+            diffraction_probe_fraction=0.75,
         )
         top_z, bottom_z = _probe_z_locations(cfg)
-        self.assertAlmostEqual(top_z, 0.95 * cfg.physical_z_max, places=12)
-        self.assertAlmostEqual(bottom_z, 0.95 * cfg.physical_z_min, places=12)
+        self.assertAlmostEqual(top_z, 0.75 * cfg.physical_z_max, places=12)
+        self.assertAlmostEqual(bottom_z, 0.75 * cfg.physical_z_min, places=12)
         self.assertGreater(top_z, cfg.grating_z_max)
         self.assertLess(bottom_z, cfg.interface_z)
 
