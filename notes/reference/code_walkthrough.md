@@ -1,3 +1,50 @@
+## 2026-06-24 更新：Stage 4 MPI 修复后的代码阅读路径
+
+这轮修复的是 Stage 4 在 MPI 下 `R+T>1`、场幅值随并行数变化的问题。阅读顺序建议如下：
+
+```text
+1. src/constraints/floquet_3d.py
+   重点看 _build_topological_edge_context()：
+     mesh.topology.create_entity_permutations()
+     cpp.mesh.entities_to_geometry(..., permute=True)
+
+   这里是根因修复点。3D Nedelec Floquet 约束的 orientation_sign 必须跟
+   DOLFINx 拓扑边方向一致，不能用未置换的几何边顺序。
+
+   再看 _build_constraints_for_kind()：
+     每个 slave dof 仍只对应一个 master dof；
+     local constraint 使用本 rank 装配 owned cells 所需的 local slave dof；
+     summary 会记录 ghost slave constraints / skipped records。
+
+2. src/solvers/solve_airbox_maxwell_3d.py
+   看 _prepare_petsc_options_for_comm()：
+     MPI direct 会显式选择 mumps / superlu_dist / strumpack。
+
+   看 run_airbox_3d_case() 的 boundary_condition_setup：
+     Stage 4 layered_scattered + pml 现在对上下 PML 外边界施加零切向 E_scat。
+
+   看 _assembled_rhs_norm() 和 _linear_system_diagnostics()：
+     summary 里会输出 RHS 范数、解范数、真实线性残差和矩阵范数，
+     用于判断并行差异到底来自 RHS、矩阵还是后处理。
+
+3. notes/test/stage4_validation_report.md
+   顶部表格记录 h50/p1 串行与 MPI 2/4/8/12/16 的最终一致性结果。
+
+4. src/test/test_12_stage4_floquet_orientation_regression.py
+   这是一个轻量回归测试，防止以后误删 create_entity_permutations() 或
+   entities_to_geometry(..., permute=True)。
+```
+
+当前结论：
+
+```text
+stage4_block_grating, h50, p1, normal:
+  serial / np=2 / np=4 / np=8 / np=12 / np=16
+  R+T = 0.952741
+  max|E| = 1.911019
+  linear system solution norm = 1266.870459
+```
+
 ## 2026-06-24 更新：Stage 4 衍射级采样面代码路径
 
 这轮只改 Stage 4 diffraction 后处理的默认 probe plane，不改 Maxwell 方程和网格。阅读顺序：

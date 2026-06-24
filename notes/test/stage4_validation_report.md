@@ -1,6 +1,57 @@
 # Stage 4 验证报告
 
-## 2026-06-24 更新：Stage 4 h50/p1 串行与 MPI 2/4/8/12/16 对比
+## 2026-06-24 更新：Stage 4 MPI 串并行一致性已修复
+
+本轮修复了 `stage4_block_grating, h50, p1` 在 MPI 下场幅值爆炸、`R+T>1` 的问题。根因不是 RHS，也不是 MUMPS 本身，而是 3D Nedelec Floquet 约束中边方向使用了未置换的几何边顺序；在并行重编号后，约束矩阵会出现很小但足以激发病态解的分区相关差异。
+
+代码修复：
+
+```text
+src/constraints/floquet_3d.py
+  1. 调用 mesh.topology.create_entity_permutations()。
+  2. 用 entities_to_geometry(..., permute=True) 取得与 DOLFINx 拓扑一致的边方向。
+  3. local constraint 保留本 rank 装配 owned cells 所需的 local slave dof。
+     这符合 dolfinx_mpc.add_constraint 的语义；它不是全局重复约束。
+
+src/solvers/solve_airbox_maxwell_3d.py
+  1. MPI direct 显式选择 MUMPS/SuperLU_DIST/STRUMPACK 这类并行 LU。
+  2. Stage 4 PML 外边界对散射场施加零切向 E，summary 写出
+     stage4_outer_pml_zero_tangential_e_bc=true。
+  3. summary 新增 unconstrained_rhs_norm、linear_system_rhs_norm、
+     linear_system_solution_norm、linear_system_relative_residual、矩阵范数等诊断字段。
+```
+
+最终验证使用同一组参数：
+
+```text
+stage_case = stage4_block_grating
+mesh_target_size = 50 nm
+nedelec_degree = 1
+visualization_degree = 1
+solver_profile = direct
+stage4_boundary_model = pml
+probe planes = 807.5 / -332.5 nm
+```
+
+| MPI ranks | 结果目录 | case_status | R | T | R+T | max \|E\| | linear solution norm | matrix Frobenius | relative residual | elapsed s |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `results/3D_stage4_block_grating_normal_p1_h50p0_20260624_040509` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 7.09e-12 | 255.5 |
+| 2 | `results/3D_stage4_block_grating_normal_p1_h50p0_np2_20260624_034631` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 3.66e-13 | 175.3 |
+| 4 | `results/3D_stage4_block_grating_normal_p1_h50p0_np4_20260624_034137` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 5.29e-13 | 182.3 |
+| 8 | `results/3D_stage4_block_grating_normal_p1_h50p0_np8_20260624_035010` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 1.96e-13 | 189.9 |
+| 12 | `results/3D_stage4_block_grating_normal_p1_h50p0_np12_20260624_035345` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 4.92e-13 | 243.1 |
+| 16 | `results/3D_stage4_block_grating_normal_p1_h50p0_np16_20260624_035815` | completed | 0.001666 | 0.951074 | 0.952741 | 1.911019 | 1266.870459 | 45.797938 | 7.38e-13 | 362.3 |
+
+结论：
+
+```text
+1. 串行与 MPI 2/4/8/12/16 的矩阵范数、RHS 范数、解范数、max|E| 和 R/T 已一致。
+2. 正式 E-Fourier R+T = 0.952741，小于 1，Stage 4 lossless 能量门槛通过。
+3. sampled net-flux R+T 仍约 1.014，只作为 H=curl(E) 后处理诊断，不作为正式 R/T。
+4. h50/p1 仍是粗网格，和 COMSOL 对齐时应比较场形态与收敛趋势，不把 4.7% 的 A_balance 当成真实吸收。
+```
+
+## 2026-06-24 修复前记录：Stage 4 h50/p1 串行与 MPI 2/4/8/12/16 对比
 
 本轮固定当前正式 600/500 nm block grating 案例：
 

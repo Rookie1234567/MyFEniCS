@@ -19,6 +19,11 @@ class DoubleFloquet3DData:
     mpc: Any
     local_slave_dofs: np.ndarray
     num_local_slaves: int
+    num_local_slave_records_seen: int
+    num_local_ghost_slave_constraints: int
+    num_global_ghost_slave_constraints: int
+    num_local_ghost_slave_records_skipped: int
+    num_global_ghost_slave_records_skipped: int
     constraint_mode_resolved: str
     phase_x: complex
     phase_y: complex
@@ -124,6 +129,7 @@ def _build_edge_dof_map_p1(V) -> dict[int, dict[str, object]]:
 
     edge_dof_map: dict[int, dict[str, object]] = {}
     for cell in range(num_cells):
+        cell_is_owned = cell < cell_map.size_local
         cell_edges = cell_to_edge.links(cell)
         cell_dofs = V.dofmap.cell_dofs(cell)
         if len(cell_edges) != len(edge_entity_dofs):
@@ -145,6 +151,7 @@ def _build_edge_dof_map_p1(V) -> dict[int, dict[str, object]]:
                 "global_dof": int(global_dof[0]),
                 "owner": int(owner[0]),
                 "owned": bool(owned[0]),
+                "touches_owned_cell": bool(cell_is_owned),
             }
             current = edge_dof_map.get(int(edge))
             if current is not None and int(current["global_dof"]) != int(record["global_dof"]):
@@ -152,8 +159,18 @@ def _build_edge_dof_map_p1(V) -> dict[int, dict[str, object]]:
                     "Inconsistent N1curl dof assignment for mesh edge "
                     f"{int(edge)}: {current['global_dof']} vs {record['global_dof']}."
                 )
-            if current is None or (bool(record["owned"]) and not bool(current["owned"])):
+            if current is None:
                 edge_dof_map[int(edge)] = record
+            else:
+                record["touches_owned_cell"] = bool(record["touches_owned_cell"]) or bool(
+                    current.get("touches_owned_cell", False)
+                )
+                if bool(record["owned"]) and not bool(current["owned"]):
+                    edge_dof_map[int(edge)] = record
+                else:
+                    current["touches_owned_cell"] = bool(current.get("touches_owned_cell", False)) or bool(
+                        record["touches_owned_cell"]
+                    )
     return edge_dof_map
 
 
@@ -208,7 +225,11 @@ def _build_topological_edge_context(V, mesh_data, cfg: SimulationConfig3D) -> di
 
     msh.topology.create_connectivity(1, 0)
     midpoints = mesh.compute_midpoints(msh, 1, periodic_edges)
-    edge_geometry = cpp.mesh.entities_to_geometry(msh._cpp_object, 1, periodic_edges, False)
+    # ``permute=True`` returns geometry dofs in the oriented entity order used
+    # by DOLFINx.  For Nedelec constraints the sign must follow this topological
+    # edge orientation, not an arbitrary unpermuted geometry ordering.
+    msh.topology.create_entity_permutations()
+    edge_geometry = cpp.mesh.entities_to_geometry(msh._cpp_object, 1, periodic_edges, True)
 
     local_records: list[dict[str, object]] = []
     local_by_key: dict[tuple[int, int, int, int], dict[str, object]] = {}
@@ -236,6 +257,7 @@ def _build_topological_edge_context(V, mesh_data, cfg: SimulationConfig3D) -> di
             "global_dof": int(edge_info["global_dof"]),
             "owner": int(edge_info["owner"]),
             "owned": bool(edge_info["owned"]),
+            "touches_owned_cell": bool(edge_info.get("touches_owned_cell", False)),
             "key": key,
         }
         current = local_by_key.get(key)
@@ -327,6 +349,8 @@ def _build_constraints_for_kind(
     pair_errors: list[float] = []
     local_slave_globals: list[int] = []
     local_matched_master_globals: list[int] = []
+    local_ghost_slave_records = 0
+    local_ghost_slave_records_for_owned_cells = 0
 
     for record in context["local_records"]:
         if not _record_is_slave_kind(record, cfg, tol, kind):
@@ -376,18 +400,32 @@ def _build_constraints_for_kind(
             np.asarray([int(master["owner"])], dtype=np.int32),
             np.asarray([phase * orientation_sign], dtype=np.complex128),
         )
-        if slave_local in local_maps:
-            raise RuntimeError(
-                f"Local 3D Floquet slave dof {slave_local} would be constrained twice in kind={kind}."
-            )
-        local_maps[slave_local] = (slave_global, *terms)
 
         if bool(record["owned"]):
+            if slave_local in local_maps:
+                raise RuntimeError(
+                    f"Owned local 3D Floquet slave dof {slave_local} would be constrained twice in kind={kind}."
+                )
             if slave_global in owned_raw_maps:
                 raise RuntimeError(
                     f"3D Floquet slave dof {slave_global} would be constrained twice in kind={kind}."
                 )
             owned_raw_maps[slave_global] = terms
+            local_maps[slave_local] = (slave_global, *terms)
+        else:
+            # dolfinx_mpc.add_constraint expects the local slave dofs needed by
+            # this process' element assembly.  That includes ghost slaves that
+            # appear on owned cells, but excludes boundary edges seen only via
+            # ghost cells from neighboring ranks.
+            if bool(record.get("touches_owned_cell", False)):
+                if slave_local in local_maps:
+                    raise RuntimeError(
+                        f"Ghost local 3D Floquet slave dof {slave_local} would be constrained twice in kind={kind}."
+                    )
+                local_maps[slave_local] = (slave_global, *terms)
+                local_ghost_slave_records_for_owned_cells += 1
+            else:
+                local_ghost_slave_records += 1
 
     gathered_slave_globals = comm.allgather(local_slave_globals)
     gathered_master_globals = comm.allgather(local_matched_master_globals)
@@ -422,6 +460,13 @@ def _build_constraints_for_kind(
         "local_maps": local_maps,
         "orientation_values": np.asarray(orientation_values, dtype=np.complex128),
         "pair_error": float(comm.allreduce(max(pair_errors, default=0.0), op=MPI.MAX)),
+        "num_local_slave_records_seen": len(local_slave_globals),
+        "num_local_ghost_slave_records_skipped": local_ghost_slave_records,
+        "num_local_ghost_slave_records_for_owned_cells": local_ghost_slave_records_for_owned_cells,
+        "num_global_ghost_slave_records_skipped": int(comm.allreduce(local_ghost_slave_records, op=MPI.SUM)),
+        "num_global_ghost_slave_records_for_owned_cells": int(
+            comm.allreduce(local_ghost_slave_records_for_owned_cells, op=MPI.SUM)
+        ),
         "num_slave_edges": global_slave_count,
         "num_matched_master_edges": global_matched_count,
         "num_constraints": global_constraints,
@@ -658,6 +703,31 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
     num_x_constraints = int(x_data["num_constraints"])
     num_y_constraints = int(y_data["num_constraints"])
     num_corner_constraints = int(corner_data["num_constraints"])
+    num_local_slave_records_seen = int(
+        x_data["num_local_slave_records_seen"]
+        + y_data["num_local_slave_records_seen"]
+        + corner_data["num_local_slave_records_seen"]
+    )
+    num_local_ghost_slave_constraints = int(
+        x_data["num_local_ghost_slave_records_for_owned_cells"]
+        + y_data["num_local_ghost_slave_records_for_owned_cells"]
+        + corner_data["num_local_ghost_slave_records_for_owned_cells"]
+    )
+    num_global_ghost_slave_constraints = int(
+        x_data["num_global_ghost_slave_records_for_owned_cells"]
+        + y_data["num_global_ghost_slave_records_for_owned_cells"]
+        + corner_data["num_global_ghost_slave_records_for_owned_cells"]
+    )
+    num_local_ghost_slave_records_skipped = int(
+        x_data["num_local_ghost_slave_records_skipped"]
+        + y_data["num_local_ghost_slave_records_skipped"]
+        + corner_data["num_local_ghost_slave_records_skipped"]
+    )
+    num_global_ghost_slave_records_skipped = int(
+        x_data["num_global_ghost_slave_records_skipped"]
+        + y_data["num_global_ghost_slave_records_skipped"]
+        + corner_data["num_global_ghost_slave_records_skipped"]
+    )
 
     if log is not None:
         log(f"3D Floquet phase x = {phase_x.real:.12g} + {phase_x.imag:.12g}j")
@@ -671,6 +741,11 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         log(f"3D Floquet number of y constraints = {num_y_constraints}")
         log(f"3D Floquet number of corner constraints = {num_corner_constraints}")
         log(f"3D Floquet local slave dofs = {len(local_slave_dofs)}")
+        log(f"3D Floquet local slave records seen = {num_local_slave_records_seen}")
+        log(f"3D Floquet local ghost slave constraints = {num_local_ghost_slave_constraints}")
+        log(f"3D Floquet global ghost slave constraints = {num_global_ghost_slave_constraints}")
+        log(f"3D Floquet local ghost slave records skipped = {num_local_ghost_slave_records_skipped}")
+        log(f"3D Floquet global ghost slave records skipped = {num_global_ghost_slave_records_skipped}")
         log(f"3D Floquet raw map nnz = {raw_map_nnz}")
         log(f"3D Floquet max masters per slave = {max_masters_per_slave}")
         log(f"3D Floquet estimated constraint memory MB = {estimated_constraint_memory_mb:.3f}")
@@ -680,6 +755,11 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         mpc=mpc,
         local_slave_dofs=local_slave_dofs,
         num_local_slaves=len(local_slave_dofs),
+        num_local_slave_records_seen=num_local_slave_records_seen,
+        num_local_ghost_slave_constraints=num_local_ghost_slave_constraints,
+        num_global_ghost_slave_constraints=num_global_ghost_slave_constraints,
+        num_local_ghost_slave_records_skipped=num_local_ghost_slave_records_skipped,
+        num_global_ghost_slave_records_skipped=num_global_ghost_slave_records_skipped,
         constraint_mode_resolved=constraint_mode_resolved,
         phase_x=phase_x,
         phase_y=phase_y,

@@ -1,5 +1,46 @@
 # v2 文档索引
 
+## 2026-06-24 更新：Stage 4 MPI 串并行一致性已修复
+
+最新状态：
+
+```text
+stage4_block_grating, h50, p1, normal
+serial / MPI 2 / MPI 4 / MPI 8 / MPI 12 / MPI 16 均已跑通并一致。
+
+R_total = 0.001666
+T_total = 0.951074
+R_plus_T = 0.952741
+max |E_tot| = 1.911019 V/m
+case_status = completed
+stage4_energy_balance_pass = true
+```
+
+本轮根因：
+
+```text
+3D Nedelec Floquet 约束的 orientation_sign 不能用未置换的几何边顺序。
+MPI 下必须使用 DOLFINx 的 entity permutation 后的拓扑边方向。
+```
+
+主要阅读入口：
+
+```text
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/reference/code_walkthrough.md
+notes/test/stage4_validation_report.md
+notes/test/stage4_resume_log.md
+```
+
+主要代码入口：
+
+```text
+src/constraints/floquet_3d.py
+src/solvers/solve_airbox_maxwell_3d.py
+src/postprocessing/diffraction_3d.py
+src/runners/run_3d_airbox.py
+```
+
 ## 2026-06-23 更新：Stage 4 已切换到 600/500 nm COMSOL 对比单胞
 
 本轮按 COMSOL 新案例更新 Stage 4 默认输入：

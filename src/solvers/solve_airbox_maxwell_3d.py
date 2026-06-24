@@ -203,6 +203,54 @@ def _solver_profile_settings(cfg: SimulationConfig3D) -> dict[str, Any]:
     }
 
 
+def _available_parallel_lu_solver_type() -> str | None:
+    """Return a PETSc LU package that can factor MPI matrices globally."""
+
+    candidates = (
+        ("mumps", "mumps"),
+        ("superlu_dist", "superlu_dist"),
+        ("strumpack", "strumpack"),
+    )
+    for package_name, solver_type in candidates:
+        try:
+            if PETSc.Sys.hasExternalPackage(package_name):
+                return solver_type
+        except Exception:
+            continue
+    return None
+
+
+def _prepare_petsc_options_for_comm(
+    solver_settings: dict[str, Any],
+    comm: MPI.Intracomm,
+) -> tuple[dict[str, Any], str | None, str | None]:
+    """Make direct solver options explicit and safe for serial or MPI runs."""
+
+    petsc_options = dict(solver_settings["petsc_options"])
+    if solver_settings["profile_resolved"] != "direct" or solver_settings["disabled"]:
+        return petsc_options, None, None
+    if comm.size == 1:
+        return petsc_options, None, None
+    parallel_lu = _available_parallel_lu_solver_type()
+    if parallel_lu is None:
+        reason = (
+            "MPI direct solve requested, but this PETSc build does not report MUMPS, "
+            "SuperLU_DIST, or STRUMPACK. Refusing to run preonly+lu because it can "
+            "produce partition-dependent local-factorization results."
+        )
+        return petsc_options, None, reason
+    if parallel_lu is not None:
+        petsc_options["pc_factor_mat_solver_type"] = parallel_lu
+    return petsc_options, parallel_lu, None
+
+
+def _pc_factor_solver_type(pc) -> str | None:
+    try:
+        return str(pc.getFactorSolverType())
+    except Exception:
+        return None
+
+
 def _ksp_reason_name(reason: int) -> str:
     for name in dir(PETSc.KSP.ConvergedReason):
         if name.startswith("_"):
@@ -219,6 +267,8 @@ def _petsc_matrix_stats(A) -> dict[str, Any]:
     A.assemble()
     rows, cols = A.getSize()
     info = A.getInfo()
+    matrix_norm_frobenius = _petsc_object_norm(A, ("NORM_FROBENIUS", "FROBENIUS"))
+    matrix_norm_infinity = _petsc_object_norm(A, ("NORM_INFINITY", "INFINITY"))
     nnz_used = info.get("nz_used")
     average_nnz_per_row = None
     memory_estimate_bytes = None
@@ -234,6 +284,59 @@ def _petsc_matrix_stats(A) -> dict[str, Any]:
         "matrix_average_nnz_per_row": average_nnz_per_row,
         "matrix_memory_bytes": float(info.get("memory")) if info.get("memory") is not None else None,
         "matrix_memory_estimate_bytes": memory_estimate_bytes,
+        "matrix_norm_frobenius": matrix_norm_frobenius,
+        "matrix_norm_infinity": matrix_norm_infinity,
+    }
+
+
+def _petsc_object_norm(obj, names: tuple[str, ...]) -> float | None:
+    for name in names:
+        norm_type = getattr(PETSc.NormType, name, None)
+        if norm_type is None:
+            continue
+        try:
+            return float(obj.norm(norm_type))
+        except Exception:
+            continue
+    try:
+        return float(obj.norm())
+    except Exception:
+        return None
+
+
+def _assembled_rhs_norm(L) -> float | None:
+    """Assemble the original, unconstrained RHS for serial/MPI comparison."""
+
+    try:
+        vec = fem_petsc.assemble_vector(fem.form(L))
+        vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
+        return _petsc_object_norm(vec, ("NORM_2",))
+    except Exception:
+        return None
+
+
+def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
+    """Measure the actually solved PETSc system after MPC assembly."""
+
+    rhs_norm = _petsc_object_norm(b, ("NORM_2",))
+    solution_norm = _petsc_object_norm(x, ("NORM_2",))
+    residual_norm = None
+    relative_residual = None
+    try:
+        residual = b.duplicate()
+        A.mult(x, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), b)
+        residual_norm = _petsc_object_norm(residual, ("NORM_2",))
+        if residual_norm is not None and rhs_norm is not None:
+            relative_residual = float(residual_norm / max(rhs_norm, 1.0e-30))
+    except Exception:
+        residual_norm = None
+        relative_residual = None
+    return {
+        "linear_system_rhs_norm": rhs_norm,
+        "linear_system_solution_norm": solution_norm,
+        "linear_system_residual_norm": residual_norm,
+        "linear_system_relative_residual": relative_residual,
     }
 
 
@@ -245,6 +348,8 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
         log(f"average nnz per row = {matrix_stats['matrix_average_nnz_per_row']:.2f}")
     log(f"PETSc matrix memory bytes = {matrix_stats['matrix_memory_bytes']}")
     log(f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}")
+    log(f"matrix Frobenius norm = {matrix_stats['matrix_norm_frobenius']}")
+    log(f"matrix infinity norm = {matrix_stats['matrix_norm_infinity']}")
 
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
@@ -254,6 +359,7 @@ def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log(f"  reliability          = {summary['solver_reliability']}")
     log(f"  ksp_type             = {summary.get('actual_ksp_type')}")
     log(f"  pc_type              = {summary.get('actual_pc_type')}")
+    log(f"  pc factor solver    = {summary.get('actual_pc_factor_solver_type')}")
     log(f"  converged            = {summary['ksp_converged']}")
     log(f"  converged reason     = {summary['ksp_converged_reason']}")
     log(f"  reason name          = {summary['ksp_converged_reason_name']}")
@@ -1143,19 +1249,26 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"Floquet constraint mode requested = {floquet_constraint_mode_requested}")
     solver_settings = _solver_profile_settings(cfg)
     solver_profile_resolved = solver_settings["profile_resolved"]
-    petsc_options = solver_settings["petsc_options"]
+    petsc_options, selected_parallel_lu, parallel_direct_disabled_reason = _prepare_petsc_options_for_comm(
+        solver_settings, comm
+    )
     log(f"solver profile requested = {solver_settings['profile_requested']}")
     log(f"solver profile resolved = {solver_profile_resolved}")
     log(f"divergence penalty = {cfg.divergence_penalty}")
     log(f"solver reliability = {solver_settings['reliability']}")
+    if selected_parallel_lu is not None:
+        log(f"MPI direct factor solver selected = {selected_parallel_lu}")
+    if parallel_direct_disabled_reason is not None:
+        log(f"WARNING: {parallel_direct_disabled_reason}")
     for warning in solver_settings["warnings"]:
         log(f"WARNING: {warning}")
     log(f"PETSc solver options = {petsc_options}")
 
-    if solver_settings["disabled"]:
+    if solver_settings["disabled"] or parallel_direct_disabled_reason is not None:
         _clear_official_field_outputs(out_dir, comm)
         elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
         max_rss_mb = _global_max_rss_mb(comm)
+        disabled_reason = solver_settings["disabled_reason"] or parallel_direct_disabled_reason
         summary = {
             "case_name": cfg.case_name,
             "stage": _stage_label(cfg),
@@ -1165,7 +1278,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             "official_result": False,
             "diagnostic_only": True,
             "postprocess_skipped": True,
-            "postprocess_skip_reason": solver_settings["disabled_reason"],
+            "postprocess_skip_reason": disabled_reason,
             "num_mesh_cells": None,
             "num_nedelec_dofs": None,
             "matrix_stats": None,
@@ -1178,10 +1291,12 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
             "solver_reliability": solver_settings["reliability"],
             "solver_experimental": solver_settings["experimental"],
             "solver_disabled": True,
-            "solver_disabled_reason": solver_settings["disabled_reason"],
+            "solver_disabled_reason": disabled_reason,
             "solver_warnings": solver_settings["warnings"],
             "actual_ksp_type": None,
             "actual_pc_type": None,
+            "actual_pc_factor_solver_type": None,
+            "selected_parallel_lu_solver_type": selected_parallel_lu,
             "ksp_converged": False,
             "ksp_converged_reason": None,
             "ksp_converged_reason_name": "DISABLED_SOLVER_PROFILE",
@@ -1231,13 +1346,15 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     if solve_layered_scattered and stage4_boundary_model == "robin0" and cfg.use_pml:
         raise ValueError("stage4_boundary_model='robin0' requires use_pml=False.")
     # The unknown is a correction/scattered field in all non-total-field paths.
-    # Stage 4 with PML follows the established 2D scattered-flow convention:
-    # the PML is part of the weak form and the outer z faces are left with the
-    # natural boundary.  The optional robin0 diagnostic also avoids strong
-    # z-face Dirichlet data because the radiation term itself is the truncation.
-    stage4_pml_natural_boundary = solve_layered_scattered and stage4_boundary_model == "pml"
+    # Stage 4 solves the scattered field.  The PML absorbs that scattered
+    # field, and the artificial outer z faces use zero tangential E as the
+    # truncation.  This matches the user's ParaView expectation that the outer
+    # PML boundary carries no solved electric field and also removes a
+    # partition-sensitive open-boundary nullspace seen in MPI block-grating
+    # tests.  The robin0 diagnostic remains a no-PML radiation-boundary path.
+    stage4_pml_zero_outer_boundary = solve_layered_scattered and stage4_boundary_model == "pml"
     stage4_robin_boundary = solve_layered_scattered and stage4_boundary_model == "robin0"
-    apply_strong_boundary_bc = not (stage4_pml_natural_boundary or stage4_robin_boundary)
+    apply_strong_boundary_bc = not stage4_robin_boundary
     E_source_for_rhs = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
@@ -1275,8 +1392,8 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     log(f"field formulation = {field_formulation}")
     if solve_layered_scattered:
         log(f"stage4 boundary model = {stage4_boundary_model}")
-        if stage4_pml_natural_boundary:
-            log("stage4 PML boundary flow = 2D-like natural outer boundary; no strong z-face Dirichlet data")
+        if stage4_pml_zero_outer_boundary:
+            log("stage4 PML boundary flow = zero tangential scattered E on outer z PML faces")
         if stage4_robin_boundary:
             log("stage4 diagnostic robin0 boundary = zero-order impedance term without PML")
     if solve_incident_scattered:
@@ -1300,7 +1417,9 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         field_formulation=field_formulation,
         incident_field=E_source_for_rhs,
     )
+    unconstrained_rhs_norm = _assembled_rhs_norm(L)
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
+    log(f"unconstrained RHS norm = {unconstrained_rhs_norm}")
 
     stage_start = _start_timed_stage(comm)
     if floquet_data is None:
@@ -1365,13 +1484,20 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
     iterations = int(problem.solver.getIterationNumber())
     residual_norm = float(problem.solver.getResidualNorm())
     ksp_type = problem.solver.getType()
-    pc_type = problem.solver.getPC().getType()
+    pc = problem.solver.getPC()
+    pc_type = pc.getType()
+    pc_factor_solver_type = _pc_factor_solver_type(pc)
+    linear_system_diagnostics = _linear_system_diagnostics(problem.A, problem.b, problem.x)
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
     log(f"solver iterations = {iterations}")
     log(f"solver residual norm = {residual_norm:.6e}")
     log(f"actual KSP type = {ksp_type}")
     log(f"actual PC type = {pc_type}")
+    log(f"actual PC factor solver type = {pc_factor_solver_type}")
+    log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
+    log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
+    log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
     elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
     max_rss_mb = _global_max_rss_mb(comm)
     converged = reason > 0
@@ -1396,7 +1522,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "stage4_boundary_model": stage4_boundary_model if solve_layered_scattered else None,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(len(boundary_dofs)),
-        "stage4_matches_2d_scattered_pml_boundary_flow": bool(stage4_pml_natural_boundary),
+        "stage4_matches_2d_scattered_pml_boundary_flow": False,
         "stage4_outer_pml_zero_tangential_e_bc": bool(
             solve_layered_scattered and cfg.use_pml and apply_strong_boundary_bc
         ),
@@ -1444,6 +1570,7 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         ),
         "rhs_source_excludes_air_and_pml": bool(solve_incident_scattered or solve_layered_scattered),
         "rhs_source_norm": rhs_source_norm,
+        "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
         "solver_profile": cfg.solver_profile,
         "solver_profile_resolved": solver_profile_resolved,
@@ -1455,14 +1582,32 @@ def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, obje
         "solver_warnings": solver_settings["warnings"],
         "actual_ksp_type": ksp_type,
         "actual_pc_type": pc_type,
+        "actual_pc_factor_solver_type": pc_factor_solver_type,
+        "selected_parallel_lu_solver_type": selected_parallel_lu,
         "ksp_converged": converged,
         "ksp_converged_reason": reason,
         "ksp_converged_reason_name": reason_name,
         "ksp_iterations": iterations,
         "solver_residual_norm": residual_norm,
+        **linear_system_diagnostics,
         "use_floquet_xy": cfg.use_floquet_xy,
         "use_pml": cfg.use_pml,
         "floquet_num_local_slaves": None if floquet_data is None else floquet_data.num_local_slaves,
+        "floquet_num_local_slave_records_seen": None
+        if floquet_data is None
+        else floquet_data.num_local_slave_records_seen,
+        "floquet_num_local_ghost_slave_constraints": None
+        if floquet_data is None
+        else floquet_data.num_local_ghost_slave_constraints,
+        "floquet_num_global_ghost_slave_constraints": None
+        if floquet_data is None
+        else floquet_data.num_global_ghost_slave_constraints,
+        "floquet_num_local_ghost_slave_records_skipped": None
+        if floquet_data is None
+        else floquet_data.num_local_ghost_slave_records_skipped,
+        "floquet_num_global_ghost_slave_records_skipped": None
+        if floquet_data is None
+        else floquet_data.num_global_ghost_slave_records_skipped,
         "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
         "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
         "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,

@@ -59,7 +59,10 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
     """Tag air, substrate, grating, top PML, and bottom PML cells by midpoint."""
     tdim = msh.topology.dim
     index_map = msh.topology.index_map(tdim)
-    num_cells = index_map.size_local + index_map.num_ghosts
+    # MeshTags used in UFL measures must describe owned integration entities.
+    # Including ghost cells can make material/PML terms depend on the MPI
+    # partition, even when the geometric tags look correct in aggregate.
+    num_cells = index_map.size_local
     cells = np.arange(num_cells, dtype=np.int32)
     midpoints = mesh.compute_midpoints(msh, tdim, cells)
 

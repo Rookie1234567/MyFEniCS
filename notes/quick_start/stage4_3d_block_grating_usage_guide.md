@@ -1,5 +1,64 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：MPI 运行已恢复为可信路径
+
+当前 Stage 4 `h50/p1` 已完成串行与 MPI 2/4/8/12/16 对比，正式 E-Fourier 功率结果一致：
+
+```text
+R_total = 0.001666
+T_total = 0.951074
+R_plus_T = 0.952741
+max |E_tot| = 1.911019 V/m
+```
+
+推荐串行命令：
+
+```bash
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+推荐并行命令，例如 `np=4`：
+
+```bash
+mpiexec -n 4 python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 50 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --solver-profile direct \
+  --stage4-boundary-model pml
+```
+
+阅读结果时重点看：
+
+```text
+case_status = completed
+stage4_energy_balance_pass = true
+R_total / T_total / R_plus_T
+max_abs_E
+linear_system_solution_norm
+linear_system_relative_residual
+stage4_outer_pml_zero_tangential_e_bc = true
+floquet_num_global_ghost_slave_constraints
+```
+
+注意：
+
+```text
+1. Stage 4 PML 吸收的是散射场 E_sca，外边界现在对 E_sca 施加零切向边界。
+2. E_tot = E_b + E_sca；ParaView 中看总电场用 E_tot_V_per_m_abs。
+3. sampled net-flux R+T 仍是诊断字段；正式 R/T 使用 diffraction_total_power_source = e_fourier_orders。
+4. 当前正式 R+T 小于 1，但 h50/p1 仍是粗网格，A_balance 主要反映离散和后处理误差，不应直接解释成真实吸收。
+```
+
 ## 2026-06-24 更新：衍射级采样面改为物理层 95% 位置
 
 Stage 4 衍射级后处理现在默认在物理区域上下均匀层的 95% 位置采样：
