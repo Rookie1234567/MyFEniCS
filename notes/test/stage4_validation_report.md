@@ -35,6 +35,34 @@ diffraction_bottom_e_fourier_projection_residual_max
 
 若 E-Fourier 逐衍射级求和仍明显低于 net-flux 能量守恒值，则应继续把逐衍射级功率标为 diagnostic，并优先推进真正的 modal port 或更稳健的面投影后处理。
 
+已按新默认 probe plane 重新实跑 h50/p1 normal：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h50p0_20260624_013712
+top_probe_z / bottom_probe_z = 807.5 / -332.5 nm
+sample points per plane = 24 x 24 = 576
+minimum sample count for current fit orders = 3 x 3
+
+official E-Fourier R/T = 1.656074e-03 / 9.511194e-01
+official E-Fourier R+T = 9.527755e-01
+sampled net-flux R/T = 4.427998e-02 / 9.701064e-01
+sampled net-flux R+T = 1.014386e+00
+top/bottom E-Fourier projection residual max = 9.519178e-02 / 4.453606e-02
+case_status = completed
+```
+
+逐传播级次的 E-Fourier 功率：
+
+| m | n | pol | R | T |
+| --- | --- | --- | --- | --- |
+| -1 | 0 | s | 0 | 8.104863e-02 |
+| 0 | -1 | p | 0 | 3.495170e-02 |
+| 0 | 0 | y | 1.656074e-03 | 7.191188e-01 |
+| 0 | 1 | p | 0 | 3.495170e-02 |
+| 1 | 0 | s | 0 | 8.104863e-02 |
+
+结论：95% probe plane 让官方逐级 `R+T` 从旧结果约 0.936 提高到约 0.953，但仍没有达到 2D 中约 0.998 的能量闭合水平。当前瓶颈仍是 Stage 4 的 3D diffraction-order power decomposition，而不是采样点数量；576 个点已经明显高于 3 x 3 的最低 Fourier 区分要求。
+
 ## 2026-06-23 更新：600/500 nm COMSOL 对比单胞 h50 验证
 
 本轮按 COMSOL 新案例更新了 Stage 4 默认几何：
