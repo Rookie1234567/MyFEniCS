@@ -1,5 +1,27 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-24 更新：Stage 2 无光栅代码入口已单独拆出
+
+研究 2A/2B/2C 时，优先只看这一条路径：
+
+```text
+src/main.py
+  ACTIVE_3D_INPUT_GROUP = "stage2_no_grating"
+  Stage2NoGratingInputs3D(stage_case="floquet_airbox" / "pml_airbox" / "fresnel_interface")
+
+src/runners/run_3d_airbox.py
+  _stage_defaults(...)
+  _run_stage_config(...)
+
+src/solvers/solve_maxwell_3d_stage_2_no_grating.py
+  run_stage2_no_grating_3d_case(...)
+
+src/solvers/solve_maxwell_3d_common.py
+  只在需要看统一有限元装配和诊断细节时进入。
+```
+
+`src/solvers/solve_airbox_maxwell_3d.py` 现在只是旧导入兼容层，不再作为 Stage 2 的主要阅读入口。
+
 ## 2026-06-22 更新：2C incident-scattered 诊断字段怎么用
 
 运行 2C 后，先看 `run_summary.json` 里的这些字段，确认求解口径没有被意外改回 reference：

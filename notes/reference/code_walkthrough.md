@@ -1,3 +1,45 @@
+## 2026-06-24 更新：3D 求解器拆分后的阅读路径
+
+现在 3D 求解器不再要求先读一个巨大的 `solve_airbox_maxwell_3d.py`。建议按你当前研究的阶段直接进入：
+
+```text
+Stage 1：最小 3D 空气盒
+  1. src/main.py
+     看 ACTIVE_3D_INPUT_GROUP = "stage1_airbox"
+     看 Stage1AirboxInputs3D。
+  2. src/runners/run_3d_airbox.py
+     看 _run_stage_config(...) 如何分发到 Stage 1。
+  3. src/solvers/solve_maxwell_3d_stage_1_airbox.py
+     这是 Stage 1 正式入口。
+  4. src/solvers/solve_maxwell_3d_common.py
+     只在需要看有限元装配细节时再进入。
+
+Stage 2：2A/2B/2C 无光栅验证
+  1. src/main.py
+     看 ACTIVE_3D_INPUT_GROUP = "stage2_no_grating"
+     看 Stage2NoGratingInputs3D。
+  2. src/solvers/solve_maxwell_3d_stage_2_no_grating.py
+     这是 floquet_airbox / pml_airbox / fresnel_interface 的入口。
+  3. src/common/analytic_fields_3d.py、src/common/pml_3d.py、src/constraints/floquet_3d.py
+     分别看解析场、PML、Floquet 约束。
+
+Stage 4：真实 3D 光栅
+  1. src/main.py
+     看 ACTIVE_3D_INPUT_GROUP = "stage4_grating"
+     只改 Stage4GratingInputs3D。
+  2. src/runners/run_3d_airbox.py
+     看 _stage_defaults("stage4_block_grating") 和 _run_stage_config(...)。
+  3. src/solvers/solve_maxwell_3d_stage_4_grating.py
+     这是 Stage 4 正式入口。
+  4. src/solvers/solve_maxwell_3d_common.py
+     看 stage4_layered_background_field(...)、_build_variational_forms(...)、
+     _stage4_lossless_energy_balance_check(...)。
+  5. src/postprocessing/diffraction_3d.py
+     看衍射级 R/T 后处理。
+```
+
+`src/solvers/solve_airbox_maxwell_3d.py` 现在只是旧脚本和旧测试的兼容调度层。新代码阅读时可以先跳过它。
+
 ## 2026-06-24 更新：Stage 4 MPI 修复后的代码阅读路径
 
 这轮修复的是 Stage 4 在 MPI 下 `R+T>1`、场幅值随并行数变化的问题。阅读顺序建议如下：

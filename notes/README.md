@@ -1,5 +1,36 @@
 # v2 文档索引
 
+## 2026-06-24 更新：3D 求解器入口已按 Stage 拆分
+
+最新代码阅读入口：
+
+```text
+Stage 1 空气盒：
+  src/solvers/solve_maxwell_3d_stage_1_airbox.py
+
+Stage 2 无光栅验证：
+  src/solvers/solve_maxwell_3d_stage_2_no_grating.py
+
+Stage 4 真实 3D 光栅：
+  src/solvers/solve_maxwell_3d_stage_4_grating.py
+
+共享底层装配和后处理引擎：
+  src/solvers/solve_maxwell_3d_common.py
+
+旧导入兼容层：
+  src/solvers/solve_airbox_maxwell_3d.py
+```
+
+`src/main.py` 的 3D PyCharm 输入也已拆成三个 dataclass：
+
+```text
+Stage1AirboxInputs3D
+Stage2NoGratingInputs3D
+Stage4GratingInputs3D
+```
+
+现在只会读取 `ACTIVE_3D_INPUT_GROUP` 指向的那一组参数。比如研究 `stage4_grating` 时，Stage 1/2 dataclass 里怎么改都不会影响当前 Stage 4 运行。
+
 ## 2026-06-24 更新：Stage 4 MPI 串并行一致性已修复
 
 最新状态：

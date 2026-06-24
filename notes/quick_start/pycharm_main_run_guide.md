@@ -1,5 +1,39 @@
 # PyCharm 直接运行 main.py 指南
 
+## 2026-06-24 更新：3D 输入已按案例拆成 dataclass
+
+如果 `SIMULATION_DIMENSION = "3d"`，现在先看这一行：
+
+```python
+ACTIVE_3D_INPUT_GROUP = "stage4_grating"
+```
+
+可选值是：
+
+```text
+stage1_airbox       # 只读取 Stage1AirboxInputs3D
+stage2_no_grating   # 只读取 Stage2NoGratingInputs3D
+stage4_grating      # 只读取 Stage4GratingInputs3D
+```
+
+例如你现在研究真实 3D 光栅，就保持：
+
+```python
+ACTIVE_3D_INPUT_GROUP = "stage4_grating"
+
+STAGE4_GRATING_3D = Stage4GratingInputs3D(
+    stage_case="stage4_block_grating",
+    mesh_target_size=25.0,
+    period_x=600.0,
+    period_y=500.0,
+    grating_width_x=300.0,
+    grating_width_y=200.0,
+    grating_height=150.0,
+)
+```
+
+这时 `Stage1AirboxInputs3D` 和 `Stage2NoGratingInputs3D` 里的参数不会进入命令行，也不会影响当前 Stage 4 运行。
+
 ## 2026-06-18 更新：3D 求解器选择变量
 
 如果 `SIMULATION_DIMENSION = "3d"`，可以在 `src/main.py` 的 3D 区块直接选择求解器：

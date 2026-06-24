@@ -13,13 +13,26 @@ from ..common.config_3d import (
     project_root,
 )
 from ..common.output_paths import unique_run_dir
-from ..solvers.solve_airbox_maxwell_3d import run_airbox_3d_case
+from ..solvers.solve_maxwell_3d_stage_1_airbox import STAGE1_CASES, run_stage1_airbox_3d_case
+from ..solvers.solve_maxwell_3d_stage_2_no_grating import STAGE2_CASES, run_stage2_no_grating_3d_case
+from ..solvers.solve_maxwell_3d_stage_4_grating import STAGE4_CASES, run_stage4_grating_3d_case
 from ..solvers.solve_vector_maxwell import _json_default
 
 
 def _number_tag(prefix: str, value: object) -> str:
     text = str(value).replace("-", "m").replace(".", "p")
     return f"{prefix}{text}"
+
+
+def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
+    """Dispatch one 3D config to the stage-specific solver entry."""
+    if cfg.stage_case in STAGE1_CASES:
+        return run_stage1_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE2_CASES:
+        return run_stage2_no_grating_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE4_CASES:
+        return run_stage4_grating_3d_case(cfg, out_dir)
+    raise ValueError(f"Unsupported 3D stage_case={cfg.stage_case!r}.")
 
 
 def _shared_run_dir(results_root: Path, base_name: str, unique_output: bool) -> Path:
@@ -392,7 +405,7 @@ def main(argv: list[str] | None = None):
     single_case_output = len(configs) == 1 and unique_output
     for cfg in configs:
         out_dir = run_root if single_case_output else run_root / cfg.case_name
-        summaries.append(run_airbox_3d_case(cfg, out_dir))
+        summaries.append(_run_stage_config(cfg, out_dir))
 
     if MPI.COMM_WORLD.rank == 0:
         summary_path = run_root / "all_run_summary.json"

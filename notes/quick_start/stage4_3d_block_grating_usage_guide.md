@@ -1,5 +1,32 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：Stage 4 代码入口已单独拆出
+
+研究真实 3D 光栅时，优先只看这一条路径：
+
+```text
+src/main.py
+  ACTIVE_3D_INPUT_GROUP = "stage4_grating"
+  Stage4GratingInputs3D(...)
+
+src/runners/run_3d_airbox.py
+  _stage_defaults("stage4_block_grating")
+  _run_stage_config(...)
+
+src/solvers/solve_maxwell_3d_stage_4_grating.py
+  run_stage4_grating_3d_case(...)
+
+src/solvers/solve_maxwell_3d_common.py
+  stage4_layered_background_field(...)
+  _build_variational_forms(...)
+  _stage4_lossless_energy_balance_check(...)
+
+src/postprocessing/diffraction_3d.py
+  compute_diffraction_orders_3d(...)
+```
+
+`src/main.py` 中 Stage 1/2 的 dataclass 不会影响 Stage 4。只要 `ACTIVE_3D_INPUT_GROUP` 保持为 `"stage4_grating"`，你只需要改 `Stage4GratingInputs3D` 这一块。
+
 ## 2026-06-24 更新：MPI 运行已恢复为可信路径
 
 当前 Stage 4 `h50/p1` 已完成串行与 MPI 2/4/8/12/16 对比，正式 E-Fourier 功率结果一致：

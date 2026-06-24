@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -73,59 +74,131 @@ UNIQUE_OUTPUT = True
 PORT_USE_PML = None
 
 # =============================================================================
-# 3D staged air-box / Floquet / PML settings
+# 3D staged settings
 # =============================================================================
+#
+# Choose the active 3D input group here.  Only the selected dataclass below is
+# translated into CLI flags, so changing an inactive case does not affect the
+# current run.
+ACTIVE_3D_INPUT_GROUP = "stage4_grating"  # stage1_airbox / stage2_no_grating / stage4_grating
 
-# The variables below are converted into the same CLI flags used by
-# src/runners/run_3d_airbox.py, so PyCharm and command-line runs exercise the
-# same code path.
-STAGE_CASE_3D = "stage4_block_grating"  # stage1_airbox, floquet_airbox, pml_airbox, fresnel_interface, stage2_all, stage4_block_grating
-AIRBOX3D_CASE = "normal"  # "normal", "oblique", or "both"
-INCIDENT_THETA_DEG_3D = None  # None keeps the selected case default.
-INCIDENT_PHI_DEG_3D = None
-POLARIZATION_KIND_3D = None  # None keeps case default; otherwise "s", "p", or "custom".
-NEDELEC_DEGREE_3D = 1
-VISUALIZATION_DEGREE_3D = 1
-# Stage 4 hexa meshes require material/block planes to land on grid planes.
-# For the current COMSOL comparison cell, h=50 nm and h=25 nm align with the
-# 600 x 500 nm period, 300 x 200 x 150 nm block, z=0 interface, and PML planes.
-MESH_TARGET_SIZE_3D = 25.0
-MESH_CELL_TYPE_3D = "auto"  # auto / tetrahedron / hexahedron
-FLOQUET_CONSTRAINT_MODE_3D = "auto"  # auto / topological_edges / sparse_facet legacy alias
-LAMBDA0_3D = 633
-USE_FLOQUET_XY_3D = None  # None lets STAGE_CASE_3D choose the default.
-USE_PML_3D = True
-PML_TOP_THICKNESS_3D = 250.0
-PML_BOTTOM_THICKNESS_3D = 250.0
-PML_ALPHA_3D = 5.0
-N_SUBSTRATE_3D = 1.45
-SOLVER_PROFILE_3D = "direct"
-SOLVER_RTOL_3D = 1.0e-8
-SOLVER_ATOL_3D = 1.0e-12
-SOLVER_MAX_IT_3D = 1000
-SOLVER_MONITOR_3D = False
-DIVERGENCE_PENALTY_3D = 0.0
 
-# Stage 4 rectangular block grating settings.  These are ignored by Stage 1/2
-# cases unless their matching CLI flags are consumed by the selected runner.
-PERIOD_X_3D = 600.0
-PERIOD_Y_3D = 500.0
-AIR_HEIGHT_3D = 850.0
-SUBSTRATE_THICKNESS_3D = 350.0
-N_GRATING_3D = 2.0
-GRATING_WIDTH_X_3D = 300.0
-GRATING_WIDTH_Y_3D = 200.0
-GRATING_HEIGHT_3D = 150.0
-SCATTERING_BACKGROUND_3D = "layered"
-STAGE4_BOUNDARY_MODEL_3D = "pml"  # "pml" or diagnostic "robin0"
-DIFFRACTION_ZERO_ORDER_ONLY_3D = False
-DIFFRACTION_ORDER_MAX_M_3D = None
-DIFFRACTION_ORDER_MAX_N_3D = None
-DIFFRACTION_SAMPLE_COUNT_X_3D = 24
-DIFFRACTION_SAMPLE_COUNT_Y_3D = 24
-DIFFRACTION_TOP_PROBE_Z_3D = None
-DIFFRACTION_BOTTOM_PROBE_Z_3D = None
-DIFFRACTION_RAYLEIGH_TOL_3D = None
+@dataclass(frozen=True)
+class Stage1AirboxInputs3D:
+    stage_case: str = "stage1_airbox"
+    case: str = "normal"  # normal / oblique / both
+    incident_theta_deg: float | None = None
+    incident_phi_deg: float | None = None
+    polarization_kind: str | None = None
+    nedelec_degree: int = 2
+    visualization_degree: int = 2
+    mesh_target_size: float = 140.0
+    mesh_cell_type: str = "auto"
+    floquet_constraint_mode: str = "auto"
+    lambda0: float = 633.0
+    solver_profile: str = "direct"
+    solver_rtol: float = 1.0e-8
+    solver_atol: float = 1.0e-12
+    solver_max_it: int = 1000
+    solver_monitor: bool = False
+    divergence_penalty: float = 0.0
+    unique_output: bool = True
+
+
+@dataclass(frozen=True)
+class Stage2NoGratingInputs3D:
+    stage_case: str = "floquet_airbox"  # floquet_airbox / pml_airbox / fresnel_interface / stage2_all
+    case: str = "normal"  # normal / oblique / both
+    incident_theta_deg: float | None = None
+    incident_phi_deg: float | None = None
+    polarization_kind: str | None = None
+    nedelec_degree: int = 1
+    visualization_degree: int = 1
+    mesh_target_size: float = 300.0
+    mesh_cell_type: str = "auto"
+    floquet_constraint_mode: str = "auto"
+    lambda0: float = 633.0
+    use_floquet_xy: bool | None = None
+    use_pml: bool | None = None
+    pml_top_thickness: float = 250.0
+    pml_bottom_thickness: float = 250.0
+    pml_alpha: float = 5.0
+    n_substrate: float = 1.45
+    solver_profile: str = "direct"
+    solver_rtol: float = 1.0e-8
+    solver_atol: float = 1.0e-12
+    solver_max_it: int = 1000
+    solver_monitor: bool = False
+    divergence_penalty: float = 0.0
+    unique_output: bool = True
+
+
+@dataclass(frozen=True)
+class Stage4GratingInputs3D:
+    stage_case: str = "stage4_block_grating"  # stage4_block_grating / stage4_flat_layer_sanity / stage4_all
+    case: str = "normal"  # normal / oblique / both
+    incident_theta_deg: float | None = None
+    incident_phi_deg: float | None = None
+    polarization_kind: str | None = None
+    nedelec_degree: int = 1
+    visualization_degree: int = 1
+    # Hexa meshes require material/block planes to land on grid planes.  For
+    # the current COMSOL comparison cell, h=50 nm and h=25 nm align with the
+    # 600 x 500 nm period, 300 x 200 x 150 nm block, interface, and PML planes.
+    mesh_target_size: float = 25.0
+    mesh_cell_type: str = "auto"
+    floquet_constraint_mode: str = "auto"
+    lambda0: float = 633.0
+    use_floquet_xy: bool | None = None
+    use_pml: bool | None = True
+    pml_top_thickness: float = 250.0
+    pml_bottom_thickness: float = 250.0
+    pml_alpha: float = 5.0
+    n_substrate: float = 1.45
+    solver_profile: str = "direct"
+    solver_rtol: float = 1.0e-8
+    solver_atol: float = 1.0e-12
+    solver_max_it: int = 1000
+    solver_monitor: bool = False
+    divergence_penalty: float = 0.0
+    period_x: float = 600.0
+    period_y: float = 500.0
+    air_height: float = 850.0
+    substrate_thickness: float = 350.0
+    n_grating: float = 2.0
+    grating_width_x: float = 300.0
+    grating_width_y: float = 200.0
+    grating_height: float = 150.0
+    scattering_background: str = "layered"
+    stage4_boundary_model: str = "pml"  # pml / robin0
+    diffraction_zero_order_only: bool = False
+    diffraction_order_max_m: int | None = None
+    diffraction_order_max_n: int | None = None
+    diffraction_sample_count_x: int = 24
+    diffraction_sample_count_y: int = 24
+    diffraction_top_probe_z: float | None = None
+    diffraction_bottom_probe_z: float | None = None
+    diffraction_rayleigh_tol: float | None = None
+    unique_output: bool = True
+
+
+STAGE1_AIRBOX_3D = Stage1AirboxInputs3D()
+STAGE2_NO_GRATING_3D = Stage2NoGratingInputs3D()
+STAGE4_GRATING_3D = Stage4GratingInputs3D()
+
+
+def _selected_3d_inputs() -> object:
+    groups = {
+        "stage1_airbox": STAGE1_AIRBOX_3D,
+        "stage2_no_grating": STAGE2_NO_GRATING_3D,
+        "stage4_grating": STAGE4_GRATING_3D,
+    }
+    try:
+        return groups[ACTIVE_3D_INPUT_GROUP]
+    except KeyError as exc:
+        raise SystemExit(
+            "ACTIVE_3D_INPUT_GROUP must be 'stage1_airbox', 'stage2_no_grating', or 'stage4_grating'."
+        ) from exc
 
 
 def _workspace_root() -> Path:
@@ -152,6 +225,10 @@ def _add_bool(args: list[str], positive_flag: str, value: bool | None) -> None:
         args.append(positive_flag)
     else:
         args.append("--no-" + positive_flag.removeprefix("--"))
+
+
+def _setting_value(settings: object, name: str) -> object | None:
+    return getattr(settings, name, None)
 
 
 def _pycharm_args_2d() -> list[str]:
@@ -183,48 +260,49 @@ def _pycharm_args_2d() -> list[str]:
 
 
 def _pycharm_args_3d() -> list[str]:
-    """Translate the editable 3D variables above into runner CLI arguments."""
-    args = ["--stage-case", STAGE_CASE_3D, "--case", AIRBOX3D_CASE]
-    _add_value(args, "--nedelec-degree", NEDELEC_DEGREE_3D)
-    _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE_3D)
-    _add_value(args, "--mesh-target-size", MESH_TARGET_SIZE_3D)
-    _add_value(args, "--mesh-cell-type", MESH_CELL_TYPE_3D)
-    _add_value(args, "--floquet-constraint-mode", FLOQUET_CONSTRAINT_MODE_3D)
-    _add_value(args, "--lambda0", LAMBDA0_3D)
-    _add_value(args, "--incident-theta-deg", INCIDENT_THETA_DEG_3D)
-    _add_value(args, "--incident-phi-deg", INCIDENT_PHI_DEG_3D)
-    _add_value(args, "--polarization-kind", POLARIZATION_KIND_3D)
-    _add_value(args, "--solver-profile", SOLVER_PROFILE_3D)
-    _add_value(args, "--solver-rtol", SOLVER_RTOL_3D)
-    _add_value(args, "--solver-atol", SOLVER_ATOL_3D)
-    _add_value(args, "--solver-max-it", SOLVER_MAX_IT_3D)
-    _add_bool(args, "--solver-monitor", SOLVER_MONITOR_3D)
-    _add_value(args, "--divergence-penalty", DIVERGENCE_PENALTY_3D)
-    _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
-    _add_bool(args, "--use-floquet-xy", USE_FLOQUET_XY_3D)
-    _add_bool(args, "--use-pml", USE_PML_3D)
-    _add_value(args, "--pml-top-thickness", PML_TOP_THICKNESS_3D)
-    _add_value(args, "--pml-bottom-thickness", PML_BOTTOM_THICKNESS_3D)
-    _add_value(args, "--pml-alpha", PML_ALPHA_3D)
-    _add_value(args, "--n-substrate", N_SUBSTRATE_3D)
-    _add_value(args, "--period-x", PERIOD_X_3D)
-    _add_value(args, "--period-y", PERIOD_Y_3D)
-    _add_value(args, "--air-height", AIR_HEIGHT_3D)
-    _add_value(args, "--substrate-thickness", SUBSTRATE_THICKNESS_3D)
-    _add_value(args, "--n-grating", N_GRATING_3D)
-    _add_value(args, "--grating-width-x", GRATING_WIDTH_X_3D)
-    _add_value(args, "--grating-width-y", GRATING_WIDTH_Y_3D)
-    _add_value(args, "--grating-height", GRATING_HEIGHT_3D)
-    _add_value(args, "--scattering-background", SCATTERING_BACKGROUND_3D)
-    _add_value(args, "--stage4-boundary-model", STAGE4_BOUNDARY_MODEL_3D)
-    _add_bool(args, "--diffraction-zero-order-only", DIFFRACTION_ZERO_ORDER_ONLY_3D)
-    _add_value(args, "--diffraction-order-max-m", DIFFRACTION_ORDER_MAX_M_3D)
-    _add_value(args, "--diffraction-order-max-n", DIFFRACTION_ORDER_MAX_N_3D)
-    _add_value(args, "--diffraction-sample-count-x", DIFFRACTION_SAMPLE_COUNT_X_3D)
-    _add_value(args, "--diffraction-sample-count-y", DIFFRACTION_SAMPLE_COUNT_Y_3D)
-    _add_value(args, "--diffraction-top-probe-z", DIFFRACTION_TOP_PROBE_Z_3D)
-    _add_value(args, "--diffraction-bottom-probe-z", DIFFRACTION_BOTTOM_PROBE_Z_3D)
-    _add_value(args, "--diffraction-rayleigh-tol", DIFFRACTION_RAYLEIGH_TOL_3D)
+    """Translate only the active 3D dataclass into runner CLI arguments."""
+    settings = _selected_3d_inputs()
+    args = ["--stage-case", str(_setting_value(settings, "stage_case")), "--case", str(_setting_value(settings, "case"))]
+    _add_value(args, "--nedelec-degree", _setting_value(settings, "nedelec_degree"))
+    _add_value(args, "--visualization-degree", _setting_value(settings, "visualization_degree"))
+    _add_value(args, "--mesh-target-size", _setting_value(settings, "mesh_target_size"))
+    _add_value(args, "--mesh-cell-type", _setting_value(settings, "mesh_cell_type"))
+    _add_value(args, "--floquet-constraint-mode", _setting_value(settings, "floquet_constraint_mode"))
+    _add_value(args, "--lambda0", _setting_value(settings, "lambda0"))
+    _add_value(args, "--incident-theta-deg", _setting_value(settings, "incident_theta_deg"))
+    _add_value(args, "--incident-phi-deg", _setting_value(settings, "incident_phi_deg"))
+    _add_value(args, "--polarization-kind", _setting_value(settings, "polarization_kind"))
+    _add_value(args, "--solver-profile", _setting_value(settings, "solver_profile"))
+    _add_value(args, "--solver-rtol", _setting_value(settings, "solver_rtol"))
+    _add_value(args, "--solver-atol", _setting_value(settings, "solver_atol"))
+    _add_value(args, "--solver-max-it", _setting_value(settings, "solver_max_it"))
+    _add_bool(args, "--solver-monitor", _setting_value(settings, "solver_monitor"))
+    _add_value(args, "--divergence-penalty", _setting_value(settings, "divergence_penalty"))
+    _add_bool(args, "--unique-output", _setting_value(settings, "unique_output"))
+    _add_bool(args, "--use-floquet-xy", _setting_value(settings, "use_floquet_xy"))
+    _add_bool(args, "--use-pml", _setting_value(settings, "use_pml"))
+    _add_value(args, "--pml-top-thickness", _setting_value(settings, "pml_top_thickness"))
+    _add_value(args, "--pml-bottom-thickness", _setting_value(settings, "pml_bottom_thickness"))
+    _add_value(args, "--pml-alpha", _setting_value(settings, "pml_alpha"))
+    _add_value(args, "--n-substrate", _setting_value(settings, "n_substrate"))
+    _add_value(args, "--period-x", _setting_value(settings, "period_x"))
+    _add_value(args, "--period-y", _setting_value(settings, "period_y"))
+    _add_value(args, "--air-height", _setting_value(settings, "air_height"))
+    _add_value(args, "--substrate-thickness", _setting_value(settings, "substrate_thickness"))
+    _add_value(args, "--n-grating", _setting_value(settings, "n_grating"))
+    _add_value(args, "--grating-width-x", _setting_value(settings, "grating_width_x"))
+    _add_value(args, "--grating-width-y", _setting_value(settings, "grating_width_y"))
+    _add_value(args, "--grating-height", _setting_value(settings, "grating_height"))
+    _add_value(args, "--scattering-background", _setting_value(settings, "scattering_background"))
+    _add_value(args, "--stage4-boundary-model", _setting_value(settings, "stage4_boundary_model"))
+    _add_bool(args, "--diffraction-zero-order-only", _setting_value(settings, "diffraction_zero_order_only"))
+    _add_value(args, "--diffraction-order-max-m", _setting_value(settings, "diffraction_order_max_m"))
+    _add_value(args, "--diffraction-order-max-n", _setting_value(settings, "diffraction_order_max_n"))
+    _add_value(args, "--diffraction-sample-count-x", _setting_value(settings, "diffraction_sample_count_x"))
+    _add_value(args, "--diffraction-sample-count-y", _setting_value(settings, "diffraction_sample_count_y"))
+    _add_value(args, "--diffraction-top-probe-z", _setting_value(settings, "diffraction_top_probe_z"))
+    _add_value(args, "--diffraction-bottom-probe-z", _setting_value(settings, "diffraction_bottom_probe_z"))
+    _add_value(args, "--diffraction-rayleigh-tol", _setting_value(settings, "diffraction_rayleigh_tol"))
     return args
 
 

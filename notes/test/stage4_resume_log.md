@@ -1,5 +1,51 @@
 # Stage 4 续接记录
 
+## 2026-06-24 续接记录：3D 求解器入口按 Stage 拆分
+
+本轮是代码结构整理，不改变 Stage 4 的物理公式和已验证的 MPI/Floquet 修复结论。
+
+完成内容：
+
+```text
+1. 原大文件 src/solvers/solve_airbox_maxwell_3d.py 已拆成：
+   - src/solvers/solve_maxwell_3d_stage_1_airbox.py
+   - src/solvers/solve_maxwell_3d_stage_2_no_grating.py
+   - src/solvers/solve_maxwell_3d_stage_4_grating.py
+   - src/solvers/solve_maxwell_3d_common.py
+
+2. src/solvers/solve_airbox_maxwell_3d.py 保留为旧导入兼容层。
+
+3. src/runners/run_3d_airbox.py 现在按 stage_case 显式分发到 Stage 1/2/4 solver。
+
+4. src/main.py 的 3D PyCharm 输入拆成：
+   - Stage1AirboxInputs3D
+   - Stage2NoGratingInputs3D
+   - Stage4GratingInputs3D
+   当前只读取 ACTIVE_3D_INPUT_GROUP 选中的那一组。
+
+5. 新增轻量回归测试：
+   - src/test/test_13_3d_stage_entrypoints.py
+   用于防止 Stage 1/2/4 入口再次混在一起。
+```
+
+验证结果：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+Ran 31 tests
+OK (skipped=8)
+
+Stage 1 tiny smoke:
+python3 -m fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox \
+  --stage-case stage1_airbox --case normal --mesh-target-size 600 \
+  --nedelec-degree 1 --visualization-degree 1 --solver-profile direct --unique-output
+结果：completed；用于验证 runner -> Stage 1 solver -> common engine 调用链。
+```
+
+下一轮如果继续 Stage 4 物理验证，优先看 `Stage4GratingInputs3D` 和
+`solve_maxwell_3d_stage_4_grating.py`，不要再从旧兼容层开始读。
+
 ## 2026-06-24 续接记录：MPI 串并行一致性修复已完成
 
 本轮接着上一条“MPI 串并行修复未完成”的断点继续。最终确认问题已经修复，可以从这里继续后续物理验证或 COMSOL 对比。
