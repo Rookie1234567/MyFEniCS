@@ -82,7 +82,6 @@ class SimulationConfig3D:
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
     floquet_constraint_mode: str = "auto"  # "auto", "topological_edges", or legacy alias "sparse_facet"
-    solver_profile: str = "direct"
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None

@@ -96,7 +96,6 @@ class Stage1AirboxInputs3D:
     mesh_cell_type: str = "auto"
     floquet_constraint_mode: str = "auto"
     lambda0: float = 633.0
-    solver_profile: str = "direct"
     divergence_penalty: float = 0.0
     unique_output: bool = True
 
@@ -120,7 +119,6 @@ class Stage2NoGratingInputs3D:
     pml_bottom_thickness: float = 250.0
     pml_alpha: float = 5.0
     n_substrate: float = 1.45
-    solver_profile: str = "direct"
     divergence_penalty: float = 0.0
     unique_output: bool = True
 
@@ -137,7 +135,7 @@ class Stage4GratingInputs3D:
     # Hexa meshes require material/block planes to land on grid planes.  The
     # current EUV cell aligns cleanly for h=5 nm: 100 x 100 nm period,
     # 50 x 50 x 50 nm cube, z=0 interface, and 25 nm PML layers.
-    mesh_target_size: float = 5.0
+    mesh_target_size: float = 1.25
     mesh_cell_type: str = "auto"
     floquet_constraint_mode: str = "auto"
     lambda0: float = 13.5
@@ -147,7 +145,6 @@ class Stage4GratingInputs3D:
     pml_bottom_thickness: float = 25.0
     pml_alpha: float = 5.0
     n_substrate: float = 1.45
-    solver_profile: str = "direct"
     divergence_penalty: float = 0.0
     period_x: float = 100.0
     period_y: float = 100.0
@@ -161,8 +158,8 @@ class Stage4GratingInputs3D:
     stage4_boundary_model: str = "pml"  # pml / robin0
     stage4_pml_outer_bc: str = "natural"  # natural / zero_tangential
     diffraction_zero_order_only: bool = False
-    diffraction_order_max_m: int | None = None
-    diffraction_order_max_n: int | None = None
+    diffraction_order_max_m: int | None = 2
+    diffraction_order_max_n: int | None = 2
     diffraction_sample_count_x: int = 32
     diffraction_sample_count_y: int = 32
     diffraction_top_probe_z: float | None = None
@@ -263,7 +260,6 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--incident-theta-deg", _setting_value(settings, "incident_theta_deg"))
     _add_value(args, "--incident-phi-deg", _setting_value(settings, "incident_phi_deg"))
     _add_value(args, "--polarization-kind", _setting_value(settings, "polarization_kind"))
-    _add_value(args, "--solver-profile", _setting_value(settings, "solver_profile"))
     _add_value(args, "--divergence-penalty", _setting_value(settings, "divergence_penalty"))
     _add_bool(args, "--unique-output", _setting_value(settings, "unique_output"))
     _add_bool(args, "--use-floquet-xy", _setting_value(settings, "use_floquet_xy"))

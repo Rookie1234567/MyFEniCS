@@ -94,7 +94,6 @@ def build_3d_extruded_config(
         visualization_degree=1,
         mesh_cell_type="auto",
         floquet_constraint_mode="auto",
-        solver_profile="direct",
         diffraction_zero_order_only=True,
         diffraction_sample_count_x=24,
         diffraction_sample_count_y=8,

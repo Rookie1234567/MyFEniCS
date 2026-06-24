@@ -13,6 +13,7 @@ from petsc4py import PETSc
 
 from dolfinx import fem, geometry
 
+from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.config_3d import SimulationConfig3D
 
 
@@ -80,18 +81,18 @@ def enumerate_diffraction_orders_3d(
         max_n = 0
     else:
         n_max = max(abs(complex(cfg.n_air)), abs(complex(cfg.substrate_index)))
-        max_m = cfg.diffraction_order_max_m
-        max_n = cfg.diffraction_order_max_n
-        # Official power orders should cover propagating candidates, not an
-        # extra evanescent buffer.  Adding far-evanescent orders to the main
-        # least-squares fit can make the modal matrix badly conditioned and
-        # corrupt the propagating R/T values.  The small-period zero-order
-        # benchmark still adds nearest evanescent neighbors separately in
-        # _orders_for_modal_fit().
-        if max_m is None:
-            max_m = int(np.floor((n_max * cfg.k0 + abs(cfg.kx)) * (cfg.x_max - cfg.x_min) / (2.0 * np.pi) + 1.0e-12))
-        if max_n is None:
-            max_n = int(np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12))
+        auto_max_m = int(
+            np.floor((n_max * cfg.k0 + abs(cfg.kx)) * (cfg.x_max - cfg.x_min) / (2.0 * np.pi) + 1.0e-12)
+        )
+        auto_max_n = int(
+            np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12)
+        )
+        # Official power orders must include every propagating order.  User
+        # limits are treated as extra requested range, not as a truncation of
+        # the propagating catalog; otherwise high-order EUV fields alias into
+        # the low-order Fourier coefficients and R/T becomes meaningless.
+        max_m = auto_max_m if cfg.diffraction_order_max_m is None else max(int(cfg.diffraction_order_max_m), auto_max_m)
+        max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
     if max_m < 0 or max_n < 0:
         raise ValueError("diffraction_order_max_m/n must be non-negative.")
 
@@ -583,7 +584,14 @@ def _complex_text(value: complex) -> str:
     return f"{number.real:.16e}{number.imag:+.16e}j"
 
 
-def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, out_dir: Path) -> dict[str, Any]:
+def compute_diffraction_orders_3d(
+    mesh_data,
+    cfg: SimulationConfig3D,
+    E_total,
+    out_dir: Path,
+    *,
+    E_scattered=None,
+) -> dict[str, Any]:
     """Compute 3D reflected/transmitted diffraction-order powers from probes."""
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -594,11 +602,28 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
     top_z, bottom_z = _probe_z_locations(cfg)
     top_points = _plane_points(cfg, top_z)
     bottom_points = _plane_points(cfg, bottom_z)
-    H_total = _h_from_curl_function(E_total, cfg)
-    top_e = _sample_field_at_points(E_total, top_points)
-    top_h = _sample_field_at_points(H_total, top_points)
-    bottom_e = _sample_field_at_points(E_total, bottom_points)
-    bottom_h = _sample_field_at_points(H_total, bottom_points)
+    use_exact_layered_background = E_scattered is not None and cfg.stage_case in {
+        "stage4_block_grating",
+        "stage4_flat_layer_sanity",
+    }
+    if use_exact_layered_background:
+        # Stage 4 solves only the scattered field.  The flat-layer background is
+        # analytic, so using an interpolated E_total at EUV wavelengths can
+        # corrupt R/T when the mesh is still too coarse to represent the fast
+        # substrate phase.  Official power postprocess therefore samples the
+        # numerical scattered field and adds the exact layered background on the
+        # probe planes.
+        H_scattered = _h_from_curl_function(E_scattered, cfg)
+        top_e = _sample_field_at_points(E_scattered, top_points) + electric_field_code_values(cfg, top_points)
+        top_h = _sample_field_at_points(H_scattered, top_points) + magnetic_field_code_values(cfg, top_points)
+        bottom_e = _sample_field_at_points(E_scattered, bottom_points) + electric_field_code_values(cfg, bottom_points)
+        bottom_h = _sample_field_at_points(H_scattered, bottom_points) + magnetic_field_code_values(cfg, bottom_points)
+    else:
+        H_total = _h_from_curl_function(E_total, cfg)
+        top_e = _sample_field_at_points(E_total, top_points)
+        top_h = _sample_field_at_points(H_total, top_points)
+        bottom_e = _sample_field_at_points(E_total, bottom_points)
+        bottom_h = _sample_field_at_points(H_total, bottom_points)
     incident_power = _incident_power(cfg)
     e_fourier_rows, e_fourier_metrics = _e_fourier_order_powers(
         cfg,
@@ -717,6 +742,7 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "A_balance": float(1.0 - official_R_plus_T),
         "diffraction_total_power_source": "e_fourier_orders",
         "diffraction_e_fourier_note": "Official Stage-4 R/T uses Fourier coefficients of E on uniform probe planes.",
+        "diffraction_background_evaluated_analytically": bool(use_exact_layered_background),
         **e_fourier_metrics,
         "diffraction_modal_order_powers_diagnostic_only": True,
         "diffraction_modal_diagnostic_computed": compute_modal_diagnostic,
@@ -739,6 +765,10 @@ def compute_diffraction_orders_3d(mesh_data, cfg: SimulationConfig3D, E_total, o
         "diffraction_fit_order_count": len(orders),
         "diffraction_channel_count": len(rows),
         "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),
+        "diffraction_order_max_m_requested": cfg.diffraction_order_max_m,
+        "diffraction_order_max_n_requested": cfg.diffraction_order_max_n,
+        "diffraction_order_max_m_resolved": int(max((abs(order.m) for order in power_orders), default=0)),
+        "diffraction_order_max_n_resolved": int(max((abs(order.n) for order in power_orders), default=0)),
         "diffraction_fit_includes_evanescent_neighbors": bool(fit_includes_evanescent_neighbors),
         "diffraction_top_probe_z": top_z,
         "diffraction_bottom_probe_z": bottom_z,

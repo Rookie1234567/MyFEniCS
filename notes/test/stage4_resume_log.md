@@ -1,5 +1,107 @@
 # Stage 4 续接记录
 
+## 2026-06-24 续接记录：R/T 后处理修正完成，Docker 全量测试因额度限制暂停
+
+本轮已完成：
+
+```text
+1. 代码中删除 solver_profile / --solver-profile 公开入口。
+   影响文件：
+   - src/common/config_3d.py
+   - src/main.py
+   - src/runners/run_3d_airbox.py
+   - src/solvers/solve_maxwell_3d_common.py
+   - src/test/stage2_test_utils.py
+   - src/test/stage4_2p5d_compare.py
+
+2. 3D 内部线性求解固定为 direct LU：
+   ksp_type = preonly
+   pc_type = lu
+   MPI 时自动选择 mumps / superlu_dist / strumpack。
+
+3. Stage 4 diffraction 后处理修正：
+   - compute_diffraction_orders_3d(..., E_scattered=...)
+   - 官方 R/T 使用 E_scat 数值采样 + 解析 E_bg_exact，而不是插值后的 E_total。
+   - diffraction_zero_order_only=False 时自动补全所有传播衍射级。
+
+4. 新增解析 flat-layer 单元测试：
+   - src/test/test_11_stage4_diffraction_modes.py
+   - test_flat_layer_fresnel_field_e_fourier_power_sanity
+
+5. 中文文档已更新：
+   - notes/README.md
+   - notes/reference/code_walkthrough.md
+   - notes/quick_start/stage4_3d_block_grating_usage_guide.md
+   - notes/quick_start/pycharm_main_run_guide.md
+   - notes/test/stage4_validation_report.md
+```
+
+已完成验证：
+
+```text
+python -m compileall -q src
+结果：通过
+
+rg -n "solver_profile|SOLVER_PROFILE|solver-profile|SUPPORTED_SOLVER|iterative_" src
+结果：src 中无匹配
+
+Docker 单测：
+python3 -m unittest src.test.test_11_stage4_diffraction_modes
+结果：Ran 6 tests, OK
+
+stage4_flat_layer_sanity, h=12.5, p1, np=2:
+results/3D_stage4_flat_layer_sanity_normal_p1_h12p5_np2_20260624_101122
+R/T/R+T = 0.03373594 / 0.9662641 / 1.000000
+结论：flat-layer 背景、Fresnel 归一化和 E-Fourier 后处理通过。
+
+stage4_block_grating, h=12.5, p1, np=2, natural PML 25 nm:
+results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260624_102538
+R/T/R+T = 0.034926 / 0.973677 / 1.008603
+case_status = failed_stage4_energy_balance
+
+stage4_block_grating, h=12.5, p1, np=2, natural PML 50 nm, alpha=8:
+results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260624_102938
+R/T/R+T = 0.034938 / 0.973685 / 1.008623
+case_status = failed_stage4_energy_balance
+结论：粗网格 block-grating 仍不可信；PML 加厚不是 0.86% 超能量主因。
+```
+
+未完成：
+
+```text
+1. Docker 全量单元测试：
+   . dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+   本轮调用时被额度限制拦截，未执行。
+
+2. 修复版 h=2.5 nm 或 h=1.25 nm block-grating 正式验证。
+   当前另有旧代码 h=1.25、np=8 Docker 任务仍在运行，且它使用旧后处理和 zero_tangential，不适合作为最终结果。
+
+3. 如 h=2.5 修复版仍 R+T>1，需要继续查：
+   - grating scattered field 在 probe plane 的横向性和 Fourier 残差
+   - PML 张量对高角传播级的吸收
+   - hexa p1 Nedelec 对 13.5 nm 高频问题的色散误差
+   - 是否需要二阶单元或更细 h<=lambda_sub/6
+```
+
+下次建议命令：
+
+```bash
+# 先跑全量轻量测试
+python3 -m unittest discover -s src/test -p "test_*.py"
+
+# 资源空闲后，跑修复版 h=2.5
+mpiexec -n 8 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 2.5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --stage4-pml-outer-bc natural \
+  --diffraction-sample-count-x 64 \
+  --diffraction-sample-count-y 64 \
+  --unique-output
+```
+
 ## 2026-06-24 续接记录：13.5 nm 小周期、natural PML 外边界和 direct-only 清理
 
 本轮修改：

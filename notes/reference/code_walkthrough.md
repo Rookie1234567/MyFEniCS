@@ -1,3 +1,44 @@
+## 2026-06-24 更新：Stage 4 R/T 修正后的阅读入口
+
+本轮先看这几处：
+
+```text
+1. src/main.py
+   Stage4GratingInputs3D 里不再有 solver_profile。
+   当前只需要改 Stage 4 几何、PML、probe 和 diffraction 参数。
+
+2. src/runners/run_3d_airbox.py
+   CLI 已删除 --solver-profile。
+   _stage_defaults("stage4_block_grating") 仍给出 Stage 4 默认几何和物理参数。
+
+3. src/solvers/solve_maxwell_3d_common.py
+   _direct_lu_petsc_options() 固定为 preonly + lu。
+   Stage 4 仍用 layered_scattered：
+     E_total = E_scat + E_bg
+     RHS = +k0^2 * (eps_true - eps_bg) * inner(E_bg, v)
+
+4. src/postprocessing/diffraction_3d.py
+   compute_diffraction_orders_3d(..., E_scattered=...)
+   现在官方 R/T 采样 E_scat，并在 probe plane 加解析 E_bg_exact。
+   enumerate_diffraction_orders_3d() 会自动补全所有传播级，防止 EUV 多级次被 m,n=2 截断。
+
+5. src/test/test_11_stage4_diffraction_modes.py
+   test_flat_layer_fresnel_field_e_fourier_power_sanity
+   这个测试不求解 Maxwell，只把解析 Fresnel 总场喂给同一套 E-Fourier R/T 后处理。
+```
+
+验证结论：
+
+```text
+flat-layer sanity:
+  E_scat = 0
+  R/T/R+T = 0.03373594 / 0.9662641 / 1.000000
+
+block-grating h=12.5:
+  R+T 仍约 1.0086，结果继续标记为 failed_stage4_energy_balance
+  需要修复版 h=2.5 或更细网格验证
+```
+
 ## 2026-06-24 更新：Stage 4 13.5 nm 案例阅读重点
 
 当前 Stage 4 默认已经切到 100 nm x 100 nm 周期、50 nm 立方体、13.5 nm 波长。阅读时先看：

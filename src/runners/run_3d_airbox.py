@@ -69,8 +69,6 @@ def _config_updates(args) -> dict[str, object]:
         updates["polarization_kind"] = args.polarization_kind
         if args.polarization_kind != "custom":
             updates["custom_polarization"] = None
-    if args.solver_profile is not None:
-        updates["solver_profile"] = args.solver_profile
     if args.divergence_penalty is not None:
         updates["divergence_penalty"] = args.divergence_penalty
     if args.use_floquet_xy is not None:
@@ -196,7 +194,6 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "visualization_degree": 1,
             "mesh_cell_type": "auto",
             "floquet_constraint_mode": "auto",
-            "solver_profile": "direct",
             "diffraction_zero_order_only": False,
             "diffraction_sample_count_x": 32,
             "diffraction_sample_count_y": 32,
@@ -303,12 +300,6 @@ def main(argv: list[str] | None = None):
         choices=("s", "p", "custom"),
         default=None,
         help="3D incident polarization. Stage-1 normal incidence uses custom Ex by default.",
-    )
-    parser.add_argument(
-        "--solver-profile",
-        choices=("default", "direct", "direct_lu"),
-        default=None,
-        help="3D linear solver profile. The current code is direct-only; aliases map to preonly+lu.",
     )
     parser.add_argument(
         "--divergence-penalty",

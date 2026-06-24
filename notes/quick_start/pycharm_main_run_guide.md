@@ -1,5 +1,19 @@
 # PyCharm 直接运行 main.py 指南
 
+## 2026-06-24 更新：不要再设置 solver profile
+
+当前 `src/main.py` 的 3D dataclass 已经删除求解器选择变量。运行 Stage 4 时只改几何、网格、PML、入射角、偏振和衍射级后处理参数；不要再寻找或添加：
+
+```text
+SOLVER_PROFILE_3D
+SOLVER_RTOL_3D
+SOLVER_ATOL_3D
+SOLVER_MAX_IT_3D
+SOLVER_MONITOR_3D
+```
+
+3D 内部固定使用 direct LU。命令行也不再接受 `--solver-profile`。
+
 ## 2026-06-24 更新：Stage 4 默认参数已切到 13.5 nm 案例
 
 如果研究当前真实 3D 光栅案例，`src/main.py` 里保持：
@@ -63,6 +77,10 @@ STAGE4_GRATING_3D = Stage4GratingInputs3D(
 ```
 
 这时 `Stage1AirboxInputs3D` 和 `Stage2NoGratingInputs3D` 里的参数不会进入命令行，也不会影响当前 Stage 4 运行。
+
+## 2026-06-18 历史记录：3D 求解器选择变量已经废弃
+
+下面这一段只保留为历史记录；当前代码已经删除这些变量。
 
 ## 2026-06-18 更新：3D 求解器选择变量
 

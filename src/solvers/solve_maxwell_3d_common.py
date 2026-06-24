@@ -31,15 +31,6 @@ from ..postprocessing.postprocess_3d import save_airbox_3d_fields
 from .solve_vector_maxwell import _json_default
 
 
-SUPPORTED_SOLVER_PROFILES = (
-    "default",
-    "direct",
-    "direct_lu",
-)
-
-DIRECT_SOLVER_ALIASES = ("default", "direct", "direct_lu")
-
-
 def _start_timed_stage(comm) -> float:
     comm.barrier()
     return time.perf_counter()
@@ -70,27 +61,17 @@ def _global_max_rss_mb(comm) -> float | None:
     return float(comm.allreduce(local, op=MPI.MAX))
 
 
-def _solver_profile_settings(cfg: SimulationConfig3D) -> dict[str, Any]:
-    profile = cfg.solver_profile.strip().lower()
-    if profile not in SUPPORTED_SOLVER_PROFILES:
-        raise ValueError(
-            "The 3D solver is currently direct-only. "
-            f"Got solver_profile={cfg.solver_profile!r}; use 'direct'."
-        )
+def _direct_lu_petsc_options() -> dict[str, Any]:
+    """Return the single supported 3D linear solve setting.
 
+    The project is intentionally back to one direct solve path while Stage 4
+    physics and diffraction postprocess are being debugged.  This keeps the
+    PETSc setup explicit without exposing a user-facing solver profile.
+    """
     return {
-        "profile_requested": cfg.solver_profile,
-        "profile_resolved": "direct",
-        "petsc_options": {
-            "ksp_type": "preonly",
-            "pc_type": "lu",
-            "ksp_error_if_not_converged": True,
-        },
-        "reliability": "direct_only_reference",
-        "experimental": False,
-        "disabled": False,
-        "disabled_reason": None,
-        "warnings": [],
+        "ksp_type": "preonly",
+        "pc_type": "lu",
+        "ksp_error_if_not_converged": True,
     }
 
 
@@ -111,15 +92,10 @@ def _available_parallel_lu_solver_type() -> str | None:
     return None
 
 
-def _prepare_petsc_options_for_comm(
-    solver_settings: dict[str, Any],
-    comm: MPI.Intracomm,
-) -> tuple[dict[str, Any], str | None, str | None]:
+def _prepare_direct_lu_options_for_comm(comm: MPI.Intracomm) -> tuple[dict[str, Any], str | None, str | None]:
     """Make direct solver options explicit and safe for serial or MPI runs."""
 
-    petsc_options = dict(solver_settings["petsc_options"])
-    if solver_settings["profile_resolved"] != "direct" or solver_settings["disabled"]:
-        return petsc_options, None, None
+    petsc_options = _direct_lu_petsc_options()
     if comm.size == 1:
         return petsc_options, None, None
     parallel_lu = _available_parallel_lu_solver_type()
@@ -244,10 +220,8 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
 
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
-    log("Solver summary:")
-    log(f"  profile              = {summary['solver_profile']}")
-    log(f"  resolved profile     = {summary['solver_profile_resolved']}")
-    log(f"  reliability          = {summary['solver_reliability']}")
+    log("Linear solve summary:")
+    log(f"  method               = {summary['linear_solve_method']}")
     log(f"  ksp_type             = {summary.get('actual_ksp_type')}")
     log(f"  pc_type              = {summary.get('actual_pc_type')}")
     log(f"  pc factor solver    = {summary.get('actual_pc_factor_solver_type')}")
@@ -1151,59 +1125,45 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     log(f"mesh cell type requested = {cfg.mesh_cell_type}")
     log(f"mesh cell type resolved = {mesh_cell_type_resolved}")
     log(f"Floquet constraint mode requested = {floquet_constraint_mode_requested}")
-    solver_settings = _solver_profile_settings(cfg)
-    solver_profile_resolved = solver_settings["profile_resolved"]
-    petsc_options, selected_parallel_lu, parallel_direct_disabled_reason = _prepare_petsc_options_for_comm(
-        solver_settings, comm
-    )
-    log(f"solver profile requested = {solver_settings['profile_requested']}")
-    log(f"solver profile resolved = {solver_profile_resolved}")
+    petsc_options, selected_parallel_lu, parallel_direct_disabled_reason = _prepare_direct_lu_options_for_comm(comm)
+    log("linear solve method = direct_lu")
     log(f"divergence penalty = {cfg.divergence_penalty}")
-    log(f"solver reliability = {solver_settings['reliability']}")
     if selected_parallel_lu is not None:
         log(f"MPI direct factor solver selected = {selected_parallel_lu}")
     if parallel_direct_disabled_reason is not None:
         log(f"WARNING: {parallel_direct_disabled_reason}")
-    for warning in solver_settings["warnings"]:
-        log(f"WARNING: {warning}")
-    log(f"PETSc solver options = {petsc_options}")
+    log(f"PETSc direct LU options = {petsc_options}")
 
-    if solver_settings["disabled"] or parallel_direct_disabled_reason is not None:
+    if parallel_direct_disabled_reason is not None:
         _clear_official_field_outputs(out_dir, comm)
         elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
         max_rss_mb = _global_max_rss_mb(comm)
-        disabled_reason = solver_settings["disabled_reason"] or parallel_direct_disabled_reason
         summary = {
             "case_name": cfg.case_name,
             "stage": _stage_label(cfg),
             **_summary_base_fields(cfg, comm),
             "config": cfg.as_jsonable(),
-            "case_status": "failed_disabled_solver_profile",
+            "case_status": "failed_parallel_direct_lu_unavailable",
             "official_result": False,
             "diagnostic_only": True,
             "postprocess_skipped": True,
-            "postprocess_skip_reason": disabled_reason,
+            "postprocess_skip_reason": parallel_direct_disabled_reason,
             "num_mesh_cells": None,
             "num_nedelec_dofs": None,
             "matrix_stats": None,
             "petsc_scalar_type": str(PETSc.ScalarType),
             "dolfinx_default_scalar_type": str(default_scalar_type),
-            "solver_backend": "stage-2 3D Maxwell manufactured-reference path",
-            "solver_profile": cfg.solver_profile,
-            "solver_profile_resolved": solver_profile_resolved,
-            "solver_petsc_options": petsc_options,
-            "solver_reliability": solver_settings["reliability"],
-            "solver_experimental": solver_settings["experimental"],
-            "solver_disabled": True,
-            "solver_disabled_reason": disabled_reason,
-            "solver_warnings": solver_settings["warnings"],
+            "solver_backend": "3D Maxwell direct LU path",
+            "linear_solve_method": "direct_lu",
+            "linear_solve_petsc_options": petsc_options,
+            "linear_solve_disabled_reason": parallel_direct_disabled_reason,
             "actual_ksp_type": None,
             "actual_pc_type": None,
             "actual_pc_factor_solver_type": None,
             "selected_parallel_lu_solver_type": selected_parallel_lu,
             "ksp_converged": False,
             "ksp_converged_reason": None,
-            "ksp_converged_reason_name": "DISABLED_SOLVER_PROFILE",
+            "ksp_converged_reason_name": "PARALLEL_DIRECT_LU_UNAVAILABLE",
             "ksp_iterations": 0,
             "solver_residual_norm": None,
             "incident_transversality_dot_k_p": dot_k_p,
@@ -1342,7 +1302,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             L,
             bcs=problem_bcs,
             u=E,
-            petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_",
+            petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_",
             petsc_options=petsc_options,
         )
         solver_backend = (
@@ -1360,7 +1320,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             floquet_data.mpc,
             bcs=problem_bcs,
             u=E,
-            petsc_options_prefix=f"airbox3d_{cfg.case_name}_{solver_profile_resolved}_mpc_",
+            petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_mpc_",
             petsc_options=petsc_options,
         )
         solver_backend = (
@@ -1489,14 +1449,9 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         "rhs_source_norm": rhs_source_norm,
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
-        "solver_profile": cfg.solver_profile,
-        "solver_profile_resolved": solver_profile_resolved,
-        "solver_petsc_options": petsc_options,
-        "solver_reliability": solver_settings["reliability"],
-        "solver_experimental": solver_settings["experimental"],
-        "solver_disabled": False,
-        "solver_disabled_reason": None,
-        "solver_warnings": solver_settings["warnings"],
+        "linear_solve_method": "direct_lu",
+        "linear_solve_petsc_options": petsc_options,
+        "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,
         "actual_pc_type": pc_type,
         "actual_pc_factor_solver_type": pc_factor_solver_type,
@@ -1629,7 +1584,13 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     diffraction_metrics: dict[str, Any] = {}
     if cfg.geometry_kind == "rectangular_block_grating":
         stage_start = _start_timed_stage(comm)
-        diffraction_metrics = compute_diffraction_orders_3d(mesh_data, cfg, E_total, out_dir)
+        diffraction_metrics = compute_diffraction_orders_3d(
+            mesh_data,
+            cfg,
+            E_total,
+            out_dir,
+            E_scattered=E_sca if solve_layered_scattered else None,
+        )
         _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
         summary.update(diffraction_metrics)
         summary.update(_stage4_lossless_energy_balance_check(cfg, summary))

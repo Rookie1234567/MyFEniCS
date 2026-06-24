@@ -42,7 +42,6 @@ def stage1_smoke_config(**updates) -> SimulationConfig3D:
         "nedelec_degree": 2,
         "visualization_degree": 2,
         "mesh_target_size": 300.0,
-        "solver_profile": "direct",
     }
     values.update(updates)
     return normal_incidence_airbox_config(**values)
@@ -57,7 +56,6 @@ def floquet_smoke_config(case: str = "normal", **updates) -> SimulationConfig3D:
         "nedelec_degree": 2,
         "visualization_degree": 2,
         "mesh_target_size": 300.0,
-        "solver_profile": "direct",
     }
     values.update(updates)
     builder = normal_incidence_airbox_config if case == "normal" else oblique_incidence_airbox_config
@@ -75,7 +73,6 @@ def pml_smoke_config(**updates) -> SimulationConfig3D:
         "nedelec_degree": 2,
         "visualization_degree": 2,
         "mesh_target_size": 300.0,
-        "solver_profile": "direct",
     }
     values.update(updates)
     return normal_incidence_airbox_config(**values)
@@ -95,7 +92,6 @@ def fresnel_smoke_config(**updates) -> SimulationConfig3D:
         "nedelec_degree": 2,
         "visualization_degree": 2,
         "mesh_target_size": 300.0,
-        "solver_profile": "direct",
     }
     values.update(updates)
     return normal_incidence_airbox_config(**values)
@@ -131,7 +127,6 @@ def stage4_block_config(**updates) -> SimulationConfig3D:
         "nedelec_degree": 1,
         "visualization_degree": 1,
         "mesh_target_size": 5.0,
-        "solver_profile": "direct",
         "diffraction_zero_order_only": False,
         "diffraction_sample_count_x": 32,
         "diffraction_sample_count_y": 32,

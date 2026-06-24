@@ -5,12 +5,15 @@ import unittest
 import numpy as np
 
 from src.postprocessing.diffraction_3d import (
+    _e_fourier_order_powers,
+    _incident_power,
     enumerate_diffraction_orders_3d,
     fit_diffraction_amplitudes_from_samples,
     mode_eh_vectors,
     polarization_basis_3d,
     _probe_z_locations,
 )
+from src.common.analytic_fields_3d import electric_field_code_values, fresnel_reference
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -89,6 +92,47 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(bottom_z, 0.75 * cfg.physical_z_min, places=12)
         self.assertGreater(top_z, cfg.grating_z_max)
         self.assertLess(bottom_z, cfg.interface_z)
+
+    def test_flat_layer_fresnel_field_e_fourier_power_sanity(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=False,
+            diffraction_order_max_m=2,
+            diffraction_order_max_n=2,
+            diffraction_sample_count_x=32,
+            diffraction_sample_count_y=32,
+        )
+        orders = enumerate_diffraction_orders_3d(cfg)
+        top_z, bottom_z = _probe_z_locations(cfg)
+        top_points = _sample_plane(
+            cfg,
+            z=top_z,
+            nx=cfg.diffraction_sample_count_x,
+            ny=cfg.diffraction_sample_count_y,
+        )
+        bottom_points = _sample_plane(
+            cfg,
+            z=bottom_z,
+            nx=cfg.diffraction_sample_count_x,
+            ny=cfg.diffraction_sample_count_y,
+        )
+        _, metrics = _e_fourier_order_powers(
+            cfg,
+            orders,
+            top_points,
+            electric_field_code_values(cfg, top_points),
+            bottom_points,
+            electric_field_code_values(cfg, bottom_points),
+            _incident_power(cfg),
+        )
+        ref = fresnel_reference(cfg)
+        self.assertAlmostEqual(metrics["R_total_from_e_fourier"], ref["R"], places=11)
+        self.assertAlmostEqual(metrics["T_total_from_e_fourier"], ref["T"], places=11)
+        self.assertAlmostEqual(metrics["R_plus_T_from_e_fourier"], ref["R_plus_T"], places=11)
 
 
 if __name__ == "__main__":

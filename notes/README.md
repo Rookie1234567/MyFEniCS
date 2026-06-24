@@ -1,5 +1,43 @@
 # v2 文档索引
 
+## 2026-06-24 更新：Stage 4 R/T 后处理修正与 solver 入口移除
+
+本轮把 3D 代码里的 `solver_profile` / `--solver-profile` 公开入口全部移除。当前 3D 路径只保留内部固定直接法：
+
+```text
+ksp_type = preonly
+pc_type = lu
+MPI 时自动选择 mumps / superlu_dist / strumpack 中可用的并行 LU
+```
+
+Stage 4 衍射级后处理也做了关键修正：
+
+```text
+旧路径：直接采样插值后的 E_total
+新路径：采样数值 E_scat，再加解析分层背景 E_bg_exact
+```
+
+原因是 13.5 nm EUV 小周期下，基底内有效波长很短；如果把解析背景先插值进 Nedelec 空间再采样，粗网格会严重污染透射 0 级功率。新增的 flat-layer sanity 已验证：无光栅时 `E_scat=0`，新后处理给出
+
+```text
+R = 0.03373594
+T = 0.9662641
+R+T = 1.000000
+```
+
+另外，当 `diffraction_zero_order_only=False` 时，官方 R/T 会自动至少包含所有传播衍射级。用户给出的 `diffraction_order_max_m/n` 只作为额外范围下限，不再允许截断传播级；例如当前 `period=100 nm, lambda0=13.5 nm, n_sub=1.45` 时，即使输入 `m,n=2`，实际也会扩展到 `m,n<=10`，并写入 summary。
+
+当前粗网格 block-grating 诊断状态：
+
+```text
+h=12.5 nm, p1, np=2, natural PML:
+  R+T = 1.0086，仍标记为 failed_stage4_energy_balance
+h=12.5 nm, PML 50 nm, alpha=8:
+  PML 衰减明显改善，但 R+T 仍约 1.0086
+```
+
+结论：flat-layer 和后处理路径已经修正；真实 block-grating 仍需要用修复后的代码跑 `h=2.5 nm` 或更细网格做正式判断。旧的 h=2.5 结果来自修复前代码，不能作为最终物理结论。
+
 ## 2026-06-24 更新：Stage 4 默认切到 13.5 nm 小周期立方体
 
 当前 Stage 4 默认几何输入已经改成：

@@ -1,5 +1,39 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-24 更新：当前推荐命令和 R/T 判断口径
+
+当前 3D 代码已经移除 `--solver-profile`。Stage 4 运行命令示例：
+
+```bash
+mpiexec -n 8 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 2.5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --stage4-pml-outer-bc natural \
+  --diffraction-sample-count-x 64 \
+  --diffraction-sample-count-y 64 \
+  --unique-output
+```
+
+13.5 nm、100 nm 周期会打开很多传播衍射级。正式 R/T 不应手动截断到 `m,n<=2`；即使命令或 `main.py` 里给了 `diffraction_order_max_m/n=2`，代码也会自动扩展到所有传播级，并在 `power_metrics_3d.json` 里写出：
+
+```text
+diffraction_order_max_m_requested
+diffraction_order_max_m_resolved
+diffraction_order_max_n_requested
+diffraction_order_max_n_resolved
+```
+
+后处理口径已经改为：
+
+```text
+E_probe = E_scat_numerical_probe + E_bg_exact_probe
+```
+
+不要再用修复前的 h=2.5 结果判断最终 R/T。最新 flat-layer sanity 已通过，真实 block-grating 需要用修复后的 h=2.5 或更细网格重跑；若 `R+T > 1`，程序会继续标记为 `failed_stage4_energy_balance`，该结果只能用于诊断。
+
 ## 2026-06-24 更新：13.5 nm 小周期立方体默认案例
 
 当前 Stage 4 默认案例已经切到：

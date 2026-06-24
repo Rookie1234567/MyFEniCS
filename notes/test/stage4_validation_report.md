@@ -1,5 +1,45 @@
 # Stage 4 验证报告
 
+## 2026-06-24 更新：R/T 后处理修正后的 sanity 结果
+
+代码变更：
+
+```text
+1. 删除 3D solver_profile / --solver-profile 公开入口，3D 当前固定使用内部 direct LU。
+2. Stage 4 diffraction 后处理改为采样 E_scat，再加解析分层背景 E_bg_exact。
+3. 当 diffraction_zero_order_only=False 时，官方 R/T 自动补全所有传播衍射级。
+```
+
+新增单元测试：
+
+```text
+python3 -m unittest src.test.test_11_stage4_diffraction_modes
+结果：6 tests OK
+```
+
+解析/flat-layer 验证：
+
+| case | result dir | h nm | PML | R | T | R+T | 结论 |
+|---|---|---:|---|---:|---:|---:|---|
+| analytic Fresnel postprocess | 单元测试 | - | - | 0.03373594 | 0.9662641 | 1.000000 | 通过 |
+| stage4_flat_layer_sanity | `results/3D_stage4_flat_layer_sanity_normal_p1_h12p5_np2_20260624_101122` | 12.5 | natural, 25 nm | 0.03373594 | 0.9662641 | 1.000000 | 通过 |
+
+block-grating 粗网格诊断：
+
+| case | result dir | h nm | PML | orders | R | T | R+T | 结论 |
+|---|---|---:|---|---:|---:|---:|---:|---|
+| block grating | `results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260624_102538` | 12.5 | natural, 25 nm | resolved m,n<=10 | 0.034926 | 0.973677 | 1.008603 | failed_stage4_energy_balance |
+| block grating | `results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260624_102938` | 12.5 | natural, 50 nm, alpha=8 | resolved m,n<=10 | 0.034938 | 0.973685 | 1.008623 | failed_stage4_energy_balance |
+
+判断：
+
+```text
+1. flat-layer sanity 已排除 Fresnel 背景、功率归一化和传播级枚举的主要错误。
+2. PML 加厚后散射场衰减明显改善，但 h=12.5 的 R+T 超 1 基本不变，因此该误差不是 PML 厚度主导。
+3. 当前 block-grating h=12.5 仍不是可信物理结果；需要用修复后的代码重跑 h=2.5 nm 或更细网格。
+4. 修复前的 h=2.5 结果来自旧的 E_total 插值背景后处理，不能作为最终 R/T 结论。
+```
+
 ## 2026-06-24 更新：13.5 nm 小周期 h25 smoke 与 PML 外边界对比
 
 本轮默认案例改为 13.5 nm 波长、100 x 100 nm 周期、50 nm 立方体。h25/p1 只是流程 smoke，不作为精度结论。
