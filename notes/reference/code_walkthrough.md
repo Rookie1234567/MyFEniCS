@@ -1,3 +1,86 @@
+## 2026-06-25 更新：Stage 4 MPI 后处理与 Floquet 计时阅读路径
+
+本轮如果要读代码，建议按这个顺序：
+
+```text
+1. src/constraints/floquet_3d.py
+   build_double_floquet_mpc(...)
+   先看 floquet_build_topological_edge_context，再看 x/y/corner 三段约束。
+   h=2.5 时耗时主要来自边拓扑上下文，不是 DtN 边界影响 Floquet。
+
+2. src/postprocessing/postprocess_3d.py
+   save_airbox_3d_fields(...)
+   MPI 下跳过 VTX .bp，写 vtx_3d_skipped_mpi.txt 和 fields_3d_for_paraview_parallel.pvd。
+   这一步是为了绕开 ADIOS2/VTXWriter 的 BUS error。
+
+3. src/solvers/dtn_port_3d.py
+   _ReusableSurfaceComponentAssembler
+   solve_stage4_dtn_port_total_field(...)
+   这里是 DtN auxiliary modal port 的装配优化。
+   每个 (side,m,n) 只装配 x/y 两个 surface component vector，两种偏振线性组合得到。
+
+4. src/solvers/solve_maxwell_3d_common.py
+   run_airbox_3d_case(...)
+   这里把 field_formulation_setup、floquet_constraint_setup_outer、
+   boundary_condition_setup、stage4_dtn_port_assembly_and_solve 分开计时。
+```
+
+对应验证结果见：
+
+```text
+notes/test/stage4_validation_report.md
+notes/test/stage4_resume_log.md
+```
+
+## 2026-06-25 更新：Stage 4 DtN 性能优化后的阅读路径
+
+如果你这轮主要关心 `boundary_condition_setup` 和 `Stage-4 DtN assembled/prepared ... auxiliary modes` 为什么耗时，按下面顺序读：
+
+```text
+1. src/solvers/solve_maxwell_3d_common.py
+   看 _run_maxwell_3d_case_core(...) 中的计时拆分：
+     field_formulation_setup
+     floquet_constraint_setup_outer
+     boundary_condition_setup
+     stage4_dtn_port_assembly_and_solve
+
+   现在 boundary_condition_setup 只表示强边界 dof/BC 对象设置；
+   dtn_port 分支不施加 z 向强 Dirichlet，所以这里通常接近 0。
+
+2. src/solvers/dtn_port_3d.py
+   先看 _ReusableSurfaceComponentAssembler：
+     用 fem.Constant 保存 alpha/gamma/kz；
+     每个 top/bottom、x/y 分量只建一次 UFL form。
+
+   再看 solve_stage4_dtn_port_total_field(...) 的 modal loop：
+     每个 (side,m,n) 装配 x/y 两个表面向量；
+     两个偏振通过 _combine_owned_entries(...) 线性组合；
+     输出 stage4_dtn_modal_loop_seconds 和 component cache 统计。
+
+3. results/.../dtn_port_power_metrics_3d.json
+   看细分耗时：
+     stage4_dtn_modal_loop_seconds
+     stage4_dtn_modal_vector_assembly_seconds
+     stage4_dtn_linear_solve_seconds
+     stage4_dtn_component_vector_assemblies
+     stage4_dtn_component_vector_cache_hits
+```
+
+本轮实测入口：
+
+```text
+block grating, h=5, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_074047
+  DtN modes = 1068
+  stage4_dtn_modal_loop_seconds = 2.431 s
+  elapsed = 15.637 s
+
+flat, n_sub=1.0, h=2.5, np=8:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_074306
+  R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+  慢在 stage4_dtn_linear_solve_seconds = 222.650 s，而不是端口模态装配。
+```
+
 ## 2026-06-25 更新：Stage 4 3D DtN 总场端口阅读路线
 
 当前新增的 Stage 4 DtN 主线建议按这个顺序读：

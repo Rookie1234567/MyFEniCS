@@ -1,5 +1,144 @@
 # Stage 4 续接记录
 
+## 2026-06-25 续接记录：MPI BUS error 已定位到 VTX 后处理，Floquet context 计时已拆分
+
+本轮已完成：
+
+```text
+1. src/postprocessing/postprocess_3d.py
+   - MPI 下默认跳过 3D VTX .bp，避免 ADIOS2/VTXWriter 在大并行向量场写出时触发 BUS error。
+   - 串行仍写 E_3d_numerical.bp 和 H_3d_A_per_m_from_curl.bp。
+   - summary 新增 vtx_3d_output_status 和 vtx_3d_output_files。
+
+2. src/constraints/floquet_3d.py
+   - 新增 floquet_build_topological_edge_context 计时。
+   - x/y/corner 约束构建计时不再混入首次拓扑上下文构建。
+
+3. src/solvers/dtn_port_3d.py
+   - 保留上一轮可复用 surface component form 的 DtN 装配优化。
+   - 撤回本轮中为 h=10 粗网格试探过的符号改动；h=10 对 lambda0=13.5 nm 太粗，不作为物理验收。
+```
+
+已运行：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+结果：Ran 37 tests, OK (skipped=8)
+
+h=2.5 block, np=8, zero_order:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np8_20260625_092003
+  R/T/R+T = 0.3189887183 / 0.6810112817 / 1.0000000000
+  case_status = completed
+  ParaView PVD 已写出
+  VTX .bp 在 MPI 下被跳过
+
+h=5 block, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_093728
+  R/T/R+T = 0.3661053 / 0.6338947 / 1.0000000
+  floquet_build_topological_edge_context = 0.591 s
+  stage4_dtn_port_assembly_and_solve = 13.487 s
+```
+
+未完成/后续建议：
+
+```text
+1. 若要继续物理验证，优先跑 h=2.5 + auto_propagating block；预计直接求解会明显慢于 zero_order。
+2. 若继续优化性能，下一步看 MUMPS 直接求解时间和矩阵规模，而不是 Floquet 或 DtN modal loop。
+3. 若想进一步压缩输出体积，可增加一个 config 控制 visualization_degree 或 rank*.vtu 写出。
+```
+
+## 2026-06-25 续接记录：额度中断前状态
+
+本轮已完成并验证：
+
+```text
+1. 代码修改：
+   - src/solvers/solve_maxwell_3d_common.py
+     拆分 field_formulation_setup、floquet_constraint_setup_outer、boundary_condition_setup。
+   - src/solvers/dtn_port_3d.py
+     修正 DtN 弱式符号；
+     增加可复用表面 form；
+     端口 modal loop 改成每个 (side,m,n) 复用 x/y 分量。
+
+2. 文档修改：
+   - notes/README.md
+   - notes/quick_start/stage4_3d_block_grating_usage_guide.md
+   - notes/reference/code_walkthrough.md
+   - notes/test/stage4_validation_report.md
+   - notes/test/stage4_resume_log.md
+   - notes/theory/stage4_3d_dtn_port.md
+
+3. 已完成验证：
+   - compileall：通过。
+   - unittest：在清理未使用 helper 之前通过，Ran 37 tests, OK (skipped=8)。
+   - h=5 block auto_propagating：
+     results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_074047
+     elapsed = 15.637 s，stage4_dtn_modal_loop_seconds = 2.431 s，R+T = 1.000000。
+   - h=2.5 flat n_sub=1：
+     results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_074306
+     R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000。
+   - 清理未使用 helper 后又跑了一次 compileall：通过。
+```
+
+未完成：
+
+```text
+1. 清理未使用 helper 后的最终 unittest 重跑被 Codex/Docker 执行额度拦截。
+2. 本轮改动尚未 git commit。
+3. 下一轮恢复后先运行：
+   . dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+   然后 git add/commit。
+```
+
+## 2026-06-25 续接记录：DtN 端口装配优化完成，下一轮重点转向直接求解器/精度
+
+本轮已完成：
+
+```text
+1. 拆分计时：
+   - field_formulation_setup
+   - floquet_constraint_setup_outer
+   - boundary_condition_setup
+   - stage4_dtn_port_assembly_and_solve
+
+2. 修正 3D DtN 弱式符号：
+   - FEM block 使用 - q * ell * auxiliary
+   - top incident RHS 使用 +2i beta 的等效边界向量
+   - auxiliary 仍表示端口总场投影
+
+3. 优化 DtN modal loop：
+   - 每个 (side,m,n) 只装配 x/y 两个表面分量
+   - 两个偏振通过线性组合得到 trace/traction
+   - fem.Constant 更新 alpha/gamma/kz，避免每个级次重建 UFL form
+
+4. 验证：
+   - compileall 通过
+   - unittest：Ran 37 tests, OK (skipped=8)
+   - h=5 block auto_propagating：elapsed = 15.637 s，R+T = 1.000000
+   - h=2.5 flat n_sub=1：R/T/R+T = 6.04e-4 / 0.999396 / 1.000000
+```
+
+本轮关键结果目录：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_074047
+results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_074306
+```
+
+下一轮建议：
+
+```text
+1. 如果继续追求 h=2.5 block grating + auto_propagating：
+   端口 modal loop 已不是瓶颈，重点看 MUMPS 直接求解时间和内存。
+
+2. 如果要进一步优化：
+   优先考虑矩阵装配/直接求解器策略，而不是继续改 DtN modal loop。
+
+3. 如果要和 COMSOL 对照：
+   先固定 dtn_port 主线，使用 dtn_port_power_metrics_3d.json 与 ParaView 的 E_total。
+```
+
 ## 2026-06-25 续接记录：Stage 4 3D DtN 主线已跑通，下一步可做 h=2.5 block 或优化端口装配
 
 本轮已完成：

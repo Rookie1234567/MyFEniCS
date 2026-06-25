@@ -1,5 +1,85 @@
 # Stage 4 3D DtN 总场端口
 
+## 2026-06-25 更新：当前 DtN 端口实现口径
+
+当前 Stage 4 正式主线仍是总场 DtN 端口：
+
+```text
+unknown = E_total
+top port = incident Floquet fundamental + outgoing reflected orders
+bottom port = outgoing transmitted orders
+x/y side = Floquet MPC
+z top/bottom = Fourier-DtN auxiliary modal unknowns
+PML = 不用于 dtn_port 主线
+```
+
+实现上，辅助变量保存端口总场投影；功率输出时：
+
+```text
+top outgoing amplitude    = total_projection - incident_projection
+bottom outgoing amplitude = total_projection
+R/T                       = outgoing modal power / incident modal power
+```
+
+MPI 后处理注意：
+
+```text
+并行运行不再写 3D VTX .bp，因为当前容器下 ADIOS2/VTXWriter 可能触发 BUS error。
+并行 ParaView 请打开 fields_3d_for_paraview_parallel.pvd。
+```
+
+网格注意：
+
+```text
+lambda0 = 13.5 nm 时，h=10 nm 太粗，不作为物理验收。
+当前更可信的 flat sanity 是 h=2.5 nm：R/T/R+T = 6.04e-4 / 0.9993956 / 1.0。
+```
+
+## 2026-06-25 更新：DtN 弱式符号与端口装配性能修正
+
+本轮重新检查了 3D curl-curl 弱式的边界项号。对内部体积分部后，`a(E,v)` 本身等于边界上的 `n x curl(E)` 贡献，因此把出射 DtN 牵引项移到左端时应写成：
+
+```text
+FEM equation:
+  A_fem E - q_j ell_j a_j = b
+
+Modal equation:
+  a_j - (1/A_cell) ell_j^H E = 0
+
+Top incident source:
+  b_top = +2i beta_0 E_inc 的等价边界向量
+```
+
+反射/透射幅值仍按总场投影读取：
+
+```text
+top outgoing amplitude    = top total projection - incident projection
+bottom outgoing amplitude = bottom total projection
+```
+
+同时优化了辅助模态装配：
+
+```text
+1. 每个 (side,m,n) 只装配一次 x/y 表面分量；
+2. 同一 (side,m,n) 的两个偏振用线性组合得到 trace 和 traction；
+3. 表面 form 使用 fem.Constant 更新 alpha/gamma/kz，相同 form 不再反复重建。
+```
+
+本轮实测：
+
+```text
+block grating, h=5, np=4, auto_propagating:
+  DtN modes = 1068
+  stage4_dtn_port_assembly_and_solve = 12.210 s
+  stage4_dtn_modal_loop_seconds      = 2.431 s
+  R/T/R+T = 0.366105 / 0.633895 / 1.000000
+
+flat, n_sub=1.0, h=2.5, np=8:
+  R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+```
+
+注意：`stage4_dtn_port_assembly_and_solve` 包含基础矩阵装配、端口装配、矩阵 finalize、直接求解和回代。若它仍然很长，应优先看 `dtn_port_power_metrics_3d.json` 里的细分字段；例如 h=2.5 flat case 中主要耗时是 `stage4_dtn_linear_solve_seconds`，不是端口模态装配。
+
 ## 2026-06-25 更新：最终采用的 auxiliary 符号口径
 
 本轮实跑后确认，3D DtN 第一版必须和 2D 端口保持同构的 auxiliary 结构：
@@ -8,13 +88,13 @@
 auxiliary unknown a_j = 端口总场在第 j 个模态上的投影
 
 FEM equation:
-  A_fem E + q_j ell_j a_j = b
+  A_fem E - q_j ell_j a_j = b
 
 Modal equation:
   a_j - (1/A_cell) ell_j^H E = 0
 
 Top incident source:
-  b_top = -2i beta_0 E_inc 的等价边界向量
+  b_top = +2i beta_0 E_inc 的等价边界向量
 ```
 
 反射/透射功率不是直接拿 top auxiliary，而是：

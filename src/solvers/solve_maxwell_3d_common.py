@@ -1267,16 +1267,24 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         rhs_source_norm = None
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
+    _finish_timed_stage(comm, timings, "field_formulation_setup", stage_start, log)
+
     floquet_data: DoubleFloquet3DData | None = None
     boundary_dofs = np.asarray([], dtype=np.int32)
     raw_boundary_dofs_global = 0
     boundary_dofs_global = 0
+
+    stage_start = _start_timed_stage(comm)
     if cfg.use_floquet_xy:
         # Floquet constraints own the x/y side walls.  Strong H(curl)
         # Dirichlet data is therefore only applied on z faces, with slave dofs
         # removed to avoid prescribing the same unknown twice.
         floquet_data = build_double_floquet_mpc(V, mesh_data, cfg, log)
         timings.update(floquet_data.timings_seconds)
+    _finish_timed_stage(comm, timings, "floquet_constraint_setup_outer", stage_start, log)
+
+    stage_start = _start_timed_stage(comm)
+    if cfg.use_floquet_xy:
         if apply_strong_boundary_bc:
             boundary_facets = _z_boundary_facets(mesh_data, cfg)
             raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)

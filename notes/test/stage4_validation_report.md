@@ -1,5 +1,172 @@
 # Stage 4 验证报告
 
+## 2026-06-25 更新：MPI VTX BUS error 修复、Floquet context 计时与 h=2.5 block 复核
+
+本轮新增修复和验证：
+
+```text
+1. MPI 后处理：
+   MPI 3D VTX .bp 写出在当前容器中可能触发不可恢复的 BUS error。
+   现在 comm.size > 1 时跳过 VTX .bp，写 vtx_3d_skipped_mpi.txt，并继续写并行 VTU/PVD。
+
+2. Floquet 计时：
+   新增 floquet_build_topological_edge_context。
+   原先 x-direction 计时包含首次构建周期边拓扑上下文的时间，因此会误以为 x 约束本身很慢。
+
+3. DtN 装配优化保持有效：
+   复用表面 x/y component form 后，1068 个 auxiliary modes 的 h=5 auto_propagating smoke 仍可在十几秒完成。
+```
+
+已运行命令：
+
+```text
+. dolfinx-complex-mode && python3 -m compileall -q src
+结果：通过
+
+. dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+结果：Ran 37 tests, OK (skipped=8)
+
+mpiexec -n 8 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy zero_order \
+  --mesh-target-size 2.5 \
+  --nedelec-degree 1 \
+  --visualization-degree 3 \
+  --unique-output
+
+mpiexec -n 4 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy auto_propagating \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+```
+
+结果摘要：
+
+```text
+h=2.5 block, np=8, zero_order:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np8_20260625_092003
+  case_status = completed
+  R/T/R+T = 0.3189887183 / 0.6810112817 / 1.0000000000
+  max RSS = 2156 MB
+  elapsed = 328.008 s
+  vtx_3d_output_status = skipped_mpi
+  ParaView = fields_3d_for_paraview_parallel.pvd
+
+h=5 block, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_093728
+  DtN modes = 1068
+  R/T/R+T = 0.3661053 / 0.6338947 / 1.0000000
+  floquet_build_topological_edge_context = 0.591 s
+  floquet_build_x_constraints = 0.021 s
+  floquet_build_y_constraints = 0.016 s
+  stage4_dtn_port_assembly_and_solve = 13.487 s
+  elapsed = 16.604 s
+```
+
+结论：
+
+```text
+1. 用户遇到的 BUS error 更像是 MPI VTX/ADIOS2 后处理崩溃，不是求解器或 Floquet 崩溃。
+2. h=2.5、np=8 的 block case 已经可以完整写出 summary 和 ParaView PVD。
+3. DtN 不会影响 Floquet 约束；Floquet 几秒主要来自 topological edge context 和边界 edge 数量增长。
+4. h=10 nm 对 13.5 nm 波长太粗，不作为物理验收；h=2.5 flat sanity 仍是当前更可信的均匀层口径。
+```
+
+## 2026-06-25 更新：DtN 端口装配优化与弱式符号复核
+
+本轮完成两类修正：
+
+```text
+1. 计时拆分：
+   boundary_condition_setup 不再包含 Floquet MPC 构建；
+   Floquet 相关耗时看 floquet_constraint_setup_outer 和 floquet_build_x/y/corner。
+
+2. DtN 端口优化：
+   每个 (side,m,n) 只装配 x/y 两个表面分量；
+   同一 (side,m,n) 的两个偏振通过线性组合得到 trace/traction；
+   表面 form 使用 fem.Constant 更新 alpha/gamma/kz，避免为每个级次重新创建 form。
+```
+
+同时复核了 3D curl-curl 弱式边界符号。当前正式口径：
+
+```text
+FEM block        += - q * ell * auxiliary
+top RHS          += +2i beta * E_inc 的等效向量
+auxiliary        = 端口总场投影
+top outgoing     = total_projection - incident_projection
+bottom outgoing  = total_projection
+```
+
+验证命令和结果：
+
+```text
+compileall:
+  . dolfinx-complex-mode && python3 -m compileall -q src
+  结果：通过
+
+unittest:
+  . dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+  结果：Ran 37 tests, OK (skipped=8)
+```
+
+PDE 实跑：
+
+```text
+flat, n_sub=1.0, h=5, np=4:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h5p0_np4_20260625_074233
+  R/T/R+T = 2.412601e-02 / 9.758740e-01 / 1.000000
+  elapsed = 10.051 s
+
+flat, n_sub=1.0, h=2.5, np=8:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_074306
+  R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+  stage4_dtn_modal_loop_seconds = 0.033 s
+  stage4_dtn_linear_solve_seconds = 222.650 s
+  elapsed = 253.684 s
+
+block grating, h=5, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_074047
+  DtN modes = 1068
+  R/T/R+T = 3.661053e-01 / 6.338947e-01 / 1.000000
+  stage4_dtn_modal_loop_seconds = 2.431 s
+  stage4_dtn_port_assembly_and_solve = 12.210 s
+  elapsed = 15.637 s
+```
+
+和旧记录对比：
+
+```text
+旧 h=5 block auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_063607
+  elapsed ≈ 610 s
+
+第一层优化后：
+  elapsed ≈ 290 s
+  modal loop ≈ 276 s
+
+当前可复用 form 优化后：
+  elapsed = 15.637 s
+  modal loop = 2.431 s
+```
+
+结论：
+
+```text
+1. 之前 boundary_condition_setup 看起来变长，主要是旧计时口径把 Floquet MPC 也算进去了；
+   当前 dtn_port 分支 boundary_condition_setup 接近 0。
+2. 1068 个辅助模态的装配已经不是主要瓶颈；
+   h=2.5 大问题中主要耗时是 MUMPS 直接求解。
+3. h=5 flat 的 R=2.4% 是粗网格色散误差；h=2.5 收敛到 R=6.0e-4。
+4. lossless block grating 的 R+T 保持在 1 的舍入误差内，没有再出现 PML/probe 分支那种 R+T 爆炸。
+```
+
 ## 2026-06-25 更新：Stage 4 dtn_port 实跑验证完成，能量守恒恢复
 
 本轮修复了 3D DtN auxiliary 端口的符号口径。最终采用与 2D 端口同构的形式：

@@ -1,5 +1,127 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-25 更新：h=2.5 并行运行、BUS error 与 Floquet 耗时解释
+
+如果你跑 `h=2.5 nm`、MPI 并行时看到 PETSc `BUS: Bus Error`，优先检查结果目录。若已经写出
+`dtn_port_power_metrics_3d.json` 但没有完整 ParaView 文件，通常说明求解已经结束，崩在并行 VTX `.bp`
+后处理。当前版本已在 MPI 下默认跳过 3D VTX `.bp`，改写：
+
+```text
+fields_3d_for_paraview_parallel.pvd
+fields_3d_for_paraview_rank0000.vtu
+fields_3d_for_paraview_rank0001.vtu
+...
+vtx_3d_skipped_mpi.txt
+```
+
+ParaView 请打开 `.pvd` 文件。串行运行仍会尝试写 `E_3d_numerical.bp` 和
+`H_3d_A_per_m_from_curl.bp`。
+
+Floquet 计时现在拆成：
+
+```text
+floquet_build_topological_edge_context
+floquet_build_x_constraints
+floquet_build_y_constraints
+floquet_resolve_corner_master_chains
+floquet_build_mpc_arrays
+floquet_mpc_finalize
+```
+
+`h=2.5` 时 Floquet 需要几秒是正常的：周期边界 edge 数量从 h=5 的约 2470 个增加到 h=2.5 的约
+9740 个。新增的 `topological_edge_context` 才是主要耗时项，DtN 边界不会反过来影响 Floquet 约束。
+
+已验证案例：
+
+```bash
+mpiexec -n 8 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy zero_order \
+  --mesh-target-size 2.5 \
+  --nedelec-degree 1 \
+  --visualization-degree 3 \
+  --unique-output
+```
+
+结果：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h2p5_np8_20260625_092003
+R/T/R+T = 0.3189887 / 0.6810113 / 1.0000000
+case_status = completed
+vtx_3d_output_status = skipped_mpi
+```
+
+`h=10 nm` 对 `lambda0=13.5 nm` 太粗，只能看程序是否跑通，不能用来判断端口物理误差。
+
+## 2026-06-25 更新：如何解读 DtN 与 boundary setup 耗时
+
+本轮之后，Stage 4 日志中的计时口径拆开了：
+
+```text
+field_formulation_setup
+  只看场形式、入射/背景场对象等准备。
+
+floquet_constraint_setup_outer
+  x/y Floquet MPC 总耗时；更细看：
+  floquet_build_x_constraints
+  floquet_build_y_constraints
+  floquet_resolve_corner_master_chains
+  floquet_build_mpc_arrays
+  floquet_mpc_finalize
+
+boundary_condition_setup
+  只看强边界 dof/BC 对象设置。
+  dtn_port 分支不使用 z 向强 Dirichlet，所以这里通常接近 0。
+
+stage4_dtn_port_assembly_and_solve
+  包含 FEM 基础矩阵装配、DtN 端口模态装配、增广矩阵 finalize、直接求解和回代。
+  继续看 dtn_port_power_metrics_3d.json 才能知道具体慢在哪里。
+```
+
+新增的 DtN 细分字段：
+
+```text
+stage4_dtn_base_matrix_assembly_seconds
+stage4_dtn_incident_source_vector_seconds
+stage4_dtn_modal_loop_seconds
+stage4_dtn_modal_vector_assembly_seconds
+stage4_dtn_augmented_matrix_finalize_seconds
+stage4_dtn_linear_solve_seconds
+stage4_dtn_unique_surface_orders
+stage4_dtn_component_vector_assemblies
+stage4_dtn_component_vector_cache_hits
+```
+
+本轮 h=5 多模态实测：
+
+```bash
+mpiexec -n 4 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy auto_propagating \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+```
+
+结果：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_074047
+DtN modes = 1068
+stage4_dtn_port_assembly_and_solve = 12.210 s
+stage4_dtn_modal_loop_seconds = 2.431 s
+elapsed = 15.637 s
+R/T/R+T = 0.366105 / 0.633895 / 1.000000
+```
+
+注意：h=2.5 的 flat sanity 中 `stage4_dtn_port_assembly_and_solve = 233.600 s`，但其中 `stage4_dtn_linear_solve_seconds = 222.650 s`，说明慢在直接求解器，不是端口模态装配。
+
 ## 2026-06-25 更新：dtn_port 已实跑通过，推荐作为 Stage 4 主线
 
 当前可信 R/T 主线：

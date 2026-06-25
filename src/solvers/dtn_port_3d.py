@@ -35,26 +35,21 @@ def _as_ufl_vector(values: np.ndarray, phase):
     return ufl.as_vector(tuple(PETSc.ScalarType(value) * phase for value in values))
 
 
-def _port_mode_phase(mode: PortMode3D, x):
-    exponent = (
-        PETSc.ScalarType(1j * mode.alpha) * x[0]
-        + PETSc.ScalarType(1j * mode.gamma) * x[1]
-        + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
-    )
-    return ufl.exp(exponent)
-
-
 def _surface_vector_form(V, mesh_data, tag: int, vector: np.ndarray, phase):
     v = ufl.TestFunction(V)
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
     return ufl.inner(_as_ufl_vector(vector, phase), v) * ds(tag)
 
 
-def _assemble_mpc_vector(linear_form, mpc) -> PETSc.Vec:
-    vec = dolfinx_mpc.assemble_vector(fem.form(linear_form), mpc)
+def _assemble_mpc_form_vector(linear_form, mpc) -> PETSc.Vec:
+    vec = dolfinx_mpc.assemble_vector(linear_form, mpc)
     vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
     vec.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
     return vec
+
+
+def _assemble_mpc_vector(linear_form, mpc) -> PETSc.Vec:
+    return _assemble_mpc_form_vector(fem.form(linear_form), mpc)
 
 
 def _vec_nonzero_owned_entries(vec: PETSc.Vec, *, relative_tol: float = 1.0e-13) -> tuple[np.ndarray, np.ndarray]:
@@ -65,6 +60,75 @@ def _vec_nonzero_owned_entries(vec: PETSc.Vec, *, relative_tol: float = 1.0e-13)
     cutoff = max(1.0e-30, relative_tol * float(np.max(np.abs(values))))
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
+
+
+def _combine_owned_entries(
+    component_entries: tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
+    coefficients: tuple[complex, complex],
+    *,
+    relative_tol: float = 1.0e-13,
+) -> tuple[np.ndarray, np.ndarray]:
+    row_blocks: list[np.ndarray] = []
+    value_blocks: list[np.ndarray] = []
+    for (rows, values), coefficient in zip(component_entries, coefficients):
+        coefficient = complex(coefficient)
+        if len(rows) == 0 or abs(coefficient) <= 0.0:
+            continue
+        row_blocks.append(rows)
+        value_blocks.append(PETSc.ScalarType(coefficient) * values)
+    if not row_blocks:
+        return _idx([]), np.asarray([], dtype=np.complex128)
+
+    rows_all = np.concatenate(row_blocks).astype(PETSc.IntType, copy=False)
+    values_all = np.concatenate(value_blocks).astype(np.complex128, copy=False)
+    order = np.argsort(rows_all, kind="mergesort")
+    rows_sorted = rows_all[order]
+    values_sorted = values_all[order]
+    unique_rows, first = np.unique(rows_sorted, return_index=True)
+    summed_values = np.add.reduceat(values_sorted, first)
+    cutoff = max(1.0e-30, relative_tol * float(np.max(np.abs(summed_values))))
+    keep = np.abs(summed_values) > cutoff
+    return _idx(unique_rows[keep]), summed_values[keep].copy()
+
+
+def _set_scalar_constant(constant: fem.Constant, value: complex) -> None:
+    scalar = PETSc.ScalarType(value)
+    try:
+        constant.value[...] = scalar
+    except Exception:
+        constant.value = scalar
+
+
+class _ReusableSurfaceComponentAssembler:
+    """Cache one port surface form and update only the Fourier phase constants."""
+
+    def __init__(self, V, mesh_data, tag: int, component: int):
+        if component not in {0, 1}:
+            raise ValueError("Stage-4 DtN port component assembly only supports x/y tangential components.")
+        self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
+        x = ufl.SpatialCoordinate(mesh_data.mesh)
+        phase = ufl.exp(
+            PETSc.ScalarType(1j) * self.alpha * x[0]
+            + PETSc.ScalarType(1j) * self.gamma * x[1]
+            + PETSc.ScalarType(1j) * self.kz * x[2]
+        )
+        vector = [PETSc.ScalarType(0.0), PETSc.ScalarType(0.0), PETSc.ScalarType(0.0)]
+        vector[component] = phase
+        v = ufl.TestFunction(V)
+        ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
+        self.form = fem.form(ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag))
+
+    def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
+        _set_scalar_constant(self.alpha, mode.alpha)
+        _set_scalar_constant(self.gamma, mode.gamma)
+        _set_scalar_constant(self.kz, mode.k_vector[2])
+        vec = _assemble_mpc_form_vector(self.form, mpc)
+        try:
+            return _vec_nonzero_owned_entries(vec)
+        finally:
+            vec.destroy()
 
 
 def _copy_base_matrix_to_augmented(A_base: PETSc.Mat, n_aux: int, comm: MPI.Intracomm) -> PETSc.Mat:
@@ -102,10 +166,6 @@ def _outward_normal(side: str) -> np.ndarray:
     if side == "bottom":
         return np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
     raise ValueError("side must be 'top' or 'bottom'.")
-
-
-def _facet_tag_for_side(cfg: SimulationConfig3D, side: str) -> int:
-    return cfg.tags.z_max if side == "top" else cfg.tags.z_min
 
 
 def _traction_vector(mode: PortMode3D, cfg: SimulationConfig3D) -> np.ndarray:
@@ -356,9 +416,17 @@ def solve_stage4_dtn_port_total_field(
 
     comm = mesh_data.mesh.comm
     stage_start = time.perf_counter()
+    timing_details: dict[str, float | int] = {}
+
+    t0 = time.perf_counter()
     A_base = dolfinx_mpc.assemble_matrix(fem.form(a), floquet_data.mpc, bcs=None)
     A_base.assemble()
+    timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+
+    t0 = time.perf_counter()
     b_base = _assemble_mpc_vector(L, floquet_data.mpc)
+    timing_details["stage4_dtn_base_rhs_assembly_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+
     n_fe = A_base.getSize()[0]
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
@@ -369,54 +437,119 @@ def solve_stage4_dtn_port_total_field(
         log(f"Stage-4 DtN top/bottom mode count = {sum(m.side == 'top' for m in modes)} / {sum(m.side == 'bottom' for m in modes)}")
         log(f"Stage-4 DtN matrix base rows = {n_fe}")
 
+    t0 = time.perf_counter()
     A_aug = _copy_base_matrix_to_augmented(A_base, n_aux, comm)
     b_aug = _augmented_vec_from_base(b_base, n_aux, comm)
+    timing_details["stage4_dtn_augmented_block_copy_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
+    t0 = time.perf_counter()
     incident_traction_vec = _assemble_mpc_vector(_incident_top_traction_form(V, mesh_data, cfg), floquet_data.mpc)
     inc_rows, inc_values = _vec_nonzero_owned_entries(incident_traction_vec)
+    incident_traction_vec.destroy()
     if len(inc_rows):
-        b_aug.setValues(inc_rows, -inc_values, addv=PETSc.InsertMode.ADD_VALUES)
+        b_aug.setValues(inc_rows, inc_values, addv=PETSc.InsertMode.ADD_VALUES)
+    timing_details["stage4_dtn_incident_source_vector_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     incident_projections: list[complex] = []
     area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
-    x = ufl.SpatialCoordinate(mesh_data.mesh)
+    surface_assemblers = {
+        ("top", 0): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_max, 0),
+        ("top", 1): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_max, 1),
+        ("bottom", 0): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_min, 0),
+        ("bottom", 1): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_min, 1),
+    }
+    component_key: tuple[str, int, int, complex] | None = None
+    component_entries: tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]] | None = None
+    unique_surface_orders = 0
+    component_vector_assemblies = 0
+    component_vector_cache_hits = 0
+    modal_vector_assembly_seconds_local = 0.0
+    modal_block_insert_seconds_local = 0.0
+    modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
-        tag = _facet_tag_for_side(cfg, mode.side)
-        phase = _port_mode_phase(mode, x)
-        trace_vector = np.asarray((mode.e_vector[0], mode.e_vector[1], 0.0 + 0.0j), dtype=np.complex128)
+        mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
+        if mode_key != component_key or component_entries is None:
+            t_component = time.perf_counter()
+            component_entries = (
+                surface_assemblers[(mode.side, 0)].assemble_entries(mode, floquet_data.mpc),
+                surface_assemblers[(mode.side, 1)].assemble_entries(mode, floquet_data.mpc),
+            )
+            modal_vector_assembly_seconds_local += time.perf_counter() - t_component
+            component_key = mode_key
+            unique_surface_orders += 1
+            component_vector_assemblies += 2
+        else:
+            component_vector_cache_hits += 1
+
         traction_vector = _traction_vector(mode, cfg)
-        ell = _assemble_mpc_vector(_surface_vector_form(V, mesh_data, tag, trace_vector, phase), floquet_data.mpc)
-        traction = _assemble_mpc_vector(_surface_vector_form(V, mesh_data, tag, traction_vector, phase), floquet_data.mpc)
+        ell_cols, ell_values = _combine_owned_entries(
+            component_entries,
+            (mode.e_vector[0], mode.e_vector[1]),
+        )
+        traction_rows, traction_values = _combine_owned_entries(
+            component_entries,
+            (traction_vector[0], traction_vector[1]),
+        )
         aux_global = n_fe + aux_index
         denominator = area * mode.electric_tangential_norm_sq
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
         incident_projections.append(incident_projection)
 
-        rows, values = _vec_nonzero_owned_entries(traction)
-        if len(rows):
-            A_aug.setValues(rows, _idx([aux_global]), values.reshape((len(rows), 1)))
+        t_insert = time.perf_counter()
+        if len(traction_rows):
+            A_aug.setValues(traction_rows, _idx([aux_global]), (-traction_values).reshape((len(traction_rows), 1)))
             if incident_projection != 0.0:
-                b_aug.setValues(rows, values * incident_projection, addv=PETSc.InsertMode.ADD_VALUES)
+                b_aug.setValues(
+                    traction_rows,
+                    -traction_values * incident_projection,
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
 
-        cols, ell_values = _vec_nonzero_owned_entries(ell)
-        if len(cols):
+        if len(ell_cols):
             A_aug.setValues(
                 _idx([aux_global]),
-                cols,
-                (-np.conj(ell_values) / denominator).reshape((1, len(cols))),
+                ell_cols,
+                (-np.conj(ell_values) / denominator).reshape((1, len(ell_cols))),
             )
         A_aug.setValue(aux_global, aux_global, PETSc.ScalarType(1.0))
+        modal_block_insert_seconds_local += time.perf_counter() - t_insert
 
         if log is not None and (aux_index + 1) % 50 == 0:
             elapsed = comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)
-            log(f"Stage-4 DtN assembled {aux_index + 1}/{n_aux} auxiliary modes in {elapsed:.3f} seconds")
+            log(
+                f"Stage-4 DtN prepared {aux_index + 1}/{n_aux} auxiliary modes "
+                f"in {elapsed:.3f} seconds; unique surface orders = {unique_surface_orders}"
+            )
 
+    timing_details["stage4_dtn_modal_loop_seconds"] = float(comm.allreduce(time.perf_counter() - modal_loop_start, op=MPI.MAX))
+    timing_details["stage4_dtn_modal_vector_assembly_seconds"] = float(comm.allreduce(modal_vector_assembly_seconds_local, op=MPI.MAX))
+    timing_details["stage4_dtn_modal_block_insert_seconds"] = float(comm.allreduce(modal_block_insert_seconds_local, op=MPI.MAX))
+    timing_details["stage4_dtn_unique_surface_orders"] = int(comm.allreduce(unique_surface_orders, op=MPI.MAX))
+    timing_details["stage4_dtn_component_vector_assemblies"] = int(comm.allreduce(component_vector_assemblies, op=MPI.MAX))
+    timing_details["stage4_dtn_component_vector_cache_hits"] = int(comm.allreduce(component_vector_cache_hits, op=MPI.MAX))
+    if log is not None:
+        log(
+            "Stage-4 DtN modal cache summary: "
+            f"unique surface orders = {timing_details['stage4_dtn_unique_surface_orders']}, "
+            f"x/y component vector assemblies = {timing_details['stage4_dtn_component_vector_assemblies']}, "
+            f"polarization cache hits = {timing_details['stage4_dtn_component_vector_cache_hits']}"
+        )
+
+    t0 = time.perf_counter()
     A_aug.assemble()
     b_aug.assemble()
+    timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+
+    t0 = time.perf_counter()
     x_aug, ksp = _solve_augmented_system(A_aug, b_aug, petsc_options, f"stage4_3d_dtn_{cfg.case_name}_")
+    timing_details["stage4_dtn_linear_solve_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+
+    t0 = time.perf_counter()
     E_total = _assign_fe_solution_from_augmented(x_aug, floquet_data, n_aux)
+    timing_details["stage4_dtn_solution_backsubstitution_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
     port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+    port_metrics.update(timing_details)
     _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
 
     solver_info = {
@@ -430,6 +563,7 @@ def solve_stage4_dtn_port_total_field(
         "actual_ksp_type": ksp.getType(),
         "actual_pc_type": ksp.getPC().getType(),
         "actual_pc_factor_solver_type": None,
+        **timing_details,
         **_linear_residual(A_aug, b_aug, x_aug),
     }
     try:

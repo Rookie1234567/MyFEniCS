@@ -1,5 +1,70 @@
 # v2 文档索引
 
+## 2026-06-25 更新：Stage 4 h=2.5 MPI BUS error 修复与 Floquet 计时拆分
+
+本轮处理两个运行层面的关键问题：
+
+```text
+1. MPI 后处理 BUS error：
+   大规模并行写 ADIOS2/VTX .bp 时，当前容器里的 VTXWriter 可能触发不可恢复的 PETSc BUS error。
+   现在 MPI 运行默认跳过 3D VTX .bp，改用 fields_3d_for_paraview_parallel.pvd + rank*.vtu。
+   串行仍会写 E_3d_numerical.bp 和 H_3d_A_per_m_from_curl.bp。
+
+2. Floquet 计时：
+   新增 floquet_build_topological_edge_context。
+   原来第一条 x-direction 计时里混入了周期边拓扑上下文构建，所以看起来 x 方向特别慢。
+   现在 context、x、y、corner、MPC arrays、finalize 分开输出。
+```
+
+最新验证：
+
+```text
+h=2.5 block, np=8, zero_order:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np8_20260625_092003
+  case_status = completed
+  R/T/R+T = 0.3189887 / 0.6810113 / 1.0000000
+  vtx_3d_output_status = skipped_mpi
+  ParaView = fields_3d_for_paraview_parallel.pvd
+
+h=5 block, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_093728
+  R/T/R+T = 0.3661053 / 0.6338947 / 1.0000000
+  floquet_build_topological_edge_context = 0.591 s
+  floquet_build_x_constraints = 0.021 s
+  floquet_build_y_constraints = 0.016 s
+  stage4_dtn_port_assembly_and_solve = 13.487 s
+```
+
+注意：`h=10 nm` 对 `lambda0=13.5 nm` 太粗，不能作为 DtN/Floquet 物理正确性的验收网格；正式 sanity 仍看 `h=2.5 nm` 及更细趋势。
+
+## 2026-06-25 更新：Stage 4 DtN 计时拆分与端口装配优化完成
+
+本轮解决两个耗时误读/性能问题：
+
+```text
+1. boundary_condition_setup 现在只表示强边界 dof/BC 对象设置。
+   Floquet 约束构建单独看 floquet_constraint_setup_outer 和 floquet_build_x/y/corner 等字段。
+
+2. Stage-4 DtN 端口装配改为可复用表面 form：
+   每个 (side,m,n) 只装配 x/y 两个表面分量，两个偏振通过线性组合得到。
+```
+
+实测结果：
+
+```text
+block grating, h=5, np=4, auto_propagating:
+  旧记录 elapsed ≈ 610 s
+  本轮 elapsed = 15.637 s
+  stage4_dtn_modal_loop_seconds = 2.431 s
+  R/T/R+T = 0.366105 / 0.633895 / 1.000000
+
+flat, n_sub=1.0, h=2.5, np=8:
+  R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+  stage4_dtn_linear_solve_seconds = 222.650 s
+```
+
+如果 `stage4_dtn_port_assembly_and_solve` 仍然很长，请先打开结果目录中的 `dtn_port_power_metrics_3d.json`，区分是 modal loop、矩阵装配、矩阵 finalize，还是 MUMPS 直接求解本身耗时。
+
 ## 2026-06-25 更新：Stage 4 dtn_port 已跑通，旧 PML/probe 不再作为可信 R/T 主线
 
 Stage 4 新的正式 R/T 路径已经完成第一轮验证：

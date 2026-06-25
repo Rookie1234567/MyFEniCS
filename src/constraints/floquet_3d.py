@@ -564,6 +564,11 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
             log(f"{message} seconds = {elapsed:.3f}")
         return result
 
+    _timed_step(
+        "floquet_build_topological_edge_context",
+        "building 3D Floquet topological edge context",
+        _context,
+    )
     x_data = _timed_step(
         "floquet_build_x_constraints",
         "building 3D Floquet x-direction low-level constraints",

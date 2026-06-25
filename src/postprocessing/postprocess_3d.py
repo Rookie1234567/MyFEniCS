@@ -170,14 +170,27 @@ def save_airbox_3d_fields(
         H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
         H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
 
-    try:
-        with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
-            writer.write(0.0)
-        with io.VTXWriter(comm, out_dir / "H_3d_A_per_m_from_curl.bp", H_dg) as writer:
-            writer.write(0.0)
-    except Exception as exc:  # pragma: no cover - best-effort artifact
-        if comm.rank == 0:
-            (out_dir / "vtx_3d_warning.txt").write_text(str(exc), encoding="utf-8")
+    vtx_output_status = "skipped_mpi"
+    vtx_output_files: list[str] = []
+    if comm.size == 1:
+        try:
+            with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
+                writer.write(0.0)
+            with io.VTXWriter(comm, out_dir / "H_3d_A_per_m_from_curl.bp", H_dg) as writer:
+                writer.write(0.0)
+            vtx_output_status = "written_serial"
+            vtx_output_files = ["E_3d_numerical.bp", "H_3d_A_per_m_from_curl.bp"]
+        except Exception as exc:  # pragma: no cover - best-effort artifact
+            vtx_output_status = "failed_serial"
+            if comm.rank == 0:
+                (out_dir / "vtx_3d_warning.txt").write_text(str(exc), encoding="utf-8")
+    elif comm.rank == 0:
+        (out_dir / "vtx_3d_skipped_mpi.txt").write_text(
+            "MPI 3D VTX .bp output is skipped because ADIOS2/VTXWriter can raise "
+            "unrecoverable BUS errors for large parallel vector fields in the current container. "
+            "Use fields_3d_for_paraview_parallel.pvd instead.\n",
+            encoding="utf-8",
+        )
 
     grid, coords = _field_grid(V_dg)
     e_num = _values(E_num_dg, grid.n_points)
@@ -278,10 +291,12 @@ def save_airbox_3d_fields(
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
         "paraview_file": str(paraview_path),
+        "vtx_3d_output_status": vtx_output_status,
+        "vtx_3d_output_files": vtx_output_files,
         "exact_reference_available": has_exact_reference,
         "exact_reference_note": None
         if has_exact_reference
-        else "Stage 4真实grating没有解析精确解；E_b是分层背景场，不再输出E_exact。",
+        else "Stage 4 grating has no analytic exact solution; E_b is the layered background field, so E_exact is not written.",
         "paraview_e_field_arrays": [
             "E_tot_V_per_m_real",
             "E_tot_V_per_m_imag",
