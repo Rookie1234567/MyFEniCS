@@ -1,5 +1,72 @@
 # Stage 4 续接记录
 
+## 2026-06-25 续接记录：E/H Fourier 修正完成，但目标案例仍失败
+
+本轮已完成：
+
+```text
+1. 修正 Stage 4 官方衍射级 R/T 后处理：
+   - 旧官方值：E-only Fourier。
+   - 新官方值：per-order E/H Fourier，上下行模态分离。
+   - 旧 E-only 字段保留为 diagnostic。
+
+2. 新增单元测试：
+   - flat-layer Fresnel 同时验证 E-only 与 E/H Fourier。
+   - 人工同级次 up/down 波验证 E/H Fourier 能分离 transmitted/down 振幅。
+
+3. 完整测试：
+   python3 -m unittest discover -s src/test -p "test_*.py"
+   结果：Ran 33 tests, OK (skipped=8)
+```
+
+关键结果：
+
+```text
+h=12.5, n=2, natural:
+  results/3D_stage4_block_grating_normal_p1_h12p5_np4_20260625_013916
+  E-only R+T = 1.008603
+  E/H    R+T = 1.001129
+
+h=6.25, n=2, natural:
+  results/3D_stage4_block_grating_normal_p1_h6p25_np4_20260625_014118
+  E-only R+T = 1.781313
+  E/H    R+T = 1.398569
+  net-flux R+T = 0.822158
+
+h=6.25, n=2, PML=100 nm, alpha=30, zero_tangential:
+  results/3D_stage4_block_grating_normal_p1_h6p25_np4_20260625_015707
+  E/H R+T = 1.417659
+  net-flux R+T = 0.867155
+
+h=2.5, n=2, natural, np=16:
+  results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260625_020717
+  E-only R+T = 2.602034
+  E/H    R+T = 1.984750
+  net-flux R+T = 1.882674
+  case_status = failed_stage4_energy_balance
+```
+
+当前判断：
+
+```text
+1. E/H Fourier 后处理修正有效，但只解决了一部分透射率虚高。
+2. h=2.5 的场解仍不可信，max |E_scat| 约 3.98，R+T 仍接近 2。
+3. h=6.25 下加厚/增强 PML 没有修复，说明不能靠 PML 参数简单救回来。
+4. 当前 p1/h=2.5 对 n=2 光栅材料内波长只有约 2.7 个单元/波长，
+   不满足常用 6 个单元/波长经验要求。
+```
+
+下一步建议：
+
+```text
+1. 不要再把当前 p1/h=2.5 作为可信 COMSOL 对标结果。
+2. 若继续做 EUV 目标案例，优先路线应是：
+   - 支持更高阶 H(curl) 元素的低内存 Floquet 约束；
+   - 或实现真正的 3D modal/DtN port，减少 PML 多级次回馈；
+   - 或转到内存更大的服务器，尝试 h≈1.0-1.25 nm 的收敛测试。
+3. 如果只想验证代码流程，可继续使用 flat-layer、n_grating=1、n_grating=1.2、h=12.5 这类 sanity。
+```
+
 ## 2026-06-24 续接记录：h=2.5 nm、np=16 已跑完但能量失败
 
 本轮已完成：

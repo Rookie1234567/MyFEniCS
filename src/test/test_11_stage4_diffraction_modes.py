@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 from src.postprocessing.diffraction_3d import (
+    _eh_fourier_order_powers,
     _e_fourier_order_powers,
     _incident_power,
     enumerate_diffraction_orders_3d,
@@ -13,7 +14,7 @@ from src.postprocessing.diffraction_3d import (
     polarization_basis_3d,
     _probe_z_locations,
 )
-from src.common.analytic_fields_3d import electric_field_code_values, fresnel_reference
+from src.common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values, fresnel_reference
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -133,6 +134,48 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(metrics["R_total_from_e_fourier"], ref["R"], places=11)
         self.assertAlmostEqual(metrics["T_total_from_e_fourier"], ref["T"], places=11)
         self.assertAlmostEqual(metrics["R_plus_T_from_e_fourier"], ref["R_plus_T"], places=11)
+
+        _, eh_metrics = _eh_fourier_order_powers(
+            cfg,
+            orders,
+            top_points,
+            electric_field_code_values(cfg, top_points),
+            magnetic_field_code_values(cfg, top_points),
+            bottom_points,
+            electric_field_code_values(cfg, bottom_points),
+            magnetic_field_code_values(cfg, bottom_points),
+            _incident_power(cfg),
+        )
+        self.assertAlmostEqual(eh_metrics["R_total_from_eh_fourier"], ref["R"], places=11)
+        self.assertAlmostEqual(eh_metrics["T_total_from_eh_fourier"], ref["T"], places=11)
+        self.assertAlmostEqual(eh_metrics["R_plus_T_from_eh_fourier"], ref["R_plus_T"], places=11)
+
+    def test_eh_fourier_separates_same_order_up_down_waves(self):
+        cfg = stage4_block_config(diffraction_zero_order_only=True)
+        order = enumerate_diffraction_orders_3d(cfg)[0]
+        points = _sample_plane(cfg, z=-25.0, nx=16, ny=16)
+        basis = dict(polarization_basis_3d(order.alpha, order.gamma, order.beta_bottom, cfg.substrate_index, -1, cfg))
+        pol = basis["y"]
+        k_down, e_down, h_down = mode_eh_vectors(order.alpha, order.gamma, order.beta_bottom, pol, -1, cfg)
+        k_up, e_up, h_up = mode_eh_vectors(order.alpha, order.gamma, order.beta_bottom, pol, 1, cfg)
+        down_amp = 0.8 + 0.2j
+        up_amp = 0.3 - 0.1j
+        e_down_values, h_down_values = _mode_samples(points, k_down, e_down, h_down, down_amp)
+        e_up_values, h_up_values = _mode_samples(points, k_up, e_up, h_up, up_amp)
+
+        rows, _ = _eh_fourier_order_powers(
+            cfg,
+            [order],
+            points,
+            np.zeros_like(e_down_values),
+            np.zeros_like(h_down_values),
+            points,
+            e_down_values + e_up_values,
+            h_down_values + h_up_values,
+            _incident_power(cfg),
+        )
+        recovered = rows[(0, 0, "y")]["transmitted_amplitude_eh_fourier"]
+        self.assertLess(abs(recovered - down_amp), 1.0e-12)
 
 
 if __name__ == "__main__":

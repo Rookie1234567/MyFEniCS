@@ -307,6 +307,159 @@ def _e_fourier_order_powers(
     return rows, metrics
 
 
+def _fit_directional_eh_amplitudes_for_order(
+    cfg: SimulationConfig3D,
+    points: np.ndarray,
+    e_values: np.ndarray,
+    h_values: np.ndarray,
+    order: DiffractionOrder3D,
+    *,
+    side: str,
+) -> tuple[dict[tuple[str, str], complex], float]:
+    """Separate up/down amplitudes for one order from tangential E/H Fourier data.
+
+    A single transverse Fourier coefficient of E alone cannot distinguish a
+    downward wave from an upward wave with the same (m, n).  That matters when a
+    finite PML leaves a small reflected component on the probe plane.  The
+    tangential pair (E_x, E_y, H_x, H_y) gives a small local modal system for
+    each order and is the Stage-4 power path closest to a real modal port.
+    """
+
+    if side == "top":
+        beta = order.beta_top
+        n_medium = complex(cfg.n_air)
+    elif side == "bottom":
+        beta = order.beta_bottom
+        n_medium = complex(cfg.substrate_index)
+    else:
+        raise ValueError("side must be 'top' or 'bottom'.")
+
+    z = float(points[0, 2])
+    e_coeff = _fourier_e_coefficient(points, e_values, order.alpha, order.gamma)
+    h_coeff = _fourier_e_coefficient(points, h_values, order.alpha, order.gamma)
+    rhs = np.asarray((e_coeff[0], e_coeff[1], h_coeff[0], h_coeff[1]), dtype=np.complex128)
+
+    columns: list[np.ndarray] = []
+    keys: list[tuple[str, str]] = []
+    for direction_name, vertical_sign in (("down", -1), ("up", 1)):
+        for pol_name, pol_vec in polarization_basis_3d(
+            order.alpha,
+            order.gamma,
+            beta,
+            n_medium,
+            vertical_sign,
+            cfg,
+        ):
+            kvec, e_vec, h_vec = mode_eh_vectors(order.alpha, order.gamma, beta, pol_vec, vertical_sign, cfg)
+            phase_z = np.exp(1j * kvec[2] * z)
+            columns.append(
+                np.asarray(
+                    (
+                        phase_z * e_vec[0],
+                        phase_z * e_vec[1],
+                        phase_z * h_vec[0],
+                        phase_z * h_vec[1],
+                    ),
+                    dtype=np.complex128,
+                )
+            )
+            keys.append((pol_name, direction_name))
+
+    matrix = np.column_stack(columns).astype(np.complex128)
+    amplitudes, *_ = np.linalg.lstsq(matrix, rhs, rcond=None)
+    rhs_norm = float(np.linalg.norm(rhs))
+    if rhs_norm < 1.0e-12:
+        residual = 0.0
+    else:
+        residual = float(np.linalg.norm(matrix @ amplitudes - rhs) / rhs_norm)
+    return {key: complex(value) for key, value in zip(keys, amplitudes)}, residual
+
+
+def _eh_fourier_order_powers(
+    cfg: SimulationConfig3D,
+    power_orders: list[DiffractionOrder3D],
+    top_points: np.ndarray,
+    top_e: np.ndarray,
+    top_h: np.ndarray,
+    bottom_points: np.ndarray,
+    bottom_e: np.ndarray,
+    bottom_h: np.ndarray,
+    incident_power: float,
+) -> tuple[dict[tuple[int, int, str], dict[str, float | complex]], dict[str, float]]:
+    """Compute propagating R/T by per-order directional E/H Fourier fitting."""
+
+    top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
+    bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+    rows: dict[tuple[int, int, str], dict[str, float | complex]] = {}
+    R_total = 0.0
+    T_total = 0.0
+    top_residuals: list[float] = []
+    bottom_residuals: list[float] = []
+
+    for order in power_orders:
+        top_amp, top_res = _fit_directional_eh_amplitudes_for_order(
+            cfg,
+            top_points,
+            top_e,
+            top_h,
+            order,
+            side="top",
+        )
+        bottom_amp, bottom_res = _fit_directional_eh_amplitudes_for_order(
+            cfg,
+            bottom_points,
+            bottom_e,
+            bottom_h,
+            order,
+            side="bottom",
+        )
+        top_residuals.append(top_res)
+        bottom_residuals.append(bottom_res)
+
+        top_basis = dict(polarization_basis_3d(order.alpha, order.gamma, order.beta_top, cfg.n_air, 1, cfg))
+        bottom_basis = dict(
+            polarization_basis_3d(order.alpha, order.gamma, order.beta_bottom, cfg.substrate_index, -1, cfg)
+        )
+        for pol_name in sorted(set(top_basis) | set(bottom_basis)):
+            ref_amp = top_amp.get((pol_name, "up"), 0.0 + 0.0j)
+            trn_amp = bottom_amp.get((pol_name, "down"), 0.0 + 0.0j)
+            R = 0.0
+            T = 0.0
+            if order.top_propagating and pol_name in top_basis:
+                top_k, top_e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, order.beta_top, top_basis[pol_name], 1, cfg)
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
+                R_total += float(R)
+            if order.bottom_propagating and pol_name in bottom_basis:
+                bottom_k, bottom_e_vec, _ = mode_eh_vectors(
+                    order.alpha,
+                    order.gamma,
+                    order.beta_bottom,
+                    bottom_basis[pol_name],
+                    -1,
+                    cfg,
+                )
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
+                T_total += float(T)
+            rows[(order.m, order.n, pol_name)] = {
+                "reflected_amplitude_eh_fourier": ref_amp,
+                "transmitted_amplitude_eh_fourier": trn_amp,
+                "R_eh_fourier": float(R),
+                "T_eh_fourier": float(T),
+                "top_eh_fourier_fit_residual": float(top_res),
+                "bottom_eh_fourier_fit_residual": float(bottom_res),
+            }
+
+    metrics = {
+        "R_total_from_eh_fourier": float(R_total),
+        "T_total_from_eh_fourier": float(T_total),
+        "R_plus_T_from_eh_fourier": float(R_total + T_total),
+        "A_balance_from_eh_fourier": float(1.0 - R_total - T_total),
+        "diffraction_top_eh_fourier_fit_residual_max": float(max(top_residuals) if top_residuals else 0.0),
+        "diffraction_bottom_eh_fourier_fit_residual_max": float(max(bottom_residuals) if bottom_residuals else 0.0),
+    }
+    return rows, metrics
+
+
 def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
     probe_fraction = float(cfg.diffraction_probe_fraction)
     if not (0.0 < probe_fraction < 1.0):
@@ -634,6 +787,17 @@ def compute_diffraction_orders_3d(
         bottom_e,
         incident_power,
     )
+    eh_fourier_rows, eh_fourier_metrics = _eh_fourier_order_powers(
+        cfg,
+        power_orders,
+        top_points,
+        top_e,
+        top_h,
+        bottom_points,
+        bottom_e,
+        bottom_h,
+        incident_power,
+    )
     top_flux_outward = _sampled_flux_code_units(top_e, top_h, np.asarray((0.0, 0.0, 1.0)), cfg)
     bottom_flux_outward = _sampled_flux_code_units(bottom_e, bottom_h, np.asarray((0.0, 0.0, -1.0)), cfg)
     R_from_net_flux = 1.0 + top_flux_outward / incident_power
@@ -721,6 +885,7 @@ def compute_diffraction_orders_3d(
                     "R": float(R),
                     "T": float(T),
                     **e_fourier_rows.get((order.m, order.n, pol_name), {}),
+                    **eh_fourier_rows.get((order.m, order.n, pol_name), {}),
                     "top_fit_residual": top_residual,
                     "bottom_fit_residual": bottom_residual,
                 }
@@ -729,9 +894,9 @@ def compute_diffraction_orders_3d(
     modal_R_total = float(R_total) if compute_modal_diagnostic else None
     modal_T_total = float(T_total) if compute_modal_diagnostic else None
     modal_R_plus_T = float(modal_R_total + modal_T_total) if compute_modal_diagnostic else None
-    official_R_total = float(e_fourier_metrics["R_total_from_e_fourier"])
-    official_T_total = float(e_fourier_metrics["T_total_from_e_fourier"])
-    official_R_plus_T = float(e_fourier_metrics["R_plus_T_from_e_fourier"])
+    official_R_total = float(eh_fourier_metrics["R_total_from_eh_fourier"])
+    official_T_total = float(eh_fourier_metrics["T_total_from_eh_fourier"])
+    official_R_plus_T = float(eh_fourier_metrics["R_plus_T_from_eh_fourier"])
     flux_R_total = float(R_from_net_flux)
     flux_T_total = float(T_from_net_flux)
     flux_R_plus_T = float(flux_R_total + flux_T_total)
@@ -740,9 +905,17 @@ def compute_diffraction_orders_3d(
         "T_total": official_T_total,
         "R_plus_T": official_R_plus_T,
         "A_balance": float(1.0 - official_R_plus_T),
-        "diffraction_total_power_source": "e_fourier_orders",
-        "diffraction_e_fourier_note": "Official Stage-4 R/T uses Fourier coefficients of E on uniform probe planes.",
+        "diffraction_total_power_source": "eh_fourier_orders",
+        "diffraction_eh_fourier_note": (
+            "Official Stage-4 R/T uses per-order Fourier coefficients of tangential E/H "
+            "to separate up/down waves on uniform probe planes."
+        ),
+        "diffraction_e_fourier_note": (
+            "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
+            "when finite-PML reflections or non-transverse FE components are present."
+        ),
         "diffraction_background_evaluated_analytically": bool(use_exact_layered_background),
+        **eh_fourier_metrics,
         **e_fourier_metrics,
         "diffraction_modal_order_powers_diagnostic_only": True,
         "diffraction_modal_diagnostic_computed": compute_modal_diagnostic,

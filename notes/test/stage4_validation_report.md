@@ -1,5 +1,54 @@
 # Stage 4 验证报告
 
+## 2026-06-25 更新：E/H Fourier 后处理修正后，目标 h=2.5 仍未通过
+
+本轮修正了 Stage 4 衍射级后处理中的一个重要问题：
+
+```text
+旧官方口径：只用 E 的 Fourier 系数推断每个衍射级功率。
+问题：同一个 (m,n) 在 probe 面上可能同时有下行/上行波，尤其有限 PML 有回波时，
+      E-only 会把 incoming/outgoing 混在一起，导致透射率明显虚高。
+
+新官方口径：对每个 (m,n) 单独使用切向 (E_x,E_y,H_x,H_y) Fourier 系数，
+            解一个小的 up/down/s/p 模态系统，再只统计 top-up 反射和 bottom-down 透射。
+```
+
+新增单元测试：
+
+```text
+python3 -m unittest src.test.test_11_stage4_diffraction_modes
+结果：7 tests OK
+
+python3 -m unittest discover -s src/test -p "test_*.py"
+结果：33 tests OK, skipped=8
+```
+
+关键实跑结果：
+
+| case | result dir | h nm | PML | official power | R | T | R+T | E-only R+T | net-flux R+T | 结论 |
+|---|---|---:|---|---|---:|---:|---:|---:|---:|---|
+| zero contrast block | `results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260625_012331` | 12.5 | 25 nm natural | old run | 0.033736 | 0.966264 | 1.000000 | 1.000000 | 1.000000 | 通过 |
+| weak contrast n=1.2 | `results/3D_stage4_block_grating_normal_p1_h12p5_np2_20260625_012525` | 12.5 | 25 nm natural | old run | 0.033649 | 0.967980 | 1.001629 | 1.001629 | 1.006901 | 轻微超 1 |
+| n=2 current | `results/3D_stage4_block_grating_normal_p1_h12p5_np4_20260625_013916` | 12.5 | 25 nm natural | E/H Fourier | 0.031539 | 0.969590 | 1.001129 | 1.008603 | 1.025137 | 后处理改善但仍超 1 |
+| n=2 current | `results/3D_stage4_block_grating_normal_p1_h6p25_np4_20260625_014118` | 6.25 | 25 nm natural | E/H Fourier | 0.395799 | 1.002770 | 1.398569 | 1.781313 | 0.822158 | 场本身不可信 |
+| n=2 strong PML | `results/3D_stage4_block_grating_normal_p1_h6p25_np4_20260625_015707` | 6.25 | 100 nm, alpha=30, zero | E/H Fourier | 0.423308 | 0.994351 | 1.417659 | - | 0.867155 | 加厚 PML 未解决 |
+| n=2 target | `results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260625_020717` | 2.5 | 25 nm natural | E/H Fourier | 0.062028 | 1.922722 | 1.984750 | 2.602034 | 1.882674 | failed_stage4_energy_balance |
+
+本轮判断：
+
+```text
+1. E/H Fourier 后处理是必要修正：h=12.5 的 R+T 从 1.0086 降到 1.0011，
+   h=6.25 的 R+T 从 1.7813 降到 1.3986。
+2. 目标 h=2.5 仍严重 R+T>1，因此问题不只是后处理。
+3. h=6.25 改成 zero_tangential、PML=50/100 nm、alpha=8/30 后仍不通过，
+   所以当前失败不能靠简单加厚 PML 修好。
+4. h=6.25 和 h=2.5 的 max |E_scat| 已经达到 3.4 到 4.0，场本身出现强非物理/未收敛特征。
+5. 对 13.5 nm、n_grating=2，材料内波长只有 6.75 nm；p1/h=2.5 只有约 2.7 个单元/材料内波长，
+   仍低于常用的 6 个单元/波长经验要求。当前 direct + p1 + PML 路径不能把该 EUV 案例判为可信结果。
+```
+
+因此当前版本的程序行为是：flat/零对比度 sanity 通过；真实 block grating 若 `R+T>1`，继续标记为 `failed_stage4_energy_balance` 和 `diagnostic_only=true`，不允许误用为正式物理结果。
+
 ## 2026-06-24 更新：h=2.5 nm、np=16 正式重跑结论
 
 本轮在资源空闲后重新跑了 13.5 nm 小周期 `stage4_block_grating`，参数为：

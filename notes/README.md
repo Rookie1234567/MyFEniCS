@@ -1,5 +1,42 @@
 # v2 文档索引
 
+## 2026-06-25 更新：Stage 4 改用 E/H Fourier 功率口径，但目标 EUV 案例仍失败
+
+本轮把 Stage 4 官方衍射级 R/T 从 E-only Fourier 改为 E/H Fourier：
+
+```text
+每个 (m,n) 级次在 probe 面上取 Fourier(E_x,E_y,H_x,H_y)，
+解局部 up/down/s/p 模态小系统，
+只统计 top-up 作为反射、bottom-down 作为透射。
+```
+
+这样可以避免有限 PML 回波或同级次反向波把 E-only 透射率抬得过高。修正后：
+
+```text
+h=12.5 nm:
+  E-only R+T = 1.008603
+  E/H    R+T = 1.001129
+
+h=2.5 nm, np=16:
+  E-only R+T = 2.602034
+  E/H    R+T = 1.984750
+```
+
+结论很明确：后处理确实修正了一部分透射率虚高，但目标 13.5 nm block grating 的场解本身仍不可信。当前 `p1/h=2.5 nm` 对 `n_grating=2` 的材料内波长只有约 2.7 个单元/波长，且加厚 PML 到 100 nm、alpha=30 也没有让 h=6.25 回到能量守恒。因此当前版本仍会把目标结果标记为：
+
+```text
+case_status = failed_stage4_energy_balance
+official_result = false
+diagnostic_only = true
+```
+
+最新验证记录见：
+
+```text
+notes/test/stage4_validation_report.md
+notes/test/stage4_resume_log.md
+```
+
 ## 2026-06-24 更新：Stage 4 h=2.5 nm、16 核重跑仍未通过能量验收
 
 本轮已用当前修正版代码完成 `stage4_block_grating` 的 h=2.5 nm、p1、np=16 重跑：

@@ -1,5 +1,51 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-25 更新：R/T 结果现在看 E/H Fourier 字段
+
+最新代码中，Stage 4 官方 R/T 使用：
+
+```text
+diffraction_total_power_source = "eh_fourier_orders"
+R_total_from_eh_fourier
+T_total_from_eh_fourier
+R_plus_T_from_eh_fourier
+```
+
+旧的 E-only 字段仍会输出，但只作为诊断：
+
+```text
+R_total_from_e_fourier
+T_total_from_e_fourier
+R_plus_T_from_e_fourier
+```
+
+原因是 E-only 不能区分同一个 `(m,n)` 级次在 probe 面上的上行/下行波；有限 PML 有回波时，它会把透射率抬得过高。
+
+当前目标案例的最新正式重跑：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h2p5_np16_20260625_020717
+
+E/H Fourier:
+  R/T/R+T = 0.062028 / 1.922722 / 1.984750
+
+E-only diagnostic:
+  R+T = 2.602034
+
+sampled net-flux diagnostic:
+  R+T = 1.882674
+```
+
+结论：后处理已改进，但这个 h=2.5、p1、13.5 nm EUV block grating 仍不可信。运行结果中只要看到：
+
+```text
+case_status = failed_stage4_energy_balance
+official_result = false
+diagnostic_only = true
+```
+
+就不要把 ParaView 场分布或 R/T 当作可对标 COMSOL 的正式结果。
+
 ## 2026-06-24 更新：h=2.5 nm 运行状态与当前风险
 
 当前 h=2.5 nm、p1、np=16 可以完整跑完，但能量验收未通过：

@@ -1,3 +1,42 @@
+## 2026-06-25 更新：Stage 4 E/H Fourier 后处理阅读路径
+
+本轮 Stage 4 官方 R/T 已从 E-only 改成 E/H Fourier。读代码时重点看：
+
+```text
+src/postprocessing/diffraction_3d.py
+
+1. _fit_directional_eh_amplitudes_for_order(...)
+   对单个 (m,n) 级次，用 Fourier(E_x,E_y,H_x,H_y) 解 up/down/s/p 振幅。
+
+2. _eh_fourier_order_powers(...)
+   统计 top-up 反射和 bottom-down 透射，写出：
+     R_total_from_eh_fourier
+     T_total_from_eh_fourier
+     R_plus_T_from_eh_fourier
+
+3. _e_fourier_order_powers(...)
+   仍保留为诊断字段：
+     R_plus_T_from_e_fourier
+   它不再是官方结果，因为 E-only 无法区分同级次的上行/下行波。
+
+4. compute_diffraction_orders_3d(...)
+   summary["diffraction_total_power_source"] 现在应为 "eh_fourier_orders"。
+```
+
+配套测试：
+
+```text
+src/test/test_11_stage4_diffraction_modes.py
+
+test_flat_layer_fresnel_field_e_fourier_power_sanity
+  同时验证 E-only 和 E/H Fourier 对解析 Fresnel flat-layer 都返回 R+T=1。
+
+test_eh_fourier_separates_same_order_up_down_waves
+  人工构造同一 (0,0) 级次的 down/up 波，确认 E/H Fourier 能分离 transmitted/down 振幅。
+```
+
+重要结论：这个后处理修正确实降低了虚高透射率，但 h=2.5 的 EUV block grating 仍然 `R+T=1.984750`，所以后续排查应转向离散精度、3D Maxwell 约束形式和更严格的边界/端口模型，而不是继续调 E-only 后处理。
+
 ## 2026-06-24 更新：h=2.5 诊断后下一步读代码重点
 
 最新 h=2.5、np=16 的 Stage 4 结果仍然 `R+T>1`，但已经排除了几类问题：

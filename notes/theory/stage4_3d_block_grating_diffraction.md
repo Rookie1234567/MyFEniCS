@@ -1,5 +1,43 @@
 # Stage 4 理论说明：3D 周期矩形柱与衍射级后处理
 
+## 2026-06-25 更新：为什么官方 R/T 改为 E/H Fourier
+
+对一个给定衍射级 `(m,n)`，横向波矢 `k_t=(alpha,gamma)` 是固定的，但在同一个 probe 面上可以同时存在：
+
+```text
+down wave: k_z = -beta
+up wave:   k_z = +beta
+```
+
+如果只取电场 Fourier 系数 `E_mn(z_probe)`，它实际是 down 与 up 的叠加。有限 PML、外边界反射或数值近场都会让同一个 `(m,n)` 同时含有两个方向。此时 E-only 后处理会把 incoming/outgoing 混在一起，典型表现就是透射率被抬高，甚至 `R+T>1`。
+
+当前官方口径改为对每个 `(m,n)` 使用切向场：
+
+```text
+[E_x, E_y, H_x, H_y]_mn
+```
+
+建立一个小的方向/偏振模态系统：
+
+```text
+[E_t, H_t]_mn =
+  a_down_s [E_t,H_t]_{down,s}
++ a_down_p [E_t,H_t]_{down,p}
++ a_up_s   [E_t,H_t]_{up,s}
++ a_up_p   [E_t,H_t]_{up,p}
+```
+
+然后只统计：
+
+```text
+top:    up   amplitudes -> reflected power
+bottom: down amplitudes -> transmitted power
+```
+
+这相当于一个轻量级的 modal-port 后处理，不改变有限元求解矩阵。旧 E-only 结果仍保留为诊断字段，用来判断 E-only 误差有多大。
+
+注意：E/H Fourier 修正只能修后处理中的方向混叠，不能修复场解本身。如果有限元解已经因为网格过粗、PML 多级次反射、或 3D H(curl) 离散问题产生非物理场，那么 E/H Fourier 仍会给出 `R+T>1`，此时结果必须标记为 diagnostic-only。
+
 ## 2026-06-23 更新：为什么 0 级传播时仍要拟合 evanescent 级次
 
 默认矩形柱参数为：
