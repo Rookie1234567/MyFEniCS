@@ -105,10 +105,16 @@ def _config_updates(args) -> dict[str, object]:
         updates["scattering_background"] = args.scattering_background
     if args.stage4_boundary_model is not None:
         updates["stage4_boundary_model"] = args.stage4_boundary_model
-        if args.stage4_boundary_model == "robin0":
+        if args.stage4_boundary_model in {"robin0", "dtn_port"}:
             updates["use_pml"] = False
             updates["pml_top_thickness"] = 0.0
             updates["pml_bottom_thickness"] = 0.0
+        if args.stage4_boundary_model == "pml":
+            updates["use_pml"] = True
+    if args.stage4_dtn_order_policy is not None:
+        updates["stage4_dtn_order_policy"] = args.stage4_dtn_order_policy
+    if args.stage4_dtn_assembly is not None:
+        updates["stage4_dtn_assembly"] = args.stage4_dtn_assembly
     if args.stage4_pml_outer_bc is not None:
         updates["stage4_pml_outer_bc"] = args.stage4_pml_outer_bc
     if args.diffraction_zero_order_only is not None:
@@ -166,7 +172,9 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "stage_case": stage_case,
             "geometry_kind": "rectangular_block_grating",
             "scattering_background": "layered",
-            "stage4_boundary_model": "pml",
+            "stage4_boundary_model": "dtn_port",
+            "stage4_dtn_order_policy": "auto_propagating",
+            "stage4_dtn_assembly": "auxiliary",
             "stage4_pml_outer_bc": "natural",
             "lambda0": 13.5,
             "period_x": 100.0,
@@ -177,9 +185,9 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "z_max": 100.0,
             "interface_z": 0.0,
             "use_floquet_xy": True,
-            "use_pml": True,
-            "pml_top_thickness": 25.0,
-            "pml_bottom_thickness": 25.0,
+            "use_pml": False,
+            "pml_top_thickness": 0.0,
+            "pml_bottom_thickness": 0.0,
             "pml_alpha": 5.0,
             "n_substrate": 1.45 + 0.0j,
             "n_grating": 2.0 + 0.0j,
@@ -340,9 +348,24 @@ def main(argv: list[str] | None = None):
     )
     parser.add_argument(
         "--stage4-boundary-model",
-        choices=("pml", "robin0"),
+        choices=("dtn_port", "pml", "robin0"),
         default=None,
-        help="Stage-4 vertical truncation. 'robin0' is a diagnostic zero-order radiation boundary without PML.",
+        help=(
+            "Stage-4 vertical truncation. 'dtn_port' is the total-field Fourier-DtN port; "
+            "'pml' and 'robin0' are diagnostic legacy paths."
+        ),
+    )
+    parser.add_argument(
+        "--stage4-dtn-order-policy",
+        choices=("auto_propagating", "zero_order", "manual"),
+        default=None,
+        help="Stage-4 DtN order selection. auto_propagating includes every propagating top/bottom order.",
+    )
+    parser.add_argument(
+        "--stage4-dtn-assembly",
+        choices=("auxiliary",),
+        default=None,
+        help="Stage-4 DtN assembly. 3D v1 supports only sparse auxiliary modal unknowns.",
     )
     parser.add_argument(
         "--stage4-pml-outer-bc",

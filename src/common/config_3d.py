@@ -58,7 +58,9 @@ class SimulationConfig3D:
     n_grating: complex | None = None
     interface_z: float = 0.0
     scattering_background: str = "layered"
-    stage4_boundary_model: str = "pml"  # "pml" or diagnostic "robin0"
+    stage4_boundary_model: str = "dtn_port"  # "dtn_port", diagnostic "pml", or diagnostic "robin0"
+    stage4_dtn_order_policy: str = "auto_propagating"  # "auto_propagating", "zero_order", or "manual"
+    stage4_dtn_assembly: str = "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
     stage4_pml_outer_bc: str = "natural"  # "natural" or "zero_tangential"
     use_floquet_xy: bool = False
     use_pml: bool = False
@@ -365,6 +367,8 @@ class SimulationConfig3D:
             "z_max": self.grating_z_max,
         }
         data["grating_background_eps"] = _complex_or_none(self.grating_background_eps)
+        data["stage4_dtn_order_policy"] = self.stage4_dtn_order_policy
+        data["stage4_dtn_assembly"] = self.stage4_dtn_assembly
         data["k0"] = self.k0
         data["omega"] = self.omega
         data["mesh_cells"] = list(self.mesh_cells)

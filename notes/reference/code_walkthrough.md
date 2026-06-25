@@ -1,3 +1,59 @@
+## 2026-06-25 更新：Stage 4 3D DtN 总场端口阅读路线
+
+当前新增的 Stage 4 DtN 主线建议按这个顺序读：
+
+```text
+1. src/main.py
+   看 Stage4GratingInputs3D：
+     stage4_boundary_model = "dtn_port"
+     stage4_dtn_order_policy = "auto_propagating"
+     stage4_dtn_assembly = "auxiliary"
+
+2. src/runners/run_3d_airbox.py
+   看 _stage_defaults("stage4_block_grating") 和 CLI：
+     --stage4-boundary-model dtn_port
+     --stage4-dtn-order-policy auto_propagating
+     --stage4-dtn-assembly auxiliary
+
+3. src/common/modes_3d.py
+   这是 3D diffraction 后处理和 DtN 装配共用的模态目录：
+     enumerate_diffraction_orders_3d(...)
+     polarization_basis_3d(...)
+     outgoing_port_modes_3d(...)
+     incident_power_3d(...)
+
+4. src/solvers/solve_maxwell_3d_common.py
+   看 _use_stage4_dtn_port_formulation(...) 和 _run_maxwell_3d_case_core(...)：
+     dtn_port 分支不加 z 向强 Dirichlet，不启用 PML；
+     先建立 x/y Floquet MPC，再调用 solve_stage4_dtn_port_total_field(...)。
+
+5. src/solvers/dtn_port_3d.py
+   这是第一版 3D Fourier-DtN 总场端口：
+     组装 FEM+MPC 基础块；
+     为每个出射端口模态添加一个 auxiliary unknown；
+     top port 额外加入入射基模；
+     R/T 从 auxiliary outgoing amplitude 计算。
+
+6. src/postprocessing/postprocess_3d.py
+   ParaView 输出 E_total 和 E_incident_port。
+   这里不输出伪造 E_exact；PML 历史字段只在旧 PML 分支里有诊断意义。
+
+7. src/test/test_14_stage4_dtn_modes.py
+   纯数学单元测试，不求解 Maxwell，用来锁住模态枚举、偏振横向性和功率符号。
+```
+
+当前验证状态：
+
+```text
+compileall：通过
+完整单元测试：Ran 37 tests, OK (skipped=8)
+flat n_sub=1.0, h=2.5：R+T = 1.000000
+flat n_sub=1.45, h=2.5：R+T = 1.000000
+block grating h=5, auto_propagating：R+T = 1.000000
+```
+
+因此 Stage 4 读代码时应优先跟踪 `dtn_port` 主线；旧 `pml` 分支保留为诊断历史，不再作为可信 R/T 结论来源。
+
 ## 2026-06-25 更新：Stage 4 E/H Fourier 后处理阅读路径
 
 本轮 Stage 4 官方 R/T 已从 E-only 改成 E/H Fourier。读代码时重点看：

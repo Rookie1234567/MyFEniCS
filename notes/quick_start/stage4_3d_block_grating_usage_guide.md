@@ -1,5 +1,105 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-25 更新：dtn_port 已实跑通过，推荐作为 Stage 4 主线
+
+当前可信 R/T 主线：
+
+```text
+stage4_boundary_model = "dtn_port"
+stage4_dtn_order_policy = "auto_propagating"
+stage4_dtn_assembly = "auxiliary"
+use_pml = False
+```
+
+已验证结果：
+
+```text
+flat, n_sub=1.0, h=2.5:
+  R/T/R+T = 6.04e-04 / 9.993956e-01 / 1.000000
+
+flat, n_sub=1.45, h=2.5:
+  R/T/R+T = 2.061e-02 / 9.793854e-01 / 1.000000
+
+block grating, h=5, auto_propagating:
+  DtN modes = 1068
+  R/T/R+T = 3.661053e-01 / 6.338947e-01 / 1.000000
+```
+
+正式结果请看：
+
+```text
+dtn_port_power_metrics_3d.json
+dtn_port_diffraction_orders_3d.json
+dtn_port_diffraction_orders_3d.csv
+dtn_auxiliary_amplitudes_3d.json
+```
+
+`h=5` 的真实 grating 结果是 smoke，不是最终 COMSOL 对标精度；如果要继续提高精度，下一步应跑 `h=2.5 + auto_propagating`，但预计耗时会明显高于 h=5。
+
+## 2026-06-25 更新：新增 3D DtN 总场端口主线
+
+当前 Stage 4 的新推荐主线是：
+
+```text
+stage4_boundary_model = "dtn_port"
+stage4_dtn_order_policy = "auto_propagating"
+stage4_dtn_assembly = "auxiliary"
+use_pml = False
+```
+
+含义：
+
+```text
+1. 未知量改为 E_total，不再用 Stage 4 PML 散射场作为可信主线。
+2. 上端口注入向下入射的 Floquet 基模。
+3. 上下端口用同一套 3D Fourier 模态目录吸收全部传播出射衍射级。
+4. 正式 R/T 来自 dtn_port_power_metrics_3d.json 和 dtn_port_diffraction_orders_3d.csv/json，
+   不再依赖内部 probe 平面。
+```
+
+最小运行命令：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_flat_layer_sanity \
+  --stage4-boundary-model dtn_port \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+```
+
+验证顺序：
+
+```text
+1. 先跑 stage4_flat_layer_sanity + dtn_port。
+   这个案例没有 grating perturbation，必须优先接近 Fresnel 且 R+T≈1。
+
+2. 再跑 n_grating 接近背景的弱扰动 grating。
+   如果这里不连续回到 flat-layer，说明 DtN 符号、归一化或材料源项仍有 bug。
+
+3. 最后跑默认 block grating。
+   对 lossless 材料，R+T 不应超过 1 加一个很小数值容差；超过时 summary 会标记失败。
+```
+
+ParaView 中的新字段：
+
+```text
+E_total_V_per_m_*          求解得到的总场
+E_incident_port_V_per_m_*  上端口入射基模诊断场
+```
+
+旧的 `stage4_boundary_model="pml"` 分支仍保留，用于查看历史 PML 散射场和内部 probe 诊断；但它不是当前可信 R/T 主线。
+
 ## 2026-06-25 更新：R/T 结果现在看 E/H Fourier 字段
 
 最新代码中，Stage 4 官方 R/T 使用：

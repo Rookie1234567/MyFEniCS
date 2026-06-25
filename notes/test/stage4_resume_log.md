@@ -1,5 +1,135 @@
 # Stage 4 续接记录
 
+## 2026-06-25 续接记录：Stage 4 3D DtN 主线已跑通，下一步可做 h=2.5 block 或优化端口装配
+
+本轮已完成：
+
+```text
+1. 修复 dtn_port 运行时问题：
+   - PETSc index dtype 改为 PETSc.IntType。
+   - 增广矩阵 Mat.createAIJ local/global size 修正。
+   - 移除非 ghost Vec 的 ghostUpdate。
+
+2. 修复 3D DtN auxiliary 端口符号：
+   - 回到与 2D 端口同构的 auxiliary=端口总场投影。
+   - top RHS 使用等价的 -2i beta 入射源。
+   - R/T 使用 top(total_projection - incident_projection)、bottom(total_projection)。
+
+3. 容器验证：
+   - python3 -m compileall -q src：通过。
+   - python3 -m unittest discover -s src/test -p "test_*.py"：
+     Ran 37 tests, OK (skipped=8)。
+
+4. PDE smoke：
+   - flat, n_sub=1.0, h=2.5, np=8：
+     R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+   - flat, n_sub=1.45, h=2.5, np=8：
+     R/T/R+T = 2.061463e-02 / 9.793854e-01 / 1.000000
+   - block grating, h=5, np=4, auto_propagating：
+     DtN modes = 1068
+     R/T/R+T = 3.661053e-01 / 6.338947e-01 / 1.000000
+```
+
+当前结论：
+
+```text
+1. dtn_port 主线已替代旧 PML/probe 分支成为 Stage 4 可信 R/T 路径。
+2. 旧 PML 分支中 R+T>1 的问题不再出现在 dtn_port 端口功率里。
+3. h=5 block grating 只是 smoke，不是最终 COMSOL 对标精度。
+4. h=2.5 block grating + auto_propagating 尚未跑；按 h=5 的 1068 模态装配耗时约 606 s 推测，
+   h=2.5 会更久，应单独安排。
+```
+
+下一轮建议：
+
+```text
+1. 如果要提高物理精度：跑 h=2.5 block grating + auto_propagating，建议 np=8 或 np=16。
+2. 如果要提高效率：优化 dtn_port_3d.py 中每个 mode 都重新 assemble_vector 的端口装配。
+3. 如果要对 COMSOL：优先使用 dtn_port_power_metrics_3d.json 和 dtn_port_diffraction_orders_3d.csv/json。
+```
+
+## 2026-06-25 续接记录：Stage 4 3D DtN 总场端口实现中，容器实跑因额度限制暂停
+
+本轮已完成：
+
+```text
+1. 新增共享 3D 模态模块：
+   - src/common/modes_3d.py
+   - 抽出 3D diffraction/DtN 共用的 (m,n) 枚举、s/p 偏振、Rayleigh warning、
+     mode E/H 向量、单位振幅功率和入射功率计算。
+
+2. 新增 Stage 4 DtN 总场端口初版：
+   - src/solvers/dtn_port_3d.py
+   - stage4_boundary_model="dtn_port"
+   - stage4_dtn_order_policy="auto_propagating"
+   - stage4_dtn_assembly="auxiliary"
+   - 默认不使用上下 PML，x/y 仍使用低内存显式边拓扑 Floquet MPC。
+
+3. 接入入口和配置：
+   - src/common/config_3d.py
+   - src/main.py
+   - src/runners/run_3d_airbox.py
+   - src/solvers/solve_maxwell_3d_common.py
+   - Stage 4 默认边界模型改为 dtn_port；PML 分支保留为诊断历史。
+
+4. ParaView 输出增加 DtN 入射端口诊断场：
+   - src/postprocessing/postprocess_3d.py
+   - 输出 E_total 和 E_incident_port；不新增伪造 E_exact。
+
+5. 新增纯数学单元测试：
+   - src/test/test_14_stage4_dtn_modes.py
+   - 验证 auto_propagating 不受 diffraction_zero_order_only 截断；
+     验证 zero_order、偏振横向性、出射功率正号和零级入射投影。
+
+6. 已完成本机语法检查：
+   python -m py_compile src/common/modes_3d.py src/solvers/dtn_port_3d.py \
+     src/postprocessing/diffraction_3d.py src/postprocessing/postprocess_3d.py \
+     src/solvers/solve_maxwell_3d_common.py src/test/test_14_stage4_dtn_modes.py
+   结果：通过。
+```
+
+当前被额度限制阻断的验证：
+
+```text
+1. Docker compileall：
+   docker run ... python3 -m compileall -q src
+   结果：被 Codex/Docker 执行额度限制拦截。
+
+2. Docker unittest：
+   docker run ... python3 -m unittest discover -s src/test -p "test_*.py"
+   结果：尚未运行。
+
+3. PDE smoke：
+   stage4_flat_layer_sanity + dtn_port
+   stage4_block_grating + dtn_port, h=5 nm / h=2.5 nm
+   MPI np=1/2/4/8/16 一致性对比
+   结果：尚未运行。
+```
+
+下一轮建议先执行：
+
+```bash
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_flat_layer_sanity \
+  --stage4-boundary-model dtn_port \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+mpiexec -n 2 python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --stage4-boundary-model dtn_port \
+  --mesh-target-size 5 \
+  --nedelec-degree 1 \
+  --visualization-degree 1 \
+  --unique-output
+```
+
+注意：当前 DtN 装配还没有经过 DOLFINx/MPC 运行时验证，不能提交为可信物理结果；如果 `stage4_flat_layer_sanity` 不能给出接近 Fresnel 且 `R+T≈1`，应先修 DtN 边界符号、端口归一化和辅助变量块，而不是继续跑真实 grating。
+
 ## 2026-06-25 续接记录：E/H Fourier 修正完成，但目标案例仍失败
 
 本轮已完成：

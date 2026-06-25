@@ -1,5 +1,57 @@
 # Stage 4 验证报告
 
+## 2026-06-25 更新：Stage 4 dtn_port 实跑验证完成，能量守恒恢复
+
+本轮修复了 3D DtN auxiliary 端口的符号口径。最终采用与 2D 端口同构的形式：
+
+```text
+auxiliary unknown = 端口总场投影
+FEM block        += q * ell * auxiliary
+top RHS          += -2i beta * E_inc 的等价向量
+R/T              = top(total_projection - incident_projection), bottom(total_projection)
+```
+
+当前已完成：
+
+```text
+1. python3 -m compileall -q src：通过。
+2. python3 -m unittest discover -s src/test -p "test_*.py"：
+   Ran 37 tests, OK (skipped=8)。
+3. stage4_flat_layer_sanity + dtn_port 已跑通。
+4. stage4_block_grating + dtn_port + auto_propagating 已跑通。
+```
+
+关键结果：
+
+```text
+flat, n_sub=1.0, h=2.5, np=8:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_061747
+  R/T/R+T = 6.043954e-04 / 9.993956e-01 / 1.000000
+  elapsed = 278.66 s, max RSS = 2133.96 MB
+
+flat, n_sub=1.45, h=2.5, np=8:
+  results/3D_stage4_flat_layer_sanity_normal_p1_h2p5_np8_20260625_062303
+  R/T/R+T = 2.061463e-02 / 9.793854e-01 / 1.000000
+  解析 Fresnel R 约 3.37e-02；p1/h=2.5 仍有离散误差，但相对 h=5 明显收敛。
+  elapsed = 273.63 s, max RSS = 2035.06 MB
+
+block grating, h=5, np=4, auto_propagating:
+  results/3D_stage4_block_grating_normal_p1_h5p0_np4_20260625_063607
+  DtN modes = 1068, top/bottom = 354 / 714
+  R/T/R+T = 3.661053e-01 / 6.338947e-01 / 1.000000
+  elapsed = 610.00 s, max RSS = 1739.24 MB
+```
+
+当前判断：
+
+```text
+1. DtN 主线已经解决旧 PML/probe 分支的 R+T 爆炸问题。
+2. lossless 情况下不再 clip，真实输出自然满足 R+T≈1。
+3. h=5 对 EUV 仍偏粗；h=2.5 flat sanity 显示明显收敛。
+4. h=2.5 + block + auto_propagating 预计端口装配会非常久，尚未作为本轮必跑项。
+5. 旧 Stage 4 PML 散射场分支继续保留为诊断历史，不再作为可信 R/T 主线。
+```
+
 ## 2026-06-25 更新：E/H Fourier 后处理修正后，目标 h=2.5 仍未通过
 
 本轮修正了 Stage 4 衍射级后处理中的一个重要问题：

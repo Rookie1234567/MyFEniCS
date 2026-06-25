@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -13,24 +12,17 @@ from petsc4py import PETSc
 
 from dolfinx import fem, geometry
 
-from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.config_3d import SimulationConfig3D
-
-
-@dataclass(frozen=True)
-class DiffractionOrder3D:
-    """One transverse Floquet wavevector shared by top and bottom media."""
-
-    m: int
-    n: int
-    alpha: complex
-    gamma: complex
-    beta_top: complex
-    beta_bottom: complex
-    top_propagating: bool
-    bottom_propagating: bool
-    rayleigh_warning_top: bool
-    rayleigh_warning_bottom: bool
+from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
+from ..common.modes_3d import (
+    DiffractionOrder3D,
+    enumerate_diffraction_orders_3d,
+    incident_power_3d,
+    mode_eh_vectors,
+    mode_power,
+    polarization_basis_3d,
+    positive_sqrt,
+)
 
 
 def _json_default(value):
@@ -41,85 +33,6 @@ def _json_default(value):
     if isinstance(value, Path):
         return str(value)
     raise TypeError(f"Cannot JSON serialize {type(value)!r}")
-
-
-def _positive_sqrt(value: complex) -> complex:
-    root = np.sqrt(complex(value))
-    if root.imag < -1.0e-14 or (abs(root.imag) < 1.0e-14 and root.real < 0.0):
-        root = -root
-    return complex(root)
-
-
-def _is_propagating(beta: complex) -> bool:
-    return abs(complex(beta).imag) < 1.0e-9 and complex(beta).real > 1.0e-12
-
-
-def _near_rayleigh(beta: complex, n_medium: complex, cfg: SimulationConfig3D) -> bool:
-    scale = max(abs(complex(n_medium) * cfg.k0), 1.0e-30)
-    return abs(complex(beta)) / scale < cfg.diffraction_rayleigh_tol
-
-
-def enumerate_diffraction_orders_3d(
-    cfg: SimulationConfig3D,
-    *,
-    max_m_override: int | None = None,
-    max_n_override: int | None = None,
-) -> list[DiffractionOrder3D]:
-    """Enumerate transverse Floquet orders for the 3D periodic cell.
-
-    The first Stage-4 benchmark defaults to zero-order-only because the
-    350 nm x 300 nm cell at lambda=633 nm has no propagating higher orders in
-    air/substrate.  Setting diffraction_zero_order_only=False or explicit
-    max_m/max_n exposes the same catalog used later by an auxiliary modal port.
-    """
-
-    if max_m_override is not None or max_n_override is not None:
-        max_m = 0 if max_m_override is None else int(max_m_override)
-        max_n = 0 if max_n_override is None else int(max_n_override)
-    elif cfg.diffraction_zero_order_only:
-        max_m = 0
-        max_n = 0
-    else:
-        n_max = max(abs(complex(cfg.n_air)), abs(complex(cfg.substrate_index)))
-        auto_max_m = int(
-            np.floor((n_max * cfg.k0 + abs(cfg.kx)) * (cfg.x_max - cfg.x_min) / (2.0 * np.pi) + 1.0e-12)
-        )
-        auto_max_n = int(
-            np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12)
-        )
-        # Official power orders must include every propagating order.  User
-        # limits are treated as extra requested range, not as a truncation of
-        # the propagating catalog; otherwise high-order EUV fields alias into
-        # the low-order Fourier coefficients and R/T becomes meaningless.
-        max_m = auto_max_m if cfg.diffraction_order_max_m is None else max(int(cfg.diffraction_order_max_m), auto_max_m)
-        max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
-    if max_m < 0 or max_n < 0:
-        raise ValueError("diffraction_order_max_m/n must be non-negative.")
-
-    orders: list[DiffractionOrder3D] = []
-    for m in range(-int(max_m), int(max_m) + 1):
-        for n in range(-int(max_n), int(max_n) + 1):
-            alpha = complex(cfg.kx + 2.0 * np.pi * m / (cfg.x_max - cfg.x_min))
-            gamma = complex(cfg.ky + 2.0 * np.pi * n / (cfg.y_max - cfg.y_min))
-            beta_top = _positive_sqrt((cfg.k0 * complex(cfg.n_air)) ** 2 - alpha**2 - gamma**2)
-            beta_bottom = _positive_sqrt(
-                (cfg.k0 * complex(cfg.substrate_index)) ** 2 - alpha**2 - gamma**2
-            )
-            orders.append(
-                DiffractionOrder3D(
-                    m=m,
-                    n=n,
-                    alpha=alpha,
-                    gamma=gamma,
-                    beta_top=beta_top,
-                    beta_bottom=beta_bottom,
-                    top_propagating=_is_propagating(beta_top),
-                    bottom_propagating=_is_propagating(beta_bottom),
-                    rayleigh_warning_top=_near_rayleigh(beta_top, cfg.n_air, cfg),
-                    rayleigh_warning_bottom=_near_rayleigh(beta_bottom, cfg.substrate_index, cfg),
-                )
-            )
-    return orders
 
 
 def _orders_for_modal_fit(cfg: SimulationConfig3D, power_orders: list[DiffractionOrder3D]) -> tuple[list[DiffractionOrder3D], bool]:
@@ -139,67 +52,17 @@ def _orders_for_modal_fit(cfg: SimulationConfig3D, power_orders: list[Diffractio
     return enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n), True
 
 
-def polarization_basis_3d(
-    alpha: complex,
-    gamma: complex,
-    beta: complex,
-    n_medium: complex,
-    vertical_sign: int,
-    cfg: SimulationConfig3D,
-) -> list[tuple[str, np.ndarray]]:
-    """Return two transverse E-polarization vectors for one 3D order."""
-
-    kt_norm = float(np.sqrt(abs(alpha) ** 2 + abs(gamma) ** 2))
-    if kt_norm < 1.0e-12 * max(abs(cfg.k0 * complex(n_medium)), 1.0):
-        return [
-            ("x", np.asarray((1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j), dtype=np.complex128)),
-            ("y", np.asarray((0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j), dtype=np.complex128)),
-        ]
-
-    s_vec = np.asarray((-gamma / kt_norm, alpha / kt_norm, 0.0 + 0.0j), dtype=np.complex128)
-    kvec = np.asarray((alpha, gamma, vertical_sign * beta), dtype=np.complex128)
-    direction = kvec / (cfg.k0 * complex(n_medium))
-    p_vec = np.cross(direction, s_vec)
-    p_norm = float(np.sqrt(np.sum(np.abs(p_vec) ** 2)))
-    if p_norm <= 0.0:
-        raise ValueError("Cannot build p polarization for a degenerate 3D diffraction mode.")
-    return [("s", s_vec), ("p", p_vec / p_norm)]
-
-
-def mode_eh_vectors(
-    alpha: complex,
-    gamma: complex,
-    beta: complex,
-    polarization: np.ndarray,
-    vertical_sign: int,
-    cfg: SimulationConfig3D,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return k, E, H code-unit vectors for one unit-amplitude mode."""
-
-    kvec = np.asarray((alpha, gamma, vertical_sign * beta), dtype=np.complex128)
-    e_vec = np.asarray(polarization, dtype=np.complex128)
-    h_vec = np.cross(kvec, e_vec) / (cfg.k0 * complex(cfg.mu_r))
-    return kvec, e_vec, h_vec
-
-
 def _mode_power(
     kvec: np.ndarray,
     e_vec: np.ndarray,
     cfg: SimulationConfig3D,
     outward_normal: np.ndarray,
 ) -> float:
-    h_vec = np.cross(kvec, e_vec) / (cfg.k0 * complex(cfg.mu_r))
-    s_vec = 0.5 * np.real(np.cross(e_vec, np.conj(h_vec)))
-    density = float(np.dot(s_vec, outward_normal))
-    return max(density, 0.0) * (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+    return mode_power(kvec, e_vec, cfg, outward_normal)
 
 
 def _incident_power(cfg: SimulationConfig3D) -> float:
-    e_vec = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
-    h_vec = np.cross(np.asarray(cfg.wavevector, dtype=np.complex128), e_vec) / (cfg.k0 * complex(cfg.mu_r))
-    s_vec = 0.5 * np.real(np.cross(e_vec, np.conj(h_vec)))
-    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
-    return max(float(-s_vec[2]) * area, 1.0e-30)
+    return incident_power_3d(cfg)
 
 
 def _sampled_flux_code_units(e_values: np.ndarray, h_values: np.ndarray, normal: np.ndarray, cfg: SimulationConfig3D) -> float:

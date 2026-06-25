@@ -113,6 +113,7 @@ def save_airbox_3d_fields(
     *,
     E_scattered=None,
     E_background=None,
+    E_incident_port=None,
 ) -> dict[str, object]:
     """Save compact 3D E/H fields and return reconstruction metrics.
 
@@ -147,6 +148,14 @@ def save_airbox_3d_fields(
         E_bg_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_bg_code_dg.x.array[:]
         E_bg_dg.x.scatter_forward()
 
+    E_port_dg = None
+    if E_incident_port is not None:
+        E_port_code_dg = fem.Function(V_dg, name="E_incident_port_code")
+        E_port_code_dg.interpolate(E_incident_port)
+        E_port_dg = fem.Function(V_dg, name="E_incident_port_V_per_m")
+        E_port_dg.x.array[:] = cfg.electric_field_scale_V_per_m * E_port_code_dg.x.array[:]
+        E_port_dg.x.scatter_forward()
+
     E_exact_dg = None
     if has_exact_reference:
         E_exact_dg = fem.Function(V_dg, name="E_exact_V_per_m")
@@ -174,6 +183,7 @@ def save_airbox_3d_fields(
     e_num = _values(E_num_dg, grid.n_points)
     e_sca = _values(E_sca_dg, grid.n_points) if E_sca_dg is not None else None
     e_bg = _values(E_bg_dg, grid.n_points) if E_bg_dg is not None else None
+    e_port = _values(E_port_dg, grid.n_points) if E_port_dg is not None else None
     e_exact = _values(E_exact_dg, grid.n_points) if E_exact_dg is not None else None
     e_error = e_num - e_exact if e_exact is not None else None
     h_num = _values(H_dg, grid.n_points)
@@ -194,6 +204,8 @@ def save_airbox_3d_fields(
         _add_complex_vector(paraview_grid, "E_sca_V_per_m", e_sca)
     if e_bg is not None:
         _add_complex_vector(paraview_grid, "E_b_V_per_m", e_bg)
+    if e_port is not None:
+        _add_complex_vector(paraview_grid, "E_incident_port_V_per_m", e_port)
     if e_exact is not None:
         _add_abs_scalar(paraview_grid, "E_exact_abs_V_per_m", e_exact)
         _add_abs_scalar(paraview_grid, "E_error_abs_V_per_m", e_error)
@@ -276,6 +288,15 @@ def save_airbox_3d_fields(
             "E_tot_V_per_m_abs",
             *([] if e_sca is None else ["E_sca_V_per_m_real", "E_sca_V_per_m_imag", "E_sca_V_per_m_abs"]),
             *([] if e_bg is None else ["E_b_V_per_m_real", "E_b_V_per_m_imag", "E_b_V_per_m_abs"]),
+            *(
+                []
+                if e_port is None
+                else [
+                    "E_incident_port_V_per_m_real",
+                    "E_incident_port_V_per_m_imag",
+                    "E_incident_port_V_per_m_abs",
+                ]
+            ),
         ],
     }
     if e_sca is not None:
@@ -292,4 +313,14 @@ def save_airbox_3d_fields(
         result["max_abs_E_b_Ez"] = _global_max_component_abs(comm, e_bg, 2)
         result["max_abs_E_b_physical_z_region"] = _global_max_norm(comm, e_bg, physical_point_mask)
         result["max_abs_E_b_pml_z_region"] = _global_max_norm(comm, e_bg, pml_point_mask)
+    if e_port is not None:
+        result["max_abs_E_incident_port"] = _global_max_norm(comm, e_port)
+        result["max_abs_E_incident_port_Ex"] = _global_max_component_abs(comm, e_port, 0)
+        result["max_abs_E_incident_port_Ey"] = _global_max_component_abs(comm, e_port, 1)
+        result["max_abs_E_incident_port_Ez"] = _global_max_component_abs(comm, e_port, 2)
+        result["max_abs_E_incident_port_physical_z_region"] = _global_max_norm(
+            comm,
+            e_port,
+            physical_point_mask,
+        )
     return result

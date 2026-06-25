@@ -1,5 +1,63 @@
 # v2 文档索引
 
+## 2026-06-25 更新：Stage 4 dtn_port 已跑通，旧 PML/probe 不再作为可信 R/T 主线
+
+Stage 4 新的正式 R/T 路径已经完成第一轮验证：
+
+```text
+flat n_sub=1.0, h=2.5: R/T/R+T = 6.04e-04 / 9.993956e-01 / 1.000000
+flat n_sub=1.45, h=2.5: R/T/R+T = 2.061e-02 / 9.793854e-01 / 1.000000
+block grating h=5, auto_propagating: R/T/R+T = 0.366105 / 0.633895 / 1.000000
+```
+
+优先阅读：
+
+```text
+notes/test/stage4_validation_report.md
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/theory/stage4_3d_dtn_port.md
+src/solvers/dtn_port_3d.py
+src/common/modes_3d.py
+```
+
+注意：`h=5` block grating 是 smoke；要做 COMSOL 对标建议继续跑 `h=2.5 + auto_propagating`，或先优化 DtN mode 装配速度。
+
+## 2026-06-25 更新：Stage 4 新增 3D DtN 总场端口主线
+
+本轮开始把 Stage 4 的可信 R/T 主线从“PML 散射场 + 内部 probe 后处理”转到“无 PML 的总场 DtN 端口”：
+
+```text
+stage4_boundary_model = "dtn_port"
+stage4_dtn_order_policy = "auto_propagating"
+stage4_dtn_assembly = "auxiliary"
+```
+
+新增/重点文件：
+
+```text
+src/common/modes_3d.py
+  3D diffraction 与 DtN 共用的 (m,n) 模态枚举、偏振基、Rayleigh warning 和功率归一化。
+
+src/solvers/dtn_port_3d.py
+  Stage 4 3D Fourier-DtN 总场端口第一版，使用 auxiliary modal unknowns。
+
+src/test/test_14_stage4_dtn_modes.py
+  不求解 PDE 的纯数学测试，先检查模态目录、偏振和功率符号。
+
+notes/theory/stage4_3d_dtn_port.md
+  DtN 总场端口的理论和实现口径。
+```
+
+新的使用说明：
+
+```text
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/reference/code_walkthrough.md
+notes/test/stage4_resume_log.md
+```
+
+当前状态：代码已经完成本机 `py_compile` 语法检查；Docker/DOLFINx 的 `compileall`、完整单元测试和 PDE smoke test 因当前执行额度限制尚未完成。下一次恢复时应先跑 `stage4_flat_layer_sanity + dtn_port`，只有它接近 Fresnel 且 `R+T≈1` 后，真实 grating 的 R/T 才能进入可信验证。
+
 ## 2026-06-25 更新：Stage 4 改用 E/H Fourier 功率口径，但目标 EUV 案例仍失败
 
 本轮把 Stage 4 官方衍射级 R/T 从 E-only Fourier 改为 E/H Fourier：

@@ -28,6 +28,7 @@ from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_m
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
+from .dtn_port_3d import solve_stage4_dtn_port_total_field
 from .solve_vector_maxwell import _json_default
 
 
@@ -1009,7 +1010,19 @@ def _use_incident_scattered_formulation(cfg: SimulationConfig3D) -> bool:
 
 
 def _use_layered_scattered_formulation(cfg: SimulationConfig3D) -> bool:
-    return cfg.stage_case in {"stage4_block_grating", "stage4_flat_layer_sanity"} and cfg.geometry_kind == "rectangular_block_grating"
+    return (
+        cfg.stage_case in {"stage4_block_grating", "stage4_flat_layer_sanity"}
+        and cfg.geometry_kind == "rectangular_block_grating"
+        and cfg.stage4_boundary_model.lower() != "dtn_port"
+    )
+
+
+def _use_stage4_dtn_port_formulation(cfg: SimulationConfig3D) -> bool:
+    return (
+        cfg.stage_case in {"stage4_block_grating", "stage4_flat_layer_sanity"}
+        and cfg.geometry_kind == "rectangular_block_grating"
+        and cfg.stage4_boundary_model.lower() == "dtn_port"
+    )
 
 
 def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict[str, Any]) -> dict[str, Any]:
@@ -1039,6 +1052,8 @@ def _field_formulation_label(
 ) -> str:
     if use_incident_scattered:
         return "incident_scattered"
+    if _use_stage4_dtn_port_formulation(cfg):
+        return "total_field_dtn_port"
     if _use_layered_scattered_formulation(cfg):
         return "layered_scattered"
     if not use_reference_correction:
@@ -1202,16 +1217,29 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     solve_reference_correction = _use_reference_correction_formulation(cfg)
     solve_incident_scattered = _use_incident_scattered_formulation(cfg)
     solve_layered_scattered = _use_layered_scattered_formulation(cfg)
+    solve_stage4_dtn_port = _use_stage4_dtn_port_formulation(cfg)
     field_formulation = _field_formulation_label(cfg, solve_reference_correction, solve_incident_scattered)
-    solve_with_zero_bc = solve_reference_correction or solve_incident_scattered or solve_layered_scattered
+    solve_with_zero_bc = (
+        solve_reference_correction
+        or solve_incident_scattered
+        or solve_layered_scattered
+        or solve_stage4_dtn_port
+    )
     stage4_boundary_model = cfg.stage4_boundary_model.lower()
-    if solve_layered_scattered and stage4_boundary_model not in {"pml", "robin0"}:
-        raise ValueError("stage4_boundary_model must be 'pml' or 'robin0' for Stage-4 layered scattering.")
+    if (solve_layered_scattered or solve_stage4_dtn_port) and stage4_boundary_model not in {"pml", "robin0", "dtn_port"}:
+        raise ValueError("stage4_boundary_model must be 'dtn_port', 'pml', or 'robin0' for Stage 4.")
     stage4_pml_outer_bc = cfg.stage4_pml_outer_bc.lower()
     if solve_layered_scattered and stage4_pml_outer_bc not in {"natural", "zero_tangential"}:
         raise ValueError("stage4_pml_outer_bc must be 'natural' or 'zero_tangential'.")
     if solve_layered_scattered and stage4_boundary_model == "robin0" and cfg.use_pml:
         raise ValueError("stage4_boundary_model='robin0' requires use_pml=False.")
+    if solve_stage4_dtn_port:
+        if cfg.use_pml:
+            raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
+        if not cfg.use_floquet_xy:
+            raise ValueError("stage4_boundary_model='dtn_port' requires use_floquet_xy=True.")
+        if cfg.stage4_dtn_assembly.lower() != "auxiliary":
+            raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
     # The unknown is a correction/scattered field in all non-total-field paths.
     # Stage 4 solves the scattered field.  The default PML truncation is now a
     # natural outer boundary so a too-thin PML remains visible in diagnostics
@@ -1223,7 +1251,11 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         and stage4_pml_outer_bc == "zero_tangential"
     )
     stage4_robin_boundary = solve_layered_scattered and stage4_boundary_model == "robin0"
-    apply_strong_boundary_bc = not (stage4_robin_boundary or (solve_layered_scattered and not stage4_pml_zero_outer_boundary))
+    apply_strong_boundary_bc = not (
+        stage4_robin_boundary
+        or solve_stage4_dtn_port
+        or (solve_layered_scattered and not stage4_pml_zero_outer_boundary)
+    )
     E_source_for_rhs = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
@@ -1278,6 +1310,11 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
             log("stage4 PML boundary flow = natural outer z boundary")
         if stage4_robin_boundary:
             log("stage4 diagnostic robin0 boundary = zero-order impedance term without PML")
+    if solve_stage4_dtn_port:
+        log("stage4 boundary model = dtn_port")
+        log(f"stage4 DtN order policy = {cfg.stage4_dtn_order_policy}")
+        log(f"stage4 DtN assembly = {cfg.stage4_dtn_assembly}")
+        log("stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes")
     if solve_incident_scattered:
         log("incident-scattered RHS sign = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)")
         log(f"incident-scattered RHS source region = physical_substrate")
@@ -1303,45 +1340,67 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
     log(f"unconstrained RHS norm = {unconstrained_rhs_norm}")
 
-    stage_start = _start_timed_stage(comm)
-    if floquet_data is None:
-        E = fem.Function(V, name="E_numerical")
-        problem = fem_petsc.LinearProblem(
-            a,
-            L,
-            bcs=problem_bcs,
-            u=E,
-            petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_",
+    dtn_result: dict[str, Any] | None = None
+    if solve_stage4_dtn_port:
+        if floquet_data is None:
+            raise RuntimeError("Stage-4 dtn_port requires Floquet MPC data.")
+        stage_start = _start_timed_stage(comm)
+        dtn_result = solve_stage4_dtn_port_total_field(
+            a=a,
+            L=L,
+            V=V,
+            mesh_data=mesh_data,
+            cfg=cfg,
+            floquet_data=floquet_data,
             petsc_options=petsc_options,
+            out_dir=out_dir,
+            log=log,
         )
-        solver_backend = (
-            "dolfinx.fem.petsc.LinearProblem with strong tangential E boundary data"
-            if apply_strong_boundary_bc
-            else "dolfinx.fem.petsc.LinearProblem without strong tangential E boundary data"
-        )
+        _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve", stage_start, log)
+        E = dtn_result["E_total"]
+        solver_backend = dtn_result["solver_info"]["solver_backend"]
+        problem = None
     else:
-        import dolfinx_mpc
+        stage_start = _start_timed_stage(comm)
+        if floquet_data is None:
+            E = fem.Function(V, name="E_numerical")
+            problem = fem_petsc.LinearProblem(
+                a,
+                L,
+                bcs=problem_bcs,
+                u=E,
+                petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_",
+                petsc_options=petsc_options,
+            )
+            solver_backend = (
+                "dolfinx.fem.petsc.LinearProblem with strong tangential E boundary data"
+                if apply_strong_boundary_bc
+                else "dolfinx.fem.petsc.LinearProblem without strong tangential E boundary data"
+            )
+        else:
+            import dolfinx_mpc
 
-        E = fem.Function(floquet_data.mpc.function_space, name="E_numerical")
-        problem = dolfinx_mpc.LinearProblem(
-            a,
-            L,
-            floquet_data.mpc,
-            bcs=problem_bcs,
-            u=E,
-            petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_mpc_",
-            petsc_options=petsc_options,
-        )
-        solver_backend = (
-            "dolfinx_mpc.LinearProblem with x/y double Floquet and z boundary data"
-            if apply_strong_boundary_bc
-            else "dolfinx_mpc.LinearProblem with x/y double Floquet and no strong tangential E boundary data"
-        )
-    _finish_timed_stage(comm, timings, "linear_problem_setup", stage_start, log)
+            E = fem.Function(floquet_data.mpc.function_space, name="E_numerical")
+            problem = dolfinx_mpc.LinearProblem(
+                a,
+                L,
+                floquet_data.mpc,
+                bcs=problem_bcs,
+                u=E,
+                petsc_options_prefix=f"airbox3d_{cfg.case_name}_direct_lu_mpc_",
+                petsc_options=petsc_options,
+            )
+            solver_backend = (
+                "dolfinx_mpc.LinearProblem with x/y double Floquet and z boundary data"
+                if apply_strong_boundary_bc
+                else "dolfinx_mpc.LinearProblem with x/y double Floquet and no strong tangential E boundary data"
+            )
+        _finish_timed_stage(comm, timings, "linear_problem_setup", stage_start, log)
 
-    stage_start = _start_timed_stage(comm)
-    E = problem.solve()
-    E.x.scatter_forward()
+        stage_start = _start_timed_stage(comm)
+        E = problem.solve()
+        E.x.scatter_forward()
+
     E_sca = E if (solve_incident_scattered or solve_layered_scattered) else None
     E_incident_solution = None
     E_background_solution = None
@@ -1354,22 +1413,29 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     elif solve_layered_scattered:
         E_background_solution = stage4_layered_background_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_background_solution, "E_total")
-    _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
+    elif solve_stage4_dtn_port:
+        E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
+    if not solve_stage4_dtn_port:
+        _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
-    matrix_stats = _petsc_matrix_stats(problem.A)
+    system_A = dtn_result["A"] if solve_stage4_dtn_port else problem.A
+    system_b = dtn_result["b"] if solve_stage4_dtn_port else problem.b
+    system_x = dtn_result["x"] if solve_stage4_dtn_port else problem.x
+    system_ksp = dtn_result["ksp"] if solve_stage4_dtn_port else problem.solver
+    matrix_stats = _petsc_matrix_stats(system_A)
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
     _log_matrix_stats(matrix_stats, log)
 
-    reason = int(problem.solver.getConvergedReason())
+    reason = int(system_ksp.getConvergedReason())
     reason_name = _ksp_reason_name(reason)
-    iterations = int(problem.solver.getIterationNumber())
-    residual_norm = float(problem.solver.getResidualNorm())
-    ksp_type = problem.solver.getType()
-    pc = problem.solver.getPC()
+    iterations = int(system_ksp.getIterationNumber())
+    residual_norm = float(system_ksp.getResidualNorm())
+    ksp_type = system_ksp.getType()
+    pc = system_ksp.getPC()
     pc_type = pc.getType()
     pc_factor_solver_type = _pc_factor_solver_type(pc)
-    linear_system_diagnostics = _linear_system_diagnostics(problem.A, problem.b, problem.x)
+    linear_system_diagnostics = _linear_system_diagnostics(system_A, system_b, system_x)
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
     log(f"solver iterations = {iterations}")
@@ -1401,7 +1467,15 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
         "field_formulation": field_formulation,
-        "stage4_boundary_model": stage4_boundary_model if solve_layered_scattered else None,
+        "stage4_boundary_model": stage4_boundary_model
+        if (solve_layered_scattered or solve_stage4_dtn_port)
+        else None,
+        "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
+        "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy if solve_stage4_dtn_port else None,
+        "stage4_dtn_assembly": cfg.stage4_dtn_assembly if solve_stage4_dtn_port else None,
+        "stage4_dtn_num_auxiliary_dofs": None
+        if dtn_result is None
+        else dtn_result["solver_info"].get("num_auxiliary_dofs"),
         "stage4_pml_outer_bc": stage4_pml_outer_bc if solve_layered_scattered else None,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
@@ -1416,6 +1490,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
         "strong_z_boundary_dirichlet_dofs_global": int(boundary_dofs_global),
         "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
+        "incident_port_used_for_solution": bool(solve_stage4_dtn_port),
         "background_added_to_solution": field_formulation == "layered_scattered",
         "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),
         "reference_added_to_solution": field_formulation == "reference_correction",
@@ -1560,6 +1635,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         out_dir,
         E_scattered=E_sca if solve_layered_scattered else None,
         E_background=E_background_solution if solve_layered_scattered else None,
+        E_incident_port=E_incident_solution if solve_stage4_dtn_port else None,
     )
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     elapsed = float(comm.allreduce(time.perf_counter() - start, op=MPI.MAX))
@@ -1580,7 +1656,7 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         summary["E_total_norm"] = _function_coefficient_norm(E_total)
     else:
         summary["E_sca_norm"] = None
-        summary["E_inc_norm"] = None
+        summary["E_inc_norm"] = _function_coefficient_norm(E_incident_solution) if solve_stage4_dtn_port else None
         summary["E_bg_norm"] = None
         summary["E_total_norm"] = _function_coefficient_norm(E)
     stage2_metrics: dict[str, Any] = {}
@@ -1593,7 +1669,16 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     stage2_metrics.update(_stage2_reference_metrics(E_total, cfg, field_metrics))
     summary.update(stage2_metrics)
     diffraction_metrics: dict[str, Any] = {}
-    if cfg.geometry_kind == "rectangular_block_grating":
+    if solve_stage4_dtn_port and dtn_result is not None:
+        summary.update(dtn_result["port_metrics"])
+        summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
+        if summary.get("stage4_energy_balance_pass") is False:
+            summary["official_result"] = False
+            summary["diagnostic_only"] = True
+            summary["case_status"] = "failed_stage4_energy_balance"
+            summary["postprocess_skipped"] = False
+            summary["postprocess_skip_reason"] = None
+    elif cfg.geometry_kind == "rectangular_block_grating":
         stage_start = _start_timed_stage(comm)
         diffraction_metrics = compute_diffraction_orders_3d(
             mesh_data,

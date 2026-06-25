@@ -155,7 +155,9 @@ class Stage4GratingInputs3D:
     grating_width_y: float = 50.0
     grating_height: float = 50.0
     scattering_background: str = "layered"
-    stage4_boundary_model: str = "pml"  # pml / robin0
+    stage4_boundary_model: str = "dtn_port"  # dtn_port / pml / robin0
+    stage4_dtn_order_policy: str = "auto_propagating"  # auto_propagating / zero_order / manual
+    stage4_dtn_assembly: str = "auxiliary"
     stage4_pml_outer_bc: str = "natural"  # natural / zero_tangential
     diffraction_zero_order_only: bool = False
     diffraction_order_max_m: int | None = 2
@@ -278,6 +280,8 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--grating-height", _setting_value(settings, "grating_height"))
     _add_value(args, "--scattering-background", _setting_value(settings, "scattering_background"))
     _add_value(args, "--stage4-boundary-model", _setting_value(settings, "stage4_boundary_model"))
+    _add_value(args, "--stage4-dtn-order-policy", _setting_value(settings, "stage4_dtn_order_policy"))
+    _add_value(args, "--stage4-dtn-assembly", _setting_value(settings, "stage4_dtn_assembly"))
     _add_value(args, "--stage4-pml-outer-bc", _setting_value(settings, "stage4_pml_outer_bc"))
     _add_bool(args, "--diffraction-zero-order-only", _setting_value(settings, "diffraction_zero_order_only"))
     _add_value(args, "--diffraction-order-max-m", _setting_value(settings, "diffraction_order_max_m"))
