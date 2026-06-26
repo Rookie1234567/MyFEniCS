@@ -1,5 +1,28 @@
 # v2 文档索引
 
+## 2026-06-26 更新：修复 Stage 4 h=2 fitted hexa MPI 建网格错误
+
+`mesh_target_size=2 nm` 时，当前 100 nm 周期、50 nm 方块案例会自动使用 `boundary_fitted` 非均匀 hexa 网格。上一版在 MPI 下 custom hexa mesh 把完整全局 cells 传给每个 rank，可能触发：
+
+```text
+RuntimeError: Adding boundary vertices in ghost cells not allowed.
+```
+
+现在已修复为每个 rank 只提交自己的 cell 分片。已验证：
+
+```text
+MPI 8 h=2 mesh build: 通过
+MPI 8 h=2 mesh + Nedelec + Floquet MPC: 通过
+完整单元测试：Ran 43 tests, OK (skipped=8)
+```
+
+详情见：
+
+```text
+notes/test/stage4_validation_report.md
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+```
+
 ## 2026-06-26 更新：Stage 4 hexa 网格支持自动贴边与局部加密
 
 本轮扩展的是 Stage 4 的前处理网格划分，不引入四面体，仍保持 `hexahedron + degree=1 N1curl + x/y Floquet + DtN/PML` 主线。

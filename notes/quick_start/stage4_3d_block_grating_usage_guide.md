@@ -1,5 +1,52 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-26 更新：h=2 nm + MPI 的 fitted hexa 网格报错已修复
+
+如果你设置：
+
+```text
+mesh_target_size = 2
+mesh_spacing_mode = "auto"
+```
+
+对于当前 100 x 100 nm 周期、50 x 50 x 50 nm 方块案例，光栅边界在 25/75 nm。因为 25/75 不能被 2 nm 的 uniform grid 对齐，代码会自动切到：
+
+```text
+mesh_spacing_mode_resolved = boundary_fitted
+mesh_cells_resolved = (51, 51, 75)
+```
+
+上一版在 MPI 下可能在 `dolfinx.mesh.create_mesh` 报：
+
+```text
+RuntimeError: Adding boundary vertices in ghost cells not allowed.
+```
+
+现在已经修复：custom tensor-product hexa builder 会让每个 rank 只提交自己的 cell 分片，不再把整张全局 cells 复制给每个 rank。
+
+已验证：
+
+```text
+mpiexec -n 8: h=2 只建网格，通过
+mpiexec -n 8: h=2 网格 + Nedelec + Floquet MPC，通过
+Floquet constraints = 15477
+max edge midpoint pairing error = 0
+```
+
+注意：这只说明 h=2 的前处理网格和 Floquet 约束已经可以并行建立。完整 direct LU 求解仍然可能很慢或占内存较大；如果后续卡住，需要看日志停在：
+
+```text
+mesh_build / floquet_constraint_setup_outer
+```
+
+还是停在：
+
+```text
+stage4_dtn_port_assembly_and_solve
+```
+
+这两类问题含义不同。
+
 ## 2026-06-26 更新：hexa 网格自动贴边与局部加密怎么用
 
 Stage 4 现在不再要求所有结构尺寸都能被一个全局 uniform `mesh_target_size` 整除。推荐保持：

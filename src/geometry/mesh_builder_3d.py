@@ -426,26 +426,47 @@ def _structured_hexa_mesh(
     def node(i: int, j: int, k: int) -> int:
         return k * len(y_values) * len(x_values) + j * len(x_values) + i
 
-    cells: list[list[int]] = []
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                cells.append(
-                    [
-                        node(i, j, k),
-                        node(i + 1, j, k),
-                        node(i, j + 1, k),
-                        node(i + 1, j + 1, k),
-                        node(i, j, k + 1),
-                        node(i + 1, j, k + 1),
-                        node(i, j + 1, k + 1),
-                        node(i + 1, j + 1, k + 1),
-                    ]
-                )
+    cell_ids = _rank_cell_ids(nx * ny * nz, msh_comm.rank, msh_comm.size)
+    cells = [
+        _structured_hexa_cell_vertices(int(cell_id), nx, ny, node)
+        for cell_id in cell_ids
+    ]
     coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
     partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
+
+
+def _rank_cell_ids(total_cells: int, rank: int, size: int) -> range:
+    """Return the global tensor-cell ids provided by one MPI rank to create_mesh."""
+
+    if total_cells < 0:
+        raise ValueError("total_cells must be non-negative.")
+    if size <= 0:
+        raise ValueError("MPI size must be positive.")
+    start = (total_cells * rank) // size
+    stop = (total_cells * (rank + 1)) // size
+    return range(start, stop)
+
+
+def _structured_hexa_cell_vertices(cell_id: int, nx: int, ny: int, node) -> list[int]:
+    """Convert a tensor-product cell id into DOLFINx hexa vertex connectivity."""
+
+    cells_per_layer = nx * ny
+    k = cell_id // cells_per_layer
+    layer_cell = cell_id - k * cells_per_layer
+    j = layer_cell // nx
+    i = layer_cell - j * nx
+    return [
+        node(i, j, k),
+        node(i + 1, j, k),
+        node(i, j + 1, k),
+        node(i + 1, j + 1, k),
+        node(i, j, k + 1),
+        node(i + 1, j, k + 1),
+        node(i, j + 1, k + 1),
+        node(i + 1, j + 1, k + 1),
+    ]
 
 
 def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> mesh.Mesh:

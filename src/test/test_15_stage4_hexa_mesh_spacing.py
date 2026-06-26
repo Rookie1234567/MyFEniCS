@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.geometry.mesh_builder_3d import _stage4_axis_plan, build_airbox_mesh_3d
+from src.geometry.mesh_builder_3d import _rank_cell_ids, _stage4_axis_plan, build_airbox_mesh_3d
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -103,6 +103,14 @@ class Stage4HexaMeshSpacingTests(unittest.TestCase):
         self.assertTrue(mesh_data.material_plane_alignment["all_aligned"])
         self.assertEqual(mesh_data.mesh_cell_type_resolved, "hexahedron")
         self.assertIn("hexahedron", str(mesh_data.mesh.basix_cell()).lower())
+
+    def test_custom_hexa_mpi_cell_slices_are_disjoint_and_complete(self):
+        total_cells = 137
+        size = 8
+        ids = [cell_id for rank in range(size) for cell_id in _rank_cell_ids(total_cells, rank, size)]
+
+        self.assertEqual(ids, list(range(total_cells)))
+        self.assertEqual(len(ids), len(set(ids)))
 
 
 if __name__ == "__main__":

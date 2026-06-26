@@ -1,5 +1,81 @@
 # Stage 4 验证报告
 
+## 2026-06-26 更新：修复 h=2 fitted hexa 在 MPI create_mesh 阶段崩溃
+
+用户复现报错：
+
+```text
+RuntimeError: Adding boundary vertices in ghost cells not allowed.
+```
+
+触发条件：
+
+```text
+Stage 4 block grating
+mesh_target_size = 2 nm
+mesh_spacing_mode = auto
+MPI 并行
+```
+
+原因：
+
+```text
+h=2 nm 时，光栅边界 25/75 nm 不在 uniform 2 nm 网格上，
+所以 auto 会正确切到 boundary_fitted 非均匀 hexa 网格。
+上一版 custom hexa builder 在 MPI 下把完整全局 cells 传给了每个 rank，
+这不符合 dolfinx.mesh.create_mesh 的 MPI 输入语义。
+create_mesh 需要每个 rank 只提供本 rank 的 cell 分片，因此触发 ghost boundary vertex 错误。
+```
+
+修复：
+
+```text
+src/geometry/mesh_builder_3d.py
+  _rank_cell_ids(...)
+  _structured_hexa_cell_vertices(...)
+  _structured_hexa_mesh(...)
+
+现在每个 rank 只提交一段不重叠的 tensor-product hexa cell ids。
+```
+
+新增测试：
+
+```text
+src/test/test_15_stage4_hexa_mesh_spacing.py
+  test_custom_hexa_mpi_cell_slices_are_disjoint_and_complete
+```
+
+已运行验证：
+
+```text
+python -m compileall -q src
+结果：通过
+
+. dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+结果：Ran 43 tests, OK (skipped=8)
+
+MPI 8 只建网格 smoke:
+  mesh_target_size = 2
+  mesh_spacing_mode_resolved = boundary_fitted
+  mesh_cells_resolved = (51, 51, 75)
+  material planes aligned = True
+  结果：通过，不再出现 create_mesh ghost boundary vertex 报错
+
+MPI 8 网格 + Nedelec + Floquet MPC smoke:
+  constraints = 15477
+  max_edge_midpoint_pairing_error = 0.0
+  raw_nnz = 15477
+  max_masters_per_slave = 1
+  结果：通过
+```
+
+备注：
+
+```text
+本轮没有完整跑 h=2 的 direct LU 求解，因为完整求解比 h=2.5 更重；
+本次报错发生在 mesh build 阶段，已用 MPI 8 覆盖到 mesh build 和 Floquet MPC。
+```
+
 ## 2026-06-26 更新：hexa 自动贴边网格与局部加密验证
 
 本轮目标：解决 Stage 4 uniform hexa 网格必须被结构尺寸整除的问题，同时保持后续 Floquet/DtN 可计算。
