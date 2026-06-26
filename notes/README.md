@@ -1,5 +1,60 @@
 # v2 文档索引
 
+## 2026-06-26 更新：Stage 4 hexa 网格支持自动贴边与局部加密
+
+本轮扩展的是 Stage 4 的前处理网格划分，不引入四面体，仍保持 `hexahedron + degree=1 N1curl + x/y Floquet + DtN/PML` 主线。
+
+新增三个 3D 网格变量：
+
+```text
+mesh_spacing_mode = "auto" / "uniform_strict" / "boundary_fitted" / "local_refined"
+mesh_refined_size = None 或一个 nm 数值
+mesh_refinement_radius = None 或一个 nm 数值
+```
+
+推荐默认是 `mesh_spacing_mode="auto"`：
+
+```text
+1. 如果 mesh_target_size 正好让光栅面、界面、PML/端口面都落在网格面上：
+   继续使用原来的 uniform structured hexa create_box 路径。
+2. 如果不能整除：
+   自动切换到 boundary_fitted，生成非均匀 tensor-product hexa 网格。
+   材料面会被插入为真实网格面，不再因为 grating_x_min=25 nm 之类的边界不在 uniform grid 上而报错。
+3. 如果显式选择 local_refined：
+   光栅、界面和光栅附近按 mesh_refined_size 加密，远离结构处按 mesh_target_size 划分。
+```
+
+本轮验证：
+
+```text
+python -m compileall -q src
+结果：通过
+
+. dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+结果：Ran 42 tests, OK (skipped=8)
+
+stage4_flat_layer_sanity, h=30 nm, auto:
+  mesh_spacing_mode_resolved = boundary_fitted
+  case_status = completed
+  R/T/R+T = 9.999998e-01 / 2.328550e-07 / 1.000000
+
+stage4_block_grating, h=30 nm, auto:
+  mesh_spacing_mode_resolved = boundary_fitted
+  material planes aligned = True
+  Floquet max edge midpoint pairing error = 0
+  case_status = completed
+```
+
+优先阅读：
+
+```text
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/reference/code_walkthrough.md
+notes/test/stage4_validation_report.md
+src/geometry/mesh_builder_3d.py
+src/test/test_15_stage4_hexa_mesh_spacing.py
+```
+
 ## 2026-06-25 更新：Stage 4 h=2.5 MPI BUS error 修复与 Floquet 计时拆分
 
 本轮处理两个运行层面的关键问题：

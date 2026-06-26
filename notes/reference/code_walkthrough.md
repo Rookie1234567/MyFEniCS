@@ -1,3 +1,58 @@
+## 2026-06-26 更新：Stage 4 hexa 网格自动贴边代码阅读路径
+
+如果本轮主要想看“任意 target size 如何生成可计算的 hexa 网格”，建议按下面顺序读：
+
+```text
+1. src/main.py
+   看 Stage4GratingInputs3D：
+     mesh_spacing_mode
+     mesh_refined_size
+     mesh_refinement_radius
+   这里是 PyCharm 直接运行时最方便改的入口。
+
+2. src/runners/run_3d_airbox.py
+   看 _config_updates(...) 和 CLI：
+     --mesh-spacing-mode
+     --mesh-refined-size
+     --mesh-refinement-radius
+   _stage_defaults("stage4_block_grating") 里默认 mesh_spacing_mode="auto"。
+
+3. src/common/config_3d.py
+   看 SimulationConfig3D：
+     mesh_spacing_mode_requested
+     mesh_refined_size_resolved
+     mesh_refinement_radius_resolved
+   None 的默认含义在这里统一解析。
+
+4. src/geometry/mesh_builder_3d.py
+   这是本轮核心：
+     _stage4_axis_plan(...)
+       决定 auto/uniform_strict/boundary_fitted/local_refined。
+     _subdivide_piecewise_axis(...)
+       按材料面切段并逐段等分。
+     _structured_hexa_mesh(...)
+       用非均匀 x/y/z 轴生成 tensor-product hexa 单元。
+     build_airbox_mesh_3d(...)
+       strict uniform 继续走 create_box；fitted/local 走 custom hexa。
+
+5. src/solvers/solve_maxwell_3d_common.py
+   看 run_summary 输出：
+     mesh_spacing_mode_resolved
+     mesh_axis_cell_stats
+     mesh_material_plane_alignment
+     mesh_local_refinement_regions
+
+6. src/test/test_15_stage4_hexa_mesh_spacing.py
+   看新增单元测试：
+     auto 可整除时保持 uniform；
+     auto 不可整除时切到 boundary_fitted；
+     uniform_strict 仍会拒绝不对齐网格；
+     local_refined 在光栅附近实际使用小网格；
+     boundary_fitted 能真实创建 DOLFINx hexa mesh。
+```
+
+读代码时要抓住一个原则：新网格仍是 tensor-product structured hexa。它不是 tetra，也不是非结构 AMR；因此 x/y 对面周期边界的 edge midpoint 和 tangent 仍能一一配对，`src/constraints/floquet_3d.py` 的显式 edge Floquet 约束不需要重写。
+
 ## 2026-06-25 更新：Stage 4 MPI 后处理与 Floquet 计时阅读路径
 
 本轮如果要读代码，建议按这个顺序：

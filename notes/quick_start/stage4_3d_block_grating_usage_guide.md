@@ -1,5 +1,76 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-26 更新：hexa 网格自动贴边与局部加密怎么用
+
+Stage 4 现在不再要求所有结构尺寸都能被一个全局 uniform `mesh_target_size` 整除。推荐保持：
+
+```text
+mesh_cell_type = "auto"
+mesh_spacing_mode = "auto"
+```
+
+这样运行时会自动判断：
+
+```text
+uniform_strict:
+  当光栅 x/y/z 面、空气/基底界面、PML/端口面都已经在 uniform grid 上时使用。
+
+boundary_fitted:
+  当 target size 不能整除这些材料面时自动使用。
+  代码会先插入必须对齐的几何平面，再在每个区间内按 target size 等分。
+
+local_refined:
+  需要你显式指定。
+  光栅和界面附近使用 mesh_refined_size，远处使用 mesh_target_size。
+```
+
+命令行示例：
+
+```bash
+# 非整除 target size：自动生成贴边非均匀 hexa 网格
+python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 30 \
+  --mesh-spacing-mode auto \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy zero_order \
+  --diffraction-zero-order-only
+
+# 几何驱动局部加密：光栅附近 2.5 nm，远处 10 nm
+python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 10 \
+  --mesh-spacing-mode local_refined \
+  --mesh-refined-size 2.5 \
+  --mesh-refinement-radius 5 \
+  --stage4-boundary-model dtn_port
+```
+
+在 `src/main.py` 的 `Stage4GratingInputs3D` 中对应修改：
+
+```python
+mesh_target_size = 10.0
+mesh_spacing_mode = "local_refined"
+mesh_refined_size = 2.5
+mesh_refinement_radius = 5.0
+```
+
+结果目录里重点看：
+
+```text
+mesh_3d_partition_note.txt
+run_summary.json:
+  mesh_spacing_mode_resolved
+  mesh_cells_resolved
+  mesh_axis_cell_stats
+  mesh_material_plane_alignment
+  mesh_local_refinement_regions
+```
+
+注意：这里的 `local_refined` 是几何驱动的结构化加密，不是基于误差估计的自适应 AMR。它仍然是 tensor-product hexa 网格，所以 x/y 周期面对面的 edge 拓扑可以一一匹配，后续 Floquet 约束仍可用。
+
 ## 2026-06-25 更新：h=2.5 并行运行、BUS error 与 Floquet 耗时解释
 
 如果你跑 `h=2.5 nm`、MPI 并行时看到 PETSc `BUS: Bus Error`，优先检查结果目录。若已经写出

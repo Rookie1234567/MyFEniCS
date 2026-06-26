@@ -857,6 +857,10 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
         "mesh_target_size": cfg.mesh_target_size,
         "mesh_cell_type": cfg.mesh_cell_type,
         "mesh_cell_type_resolved": cfg.mesh_cell_type_resolved,
+        "mesh_spacing_mode": cfg.mesh_spacing_mode,
+        "mesh_spacing_mode_requested": cfg.mesh_spacing_mode_requested,
+        "mesh_refined_size": cfg.mesh_refined_size,
+        "mesh_refinement_radius": cfg.mesh_refinement_radius,
         "floquet_constraint_mode_requested": cfg.floquet_constraint_mode_requested,
         "nedelec_degree": cfg.nedelec_degree,
         "visualization_degree": cfg.visualization_degree,
@@ -1197,6 +1201,11 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
     log(f"mesh cell type actual = {mesh_data.mesh_cell_type_resolved}")
     log(f"mesh cells requested = {cfg.mesh_cells}")
     log(f"mesh cells resolved = {mesh_data.mesh_cells_resolved}")
+    log(f"mesh spacing mode resolved = {mesh_data.mesh_spacing_mode_resolved}")
+    if mesh_data.mesh_axis_cell_stats:
+        log(f"mesh axis cell stats = {mesh_data.mesh_axis_cell_stats}")
+    if mesh_data.material_plane_alignment.get("all_aligned") is False:
+        log(f"WARNING: mesh material plane alignment = {mesh_data.material_plane_alignment}")
     for warning in mesh_data.z_alignment_warnings:
         log(f"WARNING: {warning}")
 
@@ -1595,6 +1604,10 @@ def _run_maxwell_3d_case_core(cfg: SimulationConfig3D, out_dir: Path) -> dict[st
         else floquet_data.num_corner_constraints,
         "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
         "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
+        "mesh_spacing_mode_resolved": mesh_data.mesh_spacing_mode_resolved,
+        "mesh_axis_cell_stats": mesh_data.mesh_axis_cell_stats,
+        "mesh_material_plane_alignment": mesh_data.material_plane_alignment,
+        "mesh_local_refinement_regions": mesh_data.local_refinement_regions,
         "mesh_z_alignment_warnings": mesh_data.z_alignment_warnings,
         "max_face_pairing_coordinate_error": None
         if floquet_data is None

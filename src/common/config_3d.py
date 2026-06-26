@@ -83,6 +83,9 @@ class SimulationConfig3D:
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
+    mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
+    mesh_refined_size: float | None = None
+    mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = "auto"  # "auto", "topological_edges", or legacy alias "sparse_facet"
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
@@ -170,6 +173,31 @@ class SimulationConfig3D:
         if mode not in {"tetrahedron", "hexahedron"}:
             raise ValueError("mesh_cell_type must be 'auto', 'tetrahedron', or 'hexahedron'.")
         return mode
+
+    @property
+    def mesh_spacing_mode_requested(self) -> str:
+        mode = self.mesh_spacing_mode.lower()
+        if mode not in {"auto", "uniform_strict", "boundary_fitted", "local_refined"}:
+            raise ValueError(
+                "mesh_spacing_mode must be 'auto', 'uniform_strict', 'boundary_fitted', or 'local_refined'."
+            )
+        return mode
+
+    @property
+    def mesh_refined_size_resolved(self) -> float:
+        if self.mesh_refined_size is None:
+            return 0.5 * float(self.mesh_target_size)
+        if self.mesh_refined_size <= 0.0:
+            raise ValueError("mesh_refined_size must be positive when it is set.")
+        return float(self.mesh_refined_size)
+
+    @property
+    def mesh_refinement_radius_resolved(self) -> float:
+        if self.mesh_refinement_radius is None:
+            return 2.0 * self.mesh_refined_size_resolved
+        if self.mesh_refinement_radius < 0.0:
+            raise ValueError("mesh_refinement_radius must be non-negative when it is set.")
+        return float(self.mesh_refinement_radius)
 
     @property
     def floquet_constraint_mode_requested(self) -> str:
@@ -348,6 +376,9 @@ class SimulationConfig3D:
         data["domain_z_min"] = self.domain_z_min
         data["domain_z_max"] = self.domain_z_max
         data["mesh_cell_type_resolved"] = self.mesh_cell_type_resolved
+        data["mesh_spacing_mode_requested"] = self.mesh_spacing_mode_requested
+        data["mesh_refined_size_resolved"] = self.mesh_refined_size_resolved
+        data["mesh_refinement_radius_resolved"] = self.mesh_refinement_radius_resolved
         data["floquet_constraint_mode_requested"] = self.floquet_constraint_mode_requested
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [[value.real, value.imag] for value in self.polarization_vector]

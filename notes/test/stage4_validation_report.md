@@ -1,5 +1,87 @@
 # Stage 4 验证报告
 
+## 2026-06-26 更新：hexa 自动贴边网格与局部加密验证
+
+本轮目标：解决 Stage 4 uniform hexa 网格必须被结构尺寸整除的问题，同时保持后续 Floquet/DtN 可计算。
+
+新增能力：
+
+```text
+mesh_spacing_mode = auto / uniform_strict / boundary_fitted / local_refined
+mesh_refined_size
+mesh_refinement_radius
+```
+
+已运行命令：
+
+```text
+python -m compileall -q src
+结果：通过
+
+. dolfinx-complex-mode && python3 -m unittest discover -s src/test -p "test_*.py"
+结果：Ran 42 tests, OK (skipped=8)
+
+. dolfinx-complex-mode && python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_flat_layer_sanity \
+  --case normal \
+  --mesh-target-size 30 \
+  --mesh-spacing-mode auto \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy zero_order \
+  --diffraction-zero-order-only \
+  --no-unique-output
+
+. dolfinx-complex-mode && python3 -m src.runners.run_3d_airbox \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 30 \
+  --mesh-spacing-mode auto \
+  --stage4-boundary-model dtn_port \
+  --stage4-dtn-order-policy zero_order \
+  --diffraction-zero-order-only \
+  --no-unique-output
+```
+
+结果摘要：
+
+```text
+flat-layer sanity, h=30:
+  mesh_spacing_mode_resolved = boundary_fitted
+  mesh_cells_resolved = (4, 4, 6)
+  mesh_axis_cell_stats = min/max/median 25 nm
+  case_status = completed
+  R/T/R+T = 9.999998e-01 / 2.328550e-07 / 1.000000
+  energy-balance pass = True
+
+block grating, h=30:
+  mesh_spacing_mode_resolved = boundary_fitted
+  mesh_cells_resolved = (4, 4, 6)
+  material planes aligned = True
+  Floquet max edge midpoint pairing error = 0
+  case_status = completed
+  R/T/R+T = 9.999998e-01 / 2.016544e-07 / 1.000000
+  energy-balance pass = True
+```
+
+单元测试新增覆盖：
+
+```text
+src/test/test_15_stage4_hexa_mesh_spacing.py
+  auto + h=5: 保持 uniform_strict
+  auto + h=6: 自动 boundary_fitted 并对齐光栅/界面
+  uniform_strict + h=6: 明确报错
+  local_refined: 光栅/界面附近 cell size <= mesh_refined_size
+  boundary_fitted: 能真实创建 DOLFINx hexa mesh
+```
+
+结论：
+
+```text
+1. 以前 grating_x_min=25 nm 不在 uniform grid 上导致的 ValueError 已解决。
+2. fitted/local 网格仍是 tensor-product hexa，周期面对面拓扑一致，Floquet edge pairing 不需要 fallback。
+3. 本轮只验证小网格可用性和前处理正确性；物理收敛仍要用 h=2.5 nm 或更细网格继续评估。
+```
+
 ## 2026-06-25 更新：MPI VTX BUS error 修复、Floquet context 计时与 h=2.5 block 复核
 
 本轮新增修复和验证：

@@ -57,6 +57,12 @@ def _config_updates(args) -> dict[str, object]:
         updates["mesh_target_size"] = args.mesh_target_size
     if args.mesh_cell_type is not None:
         updates["mesh_cell_type"] = args.mesh_cell_type
+    if args.mesh_spacing_mode is not None:
+        updates["mesh_spacing_mode"] = args.mesh_spacing_mode
+    if args.mesh_refined_size is not None:
+        updates["mesh_refined_size"] = args.mesh_refined_size
+    if args.mesh_refinement_radius is not None:
+        updates["mesh_refinement_radius"] = args.mesh_refinement_radius
     if args.floquet_constraint_mode is not None:
         updates["floquet_constraint_mode"] = args.floquet_constraint_mode
     if args.lambda0 is not None:
@@ -198,6 +204,9 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "polarization_kind": "s",
             "custom_polarization": None,
             "mesh_target_size": 5.0,
+            "mesh_spacing_mode": "auto",
+            "mesh_refined_size": None,
+            "mesh_refinement_radius": None,
             "nedelec_degree": 1,
             "visualization_degree": 1,
             "mesh_cell_type": "auto",
@@ -280,6 +289,27 @@ def main(argv: list[str] | None = None):
         choices=("auto", "tetrahedron", "hexahedron"),
         default=None,
         help="3D cell type. auto uses hexahedron for Floquet cases and tetrahedron otherwise.",
+    )
+    parser.add_argument(
+        "--mesh-spacing-mode",
+        choices=("auto", "uniform_strict", "boundary_fitted", "local_refined"),
+        default=None,
+        help=(
+            "Stage-4 hexa spacing. auto keeps uniform meshes when material planes align, "
+            "otherwise inserts fitted material planes."
+        ),
+    )
+    parser.add_argument(
+        "--mesh-refined-size",
+        type=float,
+        default=None,
+        help="Stage-4 local_refined target size near the grating and interface, in nm.",
+    )
+    parser.add_argument(
+        "--mesh-refinement-radius",
+        type=float,
+        default=None,
+        help="Stage-4 local_refined band radius around the grating/interface, in nm.",
     )
     parser.add_argument(
         "--floquet-constraint-mode",

@@ -22,6 +22,25 @@ class AirBox3DMesh:
     mesh_cell_type_resolved: str
     mesh_cells_resolved: tuple[int, int, int]
     z_alignment_warnings: list[str]
+    mesh_spacing_mode_resolved: str
+    mesh_axis_cell_stats: dict[str, dict[str, float | int]]
+    material_plane_alignment: dict[str, object]
+    local_refinement_regions: dict[str, list[list[float]]]
+
+
+@dataclass(frozen=True)
+class HexaAxisPlan:
+    x_values: np.ndarray
+    y_values: np.ndarray
+    z_values: np.ndarray
+    mesh_spacing_mode_resolved: str
+    axis_cell_stats: dict[str, dict[str, float | int]]
+    material_plane_alignment: dict[str, object]
+    local_refinement_regions: dict[str, list[list[float]]]
+
+    @property
+    def mesh_cells_resolved(self) -> tuple[int, int, int]:
+        return (len(self.x_values) - 1, len(self.y_values) - 1, len(self.z_values) - 1)
 
 
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
@@ -111,6 +130,322 @@ def _axis_coordinates(start: float, stop: float, target_size: float, required: t
         if abs(value - unique[-1]) > tol:
             unique.append(value)
     return np.asarray(unique, dtype=np.float64)
+
+
+def _axis_tolerance(start: float, stop: float) -> float:
+    return 1.0e-10 * max(abs(stop - start), 1.0)
+
+
+def _deduplicate_sorted(values: list[float], tol: float) -> list[float]:
+    if not values:
+        return []
+    ordered = sorted(float(value) for value in values)
+    unique = [ordered[0]]
+    for value in ordered[1:]:
+        if abs(value - unique[-1]) > tol:
+            unique.append(value)
+    return unique
+
+
+def _clip_interval(start: float, stop: float, low: float, high: float, tol: float) -> tuple[float, float] | None:
+    clipped_low = max(start, low)
+    clipped_high = min(stop, high)
+    if clipped_high - clipped_low <= tol:
+        return None
+    return (float(clipped_low), float(clipped_high))
+
+
+def _stage4_required_planes_by_axis(cfg: SimulationConfig3D) -> dict[str, list[tuple[str, float]]]:
+    """Return material/interface planes that must become true hexa grid planes."""
+
+    planes: dict[str, list[tuple[str, float]]] = {"x": [], "y": [], "z": _required_z_planes(cfg)}
+    if cfg.geometry_kind == "rectangular_block_grating" and cfg.has_grating_block:
+        planes["x"].extend(
+            [("grating_x_min", cfg.grating_x_min), ("grating_x_max", cfg.grating_x_max)]
+        )
+        planes["y"].extend(
+            [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)]
+        )
+        planes["z"].append(("grating_z_min", cfg.grating_z_min))
+    return planes
+
+
+def _axis_stats(values: np.ndarray) -> dict[str, float | int]:
+    widths = np.diff(values)
+    if len(widths) == 0:
+        return {"num_cells": 0, "min": 0.0, "max": 0.0, "median": 0.0}
+    return {
+        "num_cells": int(len(widths)),
+        "min": float(np.min(widths)),
+        "max": float(np.max(widths)),
+        "median": float(np.median(widths)),
+    }
+
+
+def _axis_contains(values: np.ndarray, value: float, tol: float) -> bool:
+    return bool(np.any(np.isclose(values, value, atol=tol, rtol=0.0)))
+
+
+def _material_plane_alignment_report(
+    cfg: SimulationConfig3D,
+    axis_values: dict[str, np.ndarray],
+) -> dict[str, object]:
+    """Check that Stage-4 material planes are represented as mesh coordinate planes."""
+
+    required = _stage4_required_planes_by_axis(cfg)
+    missing: list[str] = []
+    checked: dict[str, list[dict[str, object]]] = {"x": [], "y": [], "z": []}
+    spans = {
+        "x": (cfg.x_min, cfg.x_max),
+        "y": (cfg.y_min, cfg.y_max),
+        "z": (cfg.domain_z_min, cfg.domain_z_max),
+    }
+    for axis_name, planes in required.items():
+        tol = _axis_tolerance(*spans[axis_name])
+        values = axis_values[axis_name]
+        for name, value in planes:
+            aligned = _axis_contains(values, value, tol)
+            checked[axis_name].append({"name": name, "value": float(value), "aligned": bool(aligned)})
+            if not aligned:
+                missing.append(f"{name}={value:g} nm is not on the generated {axis_name}-grid.")
+    return {
+        "all_aligned": len(missing) == 0,
+        "missing": missing,
+        "checked": checked,
+    }
+
+
+def _subdivide_piecewise_axis(
+    start: float,
+    stop: float,
+    breakpoints: list[float],
+    target_size_by_interval,
+    min_cells: int = 1,
+) -> np.ndarray:
+    """Create a nonuniform axis from exact breakpoints and interval target sizes."""
+
+    if target_size_by_interval is None:
+        raise ValueError("target_size_by_interval must be callable.")
+    if stop <= start:
+        raise ValueError("Axis stop must be greater than start.")
+    tol = _axis_tolerance(start, stop)
+    points = _deduplicate_sorted([start, stop, *breakpoints], tol)
+    if abs(points[0] - start) > tol or abs(points[-1] - stop) > tol:
+        raise ValueError("Axis breakpoints must stay inside the domain bounds.")
+
+    axis: list[float] = [float(start)]
+    for low, high in zip(points[:-1], points[1:]):
+        length = high - low
+        if length <= tol:
+            continue
+        target = float(target_size_by_interval(0.5 * (low + high)))
+        if target <= 0.0:
+            raise ValueError("Mesh target sizes must be positive.")
+        num = max(1, int(np.ceil(length / target)))
+        segment = np.linspace(low, high, num + 1, dtype=np.float64)
+        axis.extend(float(value) for value in segment[1:])
+
+    while len(axis) - 1 < min_cells:
+        widths = np.diff(np.asarray(axis, dtype=np.float64))
+        split_index = int(np.argmax(widths))
+        midpoint = 0.5 * (axis[split_index] + axis[split_index + 1])
+        axis.insert(split_index + 1, float(midpoint))
+    return np.asarray(axis, dtype=np.float64)
+
+
+def _uniform_axis(start: float, stop: float, num_cells: int) -> np.ndarray:
+    return np.linspace(start, stop, num_cells + 1, dtype=np.float64)
+
+
+def _uniform_axes(cfg: SimulationConfig3D, mesh_cells_resolved: tuple[int, int, int]) -> dict[str, np.ndarray]:
+    return {
+        "x": _uniform_axis(cfg.x_min, cfg.x_max, mesh_cells_resolved[0]),
+        "y": _uniform_axis(cfg.y_min, cfg.y_max, mesh_cells_resolved[1]),
+        "z": _uniform_axis(cfg.domain_z_min, cfg.domain_z_max, mesh_cells_resolved[2]),
+    }
+
+
+def _refine_axes_until_enough_cells(
+    axes: dict[str, np.ndarray],
+    min_total_cells: int,
+) -> dict[str, np.ndarray]:
+    """Split the largest current interval until there are enough cells for MPI ranks."""
+
+    refined = {axis_name: np.asarray(values, dtype=np.float64).copy() for axis_name, values in axes.items()}
+    if min_total_cells <= 1:
+        return refined
+
+    def total_cells() -> int:
+        return int(np.prod([len(values) - 1 for values in refined.values()]))
+
+    while total_cells() < min_total_cells:
+        candidates: list[tuple[float, str, int]] = []
+        for axis_name, values in refined.items():
+            widths = np.diff(values)
+            if len(widths) == 0:
+                continue
+            split_index = int(np.argmax(widths))
+            candidates.append((float(widths[split_index]), axis_name, split_index))
+        if not candidates:
+            raise RuntimeError("Cannot refine an empty hexa axis plan.")
+        _, axis_name, split_index = max(candidates, key=lambda item: item[0])
+        values = refined[axis_name]
+        midpoint = 0.5 * (values[split_index] + values[split_index + 1])
+        refined[axis_name] = np.insert(values, split_index + 1, midpoint)
+    return refined
+
+
+def _stage4_refinement_regions(cfg: SimulationConfig3D) -> dict[str, list[list[float]]]:
+    """Return clipped geometry-driven refinement bands for Stage-4 local_refined mode."""
+
+    radius = cfg.mesh_refinement_radius_resolved
+    tol_x = _axis_tolerance(cfg.x_min, cfg.x_max)
+    tol_y = _axis_tolerance(cfg.y_min, cfg.y_max)
+    tol_z = _axis_tolerance(cfg.domain_z_min, cfg.domain_z_max)
+    regions: dict[str, list[list[float]]] = {"x": [], "y": [], "z": []}
+
+    if cfg.has_grating_block:
+        x_band = _clip_interval(cfg.x_min, cfg.x_max, cfg.grating_x_min - radius, cfg.grating_x_max + radius, tol_x)
+        y_band = _clip_interval(cfg.y_min, cfg.y_max, cfg.grating_y_min - radius, cfg.grating_y_max + radius, tol_y)
+        z_band = _clip_interval(
+            cfg.domain_z_min,
+            cfg.domain_z_max,
+            min(cfg.interface_z, cfg.grating_z_min) - radius,
+            cfg.grating_z_max + radius,
+            tol_z,
+        )
+        if x_band is not None:
+            regions["x"].append([x_band[0], x_band[1]])
+        if y_band is not None:
+            regions["y"].append([y_band[0], y_band[1]])
+        if z_band is not None:
+            regions["z"].append([z_band[0], z_band[1]])
+    else:
+        z_band = _clip_interval(
+            cfg.domain_z_min,
+            cfg.domain_z_max,
+            cfg.interface_z - radius,
+            cfg.interface_z + radius,
+            tol_z,
+        )
+        if z_band is not None:
+            regions["z"].append([z_band[0], z_band[1]])
+    return regions
+
+
+def _interval_in_regions(midpoint: float, regions: list[list[float]]) -> bool:
+    return any(low <= midpoint <= high for low, high in regions)
+
+
+def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
+    """Resolve the Stage-4 hexa spacing mode and build periodic-compatible axes."""
+
+    _validate_stage4_hexa_geometry(cfg)
+    uniform_cells = _hexa_mesh_cells(cfg, comm_size)
+    uniform_axes = _uniform_axes(cfg, uniform_cells)
+    uniform_alignment = _material_plane_alignment_report(cfg, uniform_axes)
+    requested = cfg.mesh_spacing_mode_requested
+    if requested == "auto":
+        mode = "uniform_strict" if uniform_alignment["all_aligned"] else "boundary_fitted"
+    else:
+        mode = requested
+
+    min_axis_cells = 2 if cfg.use_floquet_xy else 1
+    required = _stage4_required_planes_by_axis(cfg)
+    if mode == "uniform_strict":
+        if not uniform_alignment["all_aligned"]:
+            hint = (
+                "Stage-4 uniform_strict hexa meshes require every material boundary to be a grid plane. "
+                "Use mesh_spacing_mode='auto', 'boundary_fitted', or 'local_refined' to generate a fitted nonuniform hexa mesh."
+            )
+            raise ValueError(hint + " " + " ".join(str(message) for message in uniform_alignment["missing"]))
+        axes = uniform_axes
+        regions: dict[str, list[list[float]]] = {"x": [], "y": [], "z": []}
+    else:
+        spans = {
+            "x": (cfg.x_min, cfg.x_max),
+            "y": (cfg.y_min, cfg.y_max),
+            "z": (cfg.domain_z_min, cfg.domain_z_max),
+        }
+        regions = _stage4_refinement_regions(cfg) if mode == "local_refined" else {"x": [], "y": [], "z": []}
+        refined_size = cfg.mesh_refined_size_resolved
+        axes = {}
+        for axis_name, (start, stop) in spans.items():
+            breakpoints = [value for _, value in required[axis_name]]
+            for low, high in regions[axis_name]:
+                breakpoints.extend([low, high])
+
+            def target_size(midpoint: float, *, axis: str = axis_name) -> float:
+                if mode == "local_refined" and _interval_in_regions(midpoint, regions[axis]):
+                    return refined_size
+                return float(cfg.mesh_target_size)
+
+            axes[axis_name] = _subdivide_piecewise_axis(
+                start,
+                stop,
+                breakpoints,
+                target_size,
+                min_cells=min_axis_cells,
+            )
+        axes = _refine_axes_until_enough_cells(axes, comm_size)
+
+    alignment = _material_plane_alignment_report(cfg, axes)
+    if not alignment["all_aligned"]:
+        raise RuntimeError(
+            "Internal Stage-4 hexa axis generation failed to align material planes. "
+            + " ".join(str(message) for message in alignment["missing"])
+        )
+    stats = {axis_name: _axis_stats(values) for axis_name, values in axes.items()}
+    return HexaAxisPlan(
+        x_values=axes["x"],
+        y_values=axes["y"],
+        z_values=axes["z"],
+        mesh_spacing_mode_resolved=mode,
+        axis_cell_stats=stats,
+        material_plane_alignment=alignment,
+        local_refinement_regions=regions,
+    )
+
+
+def _structured_hexa_mesh(
+    msh_comm: MPI.Intracomm,
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    z_values: np.ndarray,
+) -> mesh.Mesh:
+    """Create a tensor-product hexa mesh from explicit nonuniform coordinate axes."""
+
+    nx = len(x_values) - 1
+    ny = len(y_values) - 1
+    nz = len(z_values) - 1
+    points = np.asarray(
+        [(x, y, z) for z in z_values for y in y_values for x in x_values],
+        dtype=default_real_type,
+    )
+
+    def node(i: int, j: int, k: int) -> int:
+        return k * len(y_values) * len(x_values) + j * len(x_values) + i
+
+    cells: list[list[int]] = []
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                cells.append(
+                    [
+                        node(i, j, k),
+                        node(i + 1, j, k),
+                        node(i, j + 1, k),
+                        node(i + 1, j + 1, k),
+                        node(i, j, k + 1),
+                        node(i + 1, j, k + 1),
+                        node(i, j + 1, k + 1),
+                        node(i + 1, j + 1, k + 1),
+                    ]
+                )
+    coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
+    domain = ufl.Mesh(coordinate_element)
+    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
 def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> mesh.Mesh:
@@ -216,8 +551,8 @@ def _grid_contains(grid: np.ndarray, value: float, tol: float) -> bool:
     return bool(np.any(np.isclose(grid, value, atol=tol, rtol=0.0)))
 
 
-def _validate_stage4_hexa_alignment(cfg: SimulationConfig3D, mesh_cells_resolved: tuple[int, int, int]) -> None:
-    """Require every Stage-4 material break to lie on a hexahedral grid plane."""
+def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
+    """Validate Stage-4 assumptions before building uniform or fitted hexa axes."""
     if cfg.geometry_kind != "rectangular_block_grating":
         return
     if cfg.mesh_cell_type_resolved != "hexahedron":
@@ -236,72 +571,79 @@ def _validate_stage4_hexa_alignment(cfg: SimulationConfig3D, mesh_cells_resolved
         if not (cfg.physical_z_min <= cfg.grating_z_min < cfg.grating_z_max <= cfg.physical_z_max):
             raise ValueError("Stage-4 grating z bounds must lie inside the physical z domain.")
 
-    axes = {
-        "x": (
-            np.linspace(cfg.x_min, cfg.x_max, mesh_cells_resolved[0] + 1),
-            [("grating_x_min", cfg.grating_x_min), ("grating_x_max", cfg.grating_x_max)] if cfg.has_grating_block else [],
-        ),
-        "y": (
-            np.linspace(cfg.y_min, cfg.y_max, mesh_cells_resolved[1] + 1),
-            [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)] if cfg.has_grating_block else [],
-        ),
-        "z": (
-            np.linspace(cfg.domain_z_min, cfg.domain_z_max, mesh_cells_resolved[2] + 1),
-            _required_z_planes(cfg),
-        ),
-    }
-    messages: list[str] = []
-    for axis_name, (grid, required) in axes.items():
-        tol = 1.0e-10 * max(abs(float(grid[-1] - grid[0])), 1.0)
-        for name, value in required:
-            if not _grid_contains(grid, value, tol):
-                messages.append(
-                    f"{name}={value:g} nm is not on the uniform {axis_name}-grid; "
-                    f"resolved {axis_name}-cell count is {len(grid) - 1}."
-                )
-    if messages:
-        hint = (
-            "Stage-4 hexa meshes do not use midpoint approximation for material boundaries. "
-            "Choose mesh_target_size or period/block dimensions so every interface is a grid plane."
-        )
-        raise ValueError(hint + " " + " ".join(messages))
-
 
 def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
-    """Build a structured tetrahedral 3D box mesh for staged verification.
+    """Build a structured 3D box mesh for staged verification.
 
-    The mesh is intentionally simple in Stage 2: all complexity is in the
-    material tags and boundary conditions, which makes failures easier to
-    localize before grating geometry is introduced in Stage 3.
+    Stage 4 uses a tensor-product hexa path so rectangular material planes can
+    be exact grid planes without requiring one global uniform cell size.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD
     mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
-    mesh_cells_resolved = _hexa_mesh_cells(cfg, comm.size) if mesh_cell_type_resolved == "hexahedron" else cfg.mesh_cells
-    _validate_stage4_hexa_alignment(cfg, mesh_cells_resolved)
-    z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
+    hexa_axis_plan: HexaAxisPlan | None = None
+    if mesh_cell_type_resolved == "hexahedron":
+        if cfg.geometry_kind == "rectangular_block_grating":
+            hexa_axis_plan = _stage4_axis_plan(cfg, comm.size)
+            mesh_cells_resolved = hexa_axis_plan.mesh_cells_resolved
+            z_alignment_warnings: list[str] = []
+        else:
+            mesh_cells_resolved = _hexa_mesh_cells(cfg, comm.size)
+            uniform_axes = _uniform_axes(cfg, mesh_cells_resolved)
+            hexa_axis_plan = HexaAxisPlan(
+                x_values=uniform_axes["x"],
+                y_values=uniform_axes["y"],
+                z_values=uniform_axes["z"],
+                mesh_spacing_mode_resolved="uniform_strict",
+                axis_cell_stats={axis_name: _axis_stats(values) for axis_name, values in uniform_axes.items()},
+                material_plane_alignment=_material_plane_alignment_report(cfg, uniform_axes),
+                local_refinement_regions={"x": [], "y": [], "z": []},
+            )
+            z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
+    else:
+        mesh_cells_resolved = cfg.mesh_cells
+        z_alignment_warnings = _z_alignment_warnings(cfg, mesh_cells_resolved)
 
     if mesh_cell_type_resolved == "hexahedron":
-        points = [
-            np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
-            np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
-        ]
-        msh = mesh.create_box(
-            comm,
-            points,
-            mesh_cells_resolved,
-            cell_type=mesh.CellType.hexahedron,
-            ghost_mode=mesh.GhostMode.shared_facet,
-        )
+        assert hexa_axis_plan is not None
+        if hexa_axis_plan.mesh_spacing_mode_resolved == "uniform_strict":
+            points = [
+                np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
+                np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
+            ]
+            msh = mesh.create_box(
+                comm,
+                points,
+                mesh_cells_resolved,
+                cell_type=mesh.CellType.hexahedron,
+                ghost_mode=mesh.GhostMode.shared_facet,
+            )
+            mesh_note = "Using dolfinx.mesh.create_box with uniform hexahedron cells."
+        else:
+            msh = _structured_hexa_mesh(
+                comm,
+                hexa_axis_plan.x_values,
+                hexa_axis_plan.y_values,
+                hexa_axis_plan.z_values,
+            )
+            mesh_note = (
+                "Using custom tensor-product hexahedron cells with nonuniform axis spacing. "
+                "Opposite periodic faces share the same axis coordinates, so explicit edge Floquet pairing remains one-to-one."
+            )
         if comm.rank == 0:
             note_lines = [
-                "Using dolfinx.mesh.create_box with hexahedron cells.",
+                mesh_note,
                 "This is the default low-memory 3D Floquet mesh because opposite periodic faces are structured.",
+                f"mesh_spacing_mode_resolved = {hexa_axis_plan.mesh_spacing_mode_resolved}",
+                f"mesh_cells_resolved = {mesh_cells_resolved}",
+                f"axis_cell_stats = {hexa_axis_plan.axis_cell_stats}",
             ]
             if cfg.geometry_kind == "rectangular_block_grating":
                 note_lines.append(
-                    "Stage-4 rectangular block tags are aligned to hexahedral grid planes; no midpoint fallback is used."
+                    "Stage-4 rectangular block material planes are aligned to hexahedral grid planes; no midpoint material-boundary fallback is used."
                 )
+                note_lines.append(f"material_plane_alignment = {hexa_axis_plan.material_plane_alignment}")
+                note_lines.append(f"local_refinement_regions = {hexa_axis_plan.local_refinement_regions}")
             note_lines.extend(f"WARNING: {message}" for message in z_alignment_warnings)
             (out_dir / "mesh_3d_partition_note.txt").write_text("\n".join(note_lines) + "\n", encoding="utf-8")
     elif comm.size > 1:
@@ -353,4 +695,10 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         mesh_cell_type_resolved=mesh_cell_type_resolved,
         mesh_cells_resolved=mesh_cells_resolved,
         z_alignment_warnings=z_alignment_warnings,
+        mesh_spacing_mode_resolved=hexa_axis_plan.mesh_spacing_mode_resolved if hexa_axis_plan is not None else "n/a",
+        mesh_axis_cell_stats=hexa_axis_plan.axis_cell_stats if hexa_axis_plan is not None else {},
+        material_plane_alignment=hexa_axis_plan.material_plane_alignment
+        if hexa_axis_plan is not None
+        else {"all_aligned": None, "missing": [], "checked": {"x": [], "y": [], "z": []}},
+        local_refinement_regions=hexa_axis_plan.local_refinement_regions if hexa_axis_plan is not None else {},
     )

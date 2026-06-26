@@ -94,6 +94,9 @@ class Stage1AirboxInputs3D:
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"
+    mesh_spacing_mode: str = "auto"
+    mesh_refined_size: float | None = None
+    mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = "auto"
     lambda0: float = 633.0
     divergence_penalty: float = 0.0
@@ -111,6 +114,9 @@ class Stage2NoGratingInputs3D:
     visualization_degree: int = 1
     mesh_target_size: float = 300.0
     mesh_cell_type: str = "auto"
+    mesh_spacing_mode: str = "auto"
+    mesh_refined_size: float | None = None
+    mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = "auto"
     lambda0: float = 633.0
     use_floquet_xy: bool | None = None
@@ -132,11 +138,14 @@ class Stage4GratingInputs3D:
     polarization_kind: str | None = None
     nedelec_degree: int = 1
     visualization_degree: int = 1
-    # Hexa meshes require material/block planes to land on grid planes.  The
-    # current EUV cell aligns cleanly for h=5 nm: 100 x 100 nm period,
-    # 50 x 50 x 50 nm cube, z=0 interface, and 25 nm PML layers.
+    # Stage-4 hexa meshes now support fitted nonuniform axis spacing.  With
+    # mesh_spacing_mode="auto", a divisible target keeps the old uniform mesh;
+    # a non-divisible target inserts material planes automatically.
     mesh_target_size: float = 1.25
     mesh_cell_type: str = "auto"
+    mesh_spacing_mode: str = "auto"  # auto / uniform_strict / boundary_fitted / local_refined
+    mesh_refined_size: float | None = None
+    mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = "auto"
     lambda0: float = 13.5
     use_floquet_xy: bool | None = True
@@ -257,6 +266,9 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--visualization-degree", _setting_value(settings, "visualization_degree"))
     _add_value(args, "--mesh-target-size", _setting_value(settings, "mesh_target_size"))
     _add_value(args, "--mesh-cell-type", _setting_value(settings, "mesh_cell_type"))
+    _add_value(args, "--mesh-spacing-mode", _setting_value(settings, "mesh_spacing_mode"))
+    _add_value(args, "--mesh-refined-size", _setting_value(settings, "mesh_refined_size"))
+    _add_value(args, "--mesh-refinement-radius", _setting_value(settings, "mesh_refinement_radius"))
     _add_value(args, "--floquet-constraint-mode", _setting_value(settings, "floquet_constraint_mode"))
     _add_value(args, "--lambda0", _setting_value(settings, "lambda0"))
     _add_value(args, "--incident-theta-deg", _setting_value(settings, "incident_theta_deg"))

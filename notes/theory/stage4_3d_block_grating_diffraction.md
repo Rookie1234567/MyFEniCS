@@ -1,5 +1,40 @@
 # Stage 4 理论说明：3D 周期矩形柱与衍射级后处理
 
+## 2026-06-26 更新：为什么 Stage 4 可以使用非均匀结构化 hexa 网格
+
+当前 Stage 4 的 Floquet 约束是显式 edge 拓扑配对：
+
+```text
+slave_dof = beta_x^m * beta_y^n * orientation_sign * master_dof
+```
+
+第一版只支持 `degree=1 N1curl` 的 hexa 网格，因为此时每条 mesh edge 对应一个边自由度。关键要求不是“全局 uniform”，而是：
+
+```text
+1. x=0 与 x=Lx 两个周期面上的边剖分完全一致；
+2. y=0 与 y=Ly 两个周期面上的边剖分完全一致；
+3. 光栅和材料界面必须是网格面，不能让一个 cell 横跨材料跳变；
+4. 每个 slave edge 只能找到一个 master edge。
+```
+
+新的 `boundary_fitted` 和 `local_refined` 网格仍然使用 tensor-product 坐标：
+
+```text
+x = [x0, x1, ..., x_N]
+y = [y0, y1, ..., y_M]
+z = [z0, z1, ..., z_K]
+cell = [x_i,x_{i+1}] x [y_j,y_{j+1}] x [z_k,z_{k+1}]
+```
+
+因此它虽然不是全局等间距，但周期面仍共享同一组 `y/z` 或 `x/z` 坐标，Floquet edge midpoint/tangent 可以一一匹配。它不同于真正的非结构 tetra 网格，也不同于基于误差估计的 AMR；本轮“局部加密”只是几何驱动的分段结构化加密。
+
+这带来两个直接好处：
+
+```text
+1. mesh_target_size 不再必须整除 grating_x_min、grating_x_max、interface_z 等几何面。
+2. 可以在光栅和界面附近用小网格，远处用较粗网格，同时保持后续 DtN/Floquet 代码路径不变。
+```
+
 ## 2026-06-25 更新：为什么官方 R/T 改为 E/H Fourier
 
 对一个给定衍射级 `(m,n)`，横向波矢 `k_t=(alpha,gamma)` 是固定的，但在同一个 probe 面上可以同时存在：
