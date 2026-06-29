@@ -341,6 +341,7 @@ def run_case(
         "max_abs_E_total": field_metrics["max_abs_E_total"],
         "max_abs_E_scat_over_max_abs_E_inc": scatter_ratio,
         "power_metrics": power_metrics,
+        "near_field_integrals": power_metrics.get("near_field_integrals", {}),
         "floquet_phase": cfg.floquet_phase,
         "floquet_max_probe_error": constraints.max_probe_error,
         "floquet_mismatch_scat_dof": floquet_mismatch_scat,

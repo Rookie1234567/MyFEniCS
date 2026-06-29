@@ -81,6 +81,18 @@ class SimulationConfig:
     nedelec_degree: int = 2
     visualization_degree: int = 3
     mesh_target_size: float = 25.0
+    # 2D structured mesh cell shape.  "triangle" keeps the historical Gmsh
+    # transfinite triangulation; "quadrilateral" recombines each structured
+    # rectangle into square/quad cells for the EUV mesh comparison study.
+    mesh_cell_shape: str = "triangle"
+    # When True, mesh_builder inserts fixed coordinate planes around the
+    # grating so air/substrate thickness scans keep the near-field mesh
+    # unchanged wherever that near region exists inside the physical domain.
+    mesh_lock_near_field_template: bool = False
+    # Near-field integration boxes used for convergence studies.  Units are nm.
+    near_field_margin_x: float = 25.0
+    near_field_air_top: float = 100.0
+    near_field_sub_depth: float = 50.0
     pml_alpha: float = 5.0
     tags: Tags = field(default_factory=Tags)
 

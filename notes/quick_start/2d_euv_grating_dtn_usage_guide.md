@@ -1,0 +1,129 @@
+# 2D EUV 光栅 DtN 使用指南
+
+## 2026-06-29 更新：新增 100 nm 周期 EUV 矩形光栅基准
+
+本案例用于验证 2D DtN 端口、衍射级 R/T 和近场积分，不代表真实 EUV 材料库。
+
+默认结构：
+
+```text
+period_x = 100 nm
+substrate_thickness = 50 nm
+air_height = 100 nm
+grating_width = 50 nm
+grating_height = 50 nm
+lambda0 = 13.5 nm
+polarization = TM
+incident_angle_deg = 0
+n_air = 1.0
+n_substrate = 1.1
+n_grating = 1.2
+```
+
+推荐先看 `src/main.py`：
+
+```text
+SIMULATION_DIMENSION = "2d"
+ACTIVE_2D_INPUT_GROUP = "euv_grating"
+EUVGratingInputs2D(...)
+```
+
+PyCharm 直接运行 `src/main.py` 时会读取 `EUVGratingInputs2D`，并转换成 `src/runners/run_cases.py` 的 CLI 参数。
+
+## 推荐命令
+
+三角形结构化网格 smoke：
+
+```bash
+python3 -m src.runners.run_cases \
+  --formulation port \
+  --constraint-backend manual \
+  --port-boundary-model dtn \
+  --port-dtn-assembly auxiliary \
+  --port-use-diffraction-orders \
+  --polarization-type TM \
+  --period-x 100 \
+  --air-height 100 \
+  --substrate-thickness 50 \
+  --grating-width 50 \
+  --grating-height 50 \
+  --lambda0 13.5 \
+  --n-air 1.0 \
+  --n-substrate 1.1 \
+  --n-grating 1.2 \
+  --incident-angle-deg 0 \
+  --nedelec-degree 2 \
+  --visualization-degree 2 \
+  --mesh-target-size 5 \
+  --mesh-cell-shape triangle \
+  --lock-near-field-template \
+  --compute-power-metrics
+```
+
+四边形结构化网格只改一项：
+
+```bash
+--mesh-cell-shape quadrilateral
+```
+
+## 研究脚本
+
+批量研究入口：
+
+```bash
+python3 -m src.studies.run_2d_euv_validation --study method_compare
+python3 -m src.studies.run_2d_euv_validation --study mesh_convergence
+python3 -m src.studies.run_2d_euv_validation --study air_scan
+python3 -m src.studies.run_2d_euv_validation --study substrate_scan
+python3 -m src.studies.run_2d_euv_validation --study combined_scan
+```
+
+先只看会跑哪些命令：
+
+```bash
+python3 -m src.studies.run_2d_euv_validation --study mesh_convergence --dry-run
+```
+
+输出位置：
+
+```text
+results/studies/2D_EUV_<study>_<timestamp>/
+  study_plan.json
+  study_summary.csv
+  study_summary.json
+```
+
+## 输出怎么看
+
+正式 R/T 以 DtN 端口量为准，优先看：
+
+```text
+dtn_auxiliary_power_metrics.json
+run_summary.json -> dtn_auxiliary_power_metrics
+```
+
+`power_metrics.json` 使用内部 probe line 重建模态，当前保留为诊断，不作为 EUV DtN 主判据。
+
+近场积分位于：
+
+```text
+run_summary.json -> near_field_integrals
+dtn_auxiliary_power_metrics.json -> near_field_integrals
+```
+
+字段含义：
+
+```text
+I_grating  = ∫_grating |E|^2 dΩ
+I_air_near = ∫_air_near |E|^2 dΩ
+I_sub_near = ∫_sub_near |E|^2 dΩ
+```
+
+默认近场区域：
+
+```text
+air_near: 光栅左右各扩 25 nm，y=0 到 min(air_height,100 nm)，去掉光栅本体
+sub_near: 光栅左右各扩 25 nm，y=-min(substrate_thickness,50 nm) 到 0
+```
+
+厚度扫描时使用 `--lock-near-field-template`，会插入固定网格面，尽量保证光栅和近场区域的网格不随远处空气/基座厚度变化。

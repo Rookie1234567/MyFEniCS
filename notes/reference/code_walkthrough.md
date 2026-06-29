@@ -1,3 +1,97 @@
+## 2026-06-29 更新：2D EUV 光栅 DtN 代码阅读路径
+
+如果本轮主要研究 2D EUV 矩形光栅，建议按下面顺序读：
+
+```text
+1. src/main.py
+   先看 SIMULATION_DIMENSION = "2d"。
+   再看 Inputs2D / EUVGratingInputs2D：
+     period_x = 100 nm
+     air_height = 100 nm
+     substrate_thickness = 50 nm
+     grating_width = 50 nm
+     grating_height = 50 nm
+     lambda0 = 13.5 nm
+     n_substrate = 1.1
+     n_grating = 1.2
+     mesh_cell_shape = "triangle" / "quadrilateral"
+     mesh_lock_near_field_template = True
+
+2. src/runners/run_cases.py
+   看 2D CLI 参数如何覆盖 SimulationConfig：
+     --period-x
+     --air-height
+     --substrate-thickness
+     --grating-width
+     --grating-height
+     --lambda0
+     --n-substrate
+     --n-grating
+     --mesh-cell-shape
+     --lock-near-field-template
+
+3. src/common/config.py
+   看 SimulationConfig 的 2D 几何属性：
+     x_min/x_max
+     substrate_y_min/substrate_y_max
+     grating_x_min/grating_x_max
+     grating_y_min/grating_y_max
+   这里统一约定所有长度、波长、网格尺寸都是 nm。
+
+4. src/geometry/mesh_builder.py
+   看 mesh_axis_coordinates_2d(...)：
+     生成结构化 x/y 坐标轴。
+   看 material_tag_for_rect_2d(...)：
+     不用 midpoint 近似，按分块矩形是否完全落入材料区域来打 tag。
+   看 build_mesh(...)：
+     triangle 保持历史 transfinite 三角网格；
+     quadrilateral 对每个结构化面 setRecombine。
+
+5. src/solvers/solve_port_maxwell.py
+   这是 TM DtN 主线：
+     run_port_case(...)
+     _select_dtn_port_modes(...)
+     _add_fourier_port_operators_auxiliary(...)
+     compute_dtn_auxiliary_power_metrics(...)
+   正式 R/T 优先看 dtn_auxiliary_power_metrics。
+
+6. src/postprocessing/near_field_2d.py
+   看 near_field_regions_2d(...) 和 near_field_reference_areas_2d(...)。
+   这里定义：
+     grating
+     air_near
+     sub_near
+
+7. src/postprocessing/power_metrics.py
+   看 compute_near_field_integrals(...)。
+   这里实际装配：
+     I_grating  = ∫_grating |E|^2 dΩ
+     I_air_near = ∫_air_near |E|^2 dΩ
+     I_sub_near = ∫_sub_near |E|^2 dΩ
+
+8. src/studies/run_2d_euv_validation.py
+   这是批量研究入口：
+     method_compare
+     mesh_convergence
+     air_scan
+     substrate_scan
+     combined_scan
+
+9. src/test/test_16_2d_euv_inputs_and_mesh.py
+   看新增单元测试：
+     dataclass 到 CLI 的映射；
+     近场模板网格坐标；
+     材料 tag 分类；
+     近场积分区域面积。
+```
+
+当前验证结果见：
+
+```text
+notes/quick_start/2d_euv_grating_dtn_usage_guide.md
+notes/test/2d_euv_validation_report.md
+```
+
 ## 2026-06-26 更新：Stage 4 hexa 网格自动贴边代码阅读路径
 
 如果本轮主要想看“任意 target size 如何生成可计算的 hexa 网格”，建议按下面顺序读：

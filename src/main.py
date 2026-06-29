@@ -13,65 +13,96 @@ from pathlib import Path
 #
 #   fenics_vector_maxwell_floquet_demo_v2_parallel/src/main.py
 #
-# The variables below are converted to runner options.  Keep
-# SIMULATION_DIMENSION="2d" for the original grating workflow.  Switch it to
-# "3d" for the staged 3D Maxwell air-box workflow.
+# The variables below are converted to runner options.  Use
+# SIMULATION_DIMENSION="2d" for the 2D grating workflow.  Switch it to "3d" for
+# the staged 3D Maxwell workflow.
 
 USE_PYCHARM_SETTINGS_WHEN_NO_ARGS = True
-SIMULATION_DIMENSION = "3d"  # "2d" or "3d"
+SIMULATION_DIMENSION = "2d"  # "2d" or "3d"
 
-# Main physics switch:
-#   "scattered"  = background-field scattering formulation
-#   "port"       = total-field port formulation
-#   "all"        = run scattered and port formulations
-CALCULATION_METHOD = "all"
+# =============================================================================
+# 2D grating settings
+# =============================================================================
+#
+# Choose the active 2D input group here.  Only the selected dataclass is
+# translated into CLI flags, so changing inactive examples will not change the
+# current run.
+ACTIVE_2D_INPUT_GROUP = "euv_grating"  # euv_grating
 
-# Polarization model:
-#   "TM" = current in-plane vector E=(Ex,Ey), Nedelec H(curl) element
-#   "TE" = scalar Ez model, Lagrange element
-POLARIZATION_TYPE = "TM"
 
-# Floquet constraint backend:
-#   "mpc_official" = dolfinx_mpc low-level constraints, MPI-ready
-#   "manual"       = serial matrix-elimination checker
-#   "both"         = serial comparison of mpc_official and manual
-CONSTRAINT_BACKEND = "manual"
+@dataclass(frozen=True)
+class Inputs2D:
+    # 计算方法："scattered" 散射场 / "port" 总场端口 / "all" 同时跑。
+    calculation_method: str = "port"
+    # 偏振："TM" 为 Ex/Ey 矢量模型；"TE" 为 Ez 标量模型。本研究固定 TM。
+    polarization_type: str = "TM"
+    # 约束后端：DtN 当前用 "manual"；Robin/MPI 可用 "mpc_official"。
+    constraint_backend: str = "manual"
+    # scattered 方法背景："air" 或 "layered"。DtN 主线中仅写入配置记录。
+    scattering_background: str = "layered"
+    # 端口边界："dtn" 推荐；"robin" 用于历史对比；"all" 串行对比。
+    port_boundary_model: str = "dtn"
+    # DtN 装配："auxiliary" 推荐；"explicit" 作为交叉检查。
+    port_dtn_assembly: str = "auxiliary"
+    # True 自动包含传播衍射级；False 只保留 0 级。
+    port_use_diffraction_orders: bool = True
+    # 几何、网格、波长单位均为 nm。
+    period_x: float = 600.0
+    air_height: float = 850.0
+    substrate_thickness: float = 350.0
+    grating_width: float = 300.0
+    grating_height: float = 180.0
+    lambda0: float = 633.0
+    incident_angle_deg: float = 15.0
+    n_air: float = 1.0
+    n_substrate: float = 1.45
+    n_grating: float = 1.45
+    nedelec_degree: int = 2
+    visualization_degree: int = 3
+    mesh_target_size: float = 25.0
+    # 网格单元："triangle" 三角形 / "quadrilateral" 四边形。
+    mesh_cell_shape: str = "triangle"
+    # 厚度扫描时锁定光栅附近网格模板，避免近场积分随远场厚度换网格。
+    mesh_lock_near_field_template: bool = False
+    near_field_margin_x: float = 25.0
+    near_field_air_top: float = 100.0
+    near_field_sub_depth: float = 50.0
+    # R/T 和衍射级后处理。
+    compute_power_metrics: bool = True
+    diffraction_order_count: int | None = None
+    power_probe_num_points: int | None = None
+    # 端口法默认不使用 PML。
+    port_use_pml: bool | None = None
+    unique_output: bool = True
 
-# Scattering background for CALCULATION_METHOD="scattered".
-SCATTERING_BACKGROUND = "layered"
 
-# Port boundary model for CALCULATION_METHOD="port" or "all".
-#   "robin" = current MPI-ready fundamental-mode port
-#   "dtn"   = serial Fourier DtN port
-#   "all"   = run both where supported
-PORT_BOUNDARY_MODEL = "dtn"
+@dataclass(frozen=True)
+class EUVGratingInputs2D(Inputs2D):
+    period_x: float = 100.0
+    air_height: float = 100.0
+    substrate_thickness: float = 50.0
+    grating_width: float = 50.0
+    grating_height: float = 50.0
+    lambda0: float = 13.5
+    incident_angle_deg: float = 0.0
+    n_substrate: float = 1.1
+    n_grating: float = 1.2
+    mesh_target_size: float = 2.0
+    mesh_cell_shape: str = "triangle"
+    mesh_lock_near_field_template: bool = True
 
-# Fourier DtN port implementation:
-#   "auxiliary" = sparse auxiliary modal-amplitude unknowns, recommended
-#   "explicit"  = old Q^*YQ outer-product reference/debug implementation
-PORT_DTN_ASSEMBLY = "explicit"
 
-# False = only order 0; True = automatically include clearly propagating
-# diffraction orders on the top and bottom ports.
-PORT_USE_DIFFRACTION_ORDERS = True
+EUV_GRATING_2D = EUVGratingInputs2D()
 
-# Common numerical choices.  None means "use src/common/config.py".
-NEDELEC_DEGREE = 2
-VISUALIZATION_DEGREE = 3
-MESH_TARGET_SIZE = 25.0
-INCIDENT_ANGLE_DEG = 30.0
 
-# R/T postprocessing.  Keep this enabled if you want power_metrics.json,
-# diffraction_orders.csv, and R_total/T_total in run_summary.json.
-COMPUTE_POWER_METRICS = True
-DIFFRACTION_ORDER_COUNT = None
-POWER_PROBE_NUM_POINTS = None
-
-# Output management.
-UNIQUE_OUTPUT = True
-
-# Port-only option.
-PORT_USE_PML = None
+def _selected_2d_inputs() -> Inputs2D:
+    groups = {
+        "euv_grating": EUV_GRATING_2D,
+    }
+    try:
+        return groups[ACTIVE_2D_INPUT_GROUP]
+    except KeyError as exc:
+        raise SystemExit("ACTIVE_2D_INPUT_GROUP must be 'euv_grating'.") from exc
 
 # =============================================================================
 # 3D staged settings
@@ -231,30 +262,45 @@ def _setting_value(settings: object, name: str) -> object | None:
 
 
 def _pycharm_args_2d() -> list[str]:
+    settings = _selected_2d_inputs()
     args: list[str] = [
         "--formulation",
-        CALCULATION_METHOD,
+        str(settings.calculation_method),
         "--constraint-backend",
-        CONSTRAINT_BACKEND,
+        str(settings.constraint_backend),
         "--polarization-type",
-        POLARIZATION_TYPE,
+        str(settings.polarization_type),
         "--scattering-background",
-        SCATTERING_BACKGROUND,
+        str(settings.scattering_background),
         "--port-boundary-model",
-        PORT_BOUNDARY_MODEL,
+        str(settings.port_boundary_model),
         "--port-dtn-assembly",
-        PORT_DTN_ASSEMBLY,
+        str(settings.port_dtn_assembly),
     ]
-    _add_value(args, "--nedelec-degree", NEDELEC_DEGREE)
-    _add_value(args, "--visualization-degree", VISUALIZATION_DEGREE)
-    _add_value(args, "--mesh-target-size", MESH_TARGET_SIZE)
-    _add_value(args, "--incident-angle-deg", INCIDENT_ANGLE_DEG)
-    _add_value(args, "--diffraction-order-count", DIFFRACTION_ORDER_COUNT)
-    _add_value(args, "--power-probe-num-points", POWER_PROBE_NUM_POINTS)
-    _add_bool(args, "--compute-power-metrics", COMPUTE_POWER_METRICS)
-    _add_bool(args, "--port-use-diffraction-orders", PORT_USE_DIFFRACTION_ORDERS)
-    _add_bool(args, "--unique-output", UNIQUE_OUTPUT)
-    _add_bool(args, "--port-use-pml", PORT_USE_PML)
+    _add_value(args, "--period-x", settings.period_x)
+    _add_value(args, "--air-height", settings.air_height)
+    _add_value(args, "--substrate-thickness", settings.substrate_thickness)
+    _add_value(args, "--grating-width", settings.grating_width)
+    _add_value(args, "--grating-height", settings.grating_height)
+    _add_value(args, "--lambda0", settings.lambda0)
+    _add_value(args, "--n-air", settings.n_air)
+    _add_value(args, "--n-substrate", settings.n_substrate)
+    _add_value(args, "--n-grating", settings.n_grating)
+    _add_value(args, "--nedelec-degree", settings.nedelec_degree)
+    _add_value(args, "--visualization-degree", settings.visualization_degree)
+    _add_value(args, "--mesh-target-size", settings.mesh_target_size)
+    _add_value(args, "--mesh-cell-shape", settings.mesh_cell_shape)
+    _add_value(args, "--incident-angle-deg", settings.incident_angle_deg)
+    _add_value(args, "--diffraction-order-count", settings.diffraction_order_count)
+    _add_value(args, "--power-probe-num-points", settings.power_probe_num_points)
+    _add_value(args, "--near-field-margin-x", settings.near_field_margin_x)
+    _add_value(args, "--near-field-air-top", settings.near_field_air_top)
+    _add_value(args, "--near-field-sub-depth", settings.near_field_sub_depth)
+    _add_bool(args, "--compute-power-metrics", settings.compute_power_metrics)
+    _add_bool(args, "--port-use-diffraction-orders", settings.port_use_diffraction_orders)
+    _add_bool(args, "--lock-near-field-template", settings.mesh_lock_near_field_template)
+    _add_bool(args, "--unique-output", settings.unique_output)
+    _add_bool(args, "--port-use-pml", settings.port_use_pml)
     return args
 
 

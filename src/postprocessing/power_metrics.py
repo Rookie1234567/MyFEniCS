@@ -14,6 +14,7 @@ from petsc4py import PETSc
 
 from ..common.config import SimulationConfig
 from ..common.materials import relative_permittivity
+from .near_field_2d import near_field_reference_areas_2d, near_field_regions_2d
 
 
 def _json_default(value):
@@ -247,6 +248,54 @@ def _volume_absorption_metrics(
     }
 
 
+def _box_indicator(x, bounds: dict[str, float]):
+    in_x = ufl.And(ufl.ge(x[0], bounds["x_min"]), ufl.le(x[0], bounds["x_max"]))
+    in_y = ufl.And(ufl.ge(x[1], bounds["y_min"]), ufl.le(x[1], bounds["y_max"]))
+    return ufl.conditional(ufl.And(in_x, in_y), PETSc.ScalarType(1.0), PETSc.ScalarType(0.0))
+
+
+def compute_near_field_integrals(mesh_data, cfg: SimulationConfig, E_total) -> dict[str, object]:
+    """Integrate |E|^2 over grating, nearby air, and nearby substrate regions."""
+    msh = mesh_data.mesh
+    x = ufl.SpatialCoordinate(msh)
+    dx = ufl.Measure("dx", msh, subdomain_data=mesh_data.cell_tags)
+    field_abs2 = ufl.real(ufl.inner(E_total, E_total))
+    regions = near_field_regions_2d(cfg)
+    areas = near_field_reference_areas_2d(cfg)
+
+    integrals: dict[str, float] = {}
+    grating_local = fem.assemble_scalar(fem.form(field_abs2 * dx(cfg.tags.grating)))
+    integrals["grating"] = float(np.real(msh.comm.allreduce(grating_local, op=MPI.SUM)))
+
+    air_indicator = _box_indicator(x, regions["air_near"])
+    air_local = fem.assemble_scalar(fem.form(air_indicator * field_abs2 * dx(cfg.tags.air)))
+    integrals["air_near"] = float(np.real(msh.comm.allreduce(air_local, op=MPI.SUM)))
+
+    sub_indicator = _box_indicator(x, regions["sub_near"])
+    sub_local = fem.assemble_scalar(fem.form(sub_indicator * field_abs2 * dx(cfg.tags.substrate)))
+    integrals["sub_near"] = float(np.real(msh.comm.allreduce(sub_local, op=MPI.SUM)))
+
+    means = {
+        name: (integrals[name] / areas[name] if areas[name] > 0.0 else None)
+        for name in integrals
+    }
+    return {
+        "definition": "2D near-field metrics integrate |E|^2 over fixed grating-local boxes in nm^2.",
+        "regions": regions,
+        "areas_nm2": areas,
+        "integral_abs_E2_dOmega": {
+            "I_grating": integrals["grating"],
+            "I_air_near": integrals["air_near"],
+            "I_sub_near": integrals["sub_near"],
+        },
+        "mean_abs_E2": {
+            "mean_grating": means["grating"],
+            "mean_air_near": means["air_near"],
+            "mean_sub_near": means["sub_near"],
+        },
+    }
+
+
 def _attach_absorption_metrics(
     metrics: dict[str, object],
     mesh_data,
@@ -265,6 +314,10 @@ def _attach_absorption_metrics(
         metrics["absorption_postprocess_error"] = str(exc)
         return
     metrics.update(absorption)
+    try:
+        metrics["near_field_integrals"] = compute_near_field_integrals(mesh_data, cfg, E_total)
+    except Exception as exc:  # pragma: no cover - diagnostics should not hide R/T output
+        metrics["near_field_integrals_error"] = str(exc)
     if metrics.get("A_volume") is not None:
         metrics["absorption_difference_volume_minus_balance"] = float(metrics["A_volume"]) - balance
 

@@ -1,5 +1,61 @@
 # v2 文档索引
 
+## 2026-06-29 更新：新增 2D EUV 光栅 DtN 验证入口
+
+本轮回到 2D，对 EUV 波段矩形光栅建立了新的验证入口：
+
+```text
+period_x = 100 nm
+substrate_thickness = 50 nm
+air_height = 100 nm
+grating_width = 50 nm
+grating_height = 50 nm
+lambda0 = 13.5 nm
+n_substrate = 1.1
+n_grating = 1.2
+polarization = TM
+```
+
+主要新增：
+
+```text
+src/main.py
+  Inputs2D / EUVGratingInputs2D
+
+src/geometry/mesh_builder.py
+  mesh_cell_shape = triangle / quadrilateral
+  mesh_lock_near_field_template
+
+src/postprocessing/near_field_2d.py
+src/postprocessing/power_metrics.py
+  I_grating / I_air_near / I_sub_near
+
+src/studies/run_2d_euv_validation.py
+  method_compare / mesh_convergence / air_scan / substrate_scan / combined_scan
+```
+
+推荐阅读：
+
+```text
+notes/quick_start/2d_euv_grating_dtn_usage_guide.md
+notes/test/2d_euv_validation_report.md
+notes/reference/code_walkthrough.md
+```
+
+已验证：
+
+```text
+Docker 单元测试：Ran 48 tests, OK (skipped=8)
+
+triangle h=5 nm:
+  DtN auxiliary R/T/R+T = 6.317552e-03 / 9.936824e-01 / 1.000000e+00
+
+quadrilateral h=5 nm:
+  DtN auxiliary R/T/R+T = 2.669180e-02 / 9.733082e-01 / 1.000000e+00
+```
+
+注意：`power_metrics.json` 的内部 probe-line R/T 在此 EUV 多衍射级案例中仍偏差明显，只保留为诊断。正式 R/T 看 `dtn_auxiliary_power_metrics.json`。
+
 ## 2026-06-26 更新：修复 Stage 4 h=2 fitted hexa MPI 建网格错误
 
 `mesh_target_size=2 nm` 时，当前 100 nm 周期、50 nm 方块案例会自动使用 `boundary_fitted` 非均匀 hexa 网格。上一版在 MPI 下 custom hexa mesh 把完整全局 cells 传给每个 rank，可能触发：

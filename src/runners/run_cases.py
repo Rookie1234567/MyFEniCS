@@ -105,6 +105,27 @@ def _planned_case_count(formulations: list[str], constraint_backend: str, port_b
 
 def _base_updates(args) -> dict[str, object]:
     updates: dict[str, object] = {}
+    for name in (
+        "period_x",
+        "air_height",
+        "substrate_thickness",
+        "grating_width",
+        "grating_height",
+        "lambda0",
+        "n_air",
+        "n_substrate",
+        "n_grating",
+        "pml_top_thickness",
+        "pml_bottom_thickness",
+        "pml_alpha",
+        "mesh_cell_shape",
+        "near_field_margin_x",
+        "near_field_air_top",
+        "near_field_sub_depth",
+    ):
+        value = getattr(args, name, None)
+        if value is not None:
+            updates[name] = value
     if args.polarization_type is not None:
         updates["polarization_type"] = args.polarization_type
     if args.nedelec_degree is not None:
@@ -121,6 +142,8 @@ def _base_updates(args) -> dict[str, object]:
         updates["power_probe_num_points"] = args.power_probe_num_points
     if args.compute_power_metrics is not None:
         updates["compute_power_metrics"] = args.compute_power_metrics
+    if args.lock_near_field_template is not None:
+        updates["mesh_lock_near_field_template"] = args.lock_near_field_template
     return updates
 
 
@@ -175,6 +198,29 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--nedelec-degree", type=int, default=None, help="Nedelec edge element degree.")
     parser.add_argument("--visualization-degree", type=int, default=None, help="DG visualization degree.")
     parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
+    parser.add_argument(
+        "--mesh-cell-shape",
+        choices=("triangle", "quadrilateral"),
+        default=None,
+        help="2D structured cell shape: triangle or quadrilateral.",
+    )
+    parser.add_argument("--period-x", type=float, default=None, help="2D period in x, in nm.")
+    parser.add_argument("--air-height", type=float, default=None, help="Physical air height above the substrate, in nm.")
+    parser.add_argument("--substrate-thickness", type=float, default=None, help="Substrate thickness, in nm.")
+    parser.add_argument("--grating-width", type=float, default=None, help="Rectangular grating width, in nm.")
+    parser.add_argument("--grating-height", type=float, default=None, help="Rectangular grating height, in nm.")
+    parser.add_argument("--lambda0", type=float, default=None, help="Vacuum wavelength, in nm.")
+    parser.add_argument("--n-air", type=float, default=None, help="Real refractive index of air.")
+    parser.add_argument("--n-substrate", type=float, default=None, help="Real refractive index of the substrate.")
+    parser.add_argument("--n-grating", type=float, default=None, help="Real refractive index of the grating.")
+    parser.add_argument("--pml-top-thickness", type=float, default=None, help="Top PML thickness for scattered runs.")
+    parser.add_argument(
+        "--pml-bottom-thickness",
+        type=float,
+        default=None,
+        help="Bottom PML thickness for scattered runs.",
+    )
+    parser.add_argument("--pml-alpha", type=float, default=None, help="PML strength parameter for scattered runs.")
     parser.add_argument("--incident-angle-deg", type=float, default=None, help="Incident angle in degrees.")
     parser.add_argument(
         "--diffraction-order-count",
@@ -193,6 +239,30 @@ def main(argv: list[str] | None = None):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Enable or disable R/T postprocessing.",
+    )
+    parser.add_argument(
+        "--lock-near-field-template",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Insert fixed mesh planes around the grating for thickness scans.",
+    )
+    parser.add_argument(
+        "--near-field-margin-x",
+        type=float,
+        default=None,
+        help="Horizontal margin around the grating used by near-field integrals, in nm.",
+    )
+    parser.add_argument(
+        "--near-field-air-top",
+        type=float,
+        default=None,
+        help="Top y coordinate for the air-near integration box, clipped by air_height.",
+    )
+    parser.add_argument(
+        "--near-field-sub-depth",
+        type=float,
+        default=None,
+        help="Depth below y=0 for the substrate-near integration box, clipped by substrate thickness.",
     )
     parser.add_argument(
         "--port-order-count",
@@ -261,6 +331,8 @@ def main(argv: list[str] | None = None):
     nedelec_for_name = args.nedelec_degree if args.nedelec_degree is not None else defaults.nedelec_degree
     mesh_for_name = args.mesh_target_size if args.mesh_target_size is not None else defaults.mesh_target_size
     angle_for_name = args.incident_angle_deg if args.incident_angle_deg is not None else defaults.incident_angle_deg
+    lambda_for_name = args.lambda0 if args.lambda0 is not None else defaults.lambda0
+    cell_shape_for_name = args.mesh_cell_shape if args.mesh_cell_shape is not None else defaults.mesh_cell_shape
 
     group_parts = ["2D_grating"]
     group_parts.append(_polarization_tag(polarization_type))
@@ -274,6 +346,8 @@ def main(argv: list[str] | None = None):
             group_parts.append("aux" if port_dtn_assembly == "auxiliary" else "exp")
     group_parts.append(f"p{nedelec_for_name}")
     group_parts.append(_number_tag("h", mesh_for_name))
+    group_parts.append("quad" if cell_shape_for_name == "quadrilateral" else "tri")
+    group_parts.append(_number_tag("lam", lambda_for_name))
     group_parts.append(_number_tag("t", angle_for_name))
     if constraint_backend != "both":
         group_parts.append(_backend_tag(constraint_backend))
@@ -347,6 +421,7 @@ def main(argv: list[str] | None = None):
                 else:
                     summaries.append(run_port_case(cfg, out_dir, constraint_backend=backend))
 
+    comparison = None
     if MPI.COMM_WORLD.rank == 0:
         summary_path = run_root / "all_run_summary.json" if unique_output else results_root / "all_run_summary.json"
         summary_path.write_text(
@@ -378,6 +453,7 @@ def main(argv: list[str] | None = None):
                     "dtn_auxiliary_R_total": item.get("dtn_auxiliary_power_metrics", {}).get("R_total"),
                     "dtn_auxiliary_T_total": item.get("dtn_auxiliary_power_metrics", {}).get("T_total"),
                     "dtn_auxiliary_R_plus_T": item.get("dtn_auxiliary_power_metrics", {}).get("R_plus_T"),
+                    "near_field_integrals": item.get("near_field_integrals"),
                 }
                 for item in summaries
             ],
@@ -450,6 +526,7 @@ def main(argv: list[str] | None = None):
             json.dumps(comparison, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
+    return comparison
 
 
 if __name__ == "__main__":

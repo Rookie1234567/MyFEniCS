@@ -765,6 +765,12 @@ def run_port_case(
                 "T_total_port_minus_probe": dtn_port_power_metrics["T_total"] - power_metrics["T_total"],
                 "R_plus_T_port_minus_probe": dtn_port_power_metrics["R_plus_T"] - power_metrics["R_plus_T"],
             }
+    near_field_integrals = (
+        dtn_auxiliary_power_metrics.get("near_field_integrals")
+        or dtn_port_power_metrics.get("near_field_integrals")
+        or power_metrics.get("near_field_integrals")
+        or {}
+    )
     floquet_mismatch_total = dof_trace_mismatch(E_total.x.array, constraints)
     elapsed = time.perf_counter() - start
 
@@ -793,6 +799,7 @@ def run_port_case(
         "power_metrics": power_metrics,
         "dtn_port_power_metrics": dtn_port_power_metrics,
         "dtn_auxiliary_power_metrics": dtn_auxiliary_power_metrics,
+        "near_field_integrals": near_field_integrals,
         "dtn_port_vs_probe_power_difference": dtn_port_vs_probe_power_difference,
         "dtn_auxiliary_vs_trace_power_difference": dtn_auxiliary_vs_trace_power_difference,
         "floquet_phase": cfg.floquet_phase,
