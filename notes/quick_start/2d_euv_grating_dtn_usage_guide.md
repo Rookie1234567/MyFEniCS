@@ -1,5 +1,37 @@
 # 2D EUV 光栅 DtN 使用指南
 
+## 2026-06-29 更新：一阶单元 p=1 完整 study 与结果目录说明
+
+本轮把之前所有 2D EUV study 又用一阶单元跑了一遍，包含 0° 法向入射和 80° 掠入射：
+
+```bash
+python3 -m src.studies.run_2d_euv_validation \
+  --study all \
+  --incident-angle-deg 0 \
+  --nedelec-degree 1 \
+  --visualization-degree 2 \
+  --scan-mesh-size 1.0 \
+  --scan-cell-shape triangle
+
+python3 -m src.studies.run_2d_euv_validation \
+  --study all \
+  --incident-angle-deg 80 \
+  --nedelec-degree 1 \
+  --visualization-degree 2 \
+  --scan-mesh-size 1.0 \
+  --scan-cell-shape triangle
+```
+
+结果目录名会带上角度和单元阶次，例如：
+
+```text
+results/studies/2D_EUV_mesh_convergence_theta80p0_p1_20260629_064325
+```
+
+单个 case 的目录名也会编码主要参数，例如 `p1` 表示一阶单元，`h1p0` 表示 `mesh_target_size=1.0 nm`，`tri/quad` 分别表示三角形/四边形结构化网格，`t80p0` 表示 80° 入射。完整命名规则和 p=1 全部结果表见 `notes/test/2d_euv_validation_report.md` 顶部。
+
+PNG 预览图现在默认关闭，后续结果目录只保留 ParaView 文件和 JSON/CSV 数值文件。需要临时生成 PNG 时，在 `src.runners.run_cases` 命令中显式加 `--generate-png-plots`；批量 study 默认不生成 PNG。
+
 ## 2026-06-29 更新：80° 入射和单元阶次 study 参数
 
 `src/studies/run_2d_euv_validation.py` 现在可以直接指定入射角和单元阶次，不需要改源码：

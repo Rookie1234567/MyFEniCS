@@ -132,6 +132,8 @@ def _base_updates(args) -> dict[str, object]:
         updates["nedelec_degree"] = args.nedelec_degree
     if args.visualization_degree is not None:
         updates["visualization_degree"] = args.visualization_degree
+    if args.generate_png_plots is not None:
+        updates["generate_png_plots"] = args.generate_png_plots
     if args.mesh_target_size is not None:
         updates["mesh_target_size"] = args.mesh_target_size
     if args.incident_angle_deg is not None:
@@ -197,6 +199,12 @@ def main(argv: list[str] | None = None):
     )
     parser.add_argument("--nedelec-degree", type=int, default=None, help="Nedelec edge element degree.")
     parser.add_argument("--visualization-degree", type=int, default=None, help="DG visualization degree.")
+    parser.add_argument(
+        "--generate-png-plots",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Write quick PNG preview plots. Default is false; ParaView VTU/BP output is always kept.",
+    )
     parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
     parser.add_argument(
         "--mesh-cell-shape",

@@ -1,5 +1,28 @@
 # v2 文档索引
 
+## 2026-06-29 更新：2D EUV 一阶单元完整扫描与 PNG 输出策略
+
+本轮已把 2D EUV 光栅验证中之前跑过的 study 全部用一阶单元 `p=1` 重新跑完，包含：
+
+```text
+0° 法向入射：method_compare / mesh_convergence / air_scan / substrate_scan / combined_scan
+80° 掠入射：method_compare / mesh_convergence / air_scan / substrate_scan / combined_scan
+```
+
+结果表已经写入：
+
+```text
+notes/test/2d_euv_validation_report.md
+```
+
+使用说明和复现命令见：
+
+```text
+notes/quick_start/2d_euv_grating_dtn_usage_guide.md
+```
+
+此外，2D 后处理现在默认不再生成 PNG 预览图，后续结果目录保留 ParaView 文件与 JSON/CSV 数值文件。若确实需要 PNG，可在单 case 命令中显式传入 `--generate-png-plots`。
+
 ## 2026-06-29 更新：2D EUV 80° 入射 p=2 扫描已完成
 
 在 0° 法向入射 p=2 验证基础上，新增并跑完 `incident_angle_deg=80` 的同一套 study：

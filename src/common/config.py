@@ -80,6 +80,9 @@ class SimulationConfig:
 
     nedelec_degree: int = 2
     visualization_degree: int = 3
+    # False by default: keep result folders focused on ParaView/JSON/CSV data.
+    # Set True only when quick PNG previews are explicitly needed.
+    generate_png_plots: bool = False
     mesh_target_size: float = 25.0
     # 2D structured mesh cell shape.  "triangle" keeps the historical Gmsh
     # transfinite triangulation; "quadrilateral" recombines each structured

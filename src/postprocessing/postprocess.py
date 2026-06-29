@@ -18,6 +18,8 @@ def _plotter(window_size=(1200, 900)):
 
 
 def save_mesh_plots(mesh_data, cfg: SimulationConfig, out_dir: Path):
+    if not cfg.generate_png_plots:
+        return
     out_dir.mkdir(parents=True, exist_ok=True)
     msh = mesh_data.mesh
     tdim = msh.topology.dim
@@ -428,24 +430,25 @@ def save_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat, E_tot
         out_dir,
     )
 
-    total_values_physical = _scale_e_values(cfg, total_values)
-    scat_norm_physical = _scale_e_norm(cfg, scat_norm)
-    total_norm_physical = _scale_e_norm(cfg, total_norm)
+    if cfg.generate_png_plots:
+        total_values_physical = _scale_e_values(cfg, total_values)
+        scat_norm_physical = _scale_e_norm(cfg, scat_norm)
+        total_norm_physical = _scale_e_norm(cfg, total_norm)
 
-    _save_scalar(grid, "Re Ex [V/m]", total_values_physical[:, 0].real, out_dir / "Ex_real.png")
-    _save_scalar(grid, "Im Ex [V/m]", total_values_physical[:, 0].imag, out_dir / "Ex_imag.png")
-    _save_scalar(grid, "Re Ey [V/m]", total_values_physical[:, 1].real, out_dir / "Ey_real.png")
-    _save_scalar(grid, "Im Ey [V/m]", total_values_physical[:, 1].imag, out_dir / "Ey_imag.png")
-    _save_scalar(grid, "|E_total| [V/m]", total_norm_physical, out_dir / "E_total_norm.png", cmap="viridis")
-    _save_scalar(grid, "|E_scat| [V/m]", scat_norm_physical, out_dir / "E_scat_norm.png", cmap="magma")
-    _save_scalar(
-        grid,
-        "arg Ex_total",
-        np.angle(total_values[:, 0]),
-        out_dir / "E_total_phase_or_component_phase.png",
-        cmap="twilight",
-    )
-    _save_quiver(grid, coords, total_values_physical, total_norm_physical, out_dir / "E_vector_quiver_real.png")
+        _save_scalar(grid, "Re Ex [V/m]", total_values_physical[:, 0].real, out_dir / "Ex_real.png")
+        _save_scalar(grid, "Im Ex [V/m]", total_values_physical[:, 0].imag, out_dir / "Ex_imag.png")
+        _save_scalar(grid, "Re Ey [V/m]", total_values_physical[:, 1].real, out_dir / "Ey_real.png")
+        _save_scalar(grid, "Im Ey [V/m]", total_values_physical[:, 1].imag, out_dir / "Ey_imag.png")
+        _save_scalar(grid, "|E_total| [V/m]", total_norm_physical, out_dir / "E_total_norm.png", cmap="viridis")
+        _save_scalar(grid, "|E_scat| [V/m]", scat_norm_physical, out_dir / "E_scat_norm.png", cmap="magma")
+        _save_scalar(
+            grid,
+            "arg Ex_total",
+            np.angle(total_values[:, 0]),
+            out_dir / "E_total_phase_or_component_phase.png",
+            cmap="twilight",
+        )
+        _save_quiver(grid, coords, total_values_physical, total_norm_physical, out_dir / "E_vector_quiver_real.png")
 
     return {
         "max_abs_E_inc": max_abs_E_inc,
@@ -530,19 +533,26 @@ def save_scalar_fields_and_plots(mesh_data, cfg: SimulationConfig, E_inc, E_scat
     _add_numeric_metadata(grid, cfg)
     grid.save(out_dir / "fields_for_paraview.vtu")
 
-    total_values_physical = _scale_e_values(cfg, total_values)
-    scat_values_physical = _scale_e_values(cfg, scat_values)
-    _save_scalar(grid, "Re Ez [V/m]", total_values_physical.real, out_dir / "Ez_real.png")
-    _save_scalar(grid, "Im Ez [V/m]", total_values_physical.imag, out_dir / "Ez_imag.png")
-    _save_scalar(grid, "|E_total| [V/m]", np.abs(total_values_physical), out_dir / "E_total_norm.png", cmap="viridis")
-    _save_scalar(grid, "|E_scat| [V/m]", np.abs(scat_values_physical), out_dir / "E_scat_norm.png", cmap="magma")
-    _save_scalar(
-        grid,
-        "arg Ez_total",
-        np.angle(total_values),
-        out_dir / "E_total_phase_or_component_phase.png",
-        cmap="twilight",
-    )
+    if cfg.generate_png_plots:
+        total_values_physical = _scale_e_values(cfg, total_values)
+        scat_values_physical = _scale_e_values(cfg, scat_values)
+        _save_scalar(grid, "Re Ez [V/m]", total_values_physical.real, out_dir / "Ez_real.png")
+        _save_scalar(grid, "Im Ez [V/m]", total_values_physical.imag, out_dir / "Ez_imag.png")
+        _save_scalar(
+            grid,
+            "|E_total| [V/m]",
+            np.abs(total_values_physical),
+            out_dir / "E_total_norm.png",
+            cmap="viridis",
+        )
+        _save_scalar(grid, "|E_scat| [V/m]", np.abs(scat_values_physical), out_dir / "E_scat_norm.png", cmap="magma")
+        _save_scalar(
+            grid,
+            "arg Ez_total",
+            np.angle(total_values),
+            out_dir / "E_total_phase_or_component_phase.png",
+            cmap="twilight",
+        )
 
     return {
         "max_abs_E_inc": max_abs_E_inc,
