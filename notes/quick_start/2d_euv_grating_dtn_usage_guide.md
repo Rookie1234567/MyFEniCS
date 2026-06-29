@@ -1,5 +1,29 @@
 # 2D EUV 光栅 DtN 使用指南
 
+## 2026-06-29 更新：p=1 细网格续跑命令
+
+一阶单元 `p=1` 的三角形网格已经补算到 `h=0.35 nm`，但还没有达到“连续两次核心指标相对变化 < 0.1%”的严格收敛标准。下一步建议从 `h=0.3 nm` 继续：
+
+```bash
+python3 -m src.studies.run_2d_euv_validation \
+  --study mesh_convergence \
+  --incident-angle-deg 0 \
+  --nedelec-degree 1 \
+  --visualization-degree 2 \
+  --mesh-sizes 0.3 \
+  --cell-shapes triangle
+
+python3 -m src.studies.run_2d_euv_validation \
+  --study mesh_convergence \
+  --incident-angle-deg 80 \
+  --nedelec-degree 1 \
+  --visualization-degree 2 \
+  --mesh-sizes 0.3 \
+  --cell-shapes triangle
+```
+
+如果 `h=0.3 nm` 仍未满足 0.1%，再继续尝试 `h=0.25 nm`。注意这已经是几十万到更多自由度的直接法计算，运行时间和内存都会明显增加。
+
 ## 2026-06-29 更新：一阶单元 p=1 完整 study 与结果目录说明
 
 本轮把之前所有 2D EUV study 又用一阶单元跑了一遍，包含 0° 法向入射和 80° 掠入射：
