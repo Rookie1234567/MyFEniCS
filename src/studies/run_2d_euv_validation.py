@@ -33,18 +33,12 @@ BASE_EUV_ARGS = [
     "50.0",
     "--lambda0",
     "13.5",
-    "--incident-angle-deg",
-    "0.0",
     "--n-air",
     "1.0",
     "--n-substrate",
     "1.1",
     "--n-grating",
     "1.2",
-    "--nedelec-degree",
-    "2",
-    "--visualization-degree",
-    "3",
     "--compute-power-metrics",
     "--port-use-diffraction-orders",
     "--lock-near-field-template",
@@ -68,12 +62,15 @@ def _append_flag(args: list[str], flag: str, value: object | None) -> None:
         args.extend([flag, str(value)])
 
 
-def _case_args(*, mesh_size: float, cell_shape: str, extra: list[str] | None = None) -> list[str]:
-    args = list(BASE_EUV_ARGS)
-    _append_flag(args, "--mesh-target-size", mesh_size)
-    _append_flag(args, "--mesh-cell-shape", cell_shape)
-    args.extend(extra or [])
-    return args
+def _case_args(settings, *, mesh_size: float, cell_shape: str, extra: list[str] | None = None) -> list[str]:
+    case_args = list(BASE_EUV_ARGS)
+    _append_flag(case_args, "--incident-angle-deg", settings.incident_angle_deg)
+    _append_flag(case_args, "--nedelec-degree", settings.nedelec_degree)
+    _append_flag(case_args, "--visualization-degree", settings.visualization_degree)
+    _append_flag(case_args, "--mesh-target-size", mesh_size)
+    _append_flag(case_args, "--mesh-cell-shape", cell_shape)
+    case_args.extend(extra or [])
+    return case_args
 
 
 def _case_specs(study: str, args) -> list[dict[str, object]]:
@@ -87,6 +84,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                     {
                         "label": f"dtn_aux_{shape}",
                         "args": _case_args(
+                            args,
                             mesh_size=args.method_mesh_size,
                             cell_shape=shape,
                             extra=[
@@ -104,6 +102,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                     {
                         "label": f"dtn_explicit_{shape}",
                         "args": _case_args(
+                            args,
                             mesh_size=args.method_mesh_size,
                             cell_shape=shape,
                             extra=[
@@ -121,6 +120,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                     {
                         "label": f"robin_{shape}",
                         "args": _case_args(
+                            args,
                             mesh_size=args.method_mesh_size,
                             cell_shape=shape,
                             extra=[
@@ -140,6 +140,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                     {
                         "label": f"scattered_layered_pml_{shape}",
                         "args": _case_args(
+                            args,
                             mesh_size=args.method_mesh_size,
                             cell_shape=shape,
                             extra=[
@@ -166,6 +167,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                     {
                         "label": f"mesh_{shape}_h{mesh_size:g}",
                         "args": _case_args(
+                            args,
                             mesh_size=mesh_size,
                             cell_shape=shape,
                             extra=[
@@ -189,6 +191,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                 {
                     "label": f"air_{air_height:g}",
                     "args": _case_args(
+                        args,
                         mesh_size=args.scan_mesh_size,
                         cell_shape=args.scan_cell_shape,
                         extra=[
@@ -214,6 +217,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                 {
                     "label": f"substrate_{substrate_thickness:g}",
                     "args": _case_args(
+                        args,
                         mesh_size=args.scan_mesh_size,
                         cell_shape=args.scan_cell_shape,
                         extra=[
@@ -244,6 +248,7 @@ def _case_specs(study: str, args) -> list[dict[str, object]]:
                 {
                     "label": f"combined_air{air_height:g}_sub{substrate_thickness:g}",
                     "args": _case_args(
+                        args,
                         mesh_size=args.scan_mesh_size,
                         cell_shape=args.scan_cell_shape,
                         extra=[
@@ -288,6 +293,9 @@ def _extract_row(label: str, run_root: Path, summary: dict[str, object]) -> dict
         "case_name": summary.get("case_name"),
         "cell_shape": cfg.get("mesh_cell_shape"),
         "mesh_target_size": cfg.get("mesh_target_size"),
+        "incident_angle_deg": cfg.get("incident_angle_deg"),
+        "nedelec_degree": cfg.get("nedelec_degree"),
+        "visualization_degree": cfg.get("visualization_degree"),
         "air_height": cfg.get("air_height"),
         "substrate_thickness": cfg.get("substrate_thickness"),
         "port_boundary_model": cfg.get("port_boundary_model"),
@@ -364,6 +372,9 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument("--mesh-sizes", default="4,3,2,1.5,1.25,1")
     parser.add_argument("--cell-shapes", default="triangle,quadrilateral")
+    parser.add_argument("--incident-angle-deg", type=float, default=0.0)
+    parser.add_argument("--nedelec-degree", type=int, default=2)
+    parser.add_argument("--visualization-degree", type=int, default=3)
     parser.add_argument("--method-mesh-size", type=float, default=4.0)
     parser.add_argument("--scan-mesh-size", type=float, default=1.5)
     parser.add_argument("--scan-cell-shape", choices=("triangle", "quadrilateral"), default="quadrilateral")
@@ -384,13 +395,15 @@ def main(argv: list[str] | None = None) -> None:
 
     root = project_root()
     timestamp = time.strftime("%Y%m%d_%H%M%S")
+    angle_tag = str(parsed.incident_angle_deg).replace("-", "m").replace(".", "p")
+    run_tag = f"theta{angle_tag}_p{parsed.nedelec_degree}"
     study_names = (
         ["method_compare", "mesh_convergence", "air_scan", "substrate_scan", "combined_scan"]
         if parsed.study == "all"
         else [parsed.study]
     )
     for study in study_names:
-        out_dir = root / "results" / "studies" / f"2D_EUV_{study}_{timestamp}"
+        out_dir = root / "results" / "studies" / f"2D_EUV_{study}_{run_tag}_{timestamp}"
         rows = _run_study(study, parsed, out_dir)
         print(f"[{study}] wrote {len(rows)} executed rows to {out_dir}")
 

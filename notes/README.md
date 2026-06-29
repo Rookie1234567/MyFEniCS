@@ -1,5 +1,30 @@
 # v2 文档索引
 
+## 2026-06-29 更新：2D EUV 80° 入射 p=2 扫描已完成
+
+在 0° 法向入射 p=2 验证基础上，新增并跑完 `incident_angle_deg=80` 的同一套 study：
+```text
+method_compare
+mesh_convergence
+air_scan
+substrate_scan
+combined_scan
+```
+
+入口参数已经加入：
+```text
+src/studies/run_2d_euv_validation.py
+  --incident-angle-deg
+  --nedelec-degree
+  --visualization-degree
+```
+
+详见：
+```text
+notes/test/2d_euv_validation_report.md
+notes/quick_start/2d_euv_grating_dtn_usage_guide.md
+```
+
 ## 2026-06-29 更新：2D EUV DtN 完整验证已完成
 
 本轮已按验证计划跑完：

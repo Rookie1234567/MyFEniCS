@@ -1,5 +1,26 @@
 # 2D EUV 光栅 DtN 使用指南
 
+## 2026-06-29 更新：80° 入射和单元阶次 study 参数
+
+`src/studies/run_2d_euv_validation.py` 现在可以直接指定入射角和单元阶次，不需要改源码：
+
+```bash
+python3 -m src.studies.run_2d_euv_validation \
+  --study all \
+  --incident-angle-deg 80 \
+  --nedelec-degree 2 \
+  --visualization-degree 3 \
+  --scan-mesh-size 1.0 \
+  --scan-cell-shape triangle
+```
+
+说明：
+```text
+1. 上一轮 0° 法向入射验证本身已经是 p=2。
+2. 本轮 80° 掠入射仍使用 p=2，完整结果写在 notes/test/2d_euv_validation_report.md 顶部。
+3. study 输出目录会自动带 theta80p0_p2，避免和法向入射结果混在一起。
+```
+
 ## 2026-06-29 更新：完整验证后的推荐用法
 
 完整验证已经跑完：`method_compare`、`mesh_convergence`、`air_scan`、`substrate_scan`、`combined_scan` 都通过。
