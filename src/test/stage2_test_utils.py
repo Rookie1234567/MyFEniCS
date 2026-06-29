@@ -7,7 +7,10 @@ from pathlib import Path
 import numpy as np
 
 from src.common.config_3d import SimulationConfig3D, normal_incidence_airbox_config, oblique_incidence_airbox_config
-from src.solvers.solve_airbox_maxwell_3d import run_airbox_3d_case
+from src.solvers.solve_maxwell_3d_stage_1_airbox import run_stage1_airbox_3d_case
+from src.solvers.solve_maxwell_3d_stage_2a_floquet_airbox import run_stage2a_floquet_airbox_3d_case
+from src.solvers.solve_maxwell_3d_stage_2b_pml_airbox import run_stage2b_pml_airbox_3d_case
+from src.solvers.solve_maxwell_3d_stage_2c_fresnel_interface import run_stage2c_fresnel_interface_3d_case
 
 
 RUN_PDE_TESTS = os.environ.get("RUN_STAGE2_PDE_TESTS") == "1"
@@ -24,6 +27,18 @@ def assert_vector_close(testcase, actual, expected, tol: float, msg: str = "") -
 
 def temp_output_dir(prefix: str) -> Path:
     return Path(tempfile.mkdtemp(prefix=f"stage2_{prefix}_"))
+
+
+def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
+    if cfg.stage_case == "stage1_airbox":
+        return run_stage1_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case == "floquet_airbox":
+        return run_stage2a_floquet_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case == "pml_airbox":
+        return run_stage2b_pml_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case == "fresnel_interface":
+        return run_stage2c_fresnel_interface_3d_case(cfg, out_dir)
+    raise ValueError(f"Unsupported Stage 2 test case: {cfg.stage_case!r}")
 
 
 def run_small_3d_case(cfg: SimulationConfig3D, prefix: str) -> dict[str, object]:

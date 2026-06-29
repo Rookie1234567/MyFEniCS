@@ -6,11 +6,13 @@ import numpy as np
 
 from src.common.analytic_fields_3d import fresnel_reference
 from src.common.config_3d import normal_incidence_airbox_config, oblique_incidence_airbox_config
-from src.solvers.solve_airbox_maxwell_3d import (
+from src.solvers.common_3d_fields import _mode_basis
+from src.solvers.common_3d_forms import (
     _field_formulation_label,
-    _mode_basis,
     _use_incident_scattered_formulation,
     _use_reference_correction_formulation,
+)
+from src.solvers.common_3d_postprocess import (
     run_fresnel_analytic_postprocess_sanity,
 )
 from src.test.stage2_test_utils import temp_output_dir

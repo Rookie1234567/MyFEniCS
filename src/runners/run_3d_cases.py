@@ -14,8 +14,11 @@ from ..common.config_3d import (
 )
 from ..common.output_paths import unique_run_dir
 from ..solvers.solve_maxwell_3d_stage_1_airbox import STAGE1_CASES, run_stage1_airbox_3d_case
-from ..solvers.solve_maxwell_3d_stage_2_no_grating import STAGE2_CASES, run_stage2_no_grating_3d_case
-from ..solvers.solve_maxwell_3d_stage_4_grating import STAGE4_CASES, run_stage4_grating_3d_case
+from ..solvers.solve_maxwell_3d_stage_2a_floquet_airbox import STAGE2A_CASES, run_stage2a_floquet_airbox_3d_case
+from ..solvers.solve_maxwell_3d_stage_2b_pml_airbox import STAGE2B_CASES, run_stage2b_pml_airbox_3d_case
+from ..solvers.solve_maxwell_3d_stage_2c_fresnel_interface import STAGE2C_CASES, run_stage2c_fresnel_interface_3d_case
+from ..solvers.solve_maxwell_3d_stage_4a_flat_layer_sanity import STAGE4A_CASES, run_stage4a_flat_layer_sanity_3d_case
+from ..solvers.solve_maxwell_3d_stage_4b_block_grating import STAGE4B_CASES, run_stage4b_block_grating_3d_case
 from ..solvers.solve_vector_maxwell import _json_default
 
 
@@ -28,10 +31,16 @@ def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, objec
     """Dispatch one 3D config to the stage-specific solver entry."""
     if cfg.stage_case in STAGE1_CASES:
         return run_stage1_airbox_3d_case(cfg, out_dir)
-    if cfg.stage_case in STAGE2_CASES:
-        return run_stage2_no_grating_3d_case(cfg, out_dir)
-    if cfg.stage_case in STAGE4_CASES:
-        return run_stage4_grating_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE2A_CASES:
+        return run_stage2a_floquet_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE2B_CASES:
+        return run_stage2b_pml_airbox_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE2C_CASES:
+        return run_stage2c_fresnel_interface_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE4A_CASES:
+        return run_stage4a_flat_layer_sanity_3d_case(cfg, out_dir)
+    if cfg.stage_case in STAGE4B_CASES:
+        return run_stage4b_block_grating_3d_case(cfg, out_dir)
     raise ValueError(f"Unsupported 3D stage_case={cfg.stage_case!r}.")
 
 
@@ -232,40 +241,26 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
     raise ValueError("Unsupported 3D stage_case.")
 
 
-def _stage_list(stage_case: str) -> list[str]:
-    if stage_case == "stage2_all":
-        return ["floquet_airbox", "pml_airbox", "fresnel_interface"]
-    if stage_case == "stage4_all":
-        return ["stage4_flat_layer_sanity", "stage4_block_grating"]
-    return [stage_case]
-
-
 def _case_configs(case: str, stage_case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
-    """Expand one preset such as "both" into concrete SimulationConfig3D cases."""
-    configs: list[SimulationConfig3D] = []
+    """Create exactly one SimulationConfig3D for one explicit stage/case pair."""
     if case == "normal":
-        builders = [normal_incidence_airbox_config]
+        builder = normal_incidence_airbox_config
     elif case == "oblique":
-        builders = [oblique_incidence_airbox_config]
-    elif case == "both":
-        builders = [normal_incidence_airbox_config, oblique_incidence_airbox_config]
+        builder = oblique_incidence_airbox_config
     else:
-        raise ValueError("case must be 'normal', 'oblique', or 'both'.")
+        raise ValueError("case must be 'normal' or 'oblique'.")
 
-    for stage in _stage_list(stage_case):
-        stage_updates = _stage_defaults(stage)
-        stage_updates.update(updates)
-        stage_updates["stage_case"] = stage
-        for builder in builders:
-            cfg = builder(**stage_updates)
-            cfg.case_name = f"{cfg.case_name}_{stage}"
-            configs.append(cfg)
-    return configs
+    stage_updates = _stage_defaults(stage_case)
+    stage_updates.update(updates)
+    stage_updates["stage_case"] = stage_case
+    cfg = builder(**stage_updates)
+    cfg.case_name = f"{cfg.case_name}_{stage_case}"
+    return [cfg]
 
 
 def main(argv: list[str] | None = None):
     defaults = SimulationConfig3D()
-    parser = argparse.ArgumentParser(description="Run staged 3D Maxwell airbox/Floquet/PML/Fresnel verification.")
+    parser = argparse.ArgumentParser(description="Run one explicit staged 3D Maxwell case.")
     parser.add_argument(
         "--stage-case",
         choices=(
@@ -273,14 +268,12 @@ def main(argv: list[str] | None = None):
             "floquet_airbox",
             "pml_airbox",
             "fresnel_interface",
-            "stage2_all",
             "stage4_flat_layer_sanity",
             "stage4_block_grating",
-            "stage4_all",
         ),
         default="stage1_airbox",
     )
-    parser.add_argument("--case", choices=("normal", "oblique", "both"), default="both")
+    parser.add_argument("--case", choices=("normal", "oblique"), default="normal")
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
     parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
@@ -433,7 +426,7 @@ def main(argv: list[str] | None = None):
     results_root = root / "results"
     p = configs[0].nedelec_degree if configs else defaults.nedelec_degree
     h = configs[0].mesh_target_size if configs else defaults.mesh_target_size
-    case_tag = "normal_oblique" if args.case == "both" else args.case
+    case_tag = args.case
     group_parts = ["3D", args.stage_case, case_tag, f"p{p}", _number_tag("h", h)]
     if MPI.COMM_WORLD.size > 1:
         group_parts.append(f"np{MPI.COMM_WORLD.size}")
@@ -452,7 +445,7 @@ def main(argv: list[str] | None = None):
             json.dumps(summaries, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        print(f"3D airbox results: {run_root}")
+        print(f"3D case results: {run_root}")
 
 
 if __name__ == "__main__":

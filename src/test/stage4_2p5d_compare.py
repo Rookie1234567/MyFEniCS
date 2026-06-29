@@ -9,7 +9,7 @@ from mpi4py import MPI
 from ..common.config import SimulationConfig
 from ..common.config_3d import SimulationConfig3D, project_root
 from ..common.output_paths import unique_run_dir
-from ..solvers.solve_maxwell_3d_stage_4_grating import run_stage4_grating_3d_case
+from ..solvers.solve_maxwell_3d_stage_4b_block_grating import run_stage4b_block_grating_3d_case
 from ..solvers.solve_vector_maxwell import _json_default, run_case as run_2d_tm_case
 
 
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     summary_2d = run_2d_tm_case(cfg_2d, out_dir / "reference_2d_tm", constraint_backend="mpc_official")
-    summary_3d = run_stage4_grating_3d_case(cfg_3d, out_dir / "extruded_3d_stage4")
+    summary_3d = run_stage4b_block_grating_3d_case(cfg_3d, out_dir / "extruded_3d_stage4")
 
     r2d, t2d, rt2d = _rt_from_2d(summary_2d)
     r3d = summary_3d.get("R_total")

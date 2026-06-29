@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..common.config_3d import SimulationConfig3D
-from .solve_maxwell_3d_common import (
+from .solve_maxwell_3d_common_old import (
     _field_formulation_label,
     _fresnel_numerical_metrics,
     _mode_basis,
@@ -16,8 +16,8 @@ from .solve_maxwell_3d_common import (
     stage4_layered_background_field,
 )
 from .solve_maxwell_3d_stage_1_airbox import STAGE1_CASES, run_stage1_airbox_3d_case
-from .solve_maxwell_3d_stage_2_no_grating import STAGE2_CASES, run_stage2_no_grating_3d_case
-from .solve_maxwell_3d_stage_4_grating import STAGE4_CASES, run_stage4_grating_3d_case
+from .solve_maxwell_3d_stage_2_no_grating_old import STAGE2_CASES, run_stage2_no_grating_3d_case
+from .solve_maxwell_3d_stage_4_grating_old import STAGE4_CASES, run_stage4_grating_3d_case
 
 
 def run_airbox_3d_case(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:

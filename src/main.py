@@ -360,14 +360,14 @@ def _pycharm_args_3d() -> list[str]:
 
 def main() -> None:
     _ensure_package_importable()
-    from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_airbox import (
-        main as run_3d_airbox_main,
+    from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_3d_cases import (
+        main as run_3d_cases_main,
     )
     from fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_cases import main as run_cases_main
 
     if USE_PYCHARM_SETTINGS_WHEN_NO_ARGS and len(sys.argv) == 1:
         if SIMULATION_DIMENSION.lower() == "3d":
-            run_3d_airbox_main(_pycharm_args_3d())
+            run_3d_cases_main(_pycharm_args_3d())
         elif SIMULATION_DIMENSION.lower() == "2d":
             run_cases_main(_pycharm_args_2d())
         else:
@@ -378,7 +378,7 @@ def main() -> None:
         dimension = sys.argv[1].lower()
         runner_args = sys.argv[2:]
         if dimension == "3d":
-            run_3d_airbox_main(runner_args)
+            run_3d_cases_main(runner_args)
         else:
             run_cases_main(runner_args)
         return

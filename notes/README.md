@@ -1,5 +1,28 @@
 # v2 文档索引
 
+## 2026-06-29 更新：3D 求解器已按案例拆分
+
+本轮把 3D 主求解流程从旧的混合大文件拆成了按案例入口。以后阅读和运行 3D 时，优先看：
+
+```text
+src/runners/run_3d_cases.py
+src/solvers/solve_maxwell_3d_stage_1_airbox.py
+src/solvers/solve_maxwell_3d_stage_2a_floquet_airbox.py
+src/solvers/solve_maxwell_3d_stage_2b_pml_airbox.py
+src/solvers/solve_maxwell_3d_stage_2c_fresnel_interface.py
+src/solvers/solve_maxwell_3d_stage_4a_flat_layer_sanity.py
+src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
+```
+
+旧的聚合入口已经改名为 `_old.py` 作为历史参考，新代码不再从这些旧文件导入。重构前 baseline 和重构后对比结果见：
+
+```text
+notes/test/3d_refactor_baseline_report.md
+notes/test/3d_refactor_validation_report.md
+```
+
+这轮只做结构重构，不顺手修 Stage 2C 的历史物理问题；报告里的 `R+T > 1` 是用于行为对照的旧结果复现。
+
 ## 2026-06-29 更新：2D EUV p=1 细网格补算到 h=0.35 nm
 
 一阶单元 `p=1` 的三角形网格已继续补算到 `h=0.35 nm`，包含 0° 和 80° 入射。结论是：DtN auxiliary 的 `R+T` 仍然守恒，但按“连续两次核心指标相对变化 < 0.1%”的严格判据，p=1 仍未正式收敛。

@@ -1,3 +1,68 @@
+## 2026-06-29 更新：3D 按案例求解器阅读路径
+
+现在 3D 不再从一个巨大的 `solve_maxwell_3d_common.py` 开始读。建议按你正在研究的案例直接进入对应文件：
+
+```text
+1. src/main.py
+   PyCharm 直接运行时先看 SIMULATION_DIMENSION 和 Stage4GratingInputs3D / 3D settings。
+
+2. src/runners/run_3d_cases.py
+   这是新的唯一 3D 单案例 runner。
+   stage_case 只允许：
+     stage1_airbox
+     floquet_airbox
+     pml_airbox
+     fresnel_interface
+     stage4_flat_layer_sanity
+     stage4_block_grating
+   --case 只允许 normal / oblique。
+
+3. 按案例选择 solver：
+   Stage 1:
+     src/solvers/solve_maxwell_3d_stage_1_airbox.py
+   Stage 2A:
+     src/solvers/solve_maxwell_3d_stage_2a_floquet_airbox.py
+   Stage 2B:
+     src/solvers/solve_maxwell_3d_stage_2b_pml_airbox.py
+   Stage 2C:
+     src/solvers/solve_maxwell_3d_stage_2c_fresnel_interface.py
+   Stage 4A:
+     src/solvers/solve_maxwell_3d_stage_4a_flat_layer_sanity.py
+   Stage 4B:
+     src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
+
+4. 再按需要读公共积木：
+   src/solvers/common_3d_utils.py
+     计时、日志、summary/json 写出。
+   src/solvers/common_3d_solve.py
+     Nedelec 空间、直接求解器、矩阵和残差诊断。
+   src/solvers/common_3d_fields.py
+     入射场、背景场、场叠加、采样。
+   src/solvers/common_3d_forms.py
+     curl-curl 弱式、PML 弱式、RHS source norm。
+   src/solvers/common_3d_postprocess.py
+     Floquet/PML/Fresnel/Stage-4 指标。
+   src/solvers/common_3d_case_flow.py
+     每个案例共同使用的 FEM 流程积木；它不再按 stage_case 做大分流，而是由各案例文件传入明确的 formulation。
+```
+
+历史文件只作为参考保留：
+
+```text
+src/solvers/solve_maxwell_3d_common_old.py
+src/solvers/solve_airbox_maxwell_3d_old.py
+src/solvers/solve_maxwell_3d_stage_2_no_grating_old.py
+src/solvers/solve_maxwell_3d_stage_4_grating_old.py
+src/runners/run_3d_airbox_old.py
+```
+
+本轮重构的验证记录见：
+
+```text
+notes/test/3d_refactor_baseline_report.md
+notes/test/3d_refactor_validation_report.md
+```
+
 ## 2026-06-29 更新：2D EUV 光栅 DtN 代码阅读路径
 
 如果本轮主要研究 2D EUV 矩形光栅，建议按下面顺序读：

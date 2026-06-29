@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..common.config_3d import SimulationConfig3D
-from .solve_maxwell_3d_common import (
+from .solve_maxwell_3d_common_old import (
     _run_maxwell_3d_case_core,
     run_fresnel_analytic_postprocess_sanity,
 )

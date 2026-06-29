@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..common.config_3d import SimulationConfig3D
-from .solve_maxwell_3d_common import _run_maxwell_3d_case_core
+from .solve_maxwell_3d_common_old import _run_maxwell_3d_case_core
 
 
 STAGE4_CASES = frozenset({"stage4_flat_layer_sanity", "stage4_block_grating"})
