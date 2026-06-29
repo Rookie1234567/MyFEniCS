@@ -1,5 +1,30 @@
 # v2 文档索引
 
+## 2026-06-29 更新：2D EUV DtN 完整验证已完成
+
+本轮已按验证计划跑完：
+```text
+method_compare
+mesh_convergence
+air_scan
+substrate_scan
+combined_scan
+```
+
+核心结论：
+```text
+DtN auxiliary 与 DtN explicit 一致。
+triangle h=1.0 nm 满足连续两次 0.1% 严格收敛判据。
+quadrilateral h=1.0 nm 仍未达到 0.1% 判据，暂作对照。
+空气/基座/随机组合厚度扫描中，正式 DtN 端口 R+T 均为 1 到数值舍入精度。
+```
+
+详见：
+```text
+notes/test/2d_euv_validation_report.md
+notes/quick_start/2d_euv_grating_dtn_usage_guide.md
+```
+
 ## 2026-06-29 更新：新增 2D EUV 光栅 DtN 验证入口
 
 本轮回到 2D，对 EUV 波段矩形光栅建立了新的验证入口：

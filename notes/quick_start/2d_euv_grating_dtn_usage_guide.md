@@ -1,5 +1,31 @@
 # 2D EUV 光栅 DtN 使用指南
 
+## 2026-06-29 更新：完整验证后的推荐用法
+
+完整验证已经跑完：`method_compare`、`mesh_convergence`、`air_scan`、`substrate_scan`、`combined_scan` 都通过。
+
+当前正式推荐：
+```text
+mesh_cell_shape = triangle
+mesh_target_size = 1.0 nm
+port_boundary_model = dtn
+port_dtn_assembly = auxiliary
+polarization = TM
+```
+
+原因：
+```text
+1. DtN auxiliary 与 DtN explicit 的 R/T、近场积分一致。
+2. triangle 网格在 h=1.5 -> 1.25 -> 1.0 nm 连续两次满足核心指标变化小于 0.1%。
+3. quadrilateral h=1.0 nm 仍未达到 0.1% 严格收敛阈值，暂时作为对照路径。
+4. 空气厚度、基座厚度和随机组合厚度扫描中，DtN 端口 R+T 都等于 1 到数值舍入精度。
+```
+
+完整结果见：
+```text
+notes/test/2d_euv_validation_report.md
+```
+
 ## 2026-06-29 更新：新增 100 nm 周期 EUV 矩形光栅基准
 
 本案例用于验证 2D DtN 端口、衍射级 R/T 和近场积分，不代表真实 EUV 材料库。
