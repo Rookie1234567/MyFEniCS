@@ -1,5 +1,50 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-30 更新：p=2 高阶 H(curl) Floquet trace 约束
+
+Stage 2A `floquet_airbox` 现在支持第一版二阶 N1curl Floquet 约束：
+
+```text
+mesh = hexahedron
+element = N1curl degree 2
+constraint mode = topological_trace_p2
+```
+
+一阶 N1curl 只有每条 mesh edge 一个切向自由度，所以旧路径可以直接做：
+
+```text
+slave_edge_dof = beta * orientation_sign * master_edge_dof
+```
+
+二阶 N1curl 的周期 trace 不只包含 edge dof，还包含 face-interior tangential moment dof。因此 p=2 路线改为：
+
+```text
+slave_i = beta * sum_j T_ij master_j
+```
+
+其中 `T` 是同一对局部 edge/face 上的小矩阵：
+
+- edge reversal 使用 Basix `interval` transformation；
+- face rotation/reflection 使用 Basix `quadrilateral` transformation 组合成的 D4 小矩阵；
+- corner edge dof 直接映射到 `(x_min, y_min)`，相位为 `beta_x * beta_y`，不允许重复约束；
+- face-interior dof 不做 corner 分类，只随 x-face 或 y-face 映射。
+
+这条路径仍然是显式拓扑配对，复杂度随周期 trace 实体数线性增长；没有恢复 whole-plane probe、pseudo-inverse 或 dense side fitting。
+
+当前限制：
+
+```text
+p=2 只开放 Stage 2A floquet_airbox
+p>=3 暂未开放
+Stage 2B/2C/Stage 4 暂未接入 p=2 Floquet
+```
+
+验证报告：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
 ## 2026-06-22 更新：2C Fresnel 改为 incident-scattered 物理 benchmark
 
 最新 2C `fresnel_interface` 不再把完整 Fresnel 解析解作为 `E_reference` 加回数值场。新的未知量是散射场：

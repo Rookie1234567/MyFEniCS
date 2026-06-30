@@ -86,7 +86,7 @@ class SimulationConfig3D:
     mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
-    floquet_constraint_mode: str = "auto"  # "auto", "topological_edges", or legacy alias "sparse_facet"
+    floquet_constraint_mode: str = "auto"  # auto / topological_edges_p1 / topological_trace_p2
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None
@@ -205,11 +205,18 @@ class SimulationConfig3D:
         if mode == "dense_side_fit":
             raise ValueError(
                 "floquet_constraint_mode='dense_side_fit' is disabled. "
-                "Use 'auto' or 'topological_edges' for explicit degree=1 N1curl edge pairing."
+                "Use 'auto', 'topological_edges_p1', or 'topological_trace_p2'."
             )
-        if mode not in {"auto", "topological_edges", "sparse_facet"}:
+        if mode not in {
+            "auto",
+            "topological_edges",
+            "topological_edges_p1",
+            "topological_trace_p2",
+            "sparse_facet",
+        }:
             raise ValueError(
-                "floquet_constraint_mode must be 'auto', 'topological_edges', or legacy alias 'sparse_facet'."
+                "floquet_constraint_mode must be 'auto', 'topological_edges_p1', "
+                "'topological_trace_p2', or legacy aliases 'topological_edges'/'sparse_facet'."
             )
         return mode
 

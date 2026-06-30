@@ -1,5 +1,32 @@
 # v2 文档索引
 
+## 2026-06-30 更新：3D p=2 高阶 Floquet trace 约束已开放 Stage 2A
+
+本轮新增 3D 高阶 N1curl Floquet 约束第一版：
+
+```text
+p=1 -> topological_edges_p1
+p=2 -> topological_trace_p2
+```
+
+p=2 路线只用于 Stage 2A `floquet_airbox`，支持 hexahedron + N1curl degree 2。它显式配对周期 trace 上的 edge dof 与 face-interior tangential dof，并用 Basix `interval` / `quadrilateral` 局部变换处理方向，不恢复 whole-plane probe/pinv。
+
+验证结果：
+
+```text
+p=2, h=100 nm, serial / MPI 2 / MPI 4 均跑通
+edge constraints = 436
+face constraints = 396
+Floquet setup ~= 0.13-0.15 s
+E relative max error ~= 4.92e-3
+```
+
+详细报告见：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
 ## 2026-06-29 更新：3D 求解器已按案例拆分
 
 本轮把 3D 主求解流程从旧的混合大文件拆成了按案例入口。以后阅读和运行 3D 时，优先看：

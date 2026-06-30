@@ -1,3 +1,50 @@
+## 2026-06-30 更新：3D p=2 高阶 Floquet trace 阅读路径
+
+如果你现在研究二阶 3D Floquet 边界，建议按这个顺序读：
+
+```text
+1. src/common/config_3d.py
+   看 floquet_constraint_mode：
+     auto
+     topological_edges_p1
+     topological_trace_p2
+
+2. src/constraints/floquet_3d.py
+   核心入口：
+     build_double_floquet_mpc(...)
+       p=1 -> topological_edges_p1
+       p=2 -> _build_double_floquet_mpc_p2_trace(...)
+
+   p=2 关键函数：
+     _build_topological_trace_context_p2(...)
+       收集周期边界上的 edge records 和 face records。
+
+     _build_p2_edge_constraints_for_kind(...)
+       处理 edge dof，包含 x/y/corner 三类；corner 只约束一次。
+
+     _build_p2_face_constraints_for_kind(...)
+       处理 face-interior tangential dof，只属于 x-face 或 y-face。
+
+     _quadrilateral_transform_for_permutation(...)
+       使用 Basix quadrilateral 小矩阵处理 MPI 中出现的 face rotation/reflection。
+
+3. src/solvers/common_3d_case_flow.py
+   看 summary 字段：
+     floquet_num_edge_constraints
+     floquet_num_face_constraints
+     floquet_num_slave_faces
+     floquet_max_face_midpoint_pairing_error
+
+4. src/test/test_17_3d_high_order_floquet_trace.py
+   看 p=2 dof layout、mode 分流和 PDE smoke 测试。
+```
+
+正式验证记录见：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
 ## 2026-06-29 更新：3D 按案例求解器阅读路径
 
 现在 3D 不再从一个巨大的 `solve_maxwell_3d_common.py` 开始读。建议按你正在研究的案例直接进入对应文件：

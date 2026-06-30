@@ -581,8 +581,17 @@ def run_prepared_3d_case_flow(
         "floquet_estimated_constraint_memory_mb": None if floquet_data is None else floquet_data.estimated_constraint_memory_mb,
         "floquet_num_slave_edges": None if floquet_data is None else floquet_data.num_slave_edges,
         "floquet_num_matched_master_edges": None if floquet_data is None else floquet_data.num_matched_master_edges,
+        "floquet_num_slave_faces": None if floquet_data is None else floquet_data.num_slave_faces,
+        "floquet_num_matched_master_faces": None
+        if floquet_data is None
+        else floquet_data.num_matched_master_faces,
         "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
+        "floquet_num_edge_constraints": None if floquet_data is None else floquet_data.num_edge_constraints,
+        "floquet_num_face_constraints": None if floquet_data is None else floquet_data.num_face_constraints,
         "floquet_max_edge_midpoint_pairing_error": None if floquet_data is None else floquet_data.max_edge_midpoint_pairing_error,
+        "floquet_max_face_midpoint_pairing_error": None
+        if floquet_data is None
+        else floquet_data.max_face_midpoint_pairing_error,
         "floquet_num_x_constraints": None if floquet_data is None else floquet_data.num_x_constraints,
         "floquet_num_y_constraints": None if floquet_data is None else floquet_data.num_y_constraints,
         "floquet_num_corner_constraints": None if floquet_data is None else floquet_data.num_corner_constraints,

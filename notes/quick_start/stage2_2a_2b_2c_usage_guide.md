@@ -1,5 +1,45 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-30 更新：Stage 2A 二阶 N1curl Floquet 运行方式
+
+如果只想测试高阶 Floquet 约束，目前只运行 2A：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case floquet_airbox \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+```
+
+并行 smoke：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case floquet_airbox \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+```
+
+当前限制：
+
+```text
+p=2 只支持 floquet_airbox
+p=2 不支持 pml_airbox / fresnel_interface / stage4_block_grating
+p>=3 暂未实现
+```
+
+详细验证见：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
 ## 2026-06-24 更新：Stage 2 无光栅代码入口已单独拆出
 
 研究 2A/2B/2C 时，优先只看这一条路径：
