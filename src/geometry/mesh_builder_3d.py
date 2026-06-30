@@ -578,8 +578,13 @@ def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
         return
     if cfg.mesh_cell_type_resolved != "hexahedron":
         raise ValueError("stage4_block_grating requires a hexahedron mesh for explicit edge Floquet constraints.")
-    if cfg.nedelec_degree != 1:
-        raise NotImplementedError("stage4_block_grating currently supports only degree=1 N1curl.")
+    if cfg.nedelec_degree != 1 and not (
+        cfg.stage_case == "stage4_flat_layer_sanity" and not cfg.has_grating_block
+    ):
+        raise NotImplementedError(
+            "Stage 4 p=2 is currently enabled only for stage4_flat_layer_sanity without a grating block. "
+            "stage4_block_grating still supports only degree=1 N1curl."
+        )
     if cfg.scattering_background.lower() != "layered":
         raise ValueError("stage4_block_grating currently requires scattering_background='layered'.")
     if cfg.grating_width_x < 0.0 or cfg.grating_width_y < 0.0 or cfg.grating_height < 0.0:

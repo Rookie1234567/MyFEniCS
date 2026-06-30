@@ -1,5 +1,43 @@
 # 3D 高阶 N1curl Floquet 约束验证报告
 
+## 2026-06-30 更新：p=2 Stage 4A flat-layer sanity 已开放
+
+本轮继续把 `topological_trace_p2` 从 Stage 2A/2B/2C 扩展到 Stage 4A `stage4_flat_layer_sanity`。Stage 4A 是无光栅 flat-layer + DtN total-field port sanity，用来验证二阶 Floquet trace 约束能否和 Stage 4 DtN 主线组合运行。
+
+当前支持范围：
+
+```text
+p=1 -> topological_edges_p1
+p=2 -> topological_trace_p2，可用于 floquet_airbox / pml_airbox / fresnel_interface / stage4_flat_layer_sanity
+p>=3 -> NotImplementedError
+stage4_block_grating -> p=2 暂未开放
+```
+
+新增运行命令：
+
+```bash
+python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --case normal --mesh-target-size 10 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+mpiexec -n 2 python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --case normal --mesh-target-size 10 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+```
+
+实跑结果会继续写在本节下方；Stage 4B block grating 暂不接入 p=2，避免在 flat-layer sanity 完成前引入真实结构误差。
+
+### Stage 4A h10 实跑结果
+
+| case | MPI | p | h (nm) | dofs | constraints | edge | face | Floquet total (s) | R | T | R+T | max Ex/Ey/Ez | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| Stage4A flat | 1 | 2 | 10 | 39270 | 2470 | 1270 | 1200 | 0.626 | 3.223458e-01 | 6.776542e-01 | 1.000000e+00 | 3.61e-10 / 1.57e+00 / 3.58e-10 | completed |
+| Stage4A flat | 2 | 2 | 10 | 39270 | 2470 | 1270 | 1200 | 0.357 | 3.228932e-01 | 6.771068e-01 | 1.000000e+00 | 7.67e-01 / 1.92e+00 / 8.58e-01 | completed |
+| Stage4A p1 对照 | 1 | 1 | 10 | 5335 | 635 | 635 | 0 | 0.231 | 1.000000e+00 | 4.559376e-12 | 1.000000e+00 | 2.48e-13 / 1.49e+00 / 2.85e-13 | completed |
+| Stage4A p1 对照 | 2 | 1 | 10 | 5335 | 635 | 635 | 0 | 0.142 | 1.000000e+00 | 4.559376e-12 | 1.000000e+00 | 1.72e-13 / 1.49e+00 / 2.13e-13 | completed |
+
+结论：
+
+1. Stage 4A p=2 已能 serial/MPI 跑通，且 `R+T` 保持 1，Floquet x/y mismatch 为 0。
+2. p=2 serial/MPI 的总 R/T 差异约 `5.5e-4`，作为 smoke 可接受。
+3. p=2 MPI 的场分量出现明显 Ex/Ez，而 p1 对照没有这个现象；因此 Stage4A p=2 当前只作为 Floquet/DtN 接入 smoke，不作为最终场分布可信结论。
+4. `stage4_block_grating + p=2` 已确认会明确报 `NotImplementedError`，没有提前开放真实光栅。
+
 ## 2026-06-30 更新：p=2 Stage 2B/2C 已接入并完成 smoke
 
 本轮把 `topological_trace_p2` 从 Stage 2A `floquet_airbox` 扩展到 Stage 2B `pml_airbox` 和 Stage 2C `fresnel_interface`。正式约束路径仍然是显式拓扑 trace 配对，不使用 probe / pseudo-inverse / dense side fitting。
@@ -10,10 +48,10 @@
 p=1 -> topological_edges_p1
 p=2 -> topological_trace_p2，可用于 floquet_airbox / pml_airbox / fresnel_interface
 p>=3 -> NotImplementedError
-Stage 4 -> 暂未开放 p=2 Floquet
+Stage 4 -> 本段记录产生时暂未开放 p=2 Floquet；最新状态见上方 Stage 4A 更新
 ```
 
-这次还修正了 p=2 并行路径的一个风险点：ghost slave dof 只进入统计，不再传给 `dolfinx_mpc.MultiPointConstraint.add_constraint()`。全局约束只由 owning rank 发出，避免同一个高阶 trace slave 在不同 rank 上重复进入 MPC。
+这次还修正了 p=2 并行路径的一个风险点：全局约束只由 owning rank 发出；出现在 owned cell 上的 ghost slave 会进入本 rank 的 local MPC map，用于本地单元装配，但不会重复发出全局约束。
 
 ### 本轮命令
 
@@ -87,7 +125,7 @@ constraint mode: topological_trace_p2
 2. p=2 新路径为 `topological_trace_p2`，同时配 edge dof 和 face-interior tangential dof。
 3. 正式路径不再使用 whole-plane probe / pseudo-inverse / dense transform。
 4. p=2 face orientation 在 MPI 下会出现 rotated/reflected face order；现已通过 Basix `quadrilateral` 小矩阵组合处理。
-5. 当前只开放 Stage 2A；Stage 2B/2C/Stage 4 的 p=2 Floquet 会继续明确报 `NotImplementedError`，等 Stage 2A 稳定后再接入。
+5. 历史限制：本段记录产生时只开放 Stage 2A；最新状态见本文顶部更新。
 
 ## 实现口径
 
@@ -203,7 +241,7 @@ results/3D_floquet_airbox_oblique_p1_h100p0_20260630_024935
 
 ## 当前限制
 
-1. p=2 只正式支持 `stage_case="floquet_airbox"`。
+1. 历史限制：本段记录产生时 p=2 只正式支持 `stage_case="floquet_airbox"`；最新状态见本文顶部更新。
 2. p=3/p=4 还没有开放，但可以复用 p=2 trace block 框架继续扩展。
-3. Stage 2B/2C 和 Stage 4 还没有启用 p=2 Floquet；后续接入前需要分别跑 PML、Fresnel、grating 的独立验证。
+3. 历史限制：本段记录产生时 Stage 2B/2C 和 Stage 4 还没有启用 p=2 Floquet；最新状态见本文顶部更新。
 4. 当前 p=2 face block 在已测结构化 hexa 上表现为 signed permutation，所以 `max_masters_per_slave=1`；代码仍按一般局部 block 形式写，后续更高阶时可支持多 master 小矩阵。

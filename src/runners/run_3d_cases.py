@@ -306,11 +306,11 @@ def main(argv: list[str] | None = None):
     )
     parser.add_argument(
         "--floquet-constraint-mode",
-        choices=("auto", "topological_edges", "sparse_facet"),
+        choices=("auto", "topological_edges", "sparse_facet", "topological_trace_p2"),
         default=None,
         help=(
-            "3D Floquet builder. auto/topological_edges use explicit degree=1 N1curl edge pairing; "
-            "sparse_facet is kept as a legacy alias."
+            "3D Floquet builder. auto selects p=1 edge pairing or p=2 trace pairing; "
+            "sparse_facet is kept as a legacy p=1 alias."
         ),
     )
     parser.add_argument("--lambda0", type=float, default=None)

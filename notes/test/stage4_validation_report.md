@@ -1,5 +1,26 @@
 # Stage 4 验证报告
 
+## 2026-06-30 更新：Stage 4A flat-layer sanity 已开放 p=2 Floquet smoke
+
+本轮只开放 Stage 4A `stage4_flat_layer_sanity` 的二阶 N1curl Floquet，不开放 Stage 4B `stage4_block_grating`。
+
+运行结果：
+
+| case | MPI | p | h (nm) | dofs | constraints | R | T | R+T | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Stage4A flat | 1 | 2 | 10 | 39270 | 2470 | 3.223458e-01 | 6.776542e-01 | 1.000000e+00 | completed |
+| Stage4A flat | 2 | 2 | 10 | 39270 | 2470 | 3.228932e-01 | 6.771068e-01 | 1.000000e+00 | completed |
+| Stage4A p1 对照 | 1 | 1 | 10 | 5335 | 635 | 1.000000e+00 | 4.559376e-12 | 1.000000e+00 | completed |
+| Stage4A p1 对照 | 2 | 1 | 10 | 5335 | 635 | 1.000000e+00 | 4.559376e-12 | 1.000000e+00 | completed |
+
+判断：
+
+```text
+Stage 4A p=2: 能 serial/MPI 跑通，R+T 守恒，Floquet mismatch 为 0。
+Stage 4A p=2: MPI 场分量仍有 Ex/Ez 污染，暂不作为最终场分布可信结论。
+Stage 4B p=2: 已确认继续 NotImplementedError，不提前开放真实光栅。
+```
+
 ## 2026-06-26 更新：修复 h=2 fitted hexa 在 MPI create_mesh 阶段崩溃
 
 用户复现报错：

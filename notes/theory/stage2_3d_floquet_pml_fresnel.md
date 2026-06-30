@@ -23,7 +23,7 @@ slave_i = beta * sum_j T_ij master_j
 - corner edge dof 只约束一次，直接使用 `beta_x * beta_y`。
 - 不使用 whole-plane probe、pseudo-inverse 或 dense side fitting。
 
-并行规则也同步收紧：只由 owning rank 发出全局 slave 约束，ghost slave 只做诊断统计，不再加入 `dolfinx_mpc.add_constraint()`。这条规则是为了避免高阶 trace dof 在 MPI 下被多个 rank 重复约束。
+并行规则也同步收紧：只由 owning rank 发出全局 slave 约束；出现在 owned cell 上的 ghost slave 只进入本 rank 的 local MPC map，用于本地单元装配，不参与重复的全局约束 emission。
 
 注意：2C 的 Fresnel 数值误差仍属于历史 incident-scattered + PML diagnostic 的问题，本轮只验证高阶 Floquet trace 机制能和 2C 流程组合运行，并不把 2C R/T 当作已经修好的物理 benchmark。
 

@@ -1,3 +1,23 @@
+## 2026-06-30 更新：p=2 Stage 4A flat-layer sanity 阅读路径
+
+如果你现在研究二阶 Floquet 接入 Stage 4A，请按这个顺序读：
+
+```text
+1. src/runners/run_3d_cases.py
+   --stage-case stage4_flat_layer_sanity 进入 Stage 4A，默认仍使用 DtN total-field port。
+
+2. src/solvers/solve_maxwell_3d_stage_4a_flat_layer_sanity.py
+   这是无光栅平层 sanity 的真实入口，只接受 stage4_flat_layer_sanity。
+
+3. src/constraints/floquet_3d.py
+   p=2 走 _build_double_floquet_mpc_p2_trace(...)，同时约束 edge dof 和 face-interior trace dof。
+
+4. src/solvers/common_3d_case_flow.py
+   只有在需要追踪 DtN auxiliary port 装配和 R/T summary 时再进入。
+```
+
+当前边界：Stage 4A p=2 已开放；Stage 4B block grating p=2 仍会明确报 `NotImplementedError`，避免真实 grating 在 flat-layer sanity 通过前提前混入高阶路径。
+
 ## 2026-06-30 更新：p=2 Stage 2B/2C Floquet 阅读路径
 
 如果你现在研究二阶 3D Floquet 与 Stage 2B/2C 的组合，建议按这个顺序读：
@@ -22,7 +42,7 @@
    只在需要追踪装配、PML/Fresnel 诊断字段、summary 字段时再进入。
 ```
 
-p=2 的关键点：ghost slave dof 只做诊断统计，不传给 `dolfinx_mpc.add_constraint()`；真正的全局约束只由 owning rank 发出。这样可以避免 MPI 下同一个高阶 trace slave 被重复约束。
+p=2 的关键点：全局约束只由 owning rank 发出；出现在 owned cell 上的 ghost slave 会作为本 rank 的 local MPC map 参与装配。这样既避免重复 global emission，又保留 dolfinx_mpc 所需的本地单元装配信息。
 
 ## 2026-06-30 更新：3D p=2 高阶 Floquet trace 阅读路径
 

@@ -52,13 +52,14 @@ class Test3DHighOrderFloquetTrace(unittest.TestCase):
         self.assertNotIn("_transform(", source)
         self.assertNotIn("pinv", source.lower())
 
-    def test_p2_allows_stage2a_2b_2c_but_not_stage4_for_now(self):
+    def test_p2_allows_stage2a_2b_2c_and_stage4a_but_not_stage4b_for_now(self):
         source = inspect.getsource(floquet_3d._require_supported_topological_trace_p2)
 
         self.assertIn('"floquet_airbox"', source)
         self.assertIn('"pml_airbox"', source)
         self.assertIn('"fresnel_interface"', source)
-        self.assertIn("Stage 4", source)
+        self.assertIn('"stage4_flat_layer_sanity"', source)
+        self.assertIn("Stage 4B", source)
 
     @unittest.skipUnless(RUN_PDE_TESTS, "Set RUN_STAGE2_PDE_TESTS=1 to run p=2 3D Floquet PDE tests.")
     def test_stage1_p2_airbox_smoke_does_not_use_floquet(self):

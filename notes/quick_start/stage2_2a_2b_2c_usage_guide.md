@@ -75,7 +75,7 @@ src/constraints/floquet_3d.py
   _emit_block_constraint_rows(...)
 ```
 
-其中 `_emit_block_constraint_rows(...)` 只让 owned slave dof 进入 `dolfinx_mpc.add_constraint()`；ghost slave dof 只保留诊断统计，避免 MPI 下重复约束同一个全局 trace dof。
+其中 `_emit_block_constraint_rows(...)` 只让 owned slave dof 发出全局约束；出现在 owned cell 上的 ghost slave 会加入本 rank 的 local MPC map，用于 dolfinx_mpc 的本地单元装配。
 
 ## 2026-06-30 更新：Stage 2A 二阶 N1curl Floquet 运行方式
 

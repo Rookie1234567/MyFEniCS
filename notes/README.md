@@ -1,5 +1,26 @@
 # v2 文档索引
 
+## 2026-06-30 更新：3D p=2 Floquet 已开放 Stage 4A flat-layer sanity
+
+当前高阶 Floquet 支持范围更新为：
+
+```text
+p=1: topological_edges_p1，可用于既有 3D Floquet 路径
+p=2: topological_trace_p2，可用于 Stage 2A/2B/2C 和 Stage 4A flat-layer sanity
+p>=3: 暂未实现
+Stage 4B block grating: 暂未开放 p=2 Floquet
+```
+
+Stage 4A p=2 的目的只是验证 `p=2 Floquet + DtN total-field flat layer` 能否 serial/MPI 跑通；真实 block grating 仍保持 p=1 主线。
+
+相关文档：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/reference/code_walkthrough.md
+```
+
 ## 2026-06-30 更新：3D p=2 Floquet 已扩展到 Stage 2B/2C
 
 当前高阶 Floquet 支持范围：
@@ -8,7 +29,7 @@
 p=1: topological_edges_p1，可用于既有 3D Floquet 路径
 p=2: topological_trace_p2，可用于 Stage 2A floquet_airbox、Stage 2B pml_airbox、Stage 2C fresnel_interface
 p>=3: 暂未实现
-Stage 4 grating: 暂未开放 p=2 Floquet
+Stage 4: 本段记录产生时暂未开放 p=2 Floquet；最新状态见上方 Stage 4A 更新
 ```
 
 本轮实跑结果放在：

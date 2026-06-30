@@ -1,5 +1,37 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-06-30 更新：Stage 4A flat-layer sanity 支持 p=2 Floquet
+
+如果只想验证二阶 N1curl Floquet 与 Stage 4 DtN flat layer 是否能组合运行，用 Stage 4A：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_flat_layer_sanity \
+  --case normal \
+  --mesh-target-size 10 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_flat_layer_sanity \
+  --case normal \
+  --mesh-target-size 10 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+```
+
+当前限制：
+
+```text
+Stage 4A flat-layer sanity: p=2 已开放
+Stage 4B block grating: p=2 暂未开放，仍使用 p=1
+p>=3: 暂未实现
+```
+
+注意：Stage 4A 是无光栅平层 sanity，用来检查 p=2 Floquet 和 DtN 端口组合；它不代表真实 block grating 的 R/T 已经可信。
+
 ## 2026-06-26 更新：h=2 nm + MPI 的 fitted hexa 网格报错已修复
 
 如果你设置：
