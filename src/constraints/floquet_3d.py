@@ -95,11 +95,12 @@ def _require_supported_topological_trace_p2(V, cfg: SimulationConfig3D) -> None:
             "3D explicit high-order Floquet trace constraints currently support only degree=2 N1curl. "
             f"Requested degree={cfg.nedelec_degree}."
         )
-    if cfg.stage_case != "floquet_airbox":
+    allowed_stage_cases = {"floquet_airbox", "pml_airbox", "fresnel_interface"}
+    if cfg.stage_case not in allowed_stage_cases:
         raise NotImplementedError(
-            "The first high-order 3D Floquet implementation is enabled only for Stage 2A "
-            "stage_case='floquet_airbox'. Stage 2B/2C and Stage 4 will be enabled after p=2 "
-            "trace constraints are validated."
+            "The high-order 3D Floquet trace implementation is currently enabled only for "
+            "Stage 2A/2B/2C: stage_case in "
+            f"{sorted(allowed_stage_cases)!r}. Stage 4 will be enabled after p=2 Stage 2 validation."
         )
     if not _mesh_is_hexahedron(V.mesh):
         raise NotImplementedError("3D high-order Floquet trace constraints require a hexahedron mesh.")
@@ -640,8 +641,10 @@ def _emit_block_constraint_rows(
 
     For p=2 edges this is usually a 2x2 local block.  For p=2 face-interior
     dofs it is a 4x4 block.  Only owned slave dofs emit global constraints;
-    ghost slaves are passed to the local MPC map only when they touch an owned
-    cell, matching the p=1 MPI rule.
+    p=2 deliberately emits only owned slave dofs into the local MPC map.  This
+    avoids giving dolfinx_mpc the same global high-order trace slave from more
+    than one rank, which otherwise changes nonzero-RHS parallel solves on some
+    dolfinx_mpc/PETSc builds.  Ghost slave rows are still counted for diagnostics.
     """
 
     slave_globals = np.asarray(record["global_dofs"], dtype=np.int64)
@@ -685,12 +688,6 @@ def _emit_block_constraint_rows(
             owned_raw_maps[slave_global] = terms
             local_maps[slave_local] = (slave_global, *terms)
         elif bool(record.get("touches_owned_cell", False)):
-            if slave_local in local_maps:
-                raise RuntimeError(
-                    f"Ghost local 3D Floquet {entity_label} slave dof {slave_local} "
-                    f"would be constrained twice in kind={kind}."
-                )
-            local_maps[slave_local] = (slave_global, *terms)
             ghost_rows_for_owned_cells += 1
         else:
             ghost_rows_skipped += 1
@@ -1581,8 +1578,14 @@ def _build_double_floquet_mpc_p2_trace(
         log(f"3D Floquet number of corner constraints = {num_corner_constraints}")
         log(f"3D Floquet local slave dofs = {len(local_slave_dofs)}")
         log(f"3D Floquet local slave records seen = {num_local_slave_records_seen}")
-        log(f"3D Floquet local ghost slave constraints = {num_local_ghost_slave_constraints}")
-        log(f"3D Floquet global ghost slave constraints = {num_global_ghost_slave_constraints}")
+        log(
+            "3D Floquet local ghost slave records on owned cells "
+            f"(not added to MPC) = {num_local_ghost_slave_constraints}"
+        )
+        log(
+            "3D Floquet global ghost slave records on owned cells "
+            f"(not added to MPC) = {num_global_ghost_slave_constraints}"
+        )
         log(f"3D Floquet local ghost slave records skipped = {num_local_ghost_slave_records_skipped}")
         log(f"3D Floquet global ghost slave records skipped = {num_global_ghost_slave_records_skipped}")
         log(f"3D Floquet raw map nnz = {raw_map_nnz}")

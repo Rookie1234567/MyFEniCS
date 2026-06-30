@@ -1,5 +1,82 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
+## 2026-06-30 更新：p=2 高阶 Floquet 已覆盖 2A / 2B / 2C
+
+当前二阶 N1curl Floquet 的正式约束模式是：
+
+```text
+--nedelec-degree 2
+--floquet-constraint-mode auto
+resolved -> topological_trace_p2
+```
+
+已开放的 Stage 2 case：
+
+```text
+2A floquet_airbox
+2B pml_airbox
+2C fresnel_interface
+```
+
+仍未开放：
+
+```text
+Stage 4 grating p=2 Floquet
+p>=3 Floquet
+```
+
+2B PML airbox p=2 示例：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case pml_airbox \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case pml_airbox \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+```
+
+2C Fresnel diagnostic p=2 示例：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case fresnel_interface \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case fresnel_interface \
+  --case oblique \
+  --mesh-target-size 100 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto
+```
+
+阅读 p=2 代码时，先看：
+
+```text
+src/constraints/floquet_3d.py
+  build_double_floquet_mpc(...)
+  _resolve_constraint_mode(...)
+  _build_double_floquet_mpc_p2_trace(...)
+  _emit_block_constraint_rows(...)
+```
+
+其中 `_emit_block_constraint_rows(...)` 只让 owned slave dof 进入 `dolfinx_mpc.add_constraint()`；ghost slave dof 只保留诊断统计，避免 MPI 下重复约束同一个全局 trace dof。
+
 ## 2026-06-30 更新：Stage 2A 二阶 N1curl Floquet 运行方式
 
 如果只想测试高阶 Floquet 约束，目前只运行 2A：

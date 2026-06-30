@@ -1,5 +1,75 @@
 # 3D 高阶 N1curl Floquet 约束验证报告
 
+## 2026-06-30 更新：p=2 Stage 2B/2C 已接入并完成 smoke
+
+本轮把 `topological_trace_p2` 从 Stage 2A `floquet_airbox` 扩展到 Stage 2B `pml_airbox` 和 Stage 2C `fresnel_interface`。正式约束路径仍然是显式拓扑 trace 配对，不使用 probe / pseudo-inverse / dense side fitting。
+
+实现状态：
+
+```text
+p=1 -> topological_edges_p1
+p=2 -> topological_trace_p2，可用于 floquet_airbox / pml_airbox / fresnel_interface
+p>=3 -> NotImplementedError
+Stage 4 -> 暂未开放 p=2 Floquet
+```
+
+这次还修正了 p=2 并行路径的一个风险点：ghost slave dof 只进入统计，不再传给 `dolfinx_mpc.MultiPointConstraint.add_constraint()`。全局约束只由 owning rank 发出，避免同一个高阶 trace slave 在不同 rank 上重复进入 MPC。
+
+### 本轮命令
+
+```bash
+python -m compileall -q src
+
+python3 -m unittest src.test.test_17_3d_high_order_floquet_trace
+
+python3 -m src.runners.run_3d_cases --stage-case pml_airbox --case oblique --mesh-target-size 300 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+mpiexec -n 2 python3 -m src.runners.run_3d_cases --stage-case pml_airbox --case oblique --mesh-target-size 300 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+python3 -m src.runners.run_3d_cases --stage-case pml_airbox --case oblique --mesh-target-size 100 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+mpiexec -n 2 python3 -m src.runners.run_3d_cases --stage-case pml_airbox --case oblique --mesh-target-size 100 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+
+python3 -m src.runners.run_3d_cases --stage-case fresnel_interface --case oblique --mesh-target-size 300 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+mpiexec -n 2 python3 -m src.runners.run_3d_cases --stage-case fresnel_interface --case oblique --mesh-target-size 300 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+python3 -m src.runners.run_3d_cases --stage-case fresnel_interface --case oblique --mesh-target-size 100 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+mpiexec -n 2 python3 -m src.runners.run_3d_cases --stage-case fresnel_interface --case oblique --mesh-target-size 100 --nedelec-degree 2 --visualization-degree 1 --floquet-constraint-mode auto
+```
+
+### Stage 2B：PML airbox p=2
+
+| case | MPI | h (nm) | dofs | constraints | edge | face | slave faces | Floquet total (s) | E error | PML proxy | elapsed (s) | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| pml oblique | 1 | 300 | 690 | 178 | 98 | 80 | 20 | 0.021 | 4.024652e-02 | 8.933082e-19 | 255.323 | completed |
+| pml oblique | 2 | 300 | 690 | 178 | 98 | 80 | 20 | 0.017 | 4.024652e-02 | 2.578250e-17 | 211.435 | completed |
+| pml oblique | 1 | 100 | 11602 | 1282 | 666 | 616 | 154 | 0.190 | 4.919823e-03 | 0.000000e+00 | 766.307 | completed |
+| pml oblique | 2 | 100 | 11602 | 1282 | 666 | 616 | 154 | 0.119 | 4.919823e-03 | 1.899485e-16 | 479.634 | completed |
+
+结论：2B 的 p=2 Floquet trace 约束构建保持轻量，h100 也只需要约 0.12-0.19 秒；serial/MPI 的 E error 和约束数量一致。耗时主要来自直接法 `linear_problem_solve`，不是 Floquet 约束构建。
+
+### Stage 2C：Fresnel interface p=2
+
+| case | MPI | h (nm) | dofs | constraints | edge | face | Floquet total (s) | R | T | R+T | PML proxy | status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| fresnel oblique | 1 | 300 | 690 | 178 | 98 | 80 | 0.023 | 2.123398e-01 | 1.051729e+00 | 1.264069e+00 | 3.744645e-01 | completed |
+| fresnel oblique | 2 | 300 | 690 | 178 | 98 | 80 | 0.016 | 1.899935e-01 | 8.554535e-01 | 1.045447e+00 | 2.236888e-01 | completed |
+| fresnel oblique | 1 | 100 | 11602 | 1282 | 666 | 616 | 0.185 | 8.741929e-02 | 8.612330e-01 | 9.486522e-01 | 2.880244e-01 | completed |
+| fresnel oblique | 2 | 100 | 11602 | 1282 | 666 | 616 | 0.124 | 1.017348e-01 | 8.423203e-01 | 9.440551e-01 | 2.905455e-01 | completed |
+
+结论：2C 的 p=2 高阶 Floquet 机制已经能和 Fresnel diagnostic 路径组合运行；约束数量、face constraints、mismatch 都正常。R/T 仍反映 Stage 2C 旧 incident-scattered + PML Fresnel 诊断模型本身的误差，本轮不把 2C 当作物理精确 benchmark，也不在这里修 Fresnel 物理模型。
+
+### 测试状态
+
+```text
+python -m compileall -q src
+  PASS
+
+python3 -m unittest src.test.test_17_3d_high_order_floquet_trace
+  PASS: 6 tests, 2 skipped
+
+python3 -m unittest discover -s src/test -p "test_*.py"
+  FAIL: 1 known failure in test_13_3d_stage_entrypoints
+  原因：当前 src/main.py 的用户本地默认 stage_case 是 stage4_flat_layer_sanity，
+       该测试仍期待 stage4_block_grating。本轮按要求未修改 src/main.py。
+```
+
 ## 2026-06-30 更新：p=2 Stage 2A Floquet trace 路线已跑通
 
 本轮实现并验证了第一版高阶 3D Floquet 约束：

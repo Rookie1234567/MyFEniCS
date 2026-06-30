@@ -1,3 +1,29 @@
+## 2026-06-30 更新：p=2 Stage 2B/2C Floquet 阅读路径
+
+如果你现在研究二阶 3D Floquet 与 Stage 2B/2C 的组合，建议按这个顺序读：
+
+```text
+1. src/runners/run_3d_cases.py
+   看 --stage-case pml_airbox / fresnel_interface 如何进入对应 Stage 2 配置。
+
+2. src/common/config_3d.py
+   看 nedelec_degree=2、floquet_constraint_mode="auto"、use_floquet_xy=True。
+
+3. src/constraints/floquet_3d.py
+   看 build_double_floquet_mpc(...) 如何分流：
+     p=1 -> _build_double_floquet_mpc_p1_edges(...)
+     p=2 -> _build_double_floquet_mpc_p2_trace(...)
+   p=2 的 edge dof 和 face-interior dof 都在这里显式拓扑配对。
+
+4. src/solvers/solve_maxwell_3d_stage_2_no_grating.py
+   看 Stage 2A/2B/2C 怎样调用公共有限元流程。
+
+5. src/solvers/solve_maxwell_3d_common.py
+   只在需要追踪装配、PML/Fresnel 诊断字段、summary 字段时再进入。
+```
+
+p=2 的关键点：ghost slave dof 只做诊断统计，不传给 `dolfinx_mpc.add_constraint()`；真正的全局约束只由 owning rank 发出。这样可以避免 MPI 下同一个高阶 trace slave 被重复约束。
+
 ## 2026-06-30 更新：3D p=2 高阶 Floquet trace 阅读路径
 
 如果你现在研究二阶 3D Floquet 边界，建议按这个顺序读：

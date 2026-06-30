@@ -1,5 +1,29 @@
 # v2 文档索引
 
+## 2026-06-30 更新：3D p=2 Floquet 已扩展到 Stage 2B/2C
+
+当前高阶 Floquet 支持范围：
+
+```text
+p=1: topological_edges_p1，可用于既有 3D Floquet 路径
+p=2: topological_trace_p2，可用于 Stage 2A floquet_airbox、Stage 2B pml_airbox、Stage 2C fresnel_interface
+p>=3: 暂未实现
+Stage 4 grating: 暂未开放 p=2 Floquet
+```
+
+本轮实跑结果放在：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
+Stage 2 的运行命令和代码阅读路径放在：
+
+```text
+notes/quick_start/stage2_2a_2b_2c_usage_guide.md
+notes/reference/code_walkthrough.md
+```
+
 ## 2026-06-30 更新：3D p=2 高阶 Floquet trace 约束已开放 Stage 2A
 
 本轮新增 3D 高阶 N1curl Floquet 约束第一版：

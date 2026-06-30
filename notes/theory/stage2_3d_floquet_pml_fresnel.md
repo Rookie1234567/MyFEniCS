@@ -1,5 +1,32 @@
 # Stage 2：3D 双周期 Floquet、z 向 PML 和 Fresnel 验证
 
+## 2026-06-30 更新：p=2 高阶 Floquet trace 已用于 2A / 2B / 2C
+
+二阶 N1curl 的 Floquet 约束现在用于三个 Stage 2 诊断 case：
+
+```text
+2A floquet_airbox
+2B pml_airbox
+2C fresnel_interface
+```
+
+约束仍沿用显式拓扑 trace 配对：
+
+```text
+slave_i = beta * sum_j T_ij master_j
+```
+
+其中：
+
+- edge trace dof 使用 Basix interval entity transformation。
+- face-interior tangential dof 使用 Basix quadrilateral entity transformation 的局部小矩阵。
+- corner edge dof 只约束一次，直接使用 `beta_x * beta_y`。
+- 不使用 whole-plane probe、pseudo-inverse 或 dense side fitting。
+
+并行规则也同步收紧：只由 owning rank 发出全局 slave 约束，ghost slave 只做诊断统计，不再加入 `dolfinx_mpc.add_constraint()`。这条规则是为了避免高阶 trace dof 在 MPI 下被多个 rank 重复约束。
+
+注意：2C 的 Fresnel 数值误差仍属于历史 incident-scattered + PML diagnostic 的问题，本轮只验证高阶 Floquet trace 机制能和 2C 流程组合运行，并不把 2C R/T 当作已经修好的物理 benchmark。
+
 ## 2026-06-30 更新：p=2 高阶 H(curl) Floquet trace 约束
 
 Stage 2A `floquet_airbox` 现在支持第一版二阶 N1curl Floquet 约束：
