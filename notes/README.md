@@ -2,6 +2,15 @@
 
 ## 2026-07-01 更新：新增 3D 矩阵与 PETSc 求解器诊断
 
+续跑状态：`MeshTargetSize = 20, 15, 12, 10, 8 nm` 的 Stage4 block / p1 / zero_order / np1 默认直接法尺度表已完成，结果见：
+
+```text
+results/matrix_scale_20260701_085320/matrix_scale.csv
+notes/test/3d_matrix_solver_diagnostics.md
+```
+
+结论简述：本轮 `nnz/row` 基本稳定在 33 左右，未看到 Floquet/MPC 导致矩阵随网格细化显著变稠；MUMPS out-of-core 当前在 analysis 阶段报 `INFOG(1)=-38`，MKL PARDISO 当前 PETSc build 不支持。
+
 新增运行期诊断，用来解释为什么 FEniCS/DOLFINx 在约 90 万自由度时就比 COMSOL 更容易吃满 WSL swap。现在 summary 会记录：
 
 ```text

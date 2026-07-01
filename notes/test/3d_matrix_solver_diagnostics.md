@@ -1,5 +1,74 @@
 # 3D Maxwell 矩阵与求解器诊断记录
 
+## 2026-07-01 续跑：完整默认尺度表已生成
+
+本轮补跑了上次因额度限制未完成的默认直接法尺度扫描：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 20 15 12 10 8 \
+  --mpi-procs 1 \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile default
+```
+
+输出 CSV：
+
+```text
+results/matrix_scale_20260701_085320/matrix_scale.csv
+```
+
+核心结果：
+
+| h nm | DOF | Floquet 约束 | nnz used | nnz/row | 估算 AIJ 矩阵 MB | solve/assembly 诊断秒 | peak RSS MB | R+T |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 | 1696 | 275 | 56398 | 33.25 | 1.30 | 6.44 | 294.61 | 0.99999977 |
+| 15 | 2844 | 412 | 95230 | 33.48 | 2.20 | 0.45 | 293.04 | 0.99999996 |
+| 12 | 6384 | 697 | 212734 | 33.32 | 4.92 | 2.73 | 375.57 | 0.99999084 |
+| 10 | 6384 | 697 | 212734 | 33.32 | 4.92 | 6.20 | 375.56 | 0.99999084 |
+| 8 | 15936 | 1311 | 530606 | 33.30 | 12.27 | 18.84 | 678.78 | 0.85333423 |
+
+初步判断：
+
+```text
+1. nnz/row 基本稳定在 33 左右，没有随网格细化爆炸。
+2. 因此当前这组 p1 + zero_order 的内存增长主要来自 DOF/nnz 规模增长，而不是 Floquet/MPC 让矩阵明显变稠。
+3. h12 与 h10 得到同样 DOF/nnz，说明 boundary-fitted hexa 网格解析后落到了同一组轴向 cell 数。
+4. h8 的 R+T 明显低于 1，这属于物理/边界/离散误差诊断信号；本表主要用于矩阵规模，不作为物理收敛结论。
+```
+
+MUMPS out-of-core h20 单点补跑：
+
+```text
+np=1: results/matrix_scale_20260701_085507/matrix_scale.csv
+np=2: results/matrix_scale_20260701_085545/matrix_scale.csv
+```
+
+结果：
+
+```text
+np=1 和 np=2 均进入 MUMPS，但都在 MUMPS analysis 阶段失败。
+错误：INFOG(1)=-38
+```
+
+也就是说，当前 PETSc 镜像识别 MUMPS，但用户指定的 out-of-core 参数组合还不能直接作为可用求解器。下一步应优先查 MUMPS `INFOG(1)=-38` 对应参数兼容性，尤其是 `ICNTL(22/28/29)` 与当前 PETSc/MUMPS 构建方式，而不是继续扩大 WSL swap。
+
+MKL PARDISO h20 检查：
+
+```text
+results/matrix_scale_20260701_085623/matrix_scale.csv
+```
+
+结果：
+
+```text
+当前 PETSc build 不报告 mkl_pardiso。
+程序在建网格前停止，case_status = failed_parallel_direct_lu_unavailable。
+没有静默切换到其它 solver。
+```
+
 ## 2026-07-01 实跑记录：诊断路径 smoke
 
 编译和单元测试：
@@ -66,26 +135,6 @@ results/matrix_scale_20260701_084630/matrix_scale.csv
 ```
 
 CSV 已包含 DOF、约束数、nnz、平均 nnz/row、PETSc memory、RSS、swap、KSP/PC/factor solver、R/T 等字段。
-
-未完成项：
-
-```text
-完整 MeshTargetSize = 20, 15, 12, 10, 8 nm 扫描尚未实跑。
-原因：继续启动 Docker 跑完整扫描时，工具提示当前使用额度限制。
-下一轮建议直接运行下面命令：
-
-python3 -m src.studies.run_3d_matrix_scale \
-  --mesh-sizes 20 15 12 10 8 \
-  --mpi-procs 1 \
-  --stage-case stage4_block_grating \
-  --nedelec-degree 1 \
-  --stage4-dtn-order-policy zero_order \
-  --petsc-direct-solver-profile default
-
-然后再分别跑：
-  --mpi-procs 2 --petsc-direct-solver-profile mumps_ooc
-  --mpi-procs 1 --petsc-direct-solver-profile mkl_pardiso
-```
 
 ## 2026-07-01 更新：新增矩阵结构、PETSc solver 与尺度测试诊断
 
