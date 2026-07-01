@@ -1,5 +1,85 @@
 # 3D 高阶 N1curl Floquet 约束验证报告
 
+## 2026-07-01 更新：Stage 4B block grating p=2 已开放并完成第一轮 smoke
+
+本轮把 `topological_trace_p2` 正式扩展到 `stage4_block_grating`。实现边界如下：
+
+```text
+支持：hexahedron + N1curl degree=2 + topological_trace_p2
+仍拒绝：p>=3、tetra、dense/probe/pinv Floquet
+```
+
+代码层新增：
+
+```text
+floquet_3d.py:
+  stage4_block_grating 加入 p=2 allow-list
+  summary/log 新增 face transform fit count 和 max residual
+
+mesh_builder_3d.py:
+  Stage 4 hexa guard 从 “仅 p1/Stage4A p2” 改成允许 p1/p2，p>=3 继续报错
+
+diagnose_p2_mpc_constraints.py:
+  新增 --stage-case stage4_block_grating，用同一诊断脚本检查真实 grating 网格 trace 约束
+```
+
+### 基础测试
+
+```bash
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+```
+
+结果：
+
+```text
+Ran 54 tests in 1.840s
+OK (skipped=10)
+```
+
+### p=2 Floquet 约束残差诊断
+
+命令：
+
+```bash
+mpiexec -n 2 python3 -m src.test.diagnose_p2_mpc_constraints
+mpiexec -n 4 python3 -m src.test.diagnose_p2_mpc_constraints
+mpiexec -n 2 python3 -m src.test.diagnose_p2_mpc_constraints --stage-case stage4_block_grating
+mpiexec -n 4 python3 -m src.test.diagnose_p2_mpc_constraints --stage-case stage4_block_grating
+```
+
+结果摘要：
+
+| case | MPI | x_edge bad | x_face bad | y_edge bad | y_face bad | corner bad | max residual |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Stage4A flat | 2 | 0 | 0 | 0 | 0 | 0 | 5.38e-13 |
+| Stage4A flat | 4 | 0 | 0 | 0 | 0 | 0 | 5.38e-13 |
+| Stage4B block mesh | 2 | 0 | 0 | 0 | 0 | 0 | 5.89e-13 |
+| Stage4B block mesh | 4 | 0 | 0 | 0 | 0 | 0 | 8.71e-13 |
+
+### PDE smoke 与验证闸门
+
+| case | 参数 | MPI | dofs | constraints(edge/face) | R | T | R+T | 结论 |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| Stage2A Floquet airbox | h100, p2, oblique | 1 | 7552 | 436 / 396 | - | - | - | 回归通过，场误差保持粗网格量级 |
+| Stage4A flat sanity | lambda633, h20, p2, zero_order | 2 | 5676 | 356 / 320 | 9.209129e-13 | 1.000000e+00 | 1.000000e+00 | 长波 flat sanity 通过 |
+| Stage4A flat EUV | lambda13.5, h10, p2, zero_order | 4 | 39270 | 1270 / 1200 | 1.411951e-01 | 8.588049e-01 | 1.000000e+00 | 与 4B0 对照用；不是物理收敛结论 |
+| Stage4B zero contrast | lambda13.5, h10, p2, zero_order, n_sub=1, n_grating=1 | 4 | 47242 | 1394 / 1320 | 1.411951e-01 | 8.588049e-01 | 1.000000e+00 | 与同参数 Stage4A flat 数值一致 |
+| Stage4A flat EUV | lambda13.5, h7.5, p2, zero_order | 4 | 105154 | 2450 / 2352 | 9.774197e-01 | 2.258031e-02 | 1.000000e+00 | 粗网格/端口数值诊断，不作为物理结论 |
+| Stage4B zero contrast | lambda13.5, h7.5, p2, zero_order, n_sub=1, n_grating=1 | 4 | 120342 | 2622 / 2520 | 9.774197e-01 | 2.258031e-02 | 1.000000e+00 | 与同参数 Stage4A flat 数值一致 |
+| Stage4B weak contrast | lambda13.5, h10, p2, zero_order, n_sub=1, n_grating=1.05 | 4 | 47242 | 1394 / 1320 | 1.117768e-01 | 8.107075e-01 | 9.224842e-01 | 路径可求解，R+T 未超过 1 |
+| Stage4B real block | lambda13.5, h10, p2, zero_order, n_sub=1.45, n_grating=2.0 | 4 | 47242 | 1394 / 1320 | 3.545681e-01 | 2.644273e-01 | 6.189955e-01 | 路径可求解，R+T 未超过 1 |
+| Stage4B real block | lambda13.5, h20, p2, auto_propagating | 4 | 12030 | 550 / 504 | 9.999613e-01 | 3.873717e-05 | 1.000000e+00 | 多级 DtN 主线可组装运行，1068 auxiliary modes |
+
+### 当前判断
+
+1. `stage4_block_grating + p=2` 的 Floquet 约束、MPI ghost slave 规则、MPC finalize 和直接求解都已经打通。
+2. `4B0 zero-contrast` 与同参数 `Stage4A flat` 完全一致，说明真实 grating 网格/tag 本身没有引入虚假散射。
+3. EUV `lambda0=13.5 nm` 下，`h10/h7.5` 的 zero-order flat 数值仍不代表最终物理收敛；它们只是验证 Stage4B p=2 路径一致性。
+4. `auto_propagating` 多衍射级 DtN 在 h20/p2/MPI4 下可以完成 1068 个辅助模态装配和求解，但 h20 对 EUV 仍很粗，不能作为最终 R/T benchmark。
+
+下一步建议：如果要做可信 EUV 定量，应优先做 `stage4_flat_layer_sanity + auto_propagating` 的 h 收敛和端口方向/功率归一化复查，再把真实 grating 推到 h5/h2.5。
+
 ## 2026-07-01 更新：Stage 4A p=2 MPI 场污染已修复
 
 本轮重新检查 `stage4_flat_layer_sanity + p=2 + MPI`，发现 2026-06-30 的判断不完整：Stage 4A 场污染并不是 3D zero-order DtN 的主因，而是 p=2 Floquet face-interior dof 的局部 face transform 在 MPI 分区下不满足真实 Nedelec moment 约束。

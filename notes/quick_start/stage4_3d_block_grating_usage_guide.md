@@ -1,5 +1,66 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-01 更新：Stage 4B 真实矩形柱已支持 p=2 Floquet
+
+现在 `stage4_block_grating` 可以直接使用二阶 N1curl：
+
+```bash
+mpiexec -n 4 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 10 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto \
+  --stage4-dtn-order-policy zero_order \
+  --n-substrate 1.45 \
+  --n-grating 2.0 \
+  --diffraction-zero-order-only
+```
+
+如果要走正式多衍射级 DtN 主线，把 `zero_order` 换成 `auto_propagating`：
+
+```bash
+mpiexec -n 4 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto \
+  --stage4-dtn-order-policy auto_propagating \
+  --n-substrate 1.45 \
+  --n-grating 2.0 \
+  --no-diffraction-zero-order-only
+```
+
+本轮 h20/p2/MPI4 已完成 `auto_propagating` smoke，1068 个 DtN auxiliary modes 可以完成组装和求解。不过 h20 对 `lambda0=13.5 nm` 仍很粗，只能说明流程可运行，不能作为最终物理 R/T。
+
+为了确认 grating 几何和材料 tag 没有引入假散射，可以先跑 zero-contrast：
+
+```bash
+mpiexec -n 4 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 10 \
+  --nedelec-degree 2 \
+  --visualization-degree 1 \
+  --floquet-constraint-mode auto \
+  --stage4-dtn-order-policy zero_order \
+  --n-substrate 1.0 \
+  --n-grating 1.0 \
+  --diffraction-zero-order-only
+```
+
+该结果应与同参数 `stage4_flat_layer_sanity` 一致。当前 h10/p2/MPI4 的对照值为：
+
+```text
+Stage4A flat:       R/T = 1.411951e-01 / 8.588049e-01
+Stage4B zero block: R/T = 1.411951e-01 / 8.588049e-01
+```
+
+这表示 Stage4B p=2 路径一致；但 EUV h10 的 flat-layer 物理值还没收敛，不应把这组 R/T 当作最终 benchmark。
+
 ## 2026-06-30 更新：Stage 4A flat-layer sanity 支持 p=2 Floquet
 
 如果只想验证二阶 N1curl Floquet 与 Stage 4 DtN flat layer 是否能组合运行，用 Stage 4A：

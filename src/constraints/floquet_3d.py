@@ -47,6 +47,8 @@ class DoubleFloquet3DData:
     num_edge_constraints: int = 0
     num_face_constraints: int = 0
     max_face_midpoint_pairing_error: float = 0.0
+    max_face_transform_fit_residual: float = 0.0
+    num_face_transform_fits: int = 0
 
 
 def _mesh_is_hexahedron(msh) -> bool:
@@ -100,12 +102,13 @@ def _require_supported_topological_trace_p2(V, cfg: SimulationConfig3D) -> None:
         "pml_airbox",
         "fresnel_interface",
         "stage4_flat_layer_sanity",
+        "stage4_block_grating",
     }
     if cfg.stage_case not in allowed_stage_cases:
         raise NotImplementedError(
             "The high-order 3D Floquet trace implementation is currently enabled only for "
-            "Stage 2A/2B/2C and Stage 4A flat-layer sanity: stage_case in "
-            f"{sorted(allowed_stage_cases)!r}. Stage 4B block grating will be enabled after p=2 Stage 4A validation."
+            "Stage 2A/2B/2C and Stage 4A/4B: stage_case in "
+            f"{sorted(allowed_stage_cases)!r}. p>=3 remains disabled."
         )
     if not _mesh_is_hexahedron(V.mesh):
         raise NotImplementedError("3D high-order Floquet trace constraints require a hexahedron mesh.")
@@ -611,6 +614,7 @@ def _build_topological_trace_context_p2(V, mesh_data, cfg: SimulationConfig3D) -
         "face_records": face_records,
         "face_global_by_key": _merge_entity_records(comm.allgather(face_by_key), dof_key="global_dofs"),
         "trace_fit_values_by_global": trace_fit_values_by_global,
+        "face_transform_fit_residuals": [],
         "tol": tol,
         "basix_interval_transform": np.asarray(
             V.element.basix_element.entity_transformations()["interval"][0], dtype=np.complex128
@@ -903,6 +907,9 @@ def _face_transform_fit_p2(
     )
     transform = np.asarray(transform_t.T, dtype=np.complex128)
     fit_residual = float(np.max(np.abs(transform @ master_samples - slave_samples), initial=0.0))
+    context_residuals = context.get("face_transform_fit_residuals")
+    if isinstance(context_residuals, list):
+        context_residuals.append(fit_residual)
     if fit_residual > 1.0e-8:
         raise RuntimeError(
             "p=2 Floquet face transform fit residual is too large: "
@@ -1632,6 +1639,11 @@ def _build_double_floquet_mpc_p2_trace(
         float(corner_data["pair_error"]),
     )
     max_face_pair_error = max(float(x_data["face_pair_error"]), float(y_data["face_pair_error"]))
+    context = _context()
+    local_fit_residuals = np.asarray(context.get("face_transform_fit_residuals", []), dtype=np.float64)
+    local_max_face_fit_residual = float(np.max(local_fit_residuals, initial=0.0))
+    max_face_transform_fit_residual = float(comm.allreduce(local_max_face_fit_residual, op=MPI.MAX))
+    num_face_transform_fits = int(comm.allreduce(int(local_fit_residuals.size), op=MPI.SUM))
 
     num_slave_edges = int(x_data["num_slave_edges"] + y_data["num_slave_edges"] + corner_data["num_slave_edges"])
     num_matched_master_edges = int(
@@ -1689,6 +1701,8 @@ def _build_double_floquet_mpc_p2_trace(
         log(f"3D Floquet number of face constraints = {num_face_constraints}")
         log(f"3D Floquet max edge midpoint pairing error = {max_edge_pair_error:.3e} nm")
         log(f"3D Floquet max face midpoint pairing error = {max_face_pair_error:.3e} nm")
+        log(f"3D Floquet p=2 face transform fit count = {num_face_transform_fits}")
+        log(f"3D Floquet p=2 max face transform fit residual = {max_face_transform_fit_residual:.3e}")
         log(f"3D Floquet number of x constraints = {num_x_constraints}")
         log(f"3D Floquet number of y constraints = {num_y_constraints}")
         log(f"3D Floquet number of corner constraints = {num_corner_constraints}")
@@ -1738,6 +1752,8 @@ def _build_double_floquet_mpc_p2_trace(
         num_edge_constraints=num_edge_constraints,
         num_face_constraints=num_face_constraints,
         max_face_midpoint_pairing_error=max_face_pair_error,
+        max_face_transform_fit_residual=max_face_transform_fit_residual,
+        num_face_transform_fits=num_face_transform_fits,
     )
 
 

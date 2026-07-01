@@ -1,5 +1,53 @@
 # v2 文档索引
 
+## 2026-07-01 更新：Stage 4B block grating 已开放 p=2 Floquet
+
+本轮把 `topological_trace_p2` 从 Stage 4A flat-layer sanity 扩展到 Stage 4B `stage4_block_grating`。当前支持范围：
+
+```text
+p=1: topological_edges_p1，可用于现有 3D Floquet 路径
+p=2: topological_trace_p2，可用于 Stage 2A/2B/2C、Stage 4A 和 Stage 4B
+p>=3: 仍明确 NotImplementedError
+tetra: 仍未开放 3D Floquet
+```
+
+新增诊断字段：
+
+```text
+floquet_num_face_transform_fits
+floquet_max_face_transform_fit_residual
+```
+
+关键实跑结论：
+
+```text
+Stage 4A flat, lambda0=633 nm, h20, p2, MPI2:
+  R/T = 9.209129e-13 / 1.000000e+00
+
+Stage 4B zero-contrast, lambda0=13.5 nm, h10, p2, MPI4:
+  与 Stage 4A 同参数 flat-layer 数值一致，R/T = 1.411951e-01 / 8.588049e-01
+  说明 grating 几何/tag 本身没有额外引入散射；该 EUV h10 结果仍是粗网格数值，不作为物理收敛结论。
+
+Stage 4B weak-contrast, lambda0=13.5 nm, h10, p2, MPI4, zero_order:
+  R/T = 1.117768e-01 / 8.107075e-01, R+T = 9.224842e-01
+
+Stage 4B real block, lambda0=13.5 nm, h10, p2, MPI4, zero_order:
+  R/T = 3.545681e-01 / 2.644273e-01, R+T = 6.189955e-01
+
+Stage 4B real block, lambda0=13.5 nm, h20, p2, MPI4, auto_propagating:
+  1068 个 DtN auxiliary modes，R/T = 9.999613e-01 / 3.873717e-05, R+T = 1.000000e+00
+```
+
+注意：Stage 4B p=2 已经从“约束/并行/组装能否跑通”的角度开放；EUV 定量物理仍需要继续做更细网格和多级 DtN 收敛。尤其 `h10/h7.5` 在 `lambda0=13.5 nm` 下仍偏粗，不能直接当最终物理 benchmark。
+
+相关文档：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+notes/reference/code_walkthrough.md
+```
+
 ## 2026-07-01 更新：Stage 4A p=2 MPI 不一致已修复
 
 本轮确认并修复了 `stage4_flat_layer_sanity + nedelec_degree=2` 在 MPI 下 Ex/Ez 异常污染的问题。根因不是 DtN 端口本身，而是 p=2 Floquet face-interior dof 在不同 MPI 分区下的局部 face transform 不完整。

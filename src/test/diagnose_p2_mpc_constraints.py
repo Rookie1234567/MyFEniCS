@@ -15,16 +15,24 @@ from src.runners.run_3d_cases import _stage_defaults
 from src.solvers.common_3d_solve import _create_nedelec_space
 
 
-def _make_cfg() -> SimulationConfig3D:
-    values = _stage_defaults("stage4_flat_layer_sanity")
+def _make_cfg(stage_case: str) -> SimulationConfig3D:
+    values = _stage_defaults(stage_case)
+    if stage_case == "stage4_block_grating":
+        n_substrate = 1.45 + 0.0j
+        n_grating = 2.0 + 0.0j
+    else:
+        n_substrate = 1.0 + 0.0j
+        n_grating = 1.0 + 0.0j
     values.update(
         {
             "lambda0": 633.0,
-            "n_substrate": 1.0 + 0.0j,
+            "n_substrate": n_substrate,
+            "n_grating": n_grating,
             "mesh_target_size": 20.0,
             "nedelec_degree": 2,
             "visualization_degree": 1,
             "floquet_constraint_mode": "auto",
+            "stage4_dtn_order_policy": "zero_order",
         }
     )
     return SimulationConfig3D(**values)
@@ -32,11 +40,17 @@ def _make_cfg() -> SimulationConfig3D:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Diagnose p=2 3D Floquet MPC coefficient residuals.")
+    parser.add_argument(
+        "--stage-case",
+        choices=("stage4_flat_layer_sanity", "stage4_block_grating"),
+        default="stage4_flat_layer_sanity",
+        help="3D Stage-4 mesh/tag layout to use for the p=2 Floquet constraint diagnostic.",
+    )
     parser.add_argument("--verbose", action="store_true", help="Print worst face block and permutation details.")
     args = parser.parse_args()
     comm = MPI.COMM_WORLD
-    cfg = _make_cfg()
-    mesh_data = build_airbox_mesh_3d(cfg, Path("/tmp/p2_constraint_resid"))
+    cfg = _make_cfg(args.stage_case)
+    mesh_data = build_airbox_mesh_3d(cfg, Path(f"/tmp/p2_constraint_resid_{args.stage_case}"))
     V = _create_nedelec_space(mesh_data.mesh, cfg)
     context = floquet_3d._build_topological_trace_context_p2(V, mesh_data, cfg)
     x_edge_data = floquet_3d._build_p2_edge_constraints_for_kind(context, cfg, "x", comm)

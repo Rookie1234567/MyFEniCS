@@ -1,3 +1,49 @@
+## 2026-07-01 更新：Stage 4B p=2 开放后的阅读路径
+
+如果你现在研究真实 3D grating 的二阶单元流程，按这个顺序读：
+
+```text
+1. src/runners/run_3d_cases.py
+   看 _stage_defaults("stage4_block_grating") 和 CLI 参数如何生成 SimulationConfig3D。
+
+2. src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
+   这是 Stage 4B 的清晰入口，只接受 stage_case="stage4_block_grating"。
+
+3. src/solvers/common_3d_case_flow.py
+   看 run_prepared_3d_case_flow 如何串起 mesh、Nedelec space、Floquet、DtN port、postprocess。
+
+4. src/geometry/mesh_builder_3d.py
+   看 _validate_stage4_hexa_geometry：Stage 4 现在允许 degree=1/2，p>=3 仍拒绝。
+
+5. src/constraints/floquet_3d.py
+   p=2 重点看 _build_double_floquet_mpc_p2_trace：
+   - edge dofs 显式配对
+   - face-interior dofs 用每个周期 face 的 4x4 local Nedelec moment fit
+   - summary 新增 floquet_num_face_transform_fits 和 floquet_max_face_transform_fit_residual
+
+6. src/solvers/dtn_port_3d.py
+   看 Stage 4 DtN total-field port。zero_order 是低成本 sanity；auto_propagating 是正式多衍射级端口。
+
+7. src/postprocessing/postprocess_3d.py
+   看 ParaView 字段和 field component L2 diagnostics。
+```
+
+当前边界：
+
+```text
+p=1 Stage4B: 保持旧 edge dof Floquet 路径
+p=2 Stage4B: 已开放 topological_trace_p2
+p>=3 Stage4B: 仍未开放
+tetra Stage4B: 仍未开放
+```
+
+对应验证记录在：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+notes/quick_start/stage4_3d_block_grating_usage_guide.md
+```
+
 ## 2026-07-01 更新：p=2 Floquet face-interior MPI 修复后的阅读路径
 
 如果你现在研究二阶 3D Floquet，重点看这一条新路径：

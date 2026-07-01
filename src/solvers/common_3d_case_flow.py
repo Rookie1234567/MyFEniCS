@@ -588,6 +588,12 @@ def run_prepared_3d_case_flow(
         "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
         "floquet_num_edge_constraints": None if floquet_data is None else floquet_data.num_edge_constraints,
         "floquet_num_face_constraints": None if floquet_data is None else floquet_data.num_face_constraints,
+        "floquet_num_face_transform_fits": None
+        if floquet_data is None
+        else floquet_data.num_face_transform_fits,
+        "floquet_max_face_transform_fit_residual": None
+        if floquet_data is None
+        else floquet_data.max_face_transform_fit_residual,
         "floquet_max_edge_midpoint_pairing_error": None if floquet_data is None else floquet_data.max_edge_midpoint_pairing_error,
         "floquet_max_face_midpoint_pairing_error": None
         if floquet_data is None
