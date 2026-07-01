@@ -1,5 +1,51 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-01 更新：矩阵/求解器诊断命令
+
+如果你怀疑内存瓶颈来自矩阵结构，而不是单纯自由度数，可以先跑较粗网格诊断：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --matrix-diagnostics-assemble-unconstrained \
+  -ksp_view -log_view
+```
+
+MUMPS out-of-core 测试：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mumps_ooc \
+  -ksp_view -log_view
+```
+
+尺度扫描 CSV：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 20 15 12 10 8 \
+  --mpi-procs 2 \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile default
+```
+
+详细字段说明见：
+
+```text
+notes/test/3d_matrix_solver_diagnostics.md
+```
+
 ## 2026-07-01 更新：Stage 4B 真实矩形柱已支持 p=2 Floquet
 
 现在 `stage4_block_grating` 可以直接使用二阶 N1curl：

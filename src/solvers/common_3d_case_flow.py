@@ -83,6 +83,7 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
     log(f"mesh cell type resolved = {cfg.mesh_cell_type_resolved}")
     log(f"Floquet constraint mode requested = {cfg.floquet_constraint_mode_requested}")
     log("linear solve method = direct_lu")
+    log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
     log(f"divergence penalty = {cfg.divergence_penalty}")
     if selected_parallel_lu is not None:
         log(f"MPI direct factor solver selected = {selected_parallel_lu}")
@@ -90,6 +91,47 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
         log(f"WARNING: {disabled_reason}")
     log(f"PETSc direct LU options = {petsc_options}")
     return dot_k_p
+
+
+def _matrix_nnz_ratio(after: dict[str, Any] | None, before: dict[str, Any] | None) -> float | None:
+    if after is None or before is None:
+        return None
+    after_nnz = after.get("matrix_nnz_used")
+    before_nnz = before.get("matrix_nnz_used")
+    if after_nnz is None or before_nnz in (None, 0.0):
+        return None
+    return float(after_nnz) / float(before_nnz)
+
+
+def _matrix_row_ratio(after: dict[str, Any] | None, before: dict[str, Any] | None) -> float | None:
+    if after is None or before is None:
+        return None
+    after_rows = after.get("matrix_rows")
+    before_rows = before.get("matrix_rows")
+    if after_rows is None or before_rows in (None, 0):
+        return None
+    return float(after_rows) / float(before_rows)
+
+
+def _assemble_unconstrained_matrix_stats(a, bcs, comm: MPI.Intracomm, log) -> dict[str, Any] | None:
+    """Optionally assemble the pre-MPC matrix for density diagnostics.
+
+    This doubles peak matrix memory for the diagnostic run, so it is controlled
+    by cfg.matrix_diagnostics_assemble_unconstrained and should be used first on
+    small meshes.
+    """
+
+    try:
+        A_raw = fem_petsc.assemble_matrix(fem.form(a), bcs=[] if bcs is None else bcs)
+        A_raw.assemble()
+        stats = _petsc_matrix_stats(A_raw)
+        A_raw.destroy()
+        return stats
+    except Exception as exc:
+        message = f"WARNING: unconstrained matrix diagnostic assembly failed: {exc}"
+        if comm.rank == 0:
+            log(message)
+        return {"diagnostic_error": str(exc)}
 
 
 def _parallel_lu_failure_summary(
@@ -124,6 +166,7 @@ def _parallel_lu_failure_summary(
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": "3D Maxwell direct LU path",
         "linear_solve_method": "direct_lu",
+        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
         "linear_solve_petsc_options": petsc_options,
         "linear_solve_disabled_reason": reason_text,
         "actual_ksp_type": None,
@@ -300,7 +343,7 @@ def run_prepared_3d_case_flow(
             raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
 
-    petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm)
+    petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
     dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
     if disabled_reason is not None:
         return _parallel_lu_failure_summary(
@@ -397,6 +440,13 @@ def run_prepared_3d_case_flow(
         incident_field=E_source_for_rhs,
     )
     unconstrained_rhs_norm = _assembled_rhs_norm(L)
+    unconstrained_matrix_stats = None
+    if cfg.matrix_diagnostics_assemble_unconstrained:
+        log("assembling unconstrained matrix for diagnostic nnz comparison")
+        unconstrained_matrix_stats = _assemble_unconstrained_matrix_stats(a, problem_bcs, comm, log)
+        if unconstrained_matrix_stats is not None and "diagnostic_error" not in unconstrained_matrix_stats:
+            log("unconstrained matrix diagnostic stats:")
+            _log_matrix_stats(unconstrained_matrix_stats, log)
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
     log(f"unconstrained RHS norm = {unconstrained_rhs_norm}")
 
@@ -458,6 +508,37 @@ def run_prepared_3d_case_flow(
     matrix_stats = _petsc_matrix_stats(system_A)
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
     _log_matrix_stats(matrix_stats, log)
+    dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
+    dtn_base_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_base_matrix_stats")
+    dtn_augmented_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+    dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
+    explicit_chac_constructed = False
+    chac_before_stats = None
+    chac_after_stats = None
+    constraint_matrix_transform = {
+        "uses_floquet_mpc": bool(floquet_data is not None),
+        "mpc_backend": None if floquet_data is None else "dolfinx_mpc low-level topological constraints",
+        "explicit_chac_constructed": explicit_chac_constructed,
+        "chac_matrix_stats_before": chac_before_stats,
+        "chac_matrix_stats_after": chac_after_stats,
+        "unconstrained_matrix_stats": unconstrained_matrix_stats,
+        "constrained_matrix_stats": matrix_stats,
+        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(matrix_stats, unconstrained_matrix_stats),
+        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(matrix_stats, unconstrained_matrix_stats),
+        "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
+        "dtn_base_matrix_stats": dtn_base_matrix_stats,
+        "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats),
+        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats),
+    }
+    log(f"explicit C^H A C constructed = {explicit_chac_constructed}")
+    if unconstrained_matrix_stats is None:
+        log("unconstrained pre-MPC matrix stats = not assembled")
+    elif "diagnostic_error" not in unconstrained_matrix_stats:
+        log(f"constrained/unconstrained nnz ratio = {constraint_matrix_transform['constrained_to_unconstrained_nnz_ratio']}")
+    if dtn_base_matrix_stats is not None:
+        log(f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}")
 
     reason = int(system_ksp.getConvergedReason())
     reason_name = _ksp_reason_name(reason)
@@ -495,6 +576,12 @@ def run_prepared_3d_case_flow(
         "num_mesh_cells": int(num_cells),
         "num_nedelec_dofs": int(num_dofs),
         "matrix_stats": matrix_stats,
+        "unconstrained_matrix_stats": unconstrained_matrix_stats,
+        "constraint_matrix_transform": constraint_matrix_transform,
+        "explicit_chac_constructed": explicit_chac_constructed,
+        "chac_nnz_before": None,
+        "chac_nnz_after": None,
+        "constrained_linear_system_size": int(matrix_stats["matrix_rows"]),
         "petsc_scalar_type": str(PETSc.ScalarType),
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": solver_backend,
@@ -504,6 +591,9 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy if solve_stage4_dtn_port else None,
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly if solve_stage4_dtn_port else None,
         "stage4_dtn_num_auxiliary_dofs": None if dtn_result is None else dtn_result["solver_info"].get("num_auxiliary_dofs"),
+        "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
+        "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
@@ -555,6 +645,7 @@ def run_prepared_3d_case_flow(
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
         "linear_solve_method": "direct_lu",
+        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
         "linear_solve_petsc_options": petsc_options,
         "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,

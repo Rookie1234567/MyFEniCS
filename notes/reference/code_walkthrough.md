@@ -1,3 +1,43 @@
+## 2026-07-01 更新：矩阵和求解器诊断阅读路径
+
+如果你现在关心“为什么 90 万自由度就内存爆掉”，按这个顺序读：
+
+```text
+1. src/runners/run_3d_cases.py
+   看 --petsc-direct-solver-profile、--petsc-ksp-view、--petsc-log-view、
+   --matrix-diagnostics-assemble-unconstrained 以及尾随 PETSc 参数如何进入 config。
+
+2. src/common/config_3d.py
+   看 petsc_direct_solver_profile、petsc_extra_options、
+   matrix_diagnostics_assemble_unconstrained 这些诊断字段。
+
+3. src/solvers/common_3d_solve.py
+   看 _prepare_direct_lu_options_for_comm 和 _petsc_matrix_stats。
+   这里决定 default / mumps_ooc / mkl_pardiso 等 PETSc 选项，并读取 Mat.getInfo()。
+
+4. src/solvers/common_3d_case_flow.py
+   看 unconstrained_matrix_stats、constraint_matrix_transform、
+   matrix_stats 如何写入 run_summary.json。
+
+5. src/solvers/dtn_port_3d.py
+   看 dtn_base_matrix_stats、dtn_augmented_matrix_stats_after_finalize、
+   dtn_auxiliary_block_stats。这里用于判断 DtN auxiliary 是否变成 dense block。
+
+6. src/studies/run_3d_matrix_scale.py
+   批量跑 MeshTargetSize = 20/15/12/10/8，并生成 matrix_scale.csv。
+```
+
+关键判断字段：
+
+```text
+matrix_stats.matrix_average_nnz_per_row
+matrix_stats.matrix_nnz_used
+matrix_stats.matrix_nnz_allocated
+constraint_matrix_transform.explicit_chac_constructed
+constraint_matrix_transform.dtn_augmented_to_base_nnz_ratio
+stage4_dtn_auxiliary_block_stats.dtn_auxiliary_block_is_dense
+```
+
 ## 2026-07-01 更新：Stage 4B p=2 开放后的阅读路径
 
 如果你现在研究真实 3D grating 的二阶单元流程，按这个顺序读：

@@ -13,10 +13,13 @@ from petsc4py import PETSc
 
 import dolfinx_mpc
 from dolfinx import fem
+from dolfinx.fem import petsc as fem_petsc
+from dolfinx.la.petsc import _ghost_update, create_vector
 
 from ..common.config_3d import SimulationConfig3D
 from ..common.modes_3d import PortMode3D, incident_power_3d, outgoing_port_modes_3d
 from ..constraints.floquet_3d import DoubleFloquet3DData
+from .common_3d_solve import _petsc_matrix_stats
 from .solve_vector_maxwell import _json_default
 
 
@@ -48,8 +51,11 @@ def _assemble_mpc_form_vector(linear_form, mpc) -> PETSc.Vec:
     return vec
 
 
-def _assemble_mpc_vector(linear_form, mpc) -> PETSc.Vec:
-    return _assemble_mpc_form_vector(fem.form(linear_form), mpc)
+def _assemble_mpc_vector(linear_form, mpc, *, quadrature_degree: int | None = None) -> PETSc.Vec:
+    form_options: dict[str, int] = {}
+    if quadrature_degree is not None:
+        form_options["quadrature_degree"] = int(quadrature_degree)
+    return _assemble_mpc_form_vector(fem.form(linear_form, form_compiler_options=form_options), mpc)
 
 
 def _vec_nonzero_owned_entries(vec: PETSc.Vec, *, relative_tol: float = 1.0e-13) -> tuple[np.ndarray, np.ndarray]:
@@ -102,7 +108,7 @@ def _set_scalar_constant(constant: fem.Constant, value: complex) -> None:
 class _ReusableSurfaceComponentAssembler:
     """Cache one port surface form and update only the Fourier phase constants."""
 
-    def __init__(self, V, mesh_data, tag: int, component: int):
+    def __init__(self, V, mesh_data, tag: int, component: int, *, quadrature_degree: int | None = None):
         if component not in {0, 1}:
             raise ValueError("Stage-4 DtN port component assembly only supports x/y tangential components.")
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -118,7 +124,13 @@ class _ReusableSurfaceComponentAssembler:
         vector[component] = phase
         v = ufl.TestFunction(V)
         ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
-        self.form = fem.form(ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag))
+        form_options: dict[str, int] = {}
+        if quadrature_degree is not None:
+            form_options["quadrature_degree"] = int(quadrature_degree)
+        self.form = fem.form(
+            ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag),
+            form_compiler_options=form_options,
+        )
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
         _set_scalar_constant(self.alpha, mode.alpha)
@@ -146,6 +158,30 @@ def _copy_base_matrix_to_augmented(A_base: PETSc.Mat, n_aux: int, comm: MPI.Intr
         if len(cols):
             A_aug.setValues(_idx([row]), _idx(cols), values)
     return A_aug
+
+
+def _local_augmented_dtn_coupling_stats(
+    *,
+    n_fe: int,
+    n_aux: int,
+    traction_rows_total: int,
+    ell_cols_total: int,
+) -> dict[str, Any]:
+    """Summarize the sparse auxiliary DtN block shape.
+
+    The auxiliary formulation should add one sparse column and one sparse row
+    per mode, not a dense all-to-all FEM trace block.
+    """
+
+    coupling_nnz = int(traction_rows_total + ell_cols_total + n_aux)
+    return {
+        "dtn_auxiliary_block_is_dense": False,
+        "dtn_auxiliary_dof_count": int(n_aux),
+        "dtn_auxiliary_fem_dof_count": int(n_fe),
+        "dtn_auxiliary_coupling_nnz_estimate": coupling_nnz,
+        "dtn_auxiliary_average_coupling_nnz_per_mode": float(coupling_nnz / max(n_aux, 1)),
+        "dtn_auxiliary_dense_block_equivalent_nnz": int(n_aux * max(n_fe, 1) * 2 + n_aux),
+    }
 
 
 def _augmented_vec_from_base(b_base: PETSc.Vec, n_aux: int, comm: MPI.Intracomm) -> PETSc.Vec:
@@ -198,6 +234,284 @@ def _incident_top_traction_form(V, mesh_data, cfg: SimulationConfig3D):
     return _surface_vector_form(V, mesh_data, cfg.tags.z_max, traction, phase)
 
 
+def _dtn_surface_quadrature_degree(cfg: SimulationConfig3D, modes: list[PortMode3D]) -> int:
+    """Choose a quadrature degree for oscillatory DtN surface projections.
+
+    The port forms contain Fourier factors exp(i alpha x + i gamma y), not just
+    polynomials.  Default UFL quadrature is too low for p=2 EUV cases where the
+    automatically selected propagating orders can change phase rapidly within a
+    single surface cell.  A deterministic moderately high rule keeps the
+    auxiliary DtN block from losing rank in MPI while avoiding a user-facing
+    option explosion at this stage.
+    """
+
+    configured = getattr(cfg, "stage4_dtn_quadrature_degree", None)
+    if configured is not None:
+        return max(1, int(configured))
+    max_order = max((max(abs(mode.m), abs(mode.n)) for mode in modes), default=0)
+    return int(max(10, 2 * int(cfg.nedelec_degree) + max_order + 6))
+
+
+def _use_zero_order_local_robin_dtn(cfg: SimulationConfig3D) -> bool:
+    """Use the 2D-like local DtN sanity branch for normal-incidence order 0."""
+
+    transverse_scale = max(abs(cfg.k0 * complex(cfg.n_air)), 1.0)
+    normal_incidence = abs(complex(cfg.kx)) <= 1.0e-12 * transverse_scale and abs(complex(cfg.ky)) <= 1.0e-12 * transverse_scale
+    return cfg.stage4_dtn_order_policy.lower() == "zero_order" and normal_incidence
+
+
+def _mode_projection_from_solution(
+    E_total,
+    mode: PortMode3D,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    *,
+    quadrature_degree: int | None,
+) -> complex:
+    """Project a solved total field onto one port mode on its boundary face."""
+
+    tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
+    x = ufl.SpatialCoordinate(mesh_data.mesh)
+    phase = ufl.exp(
+        PETSc.ScalarType(1j * mode.alpha) * x[0]
+        + PETSc.ScalarType(1j * mode.gamma) * x[1]
+        + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
+    )
+    reference = _as_ufl_vector(mode.e_vector, phase)
+    ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
+    form_options: dict[str, int] = {}
+    if quadrature_degree is not None:
+        form_options["quadrature_degree"] = int(quadrature_degree)
+    local = fem.assemble_scalar(
+        fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options)
+    )
+    total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
+    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+    denominator = area * mode.electric_tangential_norm_sq
+    return complex(total / denominator)
+
+
+def _surface_scalar(
+    expression,
+    mesh_data,
+    tag: int,
+    *,
+    quadrature_degree: int | None,
+) -> complex:
+    ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
+    form_options: dict[str, int] = {}
+    if quadrature_degree is not None:
+        form_options["quadrature_degree"] = int(quadrature_degree)
+    local = fem.assemble_scalar(fem.form(expression * ds(tag), form_compiler_options=form_options))
+    return complex(mesh_data.mesh.comm.allreduce(local, op=MPI.SUM))
+
+
+def _surface_diagnostics(
+    E_total,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    *,
+    quadrature_degree: int | None,
+) -> dict[str, Any]:
+    """Return direct z-port measure diagnostics for the zero-order sanity branch."""
+
+    fdim = mesh_data.mesh.topology.dim - 1
+    facet_index_map = mesh_data.mesh.topology.index_map(fdim)
+    owned_facet_limit = facet_index_map.size_local
+    diagnostics: dict[str, Any] = {}
+    one = fem.Constant(mesh_data.mesh, PETSc.ScalarType(1.0))
+    e_t = ufl.as_vector((E_total[0], E_total[1], PETSc.ScalarType(0.0)))
+    for side, tag in (("top", cfg.tags.z_max), ("bottom", cfg.tags.z_min)):
+        tagged_facets = np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32)
+        owned_count_local = int(np.count_nonzero(tagged_facets < owned_facet_limit))
+        owned_count = int(mesh_data.mesh.comm.allreduce(owned_count_local, op=MPI.SUM))
+        area = _surface_scalar(one, mesh_data, tag, quadrature_degree=quadrature_degree)
+        energy = _surface_scalar(ufl.inner(e_t, e_t), mesh_data, tag, quadrature_degree=quadrature_degree)
+        diagnostics[f"stage4_dtn_{side}_facet_count_owned_global"] = owned_count
+        diagnostics[f"stage4_dtn_{side}_surface_area_nm2"] = float(np.real(area))
+        diagnostics[f"stage4_dtn_{side}_Et_l2_integral"] = float(np.real(energy))
+        diagnostics[f"stage4_dtn_{side}_Et_l2_mean"] = float(np.real(energy) / max(float(np.real(area)), 1.0e-30))
+    return diagnostics
+
+
+def _zero_order_local_robin_forms(a, L, V, mesh_data, cfg: SimulationConfig3D):
+    """Build the normal-incidence order-0 DtN form used as a hard sanity path.
+
+    The H(curl) integration-by-parts identity contributes
+    ``+ int_boundary (n x curl(E)) . v``.  For a top incident downward wave and
+    outgoing top/bottom zero-order modes, this gives the same sign convention
+    as the validated 2D port sanity path: ``q=-i beta`` and top source
+    ``-2 i beta E_inc,t``.
+    """
+
+    u = ufl.TrialFunction(V)
+    v = ufl.TestFunction(V)
+    x = ufl.SpatialCoordinate(mesh_data.mesh)
+    ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
+
+    beta_top = cfg.k0 * complex(cfg.n_air)
+    beta_bottom = cfg.k0 * complex(cfg.substrate_index)
+    q_top = PETSc.ScalarType(-1j * beta_top)
+    q_bottom = PETSc.ScalarType(-1j * beta_bottom)
+    v_t = ufl.as_vector((v[0], v[1], PETSc.ScalarType(0.0)))
+    q_top_u_t = ufl.as_vector((q_top * u[0], q_top * u[1], PETSc.ScalarType(0.0)))
+    q_bottom_u_t = ufl.as_vector((q_bottom * u[0], q_bottom * u[1], PETSc.ScalarType(0.0)))
+    a_local = (
+        a
+        + ufl.inner(q_top_u_t, v_t) * ds(cfg.tags.z_max)
+        + ufl.inner(q_bottom_u_t, v_t) * ds(cfg.tags.z_min)
+    )
+
+    k_inc = np.asarray(cfg.wavevector, dtype=np.complex128)
+    incident_e = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
+    source_vec = np.asarray(
+        (
+            -2j * beta_top * incident_e[0],
+            -2j * beta_top * incident_e[1],
+            0.0 + 0.0j,
+        ),
+        dtype=np.complex128,
+    )
+    phase = ufl.exp(
+        PETSc.ScalarType(1j * k_inc[0]) * x[0]
+        + PETSc.ScalarType(1j * k_inc[1]) * x[1]
+        + PETSc.ScalarType(1j * k_inc[2]) * x[2]
+    )
+    L_local = L + ufl.inner(_as_ufl_vector(source_vec, phase), v) * ds(cfg.tags.z_max)
+    return a_local, L_local
+
+
+def _solve_zero_order_local_robin_dtn(
+    *,
+    a,
+    L,
+    V,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
+    petsc_options: dict[str, Any],
+    out_dir: Path,
+    log,
+) -> dict[str, Any]:
+    """Solve the normal-incidence zero-order DtN port as a local Robin problem."""
+
+    comm = mesh_data.mesh.comm
+    stage_start = time.perf_counter()
+    timing_details: dict[str, float | int | bool | str] = {
+        "stage4_dtn_zero_order_local_robin": True,
+    }
+    modes = outgoing_port_modes_3d(cfg)
+    if len(modes) != 4:
+        raise RuntimeError(
+            "zero_order local DtN expects exactly four modes: top/bottom x/y. "
+            f"Got {len(modes)} modes."
+        )
+    dtn_quadrature_degree = _dtn_surface_quadrature_degree(cfg, modes)
+    timing_details["stage4_dtn_surface_quadrature_degree"] = int(dtn_quadrature_degree)
+    if log is not None:
+        log("Stage-4 DtN using zero-order local Robin sanity branch")
+        log(f"Stage-4 DtN surface quadrature degree = {dtn_quadrature_degree}")
+
+    t0 = time.perf_counter()
+    a_local, L_local = _zero_order_local_robin_forms(a, L, V, mesh_data, cfg)
+    E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+    problem = dolfinx_mpc.LinearProblem(
+        a_local,
+        L_local,
+        floquet_data.mpc,
+        bcs=[],
+        u=E_total,
+        petsc_options_prefix=f"stage4_3d_zero_order_dtn_{cfg.case_name}_",
+        petsc_options=petsc_options,
+    )
+    timing_details["stage4_dtn_zero_order_linear_problem_setup_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+
+    t0 = time.perf_counter()
+    E_total = problem.solve()
+    E_total.x.scatter_forward()
+    timing_details["stage4_dtn_zero_order_linear_solve_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+
+    t0 = time.perf_counter()
+    modal_values = np.asarray(
+        [
+            _mode_projection_from_solution(
+                E_total,
+                mode,
+                mesh_data,
+                cfg,
+                quadrature_degree=dtn_quadrature_degree,
+            )
+            for mode in modes
+        ],
+        dtype=np.complex128,
+    )
+    incident_projections = [_incident_projection_onto_top_mode(mode, cfg) for mode in modes]
+    timing_details["stage4_dtn_zero_order_projection_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+    port_metrics = _port_power_metrics(cfg, modes, modal_values, incident_projections)
+    port_metrics.update(
+        _surface_diagnostics(
+            E_total,
+            mesh_data,
+            cfg,
+            quadrature_degree=dtn_quadrature_degree,
+        )
+    )
+    port_metrics["stage4_dtn_zero_order_modal_values"] = [complex(value) for value in modal_values]
+    port_metrics["stage4_dtn_zero_order_incident_projections"] = [
+        complex(value) for value in incident_projections
+    ]
+    port_metrics.update(timing_details)
+    port_metrics["dtn_port_power_metric_note"] = (
+        "Stage-4 zero_order dtn_port R/T is computed from direct boundary projections "
+        "after solving the local Robin/DtN total-field problem."
+    )
+    _write_port_outputs(out_dir, cfg, modes, modal_values, incident_projections, port_metrics, comm)
+
+    solver_info = {
+        "solver_backend": "dolfinx_mpc.LinearProblem with zero-order local 3D DtN/Robin ports",
+        "num_auxiliary_dofs": 0,
+        "num_fem_dofs_after_mpc": int(problem.A.getSize()[0]),
+        "num_total_augmented_dofs": int(problem.A.getSize()[0]),
+        "explicit_chac_constructed": False,
+        "dtn_auxiliary_dense_block_constructed": False,
+        "dtn_base_matrix_stats": None,
+        "dtn_augmented_matrix_stats_after_finalize": None,
+        "dtn_auxiliary_block_stats": {
+            "dtn_auxiliary_block_is_dense": False,
+            "dtn_auxiliary_dof_count": 0,
+            "dtn_auxiliary_coupling_nnz_estimate": 0,
+        },
+        "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
+        "ksp_converged_reason": int(problem.solver.getConvergedReason()),
+        "ksp_iterations": int(problem.solver.getIterationNumber()),
+        "actual_ksp_type": problem.solver.getType(),
+        "actual_pc_type": problem.solver.getPC().getType(),
+        "actual_pc_factor_solver_type": None,
+        **timing_details,
+        **_linear_residual(problem.A, problem.b, problem.x),
+    }
+    try:
+        solver_info["actual_pc_factor_solver_type"] = problem.solver.getPC().getFactorSolverType()
+    except Exception:
+        solver_info["actual_pc_factor_solver_type"] = None
+    return {
+        "E_total": E_total,
+        "solver_info": solver_info,
+        "port_metrics": port_metrics,
+        "A": problem.A,
+        "b": problem.b,
+        "x": problem.x,
+        "ksp": problem.solver,
+        "problem": problem,
+    }
+
+
 def _solve_augmented_system(
     A_aug: PETSc.Mat,
     b_aug: PETSc.Vec,
@@ -229,15 +543,24 @@ def _assign_fe_solution_from_augmented(
     E_total = fem.Function(mpc.function_space, name="E_total")
     index_map = E_total.function_space.dofmap.index_map
     block_size = E_total.function_space.dofmap.index_map_bs
-    block_start, block_end = index_map.local_range
-    owned_size = index_map.size_local * block_size
-    global_dofs = _idx(np.arange(block_start * block_size, block_end * block_size, dtype=np.int64))
-    if len(global_dofs):
-        E_total.x.array[:owned_size] = x_aug.getValues(global_dofs)
-    E_total.x.scatter_forward()
+
+    # Mirror dolfinx_mpc.LinearProblem.solve(): use a PETSc vector with the
+    # original MPC function-space layout, ghost-update it, then let
+    # fem.petsc.assign populate the Function.  Hand-copying into
+    # E_total.x.array is fragile in MPI once the augmented DtN system appends
+    # auxiliary rows on the final rank.
+    x_fe = create_vector([(index_map, block_size)])
+    row_start, row_end = x_fe.getOwnershipRange()
+    if row_end > row_start:
+        rows = _idx(np.arange(row_start, row_end, dtype=np.int64))
+        x_fe.setValues(rows, x_aug.getValues(rows), addv=PETSc.InsertMode.INSERT_VALUES)
+    x_fe.assemble()
+    _ghost_update(x_fe, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)  # type: ignore[arg-type]
+    fem_petsc.assign(x_fe, E_total)
     mpc.homogenize(E_total)
     mpc.backsubstitution(E_total)
     E_total.x.scatter_forward()
+    x_fe.destroy()
     if n_aux == 0:
         return E_total
     return E_total
@@ -413,6 +736,18 @@ def solve_stage4_dtn_port_total_field(
         raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
     if floquet_data is None:
         raise ValueError("stage4_boundary_model='dtn_port' requires x/y Floquet constraints.")
+    if _use_zero_order_local_robin_dtn(cfg):
+        return _solve_zero_order_local_robin_dtn(
+            a=a,
+            L=L,
+            V=V,
+            mesh_data=mesh_data,
+            cfg=cfg,
+            floquet_data=floquet_data,
+            petsc_options=petsc_options,
+            out_dir=out_dir,
+            log=log,
+        )
 
     comm = mesh_data.mesh.comm
     stage_start = time.perf_counter()
@@ -421,6 +756,7 @@ def solve_stage4_dtn_port_total_field(
     t0 = time.perf_counter()
     A_base = dolfinx_mpc.assemble_matrix(fem.form(a), floquet_data.mpc, bcs=None)
     A_base.assemble()
+    base_matrix_stats = _petsc_matrix_stats(A_base)
     timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     t0 = time.perf_counter()
@@ -432,10 +768,13 @@ def solve_stage4_dtn_port_total_field(
     n_aux = len(modes)
     if n_aux == 0:
         raise RuntimeError("Stage-4 DtN selected zero port modes.")
+    dtn_quadrature_degree = _dtn_surface_quadrature_degree(cfg, modes)
+    timing_details["stage4_dtn_surface_quadrature_degree"] = int(dtn_quadrature_degree)
     if log is not None:
         log(f"Stage-4 DtN selected auxiliary port modes = {n_aux}")
         log(f"Stage-4 DtN top/bottom mode count = {sum(m.side == 'top' for m in modes)} / {sum(m.side == 'bottom' for m in modes)}")
         log(f"Stage-4 DtN matrix base rows = {n_fe}")
+        log(f"Stage-4 DtN surface quadrature degree = {dtn_quadrature_degree}")
 
     t0 = time.perf_counter()
     A_aug = _copy_base_matrix_to_augmented(A_base, n_aux, comm)
@@ -453,10 +792,18 @@ def solve_stage4_dtn_port_total_field(
     incident_projections: list[complex] = []
     area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
     surface_assemblers = {
-        ("top", 0): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_max, 0),
-        ("top", 1): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_max, 1),
-        ("bottom", 0): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_min, 0),
-        ("bottom", 1): _ReusableSurfaceComponentAssembler(V, mesh_data, cfg.tags.z_min, 1),
+        ("top", 0): _ReusableSurfaceComponentAssembler(
+            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
+        ),
+        ("top", 1): _ReusableSurfaceComponentAssembler(
+            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree
+        ),
+        ("bottom", 0): _ReusableSurfaceComponentAssembler(
+            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree
+        ),
+        ("bottom", 1): _ReusableSurfaceComponentAssembler(
+            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
+        ),
     }
     component_key: tuple[str, int, int, complex] | None = None
     component_entries: tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]] | None = None
@@ -465,6 +812,8 @@ def solve_stage4_dtn_port_total_field(
     component_vector_cache_hits = 0
     modal_vector_assembly_seconds_local = 0.0
     modal_block_insert_seconds_local = 0.0
+    traction_rows_total_local = 0
+    ell_cols_total_local = 0
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
         mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
@@ -497,6 +846,7 @@ def solve_stage4_dtn_port_total_field(
 
         t_insert = time.perf_counter()
         if len(traction_rows):
+            traction_rows_total_local += int(len(traction_rows))
             A_aug.setValues(traction_rows, _idx([aux_global]), (-traction_values).reshape((len(traction_rows), 1)))
             if incident_projection != 0.0:
                 b_aug.setValues(
@@ -506,6 +856,7 @@ def solve_stage4_dtn_port_total_field(
                 )
 
         if len(ell_cols):
+            ell_cols_total_local += int(len(ell_cols))
             A_aug.setValues(
                 _idx([aux_global]),
                 ell_cols,
@@ -527,6 +878,14 @@ def solve_stage4_dtn_port_total_field(
     timing_details["stage4_dtn_unique_surface_orders"] = int(comm.allreduce(unique_surface_orders, op=MPI.MAX))
     timing_details["stage4_dtn_component_vector_assemblies"] = int(comm.allreduce(component_vector_assemblies, op=MPI.MAX))
     timing_details["stage4_dtn_component_vector_cache_hits"] = int(comm.allreduce(component_vector_cache_hits, op=MPI.MAX))
+    traction_rows_total = int(comm.allreduce(traction_rows_total_local, op=MPI.SUM))
+    ell_cols_total = int(comm.allreduce(ell_cols_total_local, op=MPI.SUM))
+    dtn_auxiliary_block_stats = _local_augmented_dtn_coupling_stats(
+        n_fe=n_fe,
+        n_aux=n_aux,
+        traction_rows_total=traction_rows_total,
+        ell_cols_total=ell_cols_total,
+    )
     if log is not None:
         log(
             "Stage-4 DtN modal cache summary: "
@@ -534,10 +893,13 @@ def solve_stage4_dtn_port_total_field(
             f"x/y component vector assemblies = {timing_details['stage4_dtn_component_vector_assemblies']}, "
             f"polarization cache hits = {timing_details['stage4_dtn_component_vector_cache_hits']}"
         )
+        log(f"Stage-4 DtN base matrix nnz = {base_matrix_stats.get('matrix_nnz_used')}")
+        log(f"Stage-4 DtN auxiliary coupling nnz estimate = {dtn_auxiliary_block_stats['dtn_auxiliary_coupling_nnz_estimate']}")
 
     t0 = time.perf_counter()
     A_aug.assemble()
     b_aug.assemble()
+    augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
     timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     t0 = time.perf_counter()
@@ -563,6 +925,11 @@ def solve_stage4_dtn_port_total_field(
         "actual_ksp_type": ksp.getType(),
         "actual_pc_type": ksp.getPC().getType(),
         "actual_pc_factor_solver_type": None,
+        "dtn_base_matrix_stats": base_matrix_stats,
+        "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+        "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "explicit_chac_constructed": False,
+        "dtn_auxiliary_dense_block_constructed": False,
         **timing_details,
         **_linear_residual(A_aug, b_aug, x_aug),
     }

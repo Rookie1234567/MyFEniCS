@@ -27,6 +27,59 @@ def _number_tag(prefix: str, value: object) -> str:
     return f"{prefix}{text}"
 
 
+def _parse_value(text: str) -> object:
+    lowered = text.lower()
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    try:
+        if any(ch in text for ch in (".", "e", "E")):
+            return float(text)
+        return int(text)
+    except ValueError:
+        return text
+
+
+def _parse_petsc_option_tokens(tokens: list[str]) -> dict[str, object]:
+    """Parse trailing PETSc-style options accepted by parse_known_args.
+
+    Examples:
+      -ksp_view -log_view
+      -pc_factor_mat_solver_type mumps
+      -mat_mumps_icntl_22 1
+    """
+
+    options: dict[str, object] = {}
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if not token.startswith("-"):
+            raise ValueError(f"Unexpected non-option token after PETSc options: {token!r}")
+        key = token.lstrip("-")
+        if not key:
+            raise ValueError("Empty PETSc option name.")
+        if i + 1 < len(tokens) and not tokens[i + 1].startswith("-"):
+            options[key] = _parse_value(tokens[i + 1])
+            i += 2
+        else:
+            options[key] = True
+            i += 1
+    return options
+
+
+def _parse_petsc_extra_option(values: list[str] | None) -> dict[str, object]:
+    options: dict[str, object] = {}
+    for item in values or []:
+        text = item.strip()
+        if not text:
+            continue
+        if "=" in text:
+            key, value = text.split("=", 1)
+            options[key.lstrip("-")] = _parse_value(value)
+        else:
+            options[text.lstrip("-")] = True
+    return options
+
+
 def _run_stage_config(cfg: SimulationConfig3D, out_dir: Path) -> dict[str, object]:
     """Dispatch one 3D config to the stage-specific solver entry."""
     if cfg.stage_case in STAGE1_CASES:
@@ -152,6 +205,23 @@ def _config_updates(args) -> dict[str, object]:
         updates["diffraction_compute_modal_diagnostic"] = args.diffraction_compute_modal_diagnostic
     if args.diffraction_rayleigh_tol is not None:
         updates["diffraction_rayleigh_tol"] = args.diffraction_rayleigh_tol
+    if args.petsc_direct_solver_profile is not None:
+        updates["petsc_direct_solver_profile"] = args.petsc_direct_solver_profile
+    if args.petsc_ksp_view is not None:
+        updates["petsc_ksp_view"] = args.petsc_ksp_view
+    if args.petsc_log_view is not None:
+        updates["petsc_log_view"] = args.petsc_log_view
+    if args.matrix_diagnostics_assemble_unconstrained is not None:
+        updates["matrix_diagnostics_assemble_unconstrained"] = args.matrix_diagnostics_assemble_unconstrained
+    petsc_extra_options = {}
+    petsc_extra_options.update(getattr(args, "petsc_unknown_options", {}))
+    petsc_extra_options.update(_parse_petsc_extra_option(args.petsc_extra_option))
+    if petsc_extra_options:
+        updates["petsc_extra_options"] = petsc_extra_options
+        if "ksp_view" in petsc_extra_options:
+            updates["petsc_ksp_view"] = True
+        if "log_view" in petsc_extra_options:
+            updates["petsc_log_view"] = True
     return updates
 
 
@@ -416,7 +486,28 @@ def main(argv: list[str] | None = None):
         help="Compute the old E/H modal-fit diagnostic. Default is off because EUV cells may have many orders.",
     )
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--petsc-direct-solver-profile",
+        choices=("default", "mumps_ooc", "mkl_pardiso", "mumps", "superlu_dist", "strumpack"),
+        default=None,
+        help="Direct-solver diagnostic profile. default keeps current behavior; mumps_ooc enables MUMPS out-of-core.",
+    )
+    parser.add_argument("--petsc-ksp-view", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--petsc-log-view", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--petsc-extra-option",
+        action="append",
+        default=None,
+        help="Extra PETSc option as key=value or key. Also accepts trailing PETSc tokens such as -ksp_view -log_view.",
+    )
+    parser.add_argument(
+        "--matrix-diagnostics-assemble-unconstrained",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Also assemble the pre-MPC matrix for nnz comparison. This increases peak memory.",
+    )
+    args, petsc_unknown = parser.parse_known_args(argv)
+    args.petsc_unknown_options = _parse_petsc_option_tokens(petsc_unknown)
 
     unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
     updates = _config_updates(args)

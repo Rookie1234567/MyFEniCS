@@ -1,5 +1,51 @@
 # v2 文档索引
 
+## 2026-07-01 更新：新增 3D 矩阵与 PETSc 求解器诊断
+
+新增运行期诊断，用来解释为什么 FEniCS/DOLFINx 在约 90 万自由度时就比 COMSOL 更容易吃满 WSL swap。现在 summary 会记录：
+
+```text
+原始 Nedelec 自由度
+Floquet/MPC 约束数量
+约束后线性系统大小
+DtN auxiliary 变量数量
+PETSc Mat size / nnz_used / nnz_allocated / memory
+平均 nnz/row
+实际 KSP / PC / factor solver
+是否显式构造 C^H A C
+DtN augmented/base matrix nnz 对比
+```
+
+新增 PETSc profile：
+
+```text
+default
+mumps_ooc
+mkl_pardiso
+mumps
+superlu_dist
+strumpack
+```
+
+也可以把 PETSc 原生命令放在运行命令末尾，例如：
+
+```bash
+-ksp_view -log_view
+```
+
+尺度测试 CSV 脚本：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 20 15 12 10 8 --mpi-procs 2 --petsc-direct-solver-profile mumps_ooc
+```
+
+相关文档：
+
+```text
+notes/test/3d_matrix_solver_diagnostics.md
+notes/reference/code_walkthrough.md
+```
+
 ## 2026-07-01 更新：Stage 4B block grating 已开放 p=2 Floquet
 
 本轮把 `topological_trace_p2` 从 Stage 4A flat-layer sanity 扩展到 Stage 4B `stage4_block_grating`。当前支持范围：

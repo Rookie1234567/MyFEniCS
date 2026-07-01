@@ -1,0 +1,285 @@
+# 3D Maxwell 矩阵与求解器诊断记录
+
+## 2026-07-01 实跑记录：诊断路径 smoke
+
+编译和单元测试：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+Ran 54 tests in 1.687s
+OK (skipped=10)
+```
+
+默认直接法小算例：
+
+```text
+stage4_flat_layer_sanity, h=50 nm, p=1, np=1, zero_order
+原始 Nedelec dofs = 75
+Floquet constraints = 31
+约束后系统大小 = 75
+matrix nnz_used / nnz_allocated = 2057 / 2057
+average nnz/row = 27.43
+explicit C^H A C constructed = False
+R/T = 9.999104e-01 / 8.960401e-05
+```
+
+这组 h=50 只是诊断 smoke，不是物理 benchmark。
+
+PETSc 参数解析已验证：
+
+```text
+-ksp_view -log_view
+```
+
+可以放在 `src.runners.run_3d_cases` 命令末尾；`log_view` 只写入 PETSc 全局 options，不再作为 prefixed KSP option 造成 unused option 噪声。
+
+MUMPS out-of-core 测试：
+
+```text
+profile = mumps_ooc
+np = 1 和 np = 2 均进入 MUMPS
+当前镜像在 MUMPS analysis 阶段失败：
+INFOG(1)=-38
+```
+
+这说明当前 PETSc/MUMPS 确实识别到 MUMPS，但用户指定的 out-of-core 参数组合在当前镜像里还不能直接作为可用解法。下一步如果继续优化 MUMPS，需要针对 `INFOG(1)=-38` 查 MUMPS 参数兼容性，而不是继续扩大 swap。
+
+MKL PARDISO 支持检查：
+
+```text
+profile = mkl_pardiso
+当前 PETSc build 不报告 mkl_pardiso
+程序在建网格前停止并写出 diagnostic summary，没有静默切换到其它求解器
+```
+
+尺度测试 CSV smoke：
+
+```text
+python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 50 --mpi-procs 1 --stage-case stage4_flat_layer_sanity --nedelec-degree 1 --stage4-dtn-order-policy zero_order
+```
+
+输出：
+
+```text
+results/matrix_scale_20260701_084630/matrix_scale.csv
+```
+
+CSV 已包含 DOF、约束数、nnz、平均 nnz/row、PETSc memory、RSS、swap、KSP/PC/factor solver、R/T 等字段。
+
+未完成项：
+
+```text
+完整 MeshTargetSize = 20, 15, 12, 10, 8 nm 扫描尚未实跑。
+原因：继续启动 Docker 跑完整扫描时，工具提示当前使用额度限制。
+下一轮建议直接运行下面命令：
+
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 20 15 12 10 8 \
+  --mpi-procs 1 \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile default
+
+然后再分别跑：
+  --mpi-procs 2 --petsc-direct-solver-profile mumps_ooc
+  --mpi-procs 1 --petsc-direct-solver-profile mkl_pardiso
+```
+
+## 2026-07-01 更新：新增矩阵结构、PETSc solver 与尺度测试诊断
+
+本轮目标不是继续增大 WSL swap，而是把内存爆炸拆成可观测指标：自由度、MPC 约束、矩阵 nnz、DtN auxiliary block、实际 PETSc 求解器和峰值内存。
+
+每次 3D 运行的 `run_summary.json` 现在会补充这些字段：
+
+```text
+num_nedelec_dofs
+floquet_num_constraints
+constrained_linear_system_size
+stage4_dtn_num_auxiliary_dofs
+matrix_stats.matrix_rows / matrix_cols
+matrix_stats.matrix_nnz_used
+matrix_stats.matrix_nnz_allocated
+matrix_stats.matrix_memory_mb
+matrix_stats.matrix_average_nnz_per_row
+actual_ksp_type
+actual_pc_type
+actual_pc_factor_solver_type
+explicit_chac_constructed
+constraint_matrix_transform
+stage4_dtn_auxiliary_block_stats
+```
+
+其中：
+
+```text
+explicit_chac_constructed = False
+```
+
+表示当前 3D 主线没有走旧的显式 `C^H A C` dense/serial 消元路线。Floquet 约束由 `dolfinx_mpc` 低层拓扑约束装配；Stage 4 DtN 是 FEM unknown + auxiliary modal unknown 的增广稀疏系统。
+
+## 运行时打开 PETSc view/log
+
+可以直接把 PETSc 风格参数放在命令最后：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  -ksp_view -log_view
+```
+
+也可以使用显式 CLI：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --mesh-target-size 20 \
+  --petsc-ksp-view \
+  --petsc-log-view
+```
+
+## 测试 MUMPS out-of-core
+
+单进程：
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mumps_ooc \
+  -ksp_view -log_view
+```
+
+双进程：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mumps_ooc \
+  -ksp_view -log_view
+```
+
+`mumps_ooc` 会设置：
+
+```text
+ksp_type = preonly
+pc_type = lu
+pc_factor_mat_solver_type = mumps
+mat_mumps_icntl_22 = 1
+mat_mumps_icntl_14 = 80
+mat_mumps_icntl_28 = 2
+mat_mumps_icntl_29 = 2
+```
+
+如果当前 PETSc 镜像不支持 MUMPS，程序会在建网格前写出失败 summary，不会静默切回其它求解器。
+
+## 测试 MKL PARDISO 是否可用
+
+```bash
+python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mkl_pardiso \
+  -ksp_view
+```
+
+如果 PETSc 不支持 `mkl_pardiso`，程序会记录错误并停止，不会强行继续。
+
+## 生成尺度测试 CSV
+
+默认扫描：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 20 15 12 10 8 \
+  --mpi-procs 1 \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile default
+```
+
+MUMPS out-of-core 双进程：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 20 15 12 10 8 \
+  --mpi-procs 2 \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mumps_ooc \
+  --petsc-option ksp_view \
+  --petsc-option log_view
+```
+
+输出位置：
+
+```text
+results/matrix_scale_YYYYMMDD_HHMMSS/matrix_scale.csv
+```
+
+CSV 字段包括：
+
+```text
+mesh_target_size_nm
+mpi_procs
+solver_profile
+dof_raw_nedelec
+floquet_constraints
+constrained_system_size
+dtn_auxiliary_dofs
+nnz_used
+nnz_allocated
+average_nnz_per_row
+solve_time_seconds
+peak_rss_mb
+swap_used_before_mb
+swap_used_after_mb
+actual_ksp_type
+actual_pc_type
+actual_pc_factor_solver_type
+explicit_chac_constructed
+dtn_augmented_to_base_nnz_ratio
+constrained_to_unconstrained_nnz_ratio
+```
+
+## 如何判断矩阵是否变稠
+
+优先看三个比值：
+
+```text
+matrix_stats.matrix_average_nnz_per_row
+constraint_matrix_transform.constrained_to_unconstrained_nnz_ratio
+constraint_matrix_transform.dtn_augmented_to_base_nnz_ratio
+```
+
+如果 `average_nnz_per_row` 随网格细化只是温和增长，内存主要来自自由度规模。如果它突然大幅上升，才说明 Floquet/MPC 或 DtN auxiliary block 正在让矩阵结构变稠。
+
+对比关闭 DtN 的路径：
+
+```bash
+mpiexec -n 2 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 20 \
+  --nedelec-degree 1 \
+  --stage4-boundary-model robin0
+```
+
+这个结果不是正式物理 R/T，只用于比较矩阵 nnz 和内存。
