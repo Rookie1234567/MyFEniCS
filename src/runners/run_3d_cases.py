@@ -213,6 +213,8 @@ def _config_updates(args) -> dict[str, object]:
         updates["petsc_log_view"] = args.petsc_log_view
     if args.matrix_diagnostics_assemble_unconstrained is not None:
         updates["matrix_diagnostics_assemble_unconstrained"] = args.matrix_diagnostics_assemble_unconstrained
+    if args.matrix_diagnostics_assemble_only is not None:
+        updates["matrix_diagnostics_assemble_only"] = args.matrix_diagnostics_assemble_only
     petsc_extra_options = {}
     petsc_extra_options.update(getattr(args, "petsc_unknown_options", {}))
     petsc_extra_options.update(_parse_petsc_extra_option(args.petsc_extra_option))
@@ -488,9 +490,22 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
     parser.add_argument(
         "--petsc-direct-solver-profile",
-        choices=("default", "mumps_ooc", "mkl_pardiso", "mumps", "superlu_dist", "strumpack"),
+        choices=(
+            "default",
+            "mumps_ooc",
+            "mumps_ooc_seq_analysis",
+            "mumps_ooc_parallel_analysis",
+            "mumps_ooc_requested_legacy",
+            "mkl_pardiso",
+            "mumps",
+            "superlu_dist",
+            "strumpack",
+        ),
         default=None,
-        help="Direct-solver diagnostic profile. default keeps current behavior; mumps_ooc enables MUMPS out-of-core.",
+        help=(
+            "Direct-solver diagnostic profile. mumps_ooc enables safe MUMPS out-of-core; "
+            "mumps_ooc_requested_legacy reproduces the old ICNTL(28/29) test."
+        ),
     )
     parser.add_argument("--petsc-ksp-view", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--petsc-log-view", action=argparse.BooleanOptionalAction, default=None)
@@ -505,6 +520,12 @@ def main(argv: list[str] | None = None):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Also assemble the pre-MPC matrix for nnz comparison. This increases peak memory.",
+    )
+    parser.add_argument(
+        "--matrix-diagnostics-assemble-only",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Assemble the final linear system and write diagnostics, but skip LU factorization/solve.",
     )
     args, petsc_unknown = parser.parse_known_args(argv)
     args.petsc_unknown_options = _parse_petsc_option_tokens(petsc_unknown)
@@ -523,6 +544,8 @@ def main(argv: list[str] | None = None):
         group_parts.append(f"np{MPI.COMM_WORLD.size}")
     run_root = _shared_run_dir(results_root, "_".join(group_parts), unique_output)
     run_root.mkdir(parents=True, exist_ok=True)
+    if MPI.COMM_WORLD.rank == 0:
+        print(f"3D case output directory: {run_root}")
 
     summaries = []
     single_case_output = len(configs) == 1 and unique_output

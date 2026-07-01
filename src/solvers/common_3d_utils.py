@@ -45,6 +45,92 @@ def _global_max_rss_mb(comm) -> float | None:
         return None
     return float(comm.allreduce(local, op=MPI.MAX))
 
+def _swap_used_mb() -> float | None:
+    """Return current Linux swap use in MB when /proc/meminfo is available."""
+
+    meminfo = Path("/proc/meminfo")
+    if not meminfo.exists():
+        return None
+    values: dict[str, float] = {}
+    try:
+        lines = meminfo.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if ":" not in line:
+            continue
+        key, rest = line.split(":", 1)
+        parts = rest.strip().split()
+        if not parts:
+            continue
+        try:
+            values[key] = float(parts[0]) / 1024.0
+        except ValueError:
+            continue
+    if "SwapTotal" not in values or "SwapFree" not in values:
+        return None
+    return max(values["SwapTotal"] - values["SwapFree"], 0.0)
+
+def _progress_matrix_fields(matrix_stats: dict[str, Any] | None) -> dict[str, Any]:
+    if not matrix_stats:
+        return {}
+    return {
+        "matrix_rows": matrix_stats.get("matrix_rows"),
+        "matrix_cols": matrix_stats.get("matrix_cols"),
+        "matrix_nnz_used": matrix_stats.get("matrix_nnz_used"),
+        "matrix_nnz_allocated": matrix_stats.get("matrix_nnz_allocated"),
+        "matrix_average_nnz_per_row": matrix_stats.get("matrix_average_nnz_per_row"),
+        "matrix_memory_mb": matrix_stats.get("matrix_memory_mb"),
+        "matrix_memory_estimate_mb": matrix_stats.get("matrix_memory_estimate_mb"),
+    }
+
+def _write_progress_event(
+    out_dir: Path,
+    comm,
+    *,
+    stage: str,
+    status: str,
+    started: float | None = None,
+    dofs: int | None = None,
+    constraints: int | None = None,
+    matrix_stats: dict[str, Any] | None = None,
+    petsc_options: dict[str, Any] | None = None,
+    extra: dict[str, Any] | None = None,
+) -> None:
+    """Append a rank-0 progress checkpoint that survives hard solver failures.
+
+    This intentionally does not call a barrier.  The event marks the latest
+    reached stage before operations such as KSPSetUp/LU factorization, where a
+    process may be killed before a normal summary can be written.
+    """
+
+    try:
+        local_rss = _max_rss_mb()
+        max_rss = None if local_rss is None else float(comm.allreduce(local_rss, op=MPI.MAX))
+    except Exception:
+        max_rss = _max_rss_mb()
+    if comm.rank != 0:
+        return
+    payload: dict[str, Any] = {
+        "time_wall": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "stage": stage,
+        "status": status,
+        "elapsed_seconds": None if started is None else time.perf_counter() - started,
+        "rank_count": comm.size,
+        "max_rss_mb": max_rss,
+        "swap_used_mb": _swap_used_mb(),
+        "dofs": dofs,
+        "floquet_constraints": constraints,
+    }
+    payload.update(_progress_matrix_fields(matrix_stats))
+    if petsc_options is not None:
+        payload["petsc_options"] = {str(key): value for key, value in petsc_options.items()}
+    if extra:
+        payload.update(extra)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with (out_dir / "progress_3d.jsonl").open("a", encoding="utf-8") as fp:
+        fp.write(json.dumps(payload, ensure_ascii=False, default=_json_default) + "\n")
+
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log("Linear solve summary:")
     log(f"  method               = {summary['linear_solve_method']}")

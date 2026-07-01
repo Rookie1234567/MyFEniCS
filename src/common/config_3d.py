@@ -100,11 +100,12 @@ class SimulationConfig3D:
     diffraction_rayleigh_tol: float = 1.0e-6
     # Solver diagnostics.  The default keeps the existing direct-LU behavior;
     # the extra profiles are explicit diagnostic experiments for memory scaling.
-    petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mkl_pardiso / mumps / superlu_dist / strumpack
+    petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mumps_ooc_seq_analysis / mumps_ooc_parallel_analysis / mumps_ooc_requested_legacy / mkl_pardiso / mumps / superlu_dist / strumpack
     petsc_ksp_view: bool = False
     petsc_log_view: bool = False
     petsc_extra_options: dict[str, object] = field(default_factory=dict)
     matrix_diagnostics_assemble_unconstrained: bool = False
+    matrix_diagnostics_assemble_only: bool = False
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)
 
@@ -230,10 +231,22 @@ class SimulationConfig3D:
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
         profile = self.petsc_direct_solver_profile.lower()
-        if profile not in {"default", "mumps_ooc", "mkl_pardiso", "mumps", "superlu_dist", "strumpack"}:
+        if profile not in {
+            "default",
+            "mumps_ooc",
+            "mumps_ooc_seq_analysis",
+            "mumps_ooc_parallel_analysis",
+            "mumps_ooc_requested_legacy",
+            "mkl_pardiso",
+            "mumps",
+            "superlu_dist",
+            "strumpack",
+        }:
             raise ValueError(
                 "petsc_direct_solver_profile must be 'default', 'mumps_ooc', "
-                "'mkl_pardiso', 'mumps', 'superlu_dist', or 'strumpack'."
+                "'mumps_ooc_seq_analysis', 'mumps_ooc_parallel_analysis', "
+                "'mumps_ooc_requested_legacy', 'mkl_pardiso', 'mumps', "
+                "'superlu_dist', or 'strumpack'."
             )
         return profile
 

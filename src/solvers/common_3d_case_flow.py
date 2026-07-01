@@ -40,14 +40,18 @@ from .common_3d_postprocess import (
     _stage4_scattered_pml_metrics,
 )
 from .common_3d_solve import (
+    DirectSolveFailure,
     _assembled_rhs_norm,
     _create_nedelec_space,
     _ksp_reason_name,
     _linear_system_diagnostics,
     _log_matrix_stats,
+    _mumps_ooc_directory_status,
     _pc_factor_solver_type,
+    _petsc_error_diagnostics,
     _petsc_matrix_stats,
     _prepare_direct_lu_options_for_comm,
+    _prepare_mumps_ooc_runtime,
 )
 from .common_3d_utils import (
     _clear_official_field_outputs,
@@ -58,6 +62,7 @@ from .common_3d_utils import (
     _start_timed_stage,
     _summary_base_fields,
     _write_case_outputs,
+    _write_progress_event,
 )
 from .dtn_port_3d import solve_stage4_dtn_port_total_field
 from .solve_vector_maxwell import _json_default
@@ -189,6 +194,197 @@ def _parallel_lu_failure_summary(
     return summary
 
 
+def _direct_solve_failure_summary(
+    *,
+    cfg: SimulationConfig3D,
+    out_dir: Path,
+    comm: MPI.Intracomm,
+    timings: dict[str, float],
+    started: float,
+    log,
+    log_lines: list[str],
+    petsc_options: dict[str, Any],
+    selected_parallel_lu: str | None,
+    dot_k_p: complex,
+    failure: DirectSolveFailure,
+    num_cells: int,
+    num_dofs: int,
+    floquet_data: DoubleFloquet3DData | None,
+    mesh_data,
+    domain_tag_volumes: dict[str, float],
+    unconstrained_rhs_norm: float | None,
+    unconstrained_matrix_stats: dict[str, Any] | None,
+    field_formulation: str,
+    solve_stage4_dtn_port: bool,
+    raw_boundary_dofs_global: int,
+    boundary_dofs_global: int,
+    ooc_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Write a diagnostic summary when PETSc direct LU raises before solution."""
+
+    _clear_official_field_outputs(out_dir, comm)
+    matrix_stats = None
+    linear_system_diagnostics = {}
+    if failure.A is not None:
+        try:
+            matrix_stats = _petsc_matrix_stats(failure.A)
+            _log_matrix_stats(matrix_stats, log)
+        except Exception as exc:
+            matrix_stats = {"diagnostic_error": str(exc)}
+    if failure.A is not None and failure.b is not None and failure.x is not None:
+        linear_system_diagnostics = _linear_system_diagnostics(failure.A, failure.b, failure.x)
+    error_diagnostics = _petsc_error_diagnostics(failure.petsc_error, failure.ksp)
+    reason = None
+    reason_name = None
+    iterations = 0
+    residual_norm = None
+    ksp_type = None
+    pc_type = None
+    pc_factor_solver_type = None
+    if failure.ksp is not None:
+        try:
+            reason = int(failure.ksp.getConvergedReason())
+            reason_name = _ksp_reason_name(reason)
+        except Exception:
+            reason_name = "PETSC_DIRECT_SOLVE_EXCEPTION"
+        try:
+            iterations = int(failure.ksp.getIterationNumber())
+        except Exception:
+            iterations = 0
+        try:
+            residual_norm = float(failure.ksp.getResidualNorm())
+        except Exception:
+            residual_norm = None
+        try:
+            ksp_type = failure.ksp.getType()
+            pc = failure.ksp.getPC()
+            pc_type = pc.getType()
+            pc_factor_solver_type = _pc_factor_solver_type(pc)
+        except Exception:
+            pass
+    elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+    dtn_solver_info = failure.extra_summary.get("solver_info", {})
+    dtn_base_matrix_stats = dtn_solver_info.get("dtn_base_matrix_stats")
+    dtn_augmented_matrix_stats = dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+    dtn_auxiliary_block_stats = dtn_solver_info.get("dtn_auxiliary_block_stats")
+    constraint_matrix_transform = {
+        "uses_floquet_mpc": bool(floquet_data is not None),
+        "mpc_backend": None if floquet_data is None else "dolfinx_mpc low-level topological constraints",
+        "explicit_chac_constructed": False,
+        "chac_matrix_stats_before": None,
+        "chac_matrix_stats_after": None,
+        "unconstrained_matrix_stats": unconstrained_matrix_stats,
+        "constrained_matrix_stats": matrix_stats,
+        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(matrix_stats, unconstrained_matrix_stats)
+        if isinstance(matrix_stats, dict)
+        else None,
+        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(matrix_stats, unconstrained_matrix_stats)
+        if isinstance(matrix_stats, dict)
+        else None,
+        "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
+        "dtn_base_matrix_stats": dtn_base_matrix_stats,
+        "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats)
+        if isinstance(matrix_stats, dict)
+        else None,
+        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats)
+        if isinstance(matrix_stats, dict)
+        else None,
+    }
+    ooc_status = _mumps_ooc_directory_status(ooc_info)
+    summary = {
+        "case_name": cfg.case_name,
+        "stage": _stage_label(cfg),
+        **_summary_base_fields(cfg, comm),
+        "config": cfg.as_jsonable(),
+        "case_status": "failed_direct_lu_exception",
+        "official_result": False,
+        "diagnostic_only": True,
+        "postprocess_skipped": True,
+        "postprocess_skip_reason": f"{failure.failure_stage}: {failure}",
+        "failure_stage": failure.failure_stage,
+        "last_completed_stage": failure.extra_summary.get("last_completed_stage"),
+        "num_mesh_cells": int(num_cells),
+        "num_nedelec_dofs": int(num_dofs),
+        "matrix_stats": matrix_stats,
+        "unconstrained_matrix_stats": unconstrained_matrix_stats,
+        "constraint_matrix_transform": constraint_matrix_transform,
+        "explicit_chac_constructed": False,
+        "chac_nnz_before": None,
+        "chac_nnz_after": None,
+        "constrained_linear_system_size": None
+        if not isinstance(matrix_stats, dict)
+        else matrix_stats.get("matrix_rows"),
+        "petsc_scalar_type": str(PETSc.ScalarType),
+        "dolfinx_default_scalar_type": str(default_scalar_type),
+        "solver_backend": failure.solver_backend or "3D Maxwell direct LU path",
+        "field_formulation": field_formulation,
+        "stage4_boundary_model": cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None,
+        "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
+        "stage4_dtn_num_auxiliary_dofs": dtn_solver_info.get("num_auxiliary_dofs"),
+        "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
+        "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "strong_z_boundary_dirichlet_enabled": bool(boundary_dofs_global),
+        "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
+        "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
+        "domain_tag_volumes": domain_tag_volumes,
+        "rhs_source_norm": None,
+        "unconstrained_rhs_norm": unconstrained_rhs_norm,
+        "linear_solve_method": "direct_lu",
+        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
+        "linear_solve_petsc_options": petsc_options,
+        "linear_solve_disabled_reason": None,
+        "direct_solve_exception": error_diagnostics,
+        "actual_ksp_type": ksp_type,
+        "actual_pc_type": pc_type,
+        "actual_pc_factor_solver_type": pc_factor_solver_type,
+        "selected_parallel_lu_solver_type": selected_parallel_lu,
+        "ksp_converged": False,
+        "ksp_converged_reason": reason,
+        "ksp_converged_reason_name": reason_name or "PETSC_DIRECT_SOLVE_EXCEPTION",
+        "ksp_iterations": iterations,
+        "solver_residual_norm": residual_norm,
+        **linear_system_diagnostics,
+        "use_floquet_xy": cfg.use_floquet_xy,
+        "use_pml": cfg.use_pml,
+        "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
+        "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
+        "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
+        "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
+        "floquet_estimated_constraint_memory_mb": None if floquet_data is None else floquet_data.estimated_constraint_memory_mb,
+        "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
+        "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
+        "mesh_spacing_mode_resolved": mesh_data.mesh_spacing_mode_resolved,
+        "mesh_axis_cell_stats": mesh_data.mesh_axis_cell_stats,
+        "mesh_material_plane_alignment": mesh_data.material_plane_alignment,
+        "mumps_ooc_runtime": {**ooc_info, **ooc_status},
+        "incident_transversality_dot_k_p": dot_k_p,
+        "timings_seconds": {**timings, **failure.timing_details},
+        "elapsed_seconds": elapsed,
+        "max_rss_mb": _global_max_rss_mb(comm),
+    }
+    log(f"WARNING: direct LU failed at {failure.failure_stage}: {failure}")
+    log(f"PETSc error diagnostics = {error_diagnostics}")
+    _log_solver_summary(summary, log)
+    log(f"elapsed seconds = {elapsed:.3f}")
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage=failure.failure_stage,
+        status="failed",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        matrix_stats=matrix_stats if isinstance(matrix_stats, dict) else None,
+        petsc_options=petsc_options,
+        extra={"petsc_error": error_diagnostics},
+    )
+    _write_case_outputs(out_dir, summary, log_lines, comm)
+    return summary
+
+
 def _build_floquet_and_boundary_conditions(
     cfg: SimulationConfig3D,
     mesh_data,
@@ -250,6 +446,9 @@ def _solve_standard_linear_problem(
     petsc_options: dict[str, Any],
     timings: dict[str, float],
     comm: MPI.Intracomm,
+    out_dir: Path,
+    started: float,
+    num_dofs: int,
     log,
 ):
     stage_start = _start_timed_stage(comm)
@@ -289,9 +488,42 @@ def _solve_standard_linear_problem(
     _finish_timed_stage(comm, timings, "linear_problem_setup", stage_start, log)
 
     stage_start = _start_timed_stage(comm)
-    E = problem.solve()
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="direct_lu_factorization_and_solve",
+        status="begin",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
+    try:
+        E = problem.solve()
+    except PETSc.Error as exc:
+        _finish_timed_stage(comm, timings, "linear_problem_solve_failed", stage_start, log)
+        raise DirectSolveFailure(
+            "PETSc direct LU failed during KSPSolve.",
+            failure_stage="direct_lu_factorization_and_solve",
+            petsc_error=exc,
+            A=problem.A,
+            b=problem.b,
+            x=problem.x,
+            ksp=problem.solver,
+            solver_backend=solver_backend,
+        ) from exc
     E.x.scatter_forward()
     _finish_timed_stage(comm, timings, "linear_problem_solve", stage_start, log)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="direct_lu_factorization_and_solve",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
     return E, problem, solver_backend
 
 
@@ -345,6 +577,20 @@ def run_prepared_3d_case_flow(
 
     petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
     dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="case_start",
+        status="begin",
+        started=started,
+        petsc_options=petsc_options,
+        extra={
+            "case_name": cfg.case_name,
+            "stage_case": cfg.stage_case,
+            "solver_profile": cfg.petsc_direct_solver_profile_requested,
+            "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
+        },
+    )
     if disabled_reason is not None:
         return _parallel_lu_failure_summary(
             cfg,
@@ -359,10 +605,13 @@ def run_prepared_3d_case_flow(
             disabled_reason,
             dot_k_p,
         )
+    ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
 
     stage_start = _start_timed_stage(comm)
+    _write_progress_event(out_dir, comm, stage="mesh_build", status="begin", started=started, petsc_options=petsc_options)
     mesh_data = build_airbox_mesh_3d(cfg, out_dir)
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
+    _write_progress_event(out_dir, comm, stage="mesh_build", status="end", started=started, petsc_options=petsc_options)
     log(f"mesh cell type actual = {mesh_data.mesh_cell_type_resolved}")
     log(f"mesh cells requested = {cfg.mesh_cells}")
     log(f"mesh cells resolved = {mesh_data.mesh_cells_resolved}")
@@ -380,13 +629,16 @@ def run_prepared_3d_case_flow(
     domain_tag_volumes = _cell_tag_volumes(msh, mesh_data, cfg)
 
     stage_start = _start_timed_stage(comm)
+    _write_progress_event(out_dir, comm, stage="function_space_setup", status="begin", started=started)
     V = _create_nedelec_space(msh, cfg)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
+    _write_progress_event(out_dir, comm, stage="function_space_setup", status="end", started=started, dofs=num_dofs)
     log(f"mesh cells = {num_cells}")
     log(f"3D N1curl dofs = {num_dofs}")
 
     stage_start = _start_timed_stage(comm)
+    _write_progress_event(out_dir, comm, stage="field_formulation_setup", status="begin", started=started, dofs=num_dofs)
     E_source_for_rhs = None
     rhs_source_norm = None
     if solve_incident_scattered:
@@ -405,11 +657,22 @@ def run_prepared_3d_case_flow(
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     _finish_timed_stage(comm, timings, "field_formulation_setup", stage_start, log)
+    _write_progress_event(out_dir, comm, stage="field_formulation_setup", status="end", started=started, dofs=num_dofs)
 
+    _write_progress_event(out_dir, comm, stage="floquet_and_boundary_setup", status="begin", started=started, dofs=num_dofs)
     floquet_data, bcs, raw_boundary_dofs_global, boundary_dofs_global, boundary_dofs = (
         _build_floquet_and_boundary_conditions(
             cfg, mesh_data, V, E_bc, apply_strong_boundary_bc, timings, comm, log
         )
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="floquet_and_boundary_setup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
     )
     problem_bcs = bcs if bcs else None
     log(f"field formulation = {field_formulation}")
@@ -431,6 +694,15 @@ def run_prepared_3d_case_flow(
         log("stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes")
 
     stage_start = _start_timed_stage(comm)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="variational_form_setup",
+        status="begin",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+    )
     a, L = _build_variational_forms(
         msh,
         mesh_data,
@@ -448,6 +720,15 @@ def run_prepared_3d_case_flow(
             log("unconstrained matrix diagnostic stats:")
             _log_matrix_stats(unconstrained_matrix_stats, log)
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="variational_form_setup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+    )
     log(f"unconstrained RHS norm = {unconstrained_rhs_norm}")
 
     dtn_result: dict[str, Any] | None = None
@@ -455,35 +736,94 @@ def run_prepared_3d_case_flow(
         if floquet_data is None:
             raise RuntimeError("Stage-4 dtn_port requires Floquet MPC data.")
         stage_start = _start_timed_stage(comm)
-        dtn_result = solve_stage4_dtn_port_total_field(
-            a=a,
-            L=L,
-            V=V,
-            mesh_data=mesh_data,
-            cfg=cfg,
-            floquet_data=floquet_data,
-            petsc_options=petsc_options,
-            out_dir=out_dir,
-            log=log,
-        )
+        try:
+            dtn_result = solve_stage4_dtn_port_total_field(
+                a=a,
+                L=L,
+                V=V,
+                mesh_data=mesh_data,
+                cfg=cfg,
+                floquet_data=floquet_data,
+                petsc_options=petsc_options,
+                out_dir=out_dir,
+                log=log,
+                started=started,
+            )
+        except DirectSolveFailure as failure:
+            _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve_failed", stage_start, log)
+            return _direct_solve_failure_summary(
+                cfg=cfg,
+                out_dir=out_dir,
+                comm=comm,
+                timings=timings,
+                started=started,
+                log=log,
+                log_lines=log_lines,
+                petsc_options=petsc_options,
+                selected_parallel_lu=selected_parallel_lu,
+                dot_k_p=dot_k_p,
+                failure=failure,
+                num_cells=num_cells,
+                num_dofs=num_dofs,
+                floquet_data=floquet_data,
+                mesh_data=mesh_data,
+                domain_tag_volumes=domain_tag_volumes,
+                unconstrained_rhs_norm=unconstrained_rhs_norm,
+                unconstrained_matrix_stats=unconstrained_matrix_stats,
+                field_formulation=field_formulation,
+                solve_stage4_dtn_port=solve_stage4_dtn_port,
+                raw_boundary_dofs_global=raw_boundary_dofs_global,
+                boundary_dofs_global=boundary_dofs_global,
+                ooc_info=ooc_info,
+            )
         _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve", stage_start, log)
         E = dtn_result["E_total"]
         solver_backend = dtn_result["solver_info"]["solver_backend"]
         problem = None
     else:
-        E, problem, solver_backend = _solve_standard_linear_problem(
-            cfg,
-            V,
-            a,
-            L,
-            floquet_data,
-            problem_bcs,
-            apply_strong_boundary_bc,
-            petsc_options,
-            timings,
-            comm,
-            log,
-        )
+        try:
+            E, problem, solver_backend = _solve_standard_linear_problem(
+                cfg,
+                V,
+                a,
+                L,
+                floquet_data,
+                problem_bcs,
+                apply_strong_boundary_bc,
+                petsc_options,
+                timings,
+                comm,
+                out_dir,
+                started,
+                num_dofs,
+                log,
+            )
+        except DirectSolveFailure as failure:
+            return _direct_solve_failure_summary(
+                cfg=cfg,
+                out_dir=out_dir,
+                comm=comm,
+                timings=timings,
+                started=started,
+                log=log,
+                log_lines=log_lines,
+                petsc_options=petsc_options,
+                selected_parallel_lu=selected_parallel_lu,
+                dot_k_p=dot_k_p,
+                failure=failure,
+                num_cells=num_cells,
+                num_dofs=num_dofs,
+                floquet_data=floquet_data,
+                mesh_data=mesh_data,
+                domain_tag_volumes=domain_tag_volumes,
+                unconstrained_rhs_norm=unconstrained_rhs_norm,
+                unconstrained_matrix_stats=unconstrained_matrix_stats,
+                field_formulation=field_formulation,
+                solve_stage4_dtn_port=solve_stage4_dtn_port,
+                raw_boundary_dofs_global=raw_boundary_dofs_global,
+                boundary_dofs_global=boundary_dofs_global,
+                ooc_info=ooc_info,
+            )
 
     E_sca = E if (solve_incident_scattered or solve_layered_scattered) else None
     E_incident_solution = None
@@ -505,6 +845,10 @@ def run_prepared_3d_case_flow(
     system_b = dtn_result["b"] if solve_stage4_dtn_port else problem.b
     system_x = dtn_result["x"] if solve_stage4_dtn_port else problem.x
     system_ksp = dtn_result["ksp"] if solve_stage4_dtn_port else problem.solver
+    assemble_only_result = bool(
+        cfg.matrix_diagnostics_assemble_only
+        or (dtn_result is not None and (dtn_result.get("solver_info", {}) or {}).get("assemble_only"))
+    )
     matrix_stats = _petsc_matrix_stats(system_A)
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
     _log_matrix_stats(matrix_stats, log)
@@ -540,19 +884,34 @@ def run_prepared_3d_case_flow(
     if dtn_base_matrix_stats is not None:
         log(f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}")
 
-    reason = int(system_ksp.getConvergedReason())
-    reason_name = _ksp_reason_name(reason)
-    iterations = int(system_ksp.getIterationNumber())
-    residual_norm = float(system_ksp.getResidualNorm())
+    if assemble_only_result:
+        reason = 0
+        reason_name = "ASSEMBLE_ONLY_SKIPPED_SOLVE"
+        iterations = 0
+        residual_norm = None
+    else:
+        reason = int(system_ksp.getConvergedReason())
+        reason_name = _ksp_reason_name(reason)
+        iterations = int(system_ksp.getIterationNumber())
+        residual_norm = float(system_ksp.getResidualNorm())
     ksp_type = system_ksp.getType()
     pc = system_ksp.getPC()
     pc_type = pc.getType()
     pc_factor_solver_type = _pc_factor_solver_type(pc)
-    linear_system_diagnostics = _linear_system_diagnostics(system_A, system_b, system_x)
+    linear_system_diagnostics = (
+        {
+            "linear_system_rhs_norm": None,
+            "linear_system_solution_norm": None,
+            "linear_system_residual_norm": None,
+            "linear_system_relative_residual": None,
+        }
+        if assemble_only_result
+        else _linear_system_diagnostics(system_A, system_b, system_x)
+    )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
     log(f"solver iterations = {iterations}")
-    log(f"solver residual norm = {residual_norm:.6e}")
+    log("solver residual norm = None" if residual_norm is None else f"solver residual norm = {residual_norm:.6e}")
     log(f"actual KSP type = {ksp_type}")
     log(f"actual PC type = {pc_type}")
     log(f"actual PC factor solver type = {pc_factor_solver_type}")
@@ -561,18 +920,22 @@ def run_prepared_3d_case_flow(
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
-    converged = reason > 0
+    converged = (reason > 0) and not assemble_only_result
     stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
     summary = {
         "case_name": cfg.case_name,
         "stage": _stage_label(cfg),
         **_summary_base_fields(cfg, comm),
         "config": cfg.as_jsonable(),
-        "case_status": "completed" if converged else "failed_not_converged",
+        "case_status": "diagnostic_assemble_only" if assemble_only_result else "completed" if converged else "failed_not_converged",
         "official_result": converged,
         "diagnostic_only": not converged,
         "postprocess_skipped": not converged,
-        "postprocess_skip_reason": None if converged else "PETSc KSP did not converge.",
+        "postprocess_skip_reason": None
+        if converged
+        else "Matrix diagnostics assemble-only mode skipped LU factorization/solve."
+        if assemble_only_result
+        else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "num_nedelec_dofs": int(num_dofs),
         "matrix_stats": matrix_stats,
@@ -646,6 +1009,7 @@ def run_prepared_3d_case_flow(
         "domain_tag_volumes": domain_tag_volumes,
         "linear_solve_method": "direct_lu",
         "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
+        "matrix_diagnostics_assemble_only": bool(assemble_only_result),
         "linear_solve_petsc_options": petsc_options,
         "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,
@@ -719,11 +1083,15 @@ def run_prepared_3d_case_flow(
         "timings_seconds": timings,
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
+        "mumps_ooc_runtime": {**ooc_info, **_mumps_ooc_directory_status(ooc_info)},
     }
 
     if not converged:
         _clear_official_field_outputs(out_dir, comm)
-        log("WARNING: PETSc KSP did not converge.")
+        if assemble_only_result:
+            log("Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.")
+        else:
+            log("WARNING: PETSc KSP did not converge.")
         _log_solver_summary(summary, log)
         log(f"elapsed seconds = {elapsed:.3f}")
         _write_case_outputs(out_dir, summary, log_lines, comm)

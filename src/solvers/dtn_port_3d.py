@@ -19,7 +19,8 @@ from dolfinx.la.petsc import _ghost_update, create_vector
 from ..common.config_3d import SimulationConfig3D
 from ..common.modes_3d import PortMode3D, incident_power_3d, outgoing_port_modes_3d
 from ..constraints.floquet_3d import DoubleFloquet3DData
-from .common_3d_solve import _petsc_matrix_stats
+from .common_3d_solve import DirectSolveFailure, _petsc_matrix_stats
+from .common_3d_utils import _write_progress_event
 from .solve_vector_maxwell import _json_default
 
 
@@ -392,6 +393,7 @@ def _solve_zero_order_local_robin_dtn(
     petsc_options: dict[str, Any],
     out_dir: Path,
     log,
+    started: float | None = None,
 ) -> dict[str, Any]:
     """Solve the normal-incidence zero-order DtN port as a local Robin problem."""
 
@@ -415,6 +417,83 @@ def _solve_zero_order_local_robin_dtn(
     t0 = time.perf_counter()
     a_local, L_local = _zero_order_local_robin_forms(a, L, V, mesh_data, cfg)
     E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+    if cfg.matrix_diagnostics_assemble_only:
+        A_diag = dolfinx_mpc.assemble_matrix(fem.form(a_local), floquet_data.mpc, bcs=[])
+        A_diag.assemble()
+        b_diag = _assemble_mpc_vector(L_local, floquet_data.mpc)
+        x_diag = b_diag.duplicate()
+        x_diag.set(PETSc.ScalarType(0.0))
+        ksp = PETSc.KSP().create(comm)
+        ksp.setOptionsPrefix(f"stage4_3d_zero_order_dtn_{cfg.case_name}_")
+        ksp.setOperators(A_diag)
+        opts = PETSc.Options()
+        opts.prefixPush(f"stage4_3d_zero_order_dtn_{cfg.case_name}_")
+        for key, value in petsc_options.items():
+            opts[key] = value
+        ksp.setFromOptions()
+        for key in petsc_options.keys():
+            del opts[key]
+        opts.prefixPop()
+        matrix_stats_after_setup = _petsc_matrix_stats(A_diag)
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_dtn_zero_order_matrix_assembled",
+            status="end",
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            matrix_stats=matrix_stats_after_setup,
+            petsc_options=petsc_options,
+        )
+        timing_details["stage4_dtn_zero_order_linear_problem_setup_seconds"] = float(
+            comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+        )
+        solver_info = {
+            "solver_backend": "dolfinx_mpc assembled zero-order local 3D DtN/Robin ports",
+            "assemble_only": True,
+            "num_auxiliary_dofs": 0,
+            "num_fem_dofs_after_mpc": int(A_diag.getSize()[0]),
+            "num_total_augmented_dofs": int(A_diag.getSize()[0]),
+            "explicit_chac_constructed": False,
+            "dtn_auxiliary_dense_block_constructed": False,
+            "dtn_base_matrix_stats": None,
+            "dtn_augmented_matrix_stats_after_finalize": None,
+            "dtn_auxiliary_block_stats": {
+                "dtn_auxiliary_block_is_dense": False,
+                "dtn_auxiliary_dof_count": 0,
+                "dtn_auxiliary_coupling_nnz_estimate": 0,
+            },
+            "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
+            "ksp_converged_reason": 0,
+            "ksp_iterations": 0,
+            "actual_ksp_type": ksp.getType(),
+            "actual_pc_type": ksp.getPC().getType(),
+            "actual_pc_factor_solver_type": None,
+            **timing_details,
+        }
+        try:
+            solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()
+        except Exception:
+            solver_info["actual_pc_factor_solver_type"] = None
+        return {
+            "E_total": E_total,
+            "solver_info": solver_info,
+            "port_metrics": {
+                "R_total": None,
+                "T_total": None,
+                "R_plus_T": None,
+                "A_balance": None,
+                "diffraction_total_power_source": "assemble_only_skipped",
+                "dtn_port_mode_count": int(len(modes)),
+            },
+            "A": A_diag,
+            "b": b_diag,
+            "x": x_diag,
+            "ksp": ksp,
+            "problem": None,
+        }
+
     problem = dolfinx_mpc.LinearProblem(
         a_local,
         L_local,
@@ -429,10 +508,56 @@ def _solve_zero_order_local_robin_dtn(
     )
 
     t0 = time.perf_counter()
-    E_total = problem.solve()
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="stage4_dtn_zero_order_solve",
+        status="begin",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
+    try:
+        E_total = problem.solve()
+    except PETSc.Error as exc:
+        raise DirectSolveFailure(
+            "PETSc direct LU failed during Stage-4 zero-order DtN KSPSolve.",
+            failure_stage="stage4_dtn_zero_order_solve",
+            petsc_error=exc,
+            A=problem.A,
+            b=problem.b,
+            x=problem.x,
+            ksp=problem.solver,
+            solver_backend="dolfinx_mpc.LinearProblem with zero-order local 3D DtN/Robin ports",
+            timing_details=timing_details,
+            extra_summary={
+                "solver_info": {
+                    "num_auxiliary_dofs": 0,
+                    "dtn_base_matrix_stats": None,
+                    "dtn_augmented_matrix_stats_after_finalize": None,
+                    "dtn_auxiliary_block_stats": {
+                        "dtn_auxiliary_block_is_dense": False,
+                        "dtn_auxiliary_dof_count": 0,
+                        "dtn_auxiliary_coupling_nnz_estimate": 0,
+                    },
+                }
+            },
+        ) from exc
     E_total.x.scatter_forward()
     timing_details["stage4_dtn_zero_order_linear_solve_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="stage4_dtn_zero_order_solve",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=_petsc_matrix_stats(problem.A),
+        petsc_options=petsc_options,
     )
 
     t0 = time.perf_counter()
@@ -517,6 +642,13 @@ def _solve_augmented_system(
     b_aug: PETSc.Vec,
     petsc_options: dict[str, Any],
     prefix: str,
+    *,
+    out_dir: Path | None = None,
+    comm: MPI.Intracomm | None = None,
+    started: float | None = None,
+    dofs: int | None = None,
+    constraints: int | None = None,
+    matrix_stats: dict[str, Any] | None = None,
 ) -> tuple[PETSc.Vec, PETSc.KSP]:
     ksp = PETSc.KSP().create(A_aug.getComm())
     ksp.setOptionsPrefix(prefix)
@@ -530,7 +662,80 @@ def _solve_augmented_system(
         del opts[key]
     opts.prefixPop()
     x_aug = b_aug.duplicate()
-    ksp.solve(b_aug, x_aug)
+    progress_comm = comm if comm is not None else A_aug.getComm()
+    if out_dir is not None:
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="stage4_dtn_augmented_ksp_setup",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+    try:
+        ksp.setUp()
+    except PETSc.Error as exc:
+        raise DirectSolveFailure(
+            "PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.",
+            failure_stage="stage4_dtn_augmented_ksp_setup",
+            petsc_error=exc,
+            A=A_aug,
+            b=b_aug,
+            x=x_aug,
+            ksp=ksp,
+            solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+        ) from exc
+    if out_dir is not None:
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="stage4_dtn_augmented_ksp_setup",
+            status="end",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="stage4_dtn_augmented_solve",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+    try:
+        ksp.solve(b_aug, x_aug)
+    except PETSc.Error as exc:
+        raise DirectSolveFailure(
+            "PETSc direct LU failed during Stage-4 augmented DtN KSPSolve.",
+            failure_stage="stage4_dtn_augmented_solve",
+            petsc_error=exc,
+            A=A_aug,
+            b=b_aug,
+            x=x_aug,
+            ksp=ksp,
+            solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+        ) from exc
+    if out_dir is not None:
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="stage4_dtn_augmented_solve",
+            status="end",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
     return x_aug, ksp
 
 
@@ -727,6 +932,7 @@ def solve_stage4_dtn_port_total_field(
     petsc_options: dict[str, Any],
     out_dir: Path,
     log,
+    started: float | None = None,
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports."""
 
@@ -747,6 +953,7 @@ def solve_stage4_dtn_port_total_field(
             petsc_options=petsc_options,
             out_dir=out_dir,
             log=log,
+            started=started,
         )
 
     comm = mesh_data.mesh.comm
@@ -757,6 +964,17 @@ def solve_stage4_dtn_port_total_field(
     A_base = dolfinx_mpc.assemble_matrix(fem.form(a), floquet_data.mpc, bcs=None)
     A_base.assemble()
     base_matrix_stats = _petsc_matrix_stats(A_base)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="stage4_dtn_base_matrix_assembled",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=base_matrix_stats,
+        petsc_options=petsc_options,
+    )
     timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     t0 = time.perf_counter()
@@ -901,9 +1119,95 @@ def solve_stage4_dtn_port_total_field(
     b_aug.assemble()
     augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
     timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="stage4_dtn_augmented_matrix_finalized",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=augmented_matrix_stats_after_finalize,
+        petsc_options=petsc_options,
+        extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
+    )
+
+    if cfg.matrix_diagnostics_assemble_only:
+        x_aug = b_aug.duplicate()
+        ksp = PETSc.KSP().create(A_aug.getComm())
+        ksp.setOptionsPrefix(f"stage4_3d_dtn_{cfg.case_name}_")
+        ksp.setOperators(A_aug)
+        opts = PETSc.Options()
+        opts.prefixPush(f"stage4_3d_dtn_{cfg.case_name}_")
+        for key, value in petsc_options.items():
+            opts[key] = value
+        ksp.setFromOptions()
+        for key in petsc_options.keys():
+            del opts[key]
+        opts.prefixPop()
+        E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+        solver_info = {
+            "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            "assemble_only": True,
+            "num_auxiliary_dofs": int(n_aux),
+            "num_fem_dofs_after_mpc": int(n_fe),
+            "num_total_augmented_dofs": int(n_fe + n_aux),
+            "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
+            "ksp_converged_reason": 0,
+            "ksp_iterations": 0,
+            "actual_ksp_type": ksp.getType(),
+            "actual_pc_type": ksp.getPC().getType(),
+            "actual_pc_factor_solver_type": None,
+            "dtn_base_matrix_stats": base_matrix_stats,
+            "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+            "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            "explicit_chac_constructed": False,
+            "dtn_auxiliary_dense_block_constructed": False,
+            **timing_details,
+        }
+        return {
+            "E_total": E_total,
+            "A": A_aug,
+            "b": b_aug,
+            "x": x_aug,
+            "ksp": ksp,
+            "solver_info": solver_info,
+            "port_metrics": {
+                "R_total": None,
+                "T_total": None,
+                "R_plus_T": None,
+                "A_balance": None,
+                "diffraction_total_power_source": "assemble_only_skipped",
+                "dtn_port_mode_count": int(len(modes)),
+            },
+        }
 
     t0 = time.perf_counter()
-    x_aug, ksp = _solve_augmented_system(A_aug, b_aug, petsc_options, f"stage4_3d_dtn_{cfg.case_name}_")
+    try:
+        x_aug, ksp = _solve_augmented_system(
+            A_aug,
+            b_aug,
+            petsc_options,
+            f"stage4_3d_dtn_{cfg.case_name}_",
+            out_dir=out_dir,
+            comm=comm,
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            matrix_stats=augmented_matrix_stats_after_finalize,
+        )
+    except DirectSolveFailure as exc:
+        exc.timing_details.update(timing_details)
+        exc.extra_summary.setdefault("solver_info", {})
+        exc.extra_summary["solver_info"].update(
+            {
+                "num_auxiliary_dofs": int(n_aux),
+                "dtn_base_matrix_stats": base_matrix_stats,
+                "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+                "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            }
+        )
+        raise
     timing_details["stage4_dtn_linear_solve_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     t0 = time.perf_counter()

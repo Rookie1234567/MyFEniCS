@@ -53,8 +53,27 @@ def _load_summary(result_dir: Path) -> dict[str, Any] | None:
 def _extract_result_dir(stdout: str) -> Path | None:
     matches = re.findall(r"3D case results:\s*(.+)", stdout)
     if not matches:
+        matches = re.findall(r"3D case output directory:\s*(.+)", stdout)
+    if not matches:
         return None
     return Path(matches[-1].strip())
+
+
+def _load_last_progress(result_dir: Path | None) -> dict[str, Any] | None:
+    if result_dir is None:
+        return None
+    path = result_dir / "progress_3d.jsonl"
+    if not path.exists():
+        return None
+    last = None
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        if not line.strip():
+            continue
+        try:
+            last = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+    return last
 
 
 def _value(summary: dict[str, Any] | None, key: str, default=None):
@@ -88,7 +107,12 @@ def _row_from_result(
     swap_after_mb: float | None,
     result_dir: Path | None,
     summary: dict[str, Any] | None,
+    last_progress: dict[str, Any] | None,
+    stdout_file: Path | None,
+    stderr_file: Path | None,
 ) -> dict[str, Any]:
+    error = _value(summary, "direct_solve_exception", {}) or {}
+    ooc_runtime = _value(summary, "mumps_ooc_runtime", {}) or {}
     return {
         "mesh_target_size_nm": mesh_target_size,
         "mpi_procs": mpi_procs,
@@ -96,6 +120,19 @@ def _row_from_result(
         "returncode": returncode,
         "case_status": _value(summary, "case_status"),
         "result_dir": "" if result_dir is None else str(result_dir),
+        "stdout_file": "" if stdout_file is None else str(stdout_file),
+        "stderr_file": "" if stderr_file is None else str(stderr_file),
+        "last_progress_stage": None if last_progress is None else last_progress.get("stage"),
+        "last_progress_status": None if last_progress is None else last_progress.get("status"),
+        "failure_stage": _value(summary, "failure_stage"),
+        "petsc_error_code": error.get("petsc_error_code"),
+        "petsc_error_type": error.get("petsc_error_type"),
+        "mumps_infog_1": error.get("mumps_infog_1"),
+        "mumps_infog_2": error.get("mumps_infog_2"),
+        "mumps_ooc_tmpdir": ooc_runtime.get("mumps_ooc_tmpdir"),
+        "mumps_ooc_cleaned_by_solver": ooc_runtime.get("mumps_ooc_cleaned_by_solver"),
+        "mumps_ooc_residual_file_count": ooc_runtime.get("mumps_ooc_residual_file_count"),
+        "mumps_ooc_residual_file_bytes": ooc_runtime.get("mumps_ooc_residual_file_bytes"),
         "dof_raw_nedelec": _value(summary, "num_nedelec_dofs"),
         "floquet_constraints": _value(summary, "floquet_num_constraints"),
         "constrained_system_size": _value(summary, "constrained_linear_system_size"),
@@ -160,10 +197,12 @@ def _command_for_case(args, mesh_size: float) -> list[str]:
         "--stage4-dtn-assembly",
         "auxiliary",
         "--petsc-direct-solver-profile",
-        args.petsc_direct_solver_profile,
+        args.current_solver_profile,
     ]
     if args.matrix_diagnostics_assemble_unconstrained:
         command.append("--matrix-diagnostics-assemble-unconstrained")
+    if args.assemble_only:
+        command.append("--matrix-diagnostics-assemble-only")
     for option in args.extra_runner_arg:
         command.extend(option.split())
     for option in args.petsc_option:
@@ -171,8 +210,8 @@ def _command_for_case(args, mesh_size: float) -> list[str]:
             command.append(option)
         else:
             command.extend(["--petsc-extra-option", option])
-    if args.mpi_procs > 1:
-        command = ["mpiexec", "-n", str(args.mpi_procs), *command]
+    if args.current_mpi_procs > 1:
+        command = ["mpiexec", "-n", str(args.current_mpi_procs), *command]
     return command
 
 
@@ -180,6 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run 3D Maxwell matrix/solver scaling diagnostics and write CSV.")
     parser.add_argument("--mesh-sizes", type=float, nargs="+", default=[20.0, 15.0, 12.0, 10.0, 8.0])
     parser.add_argument("--mpi-procs", type=int, default=1)
+    parser.add_argument("--mpi-procs-list", type=int, nargs="+", default=None)
     parser.add_argument("--stage-case", default="stage4_block_grating")
     parser.add_argument("--case", default="normal")
     parser.add_argument("--nedelec-degree", type=int, default=1)
@@ -188,10 +228,37 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stage4-dtn-order-policy", default="zero_order")
     parser.add_argument(
         "--petsc-direct-solver-profile",
-        choices=("default", "mumps_ooc", "mkl_pardiso", "mumps", "superlu_dist", "strumpack"),
+        choices=(
+            "default",
+            "mumps_ooc",
+            "mumps_ooc_seq_analysis",
+            "mumps_ooc_parallel_analysis",
+            "mumps_ooc_requested_legacy",
+            "mkl_pardiso",
+            "mumps",
+            "superlu_dist",
+            "strumpack",
+        ),
         default="default",
     )
+    parser.add_argument(
+        "--solver-profiles",
+        nargs="+",
+        choices=(
+            "default",
+            "mumps_ooc",
+            "mumps_ooc_seq_analysis",
+            "mumps_ooc_parallel_analysis",
+            "mumps_ooc_requested_legacy",
+            "mkl_pardiso",
+            "mumps",
+            "superlu_dist",
+            "strumpack",
+        ),
+        default=None,
+    )
     parser.add_argument("--matrix-diagnostics-assemble-unconstrained", action="store_true")
+    parser.add_argument("--assemble-only", action="store_true")
     parser.add_argument("--petsc-option", action="append", default=[])
     parser.add_argument("--extra-runner-arg", action="append", default=[])
     parser.add_argument("--output-csv", default=None)
@@ -203,34 +270,51 @@ def main(argv: list[str] | None = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = Path(args.output_csv) if args.output_csv else out_dir / "matrix_scale.csv"
     rows: list[dict[str, Any]] = []
-    for mesh_size in args.mesh_sizes:
-        command = _command_for_case(args, mesh_size)
-        label = f"h={mesh_size:g}, np={args.mpi_procs}, solver={args.petsc_direct_solver_profile}"
-        print(f"[matrix-scale] running {label}")
-        print("[matrix-scale] command:", " ".join(command))
-        swap_before = _swap_used_mb()
-        t0 = time.perf_counter()
-        proc = subprocess.run(command, cwd=root, text=True, capture_output=True)
-        elapsed = time.perf_counter() - t0
-        swap_after = _swap_used_mb()
-        result_dir = _extract_result_dir(proc.stdout)
-        summary = _load_summary(result_dir) if result_dir is not None else None
-        (out_dir / f"run_h{str(mesh_size).replace('.', 'p')}_stdout.txt").write_text(proc.stdout, encoding="utf-8")
-        (out_dir / f"run_h{str(mesh_size).replace('.', 'p')}_stderr.txt").write_text(proc.stderr, encoding="utf-8")
-        rows.append(
-            _row_from_result(
-                mesh_target_size=mesh_size,
-                mpi_procs=args.mpi_procs,
-                solver_profile=args.petsc_direct_solver_profile,
-                returncode=proc.returncode,
-                elapsed_wall_seconds=elapsed,
-                swap_before_mb=swap_before,
-                swap_after_mb=swap_after,
-                result_dir=result_dir,
-                summary=summary,
-            )
-        )
-        if proc.returncode != 0 and args.stop_on_failure:
+    mpi_procs_list = args.mpi_procs_list or [args.mpi_procs]
+    solver_profiles = args.solver_profiles or [args.petsc_direct_solver_profile]
+    for mpi_procs in mpi_procs_list:
+        for solver_profile in solver_profiles:
+            args.current_mpi_procs = mpi_procs
+            args.current_solver_profile = solver_profile
+            for mesh_size in args.mesh_sizes:
+                command = _command_for_case(args, mesh_size)
+                label = f"h={mesh_size:g}, np={mpi_procs}, solver={solver_profile}"
+                print(f"[matrix-scale] running {label}")
+                print("[matrix-scale] command:", " ".join(command))
+                swap_before = _swap_used_mb()
+                t0 = time.perf_counter()
+                proc = subprocess.run(command, cwd=root, text=True, capture_output=True)
+                elapsed = time.perf_counter() - t0
+                swap_after = _swap_used_mb()
+                result_dir = _extract_result_dir(proc.stdout)
+                summary = _load_summary(result_dir) if result_dir is not None else None
+                last_progress = _load_last_progress(result_dir)
+                file_tag = f"run_np{mpi_procs}_{solver_profile}_h{str(mesh_size).replace('.', 'p')}"
+                stdout_file = out_dir / f"{file_tag}_stdout.txt"
+                stderr_file = out_dir / f"{file_tag}_stderr.txt"
+                stdout_file.write_text(proc.stdout, encoding="utf-8")
+                stderr_file.write_text(proc.stderr, encoding="utf-8")
+                rows.append(
+                    _row_from_result(
+                        mesh_target_size=mesh_size,
+                        mpi_procs=mpi_procs,
+                        solver_profile=solver_profile,
+                        returncode=proc.returncode,
+                        elapsed_wall_seconds=elapsed,
+                        swap_before_mb=swap_before,
+                        swap_after_mb=swap_after,
+                        result_dir=result_dir,
+                        summary=summary,
+                        last_progress=last_progress,
+                        stdout_file=stdout_file,
+                        stderr_file=stderr_file,
+                    )
+                )
+                if proc.returncode != 0 and args.stop_on_failure:
+                    break
+            if rows and rows[-1]["returncode"] != 0 and args.stop_on_failure:
+                break
+        if rows and rows[-1]["returncode"] != 0 and args.stop_on_failure:
             break
 
     if rows:

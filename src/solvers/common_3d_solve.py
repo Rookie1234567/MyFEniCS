@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,35 @@ from dolfinx import default_real_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import SimulationConfig3D
+
+
+class DirectSolveFailure(RuntimeError):
+    """Carry PETSc objects far enough to write a diagnostic summary."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        failure_stage: str,
+        petsc_error: BaseException,
+        A=None,
+        b=None,
+        x=None,
+        ksp=None,
+        solver_backend: str | None = None,
+        timing_details: dict[str, Any] | None = None,
+        extra_summary: dict[str, Any] | None = None,
+    ):
+        super().__init__(message)
+        self.failure_stage = failure_stage
+        self.petsc_error = petsc_error
+        self.A = A
+        self.b = b
+        self.x = x
+        self.ksp = ksp
+        self.solver_backend = solver_backend
+        self.timing_details = timing_details or {}
+        self.extra_summary = extra_summary or {}
 
 
 def _direct_lu_petsc_options() -> dict[str, Any]:
@@ -31,6 +61,22 @@ def _has_petsc_package(package_name: str) -> bool:
         return bool(PETSc.Sys.hasExternalPackage(package_name))
     except Exception:
         return False
+
+def _available_mumps_parallel_ordering() -> tuple[int | None, str | None]:
+    """Return the MUMPS ICNTL(29) value for a supported parallel ordering."""
+
+    if _has_petsc_package("ptscotch"):
+        return 1, "ptscotch"
+    if _has_petsc_package("parmetis"):
+        return 2, "parmetis"
+    return None, None
+
+def _mumps_ooc_minimal_options() -> dict[str, Any]:
+    return {
+        "pc_factor_mat_solver_type": "mumps",
+        "mat_mumps_icntl_22": 1,
+        "mat_mumps_icntl_14": 80,
+    }
 
 def _available_parallel_lu_solver_type() -> str | None:
     """Return a PETSc LU package that can factor MPI matrices globally."""
@@ -84,19 +130,31 @@ def _prepare_direct_lu_options_for_comm(
         _apply_petsc_option_dict(petsc_options, cfg.petsc_extra_options)
 
     selected_solver: str | None = None
-    if profile == "mumps_ooc":
+    if profile in {
+        "mumps_ooc",
+        "mumps_ooc_seq_analysis",
+        "mumps_ooc_parallel_analysis",
+        "mumps_ooc_requested_legacy",
+    }:
         if not _has_petsc_package("mumps"):
             return petsc_options, None, "PETSc was asked to use MUMPS out-of-core, but this build does not report MUMPS."
         selected_solver = "mumps"
-        petsc_options.update(
-            {
-                "pc_factor_mat_solver_type": "mumps",
-                "mat_mumps_icntl_22": 1,
-                "mat_mumps_icntl_14": 80,
-                "mat_mumps_icntl_28": 2,
-                "mat_mumps_icntl_29": 2,
-            }
-        )
+        petsc_options.update(_mumps_ooc_minimal_options())
+        if profile == "mumps_ooc_seq_analysis":
+            petsc_options["mat_mumps_icntl_28"] = 1
+        elif profile == "mumps_ooc_parallel_analysis":
+            ordering_value, ordering_package = _available_mumps_parallel_ordering()
+            if ordering_value is None:
+                return petsc_options, None, (
+                    "PETSc was asked to use MUMPS out-of-core with parallel analysis, "
+                    "but this build does not report PT-SCOTCH or ParMETIS. Use "
+                    "mumps_ooc or mumps_ooc_seq_analysis instead."
+                )
+            petsc_options["mat_mumps_icntl_28"] = 2
+            petsc_options["mat_mumps_icntl_29"] = ordering_value
+        elif profile == "mumps_ooc_requested_legacy":
+            petsc_options["mat_mumps_icntl_28"] = 2
+            petsc_options["mat_mumps_icntl_29"] = 2
     elif profile == "mkl_pardiso":
         if not _has_petsc_package("mkl_pardiso"):
             return petsc_options, None, (
@@ -136,6 +194,65 @@ def _prepare_direct_lu_options_for_comm(
     if cfg is not None:
         _apply_global_petsc_options(cfg, petsc_options)
     return petsc_options, parallel_lu, None
+
+def _prepare_mumps_ooc_runtime(
+    cfg: SimulationConfig3D,
+    out_dir,
+    petsc_options: dict[str, Any],
+    comm: MPI.Intracomm,
+    log=None,
+) -> dict[str, Any]:
+    """Pin MUMPS out-of-core files to the current case directory."""
+
+    ooc_enabled = int(petsc_options.get("mat_mumps_icntl_22", 0) or 0) == 1
+    if not ooc_enabled:
+        return {
+            "mumps_ooc_enabled": False,
+            "mumps_ooc_tmpdir": None,
+            "mumps_ooc_prefix": None,
+        }
+    if comm.rank == 0:
+        ooc_dir = out_dir / "mumps_ooc_files"
+        ooc_dir.mkdir(parents=True, exist_ok=True)
+        ooc_dir_text = str(ooc_dir)
+    else:
+        ooc_dir_text = None
+    ooc_dir_text = comm.bcast(ooc_dir_text, root=0)
+    prefix = f"{cfg.case_name}_mumps_ooc"
+    os.environ["MUMPS_OOC_TMPDIR"] = ooc_dir_text
+    os.environ["MUMPS_OOC_PREFIX"] = prefix
+    if log is not None:
+        log(f"MUMPS OOC tmpdir = {ooc_dir_text}")
+        log(f"MUMPS OOC prefix = {prefix}")
+    return {
+        "mumps_ooc_enabled": True,
+        "mumps_ooc_tmpdir": ooc_dir_text,
+        "mumps_ooc_prefix": prefix,
+    }
+
+def _mumps_ooc_directory_status(ooc_info: dict[str, Any] | None) -> dict[str, Any]:
+    if not ooc_info or not ooc_info.get("mumps_ooc_tmpdir"):
+        return {
+            "mumps_ooc_residual_file_count": None,
+            "mumps_ooc_residual_file_bytes": None,
+            "mumps_ooc_cleaned_by_solver": None,
+        }
+    directory = os.fspath(ooc_info["mumps_ooc_tmpdir"])
+    try:
+        paths = [path for path in os.scandir(directory) if path.is_file()]
+        total = sum(path.stat().st_size for path in paths)
+        return {
+            "mumps_ooc_residual_file_count": len(paths),
+            "mumps_ooc_residual_file_bytes": int(total),
+            "mumps_ooc_cleaned_by_solver": len(paths) == 0,
+        }
+    except OSError as exc:
+        return {
+            "mumps_ooc_residual_file_count": None,
+            "mumps_ooc_residual_file_bytes": None,
+            "mumps_ooc_cleaned_by_solver": None,
+            "mumps_ooc_status_error": str(exc),
+        }
 
 def _pc_factor_solver_type(pc) -> str | None:
     try:
@@ -188,6 +305,36 @@ def _petsc_matrix_stats(A) -> dict[str, Any]:
         "matrix_norm_infinity": matrix_norm_infinity,
         "matrix_petsc_info": {str(key): float(value) for key, value in info.items()},
     }
+
+def _petsc_error_diagnostics(exc: BaseException, ksp=None) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "petsc_error_type": type(exc).__name__,
+        "petsc_error_message": str(exc),
+        "petsc_error_code": getattr(exc, "ierr", None),
+        "mumps_infog_1": None,
+        "mumps_infog_2": None,
+        "mumps_info_1": None,
+        "mumps_info_2": None,
+    }
+    if ksp is None:
+        return data
+    try:
+        pc = ksp.getPC()
+        factor = pc.getFactorMatrix()
+    except Exception:
+        return data
+    for name, method_name, idx in (
+        ("mumps_infog_1", "getMumpsInfog", 1),
+        ("mumps_infog_2", "getMumpsInfog", 2),
+        ("mumps_info_1", "getMumpsInfo", 1),
+        ("mumps_info_2", "getMumpsInfo", 2),
+    ):
+        try:
+            method = getattr(factor, method_name)
+            data[name] = method(idx)
+        except Exception:
+            data[name] = None
+    return data
 
 def _petsc_object_norm(obj, names: tuple[str, ...]) -> float | None:
     for name in names:
