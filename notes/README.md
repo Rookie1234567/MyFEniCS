@@ -1,5 +1,26 @@
 # v2 文档索引
 
+## 2026-07-01 更新：MUMPS OOC 已修复为安全默认，并新增 progress_3d.jsonl
+
+本轮针对 3D 直接 LU 内存瓶颈做了诊断增强：
+
+```text
+1. mumps_ooc 不再默认使用会触发 INFOG(1)=-38 的并行 analysis 参数。
+2. 新增 mumps_ooc_seq_analysis、mumps_ooc_parallel_analysis、mumps_ooc_requested_legacy。
+3. 每个 3D case 会写 progress_3d.jsonl，用于定位 signal 9 或长时间卡住前的最后阶段。
+4. 新增 assemble-only 尺度扫描，可只组装矩阵不进入 LU。
+```
+
+最新结果：
+
+```text
+results/matrix_scale_20260701_094444/matrix_scale.csv
+results/matrix_scale_20260701_094705/matrix_scale.csv
+notes/test/3d_matrix_solver_diagnostics.md
+```
+
+核心判断：h=1.5 / np=8 已能完成最终矩阵组装，DOF = 1,452,174，nnz/row = 33.10，没有发现 Floquet/MPC 或 DtN 让矩阵变稠；h=2 / np=8 / mumps_ooc 长时间停在 LU factorization，内存接近 Docker 上限，因此当前瓶颈是 direct LU fill-in。
+
 ## 2026-07-01 更新：新增 3D 矩阵与 PETSc 求解器诊断
 
 续跑状态：`MeshTargetSize = 20, 15, 12, 10, 8 nm` 的 Stage4 block / p1 / zero_order / np1 默认直接法尺度表已完成，结果见：

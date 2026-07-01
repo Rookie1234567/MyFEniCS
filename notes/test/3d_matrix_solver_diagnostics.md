@@ -1,5 +1,80 @@
 # 3D Maxwell 矩阵与求解器诊断记录
 
+## 2026-07-01 更新：MUMPS OOC 修复、progress 日志和 h=1.5 组装诊断
+
+本轮完成了直接 LU 诊断路径修复：`mumps_ooc` 不再默认设置会触发 `INFOG(1)=-38` 的并行 analysis 组合，而是使用：
+
+```text
+pc_factor_mat_solver_type = mumps
+mat_mumps_icntl_22 = 1
+mat_mumps_icntl_14 = 80
+```
+
+如果需要复现旧错误，使用：
+
+```text
+--petsc-direct-solver-profile mumps_ooc_requested_legacy
+```
+
+每个 3D case 现在会写：
+
+```text
+progress_3d.jsonl
+```
+
+它会在 mesh、function space、Floquet、form、DtN matrix assembly、direct solve 开始/结束时落盘。若程序被系统杀掉，优先看这个文件最后一行。
+
+小模型 profile 验证：
+
+```text
+results/matrix_scale_20260701_094444/matrix_scale.csv
+```
+
+| h nm | np | profile | status | factor solver | MUMPS INFOG(1) | OOC 残留 | R+T |
+| --- | ---: | --- | --- | --- | ---: | ---: | ---: |
+| 20 | 1 | default | completed | petsc |  |  | 0.999999773 |
+| 20 | 1 | mumps | completed | mumps |  |  | 0.999999773 |
+| 20 | 1 | mumps_ooc | completed | mumps |  | 2 files / 8.28 MB | 0.999999773 |
+| 20 | 1 | mumps_ooc_seq_analysis | completed | mumps |  | 2 files / 8.28 MB | 0.999999773 |
+| 20 | 1 | mumps_ooc_requested_legacy | failed_direct_lu_exception | mumps | -38 | 0 |  |
+| 20 | 1 | mkl_pardiso | failed_parallel_direct_lu_unavailable |  |  |  |  |
+| 20 | 2 | default | completed | mumps |  |  | 0.999999773 |
+| 20 | 2 | mumps | completed | mumps |  |  | 0.999999773 |
+| 20 | 2 | mumps_ooc | completed | mumps |  | 4 files / 10.00 MB | 0.999999773 |
+| 20 | 2 | mumps_ooc_seq_analysis | completed | mumps |  | 4 files / 10.00 MB | 0.999999773 |
+| 20 | 2 | mumps_ooc_requested_legacy | failed_direct_lu_exception | mumps | -38 | 0 |  |
+| 20 | 2 | mkl_pardiso | failed_parallel_direct_lu_unavailable |  |  |  |  |
+
+大模型 assemble-only 诊断：
+
+```text
+results/matrix_scale_20260701_094705/matrix_scale.csv
+```
+
+| h nm | np | DOF | Floquet 约束 | nnz used | nnz/row | 估算 AIJ MB | peak RSS MB | status |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 8 | 8 | 15936 | 1311 | 530606 | 33.30 | 12.27 | 284.66 | diagnostic_assemble_only |
+| 5 | 8 | 39270 | 2470 | 1307032 | 33.28 | 30.22 | 280.02 | diagnostic_assemble_only |
+| 3 | 8 | 197136 | 7261 | 6538846 | 33.17 | 151.17 | 337.55 | diagnostic_assemble_only |
+| 2 | 8 | 605904 | 15477 | 20069534 | 33.12 | 463.98 | 460.34 | diagnostic_assemble_only |
+| 1.5 | 8 | 1452174 | 27982 | 48064000 | 33.10 | 1111.18 | 662.08 | diagnostic_assemble_only |
+
+判断：
+
+```text
+1. h=1.5 已能完成矩阵组装，且 nnz/row 仍约 33.1，没有矩阵变稠迹象。
+2. 因此当前内存/时间爆点不是 Floquet/MPC 或 DtN matrix assembly，而是直接 LU factorization fill-in。
+3. h=2, np=8, mumps_ooc 运行约 30 分钟仍停在 stage4_dtn_zero_order_solve，内存约 12.8 GiB / 13.65 GiB，OOC 文件约 3.18 GB，已人工停止。
+4. 这说明 MUMPS OOC 能绕开旧的 -38 参数错误，但在当前 Docker 内存限制下，h=2 级别直接 LU 仍非常吃内存和时间。
+```
+
+对应 h=2 中断 case：
+
+```text
+results/3D_stage4_block_grating_normal_p1_h2p0_np8_20260701_094942/progress_3d.jsonl
+results/3D_stage4_block_grating_normal_p1_h2p0_np8_20260701_094942/mumps_ooc_files
+```
+
 ## 2026-07-01 续跑：完整默认尺度表已生成
 
 本轮补跑了上次因额度限制未完成的默认直接法尺度扫描：

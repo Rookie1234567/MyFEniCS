@@ -1,5 +1,76 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-01 更新：直接 LU 内存诊断和 MUMPS OOC 用法
+
+推荐先用 assemble-only 判断矩阵规模，不要直接冲 LU：
+
+```bash
+mpiexec -n 8 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 1.5 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --matrix-diagnostics-assemble-only
+```
+
+运行目录中重点看：
+
+```text
+run_summary.json
+progress_3d.jsonl
+solver_log.txt
+```
+
+如果要测试 MUMPS out-of-core：
+
+```bash
+mpiexec -n 8 python3 -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --case normal \
+  --mesh-target-size 2 \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --petsc-direct-solver-profile mumps_ooc
+```
+
+可选 direct profile：
+
+```text
+default
+mumps
+mumps_ooc
+mumps_ooc_seq_analysis
+mumps_ooc_parallel_analysis
+mumps_ooc_requested_legacy
+mkl_pardiso
+superlu_dist
+strumpack
+```
+
+说明：
+
+```text
+mumps_ooc 是推荐 OOC 入口：ICNTL(22)=1, ICNTL(14)=80。
+mumps_ooc_seq_analysis 显式使用 sequential analysis。
+mumps_ooc_parallel_analysis 只有当前 PETSc 支持 PT-SCOTCH/ParMETIS 时才允许。
+mumps_ooc_requested_legacy 只用于复现旧的 ICNTL(28)=2/ICNTL(29)=2 错误。
+mkl_pardiso 当前镜像不支持时会直接停止并写诊断，不会静默换 solver。
+```
+
+批量生成 CSV：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 8 5 3 2 1.5 \
+  --mpi-procs-list 8 \
+  --solver-profiles default \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order \
+  --assemble-only
+```
+
 ## 2026-07-01 更新：矩阵/求解器诊断命令
 
 如果你怀疑内存瓶颈来自矩阵结构，而不是单纯自由度数，可以先跑较粗网格诊断：

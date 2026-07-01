@@ -1,3 +1,39 @@
+## 2026-07-01 更新：MUMPS OOC 和 progress 日志阅读路径
+
+如果你现在关心“h=1.5 为什么 LU 跑不下去”，按这个顺序读：
+
+```text
+1. src/runners/run_3d_cases.py
+   看 --petsc-direct-solver-profile、--matrix-diagnostics-assemble-only
+   以及开头打印的 3D case output directory。
+
+2. src/solvers/common_3d_utils.py
+   看 _write_progress_event。progress_3d.jsonl 就是在这里写的。
+
+3. src/solvers/common_3d_solve.py
+   看 _prepare_direct_lu_options_for_comm：
+   - mumps_ooc
+   - mumps_ooc_seq_analysis
+   - mumps_ooc_parallel_analysis
+   - mumps_ooc_requested_legacy
+   也看 _prepare_mumps_ooc_runtime，它把 OOC 文件放到 case/mumps_ooc_files。
+
+4. src/solvers/dtn_port_3d.py
+   zero_order DtN 的 assemble-only 和 solve begin/end progress 在这里。
+
+5. src/solvers/common_3d_case_flow.py
+   看 run_summary.json 如何记录 matrix_stats、DirectSolveFailure 和 MUMPS OOC 状态。
+
+6. src/studies/run_3d_matrix_scale.py
+   看 --mpi-procs-list、--solver-profiles、--assemble-only 如何生成 CSV。
+```
+
+最新诊断结论写在：
+
+```text
+notes/test/3d_matrix_solver_diagnostics.md
+```
+
 ## 2026-07-01 更新：矩阵和求解器诊断阅读路径
 
 如果你现在关心“为什么 90 万自由度就内存爆掉”，按这个顺序读：
