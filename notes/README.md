@@ -1,5 +1,18 @@
 # v2 文档索引
 
+## 2026-07-01 更新：新增 h=2.5 直接求解器 profile 对比报告
+
+新增理论说明和 h=2.5 实测报告：
+
+```text
+notes/theory/solver_profiles_3d.md
+notes/test/3d_direct_solver_profile_h2p5_report.md
+```
+
+结论简述：当前问题在 h=2.5、np=8 下，`default/mumps/mumps_ooc/mumps_ooc_seq_analysis` 都能完成，矩阵 nnz/row 约 33.16，说明矩阵没有变稠。`mumps_ooc` 在本轮测试中峰值 RSS 最低，约 1.93 GB，但会留下约 9.7 GB 的 OOC 文件。`mkl_pardiso` 当前 PETSc 镜像不支持；`superlu_dist` 可用但 h=2.5 未在可接受时间内完成。
+
+当前无法像 COMSOL 那样轻松完成更大自由度的主要原因不是 FEM 组装，也不是 Floquet 约束，而是直接 LU factorization fill-in 加上 Docker/WSL 内存上限。若要接近 COMSOL direct solver 体验，优先考虑 Linux 服务器、更高物理内存、快速 NVMe OOC 目录，以及重新构建带 MKL PARDISO / 更完整 MUMPS ordering 包的 PETSc。
+
 ## 2026-07-01 更新：MUMPS OOC 已修复为安全默认，并新增 progress_3d.jsonl
 
 本轮针对 3D 直接 LU 内存瓶颈做了诊断增强：

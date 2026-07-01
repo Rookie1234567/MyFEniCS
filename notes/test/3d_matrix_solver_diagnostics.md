@@ -1,5 +1,27 @@
 # 3D Maxwell 矩阵与求解器诊断记录
 
+## 2026-07-01 更新：h=2.5 直接求解器 profile 对比已完成
+
+新增报告：
+
+```text
+notes/test/3d_direct_solver_profile_h2p5_report.md
+```
+
+测试对象为 Stage4 block grating / p1 / h=2.5 / np=8 / zero_order DtN。完成结果摘要：
+
+| profile | status | factor solver | solve 秒 | max RSS MB | OOC 残留 | R+T |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| default | completed | mumps | 288.01 | 2128.43 | 0 | 0.6164873424 |
+| mumps | completed | mumps | 263.76 | 2240.82 | 0 | 0.6164873424 |
+| mumps_ooc | completed | mumps | 247.72 | 1932.96 | 9.70 GB | 0.6164873424 |
+| mumps_ooc_seq_analysis | completed | mumps | 294.56 | 2048.94 | 9.73 GB | 0.6164873424 |
+| mumps_ooc_parallel_analysis | stopped | mumps | 未完成 | 接近 Docker 上限 | 中途文件 |  |
+| mkl_pardiso | unavailable |  |  | 230.38 | 0 |  |
+| superlu_dist | stopped | superlu_dist | 未完成 | 进入 solve 后停止 | 0 |  |
+
+本轮结论：当前最值得继续测试的是 `mumps_ooc`；它不是魔法，只是把部分 LU 因子放到磁盘。要接近 COMSOL 的 direct solver 能力，需要更高物理内存、快速 NVMe、以及可能重新构建带 MKL PARDISO 或更完整 MUMPS ordering 包的 PETSc。
+
 ## 2026-07-01 更新：MUMPS OOC 修复、progress 日志和 h=1.5 组装诊断
 
 本轮完成了直接 LU 诊断路径修复：`mumps_ooc` 不再默认设置会触发 `INFOG(1)=-38` 的并行 analysis 组合，而是使用：

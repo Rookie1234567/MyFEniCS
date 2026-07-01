@@ -1,5 +1,68 @@
 # 3D Maxwell 求解器 profile 原理和使用说明
 
+## 2026-07-01 更新：当前 direct LU profiles 的含义和选择建议
+
+当前 3D 主线仍然只使用直接法，不引入 Krylov 迭代。代码里的 `petsc_direct_solver_profile` 不是“不同物理模型”，而是同一个稀疏线性系统的不同 LU 分解后端：
+
+```text
+KSP = preonly
+PC  = lu
+```
+
+也就是说，PETSc 不做迭代，而是把矩阵交给某个 sparse direct solver 做符号分析、重排序、数值因子分解和回代。
+
+| profile | 实际含义 | 当前状态 | 适用场景 |
+| --- | --- | --- | --- |
+| `default` | 串行时 PETSc 默认 LU；MPI 时自动选可用并行 LU，当前通常是 MUMPS | 推荐默认 | 不想指定后端时使用 |
+| `mumps` | 显式使用 MUMPS sparse LU | 可用 | MPI 直接法基线 |
+| `mumps_ooc` | MUMPS + out-of-core factor storage，`ICNTL(22)=1` | 可用，当前推荐大模型优先测试 | 内存接近上限时，把部分因子写到磁盘 |
+| `mumps_ooc_seq_analysis` | MUMPS OOC + sequential analysis | 可用但不一定更快 | 并行 analysis 不稳定时的保守诊断 |
+| `mumps_ooc_parallel_analysis` | MUMPS OOC + parallel analysis，依赖 PT-SCOTCH/ParMETIS | 当前可进入，但 h=2.5 内存压力高 | 只有在更大内存服务器上再测 |
+| `mumps_ooc_requested_legacy` | 旧的 `ICNTL(28)=2, ICNTL(29)=2` 组合 | 只用于复现 `INFOG(1)=-38` | 不推荐正式使用 |
+| `mkl_pardiso` | Intel MKL PARDISO sparse direct solver | 当前镜像不支持 | 若重新构建 PETSc/MKL，可能接近 COMSOL 体验 |
+| `superlu_dist` | SuperLU_DIST 并行稀疏 LU | 当前 PETSc 支持，但 h=2.5 未完成 | 备选并行 direct 后端 |
+| `strumpack` | STRUMPACK sparse direct/压缩直接法 | 当前镜像不支持 | 需要重新构建 PETSc |
+
+直接法的总内存不由原始稀疏矩阵决定，而主要由 LU factor fill-in 决定。对当前 Stage 4 block grating / zero-order DtN 诊断，h=1.5 已经能完成矩阵组装：
+
+```text
+DOF = 1,452,174
+nnz = 48,064,000
+nnz/row = 33.10
+估算 AIJ 矩阵内存约 1.1 GB
+```
+
+但 LU factorization 会把稀疏矩阵展开成更大的 L/U 因子。这个 fill-in 可能比原始矩阵大几十倍甚至更多，所以“矩阵本身能组装”不等于“直接法能解完”。
+
+### 为什么 MUMPS OOC 不等于 COMSOL
+
+`mumps_ooc` 的作用是把部分 LU 因子写到磁盘，降低内存峰值。它不能消除：
+
+```text
+1. 符号分析和重排序阶段的内存；
+2. MPI 并行 LU 中部分元数据/树结构的复制；
+3. H(curl) 3D Maxwell 复数矩阵带来的高 fill-in；
+4. Docker/WSL 的内存上限。
+```
+
+COMSOL 常见配置可能使用高度优化的 PARDISO/MUMPS、共享内存线程、自动 out-of-core、METIS/SCOTCH 重排序、以及更大的主机内存/磁盘缓存。当前 Docker 容器只有约 13.65 GiB 内存上限，所以即使 OOC 能工作，也可能在 h=2 或 h=1.5 的直接 LU 阶段非常慢或接近内存上限。
+
+如果目标是“像 COMSOL 一样跑 200 万自由度直接法”，优先级应是：
+
+```text
+1. 在 Linux 服务器或 WSL/Docker 中给容器更高内存，而不是只加 swap。
+2. 使用快速 NVMe 盘作为 MUMPS OOC 目录。
+3. 构建带 MKL PARDISO 的 PETSc，并测试 mkl_pardiso 单机多线程。
+4. 构建 MUMPS + METIS/SCOTCH/PT-SCOTCH/ParMETIS，比较 ordering。
+5. 保留 assemble-only 表，确认矩阵 nnz/row 没有异常变稠。
+```
+
+本轮 h=2.5 对比报告见：
+
+```text
+notes/test/3d_direct_solver_profile_h2p5_report.md
+```
+
 ## 2026-06-24 更新：当前代码已改为 direct-only
 
 为了降低阅读和调试复杂度，当前 3D 代码路径只保留直接法：

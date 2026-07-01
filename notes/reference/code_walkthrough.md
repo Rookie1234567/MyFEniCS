@@ -1,3 +1,21 @@
+## 2026-07-01 更新：直接求解器 profile 对比阅读入口
+
+如果你想理解 `default / mumps / mumps_ooc / mkl_pardiso / superlu_dist` 是什么，以及为什么当前 h=1.5 主要卡在 LU fill-in，先读：
+
+```text
+1. notes/theory/solver_profiles_3d.md
+   解释每个 direct solver profile 的含义、适用场景和与 COMSOL 的差距。
+
+2. notes/test/3d_direct_solver_profile_h2p5_report.md
+   记录 h=2.5、np=8 在当前问题上的实测效率、内存和失败原因。
+
+3. src/solvers/common_3d_solve.py
+   看 _prepare_direct_lu_options_for_comm 如何把 profile 转成 PETSc/MUMPS 参数。
+
+4. src/studies/run_3d_matrix_scale.py
+   看批量 profile 对比如何生成 stdout/stderr 和 CSV。
+```
+
 ## 2026-07-01 更新：MUMPS OOC 和 progress 日志阅读路径
 
 如果你现在关心“h=1.5 为什么 LU 跑不下去”，按这个顺序读：
