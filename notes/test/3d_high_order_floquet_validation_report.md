@@ -1,5 +1,100 @@
 # 3D 高阶 N1curl Floquet 约束验证报告
 
+## 2026-07-01 更新：Stage 4A p=2 MPI 场污染已修复
+
+本轮重新检查 `stage4_flat_layer_sanity + p=2 + MPI`，发现 2026-06-30 的判断不完整：Stage 4A 场污染并不是 3D zero-order DtN 的主因，而是 p=2 Floquet face-interior dof 的局部 face transform 在 MPI 分区下不满足真实 Nedelec moment 约束。
+
+### 根因
+
+原先 p=2 face-interior dof 使用 Basix quadrilateral permutation 小矩阵来处理周期 face 的 4 个内部切向 moment。这个做法对部分 x-face permutation 在串行下不明显，但在 MPI2/MPI4 的不同 ghost/owned face 组合下，会让解析周期场本身不满足 slave/master 系数关系。
+
+直接诊断：
+
+```bash
+mpiexec -n 2 python3 -m src.test.diagnose_p2_mpc_constraints
+mpiexec -n 4 python3 -m src.test.diagnose_p2_mpc_constraints
+```
+
+修复前曾出现：
+
+```text
+x_face bad rows > 0
+max_constraint_residual 约 1e1 到 2e1
+```
+
+修复后：
+
+```text
+np2: x_edge/x_face/y_edge/y_face/corner bad = 0，最大残差约 5.4e-13
+np4: x_edge/x_face/y_edge/y_face/corner bad = 0，最大残差约 5.4e-13
+```
+
+### 修复方式
+
+保留显式拓扑配对，但 p=2 face-interior transform 改为每个周期 face 的局部 4x4 Nedelec moment fit：
+
+```text
+1. 插值固定的低阶向量多项式场；
+2. 只收集周期 face-interior dof 的真实 Nedelec 系数；
+3. 每个 slave/master face pair 解一个常数规模 4x4 小系统；
+4. 约束仍写成 slave_i = phase * sum_j T_ij master_j。
+```
+
+这不是旧的 whole-plane probe/pinv：不会构造整张周期面的 dense transform，复杂度仍为 `O(N_trace)`，p=2 每个 face block 是固定大小。
+
+### Stage 4A zero-order flat sanity 复测
+
+统一参数：
+
+```text
+stage_case = stage4_flat_layer_sanity
+lambda0 = 633 nm
+n_substrate = 1.0
+stage4_dtn_order_policy = zero_order
+nedelec_degree = 2
+```
+
+| case | MPI | h (nm) | dofs | constraints | edge | face | Floquet total (s) | R | T | R+T | max Ex/Ey/Ez | 结果目录 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| Stage4A flat | 2 | 20 | 5676 | 676 | 356 | 320 | 0.130 | 9.209129e-13 | 1.000000e+00 | 1.000000e+00 | 2.78e-12 / 1.00e+00 / 2.76e-12 | `results/3D_stage4_flat_layer_sanity_normal_p2_h20p0_np2_20260701_032458` |
+| Stage4A flat | 4 | 20 | 5676 | 676 | 356 | 320 | 0.118 | 9.209129e-13 | 1.000000e+00 | 1.000000e+00 | 2.80e-12 / 1.00e+00 / 2.71e-12 | `results/3D_stage4_flat_layer_sanity_normal_p2_h20p0_np4_20260701_032511` |
+| Stage4A flat | 2 | 10 | 39270 | 2470 | 1270 | 1200 | 0.746 | 4.522295e-15 | 1.000000e+00 | 1.000000e+00 | 1.36e-11 / 1.00e+00 / 1.20e-11 | `results/3D_stage4_flat_layer_sanity_normal_p2_h10p0_np2_20260701_032727` |
+
+结论：
+
+```text
+Stage 4A flat-layer sanity 的 p=2 MPI2/MPI4 已恢复与串行一致。
+Stage 4B block grating 仍未开放 p=2；下一步若要开放，需要先做 block grating 的 p=2 物理验证。
+```
+
+基础测试：
+
+```text
+python3 -m compileall -q src
+python3 -m unittest discover -s src/test -p "test_*.py"
+
+结果：54 tests OK, 10 skipped
+```
+
+## 2026-06-30 更新：Stage 4A p=2 暂不作为通过验收
+
+本轮复查发现，`p=2 topological_trace_p2` 在 Stage 2A `floquet_airbox` 的 serial/MPI 验证中是干净的，因此高阶 Floquet trace 配对本身不是当前主要问题。新的问题集中在 Stage 4 的 3D auxiliary DtN total-field 端口：即使在 `stage4_flat_layer_sanity, n_substrate=1.0, zero_order` 这个均匀层硬 sanity 中，端口辅助幅值给出的 R/T 也不符合 `R≈0, T≈1`。
+
+因此当前状态改为：
+
+```text
+p=2 Floquet 可用于 Stage 2A/2B/2C 的约束机制验证。
+Stage 4A p=2 仅保留为“能组装/能运行”的诊断入口，不能作为物理可信验收。
+Stage 4B block grating 仍不开放 p=2。
+下一步应先重推并修正 3D auxiliary DtN 的 zero-order 端口方程，再回到 p=2 Stage 4A。
+```
+
+详细续接记录见：
+
+```text
+notes/test/stage4_p2_mpi_resume_log.md
+```
+
 ## 2026-06-30 更新：p=2 Stage 4A flat-layer sanity 已开放
 
 本轮继续把 `topological_trace_p2` 从 Stage 2A/2B/2C 扩展到 Stage 4A `stage4_flat_layer_sanity`。Stage 4A 是无光栅 flat-layer + DtN total-field port sanity，用来验证二阶 Floquet trace 约束能否和 Stage 4 DtN 主线组合运行。

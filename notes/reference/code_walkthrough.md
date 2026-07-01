@@ -1,3 +1,29 @@
+## 2026-07-01 更新：p=2 Floquet face-interior MPI 修复后的阅读路径
+
+如果你现在研究二阶 3D Floquet，重点看这一条新路径：
+
+```text
+1. src/constraints/floquet_3d.py
+   build_double_floquet_mpc(...)
+     p=2 -> _build_double_floquet_mpc_p2_trace(...)
+
+2. _build_topological_trace_context_p2(...)
+   收集周期 edge records / face records。
+   同时调用 _build_p2_trace_fit_values_by_global(...)，为 face-interior dof 准备局部 moment fitting 样本。
+
+3. _build_p2_edge_constraints_for_kind(...)
+   edge dof 仍然是显式拓扑配对，corner edge 只约束一次。
+
+4. _build_p2_face_constraints_for_kind(...)
+   face-interior dof 不再手写 Basix quadrilateral permutation。
+   现在进入 _face_transform_fit_p2(...)，每个周期 face pair 解一个 4x4 局部 Nedelec moment transform。
+
+5. src/test/diagnose_p2_mpc_constraints.py
+   MPI 诊断脚本，用解析周期场检查 slave/master 系数残差。
+```
+
+这个修复的核心原则：face dof 不是点值，所以不能按点坐标硬配；但也不能恢复整张侧面的 dense probe/pinv。当前做法只在每个 face block 上做常数规模 moment fit，因此复杂度仍是 `O(N_trace)`。
+
 ## 2026-06-30 更新：p=2 Stage 4A flat-layer sanity 阅读路径
 
 如果你现在研究二阶 Floquet 接入 Stage 4A，请按这个顺序读：
@@ -71,8 +97,8 @@ p=2 的关键点：全局约束只由 owning rank 发出；出现在 owned cell 
      _build_p2_face_constraints_for_kind(...)
        处理 face-interior tangential dof，只属于 x-face 或 y-face。
 
-     _quadrilateral_transform_for_permutation(...)
-       使用 Basix quadrilateral 小矩阵处理 MPI 中出现的 face rotation/reflection。
+     _face_transform_fit_p2(...)
+       使用局部 Nedelec moment fit 处理 p=2 face-interior dof。
 
 3. src/solvers/common_3d_case_flow.py
    看 summary 字段：

@@ -1,5 +1,56 @@
 # v2 文档索引
 
+## 2026-07-01 更新：Stage 4A p=2 MPI 不一致已修复
+
+本轮确认并修复了 `stage4_flat_layer_sanity + nedelec_degree=2` 在 MPI 下 Ex/Ez 异常污染的问题。根因不是 DtN 端口本身，而是 p=2 Floquet face-interior dof 在不同 MPI 分区下的局部 face transform 不完整。
+
+最新状态：
+
+```text
+p=2 topological_trace_p2:
+  Stage 2A/2B/2C：保持可用
+  Stage 4A flat-layer sanity：MPI2/MPI4 已通过 zero_order sanity
+  Stage 4B block grating：仍未开放 p=2
+
+修复方式：
+  edge dof 继续显式拓扑配对
+  face-interior dof 改为每个周期 face 的 4x4 局部 Nedelec moment fit
+  不恢复 whole-plane probe/pinv，不构造 O(N_side^2) dense transform
+```
+
+关键结果：
+
+```text
+h20 p2 np2: max |Ex|/|Ey|/|Ez| = 2.78e-12 / 1.00 / 2.76e-12, R/T = 9.21e-13 / 1.00
+h20 p2 np4: max |Ex|/|Ey|/|Ez| = 2.80e-12 / 1.00 / 2.71e-12, R/T = 9.21e-13 / 1.00
+h10 p2 np2: max |Ex|/|Ey|/|Ez| = 1.36e-11 / 1.00 / 1.20e-11, R/T = 4.52e-15 / 1.00
+```
+
+相关文档：
+
+```text
+notes/test/3d_high_order_floquet_validation_report.md
+notes/test/stage4_p2_mpi_resume_log.md
+notes/reference/code_walkthrough.md
+```
+
+## 2026-06-30 更新：Stage 4A p=2 暂停作为物理验收
+
+最新复查结论：
+
+```text
+p=2 topological_trace_p2 在 Stage 2A/2B/2C 中可用于高阶 Floquet 机制验证。
+Stage 4A flat-layer sanity 的 p=2 MPI 不一致，根因已缩小到 3D auxiliary DtN 端口方程/端口幅值解释。
+Stage 4A 目前不能作为 p=2 物理可信 benchmark；Stage 4B block grating 仍不开放 p=2。
+```
+
+续接记录：
+
+```text
+notes/test/stage4_p2_mpi_resume_log.md
+notes/test/3d_high_order_floquet_validation_report.md
+```
+
 ## 2026-06-30 更新：3D p=2 Floquet 已开放 Stage 4A flat-layer sanity
 
 当前高阶 Floquet 支持范围更新为：

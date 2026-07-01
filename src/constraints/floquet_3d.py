@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from mpi4py import MPI
 
-from dolfinx import cpp, mesh
+from dolfinx import cpp, fem, mesh
 
 from ..common.config_3d import SimulationConfig3D
 
@@ -228,6 +228,7 @@ def _build_entity_dof_map(V, entity_dim: int, expected_entity_dofs: int) -> dict
 
     msh = V.mesh
     tdim = msh.topology.dim
+    msh.topology.create_entity_permutations()
     msh.topology.create_connectivity(tdim, entity_dim)
     msh.topology.create_connectivity(entity_dim, tdim)
     cell_to_entity = msh.topology.connectivity(tdim, entity_dim)
@@ -235,6 +236,7 @@ def _build_entity_dof_map(V, entity_dim: int, expected_entity_dofs: int) -> dict
     num_cells = cell_map.size_local + cell_map.num_ghosts
     local_entity_count = {1: 12, 2: 6}[entity_dim]
     entity_dofs = [V.dofmap.dof_layout.entity_dofs(entity_dim, i) for i in range(local_entity_count)]
+    cell_permutation_info = np.asarray(msh.topology.get_cell_permutation_info(), dtype=np.uint32)
 
     entity_dof_map: dict[int, dict[str, object]] = {}
     for cell in range(num_cells):
@@ -257,7 +259,10 @@ def _build_entity_dof_map(V, entity_dim: int, expected_entity_dofs: int) -> dict
             global_dofs, owners, owned = _local_dof_global_info(V, local_dofs)
             record = {
                 "entity": int(entity),
+                "cell": int(cell),
                 "local_entity": int(local_entity),
+                "local_entity_dofs": local_entity_dofs.copy(),
+                "cell_perm_info": int(cell_permutation_info[int(cell)]),
                 "local_dofs": local_dofs,
                 "global_dofs": global_dofs.astype(np.int64),
                 "owners": owners.astype(np.int32),
@@ -353,6 +358,77 @@ def _merge_entity_records(
                 record["rank"]
             ) < int(current["rank"]):
                 merged[key] = record
+    return merged
+
+
+def _build_p2_trace_fit_values_by_global(V, face_records: list[dict[str, object]]) -> dict[int, np.ndarray]:
+    """Collect actual p=2 Nedelec dof coefficients for local face transforms.
+
+    High-order H(curl) face moments are not point values.  Instead of probing a
+    whole periodic side, this helper interpolates a fixed set of low-order
+    vector polynomials once and stores their true Nedelec coefficients only on
+    periodic face-interior dofs.  Each face pair later solves a constant-size
+    4x4 transform, so memory and time remain O(N_trace).
+    """
+
+    needed_globals: set[int] = set()
+    for record in face_records:
+        needed_globals.update(int(value) for value in np.asarray(record["global_dofs"], dtype=np.int64))
+    gathered_needed = V.mesh.comm.allgather(needed_globals)
+    needed_globals = {int(value) for packet in gathered_needed for value in packet}
+    if not needed_globals:
+        return {}
+
+    index_map = V.dofmap.index_map
+    block_size = V.dofmap.index_map_bs
+    if block_size != 1:
+        raise NotImplementedError("p=2 trace fitting currently expects scalar H(curl) dofmap block size 1.")
+    owned_local_size = index_map.size_local * block_size
+    owned_global = np.arange(index_map.local_range[0], index_map.local_range[1], dtype=np.int64)
+    local_values: dict[int, list[complex]] = {global_dof: [] for global_dof in needed_globals}
+
+    def _basis_values(x, component: int, basis: int):
+        values = np.zeros((3, x.shape[1]), dtype=np.complex128)
+        if basis == 0:
+            scalar = np.ones(x.shape[1], dtype=np.complex128)
+        elif basis == 1:
+            scalar = x[0].astype(np.complex128)
+        elif basis == 2:
+            scalar = x[1].astype(np.complex128)
+        elif basis == 3:
+            scalar = x[2].astype(np.complex128)
+        else:  # pragma: no cover
+            raise ValueError(basis)
+        values[component] = scalar
+        return values
+
+    for component in range(3):
+        for basis in range(4):
+            field = fem.Function(V)
+            field.interpolate(lambda x, component=component, basis=basis: _basis_values(x, component, basis))
+            field.x.scatter_forward()
+            values = np.asarray(field.x.array[:owned_local_size], dtype=np.complex128)
+            for local_dof, global_dof in enumerate(owned_global):
+                global_dof = int(global_dof)
+                if global_dof in local_values:
+                    local_values[global_dof].append(complex(values[local_dof]))
+
+    filtered = {
+        global_dof: np.asarray(values, dtype=np.complex128)
+        for global_dof, values in local_values.items()
+        if len(values) == 12
+    }
+    gathered = V.mesh.comm.allgather(filtered)
+    merged: dict[int, np.ndarray] = {}
+    for packet in gathered:
+        for global_dof, values in packet.items():
+            merged[int(global_dof)] = np.asarray(values, dtype=np.complex128)
+    missing = sorted(needed_globals.difference(merged))
+    if missing:
+        raise RuntimeError(
+            "Could not collect p=2 trace fitting dof values for all periodic face dofs; "
+            f"missing first entries: {missing[:10]}"
+        )
     return merged
 
 
@@ -462,6 +538,10 @@ def _build_topological_trace_context_p2(V, mesh_data, cfg: SimulationConfig3D) -
             "edge": int(edge),
             "midpoint": midpoint,
             "tangent": tangent,
+            "cell": int(edge_info["cell"]),
+            "local_entity": int(edge_info["local_entity"]),
+            "local_entity_dofs": np.asarray(edge_info["local_entity_dofs"], dtype=np.int32),
+            "cell_perm_info": int(edge_info["cell_perm_info"]),
             "local_dofs": np.asarray(edge_info["local_dofs"], dtype=np.int32),
             "global_dofs": np.asarray(edge_info["global_dofs"], dtype=np.int64),
             "owners": np.asarray(edge_info["owners"], dtype=np.int32),
@@ -503,6 +583,10 @@ def _build_topological_trace_context_p2(V, mesh_data, cfg: SimulationConfig3D) -
             "normal": normal,
             "normal_axis": normal_axis,
             "geometry_coords": coords,
+            "cell": int(face_info["cell"]),
+            "local_entity": int(face_info["local_entity"]),
+            "local_entity_dofs": np.asarray(face_info["local_entity_dofs"], dtype=np.int32),
+            "cell_perm_info": int(face_info["cell_perm_info"]),
             "local_dofs": np.asarray(face_info["local_dofs"], dtype=np.int32),
             "global_dofs": np.asarray(face_info["global_dofs"], dtype=np.int64),
             "owners": np.asarray(face_info["owners"], dtype=np.int32),
@@ -519,17 +603,17 @@ def _build_topological_trace_context_p2(V, mesh_data, cfg: SimulationConfig3D) -
         face_by_key[key] = record
         face_records.append(record)
 
+    trace_fit_values_by_global = _build_p2_trace_fit_values_by_global(V, face_records)
+
     return {
         "edge_records": edge_records,
         "edge_global_by_key": _merge_entity_records(comm.allgather(edge_by_key), dof_key="global_dofs"),
         "face_records": face_records,
         "face_global_by_key": _merge_entity_records(comm.allgather(face_by_key), dof_key="global_dofs"),
+        "trace_fit_values_by_global": trace_fit_values_by_global,
         "tol": tol,
         "basix_interval_transform": np.asarray(
             V.element.basix_element.entity_transformations()["interval"][0], dtype=np.complex128
-        ),
-        "basix_quadrilateral_transforms": np.asarray(
-            V.element.basix_element.entity_transformations()["quadrilateral"], dtype=np.complex128
         ),
     }
 
@@ -645,11 +729,10 @@ def _emit_block_constraint_rows(
     """Emit one local block of H(curl) Floquet constraints.
 
     For p=2 edges this is usually a 2x2 local block.  For p=2 face-interior
-    dofs it is a 4x4 block.  Only owned slave dofs emit global constraints;
-    Owned slave dofs emit the global constraints.  Ghost slaves that touch
-    owned cells are also added to the local MPC map because dolfinx_mpc needs
-    them for local element assembly; duplicate global emission is still blocked
-    by the owned_raw_maps check.
+    dofs it is a 4x4 block.  Only owned slave dofs emit the global constraint
+    checked by ``owned_raw_maps``.  Ghost slave rows that touch owned cells are
+    also passed to the local MPC map because ``dolfinx_mpc`` needs them during
+    local element assembly; they never emit duplicate global constraints.
     """
 
     slave_globals = np.asarray(record["global_dofs"], dtype=np.int64)
@@ -705,6 +788,18 @@ def _emit_block_constraint_rows(
     return ghost_rows_for_owned_cells, ghost_rows_skipped, coefficients_seen
 
 
+def _global_coefficient_transform_p2(
+    context: dict[str, object],
+    record: dict[str, object],
+    master: dict[str, object],
+    reference_transform: np.ndarray,
+) -> np.ndarray:
+    """Convert a reference entity relation into global coefficient ordering."""
+
+    del context, record, master
+    return np.asarray(reference_transform, dtype=np.complex128)
+
+
 def _edge_transform_p2(context: dict[str, object], record: dict[str, object], master: dict[str, object]) -> np.ndarray:
     tangent = np.asarray(record["tangent"], dtype=np.float64)
     master_tangent = np.asarray(master["tangent"], dtype=np.float64)
@@ -715,9 +810,12 @@ def _edge_transform_p2(context: dict[str, object], record: dict[str, object], ma
             "Periodic p=2 edge tangent mismatch while building 3D Floquet constraints: "
             f"slave_edge={record['edge']}, master_edge={master['edge']}."
         )
-    if tangent_dot >= 0.0:
-        return np.eye(2, dtype=np.complex128)
-    return np.asarray(context["basix_interval_transform"], dtype=np.complex128)
+    reference_transform = (
+        np.eye(2, dtype=np.complex128)
+        if tangent_dot >= 0.0
+        else np.asarray(context["basix_interval_transform"], dtype=np.complex128)
+    )
+    return _global_coefficient_transform_p2(context, record, master, reference_transform)
 
 
 def _face_coords_match_ordered(
@@ -765,56 +863,54 @@ def _face_vertex_permutation(
     return tuple(permutation)  # type: ignore[return-value]
 
 
-def _compose_vertex_permutation(
-    outer: tuple[int, int, int, int],
-    inner: tuple[int, int, int, int],
-) -> tuple[int, int, int, int]:
-    return tuple(int(outer[index]) for index in inner)  # type: ignore[return-value]
-
-
-def _quadrilateral_transform_for_permutation(
+def _face_transform_fit_p2(
     context: dict[str, object],
-    permutation: tuple[int, int, int, int],
+    record: dict[str, object],
+    master: dict[str, object],
+    kind: str,
 ) -> np.ndarray:
-    """Compose Basix quadrilateral entity transformations for one face permutation.
+    """Return the local p=2 face transform from actual Nedelec moments."""
 
-    Basix exposes two local quadrilateral generators.  With the tensor-product
-    vertex ordering used by DOLFINx hexahedra, these correspond to swapping the
-    two face coordinates and reversing the first face coordinate.  Their small
-    4x4 matrices generate the full D4 face-orientation group without any
-    whole-plane fitting.
-    """
-
-    quad_transforms = np.asarray(context["basix_quadrilateral_transforms"], dtype=np.complex128)
-    if quad_transforms.shape != (2, 4, 4):
-        raise RuntimeError(f"Unexpected Basix quadrilateral transform shape: {quad_transforms.shape}.")
-    generators = [
-        ((0, 2, 1, 3), quad_transforms[0]),
-        ((1, 0, 3, 2), quad_transforms[1]),
-    ]
-    identity_perm = (0, 1, 2, 3)
-    identity_matrix = np.eye(4, dtype=np.complex128)
-    queue: list[tuple[tuple[int, int, int, int], np.ndarray]] = [(identity_perm, identity_matrix)]
-    seen: dict[tuple[int, int, int, int], np.ndarray] = {}
-    while queue:
-        current_perm, current_matrix = queue.pop(0)
-        if current_perm in seen:
-            continue
-        seen[current_perm] = current_matrix
-        for generator_perm, generator_matrix in generators:
-            queue.append(
-                (
-                    _compose_vertex_permutation(generator_perm, current_perm),
-                    generator_matrix @ current_matrix,
-                )
-            )
-    transform = seen.get(permutation)
-    if transform is None:
-        raise NotImplementedError(
-            "The p=2 periodic face permutation is outside the Basix quadrilateral D4 transform table: "
-            f"{permutation}. No dense/probe fallback is allowed."
+    values_by_global = context.get("trace_fit_values_by_global", {})
+    if kind == "x":
+        sample_indices = [0, 2, 3, 4, 6, 7, 8, 10, 11]
+    elif kind == "y":
+        sample_indices = [0, 1, 3, 4, 5, 7, 8, 9, 11]
+    else:
+        raise ValueError("p=2 face transform fitting supports kind='x' or kind='y'.")
+    slave_globals = [int(value) for value in np.asarray(record["global_dofs"], dtype=np.int64)]
+    master_globals = [int(value) for value in np.asarray(master["global_dofs"], dtype=np.int64)]
+    try:
+        slave_samples = np.vstack(
+            [np.asarray(values_by_global[dof], dtype=np.complex128)[sample_indices] for dof in slave_globals]
         )
-    return np.asarray(transform, dtype=np.complex128)
+        master_samples = np.vstack(
+            [np.asarray(values_by_global[dof], dtype=np.complex128)[sample_indices] for dof in master_globals]
+        )
+    except KeyError as exc:
+        raise RuntimeError(f"Missing p=2 trace fit samples for global dof {int(exc.args[0])}.") from exc
+
+    rank = np.linalg.matrix_rank(master_samples, tol=1.0e-10)
+    if rank < 4:
+        raise RuntimeError(
+            "p=2 Floquet face transform fit is rank deficient; "
+            f"rank={rank}, slave_face={record['face']}, master_face={master['face']}."
+        )
+    transform_t, residuals, _rank, _singular_values = np.linalg.lstsq(
+        master_samples.T,
+        slave_samples.T,
+        rcond=1.0e-12,
+    )
+    transform = np.asarray(transform_t.T, dtype=np.complex128)
+    fit_residual = float(np.max(np.abs(transform @ master_samples - slave_samples), initial=0.0))
+    if fit_residual > 1.0e-8:
+        raise RuntimeError(
+            "p=2 Floquet face transform fit residual is too large: "
+            f"{fit_residual:.3e} for slave_face={record['face']}, master_face={master['face']}, "
+            f"lstsq_residuals={residuals}."
+        )
+    transform[np.abs(transform) < 1.0e-12] = 0.0
+    return transform
 
 
 def _face_transform_p2(
@@ -843,10 +939,22 @@ def _face_transform_p2(
     shifted = np.asarray(record["geometry_coords"], dtype=np.float64) - shift
     master_coords = np.asarray(master["geometry_coords"], dtype=np.float64)
     if _face_coords_match_ordered(shifted, master_coords, tol):
-        return np.eye(4, dtype=np.complex128)
+        return _global_coefficient_transform_p2(
+            context,
+            record,
+            master,
+            _face_transform_fit_p2(context, record, master, kind),
+        )
     if _face_coords_match_unordered(shifted, master_coords, tol):
-        permutation = _face_vertex_permutation(shifted, master_coords, tol)
-        return _quadrilateral_transform_for_permutation(context, permutation)
+        # The local fit is still topology/local-entity based: it uses the paired
+        # face dof lists and a constant-size polynomial moment system, not any
+        # whole-plane dense side transform.
+        return _global_coefficient_transform_p2(
+            context,
+            record,
+            master,
+            _face_transform_fit_p2(context, record, master, kind),
+        )
     raise RuntimeError(
         "Periodic p=2 face mesh mismatch while building 3D Floquet constraints: "
         f"kind={kind}, slave_face={record['face']}, master_face={master['face']}."
@@ -1512,12 +1620,9 @@ def _build_double_floquet_mpc_p2_trace(
         {
             "mapping_kind": "topological_trace_p2_edge_and_face_blocks",
             "uses_basix_interval_transform": True,
-            "uses_basix_quadrilateral_transform_hook": True,
-            "face_transform_limit": "tensor-product quadrilateral D4 rotations/reflections from Basix local blocks",
+            "uses_p2_face_local_moment_fit": True,
+            "face_transform_limit": "constant-size 4x4 local Nedelec moment fit per periodic face",
             "basix_interval_transform_shape": list(np.asarray(_context()["basix_interval_transform"]).shape),
-            "basix_quadrilateral_transform_shape": list(
-                np.asarray(_context()["basix_quadrilateral_transforms"]).shape
-            ),
         }
     )
 
