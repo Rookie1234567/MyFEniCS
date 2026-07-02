@@ -7,7 +7,11 @@ from pathlib import Path
 from mpi4py import MPI
 
 from ..common.config_3d import (
+    EUV_REFERENCE_WAVELENGTH_NM,
+    NUMERICAL_SANITY_ONLY,
     SimulationConfig3D,
+    SI_GRATING_INDEX_EUV_13P5_NM,
+    SI_GRATING_MATERIAL_LABEL,
     normal_incidence_airbox_config,
     oblique_incidence_airbox_config,
     project_root,
@@ -153,6 +157,12 @@ def _config_updates(args) -> dict[str, object]:
         updates["n_substrate"] = complex(args.n_substrate)
     if args.n_grating is not None:
         updates["n_grating"] = complex(args.n_grating)
+    if args.substrate_material_label is not None:
+        updates["substrate_material_label"] = args.substrate_material_label
+    if args.grating_material_label is not None:
+        updates["grating_material_label"] = args.grating_material_label
+    if args.validation_role is not None:
+        updates["validation_role"] = args.validation_role
     if args.period_x is not None:
         updates["period_x"] = args.period_x
     if args.period_y is not None:
@@ -263,7 +273,7 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "stage4_dtn_order_policy": "auto_propagating",
             "stage4_dtn_assembly": "auxiliary",
             "stage4_pml_outer_bc": "natural",
-            "lambda0": 13.5,
+            "lambda0": EUV_REFERENCE_WAVELENGTH_NM,
             "period_x": 100.0,
             "period_y": 100.0,
             "air_height": 100.0,
@@ -277,7 +287,10 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
             "pml_bottom_thickness": 0.0,
             "pml_alpha": 5.0,
             "n_substrate": 1.45 + 0.0j,
-            "n_grating": 2.0 + 0.0j,
+            "n_grating": SI_GRATING_INDEX_EUV_13P5_NM,
+            "substrate_material_label": "placeholder_substrate_user_unspecified",
+            "grating_material_label": SI_GRATING_MATERIAL_LABEL,
+            "validation_role": NUMERICAL_SANITY_ONLY,
             "grating_width_x": 50.0,
             "grating_width_y": 50.0,
             "grating_height": 50.0,
@@ -307,6 +320,7 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
                 "grating_width_y": 0.0,
                 "grating_height": 0.0,
                 "n_grating": 1.0 + 0.0j,
+                "grating_material_label": None,
             }
         )
         return values
@@ -423,6 +437,13 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--pml-alpha", type=float, default=None)
     parser.add_argument("--n-substrate", default=None, help="Substrate refractive index for Fresnel stage.")
     parser.add_argument("--n-grating", default=None, help="Rectangular-block grating refractive index for Stage 4.")
+    parser.add_argument("--substrate-material-label", default=None, help="Human-readable substrate material label.")
+    parser.add_argument("--grating-material-label", default=None, help="Human-readable grating material label.")
+    parser.add_argument(
+        "--validation-role",
+        default=None,
+        help="Validation role, e.g. numerical_sanity_only or physical_benchmark_candidate.",
+    )
     parser.add_argument("--period-x", type=float, default=None, help="3D periodic cell size in x, nm.")
     parser.add_argument("--period-y", type=float, default=None, help="3D periodic cell size in y, nm.")
     parser.add_argument("--air-height", type=float, default=None, help="Physical air height above z=0 in nm.")

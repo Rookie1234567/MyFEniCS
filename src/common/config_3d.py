@@ -9,6 +9,12 @@ import numpy as np
 from .units import VACUUM_C, VACUUM_ETA0
 
 
+EUV_REFERENCE_WAVELENGTH_NM = 13.5
+SI_GRATING_MATERIAL_LABEL = "Si / silicon"
+SI_GRATING_INDEX_EUV_13P5_NM = 0.999002304859 + 0.00182649365j
+NUMERICAL_SANITY_ONLY = "numerical_sanity_only"
+
+
 @dataclass(frozen=True)
 class Tags3D:
     air: int = 1
@@ -56,6 +62,9 @@ class SimulationConfig3D:
     grating_width_y: float = 0.0
     n_substrate: complex | None = None
     n_grating: complex | None = None
+    substrate_material_label: str | None = None
+    grating_material_label: str | None = None
+    validation_role: str = NUMERICAL_SANITY_ONLY
     interface_z: float = 0.0
     scattering_background: str = "layered"
     stage4_boundary_model: str = "dtn_port"  # "dtn_port", diagnostic "pml", or diagnostic "robin0"

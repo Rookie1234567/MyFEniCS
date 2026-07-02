@@ -7,10 +7,14 @@ from pathlib import Path
 from mpi4py import MPI
 
 from ..common.config import SimulationConfig
-from ..common.config_3d import SimulationConfig3D, project_root
+from ..common.config_3d import NUMERICAL_SANITY_ONLY, SimulationConfig3D, project_root
 from ..common.output_paths import unique_run_dir
 from ..solvers.solve_maxwell_3d_stage_4b_block_grating import run_stage4b_block_grating_3d_case
 from ..solvers.solve_vector_maxwell import _json_default, run_case as run_2d_tm_case
+
+
+# Legacy 633 nm / real-index inputs in this file are retained only for
+# cross-dimensional numerical sanity checks, not for EUV physical validation.
 
 
 def _shared_run_dir(base_name: str, unique_output: bool) -> Path:
@@ -23,7 +27,7 @@ def _shared_run_dir(base_name: str, unique_output: bool) -> Path:
 
 
 def build_2d_reference_config(mesh_target_size: float, nedelec_degree: int) -> SimulationConfig:
-    """Return the 2D TM scattered benchmark matching the 3D y-extruded cell."""
+    """Return the legacy 633 nm 2D TM numerical-sanity case."""
 
     return SimulationConfig(
         case_name="stage4_2p5d_reference_2d_tm",
@@ -59,7 +63,7 @@ def build_3d_extruded_config(
     nedelec_degree: int,
     stage4_boundary_model: str = "pml",
 ) -> SimulationConfig3D:
-    """Return a Stage-4 cell that is invariant in y and should match the 2D TM case."""
+    """Return the matching legacy 633 nm 3D numerical-sanity case."""
     use_pml = stage4_boundary_model == "pml"
 
     return SimulationConfig3D(
@@ -82,6 +86,9 @@ def build_3d_extruded_config(
         n_air=1.0 + 0.0j,
         n_substrate=1.45 + 0.0j,
         n_grating=2.0 + 0.0j,
+        substrate_material_label="legacy_real_index_debug",
+        grating_material_label="legacy_real_index_debug",
+        validation_role=NUMERICAL_SANITY_ONLY,
         grating_width_x=150.0,
         grating_width_y=100.0,
         grating_height=150.0,
@@ -146,6 +153,7 @@ def main(argv: list[str] | None = None) -> None:
         "mesh_target_size": args.mesh_target_size,
         "nedelec_degree": args.nedelec_degree,
         "mpi_size": comm.size,
+        "validation_role": NUMERICAL_SANITY_ONLY,
         "stage4_boundary_model": args.stage4_boundary_model,
         "stage4_boundary_model_note": (
             "pml is comparable to the 2D scattered PML flow; robin0 is a 3D diagnostic and is not expected to match the 2D PML reference exactly."

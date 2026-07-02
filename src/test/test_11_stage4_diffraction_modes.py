@@ -5,6 +5,10 @@ import unittest
 import numpy as np
 
 from src.postprocessing.diffraction_3d import (
+    E_FOURIER_DIAGNOSTIC_NOTE,
+    OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
+    OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
+    SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE,
     _eh_fourier_order_powers,
     _e_fourier_order_powers,
     _incident_power,
@@ -30,6 +34,13 @@ def _mode_samples(points, kvec, e_vec, h_vec, amplitude: complex) -> tuple[np.nd
 
 
 class Stage4DiffractionModeTests(unittest.TestCase):
+    def test_official_stage4_total_power_source_is_eh_fourier(self):
+        self.assertEqual(OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE, "eh_fourier_orders")
+        self.assertIn("E/H", OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE)
+        self.assertIn("Diagnostic only", E_FOURIER_DIAGNOSTIC_NOTE)
+        self.assertIn("E/H Fourier", SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE)
+        self.assertNotIn("Official Stage-4 R/T uses E-Fourier", SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE)
+
     def test_zero_order_only_catalog(self):
         cfg = stage4_block_config(diffraction_zero_order_only=True)
         orders = enumerate_diffraction_orders_3d(cfg)

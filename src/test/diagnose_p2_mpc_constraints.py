@@ -8,7 +8,7 @@ from mpi4py import MPI
 
 from dolfinx import fem
 
-from src.common.config_3d import SimulationConfig3D
+from src.common.config_3d import NUMERICAL_SANITY_ONLY, SimulationConfig3D
 from src.constraints import floquet_3d
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.runners.run_3d_cases import _stage_defaults
@@ -17,6 +17,8 @@ from src.solvers.common_3d_solve import _create_nedelec_space
 
 def _make_cfg(stage_case: str) -> SimulationConfig3D:
     values = _stage_defaults(stage_case)
+    # Legacy 633 nm / real-index inputs are retained only for MPC coefficient
+    # diagnostics; they are not EUV physical-validation parameters.
     if stage_case == "stage4_block_grating":
         n_substrate = 1.45 + 0.0j
         n_grating = 2.0 + 0.0j
@@ -28,6 +30,9 @@ def _make_cfg(stage_case: str) -> SimulationConfig3D:
             "lambda0": 633.0,
             "n_substrate": n_substrate,
             "n_grating": n_grating,
+            "substrate_material_label": "legacy_real_index_debug",
+            "grating_material_label": "legacy_real_index_debug",
+            "validation_role": NUMERICAL_SANITY_ONLY,
             "mesh_target_size": 20.0,
             "nedelec_degree": 2,
             "visualization_degree": 1,

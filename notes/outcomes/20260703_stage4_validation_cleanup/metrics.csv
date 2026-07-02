@@ -1,0 +1,4 @@
+案例,stage_case,lambda0_nm,n_substrate,n_grating,validation_role,physical_benchmark_candidate,power_source,R,T,R_plus_T,A_balance,cells,dofs,elapsed_seconds,max_rss_mb
+Stage 4A flat-layer,stage4_flat_layer_sanity,13.5,1.45+0j,1+0j,numerical_sanity_only,false,dtn_auxiliary_port_amplitudes,0.9999103959913871,0.0000896040086193742,1.0000000000000064,-6.46513821211253e-15,12,75,8.678286976995878,280.80859375
+Stage 4B zero-contrast,stage4_block_grating,13.5,1.45+0j,1+0j,numerical_sanity_only,false,dtn_auxiliary_port_amplitudes,0.9999103959913880,0.0000896040086193743,1.0000000000000073,-7.35338439444844e-15,27,144,8.327802566986065,281.0859375
+

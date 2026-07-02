@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from src import main as main_module
-from src.common.config_3d import normal_incidence_airbox_config
+from src.common.config_3d import SI_GRATING_INDEX_EUV_13P5_NM, normal_incidence_airbox_config
 from src.solvers.solve_maxwell_3d_stage_1_airbox import run_stage1_airbox_3d_case
 from src.solvers.solve_maxwell_3d_stage_2a_floquet_airbox import run_stage2a_floquet_airbox_3d_case
 from src.solvers.solve_maxwell_3d_stage_2b_pml_airbox import run_stage2b_pml_airbox_3d_case
@@ -42,6 +42,12 @@ class Test3DStageEntrypoints(unittest.TestCase):
         self.assertEqual(args[args.index("--stage-case") + 1], "stage4_block_grating")
         self.assertIn("--period-x", args)
         self.assertIn("--grating-width-x", args)
+        self.assertIn("--n-grating", args)
+        self.assertEqual(complex(args[args.index("--n-grating") + 1]), SI_GRATING_INDEX_EUV_13P5_NM)
+        self.assertIn("--grating-material-label", args)
+        self.assertEqual(args[args.index("--grating-material-label") + 1], "Si / silicon")
+        self.assertIn("--validation-role", args)
+        self.assertEqual(args[args.index("--validation-role") + 1], "numerical_sanity_only")
         self.assertNotIn("floquet_airbox", args)
 
 

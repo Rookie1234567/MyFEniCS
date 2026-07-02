@@ -1,5 +1,17 @@
 # v2 文档索引
 
+## 2026-07-02 更新：Stage 4 验证口径收紧
+
+当前 Stage 4 的官方 `R_total/T_total` 来源统一为 `diffraction_total_power_source = "eh_fourier_orders"`，即在上下 probe 面按衍射级拟合切向 `E/H` Fourier 系数，并用 up/down 模态分离后统计反射和透射。`E-only Fourier`、sampled net flux 和旧 modal diagnostic 只作为诊断交叉检查，不作为当前官方 R/T。
+
+后续 EUV 物理验证固定使用 `lambda0 = 13.5 nm`。真实 block grating 的光栅材料参数已改为 Si / silicon：
+
+```text
+n_grating = 0.999002304859 + 0.00182649365j
+```
+
+基座复折射率仍等待用户按材料表继续指定；在此之前，使用占位基座折射率得到的 Stage 4 结果只能标记为 `numerical_sanity_only`，不能作为最终物理 benchmark。能量守恒 `R+T≈1` 也只说明功率归一化和边界吸收没有明显异常，仍必须和 flat-layer、zero-contrast、Fresnel 或网格收敛交叉验证。
+
 ## 2026-07-02 更新：3D 并行后处理保留 owned-cell 过滤
 
 `src/postprocessing/postprocess_3d.py` 的本地改动已确认有用并保留：并行运行时，summary 中的 `max|E|`、Poynting、分量最大值等指标只统计 owned cells 对应的 DG/VTK 点，避免 ghost cells 被重复计入。ParaView 并行输出仍写 `fields_3d_for_paraview_parallel.pvd` 和各 rank 的 `.vtu`。

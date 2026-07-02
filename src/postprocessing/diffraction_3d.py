@@ -25,6 +25,21 @@ from ..common.modes_3d import (
 )
 
 
+OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE = "eh_fourier_orders"
+OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE = (
+    "Official Stage-4 R/T uses per-order Fourier coefficients of tangential E/H "
+    "to separate up/down waves on uniform probe planes."
+)
+E_FOURIER_DIAGNOSTIC_NOTE = (
+    "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
+    "when finite-PML reflections or non-transverse FE components are present."
+)
+SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE = (
+    "Diagnostic only: sampled net flux uses H reconstructed from the finite-element curl on probe samples. "
+    "Official Stage-4 R/T uses tangential E/H Fourier directional fitting."
+)
+
+
 def _json_default(value):
     if isinstance(value, complex):
         return [value.real, value.imag]
@@ -96,11 +111,12 @@ def _e_fourier_order_powers(
     bottom_e: np.ndarray,
     incident_power: float,
 ) -> tuple[dict[tuple[int, int, str], dict[str, float | complex]], dict[str, float]]:
-    """Compute propagating R/T from 2D Fourier coefficients of E on probe planes.
+    """Compute diagnostic R/T from 2D Fourier coefficients of E on probe planes.
 
-    This is the official Stage-4 power path for coarse Nedelec runs.  The older
-    E/H least-squares modal fit is still reported as a diagnostic because H is
-    reconstructed from the FE curl and can over-amplify high-order channels.
+    E-only Fourier data cannot separate coexisting up/down waves of the same
+    diffraction order.  Keep this path as a diagnostic cross-check; the official
+    Stage-4 ``R_total`` / ``T_total`` values come from E/H Fourier directional
+    fitting in ``_eh_fourier_order_powers``.
     """
 
     top_z = float(top_points[0, 2])
@@ -249,7 +265,7 @@ def _eh_fourier_order_powers(
     bottom_h: np.ndarray,
     incident_power: float,
 ) -> tuple[dict[tuple[int, int, str], dict[str, float | complex]], dict[str, float]]:
-    """Compute propagating R/T by per-order directional E/H Fourier fitting."""
+    """Compute official Stage-4 R/T by per-order directional E/H Fourier fitting."""
 
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
@@ -768,15 +784,9 @@ def compute_diffraction_orders_3d(
         "T_total": official_T_total,
         "R_plus_T": official_R_plus_T,
         "A_balance": float(1.0 - official_R_plus_T),
-        "diffraction_total_power_source": "eh_fourier_orders",
-        "diffraction_eh_fourier_note": (
-            "Official Stage-4 R/T uses per-order Fourier coefficients of tangential E/H "
-            "to separate up/down waves on uniform probe planes."
-        ),
-        "diffraction_e_fourier_note": (
-            "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
-            "when finite-PML reflections or non-transverse FE components are present."
-        ),
+        "diffraction_total_power_source": OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
+        "diffraction_eh_fourier_note": OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
+        "diffraction_e_fourier_note": E_FOURIER_DIAGNOSTIC_NOTE,
         "diffraction_background_evaluated_analytically": bool(use_exact_layered_background),
         **eh_fourier_metrics,
         **e_fourier_metrics,
@@ -789,7 +799,7 @@ def compute_diffraction_orders_3d(
         "top_net_flux_code_units": float(top_flux_outward),
         "bottom_net_flux_code_units": float(bottom_flux_outward),
         "sampled_net_flux_diagnostic_only": True,
-        "sampled_net_flux_note": "Diagnostic only: this uses H reconstructed from the finite-element curl on probe samples. Official Stage-4 R/T uses E-Fourier modal powers.",
+        "sampled_net_flux_note": SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE,
         "R_total_from_net_flux": flux_R_total,
         "T_total_from_net_flux": flux_T_total,
         "R_plus_T_from_net_flux": flux_R_plus_T,

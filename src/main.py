@@ -184,13 +184,16 @@ class Stage4GratingInputs3D:
     pml_top_thickness: float = 25.0
     pml_bottom_thickness: float = 25.0
     pml_alpha: float = 5.0
-    n_substrate: float = 1.1
+    n_substrate: complex = 1.1 + 0.0j
+    substrate_material_label: str = "placeholder_substrate_user_unspecified"
     divergence_penalty: float = 0.0
     period_x: float = 100.0
     period_y: float = 100.0
     air_height: float = 50.0
     substrate_thickness: float = 50.0
-    n_grating: float = 1.0
+    n_grating: complex = 0.999002304859 + 0.00182649365j
+    grating_material_label: str = "Si / silicon"
+    validation_role: str = "numerical_sanity_only"
     grating_width_x: float = 50.0
     grating_width_y: float = 50.0
     grating_height: float = 50.0
@@ -328,11 +331,14 @@ def _pycharm_args_3d() -> list[str]:
     _add_value(args, "--pml-bottom-thickness", _setting_value(settings, "pml_bottom_thickness"))
     _add_value(args, "--pml-alpha", _setting_value(settings, "pml_alpha"))
     _add_value(args, "--n-substrate", _setting_value(settings, "n_substrate"))
+    _add_value(args, "--substrate-material-label", _setting_value(settings, "substrate_material_label"))
     _add_value(args, "--period-x", _setting_value(settings, "period_x"))
     _add_value(args, "--period-y", _setting_value(settings, "period_y"))
     _add_value(args, "--air-height", _setting_value(settings, "air_height"))
     _add_value(args, "--substrate-thickness", _setting_value(settings, "substrate_thickness"))
     _add_value(args, "--n-grating", _setting_value(settings, "n_grating"))
+    _add_value(args, "--grating-material-label", _setting_value(settings, "grating_material_label"))
+    _add_value(args, "--validation-role", _setting_value(settings, "validation_role"))
     _add_value(args, "--grating-width-x", _setting_value(settings, "grating_width_x"))
     _add_value(args, "--grating-width-y", _setting_value(settings, "grating_width_y"))
     _add_value(args, "--grating-height", _setting_value(settings, "grating_height"))

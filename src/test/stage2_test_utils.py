@@ -6,7 +6,14 @@ from pathlib import Path
 
 import numpy as np
 
-from src.common.config_3d import SimulationConfig3D, normal_incidence_airbox_config, oblique_incidence_airbox_config
+from src.common.config_3d import (
+    NUMERICAL_SANITY_ONLY,
+    SI_GRATING_INDEX_EUV_13P5_NM,
+    SI_GRATING_MATERIAL_LABEL,
+    SimulationConfig3D,
+    normal_incidence_airbox_config,
+    oblique_incidence_airbox_config,
+)
 from src.solvers.solve_maxwell_3d_stage_1_airbox import run_stage1_airbox_3d_case
 from src.solvers.solve_maxwell_3d_stage_2a_floquet_airbox import run_stage2a_floquet_airbox_3d_case
 from src.solvers.solve_maxwell_3d_stage_2b_pml_airbox import run_stage2b_pml_airbox_3d_case
@@ -132,7 +139,10 @@ def stage4_block_config(**updates) -> SimulationConfig3D:
         "pml_bottom_thickness": 25.0,
         "pml_alpha": 5.0,
         "n_substrate": 1.45 + 0.0j,
-        "n_grating": 2.0 + 0.0j,
+        "n_grating": SI_GRATING_INDEX_EUV_13P5_NM,
+        "substrate_material_label": "placeholder_substrate_user_unspecified",
+        "grating_material_label": SI_GRATING_MATERIAL_LABEL,
+        "validation_role": NUMERICAL_SANITY_ONLY,
         "grating_width_x": 50.0,
         "grating_width_y": 50.0,
         "grating_height": 50.0,

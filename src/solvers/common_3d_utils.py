@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover - Windows host fallback; Docker/Linux ha
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from ..common.config_3d import SimulationConfig3D
+from ..common.config_3d import NUMERICAL_SANITY_ONLY, SimulationConfig3D
 from .solve_vector_maxwell import _json_default
 
 
@@ -153,6 +153,8 @@ def _log_solver_summary(summary: dict[str, Any], log) -> None:
         log(f"  max RSS across ranks = {max_rss:.1f} MB")
     log(f"  official result      = {summary['official_result']}")
     log(f"  diagnostic only      = {summary['diagnostic_only']}")
+    log(f"  validation role      = {summary.get('validation_role')}")
+    log(f"  physical benchmark  = {summary.get('physical_benchmark_candidate')}")
     log(f"  case status          = {summary['case_status']}")
 
 def _write_case_outputs(out_dir: Path, summary: dict[str, Any], log_lines: list[str], comm) -> None:
@@ -202,9 +204,23 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
     top-level copies keep validation scripts simple and avoid fragile lookups
     through the nested JSON structure.
     """
+    physical_benchmark_candidate = cfg.validation_role != NUMERICAL_SANITY_ONLY
+    physical_benchmark_note = (
+        "Code-path or numerical sanity result only; do not use as a physical benchmark."
+        if not physical_benchmark_candidate
+        else "Candidate physical benchmark; verify against Fresnel, zero contrast, and mesh convergence."
+    )
     return {
         "stage_case": cfg.stage_case,
         "geometry_kind": cfg.geometry_kind,
+        "validation_role": cfg.validation_role,
+        "physical_benchmark_candidate": physical_benchmark_candidate,
+        "physical_benchmark_note": physical_benchmark_note,
+        "substrate_material_label": cfg.substrate_material_label,
+        "grating_material_label": cfg.grating_material_label,
+        "lambda0_nm": cfg.lambda0,
+        "n_substrate_complex": [cfg.substrate_index.real, cfg.substrate_index.imag],
+        "n_grating_complex": [cfg.grating_index.real, cfg.grating_index.imag],
         "mpi_size": comm.size,
         "mpi_rank": comm.rank,
         "mesh_target_size": cfg.mesh_target_size,
