@@ -6,7 +6,25 @@
 
 但从当前仓库整体状态看，代码已经形成了比较完整的 3D Maxwell / Floquet / DtN / Stage 4 框架；主要问题不再是“能不能跑通”，而是“哪些结果可以作为物理可信结论”。现阶段不建议继续盲目扩展功能，应先收紧验证链条。
 
-用户补充要求：后续物理验证不再使用随意设置的实数折射率，也不再把 `lambda0 = 633 nm` 结果作为 EUV 物理结论。后续与项目目标相关的验证应锁定 `lambda0 = 13.5 nm`，并且基座与光栅材料折射率统一采用用户指定表格中的复折射率。当前上传截图在本次工具读取中没有可见文本，因此具体 `n_substrate` 与 `n_grating` 数值需要用户或 Codex 以文本形式写入下一轮任务书、`parameters.json` 和运行日志，避免再次使用临时虚构参数。
+用户补充要求：后续物理验证不再使用随意设置的实数折射率，也不再把 `lambda0 = 633 nm` 结果作为 EUV 物理结论。后续与项目目标相关的验证应锁定 `lambda0 = 13.5 nm`，并且基座与光栅材料折射率统一采用用户指定表格中的复折射率。
+
+已明确的光栅材料参数：
+
+```text
+lambda0 = 13.5 nm
+光栅材料 = Si / silicon / 硅
+n_grating = 1 - 0.000997695141 + 1j * 0.00182649365
+          = 0.999002304859 + 0.00182649365j
+```
+
+该数值形式符合 EUV 光学常用写法 `n = 1 - delta + i beta`，其中：
+
+```text
+delta = 0.000997695141
+beta  = 0.00182649365
+```
+
+后续 Codex 不应再使用 `n_grating = 2.0 + 0j` 作为真实光栅材料；这类实数折射率只能保留为 `numerical_sanity_only` 调试参数。基座材料的复折射率仍需用户继续以文本形式给出，并写入下一轮任务书、`parameters.json` 和运行日志。
 
 ## 审查范围
 
@@ -50,6 +68,7 @@
    - 之前的 `lambda0 = 633 nm` 可以保留为数值 sanity 或调试用例，但不能继续作为 EUV 项目的物理验证依据。
    - 之前临时设置的实数折射率只能算算法 smoke test，不能作为真实基座/光栅 benchmark。
    - 后续 Stage 4 物理验证必须使用 `lambda0 = 13.5 nm` 和用户指定的复折射率，并在输出中明确写出材料名、`n`、`k` 或等价复数 `n_complex`。
+   - 光栅材料当前已明确为 Si / silicon / 硅，`n_grating = 0.999002304859 + 0.00182649365j`。
 
 ## 必须修复
 
@@ -62,7 +81,7 @@
    - Stage 4A flat-layer sanity，`lambda0 = 13.5 nm`，使用指定基座复折射率；
    - Stage 4B zero-contrast，与同参数 Stage 4A 一致；
    - Stage 4A EUV auto_propagating，做 h 收敛；
-   - Stage 4B real block 使用指定光栅复折射率，只能在前面三项稳定后再作为物理结果讨论。
+   - Stage 4B real block 使用 Si 光栅复折射率 `n_grating = 0.999002304859 + 0.00182649365j`，只能在前面三项稳定后再作为物理结果讨论。
 
 3. 不要把“能量守恒 R+T=1”单独当成正确性证明。
    - 对 DtN / modal port 来说，能量守恒只能说明功率归一化和边界吸收没有明显炸掉。
@@ -72,8 +91,9 @@
    - 本分支可以合并，但合并前建议先把 GitHub default branch 改回 `master`。
 
 5. 固定 EUV 材料参数入口。
-   - 在下一轮任务中，让 Codex 把 `lambda0 = 13.5 nm`、基座复折射率、光栅复折射率写入 `notes/outcomes/.../parameters.json`。
+   - 在下一轮任务中，让 Codex 把 `lambda0 = 13.5 nm`、基座复折射率、Si 光栅复折射率写入 `notes/outcomes/.../parameters.json`。
    - 如果代码中保留 633 nm 或实数折射率示例，必须明确标记为 `numerical_sanity_only`，不能混入正式 EUV validation。
+   - Codex 应在代码配置、summary 和 run_log 中明确区分：`material_label = Si`、`n_grating_complex = 0.999002304859 + 0.00182649365j`。
 
 ## 建议的下一步 Codex 动作
 
@@ -90,8 +110,9 @@ codex/20260703-stage4-validation-cleanup
 1. 检查并统一 `diffraction_3d.py` 中官方 R/T 指标说明。
 2. 将项目物理验证参数固定为：
    - `lambda0 = 13.5 nm`；
-   - `n_substrate` 使用用户指定表格中的基座复折射率；
-   - `n_grating` 使用用户指定表格中的光栅复折射率。
+   - `n_grating = 0.999002304859 + 0.00182649365j`；
+   - `grating_material = Si / silicon / 硅`；
+   - `n_substrate` 使用用户后续指定的基座复折射率。
 3. 生成一个新的 outcomes 目录，例如：
 
 ```text
@@ -135,4 +156,5 @@ changed_files.md
 - 必须把“路径跑通”和“物理可信”分开判断；
 - 必须使用 `lambda0 = 13.5 nm`；
 - 必须在 `parameters.json` 中写明基座和光栅复折射率；
+- 必须使用 Si 光栅复折射率 `n_grating = 0.999002304859 + 0.00182649365j`；
 - 不应把粗网格 EUV real block 结果写成最终结论。
