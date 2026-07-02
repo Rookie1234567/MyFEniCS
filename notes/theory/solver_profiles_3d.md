@@ -1,5 +1,19 @@
 # 3D Maxwell 求解器 profile 原理和使用说明
 
+## 2026-07-02 更新：MUMPS OOC 文件管理策略
+
+`mumps_ooc` 会把 LU 因子临时写到磁盘。现在代码采用自动管理：
+
+```text
+成功完成并写正式结果：
+  删除 mumps_ooc_files/ 内的 OOC 文件。
+
+求解失败、能量诊断失败、assemble-only 或其它非 completed 状态：
+  保留 mumps_ooc_files/，并在 summary 里记录路径、文件数和字节数。
+```
+
+这和 COMSOL 的思路更接近：正常计算不让临时因子文件长期占盘；异常退出时保留现场，方便判断是 LU fill-in、磁盘、内存还是 PETSc 错误。
+
 ## 2026-07-02 更新：代码已删去无效/低价值 direct solver profile
 
 当前正式代码只保留两个公开 profile：

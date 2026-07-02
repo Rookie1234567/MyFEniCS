@@ -1,5 +1,37 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-02 更新：MUMPS OOC 文件自动清理
+
+使用：
+
+```bash
+--petsc-direct-solver-profile mumps_ooc
+```
+
+时，程序会把 MUMPS out-of-core 文件放到当前 case 输出目录：
+
+```text
+mumps_ooc_files/
+```
+
+新的管理规则：
+
+```text
+case_status = completed:
+  自动删除 mumps_ooc_files/ 内的文件，并在 summary 记录删除数量和字节数。
+
+case_status != completed:
+  不删除，保留文件供排查；summary 和 solver_log 会提示路径、文件数和大小。
+```
+
+运行后看：
+
+```text
+run_summary.json -> mumps_ooc_runtime
+matrix_scale.csv -> mumps_ooc_cleanup_* / mumps_ooc_residual_*
+solver_log.txt   -> MUMPS OOC cleanup 或 retained 提示
+```
+
 ## 2026-07-02 更新：当前只保留两个 direct solver profile
 
 当前可选：

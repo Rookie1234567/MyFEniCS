@@ -1,5 +1,19 @@
 # 3D 直接求解器 h=2.5 profile 对比报告
 
+## 2026-07-02 更新：OOC 残留文件已自动化管理
+
+首轮 h=2.5 `mumps_ooc` 测试曾留下约 9.7 GB OOC 文件。现在代码已改为：
+
+```text
+case_status = completed:
+  自动删除 OOC 文件，summary 记录 removed_file_count / removed_file_bytes。
+
+case_status != completed:
+  保留 OOC 文件，summary 记录 retained_on_failure、tmpdir、residual_file_count、residual_file_bytes。
+```
+
+因此同类成功运行不再需要手动清理 `mumps_ooc_files/`；失败运行仍会保留现场并在报告字段中提示路径和大小。
+
 ## 2026-07-02 更新：根据测试结果清理代码入口
 
 当前代码已经只保留：
@@ -117,7 +131,7 @@ COMSOL 可以完成约 200 万自由度，通常依赖这些因素：
 ```text
 1. 默认大模型先跑 assemble-only，确认 nnz/row 正常。
 2. 直接法优先用 --petsc-direct-solver-profile mumps_ooc。
-3. 把 mumps_ooc_files 放在快速 NVMe 上，并定期清理残留。
+3. 把 mumps_ooc_files 放在快速 NVMe 上；成功运行会自动清理，失败运行保留残留用于诊断。
 4. 对 h=2.5 或更细网格，不要同时启动多个求解容器。
 ```
 

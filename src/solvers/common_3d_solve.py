@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from typing import Any
 
 import numpy as np
@@ -201,8 +202,10 @@ def _mumps_ooc_directory_status(ooc_info: dict[str, Any] | None) -> dict[str, An
         }
     directory = os.fspath(ooc_info["mumps_ooc_tmpdir"])
     try:
-        paths = [path for path in os.scandir(directory) if path.is_file()]
-        total = sum(path.stat().st_size for path in paths)
+        paths: list[str] = []
+        for root, _, files in os.walk(directory):
+            paths.extend(os.path.join(root, filename) for filename in files)
+        total = sum(os.path.getsize(path) for path in paths)
         return {
             "mumps_ooc_residual_file_count": len(paths),
             "mumps_ooc_residual_file_bytes": int(total),
@@ -215,6 +218,85 @@ def _mumps_ooc_directory_status(ooc_info: dict[str, Any] | None) -> dict[str, An
             "mumps_ooc_cleaned_by_solver": None,
             "mumps_ooc_status_error": str(exc),
         }
+
+def _cleanup_mumps_ooc_directory_on_success(
+    ooc_info: dict[str, Any] | None,
+    comm: MPI.Intracomm,
+    log=None,
+) -> dict[str, Any]:
+    """Delete MUMPS OOC files after a successful run and report before/after size."""
+
+    before = _mumps_ooc_directory_status(ooc_info)
+    result: dict[str, Any] = {
+        **before,
+        "mumps_ooc_cleanup_policy": "delete_on_success_keep_on_failure",
+        "mumps_ooc_cleanup_attempted": False,
+        "mumps_ooc_cleanup_success": None,
+        "mumps_ooc_cleanup_removed_file_count": 0,
+        "mumps_ooc_cleanup_removed_file_bytes": 0,
+        "mumps_ooc_cleanup_error": None,
+        "mumps_ooc_retained_on_failure": False,
+    }
+    if not ooc_info or not ooc_info.get("mumps_ooc_tmpdir"):
+        return result
+    directory = os.fspath(ooc_info["mumps_ooc_tmpdir"])
+    if comm.rank == 0:
+        result["mumps_ooc_cleanup_attempted"] = True
+        result["mumps_ooc_cleanup_removed_file_count"] = before.get("mumps_ooc_residual_file_count") or 0
+        result["mumps_ooc_cleanup_removed_file_bytes"] = before.get("mumps_ooc_residual_file_bytes") or 0
+        try:
+            if os.path.isdir(directory):
+                for entry in os.scandir(directory):
+                    if entry.is_dir(follow_symlinks=False):
+                        shutil.rmtree(entry.path)
+                    else:
+                        os.remove(entry.path)
+            result["mumps_ooc_cleanup_success"] = True
+            if log is not None and result["mumps_ooc_cleanup_removed_file_bytes"]:
+                removed_mb = result["mumps_ooc_cleanup_removed_file_bytes"] / (1024.0 * 1024.0)
+                log(
+                    "MUMPS OOC cleanup after successful run: "
+                    f"removed {result['mumps_ooc_cleanup_removed_file_count']} files, "
+                    f"{removed_mb:.2f} MiB from {directory}"
+                )
+        except OSError as exc:
+            result["mumps_ooc_cleanup_success"] = False
+            result["mumps_ooc_cleanup_error"] = str(exc)
+            if log is not None:
+                log(f"WARNING: MUMPS OOC cleanup failed for {directory}: {exc}")
+    result = comm.bcast(result if comm.rank == 0 else None, root=0)
+    after = _mumps_ooc_directory_status(ooc_info)
+    return {**result, **after}
+
+def _retain_mumps_ooc_directory_on_failure(
+    ooc_info: dict[str, Any] | None,
+    log=None,
+) -> dict[str, Any]:
+    """Keep MUMPS OOC files for failed runs and report their location and size."""
+
+    status = _mumps_ooc_directory_status(ooc_info)
+    result = {
+        **status,
+        "mumps_ooc_cleanup_policy": "delete_on_success_keep_on_failure",
+        "mumps_ooc_cleanup_attempted": False,
+        "mumps_ooc_cleanup_success": None,
+        "mumps_ooc_cleanup_removed_file_count": 0,
+        "mumps_ooc_cleanup_removed_file_bytes": 0,
+        "mumps_ooc_cleanup_error": None,
+        "mumps_ooc_retained_on_failure": bool(
+            ooc_info
+            and ooc_info.get("mumps_ooc_tmpdir")
+            and (status.get("mumps_ooc_residual_file_count") or 0) > 0
+        ),
+    }
+    if log is not None and result["mumps_ooc_retained_on_failure"]:
+        retained_mb = (status.get("mumps_ooc_residual_file_bytes") or 0) / (1024.0 * 1024.0)
+        log(
+            "MUMPS OOC files retained because the run did not complete successfully: "
+            f"{ooc_info.get('mumps_ooc_tmpdir')} "
+            f"({status.get('mumps_ooc_residual_file_count')} files, {retained_mb:.2f} MiB)"
+        )
+    return result
 
 def _pc_factor_solver_type(pc) -> str | None:
     try:

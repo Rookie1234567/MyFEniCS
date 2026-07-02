@@ -1,5 +1,27 @@
 # v2 文档索引
 
+## 2026-07-02 更新：MUMPS OOC 文件已自动管理
+
+`--petsc-direct-solver-profile mumps_ooc` 现在采用：
+
+```text
+运行成功：自动删除 case/mumps_ooc_files/ 下的 MUMPS OOC 文件
+运行失败：保留 OOC 文件，并在 run_summary.json / solver_log.txt / matrix_scale.csv 中记录路径和大小
+```
+
+重点字段：
+
+```text
+mumps_ooc_runtime.mumps_ooc_tmpdir
+mumps_ooc_runtime.mumps_ooc_cleanup_attempted
+mumps_ooc_runtime.mumps_ooc_cleanup_success
+mumps_ooc_runtime.mumps_ooc_cleanup_removed_file_count
+mumps_ooc_runtime.mumps_ooc_cleanup_removed_file_bytes
+mumps_ooc_runtime.mumps_ooc_retained_on_failure
+mumps_ooc_runtime.mumps_ooc_residual_file_count
+mumps_ooc_runtime.mumps_ooc_residual_file_bytes
+```
+
 ## 2026-07-02 更新：直接求解器入口已清理为 default / mumps_ooc
 
 根据 h=2.5 的实测结果，代码里的 3D direct solver profile 已经收窄：

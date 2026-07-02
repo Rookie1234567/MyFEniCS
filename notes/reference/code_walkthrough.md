@@ -1,3 +1,22 @@
+## 2026-07-02 更新：MUMPS OOC 文件清理代码路径
+
+如果你想看 OOC 文件为什么成功会自动删除、失败会保留，按这个顺序读：
+
+```text
+1. src/solvers/common_3d_solve.py
+   看 _prepare_mumps_ooc_runtime、_cleanup_mumps_ooc_directory_on_success、
+   _retain_mumps_ooc_directory_on_failure。
+
+2. src/solvers/common_3d_case_flow.py
+   成功 case 在写 run_summary.json 前调用 cleanup；失败 case 调用 retain。
+
+3. src/studies/run_3d_matrix_scale.py
+   批量测试 CSV 会写 mumps_ooc_cleanup_* 和 mumps_ooc_residual_* 字段。
+
+4. src/test/test_19_mumps_ooc_cleanup.py
+   小文件级单元测试，验证成功删除和失败保留两条路径。
+```
+
 ## 2026-07-02 更新：direct solver 代码入口已简化
 
 当前 3D 直接法只保留两个公开 profile：

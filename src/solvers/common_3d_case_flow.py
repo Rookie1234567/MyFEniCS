@@ -42,16 +42,17 @@ from .common_3d_postprocess import (
 from .common_3d_solve import (
     DirectSolveFailure,
     _assembled_rhs_norm,
+    _cleanup_mumps_ooc_directory_on_success,
     _create_nedelec_space,
     _ksp_reason_name,
     _linear_system_diagnostics,
     _log_matrix_stats,
-    _mumps_ooc_directory_status,
     _pc_factor_solver_type,
     _petsc_error_diagnostics,
     _petsc_matrix_stats,
     _prepare_direct_lu_options_for_comm,
     _prepare_mumps_ooc_runtime,
+    _retain_mumps_ooc_directory_on_failure,
 )
 from .common_3d_utils import (
     _clear_official_field_outputs,
@@ -116,6 +117,26 @@ def _matrix_row_ratio(after: dict[str, Any] | None, before: dict[str, Any] | Non
     if after_rows is None or before_rows in (None, 0):
         return None
     return float(after_rows) / float(before_rows)
+
+
+def _destroy_petsc_object_once(obj) -> None:
+    if obj is None:
+        return
+    try:
+        obj.destroy()
+    except Exception:
+        pass
+
+
+def _release_solver_storage_before_ooc_cleanup(problem, dtn_result: dict[str, Any] | None) -> None:
+    """Release PETSc factor objects before deleting MUMPS OOC files."""
+
+    if dtn_result is not None:
+        for key in ("ksp", "A", "b", "x"):
+            _destroy_petsc_object_once(dtn_result.get(key))
+    if problem is not None:
+        for attr in ("solver", "A", "b", "x"):
+            _destroy_petsc_object_once(getattr(problem, attr, None))
 
 
 def _assemble_unconstrained_matrix_stats(a, bcs, comm: MPI.Intracomm, log) -> dict[str, Any] | None:
@@ -292,7 +313,7 @@ def _direct_solve_failure_summary(
         if isinstance(matrix_stats, dict)
         else None,
     }
-    ooc_status = _mumps_ooc_directory_status(ooc_info)
+    ooc_status = _retain_mumps_ooc_directory_on_failure(ooc_info, log)
     summary = {
         "case_name": cfg.case_name,
         "stage": _stage_label(cfg),
@@ -606,6 +627,15 @@ def run_prepared_3d_case_flow(
             dot_k_p,
         )
     ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="mumps_ooc_runtime_setup",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+        extra=ooc_info,
+    )
 
     stage_start = _start_timed_stage(comm)
     _write_progress_event(out_dir, comm, stage="mesh_build", status="begin", started=started, petsc_options=petsc_options)
@@ -918,6 +948,9 @@ def run_prepared_3d_case_flow(
     log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
     log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
+    _release_solver_storage_before_ooc_cleanup(problem, dtn_result)
+    system_A = system_b = system_x = system_ksp = pc = None
+    problem = None
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     converged = (reason > 0) and not assemble_only_result
@@ -1083,10 +1116,14 @@ def run_prepared_3d_case_flow(
         "timings_seconds": timings,
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
-        "mumps_ooc_runtime": {**ooc_info, **_mumps_ooc_directory_status(ooc_info)},
+        "mumps_ooc_runtime": {**ooc_info, **_retain_mumps_ooc_directory_on_failure(ooc_info)},
     }
 
     if not converged:
+        summary["mumps_ooc_runtime"] = {
+            **ooc_info,
+            **_retain_mumps_ooc_directory_on_failure(ooc_info, log),
+        }
         _clear_official_field_outputs(out_dir, comm)
         if assemble_only_result:
             log("Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.")
@@ -1162,6 +1199,17 @@ def run_prepared_3d_case_flow(
         summary["case_status"] = "failed_stage4_energy_balance"
         summary["postprocess_skipped"] = False
         summary["postprocess_skip_reason"] = None
+
+    if summary.get("case_status") == "completed":
+        summary["mumps_ooc_runtime"] = {
+            **ooc_info,
+            **_cleanup_mumps_ooc_directory_on_success(ooc_info, comm, log),
+        }
+    else:
+        summary["mumps_ooc_runtime"] = {
+            **ooc_info,
+            **_retain_mumps_ooc_directory_on_failure(ooc_info, log),
+        }
 
     has_power_metrics = (
         {"R_total", "T_total", "R_plus_T"}.issubset(summary)

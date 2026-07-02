@@ -1,5 +1,48 @@
 # 3D Maxwell 矩阵与求解器诊断记录
 
+## 2026-07-02 更新：MUMPS OOC 文件成功清理、失败保留
+
+`mumps_ooc` 的磁盘文件现在自动管理：
+
+```text
+completed:
+  删除 mumps_ooc_files/ 内文件。
+
+非 completed:
+  保留 mumps_ooc_files/，用于排查失败现场。
+```
+
+`run_summary.json` 和 `matrix_scale.csv` 会新增或更新：
+
+```text
+mumps_ooc_tmpdir
+mumps_ooc_cleanup_attempted
+mumps_ooc_cleanup_success
+mumps_ooc_cleanup_removed_file_count
+mumps_ooc_cleanup_removed_file_bytes
+mumps_ooc_retained_on_failure
+mumps_ooc_residual_file_count
+mumps_ooc_residual_file_bytes
+```
+
+如果进程被系统硬杀，可能来不及写 `run_summary.json`；这时先看 `progress_3d.jsonl` 里的 `mumps_ooc_runtime_setup` 记录，它会在 OOC 目录建立后立刻写出 `mumps_ooc_tmpdir`。
+
+已做 smoke 验证：
+
+```text
+stage_case = stage1_airbox
+mesh_target_size = 300 nm
+nedelec_degree = 1
+profile = mumps_ooc
+result = completed
+mumps_ooc_cleanup_attempted = true
+mumps_ooc_cleanup_success = true
+mumps_ooc_residual_file_count = 0
+mumps_ooc_residual_file_bytes = 0
+```
+
+实现细节：清理前会先显式释放 PETSc KSP/Mat/Vec 对象，让 MUMPS 完成 termination；否则过早删除 OOC 文件会触发 MUMPS termination 错误。
+
 ## 2026-07-02 更新：求解器 profile 已清理
 
 当前代码只保留：
