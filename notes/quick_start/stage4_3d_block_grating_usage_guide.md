@@ -1,5 +1,21 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-02 更新：当前只保留两个 direct solver profile
+
+当前可选：
+
+```text
+default
+mumps_ooc
+```
+
+日常运行用 `default`；内存接近上限、想测试 out-of-core 时用 `mumps_ooc`。前期测试过的 `mumps`、`mumps_ooc_seq_analysis`、`mumps_ooc_parallel_analysis`、`mumps_ooc_requested_legacy`、`mkl_pardiso`、`superlu_dist`、`strumpack` 已经从公开代码入口删除；测试结果和删除原因见：
+
+```text
+notes/test/3d_direct_solver_profile_h2p5_report.md
+notes/theory/solver_profiles_3d.md
+```
+
 ## 2026-07-01 更新：直接 LU 内存诊断和 MUMPS OOC 用法
 
 推荐先用 assemble-only 判断矩阵规模，不要直接冲 LU：
@@ -34,28 +50,19 @@ mpiexec -n 8 python3 -m src.runners.run_3d_cases \
   --petsc-direct-solver-profile mumps_ooc
 ```
 
-可选 direct profile：
+当前可选 direct profile：
 
 ```text
 default
-mumps
 mumps_ooc
-mumps_ooc_seq_analysis
-mumps_ooc_parallel_analysis
-mumps_ooc_requested_legacy
-mkl_pardiso
-superlu_dist
-strumpack
 ```
 
 说明：
 
 ```text
+default 是普通 direct LU；MPI 下要求 PETSc 有 MUMPS。
 mumps_ooc 是推荐 OOC 入口：ICNTL(22)=1, ICNTL(14)=80。
-mumps_ooc_seq_analysis 显式使用 sequential analysis。
-mumps_ooc_parallel_analysis 只有当前 PETSc 支持 PT-SCOTCH/ParMETIS 时才允许。
-mumps_ooc_requested_legacy 只用于复现旧的 ICNTL(28)=2/ICNTL(29)=2 错误。
-mkl_pardiso 当前镜像不支持时会直接停止并写诊断，不会静默换 solver。
+其它测试性 profile 已从代码入口删除，保留在报告里作为历史结论。
 ```
 
 批量生成 CSV：

@@ -490,21 +490,11 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
     parser.add_argument(
         "--petsc-direct-solver-profile",
-        choices=(
-            "default",
-            "mumps_ooc",
-            "mumps_ooc_seq_analysis",
-            "mumps_ooc_parallel_analysis",
-            "mumps_ooc_requested_legacy",
-            "mkl_pardiso",
-            "mumps",
-            "superlu_dist",
-            "strumpack",
-        ),
+        choices=("default", "mumps_ooc"),
         default=None,
         help=(
-            "Direct-solver diagnostic profile. mumps_ooc enables safe MUMPS out-of-core; "
-            "mumps_ooc_requested_legacy reproduces the old ICNTL(28/29) test."
+            "Direct-LU profile. Use default for normal PETSc LU, or mumps_ooc "
+            "to enable MUMPS out-of-core factor files in the case output directory."
         ),
     )
     parser.add_argument("--petsc-ksp-view", action=argparse.BooleanOptionalAction, default=None)

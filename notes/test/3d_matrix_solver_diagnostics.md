@@ -1,5 +1,33 @@
 # 3D Maxwell 矩阵与求解器诊断记录
 
+## 2026-07-02 更新：求解器 profile 已清理
+
+当前代码只保留：
+
+```text
+default
+mumps_ooc
+```
+
+其余 profile 已从公开运行入口删除，原因和 h=2.5 测试表见：
+
+```text
+notes/test/3d_direct_solver_profile_h2p5_report.md
+notes/theory/solver_profiles_3d.md
+```
+
+以后做尺度测试时建议只扫：
+
+```bash
+python3 -m src.studies.run_3d_matrix_scale \
+  --mesh-sizes 8 5 3 2 1.5 \
+  --mpi-procs-list 8 \
+  --solver-profiles default mumps_ooc \
+  --stage-case stage4_block_grating \
+  --nedelec-degree 1 \
+  --stage4-dtn-order-policy zero_order
+```
+
 ## 2026-07-01 更新：h=2.5 直接求解器 profile 对比已完成
 
 新增报告：

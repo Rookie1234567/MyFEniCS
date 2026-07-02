@@ -1,6 +1,33 @@
-## 2026-07-01 更新：直接求解器 profile 对比阅读入口
+## 2026-07-02 更新：direct solver 代码入口已简化
 
-如果你想理解 `default / mumps / mumps_ooc / mkl_pardiso / superlu_dist` 是什么，以及为什么当前 h=1.5 主要卡在 LU fill-in，先读：
+当前 3D 直接法只保留两个公开 profile：
+
+```text
+default
+mumps_ooc
+```
+
+阅读代码时按这个顺序看：
+
+```text
+1. src/common/config_3d.py
+   看 petsc_direct_solver_profile_requested，只允许 default / mumps_ooc。
+
+2. src/solvers/common_3d_solve.py
+   看 _prepare_direct_lu_options_for_comm。default 是普通 direct LU；mumps_ooc 只额外设置 MUMPS OOC 参数。
+
+3. src/runners/run_3d_cases.py
+   看 --petsc-direct-solver-profile，现在 CLI choices 也只有 default / mumps_ooc。
+
+4. src/studies/run_3d_matrix_scale.py
+   批量尺度测试也只扫 default / mumps_ooc。
+```
+
+旧的 `mkl_pardiso/superlu_dist/strumpack/mumps_ooc_seq_analysis/mumps_ooc_parallel_analysis/mumps_ooc_requested_legacy` 已经从当前代码入口删除；它们只保留在报告中作为历史测试结论和未来重新构建 PETSc 时的参考。
+
+## 2026-07-01 历史记录：直接求解器 profile 对比阅读入口
+
+如果你想理解前期测试过的 `default / mumps / mumps_ooc / mkl_pardiso / superlu_dist` 是什么，以及为什么当前 h=1.5 主要卡在 LU fill-in，先读：
 
 ```text
 1. notes/theory/solver_profiles_3d.md
@@ -29,12 +56,9 @@
    看 _write_progress_event。progress_3d.jsonl 就是在这里写的。
 
 3. src/solvers/common_3d_solve.py
-   看 _prepare_direct_lu_options_for_comm：
-   - mumps_ooc
-   - mumps_ooc_seq_analysis
-   - mumps_ooc_parallel_analysis
-   - mumps_ooc_requested_legacy
-   也看 _prepare_mumps_ooc_runtime，它把 OOC 文件放到 case/mumps_ooc_files。
+    看 _prepare_direct_lu_options_for_comm：
+    - mumps_ooc
+    也看 _prepare_mumps_ooc_runtime，它把 OOC 文件放到 case/mumps_ooc_files。
 
 4. src/solvers/dtn_port_3d.py
    zero_order DtN 的 assemble-only 和 solve begin/end progress 在这里。
@@ -66,8 +90,8 @@ notes/test/3d_matrix_solver_diagnostics.md
    matrix_diagnostics_assemble_unconstrained 这些诊断字段。
 
 3. src/solvers/common_3d_solve.py
-   看 _prepare_direct_lu_options_for_comm 和 _petsc_matrix_stats。
-   这里决定 default / mumps_ooc / mkl_pardiso 等 PETSc 选项，并读取 Mat.getInfo()。
+    看 _prepare_direct_lu_options_for_comm 和 _petsc_matrix_stats。
+   这里决定 default / mumps_ooc 的 PETSc 选项，并读取 Mat.getInfo()。
 
 4. src/solvers/common_3d_case_flow.py
    看 unconstrained_matrix_stats、constraint_matrix_transform、

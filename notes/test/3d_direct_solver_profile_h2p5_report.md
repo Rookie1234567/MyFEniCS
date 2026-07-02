@@ -1,5 +1,30 @@
 # 3D 直接求解器 h=2.5 profile 对比报告
 
+## 2026-07-02 更新：根据测试结果清理代码入口
+
+当前代码已经只保留：
+
+```text
+default
+mumps_ooc
+```
+
+筛选结论：
+
+| profile | 是否保留在代码里 | 原因 |
+| --- | --- | --- |
+| `default` | 保留 | 日常直接法入口；MPI 下使用 MUMPS |
+| `mumps_ooc` | 保留 | 本轮 h=2.5 测试中内存最低，且是当前唯一有现实意义的直接法内存缓解手段 |
+| `mumps` | 删除 | 与 `default` 重复 |
+| `mumps_ooc_seq_analysis` | 删除 | 能跑但没有优于 `mumps_ooc` |
+| `mumps_ooc_parallel_analysis` | 删除 | h=2.5 即接近 Docker 内存上限，不适合当前工作站主线 |
+| `mumps_ooc_requested_legacy` | 删除 | 只用于复现旧错误，不应保留为正式选项 |
+| `mkl_pardiso` | 删除 | 当前 PETSc 镜像不支持；未来需要重新构建 PETSc/MKL 后另测 |
+| `superlu_dist` | 删除 | 当前可用但 h=2.5 未在可接受时间内完成 |
+| `strumpack` | 删除 | 当前 PETSc 镜像不支持 |
+
+注意：删除这些公开 profile 不代表它们永远没有研究价值，而是当前这份代码的主要任务是 Maxwell 模型和边界条件验证，过多求解器选项会增加理解成本。后续如果专门做“像 COMSOL 一样的大规模 direct solver”，应该单独建立 PETSc build / 服务器求解器评测，而不是把实验入口继续混在主代码中。
+
 ## 2026-07-01 首轮结果
 
 测试对象：
@@ -106,4 +131,3 @@ COMSOL 可以完成约 200 万自由度，通常依赖这些因素：
 ```
 
 长期若目标是百万级以上常规计算，仍应考虑 Maxwell 专用迭代预条件器；但这不属于本轮 direct-only 任务。
-

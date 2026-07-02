@@ -98,9 +98,9 @@ class SimulationConfig3D:
     diffraction_probe_fraction: float = 0.75
     diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
-    # Solver diagnostics.  The default keeps the existing direct-LU behavior;
-    # the extra profiles are explicit diagnostic experiments for memory scaling.
-    petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mumps_ooc_seq_analysis / mumps_ooc_parallel_analysis / mumps_ooc_requested_legacy / mkl_pardiso / mumps / superlu_dist / strumpack
+    # Direct LU setting.  Keep the public choice narrow: default direct LU, or
+    # MUMPS out-of-core for memory-pressure diagnostics.
+    petsc_direct_solver_profile: str = "default"  # "default" or "mumps_ooc"
     petsc_ksp_view: bool = False
     petsc_log_view: bool = False
     petsc_extra_options: dict[str, object] = field(default_factory=dict)
@@ -231,22 +231,11 @@ class SimulationConfig3D:
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
         profile = self.petsc_direct_solver_profile.lower()
-        if profile not in {
-            "default",
-            "mumps_ooc",
-            "mumps_ooc_seq_analysis",
-            "mumps_ooc_parallel_analysis",
-            "mumps_ooc_requested_legacy",
-            "mkl_pardiso",
-            "mumps",
-            "superlu_dist",
-            "strumpack",
-        }:
+        if profile not in {"default", "mumps_ooc"}:
             raise ValueError(
-                "petsc_direct_solver_profile must be 'default', 'mumps_ooc', "
-                "'mumps_ooc_seq_analysis', 'mumps_ooc_parallel_analysis', "
-                "'mumps_ooc_requested_legacy', 'mkl_pardiso', 'mumps', "
-                "'superlu_dist', or 'strumpack'."
+                "petsc_direct_solver_profile must be 'default' or 'mumps_ooc'. "
+                "Old diagnostic profiles were removed from the public code path; "
+                "see notes/test/3d_direct_solver_profile_h2p5_report.md."
             )
         return profile
 

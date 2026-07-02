@@ -62,15 +62,6 @@ def _has_petsc_package(package_name: str) -> bool:
     except Exception:
         return False
 
-def _available_mumps_parallel_ordering() -> tuple[int | None, str | None]:
-    """Return the MUMPS ICNTL(29) value for a supported parallel ordering."""
-
-    if _has_petsc_package("ptscotch"):
-        return 1, "ptscotch"
-    if _has_petsc_package("parmetis"):
-        return 2, "parmetis"
-    return None, None
-
 def _mumps_ooc_minimal_options() -> dict[str, Any]:
     return {
         "pc_factor_mat_solver_type": "mumps",
@@ -79,19 +70,13 @@ def _mumps_ooc_minimal_options() -> dict[str, Any]:
     }
 
 def _available_parallel_lu_solver_type() -> str | None:
-    """Return a PETSc LU package that can factor MPI matrices globally."""
+    """Return the one supported MPI sparse direct solver for the live code path."""
 
-    candidates = (
-        ("mumps", "mumps"),
-        ("superlu_dist", "superlu_dist"),
-        ("strumpack", "strumpack"),
-    )
-    for package_name, solver_type in candidates:
-        try:
-            if PETSc.Sys.hasExternalPackage(package_name):
-                return solver_type
-        except Exception:
-            continue
+    try:
+        if PETSc.Sys.hasExternalPackage("mumps"):
+            return "mumps"
+    except Exception:
+        return None
     return None
 
 def _apply_petsc_option_dict(options: dict[str, Any], extra_options: dict[str, Any]) -> None:
@@ -122,7 +107,13 @@ def _prepare_direct_lu_options_for_comm(
     comm: MPI.Intracomm,
     cfg: SimulationConfig3D | None = None,
 ) -> tuple[dict[str, Any], str | None, str | None]:
-    """Make direct solver options explicit and safe for serial or MPI runs."""
+    """Make direct solver options explicit and safe for serial or MPI runs.
+
+    The public code path intentionally exposes only two direct-LU modes:
+    ``default`` and ``mumps_ooc``.  Other packages tested during diagnostics are
+    documented in notes, but are not kept as runtime choices because they were
+    unavailable, redundant, or not useful on this PETSc build.
+    """
 
     petsc_options = _direct_lu_petsc_options()
     profile = "default" if cfg is None else cfg.petsc_direct_solver_profile_requested
@@ -130,45 +121,16 @@ def _prepare_direct_lu_options_for_comm(
         _apply_petsc_option_dict(petsc_options, cfg.petsc_extra_options)
 
     selected_solver: str | None = None
-    if profile in {
-        "mumps_ooc",
-        "mumps_ooc_seq_analysis",
-        "mumps_ooc_parallel_analysis",
-        "mumps_ooc_requested_legacy",
-    }:
+    if profile == "mumps_ooc":
         if not _has_petsc_package("mumps"):
             return petsc_options, None, "PETSc was asked to use MUMPS out-of-core, but this build does not report MUMPS."
         selected_solver = "mumps"
         petsc_options.update(_mumps_ooc_minimal_options())
-        if profile == "mumps_ooc_seq_analysis":
-            petsc_options["mat_mumps_icntl_28"] = 1
-        elif profile == "mumps_ooc_parallel_analysis":
-            ordering_value, ordering_package = _available_mumps_parallel_ordering()
-            if ordering_value is None:
-                return petsc_options, None, (
-                    "PETSc was asked to use MUMPS out-of-core with parallel analysis, "
-                    "but this build does not report PT-SCOTCH or ParMETIS. Use "
-                    "mumps_ooc or mumps_ooc_seq_analysis instead."
-                )
-            petsc_options["mat_mumps_icntl_28"] = 2
-            petsc_options["mat_mumps_icntl_29"] = ordering_value
-        elif profile == "mumps_ooc_requested_legacy":
-            petsc_options["mat_mumps_icntl_28"] = 2
-            petsc_options["mat_mumps_icntl_29"] = 2
-    elif profile == "mkl_pardiso":
-        if not _has_petsc_package("mkl_pardiso"):
-            return petsc_options, None, (
-                "PETSc was asked to use MKL PARDISO, but this build does not report mkl_pardiso. "
-                "This is a diagnostic result; not continuing with a different package."
-            )
-        selected_solver = "mkl_pardiso"
-        petsc_options["pc_factor_mat_solver_type"] = "mkl_pardiso"
-    elif profile in {"mumps", "superlu_dist", "strumpack"}:
-        package_name = "superlu_dist" if profile == "superlu_dist" else profile
-        if not _has_petsc_package(package_name):
-            return petsc_options, None, f"PETSc was asked to use {profile}, but this build does not report that package."
-        selected_solver = profile
-        petsc_options["pc_factor_mat_solver_type"] = profile
+    elif profile != "default":
+        return petsc_options, None, (
+            f"Unsupported PETSc direct solver profile '{profile}'. "
+            "Use 'default' or 'mumps_ooc'."
+        )
 
     if comm.size == 1:
         if selected_solver is not None:
@@ -184,8 +146,8 @@ def _prepare_direct_lu_options_for_comm(
     parallel_lu = _available_parallel_lu_solver_type()
     if parallel_lu is None:
         reason = (
-            "MPI direct solve requested, but this PETSc build does not report MUMPS, "
-            "SuperLU_DIST, or STRUMPACK. Refusing to run preonly+lu because it can "
+            "MPI direct solve requested, but this PETSc build does not report MUMPS. "
+            "Refusing to run preonly+lu because it can "
             "produce partition-dependent local-factorization results."
         )
         return petsc_options, None, reason

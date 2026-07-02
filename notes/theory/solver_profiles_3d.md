@@ -1,6 +1,37 @@
 # 3D Maxwell 求解器 profile 原理和使用说明
 
-## 2026-07-01 更新：当前 direct LU profiles 的含义和选择建议
+## 2026-07-02 更新：代码已删去无效/低价值 direct solver profile
+
+当前正式代码只保留两个公开 profile：
+
+| profile | 当前用途 | 建议 |
+| --- | --- | --- |
+| `default` | 普通 direct LU；MPI 下要求 PETSc 有 MUMPS | 日常默认 |
+| `mumps_ooc` | MUMPS out-of-core，因子文件写到当前 case 的 `mumps_ooc_files/` | 内存接近上限时测试 |
+
+已经从公开代码入口删除的 profile：
+
+| 已删除 profile | 前期测试结论 | 后续意义 |
+| --- | --- | --- |
+| `mumps` | 和 `default` 在当前 MPI Docker 环境下本质等价，显式保留只会增加混乱 | 不再作为用户选项 |
+| `mumps_ooc_seq_analysis` | h=2.5 能跑，但比 `mumps_ooc` 更慢，内存也没有明显优势 | 只作为历史诊断记录 |
+| `mumps_ooc_parallel_analysis` | 当前检测到 PT-SCOTCH 后可进入，但 h=2.5 已接近 Docker 内存上限 | 后续只在大内存服务器上重新评估 |
+| `mumps_ooc_requested_legacy` | 只用于复现旧的 MUMPS `INFOG(1)=-38` 错误 | 不再进入主代码 |
+| `mkl_pardiso` | 当前 PETSc 镜像不支持 | 若要接近 COMSOL，应该重新构建 PETSc/MKL 后另测 |
+| `superlu_dist` | 当前 PETSc 支持，但 h=2.5 未在可接受时间内完成 | 暂不保留在主入口 |
+| `strumpack` | 当前 PETSc 镜像不支持 | 需要新 PETSc build 才有意义 |
+
+因此现在的理解可以更简单：
+
+```text
+想正常跑：      --petsc-direct-solver-profile default
+想试 OOC：      --petsc-direct-solver-profile mumps_ooc
+想研究 COMSOL： 不在当前代码里切 profile，而是换 PETSc build / 服务器环境
+```
+
+这次清理不改变物理方程、不改变矩阵装配，也不改变 `mumps_ooc` 已经验证过的 OOC 文件目录行为。它只删除低价值运行入口，避免后续调试时把“PETSc 后端实验”和“Maxwell 模型错误”混在一起。
+
+## 2026-07-01 历史测试记录：direct LU profiles 的含义和选择建议
 
 当前 3D 主线仍然只使用直接法，不引入 Krylov 迭代。代码里的 `petsc_direct_solver_profile` 不是“不同物理模型”，而是同一个稀疏线性系统的不同 LU 分解后端：
 

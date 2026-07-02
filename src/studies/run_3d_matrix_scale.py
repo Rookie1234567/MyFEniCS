@@ -228,33 +228,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stage4-dtn-order-policy", default="zero_order")
     parser.add_argument(
         "--petsc-direct-solver-profile",
-        choices=(
-            "default",
-            "mumps_ooc",
-            "mumps_ooc_seq_analysis",
-            "mumps_ooc_parallel_analysis",
-            "mumps_ooc_requested_legacy",
-            "mkl_pardiso",
-            "mumps",
-            "superlu_dist",
-            "strumpack",
-        ),
+        choices=("default", "mumps_ooc"),
         default="default",
     )
     parser.add_argument(
         "--solver-profiles",
         nargs="+",
-        choices=(
-            "default",
-            "mumps_ooc",
-            "mumps_ooc_seq_analysis",
-            "mumps_ooc_parallel_analysis",
-            "mumps_ooc_requested_legacy",
-            "mkl_pardiso",
-            "mumps",
-            "superlu_dist",
-            "strumpack",
-        ),
+        choices=("default", "mumps_ooc"),
         default=None,
     )
     parser.add_argument("--matrix-diagnostics-assemble-unconstrained", action="store_true")

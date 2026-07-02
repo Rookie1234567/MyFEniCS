@@ -1,5 +1,35 @@
 # v2 文档索引
 
+## 2026-07-02 更新：直接求解器入口已清理为 default / mumps_ooc
+
+根据 h=2.5 的实测结果，代码里的 3D direct solver profile 已经收窄：
+
+```text
+default    = 普通 PETSc direct LU；MPI 下要求可用 MUMPS
+mumps_ooc = MUMPS out-of-core，把部分 LU 因子文件写到 case 输出目录
+```
+
+已经从公开运行入口移除的测试性 profile：
+
+```text
+mumps
+mumps_ooc_seq_analysis
+mumps_ooc_parallel_analysis
+mumps_ooc_requested_legacy
+mkl_pardiso
+superlu_dist
+strumpack
+```
+
+移除原因见：
+
+```text
+notes/theory/solver_profiles_3d.md
+notes/test/3d_direct_solver_profile_h2p5_report.md
+```
+
+简要判断：`mumps` 和 `default` 在当前 MPI 环境下等价；`mumps_ooc_seq_analysis` 没有更好；`mumps_ooc_parallel_analysis` 在 h=2.5 就接近 Docker 内存上限；`mkl_pardiso/strumpack` 当前 PETSc 镜像不支持；`superlu_dist` 可用但 h=2.5 没有在可接受时间内完成。后续若要接近 COMSOL，应在服务器或新 PETSc build 中重新测试 MKL PARDISO / 更完整 MUMPS ordering，而不是把这些实验选项继续塞在主代码里。
+
 ## 2026-07-01 更新：新增 h=2.5 直接求解器 profile 对比报告
 
 新增理论说明和 h=2.5 实测报告：
@@ -59,7 +89,7 @@ PETSc Mat size / nnz_used / nnz_allocated / memory
 DtN augmented/base matrix nnz 对比
 ```
 
-新增 PETSc profile：
+当时临时测试过的 PETSc profile：
 
 ```text
 default
@@ -69,6 +99,8 @@ mumps
 superlu_dist
 strumpack
 ```
+
+注意：2026-07-02 起，当前代码公开入口只保留 `default` 和 `mumps_ooc`。
 
 也可以把 PETSc 原生命令放在运行命令末尾，例如：
 
@@ -698,7 +730,7 @@ notes/test/stage4_resume_log.md
 ```text
 ksp_type = preonly
 pc_type = lu
-MPI 时自动选择 mumps / superlu_dist / strumpack 中可用的并行 LU
+MPI 时要求 PETSc 支持 MUMPS 并行 LU
 ```
 
 Stage 4 衍射级后处理也做了关键修正：
