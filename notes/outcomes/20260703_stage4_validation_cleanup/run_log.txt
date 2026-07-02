@@ -7,18 +7,20 @@
 2. 代码修改：
    - 统一 diffraction_3d.py 中官方 probe 后处理 R/T 来源为 E/H Fourier directional fitting。
    - Stage 4 block grating 默认光栅材料改为 Si / silicon, n = 0.999002304859 + 0.00182649365j。
-   - 3D config / summary / run log 增加 validation_role、material label 和 physical_benchmark_candidate。
+   - 3D config / summary / run log 增加 validation_role、material label、physical_benchmark_candidate 和吸收解释字段。
    - 保留 633 nm 或 n_grating=2.0 的旧诊断脚本时，标记为 numerical_sanity_only。
+   - 根据用户补充要求，将基座复折射率也改为 Si 复数 0.999002304859 + 0.00182649365j。
+   - 修复 lossy substrate 中传播级识别，避免复 beta 的透射零级被误判为非传播级。
 
 3. 验证：
    - 宿主：python -m compileall -q src，通过。
    - 宿主：python -m unittest discover -s src/test -p "test_*.py"，失败原因是缺少 ufl/petsc4py/dolfinx/basix，不是测试断言失败。
    - Docker：python3 -m unittest discover -s src/test -p "test_*.py"，通过，59 tests, skipped=10。
-   - Docker：13.5 nm Stage 4A flat-layer sanity 轻量运行，通过。
-   - Docker：13.5 nm Stage 4B zero-contrast 轻量运行，通过。
+   - Docker：13.5 nm Stage 4A flat-layer sanity + Si 基座复折射率轻量运行，通过，A_balance = 2.38707801606868e-05。
+   - Docker：13.5 nm Stage 4B zero-contrast + Si 基座复折射率轻量运行，通过，A_balance = 2.38707801607977e-05。
 
 4. 关键结论：
-   - 两条轻量 Stage 4 运行均可完成，且 zero-contrast 与 flat-layer R/T 匹配。
+   - 两条轻量 Stage 4 运行均可完成，且 zero-contrast 与 flat-layer R/T/A 匹配。
+   - 有吸收材料时不再要求 R+T=1；本轮用 A_balance = 1-R-T 记录吸收/损耗余额。
    - 两条运行均为 numerical_sanity_only，不是物理 benchmark。
-   - 后续必须等待用户提供基座复折射率后，才能进行正式 EUV benchmark 与 h 收敛。
-
+   - 后续需要 h 收敛和 auto_propagating 对照后，才能进行正式 EUV benchmark。

@@ -54,8 +54,23 @@ def positive_sqrt(value: complex) -> complex:
     return complex(root)
 
 
-def is_propagating(beta: complex) -> bool:
-    return abs(complex(beta).imag) < 1.0e-9 and complex(beta).real > 1.0e-12
+def is_propagating(beta: complex, dispersion_value: complex | None = None) -> bool:
+    """Return whether a port order should carry R/T power.
+
+    Lossy materials give propagating orders a complex ``beta``.  Requiring
+    ``Im(beta) ~= 0`` would incorrectly drop the transmitted zero order and make
+    absorption look like zero transmission.  Use the real part of the dispersion
+    value to distinguish below-cutoff orders when it is available.
+    """
+
+    beta = complex(beta)
+    if beta.real <= 1.0e-12:
+        return False
+    if dispersion_value is None:
+        return abs(beta.imag) < 1.0e-9
+    value = complex(dispersion_value)
+    scale = max(abs(value), abs(beta) ** 2, 1.0e-30)
+    return value.real > -1.0e-10 * scale
 
 
 def near_rayleigh(beta: complex, n_medium: complex, cfg: SimulationConfig3D) -> bool:
@@ -95,10 +110,10 @@ def enumerate_diffraction_orders_3d(
         for n in range(-int(max_n), int(max_n) + 1):
             alpha = complex(cfg.kx + 2.0 * np.pi * m / (cfg.x_max - cfg.x_min))
             gamma = complex(cfg.ky + 2.0 * np.pi * n / (cfg.y_max - cfg.y_min))
-            beta_top = positive_sqrt((cfg.k0 * complex(cfg.n_air)) ** 2 - alpha**2 - gamma**2)
-            beta_bottom = positive_sqrt(
-                (cfg.k0 * complex(cfg.substrate_index)) ** 2 - alpha**2 - gamma**2
-            )
+            dispersion_top = (cfg.k0 * complex(cfg.n_air)) ** 2 - alpha**2 - gamma**2
+            dispersion_bottom = (cfg.k0 * complex(cfg.substrate_index)) ** 2 - alpha**2 - gamma**2
+            beta_top = positive_sqrt(dispersion_top)
+            beta_bottom = positive_sqrt(dispersion_bottom)
             orders.append(
                 DiffractionOrder3D(
                     m=m,
@@ -107,8 +122,8 @@ def enumerate_diffraction_orders_3d(
                     gamma=gamma,
                     beta_top=beta_top,
                     beta_bottom=beta_bottom,
-                    top_propagating=is_propagating(beta_top),
-                    bottom_propagating=is_propagating(beta_bottom),
+                    top_propagating=is_propagating(beta_top, dispersion_top),
+                    bottom_propagating=is_propagating(beta_bottom, dispersion_bottom),
                     rayleigh_warning_top=near_rayleigh(beta_top, cfg.n_air, cfg),
                     rayleigh_warning_bottom=near_rayleigh(beta_bottom, cfg.substrate_index, cfg),
                 )

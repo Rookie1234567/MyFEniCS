@@ -184,8 +184,8 @@ class Stage4GratingInputs3D:
     pml_top_thickness: float = 25.0
     pml_bottom_thickness: float = 25.0
     pml_alpha: float = 5.0
-    n_substrate: complex = 1.1 + 0.0j
-    substrate_material_label: str = "placeholder_substrate_user_unspecified"
+    n_substrate: complex = 0.999002304859 + 0.00182649365j
+    substrate_material_label: str = "Si / silicon"
     divergence_penalty: float = 0.0
     period_x: float = 100.0
     period_y: float = 100.0

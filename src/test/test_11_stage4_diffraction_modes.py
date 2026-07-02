@@ -47,6 +47,7 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertEqual([(order.m, order.n) for order in orders], [(0, 0)])
         self.assertTrue(orders[0].top_propagating)
         self.assertTrue(orders[0].bottom_propagating)
+        self.assertNotAlmostEqual(orders[0].beta_bottom.imag, 0.0, places=12)
 
     def test_auto_catalog_finds_higher_orders_for_large_period(self):
         cfg = stage4_block_config(
@@ -111,6 +112,7 @@ class Stage4DiffractionModeTests(unittest.TestCase):
             grating_width_x=0.0,
             grating_width_y=0.0,
             grating_height=0.0,
+            n_substrate=1.45 + 0.0j,
             n_grating=1.0 + 0.0j,
             diffraction_zero_order_only=False,
             diffraction_order_max_m=2,
@@ -160,6 +162,45 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(eh_metrics["R_total_from_eh_fourier"], ref["R"], places=11)
         self.assertAlmostEqual(eh_metrics["T_total_from_eh_fourier"], ref["T"], places=11)
         self.assertAlmostEqual(eh_metrics["R_plus_T_from_eh_fourier"], ref["R_plus_T"], places=11)
+
+    def test_lossy_flat_layer_keeps_transmitted_zero_order(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=True,
+            diffraction_sample_count_x=16,
+            diffraction_sample_count_y=16,
+        )
+        order = enumerate_diffraction_orders_3d(cfg)[0]
+        self.assertTrue(order.bottom_propagating)
+        top_z, bottom_z = _probe_z_locations(cfg)
+        top_points = _sample_plane(
+            cfg,
+            z=top_z,
+            nx=cfg.diffraction_sample_count_x,
+            ny=cfg.diffraction_sample_count_y,
+        )
+        bottom_points = _sample_plane(
+            cfg,
+            z=bottom_z,
+            nx=cfg.diffraction_sample_count_x,
+            ny=cfg.diffraction_sample_count_y,
+        )
+        _, eh_metrics = _eh_fourier_order_powers(
+            cfg,
+            [order],
+            top_points,
+            electric_field_code_values(cfg, top_points),
+            magnetic_field_code_values(cfg, top_points),
+            bottom_points,
+            electric_field_code_values(cfg, bottom_points),
+            magnetic_field_code_values(cfg, bottom_points),
+            _incident_power(cfg),
+        )
+        self.assertGreater(eh_metrics["T_total_from_eh_fourier"], 0.0)
 
     def test_eh_fourier_separates_same_order_up_down_waves(self):
         cfg = stage4_block_config(diffraction_zero_order_only=True)

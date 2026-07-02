@@ -4,15 +4,16 @@
   "日期说明": "分支和目录名沿用审查报告建议的 20260703；实际执行日期为 2026-07-02。",
   "目标物理参数": {
     "lambda0_nm": 13.5,
+    "substrate_material_label": "Si / silicon",
+    "n_substrate_complex": [0.999002304859, 0.00182649365],
     "grating_material_label": "Si / silicon",
     "n_grating_complex": [0.999002304859, 0.00182649365],
-    "substrate_material_label": "等待用户指定",
-    "n_substrate_complex": null
+    "absorption_metric": "A_balance = 1 - R - T"
   },
   "本轮轻量运行参数": {
     "lambda0_nm": 13.5,
-    "n_substrate_complex": [1.45, 0.0],
-    "substrate_material_label": "placeholder_substrate_user_unspecified",
+    "n_substrate_complex": [0.999002304859, 0.00182649365],
+    "substrate_material_label": "Si / silicon",
     "validation_role": "numerical_sanity_only",
     "mesh_target_size_nm": 50.0,
     "nedelec_degree": 1,
@@ -21,8 +22,7 @@
     "stage4_dtn_order_policy": "zero_order",
     "diffraction_zero_order_only": true
   },
-  "stage4a_flat_layer_command": "python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --case normal --lambda0 13.5 --n-substrate 1.45+0j --substrate-material-label placeholder_substrate_user_unspecified --validation-role numerical_sanity_only --mesh-target-size 50 --nedelec-degree 1 --visualization-degree 1 --stage4-dtn-order-policy zero_order --diffraction-zero-order-only --no-unique-output",
-  "stage4b_zero_contrast_command": "python3 -m src.runners.run_3d_cases --stage-case stage4_block_grating --case normal --lambda0 13.5 --n-substrate 1.45+0j --substrate-material-label placeholder_substrate_user_unspecified --n-grating 1+0j --grating-material-label zero_contrast_air --validation-role numerical_sanity_only --mesh-target-size 50 --nedelec-degree 1 --visualization-degree 1 --stage4-dtn-order-policy zero_order --diffraction-zero-order-only --no-unique-output",
+  "stage4a_flat_layer_command": "python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --case normal --lambda0 13.5 --n-substrate 0.999002304859+0.00182649365j --substrate-material-label Si_silicon --validation-role numerical_sanity_only --mesh-target-size 50 --nedelec-degree 1 --visualization-degree 1 --stage4-dtn-order-policy zero_order --diffraction-zero-order-only --no-unique-output",
+  "stage4b_zero_contrast_command": "python3 -m src.runners.run_3d_cases --stage-case stage4_block_grating --case normal --lambda0 13.5 --n-substrate 0.999002304859+0.00182649365j --substrate-material-label Si_silicon --n-grating 1+0j --grating-material-label zero_contrast_air --validation-role numerical_sanity_only --mesh-target-size 50 --nedelec-degree 1 --visualization-degree 1 --stage4-dtn-order-policy zero_order --diffraction-zero-order-only --no-unique-output",
   "大文件策略": "results/ 仍由 .gitignore 忽略；本轮只提交轻量文本指标与说明。"
 }
-

@@ -10,7 +10,14 @@
 n_grating = 0.999002304859 + 0.00182649365j
 ```
 
-基座复折射率仍等待用户按材料表继续指定；在此之前，使用占位基座折射率得到的 Stage 4 结果只能标记为 `numerical_sanity_only`，不能作为最终物理 benchmark。能量守恒 `R+T≈1` 也只说明功率归一化和边界吸收没有明显异常，仍必须和 flat-layer、zero-contrast、Fresnel 或网格收敛交叉验证。
+基座复折射率也使用同一个 Si / silicon 复数。由于材料含虚部，Stage 4A flat-layer 和 Stage 4B zero-contrast 需要同时记录吸收余额：
+
+```text
+n_substrate = 0.999002304859 + 0.00182649365j
+A_balance = 1 - R - T
+```
+
+对有吸收材料，`R+T≈1` 不再是目标；正的 `A_balance` 表示端口功率余额中的吸收/损耗。当前粗网格轻量运行仍只能标记为 `numerical_sanity_only`，不能作为最终物理 benchmark；后续仍必须做 flat-layer、zero-contrast、Fresnel 或网格收敛交叉验证。
 
 ## 2026-07-02 更新：3D 并行后处理保留 owned-cell 过滤
 

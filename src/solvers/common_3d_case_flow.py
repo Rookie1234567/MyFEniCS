@@ -1278,6 +1278,8 @@ def run_prepared_3d_case_flow(
         log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
         log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
         log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
+        if summary.get("stage4_material_absorption_present"):
+            log(f"3D diffraction absorption from balance = {summary.get('stage4_absorption_from_balance'):.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log("timing summary seconds:")
     for name, value in timings.items():

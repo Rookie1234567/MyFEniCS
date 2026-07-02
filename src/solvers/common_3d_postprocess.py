@@ -376,7 +376,7 @@ def run_fresnel_analytic_postprocess_sanity(cfg: SimulationConfig3D, out_dir: Pa
     return summary
 
 def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict[str, Any]) -> dict[str, Any]:
-    """Return an explicit pass/fail flag for lossless Stage-4 R/T metrics."""
+    """Return explicit power-balance interpretation for Stage-4 R/T metrics."""
 
     if cfg.geometry_kind != "rectangular_block_grating" or summary.get("R_plus_T") is None:
         return {}
@@ -386,10 +386,19 @@ def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict
     )
     tolerance = 1.0e-8
     r_plus_t = float(summary["R_plus_T"])
+    a_balance = float(summary.get("A_balance", 1.0 - r_plus_t))
     passed = (not lossless) or r_plus_t <= 1.0 + tolerance
     return {
         "stage4_lossless_energy_balance_checked": bool(lossless),
+        "stage4_material_absorption_present": bool(not lossless),
         "stage4_energy_balance_tolerance": tolerance,
         "stage4_energy_balance_pass": bool(passed),
         "stage4_energy_balance_excess": float(r_plus_t - 1.0) if lossless else None,
+        "stage4_absorption_from_balance": None if lossless else a_balance,
+        "stage4_absorption_balance_note": (
+            "Lossless case: A_balance is only the residual 1-R-T and should stay near zero."
+            if lossless
+            else "Lossy material case: A_balance = 1-R-T is interpreted as port-to-port absorption/loss "
+            "between the incident plane and outgoing ports."
+        ),
     }
