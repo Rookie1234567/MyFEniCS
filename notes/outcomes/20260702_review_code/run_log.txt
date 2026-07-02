@@ -1,0 +1,13 @@
+2026-07-02 review_code
+
+本轮目标：建立第一轮审查分支和新的留痕目录结构。
+
+已执行：
+- 从 master 创建 codex/review_code。
+- 创建 notes/docs 下的任务书和审查报告占位文件。
+- 创建 notes/outcomes/20260702_review_code 下的 summary、metrics、parameters、run_log、changed_files。
+- 调整 .gitignore，使 notes/outcomes/**/*.csv 中的小型 metrics.csv 可以入库。
+
+未执行：
+- 未运行 FEniCS/DOLFINx 数值算例。
+- 未生成或提交大体积计算结果。

@@ -1,0 +1,12 @@
+{
+  "任务名": "review_code",
+  "日期": "2026-07-02",
+  "分支": "codex/review_code",
+  "仓库范围": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel",
+  "任务书": "notes/docs/CODEX_TASK_20260702_review_code.md",
+  "审查报告": "notes/docs/REVIEW_REPORT_20260702_review_code.md",
+  "输出目录": "notes/outcomes/20260702_review_code",
+  "是否运行仿真": false,
+  "大文件策略": "不提交 vtu、pvtu、pvd、xdmf、h5、图片或其他大体积生成结果。"
+}
+

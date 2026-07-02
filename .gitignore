@@ -44,6 +44,11 @@ output/
 !tests/reference_data/
 !tests/reference_data/**/*.csv
 
+# Keep small per-round metrics produced for review traceability
+!notes/
+!notes/outcomes/
+!notes/outcomes/**/*.csv
+
 # Large mesh / generated files
 *.msh
 *.vtk
