@@ -833,6 +833,8 @@ def compute_diffraction_orders_3d(
         "diffraction_top_fe_response_condition": top_response_condition,
         "diffraction_bottom_fe_response_condition": bottom_response_condition,
         "incident_power_code_units": incident_power,
+        "probe_power_file": "probe_power.json",
+        "flux_power_file": "flux_power.json",
         "diffraction_orders_json": str(out_dir / "diffraction_orders_3d.json"),
         "diffraction_orders_csv": str(out_dir / "diffraction_orders_3d.csv"),
     }
@@ -857,6 +859,65 @@ def compute_diffraction_orders_3d(
             writer.writerows(csv_rows)
         (out_dir / "power_metrics_3d.json").write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
+            encoding="utf-8",
+        )
+        probe_payload = {
+            "method": "probe_eh_fourier",
+            "role": "cross_check",
+            "status": "ok",
+            "power_source": OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
+            "R_total": official_R_total,
+            "T_total": official_T_total,
+            "A_balance": float(1.0 - official_R_plus_T),
+            "R_plus_T": official_R_plus_T,
+            "incident_power_code_units": incident_power,
+            "top_probe_z": top_z,
+            "bottom_probe_z": bottom_z,
+            "sample_count_x": int(cfg.diffraction_sample_count_x),
+            "sample_count_y": int(cfg.diffraction_sample_count_y),
+            "sample_point_count_per_plane": int(cfg.diffraction_sample_count_x) * int(cfg.diffraction_sample_count_y),
+            "fit_residuals": {
+                "top_eh_fourier_max": metrics["diffraction_top_eh_fourier_fit_residual_max"],
+                "bottom_eh_fourier_max": metrics["diffraction_bottom_eh_fourier_fit_residual_max"],
+                "top_modal_diagnostic": top_residual,
+                "bottom_modal_diagnostic": bottom_residual,
+            },
+            "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),
+            "diffraction_order_max_m_requested": cfg.diffraction_order_max_m,
+            "diffraction_order_max_n_requested": cfg.diffraction_order_max_n,
+            "per_order": rows,
+            "diagnostic_e_fourier": {
+                "note": E_FOURIER_DIAGNOSTIC_NOTE,
+                "R_total": metrics["R_total_from_e_fourier"],
+                "T_total": metrics["T_total_from_e_fourier"],
+                "A_balance": metrics["A_balance_from_e_fourier"],
+            },
+            "note": OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
+        }
+        (out_dir / "probe_power.json").write_text(
+            json.dumps(probe_payload, ensure_ascii=False, indent=2, default=_json_default),
+            encoding="utf-8",
+        )
+        flux_payload = {
+            "method": "net_flux",
+            "role": "diagnostic",
+            "status": "ok",
+            "power_source": "sampled_poynting_flux",
+            "top_flux_outward": float(top_flux_outward),
+            "bottom_flux_outward": float(bottom_flux_outward),
+            "incident_power_code_units": incident_power,
+            "R_total_from_net_flux": flux_R_total,
+            "T_total_from_net_flux": flux_T_total,
+            "A_flux": float(1.0 - flux_R_plus_T),
+            "R_plus_T_from_net_flux": flux_R_plus_T,
+            "top_probe_z": top_z,
+            "bottom_probe_z": bottom_z,
+            "sample_count_x": int(cfg.diffraction_sample_count_x),
+            "sample_count_y": int(cfg.diffraction_sample_count_y),
+            "note": "does_not_resolve_diffraction_orders; " + SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE,
+        }
+        (out_dir / "flux_power.json").write_text(
+            json.dumps(flux_payload, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
     comm.barrier()

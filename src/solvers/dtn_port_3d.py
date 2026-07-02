@@ -839,6 +839,25 @@ def _write_port_outputs(
     if comm.rank != 0:
         return
     payload = {"metrics": metrics, "orders": rows}
+    port_payload = {
+        "method": "port",
+        "role": "primary",
+        "status": "ok",
+        "power_source": "dtn_auxiliary_port_amplitudes",
+        "R_total": metrics["R_total"],
+        "T_total": metrics["T_total"],
+        "A_balance": metrics["A_balance"],
+        "R_plus_T": metrics["R_plus_T"],
+        "incident_power_code_units": metrics["incident_power_code_units"],
+        "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,
+        "stage4_dtn_assembly": cfg.stage4_dtn_assembly,
+        "orders": rows,
+        "note": metrics.get("dtn_port_power_metric_note"),
+    }
+    (out_dir / "port_power.json").write_text(
+        json.dumps(port_payload, ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
     (out_dir / "dtn_port_power_metrics_3d.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
@@ -914,6 +933,7 @@ def _port_power_metrics(
         "dtn_port_bottom_mode_count": int(rows_by_side["bottom"]),
         "dtn_port_propagating_mode_count": int(sum(1 for mode in modes if mode.propagating)),
         "dtn_port_rayleigh_warning_count": int(sum(1 for mode in modes if mode.rayleigh_warning)),
+        "port_power_file": "port_power.json",
         "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
         "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
         "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",

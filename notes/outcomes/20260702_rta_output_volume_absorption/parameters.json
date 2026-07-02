@@ -1,0 +1,56 @@
+{
+  "branch_name": "codex/20260702-rta-output-volume-absorption",
+  "lambda0_nm": 13.5,
+  "mesh_sizes_nm": [
+    10,
+    5,
+    3
+  ],
+  "stage4_boundary_model": "dtn_port",
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "diffraction_settings": {
+    "diffraction_zero_order_only": false,
+    "diffraction_sample_count_x": 32,
+    "diffraction_sample_count_y": 32,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "note": "正式算例使用默认全传播级 diffraction postprocess；早期 zero_order 诊断试跑未纳入 metrics。"
+  },
+  "material_labels": {
+    "substrate": "Si_silicon",
+    "zero_contrast_grating": "zero_contrast_air",
+    "real_si_grating": "Si_silicon"
+  },
+  "validation_role": "numerical_sanity_only",
+  "n_substrate_complex": {
+    "real": 0.999002304859,
+    "imag": 0.00182649365
+  },
+  "n_grating_complex_per_case": {
+    "flat_layer": {
+      "real": 1.0,
+      "imag": 0.0
+    },
+    "zero_contrast_block": {
+      "real": 1.0,
+      "imag": 0.0
+    },
+    "real_si_block": {
+      "real": 0.999002304859,
+      "imag": 0.00182649365
+    }
+  },
+  "result_directories": {
+    "flat_layer_10nm": "results/3D_stage4_flat_layer_sanity_normal_p1_h10p0_20260702_143338",
+    "flat_layer_5nm": "results/3D_stage4_flat_layer_sanity_normal_p1_h5p0_20260702_143437",
+    "flat_layer_3nm": "results/3D_stage4_flat_layer_sanity_normal_p1_h3p0_20260702_143726",
+    "zero_contrast_block_10nm": "results/3D_stage4_block_grating_normal_p1_h10p0_20260702_151612",
+    "zero_contrast_block_5nm": "results/3D_stage4_block_grating_normal_p1_h5p0_20260702_151734",
+    "zero_contrast_block_3nm": "results/3D_stage4_block_grating_normal_p1_h3p0_20260702_151941",
+    "real_si_block_10nm": "results/3D_stage4_block_grating_normal_p1_h10p0_20260702_160405",
+    "real_si_block_5nm": "results/3D_stage4_block_grating_normal_p1_h5p0_20260702_160436",
+    "real_si_block_3nm": "results/3D_stage4_block_grating_normal_p1_h3p0_20260702_160642"
+  },
+  "large_result_policy": "results/ is gitignored; VTK/VTU and full case folders are not committed."
+}

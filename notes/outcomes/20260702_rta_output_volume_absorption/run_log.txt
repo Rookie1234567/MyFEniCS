@@ -1,0 +1,30 @@
+本轮运行日志
+
+分支:
+codex/20260702-rta-output-volume-absorption
+
+验证命令:
+- python -m compileall -q src -> PASS
+- Docker real-mode unittest -> FAIL。原因是 real DOLFINx/PETSc 环境下复数场被截断；该命令不是正式验证环境。
+- Docker complex128 unittest -> PASS。Ran 60 tests, OK, skipped=10。
+- 早期 zero_order 诊断试跑 flat 10 nm -> completed but excluded。原因是该策略走 zero-order local Robin sanity branch，R/T 非物理。
+
+正式算例:
+- flat_layer 10 nm -> completed; dir=results/3D_stage4_flat_layer_sanity_normal_p1_h10p0_20260702_143338; elapsed_s=12.558; max_rss_mb=393.5
+- flat_layer 5 nm -> completed; dir=results/3D_stage4_flat_layer_sanity_normal_p1_h5p0_20260702_143437; elapsed_s=128.041; max_rss_mb=1732.7
+- flat_layer 3 nm -> completed; dir=results/3D_stage4_flat_layer_sanity_normal_p1_h3p0_20260702_143726; elapsed_s=2286.873; max_rss_mb=12467.3
+- zero_contrast_block 10 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h10p0_20260702_151612; elapsed_s=34.683; max_rss_mb=416.4
+- zero_contrast_block 5 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h5p0_20260702_151734; elapsed_s=104.164; max_rss_mb=1731.8
+- zero_contrast_block 3 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h3p0_20260702_151941; elapsed_s=2636.719; max_rss_mb=13201.7
+- real_si_block 10 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h10p0_20260702_160405; elapsed_s=10.259; max_rss_mb=414.8
+- real_si_block 5 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h5p0_20260702_160436; elapsed_s=104.212; max_rss_mb=1730.5
+- real_si_block 3 nm -> completed; dir=results/3D_stage4_block_grating_normal_p1_h3p0_20260702_160642; elapsed_s=2623.155; max_rss_mb=13213.4
+
+跳过/失败:
+- 正式要求的 9 个算例均未跳过，均完成。
+- 一致性检查失败已写入 summary.md 和 metrics.csv，不作为运行失败处理。
+
+内存/时间:
+- 3 nm flat-layer: max_rss_mb=12467.3, elapsed_s=2286.873。
+- 3 nm zero-contrast: max_rss_mb=13201.7, elapsed_s=2636.719。
+- 3 nm real Si block: max_rss_mb=13213.4, elapsed_s=2623.155。

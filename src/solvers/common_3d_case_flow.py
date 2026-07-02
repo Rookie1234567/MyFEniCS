@@ -17,6 +17,7 @@ from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_m
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
+from ..postprocessing.rta_3d import compute_volume_absorption_3d, write_power_summary_csv
 from .common_3d_fields import (
     _add_reference_field_to_solution,
     _combine_fields,
@@ -1182,12 +1183,14 @@ def run_prepared_3d_case_flow(
     stage2_metrics.update(_stage2_reference_metrics(E_total, cfg, field_metrics))
     summary.update(stage2_metrics)
 
+    port_power_metrics: dict[str, Any] | None = None
+    probe_power_metrics: dict[str, Any] | None = None
+    volume_absorption_metrics: dict[str, Any] | None = None
     if solve_stage4_dtn_port and dtn_result is not None:
-        summary.update(dtn_result["port_metrics"])
-        summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
-    elif run_diffraction_postprocess:
+        port_power_metrics = dtn_result["port_metrics"]
+        summary.update(port_power_metrics)
         stage_start = _start_timed_stage(comm)
-        diffraction_metrics = compute_diffraction_orders_3d(
+        probe_power_metrics = compute_diffraction_orders_3d(
             mesh_data,
             cfg,
             E_total,
@@ -1195,8 +1198,84 @@ def run_prepared_3d_case_flow(
             E_scattered=E_sca if solve_layered_scattered else None,
         )
         _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
-        summary.update(diffraction_metrics)
+        summary.update(
+            {
+                "probe_R_total": probe_power_metrics.get("R_total"),
+                "probe_T_total": probe_power_metrics.get("T_total"),
+                "probe_A_balance": probe_power_metrics.get("A_balance"),
+                "probe_power_file": probe_power_metrics.get("probe_power_file"),
+                "flux_R_total": probe_power_metrics.get("R_total_from_net_flux"),
+                "flux_T_total": probe_power_metrics.get("T_total_from_net_flux"),
+                "flux_A_balance": probe_power_metrics.get("A_balance_from_net_flux"),
+                "flux_power_file": probe_power_metrics.get("flux_power_file"),
+            }
+        )
         summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
+    elif run_diffraction_postprocess:
+        stage_start = _start_timed_stage(comm)
+        probe_power_metrics = compute_diffraction_orders_3d(
+            mesh_data,
+            cfg,
+            E_total,
+            out_dir,
+            E_scattered=E_sca if solve_layered_scattered else None,
+        )
+        _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
+        summary.update(probe_power_metrics)
+        summary.update(_stage4_lossless_energy_balance_check(cfg, summary))
+        summary["timings_seconds"] = timings
+
+    incident_power_for_absorption = (
+        None
+        if port_power_metrics is None
+        else port_power_metrics.get("incident_power_code_units")
+    )
+    if incident_power_for_absorption is None and probe_power_metrics is not None:
+        incident_power_for_absorption = probe_power_metrics.get("incident_power_code_units")
+    if (
+        cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
+        and incident_power_for_absorption is not None
+    ):
+        stage_start = _start_timed_stage(comm)
+        volume_absorption_metrics = compute_volume_absorption_3d(
+            mesh_data,
+            cfg,
+            E_total,
+            out_dir,
+            incident_power=float(incident_power_for_absorption),
+            port_metrics=port_power_metrics,
+            probe_metrics=probe_power_metrics,
+        )
+        _finish_timed_stage(comm, timings, "volume_absorption_postprocess", stage_start, log)
+        summary.update(
+            {
+                "volume_absorption_file": "volume_absorption.json",
+                "A_volume_grating": volume_absorption_metrics.get("A_volume_grating"),
+                "A_volume_substrate": volume_absorption_metrics.get("A_volume_substrate"),
+                "A_volume_total": volume_absorption_metrics.get("A_volume_total"),
+                "A_port_balance_minus_A_volume_total": volume_absorption_metrics.get(
+                    "A_port_balance_minus_A_volume_total"
+                ),
+                "A_probe_balance_minus_A_volume_total": volume_absorption_metrics.get(
+                    "A_probe_balance_minus_A_volume_total"
+                ),
+                "A_flux_minus_A_volume_total": volume_absorption_metrics.get("A_flux_minus_A_volume_total"),
+                "energy_closure_error_port_volume": volume_absorption_metrics.get(
+                    "energy_closure_error_port_volume"
+                ),
+            }
+        )
+
+    if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
+        power_summary_rows = write_power_summary_csv(
+            out_dir,
+            comm,
+            port_metrics=port_power_metrics,
+            probe_metrics=probe_power_metrics,
+            volume_metrics=volume_absorption_metrics,
+        )
+        summary["power_summary_csv"] = "power_summary.csv"
+        summary["power_summary_rows"] = power_summary_rows
         summary["timings_seconds"] = timings
 
     if summary.get("stage4_energy_balance_pass") is False:
@@ -1274,10 +1353,17 @@ def run_prepared_3d_case_flow(
         log(f"Fresnel R/T = {summary['fresnel_R']:.6e} / {summary['fresnel_T']:.6e}")
         log(f"R+T = {summary['R_plus_T']:.6e}")
     if cfg.geometry_kind == "rectangular_block_grating":
-        log(f"3D diffraction total power source = {summary.get('diffraction_total_power_source')}")
-        log(f"3D diffraction R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
-        log(f"3D diffraction R+T = {summary['R_plus_T']:.6e}")
-        log(f"3D diffraction A_balance = {summary['A_balance']:.6e}")
+        log(f"Stage-4 primary power source = {summary.get('diffraction_total_power_source')}")
+        log(f"Stage-4 primary R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
+        log(f"Stage-4 primary R+T = {summary['R_plus_T']:.6e}")
+        log(f"Stage-4 primary A_balance = {summary['A_balance']:.6e}")
+        if summary.get("probe_R_total") is not None:
+            log(f"Stage-4 probe E/H Fourier R/T = {summary['probe_R_total']:.6e} / {summary['probe_T_total']:.6e}")
+        if summary.get("flux_R_total") is not None:
+            log(f"Stage-4 sampled net-flux R/T = {summary['flux_R_total']:.6e} / {summary['flux_T_total']:.6e}")
+        if summary.get("A_volume_total") is not None:
+            log(f"Stage-4 material A_volume_total = {summary['A_volume_total']:.6e}")
+            log(f"Stage-4 port-volume closure error = {summary.get('energy_closure_error_port_volume')}")
         if summary.get("stage4_material_absorption_present"):
             log(f"3D diffraction absorption from balance = {summary.get('stage4_absorption_from_balance'):.6e}")
     log(f"ParaView file = {field_metrics['paraview_file']}")
