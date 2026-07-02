@@ -1,5 +1,18 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-02 更新：并行 ParaView 和 summary 指标避免 ghost 重复计数
+
+并行运行时，后处理会只用 owned cells 对应的点来统计 summary 指标，避免 ghost cells 让 `max|E|`、Poynting、分量最大值在串并行对比中偏移。输出里可以看：
+
+```text
+postprocess_point_scope = owned_cells_only
+postprocess_global_owned_points
+postprocess_global_total_points_before_owned_filter
+paraview_file = fields_3d_for_paraview_parallel.pvd
+```
+
+另外新增 `component_l2_energy_fraction_Ex_Ey_Ez`，它直接在原始 H(curl) 场上积分，比单点 `max|E|` 更适合做串并行和网格收敛对比。
+
 ## 2026-07-02 更新：MUMPS OOC 文件自动清理
 
 使用：

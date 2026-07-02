@@ -18,6 +18,34 @@ def _field_grid(V_dg):
     return pyvista.UnstructuredGrid(cells, cell_types, coords), coords
 
 
+def _owned_cell_count(mesh) -> int:
+    """Return the number of cells owned by this rank.
+
+    DOLFINx rank-local meshes can also carry ghost cells.  Those ghost cells are
+    useful for assembly, but they must not be counted as independent field
+    samples when comparing MPI runs against serial runs.
+    """
+    tdim = mesh.topology.dim
+    cell_map = mesh.topology.index_map(tdim)
+    return int(cell_map.size_local)
+
+
+def _owned_point_mask(V_dg, num_points: int) -> np.ndarray:
+    """Mask VTK/DG interpolation points belonging to owned cells only."""
+    mask = np.zeros(num_points, dtype=bool)
+    n_owned_cells = _owned_cell_count(V_dg.mesh)
+    for cell in range(n_owned_cells):
+        cell_dofs = np.asarray(V_dg.dofmap.cell_dofs(cell), dtype=np.int64)
+        valid = (cell_dofs >= 0) & (cell_dofs < num_points)
+        mask[cell_dofs[valid]] = True
+    if n_owned_cells > 0 and not np.any(mask):
+        raise RuntimeError(
+            "Could not map owned DG cell dofs to ParaView points. "
+            "Parallel 3D postprocessing cannot safely filter ghost cells."
+        )
+    return mask
+
+
 def _values(field, num_points: int) -> np.ndarray:
     values = field.x.array.reshape(num_points, -1)
     if values.shape[1] < 3:
@@ -91,13 +119,43 @@ def _global_max_component_abs(comm, values: np.ndarray, component: int, mask: np
     return comm.allreduce(local, op=MPI.MAX)
 
 
-def _global_mean_vector(comm, values: np.ndarray) -> np.ndarray:
+def _global_mean_vector(comm, values: np.ndarray, mask: np.ndarray | None = None) -> np.ndarray:
+    if mask is not None:
+        values = values[np.asarray(mask, dtype=bool)]
     local_sum = np.sum(values, axis=0) if len(values) else np.zeros(3, dtype=np.float64)
     total_sum = comm.allreduce(local_sum, op=MPI.SUM)
     total_count = comm.allreduce(len(values), op=MPI.SUM)
     if total_count == 0:
         return np.zeros(3, dtype=np.float64)
     return np.asarray(total_sum, dtype=np.float64) / float(total_count)
+
+
+def _field_component_l2_metrics(mesh_data, cfg: SimulationConfig3D, field) -> dict[str, object]:
+    """Assemble component L2 diagnostics on the original H(curl) field.
+
+    These metrics bypass DG/ParaView interpolation.  They are useful for
+    separating a real MPI solve inconsistency from a visualization-only issue.
+    The length unit is still nm, so the L2 values are mainly diagnostic; the
+    component ratios are the robust comparison quantities.
+    """
+    dx = ufl.Measure("dx", domain=mesh_data.mesh, subdomain_data=mesh_data.cell_tags)
+    d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+    comm = mesh_data.mesh.comm
+    integrals: list[float] = []
+    for component in range(3):
+        local = fem.assemble_scalar(fem.form(ufl.inner(field[component], field[component]) * d_physical))
+        total = comm.allreduce(local, op=MPI.SUM)
+        integrals.append(max(float(np.real(total)), 0.0) * cfg.electric_field_scale_V_per_m**2)
+    total_integral = max(float(sum(integrals)), 0.0)
+    l2_values = [float(np.sqrt(value)) for value in integrals]
+    total_l2 = float(np.sqrt(total_integral))
+    ratios = [float(value / total_integral) if total_integral > 0.0 else 0.0 for value in integrals]
+    return {
+        "component_l2_integral_E_V2_per_m2_nm3": integrals,
+        "component_l2_norm_E_V_per_m_sqrt_nm3": l2_values,
+        "component_l2_total_E_V_per_m_sqrt_nm3": total_l2,
+        "component_l2_energy_fraction_Ex_Ey_Ez": ratios,
+    }
 
 
 def _interpolation_points(V):
@@ -204,10 +262,19 @@ def save_airbox_3d_fields(
     h_error = h_num - h_exact if h_exact is not None else None
 
     paraview_grid = grid.copy()
+    owned_cell_count = _owned_cell_count(mesh_data.mesh)
+    owned_point_mask = _owned_point_mask(V_dg, grid.n_points)
+    postprocess_point_scope = "owned_cells_only" if comm.size > 1 else "serial_all_cells"
+    local_owned_point_count = int(np.count_nonzero(owned_point_mask))
+    local_total_point_count = int(grid.n_points)
+    global_owned_point_count = int(comm.allreduce(local_owned_point_count, op=MPI.SUM))
+    global_total_point_count = int(comm.allreduce(local_total_point_count, op=MPI.SUM))
     z_values = np.asarray(paraview_grid.points[:, 2], dtype=np.float64)
     z_tol = 1.0e-8 * max(cfg.domain_z_max - cfg.domain_z_min, 1.0)
-    physical_point_mask = (z_values >= cfg.physical_z_min - z_tol) & (z_values <= cfg.physical_z_max + z_tol)
-    pml_point_mask = ~physical_point_mask
+    physical_point_mask_all = (z_values >= cfg.physical_z_min - z_tol) & (z_values <= cfg.physical_z_max + z_tol)
+    pml_point_mask_all = ~physical_point_mask_all
+    physical_point_mask = owned_point_mask & physical_point_mask_all
+    pml_point_mask = owned_point_mask & pml_point_mask_all
     # ParaView arrays use physical display units.  The solve itself is still
     # normalized to E0=1, and cfg supplies the V/m and A/m scaling factors.
     # E_numerical is already the total field for this writer, so the older
@@ -242,6 +309,14 @@ def save_airbox_3d_fields(
         dtype=np.float64,
     )
 
+    paraview_cells_before_owned_filter = int(paraview_grid.n_cells)
+    paraview_owned_cell_filter_applied = False
+    if comm.size > 1 and owned_cell_count < paraview_grid.n_cells:
+        owned_cells = np.arange(owned_cell_count, dtype=np.int64)
+        paraview_grid = paraview_grid.extract_cells(owned_cells)
+        paraview_owned_cell_filter_applied = True
+    paraview_cells_written = int(paraview_grid.n_cells)
+
     if comm.size > 1:
         # PyVista writes one local VTU per rank.  Rank0 writes the collection
         # file after a barrier so ParaView can open the distributed result.
@@ -254,17 +329,17 @@ def save_airbox_3d_fields(
         paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
         paraview_path = out_dir / "fields_3d_for_paraview.vtu"
 
-    max_e_exact = _global_max_norm(comm, e_exact) if e_exact is not None else None
-    max_e_num = _global_max_norm(comm, e_num)
+    max_e_exact = _global_max_norm(comm, e_exact, owned_point_mask) if e_exact is not None else None
+    max_e_num = _global_max_norm(comm, e_num, owned_point_mask)
     max_e_num_physical = _global_max_norm(comm, e_num, physical_point_mask)
     max_e_num_pml = _global_max_norm(comm, e_num, pml_point_mask)
-    max_e_error = _global_max_norm(comm, e_error) if e_error is not None else None
-    max_h = _global_max_norm(comm, h_num)
-    max_h_exact = _global_max_norm(comm, h_exact) if h_exact is not None else None
-    max_h_error = _global_max_norm(comm, h_error) if h_error is not None else None
+    max_e_error = _global_max_norm(comm, e_error, owned_point_mask) if e_error is not None else None
+    max_h = _global_max_norm(comm, h_num, owned_point_mask)
+    max_h_exact = _global_max_norm(comm, h_exact, owned_point_mask) if h_exact is not None else None
+    max_h_error = _global_max_norm(comm, h_error, owned_point_mask) if h_error is not None else None
 
     poynting = 0.5 * np.real(np.cross(e_num, np.conj(h_num)))
-    mean_poynting = _global_mean_vector(comm, poynting)
+    mean_poynting = _global_mean_vector(comm, poynting, owned_point_mask)
     direction = cfg.direction_vector
     mean_norm = float(np.linalg.norm(mean_poynting))
     poynting_cosine = float(np.dot(mean_poynting, direction) / mean_norm) if mean_norm > 0.0 else float("nan")
@@ -272,9 +347,9 @@ def save_airbox_3d_fields(
     result = {
         "max_abs_E_exact": max_e_exact,
         "max_abs_E": max_e_num,
-        "max_abs_Ex": _global_max_component_abs(comm, e_num, 0),
-        "max_abs_Ey": _global_max_component_abs(comm, e_num, 1),
-        "max_abs_Ez": _global_max_component_abs(comm, e_num, 2),
+        "max_abs_Ex": _global_max_component_abs(comm, e_num, 0, owned_point_mask),
+        "max_abs_Ey": _global_max_component_abs(comm, e_num, 1, owned_point_mask),
+        "max_abs_Ez": _global_max_component_abs(comm, e_num, 2, owned_point_mask),
         "max_abs_E_physical_z_region": max_e_num_physical,
         "max_abs_E_pml_z_region": max_e_num_pml,
         "max_abs_E_error": max_e_error,
@@ -291,6 +366,15 @@ def save_airbox_3d_fields(
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
         "paraview_file": str(paraview_path),
+        "postprocess_point_scope": postprocess_point_scope,
+        "postprocess_local_owned_points": local_owned_point_count,
+        "postprocess_local_total_points_before_owned_filter": local_total_point_count,
+        "postprocess_global_owned_points": global_owned_point_count,
+        "postprocess_global_total_points_before_owned_filter": global_total_point_count,
+        "paraview_owned_cell_filter_applied": paraview_owned_cell_filter_applied,
+        "paraview_local_owned_cells": owned_cell_count,
+        "paraview_local_cells_before_owned_filter": paraview_cells_before_owned_filter,
+        "paraview_local_cells_written": paraview_cells_written,
         "vtx_3d_output_status": vtx_output_status,
         "vtx_3d_output_files": vtx_output_files,
         "exact_reference_available": has_exact_reference,
@@ -314,25 +398,26 @@ def save_airbox_3d_fields(
             ),
         ],
     }
+    result.update(_field_component_l2_metrics(mesh_data, cfg, E_numerical))
     if e_sca is not None:
-        result["max_abs_E_sca"] = _global_max_norm(comm, e_sca)
-        result["max_abs_E_sca_Ex"] = _global_max_component_abs(comm, e_sca, 0)
-        result["max_abs_E_sca_Ey"] = _global_max_component_abs(comm, e_sca, 1)
-        result["max_abs_E_sca_Ez"] = _global_max_component_abs(comm, e_sca, 2)
+        result["max_abs_E_sca"] = _global_max_norm(comm, e_sca, owned_point_mask)
+        result["max_abs_E_sca_Ex"] = _global_max_component_abs(comm, e_sca, 0, owned_point_mask)
+        result["max_abs_E_sca_Ey"] = _global_max_component_abs(comm, e_sca, 1, owned_point_mask)
+        result["max_abs_E_sca_Ez"] = _global_max_component_abs(comm, e_sca, 2, owned_point_mask)
         result["max_abs_E_sca_physical_z_region"] = _global_max_norm(comm, e_sca, physical_point_mask)
         result["max_abs_E_sca_pml_z_region"] = _global_max_norm(comm, e_sca, pml_point_mask)
     if e_bg is not None:
-        result["max_abs_E_b"] = _global_max_norm(comm, e_bg)
-        result["max_abs_E_b_Ex"] = _global_max_component_abs(comm, e_bg, 0)
-        result["max_abs_E_b_Ey"] = _global_max_component_abs(comm, e_bg, 1)
-        result["max_abs_E_b_Ez"] = _global_max_component_abs(comm, e_bg, 2)
+        result["max_abs_E_b"] = _global_max_norm(comm, e_bg, owned_point_mask)
+        result["max_abs_E_b_Ex"] = _global_max_component_abs(comm, e_bg, 0, owned_point_mask)
+        result["max_abs_E_b_Ey"] = _global_max_component_abs(comm, e_bg, 1, owned_point_mask)
+        result["max_abs_E_b_Ez"] = _global_max_component_abs(comm, e_bg, 2, owned_point_mask)
         result["max_abs_E_b_physical_z_region"] = _global_max_norm(comm, e_bg, physical_point_mask)
         result["max_abs_E_b_pml_z_region"] = _global_max_norm(comm, e_bg, pml_point_mask)
     if e_port is not None:
-        result["max_abs_E_incident_port"] = _global_max_norm(comm, e_port)
-        result["max_abs_E_incident_port_Ex"] = _global_max_component_abs(comm, e_port, 0)
-        result["max_abs_E_incident_port_Ey"] = _global_max_component_abs(comm, e_port, 1)
-        result["max_abs_E_incident_port_Ez"] = _global_max_component_abs(comm, e_port, 2)
+        result["max_abs_E_incident_port"] = _global_max_norm(comm, e_port, owned_point_mask)
+        result["max_abs_E_incident_port_Ex"] = _global_max_component_abs(comm, e_port, 0, owned_point_mask)
+        result["max_abs_E_incident_port_Ey"] = _global_max_component_abs(comm, e_port, 1, owned_point_mask)
+        result["max_abs_E_incident_port_Ez"] = _global_max_component_abs(comm, e_port, 2, owned_point_mask)
         result["max_abs_E_incident_port_physical_z_region"] = _global_max_norm(
             comm,
             e_port,

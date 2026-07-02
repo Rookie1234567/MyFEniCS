@@ -1,5 +1,22 @@
 # v2 文档索引
 
+## 2026-07-02 更新：3D 并行后处理保留 owned-cell 过滤
+
+`src/postprocessing/postprocess_3d.py` 的本地改动已确认有用并保留：并行运行时，summary 中的 `max|E|`、Poynting、分量最大值等指标只统计 owned cells 对应的 DG/VTK 点，避免 ghost cells 被重复计入。ParaView 并行输出仍写 `fields_3d_for_paraview_parallel.pvd` 和各 rank 的 `.vtu`。
+
+新增/重点字段：
+
+```text
+postprocess_point_scope
+postprocess_global_owned_points
+postprocess_global_total_points_before_owned_filter
+paraview_owned_cell_filter_applied
+paraview_local_owned_cells
+paraview_local_cells_written
+component_l2_integral_E_V2_per_m2_nm3
+component_l2_energy_fraction_Ex_Ey_Ez
+```
+
 ## 2026-07-02 更新：MUMPS OOC 文件已自动管理
 
 `--petsc-direct-solver-profile mumps_ooc` 现在采用：

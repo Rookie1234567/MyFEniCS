@@ -1,3 +1,22 @@
+## 2026-07-02 更新：3D 并行后处理 owned-cell 过滤
+
+`src/postprocessing/postprocess_3d.py` 现在保留并行 owned-cell 过滤逻辑：
+
+```text
+1. _owned_cell_count / _owned_point_mask
+   找到本 rank 真正拥有的 cell 和对应 DG/VTK 点。
+
+2. _global_max_norm / _global_mean_vector
+   在计算 max|E|、Poynting 等全局指标时只统计 owned 点，避免 ghost cell 重复计数。
+
+3. save_airbox_3d_fields
+   写 ParaView 并行 PVD/VTU，并把 postprocess_point_scope、
+   paraview_owned_cell_filter_applied 等诊断字段写入 run_summary.json。
+
+4. _field_component_l2_metrics
+   直接在原始 H(curl) 场上装配分量 L2 积分，作为串并行对比和近场稳定性诊断。
+```
+
 ## 2026-07-02 更新：MUMPS OOC 文件清理代码路径
 
 如果你想看 OOC 文件为什么成功会自动删除、失败会保留，按这个顺序读：
