@@ -6,6 +6,8 @@
 
 但从当前仓库整体状态看，代码已经形成了比较完整的 3D Maxwell / Floquet / DtN / Stage 4 框架；主要问题不再是“能不能跑通”，而是“哪些结果可以作为物理可信结论”。现阶段不建议继续盲目扩展功能，应先收紧验证链条。
 
+用户补充要求：后续物理验证不再使用随意设置的实数折射率，也不再把 `lambda0 = 633 nm` 结果作为 EUV 物理结论。后续与项目目标相关的验证应锁定 `lambda0 = 13.5 nm`，并且基座与光栅材料折射率统一采用用户指定表格中的复折射率。当前上传截图在本次工具读取中没有可见文本，因此具体 `n_substrate` 与 `n_grating` 数值需要用户或 Codex 以文本形式写入下一轮任务书、`parameters.json` 和运行日志，避免再次使用临时虚构参数。
+
 ## 审查范围
 
 - `notes/docs/CODEX_TASK_20260702_review_code.md`
@@ -44,6 +46,11 @@
    - notes 已经记录：矩阵本身没有异常变稠，主要瓶颈是 direct LU factorization fill-in 和 WSL/Docker 内存上限。
    - 后续需要把“物理验证”和“求解器容量验证”分开，不要混在一个任务里。
 
+7. 材料与波长参数必须收紧。
+   - 之前的 `lambda0 = 633 nm` 可以保留为数值 sanity 或调试用例，但不能继续作为 EUV 项目的物理验证依据。
+   - 之前临时设置的实数折射率只能算算法 smoke test，不能作为真实基座/光栅 benchmark。
+   - 后续 Stage 4 物理验证必须使用 `lambda0 = 13.5 nm` 和用户指定的复折射率，并在输出中明确写出材料名、`n`、`k` 或等价复数 `n_complex`。
+
 ## 必须修复
 
 1. 明确 `diffraction_3d.py` 中官方 R/T 指标来源。
@@ -52,10 +59,10 @@
 
 2. 给 Stage 4 建立最小可信验证表。
    至少包括：
-   - Stage 4A flat-layer sanity，长波长，R≈0，T≈1；
+   - Stage 4A flat-layer sanity，`lambda0 = 13.5 nm`，使用指定基座复折射率；
    - Stage 4B zero-contrast，与同参数 Stage 4A 一致；
    - Stage 4A EUV auto_propagating，做 h 收敛；
-   - Stage 4B real block 只能在前面三项稳定后再作为物理结果讨论。
+   - Stage 4B real block 使用指定光栅复折射率，只能在前面三项稳定后再作为物理结果讨论。
 
 3. 不要把“能量守恒 R+T=1”单独当成正确性证明。
    - 对 DtN / modal port 来说，能量守恒只能说明功率归一化和边界吸收没有明显炸掉。
@@ -63,6 +70,10 @@
 
 4. 保持 `master` 作为稳定主线。
    - 本分支可以合并，但合并前建议先把 GitHub default branch 改回 `master`。
+
+5. 固定 EUV 材料参数入口。
+   - 在下一轮任务中，让 Codex 把 `lambda0 = 13.5 nm`、基座复折射率、光栅复折射率写入 `notes/outcomes/.../parameters.json`。
+   - 如果代码中保留 633 nm 或实数折射率示例，必须明确标记为 `numerical_sanity_only`，不能混入正式 EUV validation。
 
 ## 建议的下一步 Codex 动作
 
@@ -72,12 +83,16 @@
 codex/20260703-stage4-validation-cleanup
 ```
 
-任务目标：整理并固定 Stage 4 可信验证链条。
+任务目标：整理并固定 Stage 4 的可信验证链条，且将物理参数统一到 EUV 13.5 nm。
 
 要求：
 
 1. 检查并统一 `diffraction_3d.py` 中官方 R/T 指标说明。
-2. 生成一个新的 outcomes 目录，例如：
+2. 将项目物理验证参数固定为：
+   - `lambda0 = 13.5 nm`；
+   - `n_substrate` 使用用户指定表格中的基座复折射率；
+   - `n_grating` 使用用户指定表格中的光栅复折射率。
+3. 生成一个新的 outcomes 目录，例如：
 
 ```text
 notes/outcomes/20260703_stage4_validation_cleanup/
@@ -93,15 +108,16 @@ run_log.txt
 changed_files.md
 ```
 
-3. 运行轻量验证，不追求大规模真实 grating：
+4. 运行轻量验证，不追求大规模真实 grating：
    - `python3 -m compileall -q src`
    - `python3 -m unittest discover -s src/test -p "test_*.py"`
-   - 一个长波 flat-layer sanity；
-   - 一个 zero-contrast Stage 4B 对照。
+   - 一个 13.5 nm flat-layer sanity；
+   - 一个 13.5 nm zero-contrast Stage 4B 对照。
 
-4. 在 `summary.md` 中明确区分：
+5. 在 `summary.md` 中明确区分：
    - 代码路径是否跑通；
    - 功率是否守恒；
+   - 使用的材料折射率是否为用户指定值；
    - 结果是否可作为物理 benchmark。
 
 ## 合并前验收标准
@@ -117,4 +133,6 @@ changed_files.md
 - 必须有 `metrics.csv`；
 - 必须说明 R/T 来源；
 - 必须把“路径跑通”和“物理可信”分开判断；
+- 必须使用 `lambda0 = 13.5 nm`；
+- 必须在 `parameters.json` 中写明基座和光栅复折射率；
 - 不应把粗网格 EUV real block 结果写成最终结论。
