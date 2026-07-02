@@ -18,7 +18,7 @@ from pathlib import Path
 # the staged 3D Maxwell workflow.
 
 USE_PYCHARM_SETTINGS_WHEN_NO_ARGS = True
-SIMULATION_DIMENSION = "2d"  # "2d" or "3d"
+SIMULATION_DIMENSION = "3d"  # "2d" or "3d"
 
 # =============================================================================
 # 2D grating settings
@@ -58,7 +58,7 @@ class Inputs2D:
     n_substrate: float = 1.45
     n_grating: float = 1.45
     nedelec_degree: int = 2
-    visualization_degree: int = 3
+    visualization_degree: int = 2
     mesh_target_size: float = 25.0
     # 网格单元："triangle" 三角形 / "quadrilateral" 四边形。
     mesh_cell_shape: str = "triangle"
@@ -87,8 +87,8 @@ class EUVGratingInputs2D(Inputs2D):
     incident_angle_deg: float = 0.0
     n_substrate: float = 1.1
     n_grating: float = 1.2
-    mesh_target_size: float = 2.0
-    mesh_cell_shape: str = "triangle"
+    mesh_target_size: float = 1.5
+    mesh_cell_shape: str = "quadrilateral"
     mesh_lock_near_field_template: bool = True
 
 
@@ -172,7 +172,7 @@ class Stage4GratingInputs3D:
     # Stage-4 hexa meshes now support fitted nonuniform axis spacing.  With
     # mesh_spacing_mode="auto", a divisible target keeps the old uniform mesh;
     # a non-divisible target inserts material planes automatically.
-    mesh_target_size: float = 1.25
+    mesh_target_size: float = 1.5
     mesh_cell_type: str = "auto"
     mesh_spacing_mode: str = "auto"  # auto / uniform_strict / boundary_fitted / local_refined
     mesh_refined_size: float | None = None
@@ -180,23 +180,23 @@ class Stage4GratingInputs3D:
     floquet_constraint_mode: str = "auto"
     lambda0: float = 13.5
     use_floquet_xy: bool | None = True
-    use_pml: bool | None = True
+    use_pml: bool | None = False
     pml_top_thickness: float = 25.0
     pml_bottom_thickness: float = 25.0
     pml_alpha: float = 5.0
-    n_substrate: float = 1.45
+    n_substrate: float = 1.1
     divergence_penalty: float = 0.0
     period_x: float = 100.0
     period_y: float = 100.0
-    air_height: float = 100.0
+    air_height: float = 50.0
     substrate_thickness: float = 50.0
-    n_grating: float = 2.0
+    n_grating: float = 1.0
     grating_width_x: float = 50.0
     grating_width_y: float = 50.0
     grating_height: float = 50.0
     scattering_background: str = "layered"
     stage4_boundary_model: str = "dtn_port"  # dtn_port / pml / robin0
-    stage4_dtn_order_policy: str = "auto_propagating"  # auto_propagating / zero_order / manual
+    stage4_dtn_order_policy: str = "zero_order"  # auto_propagating / zero_order / manual
     stage4_dtn_assembly: str = "auxiliary"
     stage4_pml_outer_bc: str = "natural"  # natural / zero_tangential
     diffraction_zero_order_only: bool = False
