@@ -1,0 +1,70 @@
+{
+  "R_total": 0.06140698660373066,
+  "T_total": 0.9385930133962723,
+  "R_plus_T": 1.0000000000000029,
+  "A_balance": -2.9976021664879227e-15,
+  "diffraction_total_power_source": "dtn_auxiliary_port_amplitudes",
+  "dtn_port_power_metric_note": "Stage-4 zero_order dtn_port R/T is computed from direct boundary projections after solving the local Robin/DtN total-field problem.",
+  "incident_power_code_units": 49.99999999999999,
+  "stage4_dtn_order_policy": "zero_order",
+  "stage4_dtn_assembly": "auxiliary",
+  "dtn_port_mode_count": 4,
+  "dtn_port_top_mode_count": 2,
+  "dtn_port_bottom_mode_count": 2,
+  "dtn_port_propagating_mode_count": 4,
+  "dtn_port_rayleigh_warning_count": 0,
+  "port_power_file": "port_power.json",
+  "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+  "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+  "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+  "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json",
+  "stage4_dtn_top_facet_count_owned_global": 9,
+  "stage4_dtn_top_surface_area_nm2": 100.00000000000001,
+  "stage4_dtn_top_Et_l2_integral": 121.46552646359078,
+  "stage4_dtn_top_Et_l2_mean": 1.2146552646359077,
+  "stage4_dtn_bottom_facet_count_owned_global": 9,
+  "stage4_dtn_bottom_surface_area_nm2": 100.0,
+  "stage4_dtn_bottom_Et_l2_integral": 93.85930133962687,
+  "stage4_dtn_bottom_Et_l2_mean": 0.9385930133962687,
+  "stage4_dtn_zero_order_modal_values": [
+    [
+      -3.634691590802577e-16,
+      -6.136514096960031e-16
+    ],
+    [
+      0.1726613697661645,
+      1.0885050831421843
+    ],
+    [
+      1.9695031444705807e-16,
+      -1.246510440581987e-16
+    ],
+    [
+      0.8766694479171204,
+      -0.41236354407847897
+    ]
+  ],
+  "stage4_dtn_zero_order_incident_projections": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      -0.05814482891047624,
+      0.9983081582712682
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "stage4_dtn_zero_order_local_robin": true,
+  "stage4_dtn_surface_quadrature_degree": 10,
+  "stage4_dtn_zero_order_linear_problem_setup_seconds": 4.142999942007009,
+  "stage4_dtn_zero_order_linear_solve_seconds": 0.01774418295826763,
+  "stage4_dtn_zero_order_projection_seconds": 0.9011217089719139
+}

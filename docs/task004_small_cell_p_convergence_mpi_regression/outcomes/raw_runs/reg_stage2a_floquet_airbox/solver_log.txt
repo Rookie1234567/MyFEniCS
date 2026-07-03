@@ -1,0 +1,153 @@
+config_validation seconds = 0.000
+case = airbox3d_oblique_floquet_airbox
+stage = stage2_3d_floquet_airbox
+geometry kind = airbox
+validation role = numerical_sanity_only
+substrate material label = None
+grating material label = None
+lambda0 nm = 633.0
+n_substrate = (1+0j)
+n_grating = (1+0j)
+use Floquet xy = True
+use PML = False
+PETSc ScalarType = <class 'numpy.complex128'>
+DOLFINx scalar type = <class 'numpy.complex128'>
+k0 = 0.0099260431393
+k = [(0.002977372635955558+0j), (0.001984910022107798+0j), (-0.00925860231320732+0j)]
+polarization = [(-0.5546992156114054+0j), (0.8320509480795584+0j), 0j]
+dot(k, p) = 0.000000e+00+0.000000e+00j
+mesh target size = 500.0
+mesh cell type requested = auto
+mesh cell type resolved = hexahedron
+Floquet constraint mode requested = auto
+linear solve method = direct_lu
+PETSc direct solver profile requested = default
+divergence penalty = 0.0
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True}
+mesh_build seconds = 0.034
+mesh cell type actual = hexahedron
+mesh cells requested = (2, 1, 2)
+mesh cells resolved = (2, 2, 2)
+mesh spacing mode resolved = uniform_strict
+mesh axis cell stats = {'x': {'num_cells': 2, 'min': 300.0, 'max': 300.0, 'median': 300.0}, 'y': {'num_cells': 2, 'min': 250.0, 'max': 250.0, 'median': 250.0}, 'z': {'num_cells': 2, 'min': 450.0, 'max': 450.0, 'median': 450.0}}
+function_space_setup seconds = 0.015
+mesh cells = 8
+3D N1curl dofs = 54
+field_formulation_setup seconds = 0.010
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_edges_p1
+3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.
+building 3D Floquet topological edge context
+building 3D Floquet topological edge context seconds = 0.003
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.001
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.001
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.000
+assembling 3D topological Floquet MPC arrays
+assembling 3D topological Floquet MPC arrays seconds = 0.000
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.002
+3D Floquet phase x = -0.213960199402 + 0.976842378827j
+3D Floquet phase y = 0.546635756127 + 0.837370497524j
+3D Floquet phase corner = -0.934937284142 + 0.354813013743j
+3D Floquet number of slave edges = 22
+3D Floquet number of matched master edges = 22
+3D Floquet number of constraints = 22
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet number of x constraints = 10
+3D Floquet number of y constraints = 10
+3D Floquet number of corner constraints = 2
+3D Floquet local slave dofs = 22
+3D Floquet local slave records seen = 22
+3D Floquet local ghost slave constraints = 0
+3D Floquet global ghost slave constraints = 0
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 22
+3D Floquet max masters per slave = 1
+3D Floquet estimated constraint memory MB = 0.001
+3D Floquet total constraint setup seconds = 0.007
+floquet_constraint_setup_outer seconds = 0.007
+Dirichlet H(curl) z-boundary dofs before slave removal local/global = 24 / 24
+boundary_condition_setup seconds = 0.001
+strong Dirichlet H(curl) boundary enabled = True
+Dirichlet H(curl) boundary dofs local/global = 16 / 16
+field formulation = incident_correction
+variational_form_setup seconds = 0.172
+unconstrained RHS norm = 0.0
+linear_problem_setup seconds = 1.260
+linear_problem_solve seconds = 0.008
+matrix_stats seconds = 0.000
+matrix rows = 54
+matrix cols = 54
+matrix nnz used = 1400.0
+matrix nnz allocated = 1400.0
+average nnz per row = 25.93
+average allocated nnz per row = 25.93
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 34040.0
+estimated AIJ matrix memory MB = 0.03246307373046875
+matrix Frobenius norm = 6.1646762615672825
+matrix infinity norm = 1.01243368495815
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = petsc
+linear system RHS norm = 0.0
+linear system solution norm = 0.0
+linear system true relative residual = 0.0
+postprocess seconds = 1.418
+max |E| = 1.000000e+00
+max component |Ex|/|Ey|/|Ez| = 5.546992e-01 / 8.320509e-01 / 8.145760e-16
+plane-wave relative max error = 3.205596e-01
+H relative max error = 1.269602e+00
+max |H| = 1.393521e-03
+Poynting direction cosine = -1.637973e-01
+Floquet x-face mismatch = 0.000000e+00
+Floquet y-face mismatch = 0.000000e+00
+Floquet edge/corner mismatch = 0.000000e+00
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_floquet_airbox_oblique_p1_h500p0_20260703_080557/fields_3d_for_paraview.vtu
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.034
+  function_space_setup: 0.015
+  field_formulation_setup: 0.010
+  floquet_build_topological_edge_context: 0.003
+  floquet_build_x_constraints: 0.001
+  floquet_build_y_constraints: 0.001
+  floquet_resolve_corner_master_chains: 0.000
+  floquet_build_mpc_arrays: 0.000
+  floquet_mpc_finalize: 0.002
+  floquet_total: 0.007
+  floquet_constraint_setup_outer: 0.007
+  boundary_condition_setup: 0.001
+  variational_form_setup: 0.172
+  linear_problem_setup: 1.260
+  linear_problem_solve: 0.008
+  matrix_stats: 0.000
+  postprocess: 1.418
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = petsc
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 276.2 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 3.950

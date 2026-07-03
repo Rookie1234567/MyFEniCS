@@ -1,0 +1,213 @@
+{
+  "task": "task004_small_cell_p_convergence_mpi_regression",
+  "branch": "codex/20260702-rta-output-volume-absorption",
+  "date": "2026-07-03",
+  "physical_model": {
+    "stage_case": "stage4_flat_layer_sanity",
+    "lambda0_nm": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "period_x_nm": 10.0,
+    "period_y_nm": 10.0,
+    "air_height_nm": 5.0,
+    "substrate_thickness_nm": 5.0,
+    "polarization_kind": "s",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_dtn_assembly": "auxiliary",
+    "use_pml": false
+  },
+  "output_policy": "Full generated results remain under ignored results/ timestamped directories; outcomes/raw_runs archives only lightweight JSON/TXT/CSV files.",
+  "convergence_cases": [
+    {
+      "name": "conv_p1_h2p7",
+      "p": 1,
+      "mesh_target_size_nm": 2.7,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h2p7_20260703_075959",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p1_h2p7"
+    },
+    {
+      "name": "conv_p1_h2p0",
+      "p": 1,
+      "mesh_target_size_nm": 2.0,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h2p0_20260703_080013",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p1_h2p0"
+    },
+    {
+      "name": "conv_p1_h1p5",
+      "p": 1,
+      "mesh_target_size_nm": 1.5,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h1p5_20260703_080026",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p1_h1p5"
+    },
+    {
+      "name": "conv_p1_h1p0",
+      "p": 1,
+      "mesh_target_size_nm": 1.0,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h1p0_20260703_080040",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p1_h1p0"
+    },
+    {
+      "name": "conv_p2_h4p0",
+      "p": 2,
+      "mesh_target_size_nm": 4.0,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h4p0_20260703_080128",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p2_h4p0"
+    },
+    {
+      "name": "conv_p2_h3p0",
+      "p": 2,
+      "mesh_target_size_nm": 3.0,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h3p0_20260703_080144",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p2_h3p0"
+    },
+    {
+      "name": "conv_p2_h2p0",
+      "p": 2,
+      "mesh_target_size_nm": 2.0,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h2p0_20260703_080205",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p2_h2p0"
+    },
+    {
+      "name": "conv_p2_h1p5",
+      "p": 2,
+      "mesh_target_size_nm": 1.5,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h1p5_20260703_080223",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/conv_p2_h1p5"
+    }
+  ],
+  "mpi_cases": [
+    {
+      "name": "mpi_p1_h1p5_np1",
+      "p": 1,
+      "mesh_target_size_nm": 1.5,
+      "ranks": 1,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h1p5_20260703_080325",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p1_h1p5_np1"
+    },
+    {
+      "name": "mpi_p1_h1p5_np4",
+      "p": 1,
+      "mesh_target_size_nm": 1.5,
+      "ranks": 4,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h1p5_np4_20260703_080339",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p1_h1p5_np4"
+    },
+    {
+      "name": "mpi_p1_h1p5_np8",
+      "p": 1,
+      "mesh_target_size_nm": 1.5,
+      "ranks": 8,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h1p5_np8_20260703_080353",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p1_h1p5_np8"
+    },
+    {
+      "name": "mpi_p2_h3p0_np1",
+      "p": 2,
+      "mesh_target_size_nm": 3.0,
+      "ranks": 1,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h3p0_20260703_080410",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p2_h3p0_np1"
+    },
+    {
+      "name": "mpi_p2_h3p0_np4",
+      "p": 2,
+      "mesh_target_size_nm": 3.0,
+      "ranks": 4,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h3p0_np4_20260703_080426",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p2_h3p0_np4"
+    },
+    {
+      "name": "mpi_p2_h3p0_np8",
+      "p": 2,
+      "mesh_target_size_nm": 3.0,
+      "ranks": 8,
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h3p0_np8_20260703_080443",
+      "raw_run_dir": "docs/task004_small_cell_p_convergence_mpi_regression/outcomes/raw_runs/mpi_p2_h3p0_np8"
+    }
+  ],
+  "regression_cases": [
+    {
+      "case": "reg_stage1_airbox",
+      "stage": "Stage 1",
+      "stage_case": "stage1_airbox",
+      "command_summary": "stage1 normal p1 h500",
+      "status": "completed",
+      "elapsed_s": 2.5483591880183667,
+      "max_rss_mb": 272.68359375,
+      "key_metric": "residual=2.715e-18, dofs=57",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage1_airbox_normal_p1_h500p0_20260703_080552",
+      "note": "smoke completed"
+    },
+    {
+      "case": "reg_stage2a_floquet_airbox",
+      "stage": "Stage 2A",
+      "stage_case": "floquet_airbox",
+      "command_summary": "floquet oblique p1 h500",
+      "status": "completed",
+      "elapsed_s": 3.9503649389953353,
+      "max_rss_mb": 276.16796875,
+      "key_metric": "residual=0, dofs=54",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_floquet_airbox_oblique_p1_h500p0_20260703_080557",
+      "note": "smoke completed"
+    },
+    {
+      "case": "reg_stage2b_pml_airbox",
+      "stage": "Stage 2B",
+      "stage_case": "pml_airbox",
+      "command_summary": "pml normal p1 h500",
+      "status": "completed",
+      "elapsed_s": 98.83582301600836,
+      "max_rss_mb": 4032.94921875,
+      "key_metric": "residual=0, pml_proxy=1.002817",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_pml_airbox_normal_p1_h500p0_20260703_080605",
+      "note": "PML path smoke; not a PML accuracy benchmark"
+    },
+    {
+      "case": "reg_stage2c_fresnel_interface",
+      "stage": "Stage 2C",
+      "stage_case": "fresnel_interface",
+      "command_summary": "fresnel normal p1 h500",
+      "status": "completed",
+      "elapsed_s": 100.36050711100688,
+      "max_rss_mb": 4034.67578125,
+      "key_metric": "residual=3.845e-16, R_err=3.857e-04, T_err=0.743538",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_fresnel_interface_normal_p1_h500p0_20260703_080750",
+      "note": "coarse PML/Fresnel smoke; not an accuracy benchmark"
+    },
+    {
+      "case": "reg_stage4_flat_layer_sanity",
+      "stage": "Flat-layer sanity",
+      "stage_case": "stage4_flat_layer_sanity",
+      "command_summary": "small-cell p1 h2.7",
+      "status": "completed",
+      "elapsed_s": 6.20877648104215,
+      "max_rss_mb": 278.16015625,
+      "key_metric": "R=0.003169, T=0.989412, Avol=0.007418, closure=-1.554e-15",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h2p7_20260703_080936",
+      "note": "small-cell flat-layer sanity; not a grating benchmark"
+    },
+    {
+      "case": "reg_stage4_block_zero_contrast",
+      "stage": "3D grating path smoke",
+      "stage_case": "stage4_block_grating",
+      "command_summary": "zero-contrast block p1 h5",
+      "status": "completed",
+      "elapsed_s": 9.71022659499431,
+      "max_rss_mb": 278.87890625,
+      "key_metric": "R+T=1, Avol=0, closure=2.887e-15",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p1_h5p0_20260703_080946",
+      "note": "zero-contrast smoke for block-grating path only"
+    }
+  ],
+  "unit_tests": {
+    "command": "python3 -m unittest discover -s src/test -p 'test_*.py'",
+    "result": "67 tests passed, 10 skipped"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "method": "power_consistency_against_flat_layer_reference",
+  "status": "ok",
+  "note": "Port and volume absorption are compared at physical port planes. Probe_eh_fourier and net_flux are compared at diffraction probe planes.",
+  "reference_values_by_method": {
+    "port": {
+      "R_ref": 1.0839489387813157e-06,
+      "T_ref": 0.9915340681454917,
+      "A_ref": 0.008464847905569572,
+      "reference_plane_z_top": 5.0,
+      "reference_plane_z_bottom": -5.0
+    },
+    "volume_absorption": {
+      "A_ref": 0.008464847905569572,
+      "reference_plane_z_top": 5.0,
+      "reference_plane_z_bottom": -5.0
+    },
+    "probe_eh_fourier": {
+      "R_ref": 1.0839489387813154e-06,
+      "T_ref": 0.9936435387785587,
+      "A_ref": 0.006355377272502524,
+      "reference_plane_z_top": 3.75,
+      "reference_plane_z_bottom": -3.75
+    },
+    "net_flux": {
+      "R_ref": 1.0839489387813154e-06,
+      "T_ref": 0.9936435387785587,
+      "A_ref": 0.006355377272502524,
+      "reference_plane_z_top": 3.75,
+      "reference_plane_z_bottom": -3.75
+    }
+  },
+  "observed": {
+    "port": {
+      "R": 1.2408892874398382e-06,
+      "T": 0.9915373175789444,
+      "A": 0.008461441531768199
+    },
+    "probe_eh_fourier": {
+      "R": 0.00020733264117875168,
+      "T": 1.0206997564379794,
+      "A": -0.02090708907915806
+    },
+    "net_flux": {
+      "R": -0.027102211134501397,
+      "T": 1.0205136581974528,
+      "A": 0.006588552937048631
+    },
+    "volume_absorption": {
+      "A": 0.00846144153176705
+    }
+  },
+  "diffs": {
+    "R_port_minus_R_ref": 1.5694034865852255e-07,
+    "T_port_minus_T_ref": 3.2494334526456115e-06,
+    "A_port_minus_A_ref": -3.4063738013727363e-06,
+    "R_probe_minus_R_ref": 0.00020624869223997036,
+    "T_probe_minus_T_ref": 0.027056217659420678,
+    "A_probe_minus_A_ref": -0.02726246635166058,
+    "R_flux_minus_R_ref": -0.027103295083440178,
+    "T_flux_minus_T_ref": 0.026870119418894056,
+    "A_flux_minus_A_ref": 0.0002331756645461069,
+    "A_volume_minus_A_ref": -3.406373802521123e-06,
+    "closure_error_port_volume": -1.1102230246251565e-15
+  },
+  "R_port_minus_R_ref": 1.5694034865852255e-07,
+  "T_port_minus_T_ref": 3.2494334526456115e-06,
+  "A_port_minus_A_ref": -3.4063738013727363e-06,
+  "R_probe_minus_R_ref": 0.00020624869223997036,
+  "T_probe_minus_T_ref": 0.027056217659420678,
+  "A_probe_minus_A_ref": -0.02726246635166058,
+  "R_flux_minus_R_ref": -0.027103295083440178,
+  "T_flux_minus_T_ref": 0.026870119418894056,
+  "A_flux_minus_A_ref": 0.0002331756645461069,
+  "A_volume_minus_A_ref": -3.406373802521123e-06,
+  "closure_error_port_volume": -1.1102230246251565e-15
+}

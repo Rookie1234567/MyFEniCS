@@ -1,0 +1,106 @@
+config_validation seconds = 0.000
+case = airbox3d_normal_stage1_airbox
+stage = stage1_3d_airbox
+geometry kind = airbox
+validation role = numerical_sanity_only
+substrate material label = None
+grating material label = None
+lambda0 nm = 633.0
+n_substrate = (1+0j)
+n_grating = (1+0j)
+use Floquet xy = False
+use PML = False
+PETSc ScalarType = <class 'numpy.complex128'>
+DOLFINx scalar type = <class 'numpy.complex128'>
+k0 = 0.0099260431393
+k = [0j, 0j, (-0.009926043139304244+0j)]
+polarization = [(1+0j), 0j, 0j]
+dot(k, p) = 0.000000e+00+0.000000e+00j
+mesh target size = 500.0
+mesh cell type requested = auto
+mesh cell type resolved = tetrahedron
+Floquet constraint mode requested = auto
+linear solve method = direct_lu
+PETSc direct solver profile requested = default
+divergence penalty = 0.0
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True}
+mesh_build seconds = 0.038
+mesh cell type actual = tetrahedron
+mesh cells requested = (2, 1, 2)
+mesh cells resolved = (2, 1, 2)
+mesh spacing mode resolved = n/a
+function_space_setup seconds = 0.018
+mesh cells = 24
+3D N1curl dofs = 57
+field_formulation_setup seconds = 0.020
+floquet_constraint_setup_outer seconds = 0.000
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = True
+Dirichlet H(curl) boundary dofs local/global = 48 / 48
+field formulation = total_field
+variational_form_setup seconds = 0.148
+unconstrained RHS norm = 0.0
+linear_problem_setup seconds = 0.481
+linear_problem_solve seconds = 0.016
+matrix_stats seconds = 0.000
+matrix rows = 57
+matrix cols = 57
+matrix nnz used = 585.0
+matrix nnz allocated = 585.0
+average nnz per row = 10.26
+average allocated nnz per row = 10.26
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 14504.0
+estimated AIJ matrix memory MB = 0.01383209228515625
+matrix Frobenius norm = 6.928240557364784
+matrix infinity norm = 1.0
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = petsc
+linear system RHS norm = 1469.7133968586006
+linear system solution norm = 4260.875000085006
+linear system true relative residual = 2.7147840589601637e-18
+postprocess seconds = 0.885
+max |E| = 7.019681e+00
+max component |Ex|/|Ey|/|Ez| = 7.019681e+00 / 4.601475e+00 / 4.866675e+00
+plane-wave relative max error = 7.335441e+00
+H relative max error = 3.574005e+00
+max |H| = 8.477057e-03
+Poynting direction cosine = -8.403669e-01
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage1_airbox_normal_p1_h500p0_20260703_080552/fields_3d_for_paraview.vtu
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.038
+  function_space_setup: 0.018
+  field_formulation_setup: 0.020
+  floquet_constraint_setup_outer: 0.000
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.148
+  linear_problem_setup: 0.481
+  linear_problem_solve: 0.016
+  matrix_stats: 0.000
+  postprocess: 0.885
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = petsc
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 272.7 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 2.548

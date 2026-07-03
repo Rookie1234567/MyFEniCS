@@ -21,7 +21,7 @@ docs/taskXXX_task_name/
 | task001 | Stage 4 validation cleanup | `task001_stage4_validation_cleanup/` | 已完成并已审查 |
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
-| task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已收到任务书，待 Codex 执行 |
+| task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | Codex 已完成 outcomes，待审查 |
 
 ## 工作规则
 

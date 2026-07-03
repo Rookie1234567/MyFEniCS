@@ -1,0 +1,18 @@
+{
+  "method": "net_flux",
+  "role": "diagnostic",
+  "status": "ok",
+  "power_source": "sampled_poynting_flux",
+  "top_flux_outward": -47.32177375943321,
+  "bottom_flux_outward": 47.01770409335088,
+  "incident_power_code_units": 49.99999999999999,
+  "R_total_from_net_flux": 0.05356452481133556,
+  "T_total_from_net_flux": 0.9403540818670177,
+  "A_flux": 0.0060813933216467,
+  "R_plus_T_from_net_flux": 0.9939186066783533,
+  "top_probe_z": 3.75,
+  "bottom_probe_z": -3.75,
+  "sample_count_x": 32,
+  "sample_count_y": 32,
+  "note": "does_not_resolve_diffraction_orders; Diagnostic only: sampled net flux uses H reconstructed from the finite-element curl on probe samples. Official Stage-4 R/T uses tangential E/H Fourier directional fitting."
+}

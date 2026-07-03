@@ -1,0 +1,184 @@
+﻿3D case output directory: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_flat_layer_sanity_normal_p2_h2p0_20260703_080205
+config_validation seconds = 0.000
+case = airbox3d_normal_stage4_flat_layer_sanity
+stage = stage4_3d_flat_layer_sanity
+geometry kind = rectangular_block_grating
+validation role = numerical_sanity_only
+substrate material label = Si / silicon
+grating material label = None
+lambda0 nm = 13.5
+n_substrate = (0.999002304859+0.00182649365j)
+n_grating = (1+0j)
+use Floquet xy = True
+use PML = False
+PETSc ScalarType = <class 'numpy.complex128'>
+DOLFINx scalar type = <class 'numpy.complex128'>
+k0 = 0.465421133865
+k = [0j, 0j, (-0.46542113386515455+0j)]
+polarization = [0j, (1+0j), 0j]
+dot(k, p) = 0.000000e+00+0.000000e+00j
+mesh target size = 2.0
+mesh cell type requested = auto
+mesh cell type resolved = hexahedron
+Floquet constraint mode requested = auto
+linear solve method = direct_lu
+PETSc direct solver profile requested = default
+divergence penalty = 0.0
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True}
+mesh_build seconds = 0.053
+mesh cell type actual = hexahedron
+mesh cells requested = (5, 5, 5)
+mesh cells resolved = (5, 5, 6)
+mesh spacing mode resolved = boundary_fitted
+mesh axis cell stats = {'x': {'num_cells': 5, 'min': 2.0, 'max': 2.0, 'median': 2.0}, 'y': {'num_cells': 5, 'min': 2.0, 'max': 2.0, 'median': 2.0}, 'z': {'num_cells': 6, 'min': 1.6666666666666665, 'max': 1.666666666666667, 'median': 1.6666666666666665}}
+function_space_setup seconds = 0.014
+mesh cells = 150
+3D N1curl dofs = 4312
+field_formulation_setup seconds = 0.012
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_trace_p2
+3D Floquet formal mapping = explicit p=2 N1curl edge + face-interior trace topology; probe/pinv is disabled.
+building 3D Floquet p=2 topological trace context
+building 3D Floquet p=2 topological trace context seconds = 0.090
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.010
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.009
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.001
+assembling 3D p=2 topological trace Floquet MPC arrays
+assembling 3D p=2 topological trace Floquet MPC arrays seconds = 0.007
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.001
+3D Floquet phase x = 1 + 0j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = 1 + 0j
+3D Floquet number of slave edges = 136
+3D Floquet number of matched master edges = 136
+3D Floquet number of slave faces = 60
+3D Floquet number of matched master faces = 60
+3D Floquet number of constraints = 512
+3D Floquet number of edge constraints = 272
+3D Floquet number of face constraints = 240
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet max face midpoint pairing error = 0.000e+00 nm
+3D Floquet p=2 face transform fit count = 60
+3D Floquet p=2 max face transform fit residual = 4.796e-14
+3D Floquet number of x constraints = 250
+3D Floquet number of y constraints = 250
+3D Floquet number of corner constraints = 12
+3D Floquet local slave dofs = 512
+3D Floquet local slave records seen = 512
+3D Floquet local ghost slave records on owned cells added to local MPC = 0
+3D Floquet global ghost slave records on owned cells added to local MPC = 0
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 512
+3D Floquet max masters per slave = 1
+3D Floquet estimated constraint memory MB = 0.018
+3D Floquet total constraint setup seconds = 0.118
+floquet_constraint_setup_outer seconds = 0.120
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.185
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 4
+Stage-4 DtN top/bottom mode count = 2 / 2
+Stage-4 DtN matrix base rows = 4312
+Stage-4 DtN surface quadrature degree = 10
+Stage-4 DtN modal cache summary: unique surface orders = 2, x/y component vector assemblies = 4, polarization cache hits = 2
+Stage-4 DtN base matrix nnz = 458944.0
+Stage-4 DtN auxiliary coupling nnz estimate = 404
+stage4_dtn_port_assembly_and_solve seconds = 11.223
+matrix_stats seconds = 0.002
+matrix rows = 4316
+matrix cols = 4316
+matrix nnz used = 459348.0
+matrix nnz allocated = 459348.0
+average nnz per row = 106.43
+average allocated nnz per row = 106.43
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 11058888.0
+estimated AIJ matrix memory MB = 10.546577453613281
+matrix Frobenius norm = 3722.20613669071
+matrix infinity norm = 456.1028563337384
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+DtN augmented/base nnz ratio = 1.0008802816901408
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = petsc
+linear system RHS norm = 13.16409759454331
+linear system solution norm = 40.23935782322043
+linear system true relative residual = 4.6978755738809336e-14
+postprocess seconds = 1.667
+diffraction_postprocess seconds = 0.828
+volume_absorption_postprocess seconds = 0.214
+max |E| = 1.000923e+00
+max component |Ex|/|Ey|/|Ez| = 2.096160e-13 / 1.000923e+00 / 3.318581e-13
+exact reference unavailable for this case; E_exact/H_exact error fields are not written.
+max |H| = 2.782028e-03
+Poynting direction cosine = 1.000000e+00
+Floquet x-face mismatch = 0.000000e+00
+Floquet y-face mismatch = 0.000000e+00
+Floquet edge/corner mismatch = 0.000000e+00
+Stage-4 primary power source = dtn_auxiliary_port_amplitudes
+Stage-4 primary R/T = 1.642874e-06 / 9.915441e-01
+Stage-4 primary R+T = 9.915457e-01
+Stage-4 primary A_balance = 8.454271e-03
+Stage-4 probe E/H Fourier R/T = 5.217676e-06 / 9.862411e-01
+Stage-4 sampled net-flux R/T = 7.467315e-03 / 9.862354e-01
+Stage-4 material A_volume_total = 8.454271e-03
+Stage-4 port-volume closure error = -2.3314683517128287e-15
+3D diffraction absorption from balance = 8.454271e-03
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_flat_layer_sanity_normal_p2_h2p0_20260703_080205/fields_3d_for_paraview.vtu
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.053
+  function_space_setup: 0.014
+  field_formulation_setup: 0.012
+  floquet_build_topological_trace_context_p2: 0.090
+  floquet_build_x_constraints: 0.010
+  floquet_build_y_constraints: 0.009
+  floquet_resolve_corner_master_chains: 0.001
+  floquet_build_mpc_arrays: 0.007
+  floquet_mpc_finalize: 0.001
+  floquet_total: 0.118
+  floquet_constraint_setup_outer: 0.120
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.185
+  stage4_dtn_port_assembly_and_solve: 11.223
+  matrix_stats: 0.002
+  postprocess: 1.667
+  diffraction_postprocess: 0.828
+  volume_absorption_postprocess: 0.214
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = petsc
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 353.8 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 14.340
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_flat_layer_sanity_normal_p2_h2p0_20260703_080205

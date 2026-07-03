@@ -1,0 +1,1 @@
+C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p1_h5p0_20260703_080946

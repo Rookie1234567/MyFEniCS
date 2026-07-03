@@ -1,0 +1,161 @@
+﻿3D case output directory: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_pml_airbox_normal_p1_h500p0_20260703_080605
+config_validation seconds = 0.000
+case = airbox3d_normal_pml_airbox
+stage = stage2_3d_pml_airbox
+geometry kind = airbox
+validation role = numerical_sanity_only
+substrate material label = None
+grating material label = None
+lambda0 nm = 633.0
+n_substrate = (1+0j)
+n_grating = (1+0j)
+use Floquet xy = True
+use PML = True
+PETSc ScalarType = <class 'numpy.complex128'>
+DOLFINx scalar type = <class 'numpy.complex128'>
+k0 = 0.0099260431393
+k = [0j, 0j, (-0.009926043139304244+0j)]
+polarization = [(1+0j), 0j, 0j]
+dot(k, p) = 0.000000e+00+0.000000e+00j
+mesh target size = 500.0
+mesh cell type requested = auto
+mesh cell type resolved = hexahedron
+Floquet constraint mode requested = auto
+linear solve method = direct_lu
+PETSc direct solver profile requested = default
+divergence penalty = 0.0
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True}
+mesh_build seconds = 0.055
+mesh cell type actual = hexahedron
+mesh cells requested = (2, 1, 3)
+mesh cells resolved = (2, 2, 3)
+mesh spacing mode resolved = uniform_strict
+mesh axis cell stats = {'x': {'num_cells': 2, 'min': 300.0, 'max': 300.0, 'median': 300.0}, 'y': {'num_cells': 2, 'min': 250.0, 'max': 250.0, 'median': 250.0}, 'z': {'num_cells': 3, 'min': 466.66666666666663, 'max': 466.6666666666667, 'median': 466.6666666666667}}
+WARNING: mesh material plane alignment = {'all_aligned': False, 'missing': ['physical_z_min=-550 nm is not on the generated z-grid.', 'physical_z_max=350 nm is not on the generated z-grid.'], 'checked': {'x': [], 'y': [], 'z': [{'name': 'physical_z_min', 'value': -550.0, 'aligned': False}, {'name': 'physical_z_max', 'value': 350.0, 'aligned': False}]}}
+WARNING: physical_z_min=-550 nm is not on a hexahedral z grid plane for mesh_target_size=500 nm; cell tags use midpoint classification.
+WARNING: physical_z_max=350 nm is not on a hexahedral z grid plane for mesh_target_size=500 nm; cell tags use midpoint classification.
+function_space_setup seconds = 0.012
+mesh cells = 12
+3D N1curl dofs = 75
+field_formulation_setup seconds = 0.009
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_edges_p1
+3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.
+building 3D Floquet topological edge context
+building 3D Floquet topological edge context seconds = 0.003
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.001
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.001
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.000
+assembling 3D topological Floquet MPC arrays
+assembling 3D topological Floquet MPC arrays seconds = 0.001
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.001
+3D Floquet phase x = 1 + 0j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = 1 + 0j
+3D Floquet number of slave edges = 31
+3D Floquet number of matched master edges = 31
+3D Floquet number of constraints = 31
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet number of x constraints = 14
+3D Floquet number of y constraints = 14
+3D Floquet number of corner constraints = 3
+3D Floquet local slave dofs = 31
+3D Floquet local slave records seen = 31
+3D Floquet local ghost slave constraints = 0
+3D Floquet global ghost slave constraints = 0
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 31
+3D Floquet max masters per slave = 1
+3D Floquet estimated constraint memory MB = 0.001
+3D Floquet total constraint setup seconds = 0.007
+floquet_constraint_setup_outer seconds = 0.007
+Dirichlet H(curl) z-boundary dofs before slave removal local/global = 24 / 24
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = True
+Dirichlet H(curl) boundary dofs local/global = 16 / 16
+field formulation = reference_correction
+variational_form_setup seconds = 0.159
+unconstrained RHS norm = 0.0
+linear_problem_setup seconds = 94.263
+linear_problem_solve seconds = 1.660
+matrix_stats seconds = 0.000
+matrix rows = 75
+matrix cols = 75
+matrix nnz used = 2057.0
+matrix nnz allocated = 2057.0
+average nnz per row = 27.43
+average allocated nnz per row = 27.43
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 49976.0
+estimated AIJ matrix memory MB = 0.04766082763671875
+matrix Frobenius norm = 6.85694451205248
+matrix infinity norm = 1.0170298602334145
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = petsc
+linear system RHS norm = 0.0
+linear system solution norm = 0.0
+linear system true relative residual = 0.0
+postprocess seconds = 1.653
+max |E| = 1.484132e+02
+max component |Ex|/|Ey|/|Ez| = 1.484132e+02 / 3.620617e-13 / 1.452861e-13
+plane-wave relative max error = 1.328140e-14
+H relative max error = 1.024479e+00
+max |H| = 8.509483e-02
+Poynting direction cosine = -1.000000e+00
+Floquet x-face mismatch = 0.000000e+00
+Floquet y-face mismatch = 0.000000e+00
+Floquet edge/corner mismatch = 0.000000e+00
+PML reflection proxy = 1.002817e+00
+PML top decay ratio = 1.9828504625032364
+PML bottom decay ratio = 0.05319986543311312
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_pml_airbox_normal_p1_h500p0_20260703_080605/fields_3d_for_paraview.vtu
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.055
+  function_space_setup: 0.012
+  field_formulation_setup: 0.009
+  floquet_build_topological_edge_context: 0.003
+  floquet_build_x_constraints: 0.001
+  floquet_build_y_constraints: 0.001
+  floquet_resolve_corner_master_chains: 0.000
+  floquet_build_mpc_arrays: 0.001
+  floquet_mpc_finalize: 0.001
+  floquet_total: 0.007
+  floquet_constraint_setup_outer: 0.007
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.159
+  linear_problem_setup: 94.263
+  linear_problem_solve: 1.660
+  matrix_stats: 0.000
+  postprocess: 1.653
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = petsc
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 4032.9 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 98.836
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_pml_airbox_normal_p1_h500p0_20260703_080605

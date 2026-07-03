@@ -1,0 +1,77 @@
+{
+  "method": "flat_layer_analytic_reference",
+  "status": "ok",
+  "note": "Flat-layer reference uses the analytic Fresnel/layered solution in the same code units as Stage-4 postprocessing: H=curl(E)/(i*k0*mu_r) and S=0.5*Re(E x conj(H)). For lossy substrates, transmitted power is evaluated at the requested bottom plane, so propagation attenuation below the interface is included.",
+  "volume_absorption_formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+  "r_amplitude": [
+    0.0004982612751396738,
+    -0.0009141578859680103
+  ],
+  "t_amplitude": [
+    1.0004982612751396,
+    -0.0009141578859680103
+  ],
+  "transmitted_kz": [
+    -0.4649567854613786,
+    -0.0008500887455805047
+  ],
+  "n_air": [
+    1.0,
+    0.0
+  ],
+  "n_substrate": [
+    0.999002304859,
+    0.00182649365
+  ],
+  "epsilon_substrate": [
+    0.9980022690345409,
+    0.0036493427323206554
+  ],
+  "reference_plane_z_top": 3.75,
+  "reference_plane_z_bottom": -3.75,
+  "interface_z": 0.0,
+  "R_ref": 1.0839489387813154e-06,
+  "T_ref_at_bottom_reference_plane": 0.9936435387785587,
+  "A_ref_between_reference_planes": 0.006355377272502524,
+  "incident_power_ref": 49.99999999999999,
+  "reflected_power_ref": 5.4197446939065763e-05,
+  "bottom_transmitted_power_ref": 49.68217693892793,
+  "absorbed_power_ref": 0.31776886362512613,
+  "probe_planes": {
+    "label": "probe_planes",
+    "reference_plane_z_top": 3.75,
+    "reference_plane_z_bottom": -3.75,
+    "interface_z": 0.0,
+    "incident_power_ref": 49.99999999999999,
+    "reflected_power_ref": 5.4197446939065763e-05,
+    "bottom_transmitted_power_ref": 49.68217693892793,
+    "absorbed_power_ref": 0.31776886362512613,
+    "R_ref": 1.0839489387813154e-06,
+    "T_ref_at_bottom_reference_plane": 0.9936435387785587,
+    "A_ref_between_reference_planes": 0.006355377272502524,
+    "A_volume_ref_between_reference_planes": 0.00635537727250254,
+    "volume_absorption_status": "ok",
+    "fresnel_R_at_interface": 1.0839489387813152e-06,
+    "fresnel_T_at_interface": 0.9999989160510612
+  },
+  "port_planes": {
+    "label": "port_planes",
+    "reference_plane_z_top": 5.0,
+    "reference_plane_z_bottom": -5.0,
+    "interface_z": 0.0,
+    "incident_power_ref": 49.99999999999999,
+    "reflected_power_ref": 5.419744693906577e-05,
+    "bottom_transmitted_power_ref": 49.57670340727458,
+    "absorbed_power_ref": 0.4232423952784785,
+    "R_ref": 1.0839489387813157e-06,
+    "T_ref_at_bottom_reference_plane": 0.9915340681454917,
+    "A_ref_between_reference_planes": 0.008464847905569572,
+    "A_volume_ref_between_reference_planes": 0.008464847905569428,
+    "volume_absorption_status": "ok",
+    "fresnel_R_at_interface": 1.0839489387813152e-06,
+    "fresnel_T_at_interface": 0.9999989160510612
+  },
+  "R_ref_at_port_planes": 1.0839489387813157e-06,
+  "T_ref_at_bottom_port_plane": 0.9915340681454917,
+  "A_ref_between_port_planes": 0.008464847905569572
+}

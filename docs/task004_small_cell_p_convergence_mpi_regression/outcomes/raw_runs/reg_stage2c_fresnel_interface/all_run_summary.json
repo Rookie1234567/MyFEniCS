@@ -1,0 +1,676 @@
+[
+  {
+    "case_name": "airbox3d_normal_fresnel_interface",
+    "stage": "stage2_3d_fresnel_interface",
+    "stage_case": "fresnel_interface",
+    "geometry_kind": "fresnel_interface",
+    "validation_role": "numerical_sanity_only",
+    "physical_benchmark_candidate": false,
+    "physical_benchmark_note": "Code-path or numerical sanity result only; do not use as a physical benchmark.",
+    "substrate_material_label": null,
+    "grating_material_label": null,
+    "lambda0_nm": 633.0,
+    "n_substrate_complex": [
+      1.45,
+      0.0
+    ],
+    "n_grating_complex": [
+      1.0,
+      0.0
+    ],
+    "mpi_size": 1,
+    "mpi_rank": 0,
+    "mesh_target_size": 500.0,
+    "mesh_cell_type": "auto",
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode": "auto",
+    "mesh_spacing_mode_requested": "auto",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode_requested": "auto",
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "config": {
+      "case_name": "airbox3d_normal_fresnel_interface",
+      "stage_case": "fresnel_interface",
+      "geometry_kind": "fresnel_interface",
+      "lambda0": 633.0,
+      "n_air": [
+        1.0,
+        0.0
+      ],
+      "mu_r": [
+        1.0,
+        0.0
+      ],
+      "period_x": 600.0,
+      "period_y": 500.0,
+      "z_min": -550.0,
+      "z_max": 350.0,
+      "air_height": 350.0,
+      "substrate_thickness": 0.0,
+      "grating_height": 0.0,
+      "grating_width_x": 0.0,
+      "grating_width_y": 0.0,
+      "n_substrate": [
+        1.45,
+        0.0
+      ],
+      "n_grating": null,
+      "substrate_material_label": null,
+      "grating_material_label": null,
+      "validation_role": "numerical_sanity_only",
+      "interface_z": 0.0,
+      "scattering_background": "layered",
+      "stage4_boundary_model": "dtn_port",
+      "stage4_dtn_order_policy": "auto_propagating",
+      "stage4_dtn_assembly": "auxiliary",
+      "stage4_pml_outer_bc": "natural",
+      "use_floquet_xy": true,
+      "use_pml": true,
+      "pml_top_thickness": 250.0,
+      "pml_bottom_thickness": 250.0,
+      "pml_alpha": 5.0,
+      "incident_theta_deg": 0.0,
+      "incident_phi_deg": 0.0,
+      "polarization_kind": "s",
+      "custom_polarization": null,
+      "incident_amplitude": [
+        1.0,
+        0.0
+      ],
+      "incident_e0_v_per_m": 1.0,
+      "nedelec_degree": 1,
+      "visualization_degree": 1,
+      "mesh_target_size": 500.0,
+      "mesh_cell_type": "auto",
+      "mesh_spacing_mode": "auto",
+      "mesh_refined_size": null,
+      "mesh_refinement_radius": null,
+      "floquet_constraint_mode": "auto",
+      "divergence_penalty": 0.0,
+      "diffraction_zero_order_only": true,
+      "diffraction_order_max_m": null,
+      "diffraction_order_max_n": null,
+      "diffraction_sample_count_x": 24,
+      "diffraction_sample_count_y": 24,
+      "diffraction_top_probe_z": null,
+      "diffraction_bottom_probe_z": null,
+      "diffraction_probe_fraction": 0.75,
+      "diffraction_compute_modal_diagnostic": false,
+      "diffraction_rayleigh_tol": 1e-06,
+      "petsc_direct_solver_profile": "default",
+      "petsc_ksp_view": false,
+      "petsc_log_view": false,
+      "petsc_extra_options": {},
+      "matrix_diagnostics_assemble_unconstrained": false,
+      "matrix_diagnostics_assemble_only": false,
+      "unique_output": true,
+      "tags": {
+        "air": 1,
+        "substrate": 2,
+        "grating": 3,
+        "top_pml": 4,
+        "bottom_pml": 5,
+        "x_min": 11,
+        "x_max": 12,
+        "y_min": 13,
+        "y_max": 14,
+        "z_min": 15,
+        "z_max": 16
+      },
+      "eps_r": [
+        1.0,
+        0.0
+      ],
+      "x_min": 0.0,
+      "x_max": 600.0,
+      "y_min": 0.0,
+      "y_max": 500.0,
+      "physical_z_min": -550.0,
+      "physical_z_max": 350.0,
+      "domain_z_min": -800.0,
+      "domain_z_max": 600.0,
+      "mesh_cell_type_resolved": "hexahedron",
+      "mesh_spacing_mode_requested": "auto",
+      "mesh_refined_size_resolved": 250.0,
+      "mesh_refinement_radius_resolved": 500.0,
+      "floquet_constraint_mode_requested": "auto",
+      "propagation_direction": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "polarization": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "wavevector": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          -0.009926043139304244,
+          0.0
+        ]
+      ],
+      "floquet_phase_x": [
+        1.0,
+        0.0
+      ],
+      "floquet_phase_y": [
+        1.0,
+        0.0
+      ],
+      "eps_air": [
+        1.0,
+        0.0
+      ],
+      "eps_substrate": [
+        2.1025,
+        0.0
+      ],
+      "eps_grating": [
+        1.0,
+        0.0
+      ],
+      "grating_index": [
+        1.0,
+        0.0
+      ],
+      "grating_bounds": {
+        "x_min": 300.0,
+        "x_max": 300.0,
+        "y_min": 250.0,
+        "y_max": 250.0,
+        "z_min": 0.0,
+        "z_max": 0.0
+      },
+      "grating_background_eps": [
+        1.0,
+        0.0
+      ],
+      "k0": 0.009926043139304244,
+      "omega": 2975752870946055.5,
+      "mesh_cells": [
+        2,
+        1,
+        3
+      ],
+      "length_unit": "nm",
+      "electric_field_unit": "V/m",
+      "magnetic_field_unit": "A/m",
+      "magnetic_field_scale_A_per_m": 0.002654418727984993
+    },
+    "case_status": "completed",
+    "official_result": true,
+    "diagnostic_only": false,
+    "postprocess_skipped": false,
+    "postprocess_skip_reason": null,
+    "num_mesh_cells": 12,
+    "num_nedelec_dofs": 75,
+    "matrix_stats": {
+      "matrix_rows": 75,
+      "matrix_cols": 75,
+      "matrix_nnz_used": 2057.0,
+      "matrix_nnz_allocated": 2057.0,
+      "matrix_average_nnz_per_row": 27.426666666666666,
+      "matrix_average_allocated_nnz_per_row": 27.426666666666666,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 49976.0,
+      "matrix_memory_estimate_mb": 0.04766082763671875,
+      "matrix_norm_frobenius": 6.859285191322699,
+      "matrix_norm_infinity": 1.0244663196656099,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 2057.0,
+        "nz_used": 2057.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "unconstrained_matrix_stats": null,
+    "constraint_matrix_transform": {
+      "uses_floquet_mpc": true,
+      "mpc_backend": "dolfinx_mpc low-level topological constraints",
+      "explicit_chac_constructed": false,
+      "chac_matrix_stats_before": null,
+      "chac_matrix_stats_after": null,
+      "unconstrained_matrix_stats": null,
+      "constrained_matrix_stats": {
+        "matrix_rows": 75,
+        "matrix_cols": 75,
+        "matrix_nnz_used": 2057.0,
+        "matrix_nnz_allocated": 2057.0,
+        "matrix_average_nnz_per_row": 27.426666666666666,
+        "matrix_average_allocated_nnz_per_row": 27.426666666666666,
+        "matrix_memory_bytes": 0.0,
+        "matrix_memory_mb": 0.0,
+        "matrix_memory_estimate_bytes": 49976.0,
+        "matrix_memory_estimate_mb": 0.04766082763671875,
+        "matrix_norm_frobenius": 6.859285191322699,
+        "matrix_norm_infinity": 1.0244663196656099,
+        "matrix_petsc_info": {
+          "block_size": 1.0,
+          "nz_allocated": 2057.0,
+          "nz_used": 2057.0,
+          "nz_unneeded": 0.0,
+          "memory": 0.0,
+          "assemblies": 3.0,
+          "mallocs": 0.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        }
+      },
+      "constrained_to_unconstrained_nnz_ratio": null,
+      "constrained_to_unconstrained_row_ratio": null,
+      "dtn_auxiliary_augmented_matrix": false,
+      "dtn_base_matrix_stats": null,
+      "dtn_augmented_matrix_stats_after_finalize": null,
+      "dtn_auxiliary_block_stats": null,
+      "dtn_augmented_to_base_nnz_ratio": null,
+      "dtn_augmented_to_base_row_ratio": null
+    },
+    "explicit_chac_constructed": false,
+    "chac_nnz_before": null,
+    "chac_nnz_after": null,
+    "constrained_linear_system_size": 75,
+    "petsc_scalar_type": "<class 'numpy.complex128'>",
+    "dolfinx_default_scalar_type": "<class 'numpy.complex128'>",
+    "solver_backend": "dolfinx_mpc.LinearProblem with x/y double Floquet and z boundary data",
+    "field_formulation": "incident_scattered",
+    "stage4_boundary_model": null,
+    "stage4_dtn_port_enabled": false,
+    "stage4_dtn_order_policy": null,
+    "stage4_dtn_assembly": null,
+    "stage4_dtn_num_auxiliary_dofs": null,
+    "stage4_dtn_auxiliary_block_stats": null,
+    "stage4_dtn_base_matrix_stats": null,
+    "stage4_dtn_augmented_matrix_stats_after_finalize": null,
+    "strong_z_boundary_dirichlet_enabled": true,
+    "strong_z_boundary_dirichlet_dofs": 16,
+    "strong_z_boundary_dirichlet_raw_dofs_global": 24,
+    "strong_z_boundary_dirichlet_dofs_global": 16,
+    "incident_added_to_solution": true,
+    "incident_port_used_for_solution": false,
+    "background_added_to_solution": false,
+    "background_zeroed_in_pml_for_stage4_output": false,
+    "reference_added_to_solution": false,
+    "fresnel_reference_used_for_solution": false,
+    "fresnel_reference_used_for_comparison_only": true,
+    "rhs_source_region": "physical_substrate",
+    "rhs_source_sign": "+k0^2*(eps_sub-eps_air)*inner(E_inc,v)",
+    "rhs_source_contrast": [
+      1.1025,
+      0.0
+    ],
+    "rhs_source_tag_ids": {
+      "substrate": 2
+    },
+    "rhs_source_tag_volumes": {
+      "substrate": 140000000.0
+    },
+    "rhs_source_excludes_air_and_pml": true,
+    "rhs_source_norm": 1.0281773113789583,
+    "unconstrained_rhs_norm": 13.430077290106233,
+    "domain_tag_volumes": {
+      "air": 0.0,
+      "substrate": 140000000.0,
+      "grating": 0.0,
+      "top_pml": 140000000.0,
+      "bottom_pml": 139999999.99999997
+    },
+    "linear_solve_method": "direct_lu",
+    "petsc_direct_solver_profile": "default",
+    "matrix_diagnostics_assemble_only": false,
+    "linear_solve_petsc_options": {
+      "ksp_type": "preonly",
+      "pc_type": "lu",
+      "ksp_error_if_not_converged": true
+    },
+    "linear_solve_disabled_reason": null,
+    "actual_ksp_type": "preonly",
+    "actual_pc_type": "lu",
+    "actual_pc_factor_solver_type": "petsc",
+    "selected_parallel_lu_solver_type": null,
+    "ksp_converged": true,
+    "ksp_converged_reason": 4,
+    "ksp_converged_reason_name": "CONVERGED_ITS",
+    "ksp_iterations": 1,
+    "solver_residual_norm": 0.0,
+    "linear_system_rhs_norm": 15.507717477360627,
+    "linear_system_solution_norm": 191.5305268836241,
+    "linear_system_residual_norm": 5.963376287910371e-15,
+    "linear_system_relative_residual": 3.8454248967432965e-16,
+    "use_floquet_xy": true,
+    "use_pml": true,
+    "floquet_num_local_slaves": 31,
+    "floquet_num_local_slave_records_seen": 31,
+    "floquet_num_local_ghost_slave_constraints": 0,
+    "floquet_num_global_ghost_slave_constraints": 0,
+    "floquet_num_local_ghost_slave_records_skipped": 0,
+    "floquet_num_global_ghost_slave_records_skipped": 0,
+    "floquet_constraint_mode_resolved": "topological_edges_p1",
+    "floquet_raw_map_nnz": 31,
+    "floquet_max_masters_per_slave": 1,
+    "floquet_estimated_constraint_memory_mb": 0.001064300537109375,
+    "floquet_num_slave_edges": 31,
+    "floquet_num_matched_master_edges": 31,
+    "floquet_num_slave_faces": 0,
+    "floquet_num_matched_master_faces": 0,
+    "floquet_num_constraints": 31,
+    "floquet_num_edge_constraints": 0,
+    "floquet_num_face_constraints": 0,
+    "floquet_num_face_transform_fits": 0,
+    "floquet_max_face_transform_fit_residual": 0.0,
+    "floquet_max_edge_midpoint_pairing_error": 0.0,
+    "floquet_max_face_midpoint_pairing_error": 0.0,
+    "floquet_num_x_constraints": 14,
+    "floquet_num_y_constraints": 14,
+    "floquet_num_corner_constraints": 3,
+    "mesh_cell_type_actual": "hexahedron",
+    "mesh_cells_resolved": [
+      2,
+      2,
+      3
+    ],
+    "mesh_spacing_mode_resolved": "uniform_strict",
+    "mesh_axis_cell_stats": {
+      "x": {
+        "num_cells": 2,
+        "min": 300.0,
+        "max": 300.0,
+        "median": 300.0
+      },
+      "y": {
+        "num_cells": 2,
+        "min": 250.0,
+        "max": 250.0,
+        "median": 250.0
+      },
+      "z": {
+        "num_cells": 3,
+        "min": 466.66666666666663,
+        "max": 466.6666666666667,
+        "median": 466.6666666666667
+      }
+    },
+    "mesh_material_plane_alignment": {
+      "all_aligned": false,
+      "missing": [
+        "physical_z_min=-550 nm is not on the generated z-grid.",
+        "physical_z_max=350 nm is not on the generated z-grid.",
+        "interface_z=0 nm is not on the generated z-grid."
+      ],
+      "checked": {
+        "x": [],
+        "y": [],
+        "z": [
+          {
+            "name": "physical_z_min",
+            "value": -550.0,
+            "aligned": false
+          },
+          {
+            "name": "physical_z_max",
+            "value": 350.0,
+            "aligned": false
+          },
+          {
+            "name": "interface_z",
+            "value": 0.0,
+            "aligned": false
+          }
+        ]
+      }
+    },
+    "mesh_local_refinement_regions": {
+      "x": [],
+      "y": [],
+      "z": []
+    },
+    "mesh_z_alignment_warnings": [
+      "physical_z_min=-550 nm is not on a hexahedral z grid plane for mesh_target_size=500 nm; cell tags use midpoint classification.",
+      "physical_z_max=350 nm is not on a hexahedral z grid plane for mesh_target_size=500 nm; cell tags use midpoint classification.",
+      "interface_z=0 nm is not on a hexahedral z grid plane for mesh_target_size=500 nm; cell tags use midpoint classification."
+    ],
+    "max_face_pairing_coordinate_error": 0.0,
+    "nedelec_orientation_factor_stats": {
+      "count": 31,
+      "unique_rounded_real": [
+        1.0
+      ],
+      "max_abs": 1.0,
+      "note": "Orientation factors are explicit edge tangent signs; no probe/pseudo-inverse fitting is used."
+    },
+    "floquet_constraint_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_constraint_phase_y": [
+      1.0,
+      0.0
+    ],
+    "floquet_constraint_phase_corner": [
+      1.0,
+      0.0
+    ],
+    "floquet_edge_corner_constraint_phase_mismatch": 0.0,
+    "floquet_constraint_timings_seconds": {
+      "floquet_build_topological_edge_context": 0.0036703249788843095,
+      "floquet_build_x_constraints": 0.0006532460101880133,
+      "floquet_build_y_constraints": 0.0005361929652281106,
+      "floquet_resolve_corner_master_chains": 0.00020758801838383079,
+      "floquet_build_mpc_arrays": 0.0005601459997706115,
+      "floquet_mpc_finalize": 0.0010315330000594258,
+      "floquet_total": 0.0070019339909777045
+    },
+    "pml_parameters": {
+      "pml_alpha": 5.0,
+      "pml_top_thickness": 250.0,
+      "pml_bottom_thickness": 250.0,
+      "physical_z_min": -550.0,
+      "physical_z_max": 350.0,
+      "domain_z_min": -800.0,
+      "domain_z_max": 600.0
+    },
+    "incident_transversality_dot_k_p": [
+      0.0,
+      0.0
+    ],
+    "timings_seconds": {
+      "config_validation": 3.4149852581322193e-06,
+      "mesh_build": 0.058583501027897,
+      "function_space_setup": 0.011228108021896333,
+      "field_formulation_setup": 0.207619649998378,
+      "floquet_build_topological_edge_context": 0.0036703249788843095,
+      "floquet_build_x_constraints": 0.0006532460101880133,
+      "floquet_build_y_constraints": 0.0005361929652281106,
+      "floquet_resolve_corner_master_chains": 0.00020758801838383079,
+      "floquet_build_mpc_arrays": 0.0005601459997706115,
+      "floquet_mpc_finalize": 0.0010315330000594258,
+      "floquet_total": 0.0070019339909777045,
+      "floquet_constraint_setup_outer": 0.00770046201068908,
+      "boundary_condition_setup": 0.0007092219893820584,
+      "variational_form_setup": 0.21994195197476074,
+      "linear_problem_setup": 95.66977055202005,
+      "linear_problem_solve": 1.6415853459620848,
+      "matrix_stats": 7.46870064176619e-05,
+      "postprocess": 1.4468985269777477
+    },
+    "elapsed_seconds": 100.36050711100688,
+    "max_rss_mb": 4034.67578125,
+    "mumps_ooc_runtime": {
+      "mumps_ooc_enabled": false,
+      "mumps_ooc_tmpdir": null,
+      "mumps_ooc_prefix": null,
+      "mumps_ooc_residual_file_count": null,
+      "mumps_ooc_residual_file_bytes": null,
+      "mumps_ooc_cleaned_by_solver": null,
+      "mumps_ooc_cleanup_policy": "delete_on_success_keep_on_failure",
+      "mumps_ooc_cleanup_attempted": false,
+      "mumps_ooc_cleanup_success": null,
+      "mumps_ooc_cleanup_removed_file_count": 0,
+      "mumps_ooc_cleanup_removed_file_bytes": 0,
+      "mumps_ooc_cleanup_error": null,
+      "mumps_ooc_retained_on_failure": false
+    },
+    "max_abs_E_exact": 148.41217773217522,
+    "max_abs_E": 1.0008807024168305,
+    "max_abs_Ex": 1.148208569742755e-05,
+    "max_abs_Ey": 1.0008807023722308,
+    "max_abs_Ez": 2.5534038222348522e-06,
+    "max_abs_E_physical_z_region": 0.8695372860821606,
+    "max_abs_E_pml_z_region": 1.0008807024168305,
+    "max_abs_E_error": 147.41217773218827,
+    "relative_max_abs_E_error": 0.9932620084465605,
+    "max_abs_H": 0.0008142168428785291,
+    "max_abs_H_exact": 0.3939532739794418,
+    "max_abs_H_error": 0.39441153141393076,
+    "relative_max_abs_H_error": 1.0011632278870537,
+    "mean_poynting_W_per_m2": [
+      1.1606221908475768e-17,
+      1.0463293199678175e-12,
+      0.0002225569109425384
+    ],
+    "poynting_direction_cosine": -1.0,
+    "curl_postprocess_success": true,
+    "paraview_file": "/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_fresnel_interface_normal_p1_h500p0_20260703_080750/fields_3d_for_paraview.vtu",
+    "postprocess_point_scope": "serial_all_cells",
+    "postprocess_local_owned_points": 96,
+    "postprocess_local_total_points_before_owned_filter": 96,
+    "postprocess_global_owned_points": 96,
+    "postprocess_global_total_points_before_owned_filter": 96,
+    "paraview_owned_cell_filter_applied": false,
+    "paraview_local_owned_cells": 12,
+    "paraview_local_cells_before_owned_filter": 12,
+    "paraview_local_cells_written": 12,
+    "vtx_3d_output_status": "written_serial",
+    "vtx_3d_output_files": [
+      "E_3d_numerical.bp",
+      "H_3d_A_per_m_from_curl.bp"
+    ],
+    "exact_reference_available": true,
+    "exact_reference_note": null,
+    "paraview_e_field_arrays": [
+      "E_tot_V_per_m_real",
+      "E_tot_V_per_m_imag",
+      "E_tot_V_per_m_abs"
+    ],
+    "component_l2_integral_E_V2_per_m2_nm3": [
+      2.6299023457336236e-05,
+      55452467.54473625,
+      8.841652194590984e-06
+    ],
+    "component_l2_norm_E_V_per_m_sqrt_nm3": [
+      0.0051282573509269435,
+      7446.6413600183705,
+      0.002973491583070479
+    ],
+    "component_l2_total_E_V_per_m_sqrt_nm3": 7446.641360020731,
+    "component_l2_energy_fraction_Ex_Ey_Ez": [
+      4.742624561495455e-13,
+      0.9999999999993662,
+      1.5944560424569713e-13
+    ],
+    "E_sca_norm": 234.53265102161936,
+    "E_inc_norm": 1224.744871391589,
+    "E_bg_norm": null,
+    "E_total_norm": 1135.455275477572,
+    "floquet_x_face_mismatch": 0.0,
+    "floquet_y_face_mismatch": 0.0,
+    "floquet_edge_corner_mismatch": 0.0,
+    "pml_reference_relative_error": 1.1195974794235068,
+    "pml_reflection_proxy": 1.9903024825534505,
+    "pml_mode_fit_residual": 0.7912745217511218,
+    "pml_downward_amplitude_abs": 0.491266095344391,
+    "pml_upward_amplitude_abs": 0.9777681291582815,
+    "pml_decay_ratio_top": 1.3531041889569968,
+    "pml_decay_ratio_bottom": 1.589138005049954,
+    "R_total": 0.03412168672208112,
+    "T_total": 0.22272645135716984,
+    "R_plus_T": 0.25684813807925094,
+    "fresnel_R": 0.033735943356934604,
+    "fresnel_T": 0.9662640566430651,
+    "fresnel_R_error": 0.0003857433651465181,
+    "fresnel_T_error": 0.7435376052858953,
+    "fresnel_R_plus_T_error": 0.7431518619207489,
+    "fresnel_reference": {
+      "r_s": [
+        -0.18367346938775508,
+        0.0
+      ],
+      "t_s": [
+        0.8163265306122448,
+        0.0
+      ],
+      "r_p": [
+        0.18367346938775508,
+        0.0
+      ],
+      "t_p": [
+        0.8163265306122448,
+        0.0
+      ],
+      "r": [
+        -0.18367346938775508,
+        0.0
+      ],
+      "t": [
+        0.8163265306122448,
+        0.0
+      ],
+      "R": 0.033735943356934604,
+      "T": 0.9662640566430651,
+      "R_plus_T": 0.9999999999999998,
+      "cos_theta_i": 1.0,
+      "cos_theta_t_real": 1.0,
+      "cos_theta_t_imag": 0.0
+    },
+    "fresnel_incident_amplitude_abs": 0.8960840573463958,
+    "fresnel_reflected_amplitude_abs": 0.1655251523616002,
+    "fresnel_transmitted_amplitude_abs": 0.35119687945569705,
+    "fresnel_top_mode_fit_residual": 0.13707133943238037,
+    "fresnel_bottom_mode_fit_residual": 0.9905385527840669,
+    "fresnel_top_sampling_z_min": 87.5,
+    "fresnel_top_sampling_z_max": 262.5,
+    "fresnel_bottom_sampling_z_min": -412.5,
+    "fresnel_bottom_sampling_z_max": -137.5,
+    "fresnel_top_sampling_point_count": 64,
+    "fresnel_bottom_sampling_point_count": 64,
+    "fresnel_top_sampling_margin_to_interface": 87.5,
+    "fresnel_top_sampling_margin_to_top_pml": 87.5,
+    "fresnel_bottom_sampling_margin_to_interface": 137.5,
+    "fresnel_bottom_sampling_margin_to_bottom_pml": 137.5,
+    "rt_metric_note": "R/T are fitted from the numerical 3D field in uniform layers and compared with Fresnel theory.",
+    "fresnel_field_relative_max_error": 0.9932620084465605
+  }
+]
