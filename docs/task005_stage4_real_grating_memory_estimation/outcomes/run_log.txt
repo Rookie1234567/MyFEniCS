@@ -1,0 +1,26 @@
+# 运行日志
+
+## 分支与前置
+
+- 已按 task005 要求先将上一轮分支合并到 `master` 并推送远程。
+- 同名远程 task005 分支不是从最新 `master` 出发，已 rebase 到最新 `master` 后继续工作。
+- 当前工作分支：`codex/20260703-stage4-real-grating-memory-estimation`。
+- 修正 `run_3d_matrix_scale.py`，增加 task005 需要的 GB 字段、RSS 上界、OOC 文件大小、stdout/stderr tail、timeout 记录和 row JSON 输出。
+
+## 实际运行
+
+1. assemble-only：h=20,15,12,10,8,6 完成。
+2. assemble-only：h=5,4,3 完成。
+3. assemble-only：h=2.5 完成，耗时约 1380 s。
+4. assemble-only：h=2 完成，耗时约 2984 s。
+5. default MUMPS：h=20,15,12,10,8,6,5 完成。
+6. default MUMPS：h=4 被 signal 9 kill，最后阶段 `stage4_dtn_augmented_ksp_setup`。
+7. MUMPS OOC：h=15,12,10,8,6,5 完成。
+8. MUMPS OOC：h=4 返回 PETSc/MUMPS 错误，`INFOG(1)=-90`。
+9. tuned OOC：h=4，`ICNTL(14)=200`，90 分钟超时，保留约 30.09 GB OOC 文件。
+
+## 验证
+
+- `python -m py_compile src/studies/run_3d_matrix_scale.py` 已通过。
+- Docker smoke：h=20, p=2, np=2, assemble-only 已通过。
+- Docker 完整单元测试已通过：`Ran 67 tests in 2.074s, OK (skipped=10)`。

@@ -1,0 +1,20 @@
+linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 362.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 7.402
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h12p0_np8_20260703_100735

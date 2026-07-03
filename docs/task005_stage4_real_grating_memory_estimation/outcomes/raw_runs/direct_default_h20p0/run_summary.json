@@ -1,0 +1,841 @@
+{
+  "case_name": "airbox3d_normal_stage4_block_grating",
+  "stage": "stage4_3d_block_grating",
+  "stage_case": "stage4_block_grating",
+  "geometry_kind": "rectangular_block_grating",
+  "validation_role": "numerical_sanity_only",
+  "physical_benchmark_candidate": false,
+  "physical_benchmark_note": "Code-path or numerical sanity result only; do not use as a physical benchmark.",
+  "substrate_material_label": "Si / silicon",
+  "grating_material_label": "Si / silicon",
+  "lambda0_nm": 13.5,
+  "n_substrate_complex": [
+    0.999002304859,
+    0.00182649365
+  ],
+  "n_grating_complex": [
+    0.999002304859,
+    0.00182649365
+  ],
+  "mpi_size": 8,
+  "mpi_rank": 0,
+  "mesh_target_size": 20.0,
+  "mesh_cell_type": "auto",
+  "mesh_cell_type_resolved": "hexahedron",
+  "mesh_spacing_mode": "auto",
+  "mesh_spacing_mode_requested": "auto",
+  "mesh_refined_size": null,
+  "mesh_refinement_radius": null,
+  "floquet_constraint_mode_requested": "auto",
+  "nedelec_degree": 2,
+  "visualization_degree": 1,
+  "incident_theta_deg": 0.0,
+  "incident_phi_deg": 0.0,
+  "polarization_kind": "s",
+  "length_unit": "nm",
+  "electric_field_unit": "V/m",
+  "magnetic_field_unit": "A/m",
+  "config": {
+    "case_name": "airbox3d_normal_stage4_block_grating",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 100.0,
+    "period_y": 100.0,
+    "z_min": -50.0,
+    "z_max": 100.0,
+    "air_height": 100.0,
+    "substrate_thickness": 50.0,
+    "grating_height": 50.0,
+    "grating_width_x": 50.0,
+    "grating_width_y": 50.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "substrate_material_label": "Si / silicon",
+    "grating_material_label": "Si / silicon",
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "natural",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 5.0,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 2,
+    "visualization_degree": 1,
+    "mesh_target_size": 20.0,
+    "mesh_cell_type": "auto",
+    "mesh_spacing_mode": "auto",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_sample_count_x": 32,
+    "diffraction_sample_count_y": 32,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "petsc_direct_solver_profile": "default",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": false,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 100.0,
+    "y_min": 0.0,
+    "y_max": 100.0,
+    "physical_z_min": -50.0,
+    "physical_z_max": 100.0,
+    "domain_z_min": -50.0,
+    "domain_z_max": 100.0,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "auto",
+    "mesh_refined_size_resolved": 10.0,
+    "mesh_refinement_radius_resolved": 20.0,
+    "floquet_constraint_mode_requested": "auto",
+    "propagation_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.46542113386515455,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "grating_index": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "grating_bounds": {
+      "x_min": 25.0,
+      "x_max": 75.0,
+      "y_min": 25.0,
+      "y_max": 75.0,
+      "z_min": 0.0,
+      "z_max": 50.0
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "mesh_cells": [
+      5,
+      5,
+      8
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "case_status": "completed",
+  "official_result": true,
+  "diagnostic_only": false,
+  "postprocess_skipped": false,
+  "postprocess_skip_reason": null,
+  "num_mesh_cells": 441,
+  "num_nedelec_dofs": 12030,
+  "matrix_stats": {
+    "matrix_rows": 12738,
+    "matrix_cols": 12738,
+    "matrix_nnz_used": 1770216.0,
+    "matrix_nnz_allocated": 1770216.0,
+    "matrix_average_nnz_per_row": 138.97126707489403,
+    "matrix_average_allocated_nnz_per_row": 138.97126707489403,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 42587096.0,
+    "matrix_memory_estimate_mb": 40.614219665527344,
+    "matrix_norm_frobenius": 1774.443874561259,
+    "matrix_norm_infinity": 1334.7290716095645,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 1770216.0,
+      "nz_used": 1770216.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 5.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "unconstrained_matrix_stats": null,
+  "constraint_matrix_transform": {
+    "uses_floquet_mpc": true,
+    "mpc_backend": "dolfinx_mpc low-level topological constraints",
+    "explicit_chac_constructed": false,
+    "chac_matrix_stats_before": null,
+    "chac_matrix_stats_after": null,
+    "unconstrained_matrix_stats": null,
+    "constrained_matrix_stats": {
+      "matrix_rows": 12738,
+      "matrix_cols": 12738,
+      "matrix_nnz_used": 1770216.0,
+      "matrix_nnz_allocated": 1770216.0,
+      "matrix_average_nnz_per_row": 138.97126707489403,
+      "matrix_average_allocated_nnz_per_row": 138.97126707489403,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 42587096.0,
+      "matrix_memory_estimate_mb": 40.614219665527344,
+      "matrix_norm_frobenius": 1774.443874561259,
+      "matrix_norm_infinity": 1334.7290716095645,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 1770216.0,
+        "nz_used": 1770216.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "constrained_to_unconstrained_nnz_ratio": null,
+    "constrained_to_unconstrained_row_ratio": null,
+    "dtn_auxiliary_augmented_matrix": true,
+    "dtn_base_matrix_stats": {
+      "matrix_rows": 12030,
+      "matrix_cols": 12030,
+      "matrix_nnz_used": 1277156.0,
+      "matrix_nnz_allocated": 1277156.0,
+      "matrix_average_nnz_per_row": 106.16425602660017,
+      "matrix_average_allocated_nnz_per_row": 106.16425602660017,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 30747992.0,
+      "matrix_memory_estimate_mb": 29.323570251464844,
+      "matrix_norm_frobenius": 881.4232448537673,
+      "matrix_norm_infinity": 61.1711177720127,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 1277156.0,
+        "nz_used": 1277156.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_augmented_matrix_stats_after_finalize": {
+      "matrix_rows": 12738,
+      "matrix_cols": 12738,
+      "matrix_nnz_used": 1770216.0,
+      "matrix_nnz_allocated": 1770216.0,
+      "matrix_average_nnz_per_row": 138.97126707489403,
+      "matrix_average_allocated_nnz_per_row": 138.97126707489403,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 42587096.0,
+      "matrix_memory_estimate_mb": 40.614219665527344,
+      "matrix_norm_frobenius": 1774.443874561259,
+      "matrix_norm_infinity": 1334.7290716095645,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 1770216.0,
+        "nz_used": 1770216.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 4.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_auxiliary_block_stats": {
+      "dtn_auxiliary_block_is_dense": false,
+      "dtn_auxiliary_dof_count": 708,
+      "dtn_auxiliary_fem_dof_count": 12030,
+      "dtn_auxiliary_coupling_nnz_estimate": 493060,
+      "dtn_auxiliary_average_coupling_nnz_per_mode": 696.4124293785311,
+      "dtn_auxiliary_dense_block_equivalent_nnz": 17035188
+    },
+    "dtn_augmented_to_base_nnz_ratio": 1.3860609040712333,
+    "dtn_augmented_to_base_row_ratio": 1.0588528678304239
+  },
+  "explicit_chac_constructed": false,
+  "chac_nnz_before": null,
+  "chac_nnz_after": null,
+  "constrained_linear_system_size": 12738,
+  "petsc_scalar_type": "<class 'numpy.complex128'>",
+  "dolfinx_default_scalar_type": "<class 'numpy.complex128'>",
+  "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+  "field_formulation": "total_field_dtn_port",
+  "stage4_boundary_model": "dtn_port",
+  "stage4_dtn_port_enabled": true,
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "stage4_dtn_num_auxiliary_dofs": 708,
+  "stage4_dtn_auxiliary_block_stats": {
+    "dtn_auxiliary_block_is_dense": false,
+    "dtn_auxiliary_dof_count": 708,
+    "dtn_auxiliary_fem_dof_count": 12030,
+    "dtn_auxiliary_coupling_nnz_estimate": 493060,
+    "dtn_auxiliary_average_coupling_nnz_per_mode": 696.4124293785311,
+    "dtn_auxiliary_dense_block_equivalent_nnz": 17035188
+  },
+  "stage4_dtn_base_matrix_stats": {
+    "matrix_rows": 12030,
+    "matrix_cols": 12030,
+    "matrix_nnz_used": 1277156.0,
+    "matrix_nnz_allocated": 1277156.0,
+    "matrix_average_nnz_per_row": 106.16425602660017,
+    "matrix_average_allocated_nnz_per_row": 106.16425602660017,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 30747992.0,
+    "matrix_memory_estimate_mb": 29.323570251464844,
+    "matrix_norm_frobenius": 881.4232448537673,
+    "matrix_norm_infinity": 61.1711177720127,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 1277156.0,
+      "nz_used": 1277156.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 3.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "stage4_dtn_augmented_matrix_stats_after_finalize": {
+    "matrix_rows": 12738,
+    "matrix_cols": 12738,
+    "matrix_nnz_used": 1770216.0,
+    "matrix_nnz_allocated": 1770216.0,
+    "matrix_average_nnz_per_row": 138.97126707489403,
+    "matrix_average_allocated_nnz_per_row": 138.97126707489403,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 42587096.0,
+    "matrix_memory_estimate_mb": 40.614219665527344,
+    "matrix_norm_frobenius": 1774.443874561259,
+    "matrix_norm_infinity": 1334.7290716095645,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 1770216.0,
+      "nz_used": 1770216.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 4.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "strong_z_boundary_dirichlet_enabled": false,
+  "strong_z_boundary_dirichlet_dofs": 0,
+  "strong_z_boundary_dirichlet_raw_dofs_global": 0,
+  "strong_z_boundary_dirichlet_dofs_global": 0,
+  "incident_added_to_solution": false,
+  "incident_port_used_for_solution": true,
+  "background_added_to_solution": false,
+  "background_zeroed_in_pml_for_stage4_output": false,
+  "reference_added_to_solution": false,
+  "fresnel_reference_used_for_solution": false,
+  "fresnel_reference_used_for_comparison_only": true,
+  "rhs_source_region": null,
+  "rhs_source_sign": null,
+  "rhs_source_contrast": null,
+  "rhs_source_tag_ids": {},
+  "rhs_source_tag_volumes": {},
+  "rhs_source_excludes_air_and_pml": false,
+  "rhs_source_norm": null,
+  "unconstrained_rhs_norm": 0.0,
+  "domain_tag_volumes": {
+    "air": 875000.0000000031,
+    "substrate": 499999.9999999998,
+    "grating": 125000.0,
+    "top_pml": 0.0,
+    "bottom_pml": 0.0
+  },
+  "linear_solve_method": "direct_lu",
+  "petsc_direct_solver_profile": "default",
+  "matrix_diagnostics_assemble_only": false,
+  "linear_solve_petsc_options": {
+    "ksp_type": "preonly",
+    "pc_type": "lu",
+    "ksp_error_if_not_converged": true,
+    "pc_factor_mat_solver_type": "mumps"
+  },
+  "linear_solve_disabled_reason": null,
+  "actual_ksp_type": "preonly",
+  "actual_pc_type": "lu",
+  "actual_pc_factor_solver_type": "mumps",
+  "selected_parallel_lu_solver_type": "mumps",
+  "ksp_converged": true,
+  "ksp_converged_reason": 4,
+  "ksp_converged_reason_name": "CONVERGED_ITS",
+  "ksp_iterations": 1,
+  "solver_residual_norm": 0.0,
+  "linear_system_rhs_norm": 133.00516757234152,
+  "linear_system_solution_norm": 447.41555480806926,
+  "linear_system_residual_norm": 5.7513249075939315e-11,
+  "linear_system_relative_residual": 4.3241364321170344e-13,
+  "use_floquet_xy": true,
+  "use_pml": false,
+  "floquet_num_local_slaves": 0,
+  "floquet_num_local_slave_records_seen": 0,
+  "floquet_num_local_ghost_slave_constraints": 0,
+  "floquet_num_global_ghost_slave_constraints": 70,
+  "floquet_num_local_ghost_slave_records_skipped": 0,
+  "floquet_num_global_ghost_slave_records_skipped": 0,
+  "floquet_constraint_mode_resolved": "topological_trace_p2",
+  "floquet_raw_map_nnz": 1054,
+  "floquet_max_masters_per_slave": 1,
+  "floquet_estimated_constraint_memory_mb": 0.03618621826171875,
+  "floquet_num_slave_edges": 275,
+  "floquet_num_matched_master_edges": 275,
+  "floquet_num_slave_faces": 126,
+  "floquet_num_matched_master_faces": 126,
+  "floquet_num_constraints": 1054,
+  "floquet_num_edge_constraints": 550,
+  "floquet_num_face_constraints": 504,
+  "floquet_num_face_transform_fits": 126,
+  "floquet_max_face_transform_fit_residual": 8.526512829121202e-12,
+  "floquet_max_edge_midpoint_pairing_error": 0.0,
+  "floquet_max_face_midpoint_pairing_error": 0.0,
+  "floquet_num_x_constraints": 518,
+  "floquet_num_y_constraints": 518,
+  "floquet_num_corner_constraints": 18,
+  "mesh_cell_type_actual": "hexahedron",
+  "mesh_cells_resolved": [
+    7,
+    7,
+    9
+  ],
+  "mesh_spacing_mode_resolved": "boundary_fitted",
+  "mesh_axis_cell_stats": {
+    "x": {
+      "num_cells": 7,
+      "min": 12.5,
+      "max": 16.66666666666667,
+      "median": 12.5
+    },
+    "y": {
+      "num_cells": 7,
+      "min": 12.5,
+      "max": 16.66666666666667,
+      "median": 12.5
+    },
+    "z": {
+      "num_cells": 9,
+      "min": 16.666666666666657,
+      "max": 16.66666666666667,
+      "median": 16.666666666666668
+    }
+  },
+  "mesh_material_plane_alignment": {
+    "all_aligned": true,
+    "missing": [],
+    "checked": {
+      "x": [
+        {
+          "name": "grating_x_min",
+          "value": 25.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_x_max",
+          "value": 75.0,
+          "aligned": true
+        }
+      ],
+      "y": [
+        {
+          "name": "grating_y_min",
+          "value": 25.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_y_max",
+          "value": 75.0,
+          "aligned": true
+        }
+      ],
+      "z": [
+        {
+          "name": "interface_z",
+          "value": 0.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_z_max",
+          "value": 50.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_z_min",
+          "value": 0.0,
+          "aligned": true
+        }
+      ]
+    }
+  },
+  "mesh_local_refinement_regions": {
+    "x": [],
+    "y": [],
+    "z": []
+  },
+  "mesh_z_alignment_warnings": [],
+  "max_face_pairing_coordinate_error": 0.0,
+  "nedelec_orientation_factor_stats": {
+    "count": 0,
+    "unique_rounded_real": [],
+    "max_abs": null,
+    "note": "Explicit edge topology mapping produced no orientation factors.",
+    "mapping_kind": "topological_trace_p2_edge_and_face_blocks",
+    "uses_basix_interval_transform": true,
+    "uses_p2_face_local_moment_fit": true,
+    "face_transform_limit": "constant-size 4x4 local Nedelec moment fit per periodic face",
+    "basix_interval_transform_shape": [
+      2,
+      2
+    ]
+  },
+  "floquet_constraint_phase_x": [
+    1.0,
+    0.0
+  ],
+  "floquet_constraint_phase_y": [
+    1.0,
+    0.0
+  ],
+  "floquet_constraint_phase_corner": [
+    1.0,
+    0.0
+  ],
+  "floquet_edge_corner_constraint_phase_mismatch": 0.0,
+  "floquet_constraint_timings_seconds": {
+    "floquet_build_topological_trace_context_p2": 0.1272153430036269,
+    "floquet_build_x_constraints": 0.022758873994462192,
+    "floquet_build_y_constraints": 0.01550415501696989,
+    "floquet_resolve_corner_master_chains": 0.0014160589780658484,
+    "floquet_build_mpc_arrays": 0.008195781032554805,
+    "floquet_mpc_finalize": 0.005191522010136396,
+    "floquet_total": 0.18115638598101214
+  },
+  "pml_parameters": {
+    "pml_alpha": 5.0,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "physical_z_min": -50.0,
+    "physical_z_max": 100.0,
+    "domain_z_min": -50.0,
+    "domain_z_max": 100.0
+  },
+  "incident_transversality_dot_k_p": [
+    0.0,
+    0.0
+  ],
+  "timings_seconds": {
+    "config_validation": 1.0781979653984308e-05,
+    "mesh_build": 0.06301703496137634,
+    "function_space_setup": 0.019475104985758662,
+    "field_formulation_setup": 0.008116072043776512,
+    "floquet_build_topological_trace_context_p2": 0.1272153430036269,
+    "floquet_build_x_constraints": 0.022758873994462192,
+    "floquet_build_y_constraints": 0.01550415501696989,
+    "floquet_resolve_corner_master_chains": 0.0014160589780658484,
+    "floquet_build_mpc_arrays": 0.008195781032554805,
+    "floquet_mpc_finalize": 0.005191522010136396,
+    "floquet_total": 0.18115638598101214,
+    "floquet_constraint_setup_outer": 0.18627648800611496,
+    "boundary_condition_setup": 2.1463027223944664e-05,
+    "variational_form_setup": 0.2244996769586578,
+    "stage4_dtn_port_assembly_and_solve": 14.119884243991692,
+    "matrix_stats": 0.005903410026803613,
+    "postprocess": 2.464921550999861,
+    "diffraction_postprocess": 2.047632298024837,
+    "volume_absorption_postprocess": 0.6662071950268
+  },
+  "elapsed_seconds": 18.726652226003353,
+  "max_rss_mb": 369.73046875,
+  "mumps_ooc_runtime": {
+    "mumps_ooc_enabled": false,
+    "mumps_ooc_tmpdir": null,
+    "mumps_ooc_prefix": null,
+    "mumps_ooc_residual_file_count": null,
+    "mumps_ooc_residual_file_bytes": null,
+    "mumps_ooc_cleaned_by_solver": null,
+    "mumps_ooc_cleanup_policy": "delete_on_success_keep_on_failure",
+    "mumps_ooc_cleanup_attempted": false,
+    "mumps_ooc_cleanup_success": null,
+    "mumps_ooc_cleanup_removed_file_count": 0,
+    "mumps_ooc_cleanup_removed_file_bytes": 0,
+    "mumps_ooc_cleanup_error": null,
+    "mumps_ooc_retained_on_failure": false
+  },
+  "max_abs_E_exact": null,
+  "max_abs_E": 2.0019032049720873,
+  "max_abs_Ex": 0.0020296498848624317,
+  "max_abs_Ey": 2.001902857420872,
+  "max_abs_Ez": 0.010837131630619825,
+  "max_abs_E_physical_z_region": 2.0019032049720873,
+  "max_abs_E_pml_z_region": 0.0,
+  "max_abs_E_error": null,
+  "relative_max_abs_E_error": null,
+  "max_abs_H": 0.003942442785241971,
+  "max_abs_H_exact": null,
+  "max_abs_H_error": null,
+  "relative_max_abs_H_error": null,
+  "mean_poynting_W_per_m2": [
+    1.965300825754549e-18,
+    1.1556141565646765e-18,
+    -9.005159746235626e-06
+  ],
+  "poynting_direction_cosine": 1.0,
+  "curl_postprocess_success": true,
+  "paraview_file": "/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h20p0_np8_20260703_113019/fields_3d_for_paraview_parallel.pvd",
+  "postprocess_point_scope": "owned_cells_only",
+  "postprocess_local_owned_points": 432,
+  "postprocess_local_total_points_before_owned_filter": 808,
+  "postprocess_global_owned_points": 3528,
+  "postprocess_global_total_points_before_owned_filter": 6488,
+  "paraview_owned_cell_filter_applied": false,
+  "paraview_local_owned_cells": 54,
+  "paraview_local_cells_before_owned_filter": 54,
+  "paraview_local_cells_written": 54,
+  "vtx_3d_output_status": "skipped_mpi",
+  "vtx_3d_output_files": [],
+  "exact_reference_available": false,
+  "exact_reference_note": "Stage 4 grating has no analytic exact solution; E_b is the layered background field, so E_exact is not written.",
+  "paraview_e_field_arrays": [
+    "E_tot_V_per_m_real",
+    "E_tot_V_per_m_imag",
+    "E_tot_V_per_m_abs",
+    "E_incident_port_V_per_m_real",
+    "E_incident_port_V_per_m_imag",
+    "E_incident_port_V_per_m_abs"
+  ],
+  "component_l2_integral_E_V2_per_m2_nm3": [
+    0.12430876692892281,
+    371668.6023913761,
+    7.843559833788751
+  ],
+  "component_l2_norm_E_V_per_m_sqrt_nm3": [
+    0.35257448422840076,
+    609.6462928546159,
+    2.800635612461705
+  ],
+  "component_l2_total_E_V_per_m_sqrt_nm3": 609.6528276486355,
+  "component_l2_energy_fraction_Ex_Ey_Ez": [
+    3.3445413802105545e-07,
+    0.999978562359755,
+    2.1103186106948877e-05
+  ],
+  "max_abs_E_incident_port": 1.000000000000013,
+  "max_abs_E_incident_port_Ex": 1.1518392602840684e-14,
+  "max_abs_E_incident_port_Ey": 1.000000000000013,
+  "max_abs_E_incident_port_Ez": 1.0259126490633693e-14,
+  "max_abs_E_incident_port_physical_z_region": 1.000000000000013,
+  "E_sca_norm": null,
+  "E_inc_norm": 453.344064904831,
+  "E_bg_norm": null,
+  "E_total_norm": 468.3387475004613,
+  "floquet_x_face_mismatch": 0.0,
+  "floquet_y_face_mismatch": 0.0,
+  "floquet_edge_corner_mismatch": 0.0,
+  "fresnel_field_relative_max_error": null,
+  "R_total": 0.9830168927200699,
+  "T_total": 0.0107488242748218,
+  "R_plus_T": 0.9937657169948917,
+  "A_balance": 0.006234283005108332,
+  "diffraction_total_power_source": "dtn_auxiliary_port_amplitudes",
+  "dtn_port_power_metric_note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the top and bottom port faces.",
+  "incident_power_code_units": 4999.999999999999,
+  "dtn_port_mode_count": 708,
+  "dtn_port_top_mode_count": 354,
+  "dtn_port_bottom_mode_count": 354,
+  "dtn_port_propagating_mode_count": 708,
+  "dtn_port_rayleigh_warning_count": 0,
+  "port_power_file": "port_power.json",
+  "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
+  "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
+  "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+  "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json",
+  "stage4_dtn_base_matrix_assembly_seconds": 9.910841207019985,
+  "stage4_dtn_base_rhs_assembly_seconds": 0.004356680030468851,
+  "stage4_dtn_surface_quadrature_degree": 17,
+  "stage4_dtn_augmented_block_copy_seconds": 0.059733050991781056,
+  "stage4_dtn_incident_source_vector_seconds": 0.3669935310026631,
+  "stage4_dtn_modal_loop_seconds": 0.8531647589989007,
+  "stage4_dtn_modal_vector_assembly_seconds": 0.7488942167256027,
+  "stage4_dtn_modal_block_insert_seconds": 0.016136466583702713,
+  "stage4_dtn_unique_surface_orders": 354,
+  "stage4_dtn_component_vector_assemblies": 708,
+  "stage4_dtn_component_vector_cache_hits": 354,
+  "stage4_dtn_augmented_matrix_finalize_seconds": 0.0769165430101566,
+  "stage4_dtn_linear_solve_seconds": 0.7240684150019661,
+  "stage4_dtn_solution_backsubstitution_seconds": 0.0022991520236246288,
+  "probe_R_total": 0.15982631548415363,
+  "probe_T_total": 0.0030395701840368696,
+  "probe_A_balance": 0.8371341143318095,
+  "probe_power_file": "probe_power.json",
+  "flux_R_total": 0.9978864581888408,
+  "flux_T_total": 0.002363776400116385,
+  "flux_A_balance": -0.00025023458895723216,
+  "flux_power_file": "flux_power.json",
+  "stage4_lossless_energy_balance_checked": false,
+  "stage4_material_absorption_present": true,
+  "stage4_energy_balance_tolerance": 1e-08,
+  "stage4_energy_balance_pass": true,
+  "stage4_energy_balance_excess": null,
+  "stage4_absorption_from_balance": 0.006234283005108332,
+  "stage4_absorption_balance_note": "Lossy material case: A_balance = 1-R-T is interpreted as port-to-port absorption/loss between the incident plane and outgoing ports.",
+  "volume_absorption_file": "volume_absorption.json",
+  "A_volume_grating": 0.003735425218757117,
+  "A_volume_substrate": 0.0024988577863824316,
+  "A_volume_total": 0.006234283005139549,
+  "A_port_balance_minus_A_volume_total": -3.1216348950202644e-14,
+  "A_probe_balance_minus_A_volume_total": 0.83089983132667,
+  "A_flux_minus_A_volume_total": -0.006484517594096781,
+  "energy_closure_error_port_volume": 3.1308289294429414e-14,
+  "power_summary_csv": "power_summary.csv",
+  "power_summary_rows": [
+    {
+      "method": "port",
+      "R": 0.9830168927200699,
+      "T": 0.0107488242748218,
+      "A": 0.006234283005108332,
+      "role": "primary",
+      "status": "ok",
+      "source": "dtn_auxiliary_port_amplitudes"
+    },
+    {
+      "method": "probe_eh_fourier",
+      "R": 0.15982631548415363,
+      "T": 0.0030395701840368696,
+      "A": 0.8371341143318095,
+      "role": "cross_check",
+      "status": "ok",
+      "source": "eh_fourier_orders"
+    },
+    {
+      "method": "net_flux",
+      "R": 0.9978864581888408,
+      "T": 0.002363776400116385,
+      "A": -0.00025023458895723216,
+      "role": "diagnostic",
+      "status": "ok",
+      "source": "sampled_poynting_flux"
+    },
+    {
+      "method": "volume_absorption",
+      "R": "",
+      "T": "",
+      "A": 0.006234283005139549,
+      "role": "absorption_check",
+      "status": "ok",
+      "source": "volume_integral_Im_epsilon_E2"
+    }
+  ]
+}

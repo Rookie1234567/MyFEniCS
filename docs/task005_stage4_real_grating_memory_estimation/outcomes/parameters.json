@@ -1,0 +1,101 @@
+{
+  "task": "task005_stage4_real_grating_memory_estimation",
+  "branch": "codex/20260703-stage4-real-grating-memory-estimation",
+  "date": "2026-07-03",
+  "hardware_context": {
+    "wsl_memory_gb_reported_by_user": 14
+  },
+  "physics": {
+    "stage_case": "stage4_block_grating",
+    "period_x_nm": 100,
+    "period_y_nm": 100,
+    "air_height_nm": 100,
+    "substrate_thickness_nm": 50,
+    "grating_width_x_nm": 50,
+    "grating_width_y_nm": 50,
+    "grating_height_nm": 50,
+    "lambda0_nm": 13.5,
+    "polarization": "s",
+    "normal_incidence": true,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ]
+  },
+  "numerics": {
+    "nedelec_degree": 2,
+    "mpi_ranks": 8,
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "use_pml": false,
+    "mesh_spacing_mode": "auto",
+    "visualization_degree": 1
+  },
+  "mesh_sweeps": {
+    "assemble_only_h_nm": [
+      20,
+      15,
+      12,
+      10,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2.5,
+      2
+    ],
+    "default_direct_h_nm": [
+      20,
+      15,
+      12,
+      10,
+      8,
+      6,
+      5,
+      4
+    ],
+    "mumps_ooc_h_nm": [
+      15,
+      12,
+      10,
+      8,
+      6,
+      5,
+      4
+    ]
+  },
+  "commands_and_parts": {
+    "assemble_parts": [
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\assemble_matrix_scale_part_coarse.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\assemble_matrix_scale_part_fine1.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\assemble_matrix_scale_part_h2p5.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\assemble_matrix_scale_part_h2.csv"
+    ],
+    "direct_parts": [
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\direct_default_scale_part_coarse.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\direct_default_scale_part_h6.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\direct_default_scale_part_h5.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\direct_default_scale_part_h4.csv"
+    ],
+    "ooc_parts": [
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\mumps_ooc_scale_part_coarse.csv",
+      "docs\\task005_stage4_real_grating_memory_estimation\\outcomes\\mumps_ooc_scale_part_h5_h4.csv"
+    ],
+    "tuned_ooc": "h=4 default profile + mat_mumps_icntl_22=1 + mat_mumps_icntl_14=200, timeout 5400 s"
+  },
+  "notes": [
+    "rss_rank_sum_GB uses max_rss_mb * ranks as a conservative upper bound; per-rank RSS sum was not collected.",
+    "GB fields use 1024^3 byte conversion.",
+    "This task is a resource estimate, not an R/T/A physical benchmark."
+  ]
+}

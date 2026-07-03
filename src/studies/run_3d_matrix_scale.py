@@ -13,6 +13,10 @@ from typing import Any
 from ..common.config_3d import project_root
 
 
+MB_PER_GB = 1024.0
+BYTES_PER_GB = 1024.0**3
+
+
 def _timestamp() -> str:
     return time.strftime("%Y%m%d_%H%M%S")
 
@@ -82,6 +86,64 @@ def _value(summary: dict[str, Any] | None, key: str, default=None):
     return summary.get(key, default)
 
 
+def _mb_to_gb(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value) / MB_PER_GB
+    except (TypeError, ValueError):
+        return None
+
+
+def _bytes_to_gb(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value) / BYTES_PER_GB
+    except (TypeError, ValueError):
+        return None
+
+
+def _mesh_cell_count(mesh_cells: Any) -> int | None:
+    if not isinstance(mesh_cells, (list, tuple)) or not mesh_cells:
+        return None
+    total = 1
+    try:
+        for value in mesh_cells:
+            total *= int(value)
+    except (TypeError, ValueError):
+        return None
+    return total
+
+
+def _tail_text(text: str, *, max_lines: int = 20, max_chars: int = 6000) -> str:
+    lines = text.splitlines()
+    tail = "\n".join(lines[-max_lines:])
+    if len(tail) > max_chars:
+        return tail[-max_chars:]
+    return tail
+
+
+def _coerce_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="ignore")
+    return str(value)
+
+
+def _case_status(returncode: int, timed_out: bool, summary_case_status: Any = None) -> str:
+    if timed_out:
+        return "timeout"
+    if isinstance(summary_case_status, str) and summary_case_status.startswith("failed"):
+        return "failed"
+    if returncode == 0:
+        return "completed"
+    if returncode in {137, -9}:
+        return "killed"
+    return "failed"
+
+
 def _matrix_value(summary: dict[str, Any] | None, key: str):
     stats = _value(summary, "matrix_stats", {}) or {}
     return stats.get(key)
@@ -100,8 +162,10 @@ def _row_from_result(
     *,
     mesh_target_size: float,
     mpi_procs: int,
+    nedelec_degree: int,
     solver_profile: str,
     returncode: int,
+    timed_out: bool,
     elapsed_wall_seconds: float,
     swap_before_mb: float | None,
     swap_after_mb: float | None,
@@ -110,18 +174,51 @@ def _row_from_result(
     last_progress: dict[str, Any] | None,
     stdout_file: Path | None,
     stderr_file: Path | None,
+    progress_file: Path | None,
+    stdout_text: str,
+    stderr_text: str,
 ) -> dict[str, Any]:
     error = _value(summary, "direct_solve_exception", {}) or {}
     ooc_runtime = _value(summary, "mumps_ooc_runtime", {}) or {}
+    matrix_memory_mb = _matrix_value(summary, "matrix_memory_mb")
+    estimated_aij_mb = _matrix_value(summary, "matrix_memory_estimate_mb")
+    peak_rss_mb = _value(summary, "max_rss_mb")
+    matrix_memory_gb = _mb_to_gb(matrix_memory_mb)
+    estimated_aij_gb = _mb_to_gb(estimated_aij_mb)
+    peak_rss_gb = _mb_to_gb(peak_rss_mb)
+    total_rss_upper_gb = None if peak_rss_gb is None else peak_rss_gb * float(mpi_procs)
+    ooc_removed_gb = _bytes_to_gb(ooc_runtime.get("mumps_ooc_cleanup_removed_file_bytes"))
+    ooc_residual_gb = _bytes_to_gb(ooc_runtime.get("mumps_ooc_residual_file_bytes"))
+    ooc_disk_gb = max(value for value in (ooc_removed_gb or 0.0, ooc_residual_gb or 0.0))
+    swap_before_gb = _mb_to_gb(swap_before_mb)
+    swap_after_gb = _mb_to_gb(swap_after_mb)
+    swap_delta_gb = None if swap_before_mb is None or swap_after_mb is None else (swap_after_mb - swap_before_mb) / MB_PER_GB
+    effective_lu_proxy_gb = (
+        None
+        if total_rss_upper_gb is None or estimated_aij_gb is None
+        else total_rss_upper_gb - estimated_aij_gb
+    )
+    rss_to_matrix_ratio = (
+        None
+        if total_rss_upper_gb is None or estimated_aij_gb in {None, 0.0}
+        else total_rss_upper_gb / estimated_aij_gb
+    )
+    mesh_cells_resolved = _value(summary, "mesh_cells_resolved")
+    summary_case_status = _value(summary, "case_status")
     return {
+        "h_nm": mesh_target_size,
+        "p": nedelec_degree,
+        "mpi_ranks": mpi_procs,
         "mesh_target_size_nm": mesh_target_size,
         "mpi_procs": mpi_procs,
         "solver_profile": solver_profile,
         "returncode": returncode,
-        "case_status": _value(summary, "case_status"),
+        "status": _case_status(returncode, timed_out, summary_case_status),
+        "case_status": summary_case_status,
         "result_dir": "" if result_dir is None else str(result_dir),
         "stdout_file": "" if stdout_file is None else str(stdout_file),
         "stderr_file": "" if stderr_file is None else str(stderr_file),
+        "progress_file": "" if progress_file is None else str(progress_file),
         "last_progress_stage": None if last_progress is None else last_progress.get("stage"),
         "last_progress_status": None if last_progress is None else last_progress.get("status"),
         "failure_stage": _value(summary, "failure_stage"),
@@ -135,35 +232,67 @@ def _row_from_result(
         "mumps_ooc_cleanup_success": ooc_runtime.get("mumps_ooc_cleanup_success"),
         "mumps_ooc_cleanup_removed_file_count": ooc_runtime.get("mumps_ooc_cleanup_removed_file_count"),
         "mumps_ooc_cleanup_removed_file_bytes": ooc_runtime.get("mumps_ooc_cleanup_removed_file_bytes"),
+        "mumps_ooc_cleanup_removed_file_GB": ooc_removed_gb,
         "mumps_ooc_retained_on_failure": ooc_runtime.get("mumps_ooc_retained_on_failure"),
         "mumps_ooc_residual_file_count": ooc_runtime.get("mumps_ooc_residual_file_count"),
         "mumps_ooc_residual_file_bytes": ooc_runtime.get("mumps_ooc_residual_file_bytes"),
+        "mumps_ooc_residual_file_GB": ooc_residual_gb,
+        "ooc_disk_GB": ooc_disk_gb,
+        "mesh_cells_resolved": mesh_cells_resolved,
+        "cells": _mesh_cell_count(mesh_cells_resolved),
+        "N1curl_raw_dofs": _value(summary, "num_nedelec_dofs"),
         "dof_raw_nedelec": _value(summary, "num_nedelec_dofs"),
         "floquet_constraints": _value(summary, "floquet_num_constraints"),
         "constrained_system_size": _value(summary, "constrained_linear_system_size"),
         "dtn_auxiliary_dofs": _value(summary, "stage4_dtn_num_auxiliary_dofs"),
+        "system_rows": _matrix_value(summary, "matrix_rows"),
+        "system_cols": _matrix_value(summary, "matrix_cols"),
         "matrix_rows": _matrix_value(summary, "matrix_rows"),
         "matrix_cols": _matrix_value(summary, "matrix_cols"),
         "nnz_used": _matrix_value(summary, "matrix_nnz_used"),
         "nnz_allocated": _matrix_value(summary, "matrix_nnz_allocated"),
+        "avg_nnz_per_row": _matrix_value(summary, "matrix_average_nnz_per_row"),
         "average_nnz_per_row": _matrix_value(summary, "matrix_average_nnz_per_row"),
         "average_allocated_nnz_per_row": _matrix_value(summary, "matrix_average_allocated_nnz_per_row"),
-        "petsc_matrix_memory_mb": _matrix_value(summary, "matrix_memory_mb"),
-        "estimated_aij_matrix_memory_mb": _matrix_value(summary, "matrix_memory_estimate_mb"),
+        "petsc_matrix_memory_mb": matrix_memory_mb,
+        "estimated_aij_matrix_memory_mb": estimated_aij_mb,
+        "matrix_memory_GB": matrix_memory_gb,
+        "PETSc_matrix_memory_GB": matrix_memory_gb,
+        "estimated_AIJ_matrix_memory_GB": estimated_aij_gb,
         "solve_time_seconds": _timing_value(
             summary,
             "linear_problem_solve",
             "stage4_dtn_linear_solve_seconds",
             "stage4_dtn_port_assembly_and_solve",
         ),
+        "solve_time_s": _timing_value(
+            summary,
+            "linear_problem_solve",
+            "stage4_dtn_linear_solve_seconds",
+            "stage4_dtn_port_assembly_and_solve",
+        ),
         "elapsed_wall_seconds": elapsed_wall_seconds,
+        "elapsed_wall_s": elapsed_wall_seconds,
+        "assemble_elapsed_s": elapsed_wall_seconds,
         "summary_elapsed_seconds": _value(summary, "elapsed_seconds"),
-        "peak_rss_mb": _value(summary, "max_rss_mb"),
+        "peak_rss_mb": peak_rss_mb,
+        "peak_RSS_per_rank_max_GB": peak_rss_gb,
+        "rss_rank_max_mb": peak_rss_mb,
+        "rss_rank_sum_mb": None if total_rss_upper_gb is None else total_rss_upper_gb * MB_PER_GB,
+        "rss_rank_sum_GB": total_rss_upper_gb,
+        "rss_rank_mean_mb": None,
+        "rss_rank_min_mb": None,
+        "rss_rank_imbalance": None,
+        "rss_rank_statistics_source": "upper_bound_from_global_max_times_ranks",
+        "estimated_total_RSS_upper_GB": total_rss_upper_gb,
         "swap_used_before_mb": swap_before_mb,
         "swap_used_after_mb": swap_after_mb,
-        "swap_used_delta_mb": None
-        if swap_before_mb is None or swap_after_mb is None
-        else swap_after_mb - swap_before_mb,
+        "swap_used_delta_mb": None if swap_before_mb is None or swap_after_mb is None else swap_after_mb - swap_before_mb,
+        "swap_before_GB": swap_before_gb,
+        "swap_after_GB": swap_after_gb,
+        "swap_delta_GB": swap_delta_gb,
+        "effective_LU_memory_proxy_GB": effective_lu_proxy_gb,
+        "rss_to_matrix_ratio": rss_to_matrix_ratio,
         "actual_ksp_type": _value(summary, "actual_ksp_type"),
         "actual_pc_type": _value(summary, "actual_pc_type"),
         "actual_pc_factor_solver_type": _value(summary, "actual_pc_factor_solver_type"),
@@ -177,6 +306,8 @@ def _row_from_result(
         "R_total": _value(summary, "R_total"),
         "T_total": _value(summary, "T_total"),
         "R_plus_T": _value(summary, "R_plus_T"),
+        "stdout_tail": _tail_text(stdout_text),
+        "stderr_tail": _tail_text(stderr_text),
     }
 
 
@@ -248,6 +379,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--extra-runner-arg", action="append", default=[])
     parser.add_argument("--output-csv", default=None)
     parser.add_argument("--stop-on-failure", action="store_true")
+    parser.add_argument(
+        "--case-timeout-seconds",
+        type=float,
+        default=None,
+        help="Optional timeout for each subprocess case. Timed-out cases are recorded and the sweep continues/stops according to --stop-on-failure.",
+    )
     args = parser.parse_args(argv)
 
     root = project_root()
@@ -268,34 +405,58 @@ def main(argv: list[str] | None = None) -> int:
                 print("[matrix-scale] command:", " ".join(command))
                 swap_before = _swap_used_mb()
                 t0 = time.perf_counter()
-                proc = subprocess.run(command, cwd=root, text=True, capture_output=True)
+                timed_out = False
+                try:
+                    proc = subprocess.run(
+                        command,
+                        cwd=root,
+                        text=True,
+                        capture_output=True,
+                        timeout=args.case_timeout_seconds,
+                    )
+                    returncode = proc.returncode
+                    stdout_text = proc.stdout
+                    stderr_text = proc.stderr
+                except subprocess.TimeoutExpired as exc:
+                    timed_out = True
+                    returncode = 124
+                    stdout_text = _coerce_text(exc.stdout)
+                    stderr_text = _coerce_text(exc.stderr)
+                    stderr_text += f"\n[matrix-scale] timeout after {args.case_timeout_seconds} seconds\n"
                 elapsed = time.perf_counter() - t0
                 swap_after = _swap_used_mb()
-                result_dir = _extract_result_dir(proc.stdout)
+                result_dir = _extract_result_dir(stdout_text)
                 summary = _load_summary(result_dir) if result_dir is not None else None
                 last_progress = _load_last_progress(result_dir)
                 file_tag = f"run_np{mpi_procs}_{solver_profile}_h{str(mesh_size).replace('.', 'p')}"
                 stdout_file = out_dir / f"{file_tag}_stdout.txt"
                 stderr_file = out_dir / f"{file_tag}_stderr.txt"
-                stdout_file.write_text(proc.stdout, encoding="utf-8")
-                stderr_file.write_text(proc.stderr, encoding="utf-8")
-                rows.append(
-                    _row_from_result(
-                        mesh_target_size=mesh_size,
-                        mpi_procs=mpi_procs,
-                        solver_profile=solver_profile,
-                        returncode=proc.returncode,
-                        elapsed_wall_seconds=elapsed,
-                        swap_before_mb=swap_before,
-                        swap_after_mb=swap_after,
-                        result_dir=result_dir,
-                        summary=summary,
-                        last_progress=last_progress,
-                        stdout_file=stdout_file,
-                        stderr_file=stderr_file,
-                    )
+                stdout_file.write_text(stdout_text, encoding="utf-8")
+                stderr_file.write_text(stderr_text, encoding="utf-8")
+                progress_file = result_dir / "progress_3d.jsonl" if result_dir is not None else None
+                row = _row_from_result(
+                    mesh_target_size=mesh_size,
+                    mpi_procs=mpi_procs,
+                    nedelec_degree=args.nedelec_degree,
+                    solver_profile=solver_profile,
+                    returncode=returncode,
+                    timed_out=timed_out,
+                    elapsed_wall_seconds=elapsed,
+                    swap_before_mb=swap_before,
+                    swap_after_mb=swap_after,
+                    result_dir=result_dir,
+                    summary=summary,
+                    last_progress=last_progress,
+                    stdout_file=stdout_file,
+                    stderr_file=stderr_file,
+                    progress_file=progress_file if progress_file is not None and progress_file.exists() else None,
+                    stdout_text=stdout_text,
+                    stderr_text=stderr_text,
                 )
-                if proc.returncode != 0 and args.stop_on_failure:
+                row_json = out_dir / f"{file_tag}_row.json"
+                row_json.write_text(json.dumps(row, ensure_ascii=False, indent=2), encoding="utf-8")
+                rows.append(row)
+                if returncode != 0 and args.stop_on_failure:
                     break
             if rows and rows[-1]["returncode"] != 0 and args.stop_on_failure:
                 break

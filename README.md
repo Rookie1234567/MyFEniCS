@@ -8,13 +8,13 @@
 
 ## 0. 当前合并版本状态
 
-当前分支：
+当前阶段分支：
 
 ```text
-codex/20260702-rta-output-volume-absorption
+codex/20260703-stage4-real-grating-memory-estimation
 ```
 
-已经完成 task002/task003/task004 的阶段性验证，可以考虑合并到 `master`。本次合并的含义是：
+task002/task003/task004 已作为阶段性版本合并到 `master`。task005 在此基础上补充了真实 3D 光栅 p=2 的内存、MUMPS OOC 和迭代法资源估算。task004 合并的含义是：
 
 ```text
 完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
@@ -31,6 +31,7 @@ codex/20260702-rta-output-volume-absorption
 ```text
 notes/reference/current_version_boundaries.md
 docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
+docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
 ```
 
 ---

@@ -177,3 +177,29 @@ p=2 下 probe/net_flux 过冲原因。
 ```
 
 真实 100 nm 3D grating benchmark 应作为未来高资源条件下的应用验证目标。
+
+---
+
+## 5. task005 资源边界补充
+
+task005 对真实 `100 nm x 100 nm x 150 nm`、p=2、MPI=8、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源评估。当前结论是：
+
+```text
+assemble-only:
+  h=2 nm 仍可完成；
+  rows ≈ 4.76M；
+  nnz ≈ 5.24e8；
+  AIJ matrix ≈ 11.74 GB。
+
+default MUMPS direct:
+  h=5 nm 可完成；
+  h=4 nm 在 stage4_dtn_augmented_ksp_setup 被 signal 9 kill；
+  主要瓶颈是 LU fill-in 峰值内存，不是矩阵本体。
+
+MUMPS OOC:
+  默认 OOC 可完成到 h=5 nm；
+  h=4 nm 返回 MUMPS INFOG(1)=-90；
+  tuned OOC h=4 在 90 分钟超时，保留约 30 GB OOC 文件。
+```
+
+这说明当前小电脑可以用于资源摸底，但不适合继续硬跑真实 3D p=2 的 h=4 nm 及更细 direct LU 计算。若目标是 `h=3` 到 `h=2.5 nm` 的真实 3D 计算，应考虑 512 GB RAM 和 1 TB 级别 SSD scratch；若目标包含 `h=2 nm` 或更细，应按 1 TB RAM 起步，或优先开发可收敛的迭代求解器与预条件器。

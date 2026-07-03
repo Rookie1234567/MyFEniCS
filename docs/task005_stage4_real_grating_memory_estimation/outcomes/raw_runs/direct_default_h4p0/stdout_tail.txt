@@ -1,0 +1,20 @@
+Stage-4 DtN prepared 450/708 auxiliary modes in 68.019 seconds; unique surface orders = 225
+Stage-4 DtN prepared 500/708 auxiliary modes in 68.680 seconds; unique surface orders = 250
+Stage-4 DtN prepared 550/708 auxiliary modes in 69.183 seconds; unique surface orders = 275
+Stage-4 DtN prepared 600/708 auxiliary modes in 69.713 seconds; unique surface orders = 300
+Stage-4 DtN prepared 650/708 auxiliary modes in 70.220 seconds; unique surface orders = 325
+Stage-4 DtN prepared 700/708 auxiliary modes in 70.743 seconds; unique surface orders = 350
+Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354
+Stage-4 DtN base matrix nnz = 73882316.0
+Stage-4 DtN auxiliary coupling nnz estimate = 7325700
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 17 RUNNING AT 6f78fc18dc9a
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions

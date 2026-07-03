@@ -22,7 +22,7 @@ docs/taskXXX_task_name/
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
 | task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
-| task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 任务书已写入；执行前需先本地合并本分支到 master，再由本地 Codex 新建任务分支 |
+| task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | Codex 已完成 outcomes，待审查 |
 
 ## 合并前结论
 
@@ -45,9 +45,16 @@ notes/reference/current_version_boundaries.md
 docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
 ```
 
-## task005 执行说明
+## task005 当前结论
 
-`task005_stage4_real_grating_memory_estimation/task.md` 只是后续任务书。执行 task005 前，应先在本地将当前分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task005 分支。ChatGPT 不负责创建远程任务分支。
+task005 已从更新后的 `master` 新建任务分支执行。当前 outcomes 说明：
+
+```text
+真实 100 nm x 100 nm x 150 nm 3D 光栅 p=2 的矩阵本体可 assemble 到 h=2 nm；
+default MUMPS direct 最后完成 h=5 nm，在 h=4 nm 被 signal 9 kill；
+默认 MUMPS OOC 最后完成 h=5 nm，在 h=4 nm 返回 MUMPS INFOG(1)=-90；
+后续若要推进 h=2.5 nm 或更细，建议考虑 512 GB 到 1 TB 级别工作站，或转向迭代求解器/预条件器路线。
+```
 
 ## 工作规则
 

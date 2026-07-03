@@ -1,0 +1,20 @@
+  diffraction_postprocess: 0.845
+  volume_absorption_postprocess: 0.022
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 593.6 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 17.845
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h10p0_np8_20260703_121907

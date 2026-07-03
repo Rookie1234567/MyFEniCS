@@ -1,0 +1,20 @@
+WARNING: direct LU failed at stage4_dtn_augmented_ksp_setup: PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.
+PETSc error diagnostics = {'petsc_error_type': 'Error', 'petsc_error_message': 'error code 76\n[0] KSPSetUp() at /usr/local/petsc/src/ksp/ksp/interface/itfunc.c:429\n[0] PCSetUp() at /usr/local/petsc/src/ksp/pc/interface/precon.c:1120\n[0] PCSetUp_LU() at /usr/local/petsc/src/ksp/pc/impls/factor/lu/lu.c:121\n[0] MatLUFactorNumeric() at /usr/local/petsc/src/mat/interface/matrix.c:3336\n[0] MatFactorNumeric_MUMPS() at /usr/local/petsc/src/mat/impls/aij/mpi/mumps/mumps.c:2092\n[0] Error in external library\n[0] MUMPS error in numerical factorization: INFOG(1)=-90, INFO(2)=4 (see users manual https://mumps-solver.org/index.php?page=doc "Error and warning diagnostics")', 'petsc_error_code': 76, 'mumps_infog_1': -90, 'mumps_infog_2': 0, 'mumps_info_1': -1, 'mumps_info_2': 4}
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = CONVERGED_ITERATING
+  iterations           = 0
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 3057.4 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_direct_lu_exception
+elapsed seconds = 1271.906
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260703_123023
