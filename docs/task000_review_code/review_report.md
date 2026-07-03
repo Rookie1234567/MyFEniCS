@@ -28,18 +28,18 @@ beta  = 0.00182649365
 
 ## 审查范围
 
-- `notes/docs/CODEX_TASK_20260702_review_code.md`
-- `notes/outcomes/20260702_review_code/summary.md`
-- `notes/outcomes/20260702_review_code/metrics.csv`
-- `notes/outcomes/20260702_review_code/parameters.json`
-- `notes/outcomes/20260702_review_code/run_log.txt`
+- `docs/task000_review_code/task.md`
+- `docs/task000_review_code/outcomes/summary.md`
+- `docs/task000_review_code/outcomes/metrics.csv`
+- `docs/task000_review_code/outcomes/parameters.json`
+- `docs/task000_review_code/outcomes/run_log.txt`
 - 当前 3D 主流程相关代码与现有 notes 记录
 
 ## 主要发现
 
 1. 协作目录结构是合理的。
-   - `notes/docs/` 放任务书和审查报告。
-   - `notes/outcomes/<日期>_<任务名>/` 放本轮运行记录。
+   - 迁移后，`docs/taskXXX_task_name/` 放任务书、outcomes 和审查报告。
+   - `notes/` 继续放理论笔记、学习笔记和解释性文档。
    - 本轮没有提交大体积仿真结果，这是正确的。
 
 2. 本轮分支没有新增数值验证。
@@ -91,7 +91,7 @@ beta  = 0.00182649365
    - 本分支可以合并，但合并前建议先把 GitHub default branch 改回 `master`。
 
 5. 固定 EUV 材料参数入口。
-   - 在下一轮任务中，让 Codex 把 `lambda0 = 13.5 nm`、基座复折射率、Si 光栅复折射率写入 `notes/outcomes/.../parameters.json`。
+   - 在下一轮任务中，让 Codex 把 `lambda0 = 13.5 nm`、基座复折射率、Si 光栅复折射率写入 `docs/task001_stage4_validation_cleanup/outcomes/parameters.json`。
    - 如果代码中保留 633 nm 或实数折射率示例，必须明确标记为 `numerical_sanity_only`，不能混入正式 EUV validation。
    - Codex 应在代码配置、summary 和 run_log 中明确区分：`material_label = Si`、`n_grating_complex = 0.999002304859 + 0.00182649365j`。
 
@@ -113,10 +113,10 @@ codex/20260703-stage4-validation-cleanup
    - `n_grating = 0.999002304859 + 0.00182649365j`；
    - `grating_material = Si / silicon / 硅`；
    - `n_substrate` 使用用户后续指定的基座复折射率。
-3. 生成一个新的 outcomes 目录，例如：
+3. 生成新的任务 outcomes 目录，例如：
 
 ```text
-notes/outcomes/20260703_stage4_validation_cleanup/
+docs/task001_stage4_validation_cleanup/outcomes/
 ```
 
 其中至少包含：
