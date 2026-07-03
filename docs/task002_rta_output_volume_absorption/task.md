@@ -1,6 +1,6 @@
-# CODEX TASK 20260702: R/T/A 输出整理与体吸收积分
+# CODEX TASK 20260702：R/T/A 输出整理与体吸收积分
 
-## 0. Branch workflow
+## 0. 分支流程
 
 当前任务起点分支是：
 
@@ -21,9 +21,20 @@ codex/20260702-rta-output-volume-absorption
 
 后续所有代码修改、文档修改、运行结果和 outcomes 都提交到这个新分支。不要继续在旧分支上直接开发。
 
+本任务迁移后的任务闭环目录为：
+
+```text
+docs/task002_rta_output_volume_absorption/
+├── task.md
+├── outcomes/
+└── review_report.md
+```
+
+理论笔记应放在 `notes/theory/`，不再放在旧的 `notes/docs/`。
+
 ---
 
-## 1. Goal
+## 1. 目标
 
 本任务目标是重构 Stage 4 后处理中的 R/T/A 输出口径，新增体吸收积分 `A_volume`，并用一组轻量但有代表性的 13.5 nm EUV 算例验证四类功率/吸收指标的一致性。
 
@@ -40,7 +51,7 @@ codex/20260702-rta-output-volume-absorption
 
 ---
 
-## 2. Add volume absorption integral
+## 2. 新增 A_volume 体吸收积分
 
 新增体吸收积分后处理，计算材料内部真实吸收：
 
@@ -72,11 +83,7 @@ A_volume_substrate
 A_volume_total
 ```
 
-5. 只积分真实物理材料区域：
-   - substrate 区域；
-   - grating 区域；
-   - 不要把 PML 损耗计入 material volume absorption；
-   - 空气通常不计吸收，除非明确设置为空气有损。
+5. 只积分真实物理材料区域：substrate、grating；不要把 PML 损耗计入 material volume absorption；空气通常不计吸收，除非明确设置为空气有损。
 6. 若某个区域不存在，例如 flat-layer 没有 grating，则该区域输出 `null` 或 `0.0`，但必须在 json 中写清楚 status/reason。
 7. 输出对比指标：
 
@@ -91,21 +98,17 @@ energy_closure_error_port_volume = R_port + T_port + A_volume_total - 1
 
 ---
 
-## 3. Add theory note
+## 3. 新增理论说明
 
-新增一个理论说明 markdown，建议路径：
+新增一个理论说明 markdown，迁移后的建议路径为：
 
 ```text
-notes/docs/THEORY_RTA_AND_VOLUME_ABSORPTION.md
+notes/theory/THEORY_RTA_AND_VOLUME_ABSORPTION.md
 ```
 
 内容要求：
 
-1. 解释四类 R/T/A 口径：
-   - `port`；
-   - `probe_eh_fourier`；
-   - `net_flux`；
-   - `volume_absorption`。
+1. 解释四类 R/T/A 口径：`port`、`probe_eh_fourier`、`net_flux`、`volume_absorption`。
 2. 说明 `A_balance = 1 - R - T` 的含义：它是能量余额，不是直接材料体吸收。
 3. 说明 `net_flux` 的含义：它是边界总能流检查，可以给出 `R_flux/T_flux/A_flux`，但不分衍射级。
 4. 说明 `volume_absorption` 的含义：它直接积分材料内部耗散，可分为 grating/substrate/total。
@@ -123,7 +126,7 @@ R + T + A_volume_total ≈ 1
 
 ---
 
-## 4. Reorganize R/T/A output files
+## 4. 重构 R/T/A 输出文件
 
 对每个 case 的 results 文件夹，统一输出以下简洁结构。已有 `run_summary.json` 保留，不需要新增 `run_info.json`。
 
@@ -154,13 +157,7 @@ net_flux,<R_flux>,<T_flux>,<A_flux>,diagnostic,ok,sampled_poynting_flux
 volume_absorption,,,<A_volume_total>,absorption_check,ok,volume_integral_Im_eps_E2
 ```
 
-如某项未实现或未计算，必须写：
-
-```text
-status = not_implemented / skipped / failed
-```
-
-不要只留空值而不说明原因。
+如某项未实现或未计算，必须写 `status = not_implemented / skipped / failed`，不要只留空值而不说明原因。
 
 ### 4.2 `port_power.json`
 
@@ -244,7 +241,7 @@ volume_absorption.json
 
 ---
 
-## 5. Validation cases
+## 5. 验证案例
 
 本任务不要求达到最终物理收敛，但要验证四套 R/T/A 计算代码的正确性和一致性。
 
@@ -276,30 +273,17 @@ n_grating = n_air = 1 + 0j
 mesh_target_size = 10 nm, 5 nm, 3 nm
 ```
 
-### 5.1 Required cases
-
 必须运行：
 
 ```text
 Stage 4A flat-layer: 10 nm, 5 nm, 3 nm
 Stage 4B zero-contrast: 10 nm, 5 nm, 3 nm
-```
-
-### 5.2 Real block case
-
-也运行真实 Si block：
-
-```text
 Stage 4B real Si block: 10 nm, 5 nm, 3 nm
 ```
 
 用户确认 4B 的 3 nm 可以跑通，因此不要默认跳过。除非遇到内存不足、额度不足、PETSc/Docker 错误或运行时间明显异常，否则耐心等待，不要提前中断。
 
-### 5.3 Boundary/model choices
-
-优先使用当前 Stage 4 `dtn_port` 路径。若使用 `zero_order` 或 `auto_propagating`，必须在 `run_summary.json` 和 outcomes 中明确写出。
-
-如果为了资源控制需要限制衍射级，也必须写明：
+优先使用当前 Stage 4 `dtn_port` 路径。若使用 `zero_order` 或 `auto_propagating`，必须在 `run_summary.json` 和 outcomes 中明确写出。如果为了资源控制需要限制衍射级，也必须写明：
 
 ```text
 stage4_dtn_order_policy
@@ -309,12 +293,12 @@ diffraction_order_max_m/n
 
 ---
 
-## 6. Outcomes
+## 6. Outcomes 输出要求
 
-新增 outcomes 目录：
+本任务的 outcomes 应写入本任务目录：
 
 ```text
-notes/outcomes/20260702_rta_output_volume_absorption/
+docs/task002_rta_output_volume_absorption/outcomes/
 ```
 
 至少包含：
@@ -449,7 +433,7 @@ After implementing the new output structure and volume absorption calculation, r
 
 ---
 
-## 8. Acceptance criteria
+## 8. 验收标准
 
 This task is complete only if:
 
