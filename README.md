@@ -6,6 +6,35 @@
 
 ---
 
+## 0. 当前合并版本状态
+
+当前分支：
+
+```text
+codex/20260702-rta-output-volume-absorption
+```
+
+已经完成 task002/task003/task004 的阶段性验证，可以考虑合并到 `master`。本次合并的含义是：
+
+```text
+完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
+```
+
+本次合并不代表：
+
+```text
+真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
+```
+
+当前版本边界详见：
+
+```text
+notes/reference/current_version_boundaries.md
+docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
+```
+
+---
+
 ## 1. 当前代码已开发的主要功能
 
 ### 1.1 二维 EUV 周期光栅
@@ -128,6 +157,8 @@ fresnel_interface
 
 用途：验证空气/基底平坦界面的 incident-scattered 求解口径，并与 Fresnel 解析参考对比。
 
+注意：task004 中 Stage 2B/2C 只做了极粗网格 smoke，不代表 PML/Fresnel 精度已经通过。
+
 主要入口：
 
 ```text
@@ -150,6 +181,7 @@ A_volume 材料体吸收
 flat-layer analytic reference
 probe_eh_fourier / net_flux diagnostic
 small-cell p=1/p=2 收敛性
+MPI 1/4/8 一致性
 ```
 
 主要入口：
@@ -166,9 +198,18 @@ period_x = period_y = 10 nm
 air_height = substrate_thickness = 5 nm
 lambda0 = 13.5 nm
 n_substrate = 0.999002304859 + 0.00182649365j
+nedelec_degree = 2
 ```
 
 该配置没有横向结构，理论上只有零级传播通道，可避免 100 nm 周期下 auto_propagating 枚举大量无物理激发的端口模态。
+
+当前结论：
+
+```text
+p=2 明显优于 p=1；
+port + A_volume 主线稳定闭合；
+MPI 1/4/8 不改变主线结果。
+```
 
 ### 2.6 Stage 4：真实 3D 周期矩形柱/光栅散射
 
@@ -204,6 +245,7 @@ src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
 ```text
 p=1: 可运行，受 3D EUV 网格和直接法内存限制明显。
 p=2: Stage 4 block grating 路径已开放，但仍以 smoke / sanity 为主。
+zero-contrast smoke: task004 已通过，用于确认几何/tag/输出路径不崩溃。
 真实 100 nm grating 的 h≈1 nm 物理收敛不适合作为小电脑阶段验收目标。
 ```
 
@@ -359,6 +401,13 @@ src/geometry/mesh_builder_3d.py
 mpiexec -n 4 python3 -m src.runners.run_3d_cases --stage-case stage4_block_grating
 ```
 
+task004 已验证 small-cell flat-layer 中 MPI 1/4/8 不改变主线结果：
+
+```text
+R_port / T_port / A_volume 与串行差异低于 1e-8；
+closure 差异低于 1e-10。
+```
+
 注意事项：
 
 ```text
@@ -429,8 +478,8 @@ python3 -m src.runners.run_3d_cases \
   --substrate-thickness 5 \
   --lambda0 13.5 \
   --n-substrate 0.999002304859+0.00182649365j \
-  --mesh-target-size 1.0 \
-  --nedelec-degree 1 \
+  --mesh-target-size 1.5 \
+  --nedelec-degree 2 \
   --stage4-boundary-model dtn_port \
   --stage4-dtn-order-policy auto_propagating \
   --stage4-dtn-assembly auxiliary \
@@ -464,6 +513,7 @@ results/ # 本地大结果，默认不提交 Git
 
 ```text
 notes/README.md
+notes/reference/current_version_boundaries.md
 notes/reference/code_walkthrough.md
 notes/quick_start/2d_euv_grating_dtn_usage_guide.md
 notes/quick_start/stage2_2a_2b_2c_usage_guide.md
@@ -493,7 +543,9 @@ docs/task004_small_cell_p_convergence_mpi_regression/
 2D EUV DtN port 主线已形成可用验证链条；
 3D staged framework 已经具备 Stage 1 / 2 / flat-layer sanity / block grating smoke 路径；
 Stage 4 dtn_port + A_volume 主线在 small-cell flat-layer 中已能闭合；
-MPI 并行、p=2 收敛和全阶段回归仍在继续验证中。
+p=2 在 small-cell flat-layer 中明显优于 p=1；
+MPI 1/4/8 不改变 port/A_volume 主线结果；
+全阶段 smoke regression 已完成。
 ```
 
 当前不应过度声称：
@@ -501,15 +553,20 @@ MPI 并行、p=2 收敛和全阶段回归仍在继续验证中。
 ```text
 真实 100 nm 3D EUV grating 已完成物理收敛 benchmark；
 probe_eh_fourier / net_flux 已能替代 port 作为主 R/T；
+Stage 2B/2C 的粗网格 smoke 代表 PML/Fresnel 精度通过；
 小电脑可以完成真实 grating 的 h≈1 nm 级别正式计算。
 ```
 
-后续优先级：
+合并后推荐表述：
 
 ```text
-1. task004：small-cell p=1/p=2 收敛性；
-2. MPI 1/4/8 并行一致性；
-3. probe/net_flux 是否因 p=2 改善；
-4. Stage 1/2/flat-layer/stage4_block_grating zero-contrast 轻量回归；
-5. 未来在更高算力下再推进真实 100 nm grating 物理 benchmark。
+当前版本完成 Stage 4 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p 收敛、MPI 一致性与全阶段 smoke 回归。port + A_volume 是当前主线。
+```
+
+后续如果需要继续深入，建议另开任务研究：
+
+```text
+probe/net_flux 的采样与 curl 重构误差；
+Stage 2B/2C 的精度验证；
+高资源条件下真实 100 nm 3D EUV grating benchmark。
 ```
