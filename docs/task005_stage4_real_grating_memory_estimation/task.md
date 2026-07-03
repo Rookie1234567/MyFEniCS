@@ -2,15 +2,15 @@
 
 ## 0. 分支要求与开始流程
 
-本任务书保存在上一轮阶段性分支中，供本地合并后继续执行。**不要直接在本分支继续开发 task005，也不要由 ChatGPT 代为创建远程 task005 分支。**
+本任务**不是**继续在上一轮分支上直接开发。开始本任务前，先完成上一轮阶段性分支的合并，再从更新后的 `master` 新开任务分支。
 
-上一轮阶段性分支：
+上一轮分支：
 
 ```text
 codex/20260702-rta-output-volume-absorption
 ```
 
-开始 task005 前，应先在本地完成上一轮分支合并：
+本任务开始前应先做：
 
 ```bash
 git checkout master
@@ -19,25 +19,20 @@ git merge codex/20260702-rta-output-volume-absorption
 git push origin master
 ```
 
-然后由本地 Codex/开发者从更新后的 `master` 新建 task005 分支，例如：
+然后从已合并 task000-task004 的 `master` 新开本任务分支：
 
 ```bash
 git checkout -b codex/20260703-stage4-real-grating-memory-estimation
-```
-
-完成任务后再由本地推送远程：
-
-```bash
 git push -u origin codex/20260703-stage4-real-grating-memory-estimation
 ```
 
-推荐本任务分支名：
+本任务分支名统一使用：
 
 ```text
 codex/20260703-stage4-real-grating-memory-estimation
 ```
 
-如果远程已经存在同名分支，不要默认使用它；请确认它是否确实从更新后的 `master` 创建。若不是，请删除/重建或 rebase 到更新后的 `master`。
+如果远程已经存在该分支，请确认它的基底包含上一轮分支 `codex/20260702-rta-output-volume-absorption` 的全部 task000-task004 内容；否则请先 rebase 到更新后的 `master`，或删除后从更新后的 `master` 重新创建。
 
 开始前必须阅读：
 
@@ -276,7 +271,7 @@ python3 -m src.studies.run_3d_matrix_scale \
   --output-csv docs/task005_stage4_real_grating_memory_estimation/outcomes/assemble_matrix_scale.csv
 ```
 
-注意：`run_3d_matrix_scale.py` 内部会按 `--mpi-procs-list` 为每个 case 构造 `mpiexec -n ...`。不要在外层再套一层 `mpiexec`，除非已经确认当前脚本机制不会造成嵌套 MPI。
+注意：`run_3d_matrix_scale.py` 内部会按 `--mpi-procs-list` 为每个 case 构造 `mpiexec -n ...`。不要在外层再套一层 `mpiexec`，除非你已经确认当前脚本机制不会造成嵌套 MPI。
 
 ### 5.4 必须记录字段
 
