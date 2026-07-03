@@ -1,11 +1,17 @@
-# REVIEW REPORT 20260703: R/T/A 输出整理与体吸收积分
+# REVIEW REPORT 20260703：R/T/A 输出整理与体吸收积分
 
-## 1. Review scope
+## 1. 审查范围
 
 本报告审查分支：
 
 ```text
 codex/20260702-rta-output-volume-absorption
+```
+
+本报告属于任务目录：
+
+```text
+docs/task002_rta_output_volume_absorption/review_report.md
 ```
 
 审查重点包括：
@@ -18,7 +24,7 @@ codex/20260702-rta-output-volume-absorption
 
 ---
 
-## 2. Overall conclusion
+## 2. 总体结论
 
 本轮任务在“后处理输出结构”和“体吸收接口”层面基本完成：
 
@@ -33,10 +39,10 @@ flux_power.json
 volume_absorption.json
 ```
 
-- 新增了理论说明：
+- 新增了理论说明，迁移后路径为：
 
 ```text
-notes/docs/THEORY_RTA_AND_VOLUME_ABSORPTION.md
+notes/theory/THEORY_RTA_AND_VOLUME_ABSORPTION.md
 ```
 
 - 跑完了 9 个正式 case：
@@ -57,7 +63,7 @@ port / probe_eh_fourier / net_flux / volume_absorption 四类功率口径没有�
 
 ---
 
-## 3. Positive findings
+## 3. 积极发现
 
 ### 3.1 输出结构已经明显变清晰
 
@@ -118,7 +124,7 @@ block geometry / material tag / mesh split 本身大概率没有引入额外虚�
 
 ---
 
-## 4. Major numerical findings
+## 4. 主要数值发现
 
 ### 4.1 所有 consistency checks 都失败
 
@@ -184,9 +190,7 @@ real Si block 中 `A_volume_total` 随网格细化从 10 nm 的近零增长到 5
 
 ---
 
-## 5. Most likely root causes to investigate
-
-下一轮应优先排查以下问题，按优先级排序。
+## 5. 最可能需要排查的根因
 
 ### 5.1 Flat-layer analytic reference 缺失
 
@@ -245,7 +249,7 @@ T_from_net_flux = bottom_flux_outward / incident_power
 
 ---
 
-## 6. Merge recommendation
+## 6. 合并建议
 
 暂不建议把该分支合并进 master。
 
@@ -259,14 +263,14 @@ T_from_net_flux = bottom_flux_outward / incident_power
 建议在同一分支继续完成下一轮修复任务：
 
 ```text
-CODEX_TASK_20260703_stage4_power_consistency.md
+docs/task003_stage4_power_consistency/task.md
 ```
 
 等 flat-layer analytic benchmark 和四类功率一致性通过后，再考虑合并。
 
 ---
 
-## 7. Immediate next task
+## 7. 立即下一步
 
 下一轮任务应聚焦一个目标：
 
