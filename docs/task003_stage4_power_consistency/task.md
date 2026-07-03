@@ -8,10 +8,10 @@
 codex/20260702-rta-output-volume-absorption
 ```
 
-开始前先阅读：
+开始前先阅读上一轮审查报告：
 
 ```text
-notes/docs/REVIEW_REPORT_20260703_rta_output_volume_absorption.md
+docs/task002_rta_output_volume_absorption/review_report.md
 ```
 
 本任务的目标是修复上一轮结果中暴露出的 Stage 4 flat-layer 功率一致性问题。请保留上一轮新增的简洁输出结构：
@@ -24,11 +24,20 @@ flux_power.json
 volume_absorption.json
 ```
 
-重要要求：本任务必须在 `notes/outcomes/` 下新建独立的 outcomes 文件夹来保存本轮输出记录。不要覆盖、追加或改写之前任务的 outcomes 文件夹，例如：
+重要要求：本任务的任务书、outcomes 和后续 review report 都应保存在本任务目录中：
 
 ```text
-notes/outcomes/20260703_stage4_validation_cleanup/
-notes/outcomes/20260702_rta_output_volume_absorption/
+docs/task003_stage4_power_consistency/
+├── task.md
+├── outcomes/
+└── review_report.md
+```
+
+不要覆盖、追加或改写之前任务目录，例如：
+
+```text
+docs/task001_stage4_validation_cleanup/
+docs/task002_rta_output_volume_absorption/
 ```
 
 这些目录是历史记录，除非另有明确要求，否则必须保持不变。
@@ -177,7 +186,7 @@ S_code = 0.5*Re(E x H_code*)
 A_volume_ref 应接近 A_flux_ref
 ```
 
-如果最终确认仍使用 `k0^2`，必须在理论文档和 json normalization note 中写清楚推导依据。如果改为 `k0`，也要同步更新代码、理论文档和输出说明。
+如果最终确认仍使用 `k0^2`，必须在理论文档和 json normalization note 中写清楚推导依据。如果改为 `k0`，也要同步更新代码、理论文档和输出说明。理论性说明文档应放在 `notes/theory/` 下，而不是放进任务目录。
 
 ### 3.6 检查 DtN port 的入射/出射幅值
 
@@ -285,22 +294,22 @@ Stage 4B real Si block: 10 nm
 
 ## 5. Outcomes 输出要求
 
-本任务必须在 `notes/outcomes/` 下新建独立文件夹：
+本任务的 outcomes 必须写入本任务目录：
 
 ```text
-notes/outcomes/20260703_stage4_power_consistency/
+docs/task003_stage4_power_consistency/outcomes/
 ```
 
-不要把本任务输出写入任何旧文件夹。尤其不要复用：
+不要把本任务输出写入任何旧任务目录。尤其不要复用：
 
 ```text
-notes/outcomes/20260703_stage4_validation_cleanup/
-notes/outcomes/20260702_rta_output_volume_absorption/
+docs/task001_stage4_validation_cleanup/outcomes/
+docs/task002_rta_output_volume_absorption/outcomes/
 ```
 
-这些旧文件夹应作为历史快照保留。本任务的 summary、metrics、logs 和 changed files 必须全部写入新的 `20260703_stage4_power_consistency` 文件夹中。
+这些旧文件夹应作为历史快照保留。本任务的 summary、metrics、logs 和 changed files 必须全部写入新的 `docs/task003_stage4_power_consistency/outcomes/` 文件夹中。
 
-新文件夹至少包含：
+新 outcomes 文件夹至少包含：
 
 ```text
 summary.md
