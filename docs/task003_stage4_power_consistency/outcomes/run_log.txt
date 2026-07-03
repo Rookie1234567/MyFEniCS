@@ -33,6 +33,17 @@ Raw small outputs archived:
 
 - docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h10_auto/
 - docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h5_auto/
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/small_cell_h2p7/
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/small_cell_h2/
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/small_cell_h1p5/
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/small_cell_h1/
+
+6. Supplement small-cell Stage 4A flat-layer runs
+   Common options:
+   --stage-case stage4_flat_layer_sanity --period-x 10 --period-y 10 --air-height 5 --substrate-thickness 5 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output
+   Mesh targets: 2.7, 2.0, 1.5, 1.0 nm.
+   Result: all completed. DtN auxiliary modes dropped from 708 in the 100 nm cell to 4 in the 10 nm cell.
+   Key trend: R_port decreased from 3.17e-3 at h=2.7 to 6.62e-5 at h=1.0; port-volume closure stayed at machine precision.
 
 Large generated files not archived:
 

@@ -117,3 +117,28 @@ zero-contrast 本轮没有继续跑，因为 flat-layer 的 FEM probe/net_flux �
 | 能否进入 zero-contrast / real-block validation？ | 暂不建议。先解决 FEM probe/net_flux 与 port 的差异，并给 h=3 或 p=2/h=5 一个可完成配置。 |
 | 当前结果是否可作为 physical benchmark candidate？ | 不能，仍为 diagnostic only。 |
 | 下一轮优先级 | 优先做 probe/net_flux 的 FEM 采样诊断，其次尝试 p=2 或迭代求解/分块策略完成 h=3。 |
+
+## Supplement: Small-Cell Flat Layer
+
+用户指出 flat interface 不需要 `100 nm x 100 nm` 横向周期。本轮追加了 `10 nm x 10 nm x 10 nm` 小 cell 补充验证，空气和基底厚度均为 `5 nm`。
+
+补充结果保存在：
+
+- `supplement_small_cell.md`
+- `small_cell_metrics.csv`
+- `small_cell_parameters.json`
+- `raw_runs/small_cell_h2p7/`
+- `raw_runs/small_cell_h2/`
+- `raw_runs/small_cell_h1p5/`
+- `raw_runs/small_cell_h1/`
+
+关键结论：
+
+| mesh_nm | DtN modes | R_port | T_port | A_volume | closure |
+|---:|---:|---:|---:|---:|---:|
+| 2.7 | 4 | 3.169e-03 | 9.894e-01 | 7.418e-03 | -1.55e-15 |
+| 2.0 | 4 | 5.938e-04 | 9.915e-01 | 7.938e-03 | -8.55e-15 |
+| 1.5 | 4 | 1.755e-04 | 9.917e-01 | 8.155e-03 | -1.11e-16 |
+| 1.0 | 4 | 6.616e-05 | 9.917e-01 | 8.262e-03 | -2.22e-15 |
+
+小 cell 下 auto_propagating 只保留零级 x/y 四个端口模态，`port` 全反射现象消失，且 `port + volume_absorption` 能量闭合稳定在机器精度。原 100 nm cell 中的 h=10 全反射应视为大横向周期、粗 p1 网格和大量传播端口模态共同造成的数值诊断失败。

@@ -19,6 +19,10 @@
 - `docs/task003_stage4_power_consistency/outcomes/run_log.txt`：本轮运行日志摘要。
 - `docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h10_auto/*`：h=10 auto 小型输出归档。
 - `docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h5_auto/*`：h=5 auto 小型输出归档。
+- `docs/task003_stage4_power_consistency/outcomes/supplement_small_cell.md`：10 nm 小 cell 补充验证说明。
+- `docs/task003_stage4_power_consistency/outcomes/small_cell_metrics.csv`：10 nm 小 cell 多网格收敛指标。
+- `docs/task003_stage4_power_consistency/outcomes/small_cell_parameters.json`：10 nm 小 cell 补充验证参数与关键结果。
+- `docs/task003_stage4_power_consistency/outcomes/raw_runs/small_cell_h*/*`：小 cell 补充验证小型输出归档。
 
 ## 未改动
 
