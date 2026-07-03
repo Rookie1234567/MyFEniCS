@@ -16,6 +16,15 @@ notes/docs/REVIEW_REPORT_20260703_rta_output_volume_absorption.md
 
 The goal is to fix the Stage 4 flat-layer power-consistency problem exposed by the previous outcomes. Keep the new `power_summary.csv`, `port_power.json`, `probe_power.json`, `flux_power.json`, and `volume_absorption.json` structure.
 
+Important: this task must create a new outcomes folder for its own run records. Do not overwrite or append to earlier outcomes folders such as:
+
+```text
+notes/outcomes/20260703_stage4_validation_cleanup/
+notes/outcomes/20260702_rta_output_volume_absorption/
+```
+
+Those folders are historical records and must remain unchanged unless there is a separate explicit request.
+
 ---
 
 ## 1. Problem
@@ -235,13 +244,22 @@ Run real Si block at least at 10 nm after the flat-layer and zero-contrast check
 
 ## 5. Outcomes
 
-Create:
+Create a new outcomes folder under `notes/outcomes/` specifically for this task:
 
 ```text
 notes/outcomes/20260703_stage4_power_consistency/
 ```
 
-with:
+Do not write this task's outputs into any previous folder. In particular, do not reuse:
+
+```text
+notes/outcomes/20260703_stage4_validation_cleanup/
+notes/outcomes/20260702_rta_output_volume_absorption/
+```
+
+Those folders should remain historical snapshots of earlier work. This task's summary, metrics, logs, and changed-file list must be kept in the new folder above.
+
+The new folder should contain:
 
 ```text
 summary.md
