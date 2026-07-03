@@ -22,6 +22,7 @@ docs/taskXXX_task_name/
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
 | task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
+| task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已收到任务书，待 Codex 执行 |
 
 ## 合并前结论
 
