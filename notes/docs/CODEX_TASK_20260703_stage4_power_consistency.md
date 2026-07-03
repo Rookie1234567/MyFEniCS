@@ -1,54 +1,70 @@
-# CODEX TASK 20260703: Stage 4 power consistency
+# CODEX TASK 20260703：Stage 4 功率一致性修复
 
-## 0. Branch
+## 0. 分支要求
 
-Continue on the existing branch:
+继续在当前分支工作：
 
 ```text
 codex/20260702-rta-output-volume-absorption
 ```
 
-Read first:
+开始前先阅读：
 
 ```text
 notes/docs/REVIEW_REPORT_20260703_rta_output_volume_absorption.md
 ```
 
-The goal is to fix the Stage 4 flat-layer power-consistency problem exposed by the previous outcomes. Keep the new `power_summary.csv`, `port_power.json`, `probe_power.json`, `flux_power.json`, and `volume_absorption.json` structure.
+本任务的目标是修复上一轮结果中暴露出的 Stage 4 flat-layer 功率一致性问题。请保留上一轮新增的简洁输出结构：
 
-Important: this task must create a new outcomes folder for its own run records. Do not overwrite or append to earlier outcomes folders such as:
+```text
+power_summary.csv
+port_power.json
+probe_power.json
+flux_power.json
+volume_absorption.json
+```
+
+重要要求：本任务必须在 `notes/outcomes/` 下新建独立的 outcomes 文件夹来保存本轮输出记录。不要覆盖、追加或改写之前任务的 outcomes 文件夹，例如：
 
 ```text
 notes/outcomes/20260703_stage4_validation_cleanup/
 notes/outcomes/20260702_rta_output_volume_absorption/
 ```
 
-Those folders are historical records and must remain unchanged unless there is a separate explicit request.
+这些目录是历史记录，除非另有明确要求，否则必须保持不变。
 
 ---
 
-## 1. Problem
+## 1. 当前问题
 
-The previous task successfully split the R/T/A outputs and added an initial `A_volume` calculation, but all consistency checks failed. Typical symptoms were:
+上一轮任务已经完成了 R/T/A 输出拆分，并加入了初版 `A_volume` 材料体吸收计算。但 9 个正式算例的一致性检查全部失败。典型现象如下：
 
 ```text
-flat_layer 10 nm:
-  port and net_flux are close to R=1, T=0, A=0
-  probe_eh_fourier gives A about 0.996
+flat_layer 10 nm：
+  port 和 net_flux 接近 R=1、T=0、A=0；
+  probe_eh_fourier 却给出 A 约为 0.996。
 
-flat_layer 5/3 nm:
-  port gives T>1 and negative A
-  net_flux gives R>1 and negative T
-  A_volume does not close with port balance
+flat_layer 5/3 nm：
+  port 出现 T>1 和负 A；
+  net_flux 出现 R>1 和负 T；
+  A_volume 无法与 port 的 A_balance 闭合。
 ```
 
-This means the next task should focus on analytic flat-layer calibration, not on more complex grating physics.
+这说明当前的核心问题不是输出格式，而是 Stage 4 中功率归一化、模态方向、解析参考、Poynting 通量和体吸收口径之间没有一致。
+
+因此，本轮不要优先扩展复杂光栅物理，也不要继续大量跑真实 block。应先集中修复 flat-layer analytic benchmark。
 
 ---
 
-## 2. Goal
+## 2. 本轮目标
 
-Make the following four quantities agree for the Stage 4A flat-layer benchmark:
+本轮唯一核心目标是：
+
+```text
+让 Stage 4A flat-layer benchmark 中的四类功率/吸收结果相互一致，并与解析 flat-layer Fresnel/layered reference 一致。
+```
+
+四类结果包括：
 
 ```text
 port
@@ -57,21 +73,21 @@ net_flux
 volume_absorption
 ```
 
-They should also agree with an analytic flat-layer Fresnel/layered reference using the same top and bottom reference planes as the numerical result.
+比较时必须使用与数值结果相同的 top/bottom 参考平面。特别是有损基底中的透射功率，不能只用界面处的 Fresnel 透射率，而要考虑从界面传播到底部参考平面的衰减。
 
 ---
 
-## 3. Required work
+## 3. 必须完成的实现内容
 
-### 3.1 Add analytic flat-layer reference
+### 3.1 新增 flat-layer 解析参考模块
 
-Add a small reference module, suggested path:
+新增一个解析参考模块，建议路径：
 
 ```text
 src/postprocessing/flat_layer_reference_3d.py
 ```
 
-It should compute and output, at minimum:
+至少应计算并输出：
 
 ```text
 R_ref
@@ -88,39 +104,41 @@ reference_plane_z_bottom
 interface_z
 ```
 
-For lossy substrate, `T_ref_at_bottom_reference_plane` must include propagation loss from the interface to the selected bottom reference plane. It should not be confused with interface-only Fresnel transmittance.
+注意：当前计算域是有限厚度的计算域，不是单独的无限界面问题。因此底部参考平面如果位于有损 substrate 内部，则 `T_ref_at_bottom_reference_plane` 必须包含从界面到底部参考平面的传播衰减。
 
-### 3.2 Add analytic-only postprocess tests
+### 3.2 增加 analytic-only 后处理测试
 
-Before any heavy FEM run, add tests or diagnostics that feed an analytic layered field directly into the postprocessors:
-
-```text
-analytic E/H -> probe_eh_fourier
-analytic E/H -> net_flux
-analytic E/H -> volume_absorption
-```
-
-These tests should verify that the postprocessors can recover the analytic `R_ref`, `T_ref`, and `A_ref` without involving a finite-element solve.
-
-### 3.3 Fix probe_eh_fourier if analytic input fails
-
-If the analytic field still gives wrong probe R/T/A, inspect:
+在跑重型 FEM 之前，先增加只依赖解析场的测试或诊断。也就是说，把解析 layered field 直接喂给后处理路径：
 
 ```text
-incident-field subtraction on top plane
-up/down wave direction naming
-vertical_sign and k_z convention
-phase factors exp(+/- i beta z)
-H-field sign convention
-complex beta in lossy substrate
-modal power normalization
+解析 E/H -> probe_eh_fourier
+解析 E/H -> net_flux
+解析 E/H -> volume_absorption
 ```
 
-E-only Fourier remains diagnostic only. The official probe result should stay E/H Fourier directional fitting.
+这些测试必须验证：在不经过 FEM 求解的情况下，后处理公式本身能恢复解析的 `R_ref`、`T_ref` 和 `A_ref`。
 
-### 3.4 Verify net_flux sign convention
+### 3.3 如果 analytic-only 下 probe_eh_fourier 失败，先修 probe
 
-For analytic fields, check explicitly:
+如果解析场输入后 `probe_eh_fourier` 仍然给出错误 R/T/A，优先检查并修复 probe 后处理，而不是调 FEM 解。
+
+重点检查：
+
+```text
+top plane 上的入射场扣除
+up/down 波方向命名
+vertical_sign 与 k_z 的约定
+相位因子 exp(+/- i beta z)
+H 场符号约定
+有损 substrate 中的 complex beta
+模态功率归一化
+```
+
+E-only Fourier 仍只能作为 diagnostic，不能作为 official probe R/T。官方 probe 结果仍应使用 E/H Fourier directional fitting。
+
+### 3.4 验证 net_flux 的符号约定
+
+对解析场，显式验证：
 
 ```text
 top_flux_outward = P_reflected - P_incident
@@ -130,38 +148,40 @@ T_flux = bottom_flux_outward / P_incident
 A_flux = 1 - R_flux - T_flux
 ```
 
-The analytic field should not produce negative transmitted flux for the flat-layer benchmark.
+解析 flat-layer 场不应得到负的 transmitted flux。如果 analytic-only net_flux 出现 `T_flux < 0`，优先检查 H 场符号、法向量方向、bottom traveling direction 和总场定义。
 
-### 3.5 Re-derive A_volume normalization
+### 3.5 重新推导并验证 A_volume 归一化
 
-The current implementation uses:
+当前 `A_volume` 初版使用：
 
 ```text
 P_abs = integral 0.5*k0^2*Im(epsilon_r)*|E_total|^2 dV
 ```
 
-Re-derive the coefficient using the project code units:
+请从项目当前的 code units 重新推导体吸收系数。当前代码中的磁场和 Poynting 通量定义接近：
 
 ```text
 H_code = curl(E) / (i*k0*mu_r)
 S_code = 0.5*Re(E x H_code*)
 ```
 
-Check whether the material loss density should instead use:
+需要检查材料损耗密度是否应改为：
 
 ```text
 0.5*k0*Im(epsilon_r)*|E_total|^2
 ```
 
-Do not choose the coefficient by intuition. Verify it using analytic lossy plane-wave attenuation and flux loss. The expected check is:
+不要凭直觉修改系数。必须使用解析有损平面波的通量差进行验证。目标检查是：
 
 ```text
-A_volume_ref approximately equals A_flux_ref
+A_volume_ref 应接近 A_flux_ref
 ```
 
-### 3.6 Check DtN port amplitudes
+如果最终确认仍使用 `k0^2`，必须在理论文档和 json normalization note 中写清楚推导依据。如果改为 `k0`，也要同步更新代码、理论文档和输出说明。
 
-For flat-layer FEM results, compare the DtN auxiliary amplitudes with the analytic reference:
+### 3.6 检查 DtN port 的入射/出射幅值
+
+对于 flat-layer FEM 结果，需要将 DtN auxiliary 输出与解析参考逐项比较：
 
 ```text
 incident_projection
@@ -172,18 +192,29 @@ T_port
 A_port_balance
 ```
 
-Inspect the top incident projection, top source traction sign, upward/downward vertical signs, complex-substrate beta, and `mode.power_per_unit_amplitude`.
+重点检查：
 
-### 3.7 Add reference output files
+```text
+top incident projection 是否与解析入射幅值一致
+top outgoing amplitude 是否等于解析反射幅值
+bottom outgoing amplitude 是否等于底部参考平面的解析透射幅值
+mode.power_per_unit_amplitude 在有损 substrate 中是否仍适用
+top source term 的符号是否正确
+auxiliary block 中相位和复共轭是否一致
+```
 
-For each flat-layer result folder, write:
+### 3.7 增加 flat-layer 参考输出文件
+
+每个 flat-layer 结果文件夹中额外输出：
 
 ```text
 flat_layer_reference.json
 power_consistency.json
 ```
 
-`flat_layer_reference.json` should contain the analytic reference values. `power_consistency.json` should contain differences such as:
+`flat_layer_reference.json` 至少包含解析参考值。
+
+`power_consistency.json` 至少包含以下差值：
 
 ```text
 R_port - R_ref
@@ -201,21 +232,23 @@ closure_error_port_volume = R_port + T_port + A_volume - 1
 
 ---
 
-## 4. Validation plan
+## 4. 验证计划
 
-### 4.1 Analytic-only tests
+### 4.1 analytic-only 测试
 
-Add tests for:
+至少增加以下测试：
 
-1. Normal-incidence Fresnel/layered reference.
-2. Analytic field through `probe_eh_fourier`.
-3. Analytic field through `net_flux`.
-4. Analytic lossy-substrate volume absorption against flux loss.
-5. Lossless substrate gives near-zero `A_volume`.
+1. normal incidence Fresnel/layered reference；
+2. 解析场输入 `probe_eh_fourier` 后能恢复 R/T；
+3. 解析场输入 `net_flux` 后能恢复 R/T；
+4. 有损 substrate 的 volume absorption 与解析 flux loss 一致；
+5. 无损 substrate 时 `A_volume` 接近 0。
 
-### 4.2 FEM flat-layer runs
+这些测试应尽量轻量，不应依赖重型 FEM 求解。
 
-After analytic-only tests pass, run Stage 4A flat-layer:
+### 4.2 FEM flat-layer 运行
+
+analytic-only 测试通过后，再运行 Stage 4A flat-layer：
 
 ```text
 mesh_target_size = 10 nm, 5 nm, 3 nm
@@ -225,41 +258,49 @@ stage4_boundary_model = dtn_port
 stage4_dtn_order_policy = auto_propagating
 ```
 
-### 4.3 zero-contrast regression
+如果 analytic-only 测试没通过，不要急着跑 5/3 nm FEM，先修公式和后处理。
 
-After flat-layer is fixed, run Stage 4B zero-contrast:
+### 4.3 zero-contrast 回归
+
+flat-layer 修复后，再运行 Stage 4B zero-contrast：
 
 ```text
 mesh_target_size = 10 nm, 5 nm, 3 nm
 n_grating = 1 + 0j
 ```
 
-It should match the flat-layer result at the same mesh size.
+zero-contrast 应在同网格下接近 flat-layer。
 
-### 4.4 real Si block smoke test
+### 4.4 real Si block 轻量确认
 
-Run real Si block at least at 10 nm after the flat-layer and zero-contrast checks pass. Run 5/3 nm only if the preceding checks are already meaningful and resources allow it.
+flat-layer 和 zero-contrast 都有意义后，再运行真实 Si block。最低要求跑：
+
+```text
+Stage 4B real Si block: 10 nm
+```
+
+5/3 nm 只有在前面检查通过且资源允许时再跑。本任务的重点不是 real block 收敛，而是先修功率一致性。
 
 ---
 
-## 5. Outcomes
+## 5. Outcomes 输出要求
 
-Create a new outcomes folder under `notes/outcomes/` specifically for this task:
+本任务必须在 `notes/outcomes/` 下新建独立文件夹：
 
 ```text
 notes/outcomes/20260703_stage4_power_consistency/
 ```
 
-Do not write this task's outputs into any previous folder. In particular, do not reuse:
+不要把本任务输出写入任何旧文件夹。尤其不要复用：
 
 ```text
 notes/outcomes/20260703_stage4_validation_cleanup/
 notes/outcomes/20260702_rta_output_volume_absorption/
 ```
 
-Those folders should remain historical snapshots of earlier work. This task's summary, metrics, logs, and changed-file list must be kept in the new folder above.
+这些旧文件夹应作为历史快照保留。本任务的 summary、metrics、logs 和 changed files 必须全部写入新的 `20260703_stage4_power_consistency` 文件夹中。
 
-The new folder should contain:
+新文件夹至少包含：
 
 ```text
 summary.md
@@ -269,29 +310,38 @@ run_log.txt
 changed_files.md
 ```
 
-`summary.md` should include these tables:
+### 5.1 summary.md 表格要求
 
-### Table 1: analytic-only tests
+#### 表 1：analytic-only 测试
 
 | test | status | max_error | note |
 |---|---|---:|---|
 
-### Table 2: flat-layer FEM vs analytic reference
+#### 表 2：flat-layer FEM 与解析参考对比
 
 | mesh_nm | method | R | T | A | R_ref | T_ref | A_ref | dR | dT | dA | pass |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
 
-### Table 3: zero-contrast regression
+方法至少包括：
+
+```text
+port
+probe_eh_fourier
+net_flux
+volume_absorption
+```
+
+#### 表 3：zero-contrast 回归
 
 | mesh_nm | method | flat_value | zero_contrast_value | difference | pass |
 |---:|---|---:|---:|---:|---|
 
-### Table 4: root cause summary
+#### 表 4：根因排查总结
 
 | issue | status | fix |
 |---|---|---|
 
-Issues to cover:
+至少覆盖：
 
 ```text
 probe direction/phase
@@ -301,23 +351,28 @@ DtN incident/outgoing amplitude
 complex substrate beta power normalization
 ```
 
-### Table 5: final recommendation
+#### 表 5：最终建议
 
-State whether Stage 4 power postprocess is ready for zero-contrast and real-block validation, or still diagnostic only.
+明确说明 Stage 4 power postprocess 当前是：
+
+```text
+可以进入 zero-contrast / real-block validation
+或仍然只能作为 diagnostic only
+```
 
 ---
 
-## 6. Acceptance criteria
+## 6. 验收标准
 
-This task is complete when:
+本任务完成的标准：
 
-1. `flat_layer_reference.json` is produced for flat-layer cases.
-2. Analytic-only probe/net_flux/volume tests pass before heavy FEM runs.
-3. Flat-layer FEM results are compared with analytic reference at 10/5/3 nm.
-4. `probe_eh_fourier` no longer gives near-total artificial absorption for flat-layer 10 nm.
-5. Analytic net_flux no longer gives negative transmitted power.
-6. `A_volume` normalization is derived and verified against analytic flux loss.
-7. `R + T + A_volume` is checked using consistent reference planes.
-8. zero-contrast remains close to flat-layer after fixes.
-9. The new outcomes clearly state whether the result is a physical benchmark candidate or still numerical sanity only.
-10. Large `results/` folders remain uncommitted.
+1. flat-layer case 会输出 `flat_layer_reference.json`。
+2. analytic-only 的 probe/net_flux/volume 测试先于重型 FEM 运行并通过。
+3. flat-layer FEM 10/5/3 nm 与解析参考完成对比。
+4. `probe_eh_fourier` 不再在 flat-layer 10 nm 下给出接近 1 的虚假吸收。
+5. analytic net_flux 不再给出负的 transmitted power。
+6. `A_volume` 的归一化系数完成推导，并通过解析 flux loss 验证。
+7. 使用一致的参考平面检查 `R + T + A_volume`。
+8. 修复后 zero-contrast 与 flat-layer 在同网格下仍保持接近。
+9. outcomes 明确说明结果是否可以作为 physical benchmark candidate，还是仍为 numerical sanity only。
+10. 不提交大型 `results/` 文件夹。
