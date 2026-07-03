@@ -16,11 +16,11 @@ codex/20260703-stage4-validation-cleanup
 
 重点阅读了：
 
-- `notes/docs/CODEX_TASK_20260703_stage4_validation_cleanup.md`
-- `notes/outcomes/20260703_stage4_validation_cleanup/summary.md`
-- `notes/outcomes/20260703_stage4_validation_cleanup/metrics.csv`
-- `notes/outcomes/20260703_stage4_validation_cleanup/parameters.json`
-- `notes/outcomes/20260703_stage4_validation_cleanup/run_log.txt`
+- `docs/task001_stage4_validation_cleanup/task.md`
+- `docs/task001_stage4_validation_cleanup/outcomes/summary.md`
+- `docs/task001_stage4_validation_cleanup/outcomes/metrics.csv`
+- `docs/task001_stage4_validation_cleanup/outcomes/parameters.json`
+- `docs/task001_stage4_validation_cleanup/outcomes/run_log.txt`
 - `src/common/config_3d.py`
 - `src/common/modes_3d.py`
 - `src/runners/run_3d_cases.py`
@@ -61,8 +61,7 @@ codex/20260703-stage4-validation-cleanup
    - `summary.md` 同时提到 `diffraction_3d.py` 的 probe 后处理官方来源是 E/H Fourier。
    - 这两者不一定矛盾，但必须明确：Stage 4 dtn_port 求解器自身输出的 R/T 与 probe 后处理输出的 R/T 是两套来源，不能混称为一个 official R/T。
 
-2. 合并前建议把本轮 REVIEW_REPORT 保留为最终审查文件。
-   - 现在该文件已经填充，可以让 Codex 读取这个报告后做一次小修。
+2. 合并前建议把本轮 `review_report.md` 保留为最终审查文件。
 
 3. 不要删除 `master` 或当前任务分支。
    - 远程分支可以清理，但只应删除已经合并的旧任务分支。
