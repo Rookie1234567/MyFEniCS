@@ -2,7 +2,7 @@
 
 ## 目标
 
-根据 `REVIEW_REPORT_20260702_review_code.md` 整理 Stage 4 验证链条，收紧 R/T 指标口径，并把 EUV 13.5 nm 与 Si 光栅复折射率写入代码配置和本轮输出记录。
+根据 `docs/task000_review_code/review_report.md` 整理 Stage 4 验证链条，收紧 R/T 指标口径，并把 EUV 13.5 nm 与 Si 光栅复折射率写入代码配置和本轮输出记录。
 
 ## 背景
 
@@ -22,7 +22,11 @@
 - 给 3D 配置、summary 和运行日志增加验证角色、材料标签和吸收解释字段。
 - 在有吸收基座时，将 `A_balance = 1 - R - T` 明确记录为吸收/损耗余额。
 - 保留 633 nm / 实数折射率诊断入口时，明确标记为 `numerical_sanity_only`。
-- 在 `notes/outcomes/20260703_stage4_validation_cleanup/` 下生成本轮输出记录。
+- 在本任务目录下生成本轮输出记录：
+
+```text
+docs/task001_stage4_validation_cleanup/outcomes/
+```
 
 ## 必需验证
 
