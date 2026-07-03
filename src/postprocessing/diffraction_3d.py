@@ -28,7 +28,8 @@ from ..common.modes_3d import (
 OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE = "eh_fourier_orders"
 OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE = (
     "Official Stage-4 R/T uses per-order Fourier coefficients of tangential E/H "
-    "to separate up/down waves on uniform probe planes."
+    "to separate up/down waves on uniform probe planes; lossy-substrate T is "
+    "evaluated at the bottom probe plane, not at the interface."
 )
 E_FOURIER_DIAGNOSTIC_NOTE = (
     "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
@@ -154,7 +155,8 @@ def _e_fourier_order_powers(
             T = 0.0
             if order.top_propagating and pol_name in top_by_name:
                 top_k, top_e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, order.beta_top, top_by_name[pol_name], 1, cfg)
-                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
+                top_e_at_plane = top_e_vec * np.exp(1j * top_k[2] * top_z)
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_at_plane, cfg, top_normal) / incident_power
                 R_total += float(R)
             if order.bottom_propagating and pol_name in bottom_by_name:
                 bottom_k, bottom_e_vec, _ = mode_eh_vectors(
@@ -165,7 +167,8 @@ def _e_fourier_order_powers(
                     -1,
                     cfg,
                 )
-                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
+                bottom_e_at_plane = bottom_e_vec * np.exp(1j * bottom_k[2] * bottom_z)
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_at_plane, cfg, bottom_normal) / incident_power
                 T_total += float(T)
             rows[(order.m, order.n, pol_name)] = {
                 "reflected_amplitude_e_fourier": ref_amp,
@@ -269,6 +272,8 @@ def _eh_fourier_order_powers(
 
     top_normal = np.asarray((0.0, 0.0, 1.0), dtype=np.float64)
     bottom_normal = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+    top_z = float(top_points[0, 2])
+    bottom_z = float(bottom_points[0, 2])
     rows: dict[tuple[int, int, str], dict[str, float | complex]] = {}
     R_total = 0.0
     T_total = 0.0
@@ -306,7 +311,8 @@ def _eh_fourier_order_powers(
             T = 0.0
             if order.top_propagating and pol_name in top_basis:
                 top_k, top_e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, order.beta_top, top_basis[pol_name], 1, cfg)
-                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
+                top_e_at_plane = top_e_vec * np.exp(1j * top_k[2] * top_z)
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_at_plane, cfg, top_normal) / incident_power
                 R_total += float(R)
             if order.bottom_propagating and pol_name in bottom_basis:
                 bottom_k, bottom_e_vec, _ = mode_eh_vectors(
@@ -317,7 +323,8 @@ def _eh_fourier_order_powers(
                     -1,
                     cfg,
                 )
-                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
+                bottom_e_at_plane = bottom_e_vec * np.exp(1j * bottom_k[2] * bottom_z)
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_at_plane, cfg, bottom_normal) / incident_power
                 T_total += float(T)
             rows[(order.m, order.n, pol_name)] = {
                 "reflected_amplitude_eh_fourier": ref_amp,
@@ -739,10 +746,12 @@ def compute_diffraction_orders_3d(
             T = 0.0
             include_in_total_power = (order.m, order.n) in power_order_keys
             if include_in_total_power and order.top_propagating:
-                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_vec, cfg, top_normal) / incident_power
+                top_e_at_plane = top_e_vec * np.exp(1j * top_k[2] * top_z)
+                R = abs(ref_amp) ** 2 * _mode_power(top_k, top_e_at_plane, cfg, top_normal) / incident_power
                 R_total += float(R)
             if include_in_total_power and order.bottom_propagating:
-                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_vec, cfg, bottom_normal) / incident_power
+                bottom_e_at_plane = bottom_e_vec * np.exp(1j * bottom_k[2] * bottom_z)
+                T = abs(trn_amp) ** 2 * _mode_power(bottom_k, bottom_e_at_plane, cfg, bottom_normal) / incident_power
                 T_total += float(T)
             rows.append(
                 {

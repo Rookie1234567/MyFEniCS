@@ -8,6 +8,12 @@ from src.common.modes_3d import (
     incident_power_3d,
     outgoing_port_modes_3d,
 )
+from src.solvers.dtn_port_3d import (
+    _mode_boundary_phase,
+    _mode_power_at_boundary,
+    _mode_projection_denominator,
+    _traction_vector,
+)
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -63,6 +69,40 @@ class Stage4DtnModeTests(unittest.TestCase):
         ]
         self.assertAlmostEqual(float(sum(projections)), abs(complex(cfg.incident_amplitude)) ** 2, places=12)
         self.assertGreater(incident_power_3d(cfg), 0.0)
+
+    def test_lossy_bottom_port_power_is_evaluated_at_boundary_plane(self):
+        cfg = _dtn_cfg(stage4_dtn_order_policy="zero_order")
+        bottom_y = [
+            mode
+            for mode in outgoing_port_modes_3d(cfg)
+            if mode.side == "bottom" and mode.m == 0 and mode.n == 0 and mode.polarization == "y"
+        ][0]
+        phase = _mode_boundary_phase(bottom_y, cfg)
+        self.assertLess(abs(phase), 1.0)
+        self.assertAlmostEqual(
+            _mode_power_at_boundary(bottom_y, cfg, 1.0 + 0.0j),
+            bottom_y.power_per_unit_amplitude * abs(phase) ** 2,
+            places=10,
+        )
+        area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+        self.assertAlmostEqual(
+            _mode_projection_denominator(bottom_y, cfg),
+            area * bottom_y.electric_tangential_norm_sq * abs(phase) ** 2,
+            places=10,
+        )
+
+    def test_auxiliary_traction_uses_curl_cross_outward_normal_sign(self):
+        cfg = _dtn_cfg(stage4_dtn_order_policy="zero_order")
+        y_modes = [
+            mode
+            for mode in outgoing_port_modes_3d(cfg)
+            if mode.m == 0 and mode.n == 0 and mode.polarization == "y"
+        ]
+        self.assertEqual({mode.side for mode in y_modes}, {"top", "bottom"})
+        for mode in y_modes:
+            traction = _traction_vector(mode, cfg)
+            self.assertAlmostEqual(traction[1].real, (-mode.beta.imag), places=12)
+            self.assertAlmostEqual(traction[1].imag, mode.beta.real, places=12)
 
 
 if __name__ == "__main__":

@@ -18,9 +18,11 @@ from .diffraction_3d import _json_default
 VOLUME_ABSORPTION_POWER_SOURCE = "volume_integral_Im_epsilon_E2"
 VOLUME_ABSORPTION_NORMALIZATION_NOTE = (
     "A_volume uses the current Stage-4 code-unit normalization: "
-    "P_abs = integral 0.5*k0^2*Im(epsilon_r)*|E_total|^2 dV over physical "
+    "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical "
     "material cells, divided by incident_power_code_units. PML cells and air "
-    "cells are deliberately excluded from material volume absorption."
+    "cells are deliberately excluded from material volume absorption. The k0 "
+    "factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding "
+    "Poynting balance."
 )
 
 
@@ -45,7 +47,7 @@ def _region_absorbed_power(mesh_data, cfg: SimulationConfig3D, E_total, tag: int
     msh = mesh_data.mesh
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
     field_abs2 = ufl.real(ufl.inner(E_total, E_total))
-    density_scale = 0.5 * cfg.k0**2 * float(complex(eps_r).imag)
+    density_scale = 0.5 * cfg.k0 * float(complex(eps_r).imag)
     local = fem.assemble_scalar(fem.form(density_scale * field_abs2 * dx(tag)))
     absorbed = float(np.real(msh.comm.allreduce(local, op=MPI.SUM)))
     return max(absorbed, 0.0)
@@ -173,7 +175,7 @@ def compute_volume_absorption_3d(
         "power_source": VOLUME_ABSORPTION_POWER_SOURCE,
         "field_model_for_absorption": "total_field",
         "incident_power_code_units": float(incident_power),
-        "formula_code_units": "P_abs = integral 0.5*k0^2*Im(epsilon_r)*|E_total|^2 dV",
+        "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
         "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
         "pml_cells_excluded": True,
         "air_cells_excluded": True,

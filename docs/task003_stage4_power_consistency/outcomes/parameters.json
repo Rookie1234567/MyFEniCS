@@ -1,0 +1,53 @@
+{
+  "task": "task003_stage4_power_consistency",
+  "branch": "codex/20260702-rta-output-volume-absorption",
+  "date": "2026-07-03",
+  "stage_case": "stage4_flat_layer_sanity",
+  "lambda0_nm": 13.5,
+  "n_air": [1.0, 0.0],
+  "n_substrate": [0.999002304859, 0.00182649365],
+  "n_grating": [1.0, 0.0],
+  "period_x_nm": 100.0,
+  "period_y_nm": 100.0,
+  "z_min_nm": -50.0,
+  "z_max_nm": 100.0,
+  "interface_z_nm": 0.0,
+  "polarization_kind": "s",
+  "stage4_boundary_model": "dtn_port",
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "use_pml": false,
+  "nedelec_degree": 1,
+  "diffraction_probe_fraction": 0.75,
+  "diffraction_sample_count_x": 32,
+  "diffraction_sample_count_y": 32,
+  "volume_absorption_formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+  "validation_runs": [
+    {
+      "name": "unit_tests",
+      "command": "python3 -m unittest discover -s src/test -p \"test_*.py\"",
+      "result": "65 tests passed, 10 skipped"
+    },
+    {
+      "name": "flat_h10_auto",
+      "mesh_target_size_nm": 10.0,
+      "result_dir": "docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h10_auto"
+    },
+    {
+      "name": "flat_h5_auto",
+      "mesh_target_size_nm": 5.0,
+      "result_dir": "docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h5_auto"
+    },
+    {
+      "name": "flat_h3_auto",
+      "mesh_target_size_nm": 3.0,
+      "status": "stopped_after_timeout",
+      "observed_setup": {
+        "mesh_cells": 58956,
+        "nedelec_dofs": 186235,
+        "dtn_auxiliary_modes": 708,
+        "dtn_base_matrix_nnz": 6179893
+      }
+    }
+  ]
+}

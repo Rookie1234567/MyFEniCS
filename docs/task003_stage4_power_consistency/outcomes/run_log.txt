@@ -1,0 +1,41 @@
+Task: task003_stage4_power_consistency
+Branch: codex/20260702-rta-output-volume-absorption
+Date: 2026-07-03
+
+Commands run:
+
+1. Lightweight targeted tests
+   docker run ... python3 -m unittest src.test.test_11_stage4_diffraction_modes src.test.test_14_stage4_dtn_modes
+   Result: 18 tests passed.
+
+2. Full unit test suite
+   docker run ... python3 -m unittest discover -s src/test -p "test_*.py"
+   Result: 65 tests passed, 10 skipped.
+
+3. Stage 4A flat-layer h=10 auto_propagating
+   python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --mesh-target-size 10 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output
+   Result: completed.
+   Key output: port R=0.999999998879, T=1.011e-10, A=1.020e-09; A_volume=1.020e-09.
+   Interpretation: h=10 p1 under-resolves lambda0=13.5 nm and remains nearly full reflection.
+
+4. Stage 4A flat-layer h=5 auto_propagating
+   python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --mesh-target-size 5 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output
+   Result: completed.
+   Key output: port R=0.0216956, T=0.918733, A=0.0595716; A_volume=0.0595716; closure R+T+A_volume-1=-5.12e-14.
+   Interpretation: DtN port and volume absorption now close consistently; remaining port-vs-reference error is dominated by numerical reflection on p1 h=5.
+
+5. Stage 4A flat-layer h=3 auto_propagating
+   python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --mesh-target-size 3 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output
+   Result: stopped after timeout.
+   Observed before stopping: mesh cells=58956, N1curl dofs=186235, auxiliary modes=708, base matrix nnz=6179893. The run reached large direct LU and made no log progress after the modal block summary.
+
+Raw small outputs archived:
+
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h10_auto/
+- docs/task003_stage4_power_consistency/outcomes/raw_runs/flat_h5_auto/
+
+Large generated files not archived:
+
+- results/*/*.vtu
+- results/*/*.bp
+- results/*/mesh_3d.h5

@@ -20,7 +20,7 @@ docs/taskXXX_task_name/
 | task000 | 初始代码审查整理 | `task000_review_code/` | 已完成，保留为历史闭环 |
 | task001 | Stage 4 validation cleanup | `task001_stage4_validation_cleanup/` | 已完成并已审查 |
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
-| task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已收到任务书，待 Codex 执行 |
+| task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | Codex 已执行，待审查 |
 
 ## 工作规则
 

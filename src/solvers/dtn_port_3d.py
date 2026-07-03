@@ -17,7 +17,7 @@ from dolfinx.fem import petsc as fem_petsc
 from dolfinx.la.petsc import _ghost_update, create_vector
 
 from ..common.config_3d import SimulationConfig3D
-from ..common.modes_3d import PortMode3D, incident_power_3d, outgoing_port_modes_3d
+from ..common.modes_3d import PortMode3D, incident_power_3d, mode_power, outgoing_port_modes_3d
 from ..constraints.floquet_3d import DoubleFloquet3DData
 from .common_3d_solve import DirectSolveFailure, _petsc_matrix_stats
 from .common_3d_utils import _write_progress_event
@@ -205,20 +205,39 @@ def _outward_normal(side: str) -> np.ndarray:
     raise ValueError("side must be 'top' or 'bottom'.")
 
 
+def _mode_boundary_z(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
+    return float(cfg.physical_z_max if mode.side == "top" else cfg.physical_z_min)
+
+
+def _mode_boundary_phase(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
+    return complex(np.exp(1j * complex(mode.k_vector[2]) * _mode_boundary_z(mode, cfg)))
+
+
+def _mode_projection_denominator(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
+    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+    phase = _mode_boundary_phase(mode, cfg)
+    return float(area * mode.electric_tangential_norm_sq * abs(phase) ** 2)
+
+
+def _mode_power_at_boundary(mode: PortMode3D, cfg: SimulationConfig3D, amplitude: complex) -> float:
+    e_at_boundary = complex(amplitude) * _mode_boundary_phase(mode, cfg) * mode.e_vector
+    return mode_power(mode.k_vector, e_at_boundary, cfg, _outward_normal(mode.side))
+
+
 def _traction_vector(mode: PortMode3D, cfg: SimulationConfig3D) -> np.ndarray:
     del cfg
     curl_vector = 1j * np.cross(mode.k_vector, mode.e_vector)
-    return np.cross(_outward_normal(mode.side), curl_vector)
+    return np.cross(curl_vector, _outward_normal(mode.side))
 
 
 def _incident_projection_onto_top_mode(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
     if mode.side != "top" or mode.m != 0 or mode.n != 0:
         return 0.0 + 0.0j
-    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
-    denominator = area * mode.electric_tangential_norm_sq
+    denominator = _mode_projection_denominator(mode, cfg)
     incident_e = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
     tangential_overlap = np.vdot(mode.e_vector[:2], incident_e[:2])
     phase = np.exp(1j * (cfg.kz - mode.k_vector[2]) * cfg.physical_z_max)
+    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
     return complex(area * tangential_overlap * phase / denominator)
 
 
@@ -226,7 +245,7 @@ def _incident_top_traction_form(V, mesh_data, cfg: SimulationConfig3D):
     x = ufl.SpatialCoordinate(mesh_data.mesh)
     k_inc = np.asarray(cfg.wavevector, dtype=np.complex128)
     e_inc = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
-    traction = np.cross(np.asarray((0.0, 0.0, 1.0), dtype=np.float64), 1j * np.cross(k_inc, e_inc))
+    traction = np.cross(1j * np.cross(k_inc, e_inc), np.asarray((0.0, 0.0, 1.0), dtype=np.float64))
     phase = ufl.exp(
         PETSc.ScalarType(1j * k_inc[0]) * x[0]
         + PETSc.ScalarType(1j * k_inc[1]) * x[1]
@@ -287,8 +306,7 @@ def _mode_projection_from_solution(
         fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options)
     )
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
-    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
-    denominator = area * mode.electric_tangential_norm_sq
+    denominator = _mode_projection_denominator(mode, cfg)
     return complex(total / denominator)
 
 
@@ -814,7 +832,7 @@ def _write_port_outputs(
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(zip(modes, aux_values, incident_projections)):
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
-        power = abs(outgoing_amplitude) ** 2 * mode.power_per_unit_amplitude / metrics["incident_power_code_units"]
+        power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / metrics["incident_power_code_units"]
         rows.append(
             {
                 "auxiliary_index": idx,
@@ -831,6 +849,8 @@ def _write_port_outputs(
                 "auxiliary_amplitude_total_projection": complex(aux_value),
                 "incident_projection": complex(inc_proj),
                 "outgoing_amplitude": outgoing_amplitude,
+                "boundary_phase": _mode_boundary_phase(mode, cfg),
+                "outgoing_amplitude_at_boundary": outgoing_amplitude * _mode_boundary_phase(mode, cfg),
                 "power_ratio": float(power),
                 "R": float(power) if mode.side == "top" and mode.propagating else 0.0,
                 "T": float(power) if mode.side == "bottom" and mode.propagating else 0.0,
@@ -886,6 +906,13 @@ def _write_port_outputs(
             "outgoing_amplitude": complex(aux_values[idx] - incident_projections[idx])
             if mode.side == "top"
             else complex(aux_values[idx]),
+            "boundary_phase": _mode_boundary_phase(mode, cfg),
+            "outgoing_amplitude_at_boundary": (
+                complex(aux_values[idx] - incident_projections[idx])
+                if mode.side == "top"
+                else complex(aux_values[idx])
+            )
+            * _mode_boundary_phase(mode, cfg),
         }
         for idx, mode in enumerate(modes)
     ]
@@ -910,7 +937,7 @@ def _port_power_metrics(
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
         if not mode.propagating:
             continue
-        power = abs(outgoing_amplitude) ** 2 * mode.power_per_unit_amplitude / incident_power
+        power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / incident_power
         if mode.side == "top":
             R_total += float(power)
         else:
@@ -1028,7 +1055,6 @@ def solve_stage4_dtn_port_total_field(
     timing_details["stage4_dtn_incident_source_vector_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
     incident_projections: list[complex] = []
-    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
     surface_assemblers = {
         ("top", 0): _ReusableSurfaceComponentAssembler(
             V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
@@ -1078,7 +1104,7 @@ def solve_stage4_dtn_port_total_field(
             (traction_vector[0], traction_vector[1]),
         )
         aux_global = n_fe + aux_index
-        denominator = area * mode.electric_tangential_norm_sq
+        denominator = _mode_projection_denominator(mode, cfg)
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
         incident_projections.append(incident_projection)
 

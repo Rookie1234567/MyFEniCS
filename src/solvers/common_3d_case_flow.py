@@ -16,6 +16,7 @@ from ..common.config_3d import SimulationConfig3D
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
+from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
 from ..postprocessing.rta_3d import compute_volume_absorption_3d, write_power_summary_csv
 from .common_3d_fields import (
@@ -1277,6 +1278,36 @@ def run_prepared_3d_case_flow(
         summary["power_summary_csv"] = "power_summary.csv"
         summary["power_summary_rows"] = power_summary_rows
         summary["timings_seconds"] = timings
+
+    if cfg.stage_case == "stage4_flat_layer_sanity":
+        flat_reference_outputs = write_flat_layer_reference_outputs(
+            out_dir,
+            cfg,
+            comm,
+            port_metrics=port_power_metrics,
+            probe_metrics=probe_power_metrics,
+            volume_metrics=volume_absorption_metrics,
+        )
+        summary.update(
+            {
+                "flat_layer_reference_file": flat_reference_outputs["flat_layer_reference_file"],
+                "power_consistency_file": flat_reference_outputs["power_consistency_file"],
+                "flat_layer_reference_R_ref": flat_reference_outputs["flat_layer_reference"]["R_ref"],
+                "flat_layer_reference_T_ref": flat_reference_outputs["flat_layer_reference"][
+                    "T_ref_at_bottom_reference_plane"
+                ],
+                "flat_layer_reference_A_ref": flat_reference_outputs["flat_layer_reference"][
+                    "A_ref_between_reference_planes"
+                ],
+                "flat_layer_reference_T_ref_at_bottom_port_plane": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["T_ref_at_bottom_port_plane"],
+                "flat_layer_reference_A_ref_between_port_planes": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["A_ref_between_port_planes"],
+                "power_consistency": flat_reference_outputs["power_consistency"],
+            }
+        )
 
     if summary.get("stage4_energy_balance_pass") is False:
         summary["official_result"] = False

@@ -32,7 +32,7 @@ E_total = E_background + E_scattered
 当前 3D Stage 4 采用的 code-unit 表达式为：
 
 ```text
-P_abs = integral 0.5*k0^2*Im(epsilon_r)*|E_total|^2 dV
+P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV
 A_volume = P_abs / P_inc
 ```
 
@@ -43,6 +43,21 @@ epsilon_r = n^2
 ```
 
 吸收项使用 `Im(epsilon_r)`，不是直接使用 `Im(n)`。
+
+这里的系数是 `k0` 而不是 `k0^2`。原因是当前 3D Stage 4 的磁场和能流采用 code-unit 定义：
+
+```text
+H_code = curl(E) / (i*k0*mu_r)
+S_code = 0.5*Re(E x H_code*)
+```
+
+把无源有损介质中的 Maxwell 方程与该 Poynting 定义相配对后，材料耗散密度为：
+
+```text
+q_abs = 0.5*k0*Im(epsilon_r)*|E_total|^2
+```
+
+用有损 flat-layer 的解析平面波可以直接验证：基底中从界面到某个底部参考面的通量损失，等于上式在同一区间的体积分。
 
 体积分只覆盖真实物理材料 tag：
 

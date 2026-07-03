@@ -16,7 +16,12 @@ from src.postprocessing.diffraction_3d import (
     fit_diffraction_amplitudes_from_samples,
     mode_eh_vectors,
     polarization_basis_3d,
+    _sampled_flux_code_units,
     _probe_z_locations,
+)
+from src.postprocessing.flat_layer_reference_3d import (
+    analytic_volume_absorption_between_z,
+    compute_flat_layer_reference_3d,
 )
 from src.common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values, fresnel_reference
 from src.test.stage2_test_utils import stage4_block_config
@@ -201,6 +206,109 @@ class Stage4DiffractionModeTests(unittest.TestCase):
             _incident_power(cfg),
         )
         self.assertGreater(eh_metrics["T_total_from_eh_fourier"], 0.0)
+
+    def test_lossy_flat_layer_reference_includes_probe_plane_attenuation(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=True,
+            diffraction_sample_count_x=16,
+            diffraction_sample_count_y=16,
+        )
+        reference = compute_flat_layer_reference_3d(cfg)
+        fresnel = fresnel_reference(cfg)
+        self.assertAlmostEqual(reference["R_ref"], fresnel["R"], places=12)
+        self.assertLess(reference["T_ref_at_bottom_reference_plane"], fresnel["T"])
+        self.assertGreater(reference["A_ref_between_reference_planes"], 0.0)
+        self.assertGreater(
+            reference["A_ref_between_port_planes"],
+            reference["A_ref_between_reference_planes"],
+        )
+
+    def test_analytic_eh_probe_and_net_flux_match_lossy_flat_reference(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=True,
+            diffraction_sample_count_x=24,
+            diffraction_sample_count_y=24,
+        )
+        order = enumerate_diffraction_orders_3d(cfg)[0]
+        top_z, bottom_z = _probe_z_locations(cfg)
+        top_points = _sample_plane(cfg, z=top_z, nx=24, ny=24)
+        bottom_points = _sample_plane(cfg, z=bottom_z, nx=24, ny=24)
+        top_e = electric_field_code_values(cfg, top_points)
+        top_h = magnetic_field_code_values(cfg, top_points)
+        bottom_e = electric_field_code_values(cfg, bottom_points)
+        bottom_h = magnetic_field_code_values(cfg, bottom_points)
+        incident_power = _incident_power(cfg)
+        reference = compute_flat_layer_reference_3d(cfg)
+
+        _, eh_metrics = _eh_fourier_order_powers(
+            cfg,
+            [order],
+            top_points,
+            top_e,
+            top_h,
+            bottom_points,
+            bottom_e,
+            bottom_h,
+            incident_power,
+        )
+        self.assertAlmostEqual(eh_metrics["R_total_from_eh_fourier"], reference["R_ref"], places=11)
+        self.assertAlmostEqual(
+            eh_metrics["T_total_from_eh_fourier"],
+            reference["T_ref_at_bottom_reference_plane"],
+            places=11,
+        )
+        self.assertAlmostEqual(
+            eh_metrics["A_balance_from_eh_fourier"],
+            reference["A_ref_between_reference_planes"],
+            places=11,
+        )
+
+        top_flux = _sampled_flux_code_units(top_e, top_h, np.asarray((0.0, 0.0, 1.0)), cfg)
+        bottom_flux = _sampled_flux_code_units(bottom_e, bottom_h, np.asarray((0.0, 0.0, -1.0)), cfg)
+        R_flux = 1.0 + top_flux / incident_power
+        T_flux = bottom_flux / incident_power
+        A_flux = 1.0 - R_flux - T_flux
+        self.assertAlmostEqual(R_flux, reference["R_ref"], places=11)
+        self.assertAlmostEqual(T_flux, reference["T_ref_at_bottom_reference_plane"], places=11)
+        self.assertAlmostEqual(A_flux, reference["A_ref_between_reference_planes"], places=11)
+        self.assertGreater(T_flux, 0.0)
+
+    def test_analytic_volume_absorption_matches_lossy_flat_flux_loss(self):
+        cfg = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=True,
+        )
+        reference = compute_flat_layer_reference_3d(cfg)
+        volume = analytic_volume_absorption_between_z(cfg, bottom_z=cfg.physical_z_min)
+        self.assertEqual(volume["status"], "ok")
+        self.assertAlmostEqual(volume["A_volume_ref"], reference["A_ref_between_port_planes"], places=11)
+
+        lossless = stage4_block_config(
+            stage_case="stage4_flat_layer_sanity",
+            grating_width_x=0.0,
+            grating_width_y=0.0,
+            grating_height=0.0,
+            n_substrate=1.45 + 0.0j,
+            n_grating=1.0 + 0.0j,
+            diffraction_zero_order_only=True,
+        )
+        lossless_volume = analytic_volume_absorption_between_z(lossless, bottom_z=lossless.physical_z_min)
+        self.assertEqual(lossless_volume["status"], "lossless")
+        self.assertAlmostEqual(lossless_volume["A_volume_ref"], 0.0, places=14)
 
     def test_eh_fourier_separates_same_order_up_down_waves(self):
         cfg = stage4_block_config(diffraction_zero_order_only=True)
