@@ -21,7 +21,28 @@ docs/taskXXX_task_name/
 | task001 | Stage 4 validation cleanup | `task001_stage4_validation_cleanup/` | 已完成并已审查 |
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
-| task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | Codex 已完成 outcomes，待审查 |
+| task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
+
+## 合并前结论
+
+当前分支可作为阶段性稳定版本合并。合并含义是：
+
+```text
+完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p 收敛、MPI 一致性与全阶段 smoke 回归。
+```
+
+不要把本次合并解读为：
+
+```text
+真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
+```
+
+详细边界说明见：
+
+```text
+notes/reference/current_version_boundaries.md
+docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
+```
 
 ## 工作规则
 
