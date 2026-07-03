@@ -35,6 +35,8 @@ docs/task003_stage4_power_consistency/outcomes/
 5. probe/net_flux 在 FEM 场下是否仍需要作为 diagnostic only；
 6. 是否应该继续强制 real block 作为小电脑验收目标。
 
+术语说明：本报告中的 `small-cell flat-layer` 指 `stage4_flat_layer_sanity` 这个平坦界面 sanity case；它不是 3D 光栅散射物理任务本身。后续文档应避免把它称为“Stage 4A 光栅散射”。真实 3D 光栅/矩形柱散射应使用 `stage4_block_grating` 路径。
+
 ---
 
 ## 2. 总体结论
@@ -59,7 +61,7 @@ probe_eh_fourier 与 net_flux 目前仍应保留为 diagnostic only；
 6. small-cell flat-layer 中 `port` 与 `A_volume` 可以达到机器精度能量闭合；
 7. 原 100 nm flat-layer 下近全反射的问题已经被定位为大横向周期、粗 p1 网格和大量 auto-propagating 端口模态共同造成的数值诊断失败，而不是 flat interface 的物理结果。
 
-因此，本轮结果可以作为后续 Stage 4 flat-layer 验证链条的基础。但是，本分支仍不应被描述为“完整 3D grating 物理 benchmark 已完成”。
+因此，本轮结果可以作为后续 flat-layer sanity 验证链条的基础。但是，本分支仍不应被描述为“完整 3D grating 物理 benchmark 已完成”。
 
 ---
 
@@ -223,7 +225,7 @@ small-cell 结果显示：
 3. `T_port` 与解析 port-plane reference 已经很接近；
 4. `A_volume` 与 `A_port` 完全一致；
 5. `R_port + T_port + A_volume - 1` 达到机器精度；
-6. small-cell flat-layer 可以作为后续 Stage 4 flat interface 的标准验证模型。
+6. small-cell flat-layer 可以作为后续 flat interface 的标准 sanity/benchmark。
 
 因此，目前可以认为：
 
@@ -315,9 +317,10 @@ Stage 4 flat-layer 的 port + A_volume 主功率闭合已修复。
 
 1. small-cell flat-layer p=1 / p=2 收敛性对比；
 2. 检查 p=2 是否改善 probe_eh_fourier 与 net_flux；
-3. 固化 small-cell flat-layer 为标准 benchmark；
-4. 运行 Stage 1 / Stage 2 / Stage 4 的轻量回归测试，确认 task002/task003 的修改没有破坏其他功能；
-5. 明确 real block 只作为未来高资源验证，不作为当前验收标准。
+3. 增加 MPI 1/4/8 并行一致性测试，确认并行不改变 `port`、`A_volume` 和诊断后处理结果；
+4. 固化 small-cell flat-layer 为标准 sanity benchmark；
+5. 运行 Stage 1 / Stage 2 / `stage4_flat_layer_sanity` / `stage4_block_grating` zero-contrast 的轻量回归测试，确认 task002/task003 的修改没有破坏其他功能；
+6. 明确 real block 只作为未来高资源验证，不作为当前验收标准。
 
 ---
 
@@ -326,16 +329,17 @@ Stage 4 flat-layer 的 port + A_volume 主功率闭合已修复。
 下一轮建议任务名称：
 
 ```text
-task004_small_cell_p_convergence_and_regression
+task004_small_cell_p_convergence_mpi_regression
 ```
 
-目标不是继续扩大真实结构，而是用 small-cell flat-layer 做一个可控、可重复、可在小电脑上完成的收敛性验证。
+目标不是继续扩大真实结构，而是用 small-cell flat-layer 做一个可控、可重复、可在小电脑上完成的收敛性与并行一致性验证。
 
 建议内容：
 
-1. 使用 small-cell flat-layer：
+1. 使用 small-cell flat-layer sanity：
 
 ```text
+stage_case = stage4_flat_layer_sanity
 period_x = period_y = 10 nm
 air_height = substrate_thickness = 5 nm
 lambda0 = 13.5 nm
@@ -351,7 +355,21 @@ p=2: mesh_target_size = 4.0, 3.0, 2.0, 1.5 nm
 
 具体 p=2 网格可以根据实际 DoF 和内存调整。
 
-3. 记录并比较：
+3. 增加 MPI 并行一致性测试：
+
+```text
+MPI ranks = 1, 4, 8
+```
+
+至少选择一个 p=1 case 和一个 p=2 case 做 1/4/8 ranks 对照。重点不是追求加速，而是确认并行不会改变：
+
+```text
+R_port, T_port, A_volume, closure_port_volume
+R_probe, T_probe, A_probe
+R_flux, T_flux, A_flux
+```
+
+4. 记录并比较：
 
 ```text
 R_port, T_port, A_port
@@ -360,10 +378,10 @@ R_port + T_port + A_volume - 1
 R_probe, T_probe, A_probe
 R_flux, T_flux, A_flux
 相对解析参考的误差
-DoF, cells, aux_modes, elapsed_s, max_rss_mb
+DoF, cells, aux_modes, MPI ranks, elapsed_s, max_rss_mb
 ```
 
-4. 判断 p=2 是否比 p=1 更快收敛，尤其关注：
+5. 判断 p=2 是否比 p=1 更快收敛，尤其关注：
 
 ```text
 probe_eh_fourier 是否更接近 port；
@@ -372,14 +390,18 @@ R_port 是否更接近 analytic R_ref；
 A_volume 是否更接近 analytic A_ref。
 ```
 
-5. 收敛性通过后，再运行轻量完整回归：
+6. 收敛性与 MPI 一致性通过后，再运行轻量完整回归：
 
 ```text
-Stage 1
-Stage 2A / 2B / 2C
-Stage 4A small-cell flat-layer
-Stage 4B zero-contrast smoke test
+Stage 1: stage1_airbox
+Stage 2A: floquet_airbox
+Stage 2B: pml_airbox
+Stage 2C: fresnel_interface
+Stage 4 flat-layer sanity: stage4_flat_layer_sanity
+Stage 4 grating path smoke: stage4_block_grating zero-contrast
 ```
+
+这里不要再写“Stage 4A small-cell flat-layer”。`stage4_flat_layer_sanity` 是平坦界面 sanity；真实 3D 光栅/矩形柱散射路径是 `stage4_block_grating`。
 
 不要求真实 100 nm real block 在本轮通过。
 
@@ -406,8 +428,9 @@ Stage 4B zero-contrast smoke test
 未完全通过：
 - probe_eh_fourier / net_flux 在 FEM 场下仍与 port 有明显差异；
 - p=2 收敛性尚未验证；
-- Stage 1/2/4 全链条回归尚未完成；
+- MPI 1/4/8 并行一致性尚未验证；
+- Stage 1/2/Stage 4 全链条轻量回归尚未完成；
 - 真实 100 nm grating 仍不适合作为当前小电脑验收项。
 ```
 
-因此，当前应把 `port` 作为主结果，把 `A_volume` 作为吸收闭合检查，把 `probe_eh_fourier` 和 `net_flux` 降级为诊断工具。下一轮重点应转向 small-cell p=1/p=2 收敛性与全阶段轻量回归。
+因此，当前应把 `port` 作为主结果，把 `A_volume` 作为吸收闭合检查，把 `probe_eh_fourier` 和 `net_flux` 降级为诊断工具。下一轮重点应转向 small-cell p=1/p=2 收敛性、MPI 并行一致性与全阶段轻量回归。
