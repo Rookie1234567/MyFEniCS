@@ -9,15 +9,15 @@
 
 ## 文档
 
-- `notes/docs/THEORY_RTA_AND_VOLUME_ABSORPTION.md`：解释四类 R/T/A 口径和体吸收定义。
+- `notes/theory/THEORY_RTA_AND_VOLUME_ABSORPTION.md`：解释四类 R/T/A 口径和体吸收定义。
 
 ## Outcomes
 
-- `notes/outcomes/20260702_rta_output_volume_absorption/summary.md`
-- `notes/outcomes/20260702_rta_output_volume_absorption/metrics.csv`
-- `notes/outcomes/20260702_rta_output_volume_absorption/parameters.json`
-- `notes/outcomes/20260702_rta_output_volume_absorption/run_log.txt`
-- `notes/outcomes/20260702_rta_output_volume_absorption/changed_files.md`
+- `docs/task002_rta_output_volume_absorption/outcomes/summary.md`
+- `docs/task002_rta_output_volume_absorption/outcomes/metrics.csv`
+- `docs/task002_rta_output_volume_absorption/outcomes/parameters.json`
+- `docs/task002_rta_output_volume_absorption/outcomes/run_log.txt`
+- `docs/task002_rta_output_volume_absorption/outcomes/changed_files.md`
 
 ## 未提交的大文件
 
