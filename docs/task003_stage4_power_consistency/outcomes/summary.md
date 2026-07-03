@@ -142,3 +142,13 @@ zero-contrast 本轮没有继续跑，因为 flat-layer 的 FEM probe/net_flux �
 | 1.0 | 4 | 6.616e-05 | 9.917e-01 | 8.262e-03 | -2.22e-15 |
 
 小 cell 下 auto_propagating 只保留零级 x/y 四个端口模态，`port` 全反射现象消失，且 `port + volume_absorption` 能量闭合稳定在机器精度。原 100 nm cell 中的 h=10 全反射应视为大横向周期、粗 p1 网格和大量传播端口模态共同造成的数值诊断失败。
+
+## Output Directory Policy
+
+用户补充要求保留每次计算在本地 `results/` 下生成的完整结果目录，方便后续手动查看 VTU/BP/mesh 等大文件。因此后续运行默认不再使用 `--no-unique-output`。推荐命令保持 runner 默认行为，每次生成新的 timestamp 目录：
+
+```text
+results/3D_stage4_flat_layer_sanity_normal_p1_h<mesh>_YYYYMMDD_HHMMSS/
+```
+
+`docs/taskXXX/outcomes/raw_runs/` 只归档轻量 JSON/TXT/CSV 摘要；完整 `results/` 目录继续由 `.gitignore` 排除，不提交到 Git。

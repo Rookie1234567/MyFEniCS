@@ -79,4 +79,6 @@ air_height = substrate_thickness = 5 nm
 mesh_target_size = 2.0, 1.5, 1.0 nm
 ```
 
+后续运行命令应保留默认 unique output，不再添加 `--no-unique-output`。这样每个 case 会在本地 `results/3D_*_YYYYMMDD_HHMMSS/` 下保留完整结果；`outcomes/raw_runs/` 只复制轻量 JSON/TXT/CSV 摘要。
+
 在 small-cell 下，`port` 与 `volume_absorption` 已经可以作为主线能量闭合检查。`probe_eh_fourier` 和 `net_flux` 仍建议保留为 diagnostic only，下一轮重点应继续查 FEM 采样和 curl 后处理误差。

@@ -545,6 +545,7 @@ def main(argv: list[str] | None = None):
 
     unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
     updates = _config_updates(args)
+    updates["unique_output"] = bool(unique_output)
     configs = _case_configs(args.case, args.stage_case, updates)
 
     root = project_root()

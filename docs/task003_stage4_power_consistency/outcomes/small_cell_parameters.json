@@ -30,7 +30,9 @@
     "diffraction_sample_count_x": 32,
     "diffraction_sample_count_y": 32
   },
-  "base_command": "python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --period-x 10 --period-y 10 --air-height 5 --substrate-thickness 5 --mesh-target-size <h> --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output",
+  "base_command_used_for_archived_runs": "python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --period-x 10 --period-y 10 --air-height 5 --substrate-thickness 5 --mesh-target-size <h> --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml --no-unique-output",
+  "recommended_base_command_for_future_runs": "python3 -m src.runners.run_3d_cases --stage-case stage4_flat_layer_sanity --period-x 10 --period-y 10 --air-height 5 --substrate-thickness 5 --mesh-target-size <h> --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --no-use-pml",
+  "results_policy": "Future runs should keep the default unique output directory under results/3D_*_YYYYMMDD_HHMMSS/. The results/ tree remains ignored by Git; outcomes/raw_runs keeps only lightweight summaries.",
   "runs": [
     {
       "name": "small_cell_h2p7",

@@ -45,6 +45,17 @@ Raw small outputs archived:
    Result: all completed. DtN auxiliary modes dropped from 708 in the 100 nm cell to 4 in the 10 nm cell.
    Key trend: R_port decreased from 3.17e-3 at h=2.7 to 6.62e-5 at h=1.0; port-volume closure stayed at machine precision.
 
+7. Output directory policy update
+   The archived small-cell runs above were produced with --no-unique-output, so the full files under results/ were overwritten by the later run with the same case name.
+   Going forward, validation commands should omit --no-unique-output unless a fixed overwrite directory is explicitly desired.
+   The runner default is timestamped unique output, for example results/3D_stage4_flat_layer_sanity_normal_p1_h2p0_YYYYMMDD_HHMMSS/.
+   Keep complete local outputs in results/ for manual inspection; copy only lightweight JSON/TXT/CSV summaries into docs/taskXXX/outcomes/raw_runs/.
+
+8. Lightweight output-policy regression test
+   docker run ... python3 -m unittest src.test.test_13_3d_stage_entrypoints
+   Result: 4 tests passed.
+   Coverage: default 3D runner output creates timestamped results/3D_* directories; explicit --no-unique-output uses the legacy fixed directory and is recorded in the config passed to the run summary.
+
 Large generated files not archived:
 
 - results/*/*.vtu
