@@ -1,0 +1,2 @@
+
+[matrix-scale] timeout after 7200.0 seconds

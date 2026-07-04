@@ -1,0 +1,18 @@
+{
+  "label": "p2_h5_np8_default_direct",
+  "status": "completed",
+  "returncode": 0,
+  "command": "mpiexec -n 8 python3 -m src.runners.run_3d_cases --stage-case stage4_block_grating --case normal --mesh-target-size 5 --nedelec-degree 2 --visualization-degree 1 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --period-x 100 --period-y 100 --air-height 60 --substrate-thickness 10 --grating-width-x 50 --grating-width-y 50 --grating-height 50 --lambda0 13.5 --n-substrate 0.999002304859+0.00182649365j --n-grating 0.999002304859+0.00182649365j --polarization-kind s --mesh-cell-type auto --mesh-spacing-mode auto",
+  "timeseries_csv": "docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/memory_profile_timeseries.csv",
+  "stdout_file": "docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/stdout.txt",
+  "stderr_file": "docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/stderr.txt",
+  "stdout_tail": "3D diffraction absorption from balance = 3.468869e-02\nParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618/fields_3d_for_paraview_parallel.pvd\ntiming summary seconds:\n  config_validation: 0.000\n  mesh_build: 0.075\n  function_space_setup: 0.032\n  field_formulation_setup: 0.007\n  floquet_build_topological_trace_context_p2: 1.015\n  floquet_build_x_constraints: 0.145\n  floquet_build_y_constraints: 0.058\n  floquet_resolve_corner_master_chains: 0.002\n  floquet_build_mpc_arrays: 0.028\n  floquet_mpc_finalize: 0.004\n  floquet_total: 1.252\n  floquet_constraint_setup_outer: 1.275\n  boundary_condition_setup: 0.000\n  variational_form_setup: 0.238\n  stage4_dtn_port_assembly_and_solve: 104.471\n  matrix_stats: 0.056\n  postprocess: 11.829\n  diffraction_postprocess: 4.061\n  volume_absorption_postprocess: 0.720\nLinear solve summary:\n  method               = direct_lu\n  ksp_type             = preonly\n  pc_type              = lu\n  pc factor solver    = mumps\n  converged            = True\n  converged reason     = 4\n  reason name          = CONVERGED_ITS\n  iterations           = 1\n  residual norm        = 0.000000e+00\n  max RSS across ranks = 2078.6 MB\n  official result      = True\n  diagnostic only      = False\n  validation role      = numerical_sanity_only\n  physical benchmark  = False\n  case status          = completed\nelapsed seconds = 119.941\n3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618",
+  "stderr_tail": "",
+  "peak_rss_sum_GB": 13.64581298828125,
+  "peak_rss_max_GB": 2.02984619140625,
+  "peak_ooc_disk_GB": 0.0,
+  "peak_swap_used_GB": 0.16107177734375,
+  "last_stage": "stage4_dtn_augmented_solve:end",
+  "result_dir": "/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618",
+  "elapsed_s": 131.58332109451294
+}

@@ -1,0 +1,80 @@
+divergence penalty = 0.0
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True}
+mesh_build seconds = 0.811
+mesh cell type actual = hexahedron
+mesh cells requested = (50, 50, 35)
+mesh cells resolved = (51, 51, 35)
+mesh spacing mode resolved = boundary_fitted
+mesh axis cell stats = {'x': {'num_cells': 51, 'min': 1.9230769230769198, 'max': 2.0, 'median': 1.923076923076934}, 'y': {'num_cells': 51, 'min': 1.9230769230769198, 'max': 2.0, 'median': 1.923076923076934}, 'z': {'num_cells': 35, 'min': 2.0, 'max': 2.0, 'median': 2.0}}
+function_space_setup seconds = 0.168
+mesh cells = 91035
+3D N1curl dofs = 285584
+field_formulation_setup seconds = 0.007
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_edges_p1
+3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.
+building 3D Floquet topological edge context
+building 3D Floquet topological edge context seconds = 11.642
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.142
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.102
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.011
+assembling 3D topological Floquet MPC arrays
+assembling 3D topological Floquet MPC arrays seconds = 0.096
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.007
+3D Floquet phase x = 1 + 0j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = 1 + 0j
+3D Floquet number of slave edges = 7277
+3D Floquet number of matched master edges = 7277
+3D Floquet number of constraints = 7277
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet number of x constraints = 3621
+3D Floquet number of y constraints = 3621
+3D Floquet number of corner constraints = 35
+3D Floquet local slave dofs = 7277
+3D Floquet local slave records seen = 7277
+3D Floquet local ghost slave constraints = 0
+3D Floquet global ghost slave constraints = 0
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 7277
+3D Floquet max masters per slave = 1
+3D Floquet estimated constraint memory MB = 0.250
+3D Floquet total constraint setup seconds = 12.001
+floquet_constraint_setup_outer seconds = 12.015
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.129
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 285584
+Stage-4 DtN surface quadrature degree = 15
+Stage-4 DtN prepared 50/708 auxiliary modes in 14.234 seconds; unique surface orders = 25
+Stage-4 DtN prepared 100/708 auxiliary modes in 15.038 seconds; unique surface orders = 50
+Stage-4 DtN prepared 150/708 auxiliary modes in 15.869 seconds; unique surface orders = 75
+Stage-4 DtN prepared 200/708 auxiliary modes in 16.667 seconds; unique surface orders = 100
+Stage-4 DtN prepared 250/708 auxiliary modes in 17.493 seconds; unique surface orders = 125
+Stage-4 DtN prepared 300/708 auxiliary modes in 18.320 seconds; unique surface orders = 150
+Stage-4 DtN prepared 350/708 auxiliary modes in 19.184 seconds; unique surface orders = 175
+Stage-4 DtN prepared 400/708 auxiliary modes in 20.428 seconds; unique surface orders = 200
+Stage-4 DtN prepared 450/708 auxiliary modes in 21.258 seconds; unique surface orders = 225
+Stage-4 DtN prepared 500/708 auxiliary modes in 22.094 seconds; unique surface orders = 250
+Stage-4 DtN prepared 550/708 auxiliary modes in 22.911 seconds; unique surface orders = 275
+Stage-4 DtN prepared 600/708 auxiliary modes in 23.766 seconds; unique surface orders = 300
+Stage-4 DtN prepared 650/708 auxiliary modes in 24.619 seconds; unique surface orders = 325
+Stage-4 DtN prepared 700/708 auxiliary modes in 25.494 seconds; unique surface orders = 350
+Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354
+Stage-4 DtN base matrix nnz = 9385694.0
+Stage-4 DtN auxiliary coupling nnz estimate = 6763308

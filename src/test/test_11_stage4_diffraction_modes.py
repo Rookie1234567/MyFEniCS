@@ -96,7 +96,7 @@ class Stage4DiffractionModeTests(unittest.TestCase):
         self.assertAlmostEqual(amplitudes[(0, 0, "x", "up")].imag, -0.1, places=10)
         self.assertLess(abs(amplitudes[(0, 0, "y", "down")]), 1.0e-12)
 
-    def test_default_probe_planes_use_configured_fraction_of_physical_layers(self):
+    def test_default_probe_planes_place_top_above_block(self):
         cfg = stage4_block_config(
             diffraction_zero_order_only=False,
             z_min=-50.0,
@@ -106,10 +106,26 @@ class Stage4DiffractionModeTests(unittest.TestCase):
             diffraction_probe_fraction=0.75,
         )
         top_z, bottom_z = _probe_z_locations(cfg)
-        self.assertAlmostEqual(top_z, 0.75 * cfg.physical_z_max, places=12)
+        expected_top = cfg.grating_z_max + 0.75 * (cfg.physical_z_max - cfg.grating_z_max)
+        self.assertAlmostEqual(top_z, expected_top, places=12)
         self.assertAlmostEqual(bottom_z, 0.75 * cfg.physical_z_min, places=12)
         self.assertGreater(top_z, cfg.grating_z_max)
         self.assertLess(bottom_z, cfg.interface_z)
+
+    def test_reduced_height_probe_planes_fit_between_block_and_boundary(self):
+        cfg = stage4_block_config(
+            diffraction_zero_order_only=False,
+            z_min=-10.0,
+            z_max=60.0,
+            interface_z=0.0,
+            grating_height=50.0,
+            diffraction_probe_fraction=0.75,
+        )
+        top_z, bottom_z = _probe_z_locations(cfg)
+        self.assertAlmostEqual(top_z, 57.5, places=12)
+        self.assertAlmostEqual(bottom_z, -7.5, places=12)
+        self.assertGreater(top_z, cfg.grating_z_max)
+        self.assertLess(top_z, cfg.physical_z_max)
 
     def test_flat_layer_fresnel_field_e_fourier_power_sanity(self):
         cfg = stage4_block_config(

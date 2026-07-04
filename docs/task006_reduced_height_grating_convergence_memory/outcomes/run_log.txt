@@ -1,0 +1,13 @@
+# 运行日志
+
+所有运行均在 Docker `code-dolfinx-mpc:latest` 内执行，并先启用 `. dolfinx-complex-mode`。
+
+## 关键事件
+
+- p=2 assemble-only 的 h=1.5 在 7200 s 超时，h=1 在 base matrix assembled 后被 signal 9 kill。
+- 初次 direct p=1 h=5 暴露 reduced-height domain 下默认 top probe 落入光栅内部的问题，随后修正 `_probe_z_locations` 并重跑 direct。
+- p=1 default direct 完成到 h=2，h=1.5 在 `stage4_dtn_augmented_ksp_setup` 被 signal 9 kill。
+- p=2 default direct 完成到 h=4，h=3 在 `stage4_dtn_augmented_ksp_setup` 被 signal 9 kill。
+- p=2 h=4 MUMPS OOC 运行 5400 s 超时，未继续尝试 h=3 OOC。
+- MPI=1 对照完成 p=1 h=5/h=3 与 p=2 h=5；p=1 h=2 超时。
+- memory profiling 运行 p=2 h=5 MPI=8 default direct，输出 top-level `memory_profile_summary.csv` 和 `memory_profile_timeseries.csv`。

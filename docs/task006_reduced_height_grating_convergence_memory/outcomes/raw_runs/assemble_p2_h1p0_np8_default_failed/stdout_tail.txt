@@ -1,0 +1,80 @@
+PETSc direct LU options = {'ksp_type': 'preonly', 'pc_type': 'lu', 'ksp_error_if_not_converged': True, 'pc_factor_mat_solver_type': 'mumps'}
+mesh_build seconds = 3.793
+mesh cell type actual = hexahedron
+mesh cells requested = (100, 100, 70)
+mesh cells resolved = (100, 100, 70)
+mesh spacing mode resolved = uniform_strict
+mesh axis cell stats = {'x': {'num_cells': 100, 'min': 1.0, 'max': 1.0, 'median': 1.0}, 'y': {'num_cells': 100, 'min': 1.0, 'max': 1.0, 'median': 1.0}, 'z': {'num_cells': 70, 'min': 1.0, 'max': 1.0, 'median': 1.0}}
+function_space_setup seconds = 5.118
+mesh cells = 700000
+3D N1curl dofs = 16992540
+field_formulation_setup seconds = 0.037
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_trace_p2
+3D Floquet formal mapping = explicit p=2 N1curl edge + face-interior trace topology; probe/pinv is disabled.
+building 3D Floquet p=2 topological trace context
+building 3D Floquet p=2 topological trace context seconds = 149.905
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 10.261
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 2.640
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.025
+assembling 3D p=2 topological trace Floquet MPC arrays
+assembling 3D p=2 topological trace Floquet MPC arrays seconds = 0.900
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.909
+3D Floquet phase x = 1 + 0j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = 1 + 0j
+3D Floquet number of slave edges = 28270
+3D Floquet number of matched master edges = 28270
+3D Floquet number of slave faces = 14000
+3D Floquet number of matched master faces = 14000
+3D Floquet number of constraints = 112540
+3D Floquet number of edge constraints = 56540
+3D Floquet number of face constraints = 56000
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet max face midpoint pairing error = 0.000e+00 nm
+3D Floquet p=2 face transform fit count = 14000
+3D Floquet p=2 max face transform fit residual = 1.048e-12
+3D Floquet number of x constraints = 56200
+3D Floquet number of y constraints = 56200
+3D Floquet number of corner constraints = 140
+3D Floquet local slave dofs = 13980
+3D Floquet local slave records seen = 13980
+3D Floquet local ghost slave records on owned cells added to local MPC = 64
+3D Floquet global ghost slave records on owned cells added to local MPC = 712
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 114608
+3D Floquet max masters per slave = 3
+3D Floquet estimated constraint memory MB = 3.919
+3D Floquet total constraint setup seconds = 164.734
+floquet_constraint_setup_outer seconds = 175.303
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 1.976
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 16992540
+Stage-4 DtN surface quadrature degree = 17
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 245 RUNNING AT 80729bde741e
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions

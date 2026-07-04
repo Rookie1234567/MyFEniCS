@@ -14,7 +14,46 @@ codex/20260702-rta-output-volume-absorption
 docs/task002_rta_output_volume_absorption/
 docs/task003_stage4_power_consistency/
 docs/task004_small_cell_p_convergence_mpi_regression/
+docs/task005_stage4_real_grating_memory_estimation/
+docs/task006_reduced_height_grating_convergence_memory/
 ```
+
+---
+
+## 0. task006 reduced-height domain 补充
+
+task006 对真实 `100 nm x 100 nm x 70 nm`、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源和初步 R/T/A 检查。几何传参为：
+
+```text
+air_height = 60 nm
+substrate_thickness = 10 nm
+grating_height = 50 nm
+top air above grating = 10 nm
+total z height = 70 nm
+```
+
+当前结论：
+
+```text
+assemble-only:
+  p=1 h=1 nm 可完成；
+  p=2 h=2 nm 可完成；
+  p=2 h=1.5 nm 超时；
+  p=2 h=1 nm 在 base matrix assembled 后被 signal 9 kill，
+  rows ≈ 16.99M，nnz ≈ 1.77e9，AIJ matrix ≈ 40.6 GB。
+
+default MUMPS direct:
+  p=1 最后完成 h=2 nm，h=1.5 nm 被 signal 9 kill；
+  p=2 最后完成 h=4 nm，h=3 nm 被 signal 9 kill。
+
+MUMPS OOC:
+  p=1 h=2 nm 完成，但 h=1.5 nm 仍失败；
+  p=2 h=4 nm 运行 5400 s 超时。
+```
+
+70 nm 域显著降低矩阵资源，但 `h=5 nm` 与 150 nm 原域的 R/T/A 差异明显。因此当前不能把 70 nm reduced-height domain 当作与 150 nm 原域等价的物理 benchmark；后续应做 top/bottom port distance 或空气/基座厚度扫描。
+
+task006 还修正了真实光栅 reduced-height domain 下的自动 top probe 位置：有光栅块时，top probe 从 `grating_z_max` 到 `physical_z_max` 之间取，而不是从 interface 到 top boundary 之间取。
 
 ---
 

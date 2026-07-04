@@ -48,6 +48,9 @@ output/
 !notes/
 !notes/outcomes/
 !notes/outcomes/**/*.csv
+!docs/
+!docs/**/outcomes/
+!docs/**/outcomes/**/*.csv
 
 # Large mesh / generated files
 *.msh

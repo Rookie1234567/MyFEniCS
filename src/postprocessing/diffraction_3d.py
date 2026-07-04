@@ -353,7 +353,8 @@ def _probe_z_locations(cfg: SimulationConfig3D) -> tuple[float, float]:
     if cfg.diffraction_top_probe_z is not None:
         top_z = float(cfg.diffraction_top_probe_z)
     else:
-        top_z = cfg.interface_z + probe_fraction * (cfg.physical_z_max - cfg.interface_z)
+        top_lower_z = cfg.grating_z_max if cfg.has_grating_block else cfg.interface_z
+        top_z = top_lower_z + probe_fraction * (cfg.physical_z_max - top_lower_z)
     if cfg.diffraction_bottom_probe_z is not None:
         bottom_z = float(cfg.diffraction_bottom_probe_z)
     else:

@@ -1,0 +1,80 @@
+building 3D Floquet x-direction low-level constraints seconds = 0.357
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.464
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.011
+assembling 3D p=2 topological trace Floquet MPC arrays
+assembling 3D p=2 topological trace Floquet MPC arrays seconds = 0.112
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.027
+3D Floquet phase x = 1 + 0j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = 1 + 0j
+3D Floquet number of slave edges = 3595
+3D Floquet number of matched master edges = 3595
+3D Floquet number of slave faces = 1750
+3D Floquet number of matched master faces = 1750
+3D Floquet number of constraints = 14190
+3D Floquet number of edge constraints = 7190
+3D Floquet number of face constraints = 7000
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet max face midpoint pairing error = 0.000e+00 nm
+3D Floquet p=2 face transform fit count = 1750
+3D Floquet p=2 max face transform fit residual = 1.435e-12
+3D Floquet number of x constraints = 7070
+3D Floquet number of y constraints = 7070
+3D Floquet number of corner constraints = 50
+3D Floquet local slave dofs = 1788
+3D Floquet local slave records seen = 1788
+3D Floquet local ghost slave records on owned cells added to local MPC = 36
+3D Floquet global ghost slave records on owned cells added to local MPC = 252
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 14249
+3D Floquet max masters per slave = 2
+3D Floquet estimated constraint memory MB = 0.489
+3D Floquet total constraint setup seconds = 16.056
+floquet_constraint_setup_outer seconds = 16.139
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.076
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 758990
+Stage-4 DtN surface quadrature degree = 17
+Stage-4 DtN prepared 50/708 auxiliary modes in 80.063 seconds; unique surface orders = 25
+Stage-4 DtN prepared 100/708 auxiliary modes in 81.264 seconds; unique surface orders = 50
+Stage-4 DtN prepared 150/708 auxiliary modes in 82.336 seconds; unique surface orders = 75
+Stage-4 DtN prepared 200/708 auxiliary modes in 83.376 seconds; unique surface orders = 100
+Stage-4 DtN prepared 250/708 auxiliary modes in 84.394 seconds; unique surface orders = 125
+Stage-4 DtN prepared 300/708 auxiliary modes in 85.398 seconds; unique surface orders = 150
+Stage-4 DtN prepared 350/708 auxiliary modes in 86.404 seconds; unique surface orders = 175
+Stage-4 DtN prepared 400/708 auxiliary modes in 87.453 seconds; unique surface orders = 200
+Stage-4 DtN prepared 450/708 auxiliary modes in 88.533 seconds; unique surface orders = 225
+Stage-4 DtN prepared 500/708 auxiliary modes in 89.451 seconds; unique surface orders = 250
+Stage-4 DtN prepared 550/708 auxiliary modes in 90.369 seconds; unique surface orders = 275
+Stage-4 DtN prepared 600/708 auxiliary modes in 91.319 seconds; unique surface orders = 300
+Stage-4 DtN prepared 650/708 auxiliary modes in 92.235 seconds; unique surface orders = 325
+Stage-4 DtN prepared 700/708 auxiliary modes in 93.157 seconds; unique surface orders = 350
+Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354
+Stage-4 DtN base matrix nnz = 78950148.0
+Stage-4 DtN auxiliary coupling nnz estimate = 12309508
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 183 RUNNING AT 081977a5e040
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions

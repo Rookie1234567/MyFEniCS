@@ -1,0 +1,80 @@
+3D Floquet local ghost slave constraints = 31
+3D Floquet global ghost slave constraints = 235
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 13240
+3D Floquet max masters per slave = 1
+3D Floquet estimated constraint memory MB = 0.455
+3D Floquet total constraint setup seconds = 9.936
+floquet_constraint_setup_outer seconds = 9.988
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.090
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 688344
+Stage-4 DtN surface quadrature degree = 15
+Stage-4 DtN prepared 50/708 auxiliary modes in 9.477 seconds; unique surface orders = 25
+Stage-4 DtN prepared 100/708 auxiliary modes in 10.568 seconds; unique surface orders = 50
+Stage-4 DtN prepared 150/708 auxiliary modes in 11.747 seconds; unique surface orders = 75
+Stage-4 DtN prepared 200/708 auxiliary modes in 12.822 seconds; unique surface orders = 100
+Stage-4 DtN prepared 250/708 auxiliary modes in 13.919 seconds; unique surface orders = 125
+Stage-4 DtN prepared 300/708 auxiliary modes in 14.990 seconds; unique surface orders = 150
+Stage-4 DtN prepared 350/708 auxiliary modes in 16.393 seconds; unique surface orders = 175
+Stage-4 DtN prepared 400/708 auxiliary modes in 17.497 seconds; unique surface orders = 200
+Stage-4 DtN prepared 450/708 auxiliary modes in 18.576 seconds; unique surface orders = 225
+Stage-4 DtN prepared 500/708 auxiliary modes in 19.753 seconds; unique surface orders = 250
+Stage-4 DtN prepared 550/708 auxiliary modes in 20.749 seconds; unique surface orders = 275
+Stage-4 DtN prepared 600/708 auxiliary modes in 21.766 seconds; unique surface orders = 300
+Stage-4 DtN prepared 650/708 auxiliary modes in 22.796 seconds; unique surface orders = 325
+Stage-4 DtN prepared 700/708 auxiliary modes in 23.901 seconds; unique surface orders = 350
+Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354
+Stage-4 DtN base matrix nnz = 22653274.0
+Stage-4 DtN auxiliary coupling nnz estimate = 12023108
+           3 : Error not enough space on disk 
+
+           3 : Error not enough space on disk 
+
+           0 : Error not enough space on disk 
+
+stage4_dtn_port_assembly_and_solve_failed seconds = 205.905
+matrix rows = 689052
+matrix cols = 689052
+matrix nnz used = 34676382.0
+matrix nnz allocated = 34676382.0
+average nnz per row = 50.32
+average allocated nnz per row = 50.32
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 837745592.0
+estimated AIJ matrix memory MB = 798.9364547729492
+matrix Frobenius norm = 2130.371268461568
+matrix infinity norm = 129.0477180372973
+WARNING: direct LU failed at stage4_dtn_augmented_ksp_setup: PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.
+PETSc error diagnostics = {'petsc_error_type': 'Error', 'petsc_error_message': 'error code 76\n[0] KSPSetUp() at /usr/local/petsc/src/ksp/ksp/interface/itfunc.c:429\n[0] PCSetUp() at /usr/local/petsc/src/ksp/pc/interface/precon.c:1120\n[0] PCSetUp_LU() at /usr/local/petsc/src/ksp/pc/impls/factor/lu/lu.c:121\n[0] MatLUFactorNumeric() at /usr/local/petsc/src/mat/interface/matrix.c:3336\n[0] MatFactorNumeric_MUMPS() at /usr/local/petsc/src/mat/impls/aij/mpi/mumps/mumps.c:2092\n[0] Error in external library\n[0] MUMPS error in numerical factorization: INFOG(1)=-90, INFO(2)=0 (see users manual https://mumps-solver.org/index.php?page=doc "Error and warning diagnostics")', 'petsc_error_code': 76, 'mumps_infog_1': -90, 'mumps_infog_2': 0, 'mumps_info_1': -90, 'mumps_info_2': 0}
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = CONVERGED_ITERATING
+  iterations           = 0
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 2218.3 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_direct_lu_exception
+elapsed seconds = 226.964
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p1_h1p5_np8_20260704_100556

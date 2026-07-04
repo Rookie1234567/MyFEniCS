@@ -11,10 +11,10 @@
 当前阶段分支：
 
 ```text
-codex/20260703-stage4-real-grating-memory-estimation
+codex/20260704-reduced-height-grating-convergence-memory
 ```
 
-task002/task003/task004 已作为阶段性版本合并到 `master`。task005 在此基础上补充了真实 3D 光栅 p=2 的内存、MUMPS OOC 和迭代法资源估算。task004 合并的含义是：
+task002/task003/task004/task005 已作为阶段性版本合并到 `master`。task006 在 task005 基础上测试了真实 3D 光栅 70 nm reduced-height domain 的 p=1/p=2 assemble-only、default direct、MUMPS OOC、MPI=1 对照、R/T/A 初步收敛和 70 nm vs 150 nm 对照。task004/task005 合并后的基础能力含义是：
 
 ```text
 完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
@@ -26,12 +26,23 @@ task002/task003/task004 已作为阶段性版本合并到 `master`。task005 在
 真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
 ```
 
+task006 的当前结论是：
+
+```text
+70 nm reduced-height domain 可以显著降低矩阵规模；
+但 h=5 的 70 nm vs 150 nm R/T/A 差异明显，暂不能视为物理等价计算域；
+p=1 default direct 可完成到 h=2 nm；
+p=2 default direct 可完成到 h=4 nm；
+p=2 h=1 nm assemble-only 在约 40 GB AIJ base matrix 后被 signal 9 kill。
+```
+
 当前版本边界详见：
 
 ```text
 notes/reference/current_version_boundaries.md
 docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
 docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
+docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md
 ```
 
 ---

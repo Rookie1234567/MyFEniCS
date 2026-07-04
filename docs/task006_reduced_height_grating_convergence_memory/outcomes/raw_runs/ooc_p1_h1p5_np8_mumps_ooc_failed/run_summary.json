@@ -1,0 +1,610 @@
+{
+  "case_name": "airbox3d_normal_stage4_block_grating",
+  "stage": "stage4_3d_block_grating",
+  "stage_case": "stage4_block_grating",
+  "geometry_kind": "rectangular_block_grating",
+  "validation_role": "numerical_sanity_only",
+  "physical_benchmark_candidate": false,
+  "physical_benchmark_note": "Code-path or numerical sanity result only; do not use as a physical benchmark.",
+  "substrate_material_label": "Si / silicon",
+  "grating_material_label": "Si / silicon",
+  "lambda0_nm": 13.5,
+  "n_substrate_complex": [
+    0.999002304859,
+    0.00182649365
+  ],
+  "n_grating_complex": [
+    0.999002304859,
+    0.00182649365
+  ],
+  "mpi_size": 8,
+  "mpi_rank": 0,
+  "mesh_target_size": 1.5,
+  "mesh_cell_type": "auto",
+  "mesh_cell_type_resolved": "hexahedron",
+  "mesh_spacing_mode": "auto",
+  "mesh_spacing_mode_requested": "auto",
+  "mesh_refined_size": null,
+  "mesh_refinement_radius": null,
+  "floquet_constraint_mode_requested": "auto",
+  "nedelec_degree": 1,
+  "visualization_degree": 1,
+  "incident_theta_deg": 0.0,
+  "incident_phi_deg": 0.0,
+  "polarization_kind": "s",
+  "length_unit": "nm",
+  "electric_field_unit": "V/m",
+  "magnetic_field_unit": "A/m",
+  "config": {
+    "case_name": "airbox3d_normal_stage4_block_grating",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 100.0,
+    "period_y": 100.0,
+    "z_min": -10.0,
+    "z_max": 60.0,
+    "air_height": 60.0,
+    "substrate_thickness": 10.0,
+    "grating_height": 50.0,
+    "grating_width_x": 50.0,
+    "grating_width_y": 50.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "substrate_material_label": "Si / silicon",
+    "grating_material_label": "Si / silicon",
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "natural",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 5.0,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "mesh_target_size": 1.5,
+    "mesh_cell_type": "auto",
+    "mesh_spacing_mode": "auto",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_sample_count_x": 32,
+    "diffraction_sample_count_y": 32,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "petsc_direct_solver_profile": "mumps_ooc",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": false,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 100.0,
+    "y_min": 0.0,
+    "y_max": 100.0,
+    "physical_z_min": -10.0,
+    "physical_z_max": 60.0,
+    "domain_z_min": -10.0,
+    "domain_z_max": 60.0,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "auto",
+    "mesh_refined_size_resolved": 0.75,
+    "mesh_refinement_radius_resolved": 1.5,
+    "floquet_constraint_mode_requested": "auto",
+    "propagation_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.46542113386515455,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "grating_index": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "grating_bounds": {
+      "x_min": 25.0,
+      "x_max": 75.0,
+      "y_min": 25.0,
+      "y_max": 75.0,
+      "z_min": 0.0,
+      "z_max": 50.0
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "mesh_cells": [
+      67,
+      67,
+      47
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "case_status": "failed_direct_lu_exception",
+  "official_result": false,
+  "diagnostic_only": true,
+  "postprocess_skipped": true,
+  "postprocess_skip_reason": "stage4_dtn_augmented_ksp_setup: PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.",
+  "failure_stage": "stage4_dtn_augmented_ksp_setup",
+  "last_completed_stage": null,
+  "num_mesh_cells": 221952,
+  "num_nedelec_dofs": 688344,
+  "matrix_stats": {
+    "matrix_rows": 689052,
+    "matrix_cols": 689052,
+    "matrix_nnz_used": 34676382.0,
+    "matrix_nnz_allocated": 34676382.0,
+    "matrix_average_nnz_per_row": 50.32476794204211,
+    "matrix_average_allocated_nnz_per_row": 50.32476794204211,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 837745592.0,
+    "matrix_memory_estimate_mb": 798.9364547729492,
+    "matrix_norm_frobenius": 2130.371268461568,
+    "matrix_norm_infinity": 129.0477180372973,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 34676382.0,
+      "nz_used": 34676382.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 5.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "unconstrained_matrix_stats": null,
+  "constraint_matrix_transform": {
+    "uses_floquet_mpc": true,
+    "mpc_backend": "dolfinx_mpc low-level topological constraints",
+    "explicit_chac_constructed": false,
+    "chac_matrix_stats_before": null,
+    "chac_matrix_stats_after": null,
+    "unconstrained_matrix_stats": null,
+    "constrained_matrix_stats": {
+      "matrix_rows": 689052,
+      "matrix_cols": 689052,
+      "matrix_nnz_used": 34676382.0,
+      "matrix_nnz_allocated": 34676382.0,
+      "matrix_average_nnz_per_row": 50.32476794204211,
+      "matrix_average_allocated_nnz_per_row": 50.32476794204211,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 837745592.0,
+      "matrix_memory_estimate_mb": 798.9364547729492,
+      "matrix_norm_frobenius": 2130.371268461568,
+      "matrix_norm_infinity": 129.0477180372973,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 34676382.0,
+        "nz_used": 34676382.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "constrained_to_unconstrained_nnz_ratio": null,
+    "constrained_to_unconstrained_row_ratio": null,
+    "dtn_auxiliary_augmented_matrix": true,
+    "dtn_base_matrix_stats": {
+      "matrix_rows": 688344,
+      "matrix_cols": 688344,
+      "matrix_nnz_used": 22653274.0,
+      "matrix_nnz_allocated": 22653274.0,
+      "matrix_average_nnz_per_row": 32.90981544111665,
+      "matrix_average_allocated_nnz_per_row": 32.90981544111665,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 549185336.0,
+      "matrix_memory_estimate_mb": 523.7439498901367,
+      "matrix_norm_frobenius": 1855.171282952979,
+      "matrix_norm_infinity": 9.36976926717946,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 22653274.0,
+        "nz_used": 22653274.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_augmented_matrix_stats_after_finalize": {
+      "matrix_rows": 689052,
+      "matrix_cols": 689052,
+      "matrix_nnz_used": 34676382.0,
+      "matrix_nnz_allocated": 34676382.0,
+      "matrix_average_nnz_per_row": 50.32476794204211,
+      "matrix_average_allocated_nnz_per_row": 50.32476794204211,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 837745592.0,
+      "matrix_memory_estimate_mb": 798.9364547729492,
+      "matrix_norm_frobenius": 2130.371268461568,
+      "matrix_norm_infinity": 129.0477180372973,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 34676382.0,
+        "nz_used": 34676382.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 4.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_auxiliary_block_stats": {
+      "dtn_auxiliary_block_is_dense": false,
+      "dtn_auxiliary_dof_count": 708,
+      "dtn_auxiliary_fem_dof_count": 688344,
+      "dtn_auxiliary_coupling_nnz_estimate": 12023108,
+      "dtn_auxiliary_average_coupling_nnz_per_mode": 16981.790960451977,
+      "dtn_auxiliary_dense_block_equivalent_nnz": 974695812
+    },
+    "dtn_augmented_to_base_nnz_ratio": 1.5307448274364226,
+    "dtn_augmented_to_base_row_ratio": 1.001028555489697
+  },
+  "explicit_chac_constructed": false,
+  "chac_nnz_before": null,
+  "chac_nnz_after": null,
+  "constrained_linear_system_size": 689052,
+  "petsc_scalar_type": "<class 'numpy.complex128'>",
+  "dolfinx_default_scalar_type": "<class 'numpy.complex128'>",
+  "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+  "field_formulation": "total_field_dtn_port",
+  "stage4_boundary_model": "dtn_port",
+  "stage4_dtn_port_enabled": true,
+  "stage4_dtn_num_auxiliary_dofs": 708,
+  "stage4_dtn_auxiliary_block_stats": {
+    "dtn_auxiliary_block_is_dense": false,
+    "dtn_auxiliary_dof_count": 708,
+    "dtn_auxiliary_fem_dof_count": 688344,
+    "dtn_auxiliary_coupling_nnz_estimate": 12023108,
+    "dtn_auxiliary_average_coupling_nnz_per_mode": 16981.790960451977,
+    "dtn_auxiliary_dense_block_equivalent_nnz": 974695812
+  },
+  "stage4_dtn_base_matrix_stats": {
+    "matrix_rows": 688344,
+    "matrix_cols": 688344,
+    "matrix_nnz_used": 22653274.0,
+    "matrix_nnz_allocated": 22653274.0,
+    "matrix_average_nnz_per_row": 32.90981544111665,
+    "matrix_average_allocated_nnz_per_row": 32.90981544111665,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 549185336.0,
+    "matrix_memory_estimate_mb": 523.7439498901367,
+    "matrix_norm_frobenius": 1855.171282952979,
+    "matrix_norm_infinity": 9.36976926717946,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 22653274.0,
+      "nz_used": 22653274.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 3.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "stage4_dtn_augmented_matrix_stats_after_finalize": {
+    "matrix_rows": 689052,
+    "matrix_cols": 689052,
+    "matrix_nnz_used": 34676382.0,
+    "matrix_nnz_allocated": 34676382.0,
+    "matrix_average_nnz_per_row": 50.32476794204211,
+    "matrix_average_allocated_nnz_per_row": 50.32476794204211,
+    "matrix_memory_bytes": 0.0,
+    "matrix_memory_mb": 0.0,
+    "matrix_memory_estimate_bytes": 837745592.0,
+    "matrix_memory_estimate_mb": 798.9364547729492,
+    "matrix_norm_frobenius": 2130.371268461568,
+    "matrix_norm_infinity": 129.0477180372973,
+    "matrix_petsc_info": {
+      "block_size": 1.0,
+      "nz_allocated": 34676382.0,
+      "nz_used": 34676382.0,
+      "nz_unneeded": 0.0,
+      "memory": 0.0,
+      "assemblies": 4.0,
+      "mallocs": 0.0,
+      "fill_ratio_given": 0.0,
+      "fill_ratio_needed": 0.0,
+      "factor_mallocs": 0.0
+    }
+  },
+  "strong_z_boundary_dirichlet_enabled": false,
+  "strong_z_boundary_dirichlet_dofs": 0,
+  "strong_z_boundary_dirichlet_raw_dofs_global": 0,
+  "domain_tag_volumes": {
+    "air": 475000.0000009837,
+    "substrate": 100000.00000004923,
+    "grating": 124999.99999993312,
+    "top_pml": 0.0,
+    "bottom_pml": 0.0
+  },
+  "rhs_source_norm": null,
+  "unconstrained_rhs_norm": 0.0,
+  "linear_solve_method": "direct_lu",
+  "petsc_direct_solver_profile": "mumps_ooc",
+  "linear_solve_petsc_options": {
+    "ksp_type": "preonly",
+    "pc_type": "lu",
+    "ksp_error_if_not_converged": true,
+    "pc_factor_mat_solver_type": "mumps",
+    "mat_mumps_icntl_22": 1,
+    "mat_mumps_icntl_14": 80
+  },
+  "linear_solve_disabled_reason": null,
+  "direct_solve_exception": {
+    "petsc_error_type": "Error",
+    "petsc_error_message": "error code 76\n[0] KSPSetUp() at /usr/local/petsc/src/ksp/ksp/interface/itfunc.c:429\n[0] PCSetUp() at /usr/local/petsc/src/ksp/pc/interface/precon.c:1120\n[0] PCSetUp_LU() at /usr/local/petsc/src/ksp/pc/impls/factor/lu/lu.c:121\n[0] MatLUFactorNumeric() at /usr/local/petsc/src/mat/interface/matrix.c:3336\n[0] MatFactorNumeric_MUMPS() at /usr/local/petsc/src/mat/impls/aij/mpi/mumps/mumps.c:2092\n[0] Error in external library\n[0] MUMPS error in numerical factorization: INFOG(1)=-90, INFO(2)=0 (see users manual https://mumps-solver.org/index.php?page=doc \"Error and warning diagnostics\")",
+    "petsc_error_code": 76,
+    "mumps_infog_1": -90,
+    "mumps_infog_2": 0,
+    "mumps_info_1": -90,
+    "mumps_info_2": 0
+  },
+  "actual_ksp_type": "preonly",
+  "actual_pc_type": "lu",
+  "actual_pc_factor_solver_type": "mumps",
+  "selected_parallel_lu_solver_type": "mumps",
+  "ksp_converged": false,
+  "ksp_converged_reason": 0,
+  "ksp_converged_reason_name": "CONVERGED_ITERATING",
+  "ksp_iterations": 0,
+  "solver_residual_norm": 0.0,
+  "linear_system_rhs_norm": 93.08422677303136,
+  "linear_system_solution_norm": 0.0,
+  "linear_system_residual_norm": 93.08422677303136,
+  "linear_system_relative_residual": 1.0,
+  "use_floquet_xy": true,
+  "use_pml": false,
+  "floquet_num_constraints": 13240,
+  "floquet_constraint_mode_resolved": "topological_edges_p1",
+  "floquet_raw_map_nnz": 13240,
+  "floquet_max_masters_per_slave": 1,
+  "floquet_estimated_constraint_memory_mb": 0.454559326171875,
+  "mesh_cell_type_actual": "hexahedron",
+  "mesh_cells_resolved": [
+    68,
+    68,
+    48
+  ],
+  "mesh_spacing_mode_resolved": "boundary_fitted",
+  "mesh_axis_cell_stats": {
+    "x": {
+      "num_cells": 68,
+      "min": 1.470588235294116,
+      "max": 1.4705882352941302,
+      "median": 1.470588235294116
+    },
+    "y": {
+      "num_cells": 68,
+      "min": 1.470588235294116,
+      "max": 1.4705882352941302,
+      "median": 1.470588235294116
+    },
+    "z": {
+      "num_cells": 48,
+      "min": 1.4285714285714235,
+      "max": 1.470588235294123,
+      "median": 1.470588235294116
+    }
+  },
+  "mesh_material_plane_alignment": {
+    "all_aligned": true,
+    "missing": [],
+    "checked": {
+      "x": [
+        {
+          "name": "grating_x_min",
+          "value": 25.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_x_max",
+          "value": 75.0,
+          "aligned": true
+        }
+      ],
+      "y": [
+        {
+          "name": "grating_y_min",
+          "value": 25.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_y_max",
+          "value": 75.0,
+          "aligned": true
+        }
+      ],
+      "z": [
+        {
+          "name": "interface_z",
+          "value": 0.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_z_max",
+          "value": 50.0,
+          "aligned": true
+        },
+        {
+          "name": "grating_z_min",
+          "value": 0.0,
+          "aligned": true
+        }
+      ]
+    }
+  },
+  "mumps_ooc_runtime": {
+    "mumps_ooc_enabled": true,
+    "mumps_ooc_tmpdir": "/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p1_h1p5_np8_20260704_100556/mumps_ooc_files",
+    "mumps_ooc_prefix": "airbox3d_normal_stage4_block_grating_mumps_ooc",
+    "mumps_ooc_residual_file_count": 0,
+    "mumps_ooc_residual_file_bytes": 0,
+    "mumps_ooc_cleaned_by_solver": true,
+    "mumps_ooc_cleanup_policy": "delete_on_success_keep_on_failure",
+    "mumps_ooc_cleanup_attempted": false,
+    "mumps_ooc_cleanup_success": null,
+    "mumps_ooc_cleanup_removed_file_count": 0,
+    "mumps_ooc_cleanup_removed_file_bytes": 0,
+    "mumps_ooc_cleanup_error": null,
+    "mumps_ooc_retained_on_failure": false
+  },
+  "incident_transversality_dot_k_p": [
+    0.0,
+    0.0
+  ],
+  "timings_seconds": {
+    "config_validation": 1.191999763250351e-05,
+    "mesh_build": 0.8291159409563988,
+    "function_space_setup": 0.26182100496953353,
+    "field_formulation_setup": 0.0086162940133363,
+    "floquet_build_topological_edge_context": 9.400605889037251,
+    "floquet_build_x_constraints": 0.14234889298677444,
+    "floquet_build_y_constraints": 0.2719904719851911,
+    "floquet_resolve_corner_master_chains": 0.006452931964304298,
+    "floquet_build_mpc_arrays": 0.09766554197994992,
+    "floquet_mpc_finalize": 0.01534466998418793,
+    "floquet_total": 9.935838568024337,
+    "floquet_constraint_setup_outer": 9.987640260951594,
+    "boundary_condition_setup": 8.728995453566313e-06,
+    "variational_form_setup": 0.09014867502264678,
+    "stage4_dtn_port_assembly_and_solve_failed": 205.90534049400594,
+    "stage4_dtn_base_matrix_assembly_seconds": 6.995921016030479,
+    "stage4_dtn_base_rhs_assembly_seconds": 0.28569740697275847,
+    "stage4_dtn_surface_quadrature_degree": 15,
+    "stage4_dtn_augmented_block_copy_seconds": 0.9636354530230165,
+    "stage4_dtn_incident_source_vector_seconds": 0.030485388997476548,
+    "stage4_dtn_modal_loop_seconds": 15.703347706003115,
+    "stage4_dtn_modal_vector_assembly_seconds": 15.246074893861078,
+    "stage4_dtn_modal_block_insert_seconds": 0.5210546860471368,
+    "stage4_dtn_unique_surface_orders": 354,
+    "stage4_dtn_component_vector_assemblies": 708,
+    "stage4_dtn_component_vector_cache_hits": 354,
+    "stage4_dtn_augmented_matrix_finalize_seconds": 5.702666285040323
+  },
+  "elapsed_seconds": 226.96430568699725,
+  "max_rss_mb": 2218.34765625
+}

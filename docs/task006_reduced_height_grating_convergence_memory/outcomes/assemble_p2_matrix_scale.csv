@@ -1,0 +1,142 @@
+domain_height_nm,substrate_thickness_nm,top_air_above_grating_nm,air_height_parameter_nm,grating_height_nm,period_x_nm,period_y_nm,h_nm,p,mpi_ranks,mesh_target_size_nm,mpi_procs,solver_profile,returncode,status,case_status,result_dir,stdout_file,stderr_file,progress_file,last_progress_stage,last_progress_status,failure_stage,petsc_error_code,petsc_error_type,mumps_infog_1,mumps_infog_2,mumps_ooc_tmpdir,mumps_ooc_cleaned_by_solver,mumps_ooc_cleanup_attempted,mumps_ooc_cleanup_success,mumps_ooc_cleanup_removed_file_count,mumps_ooc_cleanup_removed_file_bytes,mumps_ooc_cleanup_removed_file_GB,mumps_ooc_retained_on_failure,mumps_ooc_residual_file_count,mumps_ooc_residual_file_bytes,mumps_ooc_residual_file_GB,ooc_disk_GB,mesh_cells_resolved,cells,N1curl_raw_dofs,dof_raw_nedelec,floquet_constraints,constrained_system_size,dtn_auxiliary_dofs,system_rows,system_cols,matrix_rows,matrix_cols,nnz_used,nnz_allocated,avg_nnz_per_row,average_nnz_per_row,average_allocated_nnz_per_row,petsc_matrix_memory_mb,estimated_aij_matrix_memory_mb,matrix_memory_GB,PETSc_matrix_memory_GB,estimated_AIJ_matrix_memory_GB,solve_time_seconds,solve_time_s,elapsed_wall_seconds,elapsed_wall_s,assemble_elapsed_s,summary_elapsed_seconds,peak_rss_mb,peak_RSS_per_rank_max_GB,rss_rank_max_mb,rss_rank_sum_mb,rss_rank_sum_GB,rss_rank_mean_mb,rss_rank_min_mb,rss_rank_imbalance,rss_rank_statistics_source,estimated_total_RSS_upper_GB,swap_used_before_mb,swap_used_after_mb,swap_used_delta_mb,swap_before_GB,swap_after_GB,swap_delta_GB,effective_LU_memory_proxy_GB,rss_to_matrix_ratio,actual_ksp_type,actual_pc_type,actual_pc_factor_solver_type,explicit_chac_constructed,dtn_augmented_to_base_nnz_ratio,constrained_to_unconstrained_nnz_ratio,R_total,T_total,A_volume_total,R_plus_T,R_plus_T_plus_A_volume,energy_closure_error_port_volume,A_port_balance_minus_A_volume_total,num_reflection_orders,num_transmission_orders,dtn_port_propagating_mode_count,stdout_tail,stderr_tail
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,5.0,2,8,5.0,8,default,0,completed,diagnostic_assemble_only,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_040610,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_040610/progress_3d.jsonl,stage4_dtn_augmented_matrix_finalized,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[20, 20, 14]",5600,142188,142188,4588,142896,708,142896,142896,142896,142896,18803220.0,18803220.0,131.586748404434,131.586748404434,131.586748404434,0.0,431.4617691040039,0.0,0.0,0.4213493838906288,35.201811256003566,35.201811256003566,42.71491912100464,42.71491912100464,42.71491912100464,39.419611427991185,595.8359375,0.5818710327148438,595.8359375,4766.6875,4.65496826171875,,,,upper_bound_from_global_max_times_ranks,4.65496826171875,109.96875,109.96875,0.0,0.107391357421875,0.107391357421875,0.0,4.233618877828121,11.047763304495675,preonly,lu,mumps,False,1.271922015851387,,,,,,,,,,,,"linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 595.8 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 39.420
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_040610",
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,4.0,2,8,4.0,8,default,0,completed,diagnostic_assemble_only,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260704_040653,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260704_040653/progress_3d.jsonl,stage4_dtn_augmented_matrix_finalized,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[27, 27, 19]",13851,346610,346610,8354,347318,708,347318,347318,347318,347318,43371936.0,43371936.0,124.87672968288427,124.87672968288427,124.87672968288427,0.0,995.3546676635742,0.0,0.0,0.9720260426402092,51.4773025480099,51.4773025480099,60.39237211400177,60.39237211400177,60.39237211400177,56.71725200599758,923.76171875,0.9021110534667969,923.76171875,7390.09375,7.216888427734375,,,,upper_bound_from_global_max_times_ranks,7.216888427734375,109.96875,109.96875,0.0,0.107391357421875,0.107391357421875,0.0,6.244862385094166,7.424583407386824,preonly,lu,mumps,False,1.203230650767531,,,,,,,,,,,,"linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 923.8 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 56.717
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260704_040653",
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,3.0,2,8,3.0,8,default,0,completed,diagnostic_assemble_only,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260704_040753,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h3p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h3p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260704_040753/progress_3d.jsonl,stage4_dtn_augmented_matrix_finalized,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[35, 35, 25]",30625,758990,758990,14190,759698,708,759698,759698,759698,759698,91259656.0,91259656.0,120.1262291068293,120.1262291068293,120.1262291068293,0.0,2094.563804626465,0.0,0.0,2.045472465455532,108.99122433195589,108.99122433195589,122.0000174799934,122.0000174799934,122.0000174799934,118.2807948870468,1359.51953125,1.3276557922363281,1359.51953125,10876.15625,10.621246337890625,,,,upper_bound_from_global_max_times_ranks,10.621246337890625,109.96875,109.96875,0.0,0.107391357421875,0.107391357421875,0.0,8.575773872435093,5.192563829269266,preonly,lu,mumps,False,1.1559149452132755,,,,,,,,,,,,"linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 1359.5 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 118.281
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260704_040753",
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,2.5,2,8,2.5,8,default,0,completed,diagnostic_assemble_only,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260704_040956,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h2p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h2p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260704_040956/progress_3d.jsonl,stage4_dtn_augmented_matrix_finalized,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[40, 40, 28]",44800,1106136,1106136,18136,1106844,708,1106844,1106844,1106844,1106844,131114844.0,131114844.0,118.45828680464456,118.45828680464456,118.45828680464456,0.0,3009.425178527832,0.0,0.0,2.938891775906086,168.4572813520208,168.4572813520208,185.8917710990063,185.8917710990063,185.8917710990063,181.3493649099837,2219.875,2.1678466796875,2219.875,17759.0,17.3427734375,,,,upper_bound_from_global_max_times_ranks,17.3427734375,109.96875,109.96875,0.0,0.107391357421875,0.107391357421875,0.0,14.403881661593914,5.901126941686402,preonly,lu,mumps,False,1.1397590430988422,,,,,,,,,,,,"linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 2219.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 181.349
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260704_040956",
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,2.0,2,8,2.0,8,default,0,completed,diagnostic_assemble_only,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260704_041304,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h2p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h2p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260704_041304/progress_3d.jsonl,stage4_dtn_augmented_matrix_finalized,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[51, 51, 35]",91035,2234482,2234482,28834,2235190,708,2235190,2235190,2235190,2235190,258490144.0,258490144.0,115.64571423458409,115.64571423458409,115.64571423458409,0.0,5933.423027038574,0.0,0.0,5.794358424842358,787.8327213469893,787.8327213469893,824.4425145600107,824.4425145600107,824.4425145600107,814.9162328330567,2462.28515625,2.4045753479003906,2462.28515625,19698.28125,19.236602783203125,,,,upper_bound_from_global_max_times_ranks,19.236602783203125,109.96875,211.078125,101.109375,0.107391357421875,0.2061309814453125,0.0987396240234375,13.442244358360767,3.3198848557123006,preonly,lu,mumps,False,1.1124813425246416,,,,,,,,,,,,"linear system true relative residual = None
+Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = False
+  converged reason     = 0
+  reason name          = ASSEMBLE_ONLY_SKIPPED_SOLVE
+  iterations           = 0
+  residual norm        = None
+  max RSS across ranks = 2462.3 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = diagnostic_assemble_only
+elapsed seconds = 814.916
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260704_041304",
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,1.5,2,8,1.5,8,default,124,timeout,,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p5_np8_20260704_042647,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h1p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h1p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p5_np8_20260704_042647/progress_3d.jsonl,stage4_dtn_base_matrix_assembled,end,,,,,,,,,,,,,,,,,0.0,,,5416432,,52592,,,5416432,5416432,5416432,5416432,563353192.0,563353192.0,104.00817216942814,104.00817216942814,,0.0,12935.455390930176,,,12.63228065520525,,,7201.023895791965,7201.023895791965,7201.023895791965,,1848.54296875,1.8052177429199219,,,,,,,upper_bound_from_global_max_times_ranks,14.441741943359375,211.078125,28773.0703125,28561.9921875,0.2061309814453125,28.09870147705078,27.89257049560547,,,,,,,,,,,,,,,,,,,"3D Floquet raw map nnz = 53171
+3D Floquet max masters per slave = 3
+3D Floquet estimated constraint memory MB = 1.821
+3D Floquet total constraint setup seconds = 49.895
+floquet_constraint_setup_outer seconds = 50.254
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.166
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 5416432
+Stage-4 DtN surface quadrature degree = 17","
+[matrix-scale] timeout after 7200.0 seconds"
+70.0,10.0,10.0,60.0,50.0,100.0,100.0,1.0,2,8,1.0,8,default,9,failed,,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p0_np8_20260704_062647,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h1p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260704_040608/run_np8_default_h1p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p0_np8_20260704_062647/progress_3d.jsonl,stage4_dtn_base_matrix_assembled,end,,,,,,,,,,,,,,,,,0.0,,,16992540,,112540,,,16992540,16992540,16992540,16992540,1767279728.0,1767279728.0,104.00327014089713,104.00327014089713,,0.0,40579.465675354004,,,39.628384448587894,,,6518.4093680779915,6518.4093680779915,6518.4093680779915,,2384.85546875,2.328960418701172,,,,,,,upper_bound_from_global_max_times_ranks,18.631683349609375,28259.8984375,134.66015625,-28125.23828125,27.597557067871094,0.13150405883789062,-27.466053009033203,,,,,,,,,,,,,,,,,,,"stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 1.976
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 16992540
+Stage-4 DtN surface quadrature degree = 17
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 245 RUNNING AT 80729bde741e
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions",

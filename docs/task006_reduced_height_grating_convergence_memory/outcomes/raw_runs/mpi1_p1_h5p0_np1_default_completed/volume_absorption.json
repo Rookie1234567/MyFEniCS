@@ -1,0 +1,64 @@
+{
+  "method": "volume_absorption",
+  "role": "absorption_check",
+  "status": "ok",
+  "power_source": "volume_integral_Im_epsilon_E2",
+  "field_model_for_absorption": "total_field",
+  "incident_power_code_units": 4999.999999999999,
+  "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+  "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+  "pml_cells_excluded": true,
+  "air_cells_excluded": true,
+  "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+  "regions": {
+    "grating": {
+      "name": "grating",
+      "tag": 3,
+      "cell_count": 1000,
+      "volume_nm3": 125000.0,
+      "n_complex": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "epsilon_r_complex": [
+        0.9980022690345409,
+        0.0036493427323206554
+      ],
+      "Im_epsilon_r": 0.0036493427323206554,
+      "material_label": "Si / silicon",
+      "status": "ok",
+      "reason": null,
+      "absorbed_power_code_units": 76.30276871712111,
+      "A_volume": 0.015260553743424225
+    },
+    "substrate": {
+      "name": "substrate",
+      "tag": 2,
+      "cell_count": 800,
+      "volume_nm3": 100000.0,
+      "n_complex": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "epsilon_r_complex": [
+        0.9980022690345409,
+        0.0036493427323206554
+      ],
+      "Im_epsilon_r": 0.0036493427323206554,
+      "material_label": "Si / silicon",
+      "status": "ok",
+      "reason": null,
+      "absorbed_power_code_units": 61.02912827596398,
+      "A_volume": 0.012205825655192798
+    }
+  },
+  "A_grating": 0.015260553743424225,
+  "A_substrate": 0.012205825655192798,
+  "A_volume_grating": 0.015260553743424225,
+  "A_volume_substrate": 0.012205825655192798,
+  "A_volume_total": 0.02746637939861702,
+  "A_port_balance_minus_A_volume_total": 1.8811341373492496e-14,
+  "A_probe_balance_minus_A_volume_total": 0.4401965669223021,
+  "A_flux_minus_A_volume_total": -0.014653146915900757,
+  "energy_closure_error_port_volume": -1.8762769116165146e-14
+}

@@ -1,0 +1,41 @@
+label,status,returncode,command,timeseries_csv,stdout_file,stderr_file,stdout_tail,stderr_tail,peak_rss_sum_GB,peak_rss_max_GB,peak_ooc_disk_GB,peak_swap_used_GB,last_stage,result_dir,elapsed_s
+p2_h5_np8_default_direct,completed,0,mpiexec -n 8 python3 -m src.runners.run_3d_cases --stage-case stage4_block_grating --case normal --mesh-target-size 5 --nedelec-degree 2 --visualization-degree 1 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --period-x 100 --period-y 100 --air-height 60 --substrate-thickness 10 --grating-width-x 50 --grating-width-y 50 --grating-height 50 --lambda0 13.5 --n-substrate 0.999002304859+0.00182649365j --n-grating 0.999002304859+0.00182649365j --polarization-kind s --mesh-cell-type auto --mesh-spacing-mode auto,docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/memory_profile_timeseries.csv,docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/stdout.txt,docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_p2_h5_np8/stderr.txt,"3D diffraction absorption from balance = 3.468869e-02
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618/fields_3d_for_paraview_parallel.pvd
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.075
+  function_space_setup: 0.032
+  field_formulation_setup: 0.007
+  floquet_build_topological_trace_context_p2: 1.015
+  floquet_build_x_constraints: 0.145
+  floquet_build_y_constraints: 0.058
+  floquet_resolve_corner_master_chains: 0.002
+  floquet_build_mpc_arrays: 0.028
+  floquet_mpc_finalize: 0.004
+  floquet_total: 1.252
+  floquet_constraint_setup_outer: 1.275
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.238
+  stage4_dtn_port_assembly_and_solve: 104.471
+  matrix_stats: 0.056
+  postprocess: 11.829
+  diffraction_postprocess: 4.061
+  volume_absorption_postprocess: 0.720
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 2078.6 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 119.941
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618",,13.64581298828125,2.02984619140625,0.0,0.16107177734375,stage4_dtn_augmented_solve:end,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260704_130618,131.58332109451294

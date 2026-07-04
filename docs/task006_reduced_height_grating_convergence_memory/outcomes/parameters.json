@@ -1,0 +1,54 @@
+{
+  "task": "task006_reduced_height_grating_convergence_memory",
+  "branch": "codex/20260704-reduced-height-grating-convergence-memory",
+  "generated_at_local": "2026-07-04T21:13:19",
+  "geometry_reduced_70nm": {
+    "domain_height_nm": 70.0,
+    "substrate_thickness_nm": 10.0,
+    "top_air_above_grating_nm": 10.0,
+    "air_height_parameter_nm": 60.0,
+    "grating_height_nm": 50.0,
+    "period_x_nm": 100.0,
+    "period_y_nm": 100.0
+  },
+  "geometry_original_150nm": {
+    "domain_height_nm": 150.0,
+    "substrate_thickness_nm": 50.0,
+    "top_air_above_grating_nm": 50.0,
+    "air_height_parameter_nm": 100.0,
+    "grating_height_nm": 50.0,
+    "period_x_nm": 100.0,
+    "period_y_nm": 100.0
+  },
+  "material": {
+    "n_air": "1+0j",
+    "n_substrate": "0.999002304859+0.00182649365j",
+    "n_grating": "0.999002304859+0.00182649365j"
+  },
+  "physics": {
+    "lambda0_nm": 13.5,
+    "stage_case": "stage4_block_grating",
+    "boundary_model": "dtn_port",
+    "dtn_assembly": "auxiliary",
+    "dtn_order_policy": "auto_propagating",
+    "polarization": "s",
+    "incidence": "normal"
+  },
+  "runtime": {
+    "docker_image": "code-dolfinx-mpc:latest",
+    "complex_mode": ". dolfinx-complex-mode",
+    "primary_mpi_ranks": 8,
+    "comparison_mpi_ranks": 1
+  },
+  "commands": {
+    "assemble_p1": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 4 3 2.5 2 1.5 1 --mpi-procs-list 8 --nedelec-degree 1 --assemble-only ...",
+    "assemble_p2": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 4 3 2.5 2 1.5 1 --mpi-procs-list 8 --nedelec-degree 2 --assemble-only ...",
+    "direct_p1": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 4 3 2.5 2 1.5 1 --mpi-procs-list 8 --nedelec-degree 1 --stop-on-failure ...",
+    "direct_p2": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 4 3 2.5 2 1.5 1 --mpi-procs-list 8 --nedelec-degree 2 --stop-on-failure ...",
+    "mumps_ooc_p1": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 2 1.5 --mpi-procs-list 8 --nedelec-degree 1 --petsc-direct-solver-profile mumps_ooc ...",
+    "mumps_ooc_p2": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 4 3 --mpi-procs-list 8 --nedelec-degree 2 --petsc-direct-solver-profile mumps_ooc ...",
+    "mpi1_p1": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 3 2 --mpi-procs-list 1 --nedelec-degree 1 ...",
+    "mpi1_p2": "python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 --mpi-procs-list 1 --nedelec-degree 2 ...",
+    "memory_profile": "python3 -m src.studies.run_3d_memory_profile --label p2_h5_np8_default_direct -- mpiexec -n 8 python3 -m src.runners.run_3d_cases ..."
+  }
+}

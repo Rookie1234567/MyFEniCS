@@ -1,0 +1,5 @@
+method,R,T,A,role,status,source
+port,6.976281883581394e-06,0.9663569780895181,0.03363604562859823,primary,ok,dtn_auxiliary_port_amplitudes
+probe_eh_fourier,0.009946315405835224,0.8582974892986148,0.13175619529554994,cross_check,ok,eh_fourier_orders
+net_flux,0.1261883972617992,0.8486426046730743,0.025168998065126513,diagnostic,ok,sampled_poynting_flux
+volume_absorption,,,0.03363604562860581,absorption_check,ok,volume_integral_Im_epsilon_E2
