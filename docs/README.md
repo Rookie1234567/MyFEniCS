@@ -22,14 +22,15 @@ docs/taskXXX_task_name/
 | task002 | R/T/A output 与 volume absorption | `task002_rta_output_volume_absorption/` | 已完成并已审查 |
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
 | task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
-| task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | Codex 已完成 outcomes，待审查 |
+| task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
+| task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 任务书已写入；待本地 Codex 新建分支后执行 |
 
 ## 合并前结论
 
-当前分支可作为阶段性稳定版本合并。合并含义是：
+当前 task005 分支可作为资源评估阶段性结果合并。合并含义是：
 
 ```text
-完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p 收敛、MPI 一致性与全阶段 smoke 回归。
+完成真实 100 nm x 100 nm x 150 nm Stage 4 block grating p=2 的资源评估：矩阵规模、direct MUMPS 边界、MUMPS OOC 对照、迭代法内存估算和工作站配置外推。
 ```
 
 不要把本次合并解读为：
@@ -42,19 +43,12 @@ docs/taskXXX_task_name/
 
 ```text
 notes/reference/current_version_boundaries.md
-docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
+docs/task005_stage4_real_grating_memory_estimation/review_report.md
 ```
 
-## task005 当前结论
+## task006 执行说明
 
-task005 已从更新后的 `master` 新建任务分支执行。当前 outcomes 说明：
-
-```text
-真实 100 nm x 100 nm x 150 nm 3D 光栅 p=2 的矩阵本体可 assemble 到 h=2 nm；
-default MUMPS direct 最后完成 h=5 nm，在 h=4 nm 被 signal 9 kill；
-默认 MUMPS OOC 最后完成 h=5 nm，在 h=4 nm 返回 MUMPS INFOG(1)=-90；
-后续若要推进 h=2.5 nm 或更细，建议考虑 512 GB 到 1 TB 级别工作站，或转向迭代求解器/预条件器路线。
-```
+`task006_reduced_height_grating_convergence_memory/task.md` 是后续任务书。执行 task006 前，应先在本地将当前 task005 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task006 分支。ChatGPT 不负责创建远程任务分支。
 
 ## 工作规则
 
