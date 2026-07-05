@@ -1,13 +1,34 @@
 # 本轮改动文件清单
 
-## 源码
+## 代码
 
-- `src/studies/run_3d_matrix_scale.py`：补充 task006 几何/材料参数透传、R/T/A 与衍射级字段、失败进度 fallback、增量 CSV 写入。
-- `src/studies/run_3d_memory_profile.py`：新增 diagnostic-only 内存监控脚本，记录进程树 RSS、swap、OOC 磁盘和 progress stage。
-- `src/postprocessing/diffraction_3d.py`：修正真实光栅 reduced-height domain 的自动 top probe 位置，使其落在光栅顶面和 top boundary 之间。
-- `src/test/test_11_stage4_diffraction_modes.py`：更新 probe 位置测试，并新增 70 nm reduced-height 保护用例。
-- `.gitignore`：允许 `docs/**/outcomes/**/*.csv` 作为轻量任务结果提交。
+- `.gitignore`：允许 `docs/**/outcomes/**/*.csv` 被 Git 记录，同时继续忽略 `results/` 大体积运行输出。
+- `src/postprocessing/diffraction_3d.py`：修正真实 block grating 的自动 top probe 位置，避免 probe 落入光栅内部。
+- `src/studies/run_3d_matrix_scale.py`：扩展几何、材料、R/T/A、progress fallback、增量 CSV 和资源诊断字段。
+- `src/studies/run_3d_memory_profile.py`：新增进程树 RSS/swap/OOC scratch 采样脚本。
+- `src/solvers/common_3d_solve.py`：修正 MUMPS OOC profile 和 PETSc extra options 的覆盖顺序。
+- `src/test/test_11_stage4_diffraction_modes.py`：补充 reduced-height probe 位置测试。
+- `src/test/test_18_3d_direct_solver_profile_cleanup.py`：补充 `mat_mumps_icntl_14` 覆盖测试。
 
-## Outcomes
+## 文档
 
-- 生成 task006 下的 assemble/direct/OOC/MPI/RTA/衍射级/70-vs-150/memory-profile/failure-boundary/summary/raw_runs 等轻量结果文件。
+- `README.md`
+- `docs/README.md`
+- `notes/reference/current_version_boundaries.md`
+- `docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md`
+- `docs/task006_reduced_height_grating_convergence_memory/outcomes/failure_boundary.md`
+- `docs/task006_reduced_height_grating_convergence_memory/outcomes/run_log.txt`
+- `docs/task006_reduced_height_grating_convergence_memory/outcomes/parameters.json`
+
+## 结果数据
+
+- `assemble_matrix_scale.csv`
+- `direct_default_scale.csv`
+- `mumps_ooc_scale.csv`
+- `mumps_ooc_tuned_extra_scale.csv`
+- `workstation_recommendation.csv`
+- `memory_profile_summary.csv`
+- `memory_profile_timeseries.csv`
+- `rta_convergence.csv`
+- `reduced_vs_original_domain_comparison.csv`
+- `raw_runs/` 轻量运行记录

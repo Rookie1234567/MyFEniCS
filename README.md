@@ -45,6 +45,8 @@ docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
 docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md
 ```
 
+2026-07-05 补充：task006 已重新整理 summary，加入 memory profiling、tuned MUMPS OOC、assemble-only 与 direct solve 失败原因解释，以及 h=0.5/h=0.25 nm 的 workstation 外推。当前 reduced-height p=2 的 direct/OOC 可完成边界是 h=4 nm；h=3 nm tuned OOC 仍失败。h<=1 nm 应视为 TB 级或更高资源问题，h=0.5/h=0.25 nm 不适合继续用 direct/OOC workstation 路线硬推。
+
 ---
 
 ## 1. 当前代码已开发的主要功能

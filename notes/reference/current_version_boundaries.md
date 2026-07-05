@@ -55,6 +55,28 @@ MUMPS OOC:
 
 task006 还修正了真实光栅 reduced-height domain 下的自动 top probe 位置：有光栅块时，top probe 从 `grating_z_max` 到 `physical_z_max` 之间取，而不是从 interface 到 top boundary 之间取。
 
+2026-07-05 补充运行后，边界更新为：
+
+```text
+memory profiling:
+  p=2 h=5 default direct 的进程树 RSS 峰值约 13.65 GB；
+  matrix-scale 中的 RSS upper 是 max_rss_mb x ranks 的保守上界，不是实测总 RSS。
+
+tuned MUMPS OOC:
+  p=2 h=5 完成，OOC scratch 约 4.95 GB；
+  p=2 h=4 完成，OOC scratch 约 14.24 GB；
+  p=2 h=3 失败，MUMPS INFOG(1)=-90；
+  p=1 h=1.5 失败，MUMPS INFOG(1)=-90。
+
+workstation:
+  p=2 h=3 建议至少按 128 GB 级别压力测试；
+  p=2 h=2 建议 256-512 GB；
+  p=2 h=1 约为 TB 级内存问题；
+  h=0.5 / 0.25 nm 不建议继续 direct/OOC workstation 路线。
+```
+
+失败点中记录到的 RSS 可能低估，因为 signal 9 或 MUMPS error 发生后，进程可能来不及写出 factorization 峰值。
+
 ---
 
 ## 1. 当前可以较有信心使用的能力

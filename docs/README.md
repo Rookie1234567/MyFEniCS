@@ -60,6 +60,15 @@ reduced_vs_original_domain_comparison.csv
 memory_profile_summary.csv
 ```
 
+2026-07-05 补充：task006 summary 已加入 memory profiling、tuned MUMPS OOC、失败边界解释和 workstation recommendation。审查时还应查看：
+
+```text
+mumps_ooc_tuned_extra_scale.csv
+workstation_recommendation.csv
+```
+
+新的关键结论是：`mat_mumps_icntl_14=200` tuned OOC 可以完成 p=2 h=4，但 p=2 h=3 仍在 MUMPS numerical factorization 阶段失败；h=0.5 nm 和 h=0.25 nm 已不适合 direct/OOC workstation 路线。
+
 ## 工作规则
 
 1. Codex 开始新一轮前，读取上一轮任务目录中的 `review_report.md`。

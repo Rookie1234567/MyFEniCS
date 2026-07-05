@@ -1,0 +1,10 @@
+h_nm,source,matrix_GB,direct_ram_est_GB,tuned_ooc_ram_est_GB,tuned_ooc_ssd_est_GB,iterative_low_memory_est_GB,recommended_ram,recommended_ssd,confidence,note
+5,observed_completed,0.421,16.9,10.5,7.6,1.7,32-64 GB,100 GB,high,current 14 GB WSL can run but 32-64 GB is more comfortable
+4,observed_completed,0.972,38.9,24.3,17.5,3.9,64 GB,200 GB,high,default direct and tuned OOC both completed; tuned OOC used about 14.24 GB scratch
+3,observed_assemble_completed,2.045,81.8,51.1,36.8,8.2,128 GB,500 GB,medium_low,assemble completed but default direct and tuned OOC failed at MUMPS factorization
+2.5,observed_assemble_completed,2.939,117.6,73.5,52.9,11.8,128-256 GB,1 TB,medium_low,not solved in this task; estimate from matrix scaling and h4 OOC ratio
+2,observed_assemble_completed,5.794,231.8,144.9,104.3,23.2,256-512 GB,1-2 TB,low,assemble completed only; direct/OOC memory likely far above current WSL
+1.5,observed_timeout,12.632,505.3,315.8,227.4,50.5,512 GB-1 TB,2 TB,low,p2 assemble timed out; p1 h1.5 direct/OOC also failed
+1,observed_failed,39.628,1585.1,990.7,713.3,158.5,2 TB,4 TB,very_low,p2 h1 failed after recording very large base matrix; direct LU route is not economical
+0.5,extrapolated_fine_fit,281.720,11268.8,7043.0,5071.0,1126.9,8-16 TB or cluster,16 TB+,very_low,below 1 nm is outside normal workstation direct/OOC scope
+0.25,extrapolated_fine_fit,1992.925,79717.0,49823.1,35872.6,7971.7,not a workstation target,64 TB+ scratch,very_low,direct/OOC route is not recommended

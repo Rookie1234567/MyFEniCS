@@ -118,8 +118,6 @@ def _prepare_direct_lu_options_for_comm(
 
     petsc_options = _direct_lu_petsc_options()
     profile = "default" if cfg is None else cfg.petsc_direct_solver_profile_requested
-    if cfg is not None:
-        _apply_petsc_option_dict(petsc_options, cfg.petsc_extra_options)
 
     selected_solver: str | None = None
     if profile == "mumps_ooc":
@@ -132,6 +130,9 @@ def _prepare_direct_lu_options_for_comm(
             f"Unsupported PETSc direct solver profile '{profile}'. "
             "Use 'default' or 'mumps_ooc'."
         )
+
+    if cfg is not None:
+        _apply_petsc_option_dict(petsc_options, cfg.petsc_extra_options)
 
     if comm.size == 1:
         if selected_solver is not None:

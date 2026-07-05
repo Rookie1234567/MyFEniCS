@@ -1,6 +1,9 @@
 import unittest
 
+from mpi4py import MPI
+
 from src.common.config_3d import SimulationConfig3D
+from src.solvers.common_3d_solve import _prepare_direct_lu_options_for_comm
 
 
 class DirectSolverProfileCleanupTests(unittest.TestCase):
@@ -24,6 +27,16 @@ class DirectSolverProfileCleanupTests(unittest.TestCase):
             with self.subTest(profile=profile):
                 with self.assertRaises(ValueError):
                     _ = cfg.petsc_direct_solver_profile_requested
+
+    def test_mumps_ooc_extra_options_override_profile_defaults(self):
+        cfg = SimulationConfig3D(
+            petsc_direct_solver_profile="mumps_ooc",
+            petsc_extra_options={"mat_mumps_icntl_14": 200},
+        )
+        options, _, reason = _prepare_direct_lu_options_for_comm(MPI.COMM_SELF, cfg)
+        if reason is not None and "does not report MUMPS" in reason:
+            self.skipTest(reason)
+        self.assertEqual(options["mat_mumps_icntl_14"], 200)
 
 
 if __name__ == "__main__":
