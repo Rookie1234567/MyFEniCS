@@ -1,0 +1,120 @@
+3D Floquet estimated constraint memory MB = 0.040
+3D Floquet total constraint setup seconds = 0.353
+floquet_constraint_setup_outer seconds = 0.358
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.304
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 708
+Stage-4 DtN top/bottom mode count = 354 / 354
+Stage-4 DtN matrix base rows = 18774
+Stage-4 DtN surface quadrature degree = 15
+Stage-4 DtN prepared 50/708 auxiliary modes in 6.215 seconds; unique surface orders = 25
+Stage-4 DtN prepared 100/708 auxiliary modes in 6.311 seconds; unique surface orders = 50
+Stage-4 DtN prepared 150/708 auxiliary modes in 6.403 seconds; unique surface orders = 75
+Stage-4 DtN prepared 200/708 auxiliary modes in 6.494 seconds; unique surface orders = 100
+Stage-4 DtN prepared 250/708 auxiliary modes in 6.598 seconds; unique surface orders = 125
+Stage-4 DtN prepared 300/708 auxiliary modes in 6.690 seconds; unique surface orders = 150
+Stage-4 DtN prepared 350/708 auxiliary modes in 6.781 seconds; unique surface orders = 175
+Stage-4 DtN prepared 400/708 auxiliary modes in 6.873 seconds; unique surface orders = 200
+Stage-4 DtN prepared 450/708 auxiliary modes in 6.972 seconds; unique surface orders = 225
+Stage-4 DtN prepared 500/708 auxiliary modes in 7.062 seconds; unique surface orders = 250
+Stage-4 DtN prepared 550/708 auxiliary modes in 7.151 seconds; unique surface orders = 275
+Stage-4 DtN prepared 600/708 auxiliary modes in 7.254 seconds; unique surface orders = 300
+Stage-4 DtN prepared 650/708 auxiliary modes in 7.348 seconds; unique surface orders = 325
+Stage-4 DtN prepared 700/708 auxiliary modes in 7.440 seconds; unique surface orders = 350
+Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354
+Stage-4 DtN base matrix nnz = 613128.0
+Stage-4 DtN auxiliary coupling nnz estimate = 1040708
+stage4_dtn_port_assembly_and_solve seconds = 10.290
+matrix_stats seconds = 0.008
+matrix rows = 19482
+matrix cols = 19482
+matrix nnz used = 1653836.0
+matrix nnz allocated = 1653836.0
+average nnz per row = 84.89
+average allocated nnz per row = 84.89
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 39847928.0
+estimated AIJ matrix memory MB = 38.00194549560547
+matrix Frobenius norm = 930.8506644799089
+matrix infinity norm = 369.6931649771719
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+DtN augmented/base nnz ratio = 2.6973747732936677
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = mumps
+linear system RHS norm = 93.08422677303112
+linear system solution norm = 454.33266795031807
+linear system true relative residual = 1.985844414476899e-12
+postprocess seconds = 2.497
+diffraction_postprocess seconds = 1.976
+volume_absorption_postprocess seconds = 0.283
+max |E| = 1.343436e+00
+max component |Ex|/|Ey|/|Ez| = 4.087883e-12 / 1.343436e+00 / 5.381007e-12
+exact reference unavailable for this case; E_exact/H_exact error fields are not written.
+max |H| = 2.588590e-03
+Poynting direction cosine = 1.000000e+00
+Floquet x-face mismatch = 0.000000e+00
+Floquet y-face mismatch = 0.000000e+00
+Floquet edge/corner mismatch = 0.000000e+00
+Stage-4 primary power source = dtn_port_modal_amplitudes
+Stage-4 primary R/T = 2.507611e-03 / 9.850955e-01
+Stage-4 primary R+T = 9.876032e-01
+Stage-4 primary A_balance = 1.239684e-02
+Stage-4 probe E/H Fourier R/T = 7.293995e-03 / 5.335100e-01
+Stage-4 sampled net-flux R/T = 4.757132e-01 / 5.194211e-01
+Stage-4 material A_volume_total = 1.239684e-02
+Stage-4 port-volume closure error = 2.6645352591003757e-15
+3D diffraction absorption from balance = 1.239684e-02
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p1_h5p0_np8_20260706_024540/fields_3d_for_paraview_parallel.pvd
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.162
+  function_space_setup: 0.028
+  field_formulation_setup: 0.008
+  floquet_build_topological_edge_context: 0.307
+  floquet_build_x_constraints: 0.016
+  floquet_build_y_constraints: 0.017
+  floquet_resolve_corner_master_chains: 0.002
+  floquet_build_mpc_arrays: 0.007
+  floquet_mpc_finalize: 0.004
+  floquet_total: 0.353
+  floquet_constraint_setup_outer: 0.358
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.304
+  stage4_dtn_port_assembly_and_solve: 10.290
+  matrix_stats: 0.008
+  postprocess: 2.497
+  diffraction_postprocess: 1.976
+  volume_absorption_postprocess: 0.283
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 426.0 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 15.438

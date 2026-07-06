@@ -1,0 +1,270 @@
+{
+  "method": "port",
+  "role": "primary",
+  "status": "ok",
+  "power_source": "dtn_port_modal_amplitudes",
+  "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+  "reference_planes": {
+    "top_z": 5.0,
+    "bottom_z": -5.0,
+    "top_reference": "physical_z_max",
+    "bottom_reference": "physical_z_min"
+  },
+  "R_total": 0.0018550623211651023,
+  "T_total": 0.9903152495946287,
+  "A_balance": 0.007829688084206254,
+  "R_plus_T": 0.9921703119157937,
+  "R_total_dtn_port_modal": 0.0018550623211651023,
+  "T_total_dtn_port_modal": 0.9903152495946287,
+  "A_balance_dtn_port_modal": 0.007829688084206254,
+  "R_plus_T_dtn_port_modal": 0.9921703119157937,
+  "R_plus_T_plus_A_volume_dtn_port_modal": 1.0000000000000007,
+  "energy_closure_error_dtn_port_modal_volume": 6.661338147750939e-16,
+  "incident_power_code_units": 49.99999999999999,
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+  "orders": [
+    {
+      "auxiliary_index": 0,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "x",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.46542113386515455,
+        0.0
+      ],
+      "kz": [
+        0.46542113386515455,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        7.193788806243651e-16,
+        7.530296410043833e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        7.193788806243651e-16,
+        7.530296410043833e-16
+      ],
+      "boundary_phase": [
+        -0.6862416378687335,
+        0.7273736415730488
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.0414016534776444e-15,
+        6.4969418639356e-18
+      ],
+      "modal_power_code_units": 5.422798070597776e-29,
+      "power_ratio": 1.0845596141195553e-30,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.0845596141195553e-30,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 1,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "y",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.46542113386515455,
+        0.0
+      ],
+      "kz": [
+        0.46542113386515455,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.060298910746982744,
+        0.9552916236292641
+      ],
+      "incident_projection": [
+        -0.05814482891047624,
+        0.9983081582712682
+      ],
+      "outgoing_amplitude": [
+        -0.002154081836506505,
+        -0.043016534642004056
+      ],
+      "boundary_phase": [
+        -0.6862416378687335,
+        0.7273736415730488
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.03276731409799521,
+        0.02795291483849988
+      ],
+      "modal_power_code_units": 0.0927531160582551,
+      "power_ratio": 0.0018550623211651023,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0018550623211651023,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 2,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "x",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4649567854613786,
+        0.0008500887455805047
+      ],
+      "kz": [
+        -0.4649567854613786,
+        -0.0008500887455805047
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        3.5177729973435293e-16,
+        -3.1188093496504467e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        3.5177729973435293e-16,
+        -3.1188093496504467e-15
+      ],
+      "boundary_phase": [
+        -0.6816475451706017,
+        0.7258731067355025
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.024071699135837e-15,
+        2.3812744184815486e-15
+      ],
+      "modal_power_code_units": 4.878794638792909e-28,
+      "power_ratio": 9.75758927758582e-30,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 9.75758927758582e-30
+    },
+    {
+      "auxiliary_index": 3,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "y",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4649567854613786,
+        0.0008500887455805047
+      ],
+      "kz": [
+        -0.4649567854613786,
+        -0.0008500887455805047
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        0.9974668230845005,
+        -0.06947727668321038
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        0.9974668230845005,
+        -0.06947727668321038
+      ],
+      "boundary_phase": [
+        -0.6816475451706017,
+        0.7258731067355025
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -0.6294891246711046,
+        0.7713933568341873
+      ],
+      "modal_power_code_units": 49.51576247973143,
+      "power_ratio": 0.9903152495946287,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 0.9903152495946287
+    }
+  ],
+  "note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the top and bottom port faces.",
+  "A_volume_total": 0.007829688084206848,
+  "R_plus_T_plus_A_volume": 1.0000000000000007,
+  "energy_closure_error_port_volume": 6.661338147750939e-16,
+  "A_port_balance_minus_A_volume_total": -5.93275428784068e-16
+}

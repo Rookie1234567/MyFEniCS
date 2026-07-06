@@ -5,7 +5,7 @@
 对应分支：
 
 ```text
-codex/20260702-rta-output-volume-absorption
+codex/20260704-dtn-port-modal-official-rta
 ```
 
 对应任务闭环：
@@ -16,11 +16,52 @@ docs/task003_stage4_power_consistency/
 docs/task004_small_cell_p_convergence_mpi_regression/
 docs/task005_stage4_real_grating_memory_estimation/
 docs/task006_reduced_height_grating_convergence_memory/
+docs/task007_dtn_port_modal_official_rta/
 ```
 
 ---
 
-## 0. task006 reduced-height domain 补充
+## 0. task007 official DtN port modal 口径
+
+task007 已把 Stage 4 `dtn_port` 主线的 official R/T/A 统一为：
+
+```text
+power_source = dtn_port_modal_amplitudes
+```
+
+含义：
+
+```text
+R_total = R_total_dtn_port_modal
+T_total = T_total_dtn_port_modal
+A_volume_total = volume_integral_Im_epsilon_E2
+energy_closure_error_port_volume
+  = R_total_dtn_port_modal + T_total_dtn_port_modal + A_volume_total - 1
+```
+
+probe-plane 方法现在只作为 diagnostic：
+
+```text
+diagnostic_eh_fourier_probe
+diagnostic_e_only_fourier_probe
+diagnostic_sampled_net_flux
+```
+
+不要再把 E/H Fourier probe 的 `R/T` 当作 Stage 4 dtn_port official 结论。
+
+本轮 height scan 的 `T_total` 是 bottom physical port plane 上的功率。由于 substrate 为有损 Si，70 / 110 / 130 / 150 nm 的 bottom port reference plane 不同，`T_total` 随 substrate 厚度变化是当前定义下的预期现象。若要比较不同 total height 是否物理等价，下一轮应新增统一 reference plane 或界面处外推功率。
+
+主要记录：
+
+```text
+docs/task007_dtn_port_modal_official_rta/outcomes/summary.md
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_modal_investigation.md
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_power_formula.md
+```
+
+---
+
+## 1. task006 reduced-height domain 补充
 
 task006 对真实 `100 nm x 100 nm x 70 nm`、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源和初步 R/T/A 检查。几何传参为：
 
@@ -79,7 +120,7 @@ workstation:
 
 ---
 
-## 1. 当前可以较有信心使用的能力
+## 2. 当前可以较有信心使用的能力
 
 ### 1.1 Stage 4 主功率口径
 
@@ -147,7 +188,7 @@ Flat-layer sanity: stage4_flat_layer_sanity
 
 ---
 
-## 2. 当前必须谨慎解读的能力
+## 3. 当前必须谨慎解读的能力
 
 ### 2.1 probe_eh_fourier / net_flux
 
@@ -203,7 +244,7 @@ p=1/p=2 路径可以运行；
 
 ---
 
-## 3. 合并后推荐表述
+## 4. 合并后推荐表述
 
 推荐说法：
 
@@ -219,7 +260,7 @@ p=1/p=2 路径可以运行；
 
 ---
 
-## 4. 后续可能任务
+## 5. 后续可能任务
 
 后续不需要在当前分支阻塞合并。如果需要继续，可以新开任务：
 
@@ -241,7 +282,7 @@ p=2 下 probe/net_flux 过冲原因。
 
 ---
 
-## 5. task005 资源边界补充
+## 6. task005 资源边界补充
 
 task005 对真实 `100 nm x 100 nm x 150 nm`、p=2、MPI=8、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源评估。当前结论是：
 

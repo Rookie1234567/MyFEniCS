@@ -147,6 +147,52 @@ def _release_solver_storage_before_ooc_cleanup(problem, dtn_result: dict[str, An
             _destroy_petsc_object_once(getattr(problem, attr, None))
 
 
+def _merge_volume_closure_into_dtn_port_outputs(
+    out_dir: Path,
+    comm: MPI.Intracomm,
+    *,
+    port_metrics: dict[str, Any] | None,
+    volume_metrics: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Attach material-volume closure fields to the official DtN port metrics."""
+
+    if port_metrics is None or volume_metrics is None:
+        return {}
+    try:
+        R_total = float(port_metrics["R_total"])
+        T_total = float(port_metrics["T_total"])
+        A_volume_total = float(volume_metrics["A_volume_total"])
+    except (KeyError, TypeError, ValueError):
+        return {}
+    closure = float(R_total + T_total + A_volume_total - 1.0)
+    fields = {
+        "A_volume_total": A_volume_total,
+        "R_plus_T_plus_A_volume": float(R_total + T_total + A_volume_total),
+        "R_plus_T_plus_A_volume_dtn_port_modal": float(R_total + T_total + A_volume_total),
+        "energy_closure_error_dtn_port_modal_volume": closure,
+        "energy_closure_error_port_volume": closure,
+        "A_port_balance_minus_A_volume_total": float(
+            port_metrics.get("A_balance", 1.0 - R_total - T_total) - A_volume_total
+        ),
+    }
+    port_metrics.update(fields)
+    if comm.rank == 0:
+        for filename in ("port_power.json", "dtn_port_power_metrics_3d.json"):
+            path = out_dir / filename
+            if not path.exists():
+                continue
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload.update(fields)
+            if filename == "port_power.json":
+                payload["R_total_dtn_port_modal"] = port_metrics.get("R_total_dtn_port_modal", R_total)
+                payload["T_total_dtn_port_modal"] = port_metrics.get("T_total_dtn_port_modal", T_total)
+                payload["R_plus_T_dtn_port_modal"] = port_metrics.get("R_plus_T_dtn_port_modal", R_total + T_total)
+                payload["A_balance_dtn_port_modal"] = port_metrics.get("A_balance_dtn_port_modal")
+            path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default), encoding="utf-8")
+    comm.barrier()
+    return fields
+
+
 def _assemble_unconstrained_matrix_stats(a, bcs, comm: MPI.Intracomm, log) -> dict[str, Any] | None:
     """Optionally assemble the pre-MPC matrix for density diagnostics.
 
@@ -1199,15 +1245,48 @@ def run_prepared_3d_case_flow(
             E_scattered=E_sca if solve_layered_scattered else None,
         )
         _finish_timed_stage(comm, timings, "diffraction_postprocess", stage_start, log)
+        probe_R = probe_power_metrics.get("R_total")
+        probe_T = probe_power_metrics.get("T_total")
+        flux_R = probe_power_metrics.get("R_total_from_net_flux")
+        flux_T = probe_power_metrics.get("T_total_from_net_flux")
         summary.update(
             {
-                "probe_R_total": probe_power_metrics.get("R_total"),
-                "probe_T_total": probe_power_metrics.get("T_total"),
+                "probe_R_total": probe_R,
+                "probe_T_total": probe_T,
                 "probe_A_balance": probe_power_metrics.get("A_balance"),
                 "probe_power_file": probe_power_metrics.get("probe_power_file"),
-                "flux_R_total": probe_power_metrics.get("R_total_from_net_flux"),
-                "flux_T_total": probe_power_metrics.get("T_total_from_net_flux"),
+                "R_total_diagnostic_eh_fourier": probe_power_metrics.get("R_total_diagnostic_eh_fourier", probe_R),
+                "T_total_diagnostic_eh_fourier": probe_power_metrics.get("T_total_diagnostic_eh_fourier", probe_T),
+                "A_balance_diagnostic_eh_fourier": probe_power_metrics.get(
+                    "A_balance_diagnostic_eh_fourier",
+                    probe_power_metrics.get("A_balance"),
+                ),
+                "R_plus_T_diagnostic_eh_fourier": probe_power_metrics.get(
+                    "R_plus_T_diagnostic_eh_fourier",
+                    probe_power_metrics.get("R_plus_T"),
+                ),
+                "diagnostic_eh_fourier_probe_power_source": probe_power_metrics.get("power_source"),
+                "probe_top_z": probe_power_metrics.get("diffraction_top_probe_z"),
+                "probe_bottom_z": probe_power_metrics.get("diffraction_bottom_probe_z"),
+                "diagnostic_eh_minus_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
+                "diagnostic_eh_minus_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
+                "diff_vs_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
+                "diff_vs_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
+                "flux_R_total": flux_R,
+                "flux_T_total": flux_T,
                 "flux_A_balance": probe_power_metrics.get("A_balance_from_net_flux"),
+                "R_total_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                    "R_total_diagnostic_sampled_net_flux",
+                    flux_R,
+                ),
+                "T_total_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                    "T_total_diagnostic_sampled_net_flux",
+                    flux_T,
+                ),
+                "A_balance_diagnostic_sampled_net_flux": probe_power_metrics.get(
+                    "A_balance_diagnostic_sampled_net_flux",
+                    probe_power_metrics.get("A_balance_from_net_flux"),
+                ),
                 "flux_power_file": probe_power_metrics.get("flux_power_file"),
             }
         )
@@ -1266,6 +1345,13 @@ def run_prepared_3d_case_flow(
                 ),
             }
         )
+        closure_fields = _merge_volume_closure_into_dtn_port_outputs(
+            out_dir,
+            comm,
+            port_metrics=port_power_metrics,
+            volume_metrics=volume_absorption_metrics,
+        )
+        summary.update(closure_fields)
 
     if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
         power_summary_rows = write_power_summary_csv(

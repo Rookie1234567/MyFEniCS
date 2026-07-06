@@ -39,11 +39,12 @@ def _mode_samples(points, kvec, e_vec, h_vec, amplitude: complex) -> tuple[np.nd
 
 
 class Stage4DiffractionModeTests(unittest.TestCase):
-    def test_official_stage4_total_power_source_is_eh_fourier(self):
-        self.assertEqual(OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE, "eh_fourier_orders")
-        self.assertIn("E/H", OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE)
+    def test_stage4_probe_power_source_is_diagnostic_eh_fourier(self):
+        self.assertEqual(OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE, "diagnostic_eh_fourier_probe")
+        self.assertIn("Diagnostic only", OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE)
+        self.assertIn("DtN port modal amplitudes", OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE)
         self.assertIn("Diagnostic only", E_FOURIER_DIAGNOSTIC_NOTE)
-        self.assertIn("E/H Fourier", SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE)
+        self.assertIn("DtN port modal amplitudes", SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE)
         self.assertNotIn("Official Stage-4 R/T uses E-Fourier", SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE)
 
     def test_zero_order_only_catalog(self):

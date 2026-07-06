@@ -11,10 +11,10 @@
 当前阶段分支：
 
 ```text
-codex/20260704-reduced-height-grating-convergence-memory
+codex/20260704-dtn-port-modal-official-rta
 ```
 
-task002/task003/task004/task005 已作为阶段性版本合并到 `master`。task006 在 task005 基础上测试了真实 3D 光栅 70 nm reduced-height domain 的 p=1/p=2 assemble-only、default direct、MUMPS OOC、MPI=1 对照、R/T/A 初步收敛和 70 nm vs 150 nm 对照。task004/task005 合并后的基础能力含义是：
+task002/task003/task004/task005/task006 已作为阶段性版本合并到 `master`。task007 在 task006 基础上修正 Stage 4 dtn_port 的 official R/T/A 口径：官方 R/T 现在来自 DtN port modal amplitudes，E/H Fourier probe、E-only Fourier probe 和 sampled net flux 全部作为 diagnostic。task004/task005/task006 合并后的基础能力含义是：
 
 ```text
 完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
@@ -26,14 +26,14 @@ task002/task003/task004/task005 已作为阶段性版本合并到 `master`。tas
 真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
 ```
 
-task006 的当前结论是：
+task007 的当前结论是：
 
 ```text
-70 nm reduced-height domain 可以显著降低矩阵规模；
-但 h=5 的 70 nm vs 150 nm R/T/A 差异明显，暂不能视为物理等价计算域；
-p=1 default direct 可完成到 h=2 nm；
-p=2 default direct 可完成到 h=4 nm；
-p=2 h=1 nm assemble-only 在约 40 GB AIJ base matrix 后被 signal 9 kill。
+Stage 4 dtn_port official power_source = dtn_port_modal_amplitudes；
+R_total / T_total 与 R_total_dtn_port_modal / T_total_dtn_port_modal 保持一致；
+port + volume absorption 闭合误差在本轮 height scan 中为 1e-14 量级；
+probe-plane E/H Fourier 结果仍保留，但只用于 diagnostic；
+70 nm vs 150 nm 的官方 T/A 差异主要来自有损 substrate 中不同 bottom port reference plane 的传播衰减。
 ```
 
 当前版本边界详见：
@@ -43,9 +43,12 @@ notes/reference/current_version_boundaries.md
 docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
 docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
 docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md
+docs/task007_dtn_port_modal_official_rta/outcomes/summary.md
 ```
 
 2026-07-05 补充：task006 已重新整理 summary，加入 memory profiling、tuned MUMPS OOC、assemble-only 与 direct solve 失败原因解释，以及 h=0.5/h=0.25 nm 的 workstation 外推。当前 reduced-height p=2 的 direct/OOC 可完成边界是 h=4 nm；h=3 nm tuned OOC 仍失败。h<=1 nm 应视为 TB 级或更高资源问题，h=0.5/h=0.25 nm 不适合继续用 direct/OOC workstation 路线硬推。
+
+2026-07-06 补充：task007 已完成 `dtn_port_modal_amplitudes` 官方口径切换。若要比较不同 total height 的同一物理结构，后续应新增统一 reference plane 或界面处外推功率；当前 `T_total` 是 bottom physical port plane 上的功率。
 
 ---
 

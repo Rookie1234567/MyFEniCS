@@ -9,9 +9,12 @@ from src.common.modes_3d import (
     outgoing_port_modes_3d,
 )
 from src.solvers.dtn_port_3d import (
+    DTN_PORT_MODAL_POWER_SOURCE,
+    _incident_projection_onto_top_mode,
     _mode_boundary_phase,
     _mode_power_at_boundary,
     _mode_projection_denominator,
+    _port_power_metrics,
     _traction_vector,
 )
 from src.test.stage2_test_utils import stage4_block_config
@@ -103,6 +106,22 @@ class Stage4DtnModeTests(unittest.TestCase):
             traction = _traction_vector(mode, cfg)
             self.assertAlmostEqual(traction[1].real, (-mode.beta.imag), places=12)
             self.assertAlmostEqual(traction[1].imag, mode.beta.real, places=12)
+
+    def test_port_power_metrics_expose_dtn_modal_official_aliases(self):
+        cfg = _dtn_cfg(stage4_dtn_order_policy="zero_order")
+        modes = outgoing_port_modes_3d(cfg)
+        incident_projections = [
+            _incident_projection_onto_top_mode(mode, cfg) if mode.side == "top" else 0.0 + 0.0j
+            for mode in modes
+        ]
+        aux_values = np.asarray(incident_projections, dtype=np.complex128)
+        metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+        self.assertEqual(metrics["power_source"], DTN_PORT_MODAL_POWER_SOURCE)
+        self.assertEqual(metrics["diffraction_total_power_source"], DTN_PORT_MODAL_POWER_SOURCE)
+        self.assertEqual(metrics["R_total"], metrics["R_total_dtn_port_modal"])
+        self.assertEqual(metrics["T_total"], metrics["T_total_dtn_port_modal"])
+        self.assertEqual(metrics["R_plus_T"], metrics["R_plus_T_dtn_port_modal"])
+        self.assertIn("top outgoing amplitude", metrics["dtn_port_modal_amplitude_convention"])
 
 
 if __name__ == "__main__":

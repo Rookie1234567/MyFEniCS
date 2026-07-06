@@ -24,6 +24,13 @@ from .common_3d_utils import _write_progress_event
 from .solve_vector_maxwell import _json_default
 
 
+DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
+DTN_PORT_MODAL_REFERENCE = (
+    "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses "
+    "boundary-plane phase attenuation"
+)
+
+
 def _complex_text(value: complex) -> str:
     number = complex(value)
     return f"{number.real:.16e}{number.imag:+.16e}j"
@@ -832,26 +839,37 @@ def _write_port_outputs(
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(zip(modes, aux_values, incident_projections)):
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
-        power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / metrics["incident_power_code_units"]
+        modal_power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude)
+        power = modal_power / metrics["incident_power_code_units"]
+        direction = "outgoing_up" if mode.side == "top" else "outgoing_down"
+        medium = "air" if mode.side == "top" else "substrate"
         rows.append(
             {
                 "auxiliary_index": idx,
                 "side": mode.side,
+                "direction": direction,
+                "medium": medium,
                 "m": mode.m,
                 "n": mode.n,
+                "order_m": mode.m,
+                "order_n": mode.n,
                 "polarization": mode.polarization,
                 "alpha": mode.alpha,
                 "gamma": mode.gamma,
                 "beta": mode.beta,
+                "kz": mode.vertical_sign * mode.beta,
                 "vertical_sign": mode.vertical_sign,
                 "propagating": mode.propagating,
                 "rayleigh_warning": mode.rayleigh_warning,
+                "refractive_index": mode.refractive_index,
                 "auxiliary_amplitude_total_projection": complex(aux_value),
                 "incident_projection": complex(inc_proj),
                 "outgoing_amplitude": outgoing_amplitude,
                 "boundary_phase": _mode_boundary_phase(mode, cfg),
                 "outgoing_amplitude_at_boundary": outgoing_amplitude * _mode_boundary_phase(mode, cfg),
+                "modal_power_code_units": float(modal_power),
                 "power_ratio": float(power),
+                "power_source": DTN_PORT_MODAL_POWER_SOURCE,
                 "R": float(power) if mode.side == "top" and mode.propagating else 0.0,
                 "T": float(power) if mode.side == "bottom" and mode.propagating else 0.0,
             }
@@ -863,14 +881,28 @@ def _write_port_outputs(
         "method": "port",
         "role": "primary",
         "status": "ok",
-        "power_source": "dtn_auxiliary_port_amplitudes",
+        "power_source": DTN_PORT_MODAL_POWER_SOURCE,
+        "reference": DTN_PORT_MODAL_REFERENCE,
+        "reference_planes": {
+            "top_z": float(cfg.physical_z_max),
+            "bottom_z": float(cfg.physical_z_min),
+            "top_reference": "physical_z_max",
+            "bottom_reference": "physical_z_min",
+        },
         "R_total": metrics["R_total"],
         "T_total": metrics["T_total"],
         "A_balance": metrics["A_balance"],
         "R_plus_T": metrics["R_plus_T"],
+        "R_total_dtn_port_modal": metrics["R_total_dtn_port_modal"],
+        "T_total_dtn_port_modal": metrics["T_total_dtn_port_modal"],
+        "A_balance_dtn_port_modal": metrics["A_balance_dtn_port_modal"],
+        "R_plus_T_dtn_port_modal": metrics["R_plus_T_dtn_port_modal"],
+        "R_plus_T_plus_A_volume_dtn_port_modal": metrics.get("R_plus_T_plus_A_volume_dtn_port_modal"),
+        "energy_closure_error_dtn_port_modal_volume": metrics.get("energy_closure_error_dtn_port_modal_volume"),
         "incident_power_code_units": metrics["incident_power_code_units"],
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly,
+        "modal_amplitude_convention": metrics["dtn_port_modal_amplitude_convention"],
         "orders": rows,
         "note": metrics.get("dtn_port_power_metric_note"),
     }
@@ -894,13 +926,24 @@ def _write_port_outputs(
         writer = csv.DictWriter(fp, fieldnames=list(csv_rows[0].keys()) if csv_rows else ["side", "m", "n"])
         writer.writeheader()
         writer.writerows(csv_rows)
+    with (out_dir / "port_power.csv").open("w", newline="", encoding="utf-8") as fp:
+        writer = csv.DictWriter(fp, fieldnames=list(csv_rows[0].keys()) if csv_rows else ["side", "m", "n"])
+        writer.writeheader()
+        writer.writerows(csv_rows)
     amplitudes = [
         {
             "auxiliary_index": idx,
             "side": mode.side,
+            "direction": "outgoing_up" if mode.side == "top" else "outgoing_down",
+            "medium": "air" if mode.side == "top" else "substrate",
             "m": mode.m,
             "n": mode.n,
+            "order_m": mode.m,
+            "order_n": mode.n,
             "polarization": mode.polarization,
+            "beta": mode.beta,
+            "kz": mode.vertical_sign * mode.beta,
+            "propagating": mode.propagating,
             "auxiliary_amplitude_total_projection": complex(aux_values[idx]),
             "incident_projection": complex(incident_projections[idx]),
             "outgoing_amplitude": complex(aux_values[idx] - incident_projections[idx])
@@ -947,7 +990,24 @@ def _port_power_metrics(
         "T_total": float(T_total),
         "R_plus_T": float(R_total + T_total),
         "A_balance": float(1.0 - R_total - T_total),
-        "diffraction_total_power_source": "dtn_auxiliary_port_amplitudes",
+        "R_total_dtn_port_modal": float(R_total),
+        "T_total_dtn_port_modal": float(T_total),
+        "R_plus_T_dtn_port_modal": float(R_total + T_total),
+        "A_balance_dtn_port_modal": float(1.0 - R_total - T_total),
+        "R_plus_T_plus_A_volume": None,
+        "R_plus_T_plus_A_volume_dtn_port_modal": None,
+        "energy_closure_error_dtn_port_modal_volume": None,
+        "power_source": DTN_PORT_MODAL_POWER_SOURCE,
+        "diffraction_total_power_source": DTN_PORT_MODAL_POWER_SOURCE,
+        "dtn_port_modal_reference": DTN_PORT_MODAL_REFERENCE,
+        "dtn_port_top_reference_z": float(cfg.physical_z_max),
+        "dtn_port_bottom_reference_z": float(cfg.physical_z_min),
+        "dtn_port_modal_amplitude_convention": (
+            "auxiliary unknown a_j is the total-field port projection. "
+            "top outgoing amplitude = a_j - incident_projection_j; "
+            "bottom outgoing amplitude = a_j. Power uses boundary-plane "
+            "outgoing amplitude after applying boundary_phase."
+        ),
         "dtn_port_power_metric_note": (
             "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes "
             "on the top and bottom port faces."
@@ -964,6 +1024,7 @@ def _port_power_metrics(
         "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
         "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json",
         "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv",
+        "port_power_csv": "port_power.csv",
         "dtn_auxiliary_amplitudes_file": "dtn_auxiliary_amplitudes_3d.json",
     }
 

@@ -1,0 +1,20 @@
+# Task7 Run Log
+
+????????? Docker `code-dolfinx-mpc:latest` ???? `. dolfinx-complex-mode`?
+
+- flat_p1_h5_np1: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_flat_layer_sanity_normal_p1_h5p0_20260706_015639
+- flat_p2_h5_np1: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_flat_layer_sanity_normal_p2_h5p0_20260706_015730
+- height70_p2_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_015821
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\height70_p2_h5_np8_matrix_scale.csv
+- height110_p2_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_020025
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\height110_p2_h5_np8_matrix_scale.csv
+- height130_p2_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_020611
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\height130_p2_h5_np8_matrix_scale.csv
+- height150_p2_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_021505
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\height150_p2_h5_np8_matrix_scale.csv
+- optional_height70_p1_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p1_h5p0_np8_20260706_022612
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\optional_height70_p1_h5_np8_matrix_scale.csv
+- optional_height70_p2_h4_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_022655
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\optional_height70_p2_h4_np8_matrix_scale.csv
+- zero_contrast_height70_p1_h5_np8: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\results\3D_stage4_block_grating_normal_p1_h5p0_np8_20260706_024540
+  - matrix csv: C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\docs\task007_dtn_port_modal_official_rta\outcomes\raw_runs\zero_contrast_height70_p1_h5_np8_matrix_scale.csv

@@ -233,6 +233,8 @@ def _row_from_result(
     physical_z_max = _as_float(_config_value(summary, "physical_z_max"))
     R_total = _as_float(_value(summary, "R_total"))
     T_total = _as_float(_value(summary, "T_total"))
+    R_total_dtn_port_modal = _as_float(_value(summary, "R_total_dtn_port_modal", R_total))
+    T_total_dtn_port_modal = _as_float(_value(summary, "T_total_dtn_port_modal", T_total))
     A_volume_total = _as_float(_value(summary, "A_volume_total"))
     R_plus_T = _as_float(_value(summary, "R_plus_T"))
     R_plus_T_plus_A_volume = (
@@ -367,9 +369,27 @@ def _row_from_result(
         ),
         "R_total": R_total,
         "T_total": T_total,
+        "power_source": _value(summary, "power_source", _value(summary, "diffraction_total_power_source")),
+        "R_total_dtn_port_modal": R_total_dtn_port_modal,
+        "T_total_dtn_port_modal": T_total_dtn_port_modal,
+        "R_plus_T_dtn_port_modal": _as_float(_value(summary, "R_plus_T_dtn_port_modal", R_plus_T)),
+        "A_balance_dtn_port_modal": _as_float(_value(summary, "A_balance_dtn_port_modal")),
+        "R_total_diagnostic_eh_fourier": _as_float(_value(summary, "R_total_diagnostic_eh_fourier")),
+        "T_total_diagnostic_eh_fourier": _as_float(_value(summary, "T_total_diagnostic_eh_fourier")),
+        "A_balance_diagnostic_eh_fourier": _as_float(_value(summary, "A_balance_diagnostic_eh_fourier")),
+        "R_total_diagnostic_sampled_net_flux": _as_float(_value(summary, "R_total_diagnostic_sampled_net_flux")),
+        "T_total_diagnostic_sampled_net_flux": _as_float(_value(summary, "T_total_diagnostic_sampled_net_flux")),
+        "diagnostic_eh_minus_dtn_R": _as_float(_value(summary, "diagnostic_eh_minus_dtn_R")),
+        "diagnostic_eh_minus_dtn_T": _as_float(_value(summary, "diagnostic_eh_minus_dtn_T")),
         "A_volume_total": A_volume_total,
         "R_plus_T": R_plus_T,
         "R_plus_T_plus_A_volume": R_plus_T_plus_A_volume,
+        "R_plus_T_plus_A_volume_dtn_port_modal": _as_float(
+            _value(summary, "R_plus_T_plus_A_volume_dtn_port_modal", R_plus_T_plus_A_volume)
+        ),
+        "energy_closure_error_dtn_port_modal_volume": _as_float(
+            _value(summary, "energy_closure_error_dtn_port_modal_volume")
+        ),
         "energy_closure_error_port_volume": _value(summary, "energy_closure_error_port_volume"),
         "A_port_balance_minus_A_volume_total": _value(summary, "A_port_balance_minus_A_volume_total"),
         "num_reflection_orders": _value(summary, "dtn_port_top_mode_count"),

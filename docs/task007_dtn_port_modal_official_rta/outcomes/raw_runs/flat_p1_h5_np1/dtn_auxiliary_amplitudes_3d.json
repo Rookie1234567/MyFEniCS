@@ -1,0 +1,162 @@
+[
+  {
+    "auxiliary_index": 0,
+    "side": "top",
+    "direction": "outgoing_up",
+    "medium": "air",
+    "m": 0,
+    "n": 0,
+    "order_m": 0,
+    "order_n": 0,
+    "polarization": "x",
+    "beta": [
+      0.46542113386515455,
+      0.0
+    ],
+    "kz": [
+      0.46542113386515455,
+      0.0
+    ],
+    "propagating": true,
+    "auxiliary_amplitude_total_projection": [
+      -1.3306185924636844e-17,
+      -1.0166361220489995e-16
+    ],
+    "incident_projection": [
+      0.0,
+      0.0
+    ],
+    "outgoing_amplitude": [
+      -1.3306185924636844e-17,
+      -1.0166361220489995e-16
+    ],
+    "boundary_phase": [
+      -0.6862416378687335,
+      0.7273736415730488
+    ],
+    "outgoing_amplitude_at_boundary": [
+      8.307869064765701e-17,
+      6.008723483969116e-17
+    ]
+  },
+  {
+    "auxiliary_index": 1,
+    "side": "top",
+    "direction": "outgoing_up",
+    "medium": "air",
+    "m": 0,
+    "n": 0,
+    "order_m": 0,
+    "order_n": 0,
+    "polarization": "y",
+    "beta": [
+      0.46542113386515455,
+      0.0
+    ],
+    "kz": [
+      0.46542113386515455,
+      0.0
+    ],
+    "propagating": true,
+    "auxiliary_amplitude_total_projection": [
+      0.07216310321655287,
+      1.1835413722110701
+    ],
+    "incident_projection": [
+      -0.05814482891047624,
+      0.9983081582712682
+    ],
+    "outgoing_amplitude": [
+      0.1303079321270291,
+      0.18523321393980197
+    ],
+    "boundary_phase": [
+      -0.6862416378687335,
+      0.7273736415730488
+    ],
+    "outgoing_amplitude_at_boundary": [
+      -0.2241564861338136,
+      -0.03233218900464836
+    ]
+  },
+  {
+    "auxiliary_index": 2,
+    "side": "bottom",
+    "direction": "outgoing_down",
+    "medium": "substrate",
+    "m": 0,
+    "n": 0,
+    "order_m": 0,
+    "order_n": 0,
+    "polarization": "x",
+    "beta": [
+      0.4649567854613786,
+      0.0008500887455805047
+    ],
+    "kz": [
+      -0.4649567854613786,
+      -0.0008500887455805047
+    ],
+    "propagating": true,
+    "auxiliary_amplitude_total_projection": [
+      -6.209056447421548e-17,
+      -1.2156515874950766e-16
+    ],
+    "incident_projection": [
+      0.0,
+      0.0
+    ],
+    "outgoing_amplitude": [
+      -6.209056447421548e-17,
+      -1.2156515874950766e-16
+    ],
+    "boundary_phase": [
+      -0.6816475451706017,
+      0.7258731067355025
+    ],
+    "outgoing_amplitude_at_boundary": [
+      1.3056476030440562e-16,
+      3.7794721106016566e-17
+    ]
+  },
+  {
+    "auxiliary_index": 3,
+    "side": "bottom",
+    "direction": "outgoing_down",
+    "medium": "substrate",
+    "m": 0,
+    "n": 0,
+    "order_m": 0,
+    "order_n": 0,
+    "polarization": "y",
+    "beta": [
+      0.4649567854613786,
+      0.0008500887455805047
+    ],
+    "kz": [
+      -0.4649567854613786,
+      -0.0008500887455805047
+    ],
+    "propagating": true,
+    "auxiliary_amplitude_total_projection": [
+      0.7953809937883072,
+      -0.5648373138625681
+    ],
+    "incident_projection": [
+      0.0,
+      0.0
+    ],
+    "outgoing_amplitude": [
+      0.7953809937883072,
+      -0.5648373138625681
+    ],
+    "boundary_phase": [
+      -0.6816475451706017,
+      0.7258731067355025
+    ],
+    "outgoing_amplitude_at_boundary": [
+      -0.13216928607759476,
+      0.9623656414146662
+    ]
+  }
+]

@@ -24,7 +24,7 @@ docs/taskXXX_task_name/
 | task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
 | task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
-| task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 任务书已写入；待本地 Codex 新建分支后执行 |
+| task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | Codex 已完成本地执行并写入 outcomes；待 ChatGPT 审查 |
 
 ## 合并前结论
 
@@ -51,9 +51,24 @@ notes/reference/current_version_boundaries.md
 docs/task006_reduced_height_grating_convergence_memory/review_report.md
 ```
 
-## task007 执行说明
+## task007 执行结果
 
-`task007_dtn_port_modal_official_rta/task.md` 是后续任务书。执行 task007 前，应先在本地将当前 task006 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task007 分支。ChatGPT 不负责创建远程任务分支。
+task007 已在 `codex/20260704-dtn-port-modal-official-rta` 分支执行。当前 Stage 4 dtn_port 主线官方功率口径为：
+
+```text
+power_source = dtn_port_modal_amplitudes
+```
+
+主要 outcome：
+
+```text
+docs/task007_dtn_port_modal_official_rta/outcomes/summary.md
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_modal_investigation.md
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_power_formula.md
+docs/task007_dtn_port_modal_official_rta/outcomes/height_scan_official_rta.csv
+```
+
+E/H Fourier probe、E-only Fourier probe 和 sampled net flux 现在都标记为 diagnostic，不再覆盖 official `R_total/T_total`。
 
 ## 工作规则
 

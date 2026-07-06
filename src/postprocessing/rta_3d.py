@@ -12,7 +12,11 @@ from mpi4py import MPI
 from dolfinx import fem
 
 from ..common.config_3d import SimulationConfig3D
-from .diffraction_3d import _json_default
+from .diffraction_3d import (
+    DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
+    DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
+    _json_default,
+)
 
 
 VOLUME_ABSORPTION_POWER_SOURCE = "volume_integral_Im_epsilon_E2"
@@ -238,7 +242,7 @@ def power_summary_rows(
                 method="port",
                 role="primary",
                 status="skipped",
-                source="dtn_auxiliary_port_amplitudes",
+                source="dtn_port_modal_amplitudes",
             )
         )
     else:
@@ -247,7 +251,10 @@ def power_summary_rows(
                 method="port",
                 role="primary",
                 status="ok",
-                source=port_metrics.get("diffraction_total_power_source", "dtn_auxiliary_port_amplitudes"),
+                source=port_metrics.get(
+                    "power_source",
+                    port_metrics.get("diffraction_total_power_source", "dtn_port_modal_amplitudes"),
+                ),
                 R=port_metrics.get("R_total"),
                 T=port_metrics.get("T_total"),
                 A=port_metrics.get("A_balance"),
@@ -258,9 +265,9 @@ def power_summary_rows(
         rows.append(
             _summary_row(
                 method="probe_eh_fourier",
-                role="cross_check",
+                role="diagnostic",
                 status="skipped",
-                source="eh_fourier_orders",
+                source=DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
             )
         )
         rows.append(
@@ -268,16 +275,16 @@ def power_summary_rows(
                 method="net_flux",
                 role="diagnostic",
                 status="skipped",
-                source="sampled_poynting_flux",
+                source=DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
             )
         )
     else:
         rows.append(
             _summary_row(
                 method="probe_eh_fourier",
-                role="cross_check",
+                role="diagnostic",
                 status="ok",
-                source=probe_metrics.get("diffraction_total_power_source", "eh_fourier_orders"),
+                source=probe_metrics.get("power_source", DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE),
                 R=probe_metrics.get("R_total"),
                 T=probe_metrics.get("T_total"),
                 A=probe_metrics.get("A_balance"),
@@ -288,7 +295,7 @@ def power_summary_rows(
                 method="net_flux",
                 role="diagnostic",
                 status="ok",
-                source="sampled_poynting_flux",
+                source=DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
                 R=probe_metrics.get("R_total_from_net_flux"),
                 T=probe_metrics.get("T_total_from_net_flux"),
                 A=probe_metrics.get("A_balance_from_net_flux"),

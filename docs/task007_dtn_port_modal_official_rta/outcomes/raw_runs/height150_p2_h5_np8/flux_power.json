@@ -1,0 +1,21 @@
+{
+  "method": "diagnostic_sampled_net_flux",
+  "role": "diagnostic",
+  "status": "ok",
+  "power_source": "diagnostic_sampled_net_flux",
+  "top_flux_outward": -3826.676603480793,
+  "bottom_flux_outward": 3537.170481853842,
+  "incident_power_code_units": 4999.999999999999,
+  "R_total_from_net_flux": 0.23466467930384127,
+  "T_total_from_net_flux": 0.7074340963707685,
+  "A_flux": 0.057901224325390244,
+  "R_plus_T_from_net_flux": 0.9420987756746098,
+  "R_total_diagnostic_sampled_net_flux": 0.23466467930384127,
+  "T_total_diagnostic_sampled_net_flux": 0.7074340963707685,
+  "A_balance_diagnostic_sampled_net_flux": 0.057901224325390244,
+  "top_probe_z": 87.5,
+  "bottom_probe_z": -37.5,
+  "sample_count_x": 32,
+  "sample_count_y": 32,
+  "note": "does_not_resolve_diffraction_orders; Diagnostic only: sampled net flux uses H reconstructed from the finite-element curl on probe samples. Stage-4 dtn_port official R/T uses DtN port modal amplitudes."
+}

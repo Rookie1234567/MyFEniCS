@@ -1,0 +1,165 @@
+{
+  "method": "diagnostic_eh_fourier_probe",
+  "role": "diagnostic",
+  "status": "ok",
+  "power_source": "diagnostic_eh_fourier_probe",
+  "R_total": 0.10993706207298663,
+  "T_total": 0.5220239845477892,
+  "A_balance": 0.3680389533792242,
+  "R_plus_T": 0.6319610466207758,
+  "R_total_diagnostic_eh_fourier": 0.10993706207298663,
+  "T_total_diagnostic_eh_fourier": 0.5220239845477892,
+  "A_balance_diagnostic_eh_fourier": 0.3680389533792242,
+  "R_plus_T_diagnostic_eh_fourier": 0.6319610466207758,
+  "incident_power_code_units": 49.99999999999999,
+  "top_probe_z": 3.75,
+  "bottom_probe_z": -3.75,
+  "sample_count_x": 32,
+  "sample_count_y": 32,
+  "sample_point_count_per_plane": 1024,
+  "fit_residuals": {
+    "top_eh_fourier_max": 4.162387522974683e-16,
+    "bottom_eh_fourier_max": 2.8681210758816836e-16,
+    "top_modal_diagnostic": null,
+    "bottom_modal_diagnostic": null
+  },
+  "diffraction_zero_order_only": false,
+  "diffraction_order_max_m_requested": null,
+  "diffraction_order_max_n_requested": null,
+  "per_order": [
+    {
+      "m": 0,
+      "n": 0,
+      "polarization": "x",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta_top": [
+        0.46542113386515455,
+        0.0
+      ],
+      "beta_bottom": [
+        0.4649567854613786,
+        0.0008500887455805047
+      ],
+      "top_propagating": true,
+      "bottom_propagating": true,
+      "included_in_total_power": true,
+      "rayleigh_warning": false,
+      "rayleigh_warning_top": false,
+      "rayleigh_warning_bottom": false,
+      "reflected_amplitude": [
+        0.0,
+        0.0
+      ],
+      "transmitted_amplitude": [
+        0.0,
+        0.0
+      ],
+      "R": 0.0,
+      "T": 0.0,
+      "reflected_amplitude_e_fourier": [
+        -3.7185810785564215e-17,
+        -4.8149526499593725e-17
+      ],
+      "transmitted_amplitude_e_fourier": [
+        -3.9815498715813655e-17,
+        -1.0153615418142284e-16
+      ],
+      "R_e_fourier": 3.701161425914862e-33,
+      "T_e_fourier": 1.1807476083854147e-32,
+      "top_e_fourier_projection_residual": 3.5652994200985346e-16,
+      "bottom_e_fourier_projection_residual": 4.282390764567649e-16,
+      "reflected_amplitude_eh_fourier": [
+        1.1102230246251565e-16,
+        -1.1102230246251565e-16
+      ],
+      "transmitted_amplitude_eh_fourier": [
+        -4.432435357446105e-17,
+        -8.832026902919517e-17
+      ],
+      "R_eh_fourier": 2.4651903288156624e-32,
+      "T_eh_fourier": 9.693376470394147e-33,
+      "top_eh_fourier_fit_residual": 4.162387522974683e-16,
+      "bottom_eh_fourier_fit_residual": 2.8681210758816836e-16,
+      "top_fit_residual": null,
+      "bottom_fit_residual": null
+    },
+    {
+      "m": 0,
+      "n": 0,
+      "polarization": "y",
+      "alpha": [
+        0.0,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta_top": [
+        0.46542113386515455,
+        0.0
+      ],
+      "beta_bottom": [
+        0.4649567854613786,
+        0.0008500887455805047
+      ],
+      "top_propagating": true,
+      "bottom_propagating": true,
+      "included_in_total_power": true,
+      "rayleigh_warning": false,
+      "rayleigh_warning_top": false,
+      "rayleigh_warning_bottom": false,
+      "reflected_amplitude": [
+        0.0,
+        0.0
+      ],
+      "transmitted_amplitude": [
+        0.0,
+        0.0
+      ],
+      "R": 0.0,
+      "T": 0.0,
+      "reflected_amplitude_e_fourier": [
+        0.3835062653908262,
+        0.1357681437809833
+      ],
+      "transmitted_amplitude_e_fourier": [
+        0.6169141565807148,
+        -0.3212440978239986
+      ],
+      "R_e_fourier": 0.1655100444597526,
+      "T_e_fourier": 0.48022663557022516,
+      "top_e_fourier_projection_residual": 3.5652994200985346e-16,
+      "bottom_e_fourier_projection_residual": 4.282390764567649e-16,
+      "reflected_amplitude_eh_fourier": [
+        0.1951989327901873,
+        0.2680194744986987
+      ],
+      "transmitted_amplitude_eh_fourier": [
+        0.5538274793859659,
+        -0.4681481239067541
+      ],
+      "R_eh_fourier": 0.10993706207298663,
+      "T_eh_fourier": 0.5220239845477892,
+      "top_eh_fourier_fit_residual": 4.162387522974683e-16,
+      "bottom_eh_fourier_fit_residual": 2.8681210758816836e-16,
+      "top_fit_residual": null,
+      "bottom_fit_residual": null
+    }
+  ],
+  "diagnostic_e_fourier": {
+    "note": "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount when finite-PML reflections or non-transverse FE components are present.",
+    "power_source": "diagnostic_e_only_fourier_probe",
+    "R_total": 0.1655100444597526,
+    "T_total": 0.48022663557022516,
+    "A_balance": 0.35426331997002225
+  },
+  "note": "Diagnostic only: E/H Fourier probe-plane fitting separates up/down waves on uniform probe planes. Stage-4 dtn_port official R/T uses DtN port modal amplitudes instead."
+}

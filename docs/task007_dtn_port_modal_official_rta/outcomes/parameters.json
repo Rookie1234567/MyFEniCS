@@ -1,0 +1,97 @@
+{
+  "task": "task007_dtn_port_modal_official_rta",
+  "branch": "codex/20260704-dtn-port-modal-official-rta",
+  "runtime": "Docker code-dolfinx-mpc:latest with . dolfinx-complex-mode",
+  "common_physics": {
+    "lambda0_nm": 13.5,
+    "period_x_nm": 100.0,
+    "period_y_nm": 100.0,
+    "grating_width_x_nm": 50.0,
+    "grating_width_y_nm": 50.0,
+    "grating_height_nm": 50.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating_real_si": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "polarization_kind": "s",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "official_power_source": "dtn_port_modal_amplitudes"
+  },
+  "height_scan_geometry": [
+    {
+      "domain_height_nm": 70,
+      "substrate_thickness_nm": 10,
+      "top_air_above_grating_nm": 10,
+      "air_height_nm": 60
+    },
+    {
+      "domain_height_nm": 110,
+      "substrate_thickness_nm": 30,
+      "top_air_above_grating_nm": 30,
+      "air_height_nm": 80
+    },
+    {
+      "domain_height_nm": 130,
+      "substrate_thickness_nm": 40,
+      "top_air_above_grating_nm": 40,
+      "air_height_nm": 90
+    },
+    {
+      "domain_height_nm": 150,
+      "substrate_thickness_nm": 50,
+      "top_air_above_grating_nm": 50,
+      "air_height_nm": 100
+    }
+  ],
+  "runs": [
+    {
+      "case_id": "flat_p1_h5_np1",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p1_h5p0_20260706_015639"
+    },
+    {
+      "case_id": "flat_p2_h5_np1",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_flat_layer_sanity_normal_p2_h5p0_20260706_015730"
+    },
+    {
+      "case_id": "height70_p2_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\height70_p2_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_015821"
+    },
+    {
+      "case_id": "height110_p2_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\height110_p2_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_020025"
+    },
+    {
+      "case_id": "height130_p2_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\height130_p2_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_020611"
+    },
+    {
+      "case_id": "height150_p2_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\height150_p2_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_021505"
+    },
+    {
+      "case_id": "optional_height70_p1_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\optional_height70_p1_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p1_h5p0_np8_20260706_022612"
+    },
+    {
+      "case_id": "optional_height70_p2_h4_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\optional_height70_p2_h4_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_022655"
+    },
+    {
+      "case_id": "zero_contrast_height70_p1_h5_np8",
+      "matrix_csv": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\docs\\task007_dtn_port_modal_official_rta\\outcomes\\raw_runs\\zero_contrast_height70_p1_h5_np8_matrix_scale.csv",
+      "result_dir": "C:\\Users\\admin\\Desktop\\Code\\fenics_vector_maxwell_floquet_demo_v2_parallel\\results\\3D_stage4_block_grating_normal_p1_h5p0_np8_20260706_024540"
+    }
+  ]
+}

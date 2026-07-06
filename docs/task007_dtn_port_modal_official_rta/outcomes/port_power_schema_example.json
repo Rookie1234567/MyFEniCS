@@ -1,0 +1,153 @@
+{
+  "method": "port",
+  "role": "primary",
+  "status": "ok",
+  "power_source": "dtn_port_modal_amplitudes",
+  "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+  "reference_planes": {
+    "top_z": 60.0,
+    "bottom_z": -10.0,
+    "top_reference": "physical_z_max",
+    "bottom_reference": "physical_z_min"
+  },
+  "R_total": 0.0007079669153437648,
+  "T_total": 0.9646033456193189,
+  "A_balance": 0.034688687465337265,
+  "R_plus_T": 0.9653113125346627,
+  "R_total_dtn_port_modal": 0.0007079669153437648,
+  "T_total_dtn_port_modal": 0.9646033456193189,
+  "A_balance_dtn_port_modal": 0.034688687465337265,
+  "R_plus_T_dtn_port_modal": 0.9653113125346627,
+  "R_plus_T_plus_A_volume_dtn_port_modal": 1.0000000000000075,
+  "energy_closure_error_dtn_port_modal_volume": 7.549516567451064e-15,
+  "incident_power_code_units": 4999.999999999999,
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+  "orders": [
+    {
+      "auxiliary_index": 0,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -7,
+      "n": -2,
+      "order_m": -7,
+      "order_n": -2,
+      "polarization": "s",
+      "alpha": [
+        -0.43982297150257105,
+        0.0
+      ],
+      "gamma": [
+        -0.12566370614359174,
+        0.0
+      ],
+      "beta": [
+        0.08591401832781256,
+        0.0
+      ],
+      "kz": [
+        0.08591401832781256,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.0387608913134268e-06,
+        1.4945552612683808e-06
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.0387608913134268e-06,
+        1.4945552612683808e-06
+      ],
+      "boundary_phase": [
+        0.42815674128062886,
+        -0.9037044898062379
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.795388778066289e-06,
+        -2.9882897098658444e-07
+      ],
+      "modal_power_code_units": 3.057543301037697e-09,
+      "power_ratio": 6.115086602075394e-13,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 6.115086602075394e-13,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 1,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -7,
+      "n": -2,
+      "order_m": -7,
+      "order_n": -2,
+      "polarization": "p",
+      "alpha": [
+        -0.43982297150257105,
+        0.0
+      ],
+      "gamma": [
+        -0.12566370614359174,
+        0.0
+      ],
+      "beta": [
+        0.08591401832781256,
+        0.0
+      ],
+      "kz": [
+        0.08591401832781256,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.629259215656308e-08,
+        -1.995872303762614e-07
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.629259215656308e-08,
+        -1.995872303762614e-07
+      ],
+      "boundary_phase": [
+        0.42815674128062886,
+        -0.9037044898062379
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.5198425597021953e-07,
+        -1.4536353133190607e-07
+      ],
+      "modal_power_code_units": 4.08227841415837e-11,
+      "power_ratio": 8.164556828316741e-15,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 8.164556828316741e-15,
+      "T": 0.0
+    }
+  ],
+  "note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the top and bottom port faces.",
+  "A_volume_total": 0.03468868746534483,
+  "R_plus_T_plus_A_volume": 1.0000000000000075,
+  "energy_closure_error_port_volume": 7.549516567451064e-15,
+  "A_port_balance_minus_A_volume_total": -7.563394355258879e-15,
+  "orders_truncated_after": 2
+}

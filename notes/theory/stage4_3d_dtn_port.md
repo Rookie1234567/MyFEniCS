@@ -1,5 +1,46 @@
 # Stage 4 3D DtN 总场端口
 
+## 2026-07-06 更新：official R/T/A 来自 DtN port modal amplitudes
+
+当前 Stage 4 `dtn_port + auxiliary` 主线的官方功率口径已经统一为：
+
+```text
+power_source = dtn_port_modal_amplitudes
+R_total = R_total_dtn_port_modal
+T_total = T_total_dtn_port_modal
+```
+
+辅助未知量仍按总场投影理解：
+
+```text
+top outgoing amplitude    = auxiliary_total_projection - incident_projection
+bottom outgoing amplitude = auxiliary_total_projection
+```
+
+体吸收闭合为：
+
+```text
+energy_closure_error_dtn_port_modal_volume
+  = R_total_dtn_port_modal + T_total_dtn_port_modal + A_volume_total - 1
+```
+
+E/H Fourier probe、E-only Fourier probe 和 sampled net flux 现在只保留为 diagnostic：
+
+```text
+diagnostic_eh_fourier_probe
+diagnostic_e_only_fourier_probe
+diagnostic_sampled_net_flux
+```
+
+注意：`T_total_dtn_port_modal` 的参考面是 bottom physical port plane。对有损 substrate，不同计算域高度会改变 bottom port plane，因此 70 / 110 / 130 / 150 nm height scan 中 `T_total` 随高度变化是当前参考面定义下的预期结果。若要比较同一物理界面的透射，应新增统一 reference plane 或界面处外推后处理。
+
+详细记录见：
+
+```text
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_modal_investigation.md
+docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_power_formula.md
+```
+
 ## 2026-06-25 更新：当前 DtN 端口实现口径
 
 当前 Stage 4 正式主线仍是总场 DtN 端口：

@@ -25,11 +25,18 @@ from ..common.modes_3d import (
 )
 
 
-OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE = "eh_fourier_orders"
+DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE = "diagnostic_eh_fourier_probe"
+DIAGNOSTIC_E_ONLY_FOURIER_PROBE_POWER_SOURCE = "diagnostic_e_only_fourier_probe"
+DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE = "diagnostic_sampled_net_flux"
+
+# Kept as a compatibility alias for tests and callers that imported the old
+# name.  Stage-4 dtn_port official R/T now comes from DtN port modal
+# amplitudes; this probe-plane path is diagnostic.
+OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE = DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE
 OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE = (
-    "Official Stage-4 R/T uses per-order Fourier coefficients of tangential E/H "
-    "to separate up/down waves on uniform probe planes; lossy-substrate T is "
-    "evaluated at the bottom probe plane, not at the interface."
+    "Diagnostic only: E/H Fourier probe-plane fitting separates up/down waves "
+    "on uniform probe planes. Stage-4 dtn_port official R/T uses DtN port "
+    "modal amplitudes instead."
 )
 E_FOURIER_DIAGNOSTIC_NOTE = (
     "Diagnostic only: E-only Fourier powers assume a single outgoing direction and can overcount "
@@ -37,7 +44,7 @@ E_FOURIER_DIAGNOSTIC_NOTE = (
 )
 SAMPLED_NET_FLUX_DIAGNOSTIC_NOTE = (
     "Diagnostic only: sampled net flux uses H reconstructed from the finite-element curl on probe samples. "
-    "Official Stage-4 R/T uses tangential E/H Fourier directional fitting."
+    "Stage-4 dtn_port official R/T uses DtN port modal amplitudes."
 )
 
 
@@ -115,9 +122,7 @@ def _e_fourier_order_powers(
     """Compute diagnostic R/T from 2D Fourier coefficients of E on probe planes.
 
     E-only Fourier data cannot separate coexisting up/down waves of the same
-    diffraction order.  Keep this path as a diagnostic cross-check; the official
-    Stage-4 ``R_total`` / ``T_total`` values come from E/H Fourier directional
-    fitting in ``_eh_fourier_order_powers``.
+    diffraction order.  Keep this path as a diagnostic cross-check only.
     """
 
     top_z = float(top_points[0, 2])
@@ -789,14 +794,34 @@ def compute_diffraction_orders_3d(
     flux_R_total = float(R_from_net_flux)
     flux_T_total = float(T_from_net_flux)
     flux_R_plus_T = float(flux_R_total + flux_T_total)
+    diagnostic_A_balance = float(1.0 - official_R_plus_T)
+    flux_A_balance = float(1.0 - flux_R_plus_T)
     metrics = {
+        # Legacy aliases retained so old scripts that call this diagnostic
+        # function directly can still read R_total/T_total.  The power source
+        # and explicit diagnostic_* aliases below make clear these are not the
+        # Stage-4 dtn_port official values.
         "R_total": official_R_total,
         "T_total": official_T_total,
         "R_plus_T": official_R_plus_T,
-        "A_balance": float(1.0 - official_R_plus_T),
+        "A_balance": diagnostic_A_balance,
         "diffraction_total_power_source": OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
+        "power_source": DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
+        "diagnostic_power_legacy_aliases": ["R_total", "T_total", "R_plus_T", "A_balance"],
         "diffraction_eh_fourier_note": OFFICIAL_STAGE4_DIFFRACTION_POWER_NOTE,
         "diffraction_e_fourier_note": E_FOURIER_DIAGNOSTIC_NOTE,
+        "R_total_diagnostic_eh_fourier": official_R_total,
+        "T_total_diagnostic_eh_fourier": official_T_total,
+        "R_plus_T_diagnostic_eh_fourier": official_R_plus_T,
+        "A_balance_diagnostic_eh_fourier": diagnostic_A_balance,
+        "diagnostic_eh_fourier_probe_R_total": official_R_total,
+        "diagnostic_eh_fourier_probe_T_total": official_T_total,
+        "diagnostic_eh_fourier_probe_R_plus_T": official_R_plus_T,
+        "diagnostic_eh_fourier_probe_A_balance": diagnostic_A_balance,
+        "R_total_diagnostic_e_only_fourier": float(e_fourier_metrics["R_total_from_e_fourier"]),
+        "T_total_diagnostic_e_only_fourier": float(e_fourier_metrics["T_total_from_e_fourier"]),
+        "R_plus_T_diagnostic_e_only_fourier": float(e_fourier_metrics["R_plus_T_from_e_fourier"]),
+        "A_balance_diagnostic_e_only_fourier": float(e_fourier_metrics["A_balance_from_e_fourier"]),
         "diffraction_background_evaluated_analytically": bool(use_exact_layered_background),
         **eh_fourier_metrics,
         **e_fourier_metrics,
@@ -813,7 +838,11 @@ def compute_diffraction_orders_3d(
         "R_total_from_net_flux": flux_R_total,
         "T_total_from_net_flux": flux_T_total,
         "R_plus_T_from_net_flux": flux_R_plus_T,
-        "A_balance_from_net_flux": float(1.0 - flux_R_plus_T),
+        "A_balance_from_net_flux": flux_A_balance,
+        "R_total_diagnostic_sampled_net_flux": flux_R_total,
+        "T_total_diagnostic_sampled_net_flux": flux_T_total,
+        "R_plus_T_diagnostic_sampled_net_flux": flux_R_plus_T,
+        "A_balance_diagnostic_sampled_net_flux": flux_A_balance,
         "modal_minus_flux_R_total": None if modal_R_total is None else float(modal_R_total - flux_R_total),
         "modal_minus_flux_T_total": None if modal_T_total is None else float(modal_T_total - flux_T_total),
         "modal_minus_flux_R_plus_T": None if modal_R_plus_T is None else float(modal_R_plus_T - flux_R_plus_T),
@@ -872,14 +901,18 @@ def compute_diffraction_orders_3d(
             encoding="utf-8",
         )
         probe_payload = {
-            "method": "probe_eh_fourier",
-            "role": "cross_check",
+            "method": DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
+            "role": "diagnostic",
             "status": "ok",
-            "power_source": OFFICIAL_STAGE4_DIFFRACTION_POWER_SOURCE,
+            "power_source": DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
             "R_total": official_R_total,
             "T_total": official_T_total,
-            "A_balance": float(1.0 - official_R_plus_T),
+            "A_balance": diagnostic_A_balance,
             "R_plus_T": official_R_plus_T,
+            "R_total_diagnostic_eh_fourier": official_R_total,
+            "T_total_diagnostic_eh_fourier": official_T_total,
+            "A_balance_diagnostic_eh_fourier": diagnostic_A_balance,
+            "R_plus_T_diagnostic_eh_fourier": official_R_plus_T,
             "incident_power_code_units": incident_power,
             "top_probe_z": top_z,
             "bottom_probe_z": bottom_z,
@@ -898,6 +931,7 @@ def compute_diffraction_orders_3d(
             "per_order": rows,
             "diagnostic_e_fourier": {
                 "note": E_FOURIER_DIAGNOSTIC_NOTE,
+                "power_source": DIAGNOSTIC_E_ONLY_FOURIER_PROBE_POWER_SOURCE,
                 "R_total": metrics["R_total_from_e_fourier"],
                 "T_total": metrics["T_total_from_e_fourier"],
                 "A_balance": metrics["A_balance_from_e_fourier"],
@@ -909,17 +943,20 @@ def compute_diffraction_orders_3d(
             encoding="utf-8",
         )
         flux_payload = {
-            "method": "net_flux",
+            "method": DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
             "role": "diagnostic",
             "status": "ok",
-            "power_source": "sampled_poynting_flux",
+            "power_source": DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
             "top_flux_outward": float(top_flux_outward),
             "bottom_flux_outward": float(bottom_flux_outward),
             "incident_power_code_units": incident_power,
             "R_total_from_net_flux": flux_R_total,
             "T_total_from_net_flux": flux_T_total,
-            "A_flux": float(1.0 - flux_R_plus_T),
+            "A_flux": flux_A_balance,
             "R_plus_T_from_net_flux": flux_R_plus_T,
+            "R_total_diagnostic_sampled_net_flux": flux_R_total,
+            "T_total_diagnostic_sampled_net_flux": flux_T_total,
+            "A_balance_diagnostic_sampled_net_flux": flux_A_balance,
             "top_probe_z": top_z,
             "bottom_probe_z": bottom_z,
             "sample_count_x": int(cfg.diffraction_sample_count_x),
