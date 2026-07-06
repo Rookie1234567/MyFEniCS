@@ -25,7 +25,7 @@ docs/taskXXX_task_name/
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
 | task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
 | task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 已完成并已审查；建议合并当前分支 |
-| task008 | 目标尺寸 50×25×140 nm official DtN-port R/T/A 本机收敛 benchmark 与资源报告 | `task008_70nm_official_convergence_benchmark/` | 任务书已按新几何更新；待本地 Codex 新建分支后执行 |
+| task008 | 目标尺寸 50×25×140 nm official DtN-port R/T/A 本机收敛 benchmark、内存边界与资源报告 | `task008_70nm_official_convergence_benchmark/` | 任务书已按新几何和 memory-first 流程更新；待本地 Codex 新建分支后执行 |
 
 ## 合并前结论
 
@@ -57,7 +57,7 @@ docs/task007_dtn_port_modal_official_rta/review_report.md
 本轮 task008 的定位是：
 
 ```text
-在 task007 修正后的 official dtn_port_modal R/T/A 口径下，针对目标计算域 50×25×140 nm、光栅 17×25×120 nm、空气 10 nm、基座 10 nm，完成本机可承受的 p/h 收敛 benchmark，并同步生成资源报告。
+在 task007 修正后的 official dtn_port_modal R/T/A 口径下，针对目标计算域 50×25×140 nm、光栅 17×25×120 nm、空气 10 nm、基座 10 nm，先完成 p=1/p=2 各 h 的 assemble-only / matrix-scale 内存评估，再根据评估结果执行 direct solve 收敛 benchmark，并记录本机 last completed / first failed 边界。
 ```
 
 推荐 task008 分支名：
