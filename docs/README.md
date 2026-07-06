@@ -25,7 +25,7 @@ docs/taskXXX_task_name/
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
 | task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
 | task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 已完成并已审查；建议合并当前分支 |
-| task008 | 70 nm official DtN-port R/T/A 本机可承受收敛 benchmark 与资源报告 | `task008_70nm_official_convergence_benchmark/` | 任务书已写入；待本地 Codex 新建分支后执行 |
+| task008 | 目标尺寸 50×25×140 nm official DtN-port R/T/A 本机收敛 benchmark 与资源报告 | `task008_70nm_official_convergence_benchmark/` | 任务书已按新几何更新；待本地 Codex 新建分支后执行 |
 
 ## 合并前结论
 
@@ -52,12 +52,18 @@ docs/task007_dtn_port_modal_official_rta/review_report.md
 
 ## task008 执行说明
 
-`task008_70nm_official_convergence_benchmark/task.md` 是后续任务书。执行 task008 前，应先在本地将当前 task007 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task008 分支。ChatGPT 不负责创建远程任务分支。
+`task008_70nm_official_convergence_benchmark/task.md` 是后续任务书。目录名保留了早期 70 nm 命名，但任务书已更新为新的目标几何。执行 task008 前，应先在本地将当前 task007 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task008 分支。ChatGPT 不负责创建远程任务分支。
 
 本轮 task008 的定位是：
 
 ```text
-在 task007 修正后的 official dtn_port_modal R/T/A 口径下，重跑 70 nm reduced-height 真实 3D grating 的本机可完成 p/h 收敛 benchmark，并同步生成资源报告。
+在 task007 修正后的 official dtn_port_modal R/T/A 口径下，针对目标计算域 50×25×140 nm、光栅 17×25×120 nm、空气 10 nm、基座 10 nm，完成本机可承受的 p/h 收敛 benchmark，并同步生成资源报告。
+```
+
+推荐 task008 分支名：
+
+```text
+codex/20260706-target-50x25x140-official-benchmark
 ```
 
 ## 工作规则
