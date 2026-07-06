@@ -1,0 +1,8 @@
+Using custom tensor-product hexahedron cells with nonuniform axis spacing. Opposite periodic faces share the same axis coordinates, so explicit edge Floquet pairing remains one-to-one.
+This is the default low-memory 3D Floquet mesh because opposite periodic faces are structured.
+mesh_spacing_mode_resolved = boundary_fitted
+mesh_cells_resolved = (51, 25, 140)
+axis_cell_stats = {'x': {'num_cells': 51, 'min': 0.970588235294116, 'max': 1.0, 'median': 0.9705882352941178}, 'y': {'num_cells': 25, 'min': 1.0, 'max': 1.0, 'median': 1.0}, 'z': {'num_cells': 140, 'min': 1.0, 'max': 1.0, 'median': 1.0}}
+Stage-4 rectangular block material planes are aligned to hexahedral grid planes; no midpoint material-boundary fallback is used.
+material_plane_alignment = {'all_aligned': True, 'missing': [], 'checked': {'x': [{'name': 'grating_x_min', 'value': 16.5, 'aligned': True}, {'name': 'grating_x_max', 'value': 33.5, 'aligned': True}], 'y': [{'name': 'grating_y_min', 'value': 0.0, 'aligned': True}, {'name': 'grating_y_max', 'value': 25.0, 'aligned': True}], 'z': [{'name': 'interface_z', 'value': 0.0, 'aligned': True}, {'name': 'grating_z_max', 'value': 120.0, 'aligned': True}, {'name': 'grating_z_min', 'value': 0.0, 'aligned': True}]}}
+local_refinement_regions = {'x': [], 'y': [], 'z': []}

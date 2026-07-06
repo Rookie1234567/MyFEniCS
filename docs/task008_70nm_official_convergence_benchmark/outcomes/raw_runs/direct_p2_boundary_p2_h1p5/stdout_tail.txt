@@ -1,0 +1,80 @@
+mesh cells resolved = (34, 17, 94)
+mesh spacing mode resolved = boundary_fitted
+mesh axis cell stats = {'x': {'num_cells': 34, 'min': 1.4166666666666643, 'max': 1.5, 'median': 1.5}, 'y': {'num_cells': 17, 'min': 1.470588235294116, 'max': 1.4705882352941195, 'median': 1.4705882352941178}, 'z': {'num_cells': 94, 'min': 1.4285714285714164, 'max': 1.5, 'median': 1.5}}
+function_space_setup seconds = 0.115
+mesh cells = 54332
+3D N1curl dofs = 1347234
+field_formulation_setup seconds = 0.014
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_trace_p2
+3D Floquet formal mapping = explicit p=2 N1curl edge + face-interior trace topology; probe/pinv is disabled.
+building 3D Floquet p=2 topological trace context
+building 3D Floquet p=2 topological trace context seconds = 10.754
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.442
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.940
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.009
+assembling 3D p=2 topological trace Floquet MPC arrays
+assembling 3D p=2 topological trace Floquet MPC arrays seconds = 0.210
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.017
+3D Floquet phase x = -0.600741134898 + -0.799443612046j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = -0.600741134898 + -0.799443612046j
+3D Floquet number of slave edges = 9733
+3D Floquet number of matched master edges = 9733
+3D Floquet number of slave faces = 4794
+3D Floquet number of matched master faces = 4794
+3D Floquet number of constraints = 38642
+3D Floquet number of edge constraints = 19466
+3D Floquet number of face constraints = 19176
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet max face midpoint pairing error = 0.000e+00 nm
+3D Floquet p=2 face transform fit count = 4794
+3D Floquet p=2 max face transform fit residual = 9.798e-13
+3D Floquet number of x constraints = 12818
+3D Floquet number of y constraints = 25636
+3D Floquet number of corner constraints = 188
+3D Floquet local slave dofs = 6370
+3D Floquet local slave records seen = 6370
+3D Floquet local ghost slave records on owned cells added to local MPC = 66
+3D Floquet global ghost slave records on owned cells added to local MPC = 496
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 39116
+3D Floquet max masters per slave = 3
+3D Floquet estimated constraint memory MB = 1.339
+3D Floquet total constraint setup seconds = 12.376
+floquet_constraint_setup_outer seconds = 12.594
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.371
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 80
+Stage-4 DtN top/bottom mode count = 40 / 40
+Stage-4 DtN matrix base rows = 1347234
+Stage-4 DtN surface quadrature degree = 17
+Stage-4 DtN prepared 50/80 auxiliary modes in 134.633 seconds; unique surface orders = 25
+Stage-4 DtN modal cache summary: unique surface orders = 40, x/y component vector assemblies = 80, polarization cache hits = 40
+Stage-4 DtN base matrix nnz = 142105868.0
+Stage-4 DtN auxiliary coupling nnz estimate = 550336
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 18 RUNNING AT 1e17cca62cb1
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions

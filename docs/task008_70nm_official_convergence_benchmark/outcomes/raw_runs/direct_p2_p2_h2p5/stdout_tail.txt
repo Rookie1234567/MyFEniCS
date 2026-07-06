@@ -1,0 +1,80 @@
+average nnz per row = 107.03
+average allocated nnz per row = 107.03
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 768024152.0
+estimated AIJ matrix memory MB = 732.4449081420898
+matrix Frobenius norm = 24471.269253768933
+matrix infinity norm = 320.0971806638221
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+DtN augmented/base nnz ratio = 1.0061488596792123
+solver converged reason = 4
+solver converged reason name = CONVERGED_ITS
+solver iterations = 1
+solver residual norm = 0.000000e+00
+actual KSP type = preonly
+actual PC type = lu
+actual PC factor solver type = mumps
+linear system RHS norm = 7.666820893255791
+linear system solution norm = 391.418447155591
+linear system true relative residual = 9.950366772329482e-12
+postprocess seconds = 3.571
+diffraction_postprocess seconds = 169.101
+volume_absorption_postprocess seconds = 0.065
+max |E| = 1.055278e+00
+max component |Ex|/|Ey|/|Ez| = 4.809475e-12 / 1.055278e+00 / 4.861477e-12
+exact reference unavailable for this case; E_exact/H_exact error fields are not written.
+max |H| = 3.042094e-03
+Poynting direction cosine = 9.997827e-01
+Floquet x-face mismatch = 0.000000e+00
+Floquet y-face mismatch = 0.000000e+00
+Floquet edge/corner mismatch = 0.000000e+00
+Stage-4 primary power source = dtn_port_modal_amplitudes
+Stage-4 primary R/T = 2.712189e-03 / 5.928238e-01
+Stage-4 primary R+T = 5.955360e-01
+Stage-4 primary A_balance = 4.044640e-01
+Stage-4 probe E/H Fourier R/T = 8.605483e-03 / 5.562622e-01
+Stage-4 sampled net-flux R/T = 8.974214e-02 / 5.545120e-01
+Stage-4 material A_volume_total = 4.044640e-01
+Stage-4 port-volume closure error = 7.860379014346108e-14
+3D diffraction absorption from balance = 4.044640e-01
+ParaView file = /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p2_h2p5_np8_20260706_081624/fields_3d_for_paraview_parallel.pvd
+timing summary seconds:
+  config_validation: 0.000
+  mesh_build: 0.153
+  function_space_setup: 0.125
+  field_formulation_setup: 0.014
+  floquet_build_topological_trace_context_p2: 3.929
+  floquet_build_x_constraints: 0.189
+  floquet_build_y_constraints: 0.607
+  floquet_resolve_corner_master_chains: 0.011
+  floquet_build_mpc_arrays: 0.086
+  floquet_mpc_finalize: 0.010
+  floquet_total: 4.835
+  floquet_constraint_setup_outer: 4.922
+  boundary_condition_setup: 0.000
+  variational_form_setup: 0.027
+  stage4_dtn_port_assembly_and_solve: 143.764
+  matrix_stats: 0.296
+  postprocess: 3.571
+  diffraction_postprocess: 169.101
+  volume_absorption_postprocess: 0.065
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 1895.7 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 154.034
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p2_h2p5_np8_20260706_081624

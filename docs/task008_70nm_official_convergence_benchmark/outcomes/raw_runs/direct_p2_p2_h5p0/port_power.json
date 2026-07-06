@@ -1,0 +1,4754 @@
+{
+  "method": "port",
+  "role": "primary",
+  "status": "ok",
+  "power_source": "dtn_port_modal_amplitudes",
+  "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+  "reference_planes": {
+    "top_z": 130.0,
+    "bottom_z": -10.0,
+    "top_reference": "physical_z_max",
+    "bottom_reference": "physical_z_min"
+  },
+  "R_total": 0.08902160293640748,
+  "T_total": 0.4425882786570433,
+  "A_balance": 0.4683901184065492,
+  "R_plus_T": 0.5316098815934508,
+  "R_total_dtn_port_modal": 0.08902160293640748,
+  "T_total_dtn_port_modal": 0.4425882786570433,
+  "A_balance_dtn_port_modal": 0.4683901184065492,
+  "R_plus_T_dtn_port_modal": 0.5316098815934508,
+  "R_plus_T_plus_A_volume_dtn_port_modal": 0.9999999999999294,
+  "energy_closure_error_dtn_port_modal_volume": -7.061018436615996e-14,
+  "incident_power_code_units": 108.5301110418315,
+  "stage4_dtn_order_policy": "auto_propagating",
+  "stage4_dtn_assembly": "auxiliary",
+  "modal_amplitude_convention": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase.",
+  "orders": [
+    {
+      "auxiliary_index": 0,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -7,
+      "n": 0,
+      "order_m": -7,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.4212956019590051,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.19780507480427703,
+        0.0
+      ],
+      "kz": [
+        0.19780507480427703,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.0007544996052736161,
+        -0.000588545641762991
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.0007544996052736161,
+        -0.000588545641762991
+      ],
+      "boundary_phase": [
+        0.8354097295657328,
+        0.5496276773843446
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -0.0003068353370822125,
+        -0.0009063706210562534
+      ],
+      "modal_power_code_units": 0.00024322236971874645,
+      "power_ratio": 2.2410588857225033e-06,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.2410588857225033e-06,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 1,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -7,
+      "n": 0,
+      "order_m": -7,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.4212956019590051,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.19780507480427703,
+        0.0
+      ],
+      "kz": [
+        0.19780507480427703,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.4077732251081984e-14,
+        7.0655897152223986e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.4077732251081984e-14,
+        7.0655897152223986e-15
+      ],
+      "boundary_phase": [
+        0.8354097295657328,
+        0.5496276773843446
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.5644118157303595e-14,
+        -1.834848886784504e-15
+      ],
+      "modal_power_code_units": 6.590328220768325e-26,
+      "power_ratio": 6.072350021118259e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 6.072350021118259e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 2,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": -1,
+      "order_m": -6,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2570080657449077,
+        0.0
+      ],
+      "kz": [
+        0.2570080657449077,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.978548984243547e-15,
+        2.0507933109663236e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.978548984243547e-15,
+        2.0507933109663236e-14
+      ],
+      "boundary_phase": [
+        -0.4117063601864775,
+        0.911316560247866
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.6639518777978626e-14,
+        -1.2980280630873537e-14
+      ],
+      "modal_power_code_units": 1.537068129533355e-25,
+      "power_ratio": 1.4162596119899964e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.4162596119899964e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 3,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": -1,
+      "order_m": -6,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2570080657449077,
+        0.0
+      ],
+      "kz": [
+        0.2570080657449077,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.438662973619505e-15,
+        -1.939228148689888e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.438662973619505e-15,
+        -1.939228148689888e-15
+      ],
+      "boundary_phase": [
+        -0.4117063601864775,
+        0.911316560247866
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -8.835877713364223e-16,
+        6.666052756382499e-15
+      ],
+      "modal_power_code_units": 1.5605665285070874e-26,
+      "power_ratio": 1.4379111138157663e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.4379111138157663e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 4,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": 0,
+      "order_m": -6,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.3594699069809748,
+        0.0
+      ],
+      "kz": [
+        0.3594699069809748,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        2.3921993437497962e-05,
+        -9.775150942066335e-06
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        2.3921993437497962e-05,
+        -9.775150942066335e-06
+      ],
+      "boundary_phase": [
+        -0.9238401821760294,
+        0.3827784186666757
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.8358381955479678e-05,
+        1.8187500046476815e-05
+      ],
+      "modal_power_code_units": 3.223686877684495e-07,
+      "power_ratio": 2.9703156540971083e-09,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.9703156540971083e-09,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 5,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": 0,
+      "order_m": -6,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.3594699069809748,
+        0.0
+      ],
+      "kz": [
+        0.3594699069809748,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.215999283168596e-16,
+        1.885645020936222e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.215999283168596e-16,
+        1.885645020936222e-15
+      ],
+      "boundary_phase": [
+        -0.9238401821760294,
+        0.3827784186666757
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.296043210297512e-15,
+        -1.5040996020565955e-15
+      ],
+      "modal_power_code_units": 1.9029083941433775e-27,
+      "power_ratio": 1.753346030771061e-29,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.753346030771061e-29,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 6,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": 1,
+      "order_m": -6,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2570080657449077,
+        0.0
+      ],
+      "kz": [
+        0.2570080657449077,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.0488758958240664e-14,
+        -7.317883871763206e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.0488758958240664e-14,
+        -7.317883871763206e-15
+      ],
+      "boundary_phase": [
+        -0.4117063601864775,
+        0.911316560247866
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.3506199847380078e-15,
+        1.257139906820383e-14
+      ],
+      "modal_power_code_units": 5.645109188731594e-26,
+      "power_ratio": 5.201422107230463e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 5.201422107230463e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 7,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -6,
+      "n": 1,
+      "order_m": -6,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2570080657449077,
+        0.0
+      ],
+      "kz": [
+        0.2570080657449077,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -3.238282188307926e-15,
+        4.9411346566684564e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -3.238282188307926e-15,
+        4.9411346566684564e-15
+      ],
+      "boundary_phase": [
+        -0.4117063601864775,
+        0.911316560247866
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.1697164660316605e-15,
+        -4.985396749648942e-15
+      ],
+      "modal_power_code_units": 1.2045423275517291e-26,
+      "power_ratio": 1.1098692482563242e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.1098692482563242e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 8,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": -1,
+      "order_m": -5,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35293367391202257,
+        0.0
+      ],
+      "kz": [
+        0.35293367391202257,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.2052286303108314e-14,
+        -6.8040682909962024e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.2052286303108314e-14,
+        -6.8040682909962024e-15
+      ],
+      "boundary_phase": [
+        -0.3224192679204503,
+        0.9465969658062722
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.0326599726011526e-14,
+        -9.214894928287079e-15
+      ],
+      "modal_power_code_units": 9.07853683854297e-26,
+      "power_ratio": 8.364993596149338e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 8.364993596149338e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 9,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": -1,
+      "order_m": -5,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35293367391202257,
+        0.0
+      ],
+      "kz": [
+        0.35293367391202257,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.488351096689889e-15,
+        -1.2542913575951847e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.488351096689889e-15,
+        -1.2542913575951847e-14
+      ],
+      "boundary_phase": [
+        -0.3224192679204503,
+        0.9465969658062722
+      ],
+      "outgoing_amplitude_at_boundary": [
+        9.781114522760713e-15,
+        1.018593047396032e-14
+      ],
+      "modal_power_code_units": 9.451551156243648e-26,
+      "power_ratio": 8.708690210959676e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 8.708690210959676e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 10,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": 0,
+      "order_m": -5,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.43327548551471246,
+        0.0
+      ],
+      "kz": [
+        0.43327548551471246,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -8.669307719354385e-05,
+        0.000127184795288023
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -8.669307719354385e-05,
+        0.000127184795288023
+      ],
+      "boundary_phase": [
+        0.9752705051862537,
+        -0.2210145735324926
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.643950790029862e-05,
+        0.00014320001303671102
+      ],
+      "modal_power_code_units": 1.3784580667862701e-05,
+      "power_ratio": 1.2701157803616008e-07,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.2701157803616008e-07,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 11,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": 0,
+      "order_m": -5,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.43327548551471246,
+        0.0
+      ],
+      "kz": [
+        0.43327548551471246,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.853410424012851e-15,
+        4.01038589639276e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.853410424012851e-15,
+        4.01038589639276e-15
+      ],
+      "boundary_phase": [
+        0.9752705051862537,
+        -0.2210145735324926
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.8470343075112745e-15,
+        4.983885514208148e-15
+      ],
+      "modal_power_code_units": 2.3063138107296422e-26,
+      "power_ratio": 2.1250451036954197e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.1250451036954197e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 12,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": 1,
+      "order_m": -5,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35293367391202257,
+        0.0
+      ],
+      "kz": [
+        0.35293367391202257,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        4.084434005187722e-15,
+        4.378083695334511e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        4.084434005187722e-15,
+        4.378083695334511e-15
+      ],
+      "boundary_phase": [
+        -0.3224192679204503,
+        0.9465969658062722
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.461180963871578e-15,
+        2.4547342964024444e-15
+      ],
+      "modal_power_code_units": 1.6990995122122367e-26,
+      "power_ratio": 1.5655558590162515e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.5655558590162515e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 13,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -5,
+      "n": 1,
+      "order_m": -5,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35293367391202257,
+        0.0
+      ],
+      "kz": [
+        0.35293367391202257,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        9.43762280001494e-15,
+        -1.7806141320923023e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        9.43762280001494e-15,
+        -1.7806141320923023e-14
+      ],
+      "boundary_phase": [
+        -0.3224192679204503,
+        0.9465969658062722
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.3812367913013253e-14,
+        1.467466815609832e-14
+      ],
+      "modal_power_code_units": 1.9248163438379045e-25,
+      "power_ratio": 1.773532087418587e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.773532087418587e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 14,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": -1,
+      "order_m": -4,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.38921520579321023,
+        0.0
+      ],
+      "kz": [
+        0.38921520579321023,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.0255836001988343e-15,
+        -6.012960256622122e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.0255836001988343e-15,
+        -6.012960256622122e-15
+      ],
+      "boundary_phase": [
+        0.9452311423355492,
+        0.32640172726110517
+      ],
+      "outgoing_amplitude_at_boundary": [
+        9.932270557372892e-16,
+        -6.018389550740747e-15
+      ],
+      "modal_power_code_units": 1.944707798701437e-26,
+      "power_ratio": 1.79186013912017e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.79186013912017e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 15,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": -1,
+      "order_m": -4,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.38921520579321023,
+        0.0
+      ],
+      "kz": [
+        0.38921520579321023,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        5.717923429759496e-15,
+        1.7027044401742628e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        5.717923429759496e-15,
+        1.7027044401742628e-14
+      ],
+      "boundary_phase": [
+        0.9452311423355492,
+        0.32640172726110517
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.5289740758155545e-16,
+        1.796083271427754e-14
+      ],
+      "modal_power_code_units": 1.6861962671568986e-25,
+      "power_ratio": 1.5536667667344193e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.5536667667344193e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 16,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": 0,
+      "order_m": -4,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.46330761334951415,
+        0.0
+      ],
+      "kz": [
+        0.46330761334951415,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.0001909752195248849,
+        4.5382876047361606e-05
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.0001909752195248849,
+        4.5382876047361606e-05
+      ],
+      "boundary_phase": [
+        -0.8578478176943101,
+        -0.5139038058597248
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.00018715010802471357,
+        5.9211290960814245e-05
+      ],
+      "modal_power_code_units": 2.397260402034519e-05,
+      "power_ratio": 2.2088435909832677e-07,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.2088435909832677e-07,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 17,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": 0,
+      "order_m": -4,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.46330761334951415,
+        0.0
+      ],
+      "kz": [
+        0.46330761334951415,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        4.602790312105482e-15,
+        4.880088343861555e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        4.602790312105482e-15,
+        4.880088343861555e-16
+      ],
+      "boundary_phase": [
+        -0.8578478176943101,
+        -0.5139038058597248
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.697704027259987e-15,
+        -2.7840287725589857e-15
+      ],
+      "modal_power_code_units": 1.332908979732425e-26,
+      "power_ratio": 1.228146702272029e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.228146702272029e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 18,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": 1,
+      "order_m": -4,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.38921520579321023,
+        0.0
+      ],
+      "kz": [
+        0.38921520579321023,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -6.947881257667247e-15,
+        5.554215328987264e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -6.947881257667247e-15,
+        5.554215328987264e-16
+      ],
+      "boundary_phase": [
+        0.9452311423355492,
+        0.32640172726110517
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -6.7486442856927184e-15,
+        -1.742798713288024e-15
+      ],
+      "modal_power_code_units": 2.53918916881399e-26,
+      "power_ratio": 2.339617221837443e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.339617221837443e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 19,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -4,
+      "n": 1,
+      "order_m": -4,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.38921520579321023,
+        0.0
+      ],
+      "kz": [
+        0.38921520579321023,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.4013195567385539e-14,
+        3.573176867902888e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.4013195567385539e-14,
+        3.573176867902888e-15
+      ],
+      "boundary_phase": [
+        0.9452311423355492,
+        0.32640172726110517
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.4411999955424214e-14,
+        -1.196453185027496e-15
+      ],
+      "modal_power_code_units": 1.0930879198262026e-25,
+      "power_ratio": 1.0071747917081614e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.0071747917081614e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 20,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": -1,
+      "order_m": -3,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3831866915444458,
+        0.0
+      ],
+      "kz": [
+        0.3831866915444458,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.551321020107036e-14,
+        1.2263914823815799e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.551321020107036e-14,
+        1.2263914823815799e-15
+      ],
+      "boundary_phase": [
+        0.899919020166464,
+        -0.4360570572099843
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.4495409584578335e-14,
+        -5.660991766993321e-15
+      ],
+      "modal_power_code_units": 1.2461015215137874e-25,
+      "power_ratio": 1.148162025775035e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.148162025775035e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 21,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": -1,
+      "order_m": -3,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3831866915444458,
+        0.0
+      ],
+      "kz": [
+        0.3831866915444458,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.654214213522148e-14,
+        -2.397331095855218e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.654214213522148e-14,
+        -2.397331095855218e-15
+      ],
+      "boundary_phase": [
+        0.899919020166464,
+        -0.4360570572099843
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.5931961484599506e-14,
+        5.055913968637342e-15
+      ],
+      "modal_power_code_units": 1.4376549638616287e-25,
+      "power_ratio": 1.3246599953330035e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.3246599953330035e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 22,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": 0,
+      "order_m": -3,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.458254851304108,
+        0.0
+      ],
+      "kz": [
+        0.458254851304108,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -2.3720663690661802e-05,
+        5.698413802852539e-07
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -2.3720663690661802e-05,
+        5.698413802852539e-07
+      ],
+      "boundary_phase": [
+        -0.993148149957949,
+        0.11686210778136429
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.3491540395354288e-05,
+        -3.3379836694633978e-06
+      ],
+      "modal_power_code_units": 3.4645371455529226e-07,
+      "power_ratio": 3.192235880250378e-09,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 3.192235880250378e-09,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 23,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": 0,
+      "order_m": -3,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.458254851304108,
+        0.0
+      ],
+      "kz": [
+        0.458254851304108,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.523456060347122e-15,
+        5.658101616004376e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.523456060347122e-15,
+        5.658101616004376e-15
+      ],
+      "boundary_phase": [
+        -0.993148149957949,
+        0.11686210778136429
+      ],
+      "outgoing_amplitude_at_boundary": [
+        3.831244336862402e-15,
+        -6.147953761877379e-15
+      ],
+      "modal_power_code_units": 3.22923608849355e-26,
+      "power_ratio": 2.9754287151230164e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.9754287151230164e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 24,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": 1,
+      "order_m": -3,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3831866915444458,
+        0.0
+      ],
+      "kz": [
+        0.3831866915444458,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.55159521181631e-15,
+        -1.134817999482729e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.55159521181631e-15,
+        -1.134817999482729e-14
+      ],
+      "boundary_phase": [
+        0.899919020166464,
+        -0.4360570572099843
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -9.044521076445705e-15,
+        -8.227687807941967e-15
+      ],
+      "modal_power_code_units": 7.692727028702677e-26,
+      "power_ratio": 7.08810389564387e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 7.08810389564387e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 25,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -3,
+      "n": 1,
+      "order_m": -3,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3831866915444458,
+        0.0
+      ],
+      "kz": [
+        0.3831866915444458,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.1698525889130117e-14,
+        -9.13715843030077e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.1698525889130117e-14,
+        -9.13715843030077e-15
+      ],
+      "boundary_phase": [
+        0.899919020166464,
+        -0.4360570572099843
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.451204837191634e-14,
+        -3.1214778887931225e-15
+      ],
+      "modal_power_code_units": 1.13381952656052e-25,
+      "power_ratio": 1.0447050276429775e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.0447050276429775e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 26,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": -1,
+      "order_m": -2,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3325550640862645,
+        0.0
+      ],
+      "kz": [
+        0.3325550640862645,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.4747949984740344e-14,
+        2.0845155298942168e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.4747949984740344e-14,
+        2.0845155298942168e-14
+      ],
+      "boundary_phase": [
+        0.7315942373838897,
+        -0.6817403258035165
+      ],
+      "outgoing_amplitude_at_boundary": [
+        3.4214677428638715e-15,
+        2.5304467721609195e-14
+      ],
+      "modal_power_code_units": 2.9117902297296536e-25,
+      "power_ratio": 2.682933060491703e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.682933060491703e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 27,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": -1,
+      "order_m": -2,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3325550640862645,
+        0.0
+      ],
+      "kz": [
+        0.3325550640862645,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.1029908281432165e-14,
+        -2.8757548435149332e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.1029908281432165e-14,
+        -2.8757548435149332e-15
+      ],
+      "boundary_phase": [
+        0.7315942373838897,
+        -0.6817403258035165
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.0029935381517525e-14,
+        5.4156475937221345e-15
+      ],
+      "modal_power_code_units": 5.802338387636021e-26,
+      "power_ratio": 5.346293606388725e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 5.346293606388725e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 28,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": 0,
+      "order_m": -2,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4168433024727534,
+        0.0
+      ],
+      "kz": [
+        0.4168433024727534,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.00013088397560478954,
+        0.00014181057604754406
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.00013088397560478954,
+        0.00014181057604754406
+      ],
+      "boundary_phase": [
+        -0.7091148973412497,
+        -0.7050929459076364
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.00019280141375082672,
+        -8.274624144573409e-06
+      ],
+      "modal_power_code_units": 2.0846175199727393e-05,
+      "power_ratio": 1.9207734148260946e-07,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.9207734148260946e-07,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 29,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": 0,
+      "order_m": -2,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4168433024727534,
+        0.0
+      ],
+      "kz": [
+        0.4168433024727534,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.1378647057931792e-15,
+        -8.572342272283995e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.1378647057931792e-15,
+        -8.572342272283995e-15
+      ],
+      "boundary_phase": [
+        -0.7091148973412497,
+        -0.7050929459076364
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -6.851174880130045e-15,
+        5.276475232932681e-15
+      ],
+      "modal_power_code_units": 4.1859204990419495e-26,
+      "power_ratio": 3.8569208663469824e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 3.8569208663469824e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 30,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": 1,
+      "order_m": -2,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3325550640862645,
+        0.0
+      ],
+      "kz": [
+        0.3325550640862645,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -6.173314162639161e-15,
+        -5.027037306201299e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -6.173314162639161e-15,
+        -5.027037306201299e-15
+      ],
+      "boundary_phase": [
+        0.7315942373838897,
+        -0.6817403258035165
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -7.943495117903268e-15,
+        5.308456841943816e-16
+      ],
+      "modal_power_code_units": 2.830453118334648e-26,
+      "power_ratio": 2.6079887794859872e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 2.6079887794859872e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 31,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -2,
+      "n": 1,
+      "order_m": -2,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3325550640862645,
+        0.0
+      ],
+      "kz": [
+        0.3325550640862645,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.0262894748851426e-14,
+        -1.812503874006555e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.0262894748851426e-14,
+        -1.812503874006555e-15
+      ],
+      "boundary_phase": [
+        0.7315942373838897,
+        -0.6817403258035165
+      ],
+      "outgoing_amplitude_at_boundary": [
+        6.272617675551721e-15,
+        -8.322646599228342e-15
+      ],
+      "modal_power_code_units": 4.850382735778182e-26,
+      "power_ratio": 4.469158548919816e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 4.469158548919816e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 32,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": -1,
+      "order_m": -1,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2068114277272288,
+        0.0
+      ],
+      "kz": [
+        0.2068114277272288,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.786847586477178e-15,
+        2.2465553802767526e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.786847586477178e-15,
+        2.2465553802767526e-14
+      ],
+      "boundary_phase": [
+        -0.18094580826247728,
+        0.9834930678313085
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -2.1228556424448752e-14,
+        -8.772879208971276e-15
+      ],
+      "modal_power_code_units": 1.465296791389754e-25,
+      "power_ratio": 1.3501292658080619e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 1.3501292658080619e-27,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 33,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": -1,
+      "order_m": -1,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2068114277272288,
+        0.0
+      ],
+      "kz": [
+        0.2068114277272288,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        7.484010233969014e-15,
+        1.3689483807494934e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        7.484010233969014e-15,
+        1.3689483807494934e-14
+      ],
+      "boundary_phase": [
+        -0.18094580826247728,
+        0.9834930678313085
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.481771270769039e-14,
+        4.8834174724438284e-15
+      ],
+      "modal_power_code_units": 6.760068645949712e-26,
+      "power_ratio": 6.2287494051711895e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 6.2287494051711895e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 34,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": 0,
+      "order_m": -1,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.32547877781131396,
+        0.0
+      ],
+      "kz": [
+        0.32547877781131396,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.0008193540865691655,
+        0.000873978733174534
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.0008193540865691655,
+        0.000873978733174534
+      ],
+      "boundary_phase": [
+        -0.09909679572606045,
+        -0.9950777985046332
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.0009508721982912409,
+        0.0007287125686687019
+      ],
+      "modal_power_code_units": 0.0006272821812874956,
+      "power_ratio": 5.779798576320611e-06,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 5.779798576320611e-06,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 35,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": 0,
+      "order_m": -1,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.32547877781131396,
+        0.0
+      ],
+      "kz": [
+        0.32547877781131396,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        3.638658694369848e-15,
+        -2.9795987193017204e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        3.638658694369848e-15,
+        -2.9795987193017204e-15
+      ],
+      "boundary_phase": [
+        -0.09909679572606045,
+        -0.9950777985046332
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.3255119513828033e-15,
+        -3.325479797471017e-15
+      ],
+      "modal_power_code_units": 9.66717134912519e-27,
+      "power_ratio": 8.907363363333431e-29,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 8.907363363333431e-29,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 36,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": 1,
+      "order_m": -1,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2068114277272288,
+        0.0
+      ],
+      "kz": [
+        0.2068114277272288,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.6566728371117184e-14,
+        9.3588603970087e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.6566728371117184e-14,
+        9.3588603970087e-15
+      ],
+      "boundary_phase": [
+        -0.18094580826247728,
+        0.9834930678313085
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -6.206694267882312e-15,
+        -1.7986709068590446e-14
+      ],
+      "modal_power_code_units": 1.0054736938476079e-25,
+      "power_ratio": 9.264467567531201e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 9.264467567531201e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 37,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": -1,
+      "n": 1,
+      "order_m": -1,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.2068114277272288,
+        0.0
+      ],
+      "kz": [
+        0.2068114277272288,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.0173943018565475e-15,
+        1.0626674014401578e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.0173943018565475e-15,
+        1.0626674014401578e-14
+      ],
+      "boundary_phase": [
+        -0.18094580826247728,
+        0.9834930678313085
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -9.72432956820855e-15,
+        -5.8739315652986715e-15
+      ],
+      "modal_power_code_units": 3.584422119762139e-26,
+      "power_ratio": 3.3026982883861333e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 3.3026982883861333e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 38,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.458350341046137,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.08081953174336039,
+        0.0
+      ],
+      "kz": [
+        0.08081953174336039,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.7330347676489621,
+        -1.0714828341168634
+      ],
+      "incident_projection": [
+        -0.558624101316757,
+        -0.8294209506806816
+      ],
+      "outgoing_amplitude": [
+        -0.17441066633220514,
+        -0.24206188343618185
+      ],
+      "boundary_phase": [
+        -0.46977436003003803,
+        -0.8827865260969767
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -0.13175531002049412,
+        0.2676818526245643
+      ],
+      "modal_power_code_units": 9.66059467507684,
+      "power_ratio": 0.08901303594311528,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.08901303594311528,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 39,
+      "side": "top",
+      "direction": "outgoing_up",
+      "medium": "air",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.458350341046137,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.08081953174336039,
+        0.0
+      ],
+      "kz": [
+        0.08081953174336039,
+        0.0
+      ],
+      "vertical_sign": 1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        1.0,
+        0.0
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.899935371779225e-14,
+        1.1191941069555542e-14
+      ],
+      "incident_projection": [
+        0.0,
+        -0.0
+      ],
+      "outgoing_amplitude": [
+        -1.899935371779225e-14,
+        1.1191941069555542e-14
+      ],
+      "boundary_phase": [
+        -0.46977436003003803,
+        -0.8827865260969767
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.8805504010835196e-14,
+        1.1514686513173147e-14
+      ],
+      "modal_power_code_units": 5.277113708792493e-26,
+      "power_ratio": 4.862349865981892e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 4.862349865981892e-28,
+      "T": 0.0
+    },
+    {
+      "auxiliary_index": 40,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -7,
+      "n": 0,
+      "order_m": -7,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.4212956019590051,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.19671843459811364,
+        0.0020092399134300416
+      ],
+      "kz": [
+        -0.19671843459811364,
+        -0.0020092399134300416
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.0009959861189103943,
+        0.0013492575294832179
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.0009959861189103943,
+        0.0013492575294832179
+      ],
+      "boundary_phase": [
+        -0.3784089148566385,
+        0.9041120486362078
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -0.0008429899626497434,
+        -0.0014110541279751957
+      ],
+      "modal_power_code_units": 0.0007137022026856482,
+      "power_ratio": 6.576075485729127e-06,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 6.576075485729127e-06
+    },
+    {
+      "auxiliary_index": 41,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -7,
+      "n": 0,
+      "order_m": -7,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.4212956019590051,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.19671843459811364,
+        0.0020092399134300416
+      ],
+      "kz": [
+        -0.19671843459811364,
+        -0.0020092399134300416
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        2.5379511092055125e-15,
+        -1.6501320254604445e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        2.5379511092055125e-15,
+        -1.6501320254604445e-14
+      ],
+      "boundary_phase": [
+        -0.3784089148566385,
+        0.9041120486362078
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.3958659135398913e-14,
+        8.53883886792907e-15
+      ],
+      "modal_power_code_units": 7.073234911911901e-26,
+      "power_ratio": 6.517301828969488e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 6.517301828969488e-28
+    },
+    {
+      "auxiliary_index": 42,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": -1,
+      "order_m": -6,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.256169444654414,
+        0.0015429417471518755
+      ],
+      "kz": [
+        -0.256169444654414,
+        -0.0015429417471518755
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.6330673118326886e-14,
+        1.3635428706006494e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.6330673118326886e-14,
+        1.3635428706006494e-14
+      ],
+      "boundary_phase": [
+        -0.8237105020020016,
+        0.5395493005298366
+      ],
+      "outgoing_amplitude_at_boundary": [
+        6.094760931577372e-15,
+        -2.004284908261179e-14
+      ],
+      "modal_power_code_units": 1.5096947101488136e-25,
+      "power_ratio": 1.391037653658091e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.391037653658091e-27
+    },
+    {
+      "auxiliary_index": 43,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": -1,
+      "order_m": -6,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.256169444654414,
+        0.0015429417471518755
+      ],
+      "kz": [
+        -0.256169444654414,
+        -0.0015429417471518755
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -7.555863756153598e-15,
+        -2.8771249345214103e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -7.555863756153598e-15,
+        -2.8771249345214103e-15
+      ],
+      "boundary_phase": [
+        -0.8237105020020016,
+        0.5395493005298366
+      ],
+      "outgoing_amplitude_at_boundary": [
+        7.776195073597988e-15,
+        -1.7068429803943107e-15
+      ],
+      "modal_power_code_units": 2.1803728495196462e-26,
+      "power_ratio": 2.0090026892898416e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 2.0090026892898416e-28
+    },
+    {
+      "auxiliary_index": 44,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": 0,
+      "order_m": -6,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.35886917522939116,
+        0.0011013889121275415
+      ],
+      "kz": [
+        -0.35886917522939116,
+        -0.0011013889121275415
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        3.938851346888147e-05,
+        -9.703119650822514e-06
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        3.938851346888147e-05,
+        -9.703119650822514e-06
+      ],
+      "boundary_phase": [
+        -0.8918283146717119,
+        -0.42761585422423065
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.927699938250297e-05,
+        -8.189635988367353e-06
+      ],
+      "modal_power_code_units": 7.757633680096368e-07,
+      "power_ratio": 7.14790909695678e-09,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 7.14790909695678e-09
+    },
+    {
+      "auxiliary_index": 45,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": 0,
+      "order_m": -6,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.35886917522939116,
+        0.0011013889121275415
+      ],
+      "kz": [
+        -0.35886917522939116,
+        -0.0011013889121275415
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.5178215930709014e-15,
+        1.3507746021798766e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.5178215930709014e-15,
+        1.3507746021798766e-14
+      ],
+      "boundary_phase": [
+        -0.8918283146717119,
+        -0.42761585422423065
+      ],
+      "outgoing_amplitude_at_boundary": [
+        7.129762627076187e-15,
+        -1.1397545792553318e-14
+      ],
+      "modal_power_code_units": 8.710006948690661e-26,
+      "power_ratio": 8.025428947855314e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 8.025428947855314e-28
+    },
+    {
+      "auxiliary_index": 46,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": 1,
+      "order_m": -6,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.256169444654414,
+        0.0015429417471518755
+      ],
+      "kz": [
+        -0.256169444654414,
+        -0.0015429417471518755
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        5.8800915482385684e-15,
+        -1.6390360251524624e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        5.8800915482385684e-15,
+        -1.6390360251524624e-15
+      ],
+      "boundary_phase": [
+        -0.8237105020020016,
+        0.5395493005298366
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -3.959152420103103e-15,
+        4.522690468981224e-15
+      ],
+      "modal_power_code_units": 1.2428668414153466e-26,
+      "power_ratio": 1.1451815809313049e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.1451815809313049e-28
+    },
+    {
+      "auxiliary_index": 47,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -6,
+      "n": 1,
+      "order_m": -6,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.2956318958154133,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.256169444654414,
+        0.0015429417471518755
+      ],
+      "kz": [
+        -0.256169444654414,
+        -0.0015429417471518755
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        2.1789299200907345e-15,
+        -1.5339416849673397e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        2.1789299200907345e-15,
+        -1.5339416849673397e-15
+      ],
+      "boundary_phase": [
+        -0.8237105020020016,
+        0.5395493005298366
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -9.671702951274332e-16,
+        2.439163989654732e-15
+      ],
+      "modal_power_code_units": 2.368434414792905e-27,
+      "power_ratio": 2.1822832318673507e-29,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 2.1822832318673507e-29
+    },
+    {
+      "auxiliary_index": 48,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": -1,
+      "order_m": -5,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35232186220863754,
+        0.0011218563844554892
+      ],
+      "kz": [
+        -0.35232186220863754,
+        -0.0011218563844554892
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.2642658073072031e-14,
+        -2.466992947662532e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.2642658073072031e-14,
+        -2.466992947662532e-15
+      ],
+      "boundary_phase": [
+        -0.9177069827703372,
+        -0.3682751775238031
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.069372332868559e-14,
+        6.919953800748428e-15
+      ],
+      "modal_power_code_units": 7.67600780405644e-26,
+      "power_ratio": 7.072698747260863e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 7.072698747260863e-28
+    },
+    {
+      "auxiliary_index": 49,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": -1,
+      "order_m": -5,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35232186220863754,
+        0.0011218563844554892
+      ],
+      "kz": [
+        -0.35232186220863754,
+        -0.0011218563844554892
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.0479844758594715e-14,
+        1.6423425270989267e-17
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.0479844758594715e-14,
+        1.6423425270989267e-17
+      ],
+      "boundary_phase": [
+        -0.9177069827703372,
+        -0.3682751775238031
+      ],
+      "outgoing_amplitude_at_boundary": [
+        9.62347505316871e-15,
+        3.844394796841173e-15
+      ],
+      "modal_power_code_units": 5.0808918971551546e-26,
+      "power_ratio": 4.681550445660921e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.681550445660921e-28
+    },
+    {
+      "auxiliary_index": 50,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": 0,
+      "order_m": -5,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.43277677653747604,
+        0.0009132988458029711
+      ],
+      "kz": [
+        -0.43277677653747604,
+        -0.0009132988458029711
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.00011518823220041198,
+        -1.938323567567075e-05
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.00011518823220041198,
+        -1.938323567567075e-05
+      ],
+      "boundary_phase": [
+        -0.3717968824649255,
+        -0.9185134256628944
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.5022863427867552e-05,
+        0.00011300856435075063
+      ],
+      "modal_power_code_units": 7.785885160301431e-06,
+      "power_ratio": 7.173940103406384e-08,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 7.173940103406384e-08
+    },
+    {
+      "auxiliary_index": 51,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": 0,
+      "order_m": -5,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.43277677653747604,
+        0.0009132988458029711
+      ],
+      "kz": [
+        -0.43277677653747604,
+        -0.0009132988458029711
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -5.315715818602396e-15,
+        2.6559688342656954e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -5.315715818602396e-15,
+        2.6559688342656954e-15
+      ],
+      "boundary_phase": [
+        -0.3717968824649255,
+        -0.9185134256628944
+      ],
+      "outgoing_amplitude_at_boundary": [
+        4.4159096018411285e-15,
+        3.895075413890936e-15
+      ],
+      "modal_power_code_units": 2.0150003785450732e-26,
+      "power_ratio": 1.8566279525581778e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.8566279525581778e-28
+    },
+    {
+      "auxiliary_index": 52,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": 1,
+      "order_m": -5,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35232186220863754,
+        0.0011218563844554892
+      ],
+      "kz": [
+        -0.35232186220863754,
+        -0.0011218563844554892
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.6724120178931633e-14,
+        -2.1304987711739635e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.6724120178931633e-14,
+        -2.1304987711739635e-15
+      ],
+      "boundary_phase": [
+        -0.9177069827703372,
+        -0.3682751775238031
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.4563232055727525e-14,
+        8.114251926915433e-15
+      ],
+      "modal_power_code_units": 1.3149434668647676e-25,
+      "power_ratio": 1.2115932198373408e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.2115932198373408e-27
+    },
+    {
+      "auxiliary_index": 53,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -5,
+      "n": 1,
+      "order_m": -5,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.16996818967182165,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.35232186220863754,
+        0.0011218563844554892
+      ],
+      "kz": [
+        -0.35232186220863754,
+        -0.0011218563844554892
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.415229599942884e-15,
+        9.724534015797039e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.415229599942884e-15,
+        9.724534015797039e-15
+      ],
+      "boundary_phase": [
+        -0.9177069827703372,
+        -0.3682751775238031
+      ],
+      "outgoing_amplitude_at_boundary": [
+        7.633191525405784e-15,
+        -7.298253305757296e-15
+      ],
+      "modal_power_code_units": 5.276739529610649e-26,
+      "power_ratio": 4.862005096057443e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.862005096057443e-28
+    },
+    {
+      "auxiliary_index": 54,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": -1,
+      "order_m": -4,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3886602224172633,
+        0.001016966768669381
+      ],
+      "kz": [
+        -0.3886602224172633,
+        -0.001016966768669381
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.1566630467649366e-14,
+        -9.640719989032583e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.1566630467649366e-14,
+        -9.640719989032583e-16
+      ],
+      "boundary_phase": [
+        -0.7276437633794218,
+        -0.6711189665527306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        7.769379519513088e-15,
+        8.46408606339686e-15
+      ],
+      "modal_power_code_units": 6.889554500326107e-26,
+      "power_ratio": 6.348058095757977e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 6.348058095757977e-28
+    },
+    {
+      "auxiliary_index": 55,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": -1,
+      "order_m": -4,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3886602224172633,
+        0.001016966768669381
+      ],
+      "kz": [
+        -0.3886602224172633,
+        -0.001016966768669381
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -7.0404855711927515e-15,
+        6.612236020011935e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -7.0404855711927515e-15,
+        6.612236020011935e-15
+      ],
+      "boundary_phase": [
+        -0.7276437633794218,
+        -0.6711189665527306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        9.560562421394363e-15,
+        -8.634890138616322e-17
+      ],
+      "modal_power_code_units": 4.770965986517738e-26,
+      "power_ratio": 4.395983695878494e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.395983695878494e-28
+    },
+    {
+      "auxiliary_index": 56,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": 0,
+      "order_m": -4,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4628411517004591,
+        0.00085397447709621
+      ],
+      "kz": [
+        -0.4628411517004591,
+        -0.00085397447709621
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.00021787215512564885,
+        0.00021813812564990415
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.00021787215512564885,
+        0.00021813812564990415
+      ],
+      "boundary_phase": [
+        -0.08316554001348853,
+        -0.9880025460766761
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.00023364047897342634,
+        0.00019711666896614913
+      ],
+      "modal_power_code_units": 5.8078043859067686e-05,
+      "power_ratio": 5.351329995109124e-07,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 5.351329995109124e-07
+    },
+    {
+      "auxiliary_index": 57,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": 0,
+      "order_m": -4,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.4628411517004591,
+        0.00085397447709621
+      ],
+      "kz": [
+        -0.4628411517004591,
+        -0.00085397447709621
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.803133668881095e-15,
+        -4.555259499902232e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.803133668881095e-15,
+        -4.555259499902232e-15
+      ],
+      "boundary_phase": [
+        -0.08316554001348853,
+        -0.9880025460766761
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.066394269299813e-15,
+        -6.3426727699435385e-15
+      ],
+      "modal_power_code_units": 4.095784709096293e-26,
+      "power_ratio": 3.7738694540887614e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 3.7738694540887614e-28
+    },
+    {
+      "auxiliary_index": 58,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": 1,
+      "order_m": -4,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3886602224172633,
+        0.001016966768669381
+      ],
+      "kz": [
+        -0.3886602224172633,
+        -0.001016966768669381
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.793721361817198e-15,
+        -5.8764038699291e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.793721361817198e-15,
+        -5.8764038699291e-15
+      ],
+      "boundary_phase": [
+        -0.7276437633794218,
+        -0.6711189665527306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.248956254400012e-15,
+        3.072128200426295e-15
+      ],
+      "modal_power_code_units": 1.9305570099337935e-26,
+      "power_ratio": 1.7788215559732412e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.7788215559732412e-28
+    },
+    {
+      "auxiliary_index": 59,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -4,
+      "n": 1,
+      "order_m": -4,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        -0.044304483528229965,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3886602224172633,
+        0.001016966768669381
+      ],
+      "kz": [
+        -0.3886602224172633,
+        -0.001016966768669381
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -7.946241565647873e-15,
+        -5.8465968340116486e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -7.946241565647873e-15,
+        -5.8465968340116486e-15
+      ],
+      "boundary_phase": [
+        -0.7276437633794218,
+        -0.6711189665527306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.8582710924576432e-15,
+        9.587113150778401e-15
+      ],
+      "modal_power_code_units": 4.977338412197295e-26,
+      "power_ratio": 4.586135925244604e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.586135925244604e-28
+    },
+    {
+      "auxiliary_index": 60,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": -1,
+      "order_m": -3,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3826230070708763,
+        0.0010330129741225702
+      ],
+      "kz": [
+        -0.3826230070708763,
+        -0.0010330129741225702
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.179292226882344e-15,
+        -3.434653918133002e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.179292226882344e-15,
+        -3.434653918133002e-15
+      ],
+      "boundary_phase": [
+        -0.7666873642082918,
+        -0.625893111489108
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.054484313976106e-15,
+        5.249095975166707e-15
+      ],
+      "modal_power_code_units": 1.472841870075969e-26,
+      "power_ratio": 1.3570813260370492e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.3570813260370492e-28
+    },
+    {
+      "auxiliary_index": 61,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": -1,
+      "order_m": -3,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3826230070708763,
+        0.0010330129741225702
+      ],
+      "kz": [
+        -0.3826230070708763,
+        -0.0010330129741225702
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.05740341258554e-16,
+        1.8552162893121233e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.05740341258554e-16,
+        1.8552162893121233e-14
+      ],
+      "boundary_phase": [
+        -0.7666873642082918,
+        -0.625893111489108
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.1922746950820913e-14,
+        -1.3969758784243026e-14
+      ],
+      "modal_power_code_units": 1.7331220024169576e-25,
+      "power_ratio": 1.5969042929928897e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.5969042929928897e-27
+    },
+    {
+      "auxiliary_index": 62,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": 0,
+      "order_m": -3,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.45778325883274595,
+        0.0008634097531434979
+      ],
+      "kz": [
+        -0.45778325883274595,
+        -0.0008634097531434979
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -3.345394063009737e-06,
+        2.8271867517036147e-05
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -3.345394063009737e-06,
+        2.8271867517036147e-05
+      ],
+      "boundary_phase": [
+        -0.1329974415749776,
+        -0.9824417164605841
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.8220390902423638e-05,
+        -4.7343136281218817e-07
+      ],
+      "modal_power_code_units": 4.89713510329579e-07,
+      "power_ratio": 4.512236333572213e-09,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.512236333572213e-09
+    },
+    {
+      "auxiliary_index": 63,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": 0,
+      "order_m": -3,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.45778325883274595,
+        0.0008634097531434979
+      ],
+      "kz": [
+        -0.45778325883274595,
+        -0.0008634097531434979
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -3.720078804314975e-15,
+        -6.131821029191359e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -3.720078804314975e-15,
+        -6.131821029191359e-15
+      ],
+      "boundary_phase": [
+        -0.1329974415749776,
+        -0.9824417164605841
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.529395813516671e-15,
+        4.470277114957938e-15
+      ],
+      "modal_power_code_units": 3.1079944544083503e-26,
+      "power_ratio": 2.8637162761313446e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 2.8637162761313446e-28
+    },
+    {
+      "auxiliary_index": 64,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": 1,
+      "order_m": -3,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3826230070708763,
+        0.0010330129741225702
+      ],
+      "kz": [
+        -0.3826230070708763,
+        -0.0010330129741225702
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        5.851191375443852e-15,
+        -2.59812877988637e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        5.851191375443852e-15,
+        -2.59812877988637e-15
+      ],
+      "boundary_phase": [
+        -0.7666873642082918,
+        -0.625893111489108
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -6.112185399209816e-15,
+        -1.67026786977e-15
+      ],
+      "modal_power_code_units": 2.062887095625642e-26,
+      "power_ratio": 1.9007509306154946e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.9007509306154946e-28
+    },
+    {
+      "auxiliary_index": 65,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -3,
+      "n": 1,
+      "order_m": -3,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.08135922261536183,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.3826230070708763,
+        0.0010330129741225702
+      ],
+      "kz": [
+        -0.3826230070708763,
+        -0.0010330129741225702
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.943093456181053e-14,
+        9.102441733814263e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.943093456181053e-14,
+        9.102441733814263e-15
+      ],
+      "boundary_phase": [
+        -0.7666873642082918,
+        -0.625893111489108
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.0594607582223636e-14,
+        5.18296103127523e-15
+      ],
+      "modal_power_code_units": 2.317301012354947e-25,
+      "power_ratio": 2.1351687472813642e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 2.1351687472813642e-27
+    },
+    {
+      "auxiliary_index": 66,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": -1,
+      "order_m": -2,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.33190593042571165,
+        0.0011908631159287901
+      ],
+      "kz": [
+        -0.33190593042571165,
+        -0.0011908631159287901
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.442009430934384e-16,
+        -3.725096742636976e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.442009430934384e-16,
+        -3.725096742636976e-16
+      ],
+      "boundary_phase": [
+        -0.9726420023718411,
+        -0.17444674106612112
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -6.915599939111347e-16,
+        2.4993980036435307e-16
+      ],
+      "modal_power_code_units": 2.410046836906403e-28,
+      "power_ratio": 2.220625053979243e-30,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 2.220625053979243e-30
+    },
+    {
+      "auxiliary_index": 67,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": -1,
+      "order_m": -2,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.33190593042571165,
+        0.0011908631159287901
+      ],
+      "kz": [
+        -0.33190593042571165,
+        -0.0011908631159287901
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        6.349593653301615e-15,
+        -1.1580276368391197e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        6.349593653301615e-15,
+        -1.1580276368391197e-14
+      ],
+      "boundary_phase": [
+        -0.9726420023718411,
+        -0.17444674106612112
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -8.196022958305677e-15,
+        1.0155797275058733e-14
+      ],
+      "modal_power_code_units": 7.591050066522647e-26,
+      "power_ratio": 6.9944184094649795e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 6.9944184094649795e-28
+    },
+    {
+      "auxiliary_index": 68,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": 0,
+      "order_m": -2,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.416324990847281,
+        0.0009493893933621607
+      ],
+      "kz": [
+        -0.416324990847281,
+        -0.0009493893933621607
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.00044397307576189146,
+        4.944958507618862e-05
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.00044397307576189146,
+        4.944958507618862e-05
+      ],
+      "boundary_phase": [
+        -0.5170211544939234,
+        -0.8449144752070306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.00027132414241848454,
+        0.0003495527967480732
+      ],
+      "modal_power_code_units": 0.00010946816618929804,
+      "power_ratio": 1.008643270871666e-06,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.008643270871666e-06
+    },
+    {
+      "auxiliary_index": 69,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": 0,
+      "order_m": -2,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.416324990847281,
+        0.0009493893933621607
+      ],
+      "kz": [
+        -0.416324990847281,
+        -0.0009493893933621607
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -4.634704354374221e-15,
+        -4.2137145515759993e-16
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -4.634704354374221e-15,
+        -4.2137145515759993e-16
+      ],
+      "boundary_phase": [
+        -0.5170211544939234,
+        -0.8449144752070306
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.0402173541348672e-15,
+        4.1337867535322015e-15
+      ],
+      "modal_power_code_units": 1.1880623293900159e-26,
+      "power_ratio": 1.0946845239401744e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.0946845239401744e-28
+    },
+    {
+      "auxiliary_index": 70,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": 1,
+      "order_m": -2,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.33190593042571165,
+        0.0011908631159287901
+      ],
+      "kz": [
+        -0.33190593042571165,
+        -0.0011908631159287901
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        1.1689435376552843e-14,
+        1.3925739640875551e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        1.1689435376552843e-14,
+        1.3925739640875551e-14
+      ],
+      "boundary_phase": [
+        -0.9726420023718411,
+        -0.17444674106612112
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -8.940335933960557e-15,
+        -1.558394319515279e-14
+      ],
+      "modal_power_code_units": 1.4386909480379323e-25,
+      "power_ratio": 1.3256145545482837e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.3256145545482837e-27
+    },
+    {
+      "auxiliary_index": 71,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -2,
+      "n": 1,
+      "order_m": -2,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.2070229287589535,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.33190593042571165,
+        0.0011908631159287901
+      ],
+      "kz": [
+        -0.33190593042571165,
+        -0.0011908631159287901
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -2.7913134146045722e-15,
+        5.312063258674688e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -2.7913134146045722e-15,
+        5.312063258674688e-15
+      ],
+      "boundary_phase": [
+        -0.9726420023718411,
+        -0.17444674106612112
+      ],
+      "outgoing_amplitude_at_boundary": [
+        3.641620792641251e-15,
+        -4.679800316171321e-15
+      ],
+      "modal_power_code_units": 1.5671900722867265e-26,
+      "power_ratio": 1.4440140687616856e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.4440140687616856e-28
+    },
+    {
+      "auxiliary_index": 72,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": -1,
+      "order_m": -1,
+      "order_n": -1,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.20577150949397813,
+        0.0019208418671466966
+      ],
+      "kz": [
+        -0.20577150949397813,
+        -0.0019208418671466966
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.1540107923870447e-14,
+        -2.4451921766315148e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.1540107923870447e-14,
+        -2.4451921766315148e-14
+      ],
+      "boundary_phase": [
+        -0.4590030412793636,
+        0.8669647846994101
+      ],
+      "outgoing_amplitude_at_boundary": [
+        2.6495899723368847e-14,
+        1.2186392742374237e-15
+      ],
+      "modal_power_code_units": 1.9439909605718305e-25,
+      "power_ratio": 1.7911996421182547e-27,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.7911996421182547e-27
+    },
+    {
+      "auxiliary_index": 73,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": -1,
+      "order_m": -1,
+      "order_n": -1,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        -0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.20577150949397813,
+        0.0019208418671466966
+      ],
+      "kz": [
+        -0.20577150949397813,
+        -0.0019208418671466966
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -7.675625986862103e-15,
+        -1.4113679061460904e-14
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -7.675625986862103e-15,
+        -1.4113679061460904e-14
+      ],
+      "boundary_phase": [
+        -0.4590030412793636,
+        0.8669647846994101
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.5759198400528644e-14,
+        -1.7627581828167137e-16
+      ],
+      "modal_power_code_units": 6.863438420775076e-26,
+      "power_ratio": 6.323994654469352e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 6.323994654469352e-28
+    },
+    {
+      "auxiliary_index": 74,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": 0,
+      "order_m": -1,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.3248155990663659,
+        0.0012168582162867408
+      ],
+      "kz": [
+        -0.3248155990663659,
+        -0.0012168582162867408
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.0009582163928313527,
+        -0.00024659373806950615
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.0009582163928313527,
+        -0.00024659373806950615
+      ],
+      "boundary_phase": [
+        -0.9823012622583617,
+        -0.1050753381922756
+      ],
+      "outgoing_amplitude_at_boundary": [
+        0.0009153462517711412,
+        0.0003429142517088205
+      ],
+      "modal_power_code_units": 0.00041675256390731884,
+      "power_ratio": 3.839971782086236e-06,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 3.839971782086236e-06
+    },
+    {
+      "auxiliary_index": 75,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": 0,
+      "order_m": -1,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.3248155990663659,
+        0.0012168582162867408
+      ],
+      "kz": [
+        -0.3248155990663659,
+        -0.0012168582162867408
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -1.5490205258136741e-15,
+        -4.0740993684751e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -1.5490205258136741e-15,
+        -4.0740993684751e-15
+      ],
+      "boundary_phase": [
+        -0.9823012622583617,
+        -0.1050753381922756
+      ],
+      "outgoing_amplitude_at_boundary": [
+        1.0935174487994256e-15,
+        4.164756807835733e-15
+      ],
+      "modal_power_code_units": 8.087298501811607e-27,
+      "power_ratio": 7.451663344096704e-29,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 7.451663344096704e-29
+    },
+    {
+      "auxiliary_index": 76,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": 1,
+      "order_m": -1,
+      "order_n": 1,
+      "polarization": "s",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.20577150949397813,
+        0.0019208418671466966
+      ],
+      "kz": [
+        -0.20577150949397813,
+        -0.0019208418671466966
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -3.2845565411966993e-15,
+        7.449680976284146e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -3.2845565411966993e-15,
+        7.449680976284146e-15
+      ],
+      "boundary_phase": [
+        -0.4590030412793636,
+        0.8669647846994101
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -4.9509896220201636e-15,
+        -6.267021079247078e-15
+      ],
+      "modal_power_code_units": 1.7626136744998908e-26,
+      "power_ratio": 1.6240780163032493e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 1.6240780163032493e-28
+    },
+    {
+      "auxiliary_index": 77,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": -1,
+      "n": 1,
+      "order_m": -1,
+      "order_n": 1,
+      "polarization": "p",
+      "alpha": [
+        0.33268663490254524,
+        0.0
+      ],
+      "gamma": [
+        0.25132741228718347,
+        0.0
+      ],
+      "beta": [
+        0.20577150949397813,
+        0.0019208418671466966
+      ],
+      "kz": [
+        -0.20577150949397813,
+        -0.0019208418671466966
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        3.688389590613637e-15,
+        4.687051298629373e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        3.688389590613637e-15,
+        4.687051298629373e-15
+      ],
+      "boundary_phase": [
+        -0.4590030412793636,
+        0.8669647846994101
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -5.756490459506111e-15,
+        1.046333086610624e-15
+      ],
+      "modal_power_code_units": 9.45913394512818e-27,
+      "power_ratio": 8.715677017488982e-29,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 8.715677017488982e-29
+    },
+    {
+      "auxiliary_index": 78,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "s",
+      "alpha": [
+        0.458350341046137,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.07825958528525695,
+        0.00505055743729411
+      ],
+      "kz": [
+        -0.07825958528525695,
+        -0.00505055743729411
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -0.6597139932088755,
+        0.2653497842959819
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -0.6597139932088755,
+        0.2653497842959819
+      ],
+      "boundary_phase": [
+        0.6741621000760819,
+        0.6703942258428018
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -0.6226431343319327,
+        -0.26337968391921307
+      ],
+      "modal_power_code_units": 48.03284797612329,
+      "power_ratio": 0.44257623543395863,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 0.44257623543395863
+    },
+    {
+      "auxiliary_index": 79,
+      "side": "bottom",
+      "direction": "outgoing_down",
+      "medium": "substrate",
+      "m": 0,
+      "n": 0,
+      "order_m": 0,
+      "order_n": 0,
+      "polarization": "p",
+      "alpha": [
+        0.458350341046137,
+        0.0
+      ],
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "beta": [
+        0.07825958528525695,
+        0.00505055743729411
+      ],
+      "kz": [
+        -0.07825958528525695,
+        -0.00505055743729411
+      ],
+      "vertical_sign": -1,
+      "propagating": true,
+      "rayleigh_warning": false,
+      "refractive_index": [
+        0.999002304859,
+        0.00182649365
+      ],
+      "auxiliary_amplitude_total_projection": [
+        -2.304916657904905e-14,
+        -2.3504053057297625e-15
+      ],
+      "incident_projection": [
+        0.0,
+        0.0
+      ],
+      "outgoing_amplitude": [
+        -2.304916657904905e-14,
+        -2.3504053057297625e-15
+      ],
+      "boundary_phase": [
+        0.6741621000760819,
+        0.6703942258428018
+      ],
+      "outgoing_amplitude_at_boundary": [
+        -1.3963176400583628e-14,
+        -1.7036582362024112e-14
+      ],
+      "modal_power_code_units": 5.0992472002776184e-26,
+      "power_ratio": 4.6984630821138485e-28,
+      "power_source": "dtn_port_modal_amplitudes",
+      "R": 0.0,
+      "T": 4.6984630821138485e-28
+    }
+  ],
+  "note": "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes on the top and bottom port faces.",
+  "A_volume_total": 0.46839011840647865,
+  "R_plus_T_plus_A_volume": 0.9999999999999294,
+  "energy_closure_error_port_volume": -7.061018436615996e-14,
+  "A_port_balance_minus_A_volume_total": 7.05546732149287e-14
+}

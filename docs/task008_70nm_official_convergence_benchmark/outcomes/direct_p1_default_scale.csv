@@ -1,0 +1,141 @@
+domain_height_nm,substrate_thickness_nm,top_air_above_grating_nm,air_height_parameter_nm,grating_height_nm,period_x_nm,period_y_nm,h_nm,p,mpi_ranks,incident_theta_deg,incident_theta_from_z_deg,incident_phi_deg,incident_azimuth_phi_deg,polarization_kind,kx,kx_real,kx_imag,ky,ky_real,ky_imag,kz,kz_real,kz_imag,kx_over_k0,ky_over_k0,kz_over_k0,floquet_phase_x_real,floquet_phase_x_imag,floquet_phase_y_real,floquet_phase_y_imag,polarization_x_real,polarization_x_imag,polarization_y_real,polarization_y_imag,polarization_z_real,polarization_z_imag,mesh_target_size_nm,mpi_procs,solver_profile,returncode,status,case_status,result_dir,stdout_file,stderr_file,progress_file,last_progress_stage,last_progress_status,failure_stage,petsc_error_code,petsc_error_type,mumps_infog_1,mumps_infog_2,mumps_ooc_tmpdir,mumps_ooc_cleaned_by_solver,mumps_ooc_cleanup_attempted,mumps_ooc_cleanup_success,mumps_ooc_cleanup_removed_file_count,mumps_ooc_cleanup_removed_file_bytes,mumps_ooc_cleanup_removed_file_GB,mumps_ooc_retained_on_failure,mumps_ooc_residual_file_count,mumps_ooc_residual_file_bytes,mumps_ooc_residual_file_GB,ooc_disk_GB,mesh_cells_resolved,cells,N1curl_raw_dofs,dof_raw_nedelec,floquet_constraints,constrained_system_size,dtn_auxiliary_dofs,system_rows,system_cols,matrix_rows,matrix_cols,nnz_used,nnz_allocated,avg_nnz_per_row,average_nnz_per_row,average_allocated_nnz_per_row,petsc_matrix_memory_mb,estimated_aij_matrix_memory_mb,matrix_memory_GB,PETSc_matrix_memory_GB,estimated_AIJ_matrix_memory_GB,solve_time_seconds,solve_time_s,elapsed_seconds,elapsed_wall_seconds,elapsed_wall_s,assemble_elapsed_s,summary_elapsed_seconds,peak_rss_mb,max_rss_mb,peak_RSS_per_rank_max_GB,rss_rank_max_mb,rss_rank_sum_mb,rss_rank_sum_GB,rss_rank_mean_mb,rss_rank_min_mb,rss_rank_imbalance,rss_rank_statistics_source,estimated_total_RSS_upper_GB,RSS_upper_GB,swap_used_before_mb,swap_used_after_mb,swap_used_delta_mb,swap_before_GB,swap_after_GB,swap_delta_GB,effective_LU_memory_proxy_GB,rss_to_matrix_ratio,actual_ksp_type,actual_pc_type,actual_pc_factor_solver_type,explicit_chac_constructed,dtn_augmented_to_base_nnz_ratio,constrained_to_unconstrained_nnz_ratio,R_total,T_total,power_source,R_total_dtn_port_modal,T_total_dtn_port_modal,R_plus_T_dtn_port_modal,A_balance_dtn_port_modal,R_total_diagnostic_eh_fourier,T_total_diagnostic_eh_fourier,A_balance_diagnostic_eh_fourier,R_total_diagnostic_sampled_net_flux,T_total_diagnostic_sampled_net_flux,diagnostic_eh_minus_dtn_R,diagnostic_eh_minus_dtn_T,A_volume_total,R_plus_T,R_plus_T_plus_A_volume,R_plus_T_plus_A_volume_dtn_port_modal,energy_closure_error_dtn_port_modal_volume,energy_closure_error_port_volume,A_port_balance_minus_A_volume_total,num_reflection_orders,num_transmission_orders,dtn_top_mode_count,dtn_bottom_mode_count,dtn_port_propagating_mode_count,dtn_propagating_mode_count,stdout_tail,stderr_tail
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,5.0,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,5.0,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h5p0_np8_20260706_073432,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h5p0_np8_20260706_073432/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[12, 5, 28]",1680,6157,6157,997,6237,80,6237,6237,6237,6237,227751.0,227751.0,36.51611351611351,36.51611351611351,36.51611351611351,0.0,5.260398864746094,0.0,0.0,0.005137108266353607,6.022909866995178,6.022909866995178,130.75808061799034,130.75808061799034,130.75808061799034,130.75808061799034,10.596051663975231,298.3515625,298.3515625,0.29135894775390625,298.3515625,2386.8125,2.33087158203125,,,,upper_bound_from_global_max_times_ranks,2.33087158203125,2.33087158203125,115.19140625,113.69140625,-1.5,0.11249160766601562,0.11102676391601562,-0.00146484375,2.3257344737648964,453.732228557008,preonly,lu,mumps,False,1.0727235046700359,,0.9999767812321327,7.5672135956931716e-06,dtn_port_modal_amplitudes,0.9999767812321327,7.5672135956931716e-06,0.9999843484457285,1.565155427156812e-05,0.30276095169959805,5.5630251456971555e-06,0.6972334852752562,0.9999929611006261,5.5507090204992795e-06,-0.6972158295325347,-2.004188449996016e-06,1.565155426960398e-05,0.9999843484457285,0.9999999999999981,0.9999999999999981,-1.887379141862766e-15,-1.887379141862766e-15,1.96414065567474e-15,40,40,40,40,80,80,"  diffraction_postprocess: 116.045
+  volume_absorption_postprocess: 0.637
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 298.4 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 10.596
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h5p0_np8_20260706_073432",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,4.0,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,4.0,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h4p0_np8_20260706_073642,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h4p0_np8_20260706_073642/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[15, 7, 36]",3780,13192,13192,1642,13272,80,13272,13272,13272,13272,477622.0,477622.0,35.98719107896323,35.98719107896323,35.98719107896323,0.0,11.033164978027344,0.0,0.0,0.010774575173854828,0.8209199010161683,0.8209199010161683,120.87191845395137,120.87191845395137,120.87191845395137,120.87191845395137,1.6244323479477316,315.6328125,315.6328125,0.30823516845703125,315.6328125,2525.0625,2.46588134765625,,,,upper_bound_from_global_max_times_ranks,2.46588134765625,2.46588134765625,113.69140625,112.94140625,-0.75,0.11102676391601562,0.11029434204101562,-0.000732421875,2.455106772482395,228.8611205423545,preonly,lu,mumps,False,1.0598231046771194,,0.9998704779061169,1.2278064509606607e-05,dtn_port_modal_amplitudes,0.9998704779061169,1.2278064509606607e-05,0.9998827559706266,0.00011724402937345441,0.5134767808145211,1.1809447471117741e-05,0.48651140973800777,0.9998745007204631,1.1397197139820396e-05,-0.48639369709159586,-4.6861703848886615e-07,0.0001172440293716695,0.9998827559706266,0.9999999999999982,0.9999999999999982,-1.7763568394002505e-15,-1.7763568394002505e-15,1.78490848403573e-15,40,40,40,40,80,80,"  diffraction_postprocess: 116.931
+  volume_absorption_postprocess: 0.019
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 315.6 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 1.624
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h4p0_np8_20260706_073642",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,3.0,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,3.0,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h3p0_np8_20260706_073843,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h3p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h3p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h3p0_np8_20260706_073843/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[18, 9, 48]",7776,26319,26319,2667,26399,80,26399,26399,26399,26399,936145.0,936145.0,35.46138111292095,35.46138111292095,35.46138111292095,0.0,21.628074645996094,0.0,0.0,0.02112116664648056,2.1542958189966157,2.1542958189966157,127.43211978208274,127.43211978208274,127.43211978208274,127.43211978208274,3.733249770011753,362.82421875,362.82421875,0.3543205261230469,362.82421875,2902.59375,2.834564208984375,,,,upper_bound_from_global_max_times_ranks,2.834564208984375,2.834564208984375,112.94140625,112.69140625,-0.25,0.11029434204101562,0.11005020141601562,-0.000244140625,2.8134430423378944,134.204907163909,preonly,lu,mumps,False,1.0464479377772908,,0.9995347785524338,7.299527513675994e-06,dtn_port_modal_amplitudes,0.9995347785524338,7.299527513675994e-06,0.9995420780799474,0.000457921920052546,0.4164876995481309,7.233473141439636e-06,0.5835050669787276,0.9995370776042486,7.07011184324933e-06,-0.5830470790043029,-6.605437223635794e-08,0.0004579219200503509,0.9995420780799474,0.9999999999999978,0.9999999999999978,-2.220446049250313e-15,-2.220446049250313e-15,2.1950757184141523e-15,40,40,40,40,80,80,"  diffraction_postprocess: 121.453
+  volume_absorption_postprocess: 0.019
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 362.8 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 3.733
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h3p0_np8_20260706_073843",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,2.5,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,2.5,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p5_np8_20260706_074050,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h2p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h2p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p5_np8_20260706_074050/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[21, 10, 56]",11760,39259,39259,3559,39339,80,39339,39339,39339,39339,1384989.0,1384989.0,35.20651262106307,35.20651262106307,35.20651262106307,0.0,32.000022888183594,0.0,0.0,0.03125002235174179,2.2864015660015866,2.2864015660015866,121.48406073602382,121.48406073602382,121.48406073602382,121.48406073602382,3.957123326952569,415.23828125,415.23828125,0.4055061340332031,415.23828125,3321.90625,3.244049072265625,,,,upper_bound_from_global_max_times_ranks,3.244049072265625,3.244049072265625,112.69140625,112.44140625,-0.25,0.11005020141601562,0.10980606079101562,-0.000244140625,3.212799049913883,103.80949606216235,preonly,lu,mumps,False,1.040446261087226,,0.9986058189371019,4.473059475294461e-06,dtn_port_modal_amplitudes,0.9986058189371019,4.473059475294461e-06,0.9986102919965771,0.001389708003422831,0.5070516033014625,4.309638544161179e-06,0.4929440870599934,0.9986075219353042,4.214158179932903e-06,-0.4915542156356394,-1.6342093113328212e-07,0.0013897080034271528,0.9986102919965771,1.0000000000000042,1.0000000000000042,4.218847493575595e-15,4.218847493575595e-15,-4.321846699961718e-15,40,40,40,40,80,80,"  diffraction_postprocess: 115.275
+  volume_absorption_postprocess: 0.036
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 415.2 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 3.957
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p5_np8_20260706_074050",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,2.0,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,2.0,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p0_np8_20260706_074252,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h2p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h2p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p0_np8_20260706_074252/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[27, 13, 70]",24570,80122,80122,5710,80202,80,80202,80202,80202,80202,2791472.0,2791472.0,34.805516071918404,34.805516071918404,34.805516071918404,0.0,64.50362396240234,0.0,0.0,0.06299182027578354,5.513622483005747,5.513622483005747,136.43889187497552,136.43889187497552,136.43889187497552,136.43889187497552,8.189035226008855,609.90234375,609.90234375,0.5956077575683594,609.90234375,4879.21875,4.764862060546875,,,,upper_bound_from_global_max_times_ranks,4.764862060546875,4.764862060546875,112.44140625,112.44140625,0.0,0.10980606079101562,0.10980606079101562,0.0,4.7018702402710915,75.64255231371159,preonly,lu,mumps,False,1.0332906909254587,,0.9916869280248262,2.9846207088047977e-06,dtn_port_modal_amplitudes,0.9916869280248262,2.9846207088047977e-06,0.991689912645535,0.008310087354465031,0.6405575443819722,2.822246316833624e-06,0.3594396333717109,0.991656965868831,2.8117367502796316e-06,-0.35112938364285395,-1.6237439197117355e-07,0.008310087354457643,0.991689912645535,0.9999999999999926,0.9999999999999926,-7.438494264988549e-15,-7.438494264988549e-15,7.388187284185221e-15,40,40,40,40,80,80,"  diffraction_postprocess: 126.023
+  volume_absorption_postprocess: 0.026
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 609.9 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 8.189
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h2p0_np8_20260706_074252",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,1.5,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.5,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p5_np8_20260706_074508,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h1p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h1p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p5_np8_20260706_074508/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[34, 17, 94]",54332,173885,173885,9733,173965,80,173965,173965,173965,173965,5986951.0,5986951.0,34.41468686229989,34.41468686229989,34.41468686229989,0.0,138.3576889038086,0.0,0.0,0.13511493057012558,19.4298955029808,19.4298955029808,180.23101584997494,180.23101584997494,180.23101584997494,180.23101584997494,24.8371600729879,1130.99609375,1130.99609375,1.1044883728027344,1130.99609375,9047.96875,8.835906982421875,,,,upper_bound_from_global_max_times_ranks,8.835906982421875,8.835906982421875,112.44140625,112.44140625,0.0,0.10980606079101562,0.10980606079101562,0.0,8.70079205185175,65.39548919677665,preonly,lu,mumps,False,1.0253554477613347,,0.9443786677226478,4.2629514081572885e-05,dtn_port_modal_amplitudes,0.9443786677226478,4.2629514081572885e-05,0.9444212972367294,0.05557870276327065,0.7702089921312657,4.313205343399634e-05,0.22974787581530032,0.9445528380746503,4.240362218830719e-05,-0.17416967559138208,5.025393524234575e-07,0.05557870276328664,0.9444212972367294,1.000000000000016,1.000000000000016,1.5987211554602254e-14,1.5987211554602254e-14,-1.599415044850616e-14,40,40,40,40,80,80,"  diffraction_postprocess: 152.800
+  volume_absorption_postprocess: 0.032
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 1131.0 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 24.837
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p5_np8_20260706_074508",
+140.0,10.0,10.0,130.0,120.0,50.0,25.0,1.0,1,8,80.0,80.0,0.0,0.0,s,0.458350341046137,0.458350341046137,0.0,0.0,0.0,0.0,-0.08081953174336057,-0.08081953174336057,0.0,0.9848077530122081,0.0,-0.17364817766693044,-0.6007411348979813,-0.7994436120462065,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,8,default,0,completed,completed,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p0_np8_20260706_074809,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h1p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_073429/run_np8_default_h1p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p0_np8_20260706_074809/progress_3d.jsonl,stage4_dtn_augmented_solve,end,,,,,,,,False,,0,0,0.0,False,,,,0.0,"[51, 25, 140]",178500,559546,559546,21496,559626,80,559626,559626,559626,559626,19017936.0,19017936.0,33.98329598696272,33.98329598696272,33.98329598696272,0.0,439.55562591552734,0.0,0.0,0.42925354093313217,833.5336848740699,833.5336848740699,1166.806061670999,1166.806061670999,1166.806061670999,1166.806061670999,875.2933058729395,2310.94921875,2310.94921875,2.256786346435547,2310.94921875,18487.59375,18.054290771484375,,,,upper_bound_from_global_max_times_ranks,18.054290771484375,18.054290771484375,112.44140625,134.515625,22.07421875,0.10980606079101562,0.1313629150390625,0.021556854248046875,17.625037230551243,42.05973637919697,preonly,lu,mumps,False,1.0174668040841761,,0.09458200422271218,0.4238866873236759,dtn_port_modal_amplitudes,0.09458200422271218,0.4238866873236759,0.5184686915463881,0.481531308453612,0.08441988984340097,0.4392194403119794,0.47636066984461967,0.0947758656214498,0.43474107952279933,-0.010162114379311207,0.0153327529883035,0.48153130845358927,0.5184686915463881,0.9999999999999774,0.9999999999999774,-2.2648549702353193e-14,-2.2648549702353193e-14,2.270406085358445e-14,40,40,40,40,80,80,"  diffraction_postprocess: 283.024
+  volume_absorption_postprocess: 0.069
+Linear solve summary:
+  method               = direct_lu
+  ksp_type             = preonly
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 4
+  reason name          = CONVERGED_ITS
+  iterations           = 1
+  residual norm        = 0.000000e+00
+  max RSS across ranks = 2310.9 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 875.293
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_oblique_p1_h1p0_np8_20260706_074809",

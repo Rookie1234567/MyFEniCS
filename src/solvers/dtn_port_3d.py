@@ -510,7 +510,7 @@ def _solve_zero_order_local_robin_dtn(
                 "R_plus_T": None,
                 "A_balance": None,
                 "diffraction_total_power_source": "assemble_only_skipped",
-                "dtn_port_mode_count": int(len(modes)),
+                **_port_mode_count_metrics(modes),
             },
             "A": A_diag,
             "b": b_diag,
@@ -1029,6 +1029,19 @@ def _port_power_metrics(
     }
 
 
+def _port_mode_count_metrics(modes: list[PortMode3D]) -> dict[str, int]:
+    rows_by_side = {"top": 0, "bottom": 0}
+    for mode in modes:
+        rows_by_side[mode.side] += 1
+    return {
+        "dtn_port_mode_count": int(len(modes)),
+        "dtn_port_top_mode_count": int(rows_by_side["top"]),
+        "dtn_port_bottom_mode_count": int(rows_by_side["bottom"]),
+        "dtn_port_propagating_mode_count": int(sum(1 for mode in modes if mode.propagating)),
+        "dtn_port_rayleigh_warning_count": int(sum(1 for mode in modes if mode.rayleigh_warning)),
+    }
+
+
 def solve_stage4_dtn_port_total_field(
     *,
     a,
@@ -1285,7 +1298,7 @@ def solve_stage4_dtn_port_total_field(
                 "R_plus_T": None,
                 "A_balance": None,
                 "diffraction_total_power_source": "assemble_only_skipped",
-                "dtn_port_mode_count": int(len(modes)),
+                **_port_mode_count_metrics(modes),
             },
         }
 

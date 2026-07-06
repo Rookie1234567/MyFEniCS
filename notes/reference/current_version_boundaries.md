@@ -5,7 +5,7 @@
 对应分支：
 
 ```text
-codex/20260704-dtn-port-modal-official-rta
+codex/20260706-target-50x25x140-oblique80-official-benchmark
 ```
 
 对应任务闭环：
@@ -17,11 +17,96 @@ docs/task004_small_cell_p_convergence_mpi_regression/
 docs/task005_stage4_real_grating_memory_estimation/
 docs/task006_reduced_height_grating_convergence_memory/
 docs/task007_dtn_port_modal_official_rta/
+docs/task008_70nm_official_convergence_benchmark/
 ```
 
 ---
 
-## 0. task007 official DtN port modal 口径
+## 0. task008 目标几何 80° 斜入射本机边界
+
+task008 在 task007 的 official DtN-port modal R/T/A 口径上，固定如下目标几何和入射：
+
+```text
+period = 50 x 25 nm
+domain = 50 x 25 x 140 nm
+grating = 17 x 25 x 120 nm
+substrate_thickness = 10 nm
+top_air_above_grating = 10 nm
+air_height = 130 nm
+theta_from_z = 80 deg
+phi = 0 deg
+polarization = s, E along y
+n_substrate = n_grating = 0.999002304859 + 0.00182649365j
+stage4_boundary_model = dtn_port
+stage4_dtn_assembly = auxiliary
+stage4_dtn_order_policy = auto_propagating
+power_source = dtn_port_modal_amplitudes
+```
+
+几何和入射验证：
+
+```text
+grating_width_y = period_y = 25 nm 合法支持，未使用 24.999 nm fallback；
+kx = 0.458350341046137
+ky = 0
+kz = -0.0808195317433606
+Floquet phase x = -0.600741134898 - 0.799443612046j
+Floquet phase y = 1
+k dot E = 0
+DtN mode count = top 40 + bottom 40 = 80
+```
+
+本机 default MUMPS direct 边界：
+
+```text
+p=1:
+  completed direct: h = 5, 4, 3, 2.5, 2, 1.5, 1 nm
+  first failed direct: 未尝试 h < 1 nm
+
+p=2:
+  completed direct: h = 5, 4, 3, 2.5, 2 nm
+  first failed direct: h = 1.5 nm
+  failure stage: stage4_dtn_augmented_ksp_setup
+  returncode: 9 / signal 9 / Killed
+
+p=2 h=1 nm:
+  assemble-only timeout at stage4_dtn_base_matrix_assembled
+  estimated AIJ matrix = 10.313 GB
+  RSS upper = 14.129 GB
+  swap delta ≈ 33.4 GB
+```
+
+当前建议使用的本机 official benchmark 主点：
+
+```text
+p=2 h=2 nm:
+  R = 0.0013429328462348958
+  T = 0.5992132294442478
+  A_volume = 0.3994438377095067
+  R + T + A_volume = 0.9999999999999893
+  closure = -1.07e-14
+```
+
+注意：
+
+```text
+p=1 h=1 虽然能完成，但与 p=2 finest completed 仍不接近，不应作为最终物理收敛解；
+p=2 h=1.5 的 assemble-only AIJ 矩阵约 3.20 GB，但 direct MUMPS 在 KSP setup 被 kill，瓶颈来自 LU fill-in / solver workspace；
+后续若要推进 p=2 h=1.5 或更细网格，应单独评估 tuned MUMPS OOC 或迭代法。
+```
+
+主要记录：
+
+```text
+docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
+docs/task008_70nm_official_convergence_benchmark/outcomes/assemble_matrix_scale.csv
+docs/task008_70nm_official_convergence_benchmark/outcomes/official_convergence.csv
+docs/task008_70nm_official_convergence_benchmark/outcomes/failure_boundary.md
+```
+
+---
+
+## 1. task007 official DtN port modal 口径
 
 task007 已把 Stage 4 `dtn_port` 主线的 official R/T/A 统一为：
 
@@ -61,7 +146,7 @@ docs/task007_dtn_port_modal_official_rta/outcomes/dtn_port_power_formula.md
 
 ---
 
-## 1. task006 reduced-height domain 补充
+## 2. task006 reduced-height domain 补充
 
 task006 对真实 `100 nm x 100 nm x 70 nm`、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源和初步 R/T/A 检查。几何传参为：
 
@@ -120,7 +205,7 @@ workstation:
 
 ---
 
-## 2. 当前可以较有信心使用的能力
+## 3. 当前可以较有信心使用的能力
 
 ### 1.1 Stage 4 主功率口径
 
@@ -188,7 +273,7 @@ Flat-layer sanity: stage4_flat_layer_sanity
 
 ---
 
-## 3. 当前必须谨慎解读的能力
+## 4. 当前必须谨慎解读的能力
 
 ### 2.1 probe_eh_fourier / net_flux
 
@@ -244,7 +329,7 @@ p=1/p=2 路径可以运行；
 
 ---
 
-## 4. 合并后推荐表述
+## 5. 合并后推荐表述
 
 推荐说法：
 
@@ -260,7 +345,7 @@ p=1/p=2 路径可以运行；
 
 ---
 
-## 5. 后续可能任务
+## 6. 后续可能任务
 
 后续不需要在当前分支阻塞合并。如果需要继续，可以新开任务：
 
@@ -282,7 +367,7 @@ p=2 下 probe/net_flux 过冲原因。
 
 ---
 
-## 6. task005 资源边界补充
+## 7. task005 资源边界补充
 
 task005 对真实 `100 nm x 100 nm x 150 nm`、p=2、MPI=8、`stage4_block_grating`、`dtn_port + auto_propagating` 路径做了资源评估。当前结论是：
 

@@ -1,0 +1,1 @@
+MPI run: mesh_3d.xdmf is skipped for the custom Stage-2 mesh; open fields_3d_for_paraview_parallel.pvd after postprocess.

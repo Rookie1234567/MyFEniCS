@@ -1,0 +1,149 @@
+{
+  "task": "task008_70nm_official_convergence_benchmark",
+  "branch": "codex/20260706-target-50x25x140-oblique80-official-benchmark",
+  "generated_at_local": "2026-07-06T17:26:52",
+  "geometry": {
+    "domain_size_nm": [
+      50.0,
+      25.0,
+      140.0
+    ],
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "grating_width_x_nm": 17.0,
+    "grating_width_y_nm": 25.0,
+    "grating_height_nm": 120.0,
+    "substrate_thickness_nm": 10.0,
+    "top_air_above_grating_nm": 10.0,
+    "air_height_parameter_nm": 130.0,
+    "lambda0_nm": 13.5,
+    "n_air": "1",
+    "n_substrate": "0.999002304859+0.00182649365j",
+    "n_grating": "0.999002304859+0.00182649365j",
+    "incident_theta_from_z_deg": 80.0,
+    "incident_azimuth_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "boundary_model": "dtn_port",
+    "dtn_assembly": "auxiliary",
+    "dtn_order_policy": "auto_propagating",
+    "mpi_ranks": 8,
+    "solver_profile": "default MUMPS direct",
+    "official_power_source": "dtn_port_modal_amplitudes",
+    "reference_planes": "top_z=130 nm, bottom_z=-10 nm"
+  },
+  "wavevector": {
+    "k0": 0.46542113386515455,
+    "kx": 0.4583503410461369,
+    "ky": 0.0,
+    "kz": -0.08081953174336055,
+    "kx_over_k0": 0.984807753012208,
+    "ky_over_k0": 0.0,
+    "kz_over_k0": -0.1736481776669304
+  },
+  "floquet_phase": {
+    "x": {
+      "real": -0.6007411348979841,
+      "imag": -0.7994436120462043
+    },
+    "y": {
+      "real": 1.0,
+      "imag": 0.0
+    }
+  },
+  "polarization_vector": {
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0,
+    "k_dot_E": 0.0
+  },
+  "mesh_sizes_assemble_p1": [
+    5,
+    4,
+    3,
+    2.5,
+    2,
+    1.5,
+    1
+  ],
+  "mesh_sizes_assemble_p2": [
+    5,
+    4,
+    3,
+    2.5,
+    2,
+    1.5,
+    1
+  ],
+  "mesh_sizes_direct_p1_completed": [
+    5.0,
+    4.0,
+    3.0,
+    2.5,
+    2.0,
+    1.5,
+    1.0
+  ],
+  "mesh_sizes_direct_p2_completed": [
+    5.0,
+    4.0,
+    3.0,
+    2.5,
+    2.0
+  ],
+  "failure_boundary": [
+    {
+      "p": "1",
+      "last_completed_default_direct_h_nm": 1.0,
+      "first_failed_default_direct_h_nm": "",
+      "failure_stage": "",
+      "returncode": "",
+      "last_progress_stage": "",
+      "matrix_rows": "559626",
+      "nnz_used": "19017936.0",
+      "estimated_AIJ_matrix_memory_GB": "0.42925354093313217",
+      "max_rss_mb": "2310.94921875",
+      "RSS_upper_GB": "18.054290771484375",
+      "boundary_type": "not_reached",
+      "note": "p=1 在计划网格内 h=1 direct completed；未继续尝试 h<1。"
+    },
+    {
+      "p": "2",
+      "last_completed_default_direct_h_nm": 2.0,
+      "first_failed_default_direct_h_nm": "1.5",
+      "failure_stage": "",
+      "returncode": "9",
+      "last_progress_stage": "stage4_dtn_augmented_ksp_setup",
+      "matrix_rows": "1347314",
+      "nnz_used": "142656204.0",
+      "estimated_AIJ_matrix_memory_GB": "3.1986529156565666",
+      "max_rss_mb": "1839.3828125",
+      "RSS_upper_GB": "14.37017822265625",
+      "boundary_type": "default_direct_signal9",
+      "note": "p=2 h=1.5 default direct 在 KSP setup 阶段被 signal 9 kill；p=2 h=1 assemble-only 已先超时。"
+    },
+    {
+      "p": "2",
+      "last_completed_default_direct_h_nm": 2.0,
+      "first_failed_default_direct_h_nm": "1.0",
+      "failure_stage": "",
+      "returncode": "124",
+      "last_progress_stage": "stage4_dtn_base_matrix_assembled",
+      "matrix_rows": "4379752",
+      "nnz_used": "459939040.0",
+      "estimated_AIJ_matrix_memory_GB": "10.313070364296436",
+      "max_rss_mb": "1808.45703125",
+      "RSS_upper_GB": "14.128570556640625",
+      "boundary_type": "assemble_only_timeout",
+      "note": "p=2 h=1 未进入 direct 计划；assemble-only 在 base matrix assembled 后 2400 s 超时并出现大量 swap。"
+    }
+  ],
+  "source_csv_files": {
+    "assemble_p1": "assemble_p1_matrix_scale.csv",
+    "assemble_p2": "assemble_p2_matrix_scale.csv",
+    "direct_p1": "direct_p1_default_scale.csv",
+    "direct_p2": "direct_p2_default_scale.csv",
+    "direct_p2_boundary": "direct_p2_h1p5_boundary.csv"
+  },
+  "docker_image": "code-dolfinx-mpc:latest",
+  "runtime": "Docker / DOLFINx complex mode / MPI=8"
+}

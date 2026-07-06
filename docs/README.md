@@ -25,11 +25,11 @@ docs/taskXXX_task_name/
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
 | task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
 | task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 已完成并已审查；建议合并当前分支 |
-| task008 | 目标尺寸 50×25×140 nm、80° 斜入射 official DtN-port R/T/A 本机收敛 benchmark、内存边界与资源报告 | `task008_70nm_official_convergence_benchmark/` | 任务书已按新几何、80° 斜入射和 memory-first 流程更新；待本地 Codex 新建分支后执行 |
+| task008 | 目标尺寸 50×25×140 nm、80° 斜入射 official DtN-port R/T/A 本机收敛 benchmark、内存边界与资源报告 | `task008_70nm_official_convergence_benchmark/` | 已在 `codex/20260706-target-50x25x140-oblique80-official-benchmark` 完成 outcomes；等待审查 |
 
-## 合并前结论
+## 当前阶段结论
 
-当前 task007 分支可作为 Stage 4 dtn_port 后处理口径修正阶段性结果合并。合并含义是：
+task007 已并入 `master`，task008 在新分支上完成了目标几何和 80° 斜入射的本机资源 benchmark。task007 的合并含义是：
 
 ```text
 恢复 Stage 4 dtn_port 主线官方 R/T/A：R_total/T_total 来自 DtN port auxiliary modal amplitudes；E/H Fourier probe、E-only Fourier probe、sampled net flux 均降级为 diagnostic。
@@ -43,27 +43,43 @@ docs/taskXXX_task_name/
 p=2 h=5 已经是最终物理解。
 ```
 
+task008 的阶段性结论是：
+
+```text
+50×25×140 nm / 17×25×120 nm / theta_from_z=80° / phi=0° / s polarization 已完成本机 official DtN-port modal R/T/A benchmark。
+p=1 default direct 可完成到 h=1 nm；
+p=2 default direct 可完成到 h=2 nm；
+p=2 h=1.5 nm default direct 在 stage4_dtn_augmented_ksp_setup 被 signal 9 kill；
+p=2 h=1 nm assemble-only 已超时并出现大量 swap，不进入 direct 计划。
+```
+
 详细边界说明见：
 
 ```text
 notes/reference/current_version_boundaries.md
 docs/task007_dtn_port_modal_official_rta/review_report.md
+docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
 ```
 
-## task008 执行说明
+## task008 执行结果
 
-`task008_70nm_official_convergence_benchmark/task.md` 是后续任务书。目录名保留了早期 70 nm 命名，但任务书已更新为新的目标几何和 80° 斜入射。执行 task008 前，应先在本地将当前 task007 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task008 分支。ChatGPT 不负责创建远程任务分支。
+`task008_70nm_official_convergence_benchmark/task.md` 是本轮任务书。目录名保留了早期 70 nm 命名，但任务书实际目标已经更新为 50×25×140 nm、80° 斜入射。
 
-本轮 task008 的定位是：
+本轮 task008 的输出位于：
 
 ```text
-在 task007 修正后的 official dtn_port_modal R/T/A 口径下，针对目标计算域 50×25×140 nm、光栅 17×25×120 nm、空气 10 nm、基座 10 nm，采用 x-z 平面内 theta_from_z=80°、phi=0° 的 s 偏振斜入射，先完成 p=1/p=2 各 h 的 assemble-only / matrix-scale 内存评估，再根据评估结果执行 direct solve 收敛 benchmark，并记录本机 last completed / first failed 边界。
+docs/task008_70nm_official_convergence_benchmark/outcomes/
 ```
 
-推荐 task008 分支名：
+重点文件：
 
 ```text
-codex/20260706-target-50x25x140-oblique80-official-benchmark
+summary.md
+assemble_matrix_scale.csv
+official_convergence.csv
+resource_convergence.csv
+failure_boundary.md
+raw_runs/
 ```
 
 ## 工作规则

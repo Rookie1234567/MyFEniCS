@@ -1,0 +1,4 @@
+p,last_completed_default_direct_h_nm,first_failed_default_direct_h_nm,boundary_type,failure_stage,returncode,last_progress_stage,matrix_rows,nnz_used,estimated_AIJ_matrix_memory_GB,max_rss_mb,RSS_upper_GB,note
+1,1.0,,not_reached,,,,559626,19017936.0,0.42925354093313217,2310.94921875,18.054290771484375,p=1 在计划网格内 h=1 direct completed；未继续尝试 h<1。
+2,2.0,1.5,default_direct_signal9,,9,stage4_dtn_augmented_ksp_setup,1347314,142656204.0,3.1986529156565666,1839.3828125,14.37017822265625,p=2 h=1.5 default direct 在 KSP setup 阶段被 signal 9 kill；p=2 h=1 assemble-only 已先超时。
+2,2.0,1.0,assemble_only_timeout,,124,stage4_dtn_base_matrix_assembled,4379752,459939040.0,10.313070364296436,1808.45703125,14.128570556640625,p=2 h=1 未进入 direct 计划；assemble-only 在 base matrix assembled 后 2400 s 超时并出现大量 swap。

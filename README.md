@@ -11,10 +11,10 @@
 当前阶段分支：
 
 ```text
-codex/20260704-dtn-port-modal-official-rta
+codex/20260706-target-50x25x140-oblique80-official-benchmark
 ```
 
-task002/task003/task004/task005/task006 已作为阶段性版本合并到 `master`。task007 在 task006 基础上修正 Stage 4 dtn_port 的 official R/T/A 口径：官方 R/T 现在来自 DtN port modal amplitudes，E/H Fourier probe、E-only Fourier probe 和 sampled net flux 全部作为 diagnostic。task004/task005/task006 合并后的基础能力含义是：
+task002/task003/task004/task005/task006/task007 已作为阶段性版本合并到 `master`。task007 在 task006 基础上修正 Stage 4 dtn_port 的 official R/T/A 口径：官方 R/T 现在来自 DtN port modal amplitudes，E/H Fourier probe、E-only Fourier probe 和 sampled net flux 全部作为 diagnostic。task008 在 task007 的 official 口径上，完成了目标几何 50×25×140 nm、80° 斜入射的本机 resource/convergence benchmark。task004/task005/task006/task007 合并后的基础能力含义是：
 
 ```text
 完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
@@ -26,7 +26,7 @@ task002/task003/task004/task005/task006 已作为阶段性版本合并到 `maste
 真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
 ```
 
-task007 的当前结论是：
+task007/task008 的当前结论是：
 
 ```text
 Stage 4 dtn_port official power_source = dtn_port_modal_amplitudes；
@@ -34,6 +34,11 @@ R_total / T_total 与 R_total_dtn_port_modal / T_total_dtn_port_modal 保持一�
 port + volume absorption 闭合误差在本轮 height scan 中为 1e-14 量级；
 probe-plane E/H Fourier 结果仍保留，但只用于 diagnostic；
 70 nm vs 150 nm 的官方 T/A 差异主要来自有损 substrate 中不同 bottom port reference plane 的传播衰减。
+task008: 50×25×140 nm, 17×25×120 nm grating, theta_from_z=80°, phi=0°, s polarization；
+task008: p=1 default direct 可完成到 h=1 nm；
+task008: p=2 default direct 可完成到 h=2 nm；
+task008: p=2 h=1.5 nm default direct 在 stage4_dtn_augmented_ksp_setup 被 signal 9 kill；
+task008: p=2 h=1 nm assemble-only 超时并出现大量 swap。
 ```
 
 当前版本边界详见：
@@ -44,11 +49,14 @@ docs/task004_small_cell_p_convergence_mpi_regression/review_report.md
 docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
 docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md
 docs/task007_dtn_port_modal_official_rta/outcomes/summary.md
+docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
 ```
 
 2026-07-05 补充：task006 已重新整理 summary，加入 memory profiling、tuned MUMPS OOC、assemble-only 与 direct solve 失败原因解释，以及 h=0.5/h=0.25 nm 的 workstation 外推。当前 reduced-height p=2 的 direct/OOC 可完成边界是 h=4 nm；h=3 nm tuned OOC 仍失败。h<=1 nm 应视为 TB 级或更高资源问题，h=0.5/h=0.25 nm 不适合继续用 direct/OOC workstation 路线硬推。
 
 2026-07-06 补充：task007 已完成 `dtn_port_modal_amplitudes` 官方口径切换。若要比较不同 total height 的同一物理结构，后续应新增统一 reference plane 或界面处外推功率；当前 `T_total` 是 bottom physical port plane 上的功率。
+
+2026-07-06 补充：task008 已完成目标几何 `50 x 25 x 140 nm`、`theta_from_z=80°`、`phi=0°` 的本机 benchmark。当前本机 default direct 主结果建议使用 `p=2 h=2 nm`，对应 official `R≈0.001343, T≈0.599213, A_volume≈0.399444`，`R+T+A_volume` 闭合到约 `1e-14`。`p=2 h=1.5 nm` 是 direct failure boundary，`p=2 h=1 nm` 是 assemble-only timeout boundary。更细网格建议后续单独评估 tuned MUMPS OOC 或迭代法。
 
 ---
 

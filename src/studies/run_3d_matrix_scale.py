@@ -168,6 +168,22 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
+def _json_complex_parts(value: Any) -> tuple[float | None, float | None]:
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        return _as_float(value[0]), _as_float(value[1])
+    if isinstance(value, dict):
+        return _as_float(value.get("real")), _as_float(value.get("imag"))
+    if isinstance(value, (int, float)):
+        return float(value), 0.0
+    return None, None
+
+
+def _json_vector_component(vector: Any, index: int) -> tuple[float | None, float | None]:
+    if not isinstance(vector, (list, tuple)) or index >= len(vector):
+        return None, None
+    return _json_complex_parts(vector[index])
+
+
 def _timing_value(summary: dict[str, Any] | None, *keys: str):
     timings = _value(summary, "timings_seconds", {}) or {}
     for key in keys:
@@ -231,6 +247,19 @@ def _row_from_result(
     grating_height = _as_float(_config_value(summary, "grating_height"))
     physical_z_min = _as_float(_config_value(summary, "physical_z_min"))
     physical_z_max = _as_float(_config_value(summary, "physical_z_max"))
+    incident_theta_deg = _as_float(_config_value(summary, "incident_theta_deg"))
+    incident_phi_deg = _as_float(_config_value(summary, "incident_phi_deg"))
+    wavevector = _config_value(summary, "wavevector")
+    kx_real, kx_imag = _json_vector_component(wavevector, 0)
+    ky_real, ky_imag = _json_vector_component(wavevector, 1)
+    kz_real, kz_imag = _json_vector_component(wavevector, 2)
+    k0 = _as_float(_config_value(summary, "k0"))
+    polarization = _config_value(summary, "polarization")
+    px_real, px_imag = _json_vector_component(polarization, 0)
+    py_real, py_imag = _json_vector_component(polarization, 1)
+    pz_real, pz_imag = _json_vector_component(polarization, 2)
+    floquet_phase_x_real, floquet_phase_x_imag = _json_complex_parts(_config_value(summary, "floquet_phase_x"))
+    floquet_phase_y_real, floquet_phase_y_imag = _json_complex_parts(_config_value(summary, "floquet_phase_y"))
     R_total = _as_float(_value(summary, "R_total"))
     T_total = _as_float(_value(summary, "T_total"))
     R_total_dtn_port_modal = _as_float(_value(summary, "R_total_dtn_port_modal", R_total))
@@ -257,6 +286,33 @@ def _row_from_result(
         "h_nm": mesh_target_size,
         "p": nedelec_degree,
         "mpi_ranks": mpi_procs,
+        "incident_theta_deg": incident_theta_deg,
+        "incident_theta_from_z_deg": incident_theta_deg,
+        "incident_phi_deg": incident_phi_deg,
+        "incident_azimuth_phi_deg": incident_phi_deg,
+        "polarization_kind": _config_value(summary, "polarization_kind"),
+        "kx": kx_real,
+        "kx_real": kx_real,
+        "kx_imag": kx_imag,
+        "ky": ky_real,
+        "ky_real": ky_real,
+        "ky_imag": ky_imag,
+        "kz": kz_real,
+        "kz_real": kz_real,
+        "kz_imag": kz_imag,
+        "kx_over_k0": None if k0 in {None, 0.0} or kx_real is None else kx_real / k0,
+        "ky_over_k0": None if k0 in {None, 0.0} or ky_real is None else ky_real / k0,
+        "kz_over_k0": None if k0 in {None, 0.0} or kz_real is None else kz_real / k0,
+        "floquet_phase_x_real": floquet_phase_x_real,
+        "floquet_phase_x_imag": floquet_phase_x_imag,
+        "floquet_phase_y_real": floquet_phase_y_real,
+        "floquet_phase_y_imag": floquet_phase_y_imag,
+        "polarization_x_real": px_real,
+        "polarization_x_imag": px_imag,
+        "polarization_y_real": py_real,
+        "polarization_y_imag": py_imag,
+        "polarization_z_real": pz_real,
+        "polarization_z_imag": pz_imag,
         "mesh_target_size_nm": mesh_target_size,
         "mpi_procs": mpi_procs,
         "solver_profile": solver_profile,
@@ -335,11 +391,13 @@ def _row_from_result(
             "stage4_dtn_linear_solve_seconds",
             "stage4_dtn_port_assembly_and_solve",
         ),
+        "elapsed_seconds": elapsed_wall_seconds,
         "elapsed_wall_seconds": elapsed_wall_seconds,
         "elapsed_wall_s": elapsed_wall_seconds,
         "assemble_elapsed_s": elapsed_wall_seconds,
         "summary_elapsed_seconds": _value(summary, "elapsed_seconds"),
         "peak_rss_mb": peak_rss_mb,
+        "max_rss_mb": peak_rss_mb,
         "peak_RSS_per_rank_max_GB": peak_rss_gb,
         "rss_rank_max_mb": peak_rss_mb,
         "rss_rank_sum_mb": None if total_rss_upper_gb is None else total_rss_upper_gb * MB_PER_GB,
@@ -349,6 +407,7 @@ def _row_from_result(
         "rss_rank_imbalance": None,
         "rss_rank_statistics_source": "upper_bound_from_global_max_times_ranks",
         "estimated_total_RSS_upper_GB": total_rss_upper_gb,
+        "RSS_upper_GB": total_rss_upper_gb,
         "swap_used_before_mb": swap_before_mb,
         "swap_used_after_mb": swap_after_mb,
         "swap_used_delta_mb": None if swap_before_mb is None or swap_after_mb is None else swap_after_mb - swap_before_mb,
@@ -394,7 +453,10 @@ def _row_from_result(
         "A_port_balance_minus_A_volume_total": _value(summary, "A_port_balance_minus_A_volume_total"),
         "num_reflection_orders": _value(summary, "dtn_port_top_mode_count"),
         "num_transmission_orders": _value(summary, "dtn_port_bottom_mode_count"),
+        "dtn_top_mode_count": _value(summary, "dtn_port_top_mode_count"),
+        "dtn_bottom_mode_count": _value(summary, "dtn_port_bottom_mode_count"),
         "dtn_port_propagating_mode_count": _value(summary, "dtn_port_propagating_mode_count"),
+        "dtn_propagating_mode_count": _value(summary, "dtn_port_propagating_mode_count"),
         "stdout_tail": _tail_text(stdout_text),
         "stderr_tail": _tail_text(stderr_text),
     }
@@ -433,6 +495,8 @@ def _command_for_case(args, mesh_size: float) -> list[str]:
         "--grating-width-y": args.grating_width_y,
         "--grating-height": args.grating_height,
         "--lambda0": args.lambda0,
+        "--incident-theta-deg": args.incident_theta_deg,
+        "--incident-phi-deg": args.incident_phi_deg,
         "--n-substrate": args.n_substrate,
         "--n-grating": args.n_grating,
         "--polarization-kind": args.polarization_kind,
@@ -488,6 +552,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--grating-width-y", type=float, default=None)
     parser.add_argument("--grating-height", type=float, default=None)
     parser.add_argument("--lambda0", type=float, default=None)
+    parser.add_argument("--incident-theta-deg", type=float, default=None)
+    parser.add_argument("--incident-phi-deg", type=float, default=None)
     parser.add_argument("--n-substrate", default=None)
     parser.add_argument("--n-grating", default=None)
     parser.add_argument("--polarization-kind", default=None)

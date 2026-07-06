@@ -1,0 +1,24 @@
+Task008 run log
+================
+
+分支：codex/20260706-target-50x25x140-oblique80-official-benchmark
+运行环境：Docker image code-dolfinx-mpc:latest, . dolfinx-complex-mode, MPI=8
+主设置：50 x 25 x 140 nm, 17 x 25 x 120 nm grating, theta=80 deg, phi=0, s polarization, dtn_port auxiliary auto_propagating
+
+1. smoke：p=1 h=5 direct diagnostic，验证 geometry、oblique incidence、Floquet phase、port modes、official R/T/A 输出。
+   结果：completed；top/bottom mode count = 40/40；R+T+A_volume closure 约 1e-15。
+
+2. assemble-only p=1：h=5,4,3,2.5,2,1.5,1。
+   结果：全部 completed；h=1 rows=559626, nnz=19017936, AIJ=0.429 GB, RSS upper=4.472 GB。
+
+3. assemble-only p=2：h=5,4,3,2.5,2,1.5,1。
+   结果：h=5 到 h=1.5 completed；h=1 timeout 124，last stage=stage4_dtn_base_matrix_assembled，AIJ=10.313 GB，RSS upper=14.129 GB，swap delta≈33.4 GB。
+
+4. direct p=1 default MUMPS：h=5,4,3,2.5,2,1.5,1。
+   结果：全部 completed；h=1 R=0.09458200422271218, T=0.4238866873236759, A=0.48153130845358927。
+
+5. direct p=2 default MUMPS：h=5,4,3,2.5,2。
+   结果：全部 completed；h=2 R=0.0013429328462348958, T=0.5992132294442478, A=0.3994438377095067。
+
+6. direct p=2 h=1.5 boundary：
+   结果：failed returncode 9；last stage=stage4_dtn_augmented_ksp_setup；stdout tail 显示 Killed(signal 9)。
