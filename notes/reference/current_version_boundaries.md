@@ -79,7 +79,7 @@ p=2 h=1 nm:
 当前建议使用的本机 official benchmark 主点：
 
 ```text
-p=2 h=2 nm:
+p=2 h=2 nm, personal-computer best-effort direct benchmark:
   R = 0.0013429328462348958
   T = 0.5992132294442478
   A_volume = 0.3994438377095067
@@ -91,6 +91,8 @@ p=2 h=2 nm:
 
 ```text
 p=1 h=1 虽然能完成，但与 p=2 finest completed 仍不接近，不应作为最终物理收敛解；
+p=2 h=2 是当前个人电脑 best-effort direct benchmark，不是最终网格收敛物理解；
+p=2 h=5 的 R≈0.089 明显受粗网格影响，不应作为真实物理反射率结论；
 p=2 h=1.5 的 assemble-only AIJ 矩阵约 3.20 GB，但 direct MUMPS 在 KSP setup 被 kill，瓶颈来自 LU fill-in / solver workspace；
 后续若要推进 p=2 h=1.5 或更细网格，应单独评估 tuned MUMPS OOC 或迭代法。
 ```

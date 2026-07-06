@@ -56,7 +56,7 @@ docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
 
 2026-07-06 补充：task007 已完成 `dtn_port_modal_amplitudes` 官方口径切换。若要比较不同 total height 的同一物理结构，后续应新增统一 reference plane 或界面处外推功率；当前 `T_total` 是 bottom physical port plane 上的功率。
 
-2026-07-06 补充：task008 已完成目标几何 `50 x 25 x 140 nm`、`theta_from_z=80°`、`phi=0°` 的本机 benchmark。当前本机 default direct 主结果建议使用 `p=2 h=2 nm`，对应 official `R≈0.001343, T≈0.599213, A_volume≈0.399444`，`R+T+A_volume` 闭合到约 `1e-14`。`p=2 h=1.5 nm` 是 direct failure boundary，`p=2 h=1 nm` 是 assemble-only timeout boundary。更细网格建议后续单独评估 tuned MUMPS OOC 或迭代法。
+2026-07-06 补充：task008 已完成目标几何 `50 x 25 x 140 nm`、`theta_from_z=80°`、`phi=0°` 的本机 benchmark。当前个人电脑 best-effort default direct 主点建议使用 `p=2 h=2 nm`，对应 official `R≈0.001343, T≈0.599213, A_volume≈0.399444`，`R+T+A_volume` 闭合到约 `1e-14`；它不是最终网格收敛物理解。`p=2 h=5` 的 `R≈0.089` 明显受粗网格影响，不作为物理结论。`p=2 h=1.5 nm` 是 direct failure boundary，`p=2 h=1 nm` 是 assemble-only timeout boundary。更细网格建议后续单独评估 tuned MUMPS OOC 或迭代法。
 
 ---
 

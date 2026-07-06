@@ -51,6 +51,8 @@ p=1 default direct 可完成到 h=1 nm；
 p=2 default direct 可完成到 h=2 nm；
 p=2 h=1.5 nm default direct 在 stage4_dtn_augmented_ksp_setup 被 signal 9 kill；
 p=2 h=1 nm assemble-only 已超时并出现大量 swap，不进入 direct 计划。
+p=2 h=2 nm 是当前个人电脑 best-effort official benchmark 主点，但不是最终网格收敛物理解；
+p=2 h=5 nm 的 R≈0.089 明显受粗网格影响，不作为物理结论。
 ```
 
 详细边界说明见：

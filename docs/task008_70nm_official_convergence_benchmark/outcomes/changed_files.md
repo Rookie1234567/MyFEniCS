@@ -26,6 +26,11 @@
 - `changed_files.md`
 - `raw_runs/`
 
+## Review 后收尾
+
+- 删除 `raw_runs/` 中 0-byte 的空 `stderr_tail.txt` 占位文件，仅保留有实际内容的轻量运行记录。
+- 微调 `summary.md`、`README.md`、`docs/README.md` 和 `notes/reference/current_version_boundaries.md` 中关于 `p=2 h=2` 与 `p=2 h=5` 的表述：`p=2 h=2` 是当前个人电脑 best-effort direct benchmark，不是最终网格收敛物理解；`p=2 h=5` 的高 R 只作为粗网格敏感性参考。
+
 ## 项目说明文档
 
 - `README.md`

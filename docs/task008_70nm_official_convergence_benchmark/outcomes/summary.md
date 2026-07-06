@@ -158,14 +158,14 @@ probe-plane E/H Fourier diagnostic 与 official DtN-port modal 仍存在显著�
 - assemble-only：p=1 完成 h=5 到 h=1；p=2 完成 h=5 到 h=1.5，p=2 h=1 在 base matrix assembled 后超时并产生约 33.4 GB swap 增量。
 - direct：p=1 完成 h=5 到 h=1；p=2 完成 h=5 到 h=2，p=2 h=1.5 在 `stage4_dtn_augmented_ksp_setup` 被 signal 9 kill。
 - 能量闭合：completed direct case 的 `R+T+A_volume` 均为 1 到约 1e-13 量级误差，说明 official port modal + volume absorption 口径自洽。
-- 80 deg 下 R 明显不再是垂直入射旧案例那种接近零的量级；p=2 h=2 得到 R≈0.00134，p=2 h=5 粗网格 R≈0.089 说明网格/阶次敏感。
+- 80 deg 斜入射路径已验证；当前最可信的 completed direct 点是 p=2 h=2，得到 R≈0.00134。p=2 h=5 的 R≈0.089 明显受粗网格影响，只能说明网格/阶次敏感，不应作为真实物理反射率结论。
 
 ## 当前固定 Benchmark 建议
 
 | benchmark | recommended use | reason |
 | --- | --- | --- |
 | p=1 h=1 direct | 低阶本机压力测试/对照 | 能完成但与 p=2 finest 不接近 |
-| p=2 h=2 direct | 当前本机 official benchmark 主结果 | 本机 default direct 最细完成点，能量闭合正常 |
+| p=2 h=2 direct | 当前个人电脑 best-effort official benchmark 主点 | 本机 default direct 最细完成点，能量闭合正常；不是最终网格收敛物理解 |
 | p=2 h=1.5 direct failed | 本机 direct failure boundary | KSP setup signal 9，可用于估算 workstation/OOC/迭代法需求 |
 | p=2 h=1 assemble timeout | 更细 direct 禁止点 | assemble-only 已超时并产生大量 swap |
 
@@ -177,7 +177,7 @@ probe-plane E/H Fourier diagnostic 与 official DtN-port modal 仍存在显著�
 
 ## Next Questions for Review
 
-1. 是否接受 p=2 h=2 作为当前本机 official benchmark 主结果？
+1. 是否接受 p=2 h=2 作为当前个人电脑 best-effort official benchmark 主点，而不是最终网格收敛解？
 2. 后续是优先尝试 p=2 h=1.5 的 tuned MUMPS OOC，还是直接转向迭代法？
 3. 是否需要新增 common reference plane / interface-referenced T，以便不同 domain height 的 T/A 可比？
 4. 是否需要把 `direct_solve_plan.md` 的边界预测在 review 后进一步固化为 README 中的推荐运行矩阵？
