@@ -23,51 +23,37 @@ docs/taskXXX_task_name/
 | task003 | Stage 4 power consistency | `task003_stage4_power_consistency/` | 已完成并已审查 |
 | task004 | small-cell p 收敛、MPI 一致性与全阶段回归 | `task004_small_cell_p_convergence_mpi_regression/` | 已完成并已审查；建议合并当前分支 |
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
-| task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成；待审查 |
+| task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
+| task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 任务书已写入；待本地 Codex 新建分支后执行 |
 
 ## 合并前结论
 
-当前 task006 分支可作为 reduced-height domain 资源与初步 R/T/A 阶段性结果审查。合并含义是：
+当前 task006 分支可作为 reduced-height domain 资源探索与诊断阶段结果合并。合并含义是：
 
 ```text
-完成真实 100 nm x 100 nm x 70 nm Stage 4 block grating 的 p=1/p=2 资源扫描、default direct 边界、MUMPS OOC 对照、MPI=1 对照、R/T/A 初步收敛表和 70 nm vs 150 nm 对照。
+完成真实 100 nm x 100 nm x 70 nm Stage 4 block grating 的 p=1/p=2 资源扫描、default direct 边界、MUMPS OOC tuned 对照、MPI=1 对照、memory profiling 和 R/T/A 初步表。
 ```
 
 不要把本次合并解读为：
 
 ```text
-真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
+真实 100 nm 3D EUV grating 已完成物理收敛 benchmark；
+70 nm reduced-height domain 已证明与 150 nm 原域物理等价；
+当前 R/T/A 已经是严格 DtN port modal amplitude 后处理。
 ```
 
-task006 的关键结论是：70 nm 域显著降低矩阵资源，但与 150 nm 原域在 h=5 上的 R/T/A 差异明显，因此不能直接视为物理等价计算域。
+关键审查结论是：task006 资源探索部分通过，但当前 3D block grating 的 official R/T 后处理仍来自 E/H Fourier probe-plane modal fitting，而不是直接来自 DtN port modal amplitudes。因此，task007 应优先修正 official/diagnostic 后处理边界。
 
 详细边界说明见：
 
 ```text
 notes/reference/current_version_boundaries.md
-docs/task005_stage4_real_grating_memory_estimation/review_report.md
+docs/task006_reduced_height_grating_convergence_memory/review_report.md
 ```
 
-## task006 审查说明
+## task007 执行说明
 
-`task006_reduced_height_grating_convergence_memory/outcomes/summary.md` 是本轮结果入口。审查时应重点看：
-
-```text
-failure_boundary.md
-rta_convergence.csv
-direct_default_scale.csv
-reduced_vs_original_domain_comparison.csv
-memory_profile_summary.csv
-```
-
-2026-07-05 补充：task006 summary 已加入 memory profiling、tuned MUMPS OOC、失败边界解释和 workstation recommendation。审查时还应查看：
-
-```text
-mumps_ooc_tuned_extra_scale.csv
-workstation_recommendation.csv
-```
-
-新的关键结论是：`mat_mumps_icntl_14=200` tuned OOC 可以完成 p=2 h=4，但 p=2 h=3 仍在 MUMPS numerical factorization 阶段失败；h=0.5 nm 和 h=0.25 nm 已不适合 direct/OOC workstation 路线。
+`task007_dtn_port_modal_official_rta/task.md` 是后续任务书。执行 task007 前，应先在本地将当前 task006 分支合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task007 分支。ChatGPT 不负责创建远程任务分支。
 
 ## 工作规则
 
