@@ -118,6 +118,15 @@ sampled net flux = diagnostic only
 4. official R/T/A 如何统一定义 reference plane？
 5. 70 nm 与 150 nm 在 DtN port modal official R/T/A 下是否接近？
 6. E/H Fourier probe fitting 与 DtN port modal R/T 差异有多大？
+7. 在统一 official R/T/A 口径后，总高度 70 / 110 / 130 / 150 nm 的结果是否仍受高度影响？
+```
+
+本轮新增的高度扫描需求是重要目标之一，但执行顺序必须是：
+
+```text
+先修正 official R/T/A 口径，
+再做 height scan，
+不要继续用 task006 的 probe-plane E/H fitting official 口径来判断高度影响。
 ```
 
 ---
@@ -289,7 +298,7 @@ T_mn = P_transmitted_order / P_incident
 4. A_volume 的积分区域是否包括整个 substrate physical domain。
 ```
 
-如果当前 DtN port amplitude 自然定义在 top/bottom truncation boundary，那么 70 nm 和 150 nm 的 T 仍可能因为 reference plane 不同而不同。此时必须明确写出：
+如果当前 DtN port amplitude 自然定义在 top/bottom truncation boundary，那么不同总高度的 T 仍可能因为 reference plane 不同而不同。此时必须明确写出：
 
 ```text
 DtN port modal official R/T 是 boundary-referenced；
@@ -369,7 +378,110 @@ R/T diagnostic_eh_fourier_70 vs 150
 如果 diagnostic_eh_fourier 随 bottom probe 深度变化，而 dtn_port_modal 更稳定，则说明 task006 差异主要来自 probe-plane postprocess。
 ```
 
-### 7.4 Zero-contrast grating smoke
+### 7.4 Total-height scan：70 / 110 / 130 / 150 nm
+
+在 official R/T/A 口径修正后，必须研究总高度对结果的影响。
+
+扫描高度：
+
+```text
+total_height_nm = 70, 110, 130, 150
+```
+
+保持横向和光栅几何不变：
+
+```text
+period_x = 100 nm
+period_y = 100 nm
+grating_width_x = 50 nm
+grating_width_y = 50 nm
+grating_height = 50 nm
+```
+
+建议固定 top air above grating 与 substrate thickness 对称变化：
+
+```text
+total_height = 70  -> substrate_thickness = 10, top_air_above_grating = 10, air_height = 60
+total_height = 110 -> substrate_thickness = 30, top_air_above_grating = 30, air_height = 80
+total_height = 130 -> substrate_thickness = 40, top_air_above_grating = 40, air_height = 90
+total_height = 150 -> substrate_thickness = 50, top_air_above_grating = 50, air_height = 100
+```
+
+如果代码参数语义不同，必须在 `parameters.json` 中明确写出实际传入参数。
+
+主扫描配置：
+
+```text
+stage_case = stage4_block_grating
+p = 2
+h = 5 nm
+MPI = 8
+solver_profile = default
+stage4_boundary_model = dtn_port
+stage4_dtn_assembly = auxiliary
+stage4_dtn_order_policy = auto_propagating
+```
+
+如果资源允许，可额外补充：
+
+```text
+p = 1, h = 5 nm, MPI = 8
+p = 2, h = 4 nm, MPI = 8   # 只在可承受时运行
+```
+
+输出文件：
+
+```text
+height_scan_official_rta.csv
+height_scan_diagnostic_probe_rta.csv
+height_scan_resource.csv
+```
+
+`height_scan_official_rta.csv` 至少包含：
+
+```text
+total_height_nm
+substrate_thickness_nm
+top_air_above_grating_nm
+air_height_parameter_nm
+p
+h_nm
+mpi_ranks
+power_source
+reference_plane_definition
+R_total
+T_total
+A_volume_total
+R_plus_T
+R_plus_T_plus_A_volume
+energy_closure_error
+delta_R_vs_150nm
+delta_T_vs_150nm
+delta_A_vs_150nm
+relative_delta_R_vs_150nm
+relative_delta_T_vs_150nm
+relative_delta_A_vs_150nm
+status
+```
+
+`height_scan_resource.csv` 至少包含：
+
+```text
+total_height_nm
+p
+h_nm
+cells
+rows
+nnz
+estimated_AIJ_matrix_memory_GB
+RSS_upper_GB
+elapsed_s
+status
+```
+
+summary 中必须用清晰表格展示高度扫描结果，而不是只写文字结论。
+
+### 7.5 Zero-contrast grating smoke
 
 建议增加一个 zero-contrast block grating smoke：
 
@@ -401,6 +513,9 @@ docs/task007_dtn_port_modal_official_rta/outcomes/
 ├── flat_layer_port_modal_validation.csv
 ├── block_grating_port_modal_vs_eh_probe.csv
 ├── reduced_vs_original_port_modal_comparison.csv
+├── height_scan_official_rta.csv
+├── height_scan_diagnostic_probe_rta.csv
+├── height_scan_resource.csv
 ├── diagnostic_probe_comparison.csv
 ├── port_power_schema_example.json
 ├── parameters.json
@@ -436,7 +551,21 @@ mumps_ooc_files/
 
 ## 9. summary.md 必须回答的问题
 
-`summary.md` 必须用中文回答：
+`summary.md` 必须用中文回答，并且必须包含清晰的 Markdown 表格。不要只用段落描述。
+
+至少包含以下表格：
+
+```text
+表 1：official vs diagnostic 后处理来源对照
+表 2：flat-layer sanity R/T/A 对照
+表 3：70 nm block grating official dtn_port_modal vs diagnostic_eh_fourier
+表 4：70 / 110 / 130 / 150 nm height scan official R/T/A
+表 5：70 / 110 / 130 / 150 nm height scan diagnostic probe R/T/A
+表 6：height scan 资源规模 cells / rows / nnz / matrix GB / RSS / elapsed
+表 7：70 nm vs 150 nm 在 task006 probe 口径与 task007 official port 口径下的差异对照
+```
+
+`summary.md` 必须回答：
 
 1. 当前 DtN port auxiliary unknown 是否可以直接解释为 modal amplitude？如果不能，转换关系是什么？
 2. 本任务后 official power source 是什么？
@@ -444,10 +573,11 @@ mumps_ooc_files/
 4. E/H Fourier fitting 是否已经降级为 diagnostic？
 5. flat-layer sanity 中 dtn_port_modal R/T/A 是否与解析或 task004 port 结果一致？
 6. 真实 70 nm block grating 中 dtn_port_modal 与 diagnostic_eh_fourier 差异多大？
-7. 70 nm vs 150 nm 在 dtn_port_modal 下是否仍有明显差异？
-8. 若仍有差异，是 reference plane、volume absorption 厚度，还是物理解本身变化？
-9. 当前是否还需要 height scan？如果需要，应该在什么 R/T/A 口径下做？
-10. 是否建议合并？是否还存在 official/diagnostic 命名不清的问题？
+7. 70 / 110 / 130 / 150 nm 在 dtn_port_modal official R/T/A 下是否仍有明显高度影响？
+8. 70 / 110 / 130 / 150 nm 在 diagnostic probe R/T/A 下是否显示不同趋势？
+9. 若仍有高度差异，是 reference plane、volume absorption 厚度，还是物理解本身变化？
+10. 当前是否还需要进一步 height scan？如果需要，应该在什么 R/T/A 口径下做？
+11. 是否建议合并？是否还存在 official/diagnostic 命名不清的问题？
 
 ---
 
@@ -462,8 +592,10 @@ mumps_ooc_files/
 5. flat-layer sanity 通过。
 6. 真实 block grating p=2 h=5 至少跑通一个 70 nm case，并输出 official vs diagnostic 对照。
 7. 70 nm vs 150 nm p=2 h=5 至少完成 official dtn_port_modal 对照，或明确说明无法比较的原因。
-8. 所有改动有单元测试或 smoke test 覆盖。
-9. 不提交大型结果文件。
+8. 完成 total_height = 70 / 110 / 130 / 150 nm 的 p=2 h=5 MPI=8 official R/T/A 扫描，并在 summary 中列清晰表格。
+9. summary 中必须包含 R/T/A 和资源表格，能让用户直接看出高度影响趋势。
+10. 所有改动有单元测试或 smoke test 覆盖。
+11. 不提交大型结果文件。
 
 ---
 
@@ -474,4 +606,5 @@ mumps_ooc_files/
 - 如果要做 interface-referenced T correction，必须写清楚传播因子和有损介质中的功率修正公式。
 - 不要把 diagnostic probe 结果删除；它仍然有调试价值。
 - 但 official R/T/A 只能有一个主来源，并且必须清楚。
-- 在 task007 完成前，不建议继续基于 task006 的 probe-plane R/T/A 做 height 物理判断。
+- height scan 必须在 official R/T/A 口径修正后进行；不要继续用 task006 的 probe-plane official 结果判断高度影响。
+- summary 必须列出表格，清晰展示 70 / 110 / 130 / 150 nm 的 R/T/A 和资源趋势。
