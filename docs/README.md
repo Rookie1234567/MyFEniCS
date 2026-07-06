@@ -25,7 +25,8 @@ docs/taskXXX_task_name/
 | task005 | 真实 3D 光栅 p=2 内存、OOC 与迭代法资源估算 | `task005_stage4_real_grating_memory_estimation/` | 已完成并已审查；建议合并当前分支 |
 | task006 | 70 nm 缩短计算域真实 3D 光栅 p=1/p=2 收敛、资源与 R/T 分析 | `task006_reduced_height_grating_convergence_memory/` | 已完成并已审查；建议合并当前分支，但 R/T/A official 口径需在 task007 修正 |
 | task007 | 恢复 DtN port modal amplitudes 作为 Stage 4 官方 R/T/A | `task007_dtn_port_modal_official_rta/` | 已完成并已审查；建议合并当前分支 |
-| task008 | 目标尺寸 50×25×140 nm、80° 斜入射 official DtN-port R/T/A 本机收敛 benchmark、内存边界与资源报告 | `task008_70nm_official_convergence_benchmark/` | 已在 `codex/20260706-target-50x25x140-oblique80-official-benchmark` 完成 outcomes；等待审查 |
+| task008 | 目标尺寸 50×25×140 nm、80° 斜入射 official DtN-port R/T/A 本机收敛 benchmark、内存边界与资源报告 | `task008_70nm_official_convergence_benchmark/` | 已在 `codex/20260706-target-50x25x140-oblique80-official-benchmark` 完成 outcomes 与 review；合并前建议轻量收尾 |
+| task009 | Stage 4 3D Maxwell 迭代求解器 profiles 快速筛选 | `task009_iterative_solver_profile_screening/` | 任务书已写入；待本地 Codex 新建分支后执行 |
 
 ## 当前阶段结论
 
@@ -60,6 +61,7 @@ p=2 h=5 nm 的 R≈0.089 明显受粗网格影响，不作为物理结论。
 ```text
 notes/reference/current_version_boundaries.md
 docs/task007_dtn_port_modal_official_rta/review_report.md
+docs/task008_70nm_official_convergence_benchmark/review_report.md
 docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
 ```
 
@@ -82,6 +84,22 @@ official_convergence.csv
 resource_convergence.csv
 failure_boundary.md
 raw_runs/
+```
+
+## task009 执行说明
+
+`task009_iterative_solver_profile_screening/task.md` 是下一轮任务书。执行 task009 前，应先在本地完成 task008 的轻量收尾并合并到 `master`，再由本地 Codex 从更新后的 `master` 新建 task009 分支。ChatGPT 不负责创建远程任务分支。
+
+本轮 task009 的定位是：
+
+```text
+在 task008 direct-reference cases 上快速筛选 PETSc 现成 iterative profiles，优先测试 GMRES/FGMRES/BiCGStab + Jacobi/BJacobi/ASM/ILU/local LU，找出能复现 p=2 h=2 direct R/T/A 并有希望突破 p=2 h=1.5 failure boundary 的 profile。
+```
+
+推荐 task009 分支名：
+
+```text
+codex/20260706-iterative-solver-profile-screening
 ```
 
 ## 工作规则
