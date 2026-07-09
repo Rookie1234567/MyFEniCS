@@ -1,0 +1,1 @@
+case,p,h_nm,h1_degree_mode,profile,status,reason,iterations,true_relative_residual_norm,ksp_final_residual,rss_upper_gb,setup_time_s,solve_time_s,elapsed_wall_s,restart,max_it,inner_ksp_type,n_real,nnz_real,B_rows,B_nnz,G_rows,G_cols,G_nnz,H1_dofs,Pi_present,Pi_nnz,ams_setup_rss_before_gb,ams_setup_rss_after_gb,notes

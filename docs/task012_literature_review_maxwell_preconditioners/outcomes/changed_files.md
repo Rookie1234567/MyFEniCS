@@ -1,0 +1,30 @@
+# 改动文件
+
+## 新增 outcomes
+
+```text
+docs/task012_literature_review_maxwell_preconditioners/outcomes/summary.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/ars_process_log.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/search_queries.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/literature_table.csv
+docs/task012_literature_review_maxwell_preconditioners/outcomes/method_scorecard.csv
+docs/task012_literature_review_maxwell_preconditioners/outcomes/recommended_routes.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/annotated_bibliography.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/physics_custom_preconditioner_ideas.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/implementation_feasibility.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/next_task_proposal.md
+docs/task012_literature_review_maxwell_preconditioners/outcomes/references.bib
+docs/task012_literature_review_maxwell_preconditioners/outcomes/changed_files.md
+```
+
+## 更新文档
+
+```text
+docs/README.md
+notes/reference/current_version_boundaries.md
+notes/theory/maxwell_iterative_preconditioners_task012.md
+```
+
+## 未修改
+
+本轮没有修改 solver 代码，没有新增求解器 profile，没有运行新的大算例。

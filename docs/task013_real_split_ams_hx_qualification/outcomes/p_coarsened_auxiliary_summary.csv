@@ -1,0 +1,6 @@
+case,p,h_nm,auxiliary_mode,H1_dofs,G_nnz,iterations,status,true_relative_residual_norm,rss_after_solve_gb,setup_time_s,solve_time_s,decision
+fe_only_p2_h5_standard,2,5.0,standard_H1_p_plus_1,42160,4130355.0,50,not_converged,3.5149626869762085e-05,6.306327819824219,28.11483118199976,296.60825273599767,too_expensive_and_not_best
+fe_only_p2_h5_standard,2,5.0,standard_H1_p_plus_1,42160,4130355.0,150,not_converged,8.00413023447229e-06,6.306221008300781,28.8762612190003,881.1659233120008,too_expensive_and_not_better_than_jacobi_150
+fe_only_p2_h5_same,2,5.0,same_H1_p,13167,1572090.0,50,not_converged,9.502038265284304e-06,1.3224258422851562,4.84997800400015,39.50205916100094,best_tradeoff
+fe_only_p2_h5_same,2,5.0,same_H1_p,13167,1572090.0,310,completed,9.964333802586608e-07,1.3231430053710938,4.8587570339987,240.55426202300077,qualification_success_but_slow
+fe_only_p2_h5_linear,2,5.0,linear_H1_1,1914,354855.0,50,not_converged,7.76387235884351e-05,1.3224258422851562,0.4142473819993029,4.693056816002354,cheap_but_too_weak

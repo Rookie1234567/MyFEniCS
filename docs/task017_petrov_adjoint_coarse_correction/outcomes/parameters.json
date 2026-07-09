@@ -1,0 +1,97 @@
+{
+  "task": "task017_petrov_adjoint_coarse_correction",
+  "date": "2026-07-08",
+  "branch": "codex/20260707-real-split-ams-hx-qualification",
+  "cases": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "domain_preset": "tiny10",
+      "degree": 1,
+      "h_nm": 5.0,
+      "stage_case": "stage4_block_grating",
+      "dtn_order_policy": "auto_propagating"
+    },
+    {
+      "case": "task014a_default100_stage4_block_grating_p1_h5",
+      "domain_preset": "default100",
+      "degree": 1,
+      "h_nm": 5.0,
+      "stage_case": "stage4_block_grating",
+      "dtn_order_policy": "auto_propagating"
+    }
+  ],
+  "mode_sets": [
+    "top_y",
+    "top_bottom_y"
+  ],
+  "lift_types": [
+    "diag_lift",
+    "pfe_lift"
+  ],
+  "w_types": [
+    "W_aux_residual",
+    "W_AZ",
+    "W_AZ_normalized",
+    "W_residual_projected",
+    "W_adjoint_diag",
+    "W_adjoint_diag_sign_flip",
+    "W_adjoint_pfe",
+    "W_adjoint_pfe_sign_flip"
+  ],
+  "omegas": [
+    1.0,
+    0.3,
+    0.1,
+    0.03,
+    0.01
+  ],
+  "baseline_ksp": {
+    "outer_type": "fgmres",
+    "max_it": 1000,
+    "restart": 80,
+    "inner_ksp_type": "preonly",
+    "pc": "same-H1 AMS on FE block plus identity aux"
+  },
+  "true_fe_sampled_lift": {
+    "tiny10": "exact scipy SPLU on A_FE",
+    "default100_primary_attempt": "PETSc real FE selected RHS with same-H1 AMS, failed at PCSetUp error 101",
+    "default100_fallback": "SciPy complex GMRES with FE diagonal preconditioner",
+    "fe_iterative_max_it": 120,
+    "fe_iterative_restart": 60,
+    "fe_iterative_rtol": 0.01
+  },
+  "stage_d": {
+    "enabled_when": "default100 one-shot residual < 1e-2 or improvement >= 2x",
+    "profile": "stage4_real_split_fgmres_true_fe_lift_top_bottom_y_minres_additive",
+    "pc_form": "minres_additive",
+    "omega": 0.1,
+    "max_it": 300,
+    "result": {
+      "status": "not_converged",
+      "true_relative_residual_norm": 0.023549877024463182,
+      "improvement": 0.9114934875536803
+    }
+  },
+  "success_thresholds": {
+    "minimum_useful_residual": 0.01,
+    "minimum_useful_improvement": 2.0,
+    "strong_residual": 0.002,
+    "strong_improvement": 10.0
+  },
+  "cleanup": {
+    "removed_from_raw_runs": [
+      ".npz",
+      ".h5",
+      ".xdmf",
+      ".vtu",
+      ".pvtu"
+    ],
+    "kept": [
+      ".csv",
+      ".json",
+      ".jsonl",
+      ".txt",
+      ".svg"
+    ]
+  }
+}

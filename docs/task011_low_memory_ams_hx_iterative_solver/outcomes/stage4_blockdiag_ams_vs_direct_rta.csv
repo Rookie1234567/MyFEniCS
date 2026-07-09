@@ -1,0 +1,5 @@
+profile,h_nm,p,status,R_direct,T_direct,A_direct,R_candidate,T_candidate,A_candidate,energy_closure_error,decision
+iter_fgmres_stage4_blockdiag_fe_ams_aux_identity,5.0,2,not_run,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,blocked_by_complex_ams_segv
+iter_fgmres_stage4_blockdiag_fe_ams_aux_diag,5.0,2,not_run,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,blocked_by_complex_ams_segv
+iter_fgmres_stage4_blockdiag_fe_ams_aux_identity,4.0,2,not_run,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,blocked_by_complex_ams_segv
+iter_fgmres_stage4_blockdiag_fe_ams_aux_diag,4.0,2,not_run,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,blocked_by_complex_ams_segv

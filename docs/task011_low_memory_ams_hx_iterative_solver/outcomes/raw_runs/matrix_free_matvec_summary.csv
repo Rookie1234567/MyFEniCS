@@ -1,0 +1,3 @@
+degree,h_nm,cells,scalar_type,status,failure_reason,relative_action_error,assembled_matvec_norm,action_matvec_norm,elapsed_wall_s,rss_upper_gb,matrix_rows,matrix_cols,matrix_nnz_used,matrix_estimated_aij_memory_gb
+1,5.0,"[10, 5, 28]",complex128,completed,,3.2593413692268053e-16,95.81433603872351,95.81433603872351,1.8568579879997742,0.3593902587890625,5183,5183,145223.0,0.0027243010699748993
+2,5.0,"[10, 5, 28]",complex128,completed,,7.563218028818796e-16,6761.371705664098,6761.3717056641,11.098581753999952,0.445159912109375,37446,37446,3558492.0,0.06642157956957817

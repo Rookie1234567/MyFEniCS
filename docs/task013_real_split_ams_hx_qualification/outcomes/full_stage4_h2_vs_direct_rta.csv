@@ -1,0 +1,2 @@
+case,p,h_nm,status,R_iter,T_iter,A_iter,R_direct,T_direct,A_direct,R_abs_error,T_abs_error,A_abs_error,energy_closure_error,notes
+full_stage4_p2_h2,2,2.0,not_run,,,,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,No official R/T/A because full Stage 4 was not run.

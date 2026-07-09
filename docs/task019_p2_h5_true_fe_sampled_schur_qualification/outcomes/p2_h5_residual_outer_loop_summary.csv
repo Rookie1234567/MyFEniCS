@@ -1,0 +1,2 @@
+case,p,h_nm,profile,mode_set,solver_label,start,segment_max_it,cycles_requested,cycles_completed,best_residual,best_improvement,final_residual,final_improvement,status,rss_gb,notes
+task014a_default100_stage4_block_grating_p2_h5,2,5.0,residual_outer_zero,top_bottom_y,offline_scipy_gcrotmk_diag_rtol_0.01_maxit_16_top_bottom_y,zero,120,0,0,,,,,not_run_one_shot_gate_failed,,Task019 rule: do not continue residual outer loop because top_bottom_y one-shot failed minimum useful gate; auxiliary/FE-enriched variants were run offline as diagnostics.

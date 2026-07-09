@@ -1,0 +1,67 @@
+Task014a run log, 2026-07-08
+
+1. Static checks
+
+python -m py_compile src/studies/run_stage4_real_split_block_pc.py src/constraints/floquet_3d.py
+
+Result: passed.
+
+2. tiny10 p1 h5 complex export
+
+. /usr/local/bin/dolfinx-complex-mode; python3 -m src.studies.run_stage4_real_split_block_pc export-complex --degree 1 --h-nm 5 --stage-case stage4_block_grating
+
+Key output:
+- FE complex dofs = 144
+- DtN aux complex dofs = 4
+- n_real = 296
+- nnz_real = 18,600
+- real split matvec error = 1.575e-16
+
+3. tiny10 p1 h5 real solve
+
+python3 -m src.studies.run_stage4_real_split_block_pc solve-real --degree 1 --h-nm 5 --stage-case stage4_block_grating --matrix-export ... --metadata ...
+
+Key output:
+- Jacobi: converged, 39 iterations, true residual 8.817e-7
+- FE-AMS + aux identity: converged, 37 iterations, true residual 9.601e-7
+
+4. default100 p1 h5 complex export
+
+. /usr/local/bin/dolfinx-complex-mode; python3 -m src.studies.run_stage4_real_split_block_pc export-complex --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100
+
+Key output:
+- FE complex dofs = 39,270
+- DtN aux complex dofs = 708
+- n_real = 79,956
+- nnz_real = 9,390,960
+- real split matvec error = 6.805e-16
+
+5. default100 p1 h5 real solve
+
+python3 -m src.studies.run_stage4_real_split_block_pc solve-real --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100 --matrix-export ... --metadata ...
+
+Key output:
+- Jacobi: max_it, 1000 iterations, true residual 3.436e-2
+- FE-AMS + aux identity: max_it, 1000 iterations, true residual 2.147e-2
+- improvement = 1.60x, below task14a 10x target
+
+6. default100 zero-order/local-Robin diagnostic
+
+. /usr/local/bin/dolfinx-complex-mode; python3 -m src.studies.run_stage4_real_split_block_pc export-complex --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100 --dtn-order-policy zero_order
+python3 -m src.studies.run_stage4_real_split_block_pc solve-real --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100 --dtn-order-policy zero_order --matrix-export ... --metadata ...
+
+Key output:
+- zero-order normal-incidence path uses local Robin branch and has no DtN aux unknowns
+- Jacobi: max_it, true residual 4.397e-1
+- FE-AMS: max_it, true residual 5.337e-1
+
+7. Decision
+
+Stage A passed.
+MPC-after same-H1 AMS data construction passed.
+Stage C did not pass because FE-AMS + aux identity is not clearly better than Jacobi and does not reach true residual <= 1e-6 on the representative default100 auto-propagating p1 h5 system.
+p2 h5 was not run.
+
+8. Raw artifact retention
+
+The complex matrix `.npz` exports and mesh `.h5/.xdmf` files were transient files used by the real-mode solve step. They were removed from `raw_runs/` after the CSV/JSON summaries were written, so the committed outcomes keep only lightweight text/JSON/CSV records.

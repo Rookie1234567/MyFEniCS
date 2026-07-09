@@ -1,0 +1,20 @@
+linear system true relative residual = 0.24175269977753613
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = lgmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.224794e-01
+  max RSS across ranks = 354.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 28.130
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145308

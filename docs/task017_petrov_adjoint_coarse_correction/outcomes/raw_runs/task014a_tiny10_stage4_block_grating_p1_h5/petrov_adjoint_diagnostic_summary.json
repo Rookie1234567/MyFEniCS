@@ -1,0 +1,212 @@
+{
+  "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+  "baseline": {
+    "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+    "status": "completed",
+    "reason": "CONVERGED_RTOL",
+    "iterations": 37,
+    "true_relative_residual_norm": 9.601334814717081e-07,
+    "ksp_final_residual": 9.075899755809726e-06,
+    "rss_upper_gb": 0.26052093505859375,
+    "setup_time_s": 0.002491388004273176,
+    "solve_time_s": 0.006531613995321095,
+    "ams_setup_rss_before_gb": 0.25930023193359375,
+    "ams_setup_rss_after_gb": 0.25991058349609375,
+    "pc_apply_time_s": 0.005777076046797447,
+    "pc_apply_count": 37,
+    "case": "task014a_tiny10_stage4_block_grating_p1_h5"
+  },
+  "baseline_residual_decomposition": {
+    "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+    "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+    "true_relative_residual_norm": 9.601334814717081e-07,
+    "r_fe_real_over_b": 5.801834573521384e-07,
+    "r_aux_real_over_b": 2.441727146694272e-07,
+    "r_fe_imag_over_b": 7.236223249285713e-07,
+    "r_aux_imag_over_b": 4.4652819998678945e-08,
+    "r_fe_total_over_b": 9.274923791169992e-07,
+    "r_aux_total_over_b": 2.482220556736889e-07,
+    "fe_residual_fraction": 0.9660035786850426,
+    "aux_residual_fraction": 0.25852869466983913,
+    "dominant_block": "FE",
+    "notes": "computed from final true residual r=b-Ax"
+  },
+  "top_aux_modal_residuals": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "mode_id": 0,
+      "port": "top",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "x",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 1.996562692006082e-06,
+      "relative_to_total_residual": 0.21998509720900253,
+      "relative_to_aux_residual": 0.8509117237061066,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "mode_id": 2,
+      "port": "bottom",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "x",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 1.2319191987942314e-06,
+      "relative_to_total_residual": 0.1357352142186377,
+      "relative_to_aux_residual": 0.5250295886573904,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "mode_id": 3,
+      "port": "bottom",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "y",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 2.8573305196696974e-08,
+      "relative_to_total_residual": 0.0031482614327337805,
+      "relative_to_aux_residual": 0.012177609285322662,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "mode_id": 1,
+      "port": "top",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "y",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 2.8242013555107658e-08,
+      "relative_to_total_residual": 0.0031117590858396145,
+      "relative_to_aux_residual": 0.01203641665314393,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    }
+  ],
+  "baseline_mode_rows": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_y",
+      "mode_id": 1,
+      "port": "top",
+      "m": 0,
+      "n": 0,
+      "polarization": "y",
+      "baseline_residual": 9.601334814717081e-07,
+      "real_aux_index": 145,
+      "imag_aux_index": 293,
+      "notes": "mode mapping reproduced from task015/task016 zero-order rows"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_bottom_y",
+      "mode_id": 1,
+      "port": "top",
+      "m": 0,
+      "n": 0,
+      "polarization": "y",
+      "baseline_residual": 9.601334814717081e-07,
+      "real_aux_index": 145,
+      "imag_aux_index": 293,
+      "notes": "mode mapping reproduced from task015/task016 zero-order rows"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_bottom_y",
+      "mode_id": 3,
+      "port": "bottom",
+      "m": 0,
+      "n": 0,
+      "polarization": "y",
+      "baseline_residual": 9.601334814717081e-07,
+      "real_aux_index": 147,
+      "imag_aux_index": 295,
+      "notes": "mode mapping reproduced from task015/task016 zero-order rows"
+    }
+  ],
+  "petrov_row_count": 160,
+  "true_fe_rows": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_y",
+      "fe_lift_solver": "tiny10_exact_splu",
+      "fe_lift_rhs_count": 1,
+      "fe_lift_solve_residual": 2.4901824214262042e-15,
+      "fe_lift_time_s": 0.0055929380032466725,
+      "fe_lift_rss_gb": 0.26174163818359375,
+      "one_shot_residual_after": 9.601310071044e-07,
+      "improvement": 1.0000025771142582,
+      "notes": "minres one-shot on true-FE sampled Z; condition=1.0000000000000007; regularization=0.0; solve_infos=[{'relative_residual': 2.4901824214262042e-15, 'status': 'completed', 'reason': 'splu_exact'}]"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_bottom_y",
+      "fe_lift_solver": "tiny10_exact_splu",
+      "fe_lift_rhs_count": 2,
+      "fe_lift_solve_residual": 3.649671915238375e-15,
+      "fe_lift_time_s": 0.0016291520005324855,
+      "fe_lift_rss_gb": 0.26174163818359375,
+      "one_shot_residual_after": 9.601240747124345e-07,
+      "improvement": 1.0000097974413114,
+      "notes": "minres one-shot on true-FE sampled Z; condition=3.5273163391581788; regularization=0.0; solve_infos=[{'relative_residual': 2.4901824214262042e-15, 'status': 'completed', 'reason': 'splu_exact'}, {'relative_residual': 3.649671915238375e-15, 'status': 'completed', 'reason': 'splu_exact'}]"
+    }
+  ],
+  "best_candidate": {
+    "residual_after": 9.587861139326023e-07,
+    "improvement": 1.0014052847861756,
+    "row": {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "mode_set": "top_bottom_y",
+      "z_type": "diag_lift",
+      "w_type": "W_AZ",
+      "residual_before": 9.601334814717081e-07,
+      "residual_after": 9.587861139326023e-07,
+      "improvement": 1.0014052847861756,
+      "fe_fraction_after": 0.9658324656708805,
+      "aux_fraction_after": 0.25916722064355946,
+      "petrov_condition": 1.0389200862419712,
+      "regularization": 0.0,
+      "omega": 1.0,
+      "notes": "direct dense coarse solve; least-squares Petrov path W=AZ"
+    }
+  },
+  "gate_open": false,
+  "matrix_stats": {
+    "rows": 296,
+    "cols": 296,
+    "nnz": 18600,
+    "allocated_nnz": 18600
+  },
+  "complex_blocks": {
+    "Aff_shape": [
+      144,
+      144
+    ],
+    "Aff_nnz": 4574,
+    "C_shape": [
+      144,
+      4
+    ],
+    "C_nnz": 36,
+    "D_shape": [
+      4,
+      144
+    ],
+    "D_nnz": 36,
+    "Aaa_shape": [
+      4,
+      4
+    ],
+    "Aaa_nnz": 4
+  }
+}

@@ -1,0 +1,24 @@
+# Run Log
+
+## 运行环境
+
+- Docker image: `code-dolfinx-mpc:latest`
+- complex mode: `. dolfinx-complex-mode`
+- MPI ranks: 8
+- 分支: `codex/20260707-maxwell-physics-blr-preconditioner-prototype`
+
+## 命令与输出
+
+1. `python -m compileall src`：通过。
+2. `python -m unittest src.test.test_18_3d_direct_solver_profile_cleanup`：通过，5 个测试。
+3. MUMPS-BLR smoke h=5 eps=1e-3：`results/matrix_scale_20260707_014021/matrix_scale.csv`。
+4. MUMPS-BLR h=5/h=4 eps=1e-3,1e-5：`results/matrix_scale_20260707_014137/matrix_scale.csv`。
+5. MUMPS-BLR h=3/2.5/2 eps=1e-3,1e-5：`results/matrix_scale_20260707_014819/matrix_scale.csv`，eps=1e-3 在 h=2 超时，eps=1e-5 在 h=2 收敛。
+6. shifted Maxwell smoke h=5 alpha=0.5：`results/matrix_scale_20260707_024809/matrix_scale.csv`，P 可构造但不收敛。
+7. shifted/positive h=5/h=4 初筛：`results/matrix_scale_20260707_024939/matrix_scale.csv`，全部 1000 步未收敛。
+8. MUMPS-BLR h=1.5 eps=1e-5：`results/matrix_scale_20260707_025936/matrix_scale.csv`，KSP setup 阶段被 signal 9 kill。
+9. MUMPS-BLR h=2 eps=1e-4：`results/matrix_scale_20260707_032944/matrix_scale.csv`，收敛。
+
+## 说明
+
+`results/` 目录仍保留本地完整 case 输出，未纳入 git；本目录只保存轻量 CSV、JSON 和日志尾部。

@@ -1,0 +1,31 @@
+# Run Log
+
+## Environment
+
+```text
+branch: codex/20260707-real-split-ams-hx-qualification
+docker service: dolfinx_mpc
+complex mode: default dolfinx_mpc service
+real mode: . /usr/local/bin/dolfinx-real-mode
+date: 2026-07-08
+```
+
+## Commands
+
+| stage | command summary |
+|---|---|
+| default100 auto export | `python3 -m src.studies.run_stage4_real_split_block_pc export-complex ... --domain-preset default100 --dtn-order-policy auto_propagating --output-dir docs/task015_boundary_aware_pc_diagnostic/outcomes` |
+| default100 auto baseline/aux | `python3 -m src.studies.run_stage4_boundary_pc_diagnostic diagnose-real ... --profiles jacobi fe_ams_aux_identity fe_ams_aux_exact fe_ams_aux_diag` |
+| default100 auto Schur | same runner, single profile `fe_ams_aux_schur_diag` |
+| default100 auto modal | same runner, single profiles `modal_zero_order`, `modal_propagating` |
+| default100 zero_order export | export-complex with `--dtn-order-policy zero_order` |
+| default100 zero_order solve | diagnose-real single profile Jacobi and single profile FE-AMS |
+| tiny10 export | export-complex with `--domain-preset tiny10` |
+| tiny10 FE proxy | diagnose-real profiles `fe_ams_aux_identity` and `fe_exact_aux_exact` |
+
+## Runtime Notes
+
+1. `dolfinx` service lacks `dolfinx_mpc`; task15 uses `dolfinx_mpc` service.
+2. Python monitor callback triggered PETSc communicator errors when followed by Python PC setup. The runner now uses PETSc internal convergence history.
+3. Profiles using SciPy SuperLU for Schur/modal factors were run as single profile processes to avoid interference with subsequent hypre AMS setup.
+4. Temporary `.npz` matrix exports are runtime intermediates and are removed before commit.

@@ -1,0 +1,2 @@
+case,mode_set,solver_label,real_basis_dim,basis_condition,regularization,az_norm,az_spectral_min,az_spectral_max,az_max_abs_correlation,projector_idempotence_error,projector_orthogonality_error,notes
+task014a_default100_stage4_block_grating_p1_h5,top_bottom_y,scipy_gmres_diag_rtol_0.01,4,22.89058372762638,0.0,0.0071937945093697555,0.0010407098130653714,0.00497918294567581,0.8875883855187338,2.1797571475362367e-17,3.064005958438371e-20,diagnostic for P = I - AZ(AZ^T AZ)^-1 AZ^T

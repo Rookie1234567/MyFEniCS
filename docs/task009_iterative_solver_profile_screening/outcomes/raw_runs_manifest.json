@@ -1,0 +1,397 @@
+[
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_none__h4p0",
+    "profile_name": "iter_gmres_none",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_none__h5p0",
+    "profile_name": "iter_gmres_none",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageC_D_jacobi_h2_h1p5__iter_gmres_jacobi__h1p5",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "1.5",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageC_D_jacobi_h2_h1p5__iter_gmres_jacobi__h2p0",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "2.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageB_jacobi_h3_h2p5__iter_gmres_jacobi__h2p5",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "2.5",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageB_jacobi_h3_h2p5__iter_gmres_jacobi__h3p0",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "3.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_jacobi__h4p0",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_jacobi__h5p0",
+    "profile_name": "iter_gmres_jacobi",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_bjacobi_ilu0__h4p0",
+    "profile_name": "iter_gmres_bjacobi_ilu0",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_gmres_bjacobi_ilu0__h5p0",
+    "profile_name": "iter_gmres_bjacobi_ilu0",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_ilu0__h4p0",
+    "profile_name": "iter_fgmres_asm1_ilu0",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_ilu0__h5p0",
+    "profile_name": "iter_fgmres_asm1_ilu0",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm2_ilu0__h4p0",
+    "profile_name": "iter_fgmres_asm2_ilu0",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm2_ilu0__h5p0",
+    "profile_name": "iter_fgmres_asm2_ilu0",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_ilu1__h4p0",
+    "profile_name": "iter_fgmres_asm1_ilu1",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_ilu1__h5p0",
+    "profile_name": "iter_fgmres_asm1_ilu1",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_lu__h4p0",
+    "profile_name": "iter_fgmres_asm1_lu",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm1_lu__h5p0",
+    "profile_name": "iter_fgmres_asm1_lu",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm2_lu__h4p0",
+    "profile_name": "iter_fgmres_asm2_lu",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_required__iter_fgmres_asm2_lu__h5p0",
+    "profile_name": "iter_fgmres_asm2_lu",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_bicgstab_fixed__iter_bicgstab_asm1_ilu0__h4p0",
+    "profile_name": "iter_bicgstab_asm1_ilu0",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_bicgstab_fixed__iter_bicgstab_asm1_ilu0__h5p0",
+    "profile_name": "iter_bicgstab_asm1_ilu0",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_bicgstab_fixed__iter_bicgstab_bjacobi_ilu0__h4p0",
+    "profile_name": "iter_bicgstab_bjacobi_ilu0",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_bicgstab_fixed__iter_bicgstab_bjacobi_ilu0__h5p0",
+    "profile_name": "iter_bicgstab_bjacobi_ilu0",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_extra_gamg__iter_fgmres_gamg__h4p0",
+    "profile_name": "iter_fgmres_gamg",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_extra_gamg__iter_fgmres_gamg__h5p0",
+    "profile_name": "iter_fgmres_gamg",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_extra_fieldsplit_fixed__iter_fgmres_fieldsplit_schur_asm1_lu__h4p0",
+    "profile_name": "iter_fgmres_fieldsplit_schur_asm1_lu",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\stageA_extra_fieldsplit_fixed__iter_fgmres_fieldsplit_schur_asm1_lu__h5p0",
+    "profile_name": "iter_fgmres_fieldsplit_schur_asm1_lu",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\diagnostic_jacobi_maxit5000__iter_gmres_jacobi_maxit5000__h4p0",
+    "profile_name": "iter_gmres_jacobi_maxit5000",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\diagnostic_jacobi_maxit5000__iter_gmres_jacobi_maxit5000__h5p0",
+    "profile_name": "iter_gmres_jacobi_maxit5000",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\diagnostic_lgmres_jacobi__experimental_lgmres_jacobi__h4p0",
+    "profile_name": "experimental_lgmres_jacobi",
+    "h_nm": "4.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\diagnostic_lgmres_jacobi__experimental_lgmres_jacobi__h5p0",
+    "profile_name": "experimental_lgmres_jacobi",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "run_summary.json",
+      "progress_3d.jsonl",
+      "solver_log.txt",
+      "stdout_tail.txt"
+    ]
+  },
+  {
+    "raw_dir": "raw_runs\\diagnostic_hypre_boomeramg__experimental_hypre_boomeramg__h5p0",
+    "profile_name": "experimental_hypre_boomeramg",
+    "h_nm": "5.0",
+    "files": [
+      "iterative_profile_row.json",
+      "progress_3d.jsonl",
+      "stdout_tail.txt",
+      "stderr_tail.txt"
+    ]
+  }
+]

@@ -1,0 +1,11 @@
+h_nm,solver_profile,status,case_status,ksp_converged,true_relative_residual_norm,R_candidate,R_direct,T_candidate,T_direct,A_candidate,A_direct,comparison_valid
+4.0,iter_fgmres_positive_maxwell_asm1_ilu0,failed,failed_not_converged,False,0.2594342999958744,,0.003554031430110215,,0.5619170978701014,,0.4345288706998287,false_no_official_rta_when_not_converged
+4.0,iter_fgmres_positive_maxwell_asm1_lu,failed,failed_not_converged,False,0.19780021330383424,,0.003554031430110215,,0.5619170978701014,,0.4345288706998287,false_no_official_rta_when_not_converged
+4.0,iter_fgmres_shifted_a0p2_asm1_ilu0,failed,failed_not_converged,False,0.941721081955355,,0.003554031430110215,,0.5619170978701014,,0.4345288706998287,false_no_official_rta_when_not_converged
+4.0,iter_fgmres_shifted_a0p5_asm1_ilu0,failed,failed_not_converged,False,0.8179202124897857,,0.003554031430110215,,0.5619170978701014,,0.4345288706998287,false_no_official_rta_when_not_converged
+4.0,iter_fgmres_shifted_a1p0_asm1_ilu0,failed,failed_not_converged,False,0.7061267887773834,,0.003554031430110215,,0.5619170978701014,,0.4345288706998287,false_no_official_rta_when_not_converged
+5.0,iter_fgmres_positive_maxwell_asm1_ilu0,failed,failed_not_converged,False,0.18293506626973602,,0.08902160293640748,,0.4425882786570433,,0.46839011840647865,false_no_official_rta_when_not_converged
+5.0,iter_fgmres_positive_maxwell_asm1_lu,failed,failed_not_converged,False,0.1936753134247894,,0.08902160293640748,,0.4425882786570433,,0.46839011840647865,false_no_official_rta_when_not_converged
+5.0,iter_fgmres_shifted_a0p2_asm1_ilu0,failed,failed_not_converged,False,0.9418485008630986,,0.08902160293640748,,0.4425882786570433,,0.46839011840647865,false_no_official_rta_when_not_converged
+5.0,iter_fgmres_shifted_a0p5_asm1_ilu0,failed,failed_not_converged,False,0.856446226428342,,0.08902160293640748,,0.4425882786570433,,0.46839011840647865,false_no_official_rta_when_not_converged
+5.0,iter_fgmres_shifted_a1p0_asm1_ilu0,failed,failed_not_converged,False,0.7108519304998949,,0.08902160293640748,,0.4425882786570433,,0.46839011840647865,false_no_official_rta_when_not_converged

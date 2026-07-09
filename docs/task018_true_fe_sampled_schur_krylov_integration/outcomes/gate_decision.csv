@@ -1,0 +1,6 @@
+gate,decision,metric,value,threshold,notes
+Task017 one-shot reproduction,pass,one_shot_residual_after,0.0017324131089646699,<1e-2 and improvement>=2 on the same top_bottom_y mode set,Exact Task017 value drifted because the current SciPy GMRES loose solve converged further; the positive signal is reproduced and stronger.
+minimum useful solver-like,pass,best_final_residual,0.0016616234679826358,<1e-2 or improvement>=2,best_improvement=12.9143
+strong,pass,best_final_residual,0.0016616234679826358,<=2e-3 or improvement>=10,best_improvement=12.9143
+p2_h5_escalation,closed,task_scope,default100_p1_h5_only,strong stable gate plus reviewer approval,Task018 keeps p=2 closed unless strong gate and stable integration both hold.
+merge_code,research_runner_only,production_default_behavior,unchanged,opt-in only,No production solver default is changed.

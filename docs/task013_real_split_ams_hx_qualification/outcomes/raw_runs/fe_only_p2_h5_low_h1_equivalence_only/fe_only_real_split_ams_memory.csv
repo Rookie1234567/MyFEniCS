@@ -1,0 +1,3 @@
+case,p,h_nm,h1_degree_mode,status,n_real,nnz_real,real_block_estimated_aij_memory_gb,B_rows,B_nnz,B_estimated_aij_memory_gb,G_rows,G_cols,G_nnz,H1_dofs,Pi_present,Pi_nnz,rss_after_assembly_gb,rss_after_solve_gb,elapsed_wall_s,notes
+fe_only_p2_h5_same,2,5.0,same,completed,74892,14233968.0,0.1593559868633747,37446,3558492.0,0.039908748120069504,37446,13167,1572090.0,13167,False,,1.0415725708007812,,11.71046530500098,solves skipped by --skip-solves
+fe_only_p2_h5_linear,2,5.0,linear,completed,74892,14233968.0,0.1593559868633747,37446,3558492.0,0.039908748120069504,37446,1914,354855.0,1914,False,,1.0584640502929688,,9.422766851002962,solves skipped by --skip-solves

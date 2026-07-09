@@ -1,0 +1,8 @@
+case,p,h_nm,h1_degree_mode,status,cells,n_complex,n_real,nnz_complex,nnz_real,relative_matvec_error,relative_rhs_error,rss_upper_gb,notes
+fe_only_p1_h10_standard,1,10.0,standard,completed,"[5, 3, 14]",906,1812,22590.0,90360.0,1.3457848002885344e-16,0.0,0.17723464965820312,serial real PETSc FE-only explicit block equivalence
+fe_only_p1_h5_standard,1,5.0,standard,completed,"[10, 5, 28]",5183,10366,145223.0,580892.0,1.4041179212036123e-16,0.0,0.2073974609375,serial real PETSc FE-only explicit block equivalence
+fe_only_p2_h10_standard,2,10.0,standard,completed,"[5, 3, 14]",6100,12200,541520.0,2166080.0,1.6060806449189902e-16,0.0,0.3012657165527344,serial real PETSc FE-only explicit block equivalence
+fe_only_p2_h5_standard,2,5.0,standard,completed,"[10, 5, 28]",37446,74892,3558492.0,14233968.0,1.6585009054410358e-16,0.0,1.080718994140625,serial real PETSc FE-only explicit block equivalence
+fe_only_p2_h5_same,2,5.0,same,completed,"[10, 5, 28]",37446,74892,3558492.0,14233968.0,1.6585009054410358e-16,0.0,1.0415725708007812,serial real PETSc FE-only explicit block equivalence
+fe_only_p2_h5_linear,2,5.0,linear,completed,"[10, 5, 28]",37446,74892,3558492.0,14233968.0,1.6585009054410358e-16,0.0,1.0584640502929688,serial real PETSc FE-only explicit block equivalence
+fe_only_p2_h4_same,2,4.0,same,completed,"[13, 7, 35]",82878,165756,8057556.0,32230224.0,1.6705617975551743e-16,0.0,1.9244956970214844,serial real PETSc FE-only explicit block equivalence

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="360" viewBox="0 0 920 360">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="460.0" y="28" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700">Task015 default100 p=1 h=5 true residual</text>
+<line x1="80" y1="268" x2="900" y2="268" stroke="#334155"/>
+<line x1="80" y1="48" x2="80" y2="268" stroke="#334155"/>
+<rect x="80.0" y="250.9" width="106.9" height="17.1" fill="#3b82f6" rx="2"/>
+<text x="133.4" y="244.9" text-anchor="middle" font-family="Arial" font-size="11">3.44e-02</text>
+<text x="133.4" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 133.4,286)">Jacobi</text>
+<rect x="198.9" y="257.3" width="106.9" height="10.7" fill="#10b981" rx="2"/>
+<text x="252.3" y="251.3" text-anchor="middle" font-family="Arial" font-size="11">2.15e-02</text>
+<text x="252.3" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 252.3,286)">FE-AMS + aux I</text>
+<rect x="317.7" y="257.3" width="106.9" height="10.7" fill="#84cc16" rx="2"/>
+<text x="371.1" y="251.3" text-anchor="middle" font-family="Arial" font-size="11">2.15e-02</text>
+<text x="371.1" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 371.1,286)">aux exact</text>
+<rect x="436.6" y="257.3" width="106.9" height="10.7" fill="#22c55e" rx="2"/>
+<text x="490.0" y="251.3" text-anchor="middle" font-family="Arial" font-size="11">2.15e-02</text>
+<text x="490.0" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 490.0,286)">aux diag</text>
+<rect x="555.4" y="48.0" width="106.9" height="220.0" fill="#ef4444" rx="2"/>
+<text x="608.9" y="42.0" text-anchor="middle" font-family="Arial" font-size="11">4.43e-01</text>
+<text x="608.9" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 608.9,286)">Schur diag</text>
+<rect x="674.3" y="257.3" width="106.9" height="10.7" fill="#f59e0b" rx="2"/>
+<text x="727.7" y="251.3" text-anchor="middle" font-family="Arial" font-size="11">2.15e-02</text>
+<text x="727.7" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 727.7,286)">modal zero</text>
+<rect x="793.1" y="257.3" width="106.9" height="10.7" fill="#a855f7" rx="2"/>
+<text x="846.6" y="251.3" text-anchor="middle" font-family="Arial" font-size="11">2.15e-02</text>
+<text x="846.6" y="286" text-anchor="middle" font-family="Arial" font-size="11" transform="rotate(35 846.6,286)">modal prop</text>
+<text x="18" y="158.0" text-anchor="middle" font-family="Arial" font-size="12" transform="rotate(-90 18,158.0)">true relative residual</text>
+</svg>

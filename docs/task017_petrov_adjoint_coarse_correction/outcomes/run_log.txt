@@ -1,0 +1,26 @@
+Task017 run log
+Date: 2026-07-08
+Branch: codex/20260707-real-split-ams-hx-qualification
+
+1. Read task017 task.md, task016 review/summary/csv, task015 review/csv, and existing runners.
+2. Added src/studies/run_stage4_petrov_adjoint_coarse_correction.py.
+3. Ran py_compile successfully.
+4. Exported tiny10 complex matrix in Docker complex-mode.
+5. Ran tiny10 real-mode Petrov/true-FE diagnostic.
+6. Exported default100 complex matrix in Docker complex-mode.
+7. Ran default100 real-mode diagnostic.
+8. Fixed Python PC destroy callback and pre-set-up AMS helper for W_adjoint_pfe.
+9. Added SciPy complex GMRES + FE diagonal loose fallback after PETSc selected FE AMS failed with PCSetUp error 101.
+10. Added Stage D KSP gate using true-FE sampled lift top_bottom_y.
+11. Fixed Stage D PC to reuse a pre-set-up AMS helper instead of creating a new AMS KSP late in the run.
+12. Shortened Stage D residual history filename to avoid Windows path length issues.
+13. Removed .npz/.h5/.xdmf/.vtu/.pvtu generated files from task017 raw_runs.
+
+Key results:
+- baseline default100 residual: 2.1465559540488233e-2
+- best Petrov residual: 2.1464596694317942e-2, improvement 1.0000448574x
+- best true-FE sampled one-shot residual: 3.6887839402995697e-3, improvement 5.819142538x
+- Stage D KSP residual with damped true-FE lift right PC: 2.3549877024463182e-2, improvement 0.911493488x
+
+Conclusion:
+Petrov/adjoint W did not help. True-FE sampled lift is a real positive signal, but current right-PC KSP integration is wrong.

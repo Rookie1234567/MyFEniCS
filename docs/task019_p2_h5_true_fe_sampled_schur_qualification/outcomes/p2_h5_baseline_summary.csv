@@ -1,0 +1,2 @@
+case,p,h_nm,profile,status,reason,iterations,true_relative_residual_norm,ksp_final_residual,setup_time_s,solve_time_s,rss_gb,notes
+task014a_default100_stage4_block_grating_p2_h5,2,5.0,stage4_real_split_fgmres_fe_ams_aux_identity,not_converged,DIVERGED_MAX_IT,120,0.016386055485257574,2.157076335982738,129.96119609900052,1420.8493878590089,12.964344024658203,complete true residual baseline for p=2 h=5 FE-AMS plus auxiliary identity

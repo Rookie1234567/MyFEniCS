@@ -1,0 +1,95 @@
+{
+  "task": "task014a_real_split_stage4_reduced_block_pc",
+  "branch": "codex/20260707-real-split-ams-hx-qualification",
+  "date": "2026-07-08",
+  "purpose": "Reduced Stage 4 real-split FE/aux block-PC qualification",
+  "scalar_modes": {
+    "complex_export": "source /usr/local/bin/dolfinx-complex-mode before running Python",
+    "real_solve": "default real PETSc mode in code-dolfinx-mpc:latest"
+  },
+  "profiles": [
+    "stage4_real_split_fgmres_jacobi",
+    "stage4_real_split_fgmres_fe_ams_aux_identity"
+  ],
+  "ksp_settings": {
+    "outer_ksp_type": "fgmres",
+    "rtol": 1e-6,
+    "atol": 1e-12,
+    "max_it": 1000,
+    "restart": 80,
+    "pc_side": "right",
+    "norm_type": "unpreconditioned",
+    "inner_ams_ksp_type": "preonly",
+    "aux_block": "identity"
+  },
+  "cases": [
+    {
+      "case": "task014a_stage4_block_grating_p1_h5",
+      "domain_label": "tiny10",
+      "stage_case": "stage4_block_grating",
+      "dtn_order_policy": "auto_propagating",
+      "period_x_nm": 10.0,
+      "period_y_nm": 10.0,
+      "air_height_nm": 5.0,
+      "substrate_thickness_nm": 5.0,
+      "grating_width_x_nm": 5.0,
+      "grating_width_y_nm": 5.0,
+      "grating_height_nm": 2.5,
+      "p": 1,
+      "h_nm": 5.0,
+      "matrix_export_transient": "docs/task014a_real_split_stage4_reduced_block_pc/outcomes/raw_runs/task014a_stage4_block_grating_p1_h5/complex_export/task014a_stage4_block_grating_p1_h5_complex_matrix.npz",
+      "matrix_export_retained": false
+    },
+    {
+      "case": "task014a_default100_stage4_block_grating_p1_h5",
+      "domain_label": "default100",
+      "stage_case": "stage4_block_grating",
+      "dtn_order_policy": "auto_propagating",
+      "period_x_nm": 100.0,
+      "period_y_nm": 100.0,
+      "air_height_nm": 100.0,
+      "substrate_thickness_nm": 50.0,
+      "grating_width_x_nm": 50.0,
+      "grating_width_y_nm": 50.0,
+      "grating_height_nm": 50.0,
+      "p": 1,
+      "h_nm": 5.0,
+      "matrix_export_transient": "docs/task014a_real_split_stage4_reduced_block_pc/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/task014a_default100_stage4_block_grating_p1_h5_complex_matrix.npz",
+      "matrix_export_retained": false
+    },
+    {
+      "case": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+      "domain_label": "default100_zero_order_local_robin",
+      "stage_case": "stage4_block_grating",
+      "dtn_order_policy": "zero_order",
+      "period_x_nm": 100.0,
+      "period_y_nm": 100.0,
+      "air_height_nm": 100.0,
+      "substrate_thickness_nm": 50.0,
+      "grating_width_x_nm": 50.0,
+      "grating_width_y_nm": 50.0,
+      "grating_height_nm": 50.0,
+      "p": 1,
+      "h_nm": 5.0,
+      "matrix_export_transient": "docs/task014a_real_split_stage4_reduced_block_pc/outcomes/raw_runs/task014a_default100_zero_order_stage4_block_grating_p1_h5/complex_export/task014a_default100_zero_order_stage4_block_grating_p1_h5_complex_matrix.npz",
+      "matrix_export_retained": false,
+      "note": "zero_order normal-incidence path uses local Robin branch and has no DtN auxiliary unknowns"
+    }
+  ],
+  "primary_outputs": [
+    "stage4_real_split_equivalence.csv",
+    "reduced_stage4_block_pc_summary.csv",
+    "reduced_stage4_block_pc_memory.csv",
+    "summary.md",
+    "solver_profile_ranking.md",
+    "p2_h5_reduced_stage4_decision.md",
+    "merge_recommendation.md",
+    "next_decision.md"
+  ],
+  "external_references_checked": [
+    "https://petsc.org/release/manualpages/PC/PCHYPRE/",
+    "https://petsc.org/release/manualpages/PC/PCHYPRESetDiscreteGradient/",
+    "https://petsc.org/release/manualpages/PC/PCHYPRESetEdgeConstantVectors/",
+    "https://petsc.org/release/manualpages/PC/PCHYPRESetAlphaPoissonMatrix/"
+  ]
+}

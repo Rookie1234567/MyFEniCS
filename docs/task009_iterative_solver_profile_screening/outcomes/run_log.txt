@@ -1,0 +1,23 @@
+# Run Log
+
+## Validation
+
+- `python -m compileall src`：通过。
+- Docker complex-mode：确认 `PETSc.ScalarType = numpy.complex128`。
+- Docker complex-mode：`python -m unittest src.test.test_18_3d_direct_solver_profile_cleanup` 通过。
+
+## Main Runs
+
+- Stage A required profiles：`results/matrix_scale_20260706_140022/matrix_scale.csv`
+- Stage A fixed BiCGStab/bcgs profiles：`results/matrix_scale_20260706_141654/matrix_scale.csv`
+- Jacobi 5000-step diagnostic：`results/matrix_scale_20260706_142004/matrix_scale.csv`
+- Extra GAMG and first FieldSplit probe：`results/matrix_scale_20260706_142623/matrix_scale.csv`
+- Fixed FieldSplit Schur probe：`results/matrix_scale_20260706_143020/matrix_scale.csv`
+- Stage B Jacobi h=3/h=2.5：`results/matrix_scale_20260706_143520/matrix_scale.csv`
+- Stage C/D Jacobi h=2/h=1.5：`results/matrix_scale_20260706_143906/matrix_scale.csv`
+- LGMRES+Jacobi diagnostic：`results/matrix_scale_20260706_145305/matrix_scale.csv`
+- Hypre BoomerAMG diagnostic crash：`results/matrix_scale_20260706_145450/matrix_scale.csv`
+
+## Notes
+
+所有正式运行都使用 Docker complex-mode 和 MPI=8。大型场文件和完整 `results/` 目录仍保留在本地，不复制到 Git-tracked outcomes；`raw_runs/` 只保存轻量 JSON、progress、solver log 和 stdout/stderr tail。

@@ -1,0 +1,25 @@
+Task018 run log
+
+Branch:
+codex/20260707-real-split-ams-hx-qualification
+
+Complex export:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. /usr/local/bin/dolfinx-complex-mode && python -m src.studies.run_stage4_real_split_block_pc export-complex --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100 --dtn-order-policy auto_propagating --output-dir docs/task018_true_fe_sampled_schur_krylov_integration/outcomes'
+
+Stable real-mode task18 run:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. /usr/local/bin/dolfinx-real-mode && python -m src.studies.run_stage4_true_fe_sampled_schur_krylov diagnose-real --degree 1 --h-nm 5 --stage-case stage4_block_grating --domain-preset default100 --dtn-order-policy auto_propagating --output-dir docs/task018_true_fe_sampled_schur_krylov_integration/outcomes --matrix-export docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/task014a_default100_stage4_block_grating_p1_h5_complex_matrix.npz --metadata docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/metadata.json --baseline-max-it 1000 --restart 200 --fe-rtol 1e-2 1e-4 1e-6 --fe-max-it 500 --fe-restart 120 --initial-continue-max-it 200 --residual-segment-max-it 120 --residual-cycles 4 --projected-gmres-max-it 60 --projected-gmres-restart 30'
+
+Validation:
+python -m py_compile src\studies\run_stage4_true_fe_sampled_schur_krylov.py
+
+Important runtime observations:
+- `code-dolfinx-mpc:latest` must source `/usr/local/bin/dolfinx-complex-mode` for export and `/usr/local/bin/dolfinx-real-mode` for real-split AMS/HX diagnostics.
+- `code-dolfinx:latest` is complex-mode but lacks `dolfinx_mpc`, so it cannot export this Floquet MPC case.
+- PETSc selected FE-AMS opt-in was reattempted and failed with `KSPSetUp/PCSetUp` error 101 or invalid communicator behavior; the stable runner keeps it disabled by default.
+- Shared FE-AMS helper must be set up immediately after `ams_data` construction and reused; late or repeated setup can trigger PETSc communicator lifecycle errors.
+
+Final stable run result:
+baseline residual = 0.02145878536207579
+best final residual = 0.0016616234679826358
+best improvement = 12.914348993956336
+best basis = scipy_gmres_diag_rtol_0.01

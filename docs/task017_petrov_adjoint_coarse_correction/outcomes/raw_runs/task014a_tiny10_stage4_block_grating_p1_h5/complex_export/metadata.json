@@ -1,0 +1,380 @@
+{
+  "row": {
+    "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+    "p": 1,
+    "h_nm": 5.0,
+    "includes_floquet_mpc": true,
+    "includes_dtn_aux": true,
+    "n_complex": 148,
+    "n_real": 296,
+    "nnz_complex": 4650,
+    "nnz_real": 18600,
+    "fe_complex_dofs": 144,
+    "aux_complex_dofs": 4,
+    "relative_matvec_error": 1.5753489479298024e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 0.26218414306640625,
+    "notes": "constraint-after dolfinx_mpc matrix plus auxiliary DtN rows; complex-mode export"
+  },
+  "config": {
+    "case_name": "task014a_tiny10_stage4_block_grating_p1_h5",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 10.0,
+    "period_y": 10.0,
+    "z_min": -5.0,
+    "z_max": 5.0,
+    "air_height": 5.0,
+    "substrate_thickness": 5.0,
+    "grating_height": 2.5,
+    "grating_width_x": 5.0,
+    "grating_width_y": 5.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "substrate_material_label": "Si / silicon",
+    "grating_material_label": "Si / silicon",
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "natural",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 5.0,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "mesh_target_size": 5.0,
+    "mesh_cell_type": "auto",
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_sample_count_x": 16,
+    "diffraction_sample_count_y": 16,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "petsc_direct_solver_profile": "default",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": true,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 10.0,
+    "y_min": 0.0,
+    "y_max": 10.0,
+    "physical_z_min": -5.0,
+    "physical_z_max": 5.0,
+    "domain_z_min": -5.0,
+    "domain_z_max": 5.0,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "boundary_fitted",
+    "mesh_refined_size_resolved": 2.5,
+    "mesh_refinement_radius_resolved": 5.0,
+    "floquet_constraint_mode_requested": "auto",
+    "propagation_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.46542113386515455,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "grating_index": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "grating_bounds": {
+      "x_min": 2.5,
+      "x_max": 7.5,
+      "y_min": 2.5,
+      "y_max": 7.5,
+      "z_min": 0.0,
+      "z_max": 2.5
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "mesh_cells": [
+      2,
+      2,
+      2
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "mesh_cells_resolved": [
+    3,
+    3,
+    3
+  ],
+  "mesh_spacing_mode_resolved": "boundary_fitted",
+  "floquet": {
+    "num_constraints": 45,
+    "constraint_mode_resolved": "topological_edges_p1",
+    "phase_x": [
+      1.0,
+      0.0
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ]
+  },
+  "solver_info": {
+    "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+    "assemble_only": true,
+    "num_auxiliary_dofs": 4,
+    "num_fem_dofs_after_mpc": 144,
+    "num_total_augmented_dofs": 148,
+    "stage4_dtn_assembly_seconds": 4.7256221389980055,
+    "ksp_converged_reason": 0,
+    "ksp_iterations": 0,
+    "actual_ksp_type": "fgmres",
+    "actual_pc_type": "jacobi",
+    "actual_pc_factor_solver_type": null,
+    "dtn_base_matrix_stats": {
+      "matrix_rows": 144,
+      "matrix_cols": 144,
+      "matrix_nnz_used": 4574.0,
+      "matrix_nnz_allocated": 4574.0,
+      "matrix_average_nnz_per_row": 31.76388888888889,
+      "matrix_average_allocated_nnz_per_row": 31.76388888888889,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 110936.0,
+      "matrix_memory_estimate_mb": 0.10579681396484375,
+      "matrix_norm_frobenius": 12.44445657006819,
+      "matrix_norm_infinity": 6.135385519905199,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 4574.0,
+        "nz_used": 4574.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_augmented_matrix_stats_after_finalize": {
+      "matrix_rows": 148,
+      "matrix_cols": 148,
+      "matrix_nnz_used": 4650.0,
+      "matrix_nnz_allocated": 4650.0,
+      "matrix_average_nnz_per_row": 31.41891891891892,
+      "matrix_average_allocated_nnz_per_row": 31.41891891891892,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 112792.0,
+      "matrix_memory_estimate_mb": 0.10756683349609375,
+      "matrix_norm_frobenius": 15.741473255709055,
+      "matrix_norm_infinity": 6.135385519905199,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 4650.0,
+        "nz_used": 4650.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_auxiliary_block_stats": {
+      "dtn_auxiliary_block_is_dense": false,
+      "dtn_auxiliary_dof_count": 4,
+      "dtn_auxiliary_fem_dof_count": 144,
+      "dtn_auxiliary_coupling_nnz_estimate": 76,
+      "dtn_auxiliary_average_coupling_nnz_per_mode": 19.0,
+      "dtn_auxiliary_dense_block_equivalent_nnz": 1156
+    },
+    "preconditioner_family": null,
+    "mumps_blr_enabled": false,
+    "mumps_blr_epsilon": null,
+    "shifted_preconditioner_enabled": false,
+    "shifted_preconditioner_alpha": null,
+    "positive_maxwell_preconditioner_enabled": false,
+    "operator_preconditioner_enabled": false,
+    "low_memory_krylov_enabled": false,
+    "low_memory_krylov_family": null,
+    "preconditioner_matrix_stats": null,
+    "preconditioner_base_matrix_stats": null,
+    "preconditioner_auxiliary_treatment": null,
+    "preconditioner_operator_smoke_ready": false,
+    "explicit_chac_constructed": false,
+    "dtn_auxiliary_dense_block_constructed": false,
+    "stage4_dtn_base_matrix_assembly_seconds": 3.198889623003197,
+    "stage4_dtn_base_rhs_assembly_seconds": 0.17424761998699978,
+    "stage4_dtn_surface_quadrature_degree": 10,
+    "stage4_dtn_augmented_block_copy_seconds": 0.0017429690051358193,
+    "stage4_dtn_preconditioner_matrix_assembly_seconds": null,
+    "stage4_dtn_incident_source_vector_seconds": 0.26591664500301704,
+    "stage4_dtn_modal_loop_seconds": 0.002655365999089554,
+    "stage4_dtn_modal_vector_assembly_seconds": 0.0012480470031732693,
+    "stage4_dtn_modal_block_insert_seconds": 0.0001566949940752238,
+    "stage4_dtn_unique_surface_orders": 2,
+    "stage4_dtn_component_vector_assemblies": 4,
+    "stage4_dtn_component_vector_cache_hits": 2,
+    "stage4_dtn_augmented_matrix_finalize_seconds": 0.0002560769935371354
+  },
+  "matrix_export": "docs/task017_petrov_adjoint_coarse_correction/outcomes/raw_runs/task014a_tiny10_stage4_block_grating_p1_h5/complex_export/task014a_tiny10_stage4_block_grating_p1_h5_complex_matrix.npz",
+  "log_lines": [
+    "Task014a complex export case = task014a_tiny10_stage4_block_grating_p1_h5",
+    "3D Floquet constraint mode requested = auto",
+    "3D Floquet constraint mode resolved = topological_edges_p1",
+    "3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.",
+    "building 3D Floquet topological edge context",
+    "building 3D Floquet topological edge context seconds = 0.008",
+    "building 3D Floquet x-direction low-level constraints",
+    "building 3D Floquet x-direction low-level constraints seconds = 0.001",
+    "building 3D Floquet y-direction low-level constraints",
+    "building 3D Floquet y-direction low-level constraints seconds = 0.001",
+    "resolving 3D double-Floquet corner/master chain",
+    "resolving 3D double-Floquet corner/master chain seconds = 0.000",
+    "assembling 3D topological Floquet MPC arrays",
+    "assembling 3D topological Floquet MPC arrays seconds = 0.001",
+    "finalizing 3D double-Floquet MPC",
+    "finalizing 3D double-Floquet MPC seconds = 0.003",
+    "3D Floquet phase x = 1 + 0j",
+    "3D Floquet phase y = 1 + 0j",
+    "3D Floquet phase corner = 1 + 0j",
+    "3D Floquet number of slave edges = 45",
+    "3D Floquet number of matched master edges = 45",
+    "3D Floquet number of constraints = 45",
+    "3D Floquet max edge midpoint pairing error = 0.000e+00 nm",
+    "3D Floquet number of x constraints = 21",
+    "3D Floquet number of y constraints = 21",
+    "3D Floquet number of corner constraints = 3",
+    "3D Floquet local slave dofs = 45",
+    "3D Floquet local slave records seen = 45",
+    "3D Floquet local ghost slave constraints = 0",
+    "3D Floquet global ghost slave constraints = 0",
+    "3D Floquet local ghost slave records skipped = 0",
+    "3D Floquet global ghost slave records skipped = 0",
+    "3D Floquet raw map nnz = 45",
+    "3D Floquet max masters per slave = 1",
+    "3D Floquet estimated constraint memory MB = 0.002",
+    "3D Floquet total constraint setup seconds = 0.015",
+    "floquet_constraint_setup_outer seconds = 0.015",
+    "No z-boundary Dirichlet dofs were located for this Floquet run.",
+    "boundary_condition_setup seconds = 0.000",
+    "strong Dirichlet H(curl) boundary enabled = False",
+    "Dirichlet H(curl) boundary dofs local/global = 0 / 0",
+    "Stage-4 DtN selected auxiliary port modes = 4",
+    "Stage-4 DtN top/bottom mode count = 2 / 2",
+    "Stage-4 DtN matrix base rows = 144",
+    "Stage-4 DtN surface quadrature degree = 10",
+    "Stage-4 DtN modal cache summary: unique surface orders = 2, x/y component vector assemblies = 4, polarization cache hits = 2",
+    "Stage-4 DtN base matrix nnz = 4574.0",
+    "Stage-4 DtN auxiliary coupling nnz estimate = 76"
+  ],
+  "elapsed_s": 5.221689869009424
+}

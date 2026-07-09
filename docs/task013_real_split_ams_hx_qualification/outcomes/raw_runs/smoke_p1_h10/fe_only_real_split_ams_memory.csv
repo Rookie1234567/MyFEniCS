@@ -1,0 +1,2 @@
+case,p,h_nm,h1_degree_mode,status,n_real,nnz_real,real_block_estimated_aij_memory_gb,B_rows,B_nnz,B_estimated_aij_memory_gb,G_rows,G_cols,G_nnz,H1_dofs,Pi_present,Pi_nnz,rss_after_assembly_gb,rss_after_solve_gb,elapsed_wall_s,notes
+fe_only_p1_h10_standard,1,10.0,standard,completed,1812,90360.0,0.0010166056454181671,906,22590.0,0.00025584176182746887,906,2233,51126.0,2233,False,,0.17723464965820312,0.24811553955078125,2.0352542420005193,

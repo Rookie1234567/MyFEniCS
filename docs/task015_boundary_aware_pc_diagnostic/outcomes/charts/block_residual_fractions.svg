@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="310" viewBox="0 0 760 310">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="380.0" y="28" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700">Final residual block fractions</text>
+<rect x="90" y="65.67367649349754" width="32.0" height="172.32632350650246" fill="#2563eb"/>
+<rect x="128.0" y="148.89535238422044" width="32.0" height="89.10464761577956" fill="#dc2626"/>
+<text x="125.0" y="256" text-anchor="middle" font-family="Arial" font-size="11">Jacobi</text>
+<text x="107.5" y="60.67367649349754" text-anchor="middle" font-family="Arial" font-size="10">0.89</text>
+<text x="142.5" y="143.89535238422044" text-anchor="middle" font-family="Arial" font-size="10">0.46</text>
+<rect x="200" y="229.598085288264" width="32.0" height="8.401914711736007" fill="#2563eb"/>
+<rect x="238.0" y="44.182023978226624" width="32.0" height="193.81797602177338" fill="#dc2626"/>
+<text x="235.0" y="256" text-anchor="middle" font-family="Arial" font-size="11">FE-AMS + aux I</text>
+<text x="217.5" y="224.598085288264" text-anchor="middle" font-family="Arial" font-size="10">0.04</text>
+<text x="252.5" y="39.182023978226624" text-anchor="middle" font-family="Arial" font-size="10">1.00</text>
+<rect x="310" y="44.53854907078872" width="32.0" height="193.46145092921128" fill="#2563eb"/>
+<rect x="348.0" y="223.55468919114665" width="32.0" height="14.445310808853359" fill="#dc2626"/>
+<text x="345.0" y="256" text-anchor="middle" font-family="Arial" font-size="11">Schur diag</text>
+<text x="327.5" y="39.53854907078872" text-anchor="middle" font-family="Arial" font-size="10">1.00</text>
+<text x="362.5" y="218.55468919114665" text-anchor="middle" font-family="Arial" font-size="10">0.07</text>
+<text x="595" y="62" font-family="Arial" font-size="12" fill="#2563eb">FE fraction</text>
+<text x="595" y="80" font-family="Arial" font-size="12" fill="#dc2626">aux fraction</text>
+<line x1="90" y1="238" x2="730" y2="238" stroke="#334155"/>
+</svg>

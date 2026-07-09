@@ -1,0 +1,54 @@
+{
+  "task": "task015_boundary_aware_pc_diagnostic",
+  "branch": "codex/20260707-real-split-ams-hx-qualification",
+  "date": "2026-07-08",
+  "primary_case": {
+    "domain_preset": "default100",
+    "stage_case": "stage4_block_grating",
+    "degree": 1,
+    "h_nm": 5.0,
+    "period_nm": [100.0, 100.0],
+    "z_range_nm": [-50.0, 100.0],
+    "dtn_order_policy": "auto_propagating",
+    "aux_complex_dofs": 708,
+    "aux_real_dofs": 1416,
+    "fe_complex_dofs": 39270,
+    "total_real_dofs": 79956
+  },
+  "ablation_cases": [
+    {
+      "domain_preset": "default100",
+      "dtn_order_policy": "zero_order",
+      "role": "local Robin sanity branch"
+    },
+    {
+      "domain_preset": "tiny10",
+      "dtn_order_policy": "auto_propagating",
+      "role": "FE exact upper-bound diagnostic only"
+    }
+  ],
+  "ksp": {
+    "type": "fgmres",
+    "rtol": 1e-6,
+    "atol": 1e-12,
+    "max_it": 1000,
+    "restart": 80,
+    "pc_side": "right",
+    "residual_norm": "true residual computed as ||b-Ax||/||b||"
+  },
+  "profiles": [
+    "stage4_real_split_fgmres_jacobi",
+    "stage4_real_split_fgmres_fe_ams_aux_identity",
+    "stage4_real_split_fgmres_fe_ams_aux_exact",
+    "stage4_real_split_fgmres_fe_ams_aux_diag",
+    "stage4_real_split_fgmres_fe_ams_aux_schur_diag",
+    "stage4_real_split_fgmres_fe_ams_modal_zero_order",
+    "stage4_real_split_fgmres_fe_ams_modal_propagating",
+    "stage4_real_split_fgmres_fe_exact_aux_exact"
+  ],
+  "artifact_policy": {
+    "raw_runs_retained": "lightweight JSON/CSV/log excerpts only",
+    "matrix_export_retained": false,
+    "excluded_extensions": [".npz", ".h5", ".xdmf", ".vtu", ".pvtu"]
+  }
+}

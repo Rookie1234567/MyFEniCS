@@ -1,0 +1,74 @@
+Task011 run log, 2026-07-07.
+
+Branch:
+codex/20260707-low-memory-ams-hx-iterative-solver
+
+1. Stage A p=2 h=5/h=4 low-memory Krylov sweep
+
+Command:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 4 --mpi-procs 8 --stage-case stage4_block_grating --nedelec-degree 2 --visualization-degree 1 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --period-x 50 --period-y 25 --air-height 130 --substrate-thickness 10 --grating-width-x 17 --grating-width-y 25 --grating-height 120 --lambda0 13.5 --incident-theta-deg 80 --incident-phi-deg 0 --polarization-kind s --n-substrate 0.999002304859+0.00182649365j --n-grating 0.999002304859+0.00182649365j --mesh-spacing-mode boundary_fitted --solver-profiles iter_gmres_jacobi_restart20 iter_gmres_jacobi_restart40 iter_fgmres_jacobi_restart20 iter_lgmres_jacobi_restart20 iter_tfqmr_jacobi iter_bicgstab_jacobi iter_cgs_jacobi --case-timeout-seconds 420'
+
+Output CSV:
+results/matrix_scale_20260707_072827/matrix_scale.csv
+
+Result:
+All 14 p=2 cases failed to converge. Best p=2 result was iter_gmres_jacobi_restart40 at h=4 with true_relative_residual_norm 0.234320432830893 and RSS upper 3.284210205078125 GB.
+
+2. Stage A p=1 h=5 sanity check
+
+Command:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && python3 -m src.studies.run_3d_matrix_scale --mesh-sizes 5 --mpi-procs 8 --stage-case stage4_block_grating --nedelec-degree 1 --visualization-degree 1 --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --stage4-dtn-assembly auxiliary --period-x 50 --period-y 25 --air-height 130 --substrate-thickness 10 --grating-width-x 17 --grating-width-y 25 --grating-height 120 --lambda0 13.5 --incident-theta-deg 80 --incident-phi-deg 0 --polarization-kind s --n-substrate 0.999002304859+0.00182649365j --n-grating 0.999002304859+0.00182649365j --mesh-spacing-mode boundary_fitted --solver-profiles iter_gmres_jacobi_restart40 iter_fgmres_jacobi_restart20 iter_lgmres_jacobi_restart20 iter_tfqmr_jacobi --case-timeout-seconds 300'
+
+Output CSV:
+results/matrix_scale_20260707_073508/matrix_scale.csv
+
+Result:
+Best p=1 result was iter_gmres_jacobi_restart40 at true_relative_residual_norm 7.056576750190423e-05 after 1000 iterations. Still not converged.
+
+3. Real AMS/HX smoke
+
+Commands:
+mpiexec -n 2 python3 -m src.studies.run_ams_hx_smoke --degrees 1 --mesh-sizes 10 --max-it 100
+mpiexec -n 2 python3 -m src.studies.run_ams_hx_smoke --degrees 1 2 --mesh-sizes 5 --max-it 200
+mpiexec -n 2 python3 -m src.studies.run_ams_hx_smoke --degrees 2 --mesh-sizes 4 --max-it 200
+
+Output CSVs:
+results/ams_hx_smoke_20260707_070723/ams_hx_smoke_summary.csv
+results/ams_hx_smoke_20260707_070746/ams_hx_smoke_summary.csv
+
+Result:
+Real p=1 h=10, p=1 h=5, and p=2 h=5 converged. Real p=2 h=4 was stopped after the Docker container reached 12.86 GiB / 13.65 GiB memory after about 17 minutes without a completed CSV row.
+
+4. Complex AMS/HX crash reproduction
+
+Command:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && mpiexec -n 2 python3 -m src.studies.run_ams_hx_smoke --degrees 1 --mesh-sizes 10 --max-it 100'
+
+Observed output:
+malloc(): invalid size (unsorted)
+[1]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+Abort(59) on node 1 (rank 1 in comm 0): application called MPI_Abort(MPI_COMM_WORLD, 59) - process 1
+
+Result:
+Direct complex PETSc/hypre AMS is not safe in this environment.
+
+5. Matrix-free matvec smoke
+
+Command:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && mpiexec -n 2 python3 -m src.studies.run_matrix_free_matvec_smoke --degrees 1 2 --mesh-sizes 5'
+
+Output CSV:
+results/matrix_free_matvec_20260707_073805/matrix_free_matvec_summary.csv
+
+Result:
+p=1 relative action error 3.2593413692268053e-16.
+p=2 relative action error 7.563218028818796e-16.
+
+6. Validation
+
+Command:
+docker run --rm -v C:\Users\admin\Desktop\Code:/work -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc '. dolfinx-complex-mode && python3 -m compileall -q src && python3 -m unittest discover -s src/test -p "test_*.py"'
+
+Result:
+Ran 73 tests in 2.126s.
+OK, skipped=10.

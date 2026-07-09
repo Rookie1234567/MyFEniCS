@@ -1,0 +1,85 @@
+{
+  "case": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+  "profiles": [
+    "stage4_real_split_fgmres_fe_ams_aux_identity"
+  ],
+  "solve_rows": [
+    {
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "status": "not_converged",
+      "reason": "DIVERGED_MAX_IT",
+      "iterations": 1000,
+      "true_relative_residual_norm": 0.5337074114505601,
+      "ksp_final_residual": 49.679741717911384,
+      "rss_upper_gb": 0.7789497375488281,
+      "setup_time_s": 0.8787465589994099,
+      "solve_time_s": 178.52597143700405,
+      "ams_setup_rss_before_gb": 0.4399528503417969,
+      "ams_setup_rss_after_gb": 0.7117080688476562,
+      "pc_apply_time_s": 172.0046615051251,
+      "pc_apply_count": 1000,
+      "case": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+      "p": 1,
+      "h_nm": 5.0,
+      "includes_dtn_aux": false,
+      "aux_complex_dofs": 0,
+      "aux_real_dofs": 0,
+      "fe_real_dofs": 78540,
+      "total_real_dofs": 78540
+    }
+  ],
+  "residual_decomposition": [
+    {
+      "case": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_ams_aux_identity",
+      "true_relative_residual_norm": 0.5337074114505601,
+      "r_fe_real_over_b": 0.32665174831444577,
+      "r_aux_real_over_b": 0.0,
+      "r_fe_imag_over_b": 0.4220689947868398,
+      "r_aux_imag_over_b": 0.0,
+      "r_fe_total_over_b": 0.5337074114505601,
+      "r_aux_total_over_b": 0.0,
+      "fe_residual_fraction": 1.0,
+      "aux_residual_fraction": 0.0,
+      "dominant_block": "FE_no_aux_case",
+      "notes": "computed from final true residual r=b-Ax"
+    }
+  ],
+  "top_aux_modal_residuals": [],
+  "matrix_stats": {
+    "rows": 78540,
+    "cols": 78540,
+    "nnz": 5228128,
+    "allocated_nnz": 5228128
+  },
+  "complex_blocks": {
+    "Aff_shape": [
+      39270,
+      39270
+    ],
+    "Aff_nnz": 1307032,
+    "C_shape": [
+      39270,
+      0
+    ],
+    "C_nnz": 0,
+    "D_shape": [
+      0,
+      39270
+    ],
+    "D_nnz": 0,
+    "Aaa_shape": [
+      0,
+      0
+    ],
+    "Aaa_nnz": 0,
+    "schur_diag_condition": null,
+    "schur_build_time_s": null
+  },
+  "ams_failure": null,
+  "export_info": {
+    "n_complex": 39270,
+    "nnz_complex": 1307032,
+    "npz_path": "docs/task015_boundary_aware_pc_diagnostic/outcomes/raw_runs/task014a_default100_zero_order_stage4_block_grating_p1_h5/complex_export/task014a_default100_zero_order_stage4_block_grating_p1_h5_complex_matrix.npz"
+  }
+}

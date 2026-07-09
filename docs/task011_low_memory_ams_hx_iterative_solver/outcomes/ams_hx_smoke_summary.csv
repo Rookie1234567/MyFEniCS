@@ -1,0 +1,6 @@
+mode,degree,h_nm,mpi_ranks,status,reason,iterations,true_relative_residual_norm,rss_upper_gb,setup_time_s,solve_time_s,notes
+real,1,10.0,2,completed,CONVERGED_RTOL,3,1.8962457516238405e-07,0.4283905029296875,0.10944875300003787,0.028943905000005543,FE-only positive Maxwell AMS smoke
+real,1,5.0,2,completed,CONVERGED_RTOL,4,4.0339860322827845e-08,0.9914169311523438,0.9157237299999679,0.3915774390000024,FE-only positive Maxwell AMS smoke
+real,2,5.0,2,completed,CONVERGED_RTOL,7,4.0244411713016064e-07,6.929771423339844,17.11919920799994,12.093451801000015,FE-only positive Maxwell AMS smoke
+real,2,4.0,2,stopped,host_memory_pressure,,,,12.86,,"Stopped after 17 min at 12.86 GiB / 13.65 GiB Docker memory without a completed CSV row"
+complex,1,10.0,2,failed,SEGV_in_hypre_AMS_setup,,,,,,malloc invalid size plus PETSc signal 11; direct complex hypre AMS is not safe in this build

@@ -1,0 +1,2 @@
+case,profile,status,iterations,true_relative_residual_norm,improvement_vs_aux_identity,rss_upper_gb,schur_type,schur_rank_or_size,schur_build_time_s,schur_apply_time_s,notes
+task014a_default100_stage4_block_grating_p1_h5,stage4_real_split_fgmres_fe_ams_aux_schur_diag,not_converged,1000,0.44272565371564643,0.04848501404952495,0.8773002624511719,A_aux - D diag(A_FE)^-1 C,708,0.2664996730018174,178.89447061718965,DIVERGED_MAX_IT; regularization=0.000e+00

@@ -1,0 +1,59 @@
+{
+  "task": "task018_true_fe_sampled_schur_krylov_integration",
+  "case": "task014a_default100_stage4_block_grating_p1_h5",
+  "branch": null,
+  "degree": 1,
+  "h_nm": 5.0,
+  "stage_case": "stage4_block_grating",
+  "domain_preset": "default100",
+  "dtn_order_policy": "auto_propagating",
+  "baseline_max_it": 1000,
+  "restart": 200,
+  "inner_ksp_type": "preonly",
+  "fe_rtol_values": [
+    0.01,
+    0.0001,
+    1e-06
+  ],
+  "fe_max_it": 500,
+  "fe_restart": 120,
+  "extra_fe_solver_families": [
+    "lgmres",
+    "gcrotmk",
+    "bicgstab"
+  ],
+  "initial_continue_max_it": 200,
+  "residual_segment_max_it": 120,
+  "residual_cycles": 4,
+  "projected_gmres_max_it": 60,
+  "projected_gmres_restart": 30,
+  "matrix_export": "docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/task014a_default100_stage4_block_grating_p1_h5_complex_matrix.npz",
+  "metadata_path": "docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/metadata.json",
+  "matrix_export_retained_in_git": false,
+  "matrix_export_cleanup_note": "The .npz matrix dump was generated for the run and removed before commit; metadata.json and progress_3d.jsonl are retained.",
+  "attempt_petsc_fe_probe": false,
+  "attempt_petsc_fe_full_basis": false,
+  "matrix_stats": {
+    "rows": 79956,
+    "cols": 79956,
+    "nnz": 9390960,
+    "allocated_nnz": 9390960
+  },
+  "complex_export_metadata_row": {
+    "case": "task014a_default100_stage4_block_grating_p1_h5",
+    "p": 1,
+    "h_nm": 5.0,
+    "includes_floquet_mpc": true,
+    "includes_dtn_aux": true,
+    "n_complex": 39978,
+    "n_real": 79956,
+    "nnz_complex": 2347740,
+    "nnz_real": 9390960,
+    "fe_complex_dofs": 39270,
+    "aux_complex_dofs": 708,
+    "relative_matvec_error": 6.804783471620568e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 0.4601020812988281,
+    "notes": "constraint-after dolfinx_mpc matrix plus auxiliary DtN rows; complex-mode export"
+  }
+}

@@ -1,0 +1,145 @@
+config_validation seconds = 0.000
+case = airbox3d_normal_stage4_block_grating
+stage = stage4_3d_block_grating
+geometry kind = rectangular_block_grating
+validation role = numerical_sanity_only
+substrate material label = Si / silicon
+grating material label = Si / silicon
+lambda0 nm = 13.5
+n_substrate = (0.999002304859+0.00182649365j)
+n_grating = (0.999002304859+0.00182649365j)
+use Floquet xy = True
+use PML = False
+PETSc ScalarType = <class 'numpy.complex128'>
+DOLFINx scalar type = <class 'numpy.complex128'>
+k0 = 0.465421133865
+k = [(0.458350341046137+0j), 0j, (-0.08081953174336057+0j)]
+polarization = [0j, (1+0j), 0j]
+dot(k, p) = 0.000000e+00+0.000000e+00j
+mesh target size = 1.5
+mesh cell type requested = hexahedron
+mesh cell type resolved = hexahedron
+Floquet constraint mode requested = auto
+linear solve method = iterative_krylov
+PETSc solver profile requested = iter_gmres_jacobi
+divergence penalty = 0.0
+PETSc solver options = {'ksp_type': 'gmres', 'ksp_rtol': 1e-06, 'ksp_atol': 1e-12, 'ksp_max_it': 1000, 'ksp_gmres_restart': 80, 'ksp_monitor_true_residual': '', 'pc_type': 'jacobi'}
+mesh_build seconds = 0.341
+mesh cell type actual = hexahedron
+mesh cells requested = (34, 17, 94)
+mesh cells resolved = (34, 17, 94)
+mesh spacing mode resolved = boundary_fitted
+mesh axis cell stats = {'x': {'num_cells': 34, 'min': 1.4166666666666643, 'max': 1.5, 'median': 1.5}, 'y': {'num_cells': 17, 'min': 1.470588235294116, 'max': 1.4705882352941195, 'median': 1.4705882352941178}, 'z': {'num_cells': 94, 'min': 1.4285714285714164, 'max': 1.5, 'median': 1.5}}
+function_space_setup seconds = 0.122
+mesh cells = 54332
+3D N1curl dofs = 1347234
+field_formulation_setup seconds = 0.011
+3D Floquet constraint mode requested = auto
+3D Floquet constraint mode resolved = topological_trace_p2
+3D Floquet formal mapping = explicit p=2 N1curl edge + face-interior trace topology; probe/pinv is disabled.
+building 3D Floquet p=2 topological trace context
+building 3D Floquet p=2 topological trace context seconds = 10.491
+building 3D Floquet x-direction low-level constraints
+building 3D Floquet x-direction low-level constraints seconds = 0.327
+building 3D Floquet y-direction low-level constraints
+building 3D Floquet y-direction low-level constraints seconds = 0.794
+resolving 3D double-Floquet corner/master chain
+resolving 3D double-Floquet corner/master chain seconds = 0.016
+assembling 3D p=2 topological trace Floquet MPC arrays
+assembling 3D p=2 topological trace Floquet MPC arrays seconds = 0.240
+finalizing 3D double-Floquet MPC
+finalizing 3D double-Floquet MPC seconds = 0.031
+3D Floquet phase x = -0.600741134898 + -0.799443612046j
+3D Floquet phase y = 1 + 0j
+3D Floquet phase corner = -0.600741134898 + -0.799443612046j
+3D Floquet number of slave edges = 9733
+3D Floquet number of matched master edges = 9733
+3D Floquet number of slave faces = 4794
+3D Floquet number of matched master faces = 4794
+3D Floquet number of constraints = 38642
+3D Floquet number of edge constraints = 19466
+3D Floquet number of face constraints = 19176
+3D Floquet max edge midpoint pairing error = 0.000e+00 nm
+3D Floquet max face midpoint pairing error = 0.000e+00 nm
+3D Floquet p=2 face transform fit count = 4794
+3D Floquet p=2 max face transform fit residual = 9.798e-13
+3D Floquet number of x constraints = 12818
+3D Floquet number of y constraints = 25636
+3D Floquet number of corner constraints = 188
+3D Floquet local slave dofs = 3208
+3D Floquet local slave records seen = 3208
+3D Floquet local ghost slave records on owned cells added to local MPC = 42
+3D Floquet global ghost slave records on owned cells added to local MPC = 496
+3D Floquet local ghost slave records skipped = 0
+3D Floquet global ghost slave records skipped = 0
+3D Floquet raw map nnz = 39142
+3D Floquet max masters per slave = 3
+3D Floquet estimated constraint memory MB = 1.340
+3D Floquet total constraint setup seconds = 11.904
+floquet_constraint_setup_outer seconds = 12.132
+No z-boundary Dirichlet dofs were located for this Floquet run.
+boundary_condition_setup seconds = 0.000
+strong Dirichlet H(curl) boundary enabled = False
+Dirichlet H(curl) boundary dofs local/global = 0 / 0
+field formulation = total_field_dtn_port
+stage4 boundary model = dtn_port
+stage4 DtN order policy = auto_propagating
+stage4 DtN assembly = auxiliary
+stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes
+variational_form_setup seconds = 0.046
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 80
+Stage-4 DtN top/bottom mode count = 40 / 40
+Stage-4 DtN matrix base rows = 1347234
+Stage-4 DtN surface quadrature degree = 17
+Stage-4 DtN prepared 50/80 auxiliary modes in 132.491 seconds; unique surface orders = 25
+Stage-4 DtN modal cache summary: unique surface orders = 40, x/y component vector assemblies = 80, polarization cache hits = 40
+Stage-4 DtN base matrix nnz = 142105868.0
+Stage-4 DtN auxiliary coupling nnz estimate = 550336
+stage4_dtn_port_assembly_and_solve seconds = 532.290
+matrix_stats seconds = 0.186
+matrix rows = 1347314
+matrix cols = 1347314
+matrix nnz used = 142656204.0
+matrix nnz allocated = 142656204.0
+average nnz per row = 105.88
+average allocated nnz per row = 105.88
+PETSc matrix memory bytes = 0.0
+PETSc matrix memory MB = 0.0
+estimated AIJ matrix memory bytes = 3434527416.0
+estimated AIJ matrix memory MB = 3275.420585632324
+matrix Frobenius norm = 89121.64228988059
+matrix infinity norm = 540.1903501863696
+explicit C^H A C constructed = False
+unconstrained pre-MPC matrix stats = not assembled
+DtN augmented/base nnz ratio = 1.003872718331378
+solver converged reason = -3
+solver converged reason name = DIVERGED_MAX_IT
+solver iterations = 1000
+solver residual norm = 2.844995e-02
+actual KSP type = gmres
+actual PC type = jacobi
+actual PC factor solver type = None
+KSP setup seconds = 0.12164020503405482
+KSP solve seconds = 360.8603527090745
+linear system RHS norm = 7.994945581565273
+linear system solution norm = 107.36623093336704
+linear system true relative residual = 0.16174109818404858
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 2.844995e-02
+  max RSS across ranks = 1790.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 545.986

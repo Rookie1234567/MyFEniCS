@@ -1,0 +1,669 @@
+p,h_nm,profile_name,run_stage,mpi_ranks,ksp_type,pc_type,pc_asm_overlap,sub_ksp_type,sub_pc_type,sub_pc_factor_levels,sub_pc_factor_mat_solver_type,ksp_converged,ksp_converged_reason,ksp_converged_reason_text,ksp_iterations,ksp_initial_residual_norm,ksp_final_residual_norm,true_residual_norm,true_relative_residual_norm,residual_final_over_initial,setup_time_seconds,solve_time_seconds,elapsed_seconds,max_rss_mb,RSS_upper_GB,matrix_rows,nnz_used,estimated_AIJ_matrix_memory_GB,R_total_dtn_port_modal,T_total_dtn_port_modal,A_volume_total,R_plus_T_plus_A_volume,energy_closure_error_dtn_port_modal_volume,R_direct,T_direct,A_direct,abs_error_R,abs_error_T,abs_error_A,relative_error_R,relative_error_T,relative_error_A,status,case_status,failure_stage,returncode,stdout_tail,stderr_tail,result_dir,stdout_file,stderr_file,progress_file
+2,4.0,iter_gmres_none,stageA_required,8,gmres,none,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,1.307646756828188,1.3076467568281895,0.1766604378103269,0.1766604378103267,0.0007456419989466667,26.459906400064938,38.476235636044294,421.953125,3.2965087890625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.1766604378103269
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = none
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.307647e+00
+  max RSS across ranks = 422.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 36.139
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140056",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140056,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_none_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_none_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140056/progress_3d.jsonl
+2,5.0,iter_gmres_none,stageA_required,8,gmres,none,,,,,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,1.3396547434533785,1.3396547434533779,0.19670438972330057,0.19670438972330065,0.00026869005523622036,11.879358995007351,31.236921668052673,357.62109375,2.793914794921875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.19670438972330057
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = none
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.339655e+00
+  max RSS across ranks = 357.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 28.817
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140024",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140024,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_none_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_none_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140024/progress_3d.jsonl
+2,1.5,iter_gmres_jacobi,stageC_D_jacobi_h2_h1p5,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.994945581565273,0.028449952841342444,1.2931112782840741,0.16174109818404858,0.003558492368846422,0.12164020503405482,360.8603527090745,551.0282113619614,1790.92578125,13.991607666015625,1347314,142656204.0,3.1986529156565666,,,,,,,,,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.16174109818404858
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 2.844995e-02
+  max RSS across ranks = 1790.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 545.986
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p5_np8_20260706_144302",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p5_np8_20260706_144302,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143906/run_np8_iter_gmres_jacobi_h1p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143906/run_np8_iter_gmres_jacobi_h1p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h1p5_np8_20260706_144302/progress_3d.jsonl
+2,2.0,iter_gmres_jacobi,stageC_D_jacobi_h2_h1p5,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.793943491933608,0.03925171755047093,1.528961410860771,0.19617301722076627,0.005036181952190794,0.04470465600024909,161.12276251101866,233.8976894869702,1136.6171875,8.87982177734375,615188,65448472.0,1.4674708619713783,,,,,,0.0013429328462348958,0.5992132294442478,0.3994438377095067,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.19617301722076627
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 3.925172e-02
+  max RSS across ranks = 1136.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 230.241
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260706_143909",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260706_143909,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143906/run_np8_iter_gmres_jacobi_h2p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143906/run_np8_iter_gmres_jacobi_h2p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p0_np8_20260706_143909/progress_3d.jsonl
+2,2.5,iter_gmres_jacobi,stageB_jacobi_h3_h2p5,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.666820893255791,0.05254364899890363,1.5852528934221655,0.2067679570833136,0.006853381568509611,0.002013241988606751,76.52255399397109,105.69857250794303,736.75390625,5.755889892578125,298062,31901652.0,0.7152782306075096,,,,,,0.002712189318226811,0.5928238031474521,0.4044640075343996,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.2067679570833136
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 5.254365e-02
+  max RSS across ranks = 736.8 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 103.263
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260706_143644",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260706_143644,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143520/run_np8_iter_gmres_jacobi_h2p5_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143520/run_np8_iter_gmres_jacobi_h2p5_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h2p5_np8_20260706_143644/progress_3d.jsonl
+2,3.0,iter_gmres_jacobi,stageB_jacobi_h3_h2p5,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.780668579681958,0.06157216464868664,1.6513682534518406,0.21223989128185458,0.007913479930178886,0.0014267329825088382,50.86413099395577,82.23556783806998,554.48828125,4.331939697265625,198518,21317860.0,0.4779703840613365,,,,,,0.004613031407462449,0.583653357178838,0.41173361141336706,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.21223989128185458
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.157216e-02
+  max RSS across ranks = 554.5 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 80.167
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260706_143521",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260706_143521,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143520/run_np8_iter_gmres_jacobi_h3p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143520/run_np8_iter_gmres_jacobi_h3p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260706_143521/progress_3d.jsonl
+2,4.0,iter_gmres_jacobi,stageA_required,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,0.08652541583417099,1.7928618519112256,0.24221201791554256,0.011689409057276163,0.0007621980039402843,26.26487408799585,38.13414007599931,417.99609375,3.265594482421875,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.24221201791554256
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 8.652542e-02
+  max RSS across ranks = 418.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 35.878
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140154",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140154,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_jacobi_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_jacobi_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140154/progress_3d.jsonl
+2,5.0,iter_gmres_jacobi,stageA_required,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,0.12091164935282392,1.6287944643075132,0.23915939733874406,0.01775371774900348,0.00029180198907852173,12.087759741931222,19.62417862797156,338.3359375,2.64324951171875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.23915939733874406
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.209116e-01
+  max RSS across ranks = 338.3 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 16.808
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140135",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140135,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_jacobi_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_jacobi_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140135/progress_3d.jsonl
+2,4.0,iter_gmres_bjacobi_ilu0,stageA_required,8,gmres,bjacobi,,preonly,ilu,0,,False,-5,DIVERGED_BREAKDOWN,80,7.402035073818602,347.6902787624599,7.403511593899782,1.0001994748831173,46.97225496705078,0.0008369289571419358,2.8991507249884307,14.782418230897747,417.7109375,3.26336669921875,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 1.0001994748831173
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = bjacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -5
+  reason name          = DIVERGED_BREAKDOWN
+  iterations           = 80
+  residual norm        = 3.476903e+02
+  max RSS across ranks = 417.7 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 12.560
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140255",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140255,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_bjacobi_ilu0_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_bjacobi_ilu0_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140255/progress_3d.jsonl
+2,5.0,iter_gmres_bjacobi_ilu0,stageA_required,8,gmres,bjacobi,,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,339.82109628924115,6.844807632126124,1.005037838764325,49.896663067355775,0.0004834379069507122,15.56000935495831,22.701554768020287,339.71875,2.654052734375,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 1.005037838764325
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = bjacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 3.398211e+02
+  max RSS across ranks = 339.7 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 20.366
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140232",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140232,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_bjacobi_ilu0_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_gmres_bjacobi_ilu0_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140232/progress_3d.jsonl
+2,4.0,iter_fgmres_asm1_ilu0,stageA_required,8,fgmres,asm,1,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,7.401954702139736,7.401954702139736,0.999989141948388,0.999989141948388,0.15161946404259652,39.65845971601084,51.7214897290105,467.95703125,3.655914306640625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.999989141948388
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.401955e+00
+  max RSS across ranks = 468.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 49.443
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140336",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140336,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu0_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu0_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140336/progress_3d.jsonl
+2,5.0,iter_fgmres_asm1_ilu0,stageA_required,8,fgmres,asm,1,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,6.810364011224167,6.810364011224167,0.9999804077639205,0.9999804077639205,0.09077191399410367,18.88893961906433,26.61990122392308,369.96484375,2.890350341796875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9999804077639205
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.810364e+00
+  max RSS across ranks = 370.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 23.785
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140310",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140310,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu0_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu0_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140310/progress_3d.jsonl
+2,4.0,iter_fgmres_asm2_ilu0,stageA_required,8,fgmres,asm,2,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,7.401873387149262,7.401873387149262,0.9999781564572814,0.9999781564572814,0.2527182400226593,45.94256875605788,58.14518718700856,510.20703125,3.985992431640625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9999781564572814
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.401873e+00
+  max RSS across ranks = 510.2 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 55.928
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140459",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140459,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_ilu0_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_ilu0_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140459/progress_3d.jsonl
+2,5.0,iter_fgmres_asm2_ilu0,stageA_required,8,fgmres,asm,2,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,6.810224761488328,6.8102247614860305,0.9999599614251208,0.9999599614254581,0.18773605895694345,22.996763238101266,30.66118861490395,414.00390625,3.234405517578125,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9999599614251208
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.810225e+00
+  max RSS across ranks = 414.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 28.152
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140428",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140428,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_ilu0_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_ilu0_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140428/progress_3d.jsonl
+2,4.0,iter_fgmres_asm1_ilu1,stageA_required,8,fgmres,asm,1,preonly,ilu,1,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,6.590068456037458,30.035434253702213,4.057726551437073,0.8903049486143192,0.12214923603460193,117.79275755293202,130.24470899102744,652.6640625,5.09893798828125,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 4.057726551437073
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.590068e+00
+  max RSS across ranks = 652.7 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 127.750
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140703",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140703,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu1_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu1_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140703/progress_3d.jsonl
+2,5.0,iter_fgmres_asm1_ilu1,stageA_required,8,fgmres,asm,1,preonly,ilu,1,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,23.62791906489699,23.628026267593746,3.4693539585820097,3.46933821777928,0.08395355602260679,57.98552298208233,65.49756962398533,463.57421875,3.621673583984375,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 3.4693539585820097
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 2.362792e+01
+  max RSS across ranks = 463.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 63.123
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140557",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140557,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu1_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_ilu1_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140557/progress_3d.jsonl
+2,4.0,iter_fgmres_asm1_lu,stageA_required,8,fgmres,asm,1,preonly,lu,,mumps,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,7.393431242607079,7.393431242607079,0.9988376397672101,0.9988376397672101,0.12201885902322829,88.27762728102971,100.08609356696252,675.53125,5.277587890625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9988376397672101
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.393431e+00
+  max RSS across ranks = 675.5 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 97.949
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140956",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140956,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_lu_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_lu_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_140956/progress_3d.jsonl
+2,5.0,iter_fgmres_asm1_lu,stageA_required,8,fgmres,asm,1,preonly,lu,,mumps,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,6.801489883284782,6.801489883284782,0.9986774004561245,0.9986774004561245,0.08341658394783735,35.449956355965696,42.85862389393151,461.50390625,3.605499267578125,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9986774004561245
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.801490e+00
+  max RSS across ranks = 461.5 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 40.357
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140913",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140913,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_lu_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm1_lu_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_140913/progress_3d.jsonl
+2,4.0,iter_fgmres_asm2_lu,stageA_required,8,fgmres,asm,2,preonly,lu,,mumps,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,7.381683156498317,7.381683156498319,0.9972504970434052,0.997250497043405,0.2460886399494484,123.55226261401549,135.48030365002342,845.953125,6.6090087890625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9972504970434052
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.381683e+00
+  max RSS across ranks = 846.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 133.205
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141236",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141236,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_lu_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_lu_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141236/progress_3d.jsonl
+2,5.0,iter_fgmres_asm2_lu,stageA_required,8,fgmres,asm,2,preonly,lu,,mumps,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,6.771509690405581,6.77150969040558,0.9942753442002803,0.9942753442002804,0.19101263501215726,52.986890766071156,60.20332364598289,583.6875,4.56005859375,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9942753442002803
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.771510e+00
+  max RSS across ranks = 583.7 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 57.837
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141136",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141136,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_lu_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_140022/run_np8_iter_fgmres_asm2_lu_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141136/progress_3d.jsonl
+2,4.0,iter_bicgstab_asm1_ilu0,stageA_bicgstab_fixed,8,bcgs,asm,1,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,162042.49428871094,7.402165337927756,1.0000175984182533,21891.613951123254,0.11217449593823403,55.15662376396358,67.15741920797154,451.19921875,3.524993896484375,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 1.0000175984182533
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = bcgs
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.620425e+05
+  max RSS across ranks = 451.2 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 64.991
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141742",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141742,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_asm1_ilu0_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_asm1_ilu0_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141742/progress_3d.jsonl
+2,5.0,iter_bicgstab_asm1_ilu0,stageA_bicgstab_fixed,8,bcgs,asm,1,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,40414.76916019987,9.627247744890427,1.4135895100046705,5934.187552661659,0.060653402004390955,26.582562063005753,45.85538276901934,372.62109375,2.911102294921875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 1.4135895100046705
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = bcgs
+  pc_type              = asm
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 4.041477e+04
+  max RSS across ranks = 372.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 43.310
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141656",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141656,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_asm1_ilu0_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_asm1_ilu0_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141656/progress_3d.jsonl
+2,4.0,iter_bicgstab_bjacobi_ilu0,stageA_bicgstab_fixed,8,bcgs,bjacobi,,preonly,ilu,0,,False,-4,DIVERGED_DTOL,5,7.402035073818602,287585268.3718699,7.402049942099607,1.0000020086747574,38852189.36466197,0.0005279569886624813,0.34762576792854816,11.87099609291181,417.2734375,3.25994873046875,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 1.0000020086747574
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = bcgs
+  pc_type              = bjacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -4
+  reason name          = DIVERGED_DTOL
+  iterations           = 5
+  residual norm        = 2.875853e+08
+  max RSS across ranks = 417.3 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 9.313
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141916",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141916,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_bjacobi_ilu0_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_bjacobi_ilu0_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_141916/progress_3d.jsonl
+2,5.0,iter_bicgstab_bjacobi_ilu0,stageA_bicgstab_fixed,8,bcgs,bjacobi,,preonly,ilu,0,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,77073.42047745074,6.810107803569678,0.9999427882424989,11316.85623702037,0.00032740505412220955,20.209806836908683,26.995417934958823,338.94140625,2.647979736328125,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9999427882424989
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = bcgs
+  pc_type              = bjacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.707342e+04
+  max RSS across ranks = 338.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 24.782
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141849",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141849,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_bjacobi_ilu0_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_141654/run_np8_iter_bicgstab_bjacobi_ilu0_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_141849/progress_3d.jsonl
+2,4.0,iter_fgmres_gamg,stageA_extra_gamg,8,fgmres,gamg,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,1.157982272821527,1.1579822728215303,0.15644106806753405,0.1564410680675336,3.0043528999667615,65.0118370250566,79.7188780780416,957.64453125,7.481597900390625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.15644106806753405
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = gamg
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.157982e+00
+  max RSS across ranks = 957.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 77.527
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142719",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142719,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142623/run_np8_iter_fgmres_gamg_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142623/run_np8_iter_fgmres_gamg_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142719/progress_3d.jsonl
+2,5.0,iter_fgmres_gamg,stageA_extra_gamg,8,fgmres,gamg,,,,,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,1.0513476542099818,1.0513476542099833,0.15437163919958571,0.15437163919958546,1.6557599519146606,31.551115741953254,53.273507810081355,661.92578125,5.171295166015625,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.15437163919958571
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = gamg
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.051348e+00
+  max RSS across ranks = 661.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 50.514
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142626",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142626,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142623/run_np8_iter_fgmres_gamg_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142623/run_np8_iter_fgmres_gamg_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142626/progress_3d.jsonl
+2,4.0,iter_fgmres_fieldsplit_schur_asm1_lu,stageA_extra_fieldsplit_fixed,8,fgmres,fieldsplit,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,7.400181849242631,7.400181849242629,0.9997496330998853,0.9997496330998855,0.055778763024136424,151.24026957107708,163.12598838307895,707.640625,5.5284423828125,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9997496330998853
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = fieldsplit
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 7.400182e+00
+  max RSS across ranks = 707.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 160.634
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_143138",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_143138,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143020/run_np8_iter_fgmres_fieldsplit_schur_asm1_lu_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143020/run_np8_iter_fgmres_fieldsplit_schur_asm1_lu_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_143138/progress_3d.jsonl
+2,5.0,iter_fgmres_fieldsplit_schur_asm1_lu,stageA_extra_fieldsplit_fixed,8,fgmres,fieldsplit,,,,,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,6.807955187400707,6.807955187400708,0.9996267149766855,0.9996267149766854,0.03478218300733715,56.95491599792149,76.33089229394682,469.52734375,3.668182373046875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.9996267149766855
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = fieldsplit
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 6.807955e+00
+  max RSS across ranks = 469.5 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 73.871
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_143022",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_143022,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143020/run_np8_iter_fgmres_fieldsplit_schur_asm1_lu_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_143020/run_np8_iter_fgmres_fieldsplit_schur_asm1_lu_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_143022/progress_3d.jsonl
+2,4.0,iter_gmres_jacobi_maxit5000,diagnostic_jacobi_maxit5000,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,5000,7.402035073818602,0.06098546655671941,1.0652318641713239,0.14391067504382768,0.008239013453533651,0.0006521950708702207,125.9468820799375,136.94995694304816,418.61328125,3.270416259765625,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.14391067504382768
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 5000
+  residual norm        = 6.098547e-02
+  max RSS across ranks = 418.6 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 134.865
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142122",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142122,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142004/run_np8_iter_gmres_jacobi_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142004/run_np8_iter_gmres_jacobi_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_142122/progress_3d.jsonl
+2,5.0,iter_gmres_jacobi_maxit5000,diagnostic_jacobi_maxit5000,8,gmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,5000,6.810497444097911,0.07306574598681154,0.971754105173004,0.14268474706133868,0.010728400764635998,0.00025533593725413084,57.344998512999155,76.27397080603987,353.8828125,2.76470947265625,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.14268474706133868
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = gmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 5000
+  residual norm        = 7.306575e-02
+  max RSS across ranks = 353.9 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 74.005
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142006",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142006,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142004/run_np8_iter_gmres_jacobi_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_142004/run_np8_iter_gmres_jacobi_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_142006/progress_3d.jsonl
+2,4.0,experimental_lgmres_jacobi,diagnostic_lgmres_jacobi,8,lgmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,7.402035073818602,0.08419050937461275,1.7954494361944244,0.24256159533005,0.011373967906798921,0.0010139190126210451,25.65543303708546,37.39666164095979,417.40234375,3.260955810546875,98092,10608680.0,0.23785332590341568,,,,,,0.003554031430110215,0.5619170978701014,0.4345288706998287,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.24256159533005
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = lgmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 8.419051e-02
+  max RSS across ranks = 417.4 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 35.157
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_145338",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_145338,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145305/run_np8_iter_gmres_jacobi_h4p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145305/run_np8_iter_gmres_jacobi_h4p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h4p0_np8_20260706_145338/progress_3d.jsonl
+2,5.0,experimental_lgmres_jacobi,diagnostic_lgmres_jacobi,8,lgmres,jacobi,,,,,,False,-3,DIVERGED_MAX_IT,1000,6.810497444097911,0.12247943459514538,1.6464561439386796,0.24175269977753613,0.017983919030949504,0.0004979100776836276,11.113109288970008,31.341764615965076,353.953125,2.7652587890625,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,failed_not_converged,,0,"linear system true relative residual = 0.24175269977753613
+WARNING: PETSc KSP did not converge.
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = lgmres
+  pc_type              = jacobi
+  pc factor solver    = None
+  converged            = False
+  converged reason     = -3
+  reason name          = DIVERGED_MAX_IT
+  iterations           = 1000
+  residual norm        = 1.224794e-01
+  max RSS across ranks = 354.0 MB
+  official result      = False
+  diagnostic only      = True
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = failed_not_converged
+elapsed seconds = 28.130
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145308",,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145308,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145305/run_np8_iter_gmres_jacobi_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145305/run_np8_iter_gmres_jacobi_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145308/progress_3d.jsonl
+2,5.0,experimental_hypre_boomeramg,diagnostic_hypre_boomeramg,8,,,,,,,,,,,,,,,,,,,22.175417728023604,357.3359375,2.79168701171875,44778,4896156.0,0.1097712442278862,,,,,,0.08902160293640748,0.4425882786570433,0.46839011840647865,,,,,,,failed,,,143,"unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 80
+Stage-4 DtN top/bottom mode count = 40 / 40
+Stage-4 DtN matrix base rows = 44698
+Stage-4 DtN surface quadrature degree = 17
+Stage-4 DtN prepared 50/80 auxiliary modes in 14.112 seconds; unique surface orders = 25
+Stage-4 DtN modal cache summary: unique surface orders = 40, x/y component vector assemblies = 80, polarization cache hits = 40
+Stage-4 DtN base matrix nnz = 4840396.0
+Stage-4 DtN auxiliary coupling nnz estimate = 55760
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 17 RUNNING AT 9e298143d9cb
+=   EXIT CODE: 134
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Terminated (signal 15)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions","Fatal glibc error: malloc.c:4376 (_int_malloc): assertion failed: (unsigned long) (size) >= (unsigned long) (nb)
+[6]PETSC ERROR: ------------------------------------------------------------------------
+[6]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[6]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[6]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[6]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[6]PETSC ERROR: to get more information on the crash.
+[6]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+Abort(59) on node 6 (rank 6 in comm 0): application called MPI_Abort(MPI_COMM_WORLD, 59) - process 6",/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145452,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145450/run_np8_iter_gmres_jacobi_h5p0_stdout.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/matrix_scale_20260706_145450/run_np8_iter_gmres_jacobi_h5p0_stderr.txt,/work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h5p0_np8_20260706_145452/progress_3d.jsonl

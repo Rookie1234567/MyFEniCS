@@ -1,0 +1,2 @@
+case,p,h_nm,mode_set,solver_label,baseline_residual,one_shot_residual_after,improvement,selected_mode_ids,minimum_signal,strong_signal,notes
+task014a_default100_stage4_block_grating_p2_h5,2,5.0,top_bottom_y,offline_scipy_gcrotmk_diag_rtol_0.01_maxit_16_top_bottom_y,0.016386055485257574,0.01635705295598139,1.0017730901375834,"177,531",fail,fail,best offline top_bottom_y basis saved to docs/task019_p2_h5_true_fe_sampled_schur_qualification/outcomes/raw_runs/task014a_default100_stage4_block_grating_p2_h5/p2_h5_best_offline_basis.npz

@@ -1,0 +1,103 @@
+{
+  "task": "task009_iterative_solver_profile_screening",
+  "branch": "codex/20260706-iterative-solver-profile-screening",
+  "geometry": {
+    "stage_case": "stage4_block_grating",
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "domain_x_nm": 50.0,
+    "domain_y_nm": 25.0,
+    "domain_z_nm": 140.0,
+    "substrate_thickness_nm": 10.0,
+    "grating_height_nm": 120.0,
+    "top_air_above_grating_nm": 10.0,
+    "air_height_nm": 130.0,
+    "grating_width_x_nm": 17.0,
+    "grating_width_y_nm": 25.0
+  },
+  "incidence": {
+    "lambda0_nm": 13.5,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization_kind": "s",
+    "kx": 0.458350341046137,
+    "ky": 0.0,
+    "kz": -0.0808195317433606,
+    "floquet_phase_x": [
+      -0.6007411348979813,
+      -0.7994436120462065
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ]
+  },
+  "material": {
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ]
+  },
+  "mpi_ranks": 8,
+  "required_profiles": [
+    "iter_gmres_none",
+    "iter_gmres_jacobi",
+    "iter_gmres_bjacobi_ilu0",
+    "iter_fgmres_asm1_ilu0",
+    "iter_fgmres_asm2_ilu0",
+    "iter_fgmres_asm1_ilu1",
+    "iter_fgmres_asm1_lu",
+    "iter_fgmres_asm2_lu",
+    "iter_bicgstab_asm1_ilu0",
+    "iter_bicgstab_bjacobi_ilu0"
+  ],
+  "extra_probe_profiles": [
+    "iter_fgmres_gamg",
+    "iter_fgmres_fieldsplit_schur_asm1_lu",
+    "experimental_lgmres_jacobi",
+    "experimental_hypre_boomeramg"
+  ],
+  "direct_reference_p2": {
+    "5.0": {
+      "R_direct": 0.08902160293640748,
+      "T_direct": 0.4425882786570433,
+      "A_direct": 0.46839011840647865
+    },
+    "4.0": {
+      "R_direct": 0.003554031430110215,
+      "T_direct": 0.5619170978701014,
+      "A_direct": 0.4345288706998287
+    },
+    "3.0": {
+      "R_direct": 0.004613031407462449,
+      "T_direct": 0.583653357178838,
+      "A_direct": 0.41173361141336706
+    },
+    "2.5": {
+      "R_direct": 0.002712189318226811,
+      "T_direct": 0.5928238031474521,
+      "A_direct": 0.4044640075343996
+    },
+    "2.0": {
+      "R_direct": 0.0013429328462348958,
+      "T_direct": 0.5992132294442478,
+      "A_direct": 0.3994438377095067
+    }
+  },
+  "source_csvs": [
+    "results/matrix_scale_20260706_140022/matrix_scale.csv",
+    "results/matrix_scale_20260706_141654/matrix_scale.csv",
+    "results/matrix_scale_20260706_142623/matrix_scale.csv",
+    "results/matrix_scale_20260706_143020/matrix_scale.csv",
+    "results/matrix_scale_20260706_143520/matrix_scale.csv",
+    "results/matrix_scale_20260706_143906/matrix_scale.csv",
+    "results/matrix_scale_20260706_142004/matrix_scale.csv",
+    "results/matrix_scale_20260706_145305/matrix_scale.csv",
+    "results/matrix_scale_20260706_145450/matrix_scale.csv"
+  ],
+  "decision": "current PETSc black-box profiles did not produce converged official R/T/A; gmres+jacobi is diagnostic-only first candidate."
+}

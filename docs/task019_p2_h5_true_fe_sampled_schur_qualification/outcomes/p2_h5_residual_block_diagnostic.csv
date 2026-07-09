@@ -1,0 +1,7 @@
+case,block,norm,relative_to_b,relative_to_residual,notes
+task014a_default100_stage4_block_grating_p2_h5,fe_real,0.5986850159519012,0.004547862180846045,0.2775446589289114,
+task014a_default100_stage4_block_grating_p2_h5,aux_real,0.7914835652590514,0.006012440728084005,0.3669242261197846,
+task014a_default100_stage4_block_grating_p2_h5,fe_imag,0.544725162347506,0.004137960528136011,0.25252938584633094,
+task014a_default100_stage4_block_grating_p2_h5,aux_imag,1.8361325753686104,0.013948032230706838,0.8512135360005186,
+task014a_default100_stage4_block_grating_p2_h5,selected_top_bottom_y_aux_components,1.9994395733241912,0.015188580599349084,0.9269211014825443,"mode ids 177,531; real and imag scalar aux residual components only"
+task014a_default100_stage4_block_grating_p2_h5,all,2.157076335975338,0.016386055485257574,1.0,n=301648; nf=300940; na=708

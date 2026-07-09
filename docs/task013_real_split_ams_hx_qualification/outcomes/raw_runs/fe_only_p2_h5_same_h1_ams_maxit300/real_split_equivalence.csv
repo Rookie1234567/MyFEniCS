@@ -1,0 +1,2 @@
+case,p,h_nm,h1_degree_mode,status,cells,n_complex,n_real,nnz_complex,nnz_real,relative_matvec_error,relative_rhs_error,rss_upper_gb,epsilon_real,epsilon_imag,beta,notes
+fe_only_p2_h5_same,2,5.0,same,completed,"[10, 5, 28]",37446,74892,3558492.0,14233968.0,1.6585009054410358e-16,0.0,1.0419807434082031,0.9980022690345409,0.0036493427323206554,0.2161855349974538,serial real PETSc FE-only explicit block equivalence

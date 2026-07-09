@@ -1,0 +1,42 @@
+{
+  "task": "task013_real_split_ams_hx_qualification",
+  "branch": "codex/20260707-real-split-ams-hx-qualification",
+  "date": "2026-07-07",
+  "script": "src/studies/run_real_split_ams_qualification.py",
+  "model": {
+    "type": "FE-only complex Maxwell block represented as real split system",
+    "domain_nm": [50.0, 25.0, 140.0],
+    "lambda0_nm": 13.5,
+    "n_complex": "0.999002304859+0.00182649365j",
+    "epsilon_real": 0.9980022690345409,
+    "epsilon_imag": 0.0036493427323206554
+  },
+  "solver": {
+    "outer_ksp": "fgmres",
+    "pc_side": "right",
+    "rtol": 1e-6,
+    "atol": 1e-12,
+    "restart": 40,
+    "profiles": [
+      "real_split_fgmres_jacobi",
+      "real_split_fgmres_blockdiag_ams_positive"
+    ],
+    "ams_inner_ksp": "preonly",
+    "auxiliary_modes_tested": ["standard", "same", "linear"]
+  },
+  "gate_decision": {
+    "stage_a_equivalence": "passed",
+    "stage_b_fe_only": "passed_with_same_H1_auxiliary",
+    "stage_c_p_coarsened_auxiliary": "same_H1_best",
+    "stage_d_reduced_stage4": "not_run",
+    "stage_e_full_h2": "not_run",
+    "stage_f_h1p5": "not_run",
+    "classification": "B"
+  },
+  "key_result": {
+    "case": "fe_only_p2_h5_same",
+    "iterations": 310,
+    "true_relative_residual_norm": 9.964333802586608e-7,
+    "rss_upper_gb": 1.3231430053710938
+  }
+}

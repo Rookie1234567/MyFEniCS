@@ -1,0 +1,2 @@
+case,p,h_nm,includes_floquet,includes_dtn_aux,profile,status,iterations,true_relative_residual_norm,rss_upper_gb,notes
+reduced_stage4_p1_h5,1,5.0,no,no,real_split_fgmres_blockdiag_ams_positive,not_run,,,,Stage D was not entered because this task kept the experimental PC isolated in FE-only qualification; integrating MPC/Floquet/DtN requires a separate gated implementation task.

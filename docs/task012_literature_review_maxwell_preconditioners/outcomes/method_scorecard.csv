@@ -1,0 +1,10 @@
+method_family,expected_convergence_potential_1_to_5,expected_memory_potential_1_to_5,implementation_difficulty_1_to_5,fit_to_periodic_grating_physics_1_to_5,fit_to_DOLFINx_PETSc_stack_1_to_5,risk_level_1_to_5,recommended_priority,evidence_strength,reason
+"real-split AMS/HX + low-order or p-coarsened auxiliary","4","3","4","4","3","3","1","strong local smoke + strong H(curl) literature","task011 real FE-only AMS p=2 h=5 少步收敛；hypre/PETSc 支持 AMS auxiliary data；需要绕开 complex crash 并审计高阶内存"
+"Rayleigh/Floquet modal deflation","4","5","4","5","4","3","2","moderate indirect evidence + strong project physics","本项目已有 DtN modal amplitudes；低维 coarse correction 可能消除传播/近截止慢模态；直接文献较少但物理贴合最高"
+"DtN-aware FE/aux block preconditioner","4","4","4","5","4","3","3","moderate","Stage 4 unknown 自然分成 FE Nedelec 与 DtN auxiliary；比 task009 generic FieldSplit 更物理；需构造 Schur/port block 近似"
+"layered-background / RCWA-like approximate inverse","5","5","5","5","2","4","4","moderate indirect evidence","周期层状背景可用 Fourier modal/RCWA 高效近似；作为 PC 有潜在原创性；但与 DOLFINx Nedelec 耦合工程难"
+"matrix-free A + physics preconditioner","3","5","4","4","3","3","5","local matvec evidence strong but PC-dependent","task011 action matvec 已到 1e-15 一致；单独不能收敛，必须依附 AMS/modal PC"
+"shifted Maxwell + AMS or two-level DD","3","3","4","3","3","4","6","moderate literature + negative minimal local test","吸收/shifted 文献支持但 task010 minimal P+ASM/ILU 失败；只有结合 AMS/DDM 才值得重做"
+"two-level DDM / optimized Schwarz / sweeping","3","3","5","3","2","4","7","moderate strong for large domains","文献支持 high-frequency Maxwell 需要 coarse/impedance interface；当前单胞已有 DtN port，先做 modal coarse 更直接"
+"MUMPS-BLR / H-matrix fallback","5","2","2","2","5","2","8","strong local fallback","task010 BLR p=2 h=2 可复现 R/T/A，但内存下降有限且 h=1.5 仍失败；保留为 official fallback"
+"Jacobi/ASM/ILU/local LU/GAMG/BoomerAMG black-box profiles","1","4","1","1","5","2","reject","strong local negative evidence","task009/task011 已充分失败或崩溃；不再投入主线"

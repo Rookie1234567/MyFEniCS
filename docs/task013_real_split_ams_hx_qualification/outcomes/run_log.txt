@@ -1,0 +1,35 @@
+Branch: codex/20260707-real-split-ams-hx-qualification
+
+Key commands:
+
+python -m py_compile .\src\studies\run_real_split_ams_qualification.py
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 1 --mesh-sizes 10 --max-it 50 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/smoke_p1_h10'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 1 2 --mesh-sizes 5 --max-it 1000 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p1p2_h5'
+
+The combined p1/p2 h5 run was stopped after the p1 h5 JSON was written because p2 h5 serial solve produced no new output after about 45 minutes. The p2 h5 work was split into smaller runs.
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 10 --max-it 1000 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h10'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --skip-solves --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_equivalence_only'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --profiles real_split_fgmres_blockdiag_ams_positive --max-it 50 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_ams_maxit50'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --profiles real_split_fgmres_jacobi --max-it 50 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_jacobi_maxit50'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --profiles real_split_fgmres_blockdiag_ams_positive --max-it 150 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_ams_maxit150'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --profiles real_split_fgmres_jacobi --max-it 150 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_jacobi_maxit150'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --h1-degree-modes same linear --skip-solves --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_low_h1_equivalence_only'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --h1-degree-modes same linear --profiles real_split_fgmres_blockdiag_ams_positive --max-it 50 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_low_h1_ams_maxit50'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --h1-degree-modes same --profiles real_split_fgmres_blockdiag_ams_positive --max-it 150 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_same_h1_ams_maxit150'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --h1-degree-modes same --profiles real_split_fgmres_blockdiag_ams_positive --max-it 300 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_same_h1_ams_maxit300'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 5 --h1-degree-modes same --profiles real_split_fgmres_blockdiag_ams_positive --max-it 350 --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h5_same_h1_ams_maxit350'
+
+docker run --rm -v "C:\Users\admin\Desktop\Code:/work" -w /work/fenics_vector_maxwell_floquet_demo_v2_parallel code-dolfinx-mpc:latest sh -lc 'python3 -m src.studies.run_real_split_ams_qualification --degrees 2 --mesh-sizes 4 --h1-degree-modes same --skip-solves --output-dir docs/task013_real_split_ams_hx_qualification/outcomes/raw_runs/fe_only_p2_h4_same_h1_equivalence_only'

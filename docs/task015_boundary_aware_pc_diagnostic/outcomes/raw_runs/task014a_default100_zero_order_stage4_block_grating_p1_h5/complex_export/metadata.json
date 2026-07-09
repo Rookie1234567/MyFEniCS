@@ -1,0 +1,303 @@
+{
+  "row": {
+    "case": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+    "p": 1,
+    "h_nm": 5.0,
+    "includes_floquet_mpc": true,
+    "includes_dtn_aux": false,
+    "n_complex": 39270,
+    "n_real": 78540,
+    "nnz_complex": 1307032,
+    "nnz_real": 5228128,
+    "fe_complex_dofs": 39270,
+    "aux_complex_dofs": 0,
+    "relative_matvec_error": 2.1756017948460837e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 0.3774986267089844,
+    "notes": "constraint-after dolfinx_mpc matrix; zero_order local Robin branch has no auxiliary DtN rows"
+  },
+  "config": {
+    "case_name": "task014a_default100_zero_order_stage4_block_grating_p1_h5",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 100.0,
+    "period_y": 100.0,
+    "z_min": -50.0,
+    "z_max": 100.0,
+    "air_height": 100.0,
+    "substrate_thickness": 50.0,
+    "grating_height": 50.0,
+    "grating_width_x": 50.0,
+    "grating_width_y": 50.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "substrate_material_label": "Si / silicon",
+    "grating_material_label": "Si / silicon",
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "zero_order",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "natural",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 5.0,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "mesh_target_size": 5.0,
+    "mesh_cell_type": "auto",
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_sample_count_x": 16,
+    "diffraction_sample_count_y": 16,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "petsc_direct_solver_profile": "default",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": true,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 100.0,
+    "y_min": 0.0,
+    "y_max": 100.0,
+    "physical_z_min": -50.0,
+    "physical_z_max": 100.0,
+    "domain_z_min": -50.0,
+    "domain_z_max": 100.0,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "boundary_fitted",
+    "mesh_refined_size_resolved": 2.5,
+    "mesh_refinement_radius_resolved": 5.0,
+    "floquet_constraint_mode_requested": "auto",
+    "propagation_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.46542113386515455,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "grating_index": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "grating_bounds": {
+      "x_min": 25.0,
+      "x_max": 75.0,
+      "y_min": 25.0,
+      "y_max": 75.0,
+      "z_min": 0.0,
+      "z_max": 50.0
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "mesh_cells": [
+      20,
+      20,
+      30
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "mesh_cells_resolved": [
+    20,
+    20,
+    30
+  ],
+  "mesh_spacing_mode_resolved": "boundary_fitted",
+  "floquet": {
+    "num_constraints": 2470,
+    "constraint_mode_resolved": "topological_edges_p1",
+    "phase_x": [
+      1.0,
+      0.0
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ]
+  },
+  "solver_info": {
+    "solver_backend": "dolfinx_mpc assembled zero-order local 3D DtN/Robin ports",
+    "assemble_only": true,
+    "num_auxiliary_dofs": 0,
+    "num_fem_dofs_after_mpc": 39270,
+    "num_total_augmented_dofs": 39270,
+    "explicit_chac_constructed": false,
+    "dtn_auxiliary_dense_block_constructed": false,
+    "dtn_base_matrix_stats": null,
+    "dtn_augmented_matrix_stats_after_finalize": null,
+    "dtn_auxiliary_block_stats": {
+      "dtn_auxiliary_block_is_dense": false,
+      "dtn_auxiliary_dof_count": 0,
+      "dtn_auxiliary_coupling_nnz_estimate": 0
+    },
+    "stage4_dtn_assembly_seconds": 4.922171756988973,
+    "ksp_converged_reason": 0,
+    "ksp_iterations": 0,
+    "ksp_initial_residual_norm": null,
+    "ksp_final_residual_norm": null,
+    "stage4_dtn_ksp_setup_seconds": null,
+    "stage4_dtn_ksp_solve_seconds": null,
+    "actual_ksp_type": "fgmres",
+    "actual_pc_type": "jacobi",
+    "actual_pc_factor_solver_type": null,
+    "stage4_dtn_zero_order_local_robin": true,
+    "stage4_dtn_surface_quadrature_degree": 10,
+    "stage4_dtn_zero_order_linear_problem_setup_seconds": 4.9217147619929165
+  },
+  "matrix_export": "docs/task015_boundary_aware_pc_diagnostic/outcomes/raw_runs/task014a_default100_zero_order_stage4_block_grating_p1_h5/complex_export/task014a_default100_zero_order_stage4_block_grating_p1_h5_complex_matrix.npz",
+  "log_lines": [
+    "Task014a complex export case = task014a_default100_zero_order_stage4_block_grating_p1_h5",
+    "3D Floquet constraint mode requested = auto",
+    "3D Floquet constraint mode resolved = topological_edges_p1",
+    "3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.",
+    "building 3D Floquet topological edge context",
+    "building 3D Floquet topological edge context seconds = 1.598",
+    "building 3D Floquet x-direction low-level constraints",
+    "building 3D Floquet x-direction low-level constraints seconds = 0.043",
+    "building 3D Floquet y-direction low-level constraints",
+    "building 3D Floquet y-direction low-level constraints seconds = 0.036",
+    "resolving 3D double-Floquet corner/master chain",
+    "resolving 3D double-Floquet corner/master chain seconds = 0.005",
+    "assembling 3D topological Floquet MPC arrays",
+    "assembling 3D topological Floquet MPC arrays seconds = 0.031",
+    "finalizing 3D double-Floquet MPC",
+    "finalizing 3D double-Floquet MPC seconds = 0.005",
+    "3D Floquet phase x = 1 + 0j",
+    "3D Floquet phase y = 1 + 0j",
+    "3D Floquet phase corner = 1 + 0j",
+    "3D Floquet number of slave edges = 2470",
+    "3D Floquet number of matched master edges = 2470",
+    "3D Floquet number of constraints = 2470",
+    "3D Floquet max edge midpoint pairing error = 0.000e+00 nm",
+    "3D Floquet number of x constraints = 1220",
+    "3D Floquet number of y constraints = 1220",
+    "3D Floquet number of corner constraints = 30",
+    "3D Floquet local slave dofs = 2470",
+    "3D Floquet local slave records seen = 2470",
+    "3D Floquet local ghost slave constraints = 0",
+    "3D Floquet global ghost slave constraints = 0",
+    "3D Floquet local ghost slave records skipped = 0",
+    "3D Floquet global ghost slave records skipped = 0",
+    "3D Floquet raw map nnz = 2470",
+    "3D Floquet max masters per slave = 1",
+    "3D Floquet estimated constraint memory MB = 0.085",
+    "3D Floquet total constraint setup seconds = 1.718",
+    "floquet_constraint_setup_outer seconds = 1.723",
+    "No z-boundary Dirichlet dofs were located for this Floquet run.",
+    "boundary_condition_setup seconds = 0.000",
+    "strong Dirichlet H(curl) boundary enabled = False",
+    "Dirichlet H(curl) boundary dofs local/global = 0 / 0",
+    "Stage-4 DtN using zero-order local Robin sanity branch",
+    "Stage-4 DtN surface quadrature degree = 10"
+  ],
+  "elapsed_s": 7.728080348999356
+}

@@ -1,0 +1,10 @@
+gate,decision,metric,value,threshold,notes
+p2_h5_export_real_split_equivalence,pass,relative_matvec_error,2.293628988408302e-16,<=1e-10 and rhs_error<=1e-10,n_real=603296; nnz_real=142535504; RSS=3.356090545654297 GB
+baseline_available,partial_pass,true_relative_residual_norm_after_120,0.016386055485257574,stable true residual denominator,120-step baseline completed; 1000-step single run timed out after 2h near memory limit.
+minimum_useful_top_bottom_y_one_shot,fail,one_shot_residual_after,0.01635705295598139,<1e-2 or improvement>=2,best selected FE RHS = offline_scipy_gcrotmk_diag_rtol_0.01_maxit_16_top_bottom_y; improvement=1.0017730901375834
+best_creative_low_dimensional_variant,weak_positive_only,residual_after,0.015166240185462978,<1e-2 or improvement>=2,best variant=selected_fe_lift_plus_fe_residual_gcrotmk_maxit_32; improvement=1.0804296440566596
+residual_outer_loop_stable,not_run,one_shot_gate,fail,run only if Stage C positive,Task gate failed; running AMS outer loop with weak basis would spend ~20 min per 120-step segment without a >=2x signal.
+strong,fail,best_observed_residual,0.015160698257668824,<=2e-3 or improvement>=10,"Best observed residual came from weak low-dimensional enrichment, not from the required top_bottom_y process."
+production_like,fail,best_observed_residual,0.015160698257668824,<=1e-6,Research diagnostics only; no production solver change.
+p2_h2_preflight_next,closed,p2_h5_gate,fail,p2 h5 minimum/strong gate first,Do not proceed to p=2 h=2 from this route.
+next_solver_route,switch_route,failure_class,selected_FE_response_quality_and_low_dimensional_space_nontransfer,need >=2x signal,Use impedance DDM / sweeping / two-level Schwarz style route rather than continuing low-dimensional top_bottom_y sampled Schur.

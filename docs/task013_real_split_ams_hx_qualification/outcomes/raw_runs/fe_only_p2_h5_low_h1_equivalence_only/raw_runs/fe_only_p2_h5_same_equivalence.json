@@ -1,0 +1,42 @@
+{
+  "equivalence": {
+    "case": "fe_only_p2_h5_same",
+    "p": 2,
+    "h_nm": 5.0,
+    "h1_degree_mode": "same",
+    "status": "completed",
+    "notes": "serial real PETSc FE-only explicit block equivalence",
+    "cells": "[10, 5, 28]",
+    "n_complex": 37446,
+    "n_real": 74892,
+    "nnz_complex": 3558492.0,
+    "nnz_real": 14233968.0,
+    "relative_matvec_error": 1.6585009054410358e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 1.0415725708007812,
+    "epsilon_real": 0.9980022690345409,
+    "epsilon_imag": 0.0036493427323206554,
+    "beta": 0.2161855349974538
+  },
+  "memory": {
+    "case": "fe_only_p2_h5_same",
+    "p": 2,
+    "h_nm": 5.0,
+    "h1_degree_mode": "same",
+    "status": "completed",
+    "notes": "",
+    "n_real": 74892,
+    "nnz_real": 14233968.0,
+    "real_block_estimated_aij_memory_gb": 0.1593559868633747,
+    "B_rows": 37446,
+    "B_nnz": 3558492.0,
+    "B_estimated_aij_memory_gb": 0.039908748120069504,
+    "G_rows": 37446,
+    "G_cols": 13167,
+    "G_nnz": 1572090.0,
+    "H1_dofs": 13167,
+    "Pi_present": false,
+    "Pi_nnz": null,
+    "rss_after_assembly_gb": 1.0415725708007812
+  }
+}

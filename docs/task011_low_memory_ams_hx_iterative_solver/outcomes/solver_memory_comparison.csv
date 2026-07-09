@@ -1,0 +1,9 @@
+case,mode,h_nm,p,status,true_relative_residual_norm,rss_upper_gb,notes
+direct_lu_stage4_reference,complex_stage4,2.0,2,completed,,20.53,task010 reference
+mumps_blr_eps1e-5,complex_stage4,2.0,2,completed,2.085e-08,17.85,task010 usable short-term fallback
+gmres_jacobi_restart40,complex_stage4,4.0,2,failed,0.234320432830893,3.284210205078125,low memory but no official RTA
+fgmres_jacobi_restart20,complex_stage4,4.0,2,failed,0.23514847566593405,3.243316650390625,low memory but no official RTA
+gmres_jacobi_restart40,complex_stage4,5.0,1,failed,7.056576750190423e-05,2.211883544921875,near but still not converged
+fe_only_hypre_ams,real_fe_positive_maxwell,5.0,2,completed,4.0244411713016064e-07,6.929771423339844,real AMS works but is not the complex Stage4 operator
+fe_only_hypre_ams,real_fe_positive_maxwell,4.0,2,stopped,,12.86,p2 h4 exceeded available Docker memory during setup
+matrix_free_ufl_action,complex_fe_positive_maxwell,5.0,2,completed,7.563218028818796e-16,0.445159912109375,matvec equivalence error not solve residual

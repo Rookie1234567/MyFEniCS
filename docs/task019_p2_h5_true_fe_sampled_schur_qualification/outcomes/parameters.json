@@ -1,0 +1,42 @@
+{
+  "task": "task019_p2_h5_true_fe_sampled_schur_qualification",
+  "degree": 2,
+  "h_nm": 5.0,
+  "stage_case": "stage4_block_grating",
+  "domain_preset": "default100",
+  "dtn_order_policy": "auto_propagating",
+  "baseline_max_it": 120,
+  "restart": 200,
+  "inner_ksp_type": "preonly",
+  "fe_rtol": 0.01,
+  "fe_max_it": 1,
+  "fe_restart": 40,
+  "residual_segment_max_it": 120,
+  "residual_cycles": 0,
+  "long_segment_max_its": [],
+  "matrix_export": "docs/task019_p2_h5_true_fe_sampled_schur_qualification/outcomes/raw_runs/task014a_default100_stage4_block_grating_p2_h5/complex_export/task014a_default100_stage4_block_grating_p2_h5_complex_matrix.npz",
+  "metadata_path": "docs/task019_p2_h5_true_fe_sampled_schur_qualification/outcomes/raw_runs/task014a_default100_stage4_block_grating_p2_h5/complex_export/metadata.json",
+  "matrix_stats": {
+    "rows": 603296,
+    "cols": 603296,
+    "nnz": 142535504,
+    "allocated_nnz": 142535504
+  },
+  "complex_export_metadata_row": {
+    "case": "task014a_default100_stage4_block_grating_p2_h5",
+    "p": 2,
+    "h_nm": 5.0,
+    "includes_floquet_mpc": true,
+    "includes_dtn_aux": true,
+    "n_complex": 301648,
+    "n_real": 603296,
+    "nnz_complex": 35633876,
+    "nnz_real": 142535504,
+    "fe_complex_dofs": 300940,
+    "aux_complex_dofs": 708,
+    "relative_matvec_error": 2.293628988408302e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 3.356090545654297,
+    "notes": "constraint-after dolfinx_mpc matrix plus auxiliary DtN rows; complex-mode export"
+  }
+}

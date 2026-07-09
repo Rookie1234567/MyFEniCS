@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="360" viewBox="0 0 920 360">
+<rect width="100%" height="100%" fill="white"/>
+<text x="460.0" y="28" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700">default100 one-shot residual</text>
+<line x1="90" y1="248" x2="890" y2="248" stroke="#333"/>
+<line x1="90" y1="52" x2="90" y2="248" stroke="#333"/>
+<line x1="90" y1="248.0" x2="890" y2="248.0" stroke="#e5e7eb"/>
+<text x="82" y="252.0" text-anchor="end" font-family="Arial" font-size="11">0</text>
+<line x1="90" y1="199.0" x2="890" y2="199.0" stroke="#e5e7eb"/>
+<text x="82" y="203.0" text-anchor="end" font-family="Arial" font-size="11">0.27</text>
+<line x1="90" y1="150.0" x2="890" y2="150.0" stroke="#e5e7eb"/>
+<text x="82" y="154.0" text-anchor="end" font-family="Arial" font-size="11">0.539</text>
+<line x1="90" y1="101.0" x2="890" y2="101.0" stroke="#e5e7eb"/>
+<text x="82" y="105.0" text-anchor="end" font-family="Arial" font-size="11">0.809</text>
+<line x1="90" y1="52.0" x2="890" y2="52.0" stroke="#e5e7eb"/>
+<text x="82" y="56.0" text-anchor="end" font-family="Arial" font-size="11">1.08</text>
+<line x1="90" y1="244.1" x2="890" y2="244.1" stroke="#c2410c" stroke-dasharray="5 4"/>
+<text x="890" y="238.1" text-anchor="end" font-family="Arial" font-size="12" fill="#c2410c">baseline 0.02147</text>
+<rect x="113.3" y="244.1" width="86.7" height="3.9" fill="#2563eb" rx="3"/>
+<text x="156.7" y="239.1" text-anchor="middle" font-family="Arial" font-size="11">0.02146</text>
+<text x="156.7" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 156.7,266)">diag_lift_minres</text>
+<rect x="246.7" y="244.1" width="86.7" height="3.9" fill="#16a34a" rx="3"/>
+<text x="290.0" y="239.1" text-anchor="middle" font-family="Arial" font-size="11">0.02146</text>
+<text x="290.0" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 290.0,266)">pfe_lift_minres</text>
+<rect x="380.0" y="244.1" width="86.7" height="3.9" fill="#9333ea" rx="3"/>
+<text x="423.3" y="239.1" text-anchor="middle" font-family="Arial" font-size="11">0.02147</text>
+<text x="423.3" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 423.3,266)">pfe_lift_balanced_minres</text>
+<rect x="513.3" y="244.1" width="86.7" height="3.9" fill="#dc2626" rx="3"/>
+<text x="556.7" y="239.1" text-anchor="middle" font-family="Arial" font-size="11">0.02147</text>
+<text x="556.7" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 556.7,266)">aux_only_minres</text>
+<rect x="646.7" y="244.1" width="86.7" height="3.9" fill="#0891b2" rx="3"/>
+<text x="690.0" y="239.1" text-anchor="middle" font-family="Arial" font-size="11">0.02148</text>
+<text x="690.0" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 690.0,266)">pfe_lift</text>
+<rect x="780.0" y="66.5" width="86.7" height="181.5" fill="#ca8a04" rx="3"/>
+<text x="823.3" y="61.5" text-anchor="middle" font-family="Arial" font-size="11">0.9986</text>
+<text x="823.3" y="266" text-anchor="end" font-family="Arial" font-size="11" transform="rotate(-35 823.3,266)">aux_only</text>
+</svg>

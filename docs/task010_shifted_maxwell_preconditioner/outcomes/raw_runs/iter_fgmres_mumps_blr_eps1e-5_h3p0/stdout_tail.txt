@@ -1,0 +1,20 @@
+  diffraction_postprocess: 0.387
+  volume_absorption_postprocess: 0.045
+Linear solve summary:
+  method               = iterative_krylov
+  ksp_type             = fgmres
+  pc_type              = lu
+  pc factor solver    = mumps
+  converged            = True
+  converged reason     = 2
+  reason name          = CONVERGED_RTOL
+  iterations           = 3
+  residual norm        = 1.139384e-06
+  max RSS across ranks = 1343.9 MB
+  official result      = True
+  diagnostic only      = False
+  validation role      = numerical_sanity_only
+  physical benchmark  = False
+  case status          = completed
+elapsed seconds = 62.288
+3D case results: /work/fenics_vector_maxwell_floquet_demo_v2_parallel/results/3D_stage4_block_grating_normal_p2_h3p0_np8_20260707_022056

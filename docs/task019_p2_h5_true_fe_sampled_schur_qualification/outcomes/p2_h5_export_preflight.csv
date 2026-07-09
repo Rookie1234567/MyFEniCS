@@ -1,0 +1,2 @@
+case,p,h_nm,n_complex,n_real,fe_complex_dofs,aux_complex_dofs,nnz_complex,nnz_real,relative_matvec_error,relative_rhs_error,rss_upper_gb,export_status,notes
+task014a_default100_stage4_block_grating_p2_h5,2,5.0,301648,603296,300940,708,35633876,142535504,2.293628988408302e-16,0.0,3.356090545654297,pass,complex export retained temporarily for real-mode diagnostics; remove npz after outcomes are extracted

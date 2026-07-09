@@ -1,0 +1,7 @@
+case,mode_set,mode_id,port,m,n,polarization,baseline_residual,real_aux_index,imag_aux_index,notes
+task014a_tiny10_stage4_block_grating_p1_h5,top_y,1,top,0,0,y,9.601334814717081e-07,145,293,mode mapping reproduced from task015/task016 zero-order rows
+task014a_tiny10_stage4_block_grating_p1_h5,top_bottom_y,1,top,0,0,y,9.601334814717081e-07,145,293,mode mapping reproduced from task015/task016 zero-order rows
+task014a_tiny10_stage4_block_grating_p1_h5,top_bottom_y,3,bottom,0,0,y,9.601334814717081e-07,147,295,mode mapping reproduced from task015/task016 zero-order rows
+task014a_default100_stage4_block_grating_p1_h5,top_y,177,top,0,0,y,0.021465559540488233,39447,79425,mode mapping reproduced from task015/task016 zero-order rows
+task014a_default100_stage4_block_grating_p1_h5,top_bottom_y,177,top,0,0,y,0.021465559540488233,39447,79425,mode mapping reproduced from task015/task016 zero-order rows
+task014a_default100_stage4_block_grating_p1_h5,top_bottom_y,531,bottom,0,0,y,0.021465559540488233,39801,79779,mode mapping reproduced from task015/task016 zero-order rows

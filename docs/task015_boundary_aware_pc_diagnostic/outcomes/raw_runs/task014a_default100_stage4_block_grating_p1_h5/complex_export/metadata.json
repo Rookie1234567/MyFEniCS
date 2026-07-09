@@ -1,0 +1,394 @@
+{
+  "row": {
+    "case": "task014a_default100_stage4_block_grating_p1_h5",
+    "p": 1,
+    "h_nm": 5.0,
+    "includes_floquet_mpc": true,
+    "includes_dtn_aux": true,
+    "n_complex": 39978,
+    "n_real": 79956,
+    "nnz_complex": 2347740,
+    "nnz_real": 9390960,
+    "fe_complex_dofs": 39270,
+    "aux_complex_dofs": 708,
+    "relative_matvec_error": 6.804783471620568e-16,
+    "relative_rhs_error": 0.0,
+    "rss_upper_gb": 0.47422027587890625,
+    "notes": "constraint-after dolfinx_mpc matrix plus auxiliary DtN rows; complex-mode export"
+  },
+  "config": {
+    "case_name": "task014a_default100_stage4_block_grating_p1_h5",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 100.0,
+    "period_y": 100.0,
+    "z_min": -50.0,
+    "z_max": 100.0,
+    "air_height": 100.0,
+    "substrate_thickness": 50.0,
+    "grating_height": 50.0,
+    "grating_width_x": 50.0,
+    "grating_width_y": 50.0,
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "substrate_material_label": "Si / silicon",
+    "grating_material_label": "Si / silicon",
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "auto_propagating",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "natural",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 5.0,
+    "incident_theta_deg": 0.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "mesh_target_size": 5.0,
+    "mesh_cell_type": "auto",
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": false,
+    "diffraction_order_max_m": null,
+    "diffraction_order_max_n": null,
+    "diffraction_sample_count_x": 16,
+    "diffraction_sample_count_y": 16,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "petsc_direct_solver_profile": "default",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": true,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 100.0,
+    "y_min": 0.0,
+    "y_max": 100.0,
+    "physical_z_min": -50.0,
+    "physical_z_max": 100.0,
+    "domain_z_min": -50.0,
+    "domain_z_max": 100.0,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "boundary_fitted",
+    "mesh_refined_size_resolved": 2.5,
+    "mesh_refinement_radius_resolved": 5.0,
+    "floquet_constraint_mode_requested": "auto",
+    "propagation_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "polarization": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.46542113386515455,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      0.0
+    ],
+    "floquet_phase_y": [
+      1.0,
+      0.0
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "grating_index": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "grating_bounds": {
+      "x_min": 25.0,
+      "x_max": 75.0,
+      "y_min": 25.0,
+      "y_max": 75.0,
+      "z_min": 0.0,
+      "z_max": 50.0
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "mesh_cells": [
+      20,
+      20,
+      30
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "mesh_cells_resolved": [
+    20,
+    20,
+    30
+  ],
+  "mesh_spacing_mode_resolved": "boundary_fitted",
+  "floquet": {
+    "num_constraints": 2470,
+    "constraint_mode_resolved": "topological_edges_p1",
+    "phase_x": [
+      1.0,
+      0.0
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ]
+  },
+  "solver_info": {
+    "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+    "assemble_only": true,
+    "num_auxiliary_dofs": 708,
+    "num_fem_dofs_after_mpc": 39270,
+    "num_total_augmented_dofs": 39978,
+    "stage4_dtn_assembly_seconds": 9.674222508998355,
+    "ksp_converged_reason": 0,
+    "ksp_iterations": 0,
+    "actual_ksp_type": "fgmres",
+    "actual_pc_type": "jacobi",
+    "actual_pc_factor_solver_type": null,
+    "dtn_base_matrix_stats": {
+      "matrix_rows": 39270,
+      "matrix_cols": 39270,
+      "matrix_nnz_used": 1307032.0,
+      "matrix_nnz_allocated": 1307032.0,
+      "matrix_average_nnz_per_row": 33.28321874204227,
+      "matrix_average_allocated_nnz_per_row": 33.28321874204227,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 31682936.0,
+      "matrix_memory_estimate_mb": 30.21520233154297,
+      "matrix_norm_frobenius": 121.0339740957348,
+      "matrix_norm_infinity": 2.7870093510268488,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 1307032.0,
+        "nz_used": 1307032.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_augmented_matrix_stats_after_finalize": {
+      "matrix_rows": 39978,
+      "matrix_cols": 39978,
+      "matrix_nnz_used": 2347740.0,
+      "matrix_nnz_allocated": 2347740.0,
+      "matrix_average_nnz_per_row": 58.72579918955425,
+      "matrix_average_allocated_nnz_per_row": 58.72579918955425,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 56665592.0,
+      "matrix_memory_estimate_mb": 54.04051971435547,
+      "matrix_norm_frobenius": 911.9476425430717,
+      "matrix_norm_infinity": 369.69316497717193,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 2347740.0,
+        "nz_used": 2347740.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "dtn_auxiliary_block_stats": {
+      "dtn_auxiliary_block_is_dense": false,
+      "dtn_auxiliary_dof_count": 708,
+      "dtn_auxiliary_fem_dof_count": 39270,
+      "dtn_auxiliary_coupling_nnz_estimate": 1040708,
+      "dtn_auxiliary_average_coupling_nnz_per_mode": 1469.9265536723165,
+      "dtn_auxiliary_dense_block_equivalent_nnz": 55607028
+    },
+    "preconditioner_family": null,
+    "mumps_blr_enabled": false,
+    "mumps_blr_epsilon": null,
+    "shifted_preconditioner_enabled": false,
+    "shifted_preconditioner_alpha": null,
+    "positive_maxwell_preconditioner_enabled": false,
+    "operator_preconditioner_enabled": false,
+    "low_memory_krylov_enabled": false,
+    "low_memory_krylov_family": null,
+    "preconditioner_matrix_stats": null,
+    "preconditioner_base_matrix_stats": null,
+    "preconditioner_auxiliary_treatment": null,
+    "preconditioner_operator_smoke_ready": false,
+    "explicit_chac_constructed": false,
+    "dtn_auxiliary_dense_block_constructed": false,
+    "stage4_dtn_base_matrix_assembly_seconds": 5.274245182008599,
+    "stage4_dtn_base_rhs_assembly_seconds": 0.26394724000419956,
+    "stage4_dtn_surface_quadrature_degree": 15,
+    "stage4_dtn_augmented_block_copy_seconds": 0.2863482110115001,
+    "stage4_dtn_preconditioner_matrix_assembly_seconds": null,
+    "stage4_dtn_incident_source_vector_seconds": 0.24276910201297142,
+    "stage4_dtn_modal_loop_seconds": 2.1360945339984028,
+    "stage4_dtn_modal_vector_assembly_seconds": 1.7896643780113664,
+    "stage4_dtn_modal_block_insert_seconds": 0.22337909282941837,
+    "stage4_dtn_unique_surface_orders": 354,
+    "stage4_dtn_component_vector_assemblies": 708,
+    "stage4_dtn_component_vector_cache_hits": 354,
+    "stage4_dtn_augmented_matrix_finalize_seconds": 0.18851347999589052
+  },
+  "matrix_export": "docs/task015_boundary_aware_pc_diagnostic/outcomes/raw_runs/task014a_default100_stage4_block_grating_p1_h5/complex_export/task014a_default100_stage4_block_grating_p1_h5_complex_matrix.npz",
+  "log_lines": [
+    "Task014a complex export case = task014a_default100_stage4_block_grating_p1_h5",
+    "3D Floquet constraint mode requested = auto",
+    "3D Floquet constraint mode resolved = topological_edges_p1",
+    "3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.",
+    "building 3D Floquet topological edge context",
+    "building 3D Floquet topological edge context seconds = 1.651",
+    "building 3D Floquet x-direction low-level constraints",
+    "building 3D Floquet x-direction low-level constraints seconds = 0.051",
+    "building 3D Floquet y-direction low-level constraints",
+    "building 3D Floquet y-direction low-level constraints seconds = 0.064",
+    "resolving 3D double-Floquet corner/master chain",
+    "resolving 3D double-Floquet corner/master chain seconds = 0.007",
+    "assembling 3D topological Floquet MPC arrays",
+    "assembling 3D topological Floquet MPC arrays seconds = 0.056",
+    "finalizing 3D double-Floquet MPC",
+    "finalizing 3D double-Floquet MPC seconds = 0.008",
+    "3D Floquet phase x = 1 + 0j",
+    "3D Floquet phase y = 1 + 0j",
+    "3D Floquet phase corner = 1 + 0j",
+    "3D Floquet number of slave edges = 2470",
+    "3D Floquet number of matched master edges = 2470",
+    "3D Floquet number of constraints = 2470",
+    "3D Floquet max edge midpoint pairing error = 0.000e+00 nm",
+    "3D Floquet number of x constraints = 1220",
+    "3D Floquet number of y constraints = 1220",
+    "3D Floquet number of corner constraints = 30",
+    "3D Floquet local slave dofs = 2470",
+    "3D Floquet local slave records seen = 2470",
+    "3D Floquet local ghost slave constraints = 0",
+    "3D Floquet global ghost slave constraints = 0",
+    "3D Floquet local ghost slave records skipped = 0",
+    "3D Floquet global ghost slave records skipped = 0",
+    "3D Floquet raw map nnz = 2470",
+    "3D Floquet max masters per slave = 1",
+    "3D Floquet estimated constraint memory MB = 0.085",
+    "3D Floquet total constraint setup seconds = 1.839",
+    "floquet_constraint_setup_outer seconds = 1.847",
+    "No z-boundary Dirichlet dofs were located for this Floquet run.",
+    "boundary_condition_setup seconds = 0.000",
+    "strong Dirichlet H(curl) boundary enabled = False",
+    "Dirichlet H(curl) boundary dofs local/global = 0 / 0",
+    "Stage-4 DtN selected auxiliary port modes = 708",
+    "Stage-4 DtN top/bottom mode count = 354 / 354",
+    "Stage-4 DtN matrix base rows = 39270",
+    "Stage-4 DtN surface quadrature degree = 15",
+    "Stage-4 DtN prepared 50/708 auxiliary modes in 7.451 seconds; unique surface orders = 25",
+    "Stage-4 DtN prepared 100/708 auxiliary modes in 7.586 seconds; unique surface orders = 50",
+    "Stage-4 DtN prepared 150/708 auxiliary modes in 7.725 seconds; unique surface orders = 75",
+    "Stage-4 DtN prepared 200/708 auxiliary modes in 7.857 seconds; unique surface orders = 100",
+    "Stage-4 DtN prepared 250/708 auxiliary modes in 8.054 seconds; unique surface orders = 125",
+    "Stage-4 DtN prepared 300/708 auxiliary modes in 8.203 seconds; unique surface orders = 150",
+    "Stage-4 DtN prepared 350/708 auxiliary modes in 8.361 seconds; unique surface orders = 175",
+    "Stage-4 DtN prepared 400/708 auxiliary modes in 8.514 seconds; unique surface orders = 200",
+    "Stage-4 DtN prepared 450/708 auxiliary modes in 8.663 seconds; unique surface orders = 225",
+    "Stage-4 DtN prepared 500/708 auxiliary modes in 8.825 seconds; unique surface orders = 250",
+    "Stage-4 DtN prepared 550/708 auxiliary modes in 8.970 seconds; unique surface orders = 275",
+    "Stage-4 DtN prepared 600/708 auxiliary modes in 9.121 seconds; unique surface orders = 300",
+    "Stage-4 DtN prepared 650/708 auxiliary modes in 9.293 seconds; unique surface orders = 325",
+    "Stage-4 DtN prepared 700/708 auxiliary modes in 9.433 seconds; unique surface orders = 350",
+    "Stage-4 DtN modal cache summary: unique surface orders = 354, x/y component vector assemblies = 708, polarization cache hits = 354",
+    "Stage-4 DtN base matrix nnz = 1307032.0",
+    "Stage-4 DtN auxiliary coupling nnz estimate = 1040708"
+  ],
+  "elapsed_s": 13.016659440996591
+}

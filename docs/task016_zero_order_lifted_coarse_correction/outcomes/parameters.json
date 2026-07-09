@@ -1,0 +1,48 @@
+{
+  "task": "task016_zero_order_lifted_coarse_correction",
+  "branch": "codex/20260707-real-split-ams-hx-qualification",
+  "date": "2026-07-08",
+  "stage_case": "stage4_block_grating",
+  "degree": 1,
+  "h_nm": 5.0,
+  "domain_presets": ["tiny10", "default100"],
+  "dtn_order_policy": "auto_propagating",
+  "baseline_default100_true_residual": 0.021465559540488233,
+  "selected_mode_sets": {
+    "top_y": ["top,(0,0),y"],
+    "top_bottom_y": ["top,(0,0),y", "bottom,(0,0),y"],
+    "top_bottom_xy": ["top,(0,0),x", "top,(0,0),y", "bottom,(0,0),x", "bottom,(0,0),y"]
+  },
+  "lift_types": [
+    "aux_only",
+    "diag_lift",
+    "diag_lift_sign_flip",
+    "pfe_lift",
+    "pfe_lift_sign_flip",
+    "pfe_lift_aux_sign_flip",
+    "pfe_lift_balanced",
+    "pfe_lift_balanced_sign_flip",
+    "exact_lift_tiny10"
+  ],
+  "one_shot_forms": ["galerkin", "minres"],
+  "ksp_forms": ["additive", "residual_corrected", "minres_additive"],
+  "outer_ksp": "gmres for stabilized default100 KSP-only tests",
+  "coarse_omega_values": [1.0, 0.1, 0.01],
+  "max_it": {
+    "one_shot_baseline": 1000,
+    "default100_ksp": 300,
+    "tiny10_ksp": 300
+  },
+  "gate": {
+    "B_residual": 0.002,
+    "B_improvement": 10.0,
+    "A_residual": 0.000001,
+    "A_improvement": 100.0
+  },
+  "decision": {
+    "allow_p2_h5": false,
+    "allow_full_p2_h2": false,
+    "merge_code": false,
+    "merge_docs_only": "optional"
+  }
+}

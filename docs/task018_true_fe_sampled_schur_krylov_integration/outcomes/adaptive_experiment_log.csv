@@ -1,0 +1,20 @@
+stage,experiment,decision,metric,value,threshold,notes
+A,baseline_fe_ams_aux_identity,reproduced,baseline_residual,0.02145878536207579,within 1e-4 absolute of Task017 expected 2.1465559540488233e-2,history=docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/raw_runs/task018_default100_p1_h5/baseline_fe_ams_aux_identity_history.csv
+B,petsc_selected_fe_ams_opt_in,failed,KSPSetUp/PCSetUp,error code 101,stable same-process selected FE RHS solve,Opt-in PETSc selected FE-AMS basis reattempt failed and can poison later AMS communicator setup; kept disabled in stable runner.
+B,scipy_gmres_diag_rtol_0.01,positive,one_shot_residual_after,0.0017324131089646699,<1e-2 or improvement>=2,FE max residual=0.005912741773475342
+B,scipy_gmres_diag_rtol_0.0001,positive,one_shot_residual_after,0.0025064585209837974,<1e-2 or improvement>=2,FE max residual=9.980462096431165e-05
+B,scipy_gmres_diag_rtol_1e-06,positive,one_shot_residual_after,0.0024764342469280726,<1e-2 or improvement>=2,FE max residual=9.994137615008887e-07
+B,scipy_lgmres_diag_rtol_0.0001,positive,one_shot_residual_after,0.002428625642588991,<1e-2 or improvement>=2,FE max residual=9.987607808428551e-05
+B,scipy_gcrotmk_diag_rtol_0.0001,positive,one_shot_residual_after,0.002467655859489974,<1e-2 or improvement>=2,FE max residual=9.995487617014957e-05
+B,scipy_bicgstab_diag_rtol_0.0001,positive,one_shot_residual_after,0.00429121078305246,<1e-2 or improvement>=2,FE max residual=0.0049695027697023155
+C,initial_correction_omega_1,positive,initial_corrected_residual,0.0017324131089646699,<1e-2 or improvement>=2,continuation_final=1.680969e-03
+C,initial_correction_omega_0.5,weak,initial_corrected_residual,0.010833780904605487,<1e-2 or improvement>=2,continuation_final=1.082267e-02
+C,initial_correction_omega_0.3,weak,initial_corrected_residual,0.015072013138845142,<1e-2 or improvement>=2,continuation_final=1.506910e-02
+C,initial_correction_omega_0.1,weak,initial_corrected_residual,0.019327664332476603,<1e-2 or improvement>=2,continuation_final=1.932741e-02
+D,residual_outer_baseline_solution_cycle_1,positive,residual_after_correction,0.0017324089080660325,must improve residual_after_segment,omega=1.0; segment=2.145879e-02
+D,residual_outer_baseline_solution_cycle_2,positive,residual_after_correction,0.0016985191426456931,must improve residual_after_segment,omega=1.0; segment=1.698534e-03
+D,residual_outer_baseline_solution_cycle_3,positive,residual_after_correction,0.0016983348419635554,must improve residual_after_segment,omega=1.0; segment=1.698335e-03
+D,residual_outer_zero_cycle_1,positive,residual_after_correction,0.0017065621011471046,must improve residual_after_segment,omega=1.0; segment=2.146266e-02
+D,residual_outer_zero_cycle_2,positive,residual_after_correction,0.00166250084534833,must improve residual_after_segment,omega=1.0; segment=1.662518e-03
+D,residual_outer_zero_cycle_3,positive,residual_after_correction,0.0016616234679826295,must improve residual_after_segment,omega=1.0; segment=1.661623e-03
+E,projected_residual_right_preconditioned_gmres_plus_final_coarse,positive,residual_after_final_coarse,0.0017084236957858958,<1e-2 or improvement>=2,projected_gmres_status=not_converged

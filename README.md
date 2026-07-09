@@ -11,10 +11,10 @@
 当前阶段分支：
 
 ```text
-codex/20260706-target-50x25x140-oblique80-official-benchmark
+codex/20260707-maxwell-physics-blr-preconditioner-prototype
 ```
 
-task002/task003/task004/task005/task006/task007 已作为阶段性版本合并到 `master`。task007 在 task006 基础上修正 Stage 4 dtn_port 的 official R/T/A 口径：官方 R/T 现在来自 DtN port modal amplitudes，E/H Fourier probe、E-only Fourier probe 和 sampled net flux 全部作为 diagnostic。task008 在 task007 的 official 口径上，完成了目标几何 50×25×140 nm、80° 斜入射的本机 resource/convergence benchmark。task004/task005/task006/task007 合并后的基础能力含义是：
+task002/task003/task004/task005/task006/task007/task008 已作为阶段性版本合并到 `master`。task007 在 task006 基础上修正 Stage 4 dtn_port 的 official R/T/A 口径：官方 R/T 现在来自 DtN port modal amplitudes，E/H Fourier probe、E-only Fourier probe 和 sampled net flux 全部作为 diagnostic。task008 在 task007 的 official 口径上，完成了目标几何 50×25×140 nm、80° 斜入射的本机 resource/convergence benchmark。task009 在 task008 几何上完成了 PETSc 现成迭代求解器 profiles 的快速筛选。task010 在 task009 负结果基础上完成了 MUMPS-BLR 与 minimal shifted/positive Maxwell 预条件器原型验证。task004/task005/task006/task007/task008 合并后的基础能力含义是：
 
 ```text
 完成 R/T/A 输出重构、A_volume 体吸收、flat-layer 解析参考、small-cell p=1/p=2 收敛、MPI 1/4/8 一致性与全阶段 smoke 回归。
@@ -26,7 +26,7 @@ task002/task003/task004/task005/task006/task007 已作为阶段性版本合并�
 真实 100 nm 3D EUV grating 已完成物理收敛 benchmark。
 ```
 
-task007/task008 的当前结论是：
+task007/task008/task009 的当前结论是：
 
 ```text
 Stage 4 dtn_port official power_source = dtn_port_modal_amplitudes；
@@ -38,7 +38,13 @@ task008: 50×25×140 nm, 17×25×120 nm grating, theta_from_z=80°, phi=0°, s p
 task008: p=1 default direct 可完成到 h=1 nm；
 task008: p=2 default direct 可完成到 h=2 nm；
 task008: p=2 h=1.5 nm default direct 在 stage4_dtn_augmented_ksp_setup 被 signal 9 kill；
-task008: p=2 h=1 nm assemble-only 超时并出现大量 swap。
+task008: p=2 h=1 nm assemble-only 超时并出现大量 swap；
+task009: PETSc 现成 GMRES/FGMRES/BiCGStab + Jacobi/BJacobi/ASM/ILU/local LU 组合均未达到 KSP 收敛；
+task009: GMRES + Jacobi 是相对最稳的诊断路径，可在 h=1.5 nm 越过 direct setup kill，但 residual 仍不够小，不能给出 official R/T/A；
+task009: 若要真正突破 p=2 h=1.5 nm，下一步应转向 Maxwell 专用预条件器，而不是继续盲扫黑盒 iterative profile；
+task010: FGMRES + MUMPS-BLR 是当前第一 production candidate，p=2 h=2 nm 的 eps=1e-5/1e-4 均收敛并复现 task008 direct R/T/A；
+task010: p=2 h=1.5 nm eps=1e-5 仍在 KSP setup 阶段被 signal 9 kill，因此当前本机 production 上限仍是 p=2 h=2 nm；
+task010: shifted/positive Maxwell minimal P 已验证 A/P 双矩阵路径，但 h=5/h=4 初筛均未收敛，只保留为 HX/AMS 或 block-Schur 后续基础设施。
 ```
 
 当前版本边界详见：
@@ -50,6 +56,8 @@ docs/task005_stage4_real_grating_memory_estimation/outcomes/summary.md
 docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md
 docs/task007_dtn_port_modal_official_rta/outcomes/summary.md
 docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
+docs/task009_iterative_solver_profile_screening/outcomes/summary.md
+docs/task010_shifted_maxwell_preconditioner/outcomes/summary.md
 ```
 
 2026-07-05 补充：task006 已重新整理 summary，加入 memory profiling、tuned MUMPS OOC、assemble-only 与 direct solve 失败原因解释，以及 h=0.5/h=0.25 nm 的 workstation 外推。当前 reduced-height p=2 的 direct/OOC 可完成边界是 h=4 nm；h=3 nm tuned OOC 仍失败。h<=1 nm 应视为 TB 级或更高资源问题，h=0.5/h=0.25 nm 不适合继续用 direct/OOC workstation 路线硬推。
@@ -57,6 +65,10 @@ docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md
 2026-07-06 补充：task007 已完成 `dtn_port_modal_amplitudes` 官方口径切换。若要比较不同 total height 的同一物理结构，后续应新增统一 reference plane 或界面处外推功率；当前 `T_total` 是 bottom physical port plane 上的功率。
 
 2026-07-06 补充：task008 已完成目标几何 `50 x 25 x 140 nm`、`theta_from_z=80°`、`phi=0°` 的本机 benchmark。当前个人电脑 best-effort default direct 主点建议使用 `p=2 h=2 nm`，对应 official `R≈0.001343, T≈0.599213, A_volume≈0.399444`，`R+T+A_volume` 闭合到约 `1e-14`；它不是最终网格收敛物理解。`p=2 h=5` 的 `R≈0.089` 明显受粗网格影响，不作为物理结论。`p=2 h=1.5 nm` 是 direct failure boundary，`p=2 h=1 nm` 是 assemble-only timeout boundary。更细网格建议后续单独评估 tuned MUMPS OOC 或迭代法。
+
+2026-07-06 补充：task009 已在 `codex/20260706-iterative-solver-profile-screening` 上完成现成 PETSc iterative profiles 筛选。结论是：没有找到可正式替代 direct/MUMPS 的生产迭代求解器；`iter_gmres_jacobi` 只适合作为诊断路径，能跑到 `p=2 h=1.5 nm` 但不收敛，不能输出可信 official R/T/A。后续若继续突破细网格，需要引入 Maxwell/H(curl) 友好的预条件器设计，例如 auxiliary-space/AMS、shifted Laplacian 或物理分块 Schur 方案。
+
+2026-07-07 补充：task010 已在 `codex/20260707-maxwell-physics-blr-preconditioner-prototype` 上完成 MUMPS-BLR 与 minimal shifted/positive Maxwell P 原型验证。当前推荐第一候选为 `iter_fgmres_mumps_blr_eps1e-5`：`p=2 h=2 nm` 收敛，4 次迭代，`true_relative_residual_norm≈2.09e-8`，official `R≈0.001342933, T≈0.599213229, A_volume≈0.399443838` 与 task008 direct LU 对照一致到约 `1e-9`。`p=2 h=1.5 nm` 在 KSP setup 阶段被 signal 9 kill，建议工作站从 h=1.5/eps=1e-5 开始复跑；minimal shifted/positive P 当前未收敛，不作为生产求解器。
 
 ---
 
@@ -438,7 +450,7 @@ closure 差异低于 1e-10。
 ```text
 1. MPI 下 ParaView 输出使用 PVD/VTU，而不是 3D VTX .bp。
 2. summary 指标使用 owned-cell 过滤，避免 ghost cell 重复计数。
-3. 当前公开 direct solver profile 只保留 default 和 mumps_ooc。
+3. direct solver profile 保留 default 和 mumps_ooc；task009 额外开放 iter_* profiles 用于筛选和诊断，但当前没有任何 iterative profile 被认定为生产路径。
 4. MUMPS out-of-core 可用于内存压力诊断，但不能根本消除 3D direct LU fill-in 问题。
 ```
 

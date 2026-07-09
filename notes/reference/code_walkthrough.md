@@ -1,3 +1,77 @@
+## 2026-07-07 更新：task010 MUMPS-BLR 与物理预条件器阅读入口
+
+task010 在 task009 负结果之后新增了 MUMPS-BLR 与 minimal shifted/positive Maxwell operator preconditioner。阅读代码时按这个顺序看：
+
+```text
+1. src/common/config_3d.py
+   看新增的 iter_fgmres_mumps_blr_eps*、iter_fgmres_shifted_*、iter_fgmres_positive_maxwell_* profiles。
+
+2. src/solvers/common_3d_solve.py
+   看 _fgmres_right_options、_mumps_blr_options、_shifted_or_positive_asm_options 和 solver_profile_metadata。
+   BLR 使用 FGMRES + right preconditioning + unpreconditioned norm；shifted/positive profile 通过 metadata 触发 P 矩阵装配。
+
+3. src/solvers/dtn_port_3d.py
+   看 _stage4_operator_preconditioner_form、_assemble_augmented_operator_preconditioner 和 _solve_augmented_system。
+   这里使用 KSP.setOperators(A, P)，A 仍是原始 DtN augmented 系统，P 只作为预条件器。
+
+4. src/solvers/common_3d_case_flow.py
+   看 preconditioner_family、preconditioner_matrix_stats、mumps_blr_epsilon、shifted_preconditioner_alpha 如何写入 run_summary.json。
+
+5. src/studies/run_3d_matrix_scale.py
+   看 matrix_scale.csv 中 BLR、A/P matrix stats、pc_side、ksp_norm_type、true_relative_residual_norm 和 failure fields。
+
+6. src/test/test_18_3d_direct_solver_profile_cleanup.py
+   看 task010 profiles 的 PETSc options 和 metadata 单元测试。
+```
+
+task010 的结论写在：
+
+```text
+docs/task010_shifted_maxwell_preconditioner/outcomes/summary.md
+docs/task010_shifted_maxwell_preconditioner/outcomes/mumps_blr_feasibility.md
+docs/task010_shifted_maxwell_preconditioner/outcomes/preconditioner_profile_ranking.md
+docs/task010_shifted_maxwell_preconditioner/outcomes/workstation_recommendation.md
+```
+
+当前推荐候选是 `iter_fgmres_mumps_blr_eps1e-5`。它在 p=2 h=2 nm 收敛并复现 direct LU R/T/A；p=2 h=1.5 nm 仍在 KSP setup 阶段被 signal 9 kill。minimal shifted/positive P 已验证 A/P 路径，但 h=5/h=4 不收敛，不能当作生产求解器。
+
+## 2026-07-06 更新：task009 iterative solver profiles 阅读入口
+
+task009 重新开放了一组 `iter_*` PETSc profile，用于在 task008 目标几何上筛选迭代求解器。它们当前是筛选和诊断入口，不是已经确认可靠的生产求解器。
+
+阅读代码时按这个顺序看：
+
+```text
+1. src/common/config_3d.py
+   看 PETSC_DIRECT_SOLVER_PROFILES、PETSC_ITERATIVE_SOLVER_PROFILES、PETSC_SOLVER_PROFILES。
+   petsc_direct_solver_profile_requested 仍保留历史字段名，但现在接受 direct 与 iter_* profile。
+
+2. src/solvers/common_3d_solve.py
+   看 ITERATIVE_SOLVER_PROFILE_OPTIONS、is_iterative_solver_profile、solver_profile_method、iterative_solver_profile_options。
+   _prepare_direct_lu_options_for_comm 会把 iter_* profile 转成 KSP/PC options；direct/default/mumps_ooc 仍走 LU。
+
+3. src/solvers/dtn_port_3d.py
+   看 _solve_augmented_system。这里记录 KSP setup/solve time、iterations、converged reason、initial/final residual。
+   fieldsplit profile 会在这里用本进程 owned range 构造 FE/auxiliary 两个 IS，避免错误的全局 IS 触发 setup 问题。
+
+4. src/solvers/common_3d_case_flow.py
+   看 linear_solve_method、KSP residual、true residual、case_status 如何写入 run_summary.json。
+   iterative profile 不收敛时 case 会标记为 failed_not_converged，并跳过 official R/T/A。
+
+5. src/studies/run_3d_matrix_scale.py
+   看 matrix_scale.csv 如何记录 profile_name、linear_solve_method、KSP/PC 类型、iterations、residual、RSS 上界和 failure reason。
+```
+
+task009 的结论写在：
+
+```text
+docs/task009_iterative_solver_profile_screening/outcomes/summary.md
+docs/task009_iterative_solver_profile_screening/outcomes/profile_ranking.md
+docs/task009_iterative_solver_profile_screening/outcomes/workstation_recommendation.md
+```
+
+当前筛选结论是：没有找到可正式替代 direct/MUMPS 的迭代求解器；`iter_gmres_jacobi` 只适合作为诊断路径，能跑到 h=1.5 nm 但不收敛，不能输出可信 official R/T/A。
+
 ## 2026-07-02 更新：3D 并行后处理 owned-cell 过滤
 
 `src/postprocessing/postprocess_3d.py` 现在保留并行 owned-cell 过滤逻辑：
@@ -38,6 +112,8 @@
 
 ## 2026-07-02 更新：direct solver 代码入口已简化
 
+注意：本段记录的是 task009 之前的历史状态。task009 已重新开放 `iter_*` screening profiles，新的求解器入口见本文顶部 2026-07-06 小节；但 direct 生产路径仍只有 `default` 和 `mumps_ooc`。
+
 当前 3D 直接法只保留两个公开 profile：
 
 ```text
@@ -49,16 +125,16 @@ mumps_ooc
 
 ```text
 1. src/common/config_3d.py
-   看 petsc_direct_solver_profile_requested，只允许 default / mumps_ooc。
+   看 PETSC_DIRECT_SOLVER_PROFILES；direct 生产 profile 仍只有 default / mumps_ooc。
 
 2. src/solvers/common_3d_solve.py
-   看 _prepare_direct_lu_options_for_comm。default 是普通 direct LU；mumps_ooc 只额外设置 MUMPS OOC 参数。
+   看 _prepare_direct_lu_options_for_comm。default 是普通 direct LU；mumps_ooc 额外设置 MUMPS OOC 参数；task009 的 iter_* profile 也在这里映射为 KSP/PC options。
 
 3. src/runners/run_3d_cases.py
-   看 --petsc-direct-solver-profile，现在 CLI choices 也只有 default / mumps_ooc。
+   看 --petsc-direct-solver-profile，历史字段名保留，但 choices 现在同时包含 direct 与 iter_* screening profile。
 
 4. src/studies/run_3d_matrix_scale.py
-   批量尺度测试也只扫 default / mumps_ooc。
+   批量尺度测试可扫 direct 与 iter_* profile，并额外记录 KSP/PC、残差和收敛原因。
 ```
 
 旧的 `mkl_pardiso/superlu_dist/strumpack/mumps_ooc_seq_analysis/mumps_ooc_parallel_analysis/mumps_ooc_requested_legacy` 已经从当前代码入口删除；它们只保留在报告中作为历史测试结论和未来重新构建 PETSc 时的参考。
@@ -2825,3 +2901,44 @@ src/runners/run_cases.py
 ```
 
 顶层 `src` 现在只保留 `main.py` 作为 PyCharm/命令行统一入口，真正实现已经移动到各功能子目录。并行 Floquet 的重点在 `src/constraints/floquet_constraint.py`：MPI 下每个 rank 只约束自己拥有的右边界 slave，自由度 master 使用全局编号和 owner rank。
+## 2026-07-07 更新：task011 低内存迭代求解器阅读入口
+
+task011 新增了 low-memory Jacobi-Krylov profile、AMS/HX smoke runner 和 matrix-free matvec smoke runner。阅读代码时按这个顺序：
+
+```text
+1. src/common/config_3d.py
+   看 iter_gmres_jacobi_restart20/40、iter_fgmres_jacobi_restart20、
+   iter_lgmres_jacobi_restart20、iter_tfqmr_jacobi、iter_bicgstab_jacobi、
+   iter_cgs_jacobi。
+
+2. src/solvers/common_3d_solve.py
+   看 _low_memory_jacobi_krylov_options 和 solver_profile_metadata。
+   本轮 low-memory profile 全部是 assembled A + Jacobi，不含 LU/BLR。
+
+3. src/solvers/common_3d_case_flow.py
+   看 low_memory_krylov_enabled / low_memory_krylov_family 如何写入 summary。
+
+4. src/studies/run_3d_matrix_scale.py
+   看 ksp_gmres_restart 与 low-memory metadata 如何写入 matrix_scale.csv。
+
+5. src/studies/run_ams_hx_smoke.py
+   看 FE-only hypre AMS/HX smoke：discrete_gradient(Q, V)、
+   edge constant vectors、real mode 成功与 complex mode 崩溃边界。
+
+6. src/studies/run_matrix_free_matvec_smoke.py
+   看 UFL action matrix-free matvec 与 assembled matrix matvec 的一致性验证。
+
+7. src/test/test_18_3d_direct_solver_profile_cleanup.py
+   看 task011 profiles 的 PETSc options 与 metadata 单元测试。
+```
+
+task011 的结论写在：
+
+```text
+docs/task011_low_memory_ams_hx_iterative_solver/outcomes/summary.md
+docs/task011_low_memory_ams_hx_iterative_solver/outcomes/ams_hx_smoke_notes.md
+docs/task011_low_memory_ams_hx_iterative_solver/outcomes/profile_ranking.md
+docs/task011_low_memory_ams_hx_iterative_solver/outcomes/next_decision.md
+```
+
+当前判断：Jacobi-Krylov 不能作为 Stage 4 可用求解器；direct complex hypre AMS 会崩溃；下一步应做 real-imag split AMS/HX block preconditioner。

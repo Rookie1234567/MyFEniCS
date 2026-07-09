@@ -1,0 +1,2 @@
+case,p,h_nm,includes_floquet_mpc,includes_dtn_aux,n_complex,n_real,nnz_complex,nnz_real,fe_complex_dofs,aux_complex_dofs,relative_matvec_error,relative_rhs_error,rss_upper_gb,notes
+task014a_default100_stage4_block_grating_p1_h5,1,5.0,True,True,39978,79956,2347740,9390960,39270,708,6.804783471620568e-16,0.0,0.4601020812988281,constraint-after dolfinx_mpc matrix plus auxiliary DtN rows; complex-mode export

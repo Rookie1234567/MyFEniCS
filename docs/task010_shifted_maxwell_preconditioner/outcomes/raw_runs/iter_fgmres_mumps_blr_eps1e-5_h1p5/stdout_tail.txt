@@ -1,0 +1,20 @@
+unconstrained RHS norm = 0.0
+Stage-4 DtN selected auxiliary port modes = 80
+Stage-4 DtN top/bottom mode count = 40 / 40
+Stage-4 DtN matrix base rows = 1347234
+Stage-4 DtN surface quadrature degree = 17
+Stage-4 DtN prepared 50/80 auxiliary modes in 130.146 seconds; unique surface orders = 25
+Stage-4 DtN modal cache summary: unique surface orders = 40, x/y component vector assemblies = 80, polarization cache hits = 40
+Stage-4 DtN base matrix nnz = 142105868.0
+Stage-4 DtN auxiliary coupling nnz estimate = 550336
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 17 RUNNING AT e8e072144f6c
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions

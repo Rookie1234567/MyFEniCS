@@ -1,0 +1,10 @@
+case,p,h_nm,profile,stage,rss_gb,B_rows,B_nnz,G_rows,G_cols,G_nnz,H1_dofs,matrix_rows,matrix_nnz,notes
+task014a_stage4_block_grating_p1_h5,1,5.0,setup,real_block_matrix_loaded,0.25832366943359375,144,4574,144,64,1800,64,296,18600,real split matrix built from complex-mode Stage4 export
+task014a_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_jacobi,after_solve,0.25905609130859375,144,4574,144,64,1800,64,296,18600,completed
+task014a_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_fe_ams_aux_identity,after_solve,0.26100921630859375,144,4574,144,64,1800,64,296,18600,completed
+task014a_default100_stage4_block_grating_p1_h5,1,5.0,setup,real_block_matrix_loaded,0.6829338073730469,39270,1307032,39270,13671,667340,13671,79956,9390960,real split matrix built from complex-mode Stage4 export
+task014a_default100_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_jacobi,after_solve,0.6829338073730469,39270,1307032,39270,13671,667340,13671,79956,9390960,not_converged
+task014a_default100_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_fe_ams_aux_identity,after_solve,0.7863235473632812,39270,1307032,39270,13671,667340,13671,79956,9390960,not_converged
+task014a_default100_zero_order_stage4_block_grating_p1_h5,1,5.0,setup,real_block_matrix_loaded,0.46326446533203125,39270,1307032,39270,13671,667340,13671,78540,5228128,real split matrix built from complex-mode Stage4 export
+task014a_default100_zero_order_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_jacobi,after_solve,0.4696197509765625,39270,1307032,39270,13671,667340,13671,78540,5228128,not_converged
+task014a_default100_zero_order_stage4_block_grating_p1_h5,1,5.0,stage4_real_split_fgmres_fe_ams_aux_identity,after_solve,0.737396240234375,39270,1307032,39270,13671,667340,13671,78540,5228128,not_converged

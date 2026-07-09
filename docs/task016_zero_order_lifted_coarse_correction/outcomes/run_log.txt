@@ -1,0 +1,21 @@
+# Run Log
+
+| step | result |
+|---|---|
+| tiny10 complex export | completed |
+| tiny10 lifted diagnostic with KSP | completed |
+| default100 complex export | completed |
+| default100 one-shot Galerkin/minres | completed |
+| default100 KSP un-damped `omega=1.0` | PETSc FPE, not stable |
+| default100 KSP top_y `omega=0.1` | completed, no improvement |
+| default100 KSP top_bottom_y `omega=0.01` | completed, no improvement |
+| default100 KSP top_bottom_xy `omega=0.01` | completed, no improvement |
+| default100 balanced lift one-shot | completed, no improvement |
+
+## Important Notes
+
+1. Docker service used: `dolfinx_mpc`.
+2. complex export ran in default complex PETSc mode.
+3. lifted diagnostics ran after `. /usr/local/bin/dolfinx-real-mode`.
+4. `.npz/.h5/.xdmf` files were used as local run cache only and must not be committed.
+5. PETSc FPE was reproduced for un-damped multi-profile lifted KSP; damping stabilized the run but did not improve residual.

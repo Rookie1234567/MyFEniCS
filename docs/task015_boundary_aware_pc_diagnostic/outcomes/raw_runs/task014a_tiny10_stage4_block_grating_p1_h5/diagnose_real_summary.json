@@ -1,0 +1,146 @@
+{
+  "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+  "profiles": [
+    "stage4_real_split_fgmres_fe_exact_aux_exact"
+  ],
+  "solve_rows": [
+    {
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "status": "completed",
+      "reason": "CONVERGED_ATOL",
+      "iterations": 8,
+      "true_relative_residual_norm": 1.3752159928462348e-15,
+      "ksp_final_residual": 1.1864105663014648e-14,
+      "rss_upper_gb": 0.221160888671875,
+      "setup_time_s": 3.760399704333395e-05,
+      "solve_time_s": 0.0007952599989948794,
+      "ams_setup_rss_before_gb": null,
+      "ams_setup_rss_after_gb": null,
+      "pc_apply_time_s": 0.0005691889818990603,
+      "pc_apply_count": 8,
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "p": 1,
+      "h_nm": 5.0,
+      "includes_dtn_aux": true,
+      "aux_complex_dofs": 4,
+      "aux_real_dofs": 8,
+      "fe_real_dofs": 288,
+      "total_real_dofs": 296
+    }
+  ],
+  "residual_decomposition": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "true_relative_residual_norm": 1.3752159928462348e-15,
+      "r_fe_real_over_b": 6.004201098140332e-16,
+      "r_aux_real_over_b": 4.606915466320124e-16,
+      "r_fe_imag_over_b": 8.925078234541235e-16,
+      "r_aux_imag_over_b": 7.224318671306985e-16,
+      "r_fe_total_over_b": 1.0756739855532032e-15,
+      "r_aux_total_over_b": 8.568223291815771e-16,
+      "fe_residual_fraction": 0.782185482970511,
+      "aux_residual_fraction": 0.6230456405675175,
+      "dominant_block": "FE",
+      "notes": "computed from final true residual r=b-Ax"
+    }
+  ],
+  "top_aux_modal_residuals": [
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "mode_id": 1,
+      "port": "top",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "y",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 5.8834987389051215e-15,
+      "relative_to_total_residual": 0.4525917926349065,
+      "relative_to_aux_residual": 0.7264183603349688,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "mode_id": 3,
+      "port": "bottom",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "y",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 5.482200467709266e-15,
+      "relative_to_total_residual": 0.4217216740198016,
+      "relative_to_aux_residual": 0.6768712379331716,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "mode_id": 0,
+      "port": "top",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "x",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 7.982905288830867e-16,
+      "relative_to_total_residual": 0.06140899446812819,
+      "relative_to_aux_residual": 0.09856259392520936,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    },
+    {
+      "case": "task014a_tiny10_stage4_block_grating_p1_h5",
+      "profile": "stage4_real_split_fgmres_fe_exact_aux_exact",
+      "mode_id": 2,
+      "port": "bottom",
+      "diffraction_order_m": 0,
+      "diffraction_order_n": 0,
+      "polarization": "x",
+      "is_propagating": true,
+      "is_near_cutoff": false,
+      "residual_norm": 5.401168120749219e-16,
+      "relative_to_total_residual": 0.04154882104295831,
+      "relative_to_aux_residual": 0.06668664113452823,
+      "notes": "auxiliary residual is one scalar complex residual per DtN mode"
+    }
+  ],
+  "matrix_stats": {
+    "rows": 296,
+    "cols": 296,
+    "nnz": 18600,
+    "allocated_nnz": 18600
+  },
+  "complex_blocks": {
+    "Aff_shape": [
+      144,
+      144
+    ],
+    "Aff_nnz": 4574,
+    "C_shape": [
+      144,
+      4
+    ],
+    "C_nnz": 36,
+    "D_shape": [
+      4,
+      144
+    ],
+    "D_nnz": 36,
+    "Aaa_shape": [
+      4,
+      4
+    ],
+    "Aaa_nnz": 4,
+    "schur_diag_condition": null,
+    "schur_build_time_s": null
+  },
+  "ams_failure": null,
+  "export_info": {
+    "n_complex": 148,
+    "nnz_complex": 4650,
+    "npz_path": "docs/task015_boundary_aware_pc_diagnostic/outcomes/raw_runs/task014a_tiny10_stage4_block_grating_p1_h5/complex_export/task014a_tiny10_stage4_block_grating_p1_h5_complex_matrix.npz"
+  }
+}

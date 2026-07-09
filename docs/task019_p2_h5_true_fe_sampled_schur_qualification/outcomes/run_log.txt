@@ -1,0 +1,14 @@
+# Run Log
+
+## Commands
+
+1. complex export p=2 h=5：完成，export RSS 约 `3.356 GB`。
+2. first full `baseline_max_it=1000` real run：外层 timeout `7200 s` 后停止；观测容器 RSS 约 `12.78/13.65 GiB`；没有写出 baseline summary。
+3. staged `baseline-real --baseline-max-it 120`：完成；真实残差 `1.638606e-02`；solve time 约 `1420.8 s`。
+4. offline selected FE RHS scans：运行 GMRES/LGMRES/GCROTmk/BiCGStab truncated candidates；best required one-shot `1.635705e-02`。
+5. low-dimensional variants：运行 aux-only、sign diagnostics、FE residual enrichment；best `1.516624e-02`。
+6. baseline continuation to iter240：完成；真实残差 `1.581607e-02`；solve time 约 `1357.5 s`。
+
+## Important Observation
+
+p=2 问题没有卡在 export 或 mode mapping；它卡在 correction-space quality 和 workstation cost。AMS segment 很贵，而 low-dimensional sampled Schur 太弱。

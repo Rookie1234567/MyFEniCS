@@ -1,0 +1,4 @@
+case,profile,status,iterations,true_relative_residual_norm,improvement_vs_aux_identity,rss_upper_gb,notes
+task014a_default100_stage4_block_grating_p1_h5,not_run,not_run,0,,,0.8804130554199219,single-component diagnostic did not meet strong positive gate before combination
+task014a_default100_zero_order_stage4_block_grating_p1_h5,not_run,not_run,0,,,0.7789497375488281,single-component diagnostic did not meet strong positive gate before combination
+task014a_tiny10_stage4_block_grating_p1_h5,not_run,not_run,0,,,0.221160888671875,single-component diagnostic did not meet strong positive gate before combination

@@ -1,0 +1,2 @@
+case,profile,true_relative_residual_norm,r_fe_real_over_b,r_aux_real_over_b,r_fe_imag_over_b,r_aux_imag_over_b,r_fe_total_over_b,r_aux_total_over_b,fe_residual_fraction,aux_residual_fraction,dominant_block,notes
+task014a_default100_stage4_block_grating_p1_h5,stage4_real_split_fgmres_fe_ams_aux_identity,0.02145878536207579,0.0006668131505677883,0.008494229883921001,0.0008453204719920706,0.01967659323705713,0.001076664515129498,0.02143175827452099,0.05017360008792913,0.9987405117718096,aux,computed from final true residual r=b-Ax

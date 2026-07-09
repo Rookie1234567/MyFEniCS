@@ -1,0 +1,9 @@
+Fatal glibc error: malloc.c:4376 (_int_malloc): assertion failed: (unsigned long) (size) >= (unsigned long) (nb)
+[6]PETSC ERROR: ------------------------------------------------------------------------
+[6]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[6]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[6]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[6]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[6]PETSC ERROR: to get more information on the crash.
+[6]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+Abort(59) on node 6 (rank 6 in comm 0): application called MPI_Abort(MPI_COMM_WORLD, 59) - process 6

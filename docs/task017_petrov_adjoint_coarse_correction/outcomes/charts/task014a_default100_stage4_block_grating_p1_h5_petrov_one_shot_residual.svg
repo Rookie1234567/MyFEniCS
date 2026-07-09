@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="450" viewBox="0 0 980 450">
+<rect width="100%" height="100%" fill="white"/>
+<text x="24" y="34" font-family="Arial" font-size="20" font-weight="700">task014a_default100_stage4_block_grating_p1_h5 Petrov one-shot residual</text>
+<text x="24" y="86" font-family="Arial" font-size="12">top_bottom_y / diag_lift / W_AZ / 1.0</text>
+<rect x="500" y="68" width="600.0" height="18" fill="#2b6cb0"/>
+<text x="1110.0" y="82" font-family="Arial" font-size="12">2.146460e-02</text>
+<text x="24" y="116" font-family="Arial" font-size="12">top_bottom_y / diag_lift / W_AZ_normalized / 1.0</text>
+<rect x="500" y="98" width="600.0" height="18" fill="#2b6cb0"/>
+<text x="1110.0" y="112" font-family="Arial" font-size="12">2.146460e-02</text>
+<text x="24" y="146" font-family="Arial" font-size="12">top_y / diag_lift / W_AZ / 1.0</text>
+<rect x="500" y="128" width="600.0" height="18" fill="#2b6cb0"/>
+<text x="1110.0" y="142" font-family="Arial" font-size="12">2.146460e-02</text>
+<text x="24" y="176" font-family="Arial" font-size="12">top_y / diag_lift / W_AZ_normalized / 1.0</text>
+<rect x="500" y="158" width="600.0" height="18" fill="#2b6cb0"/>
+<text x="1110.0" y="172" font-family="Arial" font-size="12">2.146460e-02</text>
+<text x="24" y="206" font-family="Arial" font-size="12">top_bottom_y / pfe_lift / W_AZ / 1.0</text>
+<rect x="500" y="188" width="431.9" height="18" fill="#2b6cb0"/>
+<text x="941.9" y="202" font-family="Arial" font-size="12">2.146475e-02</text>
+<text x="24" y="236" font-family="Arial" font-size="12">top_bottom_y / pfe_lift / W_AZ_normalized / 1.0</text>
+<rect x="500" y="218" width="431.9" height="18" fill="#2b6cb0"/>
+<text x="941.9" y="232" font-family="Arial" font-size="12">2.146475e-02</text>
+<text x="24" y="266" font-family="Arial" font-size="12">top_y / pfe_lift / W_AZ / 1.0</text>
+<rect x="500" y="248" width="431.9" height="18" fill="#2b6cb0"/>
+<text x="941.9" y="262" font-family="Arial" font-size="12">2.146475e-02</text>
+<text x="24" y="296" font-family="Arial" font-size="12">top_y / pfe_lift / W_AZ_normalized / 1.0</text>
+<rect x="500" y="278" width="431.9" height="18" fill="#2b6cb0"/>
+<text x="941.9" y="292" font-family="Arial" font-size="12">2.146475e-02</text>
+<text x="24" y="326" font-family="Arial" font-size="12">top_bottom_y / diag_lift / W_AZ / 0.3</text>
+<rect x="500" y="308" width="80.0" height="18" fill="#2b6cb0"/>
+<text x="590.0" y="322" font-family="Arial" font-size="12">2.146507e-02</text>
+<text x="24" y="356" font-family="Arial" font-size="12">top_bottom_y / diag_lift / W_AZ_normalized / 0.3</text>
+<rect x="500" y="338" width="80.0" height="18" fill="#2b6cb0"/>
+<text x="590.0" y="352" font-family="Arial" font-size="12">2.146507e-02</text>
+<text x="24" y="386" font-family="Arial" font-size="12">top_y / diag_lift / W_AZ / 0.3</text>
+<rect x="500" y="368" width="80.0" height="18" fill="#2b6cb0"/>
+<text x="590.0" y="382" font-family="Arial" font-size="12">2.146507e-02</text>
+<text x="24" y="416" font-family="Arial" font-size="12">top_y / diag_lift / W_AZ_normalized / 0.3</text>
+<rect x="500" y="398" width="80.0" height="18" fill="#2b6cb0"/>
+<text x="590.0" y="412" font-family="Arial" font-size="12">2.146507e-02</text>
+</svg>
