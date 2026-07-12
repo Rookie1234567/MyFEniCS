@@ -27,11 +27,11 @@
 |---|---|
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
-| [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态与限制；Task28 V1 要求继续补全 |
-| [`quick_start.md`](quick_start.md) | 用户运行入口；Task28 V1 要求继续扩充环境、结果读取和可视化流程 |
+| [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态与限制；V2 要求与 Quick Start、Theory 和 Benchmark 建立逐项映射 |
+| [`quick_start.md`](quick_start.md) | 全局最短入口；详细 PyCharm/功能教程将重构到 `notes/quick_start/` |
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
-| [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界；Task28 V1 要求补全 OOC/BLR/condensed 路线 |
-| [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果 |
+| [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
+| [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；V2 要求建立编号 feature cases |
 
 ## 阶段索引
 
@@ -44,7 +44,7 @@
 | Task020-Task025 | wave-aware、FE response、Schur、cached-Q | 研究机制与基础设施，未达production |
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
-| Task028 | 阶段收口、选择性整合、benchmark | 核心整合通过；V1 要求修正文档、环境与 benchmark 自动化 |
+| Task028 | 阶段收口、选择性整合、benchmark | 核心代码和数值通过；V2 要求重构学习文档、PyCharm入口和功能Benchmark目录 |
 
 ## 当前任务
 
@@ -52,7 +52,7 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `response_v1.md` 已完成；六个P0已关闭，等待Review V2，暂不合并master |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v2.md` 已完成；`changes_required`，等待文档/PyCharm/feature benchmark 重构，暂不合并master |
 
 ## Task28 审计入口
 
@@ -63,7 +63,8 @@
 | `outcomes/selective_merge_manifest.csv` | 文件级整合决策 |
 | `outcomes/benchmark_gate.csv` | 分层benchmark gate |
 | `outcomes/merge_recommendation.md` | Codex 首轮合并建议 |
-| `review_report_v1.md` | ChatGPT V1 正式审查；要求修正 benchmark 边界、脚本、自动 Gate、环境、文档和 sm2 测试 |
-| `response_v1.md` | Codex逐项回应；58项自动Gate、统一限定环境、扩充文档和sm2测试均完成 |
+| `review_report_v1.md` | ChatGPT V1 审查：benchmark 边界、脚本、自动 Gate、环境、文档和 sm2 测试 |
+| `response_v1.md` | Codex V1 回应：六个 P0 基本关闭 |
+| `review_report_v2.md` | ChatGPT V2 审查：重构 Quick Start、Code Walkthrough、Theory、main.py PyCharm preset 与编号功能 Benchmark |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；发现问题后在同一分支提交 `response_v1.md` 并继续修正。
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；本轮应在同一分支提交 `response_v2.md` 并继续修正。
