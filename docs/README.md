@@ -2,10 +2,30 @@
 
 `docs/taskXXX_*/` 保存 ChatGPT 任务书、Codex outcomes 和审查报告；`notes/` 只保存理论、学习和解释性文档。Task28 从干净 master 选择性归档 Task021-Task027 的核心闭环文件，不复制 raw runs。
 
+<!-- REPOSITORY_WORK_PRINCIPLES_BEGIN -->
+
+## 工作规则（不得删除）
+
+> 本节是仓库治理保护区。完整规则见 [`repository_work_principles.md`](repository_work_principles.md)，并由 `src/test/test_24_repository_work_principles.py` 检查；文档整理时不得删除。
+
+1. 开始新一轮前，读取上一轮任务目录中的 `review_report*.md`、`response*.md`（若存在）或 outcomes summary。
+2. 同时读取本轮任务目录中的 `task.md`。
+3. 完成工作后，把本轮结果写入该任务目录的 `outcomes/`。
+4. 审查后，把 `review_report_vN.md` 提交到同一个任务目录；Codex 通过 `response_vN.md` 回应并在同一分支修正。
+5. 普通大体积计算结果保留在 `results/`，Benchmark 重型 artifact 保留在 `benchmarks/artifacts/`，均不提交 Git。
+6. **ChatGPT 不创建执行分支；执行分支由 Codex 创建。**
+7. **failed solver code 默认留在对应 research branch，不合并 production；docs / review / 精简 outcomes 可以 selective merge。**
+8. 禁止整体合并大型 research branch；ordinary solver default 不得静默改变；未通过最终 review 前不合并 `master`。
+9. Codex 不得删除或改写 ChatGPT 的 `task.md`、`review_report*.md`；需要纠正时新增 response，而不是覆盖审查记录。
+10. solver 成功使用 full explicit true residual 判断，official R/T/A 只能从通过 residual Gate 的场计算。
+
+<!-- REPOSITORY_WORK_PRINCIPLES_END -->
+
 ## 项目总览
 
 | 文件 | 内容 |
 |---|---|
+| [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
 | [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态与限制；Task28 V1 要求继续补全 |
 | [`quick_start.md`](quick_start.md) | 用户运行入口；Task28 V1 要求继续扩充环境、结果读取和可视化流程 |
