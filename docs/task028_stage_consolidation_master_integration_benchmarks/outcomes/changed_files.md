@@ -11,10 +11,15 @@
 | `src/solvers/common_3d_case_flow.py` | 将总RSS写入普通3D summary |
 | `src/test/test_22_condensed_dtn.py` | 凝聚代数/MPI回归 |
 | `src/test/test_23_physical_slab_two_level.py` | owner、empty-owner与cache认证 |
+| `src/test/test_25_benchmark_contract.py` | 自动Gate、配置、脚本与ordinary output contract |
+| `src/runners/run_cases.py` | 增加显式output root覆盖，ordinary默认不变 |
+| `src/runners/run_3d_cases.py` | 增加显式output root覆盖，ordinary默认不变 |
 
 ## Benchmark
 
-新增 `benchmarks/` 下 runner、configs、expected gates、scripts、manifest、environment、说明和轻量 records。正式 benchmark 的完整网格与场写入被忽略的 `benchmarks/artifacts/`；普通 CLI 仍写 `results/`。
+新增/更新 `benchmarks/check_benchmarks.py`、单一JSON配置、expected gates、L1/L2/L3 scripts、manifest、完整metadata、自动summary与轻量 records。正式 benchmark 的完整网格与场写入被忽略的 `benchmarks/artifacts/`；普通 CLI 仍写 `results/`。
+
+新增 `docker/Dockerfile.stage4` 与 `docker/STAGE4_ENVIRONMENT.md`，固定本地base digest并统一complex PETSc、dolfinx_mpc和gmsh；环境诚实限定为 `qualified_local_image`。
 
 ## 用户文档
 

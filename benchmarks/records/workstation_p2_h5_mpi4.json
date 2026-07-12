@@ -1,27 +1,65 @@
 {
-  "metadata": {
-    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
-    "branch": "codex/20260712-task28-stage-consolidation",
-    "git_dirty": false,
-    "command": "mpiexec -n 4 python -m benchmarks.run_workstation_iterative --config benchmarks/configs/workstation_p2.json --h-nm 5 --results-dir benchmarks/artifacts/iterative --record benchmarks/records/workstation_p2_h5_mpi4.json",
-    "timestamp_utc": "2026-07-12T06:00:00Z",
-    "container_image": "code-dolfinx-task027-hpddm:latest",
-    "container_digest": "sha256:e54cdabd598a17e9f31a0c3d4d36d7b27c460f51095d4c1722adfb73bf2bca6a",
-    "host_environment_id": "task28_windows_wsl2_14gb",
-    "provenance": "clean_rerun_on_source_commit",
-    "artifact_provenance": "historical_results_source; canonical output root corrected after run"
-  },
+  "benchmark_id": "l3_iterative_h5",
+  "case": "task028_response_v1_h5_clean",
+  "profile": "workstation_p2_fixed_coarse_physical_slab",
+  "status": "pass",
   "qualified_profile": true,
   "qualification_deviations": [],
+  "resolved_config": {
+    "profile": "workstation_p2_fixed_coarse_physical_slab",
+    "qualified_h_nm": [
+      5.0,
+      3.0,
+      2.0
+    ],
+    "theta_deg": 80.0,
+    "lambda_nm": 13.5,
+    "degree": 2,
+    "mpi_size": 4,
+    "coarse_slabs": 24,
+    "coarse_dimension": 75,
+    "num_physical_slabs": 16,
+    "overlap_layers": 0.25,
+    "absorption_shift": 0.1,
+    "ilu_levels": 1,
+    "local_ksp": "gmres",
+    "local_ksp_iterations": 1,
+    "smoother_iterations": 2,
+    "outer_ksp": "fgmres",
+    "restart": 100,
+    "rtol": 1e-06,
+    "rta_threshold": 1.1e-06,
+    "monitor_stride": 50,
+    "max_it": 3000,
+    "artifact_root": "benchmarks/artifacts/iterative",
+    "record_root": "benchmarks/records",
+    "ordinary_default_changed": false,
+    "h_nm": 5.0
+  },
   "artifact_root": "benchmarks/artifacts/iterative",
-  "case": "task028_h5_mpi4_clean",
-  "profile": "workstation_p2_fixed_coarse_physical_slab",
+  "artifact_directory": "benchmarks/artifacts/iterative/task028_response_v1_h5_clean",
+  "record_path": "benchmarks/records/workstation_p2_h5_mpi4.json",
+  "metadata": {
+    "commit_sha": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": false,
+    "command": "mpiexec -n 4 /dolfinx-env/bin/python /work/benchmarks/run_workstation_iterative.py --config benchmarks/configs/workstation_p2.json --h-nm 5 --case-label task028_response_v1_h5_clean --results-dir benchmarks/artifacts/iterative --record benchmarks/records/workstation_p2_h5_mpi4.json",
+    "timestamp_utc": "2026-07-12T08:57:35.910646+00:00",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "clean_rerun",
+    "kernel": "6.6.114.1-microsoft-standard-WSL2",
+    "python": "3.12.3",
+    "numpy": "2.2.6"
+  },
   "ordinary_default_changed": false,
   "h_nm": 5.0,
   "mpi_size": 4,
   "n_fe": 44698,
   "n_aux": 80,
   "coarse_dimension": 75,
+  "coarse_slabs": 24,
   "coarse_rank": 75,
   "coarse_condition": 900.9550133142146,
   "coarse_action_relative_error": null,
@@ -32,14 +70,15 @@
   "ilu_levels": 1,
   "smoother_iterations": 2,
   "restart": 100,
+  "rtol": 1e-06,
   "max_it": 3000,
   "ksp_reason": 2,
   "iterations": 1201,
   "reported_relative_residual": 9.839489933957105e-07,
   "condensed_true_residual": 9.839489937056112e-07,
   "full_augmented_true_residual": 9.839489937056112e-07,
-  "solve_s": 100.7783563400153,
-  "total_s": 127.2644120749901,
+  "solve_s": 99.67630580201512,
+  "total_s": 130.8429634209606,
   "pc_apply_count": 1201,
   "operator_apply_count": 2515,
   "slab_diagnostics": {
@@ -71,224 +110,226 @@
     "assembly_order": "two_color",
     "local_ksp_iterations": 1,
     "local_ksp_type": "gmres",
+    "smoother_iterations": 2,
     "global_factor_rows": 71344,
     "global_factor_nnz": 7046752,
     "maximum_owner_rows": 17836,
     "minimum_owner_rows": 17836,
     "one_level_apply_count": 3603,
-    "one_level_mean_apply_s": 0.017411699110380745
+    "one_level_mean_apply_s": 0.017293533949738343
   },
   "history": [
     {
       "iteration": 0,
       "reported_relative_residual": 1.0,
       "true_relative_residual": 1.0,
-      "elapsed_s": 0.01193036197219044,
-      "monitor_current_total_gb": 1.9710197448730469,
-      "monitor_peak_total_gb": 1.96795654296875
+      "elapsed_s": 0.008255568973254412,
+      "monitor_current_total_gb": 1.9748649597167969,
+      "monitor_peak_total_gb": 1.9711532592773438
     },
     {
       "iteration": 50,
       "reported_relative_residual": 0.00599968179558348,
       "true_relative_residual": 0.0059996817955730265,
-      "elapsed_s": 4.0609540729783475,
-      "monitor_current_total_gb": 1.9741859436035156,
-      "monitor_peak_total_gb": 1.97113037109375
+      "elapsed_s": 4.226080985972658,
+      "monitor_current_total_gb": 1.9781951904296875,
+      "monitor_peak_total_gb": 1.9745712280273438
     },
     {
       "iteration": 100,
       "reported_relative_residual": 0.0025737371765314062,
       "true_relative_residual": 0.0025737371765314062,
-      "elapsed_s": 8.230890145990998,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 8.414391466008965,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 150,
       "reported_relative_residual": 0.0017286480978086997,
       "true_relative_residual": 0.0017286480978085483,
-      "elapsed_s": 12.36309848696692,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 12.730267303006258,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 200,
       "reported_relative_residual": 0.0011025799745463874,
       "true_relative_residual": 0.0011025799745463874,
-      "elapsed_s": 16.415564739960246,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 16.887612870021258,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 250,
       "reported_relative_residual": 0.0008783704444582882,
       "true_relative_residual": 0.0008783704444596637,
-      "elapsed_s": 20.533578647009563,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 20.89355679298751,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 300,
       "reported_relative_residual": 0.0006833597398951944,
       "true_relative_residual": 0.0006833597398951944,
-      "elapsed_s": 24.816026679007336,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 25.241905502974987,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 350,
       "reported_relative_residual": 0.00056015108859118,
       "true_relative_residual": 0.0005601510885923914,
-      "elapsed_s": 29.023074683966115,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 29.211161457991693,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 400,
       "reported_relative_residual": 0.00043562296908422913,
       "true_relative_residual": 0.00043562296908422913,
-      "elapsed_s": 33.28877315798309,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 33.43950656801462,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 450,
       "reported_relative_residual": 0.0002865955633937343,
       "true_relative_residual": 0.0002865955633941384,
-      "elapsed_s": 37.59295816201484,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 37.35896015900653,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 500,
       "reported_relative_residual": 0.00013545705413646518,
       "true_relative_residual": 0.00013545705413646518,
-      "elapsed_s": 41.91968142800033,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 41.29036271502264,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 550,
       "reported_relative_residual": 7.513210134772638e-05,
       "true_relative_residual": 7.513210134781886e-05,
-      "elapsed_s": 45.924132043961436,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 45.61811078101164,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 600,
       "reported_relative_residual": 4.144915006873466e-05,
       "true_relative_residual": 4.144915006873466e-05,
-      "elapsed_s": 50.22591233800631,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 50.03593285102397,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 650,
       "reported_relative_residual": 2.971868767145181e-05,
       "true_relative_residual": 2.9718687671910144e-05,
-      "elapsed_s": 54.33830443798797,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 54.30474446999142,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 700,
       "reported_relative_residual": 2.193154210410145e-05,
       "true_relative_residual": 2.193154210410145e-05,
-      "elapsed_s": 58.68042570899706,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 58.46931685198797,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 750,
       "reported_relative_residual": 1.785458598329059e-05,
       "true_relative_residual": 1.7854585982625913e-05,
-      "elapsed_s": 62.59692154196091,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 62.49683294998249,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 800,
       "reported_relative_residual": 1.4554386539380138e-05,
       "true_relative_residual": 1.4554386539380138e-05,
-      "elapsed_s": 66.76833419100149,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 66.70605551201152,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 850,
       "reported_relative_residual": 1.2574472526914373e-05,
       "true_relative_residual": 1.257447252610912e-05,
-      "elapsed_s": 70.93700954399537,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 70.80802117200801,
+      "monitor_current_total_gb": 1.991790771484375,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 900,
       "reported_relative_residual": 1.1103007274978426e-05,
       "true_relative_residual": 1.1103007274978426e-05,
-      "elapsed_s": 75.12301349797053,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 74.97431614098605,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 950,
       "reported_relative_residual": 9.792399893026823e-06,
       "true_relative_residual": 9.792399893576163e-06,
-      "elapsed_s": 79.1367328609922,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 78.90178364299936,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 1000,
       "reported_relative_residual": 7.63788782829139e-06,
       "true_relative_residual": 7.63788782829139e-06,
-      "elapsed_s": 83.50578221201431,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 83.30453538999427,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 1050,
       "reported_relative_residual": 5.186927404478465e-06,
       "true_relative_residual": 5.1869274038632645e-06,
-      "elapsed_s": 87.96267873299075,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 87.23932341800537,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 1100,
       "reported_relative_residual": 2.6946941431054876e-06,
       "true_relative_residual": 2.6946941431054876e-06,
-      "elapsed_s": 92.44765989499865,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 91.32803356699878,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 1150,
       "reported_relative_residual": 1.6258926693495933e-06,
       "true_relative_residual": 1.6258926697492154e-06,
-      "elapsed_s": 96.41340627300087,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 95.43533465097426,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     },
     {
       "iteration": 1200,
       "reported_relative_residual": 1.006316842860421e-06,
       "true_relative_residual": 1.006316842860421e-06,
-      "elapsed_s": 100.69079197896644,
-      "monitor_current_total_gb": 1.9869117736816406,
-      "monitor_peak_total_gb": 1.98382568359375
+      "elapsed_s": 99.58171066502109,
+      "monitor_current_total_gb": 1.9917945861816406,
+      "monitor_peak_total_gb": 1.9881210327148438
     }
   ],
-  "final_current_total_gb": 1.9871444702148438,
-  "final_peak_total_gb": 1.98406982421875,
+  "final_current_total_gb": 1.9920158386230469,
+  "final_peak_total_gb": 1.9882431030273438,
   "official_rta": {
     "R_total": 0.08902160321964928,
     "T_total": 0.4425882751984558,
     "A_volume_total": 0.4683901190309042,
     "R_plus_T_plus_A_volume": 0.9999999974490092,
     "energy_closure_error": -2.5509907519705166e-09,
-    "rta_current_total_gb": 1.9901008605957031,
-    "rta_peak_total_gb": 1.98663330078125
-  }
+    "rta_current_total_gb": 1.9948539733886719,
+    "rta_peak_total_gb": 1.9911727905273438
+  },
+  "peak_total_rss_including_rta_gb": 1.9911727905273438
 }

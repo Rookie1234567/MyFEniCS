@@ -17,6 +17,8 @@ next_decision.md
 summary.md
 ```
 
+Review V1 修正的逐项回应位于任务目录上一级 `response_v1.md`；本目录中的summary、test、gate、metrics、run log和merge recommendation已同步更新。
+
 完整 benchmark 运行文件不放在本目录，而放在仓库根目录的独立：
 
 ```text

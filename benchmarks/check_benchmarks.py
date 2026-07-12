@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -60,9 +61,30 @@ def _metadata_complete(record: dict[str, Any]) -> tuple[bool, list[str]]:
         "container_image",
         "container_digest",
         "host_environment_id",
+        "provenance",
     )
     missing = [key for key in required if metadata.get(key) in (None, "")]
     return not missing, missing
+
+
+def _commit_relation(commit: str | None, provenance: str | None) -> str:
+    if provenance == "reviewed_reference_not_rerun":
+        return "reviewed_reference_exempt"
+    if commit is None or re.fullmatch(r"[0-9a-f]{7,40}", commit) is None:
+        return "invalid_commit"
+    checkout = _git("rev-parse", "HEAD")
+    if checkout is None:
+        return "checkout_unavailable_sha_valid"
+    try:
+        subprocess.check_call(
+            ["git", "merge-base", "--is-ancestor", commit, checkout],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "not_checkout_ancestor"
+    return "exact_checkout" if commit == checkout else "checkout_ancestor"
 
 
 def _record_path(raw: str) -> Path:
@@ -72,6 +94,7 @@ def _record_path(raw: str) -> Path:
 
 def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     expected = _load_json(BENCHMARKS / "expected" / "gates.json")
+    canonical_config = _load_json(BENCHMARKS / "configs" / "workstation_p2.json")
     with (BENCHMARKS / "benchmark_manifest.csv").open(
         encoding="utf-8", newline=""
     ) as stream:
@@ -100,6 +123,20 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 complete,
                 missing or "complete",
                 "no missing required metadata",
+                raw_path,
+            )
+        )
+        metadata = record.get("metadata", {})
+        relation = _commit_relation(
+            metadata.get("commit_sha"), metadata.get("provenance")
+        )
+        accepted_relations = set(expected["record_commit_relations_accepted"])
+        gates.append(
+            Gate(
+                f"record_commit_consistent:{row['benchmark_id']}",
+                relation in accepted_relations,
+                relation,
+                sorted(accepted_relations),
                 raw_path,
             )
         )
@@ -163,6 +200,37 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             )
         )
         for name, record in zip(iterative_ids, iterative_records, strict=True):
+            config_mapping = {
+                "profile": "profile",
+                "mpi_size": "mpi_size",
+                "coarse_slabs": "coarse_slabs",
+                "coarse_dimension": "coarse_dimension",
+                "num_slabs": "num_physical_slabs",
+                "overlap_layers": "overlap_layers",
+                "absorption_shift": "absorption_shift",
+                "ilu_levels": "ilu_levels",
+                "smoother_iterations": "smoother_iterations",
+                "restart": "restart",
+                "rtol": "rtol",
+                "max_it": "max_it",
+            }
+            config_differences = {
+                record_key: {
+                    "record": record.get(record_key),
+                    "config": canonical_config[config_key],
+                }
+                for record_key, config_key in config_mapping.items()
+                if record.get(record_key) != canonical_config[config_key]
+            }
+            gates.append(
+                Gate(
+                    f"record_matches_canonical_config:{name}",
+                    not config_differences,
+                    config_differences or "match",
+                    "all canonical profile fields match",
+                    name,
+                )
+            )
             reported = float(record["reported_relative_residual"])
             condensed = float(record["condensed_true_residual"])
             full = float(record["full_augmented_true_residual"])

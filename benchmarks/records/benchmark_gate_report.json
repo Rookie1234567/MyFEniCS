@@ -1,9 +1,9 @@
 {
-  "checkout_commit": null,
-  "checkout_dirty": false,
+  "checkout_commit": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+  "checkout_dirty": true,
   "passed": true,
-  "passed_count": 47,
-  "total_count": 47,
+  "passed_count": 58,
+  "total_count": 58,
   "gates": [
     {
       "name": "record_exists:l1_2d_zero_contrast",
@@ -17,6 +17,18 @@
       "passed": true,
       "observed": "complete",
       "expected": "no missing required metadata",
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "record_commit_consistent:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
       "evidence": "records/2d_zero_contrast_dtn_smoke.json"
     },
     {
@@ -34,6 +46,18 @@
       "evidence": "records/3d_stage1_mpi2_smoke.json"
     },
     {
+      "name": "record_commit_consistent:l1_3d_stage1",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
       "name": "record_exists:l3_direct_h5",
       "passed": true,
       "observed": true,
@@ -45,6 +69,18 @@
       "passed": true,
       "observed": "complete",
       "expected": "no missing required metadata",
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_direct_h5",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
       "evidence": "records/direct_p2_h5_mpi4.json"
     },
     {
@@ -62,6 +98,18 @@
       "evidence": "records/direct_p2_h3_mpi4.json"
     },
     {
+      "name": "record_commit_consistent:l3_direct_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
       "name": "record_exists:l3_direct_h2",
       "passed": true,
       "observed": true,
@@ -73,6 +121,18 @@
       "passed": true,
       "observed": "complete",
       "expected": "no missing required metadata",
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_direct_h2",
+      "passed": true,
+      "observed": "reviewed_reference_exempt",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
       "evidence": "records/direct_p2_h2_reviewed_reference.json"
     },
     {
@@ -90,6 +150,18 @@
       "evidence": "records/workstation_p2_h5_mpi4.json"
     },
     {
+      "name": "record_commit_consistent:l3_iterative_h5",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
       "name": "record_exists:l3_iterative_h3",
       "passed": true,
       "observed": true,
@@ -101,6 +173,18 @@
       "passed": true,
       "observed": "complete",
       "expected": "no missing required metadata",
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_iterative_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
       "evidence": "records/workstation_p2_h3_mpi4.json"
     },
     {
@@ -118,6 +202,18 @@
       "evidence": "records/workstation_p2_h2_mpi4.json"
     },
     {
+      "name": "record_commit_consistent:l3_iterative_h2",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
       "name": "iterative_h5_h3_h2_present",
       "passed": true,
       "observed": true,
@@ -132,6 +228,13 @@
       ],
       "expected": 1,
       "evidence": "records"
+    },
+    {
+      "name": "record_matches_canonical_config:l3_iterative_h5",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h5"
     },
     {
       "name": "residual_max:l3_iterative_h5",
@@ -184,6 +287,13 @@
       "evidence": "l3_iterative_h5"
     },
     {
+      "name": "record_matches_canonical_config:l3_iterative_h3",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h3"
+    },
+    {
       "name": "residual_max:l3_iterative_h3",
       "passed": true,
       "observed": 9.932648742620389e-07,
@@ -232,6 +342,13 @@
       "observed": 6.179627920488429e-10,
       "expected": 1e-06,
       "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "record_matches_canonical_config:l3_iterative_h2",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h2"
     },
     {
       "name": "residual_max:l3_iterative_h2",
@@ -300,21 +417,21 @@
     {
       "name": "direct_iterative_R:h5",
       "passed": true,
-      "observed": 2.832110934658516e-10,
+      "observed": 2.8320801259695827e-10,
       "expected": 1e-08,
       "evidence": "l3_direct_h5,l3_iterative_h5"
     },
     {
       "name": "direct_iterative_T:h5",
       "passed": true,
-      "observed": 3.458670017053578e-09,
+      "observed": 3.458669073364007e-09,
       "expected": 1e-08,
       "evidence": "l3_direct_h5,l3_iterative_h5"
     },
     {
       "name": "direct_iterative_A_volume:h5",
       "passed": true,
-      "observed": 6.243489614199405e-10,
+      "observed": 6.243484618195794e-10,
       "expected": 1e-08,
       "evidence": "l3_direct_h5,l3_iterative_h5"
     },

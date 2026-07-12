@@ -7,6 +7,12 @@
   "reported_condensed_relative_difference_max": 1e-8,
   "reported_full_relative_difference_max": 1e-8,
   "iteration_ratio_h5_h3_h2_max": 2.0,
+  "record_commit_relations_accepted": [
+    "exact_checkout",
+    "checkout_ancestor",
+    "checkout_unavailable_sha_valid",
+    "reviewed_reference_exempt"
+  ],
   "direct_iterative_abs_tolerance": {
     "h5": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8},
     "h3": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8}

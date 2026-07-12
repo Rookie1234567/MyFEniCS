@@ -15,10 +15,12 @@
 | condensed action error | <= 1e-11 |
 | coarse cache true-action error | <= 1e-10 |
 | synthetic reconstruction | <= 1e-12 |
-| reported/explicit residual | 相对差 <= 1e-10 |
+| reported/condensed/full residual | 相对差 <= 1e-8 |
 | production true residual | <= 1e-6 |
 | energy closure | abs <= 1e-6 |
 | h2 total RSS | <= 14 GB |
+| h5/h3/h2 iteration ratio | <= 2.0 |
+| h5/h3 direct-iterative R/T/A | case-specific <= 1e-8 |
 
 ## 输出策略
 
@@ -30,6 +32,7 @@
 sh benchmarks/scripts/run_level1.sh
 sh benchmarks/scripts/run_level2_mpi.sh
 sh benchmarks/scripts/run_level3_iterative.sh
+python -m benchmarks.check_benchmarks
 ```
 
-Direct reference 使用 `src.runners.run_3d_cases`，完整参数记录在 `records/direct_*.json` 和 Task28 outcomes。
+Direct默认脚本只运行h5/h3；h2约需20.53 GB，必须显式opt-in。环境限定见 `docker/STAGE4_ENVIRONMENT.md`。

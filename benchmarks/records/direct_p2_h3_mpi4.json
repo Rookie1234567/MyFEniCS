@@ -3,7 +3,7 @@
     "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
     "branch": "codex/20260712-task28-stage-consolidation",
     "git_dirty": false,
-    "command": "mpiexec -n 4 python -m src.runners.run_3d_cases [canonical Stage4 args] --mesh-target-size 3",
+    "command": "mpiexec -n 4 python -m src.runners.run_3d_cases --stage-case stage4_block_grating --case oblique --nedelec-degree 2 --visualization-degree 2 --period-x 50 --period-y 25 --air-height 130 --substrate-thickness 10 --grating-width-x 17 --grating-width-y 25 --grating-height 120 --incident-theta-deg 80 --incident-phi-deg 0 --polarization-kind s --stage4-boundary-model dtn_port --stage4-dtn-order-policy auto_propagating --no-diffraction-compute-modal-diagnostic --mesh-target-size 3",
     "timestamp_utc": "2026-07-12T07:10:37Z",
     "container_image": "code-dolfinx-task027-hpddm:latest",
     "container_digest": "sha256:e54cdabd598a17e9f31a0c3d4d36d7b27c460f51095d4c1722adfb73bf2bca6a",

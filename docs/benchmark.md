@@ -17,7 +17,7 @@
 
 | h/nm | direct RSS | iterative RSS | iterative steps | iterative true residual |
 |---:|---:|---:|---:|---:|
-| 5 | 2.290 GB | 1.987 GB | 1201 | 9.83949e-7 |
+| 5 | 2.293 GB | 1.991 GB | 1201 | 9.83949e-7 |
 | 3 | 8.182 GB | 5.082 GB | 993 | 9.93265e-7 |
 | 2 | 20.533 GB reviewed | 13.080 GB | 1804 | 9.99738e-7 |
 
@@ -33,4 +33,4 @@
 
 h5的粗网格R明显偏高，不能作为收敛物理结论。h3/h2的R/T/A向Task008 direct reference收敛。三网格均满足显式真残差gate，但迭代数不单调，因此当前准确称谓是 mesh-robust workstation production candidate。
 
-canonical records 位于 `benchmarks/records/`，完整表见 `benchmarks/benchmark_summary.csv`。普通运行仍写 `results/`；benchmark重型输出默认写被忽略的 `benchmarks/artifacts/`。
+canonical records 位于 `benchmarks/records/`，完整表见 `benchmarks/benchmark_summary.csv`。`python -m benchmarks.check_benchmarks` 当前自动计算58项Gate。普通运行仍写 `results/`；benchmark重型输出显式写被忽略的 `benchmarks/artifacts/`。环境状态为 `qualified_local_image`，不是无条件clean-machine reproducible。

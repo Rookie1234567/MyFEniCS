@@ -1307,6 +1307,35 @@ Task028 productization = changes required
 docs/task028_stage_consolidation_master_integration_benchmarks/review_report_v1.md
 ```
 
+### Response V1
+
+2026-07-12 在同一分支完成六个 P0 修正：
+
+```text
+benchmark output boundary = pass
+benchmark scripts = pass
+automatic gate checker = 58/58 pass
+environment = pass_with_qualification
+documentation = pass
+sm2 production tests = pass
+full suite = 91 passed, 10 skipped
+focused MPI4 = each rank 14 passed
+h5 clean rerun = 1201 iterations, full 9.839e-7, 1.991 GB
+```
+
+环境仍有一项诚实限定：complex MPC 基础镜像固定了本机 digest，但没有公开 pull source，因此不能宣称任意 clean machine 可直接在线重建。当前状态为：
+
+```text
+Task028 productization = pass_with_environment_qualification
+master merge = pending review v2 and user approval
+```
+
+逐项证据见：
+
+```text
+docs/task028_stage_consolidation_master_integration_benchmarks/response_v1.md
+```
+
 ---
 
 # 33. 当前项目能力
@@ -1429,15 +1458,9 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.1 Task028 收口问题
 
 ```text
-- benchmark artifacts 与 results 目录实际边界；
-- Level scripts 完整性；
-- automatic benchmark checker；
-- clean environment/Docker reproducibility；
-- Quick Start 完整性；
-- Capability Matrix 完整性；
-- Code Walkthrough 深度；
-- Solver Guide 完整性；
-- sm2 production path tests。
+- 等待 review v2 与用户合并决定；
+- complex MPC base image尚无公开pull source，环境保持qualified；
+- `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
 
 ## 36.2 数值和物理问题
@@ -1511,4 +1534,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得显式真残差小于 \(10^{-6}\) 的迭代求解候选；当前不再扩展新算法，而是在 Task028 中完成 clean master 整合、用户文档和可复现 benchmark 的最终收口。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得显式真残差小于 \(10^{-6}\) 的迭代求解候选；Task028 的代码、文档、自动 Gate 和输出边界已完成 response v1 收口，当前等待 V2 审查，环境按 `qualified_local_image` 诚实限定。

@@ -5,12 +5,16 @@ selective_integration,no whole research branch merge,Task026/027 stable paths ex
 ordinary_default,ordinary solver default unchanged,false,pass,git diff and runner separation
 py_compile,all source and benchmark Python compiles,pass,pass,test_summary.md
 ruff,changed Python lint and format,pass,pass,test_summary.md
-unit_suite,full source tests,80 passed 10 skipped,pass,test_summary.md
-mpi_suite,focused MPI4 tests,10 per rank passed,pass,test_summary.md
-smoke_2d,2D clean checkout execution,residual 1.56e-15 and R+T 1.0,pass,benchmarks/records/2d_zero_contrast_dtn_smoke.json
+unit_suite,full source tests,91 passed 10 skipped,pass,test_summary.md
+mpi_suite,focused MPI4 tests,14 per rank passed,pass,test_summary.md
+smoke_2d,2D qualified-image execution,residual 1.87e-15 and R+T 1.0 under benchmark artifacts,pass,benchmarks/records/2d_zero_contrast_dtn_smoke.json
 smoke_3d,3D Stage1 MPI smoke,residual 1.39e-16,pass,benchmarks/records/3d_stage1_mpi2_smoke.json
 condensation,explicit/matrixfree/transpose/backsub equivalence,all focused tests pass,pass,src/test/test_22_condensed_dtn.py
 physical_slab,owner empty-owner cache certification,all MPI4 tests pass,pass,src/test/test_23_physical_slab_two_level.py
+physical_slab_sm2,production two-step path,explicit reference repeat MPI action requirement destroy pass,pass,src/test/test_23_physical_slab_two_level.py
+output_boundary,ordinary versus benchmark heavy outputs,Level1 and h5 workstation artifacts verified,pass,benchmarks/artifacts ignored
+automatic_checker,manifest and canonical records,58 of 58 gates pass,pass,benchmarks/records/benchmark_gate_report.json
+environment,Stage4 environment reconstruction,qualified local image builds with complex PETSc and gmsh,pass_with_qualification,docker/STAGE4_ENVIRONMENT.md
 direct_reference,3D direct rerun exists,h5 and h3 clean rerun pass,pass,benchmarks/records/direct_p2_h5_mpi4.json
 iterative_h5,h5 full true residual <=1e-6,9.83949e-7,pass,benchmarks/records/workstation_p2_h5_mpi4.json
 iterative_h3,h3 full true residual <=1e-6,9.93265e-7,pass,benchmarks/records/workstation_p2_h3_mpi4.json

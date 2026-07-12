@@ -2,7 +2,7 @@
 
 ## 任务
 
-Task028 从干净 `master` 收口 Task000-Task027：审计历史、选择性整合 Task026/027 稳定能力、重建用户文档，并建立可从 clean checkout 复现的 benchmark 体系。
+Task028 从干净 `master` 收口 Task000-Task027：审计历史、选择性整合 Task026/027 稳定能力、重建用户文档，并建立可从 clean checkout 检查、在限定 complex 容器环境中复现的 benchmark 体系。
 
 ## 分支
 
@@ -12,6 +12,19 @@ Task028 从干净 `master` 收口 Task000-Task027：审计历史、选择性整�
 | branch | `codex/20260712-task28-stage-consolidation` |
 | whole research branch merge | 否 |
 | ordinary default changed | 否 |
+
+## Review V1 修正结果
+
+| 审查项 | 修正后状态 | 核心证据 |
+|---|---|---|
+| P0-1 output boundary | pass | Level1 与 h5 workstation 实际写 `benchmarks/artifacts/`；ordinary 默认仍为 `results/` |
+| P0-2 scripts/manifest | pass | L1 全测试+2D/3D smoke；L2 MPI+checker；direct h2 显式 opt-in；iterative h5/3/2 |
+| P0-3 automatic Gate | pass | `benchmarks.check_benchmarks` 58/58 Gate 通过，失败返回非零 |
+| P0-4 environment | pass_with_qualification | Stage4 Dockerfile 构建通过；基础 complex MPC 镜像缺公开 pull source |
+| P0-5 docs | pass | Quick Start、能力矩阵、代码导览、求解器、schema、边界全面扩充 |
+| P0-6 sm2 tests | pass | 小矩阵参考、sm1/sm2、重复 apply、MPI4、action requirement、destroy |
+
+详细逐项回应见 `../response_v1.md`。
 
 ## 主要改动
 
@@ -56,7 +69,7 @@ Task028 从干净 `master` 收口 Task000-Task027：审计历史、选择性整�
 
 | h/nm | FE DoF | iterations | reported residual | full residual | total peak RSS incl. RTA | total time |
 |---:|---:|---:|---:|---:|---:|---:|
-| 5 | 44,698 | 1201 | 9.83949e-7 | 9.83949e-7 | 1.987 GB | 127.3 s |
+| 5 response v1 clean | 44,698 | 1201 | 9.83949e-7 | 9.83949e-7 | 1.991 GB | 130.8 s |
 | 3 | 198,438 | 993 | 9.93265e-7 | 9.93265e-7 | 5.082 GB | 411.8 s |
 | 2 | 615,108 | 1804 | 9.99738e-7 | 9.99738e-7 | 13.080 GB | 2538.8 s |
 
@@ -66,7 +79,7 @@ Task028 从干净 `master` 收口 Task000-Task027：审计历史、选择性整�
 
 | h/nm | direct RSS | iterative RSS | direct residual | iterative full residual | 说明 |
 |---:|---:|---:|---:|---:|---|
-| 5 | 2.290 GB | 1.987 GB | 6.33e-12 | 9.84e-7 | 两者R/T/A差约1e-9 |
+| 5 | 2.293 GB | 1.991 GB | 5.22e-12 | 9.84e-7 | direct与iterative均在独立artifact root clean rerun |
 | 3 | 8.182 GB | 5.082 GB | 2.74e-11 | 9.93e-7 | 两者R/T/A差约1e-8 |
 | 2 | 20.533 GB reviewed upper | 13.080 GB | 历史direct | 9.997e-7 | direct未重复消耗>20GB资源 |
 
@@ -86,10 +99,13 @@ official power source 均为 `dtn_port_modal_amplitudes`。probe 和 sampled flu
 |---|---|
 | compileall / py_compile | 通过 |
 | Ruff lint；新增文件format | 通过 |
-| full unit suite | 80 passed，10 skipped |
-| focused MPI4 | 每个rank 10 passed |
-| 2D DtN smoke | residual 1.56e-15，R+T=1 |
-| 3D Stage1 MPI2 | residual 1.39e-16 |
+| full Level1 unit suite | 91 passed，10 skipped |
+| focused Level2 MPI4 | 每个rank 14 passed |
+| 2D DtN smoke | residual 1.87e-15，R+T=1，artifact边界通过 |
+| 3D Stage1 MPI2 | residual 1.39e-16，artifact边界通过 |
+| automatic benchmark checker | 58/58 Gate通过 |
+| Stage4 Docker build | complex PETSc + gmsh统一镜像构建通过 |
+| h5 response v1 iterative | 1201步，full 9.84e-7，RSS 1.991 GB |
 | h5/h3 direct rerun | 通过 |
 | h5/h3/h2 iterative rerun | 全通过 |
 | local Markdown links | 通过 |
@@ -102,6 +118,8 @@ official power source 均为 `dtn_port_modal_amplitudes`。probe 和 sampled flu
 3. 新角度、波长、材料和几何尚未做参数鲁棒扫描。
 4. spectral/GenEO/HPDDM、sampled-Schur、cached-Q 与 FE-only AMS 不进入普通 API。
 5. h2 direct 已审查参考约需20.53 GB，本轮不在14 GB配置上重复运行。
+6. complex MPC 基础镜像没有公开pull source，因此环境只能标记 `qualified_local_image`；不得宣称任意clean machine在线重建。
+7. `SmallDenseInverse` 显式逆、内部下划线依赖和异常路径统一清理保留为非阻断P1技术债。
 
 ## 下一步审查
 

@@ -30,3 +30,42 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 2 ...
 ## 未执行
 
 h2 ordinary direct 本轮未重复运行。Task008 reviewed MPI8 reference的总RSS上界约20.533 GB，超过当前14 GB WSL内存配额；本轮已经重新运行h5/h3 direct，并完成强制的h2 iterative clean rerun。
+
+## Review V1 修正运行
+
+```text
+docker build -f docker/Dockerfile.stage4 -t myfenics-stage4:task28 .
+  PASS: dolfinx 0.10.0.post2, gmsh 4.15.2, PETSc ScalarType numpy.complex128
+
+sh benchmarks/scripts/run_level1.sh
+  PASS: compileall
+  PASS: full suite 91 passed, 10 skipped
+  PASS: 2D manual auxiliary DtN residual 1.867e-15, R+T=1
+  PASS: 3D Stage1 MPI2 residual 1.395e-16, total RSS 0.520 GB
+
+sh benchmarks/scripts/run_level2_mpi.sh
+  PASS: MPI1 14 tests
+  PASS: MPI4 each rank 14 tests
+  PASS: automatic checker 58/58
+
+mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
+  --config benchmarks/configs/workstation_p2.json --h-nm 5 \
+  --case-label task028_response_v1_h5_clean \
+  --results-dir benchmarks/artifacts/iterative \
+  --record benchmarks/records/workstation_p2_h5_mpi4.json
+  PASS: qualified_profile=true
+  PASS: 1201 iterations
+  PASS: reported/condensed/full = 9.83948993e-7
+  PASS: R/T/A unchanged
+  PASS: peak total RSS incl. RTA = 1.9911727905 GB
+  PASS: artifact directory = benchmarks/artifacts/iterative/task028_response_v1_h5_clean
+
+mpiexec -n 4 python -m src.runners.run_3d_cases <canonical Stage4 args> \
+  --mesh-target-size 5 --results-root benchmarks/artifacts/direct
+  PASS: residual = 5.224671064e-12
+  PASS: total peak RSS = 2.293258667 GB
+  PASS: R/T/A unchanged within direct numerical reproducibility
+  PASS: artifact directory = benchmarks/artifacts/direct/3D_stage4_block_grating_oblique_p2_h5p0_np4_20260712_090929
+```
+
+第一次 MPI4 sm2 测试表现为持续高CPU。诊断发现测试用 rank-local `assertGreater` 在非重叠rank提前失败，其他rank随后等待collective；改为allreduce全局误差后，7个physical-slab测试在4个rank均于0.06秒内通过。该问题只存在于新增测试断言，不影响production solver。

@@ -3,11 +3,12 @@
 ## 决策
 
 ```text
-merge_code = yes_after_review
+merge_code = yes_after_review_v2_and_user_approval
 merge_docs = yes
 merge_benchmarks = yes
 production_default_change = no
 merge_task027_whole_branch = no
+environment_status = pass_with_environment_qualification
 ```
 
 ## 建议合并内容
@@ -28,4 +29,4 @@ Task027 whole branch、spectral/GenEO/HPDDM代码、Task020-Task025研究runner�
 
 ## 风险判断
 
-h5/h3/h2 clean branch 的迭代数与Task027完全一致，h2 residual与RTA闭环通过，新增代码测试覆盖MPI owner、empty owner和cache certification。剩余风险主要是参数域外推广，而不是当前目标case复现。
+h5/h3/h2 clean branch 的迭代数与Task027完全一致，h2 residual与RTA闭环通过；Response V1又完成h5 direct/iterative独立artifact rerun、58项自动Gate和sm2 production测试。剩余主要风险是参数域外推广与complex MPC基础镜像缺公开pull source，而不是当前目标case复现。

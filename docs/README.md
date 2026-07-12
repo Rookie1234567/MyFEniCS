@@ -52,7 +52,7 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v1.md` 已完成；`changes_required`，暂不合并 master |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `response_v1.md` 已完成；六个P0已关闭，等待Review V2，暂不合并master |
 
 ## Task28 审计入口
 
@@ -64,5 +64,6 @@
 | `outcomes/benchmark_gate.csv` | 分层benchmark gate |
 | `outcomes/merge_recommendation.md` | Codex 首轮合并建议 |
 | `review_report_v1.md` | ChatGPT V1 正式审查；要求修正 benchmark 边界、脚本、自动 Gate、环境、文档和 sm2 测试 |
+| `response_v1.md` | Codex逐项回应；58项自动Gate、统一限定环境、扩充文档和sm2测试均完成 |
 
 完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；发现问题后在同一分支提交 `response_v1.md` 并继续修正。

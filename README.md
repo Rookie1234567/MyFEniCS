@@ -54,7 +54,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。轻量 benchmark 摘要放在 `benchmarks/records/`。Task028 V1 审查要求进一步修正 canonical benchmark 的重型输出目录、脚本自动化和环境复现说明，当前分支尚未建议合并 master。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 Response V1 已关闭输出边界、脚本、58项自动Gate、文档和sm2测试问题；环境按 `qualified_local_image` 限定，当前等待Review V2，尚不合并master。
 
 ## 文档导航
 
@@ -62,10 +62,10 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 |---|---|
 | [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
 | [开发进度](docs/development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线与当前进展 |
-| [快速开始](docs/quick_start.md) | 环境、普通入口、workstation 入口；Task028 V1 要求继续扩充 |
+| [快速开始](docs/quick_start.md) | Windows Docker、2D/3D、direct/workstation完整命令与资源边界 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
 | [求解器指南](docs/solver_guide.md) | direct/iterative 选择与限制 |
-| [能力矩阵](docs/capability_matrix.md) | 已支持与未支持能力；Task028 V1 要求继续补全 |
+| [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
 | [任务索引](docs/README.md) | Task000-Task028 闭环与 Task028 V1 审查入口 |

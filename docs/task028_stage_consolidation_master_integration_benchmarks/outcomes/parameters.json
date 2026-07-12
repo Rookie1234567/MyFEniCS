@@ -3,6 +3,11 @@
   "base_commit": "0465b5f",
   "branch": "codex/20260712-task28-stage-consolidation",
   "date": "2026-07-12",
+  "response_v1_source_commit": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+  "benchmark_config": "benchmarks/configs/workstation_p2.json",
+  "artifact_root": "benchmarks/artifacts",
+  "record_root": "benchmarks/records",
+  "environment_status": "qualified_local_image",
   "target_model": {
     "domain_nm": [50, 25, 140],
     "grating_nm": [17, 25, 120],
