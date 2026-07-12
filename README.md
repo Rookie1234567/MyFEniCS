@@ -2,6 +2,25 @@
 
 本项目用于验证二维、三维频域 Maxwell 有限元、Floquet 周期约束、DtN 模态端口、official R/T/A 与材料体吸收。当前阶段已经具备目标三维 EUV 光栅的 direct reference，以及显式 opt-in 的 MPI4 workstation 迭代候选。
 
+<!-- REPOSITORY_WORK_PRINCIPLES_BEGIN -->
+
+## 仓库工作原则（不得删除）
+
+> 本节属于仓库治理契约，README 精简、文档重构和阶段合并时均不得删除或弱化。完整解释见 [`docs/repository_work_principles.md`](docs/repository_work_principles.md)，并由 `src/test/test_24_repository_work_principles.py` 自动检查。
+
+1. 开始新一轮前，读取上一轮任务目录中的 `review_report*.md`、`response*.md`（若存在）或 `outcomes/summary.md`。
+2. 同时读取本轮任务目录中的 `task.md`，不得只根据旧 README、聊天摘要或任务名称执行。
+3. 完成工作后，把本轮结果、测试、Gate 和下一步判断写入该任务目录的 `outcomes/`。
+4. 审查报告保存在同一任务目录；发现问题后在同一执行分支提交 `response_vN.md` 并继续修正。
+5. 普通大体积结果保存在 `results/`；Benchmark 重型 artifact 保存在 `benchmarks/artifacts/`；二者均不提交 Git。
+6. **ChatGPT 不创建执行分支；执行分支由 Codex 创建。** Codex 不得删除或改写 ChatGPT 已提交的 `task.md` 和 `review_report*.md`。
+7. **failed solver code 默认留在对应 research branch，不合并 production；docs、review、精简 outcomes 和理论笔记可以 selective merge。**
+8. 禁止整体合并大型 research branch；必须从 clean base 使用 `selective_merge_manifest` 抽取已验证组件。
+9. ordinary solver default 不得静默改变；新求解器在审查通过前必须保持显式 opt-in，未通过最终 review 前不合并 `master`。
+10. solver 成功必须以 full explicit true residual 为准；official R/T/A 只能从通过 residual Gate 的场计算，probe/flux 近似量默认仅作 diagnostic。
+
+<!-- REPOSITORY_WORK_PRINCIPLES_END -->
+
 ## 当前能力
 
 | 能力 | 状态 |
@@ -41,6 +60,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 
 | 文档 | 内容 |
 |---|---|
+| [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
 | [开发进度](docs/development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线与当前进展 |
 | [快速开始](docs/quick_start.md) | 环境、普通入口、workstation 入口；Task028 V1 要求继续扩充 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
