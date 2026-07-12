@@ -1,0 +1,19 @@
+ARG BASE_IMAGE=code-dolfinx-mpc@sha256:4f9ce26eb5cd30199895620eec622f91c17e4783568931307ca5529e2a0f31f6
+FROM ${BASE_IMAGE}
+
+USER root
+
+ENV PETSC_DIR=/usr/local/petsc
+ENV PETSC_ARCH=linux-gnu-complex128-32
+ENV SLEPC_DIR=/usr/local/slepc
+ENV SLEPC_ARCH=linux-gnu-complex128-32
+ENV PYTHONPATH=/usr/local/dolfinx-complex/lib/python3.12/dist-packages
+ENV LD_LIBRARY_PATH=/usr/local/petsc/linux-gnu-complex128-32/lib:/usr/local/slepc/linux-gnu-complex128-32/lib:/usr/local/dolfinx-complex/lib:/usr/local/lib
+ENV PYTHONUNBUFFERED=1
+ENV OPENBLAS_NUM_THREADS=1
+
+RUN python -m pip install --no-cache-dir gmsh==4.15.2
+
+RUN python -c "import dolfinx,dolfinx_mpc,gmsh,numpy,scipy; from petsc4py import PETSc; assert numpy.dtype(PETSc.ScalarType).kind == 'c'; print(dolfinx.__version__,gmsh.__version__,PETSc.ScalarType)"
+
+WORKDIR /work

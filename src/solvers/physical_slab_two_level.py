@@ -116,7 +116,7 @@ class SparseGalerkinTwoLevelPc:
         self.coarse_matrix_cache_hit = coarse_matrix is not None
         if coarse_matrix is None:
             self._coarse = self._factor_coarse_operator()
-            self.coarse_action_relative_error = 0.0
+            self.coarse_action_relative_error = None
         else:
             self._coarse = np.asarray(coarse_matrix, dtype=np.complex128).copy()
             if self._coarse.shape != (self._basis_count, self._basis_count):
@@ -624,6 +624,7 @@ class DistributedPhysicalSlabSmoother:
             "assembly_order": self.assembly_order,
             "local_ksp_iterations": self.local_ksp_iterations,
             "local_ksp_type": self.local_ksp_type,
+            "smoother_iterations": self.smoother_iterations,
             "global_factor_rows": self.global_factor_rows,
             "global_factor_nnz": self.global_factor_nnz,
             "maximum_owner_rows": self.maximum_owner_rows,

@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
+import os
+import platform
 import resource
+import shlex
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -38,6 +44,61 @@ from src.solvers.stage4_runtime import (
 
 
 TINY = np.finfo(float).tiny
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CONFIG = REPOSITORY_ROOT / "benchmarks" / "configs" / "workstation_p2.json"
+QUALIFIED_H_NM = (5.0, 3.0, 2.0)
+
+
+def _git_output(*args: str) -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", *args], cwd=REPOSITORY_ROOT, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _runtime_metadata(command: str) -> dict[str, Any]:
+    return {
+        "commit_sha": _git_output("rev-parse", "HEAD"),
+        "branch": _git_output("branch", "--show-current"),
+        "git_dirty": bool(_git_output("status", "--short")),
+        "command": command,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
+        "container_digest": os.environ.get("BENCHMARK_CONTAINER_DIGEST", "unknown"),
+        "host_environment_id": os.environ.get("BENCHMARK_HOST_ID", platform.node()),
+        "kernel": platform.release(),
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+    }
+
+
+def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[str]:
+    expected = {
+        "coarse_slabs": 24,
+        "num_slabs": 16,
+        "overlap_layers": 0.25,
+        "absorption_shift": 0.1,
+        "ilu_levels": 1,
+        "restart": 100,
+        "max_it": 3000,
+        "rtol": 1.0e-6,
+    }
+    deviations = [
+        f"{name}={getattr(args, name)!r}, expected {value!r}"
+        for name, value in expected.items()
+        if getattr(args, name) != value
+    ]
+    if not any(np.isclose(args.h_nm, value) for value in QUALIFIED_H_NM):
+        deviations.append(f"h_nm={args.h_nm!r}, expected one of {QUALIFIED_H_NM!r}")
+    if args.theta_deg != 80.0:
+        deviations.append(f"theta_deg={args.theta_deg!r}, expected 80.0")
+    if args.lambda_nm != 13.5:
+        deviations.append(f"lambda_nm={args.lambda_nm!r}, expected 13.5")
+    if mpi_size != 4:
+        deviations.append(f"mpi_size={mpi_size!r}, expected 4")
+    return deviations
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -319,6 +380,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     case = args.case_label or f"workstation_p2_h{args.h_nm:g}".replace(".", "p")
     heavy_dir = Path(args.results_dir) / case
     record_path = Path(args.record)
+    deviations = _qualification_deviations(args, comm.size)
+    qualified_profile = not deviations
+    if deviations:
+        PETSc.Sys.Print(
+            "WARNING: this run is outside the qualified Task28 production profile: "
+            + "; ".join(deviations)
+        )
     _write_json(
         record_path.with_name(record_path.stem + "_parameters.json"),
         vars(args),
@@ -431,8 +499,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     augmented = _combined_augmented_vector(system, solution, auxiliary)
     full_residual = _full_augmented_residual(blocks, solution, auxiliary)
     result = {
+        "benchmark_id": f"l3_iterative_h{args.h_nm:g}".replace(".", "p"),
         "case": case,
-        "profile": "workstation_p2_fixed_coarse_physical_slab",
+        "profile": args.profile,
+        "status": "pass" if qualified_profile else "experimental_unqualified",
+        "qualified_profile": qualified_profile,
+        "qualification_deviations": deviations,
+        "resolved_config": args.resolved_config,
+        "artifact_root": str(Path(args.results_dir)),
+        "artifact_directory": str(heavy_dir),
+        "record_path": str(record_path),
+        "metadata": _runtime_metadata(args.exact_command),
         "ordinary_default_changed": False,
         "h_nm": args.h_nm,
         "mpi_size": comm.size,
@@ -492,23 +569,68 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="显式 opt-in 的 p=2 workstation 物理分片两级迭代 benchmark"
     )
-    parser.add_argument("--h-nm", type=float, default=5.0)
-    parser.add_argument("--theta-deg", type=float, default=80.0)
-    parser.add_argument("--lambda-nm", type=float, default=13.5)
-    parser.add_argument("--coarse-slabs", type=int, default=24)
-    parser.add_argument("--num-slabs", type=int, default=16)
-    parser.add_argument("--overlap-layers", type=float, default=0.25)
-    parser.add_argument("--absorption-shift", type=float, default=0.1)
-    parser.add_argument("--ilu-levels", type=int, default=1)
-    parser.add_argument("--restart", type=int, default=100)
-    parser.add_argument("--max-it", type=int, default=3000)
-    parser.add_argument("--rtol", type=float, default=1e-6)
-    parser.add_argument("--rta-threshold", type=float, default=1.1e-6)
-    parser.add_argument("--monitor-stride", type=int, default=50)
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG))
+    parser.add_argument("--h-nm", type=float, default=None)
+    parser.add_argument("--theta-deg", type=float, default=None)
+    parser.add_argument("--lambda-nm", type=float, default=None)
+    parser.add_argument("--coarse-slabs", type=int, default=None)
+    parser.add_argument("--num-slabs", type=int, default=None)
+    parser.add_argument("--overlap-layers", type=float, default=None)
+    parser.add_argument("--absorption-shift", type=float, default=None)
+    parser.add_argument("--ilu-levels", type=int, default=None)
+    parser.add_argument("--restart", type=int, default=None)
+    parser.add_argument("--max-it", type=int, default=None)
+    parser.add_argument("--rtol", type=float, default=None)
+    parser.add_argument("--rta-threshold", type=float, default=None)
+    parser.add_argument("--monitor-stride", type=int, default=None)
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
-    parser.add_argument("--results-dir", default="benchmarks/artifacts")
-    run(parser.parse_args())
+    parser.add_argument("--results-dir", default=None)
+    args = parser.parse_args()
+    config_path = Path(args.config)
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    defaults = {
+        "h_nm": 5.0,
+        "theta_deg": config["theta_deg"],
+        "lambda_nm": config["lambda_nm"],
+        "coarse_slabs": config["coarse_slabs"],
+        "num_slabs": config["num_physical_slabs"],
+        "overlap_layers": config["overlap_layers"],
+        "absorption_shift": config["absorption_shift"],
+        "ilu_levels": config["ilu_levels"],
+        "restart": config["restart"],
+        "max_it": config["max_it"],
+        "rtol": config["rtol"],
+        "rta_threshold": config["rta_threshold"],
+        "monitor_stride": config["monitor_stride"],
+        "results_dir": config["artifact_root"],
+    }
+    for name, value in defaults.items():
+        if getattr(args, name) is None:
+            setattr(args, name, value)
+    args.profile = config["profile"]
+    args.resolved_config = {
+        **config,
+        "h_nm": args.h_nm,
+        "theta_deg": args.theta_deg,
+        "lambda_nm": args.lambda_nm,
+        "coarse_slabs": args.coarse_slabs,
+        "num_physical_slabs": args.num_slabs,
+        "overlap_layers": args.overlap_layers,
+        "absorption_shift": args.absorption_shift,
+        "ilu_levels": args.ilu_levels,
+        "restart": args.restart,
+        "max_it": args.max_it,
+        "rtol": args.rtol,
+        "rta_threshold": args.rta_threshold,
+        "monitor_stride": args.monitor_stride,
+        "artifact_root": args.results_dir,
+    }
+    args.exact_command = os.environ.get(
+        "BENCHMARK_EXACT_COMMAND",
+        f"mpiexec -n {MPI.COMM_WORLD.size} " + shlex.join([sys.executable, *sys.argv]),
+    )
+    run(args)
     return 0
 
 

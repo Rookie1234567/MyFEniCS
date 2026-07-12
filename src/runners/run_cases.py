@@ -302,6 +302,14 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Override config.unique_output. Use --no-unique-output for old fixed output directories.",
     )
+    parser.add_argument(
+        "--results-root",
+        default=None,
+        help=(
+            "Output root override. The ordinary default remains <repository>/results; "
+            "benchmark scripts use benchmarks/artifacts explicitly."
+        ),
+    )
     args = parser.parse_args(argv)
 
     calculation_method = _normalize_method(args.formulation or defaults.calculation_method)
@@ -327,7 +335,9 @@ def main(argv: list[str] | None = None):
         raise SystemExit("port_dtn_assembly must be 'explicit' or 'auxiliary'.")
 
     root = project_root()
-    results_root = root / "results"
+    results_root = Path(args.results_root) if args.results_root else root / "results"
+    if not results_root.is_absolute():
+        results_root = root / results_root
     common_updates = _base_updates(args)
     formulations = _formulation_list(calculation_method)
     if port_use_pml and "port_total" in formulations:

@@ -432,6 +432,14 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Use timestamped results/3D_airbox_* directories.",
     )
+    parser.add_argument(
+        "--results-root",
+        default=None,
+        help=(
+            "Output root override. The ordinary default remains <repository>/results; "
+            "benchmark scripts use benchmarks/artifacts explicitly."
+        ),
+    )
     parser.add_argument("--use-floquet-xy", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--use-pml", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--pml-top-thickness", type=float, default=None, help="Top PML thickness in nm.")
@@ -549,7 +557,9 @@ def main(argv: list[str] | None = None):
     configs = _case_configs(args.case, args.stage_case, updates)
 
     root = project_root()
-    results_root = root / "results"
+    results_root = Path(args.results_root) if args.results_root else root / "results"
+    if not results_root.is_absolute():
+        results_root = root / results_root
     p = configs[0].nedelec_degree if configs else defaults.nedelec_degree
     h = configs[0].mesh_target_size if configs else defaults.mesh_target_size
     case_tag = args.case

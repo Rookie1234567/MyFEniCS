@@ -1,4 +1,13 @@
 #!/bin/sh
 set -eu
-mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 5 --record benchmarks/records/workstation_p2_h5_mpi4.json
-mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 2 --record benchmarks/records/workstation_p2_h2_mpi4.json
+
+for h in 5 3 2; do
+  tag=$(printf '%s' "$h" | tr '.' 'p')
+  mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
+    --config benchmarks/configs/workstation_p2.json \
+    --h-nm "$h" \
+    --results-dir benchmarks/artifacts/iterative \
+    --record "benchmarks/records/workstation_p2_h${tag}_mpi4.json"
+done
+
+python -m benchmarks.check_benchmarks

@@ -1,4 +1,17 @@
 {
+  "metadata": {
+    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": false,
+    "command": "mpiexec -n 4 python -m src.runners.run_3d_cases [canonical Stage4 args] --mesh-target-size 3",
+    "timestamp_utc": "2026-07-12T07:10:37Z",
+    "container_image": "code-dolfinx-task027-hpddm:latest",
+    "container_digest": "sha256:e54cdabd598a17e9f31a0c3d4d36d7b27c460f51095d4c1722adfb73bf2bca6a",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "clean_rerun_on_source_commit",
+    "artifact_provenance": "historical_source_run_in_results"
+  },
+  "status": "pass_historical_source_run",
   "case": "task028_target_p2_h3_mpi4_direct_clean",
   "profile": "ordinary_direct_lu_mumps",
   "ordinary_default_changed": false,

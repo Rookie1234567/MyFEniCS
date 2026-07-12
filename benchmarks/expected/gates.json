@@ -4,6 +4,13 @@
   "reported_relative_residual_max": 1e-6,
   "condensed_true_residual_max": 1e-6,
   "full_augmented_true_residual_max": 1e-6,
+  "reported_condensed_relative_difference_max": 1e-8,
+  "reported_full_relative_difference_max": 1e-8,
+  "iteration_ratio_h5_h3_h2_max": 2.0,
+  "direct_iterative_abs_tolerance": {
+    "h5": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8},
+    "h3": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8}
+  },
   "coarse_rank_required": 75,
   "coarse_condition_max": 1e10,
   "energy_closure_abs_max": 1e-6,

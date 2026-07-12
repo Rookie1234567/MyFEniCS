@@ -1,4 +1,28 @@
 {
+  "metadata": {
+    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": false,
+    "command": "python -m src.runners.run_cases --formulation port_total --constraint-backend manual --port-boundary-model dtn --port-dtn-assembly auxiliary [explicit zero-contrast args]",
+    "timestamp_utc": "2026-07-12T05:30:00Z",
+    "container_image": "code-dolfinx:latest",
+    "container_digest": "sha256:9642186388c491040aeaa1cc646b4078ed4f7e2dc09d0c0fd1114653c21d7619",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "clean_rerun_on_source_commit"
+  },
+  "output_root_validation_v1": {
+    "timestamp_utc": "2026-07-12T08:50:37Z",
+    "command": "sh benchmarks/scripts/run_level1.sh (2D component)",
+    "artifact_root": "benchmarks/artifacts/level1/2d_smoke",
+    "artifact_directory": "benchmarks/artifacts/level1/2d_smoke/2D_grating_tm_port_ptdtn_dtn0_aux_p1_h2p0_tri_lam13p5_t15p0_man_20260712_085037",
+    "git_dirty_during_validation": true,
+    "reduced_linear_residual": 1.86740448214864e-15,
+    "R_total_dtn_auxiliary": 0.0004776547638950463,
+    "T_total_dtn_auxiliary": 0.9995223452361033,
+    "R_plus_T": 0.9999999999999983,
+    "elapsed_seconds": 3.762401154031977,
+    "status": "pass"
+  },
   "benchmark_id": "l1_2d_zero_contrast_dtn",
   "category": "2d_smoke",
   "container_image": "code-dolfinx:latest",

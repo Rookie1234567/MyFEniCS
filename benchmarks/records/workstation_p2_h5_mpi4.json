@@ -1,4 +1,19 @@
 {
+  "metadata": {
+    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": false,
+    "command": "mpiexec -n 4 python -m benchmarks.run_workstation_iterative --config benchmarks/configs/workstation_p2.json --h-nm 5 --results-dir benchmarks/artifacts/iterative --record benchmarks/records/workstation_p2_h5_mpi4.json",
+    "timestamp_utc": "2026-07-12T06:00:00Z",
+    "container_image": "code-dolfinx-task027-hpddm:latest",
+    "container_digest": "sha256:e54cdabd598a17e9f31a0c3d4d36d7b27c460f51095d4c1722adfb73bf2bca6a",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "clean_rerun_on_source_commit",
+    "artifact_provenance": "historical_results_source; canonical output root corrected after run"
+  },
+  "qualified_profile": true,
+  "qualification_deviations": [],
+  "artifact_root": "benchmarks/artifacts/iterative",
   "case": "task028_h5_mpi4_clean",
   "profile": "workstation_p2_fixed_coarse_physical_slab",
   "ordinary_default_changed": false,
@@ -9,7 +24,7 @@
   "coarse_dimension": 75,
   "coarse_rank": 75,
   "coarse_condition": 900.9550133142146,
-  "coarse_action_relative_error": 0.0,
+  "coarse_action_relative_error": null,
   "num_slabs": 16,
   "overlap_layers": 0.25,
   "absorption_shift": 0.1,

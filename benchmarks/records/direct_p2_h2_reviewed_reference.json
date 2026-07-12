@@ -1,4 +1,15 @@
 {
+  "metadata": {
+    "commit_sha": "task008_reviewed_source",
+    "branch": "historical_task008",
+    "git_dirty": false,
+    "command": "reviewed Task008 MPI8 direct command; not rerun in Task28",
+    "timestamp_utc": "2026-07-03T00:00:00Z",
+    "container_image": "historical Task008 environment",
+    "container_digest": "unknown_historical_reference",
+    "host_environment_id": "task008_reviewed_reference",
+    "provenance": "reviewed_reference_not_rerun"
+  },
   "case": "task008_target_p2_h2_direct_reviewed_reference",
   "profile": "ordinary_direct_lu_mumps",
   "status": "reviewed_reference_not_rerun_in_task028",

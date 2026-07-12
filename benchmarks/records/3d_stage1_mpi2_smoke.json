@@ -1,4 +1,26 @@
 {
+  "metadata": {
+    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": false,
+    "command": "mpiexec -n 2 python -m src.runners.run_3d_cases --stage-case stage1_airbox [explicit sanity args]",
+    "timestamp_utc": "2026-07-12T05:45:00Z",
+    "container_image": "code-dolfinx-task027-hpddm:latest",
+    "container_digest": "sha256:e54cdabd598a17e9f31a0c3d4d36d7b27c460f51095d4c1722adfb73bf2bca6a",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "clean_rerun_on_source_commit"
+  },
+  "output_root_validation_v1": {
+    "timestamp_utc": "2026-07-12T08:50:43Z",
+    "command": "sh benchmarks/scripts/run_level1.sh (3D Stage1 component)",
+    "artifact_root": "benchmarks/artifacts/level1/3d_stage1",
+    "artifact_directory": "benchmarks/artifacts/level1/3d_stage1/3D_stage1_airbox_normal_p1_h5p0_np2_20260712_085043",
+    "git_dirty_during_validation": true,
+    "linear_system_relative_residual": 1.3947384324739916e-16,
+    "total_peak_rss_gb": 0.519622802734375,
+    "elapsed_seconds": 4.856418929994106,
+    "status": "pass"
+  },
   "benchmark_id": "l1_3d_stage1_mpi2",
   "category": "3d_smoke",
   "stage": "stage1_3d_airbox",
