@@ -59,10 +59,17 @@ def _git_output(*args: str) -> str | None:
 
 
 def _runtime_metadata(command: str) -> dict[str, Any]:
+    dirty_override = os.environ.get("BENCHMARK_GIT_DIRTY")
     return {
-        "commit_sha": _git_output("rev-parse", "HEAD"),
-        "branch": _git_output("branch", "--show-current"),
-        "git_dirty": bool(_git_output("status", "--short")),
+        "commit_sha": os.environ.get("BENCHMARK_COMMIT_SHA")
+        or _git_output("rev-parse", "HEAD"),
+        "branch": os.environ.get("BENCHMARK_BRANCH")
+        or _git_output("branch", "--show-current"),
+        "git_dirty": (
+            dirty_override.lower() in {"1", "true", "yes"}
+            if dirty_override is not None
+            else bool(_git_output("status", "--short"))
+        ),
         "command": command,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
