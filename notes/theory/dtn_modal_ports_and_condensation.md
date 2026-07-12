@@ -15,7 +15,7 @@ $$\beta_{mn}=\sqrt{k^2-\alpha_m^2-\gamma_n^2}.$$
 
 代码选择满足出射/衰减条件的平方根分支：传播级取正确外向相位，倏逝级取远离计算域衰减的符号。接近 `beta=0` 是 Rayleigh 截止，必须用容差标记，不能用普通浮点符号硬分类。
 
-3D 每个非退化横向波数有两种切向极化；`common/modes_3d.py` 枚举 order、构造 s/p 基、E/H 向量、模态功率和 top/bottom 出射模式。
+3D 每个非退化横向波数有两种切向极化；`common/modes_3d.py::outgoing_port_modes_3d` 枚举 order、构造 s/p 基、E/H 向量、模态功率和 top/bottom 出射模式。
 
 ## 2. DtN 算子
 
@@ -27,7 +27,7 @@ $$
 
 其中 `q_j` 含 order、极化、相位和边界法向，`Y_j` 是对应 modal admittance/traction。传播模态贡献实功率，倏逝模态仍参与边界反应但平均远场功率为零。
 
-2D TM/TE 的 admittance 不相同；代码分别在 `solve_port_maxwell.py` 和 `solve_te_maxwell.py` 形成，不能复用一个标量公式。3D 的 traction、投影、入射源和功率统一在 `dtn_port_3d.py`。
+2D TM/TE 的 admittance 不相同；代码分别在 `solve_port_maxwell::run_port_case` 和 `solve_te_maxwell::run_te_port_case` 形成，不能复用一个标量公式。3D 的 traction、投影、入射源和功率统一由 `dtn_port_3d::solve_stage4_dtn_port_total_field` 组装。
 
 ## 3. 显式低秩装配
 
@@ -48,7 +48,7 @@ $$
 \begin{bmatrix}f\\g\end{bmatrix}.
 $$
 
-`e` 是 FE 自由度，`a` 是端口模态辅助未知量；C/D 只连接边界 trace 与模态，H 是小型 modal block。这样保留 FE 块稀疏性。3D `dtn_port_3d._solve_augmented_system` 负责分布式增广系统，辅助幅值同时成为 official R/T 的直接来源。
+`e` 是 FE 自由度，`a` 是端口模态辅助未知量；C/D 只连接边界 trace 与模态，H 是小型 modal block。这样保留 FE 块稀疏性。当前 3D 端口逐模插入 `H[j,j]=1`，所以已验证实现严格为 `H=I`；这是一种实现选择，不是一般 DtN 理论要求。`dtn_port_3d::solve_stage4_dtn_port_total_field` 负责分布式增广系统，辅助幅值同时成为 official R/T 的直接来源。
 
 ## 5. 精确 Schur 凝聚
 
@@ -69,14 +69,18 @@ $$
 | 数学 | 代码 |
 |---|---|
 | 提取 F/C/D/H | `extract_petsc_condensed_blocks` |
-| `H^-1` | `SmallDenseInverse` |
-| `A_c x` | `CondensedDtnMatContext.mult` |
-| matrix-free shell | `create_matrix_free_condensed_operator` |
-| condensed RHS | `condensed_rhs` |
-| 显式参考 | `build_explicit_condensed_operator` |
-| 回代 | `recover_petsc_auxiliary` |
+| `H^-1` | `condensed_dtn::SmallDenseInverse` |
+| `A_c x` | `condensed_dtn::CondensedDtnMatContext.mult` |
+| matrix-free shell | `condensed_dtn::create_matrix_free_condensed_operator` |
+| condensed RHS | `condensed_dtn::condensed_rhs` |
+| 显式参考 | `condensed_dtn::build_explicit_condensed_operator` |
+| 回代 | `condensed_dtn::recover_petsc_auxiliary` |
 
 matrix-free action 按 `Fx-C(H^-1(Dx))` 计算，不显式形成稠密 Schur 更新。
+
+`SmallDenseInverse` 当前先 MPI 收集 H，再执行 `np.linalg.inv(H_dense)`，然后用显式 inverse 乘 RHS；它不是 LU factor object。对当前约 80 x 80 的良态 H 可用，但若辅助模态显著增长，应改为 factor/solve 接口。
+
+`build_explicit_condensed_operator` 只是代数回归 reference：它先验证 `H` 在 `1e-13` 绝对容差内等于单位阵，再形成 `F-C@D`。非单位 H 会抛 `NotImplementedError`；一般可逆 H 仍由 matrix-free action 正确处理，不能把 explicit helper 描述为一般分布式 Schur builder。
 
 ## 6. 转置与 Hermitian
 

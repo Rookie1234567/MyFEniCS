@@ -7,13 +7,16 @@ direct_reference,pass,h5 and h3 rerun; h2 retained as reviewed resource-heavy re
 workstation_iterative,pass,h5 h3 h2 canonical records reach full residual <=1e-6
 h2_memory,pass,canonical total peak RSS 13.080257 GB
 ordinary_default,pass,PyCharm default is lightweight Stage1 direct and runner default remains direct
-main_presets,pass,15 unique named presets accepted by actual runner parsers
+main_presets,pass,17 unique presets accepted and demo target identities separated
 documentation_architecture,pass,capability quick-start walkthrough theory and benchmark layers cross-linked
-documentation_contract,pass,required indexes local links 13 cases and 22-field templates pass
+documentation_contract,pass,11 tests protect tutorial depth walkthrough accuracy records case files and links
 benchmark_output_boundary,pass,ordinary results and gitignored benchmark artifacts remain separate
 benchmark_metadata,pass,actual source and canonical rerun provenance are distinct and complete
-benchmark_automatic_checker,pass,87 of 87 canonical gates pass with nonzero failure semantics
+benchmark_automatic_checker,pass,143 of 143 canonical gates pass with nonzero failure semantics
 production_sm2_tests,pass,small reference repeat MPI action requirement and destroy covered
 environment,pass_with_qualification,Stage4 image works but complex MPC base has no public pull source
 task028_response_v2,pass,all ten review topics answered with code docs benchmark and tests
+case002_full_equivalence,pass,explicit and auxiliary full fields matrices residual and RTA agree
+case003_lossy_canonical,pass,TM and TE official RTA close with volume absorption while probe remains diagnostic
+task028_response_v3,pass,all P0 and P1 review topics have code evidence documents and automatic gates
 task028_overall,pass_pending_final_review_and_user_merge,do not merge master until final review and user approval

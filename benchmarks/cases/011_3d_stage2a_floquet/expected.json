@@ -1,0 +1,6 @@
+{
+  "status": "test_backed",
+  "evidence": "src/test/test_13_3d_stage_entrypoints.py and Floquet unit tests",
+  "required": ["x phase pairing", "y phase pairing", "finite residual"],
+  "no_canonical_physical_record": true
+}

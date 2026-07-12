@@ -2,6 +2,8 @@
 
 本索引解释当前代码如何把参数、方程、约束、求解器和结果串起来。运行方法见 [`../quick_start/README.md`](../quick_start/README.md)，推导见 [`../theory/README.md`](../theory/README.md)，数值证据见 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md)。
 
+Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇都给出真实签名、对象 shape/ownership、公式映射、调用顺序、测试和限制，并由 `test_26_documentation_contract.py` 防止退化为函数摘要。
+
 | 顺序 | 文档 | 内容 |
 |---:|---|---|
 | 0 | [`code_walkthrough/00_repository_architecture.md`](code_walkthrough/00_repository_architecture.md) | 全目录和文件责任、正式/诊断/历史边界 |

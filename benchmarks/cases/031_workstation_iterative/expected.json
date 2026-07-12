@@ -1,0 +1,12 @@
+{
+  "status": "qualified_target_profile",
+  "full_augmented_true_residual_max": 1e-6,
+  "energy_closure_abs_max": 1e-6,
+  "h2_peak_total_rss_gb_max": 14.0,
+  "canonical_records_are_read_only_for_scans": true,
+  "canonical_references": [
+    "records/h5_reference.json",
+    "records/h3_reference.json",
+    "records/h2_reference.json"
+  ]
+}

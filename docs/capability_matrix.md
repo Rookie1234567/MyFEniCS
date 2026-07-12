@@ -42,7 +42,7 @@
 | p2 Nedelec | recommended | ordinary/benchmark | workstation qualification 使用 p2 |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
 | auxiliary DtN | recommended | ordinary Stage4 | 稀疏增广系统 |
-| explicit condensed DtN | supported | `condensed_dtn.py` | exact Schur，可显式构造 |
+| explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |
 | matrix-free condensed DtN | recommended | benchmark runner | `F-C H^-1 D` |
 | MUMPS direct | recommended | ordinary default | h=2 内存超当前工作站 |
 | MUMPS out-of-core | supported | `mumps_ooc` profile | scratch 容量和 I/O 敏感 |

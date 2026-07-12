@@ -78,7 +78,7 @@ docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 mpiexec -n 4 
 docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 python -m benchmarks.check_benchmarks
 ```
 
-checker 从 manifest 和 canonical records 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、benchmark ID、KSP/coarse、physical model、actual/canonical artifact provenance 和环境限定。Task28 Response V2 为 `87/87`；任何 Gate 失败都会返回非零退出码。
+checker 从 manifest 和 canonical records 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、benchmark ID、KSP/coarse、physical model、actual/canonical artifact provenance、case-contained files、Case002 双解和 Case003 lossy regression。Task28 Response V3 为 `143/143`；任何 Gate 失败都会返回非零退出码。
 
 ## 8. 在哪里看结果
 

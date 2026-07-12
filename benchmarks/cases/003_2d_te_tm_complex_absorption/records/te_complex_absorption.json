@@ -1,0 +1,217 @@
+{
+  "benchmark_id": "case003_te_lossy",
+  "case_id": "003_2d_te_tm_complex_absorption",
+  "polarization": "TE",
+  "metadata": {
+    "commit_sha": "e89fb632bb4318a739afd1ee702be3a17d109d7c",
+    "branch": "codex/20260712-task28-stage-consolidation",
+    "git_dirty": true,
+    "tracked_source_dirty": false,
+    "command": "python -m benchmarks.run_2d_canonical --case 003 --variant te --artifact-root benchmarks/artifacts/cases/003 --record-dir benchmarks/cases/003_2d_te_tm_complex_absorption/records --source-commit e89fb632bb4318a739afd1ee702be3a17d109d7c --source-git-dirty --container-image myfenics-stage4:task28 --container-digest sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "timestamp_utc": "2026-07-12T13:42:45.770367+00:00",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "host_environment_id": "task28_windows_wsl2_14gb",
+    "provenance": "canonical_lightweight_rerun_from_frozen_case_contract"
+  },
+  "physical_model": {
+    "period_x_nm": 10.0,
+    "air_height_nm": 5.0,
+    "substrate_thickness_nm": 5.0,
+    "grating_width_nm": 5.0,
+    "grating_height_nm": 2.0,
+    "wavelength_nm": 13.5,
+    "incident_angle_deg": 15.0,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "time_convention": "exp(-i omega t)"
+  },
+  "resolved_config": {
+    "case_name": "case003_te_complex_absorption",
+    "calculation_method": "port",
+    "constraint_backend": "manual",
+    "port_boundary_model": "dtn",
+    "scattering_background": "layered",
+    "polarization_type": "TE",
+    "period_x": 10.0,
+    "air_height": 5.0,
+    "substrate_thickness": 5.0,
+    "pml_top_thickness": 300.0,
+    "pml_bottom_thickness": 300.0,
+    "grating_width": 5.0,
+    "grating_height": 2.0,
+    "lambda0": 13.5,
+    "incident_angle_deg": 15.0,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_substrate": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "n_grating": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "use_pml": false,
+    "port_use_pml": false,
+    "port_incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "port_dtn_order_count": 0,
+    "port_dtn_assembly": "explicit",
+    "port_use_diffraction_orders": false,
+    "port_rayleigh_tolerance": 1e-06,
+    "unique_output": false,
+    "compute_power_metrics": true,
+    "diffraction_order_count": 0,
+    "power_probe_num_points": 256,
+    "nedelec_degree": 1,
+    "visualization_degree": 1,
+    "generate_png_plots": false,
+    "mesh_target_size": 2.0,
+    "mesh_cell_shape": "triangle",
+    "mesh_lock_near_field_template": false,
+    "near_field_margin_x": 25.0,
+    "near_field_air_top": 100.0,
+    "near_field_sub_depth": 50.0,
+    "pml_alpha": 5.0,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "left": 11,
+      "right": 12,
+      "outer_top": 13,
+      "outer_bottom": 14
+    },
+    "k0": 0.46542113386515455,
+    "omega": 1.3952974572658171e+17,
+    "kx": [
+      0.12045985343751178,
+      0.0
+    ],
+    "ky": [
+      -0.4495622933010945,
+      0.0
+    ],
+    "polarization": [
+      0.9659258262890683,
+      0.25881904510252074
+    ],
+    "floquet_phase": [
+      0.358067924510886,
+      0.933695540011018
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "eps_grating": [
+      0.9980022690345409,
+      0.0036493427323206554
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "artifact_root": "benchmarks/artifacts/cases/003",
+  "artifact_directory": "benchmarks/artifacts/cases/003/case003_te_20260712T134241Z",
+  "artifact_provenance": "full fields and logs are gitignored; this JSON is the lightweight canonical record",
+  "mesh": {
+    "cells": 84,
+    "field_dofs": 56,
+    "auxiliary_dofs": 0,
+    "reduced_dofs": 49,
+    "mesh_target_size_nm": 2.0,
+    "element": "Lagrange",
+    "degree": 1
+  },
+  "matrix": {
+    "rows": 56,
+    "nnz": 418,
+    "reduced_rows": 49,
+    "reduced_nnz": 371
+  },
+  "solver": {
+    "backend": "manual_scalar_constraint_elimination",
+    "linear_true_residual": 1.4856285856990297e-15
+  },
+  "official_rta": {
+    "method": "dtn_boundary_trace_modal_projection",
+    "R_total": 8.745627144339044e-05,
+    "T_total": 0.9903457797965699,
+    "A_balance": 0.009566763931986744,
+    "A_volume": 0.00956676393198616,
+    "R_plus_T_plus_A_volume": 0.9999999999999994,
+    "energy_closure_error": 5.828670879282072e-16,
+    "orders": [
+      {
+        "order": 0,
+        "alpha": [
+          0.12045985343751178,
+          0.0
+        ],
+        "beta_top_real": 0.4495622933010945,
+        "beta_top_imag": 0.0,
+        "beta_bottom_real": 0.44908160511351886,
+        "beta_bottom_imag": 0.0008801396583636392,
+        "top_propagating": true,
+        "bottom_propagating": true,
+        "incident_Ez_abs": 1.0,
+        "incident_Ez_line_abs": 1.0,
+        "top_total_Ez_port_real": -0.6302815601762861,
+        "top_total_Ez_port_imag": -0.78798559590036,
+        "top_total_Ez_port_abs": 1.009047146789831,
+        "bottom_total_Ez_port_real": -0.47659650309839235,
+        "bottom_total_Ez_port_imag": 0.8742205670366572,
+        "bottom_total_Ez_port_abs": 0.9956936409335506,
+        "reflected_Ez_boundary_abs": 0.009351805785162053,
+        "transmitted_Ez_boundary_abs": 0.9956936409335506,
+        "reflected_Ez_real": -0.0042677918190255765,
+        "reflected_Ez_imag": 0.00832119128688007,
+        "reflected_Ez_abs": 0.009351805785162053,
+        "reflected_Ez_phase": 2.0446965924689553,
+        "transmitted_Ez_real": 0.9847254823412466,
+        "transmitted_Ez_imag": -0.17460188773859964,
+        "transmitted_Ez_abs": 1.0000850437708202,
+        "transmitted_Ez_phase": -0.1754863514857198,
+        "R_order": 8.745627144339044e-05,
+        "T_order": 0.9903457797965699
+      }
+    ]
+  },
+  "diagnostic_probe": {
+    "identity": "diagnostic_only",
+    "R_total": 0.026083688728229797,
+    "T_total": 0.8892243236702061,
+    "A_volume": 0.00956676393198616,
+    "energy_closure_error": 0.075125223669578,
+    "must_not_replace_official": true
+  },
+  "auxiliary_vs_trace": {},
+  "elapsed_seconds": 4.54068798298249,
+  "process_peak_rss_mb_after_run": 287.48046875,
+  "rss_measurement_scope": "serial process ru_maxrss after this run",
+  "status": "pass"
+}

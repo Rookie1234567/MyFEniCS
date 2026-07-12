@@ -36,7 +36,7 @@ docs/taskXXX_*/review_report*.md
 ```text
 2026-07-12
 current integration branch = codex/20260712-task28-stage-consolidation
-Task028 V2 response status = implemented, awaiting final review and user merge approval
+Task028 V3 response status = implemented, awaiting final review and user merge approval
 ```
 
 ---
@@ -92,7 +92,7 @@ z boundaries = periodic modal DtN ports
 | C. AMS/HX 与低维模态路线 | 011–019 | 低内存 Krylov、real split、AMS/HX、sampled Schur | p1 有信号，p2 主线失败并关闭 |
 | D. wave-aware 与 FE-response/Schur | 020–025 | residual-aware modes、FE response、PETSc/MPI Schur、cached-Q | 数学结构成立，h=2 response 质量不足 |
 | E. auxiliary-free 与 workstation solver | 026–027 | exact condensation、matrix-free、physical slab two-level PC | h=5/3/2 MPI4 达 production residual |
-| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | V2 整改完成，等待最终审查 |
+| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | V3 整改完成，等待最终审查 |
 
 ---
 
@@ -1371,6 +1371,36 @@ master merge = blocked only pending final review and user approval
 
 逐项证据见 `response_v2.md` 与本任务 `outcomes/`。
 
+### Review V3 与 Response V3
+
+V3 保持 Task026/027 核心 solver 和既有 3D records 通过，但要求把“目录存在”提升为可执行、可复核、技术准确的交付。同一分支完成：
+
+```text
+- Case002 在同一网格完成 explicit/auxiliary 两次完整 solve；
+- Case003 冻结 TM/TE complex absorption lightweight records；
+- checker 扩展到 143/143，含 lossy、lossless、case files 与 SHA references；
+- main.py 增至 17 个 preset，demo/target 物理身份分离；
+- Case021 target preset 直接复用 target_stage4_config；
+- Case031 增加 PyCharm Docker/WSL External Tool MPI4 workflow；
+- 15 篇核心 Quick Start 全部扩展为 16 节教程；
+- 11 篇核心 Walkthrough 全部达到源码/shape/ownership/公式/Gate 深度；
+- 修正 SparseCoarseVector 字段、smoother-first 顺序、显式 inverse 和 H=I 限制；
+- 13 个 Benchmark 全部建立 case-contained contract 并扩展 README；
+- Theory 增加统一符号表、module::function anchors 和 2D/3D power constants。
+```
+
+最新验证：
+
+```text
+full suite = 115 passed, 10 skipped
+focused MPI4 = each rank 14 passed
+documentation contract = 11 passed
+benchmark checker = 143/143 pass
+h2 direct/iterative = not rerun; existing 3D records unchanged
+```
+
+逐项证据见 `response_v3.md`。当前状态为 ready for final review；master 仍未合并。
+
 ---
 
 # 33. 当前项目能力
@@ -1461,7 +1491,7 @@ new angle/wavelength/material/geometry = not qualified
 | h2 full-aux cached-Schur research solve | 完成但不生产 | 025 |
 | exact auxiliary-free condensation | 完成 | 026 |
 | MPI4 h2 <1e-6 under 14 GB | 完成 | 027 |
-| clean master candidate integration | 核心完成，包装修正中 | 028 |
+| clean master candidate integration | V3 收口完成，等待最终审查 | 028 |
 
 ---
 
@@ -1493,7 +1523,7 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.1 Task028 收口问题
 
 ```text
-- 等待 Response V2 的最终审查与用户合并决定；
+- 等待 Response V3 的最终审查与用户合并决定；
 - complex MPC base image尚无公开pull source，环境保持qualified；
 - `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
@@ -1569,4 +1599,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V2 已补齐安全 preset、从强形式开始的理论、逐模块代码导读、编号 benchmark 与 provenance Gate，并修复 2D 有耗端口功率闭合，当前等待最终审查和用户合并许可，环境仍按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V3 已补齐 2D canonical、17 个安全 preset、源码级 Walkthrough、case-contained Benchmark 与 143 项 Gate，当前等待最终审查和用户合并许可，环境仍按 `qualified_local_image` 诚实限定。

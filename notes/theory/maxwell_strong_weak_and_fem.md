@@ -63,7 +63,7 @@ $$\mathbf E=(E_x,E_y,0),\qquad
 
 $$
 \int_\Omega \operatorname{curl}_{2D}\mathbf E\,
-\overline{\operatorname{curl}_{2D}\mathbf v},dA
+\overline{\operatorname{curl}_{2D}\mathbf v}\,dA
 -k_0^2\int_\Omega\epsilon_r\mathbf E\cdot\overline{\mathbf v}\,dA.
 $$
 

@@ -1,6 +1,6 @@
 # 当前版本边界
 
-更新时间：2026-07-12，Task28 response v2 文档与 benchmark 契约整改。
+更新时间：2026-07-12，Task28 Response V3 文档深度、case-contained benchmark 与 2D canonical 整改。
 
 ## 可声明能力
 
@@ -36,7 +36,9 @@
 
 ## Benchmark 状态
 
-重型 benchmark 只能写 `benchmarks/artifacts/`；`results/` 保留给 ordinary runs。Task28 V2 后 checker 额外核对 ID、qualified、KSP reason、coarse condition、physical model 与 actual/canonical artifact provenance。旧 h3/h2 artifacts 来自 source commit 的历史运行；record 分别保存实际来源命令/目录和规范重跑命令/目录，没有为元数据整改重复 h=2 重型计算。
+重型 benchmark 只能写 `benchmarks/artifacts/`；`results/` 保留给 ordinary runs。Task28 V3 checker 共 143 项，除 ID、qualified、KSP、coarse、physical model 和 provenance 外，还核对 13 个 case contract、SHA references、Case002 双解和 Case003 lossy/lossless Gate。旧 3D h3/h2 artifacts 来自 source commit 的历史运行；没有为 V3 重复 h=2 重型计算。
+
+2D Case002/003 是 V3 新生成的 lightweight canonical evidence。2D lossy 功率使用实际端口平面 coefficient；该口径变化不重算独立 3D official RTA 路径。
 
 环境当前为 `qualified_local_image`，不是完全 clean-machine reproducible。基础 complex MPC 镜像已按本地 digest 固定，但没有公开 pull source；详见 `docker/STAGE4_ENVIRONMENT.md`。
 

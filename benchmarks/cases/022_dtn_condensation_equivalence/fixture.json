@@ -1,0 +1,6 @@
+{
+  "case_id": "022_dtn_condensation_equivalence",
+  "status": "algebraic_test_backed",
+  "operators": ["augmented", "explicit_condensed_H_equals_I", "matrix_free_condensed"],
+  "actions": ["mult", "multTranspose", "multHermitian", "back_substitution"]
+}

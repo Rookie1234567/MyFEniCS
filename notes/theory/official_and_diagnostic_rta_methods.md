@@ -15,7 +15,7 @@ $$R=P_{ref}/P_{inc},\qquad T=P_{trn}/P_{inc}.$$
 $$P_{abs}=\frac{\omega\epsilon_0}{2}\int_{\Omega_{loss}}\operatorname{Im}(\epsilon_r)|E|^2dV,
 \qquad A_{volume}=P_{abs}/P_{inc}.$$
 
-代码单位中公共常数消去，3D 使用 `0.5*k0*Im(epsilon_r)*|E|^2`。只积分 substrate/grating 物理 tag，不积分 PML 或空气。
+代码单位中公共常数消去，3D 使用 `0.5*k0*Im(epsilon_r)*|E|^2`。只积分 substrate/grating 物理 tag，不积分 PML 或空气。2D 按单位 z 长度使用 TM/TE 各自 admittance，3D 乘 `L_xL_y` 单胞面积；归一化 R/T/A 可比较，但两套未归一化 code-unit 功率不能跨维度直接比较，也不是未经换算的 SI W/Wm。
 
 ## 2. 两个吸收量
 
@@ -38,7 +38,7 @@ $$R+T+A_{volume}=1,\qquad A_{balance}-A_{volume}=0.$$
 | sampled net flux | 平面 E/H Poynting | conservation diagnostic | 含混合向上/向下分量 |
 | volume absorption | 损耗体积分 | official A | 必须使用 total field 与正确材料 tag |
 
-2D `power_metrics.py` 同时输出多套量；3D `dtn_port_3d._port_power_metrics` 形成 port official，`rta_3d.compute_volume_absorption_3d` 形成 official A，`diffraction_3d` 的采样方法保留为诊断。
+2D `power_metrics::compute_dtn_auxiliary_power_metrics` 等入口输出多套量；3D `dtn_port_3d::_port_power_metrics` 形成 port official，`rta_3d::compute_volume_absorption_3d` 形成 official A，`diffraction_3d::compute_diffraction_orders_3d` 的采样方法保留为诊断。
 
 ## 4. 衍射级功率
 

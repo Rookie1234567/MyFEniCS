@@ -7,7 +7,7 @@
 1. 阅读 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)，确认 Docker 复杂数环境。
 2. 打开 `src/main.py`，只修改 `ACTIVE_PYCHARM_PRESET`。
 3. 第一次保持默认 `3d_stage1_airbox_smoke`，在 PyCharm 运行 `main.py`。
-4. 在 `results/` 最新时间戳目录查看 `run_summary.json`、`run_log.txt` 和 ParaView 文件。
+4. 在 `results/` 最新时间戳目录查看 `run_summary.json`、`solver_log.txt` 和 ParaView 文件。
 5. 需要正式迭代结果时使用 [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md) 的 MPI4 外部命令，普通单进程 `main.py` 不会偷偷启动它。
 
 ## 按功能阅读
@@ -16,17 +16,17 @@
 |---|---|---|---|
 | 参数总表 | [`01_main_py_parameter_map.md`](01_main_py_parameter_map.md) | 全部 | 入口契约 |
 | 输出与 ParaView | [`02_results_and_paraview.md`](02_results_and_paraview.md) | 全部 | 通用 |
-| 2D TM PML | [`10_2d_pml_floquet.md`](10_2d_pml_floquet.md) | `2d_tm_pml_floquet_smoke` | 已验证路径 |
+| 2D TM PML | [`10_2d_pml_floquet.md`](10_2d_pml_floquet.md) | `2d_tm_pml_floquet_smoke` | experimental path smoke |
 | 2D TM DtN | [`11_2d_dtn_floquet.md`](11_2d_dtn_floquet.md) | `2d_tm_dtn_auxiliary_smoke` | auxiliary 推荐、explicit 交叉核验 |
 | 2D TE/TM/复材料 | [`12_2d_te_tm_and_complex_material.md`](12_2d_te_tm_and_complex_material.md) | `2d_complex_absorption` | 已支持 |
 | 2D RTA 方法 | [`13_2d_diffraction_and_rta_methods.md`](13_2d_diffraction_and_rta_methods.md) | 2D DtN | official 与 diagnostic 分开 |
 | 3D Stage 1 | [`20_3d_stage1_airbox.md`](20_3d_stage1_airbox.md) | `3d_stage1_airbox_smoke` | 默认安全入口 |
-| 3D Stage 2A | [`21_3d_stage2a_floquet.md`](21_3d_stage2a_floquet.md) | `3d_stage2a_floquet_smoke` | Floquet 验证 |
-| 3D Stage 2B | [`22_3d_stage2b_pml.md`](22_3d_stage2b_pml.md) | `3d_stage2b_pml_smoke` | 实验验证，不等于生产证明 |
-| 3D Stage 2C | [`23_3d_stage2c_fresnel.md`](23_3d_stage2c_fresnel.md) | `3d_stage2c_fresnel_smoke` | Fresnel 验证 |
+| 3D Stage 2A | [`21_3d_stage2a_floquet.md`](21_3d_stage2a_floquet.md) | `3d_stage2a_floquet_smoke` | test-backed Floquet smoke |
+| 3D Stage 2B | [`22_3d_stage2b_pml.md`](22_3d_stage2b_pml.md) | `3d_stage2b_pml_smoke` | experimental/not accuracy qualified |
+| 3D Stage 2C | [`23_3d_stage2c_fresnel.md`](23_3d_stage2c_fresnel.md) | `3d_stage2c_fresnel_smoke` | experimental/not accuracy qualified |
 | 3D Stage 4A | [`30_3d_stage4a_flat_layer.md`](30_3d_stage4a_flat_layer.md) | `3d_stage4a_flat_layer_direct` | 平层功率闭合 |
-| 3D Stage 4B direct | [`31_3d_stage4b_grating_direct.md`](31_3d_stage4b_grating_direct.md) | `...direct_h5` | 基线/小规模回归 |
-| OOC 与 BLR | [`32_3d_direct_ooc_blr.md`](32_3d_direct_ooc_blr.md) | `...mumps_ooc` / `...mumps_blr` | 仍是直接分解 |
+| 3D Stage 4B direct | [`31_3d_stage4b_grating_direct.md`](31_3d_stage4b_grating_direct.md) | `3d_stage4b_demo_*` / `3d_target_grating_*` | demo 与 canonical target 严格分开 |
+| OOC 与 BLR | [`32_3d_direct_ooc_blr.md`](32_3d_direct_ooc_blr.md) | `3d_stage4b_demo_mumps_*` | experimental direct fallback |
 | MPI4 迭代生产档 | [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md) | 无 main preset | h=5/3/2 已限定验证 |
 | 扫描和新案例 | [`50_parameter_scans_and_new_cases.md`](50_parameter_scans_and_new_cases.md) | 从最近 preset 复制 | 新结果必须降级为未验证 |
 

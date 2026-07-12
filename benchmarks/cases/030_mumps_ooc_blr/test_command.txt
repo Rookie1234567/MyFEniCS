@@ -1,0 +1,1 @@
+python -m unittest src.test.test_18_3d_direct_solver_profile_cleanup

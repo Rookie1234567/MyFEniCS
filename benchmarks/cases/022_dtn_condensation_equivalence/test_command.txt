@@ -1,0 +1,2 @@
+python -m unittest src.test.test_22_condensed_dtn
+mpiexec -n 4 python -m unittest src.test.test_22_condensed_dtn

@@ -20,6 +20,12 @@
   "coarse_rank_required": 75,
   "coarse_condition_max": 1e10,
   "energy_closure_abs_max": 1e-6,
+  "two_d_linear_residual_max": 1e-10,
+  "two_d_energy_closure_abs_max": 1e-8,
+  "two_d_absorption_balance_difference_max": 1e-8,
+  "two_d_auxiliary_trace_abs_difference_max": 1e-8,
+  "case002_field_relative_difference_max": 1e-8,
+  "case002_rta_absolute_difference_max": 1e-8,
   "h2_peak_total_rss_gb_max": 14.0,
   "ordinary_default_changed": false
 }

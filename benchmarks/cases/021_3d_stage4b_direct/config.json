@@ -1,0 +1,19 @@
+{
+  "case_id": "021_3d_stage4b_direct",
+  "status": "canonical_target",
+  "physical_model_factory": "src.common.config_3d::target_stage4_config",
+  "geometry": {
+    "domain_nm": [50.0, 25.0, 140.0],
+    "grating_nm": [17.0, 25.0, 120.0]
+  },
+  "wavelength_nm": 13.5,
+  "incident_theta_deg": 80.0,
+  "incident_phi_deg": 0.0,
+  "polarization": "s",
+  "degree": 2,
+  "mesh_sizes_nm": [5.0, 3.0, 2.0],
+  "pycharm_presets": [
+    "3d_target_grating_direct_h5",
+    "3d_target_grating_direct_h3"
+  ]
+}

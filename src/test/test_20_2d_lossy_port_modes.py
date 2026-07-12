@@ -7,7 +7,9 @@ import numpy as np
 from src.common.config import SimulationConfig
 from src.postprocessing.power_metrics import (
     _is_propagating,
+    _modal_admittance,
     _modal_power_on_plane,
+    _modal_power_factor,
     _positive_sqrt,
 )
 from src.solvers.solve_port_maxwell import _select_dtn_port_modes
@@ -29,6 +31,13 @@ class LossyPortModeTests(unittest.TestCase):
         beta = _positive_sqrt(k_sub**2)
         self.assertGreater(beta.imag, 0.0)
         self.assertTrue(_is_propagating(beta, k_sub**2))
+        power_factor = _modal_power_factor(_modal_admittance(k_sub, beta))
+        self.assertGreater(
+            _modal_power_on_plane(
+                self.cfg.period_x, power_factor, 1.0, power_carrying=True
+            ),
+            0.0,
+        )
 
     def test_below_cutoff_lossy_order_is_not_mislabeled(self):
         k_sub = self.cfg.k0 * self.cfg.n_substrate
@@ -37,6 +46,13 @@ class LossyPortModeTests(unittest.TestCase):
         beta = _positive_sqrt(dispersion)
         self.assertLess(dispersion.real, 0.0)
         self.assertFalse(_is_propagating(beta, dispersion))
+        power_factor = _modal_power_factor(_modal_admittance(k_sub, beta))
+        self.assertEqual(
+            _modal_power_on_plane(
+                self.cfg.period_x, power_factor, 1.0, power_carrying=False
+            ),
+            0.0,
+        )
 
     def test_auto_dtn_selection_keeps_lossy_power_carrying_orders(self):
         selection = _select_dtn_port_modes(self.cfg, lambda _message: None)

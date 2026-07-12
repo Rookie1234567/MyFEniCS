@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import subprocess
@@ -26,6 +27,14 @@ class Gate:
 def _load_json(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as stream:
         return json.load(stream)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _git(*args: str) -> str | None:
@@ -101,6 +110,140 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         manifest = list(csv.DictReader(stream))
 
     gates: list[Gate] = []
+
+    case_requirements = {
+        "001_2d_tm_pml_floquet": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+        ),
+        "002_2d_tm_dtn_equivalence": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+            "records",
+        ),
+        "003_2d_te_tm_complex_absorption": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+            "records",
+        ),
+        "010_3d_stage1_airbox": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+            "records",
+        ),
+        "011_3d_stage2a_floquet": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+        ),
+        "012_3d_stage2b_pml": ("README.md", "config.json", "expected.json", "run.sh"),
+        "013_3d_stage2c_fresnel": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+        ),
+        "020_3d_stage4a_flat_dtn": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+        ),
+        "021_3d_stage4b_direct": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+            "records",
+        ),
+        "022_dtn_condensation_equivalence": (
+            "README.md",
+            "fixture.json",
+            "expected.json",
+            "test_command.txt",
+        ),
+        "030_mumps_ooc_blr": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "test_command.txt",
+        ),
+        "031_workstation_iterative": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run.sh",
+            "records",
+        ),
+        "040_mpi_p_algebra_regression": (
+            "README.md",
+            "fixture.json",
+            "expected.json",
+            "test_command.txt",
+        ),
+    }
+    cases_root = BENCHMARKS / "cases"
+    for case_name, required_names in case_requirements.items():
+        missing = [
+            name
+            for name in required_names
+            if not (cases_root / case_name / name).exists()
+        ]
+        gates.append(
+            Gate(
+                f"case_contract:{case_name}",
+                not missing,
+                missing or "complete",
+                "all case-contained contract files exist",
+                f"cases/{case_name}",
+            )
+        )
+
+    reference_files = (
+        "010_3d_stage1_airbox/records/canonical_reference.json",
+        "021_3d_stage4b_direct/records/h5_reference.json",
+        "021_3d_stage4b_direct/records/h3_reference.json",
+        "021_3d_stage4b_direct/records/h2_reviewed_reference.json",
+        "031_workstation_iterative/records/h5_reference.json",
+        "031_workstation_iterative/records/h3_reference.json",
+        "031_workstation_iterative/records/h2_reference.json",
+    )
+    for relative_reference in reference_files:
+        reference_path = cases_root / relative_reference
+        if not reference_path.is_file():
+            gates.append(
+                Gate(
+                    f"case_reference:{relative_reference}",
+                    False,
+                    "missing reference file",
+                    "sha256-pinned canonical reference",
+                    f"cases/{relative_reference}",
+                )
+            )
+            continue
+        reference = _load_json(reference_path)
+        canonical_path = ROOT / str(reference.get("canonical_record", ""))
+        observed_hash = _sha256(canonical_path) if canonical_path.is_file() else None
+        expected_hash = reference.get("sha256")
+        gates.append(
+            Gate(
+                f"case_reference:{relative_reference}",
+                observed_hash == expected_hash,
+                observed_hash,
+                expected_hash,
+                str(reference.get("canonical_record")),
+            )
+        )
+
     records: dict[str, dict[str, Any]] = {}
     summaries: list[dict[str, Any]] = []
     for row in manifest:
@@ -161,7 +304,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     "full_augmented_true_residual",
                     record.get(
                         "linear_system_relative_residual",
-                        record.get("reduced_linear_residual"),
+                        record.get(
+                            "reduced_linear_residual",
+                            (record.get("solver") or {}).get("linear_true_residual"),
+                        ),
                     ),
                 ),
                 "peak_total_rss_gb": record.get(
@@ -178,11 +324,189 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     "T_total", record.get("T_total")
                 ),
                 "A_volume": (record.get("official_rta") or {}).get(
-                    "A_volume_total", record.get("A_volume_total")
+                    "A_volume_total",
+                    (record.get("official_rta") or {}).get(
+                        "A_volume", record.get("A_volume_total")
+                    ),
                 ),
                 "status": row["status"],
                 "record": raw_path,
             }
+        )
+
+    case002_comparison_path = (
+        cases_root / "002_2d_tm_dtn_equivalence" / "records" / "comparison.json"
+    )
+    case002_comparison = (
+        _load_json(case002_comparison_path)
+        if case002_comparison_path.is_file()
+        else None
+    )
+    gates.append(
+        Gate(
+            "case002_comparison_exists",
+            case002_comparison is not None,
+            case002_comparison is not None,
+            True,
+            "cases/002_2d_tm_dtn_equivalence/records/comparison.json",
+        )
+    )
+    if case002_comparison is not None:
+        field_difference = float(case002_comparison["field_relative_difference"])
+        rta_differences = [
+            float(value)
+            for value in case002_comparison["absolute_differences"].values()
+        ]
+        max_rta_difference = max(rta_differences, default=0.0)
+        gates.extend(
+            (
+                Gate(
+                    "case002_field_equivalence",
+                    field_difference
+                    <= expected["case002_field_relative_difference_max"],
+                    field_difference,
+                    expected["case002_field_relative_difference_max"],
+                    "case002 comparison",
+                ),
+                Gate(
+                    "case002_rta_equivalence",
+                    max_rta_difference
+                    <= expected["case002_rta_absolute_difference_max"],
+                    max_rta_difference,
+                    expected["case002_rta_absolute_difference_max"],
+                    "case002 comparison",
+                ),
+                Gate(
+                    "case002_matrix_identity",
+                    case002_comparison["explicit"]["auxiliary_dofs"] == 0
+                    and case002_comparison["auxiliary"]["auxiliary_dofs"] > 0
+                    and case002_comparison["auxiliary"]["matrix_rows"]
+                    > case002_comparison["explicit"]["matrix_rows"],
+                    {
+                        "explicit": {
+                            "rows": case002_comparison["explicit"]["matrix_rows"],
+                            "aux": case002_comparison["explicit"]["auxiliary_dofs"],
+                        },
+                        "auxiliary": {
+                            "rows": case002_comparison["auxiliary"]["matrix_rows"],
+                            "aux": case002_comparison["auxiliary"]["auxiliary_dofs"],
+                        },
+                    },
+                    "explicit has no auxiliary rows; auxiliary system is augmented",
+                    "case002 comparison",
+                ),
+            )
+        )
+
+    for benchmark_id in ("case002_explicit", "case002_auxiliary"):
+        record = records.get(benchmark_id)
+        if record is None:
+            continue
+        residual = float(record["solver"]["linear_true_residual"])
+        closure = float(record["official_rta"]["energy_closure_error"])
+        gates.extend(
+            (
+                Gate(
+                    f"two_d_residual:{benchmark_id}",
+                    residual <= expected["two_d_linear_residual_max"],
+                    residual,
+                    expected["two_d_linear_residual_max"],
+                    benchmark_id,
+                ),
+                Gate(
+                    f"lossless_energy:{benchmark_id}",
+                    abs(closure) <= expected["two_d_energy_closure_abs_max"],
+                    closure,
+                    expected["two_d_energy_closure_abs_max"],
+                    benchmark_id,
+                ),
+            )
+        )
+
+    for benchmark_id in ("case003_tm_lossy", "case003_te_lossy"):
+        record = records.get(benchmark_id)
+        if record is None:
+            continue
+        residual = float(record["solver"]["linear_true_residual"])
+        official = record["official_rta"]
+        closure = float(official["energy_closure_error"])
+        balance_difference = abs(
+            float(official["A_balance"]) - float(official["A_volume"])
+        )
+        nonnegative = {
+            key: float(official[key]) for key in ("R_total", "T_total", "A_volume")
+        }
+        probe = record.get("diagnostic_probe") or {}
+        gates.extend(
+            (
+                Gate(
+                    f"lossy_residual:{benchmark_id}",
+                    residual <= expected["two_d_linear_residual_max"],
+                    residual,
+                    expected["two_d_linear_residual_max"],
+                    benchmark_id,
+                ),
+                Gate(
+                    f"lossy_nonnegative:{benchmark_id}",
+                    all(value >= 0.0 for value in nonnegative.values()),
+                    nonnegative,
+                    ">= 0",
+                    benchmark_id,
+                ),
+                Gate(
+                    f"lossy_energy:{benchmark_id}",
+                    abs(closure) <= expected["two_d_energy_closure_abs_max"],
+                    closure,
+                    expected["two_d_energy_closure_abs_max"],
+                    benchmark_id,
+                ),
+                Gate(
+                    f"lossy_absorption_balance:{benchmark_id}",
+                    balance_difference
+                    <= expected["two_d_absorption_balance_difference_max"],
+                    balance_difference,
+                    expected["two_d_absorption_balance_difference_max"],
+                    benchmark_id,
+                ),
+                Gate(
+                    f"probe_is_diagnostic:{benchmark_id}",
+                    probe.get("identity") == "diagnostic_only"
+                    and probe.get("must_not_replace_official") is True,
+                    probe.get("identity"),
+                    "diagnostic_only and must_not_replace_official=true",
+                    benchmark_id,
+                ),
+            )
+        )
+
+    tm_lossy = records.get("case003_tm_lossy")
+    if tm_lossy is not None:
+        auxiliary_trace = tm_lossy.get("auxiliary_vs_trace") or {}
+        maximum = max(
+            (abs(float(value)) for value in auxiliary_trace.values()),
+            default=float("inf"),
+        )
+        gates.append(
+            Gate(
+                "lossy_tm_auxiliary_trace",
+                maximum <= expected["two_d_auxiliary_trace_abs_difference_max"],
+                maximum,
+                expected["two_d_auxiliary_trace_abs_difference_max"],
+                "case003_tm_lossy",
+            )
+        )
+
+    zero_contrast = records.get("l1_2d_zero_contrast")
+    if zero_contrast is not None:
+        lossless_sum = float(zero_contrast["R_plus_T"])
+        gates.append(
+            Gate(
+                "lossless_zero_contrast_regression",
+                abs(lossless_sum - 1.0) <= expected["two_d_energy_closure_abs_max"],
+                lossless_sum,
+                1.0,
+                "l1_2d_zero_contrast",
+            )
         )
 
     iterative_ids = ["l3_iterative_h5", "l3_iterative_h3", "l3_iterative_h2"]

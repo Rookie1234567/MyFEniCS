@@ -1,0 +1,6 @@
+{
+  "status": "test_backed",
+  "mpi_ranks": [1, 4],
+  "all_tests_pass": true,
+  "no_canonical_physical_record": true
+}

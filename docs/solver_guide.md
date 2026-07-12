@@ -20,7 +20,7 @@
 
 ## 3. Explicit condensed direct
 
-`build_explicit_condensed_operator` 构造 `F-C H^-1D`，再用 direct 求解 FE 系统并回代 auxiliary。它主要用于代数等价性、存储诊断或较小案例；对大规模问题显式 Schur 项可能增加存储，不是当前 h=2 低内存推荐路径。
+`build_explicit_condensed_operator` 是当前端口 `H=I` 的 reference helper，构造 `F-C D`，再用 direct 求解 FE 系统并回代 auxiliary；非单位 H 会抛 `NotImplementedError`。一般可逆 H 的 exact action 由 matrix-free `F-C H^-1D` 路径处理。显式 Schur 项可能增加存储，不是当前 h=2 低内存推荐路径。
 
 ## 4. MUMPS OOC 与 BLR
 
@@ -62,7 +62,7 @@ JSON 是唯一 canonical 默认来源，CLI 只做显式 override。任何 overr
 | Gate | 阈值 |
 |---|---:|
 | PETSc reported relative residual | <= 1e-6 |
-| explicit condensed true residual | <= 1e-6 |
+| condensed true residual | <= 1e-6 |
 | full augmented true residual | <= 1e-6 |
 | reported/condensed 相对差 | <= 1e-8 |
 | reported/full 相对差 | <= 1e-8 |

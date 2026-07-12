@@ -146,3 +146,45 @@ docker run --rm -v <worktree>:/work -w /work myfenics-stage4:task28 sh -lc '
 宿主 Windows Python 可单独运行 `test_26_documentation_contract`（4 项通过），但不能导入依赖 `ufl/petsc4py` 的真实 runners，因此 `test_27_main_preset_contract` 的正式结果取自上述 DOLFINx 容器完整测试。该宿主依赖缺失不是代码失败，也没有用 mock parser 绕过验证。
 
 最后执行 Ruff 0.12.0：先修复未使用的 `numpy` import 和无占位符 f-string，再机械格式化 12 个改动文件。最终 `ruff check` 全绿，16 个改动 Python 文件全部通过 `ruff format --check`；格式化后的完整容器回归仍为 105 通过、10 跳过、MPI4 每 rank 14 通过、benchmark 87/87。
+
+## Response V3 迁移、数值与最终验证
+
+```text
+git pull
+  PASS: fast-forward 获取 review_report_v3.md
+
+git worktree remove <task028_worktree>
+  PASS: Git 登记已移除，原项目目录成为唯一 worktree
+  INFO: 旧目录被一个已完成 serial 21/21、卡在 MPI 阶段 6 小时的容器占用
+  PASS: 当前原目录 MPI4 focused suite 通过后，单独删除残留容器
+  PASS: 删除旧空目录和迁移临时备份
+
+python -m benchmarks.run_2d_canonical --case 002 ...
+  PASS: explicit/auxiliary 两次完整 solve
+  PASS: field difference 2.771e-15
+  PASS: max R/T/A difference 1.221e-15
+
+python -m benchmarks.run_2d_canonical --case 003 --variant tm ...
+  PASS: residual 3.323e-14, R/T/A closure -3.331e-15, RSS 365.30 MB
+
+python -m benchmarks.run_2d_canonical --case 003 --variant te ...
+  PASS: residual 1.486e-15, R/T/A closure 5.829e-16, RSS 287.48 MB
+
+docker ... python -m compileall -q src benchmarks
+  PASS
+
+docker ... python -m unittest discover -s src/test -p "test_*.py"
+  PASS: 115 passed, 10 skipped
+
+docker ... mpiexec -n 4 python -m unittest \
+  src.test.test_22_condensed_dtn src.test.test_23_physical_slab_two_level
+  PASS: each rank 14 tests
+
+docker ... python benchmarks/check_benchmarks.py --no-write
+  PASS: 143/143
+
+ruff check / ruff format --check / git diff --check
+  PASS
+```
+
+本轮没有运行 h2 direct、h2 iterative、h1.5 或新的 3D 参数扫描。完整 2D fields/logs 位于 gitignored `benchmarks/artifacts/cases/002` 和 `003`；Git 只保留轻量 JSON。

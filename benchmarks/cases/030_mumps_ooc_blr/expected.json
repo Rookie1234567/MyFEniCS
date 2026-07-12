@@ -1,0 +1,7 @@
+{
+  "status": "experimental",
+  "evidence": "profile_contract_test_and_historical_runs",
+  "required": ["preonly", "lu", "mumps"],
+  "no_new_target_record": true,
+  "no_canonical_physical_record": true
+}

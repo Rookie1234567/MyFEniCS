@@ -46,7 +46,7 @@
 | Task020-Task025 | wave-aware、FE response、Schur、cached-Q | 研究机制与基础设施，未达production |
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
-| Task028 | 阶段收口、选择性整合、benchmark | 核心代码和 3D 数值通过；V3 要求深化教程/导览、补齐 case-contained Benchmark 和 2D lossy canonical evidence |
+| Task028 | 阶段收口、选择性整合、benchmark | Response V3 已补齐教程/导览、case-contained Benchmark、2D canonical evidence 与 143 项 Gate，等待最终审查 |
 
 ## 当前任务
 
@@ -54,7 +54,7 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v3.md` 已完成；`changes_required`，暂不合并 master |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `response_v3.md` 已完成；ready for final review，未合并 master |
 
 ## Task28 审计入口
 
@@ -70,5 +70,6 @@
 | `review_report_v2.md` | ChatGPT V2 审查：重构 Quick Start、Code Walkthrough、Theory、main.py PyCharm preset 与编号功能 Benchmark |
 | `response_v2.md` | Codex V2 回应：五层文档架构、命名 preset、metadata/checker、测试与 2D lossy RTA 修复 |
 | `review_report_v3.md` | ChatGPT V3 审查：修复 Walkthrough 技术错误、扩展可跟随教程、区分 demo/target preset、补 case-contained records/config/run/Gate 和 2D lossy canonical evidence |
+| `response_v3.md` | Codex V3 回应：15 项 P0、3 项 P1、Case002/003 canonical、17 preset、115 tests 与 143/143 Gate |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；本轮应在同一分支提交 `response_v3.md` 并继续修正。
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 没有生成或改写 ChatGPT task/review 内容；只有最终审查通过并获得用户明确许可后才合并 master。

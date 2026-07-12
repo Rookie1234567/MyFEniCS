@@ -1,59 +1,156 @@
-# main.py 参数地图
+# `main.py` 参数地图：知道自己改了什么
 
-`src/main.py` 是 PyCharm 门面，不保存 benchmark 结果，也不替代两个 runner。`preset_cli_args()` 把不可变 dataclass 翻译为 `run_cases.py` 或 `run_3d_cases.py` 的参数；runner 再生成 `SimulationConfig`。
+## 1. 功能与物理图景
 
-## 选择规则
+`src/main.py` 是 PyCharm facade，不是第二套求解器。它把一个命名 preset 翻译成 `run_cases` 或 `run_3d_cases` 的真实 CLI 参数。物理方程、网格、边界和求解仍在 `src/` 对应模块中完成。
 
-| 入口 | 用途 |
+## 2. 当前能力状态
+
+```text
+2D presets = 6
+3D presets = 11
+ordinary default = 3d_stage1_airbox_smoke
+iterative preset = 无；MPI4 使用独立 benchmark 配置
+```
+
+## 3. 运行前提
+
+先完成 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)，确认 complex PETSc。用以下命令查看每个 preset 的几何、p/h、资源和证据身份：
+
+```text
+python src/main.py --list-presets --verbose
+```
+
+## 4. PyCharm 选择位置
+
+只改顶部这一行即可选择已有功能：
+
+```python
+ACTIVE_PYCHARM_PRESET = "2d_complex_absorption"
+```
+
+不要同时寻找旧的 `SIMULATION_DIMENSION`、`stage2_all` 或 `stage4_all`；它们不是当前入口。
+
+## 5. `main.py` 中的实际参数块
+
+| 配置类 | 用途 |
 |---|---|
-| `ACTIVE_PYCHARM_PRESET` | 无参数 PyCharm Run 的唯一选择 |
-| `python src/main.py --preset NAME` | 命令行复用相同 preset |
-| `python src/main.py 2d ...` | 直接进入 2D runner |
-| `python src/main.py 3d ...` | 直接进入 3D runner |
+| `Inputs2D` | 2D TM/TE、PML/Robin/DtN |
+| `Stage1AirboxInputs3D` | Stage1 |
+| `Stage2NoGratingInputs3D` | Stage2A/2B/2C |
+| `Stage4GratingInputs3D` | Stage4A/4B direct |
+| `PresetInfo` | 几何、离散、资源和证据身份 |
 
-## 共同物理参数
+冻结 dataclass 防止运行时意外改值；源码中使用 `replace(base, field=value)` 产生新配置。
 
-| 字段 | 对象/单位 | 合法或常用值 | 改动影响 |
+## 6. 完整自定义参数示例
+
+```python
+MY_2D = replace(
+    PRESETS_2D["2d_tm_dtn_auxiliary_smoke"],
+    period_x=120.0,
+    lambda0=13.5,
+    n_substrate=0.999 + 0.002j,
+    mesh_target_size=3.0,
+)
+PRESETS_2D["2d_my_lossy_cell"] = MY_2D
+PRESET_INFO["2d_my_lossy_cell"] = PresetInfo(
+    physical_geometry="120 nm user cell",
+    discretization="TM N1curl p=2, h=3 nm",
+    resource_class="unmeasured",
+    evidence_status="user_experimental",
+    purpose="User-defined parameter study",
+)
+```
+
+## 7. 2D 参数含义
+
+| 参数 | 单位 | 合法/典型值 | 改动影响 |
 |---|---|---|---|
-| `lambda0` | 真空波长，nm | `>0` | 改变波数、传播级和材料适用性 |
-| `n_air/substrate/grating` | 复折射率 | `a+bj` | `Im(n)>0` 在当前约定中表示吸收；必须重查 RTA |
-| `incident_*_deg` | 入射角，度 | 2D 一个角；3D theta/phi | 改变 Floquet 相位与端口传播常数 |
-| `polarization_type/kind` | 偏振 | 2D `TM/TE`；3D `s/p/custom` | 选择不同函数空间/入射向量 |
-| `period_x/y` | 周期，nm | `>0` | 改变倒格矢和衍射级 |
+| `period_x` | nm | `>0` | Floquet 相位和衍射阶 |
+| `air_height`、`substrate_thickness` | nm | `>0` | port 面位置与吸收传播距离 |
+| `grating_width/height` | nm | 落在周期域内 | 材料标签和几何 |
+| `lambda0` | nm | `>0` | `k0=2pi/lambda0` |
+| `incident_angle_deg` | deg | 避开未处理 Rayleigh 点 | `kx` 与传播阶 |
+| `n_*` | 无量纲复数 | `a+bj` | `epsilon_r=n^2` |
+| `nedelec_degree` | 无量纲 | TM 常用 1/2 | DoF 和内存 |
+| `mesh_target_size` | nm | `>0` | 精度与资源，不保证自动收敛 |
 
-## 数值参数
+在 `exp(-i omega t)` 约定下，本项目使用正 `Im(epsilon_r)` 表示吸收；外部数据库若使用相反时间约定，必须先转换符号。
 
-| 字段 | 含义 | 约束 | 资格影响 |
-|---|---|---|---|
-| `nedelec_degree` | H(curl) 阶数 | 2D/3D 常用 1、2 | p=2 内存显著增加；迭代生产档固定 p=2 |
-| `mesh_target_size` | 目标网格宽度，nm | `>0` | 不是精确单元宽度；改变即需网格收敛检查 |
-| `mesh_cell_shape/type` | 单元类型 | 2D tri/quad；3D auto/tet/hex | Floquet Stage 4 主要使用匹配六面体 |
-| `mesh_spacing_mode` | Stage 4 轴网格 | auto/uniform_strict/boundary_fitted/local_refined | 材料面必须与网格面一致 |
-| `floquet_constraint_mode` | 周期约束构造 | auto 或代码列出的显式模式 | p=1/p=2 路径不同，不可随意互换 |
-| `visualization_degree` | 输出插值阶数 | 正整数 | 影响输出体积，不改变原始 FE 解 |
+## 8. 3D 参数含义
 
-## 边界与端口
-
-| 字段 | 含义 | 建议 |
+| 参数 | 物理对象 | 资格边界 |
 |---|---|---|
-| `calculation_method` | 2D scattered 或 port | PML 用 scattered；DtN/Robin 用 port |
-| `port_boundary_model` | robin/dtn | 多衍射级正式功率优先 DtN |
-| `port_dtn_assembly` | auxiliary/explicit | auxiliary 正式路径；explicit 仅交叉核验 |
-| `port_use_diffraction_orders` | 是否自动纳入传播级 | 正式周期端口开启 |
-| `stage4_boundary_model` | 3D dtn_port/pml/robin0 | Stage 4 正式路径为 dtn_port |
-| `stage4_dtn_order_policy` | auto_propagating/zero_order/manual | 真实光栅用 auto；小平层可 zero_order |
-| `pml_*` | PML 厚度/强度 | 只在 PML 路线生效 | 厚度与 alpha 都需收敛诊断 |
+| `period_x/y` | 双周期尺寸 | 改后不再是 target record |
+| `air_height/substrate_thickness` | z 向分层 | 影响端口和吸收 |
+| `grating_width_x/y/height` | 3D block | 必须落在 cell 内 |
+| `incident_theta/phi_deg` | 从 `-z` 的倾角/方位角 | target 为 80/0 |
+| `polarization_kind` | `s`/`p`/`custom` | target 为 `s` |
+| `stage4_boundary_model` | `dtn_port`/诊断 PML/Robin | production target 使用 DtN |
+| `stage4_dtn_order_policy` | auto/zero/manual | target 使用 auto propagating |
+| `petsc_direct_solver_profile` | default/OOC/BLR | BLR 仍是 direct |
 
-## 直接求解配置
+## 9. Demo 与 target 的区别
 
-| profile | 真实含义 | 何时用 |
-|---|---|---|
-| `default` | PETSc LU；MPI 时选择可用 MUMPS | 普通 direct 基线 |
-| `mumps_ooc` | MUMPS 直接 LU，因子文件可落盘 | 内存压力诊断；I/O 可能增加 |
-| `mumps_blr` | MUMPS BLR 压缩直接分解，阈值 `1e-5` | 实验性 direct fallback；不是迭代器 |
+| 名称前缀 | 物理身份 |
+|---|---|
+| `3d_stage4b_demo_*` | 100 x 100 x 100 nm、normal-incidence 演示，不对应 Case021 |
+| `3d_target_grating_*` | 50 x 25 x 140 nm、80° s 偏振 canonical target |
 
-`petsc_extra_options` 能覆盖 profile 默认值，覆盖后结果不再自动继承原 profile 的资格。`matrix_diagnostics_assemble_only=True` 会跳过求解，只测装配资源；不能把它写成“求解成功”。
+target preset 的物理参数来自 `src.common.config_3d::target_stage4_config`，不是第二份手抄常数。
 
-## 输出参数
+## 10. CLI 等价命令
 
-`unique_output=True` 每次创建时间戳目录；`results_root=None` 保持普通 `results/`。benchmark 脚本才显式改到 `benchmarks/artifacts/`。参数改动后的资格边界见 [`../reference/current_version_boundaries.md`](../reference/current_version_boundaries.md)。
+```text
+python src/main.py --preset 2d_complex_absorption
+python src/main.py --preset 3d_target_grating_direct_h5
+```
+
+命令末尾可追加真实 runner 参数；后出现的同名参数覆盖 preset 值，但这会形成用户变体，不应覆盖 canonical record。
+
+## 11. 真实调用链
+
+```text
+PRESETS_2D/PRESETS_3D
+-> preset_cli_args
+-> _pycharm_args_2d/_pycharm_args_3d
+-> run_cases::main / run_3d_cases::main
+-> SimulationConfig / SimulationConfig3D
+```
+
+`test_27_main_preset_contract.py` 把全部 preset 参数交给真实 parser，防止 facade 与 runner 漂移。
+
+## 12. 输出与关键字段
+
+默认 `results/`；benchmark 使用显式 `benchmarks/artifacts/`。检查 `run_summary.json` 的 `config`，确认实际解析值，而不是只相信源文件注释。
+
+## 13. 成功 Gate
+
+```text
+preset 名称唯一
+PRESET_INFO 完整
+runner parser 接受全部参数
+demo/target 名称不混淆
+ordinary default 仍为轻量 direct
+```
+
+## 14. 常见错误
+
+| 错误 | 原因 |
+|---|---|
+| 改了未激活 dataclass 但结果不变 | `ACTIVE_PYCHARM_PRESET` 指向别处 |
+| 把 `n` 当成 `epsilon` 输入 | 程序还会再平方 |
+| 用 demo 与 target record 比较 | 两者几何和入射不同 |
+| 参数扫描写到 canonical record | `--record` 路径使用错误 |
+
+## 15. 如何进入自己的案例
+
+先从最近的 smoke 复制、改名、放到新的 artifact root；跑 residual、能量和网格收敛后，再考虑建立新的 benchmark。不要修改 Case021/031 的 `config.json` 来容纳个人扫描。
+
+## 16. 链接
+
+- 入口代码：[`../reference/code_walkthrough/01_main_and_runner_dispatch.md`](../reference/code_walkthrough/01_main_and_runner_dispatch.md)
+- 物理符号：[`../theory/README.md`](../theory/README.md)
+- Target direct：[`31_3d_stage4b_grating_direct.md`](31_3d_stage4b_grating_direct.md)
+- Benchmark 021：[`../../benchmarks/cases/021_3d_stage4b_direct/README.md`](../../benchmarks/cases/021_3d_stage4b_direct/README.md)

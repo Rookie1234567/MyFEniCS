@@ -1,0 +1,8 @@
+{
+  "case_id": "012_3d_stage2b_pml",
+  "status": "experimental_not_accuracy_qualified",
+  "preset": "3d_stage2b_pml_smoke",
+  "feature": "3D z-directed complex-stretch PML path",
+  "degree": 1,
+  "mesh_target_size_nm": 300.0
+}

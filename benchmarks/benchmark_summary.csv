@@ -1,6 +1,10 @@
 benchmark_id,category,h_nm,mpi,iterations,true_residual,peak_total_rss_gb,R,T,A_volume,status,record
 l1_2d_zero_contrast,physics_smoke,2.0,1,,1.5603764026154926e-15,,,,,pass,records/2d_zero_contrast_dtn_smoke.json
 l1_3d_stage1,physics_smoke,5.0,2,,1.3947384324739916e-16,,,,,pass,records/3d_stage1_mpi2_smoke.json
+case002_explicit,2d_dtn_equivalence,,1,,2.1682714364163384e-15,,0.00047765476389505804,0.9995223452361045,0.0,pass,cases/002_2d_tm_dtn_equivalence/records/explicit.json
+case002_auxiliary,2d_dtn_equivalence,,1,,1.86740448214864e-15,,0.0004776547638950463,0.9995223452361033,0.0,pass,cases/002_2d_tm_dtn_equivalence/records/auxiliary.json
+case003_tm_lossy,2d_lossy_absorption,,1,,3.322514215565969e-14,,3.6625211715089244e-06,0.882172452104592,0.11782388537423982,pass,cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json
+case003_te_lossy,2d_lossy_absorption,,1,,1.4856285856990297e-15,,8.745627144339044e-05,0.9903457797965699,0.00956676393198616,pass,cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json
 l3_direct_h5,direct,5.0,4,,5.224671064148491e-12,2.2932586669921875,0.08902160293644126,0.44258827865712486,0.46839011840655576,pass,records/direct_p2_h5_mpi4.json
 l3_direct_h3,direct,3.0,4,,2.738282207791187e-11,8.181732177734375,0.004613031407437029,0.583653357179078,0.4117336114135146,pass,records/direct_p2_h3_mpi4.json
 l3_direct_h2,direct_reference,2.0,8,,,20.532958984375,0.0013429328462348958,0.5992132294442478,0.3994438377095067,reviewed_not_rerun,records/direct_p2_h2_reviewed_reference.json

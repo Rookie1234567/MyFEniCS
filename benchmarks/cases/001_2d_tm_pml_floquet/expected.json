@@ -1,0 +1,7 @@
+{
+  "status": "experimental",
+  "evidence": "test_backed_path_smoke",
+  "linear_residual_max": 1e-8,
+  "required_outputs": ["run_summary.json", "solver_log.txt"],
+  "not_claimed": ["PML reflection accuracy", "mesh convergence", "production RTA"]
+}

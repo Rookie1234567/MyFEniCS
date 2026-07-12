@@ -1,5 +1,21 @@
 # 本轮改动文件
 
+## Response V3
+
+| 范围 | 主要文件与作用 |
+|---|---|
+| 2D canonical harness | `benchmarks/run_2d_canonical.py`、Case002/003 records；完整 explicit/auxiliary 与 TM/TE lossy evidence |
+| 2D solver stats/tests | `solve_*` matrix rows/nnz、solution observer、`test_20` lossless/lossy power regression |
+| target config/presets | `config_3d::target_stage4_config`、17 preset metadata、demo/target 拆名、verbose resource identity |
+| benchmark contract | 13 case 的 config/fixture、expected、run/test、SHA references；checker 143 Gates |
+| Quick Start | 15 篇核心教程扩展为 16 节可跟随文档 |
+| Walkthrough | 11 篇核心源码级深化；修复字段、PC 顺序、inverse、H=I 限制 |
+| Theory | 统一符号表、2D/3D 功率常数、代码锚点和弱式排版 |
+| Contract tests | `test_26` 增为 11 个结构/深度/record/技术准确性测试；`test_27` 保护 target identity |
+| Task outcomes | `response_v3.md`、summary、metrics、parameters、run log、Gate、merge/decision 文档 |
+
+V3 没有修改 `task.md` 或任何 `review_report*.md`，没有重跑 h2 direct/iterative，也没有跟踪用户 `papers/`、Task23 raw runs 或重型 artifacts。
+
 ## Response V2 源码
 
 | 文件 | 作用 |
