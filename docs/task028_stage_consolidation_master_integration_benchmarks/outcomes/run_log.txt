@@ -1,0 +1,32 @@
+# 运行日志
+
+## 成功命令
+
+```text
+python -m compileall -q src benchmarks
+ruff check <changed-python-files>
+ruff format --check <changed-python-files>
+python -m unittest discover -s src/test -p test_*.py
+mpiexec -n 4 python -m unittest src.test.test_22_condensed_dtn src.test.test_23_physical_slab_two_level
+python -m src.runners.run_cases ... 2D zero-contrast manual DtN ...
+mpiexec -n 2 python -m src.runners.run_3d_cases --stage-case stage1_airbox ...
+mpiexec -n 4 python -m src.runners.run_3d_cases ... --mesh-target-size 5
+mpiexec -n 4 python -m src.runners.run_3d_cases ... --mesh-target-size 3
+mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 5 ...
+mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 3 ...
+mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 2 ...
+```
+
+## 已解决问题
+
+| 问题 | 原因 | 处理 |
+|---|---|---|
+| worktree长路径失败 | Windows Git long paths关闭 | 仓库本地设置 `core.longpaths=true` |
+| 容器 `ruff: not found` | benchmark镜像未安装Ruff | 使用宿主Ruff 0.12.0 |
+| 2D DtN + mpc_official被拒绝 | 2D nonlocal DtN只支持manual backend | 按能力边界切换manual |
+| Task027 image缺少gmsh | HPDDM研究镜像未带2D网格依赖 | 2D smoke使用既有complex+gmsh镜像 |
+| h2 clean RSS略高于Task027 | 本轮不复用basis/coarse cache | 峰值13.080 GB仍通过14 GB gate |
+
+## 未执行
+
+h2 ordinary direct 本轮未重复运行。Task008 reviewed MPI8 reference的总RSS上界约20.533 GB，超过当前14 GB WSL内存配额；本轮已经重新运行h5/h3 direct，并完成强制的h2 iterative clean rerun。

@@ -1,0 +1,39 @@
+{
+  "task": "task022_p2_h2_schur_pc_preflight",
+  "branch": "codex/20260709-task20-wave-solver-search",
+  "run_date": "2026-07-09",
+  "baseline_maxiter": 20,
+  "solver_maxiter": 20,
+  "rtol": 1e-06,
+  "memory_guard_gb": 12.0,
+  "h2_spilu_variants": [
+    "1e-3:12",
+    "1e-1:1.05"
+  ],
+  "physical_model": {
+    "domain_nm": [
+      50.0,
+      25.0,
+      140.0
+    ],
+    "period_nm": [
+      50.0,
+      25.0
+    ],
+    "grating_nm": [
+      17.0,
+      25.0,
+      120.0
+    ],
+    "substrate_thickness_nm": 10.0,
+    "top_air_above_grating_nm": 10.0,
+    "air_height_nm": 130.0,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "material_n": [
+      0.999002304859,
+      0.00182649365
+    ]
+  }
+}

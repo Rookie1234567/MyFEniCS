@@ -1,0 +1,20 @@
+gate,status,best_value,threshold,decision
+stage1_task025_freeze,pass,,,selective merge boundary recorded
+stage2_2d_field_rta,pass,1.696e-14,1e-9,pass
+stage2_2d_actual_action,not_run,,1e-12,pending
+stage3_h5_explicit_condensation,pass,3.712e-13,1e-8,pass
+stage4_h5_matrix_free_action,pass,3.639e-15,1e-12,pass
+stage4_h2_actual_action_mpi1,pass,7.401e-16,1e-11,pass
+stage4_h2_actual_action_mpi4,pass,1.001e-15,1e-11,pass
+stage4_h2_action_mpi_consistency,pass,2.607e-16,1e-11,pass
+stage5_h5_direct_physics,pass,8.332e-14,1e-8,pass
+stage5_h2_direct,not_run,,1e-7,pending_resource_reference
+stage6_h5_iterative,pass,9.999205172e-10,1e-8,pass
+stage6_h2_plain,fail,0.166485272,1e-2,fail
+stage6_h2_two_level_100,strong_pass,0.005023993,1e-2,strong_gate_pass
+stage6_h2_two_level_best,fail,0.000705115,1e-6,production_gate_not_met
+stage6_h2_memory,pass,11.3801,14,pass
+stage6_h2_official_rta,not_run,,1e-6,pending_residual_gate
+stage7_topology_mpi4,not_run,,1e-8,pending_serial_solver_gate
+stage8_h5_local_parameter_robustness,not_run,,1e-6,pending
+task026_final,architecture_success_solver_research_only,0.000705115,1e-6,h2 production unresolved

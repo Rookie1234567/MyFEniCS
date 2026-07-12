@@ -1,0 +1,21 @@
+gate,requirement,result,status,evidence
+clean_base,branch starts from clean master,master@0465b5f,pass,merge_execution_log.md
+task_audit,Task000-Task027 audited,28 structured rows,pass,task000_task027_progress.csv
+selective_integration,no whole research branch merge,Task026/027 stable paths extracted,pass,selective_merge_manifest.csv
+ordinary_default,ordinary solver default unchanged,false,pass,git diff and runner separation
+py_compile,all source and benchmark Python compiles,pass,pass,test_summary.md
+ruff,changed Python lint and format,pass,pass,test_summary.md
+unit_suite,full source tests,80 passed 10 skipped,pass,test_summary.md
+mpi_suite,focused MPI4 tests,10 per rank passed,pass,test_summary.md
+smoke_2d,2D clean checkout execution,residual 1.56e-15 and R+T 1.0,pass,benchmarks/records/2d_zero_contrast_dtn_smoke.json
+smoke_3d,3D Stage1 MPI smoke,residual 1.39e-16,pass,benchmarks/records/3d_stage1_mpi2_smoke.json
+condensation,explicit/matrixfree/transpose/backsub equivalence,all focused tests pass,pass,src/test/test_22_condensed_dtn.py
+physical_slab,owner empty-owner cache certification,all MPI4 tests pass,pass,src/test/test_23_physical_slab_two_level.py
+direct_reference,3D direct rerun exists,h5 and h3 clean rerun pass,pass,benchmarks/records/direct_p2_h5_mpi4.json
+iterative_h5,h5 full true residual <=1e-6,9.83949e-7,pass,benchmarks/records/workstation_p2_h5_mpi4.json
+iterative_h3,h3 full true residual <=1e-6,9.93265e-7,pass,benchmarks/records/workstation_p2_h3_mpi4.json
+iterative_h2,h2 clean branch full true residual <=1e-6,9.997378e-7,pass,benchmarks/records/workstation_p2_h2_mpi4.json
+h2_memory,h2 total peak RSS <14 GB,13.080257 GB,pass,benchmarks/records/workstation_p2_h2_mpi4.json
+energy,abs closure <=1e-6,maximum 6.58e-9,pass,benchmarks/benchmark_summary.csv
+documentation,user docs and task index refreshed,local links pass,pass,documentation_audit.md
+large_artifacts,no large tracked fields/mesh/cache,no candidate file >5 MB and no VTU/MSH/XDMF/H5/NPZ under benchmarks,pass,final candidate scan

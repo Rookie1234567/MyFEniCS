@@ -1,0 +1,19 @@
+{
+  "case": "task028_target_p2_h5_mpi4_direct_clean",
+  "profile": "ordinary_direct_lu_mumps",
+  "ordinary_default_changed": false,
+  "source_run_directory": "results/3D_stage4_block_grating_oblique_p2_h5p0_np4_20260712_070940",
+  "h_nm": 5.0,
+  "mpi_size": 4,
+  "matrix_rows": 44778,
+  "matrix_nnz_used": 4896156,
+  "linear_system_relative_residual": 6.328872854790137e-12,
+  "total_peak_rss_mb": 2345.14453125,
+  "total_peak_rss_gb": 2.290180206298828,
+  "elapsed_seconds": 28.910160172032192,
+  "R_total": 0.08902160293643818,
+  "T_total": 0.4425882786571258,
+  "A_volume_total": 0.46839011840655526,
+  "R_plus_T_plus_A_volume": 1.0000000000001192,
+  "energy_closure_error": 1.1923795284474181e-13
+}

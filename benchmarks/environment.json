@@ -1,0 +1,16 @@
+{
+  "date": "2026-07-12",
+  "primary_container_image": "code-dolfinx-task027-hpddm:latest",
+  "two_d_smoke_image": "code-dolfinx:latest",
+  "python": "3.12.3",
+  "numpy": "2.2.6",
+  "scipy": "1.16.3",
+  "dolfinx": "0.10.0.post2",
+  "petsc4py": "3.24.0",
+  "petsc": "3.24.0",
+  "mpi4py": "4.1.1",
+  "petsc_scalar_type": "numpy.complex128",
+  "host_os": "Windows with Docker Desktop / WSL2",
+  "wsl_memory_limit_gb": 14,
+  "note": "稳定 profile 不依赖 HPDDM；Task027镜像仅作为complex DOLFINx环境。2D smoke因需要gmsh而使用已有complex+gmsh镜像。"
+}

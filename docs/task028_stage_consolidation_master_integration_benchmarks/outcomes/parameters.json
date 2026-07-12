@@ -1,0 +1,31 @@
+{
+  "task": "Task028",
+  "base_commit": "0465b5f",
+  "branch": "codex/20260712-task28-stage-consolidation",
+  "date": "2026-07-12",
+  "target_model": {
+    "domain_nm": [50, 25, 140],
+    "grating_nm": [17, 25, 120],
+    "wavelength_nm": 13.5,
+    "theta_from_z_deg": 80,
+    "phi_deg": 0,
+    "polarization": "s",
+    "degree": 2
+  },
+  "workstation_profile": {
+    "mpi_size": 4,
+    "coarse_slabs": 24,
+    "coarse_dimension": 75,
+    "physical_slabs": 16,
+    "overlap_layers": 0.25,
+    "absorption_shift": 0.1,
+    "ilu_levels": 1,
+    "smoother_iterations": 2,
+    "outer_ksp": "fgmres",
+    "restart": 100,
+    "rtol": 1e-6,
+    "max_it": 3000
+  },
+  "wsl_memory_limit_gb": 14,
+  "ordinary_default_changed": false
+}

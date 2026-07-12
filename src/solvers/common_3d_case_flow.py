@@ -60,6 +60,7 @@ from .common_3d_utils import (
     _clear_official_field_outputs,
     _finish_timed_stage,
     _global_max_rss_mb,
+    _global_total_peak_rss_mb,
     _log_solver_summary,
     _stage_label,
     _start_timed_stage,
@@ -262,6 +263,7 @@ def _parallel_lu_failure_summary(
         "timings_seconds": timings,
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
+        "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
     _log_solver_summary(summary, log)
     log(f"elapsed seconds = {elapsed:.3f}")
@@ -439,6 +441,7 @@ def _direct_solve_failure_summary(
         "timings_seconds": {**timings, **failure.timing_details},
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
+        "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
     log(f"WARNING: direct LU failed at {failure.failure_stage}: {failure}")
     log(f"PETSc error diagnostics = {error_diagnostics}")
@@ -1170,6 +1173,7 @@ def run_prepared_3d_case_flow(
         "timings_seconds": timings,
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
+        "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
         "mumps_ooc_runtime": {**ooc_info, **_retain_mumps_ooc_directory_on_failure(ooc_info)},
     }
 
@@ -1202,6 +1206,12 @@ def run_prepared_3d_case_flow(
     summary["timings_seconds"] = timings
     summary["elapsed_seconds"] = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     summary["max_rss_mb"] = _global_max_rss_mb(comm)
+    summary["total_peak_rss_mb"] = _global_total_peak_rss_mb(comm)
+    summary["total_peak_rss_gb"] = (
+        None
+        if summary["total_peak_rss_mb"] is None
+        else summary["total_peak_rss_mb"] / 1024.0
+    )
     summary.update(field_metrics)
 
     if solve_incident_scattered:

@@ -1,0 +1,8 @@
+item,status,evidence,next_action
+h5_cached_schur,strong,5.338896442e-6_and_official_rta,retain_research_solver
+h2_memory,pass,13.005966gb_under_14gb,do_not_add_ilu2_or_more_cache
+h2_minimum,pass,0.1184750954,positive_but_not_engineering
+h2_strong,fail,residual_above_1e-2,need_stronger_fe_multilevel
+h2_production,fail,residual_above_1e-6,no_official_rta
+angle_wavelength_robustness,blocked,reference_gate_failed,defer
+merge_production_default,no,research_only,no_default_change

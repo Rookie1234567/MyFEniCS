@@ -1,0 +1,12 @@
+source_task,source_branch,source_path,destination_path,action,category,ordinary_default_changed,required_refactor,required_tests,reason,status
+Task003-Task010,master,src/,src/,merge_as_is,existing_production,false,none,existing_suite,既有direct与official RTA主线,kept
+Task024,codex/20260709-task20-wave-solver-search,src/studies/task024_numerics.py,,keep_research_only,research_infrastructure,false,none,none,complex-dot修复证据重要但Task28不需要搬整套export框架,documented
+Task025,codex/20260710-task25-parameter-robust-hcurl-pc,src/studies/run_task025_parameter_robust_multilevel_hcurl_pc.py,,replace_with_newer_implementation,superseded_research,false,none,none,cached-Q与调参shift已被exact condensation和Task027方案替代,excluded
+Task026,codex/20260711-task26-auxiliary-free-3d-modal-port,src/solvers/condensed_dtn.py,src/solvers/condensed_dtn.py,extract_and_refactor,stable_solver,false,移除任务目录依赖并保留Task027生命周期修正,MPI1/MPI4 dense-explicit-matrixfree-transpose tests,精确凝聚是长期稳定能力,integrated
+Task026,codex/20260711-task26-auxiliary-free-3d-modal-port,src/studies/run_task026_auxiliary_free_modal_port.py,,keep_research_only,research_runner,false,不整包复制,none,runner混合大量已失败profile,excluded
+Task027,codex/20260711-task27-mesh-independent-spectral-schwarz,src/solvers/spectral_schwarz.py,src/solvers/physical_slab_two_level.py,extract_and_refactor,stable_solver,false,只保留fixed coarse与physical slab路径,MPI1/MPI4 owner-empty-owner-cache certification tests,成功路径与失败spectral代码必须拆分,integrated
+Task027,codex/20260711-task27-mesh-independent-spectral-schwarz,src/studies/run_task027_mesh_independent_spectral_schwarz.py,benchmarks/run_workstation_iterative.py,extract_and_refactor,benchmark,false,重写为hand coarse+distributed slab唯一profile,h5/h2 MPI4 full RTA benchmark,提供干净checkout可复现入口,integrated
+Task027,codex/20260711-task27-mesh-independent-spectral-schwarz,src/solvers/spectral_schwarz.py,,exclude_failed,failed_research,false,none,none,spectral/GenEO/interface/HPDDM未形成成功方案,excluded
+Task027,codex/20260711-task27-mesh-independent-spectral-schwarz,Dockerfile.task027_hpddm,,exclude_failed,research_environment,false,none,none,稳定profile不依赖HPDDM或SLEPc插件,excluded
+Task021-Task025,codex/20260709-task20-wave-solver-search,src/studies/run_task02*.py,,keep_research_only,research_history,false,none,none,避免把研究依赖链带入维护主线,excluded
+Task028,clean master,new,src/solvers/stage4_runtime.py,extract_and_refactor,stable_runtime,false,从Task021/023抽取目标装配且移除任务脚本依赖,compile+smoke,为benchmark提供最小稳定装配接口,integrated

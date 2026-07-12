@@ -1,0 +1,46 @@
+{
+  "task": "Task027",
+  "branch": "codex/20260711-task27-mesh-independent-spectral-schwarz",
+  "date": "2026-07-12",
+  "physics": {
+    "wavelength_nm": 13.5,
+    "theta_from_z_deg": 80.0,
+    "polarization": "s",
+    "true_operator": "F - C H^{-1} D",
+    "auxiliary_modes": 80
+  },
+  "parallel_production_solver": {
+    "mpi_size": 4,
+    "outer": "FGMRES",
+    "restart": 100,
+    "rtol": 8e-7,
+    "max_it": 6000,
+    "subdomains": 16,
+    "overlap_fraction_of_slab": 0.25,
+    "local_pc": "rank-local BJacobi ILU1",
+    "smoother_iterations": 5,
+    "smoother_action": "matrix-free diagonal-shifted F",
+    "absorption_shift": 0.1,
+    "coarse_intervals": 24,
+    "coarse_dimension": 75,
+    "include_physical_rhs": false,
+    "basis_cache": "rank-local manifest plus one file per MPI rank",
+    "coarse_matrix_cache": "MPI-independent with true random coarse-action certification <= 1e-10"
+  },
+  "serial_mesh_robust_reference": {
+    "mpi_size": 1,
+    "local_pc": "16 physical z-slab ASM ILU1",
+    "smoother_iterations": 1,
+    "iteration_ratio_h5_h3_h2": 1.94523433385993
+  },
+  "mesh_sizes_nm": [5.0, 3.0, 2.0],
+  "production_gate": {
+    "true_residual": 1e-6,
+    "rss_gb": 14.0,
+    "iteration_ratio": 2.0
+  },
+  "research_image": "code-dolfinx-task027-hpddm:latest",
+  "petsc": "3.24.0 complex128 int32",
+  "slepc": "3.24.0",
+  "hpddm": "2.3.5"
+}

@@ -1,0 +1,19 @@
+{
+  "benchmark_id": "l1_3d_stage1_mpi2",
+  "category": "3d_smoke",
+  "stage": "stage1_3d_airbox",
+  "mpi_size": 2,
+  "nedelec_degree": 1,
+  "mesh_target_size_nm": 5.0,
+  "num_mesh_cells": 48,
+  "num_nedelec_dofs": 98,
+  "matrix_rows": 98,
+  "matrix_nnz_used": 1106,
+  "linear_system_relative_residual": 1.3947384324739916e-16,
+  "relative_max_E_error": 0.02481519,
+  "relative_max_H_error": 0.03723939,
+  "poynting_direction_cosine": 1.0,
+  "max_rss_per_rank_mb": 269.0,
+  "elapsed_seconds": 9.939,
+  "status": "pass"
+}

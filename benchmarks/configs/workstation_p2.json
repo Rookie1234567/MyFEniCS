@@ -1,0 +1,19 @@
+{
+  "profile": "workstation_p2_fixed_coarse_physical_slab",
+  "degree": 2,
+  "mpi_size": 4,
+  "coarse_slabs": 24,
+  "coarse_dimension": 75,
+  "num_physical_slabs": 16,
+  "overlap_layers": 0.25,
+  "absorption_shift": 0.1,
+  "ilu_levels": 1,
+  "local_ksp": "gmres",
+  "local_ksp_iterations": 1,
+  "smoother_iterations": 2,
+  "outer_ksp": "fgmres",
+  "restart": 100,
+  "rtol": 1e-6,
+  "max_it": 3000,
+  "ordinary_default_changed": false
+}

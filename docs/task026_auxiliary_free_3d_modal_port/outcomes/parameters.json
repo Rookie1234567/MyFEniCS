@@ -1,0 +1,87 @@
+{
+  "task": "Task026 auxiliary-free 3D periodic modal port",
+  "branch": "codex/20260711-task26-auxiliary-free-3d-modal-port",
+  "physical_model": {
+    "domain_nm": [50.0, 25.0, 140.0],
+    "grating_nm": [17.0, 25.0, 120.0],
+    "wavelength_nm": 13.5,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "nedelec_degree": 2,
+    "dtn_modes": 80
+  },
+  "h5_best_iterative": {
+    "operator": "matrix_free_F_minus_C_Hinv_D",
+    "ksp": "FGMRES",
+    "restart": 300,
+    "rtol": 1e-9,
+    "max_it": 1000,
+    "num_z_asm_slabs": 8,
+    "coarse_z_intervals": 24,
+    "coarse_dimension": 76,
+    "overlap_slab_fraction": 0.25,
+    "absorption_shift": 0.1,
+    "local_ilu_levels": 2,
+    "post_smooth": false,
+    "iterations": 795,
+    "full_true_residual": 9.99920517204184e-10,
+    "peak_rss_gb": 1.8292274475097656
+  },
+  "h2_plain_completed": {
+    "restart": 100,
+    "max_it": 200,
+    "absorption_shift": 0.5,
+    "local_ilu_levels": 2,
+    "full_true_residual": 0.16648527188245762,
+    "peak_rss_gb": 12.882980346679688
+  },
+  "h2_two_level_recovered_old_run": {
+    "restart": 50,
+    "max_it": 100,
+    "num_z_asm_slabs": 8,
+    "coarse_z_intervals": 24,
+    "overlap_slab_fraction": 0.25,
+    "absorption_shift": 0.1,
+    "local_ilu_levels": 2,
+    "observed_rss_gb": 12.71,
+    "observed_swap_used_gb": 7.2,
+    "elapsed_hours": 3.0,
+    "completed_iterations": 0,
+    "result": null,
+    "status": "stopped_setup_swap_thrashing"
+  },
+  "h2_best_completed": {
+    "operator": "matrix_free_F_minus_C_Hinv_D",
+    "ksp": "FGMRES",
+    "restart": 100,
+    "max_it": 600,
+    "num_z_asm_slabs": 16,
+    "coarse_z_intervals": 24,
+    "coarse_dimension": 76,
+    "overlap_slab_fraction": 0.25,
+    "absorption_shift": 0.1,
+    "local_ilu_levels": 1,
+    "iterations": 600,
+    "full_true_residual": 0.0007051153443515814,
+    "peak_rss_gb": 11.380126953125,
+    "production_gate": false
+  },
+  "h2_actual_action": {
+    "n_fe": 615108,
+    "n_aux": 80,
+    "explicit_nnz": 80796920,
+    "port_nnz": 15769728,
+    "mpi1_max_error": 7.401314851185185e-16,
+    "mpi4_max_error": 1.000832237089763e-15,
+    "gate": 1e-11,
+    "status": "pass"
+  },
+  "runtime": {
+    "image": "code-dolfinx-mpc:latest",
+    "complex_activation": ". dolfinx-complex-mode",
+    "scalar_type": "numpy.complex128",
+    "primary_mpi_size": 1,
+    "synthetic_mpi_test_size": 4
+  }
+}

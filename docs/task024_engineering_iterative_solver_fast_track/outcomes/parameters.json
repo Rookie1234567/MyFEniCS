@@ -1,0 +1,36 @@
+{
+  "task": "task024_engineering_iterative_solver_fast_track",
+  "branch": "codex/20260709-task20-wave-solver-search",
+  "physical_model": {
+    "domain_nm": [50.0, 25.0, 140.0],
+    "grating_nm": [17.0, 25.0, 120.0],
+    "substrate_nm": 10.0,
+    "top_air_nm": 10.0,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "material_n": [0.999002304859, 0.00182649365],
+    "boundary": "double Floquet x/y + 80-mode auxiliary DtN"
+  },
+  "research_only_profile": {
+    "fine_operator": "PETSc MatNest real split",
+    "outer_method": "manual right-preconditioned FGMRES",
+    "smoother": "complex 2x2 block Jacobi",
+    "omega": 0.25,
+    "pre_sweeps": 2,
+    "post_sweeps": 2,
+    "coarse_solver": "none",
+    "selected_aux_index": 38,
+    "steps": 100,
+    "mpi_ranks": 4
+  },
+  "gates": {
+    "minimum": "true outer residual < 1e-2 or improvement >= 2x",
+    "strong": "true outer residual <= 2e-3 or improvement >= 10x",
+    "production_like": "true outer residual <= 1e-6",
+    "rss_gb": 14.0,
+    "review_v1_reproducibility": "pass",
+    "review_v1_algorithm": "fail",
+    "review_v1_production_like": "fail"
+  }
+}

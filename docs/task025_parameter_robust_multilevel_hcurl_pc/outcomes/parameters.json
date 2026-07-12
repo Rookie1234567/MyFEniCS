@@ -1,0 +1,49 @@
+{
+  "task": "task025_parameter_robust_multilevel_hcurl_pc",
+  "branch": "codex/20260710-task25-parameter-robust-hcurl-pc",
+  "reference_model": {
+    "domain_nm": [50.0, 25.0, 140.0],
+    "period_nm": [50.0, 25.0],
+    "grating_nm": [17.0, 25.0, 120.0],
+    "wavelength_nm": 13.5,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "n_substrate": [0.999002304859, 0.00182649365],
+    "n_grating": [0.999002304859, 0.00182649365],
+    "dtn_auxiliary_modes": 80
+  },
+  "runtime": {
+    "mpi_ranks": 4,
+    "petsc_scalar": "complex128",
+    "wsl_memory_limit_gb": 14.0,
+    "docker_image": "ghcr.io/jorgensd/dolfinx_mpc:v0.10.5"
+  },
+  "best_h2_profile": {
+    "method": "cached_80_response_shifted_asm_schur_lu",
+    "mesh_h_nm": 2.0,
+    "degree": 2,
+    "absorption_shift": 1.0,
+    "asm_overlap": 1,
+    "ilu_levels": 1,
+    "fe_restart": 30,
+    "fe_max_it": 20,
+    "response_refine_cycles": 1,
+    "outer_restart": 50,
+    "outer_max_it": 100,
+    "outer_rtol": 1e-6
+  },
+  "best_h5_profile": {
+    "method": "cached_80_response_shifted_asm_schur_lu",
+    "mesh_h_nm": 5.0,
+    "degree": 2,
+    "absorption_shift": 0.3,
+    "asm_overlap": 1,
+    "ilu_levels": 1,
+    "fe_max_it": 20,
+    "response_refine_cycles": 2,
+    "response_refine_target": 0.2,
+    "outer_restart": 50,
+    "outer_max_it": 200
+  }
+}
