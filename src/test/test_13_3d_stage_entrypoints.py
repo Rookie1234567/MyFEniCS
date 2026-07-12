@@ -61,7 +61,7 @@ class Test3DStageEntrypoints(unittest.TestCase):
         )
         self.assertNotIn("--grating-width-x", default_args)
 
-        args = main_module._pycharm_args_3d("3d_stage4b_grating_direct_h5")
+        args = main_module._pycharm_args_3d("3d_stage4b_demo_direct_h5")
         self.assertIn("--stage-case", args)
         self.assertEqual(args[args.index("--stage-case") + 1], "stage4_block_grating")
         self.assertIn("--period-x", args)

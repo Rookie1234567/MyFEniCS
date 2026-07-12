@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import ufl
@@ -499,6 +500,7 @@ def _solve_manual_with_auxiliary(A_aug, b_aug, constraints, n_fem: int):
             "solver_backend": "manual_constraint_elimination_with_auxiliary_dtn_modes",
             "reduced_linear_residual": float(reduced_residual),
             "num_reduced_dofs": int(A_reduced.shape[0]),
+            "reduced_matrix_nnz": int(A_reduced.nnz),
             "num_fem_reduced_dofs": int(num_fem_reduced),
             "num_auxiliary_dofs": int(n_aux),
             "ksp_converged_reason": None,
@@ -639,7 +641,11 @@ def _add_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: SimulationConfig
 
 
 def run_port_case(
-    cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual"
+    cfg: SimulationConfig,
+    out_dir: Path,
+    constraint_backend: str = "manual",
+    *,
+    solution_observer: Callable[[np.ndarray], None] | None = None,
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
@@ -765,6 +771,8 @@ def run_port_case(
             "bottom": {},
         }
         A_csr = _petsc_to_csr(A)
+        linear_matrix_rows = int(A_csr.shape[0])
+        linear_matrix_nnz = int(A_csr.nnz)
         if cfg.port_boundary_model == "robin":
             b = fem_petsc.assemble_vector(fem.form(L))
             b.ghostUpdate(
@@ -778,6 +786,8 @@ def run_port_case(
                 A_csr, b_np, port_metadata = _add_fourier_port_operators_explicit(
                     A_csr, b_np, V, mesh_data, cfg, log
                 )
+                linear_matrix_rows = int(A_csr.shape[0])
+                linear_matrix_nnz = int(A_csr.nnz)
                 port_modes = port_metadata["modes"]
                 port_trace_vectors = port_metadata["trace_vectors"]
                 log(
@@ -788,6 +798,8 @@ def run_port_case(
                 A_aug, b_aug, port_metadata = _add_fourier_port_operators_auxiliary(
                     A_csr, b_np, V, mesh_data, cfg, log
                 )
+                linear_matrix_rows = int(A_aug.shape[0])
+                linear_matrix_nnz = int(A_aug.nnz)
                 port_modes = port_metadata["modes"]
                 port_trace_vectors = port_metadata["trace_vectors"]
                 log(
@@ -821,6 +833,11 @@ def run_port_case(
         port_metadata = {}
         port_auxiliary_values = np.asarray([], dtype=np.complex128)
         port_auxiliary_coefficients = {"top": {}, "bottom": {}}
+        linear_matrix_rows = None
+        linear_matrix_nnz = None
+
+    if solution_observer is not None:
+        solution_observer(np.asarray(E_total.x.array, dtype=np.complex128).copy())
 
     E_scat_output = _subtract_fields(E_total, E_inc_output)
     field_metrics = save_fields_and_plots(
@@ -897,6 +914,9 @@ def run_port_case(
         "num_mesh_cells": int(num_cells),
         "num_nedelec_dofs": int(num_dofs),
         "num_reduced_dofs": solver_info["num_reduced_dofs"],
+        "linear_matrix_rows": linear_matrix_rows,
+        "linear_matrix_nnz": linear_matrix_nnz,
+        "reduced_matrix_nnz": solver_info.get("reduced_matrix_nnz"),
         "petsc_scalar_type": str(PETSc.ScalarType),
         "solver": solver_info["solver_backend"],
         "reduced_linear_residual": solver_info["reduced_linear_residual"],

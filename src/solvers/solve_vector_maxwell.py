@@ -17,7 +17,11 @@ from dolfinx.fem import petsc as fem_petsc
 from ..common.config import SimulationConfig
 from ..common.materials import background_relative_permittivity, relative_permittivity
 from ..common.pml import bottom_pml_tensors, curl_3d, field_3d, top_pml_tensors
-from ..constraints.floquet_constraint import build_floquet_constraints, dof_trace_mismatch, solve_with_constraints
+from ..constraints.floquet_constraint import (
+    build_floquet_constraints,
+    dof_trace_mismatch,
+    solve_with_constraints_with_stats,
+)
 from ..geometry.mesh_builder import build_mesh
 from ..postprocessing.power_metrics import compute_power_metrics
 from ..postprocessing.postprocess import save_fields_and_plots
@@ -25,7 +29,9 @@ from ..postprocessing.postprocess import save_fields_and_plots
 
 def _petsc_to_csr(A: PETSc.Mat):
     indptr, indices, data = A.getValuesCSR()
-    return sparse.csr_matrix((data, indices, indptr), shape=A.getSize(), dtype=np.complex128)
+    return sparse.csr_matrix(
+        (data, indices, indptr), shape=A.getSize(), dtype=np.complex128
+    )
 
 
 def _json_default(value):
@@ -73,7 +79,9 @@ def layered_background_field_function(V, cfg: SimulationConfig) -> fem.Function:
     reflection = (cfg.n_air * cos_t - cfg.n_substrate * cos_i) / (
         cfg.n_air * cos_t + cfg.n_substrate * cos_i
     )
-    transmission = 2.0 * cfg.n_air * cos_i / (cfg.n_air * cos_t + cfg.n_substrate * cos_i)
+    transmission = (
+        2.0 * cfg.n_air * cos_i / (cfg.n_air * cos_t + cfg.n_substrate * cos_i)
+    )
 
     p_inc = np.asarray((cos_i, sin_i), dtype=np.complex128)
     p_ref = np.asarray((cos_i, -sin_i), dtype=np.complex128)
@@ -86,7 +94,10 @@ def layered_background_field_function(V, cfg: SimulationConfig) -> fem.Function:
         phase_ref = np.exp(1j * (cfg.kx * x[0] + k_air_y * x[1]))
         phase_trn = np.exp(1j * (cfg.kx * x[0] - k_sub_y * x[1]))
 
-        air_values = p_inc[:, None] * phase_inc[None, :] + reflection * p_ref[:, None] * phase_ref[None, :]
+        air_values = (
+            p_inc[:, None] * phase_inc[None, :]
+            + reflection * p_ref[:, None] * phase_ref[None, :]
+        )
         substrate_values = transmission * p_trn[:, None] * phase_trn[None, :]
         values[:, air_mask] = air_values[:, air_mask]
         values[:, ~air_mask] = substrate_values[:, ~air_mask]
@@ -108,7 +119,9 @@ def _solve_mpc(a, L, V, constraints, cfg: SimulationConfig, log):
     try:
         import dolfinx_mpc
     except ModuleNotFoundError as exc:
-        raise RuntimeError("请求使用 dolfinx_mpc，但当前 Python 环境未安装 dolfinx_mpc。") from exc
+        raise RuntimeError(
+            "请求使用 dolfinx_mpc，但当前 Python 环境未安装 dolfinx_mpc。"
+        ) from exc
 
     mpc = dolfinx_mpc.MultiPointConstraint(V)
     slaves = constraints.slave_dofs.astype(np.int32)
@@ -155,7 +168,9 @@ def _solve_mpc_auto(a, L, V, mesh_data, cfg: SimulationConfig, log):
     try:
         import dolfinx_mpc
     except ModuleNotFoundError as exc:
-        raise RuntimeError("请求使用 dolfinx_mpc，但当前 Python 环境未安装 dolfinx_mpc。") from exc
+        raise RuntimeError(
+            "请求使用 dolfinx_mpc，但当前 Python 环境未安装 dolfinx_mpc。"
+        ) from exc
 
     def right_to_left(x):
         y = x.copy()
@@ -204,12 +219,17 @@ def _solve_mpc_auto(a, L, V, mesh_data, cfg: SimulationConfig, log):
 
 def _solve_manual(A_csr, b_np, constraints):
     if MPI.COMM_WORLD.size != 1:
-        raise RuntimeError("manual constraint elimination is serial-only; use constraint_backend='mpc_official' for MPI.")
-    solution, reduced_residual, reduced_size = solve_with_constraints(A_csr, b_np, constraints)
+        raise RuntimeError(
+            "manual constraint elimination is serial-only; use constraint_backend='mpc_official' for MPI."
+        )
+    solution, reduced_residual, reduced_size, reduced_nnz = (
+        solve_with_constraints_with_stats(A_csr, b_np, constraints)
+    )
     return solution, {
         "solver_backend": "manual_constraint_elimination",
         "reduced_linear_residual": reduced_residual,
         "num_reduced_dofs": int(reduced_size),
+        "reduced_matrix_nnz": int(reduced_nnz),
         "ksp_converged_reason": None,
         "ksp_iterations": None,
     }
@@ -228,9 +248,13 @@ def run_case(
             PETSc.Sys.Print(message)
 
     if not np.issubdtype(default_scalar_type, np.complexfloating):
-        raise RuntimeError("当前 DOLFINx/PETSc 不是 complex 模式，不能求解复数频域 Maxwell 方程。")
+        raise RuntimeError(
+            "当前 DOLFINx/PETSc 不是 complex 模式，不能求解复数频域 Maxwell 方程。"
+        )
     if cfg.polarization_type.upper() != "TM":
-        raise RuntimeError("solve_vector_maxwell.run_case() only supports TM Ex/Ey; use solve_te_maxwell for TE.")
+        raise RuntimeError(
+            "solve_vector_maxwell.run_case() only supports TM Ex/Ey; use solve_te_maxwell for TE."
+        )
 
     log(f"case = {cfg.case_name}")
     log(f"constraint_backend = {constraint_backend}")
@@ -240,15 +264,21 @@ def run_case(
     log(f"omega = {cfg.omega:.12g}")
     log(f"polarization = {cfg.polarization}")
     log(f"scattering_background = {cfg.scattering_background}")
-    log(f"dot(k, p) = {cfg.kx * cfg.polarization[0] + cfg.ky * cfg.polarization[1]:.6e}")
-    log(f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j")
+    log(
+        f"dot(k, p) = {cfg.kx * cfg.polarization[0] + cfg.ky * cfg.polarization[1]:.6e}"
+    )
+    log(
+        f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j"
+    )
 
     mesh_data = build_mesh(cfg, out_dir)
     msh = mesh_data.mesh
     tdim = msh.topology.dim
     num_cells = msh.topology.index_map(tdim).size_global
 
-    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
+    curl_el = element(
+        "N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type
+    )
     V = fem.functionspace(msh, curl_el)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     log(f"mesh cells = {num_cells}")
@@ -262,7 +292,9 @@ def run_case(
     log(f"max left/right y-pairing error = {constraints.max_pair_y_error:.3e}")
     log(f"max Floquet probe reconstruction error = {constraints.max_probe_error:.3e}")
     orientation_unique = np.unique(np.round(constraints.orientation_factors.real, 6))
-    log(f"Nedelec orientation factors, rounded real parts = {orientation_unique.tolist()}")
+    log(
+        f"Nedelec orientation factors, rounded real parts = {orientation_unique.tolist()}"
+    )
 
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
@@ -280,7 +312,9 @@ def run_case(
         + ufl.inner(ufl.inv(mu_top_pml) * curl_3d(u), curl_3d(v)) * d_top_pml
         - cfg.k0**2 * ufl.inner(eps_top_pml * field_3d(u), field_3d(v)) * d_top_pml
         + ufl.inner(ufl.inv(mu_bottom_pml) * curl_3d(u), curl_3d(v)) * d_bottom_pml
-        - cfg.k0**2 * ufl.inner(eps_bottom_pml * field_3d(u), field_3d(v)) * d_bottom_pml
+        - cfg.k0**2
+        * ufl.inner(eps_bottom_pml * field_3d(u), field_3d(v))
+        * d_bottom_pml
     )
     L = cfg.k0**2 * (eps - eps_bg) * ufl.inner(E_background, v) * d_physical
 
@@ -289,7 +323,9 @@ def run_case(
         E_scat, solver_info = _solve_mpc_auto(a, L, V, mesh_data, cfg, log)
         E_inc_output = background_field_function(E_scat.function_space, cfg)
     elif constraint_backend in ("mpc_official", "mpc_lowlevel"):
-        log("solving constrained system with dolfinx_mpc.MultiPointConstraint low-level data")
+        log(
+            "solving constrained system with dolfinx_mpc.MultiPointConstraint low-level data"
+        )
         E_scat, solver_info = _solve_mpc(a, L, V, constraints, cfg, log)
         E_inc_output = background_field_function(E_scat.function_space, cfg)
     elif constraint_backend == "manual":
@@ -308,15 +344,21 @@ def run_case(
         E_scat.x.scatter_forward()
         E_inc_output = E_background
     else:
-        raise ValueError("constraint_backend 必须是 'mpc_auto'、'mpc_official'、'mpc_lowlevel' 或 'manual'。")
+        raise ValueError(
+            "constraint_backend 必须是 'mpc_auto'、'mpc_official'、'mpc_lowlevel' 或 'manual'。"
+        )
 
     E_total = fem.Function(E_scat.function_space, name="E_total")
     E_total.x.array[:] = E_inc_output.x.array[:] + E_scat.x.array[:]
     E_total.x.scatter_forward()
 
-    field_metrics = save_fields_and_plots(mesh_data, cfg, E_inc_output, E_scat, E_total, out_dir)
+    field_metrics = save_fields_and_plots(
+        mesh_data, cfg, E_inc_output, E_scat, E_total, out_dir
+    )
     power_metrics = compute_power_metrics(mesh_data, cfg, E_total, out_dir)
-    scatter_ratio = field_metrics["max_abs_E_scat"] / max(field_metrics["max_abs_E_inc"], 1e-30)
+    scatter_ratio = field_metrics["max_abs_E_scat"] / max(
+        field_metrics["max_abs_E_inc"], 1e-30
+    )
     floquet_mismatch_scat = dof_trace_mismatch(E_scat.x.array, constraints)
     floquet_mismatch_total = dof_trace_mismatch(E_total.x.array, constraints)
     elapsed = time.perf_counter() - start
@@ -346,7 +388,8 @@ def run_case(
         "floquet_max_probe_error": constraints.max_probe_error,
         "floquet_mismatch_scat_dof": floquet_mismatch_scat,
         "floquet_mismatch_total_dof": floquet_mismatch_total,
-        "incident_transversality_dot_k_p": cfg.kx * cfg.polarization[0] + cfg.ky * cfg.polarization[1],
+        "incident_transversality_dot_k_p": cfg.kx * cfg.polarization[0]
+        + cfg.ky * cfg.polarization[1],
         "pml_type": (
             "top air PML and bottom substrate PML using the official DOLFINx-style complex coordinate "
             "map y' = y + i * alpha/k0 * y * (|y|-l_dom/2)/(l_pml/2-l_dom/2)^2, shifted to the physical "
@@ -387,6 +430,8 @@ def run_case(
             json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        (out_dir / "solver_log.txt").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+        (out_dir / "solver_log.txt").write_text(
+            "\n".join(log_lines) + "\n", encoding="utf-8"
+        )
 
     return summary

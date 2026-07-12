@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
+
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from src.common.config_3d import SimulationConfig3D, target_stage4_config  # noqa: E402
 
 
 # =============================================================================
@@ -221,6 +228,31 @@ class Stage4GratingInputs3D:
     unique_output: bool = True
     results_root: str | None = None
 
+    @classmethod
+    def from_simulation_config(
+        cls,
+        cfg: SimulationConfig3D,
+        *,
+        direct_solver_profile: str = "default",
+    ) -> Stage4GratingInputs3D:
+        """Translate the shared target config without copying physical values."""
+
+        values: dict[str, object] = {}
+        for item in fields(cls):
+            if item.name == "case":
+                values[item.name] = "oblique"
+            elif item.name == "petsc_extra_options":
+                values[item.name] = tuple(cfg.petsc_extra_options.items())
+            elif item.name == "results_root":
+                values[item.name] = None
+            elif hasattr(cfg, item.name):
+                values[item.name] = getattr(cfg, item.name)
+        values["petsc_direct_solver_profile"] = direct_solver_profile
+        # target_stage4_config is also used by the assembly-only workstation
+        # runtime.  A direct preset must execute the solve instead.
+        values["matrix_diagnostics_assemble_only"] = False
+        return cls(**values)
+
 
 STAGE1_AIRBOX_3D = Stage1AirboxInputs3D()
 STAGE2_NO_GRATING_3D = Stage2NoGratingInputs3D()
@@ -234,6 +266,12 @@ _STAGE4_FLAT_3D = replace(
     period_y=10.0,
     air_height=5.0,
     substrate_thickness=5.0,
+)
+_TARGET_STAGE4_DIRECT_H5 = Stage4GratingInputs3D.from_simulation_config(
+    target_stage4_config(degree=2, h_nm=5.0)
+)
+_TARGET_STAGE4_DIRECT_H3 = Stage4GratingInputs3D.from_simulation_config(
+    target_stage4_config(degree=2, h_nm=3.0)
 )
 
 PRESETS_3D: dict[str, object] = {
@@ -251,25 +289,189 @@ PRESETS_3D: dict[str, object] = {
         use_pml=True,
     ),
     "3d_stage4a_flat_layer_direct": _STAGE4_FLAT_3D,
-    "3d_stage4b_grating_direct_h5": STAGE4_GRATING_3D,
-    "3d_stage4b_grating_direct_h3": replace(STAGE4_GRATING_3D, mesh_target_size=3.0),
-    "3d_stage4b_grating_mumps_ooc": replace(
+    "3d_stage4b_demo_direct_h5": STAGE4_GRATING_3D,
+    "3d_stage4b_demo_direct_h3": replace(STAGE4_GRATING_3D, mesh_target_size=3.0),
+    "3d_stage4b_demo_mumps_ooc": replace(
         STAGE4_GRATING_3D,
         petsc_direct_solver_profile="mumps_ooc",
     ),
-    "3d_stage4b_grating_mumps_blr": replace(
+    "3d_stage4b_demo_mumps_blr": replace(
         STAGE4_GRATING_3D,
         petsc_direct_solver_profile="mumps_blr",
     ),
+    "3d_target_grating_direct_h5": _TARGET_STAGE4_DIRECT_H5,
+    "3d_target_grating_direct_h3": _TARGET_STAGE4_DIRECT_H3,
 }
 
 ACTIVE_3D_INPUT_GROUP = "3d_stage1_airbox_smoke"
+
+
+@dataclass(frozen=True)
+class PresetInfo:
+    physical_geometry: str
+    discretization: str
+    resource_class: str
+    evidence_status: str
+    purpose: str
+
+
+PRESET_INFO: dict[str, PresetInfo] = {
+    "2d_tm_pml_floquet_smoke": PresetInfo(
+        "600 nm periodic 2D layered cell with upper/lower PML",
+        "TM N1curl p=1, h=80 nm",
+        "lightweight",
+        "experimental_path_smoke",
+        "Exercise scattered-field PML and x-Floquet assembly.",
+    ),
+    "2d_tm_dtn_auxiliary_smoke": PresetInfo(
+        "100 x 150 nm 2D EUV grating cell",
+        "TM N1curl p=2, h=3 nm",
+        "moderate",
+        "test_backed",
+        "Exercise the recommended auxiliary Fourier-DtN path.",
+    ),
+    "2d_tm_dtn_explicit_smoke": PresetInfo(
+        "100 x 150 nm 2D EUV grating cell",
+        "TM N1curl p=2, h=3 nm",
+        "moderate",
+        "reference_cross_check",
+        "Exercise the explicit Q^H Y Q DtN reference path.",
+    ),
+    "2d_te_port_smoke": PresetInfo(
+        "100 x 150 nm 2D EUV grating cell",
+        "TE Lagrange p=2, h=3 nm",
+        "moderate",
+        "test_backed",
+        "Exercise the scalar TE Robin-port path.",
+    ),
+    "2d_complex_absorption": PresetInfo(
+        "100 x 150 nm lossy 2D EUV grating cell",
+        "TM N1curl p=2, h=3 nm",
+        "moderate",
+        "canonical_case003",
+        "Reproduce the canonical TM complex-material absorption case.",
+    ),
+    "2d_euv_grating_direct": PresetInfo(
+        "100 x 150 nm 2D EUV grating cell",
+        "TM N1curl p=2, h=1.5 nm",
+        "moderate_to_heavy",
+        "user_case_not_qualified_scan",
+        "Run the finer ordinary 2D EUV direct case.",
+    ),
+    "3d_stage1_airbox_smoke": PresetInfo(
+        "10 x 10 x 10 nm homogeneous air box",
+        "N1curl p=1, h=5 nm",
+        "lightweight",
+        "validated_smoke",
+        "Safe default for first PyCharm Run.",
+    ),
+    "3d_stage2a_floquet_smoke": PresetInfo(
+        "600 x 500 x 900 nm homogeneous double-periodic box",
+        "N1curl p=1, h=300 nm",
+        "lightweight",
+        "test_backed_smoke",
+        "Exercise x/y Floquet pairing.",
+    ),
+    "3d_stage2b_pml_smoke": PresetInfo(
+        "600 x 500 nm periodic box with z-PML",
+        "N1curl p=1, h=300 nm",
+        "lightweight",
+        "experimental_not_accuracy_qualified",
+        "Exercise the 3D PML code path only.",
+    ),
+    "3d_stage2c_fresnel_smoke": PresetInfo(
+        "600 x 500 nm periodic flat interface with z-PML",
+        "N1curl p=1, h=300 nm",
+        "lightweight",
+        "experimental_not_accuracy_qualified",
+        "Exercise the Fresnel-interface code path only.",
+    ),
+    "3d_stage4a_flat_layer_direct": PresetInfo(
+        "10 x 10 x 10 nm flat lossy layer cell",
+        "N1curl p=1, h=2 nm",
+        "lightweight",
+        "energy_sanity",
+        "Run the flat-layer DtN and absorption sanity case.",
+    ),
+    "3d_stage4b_demo_direct_h5": PresetInfo(
+        "100 x 100 x 100 nm demo cell; 50 nm cubic block; normal incidence",
+        "N1curl p=2, h=5 nm",
+        "workstation_preview",
+        "demo_not_canonical_target",
+        "Run the Stage4 demo geometry with ordinary MUMPS.",
+    ),
+    "3d_stage4b_demo_direct_h3": PresetInfo(
+        "100 x 100 x 100 nm demo cell; 50 nm cubic block; normal incidence",
+        "N1curl p=2, h=3 nm",
+        "resource_heavy",
+        "demo_not_canonical_target",
+        "Run a finer demo geometry; inspect memory before launch.",
+    ),
+    "3d_stage4b_demo_mumps_ooc": PresetInfo(
+        "100 x 100 x 100 nm demo cell; 50 nm cubic block; normal incidence",
+        "N1curl p=2, h=5 nm; MUMPS OOC",
+        "workstation_plus_disk",
+        "experimental_direct_fallback",
+        "Exercise out-of-core direct factorization on the demo.",
+    ),
+    "3d_stage4b_demo_mumps_blr": PresetInfo(
+        "100 x 100 x 100 nm demo cell; 50 nm cubic block; normal incidence",
+        "N1curl p=2, h=5 nm; MUMPS BLR",
+        "workstation_experimental",
+        "experimental_compressed_direct",
+        "Exercise compressed direct factorization on the demo.",
+    ),
+    "3d_target_grating_direct_h5": PresetInfo(
+        "50 x 25 x 140 nm target; 17 x 25 x 120 nm Si block; 80 deg s",
+        "N1curl p=2, h=5 nm",
+        "about_2.3_gb_canonical",
+        "canonical_case021",
+        "Reproduce the Benchmark 021 target h=5 direct solve.",
+    ),
+    "3d_target_grating_direct_h3": PresetInfo(
+        "50 x 25 x 140 nm target; 17 x 25 x 120 nm Si block; 80 deg s",
+        "N1curl p=2, h=3 nm",
+        "about_8.2_gb_canonical",
+        "canonical_case021_resource_heavy",
+        "Reproduce the Benchmark 021 target h=3 direct solve.",
+    ),
+}
 
 
 def available_preset_names() -> tuple[str, ...]:
     """Return every public PyCharm preset in deterministic order."""
 
     return tuple(sorted((*PRESETS_2D, *PRESETS_3D)))
+
+
+def preset_info(name: str) -> PresetInfo:
+    try:
+        return PRESET_INFO[name]
+    except KeyError as exc:
+        raise SystemExit(
+            f"Unknown preset {name!r}. Available: {', '.join(available_preset_names())}"
+        ) from exc
+
+
+def format_preset_listing(*, verbose: bool = False) -> str:
+    if not verbose:
+        return "\n".join(available_preset_names())
+    rows: list[str] = []
+    for name in available_preset_names():
+        info = preset_info(name)
+        rows.append(
+            " | ".join(
+                (
+                    name,
+                    f"geometry={info.physical_geometry}",
+                    f"discretization={info.discretization}",
+                    f"resource={info.resource_class}",
+                    f"status={info.evidence_status}",
+                    f"purpose={info.purpose}",
+                )
+            )
+        )
+    return "\n".join(rows)
 
 
 def _selected_2d_inputs(preset_name: str | None = None) -> Inputs2D:
@@ -469,7 +671,10 @@ def main() -> None:
         (run_3d_cases_main if dimension == "3d" else run_cases_main)(runner_args)
 
     if len(sys.argv) > 1 and sys.argv[1] == "--list-presets":
-        print("\n".join(available_preset_names()))
+        extra = sys.argv[2:]
+        if extra not in ([], ["--verbose"]):
+            raise SystemExit("--list-presets accepts only the optional --verbose flag")
+        print(format_preset_listing(verbose=extra == ["--verbose"]))
         return
     if len(sys.argv) > 2 and sys.argv[1] == "--preset":
         dimension, preset_args = preset_cli_args(sys.argv[2])

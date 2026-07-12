@@ -1,0 +1,16 @@
+{
+  "status": "canonical_lightweight",
+  "linear_residual_max": 1e-10,
+  "field_relative_difference_max": 1e-8,
+  "rta_absolute_difference_max": 1e-8,
+  "energy_closure_abs_max": 1e-8,
+  "required_records": [
+    "records/explicit.json",
+    "records/auxiliary.json",
+    "records/comparison.json"
+  ],
+  "official_methods": {
+    "explicit": "dtn_boundary_trace_modal_projection",
+    "auxiliary": "dtn_auxiliary_modal_amplitudes"
+  }
+}
