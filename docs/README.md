@@ -27,7 +27,7 @@
 |---|---|
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
-| [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态与限制；V2 要求与 Quick Start、Theory 和 Benchmark 建立逐项映射 |
+| [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态，以及 Quick Start、Theory、Walkthrough、Benchmark 映射 |
 | [`quick_start.md`](quick_start.md) | 全局 Docker/benchmark 最短入口；详细功能教程见 [`../notes/quick_start/README.md`](../notes/quick_start/README.md) |
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
 | [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
@@ -46,7 +46,7 @@
 | Task020-Task025 | wave-aware、FE response、Schur、cached-Q | 研究机制与基础设施，未达production |
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
-| Task028 | 阶段收口、选择性整合、benchmark | 核心代码和数值通过；V2 要求重构学习文档、PyCharm入口和功能Benchmark目录 |
+| Task028 | 阶段收口、选择性整合、benchmark | 核心代码和 3D 数值通过；V3 要求深化教程/导览、补齐 case-contained Benchmark 和 2D lossy canonical evidence |
 
 ## 当前任务
 
@@ -54,7 +54,7 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | Response V2 已实现并验证；等待最终审查与用户许可，暂不合并 master |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v3.md` 已完成；`changes_required`，暂不合并 master |
 
 ## Task28 审计入口
 
@@ -68,6 +68,7 @@
 | `review_report_v1.md` | ChatGPT V1 审查：benchmark 边界、脚本、自动 Gate、环境、文档和 sm2 测试 |
 | `response_v1.md` | Codex V1 回应：六个 P0 基本关闭 |
 | `review_report_v2.md` | ChatGPT V2 审查：重构 Quick Start、Code Walkthrough、Theory、main.py PyCharm preset 与编号功能 Benchmark |
-| `response_v2.md` | Codex V2 回应：文档五层架构、入口、metadata/checker、测试与 2D lossy RTA 修复 |
+| `response_v2.md` | Codex V2 回应：五层文档架构、命名 preset、metadata/checker、测试与 2D lossy RTA 修复 |
+| `review_report_v3.md` | ChatGPT V3 审查：修复 Walkthrough 技术错误、扩展可跟随教程、区分 demo/target preset、补 case-contained records/config/run/Gate 和 2D lossy canonical evidence |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；本轮应在同一分支提交 `response_v2.md` 并继续修正。
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；本轮应在同一分支提交 `response_v3.md` 并继续修正。
