@@ -116,6 +116,16 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             continue
         record = _load_json(path)
         records[row["benchmark_id"]] = record
+        record_benchmark_id = record.get("benchmark_id")
+        gates.append(
+            Gate(
+                f"benchmark_id_matches_manifest:{row['benchmark_id']}",
+                record_benchmark_id == row["benchmark_id"],
+                record_benchmark_id,
+                row["benchmark_id"],
+                raw_path,
+            )
+        )
         complete, missing = _metadata_complete(record)
         gates.append(
             Gate(
@@ -229,6 +239,103 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     config_differences or "match",
                     "all canonical profile fields match",
                     name,
+                )
+            )
+            metadata = record.get("metadata", {})
+            provenance_fields = {
+                "actual_source_command": metadata.get("actual_source_command"),
+                "actual_source_artifact_root": metadata.get(
+                    "actual_source_artifact_root"
+                ),
+                "canonical_rerun_command": metadata.get("canonical_rerun_command"),
+                "canonical_artifact_root": metadata.get("canonical_artifact_root"),
+                "artifact_provenance": metadata.get("artifact_provenance"),
+            }
+            missing_provenance = [
+                key for key, value in provenance_fields.items() if value in (None, "")
+            ]
+            gates.append(
+                Gate(
+                    f"artifact_provenance_complete:{name}",
+                    not missing_provenance,
+                    missing_provenance or "complete",
+                    "actual and canonical source fields present",
+                    name,
+                )
+            )
+            artifact_consistent = (
+                metadata.get("command") == metadata.get("actual_source_command")
+                and record.get("artifact_root")
+                == metadata.get("actual_source_artifact_root")
+                and metadata.get("canonical_artifact_root")
+                == canonical_config.get("artifact_root")
+                and str(metadata.get("canonical_artifact_root", ""))
+                in str(metadata.get("canonical_rerun_command", ""))
+            )
+            gates.append(
+                Gate(
+                    f"artifact_provenance_consistent:{name}",
+                    artifact_consistent,
+                    {
+                        "command_is_actual": metadata.get("command")
+                        == metadata.get("actual_source_command"),
+                        "record_root_is_actual": record.get("artifact_root")
+                        == metadata.get("actual_source_artifact_root"),
+                        "canonical_root": metadata.get("canonical_artifact_root"),
+                    },
+                    "actual source and canonical rerun identities are not conflated",
+                    name,
+                )
+            )
+            clean_provenance = str(metadata.get("provenance", "")).startswith(
+                "clean_rerun"
+            )
+            gates.append(
+                Gate(
+                    f"clean_rerun_git_clean:{name}",
+                    (not clean_provenance) or metadata.get("git_dirty") is False,
+                    metadata.get("git_dirty"),
+                    False,
+                    name,
+                )
+            )
+            gates.extend(
+                (
+                    Gate(
+                        f"qualified_profile:{name}",
+                        record.get("qualified_profile") is True
+                        and not record.get("qualification_deviations"),
+                        {
+                            "qualified": record.get("qualified_profile"),
+                            "deviations": record.get("qualification_deviations"),
+                        },
+                        "qualified=true and no deviations",
+                        name,
+                    ),
+                    Gate(
+                        f"ksp_converged:{name}",
+                        int(record.get("ksp_reason", 0)) > 0,
+                        record.get("ksp_reason"),
+                        "> 0",
+                        name,
+                    ),
+                    Gate(
+                        f"coarse_condition:{name}",
+                        record.get("coarse_condition") is not None
+                        and float(record["coarse_condition"])
+                        <= expected["coarse_condition_max"],
+                        record.get("coarse_condition"),
+                        expected["coarse_condition_max"],
+                        name,
+                    ),
+                    Gate(
+                        f"physical_model:{name}",
+                        record.get("physical_model")
+                        == canonical_config.get("physical_model"),
+                        record.get("physical_model"),
+                        canonical_config.get("physical_model"),
+                        name,
+                    ),
                 )
             )
             reported = float(record["reported_relative_residual"])
@@ -383,6 +490,11 @@ def _write_outputs(gates: list[Gate], summaries: list[dict[str, Any]]) -> None:
     payload = {
         "checkout_commit": _git("rev-parse", "HEAD"),
         "checkout_dirty": bool(_git("status", "--short")),
+        "checkout_dirty_note": (
+            "This reports the checkout at checker execution time. It is independent "
+            "of metadata.git_dirty, which records the original benchmark run. Writing "
+            "this report can itself make the checkout dirty."
+        ),
         "passed": all(gate.passed for gate in gates),
         "passed_count": sum(gate.passed for gate in gates),
         "total_count": len(gates),

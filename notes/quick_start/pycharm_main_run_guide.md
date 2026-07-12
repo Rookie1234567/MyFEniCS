@@ -1,5 +1,7 @@
 # PyCharm 直接运行 main.py 指南
 
+> **文档状态：历史长文。** 当前入口已改为 `ACTIVE_PYCHARM_PRESET` 命名 preset，默认安全案例是 `3d_stage1_airbox_smoke`；请先读 [`README.md`](README.md) 与 [`01_main_py_parameter_map.md`](01_main_py_parameter_map.md)。本文后续旧变量名和“只保留 direct profile”的描述仅用于追溯。
+
 ## 2026-06-24 更新：不要再设置 solver profile
 
 当前 `src/main.py` 的 3D dataclass 已经删除求解器选择变量。运行 Stage 4 时只改几何、网格、PML、入射角、偏振和衍射级后处理参数；不要再寻找或添加：

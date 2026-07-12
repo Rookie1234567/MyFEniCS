@@ -23,7 +23,7 @@
     "elapsed_seconds": 3.762401154031977,
     "status": "pass"
   },
-  "benchmark_id": "l1_2d_zero_contrast_dtn",
+  "benchmark_id": "l1_2d_zero_contrast",
   "category": "2d_smoke",
   "container_image": "code-dolfinx:latest",
   "formulation": "port_total_field",

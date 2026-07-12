@@ -51,6 +51,35 @@ class RuntimeStage4System:
     modes: list[PortMode3D]
 
 
+def stage4_physical_model(cfg: SimulationConfig3D) -> dict[str, Any]:
+    """Serialize the physical target independently from solver settings."""
+
+    def pair(value: complex) -> list[float]:
+        number = complex(value)
+        return [float(number.real), float(number.imag)]
+
+    return {
+        "geometry_kind": cfg.geometry_kind,
+        "period_x_nm": float(cfg.period_x),
+        "period_y_nm": float(cfg.period_y),
+        "air_height_nm": float(cfg.air_height),
+        "substrate_thickness_nm": float(cfg.substrate_thickness),
+        "grating_width_x_nm": float(cfg.grating_width_x),
+        "grating_width_y_nm": float(cfg.grating_width_y),
+        "grating_height_nm": float(cfg.grating_height),
+        "n_air": pair(cfg.n_air),
+        "n_substrate": pair(cfg.substrate_index),
+        "n_grating": pair(cfg.grating_index),
+        "wavelength_nm": float(cfg.lambda0),
+        "incident_theta_deg": float(cfg.incident_theta_deg),
+        "incident_phi_deg": float(cfg.incident_phi_deg),
+        "polarization_kind": cfg.polarization_kind,
+        "nedelec_degree": int(cfg.nedelec_degree),
+        "boundary_model": cfg.stage4_boundary_model,
+        "dtn_order_policy": cfg.stage4_dtn_order_policy,
+    }
+
+
 def target_stage4_config(*, degree: int, h_nm: float) -> SimulationConfig3D:
     """Return the reviewed 50 x 25 x 140 nm target grating configuration."""
 

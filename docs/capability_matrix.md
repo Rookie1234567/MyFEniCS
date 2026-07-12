@@ -34,8 +34,8 @@
 |---|---|---|---|
 | Stage1 airbox | recommended | serial/MPI | 快速 sanity |
 | Stage2A double Floquet | supported | MPI | x/y 周期约束 |
-| Stage2B PML | supported | MPI | 用于开放边界验证 |
-| Stage2C Fresnel | supported | MPI | 平坦界面参考 |
+| Stage2B PML | experimental | MPI | tensor/decay smoke 已有；尚无独立 canonical record 与生产精度资格 |
+| Stage2C Fresnel | experimental | MPI | 解析参考/组合测试已有；旧 p2 精度限制尚未关闭 |
 | Stage4 flat-layer sanity | recommended | MPI | 能量与参考解闭环 |
 | Stage4 block grating | supported | MPI | 当前目标几何 |
 | p1 Nedelec | supported | ordinary CLI | 低阶验证 |
@@ -73,3 +73,19 @@
 | solver | fixed 75D coarse + 16 physical slabs + sm2 + FGMRES(100) |
 
 任何偏离都自动标记为 `experimental`，必须重新取得 direct 或其他可信参考、三残差、R/T/A、能量闭合和总 RSS 证据。
+
+## 能力到使用、理论和证据的映射
+
+| 能力 | Quick Start | Theory / Code Walkthrough | Benchmark case |
+|---|---|---|---|
+| 2D TM PML/Floquet | [`10_2d_pml_floquet.md`](../notes/quick_start/10_2d_pml_floquet.md) | [`maxwell_strong_weak_and_fem.md`](../notes/theory/maxwell_strong_weak_and_fem.md)、walkthrough 11 | [`001`](../benchmarks/cases/001_2d_tm_pml_floquet/README.md) |
+| 2D TM DtN | [`11_2d_dtn_floquet.md`](../notes/quick_start/11_2d_dtn_floquet.md) | [`dtn_modal_ports_and_condensation.md`](../notes/theory/dtn_modal_ports_and_condensation.md)、walkthrough 12 | [`002`](../benchmarks/cases/002_2d_tm_dtn_equivalence/README.md) |
+| 2D TE/TM/复材料 | [`12_2d_te_tm_and_complex_material.md`](../notes/quick_start/12_2d_te_tm_and_complex_material.md) | [`official_and_diagnostic_rta_methods.md`](../notes/theory/official_and_diagnostic_rta_methods.md) | [`003`](../benchmarks/cases/003_2d_te_tm_complex_absorption/README.md) |
+| 3D Stage1 | [`20_3d_stage1_airbox.md`](../notes/quick_start/20_3d_stage1_airbox.md) | walkthrough 20 | [`010`](../benchmarks/cases/010_3d_stage1_airbox/README.md) |
+| Stage2A/B/C | quick start [`21`](../notes/quick_start/21_3d_stage2a_floquet.md)/[`22`](../notes/quick_start/22_3d_stage2b_pml.md)/[`23`](../notes/quick_start/23_3d_stage2c_fresnel.md) | [`3d_stages_and_validation_ladder.md`](../notes/theory/3d_stages_and_validation_ladder.md) | cases [`011`](../benchmarks/cases/011_3d_stage2a_floquet/README.md)-[`013`](../benchmarks/cases/013_3d_stage2c_fresnel/README.md) |
+| Stage4A flat | [`30_3d_stage4a_flat_layer.md`](../notes/quick_start/30_3d_stage4a_flat_layer.md) | walkthrough 22/23 | [`020`](../benchmarks/cases/020_3d_stage4a_flat_dtn/README.md) |
+| Stage4B direct | [`31_3d_stage4b_grating_direct.md`](../notes/quick_start/31_3d_stage4b_grating_direct.md) | [`direct_solvers_and_factorization.md`](../notes/theory/direct_solvers_and_factorization.md) | [`021`](../benchmarks/cases/021_3d_stage4b_direct/README.md) |
+| exact condensation | iterative quick start | walkthrough 31 | [`022`](../benchmarks/cases/022_dtn_condensation_equivalence/README.md) |
+| OOC/BLR | [`32_3d_direct_ooc_blr.md`](../notes/quick_start/32_3d_direct_ooc_blr.md) | walkthrough 30 | [`030`](../benchmarks/cases/030_mumps_ooc_blr/README.md) |
+| MPI4 workstation iterative | [`40_3d_workstation_iterative.md`](../notes/quick_start/40_3d_workstation_iterative.md) | [`iterative_solver_and_preconditioner.md`](../notes/theory/iterative_solver_and_preconditioner.md)、walkthrough 32/33 | [`031`](../benchmarks/cases/031_workstation_iterative/README.md) |
+| MPI/p/algebra regression | 环境/验证章节 | walkthrough 50 | [`040`](../benchmarks/cases/040_mpi_p_algebra_regression/README.md) |

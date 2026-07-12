@@ -1,5 +1,7 @@
 # 架构概览
 
+本文是顶层摘要。逐文件、逐类/函数、对象所有权和 equation-to-code 映射见 [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md)。
+
 ## 分层结构
 
 | 层 | 目录 | 职责 | 不负责 |

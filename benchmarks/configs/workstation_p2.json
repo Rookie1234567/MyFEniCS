@@ -20,7 +20,27 @@
   "rta_threshold": 1.1e-6,
   "monitor_stride": 50,
   "max_it": 3000,
-  "artifact_root": "benchmarks/artifacts",
+  "artifact_root": "benchmarks/artifacts/iterative",
   "record_root": "benchmarks/records",
-  "ordinary_default_changed": false
+  "ordinary_default_changed": false,
+  "physical_model": {
+    "geometry_kind": "rectangular_block_grating",
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "air_height_nm": 130.0,
+    "substrate_thickness_nm": 10.0,
+    "grating_width_x_nm": 17.0,
+    "grating_width_y_nm": 25.0,
+    "grating_height_nm": 120.0,
+    "n_air": [1.0, 0.0],
+    "n_substrate": [0.999002304859, 0.00182649365],
+    "n_grating": [0.999002304859, 0.00182649365],
+    "wavelength_nm": 13.5,
+    "incident_theta_deg": 80.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "nedelec_degree": 2,
+    "boundary_model": "dtn_port",
+    "dtn_order_policy": "auto_propagating"
+  }
 }

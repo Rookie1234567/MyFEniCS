@@ -1,5 +1,7 @@
 # Benchmark 体系
 
+编号功能目录见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md)；每个 case 固定 22 项问题/参数/命令/证据/限制契约。
+
 ## 分层结果
 
 | Level | 内容 | 结果 |
@@ -33,4 +35,4 @@
 
 h5的粗网格R明显偏高，不能作为收敛物理结论。h3/h2的R/T/A向Task008 direct reference收敛。三网格均满足显式真残差gate，但迭代数不单调，因此当前准确称谓是 mesh-robust workstation production candidate。
 
-canonical records 位于 `benchmarks/records/`，完整表见 `benchmarks/benchmark_summary.csv`。`python -m benchmarks.check_benchmarks` 当前自动计算58项Gate。普通运行仍写 `results/`；benchmark重型输出显式写被忽略的 `benchmarks/artifacts/`。环境状态为 `qualified_local_image`，不是无条件clean-machine reproducible。
+canonical records 位于 `benchmarks/records/`，完整表见 `benchmarks/benchmark_summary.csv`。Response V2 的 checker 自动计算 87 项 Gate，并核对 record ID、求解资格、物理模型和 artifact provenance。普通运行仍写 `results/`；benchmark 重型输出显式写被忽略的 `benchmarks/artifacts/`。环境状态为 `qualified_local_image`，不是无条件 clean-machine reproducible。

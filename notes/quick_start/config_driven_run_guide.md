@@ -1,3 +1,7 @@
+# 历史配置式运行指南
+
+> **文档状态：历史长文。** 当前统一入口和完整参数表见 [`README.md`](README.md) 与 [`01_main_py_parameter_map.md`](01_main_py_parameter_map.md)；若本文旧组合与 runner argparse 冲突，以当前代码和新索引为准。
+
 ## 2026-06-16 更新：DtN explicit / auxiliary 与自动衍射级
 
 现在 TM 的 Fourier-DtN 端口有两种装配后端：

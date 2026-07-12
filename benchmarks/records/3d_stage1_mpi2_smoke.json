@@ -21,7 +21,7 @@
     "elapsed_seconds": 4.856418929994106,
     "status": "pass"
   },
-  "benchmark_id": "l1_3d_stage1_mpi2",
+  "benchmark_id": "l1_3d_stage1",
   "category": "3d_smoke",
   "stage": "stage1_3d_airbox",
   "mpi_size": 2,

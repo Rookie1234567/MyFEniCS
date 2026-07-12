@@ -69,3 +69,80 @@ mpiexec -n 4 python -m src.runners.run_3d_cases <canonical Stage4 args> \
 ```
 
 第一次 MPI4 sm2 测试表现为持续高CPU。诊断发现测试用 rank-local `assertGreater` 在非重叠rank提前失败，其他rank随后等待collective；改为allreduce全局误差后，7个physical-slab测试在4个rank均于0.06秒内通过。该问题只存在于新增测试断言，不影响production solver。
+
+## Response V2 文档与物理审计
+
+```text
+python src/main.py --list-presets
+  PASS: 15 named presets
+
+python -m unittest src.test.test_26_documentation_contract
+  PASS: indexes, local links, 13 benchmark cases, 22 fields
+
+python -m unittest src.test.test_27_main_preset_contract
+  PASS: all preset arguments accepted by actual runner parsers
+```
+
+### 默认 Stage1 真实运行
+
+```text
+python src/main.py --preset 3d_stage1_airbox_smoke
+  PASS: 48 cells, 98 DoF
+  PASS: residual = 1.4355075602162385e-16
+  PASS: E error = 0.02481519
+  PASS: H error = 0.03723939
+  PASS: Poynting direction cosine = 1
+  PASS: total RSS = 274.4 MB
+```
+
+### 2D 有耗功率诊断与修复
+
+第一次 TM complex smoke 的代数 residual 为约 `3.3e-14`，但旧结果为 `T=0`、`A_balance≈0.99964`、`A_volume≈0.11792`。诊断确认有耗介质的 complex `beta` 被误判为倏逝模，且功率错误使用了回到参考面的相位归一化振幅。
+
+修正传播判定和实际端口面功率后：
+
+```text
+python src/main.py --preset 2d_complex_absorption
+  PASS: 14,452 FE DoF + 30 auxiliary DoF
+  PASS: residual = 3.32251421556597e-14
+  PASS: R = 3.66252117150892e-6
+  PASS: T = 0.882172452104592
+  PASS: A_volume = 0.11782388537423982
+  PASS: official closure = 3.3306690738754696e-15
+
+python -m src.runners.run_cases <TE complex smoke arguments>
+  PASS: 56 DoF
+  PASS: residual = 1.48562858569903e-15
+  PASS: R = 8.74562714433904e-5
+  PASS: T = 0.9903457797965699
+  PASS: A_volume = 0.00956676393198616
+  PASS: official closure = -5.495603971894525e-16
+```
+
+完整运行目录保留在 gitignored `results/task028_v2_smoke_*` 下，未复制到 Git。
+
+## Response V2 最终验证
+
+```text
+docker run --rm -v <worktree>:/work -w /work myfenics-stage4:task28 sh -lc '
+  /dolfinx-env/bin/python -m compileall -q src benchmarks &&
+  /dolfinx-env/bin/python -m unittest discover -s src/test -p "test_*.py" &&
+  mpiexec -n 4 /dolfinx-env/bin/python -m unittest \
+    src.test.test_22_condensed_dtn \
+    src.test.test_23_physical_slab_two_level &&
+  /dolfinx-env/bin/python benchmarks/check_benchmarks.py --no-write'
+
+  PASS: 105 tests, 10 skipped
+  PASS: MPI4 each rank 14 tests
+  PASS: benchmark gates 87/87
+```
+
+随后执行 `python benchmarks/check_benchmarks.py` 更新轻量 gate report 和 summary。`checkout_dirty=true` 表示报告在待提交候选工作区生成；canonical records 自身的 `git_dirty=false` 仍由独立 Gate 检查。
+
+## Response V2 未执行
+
+没有重跑 h=2 direct 或 h=2 iterative，没有启动新求解器、参数扫描或 Task029。h=2 数值只来自既有已审查 canonical records。
+
+宿主 Windows Python 可单独运行 `test_26_documentation_contract`（4 项通过），但不能导入依赖 `ufl/petsc4py` 的真实 runners，因此 `test_27_main_preset_contract` 的正式结果取自上述 DOLFINx 容器完整测试。该宿主依赖缺失不是代码失败，也没有用 mock parser 绕过验证。
+
+最后执行 Ruff 0.12.0：先修复未使用的 `numpy` import 和无占位符 f-string，再机械格式化 12 个改动文件。最终 `ruff check` 全绿，16 个改动 Python 文件全部通过 `ruff format --check`；格式化后的完整容器回归仍为 105 通过、10 跳过、MPI4 每 rank 14 通过、benchmark 87/87。

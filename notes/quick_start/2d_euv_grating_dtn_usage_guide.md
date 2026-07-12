@@ -1,5 +1,7 @@
 # 2D EUV 光栅 DtN 使用指南
 
+> **文档状态：历史验证长文。** 当前运行入口见 [`11_2d_dtn_floquet.md`](11_2d_dtn_floquet.md) 与 [`12_2d_te_tm_and_complex_material.md`](12_2d_te_tm_and_complex_material.md)；旧 `ACTIVE_2D_INPUT_GROUP="euv_grating"` 已被命名 preset 取代。
+
 ## 2026-06-29 更新：p=1 细网格续跑命令
 
 一阶单元 `p=1` 的三角形网格已经补算到 `h=0.35 nm`，但还没有达到“连续两次核心指标相对变化 < 0.1%”的严格收敛标准。下一步建议从 `h=0.3 nm` 继续：

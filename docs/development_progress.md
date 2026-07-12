@@ -36,7 +36,7 @@ docs/taskXXX_*/review_report*.md
 ```text
 2026-07-12
 current integration branch = codex/20260712-task28-stage-consolidation
-Task028 V1 review status = changes_required
+Task028 V2 response status = implemented, awaiting final review and user merge approval
 ```
 
 ---
@@ -92,7 +92,7 @@ z boundaries = periodic modal DtN ports
 | C. AMS/HX 与低维模态路线 | 011–019 | 低内存 Krylov、real split、AMS/HX、sampled Schur | p1 有信号，p2 主线失败并关闭 |
 | D. wave-aware 与 FE-response/Schur | 020–025 | residual-aware modes、FE response、PETSc/MPI Schur、cached-Q | 数学结构成立，h=2 response 质量不足 |
 | E. auxiliary-free 与 workstation solver | 026–027 | exact condensation、matrix-free、physical slab two-level PC | h=5/3/2 MPI4 达 production residual |
-| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | 核心通过，productization 修正中 |
+| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | V2 整改完成，等待最终审查 |
 
 ---
 
@@ -1336,6 +1336,41 @@ master merge = pending review v2 and user approval
 docs/task028_stage_consolidation_master_integration_benchmarks/response_v1.md
 ```
 
+### Review V2 与 Response V2
+
+V2 认为核心求解器和数值结果仍通过，但要求把项目从“开发者能追踪”升级为“新用户能运行、每项能力有理论/代码/benchmark 对照”。同一分支已完成：
+
+```text
+- main.py 改为 15 个安全命名 preset，默认 10x10x10 nm Stage1 p1/h5；
+- 2D CLI 支持 complex index；3D direct 显式区分 default/OOC/BLR；
+- 建立 Quick Start 15 篇、Code Walkthrough 15 篇、Theory 9 篇规范文档；
+- 建立 13 个编号 feature benchmark case，每个使用 22 字段契约；
+- historical h3/h2 record 拆分 actual source 与 canonical rerun provenance；
+- checker 新增 ID、qualified、KSP、coarse condition、physical model 与 artifact provenance Gate；
+- 新增 documentation/main preset/lossy port tests；
+- 修复 Docker 根挂载时 main.py 导入；
+- 修复 2D lossy DtN 把 complex beta 误判为 evanescent、以及在错误参考平面计算 T 的问题。
+```
+
+复材料实算确认：TM `R+T+A_volume-1=3.33e-15`，TE 为 `-5.50e-16`；probe 结果仍只作 diagnostic。最新验证：
+
+```text
+full suite = 105 passed, 10 skipped（最终重跑前的预期计数，以 outcomes/test_summary 为准）
+focused MPI4 = each rank 14 passed
+benchmark checker = 87/87 pass
+h2 heavy solve = not rerun; numerical records unchanged
+```
+
+当前状态：
+
+```text
+Task028 V2 implementation = complete
+environment = qualified_local_image
+master merge = blocked only pending final review and user approval
+```
+
+逐项证据见 `response_v2.md` 与本任务 `outcomes/`。
+
 ---
 
 # 33. 当前项目能力
@@ -1458,7 +1493,7 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.1 Task028 收口问题
 
 ```text
-- 等待 review v2 与用户合并决定；
+- 等待 Response V2 的最终审查与用户合并决定；
 - complex MPC base image尚无公开pull source，环境保持qualified；
 - `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
@@ -1482,14 +1517,14 @@ new angle/wavelength/material/geometry = not qualified
 
 # 37. 当前推荐开发顺序
 
-在 Task028 V2 通过前：
+在 Task028 最终审查通过前：
 
 ```text
 1. 不启动新求解算法；
-2. 修复 benchmark 与文档 Gate；
-3. 补 sm2 test；
-4. 完成 clean environment 说明；
-5. 通过 review_report_v2；
+2. 保持 benchmark 与文档 Gate 全绿；
+3. 不重写 task/review 历史；
+4. 保持 clean environment 限定；
+5. 取得最终审查结论；
 6. 经用户同意后再 merge master。
 ```
 
@@ -1534,4 +1569,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得显式真残差小于 \(10^{-6}\) 的迭代求解候选；Task028 的代码、文档、自动 Gate 和输出边界已完成 response v1 收口，当前等待 V2 审查，环境按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V2 已补齐安全 preset、从强形式开始的理论、逐模块代码导读、编号 benchmark 与 provenance Gate，并修复 2D 有耗端口功率闭合，当前等待最终审查和用户合并许可，环境仍按 `qualified_local_image` 诚实限定。

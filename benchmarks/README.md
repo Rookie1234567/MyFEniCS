@@ -2,6 +2,8 @@
 
 Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完整网格和场写入被忽略的 `benchmarks/artifacts/`。
 
+按功能查找“证明什么、参数、命令、Gate、record 与限制”请从 [`cases/README.md`](cases/README.md) 进入。
+
 | 脚本/文件 | 实际内容 |
 |---|---|
 | `scripts/run_level1.sh` | compileall、全量单元测试、显式2D manual DtN、3D Stage1 MPI2 |
@@ -10,7 +12,7 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `scripts/run_level3_iterative.sh` | p2 h5/h3/h2 workstation完整求解并运行checker |
 | `configs/workstation_p2.json` | canonical profile唯一默认来源；CLI只做override |
 | `expected/gates.json` | 残差、迭代比、RTA、RSS阈值 |
-| `check_benchmarks.py` | 从manifest/records重算Gate，失败返回非零 |
+| `check_benchmarks.py` | 从 manifest/records 重算 87 项 Gate，含 ID/KSP/coarse/physical model/provenance |
 | `records/` | canonical轻量记录与machine-readable Gate report |
 | `artifacts/` | ignored重型输出 |
 
@@ -29,8 +31,8 @@ sh benchmarks/scripts/run_level3_iterative.sh
 sh benchmarks/scripts/run_level3_direct.sh --include-resource-heavy-h2
 ```
 
-## Record身份
+## Record 身份
 
-clean rerun必须记录commit、branch、dirty、command、time、container digest、host ID和provenance。h5 iterative在Response V1从`3b3abf0` clean source重新运行；h3/h2 iterative和h5/h3 direct是`440885b` clean source的ancestor records；h2 direct明确为Task008 reviewed reference。checker分别验证这些身份，不能把reviewed reference写成clean rerun。
+clean rerun 必须记录 commit、branch、dirty、实际 command、time、container digest、host ID 和 provenance。对历史 h3/h2 iterative，`command/actual_source_*` 保留原运行位置，`canonical_rerun_*` 单独描述今后规范位置；两者不可混写。h5 iterative 在 Response V1 从 `3b3abf0` clean source 重新运行；h3/h2 iterative 和 h5/h3 direct 是 `440885b` clean source 的 ancestor records；h2 direct 明确为 Task008 reviewed reference。
 
 当前环境状态为 `qualified_local_image`，详见 `docker/STAGE4_ENVIRONMENT.md`。

@@ -4,7 +4,6 @@ import os
 import shutil
 from typing import Any
 
-import numpy as np
 from basix.ufl import element
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -57,11 +56,13 @@ def _direct_lu_petsc_options() -> dict[str, Any]:
         "ksp_error_if_not_converged": True,
     }
 
+
 def _has_petsc_package(package_name: str) -> bool:
     try:
         return bool(PETSc.Sys.hasExternalPackage(package_name))
     except Exception:
         return False
+
 
 def _mumps_ooc_minimal_options() -> dict[str, Any]:
     return {
@@ -69,6 +70,18 @@ def _mumps_ooc_minimal_options() -> dict[str, Any]:
         "mat_mumps_icntl_22": 1,
         "mat_mumps_icntl_14": 80,
     }
+
+
+def _mumps_blr_minimal_options() -> dict[str, Any]:
+    """Return the reviewed MUMPS BLR direct-factorization fallback."""
+
+    return {
+        "pc_factor_mat_solver_type": "mumps",
+        "mat_mumps_icntl_35": 1,
+        "mat_mumps_cntl_7": 1.0e-5,
+        "mat_mumps_icntl_14": 80,
+    }
+
 
 def _available_parallel_lu_solver_type() -> str | None:
     """Return the one supported MPI sparse direct solver for the live code path."""
@@ -80,7 +93,10 @@ def _available_parallel_lu_solver_type() -> str | None:
         return None
     return None
 
-def _apply_petsc_option_dict(options: dict[str, Any], extra_options: dict[str, Any]) -> None:
+
+def _apply_petsc_option_dict(
+    options: dict[str, Any], extra_options: dict[str, Any]
+) -> None:
     """Merge user/PETSc options without dropping falsey but meaningful values."""
 
     for key, value in extra_options.items():
@@ -91,7 +107,10 @@ def _apply_petsc_option_dict(options: dict[str, Any], extra_options: dict[str, A
             continue
         options[clean_key] = "" if value is None else value
 
-def _apply_global_petsc_options(cfg: SimulationConfig3D, petsc_options: dict[str, Any]) -> None:
+
+def _apply_global_petsc_options(
+    cfg: SimulationConfig3D, petsc_options: dict[str, Any]
+) -> None:
     """Set PETSc process-global options such as -log_view.
 
     KSP options are also copied into ``petsc_options`` because the actual KSPs
@@ -104,16 +123,16 @@ def _apply_global_petsc_options(cfg: SimulationConfig3D, petsc_options: dict[str
     if cfg.petsc_ksp_view or "ksp_view" in cfg.petsc_extra_options:
         petsc_options["ksp_view"] = ""
 
+
 def _prepare_direct_lu_options_for_comm(
     comm: MPI.Intracomm,
     cfg: SimulationConfig3D | None = None,
 ) -> tuple[dict[str, Any], str | None, str | None]:
     """Make direct solver options explicit and safe for serial or MPI runs.
 
-    The public code path intentionally exposes only two direct-LU modes:
-    ``default`` and ``mumps_ooc``.  Other packages tested during diagnostics are
-    documented in notes, but are not kept as runtime choices because they were
-    unavailable, redundant, or not useful on this PETSc build.
+    The public code path exposes normal LU, MUMPS out-of-core LU, and the
+    reviewed MUMPS BLR compressed direct factorization. BLR remains a direct
+    fallback; it must not be presented as the qualified iterative solver.
     """
 
     petsc_options = _direct_lu_petsc_options()
@@ -122,13 +141,30 @@ def _prepare_direct_lu_options_for_comm(
     selected_solver: str | None = None
     if profile == "mumps_ooc":
         if not _has_petsc_package("mumps"):
-            return petsc_options, None, "PETSc was asked to use MUMPS out-of-core, but this build does not report MUMPS."
+            return (
+                petsc_options,
+                None,
+                "PETSc was asked to use MUMPS out-of-core, but this build does not report MUMPS.",
+            )
         selected_solver = "mumps"
         petsc_options.update(_mumps_ooc_minimal_options())
+    elif profile == "mumps_blr":
+        if not _has_petsc_package("mumps"):
+            return (
+                petsc_options,
+                None,
+                "PETSc was asked to use MUMPS BLR, but this build does not report MUMPS.",
+            )
+        selected_solver = "mumps"
+        petsc_options.update(_mumps_blr_minimal_options())
     elif profile != "default":
-        return petsc_options, None, (
-            f"Unsupported PETSc direct solver profile '{profile}'. "
-            "Use 'default' or 'mumps_ooc'."
+        return (
+            petsc_options,
+            None,
+            (
+                f"Unsupported PETSc direct solver profile '{profile}'. "
+                "Use 'default', 'mumps_ooc', or 'mumps_blr'."
+            ),
         )
 
     if cfg is not None:
@@ -158,6 +194,7 @@ def _prepare_direct_lu_options_for_comm(
     if cfg is not None:
         _apply_global_petsc_options(cfg, petsc_options)
     return petsc_options, parallel_lu, None
+
 
 def _prepare_mumps_ooc_runtime(
     cfg: SimulationConfig3D,
@@ -194,6 +231,7 @@ def _prepare_mumps_ooc_runtime(
         "mumps_ooc_prefix": prefix,
     }
 
+
 def _mumps_ooc_directory_status(ooc_info: dict[str, Any] | None) -> dict[str, Any]:
     if not ooc_info or not ooc_info.get("mumps_ooc_tmpdir"):
         return {
@@ -220,6 +258,7 @@ def _mumps_ooc_directory_status(ooc_info: dict[str, Any] | None) -> dict[str, An
             "mumps_ooc_status_error": str(exc),
         }
 
+
 def _cleanup_mumps_ooc_directory_on_success(
     ooc_info: dict[str, Any] | None,
     comm: MPI.Intracomm,
@@ -243,8 +282,12 @@ def _cleanup_mumps_ooc_directory_on_success(
     directory = os.fspath(ooc_info["mumps_ooc_tmpdir"])
     if comm.rank == 0:
         result["mumps_ooc_cleanup_attempted"] = True
-        result["mumps_ooc_cleanup_removed_file_count"] = before.get("mumps_ooc_residual_file_count") or 0
-        result["mumps_ooc_cleanup_removed_file_bytes"] = before.get("mumps_ooc_residual_file_bytes") or 0
+        result["mumps_ooc_cleanup_removed_file_count"] = (
+            before.get("mumps_ooc_residual_file_count") or 0
+        )
+        result["mumps_ooc_cleanup_removed_file_bytes"] = (
+            before.get("mumps_ooc_residual_file_bytes") or 0
+        )
         try:
             if os.path.isdir(directory):
                 for entry in os.scandir(directory):
@@ -254,7 +297,9 @@ def _cleanup_mumps_ooc_directory_on_success(
                         os.remove(entry.path)
             result["mumps_ooc_cleanup_success"] = True
             if log is not None and result["mumps_ooc_cleanup_removed_file_bytes"]:
-                removed_mb = result["mumps_ooc_cleanup_removed_file_bytes"] / (1024.0 * 1024.0)
+                removed_mb = result["mumps_ooc_cleanup_removed_file_bytes"] / (
+                    1024.0 * 1024.0
+                )
                 log(
                     "MUMPS OOC cleanup after successful run: "
                     f"removed {result['mumps_ooc_cleanup_removed_file_count']} files, "
@@ -268,6 +313,7 @@ def _cleanup_mumps_ooc_directory_on_success(
     result = comm.bcast(result if comm.rank == 0 else None, root=0)
     after = _mumps_ooc_directory_status(ooc_info)
     return {**result, **after}
+
 
 def _retain_mumps_ooc_directory_on_failure(
     ooc_info: dict[str, Any] | None,
@@ -291,7 +337,9 @@ def _retain_mumps_ooc_directory_on_failure(
         ),
     }
     if log is not None and result["mumps_ooc_retained_on_failure"]:
-        retained_mb = (status.get("mumps_ooc_residual_file_bytes") or 0) / (1024.0 * 1024.0)
+        retained_mb = (status.get("mumps_ooc_residual_file_bytes") or 0) / (
+            1024.0 * 1024.0
+        )
         log(
             "MUMPS OOC files retained because the run did not complete successfully: "
             f"{ooc_info.get('mumps_ooc_tmpdir')} "
@@ -299,11 +347,13 @@ def _retain_mumps_ooc_directory_on_failure(
         )
     return result
 
+
 def _pc_factor_solver_type(pc) -> str | None:
     try:
         return str(pc.getFactorSolverType())
     except Exception:
         return None
+
 
 def _ksp_reason_name(reason: int) -> str:
     for name in dir(PETSc.KSP.ConvergedReason):
@@ -315,6 +365,7 @@ def _ksp_reason_name(reason: int) -> str:
         except (TypeError, ValueError):
             continue
     return str(reason)
+
 
 def _petsc_matrix_stats(A) -> dict[str, Any]:
     A.assemble()
@@ -334,22 +385,31 @@ def _petsc_matrix_stats(A) -> dict[str, Any]:
         memory_estimate_bytes = float(nnz_used) * (16.0 + 8.0) + float(rows + 1) * 8.0
     if nnz_allocated is not None and rows > 0:
         average_allocated_nnz_per_row = float(nnz_allocated) / float(rows)
-    matrix_memory_bytes = float(info.get("memory")) if info.get("memory") is not None else None
+    matrix_memory_bytes = (
+        float(info.get("memory")) if info.get("memory") is not None else None
+    )
     return {
         "matrix_rows": int(rows),
         "matrix_cols": int(cols),
         "matrix_nnz_used": float(nnz_used) if nnz_used is not None else None,
-        "matrix_nnz_allocated": float(nnz_allocated) if nnz_allocated is not None else None,
+        "matrix_nnz_allocated": float(nnz_allocated)
+        if nnz_allocated is not None
+        else None,
         "matrix_average_nnz_per_row": average_nnz_per_row,
         "matrix_average_allocated_nnz_per_row": average_allocated_nnz_per_row,
         "matrix_memory_bytes": matrix_memory_bytes,
-        "matrix_memory_mb": None if matrix_memory_bytes is None else matrix_memory_bytes / (1024.0 * 1024.0),
+        "matrix_memory_mb": None
+        if matrix_memory_bytes is None
+        else matrix_memory_bytes / (1024.0 * 1024.0),
         "matrix_memory_estimate_bytes": memory_estimate_bytes,
-        "matrix_memory_estimate_mb": None if memory_estimate_bytes is None else memory_estimate_bytes / (1024.0 * 1024.0),
+        "matrix_memory_estimate_mb": None
+        if memory_estimate_bytes is None
+        else memory_estimate_bytes / (1024.0 * 1024.0),
         "matrix_norm_frobenius": matrix_norm_frobenius,
         "matrix_norm_infinity": matrix_norm_infinity,
         "matrix_petsc_info": {str(key): float(value) for key, value in info.items()},
     }
+
 
 def _petsc_error_diagnostics(exc: BaseException, ksp=None) -> dict[str, Any]:
     data: dict[str, Any] = {
@@ -381,6 +441,7 @@ def _petsc_error_diagnostics(exc: BaseException, ksp=None) -> dict[str, Any]:
             data[name] = None
     return data
 
+
 def _petsc_object_norm(obj, names: tuple[str, ...]) -> float | None:
     for name in names:
         norm_type = getattr(PETSc.NormType, name, None)
@@ -395,15 +456,19 @@ def _petsc_object_norm(obj, names: tuple[str, ...]) -> float | None:
     except Exception:
         return None
 
+
 def _assembled_rhs_norm(L) -> float | None:
     """Assemble the original, unconstrained RHS for serial/MPI comparison."""
 
     try:
         vec = fem_petsc.assemble_vector(fem.form(L))
-        vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
+        vec.ghostUpdate(
+            addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+        )
         return _petsc_object_norm(vec, ("NORM_2",))
     except Exception:
         return None
+
 
 def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
     """Measure the actually solved PETSc system after MPC assembly."""
@@ -429,6 +494,7 @@ def _linear_system_diagnostics(A, b, x) -> dict[str, float | None]:
         "linear_system_relative_residual": relative_residual,
     }
 
+
 def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     log(f"matrix rows = {matrix_stats['matrix_rows']}")
     log(f"matrix cols = {matrix_stats['matrix_cols']}")
@@ -437,14 +503,21 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     if matrix_stats["matrix_average_nnz_per_row"] is not None:
         log(f"average nnz per row = {matrix_stats['matrix_average_nnz_per_row']:.2f}")
     if matrix_stats["matrix_average_allocated_nnz_per_row"] is not None:
-        log(f"average allocated nnz per row = {matrix_stats['matrix_average_allocated_nnz_per_row']:.2f}")
+        log(
+            f"average allocated nnz per row = {matrix_stats['matrix_average_allocated_nnz_per_row']:.2f}"
+        )
     log(f"PETSc matrix memory bytes = {matrix_stats['matrix_memory_bytes']}")
     log(f"PETSc matrix memory MB = {matrix_stats['matrix_memory_mb']}")
-    log(f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}")
+    log(
+        f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}"
+    )
     log(f"estimated AIJ matrix memory MB = {matrix_stats['matrix_memory_estimate_mb']}")
     log(f"matrix Frobenius norm = {matrix_stats['matrix_norm_frobenius']}")
     log(f"matrix infinity norm = {matrix_stats['matrix_norm_infinity']}")
 
+
 def _create_nedelec_space(msh, cfg: SimulationConfig3D):
-    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
+    curl_el = element(
+        "N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type
+    )
     return fem.functionspace(msh, curl_el)

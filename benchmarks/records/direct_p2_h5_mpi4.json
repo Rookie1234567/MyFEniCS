@@ -1,4 +1,5 @@
 {
+  "benchmark_id": "l3_direct_h5",
   "metadata": {
     "commit_sha": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
     "branch": "codex/20260712-task28-stage-consolidation",

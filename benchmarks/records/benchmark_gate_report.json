@@ -1,15 +1,23 @@
 {
-  "checkout_commit": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+  "checkout_commit": "57257e7a88f76c981d8b434f2638bb2617dbf4cc",
   "checkout_dirty": true,
+  "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 58,
-  "total_count": 58,
+  "passed_count": 87,
+  "total_count": 87,
   "gates": [
     {
       "name": "record_exists:l1_2d_zero_contrast",
       "passed": true,
       "observed": true,
       "expected": true,
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": "l1_2d_zero_contrast",
+      "expected": "l1_2d_zero_contrast",
       "evidence": "records/2d_zero_contrast_dtn_smoke.json"
     },
     {
@@ -39,6 +47,13 @@
       "evidence": "records/3d_stage1_mpi2_smoke.json"
     },
     {
+      "name": "benchmark_id_matches_manifest:l1_3d_stage1",
+      "passed": true,
+      "observed": "l1_3d_stage1",
+      "expected": "l1_3d_stage1",
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
       "name": "metadata_complete:l1_3d_stage1",
       "passed": true,
       "observed": "complete",
@@ -65,6 +80,13 @@
       "evidence": "records/direct_p2_h5_mpi4.json"
     },
     {
+      "name": "benchmark_id_matches_manifest:l3_direct_h5",
+      "passed": true,
+      "observed": "l3_direct_h5",
+      "expected": "l3_direct_h5",
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
       "name": "metadata_complete:l3_direct_h5",
       "passed": true,
       "observed": "complete",
@@ -74,7 +96,7 @@
     {
       "name": "record_commit_consistent:l3_direct_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -88,6 +110,13 @@
       "passed": true,
       "observed": true,
       "expected": true,
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_direct_h3",
+      "passed": true,
+      "observed": "l3_direct_h3",
+      "expected": "l3_direct_h3",
       "evidence": "records/direct_p2_h3_mpi4.json"
     },
     {
@@ -117,6 +146,13 @@
       "evidence": "records/direct_p2_h2_reviewed_reference.json"
     },
     {
+      "name": "benchmark_id_matches_manifest:l3_direct_h2",
+      "passed": true,
+      "observed": "l3_direct_h2",
+      "expected": "l3_direct_h2",
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
       "name": "metadata_complete:l3_direct_h2",
       "passed": true,
       "observed": "complete",
@@ -143,6 +179,13 @@
       "evidence": "records/workstation_p2_h5_mpi4.json"
     },
     {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h5",
+      "passed": true,
+      "observed": "l3_iterative_h5",
+      "expected": "l3_iterative_h5",
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
       "name": "metadata_complete:l3_iterative_h5",
       "passed": true,
       "observed": "complete",
@@ -152,7 +195,7 @@
     {
       "name": "record_commit_consistent:l3_iterative_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -166,6 +209,13 @@
       "passed": true,
       "observed": true,
       "expected": true,
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h3",
+      "passed": true,
+      "observed": "l3_iterative_h3",
+      "expected": "l3_iterative_h3",
       "evidence": "records/workstation_p2_h3_mpi4.json"
     },
     {
@@ -192,6 +242,13 @@
       "passed": true,
       "observed": true,
       "expected": true,
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h2",
+      "passed": true,
+      "observed": "l3_iterative_h2",
+      "expected": "l3_iterative_h2",
       "evidence": "records/workstation_p2_h2_mpi4.json"
     },
     {
@@ -234,6 +291,118 @@
       "passed": true,
       "observed": "match",
       "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "artifact_provenance_complete:l3_iterative_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h5",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h5",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h5",
+      "passed": true,
+      "observed": 900.9550133142146,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "physical_model:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
       "evidence": "l3_iterative_h5"
     },
     {
@@ -294,6 +463,118 @@
       "evidence": "l3_iterative_h3"
     },
     {
+      "name": "artifact_provenance_complete:l3_iterative_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h3",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h3",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h3",
+      "passed": true,
+      "observed": 606.7573992847327,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "physical_model:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "evidence": "l3_iterative_h3"
+    },
+    {
       "name": "residual_max:l3_iterative_h3",
       "passed": true,
       "observed": 9.932648742620389e-07,
@@ -348,6 +629,118 @@
       "passed": true,
       "observed": "match",
       "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "artifact_provenance_complete:l3_iterative_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h2",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h2",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h2",
+      "passed": true,
+      "observed": 734.3166944053114,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "physical_model:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
       "evidence": "l3_iterative_h2"
     },
     {

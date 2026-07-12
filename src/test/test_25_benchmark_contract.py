@@ -23,7 +23,7 @@ class BenchmarkContractTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(config["artifact_root"], "benchmarks/artifacts")
+        self.assertEqual(config["artifact_root"], "benchmarks/artifacts/iterative")
         self.assertEqual(config["qualified_h_nm"], [5.0, 3.0, 2.0])
         runner = (ROOT / "benchmarks/run_workstation_iterative.py").read_text(
             encoding="utf-8"

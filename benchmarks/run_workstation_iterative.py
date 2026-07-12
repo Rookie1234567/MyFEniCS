@@ -40,6 +40,7 @@ from src.solvers.solve_vector_maxwell import _json_default
 from src.solvers.stage4_runtime import (
     RuntimeStage4System,
     assemble_target_stage4_system,
+    stage4_physical_model,
 )
 
 
@@ -514,6 +515,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "qualified_profile": qualified_profile,
         "qualification_deviations": deviations,
         "resolved_config": args.resolved_config,
+        "physical_model": stage4_physical_model(system.cfg),
         "artifact_root": str(Path(args.results_dir)),
         "artifact_directory": str(heavy_dir),
         "record_path": str(record_path),

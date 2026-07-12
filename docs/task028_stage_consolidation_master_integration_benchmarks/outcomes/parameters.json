@@ -1,9 +1,10 @@
 {
   "task": "Task028",
+  "response": "V2",
   "base_commit": "0465b5f",
   "branch": "codex/20260712-task28-stage-consolidation",
   "date": "2026-07-12",
-  "response_v1_source_commit": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+  "review_source": "review_report_v2.md",
   "benchmark_config": "benchmarks/configs/workstation_p2.json",
   "artifact_root": "benchmarks/artifacts",
   "record_root": "benchmarks/records",
@@ -31,6 +32,50 @@
     "rtol": 1e-6,
     "max_it": 3000
   },
+  "documentation": {
+    "canonical_quick_start_files": 17,
+    "legacy_quick_start_files_retained": 8,
+    "walkthrough_chapters": 15,
+    "canonical_theory_files": 10,
+    "benchmark_cases": 13,
+    "benchmark_fields_per_case": 22,
+    "named_main_presets": 15
+  },
+  "validation": {
+    "unit_passed": 105,
+    "unit_skipped": 10,
+    "mpi_ranks": 4,
+    "mpi_tests_per_rank": 14,
+    "benchmark_gates_passed": 87,
+    "benchmark_gates_total": 87
+  },
+  "response_v2_smokes": {
+    "stage1_default": {
+      "dofs": 98,
+      "residual": 1.4355075602162385e-16,
+      "rss_mb": 274.4
+    },
+    "tm_complex_absorption": {
+      "fe_dofs": 14452,
+      "auxiliary_dofs": 30,
+      "residual": 3.32251421556597e-14,
+      "R": 3.66252117150892e-6,
+      "T": 0.882172452104592,
+      "A_volume": 0.11782388537423982,
+      "closure": 3.3306690738754696e-15
+    },
+    "te_complex_absorption": {
+      "dofs": 56,
+      "residual": 1.48562858569903e-15,
+      "R": 8.74562714433904e-5,
+      "T": 0.9903457797965699,
+      "A_volume": 0.00956676393198616,
+      "closure": -5.495603971894525e-16
+    }
+  },
   "wsl_memory_limit_gb": 14,
-  "ordinary_default_changed": false
+  "ordinary_default_changed": false,
+  "h2_direct_rerun": false,
+  "h2_iterative_rerun_in_response_v2": false,
+  "master_merged": false
 }

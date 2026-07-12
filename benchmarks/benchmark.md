@@ -1,5 +1,7 @@
 # Benchmark 维护规范
 
+编号功能级说明见 [`cases/README.md`](cases/README.md)。本文件保留 target 数值与维护规范，case 目录负责逐项复现契约。
+
 ## 目的
 
 本目录验证 clean checkout 中的稳定入口、代数等价、MPI owner-computes 语义和目标工作站求解能力。它不承担普通用户的完整结果存储。

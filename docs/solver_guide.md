@@ -27,7 +27,7 @@
 | 路线 | 启用方式 | 使用条件 | 必须验证 |
 |---|---|---|---|
 | OOC | `--petsc-direct-solver-profile mumps_ooc` | RAM 不足、磁盘空间和 I/O 足够 | scratch 目录、退出清理、full residual |
-| BLR | `--petsc-extra-option mat_mumps_icntl_35=...` 等显式 PETSc 参数 | 接受近似因子并有 reference | residual、R/T/A、压缩率、RSS |
+| BLR | `--petsc-direct-solver-profile mumps_blr`；额外 option 可覆盖阈值 | 接受近似因子并有 reference | residual、R/T/A、压缩率、RSS |
 
 OOC 和 BLR 都是 direct fallback，不会自动启用。不同 MUMPS/PETSc 版本的参数支持可能变化，运行时以 KSP view 和实际 summary 为准。
 

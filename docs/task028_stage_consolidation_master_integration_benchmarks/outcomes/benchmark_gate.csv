@@ -2,24 +2,34 @@ gate,requirement,result,status,evidence
 clean_base,branch starts from clean master,master@0465b5f,pass,merge_execution_log.md
 task_audit,Task000-Task027 audited,28 structured rows,pass,task000_task027_progress.csv
 selective_integration,no whole research branch merge,Task026/027 stable paths extracted,pass,selective_merge_manifest.csv
-ordinary_default,ordinary solver default unchanged,false,pass,git diff and runner separation
+ordinary_default,ordinary solver default remains direct,Stage1 lightweight PyCharm preset,pass,src/main.py
 py_compile,all source and benchmark Python compiles,pass,pass,test_summary.md
-ruff,changed Python lint and format,pass,pass,test_summary.md
-unit_suite,full source tests,91 passed 10 skipped,pass,test_summary.md
+unit_suite,full source tests,105 passed and 10 skipped,pass,test_summary.md
 mpi_suite,focused MPI4 tests,14 per rank passed,pass,test_summary.md
-smoke_2d,2D qualified-image execution,residual 1.87e-15 and R+T 1.0 under benchmark artifacts,pass,benchmarks/records/2d_zero_contrast_dtn_smoke.json
-smoke_3d,3D Stage1 MPI smoke,residual 1.39e-16,pass,benchmarks/records/3d_stage1_mpi2_smoke.json
-condensation,explicit/matrixfree/transpose/backsub equivalence,all focused tests pass,pass,src/test/test_22_condensed_dtn.py
-physical_slab,owner empty-owner cache certification,all MPI4 tests pass,pass,src/test/test_23_physical_slab_two_level.py
-physical_slab_sm2,production two-step path,explicit reference repeat MPI action requirement destroy pass,pass,src/test/test_23_physical_slab_two_level.py
-output_boundary,ordinary versus benchmark heavy outputs,Level1 and h5 workstation artifacts verified,pass,benchmarks/artifacts ignored
-automatic_checker,manifest and canonical records,58 of 58 gates pass,pass,benchmarks/records/benchmark_gate_report.json
-environment,Stage4 environment reconstruction,qualified local image builds with complex PETSc and gmsh,pass_with_qualification,docker/STAGE4_ENVIRONMENT.md
-direct_reference,3D direct rerun exists,h5 and h3 clean rerun pass,pass,benchmarks/records/direct_p2_h5_mpi4.json
+main_preset_contract,all named presets use actual parser,15 of 15 accepted,pass,src/test/test_27_main_preset_contract.py
+documentation_contract,index links and benchmark templates,all pass,pass,src/test/test_26_documentation_contract.py
+smoke_2d_tm_lossy,complex TM official energy closure,3.33e-15,pass,test_summary.md
+smoke_2d_te_lossy,complex TE official energy closure,-5.50e-16,pass,test_summary.md
+smoke_3d_default,default Stage1 direct,residual 1.436e-16 and 274.4 MB,pass,test_summary.md
+condensation,explicit matrixfree transpose and backsub equivalence,all focused tests pass,pass,src/test/test_22_condensed_dtn.py
+physical_slab,owner empty-owner and cache certification,all MPI4 tests pass,pass,src/test/test_23_physical_slab_two_level.py
+physical_slab_sm2,production two-step path,explicit reference repeat action requirement destroy pass,pass,src/test/test_23_physical_slab_two_level.py
+output_boundary,ordinary versus benchmark heavy outputs,separate ignored roots,pass,benchmarks/artifacts
+automatic_checker,manifest and canonical records,87 of 87 gates pass,pass,benchmarks/records/benchmark_gate_report.json
+record_ids,record IDs match manifest,all required records pass,pass,benchmarks/check_benchmarks.py
+artifact_provenance,actual and canonical roots are truthful,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+physical_model,geometry material incidence polarization and degree match,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+qualified_profile,required iterative records have no deviations,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+ksp_convergence,ksp_reason is positive,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+coarse_condition,condition below configured maximum,max 900.96,pass,benchmarks/check_benchmarks.py
+environment,Stage4 environment reconstruction,qualified local complex image,pass_with_qualification,benchmarks/environment.json
+direct_reference,3D direct records,h5 and h3 pass plus h2 reviewed reference,pass,benchmarks/records
 iterative_h5,h5 full true residual <=1e-6,9.83949e-7,pass,benchmarks/records/workstation_p2_h5_mpi4.json
 iterative_h3,h3 full true residual <=1e-6,9.93265e-7,pass,benchmarks/records/workstation_p2_h3_mpi4.json
-iterative_h2,h2 clean branch full true residual <=1e-6,9.997378e-7,pass,benchmarks/records/workstation_p2_h2_mpi4.json
+iterative_h2,h2 full true residual <=1e-6,9.99738e-7,pass,benchmarks/records/workstation_p2_h2_mpi4.json
 h2_memory,h2 total peak RSS <14 GB,13.080257 GB,pass,benchmarks/records/workstation_p2_h2_mpi4.json
 energy,abs closure <=1e-6,maximum 6.58e-9,pass,benchmarks/benchmark_summary.csv
-documentation,user docs and task index refreshed,local links pass,pass,documentation_audit.md
-large_artifacts,no large tracked fields/mesh/cache,no candidate file >5 MB and no VTU/MSH/XDMF/H5/NPZ under benchmarks,pass,final candidate scan
+feature_catalog,13 benchmark cases have 22 fields,13 of 13 pass,pass,benchmarks/cases
+stage2_truthfulness,Stage2B and Stage2C do not overclaim,experimental and not_verified_accuracy,pass,docs/capability_matrix.md
+large_artifacts,no tracked mesh field or cache,no large artifacts tracked,pass,final candidate scan
+task028_response_v2,ten requested response topics complete,response_v2.md,pass,../response_v2.md

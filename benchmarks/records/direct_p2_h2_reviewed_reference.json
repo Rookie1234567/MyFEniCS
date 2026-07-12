@@ -1,4 +1,5 @@
 {
+  "benchmark_id": "l3_direct_h2",
   "metadata": {
     "commit_sha": "task008_reviewed_source",
     "branch": "historical_task008",

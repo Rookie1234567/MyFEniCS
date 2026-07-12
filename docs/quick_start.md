@@ -1,5 +1,7 @@
 # 快速开始
 
+本文件保留全局 Docker/benchmark 最短命令。按功能使用 PyCharm preset、参数含义、输出和错误定位，请从 [`../notes/quick_start/README.md`](../notes/quick_start/README.md) 进入；理论与代码导读分别见 `notes/theory/README.md` 和 `notes/reference/code_walkthrough.md`。
+
 ## 1. 先确认边界
 
 本项目必须使用 complex-mode PETSc。普通 2D/3D CLI 默认继续写入 `results/` 并使用既有 direct 求解器；正式 benchmark 必须显式写入 `benchmarks/artifacts/`。Task28 没有把迭代法设为普通默认。
@@ -76,7 +78,7 @@ docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 mpiexec -n 4 
 docker run --rm -v "${Repo}:/work" -w /work myfenics-stage4:task28 python -m benchmarks.check_benchmarks
 ```
 
-checker 从 manifest 和 canonical records 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、元数据和环境限定。任何 Gate 失败都会返回非零退出码，并更新 `benchmarks/records/benchmark_gate_report.json`。
+checker 从 manifest 和 canonical records 重新计算三残差一致性、三网格迭代比、direct/iterative R/T/A 差、h=2 RSS、benchmark ID、KSP/coarse、physical model、actual/canonical artifact provenance 和环境限定。Task28 Response V2 为 `87/87`；任何 Gate 失败都会返回非零退出码。
 
 ## 8. 在哪里看结果
 
@@ -101,3 +103,4 @@ ParaView 打开 `.pvd` 或 `.vtu`；MPI 输出优先打开 `fields_3d_for_paravi
 | h=2 direct OOM | 预计超过 20 GB | 使用 MPI4 workstation iterative |
 | 有 R/T/A 但 residual 未通过 | 非正式场 | 丢弃该 R/T/A，不得作为 official |
 | benchmark 写入 `results/` | 忘记 output root | 使用 scripts 或显式 `--results-root benchmarks/artifacts/...` |
+| 复基座 T 被判为 0 | 旧代码把 complex beta 当 evanescent | 使用 Response V2 后代码；official 功率应在实际端口平面评价 |

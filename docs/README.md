@@ -28,10 +28,12 @@
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
 | [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态与限制；V2 要求与 Quick Start、Theory 和 Benchmark 建立逐项映射 |
-| [`quick_start.md`](quick_start.md) | 全局最短入口；详细 PyCharm/功能教程将重构到 `notes/quick_start/` |
+| [`quick_start.md`](quick_start.md) | 全局 Docker/benchmark 最短入口；详细功能教程见 [`../notes/quick_start/README.md`](../notes/quick_start/README.md) |
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
 | [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
-| [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；V2 要求建立编号 feature cases |
+| [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
+| [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚和迭代 PC 的规范理论 |
+| [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
 
 ## 阶段索引
 
@@ -52,7 +54,7 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v2.md` 已完成；`changes_required`，等待文档/PyCharm/feature benchmark 重构，暂不合并master |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | Response V2 已实现并验证；等待最终审查与用户许可，暂不合并 master |
 
 ## Task28 审计入口
 
@@ -66,5 +68,6 @@
 | `review_report_v1.md` | ChatGPT V1 审查：benchmark 边界、脚本、自动 Gate、环境、文档和 sm2 测试 |
 | `response_v1.md` | Codex V1 回应：六个 P0 基本关闭 |
 | `review_report_v2.md` | ChatGPT V2 审查：重构 Quick Start、Code Walkthrough、Theory、main.py PyCharm preset 与编号功能 Benchmark |
+| `response_v2.md` | Codex V2 回应：文档五层架构、入口、metadata/checker、测试与 2D lossy RTA 修复 |
 
 完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 不生成或改写 ChatGPT task/review 内容；本轮应在同一分支提交 `response_v2.md` 并继续修正。
