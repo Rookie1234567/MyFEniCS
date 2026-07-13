@@ -16,6 +16,7 @@ from benchmarks.run_direct_memory_forensics import (
     _parse_args,
     _sample,
     _source_provenance,
+    _task29_direct_config,
     _validate_h2_gate,
 )
 from src.solvers.common_3d_solve import _petsc_matrix_stats
@@ -26,6 +27,13 @@ from src.solvers.common_3d_utils import (
 
 
 class DirectMemoryTelemetryTests(unittest.TestCase):
+    def test_worker_forces_full_solve_not_assemble_only(self) -> None:
+        args = _parse_args(["--h-nm", "5", "--profile", "default"])
+        cfg = _task29_direct_config(args)
+        self.assertFalse(cfg.matrix_diagnostics_assemble_only)
+        self.assertEqual(cfg.stage_case, "stage4_block_grating")
+        self.assertEqual(cfg.stage4_dtn_order_policy, "auto_propagating")
+
     def test_memory_snapshot_schema(self) -> None:
         self.assertIsNotNone(_current_rss_mb())
         cgroup = _cgroup_memory_fields()

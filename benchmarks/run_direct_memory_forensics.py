@@ -344,20 +344,26 @@ def _numeric_gate(
     }
 
 
-def _worker(args: argparse.Namespace) -> int:
+def _task29_direct_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
+
+    extra_options = json.loads(args.petsc_options_json)
+    cfg = target_stage4_config(degree=2, h_nm=args.h_nm)
+    return replace(
+        cfg,
+        petsc_direct_solver_profile=args.profile,
+        petsc_extra_options=extra_options,
+        matrix_diagnostics_assemble_only=False,
+        unique_output=False,
+    )
+
+
+def _worker(args: argparse.Namespace) -> int:
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
 
-    extra_options = json.loads(args.petsc_options_json)
-    cfg = target_stage4_config(degree=2, h_nm=args.h_nm)
-    cfg = replace(
-        cfg,
-        petsc_direct_solver_profile=args.profile,
-        petsc_extra_options=extra_options,
-        unique_output=False,
-    )
+    cfg = _task29_direct_config(args)
     run_stage4b_block_grating_3d_case(cfg, args.run_dir)
     return 0
 

@@ -95,3 +95,22 @@ fix = host tracked-clean attestation + exact mounted HEAD verification
 ```
 
 宿主机当时确认 `git status --porcelain --untracked-files=no` 为空，且 local/remote branch HEAD 都为 `01e05da6b9590161bb2405d45ea76dc004305a39`。该修正不放宽 clean Gate：宿主机仍需先证明 tracked clean，容器只接受完全相同的 SHA。
+
+## 6. h5 assemble-only 预检（不构成 baseline）
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T044630Z
+source_sha = cbdccd1d905c42b8bb3d4fafdce16b7d8595b544
+return_code = 0
+qualification = failed
+reason = target_stage4_config default matrix_diagnostics_assemble_only=true
+KSP/factorization = not run
+true residual = null
+official R/T/A = null
+max simultaneous worker RSS = 1485.5 MB
+sum rank historical peaks upper bound = 1571.3867 MB
+cgroup peak = 1047.7773 MB
+swap in/out delta = 0 / 0 pages
+```
+
+该结果只证明装配遥测和数值 Gate 能正确阻止伪 baseline。runner 后续显式设置 `matrix_diagnostics_assemble_only=false`，并在重新提交后才运行正式 h5。

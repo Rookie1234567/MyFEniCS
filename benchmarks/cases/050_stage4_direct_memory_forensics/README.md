@@ -31,6 +31,8 @@
 
 50 x 25 x 140 nm 单胞、17 x 25 x 120 nm Si block、13.5 nm、80 度、s 偏振、p2 Nédélec、double Floquet、auxiliary Fourier-DtN、`auto_propagating` 全传播衍射级。profile、ordering、遥测和数学等价装配可以改变；物理、模式集合、official R/T/A 与 ordinary default 不得改变。
 
+`target_stage4_config` 为安全的公共 factory，默认 `matrix_diagnostics_assemble_only=true`；Case050 full baseline worker 必须显式覆盖为 `false`。缺少 KSPSolve、true residual 或 official R/T/A 的运行只能记为 assemble preflight，不能获得 baseline 资格。
+
 ## 参数说明
 
 `config.json` 冻结允许的 h、MPI、profile、artifact root 和 h2 安全上限；`expected.json` 冻结 Task28 h5/h3 R/T/A 与 Task29 数值/内存 Gate。profile 筛选一次只改变一个主要因素。
