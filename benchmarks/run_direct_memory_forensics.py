@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import subprocess
 import sys
@@ -400,6 +401,24 @@ def _enrich_factor_inventory(
     return enriched
 
 
+def _two_point_power_law_prediction(
+    x_low: float,
+    y_low: float,
+    x_high: float,
+    y_high: float,
+    x_target: float,
+) -> dict[str, float]:
+    """Fit y = c*x**p through two positive observations and extrapolate."""
+    values = (x_low, y_low, x_high, y_high, x_target)
+    if any(value <= 0.0 for value in values):
+        raise ValueError("Power-law prediction inputs must be positive.")
+    if x_low == x_high:
+        raise ValueError("Power-law observations must use distinct x values.")
+    exponent = math.log(y_high / y_low) / math.log(x_high / x_low)
+    prediction = y_high * (x_target / x_high) ** exponent
+    return {"exponent": exponent, "prediction": prediction}
+
+
 def _read_progress_events(path: Path) -> list[dict[str, Any]]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -524,7 +543,10 @@ def _validate_h2_gate(args: argparse.Namespace) -> None:
         "h3_memory_reduction_20pct",
         "h3_no_swap",
         "prediction_upper_le_13p5_gb",
+        "current_memory_margin_pass",
+        "single_qualified_profile",
         "watchdog_enabled",
+        "task28_h2_record_untouched",
     )
     failed = [key for key in required if gate.get(key) is not True]
     if failed:

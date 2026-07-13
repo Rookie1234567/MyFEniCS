@@ -20,6 +20,7 @@ from benchmarks.run_direct_memory_forensics import (
     _sample,
     _source_provenance,
     _task29_direct_config,
+    _two_point_power_law_prediction,
     _validate_h2_gate,
 )
 from src.solvers.common_3d_solve import (
@@ -181,6 +182,42 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertEqual(args.profile, "mumps_ooc")
         self.assertEqual(args.mpi_size, 2)
 
+    def test_selected_candidate_record_contract(self) -> None:
+        records = (
+            "h5_mpi2_candidate.json",
+            "h3_mpi2_candidate.json",
+        )
+        root = (
+            Path(__file__).resolve().parents[2]
+            / "benchmarks"
+            / "cases"
+            / "050_stage4_direct_memory_forensics"
+            / "records"
+        )
+        required = {
+            "benchmark_id",
+            "status",
+            "metadata",
+            "physical_model",
+            "resolved_config",
+            "dimensions",
+            "matrix_inventory",
+            "factor_inventory",
+            "memory_checkpoints",
+            "memory",
+            "timings_seconds",
+            "qualification",
+            "limitations",
+        }
+        for name in records:
+            with self.subTest(record=name):
+                record = json.loads((root / name).read_text(encoding="utf-8"))
+                self.assertTrue(required.issubset(record))
+                self.assertEqual(record["status"], "pass")
+                self.assertFalse(record["metadata"]["tracked_source_dirty"])
+                self.assertTrue(record["qualification"]["full_solve"])
+                self.assertEqual(record["qualification"]["numeric_gate"], "pass")
+
     def test_numeric_gate_uses_task28_reference(self) -> None:
         reference = {
             "R_total": 0.1,
@@ -226,7 +263,10 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             "h3_memory_reduction_20pct": True,
             "h3_no_swap": True,
             "prediction_upper_le_13p5_gb": True,
+            "current_memory_margin_pass": True,
+            "single_qualified_profile": True,
             "watchdog_enabled": True,
+            "task28_h2_record_untouched": True,
         }
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "gate.json"
@@ -237,6 +277,13 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             path.write_text(json.dumps(required), encoding="utf-8")
             with self.assertRaises(SystemExit):
                 _validate_h2_gate(args)
+
+    def test_two_point_power_law_memory_prediction(self) -> None:
+        result = _two_point_power_law_prediction(1.0, 10.0, 2.0, 20.0, 4.0)
+        self.assertAlmostEqual(result["exponent"], 1.0)
+        self.assertAlmostEqual(result["prediction"], 40.0)
+        with self.assertRaises(ValueError):
+            _two_point_power_law_prediction(1.0, 10.0, 1.0, 20.0, 4.0)
 
 
 if __name__ == "__main__":
