@@ -47,7 +47,7 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | V4 判定 `pass_with_minor_qualifications`；完成三项 metadata/runner 加固并获用户许可后可合并 master |
-| Task029 | Stage4 direct memory forensics | 已写任务书；必须在 Task028 合并后的新 master 分支启动，先 h5/h3 剖析，h2 条件解锁 |
+| Task029 | Stage4 direct memory forensics | 已写任务书和强制 COMSOL 参考补充；必须在 Task028 合并后的新 master 分支启动，先 h5/h3 剖析，h2 条件解锁 |
 
 ## 当前任务
 
@@ -56,7 +56,7 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v4.md` 已完成；只剩三项轻量加固，等待 `response_v4.md` 与用户合并许可 |
-| Task029 | `task029_stage4_direct_memory_forensics/` | planned；不得在 Task028 分支执行，待 Task028 合并 master 后由 Codex 新建执行分支 |
+| Task029 | `task029_stage4_direct_memory_forensics/` | planned；有效任务规范为 `task.md + task_comsol_reference_addendum.md`，不得在 Task028 分支执行 |
 
 ## Task28 审计入口
 
@@ -80,5 +80,7 @@
 | 文件 | 内容 |
 |---|---|
 | [`task029_stage4_direct_memory_forensics/task.md`](task029_stage4_direct_memory_forensics/task.md) | 直接法阶段内存剖析、矩阵/factor inventory、对象生命周期与预分配优化；h5/h3 必跑，h2 仅在显著降内存且预测低于安全上限后解锁 |
+| [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | 强制补充：COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 必须保留 `auto_propagating` 全传播衍射级，不比较跨机器时间 |
+| [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL 117.8 万 DoF、MUMPS 与 GMG 内存报告，供 Task029/后续多层迭代研究参考 |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 应先在 Task028 同一分支提交 `response_v4.md`；完成三项轻量加固并获得用户明确许可后合并 Task028。Task029 只能从合并后的干净 `master` 创建新执行分支。
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 应先在 Task28 同一分支提交 `response_v4.md`；完成三项轻量加固并获得用户明确许可后合并 Task28。Task029 只能从合并后的干净 `master` 创建新执行分支，并必须同时阅读 Task29 的主任务书、COMSOL 强制补充和参考报告。
