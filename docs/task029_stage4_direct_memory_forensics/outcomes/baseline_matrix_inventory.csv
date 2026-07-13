@@ -1,0 +1,4 @@
+run_id,h_nm,mpi_size,object,matrix_type,rows,cols,nnz_used,nnz_allocated,nnz_unneeded,mallocs,average_nnz_per_row,petsc_memory_mb_raw,estimated_storage_mb,estimate_semantics
+h5_default_mpi4_20260713T050814Z,5.0,4,base,mpiaij,44698,44698,4840396,4840396,0,0,108.29110922188912,0.0,111.12889862060547,nnz_scalar_index_common_estimator
+h5_default_mpi4_20260713T050814Z,5.0,4,augmented,mpiaij,44778,44778,4896156,4896156,0,0,109.34289159855287,0.0,112.40575408935547,nnz_scalar_index_common_estimator
+h5_default_mpi4_20260713T050814Z,5.0,4,factor,mumps,44778,44778,33862428,33862428,0,0,756.2291303765242,0.0,775.3911056518555,nnz_scalar_index_common_estimator_not_allocator_memory

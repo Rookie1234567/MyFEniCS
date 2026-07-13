@@ -133,3 +133,59 @@ KSPSolve seconds = 0.11982890299987048
 ```
 
 V1 数值与内存阶段证据有效，但 factor Mat stats 缺失。3x3 PETSc 诊断证明原因是 `_petsc_matrix_stats` 对已分解 Mat 错误调用 `assemble()`；raw MUMPS INFOG/RINFOG 已成功读取。修正后将重跑 h5 V2，补全 factor fill inventory 后才冻结 h5 baseline。
+
+## 8. h5 full-solve baseline V2
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050037Z
+source_sha = 5d715008f1fec34382c4deff8623c38b1bbe2509
+qualification = pass
+factor inventory available = true
+factor nnz = 33862428
+augmented nnz = 4896156
+raw MUMPS API available = true
+swap in/out delta = 0 / 0 pages
+```
+
+V2 证明 factor Mat 可以直接读取，且不再触发 PETSc `Not for factored matrix`。冻结前交叉核对发现顶层 historical upper bound 仍来自较早写出的 `run_summary.json`，比最终 progress checkpoint 少 0.875 MB；原始 checkpoint 完整，但汇总字段不能取早值。runner 随后改为取所有完整 checkpoint 与 solver summary 的最大值，并新增只由 nnz/统一 estimator 代数计算的 factor ratios。
+
+## 9. h5 full-solve baseline V3（冻结）
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+source_sha = 208aaab149ca5c2be0aae09a8d893bfa02e3f8cc
+qualification = pass
+assemble_only = false
+true residual = 5.224671064148491e-12
+R/T/A = 0.08902160293644126 / 0.44258827865712486 / 0.46839011840655576
+Task28 R/T/A delta = 0 / 0 / 0
+energy closure = 1.219024881038422e-13
+max simultaneous worker RSS = 2328.14453125 MB
+max MPI process tree RSS = 2385.140625 MB
+max cgroup current = 1729.03515625 MB
+cgroup kernel peak = 1757.53515625 MB
+sum rank historical peaks upper bound = 2373.37109375 MB
+peak worker/cgroup stage = during_ksp_setup_peak
+KSPSetUp seconds = 1.8376552690006065
+KSPSolve seconds = 0.046669377000398526
+base/augmented/factor nnz = 4840396 / 4896156 / 33862428
+factor / augmented nnz ratio = 6.9161252215002955
+factor / augmented estimated storage ratio = 6.898144244781887
+swap in/out delta = 0 / 0 pages
+```
+
+PETSc factor `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，不把它们解释成可用 factor memory；统一 nnz estimator 的 factor storage 为 775.391 MB，只作结构量级。MUMPS INFOG 1..40 与 RINFOG 1..20 仅按 raw index 保存。h5 至此冻结；h3 未获本轮授权，未启动。
+
+## 10. h5 evidence regression
+
+```text
+ruff = pass
+compileall benchmarks src = pass
+Docker unit discovery = 128 passed / 10 skipped
+Documentation contract = 11 / 11
+Benchmark checker = 149 / 149
+JSON/CSV parse = pass (1 summary JSON, 13 memory rows, 3 matrix rows, 1 factor row)
+git diff --check = pass
+```
+
+测试只读取/生成 Task29 自身证据与既有 Gate report；用户未跟踪的 `papers/` 和 Task023 raw runs 未加入暂存区、未修改、未删除。

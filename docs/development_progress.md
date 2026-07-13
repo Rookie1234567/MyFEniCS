@@ -37,14 +37,14 @@ docs/taskXXX_*/review_report*.md
 2026-07-13
 current branch = codex/20260713-task29-stage4-direct-memory-forensics
 Task028 status = V4 closed and merged to master at 2f9e56d
-Task029 status = Stage A telemetry validated; h5/h3 baseline not run; h2 locked
+Task029 status = Stage A telemetry validated; h5 baseline pass/frozen; h3 not run; h2 locked
 ```
 
 ## 1.1 2026-07-13 最新更新
 
-Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，当前只完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050 合同和 h2 启动锁。遥测明确区分同时总 RSS 与各 rank 历史峰值和；Task28 canonical records 保持只读。
+Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，已完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050 合同和 h2 启动锁。遥测明确区分同时总 RSS、各 rank 历史峰值和、MPI 进程树与 cgroup；Task28 canonical records 保持只读。
 
-Task029 尚未运行 h5/h3 baseline，也没有开始生命周期、预分配、OOC、BLR 或 ordering 优化。必须先完成 h5，再完成无 swap 的 h3，形成 Stage B 归因报告后才进入候选优化。
+Task029 MPI4 h5 baseline 已在 clean source SHA `208aaab` 完整通过：真实残差 `5.22e-12`，R/T/A 与 Task28 完全一致，swap 为 0。最大同时 worker RSS 2328.145 MB 与最大 cgroup current 1729.035 MB 都位于 KSPSetUp；factor/augmented nnz 比为 6.916。h3 尚未运行，也没有开始生命周期、预分配、OOC、BLR 或 ordering 优化。必须完成无 swap h3 与 Stage B 归因后才进入候选优化。
 
 ---
 
@@ -1538,8 +1538,8 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.2 Task029 当前问题
 
 ```text
-- h5/h3 新统计口径 baseline 尚未运行；
-- factorization、base/augmented 双份对象和 postprocess 生命周期占比尚待定量；
+- h5 新统计口径 baseline 已冻结，h3 尚未运行；
+- h5 已确认 factorization 为主峰，完整 h3 归因与跨网格增长模型尚缺；
 - h2 继续受 20% 双网格降幅、无 swap、13.5 GB 预测上限与 watchdog Gate 锁定。
 ```
 
@@ -1566,8 +1566,8 @@ Task28 合并与 Task29 分支启动已完成。Task029 当前强制顺序：
 
 ```text
 1. Commit A telemetry-only（已完成）；
-2. 先跑 MPI4 h5 baseline 并验证 Task28 R/T/A；
-3. 再跑无 swap 的 MPI4 h3 baseline；
+2. MPI4 h5 baseline 与 Task28 R/T/A 对照（已完成）；
+3. 经用户确认后再跑无 swap 的 MPI4 h3 baseline；
 4. 完成 Stage B 内存归因和 optimization hypothesis table；
 5. 依次验证公共生命周期/预分配与 factorization profile；
 6. 仅在全部 h2 Gate 通过时考虑 h2，否则明确 not-run。
@@ -1614,4 +1614,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 direct-memory telemetry 的 Commit A 与 149 项 benchmark Gate，但 h5/h3 新口径 baseline 尚未运行、h2 仍锁定，环境继续按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 direct-memory telemetry 的 Commit A，并冻结通过完整数值 Gate、零 swap 的 h5 baseline；h3 尚未运行、h2 仍锁定，环境继续按 `qualified_local_image` 诚实限定。

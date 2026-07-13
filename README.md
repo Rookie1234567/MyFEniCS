@@ -54,7 +54,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 Review/Response V4 已关闭 tracked-source-clean、真实 image digest 与最终提交验证，checker 为 148/148；环境继续按 `qualified_local_image` 限定，ordinary default 未改变。Task29 只能从 Task28 合并后的 `master` 新分支启动。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task29 已完成 telemetry-only Commit A，并冻结通过完整数值 Gate、零 swap 的 MPI4 h5 baseline。h3 尚未运行，h2 继续锁定；环境仍按 `qualified_local_image` 限定，ordinary default 未改变。
 
 ## 文档导航
 

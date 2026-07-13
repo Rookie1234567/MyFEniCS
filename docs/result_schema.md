@@ -39,6 +39,25 @@
 
 旧记录由 Task28 response v1 补充 provenance；只有新 runner 生成的记录拥有完整 resolved config。
 
+## Task029 direct-memory record
+
+Case050 的 candidate/summary 额外包含：
+
+| 字段 | 含义 |
+|---|---|
+| `memory.max_simultaneous_total_rss_mb` | 同一外部采样时刻所有 worker rank 当前 RSS 的和；可能重复计算共享页 |
+| `memory.max_mpi_process_tree_rss_mb` | `mpiexec` 子树的同时 RSS，包含非 worker helper/launcher |
+| `memory.max_container_cgroup_current_mb` | cgroup 实际 charged current 的采样最大值 |
+| `memory.container_cgroup_peak_mb_at_end` | 内核 cgroup high-water mark |
+| `memory.sum_rank_historical_peaks_mb_upper_bound` | 所有完整 checkpoint 与 solver summary 中最大的 rank 历史峰值和，只作上界 |
+| `memory.historical_peak_source` | historical upper bound 的聚合来源，防止误取较早 summary |
+| `matrix_inventory.base/augmented` | rows、nnz used/allocated/unneeded、mallocs 与统一 storage estimate |
+| `factor_inventory.matrix_stats` | backend 实际暴露的 factored Mat 结构；不得对 factored Mat 再调用 assemble |
+| `factor_inventory.derived_ratios` | 仅由 factor/augmented nnz 和同一 estimator 代数相除，不解释 MUMPS raw index |
+| `factor_inventory.mumps_raw_infog/rinfog` | raw index telemetry；无官方映射时不赋予语义 |
+
+PETSc 返回的 factor `fill_ratio_*` 或 `memory=0` 必须保留为原始值并标记不可用；不得把统一 nnz estimator 当成 allocator-accounted factor memory。
+
 ## Iterative 数值字段
 
 | 字段 | 含义 |

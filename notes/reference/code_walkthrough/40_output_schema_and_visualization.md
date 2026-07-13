@@ -21,6 +21,12 @@
 
 `*_parameters.json` 保存启动参数，`*_progress.json` 可在中断时恢复最后 stage/iteration/RSS；最终 record 才是 Gate 输入。progress 不等于 pass。
 
+## Task29 Case050 内存字段
+
+Case050 同时保存三种不可混写的量：worker-rank 当前 RSS 的同刻和、MPI 进程树当前 RSS、cgroup charged current/peak；另把各 rank 历史峰值之和标成 upper bound。`historical_peak_source` 必须说明它取所有完整 progress checkpoint 与 solver summary 的最大值。
+
+`matrix_inventory` 区分 base、augmented 与 factor。`factor_inventory.derived_ratios` 只做 nnz/统一 estimator 的代数相除；若 PETSc factor `fill_ratio_*` 或 `memory` 返回 0，则保留 raw 0 并标记 unavailable，不能替换成猜测的 MUMPS INFOG/RINFOG 含义。
+
 ## 场文件
 
 2D/串行可直接写单 VTU；3D MPI 写 rank-local VTU 与 PVD。`postprocess_3d` 过滤 ghost cells，避免 ParaView 数量/积分重复。场名区分 `E_total/E_scat/E_background` 和 real/imag/abs。

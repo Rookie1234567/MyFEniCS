@@ -69,7 +69,9 @@ gate 文件必须同时证明 h5/h3 数值通过、两者内存至少降低 20%�
 
 ## 当前证据
 
-当前只有 Task28 的只读 h5/h3 baseline record 和新遥测代码/合同；Task29 的 h5/h3 外部采样 baseline 尚未运行。任何候选资格必须等待完整 solve、true residual 和 official RTA。
+Task29 h5 baseline 已在 source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 完整通过：MPI4、p2、44,698 FE DoF、80 auxiliary DoF、default MUMPS，true residual 为 `5.224671064148491e-12`，R/T/A 与 Task28 h5 reference 的差均为 0，swap-in/out 也均为 0。轻量记录见 [`records/h5_baseline.json`](records/h5_baseline.json)。
+
+h5 的最大同时 worker RSS 为 2328.145 MB，最大 cgroup current 为 1729.035 MB，均出现在 KSPSetUp；factor nnz 为 33,862,428，是 augmented nnz 的 6.916 倍。h3 尚未运行，任何优化候选资格仍须等待 h3 baseline 与 Stage B 完整归因。
 
 ## 结果解释
 

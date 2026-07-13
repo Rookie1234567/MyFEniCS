@@ -1,5 +1,5 @@
 {
-  "status": "telemetry_ready_baseline_not_run",
+  "status": "h5_baseline_pass_h3_not_run",
   "full_true_residual_max": 1e-8,
   "reference_absolute_tolerance": {
     "R_total": 1e-8,

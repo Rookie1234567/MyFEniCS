@@ -102,6 +102,14 @@ python src/main.py --preset 3d_target_grating_direct_h5
 - Case030：OOC/BLR 功能 contract，身份为 direct fallback/experimental，不是 canonical 迭代结果。
 - Case021：target p2 h5/h3 MPI4 MUMPS direct canonical；h2 direct 仅 reviewed reference，本轮未重跑。
 
-## 11. 限制
+## 11. Task29 factored Mat 与内存遥测
+
+`benchmarks.run_direct_memory_forensics` 用独立 0.25 s sampler 包住完整 MPI worker。worker 在 `KSPSetUp` 后通过 `PC.getFactorMatrix()` 读取 factor；已分解的 PETSc Mat 不能再次 `assemble()`，因此 `_petsc_matrix_stats(..., assemble=False)` 只读 size、type、ownership、`getInfo()` 和可安全获得的字段。
+
+h5 冻结结果的 augmented/factor nnz 为 4,896,156 / 33,862,428，代数比为 6.916。PETSc 对 MUMPS factor 返回的 `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，因此不把它们当有效 factor memory；统一 nnz estimator 的 775.391 MB 只用于同口径结构比较。INFOG/RINFOG 保留 raw index，代码不猜测其语义。
+
+外部 sampler 的 worker 同时 RSS 与 cgroup charged memory 分开记录。h5 的 worker/cgroup 主峰均位于 KSPSetUp，MPI process tree 的稍后峰值则位于 field output；这两个结论不能合并成一个“总峰值”字段。
+
+## 12. 限制
 
 OOC 会把 RAM 压力转成磁盘 I/O，不保证 14 GB 内完成；BLR 会引入 factor approximation，不保证所有参数 residual 合格。profile 对资源的表现依赖 PETSc/MUMPS build、MPI、磁盘和矩阵排序。理论见 [`../../theory/direct_solvers_and_factorization.md`](../../theory/direct_solvers_and_factorization.md)。

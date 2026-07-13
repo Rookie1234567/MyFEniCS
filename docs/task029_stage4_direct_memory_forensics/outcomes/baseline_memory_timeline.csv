@@ -1,0 +1,14 @@
+run_id,h_nm,mpi_size,profile,stage,samples,max_worker_rank_rss_sum_mb,max_mpi_process_tree_rss_mb,max_container_cgroup_current_mb,source_artifact
+h5_default_mpi4_20260713T050814Z,5.0,4,default,process_start,8,920.421875,925.96875,395.94921875,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,mesh_build,1,972.58984375,978.19140625,412.1640625,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,after_mesh,3,997.58203125,1003.18359375,430.8984375,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,floquet_and_boundary_setup,2,1057.0703125,1062.671875,495.35546875,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,variational_form_setup,42,1255.1484375,1368.5390625,763.671875,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,after_augmented_matrix_allocation,1,1391.53515625,1397.13671875,806.02734375,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,after_base_matrix_copy,6,1481.234375,1516.9375,911.87890625,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,before_ksp_setup,1,1382.59765625,1388.19921875,793.76171875,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,during_ksp_setup_peak,6,2328.14453125,2333.74609375,1729.03515625,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,stage4_dtn_augmented_ksp_setup,1,2273.11328125,2278.71484375,1669.89453125,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,solver_objects_retained_for_postprocess,9,2309.95703125,2351.24609375,1718.26171875,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,after_field_output,7,2312.05078125,2385.140625,1724.12890625,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+h5_default_mpi4_20260713T050814Z,5.0,4,default,final_cleanup,2,2308.0546875,2313.66015625,1674.83203125,benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
