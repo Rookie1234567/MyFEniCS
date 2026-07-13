@@ -11,6 +11,7 @@ from petsc4py import PETSc
 
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
+    _directory_usage,
     _enrich_factor_inventory,
     _historical_peak_upper_bound,
     _latest_stage,
@@ -21,7 +22,11 @@ from benchmarks.run_direct_memory_forensics import (
     _task29_direct_config,
     _validate_h2_gate,
 )
-from src.solvers.common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
+from src.solvers.common_3d_solve import (
+    DirectSolveFailure,
+    _petsc_factor_inventory,
+    _petsc_matrix_stats,
+)
 from src.solvers.common_3d_utils import (
     _cgroup_memory_fields,
     _current_rss_mb,
@@ -64,6 +69,49 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertFalse(cfg.matrix_diagnostics_assemble_only)
         self.assertEqual(cfg.stage_case, "stage4_block_grating")
         self.assertEqual(cfg.stage4_dtn_order_policy, "auto_propagating")
+
+    def test_release_base_candidate_is_explicit_opt_in(self) -> None:
+        ordinary = _task29_direct_config(_parse_args(["--h-nm", "5"]))
+        candidate = _task29_direct_config(
+            _parse_args(["--h-nm", "5", "--release-base-after-augmentation"])
+        )
+        self.assertFalse(ordinary.direct_release_base_after_augmentation)
+        self.assertTrue(candidate.direct_release_base_after_augmentation)
+
+    def test_ooc_scratch_usage_is_measured_recursively(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "mumps_ooc_files"
+            nested = root / "rank0"
+            nested.mkdir(parents=True)
+            (root / "a.bin").write_bytes(b"123")
+            (nested / "b.bin").write_bytes(b"45678")
+            self.assertEqual(_directory_usage(root), (2, 8))
+
+    def test_direct_solve_failure_cleanup_is_idempotent(self) -> None:
+        class FakePetscObject:
+            def __init__(self) -> None:
+                self.handle = 1
+                self.destroy_count = 0
+
+            def destroy(self) -> None:
+                self.destroy_count += 1
+                self.handle = 0
+
+        objects = [FakePetscObject() for _ in range(4)]
+        failure = DirectSolveFailure(
+            "diagnostic",
+            failure_stage="unit_test",
+            petsc_error=RuntimeError("unit_test"),
+            A=objects[0],
+            b=objects[1],
+            x=objects[2],
+            ksp=objects[3],
+        )
+        failure.cleanup()
+        failure.cleanup()
+        self.assertEqual([obj.destroy_count for obj in objects], [1, 1, 1, 1])
+        self.assertIsNone(failure.A)
+        self.assertIsNone(failure.ksp)
 
     def test_memory_snapshot_schema(self) -> None:
         self.assertIsNotNone(_current_rss_mb())

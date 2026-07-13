@@ -1,5 +1,17 @@
 # Task029 changed files
 
+## Commit C 候选：低风险生命周期与 profile 证据
+
+- `SimulationConfig3D.direct_release_base_after_augmentation`（默认 false）
+- DtN copy 后 opt-in 释放 `A_base/b_base`
+- `DirectSolveFailure.cleanup()` 与 failure summary finally cleanup
+- 显式可用 MPI distributed factor package 选择
+- Case050 OOC scratch/I/O sampler 与 candidate lifecycle record
+- `optimization_hypotheses.csv`、`optimization_manifest.csv`、`direct_object_lifecycle.md`
+- `test_18` / `test_28` 与 code walkthrough 更新
+
+普通 default 不变；所有内存候选仍需提交后 clean-source full solve。
+
 ## Commit B checkpoint：Stage B 完整 baseline evidence
 
 - 新增 `benchmarks/cases/050_stage4_direct_memory_forensics/records/h3_baseline.json`

@@ -1,5 +1,36 @@
 # Task029 Run Log
 
+## 最新 checkpoint：Stage C/D 低风险实现
+
+```text
+H1 candidate = opt-in release A_base/b_base after complete augmented copy
+ordinary default changed = no
+failure cleanup = idempotent KSP/x/b/A destroy after diagnostics write
+explicit MPI factor package = honor only when available and approved distributed LU
+OOC telemetry = scratch peak bytes/files + process-tree read/write bytes + block-I/O delay
+ruff = pass
+compileall = pass
+focused tests = 34 passed
+full unit discovery = 133 passed / 10 skipped
+```
+
+负/无效 screening：
+
+```text
+BLR artifact = benchmarks/artifacts/cases/050/h5_mumps_blr_mpi4_20260713T081608Z
+BLR process return = 0
+BLR qualification = failed
+BLR true residual = 0.004704037956272798
+BLR max Task28 R/T/A abs delta = 0.0010734669822908827
+BLR max simultaneous worker RSS = 2407.93359375 MB
+
+first SuperLU request artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T081655Z
+requested option = superlu_dist
+actual package = mumps
+classification = invalid package screen; old MPI fallback overwrote explicit request
+action = selection logic fixed; clean rerun required
+```
+
 ## 最新 checkpoint：Stage B 完成
 
 ```text

@@ -14,6 +14,9 @@
 - [h5/h3 matrix inventory](baseline_matrix_inventory.csv)
 - [h5/h3 factorization summary](baseline_factorization_summary.csv)
 - [h5 rank-count 诊断](rank_scaling.csv)
+- [优化假设表](optimization_hypotheses.csv)
+- [候选实施清单](optimization_manifest.csv)
+- [direct 对象生命周期](direct_object_lifecycle.md)
 
 ## 当前阶段
 

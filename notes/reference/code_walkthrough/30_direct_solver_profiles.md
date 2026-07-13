@@ -2,6 +2,14 @@
 
 三个 profile 都是直接因子分解路径。OOC 改变因子存储位置，BLR 改变 MUMPS 因子近似；两者都不是 Krylov 迭代预条件器。
 
+## Task29 更新（2026-07-13）
+
+`petsc_extra_options.pc_factor_mat_solver_type` 现在会在 PETSc 实际提供且属于已批准的 MPI distributed LU package 时被尊重，不再被 MPI fallback 无条件改写为 MUMPS；未显式请求时 ordinary MPI default 仍选择 MUMPS。串行-only package 不允许进入 MPI direct 路径。
+
+Task29 的低风险 H1 候选由 `SimulationConfig3D.direct_release_base_after_augmentation` 控制，默认 `false`。显式开启后，DtN 路径在 `A_base/b_base -> A_aug/b_aug` 完整复制并写出 checkpoint 后立即销毁 base Mat/Vec；KSP、真残差、场重建和 official R/T/A 仍只使用 augmented system。异常路径的 `DirectSolveFailure.cleanup()` 在诊断写盘后幂等销毁 KSP/x/b/A。
+
+Case050 sampler 还记录 `ooc_scratch_*`、process-tree read/write bytes 与 block-I/O delay。后者是存活后代进程的累计计数最大观测值，block-I/O delay 是进程时间之和而非 wall time；OOC 报告必须同时给 KSPSetUp wall time、scratch peak、I/O counters 与 cleanup 状态。
+
 ## 1. 配置入口
 
 ```text
@@ -34,7 +42,7 @@ PC type = lu
 factor solver = serial available package or MPI MUMPS
 ```
 
-`_prepare_direct_lu_options_for_comm` 根据 communicator 大小与 PETSc build 选择 backend。MPI 中没有可用 parallel LU 时返回环境不满足信息，case flow 写 failure summary；不能把它解释为 Maxwell 方程不收敛。
+`_prepare_direct_lu_options_for_comm` 根据 communicator 大小、显式 package 请求与 PETSc build 选择 backend。MPI 中没有可用 parallel LU 时返回环境不满足信息，case flow 写 failure summary；不能把它解释为 Maxwell 方程不收敛。
 
 ## 4. OOC 生命周期
 

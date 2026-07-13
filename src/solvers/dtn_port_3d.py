@@ -1288,6 +1288,25 @@ def solve_stage4_dtn_port_total_field(
     timing_details["stage4_dtn_augmented_block_copy_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
     )
+    if cfg.direct_release_base_after_augmentation:
+        A_base.destroy()
+        b_base.destroy()
+        A_base = None
+        b_base = None
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="after_base_matrix_release",
+            status="end",
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            petsc_options=petsc_options,
+            extra={
+                "direct_release_base_after_augmentation": True,
+                "released_objects": ["A_base", "b_base"],
+            },
+        )
 
     t0 = time.perf_counter()
     incident_traction_vec = _assemble_mpc_vector(_incident_top_traction_form(V, mesh_data, cfg), floquet_data.mpc)

@@ -34,6 +34,11 @@ TIMELINE_FIELDS = (
     "container_swap_current_mb",
     "wsl_pswpin_pages",
     "wsl_pswpout_pages",
+    "ooc_scratch_file_count",
+    "ooc_scratch_bytes",
+    "mpi_process_tree_read_bytes",
+    "mpi_process_tree_write_bytes",
+    "mpi_process_tree_blkio_delay_seconds",
 )
 
 
@@ -169,6 +174,24 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             )
         except OSError:
             cmdline = ""
+        io_fields: dict[str, int] = {}
+        try:
+            for line in (entry / "io").read_text(encoding="utf-8", errors="ignore").splitlines():
+                if ":" not in line:
+                    continue
+                key, value = line.split(":", 1)
+                if key in {"read_bytes", "write_bytes"}:
+                    io_fields[key] = int(value.strip())
+        except (OSError, ValueError):
+            pass
+        blkio_delay_seconds = 0.0
+        try:
+            stat_text = (entry / "stat").read_text(encoding="utf-8", errors="ignore")
+            fields_after_comm = stat_text[stat_text.rfind(")") + 2 :].split()
+            blkio_delay_ticks = int(fields_after_comm[39])
+            blkio_delay_seconds = blkio_delay_ticks / float(os.sysconf("SC_CLK_TCK"))
+        except (OSError, ValueError, IndexError):
+            pass
         rank: int | None = None
         if "--worker" in cmdline:
             try:
@@ -195,6 +218,9 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             "rss_mb": rss_mb,
             "cmdline": cmdline,
             "worker_rank": rank,
+            "read_bytes": io_fields.get("read_bytes", 0),
+            "write_bytes": io_fields.get("write_bytes", 0),
+            "blkio_delay_seconds": blkio_delay_seconds,
         }
     return processes
 
@@ -227,6 +253,25 @@ def _latest_stage(progress_path: Path) -> tuple[str, str]:
     return "process_start", "waiting_for_progress"
 
 
+def _directory_usage(path: Path) -> tuple[int, int]:
+    """Return a best-effort file count and byte total while OOC files churn."""
+
+    count = 0
+    total = 0
+    try:
+        entries = list(path.rglob("*")) if path.is_dir() else []
+    except OSError:
+        entries = []
+    for entry in entries:
+        try:
+            if entry.is_file():
+                count += 1
+                total += entry.stat().st_size
+        except OSError:
+            continue
+    return count, total
+
+
 def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any]:
     processes = _read_processes()
     tree = _descendants(processes, root_pid)
@@ -244,6 +289,9 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
     )
     stage, stage_status = _latest_stage(progress_path)
     pswpin, pswpout = _vmstat_swap_pages()
+    ooc_file_count, ooc_bytes = _directory_usage(
+        progress_path.parent / "mumps_ooc_files"
+    )
     row: dict[str, Any] = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "elapsed_seconds": elapsed,
@@ -259,6 +307,17 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         "worker_rank_rss_mb_json": json.dumps(worker_ranks, separators=(",", ":")),
         "wsl_pswpin_pages": pswpin,
         "wsl_pswpout_pages": pswpout,
+        "ooc_scratch_file_count": ooc_file_count,
+        "ooc_scratch_bytes": ooc_bytes,
+        "mpi_process_tree_read_bytes": sum(
+            processes[pid]["read_bytes"] for pid in tree if pid in processes
+        ),
+        "mpi_process_tree_write_bytes": sum(
+            processes[pid]["write_bytes"] for pid in tree if pid in processes
+        ),
+        "mpi_process_tree_blkio_delay_seconds": sum(
+            processes[pid]["blkio_delay_seconds"] for pid in tree if pid in processes
+        ),
     }
     row.update(_cgroup_snapshot())
     return row
@@ -408,6 +467,7 @@ def _task29_direct_config(args: argparse.Namespace):
         cfg,
         petsc_direct_solver_profile=args.profile,
         petsc_extra_options=extra_options,
+        direct_release_base_after_augmentation=args.release_base_after_augmentation,
         matrix_diagnostics_assemble_only=False,
         unique_output=False,
     )
@@ -437,6 +497,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--record", type=Path)
     parser.add_argument("--poll-interval", type=float, default=0.25)
     parser.add_argument("--petsc-options-json", default="{}")
+    parser.add_argument("--release-base-after-augmentation", action="store_true")
     parser.add_argument("--h2-gate-json", type=Path)
     parser.add_argument(
         "--verified-clean-sha",
@@ -474,9 +535,10 @@ def _run_parent(args: argparse.Namespace) -> int:
     _validate_h2_gate(args)
     source_provenance = _source_provenance(args)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    lifecycle_suffix = "_release_base" if args.release_base_after_augmentation else ""
     run_dir = args.run_dir or (
         args.artifact_root
-        / f"h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}_{timestamp}"
+        / f"h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{lifecycle_suffix}_{timestamp}"
     )
     run_dir = run_dir.resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -500,6 +562,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--petsc-options-json",
         args.petsc_options_json,
     ]
+    if args.release_base_after_augmentation:
+        command.append("--release-base-after-augmentation")
     worker_environment = os.environ.copy()
     for key in (
         "OMP_NUM_THREADS",
@@ -585,6 +649,27 @@ def _run_parent(args: argparse.Namespace) -> int:
         "wsl_pswpout_delta_pages": (
             max(pswpout_values) - min(pswpout_values) if pswpout_values else None
         ),
+        "max_ooc_scratch_file_count": max(
+            (int(row["ooc_scratch_file_count"]) for row in rows), default=0
+        ),
+        "max_ooc_scratch_bytes": max(
+            (int(row["ooc_scratch_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_read_bytes": max(
+            (int(row["mpi_process_tree_read_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_write_bytes": max(
+            (int(row["mpi_process_tree_write_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_blkio_delay_seconds": max(
+            (float(row["mpi_process_tree_blkio_delay_seconds"]) for row in rows),
+            default=0.0,
+        ),
+        "ooc_io_semantics": (
+            "Scratch bytes are simultaneous directory usage. Process-tree I/O bytes and "
+            "block-I/O delay are maximum observed cumulative counters for live descendants; "
+            "block-I/O delay is summed process time, not wall time."
+        ),
         "stage_peaks": _stage_peaks(rows),
         "timeline": str(timeline_path.relative_to(ROOT)),
     }
@@ -600,7 +685,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     )
     record = {
         "benchmark_id": (
-            f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}"
+            f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{lifecycle_suffix}"
         ),
         "status": numeric_gate["status"],
         "metadata": {
@@ -641,6 +726,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             "mat_mumps_icntl_7", "backend_default_not_reported"
         ),
         "petsc_options": extra_options,
+        "lifecycle_options": {
+            "release_base_after_augmentation": args.release_base_after_augmentation,
+        },
         "mumps_telemetry": {
             "profile": args.profile,
             "ooc_requested": args.profile == "mumps_ooc",
@@ -654,6 +742,21 @@ def _run_parent(args: argparse.Namespace) -> int:
             "raw_rinfog": None
             if factor_inventory is None
             else factor_inventory.get("mumps_raw_rinfog"),
+        },
+        "ooc_telemetry": {
+            "requested": args.profile == "mumps_ooc",
+            "scratch_peak_file_count": sampler_summary["max_ooc_scratch_file_count"],
+            "scratch_peak_bytes": sampler_summary["max_ooc_scratch_bytes"],
+            "process_tree_read_bytes_max_observed": sampler_summary[
+                "max_mpi_process_tree_read_bytes"
+            ],
+            "process_tree_write_bytes_max_observed": sampler_summary[
+                "max_mpi_process_tree_write_bytes"
+            ],
+            "process_tree_blkio_delay_seconds_max_observed": sampler_summary[
+                "max_mpi_process_tree_blkio_delay_seconds"
+            ],
+            "semantics": sampler_summary["ooc_io_semantics"],
         },
         "physical_model": solver_summary.get("config"),
         "resolved_config": solver_summary.get("config"),

@@ -7,6 +7,10 @@
   "mpi_baseline": 4,
   "profiles": ["default", "mumps_ooc", "mumps_blr"],
   "baseline_profile": "default",
+  "lifecycle_candidates": {
+    "release_base_after_augmentation": false,
+    "ordinary_default_changed": false
+  },
   "artifact_root": "benchmarks/artifacts/cases/050",
   "poll_interval_seconds": 0.25,
   "run_h2_default": false,

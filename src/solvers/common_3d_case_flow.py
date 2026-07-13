@@ -447,7 +447,10 @@ def _direct_solve_failure_summary(
         petsc_options=petsc_options,
         extra={"petsc_error": error_diagnostics},
     )
-    _write_case_outputs(out_dir, summary, log_lines, comm)
+    try:
+        _write_case_outputs(out_dir, summary, log_lines, comm)
+    finally:
+        failure.cleanup()
     return summary
 
 

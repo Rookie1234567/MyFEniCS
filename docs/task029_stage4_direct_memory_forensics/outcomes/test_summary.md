@@ -1,5 +1,20 @@
 # Task029 test summary
 
+## Stage C/D low-risk implementation
+
+| 检查 | 结果 |
+|---|---|
+| ruff on changed Python | pass |
+| Docker compileall | pass |
+| direct profile/package selection tests | pass |
+| OOC cleanup tests | pass |
+| documentation contract | pass |
+| Task29 telemetry/lifecycle tests | pass |
+| focused total | 34 passed |
+| Docker full unit discovery | 133 passed, 10 skipped |
+
+新增合同覆盖：H1 opt-in 默认关闭/显式开启、recursive OOC scratch bytes、failure cleanup 幂等性、显式 SuperLU_DIST 不被 MUMPS fallback 覆盖、MPI 拒绝 serial-only UMFPACK。正式内存收益仍必须由提交后的 clean-source h5/h3 full solve 决定。
+
 ## Stage A telemetry
 
 | 检查 | 结果 |

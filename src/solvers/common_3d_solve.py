@@ -42,6 +42,15 @@ class DirectSolveFailure(RuntimeError):
         self.timing_details = timing_details or {}
         self.extra_summary = extra_summary or {}
 
+    def cleanup(self) -> None:
+        """Collectively release retained PETSc diagnostics, safely and idempotently."""
+
+        for name in ("ksp", "x", "b", "A"):
+            obj = getattr(self, name, None)
+            if obj is not None and getattr(obj, "handle", 0):
+                obj.destroy()
+            setattr(self, name, None)
+
 
 def _direct_lu_petsc_options() -> dict[str, Any]:
     """Return the single supported 3D linear solve setting.
@@ -162,6 +171,30 @@ def _prepare_direct_lu_options_for_comm(
 
     if cfg is not None:
         _apply_petsc_option_dict(petsc_options, cfg.petsc_extra_options)
+
+    explicitly_requested_solver = petsc_options.get("pc_factor_mat_solver_type")
+    if selected_solver is None and explicitly_requested_solver:
+        requested_solver = str(explicitly_requested_solver).strip().lower()
+        distributed_packages = {
+            "mumps",
+            "superlu_dist",
+            "pastix",
+            "strumpack",
+            "mkl_cpardiso",
+        }
+        if comm.size > 1 and requested_solver not in distributed_packages:
+            return (
+                petsc_options,
+                None,
+                f"Explicit factor solver '{requested_solver}' is not approved for the MPI direct path.",
+            )
+        if not _has_petsc_package(requested_solver):
+            return (
+                petsc_options,
+                None,
+                f"PETSc does not report the explicitly requested factor solver '{requested_solver}'.",
+            )
+        selected_solver = requested_solver
 
     if comm.size == 1:
         if selected_solver is not None:

@@ -1,5 +1,11 @@
 # Task029 当前总结
 
+## 最新实现状态（2026-07-13，Stage C/D 候选冻结前）
+
+H1–H7 假设表和逐对象生命周期清单已建立。低风险 H1 以 `direct_release_base_after_augmentation=false` 保持 ordinary default，只有 Case050 显式传入 `--release-base-after-augmentation` 才在 copy 后释放 `A_base/b_base`。异常 direct LU 路径增加幂等 PETSc cleanup；OOC sampler 增加 scratch peak、process-tree I/O bytes 和 block-I/O delay；显式且可用的 MPI distributed factor package 不再被 fallback MUMPS 覆盖。ruff、compileall、34 项 focused regression 与全量 133 passed / 10 skipped 均通过，待提交后进行 clean-source h5/h3 实跑。
+
+BLR `1e-5` h5 screening 已被数值 Gate 淘汰：真残差 `4.704e-3`，R/T/A 最大偏差 `1.073e-3`，worker RSS 还比 baseline 高约 3.4%。首次 SuperLU_DIST 请求被旧选择逻辑覆盖，实际仍运行 MUMPS，因此标记 invalid screen，不用其数值作 package 对比；修正后将 clean rerun。
+
 ## 最新状态（2026-07-13，Stage B 完成）
 
 Task28 已通过 review、合并并推送到 `master`；Task29 从 merge commit `2f9e56d2edddb801780504f681b2ff295d993e02` 建立独立分支。Stage A 遥测和 Stage B 的 h5/h3 MPI4 baseline 均已完成，两个 baseline 都是 full solve、数值 Gate 全通过且 swap-in/swap-out 为 0。ordinary default、物理模型、模式集合、网格和 official R/T/A 路径均未改变，h2 仍锁定。

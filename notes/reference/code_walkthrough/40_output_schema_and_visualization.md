@@ -27,6 +27,8 @@ Case050 同时保存三种不可混写的量：worker-rank 当前 RSS 的同刻�
 
 `matrix_inventory` 区分 base、augmented 与 factor。`factor_inventory.derived_ratios` 只做 nnz/统一 estimator 的代数相除；若 PETSc factor `fill_ratio_*` 或 `memory` 返回 0，则保留 raw 0 并标记 unavailable，不能替换成猜测的 MUMPS INFOG/RINFOG 含义。
 
+Task29 OOC timeline 新增 `ooc_scratch_file_count/ooc_scratch_bytes`、`mpi_process_tree_read_bytes/write_bytes` 和 `mpi_process_tree_blkio_delay_seconds`。summary 中保存这些字段的最大观测值及明确语义：scratch 是同刻目录占用，I/O bytes 是存活进程树累计 counter，delay 是各进程 block-I/O delay 之和，不可冒充 wall time。候选 record 的 `lifecycle_options.release_base_after_augmentation` 说明 H1 opt-in 是否启用；ordinary default 为 `false`。
+
 ## 场文件
 
 2D/串行可直接写单 VTU；3D MPI 写 rank-local VTU 与 PVD。`postprocess_3d` 过滤 ghost cells，避免 ParaView 数量/积分重复。场名区分 `E_total/E_scat/E_background` 和 real/imag/abs。
