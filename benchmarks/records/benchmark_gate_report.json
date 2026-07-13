@@ -1,5 +1,5 @@
 {
-  "checkout_commit": "208aaab149ca5c2be0aae09a8d893bfa02e3f8cc",
+  "checkout_commit": "fba69d88ea8590ea01537b7561edff1684f25135",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,

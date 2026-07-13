@@ -1,5 +1,5 @@
 {
-  "status": "h5_baseline_pass_h3_not_run",
+  "status": "h5_h3_baseline_pass_stage_c_ready",
   "full_true_residual_max": 1e-8,
   "reference_absolute_tolerance": {
     "R_total": 1e-8,

@@ -1,36 +1,36 @@
 # Task029 test summary
 
-## Stage A
+## Stage A telemetry
 
 | 检查 | 结果 |
 |---|---|
 | ruff | pass |
 | `compileall benchmarks src` | pass |
-| Docker focused telemetry + documentation | 18 passed |
-| Docker focused source/full-solve Gate regression | 9 passed |
-| Docker focused factor/history aggregation regression | 12 passed |
 | Docker full unit discovery | 128 passed, 10 skipped |
-| Benchmark checker | 149/149 |
+| focused factor/history aggregation | 12 passed |
+| documentation contract | 11/11 |
+| benchmark checker | 149/149 |
 | `git diff --check` | pass |
 
-镜像固定为 `myfenics-stage4:task28@sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`。这里仅验证遥测和既有轻量回归；h5/h3 数值等价必须由后续完整 baseline solve 证明。
+镜像固定为 `myfenics-stage4:task28@sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`。
 
-## Stage B h5
+## Stage B full-solve validation
 
-| 检查 | 结果 |
-|---|---|
-| clean source SHA | `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` |
-| Docker focused factor/history aggregation | 12 passed |
-| Documentation contract after h5 evidence update | 11 passed |
-| h5 full solve | pass |
-| assemble-only | false |
-| true residual Gate | `5.224671064148491e-12 <= 1e-8` |
-| Task28 R/T/A absolute delta Gate | `0 / 0 / 0 <= 1e-8` |
-| energy closure Gate | `1.219024881038422e-13 <= 1e-8` |
-| factor inventory | available；33,862,428 nnz |
-| external peak stage | `during_ksp_setup_peak` |
-| swap delta | `0 / 0` pages |
+| 检查 | h5 MPI4 | h3 MPI4 |
+|---|---|---|
+| clean source SHA | `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` | `fba69d88ea8590ea01537b7561edff1684f25135` |
+| source-code equivalence | baseline implementation | only tracked docs/evidence changed since h5 SHA |
+| full solve | pass | pass |
+| assemble-only | false | false |
+| true residual | `5.225e-12` | `1.382e-11` |
+| max Task28 R/T/A abs delta | `0` | `1.865e-14` |
+| energy closure | `1.219e-13` | `7.305e-14` |
+| factor inventory | 33,862,428 nnz | 266,127,836 nnz |
+| peak stage | KSPSetUp | KSPSetUp |
+| swap-in/out | 0 / 0 pages | 0 / 0 pages |
 
-完整运行目录为 ignored artifact `benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z`；tracked summary 为 `benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_baseline.json`。
+## h5 rank diagnostics
 
-收尾全量 Docker discovery 为 128 passed / 10 skipped，Benchmark checker 为 149/149；ruff、compileall、JSON/CSV 解析和 `git diff --check` 均通过。
+MPI1 PETSc LU、MPI1 forced MUMPS、MPI2 MUMPS 和 MPI4 MUMPS 都完成 full solve，true residual/RTA Gate 全通过且无 swap。所有运行固定每 rank 1 个线程；同后端 MUMPS 的总线程数分别为 1、2、4，并已在 `rank_scaling.csv` 明确记录。MPI2/MUMPS 是后续 h3 候选，MPI1 ordinary default 因后端不同只作诊断。
+
+重型 timeline、solver log 和场输出保留在 gitignored `benchmarks/artifacts/cases/050/`；tracked summary 只引用通过 Gate 的轻量证据。用户未跟踪的 `papers/` 与 Task023 raw runs 未修改、未暂存。

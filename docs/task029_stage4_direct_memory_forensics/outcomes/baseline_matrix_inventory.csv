@@ -2,3 +2,6 @@ run_id,h_nm,mpi_size,object,matrix_type,rows,cols,nnz_used,nnz_allocated,nnz_unn
 h5_default_mpi4_20260713T050814Z,5.0,4,base,mpiaij,44698,44698,4840396,4840396,0,0,108.29110922188912,0.0,111.12889862060547,nnz_scalar_index_common_estimator
 h5_default_mpi4_20260713T050814Z,5.0,4,augmented,mpiaij,44778,44778,4896156,4896156,0,0,109.34289159855287,0.0,112.40575408935547,nnz_scalar_index_common_estimator
 h5_default_mpi4_20260713T050814Z,5.0,4,factor,mumps,44778,44778,33862428,33862428,0,0,756.2291303765242,0.0,775.3911056518555,nnz_scalar_index_common_estimator_not_allocator_memory
+h3_default_mpi4_20260713T075023Z,3.0,4,base,mpiaij,198438,198438,21167444,21167444,0,0,106.67031516141061,0.0,485.9983139038086,nnz_scalar_index_common_estimator
+h3_default_mpi4_20260713T075023Z,3.0,4,augmented,mpiaij,198518,198518,21317860,21317860,0,0,107.38502302058252,0.0,489.4416732788086,nnz_scalar_index_common_estimator
+h3_default_mpi4_20260713T075023Z,3.0,4,factor,mumps,198518,198518,266127836,266127836,0,0,1340.572824630512,0.0,6092.69734954834,nnz_scalar_index_common_estimator_not_allocator_memory

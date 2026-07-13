@@ -1,5 +1,14 @@
 # Task029 changed files
 
+## Commit B checkpoint：Stage B 完整 baseline evidence
+
+- 新增 `benchmarks/cases/050_stage4_direct_memory_forensics/records/h3_baseline.json`
+- h5/h3 共同更新三份 baseline CSV
+- 新增 `docs/task029_stage4_direct_memory_forensics/outcomes/rank_scaling.csv`
+- 更新 outcomes summary、lifecycle、test summary、Case050 状态与 records index
+
+h3 MPI4 full solve 通过且无 swap；h5 MUMPS MPI1/2/4 rank-count 诊断完成。MPI2/MUMPS 被选为后续 h3 低风险候选。重型 artifacts 仍被 gitignore 排除。
+
 ## Commit A: telemetry
 
 - `benchmarks/run_direct_memory_forensics.py`
@@ -15,7 +24,7 @@
 - benchmark checker/documentation contract/index files
 - `docs/task029_stage4_direct_memory_forensics/outcomes/`
 
-后续 Commit B–G 的文件与结果将在对应阶段追加；本文件不把用户未跟踪的 `papers/` 或 Task023 raw runs 列为 Task029 改动。
+后续 Commit C–G 的文件与结果将在对应阶段追加；本文件不把用户未跟踪的 `papers/` 或 Task023 raw runs 列为 Task029 改动。
 
 ## Commit B checkpoint：h5 baseline evidence
 

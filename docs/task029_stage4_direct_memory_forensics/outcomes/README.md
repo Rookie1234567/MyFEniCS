@@ -9,17 +9,19 @@
 - [COMSOL 内存参考报告](../references/comsol_3d_direct_iterative_memory_report.md)
 - [比较边界](comsol_reference_comparability.md)
 - [h5 轻量 summary record](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_baseline.json)
-- [h5 分阶段内存](baseline_memory_timeline.csv)
-- [h5 matrix inventory](baseline_matrix_inventory.csv)
-- [h5 factorization summary](baseline_factorization_summary.csv)
+- [h3 轻量 summary record](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h3_baseline.json)
+- [h5/h3 分阶段内存](baseline_memory_timeline.csv)
+- [h5/h3 matrix inventory](baseline_matrix_inventory.csv)
+- [h5/h3 factorization summary](baseline_factorization_summary.csv)
+- [h5 rank-count 诊断](rank_scaling.csv)
 
 ## 当前阶段
 
 ```text
-stage = stage_b_h5_baseline_frozen_h3_pending
+stage = stage_b_baselines_complete_stage_c_ready
 h5_baseline = pass
-h3_baseline = not_run_yet
+h3_baseline = pass_no_swap
 h2 = locked
 ```
 
-冻结 h5 记录来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc`。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。
+冻结 h5/h3 记录分别来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135`；两者之间只有文档和轻量证据变更，求解实现相同。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。

@@ -1,11 +1,11 @@
 # Task029 direct object lifecycle
 
-## Stage A baseline path
+## baseline 路径
 
 ```text
 assemble constrained A_base / b_base
   -> allocate A_aug / b_aug
-  -> copy base and insert auxiliary DtN coupling
+  -> copy A_base and insert auxiliary DtN coupling
   -> KSPSetUp (analysis + numeric factorization)
   -> KSPSolve
   -> true residual
@@ -15,31 +15,32 @@ assemble constrained A_base / b_base
   -> function return and Python/PETSc reference cleanup
 ```
 
-Task28 路径在 postprocess 期间仍由 `dtn_result` 或 `problem` 引用 KSP/factor、system Mat、RHS Vec 和 solution Vec。Stage A 只记录 `solver_objects_retained_for_postprocess`，不提前 destroy；这样 h5/h3 baseline 保留原始生命周期。
+Task28 路径在 postprocess 期间仍由 `dtn_result` 或 `problem` 引用 KSP/factor、system Mat、RHS Vec 和 solution Vec。Task29 baseline 只记录 `solver_objects_retained_for_postprocess`，没有提前 destroy，所以 h5/h3 与原生命周期可比。
 
-## 已确认的同时存在对象
+## 同时存在对象与量级
 
-- `A_base` 与 `A_aug` 在复制和 DtN coupling/finalize 阶段同时存在；
-- KSP factorization 后，`A_aug`、factor、`b_aug`、`x_aug` 和重建后的 FE field 同时存在；
-- ordinary default 不默认装配 unconstrained diagnostic matrix，但若显式开启则会额外存在；
-- factor matrix 字段只读取当前 petsc4py/MUMPS API 实际暴露的数据，缺失项保留 unavailable，不推断 INFOG 含义。
+- `A_base` 与 `A_aug` 在复制和 DtN coupling/finalize 阶段同时存在。
+- KSP factorization 后，`A_aug`、factor、`b_aug`、`x_aug` 与重建后的 FE field 同时存在。
+- ordinary default 不装配 unconstrained diagnostic matrix；两个 baseline 的 `unconstrained_matrix_stats` 均为空。
+- h5/h3 的 base、augmented matrix 都显示 `nz_unneeded=0`、`mallocs=0`，说明当前预分配没有明显的 PETSc 动态重分配证据。
+- factor 的 PETSc raw memory/fill 字段为 0；只报告 nnz 和统一 storage estimator，不推断 MUMPS INFOG/RINFOG 的含义。
 
-提前释放 KSP/factor 或 base objects 属于后续 Commit C 候选，必须在 Stage B 基线报告完成后单独实现和验证。
+## h5/h3 定量归因
 
-## h5 实测归因
-
-冻结运行：`h5_default_mpi4_20260713T050814Z`。
-
-| 外部采样阶段 | worker rank 同时 RSS 和 MB | cgroup current MB | 解释 |
+| 阶段/增量 | h5 worker / cgroup MB | h3 worker / cgroup MB | 结论 |
 |---|---:|---:|---|
-| `variational_form_setup` | 1255.148 | 763.672 | form 与 constrained base assembly 区间 |
-| `after_augmented_matrix_allocation` | 1391.535 | 806.027 | 新增 augmented shell/storage |
-| `after_base_matrix_copy` | 1481.234 | 911.879 | base 与 augmented copy 同时存在 |
-| `before_ksp_setup` | 1382.598 | 793.762 | factorization 前稳定点 |
-| `during_ksp_setup_peak` | 2328.145 | 1729.035 | analysis/numeric factorization 主峰 |
-| `solver_objects_retained_for_postprocess` | 2309.957 | 1718.262 | KSP/factor 与场后处理继续同时存在 |
-| `after_field_output` | 2312.051 | 1724.129 | worker/cgroup 次峰；MPI tree 在此达到 2385.141 MB |
+| base + augmented 共存，相对 variational stage | 226.09 / 148.21 | 729.07 / 754.62 | 次要但可审计 |
+| KSPSetUp 峰值，相对 pre-setup | 945.55 / 935.27 | 6472.43 / 6474.57 | 主瓶颈 |
+| KSPSolve retained 增量 | 1.32 / 0.25 | 6.98 / 6.28 | 很小 |
+| official RTA 增量 | 0.00 / 0.00 | 0.78 / -0.02 | 可忽略 |
+| field output 增量 | 35.45 / 10.93 | 129.06 / 112.51 | 不形成全局主峰 |
 
-`KSPSetUp` 相对其前一稳定点增加约 945.55 MB worker RSS、935.27 MB cgroup current。KSPSolve 只运行约 0.0467 s，短于 0.25 s sampler 的可靠分辨率；因此不虚构独立 solve 内部峰值，使用 `after_ksp_solve` checkpoint 与总计时证明它没有取代 factorization 主峰。
+h3 KSPSetUp 外部主峰为 8651.10 MB，而 postprocess/field-output 区间最高约 8345.76 MB。即使 factor 与输出生命周期完全分离，也只能降低后段平台，不能降低本次运行已经出现的 KSPSetUp 全局峰值；因此 H7 可作为清理质量候选，但不能预期获得 20% 峰值收益。
 
-当前 lifecycle 在 official RTA、field output 和 volume absorption 完成前仍保留 KSP/factor、system Mat、RHS Vec 和 solution Vec。h5 证据支持把“factor 与 postprocess 生命周期分离”列为后续候选，但 Stage B h3 完成前不实施。
+## Stage C 判据
+
+- H1：base/augmented 双份存在已确认，但其上界约为 h3 主峰的 9%，预计无法单独达到 20%。
+- H2：现有精确预分配已有 `mallocs=0`、`nz_unneeded=0`，没有支持继续调优的实测信号。
+- H3：ordinary default 不存在额外 unconstrained diagnostic copy；应检查临时 Python/PETSc 引用和异常清理，不应虚构默认矩阵副本。
+- H5/H6：因子化主导，rank-count、ordering、OOC、BLR 是后续最有价值的筛选方向。
+- H7：factor 在 postprocess 保留属实，但只影响尾部平台，不是全局主峰。

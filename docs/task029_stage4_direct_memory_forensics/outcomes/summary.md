@@ -1,44 +1,51 @@
 # Task029 当前总结
 
-## 最新状态
+## 最新状态（2026-07-13，Stage B 完成）
 
-Task028 已合并并通过 master release check；Task29 已从 merge commit `2f9e56d2edddb801780504f681b2ff295d993e02` 建立独立分支。Commit A `8401b44` 已加入可开关的外部采样、阶段 checkpoint、PETSc matrix/factor inventory 和 raw MUMPS API 遥测。h5 baseline 已在 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 完整通过并冻结；h3 尚未运行，h2 保持锁定。物理配置、direct default profile 与 ordinary default 均未改变。
+Task28 已通过 review、合并并推送到 `master`；Task29 从 merge commit `2f9e56d2edddb801780504f681b2ff295d993e02` 建立独立分支。Stage A 遥测和 Stage B 的 h5/h3 MPI4 baseline 均已完成，两个 baseline 都是 full solve、数值 Gate 全通过且 swap-in/swap-out 为 0。ordinary default、物理模型、模式集合、网格和 official R/T/A 路径均未改变，h2 仍锁定。
 
-## Stage B h5 结论
+| 项目 | h5 MPI4 baseline | h3 MPI4 baseline |
+|---|---:|---:|
+| source SHA | `208aaab` | `fba69d8` |
+| FE / auxiliary / augmented rows | 44,698 / 80 / 44,778 | 198,438 / 80 / 198,518 |
+| true residual | `5.225e-12` | `1.382e-11` |
+| max Task28 R/T/A abs delta | `0` | `1.865e-14` |
+| max simultaneous worker RSS | 2328.145 MB | 8651.098 MB |
+| max cgroup current | 1729.035 MB | 8353.727 MB |
+| historical rank-peak upper bound | 2373.371 MB | 8648.613 MB |
+| KSPSetUp / KSPSolve | 1.838 / 0.0467 s | 31.200 / 1.603 s |
+| augmented / factor nnz | 4,896,156 / 33,862,428 | 21,317,860 / 266,127,836 |
+| factor / augmented storage estimate | 6.898× | 12.448× |
+| swap-in / swap-out | 0 / 0 pages | 0 / 0 pages |
 
-| 项目 | h5 结果 |
-|---|---:|
-| full solve / qualification | pass |
-| FE / auxiliary / augmented rows | 44,698 / 80 / 44,778 |
-| true residual | `5.224671064148491e-12` |
-| Task28 R/T/A delta | `0 / 0 / 0` |
-| energy closure | `1.219024881038422e-13` |
-| max simultaneous worker RSS | 2328.145 MB（2.274 GiB） |
-| max cgroup current / kernel peak | 1729.035 / 1757.535 MB |
-| sum-rank historical upper bound | 2373.371 MB（2.318 GiB） |
-| KSPSetUp / KSPSolve | 1.838 / 0.0467 s |
-| swap-in / swap-out | 0 / 0 pages |
+## Stage B 归因
 
-最大同时 worker RSS 和最大 cgroup current 都位于 `during_ksp_setup_peak`。从 `before_ksp_setup` 到该阶段，worker RSS 增加约 945.55 MB，cgroup current 增加约 935.27 MB，说明 h5 的首要压力来自 MUMPS analysis/numeric factorization，而不是 KSPSolve。
+两个网格的主峰都发生在 `during_ksp_setup_peak`，不是 `KSPSolve`、RTA 或 field output：
 
-augmented matrix 为 4,896,156 nnz，factor matrix 为 33,862,428 nnz，直接相除为 6.916 倍；同一 nnz storage estimator 给出 112.406 MB 与 775.391 MB，比例为 6.898。PETSc 对 factor 的 `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，因此这些字段不冒充可用测量；775.391 MB 只是统一估算，不是 MUMPS allocator 实测内存。raw INFOG/RINFOG 只按索引保存，不解释含义。
+- h5：相对 `before_ksp_setup`，KSPSetUp 主峰增加 945.55 MB worker RSS、935.27 MB cgroup memory。
+- h3：相对同一稳定点，KSPSetUp 主峰增加 6472.43 MB worker RSS、6474.57 MB cgroup memory。
+- h3 的 KSPSolve 结束只比 factorized checkpoint 多 6.98 MB worker RSS；official RTA 再增加不足 1 MB；field output 与后处理增加约 129.06 MB worker RSS、112.51 MB cgroup memory，仍低于 KSPSetUp 主峰。
+- h3 在 `A_base` 与 `A_aug` 共存区间相对 variational stage 增加约 729.07 MB worker RSS、754.62 MB cgroup memory；它值得检查生命周期，但只占 8.4%–9.0% 的最终主峰，无法单独解释瓶颈。
+- h3 factor 的统一 nnz storage estimate 为 6092.70 MB，是 augmented matrix 的 12.448 倍；这是结构量级估算，不是 MUMPS allocator 实测值。PETSc 返回的 factor memory/fill 原始字段为 0，因此不冒充可用测量。
 
-Task28 h5 的历史峰值和口径为 2348.297 MB；新完整 checkpoint 上界为 2373.371 MB，相差 25.074 MB（1.068%）。这轮没有优化，差异只用于说明运行噪声和更完整的最终 checkpoint，不能称作内存改善。外部采样还发现 MPI 进程树在 field output 阶段达到 2385.141 MB，但 worker-rank RSS 和 cgroup current 的主峰仍在 KSPSetUp；factor/KSP 在 postprocess 期间尚未释放。
+结论：Task29 的首要瓶颈是 MUMPS analysis/numeric factorization；base/augmented 生命周期与 postprocess 是次要项。若 H1–H3 的低风险公共改动收益不足 10%，应按任务书 Stop B 转向 rank/solver profile，而不是重写装配。
 
-## 环境边界
+## rank-count 诊断
 
-容器镜像为 `myfenics-stage4:task28@sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`。WSL 可见内存约 13.65 GiB，cgroup 未另设硬上限。当前主机只有 16 GB 级物理内存，因此 h3 前必须确认无交换压力，h2 仅可在任务书全部解锁 Gate 满足时运行。
+h5 固定每 rank 1 个线程，MUMPS 同后端 MPI1/2/4 的结果为：
 
-## 比较原则
+| ranks | total threads | worker RSS | 相对 MPI4 | cgroup current | Stage4 时间 |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 1 | 1230.305 MB | -47.16% | 1096.766 MB | 25.969 s |
+| 2 | 2 | 1697.980 MB | -27.07% | 1411.852 MB | 19.286 s |
+| 4 | 4 | 2328.145 MB | baseline | 1729.035 MB | 14.800 s |
 
-主比较只使用同一 FEniCS target 的 Task28 baseline 与 Task29 candidate。COMSOL 的 22.989 GB direct 与 8.992–13.376 GB GMG 结果只作为另一机器、自由四面体、P 偏振、零级端口的定性架构参考，不能作为 FEniCS 的时间、RTA 或每 DoF 效率基准。
+更多 ranks 缩短运行时间，但增加所有进程的总 RSS。MPI2/MUMPS 在 h5 已超过 20% worker-RSS 降幅，且时间代价小于 MPI1，因此选为 h3 的首个低风险候选。单 rank ordinary default 自动落到 PETSc 内置 LU，已单列为不同后端诊断，不与 MUMPS rank scaling 混为同一比较。
 
-详见 [COMSOL 比较边界](comsol_reference_comparability.md)。
+## 与 Task28 口径差异
 
-## Stage A 验证
+Task29 不把历史 rank 峰值之和与同时 RSS 混写。h5 新历史上界比 Task28 高 25.074 MB（1.068%）；h3 高 270.520 MB（3.229%）。差异来自 0.25 s 外部采样、更多完整 checkpoint 和正常运行波动，不是优化收益。所有正式前后比较将以 Task29 的 `max_simultaneous_worker_rss_mb` 为主、cgroup memory 为交叉证据。
 
-Docker 完整轻量回归为 128 passed / 10 skipped，Benchmark checker 为 149/149；ruff、compileall 与文档合同均通过。基线前审计还确认 Task28 原生命周期会让 KSP/factor、system Mat、RHS 和 solution Vec 在 postprocess 期间继续被引用；Commit A 没有提前释放这些对象，避免把基线测低。
+## 当前决策
 
-## 当前停止点
-
-h5 baseline 已冻结，但 Stage B 尚未完成。下一步只能在用户单独确认后运行无 swap 的 h3 baseline；在此之前不进入生命周期、预分配、ordering、OOC 或 BLR 候选，也不解锁 h2。
+Stage B 已闭合，可以进入 Stage C/D/E。下一步按独立归因依次调查 H1/H2/H3/H5/H6/H7；先完成 h5 OOC/BLR 等 profile screening，再只把最多两个候选送入 h3。h2 仅在 h5/h3 同一候选均降低至少 20%、h3 无 swap、预测上界不超过 13.5 GB且 watchdog 就绪时才可能解锁。

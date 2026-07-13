@@ -1,5 +1,27 @@
 # Task029 Run Log
 
+## 最新 checkpoint：Stage B 完成
+
+```text
+h3 artifact = benchmarks/artifacts/cases/050/h3_default_mpi4_20260713T075023Z
+h3 source_sha = fba69d88ea8590ea01537b7561edff1684f25135
+h3 full solve / qualification = pass
+h3 max simultaneous worker RSS = 8651.09765625 MB
+h3 max cgroup current / kernel peak = 8353.7265625 / 8353.734375 MB
+h3 historical rank-peak upper bound = 8648.61328125 MB
+h3 KSPSetUp / KSPSolve = 31.200131237001187 / 1.6025402609993762 s
+h3 augmented/factor nnz = 21317860 / 266127836
+h3 factor/augmented estimated storage ratio = 12.44826029776516
+h3 true residual = 1.3821009358870955e-11
+h3 max Task28 R/T/A abs delta = 1.865174681370263e-14
+h3 swap in/out delta = 0 / 0 pages
+peak stage = during_ksp_setup_peak
+```
+
+h5 固定每 rank 1 thread 的同后端 MUMPS rank 诊断：MPI1 / MPI2 / MPI4 的 max simultaneous worker RSS 分别为 1230.305 / 1697.980 / 2328.145 MB，Stage4 时间分别为 25.969 / 19.286 / 14.800 s。MPI2 相对 MPI4 降低 27.07% worker RSS，作为首个 h3 候选。MPI1 ordinary default 使用 PETSc 内置 LU，单列为不同后端诊断。
+
+Stage B 结论：主瓶颈是 KSPSetUp/MUMPS factorization；h3 factorization 峰值增量约 6472.43 MB worker RSS。h2 仍锁定，下一步进入 H1/H2/H3/H5/H6/H7 独立调查。
+
 ## 0. 执行前必读确认
 
 ```text

@@ -69,9 +69,9 @@ gate 文件必须同时证明 h5/h3 数值通过、两者内存至少降低 20%�
 
 ## 当前证据
 
-Task29 h5 baseline 已在 source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 完整通过：MPI4、p2、44,698 FE DoF、80 auxiliary DoF、default MUMPS，true residual 为 `5.224671064148491e-12`，R/T/A 与 Task28 h5 reference 的差均为 0，swap-in/out 也均为 0。轻量记录见 [`records/h5_baseline.json`](records/h5_baseline.json)。
+Task29 h5/h3 baseline 已分别在 source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135` 完整通过；两者之间只有文档/证据变更。二者均为 MPI4、p2、default MUMPS、full solve，true residual 分别为 `5.224671064148491e-12` 与 `1.3821009358870955e-11`，Task28 R/T/A Gate 和零 swap Gate 均通过。轻量记录见 [`records/h5_baseline.json`](records/h5_baseline.json) 与 [`records/h3_baseline.json`](records/h3_baseline.json)。
 
-h5 的最大同时 worker RSS 为 2328.145 MB，最大 cgroup current 为 1729.035 MB，均出现在 KSPSetUp；factor nnz 为 33,862,428，是 augmented nnz 的 6.916 倍。h3 尚未运行，任何优化候选资格仍须等待 h3 baseline 与 Stage B 完整归因。
+h5/h3 的最大同时 worker RSS 分别为 2328.145 / 8651.098 MB，最大 cgroup current 为 1729.035 / 8353.727 MB，均出现在 KSPSetUp；factor/augmented nnz 比例分别为 6.916 / 12.484。h5 MUMPS MPI1/2/4 rank 诊断显示 MPI2 相对 MPI4 降低 27.07% worker RSS，因此选为首个 h3 候选。Stage B 已完成，h2 仍锁定。
 
 ## 结果解释
 
