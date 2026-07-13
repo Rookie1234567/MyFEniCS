@@ -47,6 +47,7 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | V4 判定 `pass_with_minor_qualifications`；完成三项 metadata/runner 加固并获用户许可后可合并 master |
+| Task029 | Stage4 direct memory forensics | 已写任务书；必须在 Task028 合并后的新 master 分支启动，先 h5/h3 剖析，h2 条件解锁 |
 
 ## 当前任务
 
@@ -55,6 +56,7 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `review_report_v4.md` 已完成；只剩三项轻量加固，等待 `response_v4.md` 与用户合并许可 |
+| Task029 | `task029_stage4_direct_memory_forensics/` | planned；不得在 Task028 分支执行，待 Task028 合并 master 后由 Codex 新建执行分支 |
 
 ## Task28 审计入口
 
@@ -71,6 +73,12 @@
 | `response_v2.md` | Codex V2 回应：五层文档架构、命名 preset、metadata/checker、测试与 2D lossy RTA 修复 |
 | `review_report_v3.md` | ChatGPT V3 审查：修复 Walkthrough 技术错误、扩展可跟随教程、区分 demo/target preset、补 case-contained records/config/run/Gate 和 2D lossy canonical evidence |
 | `response_v3.md` | Codex V3 回应：15 项 P0、3 项 P1、Case002/003 canonical、17 preset、115 tests 与 143/143 Gate |
-| `review_report_v4.md` | ChatGPT V4 最终验收：核心、文档和 Benchmark 通过；要求 tracked-source-clean Gate、真实 image digest 和最终 head checker；建议下一步 Task029 物理网格收敛与 reference qualification |
+| `review_report_v4.md` | ChatGPT V4 最终验收：核心、文档和 Benchmark 通过；要求 tracked-source-clean Gate、真实 image digest 和最终 head checker；建议 Task029 先做 Stage4 直接法内存剖析与公共装配优化 |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 应在同一分支提交 `response_v4.md`；完成三项轻量加固并获得用户明确许可后，Task028 integration branch 可合并 master。
+## Task029 任务入口
+
+| 文件 | 内容 |
+|---|---|
+| [`task029_stage4_direct_memory_forensics/task.md`](task029_stage4_direct_memory_forensics/task.md) | 直接法阶段内存剖析、矩阵/factor inventory、对象生命周期与预分配优化；h5/h3 必跑，h2 仅在显著降内存且预测低于安全上限后解锁 |
+
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Codex 应先在 Task028 同一分支提交 `response_v4.md`；完成三项轻量加固并获得用户明确许可后合并 Task028。Task029 只能从合并后的干净 `master` 创建新执行分支。
