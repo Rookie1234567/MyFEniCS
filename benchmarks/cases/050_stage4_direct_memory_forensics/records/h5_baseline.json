@@ -1,0 +1,164 @@
+{
+  "schema_version": "task029_baseline_summary_v1",
+  "benchmark_id": "task029_direct_h5_default_mpi4",
+  "status": "pass",
+  "metadata": {
+    "commit_sha": "208aaab149ca5c2be0aae09a8d893bfa02e3f8cc",
+    "branch": "codex/20260713-task29-stage4-direct-memory-forensics",
+    "tracked_source_dirty": false,
+    "tracked_source_verification": "host_git_clean_attestation",
+    "timestamp_utc": "20260713T050814Z",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "source_artifact": "benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z",
+    "provenance": "clean_task029_external_sampler_full_direct_run"
+  },
+  "configuration": {
+    "h_nm": 5.0,
+    "mpi_size": 4,
+    "threads_per_rank": 1,
+    "nedelec_degree": 2,
+    "profile": "default",
+    "solver_package": "mumps",
+    "ordering": "backend_default_not_reported",
+    "dtn_order_policy": "auto_propagating",
+    "assemble_only": false
+  },
+  "dimensions": {
+    "n_fe": 44698,
+    "n_aux": 80,
+    "augmented_rows": 44778,
+    "floquet_constraints": 3898,
+    "top_modes": 40,
+    "bottom_modes": 40,
+    "propagating_modes": 80
+  },
+  "qualification": {
+    "process_completed": true,
+    "true_residual_le_1e_8": true,
+    "reference_rta_abs_delta_le_1e_8": true,
+    "energy_closure_abs_le_1e_8": true,
+    "true_residual": 5.224671064148491e-12,
+    "R_total": 0.08902160293644126,
+    "T_total": 0.44258827865712486,
+    "A_volume_total": 0.46839011840655576,
+    "energy_closure_error": 1.219024881038422e-13
+  },
+  "task28_reference": {
+    "benchmark_id": "l3_direct_h5",
+    "commit_sha": "3b3abf0fefd768328ce1cc183518060ec5138bb8",
+    "true_residual": 5.224671064148491e-12,
+    "R_total": 0.08902160293644126,
+    "T_total": 0.44258827865712486,
+    "A_volume_total": 0.46839011840655576,
+    "R_delta": 0.0,
+    "T_delta": 0.0,
+    "A_delta": 0.0,
+    "historical_rank_peak_upper_bound_mb": 2348.296875
+  },
+  "memory": {
+    "poll_interval_seconds": 0.25,
+    "sample_count": 89,
+    "max_simultaneous_worker_rank_rss_sum_mb": 2328.14453125,
+    "max_simultaneous_worker_rank_rss_sum_gib": 2.273578643798828,
+    "max_worker_rss_stage": "during_ksp_setup_peak",
+    "max_mpi_process_tree_rss_mb": 2385.140625,
+    "max_mpi_process_tree_rss_stage": "after_field_output",
+    "max_container_process_rss_sum_mb": 2402.19140625,
+    "max_container_cgroup_current_mb": 1729.03515625,
+    "max_container_cgroup_current_stage": "during_ksp_setup_peak",
+    "container_cgroup_peak_mb": 1757.53515625,
+    "container_cgroup_peak_gib": 1.7163429260253906,
+    "sum_rank_historical_peaks_mb_upper_bound": 2373.37109375,
+    "sum_rank_historical_peaks_gib_upper_bound": 2.3177452087402344,
+    "historical_peak_source": "max_complete_progress_checkpoint_with_solver_summary_fallback",
+    "wsl_pswpin_delta_pages": 0,
+    "wsl_pswpout_delta_pages": 0
+  },
+  "matrix_inventory": {
+    "base": {
+      "matrix_type": "mpiaij",
+      "rows": 44698,
+      "nnz_used": 4840396,
+      "nnz_allocated": 4840396,
+      "nnz_unneeded": 0,
+      "mallocs": 0,
+      "petsc_memory_mb_raw": 0.0,
+      "estimated_storage_mb": 111.12889862060547
+    },
+    "augmented": {
+      "matrix_type": "mpiaij",
+      "rows": 44778,
+      "nnz_used": 4896156,
+      "nnz_allocated": 4896156,
+      "nnz_unneeded": 0,
+      "mallocs": 0,
+      "petsc_memory_mb_raw": 0.0,
+      "estimated_storage_mb": 112.40575408935547
+    }
+  },
+  "factor_inventory": {
+    "available": true,
+    "factor_solver_type": "mumps",
+    "matrix_type": "mumps",
+    "rows": 44778,
+    "nnz_used": 33862428,
+    "nnz_allocated": 33862428,
+    "nnz_unneeded": 0,
+    "mallocs": 0,
+    "petsc_memory_mb_raw": 0.0,
+    "estimated_storage_mb": 775.3911056518555,
+    "petsc_fill_ratio_given_raw": 0.0,
+    "petsc_fill_ratio_needed_raw": 0.0,
+    "petsc_factor_mallocs_raw": 0.0,
+    "backend_fill_and_memory_fields_interpreted_as_available": false,
+    "derived_factor_to_augmented_nnz_ratio": 6.9161252215002955,
+    "derived_factor_to_augmented_estimated_storage_ratio": 6.898144244781887,
+    "mumps_raw_api_available": true,
+    "mumps_raw_infog": {
+      "1": 0, "2": 0, "3": 33865512, "4": 502966, "5": 1542,
+      "6": 1264, "7": 5, "8": -1, "9": 33862428, "10": 503044,
+      "11": 1542, "12": 123, "13": 0, "14": 0, "15": 0,
+      "16": 261, "17": 1012, "18": 261, "19": 1012, "20": 33862428,
+      "21": 226, "22": 866, "23": 0, "24": 1, "25": 0,
+      "26": 148, "27": 550, "28": 0, "29": 33862428, "30": 0,
+      "31": 0, "32": 1, "33": 7, "34": 0, "35": 33862428,
+      "36": 0, "37": 0, "38": 0, "39": 0, "40": 0
+    },
+    "mumps_raw_rinfog": {
+      "1": 21998293114.0, "2": 54152826.0, "3": 21998293114.0,
+      "4": 0.0, "5": 0.0, "6": 0.0, "7": 0.0, "8": 0.0,
+      "9": 0.0, "10": 0.0, "11": 0.0, "12": 0.0, "13": 0.0,
+      "14": 0.0, "15": 541.848192, "16": 0.0, "17": 550.570552,
+      "18": 783.222364, "19": 0.0003297851833483634,
+      "20": 0.0003297851833483634
+    }
+  },
+  "timings_seconds": {
+    "ksp_setup": 1.8376552690006065,
+    "ksp_solve": 0.046669377000398526,
+    "stage4_dtn_port_assembly_and_solve": 14.799822971999674,
+    "postprocess": 2.38690394599962,
+    "worker_to_final_cleanup": 20.881705169999805
+  },
+  "baseline_attribution": {
+    "ksp_setup_worker_rss_increment_mb_from_pre_setup_sample": 945.546875,
+    "ksp_setup_cgroup_current_increment_mb_from_pre_setup_sample": 935.2734375,
+    "augmented_allocation_cgroup_increment_mb_from_variational_stage": 42.35546875,
+    "base_copy_cgroup_increment_mb_from_augmented_allocation_stage": 105.8515625,
+    "task28_historical_upper_bound_delta_mb": 25.07421875,
+    "task28_historical_upper_bound_delta_percent": 1.0677618752952605
+  },
+  "tracked_evidence": {
+    "memory_stage_peaks": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_memory_timeline.csv",
+    "matrix_inventory": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_matrix_inventory.csv",
+    "factorization_summary": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_factorization_summary.csv"
+  },
+  "limitations": [
+    "Worker-rank RSS sums can count shared pages more than once; cgroup charged memory is reported separately.",
+    "PETSc returned zero for factor fill and memory fields, so those fields are retained as raw values but not treated as available measurements.",
+    "The factor storage estimate is a common nnz-based estimator, not allocator-accounted MUMPS memory.",
+    "MUMPS INFOG/RINFOG are retained only by raw index without inferred semantics.",
+    "The h5 baseline alone does not authorize h3, optimization qualification, or h2 launch."
+  ]
+}

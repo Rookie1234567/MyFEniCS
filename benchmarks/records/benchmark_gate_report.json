@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "e89fb632bb4318a739afd1ee702be3a17d109d7c",
+  "checkout_commit": "fba69d88ea8590ea01537b7561edff1684f25135",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 143,
-  "total_count": 143,
+  "passed_count": 149,
+  "total_count": 149,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -96,6 +96,13 @@
       "observed": "complete",
       "expected": "all case-contained contract files exist",
       "evidence": "cases/040_mpi_p_algebra_regression"
+    },
+    {
+      "name": "case_contract:050_stage4_direct_memory_forensics",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/050_stage4_direct_memory_forensics"
     },
     {
       "name": "case_reference:010_3d_stage1_airbox/records/canonical_reference.json",
@@ -234,9 +241,16 @@
       "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
     },
     {
+      "name": "canonical_lightweight_tracked_source_clean:case002_explicit",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
+    },
+    {
       "name": "record_commit_consistent:case002_explicit",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -267,9 +281,16 @@
       "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
     },
     {
+      "name": "canonical_lightweight_tracked_source_clean:case002_auxiliary",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
+    },
+    {
       "name": "record_commit_consistent:case002_auxiliary",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -300,9 +321,16 @@
       "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
     },
     {
+      "name": "canonical_lightweight_tracked_source_clean:case003_tm_lossy",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
+    },
+    {
       "name": "record_commit_consistent:case003_tm_lossy",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -333,9 +361,16 @@
       "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
     },
     {
+      "name": "canonical_lightweight_tracked_source_clean:case003_te_lossy",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
+    },
+    {
       "name": "record_commit_consistent:case003_te_lossy",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -547,6 +582,13 @@
       "passed": true,
       "observed": true,
       "expected": true,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/comparison.json"
+    },
+    {
+      "name": "canonical_lightweight_tracked_source_clean:case002_explicit_vs_auxiliary",
+      "passed": true,
+      "observed": false,
+      "expected": false,
       "evidence": "cases/002_2d_tm_dtn_equivalence/records/comparison.json"
     },
     {

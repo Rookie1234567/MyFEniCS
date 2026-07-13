@@ -18,6 +18,7 @@
 8. 禁止整体合并大型 research branch；ordinary solver default 不得静默改变；未通过最终 review 前不合并 `master`。
 9. Codex 不得删除或改写 ChatGPT 的 `task.md`、`review_report*.md`；需要纠正时新增 response，而不是覆盖审查记录。
 10. solver 成功使用 full explicit true residual 判断，official R/T/A 只能从通过 residual Gate 的场计算。
+11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；详细档案与项目级回顾都不可省略，一句状态或纯链接不构成完成。完整框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -26,7 +27,8 @@
 | 文件 | 内容 |
 |---|---|
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
-| [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
+| [`task_retrospective_standard.md`](task_retrospective_standard.md) | 从 Task029 起适用于所有新 Task 的阶段回顾标准：背景、基线、方法、结果、解释、负结果、决策、局限、下一步与证据入口 |
+| [`development_progress.md`](development_progress.md) | Task000 起的项目发展时间线；每个新 Task 必须按阶段回顾标准留下可理解的结构化记录 |
 | [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态，以及 Quick Start、Theory、Walkthrough、Benchmark 映射 |
 | [`quick_start.md`](quick_start.md) | 全局 Docker/benchmark 最短入口；详细功能教程见 [`../notes/quick_start/README.md`](../notes/quick_start/README.md) |
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
@@ -46,8 +48,9 @@
 | Task020-Task025 | wave-aware、FE response、Schur、cached-Q | 研究机制与基础设施，未达production |
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
-| Task028 | 阶段收口、选择性整合、benchmark | V4 三项加固已完成，148/148 Gate；已获用户合并许可 |
-| Task029 | Stage4 direct memory forensics | 已写任务书和强制 COMSOL 参考补充；必须在 Task028 合并后的新 master 分支启动，先 h5/h3 剖析，h2 条件解锁 |
+| Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
+| Task029 | Stage4 direct memory forensics | `diagnostic_success`；engineering_success=no；当前 image threaded direct unavailable；V2 技术通过，用户已许可合并 |
+| Task030 | multilevel H(curl) low-memory iterative solver | planned；多 lane 漏斗探索，h5→h3→条件式单个 h2，Task029 合并后才能启动 |
 
 ## 当前任务
 
@@ -55,8 +58,9 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `response_v4.md` 已关闭 M1–M3；允许合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | planned；有效任务规范为 `task.md + task_comsol_reference_addendum.md`，不得在 Task028 分支执行 |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
+| Task029 | `task029_stage4_direct_memory_forensics/` | `review_report_v2.md` 技术通过；`response_v2.md` 已同步最终状态，用户已许可合并 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | planned；不得在 Task029 分支执行，必须从合并 Task029 后的 clean master 新开 Codex 分支 |
 
 ## Task28 审计入口
 
@@ -76,12 +80,27 @@
 | `review_report_v4.md` | ChatGPT V4 最终验收：核心、文档和 Benchmark 通过；要求 tracked-source-clean Gate、真实 image digest 和最终 head checker；建议 Task029 先做 Stage4 直接法内存剖析与公共装配优化 |
 | `response_v4.md` | Codex V4 回应：5 项 tracked-source-clean Gate、runner 强制真实 digest、148/148 checker 与最终实现提交验证 |
 
-## Task029 任务入口
+## Task029 任务与审查入口
 
 | 文件 | 内容 |
 |---|---|
 | [`task029_stage4_direct_memory_forensics/task.md`](task029_stage4_direct_memory_forensics/task.md) | 直接法阶段内存剖析、矩阵/factor inventory、对象生命周期与预分配优化；h5/h3 必跑，h2 仅在显著降内存且预测低于安全上限后解锁 |
 | [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | 强制补充：COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 必须保留 `auto_propagating` 全传播衍射级，不比较跨机器时间 |
 | [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL 117.8 万 DoF、MUMPS 与 GMG 内存报告，供 Task029/后续多层迭代研究参考 |
+| [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5/h3 baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run 总结 |
+| [`task029_stage4_direct_memory_forensics/review_report_v1.md`](task029_stage4_direct_memory_forensics/review_report_v1.md) | ChatGPT V1 审查：接受内存诊断，要求条件式线程验证和项目级文档收口 |
+| [`task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md`](task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md) | P0-C 长期补充：从 Task029 起，每个 Task 必须按统一框架维护 outcomes summary 和 development progress，并增加合同测试 |
+| [`task029_stage4_direct_memory_forensics/response_v1.md`](task029_stage4_direct_memory_forensics/response_v1.md) | Codex V1 回应：线程能力审计、结构化阶段回顾、长期合同和项目文档同步 |
+| [`task029_stage4_direct_memory_forensics/review_report_v2.md`](task029_stage4_direct_memory_forensics/review_report_v2.md) | ChatGPT V2 最终技术审查：停止 direct 微调；遥测/清理/合同可合并，性能候选不得提升；只剩 response_v2 状态同步 |
+| [`task029_stage4_direct_memory_forensics/response_v2.md`](task029_stage4_direct_memory_forensics/response_v2.md) | Codex V2 收口：统一最终身份、记录轻量复核和用户合并许可，不新增重型 direct 实验 |
+| [`task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md`](task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md) | PETSc/MUMPS/OpenBLAS 链路、固定四核 h5 矩阵与 `unavailable_in_current_image` 结论 |
+| [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 建议保留的遥测/低风险代码与不得提升的 direct profiles |
+| [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | G3/G5/G7/G9 阻塞、18.882–27.913 GiB 预测与 not-run 决策 |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Task28 的 `response_v4.md` 已完成，三项轻量加固与用户许可均已具备。Task029 只能从 Task28 合并后的干净 `master` 创建新执行分支，并必须同时阅读 Task29 的主任务书、COMSOL 强制补充和参考报告。
+## Task030 任务入口
+
+| 文件 | 内容 |
+|---|---|
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/task.md`](task030_multilevel_hcurl_low_memory_iterative_solver/task.md) | 多路线 H(curl) 低内存迭代任务书：嵌套/半粗化网格、p/h hierarchy、polynomial/patch/Vanka smoother、shifted-level AMS/HX、全 80 模态 DtN 低秩 Schur、wave-aware 原型与 Krylov 优化；正反馈持续推进，h2 严格条件解锁 |
+
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。Task030 只允许在 Task029 合并后的 clean master 上由 Codex 创建新分支执行。

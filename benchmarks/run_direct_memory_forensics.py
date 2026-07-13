@@ -1,0 +1,1033 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import math
+import os
+import subprocess
+import sys
+import time
+from dataclasses import replace
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "050"
+REFERENCE_RECORDS = {
+    5.0: ROOT / "benchmarks" / "records" / "direct_p2_h5_mpi4.json",
+    3.0: ROOT / "benchmarks" / "records" / "direct_p2_h3_mpi4.json",
+    2.0: ROOT / "benchmarks" / "records" / "direct_p2_h2_reviewed_reference.json",
+}
+TIMELINE_FIELDS = (
+    "timestamp_utc",
+    "elapsed_seconds",
+    "stage",
+    "stage_status",
+    "worker_rank_rss_sum_mb",
+    "mpi_process_tree_rss_mb",
+    "container_process_rss_sum_mb",
+    "worker_rank_rss_mb_json",
+    "worker_rank_cpu_affinity_json",
+    "worker_rank_thread_count_sum",
+    "mpi_process_tree_thread_count",
+    "worker_rank_cpu_seconds",
+    "mpi_process_tree_cpu_seconds",
+    "worker_rank_cpu_core_equivalents",
+    "mpi_process_tree_cpu_core_equivalents",
+    "container_cgroup_current_mb",
+    "container_cgroup_peak_mb",
+    "container_swap_current_mb",
+    "wsl_pswpin_pages",
+    "wsl_pswpout_pages",
+    "ooc_scratch_file_count",
+    "ooc_scratch_bytes",
+    "mpi_process_tree_read_bytes",
+    "mpi_process_tree_write_bytes",
+    "mpi_process_tree_blkio_delay_seconds",
+)
+
+
+def _git(*args: str) -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", *args], cwd=ROOT, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _source_provenance(args: argparse.Namespace) -> dict[str, Any]:
+    """Verify source cleanliness without misreading Windows CRLF in Linux."""
+
+    head = _git("rev-parse", "HEAD")
+    if head is None:
+        raise SystemExit("Cannot resolve the source commit with git.")
+    if args.verified_clean_sha is not None:
+        verified = args.verified_clean_sha.strip().lower()
+        if len(verified) != 40 or any(
+            char not in "0123456789abcdef" for char in verified
+        ):
+            raise SystemExit(
+                "Host clean-source attestation must be a full 40-character Git SHA."
+            )
+        if head.lower() != verified:
+            raise SystemExit(
+                "Host clean-source attestation does not match the mounted checkout: "
+                f"expected {verified}, mounted HEAD is {head}."
+            )
+        return {
+            "commit_sha": head,
+            "tracked_source_dirty": False,
+            "tracked_source_verification": "host_git_clean_attestation",
+            "verified_clean_sha": verified,
+        }
+
+    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    if tracked_status is None:
+        raise SystemExit("Cannot verify tracked-source cleanliness with git.")
+    if tracked_status:
+        raise SystemExit(
+            "Tracked source is dirty. Commit telemetry/candidate code before baseline runs."
+        )
+    return {
+        "commit_sha": head,
+        "tracked_source_dirty": False,
+        "tracked_source_verification": "local_git_status",
+        "verified_clean_sha": None,
+    }
+
+
+def _read_number(path: Path, *, scale: float = 1.0) -> float | str | None:
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if value == "max":
+        return value
+    try:
+        return float(value) / scale
+    except ValueError:
+        return None
+
+
+def _cgroup_snapshot() -> dict[str, float | str | None]:
+    root = Path("/sys/fs/cgroup")
+    scale = 1024.0 * 1024.0
+    return {
+        "container_cgroup_current_mb": _read_number(
+            root / "memory.current", scale=scale
+        ),
+        "container_cgroup_peak_mb": _read_number(root / "memory.peak", scale=scale),
+        "container_swap_current_mb": _read_number(
+            root / "memory.swap.current", scale=scale
+        ),
+    }
+
+
+def _vmstat_swap_pages() -> tuple[int | None, int | None]:
+    path = Path("/proc/vmstat")
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return None, None
+    values: dict[str, int] = {}
+    for line in lines:
+        parts = line.split()
+        if len(parts) == 2 and parts[0] in {"pswpin", "pswpout"}:
+            try:
+                values[parts[0]] = int(parts[1])
+            except ValueError:
+                pass
+    return values.get("pswpin"), values.get("pswpout")
+
+
+def _read_processes() -> dict[int, dict[str, Any]]:
+    processes: dict[int, dict[str, Any]] = {}
+    proc = Path("/proc")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        try:
+            status_lines = (
+                (entry / "status")
+                .read_text(encoding="utf-8", errors="ignore")
+                .splitlines()
+            )
+        except OSError:
+            continue
+        fields: dict[str, str] = {}
+        for line in status_lines:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                fields[key] = value.strip()
+        try:
+            ppid = int(fields.get("PPid", "0"))
+        except ValueError:
+            ppid = 0
+        try:
+            thread_count = int(fields.get("Threads", "1"))
+        except ValueError:
+            thread_count = 1
+        rss_parts = fields.get("VmRSS", "0 kB").split()
+        try:
+            rss_mb = float(rss_parts[0]) / 1024.0
+        except (ValueError, IndexError):
+            rss_mb = 0.0
+        try:
+            cmdline = (
+                (entry / "cmdline")
+                .read_bytes()
+                .replace(b"\0", b" ")
+                .decode("utf-8", errors="ignore")
+            )
+        except OSError:
+            cmdline = ""
+        io_fields: dict[str, int] = {}
+        try:
+            for line in (entry / "io").read_text(encoding="utf-8", errors="ignore").splitlines():
+                if ":" not in line:
+                    continue
+                key, value = line.split(":", 1)
+                if key in {"read_bytes", "write_bytes"}:
+                    io_fields[key] = int(value.strip())
+        except (OSError, ValueError):
+            pass
+        blkio_delay_seconds = 0.0
+        cpu_seconds = 0.0
+        try:
+            stat_text = (entry / "stat").read_text(encoding="utf-8", errors="ignore")
+            fields_after_comm = stat_text[stat_text.rfind(")") + 2 :].split()
+            cpu_ticks = int(fields_after_comm[11]) + int(fields_after_comm[12])
+            cpu_seconds = cpu_ticks / float(os.sysconf("SC_CLK_TCK"))
+            blkio_delay_ticks = int(fields_after_comm[39])
+            blkio_delay_seconds = blkio_delay_ticks / float(os.sysconf("SC_CLK_TCK"))
+        except (OSError, ValueError, IndexError):
+            pass
+        rank: int | None = None
+        if "--worker" in cmdline:
+            try:
+                environment = (entry / "environ").read_bytes().split(b"\0")
+            except OSError:
+                environment = []
+            for item in environment:
+                for key in (
+                    b"OMPI_COMM_WORLD_RANK=",
+                    b"PMI_RANK=",
+                    b"PMIX_RANK=",
+                ):
+                    if item.startswith(key):
+                        try:
+                            rank = int(item[len(key) :])
+                        except ValueError:
+                            rank = None
+                        break
+                if rank is not None:
+                    break
+        processes[pid] = {
+            "pid": pid,
+            "ppid": ppid,
+            "rss_mb": rss_mb,
+            "cpu_affinity": fields.get("Cpus_allowed_list", "unknown"),
+            "thread_count": thread_count,
+            "cpu_seconds": cpu_seconds,
+            "cmdline": cmdline,
+            "worker_rank": rank,
+            "read_bytes": io_fields.get("read_bytes", 0),
+            "write_bytes": io_fields.get("write_bytes", 0),
+            "blkio_delay_seconds": blkio_delay_seconds,
+        }
+    return processes
+
+
+def _descendants(processes: dict[int, dict[str, Any]], root_pid: int) -> set[int]:
+    selected = {root_pid}
+    changed = True
+    while changed:
+        changed = False
+        for pid, item in processes.items():
+            if pid not in selected and item["ppid"] in selected:
+                selected.add(pid)
+                changed = True
+    return selected
+
+
+def _latest_stage(progress_path: Path) -> tuple[str, str]:
+    try:
+        lines = progress_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return "process_start", "waiting_for_progress"
+    for line in reversed(lines):
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        return str(payload.get("stage", "unknown")), str(
+            payload.get("status", "unknown")
+        )
+    return "process_start", "waiting_for_progress"
+
+
+def _directory_usage(path: Path) -> tuple[int, int]:
+    """Return a best-effort file count and byte total while OOC files churn."""
+
+    count = 0
+    total = 0
+    try:
+        entries = list(path.rglob("*")) if path.is_dir() else []
+    except OSError:
+        entries = []
+    for entry in entries:
+        try:
+            if entry.is_file():
+                count += 1
+                total += entry.stat().st_size
+        except OSError:
+            continue
+    return count, total
+
+
+def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any]:
+    processes = _read_processes()
+    tree = _descendants(processes, root_pid)
+    worker_ranks = sorted(
+        (
+            {
+                "rank": item["worker_rank"],
+                "pid": item["pid"],
+                "rss_mb": item["rss_mb"],
+                "cpu_affinity": item["cpu_affinity"],
+                "thread_count": item["thread_count"],
+                "cpu_seconds": item["cpu_seconds"],
+            }
+            for item in processes.values()
+            if item["worker_rank"] is not None
+        ),
+        key=lambda item: (item["rank"], item["pid"]),
+    )
+    stage, stage_status = _latest_stage(progress_path)
+    pswpin, pswpout = _vmstat_swap_pages()
+    ooc_file_count, ooc_bytes = _directory_usage(
+        progress_path.parent / "mumps_ooc_files"
+    )
+    row: dict[str, Any] = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "elapsed_seconds": elapsed,
+        "stage": stage,
+        "stage_status": stage_status,
+        "worker_rank_rss_sum_mb": sum(item["rss_mb"] for item in worker_ranks),
+        "mpi_process_tree_rss_mb": sum(
+            processes[pid]["rss_mb"] for pid in tree if pid in processes
+        ),
+        "container_process_rss_sum_mb": sum(
+            item["rss_mb"] for item in processes.values()
+        ),
+        "worker_rank_rss_mb_json": json.dumps(worker_ranks, separators=(",", ":")),
+        "worker_rank_cpu_affinity_json": json.dumps(
+            [
+                {"rank": item["rank"], "cpu_affinity": item["cpu_affinity"]}
+                for item in worker_ranks
+            ],
+            separators=(",", ":"),
+        ),
+        "worker_rank_thread_count_sum": sum(
+            item["thread_count"] for item in worker_ranks
+        ),
+        "mpi_process_tree_thread_count": sum(
+            processes[pid]["thread_count"] for pid in tree if pid in processes
+        ),
+        "worker_rank_cpu_seconds": sum(item["cpu_seconds"] for item in worker_ranks),
+        "mpi_process_tree_cpu_seconds": sum(
+            processes[pid]["cpu_seconds"] for pid in tree if pid in processes
+        ),
+        "worker_rank_cpu_core_equivalents": 0.0,
+        "mpi_process_tree_cpu_core_equivalents": 0.0,
+        "wsl_pswpin_pages": pswpin,
+        "wsl_pswpout_pages": pswpout,
+        "ooc_scratch_file_count": ooc_file_count,
+        "ooc_scratch_bytes": ooc_bytes,
+        "mpi_process_tree_read_bytes": sum(
+            processes[pid]["read_bytes"] for pid in tree if pid in processes
+        ),
+        "mpi_process_tree_write_bytes": sum(
+            processes[pid]["write_bytes"] for pid in tree if pid in processes
+        ),
+        "mpi_process_tree_blkio_delay_seconds": sum(
+            processes[pid]["blkio_delay_seconds"] for pid in tree if pid in processes
+        ),
+    }
+    row.update(_cgroup_snapshot())
+    return row
+
+
+def _add_cpu_core_equivalents(
+    row: dict[str, Any], previous: dict[str, Any] | None
+) -> None:
+    """Convert cumulative /proc CPU time into average used cores per interval."""
+
+    if previous is None:
+        return
+    elapsed = float(row["elapsed_seconds"]) - float(previous["elapsed_seconds"])
+    if elapsed <= 0.0:
+        return
+    for scope in ("worker_rank", "mpi_process_tree"):
+        current_cpu = float(row[f"{scope}_cpu_seconds"])
+        previous_cpu = float(previous[f"{scope}_cpu_seconds"])
+        row[f"{scope}_cpu_core_equivalents"] = max(
+            0.0, (current_cpu - previous_cpu) / elapsed
+        )
+
+
+def _cpu_affinity_count(specification: str | None) -> int | None:
+    if not specification:
+        return None
+    cpus: set[int] = set()
+    try:
+        for part in specification.split(","):
+            bounds = part.strip().split("-", 1)
+            first = int(bounds[0])
+            last = int(bounds[-1])
+            if first < 0 or last < first:
+                return None
+            cpus.update(range(first, last + 1))
+    except ValueError:
+        return None
+    return len(cpus)
+
+
+def _stage_peaks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row["stage"]), []).append(row)
+    return [
+        {
+            "stage": stage,
+            "samples": len(stage_rows),
+            "max_worker_rank_rss_sum_mb": max(
+                float(row["worker_rank_rss_sum_mb"]) for row in stage_rows
+            ),
+            "max_mpi_process_tree_rss_mb": max(
+                float(row["mpi_process_tree_rss_mb"]) for row in stage_rows
+            ),
+            "max_container_cgroup_current_mb": max(
+                float(row["container_cgroup_current_mb"] or 0.0) for row in stage_rows
+            ),
+            "max_worker_rank_thread_count_sum": max(
+                int(row["worker_rank_thread_count_sum"]) for row in stage_rows
+            ),
+            "max_worker_rank_cpu_core_equivalents": max(
+                float(row["worker_rank_cpu_core_equivalents"]) for row in stage_rows
+            ),
+            "mean_worker_rank_cpu_core_equivalents": sum(
+                float(row["worker_rank_cpu_core_equivalents"]) for row in stage_rows
+            )
+            / len(stage_rows),
+        }
+        for stage, stage_rows in grouped.items()
+    ]
+
+
+def _historical_peak_upper_bound(
+    progress_events: list[dict[str, Any]], solver_summary: dict[str, Any]
+) -> float | None:
+    """Return the largest complete rank-historical upper bound available."""
+
+    values: list[float] = []
+    for event in progress_events:
+        value = event.get("sum_rank_historical_peaks_mb_upper_bound")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            values.append(float(value))
+    for field in ("sum_rank_historical_peaks_mb_upper_bound", "total_peak_rss_mb"):
+        value = solver_summary.get(field)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            values.append(float(value))
+    return max(values) if values else None
+
+
+def _enrich_factor_inventory(
+    factor_inventory: dict[str, Any] | None,
+    augmented_matrix_stats: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Add transparent algebraic ratios without assigning MUMPS index semantics."""
+
+    if factor_inventory is None:
+        return None
+    enriched = dict(factor_inventory)
+    factor_stats = factor_inventory.get("matrix_stats") or {}
+    augmented_stats = augmented_matrix_stats or {}
+    factor_nnz = factor_stats.get("matrix_nnz_used")
+    augmented_nnz = augmented_stats.get("matrix_nnz_used")
+    factor_estimate = factor_stats.get("matrix_memory_estimate_mb")
+    augmented_estimate = augmented_stats.get("matrix_memory_estimate_mb")
+    enriched["derived_ratios"] = {
+        "factor_to_augmented_nnz_ratio": (
+            float(factor_nnz) / float(augmented_nnz)
+            if isinstance(factor_nnz, (int, float))
+            and isinstance(augmented_nnz, (int, float))
+            and float(augmented_nnz) > 0.0
+            else None
+        ),
+        "factor_to_augmented_estimated_storage_ratio": (
+            float(factor_estimate) / float(augmented_estimate)
+            if isinstance(factor_estimate, (int, float))
+            and isinstance(augmented_estimate, (int, float))
+            and float(augmented_estimate) > 0.0
+            else None
+        ),
+        "semantics": (
+            "Ratios are algebraically derived from PETSc-reported nnz and the "
+            "same matrix-storage estimator; they are not inferred MUMPS INFOG/RINFOG meanings."
+        ),
+    }
+    return enriched
+
+
+def _two_point_power_law_prediction(
+    x_low: float,
+    y_low: float,
+    x_high: float,
+    y_high: float,
+    x_target: float,
+) -> dict[str, float]:
+    """Fit y = c*x**p through two positive observations and extrapolate."""
+    values = (x_low, y_low, x_high, y_high, x_target)
+    if any(value <= 0.0 for value in values):
+        raise ValueError("Power-law prediction inputs must be positive.")
+    if x_low == x_high:
+        raise ValueError("Power-law observations must use distinct x values.")
+    exponent = math.log(y_high / y_low) / math.log(x_high / x_low)
+    prediction = y_high * (x_target / x_high) ** exponent
+    return {"exponent": exponent, "prediction": prediction}
+
+
+def _read_progress_events(path: Path) -> list[dict[str, Any]]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    events: list[dict[str, Any]] = []
+    for line in lines:
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return events
+
+
+def _factor_inventory_from_progress(events: list[dict[str, Any]]) -> Any:
+    for event in reversed(events):
+        if event.get("stage") == "after_ksp_setup_factorized":
+            return event.get("factor_inventory")
+    return None
+
+
+def _task28_reference(h_nm: float) -> dict[str, Any]:
+    path = REFERENCE_RECORDS[h_nm]
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _numeric_gate(
+    solver_summary: dict[str, Any], reference: dict[str, Any], return_code: int
+) -> dict[str, Any]:
+    tolerance = 1.0e-8
+    deltas: dict[str, float | None] = {}
+    for key in ("R_total", "T_total", "A_volume_total"):
+        actual = solver_summary.get(key)
+        expected = reference.get(key)
+        deltas[key] = (
+            None
+            if actual is None or expected is None
+            else float(actual) - float(expected)
+        )
+    residual = solver_summary.get("linear_system_relative_residual")
+    closure = solver_summary.get("energy_closure_error_port_volume")
+    checks = {
+        "process_completed": return_code == 0,
+        "true_residual_le_1e-8": residual is not None and float(residual) <= tolerance,
+        "reference_rta_abs_delta_le_1e-8": all(
+            value is not None and abs(value) <= tolerance for value in deltas.values()
+        ),
+        "energy_closure_abs_le_1e-8": closure is not None
+        and abs(float(closure)) <= tolerance,
+    }
+    return {
+        "status": "pass" if all(checks.values()) else "failed",
+        "checks": checks,
+        "task28_reference_delta": deltas,
+        "tolerance": tolerance,
+    }
+
+
+def _task29_direct_config(args: argparse.Namespace):
+    from src.common.config_3d import target_stage4_config
+
+    extra_options = json.loads(args.petsc_options_json)
+    cfg = target_stage4_config(degree=2, h_nm=args.h_nm)
+    return replace(
+        cfg,
+        petsc_direct_solver_profile=args.profile,
+        petsc_extra_options=extra_options,
+        direct_release_base_after_augmentation=args.release_base_after_augmentation,
+        matrix_diagnostics_assemble_only=False,
+        unique_output=False,
+    )
+
+
+def _worker(args: argparse.Namespace) -> int:
+    from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
+        run_stage4b_block_grating_3d_case,
+    )
+
+    cfg = _task29_direct_config(args)
+    run_stage4b_block_grating_3d_case(cfg, args.run_dir)
+    return 0
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run and sample Task029 Stage4 direct-memory candidates."
+    )
+    parser.add_argument("--h-nm", type=float, choices=(5.0, 3.0, 2.0), required=True)
+    parser.add_argument("--mpi-size", type=int, default=4)
+    parser.add_argument(
+        "--threads-per-rank",
+        type=int,
+        default=1,
+        help=(
+            "OpenBLAS pthread workers per MPI rank; OpenMP remains fixed at one "
+            "to prevent nested threading."
+        ),
+    )
+    parser.add_argument(
+        "--cpu-affinity",
+        help=(
+            "Optional taskset CPU list, for example 0-3. When supplied, OpenMPI "
+            "rank binding is disabled so BLAS threads share exactly this CPU budget."
+        ),
+    )
+    parser.add_argument(
+        "--profile", choices=("default", "mumps_ooc", "mumps_blr"), default="default"
+    )
+    parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
+    parser.add_argument("--run-dir", type=Path)
+    parser.add_argument("--record", type=Path)
+    parser.add_argument("--poll-interval", type=float, default=0.25)
+    parser.add_argument("--petsc-options-json", default="{}")
+    parser.add_argument("--release-base-after-augmentation", action="store_true")
+    parser.add_argument("--h2-gate-json", type=Path)
+    parser.add_argument(
+        "--verified-clean-sha",
+        default=os.environ.get("TASK029_VERIFIED_CLEAN_SHA"),
+        help=(
+            "Clean HEAD attested by the host immediately before a Docker bind-mount run; "
+            "avoids Linux Git treating Windows CRLF as source edits."
+        ),
+    )
+    parser.add_argument("--worker", action="store_true")
+    return parser.parse_args(argv)
+
+
+def _validate_h2_gate(args: argparse.Namespace) -> None:
+    if args.h_nm != 2.0:
+        return
+    if args.h2_gate_json is None or not args.h2_gate_json.is_file():
+        raise SystemExit("h=2 is locked: provide a passing --h2-gate-json record.")
+    gate = json.loads(args.h2_gate_json.read_text(encoding="utf-8"))
+    required = (
+        "h5_numeric_pass",
+        "h3_numeric_pass",
+        "h5_memory_reduction_20pct",
+        "h3_memory_reduction_20pct",
+        "h3_no_swap",
+        "prediction_upper_le_13p5_gb",
+        "current_memory_margin_pass",
+        "single_qualified_profile",
+        "watchdog_enabled",
+        "task28_h2_record_untouched",
+    )
+    failed = [key for key in required if gate.get(key) is not True]
+    if failed:
+        raise SystemExit(f"h=2 remains locked; failed gates: {failed}")
+
+
+def _run_parent(args: argparse.Namespace) -> int:
+    _validate_h2_gate(args)
+    if args.mpi_size < 1 or args.threads_per_rank < 1:
+        raise SystemExit("MPI size and threads per rank must both be positive.")
+    affinity_cpu_count = _cpu_affinity_count(args.cpu_affinity)
+    if args.cpu_affinity and affinity_cpu_count is None:
+        raise SystemExit("--cpu-affinity must be a comma/range CPU list such as 0-3.")
+    source_provenance = _source_provenance(args)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    lifecycle_suffix = "_release_base" if args.release_base_after_augmentation else ""
+    thread_suffix = f"_t{args.threads_per_rank}"
+    affinity_suffix = (
+        f"_cpu{args.cpu_affinity.replace(',', '-').replace(' ', '')}"
+        if args.cpu_affinity
+        else ""
+    )
+    run_dir = args.run_dir or (
+        args.artifact_root
+        / (
+            f"h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{thread_suffix}"
+            f"{affinity_suffix}{lifecycle_suffix}_{timestamp}"
+        )
+    )
+    run_dir = run_dir.resolve()
+    run_dir.mkdir(parents=True, exist_ok=False)
+    progress_path = run_dir / "progress_3d.jsonl"
+    timeline_path = run_dir / "memory_timeline.csv"
+    stdout_path = run_dir / "worker_stdout.txt"
+    mpi_command = [
+        "mpiexec",
+    ]
+    if args.cpu_affinity:
+        mpi_command.extend(["--bind-to", "none"])
+    mpi_command.extend([
+        "-n",
+        str(args.mpi_size),
+        sys.executable,
+        "-m",
+        "benchmarks.run_direct_memory_forensics",
+        "--worker",
+        "--h-nm",
+        str(args.h_nm),
+        "--profile",
+        args.profile,
+        "--threads-per-rank",
+        str(args.threads_per_rank),
+        "--run-dir",
+        str(run_dir),
+        "--petsc-options-json",
+        args.petsc_options_json,
+    ])
+    command = (
+        ["taskset", "-c", args.cpu_affinity, *mpi_command]
+        if args.cpu_affinity
+        else mpi_command
+    )
+    if args.release_base_after_augmentation:
+        command.append("--release-base-after-augmentation")
+    worker_environment = os.environ.copy()
+    worker_environment.update(
+        {
+            "OMP_NUM_THREADS": "1",
+            "OMP_DYNAMIC": "FALSE",
+            "OMP_MAX_ACTIVE_LEVELS": "1",
+            "OMP_DISPLAY_ENV": "VERBOSE",
+            "OPENBLAS_NUM_THREADS": str(args.threads_per_rank),
+            "GOTO_NUM_THREADS": str(args.threads_per_rank),
+            "MKL_NUM_THREADS": "1",
+            "MKL_DYNAMIC": "FALSE",
+            "NUMEXPR_NUM_THREADS": "1",
+            "BLIS_NUM_THREADS": "1",
+        }
+    )
+    started = time.perf_counter()
+    rows: list[dict[str, Any]] = []
+    with stdout_path.open("w", encoding="utf-8") as stdout:
+        process = subprocess.Popen(
+            command,
+            cwd=ROOT,
+            stdout=stdout,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=worker_environment,
+        )
+        last_stage = ""
+        previous_row: dict[str, Any] | None = None
+        while True:
+            row = _sample(process.pid, progress_path, time.perf_counter() - started)
+            _add_cpu_core_equivalents(row, previous_row)
+            rows.append(row)
+            previous_row = row
+            if row["stage"] != last_stage:
+                (run_dir / "memory_stage.txt").write_text(
+                    f"{row['stage']} {row['stage_status']}\n", encoding="utf-8"
+                )
+                last_stage = str(row["stage"])
+            if process.poll() is not None:
+                break
+            time.sleep(max(args.poll_interval, 0.05))
+        return_code = int(process.returncode or 0)
+
+    with timeline_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=TIMELINE_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    summary_path = run_dir / "run_summary.json"
+    solver_summary = (
+        json.loads(summary_path.read_text(encoding="utf-8"))
+        if summary_path.is_file()
+        else {}
+    )
+    progress_events = _read_progress_events(progress_path)
+    factor_inventory = _factor_inventory_from_progress(progress_events)
+    reference = _task28_reference(args.h_nm)
+    numeric_gate = _numeric_gate(solver_summary, reference, return_code)
+    extra_options = json.loads(args.petsc_options_json)
+    pswpin_values = [
+        int(row["wsl_pswpin_pages"])
+        for row in rows
+        if row.get("wsl_pswpin_pages") is not None
+    ]
+    pswpout_values = [
+        int(row["wsl_pswpout_pages"])
+        for row in rows
+        if row.get("wsl_pswpout_pages") is not None
+    ]
+    sampler_summary = {
+        "poll_interval_seconds": args.poll_interval,
+        "sample_count": len(rows),
+        "max_simultaneous_total_rss_mb": max(
+            (float(row["worker_rank_rss_sum_mb"]) for row in rows), default=0.0
+        ),
+        "max_mpi_process_tree_rss_mb": max(
+            (float(row["mpi_process_tree_rss_mb"]) for row in rows), default=0.0
+        ),
+        "max_container_process_rss_sum_mb": max(
+            (float(row["container_process_rss_sum_mb"]) for row in rows),
+            default=0.0,
+        ),
+        "max_container_cgroup_current_mb": max(
+            (float(row["container_cgroup_current_mb"] or 0.0) for row in rows),
+            default=0.0,
+        ),
+        "container_cgroup_peak_mb_at_end": (
+            rows[-1].get("container_cgroup_peak_mb") if rows else None
+        ),
+        "wsl_pswpin_delta_pages": (
+            max(pswpin_values) - min(pswpin_values) if pswpin_values else None
+        ),
+        "wsl_pswpout_delta_pages": (
+            max(pswpout_values) - min(pswpout_values) if pswpout_values else None
+        ),
+        "max_ooc_scratch_file_count": max(
+            (int(row["ooc_scratch_file_count"]) for row in rows), default=0
+        ),
+        "max_ooc_scratch_bytes": max(
+            (int(row["ooc_scratch_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_read_bytes": max(
+            (int(row["mpi_process_tree_read_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_write_bytes": max(
+            (int(row["mpi_process_tree_write_bytes"]) for row in rows), default=0
+        ),
+        "max_mpi_process_tree_blkio_delay_seconds": max(
+            (float(row["mpi_process_tree_blkio_delay_seconds"]) for row in rows),
+            default=0.0,
+        ),
+        "ooc_io_semantics": (
+            "Scratch bytes are simultaneous directory usage. Process-tree I/O bytes and "
+            "block-I/O delay are maximum observed cumulative counters for live descendants; "
+            "block-I/O delay is summed process time, not wall time."
+        ),
+        "stage_peaks": _stage_peaks(rows),
+        "timeline": str(timeline_path.relative_to(ROOT)),
+    }
+    (run_dir / "memory_sampler_summary.json").write_text(
+        json.dumps(sampler_summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    matrix_transform = solver_summary.get("constraint_matrix_transform") or {}
+    augmented_matrix_stats = solver_summary.get(
+        "stage4_dtn_augmented_matrix_stats_after_finalize"
+    )
+    factor_inventory = _enrich_factor_inventory(
+        factor_inventory, augmented_matrix_stats
+    )
+    record = {
+        "benchmark_id": (
+            f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}"
+            f"{thread_suffix}{affinity_suffix}{lifecycle_suffix}"
+        ),
+        "status": numeric_gate["status"],
+        "metadata": {
+            "commit_sha": source_provenance["commit_sha"],
+            "branch": _git("branch", "--show-current"),
+            "tracked_source_dirty": source_provenance["tracked_source_dirty"],
+            "tracked_source_verification": source_provenance[
+                "tracked_source_verification"
+            ],
+            "verified_clean_sha": source_provenance["verified_clean_sha"],
+            "timestamp_utc": timestamp,
+            "command": command,
+            "container_image": os.environ.get(
+                "TASK029_CONTAINER_IMAGE", "myfenics-stage4:task28"
+            ),
+            "container_digest": os.environ.get(
+                "TASK029_CONTAINER_DIGEST",
+                "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+            ),
+            "provenance": "task029_external_sampler_full_direct_run",
+        },
+        "h_nm": args.h_nm,
+        "mpi_size": args.mpi_size,
+        "thread_count_per_rank": args.threads_per_rank,
+        "cpu_count_visible": os.cpu_count(),
+        "cpu_affinity_requested": args.cpu_affinity,
+        "cpu_affinity_logical_cpu_budget": affinity_cpu_count,
+        "thread_environment": {
+            key: worker_environment[key]
+            for key in (
+                "OMP_NUM_THREADS",
+                "OMP_DYNAMIC",
+                "OMP_MAX_ACTIVE_LEVELS",
+                "OMP_DISPLAY_ENV",
+                "OPENBLAS_NUM_THREADS",
+                "GOTO_NUM_THREADS",
+                "MKL_NUM_THREADS",
+                "MKL_DYNAMIC",
+                "NUMEXPR_NUM_THREADS",
+                "BLIS_NUM_THREADS",
+            )
+        },
+        "thread_runtime_evidence": {
+            "control_model": "openblas_pthreads_only_openmp_fixed_at_one",
+            "requested_compute_threads": args.mpi_size * args.threads_per_rank,
+            "nested_openmp_disabled": True,
+            "intended_compute_threads_exceed_affinity_budget": (
+                None
+                if affinity_cpu_count is None
+                else args.mpi_size * args.threads_per_rank > affinity_cpu_count
+            ),
+            "multiple_blas_runtime_note": (
+                "The runner controls the shared OpenBLAS environment but does not "
+                "claim that NumPy and PETSc load a single BLAS runtime. Use the "
+                "image audit plus stage CPU evidence to assess runnable-thread "
+                "oversubscription."
+            ),
+            "max_worker_rank_thread_count_sum": max(
+                (int(row["worker_rank_thread_count_sum"]) for row in rows), default=0
+            ),
+            "max_worker_rank_cpu_core_equivalents": max(
+                (float(row["worker_rank_cpu_core_equivalents"]) for row in rows),
+                default=0.0,
+            ),
+            "observed_worker_cpu_affinity_json": sorted(
+                {
+                    str(row["worker_rank_cpu_affinity_json"])
+                    for row in rows
+                    if str(row["worker_rank_cpu_affinity_json"]) != "[]"
+                }
+            ),
+            "stage_evidence": sampler_summary["stage_peaks"],
+        },
+        "solver_profile": args.profile,
+        "solver_package": solver_summary.get("actual_pc_factor_solver_type"),
+        "ordering": extra_options.get(
+            "mat_mumps_icntl_7", "backend_default_not_reported"
+        ),
+        "petsc_options": extra_options,
+        "lifecycle_options": {
+            "release_base_after_augmentation": args.release_base_after_augmentation,
+        },
+        "mumps_telemetry": {
+            "profile": args.profile,
+            "ooc_requested": args.profile == "mumps_ooc",
+            "blr_requested": args.profile == "mumps_blr",
+            "raw_api_available": None
+            if factor_inventory is None
+            else factor_inventory.get("mumps_api_available"),
+            "raw_infog": None
+            if factor_inventory is None
+            else factor_inventory.get("mumps_raw_infog"),
+            "raw_rinfog": None
+            if factor_inventory is None
+            else factor_inventory.get("mumps_raw_rinfog"),
+        },
+        "ooc_telemetry": {
+            "requested": args.profile == "mumps_ooc",
+            "scratch_peak_file_count": sampler_summary["max_ooc_scratch_file_count"],
+            "scratch_peak_bytes": sampler_summary["max_ooc_scratch_bytes"],
+            "process_tree_read_bytes_max_observed": sampler_summary[
+                "max_mpi_process_tree_read_bytes"
+            ],
+            "process_tree_write_bytes_max_observed": sampler_summary[
+                "max_mpi_process_tree_write_bytes"
+            ],
+            "process_tree_blkio_delay_seconds_max_observed": sampler_summary[
+                "max_mpi_process_tree_blkio_delay_seconds"
+            ],
+            "semantics": sampler_summary["ooc_io_semantics"],
+        },
+        "physical_model": solver_summary.get("config"),
+        "resolved_config": solver_summary.get("config"),
+        "n_fe": solver_summary.get("num_nedelec_dofs"),
+        "n_aux": solver_summary.get("stage4_dtn_num_auxiliary_dofs"),
+        "matrix_inventory": {
+            "base": solver_summary.get("stage4_dtn_base_matrix_stats"),
+            "augmented": augmented_matrix_stats,
+            "final": solver_summary.get("matrix_stats"),
+            "transform": matrix_transform,
+        },
+        "factor_inventory": factor_inventory,
+        "memory_checkpoints": progress_events,
+        "memory": {
+            **sampler_summary,
+            "sum_rank_historical_peaks_mb_upper_bound": _historical_peak_upper_bound(
+                progress_events, solver_summary
+            ),
+            "historical_peak_source": "max_complete_progress_checkpoint_with_solver_summary_fallback",
+        },
+        "timings": solver_summary.get("timings_seconds"),
+        "true_residual": solver_summary.get("linear_system_relative_residual"),
+        "official_rta": {
+            "R_total": solver_summary.get("R_total"),
+            "T_total": solver_summary.get("T_total"),
+            "A_volume_total": solver_summary.get("A_volume_total"),
+            "energy_closure_error": solver_summary.get(
+                "energy_closure_error_port_volume"
+            ),
+        },
+        "modal_identity": {
+            "order_policy": solver_summary.get("stage4_dtn_order_policy"),
+            "n_aux": solver_summary.get("stage4_dtn_num_auxiliary_dofs"),
+            "top_modes": solver_summary.get("dtn_port_top_mode_count"),
+            "bottom_modes": solver_summary.get("dtn_port_bottom_mode_count"),
+            "propagating_modes": solver_summary.get("dtn_port_propagating_mode_count"),
+        },
+        "task28_reference": {
+            "benchmark_id": reference.get("benchmark_id"),
+            "commit_sha": (reference.get("metadata") or {}).get("commit_sha"),
+            "R_total": reference.get("R_total"),
+            "T_total": reference.get("T_total"),
+            "A_volume_total": reference.get("A_volume_total"),
+        },
+        "task28_reference_delta": numeric_gate["task28_reference_delta"],
+        "qualification": numeric_gate,
+        "return_code": return_code,
+        "run_directory": str(run_dir.relative_to(ROOT)),
+        "limitations": [
+            "External sampler reports the simultaneous sum of worker-rank RSS separately from cgroup memory and historical per-rank peaks.",
+            "MUMPS INFOG/RINFOG values are raw indexed telemetry without inferred semantics.",
+            "Process thread counts include MPI/Python/runtime helper threads; stage CPU core equivalents, not raw thread count alone, determine actual factorization parallelism.",
+            "A shared OPENBLAS_NUM_THREADS value cannot prove that separately loaded NumPy and PETSc BLAS runtimes form one thread pool.",
+        ],
+    }
+    record_path = args.record or (run_dir / "candidate_record.json")
+    if not record_path.is_absolute():
+        record_path = ROOT / record_path
+    record_path.parent.mkdir(parents=True, exist_ok=True)
+    record_path.write_text(
+        json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(json.dumps(record, ensure_ascii=False, indent=2))
+    return return_code
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.worker:
+        if args.run_dir is None:
+            raise SystemExit("--worker requires --run-dir")
+        return _worker(args)
+    return _run_parent(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

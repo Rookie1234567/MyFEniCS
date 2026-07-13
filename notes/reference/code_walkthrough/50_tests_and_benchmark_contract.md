@@ -15,6 +15,7 @@
 | 25 | benchmark manifest/record/Gate 基础契约 |
 | 26 | 文档索引、链接、case 结构契约 |
 | 27 | main preset/parser/default/iterative 隔离契约 |
+| 28 | Task029 memory snapshot、stage marker、matrix inventory、candidate parser/record、cleanup、prediction 与 h2 G1–G10 guard |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -37,3 +38,9 @@
 ## 运行策略
 
 代码改动先 compile + focused tests，再 full unit/MPI，最后按风险决定 Level3。文档/metadata Task28 V2 不要求重跑 h=2；历史 record 可补 provenance/physical model，但不得篡改数值。
+
+## Task029 外部采样链
+
+`benchmarks.run_direct_memory_forensics` 由单个父进程启动 MPI worker，读取 worker 进程树与 `/sys/fs/cgroup`，并从 `progress_3d.jsonl` 获取 rank0 stage marker。`max_simultaneous_total_rss_mb` 是同一采样时刻 MPI worker 当前 RSS 之和；`sum_rank_historical_peaks_mb_upper_bound` 是各 rank 历史高水位之和，两者必须分开。worker 仍调用 `target_stage4_config` 和原 Stage4 solver，遥测默认不改变物理或 direct profile。
+
+`test_28_direct_memory_telemetry` 还验证 h2 缺少 gate record 必须阻塞、G1–G10 任一 false 必须阻塞、两点幂律预测输入合同、`DirectSolveFailure.cleanup()` 幂等性，以及 h5/h3 selected candidate record 的完整求解/数值字段。Task29 final decision 中 G3/G5/G7/G9 为 false，因此未实现或声称 active h2 watchdog，也没有启动 h2。

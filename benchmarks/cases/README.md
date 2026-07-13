@@ -17,6 +17,7 @@
 | [`030`](030_mumps_ooc_blr/README.md) | MUMPS OOC/BLR | experimental | profile/OOC tests，非迭代法 |
 | [`031`](031_workstation_iterative/README.md) | workstation iterative h5/h3/h2 | recorded/qualified | 三个 SHA-pinned iterative records |
 | [`040`](040_mpi_p_algebra_regression/README.md) | MPI/p/algebra regression | test-backed | fixture/expected + Level2 suite |
+| [`050`](050_stage4_direct_memory_forensics/README.md) | Stage4 direct memory forensics | diagnostic_success | 最佳 h3 -15.119%；当前 image threaded direct unavailable；h2/threaded h3 均按 Gate 未运行 |
 
 每个 README 使用相同 22 项契约，并在表后展开物理问题、参数、PyCharm、CLI、代码路径、结果、解释和限制。Recorded case 至少包含 `config.json`、`expected.json`、可执行 `run.sh` 与 `records/`；纯代数 case 用 `fixture.json` 和 `test_command.txt` 代替几何配置。缺少 record 的 case 仍有价值：它明确告诉维护者还差什么证据，防止能力矩阵把“代码存在”写成“工程已验证”。
 

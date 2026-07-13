@@ -127,6 +127,10 @@ class SimulationConfig3D:
     petsc_ksp_view: bool = False
     petsc_log_view: bool = False
     petsc_extra_options: dict[str, object] = field(default_factory=dict)
+    # Task29 low-risk lifecycle candidate. Keep False for the reviewed ordinary
+    # default; explicit callers may release the copied base Mat/Vec once the
+    # augmented system owns every entry needed by residual and official R/T/A.
+    direct_release_base_after_augmentation: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
     unique_output: bool = True

@@ -1,0 +1,54 @@
+{
+  "task": "Task029 Stage4 direct memory forensics",
+  "master_base_sha": "2f9e56d2edddb801780504f681b2ff295d993e02",
+  "branch": "codex/20260713-task29-stage4-direct-memory-forensics",
+  "physical_model_factory": "src.common.config_3d::target_stage4_config",
+  "required_mesh_sizes_nm": [5.0, 3.0],
+  "conditional_mesh_size_nm": 2.0,
+  "mpi_baseline": 4,
+  "nedelec_degree": 2,
+  "boundary_model": "double_floquet_auxiliary_fourier_dtn",
+  "diffraction_order_policy": "auto_propagating",
+  "run_h2_default": false,
+  "safe_h2_rss_limit_gb": 13.5,
+  "h2_minimum_h5_h3_reduction_fraction": 0.2,
+  "telemetry_poll_interval_seconds": 0.25,
+  "selected_diagnostic_candidate": {
+    "profile": "default",
+    "solver_package": "mumps",
+    "mpi_size": 2,
+    "threads_per_rank": 1,
+    "source_commit": "6babe4700328be2b3b93aad7e3e6c212b6dbad10",
+    "h5_reduction_fraction": 0.288925428477949,
+    "h3_reduction_fraction": 0.151190171406175,
+    "engineering_qualified": false
+  },
+  "h2_decision": {
+    "launch": false,
+    "status": "not_run",
+    "prediction_lower_gib": 18.881588574675458,
+    "prediction_upper_gib": 27.91255553093738,
+    "failed_gates": ["G3", "G5", "G7", "G9"]
+  },
+  "canonical_records_read_only": [
+    "benchmarks/records/direct_p2_h5_mpi4.json",
+    "benchmarks/records/direct_p2_h3_mpi4.json",
+    "benchmarks/records/direct_p2_h2_reviewed_reference.json",
+    "benchmarks/records/workstation_p2_h5_mpi4.json",
+    "benchmarks/records/workstation_p2_h3_mpi4.json",
+    "benchmarks/records/workstation_p2_h2_mpi4.json"
+  ],
+  "external_memory_reference": {
+    "path": "docs/task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md",
+    "same_machine": false,
+    "mesh_topology": "free_tetrahedron",
+    "dof": 1178238,
+    "diffraction_scope": "zero_order_only",
+    "allowed_use": "qualitative_memory_architecture_reference",
+    "forbidden_use": [
+      "runtime_comparison",
+      "RTA_reference",
+      "per_dof_efficiency_claim_without_matrix_data"
+    ]
+  }
+}

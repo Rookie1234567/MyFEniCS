@@ -21,6 +21,18 @@
 
 `*_parameters.json` 保存启动参数，`*_progress.json` 可在中断时恢复最后 stage/iteration/RSS；最终 record 才是 Gate 输入。progress 不等于 pass。
 
+## Task29 Case050 内存字段
+
+Case050 同时保存三种不可混写的量：worker-rank 当前 RSS 的同刻和、MPI 进程树当前 RSS、cgroup charged current/peak；另把各 rank 历史峰值之和标成 upper bound。`historical_peak_source` 必须说明它取所有完整 progress checkpoint 与 solver summary 的最大值。
+
+`matrix_inventory` 区分 base、augmented 与 factor。`factor_inventory.derived_ratios` 只做 nnz/统一 estimator 的代数相除；若 PETSc factor `fill_ratio_*` 或 `memory` 返回 0，则保留 raw 0 并标记 unavailable，不能替换成猜测的 MUMPS INFOG/RINFOG 含义。
+
+Task29 OOC timeline 新增 `ooc_scratch_file_count/ooc_scratch_bytes`、`mpi_process_tree_read_bytes/write_bytes` 和 `mpi_process_tree_blkio_delay_seconds`。summary 中保存这些字段的最大观测值及明确语义：scratch 是同刻目录占用，I/O bytes 是存活进程树累计 counter，delay 是各进程 block-I/O delay 之和，不可冒充 wall time。候选 record 的 `lifecycle_options.release_base_after_augmentation` 说明 H1 opt-in 是否启用；ordinary default 为 `false`。
+
+精简候选 record 把数值资格和性能资格分开：`status=pass` 只表示 full solve、true residual 与 Task28 R/T/A 通过；`candidate_disposition` 和 `qualification.memory_reduction_20pct_gate` 决定能否提升 profile。Task29 的 h3 MPI2 record 数值为 pass，但 20% memory Gate 为 failed，因此不得只读顶层 status 宣称工程成功。
+
+h2 不生成伪 record。`gate_decision.csv` 保存 G1–G10；`h2_memory_prediction.md` 保存 DoF 与 factor-nnz 两条幂律外推和敏感性区间；`h2_launch_decision.md` 保存 `not_run`、失败 Gate、阻塞阶段与建议机器内存。
+
 ## 场文件
 
 2D/串行可直接写单 VTU；3D MPI 写 rank-local VTU 与 PVD。`postprocess_3d` 过滤 ghost cells，避免 ParaView 数量/积分重复。场名区分 `E_total/E_scat/E_background` 和 real/imag/abs。

@@ -6,9 +6,15 @@
 |---|---|---|---|
 | 2D、Stage1-4 smoke、小网格 | ordinary auxiliary direct | recommended | 先做物理与代码回归 |
 | 目标 p2 h=5/3 | ordinary MUMPS direct | recommended | Task28 为 2.29/8.18 GB |
+| Task28 target direct reference | default MPI4 MUMPS | recommended | Task29 不改变该基线和 ordinary default |
 | 目标 p2 h=2 direct reference | MUMPS direct | supported | 历史约 20.53 GB，超当前 14 GB |
-| direct 内存紧张且 scratch 足够 | MUMPS OOC | supported | I/O 变慢，必须保留 scratch 证据 |
+| direct 内存紧张且 scratch 足够 | MUMPS OOC | diagnostic_only | Task29 收益不足 20% 且 I/O 变慢，必须保留 scratch 证据 |
 | direct 内存紧张的压缩尝试 | MUMPS BLR | experimental | 需逐案例验证残差与 RTA |
+| 通过减少 MPI rank 降低 direct RSS | MUMPS MPI2 | diagnostic_only | h3 只降 15.119%，不得替代 ordinary default |
+| 最少 rank 复制 | MUMPS MPI1×1 | diagnostic_only | h5 RSS 最低但 Stage4 约 50.891 s（固定 CPU 0-3 对照） |
+| 替换 distributed LU backend | SuperLU_DIST | supported backend / negative target result | h5 RSS +14.462%，本目标不推荐 |
+| 提前释放 base objects | release-base opt-in | diagnostic_only | h3 只降 5.462%，默认保持 false |
+| 单 rank + OpenBLAS threads | 当前 image 不推荐 | diagnostic_only | MPI1×4 KSPSetUp 仍约 1 核，Stage4 48.273 s |
 | 目标 p2 h=5/3/2，MPI4 | matrix-free condensed workstation | recommended | h=2 为 13.08 GB |
 | h=1.5 或新物理参数 | 无 production 推荐 | not_verified | 先做 qualification |
 
@@ -30,6 +36,22 @@
 | BLR | `--petsc-direct-solver-profile mumps_blr`；额外 option 可覆盖阈值 | 接受近似因子并有 reference | residual、R/T/A、压缩率、RSS |
 
 OOC 和 BLR 都是 direct fallback，不会自动启用。不同 MUMPS/PETSc 版本的参数支持可能变化，运行时以 KSP view 和实际 summary 为准。
+
+Task029 的目标 h5 实测进一步收紧使用边界：OOC worker RSS 下降 13.744%，但需要 559,715,776 bytes scratch，Stage4 为 MPI4 baseline 的 1.539×；BLR `1e-5` 的 true residual 为 `4.704e-3`，数值 Gate 失败。因此 OOC 只保留显式诊断/fallback，BLR 不能因进程返回 0 被视为求解通过。
+
+## 4.1 Task029 direct rank/thread 选择结论
+
+| 选择 | h5 结果 | 能力身份 | 是否改变默认 |
+|---|---|---|---|
+| MPI4×1 default MUMPS | 原 baseline 14.800 s；2328.145 MiB | ordinary reference | 否 |
+| MPI2×1 default MUMPS | h3 RSS -15.119% | best diagnostic in-core point | 否 |
+| MPI2×2，固定 CPU 0-3 | 20.687 s；KSPSetUp 约 3.27 核均值 | 时间负向诊断 | 否 |
+| MPI1×4，固定 CPU 0-3 | 48.273 s；KSPSetUp 0.999/1.054 核均值/峰值 | `unavailable_in_current_image` | 否 |
+| h2 direct | 预测 18.882–27.913 GiB | `not_run` | 否 |
+
+线程运行固定 `OMP_NUM_THREADS=1`，通过共享环境控制 OpenBLAS，并用 CPU affinity 将实际执行封顶在四核预算。NumPy 与 PETSc 加载不同 OpenBLAS runtime，所以 runnable-thread oversubscription 不能完全排除；进程 thread 数增加也不代表 MUMPS 因子化多核。当前 image 不应创建 threaded direct profile；更换 PETSc/MUMPS/BLAS 构建后必须从 Case050 h5 重新资格化。
+
+Task029 Review V2 已技术通过：最终身份保持 `diagnostic_success`、`engineering_success=no`、新 optimized direct profile 为 `none`、h2 为 `not_run`，ordinary default 不变。验收没有把任何 MPI2/OOC/BLR/SuperLU/ordering/threaded 候选提升为推荐配置。
 
 ## 5. Matrix-free condensed workstation profile
 

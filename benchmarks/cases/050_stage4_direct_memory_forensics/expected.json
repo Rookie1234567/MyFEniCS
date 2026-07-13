@@ -1,0 +1,35 @@
+{
+  "status": "diagnostic_success_h2_not_run",
+  "full_true_residual_max": 1e-8,
+  "reference_absolute_tolerance": {
+    "R_total": 1e-8,
+    "T_total": 1e-8,
+    "A_volume_total": 1e-8
+  },
+  "h5_reference": {
+    "R_total": 0.08902160293644126,
+    "T_total": 0.44258827865712486,
+    "A_volume_total": 0.46839011840655576
+  },
+  "h3_reference": {
+    "R_total": 0.004613031407437029,
+    "T_total": 0.583653357179078,
+    "A_volume_total": 0.4117336114135146
+  },
+  "h2_launch": {
+    "minimum_h5_reduction_fraction": 0.2,
+    "minimum_h3_reduction_fraction": 0.2,
+    "safe_prediction_upper_gb": 13.5,
+    "requires_no_h3_swap": true,
+    "requires_watchdog": true,
+    "decision": "not_run",
+    "failed_gates": ["G3", "G5", "G7", "G9"],
+    "prediction_range_gib": [18.881588574675458, 27.91255553093738]
+  },
+  "selected_diagnostic_candidate": {
+    "profile": "default_mumps_mpi2",
+    "h5_reduction_fraction": 0.288925428477949,
+    "h3_reduction_fraction": 0.151190171406175,
+    "engineering_qualified": false
+  }
+}

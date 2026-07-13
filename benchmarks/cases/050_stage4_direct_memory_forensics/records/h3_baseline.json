@@ -1,0 +1,153 @@
+{
+  "schema_version": "task029_baseline_summary_v1",
+  "benchmark_id": "task029_direct_h3_default_mpi4",
+  "status": "pass",
+  "metadata": {
+    "commit_sha": "fba69d88ea8590ea01537b7561edff1684f25135",
+    "branch": "codex/20260713-task29-stage4-direct-memory-forensics",
+    "tracked_source_dirty": false,
+    "tracked_source_verification": "host_git_clean_attestation",
+    "timestamp_utc": "20260713T075023Z",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "source_artifact": "benchmarks/artifacts/cases/050/h3_default_mpi4_20260713T075023Z",
+    "provenance": "clean_task029_external_sampler_full_direct_run"
+  },
+  "configuration": {
+    "h_nm": 3.0,
+    "mpi_size": 4,
+    "threads_per_rank": 1,
+    "nedelec_degree": 2,
+    "profile": "default",
+    "solver_package": "mumps",
+    "ordering": "backend_default_not_reported",
+    "dtn_order_policy": "auto_propagating",
+    "assemble_only": false
+  },
+  "dimensions": {
+    "n_fe": 198438,
+    "n_aux": 80,
+    "augmented_rows": 198518,
+    "floquet_constraints": 10518,
+    "top_modes": 40,
+    "bottom_modes": 40,
+    "propagating_modes": 80
+  },
+  "qualification": {
+    "process_completed": true,
+    "true_residual_le_1e_8": true,
+    "reference_rta_abs_delta_le_1e_8": true,
+    "energy_closure_abs_le_1e_8": true,
+    "true_residual": 1.3821009358870955e-11,
+    "R_total": 0.004613031407444258,
+    "T_total": 0.5836533571790966,
+    "A_volume_total": 0.41173361141353215,
+    "energy_closure_error": 7.30526750203353e-14
+  },
+  "task28_reference": {
+    "benchmark_id": "l3_direct_h3",
+    "commit_sha": "440885b3f74c4fa616ea371d934c3e5ca33b1d01",
+    "R_total": 0.004613031407437029,
+    "T_total": 0.583653357179078,
+    "A_volume_total": 0.4117336114135146,
+    "R_delta": 7.229460086133344e-15,
+    "T_delta": 1.865174681370263e-14,
+    "A_delta": 1.7541523789077473e-14,
+    "historical_rank_peak_upper_bound_mb": 8378.09375
+  },
+  "memory": {
+    "poll_interval_seconds": 0.25,
+    "sample_count": 327,
+    "max_simultaneous_worker_rank_rss_sum_mb": 8651.09765625,
+    "max_simultaneous_worker_rank_rss_sum_gib": 8.44833755493164,
+    "max_worker_rss_stage": "during_ksp_setup_peak",
+    "max_mpi_process_tree_rss_mb": 8656.62109375,
+    "max_mpi_process_tree_rss_stage": "during_ksp_setup_peak",
+    "max_container_process_rss_sum_mb": 8673.55078125,
+    "max_container_cgroup_current_mb": 8353.7265625,
+    "max_container_cgroup_current_stage": "during_ksp_setup_peak",
+    "container_cgroup_peak_mb": 8353.734375,
+    "container_cgroup_peak_gib": 8.157943725585938,
+    "sum_rank_historical_peaks_mb_upper_bound": 8648.61328125,
+    "sum_rank_historical_peaks_gib_upper_bound": 8.445911407470703,
+    "historical_peak_source": "max_complete_progress_checkpoint_with_solver_summary_fallback",
+    "wsl_pswpin_delta_pages": 0,
+    "wsl_pswpout_delta_pages": 0
+  },
+  "matrix_inventory": {
+    "base": {
+      "matrix_type": "mpiaij",
+      "rows": 198438,
+      "nnz_used": 21167444,
+      "nnz_allocated": 21167444,
+      "nnz_unneeded": 0,
+      "mallocs": 0,
+      "petsc_memory_mb_raw": 0.0,
+      "estimated_storage_mb": 485.9983139038086
+    },
+    "augmented": {
+      "matrix_type": "mpiaij",
+      "rows": 198518,
+      "nnz_used": 21317860,
+      "nnz_allocated": 21317860,
+      "nnz_unneeded": 0,
+      "mallocs": 0,
+      "petsc_memory_mb_raw": 0.0,
+      "estimated_storage_mb": 489.4416732788086
+    }
+  },
+  "factor_inventory": {
+    "available": true,
+    "factor_solver_type": "mumps",
+    "matrix_type": "mumps",
+    "rows": 198518,
+    "nnz_used": 266127836,
+    "nnz_allocated": 266127836,
+    "nnz_unneeded": 0,
+    "mallocs": 0,
+    "petsc_memory_mb_raw": 0.0,
+    "estimated_storage_mb": 6092.69734954834,
+    "petsc_fill_ratio_given_raw": 0.0,
+    "petsc_fill_ratio_needed_raw": 0.0,
+    "petsc_factor_mallocs_raw": 0.0,
+    "backend_fill_and_memory_fields_interpreted_as_available": false,
+    "derived_factor_to_augmented_nnz_ratio": 12.483796966487255,
+    "derived_factor_to_augmented_estimated_storage_ratio": 12.44826029776516,
+    "mumps_raw_api_available": true,
+    "mumps_raw_infog_index_range": "1..40",
+    "mumps_raw_rinfog_index_range": "1..20",
+    "raw_values_source": "source_artifact/candidate_record.json"
+  },
+  "timings_seconds": {
+    "ksp_setup": 31.200131237001187,
+    "ksp_solve": 1.6025402609993762,
+    "stage4_dtn_port_assembly_and_solve": 68.06690861400057,
+    "postprocess": 6.608444395002152,
+    "worker_to_final_cleanup": 81.68513044099927
+  },
+  "baseline_attribution": {
+    "ksp_setup_peak_worker_rss_increment_mb_from_pre_setup_sample": 6472.4296875,
+    "ksp_setup_peak_cgroup_current_increment_mb_from_pre_setup_sample": 6474.56640625,
+    "ksp_solve_retained_worker_rss_increment_mb": 6.984375,
+    "ksp_solve_retained_cgroup_increment_mb": 6.28125,
+    "official_rta_worker_rss_increment_mb": 0.77734375,
+    "field_output_worker_rss_increment_mb": 129.05859375,
+    "field_output_cgroup_increment_mb": 112.51171875,
+    "base_and_augmented_coexistence_worker_rss_increment_mb": 729.07421875,
+    "base_and_augmented_coexistence_cgroup_increment_mb": 754.62109375,
+    "task28_historical_upper_bound_delta_mb": 270.51953125,
+    "task28_historical_upper_bound_delta_percent": 3.22889119317864
+  },
+  "tracked_evidence": {
+    "memory_stage_peaks": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_memory_timeline.csv",
+    "matrix_inventory": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_matrix_inventory.csv",
+    "factorization_summary": "docs/task029_stage4_direct_memory_forensics/outcomes/baseline_factorization_summary.csv",
+    "rank_scaling": "docs/task029_stage4_direct_memory_forensics/outcomes/rank_scaling.csv"
+  },
+  "limitations": [
+    "Worker-rank RSS sums can count shared pages more than once; cgroup charged memory is reported separately.",
+    "PETSc returned zero for factor fill and memory fields, so those fields are retained as raw values but not treated as available measurements.",
+    "The factor storage estimate is a common nnz-based estimator, not allocator-accounted MUMPS memory.",
+    "MUMPS INFOG/RINFOG are retained only by raw index without inferred semantics."
+  ]
+}

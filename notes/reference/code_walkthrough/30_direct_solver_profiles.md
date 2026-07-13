@@ -2,6 +2,22 @@
 
 三个 profile 都是直接因子分解路径。OOC 改变因子存储位置，BLR 改变 MUMPS 因子近似；两者都不是 Krylov 迭代预条件器。
 
+## Task29 更新（2026-07-13）
+
+Review V1 线程审计的最终结论是 `threaded_direct_capability=unavailable_in_current_image`。活动 PETSc 3.24.0 / MUMPS 5.8.1 通过系统 BLAS 链接 OpenBLAS 0.3.26 pthread；运行时线程数可控，但固定 CPU `0-3` 的 MPI1×4 在 `during_ksp_setup_peak` 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 只有 1.054× speedup。进程 thread 数从 3 增至 12 只证明线程池存在，不证明 MUMPS factorization 多核。threaded h3 因 T1/T3 失败而 `not_run`，ordinary default 不变。
+
+`benchmarks.run_direct_memory_forensics` 的 `--threads-per-rank` 设置共享的 OpenBLAS 环境；runner 固定 `OMP_NUM_THREADS=1`、`OMP_MAX_ACTIVE_LEVELS=1`，避免 OpenMP 与 BLAS 嵌套。由于 NumPy scipy-openblas 与 PETSc system OpenBLAS 是不同 runtime，该环境不能保证只有一个线程池；`--cpu-affinity 0-3` 用 `taskset` 和 `mpiexec --bind-to none` 将实际执行封顶在固定 CPU budget。timeline 新增 worker/process-tree thread count、累计 CPU seconds、区间 CPU core equivalents 和 worker affinity；这些字段属于 capability/telemetry，不进入普通 Stage4 config。
+
+最终 Case050 证据显示：MPI4 h5/h3 baseline simultaneous worker RSS 为 2328.145 / 8651.098 MiB，default MUMPS MPI2 为 1655.484 / 7343.137 MiB，即分别下降 28.893% / 15.119%。h3 未达到 20%，所以 MPI2 只是诊断运行点，不是合格 `optimized_direct_incore_candidate`。release-base MPI4 在 h3 只下降 5.462%，证明公共生命周期开销不是主峰根因；ordinary default 仍为 MPI4/default 行为。
+
+OOC h5 降低 13.744% worker RSS，但使用 559,715,776 scratch bytes，Stage4 时间为 baseline 的 1.539 倍；成功路径删除全部 8 个文件。BLR `1e-5` 的进程返回码虽为 0，真残差 `4.704e-3` 与 R/T/A 失败；SuperLU_DIST 和 `ICNTL(7)=3` 都增加内存。因此没有 profile 获得 h3 20% 工程资格。
+
+`petsc_extra_options.pc_factor_mat_solver_type` 现在会在 PETSc 实际提供且属于已批准的 MPI distributed LU package 时被尊重，不再被 MPI fallback 无条件改写为 MUMPS；未显式请求时 ordinary MPI default 仍选择 MUMPS。串行-only package 不允许进入 MPI direct 路径。
+
+Task29 的低风险 H1 候选由 `SimulationConfig3D.direct_release_base_after_augmentation` 控制，默认 `false`。显式开启后，DtN 路径在 `A_base/b_base -> A_aug/b_aug` 完整复制并写出 checkpoint 后立即销毁 base Mat/Vec；KSP、真残差、场重建和 official R/T/A 仍只使用 augmented system。异常路径的 `DirectSolveFailure.cleanup()` 在诊断写盘后幂等销毁 KSP/x/b/A。
+
+Case050 sampler 还记录 `ooc_scratch_*`、process-tree read/write bytes 与 block-I/O delay。后者是存活后代进程的累计计数最大观测值，block-I/O delay 是进程时间之和而非 wall time；OOC 报告必须同时给 KSPSetUp wall time、scratch peak、I/O counters 与 cleanup 状态。
+
 ## 1. 配置入口
 
 ```text
@@ -34,7 +50,7 @@ PC type = lu
 factor solver = serial available package or MPI MUMPS
 ```
 
-`_prepare_direct_lu_options_for_comm` 根据 communicator 大小与 PETSc build 选择 backend。MPI 中没有可用 parallel LU 时返回环境不满足信息，case flow 写 failure summary；不能把它解释为 Maxwell 方程不收敛。
+`_prepare_direct_lu_options_for_comm` 根据 communicator 大小、显式 package 请求与 PETSc build 选择 backend。MPI 中没有可用 parallel LU 时返回环境不满足信息，case flow 写 failure summary；不能把它解释为 Maxwell 方程不收敛。
 
 ## 4. OOC 生命周期
 
@@ -102,6 +118,14 @@ python src/main.py --preset 3d_target_grating_direct_h5
 - Case030：OOC/BLR 功能 contract，身份为 direct fallback/experimental，不是 canonical 迭代结果。
 - Case021：target p2 h5/h3 MPI4 MUMPS direct canonical；h2 direct 仅 reviewed reference，本轮未重跑。
 
-## 11. 限制
+## 11. Task29 factored Mat 与内存遥测
+
+`benchmarks.run_direct_memory_forensics` 用独立 0.25 s sampler 包住完整 MPI worker。worker 在 `KSPSetUp` 后通过 `PC.getFactorMatrix()` 读取 factor；已分解的 PETSc Mat 不能再次 `assemble()`，因此 `_petsc_matrix_stats(..., assemble=False)` 只读 size、type、ownership、`getInfo()` 和可安全获得的字段。
+
+h5 冻结结果的 augmented/factor nnz 为 4,896,156 / 33,862,428，代数比为 6.916。PETSc 对 MUMPS factor 返回的 `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，因此不把它们当有效 factor memory；统一 nnz estimator 的 775.391 MB 只用于同口径结构比较。INFOG/RINFOG 保留 raw index，代码不猜测其语义。
+
+外部 sampler 的 worker 同时 RSS 与 cgroup charged memory 分开记录。h5/h3 的 worker/cgroup 主峰均位于 KSPSetUp；h3 factor estimated storage 是 augmented 的约 12.45 倍，KSPSetUp 峰值增量约 6.47 GiB。field/RTA/output 只形成较低尾部平台，不能与 factorization 主峰合并为一个“总峰值”字段。
+
+## 12. 限制
 
 OOC 会把 RAM 压力转成磁盘 I/O，不保证 14 GB 内完成；BLR 会引入 factor approximation，不保证所有参数 residual 合格。profile 对资源的表现依赖 PETSc/MUMPS build、MPI、磁盘和矩阵排序。理论见 [`../../theory/direct_solvers_and_factorization.md`](../../theory/direct_solvers_and_factorization.md)。

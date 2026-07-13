@@ -18,7 +18,10 @@ from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
-from ..postprocessing.rta_3d import compute_volume_absorption_3d, write_power_summary_csv
+from ..postprocessing.rta_3d import (
+    compute_volume_absorption_3d,
+    write_power_summary_csv,
+)
 from .common_3d_fields import (
     _add_reference_field_to_solution,
     _combine_fields,
@@ -128,26 +131,6 @@ def _matrix_row_ratio(after: dict[str, Any] | None, before: dict[str, Any] | Non
     return float(after_rows) / float(before_rows)
 
 
-def _destroy_petsc_object_once(obj) -> None:
-    if obj is None:
-        return
-    try:
-        obj.destroy()
-    except Exception:
-        pass
-
-
-def _release_solver_storage_before_ooc_cleanup(problem, dtn_result: dict[str, Any] | None) -> None:
-    """Release PETSc factor objects before deleting MUMPS OOC files."""
-
-    if dtn_result is not None:
-        for key in ("ksp", "A", "b", "x"):
-            _destroy_petsc_object_once(dtn_result.get(key))
-    if problem is not None:
-        for attr in ("solver", "A", "b", "x"):
-            _destroy_petsc_object_once(getattr(problem, attr, None))
-
-
 def _merge_volume_closure_into_dtn_port_outputs(
     out_dir: Path,
     comm: MPI.Intracomm,
@@ -189,7 +172,10 @@ def _merge_volume_closure_into_dtn_port_outputs(
                 payload["T_total_dtn_port_modal"] = port_metrics.get("T_total_dtn_port_modal", T_total)
                 payload["R_plus_T_dtn_port_modal"] = port_metrics.get("R_plus_T_dtn_port_modal", R_total + T_total)
                 payload["A_balance_dtn_port_modal"] = port_metrics.get("A_balance_dtn_port_modal")
-            path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default), encoding="utf-8")
+            path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default),
+                encoding="utf-8",
+            )
     comm.barrier()
     return fields
 
@@ -430,7 +416,9 @@ def _direct_solve_failure_summary(
         "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
         "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
         "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
-        "floquet_estimated_constraint_memory_mb": None if floquet_data is None else floquet_data.estimated_constraint_memory_mb,
+        "floquet_estimated_constraint_memory_mb": None
+        if floquet_data is None
+        else floquet_data.estimated_constraint_memory_mb,
         "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
         "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
         "mesh_spacing_mode_resolved": mesh_data.mesh_spacing_mode_resolved,
@@ -459,7 +447,10 @@ def _direct_solve_failure_summary(
         petsc_options=petsc_options,
         extra={"petsc_error": error_diagnostics},
     )
-    _write_case_outputs(out_dir, summary, log_lines, comm)
+    try:
+        _write_case_outputs(out_dir, summary, log_lines, comm)
+    finally:
+        failure.cleanup()
     return summary
 
 
@@ -490,9 +481,9 @@ def _build_floquet_and_boundary_conditions(
         if apply_strong_boundary_bc:
             boundary_facets = _z_boundary_facets(mesh_data, cfg)
             raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
-            boundary_dofs = np.setdiff1d(
-                raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False
-            ).astype(np.int32)
+            boundary_dofs = np.setdiff1d(raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False).astype(
+                np.int32
+            )
             raw_boundary_dofs_global = int(comm.allreduce(len(raw_boundary_dofs), op=MPI.SUM))
             boundary_dofs_global = int(comm.allreduce(len(boundary_dofs), op=MPI.SUM))
             log(
@@ -510,7 +501,13 @@ def _build_floquet_and_boundary_conditions(
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
     log(f"Dirichlet H(curl) boundary dofs local/global = {len(boundary_dofs)} / {boundary_dofs_global}")
-    return floquet_data, bcs, raw_boundary_dofs_global, boundary_dofs_global, boundary_dofs
+    return (
+        floquet_data,
+        bcs,
+        raw_boundary_dofs_global,
+        boundary_dofs_global,
+        boundary_dofs,
+    )
 
 
 def _solve_standard_linear_problem(
@@ -641,6 +638,15 @@ def run_prepared_3d_case_flow(
         if comm.rank == 0:
             PETSc.Sys.Print(message)
 
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="process_start",
+        status="begin",
+        started=started,
+        extra={"case_name": cfg.case_name, "stage_case": cfg.stage_case},
+    )
+
     stage_start = _start_timed_stage(comm)
     if cfg.use_pml and (cfg.pml_top_thickness <= 0.0 or cfg.pml_bottom_thickness <= 0.0):
         raise ValueError("3D PML cases require positive pml_top_thickness and pml_bottom_thickness.")
@@ -652,6 +658,7 @@ def run_prepared_3d_case_flow(
         if cfg.stage4_dtn_assembly.lower() != "auxiliary":
             raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
+    _write_progress_event(out_dir, comm, stage="after_config", status="end", started=started)
 
     petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
     dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
@@ -695,10 +702,32 @@ def run_prepared_3d_case_flow(
     )
 
     stage_start = _start_timed_stage(comm)
-    _write_progress_event(out_dir, comm, stage="mesh_build", status="begin", started=started, petsc_options=petsc_options)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="mesh_build",
+        status="begin",
+        started=started,
+        petsc_options=petsc_options,
+    )
     mesh_data = build_airbox_mesh_3d(cfg, out_dir)
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
-    _write_progress_event(out_dir, comm, stage="mesh_build", status="end", started=started, petsc_options=petsc_options)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="mesh_build",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_mesh",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+    )
     log(f"mesh cell type actual = {mesh_data.mesh_cell_type_resolved}")
     log(f"mesh cells requested = {cfg.mesh_cells}")
     log(f"mesh cells resolved = {mesh_data.mesh_cells_resolved}")
@@ -720,12 +749,34 @@ def run_prepared_3d_case_flow(
     V = _create_nedelec_space(msh, cfg)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
-    _write_progress_event(out_dir, comm, stage="function_space_setup", status="end", started=started, dofs=num_dofs)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="function_space_setup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_function_space",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+    )
     log(f"mesh cells = {num_cells}")
     log(f"3D N1curl dofs = {num_dofs}")
 
     stage_start = _start_timed_stage(comm)
-    _write_progress_event(out_dir, comm, stage="field_formulation_setup", status="begin", started=started, dofs=num_dofs)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="field_formulation_setup",
+        status="begin",
+        started=started,
+        dofs=num_dofs,
+    )
     E_source_for_rhs = None
     rhs_source_norm = None
     if solve_incident_scattered:
@@ -736,26 +787,44 @@ def run_prepared_3d_case_flow(
         rhs_source_norm = _layered_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
 
     solve_with_zero_bc = (
-        solve_reference_correction
-        or solve_incident_scattered
-        or solve_layered_scattered
-        or solve_stage4_dtn_port
+        solve_reference_correction or solve_incident_scattered or solve_layered_scattered or solve_stage4_dtn_port
     )
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
     _finish_timed_stage(comm, timings, "field_formulation_setup", stage_start, log)
-    _write_progress_event(out_dir, comm, stage="field_formulation_setup", status="end", started=started, dofs=num_dofs)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="field_formulation_setup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+    )
 
-    _write_progress_event(out_dir, comm, stage="floquet_and_boundary_setup", status="begin", started=started, dofs=num_dofs)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="floquet_and_boundary_setup",
+        status="begin",
+        started=started,
+        dofs=num_dofs,
+    )
     floquet_data, bcs, raw_boundary_dofs_global, boundary_dofs_global, boundary_dofs = (
-        _build_floquet_and_boundary_conditions(
-            cfg, mesh_data, V, E_bc, apply_strong_boundary_bc, timings, comm, log
-        )
+        _build_floquet_and_boundary_conditions(cfg, mesh_data, V, E_bc, apply_strong_boundary_bc, timings, comm, log)
     )
     _write_progress_event(
         out_dir,
         comm,
         stage="floquet_and_boundary_setup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_floquet_mpc_finalize",
         status="end",
         started=started,
         dofs=num_dofs,
@@ -798,6 +867,15 @@ def run_prepared_3d_case_flow(
         field_formulation=field_formulation,
         incident_field=E_source_for_rhs,
     )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_materials_and_forms",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+    )
     unconstrained_rhs_norm = _assembled_rhs_norm(L)
     unconstrained_matrix_stats = None
     if cfg.matrix_diagnostics_assemble_unconstrained:
@@ -837,7 +915,13 @@ def run_prepared_3d_case_flow(
                 started=started,
             )
         except DirectSolveFailure as failure:
-            _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve_failed", stage_start, log)
+            _finish_timed_stage(
+                comm,
+                timings,
+                "stage4_dtn_port_assembly_and_solve_failed",
+                stage_start,
+                log,
+            )
             return _direct_solve_failure_summary(
                 cfg=cfg,
                 out_dir=out_dir,
@@ -941,7 +1025,9 @@ def run_prepared_3d_case_flow(
     _log_matrix_stats(matrix_stats, log)
     dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
     dtn_base_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_base_matrix_stats")
-    dtn_augmented_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+    dtn_augmented_matrix_stats = (
+        None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+    )
     dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
     explicit_chac_constructed = False
     chac_before_stats = None
@@ -967,7 +1053,9 @@ def run_prepared_3d_case_flow(
     if unconstrained_matrix_stats is None:
         log("unconstrained pre-MPC matrix stats = not assembled")
     elif "diagnostic_error" not in unconstrained_matrix_stats:
-        log(f"constrained/unconstrained nnz ratio = {constraint_matrix_transform['constrained_to_unconstrained_nnz_ratio']}")
+        log(
+            f"constrained/unconstrained nnz ratio = {constraint_matrix_transform['constrained_to_unconstrained_nnz_ratio']}"
+        )
     if dtn_base_matrix_stats is not None:
         log(f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}")
 
@@ -1005,9 +1093,23 @@ def run_prepared_3d_case_flow(
     log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
     log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
-    _release_solver_storage_before_ooc_cleanup(problem, dtn_result)
-    system_A = system_b = system_x = system_ksp = pc = None
-    problem = None
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="solver_objects_retained_for_postprocess",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        matrix_stats=matrix_stats,
+        petsc_options=petsc_options,
+        extra={
+            "lifecycle_note": (
+                "Telemetry-only baseline preserves the Task28 lifecycle: KSP/factor, "
+                "system Mat, RHS Vec, and solution Vec remain referenced during postprocess."
+            )
+        },
+    )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     converged = (reason > 0) and not assemble_only_result
@@ -1017,7 +1119,11 @@ def run_prepared_3d_case_flow(
         "stage": _stage_label(cfg),
         **_summary_base_fields(cfg, comm),
         "config": cfg.as_jsonable(),
-        "case_status": "diagnostic_assemble_only" if assemble_only_result else "completed" if converged else "failed_not_converged",
+        "case_status": "diagnostic_assemble_only"
+        if assemble_only_result
+        else "completed"
+        if converged
+        else "failed_not_converged",
         "official_result": converged,
         "diagnostic_only": not converged,
         "postprocess_skipped": not converged,
@@ -1043,7 +1149,9 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy if solve_stage4_dtn_port else None,
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly if solve_stage4_dtn_port else None,
-        "stage4_dtn_num_auxiliary_dofs": None if dtn_result is None else dtn_result["solver_info"].get("num_auxiliary_dofs"),
+        "stage4_dtn_num_auxiliary_dofs": None
+        if dtn_result is None
+        else dtn_result["solver_info"].get("num_auxiliary_dofs"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
@@ -1057,7 +1165,8 @@ def run_prepared_3d_case_flow(
         "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),
         "reference_added_to_solution": field_formulation == "reference_correction",
         "fresnel_reference_used_for_solution": False,
-        "fresnel_reference_used_for_comparison_only": cfg.geometry_kind in {"fresnel_interface", "rectangular_block_grating"},
+        "fresnel_reference_used_for_comparison_only": cfg.geometry_kind
+        in {"fresnel_interface", "rectangular_block_grating"},
         "rhs_source_region": (
             "physical_substrate"
             if solve_incident_scattered
@@ -1115,31 +1224,41 @@ def run_prepared_3d_case_flow(
         "use_floquet_xy": cfg.use_floquet_xy,
         "use_pml": cfg.use_pml,
         "floquet_num_local_slaves": None if floquet_data is None else floquet_data.num_local_slaves,
-        "floquet_num_local_slave_records_seen": None if floquet_data is None else floquet_data.num_local_slave_records_seen,
-        "floquet_num_local_ghost_slave_constraints": None if floquet_data is None else floquet_data.num_local_ghost_slave_constraints,
-        "floquet_num_global_ghost_slave_constraints": None if floquet_data is None else floquet_data.num_global_ghost_slave_constraints,
-        "floquet_num_local_ghost_slave_records_skipped": None if floquet_data is None else floquet_data.num_local_ghost_slave_records_skipped,
-        "floquet_num_global_ghost_slave_records_skipped": None if floquet_data is None else floquet_data.num_global_ghost_slave_records_skipped,
+        "floquet_num_local_slave_records_seen": None
+        if floquet_data is None
+        else floquet_data.num_local_slave_records_seen,
+        "floquet_num_local_ghost_slave_constraints": None
+        if floquet_data is None
+        else floquet_data.num_local_ghost_slave_constraints,
+        "floquet_num_global_ghost_slave_constraints": None
+        if floquet_data is None
+        else floquet_data.num_global_ghost_slave_constraints,
+        "floquet_num_local_ghost_slave_records_skipped": None
+        if floquet_data is None
+        else floquet_data.num_local_ghost_slave_records_skipped,
+        "floquet_num_global_ghost_slave_records_skipped": None
+        if floquet_data is None
+        else floquet_data.num_global_ghost_slave_records_skipped,
         "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
         "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
         "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
-        "floquet_estimated_constraint_memory_mb": None if floquet_data is None else floquet_data.estimated_constraint_memory_mb,
+        "floquet_estimated_constraint_memory_mb": None
+        if floquet_data is None
+        else floquet_data.estimated_constraint_memory_mb,
         "floquet_num_slave_edges": None if floquet_data is None else floquet_data.num_slave_edges,
         "floquet_num_matched_master_edges": None if floquet_data is None else floquet_data.num_matched_master_edges,
         "floquet_num_slave_faces": None if floquet_data is None else floquet_data.num_slave_faces,
-        "floquet_num_matched_master_faces": None
-        if floquet_data is None
-        else floquet_data.num_matched_master_faces,
+        "floquet_num_matched_master_faces": None if floquet_data is None else floquet_data.num_matched_master_faces,
         "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
         "floquet_num_edge_constraints": None if floquet_data is None else floquet_data.num_edge_constraints,
         "floquet_num_face_constraints": None if floquet_data is None else floquet_data.num_face_constraints,
-        "floquet_num_face_transform_fits": None
-        if floquet_data is None
-        else floquet_data.num_face_transform_fits,
+        "floquet_num_face_transform_fits": None if floquet_data is None else floquet_data.num_face_transform_fits,
         "floquet_max_face_transform_fit_residual": None
         if floquet_data is None
         else floquet_data.max_face_transform_fit_residual,
-        "floquet_max_edge_midpoint_pairing_error": None if floquet_data is None else floquet_data.max_edge_midpoint_pairing_error,
+        "floquet_max_edge_midpoint_pairing_error": None
+        if floquet_data is None
+        else floquet_data.max_edge_midpoint_pairing_error,
         "floquet_max_face_midpoint_pairing_error": None
         if floquet_data is None
         else floquet_data.max_face_midpoint_pairing_error,
@@ -1153,12 +1272,16 @@ def run_prepared_3d_case_flow(
         "mesh_material_plane_alignment": mesh_data.material_plane_alignment,
         "mesh_local_refinement_regions": mesh_data.local_refinement_regions,
         "mesh_z_alignment_warnings": mesh_data.z_alignment_warnings,
-        "max_face_pairing_coordinate_error": None if floquet_data is None else floquet_data.max_face_pairing_coordinate_error,
+        "max_face_pairing_coordinate_error": None
+        if floquet_data is None
+        else floquet_data.max_face_pairing_coordinate_error,
         "nedelec_orientation_factor_stats": None if floquet_data is None else floquet_data.orientation_factor_stats,
         "floquet_constraint_phase_x": None if floquet_data is None else floquet_data.phase_x,
         "floquet_constraint_phase_y": None if floquet_data is None else floquet_data.phase_y,
         "floquet_constraint_phase_corner": None if floquet_data is None else floquet_data.phase_corner,
-        "floquet_edge_corner_constraint_phase_mismatch": None if floquet_data is None else floquet_data.edge_corner_phase_mismatch,
+        "floquet_edge_corner_constraint_phase_mismatch": None
+        if floquet_data is None
+        else floquet_data.edge_corner_phase_mismatch,
         "floquet_constraint_timings_seconds": None if floquet_data is None else floquet_data.timings_seconds,
         "pml_parameters": {
             "pml_alpha": cfg.pml_alpha,
@@ -1174,7 +1297,10 @@ def run_prepared_3d_case_flow(
         "elapsed_seconds": elapsed,
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
-        "mumps_ooc_runtime": {**ooc_info, **_retain_mumps_ooc_directory_on_failure(ooc_info)},
+        "mumps_ooc_runtime": {
+            **ooc_info,
+            **_retain_mumps_ooc_directory_on_failure(ooc_info),
+        },
     }
 
     if not converged:
@@ -1207,12 +1333,22 @@ def run_prepared_3d_case_flow(
     summary["elapsed_seconds"] = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     summary["max_rss_mb"] = _global_max_rss_mb(comm)
     summary["total_peak_rss_mb"] = _global_total_peak_rss_mb(comm)
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary["total_peak_rss_mb"]
+    summary["total_peak_rss_semantics"] = "sum_rank_historical_peaks_upper_bound_not_simultaneous"
     summary["total_peak_rss_gb"] = (
-        None
-        if summary["total_peak_rss_mb"] is None
-        else summary["total_peak_rss_mb"] / 1024.0
+        None if summary["total_peak_rss_mb"] is None else summary["total_peak_rss_mb"] / 1024.0
     )
     summary.update(field_metrics)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_field_output",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
 
     if solve_incident_scattered:
         summary["E_sca_norm"] = _function_coefficient_norm(E_sca)
@@ -1316,9 +1452,7 @@ def run_prepared_3d_case_flow(
         summary["timings_seconds"] = timings
 
     incident_power_for_absorption = (
-        None
-        if port_power_metrics is None
-        else port_power_metrics.get("incident_power_code_units")
+        None if port_power_metrics is None else port_power_metrics.get("incident_power_code_units")
     )
     if incident_power_for_absorption is None and probe_power_metrics is not None:
         incident_power_for_absorption = probe_power_metrics.get("incident_power_code_units")
@@ -1350,9 +1484,7 @@ def run_prepared_3d_case_flow(
                     "A_probe_balance_minus_A_volume_total"
                 ),
                 "A_flux_minus_A_volume_total": volume_absorption_metrics.get("A_flux_minus_A_volume_total"),
-                "energy_closure_error_port_volume": volume_absorption_metrics.get(
-                    "energy_closure_error_port_volume"
-                ),
+                "energy_closure_error_port_volume": volume_absorption_metrics.get("energy_closure_error_port_volume"),
             }
         )
         closure_fields = _merge_volume_closure_into_dtn_port_outputs(
@@ -1375,6 +1507,23 @@ def run_prepared_3d_case_flow(
         summary["power_summary_rows"] = power_summary_rows
         summary["timings_seconds"] = timings
 
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_official_rta_and_volume_absorption",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        petsc_options=petsc_options,
+        extra={
+            "R_total": summary.get("R_total"),
+            "T_total": summary.get("T_total"),
+            "A_volume_total": summary.get("A_volume_total"),
+            "energy_closure_error": summary.get("energy_closure_error_port_volume"),
+        },
+    )
+
     if cfg.stage_case == "stage4_flat_layer_sanity":
         flat_reference_outputs = write_flat_layer_reference_outputs(
             out_dir,
@@ -1395,12 +1544,12 @@ def run_prepared_3d_case_flow(
                 "flat_layer_reference_A_ref": flat_reference_outputs["flat_layer_reference"][
                     "A_ref_between_reference_planes"
                 ],
-                "flat_layer_reference_T_ref_at_bottom_port_plane": flat_reference_outputs[
-                    "flat_layer_reference"
-                ]["T_ref_at_bottom_port_plane"],
-                "flat_layer_reference_A_ref_between_port_planes": flat_reference_outputs[
-                    "flat_layer_reference"
-                ]["A_ref_between_port_planes"],
+                "flat_layer_reference_T_ref_at_bottom_port_plane": flat_reference_outputs["flat_layer_reference"][
+                    "T_ref_at_bottom_port_plane"
+                ],
+                "flat_layer_reference_A_ref_between_port_planes": flat_reference_outputs["flat_layer_reference"][
+                    "A_ref_between_port_planes"
+                ],
                 "power_consistency": flat_reference_outputs["power_consistency"],
             }
         )
@@ -1499,5 +1648,15 @@ def run_prepared_3d_case_flow(
         log(f"  {name}: {value:.3f}")
     _log_solver_summary(summary, log)
     log(f"elapsed seconds = {summary['elapsed_seconds']:.3f}")
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="final_cleanup",
+        status="end",
+        started=started,
+        dofs=num_dofs,
+        constraints=None if floquet_data is None else floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
     _write_case_outputs(out_dir, summary, log_lines, comm)
     return summary

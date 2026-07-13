@@ -18,6 +18,7 @@
 8. 禁止整体合并大型 research branch；必须从 clean base 使用 `selective_merge_manifest` 抽取已验证组件。
 9. ordinary solver default 不得静默改变；新求解器在审查通过前必须保持显式 opt-in，未通过最终 review 前不合并 `master`。
 10. solver 成功必须以 full explicit true residual 为准；official R/T/A 只能从通过 residual Gate 的场计算，probe/flux 近似量默认仅作 diagnostic。
+11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；两者分别承担详细技术档案与项目级回顾，一句状态或纯链接不构成完成。完整框架见 [`docs/task_retrospective_standard.md`](docs/task_retrospective_standard.md)。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -54,21 +55,22 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 Review/Response V4 已关闭 tracked-source-clean、真实 image digest 与最终提交验证，checker 为 148/148；环境继续按 `qualified_local_image` 限定，ordinary default 未改变。Task29 只能从 Task28 合并后的 `master` 新分支启动。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task029 已完成 h5/h3 direct-memory 剖析，并通过 Review V2 技术验收，以 `diagnostic_success` 收口、`engineering_success=no`。最佳 MUMPS MPI2 候选在 h5/h3 分别降低 simultaneous RSS 28.893% / 15.119%，h3 未达到 20% 工程 Gate；当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，threaded direct 不可用。h2 与 threaded h3 均按 Gate 未运行，没有形成新 optimized direct profile，ordinary default 未改变；用户已在启动 Task030 时明确许可合并。
 
 ## 文档导航
 
 | 文档 | 内容 |
 |---|---|
 | [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
-| [开发进度](docs/development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线与当前进展 |
+| [Task 阶段回顾标准](docs/task_retrospective_standard.md) | 从 Task029 起所有新 Task 的强制 outcomes 与 development progress 写作/审查合同 |
+| [开发进度](docs/development_progress.md) | Task000-Task029 分阶段开发内容、关键结果、失败路线与当前进展 |
 | [快速开始](docs/quick_start.md) | Windows Docker、2D/3D、direct/workstation完整命令与资源边界 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
 | [求解器指南](docs/solver_guide.md) | direct/iterative 选择与限制 |
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task028 闭环、Task028 V4 合并状态与 Task029 入口 |
+| [任务索引](docs/README.md) | Task000-Task029 闭环与 Task030 任务入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

@@ -1,0 +1,97 @@
+{
+  "schema_version": "task029_candidate_summary_v1",
+  "benchmark_id": "task029_direct_h3_default_mpi2",
+  "status": "pass",
+  "candidate_disposition": "diagnostic_best_incore_rejected_by_20pct_engineering_gate",
+  "metadata": {
+    "commit_sha": "6babe4700328be2b3b93aad7e3e6c212b6dbad10",
+    "branch": "codex/20260713-task29-stage4-direct-memory-forensics",
+    "tracked_source_dirty": false,
+    "tracked_source_verification": "host_git_clean_attestation",
+    "timestamp_utc": "20260713T083918Z",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "source_artifact": "benchmarks/artifacts/cases/050/h3_default_mpi2_20260713T083918Z",
+    "provenance": "clean_task029_external_sampler_full_direct_run"
+  },
+  "physical_model": {
+    "factory": "src.common.config_3d.target_stage4_config",
+    "identity": "Task28 target Stage4 rectangular Si block, p2 Nedelec, double Floquet, auxiliary auto_propagating Fourier-DtN"
+  },
+  "resolved_config": {
+    "h_nm": 3.0,
+    "mpi_size": 2,
+    "threads_per_rank": 1,
+    "solver_profile": "default",
+    "solver_package": "mumps",
+    "ordering": "backend_default_not_reported",
+    "petsc_options": {},
+    "release_base_after_augmentation": false,
+    "assemble_only": false
+  },
+  "dimensions": {
+    "n_fe": 198438,
+    "n_aux": 80,
+    "augmented_rows": 198518,
+    "floquet_constraints": 10518,
+    "top_modes": 40,
+    "bottom_modes": 40,
+    "propagating_modes": 80
+  },
+  "matrix_inventory": {
+    "base_nnz_used": 21167444,
+    "augmented_nnz_used": 21317860,
+    "augmented_estimated_storage_mb": 489.4416732788086,
+    "nnz_unneeded": 0,
+    "mallocs": 0
+  },
+  "factor_inventory": {
+    "available": true,
+    "factor_solver_type": "mumps",
+    "factor_nnz_used": 266564172,
+    "factor_estimated_storage_mb": 6102.684288024902,
+    "factor_to_augmented_estimated_storage_ratio": 12.468665054903347,
+    "petsc_factor_memory_raw_mb": 0.0,
+    "mumps_raw_api_available": true,
+    "mumps_raw_fields": "INFOG[1..40] and RINFOG[1..20] retained by index in source artifact; meanings are not inferred"
+  },
+  "memory_checkpoints": {
+    "peak_stage": "during_ksp_setup_peak",
+    "full_trace": "benchmarks/artifacts/cases/050/h3_default_mpi2_20260713T083918Z/memory_timeline.csv"
+  },
+  "memory": {
+    "baseline_mpi4_simultaneous_rss_mb": 8651.09765625,
+    "max_simultaneous_total_rss_mb": 7343.13671875,
+    "absolute_reduction_gib": 1.2773056030273438,
+    "relative_reduction_percent": 15.1190171406175,
+    "max_container_cgroup_current_mb": 7070.4375,
+    "cgroup_relative_reduction_percent": 15.3618753606409,
+    "sum_rank_historical_peaks_mb_upper_bound": 7381.984375,
+    "wsl_pswpin_delta_pages": 0,
+    "wsl_pswpout_delta_pages": 0
+  },
+  "timings_seconds": {
+    "ksp_setup": 26.82689313100127,
+    "ksp_solve": 0.5640336579999712,
+    "stage4_dtn_port_assembly_and_solve": 73.37488269499954,
+    "postprocess": 4.638567800000601,
+    "stage4_runtime_ratio_to_mpi4_baseline": 1.07798171224581
+  },
+  "qualification": {
+    "process_completed": true,
+    "full_solve": true,
+    "true_residual": 1.33425838374134e-11,
+    "R_total": 0.004613031407444003,
+    "T_total": 0.5836533571790232,
+    "A_volume_total": 0.41173361141350556,
+    "energy_closure_error": -2.73114864057789e-14,
+    "max_task28_rta_absolute_delta": 5.47339951140202e-14,
+    "numeric_gate": "pass",
+    "memory_reduction_20pct_gate": "failed"
+  },
+  "limitations": [
+    "The 15.119% h3 simultaneous-RSS reduction is below the 20% engineering-success and h2-unlock threshold.",
+    "MPI2 changes the explicit rank-count profile and is not an ordinary-default replacement.",
+    "The factor storage value is an nnz-based estimate; PETSc reported zero raw factor memory."
+  ]
+}

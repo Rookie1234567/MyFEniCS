@@ -1,0 +1,310 @@
+# Task029 Run Log
+
+## Review V1 checkpoint：线程能力与文档合同
+
+```text
+audit source_sha = 48958571f62590418bf4281f09ad22b1419eb880
+PETSc = 3.24.0, linux-gnu-complex128-32
+MUMPS = 5.8.1
+system BLAS = OpenBLAS 0.3.26 pthread; runtime thread control verified
+PETSc/MUMPS OpenMP build detected = no
+visible CPUs = 0-15; formal affinity = 0-3
+OMP_NUM_THREADS = 1; nested OpenMP disabled
+multiple BLAS runtimes = NumPy scipy-openblas + PETSc system OpenBLAS; runnable-thread oversubscription not fully excluded; actual CPU execution capped by affinity 0-3
+
+MPI4x1: RSS=2351.707 MB; KSPSetUp=2.385 s; Stage4=18.311 s; KSP CPU mean/max=3.906/4.061
+MPI2x2: RSS=1677.062 MB; KSPSetUp=1.953 s; Stage4=20.687 s; KSP CPU mean/max=3.272/4.025
+MPI1x4: RSS=1399.648 MB; KSPSetUp=23.841 s; Stage4=48.273 s; KSP CPU mean/max=0.999/1.054
+MPI1x1: RSS=1401.988 MB; KSPSetUp=25.578 s; Stage4=50.891 s; KSP CPU mean/max=0.999/1.060
+
+T0 = failed_at_runtime
+T1 = failed
+T2 = pass_but_not_sufficient
+T3 = negative
+T4 = stop; threaded h3 = not_run
+threaded_direct_capability = unavailable_in_current_image
+
+ruff changed Python = pass (host ruff 0.12.0; image has no ruff)
+compileall = pass
+focused telemetry/governance/documentation/retrospective = 42 passed
+full unit = 146 passed / 10 skipped
+benchmark checker = 149/149
+JSON/CSV parse = pass
+git diff --check = pass
+```
+
+## 最终 checkpoint：候选、h2 Gate 与收口
+
+```text
+formal candidate source_sha = 6babe4700328be2b3b93aad7e3e6c212b6dbad10
+h5 MPI2 artifact = benchmarks/artifacts/cases/050/h5_default_mpi2_20260713T083431Z
+h5 numeric gate = pass
+h5 simultaneous RSS = 1655.484375 MB (baseline 2328.14453125 MB; -28.8925%)
+h5 cgroup current = 1370.47265625 MB (-20.7377%)
+h5 stage4 runtime ratio = 1.18959
+
+h3 MPI2 artifact = benchmarks/artifacts/cases/050/h3_default_mpi2_20260713T083918Z
+h3 numeric gate = pass
+h3 simultaneous RSS = 7343.13671875 MB (baseline 8651.09765625 MB; -15.1190%)
+h3 cgroup current = 7070.4375 MB (-15.3619%)
+h3 stage4 runtime ratio = 1.07798
+h3 true residual = 1.3342583837413397e-11
+h3 max Task28 R/T/A abs delta = 5.473399511402022e-14
+h3 swap in/out = 0 / 0 pages
+
+release-base h3 reduction = 5.4624% (Stop B)
+best h3 reduction = 15.1190% (Stop C; diagnostic_success)
+h2 DoF prediction = 22.2136 GiB
+h2 factor-nnz prediction = 22.3300 GiB
+h2 sensitivity range = 18.8816–27.9126 GiB
+h2 failed gates = G3, G5, G7, G9
+h2 launch = not_run
+Task28 h2 record overwritten = no
+```
+
+h5 profile 筛选：有效 SuperLU_DIST 为 `+14.462%` RSS；OOC 为 `-13.744%` RSS、`1.539x` 时间、559,715,776 bytes scratch，并成功删除 8 个临时文件；BLR 数值 Gate 失败；`ICNTL(7)=3` 为 `+4.093%` RSS。最多两个 h3 候选分别为 release-base MPI4 与 default MUMPS MPI2，没有运行第三个组合。
+
+最终新增预测/G1–G10/record 合同聚焦测试为 18 passed；Ruff 与 compileall 通过。完整最终工作树的 full unit discovery 为 136 passed / 10 skipped，documentation + Task29 contract 为 29 passed，benchmark checker 为 149/149。Commit G 后再执行 clean-head 轻量验证。
+
+## 最新 checkpoint：Stage C/D 低风险实现
+
+```text
+H1 candidate = opt-in release A_base/b_base after complete augmented copy
+ordinary default changed = no
+failure cleanup = idempotent KSP/x/b/A destroy after diagnostics write
+explicit MPI factor package = honor only when available and approved distributed LU
+OOC telemetry = scratch peak bytes/files + process-tree read/write bytes + block-I/O delay
+ruff = pass
+compileall = pass
+focused tests = 34 passed
+full unit discovery = 133 passed / 10 skipped
+```
+
+负/无效 screening：
+
+```text
+BLR artifact = benchmarks/artifacts/cases/050/h5_mumps_blr_mpi4_20260713T081608Z
+BLR process return = 0
+BLR qualification = failed
+BLR true residual = 0.004704037956272798
+BLR max Task28 R/T/A abs delta = 0.0010734669822908827
+BLR max simultaneous worker RSS = 2407.93359375 MB
+
+first SuperLU request artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T081655Z
+requested option = superlu_dist
+actual package = mumps
+classification = invalid package screen; old MPI fallback overwrote explicit request
+action = selection logic fixed; clean rerun required
+```
+
+## 最新 checkpoint：Stage B 完成
+
+```text
+h3 artifact = benchmarks/artifacts/cases/050/h3_default_mpi4_20260713T075023Z
+h3 source_sha = fba69d88ea8590ea01537b7561edff1684f25135
+h3 full solve / qualification = pass
+h3 max simultaneous worker RSS = 8651.09765625 MB
+h3 max cgroup current / kernel peak = 8353.7265625 / 8353.734375 MB
+h3 historical rank-peak upper bound = 8648.61328125 MB
+h3 KSPSetUp / KSPSolve = 31.200131237001187 / 1.6025402609993762 s
+h3 augmented/factor nnz = 21317860 / 266127836
+h3 factor/augmented estimated storage ratio = 12.44826029776516
+h3 true residual = 1.3821009358870955e-11
+h3 max Task28 R/T/A abs delta = 1.865174681370263e-14
+h3 swap in/out delta = 0 / 0 pages
+peak stage = during_ksp_setup_peak
+```
+
+h5 固定每 rank 1 thread 的同后端 MUMPS rank 诊断：MPI1 / MPI2 / MPI4 的 max simultaneous worker RSS 分别为 1230.305 / 1697.980 / 2328.145 MB，Stage4 时间分别为 25.969 / 19.286 / 14.800 s。MPI2 相对 MPI4 降低 27.07% worker RSS，作为首个 h3 候选。MPI1 ordinary default 使用 PETSc 内置 LU，单列为不同后端诊断。
+
+Stage B 结论：主瓶颈是 KSPSetUp/MUMPS factorization；h3 factorization 峰值增量约 6472.43 MB worker RSS。h2 仍锁定，下一步进入 H1/H2/H3/H5/H6/H7 独立调查。
+
+## 0. 执行前必读确认
+
+```text
+[x] task.md
+[x] task_comsol_reference_addendum.md
+[x] references/comsol_3d_direct_iterative_memory_report.md
+[x] Task028 final review/response/outcomes
+```
+
+Task028 闭环证据：
+
+```text
+Task28 branch head = 11cd4171cd2e86f025f4bf08337bb62e58295258
+Task28 merge commit = 2f9e56d2edddb801780504f681b2ff295d993e02
+master remote after push = 2f9e56d2edddb801780504f681b2ff295d993e02
+master release check = compileall pass; 116 passed, 10 skipped; MPI4 each rank 14 passed; benchmark 148/148; default Stage1 pass
+```
+
+启动规则：
+
+```text
+Task28 canonical records = read only
+ordinary default = unchanged
+FEniCS diffraction scope = auto_propagating, all propagating orders retained
+RUN_H2 = false
+safe_h2_rss_limit_gb = 13.5
+```
+
+## 1. 分支与工作树
+
+```text
+master_base_sha = 2f9e56d2edddb801780504f681b2ff295d993e02
+Task28 merge commit = 2f9e56d2edddb801780504f681b2ff295d993e02
+branch_name = codex/20260713-task29-stage4-direct-memory-forensics
+tracked worktree at branch creation = clean
+preserved user untracked paths = docs/task023_petsc_mpi_fe_response_pc/outcomes/raw_runs/; papers/
+```
+
+## 2. 容器与主机内存启动快照
+
+```text
+container_image = myfenics-stage4:task28
+container_digest = sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d
+container_cpu_processors = 16
+cgroup_memory_max = max
+cgroup_swap_max = max
+WSL_MemTotal_kB = 14311488
+WSL_memory_visible_gib = 13.6485
+
+Windows_total_physical_bytes = 16733323264
+Windows_free_physical_bytes_at_start = 3706617856
+Windows_total_virtual_bytes = 40537772032
+Windows_free_virtual_bytes_at_start = 20884762624
+pagefile_allocated_mb = 22701
+pagefile_current_usage_mb_at_start = 1664
+pagefile_historical_peak_usage_mb = 13840
+```
+
+解释：容器没有额外 `memory.max` 数值限制，但 WSL 实际可见内存约 13.65 GiB；主机启动快照的可用物理内存较低，因此 baseline run 前必须重新采样并避免并行重型任务。
+
+## 3. 当前动作
+
+```text
+next = commit Case050 scaffold, then run h5 baseline before h3
+numeric/physical profile change = no
+h5/h3 run = not started
+h2 = not started and locked
+```
+
+## 4. Stage A telemetry
+
+```text
+commit = 8401b44 feat: add Task29 direct-memory telemetry
+external sampler = 0.25 s process tree + per-rank RSS + cgroup + swap counters
+checkpoint RSS = current and historical fields separated
+matrix inventory = base / augmented / factor when API exposes it
+MUMPS inventory = raw INFOG(1..40) and RINFOG(1..20), no guessed meanings
+baseline lifecycle = preserved; solver objects retained during postprocess
+Docker unit tests = 123 passed, 10 skipped
+benchmark checker = 149/149
+h5/h3 baseline = not started
+h2 = locked
+```
+
+## 5. h5 首次启动前来源 Gate 修正
+
+```text
+first h5 attempt = stopped before artifact/run creation
+reason = Linux container git status treated Windows CRLF checkout as tracked dirty
+heavy solve started = no
+numeric result produced = no
+fix = host tracked-clean attestation + exact mounted HEAD verification
+```
+
+宿主机当时确认 `git status --porcelain --untracked-files=no` 为空，且 local/remote branch HEAD 都为 `01e05da6b9590161bb2405d45ea76dc004305a39`。该修正不放宽 clean Gate：宿主机仍需先证明 tracked clean，容器只接受完全相同的 SHA。
+
+## 6. h5 assemble-only 预检（不构成 baseline）
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T044630Z
+source_sha = cbdccd1d905c42b8bb3d4fafdce16b7d8595b544
+return_code = 0
+qualification = failed
+reason = target_stage4_config default matrix_diagnostics_assemble_only=true
+KSP/factorization = not run
+true residual = null
+official R/T/A = null
+max simultaneous worker RSS = 1485.5 MB
+sum rank historical peaks upper bound = 1571.3867 MB
+cgroup peak = 1047.7773 MB
+swap in/out delta = 0 / 0 pages
+```
+
+该结果只证明装配遥测和数值 Gate 能正确阻止伪 baseline。runner 后续显式设置 `matrix_diagnostics_assemble_only=false`，并在重新提交后才运行正式 h5。
+
+## 7. h5 full-solve baseline V1
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T045058Z
+source_sha = 1930a43414f0584533e5ac8dad67a57dda18de21
+qualification = pass
+true residual = 5.224671064148491e-12
+Task28 R/T/A delta = 0 / 0 / 0
+max simultaneous worker RSS = 2326.64453125 MB
+sum rank historical peaks upper bound = 2353.87109375 MB
+cgroup peak = 1743.05078125 MB
+swap in/out delta = 0 / 0 pages
+peak stage = during_ksp_setup_peak
+KSPSetUp seconds = 2.243473522000386
+KSPSolve seconds = 0.11982890299987048
+```
+
+V1 数值与内存阶段证据有效，但 factor Mat stats 缺失。3x3 PETSc 诊断证明原因是 `_petsc_matrix_stats` 对已分解 Mat 错误调用 `assemble()`；raw MUMPS INFOG/RINFOG 已成功读取。修正后将重跑 h5 V2，补全 factor fill inventory 后才冻结 h5 baseline。
+
+## 8. h5 full-solve baseline V2
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050037Z
+source_sha = 5d715008f1fec34382c4deff8623c38b1bbe2509
+qualification = pass
+factor inventory available = true
+factor nnz = 33862428
+augmented nnz = 4896156
+raw MUMPS API available = true
+swap in/out delta = 0 / 0 pages
+```
+
+V2 证明 factor Mat 可以直接读取，且不再触发 PETSc `Not for factored matrix`。冻结前交叉核对发现顶层 historical upper bound 仍来自较早写出的 `run_summary.json`，比最终 progress checkpoint 少 0.875 MB；原始 checkpoint 完整，但汇总字段不能取早值。runner 随后改为取所有完整 checkpoint 与 solver summary 的最大值，并新增只由 nnz/统一 estimator 代数计算的 factor ratios。
+
+## 9. h5 full-solve baseline V3（冻结）
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T050814Z
+source_sha = 208aaab149ca5c2be0aae09a8d893bfa02e3f8cc
+qualification = pass
+assemble_only = false
+true residual = 5.224671064148491e-12
+R/T/A = 0.08902160293644126 / 0.44258827865712486 / 0.46839011840655576
+Task28 R/T/A delta = 0 / 0 / 0
+energy closure = 1.219024881038422e-13
+max simultaneous worker RSS = 2328.14453125 MB
+max MPI process tree RSS = 2385.140625 MB
+max cgroup current = 1729.03515625 MB
+cgroup kernel peak = 1757.53515625 MB
+sum rank historical peaks upper bound = 2373.37109375 MB
+peak worker/cgroup stage = during_ksp_setup_peak
+KSPSetUp seconds = 1.8376552690006065
+KSPSolve seconds = 0.046669377000398526
+base/augmented/factor nnz = 4840396 / 4896156 / 33862428
+factor / augmented nnz ratio = 6.9161252215002955
+factor / augmented estimated storage ratio = 6.898144244781887
+swap in/out delta = 0 / 0 pages
+```
+
+PETSc factor `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，不把它们解释成可用 factor memory；统一 nnz estimator 的 factor storage 为 775.391 MB，只作结构量级。MUMPS INFOG 1..40 与 RINFOG 1..20 仅按 raw index 保存。h5 至此冻结；h3 未获本轮授权，未启动。
+
+## 10. h5 evidence regression
+
+```text
+ruff = pass
+compileall benchmarks src = pass
+Docker unit discovery = 128 passed / 10 skipped
+Documentation contract = 11 / 11
+Benchmark checker = 149 / 149
+JSON/CSV parse = pass (1 summary JSON, 13 memory rows, 3 matrix rows, 1 factor row)
+git diff --check = pass
+```
+
+测试只读取/生成 Task29 自身证据与既有 Gate report；用户未跟踪的 `papers/` 和 Task023 raw runs 未加入暂存区、未修改、未删除。

@@ -1,0 +1,12 @@
+gate_id,requirement,status,evidence,decision_effect
+G1,h5 optimized full run passes residual and RTA,true,"MPI2 residual=7.587e-12; max Task28 RTA delta=5.840e-14",none
+G2,h3 optimized full run passes residual and RTA,true,"MPI2 residual=1.334e-11; max Task28 RTA delta=5.473e-14",none
+G3,h5 and h3 simultaneous RSS both reduce at least 20 percent,false,"h5=28.893 percent; h3=15.119 percent",blocks_h2_and_engineering_success
+G4,h3 factorization has no host swap,true,"pswpin=0; pswpout=0; container swap=0",none
+G5,h2 prediction upper bound is at most 13.5 GiB,false,"prediction range=18.882 to 27.913 GiB",blocks_h2
+G6,safe h2 limit remains 13.5 GiB,true,"config and expected contract retain 13.5 GiB",none
+G7,current physical and cgroup memory have safe margin,false,"preflight available memory was about 12.83 GiB while predicted lower bound is 18.88 GiB",blocks_h2
+G8,only one h5 and h3 qualified profile is selected,true,"default MUMPS MPI2 is the sole final diagnostic candidate",none
+G9,h2 runner has active watchdog and clean abort,false,"watchdog was not implemented or activated because earlier hard gates already failed",blocks_h2
+G10,Task28 h2 historical record is not overwritten,true,"benchmarks/records/direct_p2_h2_reviewed_reference.json remains unchanged",none
+OVERALL,all h2 launch gates pass,false,"G3 G5 G7 and G9 are false",h2_launch_decision_not_run

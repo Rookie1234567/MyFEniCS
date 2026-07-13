@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from mpi4py import MPI
 
@@ -50,6 +51,35 @@ class DirectSolverProfileCleanupTests(unittest.TestCase):
         self.assertEqual(options["pc_type"], "lu")
         self.assertEqual(options["mat_mumps_icntl_35"], 1)
         self.assertEqual(options["mat_mumps_cntl_7"], 1.0e-5)
+
+    def test_explicit_available_distributed_solver_is_not_overwritten_by_mumps(self):
+        class TwoRankComm:
+            size = 2
+
+        cfg = SimulationConfig3D(
+            petsc_extra_options={"pc_factor_mat_solver_type": "superlu_dist"}
+        )
+        with patch("src.solvers.common_3d_solve._has_petsc_package", return_value=True):
+            options, selected, reason = _prepare_direct_lu_options_for_comm(
+                TwoRankComm(), cfg
+            )
+        self.assertIsNone(reason)
+        self.assertEqual(selected, "superlu_dist")
+        self.assertEqual(options["pc_factor_mat_solver_type"], "superlu_dist")
+
+    def test_explicit_serial_only_solver_is_rejected_for_mpi(self):
+        class TwoRankComm:
+            size = 2
+
+        cfg = SimulationConfig3D(
+            petsc_extra_options={"pc_factor_mat_solver_type": "umfpack"}
+        )
+        options, selected, reason = _prepare_direct_lu_options_for_comm(
+            TwoRankComm(), cfg
+        )
+        self.assertEqual(options["pc_factor_mat_solver_type"], "umfpack")
+        self.assertIsNone(selected)
+        self.assertIn("not approved for the MPI direct path", reason)
 
 
 if __name__ == "__main__":
