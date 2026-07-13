@@ -55,6 +55,18 @@ class BenchmarkContractTests(unittest.TestCase):
             self.assertIn('root / "results"', text)
             self.assertIn('"--results-root"', text)
 
+    def test_lightweight_candidate_runners_require_image_digest(self) -> None:
+        for relative in (
+            "benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh",
+            "benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh",
+        ):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn(
+                ': "${IMAGE_DIGEST:?Set IMAGE_DIGEST to the tested image digest}"',
+                text,
+            )
+            self.assertNotIn("sha256:qualified-local-image", text)
+
 
 if __name__ == "__main__":
     unittest.main()

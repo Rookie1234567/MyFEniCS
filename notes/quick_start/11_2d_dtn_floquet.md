@@ -70,7 +70,7 @@ python src/main.py --preset 2d_tm_dtn_explicit_smoke
 冻结双求解：
 
 ```text
-SOURCE_COMMIT=<sha> sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh
+SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh
 ```
 
 ## 10. 真实调用链

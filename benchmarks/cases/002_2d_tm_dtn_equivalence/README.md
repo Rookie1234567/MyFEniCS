@@ -13,7 +13,7 @@
 | 9. FE/网格 | N1curl p1，h2 nm |
 | 10. PyCharm preset | `2d_tm_dtn_auxiliary_smoke` 可交互运行；canonical 对比用本目录 `run.sh` |
 | 11. 参数表 | [`config.json`](config.json) 与 [`expected.json`](expected.json) |
-| 12. 精确命令 | `sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh` |
+| 12. 精确命令 | `SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh` |
 | 13. 调用链 | run_cases -> solve_port_maxwell -> auxiliary DtN -> power_metrics |
 | 14. 理论 | `dtn_modal_ports_and_condensation.md` |
 | 15. 求解器 | serial constrained sparse/direct |
@@ -40,7 +40,7 @@
 ## CLI 或测试
 
 ```text
-sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh
+SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh
 python benchmarks/check_benchmarks.py --no-write
 ```
 

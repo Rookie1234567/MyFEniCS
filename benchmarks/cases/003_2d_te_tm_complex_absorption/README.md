@@ -13,7 +13,7 @@
 | 9. FE/网格 | TM N1curl p2/h3；TE Lagrange p1/h2 |
 | 10. PyCharm preset | `2d_complex_absorption`, `2d_te_port_smoke` |
 | 11. 参数表 | [`config.json`](config.json)、两个 record 的 `resolved_config` |
-| 12. 精确命令 | `sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh` |
+| 12. 精确命令 | `SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh` |
 | 13. 调用链 | run_cases -> solve_port_maxwell/solve_te_maxwell -> power_metrics |
 | 14. 理论 | Maxwell TM/TE 与 official RTA 理论 |
 | 15. 求解器 | serial manual direct |
@@ -40,7 +40,7 @@ TM 可用 `2d_complex_absorption` preset。TE 交互入口 `2d_te_port_smoke` �
 ## CLI 或测试
 
 ```text
-sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh
+SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh
 python benchmarks/check_benchmarks.py --no-write
 ```
 

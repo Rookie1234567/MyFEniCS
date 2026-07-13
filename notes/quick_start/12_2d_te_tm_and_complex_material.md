@@ -73,7 +73,7 @@ Case003 证明两个冻结案例的 residual、非负 R/T/A、`A_balance≈A_vol
 
 ```text
 python src/main.py --preset 2d_complex_absorption
-SOURCE_COMMIT=<sha> sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh
+SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh
 ```
 
 CLI 复数示例：

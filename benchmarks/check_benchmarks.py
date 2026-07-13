@@ -280,6 +280,20 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             )
         )
         metadata = record.get("metadata", {})
+        if (
+            metadata.get("provenance")
+            == "canonical_lightweight_rerun_from_frozen_case_contract"
+        ):
+            tracked_source_dirty = metadata.get("tracked_source_dirty")
+            gates.append(
+                Gate(
+                    f"canonical_lightweight_tracked_source_clean:{row['benchmark_id']}",
+                    tracked_source_dirty is False,
+                    tracked_source_dirty,
+                    False,
+                    raw_path,
+                )
+            )
         relation = _commit_relation(
             metadata.get("commit_sha"), metadata.get("provenance")
         )
@@ -352,6 +366,22 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         )
     )
     if case002_comparison is not None:
+        comparison_metadata = case002_comparison.get("metadata", {})
+        if (
+            comparison_metadata.get("provenance")
+            == "canonical_lightweight_rerun_from_frozen_case_contract"
+        ):
+            tracked_source_dirty = comparison_metadata.get("tracked_source_dirty")
+            gates.append(
+                Gate(
+                    "canonical_lightweight_tracked_source_clean:"
+                    "case002_explicit_vs_auxiliary",
+                    tracked_source_dirty is False,
+                    tracked_source_dirty,
+                    False,
+                    "cases/002_2d_tm_dtn_equivalence/records/comparison.json",
+                )
+            )
         field_difference = float(case002_comparison["field_relative_difference"])
         rta_differences = [
             float(value)

@@ -2,8 +2,8 @@
 set -eu
 
 : "${SOURCE_COMMIT:?Set SOURCE_COMMIT to the source commit being tested}"
+: "${IMAGE_DIGEST:?Set IMAGE_DIGEST to the tested image digest}"
 IMAGE_NAME="${IMAGE_NAME:-myfenics-stage4:task28}"
-IMAGE_DIGEST="${IMAGE_DIGEST:-sha256:qualified-local-image}"
 ARTIFACT_ROOT="${ARTIFACT_ROOT:-benchmarks/artifacts/cases/003}"
 RECORD_DIR="${RECORD_DIR:-benchmarks/artifacts/cases/003/candidate_records}"
 
