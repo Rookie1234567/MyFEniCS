@@ -46,6 +46,47 @@ def _git(*args: str) -> str | None:
         return None
 
 
+def _source_provenance(args: argparse.Namespace) -> dict[str, Any]:
+    """Verify source cleanliness without misreading Windows CRLF in Linux."""
+
+    head = _git("rev-parse", "HEAD")
+    if head is None:
+        raise SystemExit("Cannot resolve the source commit with git.")
+    if args.verified_clean_sha is not None:
+        verified = args.verified_clean_sha.strip().lower()
+        if len(verified) != 40 or any(
+            char not in "0123456789abcdef" for char in verified
+        ):
+            raise SystemExit(
+                "Host clean-source attestation must be a full 40-character Git SHA."
+            )
+        if head.lower() != verified:
+            raise SystemExit(
+                "Host clean-source attestation does not match the mounted checkout: "
+                f"expected {verified}, mounted HEAD is {head}."
+            )
+        return {
+            "commit_sha": head,
+            "tracked_source_dirty": False,
+            "tracked_source_verification": "host_git_clean_attestation",
+            "verified_clean_sha": verified,
+        }
+
+    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    if tracked_status is None:
+        raise SystemExit("Cannot verify tracked-source cleanliness with git.")
+    if tracked_status:
+        raise SystemExit(
+            "Tracked source is dirty. Commit telemetry/candidate code before baseline runs."
+        )
+    return {
+        "commit_sha": head,
+        "tracked_source_dirty": False,
+        "tracked_source_verification": "local_git_status",
+        "verified_clean_sha": None,
+    }
+
+
 def _read_number(path: Path, *, scale: float = 1.0) -> float | str | None:
     try:
         value = path.read_text(encoding="utf-8").strip()
@@ -288,8 +329,7 @@ def _numeric_gate(
     closure = solver_summary.get("energy_closure_error_port_volume")
     checks = {
         "process_completed": return_code == 0,
-        "true_residual_le_1e-8": residual is not None
-        and float(residual) <= tolerance,
+        "true_residual_le_1e-8": residual is not None and float(residual) <= tolerance,
         "reference_rta_abs_delta_le_1e-8": all(
             value is not None and abs(value) <= tolerance for value in deltas.values()
         ),
@@ -337,6 +377,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--poll-interval", type=float, default=0.25)
     parser.add_argument("--petsc-options-json", default="{}")
     parser.add_argument("--h2-gate-json", type=Path)
+    parser.add_argument(
+        "--verified-clean-sha",
+        default=os.environ.get("TASK029_VERIFIED_CLEAN_SHA"),
+        help=(
+            "Clean HEAD attested by the host immediately before a Docker bind-mount run; "
+            "avoids Linux Git treating Windows CRLF as source edits."
+        ),
+    )
     parser.add_argument("--worker", action="store_true")
     return parser.parse_args(argv)
 
@@ -363,13 +411,7 @@ def _validate_h2_gate(args: argparse.Namespace) -> None:
 
 def _run_parent(args: argparse.Namespace) -> int:
     _validate_h2_gate(args)
-    initial_tracked_status = _git("status", "--porcelain", "--untracked-files=no")
-    if initial_tracked_status is None:
-        raise SystemExit("Cannot verify tracked-source cleanliness with git.")
-    if initial_tracked_status:
-        raise SystemExit(
-            "Tracked source is dirty. Commit telemetry/candidate code before baseline runs."
-        )
+    source_provenance = _source_provenance(args)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = args.run_dir or (
         args.artifact_root
@@ -495,11 +537,13 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "status": numeric_gate["status"],
         "metadata": {
-            "commit_sha": _git("rev-parse", "HEAD"),
+            "commit_sha": source_provenance["commit_sha"],
             "branch": _git("branch", "--show-current"),
-            "tracked_source_dirty": bool(
-                _git("status", "--porcelain", "--untracked-files=no") or ""
-            ),
+            "tracked_source_dirty": source_provenance["tracked_source_dirty"],
+            "tracked_source_verification": source_provenance[
+                "tracked_source_verification"
+            ],
+            "verified_clean_sha": source_provenance["verified_clean_sha"],
             "timestamp_utc": timestamp,
             "command": command,
             "container_image": os.environ.get(

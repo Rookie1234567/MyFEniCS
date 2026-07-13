@@ -83,3 +83,15 @@ benchmark checker = 149/149
 h5/h3 baseline = not started
 h2 = locked
 ```
+
+## 5. h5 首次启动前来源 Gate 修正
+
+```text
+first h5 attempt = stopped before artifact/run creation
+reason = Linux container git status treated Windows CRLF checkout as tracked dirty
+heavy solve started = no
+numeric result produced = no
+fix = host tracked-clean attestation + exact mounted HEAD verification
+```
+
+宿主机当时确认 `git status --porcelain --untracked-files=no` 为空，且 local/remote branch HEAD 都为 `01e05da6b9590161bb2405d45ea76dc004305a39`。该修正不放宽 clean Gate：宿主机仍需先证明 tracked clean，容器只接受完全相同的 SHA。

@@ -7,6 +7,7 @@
 | ruff | pass |
 | `compileall benchmarks src` | pass |
 | Docker focused telemetry + documentation | 18 passed |
+| Docker focused host-clean attestation regression | 8 passed |
 | Docker full unit discovery | 123 passed, 10 skipped |
 | Benchmark checker | 149/149 |
 | `git diff --check` | pass |

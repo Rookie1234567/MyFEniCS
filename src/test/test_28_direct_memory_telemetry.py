@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from petsc4py import PETSc
 
@@ -14,6 +15,7 @@ from benchmarks.run_direct_memory_forensics import (
     _numeric_gate,
     _parse_args,
     _sample,
+    _source_provenance,
     _validate_h2_gate,
 )
 from src.solvers.common_3d_solve import _petsc_matrix_stats
@@ -39,9 +41,7 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "progress.jsonl"
             path.write_text(
-                '{"stage":"after_mesh","status":"end"}\n'
-                '{"stage":"before_ksp_setup","status":"begin"}\n'
-                "{partial",
+                '{"stage":"after_mesh","status":"end"}\n{"stage":"before_ksp_setup","status":"begin"}\n{partial',
                 encoding="utf-8",
             )
             self.assertEqual(_latest_stage(path), ("before_ksp_setup", "begin"))
@@ -84,6 +84,22 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertEqual(gate["status"], "pass")
         summary["T_total"] = 0.4001
         self.assertEqual(_numeric_gate(summary, reference, 0)["status"], "failed")
+
+    def test_host_clean_sha_attestation_must_match_mounted_head(self) -> None:
+        sha = "a" * 40
+        args = _parse_args(["--h-nm", "5", "--verified-clean-sha", sha])
+        with patch("benchmarks.run_direct_memory_forensics._git", return_value=sha):
+            provenance = _source_provenance(args)
+        self.assertFalse(provenance["tracked_source_dirty"])
+        self.assertEqual(
+            provenance["tracked_source_verification"],
+            "host_git_clean_attestation",
+        )
+
+        args.verified_clean_sha = "b" * 40
+        with patch("benchmarks.run_direct_memory_forensics._git", return_value=sha):
+            with self.assertRaises(SystemExit):
+                _source_provenance(args)
 
     def test_h2_is_blocked_without_passing_gate_record(self) -> None:
         args = _parse_args(["--h-nm", "2"])

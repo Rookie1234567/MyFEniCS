@@ -50,6 +50,8 @@ sh benchmarks/cases/050_stage4_direct_memory_forensics/run_h3.sh
 
 脚本调用 `benchmarks.run_direct_memory_forensics`，外部采样器以 0.25 秒间隔记录 worker-rank 同时 RSS、MPI 进程树 RSS、cgroup current/peak、swap 与 solver stage。raw timeline 与完整 solver 输出保留在 ignored artifact 目录。
 
+Windows bind mount 的正式 Docker 运行由宿主机先执行 tracked-only clean check，再把同一时刻的 `HEAD` 作为 `TASK029_VERIFIED_CLEAN_SHA` 传入容器。容器必须确认 mounted `HEAD` 完全匹配；这样不会把 CRLF 归一化误判为 source dirty，也不会跳过宿主机 clean Gate。
+
 h2 默认禁止：
 
 ```text
