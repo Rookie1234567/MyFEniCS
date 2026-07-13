@@ -112,3 +112,11 @@ KSP/PC 持有 operator 和 context 引用；smoother 持有 local Mat/KSP/scatte
 - Case031：h5/h3/h2 canonical evidence。
 
 限制：只资格化固定 target、MPI4 和当前 PC 参数；h=1.5、角度/材料扫描、warm start、true multilevel H(curl) 未关闭。理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。
+
+## 15. Task030 explicit flags and record fields
+
+runner 新增 `--post-smooth`、`--subdomain-local-shift` 和 `--factor-only-storage`，默认均为 false；与 `--ilu-levels 0 --restart 90` 共同构成 Case060 最终候选。resolved config 和 record 同步写 `post_smooth`、`subdomain_local_shift`、`factor_only_storage`，smoother diagnostics 写 `subdomain_local_diagonal_shift`、`global_stored_factor_nnz` 与 factor-only identity。
+
+这些 flags 触发 `qualification_deviations`，所以 Task027/Case031 ordinary canonical 不会被静默覆盖。失败的 Task030 Woodbury 和 x-harmonic coarse 没有保留在正式 workstation runner 参数表；它们只在 research runner、模块测试和负结果文档中出现。
+
+Case060 入口：[`../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md`](../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)。

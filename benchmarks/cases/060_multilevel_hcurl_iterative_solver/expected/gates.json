@@ -1,0 +1,47 @@
+{
+  "baseline_source": "canonical_record_history_at_iteration_100",
+  "screen": {
+    "weak_residual_ratio_max": 0.8,
+    "weak_rss_ratio_max": 1.1,
+    "strong_residual_ratio_max": 0.5,
+    "strong_balanced_residual_ratio_max": 0.7,
+    "strong_balanced_rss_ratio_max": 0.8,
+    "memory_positive_rss_ratio_max": 0.7,
+    "memory_positive_residual_ratio_max": 1.1,
+    "negative_residual_ratio_min": 1.25,
+    "negative_rss_ratio_min_without_2x_gain": 1.2
+  },
+  "h5_full": {
+    "full_true_residual_max": 1e-6,
+    "rta_delta_from_direct_max": 1e-6,
+    "peak_rss_gb_max": 1.9911727905273438,
+    "preferred_iterations_max": 1000,
+    "positive_iterations_max": 1200,
+    "swap_allowed": false
+  },
+  "h3_full": {
+    "peak_rss_gb_max": 3.8,
+    "minimum_memory_reduction_fraction": 0.25,
+    "preferred_iterations_max": 1000,
+    "h3_to_h5_iteration_ratio_max": 2.0
+  },
+  "h2_launch": {
+    "default": false,
+    "independent_prediction_methods": ["affine_dof_rss", "power_law_dof_rss"],
+    "affine_central_peak_rss_gb": 9.529780517772656,
+    "power_law_central_peak_rss_gb": 7.033707384767461,
+    "conservative_upper_peak_rss_gb": 10.959247595438553,
+    "central_peak_rss_gb_max": 10.0,
+    "upper_peak_rss_gb_max": 12.0,
+    "soft_watchdog_gb": 10.5,
+    "hard_watchdog_gb": 12.5
+  },
+  "h2_full": {
+    "full_true_residual_max": 1e-6,
+    "peak_rss_gb_max": 10.0,
+    "rta_delta_from_direct_max": 1e-6,
+    "same_n_aux": 80,
+    "preferred_iterations_max": 1200,
+    "strong_iterations_max": 800
+  }
+}

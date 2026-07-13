@@ -127,4 +127,15 @@ build 16 complete slab index sets
 
 代码是 stable PC infrastructure；“qualified”只属于 4 ranks、16 slabs、overlap 0.25、shift 0.1、ILU1、sm2、75D coarse 的冻结 target。类能接受其他参数不等于它们已通过工程验证。
 
+## 15. Task030 storage path
+
+Task030 为 `DistributedPhysicalSlabSmoother` 增加两个显式 opt-in：
+
+- `diagonal_shift`：从原 F 逐 subdomain 提取矩阵后只修改 local diagonal，不保留一份完整 shifted-F；
+- `factor_only_storage`：要求 `local_ksp_iterations=1`，local PC setup 后对 factor Mat `incRef()`，销毁 KSP 和 source submatrix，apply 直接调用 factor solve。
+
+factor-only 模式逐块提取/分解，避免所有 local source matrices 同时驻留。`_OwnedSubdomainFactor` 的 Mat/KSP 因而可为 `None`，destroy 必须按实际所有权释放 factor/rhs/solution。serial 与 MPI2 测试比较普通与 compact action，误差约 `2e-12`；h5/h3 物理 full solve 证明 true residual 不漂移。
+
+`SparseGalerkinTwoLevelPc(post_smooth=True)` 在 coarse correction 后重算真实 residual，再执行同一 fixed smoother。它是 Task030 的主要收敛机制；只启用 storage flags 而不启用 post smooth 不是同一个候选。
+
 理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。

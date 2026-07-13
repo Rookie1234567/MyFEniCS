@@ -199,6 +199,20 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "run_h2_guarded.sh",
             "records",
         ),
+        "060_multilevel_hcurl_iterative_solver": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "expected/gates.json",
+            "run.sh",
+            "records/h5_baseline.json",
+            "records/hierarchy_contract.json",
+            "records/transfer_contract.json",
+            "records/candidate_screen_summary.json",
+            "records/best_h5.json",
+            "records/best_h3.json",
+            "records/best_h2.json",
+        ),
     }
     cases_root = BENCHMARKS / "cases"
     for case_name, required_names in case_requirements.items():

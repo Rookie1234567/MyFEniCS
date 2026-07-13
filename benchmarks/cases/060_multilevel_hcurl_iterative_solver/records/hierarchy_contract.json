@@ -1,0 +1,27 @@
+{
+  "record_type": "task030_hierarchy_contract_summary",
+  "source_artifact": "benchmarks/artifacts/cases/060/hierarchy_contract.json",
+  "mpi_size": 4,
+  "fine": {
+    "h_nm": 5.0,
+    "degree": 2,
+    "mesh_cells": [12, 5, 28],
+    "global_full_dofs": 44698,
+    "global_active_dofs": 40800,
+    "global_slave_dofs": 3898,
+    "material_planes_aligned": true,
+    "floquet_constraint_mode": "topological_trace_p2"
+  },
+  "coarse": {
+    "h_nm": 10.0,
+    "degree": 1,
+    "mesh_cells": [6, 3, 14],
+    "global_full_dofs": 1067,
+    "global_active_dofs": 792,
+    "global_slave_dofs": 275,
+    "material_planes_aligned": true,
+    "floquet_constraint_mode": "topological_edges_p1"
+  },
+  "status": "passed",
+  "ordinary_default_changed": false
+}

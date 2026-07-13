@@ -107,6 +107,12 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         deviations.append(f"lambda_nm={args.lambda_nm!r}, expected 13.5")
     if mpi_size != 4:
         deviations.append(f"mpi_size={mpi_size!r}, expected 4")
+    if args.post_smooth:
+        deviations.append("post_smooth=True, expected False")
+    if args.subdomain_local_shift:
+        deviations.append("subdomain_local_shift=True, expected False")
+    if args.factor_only_storage:
+        deviations.append("factor_only_storage=True, expected False")
     return deviations
 
 
@@ -236,22 +242,30 @@ def _fixed_floquet_hat_basis(
     return sparse
 
 
-def _shifted_matrix(
+def _absorption_diagonal_shift(
     matrix: PETSc.Mat, absorption_shift: float
-) -> tuple[PETSc.Mat, PETSc.Vec, float]:
+) -> tuple[PETSc.Vec, float]:
     diagonal = matrix.createVecLeft()
     matrix.getDiagonal(diagonal)
     absolute = np.abs(diagonal.getArray(readonly=True))
     scale = float(MPI.COMM_WORLD.allreduce(float(absolute.max(initial=0)), op=MPI.MAX))
-    shifted_diagonal = diagonal.copy()
-    shifted_diagonal.getArray()[:] += (
+    difference = diagonal.duplicate()
+    difference.getArray()[:] = (
         -1j * absorption_shift * np.maximum(absolute, 1e-12 * scale)
     )
+    diagonal.destroy()
+    return difference, scale
+
+
+def _shifted_matrix(matrix: PETSc.Mat, difference: PETSc.Vec) -> PETSc.Mat:
     shifted = matrix.copy()
+    shifted_diagonal = shifted.createVecLeft()
+    shifted.getDiagonal(shifted_diagonal)
+    shifted_diagonal.axpy(PETSc.ScalarType(1.0), difference)
     shifted.setDiagonal(shifted_diagonal)
     shifted.assemble()
-    diagonal.destroy()
-    return shifted, shifted_diagonal, scale
+    shifted_diagonal.destroy()
+    return shifted
 
 
 class _DiagonalShiftContext:
@@ -272,13 +286,7 @@ class _DiagonalShiftContext:
             self.destroyed = True
 
 
-def _shifted_action(matrix: PETSc.Mat, shifted: PETSc.Mat) -> PETSc.Mat:
-    original = matrix.createVecLeft()
-    difference = shifted.createVecLeft()
-    matrix.getDiagonal(original)
-    shifted.getDiagonal(difference)
-    difference.axpy(PETSc.ScalarType(-1.0), original)
-    original.destroy()
+def _shifted_action(matrix: PETSc.Mat, difference: PETSc.Vec) -> PETSc.Mat:
     action = PETSc.Mat().createPython(
         matrix.getSizes(),
         context=_DiagonalShiftContext(matrix, difference),
@@ -442,32 +450,40 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         operator,
         None,
         basis,
+        post_smooth=args.post_smooth,
         coarse_progress=lambda done, total: progress("coarse_operator", done, total),
         setup_progress=lambda stage: progress(stage, 0, len(basis)),
     )
-    shifted, shifted_diagonal, diagonal_scale = _shifted_matrix(
+    diagonal_shift, diagonal_scale = _absorption_diagonal_shift(
         blocks.F, args.absorption_shift
     )
-    shifted_diagonal.destroy()
-    action = _shifted_action(blocks.F, shifted)
+    action = _shifted_action(blocks.F, diagonal_shift)
+    shifted = (
+        None
+        if args.subdomain_local_shift
+        else _shifted_matrix(blocks.F, diagonal_shift)
+    )
     slabs = _complete_physical_slabs(
         system,
         num_slabs=args.num_slabs,
         overlap_layers=args.overlap_layers,
     )
     smoother = DistributedPhysicalSlabSmoother(
-        shifted,
+        blocks.F if shifted is None else shifted,
         slabs,
         ilu_levels=args.ilu_levels,
         local_ksp_iterations=1,
         local_ksp_type="gmres",
         smoother_iterations=2,
         action_operator=action,
+        diagonal_shift=diagonal_shift if args.subdomain_local_shift else None,
+        factor_only_storage=args.factor_only_storage,
         interpolation="basic",
         assembly_order="two_color",
         progress=lambda done, total: progress("slab_factorization", done, total),
     )
-    shifted.destroy()
+    if shifted is not None:
+        shifted.destroy()
     coarse_context.set_smoother(smoother)
     solution = operator.createVecRight()
     solution.set(0.0)
@@ -536,6 +552,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "shift_diagonal_scale": diagonal_scale,
         "ilu_levels": args.ilu_levels,
         "smoother_iterations": 2,
+        "post_smooth": args.post_smooth,
+        "subdomain_local_shift": args.subdomain_local_shift,
+        "factor_only_storage": args.factor_only_storage,
         "restart": args.restart,
         "rtol": args.rtol,
         "max_it": args.max_it,
@@ -595,6 +614,9 @@ def main() -> int:
     parser.add_argument("--rtol", type=float, default=None)
     parser.add_argument("--rta-threshold", type=float, default=None)
     parser.add_argument("--monitor-stride", type=int, default=None)
+    parser.add_argument("--post-smooth", action="store_true")
+    parser.add_argument("--subdomain-local-shift", action="store_true")
+    parser.add_argument("--factor-only-storage", action="store_true")
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -637,6 +659,9 @@ def main() -> int:
         "rta_threshold": args.rta_threshold,
         "monitor_stride": args.monitor_stride,
         "artifact_root": args.results_dir,
+        "post_smooth": args.post_smooth,
+        "subdomain_local_shift": args.subdomain_local_shift,
+        "factor_only_storage": args.factor_only_storage,
     }
     args.exact_command = os.environ.get(
         "BENCHMARK_EXACT_COMMAND",

@@ -1,0 +1,18 @@
+{
+  "record_type": "task030_nonmatching_hcurl_transfer_contract",
+  "source_artifact": "benchmarks/artifacts/cases/060/hierarchy_contract.json",
+  "kind": "active_column_nonmatching_hcurl_interpolation",
+  "mpi_size": 4,
+  "matrix_rows": 44698,
+  "matrix_cols": 792,
+  "matrix_nnz": 145998,
+  "coarse_removed_slave_dofs": 275,
+  "column_norm_min": 1.13707332336581,
+  "column_norm_max": 1.7926935041997605,
+  "adjoint_identity_relative_error": 1.586269571822032e-15,
+  "fresh_vs_cache_action_relative_error": 6.41005875401795e-15,
+  "build_s": 88.83337767699413,
+  "zero_columns": 0,
+  "restriction": "Hermitian_transpose",
+  "status": "passed"
+}

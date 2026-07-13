@@ -9,7 +9,8 @@
 | L1 | compile、full unit、2D DtN、3D Stage1 | 通过 |
 | L2 | condensation等价、transpose、backsub、MPI owner/cache | 通过 |
 | L3 direct | target p2 h5/h3 rerun，h2 reviewed reference | 通过 |
-| L3 iterative | target p2 h5/h3/h2 clean branch | 全通过 |
+| L3 iterative | Task27 target p2 h5/h3/h2 canonical | 全通过 |
+| L3 Task30 | compact low-memory h5/h3/h2 | 全通过；h2 1873 步、9.374729 GB，experimental opt-in |
 
 ## 目标模型
 
@@ -44,3 +45,15 @@ canonical records 位于 `benchmarks/records/` 与 recorded case 的 `records/`�
 Review V1 的条件式线程审计也归入 Case050：PETSc 3.24.0 / MUMPS 5.8.1 实际链接 system OpenBLAS 0.3.26 pthread，线程控制 API 可用；但固定 CPU `0-3` 的 MPI1×4 在 KSPSetUp 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 speedup 仅 1.054×。因此 `threaded_direct_capability=unavailable_in_current_image`，threaded h3 明确 `not_run`。轻量记录为 [`h5_threaded_direct_audit.json`](../benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_threaded_direct_audit.json)。
 
 Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施进入 master；该接受不代表存在 qualified low-memory direct profile。最终状态仍为 `diagnostic_success`、`engineering_success=no`、h2 `not_run`、ordinary default unchanged。
+
+## Task030 Case060
+
+[`Case060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) 同时保存“正确但性能失败”的 nonmatching H(curl) transfer/Galerkin 基础设施和最终低内存正反馈。五个 p/h 候选 100 步真残差为 `0.375–0.680`，不得提升；最终候选保留 75D wave coarse，使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 与 restart90。
+
+| h/nm | iterations | full true residual | peak RSS | 相对 Task27 |
+|---:|---:|---:|---:|---:|
+| 5 | 855 | 9.92491e-7 | 1.696 GB | memory -14.82%，iterations -28.81% |
+| 3 | 962 | 9.90389e-7 | 3.808 GB | memory -25.08%，iterations -3.12% |
+| 2 qualified | 1873 | 9.97223e-7 | 9.375 GB | memory -28.33%，workstation pass；iterations target missed |
+
+h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。Case060 达到冻结目标的 `workstation_success`，但仍是显式 experimental profile；1873 步未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。

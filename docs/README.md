@@ -49,8 +49,8 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
-| Task029 | Stage4 direct memory forensics | `diagnostic_success`；engineering_success=no；当前 image threaded direct unavailable；V2 技术通过，用户已许可合并 |
-| Task030 | multilevel H(curl) low-memory iterative solver | planned；多 lane 漏斗探索，h5→h3→条件式单个 h2，Task029 合并后才能启动 |
+| Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
+| Task030 | multilevel H(curl) low-memory iterative solver | `workstation_success` experimental opt-in；h5/h3/h2 通过，h2 1873 步、9.374729 GB；p/h coarse solver-negative |
 
 ## 当前任务
 
@@ -59,8 +59,8 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | `review_report_v2.md` 技术通过；`response_v2.md` 已同步最终状态，用户已许可合并 |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | planned；不得在 Task029 分支执行，必须从合并 Task029 后的 clean master 新开 Codex 分支 |
+| Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | 独立分支实施完成；等待最终测试与 ChatGPT review，ordinary default 不变 |
 
 ## Task28 审计入口
 
@@ -102,5 +102,6 @@
 | 文件 | 内容 |
 |---|---|
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/task.md`](task030_multilevel_hcurl_low_memory_iterative_solver/task.md) | 多路线 H(curl) 低内存迭代任务书：嵌套/半粗化网格、p/h hierarchy、polynomial/patch/Vanka smoother、shifted-level AMS/HX、全 80 模态 DtN 低秩 Schur、wave-aware 原型与 Krylov 优化；正反馈持续推进，h2 严格条件解锁 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md`](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md) | transfer/Galerkin 基础设施、五类 p/h 负结果、对称 ILU0 低内存正反馈、h5/h3 full 与条件式 h2 证据 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。Task030 只允许在 Task029 合并后的 clean master 上由 Codex 创建新分支执行。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。Task030 已从 Task029 合并后的 clean master 独立启动，ordinary default 仍未改变。

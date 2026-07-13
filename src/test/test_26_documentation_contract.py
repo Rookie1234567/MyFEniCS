@@ -56,6 +56,7 @@ CASES = {
     "031_workstation_iterative",
     "040_mpi_p_algebra_regression",
     "050_stage4_direct_memory_forensics",
+    "060_multilevel_hcurl_iterative_solver",
 }
 
 RECORDED_CASES = {
@@ -78,6 +79,15 @@ RECORDED_CASES = {
         "records/h5_reference.json",
         "records/h3_reference.json",
         "records/h2_reference.json",
+    ),
+    "060_multilevel_hcurl_iterative_solver": (
+        "records/h5_baseline.json",
+        "records/hierarchy_contract.json",
+        "records/transfer_contract.json",
+        "records/candidate_screen_summary.json",
+        "records/best_h5.json",
+        "records/best_h3.json",
+        "records/best_h2.json",
     ),
 }
 
