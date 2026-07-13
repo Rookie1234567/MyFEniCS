@@ -4,7 +4,7 @@ import csv
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import ufl
@@ -17,17 +17,25 @@ from dolfinx.fem import petsc as fem_petsc
 from dolfinx.la.petsc import _ghost_update, create_vector
 
 from ..common.config_3d import SimulationConfig3D
-from ..common.modes_3d import PortMode3D, incident_power_3d, mode_power, outgoing_port_modes_3d
+from ..common.modes_3d import (
+    PortMode3D,
+    incident_power_3d,
+    mode_power,
+    outgoing_port_modes_3d,
+)
 from ..constraints.floquet_3d import DoubleFloquet3DData
-from .common_3d_solve import DirectSolveFailure, _petsc_matrix_stats
+from .common_3d_solve import (
+    DirectSolveFailure,
+    _petsc_factor_inventory,
+    _petsc_matrix_stats,
+)
 from .common_3d_utils import _write_progress_event
 from .solve_vector_maxwell import _json_default
 
 
 DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = (
-    "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses "
-    "boundary-plane phase attenuation"
+    "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
 )
 
 
@@ -116,7 +124,15 @@ def _set_scalar_constant(constant: fem.Constant, value: complex) -> None:
 class _ReusableSurfaceComponentAssembler:
     """Cache one port surface form and update only the Fourier phase constants."""
 
-    def __init__(self, V, mesh_data, tag: int, component: int, *, quadrature_degree: int | None = None):
+    def __init__(
+        self,
+        V,
+        mesh_data,
+        tag: int,
+        component: int,
+        *,
+        quadrature_degree: int | None = None,
+    ):
         if component not in {0, 1}:
             raise ValueError("Stage-4 DtN port component assembly only supports x/y tangential components.")
         self.alpha = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
@@ -151,7 +167,13 @@ class _ReusableSurfaceComponentAssembler:
             vec.destroy()
 
 
-def _copy_base_matrix_to_augmented(A_base: PETSc.Mat, n_aux: int, comm: MPI.Intracomm) -> PETSc.Mat:
+def _copy_base_matrix_to_augmented(
+    A_base: PETSc.Mat,
+    n_aux: int,
+    comm: MPI.Intracomm,
+    *,
+    on_allocated: Callable[[], None] | None = None,
+) -> PETSc.Mat:
     n_fe = A_base.getSize()[0]
     local_fe_rows = A_base.getOwnershipRange()[1] - A_base.getOwnershipRange()[0]
     local_aug_rows = local_fe_rows + (n_aux if comm.rank == comm.size - 1 else 0)
@@ -160,6 +182,8 @@ def _copy_base_matrix_to_augmented(A_base: PETSc.Mat, n_aux: int, comm: MPI.Intr
         comm=comm,
     )
     A_aug.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+    if on_allocated is not None:
+        on_allocated()
     row_start, row_end = A_base.getOwnershipRange()
     for row in range(row_start, row_end):
         cols, values = A_base.getRow(row)
@@ -200,7 +224,11 @@ def _augmented_vec_from_base(b_base: PETSc.Vec, n_aux: int, comm: MPI.Intracomm)
     row_start, row_end = b_base.getOwnershipRange()
     values = np.asarray(b_base.getArray(readonly=True), dtype=np.complex128)
     if values.size:
-        b_aug.setValues(_idx(np.arange(row_start, row_end, dtype=np.int64)), values, addv=PETSc.InsertMode.ADD_VALUES)
+        b_aug.setValues(
+            _idx(np.arange(row_start, row_end, dtype=np.int64)),
+            values,
+            addv=PETSc.InsertMode.ADD_VALUES,
+        )
     return b_aug
 
 
@@ -283,7 +311,9 @@ def _use_zero_order_local_robin_dtn(cfg: SimulationConfig3D) -> bool:
     """Use the 2D-like local DtN sanity branch for normal-incidence order 0."""
 
     transverse_scale = max(abs(cfg.k0 * complex(cfg.n_air)), 1.0)
-    normal_incidence = abs(complex(cfg.kx)) <= 1.0e-12 * transverse_scale and abs(complex(cfg.ky)) <= 1.0e-12 * transverse_scale
+    normal_incidence = (
+        abs(complex(cfg.kx)) <= 1.0e-12 * transverse_scale and abs(complex(cfg.ky)) <= 1.0e-12 * transverse_scale
+    )
     return cfg.stage4_dtn_order_policy.lower() == "zero_order" and normal_incidence
 
 
@@ -309,9 +339,7 @@ def _mode_projection_from_solution(
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
-    local = fem.assemble_scalar(
-        fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options)
-    )
+    local = fem.assemble_scalar(fem.form(ufl.inner(E_total, reference) * ds(tag), form_compiler_options=form_options))
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
     denominator = _mode_projection_denominator(mode, cfg)
     return complex(total / denominator)
@@ -382,11 +410,7 @@ def _zero_order_local_robin_forms(a, L, V, mesh_data, cfg: SimulationConfig3D):
     v_t = ufl.as_vector((v[0], v[1], PETSc.ScalarType(0.0)))
     q_top_u_t = ufl.as_vector((q_top * u[0], q_top * u[1], PETSc.ScalarType(0.0)))
     q_bottom_u_t = ufl.as_vector((q_bottom * u[0], q_bottom * u[1], PETSc.ScalarType(0.0)))
-    a_local = (
-        a
-        + ufl.inner(q_top_u_t, v_t) * ds(cfg.tags.z_max)
-        + ufl.inner(q_bottom_u_t, v_t) * ds(cfg.tags.z_min)
-    )
+    a_local = a + ufl.inner(q_top_u_t, v_t) * ds(cfg.tags.z_max) + ufl.inner(q_bottom_u_t, v_t) * ds(cfg.tags.z_min)
 
     k_inc = np.asarray(cfg.wavevector, dtype=np.complex128)
     incident_e = complex(cfg.incident_amplitude) * np.asarray(cfg.polarization_vector, dtype=np.complex128)
@@ -429,10 +453,7 @@ def _solve_zero_order_local_robin_dtn(
     }
     modes = outgoing_port_modes_3d(cfg)
     if len(modes) != 4:
-        raise RuntimeError(
-            "zero_order local DtN expects exactly four modes: top/bottom x/y. "
-            f"Got {len(modes)} modes."
-        )
+        raise RuntimeError(f"zero_order local DtN expects exactly four modes: top/bottom x/y. Got {len(modes)} modes.")
     dtn_quadrature_degree = _dtn_surface_quadrature_degree(cfg, modes)
     timing_details["stage4_dtn_surface_quadrature_degree"] = int(dtn_quadrature_degree)
     if log is not None:
@@ -613,9 +634,7 @@ def _solve_zero_order_local_robin_dtn(
         )
     )
     port_metrics["stage4_dtn_zero_order_modal_values"] = [complex(value) for value in modal_values]
-    port_metrics["stage4_dtn_zero_order_incident_projections"] = [
-        complex(value) for value in incident_projections
-    ]
+    port_metrics["stage4_dtn_zero_order_incident_projections"] = [complex(value) for value in incident_projections]
     port_metrics.update(timing_details)
     port_metrics["dtn_port_power_metric_note"] = (
         "Stage-4 zero_order dtn_port R/T is computed from direct boundary projections "
@@ -674,7 +693,20 @@ def _solve_augmented_system(
     dofs: int | None = None,
     constraints: int | None = None,
     matrix_stats: dict[str, Any] | None = None,
-) -> tuple[PETSc.Vec, PETSc.KSP]:
+) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
+    progress_comm = comm if comm is not None else A_aug.getComm()
+    if out_dir is not None:
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="before_ksp_create",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
     ksp = PETSc.KSP().create(A_aug.getComm())
     ksp.setOptionsPrefix(prefix)
     ksp.setOperators(A_aug)
@@ -687,7 +719,6 @@ def _solve_augmented_system(
         del opts[key]
     opts.prefixPop()
     x_aug = b_aug.duplicate()
-    progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -700,6 +731,30 @@ def _solve_augmented_system(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
         )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="before_ksp_setup",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="during_ksp_setup_peak",
+            status="active",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={"stage_semantics": "external sampler labels samples while KSPSetUp is running"},
+        )
+    setup_started = time.perf_counter()
     try:
         ksp.setUp()
     except PETSc.Error as exc:
@@ -713,6 +768,8 @@ def _solve_augmented_system(
             ksp=ksp,
             solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
         ) from exc
+    setup_seconds = float(progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX))
+    factor_inventory = _petsc_factor_inventory(ksp)
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -728,6 +785,21 @@ def _solve_augmented_system(
         _write_progress_event(
             out_dir,
             progress_comm,
+            stage="after_ksp_setup_factorized",
+            status="end",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "ksp_setup_seconds": setup_seconds,
+                "factor_inventory": factor_inventory,
+            },
+        )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
             stage="stage4_dtn_augmented_solve",
             status="begin",
             started=started,
@@ -736,6 +808,30 @@ def _solve_augmented_system(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
         )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="before_ksp_solve",
+            status="begin",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+        )
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="during_ksp_solve_peak",
+            status="active",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={"stage_semantics": "external sampler labels samples while KSPSolve is running"},
+        )
+    solve_started = time.perf_counter()
     try:
         ksp.solve(b_aug, x_aug)
     except PETSc.Error as exc:
@@ -749,6 +845,7 @@ def _solve_augmented_system(
             ksp=ksp,
             solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
         ) from exc
+    solve_seconds = float(progress_comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX))
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -761,7 +858,27 @@ def _solve_augmented_system(
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
         )
-    return x_aug, ksp
+        _write_progress_event(
+            out_dir,
+            progress_comm,
+            stage="after_ksp_solve",
+            status="end",
+            started=started,
+            dofs=dofs,
+            constraints=constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={"ksp_solve_seconds": solve_seconds},
+        )
+    return (
+        x_aug,
+        ksp,
+        {
+            "ksp_setup_seconds": setup_seconds,
+            "ksp_solve_seconds": solve_seconds,
+            "factor_inventory": factor_inventory,
+        },
+    )
 
 
 def _assign_fe_solution_from_augmented(
@@ -951,9 +1068,7 @@ def _write_port_outputs(
             else complex(aux_values[idx]),
             "boundary_phase": _mode_boundary_phase(mode, cfg),
             "outgoing_amplitude_at_boundary": (
-                complex(aux_values[idx] - incident_projections[idx])
-                if mode.side == "top"
-                else complex(aux_values[idx])
+                complex(aux_values[idx] - incident_projections[idx]) if mode.side == "top" else complex(aux_values[idx])
             )
             * _mode_boundary_phase(mode, cfg),
         }
@@ -1096,7 +1211,20 @@ def solve_stage4_dtn_port_total_field(
         matrix_stats=base_matrix_stats,
         petsc_options=petsc_options,
     )
-    timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_base_matrix_assembly",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=base_matrix_stats,
+        petsc_options=petsc_options,
+    )
+    timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
 
     t0 = time.perf_counter()
     b_base = _assemble_mpc_vector(L, floquet_data.mpc)
@@ -1109,16 +1237,57 @@ def solve_stage4_dtn_port_total_field(
         raise RuntimeError("Stage-4 DtN selected zero port modes.")
     dtn_quadrature_degree = _dtn_surface_quadrature_degree(cfg, modes)
     timing_details["stage4_dtn_surface_quadrature_degree"] = int(dtn_quadrature_degree)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_dtn_mode_enumeration",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+        extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
+    )
     if log is not None:
         log(f"Stage-4 DtN selected auxiliary port modes = {n_aux}")
-        log(f"Stage-4 DtN top/bottom mode count = {sum(m.side == 'top' for m in modes)} / {sum(m.side == 'bottom' for m in modes)}")
+        log(
+            f"Stage-4 DtN top/bottom mode count = {sum(m.side == 'top' for m in modes)} / {sum(m.side == 'bottom' for m in modes)}"
+        )
         log(f"Stage-4 DtN matrix base rows = {n_fe}")
         log(f"Stage-4 DtN surface quadrature degree = {dtn_quadrature_degree}")
 
     t0 = time.perf_counter()
-    A_aug = _copy_base_matrix_to_augmented(A_base, n_aux, comm)
+    A_aug = _copy_base_matrix_to_augmented(
+        A_base,
+        n_aux,
+        comm,
+        on_allocated=lambda: _write_progress_event(
+            out_dir,
+            comm,
+            stage="after_augmented_matrix_allocation",
+            status="end",
+            started=started,
+            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            constraints=floquet_data.num_constraints,
+            petsc_options=petsc_options,
+            extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
+        ),
+    )
     b_aug = _augmented_vec_from_base(b_base, n_aux, comm)
-    timing_details["stage4_dtn_augmented_block_copy_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_base_matrix_copy",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+        extra={"stage4_dtn_num_auxiliary_dofs": int(n_aux)},
+    )
+    timing_details["stage4_dtn_augmented_block_copy_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
 
     t0 = time.perf_counter()
     incident_traction_vec = _assemble_mpc_vector(_incident_top_traction_form(V, mesh_data, cfg), floquet_data.mpc)
@@ -1126,7 +1295,9 @@ def solve_stage4_dtn_port_total_field(
     incident_traction_vec.destroy()
     if len(inc_rows):
         b_aug.setValues(inc_rows, inc_values, addv=PETSc.InsertMode.ADD_VALUES)
-    timing_details["stage4_dtn_incident_source_vector_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    timing_details["stage4_dtn_incident_source_vector_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
 
     incident_projections: list[complex] = []
     surface_assemblers = {
@@ -1185,7 +1356,11 @@ def solve_stage4_dtn_port_total_field(
         t_insert = time.perf_counter()
         if len(traction_rows):
             traction_rows_total_local += int(len(traction_rows))
-            A_aug.setValues(traction_rows, _idx([aux_global]), (-traction_values).reshape((len(traction_rows), 1)))
+            A_aug.setValues(
+                traction_rows,
+                _idx([aux_global]),
+                (-traction_values).reshape((len(traction_rows), 1)),
+            )
             if incident_projection != 0.0:
                 b_aug.setValues(
                     traction_rows,
@@ -1210,12 +1385,22 @@ def solve_stage4_dtn_port_total_field(
                 f"in {elapsed:.3f} seconds; unique surface orders = {unique_surface_orders}"
             )
 
-    timing_details["stage4_dtn_modal_loop_seconds"] = float(comm.allreduce(time.perf_counter() - modal_loop_start, op=MPI.MAX))
-    timing_details["stage4_dtn_modal_vector_assembly_seconds"] = float(comm.allreduce(modal_vector_assembly_seconds_local, op=MPI.MAX))
-    timing_details["stage4_dtn_modal_block_insert_seconds"] = float(comm.allreduce(modal_block_insert_seconds_local, op=MPI.MAX))
+    timing_details["stage4_dtn_modal_loop_seconds"] = float(
+        comm.allreduce(time.perf_counter() - modal_loop_start, op=MPI.MAX)
+    )
+    timing_details["stage4_dtn_modal_vector_assembly_seconds"] = float(
+        comm.allreduce(modal_vector_assembly_seconds_local, op=MPI.MAX)
+    )
+    timing_details["stage4_dtn_modal_block_insert_seconds"] = float(
+        comm.allreduce(modal_block_insert_seconds_local, op=MPI.MAX)
+    )
     timing_details["stage4_dtn_unique_surface_orders"] = int(comm.allreduce(unique_surface_orders, op=MPI.MAX))
-    timing_details["stage4_dtn_component_vector_assemblies"] = int(comm.allreduce(component_vector_assemblies, op=MPI.MAX))
-    timing_details["stage4_dtn_component_vector_cache_hits"] = int(comm.allreduce(component_vector_cache_hits, op=MPI.MAX))
+    timing_details["stage4_dtn_component_vector_assemblies"] = int(
+        comm.allreduce(component_vector_assemblies, op=MPI.MAX)
+    )
+    timing_details["stage4_dtn_component_vector_cache_hits"] = int(
+        comm.allreduce(component_vector_cache_hits, op=MPI.MAX)
+    )
     traction_rows_total = int(comm.allreduce(traction_rows_total_local, op=MPI.SUM))
     ell_cols_total = int(comm.allreduce(ell_cols_total_local, op=MPI.SUM))
     dtn_auxiliary_block_stats = _local_augmented_dtn_coupling_stats(
@@ -1232,13 +1417,32 @@ def solve_stage4_dtn_port_total_field(
             f"polarization cache hits = {timing_details['stage4_dtn_component_vector_cache_hits']}"
         )
         log(f"Stage-4 DtN base matrix nnz = {base_matrix_stats.get('matrix_nnz_used')}")
-        log(f"Stage-4 DtN auxiliary coupling nnz estimate = {dtn_auxiliary_block_stats['dtn_auxiliary_coupling_nnz_estimate']}")
+        log(
+            f"Stage-4 DtN auxiliary coupling nnz estimate = {dtn_auxiliary_block_stats['dtn_auxiliary_coupling_nnz_estimate']}"
+        )
+
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_dtn_coupling_insert",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+        extra={
+            "stage4_dtn_num_auxiliary_dofs": int(n_aux),
+            "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        },
+    )
 
     t0 = time.perf_counter()
     A_aug.assemble()
     b_aug.assemble()
     augmented_matrix_stats_after_finalize = _petsc_matrix_stats(A_aug)
-    timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    timing_details["stage4_dtn_augmented_matrix_finalize_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
     _write_progress_event(
         out_dir,
         comm,
@@ -1304,7 +1508,7 @@ def solve_stage4_dtn_port_total_field(
 
     t0 = time.perf_counter()
     try:
-        x_aug, ksp = _solve_augmented_system(
+        x_aug, ksp, ksp_telemetry = _solve_augmented_system(
             A_aug,
             b_aug,
             petsc_options,
@@ -1330,13 +1534,64 @@ def solve_stage4_dtn_port_total_field(
         raise
     timing_details["stage4_dtn_linear_solve_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
 
+    linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_true_residual",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=augmented_matrix_stats_after_finalize,
+        petsc_options=petsc_options,
+        extra={"linear_system_relative_residual": linear_residual.get("linear_system_relative_residual")},
+    )
+
     t0 = time.perf_counter()
     E_total = _assign_fe_solution_from_augmented(x_aug, floquet_data, n_aux)
-    timing_details["stage4_dtn_solution_backsubstitution_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    timing_details["stage4_dtn_solution_backsubstitution_seconds"] = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_fe_field_reconstruction",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_augmented_matrix_finalize",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        matrix_stats=augmented_matrix_stats_after_finalize,
+        petsc_options=petsc_options,
+    )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
     port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
     port_metrics.update(timing_details)
     _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="after_official_rta",
+        status="end",
+        started=started,
+        dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+        constraints=floquet_data.num_constraints,
+        petsc_options=petsc_options,
+        extra={
+            "R_total": port_metrics.get("R_total"),
+            "T_total": port_metrics.get("T_total"),
+        },
+    )
 
     solver_info = {
         "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
@@ -1354,8 +1609,9 @@ def solve_stage4_dtn_port_total_field(
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
+        **ksp_telemetry,
         **timing_details,
-        **_linear_residual(A_aug, b_aug, x_aug),
+        **linear_residual,
     }
     try:
         solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()

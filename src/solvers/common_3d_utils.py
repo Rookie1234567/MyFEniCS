@@ -22,11 +22,13 @@ def _start_timed_stage(comm) -> float:
     comm.barrier()
     return time.perf_counter()
 
+
 def _finish_timed_stage(comm, timings: dict[str, float], name: str, started: float, log) -> None:
     local_elapsed = time.perf_counter() - started
     elapsed = float(comm.allreduce(local_elapsed, op=MPI.MAX))
     timings[name] = elapsed
     log(f"{name} seconds = {elapsed:.3f}")
+
 
 def _max_rss_mb() -> float | None:
     if resource is None:
@@ -38,11 +40,62 @@ def _max_rss_mb() -> float | None:
         return float(usage.ru_maxrss) / (1024.0 * 1024.0)
     return float(usage.ru_maxrss) / 1024.0
 
+
+def _current_rss_mb() -> float | None:
+    """Return the current resident set, not the historical high-water mark."""
+
+    status = Path("/proc/self/status")
+    if not status.exists():
+        return None
+    try:
+        lines = status.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if not line.startswith("VmRSS:"):
+            continue
+        parts = line.split()
+        if len(parts) >= 2:
+            try:
+                return float(parts[1]) / 1024.0
+            except ValueError:
+                return None
+    return None
+
+
+def _cgroup_memory_fields() -> dict[str, float | str | None]:
+    root = Path("/sys/fs/cgroup")
+
+    def read_value(name: str) -> float | str | None:
+        path = root / name
+        if not path.exists():
+            return None
+        try:
+            value = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        if value == "max":
+            return value
+        try:
+            return float(value) / (1024.0 * 1024.0)
+        except ValueError:
+            return None
+
+    return {
+        "container_cgroup_current_mb": read_value("memory.current"),
+        "container_cgroup_peak_mb": read_value("memory.peak"),
+        "container_cgroup_limit_mb": read_value("memory.max"),
+        "container_swap_current_mb": read_value("memory.swap.current"),
+        "container_swap_limit_mb": read_value("memory.swap.max"),
+    }
+
+
 def _global_max_rss_mb(comm) -> float | None:
     local = _max_rss_mb()
     if local is None:
         return None
     return float(comm.allreduce(local, op=MPI.MAX))
+
 
 def _global_total_peak_rss_mb(comm) -> float | None:
     """Return the sum of per-rank peak RSS values."""
@@ -51,6 +104,7 @@ def _global_total_peak_rss_mb(comm) -> float | None:
     if local is None:
         return None
     return float(comm.allreduce(local, op=MPI.SUM))
+
 
 def _swap_used_mb() -> float | None:
     """Return current Linux swap use in MB when /proc/meminfo is available."""
@@ -78,6 +132,7 @@ def _swap_used_mb() -> float | None:
         return None
     return max(values["SwapTotal"] - values["SwapFree"], 0.0)
 
+
 def _progress_matrix_fields(matrix_stats: dict[str, Any] | None) -> dict[str, Any]:
     if not matrix_stats:
         return {}
@@ -90,6 +145,7 @@ def _progress_matrix_fields(matrix_stats: dict[str, Any] | None) -> dict[str, An
         "matrix_memory_mb": matrix_stats.get("matrix_memory_mb"),
         "matrix_memory_estimate_mb": matrix_stats.get("matrix_memory_estimate_mb"),
     }
+
 
 def _write_progress_event(
     out_dir: Path,
@@ -112,14 +168,19 @@ def _write_progress_event(
     """
 
     try:
-        local_rss = _max_rss_mb()
-        max_rss = None if local_rss is None else float(comm.allreduce(local_rss, op=MPI.MAX))
-        total_peak_rss = (
-            None if local_rss is None else float(comm.allreduce(local_rss, op=MPI.SUM))
-        )
+        local_current_rss = _current_rss_mb()
+        local_peak_rss = _max_rss_mb()
+        max_current_rss = None if local_current_rss is None else float(comm.allreduce(local_current_rss, op=MPI.MAX))
+        sum_current_rss = None if local_current_rss is None else float(comm.allreduce(local_current_rss, op=MPI.SUM))
+        max_peak_rss = None if local_peak_rss is None else float(comm.allreduce(local_peak_rss, op=MPI.MAX))
+        sum_rank_peaks = None if local_peak_rss is None else float(comm.allreduce(local_peak_rss, op=MPI.SUM))
     except Exception:
-        max_rss = _max_rss_mb()
-        total_peak_rss = max_rss
+        local_current_rss = _current_rss_mb()
+        local_peak_rss = _max_rss_mb()
+        max_current_rss = local_current_rss
+        sum_current_rss = local_current_rss
+        max_peak_rss = local_peak_rss
+        sum_rank_peaks = local_peak_rss
     if comm.rank != 0:
         return
     payload: dict[str, Any] = {
@@ -128,15 +189,23 @@ def _write_progress_event(
         "status": status,
         "elapsed_seconds": None if started is None else time.perf_counter() - started,
         "rank_count": comm.size,
-        "max_rss_mb": max_rss,
-        "total_peak_rss_mb": total_peak_rss,
-        "total_peak_rss_gb": (
-            None if total_peak_rss is None else total_peak_rss / 1024.0
-        ),
+        "rank_current_rss_mb": local_current_rss,
+        "rank_peak_rss_mb": local_peak_rss,
+        "max_current_rss_across_ranks_mb": max_current_rss,
+        "sum_current_rss_all_ranks_mb": sum_current_rss,
+        "max_rank_historical_peak_rss_mb": max_peak_rss,
+        "sum_rank_historical_peaks_mb_upper_bound": sum_rank_peaks,
+        # Backward-compatible aliases.  total_peak_rss_mb is historical and
+        # must not be interpreted as a simultaneous MPI total.
+        "max_rss_mb": max_peak_rss,
+        "total_peak_rss_mb": sum_rank_peaks,
+        "total_peak_rss_gb": (None if sum_rank_peaks is None else sum_rank_peaks / 1024.0),
+        "total_peak_rss_semantics": "sum_rank_historical_peaks_upper_bound",
         "swap_used_mb": _swap_used_mb(),
         "dofs": dofs,
         "floquet_constraints": constraints,
     }
+    payload.update(_cgroup_memory_fields())
     payload.update(_progress_matrix_fields(matrix_stats))
     if petsc_options is not None:
         payload["petsc_options"] = {str(key): value for key, value in petsc_options.items()}
@@ -145,6 +214,7 @@ def _write_progress_event(
     out_dir.mkdir(parents=True, exist_ok=True)
     with (out_dir / "progress_3d.jsonl").open("a", encoding="utf-8") as fp:
         fp.write(json.dumps(payload, ensure_ascii=False, default=_json_default) + "\n")
+
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log("Linear solve summary:")
@@ -177,6 +247,7 @@ def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log(f"  physical benchmark  = {summary.get('physical_benchmark_candidate')}")
     log(f"  case status          = {summary['case_status']}")
 
+
 def _write_case_outputs(out_dir: Path, summary: dict[str, Any], log_lines: list[str], comm) -> None:
     if comm.rank == 0:
         (out_dir / "run_summary.json").write_text(
@@ -192,6 +263,7 @@ def _write_case_outputs(out_dir: Path, summary: dict[str, Any], log_lines: list[
             )
         else:
             (out_dir / "NO_OFFICIAL_FIELD_OUTPUT.txt").unlink(missing_ok=True)
+
 
 def _clear_official_field_outputs(out_dir: Path, comm) -> None:
     if comm.rank == 0:
@@ -210,12 +282,14 @@ def _clear_official_field_outputs(out_dir: Path, comm) -> None:
                     path.unlink(missing_ok=True)
     comm.barrier()
 
+
 def _stage_label(cfg: SimulationConfig3D) -> str:
     if cfg.stage_case == "stage1_airbox":
         return "stage1_3d_airbox"
     if cfg.stage_case.startswith("stage4_"):
         return f"stage4_3d_{cfg.stage_case.removeprefix('stage4_')}"
     return f"stage2_3d_{cfg.stage_case}"
+
 
 def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[str, Any]:
     """Small duplicated-at-top fields used by test scripts and reports.
