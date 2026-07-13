@@ -136,6 +136,8 @@ Task030 为 `DistributedPhysicalSlabSmoother` 增加两个显式 opt-in：
 
 factor-only 模式逐块提取/分解，避免所有 local source matrices 同时驻留。`_OwnedSubdomainFactor` 的 Mat/KSP 因而可为 `None`，destroy 必须按实际所有权释放 factor/rhs/solution。serial 与 MPI2 测试比较普通与 compact action，误差约 `2e-12`；h5/h3 物理 full solve 证明 true residual 不漂移。
 
-`SparseGalerkinTwoLevelPc(post_smooth=True)` 在 coarse correction 后重算真实 residual，再执行同一 fixed smoother。它是 Task030 的主要收敛机制；只启用 storage flags 而不启用 post smooth 不是同一个候选。
+该生命周期路径只在 PETSc 3.24.0 complex build 验证，升级 PETSc/petsc4py 后必须重跑 action/lifecycle 测试。另需注意 Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 在 h5/h3/h2 分别都报告 7,046,752 / 30,329,104 / 95,617,608；这个统计口径不能证明 ILU0 stored fill 更少。当前内存下降主要解释为 local shift、factor-only 释放对象与 restart90，而不是 factor-nnz compression。
+
+`SparseGalerkinTwoLevelPc(post_smooth=True)` 在 coarse correction 后重算真实 residual，再执行同一 fixed smoother。它是 Task030 compact physical-slab low-memory experimental profile 的主要收敛机制；只启用 storage flags 而不启用 post smooth 不是同一个候选。该成功配置继承 Task27 的 physical slabs 与 75D wave coarse，不是成功的 p/h GMG。
 
 理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。

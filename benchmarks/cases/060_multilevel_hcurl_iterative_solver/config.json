@@ -1,5 +1,6 @@
 {
-  "profile": "task030_multilevel_hcurl_low_memory_opt_in",
+  "case_identity": "task030_hcurl_infrastructure_and_compact_physical_slab_memory",
+  "profile": "compact_physical_slab_low_memory_experimental_opt_in",
   "baseline_reference": "benchmarks/cases/031_workstation_iterative/records/h5_reference.json",
   "physical_config": "benchmarks/configs/workstation_p2.json",
   "mpi_size": 4,
@@ -14,9 +15,12 @@
     "low_order_degree": 1,
     "coarsening": "p2_to_nonmatching_h10_p1_active_columns",
     "operator_policy": "exact_condensed_galerkin",
-    "solver_disposition": "negative_keep_in_research_only"
+    "infrastructure_status": "validated_research_infrastructure",
+    "solver_disposition": "negative"
   },
   "best_candidate": {
+    "profile_identity": "compact_physical_slab_low_memory_experimental_opt_in",
+    "solver_family": "task27_derived_physical_slab_wave_coarse",
     "coarse_space": "fixed_75D_floquet_z_hat",
     "num_physical_slabs": 16,
     "overlap_layers": 0.25,

@@ -10,7 +10,7 @@
 | L2 | condensation等价、transpose、backsub、MPI owner/cache | 通过 |
 | L3 direct | target p2 h5/h3 rerun，h2 reviewed reference | 通过 |
 | L3 iterative | Task27 target p2 h5/h3/h2 canonical | 全通过 |
-| L3 Task30 | compact low-memory h5/h3/h2 | 全通过；h2 1873 步、9.374729 GB，experimental opt-in |
+| L3 Task30 | compact physical-slab low-memory h5/h3/h2 | Task27-derived；全通过；h2 1873 步、9.374729 GB，experimental opt-in |
 
 ## 目标模型
 
@@ -48,7 +48,7 @@ Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施
 
 ## Task030 Case060
 
-[`Case060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) 同时保存“正确但性能失败”的 nonmatching H(curl) transfer/Galerkin 基础设施和最终低内存正反馈。五个 p/h 候选 100 步真残差为 `0.375–0.680`，不得提升；最终候选保留 75D wave coarse，使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 与 restart90。
+[`Case060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) 同时保存“正确但性能失败”的 nonmatching H(curl) transfer/Galerkin 基础设施和最终低内存正反馈。五个 p/h 候选 100 步真残差为 `0.375–0.680`，不得提升；最终成功求解器不是 p/h GMG，而是 Task27-derived physical-slab + 75D wave-coarse 架构，Task30 在其上使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 与 restart90。
 
 | h/nm | iterations | full true residual | peak RSS | 相对 Task27 |
 |---:|---:|---:|---:|---:|
@@ -56,4 +56,6 @@ Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施
 | 3 | 962 | 9.90389e-7 | 3.808 GB | memory -25.08%，iterations -3.12% |
 | 2 qualified | 1873 | 9.97223e-7 | 9.375 GB | memory -28.33%，workstation pass；iterations target missed |
 
-h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。Case060 达到冻结目标的 `workstation_success`，但仍是显式 experimental profile；1873 步未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
+h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。h3 的 3.807503 GB 没通过 `<=3.8 GB` 绝对线，而是凭相对 Task27 降低 25.08% 的 OR Gate 通过。Case060 分类为 `workstation_success_experimental_opt_in`，1873 步未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
+
+三份正式 lightweight records 已进入 manifest，checker 可重复生成同一 `benchmark_summary.csv`，并执行 203 项 Gate。原重型计算是在 source commit `bfb6586e` 的 tracked-dirty 工作树运行；记录据实标记 `working_tree_source_artifact_recovered_without_rerun`，并固定实际 artifact SHA-256，不把后续文档 commit 冒充运行来源。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因此该统计口径保持 `measurement_unresolved`，内存下降不归因于已证明的 factor-nnz compression。

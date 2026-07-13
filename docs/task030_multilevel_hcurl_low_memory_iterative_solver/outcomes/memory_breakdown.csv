@@ -1,9 +1,9 @@
 candidate_id,h_nm,stage,peak_rss_gb,fine_operator_nnz,transfer_nnz,coarse_operator_nnz,slab_factor_nnz,krylov_vector_bytes_estimate,notes
-task027_baseline,5,full,1.9911727905273438,4840396,0,75D,7046752,71516800,ILU1 pre-only restart100
-compact_restart90,5,full,1.696136474609375,4840396,0,75D,7046752,64365120,ILU0 pre/post local shift factor-only restart90
-task027_baseline,3,full,5.082275390625,21167444,0,75D,30329104,317500800,ILU1 pre-only restart100
-compact_restart90,3,full,3.8075027465820312,21167444,0,75D,30329104,285750720,ILU0 pre/post local shift factor-only restart90
-task027_baseline,2,full,13.080257415771484,65122664,0,75D,95617608,984172800,ILU1 pre-only restart100
-compact_restart90_attempt1,2,full_no_rta,9.342113494873047,65122664,0,75D,95617608,885755520,ILU0 pre/post local shift factor-only restart90
-compact_restart90_qualified,2,full_with_rta,9.37472915649414,65122664,0,75D,95617608,885755520,ILU0 pre/post local shift factor-only restart90 workstation pass
+task027_baseline,5,full,1.9911727905273438,4840396,0,75D,7046752,71516800,ILU1 pre-only restart100; factor-nnz statistic unresolved
+compact_restart90,5,full,1.696136474609375,4840396,0,75D,7046752,64365120,ILU0 pre/post local shift factor-only restart90; no factor-nnz compression claim
+task027_baseline,3,full,5.082275390625,21167444,0,75D,30329104,317500800,ILU1 pre-only restart100; factor-nnz statistic unresolved
+compact_restart90,3,full,3.8075027465820312,21167444,0,75D,30329104,285750720,ILU0 pre/post local shift factor-only restart90; no factor-nnz compression claim
+task027_baseline,2,full,13.080257415771484,65122664,0,75D,95617608,984172800,ILU1 pre-only restart100; factor-nnz statistic unresolved
+compact_restart90_attempt1,2,full_no_rta,9.342113494873047,65122664,0,75D,95617608,885755520,ILU0 pre/post local shift factor-only restart90; no factor-nnz compression claim
+compact_restart90_qualified,2,full_with_rta,9.37472915649414,65122664,0,75D,95617608,885755520,ILU0 pre/post local shift factor-only restart90 workstation pass; no factor-nnz compression claim
 p_h_transfer,5,setup,1.171112060546875,4840396,145998,36216,0,0,validated infrastructure but solver-negative

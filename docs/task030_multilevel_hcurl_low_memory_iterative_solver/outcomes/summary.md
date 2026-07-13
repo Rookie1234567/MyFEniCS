@@ -6,8 +6,8 @@
 task = Task030
 branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
 base = Task029 merged master bfb6586e030efd5208ebd796c39fdc31301e1d6e
-classification = workstation_success
-workstation_success = pass_for_frozen_target_experimental_opt_in
+classification = workstation_success_experimental_opt_in
+workstation_memory_result = success_with_qualifications
 ordinary_default_changed = false
 ```
 
@@ -39,7 +39,7 @@ MPI4 目标 transfer 为 `44698×792`、145,998 nnz，无零列；伴随恒等�
 
 ### 3.3 最终有效机制
 
-真正正反馈不是 792D p1 coarse，而是保留已验证的 75D 波动粗空间，并将平滑器改为：
+真正正反馈不是 792D p1 coarse，而是保留 Task27-derived physical-slab + 75D 波动粗空间，并将平滑器改为：
 
 ```text
 ILU1 -> ILU0
@@ -51,11 +51,15 @@ FGMRES restart100 -> restart90
 
 local shift 与 factor-only 逐块 factorization 均通过 serial/MPI2/MPI4 action 等价测试（约 `2e-12`），没有改变 exact condensed outer operator。
 
+这个最终配置的统一名称是 `compact physical-slab low-memory experimental profile`；它不是成功的 p/h multigrid solver。Task30 的 H(curl) transfer/Galerkin 成果属于 validated research infrastructure。
+
 ## 4. 候选结果与机制解释
 
 五个 p/h 候选 100 步真残差为 `0.374864–0.680155`，是 Task027 基线的 145.65–264.27 倍。相同 slab smoother 加入 p/h coarse 还把 20 步 residual 从 `0.381817` 恶化到 `0.685751`。因此结论不是 transfer 失败，而是当前 792D p1 coarse 未包含 Maxwell 近核/梯度与该 grazing-wave RHS 的关键慢误差。
 
 对称 pre/post 是决定性正反馈：Task27 ILU1 版本在 100 步达到 `1.273503e-3`（基线的 0.4948），随后 ILU0 仍保持 `1.865566e-3`。local shift 与 factor-only 在保持相同 residual 的同时把 h5 峰值降到 1.705 GB；restart90 继续降到 1.694 GB 且仍通过 weak-positive。restart80 未通过，故停止。
+
+Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 在 h5/h3/h2 分别都为 7,046,752 / 30,329,104 / 95,617,608，因此当前 evidence 不能证明 factor-nnz compression。已观测内存下降主要归因于 factor-only 生命周期、local shift、释放 source submatrix/KSP/PC wrapper 和 restart90；ILU0 的作用是配合对称组合保持较低 setup/apply 成本。
 
 ## 5. 正式 h5/h3/h2 结果
 
@@ -67,6 +71,8 @@ local shift 与 factor-only 逐块 factorization 均通过 serial/MPI2/MPI4 acti
 
 三者 reported、condensed true 和 full augmented true residual 一致；energy closure 分别为 `-1.137e-9`、`1.659e-9` 与 `2.639e-9`。h3/h5 iteration ratio 为 `1.1251`，满足 `<=2`。h5 迭代比基线少 28.8%，h3 少 3.1%；h2 迭代比 canonical 多 3.8%，但内存低 28.33%。
 
+h3 的 3.807503 GB 略高于 3.8 GB 绝对目标；它是凭相对 Task27 降低 25.08% 的替代 Gate 通过，不能写成绝对内存 Gate 通过。
+
 ## 6. h2 条件运行
 
 h5/h3 的 DoF–RSS 仿射与幂律两个独立模型给出 h2 中央预测 `9.5298 / 7.0337 GB`；较保守仿射值增加 15% 后为 `10.9593 GB`，通过 G5/G6。唯一候选首次 h2 运行峰值 9.342113 GB，1800 步真残差 `1.461130e-6`，严格未通过且没有输出 official R/T/A。
@@ -75,7 +81,7 @@ h5/h3 的 DoF–RSS 仿射与幂律两个独立模型给出 h2 中央预测 `9.5
 
 ## 7. 成功、负结果与合并决策
 
-已达到 `workstation_success`：h5/h3 full solve 通过，h3 内存降幅超过 25%，h3/h5 iteration ratio 为 1.125；h2 在 9.375 GB 内完成 full solve、80 modes 与 official R/T/A，h2/h3 iteration ratio 为 1.947。由于 h2 1873 步高于 1200 的工程偏好且峰值高于 8 GB，它不是 `strong_workstation_success`，也不能称为真正 mesh-independent GMG。
+已达到 `workstation_success_experimental_opt_in`：h5/h3 full solve 通过，h3 内存降幅超过 25%，h3/h5 iteration ratio 为 1.125；h2 在 9.375 GB 内完成 full solve、80 modes 与 official R/T/A，h2/h3 iteration ratio 为 1.947。由于 h2 1873 步高于 1200 的工程偏好且峰值高于 8 GB，它不是 `strong_workstation_success`，也不能称为真正 mesh-independent GMG。
 
 可建议合并的是通用 transfer/Galerkin 基础设施和已验证的 local-shift/factor-only/pre-post opt-in 机制。p/h solver profiles、Woodbury、x-harmonic、AMS/HX、restart80 和 heavy artifacts 不得提升。ordinary default 保持不变，最终仍需 ChatGPT review 与用户明确许可。
 
@@ -83,10 +89,16 @@ h5/h3 的 DoF–RSS 仿射与幂律两个独立模型给出 h2 中央预测 `9.5
 
 - “保证”只针对冻结物理模型、MPI4 分区和 explicit true residual，不代表所有角度/材料/网格参数无条件收敛。
 - 当前 h/p coarse 缺少严格 commuting projection、梯度/近核辅助空间和多级 smoother；基础设施成功不等于 GMG 成功。
-- factor-only 依赖 PETSc factor matrix 的公开生命周期语义，已用 action/lifecycle 测试约束，但仍应跨 PETSc 版本复核。
+- factor-only 只在 qualified local image 的 PETSc 3.24.0 complex build 验证；跨 PETSc 版本必须重跑 action/lifecycle 回归。
 - h2 已收敛，但 1873 步仍高于 1200 工程目标；下一步应做参数鲁棒性与 fallback，而不是继续压当前单点 restart。
 
-## 9. 证据入口
+## 9. Review V1 provenance 与自动 Gate
+
+三份 best records 的实际 source commit 均为 `bfb6586e`；重型运行时 Task30 tracked source 尚未提交，所以据实标记 `tracked_source_dirty=true` 和 `working_tree_source_artifact_recovered_without_rerun`，没有伪造 clean provenance，也没有重跑 h5/h3/h2。各 record 已固定原始命令、UTC 时间、镜像/digest、host id、artifact root 与 JSON SHA-256。
+
+Case060 已接入 203 项 checker：除 manifest/文件合同外，还验证 provenance、final solver identity、p/h negative disposition、显式 opt-in、冻结物理与 80 modes、KSP reason、三残差与一致性、official R/T/A、energy closure、direct delta、h3 OR memory Gate、iteration ratio、h2 RSS 和非 strong 分类。三份 experimental records 已进入 manifest，normal checker 可以稳定再生成同一 summary。
+
+## 10. 证据入口
 
 - `candidate_funnel.csv`、`candidate_comparison.csv`、`memory_breakdown.csv`；
 - `hierarchy_design.md`、`transfer_validation.md`、`level_inventory.csv`；

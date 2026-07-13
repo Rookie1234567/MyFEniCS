@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "fba69d88ea8590ea01537b7561edff1684f25135",
+  "checkout_commit": "3f0ff57f228dbf259ec6f181c98f46ca5857813e",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 149,
-  "total_count": 149,
+  "passed_count": 203,
+  "total_count": 203,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -103,6 +103,13 @@
       "observed": "complete",
       "expected": "all case-contained contract files exist",
       "evidence": "cases/050_stage4_direct_memory_forensics"
+    },
+    {
+      "name": "case_contract:060_multilevel_hcurl_iterative_solver",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver"
     },
     {
       "name": "case_reference:010_3d_stage1_airbox/records/canonical_reference.json",
@@ -576,6 +583,105 @@
         "reviewed_reference_exempt"
       ],
       "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "record_exists:task030_compact_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h5.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task030_compact_h5",
+      "passed": true,
+      "observed": "task030_compact_h5",
+      "expected": "task030_compact_h5",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h5.json"
+    },
+    {
+      "name": "metadata_complete:task030_compact_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h5.json"
+    },
+    {
+      "name": "record_commit_consistent:task030_compact_h5",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h5.json"
+    },
+    {
+      "name": "record_exists:task030_compact_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h3.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task030_compact_h3",
+      "passed": true,
+      "observed": "task030_compact_h3",
+      "expected": "task030_compact_h3",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h3.json"
+    },
+    {
+      "name": "metadata_complete:task030_compact_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h3.json"
+    },
+    {
+      "name": "record_commit_consistent:task030_compact_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h3.json"
+    },
+    {
+      "name": "record_exists:task030_compact_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h2.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task030_compact_h2",
+      "passed": true,
+      "observed": "task030_compact_h2",
+      "expected": "task030_compact_h2",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h2.json"
+    },
+    {
+      "name": "metadata_complete:task030_compact_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h2.json"
+    },
+    {
+      "name": "record_commit_consistent:task030_compact_h2",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h2.json"
     },
     {
       "name": "case002_comparison_exists",
@@ -1277,6 +1383,404 @@
       "observed": 13.080257415771484,
       "expected": 14.0,
       "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "task030_h5_h3_h2_present",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task030_compact_h5,task030_compact_h3,task030_compact_h2"
+    },
+    {
+      "name": "task030_source_artifact_sha256:task030_compact_h5",
+      "passed": true,
+      "observed": "2dc68e4001d3fb6b04d239ea3f7dbfb7e46a63f5afcb566e2065eb1e13815878",
+      "expected": "2dc68e4001d3fb6b04d239ea3f7dbfb7e46a63f5afcb566e2065eb1e13815878",
+      "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h5_full.json"
+    },
+    {
+      "name": "task030_provenance_qualified:task030_compact_h5",
+      "passed": true,
+      "observed": {
+        "git_dirty": true,
+        "tracked_source_dirty": true,
+        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+      },
+      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_source_commit_relation:task030_compact_h5",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_solver_identity:task030_compact_h5",
+      "passed": true,
+      "observed": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "expected": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_explicit_opt_in_identity:task030_compact_h5",
+      "passed": true,
+      "observed": {
+        "qualified_profile": false,
+        "deviations": [
+          "ilu_levels=0, expected 1",
+          "restart=90, expected 100",
+          "max_it=1200, expected 3000",
+          "post_smooth=True, expected False",
+          "subdomain_local_shift=True, expected False",
+          "factor_only_storage=True, expected False"
+        ]
+      },
+      "expected": "qualified_profile=false with explicit deviations",
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_frozen_contract:task030_compact_h5",
+      "passed": true,
+      "observed": {
+        "ordinary_default_changed": false,
+        "n_aux": 80,
+        "modal_n_aux": 80,
+        "physical_model_match": true
+      },
+      "expected": "ordinary default false, same physical model and 80 modes",
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_ksp_converged:task030_compact_h5",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_residual_max:task030_compact_h5",
+      "passed": true,
+      "observed": 9.924905377128956e-07,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_residual_consistency:task030_compact_h5",
+      "passed": true,
+      "observed": 7.602118503164014e-10,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_official_rta:task030_compact_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_energy_closure:task030_compact_h5",
+      "passed": true,
+      "observed": -1.1372813801813209e-09,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h5"
+    },
+    {
+      "name": "task030_rta_delta_from_direct:task030_compact_h5",
+      "passed": true,
+      "observed": 5.438117067768644e-09,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h5,l3_direct_h5"
+    },
+    {
+      "name": "task030_source_artifact_sha256:task030_compact_h3",
+      "passed": true,
+      "observed": "b76c991c72d30a4e8b575cfc077ad633ea2ea50dbead1ebc8f4626d9eb389331",
+      "expected": "b76c991c72d30a4e8b575cfc077ad633ea2ea50dbead1ebc8f4626d9eb389331",
+      "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h3_full.json"
+    },
+    {
+      "name": "task030_provenance_qualified:task030_compact_h3",
+      "passed": true,
+      "observed": {
+        "git_dirty": true,
+        "tracked_source_dirty": true,
+        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+      },
+      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_source_commit_relation:task030_compact_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_solver_identity:task030_compact_h3",
+      "passed": true,
+      "observed": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "expected": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_explicit_opt_in_identity:task030_compact_h3",
+      "passed": true,
+      "observed": {
+        "qualified_profile": false,
+        "deviations": [
+          "ilu_levels=0, expected 1",
+          "restart=90, expected 100",
+          "max_it=1100, expected 3000",
+          "post_smooth=True, expected False",
+          "subdomain_local_shift=True, expected False",
+          "factor_only_storage=True, expected False"
+        ]
+      },
+      "expected": "qualified_profile=false with explicit deviations",
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_frozen_contract:task030_compact_h3",
+      "passed": true,
+      "observed": {
+        "ordinary_default_changed": false,
+        "n_aux": 80,
+        "modal_n_aux": 80,
+        "physical_model_match": true
+      },
+      "expected": "ordinary default false, same physical model and 80 modes",
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_ksp_converged:task030_compact_h3",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_residual_max:task030_compact_h3",
+      "passed": true,
+      "observed": 9.903890492393131e-07,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_residual_consistency:task030_compact_h3",
+      "passed": true,
+      "observed": 7.916903556401287e-11,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_official_rta:task030_compact_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_energy_closure:task030_compact_h3",
+      "passed": true,
+      "observed": 1.659170578705016e-09,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h3"
+    },
+    {
+      "name": "task030_rta_delta_from_direct:task030_compact_h3",
+      "passed": true,
+      "observed": 7.719291117772031e-10,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h3,l3_direct_h3"
+    },
+    {
+      "name": "task030_source_artifact_sha256:task030_compact_h2",
+      "passed": true,
+      "observed": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a",
+      "expected": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a",
+      "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h2_qualified_full.json"
+    },
+    {
+      "name": "task030_provenance_qualified:task030_compact_h2",
+      "passed": true,
+      "observed": {
+        "git_dirty": true,
+        "tracked_source_dirty": true,
+        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+      },
+      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_source_commit_relation:task030_compact_h2",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_solver_identity:task030_compact_h2",
+      "passed": true,
+      "observed": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "expected": {
+        "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+        "final_solver": "task27_derived_physical_slab_wave_coarse",
+        "hierarchy": "validated_research_infrastructure",
+        "p_h_solver": "negative"
+      },
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_explicit_opt_in_identity:task030_compact_h2",
+      "passed": true,
+      "observed": {
+        "qualified_profile": false,
+        "deviations": [
+          "ilu_levels=0, expected 1",
+          "restart=90, expected 100",
+          "max_it=2100, expected 3000",
+          "post_smooth=True, expected False",
+          "subdomain_local_shift=True, expected False",
+          "factor_only_storage=True, expected False"
+        ]
+      },
+      "expected": "qualified_profile=false with explicit deviations",
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_frozen_contract:task030_compact_h2",
+      "passed": true,
+      "observed": {
+        "ordinary_default_changed": false,
+        "n_aux": 80,
+        "modal_n_aux": 80,
+        "physical_model_match": true
+      },
+      "expected": "ordinary default false, same physical model and 80 modes",
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_ksp_converged:task030_compact_h2",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_residual_max:task030_compact_h2",
+      "passed": true,
+      "observed": 9.972228402088593e-07,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_residual_consistency:task030_compact_h2",
+      "passed": true,
+      "observed": 6.205089844163252e-10,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_official_rta:task030_compact_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_energy_closure:task030_compact_h2",
+      "passed": true,
+      "observed": 2.639062746112586e-09,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_rta_delta_from_direct:task030_compact_h2",
+      "passed": true,
+      "observed": 6.561387766446103e-09,
+      "expected": 1e-06,
+      "evidence": "task030_compact_h2,l3_direct_h2"
+    },
+    {
+      "name": "task030_h3_memory_gate",
+      "passed": true,
+      "observed": {
+        "peak_rss_gb": 3.8075027465820312,
+        "relative_reduction": 0.2508271484844118,
+        "absolute_gate_pass": false,
+        "relative_gate_pass": true
+      },
+      "expected": "RSS <= 3.8 GB OR reduction >= 25%",
+      "evidence": "task030_compact_h3,l3_iterative_h3"
+    },
+    {
+      "name": "task030_h3_h5_iteration_ratio",
+      "passed": true,
+      "observed": 1.1251461988304094,
+      "expected": 2.0,
+      "evidence": "task030_compact_h5,task030_compact_h3"
+    },
+    {
+      "name": "task030_h2_peak_rss",
+      "passed": true,
+      "observed": 9.37472915649414,
+      "expected": 10.0,
+      "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task030_h2_classification_not_strong",
+      "passed": true,
+      "observed": {
+        "classification": "workstation_gate_pass_iteration_target_missed",
+        "strong_workstation_success": false,
+        "preferred_iteration_target_pass": false
+      },
+      "expected": "strong success false and preferred iteration target missed",
+      "evidence": "task030_compact_h2"
     },
     {
       "name": "direct_iterative_R:h5",

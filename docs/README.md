@@ -50,7 +50,7 @@
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
-| Task030 | multilevel H(curl) low-memory iterative solver | `workstation_success` experimental opt-in；h5/h3/h2 通过，h2 1873 步、9.374729 GB；p/h coarse solver-negative |
+| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_success_experimental_opt_in`；h5/h3/h2 通过，h2 1873 步、9.374729 GB；p/h multigrid solver-negative |
 
 ## 当前任务
 
@@ -60,7 +60,7 @@
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | 独立分支实施完成；等待最终测试与 ChatGPT review，ordinary default 不变 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Review V1 P0 已回应；等待 final review，ordinary default 不变 |
 
 ## Task28 审计入口
 
@@ -103,5 +103,7 @@
 |---|---|
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/task.md`](task030_multilevel_hcurl_low_memory_iterative_solver/task.md) | 多路线 H(curl) 低内存迭代任务书：嵌套/半粗化网格、p/h hierarchy、polynomial/patch/Vanka smoother、shifted-level AMS/HX、全 80 模态 DtN 低秩 Schur、wave-aware 原型与 Krylov 优化；正反馈持续推进，h2 严格条件解锁 |
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md`](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md) | transfer/Galerkin 基础设施、五类 p/h 负结果、对称 ILU0 低内存正反馈、h5/h3 full 与条件式 h2 证据 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md) | ChatGPT V1 审查：数值结果有条件接受；要求 provenance、真实数值 Gate、manifest 可再生、准确命名与文档同步 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md) | Codex V1 回应：补齐 dirty-source provenance、203 项 Gate、可再生 summary、factor-nnz 限定和统一身份 |
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。Task030 已从 Task029 合并后的 clean master 独立启动，ordinary default 仍未改变。

@@ -1,5 +1,26 @@
 {
   "baseline_source": "canonical_record_history_at_iteration_100",
+  "record_contract": {
+    "benchmark_ids": {
+      "h5": "task030_compact_h5",
+      "h3": "task030_compact_h3",
+      "h2": "task030_compact_h2"
+    },
+    "profile_identity": "compact_physical_slab_low_memory_experimental_opt_in",
+    "final_solver_identity": "task27_derived_physical_slab_wave_coarse",
+    "hierarchy_infrastructure_status": "validated_research_infrastructure",
+    "p_h_multigrid_solver_disposition": "negative",
+    "n_aux": 80,
+    "ordinary_default_changed": false,
+    "strong_workstation_success": false,
+    "source_artifact_sha256_pattern": "^[0-9a-f]{64}$"
+  },
+  "numeric_common": {
+    "full_true_residual_max": 1e-6,
+    "reported_true_relative_difference_max": 1e-6,
+    "energy_closure_abs_max": 1e-6,
+    "rta_delta_from_direct_max": 1e-6
+  },
   "screen": {
     "weak_residual_ratio_max": 0.8,
     "weak_rss_ratio_max": 1.1,

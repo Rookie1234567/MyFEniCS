@@ -84,6 +84,8 @@ y_2=y_1+Z(Z^HAZ)^{-1}Z^Hr_1,
 \quad r_2=r-Ay_2,quad
 y=y_2+M_s^{-1}r_2$$
 
-把 pre-only 的互补误差再交给局部平滑器，因此 ILU fill 可以从 1 降到 0。随后只在 local submatrix 加 diagonal shift、setup 后只保留 factor、把 FGMRES restart 从 100 降到 90，分别减少 shifted-F、副本/包装和 Krylov basis；这些存储优化不改变 outer exact operator。
+把 pre-only 的互补误差再交给局部平滑器，因此配置上可从 ILU1 改为 ILU0 而不丢失该冻结目标的收敛。当前 PETSc `global_slab_factor_nnz` 对 ILU1/ILU0 报告相同值，不能据此宣称 stored factor fill 已减少；该测量保持 unresolved。随后只在 local submatrix 加 diagonal shift、setup 后只保留 factor、释放 source submatrix/KSP/PC wrapper，并把 FGMRES restart 从 100 降到 90；已观测内存下降主要归因于这些生命周期与 Krylov-basis 变化，而不是已证明的 factor-nnz compression。这些存储优化不改变 outer exact operator。
 
 Task030 h5/h3 的 full true residual 与 R/T/A 已通过，但该组合仍是显式 experimental profile。h2 和参数域外鲁棒性必须由实测决定，不能从对称公式推导出无条件收敛保证。
+
+factor-only 生命周期只在 qualified local image 的 PETSc 3.24.0 complex build 完成 action/destroy 回归；`PC.getFactorMatrix()` 的跨版本引用计数与生命周期语义必须重新验证。

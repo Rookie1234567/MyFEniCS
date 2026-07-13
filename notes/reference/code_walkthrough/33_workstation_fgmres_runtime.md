@@ -115,8 +115,10 @@ KSP/PC 持有 operator 和 context 引用；smoother 持有 local Mat/KSP/scatte
 
 ## 15. Task030 explicit flags and record fields
 
-runner 新增 `--post-smooth`、`--subdomain-local-shift` 和 `--factor-only-storage`，默认均为 false；与 `--ilu-levels 0 --restart 90` 共同构成 Case060 最终候选。resolved config 和 record 同步写 `post_smooth`、`subdomain_local_shift`、`factor_only_storage`，smoother diagnostics 写 `subdomain_local_diagonal_shift`、`global_stored_factor_nnz` 与 factor-only identity。
+runner 新增 `--post-smooth`、`--subdomain-local-shift` 和 `--factor-only-storage`，默认均为 false；与 `--ilu-levels 0 --restart 90` 共同构成 Case060 的 `compact_physical_slab_low_memory_experimental_opt_in` 候选。它仍是 Task27-derived physical-slab + 75D wave-coarse solver，不是 p/h multigrid solver。resolved config 和 record 同步写 `post_smooth`、`subdomain_local_shift`、`factor_only_storage`，smoother diagnostics 写 `subdomain_local_diagonal_shift`、`global_stored_factor_nnz` 与 factor-only identity。
 
 这些 flags 触发 `qualification_deviations`，所以 Task027/Case031 ordinary canonical 不会被静默覆盖。失败的 Task030 Woodbury 和 x-harmonic coarse 没有保留在正式 workstation runner 参数表；它们只在 research runner、模块测试和负结果文档中出现。
+
+Case060 best records 还写入实际重型运行的 commit、dirty-source qualification、命令、时间、镜像 digest、host id、artifact root/SHA-256、80-mode identity 与 75D coarse identity。factor-only 的 factor matrix lifetime 仅对 PETSc 3.24.0 complex build 验证；跨版本必须回归。
 
 Case060 入口：[`../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md`](../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)。
