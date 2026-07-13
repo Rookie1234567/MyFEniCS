@@ -16,5 +16,13 @@
   "run_h2_default": false,
   "safe_h2_rss_limit_gb": 13.5,
   "diffraction_order_policy": "auto_propagating",
-  "canonical_records_read_only": true
+  "canonical_records_read_only": true,
+  "selected_diagnostic_candidate": {
+    "profile": "default",
+    "solver_package": "mumps",
+    "mpi_size": 2,
+    "threads_per_rank": 1,
+    "ordinary_default_changed": false,
+    "engineering_qualified": false
+  }
 }

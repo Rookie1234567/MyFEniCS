@@ -13,6 +13,23 @@
   "safe_h2_rss_limit_gb": 13.5,
   "h2_minimum_h5_h3_reduction_fraction": 0.2,
   "telemetry_poll_interval_seconds": 0.25,
+  "selected_diagnostic_candidate": {
+    "profile": "default",
+    "solver_package": "mumps",
+    "mpi_size": 2,
+    "threads_per_rank": 1,
+    "source_commit": "6babe4700328be2b3b93aad7e3e6c212b6dbad10",
+    "h5_reduction_fraction": 0.288925428477949,
+    "h3_reduction_fraction": 0.151190171406175,
+    "engineering_qualified": false
+  },
+  "h2_decision": {
+    "launch": false,
+    "status": "not_run",
+    "prediction_lower_gib": 18.881588574675458,
+    "prediction_upper_gib": 27.91255553093738,
+    "failed_gates": ["G3", "G5", "G7", "G9"]
+  },
   "canonical_records_read_only": [
     "benchmarks/records/direct_p2_h5_mpi4.json",
     "benchmarks/records/direct_p2_h3_mpi4.json",

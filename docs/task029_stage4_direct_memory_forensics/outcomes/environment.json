@@ -21,6 +21,14 @@
     "pagefile_current_usage_mb": 1664,
     "pagefile_historical_peak_usage_mb": 13840
   },
+  "final_h3_candidate_preflight": {
+    "container_mem_available_kb": 13457964,
+    "container_mem_available_gib": 12.834514617919922,
+    "swap_total_kb": 41943040,
+    "swap_free_kb": 41943040,
+    "pswpin_pages": 0,
+    "pswpout_pages": 0
+  },
   "worktree": {
     "tracked_source_clean_at_branch_creation": true,
     "preserved_user_untracked_paths": [

@@ -1,5 +1,5 @@
 {
-  "status": "h5_h3_baseline_pass_stage_c_ready",
+  "status": "diagnostic_success_h2_not_run",
   "full_true_residual_max": 1e-8,
   "reference_absolute_tolerance": {
     "R_total": 1e-8,
@@ -21,6 +21,15 @@
     "minimum_h3_reduction_fraction": 0.2,
     "safe_prediction_upper_gb": 13.5,
     "requires_no_h3_swap": true,
-    "requires_watchdog": true
+    "requires_watchdog": true,
+    "decision": "not_run",
+    "failed_gates": ["G3", "G5", "G7", "G9"],
+    "prediction_range_gib": [18.881588574675458, 27.91255553093738]
+  },
+  "selected_diagnostic_candidate": {
+    "profile": "default_mumps_mpi2",
+    "h5_reduction_fraction": 0.288925428477949,
+    "h3_reduction_fraction": 0.151190171406175,
+    "engineering_qualified": false
   }
 }
