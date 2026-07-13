@@ -19,7 +19,7 @@ from benchmarks.run_direct_memory_forensics import (
     _task29_direct_config,
     _validate_h2_gate,
 )
-from src.solvers.common_3d_solve import _petsc_matrix_stats
+from src.solvers.common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 from src.solvers.common_3d_utils import (
     _cgroup_memory_fields,
     _current_rss_mb,
@@ -69,6 +69,33 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             self.assertIn("matrix_mallocs", stats)
             self.assertIn("matrix_petsc_info_global_sum", stats)
         finally:
+            matrix.destroy()
+
+    def test_factor_inventory_does_not_reassemble_factored_matrix(self) -> None:
+        matrix = PETSc.Mat().createAIJ([3, 3], nnz=1, comm=PETSc.COMM_SELF)
+        diagonal = PETSc.Vec().createSeq(3, comm=PETSc.COMM_SELF)
+        ksp = PETSc.KSP().create(PETSc.COMM_SELF)
+        try:
+            diagonal.set(1.0)
+            matrix.setDiagonal(diagonal)
+            matrix.assemble()
+            ksp.setType("preonly")
+            ksp.getPC().setType("lu")
+            ksp.setOperators(matrix)
+            ksp.setUp()
+            inventory = _petsc_factor_inventory(ksp)
+            self.assertTrue(inventory["available"])
+            self.assertEqual(inventory["matrix_stats"]["matrix_rows"], 3)
+            self.assertEqual(
+                inventory["matrix_stats"]["matrix_petsc_info"][
+                    "fill_ratio_needed"
+                ],
+                1.0,
+            )
+            self.assertFalse(inventory["mumps_api_available"])
+        finally:
+            ksp.destroy()
+            diagonal.destroy()
             matrix.destroy()
 
     def test_candidate_profile_parser(self) -> None:

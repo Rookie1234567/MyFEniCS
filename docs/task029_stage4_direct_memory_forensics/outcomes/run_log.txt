@@ -114,3 +114,22 @@ swap in/out delta = 0 / 0 pages
 ```
 
 该结果只证明装配遥测和数值 Gate 能正确阻止伪 baseline。runner 后续显式设置 `matrix_diagnostics_assemble_only=false`，并在重新提交后才运行正式 h5。
+
+## 7. h5 full-solve baseline V1
+
+```text
+artifact = benchmarks/artifacts/cases/050/h5_default_mpi4_20260713T045058Z
+source_sha = 1930a43414f0584533e5ac8dad67a57dda18de21
+qualification = pass
+true residual = 5.224671064148491e-12
+Task28 R/T/A delta = 0 / 0 / 0
+max simultaneous worker RSS = 2326.64453125 MB
+sum rank historical peaks upper bound = 2353.87109375 MB
+cgroup peak = 1743.05078125 MB
+swap in/out delta = 0 / 0 pages
+peak stage = during_ksp_setup_peak
+KSPSetUp seconds = 2.243473522000386
+KSPSolve seconds = 0.11982890299987048
+```
+
+V1 数值与内存阶段证据有效，但 factor Mat stats 缺失。3x3 PETSc 诊断证明原因是 `_petsc_matrix_stats` 对已分解 Mat 错误调用 `assemble()`；raw MUMPS INFOG/RINFOG 已成功读取。修正后将重跑 h5 V2，补全 factor fill inventory 后才冻结 h5 baseline。

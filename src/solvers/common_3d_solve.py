@@ -350,8 +350,9 @@ def _ksp_reason_name(reason: int) -> str:
     return str(reason)
 
 
-def _petsc_matrix_stats(A) -> dict[str, Any]:
-    A.assemble()
+def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
+    if assemble:
+        A.assemble()
     rows, cols = A.getSize()
     info = A.getInfo()
     try:
@@ -444,11 +445,16 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
         inventory["limitations"].append(f"factor_matrix_unavailable:{type(exc).__name__}")
         return inventory
     try:
-        inventory["matrix_stats"] = _petsc_matrix_stats(factor)
+        inventory["matrix_stats"] = _petsc_matrix_stats(factor, assemble=False)
         inventory["available"] = True
     except Exception as exc:
         inventory["limitations"].append(f"factor_matrix_stats_unavailable:{type(exc).__name__}")
 
+    if inventory["factor_solver_type"] != "mumps":
+        inventory["limitations"].append(
+            f"mumps_raw_api_not_applicable_for_factor_solver:{inventory['factor_solver_type']}"
+        )
+        return inventory
     if not hasattr(factor, "getMumpsInfog"):
         inventory["limitations"].append("mumps_raw_api_not_exposed")
         return inventory
