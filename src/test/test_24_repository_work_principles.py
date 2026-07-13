@@ -19,6 +19,7 @@ REQUIRED_CLAUSES = (
     "ordinary solver default 不得静默改变",
     "未通过最终 review 之前，不建议合并到 `master`",
     "official R/T/A 只能从通过 residual Gate 的场计算",
+    "从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`",
 )
 
 
@@ -46,6 +47,20 @@ class RepositoryWorkPrinciplesTests(unittest.TestCase):
         )
         self.assertIn("docs/repository_work_principles.md", root_readme)
         self.assertIn("repository_work_principles.md", docs_readme)
+
+    def test_retrospective_clause_is_synchronized_in_protected_files(self) -> None:
+        clause = REQUIRED_CLAUSES[-1]
+        for path in PROTECTED_FILES:
+            with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
+                self.assertIn(clause, path.read_text(encoding="utf-8"))
+
+    def test_readmes_link_to_retrospective_standard(self) -> None:
+        for path in PROTECTED_FILES[:2]:
+            with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
+                self.assertIn(
+                    "task_retrospective_standard.md",
+                    path.read_text(encoding="utf-8"),
+                )
 
 
 if __name__ == "__main__":

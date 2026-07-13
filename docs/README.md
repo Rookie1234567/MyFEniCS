@@ -18,6 +18,7 @@
 8. 禁止整体合并大型 research branch；ordinary solver default 不得静默改变；未通过最终 review 前不合并 `master`。
 9. Codex 不得删除或改写 ChatGPT 的 `task.md`、`review_report*.md`；需要纠正时新增 response，而不是覆盖审查记录。
 10. solver 成功使用 full explicit true residual 判断，official R/T/A 只能从通过 residual Gate 的场计算。
+11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；详细档案与项目级回顾都不可省略，一句状态或纯链接不构成完成。完整框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -48,7 +49,7 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
-| Task029 | Stage4 direct memory forensics | `diagnostic_success`；工程降内存目标未达，等待线程条件验证和项目级文档重写 |
+| Task029 | Stage4 direct memory forensics | `diagnostic_success`；engineering_success=no；当前 image threaded direct unavailable；等待 final review |
 
 ## 当前任务
 
@@ -57,7 +58,7 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | `review_report_v1.md` 与 P0-C 补充已提交；等待 Codex `response_v1.md` |
+| Task029 | `task029_stage4_direct_memory_forensics/` | `review_report_v1.md`、P0-C 补充与 Codex `response_v1.md` 已提交；等待 final review |
 
 ## Task28 审计入口
 
@@ -87,6 +88,8 @@
 | [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5/h3 baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run 总结 |
 | [`task029_stage4_direct_memory_forensics/review_report_v1.md`](task029_stage4_direct_memory_forensics/review_report_v1.md) | ChatGPT V1 审查：接受内存诊断，要求条件式线程验证和项目级文档收口 |
 | [`task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md`](task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md) | P0-C 长期补充：从 Task029 起，每个 Task 必须按统一框架维护 outcomes summary 和 development progress，并增加合同测试 |
+| [`task029_stage4_direct_memory_forensics/response_v1.md`](task029_stage4_direct_memory_forensics/response_v1.md) | Codex V1 回应：线程能力审计、结构化阶段回顾、长期合同和项目文档同步 |
+| [`task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md`](task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md) | PETSc/MUMPS/OpenBLAS 链路、固定四核 h5 矩阵与 `unavailable_in_current_image` 结论 |
 | [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 建议保留的遥测/低风险代码与不得提升的 direct profiles |
 | [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | G3/G5/G7/G9 阻塞、18.882–27.913 GiB 预测与 not-run 决策 |
 

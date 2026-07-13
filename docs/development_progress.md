@@ -37,7 +37,7 @@ docs/taskXXX_*/review_report*.md
 2026-07-13
 current branch = codex/20260713-task29-stage4-direct-memory-forensics
 Task028 status = V4 closed and merged to master at 2f9e56d
-Task029 status = diagnostic_success; h5/h3 complete; best h3 reduction 15.119%; h2 not run by gate; waiting review
+Task029 status = diagnostic_success; engineering_success=no; threaded direct unavailable in current image; h2/threaded h3 not run by gate; final review pending
 ```
 
 ## 1.1 2026-07-13 最新更新
@@ -45,6 +45,8 @@ Task029 status = diagnostic_success; h5/h3 complete; best h3 reduction 15.119%; 
 Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050、h5/h3 baseline、H1–H7、profile 筛选和 h2 安全决策。遥测明确区分 simultaneous worker RSS、各 rank 历史峰值和、MPI 进程树与 cgroup；Task28 canonical records 保持只读。
 
 MPI4 h5/h3 baseline simultaneous RSS 为 2328.145 / 8651.098 MB，主峰都位于 KSPSetUp。release-base 公共生命周期候选在 h3 只下降 5.462%；最佳 default MUMPS MPI2 在 h5/h3 分别下降 28.893% / 15.119%，全部 residual/R/T/A Gate 通过且无 swap，但 h3 低于 20% 工程门槛。因此 Task029 分类为 `diagnostic_success`，不产生合格低内存 direct profile。h2 两类外推中央值为 22.214 / 22.330 GiB、区间 18.882–27.913 GiB，G3/G5/G7/G9 失败，未启动 h2。
+
+Review V1 后补充的构建/链接与固定四核审计确认，当前 PETSc/MUMPS 链接可控的 OpenBLAS pthread，但 MPI1×4 在 KSPSetUp 的 CPU 核均值/峰值仅 0.999/1.054，Stage4 相对 MPI1×1 只有 1.054× speedup。最终身份为 `threaded_direct_capability=unavailable_in_current_image`，因此 threaded h3 按 T4 `not_run`；ordinary default 仍不改变。
 
 ---
 
@@ -1526,9 +1528,177 @@ new angle/wavelength/material/geometry = not qualified
 
 ---
 
-# 36. 当前未完成问题
+# 36. Task029：Stage4 direct memory forensics
 
-## 36.1 Task028 收口问题
+## 36.1 最终状态
+
+```text
+Task = Task029 — Stage4 direct memory forensics
+branch = codex/20260713-task29-stage4-direct-memory-forensics
+base = master@2f9e56d2edddb801780504f681b2ff295d993e02
+classification = diagnostic_success
+engineering_success = no
+threaded_direct_capability = unavailable_in_current_image
+h2 = not_run
+h3_threaded_direct = not_run
+review = response_v1 corrections complete; final review pending
+master = not merged
+ordinary default changed = no
+```
+
+Task029 的成功是“诊断、基础设施和安全决策成功”，不是“获得了新低内存 direct solver”。这一分类贯穿代码、Benchmark、能力矩阵和合并边界。
+
+## 36.2 为什么启动
+
+Task028 已把目标 p2/h5、h3、h2 的 direct reference 与 MPI4 workstation iterative 路径收口，但 direct h3/h2 的因子内存仍是工作站边界：h3 direct 已约 8 GiB，历史 h2 direct 约 20.5 GiB，超过当前约 14 GiB 环境。此前只有最终/历史 RSS，没有足够证据回答内存是在 DtN 增广、MUMPS factorization、KSPSolve 还是后处理中增长，也无法判断对象释放、rank 数、OOC/BLR 或 ordering 是否值得提升。
+
+如果不先完成分阶段剖析，后续容易把统计口径变化误写成优化，把单网格正信号包装成 profile，或在没有安全余量时直接运行 h2。本任务不解决物理网格收敛、新迭代预条件器、adaptive mesh 或跨机器 COMSOL 性能可比性。
+
+## 36.3 冻结问题与 baseline
+
+冻结模型为 50 × 25 × 140 nm 周期单元、17 × 25 × 120 nm complex-Si block、13.5 nm、theta=80°、phi=0、s 偏振、p2 Nédélec、double Floquet + auxiliary Fourier-DtN。模式策略始终为 `auto_propagating`，top/bottom 各 40 个模式、`n_aux=80`。允许改变的是 direct 生命周期、MPI rank/thread 组合、明确 opt-in profile/package/ordering 与遥测；禁止改变物理、模式、official R/T/A、full solve 和 ordinary default。
+
+基线是 default MUMPS、MPI4、每 rank 1 thread。数值资格要求 full explicit true residual、Task28 R/T/A 绝对差和能量闭合均 `<=1e-8`。内存主口径是外部同一时刻所有 worker rank RSS 的和；cgroup current、swap 和各 rank 历史峰值和分别记录，不混写。
+
+| 指标 | h5 MPI4 baseline | h3 MPI4 baseline |
+|---|---:|---:|
+| FE / auxiliary / augmented rows | 44,698 / 80 / 44,778 | 198,438 / 80 / 198,518 |
+| true residual | `5.225e-12` | `1.382e-11` |
+| max Task28 R/T/A abs delta | `0` | `1.865e-14` |
+| simultaneous worker RSS | 2328.145 MiB | 8651.098 MiB |
+| cgroup current peak | 1729.035 MiB | 8353.727 MiB |
+| KSPSetUp / KSPSolve | 1.838 / 0.0467 s | 31.200 / 1.603 s |
+| augmented / factor nnz | 4,896,156 / 33,862,428 | 21,317,860 / 266,127,836 |
+| swap in / out | 0 / 0 | 0 / 0 |
+
+## 36.4 采用的方法
+
+| 方法 | 解决的问题 | 保护措施 |
+|---|---|---|
+| 0.25 s external sampler | 把 simultaneous RSS/cgroup/swap 峰值映射到 solver stage | 原始 timeline 留在 ignored artifacts，轻量 CSV 入库 |
+| matrix/factor inventory | 区分 base/augmented 存储与 LU fill | PETSc 原始 0 memory/fill 不冒充有效 allocator 测量 |
+| progress checkpoints | 标记 `before/during/after KSPSetUp`、solve、RTA、field output | 每个 full run 保留 residual/R/T/A |
+| H1–H7 单因素假设表 | 按收益、风险和 stop rule 筛选优化 | h5 先筛，最多两个候选进 h3 |
+| clean-source candidate runner | 绑定 commit、image digest、command、profile | tracked-source-dirty 直接拒绝 |
+| h2 两路径外推 + G1–G10 | 在高内存运行前给出范围与硬 stop | Gate 未全 true 时 runner 保持锁定 |
+| 构建/链接与 `/proc` 审计 | 区分 NumPy BLAS、MUMPS 实际 BLAS 和真实 CPU 使用 | 固定 `OMP=1`、CPU `0-3`，只控制 OpenBLAS pthread |
+
+低风险实现包括幂等 `DirectSolveFailure.cleanup()`、OOC scratch/I/O/cleanup telemetry、显式 MPI distributed factor package 选择正确性，以及默认 `false` 的 `direct_release_base_after_augmentation`。这些基础设施与性能 profile 资格分开审查。
+
+## 36.5 主要实验与实施步骤
+
+实际运行顺序为：h5/h3 MPI4 baseline；h5 MPI1/2/4 rank 诊断；H1 release-base h5→h3；H5/H6 的 MPI2、SuperLU_DIST、OOC、BLR、ordering h5 筛选；唯一正式 MPI2 候选 h5→h3；h2 外推与 Gate；最后按 review 进行 PETSc/MUMPS/BLAS 静态审计和固定四核 h5 MPI4×1、MPI2×2、MPI1×4、MPI1×1。
+
+没有运行 h2 direct；没有在 h5 线程 Gate 失败后运行 threaded h3；没有重建 image 或在 Task029 实现 multilevel solver。建议模板中的 MPI1×2 是可选补点，但 MPI1×4 已同时触发 T0/T1/T3 stop，继续补点不会改变能力身份。
+
+## 36.6 关键结果
+
+### KSPSetUp / MUMPS factorization 是主峰
+
+h3 从 `before_ksp_setup` 到 `during_ksp_setup_peak`，worker RSS/cgroup 分别增加约 6472.43 / 6474.57 MiB。KSPSolve 结束只比 factorized checkpoint 多约 6.98 MiB worker RSS；official RTA 增量不足 1 MiB；field output 形成约 129.06 MiB 的较低尾部平台。base/augmented 共存约增加 729 MiB worker RSS，只占总峰值约 8%–9%。
+
+h3 factor/augmented nnz 比为 12.484；统一 nnz-storage estimator 约 6093/489 MiB。前者是结构计数，后者是估算，不是 MUMPS allocator 实测。
+
+### H1–H7 与候选结果
+
+下表中“相对变化”为同 h 的 `baseline - candidate` 再除以 baseline：正数表示内存减少，负数表示恶化。
+
+| 路线 | h5 worker RSS 变化 | h3 worker RSS 变化 | 数值 | 最终处置 |
+|---|---:|---:|---|---|
+| H1 release-base MPI4 | +4.767% | +5.462% | pass | 合并显式低风险生命周期控制；非 profile |
+| H2 preallocation rewrite | not_run | not_run | `mallocs=0`,`nz_unneeded=0` | 无 allocator 正证据，拒绝 speculative rewrite |
+| H3 cleanup/temporaries | 非主峰收益 | full flow 保持 | pass | 合并幂等 failure cleanup |
+| H4 direct A_aug assembly | not_implemented | not_implemented | 无 public safe API | 不使用 private framework hack |
+| H5 MUMPS MPI2 | +28.893% | +15.119% | pass | 最佳诊断点；h3 未达 20%，拒绝 profile |
+| H5 SuperLU_DIST | -14.462% | not_run | pass | 内存和时间负向 |
+| H6 MUMPS OOC | +13.744% | not_run | pass | 559,715,776 bytes scratch、1.539×时间；仅 fallback |
+| H6 BLR 1e-5 | -3.427% | not_run | fail | residual `4.704e-3`，拒绝 |
+| H6 ordering ICNTL(7)=3 | -4.093% | not_run | pass | factor nnz/峰值增加，拒绝 |
+| H7 early factor release | 只影响尾部 | not_run | 风险较高 | 不是全局峰值修复，本任务不实现 |
+
+### 少 rank + 多线程最终结论
+
+静态审计确认 PETSc 3.24.0 / MUMPS 5.8.1 通过 `-llapack -lblas` 动态链接 system OpenBLAS 0.3.26 pthread；OpenBLAS API 能读取并修改线程数。NumPy 使用独立 scipy-openblas 0.3.29，只作 Python 侧交叉检查，不代表 MUMPS。活动 PETSc/MUMPS 未显示 OpenMP 构建，正式线程运行固定 `OMP_NUM_THREADS=1`，避免 OpenMP 嵌套；但两个 OpenBLAS runtime 可能形成多个线程池，runnable-thread oversubscription 不能完全排除，CPU affinity 只负责把实际执行封顶在 `0-3`。
+
+| 固定 CPU 0-3 | worker RSS | KSPSetUp | Stage4 | KSPSetUp CPU 核均值/峰值 |
+|---|---:|---:|---:|---:|
+| MPI4×1 | 2351.707 MiB | 2.385 s | 18.311 s | 3.906 / 4.061 |
+| MPI2×2 | 1677.062 MiB | 1.953 s | 20.687 s | 3.272 / 4.025 |
+| MPI1×4 | 1399.648 MiB | 23.841 s | 48.273 s | 0.999 / 1.054 |
+| MPI1×1 | 1401.988 MiB | 25.578 s | 50.891 s | 0.999 / 1.060 |
+
+MPI1×4 的 worker thread 数从 3 增至 12，但 KSPSetUp 仍约 1 核，Stage4 相对 MPI1×1 只有 1.054× speedup。T2 内存比通过（RSS/cgroup 均远低于 1.20×），但 T0 runtime、T1 与 T3 失败；最终身份是 `threaded_direct_capability=unavailable_in_current_image`，T4 要求 threaded h3=`not_run`。
+
+## 36.7 结果解释
+
+主导机制是 LU fill，而不是 auxiliary DoF 或后处理。提前释放 base 对象只能回收次要共存量；减少 rank 能减少进程重复和总 RSS，却削弱分布式 factorization 并行。OOC 把部分 RAM 压力转成 scratch/I/O；BLR 则引入当前阈值不可接受的近似误差。
+
+线程审计进一步说明：有可控 pthread 和更高进程 thread count，不代表 MUMPS factorization 会多核执行。MPI1×4 的实际 CPU 证据与 MPI1×1 相同，因而不能用静态 BLAS 能力或 NumPy matmul 证明 threaded direct 可用。
+
+## 36.8 h2 预测与 G1–G10
+
+DoF 幂律与 factor-nnz/fill 两条路径给出 h2 中央预测 22.214 / 22.330 GiB，敏感性范围 18.882–27.913 GiB。这里属于外推，不是实测 h2。
+
+| Gate | 状态 | 含义 |
+|---|---|---|
+| G1/G2 | true | h5/h3 MPI2 数值通过 |
+| G3 | false | h3 只降 15.119%，没有双网格 20% |
+| G4 | true | h3 无 swap |
+| G5 | false | 预测上界高于 13.5 GiB |
+| G6 | true | 13.5 GiB 安全上限未放宽 |
+| G7 | false | 当前可用内存低于预测下界 |
+| G8 | true | 只有一个最终诊断候选 |
+| G9 | false | 早期 Gate 已失败，未实现/启用 h2 watchdog |
+| G10 | true | Task28 h2 record 未覆盖 |
+
+因此 `h2 = not_run`，不是 pass、fail-run 或 skipped-without-reason。
+
+若未来确有 direct h2 需求，资源规划应使用至少 48 GB、优先 64 GB 的机器，并先实现 watchdog/clean-abort；这不构成当前工作站运行许可。
+
+## 36.9 成功路线、失败路线与负结果
+
+成功并建议保留的是 telemetry、matrix/factor inventory、clean provenance、异常 cleanup、factor package 选择正确性、OOC 证据、显式 release-base 控制、Case050 与 h2 guard。它们改善可观测性、正确性或安全性。
+
+失败或只作诊断的是 MPI2、OOC、BLR、SuperLU_DIST、ordering 和当前镜像 threaded direct；都不得提升为 ordinary/recommended profile。COMSOL GMG 只提供“未来可研究完整多层层次”的定性线索，不是本任务 runtime、R/T/A 或每 DoF benchmark。
+
+## 36.10 最终决策与合并边界
+
+| 对象 | 决定 | 原因 |
+|---|---|---|
+| telemetry / Case050 / h2 guard | final review 后建议合并 | 可复用且有合同测试 |
+| failure cleanup / package selection fix | final review 后建议合并 | 正确性与异常安全 |
+| release-base option | 建议合并，保持默认 false | 低风险，收益不足 profile 资格 |
+| MPI2/OOC/BLR/SuperLU/ordering | 不提升 | 内存、时间或数值 Gate 失败 |
+| threaded direct | 不创建 profile | 当前 image KSPSetUp 仍单核 |
+| ordinary default | 不改变 | 无候选同时通过工程 Gate |
+| h2 / threaded h3 | 不运行 | 分别被 G/T Gate 阻止 |
+| master | 等待 final review | 当前 response 修正尚需复审 |
+
+## 36.11 局限
+
+factor storage 是 nnz estimator；部分 PETSc/MUMPS raw memory/fill 字段不可用。CPU 核数由 0.25 s `/proc` 累计 CPU 时间差分，不是硬件计数器。线程结论只适用于当前 image、目标矩阵与固定四核条件。完整 field/mesh/timeline 保存在本地 ignored artifacts，不进入 Git。物理 residual/closure 通过也不等于 h3/h2 R/T/A 已完成网格收敛。
+
+## 36.12 下一步及原因
+
+由于对象生命周期、ordering 和当前 BLAS 线程都不是主峰解法，停止继续 direct 微调。下一阶段应优先做 h3/h2 物理网格收敛或 graded/adaptive mesh qualification；若继续降低 solver memory，则研究真正 multilevel H(curl)、low-order-refined multigrid 或带受控 coarse direct solve 的并行 physical Schwarz。只有更换为明确支持 threaded factorization 的构建时，才重新执行固定四核 h5 能力审计。
+
+## 36.13 证据入口
+
+- [Task029 outcomes summary](task029_stage4_direct_memory_forensics/outcomes/summary.md)
+- [线程能力审计](task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md)
+- [h2 launch decision](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md)
+- [Task029 review V1](task029_stage4_direct_memory_forensics/review_report_v1.md)
+- [Task029 response V1](task029_stage4_direct_memory_forensics/response_v1.md)
+- [Benchmark Case050](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md)
+- [Task 回顾标准](task_retrospective_standard.md)
+- [direct runner](../benchmarks/run_direct_memory_forensics.py)
+- [direct profile walkthrough](../notes/reference/code_walkthrough/30_direct_solver_profiles.md)
+
+---
+
+# 37. 当前未完成问题
+
+## 37.1 Task028 收口问题
 
 ```text
 - Response V4 已关闭 tracked-source-clean、真实 image digest 和最终提交验证，并以 2f9e56d 合入 master；
@@ -1536,16 +1706,17 @@ new angle/wavelength/material/geometry = not qualified
 - `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
 
-## 36.2 Task029 当前问题
+## 37.2 Task029 当前问题
 
 ```text
 - h5/h3 baseline、归因和最多两个 h3 候选均已完成；
 - 最佳 h3 只下降 15.119%，未达到 engineering_success；
 - h2 预测区间 18.882–27.913 GiB，G3/G5/G7/G9 失败并明确 not-run；
-- Task029 outcomes 已完成，当前只等待 ChatGPT review 和用户后续合并许可。
+- review V1 更正与 response 已完成，当前等待 final review 和后续合并许可；
+- 当前 image 的 threaded direct 不可用，threaded h3 按 T4 未运行。
 ```
 
-## 36.3 数值和物理问题
+## 37.3 数值和物理问题
 
 ```text
 - h=1.5 production solve；
@@ -1562,14 +1733,14 @@ new angle/wavelength/material/geometry = not qualified
 
 ---
 
-# 37. 当前推荐开发顺序
+# 38. 当前推荐开发顺序
 
 Task28 合并与 Task29 执行已完成。当前强制顺序：
 
 ```text
-1. 等待 ChatGPT 创建 Task029 `review_report_v1.md`；
-2. 在同一分支只处理可执行审查意见；
-3. 审查通过且用户明确许可后再合并建议保留的基础设施；
+1. 提交并推送 Task029 `response_v1.md` 与全部 P0 更正；
+2. 等待 final review，并在同一分支继续处理可执行意见；
+3. final review 通过且用户明确许可后再合并建议保留的基础设施；
 4. 不提升 MPI2/OOC/BLR/SuperLU/ordering 为低内存 profile；
 5. 不在当前工作站运行 h2 direct；
 6. 后续优先物理收敛资格化或真正 multilevel H(curl) 研究。
@@ -1588,7 +1759,7 @@ F. slab-internal parallel or true H(curl) multilevel solver。
 
 ---
 
-# 38. 文档维护规则
+# 39. 文档维护规则
 
 每个后续阶段完成后，应同步更新：
 
@@ -1614,6 +1785,6 @@ benchmarks/benchmark_summary.csv
 
 ---
 
-# 39. 当前一句话状态
+# 40. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 h5/h3 direct-memory forensics 并确认 MUMPS KSPSetUp/factorization 是主瓶颈。最佳 h3 direct 候选只下降 15.119%，因此按 `diagnostic_success` 收口，h2 因 18.882–27.913 GiB 预测与硬 Gate 未通过而未运行。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 以 `diagnostic_success` 收口并确认 MUMPS KSPSetUp/factorization 是 direct 内存主瓶颈。最佳 h3 候选只下降 15.119%，当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，故 engineering_success=no、threaded direct unavailable、threaded h3 与 h2 均按 Gate 未运行。

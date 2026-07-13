@@ -1,5 +1,38 @@
 # Task029 Run Log
 
+## Review V1 checkpoint：线程能力与文档合同
+
+```text
+audit source_sha = 48958571f62590418bf4281f09ad22b1419eb880
+PETSc = 3.24.0, linux-gnu-complex128-32
+MUMPS = 5.8.1
+system BLAS = OpenBLAS 0.3.26 pthread; runtime thread control verified
+PETSc/MUMPS OpenMP build detected = no
+visible CPUs = 0-15; formal affinity = 0-3
+OMP_NUM_THREADS = 1; nested OpenMP disabled
+multiple BLAS runtimes = NumPy scipy-openblas + PETSc system OpenBLAS; runnable-thread oversubscription not fully excluded; actual CPU execution capped by affinity 0-3
+
+MPI4x1: RSS=2351.707 MB; KSPSetUp=2.385 s; Stage4=18.311 s; KSP CPU mean/max=3.906/4.061
+MPI2x2: RSS=1677.062 MB; KSPSetUp=1.953 s; Stage4=20.687 s; KSP CPU mean/max=3.272/4.025
+MPI1x4: RSS=1399.648 MB; KSPSetUp=23.841 s; Stage4=48.273 s; KSP CPU mean/max=0.999/1.054
+MPI1x1: RSS=1401.988 MB; KSPSetUp=25.578 s; Stage4=50.891 s; KSP CPU mean/max=0.999/1.060
+
+T0 = failed_at_runtime
+T1 = failed
+T2 = pass_but_not_sufficient
+T3 = negative
+T4 = stop; threaded h3 = not_run
+threaded_direct_capability = unavailable_in_current_image
+
+ruff changed Python = pass (host ruff 0.12.0; image has no ruff)
+compileall = pass
+focused telemetry/governance/documentation/retrospective = 42 passed
+full unit = 146 passed / 10 skipped
+benchmark checker = 149/149
+JSON/CSV parse = pass
+git diff --check = pass
+```
+
 ## 最终 checkpoint：候选、h2 Gate 与收口
 
 ```text

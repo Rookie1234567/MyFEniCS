@@ -1,5 +1,19 @@
 # Task029 changed files
 
+## Review V1 更正
+
+- `benchmarks/run_direct_memory_forensics.py`：OpenBLAS threads、CPU affinity、worker/process-tree thread count、CPU seconds/core-equivalents 与实际 affinity 遥测。
+- `benchmarks/scripts/audit_direct_thread_capability.sh`：活动 PETSc/MUMPS/BLAS/OpenMP/CPU 只读能力审计。
+- Case050 `records/h5_threaded_direct_audit.json` 与 outcomes `threaded_direct_matrix.csv` / `threaded_direct_capability_audit.md`。
+- `docs/development_progress.md`：新增独立 Task029 结构化章节；`outcomes/summary.md` 按长期标准重写。
+- `README.md`、`docs/README.md`、`docs/repository_work_principles.md`：同步强制 Task 回顾条款与标准入口。
+- `docs/capability_matrix.md`、`docs/solver_guide.md`、`docs/benchmark.md`、`benchmarks/README.md`、Case050 README、direct walkthrough 与 current boundaries：同步最终能力身份。
+- `src/test/test_24_repository_work_principles.py`：保护区长期条款同步检查。
+- `src/test/test_29_task_retrospective_contract.py`：Task029 章节、状态、结构、证据链接与未来流程合同。
+- `docs/task029_stage4_direct_memory_forensics/response_v1.md`：逐项回应 P0-A/B/C1/C2/C3/D/E。
+
+线程审计 heavy timelines 继续保留在 gitignored `benchmarks/artifacts/cases/050/`；用户未跟踪的 `papers/` 与 Task023 `raw_runs/` 未修改或暂存。
+
 ## Commit D–G：profile 筛选、候选资格与最终决策
 
 - `benchmarks/run_direct_memory_forensics.py`：两点幂律预测 helper；h2 Gate 补齐 G1–G10 字段。

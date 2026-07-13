@@ -890,10 +890,16 @@ def _run_parent(args: argparse.Namespace) -> int:
             "control_model": "openblas_pthreads_only_openmp_fixed_at_one",
             "requested_compute_threads": args.mpi_size * args.threads_per_rank,
             "nested_openmp_disabled": True,
-            "requested_oversubscription": (
+            "intended_compute_threads_exceed_affinity_budget": (
                 None
                 if affinity_cpu_count is None
                 else args.mpi_size * args.threads_per_rank > affinity_cpu_count
+            ),
+            "multiple_blas_runtime_note": (
+                "The runner controls the shared OpenBLAS environment but does not "
+                "claim that NumPy and PETSc load a single BLAS runtime. Use the "
+                "image audit plus stage CPU evidence to assess runnable-thread "
+                "oversubscription."
             ),
             "max_worker_rank_thread_count_sum": max(
                 (int(row["worker_rank_thread_count_sum"]) for row in rows), default=0
@@ -999,6 +1005,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "limitations": [
             "External sampler reports the simultaneous sum of worker-rank RSS separately from cgroup memory and historical per-rank peaks.",
             "MUMPS INFOG/RINFOG values are raw indexed telemetry without inferred semantics.",
+            "Process thread counts include MPI/Python/runtime helper threads; stage CPU core equivalents, not raw thread count alone, determine actual factorization parallelism.",
+            "A shared OPENBLAS_NUM_THREADS value cannot prove that separately loaded NumPy and PETSc BLAS runtimes form one thread pool.",
         ],
     }
     record_path = args.record or (run_dir / "candidate_record.json")

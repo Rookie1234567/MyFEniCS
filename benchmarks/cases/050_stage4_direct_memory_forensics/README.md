@@ -6,6 +6,8 @@ Case050 已以 `diagnostic_success` 收口。MPI4 h5/h3 baseline 的 simultaneou
 
 h2 两种中央预测为 22.214 / 22.330 GiB，敏感性区间 18.882–27.913 GiB；G3、G5、G7、G9 失败，故 `h2_launch_decision=not_run`。精简证据见 [`h5_mpi2_candidate.json`](records/h5_mpi2_candidate.json)、[`h3_mpi2_candidate.json`](records/h3_mpi2_candidate.json) 和 [Task29 outcomes](../../../docs/task029_stage4_direct_memory_forensics/outcomes/README.md)。ordinary default 未改变，Task28 canonical records 未覆盖。
 
+Review V1 后的线程条件审计也已闭合。活动 PETSc 3.24.0 / MUMPS 5.8.1 链接 system OpenBLAS 0.3.26 pthread，但固定 CPU `0-3` 的 MPI1×4 在 `during_ksp_setup_peak` 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 只有 1.054× speedup。T0 runtime、T1 与 T3 失败，故 `threaded_direct_capability=unavailable_in_current_image`，threaded h3 按 T4 `not_run`。精简记录见 [`h5_threaded_direct_audit.json`](records/h5_threaded_direct_audit.json)。
+
 ## 合同
 
 | 项目 | 值 |
@@ -19,7 +21,7 @@ h2 两种中央预测为 22.214 / 22.330 GiB，敏感性区间 18.882–27.913 G
 | 7. 入射 | 80 度、s 偏振 |
 | 8. 边界 | double Floquet + auxiliary Fourier-DtN |
 | 9. FE/mesh | p2 Nédélec；h5/h3，h2 条件式 |
-| 10. MPI | baseline 4 ranks |
+| 10. MPI/thread | baseline 4×1；能力审计固定总四核 MPI4×1、MPI2×2、MPI1×4、MPI1×1 |
 | 11. direct profile | default / mumps_ooc / mumps_blr |
 | 12. 必跑 | MPI4 h5、MPI4 h3 |
 | 13. 条件运行 | h2，仅通过 guarded Gate 后 |
@@ -46,6 +48,8 @@ h2 两种中央预测为 22.214 / 22.330 GiB，敏感性区间 18.882–27.913 G
 ## PyCharm
 
 在 Docker 解释器环境中把模块设为 `benchmarks.run_direct_memory_forensics`，参数先用 `--h-nm 5 --mpi-size 4 --profile default`。PyCharm 普通单进程 Run 不构成 MPI4 baseline；正式运行使用下方 shell wrapper 或 External Tool。
+
+线程能力复核必须显式使用 `--threads-per-rank N --cpu-affinity 0-3`；runner 会保持 `OMP_NUM_THREADS=1`、禁用 nested OpenMP，并把 OpenBLAS pthread 的实际执行封顶在指定 CPU budget。NumPy/PETSc 的不同 OpenBLAS runtime 可能产生多个线程池，因此必须同时读取 process threads 与 stage CPU cores；该入口是诊断工具，不是 ordinary solver profile。
 
 ## CLI 或测试
 
@@ -78,6 +82,8 @@ gate 文件必须同时证明 h5/h3 数值通过、两者内存至少降低 20%�
 Task29 h5/h3 baseline 已分别在 source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135` 完整通过；两者之间只有文档/证据变更。二者均为 MPI4、p2、default MUMPS、full solve，true residual 分别为 `5.224671064148491e-12` 与 `1.3821009358870955e-11`，Task28 R/T/A Gate 和零 swap Gate 均通过。轻量记录见 [`records/h5_baseline.json`](records/h5_baseline.json) 与 [`records/h3_baseline.json`](records/h3_baseline.json)。
 
 h5/h3 的最大同时 worker RSS 分别为 2328.145 / 8651.098 MB，最大 cgroup current 为 1729.035 / 8353.727 MB，均出现在 KSPSetUp；factor/augmented nnz 比例分别为 6.916 / 12.484。h5 MUMPS MPI1/2/4 rank 诊断显示 MPI2 相对 MPI4 降低 27.07% worker RSS，因此选为首个 h3 候选。Stage B 已完成，h2 仍锁定。
+
+线程审计的四个 h5 full solve 均来自 clean source `48958571f62590418bf4281f09ad22b1419eb880`，数值 Gate 与零 swap 通过。MPI4×1、MPI2×2、MPI1×4、MPI1×1 的 Stage4 分别为 18.311、20.687、48.273、50.891 s；MPI1×4 的内存与 MPI1×1 基本相同，但 KSPSetUp 没有实际多核，因此不能用少 rank 内存收益宣称 threaded engineering success。
 
 ## 结果解释
 

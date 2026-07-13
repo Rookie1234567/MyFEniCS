@@ -4,6 +4,10 @@
 
 ## Task29 更新（2026-07-13）
 
+Review V1 线程审计的最终结论是 `threaded_direct_capability=unavailable_in_current_image`。活动 PETSc 3.24.0 / MUMPS 5.8.1 通过系统 BLAS 链接 OpenBLAS 0.3.26 pthread；运行时线程数可控，但固定 CPU `0-3` 的 MPI1×4 在 `during_ksp_setup_peak` 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 只有 1.054× speedup。进程 thread 数从 3 增至 12 只证明线程池存在，不证明 MUMPS factorization 多核。threaded h3 因 T1/T3 失败而 `not_run`，ordinary default 不变。
+
+`benchmarks.run_direct_memory_forensics` 的 `--threads-per-rank` 设置共享的 OpenBLAS 环境；runner 固定 `OMP_NUM_THREADS=1`、`OMP_MAX_ACTIVE_LEVELS=1`，避免 OpenMP 与 BLAS 嵌套。由于 NumPy scipy-openblas 与 PETSc system OpenBLAS 是不同 runtime，该环境不能保证只有一个线程池；`--cpu-affinity 0-3` 用 `taskset` 和 `mpiexec --bind-to none` 将实际执行封顶在固定 CPU budget。timeline 新增 worker/process-tree thread count、累计 CPU seconds、区间 CPU core equivalents 和 worker affinity；这些字段属于 capability/telemetry，不进入普通 Stage4 config。
+
 最终 Case050 证据显示：MPI4 h5/h3 baseline simultaneous worker RSS 为 2328.145 / 8651.098 MiB，default MUMPS MPI2 为 1655.484 / 7343.137 MiB，即分别下降 28.893% / 15.119%。h3 未达到 20%，所以 MPI2 只是诊断运行点，不是合格 `optimized_direct_incore_candidate`。release-base MPI4 在 h3 只下降 5.462%，证明公共生命周期开销不是主峰根因；ordinary default 仍为 MPI4/default 行为。
 
 OOC h5 降低 13.744% worker RSS，但使用 559,715,776 scratch bytes，Stage4 时间为 baseline 的 1.539 倍；成功路径删除全部 8 个文件。BLR `1e-5` 的进程返回码虽为 0，真残差 `4.704e-3` 与 R/T/A 失败；SuperLU_DIST 和 `ICNTL(7)=3` 都增加内存。因此没有 profile 获得 h3 20% 工程资格。

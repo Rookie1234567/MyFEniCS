@@ -1,0 +1,93 @@
+{
+  "benchmark_id": "task029_h5_threaded_direct_capability_audit",
+  "status": "pass_as_negative_capability_audit",
+  "source_commit_sha": "48958571f62590418bf4281f09ad22b1419eb880",
+  "container_image": "myfenics-stage4:task28",
+  "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+  "physical_model_frozen": true,
+  "factor_solver": "mumps",
+  "mumps_version": "5.8.1",
+  "blas_runtime": "system OpenBLAS 0.3.26 pthread",
+  "cpu_affinity": "0-3",
+  "thread_control": {
+    "OMP_NUM_THREADS": 1,
+    "OMP_DYNAMIC": false,
+    "OMP_MAX_ACTIVE_LEVELS": 1,
+    "OPENBLAS_NUM_THREADS": "threads_per_rank",
+    "nested_openmp_disabled": true,
+    "intended_rank_times_thread_budget_exceeds_affinity": false,
+    "multiple_blas_runtime_pools": "NumPy scipy-openblas and PETSc system OpenBLAS are distinct; runnable-thread oversubscription cannot be excluded, while CPU affinity caps execution to 0-3"
+  },
+  "runs": [
+    {
+      "configuration": "MPI4x1",
+      "worker_rss_mb": 2351.70703125,
+      "cgroup_current_mb": 1813.46484375,
+      "ksp_setup_seconds": 2.3852727689991298,
+      "ksp_solve_seconds": 0.07033997799953795,
+      "stage4_seconds": 18.310507861002407,
+      "ksp_cpu_cores_mean": 3.9055546345872276,
+      "ksp_cpu_cores_max": 4.061085639543932,
+      "factor_nnz": 34317396,
+      "true_residual": 8.04372893255418e-12,
+      "max_rta_abs_delta": 6.3352101342673e-14,
+      "swap_in_pages": 0,
+      "swap_out_pages": 0
+    },
+    {
+      "configuration": "MPI2x2",
+      "worker_rss_mb": 1677.0625,
+      "cgroup_current_mb": 1391.3203125,
+      "ksp_setup_seconds": 1.9529421469997033,
+      "ksp_solve_seconds": 0.06316042199978256,
+      "stage4_seconds": 20.687306968000485,
+      "ksp_cpu_cores_mean": 3.27190370393703,
+      "ksp_cpu_cores_max": 4.024566909807217,
+      "factor_nnz": 33940948,
+      "true_residual": 5.6187400493095744e-12,
+      "max_rta_abs_delta": 5.6649129831498612e-14,
+      "swap_in_pages": 0,
+      "swap_out_pages": 0
+    },
+    {
+      "configuration": "MPI1x4",
+      "worker_rss_mb": 1399.6484375,
+      "cgroup_current_mb": 1272.4765625,
+      "ksp_setup_seconds": 23.840756644000066,
+      "ksp_solve_seconds": 0.14011276200108114,
+      "stage4_seconds": 48.27260564799872,
+      "ksp_cpu_cores_mean": 0.9991616000269552,
+      "ksp_cpu_cores_max": 1.0543361515707441,
+      "factor_nnz": 44628034,
+      "true_residual": 2.7643987816798819e-11,
+      "max_rta_abs_delta": 1.7280621378290562e-13,
+      "swap_in_pages": 0,
+      "swap_out_pages": 0
+    },
+    {
+      "configuration": "MPI1x1",
+      "worker_rss_mb": 1401.98828125,
+      "cgroup_current_mb": 1269.8125,
+      "ksp_setup_seconds": 25.57775890799894,
+      "ksp_solve_seconds": 0.11118558399903122,
+      "stage4_seconds": 50.891330800001015,
+      "ksp_cpu_cores_mean": 0.998745656443112,
+      "ksp_cpu_cores_max": 1.0599751505482975,
+      "factor_nnz": 44628034,
+      "true_residual": 2.7643987816798819e-11,
+      "max_rta_abs_delta": 1.7280621378290562e-13,
+      "swap_in_pages": 0,
+      "swap_out_pages": 0
+    }
+  ],
+  "gates": {
+    "T0": "failed_at_runtime",
+    "T1": "failed",
+    "T2": "pass_but_not_sufficient",
+    "T3": "negative",
+    "T4": "stop_h3_not_run"
+  },
+  "threaded_direct_capability": "unavailable_in_current_image",
+  "ordinary_default_changed": false,
+  "candidate_disposition": "no_threaded_direct_profile"
+}

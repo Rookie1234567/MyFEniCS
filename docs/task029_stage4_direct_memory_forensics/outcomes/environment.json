@@ -35,5 +35,24 @@
       "docs/task023_petsc_mpi_fe_response_pc/outcomes/raw_runs/",
       "papers/"
     ]
+  },
+  "threaded_direct_capability_audit": {
+    "source_sha": "48958571f62590418bf4281f09ad22b1419eb880",
+    "petsc_version": "3.24.0",
+    "petsc_arch": "linux-gnu-complex128-32",
+    "mumps_version": "5.8.1",
+    "petsc_mumps_openmp_build_detected": false,
+    "system_blas": "OpenBLAS 0.3.26 pthread",
+    "system_blas_parallel_mode": 1,
+    "system_blas_thread_control_verified": true,
+    "numpy_blas": "scipy-openblas 0.3.29; separate Python runtime only",
+    "container_visible_logical_cpus": 16,
+    "fixed_test_affinity": "0-3",
+    "nested_openmp_disabled": true,
+    "multiple_blas_runtime_pools_detected": true,
+    "oversubscription_assessment": "NumPy and PETSc use distinct OpenBLAS runtimes; runnable-thread oversubscription cannot be excluded, while affinity caps actual execution to CPUs 0-3",
+    "runtime_result": "KSPSetUp stayed at approximately one CPU core for MPI1x4",
+    "threaded_direct_capability": "unavailable_in_current_image",
+    "h3_threaded_direct": "not_run_by_T4"
   }
 }

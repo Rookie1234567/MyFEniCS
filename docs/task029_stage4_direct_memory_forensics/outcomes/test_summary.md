@@ -1,5 +1,22 @@
 # Task029 test summary
 
+## Review V1 更正验证
+
+| 检查 | 结果 |
+|---|---|
+| 固定四核 h5 MPI4×1 / MPI2×2 / MPI1×4 / MPI1×1 | 4/4 full solve、数值 Gate、80 modes、零 swap 通过 |
+| MPI1×4 KSPSetUp actual CPU evidence | mean 0.999 cores / max 1.054 cores；T1 fail |
+| Task29 telemetry + governance + documentation links + retrospective focused | 42 passed |
+| Ruff changed Python | host ruff 0.12.0，pass；镜像未安装 ruff |
+| compileall `benchmarks src` | pass |
+| Docker full unit discovery | 146 passed, 10 skipped |
+| benchmark checker `--no-write` | 149 / 149 passed |
+| JSON parse | `environment.json`、thread audit record pass |
+| CSV parse | `threaded_direct_matrix.csv` 4 rows pass |
+| `git diff --check` | pass |
+
+四个线程审计 full solve 来自 clean source `48958571f62590418bf4281f09ad22b1419eb880`。所有 worker 实际 affinity 为 `0-3`；MPI1×4 与 MPI1×1 的 true residual 相同为 `2.764e-11`，最大 Task28 R/T/A 绝对差 `1.728e-13`。线程创建成功但 KSPSetUp 保持约 1 核，因此这是经过验证的负向 capability 结论。
+
 ## 最终候选与安全合同
 
 | 检查 | 当前结果 |

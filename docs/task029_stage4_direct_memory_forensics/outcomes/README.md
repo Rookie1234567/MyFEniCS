@@ -23,18 +23,23 @@
 - [h2 启动决定](h2_launch_decision.md)
 - [合并建议](merge_recommendation.md)
 - [下一步判断](next_decision.md)
+- [少 rank + 多线程能力审计](threaded_direct_capability_audit.md)
+- [固定四核线程矩阵](threaded_direct_matrix.csv)
 - [h5 MPI2 精简记录](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_mpi2_candidate.json)
 - [h3 MPI2 精简记录](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h3_mpi2_candidate.json)
 
 ## 当前阶段
 
 ```text
-stage = task029_complete_waiting_review
+stage = review_v1_corrections_complete_pending_final_review
 h5_baseline = pass
 h3_baseline = pass_no_swap
 h3_best_candidate = numeric_pass_memory_minus_15.119pct
 classification = diagnostic_success
+engineering_success = no
+threaded_direct_capability = unavailable_in_current_image
+h3_threaded_direct = not_run_by_T4
 h2 = not_run_by_gate
 ```
 
-冻结 h5/h3 baseline 分别来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135`；正式候选来自 clean source SHA `6babe4700328be2b3b93aad7e3e6c212b6dbad10`。最佳 h3 候选未达到 20%，因此不产生合格低内存 profile，也不运行 h2。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。
+冻结 h5/h3 baseline 分别来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135`；正式内存候选来自 `6babe4700328be2b3b93aad7e3e6c212b6dbad10`，线程审计来自 `48958571f62590418bf4281f09ad22b1419eb880`。最佳 h3 内存候选未达到 20%；MPI1×4 在 KSPSetUp 的 CPU 核均值/峰值仅 0.999/1.054，Stage4 相对 MPI1×1 speedup 仅 1.054×，所以不产生低内存或 threaded direct profile，也不运行 threaded h3 或 h2。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。

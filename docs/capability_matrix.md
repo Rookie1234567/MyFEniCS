@@ -45,8 +45,14 @@
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |
 | matrix-free condensed DtN | recommended | benchmark runner | `F-C H^-1 D` |
 | MUMPS direct | recommended | ordinary default | h=2 内存超当前工作站 |
-| MUMPS out-of-core | supported | `mumps_ooc` profile | scratch 容量和 I/O 敏感 |
-| MUMPS BLR | experimental | PETSc extra options | 仅作为内存 fallback |
+| Task29 direct-memory telemetry | recommended | Case050 runner | merge candidate；RSS/cgroup/swap/stage/matrix/factor/CPU/thread 证据 |
+| Task29 optimized direct profile | not_implemented | 无 | 所有候选均未通过 h3 工程 Gate |
+| MUMPS MPI2 low-rank-count direct | diagnostic_only | Case050 显式 `--mpi-size 2` | h3 RSS 只降 15.119%，不是推荐 profile |
+| MUMPS out-of-core | diagnostic_only | `mumps_ooc` profile | h5 只降 13.744%，时间 1.539×，需 scratch/I/O 证据 |
+| MUMPS BLR | experimental | PETSc extra options | Task29 `1e-5` 数值 Gate 失败，不是当前候选 |
+| SuperLU_DIST direct backend | supported | 显式 PETSc package | backend 有效；目标 h5 RSS +14.462%，不推荐该模型 |
+| release-base lifecycle control | diagnostic_only | 显式 opt-in | h3 只降 5.462%，不是 low-memory profile |
+| OpenBLAS-threaded direct | diagnostic_only | Case050 `--threads-per-rank` | 当前 image MPI1×4 KSPSetUp 仍约 1 核；capability unavailable |
 | MPI4 workstation iterative | recommended | 显式 benchmark | 仅固定 p2/h5,h3,h2 profile |
 | h=1.5 iterative | not_verified | 无 canonical record | 不得宣称 production |
 | field/mesh output | supported | results/artifacts | rank-local + parallel PVD |
@@ -87,5 +93,6 @@
 | Stage4B direct | [`31_3d_stage4b_grating_direct.md`](../notes/quick_start/31_3d_stage4b_grating_direct.md) | [`direct_solvers_and_factorization.md`](../notes/theory/direct_solvers_and_factorization.md) | [`021`](../benchmarks/cases/021_3d_stage4b_direct/README.md) |
 | exact condensation | iterative quick start | walkthrough 31 | [`022`](../benchmarks/cases/022_dtn_condensation_equivalence/README.md) |
 | OOC/BLR | [`32_3d_direct_ooc_blr.md`](../notes/quick_start/32_3d_direct_ooc_blr.md) | walkthrough 30 | [`030`](../benchmarks/cases/030_mumps_ooc_blr/README.md) |
+| direct memory/thread forensics | solver guide Task029 | walkthrough 30 | [`050`](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md) |
 | MPI4 workstation iterative | [`40_3d_workstation_iterative.md`](../notes/quick_start/40_3d_workstation_iterative.md) | [`iterative_solver_and_preconditioner.md`](../notes/theory/iterative_solver_and_preconditioner.md)、walkthrough 32/33 | [`031`](../benchmarks/cases/031_workstation_iterative/README.md) |
 | MPI/p/algebra regression | 环境/验证章节 | walkthrough 50 | [`040`](../benchmarks/cases/040_mpi_p_algebra_regression/README.md) |
