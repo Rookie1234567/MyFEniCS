@@ -8,7 +8,7 @@
 | `compileall benchmarks src` | pass |
 | Docker focused telemetry + documentation | 18 passed |
 | Docker focused source/full-solve Gate regression | 9 passed |
-| Docker focused factor-inventory regression | 10 passed |
+| Docker focused factor/history aggregation regression | 12 passed |
 | Docker full unit discovery | 123 passed, 10 skipped |
 | Benchmark checker | 149/149 |
 | `git diff --check` | pass |

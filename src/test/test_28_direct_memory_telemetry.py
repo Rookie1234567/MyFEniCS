@@ -11,6 +11,8 @@ from petsc4py import PETSc
 
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
+    _enrich_factor_inventory,
+    _historical_peak_upper_bound,
     _latest_stage,
     _numeric_gate,
     _parse_args,
@@ -27,6 +29,35 @@ from src.solvers.common_3d_utils import (
 
 
 class DirectMemoryTelemetryTests(unittest.TestCase):
+    def test_historical_peak_upper_bound_uses_all_complete_checkpoints(self) -> None:
+        events = [
+            {"sum_rank_historical_peaks_mb_upper_bound": 10.0},
+            {"sum_rank_historical_peaks_mb_upper_bound": 12.5},
+        ]
+        summary = {
+            "sum_rank_historical_peaks_mb_upper_bound": 11.0,
+            "total_peak_rss_mb": 9.0,
+        }
+        self.assertEqual(_historical_peak_upper_bound(events, summary), 12.5)
+
+    def test_factor_inventory_records_only_algebraic_derived_ratios(self) -> None:
+        inventory = {
+            "matrix_stats": {
+                "matrix_nnz_used": 60.0,
+                "matrix_memory_estimate_mb": 24.0,
+            }
+        }
+        augmented = {
+            "matrix_nnz_used": 10.0,
+            "matrix_memory_estimate_mb": 4.0,
+        }
+        enriched = _enrich_factor_inventory(inventory, augmented)
+        self.assertIsNotNone(enriched)
+        ratios = enriched["derived_ratios"]
+        self.assertEqual(ratios["factor_to_augmented_nnz_ratio"], 6.0)
+        self.assertEqual(ratios["factor_to_augmented_estimated_storage_ratio"], 6.0)
+        self.assertIn("not inferred MUMPS", ratios["semantics"])
+
     def test_worker_forces_full_solve_not_assemble_only(self) -> None:
         args = _parse_args(["--h-nm", "5", "--profile", "default"])
         cfg = _task29_direct_config(args)
@@ -87,9 +118,7 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             self.assertTrue(inventory["available"])
             self.assertEqual(inventory["matrix_stats"]["matrix_rows"], 3)
             self.assertEqual(
-                inventory["matrix_stats"]["matrix_petsc_info"][
-                    "fill_ratio_needed"
-                ],
+                inventory["matrix_stats"]["matrix_petsc_info"]["fill_ratio_needed"],
                 1.0,
             )
             self.assertFalse(inventory["mumps_api_available"])

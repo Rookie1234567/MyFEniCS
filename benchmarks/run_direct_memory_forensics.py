@@ -286,6 +286,61 @@ def _stage_peaks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def _historical_peak_upper_bound(
+    progress_events: list[dict[str, Any]], solver_summary: dict[str, Any]
+) -> float | None:
+    """Return the largest complete rank-historical upper bound available."""
+
+    values: list[float] = []
+    for event in progress_events:
+        value = event.get("sum_rank_historical_peaks_mb_upper_bound")
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            values.append(float(value))
+    for field in ("sum_rank_historical_peaks_mb_upper_bound", "total_peak_rss_mb"):
+        value = solver_summary.get(field)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            values.append(float(value))
+    return max(values) if values else None
+
+
+def _enrich_factor_inventory(
+    factor_inventory: dict[str, Any] | None,
+    augmented_matrix_stats: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Add transparent algebraic ratios without assigning MUMPS index semantics."""
+
+    if factor_inventory is None:
+        return None
+    enriched = dict(factor_inventory)
+    factor_stats = factor_inventory.get("matrix_stats") or {}
+    augmented_stats = augmented_matrix_stats or {}
+    factor_nnz = factor_stats.get("matrix_nnz_used")
+    augmented_nnz = augmented_stats.get("matrix_nnz_used")
+    factor_estimate = factor_stats.get("matrix_memory_estimate_mb")
+    augmented_estimate = augmented_stats.get("matrix_memory_estimate_mb")
+    enriched["derived_ratios"] = {
+        "factor_to_augmented_nnz_ratio": (
+            float(factor_nnz) / float(augmented_nnz)
+            if isinstance(factor_nnz, (int, float))
+            and isinstance(augmented_nnz, (int, float))
+            and float(augmented_nnz) > 0.0
+            else None
+        ),
+        "factor_to_augmented_estimated_storage_ratio": (
+            float(factor_estimate) / float(augmented_estimate)
+            if isinstance(factor_estimate, (int, float))
+            and isinstance(augmented_estimate, (int, float))
+            and float(augmented_estimate) > 0.0
+            else None
+        ),
+        "semantics": (
+            "Ratios are algebraically derived from PETSc-reported nnz and the "
+            "same matrix-storage estimator; they are not inferred MUMPS INFOG/RINFOG meanings."
+        ),
+    }
+    return enriched
+
+
 def _read_progress_events(path: Path) -> list[dict[str, Any]]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -537,6 +592,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         json.dumps(sampler_summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     matrix_transform = solver_summary.get("constraint_matrix_transform") or {}
+    augmented_matrix_stats = solver_summary.get(
+        "stage4_dtn_augmented_matrix_stats_after_finalize"
+    )
+    factor_inventory = _enrich_factor_inventory(
+        factor_inventory, augmented_matrix_stats
+    )
     record = {
         "benchmark_id": (
             f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}"
@@ -600,9 +661,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "n_aux": solver_summary.get("stage4_dtn_num_auxiliary_dofs"),
         "matrix_inventory": {
             "base": solver_summary.get("stage4_dtn_base_matrix_stats"),
-            "augmented": solver_summary.get(
-                "stage4_dtn_augmented_matrix_stats_after_finalize"
-            ),
+            "augmented": augmented_matrix_stats,
             "final": solver_summary.get("matrix_stats"),
             "transform": matrix_transform,
         },
@@ -610,10 +669,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         "memory_checkpoints": progress_events,
         "memory": {
             **sampler_summary,
-            "sum_rank_historical_peaks_mb_upper_bound": solver_summary.get(
-                "sum_rank_historical_peaks_mb_upper_bound",
-                solver_summary.get("total_peak_rss_mb"),
+            "sum_rank_historical_peaks_mb_upper_bound": _historical_peak_upper_bound(
+                progress_events, solver_summary
             ),
+            "historical_peak_source": "max_complete_progress_checkpoint_with_solver_summary_fallback",
         },
         "timings": solver_summary.get("timings_seconds"),
         "true_residual": solver_summary.get("linear_system_relative_residual"),
