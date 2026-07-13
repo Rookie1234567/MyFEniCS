@@ -47,7 +47,7 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
-| Task029 | Stage4 direct memory forensics | telemetry 已验证；h5 baseline 已通过并冻结，h3 尚未运行，h2 锁定 |
+| Task029 | Stage4 direct memory forensics | `diagnostic_success`；最佳 h3 降低 15.119%，h2 Gate 不通过且未运行，等待审查 |
 
 ## 当前任务
 
@@ -56,7 +56,7 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | active；h5 同时 RSS/cgroup/matrix/factor 基线已冻结，等待 h3 授权 |
+| Task029 | `task029_stage4_direct_memory_forensics/` | outcomes 完成并已推送；等待 ChatGPT `review_report_v1.md` |
 
 ## Task28 审计入口
 
@@ -83,6 +83,8 @@
 | [`task029_stage4_direct_memory_forensics/task.md`](task029_stage4_direct_memory_forensics/task.md) | 直接法阶段内存剖析、矩阵/factor inventory、对象生命周期与预分配优化；h5/h3 必跑，h2 仅在显著降内存且预测低于安全上限后解锁 |
 | [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | 强制补充：COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 必须保留 `auto_propagating` 全传播衍射级，不比较跨机器时间 |
 | [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL 117.8 万 DoF、MUMPS 与 GMG 内存报告，供 Task029/后续多层迭代研究参考 |
-| [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5 baseline 数值 Gate、KSPSetUp 主峰、factor/augmented 结构比例与当前停止点 |
+| [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5/h3 baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run 总结 |
+| [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 建议保留的遥测/低风险代码与不得提升的 direct profiles |
+| [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | G3/G5/G7/G9 阻塞、18.882–27.913 GiB 预测与 not-run 决策 |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Task29 h5 记录来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc`；h3 与后续候选仍须按任务顺序单独执行。
+完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Task29 baseline 来自 clean source SHA `208aaab` / `fba69d8`，正式候选来自 `6babe47`；h5/h3 数值均通过且零 swap，但最佳 h3 只下降 15.119%，因此没有合格低内存 profile，也没有运行 h2。

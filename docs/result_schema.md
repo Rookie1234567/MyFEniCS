@@ -55,8 +55,14 @@ Case050 的 candidate/summary 额外包含：
 | `factor_inventory.matrix_stats` | backend 实际暴露的 factored Mat 结构；不得对 factored Mat 再调用 assemble |
 | `factor_inventory.derived_ratios` | 仅由 factor/augmented nnz 和同一 estimator 代数相除，不解释 MUMPS raw index |
 | `factor_inventory.mumps_raw_infog/rinfog` | raw index telemetry；无官方映射时不赋予语义 |
+| `candidate_disposition` | 数值通过后对性能资格的独立处置；不得只读顶层 `status=pass` |
+| `qualification.memory_reduction_20pct_gate` | 候选是否达到 h2/engineering 的 20% 门槛 |
+| `ooc_telemetry.scratch_peak_bytes` | OOC 目录同刻最大占用，不属于 RAM |
+| `ooc_telemetry.process_tree_*` | 存活 MPI 进程树累计 I/O counter 的最大观测值 |
 
 PETSc 返回的 factor `fill_ratio_*` 或 `memory=0` 必须保留为原始值并标记不可用；不得把统一 nnz estimator 当成 allocator-accounted factor memory。
+
+Task29 h2 决策由 `gate_decision.csv` 的 G1–G10 共同决定。`h2_memory_prediction.md` 同时保存 DoF power-law 与 factor-nnz/fill 两条外推、中央值和敏感性区间；`h2_launch_decision=not_run` 是安全处置，不等于 solver failure。当前精简候选 record 中，h5/h3 MPI2 顶层 `status=pass` 表示 full solve 与数值 Gate 通过，但 h3 的 `memory_reduction_20pct_gate=failed` 阻止 profile 提升。
 
 ## Iterative 数值字段
 

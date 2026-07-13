@@ -17,14 +17,24 @@
 - [优化假设表](optimization_hypotheses.csv)
 - [候选实施清单](optimization_manifest.csv)
 - [direct 对象生命周期](direct_object_lifecycle.md)
+- [候选统一对比](candidate_comparison.csv)
+- [h2 G1-G10 决策](gate_decision.csv)
+- [h2 内存预测](h2_memory_prediction.md)
+- [h2 启动决定](h2_launch_decision.md)
+- [合并建议](merge_recommendation.md)
+- [下一步判断](next_decision.md)
+- [h5 MPI2 精简记录](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_mpi2_candidate.json)
+- [h3 MPI2 精简记录](../../../benchmarks/cases/050_stage4_direct_memory_forensics/records/h3_mpi2_candidate.json)
 
 ## 当前阶段
 
 ```text
-stage = stage_b_baselines_complete_stage_c_ready
+stage = task029_complete_waiting_review
 h5_baseline = pass
 h3_baseline = pass_no_swap
-h2 = locked
+h3_best_candidate = numeric_pass_memory_minus_15.119pct
+classification = diagnostic_success
+h2 = not_run_by_gate
 ```
 
-冻结 h5/h3 记录分别来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135`；两者之间只有文档和轻量证据变更，求解实现相同。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。
+冻结 h5/h3 baseline 分别来自 clean source SHA `208aaab149ca5c2be0aae09a8d893bfa02e3f8cc` 与 `fba69d88ea8590ea01537b7561edff1684f25135`；正式候选来自 clean source SHA `6babe4700328be2b3b93aad7e3e6c212b6dbad10`。最佳 h3 候选未达到 20%，因此不产生合格低内存 profile，也不运行 h2。本目录的新结果不得覆盖 Task28 canonical records；完整 timeline、场和 solver log 继续保留在 ignored artifact 目录。

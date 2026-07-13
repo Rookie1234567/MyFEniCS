@@ -1,5 +1,31 @@
 # Task029 当前总结
 
+## 最终结论（2026-07-13）
+
+```text
+classification = diagnostic_success
+engineering_success = no
+best h3 simultaneous RSS reduction = 15.119% (<20%)
+h2_launch_decision = not_run
+ordinary default changed = no
+master merge = wait for ChatGPT review_report_v1 and explicit user approval
+```
+
+Task29 已完成 h5/h3 基线剖析、H1–H7 假设调查、h5 profile 筛选、最多两个 h3 候选、两类 h2 外推和 G1–G10 决策。主峰确定在 `KSPSetUp` / MUMPS analysis 与 numeric factorization；h3 factor/augmented 估算 storage 比约 12.45，base/augmented 共存与 postprocess 都不是主瓶颈。
+
+| h / 候选 | full solve / 数值 Gate | 同时 worker RSS | 相对 MPI4 baseline | cgroup 交叉证据 | 处置 |
+|---|---|---:|---:|---:|---|
+| h5 MPI4 baseline | pass | 2328.145 MiB | baseline | 1729.035 MiB | 冻结基线 |
+| h3 MPI4 baseline | pass | 8651.098 MiB | baseline | 8353.727 MiB | 冻结基线 |
+| h5 release-base MPI4 | pass | 2217.172 MiB | -4.767% | 1932.539 MiB | 低风险诊断 |
+| h3 release-base MPI4 | pass | 8178.539 MiB | -5.462% | 7593.148 MiB | Stop B：公共生命周期非主瓶颈 |
+| h5 MUMPS MPI2 | pass | 1655.484 MiB | -28.893% | 1370.473 MiB | 进入 h3 |
+| h3 MUMPS MPI2 | pass | 7343.137 MiB | -15.119% | 7070.438 MiB | 最佳但未达 20% |
+
+其他 h5 筛选：OOC 降低 worker RSS 13.744%，但 Stage4 时间为 1.539 倍且 scratch 峰值 559,715,776 bytes；BLR 真残差与 R/T/A 失败；SuperLU_DIST 增加 14.462% RSS；`ICNTL(7)=3` 增加 factor nnz 与峰值。两次 h3 候选都完整执行到 cleanup，数值与 Task28 reference 一致且 swap 为 0。
+
+h2 的 DoF 幂律与 factor-nnz/fill 路径分别预测 22.214 / 22.330 GiB，工程敏感性区间为 18.882–27.913 GiB。G3、G5、G7、G9 不满足，因此没有启动 h2；Task28 h2 历史记录未覆盖。详细证据见 `candidate_comparison.csv`、`gate_decision.csv`、`h2_memory_prediction.md`、`h2_launch_decision.md` 与 `merge_recommendation.md`。
+
 ## 最新实现状态（2026-07-13，Stage C/D 候选冻结前）
 
 H1–H7 假设表和逐对象生命周期清单已建立。低风险 H1 以 `direct_release_base_after_augmentation=false` 保持 ordinary default，只有 Case050 显式传入 `--release-base-after-augmentation` 才在 copy 后释放 `A_base/b_base`。异常 direct LU 路径增加幂等 PETSc cleanup；OOC sampler 增加 scratch peak、process-tree I/O bytes 和 block-I/O delay；显式且可用的 MPI distributed factor package 不再被 fallback MUMPS 覆盖。ruff、compileall、34 项 focused regression 与全量 133 passed / 10 skipped 均通过，待提交后进行 clean-source h5/h3 实跑。

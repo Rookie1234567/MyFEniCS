@@ -4,6 +4,10 @@
 
 ## Task29 更新（2026-07-13）
 
+最终 Case050 证据显示：MPI4 h5/h3 baseline simultaneous worker RSS 为 2328.145 / 8651.098 MiB，default MUMPS MPI2 为 1655.484 / 7343.137 MiB，即分别下降 28.893% / 15.119%。h3 未达到 20%，所以 MPI2 只是诊断运行点，不是合格 `optimized_direct_incore_candidate`。release-base MPI4 在 h3 只下降 5.462%，证明公共生命周期开销不是主峰根因；ordinary default 仍为 MPI4/default 行为。
+
+OOC h5 降低 13.744% worker RSS，但使用 559,715,776 scratch bytes，Stage4 时间为 baseline 的 1.539 倍；成功路径删除全部 8 个文件。BLR `1e-5` 的进程返回码虽为 0，真残差 `4.704e-3` 与 R/T/A 失败；SuperLU_DIST 和 `ICNTL(7)=3` 都增加内存。因此没有 profile 获得 h3 20% 工程资格。
+
 `petsc_extra_options.pc_factor_mat_solver_type` 现在会在 PETSc 实际提供且属于已批准的 MPI distributed LU package 时被尊重，不再被 MPI fallback 无条件改写为 MUMPS；未显式请求时 ordinary MPI default 仍选择 MUMPS。串行-only package 不允许进入 MPI direct 路径。
 
 Task29 的低风险 H1 候选由 `SimulationConfig3D.direct_release_base_after_augmentation` 控制，默认 `false`。显式开启后，DtN 路径在 `A_base/b_base -> A_aug/b_aug` 完整复制并写出 checkpoint 后立即销毁 base Mat/Vec；KSP、真残差、场重建和 official R/T/A 仍只使用 augmented system。异常路径的 `DirectSolveFailure.cleanup()` 在诊断写盘后幂等销毁 KSP/x/b/A。
@@ -116,7 +120,7 @@ python src/main.py --preset 3d_target_grating_direct_h5
 
 h5 冻结结果的 augmented/factor nnz 为 4,896,156 / 33,862,428，代数比为 6.916。PETSc 对 MUMPS factor 返回的 `fill_ratio_given/fill_ratio_needed/memory` 原始值均为 0，因此不把它们当有效 factor memory；统一 nnz estimator 的 775.391 MB 只用于同口径结构比较。INFOG/RINFOG 保留 raw index，代码不猜测其语义。
 
-外部 sampler 的 worker 同时 RSS 与 cgroup charged memory 分开记录。h5 的 worker/cgroup 主峰均位于 KSPSetUp，MPI process tree 的稍后峰值则位于 field output；这两个结论不能合并成一个“总峰值”字段。
+外部 sampler 的 worker 同时 RSS 与 cgroup charged memory 分开记录。h5/h3 的 worker/cgroup 主峰均位于 KSPSetUp；h3 factor estimated storage 是 augmented 的约 12.45 倍，KSPSetUp 峰值增量约 6.47 GiB。field/RTA/output 只形成较低尾部平台，不能与 factorization 主峰合并为一个“总峰值”字段。
 
 ## 12. 限制
 

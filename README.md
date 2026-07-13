@@ -54,7 +54,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task29 已完成 telemetry-only Commit A，并冻结通过完整数值 Gate、零 swap 的 MPI4 h5 baseline。h3 尚未运行，h2 继续锁定；环境仍按 `qualified_local_image` 限定，ordinary default 未改变。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task29 已完成 h5/h3 direct-memory 剖析和候选筛选，以 `diagnostic_success` 收口。最佳 MUMPS MPI2 候选在 h5/h3 分别降低 simultaneous RSS 28.893% / 15.119%，h3 未达到 20% 工程 Gate；h2 预测区间 18.882–27.913 GiB，故未运行。ordinary default 未改变，Task29 分支等待 `review_report_v1.md`。
 
 ## 文档导航
 
@@ -68,7 +68,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task028 闭环与正在执行的 Task029 入口 |
+| [任务索引](docs/README.md) | Task000-Task028 闭环与等待审查的 Task029 入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

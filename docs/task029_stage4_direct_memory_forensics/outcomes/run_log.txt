@@ -1,5 +1,38 @@
 # Task029 Run Log
 
+## 最终 checkpoint：候选、h2 Gate 与收口
+
+```text
+formal candidate source_sha = 6babe4700328be2b3b93aad7e3e6c212b6dbad10
+h5 MPI2 artifact = benchmarks/artifacts/cases/050/h5_default_mpi2_20260713T083431Z
+h5 numeric gate = pass
+h5 simultaneous RSS = 1655.484375 MB (baseline 2328.14453125 MB; -28.8925%)
+h5 cgroup current = 1370.47265625 MB (-20.7377%)
+h5 stage4 runtime ratio = 1.18959
+
+h3 MPI2 artifact = benchmarks/artifacts/cases/050/h3_default_mpi2_20260713T083918Z
+h3 numeric gate = pass
+h3 simultaneous RSS = 7343.13671875 MB (baseline 8651.09765625 MB; -15.1190%)
+h3 cgroup current = 7070.4375 MB (-15.3619%)
+h3 stage4 runtime ratio = 1.07798
+h3 true residual = 1.3342583837413397e-11
+h3 max Task28 R/T/A abs delta = 5.473399511402022e-14
+h3 swap in/out = 0 / 0 pages
+
+release-base h3 reduction = 5.4624% (Stop B)
+best h3 reduction = 15.1190% (Stop C; diagnostic_success)
+h2 DoF prediction = 22.2136 GiB
+h2 factor-nnz prediction = 22.3300 GiB
+h2 sensitivity range = 18.8816–27.9126 GiB
+h2 failed gates = G3, G5, G7, G9
+h2 launch = not_run
+Task28 h2 record overwritten = no
+```
+
+h5 profile 筛选：有效 SuperLU_DIST 为 `+14.462%` RSS；OOC 为 `-13.744%` RSS、`1.539x` 时间、559,715,776 bytes scratch，并成功删除 8 个临时文件；BLR 数值 Gate 失败；`ICNTL(7)=3` 为 `+4.093%` RSS。最多两个 h3 候选分别为 release-base MPI4 与 default MUMPS MPI2，没有运行第三个组合。
+
+最终新增预测/G1–G10/record 合同聚焦测试为 18 passed；Ruff 与 compileall 通过。完整最终工作树的 full unit discovery 为 136 passed / 10 skipped，documentation + Task29 contract 为 29 passed，benchmark checker 为 149/149。Commit G 后再执行 clean-head 轻量验证。
+
 ## 最新 checkpoint：Stage C/D 低风险实现
 
 ```text

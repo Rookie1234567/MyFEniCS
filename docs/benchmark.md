@@ -39,4 +39,4 @@ canonical records 位于 `benchmarks/records/` 与 recorded case 的 `records/`�
 
 ## Task029 Case050
 
-[`Case050`](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md) 从 Task28 merge 后的 `master` 建立，专门区分 MPI worker 同时 RSS、各 rank 历史峰值和、cgroup memory 与 swap，并保存 base/augmented/factor inventory。MPI4 h5 已完整通过：同时 worker RSS 2328.145 MB、cgroup current peak 1729.035 MB、factor/augmented nnz 比 6.916、零 swap，且 R/T/A 与 Task28 完全一致。h3 尚未运行；h2 默认锁定。Task28 canonical records 保持只读，Case050 的完整 timeline 和 solver output 写入 ignored artifacts。
+[`Case050`](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md) 从 Task28 merge 后的 `master` 建立，区分 MPI worker simultaneous RSS、各 rank 历史峰值和、cgroup memory 与 swap，并保存 base/augmented/factor inventory。MPI4 h5/h3 baseline 为 2328.145 / 8651.098 MB；最佳 default MUMPS MPI2 为 1655.484 / 7343.137 MB，即下降 28.893% / 15.119%。候选 full residual/R/T/A 全通过且零 swap，但 h3 低于 20%，所以 Case050 以 `diagnostic_success` 收口。h2 预测区间 18.882–27.913 GiB，Gate 不通过且未运行。Task28 canonical records 保持只读，完整 timeline 和 solver output 只写 ignored artifacts。

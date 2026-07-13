@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import os
 from pathlib import Path
@@ -217,6 +218,58 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
                 self.assertFalse(record["metadata"]["tracked_source_dirty"])
                 self.assertTrue(record["qualification"]["full_solve"])
                 self.assertEqual(record["qualification"]["numeric_gate"], "pass")
+        h5 = json.loads((root / records[0]).read_text(encoding="utf-8"))
+        h3 = json.loads((root / records[1]).read_text(encoding="utf-8"))
+        self.assertEqual(
+            h5["qualification"]["memory_reduction_20pct_gate"], "pass"
+        )
+        self.assertEqual(
+            h3["qualification"]["memory_reduction_20pct_gate"], "failed"
+        )
+
+    def test_task29_required_outcomes_contract(self) -> None:
+        root = (
+            Path(__file__).resolve().parents[2]
+            / "docs"
+            / "task029_stage4_direct_memory_forensics"
+            / "outcomes"
+        )
+        required = (
+            "README.md",
+            "summary.md",
+            "parameters.json",
+            "environment.json",
+            "changed_files.md",
+            "run_log.txt",
+            "test_summary.md",
+            "gate_decision.csv",
+            "merge_recommendation.md",
+            "next_decision.md",
+            "baseline_memory_timeline.csv",
+            "baseline_matrix_inventory.csv",
+            "baseline_factorization_summary.csv",
+            "rank_scaling.csv",
+            "optimization_hypotheses.csv",
+            "optimization_manifest.csv",
+            "candidate_comparison.csv",
+            "object_lifecycle.md",
+            "h2_memory_prediction.md",
+            "h2_launch_decision.md",
+            "comsol_reference_comparability.md",
+        )
+        for name in required:
+            with self.subTest(outcome=name):
+                self.assertTrue((root / name).is_file())
+        for name in ("parameters.json", "environment.json"):
+            json.loads((root / name).read_text(encoding="utf-8"))
+        for name in (
+            "gate_decision.csv",
+            "optimization_hypotheses.csv",
+            "optimization_manifest.csv",
+            "candidate_comparison.csv",
+        ):
+            with (root / name).open(encoding="utf-8", newline="") as stream:
+                self.assertGreater(len(list(csv.DictReader(stream))), 0)
 
     def test_numeric_gate_uses_task28_reference(self) -> None:
         reference = {

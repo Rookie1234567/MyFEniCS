@@ -1,5 +1,27 @@
 # Task029 test summary
 
+## 最终候选与安全合同
+
+| 检查 | 当前结果 |
+|---|---|
+| h5/h3 MPI2 full solve | pass / pass |
+| h5/h3 MPI2 Task28 residual/RTA Gate | pass / pass |
+| h5/h3 MPI2 swap | 0 / 0 pages |
+| h3 候选数量上限 | 2 / 2，未超限 |
+| h2 launch gate / blocked path | pass |
+| 两点幂律 memory prediction | pass |
+| selected candidate record contract | pass |
+| Task29 聚焦测试 | 18 passed |
+| Ruff changed Python | pass |
+| compileall `benchmarks src` | pass |
+| Docker full unit discovery | 136 passed, 10 skipped |
+| documentation + Task29 contract | 29 passed |
+| benchmark checker `--no-write` | 149 / 149 passed |
+| JSON/CSV parse | pass |
+| `git diff --check` | pass |
+
+全量测试在 Commit G 前的完整最终工作树执行；Commit G 后再运行 clean-head compile、Task29/documentation contract、checker 与 diff/status 验证。正式 h5/h3 candidate full solves 来自更早的 clean source `6babe4700328be2b3b93aad7e3e6c212b6dbad10`，之后没有改变 worker 数值路径。
+
 ## Stage C/D low-risk implementation
 
 | 检查 | 结果 |

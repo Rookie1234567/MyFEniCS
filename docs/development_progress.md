@@ -37,14 +37,14 @@ docs/taskXXX_*/review_report*.md
 2026-07-13
 current branch = codex/20260713-task29-stage4-direct-memory-forensics
 Task028 status = V4 closed and merged to master at 2f9e56d
-Task029 status = Stage A telemetry validated; h5 baseline pass/frozen; h3 not run; h2 locked
+Task029 status = diagnostic_success; h5/h3 complete; best h3 reduction 15.119%; h2 not run by gate; waiting review
 ```
 
 ## 1.1 2026-07-13 最新更新
 
-Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，已完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050 合同和 h2 启动锁。遥测明确区分同时总 RSS、各 rank 历史峰值和、MPI 进程树与 cgroup；Task28 canonical records 保持只读。
+Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050、h5/h3 baseline、H1–H7、profile 筛选和 h2 安全决策。遥测明确区分 simultaneous worker RSS、各 rank 历史峰值和、MPI 进程树与 cgroup；Task28 canonical records 保持只读。
 
-Task029 MPI4 h5 baseline 已在 clean source SHA `208aaab` 完整通过：真实残差 `5.22e-12`，R/T/A 与 Task28 完全一致，swap 为 0。最大同时 worker RSS 2328.145 MB 与最大 cgroup current 1729.035 MB 都位于 KSPSetUp；factor/augmented nnz 比为 6.916。h3 尚未运行，也没有开始生命周期、预分配、OOC、BLR 或 ordering 优化。必须完成无 swap h3 与 Stage B 归因后才进入候选优化。
+MPI4 h5/h3 baseline simultaneous RSS 为 2328.145 / 8651.098 MB，主峰都位于 KSPSetUp。release-base 公共生命周期候选在 h3 只下降 5.462%；最佳 default MUMPS MPI2 在 h5/h3 分别下降 28.893% / 15.119%，全部 residual/R/T/A Gate 通过且无 swap，但 h3 低于 20% 工程门槛。因此 Task029 分类为 `diagnostic_success`，不产生合格低内存 direct profile。h2 两类外推中央值为 22.214 / 22.330 GiB、区间 18.882–27.913 GiB，G3/G5/G7/G9 失败，未启动 h2。
 
 ---
 
@@ -99,7 +99,8 @@ z boundaries = periodic modal DtN ports
 | C. AMS/HX 与低维模态路线 | 011–019 | 低内存 Krylov、real split、AMS/HX、sampled Schur | p1 有信号，p2 主线失败并关闭 |
 | D. wave-aware 与 FE-response/Schur | 020–025 | residual-aware modes、FE response、PETSc/MPI Schur、cached-Q | 数学结构成立，h=2 response 质量不足 |
 | E. auxiliary-free 与 workstation solver | 026–027 | exact condensation、matrix-free、physical slab two-level PC | h=5/3/2 MPI4 达 production residual |
-| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | V3 整改完成，等待最终审查 |
+| F. 阶段收口与可复现版本 | 028 | clean master 整合、文档、benchmark、阶段版本 | V4 完成并合入 master |
+| G. direct memory forensics | 029 | simultaneous RSS、factor inventory、生命周期/profile 筛选、h2 Gate | diagnostic_success，等待审查 |
 
 ---
 
@@ -1538,9 +1539,10 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.2 Task029 当前问题
 
 ```text
-- h5 新统计口径 baseline 已冻结，h3 尚未运行；
-- h5 已确认 factorization 为主峰，完整 h3 归因与跨网格增长模型尚缺；
-- h2 继续受 20% 双网格降幅、无 swap、13.5 GB 预测上限与 watchdog Gate 锁定。
+- h5/h3 baseline、归因和最多两个 h3 候选均已完成；
+- 最佳 h3 只下降 15.119%，未达到 engineering_success；
+- h2 预测区间 18.882–27.913 GiB，G3/G5/G7/G9 失败并明确 not-run；
+- Task029 outcomes 已完成，当前只等待 ChatGPT review 和用户后续合并许可。
 ```
 
 ## 36.3 数值和物理问题
@@ -1562,15 +1564,15 @@ new angle/wavelength/material/geometry = not qualified
 
 # 37. 当前推荐开发顺序
 
-Task28 合并与 Task29 分支启动已完成。Task029 当前强制顺序：
+Task28 合并与 Task29 执行已完成。当前强制顺序：
 
 ```text
-1. Commit A telemetry-only（已完成）；
-2. MPI4 h5 baseline 与 Task28 R/T/A 对照（已完成）；
-3. 经用户确认后再跑无 swap 的 MPI4 h3 baseline；
-4. 完成 Stage B 内存归因和 optimization hypothesis table；
-5. 依次验证公共生命周期/预分配与 factorization profile；
-6. 仅在全部 h2 Gate 通过时考虑 h2，否则明确 not-run。
+1. 等待 ChatGPT 创建 Task029 `review_report_v1.md`；
+2. 在同一分支只处理可执行审查意见；
+3. 审查通过且用户明确许可后再合并建议保留的基础设施；
+4. 不提升 MPI2/OOC/BLR/SuperLU/ordering 为低内存 profile；
+5. 不在当前工作站运行 h2 direct；
+6. 后续优先物理收敛资格化或真正 multilevel H(curl) 研究。
 ```
 
 Task028 完成后，如重新开启研究，推荐顺序：
@@ -1614,4 +1616,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 direct-memory telemetry 的 Commit A，并冻结通过完整数值 Gate、零 swap 的 h5 baseline；h3 尚未运行、h2 仍锁定，环境继续按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 h5/h3 direct-memory forensics 并确认 MUMPS KSPSetUp/factorization 是主瓶颈。最佳 h3 direct 候选只下降 15.119%，因此按 `diagnostic_success` 收口，h2 因 18.882–27.913 GiB 预测与硬 Gate 未通过而未运行。

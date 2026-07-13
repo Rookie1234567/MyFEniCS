@@ -37,10 +37,10 @@ Task28 路径在 postprocess 期间仍由 `dtn_result` 或 `problem` 引用 KSP/
 
 h3 KSPSetUp 外部主峰为 8651.10 MB，而 postprocess/field-output 区间最高约 8345.76 MB。即使 factor 与输出生命周期完全分离，也只能降低后段平台，不能降低本次运行已经出现的 KSPSetUp 全局峰值；因此 H7 可作为清理质量候选，但不能预期获得 20% 峰值收益。
 
-## Stage C 判据
+## Stage C 判据与最终验证
 
-- H1：base/augmented 双份存在已确认，但其上界约为 h3 主峰的 9%，预计无法单独达到 20%。
+- H1：base/augmented 双份存在已确认；正式 h5/h3 release-base full run 分别下降 4.767% / 5.462%，数值 Gate 通过但按 Stop B 证明它不是主瓶颈。
 - H2：现有精确预分配已有 `mallocs=0`、`nz_unneeded=0`，没有支持继续调优的实测信号。
 - H3：ordinary default 不存在额外 unconstrained diagnostic copy；应检查临时 Python/PETSc 引用和异常清理，不应虚构默认矩阵副本。
-- H5/H6：因子化主导，rank-count、ordering、OOC、BLR 是后续最有价值的筛选方向。
+- H5/H6：因子化主导；MPI2 h3 最终下降 15.119%，OOC 只在 h5 有 13.744% 收益，SuperLU_DIST/ordering/BLR 均被淘汰，没有 profile 达到工程 Gate。
 - H7：factor 在 postprocess 保留属实，但只影响尾部平台，不是全局主峰。

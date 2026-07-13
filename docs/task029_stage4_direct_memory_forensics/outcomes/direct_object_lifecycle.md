@@ -22,6 +22,8 @@
 
 `A_aug` 和 `b_aug` 已拥有独立 PETSc storage；复制完成后，DtN coupling 只写入 augmented 对象，KSP、true residual、FE reconstruction 和 official R/T/A 也只读取 augmented system。`base_matrix_stats` 是普通 Python 字典，不依赖活的 `A_base`。因此 `direct_release_base_after_augmentation=true` 时销毁 `A_base/b_base` 不改变矩阵、右端项或数学模型。
 
+正式 h5/h3 MPI4 full run 已验证上述所有权：true residual 分别为 `1.303e-11` / `9.270e-12`，最大 Task28 R/T/A 差为 `2.22e-15` / `2.39e-14`，swap 为 0。simultaneous worker RSS 分别下降 4.767% / 5.462%；收益低于 10%，因此 H1 只保留为 default-off 生命周期控制，不构成 low-memory profile。
+
 ## H2/H3 否定证据
 
 h5/h3 baseline 的 base/augmented `nz_allocated == nz_used`、`nz_unneeded == 0`、`mallocs == 0`；当前可见 PETSc 信息没有支持预分配重写的正信号。ordinary default 的 `unconstrained_matrix_stats` 为 `null`、`matrix_diagnostics_assemble_only=false`，不存在额外默认诊断矩阵。需要保留的 residual、field reconstruction 和 surface vectors 均有明确短生命周期。

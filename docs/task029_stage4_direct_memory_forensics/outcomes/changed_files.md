@@ -1,5 +1,16 @@
 # Task029 changed files
 
+## Commit D–G：profile 筛选、候选资格与最终决策
+
+- `benchmarks/run_direct_memory_forensics.py`：两点幂律预测 helper；h2 Gate 补齐 G1–G10 字段。
+- `src/test/test_28_direct_memory_telemetry.py`：prediction、blocked launch、candidate record 合同。
+- Case050 `records/h5_mpi2_candidate.json` 与 `records/h3_mpi2_candidate.json`。
+- `candidate_comparison.csv`、最终 `optimization_hypotheses.csv` / `optimization_manifest.csv`。
+- `gate_decision.csv`、`h2_memory_prediction.md`、`h2_launch_decision.md`。
+- `merge_recommendation.md`、`next_decision.md` 及 outcomes/Case050/index/walkthrough 同步。
+
+正式候选 full solve 来自 clean source `6babe4700328be2b3b93aad7e3e6c212b6dbad10`；之后只增加纯预测 helper、测试、轻量 records 与文档，不改变 worker 的物理/数值求解路径。h2 未运行，Task28 canonical records 未覆盖，用户未跟踪的 `papers/` 与 Task023 `raw_runs/` 仍未修改或暂存。
+
 ## Commit C 候选：低风险生命周期与 profile 证据
 
 - `SimulationConfig3D.direct_release_base_after_augmentation`（默认 false）

@@ -1,5 +1,11 @@
 # Case050：Stage4 direct memory forensics
 
+## 最终状态（2026-07-13）
+
+Case050 已以 `diagnostic_success` 收口。MPI4 h5/h3 baseline 的 simultaneous worker RSS 为 2328.145 / 8651.098 MiB；最佳 in-core 候选 default MUMPS MPI2 为 1655.484 / 7343.137 MiB，即分别下降 28.893% / 15.119%。两次候选均为 full solve、Task28 residual/R/T/A Gate 通过且零 swap，但 h3 未达到 20%，因此不形成合格低内存 profile。
+
+h2 两种中央预测为 22.214 / 22.330 GiB，敏感性区间 18.882–27.913 GiB；G3、G5、G7、G9 失败，故 `h2_launch_decision=not_run`。精简证据见 [`h5_mpi2_candidate.json`](records/h5_mpi2_candidate.json)、[`h3_mpi2_candidate.json`](records/h3_mpi2_candidate.json) 和 [Task29 outcomes](../../../docs/task029_stage4_direct_memory_forensics/outcomes/README.md)。ordinary default 未改变，Task28 canonical records 未覆盖。
+
 ## 合同
 
 | 项目 | 值 |
