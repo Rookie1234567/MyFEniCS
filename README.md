@@ -54,7 +54,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 Response V1 已关闭输出边界、脚本、58项自动Gate、文档和sm2测试问题；环境按 `qualified_local_image` 限定，当前等待Review V2，尚不合并master。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 Review/Response V4 已关闭 tracked-source-clean、真实 image digest 与最终提交验证，checker 为 148/148；环境继续按 `qualified_local_image` 限定，ordinary default 未改变。Task29 只能从 Task28 合并后的 `master` 新分支启动。
 
 ## 文档导航
 
@@ -68,7 +68,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task028 闭环与 Task028 V1 审查入口 |
+| [任务索引](docs/README.md) | Task000-Task028 闭环、Task028 V4 合并状态与 Task029 入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

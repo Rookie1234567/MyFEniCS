@@ -1,5 +1,17 @@
 # 本轮改动文件
 
+## Response V4
+
+| 范围 | 文件与作用 |
+|---|---|
+| tracked-source Gate | `benchmarks/check_benchmarks.py`：对 5 份 lightweight canonical record 强制 `tracked_source_dirty=false` |
+| runner provenance | Case002/003 `run.sh`：删除占位 digest，强制显式 `IMAGE_DIGEST` |
+| contract regression | `src/test/test_25_benchmark_contract.py`：保护两个 runner 的 required-variable guard |
+| 用户文档 | Case002/003 README 与两篇 Quick Start：命令同步加入真实 digest 参数 |
+| 审查闭环 | `response_v4.md` 与 outcomes/index/status 更新 |
+
+未修改 Task28 `task.md` 或任何 `review_report*.md`，未改 canonical JSON，未跟踪 `papers/` 或 Task23 raw runs。
+
 ## Response V3
 
 | 范围 | 主要文件与作用 |

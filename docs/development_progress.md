@@ -1491,7 +1491,7 @@ new angle/wavelength/material/geometry = not qualified
 | h2 full-aux cached-Schur research solve | 完成但不生产 | 025 |
 | exact auxiliary-free condensation | 完成 | 026 |
 | MPI4 h2 <1e-6 under 14 GB | 完成 | 027 |
-| clean master candidate integration | V3 收口完成，等待最终审查 | 028 |
+| clean master candidate integration | V4 三项加固完成，已获合并许可 | 028 |
 
 ---
 
@@ -1523,7 +1523,7 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.1 Task028 收口问题
 
 ```text
-- 等待 Response V3 的最终审查与用户合并决定；
+- Response V4 已关闭 tracked-source-clean、真实 image digest 和最终提交验证，等待执行合并动作；
 - complex MPC base image尚无公开pull source，环境保持qualified；
 - `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
@@ -1547,15 +1547,14 @@ new angle/wavelength/material/geometry = not qualified
 
 # 37. 当前推荐开发顺序
 
-在 Task028 最终审查通过前：
+Task028 合并与 Task029 启动顺序：
 
 ```text
-1. 不启动新求解算法；
-2. 保持 benchmark 与文档 Gate 全绿；
-3. 不重写 task/review 历史；
-4. 保持 clean environment 限定；
-5. 取得最终审查结论；
-6. 经用户同意后再 merge master。
+1. 推送 Response V4；
+2. 以普通 merge commit 合并 Task28，保留完整审查历史；
+3. 在 master 运行轻量 release check；
+4. 从合并后的 master 新建 Task29 分支；
+5. 先 h5/h3 做直接法内存剖析，h2 继续受条件 Gate 锁定。
 ```
 
 Task028 完成后，如重新开启研究，推荐顺序：
@@ -1599,4 +1598,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V3 已补齐 2D canonical、17 个安全 preset、源码级 Walkthrough、case-contained Benchmark 与 143 项 Gate，当前等待最终审查和用户合并许可，环境仍按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V4 已补齐 tracked-source-clean、真实 image digest 与最终实现提交验证，148 项 Gate 全部通过并已获用户合并许可，环境仍按 `qualified_local_image` 诚实限定。

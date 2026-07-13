@@ -1,3 +1,7 @@
+# Response V4 最新结论
+
+Task028 Review V4 的三项轻量加固已在 `da05077fc010f658f2fe01ef65a00f0723cee88c` 关闭：5 份 Case002/003 lightweight canonical record 现在强制 `tracked_source_dirty=false`；两个 candidate runner 必须显式提供真实 `IMAGE_DIGEST`；最终实现提交的 checker 为 `148/148`，documentation contract 为 `11/11`，容器 preset/parser contract 为 `8/8`。未覆盖 canonical record，未重跑 h2，未启动新求解器或 Task29 实现。用户已明确许可完成这些修正后合并 Task28。
+
 # Outcome Summary
 
 ## 任务

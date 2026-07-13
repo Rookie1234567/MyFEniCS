@@ -188,3 +188,29 @@ ruff check / ruff format --check / git diff --check
 ```
 
 本轮没有运行 h2 direct、h2 iterative、h1.5 或新的 3D 参数扫描。完整 2D fields/logs 位于 gitignored `benchmarks/artifacts/cases/002` 和 `003`；Git 只保留轻量 JSON。
+
+## Response V4 最终实现提交验证
+
+```text
+validated head = da05077fc010f658f2fe01ef65a00f0723cee88c
+git status --short --untracked-files=no
+  PASS: tracked source clean
+
+python benchmarks/check_benchmarks.py --no-write
+  PASS: 148/148
+
+python -m unittest src.test.test_25_benchmark_contract
+  PASS: 5/5
+
+python -m unittest src.test.test_26_documentation_contract
+  PASS: 11/11
+
+docker run ... myfenics-stage4:task28 \
+  python -m unittest src.test.test_27_main_preset_contract
+  PASS: 8/8
+
+ruff check / ruff format --check / git diff --check
+  PASS
+```
+
+没有覆盖 Case002/003 canonical records，没有重跑 h2，没有启动 Task29 实现。`papers/` 与 Task23 `raw_runs/` 仍为用户未跟踪内容。

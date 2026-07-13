@@ -5,6 +5,7 @@
 - `../response_v1.md`：第一轮 benchmark 与环境修正；
 - `../response_v2.md`：文档体系、PyCharm、feature benchmarks、RTA 和 metadata 修正；
 - `../response_v3.md`：2D canonical、case-contained contract、文档深度和技术准确性最终修正。
+- `../response_v4.md`：tracked-source-clean Gate、真实 image digest 与最终实现提交验证。
 
 ## 文件职责
 
@@ -18,7 +19,7 @@
 | `documentation_audit.md` | 五层文档、13 cases 和交叉链接审计 |
 | `benchmark_gate.csv` | 面向人的细粒度 Gate 表 |
 | `gate_decision.csv` | 最终分组决策 |
-| `test_summary.md` | 115 项测试、MPI4、143/143 Gate 与 2D canonical |
+| `test_summary.md` | 115 项主回归、MPI4、148/148 Gate 与 V4 轻量验证 |
 | `merge_recommendation.md` | 合并范围和风险 |
 | `next_decision.md` | 最终审查与用户决策顺序 |
 
