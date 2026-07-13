@@ -1,0 +1,8 @@
+{
+  "case_id": "013_3d_stage2c_fresnel",
+  "status": "experimental_not_accuracy_qualified",
+  "preset": "3d_stage2c_fresnel_smoke",
+  "feature": "layered scattered-field Fresnel interface path",
+  "degree": 1,
+  "mesh_target_size_nm": 300.0
+}

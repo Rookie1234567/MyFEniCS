@@ -1,5 +1,7 @@
 # PyCharm Professional 使用 MPC Docker Compose 解释器
 
+> **文档状态：环境历史长文。** 镜像身份以 [`../../benchmarks/environment.json`](../../benchmarks/environment.json) 和 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md) 为准；本文保留 IDE 操作细节。
+
 本文说明如何在 PyCharm Professional 中切换到当前 Maxwell/Floquet 算例需要的新 Docker 环境。
 
 正确流程是：

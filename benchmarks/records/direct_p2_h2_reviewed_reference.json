@@ -1,0 +1,31 @@
+{
+  "benchmark_id": "l3_direct_h2",
+  "metadata": {
+    "commit_sha": "task008_reviewed_source",
+    "branch": "historical_task008",
+    "git_dirty": false,
+    "command": "reviewed Task008 MPI8 direct command; not rerun in Task28",
+    "timestamp_utc": "2026-07-03T00:00:00Z",
+    "container_image": "historical Task008 environment",
+    "container_digest": "unknown_historical_reference",
+    "host_environment_id": "task008_reviewed_reference",
+    "provenance": "reviewed_reference_not_rerun"
+  },
+  "case": "task008_target_p2_h2_direct_reviewed_reference",
+  "profile": "ordinary_direct_lu_mumps",
+  "status": "reviewed_reference_not_rerun_in_task028",
+  "source_task": "Task008",
+  "reason_not_rerun": "reviewed MPI8 total RSS upper bound 20.53296 GB exceeds the current 14 GB WSL memory budget; Task28 clean rerun requirement specifically targets h2 iterative",
+  "h_nm": 2.0,
+  "mpi_size": 8,
+  "matrix_rows": 615188,
+  "matrix_nnz_used": 65448472,
+  "linear_system_relative_residual": null,
+  "total_peak_rss_upper_gb": 20.532958984375,
+  "elapsed_seconds": 1665.7796797530027,
+  "R_total": 0.0013429328462348958,
+  "T_total": 0.5992132294442478,
+  "A_volume_total": 0.3994438377095067,
+  "R_plus_T_plus_A_volume": 0.9999999999999893,
+  "energy_closure_error": -1.0658141036401503e-14
+}

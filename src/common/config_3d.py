@@ -69,9 +69,15 @@ class SimulationConfig3D:
     validation_role: str = NUMERICAL_SANITY_ONLY
     interface_z: float = 0.0
     scattering_background: str = "layered"
-    stage4_boundary_model: str = "dtn_port"  # "dtn_port", diagnostic "pml", or diagnostic "robin0"
-    stage4_dtn_order_policy: str = "auto_propagating"  # "auto_propagating", "zero_order", or "manual"
-    stage4_dtn_assembly: str = "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
+    stage4_boundary_model: str = (
+        "dtn_port"  # "dtn_port", diagnostic "pml", or diagnostic "robin0"
+    )
+    stage4_dtn_order_policy: str = (
+        "auto_propagating"  # "auto_propagating", "zero_order", or "manual"
+    )
+    stage4_dtn_assembly: str = (
+        "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
+    )
     stage4_pml_outer_bc: str = "natural"  # "natural" or "zero_tangential"
     use_floquet_xy: bool = False
     use_pml: bool = False
@@ -84,7 +90,11 @@ class SimulationConfig3D:
     incident_theta_deg: float = 0.0
     incident_phi_deg: float = 0.0
     polarization_kind: str = "custom"  # "s", "p", or "custom"
-    custom_polarization: tuple[complex, complex, complex] | None = (1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+    custom_polarization: tuple[complex, complex, complex] | None = (
+        1.0 + 0.0j,
+        0.0 + 0.0j,
+        0.0 + 0.0j,
+    )
     # incident_e0_v_per_m only controls physical-unit visualization.
     # The finite-element solve still uses incident_amplitude as the normalized field amplitude.
     incident_amplitude: complex = 1.0 + 0.0j
@@ -97,7 +107,9 @@ class SimulationConfig3D:
     mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
-    floquet_constraint_mode: str = "auto"  # auto / topological_edges_p1 / topological_trace_p2
+    floquet_constraint_mode: str = (
+        "auto"  # auto / topological_edges_p1 / topological_trace_p2
+    )
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None
@@ -109,9 +121,9 @@ class SimulationConfig3D:
     diffraction_probe_fraction: float = 0.75
     diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
-    # Direct LU setting.  Keep the public choice narrow: default direct LU, or
-    # MUMPS out-of-core for memory-pressure diagnostics.
-    petsc_direct_solver_profile: str = "default"  # "default" or "mumps_ooc"
+    # Direct-factorization profiles. BLR is still a direct MUMPS factorization,
+    # not an iterative solver or a replacement for the qualified MPI4 runtime.
+    petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mumps_blr
     petsc_ksp_view: bool = False
     petsc_log_view: bool = False
     petsc_extra_options: dict[str, object] = field(default_factory=dict)
@@ -166,11 +178,19 @@ class SimulationConfig3D:
 
     @property
     def domain_z_min(self) -> float:
-        return self.physical_z_min - self.pml_bottom_thickness if self.use_pml else self.physical_z_min
+        return (
+            self.physical_z_min - self.pml_bottom_thickness
+            if self.use_pml
+            else self.physical_z_min
+        )
 
     @property
     def domain_z_max(self) -> float:
-        return self.physical_z_max + self.pml_top_thickness if self.use_pml else self.physical_z_max
+        return (
+            self.physical_z_max + self.pml_top_thickness
+            if self.use_pml
+            else self.physical_z_max
+        )
 
     @property
     def box_lengths(self) -> tuple[float, float, float]:
@@ -182,7 +202,10 @@ class SimulationConfig3D:
 
     @property
     def mesh_cells(self) -> tuple[int, int, int]:
-        return tuple(max(1, int(ceil(length / self.mesh_target_size))) for length in self.box_lengths)
+        return tuple(
+            max(1, int(ceil(length / self.mesh_target_size)))
+            for length in self.box_lengths
+        )
 
     @property
     def mesh_cell_type_resolved(self) -> str:
@@ -190,7 +213,9 @@ class SimulationConfig3D:
         if mode == "auto":
             return "hexahedron" if self.use_floquet_xy else "tetrahedron"
         if mode not in {"tetrahedron", "hexahedron"}:
-            raise ValueError("mesh_cell_type must be 'auto', 'tetrahedron', or 'hexahedron'.")
+            raise ValueError(
+                "mesh_cell_type must be 'auto', 'tetrahedron', or 'hexahedron'."
+            )
         return mode
 
     @property
@@ -215,7 +240,9 @@ class SimulationConfig3D:
         if self.mesh_refinement_radius is None:
             return 2.0 * self.mesh_refined_size_resolved
         if self.mesh_refinement_radius < 0.0:
-            raise ValueError("mesh_refinement_radius must be non-negative when it is set.")
+            raise ValueError(
+                "mesh_refinement_radius must be non-negative when it is set."
+            )
         return float(self.mesh_refinement_radius)
 
     @property
@@ -242,9 +269,9 @@ class SimulationConfig3D:
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
         profile = self.petsc_direct_solver_profile.lower()
-        if profile not in {"default", "mumps_ooc"}:
+        if profile not in {"default", "mumps_ooc", "mumps_blr"}:
             raise ValueError(
-                "petsc_direct_solver_profile must be 'default' or 'mumps_ooc'. "
+                "petsc_direct_solver_profile must be 'default', 'mumps_ooc', or 'mumps_blr'. "
                 "Old diagnostic profiles were removed from the public code path; "
                 "see notes/test/3d_direct_solver_profile_h2p5_report.md."
             )
@@ -282,7 +309,9 @@ class SimulationConfig3D:
 
     @property
     def p_polarization_vector(self) -> np.ndarray:
-        return np.cross(self.direction_vector.astype(np.complex128), self.s_polarization_vector)
+        return np.cross(
+            self.direction_vector.astype(np.complex128), self.s_polarization_vector
+        )
 
     @property
     def polarization_vector(self) -> np.ndarray:
@@ -293,7 +322,9 @@ class SimulationConfig3D:
             polarization = self.p_polarization_vector
         elif kind == "custom":
             if self.custom_polarization is None:
-                raise ValueError("custom_polarization must be set when polarization_kind='custom'.")
+                raise ValueError(
+                    "custom_polarization must be set when polarization_kind='custom'."
+                )
             polarization = np.asarray(self.custom_polarization, dtype=np.complex128)
         else:
             raise ValueError("polarization_kind must be 's', 'p', or 'custom'.")
@@ -312,7 +343,9 @@ class SimulationConfig3D:
 
     @property
     def wavevector(self) -> np.ndarray:
-        return self.k0 * complex(self.n_air) * self.direction_vector.astype(np.complex128)
+        return (
+            self.k0 * complex(self.n_air) * self.direction_vector.astype(np.complex128)
+        )
 
     @property
     def kx(self) -> complex:
@@ -416,9 +449,13 @@ class SimulationConfig3D:
         data["mesh_spacing_mode_requested"] = self.mesh_spacing_mode_requested
         data["mesh_refined_size_resolved"] = self.mesh_refined_size_resolved
         data["mesh_refinement_radius_resolved"] = self.mesh_refinement_radius_resolved
-        data["floquet_constraint_mode_requested"] = self.floquet_constraint_mode_requested
+        data["floquet_constraint_mode_requested"] = (
+            self.floquet_constraint_mode_requested
+        )
         data["propagation_direction"] = list(self.direction_vector)
-        data["polarization"] = [[value.real, value.imag] for value in self.polarization_vector]
+        data["polarization"] = [
+            [value.real, value.imag] for value in self.polarization_vector
+        ]
         data["wavevector"] = [[value.real, value.imag] for value in self.wavevector]
         data["floquet_phase_x"] = _complex_or_none(self.floquet_phase_x)
         data["floquet_phase_y"] = _complex_or_none(self.floquet_phase_y)
@@ -454,7 +491,9 @@ def _complex_or_none(value: complex | None) -> list[float] | None:
     return [number.real, number.imag]
 
 
-def _vector_or_none(values: tuple[complex, complex, complex] | None) -> list[list[float]] | None:
+def _vector_or_none(
+    values: tuple[complex, complex, complex] | None,
+) -> list[list[float]] | None:
     if values is None:
         return None
     return [_complex_or_none(value) for value in values]
@@ -486,6 +525,67 @@ def oblique_incidence_airbox_config(**updates) -> SimulationConfig3D:
     }
     values.update(updates)
     return SimulationConfig3D(**values)
+
+
+def target_stage4_config(*, degree: int, h_nm: float) -> SimulationConfig3D:
+    """Return the reviewed 50 x 25 x 140 nm target grating configuration.
+
+    This pure configuration factory is shared by the workstation runtime,
+    direct PyCharm presets, benchmark records, and contract tests.  Keeping it
+    outside solver modules prevents physical-parameter copies from drifting.
+    """
+
+    cfg = oblique_incidence_airbox_config(
+        stage_case="stage4_block_grating",
+        geometry_kind="rectangular_block_grating",
+        scattering_background="layered",
+        stage4_boundary_model="dtn_port",
+        stage4_dtn_order_policy="auto_propagating",
+        stage4_dtn_assembly="auxiliary",
+        stage4_pml_outer_bc="natural",
+        lambda0=EUV_REFERENCE_WAVELENGTH_NM,
+        period_x=50.0,
+        period_y=25.0,
+        air_height=130.0,
+        substrate_thickness=10.0,
+        z_min=-10.0,
+        z_max=130.0,
+        interface_z=0.0,
+        use_floquet_xy=True,
+        use_pml=False,
+        pml_top_thickness=0.0,
+        pml_bottom_thickness=0.0,
+        pml_alpha=5.0,
+        n_substrate=SI_SUBSTRATE_INDEX_EUV_13P5_NM,
+        n_grating=SI_GRATING_INDEX_EUV_13P5_NM,
+        substrate_material_label=SI_SUBSTRATE_MATERIAL_LABEL,
+        grating_material_label=SI_GRATING_MATERIAL_LABEL,
+        validation_role=NUMERICAL_SANITY_ONLY,
+        grating_width_x=17.0,
+        grating_width_y=25.0,
+        grating_height=120.0,
+        incident_theta_deg=80.0,
+        incident_phi_deg=0.0,
+        polarization_kind="s",
+        custom_polarization=None,
+        nedelec_degree=int(degree),
+        visualization_degree=int(degree),
+        mesh_target_size=float(h_nm),
+        mesh_spacing_mode="auto",
+        mesh_refined_size=None,
+        mesh_refinement_radius=None,
+        mesh_cell_type="auto",
+        floquet_constraint_mode="auto",
+        diffraction_zero_order_only=False,
+        diffraction_sample_count_x=32,
+        diffraction_sample_count_y=32,
+        diffraction_probe_fraction=0.75,
+        diffraction_compute_modal_diagnostic=False,
+        matrix_diagnostics_assemble_only=True,
+        unique_output=True,
+    )
+    cfg.case_name = f"target_stage4_block_grating_p{degree}_h{h_nm:g}".replace(".", "p")
+    return cfg
 
 
 def project_root() -> Path:

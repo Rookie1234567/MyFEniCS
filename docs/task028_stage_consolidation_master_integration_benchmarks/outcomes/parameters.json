@@ -1,0 +1,86 @@
+{
+  "task": "Task028",
+  "response": "V3",
+  "base_commit": "0465b5f",
+  "branch": "codex/20260712-task28-stage-consolidation",
+  "date": "2026-07-12",
+  "review_source": "review_report_v3.md",
+  "two_d_evidence_source_commit": "e89fb632bb4318a739afd1ee702be3a17d109d7c",
+  "environment_status": "qualified_local_image",
+  "target_model": {
+    "domain_nm": [50, 25, 140],
+    "grating_nm": [17, 25, 120],
+    "wavelength_nm": 13.5,
+    "theta_from_z_deg": 80,
+    "phi_deg": 0,
+    "polarization": "s",
+    "degree": 2
+  },
+  "workstation_profile": {
+    "mpi_size": 4,
+    "coarse_slabs": 24,
+    "coarse_dimension": 75,
+    "physical_slabs": 16,
+    "overlap_layers": 0.25,
+    "absorption_shift": 0.1,
+    "ilu_levels": 1,
+    "smoother_iterations": 2,
+    "outer_ksp": "fgmres",
+    "restart": 100,
+    "rtol": 1e-6,
+    "max_it": 3000
+  },
+  "documentation": {
+    "quick_start_total_files": 25,
+    "quick_start_core_tutorials": 15,
+    "quick_start_numbered_sections_each": 16,
+    "walkthrough_chapters": 15,
+    "walkthrough_core_deep_chapters": 11,
+    "theory_total_files": 25,
+    "benchmark_cases": 13,
+    "benchmark_contract_fields_per_case": 22,
+    "named_main_presets": 17,
+    "preset_split": {"2d": 6, "3d": 11}
+  },
+  "validation": {
+    "unit_passed": 115,
+    "unit_skipped": 10,
+    "documentation_contract_tests": 11,
+    "mpi_ranks": 4,
+    "mpi_tests_per_rank": 14,
+    "benchmark_gates_passed": 143,
+    "benchmark_gates_total": 143
+  },
+  "case002": {
+    "explicit_rows": 139,
+    "auxiliary_rows": 141,
+    "field_relative_difference": 2.7711962846232144e-15,
+    "rta_max_absolute_difference": 1.2212453270876722e-15
+  },
+  "case003": {
+    "tm": {
+      "fe_dofs": 14452,
+      "auxiliary_dofs": 30,
+      "residual": 3.322514215565969e-14,
+      "R": 3.6625211715089244e-6,
+      "T": 0.882172452104592,
+      "A_volume": 0.11782388537423982,
+      "energy_closure": -3.3306690738754696e-15,
+      "peak_rss_mb": 365.296875
+    },
+    "te": {
+      "dofs": 56,
+      "residual": 1.4856285856990297e-15,
+      "R": 8.745627144339044e-5,
+      "T": 0.9903457797965699,
+      "A_volume": 0.00956676393198616,
+      "energy_closure": 5.828670879282072e-16,
+      "peak_rss_mb": 287.48046875
+    }
+  },
+  "wsl_memory_limit_gb": 14,
+  "ordinary_default_changed": false,
+  "h2_direct_rerun": false,
+  "h2_iterative_rerun_in_response_v3": false,
+  "master_merged": false
+}

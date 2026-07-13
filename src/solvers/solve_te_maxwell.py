@@ -16,11 +16,18 @@ from dolfinx.fem import petsc as fem_petsc
 from ..common.config import SimulationConfig
 from ..common.materials import background_relative_permittivity, relative_permittivity
 from ..common.pml import bottom_scalar_pml_coefficients, top_scalar_pml_coefficients
-from ..constraints.floquet_constraint import dof_trace_mismatch, solve_with_constraints
+from ..constraints.floquet_constraint import (
+    dof_trace_mismatch,
+    solve_with_constraints,
+    solve_with_constraints_with_stats,
+)
 from ..constraints.floquet_scalar_constraint import build_scalar_floquet_constraints
 from ..geometry.mesh_builder import build_mesh
 from ..postprocessing.postprocess import save_scalar_fields_and_plots
-from ..postprocessing.power_metrics import compute_power_metrics, compute_te_dtn_port_power_metrics
+from ..postprocessing.power_metrics import (
+    compute_power_metrics,
+    compute_te_dtn_port_power_metrics,
+)
 from .solve_port_maxwell import (
     CompressedTraceBank,
     _add_compressed_trace_to_rhs,
@@ -37,7 +44,9 @@ def _positive_sqrt(value: complex) -> complex:
     return root
 
 
-def te_incident_field_function(V, cfg: SimulationConfig, amplitude: complex = 1.0 + 0.0j) -> fem.Function:
+def te_incident_field_function(
+    V, cfg: SimulationConfig, amplitude: complex = 1.0 + 0.0j
+) -> fem.Function:
     Ez_inc = fem.Function(V, name="Ez_inc")
 
     def eval_field(x):
@@ -84,11 +93,15 @@ def _subtract_scalar_fields(total, reference):
     return diff
 
 
-def _solve_scalar_mpc_auto(a, L, V, mesh_data, cfg: SimulationConfig, log, *, unknown_name: str):
+def _solve_scalar_mpc_auto(
+    a, L, V, mesh_data, cfg: SimulationConfig, log, *, unknown_name: str
+):
     try:
         import dolfinx_mpc
     except ModuleNotFoundError as exc:
-        raise RuntimeError("Requested dolfinx_mpc, but dolfinx_mpc is not installed in this Python environment.") from exc
+        raise RuntimeError(
+            "Requested dolfinx_mpc, but dolfinx_mpc is not installed in this Python environment."
+        ) from exc
 
     def right_to_left(x):
         y = x.copy()
@@ -137,7 +150,9 @@ def _solve_scalar_mpc_auto(a, L, V, mesh_data, cfg: SimulationConfig, log, *, un
 
 def _solve_scalar_manual(a, L, V, constraints, log):
     if MPI.COMM_WORLD.size != 1:
-        raise RuntimeError("TE manual constraint elimination is serial-only; use mpc_official for MPI.")
+        raise RuntimeError(
+            "TE manual constraint elimination is serial-only; use mpc_official for MPI."
+        )
     log("assembling scalar PETSc matrix/vector")
     A = fem_petsc.assemble_matrix(fem.form(a), bcs=[])
     A.assemble()
@@ -147,7 +162,9 @@ def _solve_scalar_manual(a, L, V, constraints, log):
     A_csr = _petsc_to_csr(A)
     b_np = b.array.copy()
     log("solving scalar constrained system with C^H A C reduction + SciPy SuperLU")
-    solution, reduced_residual, reduced_size = solve_with_constraints(A_csr, b_np, constraints)
+    solution, reduced_residual, reduced_size = solve_with_constraints(
+        A_csr, b_np, constraints
+    )
     Ez = fem.Function(V, name="E_scat")
     Ez.x.array[:] = solution
     Ez.x.scatter_forward()
@@ -172,9 +189,13 @@ def _scalar_fourier_trace_vector(V, mesh_data, tag: int, alpha: complex) -> np.n
     return vec.array.copy()
 
 
-def _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: SimulationConfig, log):
+def _add_scalar_fourier_port_operators(
+    A_csr, b_np, V, mesh_data, cfg: SimulationConfig, log
+):
     if cfg.use_pml:
-        raise RuntimeError("TE Fourier DtN port requires use_pml=False; disable port_use_pml.")
+        raise RuntimeError(
+            "TE Fourier DtN port requires use_pml=False; disable port_use_pml."
+        )
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("TE Fourier DtN port is currently a serial manual operator.")
     if cfg.port_dtn_order_count < 0:
@@ -201,7 +222,9 @@ def _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: Simulatio
             ell = _scalar_fourier_trace_vector(V, mesh_data, tag, alpha)
             trace = _compress_trace_vector(ell)
             trace_vectors[side][order] = trace
-            rows, cols, data = _compressed_outer_trace_triplets(trace, q_mode / cfg.period_x)
+            rows, cols, data = _compressed_outer_trace_triplets(
+                trace, q_mode / cfg.period_x
+            )
             if len(data):
                 port_rows.append(rows)
                 port_cols.append(cols)
@@ -209,7 +232,12 @@ def _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: Simulatio
             del ell
 
             if side == "top" and order == 0:
-                source_amplitude = 2j * beta * cfg.port_incident_amplitude * np.exp(1j * cfg.ky * cfg.y_max)
+                source_amplitude = (
+                    2j
+                    * beta
+                    * cfg.port_incident_amplitude
+                    * np.exp(1j * cfg.ky * cfg.y_max)
+                )
                 _add_compressed_trace_to_rhs(b_out, trace, -source_amplitude)
 
             modes.append(
@@ -224,7 +252,9 @@ def _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: Simulatio
                     "trace_vector_storage": "compressed_nonzero_indices_and_values",
                     "dense_trace_size": int(trace["size"]),
                     "trace_compression_ratio": (
-                        float(len(trace["indices"]) / trace["size"]) if int(trace["size"]) else 0.0
+                        float(len(trace["indices"]) / trace["size"])
+                        if int(trace["size"])
+                        else 0.0
                     ),
                     "trace_cutoff": float(trace["cutoff"]),
                 }
@@ -232,7 +262,10 @@ def _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg: Simulatio
 
     if port_data:
         A_port = sparse.coo_matrix(
-            (np.concatenate(port_data), (np.concatenate(port_rows), np.concatenate(port_cols))),
+            (
+                np.concatenate(port_data),
+                (np.concatenate(port_rows), np.concatenate(port_cols)),
+            ),
             shape=A_csr.shape,
             dtype=np.complex128,
         ).tocsr()
@@ -247,7 +280,9 @@ def _maybe_serial_scalar_constraints(V, mesh_data, cfg: SimulationConfig):
     return None
 
 
-def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual") -> dict[str, object]:
+def run_te_case(
+    cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual"
+) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
     start = time.perf_counter()
@@ -267,7 +302,9 @@ def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = 
     log(f"constraint_backend = {constraint_backend}")
     log(f"k0 = {cfg.k0:.12g}, kx = {cfg.kx}, ky = {cfg.ky}")
     log(f"scattering_background = {cfg.scattering_background}")
-    log(f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j")
+    log(
+        f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j"
+    )
 
     mesh_data = build_mesh(cfg, out_dir)
     msh = mesh_data.mesh
@@ -287,7 +324,9 @@ def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = 
     constraints = _maybe_serial_scalar_constraints(V, mesh_data, cfg)
     if constraints is not None:
         log(f"scalar Floquet constrained boundary dofs = {len(constraints.slave_dofs)}")
-        log(f"max scalar left/right y-pairing error = {constraints.max_pair_y_error:.3e}")
+        log(
+            f"max scalar left/right y-pairing error = {constraints.max_pair_y_error:.3e}"
+        )
 
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
@@ -310,8 +349,12 @@ def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = 
     L = cfg.k0**2 * (eps - eps_bg) * ufl.inner(E_background, v) * d_physical
 
     if constraint_backend in ("mpc_official", "mpc_lowlevel", "mpc_auto"):
-        log("solving TE scalar scattered-field system with dolfinx_mpc automatic periodic constraint")
-        E_scat, solver_info = _solve_scalar_mpc_auto(a, L, V, mesh_data, cfg, log, unknown_name="E_scat")
+        log(
+            "solving TE scalar scattered-field system with dolfinx_mpc automatic periodic constraint"
+        )
+        E_scat, solver_info = _solve_scalar_mpc_auto(
+            a, L, V, mesh_data, cfg, log, unknown_name="E_scat"
+        )
         E_inc_output = te_background_field_function(E_scat.function_space, cfg)
     elif constraint_backend == "manual":
         if constraints is None:
@@ -319,18 +362,32 @@ def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = 
         E_scat, solver_info = _solve_scalar_manual(a, L, V, constraints, log)
         E_inc_output = E_background
     else:
-        raise ValueError("TE solver supports 'mpc_official', 'mpc_lowlevel', 'mpc_auto', or 'manual'.")
+        raise ValueError(
+            "TE solver supports 'mpc_official', 'mpc_lowlevel', 'mpc_auto', or 'manual'."
+        )
 
     E_total = fem.Function(E_scat.function_space, name="E_total")
     E_total.x.array[:] = E_inc_output.x.array[:] + E_scat.x.array[:]
     E_total.x.scatter_forward()
 
-    field_metrics = save_scalar_fields_and_plots(mesh_data, cfg, E_inc_output, E_scat, E_total, out_dir)
+    field_metrics = save_scalar_fields_and_plots(
+        mesh_data, cfg, E_inc_output, E_scat, E_total, out_dir
+    )
     power_metrics = compute_power_metrics(mesh_data, cfg, E_total, out_dir)
-    floquet_mismatch_scat = dof_trace_mismatch(E_scat.x.array, constraints) if constraints is not None else float("nan")
-    floquet_mismatch_total = dof_trace_mismatch(E_total.x.array, constraints) if constraints is not None else float("nan")
+    floquet_mismatch_scat = (
+        dof_trace_mismatch(E_scat.x.array, constraints)
+        if constraints is not None
+        else float("nan")
+    )
+    floquet_mismatch_total = (
+        dof_trace_mismatch(E_total.x.array, constraints)
+        if constraints is not None
+        else float("nan")
+    )
     elapsed = time.perf_counter() - start
-    scatter_ratio = field_metrics["max_abs_E_scat"] / max(field_metrics["max_abs_E_inc"], 1e-30)
+    scatter_ratio = field_metrics["max_abs_E_scat"] / max(
+        field_metrics["max_abs_E_inc"], 1e-30
+    )
 
     summary = {
         "case_name": cfg.case_name,
@@ -378,11 +435,15 @@ def run_te_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = 
             json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        (out_dir / "solver_log.txt").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+        (out_dir / "solver_log.txt").write_text(
+            "\n".join(log_lines) + "\n", encoding="utf-8"
+        )
     return summary
 
 
-def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual") -> dict[str, object]:
+def run_te_port_case(
+    cfg: SimulationConfig, out_dir: Path, constraint_backend: str = "manual"
+) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
     start = time.perf_counter()
@@ -395,16 +456,26 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("Current DOLFINx/PETSc is not in complex mode.")
     if cfg.polarization_type.upper() != "TE":
-        raise RuntimeError("run_te_port_case() only supports cfg.polarization_type='TE'.")
+        raise RuntimeError(
+            "run_te_port_case() only supports cfg.polarization_type='TE'."
+        )
     if cfg.use_pml:
         raise RuntimeError(
             "port_use_pml=True is disabled for the TE port total-field solver. "
             "The port weak form places Robin/DtN conditions directly on the outer top/bottom boundaries."
         )
     if cfg.port_boundary_model not in ("robin", "dtn"):
-        raise ValueError("A concrete TE port case must use port_boundary_model='robin' or 'dtn'.")
-    if cfg.port_boundary_model == "dtn" and constraint_backend in ("mpc_official", "mpc_lowlevel", "mpc_auto"):
-        raise RuntimeError("TE Fourier DtN port currently supports the serial manual backend only.")
+        raise ValueError(
+            "A concrete TE port case must use port_boundary_model='robin' or 'dtn'."
+        )
+    if cfg.port_boundary_model == "dtn" and constraint_backend in (
+        "mpc_official",
+        "mpc_lowlevel",
+        "mpc_auto",
+    ):
+        raise RuntimeError(
+            "TE Fourier DtN port currently supports the serial manual backend only."
+        )
 
     log(f"case = {cfg.case_name}")
     log("formulation = TE port total field")
@@ -413,7 +484,9 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
     log(f"k0 = {cfg.k0:.12g}, kx = {cfg.kx}, ky = {cfg.ky}")
     log(f"port_boundary_model = {cfg.port_boundary_model}")
     log(f"port_dtn_order_count = {cfg.port_dtn_order_count}")
-    log(f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j")
+    log(
+        f"Floquet phase = {cfg.floquet_phase.real:.12g} + {cfg.floquet_phase.imag:.12g}j"
+    )
 
     mesh_data = build_mesh(cfg, out_dir)
     msh = mesh_data.mesh
@@ -431,7 +504,9 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
     constraints = _maybe_serial_scalar_constraints(V, mesh_data, cfg)
     if constraints is not None:
         log(f"scalar Floquet constrained boundary dofs = {len(constraints.slave_dofs)}")
-        log(f"max scalar left/right y-pairing error = {constraints.max_pair_y_error:.3e}")
+        log(
+            f"max scalar left/right y-pairing error = {constraints.max_pair_y_error:.3e}"
+        )
 
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
@@ -452,7 +527,9 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
         - cfg.k0**2 * eps * ufl.inner(u, v) * d_physical
     )
     if cfg.port_boundary_model == "robin":
-        incident = cfg.port_incident_amplitude * ufl.exp(1j * (cfg.kx * x[0] + cfg.ky * x[1]))
+        incident = cfg.port_incident_amplitude * ufl.exp(
+            1j * (cfg.kx * x[0] + cfg.ky * x[1])
+        )
         top_source = 2j * beta_air * incident
         a = (
             a
@@ -466,9 +543,15 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
     port_modes = []
     port_trace_vectors: CompressedTraceBank = {"top": {}, "bottom": {}}
     if constraint_backend in ("mpc_official", "mpc_lowlevel", "mpc_auto"):
-        log("solving TE scalar port system with dolfinx_mpc automatic periodic constraint")
-        E_total, solver_info = _solve_scalar_mpc_auto(a, L, V, mesh_data, cfg, log, unknown_name="E_total")
-        E_inc_output = te_incident_field_function(E_total.function_space, cfg, amplitude=cfg.port_incident_amplitude)
+        log(
+            "solving TE scalar port system with dolfinx_mpc automatic periodic constraint"
+        )
+        E_total, solver_info = _solve_scalar_mpc_auto(
+            a, L, V, mesh_data, cfg, log, unknown_name="E_total"
+        )
+        E_inc_output = te_incident_field_function(
+            E_total.function_space, cfg, amplitude=cfg.port_incident_amplitude
+        )
     elif constraint_backend == "manual":
         if constraints is None:
             constraints = build_scalar_floquet_constraints(V, mesh_data, cfg)
@@ -478,20 +561,27 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
         A_csr = _petsc_to_csr(A)
         if cfg.port_boundary_model == "robin":
             b = fem_petsc.assemble_vector(fem.form(L))
-            b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
+            b.ghostUpdate(
+                addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+            )
             b_np = b.array.copy()
         else:
             b_np = np.zeros(A_csr.shape[0], dtype=np.complex128)
         if cfg.port_boundary_model == "dtn":
-            A_csr, b_np, port_modes, port_trace_vectors = _add_scalar_fourier_port_operators(
-                A_csr, b_np, V, mesh_data, cfg, log
+            A_csr, b_np, port_modes, port_trace_vectors = (
+                _add_scalar_fourier_port_operators(A_csr, b_np, V, mesh_data, cfg, log)
             )
-        log("solving TE scalar constrained port system with C^H A C reduction + SciPy SuperLU")
-        solution, reduced_residual, reduced_size = solve_with_constraints(A_csr, b_np, constraints)
+        log(
+            "solving TE scalar constrained port system with C^H A C reduction + SciPy SuperLU"
+        )
+        solution, reduced_residual, reduced_size, reduced_nnz = (
+            solve_with_constraints_with_stats(A_csr, b_np, constraints)
+        )
         solver_info = {
             "solver_backend": "manual_scalar_constraint_elimination",
             "reduced_linear_residual": reduced_residual,
             "num_reduced_dofs": int(reduced_size),
+            "reduced_matrix_nnz": int(reduced_nnz),
             "ksp_converged_reason": None,
             "ksp_iterations": None,
         }
@@ -500,10 +590,14 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
         E_total.x.scatter_forward()
         E_inc_output = E_inc
     else:
-        raise ValueError("TE port solver supports 'mpc_official', 'mpc_lowlevel', 'mpc_auto', or 'manual'.")
+        raise ValueError(
+            "TE port solver supports 'mpc_official', 'mpc_lowlevel', 'mpc_auto', or 'manual'."
+        )
 
     E_scat_output = _subtract_scalar_fields(E_total, E_inc_output)
-    field_metrics = save_scalar_fields_and_plots(mesh_data, cfg, E_inc_output, E_scat_output, E_total, out_dir)
+    field_metrics = save_scalar_fields_and_plots(
+        mesh_data, cfg, E_inc_output, E_scat_output, E_total, out_dir
+    )
     power_metrics = compute_power_metrics(mesh_data, cfg, E_total, out_dir)
     dtn_port_power_metrics = {}
     dtn_port_vs_probe_power_difference = {}
@@ -511,17 +605,25 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
         dtn_port_power_metrics = compute_te_dtn_port_power_metrics(
             mesh_data, cfg, E_total, out_dir, port_trace_vectors
         )
-        if (
-            {"R_total", "T_total", "R_plus_T"}.issubset(power_metrics)
-            and {"R_total", "T_total", "R_plus_T"}.issubset(dtn_port_power_metrics)
-        ):
+        if {"R_total", "T_total", "R_plus_T"}.issubset(power_metrics) and {
+            "R_total",
+            "T_total",
+            "R_plus_T",
+        }.issubset(dtn_port_power_metrics):
             dtn_port_vs_probe_power_difference = {
-                "R_total_port_minus_probe": dtn_port_power_metrics["R_total"] - power_metrics["R_total"],
-                "T_total_port_minus_probe": dtn_port_power_metrics["T_total"] - power_metrics["T_total"],
-                "R_plus_T_port_minus_probe": dtn_port_power_metrics["R_plus_T"] - power_metrics["R_plus_T"],
+                "R_total_port_minus_probe": dtn_port_power_metrics["R_total"]
+                - power_metrics["R_total"],
+                "T_total_port_minus_probe": dtn_port_power_metrics["T_total"]
+                - power_metrics["T_total"],
+                "R_plus_T_port_minus_probe": dtn_port_power_metrics["R_plus_T"]
+                - power_metrics["R_plus_T"],
             }
 
-    floquet_mismatch_total = dof_trace_mismatch(E_total.x.array, constraints) if constraints is not None else float("nan")
+    floquet_mismatch_total = (
+        dof_trace_mismatch(E_total.x.array, constraints)
+        if constraints is not None
+        else float("nan")
+    )
     elapsed = time.perf_counter() - start
     summary = {
         "case_name": cfg.case_name,
@@ -535,6 +637,13 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
         "num_mesh_cells": int(num_cells),
         "num_scalar_dofs": int(num_dofs),
         "num_reduced_dofs": solver_info["num_reduced_dofs"],
+        "linear_matrix_rows": (
+            int(A_csr.shape[0]) if constraint_backend == "manual" else None
+        ),
+        "linear_matrix_nnz": (
+            int(A_csr.nnz) if constraint_backend == "manual" else None
+        ),
+        "reduced_matrix_nnz": solver_info.get("reduced_matrix_nnz"),
         "petsc_scalar_type": str(PETSc.ScalarType),
         "solver": solver_info["solver_backend"],
         "reduced_linear_residual": solver_info["reduced_linear_residual"],
@@ -583,5 +692,7 @@ def run_te_port_case(cfg: SimulationConfig, out_dir: Path, constraint_backend: s
             json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        (out_dir / "solver_log.txt").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+        (out_dir / "solver_log.txt").write_text(
+            "\n".join(log_lines) + "\n", encoding="utf-8"
+        )
     return summary

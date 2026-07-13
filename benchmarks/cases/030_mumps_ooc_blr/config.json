@@ -1,0 +1,7 @@
+{
+  "case_id": "030_mumps_ooc_blr",
+  "status": "experimental_direct_fallback",
+  "demo_presets": ["3d_stage4b_demo_mumps_ooc", "3d_stage4b_demo_mumps_blr"],
+  "profiles": ["default", "mumps_ooc", "mumps_blr"],
+  "production_claim": false
+}

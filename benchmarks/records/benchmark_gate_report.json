@@ -1,0 +1,1303 @@
+{
+  "checkout_commit": "e89fb632bb4318a739afd1ee702be3a17d109d7c",
+  "checkout_dirty": true,
+  "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
+  "passed": true,
+  "passed_count": 143,
+  "total_count": 143,
+  "gates": [
+    {
+      "name": "case_contract:001_2d_tm_pml_floquet",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/001_2d_tm_pml_floquet"
+    },
+    {
+      "name": "case_contract:002_2d_tm_dtn_equivalence",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/002_2d_tm_dtn_equivalence"
+    },
+    {
+      "name": "case_contract:003_2d_te_tm_complex_absorption",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/003_2d_te_tm_complex_absorption"
+    },
+    {
+      "name": "case_contract:010_3d_stage1_airbox",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/010_3d_stage1_airbox"
+    },
+    {
+      "name": "case_contract:011_3d_stage2a_floquet",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/011_3d_stage2a_floquet"
+    },
+    {
+      "name": "case_contract:012_3d_stage2b_pml",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/012_3d_stage2b_pml"
+    },
+    {
+      "name": "case_contract:013_3d_stage2c_fresnel",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/013_3d_stage2c_fresnel"
+    },
+    {
+      "name": "case_contract:020_3d_stage4a_flat_dtn",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/020_3d_stage4a_flat_dtn"
+    },
+    {
+      "name": "case_contract:021_3d_stage4b_direct",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/021_3d_stage4b_direct"
+    },
+    {
+      "name": "case_contract:022_dtn_condensation_equivalence",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/022_dtn_condensation_equivalence"
+    },
+    {
+      "name": "case_contract:030_mumps_ooc_blr",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/030_mumps_ooc_blr"
+    },
+    {
+      "name": "case_contract:031_workstation_iterative",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/031_workstation_iterative"
+    },
+    {
+      "name": "case_contract:040_mpi_p_algebra_regression",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/040_mpi_p_algebra_regression"
+    },
+    {
+      "name": "case_reference:010_3d_stage1_airbox/records/canonical_reference.json",
+      "passed": true,
+      "observed": "a429f36a4a6490d55a83175e3a9a98c4420909b605213c05fec128629038e50a",
+      "expected": "a429f36a4a6490d55a83175e3a9a98c4420909b605213c05fec128629038e50a",
+      "evidence": "benchmarks/records/3d_stage1_mpi2_smoke.json"
+    },
+    {
+      "name": "case_reference:021_3d_stage4b_direct/records/h5_reference.json",
+      "passed": true,
+      "observed": "791176fbe378322569846ea00d2326311247393e9de4d7aa41a45399dae0bdf4",
+      "expected": "791176fbe378322569846ea00d2326311247393e9de4d7aa41a45399dae0bdf4",
+      "evidence": "benchmarks/records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "case_reference:021_3d_stage4b_direct/records/h3_reference.json",
+      "passed": true,
+      "observed": "a1afd93a73db613aaa3dce0bdcec8eb34b2aee3f2ccc6c5faf2314d4c02a533b",
+      "expected": "a1afd93a73db613aaa3dce0bdcec8eb34b2aee3f2ccc6c5faf2314d4c02a533b",
+      "evidence": "benchmarks/records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "case_reference:021_3d_stage4b_direct/records/h2_reviewed_reference.json",
+      "passed": true,
+      "observed": "f7f832f2e07bd8d4ae1558ef7c68719aa40e5ddede33f167997115d3999dc95d",
+      "expected": "f7f832f2e07bd8d4ae1558ef7c68719aa40e5ddede33f167997115d3999dc95d",
+      "evidence": "benchmarks/records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "case_reference:031_workstation_iterative/records/h5_reference.json",
+      "passed": true,
+      "observed": "528cdfadbaa867577c871071d93c975bd318623eaa45dc0f9aadb1abf9f41c73",
+      "expected": "528cdfadbaa867577c871071d93c975bd318623eaa45dc0f9aadb1abf9f41c73",
+      "evidence": "benchmarks/records/workstation_p2_h5_mpi4.json"
+    },
+    {
+      "name": "case_reference:031_workstation_iterative/records/h3_reference.json",
+      "passed": true,
+      "observed": "3cfdd4dbb45886e5407841aa241124d248693d21873cdd6316656540c5c2bcc8",
+      "expected": "3cfdd4dbb45886e5407841aa241124d248693d21873cdd6316656540c5c2bcc8",
+      "evidence": "benchmarks/records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "case_reference:031_workstation_iterative/records/h2_reference.json",
+      "passed": true,
+      "observed": "797080b1d3d8b8309de196a2573f6cad81be5c9110f561494d9bb9b4d5c262af",
+      "expected": "797080b1d3d8b8309de196a2573f6cad81be5c9110f561494d9bb9b4d5c262af",
+      "evidence": "benchmarks/records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "record_exists:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": "l1_2d_zero_contrast",
+      "expected": "l1_2d_zero_contrast",
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "metadata_complete:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "record_commit_consistent:l1_2d_zero_contrast",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/2d_zero_contrast_dtn_smoke.json"
+    },
+    {
+      "name": "record_exists:l1_3d_stage1",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l1_3d_stage1",
+      "passed": true,
+      "observed": "l1_3d_stage1",
+      "expected": "l1_3d_stage1",
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
+      "name": "metadata_complete:l1_3d_stage1",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
+      "name": "record_commit_consistent:l1_3d_stage1",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/3d_stage1_mpi2_smoke.json"
+    },
+    {
+      "name": "record_exists:case002_explicit",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:case002_explicit",
+      "passed": true,
+      "observed": "case002_explicit",
+      "expected": "case002_explicit",
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
+    },
+    {
+      "name": "metadata_complete:case002_explicit",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
+    },
+    {
+      "name": "record_commit_consistent:case002_explicit",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/explicit.json"
+    },
+    {
+      "name": "record_exists:case002_auxiliary",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:case002_auxiliary",
+      "passed": true,
+      "observed": "case002_auxiliary",
+      "expected": "case002_auxiliary",
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
+    },
+    {
+      "name": "metadata_complete:case002_auxiliary",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
+    },
+    {
+      "name": "record_commit_consistent:case002_auxiliary",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/auxiliary.json"
+    },
+    {
+      "name": "record_exists:case003_tm_lossy",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:case003_tm_lossy",
+      "passed": true,
+      "observed": "case003_tm_lossy",
+      "expected": "case003_tm_lossy",
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
+    },
+    {
+      "name": "metadata_complete:case003_tm_lossy",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
+    },
+    {
+      "name": "record_commit_consistent:case003_tm_lossy",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json"
+    },
+    {
+      "name": "record_exists:case003_te_lossy",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:case003_te_lossy",
+      "passed": true,
+      "observed": "case003_te_lossy",
+      "expected": "case003_te_lossy",
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
+    },
+    {
+      "name": "metadata_complete:case003_te_lossy",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
+    },
+    {
+      "name": "record_commit_consistent:case003_te_lossy",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json"
+    },
+    {
+      "name": "record_exists:l3_direct_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_direct_h5",
+      "passed": true,
+      "observed": "l3_direct_h5",
+      "expected": "l3_direct_h5",
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "metadata_complete:l3_direct_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_direct_h5",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/direct_p2_h5_mpi4.json"
+    },
+    {
+      "name": "record_exists:l3_direct_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_direct_h3",
+      "passed": true,
+      "observed": "l3_direct_h3",
+      "expected": "l3_direct_h3",
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "metadata_complete:l3_direct_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_direct_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/direct_p2_h3_mpi4.json"
+    },
+    {
+      "name": "record_exists:l3_direct_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_direct_h2",
+      "passed": true,
+      "observed": "l3_direct_h2",
+      "expected": "l3_direct_h2",
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "metadata_complete:l3_direct_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_direct_h2",
+      "passed": true,
+      "observed": "reviewed_reference_exempt",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/direct_p2_h2_reviewed_reference.json"
+    },
+    {
+      "name": "record_exists:l3_iterative_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h5",
+      "passed": true,
+      "observed": "l3_iterative_h5",
+      "expected": "l3_iterative_h5",
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
+      "name": "metadata_complete:l3_iterative_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_iterative_h5",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/workstation_p2_h5_mpi4.json"
+    },
+    {
+      "name": "record_exists:l3_iterative_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h3",
+      "passed": true,
+      "observed": "l3_iterative_h3",
+      "expected": "l3_iterative_h3",
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "metadata_complete:l3_iterative_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_iterative_h3",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/workstation_p2_h3_mpi4.json"
+    },
+    {
+      "name": "record_exists:l3_iterative_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:l3_iterative_h2",
+      "passed": true,
+      "observed": "l3_iterative_h2",
+      "expected": "l3_iterative_h2",
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "metadata_complete:l3_iterative_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "record_commit_consistent:l3_iterative_h2",
+      "passed": true,
+      "observed": "checkout_ancestor",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "case002_comparison_exists",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/002_2d_tm_dtn_equivalence/records/comparison.json"
+    },
+    {
+      "name": "case002_field_equivalence",
+      "passed": true,
+      "observed": 2.7711962846232144e-15,
+      "expected": 1e-08,
+      "evidence": "case002 comparison"
+    },
+    {
+      "name": "case002_rta_equivalence",
+      "passed": true,
+      "observed": 1.2212453270876722e-15,
+      "expected": 1e-08,
+      "evidence": "case002 comparison"
+    },
+    {
+      "name": "case002_matrix_identity",
+      "passed": true,
+      "observed": {
+        "explicit": {
+          "rows": 139,
+          "aux": 0
+        },
+        "auxiliary": {
+          "rows": 141,
+          "aux": 2
+        }
+      },
+      "expected": "explicit has no auxiliary rows; auxiliary system is augmented",
+      "evidence": "case002 comparison"
+    },
+    {
+      "name": "two_d_residual:case002_explicit",
+      "passed": true,
+      "observed": 2.1682714364163384e-15,
+      "expected": 1e-10,
+      "evidence": "case002_explicit"
+    },
+    {
+      "name": "lossless_energy:case002_explicit",
+      "passed": true,
+      "observed": 4.440892098500626e-16,
+      "expected": 1e-08,
+      "evidence": "case002_explicit"
+    },
+    {
+      "name": "two_d_residual:case002_auxiliary",
+      "passed": true,
+      "observed": 1.86740448214864e-15,
+      "expected": 1e-10,
+      "evidence": "case002_auxiliary"
+    },
+    {
+      "name": "lossless_energy:case002_auxiliary",
+      "passed": true,
+      "observed": 1.6653345369377348e-15,
+      "expected": 1e-08,
+      "evidence": "case002_auxiliary"
+    },
+    {
+      "name": "lossy_residual:case003_tm_lossy",
+      "passed": true,
+      "observed": 3.322514215565969e-14,
+      "expected": 1e-10,
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "lossy_nonnegative:case003_tm_lossy",
+      "passed": true,
+      "observed": {
+        "R_total": 3.6625211715089244e-06,
+        "T_total": 0.882172452104592,
+        "A_volume": 0.11782388537423982
+      },
+      "expected": ">= 0",
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "lossy_energy:case003_tm_lossy",
+      "passed": true,
+      "observed": -3.3306690738754696e-15,
+      "expected": 1e-08,
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "lossy_absorption_balance:case003_tm_lossy",
+      "passed": true,
+      "observed": 3.3306690738754696e-15,
+      "expected": 1e-08,
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "probe_is_diagnostic:case003_tm_lossy",
+      "passed": true,
+      "observed": "diagnostic_only",
+      "expected": "diagnostic_only and must_not_replace_official=true",
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "lossy_residual:case003_te_lossy",
+      "passed": true,
+      "observed": 1.4856285856990297e-15,
+      "expected": 1e-10,
+      "evidence": "case003_te_lossy"
+    },
+    {
+      "name": "lossy_nonnegative:case003_te_lossy",
+      "passed": true,
+      "observed": {
+        "R_total": 8.745627144339044e-05,
+        "T_total": 0.9903457797965699,
+        "A_volume": 0.00956676393198616
+      },
+      "expected": ">= 0",
+      "evidence": "case003_te_lossy"
+    },
+    {
+      "name": "lossy_energy:case003_te_lossy",
+      "passed": true,
+      "observed": 5.828670879282072e-16,
+      "expected": 1e-08,
+      "evidence": "case003_te_lossy"
+    },
+    {
+      "name": "lossy_absorption_balance:case003_te_lossy",
+      "passed": true,
+      "observed": 5.828670879282072e-16,
+      "expected": 1e-08,
+      "evidence": "case003_te_lossy"
+    },
+    {
+      "name": "probe_is_diagnostic:case003_te_lossy",
+      "passed": true,
+      "observed": "diagnostic_only",
+      "expected": "diagnostic_only and must_not_replace_official=true",
+      "evidence": "case003_te_lossy"
+    },
+    {
+      "name": "lossy_tm_auxiliary_trace",
+      "passed": true,
+      "observed": 1.2212453270876722e-15,
+      "expected": 1e-08,
+      "evidence": "case003_tm_lossy"
+    },
+    {
+      "name": "lossless_zero_contrast_regression",
+      "passed": true,
+      "observed": 1.0000000000000007,
+      "expected": 1.0,
+      "evidence": "l1_2d_zero_contrast"
+    },
+    {
+      "name": "iterative_h5_h3_h2_present",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "l3_iterative_h5,l3_iterative_h3,l3_iterative_h2"
+    },
+    {
+      "name": "iterative_profile_consistent",
+      "passed": true,
+      "observed": [
+        "workstation_p2_fixed_coarse_physical_slab"
+      ],
+      "expected": 1,
+      "evidence": "records"
+    },
+    {
+      "name": "record_matches_canonical_config:l3_iterative_h5",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "artifact_provenance_complete:l3_iterative_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h5",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h5",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h5",
+      "passed": true,
+      "observed": 900.9550133142146,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "physical_model:l3_iterative_h5",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "residual_max:l3_iterative_h5",
+      "passed": true,
+      "observed": 9.839489937056112e-07,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "reported_condensed_match:l3_iterative_h5",
+      "passed": true,
+      "observed": 3.149561308775506e-10,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "reported_full_match:l3_iterative_h5",
+      "passed": true,
+      "observed": 3.149561308775506e-10,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "coarse_rank:l3_iterative_h5",
+      "passed": true,
+      "observed": 75,
+      "expected": 75,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "official_rta:l3_iterative_h5",
+      "passed": true,
+      "observed": [
+        "A_volume_total",
+        "R_plus_T_plus_A_volume",
+        "R_total",
+        "T_total",
+        "energy_closure_error",
+        "rta_current_total_gb",
+        "rta_peak_total_gb"
+      ],
+      "expected": "R_total,T_total,A_volume_total",
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "energy_closure:l3_iterative_h5",
+      "passed": true,
+      "observed": -2.5509907519705166e-09,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h5"
+    },
+    {
+      "name": "record_matches_canonical_config:l3_iterative_h3",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "artifact_provenance_complete:l3_iterative_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h3",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h3",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h3",
+      "passed": true,
+      "observed": 606.7573992847327,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "physical_model:l3_iterative_h3",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "residual_max:l3_iterative_h3",
+      "passed": true,
+      "observed": 9.932648742620389e-07,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "reported_condensed_match:l3_iterative_h3",
+      "passed": true,
+      "observed": 1.4600173334910713e-09,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "reported_full_match:l3_iterative_h3",
+      "passed": true,
+      "observed": 1.4600173334910713e-09,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "coarse_rank:l3_iterative_h3",
+      "passed": true,
+      "observed": 75,
+      "expected": 75,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "official_rta:l3_iterative_h3",
+      "passed": true,
+      "observed": [
+        "A_volume_total",
+        "R_plus_T_plus_A_volume",
+        "R_total",
+        "T_total",
+        "energy_closure_error",
+        "rta_current_total_gb",
+        "rta_peak_total_gb"
+      ],
+      "expected": "R_total,T_total,A_volume_total",
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "energy_closure:l3_iterative_h3",
+      "passed": true,
+      "observed": 6.179627920488429e-10,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h3"
+    },
+    {
+      "name": "record_matches_canonical_config:l3_iterative_h2",
+      "passed": true,
+      "observed": "match",
+      "expected": "all canonical profile fields match",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "artifact_provenance_complete:l3_iterative_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "actual and canonical source fields present",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "artifact_provenance_consistent:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "command_is_actual": true,
+        "record_root_is_actual": true,
+        "canonical_root": "benchmarks/artifacts/iterative"
+      },
+      "expected": "actual source and canonical rerun identities are not conflated",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "clean_rerun_git_clean:l3_iterative_h2",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "qualified_profile:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "qualified": true,
+        "deviations": []
+      },
+      "expected": "qualified=true and no deviations",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "ksp_converged:l3_iterative_h2",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "coarse_condition:l3_iterative_h2",
+      "passed": true,
+      "observed": 734.3166944053114,
+      "expected": 10000000000.0,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "physical_model:l3_iterative_h2",
+      "passed": true,
+      "observed": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "expected": {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0,
+        "period_y_nm": 25.0,
+        "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0,
+        "grating_width_y_nm": 25.0,
+        "grating_height_nm": 120.0,
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "wavelength_nm": 13.5,
+        "incident_theta_deg": 80.0,
+        "incident_phi_deg": 0.0,
+        "polarization_kind": "s",
+        "nedelec_degree": 2,
+        "boundary_model": "dtn_port",
+        "dtn_order_policy": "auto_propagating"
+      },
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "residual_max:l3_iterative_h2",
+      "passed": true,
+      "observed": 9.99737804496762e-07,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "reported_condensed_match:l3_iterative_h2",
+      "passed": true,
+      "observed": 9.936952995715804e-10,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "reported_full_match:l3_iterative_h2",
+      "passed": true,
+      "observed": 9.936952995715804e-10,
+      "expected": 1e-08,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "coarse_rank:l3_iterative_h2",
+      "passed": true,
+      "observed": 75,
+      "expected": 75,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "official_rta:l3_iterative_h2",
+      "passed": true,
+      "observed": [
+        "A_volume_total",
+        "R_plus_T_plus_A_volume",
+        "R_total",
+        "T_total",
+        "energy_closure_error",
+        "rta_current_total_gb",
+        "rta_peak_total_gb"
+      ],
+      "expected": "R_total,T_total,A_volume_total",
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "energy_closure:l3_iterative_h2",
+      "passed": true,
+      "observed": 6.5789449443798276e-09,
+      "expected": 1e-06,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "iteration_ratio_h5_h3_h2",
+      "passed": true,
+      "observed": 1.8167170191339375,
+      "expected": 2.0,
+      "evidence": "iterative records"
+    },
+    {
+      "name": "h2_peak_total_rss_gb",
+      "passed": true,
+      "observed": 13.080257415771484,
+      "expected": 14.0,
+      "evidence": "l3_iterative_h2"
+    },
+    {
+      "name": "direct_iterative_R:h5",
+      "passed": true,
+      "observed": 2.8320801259695827e-10,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h5,l3_iterative_h5"
+    },
+    {
+      "name": "direct_iterative_T:h5",
+      "passed": true,
+      "observed": 3.458669073364007e-09,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h5,l3_iterative_h5"
+    },
+    {
+      "name": "direct_iterative_A_volume:h5",
+      "passed": true,
+      "observed": 6.243484618195794e-10,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h5,l3_iterative_h5"
+    },
+    {
+      "name": "direct_iterative_R:h3",
+      "passed": true,
+      "observed": 1.039081348741533e-09,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h3,l3_iterative_h3"
+    },
+    {
+      "name": "direct_iterative_T:h3",
+      "passed": true,
+      "observed": 7.3958268398399696e-09,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h3,l3_iterative_h3"
+    },
+    {
+      "name": "direct_iterative_A_volume:h3",
+      "passed": true,
+      "observed": 7.81697495622069e-09,
+      "expected": 1e-08,
+      "evidence": "l3_direct_h3,l3_iterative_h3"
+    },
+    {
+      "name": "h2_direct_reviewed_reference",
+      "passed": true,
+      "observed": "reviewed_reference_not_rerun_in_task028",
+      "expected": "reviewed_reference_not_rerun_in_task028",
+      "evidence": "l3_direct_h2"
+    },
+    {
+      "name": "environment_reproducibility_declared",
+      "passed": true,
+      "observed": "qualified_local_image",
+      "expected": "reproducible or qualified_local_image",
+      "evidence": "environment.json"
+    },
+    {
+      "name": "ordinary_default_unchanged",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "iterative records"
+    }
+  ]
+}

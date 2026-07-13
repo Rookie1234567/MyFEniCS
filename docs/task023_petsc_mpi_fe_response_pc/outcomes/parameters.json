@@ -1,0 +1,61 @@
+{
+  "task": "task023_petsc_mpi_fe_response_pc",
+  "run_date": "2026-07-09",
+  "branch": "codex/20260709-task20-wave-solver-search",
+  "executed_stages": [
+    {
+      "stage": "h5_serial_closure",
+      "mpi_ranks": 1,
+      "h_nm": 5.0,
+      "baseline_maxiter": 5,
+      "outer_maxiter": 5,
+      "fieldsplit_maxiter": 20,
+      "fe_inner_maxiter": 20
+    },
+    {
+      "stage": "h2_mpi_fieldsplit_preflight",
+      "mpi_ranks": 4,
+      "h_nm": 2.0,
+      "refinement_maxiter": 40,
+      "profiles": [
+        "ASM/ILU",
+        "ASM+local LU timeout",
+        "LU/MUMPS timeout"
+      ]
+    },
+    {
+      "stage": "h2_mpi_selected_response_preflight",
+      "mpi_ranks": 4,
+      "h_nm": 2.0,
+      "selected_aux_index": 38,
+      "selected_response_profile": "ASM/ILU",
+      "fe_inner_maxiter": 80
+    },
+    {
+      "stage": "h1p5_projection",
+      "h_nm": 1.5,
+      "run": false,
+      "reason": "h=2 observed RSS and cubic scaling project beyond current 14 GB WSL budget"
+    }
+  ],
+  "thresholds": {
+    "minimum_useful": "residual < 1e-2 or improvement >= 2x",
+    "strong": "residual <= 2e-3 or improvement >= 10x",
+    "production_like": "residual <= 1e-6",
+    "rta_residual_gate": 1e-5
+  },
+  "physical_model": {
+    "domain_nm": [50.0, 25.0, 140.0],
+    "period_nm": [50.0, 25.0],
+    "grating_nm": [17.0, 25.0, 120.0],
+    "substrate_thickness_nm": 10.0,
+    "top_air_above_grating_nm": 10.0,
+    "air_height_nm": 130.0,
+    "theta_from_z_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "material_n": [0.999002304859, 0.00182649365],
+    "boundary": "double Floquet x/y + auxiliary DtN port",
+    "power_source": "dtn_port_modal_amplitudes + A_volume"
+  }
+}

@@ -1,0 +1,22 @@
+gate,criterion,measured,status,decision
+architecture,exact matrix-free F-C H^-1 D,forward and exact Hermitian-transpose actions verified,pass,retain
+partition_of_unity,relative identity error <=1e-12,0.0 with zero uncovered dofs,pass,retain
+local_energy,Hermitian error <=1e-12 and SPD,max Hermitian error 7.52e-17; min scaled eigenvalue 2.64e-2,pass,retain
+eigenproblem,eigen residual and orthogonality pass,max residual 5.48e-9; max energy orthogonality 4.33e-11,pass,retain as diagnostic
+spectral_coarse_h5,100-step gain >=5x or iteration gain >=2x,best new spectral or hybrid residual 7.162e-3 vs hand 6.272e-3,fail,reject current spectral variants
+hpddm_gcrodr,h5 material gain,300-step 1.650e-3 vs FGMRES 1.889e-3; 12.7 percent only,fail,research evidence only
+pchpddm_geneo,h5 100-step material gain,energy GenEO residual 2.187e-1,fail,reject
+cross_solve_recycling,reported and explicit residual consistent,reported 7.47e-3 vs explicit 3.90e-1,fail,never use for production
+distributed_slab_ownership,16 complete physical slabs factored once globally,16 factors assigned to 4 owners; h2 owner rows 230202 to 238948,pass,retain
+distributed_slab_mpi_action,complete slab correction is deterministic and repeatable,MPI1 and MPI2 dense-reference tests pass including an empty owner rank,pass,retain
+h2_production,true residual <=1e-6,9.997377952006893e-7 at 1804 iterations,pass,parallel production candidate
+h2_memory,total RSS <14 GB,12.958454132080078 GB including RTA,pass,within workstation budget
+h2_memory_target,total RSS <=12 GB preferred,12.958454132080078 GB,fail,mandatory 14 GB gate still passes
+official_physics,finite R T A and energy closure,R+T+A=1.0000000065789685; closure 6.58e-9,pass,h2 official output valid
+same_rule_all_mesh,h5 h3 h2 use identical algorithm,1201 993 1804 iterations with the same MPI4 profile,pass,no mesh-specific tuning
+mesh_iteration_ratio,max/min <=2,1804/993=1.81671701913394,pass,strict mesh-robustness gate passed
+physical_mesh_convergence,h3 to h2 R T A converged,R remains strongly mesh sensitive,fail,do not claim physical mesh convergence
+mpi_coarse_action,cached Z^H A Z action error <=1e-10,max h5 h3 h2 error 4.99e-14,pass,partition-independent cache certified
+spectral_mechanism,operator-adaptive spectral coarse provides the winning profile,winning profile uses fixed 75D no-RHS z-hat coarse,fail,do not call the breakthrough spectral
+solver_objective,MPI4 h2 production plus ratio <=2 plus RSS <14 GB,1804 iterations; ratio 1.8167; RSS 12.958 GB; official RTA valid,pass,mesh_independent_parallel_production_candidate_fixed_coarse
+overall,Task027 spectral hypothesis and practical solver objective,spectral hypothesis failed but the practical MPI4 solver objective passed,partial_success,solver problem solved by non-spectral physical Schwarz profile

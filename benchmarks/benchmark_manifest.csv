@@ -1,0 +1,17 @@
+benchmark_id,level,category,entrypoint,mpi,case,status,canonical_record,required,resource_class,artifact_policy
+l1_compile,1,smoke,benchmarks/scripts/run_level1.sh,1,compileall,pass,,true,lightweight,no_artifact
+l1_unit,1,smoke,benchmarks/scripts/run_level1.sh,1,full unit suite,pass,,true,lightweight,no_artifact
+l1_2d_zero_contrast,1,physics_smoke,benchmarks/scripts/run_level1.sh,1,2D zero-contrast manual auxiliary DtN,pass,records/2d_zero_contrast_dtn_smoke.json,true,lightweight,benchmarks/artifacts/level1
+l1_3d_stage1,1,physics_smoke,benchmarks/scripts/run_level1.sh,2,3D Stage1,pass,records/3d_stage1_mpi2_smoke.json,true,lightweight,benchmarks/artifacts/level1
+case002_explicit,1,2d_dtn_equivalence,benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh,1,2D TM explicit DtN canonical solve,pass,cases/002_2d_tm_dtn_equivalence/records/explicit.json,true,lightweight,benchmarks/artifacts/cases/002
+case002_auxiliary,1,2d_dtn_equivalence,benchmarks/cases/002_2d_tm_dtn_equivalence/run.sh,1,2D TM auxiliary DtN canonical solve,pass,cases/002_2d_tm_dtn_equivalence/records/auxiliary.json,true,lightweight,benchmarks/artifacts/cases/002
+case003_tm_lossy,1,2d_lossy_absorption,benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh,1,2D TM complex absorption,pass,cases/003_2d_te_tm_complex_absorption/records/tm_complex_absorption.json,true,lightweight,benchmarks/artifacts/cases/003
+case003_te_lossy,1,2d_lossy_absorption,benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh,1,2D TE complex absorption,pass,cases/003_2d_te_tm_complex_absorption/records/te_complex_absorption.json,true,lightweight,benchmarks/artifacts/cases/003
+l2_condensation_mpi1,2,algebraic,benchmarks/scripts/run_level2_mpi.sh,1,dense explicit matrixfree transpose,pass,,true,lightweight,no_artifact
+l2_physical_slab_mpi4,2,parallel,benchmarks/scripts/run_level2_mpi.sh,4,owner empty-owner cache sm2 lifecycle,pass,,true,lightweight,no_artifact
+l3_direct_h5,3,direct,benchmarks/scripts/run_level3_direct.sh,4,target p2 h5,pass,records/direct_p2_h5_mpi4.json,true,workstation,benchmarks/artifacts/direct
+l3_direct_h3,3,direct,benchmarks/scripts/run_level3_direct.sh,4,target p2 h3,pass,records/direct_p2_h3_mpi4.json,true,workstation,benchmarks/artifacts/direct
+l3_direct_h2,3,direct_reference,benchmarks/scripts/run_level3_direct.sh --include-resource-heavy-h2,8,target p2 h2,reviewed_not_rerun,records/direct_p2_h2_reviewed_reference.json,false,resource_heavy_over_14gb,historical_results_reference
+l3_iterative_h5,3,iterative,benchmarks/scripts/run_level3_iterative.sh,4,target p2 h5,pass,records/workstation_p2_h5_mpi4.json,true,workstation,benchmarks/artifacts/iterative
+l3_iterative_h3,3,iterative,benchmarks/scripts/run_level3_iterative.sh,4,target p2 h3,pass,records/workstation_p2_h3_mpi4.json,true,workstation,benchmarks/artifacts/iterative
+l3_iterative_h2,3,iterative,benchmarks/scripts/run_level3_iterative.sh,4,target p2 h2,pass,records/workstation_p2_h2_mpi4.json,true,workstation,benchmarks/artifacts/iterative

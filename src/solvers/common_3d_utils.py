@@ -13,7 +13,6 @@ except ImportError:  # pragma: no cover - Windows host fallback; Docker/Linux ha
     resource = None
 
 from mpi4py import MPI
-from petsc4py import PETSc
 
 from ..common.config_3d import NUMERICAL_SANITY_ONLY, SimulationConfig3D
 from .solve_vector_maxwell import _json_default
@@ -44,6 +43,14 @@ def _global_max_rss_mb(comm) -> float | None:
     if local is None:
         return None
     return float(comm.allreduce(local, op=MPI.MAX))
+
+def _global_total_peak_rss_mb(comm) -> float | None:
+    """Return the sum of per-rank peak RSS values."""
+
+    local = _max_rss_mb()
+    if local is None:
+        return None
+    return float(comm.allreduce(local, op=MPI.SUM))
 
 def _swap_used_mb() -> float | None:
     """Return current Linux swap use in MB when /proc/meminfo is available."""
@@ -107,8 +114,12 @@ def _write_progress_event(
     try:
         local_rss = _max_rss_mb()
         max_rss = None if local_rss is None else float(comm.allreduce(local_rss, op=MPI.MAX))
+        total_peak_rss = (
+            None if local_rss is None else float(comm.allreduce(local_rss, op=MPI.SUM))
+        )
     except Exception:
         max_rss = _max_rss_mb()
+        total_peak_rss = max_rss
     if comm.rank != 0:
         return
     payload: dict[str, Any] = {
@@ -118,6 +129,10 @@ def _write_progress_event(
         "elapsed_seconds": None if started is None else time.perf_counter() - started,
         "rank_count": comm.size,
         "max_rss_mb": max_rss,
+        "total_peak_rss_mb": total_peak_rss,
+        "total_peak_rss_gb": (
+            None if total_peak_rss is None else total_peak_rss / 1024.0
+        ),
         "swap_used_mb": _swap_used_mb(),
         "dofs": dofs,
         "floquet_constraints": constraints,
@@ -151,6 +166,11 @@ def _log_solver_summary(summary: dict[str, Any], log) -> None:
         log("  max RSS across ranks = None")
     else:
         log(f"  max RSS across ranks = {max_rss:.1f} MB")
+    total_peak_rss = summary.get("total_peak_rss_mb")
+    if total_peak_rss is None:
+        log("  total peak RSS       = None")
+    else:
+        log(f"  total peak RSS       = {total_peak_rss:.1f} MB")
     log(f"  official result      = {summary['official_result']}")
     log(f"  diagnostic only      = {summary['diagnostic_only']}")
     log(f"  validation role      = {summary.get('validation_role')}")

@@ -1,0 +1,31 @@
+{
+  "unit_tests": "pass",
+  "mpi_tests": "pass",
+  "reported_relative_residual_max": 1e-6,
+  "condensed_true_residual_max": 1e-6,
+  "full_augmented_true_residual_max": 1e-6,
+  "reported_condensed_relative_difference_max": 1e-8,
+  "reported_full_relative_difference_max": 1e-8,
+  "iteration_ratio_h5_h3_h2_max": 2.0,
+  "record_commit_relations_accepted": [
+    "exact_checkout",
+    "checkout_ancestor",
+    "checkout_unavailable_sha_valid",
+    "reviewed_reference_exempt"
+  ],
+  "direct_iterative_abs_tolerance": {
+    "h5": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8},
+    "h3": {"R": 1e-8, "T": 1e-8, "A_volume": 1e-8}
+  },
+  "coarse_rank_required": 75,
+  "coarse_condition_max": 1e10,
+  "energy_closure_abs_max": 1e-6,
+  "two_d_linear_residual_max": 1e-10,
+  "two_d_energy_closure_abs_max": 1e-8,
+  "two_d_absorption_balance_difference_max": 1e-8,
+  "two_d_auxiliary_trace_abs_difference_max": 1e-8,
+  "case002_field_relative_difference_max": 1e-8,
+  "case002_rta_absolute_difference_max": 1e-8,
+  "h2_peak_total_rss_gb_max": 14.0,
+  "ordinary_default_changed": false
+}

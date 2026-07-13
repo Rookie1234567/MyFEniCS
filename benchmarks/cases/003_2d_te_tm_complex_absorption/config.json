@@ -1,0 +1,63 @@
+{
+  "contract_version": 1,
+  "case_id": "003_2d_te_tm_complex_absorption",
+  "status": "canonical_lightweight",
+  "time_convention": "exp(-i omega t)",
+  "variants": {
+    "tm": {
+      "physical_model": {
+        "period_x_nm": 100.0,
+        "air_height_nm": 100.0,
+        "substrate_thickness_nm": 50.0,
+        "grating_width_nm": 50.0,
+        "grating_height_nm": 50.0,
+        "wavelength_nm": 13.5,
+        "incident_angle_deg": 0.0,
+        "n_air": "1+0j",
+        "n_substrate": "0.999002304859+0.00182649365j",
+        "n_grating": "0.999002304859+0.00182649365j"
+      },
+      "scattering_background": "layered",
+      "numerical_settings": {
+        "degree": 2,
+        "visualization_degree": 2,
+        "mesh_target_size_nm": 3.0,
+        "mesh_cell_shape": "quadrilateral",
+        "mesh_lock_near_field_template": true,
+        "port_dtn_order_count": 2,
+        "port_dtn_assembly": "auxiliary",
+        "port_use_diffraction_orders": true,
+        "port_rayleigh_tolerance": 1e-6,
+        "diffraction_order_count": 8,
+        "power_probe_num_points": 512
+      }
+    },
+    "te": {
+      "physical_model": {
+        "period_x_nm": 10.0,
+        "air_height_nm": 5.0,
+        "substrate_thickness_nm": 5.0,
+        "grating_width_nm": 5.0,
+        "grating_height_nm": 2.0,
+        "wavelength_nm": 13.5,
+        "incident_angle_deg": 15.0,
+        "n_air": "1+0j",
+        "n_substrate": "0.999002304859+0.00182649365j",
+        "n_grating": "0.999002304859+0.00182649365j"
+      },
+      "scattering_background": "layered",
+      "numerical_settings": {
+        "degree": 1,
+        "visualization_degree": 1,
+        "mesh_target_size_nm": 2.0,
+        "mesh_cell_shape": "triangle",
+        "port_dtn_order_count": 0,
+        "port_dtn_assembly": "explicit",
+        "port_use_diffraction_orders": false,
+        "port_rayleigh_tolerance": 1e-6,
+        "diffraction_order_count": 0,
+        "power_probe_num_points": 256
+      }
+    }
+  }
+}

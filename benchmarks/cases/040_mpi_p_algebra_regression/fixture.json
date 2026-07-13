@@ -1,0 +1,5 @@
+{
+  "case_id": "040_mpi_p_algebra_regression",
+  "status": "regression_collection",
+  "coverage": ["MPI1/4", "p1/p2", "Floquet pairing", "coarse cache", "repository principles"]
+}

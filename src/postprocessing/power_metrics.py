@@ -38,16 +38,22 @@ def _probe_y_locations(cfg: SimulationConfig) -> tuple[float, float]:
     fraction = 0.95
     top_gap = cfg.physical_y_max - cfg.grating_y_max
     if top_gap <= 0:
-        raise ValueError("The top uniform air probe line requires physical_y_max > grating_y_max.")
+        raise ValueError(
+            "The top uniform air probe line requires physical_y_max > grating_y_max."
+        )
     bottom_gap = cfg.substrate_y_max - cfg.substrate_y_min
     if bottom_gap <= 0:
-        raise ValueError("The bottom substrate probe line requires substrate_y_max > substrate_y_min.")
+        raise ValueError(
+            "The bottom substrate probe line requires substrate_y_max > substrate_y_min."
+        )
     top_y = cfg.grating_y_max + fraction * top_gap
     bottom_y = cfg.substrate_y_max - fraction * bottom_gap
     return float(top_y), float(bottom_y)
 
 
-def _sample_field_at_points(function, x_values: np.ndarray, y_values: np.ndarray) -> np.ndarray:
+def _sample_field_at_points(
+    function, x_values: np.ndarray, y_values: np.ndarray
+) -> np.ndarray:
     msh = function.function_space.mesh
     comm = msh.comm
     points = np.zeros((len(x_values), 3), dtype=np.float64)
@@ -67,7 +73,9 @@ def _sample_field_at_points(function, x_values: np.ndarray, y_values: np.ndarray
 
     if local_indices:
         local_points = points[np.asarray(local_indices, dtype=np.int32)]
-        local_values = function.eval(local_points, np.asarray(local_cells, dtype=np.int32))
+        local_values = function.eval(
+            local_points, np.asarray(local_cells, dtype=np.int32)
+        )
         local_values = np.asarray(local_values, dtype=np.complex128)
         if local_values.ndim == 1:
             local_values = local_values.reshape((-1, 1))
@@ -97,14 +105,17 @@ def _sample_field_at_points(function, x_values: np.ndarray, y_values: np.ndarray
     if not np.all(filled):
         missing = np.flatnonzero(~filled)[:5]
         examples = ", ".join(
-            f"(x={x_values[i]:.6g}, y={y_values[i]:.6g})"
-            for i in missing
+            f"(x={x_values[i]:.6g}, y={y_values[i]:.6g})" for i in missing
         )
-        raise RuntimeError(f"No mesh cell found for {np.count_nonzero(~filled)} power probe points: {examples}")
+        raise RuntimeError(
+            f"No mesh cell found for {np.count_nonzero(~filled)} power probe points: {examples}"
+        )
     return values
 
 
-def _wrap_x_values(x_values: np.ndarray, cfg: SimulationConfig) -> tuple[np.ndarray, np.ndarray]:
+def _wrap_x_values(
+    x_values: np.ndarray, cfg: SimulationConfig
+) -> tuple[np.ndarray, np.ndarray]:
     """Map raw x coordinates into one cell and return the matching Floquet phase."""
     shifted = (x_values - cfg.x_min) / cfg.period_x
     periods = np.floor(shifted).astype(np.int64)
@@ -124,17 +135,23 @@ def _wrap_x_values(x_values: np.ndarray, cfg: SimulationConfig) -> tuple[np.ndar
     return wrapped, phases
 
 
-def _sample_field_on_wrapped_line(E_total, raw_x_values: np.ndarray, y: float, cfg: SimulationConfig) -> np.ndarray:
+def _sample_field_on_wrapped_line(
+    E_total, raw_x_values: np.ndarray, y: float, cfg: SimulationConfig
+) -> np.ndarray:
     wrapped_x, floquet_phases = _wrap_x_values(raw_x_values, cfg)
     y_values = np.full(len(raw_x_values), y, dtype=np.float64)
     values = _sample_field_at_points(E_total, wrapped_x, y_values)
     return values * floquet_phases[:, None]
 
 
-def _sample_scalar_on_wrapped_line(function, raw_x_values: np.ndarray, y: float, cfg: SimulationConfig) -> np.ndarray:
+def _sample_scalar_on_wrapped_line(
+    function, raw_x_values: np.ndarray, y: float, cfg: SimulationConfig
+) -> np.ndarray:
     wrapped_x, floquet_phases = _wrap_x_values(raw_x_values, cfg)
     y_values = np.full(len(raw_x_values), y, dtype=np.float64)
-    values = _sample_field_at_points(function, wrapped_x, y_values).reshape((len(raw_x_values), -1))[:, 0]
+    values = _sample_field_at_points(function, wrapped_x, y_values).reshape(
+        (len(raw_x_values), -1)
+    )[:, 0]
     return values * floquet_phases
 
 
@@ -160,7 +177,9 @@ def _scaled_hx_function(E_total, cfg: SimulationConfig):
     interpolation_points = Q.element.interpolation_points
     if callable(interpolation_points):
         interpolation_points = interpolation_points()
-    expression = fem.Expression(ufl.Dx(E_total, 1) / PETSc.ScalarType(1j), interpolation_points)
+    expression = fem.Expression(
+        ufl.Dx(E_total, 1) / PETSc.ScalarType(1j), interpolation_points
+    )
     hx_scaled = fem.Function(Q, name="Hx_scaled")
     hx_scaled.interpolate(expression)
     hx_scaled.x.scatter_forward()
@@ -180,7 +199,10 @@ def _line_field_and_scaled_hz(
     H_z = (d_x Ey - d_y Ex)/(i omega mu0). Since all powers are normalized by
     the same incident power, this routine returns H_z scaled by omega*mu0.
     """
-    x_values = cfg.x_min + (np.arange(num_points, dtype=np.float64) + 0.5) * cfg.period_x / num_points
+    x_values = (
+        cfg.x_min
+        + (np.arange(num_points, dtype=np.float64) + 0.5) * cfg.period_x / num_points
+    )
     center = _sample_field_on_wrapped_line(E_total, x_values, y, cfg)
     scaled_hz = _sample_scalar_on_wrapped_line(hz_scaled, x_values, y, cfg)
     return x_values, center, scaled_hz
@@ -194,13 +216,18 @@ def _line_scalar_and_scaled_hx(
     num_points: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Sample TE Ez and Hx_scaled=dEz/dy/i on a wrapped horizontal line."""
-    x_values = cfg.x_min + (np.arange(num_points, dtype=np.float64) + 0.5) * cfg.period_x / num_points
+    x_values = (
+        cfg.x_min
+        + (np.arange(num_points, dtype=np.float64) + 0.5) * cfg.period_x / num_points
+    )
     ez_values = _sample_scalar_on_wrapped_line(E_total, x_values, y, cfg)
     hx_values = _sample_scalar_on_wrapped_line(hx_scaled, x_values, y, cfg)
     return x_values, ez_values, hx_values
 
 
-def _fourier_line_coefficients(x_values: np.ndarray, values: np.ndarray, cfg: SimulationConfig, order_count: int):
+def _fourier_line_coefficients(
+    x_values: np.ndarray, values: np.ndarray, cfg: SimulationConfig, order_count: int
+):
     coeffs: dict[int, complex] = {}
     for order in range(-order_count, order_count + 1):
         alpha = cfg.kx + 2.0 * np.pi * order / cfg.period_x
@@ -217,8 +244,33 @@ def _modal_power_factor(admittance: complex) -> float:
     return float(max(factor, 0.0))
 
 
-def _is_propagating(beta: complex) -> bool:
-    return abs(beta.imag) < 1e-10 and beta.real > 1e-12
+def _modal_power_on_plane(
+    period: float,
+    power_factor: float,
+    boundary_coefficient: complex,
+    power_carrying: bool,
+) -> float:
+    """Evaluate modal power from the coefficient on the actual port plane."""
+
+    if not power_carrying:
+        return 0.0
+    return float(period) * float(power_factor) * abs(complex(boundary_coefficient)) ** 2
+
+
+def _is_propagating(beta: complex, dispersion_value: complex | None = None) -> bool:
+    """Return whether an outgoing order carries normal real power.
+
+    Propagating modes in lossy media have complex beta. Requiring Im(beta)=0
+    drops their transmitted power and mislabels it as absorption. The sign of
+    Re(beta**2) separates those modes from below-cutoff evanescent orders.
+    """
+
+    beta = complex(beta)
+    if beta.real <= 1.0e-12:
+        return False
+    value = complex(beta**2 if dispersion_value is None else dispersion_value)
+    scale = max(abs(value), abs(beta) ** 2, 1.0e-30)
+    return value.real > -1.0e-10 * scale
 
 
 def _volume_absorption_metrics(
@@ -234,7 +286,9 @@ def _volume_absorption_metrics(
     eps = relative_permittivity(mesh_data, cfg)
     eps_imag = ufl.imag(eps)
     field_abs2 = ufl.inner(E_total, E_total)
-    local_abs = fem.assemble_scalar(fem.form(0.5 * cfg.k0**2 * eps_imag * field_abs2 * d_physical))
+    local_abs = fem.assemble_scalar(
+        fem.form(0.5 * cfg.k0**2 * eps_imag * field_abs2 * d_physical)
+    )
     absorbed_power = float(np.real(msh.comm.allreduce(local_abs, op=MPI.SUM)))
     absorbed_power = max(absorbed_power, 0.0)
     return {
@@ -251,10 +305,14 @@ def _volume_absorption_metrics(
 def _box_indicator(x, bounds: dict[str, float]):
     in_x = ufl.And(ufl.ge(x[0], bounds["x_min"]), ufl.le(x[0], bounds["x_max"]))
     in_y = ufl.And(ufl.ge(x[1], bounds["y_min"]), ufl.le(x[1], bounds["y_max"]))
-    return ufl.conditional(ufl.And(in_x, in_y), PETSc.ScalarType(1.0), PETSc.ScalarType(0.0))
+    return ufl.conditional(
+        ufl.And(in_x, in_y), PETSc.ScalarType(1.0), PETSc.ScalarType(0.0)
+    )
 
 
-def compute_near_field_integrals(mesh_data, cfg: SimulationConfig, E_total) -> dict[str, object]:
+def compute_near_field_integrals(
+    mesh_data, cfg: SimulationConfig, E_total
+) -> dict[str, object]:
     """Integrate |E|^2 over grating, nearby air, and nearby substrate regions."""
     msh = mesh_data.mesh
     x = ufl.SpatialCoordinate(msh)
@@ -268,11 +326,15 @@ def compute_near_field_integrals(mesh_data, cfg: SimulationConfig, E_total) -> d
     integrals["grating"] = float(np.real(msh.comm.allreduce(grating_local, op=MPI.SUM)))
 
     air_indicator = _box_indicator(x, regions["air_near"])
-    air_local = fem.assemble_scalar(fem.form(air_indicator * field_abs2 * dx(cfg.tags.air)))
+    air_local = fem.assemble_scalar(
+        fem.form(air_indicator * field_abs2 * dx(cfg.tags.air))
+    )
     integrals["air_near"] = float(np.real(msh.comm.allreduce(air_local, op=MPI.SUM)))
 
     sub_indicator = _box_indicator(x, regions["sub_near"])
-    sub_local = fem.assemble_scalar(fem.form(sub_indicator * field_abs2 * dx(cfg.tags.substrate)))
+    sub_local = fem.assemble_scalar(
+        fem.form(sub_indicator * field_abs2 * dx(cfg.tags.substrate))
+    )
     integrals["sub_near"] = float(np.real(msh.comm.allreduce(sub_local, op=MPI.SUM)))
 
     means = {
@@ -307,19 +369,29 @@ def _attach_absorption_metrics(
     balance = 1.0 - float(metrics["R_total"]) - float(metrics["T_total"])
     metrics["A_balance"] = balance
     try:
-        absorption = _volume_absorption_metrics(mesh_data, cfg, E_total, incident_power, field_model)
-    except Exception as exc:  # pragma: no cover - postprocess should not hide the solved field
+        absorption = _volume_absorption_metrics(
+            mesh_data, cfg, E_total, incident_power, field_model
+        )
+    except (
+        Exception
+    ) as exc:  # pragma: no cover - postprocess should not hide the solved field
         metrics["A_volume"] = None
         metrics["absorbed_power_weighted"] = None
         metrics["absorption_postprocess_error"] = str(exc)
         return
     metrics.update(absorption)
     try:
-        metrics["near_field_integrals"] = compute_near_field_integrals(mesh_data, cfg, E_total)
-    except Exception as exc:  # pragma: no cover - diagnostics should not hide R/T output
+        metrics["near_field_integrals"] = compute_near_field_integrals(
+            mesh_data, cfg, E_total
+        )
+    except (
+        Exception
+    ) as exc:  # pragma: no cover - diagnostics should not hide R/T output
         metrics["near_field_integrals_error"] = str(exc)
     if metrics.get("A_volume") is not None:
-        metrics["absorption_difference_volume_minus_balance"] = float(metrics["A_volume"]) - balance
+        metrics["absorption_difference_volume_minus_balance"] = (
+            float(metrics["A_volume"]) - balance
+        )
 
 
 def _compute_power_metrics_from_lines(
@@ -341,11 +413,17 @@ def _compute_power_metrics_from_lines(
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     hz_scaled = _scaled_hz_function(E_total, cfg)
-    x_top, top_values, top_hz = _line_field_and_scaled_hz(E_total, hz_scaled, top_y, cfg, num_points)
-    x_bottom, bottom_values, bottom_hz = _line_field_and_scaled_hz(E_total, hz_scaled, bottom_y, cfg, num_points)
+    x_top, top_values, top_hz = _line_field_and_scaled_hz(
+        E_total, hz_scaled, top_y, cfg, num_points
+    )
+    x_bottom, bottom_values, bottom_hz = _line_field_and_scaled_hz(
+        E_total, hz_scaled, bottom_y, cfg, num_points
+    )
     top_ex_coeff = _fourier_line_coefficients(x_top, top_values[:, 0], cfg, order_count)
     top_hz_coeff = _fourier_line_coefficients(x_top, top_hz, cfg, order_count)
-    bottom_ex_coeff = _fourier_line_coefficients(x_bottom, bottom_values[:, 0], cfg, order_count)
+    bottom_ex_coeff = _fourier_line_coefficients(
+        x_bottom, bottom_values[:, 0], cfg, order_count
+    )
     bottom_hz_coeff = _fourier_line_coefficients(x_bottom, bottom_hz, cfg, order_count)
 
     incident_ex = complex(cfg.port_incident_amplitude) * cfg.polarization[0]
@@ -353,12 +431,20 @@ def _compute_power_metrics_from_lines(
     k_sub = complex(cfg.k0 * cfg.n_substrate)
     beta_inc = _positive_sqrt(k_air**2 - cfg.kx**2)
     incident_admittance = _modal_admittance(k_air, beta_inc)
-    incident_power = cfg.period_x * _modal_power_factor(incident_admittance) * abs(incident_ex) ** 2
+    incident_power = (
+        cfg.period_x * _modal_power_factor(incident_admittance) * abs(incident_ex) ** 2
+    )
     if incident_power <= 0:
-        raise RuntimeError("Incident modal power is zero; cannot normalize reflection/transmission metrics.")
+        raise RuntimeError(
+            "Incident modal power is zero; cannot normalize reflection/transmission metrics."
+        )
 
-    top_flux_y = cfg.period_x * float(np.mean(-0.5 * np.real(top_values[:, 0] * np.conj(top_hz))))
-    bottom_flux_y = cfg.period_x * float(np.mean(-0.5 * np.real(bottom_values[:, 0] * np.conj(bottom_hz))))
+    top_flux_y = cfg.period_x * float(
+        np.mean(-0.5 * np.real(top_values[:, 0] * np.conj(top_hz)))
+    )
+    bottom_flux_y = cfg.period_x * float(
+        np.mean(-0.5 * np.real(bottom_values[:, 0] * np.conj(bottom_hz)))
+    )
     top_outward_power = top_flux_y
     bottom_outward_power = -bottom_flux_y
     net_outward_power = top_outward_power + bottom_outward_power
@@ -382,10 +468,18 @@ def _compute_power_metrics_from_lines(
         if order == 0:
             incident_line_coeff = incident_ex * np.exp(-1j * beta_top * top_y)
 
-        top_down_line_coeff = 0.5 * (top_line_coeff + top_hz_line_coeff / y_top_admittance)
-        top_up_line_coeff = 0.5 * (top_line_coeff - top_hz_line_coeff / y_top_admittance)
-        bottom_down_line_coeff = 0.5 * (bottom_line_coeff + bottom_hz_line_coeff / y_bottom_admittance)
-        bottom_up_line_coeff = 0.5 * (bottom_line_coeff - bottom_hz_line_coeff / y_bottom_admittance)
+        top_down_line_coeff = 0.5 * (
+            top_line_coeff + top_hz_line_coeff / y_top_admittance
+        )
+        top_up_line_coeff = 0.5 * (
+            top_line_coeff - top_hz_line_coeff / y_top_admittance
+        )
+        bottom_down_line_coeff = 0.5 * (
+            bottom_line_coeff + bottom_hz_line_coeff / y_bottom_admittance
+        )
+        bottom_up_line_coeff = 0.5 * (
+            bottom_line_coeff - bottom_hz_line_coeff / y_bottom_admittance
+        )
 
         reflected_amp = top_up_line_coeff * np.exp(-1j * beta_top * top_y)
         transmitted_amp = bottom_down_line_coeff * np.exp(1j * beta_bottom * bottom_y)
@@ -394,15 +488,20 @@ def _compute_power_metrics_from_lines(
 
         top_propagating = _is_propagating(beta_top)
         bottom_propagating = _is_propagating(beta_bottom)
-        reflected_power = (
-            cfg.period_x * _modal_power_factor(y_top_admittance) * abs(reflected_amp) ** 2
-            if top_propagating
-            else 0.0
+        # Power is evaluated on the actual probe plane. Phase-normalized
+        # amplitudes are retained for reporting, but in a lossy medium their
+        # magnitude changes when transported to y=0.
+        reflected_power = _modal_power_on_plane(
+            cfg.period_x,
+            _modal_power_factor(y_top_admittance),
+            top_up_line_coeff,
+            top_propagating,
         )
-        transmitted_power = (
-            cfg.period_x * _modal_power_factor(y_bottom_admittance) * abs(transmitted_amp) ** 2
-            if bottom_propagating
-            else 0.0
+        transmitted_power = _modal_power_on_plane(
+            cfg.period_x,
+            _modal_power_factor(y_bottom_admittance),
+            bottom_down_line_coeff,
+            bottom_propagating,
         )
         reflected_total += reflected_power
         transmitted_total += transmitted_power
@@ -427,7 +526,11 @@ def _compute_power_metrics_from_lines(
                 "top_up_Ex_abs": abs(reflected_amp),
                 "bottom_down_Ex_abs": abs(transmitted_amp),
                 "bottom_up_Ex_abs": abs(bottom_up_amp),
-                "top_down_minus_incident_abs": abs(top_down_line_coeff - incident_line_coeff) if order == 0 else 0.0,
+                "top_down_minus_incident_abs": abs(
+                    top_down_line_coeff - incident_line_coeff
+                )
+                if order == 0
+                else 0.0,
                 "reflected_Ex_real": reflected_amp.real,
                 "reflected_Ex_imag": reflected_amp.imag,
                 "reflected_Ex_abs": abs(reflected_amp),
@@ -481,7 +584,9 @@ def _compute_power_metrics_from_lines(
     }
     if extra_metadata:
         metrics.update(extra_metadata)
-    _attach_absorption_metrics(metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey")
+    _attach_absorption_metrics(
+        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
+    )
 
     if MPI.COMM_WORLD.rank == 0:
         (out_dir / metrics_filename).write_text(
@@ -492,7 +597,9 @@ def _compute_power_metrics_from_lines(
             json.dumps(rows, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        with (out_dir / orders_csv_filename).open("w", newline="", encoding="utf-8") as fp:
+        with (out_dir / orders_csv_filename).open(
+            "w", newline="", encoding="utf-8"
+        ) as fp:
             writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
             writer.writeheader()
             writer.writerows(rows)
@@ -519,8 +626,12 @@ def _compute_te_power_metrics_from_lines(
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     hx_scaled = _scaled_hx_function(E_total, cfg)
-    x_top, top_ez, top_hx = _line_scalar_and_scaled_hx(E_total, hx_scaled, top_y, cfg, num_points)
-    x_bottom, bottom_ez, bottom_hx = _line_scalar_and_scaled_hx(E_total, hx_scaled, bottom_y, cfg, num_points)
+    x_top, top_ez, top_hx = _line_scalar_and_scaled_hx(
+        E_total, hx_scaled, top_y, cfg, num_points
+    )
+    x_bottom, bottom_ez, bottom_hx = _line_scalar_and_scaled_hx(
+        E_total, hx_scaled, bottom_y, cfg, num_points
+    )
     top_ez_coeff = _fourier_line_coefficients(x_top, top_ez, cfg, order_count)
     top_hx_coeff = _fourier_line_coefficients(x_top, top_hx, cfg, order_count)
     bottom_ez_coeff = _fourier_line_coefficients(x_bottom, bottom_ez, cfg, order_count)
@@ -530,12 +641,18 @@ def _compute_te_power_metrics_from_lines(
     k_air = complex(cfg.k0 * cfg.n_air)
     k_sub = complex(cfg.k0 * cfg.n_substrate)
     beta_inc = _positive_sqrt(k_air**2 - cfg.kx**2)
-    incident_power = cfg.period_x * 0.5 * float(max(np.real(beta_inc), 0.0)) * abs(incident_ez) ** 2
+    incident_power = (
+        cfg.period_x * 0.5 * float(max(np.real(beta_inc), 0.0)) * abs(incident_ez) ** 2
+    )
     if incident_power <= 0:
-        raise RuntimeError("Incident TE modal power is zero; cannot normalize reflection/transmission metrics.")
+        raise RuntimeError(
+            "Incident TE modal power is zero; cannot normalize reflection/transmission metrics."
+        )
 
     top_flux_y = cfg.period_x * float(np.mean(0.5 * np.real(top_ez * np.conj(top_hx))))
-    bottom_flux_y = cfg.period_x * float(np.mean(0.5 * np.real(bottom_ez * np.conj(bottom_hx))))
+    bottom_flux_y = cfg.period_x * float(
+        np.mean(0.5 * np.real(bottom_ez * np.conj(bottom_hx)))
+    )
     top_outward_power = top_flux_y
     bottom_outward_power = -bottom_flux_y
     net_outward_power = top_outward_power + bottom_outward_power
@@ -571,9 +688,11 @@ def _compute_te_power_metrics_from_lines(
 
         top_propagating = _is_propagating(beta_top)
         bottom_propagating = _is_propagating(beta_bottom)
-        reflected_power = cfg.period_x * beta_top_factor * abs(reflected_amp) ** 2 if top_propagating else 0.0
-        transmitted_power = (
-            cfg.period_x * beta_bottom_factor * abs(transmitted_amp) ** 2 if bottom_propagating else 0.0
+        reflected_power = _modal_power_on_plane(
+            cfg.period_x, beta_top_factor, top_up_line_coeff, top_propagating
+        )
+        transmitted_power = _modal_power_on_plane(
+            cfg.period_x, beta_bottom_factor, bottom_down_line_coeff, bottom_propagating
         )
         reflected_total += reflected_power
         transmitted_total += transmitted_power
@@ -594,7 +713,9 @@ def _compute_te_power_metrics_from_lines(
                 "top_up_Ez_abs": abs(reflected_amp),
                 "bottom_down_Ez_abs": abs(transmitted_amp),
                 "bottom_up_Ez_abs": abs(bottom_up_amp),
-                "top_down_minus_incident_abs": abs(top_down_line_coeff - incident_line_coeff)
+                "top_down_minus_incident_abs": abs(
+                    top_down_line_coeff - incident_line_coeff
+                )
                 if order == 0
                 else 0.0,
                 "reflected_Ez_real": reflected_amp.real,
@@ -650,7 +771,9 @@ def _compute_te_power_metrics_from_lines(
     }
     if extra_metadata:
         metrics.update(extra_metadata)
-    _attach_absorption_metrics(metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez")
+    _attach_absorption_metrics(
+        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
+    )
 
     if MPI.COMM_WORLD.rank == 0:
         (out_dir / metrics_filename).write_text(
@@ -661,7 +784,9 @@ def _compute_te_power_metrics_from_lines(
             json.dumps(rows, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        with (out_dir / orders_csv_filename).open("w", newline="", encoding="utf-8") as fp:
+        with (out_dir / orders_csv_filename).open(
+            "w", newline="", encoding="utf-8"
+        ) as fp:
             writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
             writer.writeheader()
             writer.writerows(rows)
@@ -669,7 +794,9 @@ def _compute_te_power_metrics_from_lines(
     return metrics
 
 
-def compute_power_metrics(mesh_data, cfg: SimulationConfig, E_total, out_dir: Path) -> dict[str, object]:
+def compute_power_metrics(
+    mesh_data, cfg: SimulationConfig, E_total, out_dir: Path
+) -> dict[str, object]:
     """Compute reflection/transmission metrics from interior horizontal probe lines."""
     if not cfg.compute_power_metrics:
         return {}
@@ -742,7 +869,9 @@ def _trace_modal_coefficient(
     try:
         trace = trace_vectors[side][order]
     except KeyError as exc:
-        raise RuntimeError(f"Missing DtN trace projection vector for side={side!r}, order={order}.") from exc
+        raise RuntimeError(
+            f"Missing DtN trace projection vector for side={side!r}, order={order}."
+        ) from exc
     indices = np.asarray(trace["indices"], dtype=np.int64)
     values = np.asarray(trace["values"], dtype=np.complex128)
     if len(indices) == 0:
@@ -780,9 +909,13 @@ def _compute_tm_dtn_power_from_coefficients(
     k_sub = complex(cfg.k0 * cfg.n_substrate)
     beta_inc = _positive_sqrt(k_air**2 - cfg.kx**2)
     incident_admittance = _modal_admittance(k_air, beta_inc)
-    incident_power = cfg.period_x * _modal_power_factor(incident_admittance) * abs(incident_ex) ** 2
+    incident_power = (
+        cfg.period_x * _modal_power_factor(incident_admittance) * abs(incident_ex) ** 2
+    )
     if incident_power <= 0:
-        raise RuntimeError("Incident modal power is zero; cannot normalize DtN port power metrics.")
+        raise RuntimeError(
+            "Incident modal power is zero; cannot normalize DtN port power metrics."
+        )
 
     rows: list[dict[str, object]] = []
     reflected_total = 0.0
@@ -815,15 +948,21 @@ def _compute_tm_dtn_power_from_coefficients(
 
         top_propagating = _is_propagating(beta_top)
         bottom_propagating = _is_propagating(beta_bottom)
-        reflected_power = (
-            cfg.period_x * _modal_power_factor(y_top_admittance) * abs(reflected_amp) ** 2
-            if top_propagating
-            else 0.0
+        reflected_boundary_coeff = (
+            top_total - incident_line_coeff if top_included else 0.0 + 0.0j
         )
-        transmitted_power = (
-            cfg.period_x * _modal_power_factor(y_bottom_admittance) * abs(transmitted_amp) ** 2
-            if bottom_propagating
-            else 0.0
+        transmitted_boundary_coeff = bottom_total if bottom_included else 0.0 + 0.0j
+        reflected_power = _modal_power_on_plane(
+            cfg.period_x,
+            _modal_power_factor(y_top_admittance),
+            reflected_boundary_coeff,
+            top_propagating,
+        )
+        transmitted_power = _modal_power_on_plane(
+            cfg.period_x,
+            _modal_power_factor(y_bottom_admittance),
+            transmitted_boundary_coeff,
+            bottom_propagating,
         )
         reflected_total += reflected_power
         transmitted_total += transmitted_power
@@ -852,6 +991,8 @@ def _compute_tm_dtn_power_from_coefficients(
                 "bottom_total_Ex_port_real": bottom_total.real,
                 "bottom_total_Ex_port_imag": bottom_total.imag,
                 "bottom_total_Ex_port_abs": abs(bottom_total),
+                "reflected_Ex_boundary_abs": abs(reflected_boundary_coeff),
+                "transmitted_Ex_boundary_abs": abs(transmitted_boundary_coeff),
                 "reflected_Ex_real": reflected_amp.real,
                 "reflected_Ex_imag": reflected_amp.imag,
                 "reflected_Ex_abs": abs(reflected_amp),
@@ -908,13 +1049,16 @@ def _compute_tm_dtn_power_from_coefficients(
             "vectors to the solved finite-element coefficient vector."
         ),
         "normalization_note": (
-            "Power ratios use the modal admittance k_medium^2/beta_m. Only propagating Floquet orders contribute "
-            "to R/T; evanescent orders still keep their complex amplitudes in the order table."
+            "Power ratios use the modal admittance k_medium^2/beta_m and the field coefficient on the actual "
+            "port plane. Lossy power-carrying modes may have complex beta; below-cutoff evanescent orders do "
+            "not contribute to R/T. Phase-normalized amplitudes are reporting fields only."
         ),
     }
     if extra_metadata:
         metrics.update(extra_metadata)
-    _attach_absorption_metrics(metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey")
+    _attach_absorption_metrics(
+        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
+    )
 
     if MPI.COMM_WORLD.rank == 0:
         (out_dir / metrics_filename).write_text(
@@ -925,7 +1069,9 @@ def _compute_tm_dtn_power_from_coefficients(
             json.dumps(rows, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        with (out_dir / orders_csv_filename).open("w", newline="", encoding="utf-8") as fp:
+        with (out_dir / orders_csv_filename).open(
+            "w", newline="", encoding="utf-8"
+        ) as fp:
             writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
             writer.writeheader()
             writer.writerows(rows)
@@ -944,7 +1090,10 @@ def compute_dtn_port_power_metrics(
     if not cfg.compute_power_metrics:
         return {}
     if cfg.port_boundary_model != "dtn":
-        return {"skipped": True, "reason": "dtn_port_power_metrics requires port_boundary_model='dtn'."}
+        return {
+            "skipped": True,
+            "reason": "dtn_port_power_metrics requires port_boundary_model='dtn'.",
+        }
     if cfg.use_pml:
         return {
             "skipped": True,
@@ -958,11 +1107,15 @@ def compute_dtn_port_power_metrics(
 
     solution = np.asarray(E_total.x.array, dtype=np.complex128)
     top_ex_coeff = {
-        int(order): _trace_modal_coefficient(trace_vectors, "top", int(order), solution, cfg)
+        int(order): _trace_modal_coefficient(
+            trace_vectors, "top", int(order), solution, cfg
+        )
         for order in sorted(trace_vectors.get("top", {}).keys())
     }
     bottom_ex_coeff = {
-        int(order): _trace_modal_coefficient(trace_vectors, "bottom", int(order), solution, cfg)
+        int(order): _trace_modal_coefficient(
+            trace_vectors, "bottom", int(order), solution, cfg
+        )
         for order in sorted(trace_vectors.get("bottom", {}).keys())
     }
 
@@ -994,9 +1147,15 @@ def compute_dtn_auxiliary_power_metrics(
     if not cfg.compute_power_metrics:
         return {}
     if cfg.port_boundary_model != "dtn":
-        return {"skipped": True, "reason": "dtn_auxiliary_power_metrics requires port_boundary_model='dtn'."}
+        return {
+            "skipped": True,
+            "reason": "dtn_auxiliary_power_metrics requires port_boundary_model='dtn'.",
+        }
     if cfg.port_dtn_assembly != "auxiliary":
-        return {"skipped": True, "reason": "auxiliary modal amplitudes exist only for port_dtn_assembly='auxiliary'."}
+        return {
+            "skipped": True,
+            "reason": "auxiliary modal amplitudes exist only for port_dtn_assembly='auxiliary'.",
+        }
     if cfg.use_pml:
         return {
             "skipped": True,
@@ -1013,9 +1172,13 @@ def compute_dtn_auxiliary_power_metrics(
         cfg,
         E_total,
         out_dir,
-        top_ex_coeff={int(order): complex(value) for order, value in auxiliary_coefficients.get("top", {}).items()},
+        top_ex_coeff={
+            int(order): complex(value)
+            for order, value in auxiliary_coefficients.get("top", {}).items()
+        },
         bottom_ex_coeff={
-            int(order): complex(value) for order, value in auxiliary_coefficients.get("bottom", {}).items()
+            int(order): complex(value)
+            for order, value in auxiliary_coefficients.get("bottom", {}).items()
         },
         metrics_filename="dtn_auxiliary_power_metrics.json",
         orders_json_filename="dtn_auxiliary_diffraction_orders.json",
@@ -1029,7 +1192,9 @@ def compute_dtn_auxiliary_power_metrics(
                 "match dtn_port_power_metrics.json up to linear-solve roundoff."
             ),
             "port_order_candidates": (port_metadata or {}).get("mode_candidates", []),
-            "port_rayleigh_warnings": (port_metadata or {}).get("rayleigh_warnings", []),
+            "port_rayleigh_warnings": (port_metadata or {}).get(
+                "rayleigh_warnings", []
+            ),
         },
     )
 
@@ -1045,7 +1210,10 @@ def compute_te_dtn_port_power_metrics(
     if not cfg.compute_power_metrics:
         return {}
     if cfg.port_boundary_model != "dtn":
-        return {"skipped": True, "reason": "TE dtn_port_power_metrics requires port_boundary_model='dtn'."}
+        return {
+            "skipped": True,
+            "reason": "TE dtn_port_power_metrics requires port_boundary_model='dtn'.",
+        }
     if cfg.use_pml:
         return {
             "skipped": True,
@@ -1068,16 +1236,24 @@ def compute_te_dtn_port_power_metrics(
     top_ez_coeff: dict[int, complex] = {}
     bottom_ez_coeff: dict[int, complex] = {}
     for order in range(-order_count, order_count + 1):
-        top_ez_coeff[order] = _trace_modal_coefficient(trace_vectors, "top", order, solution, cfg)
-        bottom_ez_coeff[order] = _trace_modal_coefficient(trace_vectors, "bottom", order, solution, cfg)
+        top_ez_coeff[order] = _trace_modal_coefficient(
+            trace_vectors, "top", order, solution, cfg
+        )
+        bottom_ez_coeff[order] = _trace_modal_coefficient(
+            trace_vectors, "bottom", order, solution, cfg
+        )
 
     incident_ez = complex(cfg.port_incident_amplitude)
     k_air = complex(cfg.k0 * cfg.n_air)
     k_sub = complex(cfg.k0 * cfg.n_substrate)
     beta_inc = _positive_sqrt(k_air**2 - cfg.kx**2)
-    incident_power = cfg.period_x * 0.5 * float(max(np.real(beta_inc), 0.0)) * abs(incident_ez) ** 2
+    incident_power = (
+        cfg.period_x * 0.5 * float(max(np.real(beta_inc), 0.0)) * abs(incident_ez) ** 2
+    )
     if incident_power <= 0:
-        raise RuntimeError("Incident TE modal power is zero; cannot normalize TE DtN port power metrics.")
+        raise RuntimeError(
+            "Incident TE modal power is zero; cannot normalize TE DtN port power metrics."
+        )
 
     rows: list[dict[str, object]] = []
     reflected_total = 0.0
@@ -1093,14 +1269,23 @@ def compute_te_dtn_port_power_metrics(
         if order == 0:
             incident_line_coeff = incident_ez * np.exp(-1j * beta_top * top_y)
 
-        reflected_amp = (top_ez_coeff[order] - incident_line_coeff) * np.exp(-1j * beta_top * top_y)
+        reflected_amp = (top_ez_coeff[order] - incident_line_coeff) * np.exp(
+            -1j * beta_top * top_y
+        )
         transmitted_amp = bottom_ez_coeff[order] * np.exp(1j * beta_bottom * bottom_y)
 
         top_propagating = _is_propagating(beta_top)
         bottom_propagating = _is_propagating(beta_bottom)
-        reflected_power = cfg.period_x * beta_top_factor * abs(reflected_amp) ** 2 if top_propagating else 0.0
-        transmitted_power = (
-            cfg.period_x * beta_bottom_factor * abs(transmitted_amp) ** 2 if bottom_propagating else 0.0
+        reflected_boundary_coeff = top_ez_coeff[order] - incident_line_coeff
+        transmitted_boundary_coeff = bottom_ez_coeff[order]
+        reflected_power = _modal_power_on_plane(
+            cfg.period_x, beta_top_factor, reflected_boundary_coeff, top_propagating
+        )
+        transmitted_power = _modal_power_on_plane(
+            cfg.period_x,
+            beta_bottom_factor,
+            transmitted_boundary_coeff,
+            bottom_propagating,
         )
         reflected_total += reflected_power
         transmitted_total += transmitted_power
@@ -1123,6 +1308,8 @@ def compute_te_dtn_port_power_metrics(
                 "bottom_total_Ez_port_real": bottom_ez_coeff[order].real,
                 "bottom_total_Ez_port_imag": bottom_ez_coeff[order].imag,
                 "bottom_total_Ez_port_abs": abs(bottom_ez_coeff[order]),
+                "reflected_Ez_boundary_abs": abs(reflected_boundary_coeff),
+                "transmitted_Ez_boundary_abs": abs(transmitted_boundary_coeff),
                 "reflected_Ez_real": reflected_amp.real,
                 "reflected_Ez_imag": reflected_amp.imag,
                 "reflected_Ez_abs": abs(reflected_amp),
@@ -1167,11 +1354,13 @@ def compute_te_dtn_port_power_metrics(
             "Bottom transmitted amplitudes use transmitted_m=Ez_bottom_m exp(i beta_bottom y_bottom)."
         ),
         "normalization_note": (
-            "TE power ratios use the modal factor 0.5*Re(beta_m). Only propagating Floquet orders "
-            "contribute to R/T; evanescent orders keep their complex amplitudes in the order table."
+            "TE power ratios use 0.5*Re(beta_m) and coefficients on the actual port plane. Lossy "
+            "power-carrying modes may have complex beta; below-cutoff evanescent orders do not contribute."
         ),
     }
-    _attach_absorption_metrics(metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez")
+    _attach_absorption_metrics(
+        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
+    )
 
     if MPI.COMM_WORLD.rank == 0:
         (out_dir / "dtn_port_power_metrics.json").write_text(
@@ -1182,7 +1371,9 @@ def compute_te_dtn_port_power_metrics(
             json.dumps(rows, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        with (out_dir / "dtn_port_diffraction_orders.csv").open("w", newline="", encoding="utf-8") as fp:
+        with (out_dir / "dtn_port_diffraction_orders.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fp:
             writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
             writer.writeheader()
             writer.writerows(rows)

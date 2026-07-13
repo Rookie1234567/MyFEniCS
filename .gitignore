@@ -51,6 +51,11 @@ output/
 !docs/
 !docs/**/outcomes/
 !docs/**/outcomes/**/*.csv
+!benchmarks/
+!benchmarks/**/*.csv
+
+# Benchmark metadata is tracked; heavy fields stay local
+benchmarks/artifacts/
 
 # Large mesh / generated files
 *.msh

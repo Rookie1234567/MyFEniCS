@@ -1,0 +1,7 @@
+{
+  "status": "experimental",
+  "evidence": "test_backed_path_smoke",
+  "required": ["interface tags exist", "solve completes", "finite fields"],
+  "not_verified_accuracy": true,
+  "no_canonical_physical_record": true
+}

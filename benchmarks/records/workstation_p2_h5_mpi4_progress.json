@@ -1,0 +1,8 @@
+{
+  "iteration": 1200,
+  "reported_relative_residual": 1.006316842860421e-06,
+  "true_relative_residual": 1.006316842860421e-06,
+  "elapsed_s": 99.58171066502109,
+  "monitor_current_total_gb": 1.9917945861816406,
+  "monitor_peak_total_gb": 1.9881210327148438
+}

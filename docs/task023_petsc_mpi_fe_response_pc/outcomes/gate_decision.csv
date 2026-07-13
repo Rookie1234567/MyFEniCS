@@ -1,0 +1,5 @@
+gate,best_profile,best_h_nm,best_residual,h5_rta_closed,h2_attempted,h1p5_attempted,decision,reason
+task023_h5,best_petsc_fe_response_iterative,5.0,2.4934022898371233e-10,True,True,False,pass,h=5 residual and official R/T/A closed
+task023_h2,none,2.0,0.9895610798912028,True,True,False,fail,ASM/ILU too weak and stronger local LU/MUMPS profiles timed out
+task023_h15,none,1.5,,True,True,False,not_run_memory_projection,h=2 peak RSS and cubic scaling project beyond 14 GB WSL budget
+task023_overall,best_petsc_fe_response_iterative,5.0,2.4934022898371233e-10,True,True,False,review_required_before_production_default,h=5 breakthrough retained but h=2 production gate not met

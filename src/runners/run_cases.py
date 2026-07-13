@@ -14,11 +14,24 @@ from ..solvers.solve_te_maxwell import run_te_case, run_te_port_case
 from ..solvers.solve_vector_maxwell import _json_default, run_case
 
 
+def _parse_complex_index(text: str) -> complex:
+    """Parse refractive indices such as 1.45, 0.999+0.002j, or 1.2-0.1i."""
+
+    try:
+        return complex(text.strip().replace("I", "j").replace("i", "j"))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid complex refractive index {text!r}; use forms such as 1.45 or 0.999+0.002j."
+        ) from exc
+
+
 def _backend_list(name: str) -> list[str]:
     if MPI.COMM_WORLD.size > 1 and name == "both":
         return ["mpc_official"]
     if MPI.COMM_WORLD.size > 1 and name == "manual":
-        raise SystemExit("manual backend is serial-only in v2; use constraint_backend='mpc_official' for MPI runs.")
+        raise SystemExit(
+            "manual backend is serial-only in v2; use constraint_backend='mpc_official' for MPI runs."
+        )
     return ["mpc_official", "manual"] if name == "both" else [name]
 
 
@@ -33,7 +46,9 @@ def _normalize_method(name: str) -> str:
     try:
         return aliases[name]
     except KeyError as exc:
-        raise ValueError("calculation_method must be 'scattered', 'port', or 'all'.") from exc
+        raise ValueError(
+            "calculation_method must be 'scattered', 'port', or 'all'."
+        ) from exc
 
 
 def _formulation_list(method: str) -> list[str]:
@@ -48,7 +63,9 @@ def _port_model_list(name: str) -> list[str]:
         if name == "all":
             return ["robin"]
         if name == "dtn":
-            raise SystemExit("DtN Fourier port is serial-only in v2; MPI runs currently support the Robin port.")
+            raise SystemExit(
+                "DtN Fourier port is serial-only in v2; MPI runs currently support the Robin port."
+            )
     if name == "all":
         return ["robin", "dtn"]
     if name in ("robin", "dtn"):
@@ -56,13 +73,17 @@ def _port_model_list(name: str) -> list[str]:
     raise ValueError("port_boundary_model must be 'robin', 'dtn', or 'all'.")
 
 
-def _backends_for_case(requested: str, formulation: str, port_model: str | None) -> list[str]:
+def _backends_for_case(
+    requested: str, formulation: str, port_model: str | None
+) -> list[str]:
     backends = _backend_list(requested)
     if formulation == "port_total" and port_model == "dtn":
         if requested == "both":
             return ["manual"]
         if requested != "manual":
-            raise SystemExit("DtN Fourier port is a nonlocal matrix operator and currently supports manual backend only.")
+            raise SystemExit(
+                "DtN Fourier port is a nonlocal matrix operator and currently supports manual backend only."
+            )
     return backends
 
 
@@ -92,14 +113,18 @@ def _polarization_tag(name: str) -> str:
     return str(name).lower()
 
 
-def _planned_case_count(formulations: list[str], constraint_backend: str, port_boundary_model: str) -> int:
+def _planned_case_count(
+    formulations: list[str], constraint_backend: str, port_boundary_model: str
+) -> int:
     count = 0
     for formulation in formulations:
         if formulation == "scattered":
             count += len(_backends_for_case(constraint_backend, formulation, None))
             continue
         for port_model in _port_model_list(port_boundary_model):
-            count += len(_backends_for_case(constraint_backend, formulation, port_model))
+            count += len(
+                _backends_for_case(constraint_backend, formulation, port_model)
+            )
     return count
 
 
@@ -197,39 +222,102 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Override config.polarization_type: TM uses Ex/Ey Nedelec, TE uses scalar Ez.",
     )
-    parser.add_argument("--nedelec-degree", type=int, default=None, help="Nedelec edge element degree.")
-    parser.add_argument("--visualization-degree", type=int, default=None, help="DG visualization degree.")
+    parser.add_argument(
+        "--nedelec-degree", type=int, default=None, help="Nedelec edge element degree."
+    )
+    parser.add_argument(
+        "--visualization-degree",
+        type=int,
+        default=None,
+        help="DG visualization degree.",
+    )
     parser.add_argument(
         "--generate-png-plots",
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Write quick PNG preview plots. Default is false; ParaView VTU/BP output is always kept.",
     )
-    parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
+    parser.add_argument(
+        "--mesh-target-size", type=float, default=None, help="Target mesh size in nm."
+    )
     parser.add_argument(
         "--mesh-cell-shape",
         choices=("triangle", "quadrilateral"),
         default=None,
         help="2D structured cell shape: triangle or quadrilateral.",
     )
-    parser.add_argument("--period-x", type=float, default=None, help="2D period in x, in nm.")
-    parser.add_argument("--air-height", type=float, default=None, help="Physical air height above the substrate, in nm.")
-    parser.add_argument("--substrate-thickness", type=float, default=None, help="Substrate thickness, in nm.")
-    parser.add_argument("--grating-width", type=float, default=None, help="Rectangular grating width, in nm.")
-    parser.add_argument("--grating-height", type=float, default=None, help="Rectangular grating height, in nm.")
-    parser.add_argument("--lambda0", type=float, default=None, help="Vacuum wavelength, in nm.")
-    parser.add_argument("--n-air", type=float, default=None, help="Real refractive index of air.")
-    parser.add_argument("--n-substrate", type=float, default=None, help="Real refractive index of the substrate.")
-    parser.add_argument("--n-grating", type=float, default=None, help="Real refractive index of the grating.")
-    parser.add_argument("--pml-top-thickness", type=float, default=None, help="Top PML thickness for scattered runs.")
+    parser.add_argument(
+        "--period-x", type=float, default=None, help="2D period in x, in nm."
+    )
+    parser.add_argument(
+        "--air-height",
+        type=float,
+        default=None,
+        help="Physical air height above the substrate, in nm.",
+    )
+    parser.add_argument(
+        "--substrate-thickness",
+        type=float,
+        default=None,
+        help="Substrate thickness, in nm.",
+    )
+    parser.add_argument(
+        "--grating-width",
+        type=float,
+        default=None,
+        help="Rectangular grating width, in nm.",
+    )
+    parser.add_argument(
+        "--grating-height",
+        type=float,
+        default=None,
+        help="Rectangular grating height, in nm.",
+    )
+    parser.add_argument(
+        "--lambda0", type=float, default=None, help="Vacuum wavelength, in nm."
+    )
+    parser.add_argument(
+        "--n-air",
+        type=_parse_complex_index,
+        default=None,
+        help="Air refractive index; complex values are accepted.",
+    )
+    parser.add_argument(
+        "--n-substrate",
+        type=_parse_complex_index,
+        default=None,
+        help="Substrate refractive index, e.g. 0.999+0.002j for an absorbing material.",
+    )
+    parser.add_argument(
+        "--n-grating",
+        type=_parse_complex_index,
+        default=None,
+        help="Grating refractive index; complex values are accepted.",
+    )
+    parser.add_argument(
+        "--pml-top-thickness",
+        type=float,
+        default=None,
+        help="Top PML thickness for scattered runs.",
+    )
     parser.add_argument(
         "--pml-bottom-thickness",
         type=float,
         default=None,
         help="Bottom PML thickness for scattered runs.",
     )
-    parser.add_argument("--pml-alpha", type=float, default=None, help="PML strength parameter for scattered runs.")
-    parser.add_argument("--incident-angle-deg", type=float, default=None, help="Incident angle in degrees.")
+    parser.add_argument(
+        "--pml-alpha",
+        type=float,
+        default=None,
+        help="PML strength parameter for scattered runs.",
+    )
+    parser.add_argument(
+        "--incident-angle-deg",
+        type=float,
+        default=None,
+        help="Incident angle in degrees.",
+    )
     parser.add_argument(
         "--diffraction-order-count",
         type=int,
@@ -302,32 +390,56 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Override config.unique_output. Use --no-unique-output for old fixed output directories.",
     )
+    parser.add_argument(
+        "--results-root",
+        default=None,
+        help=(
+            "Output root override. The ordinary default remains <repository>/results; "
+            "benchmark scripts use benchmarks/artifacts explicitly."
+        ),
+    )
     args = parser.parse_args(argv)
 
-    calculation_method = _normalize_method(args.formulation or defaults.calculation_method)
+    calculation_method = _normalize_method(
+        args.formulation or defaults.calculation_method
+    )
     constraint_backend = args.constraint_backend or defaults.constraint_backend
     scattering_background = args.scattering_background or defaults.scattering_background
     port_boundary_model = args.port_boundary_model or defaults.port_boundary_model
-    port_dtn_order_count = args.port_order_count if args.port_order_count is not None else defaults.port_dtn_order_count
+    port_dtn_order_count = (
+        args.port_order_count
+        if args.port_order_count is not None
+        else defaults.port_dtn_order_count
+    )
     port_dtn_assembly = args.port_dtn_assembly or defaults.port_dtn_assembly
     port_use_diffraction_orders = (
         defaults.port_use_diffraction_orders
         if args.port_use_diffraction_orders is None
         else args.port_use_diffraction_orders
     )
-    port_use_pml = defaults.port_use_pml if args.port_use_pml is None else args.port_use_pml
-    unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
+    port_use_pml = (
+        defaults.port_use_pml if args.port_use_pml is None else args.port_use_pml
+    )
+    unique_output = (
+        defaults.unique_output if args.unique_output is None else args.unique_output
+    )
     polarization_type = args.polarization_type or defaults.polarization_type
 
     if calculation_method == "port_total" and constraint_backend == "mpc_auto":
-        raise SystemExit("port_total does not use the dolfinx_mpc automatic helper; use manual, mpc_official, or both.")
+        raise SystemExit(
+            "port_total does not use the dolfinx_mpc automatic helper; use manual, mpc_official, or both."
+        )
     if port_dtn_order_count < 0:
-        raise SystemExit("port_dtn_order_count / --port-order-count must be non-negative.")
+        raise SystemExit(
+            "port_dtn_order_count / --port-order-count must be non-negative."
+        )
     if port_dtn_assembly not in ("explicit", "auxiliary"):
         raise SystemExit("port_dtn_assembly must be 'explicit' or 'auxiliary'.")
 
     root = project_root()
-    results_root = root / "results"
+    results_root = Path(args.results_root) if args.results_root else root / "results"
+    if not results_root.is_absolute():
+        results_root = root / results_root
     common_updates = _base_updates(args)
     formulations = _formulation_list(calculation_method)
     if port_use_pml and "port_total" in formulations:
@@ -336,11 +448,27 @@ def main(argv: list[str] | None = None):
             "The current port weak form integrates only physical cells; PML cells would have unconstrained dofs."
         )
 
-    nedelec_for_name = args.nedelec_degree if args.nedelec_degree is not None else defaults.nedelec_degree
-    mesh_for_name = args.mesh_target_size if args.mesh_target_size is not None else defaults.mesh_target_size
-    angle_for_name = args.incident_angle_deg if args.incident_angle_deg is not None else defaults.incident_angle_deg
+    nedelec_for_name = (
+        args.nedelec_degree
+        if args.nedelec_degree is not None
+        else defaults.nedelec_degree
+    )
+    mesh_for_name = (
+        args.mesh_target_size
+        if args.mesh_target_size is not None
+        else defaults.mesh_target_size
+    )
+    angle_for_name = (
+        args.incident_angle_deg
+        if args.incident_angle_deg is not None
+        else defaults.incident_angle_deg
+    )
     lambda_for_name = args.lambda0 if args.lambda0 is not None else defaults.lambda0
-    cell_shape_for_name = args.mesh_cell_shape if args.mesh_cell_shape is not None else defaults.mesh_cell_shape
+    cell_shape_for_name = (
+        args.mesh_cell_shape
+        if args.mesh_cell_shape is not None
+        else defaults.mesh_cell_shape
+    )
 
     group_parts = ["2D_grating"]
     group_parts.append(_polarization_tag(polarization_type))
@@ -363,7 +491,11 @@ def main(argv: list[str] | None = None):
         group_parts.append(f"np{MPI.COMM_WORLD.size}")
     run_root = _shared_run_dir(results_root, _case_name(group_parts), unique_output)
     run_root.mkdir(parents=True, exist_ok=True)
-    single_case_output = unique_output and _planned_case_count(formulations, constraint_backend, port_boundary_model) == 1
+    single_case_output = (
+        unique_output
+        and _planned_case_count(formulations, constraint_backend, port_boundary_model)
+        == 1
+    )
 
     summaries = []
     for formulation in formulations:
@@ -385,9 +517,17 @@ def main(argv: list[str] | None = None):
                     }
                 )
                 cfg = replace(cfg, case_name=f"{cfg.case_name}_{_backend_tag(backend)}")
-                out_dir = run_root if single_case_output else run_root / cfg.case_name if unique_output else results_root / cfg.case_name
+                out_dir = (
+                    run_root
+                    if single_case_output
+                    else run_root / cfg.case_name
+                    if unique_output
+                    else results_root / cfg.case_name
+                )
                 if cfg.polarization_type.upper() == "TE":
-                    summaries.append(run_te_case(cfg, out_dir, constraint_backend=backend))
+                    summaries.append(
+                        run_te_case(cfg, out_dir, constraint_backend=backend)
+                    )
                 else:
                     summaries.append(run_case(cfg, out_dir, constraint_backend=backend))
             continue
@@ -401,8 +541,12 @@ def main(argv: list[str] | None = None):
                 if args.nedelec_degree is not None:
                     case_parts.append(f"p{args.nedelec_degree}")
                 if port_model == "dtn":
-                    case_parts.append("auto" if port_use_diffraction_orders else "order0")
-                    case_parts.append("aux" if port_dtn_assembly == "auxiliary" else "explicit")
+                    case_parts.append(
+                        "auto" if port_use_diffraction_orders else "order0"
+                    )
+                    case_parts.append(
+                        "aux" if port_dtn_assembly == "auxiliary" else "explicit"
+                    )
                 if port_use_pml:
                     case_parts.append("with_pml")
                 port_updates = dict(common_updates)
@@ -423,15 +567,29 @@ def main(argv: list[str] | None = None):
                     }
                 )
                 cfg = replace(cfg, case_name=f"{cfg.case_name}_{_backend_tag(backend)}")
-                out_dir = run_root if single_case_output else run_root / cfg.case_name if unique_output else results_root / cfg.case_name
+                out_dir = (
+                    run_root
+                    if single_case_output
+                    else run_root / cfg.case_name
+                    if unique_output
+                    else results_root / cfg.case_name
+                )
                 if cfg.polarization_type.upper() == "TE":
-                    summaries.append(run_te_port_case(cfg, out_dir, constraint_backend=backend))
+                    summaries.append(
+                        run_te_port_case(cfg, out_dir, constraint_backend=backend)
+                    )
                 else:
-                    summaries.append(run_port_case(cfg, out_dir, constraint_backend=backend))
+                    summaries.append(
+                        run_port_case(cfg, out_dir, constraint_backend=backend)
+                    )
 
     comparison = None
     if MPI.COMM_WORLD.rank == 0:
-        summary_path = run_root / "all_run_summary.json" if unique_output else results_root / "all_run_summary.json"
+        summary_path = (
+            run_root / "all_run_summary.json"
+            if unique_output
+            else results_root / "all_run_summary.json"
+        )
         summary_path.write_text(
             json.dumps(summaries, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
@@ -448,19 +606,33 @@ def main(argv: list[str] | None = None):
                     "R_plus_T": item.get("power_metrics", {}).get("R_plus_T"),
                     "A_balance": item.get("power_metrics", {}).get("A_balance"),
                     "A_volume": item.get("power_metrics", {}).get("A_volume"),
-                    "energy_residual_1_minus_R_minus_T": item.get("power_metrics", {}).get(
-                        "energy_residual_1_minus_R_minus_T"
+                    "energy_residual_1_minus_R_minus_T": item.get(
+                        "power_metrics", {}
+                    ).get("energy_residual_1_minus_R_minus_T"),
+                    "poynting_R_plus_T_from_net_flux": item.get(
+                        "power_metrics", {}
+                    ).get("poynting_R_plus_T_from_net_flux"),
+                    "poynting_energy_residual": item.get("power_metrics", {}).get(
+                        "poynting_energy_residual"
                     ),
-                    "poynting_R_plus_T_from_net_flux": item.get("power_metrics", {}).get(
-                        "poynting_R_plus_T_from_net_flux"
+                    "dtn_port_R_total": item.get("dtn_port_power_metrics", {}).get(
+                        "R_total"
                     ),
-                    "poynting_energy_residual": item.get("power_metrics", {}).get("poynting_energy_residual"),
-                    "dtn_port_R_total": item.get("dtn_port_power_metrics", {}).get("R_total"),
-                    "dtn_port_T_total": item.get("dtn_port_power_metrics", {}).get("T_total"),
-                    "dtn_port_R_plus_T": item.get("dtn_port_power_metrics", {}).get("R_plus_T"),
-                    "dtn_auxiliary_R_total": item.get("dtn_auxiliary_power_metrics", {}).get("R_total"),
-                    "dtn_auxiliary_T_total": item.get("dtn_auxiliary_power_metrics", {}).get("T_total"),
-                    "dtn_auxiliary_R_plus_T": item.get("dtn_auxiliary_power_metrics", {}).get("R_plus_T"),
+                    "dtn_port_T_total": item.get("dtn_port_power_metrics", {}).get(
+                        "T_total"
+                    ),
+                    "dtn_port_R_plus_T": item.get("dtn_port_power_metrics", {}).get(
+                        "R_plus_T"
+                    ),
+                    "dtn_auxiliary_R_total": item.get(
+                        "dtn_auxiliary_power_metrics", {}
+                    ).get("R_total"),
+                    "dtn_auxiliary_T_total": item.get(
+                        "dtn_auxiliary_power_metrics", {}
+                    ).get("T_total"),
+                    "dtn_auxiliary_R_plus_T": item.get(
+                        "dtn_auxiliary_power_metrics", {}
+                    ).get("R_plus_T"),
                     "near_field_integrals": item.get("near_field_integrals"),
                 }
                 for item in summaries
@@ -485,7 +657,11 @@ def main(argv: list[str] | None = None):
                     cfg_data.get("port_boundary_model", ""),
                 ]
                 if cfg_data.get("port_boundary_model") == "dtn":
-                    key_parts.append("dtnauto" if cfg_data.get("port_use_diffraction_orders") else "dtn0")
+                    key_parts.append(
+                        "dtnauto"
+                        if cfg_data.get("port_use_diffraction_orders")
+                        else "dtn0"
+                    )
                     key_parts.append(str(cfg_data.get("port_dtn_assembly", "")))
             else:
                 key_parts = [
@@ -493,7 +669,9 @@ def main(argv: list[str] | None = None):
                     "scattered",
                     cfg_data.get("scattering_background", ""),
                 ]
-            groups.setdefault(_case_name([str(part) for part in key_parts]), []).append(item)
+            groups.setdefault(_case_name([str(part) for part in key_parts]), []).append(
+                item
+            )
         comparison["same_physics_backend_checks"] = []
         for group_name, items in groups.items():
             if len(items) != 2:
@@ -502,24 +680,38 @@ def main(argv: list[str] | None = None):
             check = {
                 "physics_group": group_name,
                 "cases": [first["case_name"], second["case_name"]],
-                "max_abs_E_total_scalar_difference": abs(first["max_abs_E_total"] - second["max_abs_E_total"]),
+                "max_abs_E_total_scalar_difference": abs(
+                    first["max_abs_E_total"] - second["max_abs_E_total"]
+                ),
                 "floquet_mismatch_total_dof": {
                     first["case_name"]: first["floquet_mismatch_total_dof"],
                     second["case_name"]: second["floquet_mismatch_total_dof"],
                 },
             }
             if "max_abs_E_scat" in first and "max_abs_E_scat" in second:
-                check["max_abs_E_scat_scalar_difference"] = abs(first["max_abs_E_scat"] - second["max_abs_E_scat"])
-            if "max_abs_E_scat_reference" in first and "max_abs_E_scat_reference" in second:
+                check["max_abs_E_scat_scalar_difference"] = abs(
+                    first["max_abs_E_scat"] - second["max_abs_E_scat"]
+                )
+            if (
+                "max_abs_E_scat_reference" in first
+                and "max_abs_E_scat_reference" in second
+            ):
                 check["max_abs_E_scat_reference_scalar_difference"] = abs(
-                    first["max_abs_E_scat_reference"] - second["max_abs_E_scat_reference"]
+                    first["max_abs_E_scat_reference"]
+                    - second["max_abs_E_scat_reference"]
                 )
             first_power = first.get("power_metrics", {})
             second_power = second.get("power_metrics", {})
             if first_power and second_power:
-                check["R_total_difference"] = abs(first_power["R_total"] - second_power["R_total"])
-                check["T_total_difference"] = abs(first_power["T_total"] - second_power["T_total"])
-                check["R_plus_T_difference"] = abs(first_power["R_plus_T"] - second_power["R_plus_T"])
+                check["R_total_difference"] = abs(
+                    first_power["R_total"] - second_power["R_total"]
+                )
+                check["T_total_difference"] = abs(
+                    first_power["T_total"] - second_power["T_total"]
+                )
+                check["R_plus_T_difference"] = abs(
+                    first_power["R_plus_T"] - second_power["R_plus_T"]
+                )
                 if (
                     first_power.get("poynting_R_plus_T_from_net_flux") is not None
                     and second_power.get("poynting_R_plus_T_from_net_flux") is not None
@@ -529,7 +721,11 @@ def main(argv: list[str] | None = None):
                         - second_power["poynting_R_plus_T_from_net_flux"]
                     )
             comparison["same_physics_backend_checks"].append(check)
-        comparison_path = run_root / "backend_comparison.json" if unique_output else results_root / "backend_comparison.json"
+        comparison_path = (
+            run_root / "backend_comparison.json"
+            if unique_output
+            else results_root / "backend_comparison.json"
+        )
         comparison_path.write_text(
             json.dumps(comparison, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",

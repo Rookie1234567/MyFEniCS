@@ -1,0 +1,11 @@
+{
+  "status": "canonical_target",
+  "linear_residual_max": 1e-8,
+  "energy_closure_abs_max": 1e-6,
+  "h2_policy": "reviewed_reference_not_rerun_under_14gb",
+  "canonical_references": [
+    "records/h5_reference.json",
+    "records/h3_reference.json",
+    "records/h2_reviewed_reference.json"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "record_type": "sha256_pinned_reviewed_reference",
+  "benchmark_id": "l3_direct_h2",
+  "canonical_record": "benchmarks/records/direct_p2_h2_reviewed_reference.json",
+  "sha256": "f7f832f2e07bd8d4ae1558ef7c68719aa40e5ddede33f167997115d3999dc95d"
+}

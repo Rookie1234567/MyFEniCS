@@ -1,5 +1,7 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+> **文档状态：历史验证长文。** 当前运行方式见 [`30_3d_stage4a_flat_layer.md`](30_3d_stage4a_flat_layer.md)、[`31_3d_stage4b_grating_direct.md`](31_3d_stage4b_grating_direct.md) 和 [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md)；旧 `ACTIVE_3D_INPUT_GROUP="stage4_grating"` 已被命名 preset 取代。
+
 ## 2026-07-02 更新：并行 ParaView 和 summary 指标避免 ghost 重复计数
 
 并行运行时，后处理会只用 owned cells 对应的点来统计 summary 指标，避免 ghost cells 让 `max|E|`、Poynting、分量最大值在串并行对比中偏移。输出里可以看：

@@ -1,0 +1,6 @@
+{
+  "status": "canonical_lightweight",
+  "linear_residual_max": 1e-12,
+  "poynting_direction_cosine_min": 0.999999,
+  "canonical_reference": "records/canonical_reference.json"
+}

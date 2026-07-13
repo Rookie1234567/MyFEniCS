@@ -1,0 +1,4 @@
+case,h_nm,best_available_profile,best_residual,gate,allow_next_scale,dominant_failure_stage,peak_total_rss_gb,decision
+target_p2_h5,5.0,SPILU block Schur PC,2.4302852415918324e-07,production_like,true,,2.3542098999023438,h5 breakthrough reproducible
+target_p2_h2,2.0,none,,blocked,false,fe_factorization,6.276741027832031,h2 matrix and mode mapping pass but serial SciPy SPILU is not robust
+matrix_free_fe_action,10.0,FE weak-form action,6.034580243393256e-16,pass,true,,0.2066802978515625,use as PETSc MatShell support layer

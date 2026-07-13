@@ -1,0 +1,40 @@
+gate,requirement,result,status,evidence
+clean_base,branch starts from clean master,master@0465b5f,pass,merge_execution_log.md
+task_audit,Task000-Task027 audited,28 structured rows,pass,task000_task027_progress.csv
+selective_integration,no whole research branch merge,Task026/027 stable paths extracted,pass,selective_merge_manifest.csv
+ordinary_default,ordinary solver default remains direct,Stage1 lightweight PyCharm preset,pass,src/main.py
+py_compile,all source and benchmark Python compiles,pass,pass,test_summary.md
+unit_suite,full source tests,115 passed and 10 skipped,pass,test_summary.md
+mpi_suite,focused MPI4 tests,14 per rank passed,pass,test_summary.md
+main_preset_contract,all named presets use actual parser,17 of 17 accepted,pass,src/test/test_27_main_preset_contract.py
+documentation_contract,depth links case contracts records and technical accuracy,11 tests pass,pass,src/test/test_26_documentation_contract.py
+smoke_2d_tm_lossy,complex TM official energy closure,3.33e-15,pass,test_summary.md
+smoke_2d_te_lossy,complex TE official energy closure,-5.50e-16,pass,test_summary.md
+smoke_3d_default,default Stage1 direct,residual 1.436e-16 and 274.4 MB,pass,test_summary.md
+condensation,explicit matrixfree transpose and backsub equivalence,all focused tests pass,pass,src/test/test_22_condensed_dtn.py
+physical_slab,owner empty-owner and cache certification,all MPI4 tests pass,pass,src/test/test_23_physical_slab_two_level.py
+physical_slab_sm2,production two-step path,explicit reference repeat action requirement destroy pass,pass,src/test/test_23_physical_slab_two_level.py
+output_boundary,ordinary versus benchmark heavy outputs,separate ignored roots,pass,benchmarks/artifacts
+automatic_checker,manifest and canonical records,143 of 143 gates pass,pass,benchmarks/records/benchmark_gate_report.json
+record_ids,record IDs match manifest,all required records pass,pass,benchmarks/check_benchmarks.py
+artifact_provenance,actual and canonical roots are truthful,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+physical_model,geometry material incidence polarization and degree match,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+qualified_profile,required iterative records have no deviations,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+ksp_convergence,ksp_reason is positive,h5 h3 h2 pass,pass,benchmarks/check_benchmarks.py
+coarse_condition,condition below configured maximum,max 900.96,pass,benchmarks/check_benchmarks.py
+environment,Stage4 environment reconstruction,qualified local complex image,pass_with_qualification,benchmarks/environment.json
+direct_reference,3D direct records,h5 and h3 pass plus h2 reviewed reference,pass,benchmarks/records
+iterative_h5,h5 full true residual <=1e-6,9.83949e-7,pass,benchmarks/records/workstation_p2_h5_mpi4.json
+iterative_h3,h3 full true residual <=1e-6,9.93265e-7,pass,benchmarks/records/workstation_p2_h3_mpi4.json
+iterative_h2,h2 full true residual <=1e-6,9.99738e-7,pass,benchmarks/records/workstation_p2_h2_mpi4.json
+h2_memory,h2 total peak RSS <14 GB,13.080257 GB,pass,benchmarks/records/workstation_p2_h2_mpi4.json
+energy,abs closure <=1e-6,maximum 6.58e-9,pass,benchmarks/benchmark_summary.csv
+feature_catalog,13 case-contained benchmarks with expanded tutorials,13 of 13 pass,pass,benchmarks/cases
+stage2_truthfulness,Stage2B and Stage2C do not overclaim,experimental and not_verified_accuracy,pass,docs/capability_matrix.md
+large_artifacts,no tracked mesh field or cache,no large artifacts tracked,pass,final candidate scan
+task028_response_v2,ten requested response topics complete,response_v2.md,pass,../response_v2.md
+case002_full_equivalence,explicit and auxiliary full solves,field 2.771e-15 and RTA 1.221e-15,pass,benchmarks/cases/002_2d_tm_dtn_equivalence/records/comparison.json
+case003_lossy_canonical,TM and TE records with official closure,max abs closure 3.331e-15,pass,benchmarks/cases/003_2d_te_tm_complex_absorption/records
+demo_target_identity,demo and target preset names and physics are distinct,17 presets pass,pass,src/test/test_27_main_preset_contract.py
+walkthrough_accuracy,coarse fields PC order explicit inverse and H=I limitation,protected by contract,pass,src/test/test_26_documentation_contract.py
+task028_response_v3,fifteen P0 and three P1 topics complete,response_v3.md,pass,../response_v3.md

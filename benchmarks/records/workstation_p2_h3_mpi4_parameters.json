@@ -1,0 +1,18 @@
+{
+  "h_nm": 3.0,
+  "theta_deg": 80.0,
+  "lambda_nm": 13.5,
+  "coarse_slabs": 24,
+  "num_slabs": 16,
+  "overlap_layers": 0.25,
+  "absorption_shift": 0.1,
+  "ilu_levels": 1,
+  "restart": 100,
+  "max_it": 3000,
+  "rtol": 1e-06,
+  "rta_threshold": 1.1e-06,
+  "monitor_stride": 50,
+  "case_label": "task028_h3_mpi4_clean",
+  "record": "benchmarks/records/workstation_p2_h3_mpi4.json",
+  "results_dir": "benchmarks/artifacts"
+}

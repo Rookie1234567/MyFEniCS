@@ -1,0 +1,11 @@
+{
+  "case_id": "010_3d_stage1_airbox",
+  "status": "canonical_lightweight",
+  "preset": "3d_stage1_airbox_smoke",
+  "geometry_nm": [10.0, 10.0, 10.0],
+  "wavelength_nm": 633.0,
+  "material_index": "1+0j",
+  "degree": 1,
+  "mesh_target_size_nm": 5.0,
+  "mpi_size": 2
+}

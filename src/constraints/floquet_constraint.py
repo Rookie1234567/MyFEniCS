@@ -27,13 +27,17 @@ class FloquetConstraintData:
 
 
 def _facet_dofs(V, facet_dim: int, facet: int) -> np.ndarray:
-    dofs = fem.locate_dofs_topological(V, facet_dim, np.asarray([facet], dtype=np.int32))
+    dofs = fem.locate_dofs_topological(
+        V, facet_dim, np.asarray([facet], dtype=np.int32)
+    )
     if len(dofs) < 1:
         raise RuntimeError(f"No H(curl) dofs were found on Floquet facet {facet}.")
     return np.asarray(dofs, dtype=np.int32)
 
 
-def _local_dof_global_info(V, dofs: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _local_dof_global_info(
+    V, dofs: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     index_map = V.dofmap.index_map
     bs = V.dofmap.index_map_bs
     comm = V.mesh.comm
@@ -108,13 +112,17 @@ def _transform_from_probe_values(
     return transform, float(np.linalg.norm(residual) / denom)
 
 
-def _build_floquet_constraints_serial(V, mesh_data, cfg: SimulationConfig) -> FloquetConstraintData:
+def _build_floquet_constraints_serial(
+    V, mesh_data, cfg: SimulationConfig
+) -> FloquetConstraintData:
     msh = mesh_data.mesh
     facet_dim = msh.topology.dim - 1
     left_facets = np.asarray(mesh_data.facet_tags.find(cfg.tags.left), dtype=np.int32)
     right_facets = np.asarray(mesh_data.facet_tags.find(cfg.tags.right), dtype=np.int32)
     if len(left_facets) != len(right_facets):
-        raise RuntimeError(f"Left/right Floquet facet counts differ: left={len(left_facets)}, right={len(right_facets)}")
+        raise RuntimeError(
+            f"Left/right Floquet facet counts differ: left={len(left_facets)}, right={len(right_facets)}"
+        )
 
     left_mid = mesh.compute_midpoints(msh, facet_dim, left_facets)
     right_mid = mesh.compute_midpoints(msh, facet_dim, right_facets)
@@ -126,7 +134,9 @@ def _build_floquet_constraints_serial(V, mesh_data, cfg: SimulationConfig) -> Fl
     right_y = right_mid[right_order, 1]
     max_pair_y_error = float(np.max(np.abs(left_y - right_y))) if len(left_y) else 0.0
     if max_pair_y_error > 1e-10:
-        raise RuntimeError(f"Left/right Floquet facets cannot be paired by y coordinate; max error={max_pair_y_error:g}")
+        raise RuntimeError(
+            f"Left/right Floquet facets cannot be paired by y coordinate; max error={max_pair_y_error:g}"
+        )
 
     slave_dofs: list[int] = []
     master_dofs: list[int] = []
@@ -136,7 +146,9 @@ def _build_floquet_constraints_serial(V, mesh_data, cfg: SimulationConfig) -> Fl
     orientation_factors: list[complex] = []
     probe_errors: list[float] = []
 
-    for left_facet, right_facet, left_mid_y, right_mid_y in zip(left_facets, right_facets, left_y, right_y):
+    for left_facet, right_facet, left_mid_y, right_mid_y in zip(
+        left_facets, right_facets, left_y, right_y
+    ):
         left_dofs = _facet_dofs(V, facet_dim, int(left_facet))
         right_dofs = _facet_dofs(V, facet_dim, int(right_facet))
         if len(left_dofs) != len(right_dofs):
@@ -160,7 +172,9 @@ def _build_floquet_constraints_serial(V, mesh_data, cfg: SimulationConfig) -> Fl
             slave_dofs.append(int(slave))
             row_coefficients = cfg.floquet_phase * transform[row]
             used = False
-            for master, owner, coefficient in zip(global_left, owners_left, row_coefficients):
+            for master, owner, coefficient in zip(
+                global_left, owners_left, row_coefficients
+            ):
                 if abs(coefficient) <= cutoff:
                     continue
                 master_dofs.append(int(master))
@@ -221,7 +235,9 @@ def _local_facet_records(V, mesh_data, tag: int) -> list[dict[str, object]]:
     return records
 
 
-def _merge_records(records_by_rank: list[list[dict[str, object]]]) -> dict[int, dict[str, object]]:
+def _merge_records(
+    records_by_rank: list[list[dict[str, object]]],
+) -> dict[int, dict[str, object]]:
     merged: dict[int, dict[str, object]] = {}
     for records in records_by_rank:
         for record in records:
@@ -283,7 +299,11 @@ def _collective_probe_values_for_key(
     local_records: dict[int, dict[str, object]],
 ) -> np.ndarray | None:
     record = local_records.get(key)
-    dofs = np.asarray(record["local_dofs"], dtype=np.int32) if record is not None else np.asarray([], dtype=np.int32)
+    dofs = (
+        np.asarray(record["local_dofs"], dtype=np.int32)
+        if record is not None
+        else np.asarray([], dtype=np.int32)
+    )
     values = np.empty((len(dofs), num_probes), dtype=np.complex128)
     y_scale = max(cfg.mesh_target_size, 1e-12)
 
@@ -302,12 +322,18 @@ def _collective_probe_values_for_key(
     return values if record is not None else None
 
 
-def _build_floquet_constraints_parallel(V, mesh_data, cfg: SimulationConfig) -> FloquetConstraintData:
+def _build_floquet_constraints_parallel(
+    V, mesh_data, cfg: SimulationConfig
+) -> FloquetConstraintData:
     comm = mesh_data.mesh.comm
     local_left_facets = _local_facet_map(mesh_data, cfg.tags.left)
     local_right_facets = _local_facet_map(mesh_data, cfg.tags.right)
-    left_keys = sorted({key for keys in comm.allgather(list(local_left_facets)) for key in keys})
-    right_keys = sorted({key for keys in comm.allgather(list(local_right_facets)) for key in keys})
+    left_keys = sorted(
+        {key for keys in comm.allgather(list(local_left_facets)) for key in keys}
+    )
+    right_keys = sorted(
+        {key for keys in comm.allgather(list(local_right_facets)) for key in keys}
+    )
     if not left_keys:
         raise RuntimeError("No left Floquet facets were found across MPI ranks.")
     if not right_keys:
@@ -328,18 +354,30 @@ def _build_floquet_constraints_parallel(V, mesh_data, cfg: SimulationConfig) -> 
         if left_key not in left_keys:
             nearest_key = min(left_keys, key=lambda candidate: abs(candidate - key))
             if abs(nearest_key - key) > 100:
-                raise RuntimeError(f"No matching left Floquet facet was found for right facet key={key}.")
+                raise RuntimeError(
+                    f"No matching left Floquet facet was found for right facet key={key}."
+                )
             left_key = nearest_key
 
-        local_left_record = _collective_dof_record_for_key(V, mesh_data, local_left_facets, left_key)
+        local_left_record = _collective_dof_record_for_key(
+            V, mesh_data, local_left_facets, left_key
+        )
         gathered_left_records = comm.allgather(local_left_record)
-        left_record = next((record for record in gathered_left_records if record is not None), None)
+        left_record = next(
+            (record for record in gathered_left_records if record is not None), None
+        )
         if left_record is None:
-            raise RuntimeError(f"No rank produced left dofs for Floquet key {left_key}.")
+            raise RuntimeError(
+                f"No rank produced left dofs for Floquet key {left_key}."
+            )
 
-        local_right_record = _collective_dof_record_for_key(V, mesh_data, local_right_facets, key)
+        local_right_record = _collective_dof_record_for_key(
+            V, mesh_data, local_right_facets, key
+        )
         gathered_right_records = comm.allgather(local_right_record)
-        right_record_global = next((record for record in gathered_right_records if record is not None), None)
+        right_record_global = next(
+            (record for record in gathered_right_records if record is not None), None
+        )
         if key not in right_keys or right_record_global is None:
             continue
 
@@ -356,21 +394,35 @@ def _build_floquet_constraints_parallel(V, mesh_data, cfg: SimulationConfig) -> 
             )
 
         num_probes = max(2 * max(num_left, num_right) + 2, 4)
-        local_left = {left_key: local_left_record} if local_left_record is not None else {}
-        local_right = {key: local_right_record} if local_right_record is not None else {}
-        local_left_values = _collective_probe_values_for_key(V, cfg, left_key, left_y, num_probes, local_left)
+        local_left = (
+            {left_key: local_left_record} if local_left_record is not None else {}
+        )
+        local_right = (
+            {key: local_right_record} if local_right_record is not None else {}
+        )
+        local_left_values = _collective_probe_values_for_key(
+            V, cfg, left_key, left_y, num_probes, local_left
+        )
         gathered_left_values = comm.allgather(local_left_values)
-        left_values = next((values for values in gathered_left_values if values is not None), None)
+        left_values = next(
+            (values for values in gathered_left_values if values is not None), None
+        )
         if left_values is None:
-            raise RuntimeError(f"No rank produced left probe values for Floquet key {left_key}.")
+            raise RuntimeError(
+                f"No rank produced left probe values for Floquet key {left_key}."
+            )
 
-        local_right_values = _collective_probe_values_for_key(V, cfg, key, right_y, num_probes, local_right)
+        local_right_values = _collective_probe_values_for_key(
+            V, cfg, key, right_y, num_probes, local_right
+        )
         if local_right_record is None:
             continue
         right_dofs = np.asarray(local_right_record["local_dofs"], dtype=np.int32)
         right_global, _, right_owned = _local_dof_global_info(V, right_dofs)
         right_values = np.asarray(local_right_values)
-        transform, probe_error = _transform_from_probe_values(cfg, np.asarray(left_values), right_values)
+        transform, probe_error = _transform_from_probe_values(
+            cfg, np.asarray(left_values), right_values
+        )
         probe_errors.append(probe_error)
 
         cutoff = max(1e-12, 1e-10 * float(np.max(np.abs(transform))))
@@ -382,7 +434,9 @@ def _build_floquet_constraints_parallel(V, mesh_data, cfg: SimulationConfig) -> 
             slave_dofs.append(int(slave))
             row_coefficients = cfg.floquet_phase * transform[row]
             used = False
-            for master, owner, coefficient in zip(left_global, left_owners, row_coefficients):
+            for master, owner, coefficient in zip(
+                left_global, left_owners, row_coefficients
+            ):
                 if int(master) == int(right_global[row]):
                     continue
                 if abs(coefficient) <= cutoff:
@@ -420,17 +474,22 @@ def _build_floquet_constraints_parallel(V, mesh_data, cfg: SimulationConfig) -> 
     )
 
 
-def build_floquet_constraints(V, mesh_data, cfg: SimulationConfig) -> FloquetConstraintData:
+def build_floquet_constraints(
+    V, mesh_data, cfg: SimulationConfig
+) -> FloquetConstraintData:
     """Constrain right boundary H(curl) edge dofs to left boundary dofs."""
     if mesh_data.mesh.comm.size == 1:
         return _build_floquet_constraints_serial(V, mesh_data, cfg)
     return _build_floquet_constraints_parallel(V, mesh_data, cfg)
 
 
-def solve_with_constraints(A_csr, b, constraints: FloquetConstraintData):
-    """Solve C^H A C q = C^H b, then reconstruct the full vector u=Cq."""
+def solve_with_constraints_with_stats(A_csr, b, constraints: FloquetConstraintData):
+    """Solve the reduced system and also return its structural diagnostics."""
+
     if MPI.COMM_WORLD.size != 1:
-        raise RuntimeError("Manual C^H A C elimination is a serial verification backend and cannot run with MPI.")
+        raise RuntimeError(
+            "Manual C^H A C elimination is a serial verification backend and cannot run with MPI."
+        )
     n = A_csr.shape[0]
     slave = constraints.slave_dofs
     master = constraints.master_dofs
@@ -450,14 +509,32 @@ def solve_with_constraints(A_csr, b, constraints: FloquetConstraintData):
     rows = np.concatenate([free, slave_rows])
     cols = np.concatenate([reduced_index[free], reduced_index[master]])
     data = np.concatenate([np.ones(len(free), dtype=np.complex128), coefficients])
-    C = sparse.coo_matrix((data, (rows, cols)), shape=(n, len(free)), dtype=np.complex128).tocsr()
+    C = sparse.coo_matrix(
+        (data, (rows, cols)), shape=(n, len(free)), dtype=np.complex128
+    ).tocsr()
 
     A_reduced = (C.conjugate().transpose() @ A_csr @ C).tocsc()
     b_reduced = C.conjugate().transpose() @ b
     x_reduced = spla.spsolve(A_reduced, b_reduced)
-    reduced_residual = np.linalg.norm(A_reduced @ x_reduced - b_reduced) / max(np.linalg.norm(b_reduced), 1e-30)
+    reduced_residual = np.linalg.norm(A_reduced @ x_reduced - b_reduced) / max(
+        np.linalg.norm(b_reduced), 1e-30
+    )
     x_full = C @ x_reduced
-    return np.asarray(x_full, dtype=np.complex128), float(reduced_residual), A_reduced.shape[0]
+    return (
+        np.asarray(x_full, dtype=np.complex128),
+        float(reduced_residual),
+        int(A_reduced.shape[0]),
+        int(A_reduced.nnz),
+    )
+
+
+def solve_with_constraints(A_csr, b, constraints: FloquetConstraintData):
+    """Solve C^H A C q = C^H b, then reconstruct the full vector u=Cq."""
+
+    solution, residual, rows, _nnz = solve_with_constraints_with_stats(
+        A_csr, b, constraints
+    )
+    return solution, residual, rows
 
 
 def dof_trace_mismatch(values: np.ndarray, constraints: FloquetConstraintData) -> float:

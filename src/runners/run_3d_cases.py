@@ -19,12 +19,30 @@ from ..common.config_3d import (
     project_root,
 )
 from ..common.output_paths import unique_run_dir
-from ..solvers.solve_maxwell_3d_stage_1_airbox import STAGE1_CASES, run_stage1_airbox_3d_case
-from ..solvers.solve_maxwell_3d_stage_2a_floquet_airbox import STAGE2A_CASES, run_stage2a_floquet_airbox_3d_case
-from ..solvers.solve_maxwell_3d_stage_2b_pml_airbox import STAGE2B_CASES, run_stage2b_pml_airbox_3d_case
-from ..solvers.solve_maxwell_3d_stage_2c_fresnel_interface import STAGE2C_CASES, run_stage2c_fresnel_interface_3d_case
-from ..solvers.solve_maxwell_3d_stage_4a_flat_layer_sanity import STAGE4A_CASES, run_stage4a_flat_layer_sanity_3d_case
-from ..solvers.solve_maxwell_3d_stage_4b_block_grating import STAGE4B_CASES, run_stage4b_block_grating_3d_case
+from ..solvers.solve_maxwell_3d_stage_1_airbox import (
+    STAGE1_CASES,
+    run_stage1_airbox_3d_case,
+)
+from ..solvers.solve_maxwell_3d_stage_2a_floquet_airbox import (
+    STAGE2A_CASES,
+    run_stage2a_floquet_airbox_3d_case,
+)
+from ..solvers.solve_maxwell_3d_stage_2b_pml_airbox import (
+    STAGE2B_CASES,
+    run_stage2b_pml_airbox_3d_case,
+)
+from ..solvers.solve_maxwell_3d_stage_2c_fresnel_interface import (
+    STAGE2C_CASES,
+    run_stage2c_fresnel_interface_3d_case,
+)
+from ..solvers.solve_maxwell_3d_stage_4a_flat_layer_sanity import (
+    STAGE4A_CASES,
+    run_stage4a_flat_layer_sanity_3d_case,
+)
+from ..solvers.solve_maxwell_3d_stage_4b_block_grating import (
+    STAGE4B_CASES,
+    run_stage4b_block_grating_3d_case,
+)
 from ..solvers.solve_vector_maxwell import _json_default
 
 
@@ -59,7 +77,9 @@ def _parse_petsc_option_tokens(tokens: list[str]) -> dict[str, object]:
     while i < len(tokens):
         token = tokens[i]
         if not token.startswith("-"):
-            raise ValueError(f"Unexpected non-option token after PETSc options: {token!r}")
+            raise ValueError(
+                f"Unexpected non-option token after PETSc options: {token!r}"
+            )
         key = token.lstrip("-")
         if not key:
             raise ValueError("Empty PETSc option name.")
@@ -214,7 +234,9 @@ def _config_updates(args) -> dict[str, object]:
     if args.diffraction_probe_fraction is not None:
         updates["diffraction_probe_fraction"] = args.diffraction_probe_fraction
     if args.diffraction_compute_modal_diagnostic is not None:
-        updates["diffraction_compute_modal_diagnostic"] = args.diffraction_compute_modal_diagnostic
+        updates["diffraction_compute_modal_diagnostic"] = (
+            args.diffraction_compute_modal_diagnostic
+        )
     if args.diffraction_rayleigh_tol is not None:
         updates["diffraction_rayleigh_tol"] = args.diffraction_rayleigh_tol
     if args.petsc_direct_solver_profile is not None:
@@ -224,9 +246,13 @@ def _config_updates(args) -> dict[str, object]:
     if args.petsc_log_view is not None:
         updates["petsc_log_view"] = args.petsc_log_view
     if args.matrix_diagnostics_assemble_unconstrained is not None:
-        updates["matrix_diagnostics_assemble_unconstrained"] = args.matrix_diagnostics_assemble_unconstrained
+        updates["matrix_diagnostics_assemble_unconstrained"] = (
+            args.matrix_diagnostics_assemble_unconstrained
+        )
     if args.matrix_diagnostics_assemble_only is not None:
-        updates["matrix_diagnostics_assemble_only"] = args.matrix_diagnostics_assemble_only
+        updates["matrix_diagnostics_assemble_only"] = (
+            args.matrix_diagnostics_assemble_only
+        )
     petsc_extra_options = {}
     petsc_extra_options.update(getattr(args, "petsc_unknown_options", {}))
     petsc_extra_options.update(_parse_petsc_extra_option(args.petsc_extra_option))
@@ -242,9 +268,19 @@ def _config_updates(args) -> dict[str, object]:
 def _stage_defaults(stage_case: str) -> dict[str, object]:
     """Apply the Stage-2 case switches without creating separate config classes."""
     if stage_case == "stage1_airbox":
-        return {"stage_case": stage_case, "geometry_kind": "airbox", "use_floquet_xy": False, "use_pml": False}
+        return {
+            "stage_case": stage_case,
+            "geometry_kind": "airbox",
+            "use_floquet_xy": False,
+            "use_pml": False,
+        }
     if stage_case == "floquet_airbox":
-        return {"stage_case": stage_case, "geometry_kind": "airbox", "use_floquet_xy": True, "use_pml": False}
+        return {
+            "stage_case": stage_case,
+            "geometry_kind": "airbox",
+            "use_floquet_xy": True,
+            "use_pml": False,
+        }
     if stage_case == "pml_airbox":
         return {
             "stage_case": stage_case,
@@ -329,7 +365,9 @@ def _stage_defaults(stage_case: str) -> dict[str, object]:
     raise ValueError("Unsupported 3D stage_case.")
 
 
-def _case_configs(case: str, stage_case: str, updates: dict[str, object]) -> list[SimulationConfig3D]:
+def _case_configs(
+    case: str, stage_case: str, updates: dict[str, object]
+) -> list[SimulationConfig3D]:
     """Create exactly one SimulationConfig3D for one explicit stage/case pair."""
     if case == "normal":
         builder = normal_incidence_airbox_config
@@ -348,7 +386,9 @@ def _case_configs(case: str, stage_case: str, updates: dict[str, object]) -> lis
 
 def main(argv: list[str] | None = None):
     defaults = SimulationConfig3D()
-    parser = argparse.ArgumentParser(description="Run one explicit staged 3D Maxwell case.")
+    parser = argparse.ArgumentParser(
+        description="Run one explicit staged 3D Maxwell case."
+    )
     parser.add_argument(
         "--stage-case",
         choices=(
@@ -364,7 +404,9 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--case", choices=("normal", "oblique"), default="normal")
     parser.add_argument("--nedelec-degree", type=int, default=None)
     parser.add_argument("--visualization-degree", type=int, default=None)
-    parser.add_argument("--mesh-target-size", type=float, default=None, help="Target mesh size in nm.")
+    parser.add_argument(
+        "--mesh-target-size", type=float, default=None, help="Target mesh size in nm."
+    )
     parser.add_argument(
         "--mesh-cell-type",
         choices=("auto", "tetrahedron", "hexahedron"),
@@ -432,32 +474,91 @@ def main(argv: list[str] | None = None):
         default=None,
         help="Use timestamped results/3D_airbox_* directories.",
     )
-    parser.add_argument("--use-floquet-xy", action=argparse.BooleanOptionalAction, default=None)
-    parser.add_argument("--use-pml", action=argparse.BooleanOptionalAction, default=None)
-    parser.add_argument("--pml-top-thickness", type=float, default=None, help="Top PML thickness in nm.")
-    parser.add_argument("--pml-bottom-thickness", type=float, default=None, help="Bottom PML thickness in nm.")
+    parser.add_argument(
+        "--results-root",
+        default=None,
+        help=(
+            "Output root override. The ordinary default remains <repository>/results; "
+            "benchmark scripts use benchmarks/artifacts explicitly."
+        ),
+    )
+    parser.add_argument(
+        "--use-floquet-xy", action=argparse.BooleanOptionalAction, default=None
+    )
+    parser.add_argument(
+        "--use-pml", action=argparse.BooleanOptionalAction, default=None
+    )
+    parser.add_argument(
+        "--pml-top-thickness", type=float, default=None, help="Top PML thickness in nm."
+    )
+    parser.add_argument(
+        "--pml-bottom-thickness",
+        type=float,
+        default=None,
+        help="Bottom PML thickness in nm.",
+    )
     parser.add_argument("--pml-alpha", type=float, default=None)
-    parser.add_argument("--n-substrate", default=None, help="Substrate refractive index for Fresnel stage.")
-    parser.add_argument("--n-grating", default=None, help="Rectangular-block grating refractive index for Stage 4.")
-    parser.add_argument("--substrate-material-label", default=None, help="Human-readable substrate material label.")
-    parser.add_argument("--grating-material-label", default=None, help="Human-readable grating material label.")
+    parser.add_argument(
+        "--n-substrate",
+        default=None,
+        help="Substrate refractive index for Fresnel stage.",
+    )
+    parser.add_argument(
+        "--n-grating",
+        default=None,
+        help="Rectangular-block grating refractive index for Stage 4.",
+    )
+    parser.add_argument(
+        "--substrate-material-label",
+        default=None,
+        help="Human-readable substrate material label.",
+    )
+    parser.add_argument(
+        "--grating-material-label",
+        default=None,
+        help="Human-readable grating material label.",
+    )
     parser.add_argument(
         "--validation-role",
         default=None,
         help="Validation role, e.g. numerical_sanity_only or physical_benchmark_candidate.",
     )
-    parser.add_argument("--period-x", type=float, default=None, help="3D periodic cell size in x, nm.")
-    parser.add_argument("--period-y", type=float, default=None, help="3D periodic cell size in y, nm.")
-    parser.add_argument("--air-height", type=float, default=None, help="Physical air height above z=0 in nm.")
+    parser.add_argument(
+        "--period-x", type=float, default=None, help="3D periodic cell size in x, nm."
+    )
+    parser.add_argument(
+        "--period-y", type=float, default=None, help="3D periodic cell size in y, nm."
+    )
+    parser.add_argument(
+        "--air-height",
+        type=float,
+        default=None,
+        help="Physical air height above z=0 in nm.",
+    )
     parser.add_argument(
         "--substrate-thickness",
         type=float,
         default=None,
         help="Physical substrate thickness below z=0 in nm.",
     )
-    parser.add_argument("--grating-width-x", type=float, default=None, help="Stage-4 block width in x, nm.")
-    parser.add_argument("--grating-width-y", type=float, default=None, help="Stage-4 block width in y, nm.")
-    parser.add_argument("--grating-height", type=float, default=None, help="Stage-4 block height above interface z=0, nm.")
+    parser.add_argument(
+        "--grating-width-x",
+        type=float,
+        default=None,
+        help="Stage-4 block width in x, nm.",
+    )
+    parser.add_argument(
+        "--grating-width-y",
+        type=float,
+        default=None,
+        help="Stage-4 block width in y, nm.",
+    )
+    parser.add_argument(
+        "--grating-height",
+        type=float,
+        default=None,
+        help="Stage-4 block height above interface z=0, nm.",
+    )
     parser.add_argument(
         "--scattering-background",
         choices=("layered",),
@@ -513,15 +614,19 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
     parser.add_argument(
         "--petsc-direct-solver-profile",
-        choices=("default", "mumps_ooc"),
+        choices=("default", "mumps_ooc", "mumps_blr"),
         default=None,
         help=(
-            "Direct-LU profile. Use default for normal PETSc LU, or mumps_ooc "
-            "to enable MUMPS out-of-core factor files in the case output directory."
+            "Direct-factorization profile: default LU, MUMPS out-of-core LU, or "
+            "MUMPS BLR compressed LU. BLR is not the qualified iterative runtime."
         ),
     )
-    parser.add_argument("--petsc-ksp-view", action=argparse.BooleanOptionalAction, default=None)
-    parser.add_argument("--petsc-log-view", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--petsc-ksp-view", action=argparse.BooleanOptionalAction, default=None
+    )
+    parser.add_argument(
+        "--petsc-log-view", action=argparse.BooleanOptionalAction, default=None
+    )
     parser.add_argument(
         "--petsc-extra-option",
         action="append",
@@ -543,13 +648,17 @@ def main(argv: list[str] | None = None):
     args, petsc_unknown = parser.parse_known_args(argv)
     args.petsc_unknown_options = _parse_petsc_option_tokens(petsc_unknown)
 
-    unique_output = defaults.unique_output if args.unique_output is None else args.unique_output
+    unique_output = (
+        defaults.unique_output if args.unique_output is None else args.unique_output
+    )
     updates = _config_updates(args)
     updates["unique_output"] = bool(unique_output)
     configs = _case_configs(args.case, args.stage_case, updates)
 
     root = project_root()
-    results_root = root / "results"
+    results_root = Path(args.results_root) if args.results_root else root / "results"
+    if not results_root.is_absolute():
+        results_root = root / results_root
     p = configs[0].nedelec_degree if configs else defaults.nedelec_degree
     h = configs[0].mesh_target_size if configs else defaults.mesh_target_size
     case_tag = args.case

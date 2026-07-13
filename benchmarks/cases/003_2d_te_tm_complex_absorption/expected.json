@@ -1,0 +1,19 @@
+{
+  "status": "canonical_lightweight",
+  "tolerances": {
+    "linear_residual_max": 1e-10,
+    "energy_closure_abs_max": 1e-8,
+    "absorption_balance_difference_max": 1e-8,
+    "tm_auxiliary_trace_abs_difference_max": 1e-8
+  },
+  "nonnegative_quantities": [
+    "R_total",
+    "T_total",
+    "A_volume"
+  ],
+  "required_records": [
+    "records/tm_complex_absorption.json",
+    "records/te_complex_absorption.json"
+  ],
+  "probe_identity": "diagnostic_only"
+}
