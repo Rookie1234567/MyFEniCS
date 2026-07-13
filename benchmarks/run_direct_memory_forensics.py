@@ -30,6 +30,13 @@ TIMELINE_FIELDS = (
     "mpi_process_tree_rss_mb",
     "container_process_rss_sum_mb",
     "worker_rank_rss_mb_json",
+    "worker_rank_cpu_affinity_json",
+    "worker_rank_thread_count_sum",
+    "mpi_process_tree_thread_count",
+    "worker_rank_cpu_seconds",
+    "mpi_process_tree_cpu_seconds",
+    "worker_rank_cpu_core_equivalents",
+    "mpi_process_tree_cpu_core_equivalents",
     "container_cgroup_current_mb",
     "container_cgroup_peak_mb",
     "container_swap_current_mb",
@@ -161,6 +168,10 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             ppid = int(fields.get("PPid", "0"))
         except ValueError:
             ppid = 0
+        try:
+            thread_count = int(fields.get("Threads", "1"))
+        except ValueError:
+            thread_count = 1
         rss_parts = fields.get("VmRSS", "0 kB").split()
         try:
             rss_mb = float(rss_parts[0]) / 1024.0
@@ -186,9 +197,12 @@ def _read_processes() -> dict[int, dict[str, Any]]:
         except (OSError, ValueError):
             pass
         blkio_delay_seconds = 0.0
+        cpu_seconds = 0.0
         try:
             stat_text = (entry / "stat").read_text(encoding="utf-8", errors="ignore")
             fields_after_comm = stat_text[stat_text.rfind(")") + 2 :].split()
+            cpu_ticks = int(fields_after_comm[11]) + int(fields_after_comm[12])
+            cpu_seconds = cpu_ticks / float(os.sysconf("SC_CLK_TCK"))
             blkio_delay_ticks = int(fields_after_comm[39])
             blkio_delay_seconds = blkio_delay_ticks / float(os.sysconf("SC_CLK_TCK"))
         except (OSError, ValueError, IndexError):
@@ -217,6 +231,9 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             "pid": pid,
             "ppid": ppid,
             "rss_mb": rss_mb,
+            "cpu_affinity": fields.get("Cpus_allowed_list", "unknown"),
+            "thread_count": thread_count,
+            "cpu_seconds": cpu_seconds,
             "cmdline": cmdline,
             "worker_rank": rank,
             "read_bytes": io_fields.get("read_bytes", 0),
@@ -282,6 +299,9 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
                 "rank": item["worker_rank"],
                 "pid": item["pid"],
                 "rss_mb": item["rss_mb"],
+                "cpu_affinity": item["cpu_affinity"],
+                "thread_count": item["thread_count"],
+                "cpu_seconds": item["cpu_seconds"],
             }
             for item in processes.values()
             if item["worker_rank"] is not None
@@ -306,6 +326,25 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
             item["rss_mb"] for item in processes.values()
         ),
         "worker_rank_rss_mb_json": json.dumps(worker_ranks, separators=(",", ":")),
+        "worker_rank_cpu_affinity_json": json.dumps(
+            [
+                {"rank": item["rank"], "cpu_affinity": item["cpu_affinity"]}
+                for item in worker_ranks
+            ],
+            separators=(",", ":"),
+        ),
+        "worker_rank_thread_count_sum": sum(
+            item["thread_count"] for item in worker_ranks
+        ),
+        "mpi_process_tree_thread_count": sum(
+            processes[pid]["thread_count"] for pid in tree if pid in processes
+        ),
+        "worker_rank_cpu_seconds": sum(item["cpu_seconds"] for item in worker_ranks),
+        "mpi_process_tree_cpu_seconds": sum(
+            processes[pid]["cpu_seconds"] for pid in tree if pid in processes
+        ),
+        "worker_rank_cpu_core_equivalents": 0.0,
+        "mpi_process_tree_cpu_core_equivalents": 0.0,
         "wsl_pswpin_pages": pswpin,
         "wsl_pswpout_pages": pswpout,
         "ooc_scratch_file_count": ooc_file_count,
@@ -322,6 +361,41 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
     }
     row.update(_cgroup_snapshot())
     return row
+
+
+def _add_cpu_core_equivalents(
+    row: dict[str, Any], previous: dict[str, Any] | None
+) -> None:
+    """Convert cumulative /proc CPU time into average used cores per interval."""
+
+    if previous is None:
+        return
+    elapsed = float(row["elapsed_seconds"]) - float(previous["elapsed_seconds"])
+    if elapsed <= 0.0:
+        return
+    for scope in ("worker_rank", "mpi_process_tree"):
+        current_cpu = float(row[f"{scope}_cpu_seconds"])
+        previous_cpu = float(previous[f"{scope}_cpu_seconds"])
+        row[f"{scope}_cpu_core_equivalents"] = max(
+            0.0, (current_cpu - previous_cpu) / elapsed
+        )
+
+
+def _cpu_affinity_count(specification: str | None) -> int | None:
+    if not specification:
+        return None
+    cpus: set[int] = set()
+    try:
+        for part in specification.split(","):
+            bounds = part.strip().split("-", 1)
+            first = int(bounds[0])
+            last = int(bounds[-1])
+            if first < 0 or last < first:
+                return None
+            cpus.update(range(first, last + 1))
+    except ValueError:
+        return None
+    return len(cpus)
 
 
 def _stage_peaks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -341,6 +415,16 @@ def _stage_peaks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "max_container_cgroup_current_mb": max(
                 float(row["container_cgroup_current_mb"] or 0.0) for row in stage_rows
             ),
+            "max_worker_rank_thread_count_sum": max(
+                int(row["worker_rank_thread_count_sum"]) for row in stage_rows
+            ),
+            "max_worker_rank_cpu_core_equivalents": max(
+                float(row["worker_rank_cpu_core_equivalents"]) for row in stage_rows
+            ),
+            "mean_worker_rank_cpu_core_equivalents": sum(
+                float(row["worker_rank_cpu_core_equivalents"]) for row in stage_rows
+            )
+            / len(stage_rows),
         }
         for stage, stage_rows in grouped.items()
     ]
@@ -509,6 +593,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--h-nm", type=float, choices=(5.0, 3.0, 2.0), required=True)
     parser.add_argument("--mpi-size", type=int, default=4)
     parser.add_argument(
+        "--threads-per-rank",
+        type=int,
+        default=1,
+        help=(
+            "OpenBLAS pthread workers per MPI rank; OpenMP remains fixed at one "
+            "to prevent nested threading."
+        ),
+    )
+    parser.add_argument(
+        "--cpu-affinity",
+        help=(
+            "Optional taskset CPU list, for example 0-3. When supplied, OpenMPI "
+            "rank binding is disabled so BLAS threads share exactly this CPU budget."
+        ),
+    )
+    parser.add_argument(
         "--profile", choices=("default", "mumps_ooc", "mumps_blr"), default="default"
     )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
@@ -555,20 +655,38 @@ def _validate_h2_gate(args: argparse.Namespace) -> None:
 
 def _run_parent(args: argparse.Namespace) -> int:
     _validate_h2_gate(args)
+    if args.mpi_size < 1 or args.threads_per_rank < 1:
+        raise SystemExit("MPI size and threads per rank must both be positive.")
+    affinity_cpu_count = _cpu_affinity_count(args.cpu_affinity)
+    if args.cpu_affinity and affinity_cpu_count is None:
+        raise SystemExit("--cpu-affinity must be a comma/range CPU list such as 0-3.")
     source_provenance = _source_provenance(args)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lifecycle_suffix = "_release_base" if args.release_base_after_augmentation else ""
+    thread_suffix = f"_t{args.threads_per_rank}"
+    affinity_suffix = (
+        f"_cpu{args.cpu_affinity.replace(',', '-').replace(' ', '')}"
+        if args.cpu_affinity
+        else ""
+    )
     run_dir = args.run_dir or (
         args.artifact_root
-        / f"h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{lifecycle_suffix}_{timestamp}"
+        / (
+            f"h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{thread_suffix}"
+            f"{affinity_suffix}{lifecycle_suffix}_{timestamp}"
+        )
     )
     run_dir = run_dir.resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     progress_path = run_dir / "progress_3d.jsonl"
     timeline_path = run_dir / "memory_timeline.csv"
     stdout_path = run_dir / "worker_stdout.txt"
-    command = [
+    mpi_command = [
         "mpiexec",
+    ]
+    if args.cpu_affinity:
+        mpi_command.extend(["--bind-to", "none"])
+    mpi_command.extend([
         "-n",
         str(args.mpi_size),
         sys.executable,
@@ -579,21 +697,35 @@ def _run_parent(args: argparse.Namespace) -> int:
         str(args.h_nm),
         "--profile",
         args.profile,
+        "--threads-per-rank",
+        str(args.threads_per_rank),
         "--run-dir",
         str(run_dir),
         "--petsc-options-json",
         args.petsc_options_json,
-    ]
+    ])
+    command = (
+        ["taskset", "-c", args.cpu_affinity, *mpi_command]
+        if args.cpu_affinity
+        else mpi_command
+    )
     if args.release_base_after_augmentation:
         command.append("--release-base-after-augmentation")
     worker_environment = os.environ.copy()
-    for key in (
-        "OMP_NUM_THREADS",
-        "OPENBLAS_NUM_THREADS",
-        "MKL_NUM_THREADS",
-        "NUMEXPR_NUM_THREADS",
-    ):
-        worker_environment[key] = "1"
+    worker_environment.update(
+        {
+            "OMP_NUM_THREADS": "1",
+            "OMP_DYNAMIC": "FALSE",
+            "OMP_MAX_ACTIVE_LEVELS": "1",
+            "OMP_DISPLAY_ENV": "VERBOSE",
+            "OPENBLAS_NUM_THREADS": str(args.threads_per_rank),
+            "GOTO_NUM_THREADS": str(args.threads_per_rank),
+            "MKL_NUM_THREADS": "1",
+            "MKL_DYNAMIC": "FALSE",
+            "NUMEXPR_NUM_THREADS": "1",
+            "BLIS_NUM_THREADS": "1",
+        }
+    )
     started = time.perf_counter()
     rows: list[dict[str, Any]] = []
     with stdout_path.open("w", encoding="utf-8") as stdout:
@@ -606,9 +738,12 @@ def _run_parent(args: argparse.Namespace) -> int:
             env=worker_environment,
         )
         last_stage = ""
+        previous_row: dict[str, Any] | None = None
         while True:
             row = _sample(process.pid, progress_path, time.perf_counter() - started)
+            _add_cpu_core_equivalents(row, previous_row)
             rows.append(row)
+            previous_row = row
             if row["stage"] != last_stage:
                 (run_dir / "memory_stage.txt").write_text(
                     f"{row['stage']} {row['stage_status']}\n", encoding="utf-8"
@@ -707,7 +842,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     )
     record = {
         "benchmark_id": (
-            f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}{lifecycle_suffix}"
+            f"task029_direct_h{args.h_nm:g}_{args.profile}_mpi{args.mpi_size}"
+            f"{thread_suffix}{affinity_suffix}{lifecycle_suffix}"
         ),
         "status": numeric_gate["status"],
         "metadata": {
@@ -731,16 +867,49 @@ def _run_parent(args: argparse.Namespace) -> int:
         },
         "h_nm": args.h_nm,
         "mpi_size": args.mpi_size,
-        "thread_count_per_rank": int(worker_environment["OMP_NUM_THREADS"]),
+        "thread_count_per_rank": args.threads_per_rank,
         "cpu_count_visible": os.cpu_count(),
+        "cpu_affinity_requested": args.cpu_affinity,
+        "cpu_affinity_logical_cpu_budget": affinity_cpu_count,
         "thread_environment": {
             key: worker_environment[key]
             for key in (
                 "OMP_NUM_THREADS",
+                "OMP_DYNAMIC",
+                "OMP_MAX_ACTIVE_LEVELS",
+                "OMP_DISPLAY_ENV",
                 "OPENBLAS_NUM_THREADS",
+                "GOTO_NUM_THREADS",
                 "MKL_NUM_THREADS",
+                "MKL_DYNAMIC",
                 "NUMEXPR_NUM_THREADS",
+                "BLIS_NUM_THREADS",
             )
+        },
+        "thread_runtime_evidence": {
+            "control_model": "openblas_pthreads_only_openmp_fixed_at_one",
+            "requested_compute_threads": args.mpi_size * args.threads_per_rank,
+            "nested_openmp_disabled": True,
+            "requested_oversubscription": (
+                None
+                if affinity_cpu_count is None
+                else args.mpi_size * args.threads_per_rank > affinity_cpu_count
+            ),
+            "max_worker_rank_thread_count_sum": max(
+                (int(row["worker_rank_thread_count_sum"]) for row in rows), default=0
+            ),
+            "max_worker_rank_cpu_core_equivalents": max(
+                (float(row["worker_rank_cpu_core_equivalents"]) for row in rows),
+                default=0.0,
+            ),
+            "observed_worker_cpu_affinity_json": sorted(
+                {
+                    str(row["worker_rank_cpu_affinity_json"])
+                    for row in rows
+                    if str(row["worker_rank_cpu_affinity_json"]) != "[]"
+                }
+            ),
+            "stage_evidence": sampler_summary["stage_peaks"],
         },
         "solver_profile": args.profile,
         "solver_package": solver_summary.get("actual_pc_factor_solver_type"),

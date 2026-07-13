@@ -12,6 +12,8 @@ from petsc4py import PETSc
 
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
+    _add_cpu_core_equivalents,
+    _cpu_affinity_count,
     _directory_usage,
     _enrich_factor_inventory,
     _historical_peak_upper_bound,
@@ -178,10 +180,48 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             matrix.destroy()
 
     def test_candidate_profile_parser(self) -> None:
-        args = _parse_args(["--h-nm", "5", "--profile", "mumps_ooc", "--mpi-size", "2"])
+        args = _parse_args(
+            [
+                "--h-nm",
+                "5",
+                "--profile",
+                "mumps_ooc",
+                "--mpi-size",
+                "2",
+                "--threads-per-rank",
+                "2",
+                "--cpu-affinity",
+                "0-3",
+            ]
+        )
         self.assertEqual(args.h_nm, 5.0)
         self.assertEqual(args.profile, "mumps_ooc")
         self.assertEqual(args.mpi_size, 2)
+        self.assertEqual(args.threads_per_rank, 2)
+        self.assertEqual(args.cpu_affinity, "0-3")
+
+    def test_cpu_core_equivalents_use_cumulative_proc_cpu_time(self) -> None:
+        previous = {
+            "elapsed_seconds": 1.0,
+            "worker_rank_cpu_seconds": 2.0,
+            "mpi_process_tree_cpu_seconds": 2.5,
+        }
+        current = {
+            "elapsed_seconds": 1.5,
+            "worker_rank_cpu_seconds": 3.5,
+            "mpi_process_tree_cpu_seconds": 4.5,
+            "worker_rank_cpu_core_equivalents": 0.0,
+            "mpi_process_tree_cpu_core_equivalents": 0.0,
+        }
+        _add_cpu_core_equivalents(current, previous)
+        self.assertAlmostEqual(current["worker_rank_cpu_core_equivalents"], 3.0)
+        self.assertAlmostEqual(current["mpi_process_tree_cpu_core_equivalents"], 4.0)
+
+    def test_cpu_affinity_count_understands_ranges_and_lists(self) -> None:
+        self.assertEqual(_cpu_affinity_count("0-3"), 4)
+        self.assertEqual(_cpu_affinity_count("0-1,4,6-7"), 5)
+        self.assertIsNone(_cpu_affinity_count("3-1"))
+        self.assertIsNone(_cpu_affinity_count("not-a-cpu-list"))
 
     def test_selected_candidate_record_contract(self) -> None:
         records = (
