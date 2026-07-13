@@ -45,7 +45,7 @@
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |
 | matrix-free condensed DtN | recommended | benchmark runner | `F-C H^-1 D` |
 | MUMPS direct | recommended | ordinary default | h=2 内存超当前工作站 |
-| Task29 direct-memory telemetry | recommended | Case050 runner | merge candidate；RSS/cgroup/swap/stage/matrix/factor/CPU/thread 证据 |
+| Task29 direct-memory telemetry | recommended | Case050 runner | Review V2 技术通过并获准合并；RSS/cgroup/swap/stage/matrix/factor/CPU/thread 证据 |
 | Task29 optimized direct profile | not_implemented | 无 | 所有候选均未通过 h3 工程 Gate |
 | MUMPS MPI2 low-rank-count direct | diagnostic_only | Case050 显式 `--mpi-size 2` | h3 RSS 只降 15.119%，不是推荐 profile |
 | MUMPS out-of-core | diagnostic_only | `mumps_ooc` profile | h5 只降 13.744%，时间 1.539×，需 scratch/I/O 证据 |

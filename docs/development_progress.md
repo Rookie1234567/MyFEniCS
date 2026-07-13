@@ -1541,8 +1541,8 @@ engineering_success = no
 threaded_direct_capability = unavailable_in_current_image
 h2 = not_run
 h3_threaded_direct = not_run
-review = response_v1 corrections complete; final review pending
-master = not merged
+review = V2 technical review pass
+master = user-approved; merge pending execution
 ordinary default changed = no
 ```
 
@@ -1665,14 +1665,14 @@ DoF 幂律与 factor-nnz/fill 两条路径给出 h2 中央预测 22.214 / 22.330
 
 | 对象 | 决定 | 原因 |
 |---|---|---|
-| telemetry / Case050 / h2 guard | final review 后建议合并 | 可复用且有合同测试 |
-| failure cleanup / package selection fix | final review 后建议合并 | 正确性与异常安全 |
+| telemetry / Case050 / h2 guard | V2 通过，允许合并 | 可复用且有合同测试 |
+| failure cleanup / package selection fix | V2 通过，允许合并 | 正确性与异常安全 |
 | release-base option | 建议合并，保持默认 false | 低风险，收益不足 profile 资格 |
 | MPI2/OOC/BLR/SuperLU/ordering | 不提升 | 内存、时间或数值 Gate 失败 |
 | threaded direct | 不创建 profile | 当前 image KSPSetUp 仍单核 |
 | ordinary default | 不改变 | 无候选同时通过工程 Gate |
 | h2 / threaded h3 | 不运行 | 分别被 G/T Gate 阻止 |
-| master | 等待 final review | 当前 response 修正尚需复审 |
+| master | 用户已许可，待执行合并 | V2 技术审查通过；Task030 启动请求提供明确许可 |
 
 ## 36.11 局限
 
@@ -1689,6 +1689,8 @@ factor storage 是 nnz estimator；部分 PETSc/MUMPS raw memory/fill 字段不�
 - [h2 launch decision](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md)
 - [Task029 review V1](task029_stage4_direct_memory_forensics/review_report_v1.md)
 - [Task029 response V1](task029_stage4_direct_memory_forensics/response_v1.md)
+- [Task029 review V2](task029_stage4_direct_memory_forensics/review_report_v2.md)
+- [Task029 response V2](task029_stage4_direct_memory_forensics/response_v2.md)
 - [Benchmark Case050](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md)
 - [Task 回顾标准](task_retrospective_standard.md)
 - [direct runner](../benchmarks/run_direct_memory_forensics.py)
@@ -1712,7 +1714,7 @@ factor storage 是 nnz estimator；部分 PETSc/MUMPS raw memory/fill 字段不�
 - h5/h3 baseline、归因和最多两个 h3 候选均已完成；
 - 最佳 h3 只下降 15.119%，未达到 engineering_success；
 - h2 预测区间 18.882–27.913 GiB，G3/G5/G7/G9 失败并明确 not-run；
-- review V1 更正与 response 已完成，当前等待 final review 和后续合并许可；
+- review V1 更正、V2 技术验收与 response_v2 状态同步均完成，用户已许可合并；
 - 当前 image 的 threaded direct 不可用，threaded h3 按 T4 未运行。
 ```
 
@@ -1738,9 +1740,9 @@ factor storage 是 nnz estimator；部分 PETSc/MUMPS raw memory/fill 字段不�
 Task28 合并与 Task29 执行已完成。当前强制顺序：
 
 ```text
-1. 提交并推送 Task029 `response_v1.md` 与全部 P0 更正；
-2. 等待 final review，并在同一分支继续处理可执行意见；
-3. final review 通过且用户明确许可后再合并建议保留的基础设施；
+1. Task029 `response_v1.md`、全部 P0 更正和 V2 技术验收已完成；
+2. 提交 `response_v2.md` 并完成轻量 release checks；
+3. 按用户许可合并 Task029 后，从更新的 clean master 新建 Task030 分支；
 4. 不提升 MPI2/OOC/BLR/SuperLU/ordering 为低内存 profile；
 5. 不在当前工作站运行 h2 direct；
 6. 后续优先物理收敛资格化或真正 multilevel H(curl) 研究。

@@ -10,7 +10,9 @@ threaded_direct_capability = unavailable_in_current_image
 h2 = not_run
 h3_threaded_direct = not_run
 ordinary default changed = no
-master decision = pending final review
+technical review = pass
+new optimized direct profile = none
+master decision = user-approved; merge pending execution
 ```
 
 Task029 建立了可信的 Stage4 direct 分阶段内存证据，确认 MUMPS analysis/numeric LU factorization 是主峰，并完成 H1–H7、rank/profile、h2 安全门槛与线程条件审计。最佳 h3 in-core 候选只降低 simultaneous worker RSS 15.119%，未达到 20% 工程门槛。当前镜像的 MPI1×4 虽能创建 OpenBLAS pthread，但 `KSPSetUp` 仍约使用 1 核，Stage4 只比 MPI1×1 快 1.054×，所以没有 low-memory 或 threaded direct 推荐 profile。
@@ -123,7 +125,7 @@ OOC h5 worker RSS 降低 13.744%，但 Stage4 为 baseline 的 1.539×并使用 
 
 ## 13. 最终合并建议
 
-建议在最终 review 通过后合并 telemetry、cleanup、package-selection correctness、显式 release-base 控制、Case050、h2 guard、审计证据和文档契约。不得提升 MPI2、OOC、BLR、SuperLU_DIST、ordering 或 threaded direct 为推荐 profile；ordinary default 不变；Task28 canonical records 不覆盖。详见 [`merge_recommendation.md`](merge_recommendation.md)。
+Review V2 已技术通过，用户已在启动 Task030 时明确许可合并 telemetry、cleanup、package-selection correctness、显式 release-base 控制、Case050、h2 guard、审计证据和文档契约。不得提升 MPI2、OOC、BLR、SuperLU_DIST、ordering 或 threaded direct 为推荐 profile；ordinary default 不变；Task28 canonical records 不覆盖。详见 [`merge_recommendation.md`](merge_recommendation.md)。
 
 ## 14. 局限
 
@@ -138,6 +140,9 @@ PETSc 对 MUMPS factor 的部分 memory/fill 原始字段为 0，factor storage 
 - [任务书](../task.md)
 - [Task029 review V1](../review_report_v1.md)
 - [P0-C 长期补充](../review_report_v1_p0c_addendum.md)
+- [Task029 response V1](../response_v1.md)
+- [Task029 review V2](../review_report_v2.md)
+- [Task029 response V2](../response_v2.md)
 - [线程能力审计](threaded_direct_capability_audit.md)
 - [线程矩阵 CSV](threaded_direct_matrix.csv)
 - [候选统一对比](candidate_comparison.csv)

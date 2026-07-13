@@ -9,7 +9,9 @@ strong_engineering_success = no
 h2_workstation_success = not_attempted_by_gate
 threaded_direct_capability = unavailable_in_current_image
 ordinary_default_changed = no
-task29_master_merge_now = no; response_v1 后等待 final review
+technical_review = pass
+new_optimized_direct_profile = none
+task29_master_merge_now = yes; explicit user permission received with Task030 start request
 ```
 
 Task29 已得到可信的内存分解和主瓶颈结论。最佳 h3 候选将 simultaneous RSS 降低 15.119%，低于 20% 工程阈值。因此不得把任何候选宣传为 `optimized_direct_incore_candidate` 或 `optimized_direct_low_memory_candidate`。
@@ -35,4 +37,4 @@ Task29 已得到可信的内存分解和主瓶颈结论。最佳 h3 候选将 si
 - 任何 h=2 运行、ordinary default rank 改动、静默启用 OOC/BLR 或 direct-assembly 重写。
 - MPI1×4 threaded direct：KSPSetUp CPU 核均值/峰值仅 0.999/1.054，Stage4 相对 MPI1×1 只有 1.054× speedup；当前镜像身份为 `unavailable_in_current_image`，threaded h3 按 T4 `not_run`。
 
-本建议刻意把基础设施/公共生命周期价值与性能 profile 资格分开。`review_report_v1.md` 的 P0 已在同一分支回应；最终 review 通过前不得宣称最终通过或把本分支合入 `master`。
+本建议刻意把基础设施/公共生命周期价值与性能 profile 资格分开。`review_report_v1.md` 的 P0 已在同一分支回应，`review_report_v2.md` 已完成技术验收；用户在要求启动 Task030 时明确授予 Task029 合并许可。因此允许合并本分支，但上述性能候选身份和 ordinary default 边界不得改变。

@@ -44,3 +44,5 @@ Task28 最终 checker 为 148/148；Task29 新增 Case050 contract 后，checker
 Task29 Case050 最终分类为 `diagnostic_success`：最佳 h3 MPI2 候选只下降 15.119%，低于 20%；h2 预测区间 18.882–27.913 GiB，G3/G5/G7/G9 失败，因此没有运行 h2，也没有生成合格 low-memory direct profile。
 
 Review V1 后的固定四核 h5 矩阵进一步判定当前 image 的 threaded direct 不可用：MPI1×4 虽创建更多 pthread，KSPSetUp CPU 核均值/峰值仍为 0.999/1.054，Stage4 相对 MPI1×1 仅 1.054× speedup。T1/T3 失败后 threaded h3 按 T4 `not_run`，ordinary default 不变。
+
+Task029 Review V2 已技术通过并接受 Case050 的 telemetry、Gate 与负结果记录进入 master；`engineering_success=no`，没有新 optimized direct profile，h2 保持 `not_run`。

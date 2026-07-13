@@ -2,9 +2,10 @@
 
 ## 立即动作
 
-1. 推送 `response_v1.md`、P0-A/B/C/D 更正、线程审计和合同测试。
-2. 等待 Task29 final review；若仍有可执行意见，继续在同一分支修正。
-3. final review 通过且用户明确许可后，合并建议保留的遥测、benchmark、治理合同和低风险生命周期基础设施；不提升 low-memory/threaded direct profile。
+1. `response_v1.md`、P0-A/B/C/D 更正、线程审计和合同测试已经完成。
+2. `review_report_v2.md` 已技术通过；提交 `response_v2.md` 并完成轻量 release checks。
+3. 用户已在启动 Task030 时明确许可合并；把建议保留的遥测、benchmark、治理合同和低风险生命周期基础设施合入 master，不提升 low-memory/threaded direct profile。
+4. 从更新后的 clean master 创建 Task030 独立执行分支，开始 H(curl) 多层低内存迭代研究。
 
 ## 技术方向
 

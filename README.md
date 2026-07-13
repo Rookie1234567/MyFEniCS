@@ -55,7 +55,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task29 已完成 h5/h3 direct-memory 剖析和 review V1 更正，以 `diagnostic_success` 收口。最佳 MUMPS MPI2 候选在 h5/h3 分别降低 simultaneous RSS 28.893% / 15.119%，h3 未达到 20% 工程 Gate；当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，threaded direct 不可用。h2 与 threaded h3 均按 Gate 未运行。ordinary default 未改变，Task29 分支等待 final review。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task029 已完成 h5/h3 direct-memory 剖析，并通过 Review V2 技术验收，以 `diagnostic_success` 收口、`engineering_success=no`。最佳 MUMPS MPI2 候选在 h5/h3 分别降低 simultaneous RSS 28.893% / 15.119%，h3 未达到 20% 工程 Gate；当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，threaded direct 不可用。h2 与 threaded h3 均按 Gate 未运行，没有形成新 optimized direct profile，ordinary default 未改变；用户已在启动 Task030 时明确许可合并。
 
 ## 文档导航
 
@@ -70,7 +70,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task028 闭环与 Task029 review-response 入口 |
+| [任务索引](docs/README.md) | Task000-Task029 闭环与 Task030 任务入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

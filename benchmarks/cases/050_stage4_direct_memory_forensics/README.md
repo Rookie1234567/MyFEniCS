@@ -8,6 +8,8 @@ h2 两种中央预测为 22.214 / 22.330 GiB，敏感性区间 18.882–27.913 G
 
 Review V1 后的线程条件审计也已闭合。活动 PETSc 3.24.0 / MUMPS 5.8.1 链接 system OpenBLAS 0.3.26 pthread，但固定 CPU `0-3` 的 MPI1×4 在 `during_ksp_setup_peak` 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 只有 1.054× speedup。T0 runtime、T1 与 T3 失败，故 `threaded_direct_capability=unavailable_in_current_image`，threaded h3 按 T4 `not_run`。精简记录见 [`h5_threaded_direct_audit.json`](records/h5_threaded_direct_audit.json)。
 
+Task029 Review V2 已技术通过并批准本 Case 的诊断基础设施进入 master；这不改变 `engineering_success=no`、新 optimized direct profile 为 `none`、h2 `not_run` 和 ordinary default unchanged 的边界。
+
 ## 合同
 
 | 项目 | 值 |

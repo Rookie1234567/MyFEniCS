@@ -51,6 +51,8 @@ Task029 的目标 h5 实测进一步收紧使用边界：OOC worker RSS 下降 1
 
 线程运行固定 `OMP_NUM_THREADS=1`，通过共享环境控制 OpenBLAS，并用 CPU affinity 将实际执行封顶在四核预算。NumPy 与 PETSc 加载不同 OpenBLAS runtime，所以 runnable-thread oversubscription 不能完全排除；进程 thread 数增加也不代表 MUMPS 因子化多核。当前 image 不应创建 threaded direct profile；更换 PETSc/MUMPS/BLAS 构建后必须从 Case050 h5 重新资格化。
 
+Task029 Review V2 已技术通过：最终身份保持 `diagnostic_success`、`engineering_success=no`、新 optimized direct profile 为 `none`、h2 为 `not_run`，ordinary default 不变。验收没有把任何 MPI2/OOC/BLR/SuperLU/ordering/threaded 候选提升为推荐配置。
+
 ## 5. Matrix-free condensed workstation profile
 
 入口：
