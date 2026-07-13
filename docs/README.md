@@ -26,7 +26,8 @@
 | 文件 | 内容 |
 |---|---|
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
-| [`development_progress.md`](development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线、当前能力与未完成事项 |
+| [`task_retrospective_standard.md`](task_retrospective_standard.md) | 从 Task029 起适用于所有新 Task 的阶段回顾标准：背景、基线、方法、结果、解释、负结果、决策、局限、下一步与证据入口 |
+| [`development_progress.md`](development_progress.md) | Task000 起的项目发展时间线；每个新 Task 必须按阶段回顾标准留下可理解的结构化记录 |
 | [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态，以及 Quick Start、Theory、Walkthrough、Benchmark 映射 |
 | [`quick_start.md`](quick_start.md) | 全局 Docker/benchmark 最短入口；详细功能教程见 [`../notes/quick_start/README.md`](../notes/quick_start/README.md) |
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
@@ -47,7 +48,7 @@
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
-| Task029 | Stage4 direct memory forensics | `diagnostic_success`；最佳 h3 降低 15.119%，h2 Gate 不通过且未运行，等待审查 |
+| Task029 | Stage4 direct memory forensics | `diagnostic_success`；工程降内存目标未达，等待线程条件验证和项目级文档重写 |
 
 ## 当前任务
 
@@ -56,7 +57,7 @@
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | outcomes 完成并已推送；等待 ChatGPT `review_report_v1.md` |
+| Task029 | `task029_stage4_direct_memory_forensics/` | `review_report_v1.md` 与 P0-C 补充已提交；等待 Codex `response_v1.md` |
 
 ## Task28 审计入口
 
@@ -76,7 +77,7 @@
 | `review_report_v4.md` | ChatGPT V4 最终验收：核心、文档和 Benchmark 通过；要求 tracked-source-clean Gate、真实 image digest 和最终 head checker；建议 Task029 先做 Stage4 直接法内存剖析与公共装配优化 |
 | `response_v4.md` | Codex V4 回应：5 项 tracked-source-clean Gate、runner 强制真实 digest、148/148 checker 与最终实现提交验证 |
 
-## Task029 任务入口
+## Task029 任务与审查入口
 
 | 文件 | 内容 |
 |---|---|
@@ -84,7 +85,9 @@
 | [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | 强制补充：COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 必须保留 `auto_propagating` 全传播衍射级，不比较跨机器时间 |
 | [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL 117.8 万 DoF、MUMPS 与 GMG 内存报告，供 Task029/后续多层迭代研究参考 |
 | [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5/h3 baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run 总结 |
+| [`task029_stage4_direct_memory_forensics/review_report_v1.md`](task029_stage4_direct_memory_forensics/review_report_v1.md) | ChatGPT V1 审查：接受内存诊断，要求条件式线程验证和项目级文档收口 |
+| [`task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md`](task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md) | P0-C 长期补充：从 Task029 起，每个 Task 必须按统一框架维护 outcomes summary 和 development progress，并增加合同测试 |
 | [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 建议保留的遥测/低风险代码与不得提升的 direct profiles |
 | [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | G3/G5/G7/G9 阻塞、18.882–27.913 GiB 预测与 not-run 决策 |
 
-完整任务目录仍按 `task.md -> outcomes -> review_report/response` 闭环。Task29 baseline 来自 clean source SHA `208aaab` / `fba69d8`，正式候选来自 `6babe47`；h5/h3 数值均通过且零 swap，但最佳 h3 只下降 15.119%，因此没有合格低内存 profile，也没有运行 h2。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。
