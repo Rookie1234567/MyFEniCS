@@ -61,14 +61,14 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 | 文档 | 内容 |
 |---|---|
 | [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
-| [开发进度](docs/development_progress.md) | Task000-Task028 分阶段开发内容、关键结果、失败路线与当前进展 |
+| [开发进度](docs/development_progress.md) | Task000-Task029 分阶段开发内容、关键结果、失败路线与当前进展 |
 | [快速开始](docs/quick_start.md) | Windows Docker、2D/3D、direct/workstation完整命令与资源边界 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
 | [求解器指南](docs/solver_guide.md) | direct/iterative 选择与限制 |
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task028 闭环、Task028 V4 合并状态与 Task029 入口 |
+| [任务索引](docs/README.md) | Task000-Task028 闭环与正在执行的 Task029 入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

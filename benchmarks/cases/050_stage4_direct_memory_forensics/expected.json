@@ -1,0 +1,26 @@
+{
+  "status": "telemetry_ready_baseline_not_run",
+  "full_true_residual_max": 1e-8,
+  "reference_absolute_tolerance": {
+    "R_total": 1e-8,
+    "T_total": 1e-8,
+    "A_volume_total": 1e-8
+  },
+  "h5_reference": {
+    "R_total": 0.08902160293644126,
+    "T_total": 0.44258827865712486,
+    "A_volume_total": 0.46839011840655576
+  },
+  "h3_reference": {
+    "R_total": 0.004613031407437029,
+    "T_total": 0.583653357179078,
+    "A_volume_total": 0.4117336114135146
+  },
+  "h2_launch": {
+    "minimum_h5_reduction_fraction": 0.2,
+    "minimum_h3_reduction_fraction": 0.2,
+    "safe_prediction_upper_gb": 13.5,
+    "requires_no_h3_swap": true,
+    "requires_watchdog": true
+  }
+}

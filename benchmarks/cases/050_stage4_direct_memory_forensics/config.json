@@ -1,0 +1,16 @@
+{
+  "case_id": "050_stage4_direct_memory_forensics",
+  "physical_model_factory": "src.common.config_3d::target_stage4_config",
+  "degree": 2,
+  "required_h_nm": [5.0, 3.0],
+  "conditional_h_nm": 2.0,
+  "mpi_baseline": 4,
+  "profiles": ["default", "mumps_ooc", "mumps_blr"],
+  "baseline_profile": "default",
+  "artifact_root": "benchmarks/artifacts/cases/050",
+  "poll_interval_seconds": 0.25,
+  "run_h2_default": false,
+  "safe_h2_rss_limit_gb": 13.5,
+  "diffraction_order_policy": "auto_propagating",
+  "canonical_records_read_only": true
+}

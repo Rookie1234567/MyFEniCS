@@ -1,0 +1,91 @@
+# Case050：Stage4 direct memory forensics
+
+## 合同
+
+| 项目 | 值 |
+|---|---|
+| 1. ID | `050_stage4_direct_memory_forensics` |
+| 2. 证明 | Stage4 direct 的分阶段内存、matrix/factor inventory 与候选前后对比 |
+| 3. 不证明 | 物理网格收敛、参数鲁棒性或新迭代法能力 |
+| 4. 物理配置来源 | `src.common.config_3d::target_stage4_config` |
+| 5. 几何 | 50 x 25 x 140 nm；17 x 25 x 120 nm block |
+| 6. 材料 | 13.5 nm complex Si |
+| 7. 入射 | 80 度、s 偏振 |
+| 8. 边界 | double Floquet + auxiliary Fourier-DtN |
+| 9. FE/mesh | p2 Nédélec；h5/h3，h2 条件式 |
+| 10. MPI | baseline 4 ranks |
+| 11. direct profile | default / mumps_ooc / mumps_blr |
+| 12. 必跑 | MPI4 h5、MPI4 h3 |
+| 13. 条件运行 | h2，仅通过 guarded Gate 后 |
+| 14. sampler | 0.25 s external process/cgroup sampler |
+| 15. matrix evidence | base/augmented/factor PETSc inventory |
+| 16. memory evidence | simultaneous RSS、historical upper bound、cgroup、swap |
+| 17. 数值 Gate | true residual、R/T/A、closure、modal identity |
+| 18. ordinary default | 不改变；新 profile 显式 opt-in |
+| 19. heavy artifacts | `benchmarks/artifacts/cases/050/`，不提交 |
+| 20. records | 只提交通过 Gate 的轻量 summary record |
+| 21. Task28 records | 只读，不覆盖 |
+| 22. COMSOL | 另一机器/四面体/零级端口的定性参考 |
+
+## 物理问题
+
+50 x 25 x 140 nm 单胞、17 x 25 x 120 nm Si block、13.5 nm、80 度、s 偏振、p2 Nédélec、double Floquet、auxiliary Fourier-DtN、`auto_propagating` 全传播衍射级。profile、ordering、遥测和数学等价装配可以改变；物理、模式集合、official R/T/A 与 ordinary default 不得改变。
+
+## 参数说明
+
+`config.json` 冻结允许的 h、MPI、profile、artifact root 和 h2 安全上限；`expected.json` 冻结 Task28 h5/h3 R/T/A 与 Task29 数值/内存 Gate。profile 筛选一次只改变一个主要因素。
+
+## PyCharm
+
+在 Docker 解释器环境中把模块设为 `benchmarks.run_direct_memory_forensics`，参数先用 `--h-nm 5 --mpi-size 4 --profile default`。PyCharm 普通单进程 Run 不构成 MPI4 baseline；正式运行使用下方 shell wrapper 或 External Tool。
+
+## CLI 或测试
+
+在 `myfenics-stage4:task28` 镜像内：
+
+```text
+sh benchmarks/cases/050_stage4_direct_memory_forensics/run_h5.sh
+sh benchmarks/cases/050_stage4_direct_memory_forensics/run_h3.sh
+```
+
+脚本调用 `benchmarks.run_direct_memory_forensics`，外部采样器以 0.25 秒间隔记录 worker-rank 同时 RSS、MPI 进程树 RSS、cgroup current/peak、swap 与 solver stage。raw timeline 与完整 solver 输出保留在 ignored artifact 目录。
+
+h2 默认禁止：
+
+```text
+H2_GATE_JSON=<passing-gate.json> \
+  sh benchmarks/cases/050_stage4_direct_memory_forensics/run_h2_guarded.sh
+```
+
+gate 文件必须同时证明 h5/h3 数值通过、两者内存至少降低 20%、h3 无 swap、h2 预测上界不超过 13.5 GB 且 watchdog 已启用。
+
+## 代码路径与理论
+
+`run_direct_memory_forensics -> mpiexec worker -> target_stage4_config -> run_stage4b_block_grating_3d_case -> common_3d_case_flow -> dtn_port_3d -> MUMPS`。内存字段定义见 Task029 任务书 Stage A，direct 物理/数值背景见 `notes/theory/direct_solvers_and_factorization.md` 与 `notes/theory/dtn_modal_ports_and_condensation.md`。
+
+## 当前证据
+
+当前只有 Task28 的只读 h5/h3 baseline record 和新遥测代码/合同；Task29 的 h5/h3 外部采样 baseline 尚未运行。任何候选资格必须等待完整 solve、true residual 和 official RTA。
+
+## 结果解释
+
+诊断成功可以只确认主要瓶颈，即使内存收益有限；工程成功要求 h3 同时总 RSS 至少降低 20%。统计口径变化本身不算优化。COMSOL 量级不能替代 FEniCS 自身前后比较。
+
+## 数值 Gate
+
+- full true residual `<=1e-8`；
+- h5/h3 的 R/T/A 相对 Task28 direct reference 绝对差 `<=1e-8`；
+- modal order set、`n_aux`、FE DoF 和 Floquet constraint count 不变；
+- official energy closure 不退化。
+
+## 内存口径
+
+`max_simultaneous_total_rss_mb` 是外部采样时刻所有 MPI worker rank 当前 RSS 的和。`sum_rank_historical_peaks_mb_upper_bound` 是各 rank 历史峰值之和，只作上界；两者不得混写。cgroup current/peak 与 process RSS 分开记录。
+
+## 限制
+
+h3 必须在无 swap 压力下完成。h2 默认锁定；即使历史 h2 record 存在，也不得跳过预测、20% 降幅、13.5 GB 上限与 watchdog Gate。OOC/BLR 必须同时报告磁盘/误差/时间代价。
+
+## COMSOL 参考边界
+
+COMSOL 报告见 [Task029 参考](../../../docs/task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md)，可比性说明见 [outcomes 文档](../../../docs/task029_stage4_direct_memory_forensics/outcomes/comsol_reference_comparability.md)。它来自另一台机器、自由四面体、P 偏振、16 nm block 与零级端口，只能提供定性内存架构线索，不能作时间、RTA 或每 DoF 效率基准。

@@ -1,0 +1,31 @@
+{
+  "recorded_date": "2026-07-13",
+  "master_base_sha": "2f9e56d2edddb801780504f681b2ff295d993e02",
+  "task28_merge_commit": "2f9e56d2edddb801780504f681b2ff295d993e02",
+  "branch": "codex/20260713-task29-stage4-direct-memory-forensics",
+  "container": {
+    "image": "myfenics-stage4:task28",
+    "digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "cpu_processors": 16,
+    "cgroup_memory_max": "max",
+    "cgroup_swap_max": "max",
+    "wsl_mem_total_kb": 14311488,
+    "wsl_memory_visible_gib": 13.6485
+  },
+  "windows_host_start_snapshot": {
+    "total_physical_memory_bytes": 16733323264,
+    "free_physical_memory_bytes": 3706617856,
+    "total_virtual_memory_bytes": 40537772032,
+    "free_virtual_memory_bytes": 20884762624,
+    "pagefile_allocated_mb": 22701,
+    "pagefile_current_usage_mb": 1664,
+    "pagefile_historical_peak_usage_mb": 13840
+  },
+  "worktree": {
+    "tracked_source_clean_at_branch_creation": true,
+    "preserved_user_untracked_paths": [
+      "docs/task023_petsc_mpi_fe_response_pc/outcomes/raw_runs/",
+      "papers/"
+    ]
+  }
+}

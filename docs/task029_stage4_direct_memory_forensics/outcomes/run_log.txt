@@ -1,0 +1,85 @@
+# Task029 Run Log
+
+## 0. 执行前必读确认
+
+```text
+[x] task.md
+[x] task_comsol_reference_addendum.md
+[x] references/comsol_3d_direct_iterative_memory_report.md
+[x] Task028 final review/response/outcomes
+```
+
+Task028 闭环证据：
+
+```text
+Task28 branch head = 11cd4171cd2e86f025f4bf08337bb62e58295258
+Task28 merge commit = 2f9e56d2edddb801780504f681b2ff295d993e02
+master remote after push = 2f9e56d2edddb801780504f681b2ff295d993e02
+master release check = compileall pass; 116 passed, 10 skipped; MPI4 each rank 14 passed; benchmark 148/148; default Stage1 pass
+```
+
+启动规则：
+
+```text
+Task28 canonical records = read only
+ordinary default = unchanged
+FEniCS diffraction scope = auto_propagating, all propagating orders retained
+RUN_H2 = false
+safe_h2_rss_limit_gb = 13.5
+```
+
+## 1. 分支与工作树
+
+```text
+master_base_sha = 2f9e56d2edddb801780504f681b2ff295d993e02
+Task28 merge commit = 2f9e56d2edddb801780504f681b2ff295d993e02
+branch_name = codex/20260713-task29-stage4-direct-memory-forensics
+tracked worktree at branch creation = clean
+preserved user untracked paths = docs/task023_petsc_mpi_fe_response_pc/outcomes/raw_runs/; papers/
+```
+
+## 2. 容器与主机内存启动快照
+
+```text
+container_image = myfenics-stage4:task28
+container_digest = sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d
+container_cpu_processors = 16
+cgroup_memory_max = max
+cgroup_swap_max = max
+WSL_MemTotal_kB = 14311488
+WSL_memory_visible_gib = 13.6485
+
+Windows_total_physical_bytes = 16733323264
+Windows_free_physical_bytes_at_start = 3706617856
+Windows_total_virtual_bytes = 40537772032
+Windows_free_virtual_bytes_at_start = 20884762624
+pagefile_allocated_mb = 22701
+pagefile_current_usage_mb_at_start = 1664
+pagefile_historical_peak_usage_mb = 13840
+```
+
+解释：容器没有额外 `memory.max` 数值限制，但 WSL 实际可见内存约 13.65 GiB；主机启动快照的可用物理内存较低，因此 baseline run 前必须重新采样并避免并行重型任务。
+
+## 3. 当前动作
+
+```text
+next = commit Case050 scaffold, then run h5 baseline before h3
+numeric/physical profile change = no
+h5/h3 run = not started
+h2 = not started and locked
+```
+
+## 4. Stage A telemetry
+
+```text
+commit = 8401b44 feat: add Task29 direct-memory telemetry
+external sampler = 0.25 s process tree + per-rank RSS + cgroup + swap counters
+checkpoint RSS = current and historical fields separated
+matrix inventory = base / augmented / factor when API exposes it
+MUMPS inventory = raw INFOG(1..40) and RINFOG(1..20), no guessed meanings
+baseline lifecycle = preserved; solver objects retained during postprocess
+Docker unit tests = 123 passed, 10 skipped
+benchmark checker = 149/149
+h5/h3 baseline = not started
+h2 = locked
+```

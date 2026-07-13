@@ -55,6 +55,7 @@ CASES = {
     "030_mumps_ooc_blr",
     "031_workstation_iterative",
     "040_mpi_p_algebra_regression",
+    "050_stage4_direct_memory_forensics",
 }
 
 RECORDED_CASES = {
@@ -224,6 +225,18 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertTrue((folder / name).is_file(), name)
         folder = cases_root / "030_mumps_ooc_blr"
         for name in ("README.md", "config.json", "expected.json", "test_command.txt"):
+            self.assertTrue((folder / name).is_file(), name)
+
+        folder = cases_root / "050_stage4_direct_memory_forensics"
+        for name in (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run_h5.sh",
+            "run_h3.sh",
+            "run_h2_guarded.sh",
+            "records/README.md",
+        ):
             self.assertTrue((folder / name).is_file(), name)
 
     def test_case002_full_solve_equivalence_record(self):

@@ -36,3 +36,7 @@
 h5的粗网格R明显偏高，不能作为收敛物理结论。h3/h2的R/T/A向Task008 direct reference收敛。三网格均满足显式真残差gate，但迭代数不单调，因此当前准确称谓是 mesh-robust workstation production candidate。
 
 canonical records 位于 `benchmarks/records/` 与 recorded case 的 `records/`，完整表见 `benchmarks/benchmark_summary.csv`。Response V3 的 checker 自动计算 143 项 Gate，并核对 case files、SHA references、2D explicit/auxiliary、lossy/lossless、record ID、求解资格、物理模型和 artifact provenance。普通运行仍写 `results/`；benchmark 重型输出显式写被忽略的 `benchmarks/artifacts/`。环境状态为 `qualified_local_image`，不是无条件 clean-machine reproducible。
+
+## Task029 Case050
+
+[`Case050`](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md) 从 Task28 merge 后的 `master` 建立，专门区分 MPI worker 同时 RSS、各 rank 历史峰值和、cgroup memory 与 swap，并保存 base/augmented/factor inventory。h5/h3 是必跑 baseline；h2 默认锁定。Task28 canonical records 保持只读，Case050 的完整 timeline 和 solver output 写入 ignored artifacts。

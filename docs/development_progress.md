@@ -1,8 +1,8 @@
-# 项目开发进度：Task000–Task028
+# 项目开发进度：Task000–Task029
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task028 阶段收口的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task029 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -34,10 +34,17 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-12
-current integration branch = codex/20260712-task28-stage-consolidation
-Task028 V3 response status = implemented, awaiting final review and user merge approval
+2026-07-13
+current branch = codex/20260713-task29-stage4-direct-memory-forensics
+Task028 status = V4 closed and merged to master at 2f9e56d
+Task029 status = Stage A telemetry validated; h5/h3 baseline not run; h2 locked
 ```
+
+## 1.1 2026-07-13 最新更新
+
+Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，当前只完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050 合同和 h2 启动锁。遥测明确区分同时总 RSS 与各 rank 历史峰值和；Task28 canonical records 保持只读。
+
+Task029 尚未运行 h5/h3 baseline，也没有开始生命周期、预分配、OOC、BLR 或 ordering 优化。必须先完成 h5，再完成无 swap 的 h3，形成 Stage B 归因报告后才进入候选优化。
 
 ---
 
@@ -1523,12 +1530,20 @@ new angle/wavelength/material/geometry = not qualified
 ## 36.1 Task028 收口问题
 
 ```text
-- Response V4 已关闭 tracked-source-clean、真实 image digest 和最终提交验证，等待执行合并动作；
+- Response V4 已关闭 tracked-source-clean、真实 image digest 和最终提交验证，并以 2f9e56d 合入 master；
 - complex MPC base image尚无公开pull source，环境保持qualified；
 - `SmallDenseInverse`显式逆、内部下划线依赖和异常路径统一清理为非阻断技术债。
 ```
 
-## 36.2 数值和物理问题
+## 36.2 Task029 当前问题
+
+```text
+- h5/h3 新统计口径 baseline 尚未运行；
+- factorization、base/augmented 双份对象和 postprocess 生命周期占比尚待定量；
+- h2 继续受 20% 双网格降幅、无 swap、13.5 GB 预测上限与 watchdog Gate 锁定。
+```
+
+## 36.3 数值和物理问题
 
 ```text
 - h=1.5 production solve；
@@ -1547,14 +1562,15 @@ new angle/wavelength/material/geometry = not qualified
 
 # 37. 当前推荐开发顺序
 
-Task028 合并与 Task029 启动顺序：
+Task28 合并与 Task29 分支启动已完成。Task029 当前强制顺序：
 
 ```text
-1. 推送 Response V4；
-2. 以普通 merge commit 合并 Task28，保留完整审查历史；
-3. 在 master 运行轻量 release check；
-4. 从合并后的 master 新建 Task29 分支；
-5. 先 h5/h3 做直接法内存剖析，h2 继续受条件 Gate 锁定。
+1. Commit A telemetry-only（已完成）；
+2. 先跑 MPI4 h5 baseline 并验证 Task28 R/T/A；
+3. 再跑无 swap 的 MPI4 h3 baseline；
+4. 完成 Stage B 内存归因和 optimization hypothesis table；
+5. 依次验证公共生命周期/预分配与 factorization profile；
+6. 仅在全部 h2 Gate 通过时考虑 h2，否则明确 not-run。
 ```
 
 Task028 完成后，如重新开启研究，推荐顺序：
@@ -1598,4 +1614,4 @@ benchmarks/benchmark_summary.csv
 
 # 39. 当前一句话状态
 
-> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 Response V4 已补齐 tracked-source-clean、真实 image digest 与最终实现提交验证，148 项 Gate 全部通过并已获用户合并许可，环境仍按 `qualified_local_image` 诚实限定。
+> 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 已完成 direct-memory telemetry 的 Commit A 与 149 项 benchmark Gate，但 h5/h3 新口径 baseline 尚未运行、h2 仍锁定，环境继续按 `qualified_local_image` 诚实限定。

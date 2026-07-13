@@ -190,6 +190,15 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "expected.json",
             "test_command.txt",
         ),
+        "050_stage4_direct_memory_forensics": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "run_h5.sh",
+            "run_h3.sh",
+            "run_h2_guarded.sh",
+            "records",
+        ),
     }
     cases_root = BENCHMARKS / "cases"
     for case_name, required_names in case_requirements.items():

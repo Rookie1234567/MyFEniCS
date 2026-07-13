@@ -46,8 +46,8 @@
 | Task020-Task025 | wave-aware、FE response、Schur、cached-Q | 研究机制与基础设施，未达production |
 | Task026 | auxiliary-free exact condensation | 稳定算子基础 |
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
-| Task028 | 阶段收口、选择性整合、benchmark | V4 三项加固已完成，148/148 Gate；已获用户合并许可 |
-| Task029 | Stage4 direct memory forensics | 已写任务书和强制 COMSOL 参考补充；必须在 Task028 合并后的新 master 分支启动，先 h5/h3 剖析，h2 条件解锁 |
+| Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
+| Task029 | Stage4 direct memory forensics | 已从新 master 建分支；当前 telemetry-only 阶段，h5/h3 尚未运行，h2 锁定 |
 
 ## 当前任务
 
@@ -55,8 +55,8 @@
 |---|---|---|
 | Task026 | `task026_auxiliary_free_3d_modal_port/` | 已审查；稳定凝聚组件由Task28抽取 |
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
-| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | `response_v4.md` 已关闭 M1–M3；允许合并 `master` |
-| Task029 | `task029_stage4_direct_memory_forensics/` | planned；有效任务规范为 `task.md + task_comsol_reference_addendum.md`，不得在 Task028 分支执行 |
+| Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
+| Task029 | `task029_stage4_direct_memory_forensics/` | active；启动环境与 COMSOL 比较边界已记录，正在实现可开关遥测 |
 
 ## Task28 审计入口
 

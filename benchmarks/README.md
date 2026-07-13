@@ -12,7 +12,8 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `scripts/run_level3_iterative.sh` | p2 h5/h3/h2 workstation完整求解并运行checker |
 | `configs/workstation_p2.json` | canonical profile唯一默认来源；CLI只做override |
 | `expected/gates.json` | 残差、迭代比、RTA、RSS阈值 |
-| `check_benchmarks.py` | 从 manifest/records 重算 87 项 Gate，含 ID/KSP/coarse/physical model/provenance |
+| `check_benchmarks.py` | 从 manifest/records 重算当前 Gate（Task29 Case050 scaffold 为 149 项），含 ID/KSP/coarse/physical model/provenance |
+| `run_direct_memory_forensics.py` | Task029 h5/h3 direct worker + 0.25 s simultaneous RSS/cgroup/swap sampler；h2 guarded |
 | `records/` | canonical轻量记录与machine-readable Gate report |
 | `artifacts/` | ignored重型输出 |
 
@@ -36,3 +37,5 @@ sh benchmarks/scripts/run_level3_direct.sh --include-resource-heavy-h2
 clean rerun 必须记录 commit、branch、dirty、实际 command、time、container digest、host ID 和 provenance。对历史 h3/h2 iterative，`command/actual_source_*` 保留原运行位置，`canonical_rerun_*` 单独描述今后规范位置；两者不可混写。h5 iterative 在 Response V1 从 `3b3abf0` clean source 重新运行；h3/h2 iterative 和 h5/h3 direct 是 `440885b` clean source 的 ancestor records；h2 direct 明确为 Task008 reviewed reference。
 
 当前环境状态为 `qualified_local_image`，详见 `docker/STAGE4_ENVIRONMENT.md`。
+
+Task28 最终 checker 为 148/148；Task29 新增 Case050 contract 后，checker 继续把该目录结构作为独立 Gate。历史报告中的 87/143/148 数字保留其当时语义。
