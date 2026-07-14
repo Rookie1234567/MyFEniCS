@@ -57,6 +57,7 @@ CASES = {
     "040_mpi_p_algebra_regression",
     "050_stage4_direct_memory_forensics",
     "060_multilevel_hcurl_iterative_solver",
+    "070_compact_physical_slab_memory_optimization",
 }
 
 RECORDED_CASES = {
@@ -85,6 +86,19 @@ RECORDED_CASES = {
         "records/hierarchy_contract.json",
         "records/transfer_contract.json",
         "records/candidate_screen_summary.json",
+        "records/best_h5.json",
+        "records/best_h3.json",
+        "records/best_h2.json",
+    ),
+    "070_compact_physical_slab_memory_optimization": (
+        "records/baseline_h5.json",
+        "records/baseline_h3.json",
+        "records/baseline_h2.json",
+        "records/object_lifecycle.json",
+        "records/pc_linearity.json",
+        "records/candidate_screen.json",
+        "records/memory_components.json",
+        "records/h2_prediction.json",
         "records/best_h5.json",
         "records/best_h3.json",
         "records/best_h2.json",

@@ -51,6 +51,8 @@ def _relative_difference(left: float, right: float) -> float:
 
 
 def _iterative_peak_rss(record: dict[str, Any]) -> float | None:
+    if record.get("simultaneous_worker_peak_gib") is not None:
+        return float(record["simultaneous_worker_peak_gib"])
     if record.get("peak_rss_gb_including_rta") is not None:
         return float(record["peak_rss_gb_including_rta"])
     if record.get("peak_total_rss_including_rta_gb") is not None:
@@ -211,6 +213,24 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "records/hierarchy_contract.json",
             "records/transfer_contract.json",
             "records/candidate_screen_summary.json",
+            "records/best_h5.json",
+            "records/best_h3.json",
+            "records/best_h2.json",
+        ),
+        "070_compact_physical_slab_memory_optimization": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "expected/gates.json",
+            "run.sh",
+            "records/baseline_h5.json",
+            "records/baseline_h3.json",
+            "records/baseline_h2.json",
+            "records/object_lifecycle.json",
+            "records/pc_linearity.json",
+            "records/candidate_screen.json",
+            "records/memory_components.json",
+            "records/h2_prediction.json",
             "records/best_h5.json",
             "records/best_h3.json",
             "records/best_h2.json",
@@ -1168,6 +1188,332 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 },
                 "strong success false and preferred iteration target missed",
                 "task030_compact_h2",
+            )
+        )
+
+    case070 = cases_root / "070_compact_physical_slab_memory_optimization"
+    case070_expected = _load_json(case070 / "expected" / "gates.json")
+    case070_config = _load_json(case070 / "config.json")
+    task031_ids = {
+        "h5": "task031_compact_h5",
+        "h3": "task031_compact_h3",
+        "h2": "task031_compact_h2",
+    }
+    task031 = {label: records.get(name) for label, name in task031_ids.items()}
+    task031_present = all(record is not None for record in task031.values())
+    gates.append(
+        Gate(
+            "task031_h5_h3_h2_present",
+            task031_present,
+            task031_present,
+            True,
+            ",".join(task031_ids.values()),
+        )
+    )
+    if task031_present:
+        contract = case070_expected["record_contract"]
+        numeric = case070_expected["numeric_common"]
+        direct_ids = {"h5": "l3_direct_h5", "h3": "l3_direct_h3", "h2": "l3_direct_h2"}
+        for label, benchmark_id in task031_ids.items():
+            record = task031[label]
+            assert record is not None
+            metadata = record.get("metadata") or {}
+            source_hash = metadata.get("source_artifact_sha256")
+            sampler_hash = metadata.get("memory_sampler_sha256")
+            hash_pattern = contract["source_artifact_sha256_pattern"]
+            source_path = ROOT / str(record.get("source_artifact", ""))
+            sampler_path = ROOT / str(record.get("memory_sampler_artifact", ""))
+            observed_source_hash = _sha256(source_path) if source_path.is_file() else None
+            observed_sampler_hash = _sha256(sampler_path) if sampler_path.is_file() else None
+            hashes_ok = (
+                isinstance(source_hash, str)
+                and re.fullmatch(hash_pattern, source_hash) is not None
+                and isinstance(sampler_hash, str)
+                and re.fullmatch(hash_pattern, sampler_hash) is not None
+                and (observed_source_hash is None or observed_source_hash == source_hash)
+                and (observed_sampler_hash is None or observed_sampler_hash == sampler_hash)
+            )
+            gates.append(
+                Gate(
+                    f"task031_artifact_hashes:{benchmark_id}",
+                    hashes_ok,
+                    {
+                        "source": observed_source_hash or "heavy artifact unavailable",
+                        "sampler": observed_sampler_hash or "heavy artifact unavailable",
+                    },
+                    {"source": source_hash, "sampler": sampler_hash},
+                    benchmark_id,
+                )
+            )
+            provenance_ok = (
+                metadata.get("commit_sha") == contract["clean_source_commit_sha"]
+                and metadata.get("verified_clean_sha")
+                == contract["clean_source_commit_sha"]
+                and metadata.get("git_dirty") is False
+                and metadata.get("tracked_source_dirty") is False
+                and metadata.get("tracked_source_verification")
+                == "host_git_clean_attestation"
+                and metadata.get("provenance") == "clean_rerun"
+                and metadata.get("container_image") != "unknown"
+                and str(metadata.get("container_digest", "")).startswith("sha256:")
+                and bool(metadata.get("command"))
+                and bool(metadata.get("timestamp_utc"))
+                and bool(metadata.get("host_environment_id"))
+            )
+            gates.append(
+                Gate(
+                    f"task031_clean_provenance:{benchmark_id}",
+                    provenance_ok,
+                    {
+                        "commit": metadata.get("commit_sha"),
+                        "dirty": metadata.get("tracked_source_dirty"),
+                        "image": metadata.get("container_image"),
+                        "digest": metadata.get("container_digest"),
+                    },
+                    "clean full-SHA plus real image/digest/command/time/host",
+                    benchmark_id,
+                )
+            )
+            relation = _commit_relation(metadata.get("commit_sha"), metadata.get("provenance"))
+            gates.append(
+                Gate(
+                    f"task031_source_commit_relation:{benchmark_id}",
+                    relation in set(expected["record_commit_relations_accepted"]),
+                    relation,
+                    sorted(expected["record_commit_relations_accepted"]),
+                    benchmark_id,
+                )
+            )
+            identity_ok = (
+                record.get("profile_identity") == contract["profile_identity"]
+                and record.get("ordinary_default_changed")
+                is contract["ordinary_default_changed"]
+                and record.get("qualified_profile") is False
+                and record.get("physical_model_match") is True
+                and record.get("n_aux") == contract["n_aux"]
+                and record.get("mpi_size") == 4
+                and record.get("ksp_type") == "fgmres"
+                and record.get("restart") == 90
+                and record.get("num_slabs") == 16
+                and float(record.get("overlap_layers")) == 0.125
+                and record.get("matrix_free_fine") is True
+                and record.get("fine_matrix_present_during_solve") is False
+                and record.get("compact_lifecycle") is True
+                and case070_config.get("physical_model")
+                == canonical_config.get("physical_model")
+            )
+            gates.append(
+                Gate(
+                    f"task031_frozen_solver_identity:{benchmark_id}",
+                    identity_ok,
+                    {
+                        "profile": record.get("profile_identity"),
+                        "n_aux": record.get("n_aux"),
+                        "ksp": record.get("ksp_type"),
+                        "matrix_free": record.get("matrix_free_fine"),
+                        "compact": record.get("compact_lifecycle"),
+                    },
+                    "same physical model/80 modes, FGMRES90, matrix-free fine, compact lifecycle",
+                    benchmark_id,
+                )
+            )
+            residuals = [
+                float(record["reported_relative_residual"]),
+                float(record["condensed_true_residual"]),
+                float(record["full_augmented_true_residual"]),
+            ]
+            residual_max = max(residuals)
+            residual_mismatch = max(
+                _relative_difference(residuals[0], residuals[1]),
+                _relative_difference(residuals[0], residuals[2]),
+            )
+            gates.extend(
+                (
+                    Gate(
+                        f"task031_ksp_converged:{benchmark_id}",
+                        int(record.get("ksp_reason", 0)) > 0,
+                        record.get("ksp_reason"),
+                        "> 0",
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task031_residual_max:{benchmark_id}",
+                        residual_max <= numeric["residual_max"],
+                        residual_max,
+                        numeric["residual_max"],
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task031_residual_consistency:{benchmark_id}",
+                        residual_mismatch
+                        <= numeric["reported_true_relative_difference_max"],
+                        residual_mismatch,
+                        numeric["reported_true_relative_difference_max"],
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task031_fine_action:{benchmark_id}",
+                        float(record["fine_action_relative_error"])
+                        <= numeric["fine_action_relative_error_max"],
+                        record["fine_action_relative_error"],
+                        numeric["fine_action_relative_error_max"],
+                        benchmark_id,
+                    ),
+                )
+            )
+            rta_complete = all(
+                record.get(key) is not None
+                for key in ("R_total", "T_total", "A_volume_total")
+            )
+            direct = records.get(direct_ids[label])
+            direct_delta = float("inf")
+            if direct is not None and rta_complete:
+                direct_delta = max(
+                    abs(float(record[key]) - float(direct[key]))
+                    for key in ("R_total", "T_total", "A_volume_total")
+                )
+            gates.extend(
+                (
+                    Gate(
+                        f"task031_official_rta:{benchmark_id}",
+                        rta_complete,
+                        rta_complete,
+                        True,
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task031_energy_closure:{benchmark_id}",
+                        abs(float(record["energy_closure_error"]))
+                        <= numeric["energy_closure_abs_max"],
+                        record["energy_closure_error"],
+                        numeric["energy_closure_abs_max"],
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task031_rta_delta_from_direct:{benchmark_id}",
+                        direct_delta <= numeric["rta_delta_from_direct_max"],
+                        direct_delta,
+                        numeric["rta_delta_from_direct_max"],
+                        f"{benchmark_id},{direct_ids[label]}",
+                    ),
+                    Gate(
+                        f"task031_external_memory_and_swap:{benchmark_id}",
+                        float(record.get("simultaneous_worker_peak_gib", 0.0)) > 0.0
+                        and int(record.get("swap_in_delta_pages", -1)) == 0
+                        and int(record.get("swap_out_delta_pages", -1)) == 0,
+                        {
+                            "worker_peak_gib": record.get("simultaneous_worker_peak_gib"),
+                            "swap_in": record.get("swap_in_delta_pages"),
+                            "swap_out": record.get("swap_out_delta_pages"),
+                        },
+                        "positive simultaneous peak and zero swap",
+                        benchmark_id,
+                    ),
+                )
+            )
+
+        h3 = task031["h3"]
+        h2 = task031["h2"]
+        assert h3 is not None and h2 is not None
+        task030_h3 = records.get("task030_compact_h3")
+        task030_h2 = records.get("task030_compact_h2")
+        h3_peak = float(h3["simultaneous_worker_peak_gib"])
+        h3_baseline = _iterative_peak_rss(task030_h3) if task030_h3 else None
+        h3_reduction = (
+            None
+            if h3_baseline is None
+            else (float(h3_baseline) - h3_peak) / float(h3_baseline)
+        )
+        gates.append(
+            Gate(
+                "task031_h3_memory_gate",
+                h3_peak <= case070_expected["h3"]["simultaneous_worker_peak_gib_max"]
+                and h3_reduction is not None
+                and h3_reduction
+                >= case070_expected["h3"]["minimum_reduction_vs_task030"],
+                {"peak_gib": h3_peak, "reduction": h3_reduction},
+                "peak <=3.50 GiB and reduction >=8% vs Task030",
+                "task031_compact_h3,task030_compact_h3",
+            )
+        )
+        prediction = _load_json(case070 / "records" / "h2_prediction.json")
+        prediction_ok = (
+            prediction.get("h3_full_numeric_pass") is True
+            and float(prediction["h3_memory_reduction_fraction"])
+            >= case070_expected["h3"]["minimum_reduction_vs_task030"]
+            and float(prediction["affine_dof_central_gib"])
+            <= case070_expected["h2_launch"]["affine_dof_prediction_gib_max"]
+            and float(prediction["task030_ratio_transfer_central_gib"])
+            <= case070_expected["h2_launch"]["task030_ratio_prediction_gib_max"]
+            and float(prediction["conservative_upper_gib"])
+            <= case070_expected["h2_launch"]["conservative_upper_gib_max"]
+            and prediction.get("clean_source") is True
+            and prediction.get("same_n_aux") == 80
+            and prediction.get("launch_allowed") is True
+        )
+        gates.append(
+            Gate(
+                "task031_h2_launch_gate",
+                prediction_ok,
+                prediction,
+                "two central predictions <=8.8 GiB and upper <=10 GiB",
+                "cases/070_compact_physical_slab_memory_optimization/records/h2_prediction.json",
+            )
+        )
+        h2_peak = float(h2["simultaneous_worker_peak_gib"])
+        h2_baseline = _iterative_peak_rss(task030_h2) if task030_h2 else None
+        h2_reduction = (
+            None
+            if h2_baseline is None
+            else (float(h2_baseline) - h2_peak) / float(h2_baseline)
+        )
+        gates.append(
+            Gate(
+                "task031_h2_strong_memory_success",
+                h2_peak <= case070_expected["h2"]["strong_success_gib_max"]
+                and h2.get("classification")
+                == "strong_memory_success_slow_but_memory_efficient"
+                and h2.get("warning_triggered") is False
+                and h2.get("terminated_for_memory") is False,
+                {
+                    "peak_gib": h2_peak,
+                    "reduction": h2_reduction,
+                    "classification": h2.get("classification"),
+                },
+                "converged h2 <=8.0 GiB without warning/termination",
+                "task031_compact_h2,task030_compact_h2",
+            )
+        )
+        pc_contract = _load_json(case070 / "records" / "pc_linearity.json")
+        pc_ok = (
+            float(pc_contract["task030_flexible_pc"]["linearity_relative_error"])
+            > float(pc_contract["task030_flexible_pc"]["gate"])
+            and pc_contract["task030_flexible_pc"]["result"] == "fail"
+            and float(pc_contract["fixed_richardson_variant"]["linearity_relative_error"])
+            <= 1.0e-11
+            and pc_contract["fixed_richardson_variant"]["solver_result"]
+            == "numeric_negative"
+        )
+        gates.append(
+            Gate(
+                "task031_pc_legality_contract",
+                pc_ok,
+                pc_contract["final_disposition"],
+                "nonlinear PC requires FGMRES; linear substitute is numeric-negative",
+                "cases/070_compact_physical_slab_memory_optimization/records/pc_linearity.json",
+            )
+        )
+        components = _load_json(case070 / "records" / "memory_components.json")
+        factor_contract = components["factor_deduplication"]
+        gates.append(
+            Gate(
+                "task031_exact_factor_dedup_negative",
+                factor_contract.get("unique_factor_classes") == 16
+                and factor_contract.get("exact_duplicate_factor_count") == 0
+                and "approximate sharing prohibited" in factor_contract.get("disposition", ""),
+                factor_contract,
+                "16 unique exact factors and no approximate sharing",
+                "cases/070_compact_physical_slab_memory_optimization/records/memory_components.json",
             )
         )
 

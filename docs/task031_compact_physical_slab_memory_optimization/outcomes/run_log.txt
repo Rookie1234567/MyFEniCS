@@ -1,0 +1,51 @@
+Task031 run log (UTC, condensed)
+
+2026-07-14 implementation clean SHA: 45a0fc6e19535cb8f14fbfb186f099019612fec2
+image: myfenics-stage4:task28
+digest: sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d
+
+SCREEN h5, FGMRES90 assembled F, 200 it:
+  residual=8.611995756278665e-4 worker_peak=1.693619 GiB solve=18.478 s
+SCREEN h5, FGMRES50:
+  residual=9.922889152776102e-4 worker_peak=1.661560 GiB solve=19.311 s -> stop (<3% RSS, worse residual/time)
+SCREEN h5, 16 slabs overlap0.125:
+  residual=1.106964191376560e-3 worker_peak=1.654263 GiB factor_nnz=5,666,368 -> weak positive
+SCREEN h5, 20 slabs overlap0.125:
+  residual=1.477687847469398e-3 worker_peak=1.680412 GiB -> stop
+SCREEN h5, boundary Jacobi1:
+  residual=1.177524551426097e-2 worker_peak=1.682713 GiB -> stop
+SCREEN h5, matrix-free fine F, 200 it:
+  residual=8.611995762545732e-4 action_error~9.7e-16 worker_peak=1.659306 GiB solve=58.837 s -> memory-primary keep
+SCREEN h5, fixed Richardson + GMRES90:
+  PC linearity=3.611043e-15 determinism=0 residual200=0.7703156 -> numeric negative
+SCREEN adaptive PC + ordinary GMRES:
+  PC linearity=2.374308e-2 >1e-11 -> fail closed
+FACTOR fingerprint:
+  unique=16 duplicate=0 -> exact dedup stop
+
+FULL h5 clean:
+  command=mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 5 --num-slabs 16 --overlap-layers 0.125 --ksp-type fgmres --restart 90 --max-it 1600 --post-smooth --subdomain-local-shift --factor-only-storage --compact-lifecycle --matrix-free-fine
+  iterations=1157 full=9.95990325978819e-7 worker_peak=1.619598 GiB cgroup=1.056248 GiB
+  solve/total=350.851/374.342 s R/T/A=0.089021602568/0.442588275323/0.468390124569
+
+FULL h3 attempt1 clean:
+  max_it=1600 reason=-3 full=5.49013983747199e-6 worker_peak=3.474262 GiB -> numeric fail, retain negative
+FULL h3 qualification clean:
+  same candidate, max_it=5000, iterations=1994, full=9.97385343407516e-7
+  worker_peak=3.474346 GiB cgroup=2.899216 GiB swap=0
+  solve/total=2311.581/2370.351 s R/T/A=0.004613031629/0.583653357934/0.411733610310
+
+H2 conditional predictions:
+  affine DoF=8.501130 GiB
+  Task030 h3-ratio transfer=8.587349 GiB
+  conservative upper=9.446530 GiB
+  all launch gates pass; watchdog 9.5/11 GiB
+
+FULL h2 clean:
+  command=mpiexec -n 4 python -m benchmarks.run_workstation_iterative --h-nm 2 --num-slabs 16 --overlap-layers 0.125 --ksp-type fgmres --restart 90 --max-it 6000 --post-smooth --subdomain-local-shift --factor-only-storage --compact-lifecycle --matrix-free-fine
+  iterations=1977 reason=2 reported/condensed/full=9.998453941e-7/9.998453942e-7/9.998453942e-7
+  worker_peak=7.897675 GiB cgroup=7.424026 GiB legacy_internal_peak=8.176441 GiB
+  swap=0 warning=false termination=false
+  solve/total=11982.581/12173.086 s
+  R/T/A=0.001342934186/0.599213235569/0.399443835926 closure=5.682325e-9
+  classification=strong_memory_success_slow_but_memory_efficient

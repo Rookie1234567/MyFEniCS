@@ -1,0 +1,37 @@
+{
+  "record_type": "task031_memory_component_summary",
+  "rows": [
+    {
+      "mesh": "h5",
+      "n_fe": 44698,
+      "factor_rows": 58720,
+      "factor_nnz": 5666368,
+      "object_payload_model_gib": 0.24211673438549042,
+      "simultaneous_worker_peak_gib": 1.619598388671875,
+      "cgroup_current_peak_gib": 1.0562477111816406
+    },
+    {
+      "mesh": "h3",
+      "n_fe": 198438,
+      "factor_rows": 267960,
+      "factor_nnz": 26805104,
+      "object_payload_model_gib": 1.105485636740923,
+      "simultaneous_worker_peak_gib": 3.474346160888672,
+      "cgroup_current_peak_gib": 2.8992156982421875
+    },
+    {
+      "mesh": "h2",
+      "n_fe": 615108,
+      "factor_rows": 798364,
+      "factor_nnz": 80743816,
+      "object_payload_model_gib": 3.383055478334427,
+      "simultaneous_worker_peak_gib": 7.897674560546875,
+      "cgroup_current_peak_gib": 7.4240264892578125
+    }
+  ],
+  "factor_deduplication": {
+    "unique_factor_classes": 16,
+    "exact_duplicate_factor_count": 0,
+    "disposition": "reliable negative; approximate sharing prohibited"
+  }
+}

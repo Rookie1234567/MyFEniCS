@@ -122,3 +122,28 @@ runner 新增 `--post-smooth`、`--subdomain-local-shift` 和 `--factor-only-sto
 Case060 best records 写入实际重型运行的 commit、tracked-source qualification、命令、时间、镜像 digest、host id、artifact root/SHA-256、80-mode identity 与 75D coarse identity。Review V2 后，h5/h3 来自 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 的 clean rerun：runner 接收 host 已验证的 exact full SHA，并要求它与容器 HEAD 完全一致，否则 fail closed；record 同时写 `git_dirty=false`、`tracked_source_dirty=false` 和 `host_git_clean_attestation`。h2 不重跑，仍保留原 dirty provenance，并以 `reviewed_historical_dirty_worktree_reference` 与 clean h5/h3 明确区分。factor-only 的 factor matrix lifetime 仅对 PETSc 3.24.0 complex build 验证；跨版本必须回归。
 
 Case060 入口：[`../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md`](../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)。
+
+## 16. Task031 external sampler 与 matrix-free/compact pipeline
+
+Task031 wrapper `benchmarks.run_task031_memory_forensics` 是 runner 的父进程。它先核对 host clean full SHA，再启动 `mpiexec -n 4` worker；每 0.25 s 读取 live rank RSS、process tree、cgroup、swap 与 `*_memory_stages.jsonl`，最后把 solver numeric pass 和 full-run memory summary合并。h2 默认锁定，并可在 9.5/11 GiB warning/termination 时受控结束。
+
+新增 pipeline 为：
+
+```text
+assemble Stage4 form/F/C/D/H
+-> certify public MPC form action against assembled F
+-> build exact condensed shell with external fine action
+-> build 75D coarse and 16 overlap0.125 slab factors
+-> release assembled F when all require_f users finish
+-> build FGMRES90 and write object ledger
+-> solve with matrix-free fine action
+-> recompute condensed/full true residual
+-> destroy solver stack before official RTA
+-> external sampler reports full-run simultaneous peak
+```
+
+`--matrix-free-fine`、`--compact-lifecycle`、`--ksp-type`、`--smoother-ksp-type`、`--certify-pc` 与 selective slab flags 默认都不改变 ordinary profile。最终 adaptive PC 非线性，所以 Case070 正式 run 用 FGMRES 并记录 certificate negative disposition，不用 `--certify-pc` 把已知非线性误判成运行失败。
+
+`object_ledger_at_solve` 只做可解释 payload 模型；外部 RSS/cgroup 才是内存 authority。h2 ledger payload 3.383 GiB、legacy internal peak 8.176 GiB、external worker peak 7.898 GiB，三个数不能混写。matrix-free h2 调用 form action 13,960 次，解释了 solve 11982.581 s 的主要成本。
+
+Case070 入口：[`../../../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md`](../../../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md)。

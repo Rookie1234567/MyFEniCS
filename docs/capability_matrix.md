@@ -54,7 +54,10 @@
 | release-base lifecycle control | diagnostic_only | 显式 opt-in | h3 只降 5.462%，不是 low-memory profile |
 | OpenBLAS-threaded direct | diagnostic_only | Case050 `--threads-per-rank` | 当前 image MPI1×4 KSPSetUp 仍约 1 核；capability unavailable |
 | MPI4 workstation iterative | recommended | 显式 benchmark | 仅固定 p2/h5,h3,h2 profile |
-| Task30 compact physical-slab low-memory profile | experimental | Case060 显式 flags | `workstation_memory_success_with_qualifications`；clean final-HEAD h5/h3 为 1.688/3.793 GB；h2 是 reviewed historical reference；等待 final review |
+| Task30 compact physical-slab low-memory profile | experimental | Case060 显式 flags | `workstation_memory_success_with_qualifications`；Review V3 通过并已合入 master；ordinary default 未改变 |
+| Task31 matrix-free compact physical-slab memory-first profile | experimental | Case070 显式 flags | clean h5/h3/h2 full pass；h2 simultaneous RSS 7.898 GiB（-15.756% vs Task030），strong memory success；solve 约 5.01x，非 ordinary default |
+| Task31 simultaneous RSS/cgroup/swap/stage telemetry | recommended | `run_task031_memory_forensics.py` | 0.25 s live-rank sum，禁止 per-rank historical peak sum；h2 watchdog 9.5/11 GiB |
+| public MPC form action + condensed fine lifecycle | experimental | `mpc_form_action.py` / Case070 | h5/h3/h2 action error `<1e-15`；solve ledger 无 assembled F；跨参数/版本需复验 |
 | nonmatching H(curl) transfer + condensed Galerkin | research_only | `hcurl_multilevel.py` / Case060 | validated infrastructure API 与失败 p/h/Woodbury research candidates 已隔离；当前 792D p1 coarse 的 solver 性能为负，不是可推荐 GMG |
 | subdomain-local shift + factor-only storage | experimental | workstation runner 显式 opt-in | PETSc 3.24 complex action/lifecycle 等价通过；跨版本需回归；普通 Task27 profile 不变 |
 | h=1.5 iterative | not_verified | 无 canonical record | 不得宣称 production |
@@ -79,7 +82,7 @@
 | element | p=2 Nedelec |
 | mesh target | h=5/3/2 nm |
 | MPI | 4 ranks |
-| solver | canonical: fixed 75D coarse + 16 physical slabs + sm2 + FGMRES(100)；Task30 compact physical-slab experimental: 同一 Task27-derived 架构 + symmetric pre/post ILU0 + local shift + factor-only + FGMRES(90) |
+| solver | canonical: fixed 75D coarse + 16 physical slabs + sm2 + FGMRES(100)；Task30 compact experimental: symmetric pre/post ILU0 + local shift + factor-only + FGMRES(90)；Task31 memory-first experimental: Task30 架构 + overlap0.125 + public matrix-free fine action + compact lifecycle |
 
 任何偏离都自动标记为 `experimental`，必须重新取得 direct 或其他可信参考、三残差、R/T/A、能量闭合和总 RSS 证据。
 
@@ -99,4 +102,5 @@
 | direct memory/thread forensics | solver guide Task029 | walkthrough 30 | [`050`](../benchmarks/cases/050_stage4_direct_memory_forensics/README.md) |
 | MPI4 workstation iterative | [`40_3d_workstation_iterative.md`](../notes/quick_start/40_3d_workstation_iterative.md) | [`iterative_solver_and_preconditioner.md`](../notes/theory/iterative_solver_and_preconditioner.md)、walkthrough 32/33 | [`031`](../benchmarks/cases/031_workstation_iterative/README.md) |
 | Task30 H(curl) infrastructure + physical-slab low-memory research | solver guide Task030 | iterative theory、walkthrough 32/33/50 | [`060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) |
+| Task31 matrix-free compact memory-first research | solver guide Task031 | iterative theory、walkthrough 31/32/33/50 | [`070`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) |
 | MPI/p/algebra regression | 环境/验证章节 | walkthrough 50 | [`040`](../benchmarks/cases/040_mpi_p_algebra_regression/README.md) |

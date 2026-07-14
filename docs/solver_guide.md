@@ -95,6 +95,37 @@ Task030 没有替换 ordinary/canonical profile。最终成功求解器仍是 Ta
 
 Task030 还建立了 nonmatching p2/p1 H(curl) transfer 和 exact Galerkin coarse；它们代数正确，但五个 100 步 solver 候选均明显失败。`hcurl_multilevel.py` 只公开 validated transfer/cache/Galerkin API；Jacobi、p/h multilevel、Woodbury 等失败候选只允许 research runner/tests 直接导入，不属于普通 `src.solvers` 公共 API，更不能理解为可推荐 GMG profile。
 
+## 5.2 Task031 matrix-free compact memory-first experimental profile
+
+Task031 面向“机器内存不足，但允许明显增加时间”的场景。它保留 Task030 的 75D wave coarse、16-slab ILU0 symmetric pre/post、local shift、factor-only 与 FGMRES90，再显式增加：
+
+```bash
+--overlap-layers 0.125 --matrix-free-fine --compact-lifecycle
+```
+
+推荐通过带外部采样与 h2 lock/watchdog 的 wrapper 运行：
+
+```bash
+mpiexec -n 4 python -m benchmarks.run_task031_memory_forensics \
+  --h-nm 5 --num-slabs 16 --overlap-layers 0.125 \
+  --ksp-type fgmres --smoother-ksp-type gmres --restart 90 \
+  --max-it 5000 --matrix-free-fine --compact-lifecycle --no-certify-pc \
+  --case-label task031_local --run-dir /tmp/task031_local \
+  --verified-clean-sha <full-clean-sha>
+```
+
+h2 默认锁定，只有 h5/h3 数值、内存、预测、clean source 与无 swap Gate 通过后才可加 `--unlock-h2`；必须保留 9.5 GiB warning 与 11 GiB termination。Case070 的 frozen MPI4 h5/h3/h2 为 1157/1994/1977 步，external simultaneous worker peak 1.620/3.474/7.898 GiB。h2 较 Task030 降 15.756%，但 solve 11982.581 s，约慢 5.01x。因此选择规则是：
+
+```text
+速度/吞吐优先且可承受约 9.4 GiB -> Task030 compact profile
+内存硬约束约 8 GiB、可接受数小时 -> Task031 memory-first profile
+普通使用/参数域外 -> ordinary/canonical profile + 重新资格化
+```
+
+Task031 的 adaptive local GMRES PC 实测非线性（linearity error `2.374308e-2`），所以必须与 FGMRES 配对；普通 GMRES、TFQMR、BiCGStab 不得使用。fixed Richardson 虽线性，但 200 步 residual 0.7703，不能替代。public MPC form action 对 assembled `F` 的误差 `<1e-15`，solve ledger 中不保留 `F`；这只是 frozen target 的资格证据，不是任意参数的数学收敛保证。
+
+内存判断以 external simultaneous live-rank RSS 为权威，cgroup 与 legacy internal peak 分开记录。release 后 current RSS 下降只能证明 lifecycle 生效，不能单独构成 solve-peak success。完整配置、records 与限制见 Case070。
+
 ## 6. 可信停止条件
 
 | Gate | 阈值 |

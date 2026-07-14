@@ -1,0 +1,38 @@
+{
+  "record_contract": {
+    "benchmark_ids": {
+      "h5": "task031_compact_h5",
+      "h3": "task031_compact_h3",
+      "h2": "task031_compact_h2"
+    },
+    "clean_source_commit_sha": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+    "profile_identity": "task031_matrix_free_compact_physical_slab_opt_in",
+    "n_aux": 80,
+    "ordinary_default_changed": false,
+    "source_artifact_sha256_pattern": "^[0-9a-f]{64}$"
+  },
+  "numeric_common": {
+    "residual_max": 1e-6,
+    "reported_true_relative_difference_max": 1e-6,
+    "fine_action_relative_error_max": 1e-11,
+    "energy_closure_abs_max": 1e-6,
+    "rta_delta_from_direct_max": 1e-6
+  },
+  "h3": {
+    "simultaneous_worker_peak_gib_max": 3.5,
+    "minimum_reduction_vs_task030": 0.08,
+    "swap_pages_max": 0
+  },
+  "h2_launch": {
+    "affine_dof_prediction_gib_max": 8.8,
+    "task030_ratio_prediction_gib_max": 8.8,
+    "conservative_upper_gib_max": 10.0
+  },
+  "h2": {
+    "memory_positive_gib_max_exclusive": 9.0,
+    "engineering_success_gib_max": 8.5,
+    "strong_success_gib_max": 8.0,
+    "stretch_success_gib_max": 7.0,
+    "swap_pages_max": 0
+  }
+}

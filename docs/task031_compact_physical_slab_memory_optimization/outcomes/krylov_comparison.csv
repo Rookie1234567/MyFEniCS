@@ -1,0 +1,8 @@
+candidate,ksp_type,restart,pc_kind,pc_linearity_error,iterations,full_true_residual,worker_peak_gib,solve_s,disposition
+assembled_baseline,fgmres,90,adaptive_local_gmres,not_certified,200,8.611995756278665e-4,1.6936187744140625,18.47797544299101,screen_baseline
+restart50,fgmres,50,adaptive_local_gmres,not_certified,200,9.922889152776102e-4,1.66156005859375,19.31139870500192,stop_below_3_percent
+ordinary_gmres,gmres,90,adaptive_local_gmres,2.374308e-2,0,not_run_after_certification,not_qualified,not_qualified,fail_closed_nonlinear_pc
+fixed_richardson,gmres,90,fixed_richardson,3.611043013196607e-15,200,7.703155637491123e-1,1.6569061279296875,12.491137154996977,numeric_negative
+final_h5,fgmres,90,adaptive_local_gmres,nonlinear_requires_flexible_ksp,1157,9.95990325978819e-7,1.619598388671875,350.85145848798857,full_pass
+final_h3,fgmres,90,adaptive_local_gmres,nonlinear_requires_flexible_ksp,1994,9.97385343407516e-7,3.474346160888672,2311.5807168850006,full_pass
+final_h2,fgmres,90,adaptive_local_gmres,nonlinear_requires_flexible_ksp,1977,9.99845394184582e-7,7.897674560546875,11982.581291871,strong_memory_success

@@ -111,8 +111,14 @@ def _runtime_metadata(command: str) -> dict[str, Any]:
         "verified_clean_sha": verified_clean_sha,
         "command": command,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
-        "container_digest": os.environ.get("BENCHMARK_CONTAINER_DIGEST", "unknown"),
+        "container_image": os.environ.get(
+            "BENCHMARK_CONTAINER_IMAGE",
+            os.environ.get("TASK031_CONTAINER_IMAGE", "unknown"),
+        ),
+        "container_digest": os.environ.get(
+            "BENCHMARK_CONTAINER_DIGEST",
+            os.environ.get("TASK031_IMAGE_DIGEST", "unknown"),
+        ),
         "host_environment_id": os.environ.get("BENCHMARK_HOST_ID", platform.node()),
         "provenance": "clean_rerun",
         "kernel": platform.release(),

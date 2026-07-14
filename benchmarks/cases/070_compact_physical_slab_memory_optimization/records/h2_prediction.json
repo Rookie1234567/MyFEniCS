@@ -1,0 +1,15 @@
+{
+  "record_type": "task031_h2_launch_prediction",
+  "h3_full_numeric_pass": true,
+  "h3_memory_reduction_fraction": 0.0839896649766818,
+  "h3_swap_pages": 0,
+  "affine_dof_central_gib": 8.50113004439051,
+  "task030_ratio_transfer_central_gib": 8.58734865204282,
+  "conservative_upper_gib": 9.44652998855265,
+  "clean_source": true,
+  "same_n_aux": 80,
+  "watchdog_warning_gib": 9.5,
+  "watchdog_termination_gib": 11.0,
+  "launch_allowed": true,
+  "actual_h2_peak_gib": 7.897674560546875
+}

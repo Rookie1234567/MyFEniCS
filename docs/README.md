@@ -50,8 +50,8 @@
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
-| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；clean h5/h3，historical h2；p/h multigrid solver-negative |
-| Task031 | compact physical-slab PC memory-first structural optimization | planned；目标为在保证收敛下继续压缩 Krylov、F、slab factors 和对象生命周期 |
+| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | Review V3 通过并以 `545165b` 合入 master；p/h multigrid solver-negative |
+| Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；clean h5/h3/h2；h2 7.898 GiB、无 swap |
 
 ## 当前任务
 
@@ -61,8 +61,8 @@
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Response V2 已完成；等待最终审查与用户选择性合并许可 |
-| Task031 | `task031_compact_physical_slab_memory_optimization/` | 任务书已创建；只能在 Task030 合并后的 clean master 上启动 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Review V3 通过并按用户许可合入 master |
+| Task031 | `task031_compact_physical_slab_memory_optimization/` | clean h5/h3/h2 与 Case070 已完成；等待 Task031 review |
 
 ## Task28 审计入口
 
@@ -115,5 +115,8 @@
 | 文件 | 内容 |
 |---|---|
 | [`task031_compact_physical_slab_memory_optimization/task.md`](task031_compact_physical_slab_memory_optimization/task.md) | 内存优先结构性优化：固定 PC 的低存储 Krylov、真正 matrix-free F、提前释放、slab factor 精确去重、overlap/slab 重构和选择性局部因子；迭代数/时间完整统计但内存优先，h2 条件解锁 |
+| [`task031_compact_physical_slab_memory_optimization/outcomes/summary.md`](task031_compact_physical_slab_memory_optimization/outcomes/summary.md) | clean h5/h3/h2、7.898 GiB strong memory success、PC/matrix-free/lifecycle 证据、负结果与合并边界 |
+| [`task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md`](task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md) | 8.501/8.587 GiB 两套中心预测、9.447 GiB 保守上界与实测对照 |
+| [`../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) | Case070 合同、轻量 records、自动 Gate 与复现入口 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task031 必须从 Task030 合并后的 clean master 独立启动，ordinary default 仍不得改变。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task031 已从 Task030 合并后的 clean master 独立启动并完成执行，ordinary default 未改变；合入 master 仍需 review 与用户明确许可。

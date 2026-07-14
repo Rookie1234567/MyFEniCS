@@ -147,3 +147,11 @@ factor-only 模式逐块提取/分解，避免所有 local source matrices 同�
 Task030 的最终成功配置仍走本文件描述的 Task27-derived physical-slab PC；它不依赖失败的 p/h multilevel coarse。`src/solvers/hcurl_multilevel.py` 的公共 `__all__` 只包含 `ActiveDofMap`、nonmatching transfer/cache/validation 与 condensed Galerkin 等 validated infrastructure。Jacobi、Galerkin multilevel PC、Modal Woodbury 等 solver-negative candidates 只允许 research runner/tests 直接导入，不由普通 `src.solvers` 暴露。
 
 因此 selective merge 时应分别审查两条 lane：本文件的 local-shift/factor-only/post-smooth 是已验证的 explicit opt-in 工程路径；H(curl) 文件只提升代数基础设施，不提升 p/h solver profile。ordinary default 与 Task027 canonical 均保持不变。
+
+## 17. Task031 PC certificate、factor fingerprint 与 selective research path
+
+Task031 为 physical-slab context 增加 `certify_fixed_pc_action`：用分布式随机向量比较 `P(ax+by)` 与 `aP(x)+bP(y)`，并重复 apply 检查 determinism。Task030 adaptive two-step local GMRES 的 linearity error 为 `2.374308e-2`，runner 因而拒绝普通 GMRES；fixed Richardson 的 `3.611e-15` 虽合法，却在 200 步 residual 0.7703，未进入最终 profile。
+
+每个 local factor 记录结构/数值 SHA-256 fingerprint、owner、rows 与 stored nnz。Case070 的 16 个 factor 全部 unique，`exact_duplicate_factor_count=0`；代码不做近似 dedup。`selective_diagonal_boundary_slabs=1` 只用于 research screen：两个 boundary slabs 改为 Jacobi 后 stored factor nnz 下降约 9.95%，但 residual 恶化约 13.7x 且 RSS 几乎不降，因此最终仍是 16 个 ILU0 factors。
+
+最终 Task031 使用 overlap0.125，把 h5 factor rows/nnz 从 71,344/7,046,752 降到 58,720/5,666,368。该参数与 matrix-free/lifecycle 一样触发 qualification deviation，不改变 ordinary overlap0.25。

@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "5b81359daee0874793c44b019d9c914b334db483",
+  "checkout_commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 203,
-  "total_count": 203,
+  "passed_count": 258,
+  "total_count": 258,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -110,6 +110,13 @@
       "observed": "complete",
       "expected": "all case-contained contract files exist",
       "evidence": "cases/060_multilevel_hcurl_iterative_solver"
+    },
+    {
+      "name": "case_contract:070_compact_physical_slab_memory_optimization",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization"
     },
     {
       "name": "case_reference:010_3d_stage1_airbox/records/canonical_reference.json",
@@ -608,7 +615,7 @@
     {
       "name": "record_commit_consistent:task030_compact_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -641,7 +648,7 @@
     {
       "name": "record_commit_consistent:task030_compact_h3",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -682,6 +689,105 @@
         "reviewed_reference_exempt"
       ],
       "evidence": "cases/060_multilevel_hcurl_iterative_solver/records/best_h2.json"
+    },
+    {
+      "name": "record_exists:task031_compact_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h5.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task031_compact_h5",
+      "passed": true,
+      "observed": "task031_compact_h5",
+      "expected": "task031_compact_h5",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h5.json"
+    },
+    {
+      "name": "metadata_complete:task031_compact_h5",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h5.json"
+    },
+    {
+      "name": "record_commit_consistent:task031_compact_h5",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h5.json"
+    },
+    {
+      "name": "record_exists:task031_compact_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h3.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task031_compact_h3",
+      "passed": true,
+      "observed": "task031_compact_h3",
+      "expected": "task031_compact_h3",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h3.json"
+    },
+    {
+      "name": "metadata_complete:task031_compact_h3",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h3.json"
+    },
+    {
+      "name": "record_commit_consistent:task031_compact_h3",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h3.json"
+    },
+    {
+      "name": "record_exists:task031_compact_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h2.json"
+    },
+    {
+      "name": "benchmark_id_matches_manifest:task031_compact_h2",
+      "passed": true,
+      "observed": "task031_compact_h2",
+      "expected": "task031_compact_h2",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h2.json"
+    },
+    {
+      "name": "metadata_complete:task031_compact_h2",
+      "passed": true,
+      "observed": "complete",
+      "expected": "no missing required metadata",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h2.json"
+    },
+    {
+      "name": "record_commit_consistent:task031_compact_h2",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/best_h2.json"
     },
     {
       "name": "case002_comparison_exists",
@@ -1414,7 +1520,7 @@
     {
       "name": "task030_source_commit_relation:task030_compact_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1534,7 +1640,7 @@
     {
       "name": "task030_source_commit_relation:task030_compact_h3",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1787,6 +1893,403 @@
       },
       "expected": "strong success false and preferred iteration target missed",
       "evidence": "task030_compact_h2"
+    },
+    {
+      "name": "task031_h5_h3_h2_present",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task031_compact_h5,task031_compact_h3,task031_compact_h2"
+    },
+    {
+      "name": "task031_artifact_hashes:task031_compact_h5",
+      "passed": true,
+      "observed": {
+        "source": "56aec1265d7bde58d579fa58b3d0683d8b9fee52c19343aa1cb7c4110506e00c",
+        "sampler": "0846cd8b10c0ade98ab94440a0956711d23b19b509d1a8f45e6082f82cb527eb"
+      },
+      "expected": {
+        "source": "56aec1265d7bde58d579fa58b3d0683d8b9fee52c19343aa1cb7c4110506e00c",
+        "sampler": "0846cd8b10c0ade98ab94440a0956711d23b19b509d1a8f45e6082f82cb527eb"
+      },
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_clean_provenance:task031_compact_h5",
+      "passed": true,
+      "observed": {
+        "commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+        "dirty": false,
+        "image": "myfenics-stage4:task28",
+        "digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d"
+      },
+      "expected": "clean full-SHA plus real image/digest/command/time/host",
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_source_commit_relation:task031_compact_h5",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_frozen_solver_identity:task031_compact_h5",
+      "passed": true,
+      "observed": {
+        "profile": "task031_matrix_free_compact_physical_slab_opt_in",
+        "n_aux": 80,
+        "ksp": "fgmres",
+        "matrix_free": true,
+        "compact": true
+      },
+      "expected": "same physical model/80 modes, FGMRES90, matrix-free fine, compact lifecycle",
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_ksp_converged:task031_compact_h5",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_residual_max:task031_compact_h5",
+      "passed": true,
+      "observed": 9.95990326083679e-07,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_residual_consistency:task031_compact_h5",
+      "passed": true,
+      "observed": 1.052820727941427e-10,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_fine_action:task031_compact_h5",
+      "passed": true,
+      "observed": 9.718e-16,
+      "expected": 1e-11,
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_official_rta:task031_compact_h5",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_energy_closure:task031_compact_h5",
+      "passed": true,
+      "observed": 2.46043740936841e-09,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_rta_delta_from_direct:task031_compact_h5",
+      "passed": true,
+      "observed": 6.1624295111251115e-09,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h5,l3_direct_h5"
+    },
+    {
+      "name": "task031_external_memory_and_swap:task031_compact_h5",
+      "passed": true,
+      "observed": {
+        "worker_peak_gib": 1.619598388671875,
+        "swap_in": 0,
+        "swap_out": 0
+      },
+      "expected": "positive simultaneous peak and zero swap",
+      "evidence": "task031_compact_h5"
+    },
+    {
+      "name": "task031_artifact_hashes:task031_compact_h3",
+      "passed": true,
+      "observed": {
+        "source": "0292d9107f5c9914c1cebc19073fd29b0af4adb41b11c3d7145b81bf50bfc071",
+        "sampler": "32e3b04ed0f5935b204102ca8312b448b0e57b032b67ba247c25d89299833571"
+      },
+      "expected": {
+        "source": "0292d9107f5c9914c1cebc19073fd29b0af4adb41b11c3d7145b81bf50bfc071",
+        "sampler": "32e3b04ed0f5935b204102ca8312b448b0e57b032b67ba247c25d89299833571"
+      },
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_clean_provenance:task031_compact_h3",
+      "passed": true,
+      "observed": {
+        "commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+        "dirty": false,
+        "image": "myfenics-stage4:task28",
+        "digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d"
+      },
+      "expected": "clean full-SHA plus real image/digest/command/time/host",
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_source_commit_relation:task031_compact_h3",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_frozen_solver_identity:task031_compact_h3",
+      "passed": true,
+      "observed": {
+        "profile": "task031_matrix_free_compact_physical_slab_opt_in",
+        "n_aux": 80,
+        "ksp": "fgmres",
+        "matrix_free": true,
+        "compact": true
+      },
+      "expected": "same physical model/80 modes, FGMRES90, matrix-free fine, compact lifecycle",
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_ksp_converged:task031_compact_h3",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_residual_max:task031_compact_h3",
+      "passed": true,
+      "observed": 9.97385343407516e-07,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_residual_consistency:task031_compact_h3",
+      "passed": true,
+      "observed": 1.1460038413474252e-11,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_fine_action:task031_compact_h3",
+      "passed": true,
+      "observed": 9.45953675463829e-16,
+      "expected": 1e-11,
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_official_rta:task031_compact_h3",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_energy_closure:task031_compact_h3",
+      "passed": true,
+      "observed": -1.2696887985441663e-10,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_rta_delta_from_direct:task031_compact_h3",
+      "passed": true,
+      "observed": 1.1040116598692862e-09,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h3,l3_direct_h3"
+    },
+    {
+      "name": "task031_external_memory_and_swap:task031_compact_h3",
+      "passed": true,
+      "observed": {
+        "worker_peak_gib": 3.474346160888672,
+        "swap_in": 0,
+        "swap_out": 0
+      },
+      "expected": "positive simultaneous peak and zero swap",
+      "evidence": "task031_compact_h3"
+    },
+    {
+      "name": "task031_artifact_hashes:task031_compact_h2",
+      "passed": true,
+      "observed": {
+        "source": "11509a2bda8091aa0fefef75463c307a19f919c1cc1360b166d27b1ceef3a690",
+        "sampler": "ee6359a0c4f812c06153780dc38d4bea3b03f21ada8fc50ed3e22ba456ee06f7"
+      },
+      "expected": {
+        "source": "11509a2bda8091aa0fefef75463c307a19f919c1cc1360b166d27b1ceef3a690",
+        "sampler": "ee6359a0c4f812c06153780dc38d4bea3b03f21ada8fc50ed3e22ba456ee06f7"
+      },
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_clean_provenance:task031_compact_h2",
+      "passed": true,
+      "observed": {
+        "commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+        "dirty": false,
+        "image": "myfenics-stage4:task28",
+        "digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d"
+      },
+      "expected": "clean full-SHA plus real image/digest/command/time/host",
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_source_commit_relation:task031_compact_h2",
+      "passed": true,
+      "observed": "exact_checkout",
+      "expected": [
+        "checkout_ancestor",
+        "checkout_unavailable_sha_valid",
+        "exact_checkout",
+        "reviewed_reference_exempt"
+      ],
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_frozen_solver_identity:task031_compact_h2",
+      "passed": true,
+      "observed": {
+        "profile": "task031_matrix_free_compact_physical_slab_opt_in",
+        "n_aux": 80,
+        "ksp": "fgmres",
+        "matrix_free": true,
+        "compact": true
+      },
+      "expected": "same physical model/80 modes, FGMRES90, matrix-free fine, compact lifecycle",
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_ksp_converged:task031_compact_h2",
+      "passed": true,
+      "observed": 2,
+      "expected": "> 0",
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_residual_max:task031_compact_h2",
+      "passed": true,
+      "observed": 9.99845394184582e-07,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_residual_consistency:task031_compact_h2",
+      "passed": true,
+      "observed": 8.325291669411964e-11,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_fine_action:task031_compact_h2",
+      "passed": true,
+      "observed": 9.24750845836843e-16,
+      "expected": 1e-11,
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_official_rta:task031_compact_h2",
+      "passed": true,
+      "observed": true,
+      "expected": true,
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_energy_closure:task031_compact_h2",
+      "passed": true,
+      "observed": 5.68232483288966e-09,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_rta_delta_from_direct:task031_compact_h2",
+      "passed": true,
+      "observed": 6.12516271036867e-09,
+      "expected": 1e-06,
+      "evidence": "task031_compact_h2,l3_direct_h2"
+    },
+    {
+      "name": "task031_external_memory_and_swap:task031_compact_h2",
+      "passed": true,
+      "observed": {
+        "worker_peak_gib": 7.897674560546875,
+        "swap_in": 0,
+        "swap_out": 0
+      },
+      "expected": "positive simultaneous peak and zero swap",
+      "evidence": "task031_compact_h2"
+    },
+    {
+      "name": "task031_h3_memory_gate",
+      "passed": true,
+      "observed": {
+        "peak_gib": 3.474346160888672,
+        "reduction": 0.08398966497668182
+      },
+      "expected": "peak <=3.50 GiB and reduction >=8% vs Task030",
+      "evidence": "task031_compact_h3,task030_compact_h3"
+    },
+    {
+      "name": "task031_h2_launch_gate",
+      "passed": true,
+      "observed": {
+        "record_type": "task031_h2_launch_prediction",
+        "h3_full_numeric_pass": true,
+        "h3_memory_reduction_fraction": 0.0839896649766818,
+        "h3_swap_pages": 0,
+        "affine_dof_central_gib": 8.50113004439051,
+        "task030_ratio_transfer_central_gib": 8.58734865204282,
+        "conservative_upper_gib": 9.44652998855265,
+        "clean_source": true,
+        "same_n_aux": 80,
+        "watchdog_warning_gib": 9.5,
+        "watchdog_termination_gib": 11.0,
+        "launch_allowed": true,
+        "actual_h2_peak_gib": 7.897674560546875
+      },
+      "expected": "two central predictions <=8.8 GiB and upper <=10 GiB",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/h2_prediction.json"
+    },
+    {
+      "name": "task031_h2_strong_memory_success",
+      "passed": true,
+      "observed": {
+        "peak_gib": 7.897674560546875,
+        "reduction": 0.15755704205321686,
+        "classification": "strong_memory_success_slow_but_memory_efficient"
+      },
+      "expected": "converged h2 <=8.0 GiB without warning/termination",
+      "evidence": "task031_compact_h2,task030_compact_h2"
+    },
+    {
+      "name": "task031_pc_legality_contract",
+      "passed": true,
+      "observed": "nonlinear flexible PC is explicitly paired with FGMRES; fixed linear substitute is rejected for nonconvergence",
+      "expected": "nonlinear PC requires FGMRES; linear substitute is numeric-negative",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/pc_linearity.json"
+    },
+    {
+      "name": "task031_exact_factor_dedup_negative",
+      "passed": true,
+      "observed": {
+        "unique_factor_classes": 16,
+        "exact_duplicate_factor_count": 0,
+        "disposition": "reliable negative; approximate sharing prohibited"
+      },
+      "expected": "16 unique exact factors and no approximate sharing",
+      "evidence": "cases/070_compact_physical_slab_memory_optimization/records/memory_components.json"
     },
     {
       "name": "direct_iterative_R:h5",
