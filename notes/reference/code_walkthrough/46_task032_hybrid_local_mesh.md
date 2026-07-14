@@ -57,3 +57,27 @@ mpiexec -n 4 python -m unittest -v src.test.test_36_task032_hybrid_local_mesh
 
 当前串行和 MPI4 均为 3/3 通过。这个结果只资格化局部网格、标签、材料、法向和
 Floquet ownership；它不声称 Phase 6 augmented direct 已完成，也不产生 Hybrid R/T/A。
+
+## 6. Phase 6b 单侧外端口 DtN
+
+`src/solvers/hybrid_local_dtn.py` 在每个局部网格上继续装配原 Stage-4 auxiliary
+Fourier-DtN，但只保留该局部域真正拥有的外端口：
+
+```text
+bottom block unknown = [bottom FE, 40 bottom external auxiliaries]
+top block unknown    = [top FE,    40 top external auxiliaries]
+```
+
+内部接口不进入这个 DtN loop。bottom 没有入射源；top 保留原有 top incident traction
+以及 incident modal projection。每个 auxiliary row 的小块对角仍为 1，FE-to-modal 和
+modal-to-FE coupling 仍只沿外端口 trace 稀疏插入。
+
+```bash
+python -m unittest -v src.test.test_37_task032_hybrid_local_dtn
+mpiexec -n 4 python -m unittest -v src.test.test_37_task032_hybrid_local_dtn
+```
+
+串行和 MPI4 均为 4/4 通过，覆盖单侧 mode 计数、外部/内部 tag 隔离、auxiliary
+identity rows、top-only incident source、无 dense auxiliary block，以及局部 FE DoF
+之和小于现场构造的 full Stage-4 FE 空间。此时两个局部块仍彼此独立；内部 mode
+traction/projection 与最终 monolithic MUMPS solve 留到后续子步骤。
