@@ -1,0 +1,24 @@
+{
+  "phase1": {
+    "required_levels": ["h5", "h3"],
+    "required_commit": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
+    "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "max_true_relative_residual": 1e-9,
+    "max_abs_energy_closure": 1e-9,
+    "rta_absolute_tolerance": 1e-9,
+    "required_archive_schema": 1,
+    "required_archive_shape": [5, 20, 40, 3],
+    "required_plane_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "required_dtype": "complex128",
+    "required_interface_trace_sides": ["positive_z", "negative_z"],
+    "max_replicated_payload_bytes": 67108864,
+    "ordinary_default_changed": false
+  },
+  "future_hybrid": {
+    "full_residual": "required before official RTA",
+    "interface_continuity": "required",
+    "mode_truncation_convergence": "required",
+    "h5_augmented_vs_full3d": "minimum success gate",
+    "h3_augmented_and_schur_vs_full3d": "engineering success gate"
+  }
+}

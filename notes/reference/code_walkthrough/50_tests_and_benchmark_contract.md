@@ -18,6 +18,7 @@
 | 28 | Task029 memory snapshot、stage marker、matrix inventory、candidate parser/record、cleanup、prediction 与 h2 G1–G10 guard |
 | 29 | Task030 baseline pin、active DoF、nonmatching H(curl) transfer/cache、condensed Galerkin、low-rank adapter 与 compact slab action |
 | 30 | Task031 Case070/outcomes 合同、public MPC form action、fine lifecycle、PC certificate、factor fingerprint 与 ordinary-default 隔离 |
+| 31 | Task032 full-3D reference grid、64 MiB guard、单侧接口取迹和默认关闭合同 |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -58,3 +59,9 @@ Case060 的 solver 性能结论不由单元测试代替：正式 p/h 候选必�
 `test_22_condensation` 覆盖 external fine action、`require_f/release_f`、重复 destroy 与 assembled equivalence；`test_23_physical_slab` 覆盖 PC linearity/determinism helper、fixed Richardson、selective slab、exact fingerprint 与 compact factor lifecycle。`test_30_task031_contract` 检查 Case070 JSON/CSV、Task031 summary/development progress、索引、ordinary default 与三份 clean best records。Review V1 后还固定 `iterative_solver_ports.md` 的 interface-vs-qualification 状态、保守 8.0–8.2 GiB 口径、response_v1 和 wrapper 规则：FGMRES 默认不强制 fixed-PC cert，所有非 FGMRES outer KSP 仍自动 certification/fail closed。
 
 Case070 checker 还必须验证 clean full-SHA/image/artifact hash、same 80 modes、FGMRES/matrix-free/compact identity、三残差、fine action、official R/T/A/direct delta、external simultaneous peak、swap、h3 8% Gate、两套 h2 prediction/upper 和 h2 strong classification。单元 action pass 不能替代 h5/h3/h2 full solve。
+
+## Task032 Phase 1 contract
+
+`test_31_full3d_reference_export` 检查普通默认关闭、周期单元中心网格、严格递增 z 平面、接口从中间模态区单侧取迹和冻结样本 payload 边界。实际 complex128 数组、切向 slice、finite 值与三方 SHA 一致性由 clean h5/h3 run 验证，不能只靠 unit test。
+
+Case080 checker 固定 source commit/image、clean provenance、残差、能量闭合、R/T/A、NPZ schema/shape/planes/dtype、接口侧、六个 artifact hash 和 h3 历史一致性。heavy field 不进 Git；h5/h3 的内部 per-rank historical peak sum 不是 simultaneous memory authority。

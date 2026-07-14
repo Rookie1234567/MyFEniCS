@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "01ef89b6109593e3217a44383b0bf8ec266d7c43",
+  "checkout_commit": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 258,
-  "total_count": 258,
+  "passed_count": 271,
+  "total_count": 271,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -119,6 +119,13 @@
       "evidence": "cases/070_compact_physical_slab_memory_optimization"
     },
     {
+      "name": "case_contract:080_hybrid_fem_modal_direct_baseline",
+      "passed": true,
+      "observed": "complete",
+      "expected": "all case-contained contract files exist",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline"
+    },
+    {
       "name": "case_reference:010_3d_stage1_airbox/records/canonical_reference.json",
       "passed": true,
       "observed": "a429f36a4a6490d55a83175e3a9a98c4420909b605213c05fec128629038e50a",
@@ -166,6 +173,249 @@
       "observed": "797080b1d3d8b8309de196a2573f6cad81be5c9110f561494d9bb9b4d5c262af",
       "expected": "797080b1d3d8b8309de196a2573f6cad81be5c9110f561494d9bb9b4d5c262af",
       "evidence": "benchmarks/records/workstation_p2_h2_mpi4.json"
+    },
+    {
+      "name": "task032_phase1_ordinary_default_unchanged",
+      "passed": true,
+      "observed": {
+        "config": false,
+        "expected": false,
+        "gates": false
+      },
+      "expected": false,
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline"
+    },
+    {
+      "name": "task032_phase1_identity:h5",
+      "passed": true,
+      "observed": {
+        "missing": [],
+        "relation": "exact_checkout",
+        "metadata": {
+          "commit_sha": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "git_dirty": false,
+          "tracked_source_dirty": false,
+          "command": "docker run --rm -v C:\\Users\\admin\\Desktop\\Code\\fenics_v3_hybrid_FEM_modal:/work -w /work myfenics-stage4:task28 mpiexec -n 4 python src/main.py --preset 3d_target_grating_direct_h5 --results-root benchmarks/artifacts/cases/080/full3d_reference/h5 --full3d-reference-export --full3d-reference-plane-z 10 30 60 90 110 --full3d-reference-sample-count-x 40 --full3d-reference-sample-count-y 20",
+          "timestamp_utc": "2026-07-14T10:32:35Z",
+          "container_image": "myfenics-stage4:task28",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "host_environment_id": "SK-20260601OSDE",
+          "provenance": "clean_task032_phase1_full3d_reference"
+        }
+      },
+      "expected": "complete clean metadata on frozen commit and image",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h5_reference.json"
+    },
+    {
+      "name": "task032_phase1_numeric:h5",
+      "passed": true,
+      "observed": {
+        "residual": 9.733991081132456e-12,
+        "closure": 1.212363542890671e-13,
+        "status": "completed",
+        "official": true
+      },
+      "expected": {
+        "residual_max": 1e-09,
+        "closure_abs_max": 1e-09
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h5_reference.json"
+    },
+    {
+      "name": "task032_phase1_archive_contract:h5",
+      "passed": true,
+      "observed": {
+        "schema_version": 1,
+        "dtype": "complex128",
+        "array_shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "plane_z_nm": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ],
+        "interface_trace_sides": [
+          "positive_z",
+          "negative_z"
+        ],
+        "interface_trace_region": "inside_middle_modal_region",
+        "point_count": 4000,
+        "replicated_payload_bytes_uncompressed": 384000
+      },
+      "expected": {
+        "schema": 1,
+        "shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "planes": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ],
+        "dtype": "complex128"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h5_reference.json"
+    },
+    {
+      "name": "task032_phase1_artifact_hashes:h5",
+      "passed": true,
+      "observed": {
+        "run_summary_sha256": "7891fd98fad1a43c3977bef51332b2a0c6d657b40713fa1e3fdc1ff1bc122c5a",
+        "reference_metadata_sha256": "2b6619b58b44101143b2edab8e8c8ca1e672fc4129f4ed89c85498e6f3023b97",
+        "reference_npz_sha256": "771ef22248ef743334a7d2ca2a7199eb190aaa73c26ac653bfd3641c3d5999e2",
+        "diffraction_orders_sha256": "30c6a7be34d89d79bfeb0ece9076ce158a7aba0805e589df75d8072315022560",
+        "dtn_port_diffraction_orders_sha256": "6e471191028e12cab8fd1dbe114e56a8a5c175e0cf00b1bc1c1f75b4025ba49e",
+        "power_metrics_sha256": "bb10f5975343a361693ab10e7410ac51b61a7a3a9c0099197068aeb18ffb0a5d"
+      },
+      "expected": "six SHA-256 identities and a positive NPZ byte count",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h5_reference.json"
+    },
+    {
+      "name": "task032_phase1_rta:h5",
+      "passed": true,
+      "observed": {
+        "R_total": 0.0,
+        "T_total": 0.0,
+        "A_balance": 0.0
+      },
+      "expected": {
+        "absolute_tolerance": 1e-09
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h5_reference.json"
+    },
+    {
+      "name": "task032_phase1_identity:h3",
+      "passed": true,
+      "observed": {
+        "missing": [],
+        "relation": "exact_checkout",
+        "metadata": {
+          "commit_sha": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "git_dirty": false,
+          "tracked_source_dirty": false,
+          "command": "docker run --rm -v C:\\Users\\admin\\Desktop\\Code\\fenics_v3_hybrid_FEM_modal:/work -w /work myfenics-stage4:task28 mpiexec -n 4 python src/main.py --preset 3d_target_grating_direct_h3 --results-root benchmarks/artifacts/cases/080/full3d_reference/h3 --full3d-reference-export --full3d-reference-plane-z 10 30 60 90 110 --full3d-reference-sample-count-x 40 --full3d-reference-sample-count-y 20",
+          "timestamp_utc": "2026-07-14T10:33:37Z",
+          "container_image": "myfenics-stage4:task28",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "host_environment_id": "SK-20260601OSDE",
+          "provenance": "clean_task032_phase1_full3d_reference"
+        }
+      },
+      "expected": "complete clean metadata on frozen commit and image",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
+    },
+    {
+      "name": "task032_phase1_numeric:h3",
+      "passed": true,
+      "observed": {
+        "residual": 9.92338580003542e-12,
+        "closure": 6.23945339839338e-14,
+        "status": "completed",
+        "official": true
+      },
+      "expected": {
+        "residual_max": 1e-09,
+        "closure_abs_max": 1e-09
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
+    },
+    {
+      "name": "task032_phase1_archive_contract:h3",
+      "passed": true,
+      "observed": {
+        "schema_version": 1,
+        "dtype": "complex128",
+        "array_shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "plane_z_nm": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ],
+        "interface_trace_sides": [
+          "positive_z",
+          "negative_z"
+        ],
+        "interface_trace_region": "inside_middle_modal_region",
+        "point_count": 4000,
+        "replicated_payload_bytes_uncompressed": 384000
+      },
+      "expected": {
+        "schema": 1,
+        "shape": [
+          5,
+          20,
+          40,
+          3
+        ],
+        "planes": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ],
+        "dtype": "complex128"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
+    },
+    {
+      "name": "task032_phase1_artifact_hashes:h3",
+      "passed": true,
+      "observed": {
+        "run_summary_sha256": "dcb7775637ab17dacf80796e2c2175cb0673fb89fef4606744231d8416f06580",
+        "reference_metadata_sha256": "a17198b20c76fdc486a2464448367b331f549130200924c03c6a715f3cb98857",
+        "reference_npz_sha256": "beb0c97519f15a8d819b2af2163310ab0dea77ab002999ba1d51f6e0fb981b4e",
+        "diffraction_orders_sha256": "6eedc66bfb3bcd242720f4e984fbb6e2b5897e5ce41ba3d564f3dcb3274bcfbf",
+        "dtn_port_diffraction_orders_sha256": "8ba37402973508068ddfda7731e97cccf54977fa3928e2b00f77bd1479a186b6",
+        "power_metrics_sha256": "22d37d58a0c8f960f94f74b1c8fb33d478583dbe93aeed91579caa7674c43b47"
+      },
+      "expected": "six SHA-256 identities and a positive NPZ byte count",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
+    },
+    {
+      "name": "task032_phase1_rta:h3",
+      "passed": true,
+      "observed": {
+        "R_total": 0.0,
+        "T_total": 0.0,
+        "A_balance": 0.0
+      },
+      "expected": {
+        "absolute_tolerance": 1e-09
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
+    },
+    {
+      "name": "task032_phase1_h3_historical_consistency",
+      "passed": true,
+      "observed": {
+        "canonical_record": "benchmarks/records/direct_p2_h3_mpi4.json",
+        "R_total_absolute_difference": 2.368764906446775e-15,
+        "T_total_absolute_difference": 1.2989609388114332e-14,
+        "A_volume_total_absolute_difference": 2.226996365871425e-14
+      },
+      "expected": "all h3 R/T/A absolute differences <= 1e-12",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"
     },
     {
       "name": "record_exists:l1_2d_zero_contrast",
@@ -1500,7 +1750,7 @@
     {
       "name": "task030_source_artifact_sha256:task030_compact_h5",
       "passed": true,
-      "observed": "2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3",
+      "observed": "heavy artifact unavailable by policy",
       "expected": "2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3",
       "evidence": "benchmarks/artifacts/cases/060/response_v2_clean/task030_response_v2_clean_h5.json"
     },
@@ -1620,7 +1870,7 @@
     {
       "name": "task030_source_artifact_sha256:task030_compact_h3",
       "passed": true,
-      "observed": "48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232",
+      "observed": "heavy artifact unavailable by policy",
       "expected": "48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232",
       "evidence": "benchmarks/artifacts/cases/060/response_v2_clean/task030_response_v2_clean_h3.json"
     },
@@ -1740,7 +1990,7 @@
     {
       "name": "task030_source_artifact_sha256:task030_compact_h2",
       "passed": true,
-      "observed": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a",
+      "observed": "heavy artifact unavailable by policy",
       "expected": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a",
       "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h2_qualified_full.json"
     },
@@ -1905,8 +2155,8 @@
       "name": "task031_artifact_hashes:task031_compact_h5",
       "passed": true,
       "observed": {
-        "source": "56aec1265d7bde58d579fa58b3d0683d8b9fee52c19343aa1cb7c4110506e00c",
-        "sampler": "0846cd8b10c0ade98ab94440a0956711d23b19b509d1a8f45e6082f82cb527eb"
+        "source": "heavy artifact unavailable",
+        "sampler": "heavy artifact unavailable"
       },
       "expected": {
         "source": "56aec1265d7bde58d579fa58b3d0683d8b9fee52c19343aa1cb7c4110506e00c",
@@ -2015,8 +2265,8 @@
       "name": "task031_artifact_hashes:task031_compact_h3",
       "passed": true,
       "observed": {
-        "source": "0292d9107f5c9914c1cebc19073fd29b0af4adb41b11c3d7145b81bf50bfc071",
-        "sampler": "32e3b04ed0f5935b204102ca8312b448b0e57b032b67ba247c25d89299833571"
+        "source": "heavy artifact unavailable",
+        "sampler": "heavy artifact unavailable"
       },
       "expected": {
         "source": "0292d9107f5c9914c1cebc19073fd29b0af4adb41b11c3d7145b81bf50bfc071",
@@ -2125,8 +2375,8 @@
       "name": "task031_artifact_hashes:task031_compact_h2",
       "passed": true,
       "observed": {
-        "source": "11509a2bda8091aa0fefef75463c307a19f919c1cc1360b166d27b1ceef3a690",
-        "sampler": "ee6359a0c4f812c06153780dc38d4bea3b03f21ada8fc50ed3e22ba456ee06f7"
+        "source": "heavy artifact unavailable",
+        "sampler": "heavy artifact unavailable"
       },
       "expected": {
         "source": "11509a2bda8091aa0fefef75463c307a19f919c1cc1360b166d27b1ceef3a690",

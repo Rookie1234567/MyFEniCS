@@ -235,6 +235,15 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "records/best_h3.json",
             "records/best_h2.json",
         ),
+        "080_hybrid_fem_modal_direct_baseline": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "expected/gates.json",
+            "run.sh",
+            "records/full3d_h5_reference.json",
+            "records/full3d_h3_reference.json",
+        ),
     }
     cases_root = BENCHMARKS / "cases"
     for case_name, required_names in case_requirements.items():
@@ -288,6 +297,167 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 str(reference.get("canonical_record")),
             )
         )
+
+    case080 = cases_root / "080_hybrid_fem_modal_direct_baseline"
+    case080_config = _load_json(case080 / "config.json")
+    case080_expected = _load_json(case080 / "expected.json")
+    case080_gates = _load_json(case080 / "expected" / "gates.json")["phase1"]
+    gates.append(
+        Gate(
+            "task032_phase1_ordinary_default_unchanged",
+            case080_config.get("ordinary_default_changed") is False
+            and case080_expected.get("ordinary_default_changed") is False
+            and case080_gates.get("ordinary_default_changed") is False,
+            {
+                "config": case080_config.get("ordinary_default_changed"),
+                "expected": case080_expected.get("ordinary_default_changed"),
+                "gates": case080_gates.get("ordinary_default_changed"),
+            },
+            False,
+            "cases/080_hybrid_fem_modal_direct_baseline",
+        )
+    )
+    task032_reference_records: dict[str, dict[str, Any]] = {}
+    for level in case080_gates["required_levels"]:
+        relative = f"records/full3d_{level}_reference.json"
+        record_path = case080 / relative
+        record = _load_json(record_path)
+        task032_reference_records[level] = record
+        metadata = record.get("metadata", {})
+        complete, missing = _metadata_complete(record)
+        relation = _commit_relation(metadata.get("commit_sha"), metadata.get("provenance"))
+        identity_ok = (
+            complete
+            and metadata.get("commit_sha") == case080_gates["required_commit"]
+            and metadata.get("container_digest")
+            == case080_gates["required_container_digest"]
+            and metadata.get("git_dirty") is False
+            and metadata.get("tracked_source_dirty") is False
+            and relation in {"exact_checkout", "checkout_ancestor"}
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_identity:{level}",
+                identity_ok,
+                {"missing": missing, "relation": relation, "metadata": metadata},
+                "complete clean metadata on frozen commit and image",
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        results = record.get("results", {})
+        numeric_ok = (
+            results.get("case_status") == "completed"
+            and results.get("official_result") is True
+            and float(results.get("linear_system_true_relative_residual", float("inf")))
+            <= float(case080_gates["max_true_relative_residual"])
+            and abs(float(results.get("energy_closure_error_port_volume", float("inf"))))
+            <= float(case080_gates["max_abs_energy_closure"])
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_numeric:{level}",
+                numeric_ok,
+                {
+                    "residual": results.get("linear_system_true_relative_residual"),
+                    "closure": results.get("energy_closure_error_port_volume"),
+                    "status": results.get("case_status"),
+                    "official": results.get("official_result"),
+                },
+                {
+                    "residual_max": case080_gates["max_true_relative_residual"],
+                    "closure_abs_max": case080_gates["max_abs_energy_closure"],
+                },
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        reference_contract = record.get("reference_contract", {})
+        archive_ok = (
+            reference_contract.get("schema_version")
+            == case080_gates["required_archive_schema"]
+            and reference_contract.get("array_shape")
+            == case080_gates["required_archive_shape"]
+            and reference_contract.get("plane_z_nm")
+            == case080_gates["required_plane_z_nm"]
+            and reference_contract.get("dtype") == case080_gates["required_dtype"]
+            and reference_contract.get("interface_trace_sides")
+            == case080_gates["required_interface_trace_sides"]
+            and int(reference_contract.get("replicated_payload_bytes_uncompressed", 2**63))
+            <= int(case080_gates["max_replicated_payload_bytes"])
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_archive_contract:{level}",
+                archive_ok,
+                reference_contract,
+                {
+                    "schema": case080_gates["required_archive_schema"],
+                    "shape": case080_gates["required_archive_shape"],
+                    "planes": case080_gates["required_plane_z_nm"],
+                    "dtype": case080_gates["required_dtype"],
+                },
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        artifacts = record.get("artifacts", {})
+        hash_keys = (
+            "run_summary_sha256",
+            "reference_metadata_sha256",
+            "reference_npz_sha256",
+            "diffraction_orders_sha256",
+            "dtn_port_diffraction_orders_sha256",
+            "power_metrics_sha256",
+        )
+        hashes_ok = all(
+            re.fullmatch(r"[0-9a-f]{64}", str(artifacts.get(key, "")))
+            for key in hash_keys
+        ) and int(artifacts.get("reference_npz_bytes", 0)) > 0
+        gates.append(
+            Gate(
+                f"task032_phase1_artifact_hashes:{level}",
+                hashes_ok,
+                {key: artifacts.get(key) for key in hash_keys},
+                "six SHA-256 identities and a positive NPZ byte count",
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        expected_rta = case080_expected["full3d_reference"][level]
+        rta_delta = {
+            key: abs(float(results.get(key, float("inf"))) - float(expected_rta[key]))
+            for key in ("R_total", "T_total", "A_balance")
+        }
+        rta_ok = max(rta_delta.values()) <= float(case080_gates["rta_absolute_tolerance"])
+        gates.append(
+            Gate(
+                f"task032_phase1_rta:{level}",
+                rta_ok,
+                rta_delta,
+                {"absolute_tolerance": case080_gates["rta_absolute_tolerance"]},
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+    h3_consistency = task032_reference_records["h3"].get("historical_consistency", {})
+    h3_history_ok = all(
+        float(h3_consistency.get(key, float("inf"))) <= 1.0e-12
+        for key in (
+            "R_total_absolute_difference",
+            "T_total_absolute_difference",
+            "A_volume_total_absolute_difference",
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase1_h3_historical_consistency",
+            h3_history_ok,
+            h3_consistency,
+            "all h3 R/T/A absolute differences <= 1e-12",
+            "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json",
+        )
+    )
 
     records: dict[str, dict[str, Any]] = {}
     summaries: list[dict[str, Any]] = []

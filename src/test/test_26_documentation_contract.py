@@ -58,6 +58,7 @@ CASES = {
     "050_stage4_direct_memory_forensics",
     "060_multilevel_hcurl_iterative_solver",
     "070_compact_physical_slab_memory_optimization",
+    "080_hybrid_fem_modal_direct_baseline",
 }
 
 RECORDED_CASES = {
@@ -102,6 +103,10 @@ RECORDED_CASES = {
         "records/best_h5.json",
         "records/best_h3.json",
         "records/best_h2.json",
+    ),
+    "080_hybrid_fem_modal_direct_baseline": (
+        "records/full3d_h5_reference.json",
+        "records/full3d_h3_reference.json",
     ),
 }
 

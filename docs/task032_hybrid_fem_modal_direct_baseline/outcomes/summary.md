@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_export_ready / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出。`eigenmodes -> coupling -> solvers -> runner -> Case080` 尚未开始实现。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。`eigenmodes -> coupling -> solvers -> runner` 尚未开始实现。
 
 ## 4. eigenproblem implementation and validation
 
@@ -57,7 +57,9 @@ planned first gate = homogeneous air analytic beta
 
 ## 11. full-3D comparison
 
-Phase 0 已证明现有 full-3D h5 MPI4 direct 在新目录可运行。Phase 1 exporter 诊断进一步生成 z=`10/30/60/90/110 nm`、40x20 周期单元中心网格上的 complex128 E/H；主数组 shape 为 `(5,20,40,3)`，接口显式保存 x/y tangential traces。z=10 从 +z 单元、z=110 从 -z 单元取迹，二者均来自中间模态区域。诊断的真相对残差为 `5.6433e-12`，`R/T/A = 0.0890216029 / 0.4425882787 / 0.4683901184`，闭合误差 `-9.5035e-14`。NPZ/JSON/run-summary 哈希一致；正式 h5/h3 clean-SHA reference 仍待运行。
+Phase 1 已从 clean commit `c468c728...` 完成 h5/h3 MPI4 direct reference。两档均生成 z=`10/30/60/90/110 nm`、40x20 周期单元中心网格上的 complex128 E/H；主数组 shape 为 `(5,20,40,3)`，接口显式保存 x/y tangential traces。z=10 从 +z 单元、z=110 从 -z 单元取迹，二者均来自中间模态区域。
+
+h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`；h3 为 198,438 DoF，残差 `9.9234e-12`，`R/T/A=0.0046130314/0.5836533572/0.4117336114`。两者闭合均优于 `1.3e-13`，NPZ/JSON/run-summary 哈希一致。h3 与历史 direct h3 的 R/T/A 绝对差约 `2.3e-14` 或更小。h5/h3 差异大，因此不宣称网格收敛：h5 用作快速开发，h3 是 Task032 主 full-3D 场/RTA reference。Case080 自动 Gate 为 `271/271 passed`。
 
 ## 12. angle/polarization smoke
 
@@ -69,34 +71,35 @@ Phase 0 h5 full-3D direct 的 simultaneous total peak RSS 为 `2367.133 MB`，el
 
 Phase 1 冻结参考采样的 E/H 未压缩复制载荷仅 `384000 bytes`，并有 `64 MiB` fail-closed 上限；没有聚集完整 FE vector、matrix 或 volume mesh。
 
+正式 h5/h3 的内部 historical-peak 上界分别为 `2360.723 MB` 和 `8707.480 MB`，elapsed 分别为 `21.178 s` 和 `79.541 s`。这些 peak 不是外部同时采样值，不作为 Task032 最终内存权威。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
 
 ## 15. changed files
 
-Phase 0 已提交。Phase 1 当前 tracked 变化：
+Phase 0 和 Phase 1 exporter 已提交；Phase 1 evidence 当前 tracked 变化：
 
 ```text
-src/common/config_3d.py
-src/postprocessing/full3d_reference.py
-src/postprocessing/postprocess_3d.py
-src/runners/run_3d_cases.py
-src/test/test_31_full3d_reference_export.py
-notes/reference/code_walkthrough.md
-notes/reference/code_walkthrough/41_task032_full3d_reference_export.md
-docs/task032_hybrid_fem_modal_direct_baseline/README.md
+benchmarks/check_benchmarks.py
+benchmarks/README.md
+benchmarks/cases/README.md
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/*
+benchmarks/records/benchmark_gate_report.json
+notes/reference/code_walkthrough/50_tests_and_benchmark_contract.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/full3d_reference_contract.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
+docs/development_progress.md
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1 reference export is ready, but formal h5/h3 references and Hybrid implementation are incomplete
+reason = Phase 1 reference is complete, but the Hybrid eigenproblem/coupling/direct solvers are not implemented
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是从 clean exporter SHA 生成 Phase 1 h5/h3 正式 reference，再进入 Phase 2 截面 QEP。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 2 截面 QEP，先从 homogeneous air analytic beta 开始。

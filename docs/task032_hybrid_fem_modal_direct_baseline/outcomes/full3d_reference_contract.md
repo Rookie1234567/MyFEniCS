@@ -9,8 +9,9 @@ by later Hybrid comparisons.
 
 ```text
 ordinary default = export disabled
-formal h5/h3 reference runs = pending clean source commit
-diagnostic h5 MPI4 export = passed
+formal source commit = c468c728a4e71d4e532002c6d001ad7d0e9cd163
+formal h5/h3 MPI4 reference runs = passed
+Case080 checker = 271/271 passed
 ```
 
 The normal rank-local VTU/PVD output remains the full volume-field artifact.
@@ -77,20 +78,28 @@ frozen grid, the uncompressed replicated E/H payload is:
 The exporter fails closed above 64 MiB.  It never gathers a full FE vector,
 full matrix, LU factor or complete volume mesh to rank 0.
 
-## 5. Diagnostic evidence
+## 5. Formal reference evidence
 
-The post-convention h5 diagnostic produced finite complex128 arrays, matching
-JSON/NPZ/run-summary SHA-256, and exact derived tangential slices.  Its main
-solver values were:
+Both clean runs produced finite complex128 arrays, matching
+JSON/NPZ/run-summary SHA-256, and exact derived tangential slices:
 
-```text
-FE DoF = 44698
-auxiliary Fourier-DtN modes = 80
-linear true relative residual = 5.6433276626e-12
-R/T/A = 0.0890216029364 / 0.4425882786570 / 0.4683901184066
-port-volume closure = -9.5035090908e-14
-```
+| value | h5 | h3 |
+|---|---:|---:|
+| FE DoF | 44698 | 198438 |
+| external Fourier-DtN auxiliary DoF | 80 | 80 |
+| true relative residual | `9.7339910811e-12` | `9.9233858000e-12` |
+| R | `0.0890216029364` | `0.00461303140743` |
+| T | `0.442588278657` | `0.583653357179` |
+| A balance | `0.468390118406` | `0.411733611413` |
+| port-volume closure | `1.2123635429e-13` | `6.2394533984e-14` |
+| elapsed seconds | `21.1784` | `79.5409` |
+| reference NPZ SHA-256 | `771ef22248ef743334a7d2ca2a7199eb190aaa73c26ac653bfd3641c3d5999e2` | `beb0c97519f15a8d819b2af2163310ab0dea77ab002999ba1d51f6e0fb981b4e` |
 
-This dirty-source diagnostic validates the exporter only.  It is not the
-formal Phase 1 reference record; h5 and h3 will be rerun from the clean export
-implementation commit.
+The h3 R/T/A agrees with the pre-Task032 canonical direct record to about
+`2.3e-14` absolute or better.  h5 and h3 differ strongly, so Phase 1 does not
+claim mesh convergence: h5 is the fast development reference and h3 is the
+primary Task032 field/RTA reference.
+
+Lightweight records and automatic gates are in
+`benchmarks/cases/080_hybrid_fem_modal_direct_baseline/`.  Heavy NPZ, VTU and
+JSON output remains gitignored below `benchmarks/artifacts/cases/080/`.

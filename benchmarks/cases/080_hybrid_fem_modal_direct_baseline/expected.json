@@ -1,0 +1,19 @@
+{
+  "status": "phase1_reference_pass_hybrid_pending",
+  "ordinary_default_changed": false,
+  "full3d_reference": {
+    "h5": {
+      "R_total": 0.08902160293643864,
+      "T_total": 0.44258827865712697,
+      "A_balance": 0.46839011840643435
+    },
+    "h3": {
+      "R_total": 0.004613031407434661,
+      "T_total": 0.583653357179091,
+      "A_balance": 0.4117336114134744
+    }
+  },
+  "h5_h3_grid_convergence_claim": false,
+  "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
+  "heavy_artifacts": "benchmarks/artifacts/cases/080 (gitignored)"
+}
