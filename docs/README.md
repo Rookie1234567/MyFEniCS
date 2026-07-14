@@ -56,7 +56,7 @@
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
 | Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
-| Task032 | Hybrid FEM–Modal direct baseline | planned；Task031 clean merge 后在新本地目录启动 |
+| Task032 | Hybrid FEM–Modal direct baseline | Phase 0/1 complete；Phase 2 QEP implementation passed，clean record pending |
 
 ## 当前任务
 
@@ -68,7 +68,7 @@
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
-| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | 任务书和理论笔记已创建；不得在 Task031 分支直接开发 |
+| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | 新目录/分支已建立；Phase 1 reference 完成；Phase 2 distributed QEP 实现通过，coupling/Hybrid pending |
 
 ## Task28 审计入口
 

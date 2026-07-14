@@ -4,22 +4,22 @@
 
 ```text
 Phase 1 full-3D h5/h3 reference = complete
-Phase 2 cross-section eigenproblem = pending
+Phase 2 cross-section eigenproblem implementation = passed; clean record pending
 Hybrid augmented/Schur direct = pending
 ordinary default changed = false
 ```
 
-This case will be the canonical Task032 evidence bundle.  It currently freezes
-the existing full-3D direct reference without claiming that Hybrid is already
-implemented.
+This case is the canonical Task032 evidence bundle. It freezes the existing
+full-3D direct reference and now contains the Phase 2 distributed cross-section
+QEP implementation; it does not claim that coupling or a Hybrid solve exists.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 full-3D complex field、接口迹、逐级衍射与 R/T/A reference 可复现 |
-| 3. 尚不证明 | Hybrid 截面模态替代、augmented/Schur、一致性、截断收敛或内存收益 |
+| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 匹配截面混合 QEP、解析/有损 beta、±配对、残差、L2 归一化和 MPI ownership |
+| 3. 尚不证明 | Poynting 分类、left/right 双正交、接口耦合、augmented/Schur、一致性、截断收敛或内存收益 |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -79,6 +79,9 @@ Inside the qualified complex128 DOLFINx image:
 ```bash
 LEVEL=h5 sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run.sh
 LEVEL=h3 sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run.sh
+mpiexec -n 4 python -m unittest -v src.test.test_32_task032_cross_section_qep
+mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <full-sha>
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase2.sh
 ```
 
 The formal host command mounts the repository at `/work` in

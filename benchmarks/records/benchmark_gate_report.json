@@ -1,5 +1,5 @@
 {
-  "checkout_commit": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
+  "checkout_commit": "20bb3464e65738a58928f5eab563ed57f981e615",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
@@ -190,7 +190,7 @@
       "passed": true,
       "observed": {
         "missing": [],
-        "relation": "exact_checkout",
+        "relation": "checkout_ancestor",
         "metadata": {
           "commit_sha": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
           "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
@@ -300,7 +300,7 @@
       "passed": true,
       "observed": {
         "missing": [],
-        "relation": "exact_checkout",
+        "relation": "checkout_ancestor",
         "metadata": {
           "commit_sha": "c468c728a4e71d4e532002c6d001ad7d0e9cd163",
           "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",

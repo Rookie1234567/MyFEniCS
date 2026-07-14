@@ -30,6 +30,27 @@ $$
 
 本文不讨论 h/p 自适应、迭代法、非匹配 mortar、0.7 nm 材料色散和参数反演。
 
+## 0.1 Phase 2 离散实现锚点
+
+当前 Phase 2 代码把本文的截面问题落实为：
+
+```text
+src/modes/cross_section_spaces.py
+src/constraints/cross_section_floquet.py
+src/modes/quadratic_beta_eigenproblem.py
+```
+
+匹配二维网格复用 `stage4_axis_plan` 的 x/y 轴；横向场使用二维
+`N1curl(p2)`，纵向分量使用 `Lagrange(p2)`。离散多项式保持
+`K0 + beta K1 + beta^2 K2`，其中 `K2` 的纵向块为零，因此最高次矩阵
+按物理设计奇异。双 Floquet 条件通过分布式 `u=Cq` 消元，每个系数矩阵
+以 `C^H K C` 稀疏约化，再交给 SLEPc PEP/TOAR；没有 dense 全谱和 rank0
+全本征向量聚集。
+
+Phase 2 的 electric-L2 归一化只建立稳定的场尺度。本文后述的 Poynting
+方向、left/right 双正交、`Q'(beta)` 与近简并子空间归一化仍属于 Phase 3，
+不能用当前 L2 字段替代最终接口功率归一化。
+
 ---
 
 # 1. 物理域和基本方程

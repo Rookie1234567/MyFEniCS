@@ -407,6 +407,17 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
     )
 
 
+def stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
+    """Return the reviewed Stage-4 tensor axes for matching lower-dimensional meshes.
+
+    The hybrid FEM-modal path must use cross-section cells that are the exact
+    x-y faces of the full 3D hexahedral mesh.  This small public wrapper avoids
+    duplicating the material-plane fitting policy in the modal package.
+    """
+
+    return _stage4_axis_plan(cfg, comm_size)
+
+
 def _structured_hexa_mesh(
     msh_comm: MPI.Intracomm,
     x_values: np.ndarray,

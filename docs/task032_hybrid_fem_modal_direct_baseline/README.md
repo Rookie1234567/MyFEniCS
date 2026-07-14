@@ -21,6 +21,7 @@
 - [环境能力记录](outcomes/environment_capability.md)
 - [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
 - [Phase 1 full-3D reference contract](outcomes/full3d_reference_contract.md)
+- [Phase 2 cross-section QEP walkthrough](../../notes/reference/code_walkthrough/42_task032_cross_section_qep.md)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -42,3 +43,13 @@ no 0.7 nm
 ```
 
 Task032 的第一目标是证明中间 z 不变区可以由二维截面模式可靠替代；第二目标才是评估 h2 Hybrid direct 是否进入 2–5 GiB 范围。
+
+Phase 2 的测试入口为：
+
+```bash
+mpiexec -n 4 python -m unittest -v src.test.test_32_task032_cross_section_qep
+mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <full-sha>
+```
+
+第二条命令要求 tracked source clean；研究工作树必须显式使用
+`--allow-dirty-research`，其结果不能升级为正式 record。

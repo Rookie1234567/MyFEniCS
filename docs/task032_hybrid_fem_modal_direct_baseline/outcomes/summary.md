@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_implementation_passed_clean_record_pending / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,19 +21,26 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。`eigenmodes -> coupling -> solvers -> runner` 尚未开始实现。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；`classification -> coupling -> Hybrid solvers` 尚未开始。
 
 ## 4. eigenproblem implementation and validation
 
 ```text
-implementation = not_started
-environment = SLEPc 3.24 PEP/TOAR available
-planned first gate = homogeneous air analytic beta
+implementation = passed in MPI4 tests and dirty-research benchmark
+space = transverse N1curl(p2) x longitudinal Lagrange(p2)
+polynomial = K0 + beta*K1 + beta^2*K2
+solver = SLEPc 3.24 PEP/TOAR + shift-invert MUMPS
+ownership = distributed reduced/full vectors; no rank0 full gather
+clean formal record = pending code commit
 ```
+
+二维截面复用 Stage4 三维 hexa 网格的 x/y 轴，并支持 homogeneous air、homogeneous lossy Si 和当前 air/Si `epsilon(x,y)`。双 Floquet 约束只复制周期边界规模元数据，显式构造分布式 `u=Cq`，矩阵通过 `C^H K C` 稀疏约化。MPI4 测试覆盖 Bloch phase、Nedelec orientation、无 slave-chain、解析复 beta、正反向配对、残差、归一化和 ownership。
+
+研究验证中，air 基模从 h5 到 h3/h2/h1.5 单调逼近解析 `0.0808195317 1/nm`；h2/h1.5 相对误差约为 1.13%/0.455%。h5 的大误差来自 10° 掠入射下 `beta^2=k^2-k_t^2` 对横向色散高度敏感，不能拿 h5 单点否定 QEP 符号。正式数值将在 Phase 2 code commit 后 clean 重跑并写入 Case080 record。
 
 ## 5. mode classification/normalization
 
-`not_started`。后续必须基于 Poynting flux、物理衰减分支、左右模/双正交残差和近简并子空间处理。
+Phase 2 已提供 electric-L2 场尺度归一化，验证后范数为 1；它不是最终功率归一化。Poynting flux、物理衰减分支、左右模/双正交残差和近简并子空间处理仍属于 Phase 3，当前不得提前宣称完成。
 
 ## 6. stable propagation
 
@@ -79,16 +86,17 @@ Phase 1 冻结参考采样的 E/H 未压缩复制载荷仅 `384000 bytes`，并�
 
 ## 15. changed files
 
-Phase 0 和 Phase 1 exporter 已提交；Phase 1 evidence 当前 tracked 变化：
+Phase 0/1 已提交；Phase 2 implementation 当前 tracked 变化包括：
 
 ```text
-benchmarks/check_benchmarks.py
-benchmarks/README.md
-benchmarks/cases/README.md
-benchmarks/cases/080_hybrid_fem_modal_direct_baseline/*
-benchmarks/records/benchmark_gate_report.json
-notes/reference/code_walkthrough/50_tests_and_benchmark_contract.md
-docs/task032_hybrid_fem_modal_direct_baseline/outcomes/full3d_reference_contract.md
+src/modes/cross_section_spaces.py
+src/modes/quadratic_beta_eigenproblem.py
+src/constraints/cross_section_floquet.py
+src/geometry/mesh_builder_3d.py
+src/test/test_32_task032_cross_section_qep.py
+benchmarks/run_task032_phase2_qep.py
+notes/reference/code_walkthrough/42_task032_cross_section_qep.md
+notes/theory/hybrid_fem_modal_domain_decomposition.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
 docs/development_progress.md
 ```
