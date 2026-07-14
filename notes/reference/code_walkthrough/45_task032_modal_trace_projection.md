@@ -104,5 +104,9 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 
 单元/集成测试覆盖 affine complex 3D N1curl field 的 bottom/top 取迹、空 source
 rank、法向相反、真实 Stage4/air 模态 round trip、左/右投影、近简并 unitary
-rotation 和无 dense interface square。正式 clean record 在实现提交后生成；在该
-record 和 checker 固定前，只能称 Phase 5 implementation/MPI4 research pass。
+rotation 和无 dense interface square。正式 clean record 为
+`benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/trace_phase5.json`，
+来源是 `b565ac4610dee08a2d313060b7cb26b48145370d`，SHA-256 为
+`8b0eeff9e8666ed327f36e0ab243561e5cecbfc305cb353cab8f2108d6ac7aed`。
+MPI4 runner 8/8 Gate 和 Case080 checker `290/290` 均通过；它资格化单接口
+coupling，但不把尚未实现的 Phase 6 Hybrid augmented solve 写成已完成。

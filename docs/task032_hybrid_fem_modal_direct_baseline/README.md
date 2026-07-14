@@ -89,4 +89,8 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 Phase 4 已在 clean source `9206e9c964db387448551cdefdc88081ef705441`
 完成正式 MPI4 record；100 nm two-port、无反射、被动衰减、composition、
 reciprocity 和强衰减负对照均通过，Case080 checker 为 `286/286 passed`。
-当前下一步是 Phase 5 匹配接口 trace coupling。
+
+Phase 5 已在 clean source `b565ac4610dee08a2d313060b7cb26b48145370d`
+完成正式 MPI4 record；匹配 3D/2D Nédélec trace、bottom/top 法向、Stage4
+left/right round trip、近简并子空间和无 dense `N_Gamma^2` 存储均通过，
+Case080 checker 为 `290/290 passed`。当前下一步是 Phase 6 augmented direct。

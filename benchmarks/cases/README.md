@@ -20,7 +20,7 @@
 | [`050`](050_stage4_direct_memory_forensics/README.md) | Stage4 direct memory forensics | diagnostic_success | 最佳 h3 -15.119%；当前 image threaded direct unavailable；h2/threaded h3 均按 Gate 未运行 |
 | [`060`](060_multilevel_hcurl_iterative_solver/README.md) | Task30 H(curl) transfer 与 compact low-memory iterative | workstation_success experimental | p/h coarse solver-negative；h5/h3/h2 通过，h2 1873 步、9.375 GB |
 | [`070`](070_compact_physical_slab_memory_optimization/README.md) | Task31 matrix-free compact physical-slab memory-first | strong_memory_success experimental | clean h5/h3/h2；h2 1977 步、7.898 GiB、无 swap；solve 约 5.01x |
-| [`080`](080_hybrid_fem_modal_direct_baseline/README.md) | Task32 Hybrid FEM-modal direct baseline | Phase 1/2/3/4 recorded；Phase 5 implementation/MPI4 research pass；Hybrid pending | clean h5/h3 full-3D reference；clean QEP；clean Poynting/adjoint-QEP/biorthogonal/tracking；clean 100 nm two-port propagation；matched trace/projection pending clean record |
+| [`080`](080_hybrid_fem_modal_direct_baseline/README.md) | Task32 Hybrid FEM-modal direct baseline | Phase 1/2/3/4/5 recorded；Hybrid direct pending | clean h5/h3 full-3D reference；clean QEP；clean Poynting/adjoint-QEP/biorthogonal/tracking；clean 100 nm two-port propagation；clean matched trace/projection |
 
 每个 README 使用相同 22 项契约，并在表后展开物理问题、参数、PyCharm、CLI、代码路径、结果、解释和限制。Recorded case 至少包含 `config.json`、`expected.json`、可执行 `run.sh` 与 `records/`；纯代数 case 用 `fixture.json` 和 `test_command.txt` 代替几何配置。缺少 record 的 case 仍有价值：它明确告诉维护者还差什么证据，防止能力矩阵把“代码存在”写成“工程已验证”。
 

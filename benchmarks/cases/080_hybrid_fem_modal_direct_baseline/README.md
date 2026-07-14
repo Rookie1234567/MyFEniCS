@@ -7,7 +7,7 @@ Phase 1 full-3D h5/h3 reference = complete
 Phase 2 cross-section eigenproblem = clean MPI4 formal record complete
 Phase 3 classification/biorthogonality = clean MPI4 formal record complete
 Phase 4 stable two-sided propagation = clean MPI4 formal record complete
-Phase 5 matched trace/projection = implementation and MPI4 research pass; clean record pending
+Phase 5 matched trace/projection = clean MPI4 formal record complete
 Hybrid augmented/Schur direct = pending
 ordinary default changed = false
 ```
@@ -15,16 +15,16 @@ ordinary default changed = false
 This case is the canonical Task032 evidence bundle. It freezes the existing
 full-3D direct reference and now contains the Phase 2 distributed cross-section
 QEP, Phase 3 classification/biorthogonality, Phase 4 stable-propagation clean
-records and a Phase 5 matched-trace implementation awaiting its clean record;
-this case does not claim that a Hybrid solve exists.
+and Phase 5 matched-trace/projection clean records; this case does not claim
+that a Hybrid solve exists.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 clean 100 nm two-port propagation；Phase 5 matching trace/projection MPI4 research pass |
-| 3. 尚不证明 | Phase 5 clean-record qualification、augmented/Schur、Hybrid 一致性、截断收敛或内存收益 |
+| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 clean 100 nm two-port propagation；Phase 5 clean matching trace/projection |
+| 3. 尚不证明 | augmented/Schur、Hybrid 一致性、截断收敛或内存收益 |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -40,7 +40,7 @@ this case does not claim that a Hybrid solve exists.
 | 16. memory guard | frozen E/H payload 384000 bytes；fail closed above 64 MiB |
 | 17. numeric Gate | true residual `<=1e-9`、absolute closure `<=1e-9` |
 | 18. archive Gate | schema/shape/planes/dtype/sides + six SHA-256 identities |
-| 19. provenance | Phase 1 clean `c468c728...`；Phase 2 clean `33211a4...`；Phase 3 clean `72dca66...`；Phase 4 clean `9206e9c...`；image digest、command、host 与 UTC time |
+| 19. provenance | Phase 1 clean `c468c728...`；Phase 2 clean `33211a4...`；Phase 3 clean `72dca66...`；Phase 4 clean `9206e9c...`；Phase 5 clean `b565ac4...`；image digest、command、host 与 UTC time |
 | 20. heavy artifacts | `benchmarks/artifacts/cases/080/`，gitignored |
 | 21. reference policy | h5 fast development；h3 primary；不宣称 h5--h3 mesh convergence |
 | 22. ordinary default | 不改变；reference exporter 显式 opt-in |
@@ -125,6 +125,16 @@ air independently solved reciprocity beta/factor errors are
 Strong evanescence underflows to zero without overflow; growing and ambiguous
 branches fail closed. The full Case080 checker passes 286/286 gates.
 
+The formal Phase 5 record uses clean source
+`b565ac4610dee08a2d313060b7cb26b48145370d`. MPI4 validates matched p2
+Nédélec traces at z=10/110 nm, explicit opposite local/modal normals, Stage4
+left/right coefficient round trip and an air near-degenerate trace subspace.
+There are 18 facets and 162 trace DoF per interface. The maximum affine trace
+error is `6.62e-15`; Gram condition is `30.4995`; coefficient/reconstruction
+errors are `3.78e-16/4.69e-16`. Only sparse trace mass, distributed mode
+columns and a 2x2 Gram block are stored; no dense interface square or full
+field/mode gather is formed. The full Case080 checker passes 290/290 gates.
+
 ## 代码路径与理论
 
 The call chain is `src/main.py -> run_3d_cases -> Stage-4 direct solve ->
@@ -160,7 +170,7 @@ formal Case080 reference identity requires MPI4.
 This is numerical reference evidence for the frozen current model, not
 experimental validation. Phase 3 supplies a clean-recorded Poynting/Q'
 biorthogonal basis and near-degenerate subspace tracking. Phase 4 supplies a
-clean-recorded stable two-port propagation block. Phase 5 currently supplies a
-matched-interface implementation and MPI4 research pass, but not yet its clean
-record. Hybrid direct solvers remain pending. It does not add h/p adaptivity, a
-new iterative solver, nonmatching interfaces, material scans or shorter wavelengths.
+clean-recorded stable two-port propagation block, and Phase 5 supplies a
+clean-recorded matched-interface trace/projection block. Hybrid direct solvers
+remain pending. It does not add h/p adaptivity, a new iterative solver,
+nonmatching interfaces, material scans or shorter wavelengths.

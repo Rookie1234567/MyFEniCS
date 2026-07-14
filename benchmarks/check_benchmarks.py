@@ -244,11 +244,13 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "run_phase2.sh",
             "run_phase3.sh",
             "run_phase4.sh",
+            "run_phase5.sh",
             "records/full3d_h5_reference.json",
             "records/full3d_h3_reference.json",
             "records/qep_phase2.json",
             "records/modes_phase3.json",
             "records/propagation_phase4.json",
+            "records/trace_phase5.json",
         ),
     }
     cases_root = BENCHMARKS / "cases"
@@ -312,6 +314,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     case080_phase2_gates = case080_gate_bundle["phase2"]
     case080_phase3_gates = case080_gate_bundle["phase3"]
     case080_phase4_gates = case080_gate_bundle["phase4"]
+    case080_phase5_gates = case080_gate_bundle["phase5"]
     gates.append(
         Gate(
             "task032_phase1_ordinary_default_unchanged",
@@ -320,7 +323,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             and case080_gates.get("ordinary_default_changed") is False
             and case080_phase2_gates.get("ordinary_default_changed") is False
             and case080_phase3_gates.get("ordinary_default_changed") is False
-            and case080_phase4_gates.get("ordinary_default_changed") is False,
+            and case080_phase4_gates.get("ordinary_default_changed") is False
+            and case080_phase5_gates.get("ordinary_default_changed") is False,
             {
                 "config": case080_config.get("ordinary_default_changed"),
                 "expected": case080_expected.get("ordinary_default_changed"),
@@ -328,6 +332,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "phase2_gates": case080_phase2_gates.get("ordinary_default_changed"),
                 "phase3_gates": case080_phase3_gates.get("ordinary_default_changed"),
                 "phase4_gates": case080_phase4_gates.get("ordinary_default_changed"),
+                "phase5_gates": case080_phase5_gates.get("ordinary_default_changed"),
             },
             False,
             "cases/080_hybrid_fem_modal_direct_baseline",
@@ -1090,6 +1095,242 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "unique_rank_signatures": 1,
             },
             f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase5_relative = "records/trace_phase5.json"
+    phase5_record = _load_json(case080 / phase5_relative)
+    phase5_metadata = phase5_record.get("metadata", {})
+    phase5_complete, phase5_missing = _metadata_complete(phase5_record)
+    phase5_relation = _commit_relation(
+        phase5_metadata.get("commit_sha"), phase5_metadata.get("provenance")
+    )
+    phase5_config = phase5_record.get("configuration", {})
+    phase5_identity_ok = (
+        phase5_complete
+        and phase5_record.get("schema_version")
+        == case080_phase5_gates["required_schema"]
+        and phase5_record.get("status") == "pass"
+        and phase5_metadata.get("commit_sha")
+        == case080_phase5_gates["required_commit"]
+        and phase5_metadata.get("container_digest")
+        == case080_phase5_gates["required_container_digest"]
+        and phase5_metadata.get("mpi_size")
+        == case080_phase5_gates["required_mpi_size"]
+        and phase5_metadata.get("scalar_dtype")
+        == case080_phase5_gates["required_dtype"]
+        and phase5_metadata.get("git_dirty") is False
+        and phase5_metadata.get("tracked_source_dirty") is False
+        and phase5_metadata.get("full_field_or_mode_vector_gather") is False
+        and float(phase5_config.get("h_nm", float("nan")))
+        == float(case080_phase5_gates["required_h_nm"])
+        and int(phase5_config.get("degree", -1))
+        == int(case080_phase5_gates["required_degree"])
+        and [
+            phase5_config.get("bottom_interface_z_nm"),
+            phase5_config.get("top_interface_z_nm"),
+        ]
+        == case080_phase5_gates["required_interface_z_nm"]
+        and phase5_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_identity_and_matched_configuration",
+            phase5_identity_ok,
+            {
+                "missing": phase5_missing,
+                "relation": phase5_relation,
+                "metadata": phase5_metadata,
+                "configuration": phase5_config,
+            },
+            {
+                "commit": case080_phase5_gates["required_commit"],
+                "mpi_size": case080_phase5_gates["required_mpi_size"],
+                "dtype": case080_phase5_gates["required_dtype"],
+                "h_nm": case080_phase5_gates["required_h_nm"],
+                "interface_z_nm": case080_phase5_gates[
+                    "required_interface_z_nm"
+                ],
+                "full_field_or_mode_vector_gather": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_trace = phase5_record.get("affine_trace_validation", {})
+    phase5_interfaces = phase5_trace.get("interfaces", [])
+    phase5_interface_contract_ok = (
+        [item.get("side") for item in phase5_interfaces]
+        == case080_phase5_gates["required_interface_sides"]
+        and [item.get("z_nm") for item in phase5_interfaces]
+        == case080_phase5_gates["required_interface_z_nm"]
+        and [item.get("local_fem_outward_normal", [None, None, None])[2]
+             for item in phase5_interfaces]
+        == case080_phase5_gates["required_local_fem_normal_signs"]
+        and [item.get("modal_outward_normal", [None, None, None])[2]
+             for item in phase5_interfaces]
+        == case080_phase5_gates["required_modal_normal_signs"]
+        and [item.get("middle_adjacent_cell_sign") for item in phase5_interfaces]
+        == case080_phase5_gates["required_middle_adjacent_cell_signs"]
+        and all(
+            item.get("canonical_trace") == "(E_x,E_y)"
+            and int(item.get("global_interface_facets", -1))
+            == int(case080_phase5_gates["required_global_interface_facets"])
+            and int(item.get("global_middle_adjacent_cells", -2))
+            == int(item.get("global_interface_facets", -1))
+            and int(item.get("global_trace_dofs", -1))
+            == int(case080_phase5_gates["required_global_trace_dofs"])
+            and int(item.get("global_query_points", -1)) > 0
+            and int(item.get("global_query_points", -1))
+            == int(item.get("global_source_evaluations", -2))
+            and int(item.get("unresolved_points", -1)) == 0
+            and float(item.get("relative_trace_coefficient_error", float("inf")))
+            <= float(case080_phase5_gates["max_trace_coefficient_error"])
+            and float(item.get("normal_opposition_error", float("inf")))
+            <= float(case080_phase5_gates["max_normal_opposition_error"])
+            and item.get("field_vector_gathered") is False
+            for item in phase5_interfaces
+        )
+        and phase5_trace.get("communication_scope")
+        == "interface_interpolation_points_and_two_complex_tangential_values_only"
+        and phase5_trace.get("full_3d_field_or_mode_gathered") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_nedelec_trace_orientation_and_point_ownership",
+            phase5_interface_contract_ok,
+            {
+                "interfaces": phase5_interfaces,
+                "communication_scope": phase5_trace.get("communication_scope"),
+                "full_3d_field_or_mode_gathered": phase5_trace.get(
+                    "full_3d_field_or_mode_gathered"
+                ),
+            },
+            {
+                "sides": case080_phase5_gates["required_interface_sides"],
+                "z_nm": case080_phase5_gates["required_interface_z_nm"],
+                "facets": case080_phase5_gates[
+                    "required_global_interface_facets"
+                ],
+                "trace_dofs": case080_phase5_gates["required_global_trace_dofs"],
+                "max_trace_error": case080_phase5_gates[
+                    "max_trace_coefficient_error"
+                ],
+                "unresolved_points": 0,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_projection = phase5_record.get("stage4_modal_projection", {})
+    phase5_storage = phase5_projection.get("storage", {})
+    phase5_projection_ok = (
+        phase5_projection.get("material_kind") == "stage4_xy"
+        and int(phase5_projection.get("mode_count", -1))
+        == int(case080_phase5_gates["required_mode_count"])
+        and phase5_projection.get("reconstruction_shape")
+        == case080_phase5_gates["required_reconstruction_shape"]
+        and phase5_projection.get("projection_shape")
+        == case080_phase5_gates["required_projection_shape"]
+        and phase5_projection.get("small_dense_gram_shape")
+        == case080_phase5_gates["required_small_dense_gram_shape"]
+        and float(phase5_projection.get("coefficient_relative_error", float("inf")))
+        <= float(case080_phase5_gates["max_coefficient_round_trip_error"])
+        and float(
+            phase5_projection.get(
+                "trace_reconstruction_relative_residual", float("inf")
+            )
+        )
+        <= float(case080_phase5_gates["max_trace_reconstruction_residual"])
+        and float(phase5_projection.get("gram_condition", float("inf")))
+        <= float(case080_phase5_gates["max_gram_condition"])
+        and int(phase5_projection.get("trace_mass_nz_used", 0)) > 0
+        and phase5_projection.get("constraint_communication_scope")
+        == case080_phase5_gates["required_constraint_communication_scope"]
+        and phase5_projection.get("full_vector_gathered") is False
+        and phase5_projection.get("dense_interface_operator_formed") is False
+        and int(phase5_storage.get("distributed_right_trace_bytes", 0)) > 0
+        and int(phase5_storage.get("distributed_left_trace_bytes", 0)) > 0
+        and int(phase5_storage.get("replicated_gram_bytes_per_rank", 0)) > 0
+        and int(phase5_storage.get("dense_NGamma_squared_bytes", -1)) == 0
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_left_right_round_trip_and_storage_contract",
+            phase5_projection_ok,
+            phase5_projection,
+            {
+                "reconstruction_shape": case080_phase5_gates[
+                    "required_reconstruction_shape"
+                ],
+                "projection_shape": case080_phase5_gates[
+                    "required_projection_shape"
+                ],
+                "small_dense_gram_shape": case080_phase5_gates[
+                    "required_small_dense_gram_shape"
+                ],
+                "max_round_trip_error": case080_phase5_gates[
+                    "max_coefficient_round_trip_error"
+                ],
+                "max_reconstruction_residual": case080_phase5_gates[
+                    "max_trace_reconstruction_residual"
+                ],
+                "dense_NGamma_squared_bytes": 0,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_subspace = phase5_record.get(
+        "near_degenerate_subspace_validation", {}
+    )
+    phase5_runner_gates = phase5_record.get("gates", {})
+    phase5_rank_signatures = phase5_record.get("mpi_rank_signatures", [])
+    phase5_subspace_and_mpi_ok = (
+        phase5_subspace.get("comparison") == "mass_weighted_trace_subspace"
+        and phase5_subspace.get("phase3_group_indices") == [[0, 1]]
+        and len(phase5_subspace.get("singular_values", [])) == 2
+        and float(phase5_subspace.get("projector_error", float("inf")))
+        <= float(case080_phase5_gates["max_subspace_projector_error"])
+        and float(phase5_subspace.get("max_principal_angle_rad", float("inf")))
+        <= float(case080_phase5_gates["max_subspace_principal_angle_rad"])
+        and float(
+            phase5_subspace.get("first_vector_relative_difference", -float("inf"))
+        )
+        >= float(case080_phase5_gates["min_rotated_vector_relative_difference"])
+        and phase5_subspace.get("individual_vector_equality_used_as_gate") is False
+        and phase5_runner_gates
+        and all(value is True for value in phase5_runner_gates.values())
+        and len(phase5_rank_signatures)
+        == int(case080_phase5_gates["required_mpi_rank_signature_count"])
+        and len(set(phase5_rank_signatures)) == 1
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_near_degenerate_subspace_and_mpi_agreement",
+            phase5_subspace_and_mpi_ok,
+            {
+                "subspace": phase5_subspace,
+                "runner_gates": phase5_runner_gates,
+                "rank_signature_count": len(phase5_rank_signatures),
+                "unique_rank_signatures": len(set(phase5_rank_signatures)),
+            },
+            {
+                "comparison": "mass_weighted_trace_subspace",
+                "max_projector_error": case080_phase5_gates[
+                    "max_subspace_projector_error"
+                ],
+                "max_principal_angle_rad": case080_phase5_gates[
+                    "max_subspace_principal_angle_rad"
+                ],
+                "individual_vector_equality_used_as_gate": False,
+                "all_runner_gates": True,
+                "rank_signature_count": case080_phase5_gates[
+                    "required_mpi_rank_signature_count"
+                ],
+                "unique_rank_signatures": 1,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
         )
     )
 

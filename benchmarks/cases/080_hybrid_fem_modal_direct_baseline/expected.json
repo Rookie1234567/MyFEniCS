@@ -1,5 +1,5 @@
 {
-  "status": "phase1_reference_phase2_qep_phase3_modes_phase4_propagation_pass_hybrid_coupling_pending",
+  "status": "phase1_to_phase5_matching_trace_pass_hybrid_direct_pending",
   "ordinary_default_changed": false,
   "full3d_reference": {
     "h5": {
@@ -41,6 +41,17 @@
     "storage": "linear_in_mode_count",
     "growing_inverse_factors": false,
     "full_field_vector_gather": false
+  },
+  "phase5_trace_projection": {
+    "status": "pass",
+    "record": "records/trace_phase5.json",
+    "h_nm": 10.0,
+    "interface_z_nm": [10.0, 110.0],
+    "trace_space": "matched_2d_N1curl_p2",
+    "projection": "left_Petrov_right_reconstruction_small_Gram",
+    "near_degenerate_gate": "mass_weighted_trace_subspace",
+    "dense_interface_square": false,
+    "full_field_or_mode_vector_gather": false
   },
   "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
   "heavy_artifacts": "benchmarks/artifacts/cases/080 (gitignored)"
