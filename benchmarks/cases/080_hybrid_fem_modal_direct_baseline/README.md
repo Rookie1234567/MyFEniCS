@@ -7,23 +7,24 @@ Phase 1 full-3D h5/h3 reference = complete
 Phase 2 cross-section eigenproblem = clean MPI4 formal record complete
 Phase 3 classification/biorthogonality = clean MPI4 formal record complete
 Phase 4 stable two-sided propagation = clean MPI4 formal record complete
+Phase 5 matched trace/projection = implementation and MPI4 research pass; clean record pending
 Hybrid augmented/Schur direct = pending
 ordinary default changed = false
 ```
 
 This case is the canonical Task032 evidence bundle. It freezes the existing
 full-3D direct reference and now contains the Phase 2 distributed cross-section
-QEP, Phase 3 classification/biorthogonality and Phase 4 stable-propagation
-implementation and clean record; this case does not claim that coupling or a
-Hybrid solve exists.
+QEP, Phase 3 classification/biorthogonality, Phase 4 stable-propagation clean
+records and a Phase 5 matched-trace implementation awaiting its clean record;
+this case does not claim that a Hybrid solve exists.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 clean 100 nm two-port propagation |
-| 3. 尚不证明 | 接口耦合、augmented/Schur、一致性、截断收敛或内存收益 |
+| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 clean 100 nm two-port propagation；Phase 5 matching trace/projection MPI4 research pass |
+| 3. 尚不证明 | Phase 5 clean-record qualification、augmented/Schur、Hybrid 一致性、截断收敛或内存收益 |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -98,6 +99,8 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <f
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase2.sh
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase3.sh
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
+mpiexec -n 4 python -m unittest -v src.test.test_35_task032_modal_trace_projection
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase5.sh
 ```
 
 The formal host command mounts the repository at `/work` in
@@ -157,6 +160,7 @@ formal Case080 reference identity requires MPI4.
 This is numerical reference evidence for the frozen current model, not
 experimental validation. Phase 3 supplies a clean-recorded Poynting/Q'
 biorthogonal basis and near-degenerate subspace tracking. Phase 4 supplies a
-clean-recorded stable two-port propagation block. Interface coupling and Hybrid
-direct solvers remain pending. It does not add h/p adaptivity, a new iterative
-solver, nonmatching interfaces, material scans or shorter wavelengths.
+clean-recorded stable two-port propagation block. Phase 5 currently supplies a
+matched-interface implementation and MPI4 research pass, but not yet its clean
+record. Hybrid direct solvers remain pending. It does not add h/p adaptivity, a
+new iterative solver, nonmatching interfaces, material scans or shorter wavelengths.

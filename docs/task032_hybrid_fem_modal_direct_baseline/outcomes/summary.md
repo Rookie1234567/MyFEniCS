@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_implementation_mpi4_research_pass / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation 和 clean MPI4 formal record。接口 coupling 与 Hybrid solvers 尚未开始。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation 和 clean MPI4 formal record；Phase 5 已实现 matching Nédélec trace 与 modal projection 并通过 MPI4 research runner，clean record 待实现提交后生成。Hybrid solvers 尚未开始。
 
 ## 4. eigenproblem implementation and validation
 
@@ -82,14 +82,16 @@ air 的 independently solved 正反 basis 得到 reciprocity beta/factor 最大�
 `3.63e-16/2.78e-15`；三个 case 的 reflection norm 均为 0，composition 最大误差
 `9.42e-16`。air/lossy/current-patterned 最大 factor magnitude 分别约
 `1.000/0.620/0.853`；强衰减 `exp(-1000)` 安全下溢为 0。Case080 新增四类
-Phase 4 Gate 后为 `286/286 passed`。接口 coupling 尚未加入。
+Phase 4 Gate 后为 `286/286 passed`。该句记录 Phase 4 的冻结边界；接口 coupling 现已进入下节所述 Phase 5 implementation/MPI4 research pass。
 
 回归口径为完整 serial `196 tests / 10 skipped`、Phase 3+4 真实模式集成
 `10/10`、Phase 4 单元合同 `6/6` 和正式 MPI4 runner `8/8` Gates。
 
 ## 7. interface projection
 
-`not_started`。第一版使用匹配网格，并要求 trace round trip、orientation 与 projection residual。
+`implementation_mpi4_research_pass; clean_formal_record_pending`。第一版使用匹配 3D hexa/2D quad 网格；canonical trace 为 `(E_x,E_y)`，bottom/top local FEM 外法向分别为 `+z/-z`，modal 外法向取相反号。分布式 3D 取迹只传接口插值点和两个复切向分量，空 source rank 合法，不聚集完整场或模态。
+
+真实 Stage4 h10 两模 left/right Gram 投影得到 `N_Gamma=162`、`M=2`、Gram condition 约 `30.5`，系数 round trip 与重构 residual 分别约 `7.03e-17/6.23e-17`。affine complex 3D N1curl 场在 z=10/110 nm 的 2D trace coefficient error 约 `4.52e-15/6.61e-15`；air 两维近简并 basis 经 unitary rotation 后逐向量差异明显，但 mass-weighted projector error 约 `2.98e-8`，因此 Gate 使用子空间而非逐向量 equality。完整 serial 回归为 `199 tests / 10 skipped`，Phase 5 MPI4 为每 rank `3/3`，非正式 MPI4 runner 8/8 Gate 通过；实现 clean commit、正式 record 和 checker 尚待下一步固定。
 
 ## 8. augmented direct result
 
@@ -173,9 +175,9 @@ benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1/2/3/4 are complete, but interface coupling and Hybrid direct solvers are pending
+reason = Phase 1/2/3/4 are complete and Phase 5 implementation passes MPI4 research gates, but its clean record and Hybrid direct solvers are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 5 matching-interface trace coupling。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是固定 Phase 5 clean record/checker，然后才进入 Phase 6 augmented direct。
