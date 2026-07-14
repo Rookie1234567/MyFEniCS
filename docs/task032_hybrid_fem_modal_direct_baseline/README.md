@@ -16,6 +16,10 @@
 ## 文件
 
 - [Task032 任务书](task.md)
+- [滚动结果总结](outcomes/summary.md)
+- [本地迁移记录](outcomes/local_migration_record.md)
+- [环境能力记录](outcomes/environment_capability.md)
+- [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
 - [Hybrid FEM–Modal 理论笔记](../../notes/theory/hybrid_fem_modal_domain_decomposition.md)

@@ -1,4 +1,4 @@
-# 项目开发进度：Task000–Task031
+# 项目开发进度：Task000–Task032
 
 ## 1. 文档定位
 
@@ -35,14 +35,19 @@ docs/taskXXX_*/review_report*.md
 
 ```text
 2026-07-14
-current branch = codex/20260714-task31-compact-pc-memory-optimization
+current branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
-Task031 status = strong_memory_success_slow_but_memory_efficient; Review V1 hardening complete in response_v1; pending final review
+Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
+Task032 status = Phase 0 local migration and old-capability smoke passed; Hybrid implementation not started
 ```
 
 ## 1.1 2026-07-14 最新更新
+
+Task032 已从 Review V2 通过后的 Task031 clean merge `dae03170` 启动。旧目录 `fenics_vector_maxwell_floquet_demo_v2_parallel` 保持 Task031 分支和既有未跟踪材料不变；新目录 `fenics_v3_hybrid_FEM_modal` 从更新后的 `origin/master` clean clone，并创建、推送 `codex/20260714-task32-hybrid-fem-modal-direct-baseline`。迁移、环境和 smoke 证据见 [`task032_hybrid_fem_modal_direct_baseline/outcomes/`](task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md)。
+
+Phase 0 确认本机合格镜像提供 PETSc complex128、DOLFINx 0.10.0.post2 和 SLEPc 3.24 PEP/TOAR；compile/import、8 个 condensation/action 合同测试、最小 Stage4 和 h5 MPI4 target direct 均通过。最小 Stage4 首次暴露 flat preset 仍继承 `50 x 50 x 50 nm` 光栅块的旧回归；通过显式零尺寸 A/B 定位后，只修复三个 preset 几何字段并新增合同测试，原始命令恢复通过。h5 基线为 44,698 FE DoF、80 auxiliary modes、真相对残差 `1.3033e-11`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`，闭合误差 `1.2124e-13`。当前尚未开始 Hybrid eigenmode、coupling 或 solver 实现。
 
 Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
 
