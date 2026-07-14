@@ -54,8 +54,8 @@
 | release-base lifecycle control | diagnostic_only | 显式 opt-in | h3 只降 5.462%，不是 low-memory profile |
 | OpenBLAS-threaded direct | diagnostic_only | Case050 `--threads-per-rank` | 当前 image MPI1×4 KSPSetUp 仍约 1 核；capability unavailable |
 | MPI4 workstation iterative | recommended | 显式 benchmark | 仅固定 p2/h5,h3,h2 profile |
-| Task30 compact physical-slab low-memory profile | experimental | Case060 显式 flags | Task27-derived 75D wave coarse；h5/h3/h2 full 已通过；h2 1873 步、9.375 GB；等待 final review |
-| nonmatching H(curl) transfer + condensed Galerkin | research_only | `hcurl_multilevel.py` / Case060 | 基础设施 MPI4 action/adjoint 通过；当前 792D p1 coarse 的 solver 性能为负，不是可推荐 GMG |
+| Task30 compact physical-slab low-memory profile | experimental | Case060 显式 flags | `workstation_memory_success_with_qualifications`；clean final-HEAD h5/h3 为 1.688/3.793 GB；h2 是 reviewed historical reference；等待 final review |
+| nonmatching H(curl) transfer + condensed Galerkin | research_only | `hcurl_multilevel.py` / Case060 | validated infrastructure API 与失败 p/h/Woodbury research candidates 已隔离；当前 792D p1 coarse 的 solver 性能为负，不是可推荐 GMG |
 | subdomain-local shift + factor-only storage | experimental | workstation runner 显式 opt-in | PETSc 3.24 complex action/lifecycle 等价通过；跨版本需回归；普通 Task27 profile 不变 |
 | h=1.5 iterative | not_verified | 无 canonical record | 不得宣称 production |
 | field/mesh output | supported | results/artifacts | rank-local + parallel PVD |

@@ -25,3 +25,13 @@
 2026-07-14 Review V1 P0：不重跑 h5/h3/h2；从原重型 JSON 恢复 `bfb6586e` tracked-dirty provenance、完整命令/环境与 SHA-256。Case060 升级为 203/203 数值 Gate，三份 records 加入 manifest；normal checker 连续两次生成 summary/report 哈希稳定。统一最终身份为 Task27-derived `compact physical-slab low-memory experimental profile`，p/h solver negative；reported factor nnz 不能证明 ILU0 compression，factor-only 只验证 PETSc 3.24.0 complex build。
 
 2026-07-14 Review V1 regression：Ruff、compileall、JSON 757/CSV 354 parse、diff check 通过；docs/preset/benchmark/retrospective contracts 32/32；serial/MPI2/MPI4 focused 各 23 项/每 rank 通过；full discovery 157 passed/10 skipped。未触碰 `papers/` 与 Task023 raw runs。
+
+2026-07-14 Review V2 R2：`hcurl_multilevel.py` 标记 research-only；公共 `__all__` 仅保留 active DoF、nonmatching transfer/cache/validation 与 condensed Galerkin。失败的 Jacobi、p/h multilevel 和 Woodbury candidates 只由 Task030 research runner/tests 直接导入，普通 `src.solvers` 不导出。
+
+2026-07-14 Review V2 clean h5：final implementation commit=`5b81359daee0874793c44b019d9c914b334db483`，tracked source clean，host SHA attestation 与容器 HEAD 一致；855 iterations，reported/condensed/full=`9.924905370e-7/9.924905377e-7/9.924905377e-7`，peak incl R/T/A=1.687652588 GB，solve/total=85.204/109.166 s；heavy SHA-256=`2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3`。
+
+2026-07-14 Review V2 clean h3：同一 final implementation commit 和 clean attestation；962 iterations，reported/condensed/full=`9.903890492e-7/9.903890492e-7/9.903890492e-7`，peak incl R/T/A=3.792911530 GB，solve/total=407.027/453.373 s；h3 同时通过 3.8 GB absolute Gate 和 25.37% relative reduction Gate；heavy SHA-256=`48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`。
+
+2026-07-14 Review V2 h2：按审查不重跑。原 record 保留 tracked-dirty provenance、exact command/timestamp 与 SHA-256，并明确标记 `reviewed_historical_dirty_worktree_reference`；checker 通过显式 exemption 验证其与 clean h5/h3 的 solver/physics identity。
+
+2026-07-14 Review V2 final regression：Ruff/compileall 通过；serial focused 47/47；MPI2/MPI4 targeted 每个 rank 27/27；full discovery 161 passed/10 skipped；documentation/retrospective 19/19；benchmark 203/203；normal regeneration 两次 hash 稳定；JSON 757/CSV 354 parse 通过；diff check 无 whitespace error。ordinary default 未改变，Task31 未启动，等待 Task030 final review 与用户 selective-merge 许可。

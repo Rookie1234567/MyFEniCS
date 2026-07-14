@@ -141,3 +141,9 @@ factor-only 模式逐块提取/分解，避免所有 local source matrices 同�
 `SparseGalerkinTwoLevelPc(post_smooth=True)` 在 coarse correction 后重算真实 residual，再执行同一 fixed smoother。它是 Task030 compact physical-slab low-memory experimental profile 的主要收敛机制；只启用 storage flags 而不启用 post smooth 不是同一个候选。该成功配置继承 Task27 的 physical slabs 与 75D wave coarse，不是成功的 p/h GMG。
 
 理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。
+
+## 16. Review V2 的模块边界
+
+Task030 的最终成功配置仍走本文件描述的 Task27-derived physical-slab PC；它不依赖失败的 p/h multilevel coarse。`src/solvers/hcurl_multilevel.py` 的公共 `__all__` 只包含 `ActiveDofMap`、nonmatching transfer/cache/validation 与 condensed Galerkin 等 validated infrastructure。Jacobi、Galerkin multilevel PC、Modal Woodbury 等 solver-negative candidates 只允许 research runner/tests 直接导入，不由普通 `src.solvers` 暴露。
+
+因此 selective merge 时应分别审查两条 lane：本文件的 local-shift/factor-only/post-smooth 是已验证的 explicit opt-in 工程路径；H(curl) 文件只提升代数基础设施，不提升 p/h solver profile。ordinary default 与 Task027 canonical 均保持不变。

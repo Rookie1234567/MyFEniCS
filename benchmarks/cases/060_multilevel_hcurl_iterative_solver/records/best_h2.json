@@ -17,7 +17,16 @@
     "provenance": "working_tree_source_artifact_recovered_without_rerun",
     "provenance_qualification": "base commit is exact; tracked Task030 source changes were uncommitted at run time, so clean-source provenance is not claimed",
     "actual_source_artifact_root": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h2_qualified",
-    "source_artifact_sha256": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a"
+    "source_artifact_sha256": "63b49fc9addcff97aefed335fdb625468f91aa702c71128cf977d1ee138d4b5a",
+    "evidence_identity": "reviewed_historical_dirty_worktree_reference",
+    "clean_final_head_equivalence": {
+      "implementation_commit_sha": "5b81359daee0874793c44b019d9c914b334db483",
+      "h5_source_artifact_sha256": "2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3",
+      "h3_source_artifact_sha256": "48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232",
+      "candidate_identity_match": true,
+      "physical_and_modal_identity_match": true,
+      "numeric_equivalence_status": "h5_h3_clean_reruns_match_historical_results"
+    }
   },
   "candidate": "compact_restart90_ilu0_symmetric_pre_post_local_shift_factor_only",
   "profile_identity": "compact_physical_slab_low_memory_experimental_opt_in",

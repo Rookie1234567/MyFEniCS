@@ -862,16 +862,53 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     str(record.get("source_artifact")),
                 )
             )
-            provenance_qualified = (
-                metadata.get("git_dirty") is True
-                and metadata.get("tracked_source_dirty") is True
-                and metadata.get("provenance")
-                == "working_tree_source_artifact_recovered_without_rerun"
-                and bool(metadata.get("provenance_qualification"))
-                and bool(metadata.get("actual_source_artifact_root"))
-                and metadata.get("container_image") != "unknown"
-                and metadata.get("container_digest") != "unknown"
-            )
+            if label in set(contract["clean_rerun_labels"]):
+                provenance_qualified = (
+                    metadata.get("commit_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and metadata.get("git_dirty") is False
+                    and metadata.get("tracked_source_dirty") is False
+                    and metadata.get("tracked_source_verification")
+                    == "host_git_clean_attestation"
+                    and metadata.get("verified_clean_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and metadata.get("provenance") == "clean_rerun"
+                    and bool(metadata.get("provenance_qualification"))
+                    and bool(metadata.get("actual_source_artifact_root"))
+                    and metadata.get("container_image") != "unknown"
+                    and metadata.get("container_digest") != "unknown"
+                )
+                expected_provenance = (
+                    "clean final implementation commit with full-SHA host attestation"
+                )
+            else:
+                equivalence = metadata.get("clean_final_head_equivalence") or {}
+                h5_metadata = (task030["h5"] or {}).get("metadata") or {}
+                h3_metadata = (task030["h3"] or {}).get("metadata") or {}
+                provenance_qualified = (
+                    metadata.get("git_dirty") is True
+                    and metadata.get("tracked_source_dirty") is True
+                    and metadata.get("provenance")
+                    == "working_tree_source_artifact_recovered_without_rerun"
+                    and metadata.get("evidence_identity")
+                    == contract["h2_evidence_identity"]
+                    and equivalence.get("implementation_commit_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and equivalence.get("h5_source_artifact_sha256")
+                    == h5_metadata.get("source_artifact_sha256")
+                    and equivalence.get("h3_source_artifact_sha256")
+                    == h3_metadata.get("source_artifact_sha256")
+                    and equivalence.get("candidate_identity_match") is True
+                    and equivalence.get("physical_and_modal_identity_match") is True
+                    and bool(metadata.get("provenance_qualification"))
+                    and bool(metadata.get("actual_source_artifact_root"))
+                    and metadata.get("container_image") != "unknown"
+                    and metadata.get("container_digest") != "unknown"
+                )
+                expected_provenance = (
+                    "explicit reviewed historical dirty-worktree h2 exemption linked "
+                    "to clean final-HEAD h5/h3 equivalence"
+                )
             gates.append(
                 Gate(
                     f"task030_provenance_qualified:{benchmark_id}",
@@ -880,8 +917,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                         "git_dirty": metadata.get("git_dirty"),
                         "tracked_source_dirty": metadata.get("tracked_source_dirty"),
                         "provenance": metadata.get("provenance"),
+                        "evidence_identity": metadata.get("evidence_identity"),
+                        "commit_sha": metadata.get("commit_sha"),
                     },
-                    "honest dirty-source qualification with pinned artifact identity",
+                    expected_provenance,
                     benchmark_id,
                 )
             )

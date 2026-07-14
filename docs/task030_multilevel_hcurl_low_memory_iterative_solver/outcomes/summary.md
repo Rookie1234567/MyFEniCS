@@ -6,7 +6,7 @@
 task = Task030
 branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
 base = Task029 merged master bfb6586e030efd5208ebd796c39fdc31301e1d6e
-classification = workstation_success_experimental_opt_in
+classification = workstation_memory_success_with_qualifications
 workstation_memory_result = success_with_qualifications
 ordinary_default_changed = false
 ```
@@ -65,13 +65,13 @@ Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 在 h5/h3/h2 分别都�
 
 | h | iterations | full true residual | peak incl. RTA | Task027 memory reduction | R / T / A | max delta vs direct |
 |---:|---:|---:|---:|---:|---|---:|
-| 5 | 855 | `9.924905e-7` | 1.696136 GB | 14.82% | 0.0890216035 / 0.4425882732 / 0.4683901222 | `5.438e-9` |
-| 3 | 962 | `9.903890e-7` | 3.807503 GB | 25.08% | 0.00461303218 / 0.58365335775 / 0.41173361173 | `7.719e-10` |
+| 5 | 855 | `9.924905e-7` | 1.687653 GB | 15.24% | 0.0890216035 / 0.4425882732 / 0.4683901222 | `5.438e-9` |
+| 3 | 962 | `9.903890e-7` | 3.792912 GB | 25.37% | 0.00461303218 / 0.58365335775 / 0.41173361173 | `7.719e-10` |
 | 2 | 1873 | `9.972228e-7` | 9.374729 GB | 28.33% | 0.00134293442 / 0.59921323601 / 0.39944383222 | `6.561e-9` |
 
 三者 reported、condensed true 和 full augmented true residual 一致；energy closure 分别为 `-1.137e-9`、`1.659e-9` 与 `2.639e-9`。h3/h5 iteration ratio 为 `1.1251`，满足 `<=2`。h5 迭代比基线少 28.8%，h3 少 3.1%；h2 迭代比 canonical 多 3.8%，但内存低 28.33%。
 
-h3 的 3.807503 GB 略高于 3.8 GB 绝对目标；它是凭相对 Task27 降低 25.08% 的替代 Gate 通过，不能写成绝对内存 Gate 通过。
+h5/h3 是 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上的 clean rerun。h3 的 3.792912 GB 同时通过 3.8 GB 绝对目标，并较 Task27 降低 25.37%。h2 未按 Review V2 重跑，本表 h2 行是 `reviewed_historical_dirty_worktree_reference`。
 
 ## 6. h2 条件运行
 
@@ -81,7 +81,7 @@ h5/h3 的 DoF–RSS 仿射与幂律两个独立模型给出 h2 中央预测 `9.5
 
 ## 7. 成功、负结果与合并决策
 
-已达到 `workstation_success_experimental_opt_in`：h5/h3 full solve 通过，h3 内存降幅超过 25%，h3/h5 iteration ratio 为 1.125；h2 在 9.375 GB 内完成 full solve、80 modes 与 official R/T/A，h2/h3 iteration ratio 为 1.947。由于 h2 1873 步高于 1200 的工程偏好且峰值高于 8 GB，它不是 `strong_workstation_success`，也不能称为真正 mesh-independent GMG。
+已达到 `workstation_memory_success_with_qualifications`：clean final-HEAD h5/h3 full solve 通过，h3 绝对内存低于 3.8 GB且降幅超过 25%，h3/h5 iteration ratio 为 1.125；历史 h2 reference 在 9.375 GB 内完成 full solve、80 modes 与 official R/T/A，h2/h3 iteration ratio 为 1.947。由于 h2 没有在 Response V2 final-HEAD 重跑、1873 步高于 1200 的工程偏好且峰值高于 8 GB，它不是 strong success，也不能称为真正 mesh-independent GMG。
 
 可建议合并的是通用 transfer/Galerkin 基础设施和已验证的 local-shift/factor-only/pre-post opt-in 机制。p/h solver profiles、Woodbury、x-harmonic、AMS/HX、restart80 和 heavy artifacts 不得提升。ordinary default 保持不变，最终仍需 ChatGPT review 与用户明确许可。
 
@@ -90,13 +90,15 @@ h5/h3 的 DoF–RSS 仿射与幂律两个独立模型给出 h2 中央预测 `9.5
 - “保证”只针对冻结物理模型、MPI4 分区和 explicit true residual，不代表所有角度/材料/网格参数无条件收敛。
 - 当前 h/p coarse 缺少严格 commuting projection、梯度/近核辅助空间和多级 smoother；基础设施成功不等于 GMG 成功。
 - factor-only 只在 qualified local image 的 PETSc 3.24.0 complex build 验证；跨 PETSc 版本必须重跑 action/lifecycle 回归。
-- h2 已收敛，但 1873 步仍高于 1200 工程目标；下一步应做参数鲁棒性与 fallback，而不是继续压当前单点 restart。
+- h2 历史证据已收敛，但 1873 步仍高于 1200 工程目标；Task31 只可在 Task30 final review、用户批准和 selective merge 后，从 clean master 独立启动。
 
-## 9. Review V1 provenance 与自动 Gate
+## 9. Review V2 provenance、API 隔离与自动 Gate
 
-三份 best records 的实际 source commit 均为 `bfb6586e`；重型运行时 Task30 tracked source 尚未提交，所以据实标记 `tracked_source_dirty=true` 和 `working_tree_source_artifact_recovered_without_rerun`，没有伪造 clean provenance，也没有重跑 h5/h3/h2。各 record 已固定原始命令、UTC 时间、镜像/digest、host id、artifact root 与 JSON SHA-256。
+h5/h3 在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上完成 clean rerun，host tracked-source 状态为 clean，并用 exact full-SHA attestation 与容器内 HEAD 交叉核对。heavy JSON SHA-256 分别为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3` 和 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`。h2 没有重跑；其 record 保留原 `bfb6586e` dirty provenance，并增加 `reviewed_historical_dirty_worktree_reference` identity 以及与 clean h5/h3 相同 solver/physics 的等价性链接。
 
-Case060 已接入 203 项 checker：除 manifest/文件合同外，还验证 provenance、final solver identity、p/h negative disposition、显式 opt-in、冻结物理与 80 modes、KSP reason、三残差与一致性、official R/T/A、energy closure、direct delta、h3 OR memory Gate、iteration ratio、h2 RSS 和非 strong 分类。三份 experimental records 已进入 manifest，normal checker 可以稳定再生成同一 summary。
+`hcurl_multilevel.py` 已把 validated API 限定为 active DoF、nonmatching transfer/cache、transfer validation 和 condensed Galerkin。失败的 Jacobi/p-h multilevel/Woodbury 候选只由 research runner/tests 直接导入，普通 `src.solvers` 不导出；这明确了可选择合并的基础设施边界，不把 solver-negative lane 带入公共 API。
+
+Case060 已接入 203 项 checker：除 manifest/文件合同外，还验证 clean h5/h3 final-HEAD provenance、historical h2 identity、final solver identity、p/h negative disposition、显式 opt-in、冻结物理与 80 modes、KSP reason、三残差与一致性、official R/T/A、energy closure、direct delta、h3 absolute/relative memory Gate、iteration ratio、h2 RSS 和限定分类。三份 experimental records 已进入 manifest，normal checker 可以稳定再生成同一 summary。
 
 ## 10. 证据入口
 

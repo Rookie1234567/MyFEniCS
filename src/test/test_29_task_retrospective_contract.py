@@ -145,7 +145,7 @@ class TaskRetrospectiveContractTests(unittest.TestCase):
         )
         summary = (outcomes / "summary.md").read_text(encoding="utf-8")
         for value in (
-            "workstation_success",
+            "workstation_memory_success_with_qualifications",
             "ordinary_default_changed = false",
             "五个 p/h 候选",
             "正式 h5/h3/h2 结果",

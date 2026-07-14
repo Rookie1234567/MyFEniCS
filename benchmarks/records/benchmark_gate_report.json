@@ -1,5 +1,5 @@
 {
-  "checkout_commit": "3f0ff57f228dbf259ec6f181c98f46ca5857813e",
+  "checkout_commit": "5b81359daee0874793c44b019d9c914b334db483",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
@@ -608,7 +608,7 @@
     {
       "name": "record_commit_consistent:task030_compact_h5",
       "passed": true,
-      "observed": "checkout_ancestor",
+      "observed": "exact_checkout",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -641,7 +641,7 @@
     {
       "name": "record_commit_consistent:task030_compact_h3",
       "passed": true,
-      "observed": "checkout_ancestor",
+      "observed": "exact_checkout",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1394,25 +1394,27 @@
     {
       "name": "task030_source_artifact_sha256:task030_compact_h5",
       "passed": true,
-      "observed": "2dc68e4001d3fb6b04d239ea3f7dbfb7e46a63f5afcb566e2065eb1e13815878",
-      "expected": "2dc68e4001d3fb6b04d239ea3f7dbfb7e46a63f5afcb566e2065eb1e13815878",
-      "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h5_full.json"
+      "observed": "2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3",
+      "expected": "2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3",
+      "evidence": "benchmarks/artifacts/cases/060/response_v2_clean/task030_response_v2_clean_h5.json"
     },
     {
       "name": "task030_provenance_qualified:task030_compact_h5",
       "passed": true,
       "observed": {
-        "git_dirty": true,
-        "tracked_source_dirty": true,
-        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+        "git_dirty": false,
+        "tracked_source_dirty": false,
+        "provenance": "clean_rerun",
+        "evidence_identity": null,
+        "commit_sha": "5b81359daee0874793c44b019d9c914b334db483"
       },
-      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "expected": "clean final implementation commit with full-SHA host attestation",
       "evidence": "task030_compact_h5"
     },
     {
       "name": "task030_source_commit_relation:task030_compact_h5",
       "passed": true,
-      "observed": "checkout_ancestor",
+      "observed": "exact_checkout",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1512,25 +1514,27 @@
     {
       "name": "task030_source_artifact_sha256:task030_compact_h3",
       "passed": true,
-      "observed": "b76c991c72d30a4e8b575cfc077ad633ea2ea50dbead1ebc8f4626d9eb389331",
-      "expected": "b76c991c72d30a4e8b575cfc077ad633ea2ea50dbead1ebc8f4626d9eb389331",
-      "evidence": "benchmarks/artifacts/cases/060/full/task030_compact_restart90_h3_full.json"
+      "observed": "48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232",
+      "expected": "48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232",
+      "evidence": "benchmarks/artifacts/cases/060/response_v2_clean/task030_response_v2_clean_h3.json"
     },
     {
       "name": "task030_provenance_qualified:task030_compact_h3",
       "passed": true,
       "observed": {
-        "git_dirty": true,
-        "tracked_source_dirty": true,
-        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+        "git_dirty": false,
+        "tracked_source_dirty": false,
+        "provenance": "clean_rerun",
+        "evidence_identity": null,
+        "commit_sha": "5b81359daee0874793c44b019d9c914b334db483"
       },
-      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "expected": "clean final implementation commit with full-SHA host attestation",
       "evidence": "task030_compact_h3"
     },
     {
       "name": "task030_source_commit_relation:task030_compact_h3",
       "passed": true,
-      "observed": "checkout_ancestor",
+      "observed": "exact_checkout",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1640,9 +1644,11 @@
       "observed": {
         "git_dirty": true,
         "tracked_source_dirty": true,
-        "provenance": "working_tree_source_artifact_recovered_without_rerun"
+        "provenance": "working_tree_source_artifact_recovered_without_rerun",
+        "evidence_identity": "reviewed_historical_dirty_worktree_reference",
+        "commit_sha": "bfb6586e030efd5208ebd796c39fdc31301e1d6e"
       },
-      "expected": "honest dirty-source qualification with pinned artifact identity",
+      "expected": "explicit reviewed historical dirty-worktree h2 exemption linked to clean final-HEAD h5/h3 equivalence",
       "evidence": "task030_compact_h2"
     },
     {
@@ -1749,9 +1755,9 @@
       "name": "task030_h3_memory_gate",
       "passed": true,
       "observed": {
-        "peak_rss_gb": 3.8075027465820312,
-        "relative_reduction": 0.2508271484844118,
-        "absolute_gate_pass": false,
+        "peak_rss_gb": 3.7929115295410156,
+        "relative_reduction": 0.2536981493490897,
+        "absolute_gate_pass": true,
         "relative_gate_pass": true
       },
       "expected": "RSS <= 3.8 GB OR reduction >= 25%",

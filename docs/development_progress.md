@@ -38,14 +38,14 @@ docs/taskXXX_*/review_report*.md
 current branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
-Task030 status = workstation_success_experimental_opt_in; Review V1 P0 addressed; h5/h3/h2 passed; h2 peak incl RTA 9.374729 GB
+Task030 status = workstation_memory_success_with_qualifications; Review V2 responded; h5/h3 clean final-HEAD passed; h2 reviewed historical reference
 ```
 
 ## 1.1 2026-07-14 最新更新
 
 Task029 已按用户许可合并；Task030 从 `bfb6586e` clean master 创建独立分支。Task030 建立了 active/master-aware nonmatching H(curl) transfer 与 exact condensed Galerkin 基础设施，但五个正式 p/h 候选 100 步残差均比 Task027 基线差 146–264 倍，证明当前 792D p1 coarse 不是目标慢误差的有效表示。
 
-真正正反馈来自 Task27-derived physical-slab + 75D wave-coarse 架构，并加入 symmetric pre/post sm2、ILU0、subdomain-local shift、factor-only storage 和 FGMRES restart90。h5/h3 分别用 855/962 步收敛，峰值 1.696/3.808 GB；h3 没有通过 3.8 GB 绝对线，而是凭相对 Task027 canonical 降低 25.08% 的替代 Gate 通过，iteration ratio 为 1.125。唯一 h2 候选资格复跑在 1873 步达到 full true residual `9.972e-7`，含 R/T/A 峰值 9.374729 GB（-28.33%），official R/T/A 对 direct 最大差 `6.561e-9`。因此分类为 `workstation_success_experimental_opt_in`，但未达到 1200 步偏好；ordinary default 未改变。
+真正正反馈来自 Task27-derived physical-slab + 75D wave-coarse 架构，并加入 symmetric pre/post sm2、ILU0、subdomain-local shift、factor-only storage 和 FGMRES restart90。Review V2 后，h5/h3 在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上 clean 复跑，分别用 855/962 步收敛，峰值 1.687653/3.792912 GB；h3 同时通过 3.8 GB 绝对线和相对 Task027 canonical 降低 25.37% 的相对线，iteration ratio 为 1.125。h2 不重跑，保留为 1873 步、full true residual `9.972e-7`、含 R/T/A 峰值 9.374729 GB（-28.33%）的 reviewed historical dirty-worktree reference。因此分类为 `workstation_memory_success_with_qualifications`；ordinary default 未改变。
 
 Review V1 接受数值结果并要求修正 benchmark/provenance。三份正式 records 已从原 artifacts 恢复 source commit、tracked-dirty qualification、完整命令/时间/镜像/host 和 artifact SHA-256；Case060 已接入 203 项真实数值 Gate，三份记录也进入 manifest，使 normal checker 可重复生成完全相同的 summary。当前 ILU1/ILU0 reported factor nnz 相同，不能宣称 factor-nnz compression；factor-only 只在 PETSc 3.24.0 complex build 验证，跨版本需回归。
 
@@ -1810,7 +1810,7 @@ branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
 base master = bfb6586e030efd5208ebd796c39fdc31301e1d6e
 physical model = Task27/28 frozen p2 Stage4 target
 ordinary default changed = no
-current classification = workstation_success_experimental_opt_in
+current classification = workstation_memory_success_with_qualifications
 ```
 
 Task029 已证明 direct 的内存主峰在 MUMPS analysis/factorization；MPI2、OOC、BLR、ordering 与线程都没有得到可提升的 h3 工程收益。Task027 虽能在约 14 GB 内完成 h2，但 16 个大 slab ILU1、shifted-F 副本和 FGMRES basis 仍让 h2 达到 13.08 GB。因此 Task030 转向 H(curl) 层级、低 fill smoother、对象生命周期和 Krylov memory，而不继续微调 direct。
@@ -1862,21 +1862,21 @@ Task027 ILU1 overlap PC 增加真正 post smooth 后，h5 100-step residual 变�
 
 | h | DoF | iterations | full true residual | peak incl RTA | R/T/A | direct max delta |
 |---:|---:|---:|---:|---:|---|---:|
-| 5 | 44,698 | 855 | 9.924905e-7 | 1.696136 GB | 0.0890216035 / 0.4425882732 / 0.4683901222 | 5.438e-9 |
-| 3 | 198,438 | 962 | 9.903890e-7 | 3.807503 GB | 0.00461303218 / 0.58365335775 / 0.41173361173 | 7.719e-10 |
+| 5 | 44,698 | 855 | 9.924905e-7 | 1.687653 GB | 0.0890216035 / 0.4425882732 / 0.4683901222 | 5.438e-9 |
+| 3 | 198,438 | 962 | 9.903890e-7 | 3.792912 GB | 0.00461303218 / 0.58365335775 / 0.41173361173 | 7.719e-10 |
 | 2 | 615,108 | 1873 | 9.972228e-7 | 9.374729 GB | 0.00134293442 / 0.59921323601 / 0.39944383222 | 6.561e-9 |
 
-h3 较 Task027 canonical 5.082275 GB 下降 25.08%，h3/h5 iteration ratio 为 1.1251。其 3.807503 GB 略高于 3.8 GB 绝对线，所以明确由“相对下降至少 25%”这一 OR 分支通过。reported/condensed/full residual、80 modes、R/T/A 与 closure 全通过；h2 资格复跑进一步把分类提升为 `workstation_success_experimental_opt_in`。
+h3 较 Task027 canonical 5.082275 GB 下降 25.37%，h3/h5 iteration ratio 为 1.1251。其 3.792912 GB 同时通过 3.8 GB 绝对线和“相对下降至少 25%”分支。reported/condensed/full residual、80 modes、R/T/A 与 closure 全通过；h5/h3 均为 clean final-HEAD rerun。
 
 ## 41.7 h2 预测、实测与当前边界
 
 h5/h3 的 DoF–RSS 仿射/幂律两个独立模型预测 h2 中央值为 9.5298/7.0337 GB；较保守仿射值的 15% engineering upper 为 10.9593 GB，满足 G5/G6。唯一候选 attempt1 的实测峰值为 9.342113 GB，较 Task027 降低 28.58%；1800 步 solve time 2220.43 s，也略低于 Task027 2345.26 s。
 
-attempt1 真残差为 `1.461130e-6`，所以未输出 official R/T/A。随后只对同一 PC/restart 将 max_it 延到 2100；共同 monitor 点残差逐位一致，并在 1873 步收敛。最终 full residual `9.972228e-7`、含 R/T/A 峰值 9.374729 GB、closure `2.639e-9`、direct 最大差 `6.561e-9`，达到 `workstation_success`。h2/h3 iteration ratio 为 1.947，但 1873 步仍高于 1200 偏好，因此不是 `strong_workstation_success`。
+attempt1 真残差为 `1.461130e-6`，所以未输出 official R/T/A。随后只对同一 PC/restart 将 max_it 延到 2100；共同 monitor 点残差逐位一致，并在 1873 步收敛。最终 full residual `9.972228e-7`、含 R/T/A 峰值 9.374729 GB、closure `2.639e-9`、direct 最大差 `6.561e-9`。Review V2 明确不重跑 h2，因此这些值的身份是 `reviewed_historical_dirty_worktree_reference`，不是 clean final-HEAD evidence；h2/h3 iteration ratio 为 1.947，且 1873 步仍高于 1200 偏好。
 
 ## 41.8 合并边界
 
-建议 final review 接受的内容：nonmatching H(curl) transfer/cache、condensed Galerkin 研究基础设施、local shift、factor-only storage、symmetric pre/post opt-in、Case060、tests 和完整文档。不得提升 p/h solver profiles、Woodbury、x-harmonic、AMS/HX、restart80 或 heavy artifacts。Task027 canonical 和 ordinary default 均保持不变；master 仍等待 response V1 后的 final review。
+建议 final review 接受的内容：nonmatching H(curl) transfer/cache、condensed Galerkin 研究基础设施、local shift、factor-only storage、symmetric pre/post opt-in、Case060、tests 和完整文档。不得提升 p/h solver profiles、Woodbury、x-harmonic、AMS/HX、restart80 或 heavy artifacts。validated infrastructure API 已与失败 candidates 隔离；Task027 canonical 和 ordinary default 均保持不变。master 仍等待 Response V2 后的 final review 与用户明确许可。
 
 ## 41.9 局限与下一步因果关系
 
@@ -1892,22 +1892,30 @@ h2 已收敛，但当前 evidence 只覆盖单个角度/波长/材料/分区，�
 
 ## 41.10 Review V1 更正与证据边界
 
-Review V1 的五项 P0 已在同一分支回应：正式 h5/h3/h2 lightweight records 补齐实际运行 provenance，明确原运行来自 `bfb6586e` tracked-dirty 工作树且没有重跑；Case060 checker 从文件存在性升级为 provenance、solver identity、80 modes、三残差、R/T/A、closure、direct delta、内存和分类的 203 项 Gate；manifest 加入三份 experimental entries，normal checker 连续生成保持一致；项目级命名统一为 `compact physical-slab low-memory experimental profile`；理论、walkthrough、capability、benchmark 和边界文档同步说明 p/h multigrid solver 失败。
+Review V1 的五项 P0 已在同一分支回应：正式 h5/h3/h2 lightweight records 补齐实际运行 provenance；Case060 checker 从文件存在性升级为 provenance、solver identity、80 modes、三残差、R/T/A、closure、direct delta、内存和分类的 203 项 Gate；manifest 加入三份 experimental entries，normal checker 连续生成保持一致；项目级命名统一为 `compact physical-slab low-memory experimental profile`；理论、walkthrough、capability、benchmark 和边界文档同步说明 p/h multigrid solver 失败。Review V2 又把 h5/h3 更新为 clean final-HEAD rerun，并把 h2 固定为 historical dirty-worktree reference。
 
 最终成功求解器身份固定为 `task27_derived_physical_slab_wave_coarse`。H(curl) transfer/Galerkin 是 validated research infrastructure，不是 successful GMG。factor-only 在 PETSc 3.24.0 complex build 通过生命周期测试；跨版本兼容仍需回归。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因而不把内存下降解释为已证明的 factor-nnz compression。
+
+## 41.11 Review V2：clean evidence 与 selective-merge 边界
+
+R1 在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上重跑 h5/h3。两次 record 均写 `git_dirty=false`、`tracked_source_dirty=false`、`tracked_source_verification=host_git_clean_attestation`，且 verified clean SHA 与容器 HEAD 完全一致。h5 heavy JSON SHA-256 为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3`；h3 为 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`。h2 按审查要求不重跑，保留 `reviewed_historical_dirty_worktree_reference` 身份，并显式链接 clean h5/h3 的 solver/physics 等价性。
+
+R2 把 `hcurl_multilevel.py` 的 validated infrastructure API 限定为 active DoF、nonmatching transfer/cache/validation 和 condensed Galerkin。Damped Jacobi、Galerkin multilevel PC、Modal Woodbury 等 solver-negative candidates 只由 research runner/tests 直接导入，普通 `src.solvers` 不导出。最终工程求解器仍是 Task27-derived compact physical-slab profile，不是 p/h GMG。
+
+因此 Task030 最终状态为 `workstation_memory_success_with_qualifications`。ordinary default 不变；当前分支只可提交 Response V2 并等待 final review，不能直接合并 master 或启动 Task31。Task31 必须在用户批准 selective merge 后，从 clean master 新建独立分支。
 
 ---
 
 # 42. Task030 后的当前推荐顺序
 
 ```text
-1. 完成 tests 和 ChatGPT review；
-2. review 前 ordinary default 不变；
-3. 下一任务做小型参数鲁棒性矩阵与 automatic fallback；
-4. 进一步压迭代数时转向 commuting/near-kernel multigrid；
-5. 不再重复 direct 微调、失败 p/h coarse 或 Woodbury 参数海洋。
+1. 提交并推送 Task030 Response V2；
+2. 等待 ChatGPT final review，ordinary default 不变；
+3. 用户明确批准后，按 selective merge 边界合入 master；
+4. 在合并后的 clean master 新建 Task31 独立分支；
+5. Task31 优先压缩 Krylov、F/condensed 重复对象、slab factors 与生命周期。
 ```
 
 # 43. 当前一句话状态（Task030）
 
-> 项目已获得一个对固定 3D EUV 目标在 h5/h3/h2 达到 explicit full true residual 收敛的 `compact physical-slab low-memory experimental profile`：它派生自 Task27 的 physical-slab + 75D wave-coarse 架构，h2 为 1873 步、9.374729 GB，80 modes 与 official R/T/A 全通过；H(curl) transfer/Galerkin 研究基础设施正确，但 792D p1 coarse 的 p/h multigrid solver 明确失败。当前分类为 `workstation_success_experimental_opt_in`，不是参数域外保证，也未改变 ordinary default；Review V1 P0 已回应，master 等待 final review。
+> Task030 已获得 `workstation_memory_success_with_qualifications`：Task27-derived compact physical-slab profile 的 clean final-HEAD h5/h3 分别为 855/962 步、1.687653/3.792912 GB，h2 保留为 1873 步、9.374729 GB 的 reviewed historical dirty-worktree reference；80 modes 与 official R/T/A 通过，H(curl) transfer/Galerkin validated infrastructure 正确，但 792D p1 coarse 的 p/h multigrid solver 明确失败。ordinary default 未改变，master 等待 final review 与用户选择性合并许可。

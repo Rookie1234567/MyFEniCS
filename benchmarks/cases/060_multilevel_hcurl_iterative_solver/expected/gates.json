@@ -13,6 +13,9 @@
     "n_aux": 80,
     "ordinary_default_changed": false,
     "strong_workstation_success": false,
+    "clean_final_head_commit_sha": "5b81359daee0874793c44b019d9c914b334db483",
+    "clean_rerun_labels": ["h5", "h3"],
+    "h2_evidence_identity": "reviewed_historical_dirty_worktree_reference",
     "source_artifact_sha256_pattern": "^[0-9a-f]{64}$"
   },
   "numeric_common": {

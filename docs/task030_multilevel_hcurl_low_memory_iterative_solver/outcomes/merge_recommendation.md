@@ -1,6 +1,6 @@
 # 合并建议
 
-当前建议：`review_required_before_master = true`，`ordinary_default_changed = false`。
+当前建议：`review_required_before_master = true`，`ordinary_default_changed = false`，`Task030 status = workstation_memory_success_with_qualifications`。
 
 建议合并：
 
@@ -17,6 +17,8 @@
 - h2 首次未收敛和资格复跑的 heavy artifacts；
 - transfer cache、网格、矩阵、场和逐步日志。
 
-Task27-derived `compact physical-slab low-memory experimental profile` 已在冻结 h5/h3/h2 上达到 `workstation_success_experimental_opt_in`，但 1873 步未达到 1200 的工程偏好，只作为 Case060 / workstation runner 的显式参数组合。真正 p/h multigrid solver 仍为 negative；Review V1 P0 已回应，待 final review 和用户明确许可后再决定是否 selective merge 到 master。
+Task27-derived `compact physical-slab low-memory experimental profile` 的 h5/h3 已在 final implementation HEAD clean 复跑，达到 `workstation_memory_success_with_qualifications`；h2 保留为 reviewed historical dirty-worktree reference，1873 步未达到 1200 的工程偏好。真正 p/h multigrid solver 仍为 negative。Review V2 R1/R2/D1/V1 回应完成后，仍须等待 ChatGPT final review 和用户明确许可，再按 selective merge 边界合入 master。
+
+`hcurl_multilevel.py` 的 validated infrastructure API 只包含 active DoF、nonmatching transfer/cache/validation 和 condensed Galerkin；失败的 Jacobi、p/h multilevel 与 Woodbury 候选仅留在 research runner/tests，不通过普通 `src.solvers` 导出。不得整体合并 research lane，也不得在 Task30 分支直接启动 Task31。
 
 Task27 ILU1 与 Task30 ILU0 的 reported factor nnz 相同，不能把内存下降写成已证明的 factor-nnz compression。factor-only 只验证 PETSc 3.24.0 complex build，跨版本需回归。

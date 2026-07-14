@@ -10,7 +10,7 @@
 | L2 | condensation等价、transpose、backsub、MPI owner/cache | 通过 |
 | L3 direct | target p2 h5/h3 rerun，h2 reviewed reference | 通过 |
 | L3 iterative | Task27 target p2 h5/h3/h2 canonical | 全通过 |
-| L3 Task30 | compact physical-slab low-memory h5/h3/h2 | Task27-derived；全通过；h2 1873 步、9.374729 GB，experimental opt-in |
+| L3 Task30 | compact physical-slab low-memory h5/h3/h2 | `workstation_memory_success_with_qualifications`；h5/h3 为 clean final-HEAD 复跑，h2 为 reviewed historical reference |
 
 ## 目标模型
 
@@ -52,10 +52,10 @@ Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施
 
 | h/nm | iterations | full true residual | peak RSS | 相对 Task27 |
 |---:|---:|---:|---:|---:|
-| 5 | 855 | 9.92491e-7 | 1.696 GB | memory -14.82%，iterations -28.81% |
-| 3 | 962 | 9.90389e-7 | 3.808 GB | memory -25.08%，iterations -3.12% |
+| 5 | 855 | 9.92491e-7 | 1.688 GB | memory -15.24%，iterations -28.81% |
+| 3 | 962 | 9.90389e-7 | 3.793 GB | memory -25.37%，iterations -3.12% |
 | 2 qualified | 1873 | 9.97223e-7 | 9.375 GB | memory -28.33%，workstation pass；iterations target missed |
 
-h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。h3 的 3.807503 GB 没通过 `<=3.8 GB` 绝对线，而是凭相对 Task27 降低 25.08% 的 OR Gate 通过。Case060 分类为 `workstation_success_experimental_opt_in`，1873 步未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
+h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。最终实现提交 `5b81359daee0874793c44b019d9c914b334db483` 上的 clean h3 复跑峰值为 3.792912 GB，同时通过 `<=3.8 GB` 绝对线，并较 Task27 降低 25.37%。Case060 最终分类为 `workstation_memory_success_with_qualifications`；h2 的 1873 步仍未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
 
-三份正式 lightweight records 已进入 manifest，checker 可重复生成同一 `benchmark_summary.csv`，并执行 203 项 Gate。原重型计算是在 source commit `bfb6586e` 的 tracked-dirty 工作树运行；记录据实标记 `working_tree_source_artifact_recovered_without_rerun`，并固定实际 artifact SHA-256，不把后续文档 commit 冒充运行来源。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因此该统计口径保持 `measurement_unresolved`，内存下降不归因于已证明的 factor-nnz compression。
+三份正式 lightweight records 已进入 manifest，checker 可重复生成同一 `benchmark_summary.csv`，并执行 203 项 Gate。h5/h3 是 final implementation HEAD `5b81359daee0874793c44b019d9c914b334db483` 的 clean 复跑，heavy JSON SHA-256 分别为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3` 与 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`；h2 明确保留为 `reviewed_historical_dirty_worktree_reference`，不是 clean final-HEAD 复跑。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因此该统计口径保持 `measurement_unresolved`，内存下降不归因于已证明的 factor-nnz compression。

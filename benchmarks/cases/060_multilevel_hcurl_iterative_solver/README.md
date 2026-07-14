@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-Case060 当前为 `workstation_success_experimental_opt_in`。五类真正 p/h 候选在 h5 100 步均为明确负结果；最终有效候选是 Task27-derived physical-slab + 75D Floquet z-hat wave coarse 架构，并使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 和 FGMRES restart90。h5/h3/h2 full solve 均已通过；h2 为 1873 步、真残差 `9.972228e-7`、含 R/T/A 峰值 9.374729 GB。
+Case060 当前为 `workstation_memory_success_with_qualifications`。五类真正 p/h 候选在 h5 100 步均为明确负结果；最终有效候选是 Task27-derived physical-slab + 75D Floquet z-hat wave coarse 架构，并使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 和 FGMRES restart90。h5/h3 已在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上 clean 复跑；h2 不重跑，保留为 1873 步、真残差 `9.972228e-7`、含 R/T/A 峰值 9.374729 GB 的 reviewed historical dirty-worktree reference。
 
 ## 合同
 
@@ -28,7 +28,7 @@ Case060 当前为 `workstation_success_experimental_opt_in`。五类真正 p/h �
 | 18. Krylov | right FGMRES restart90、rtol `1e-6` |
 | 19. numeric Gate | reported/condensed/full true residual + official R/T/A |
 | 20. heavy artifacts | `benchmarks/artifacts/cases/060/`，不提交 |
-| 21. records | 只提交轻量 hierarchy/transfer/screen/h5/h3/h2 摘要；正式 best records 含 provenance 与 artifact SHA-256 |
+| 21. records | 只提交轻量 hierarchy/transfer/screen/h5/h3/h2 摘要；h5/h3 固定 clean final-HEAD provenance 与 artifact SHA-256，h2 固定 historical-reference identity |
 | 22. ordinary default | 不改变；全部新路径显式 opt-in |
 
 ## 物理问题
@@ -70,7 +70,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 
 MPI4 transfer 为 `44698×792`、145,998 nnz，无零列；adjoint error `1.586e-15`、fresh/cache action error `6.410e-15`。五个正式 p/h 候选 100 步 residual 为 `0.375–0.680`，相对 Task027 基线为 146–264 倍，全部 negative。
 
-最终 compact physical-slab candidate：h5 855 步、`9.924905e-7`、1.696136 GB；h3 962 步、`9.903890e-7`、3.807503 GB。两者 R/T/A 对 direct 最大差小于 `5.44e-9`。h3 略高于 3.8 GB 绝对目标，凭相对 canonical 5.082275 GB 降低 25.08% 的替代 Gate 通过；h3/h5 iteration ratio 1.1251。
+最终 compact physical-slab candidate 的 clean final-HEAD rerun：h5 855 步、`9.924905e-7`、1.687653 GB；h3 962 步、`9.903890e-7`、3.792912 GB。两者 R/T/A 对 direct 最大差小于 `5.44e-9`。h3 同时通过 3.8 GB 绝对目标，并较 canonical 5.082275 GB 降低 25.37%；h3/h5 iteration ratio 1.1251。
 
 h2 attempt1 峰值 9.342113 GB，1800 步 true residual `1.461130e-6`，严格未通过且没有 official R/T/A。随后仅对同一候选把 `max_it` 延到 2100：1873 步收敛，full true residual `9.972228e-7`，含 R/T/A 峰值 9.374729 GB，较 Task27 降低 28.33%；R/T/A 对 direct 的最大差为 `6.561e-9`。它通过 workstation Gate，但未达到 `iterations <=1200` 的工程偏好。
 
@@ -78,7 +78,7 @@ h2 attempt1 峰值 9.342113 GB，1800 步 true residual `1.461130e-6`，严格�
 
 transfer/Galerkin 的 algebra pass 与 solver negative 必须分开。当前 792D p1 coarse 没有覆盖 Maxwell 近核/梯度和 grazing-wave 慢误差；真正的正反馈来自 75D wave coarse 与对称平滑。local shift、factor-only 和 restart90 在保持该收敛机制时压缩存储。
 
-正式 h5/h3/h2 records 的 source commit 为 `bfb6586e`，重型运行时 tracked source 为 dirty；因此 provenance 据实标记为 `working_tree_source_artifact_recovered_without_rerun`，并固定各自 artifact SHA-256。checker 用 203 项 Gate 核验 provenance、80 modes、三残差、official R/T/A、能量闭合、direct delta、内存与分类，manifest 可重复生成 summary。
+正式 h5/h3 records 来自 clean final implementation HEAD `5b81359daee0874793c44b019d9c914b334db483`，使用 host clean attestation 并固定 heavy JSON SHA-256；h2 的原始 source commit 仍为 `bfb6586e`，且明确标记 `reviewed_historical_dirty_worktree_reference`，不得解释为 clean rerun。checker 用 203 项 Gate 核验这两类 provenance、80 modes、三残差、official R/T/A、能量闭合、direct delta、内存与分类，manifest 可重复生成 summary。
 
 Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 记录相同，当前统计不能证明 ILU0 factor-nnz compression。内存下降主要归因于 factor-only 生命周期、local shift、释放 source submatrix/KSP/PC wrapper 与 restart90。factor-only 仅在 PETSc 3.24.0 complex build 验证，跨版本需要 action/lifecycle 回归。
 
@@ -93,6 +93,6 @@ Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 记录相同，当前�
 
 ## 限制
 
-Case060 不是 ordinary profile。`workstation_success` 只覆盖冻结 target、MPI4、80 modes 和显式 opt-in 参数；真正 commuting multigrid、AMS/HX、参数域外鲁棒和 h<2 均未实现或未验证。`strong_workstation_success` 未达到，ordinary default 仍未改变。
+Case060 不是 ordinary profile。`workstation_memory_success_with_qualifications` 只覆盖冻结 target、MPI4、80 modes 和显式 opt-in 参数；真正 commuting multigrid、AMS/HX、参数域外鲁棒和 h<2 均未实现或未验证。h2 仍超过 1200 步偏好，ordinary default 仍未改变。
 
 heavy transfer cache、matrix、history、field 和 solver log 只保留在 ignored artifacts；用户本地 papers 与其他任务 raw runs 不属于本 Case。

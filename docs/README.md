@@ -50,7 +50,7 @@
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
-| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_success_experimental_opt_in`；h2 1873 步、9.374729 GB；p/h multigrid solver-negative |
+| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；clean h5/h3，historical h2；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | planned；目标为在保证收敛下继续压缩 Krylov、F、slab factors 和对象生命周期 |
 
 ## 当前任务
@@ -61,7 +61,7 @@
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Review V2 已提交；等待 response_v2、最终审查与用户合并许可 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Response V2 已完成；等待最终审查与用户选择性合并许可 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | 任务书已创建；只能在 Task030 合并后的 clean master 上启动 |
 
 ## Task28 审计入口
@@ -108,6 +108,7 @@
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md) | V1：provenance、数值 Gate、manifest 和准确命名 |
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md) | V1 回应：203 项 Gate、统一身份和 factor-nnz 限定 |
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md) | V2：clean h5/h3 加固与 validated infrastructure / failed lanes 选择性合并边界 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v2.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v2.md) | V2 回应：final-HEAD clean h5/h3、historical h2、API 隔离、文档与最终验证 |
 
 ## Task031 任务入口
 
