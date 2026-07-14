@@ -36,8 +36,9 @@
 | [`architecture_overview.md`](architecture_overview.md) | 当前模块边界与主要数据流 |
 | [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
 | [`iterative_solver_ports.md`](iterative_solver_ports.md) | Task27/30/31 入口、outer KSP 与 local smoother 合法性、组件 flags、资格化和资源选择规则 |
+| [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
-| [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚和迭代 PC 的规范理论 |
+| [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
 
 ## 阶段索引
@@ -54,7 +55,8 @@
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
 | Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
-| Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；clean h5/h3/h2；h2 external simultaneous peak 7.898 GiB、无 swap；等待最终审查 |
+| Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
+| Task032 | Hybrid FEM–Modal direct baseline | planned；Task031 clean merge 后在新本地目录启动 |
 
 ## 当前任务
 
@@ -65,7 +67,8 @@
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
-| Task031 | `task031_compact_physical_slab_memory_optimization/` | clean h5/h3/h2 与 Case070 已完成；Review V1 数值/内存通过，response_v1 文档加固完成，等待最终审查 |
+| Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
+| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | 任务书和理论笔记已创建；不得在 Task031 分支直接开发 |
 
 ## Task28 审计入口
 
@@ -123,6 +126,15 @@
 | [`task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md`](task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md) | 8.501/8.587 GiB 两套中心预测、9.447 GiB 保守上界与实测对照 |
 | [`task031_compact_physical_slab_memory_optimization/review_report_v1.md`](task031_compact_physical_slab_memory_optimization/review_report_v1.md) | V1：数值与绝对内存通过；要求同步 master、建立端口文档并收紧 form-action、内存口径和 profile 身份 |
 | [`task031_compact_physical_slab_memory_optimization/response_v1.md`](task031_compact_physical_slab_memory_optimization/response_v1.md) | V1 回应：项目规划保护、端口矩阵、术语/口径修正、选择性合并边界和轻量验证 |
+| [`task031_compact_physical_slab_memory_optimization/review_report_v2.md`](task031_compact_physical_slab_memory_optimization/review_report_v2.md) | V2 最终验收：PASS，允许合入 master，并批准 clean master 后启动 Task032 |
 | [`../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) | Case070 合同、轻量 records、自动 Gate 与复现入口 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task031 已从 Task030 合并后的 clean master 独立启动并完成执行，ordinary default 未改变；合入 master 仍需最终 review 与用户明确许可。后续 Task032–Task035 在编写任务书前必须同时读取项目路线图与第一阶段范围，统一保持 `13.5 nm + fixed Si + 1–10° + S/P`，不得把 frozen-target 资格化扩张为通用保证。
+## Task032 任务入口
+
+| 文件 | 内容 |
+|---|---|
+| [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | 执行顺序、新本地目录、冻结物理边界和入口文件 |
+| [`task032_hybrid_fem_modal_direct_baseline/task.md`](task032_hybrid_fem_modal_direct_baseline/task.md) | 新目录迁移、二维截面本征模、稳定双向传播、匹配接口、增广 direct、Modal-Schur、内存 Gate、Case080 与验收标准 |
+| [`../notes/theory/hybrid_fem_modal_domain_decomposition.md`](../notes/theory/hybrid_fem_modal_domain_decomposition.md) | Hybrid FEM–Modal 的 Maxwell 分解、QEP、双正交、传播、接口投影、Schur 消元、内存复杂度和验证阶梯 |
+
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task032 只能在 Task031 合入 master 后，从新本地目录的 clean `origin/master` 创建执行分支；旧目录保留为只读历史基线。
