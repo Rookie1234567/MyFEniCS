@@ -50,7 +50,8 @@
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
-| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_success_experimental_opt_in`；h5/h3/h2 通过，h2 1873 步、9.374729 GB；p/h multigrid solver-negative |
+| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_success_experimental_opt_in`；h2 1873 步、9.374729 GB；p/h multigrid solver-negative |
+| Task031 | compact physical-slab PC memory-first structural optimization | planned；目标为在保证收敛下继续压缩 Krylov、F、slab factors 和对象生命周期 |
 
 ## 当前任务
 
@@ -60,7 +61,8 @@
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Review V1 P0 已回应；等待 final review，ordinary default 不变 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Review V2 已提交；等待 response_v2、最终审查与用户合并许可 |
+| Task031 | `task031_compact_physical_slab_memory_optimization/` | 任务书已创建；只能在 Task030 合并后的 clean master 上启动 |
 
 ## Task28 审计入口
 
@@ -85,25 +87,32 @@
 | 文件 | 内容 |
 |---|---|
 | [`task029_stage4_direct_memory_forensics/task.md`](task029_stage4_direct_memory_forensics/task.md) | 直接法阶段内存剖析、矩阵/factor inventory、对象生命周期与预分配优化；h5/h3 必跑，h2 仅在显著降内存且预测低于安全上限后解锁 |
-| [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | 强制补充：COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 必须保留 `auto_propagating` 全传播衍射级，不比较跨机器时间 |
-| [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL 117.8 万 DoF、MUMPS 与 GMG 内存报告，供 Task029/后续多层迭代研究参考 |
-| [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | h5/h3 baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run 总结 |
-| [`task029_stage4_direct_memory_forensics/review_report_v1.md`](task029_stage4_direct_memory_forensics/review_report_v1.md) | ChatGPT V1 审查：接受内存诊断，要求条件式线程验证和项目级文档收口 |
-| [`task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md`](task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md) | P0-C 长期补充：从 Task029 起，每个 Task 必须按统一框架维护 outcomes summary 和 development progress，并增加合同测试 |
-| [`task029_stage4_direct_memory_forensics/response_v1.md`](task029_stage4_direct_memory_forensics/response_v1.md) | Codex V1 回应：线程能力审计、结构化阶段回顾、长期合同和项目文档同步 |
-| [`task029_stage4_direct_memory_forensics/review_report_v2.md`](task029_stage4_direct_memory_forensics/review_report_v2.md) | ChatGPT V2 最终技术审查：停止 direct 微调；遥测/清理/合同可合并，性能候选不得提升；只剩 response_v2 状态同步 |
-| [`task029_stage4_direct_memory_forensics/response_v2.md`](task029_stage4_direct_memory_forensics/response_v2.md) | Codex V2 收口：统一最终身份、记录轻量复核和用户合并许可，不新增重型 direct 实验 |
-| [`task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md`](task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md) | PETSc/MUMPS/OpenBLAS 链路、固定四核 h5 矩阵与 `unavailable_in_current_image` 结论 |
-| [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 建议保留的遥测/低风险代码与不得提升的 direct profiles |
-| [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | G3/G5/G7/G9 阻塞、18.882–27.913 GiB 预测与 not-run 决策 |
+| [`task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md`](task029_stage4_direct_memory_forensics/task_comsol_reference_addendum.md) | COMSOL 只能作为另一机器、四面体、零级端口的定性内存参考；FEniCS 保留全传播衍射级，不比较跨机器时间 |
+| [`task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md`](task029_stage4_direct_memory_forensics/references/comsol_3d_direct_iterative_memory_report.md) | 用户提供的 COMSOL MUMPS/GMG 内存报告 |
+| [`task029_stage4_direct_memory_forensics/outcomes/summary.md`](task029_stage4_direct_memory_forensics/outcomes/summary.md) | baseline、候选筛选、KSPSetUp 主峰、`diagnostic_success` 与 h2 not-run |
+| [`task029_stage4_direct_memory_forensics/review_report_v1.md`](task029_stage4_direct_memory_forensics/review_report_v1.md) | 接受内存诊断，要求线程验证和文档收口 |
+| [`task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md`](task029_stage4_direct_memory_forensics/review_report_v1_p0c_addendum.md) | Task 回顾长期合同 |
+| [`task029_stage4_direct_memory_forensics/response_v1.md`](task029_stage4_direct_memory_forensics/response_v1.md) | 线程审计、结构化回顾和文档同步 |
+| [`task029_stage4_direct_memory_forensics/review_report_v2.md`](task029_stage4_direct_memory_forensics/review_report_v2.md) | 停止 direct 微调；基础设施可合并，性能候选不提升 |
+| [`task029_stage4_direct_memory_forensics/response_v2.md`](task029_stage4_direct_memory_forensics/response_v2.md) | 最终身份与合并收口 |
+| [`task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md`](task029_stage4_direct_memory_forensics/outcomes/threaded_direct_capability_audit.md) | 当前 image threaded direct unavailable |
+| [`task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md`](task029_stage4_direct_memory_forensics/outcomes/merge_recommendation.md) | 合并边界 |
+| [`task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md`](task029_stage4_direct_memory_forensics/outcomes/h2_launch_decision.md) | h2 not-run Gate |
 
-## Task030 任务入口
+## Task030 任务与审查入口
 
 | 文件 | 内容 |
 |---|---|
-| [`task030_multilevel_hcurl_low_memory_iterative_solver/task.md`](task030_multilevel_hcurl_low_memory_iterative_solver/task.md) | 多路线 H(curl) 低内存迭代任务书：嵌套/半粗化网格、p/h hierarchy、polynomial/patch/Vanka smoother、shifted-level AMS/HX、全 80 模态 DtN 低秩 Schur、wave-aware 原型与 Krylov 优化；正反馈持续推进，h2 严格条件解锁 |
-| [`task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md`](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md) | transfer/Galerkin 基础设施、五类 p/h 负结果、对称 ILU0 低内存正反馈、h5/h3 full 与条件式 h2 证据 |
-| [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md) | ChatGPT V1 审查：数值结果有条件接受；要求 provenance、真实数值 Gate、manifest 可再生、准确命名与文档同步 |
-| [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md) | Codex V1 回应：补齐 dirty-source provenance、203 项 Gate、可再生 summary、factor-nnz 限定和统一身份 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/task.md`](task030_multilevel_hcurl_low_memory_iterative_solver/task.md) | 多路线 H(curl) 低内存迭代任务书 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md`](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md) | transfer/Galerkin 基础设施、p/h 负结果和 compact profile h5/h3/h2 证据 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v1.md) | V1：provenance、数值 Gate、manifest 和准确命名 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md) | V1 回应：203 项 Gate、统一身份和 factor-nnz 限定 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md) | V2：clean h5/h3 加固与 validated infrastructure / failed lanes 选择性合并边界 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)：详细证据留在 task outcomes，结构化项目回顾写入 `docs/development_progress.md`，一句状态或纯链接不构成完成。Task030 已从 Task029 合并后的 clean master 独立启动，ordinary default 仍未改变。
+## Task031 任务入口
+
+| 文件 | 内容 |
+|---|---|
+| [`task031_compact_physical_slab_memory_optimization/task.md`](task031_compact_physical_slab_memory_optimization/task.md) | 内存优先结构性优化：固定 PC 的低存储 Krylov、真正 matrix-free F、提前释放、slab factor 精确去重、overlap/slab 重构和选择性局部因子；迭代数/时间完整统计但内存优先，h2 条件解锁 |
+
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task031 必须从 Task030 合并后的 clean master 独立启动，ordinary default 仍不得改变。
