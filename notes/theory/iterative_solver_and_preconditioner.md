@@ -68,3 +68,24 @@ reported、condensed true、full augmented true 三者必须 `<=1e-6` 且相互�
 ## 9. 已知边界
 
 该 PC 对一个 80 度、13.5 nm、Si、50 x 25 x 140 nm target case 的 h=5/3/2 有证据。尚未证明角度无关、材料无关、任意层厚鲁棒或 h<2 可行；这些是后续研究问题，不应从三点结果外推。
+
+## 10. Task030：为什么对称平滑能降内存而 p/h coarse 失败
+
+Task030 验证了真正的 nonmatching p2/p1 H(curl) transfer 与
+
+$$A_H=P^H(F-CH^{-1}D)P,$$
+
+但 792 维 `h10/p1` coarse 在五类 smoother 下的 100 步 residual 都比基线差两个数量级。代数正确不代表 coarse space 覆盖了 Maxwell 的慢误差；一个有效 coarse 通常还要处理梯度/近核、curl-commuting 映射、材料界面和 grazing-wave 方向。
+
+相反，保留 75D 波动 coarse 后，对称组合
+
+$$y_1=M_s^{-1}r,quad r_1=r-Ay_1,quad
+y_2=y_1+Z(Z^HAZ)^{-1}Z^Hr_1,
+\quad r_2=r-Ay_2,quad
+y=y_2+M_s^{-1}r_2$$
+
+把 pre-only 的互补误差再交给局部平滑器，因此配置上可从 ILU1 改为 ILU0 而不丢失该冻结目标的收敛。当前 PETSc `global_slab_factor_nnz` 对 ILU1/ILU0 报告相同值，不能据此宣称 stored factor fill 已减少；该测量保持 unresolved。随后只在 local submatrix 加 diagonal shift、setup 后只保留 factor、释放 source submatrix/KSP/PC wrapper，并把 FGMRES restart 从 100 降到 90；已观测内存下降主要归因于这些生命周期与 Krylov-basis 变化，而不是已证明的 factor-nnz compression。这些存储优化不改变 outer exact operator。
+
+Task030 h5/h3 的 full true residual 与 R/T/A 已通过，但该组合仍是显式 experimental profile。h2 和参数域外鲁棒性必须由实测决定，不能从对称公式推导出无条件收敛保证。
+
+factor-only 生命周期只在 qualified local image 的 PETSc 3.24.0 complex build 完成 action/destroy 回归；`PC.getFactorMatrix()` 的跨版本引用计数与生命周期语义必须重新验证。

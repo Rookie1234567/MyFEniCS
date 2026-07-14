@@ -112,3 +112,13 @@ KSP/PC 持有 operator 和 context 引用；smoother 持有 local Mat/KSP/scatte
 - Case031：h5/h3/h2 canonical evidence。
 
 限制：只资格化固定 target、MPI4 和当前 PC 参数；h=1.5、角度/材料扫描、warm start、true multilevel H(curl) 未关闭。理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。
+
+## 15. Task030 explicit flags and record fields
+
+runner 新增 `--post-smooth`、`--subdomain-local-shift` 和 `--factor-only-storage`，默认均为 false；与 `--ilu-levels 0 --restart 90` 共同构成 Case060 的 `compact_physical_slab_low_memory_experimental_opt_in` 候选。它仍是 Task27-derived physical-slab + 75D wave-coarse solver，不是 p/h multigrid solver。resolved config 和 record 同步写 `post_smooth`、`subdomain_local_shift`、`factor_only_storage`，smoother diagnostics 写 `subdomain_local_diagonal_shift`、`global_stored_factor_nnz` 与 factor-only identity。
+
+这些 flags 触发 `qualification_deviations`，所以 Task027/Case031 ordinary canonical 不会被静默覆盖。失败的 Task030 Woodbury 和 x-harmonic coarse 没有保留在正式 workstation runner 参数表；它们只在 research runner、模块测试和负结果文档中出现。
+
+Case060 best records 写入实际重型运行的 commit、tracked-source qualification、命令、时间、镜像 digest、host id、artifact root/SHA-256、80-mode identity 与 75D coarse identity。Review V2 后，h5/h3 来自 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 的 clean rerun：runner 接收 host 已验证的 exact full SHA，并要求它与容器 HEAD 完全一致，否则 fail closed；record 同时写 `git_dirty=false`、`tracked_source_dirty=false` 和 `host_git_clean_attestation`。h2 不重跑，仍保留原 dirty provenance，并以 `reviewed_historical_dirty_worktree_reference` 与 clean h5/h3 明确区分。factor-only 的 factor matrix lifetime 仅对 PETSc 3.24.0 complex build 验证；跨版本必须回归。
+
+Case060 入口：[`../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md`](../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)。

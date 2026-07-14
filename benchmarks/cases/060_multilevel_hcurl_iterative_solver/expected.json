@@ -1,0 +1,12 @@
+{
+  "status": "workstation_success_experimental_opt_in",
+  "detailed_gates": "expected/gates.json",
+  "ordinary_default_changed": false,
+  "h5_full_true_residual_max": 1e-6,
+  "h3_full_true_residual_max": 1e-6,
+  "h3_peak_rss_gb_max": 3.8,
+  "h3_minimum_memory_reduction_fraction": 0.25,
+  "h3_to_h5_iteration_ratio_max": 2.0,
+  "h2_peak_rss_gb_max": 10.0,
+  "n_aux": 80
+}

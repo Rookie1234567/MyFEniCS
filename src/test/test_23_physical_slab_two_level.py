@@ -205,6 +205,72 @@ class PhysicalSlabTwoLevelTests(unittest.TestCase):
         source.destroy()
         matrix.destroy()
 
+    def test_subdomain_local_diagonal_shift_matches_explicit_shift(self) -> None:
+        matrix, subdomains, source, _source_values, _diagonal = self._two_step_fixture()
+        shift = matrix.createVecLeft()
+        shift.getArray()[:] = -0.25j
+        explicit = matrix.copy()
+        explicit_diagonal = explicit.createVecLeft()
+        explicit.getDiagonal(explicit_diagonal)
+        explicit_diagonal.axpy(PETSc.ScalarType(1.0), shift)
+        explicit.setDiagonal(explicit_diagonal)
+        explicit.assemble()
+        local_shift = DistributedPhysicalSlabSmoother(
+            matrix,
+            subdomains,
+            ilu_levels=0,
+            diagonal_shift=shift,
+        )
+        explicit_shift = DistributedPhysicalSlabSmoother(
+            explicit,
+            subdomains,
+            ilu_levels=0,
+        )
+        factor_only = DistributedPhysicalSlabSmoother(
+            matrix,
+            subdomains,
+            ilu_levels=0,
+            diagonal_shift=shift,
+            factor_only_storage=True,
+        )
+        actual = matrix.createVecRight()
+        expected = matrix.createVecRight()
+        compact = matrix.createVecRight()
+        local_shift.solve(source, actual)
+        explicit_shift.solve(source, expected)
+        factor_only.solve(source, compact)
+        np.testing.assert_allclose(
+            actual.getArray(readonly=True),
+            expected.getArray(readonly=True),
+            rtol=2e-12,
+            atol=2e-12,
+        )
+        self.assertTrue(local_shift.diagnostics["subdomain_local_diagonal_shift"])
+        np.testing.assert_allclose(
+            compact.getArray(readonly=True),
+            expected.getArray(readonly=True),
+            rtol=2e-12,
+            atol=2e-12,
+        )
+        self.assertTrue(factor_only.diagnostics["factor_only_storage"])
+        self.assertGreater(local_shift.diagnostics["global_stored_factor_nnz"], 0)
+        self.assertEqual(
+            factor_only.diagnostics["global_stored_factor_nnz"],
+            local_shift.diagnostics["global_stored_factor_nnz"],
+        )
+        self.assertTrue(all(factor.matrix is None for factor in factor_only._factors))
+        compact.destroy()
+        expected.destroy()
+        actual.destroy()
+        factor_only.destroy()
+        explicit_shift.destroy()
+        local_shift.destroy()
+        explicit_diagonal.destroy()
+        explicit.destroy()
+        shift.destroy()
+        source.destroy()
+        matrix.destroy()
+
     def test_two_step_smoother_mpi_action_consistency(self) -> None:
         matrix, subdomains, source, source_values, diagonal = self._two_step_fixture()
         smoother = DistributedPhysicalSlabSmoother(

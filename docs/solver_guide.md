@@ -16,6 +16,7 @@
 | 提前释放 base objects | release-base opt-in | diagnostic_only | h3 只降 5.462%，默认保持 false |
 | 单 rank + OpenBLAS threads | 当前 image 不推荐 | diagnostic_only | MPI1×4 KSPSetUp 仍约 1 核，Stage4 48.273 s |
 | 目标 p2 h=5/3/2，MPI4 | matrix-free condensed workstation | recommended | h=2 为 13.08 GB |
+| 目标 p2 h=5/3/2，内存优先 | Task30 compact physical-slab low-memory profile | experimental | `workstation_memory_success_with_qualifications`；clean h5/h3 为 1.688/3.793 GB；h2 9.375 GB 为历史审阅参考；需显式 flags |
 | h=1.5 或新物理参数 | 无 production 推荐 | not_verified | 先做 qualification |
 
 ## 2. Ordinary auxiliary direct
@@ -78,6 +79,21 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 | output | heavy artifacts 与 compact record 分离 |
 
 JSON 是唯一 canonical 默认来源，CLI 只做显式 override。任何 override 偏离已验证组合，`qualified_profile=false`，结果只能作为 experimental。
+
+## 5.1 Task030 compact physical-slab low-memory experimental profile
+
+Task030 没有替换 ordinary/canonical profile。最终成功求解器仍是 Task27-derived exact condensed operator + 75D wave coarse + 16 physical slabs，只在该架构上增加显式组合：
+
+```bash
+--post-smooth --subdomain-local-shift --factor-only-storage \
+--ilu-levels 0 --restart 90
+```
+
+其关键不是单独降低 ILU fill，而是 symmetric pre/post 两步 smoothing；仅去 overlap 或仅减 fill 都不能保证收敛。local shift 避免保留一份完整 shifted-F，factor-only 在 local PREONLY setup 后只保留因子，restart90 减少 Krylov basis。final implementation HEAD 的 clean h5/h3 复跑分别为 855/962 步、1.687653/3.792912 GB，并通过三残差、80 模态 R/T/A、direct delta 与 h3 绝对/相对内存 Gate。h2 不按 Review V2 重跑，保留同候选 1873 步、9.374729 GB、真残差 `9.972228e-7` 的 reviewed historical dirty-worktree reference；迭代数高于 1200 且参数域外未验证，所以整体仍为 experimental，不属于 strong success。
+
+当前 Task27 ILU1 与 Task30 ILU0 记录的 `global_slab_factor_nnz` 完全相同，因此不能声称已经证明 factor-nnz compression。已观测内存下降主要归因于 factor-only 生命周期、subdomain-local shift、释放 source submatrix/KSP/PC wrapper 和 restart90 的 Krylov basis 缩减。factor-only 只在 qualified local image 的 PETSc 3.24.0 complex build 验证；跨 PETSc 版本必须重跑 action/lifecycle 回归。
+
+Task030 还建立了 nonmatching p2/p1 H(curl) transfer 和 exact Galerkin coarse；它们代数正确，但五个 100 步 solver 候选均明显失败。`hcurl_multilevel.py` 只公开 validated transfer/cache/Galerkin API；Jacobi、p/h multilevel、Woodbury 等失败候选只允许 research runner/tests 直接导入，不属于普通 `src.solvers` 公共 API，更不能理解为可推荐 GMG profile。
 
 ## 6. 可信停止条件
 

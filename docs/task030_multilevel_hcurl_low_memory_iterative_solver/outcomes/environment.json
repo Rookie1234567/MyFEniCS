@@ -1,0 +1,11 @@
+{
+  "date": "2026-07-13",
+  "host": "Windows + Docker Desktop + WSL2",
+  "container_image": "myfenics-stage4:task28",
+  "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+  "dolfinx": "0.10.0.post2",
+  "basix": "0.10.0",
+  "petsc_scalar": "complex",
+  "target_mpi_size": 4,
+  "ordinary_default_changed": false
+}

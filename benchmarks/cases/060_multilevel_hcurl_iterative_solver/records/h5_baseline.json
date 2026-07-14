@@ -1,0 +1,6 @@
+{
+  "record_type": "sha256_pinned_case031_reference",
+  "reference": "benchmarks/cases/031_workstation_iterative/records/h5_reference.json",
+  "canonical_record": "benchmarks/records/workstation_p2_h5_mpi4.json",
+  "sha256": "528cdfadbaa867577c871071d93c975bd318623eaa45dc0f9aadb1abf9f41c73"
+}

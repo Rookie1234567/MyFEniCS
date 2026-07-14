@@ -375,8 +375,11 @@ class _OwnedSubdomainFactor:
     indices: np.ndarray
     union_positions: np.ndarray
     weights: np.ndarray
-    matrix: PETSc.Mat
-    ksp: PETSc.KSP
+    matrix: PETSc.Mat | None
+    ksp: PETSc.KSP | None
+    factor_matrix: PETSc.Mat | None
+    matrix_nnz: int
+    factor_nnz: int
     rhs: PETSc.Vec
     solution: PETSc.Vec
 
@@ -411,6 +414,8 @@ class DistributedPhysicalSlabSmoother:
         local_ksp_type: str = "gmres",
         smoother_iterations: int = 1,
         action_operator: PETSc.Mat | None = None,
+        diagonal_shift: PETSc.Vec | None = None,
+        factor_only_storage: bool = False,
         interpolation: str = "basic",
         assembly_order: str = "combined",
         progress: Callable[[int, int], None] | None = None,
@@ -421,6 +426,8 @@ class DistributedPhysicalSlabSmoother:
             raise ValueError("smoother_iterations must be positive")
         if local_ksp_iterations < 1:
             raise ValueError("local_ksp_iterations must be positive")
+        if factor_only_storage and local_ksp_iterations != 1:
+            raise ValueError("factor_only_storage requires local_ksp_iterations=1")
         if local_ksp_type not in {"gmres", "richardson"}:
             raise ValueError("local_ksp_type must be 'gmres' or 'richardson'")
         if smoother_iterations > 1 and action_operator is None:
@@ -439,11 +446,30 @@ class DistributedPhysicalSlabSmoother:
         self.local_ksp_iterations = int(local_ksp_iterations)
         self.local_ksp_type = local_ksp_type
         self.smoother_iterations = int(smoother_iterations)
+        self.factor_only_storage = bool(factor_only_storage)
         self.apply_count = 0
         self.apply_elapsed_s = 0.0
         self._destroyed = False
         self._inner_ksp: PETSc.KSP | None = None
         self._inner_pc_context: _DistributedPhysicalSlabPcContext | None = None
+
+        global_diagonal_shift: np.ndarray | None = None
+        self.subdomain_local_diagonal_shift = diagonal_shift is not None
+        if diagonal_shift is not None:
+            if diagonal_shift.getSize() != self.global_size:
+                raise ValueError("diagonal_shift size does not match smoother matrix")
+            shift_start, shift_end = diagonal_shift.getOwnershipRange()
+            packet = (
+                int(shift_start),
+                int(shift_end),
+                np.asarray(
+                    diagonal_shift.getArray(readonly=True),
+                    dtype=PETSc.ScalarType,
+                ).copy(),
+            )
+            global_diagonal_shift = np.empty(self.global_size, dtype=PETSc.ScalarType)
+            for packet_start, packet_end, values in self.comm.allgather(packet):
+                global_diagonal_shift[packet_start:packet_end] = values
 
         normalized: list[np.ndarray] = []
         multiplicity = np.zeros(self.global_size, dtype=np.int32)
@@ -493,21 +519,18 @@ class DistributedPhysicalSlabSmoother:
         global_is.destroy()
         template.destroy()
 
-        extraction_sets = [
-            PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
-            for indices in local_indices
-        ]
-        submatrices = matrix.createSubMatrices(extraction_sets)
-        for index_set in extraction_sets:
-            index_set.destroy()
-
         self._factors: list[_OwnedSubdomainFactor] = []
-        for subdomain, indices, submatrix in zip(
-            self.local_subdomains,
-            local_indices,
-            submatrices,
-            strict=True,
-        ):
+
+        def build_factor(
+            subdomain: int, indices: np.ndarray, submatrix: PETSc.Mat
+        ) -> _OwnedSubdomainFactor:
+            if global_diagonal_shift is not None:
+                submatrix_diagonal = submatrix.createVecLeft()
+                submatrix.getDiagonal(submatrix_diagonal)
+                submatrix_diagonal.getArray()[:] += global_diagonal_shift[indices]
+                submatrix.setDiagonal(submatrix_diagonal)
+                submatrix.assemble()
+                submatrix_diagonal.destroy()
             union_positions = np.searchsorted(self._union_indices, indices).astype(
                 PETSc.IntType, copy=False
             )
@@ -536,28 +559,85 @@ class DistributedPhysicalSlabSmoother:
             pc.setFactorLevels(int(ilu_levels))
             pc.setFactorOrdering("rcm")
             ksp.setUp()
-            self._factors.append(
-                _OwnedSubdomainFactor(
-                    subdomain=subdomain,
-                    indices=indices,
-                    union_positions=union_positions,
-                    weights=weights,
-                    matrix=submatrix,
-                    ksp=ksp,
-                    rhs=rhs,
-                    solution=solution,
-                )
+            matrix_nnz = int(submatrix.getInfo()["nz_used"])
+            factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
+            factor_matrix = None
+            retained_matrix: PETSc.Mat | None = submatrix
+            retained_ksp: PETSc.KSP | None = ksp
+            if self.factor_only_storage:
+                factor_matrix = pc.getFactorMatrix()
+                factor_matrix.incRef()
+                ksp.destroy()
+                submatrix.destroy()
+                retained_ksp = None
+                retained_matrix = None
+            return _OwnedSubdomainFactor(
+                subdomain=subdomain,
+                indices=indices,
+                union_positions=union_positions,
+                weights=weights,
+                matrix=retained_matrix,
+                ksp=retained_ksp,
+                factor_matrix=factor_matrix,
+                matrix_nnz=matrix_nnz,
+                factor_nnz=factor_nnz,
+                rhs=rhs,
+                solution=solution,
             )
+
+        local_factor_count = len(local_indices)
+        factor_counts = self.comm.allgather(local_factor_count)
+        uneven_owner_counts = len(set(factor_counts)) != 1
+
+        if uneven_owner_counts:
+            empty_indices = np.empty(0, dtype=PETSc.IntType)
+            for slot in range(max(factor_counts)):
+                has_factor = slot < local_factor_count
+                indices = local_indices[slot] if has_factor else empty_indices
+                extraction_set = PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
+                submatrix = matrix.createSubMatrices([extraction_set])[0]
+                extraction_set.destroy()
+                if has_factor:
+                    self._factors.append(
+                        build_factor(self.local_subdomains[slot], indices, submatrix)
+                    )
+                else:
+                    submatrix.destroy()
+        elif self.factor_only_storage:
+            for subdomain, indices in zip(
+                self.local_subdomains, local_indices, strict=True
+            ):
+                extraction_set = PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
+                submatrix = matrix.createSubMatrices([extraction_set])[0]
+                extraction_set.destroy()
+                self._factors.append(build_factor(subdomain, indices, submatrix))
+        else:
+            extraction_sets = [
+                PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
+                for indices in local_indices
+            ]
+            submatrices = matrix.createSubMatrices(extraction_sets)
+            for index_set in extraction_sets:
+                index_set.destroy()
+            for subdomain, indices, submatrix in zip(
+                self.local_subdomains,
+                local_indices,
+                submatrices,
+                strict=True,
+            ):
+                self._factors.append(build_factor(subdomain, indices, submatrix))
         self.comm.Barrier()
         if progress is not None:
             progress(len(normalized), len(normalized))
 
         local_rows = sum(factor.indices.size for factor in self._factors)
-        local_nnz = sum(
-            int(factor.matrix.getInfo()["nz_used"]) for factor in self._factors
-        )
+        local_nnz = sum(factor.matrix_nnz for factor in self._factors)
+        local_factor_nnz = sum(factor.factor_nnz for factor in self._factors)
         self.global_factor_rows = int(self.comm.allreduce(local_rows, op=MPI.SUM))
         self.global_factor_nnz = int(self.comm.allreduce(local_nnz, op=MPI.SUM))
+        self.global_stored_factor_nnz = int(
+            self.comm.allreduce(local_factor_nnz, op=MPI.SUM)
+        )
         self.maximum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MAX))
         self.minimum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MIN))
 
@@ -593,7 +673,11 @@ class DistributedPhysicalSlabSmoother:
         for factor in self._factors:
             factor.rhs.getArray()[:] = gathered_source[factor.union_positions]
             factor.solution.set(0.0)
-            factor.ksp.solve(factor.rhs, factor.solution)
+            if factor.factor_matrix is not None:
+                factor.factor_matrix.solve(factor.rhs, factor.solution)
+            else:
+                assert factor.ksp is not None
+                factor.ksp.solve(factor.rhs, factor.solution)
             color = factor.subdomain % 2 if self.assembly_order == "two_color" else 0
             gathered_target_arrays[color][factor.union_positions] += (
                 factor.weights * factor.solution.getArray(readonly=True)
@@ -625,8 +709,11 @@ class DistributedPhysicalSlabSmoother:
             "local_ksp_iterations": self.local_ksp_iterations,
             "local_ksp_type": self.local_ksp_type,
             "smoother_iterations": self.smoother_iterations,
+            "subdomain_local_diagonal_shift": self.subdomain_local_diagonal_shift,
+            "factor_only_storage": self.factor_only_storage,
             "global_factor_rows": self.global_factor_rows,
             "global_factor_nnz": self.global_factor_nnz,
+            "global_stored_factor_nnz": self.global_stored_factor_nnz,
             "maximum_owner_rows": self.maximum_owner_rows,
             "minimum_owner_rows": self.minimum_owner_rows,
             "one_level_apply_count": self.apply_count,
@@ -645,8 +732,12 @@ class DistributedPhysicalSlabSmoother:
         for factor in self._factors:
             factor.solution.destroy()
             factor.rhs.destroy()
-            factor.ksp.destroy()
-            factor.matrix.destroy()
+            if factor.factor_matrix is not None:
+                factor.factor_matrix.destroy()
+            if factor.ksp is not None:
+                factor.ksp.destroy()
+            if factor.matrix is not None:
+                factor.matrix.destroy()
         self._factors = []
         self._scatter.destroy()
         for gathered_target in self._gathered_targets:

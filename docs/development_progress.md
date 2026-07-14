@@ -1,8 +1,8 @@
-# 项目开发进度：Task000–Task029
+# 项目开发进度：Task000–Task030
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task029 当前阶段的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task030 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -34,13 +34,20 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-13
-current branch = codex/20260713-task29-stage4-direct-memory-forensics
+2026-07-14
+current branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
 Task028 status = V4 closed and merged to master at 2f9e56d
-Task029 status = diagnostic_success; engineering_success=no; threaded direct unavailable in current image; h2/threaded h3 not run by gate; final review pending
+Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
+Task030 status = workstation_memory_success_with_qualifications; Review V2 responded; h5/h3 clean final-HEAD passed; h2 reviewed historical reference
 ```
 
-## 1.1 2026-07-13 最新更新
+## 1.1 2026-07-14 最新更新
+
+Task029 已按用户许可合并；Task030 从 `bfb6586e` clean master 创建独立分支。Task030 建立了 active/master-aware nonmatching H(curl) transfer 与 exact condensed Galerkin 基础设施，但五个正式 p/h 候选 100 步残差均比 Task027 基线差 146–264 倍，证明当前 792D p1 coarse 不是目标慢误差的有效表示。
+
+真正正反馈来自 Task27-derived physical-slab + 75D wave-coarse 架构，并加入 symmetric pre/post sm2、ILU0、subdomain-local shift、factor-only storage 和 FGMRES restart90。Review V2 后，h5/h3 在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上 clean 复跑，分别用 855/962 步收敛，峰值 1.687653/3.792912 GB；h3 同时通过 3.8 GB 绝对线和相对 Task027 canonical 降低 25.37% 的相对线，iteration ratio 为 1.125。h2 不重跑，保留为 1873 步、full true residual `9.972e-7`、含 R/T/A 峰值 9.374729 GB（-28.33%）的 reviewed historical dirty-worktree reference。因此分类为 `workstation_memory_success_with_qualifications`；ordinary default 未改变。
+
+Review V1 接受数值结果并要求修正 benchmark/provenance。三份正式 records 已从原 artifacts 恢复 source commit、tracked-dirty qualification、完整命令/时间/镜像/host 和 artifact SHA-256；Case060 已接入 203 项真实数值 Gate，三份记录也进入 manifest，使 normal checker 可重复生成完全相同的 summary。当前 ILU1/ILU0 reported factor nnz 相同，不能宣称 factor-nnz compression；factor-only 只在 PETSc 3.24.0 complex build 验证，跨版本需回归。
 
 Task028 已按普通 merge commit 合入 `master`，并完成 master release check。Task029 从该合并点新建独立分支，完成 direct-memory telemetry、外部 0.25 s sampler、matrix/factor inventory、Case050、h5/h3 baseline、H1–H7、profile 筛选和 h2 安全决策。遥测明确区分 simultaneous worker RSS、各 rank 历史峰值和、MPI 进程树与 cgroup；Task28 canonical records 保持只读。
 
@@ -1790,3 +1797,125 @@ benchmarks/benchmark_summary.csv
 # 40. 当前一句话状态
 
 > 项目已经从基础 2D/3D Maxwell、Floquet 和 DtN 验证，发展到可在约 14 GB 工作站上用 MPI4 对目标 p=2、h=2 三维 EUV 光栅取得全增广真残差小于 \(10^{-6}\) 的限定迭代解；Task028 已合入 master，Task029 以 `diagnostic_success` 收口并确认 MUMPS KSPSetUp/factorization 是 direct 内存主瓶颈。最佳 h3 候选只下降 15.119%，当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，故 engineering_success=no、threaded direct unavailable、threaded h3 与 h2 均按 Gate 未运行。
+
+---
+
+# 41. Task030：3D H(curl) 多层与低内存迭代研究
+
+## 41.1 任务身份与为什么启动
+
+```text
+Task = Task030
+branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
+base master = bfb6586e030efd5208ebd796c39fdc31301e1d6e
+physical model = Task27/28 frozen p2 Stage4 target
+ordinary default changed = no
+current classification = workstation_memory_success_with_qualifications
+```
+
+Task029 已证明 direct 的内存主峰在 MUMPS analysis/factorization；MPI2、OOC、BLR、ordering 与线程都没有得到可提升的 h3 工程收益。Task027 虽能在约 14 GB 内完成 h2，但 16 个大 slab ILU1、shifted-F 副本和 FGMRES basis 仍让 h2 达到 13.08 GB。因此 Task030 转向 H(curl) 层级、低 fill smoother、对象生命周期和 Krylov memory，而不继续微调 direct。
+
+COMSOL 报告只提供定性依据：真正多层 Maxwell PC 可能明显低于 direct；它不是当前 FEniCS R/T/A reference，也不能用于跨机器时间排名。
+
+## 41.2 冻结基线与数值合同
+
+物理保持 50×25×140 nm cell、17×25×120 nm Si grating、13.5 nm、theta=80°、phi=0、s polarization、p2 Nédélec、双 Floquet、80 个 auto-propagating modal unknowns、exact matrix-free `F-C H^-1D`、full true residual 和 official modal R/T/A。
+
+Task027 baseline 为 h5/h3/h2 的 1201/993/1804 步和 1.991/5.08/13.080 GB。Case031 h5 100-step residual `2.5737371765314062e-3` 由 SHA-256 pinned record 读取，候选不得手写或覆盖基线。
+
+## 41.3 层级与 transfer 基础设施
+
+实现 `ActiveDofMap`，将 MPC slaves 从 coarse columns 中移除，再逐 active column 用 DOLFINx nonmatching interpolation 构造 p1→p2 H(curl) transfer；每列执行 MPC backsubstitution/homogenize，restriction 为 Hermitian transpose。transfer 支持 MPI CSR cache，fresh/cache action 可复核。
+
+MPI4 目标规模：fine h5/p2 full/active/slave 为 44,698/40,800/3,898；coarse h10/p1 为 1,067/792/275；P 有 145,998 nnz、无零列、adjoint error `1.586e-15`、fresh/cache error `6.410e-15`。精确 coarse operator 使用 `P^H(F-CD)P`，保留全部 80 modes；serial/MPI2 action tests 通过。
+
+这部分达到 infrastructure success，但没有直接得到 solver success。
+
+## 41.4 多 lane 漏斗与负结果
+
+| lane | h5 100-step true residual | 相对基线 | 结论 |
+|---|---:|---:|---|
+| Jacobi + p/h coarse | 0.680155 | 264.27× | negative |
+| z-layer patch + p/h coarse | 0.374864 | 145.65× | negative |
+| vertical column + p/h coarse | 0.513599 | 199.55× | negative |
+| cell patch + p/h coarse | 0.512730 | 199.22× | negative |
+| 16-slab ILU0 + p/h coarse | 0.561064 | 218.00× | negative |
+
+相同 slab smoother 不加 p/h coarse 的 20-step residual 为 0.381817，加 coarse 后反而为 0.685751。说明 transfer/Galerkin 正确，但 792D p1 coarse 没有覆盖当前 Maxwell 近核、梯度和 grazing-wave 慢方向。当前不能声称 pure h-GMG、mixed p/h 或 AMS/HX 成功。
+
+全 80 mode Woodbury 只提供很小改善且增加内存；225D x-harmonic coarse、更多 z hats、去 overlap pre-only、单次廉价 post 和 restart80 都未过 Gate。失败实现没有进入 ordinary default。
+
+## 41.5 正反馈如何继续深化
+
+Task027 ILU1 overlap PC 增加真正 post smooth 后，h5 100-step residual 变为 `1.273503e-3`，达到 strong-positive。此后逐步验证：
+
+1. ILU0 仍为 `1.865566e-3`，说明对称组合后 fill1 不是必要条件；
+2. local diagonal shift 不保留完整 shifted-F，residual 不变；
+3. factor-only 逐块 setup 后销毁 source submatrix/KSP，只保留因子，action serial/MPI2/MPI4 等价；
+4. restart90 仍通过 weak-positive，restart80 失败，因此停止继续缩小。
+
+最终候选固定为 75D wave coarse、16 slabs overlap0.25、ILU0、sm2 symmetric pre/post、local shift、factor-only、right FGMRES(90)。这不是“真正多重网格成功”，而是现有有效 coarse 与更低内存 smoother/lifecycle 的工程改进。
+
+这里的 ILU0 结论只表示“该冻结目标在对称组合下不需要配置 ILU1 才能收敛”。Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 完全相同，当前统计口径不能证明 stored fill 下降。可归因的内存改进是 local shift、factor-only 释放 source submatrix/KSP/PC wrapper 以及 restart90；factor nnz 保持 `measurement_unresolved`。
+
+## 41.6 h5/h3/h2 正式结果
+
+| h | DoF | iterations | full true residual | peak incl RTA | R/T/A | direct max delta |
+|---:|---:|---:|---:|---:|---|---:|
+| 5 | 44,698 | 855 | 9.924905e-7 | 1.687653 GB | 0.0890216035 / 0.4425882732 / 0.4683901222 | 5.438e-9 |
+| 3 | 198,438 | 962 | 9.903890e-7 | 3.792912 GB | 0.00461303218 / 0.58365335775 / 0.41173361173 | 7.719e-10 |
+| 2 | 615,108 | 1873 | 9.972228e-7 | 9.374729 GB | 0.00134293442 / 0.59921323601 / 0.39944383222 | 6.561e-9 |
+
+h3 较 Task027 canonical 5.082275 GB 下降 25.37%，h3/h5 iteration ratio 为 1.1251。其 3.792912 GB 同时通过 3.8 GB 绝对线和“相对下降至少 25%”分支。reported/condensed/full residual、80 modes、R/T/A 与 closure 全通过；h5/h3 均为 clean final-HEAD rerun。
+
+## 41.7 h2 预测、实测与当前边界
+
+h5/h3 的 DoF–RSS 仿射/幂律两个独立模型预测 h2 中央值为 9.5298/7.0337 GB；较保守仿射值的 15% engineering upper 为 10.9593 GB，满足 G5/G6。唯一候选 attempt1 的实测峰值为 9.342113 GB，较 Task027 降低 28.58%；1800 步 solve time 2220.43 s，也略低于 Task027 2345.26 s。
+
+attempt1 真残差为 `1.461130e-6`，所以未输出 official R/T/A。随后只对同一 PC/restart 将 max_it 延到 2100；共同 monitor 点残差逐位一致，并在 1873 步收敛。最终 full residual `9.972228e-7`、含 R/T/A 峰值 9.374729 GB、closure `2.639e-9`、direct 最大差 `6.561e-9`。Review V2 明确不重跑 h2，因此这些值的身份是 `reviewed_historical_dirty_worktree_reference`，不是 clean final-HEAD evidence；h2/h3 iteration ratio 为 1.947，且 1873 步仍高于 1200 偏好。
+
+## 41.8 合并边界
+
+建议 final review 接受的内容：nonmatching H(curl) transfer/cache、condensed Galerkin 研究基础设施、local shift、factor-only storage、symmetric pre/post opt-in、Case060、tests 和完整文档。不得提升 p/h solver profiles、Woodbury、x-harmonic、AMS/HX、restart80 或 heavy artifacts。validated infrastructure API 已与失败 candidates 隔离；Task027 canonical 和 ordinary default 均保持不变。master 仍等待 Response V2 后的 final review 与用户明确许可。
+
+## 41.9 局限与下一步因果关系
+
+h2 已收敛，但当前 evidence 只覆盖单个角度/波长/材料/分区，且 1873 步仍高于 1200 目标。下一步优先参数鲁棒性、fallback 和 restart/内存监控；若目标是进一步降低迭代数，应研究 Maxwell commuting projection、梯度/近核 auxiliary space 和材料/端口感知的真正多层 hierarchy，而不是继续扩大当前失败 p1 coarse。
+
+证据入口：
+
+- [Task030 outcomes](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md)
+- [Case060](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)
+- [candidate funnel](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/candidate_funnel.csv)
+- [transfer validation](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/transfer_validation.md)
+- [h2 decision](task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/h2_launch_decision.md)
+
+## 41.10 Review V1 更正与证据边界
+
+Review V1 的五项 P0 已在同一分支回应：正式 h5/h3/h2 lightweight records 补齐实际运行 provenance；Case060 checker 从文件存在性升级为 provenance、solver identity、80 modes、三残差、R/T/A、closure、direct delta、内存和分类的 203 项 Gate；manifest 加入三份 experimental entries，normal checker 连续生成保持一致；项目级命名统一为 `compact physical-slab low-memory experimental profile`；理论、walkthrough、capability、benchmark 和边界文档同步说明 p/h multigrid solver 失败。Review V2 又把 h5/h3 更新为 clean final-HEAD rerun，并把 h2 固定为 historical dirty-worktree reference。
+
+最终成功求解器身份固定为 `task27_derived_physical_slab_wave_coarse`。H(curl) transfer/Galerkin 是 validated research infrastructure，不是 successful GMG。factor-only 在 PETSc 3.24.0 complex build 通过生命周期测试；跨版本兼容仍需回归。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因而不把内存下降解释为已证明的 factor-nnz compression。
+
+## 41.11 Review V2：clean evidence 与 selective-merge 边界
+
+R1 在 final implementation commit `5b81359daee0874793c44b019d9c914b334db483` 上重跑 h5/h3。两次 record 均写 `git_dirty=false`、`tracked_source_dirty=false`、`tracked_source_verification=host_git_clean_attestation`，且 verified clean SHA 与容器 HEAD 完全一致。h5 heavy JSON SHA-256 为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3`；h3 为 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`。h2 按审查要求不重跑，保留 `reviewed_historical_dirty_worktree_reference` 身份，并显式链接 clean h5/h3 的 solver/physics 等价性。
+
+R2 把 `hcurl_multilevel.py` 的 validated infrastructure API 限定为 active DoF、nonmatching transfer/cache/validation 和 condensed Galerkin。Damped Jacobi、Galerkin multilevel PC、Modal Woodbury 等 solver-negative candidates 只由 research runner/tests 直接导入，普通 `src.solvers` 不导出。最终工程求解器仍是 Task27-derived compact physical-slab profile，不是 p/h GMG。
+
+因此 Task030 最终状态为 `workstation_memory_success_with_qualifications`。ordinary default 不变；当前分支只可提交 Response V2 并等待 final review，不能直接合并 master 或启动 Task31。Task31 必须在用户批准 selective merge 后，从 clean master 新建独立分支。
+
+---
+
+# 42. Task030 后的当前推荐顺序
+
+```text
+1. 提交并推送 Task030 Response V2；
+2. 等待 ChatGPT final review，ordinary default 不变；
+3. 用户明确批准后，按 selective merge 边界合入 master；
+4. 在合并后的 clean master 新建 Task31 独立分支；
+5. Task31 优先压缩 Krylov、F/condensed 重复对象、slab factors 与生命周期。
+```
+
+# 43. 当前一句话状态（Task030）
+
+> Task030 已获得 `workstation_memory_success_with_qualifications`：Task27-derived compact physical-slab profile 的 clean final-HEAD h5/h3 分别为 855/962 步、1.687653/3.792912 GB，h2 保留为 1873 步、9.374729 GB 的 reviewed historical dirty-worktree reference；80 modes 与 official R/T/A 通过，H(curl) transfer/Galerkin validated infrastructure 正确，但 792D p1 coarse 的 p/h multigrid solver 明确失败。ordinary default 未改变，master 等待 final review 与用户选择性合并许可。

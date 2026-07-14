@@ -51,6 +51,8 @@ def _relative_difference(left: float, right: float) -> float:
 
 
 def _iterative_peak_rss(record: dict[str, Any]) -> float | None:
+    if record.get("peak_rss_gb_including_rta") is not None:
+        return float(record["peak_rss_gb_including_rta"])
     if record.get("peak_total_rss_including_rta_gb") is not None:
         return float(record["peak_total_rss_including_rta_gb"])
     values = [record.get("final_peak_total_gb")]
@@ -198,6 +200,20 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "run_h3.sh",
             "run_h2_guarded.sh",
             "records",
+        ),
+        "060_multilevel_hcurl_iterative_solver": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "expected/gates.json",
+            "run.sh",
+            "records/h5_baseline.json",
+            "records/hierarchy_contract.json",
+            "records/transfer_contract.json",
+            "records/candidate_screen_summary.json",
+            "records/best_h5.json",
+            "records/best_h3.json",
+            "records/best_h2.json",
         ),
     }
     cases_root = BENCHMARKS / "cases"
@@ -782,6 +798,376 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 h2_rss,
                 expected["h2_peak_total_rss_gb_max"],
                 iterative_ids[2],
+            )
+        )
+
+    case060_expected = _load_json(
+        cases_root / "060_multilevel_hcurl_iterative_solver" / "expected" / "gates.json"
+    )
+    task030_ids = {
+        "h5": "task030_compact_h5",
+        "h3": "task030_compact_h3",
+        "h2": "task030_compact_h2",
+    }
+    task030 = {label: records.get(name) for label, name in task030_ids.items()}
+    task030_present = all(record is not None for record in task030.values())
+    gates.append(
+        Gate(
+            "task030_h5_h3_h2_present",
+            task030_present,
+            task030_present,
+            True,
+            ",".join(task030_ids.values()),
+        )
+    )
+    if task030_present:
+        contract = case060_expected["record_contract"]
+        numeric = case060_expected["numeric_common"]
+        direct_ids = {
+            "h5": "l3_direct_h5",
+            "h3": "l3_direct_h3",
+            "h2": "l3_direct_h2",
+        }
+        canonical_iterative_ids = {
+            "h5": "l3_iterative_h5",
+            "h3": "l3_iterative_h3",
+            "h2": "l3_iterative_h2",
+        }
+        for label, benchmark_id in task030_ids.items():
+            record = task030[label]
+            assert record is not None
+            metadata = record.get("metadata") or {}
+            artifact_hash = metadata.get("source_artifact_sha256")
+            artifact_path = ROOT / str(record.get("source_artifact", ""))
+            observed_artifact_hash = (
+                _sha256(artifact_path) if artifact_path.is_file() else None
+            )
+            hash_format_ok = (
+                isinstance(artifact_hash, str)
+                and re.fullmatch(
+                    contract["source_artifact_sha256_pattern"], artifact_hash
+                )
+                is not None
+            )
+            artifact_hash_ok = hash_format_ok and (
+                observed_artifact_hash is None
+                or observed_artifact_hash == artifact_hash
+            )
+            gates.append(
+                Gate(
+                    f"task030_source_artifact_sha256:{benchmark_id}",
+                    artifact_hash_ok,
+                    observed_artifact_hash or "heavy artifact unavailable by policy",
+                    artifact_hash,
+                    str(record.get("source_artifact")),
+                )
+            )
+            if label in set(contract["clean_rerun_labels"]):
+                provenance_qualified = (
+                    metadata.get("commit_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and metadata.get("git_dirty") is False
+                    and metadata.get("tracked_source_dirty") is False
+                    and metadata.get("tracked_source_verification")
+                    == "host_git_clean_attestation"
+                    and metadata.get("verified_clean_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and metadata.get("provenance") == "clean_rerun"
+                    and bool(metadata.get("provenance_qualification"))
+                    and bool(metadata.get("actual_source_artifact_root"))
+                    and metadata.get("container_image") != "unknown"
+                    and metadata.get("container_digest") != "unknown"
+                )
+                expected_provenance = (
+                    "clean final implementation commit with full-SHA host attestation"
+                )
+            else:
+                equivalence = metadata.get("clean_final_head_equivalence") or {}
+                h5_metadata = (task030["h5"] or {}).get("metadata") or {}
+                h3_metadata = (task030["h3"] or {}).get("metadata") or {}
+                provenance_qualified = (
+                    metadata.get("git_dirty") is True
+                    and metadata.get("tracked_source_dirty") is True
+                    and metadata.get("provenance")
+                    == "working_tree_source_artifact_recovered_without_rerun"
+                    and metadata.get("evidence_identity")
+                    == contract["h2_evidence_identity"]
+                    and equivalence.get("implementation_commit_sha")
+                    == contract["clean_final_head_commit_sha"]
+                    and equivalence.get("h5_source_artifact_sha256")
+                    == h5_metadata.get("source_artifact_sha256")
+                    and equivalence.get("h3_source_artifact_sha256")
+                    == h3_metadata.get("source_artifact_sha256")
+                    and equivalence.get("candidate_identity_match") is True
+                    and equivalence.get("physical_and_modal_identity_match") is True
+                    and bool(metadata.get("provenance_qualification"))
+                    and bool(metadata.get("actual_source_artifact_root"))
+                    and metadata.get("container_image") != "unknown"
+                    and metadata.get("container_digest") != "unknown"
+                )
+                expected_provenance = (
+                    "explicit reviewed historical dirty-worktree h2 exemption linked "
+                    "to clean final-HEAD h5/h3 equivalence"
+                )
+            gates.append(
+                Gate(
+                    f"task030_provenance_qualified:{benchmark_id}",
+                    provenance_qualified,
+                    {
+                        "git_dirty": metadata.get("git_dirty"),
+                        "tracked_source_dirty": metadata.get("tracked_source_dirty"),
+                        "provenance": metadata.get("provenance"),
+                        "evidence_identity": metadata.get("evidence_identity"),
+                        "commit_sha": metadata.get("commit_sha"),
+                    },
+                    expected_provenance,
+                    benchmark_id,
+                )
+            )
+            relation = _commit_relation(
+                metadata.get("commit_sha"), metadata.get("provenance")
+            )
+            gates.append(
+                Gate(
+                    f"task030_source_commit_relation:{benchmark_id}",
+                    relation in set(expected["record_commit_relations_accepted"]),
+                    relation,
+                    sorted(expected["record_commit_relations_accepted"]),
+                    benchmark_id,
+                )
+            )
+            identity_ok = (
+                record.get("profile_identity") == contract["profile_identity"]
+                and record.get("final_solver_identity")
+                == contract["final_solver_identity"]
+                and record.get("hierarchy_infrastructure_status")
+                == contract["hierarchy_infrastructure_status"]
+                and record.get("p_h_multigrid_solver_disposition")
+                == contract["p_h_multigrid_solver_disposition"]
+            )
+            gates.append(
+                Gate(
+                    f"task030_solver_identity:{benchmark_id}",
+                    identity_ok,
+                    {
+                        "profile": record.get("profile_identity"),
+                        "final_solver": record.get("final_solver_identity"),
+                        "hierarchy": record.get("hierarchy_infrastructure_status"),
+                        "p_h_solver": record.get("p_h_multigrid_solver_disposition"),
+                    },
+                    {
+                        "profile": contract["profile_identity"],
+                        "final_solver": contract["final_solver_identity"],
+                        "hierarchy": contract["hierarchy_infrastructure_status"],
+                        "p_h_solver": contract["p_h_multigrid_solver_disposition"],
+                    },
+                    benchmark_id,
+                )
+            )
+            qualification_ok = record.get("qualified_profile") is False and bool(
+                record.get("qualification_deviations")
+            )
+            gates.append(
+                Gate(
+                    f"task030_explicit_opt_in_identity:{benchmark_id}",
+                    qualification_ok,
+                    {
+                        "qualified_profile": record.get("qualified_profile"),
+                        "deviations": record.get("qualification_deviations"),
+                    },
+                    "qualified_profile=false with explicit deviations",
+                    benchmark_id,
+                )
+            )
+            modal = record.get("modal_identity") or {}
+            common_contract_ok = (
+                record.get("ordinary_default_changed")
+                is contract["ordinary_default_changed"]
+                and record.get("n_aux") == contract["n_aux"]
+                and modal.get("n_aux_before_condensation") == contract["n_aux"]
+                and record.get("physical_model")
+                == canonical_config.get("physical_model")
+            )
+            gates.append(
+                Gate(
+                    f"task030_frozen_contract:{benchmark_id}",
+                    common_contract_ok,
+                    {
+                        "ordinary_default_changed": record.get(
+                            "ordinary_default_changed"
+                        ),
+                        "n_aux": record.get("n_aux"),
+                        "modal_n_aux": modal.get("n_aux_before_condensation"),
+                        "physical_model_match": record.get("physical_model")
+                        == canonical_config.get("physical_model"),
+                    },
+                    "ordinary default false, same physical model and 80 modes",
+                    benchmark_id,
+                )
+            )
+            gates.append(
+                Gate(
+                    f"task030_ksp_converged:{benchmark_id}",
+                    int(record.get("ksp_reason", 0)) > 0,
+                    record.get("ksp_reason"),
+                    "> 0",
+                    benchmark_id,
+                )
+            )
+            reported = float(record["reported_relative_residual"])
+            condensed = float(record["condensed_true_residual"])
+            full = float(record["full_augmented_true_residual"])
+            maximum_residual = max(reported, condensed, full)
+            maximum_mismatch = max(
+                _relative_difference(reported, condensed),
+                _relative_difference(reported, full),
+            )
+            gates.extend(
+                (
+                    Gate(
+                        f"task030_residual_max:{benchmark_id}",
+                        maximum_residual <= numeric["full_true_residual_max"],
+                        maximum_residual,
+                        numeric["full_true_residual_max"],
+                        benchmark_id,
+                    ),
+                    Gate(
+                        f"task030_residual_consistency:{benchmark_id}",
+                        maximum_mismatch
+                        <= numeric["reported_true_relative_difference_max"],
+                        maximum_mismatch,
+                        numeric["reported_true_relative_difference_max"],
+                        benchmark_id,
+                    ),
+                )
+            )
+            rta_complete = all(
+                record.get(key) is not None
+                for key in ("R_total", "T_total", "A_volume_total")
+            )
+            gates.append(
+                Gate(
+                    f"task030_official_rta:{benchmark_id}",
+                    rta_complete,
+                    rta_complete,
+                    True,
+                    benchmark_id,
+                )
+            )
+            closure = record.get("energy_closure_error")
+            gates.append(
+                Gate(
+                    f"task030_energy_closure:{benchmark_id}",
+                    closure is not None
+                    and abs(float(closure)) <= numeric["energy_closure_abs_max"],
+                    closure,
+                    numeric["energy_closure_abs_max"],
+                    benchmark_id,
+                )
+            )
+            direct = records.get(direct_ids[label])
+            direct_delta = float("inf")
+            if direct is not None and rta_complete:
+                direct_delta = max(
+                    abs(float(record[key]) - float(direct[key]))
+                    for key in ("R_total", "T_total", "A_volume_total")
+                )
+            gates.append(
+                Gate(
+                    f"task030_rta_delta_from_direct:{benchmark_id}",
+                    direct_delta <= numeric["rta_delta_from_direct_max"],
+                    direct_delta,
+                    numeric["rta_delta_from_direct_max"],
+                    f"{benchmark_id},{direct_ids[label]}",
+                )
+            )
+
+        task030_h5 = task030["h5"]
+        task030_h3 = task030["h3"]
+        task030_h2 = task030["h2"]
+        assert task030_h5 is not None
+        assert task030_h3 is not None
+        assert task030_h2 is not None
+        canonical_h3 = records.get(canonical_iterative_ids["h3"])
+        task030_h3_peak = _iterative_peak_rss(task030_h3)
+        canonical_h3_peak = (
+            _iterative_peak_rss(canonical_h3) if canonical_h3 is not None else None
+        )
+        h3_memory_reduction = (
+            None
+            if task030_h3_peak is None or canonical_h3_peak is None
+            else (canonical_h3_peak - task030_h3_peak) / canonical_h3_peak
+        )
+        h3_memory_pass = task030_h3_peak is not None and (
+            task030_h3_peak <= case060_expected["h3_full"]["peak_rss_gb_max"]
+            or (
+                h3_memory_reduction is not None
+                and h3_memory_reduction
+                >= case060_expected["h3_full"]["minimum_memory_reduction_fraction"]
+            )
+        )
+        gates.append(
+            Gate(
+                "task030_h3_memory_gate",
+                h3_memory_pass,
+                {
+                    "peak_rss_gb": task030_h3_peak,
+                    "relative_reduction": h3_memory_reduction,
+                    "absolute_gate_pass": task030_h3_peak is not None
+                    and task030_h3_peak
+                    <= case060_expected["h3_full"]["peak_rss_gb_max"],
+                    "relative_gate_pass": h3_memory_reduction is not None
+                    and h3_memory_reduction
+                    >= case060_expected["h3_full"]["minimum_memory_reduction_fraction"],
+                },
+                "RSS <= 3.8 GB OR reduction >= 25%",
+                "task030_compact_h3,l3_iterative_h3",
+            )
+        )
+        h3_h5_ratio = float(task030_h3["iterations"]) / float(task030_h5["iterations"])
+        gates.append(
+            Gate(
+                "task030_h3_h5_iteration_ratio",
+                h3_h5_ratio
+                <= case060_expected["h3_full"]["h3_to_h5_iteration_ratio_max"],
+                h3_h5_ratio,
+                case060_expected["h3_full"]["h3_to_h5_iteration_ratio_max"],
+                "task030_compact_h5,task030_compact_h3",
+            )
+        )
+        task030_h2_peak = _iterative_peak_rss(task030_h2)
+        gates.append(
+            Gate(
+                "task030_h2_peak_rss",
+                task030_h2_peak is not None
+                and task030_h2_peak <= case060_expected["h2_full"]["peak_rss_gb_max"],
+                task030_h2_peak,
+                case060_expected["h2_full"]["peak_rss_gb_max"],
+                "task030_compact_h2",
+            )
+        )
+        strong_claim_absent = (
+            task030_h2.get("strong_workstation_success")
+            is contract["strong_workstation_success"]
+            and "strong_workstation_success"
+            not in str(task030_h2.get("classification", ""))
+            and task030_h2.get("preferred_iteration_target_pass") is False
+        )
+        gates.append(
+            Gate(
+                "task030_h2_classification_not_strong",
+                strong_claim_absent,
+                {
+                    "classification": task030_h2.get("classification"),
+                    "strong_workstation_success": task030_h2.get(
+                        "strong_workstation_success"
+                    ),
+                    "preferred_iteration_target_pass": task030_h2.get(
+                        "preferred_iteration_target_pass"
+                    ),
+                },
+                "strong success false and preferred iteration target missed",
+                "task030_compact_h2",
             )
         )
 

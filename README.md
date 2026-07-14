@@ -55,7 +55,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task029 已完成 h5/h3 direct-memory 剖析，并通过 Review V2 技术验收，以 `diagnostic_success` 收口、`engineering_success=no`。最佳 MUMPS MPI2 候选在 h5/h3 分别降低 simultaneous RSS 28.893% / 15.119%，h3 未达到 20% 工程 Gate；当前 image 的 MPI1×4 KSPSetUp 仍约 1 核，threaded direct 不可用。h2 与 threaded h3 均按 Gate 未运行，没有形成新 optimized direct profile，ordinary default 未改变；用户已在启动 Task030 时明确许可合并。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task029 已以 `diagnostic_success` 收口并合入。Task030 Response V2 已完成 final implementation HEAD 上的 clean h5/h3 复跑：855/962 步、1.687653/3.792912 GB；h2 不重跑，保留为 1873 步、9.374729 GB 的 reviewed historical dirty-worktree reference。Task030 最终状态为 `workstation_memory_success_with_qualifications`；真正 p/h multigrid solver 仍为 negative，ordinary default 未改变，master 等待最终审查和用户选择性合并许可。
 
 ## 文档导航
 
@@ -63,14 +63,14 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 |---|---|
 | [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
 | [Task 阶段回顾标准](docs/task_retrospective_standard.md) | 从 Task029 起所有新 Task 的强制 outcomes 与 development progress 写作/审查合同 |
-| [开发进度](docs/development_progress.md) | Task000-Task029 分阶段开发内容、关键结果、失败路线与当前进展 |
+| [开发进度](docs/development_progress.md) | Task000-Task030 分阶段开发内容、关键结果、失败路线与当前进展 |
 | [快速开始](docs/quick_start.md) | Windows Docker、2D/3D、direct/workstation完整命令与资源边界 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
 | [求解器指南](docs/solver_guide.md) | direct/iterative 选择与限制 |
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task029 闭环与 Task030 任务入口 |
+| [任务索引](docs/README.md) | Task000-Task030 闭环与 Task031 任务入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

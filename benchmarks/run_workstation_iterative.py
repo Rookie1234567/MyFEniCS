@@ -61,16 +61,50 @@ def _git_output(*args: str) -> str | None:
 
 def _runtime_metadata(command: str) -> dict[str, Any]:
     dirty_override = os.environ.get("BENCHMARK_GIT_DIRTY")
+    verified_clean_sha = os.environ.get("BENCHMARK_VERIFIED_CLEAN_SHA")
+    commit_sha = os.environ.get("BENCHMARK_COMMIT_SHA") or _git_output(
+        "rev-parse", "HEAD"
+    )
+    branch = os.environ.get("BENCHMARK_BRANCH") or _git_output(
+        "branch", "--show-current"
+    )
+    if commit_sha is None or branch is None:
+        raise RuntimeError("cannot verify benchmark source identity and cleanliness")
+    if verified_clean_sha is not None:
+        verified_clean_sha = verified_clean_sha.strip().lower()
+        if len(verified_clean_sha) != 40 or any(
+            character not in "0123456789abcdef" for character in verified_clean_sha
+        ):
+            raise RuntimeError("clean-source attestation must be a full Git SHA")
+        if commit_sha.lower() != verified_clean_sha:
+            raise RuntimeError(
+                "clean-source attestation does not match mounted HEAD: "
+                f"expected {verified_clean_sha}, mounted {commit_sha}"
+            )
+        full_dirty = False
+        tracked_source_dirty = False
+        tracked_source_verification = "host_git_clean_attestation"
+    else:
+        full_status = _git_output("status", "--short")
+        tracked_status = _git_output("status", "--short", "--untracked-files=no")
+        if full_status is None or tracked_status is None:
+            raise RuntimeError(
+                "cannot verify benchmark source identity and cleanliness"
+            )
+        full_dirty = bool(full_status)
+        tracked_source_dirty = bool(tracked_status)
+        tracked_source_verification = "git_status_untracked_files_no"
     return {
-        "commit_sha": os.environ.get("BENCHMARK_COMMIT_SHA")
-        or _git_output("rev-parse", "HEAD"),
-        "branch": os.environ.get("BENCHMARK_BRANCH")
-        or _git_output("branch", "--show-current"),
+        "commit_sha": commit_sha,
+        "branch": branch,
         "git_dirty": (
             dirty_override.lower() in {"1", "true", "yes"}
             if dirty_override is not None
-            else bool(_git_output("status", "--short"))
+            else full_dirty
         ),
+        "tracked_source_dirty": tracked_source_dirty,
+        "tracked_source_verification": tracked_source_verification,
+        "verified_clean_sha": verified_clean_sha,
         "command": command,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
@@ -107,6 +141,12 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         deviations.append(f"lambda_nm={args.lambda_nm!r}, expected 13.5")
     if mpi_size != 4:
         deviations.append(f"mpi_size={mpi_size!r}, expected 4")
+    if args.post_smooth:
+        deviations.append("post_smooth=True, expected False")
+    if args.subdomain_local_shift:
+        deviations.append("subdomain_local_shift=True, expected False")
+    if args.factor_only_storage:
+        deviations.append("factor_only_storage=True, expected False")
     return deviations
 
 
@@ -236,22 +276,30 @@ def _fixed_floquet_hat_basis(
     return sparse
 
 
-def _shifted_matrix(
+def _absorption_diagonal_shift(
     matrix: PETSc.Mat, absorption_shift: float
-) -> tuple[PETSc.Mat, PETSc.Vec, float]:
+) -> tuple[PETSc.Vec, float]:
     diagonal = matrix.createVecLeft()
     matrix.getDiagonal(diagonal)
     absolute = np.abs(diagonal.getArray(readonly=True))
     scale = float(MPI.COMM_WORLD.allreduce(float(absolute.max(initial=0)), op=MPI.MAX))
-    shifted_diagonal = diagonal.copy()
-    shifted_diagonal.getArray()[:] += (
+    difference = diagonal.duplicate()
+    difference.getArray()[:] = (
         -1j * absorption_shift * np.maximum(absolute, 1e-12 * scale)
     )
+    diagonal.destroy()
+    return difference, scale
+
+
+def _shifted_matrix(matrix: PETSc.Mat, difference: PETSc.Vec) -> PETSc.Mat:
     shifted = matrix.copy()
+    shifted_diagonal = shifted.createVecLeft()
+    shifted.getDiagonal(shifted_diagonal)
+    shifted_diagonal.axpy(PETSc.ScalarType(1.0), difference)
     shifted.setDiagonal(shifted_diagonal)
     shifted.assemble()
-    diagonal.destroy()
-    return shifted, shifted_diagonal, scale
+    shifted_diagonal.destroy()
+    return shifted
 
 
 class _DiagonalShiftContext:
@@ -272,13 +320,7 @@ class _DiagonalShiftContext:
             self.destroyed = True
 
 
-def _shifted_action(matrix: PETSc.Mat, shifted: PETSc.Mat) -> PETSc.Mat:
-    original = matrix.createVecLeft()
-    difference = shifted.createVecLeft()
-    matrix.getDiagonal(original)
-    shifted.getDiagonal(difference)
-    difference.axpy(PETSc.ScalarType(-1.0), original)
-    original.destroy()
+def _shifted_action(matrix: PETSc.Mat, difference: PETSc.Vec) -> PETSc.Mat:
     action = PETSc.Mat().createPython(
         matrix.getSizes(),
         context=_DiagonalShiftContext(matrix, difference),
@@ -442,32 +484,40 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         operator,
         None,
         basis,
+        post_smooth=args.post_smooth,
         coarse_progress=lambda done, total: progress("coarse_operator", done, total),
         setup_progress=lambda stage: progress(stage, 0, len(basis)),
     )
-    shifted, shifted_diagonal, diagonal_scale = _shifted_matrix(
+    diagonal_shift, diagonal_scale = _absorption_diagonal_shift(
         blocks.F, args.absorption_shift
     )
-    shifted_diagonal.destroy()
-    action = _shifted_action(blocks.F, shifted)
+    action = _shifted_action(blocks.F, diagonal_shift)
+    shifted = (
+        None
+        if args.subdomain_local_shift
+        else _shifted_matrix(blocks.F, diagonal_shift)
+    )
     slabs = _complete_physical_slabs(
         system,
         num_slabs=args.num_slabs,
         overlap_layers=args.overlap_layers,
     )
     smoother = DistributedPhysicalSlabSmoother(
-        shifted,
+        blocks.F if shifted is None else shifted,
         slabs,
         ilu_levels=args.ilu_levels,
         local_ksp_iterations=1,
         local_ksp_type="gmres",
         smoother_iterations=2,
         action_operator=action,
+        diagonal_shift=diagonal_shift if args.subdomain_local_shift else None,
+        factor_only_storage=args.factor_only_storage,
         interpolation="basic",
         assembly_order="two_color",
         progress=lambda done, total: progress("slab_factorization", done, total),
     )
-    shifted.destroy()
+    if shifted is not None:
+        shifted.destroy()
     coarse_context.set_smoother(smoother)
     solution = operator.createVecRight()
     solution.set(0.0)
@@ -536,6 +586,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "shift_diagonal_scale": diagonal_scale,
         "ilu_levels": args.ilu_levels,
         "smoother_iterations": 2,
+        "post_smooth": args.post_smooth,
+        "subdomain_local_shift": args.subdomain_local_shift,
+        "factor_only_storage": args.factor_only_storage,
         "restart": args.restart,
         "rtol": args.rtol,
         "max_it": args.max_it,
@@ -595,6 +648,9 @@ def main() -> int:
     parser.add_argument("--rtol", type=float, default=None)
     parser.add_argument("--rta-threshold", type=float, default=None)
     parser.add_argument("--monitor-stride", type=int, default=None)
+    parser.add_argument("--post-smooth", action="store_true")
+    parser.add_argument("--subdomain-local-shift", action="store_true")
+    parser.add_argument("--factor-only-storage", action="store_true")
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -637,6 +693,9 @@ def main() -> int:
         "rta_threshold": args.rta_threshold,
         "monitor_stride": args.monitor_stride,
         "artifact_root": args.results_dir,
+        "post_smooth": args.post_smooth,
+        "subdomain_local_shift": args.subdomain_local_shift,
+        "factor_only_storage": args.factor_only_storage,
     }
     args.exact_command = os.environ.get(
         "BENCHMARK_EXACT_COMMAND",

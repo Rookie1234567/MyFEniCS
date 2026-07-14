@@ -9,7 +9,8 @@
 | L1 | compile、full unit、2D DtN、3D Stage1 | 通过 |
 | L2 | condensation等价、transpose、backsub、MPI owner/cache | 通过 |
 | L3 direct | target p2 h5/h3 rerun，h2 reviewed reference | 通过 |
-| L3 iterative | target p2 h5/h3/h2 clean branch | 全通过 |
+| L3 iterative | Task27 target p2 h5/h3/h2 canonical | 全通过 |
+| L3 Task30 | compact physical-slab low-memory h5/h3/h2 | `workstation_memory_success_with_qualifications`；h5/h3 为 clean final-HEAD 复跑，h2 为 reviewed historical reference |
 
 ## 目标模型
 
@@ -44,3 +45,17 @@ canonical records 位于 `benchmarks/records/` 与 recorded case 的 `records/`�
 Review V1 的条件式线程审计也归入 Case050：PETSc 3.24.0 / MUMPS 5.8.1 实际链接 system OpenBLAS 0.3.26 pthread，线程控制 API 可用；但固定 CPU `0-3` 的 MPI1×4 在 KSPSetUp 只使用 0.999/1.054 核均值/峰值，Stage4 48.273 s，相对 MPI1×1 speedup 仅 1.054×。因此 `threaded_direct_capability=unavailable_in_current_image`，threaded h3 明确 `not_run`。轻量记录为 [`h5_threaded_direct_audit.json`](../benchmarks/cases/050_stage4_direct_memory_forensics/records/h5_threaded_direct_audit.json)。
 
 Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施进入 master；该接受不代表存在 qualified low-memory direct profile。最终状态仍为 `diagnostic_success`、`engineering_success=no`、h2 `not_run`、ordinary default unchanged。
+
+## Task030 Case060
+
+[`Case060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) 同时保存“正确但性能失败”的 nonmatching H(curl) transfer/Galerkin 基础设施和最终低内存正反馈。五个 p/h 候选 100 步真残差为 `0.375–0.680`，不得提升；最终成功求解器不是 p/h GMG，而是 Task27-derived physical-slab + 75D wave-coarse 架构，Task30 在其上使用 symmetric pre/post ILU0、subdomain-local shift、factor-only storage 与 restart90。
+
+| h/nm | iterations | full true residual | peak RSS | 相对 Task27 |
+|---:|---:|---:|---:|---:|
+| 5 | 855 | 9.92491e-7 | 1.688 GB | memory -15.24%，iterations -28.81% |
+| 3 | 962 | 9.90389e-7 | 3.793 GB | memory -25.37%，iterations -3.12% |
+| 2 qualified | 1873 | 9.97223e-7 | 9.375 GB | memory -28.33%，workstation pass；iterations target missed |
+
+h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。最终实现提交 `5b81359daee0874793c44b019d9c914b334db483` 上的 clean h3 复跑峰值为 3.792912 GB，同时通过 `<=3.8 GB` 绝对线，并较 Task27 降低 25.37%。Case060 最终分类为 `workstation_memory_success_with_qualifications`；h2 的 1873 步仍未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
+
+三份正式 lightweight records 已进入 manifest，checker 可重复生成同一 `benchmark_summary.csv`，并执行 203 项 Gate。h5/h3 是 final implementation HEAD `5b81359daee0874793c44b019d9c914b334db483` 的 clean 复跑，heavy JSON SHA-256 分别为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3` 与 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`；h2 明确保留为 `reviewed_historical_dirty_worktree_reference`，不是 clean final-HEAD 复跑。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因此该统计口径保持 `measurement_unresolved`，内存下降不归因于已证明的 factor-nnz compression。

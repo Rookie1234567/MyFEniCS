@@ -1,0 +1,39 @@
+{
+  "case_identity": "task030_hcurl_infrastructure_and_compact_physical_slab_memory",
+  "profile": "compact_physical_slab_low_memory_experimental_opt_in",
+  "baseline_reference": "benchmarks/cases/031_workstation_iterative/records/h5_reference.json",
+  "physical_config": "benchmarks/configs/workstation_p2.json",
+  "mpi_size": 4,
+  "h5_screen": {
+    "smoke_steps": 20,
+    "comparison_steps": 100,
+    "monitor_stride": 20,
+    "restart": 100
+  },
+  "hierarchy_research": {
+    "fine_degree": 2,
+    "low_order_degree": 1,
+    "coarsening": "p2_to_nonmatching_h10_p1_active_columns",
+    "operator_policy": "exact_condensed_galerkin",
+    "infrastructure_status": "validated_research_infrastructure",
+    "solver_disposition": "negative"
+  },
+  "best_candidate": {
+    "profile_identity": "compact_physical_slab_low_memory_experimental_opt_in",
+    "solver_family": "task27_derived_physical_slab_wave_coarse",
+    "coarse_space": "fixed_75D_floquet_z_hat",
+    "num_physical_slabs": 16,
+    "overlap_layers": 0.25,
+    "absorption_shift": 0.1,
+    "ilu_levels": 0,
+    "smoother_iterations": 2,
+    "symmetric_pre_post": true,
+    "subdomain_local_shift": true,
+    "factor_only_storage": true,
+    "outer_ksp": "fgmres",
+    "restart": 90,
+    "rtol": 1e-6,
+    "n_aux": 80
+  },
+  "ordinary_default_changed": false
+}

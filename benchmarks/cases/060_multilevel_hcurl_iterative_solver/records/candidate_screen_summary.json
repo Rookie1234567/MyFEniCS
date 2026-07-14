@@ -1,0 +1,19 @@
+{
+  "record_type": "task030_h5_candidate_screen_summary",
+  "baseline_true_residual_at_100": 0.0025737371765314062,
+  "baseline_peak_rss_gb": 1.9911727905273438,
+  "formal_ph_screens": [
+    {"candidate": "jacobi_ph", "iterations": 100, "true_residual": 0.6801547181194263, "residual_ratio": 264.26735578186054, "peak_rss_gb": 1.7086982727050781, "classification": "negative"},
+    {"candidate": "layer_ph", "iterations": 100, "true_residual": 0.37486358702226213, "residual_ratio": 145.64952103130483, "peak_rss_gb": 1.9293975830078125, "classification": "negative"},
+    {"candidate": "column_ph", "iterations": 100, "true_residual": 0.5135989774111835, "residual_ratio": 199.5537780991898, "peak_rss_gb": 1.928680419921875, "classification": "negative"},
+    {"candidate": "cell_ph", "iterations": 100, "true_residual": 0.5127299861423078, "residual_ratio": 199.21614017842631, "peak_rss_gb": 1.9816780090332031, "classification": "negative"},
+    {"candidate": "slab_ph", "iterations": 100, "true_residual": 0.5610637887346428, "residual_ratio": 217.99575879413666, "peak_rss_gb": 2.0051918029785156, "classification": "negative"}
+  ],
+  "successful_mechanism_screens": [
+    {"candidate": "task027_ilu1_symmetric_pre_post", "iterations": 100, "true_residual": 0.0012735032604417472, "residual_ratio": 0.4948039231876364, "peak_rss_gb": 1.9838027954101562, "classification": "strong_positive"},
+    {"candidate": "ilu0_symmetric_pre_post", "iterations": 100, "true_residual": 0.0018655660622674713, "residual_ratio": 0.7248456033986697, "peak_rss_gb": 1.89031982421875, "classification": "weak_positive"},
+    {"candidate": "local_shift_factor_only_ilu0_symmetric_pre_post", "iterations": 100, "true_residual": 0.001865566062266882, "residual_ratio": 0.7248456033984408, "peak_rss_gb": 1.7052116394042969, "classification": "weak_positive"},
+    {"candidate": "compact_restart90", "iterations": 100, "true_residual": 0.0019929448285525087, "residual_ratio": 0.7743342625813795, "peak_rss_gb": 1.6935043334960938, "classification": "weak_positive"}
+  ],
+  "ordinary_default_changed": false
+}

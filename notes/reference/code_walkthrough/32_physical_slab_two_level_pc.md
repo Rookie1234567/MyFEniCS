@@ -127,4 +127,23 @@ build 16 complete slab index sets
 
 代码是 stable PC infrastructure；“qualified”只属于 4 ranks、16 slabs、overlap 0.25、shift 0.1、ILU1、sm2、75D coarse 的冻结 target。类能接受其他参数不等于它们已通过工程验证。
 
+## 15. Task030 storage path
+
+Task030 为 `DistributedPhysicalSlabSmoother` 增加两个显式 opt-in：
+
+- `diagonal_shift`：从原 F 逐 subdomain 提取矩阵后只修改 local diagonal，不保留一份完整 shifted-F；
+- `factor_only_storage`：要求 `local_ksp_iterations=1`，local PC setup 后对 factor Mat `incRef()`，销毁 KSP 和 source submatrix，apply 直接调用 factor solve。
+
+factor-only 模式逐块提取/分解，避免所有 local source matrices 同时驻留。`_OwnedSubdomainFactor` 的 Mat/KSP 因而可为 `None`，destroy 必须按实际所有权释放 factor/rhs/solution。serial 与 MPI2 测试比较普通与 compact action，误差约 `2e-12`；h5/h3 物理 full solve 证明 true residual 不漂移。
+
+该生命周期路径只在 PETSc 3.24.0 complex build 验证，升级 PETSc/petsc4py 后必须重跑 action/lifecycle 测试。另需注意 Task27 ILU1 与 Task30 ILU0 的 `global_slab_factor_nnz` 在 h5/h3/h2 分别都报告 7,046,752 / 30,329,104 / 95,617,608；这个统计口径不能证明 ILU0 stored fill 更少。当前内存下降主要解释为 local shift、factor-only 释放对象与 restart90，而不是 factor-nnz compression。
+
+`SparseGalerkinTwoLevelPc(post_smooth=True)` 在 coarse correction 后重算真实 residual，再执行同一 fixed smoother。它是 Task030 compact physical-slab low-memory experimental profile 的主要收敛机制；只启用 storage flags 而不启用 post smooth 不是同一个候选。该成功配置继承 Task27 的 physical slabs 与 75D wave coarse，不是成功的 p/h GMG。
+
 理论见 [`../../theory/iterative_solver_and_preconditioner.md`](../../theory/iterative_solver_and_preconditioner.md)。
+
+## 16. Review V2 的模块边界
+
+Task030 的最终成功配置仍走本文件描述的 Task27-derived physical-slab PC；它不依赖失败的 p/h multilevel coarse。`src/solvers/hcurl_multilevel.py` 的公共 `__all__` 只包含 `ActiveDofMap`、nonmatching transfer/cache/validation 与 condensed Galerkin 等 validated infrastructure。Jacobi、Galerkin multilevel PC、Modal Woodbury 等 solver-negative candidates 只允许 research runner/tests 直接导入，不由普通 `src.solvers` 暴露。
+
+因此 selective merge 时应分别审查两条 lane：本文件的 local-shift/factor-only/post-smooth 是已验证的 explicit opt-in 工程路径；H(curl) 文件只提升代数基础设施，不提升 p/h solver profile。ordinary default 与 Task027 canonical 均保持不变。

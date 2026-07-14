@@ -1,0 +1,37 @@
+2026-07-13 Task030 启动：读取任务书、Task026/027/028/029 结论、历史 AMS/p-coarse/Schur 负结果、theory/walkthrough 和用户提供论文。Task029 先按 Review V2 更正并合并 master；Task030 从 bfb6586e clean master 创建独立分支。
+
+2026-07-13 baseline freeze：Case031 h5 canonical SHA-256=528cdfadbaa867577c871071d93c975bd318623eaa45dc0f9aadb1abf9f41c73；iteration100 true residual=2.5737371765314062e-3；peak reference=1.9911727905273438 GB。
+
+2026-07-13 API probe：固定镜像 DOLFINx 0.10.0.post2 / Basix 0.10.0。不同网格直接 interpolation_matrix 会产生大量零行，禁止；改用 nonmatching interpolation data 和 active-column assembly。
+
+2026-07-13 hierarchy：h5/p2 full/active/slave=44698/40800/3898；h10/p1=1067/792/275。MPI4 transfer 44698x792、145998 nnz、adjoint error=1.586e-15、fresh/cache action error=6.410e-15、build=88.833 s。
+
+2026-07-13 p/h funnel：Jacobi/layer/column/cell/slab 五个候选完成 20 和 100 步；100 步 residual=0.680155/0.374864/0.513599/0.512730/0.561064，全部 negative。p/h coarse 在相同 slab smoother 上主动恶化 residual。Woodbury、x-harmonic、z coarse 和 no-overlap 也未形成强信号。
+
+2026-07-13 positive lane：symmetric pre/post ILU1 100-step residual=1.273503e-3，strong positive；ILU0 保持 1.865566e-3。subdomain-local shift 和 factor-only storage 保持 action/residual，逐步降低 h5 peak。restart90 residual=1.992945e-3、peak=1.693504 GB；restart80 未通过 weak gate。
+
+2026-07-13 h5 full：855 iterations，full true=9.924905e-7，R/T/A=0.089021603472/0.442588273219/0.468390122172，closure=-1.137e-9，peak incl RTA=1.696136 GB。
+
+2026-07-13 h3 full：962 iterations，full true=9.903890e-7，R/T/A=0.004613032179/0.583653357750/0.411733611730，closure=1.659e-9，peak incl RTA=3.807503 GB；相对 canonical 5.082275 GB 降低 25.08%，h3/h5 iteration ratio=1.1251。
+
+2026-07-13 h2 unlock：仿射/幂律两个独立中央预测=9.5298/7.0337 GB，保守15%上界=10.9593 GB；G1-G10 通过，只启动同一最终候选。
+
+2026-07-13 h2 attempt1：1800 iterations，ksp_reason=-3，true residual=1.461129613e-6，peak=9.342113 GB，solve=2220.433 s。内存降低 28.58%，但 residual Gate 失败且不输出 R/T/A。
+
+2026-07-13 h2 qualification rerun：同一 PC/restart/物理配置，只把 max_it 延长至2100；共同 monitor 点残差与 attempt1 逐位一致。1873 iterations，ksp_reason=2，full true residual=9.972228402e-7，peak incl RTA=9.374729 GB，R/T/A=0.001342934415/0.599213236006/0.399443832218，closure=2.639063e-9，direct max delta=6.561388e-9。分类 workstation_success；1873>1200，非 strong_workstation_success。
+
+2026-07-13 final regression：serial/MPI2/MPI4 focused 各 23 项通过；MPI4 首轮发现空 owner 的 PETSc collective 调用次数不一致，按 rank 统一空索引占位后精确复现与完整模块通过。full unit 157 passed/10 skipped；docs contracts 29 passed；benchmark checker 150/150；Ruff、compileall、JSON/CSV/UTF8、diff check 通过。
+
+2026-07-14 Review V1 P0：不重跑 h5/h3/h2；从原重型 JSON 恢复 `bfb6586e` tracked-dirty provenance、完整命令/环境与 SHA-256。Case060 升级为 203/203 数值 Gate，三份 records 加入 manifest；normal checker 连续两次生成 summary/report 哈希稳定。统一最终身份为 Task27-derived `compact physical-slab low-memory experimental profile`，p/h solver negative；reported factor nnz 不能证明 ILU0 compression，factor-only 只验证 PETSc 3.24.0 complex build。
+
+2026-07-14 Review V1 regression：Ruff、compileall、JSON 757/CSV 354 parse、diff check 通过；docs/preset/benchmark/retrospective contracts 32/32；serial/MPI2/MPI4 focused 各 23 项/每 rank 通过；full discovery 157 passed/10 skipped。未触碰 `papers/` 与 Task023 raw runs。
+
+2026-07-14 Review V2 R2：`hcurl_multilevel.py` 标记 research-only；公共 `__all__` 仅保留 active DoF、nonmatching transfer/cache/validation 与 condensed Galerkin。失败的 Jacobi、p/h multilevel 和 Woodbury candidates 只由 Task030 research runner/tests 直接导入，普通 `src.solvers` 不导出。
+
+2026-07-14 Review V2 clean h5：final implementation commit=`5b81359daee0874793c44b019d9c914b334db483`，tracked source clean，host SHA attestation 与容器 HEAD 一致；855 iterations，reported/condensed/full=`9.924905370e-7/9.924905377e-7/9.924905377e-7`，peak incl R/T/A=1.687652588 GB，solve/total=85.204/109.166 s；heavy SHA-256=`2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3`。
+
+2026-07-14 Review V2 clean h3：同一 final implementation commit 和 clean attestation；962 iterations，reported/condensed/full=`9.903890492e-7/9.903890492e-7/9.903890492e-7`，peak incl R/T/A=3.792911530 GB，solve/total=407.027/453.373 s；h3 同时通过 3.8 GB absolute Gate 和 25.37% relative reduction Gate；heavy SHA-256=`48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`。
+
+2026-07-14 Review V2 h2：按审查不重跑。原 record 保留 tracked-dirty provenance、exact command/timestamp 与 SHA-256，并明确标记 `reviewed_historical_dirty_worktree_reference`；checker 通过显式 exemption 验证其与 clean h5/h3 的 solver/physics identity。
+
+2026-07-14 Review V2 final regression：Ruff/compileall 通过；serial focused 47/47；MPI2/MPI4 targeted 每个 rank 27/27；full discovery 161 passed/10 skipped；documentation/retrospective 19/19；benchmark 203/203；normal regeneration 两次 hash 稳定；JSON 757/CSV 354 parse 通过；diff check 无 whitespace error。ordinary default 未改变，Task31 未启动，等待 Task030 final review 与用户 selective-merge 许可。
