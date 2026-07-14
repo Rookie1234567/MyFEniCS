@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import resource
 import shlex
@@ -287,6 +288,10 @@ def _parse_args() -> argparse.Namespace:
         "--container-digest",
         default="sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
     )
+    parser.add_argument(
+        "--host-environment-id",
+        default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
+    )
     parser.add_argument("--requested-modes", type=int, default=2)
     return parser.parse_args()
 
@@ -345,6 +350,8 @@ def main() -> None:
                 "mpi_size": comm.size,
                 "container_image": args.container_image,
                 "container_digest": args.container_digest,
+                "host_environment_id": args.host_environment_id,
+                "provenance": "clean_task032_phase2_qep",
                 "eigen_backend": "SLEPc.PEP/TOAR",
                 "full_eigenvector_gather": False,
             },
