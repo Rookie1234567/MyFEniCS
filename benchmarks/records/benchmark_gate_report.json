@@ -1,5 +1,5 @@
 {
-  "checkout_commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+  "checkout_commit": "8ec030c3fee0cbcf17d9fe1b1ff77c4034b8b442",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
@@ -714,7 +714,7 @@
     {
       "name": "record_commit_consistent:task031_compact_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -747,7 +747,7 @@
     {
       "name": "record_commit_consistent:task031_compact_h3",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -780,7 +780,7 @@
     {
       "name": "record_commit_consistent:task031_compact_h2",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -1929,7 +1929,7 @@
     {
       "name": "task031_source_commit_relation:task031_compact_h5",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -2039,7 +2039,7 @@
     {
       "name": "task031_source_commit_relation:task031_compact_h3",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
@@ -2149,7 +2149,7 @@
     {
       "name": "task031_source_commit_relation:task031_compact_h2",
       "passed": true,
-      "observed": "exact_checkout",
+      "observed": "checkout_ancestor",
       "expected": [
         "checkout_ancestor",
         "checkout_unavailable_sha_valid",
