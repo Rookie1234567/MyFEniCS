@@ -61,16 +61,31 @@ def _git_output(*args: str) -> str | None:
 
 def _runtime_metadata(command: str) -> dict[str, Any]:
     dirty_override = os.environ.get("BENCHMARK_GIT_DIRTY")
+    commit_sha = os.environ.get("BENCHMARK_COMMIT_SHA") or _git_output(
+        "rev-parse", "HEAD"
+    )
+    branch = os.environ.get("BENCHMARK_BRANCH") or _git_output(
+        "branch", "--show-current"
+    )
+    full_status = _git_output("status", "--short")
+    tracked_status = _git_output("status", "--short", "--untracked-files=no")
+    if (
+        commit_sha is None
+        or branch is None
+        or full_status is None
+        or tracked_status is None
+    ):
+        raise RuntimeError("cannot verify benchmark source identity and cleanliness")
     return {
-        "commit_sha": os.environ.get("BENCHMARK_COMMIT_SHA")
-        or _git_output("rev-parse", "HEAD"),
-        "branch": os.environ.get("BENCHMARK_BRANCH")
-        or _git_output("branch", "--show-current"),
+        "commit_sha": commit_sha,
+        "branch": branch,
         "git_dirty": (
             dirty_override.lower() in {"1", "true", "yes"}
             if dirty_override is not None
-            else bool(_git_output("status", "--short"))
+            else bool(full_status)
         ),
+        "tracked_source_dirty": bool(tracked_status),
+        "tracked_source_verification": "git_status_untracked_files_no",
         "command": command,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
