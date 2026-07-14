@@ -26,6 +26,7 @@
 - [Phase 3 mode classification walkthrough](../../notes/reference/code_walkthrough/43_task032_mode_classification.md)
 - [Phase 3 clean MPI4 mode-basis record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json)
 - [Phase 4 stable propagation walkthrough](../../notes/reference/code_walkthrough/44_task032_stable_propagation.md)
+- [Phase 4 clean MPI4 propagation record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -85,5 +86,7 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase4_propagation --allow-dirty-r
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
 ```
 
-当前 Phase 4 的实现、真实 Phase 3 air basis 集成测试和 MPI4 research runner
-均通过；clean formal record 等待本阶段实现提交后生成。接口 coupling 尚未开始。
+Phase 4 已在 clean source `9206e9c964db387448551cdefdc88081ef705441`
+完成正式 MPI4 record；100 nm two-port、无反射、被动衰减、composition、
+reciprocity 和强衰减负对照均通过，Case080 checker 为 `286/286 passed`。
+当前下一步是 Phase 5 匹配接口 trace coupling。

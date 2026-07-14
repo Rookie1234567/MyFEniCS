@@ -1,0 +1,381 @@
+{
+  "benchmark_id": "case080_task032_phase4_stable_propagation",
+  "cases": [
+    {
+      "backward_source": "phase3_negative_basis",
+      "case_id": "air_p2_h10",
+      "coefficient_power_gain": 0.9999999999999636,
+      "composition_lengths_nm": [
+        37.0,
+        63.0
+      ],
+      "composition_max_relative_error": 9.420554752102975e-16,
+      "input_coefficient_power": 4.0,
+      "output_coefficient_power": 3.9999999999998543,
+      "phase3_record_h_nm": 10.0,
+      "propagation": {
+        "backward": {
+          "beta_per_nm": [
+            [
+              -0.08508577988471973,
+              -3.752061258718649e-16
+            ],
+            [
+              -0.08508577988472033,
+              -4.397049401378739e-18
+            ]
+          ],
+          "factors": [
+            [
+              -0.6088390834835685,
+              0.7932937478783085
+            ],
+            [
+              -0.6088390834836376,
+              0.7932937478783022
+            ]
+          ],
+          "log_magnitudes": [
+            -3.752061258718649e-14,
+            -4.3970494013787393e-16
+          ],
+          "phase_advances_rad": [
+            8.508577988471973,
+            8.508577988472032
+          ],
+          "source_indices": [
+            2,
+            3
+          ]
+        },
+        "forward": {
+          "beta_per_nm": [
+            [
+              0.08508577988471974,
+              3.4759120072516376e-16
+            ],
+            [
+              0.08508577988472031,
+              2.8451496126568165e-18
+            ]
+          ],
+          "factors": [
+            [
+              -0.6088390834835702,
+              0.7932937478783108
+            ],
+            [
+              -0.6088390834836362,
+              0.7932937478783034
+            ]
+          ],
+          "log_magnitudes": [
+            -3.4759120072516375e-14,
+            -2.8451496126568167e-16
+          ],
+          "phase_advances_rad": [
+            8.508577988471973,
+            8.50857798847203
+          ],
+          "source_indices": [
+            0,
+            1
+          ]
+        },
+        "growing_inverse_factors_present": false,
+        "length_nm": 100.0,
+        "local_reflection_terms_present": false,
+        "max_factor_magnitude": 0.9999999999999997,
+        "passivity_valid": true,
+        "representation": "two_port_diagonal_scattering",
+        "stored_complex_scalars": 4
+      },
+      "reciprocity": {
+        "max_relative_beta_error": 3.632327207037806e-16,
+        "max_relative_factor_error": 2.7755575615629876e-15,
+        "pair_count": 2,
+        "passivity_valid": true,
+        "reciprocity_valid": true,
+        "unmatched_backward": [],
+        "unmatched_forward": []
+      },
+      "reflection_norm": 0.0
+    },
+    {
+      "backward_source": "reciprocal_mirror_of_phase3_positive_beta",
+      "case_id": "lossy_homogeneous_p2_h10",
+      "coefficient_power_gain": 0.38421813173298414,
+      "composition_lengths_nm": [
+        37.0,
+        63.0
+      ],
+      "composition_max_relative_error": 8.820174417611801e-16,
+      "input_coefficient_power": 4.0,
+      "output_coefficient_power": 1.5368725269319365,
+      "phase3_record_h_nm": 10.0,
+      "propagation": {
+        "backward": {
+          "beta_per_nm": [
+            [
+              -0.08264213354315018,
+              -0.004782724181432302
+            ],
+            [
+              -0.08264213354315134,
+              -0.004782724181433163
+            ]
+          ],
+          "factors": [
+            [
+              -0.24721103505091407,
+              0.5684231134305439
+            ],
+            [
+              -0.24721103505095843,
+              0.5684231134304664
+            ]
+          ],
+          "log_magnitudes": [
+            -0.4782724181432302,
+            -0.47827241814331634
+          ],
+          "phase_advances_rad": [
+            8.264213354315018,
+            8.264213354315133
+          ],
+          "source_indices": [
+            2,
+            3
+          ]
+        },
+        "forward": {
+          "beta_per_nm": [
+            [
+              0.08264213354315018,
+              0.004782724181432302
+            ],
+            [
+              0.08264213354315134,
+              0.004782724181433163
+            ]
+          ],
+          "factors": [
+            [
+              -0.24721103505091407,
+              0.5684231134305439
+            ],
+            [
+              -0.24721103505095843,
+              0.5684231134304664
+            ]
+          ],
+          "log_magnitudes": [
+            -0.4782724181432302,
+            -0.47827241814331634
+          ],
+          "phase_advances_rad": [
+            8.264213354315018,
+            8.264213354315133
+          ],
+          "source_indices": [
+            0,
+            1
+          ]
+        },
+        "growing_inverse_factors_present": false,
+        "length_nm": 100.0,
+        "local_reflection_terms_present": false,
+        "max_factor_magnitude": 0.6198533146906752,
+        "passivity_valid": true,
+        "representation": "two_port_diagonal_scattering",
+        "stored_complex_scalars": 4
+      },
+      "reciprocity": {
+        "max_relative_beta_error": 0.0,
+        "max_relative_factor_error": 0.0,
+        "pair_count": 2,
+        "passivity_valid": true,
+        "reciprocity_valid": true,
+        "unmatched_backward": [],
+        "unmatched_forward": []
+      },
+      "reflection_norm": 0.0
+    },
+    {
+      "backward_source": "reciprocal_mirror_of_phase3_positive_beta",
+      "case_id": "stage4_xy_p2_h10",
+      "coefficient_power_gain": 0.7267945633384758,
+      "composition_lengths_nm": [
+        37.0,
+        63.0
+      ],
+      "composition_max_relative_error": 2.6044479434879677e-16,
+      "input_coefficient_power": 4.0,
+      "output_coefficient_power": 2.9071782533539032,
+      "phase3_record_h_nm": 10.0,
+      "propagation": {
+        "backward": {
+          "beta_per_nm": [
+            [
+              -0.0842319232106747,
+              -0.0015959879439832146
+            ],
+            [
+              -0.08423253366431765,
+              -0.0015951263207352252
+            ]
+          ],
+          "factors": [
+            [
+              -0.45946198781112874,
+              0.7180714607795302
+            ],
+            [
+              -0.4595454156845093,
+              0.7181052823722305
+            ]
+          ],
+          "log_magnitudes": [
+            -0.15959879439832148,
+            -0.1595126320735225
+          ],
+          "phase_advances_rad": [
+            8.42319232106747,
+            8.423253366431766
+          ],
+          "source_indices": [
+            2,
+            3
+          ]
+        },
+        "forward": {
+          "beta_per_nm": [
+            [
+              0.0842319232106747,
+              0.0015959879439832146
+            ],
+            [
+              0.08423253366431765,
+              0.0015951263207352252
+            ]
+          ],
+          "factors": [
+            [
+              -0.45946198781112874,
+              0.7180714607795302
+            ],
+            [
+              -0.4595454156845093,
+              0.7181052823722305
+            ]
+          ],
+          "log_magnitudes": [
+            -0.15959879439832148,
+            -0.1595126320735225
+          ],
+          "phase_advances_rad": [
+            8.42319232106747,
+            8.423253366431766
+          ],
+          "source_indices": [
+            0,
+            1
+          ]
+        },
+        "growing_inverse_factors_present": false,
+        "length_nm": 100.0,
+        "local_reflection_terms_present": false,
+        "max_factor_magnitude": 0.8525591977379338,
+        "passivity_valid": true,
+        "representation": "two_port_diagonal_scattering",
+        "stored_complex_scalars": 4
+      },
+      "reciprocity": {
+        "max_relative_beta_error": 0.0,
+        "max_relative_factor_error": 0.0,
+        "pair_count": 2,
+        "passivity_valid": true,
+        "reciprocity_valid": true,
+        "unmatched_backward": [],
+        "unmatched_forward": []
+      },
+      "reflection_norm": 0.0
+    }
+  ],
+  "controls": {
+    "all_outputs_finite": true,
+    "ambiguous_branch_rejected": true,
+    "backward_factor": [
+      0.0,
+      -0.0
+    ],
+    "evanescent_beta_per_nm": [
+      0.0,
+      10.0
+    ],
+    "forward_factor": [
+      0.0,
+      0.0
+    ],
+    "growing_branch_rejected": true,
+    "underflow_without_overflow": true
+  },
+  "elapsed_seconds_max_rank": 0.01255125999887241,
+  "gates": {
+    "all_cases_composition_le_1e-12": true,
+    "all_cases_passive_without_growing_inverse": true,
+    "all_cases_reciprocity_diagnostic_pass": true,
+    "all_cases_reflection_free": true,
+    "all_cases_use_100_nm_two_port_scattering": true,
+    "growing_and_ambiguous_branches_fail_closed": true,
+    "mpi_ranks_agree_and_storage_is_linear": true,
+    "strong_evanescent_underflows_without_overflow": true
+  },
+  "historical_peak_rss_by_rank": [
+    {
+      "historical_peak_rss_mb": 86.92578125,
+      "rank": 0
+    },
+    {
+      "historical_peak_rss_mb": 86.6640625,
+      "rank": 1
+    },
+    {
+      "historical_peak_rss_mb": 86.41015625,
+      "rank": 2
+    },
+    {
+      "historical_peak_rss_mb": 86.80859375,
+      "rank": 3
+    }
+  ],
+  "memory_note": "Per-rank process-lifetime historical peaks are not simultaneous. Only small modal coefficient arrays are replicated.",
+  "metadata": {
+    "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+    "coefficient_distribution": "small_mode_count_replicated",
+    "command": "python -m benchmarks.run_task032_phase4_propagation --verified-clean-sha 9206e9c964db387448551cdefdc88081ef705441 --length-nm 100 --first-length-nm 37 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json",
+    "commit_sha": "9206e9c964db387448551cdefdc88081ef705441",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "container_image": "myfenics-stage4:task28",
+    "full_field_vector_gather": false,
+    "git_dirty": false,
+    "host_environment_id": "SK-20260601OSDE",
+    "mpi_size": 4,
+    "provenance": "clean_task032_phase4_stable_propagation",
+    "timestamp_utc": "2026-07-14T13:10:32.728182+00:00",
+    "tracked_source_dirty": false,
+    "verification": "host_git_clean_attestation",
+    "verified_clean_sha": "9206e9c964db387448551cdefdc88081ef705441"
+  },
+  "mpi_rank_signatures": [
+    "9bfc63b560ec9529cb04194a9e3ea52e89c9b10c839bff4de610649edc8f1565",
+    "9bfc63b560ec9529cb04194a9e3ea52e89c9b10c839bff4de610649edc8f1565",
+    "9bfc63b560ec9529cb04194a9e3ea52e89c9b10c839bff4de610649edc8f1565",
+    "9bfc63b560ec9529cb04194a9e3ea52e89c9b10c839bff4de610649edc8f1565"
+  ],
+  "phase3_record": "/work/benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json",
+  "phase3_record_sha256": "10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8",
+  "schema_version": 1,
+  "status": "pass",
+  "timestamp_utc": "2026-07-14T13:10:32.728182+00:00"
+}

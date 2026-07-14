@@ -40,7 +40,7 @@ Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0/1/2/3 complete; Phase 4 implementation/MPI4 research pass, clean record pending
+Task032 status = Phase 0/1/2/3/4 complete; Phase 5 matching-interface trace coupling next
 ```
 
 ## 1.1 2026-07-14 最新更新
@@ -57,7 +57,7 @@ Phase 2 已实现匹配 Stage4 x/y 轴的 quadrilateral 截面、`N1curl(p2) x L
 
 Phase 3 已实现由混合 E 场重构阻抗缩放 H、z 向 Poynting 分类、near-zero flux 的 `Im(beta)` 衰减分支、显式伴随 QEP 左模、`Q'(beta)` left/right 双正交、近简并 block inverse、正反向 identity 和相邻角度/模式数变化的 overlap tracking。全量 serial suite 为 190 tests/10 skipped；Phase 3 serial 4/4 与精简 MPI4 4 项（每 rank 2 skip）通过。clean source `72dca66...` 的正式 MPI4 h10 record 对 air/lossy/current-patterned、air 正反配对和 80°→79.8° tracking 的 9 个 runner Gate 全通过。双正交误差 air/lossy 约 `1e-15`、patterned `2.46e-10`，左右残差约 `1e-16–1e-15`，principal angle 最大 `0.005918 rad`，完整向量不聚集。Case080 checker 增至 `282/282 passed`。h10 仅是分类合同；Phase 4 尚未开始。
 
-Phase 4 已实现 O(M) 存储的 two-port 对角传播：incoming 为 bottom-forward/top-backward，outgoing 为 bottom-backward/top-forward；正反方向分别使用 `+L/-L` 坐标位移，禁止 growing inverse。纯传播 6 项合同、真实 Phase 3 air basis 集成和 MPI4 research runner 的 8 个 Gate 均通过；覆盖 100 nm 无反射、lossy/evanescent 被动衰减、37+63 nm composition、reciprocity 负对照和四 rank 一致性。clean formal record 待实现提交后生成，Phase 5 interface coupling 未开始。
+Phase 4 已实现 O(M) 存储的 two-port 对角传播：incoming 为 bottom-forward/top-backward，outgoing 为 bottom-backward/top-forward；正反方向分别使用 `+L/-L` 坐标位移，禁止 growing inverse。纯传播 6 项合同、真实 Phase 3 air basis 集成和 MPI4 runner 的 8 个 Gate 均通过；覆盖 100 nm 无反射、lossy/evanescent 被动衰减、37+63 nm composition、reciprocity 负对照和四 rank 一致性。clean source `9206e9c...` 的正式 record 固定 exact Phase 3 record hash；最大 composition 误差 `9.42e-16`，air reciprocity beta/factor 误差 `3.63e-16/2.78e-15`，三个 case reflection norm 为 0。Case080 checker 增至 `286/286 passed`，Phase 5 interface coupling 尚未开始。
 
 Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
 

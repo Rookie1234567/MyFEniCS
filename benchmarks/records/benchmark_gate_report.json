@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "72dca66b70515bcf6ccef239005afa43028df72b",
+  "checkout_commit": "9206e9c964db387448551cdefdc88081ef705441",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 282,
-  "total_count": 282,
+  "passed_count": 286,
+  "total_count": 286,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -182,7 +182,8 @@
         "expected": false,
         "gates": false,
         "phase2_gates": false,
-        "phase3_gates": false
+        "phase3_gates": false,
+        "phase4_gates": false
       },
       "expected": false,
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline"
@@ -434,7 +435,7 @@
       "passed": true,
       "observed": {
         "missing": [],
-        "relation": "exact_checkout",
+        "relation": "checkout_ancestor",
         "metadata": {
           "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
           "command": "python -m benchmarks.run_task032_phase3_modes --verified-clean-sha 72dca66b70515bcf6ccef239005afa43028df72b --basis-h-nm 10 --tracking-h-nm 10 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json",
@@ -632,6 +633,154 @@
         "all_runner_gates": true
       },
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
+    },
+    {
+      "name": "task032_phase4_identity_and_phase3_source",
+      "passed": true,
+      "observed": {
+        "missing": [],
+        "relation": "exact_checkout",
+        "metadata": {
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "coefficient_distribution": "small_mode_count_replicated",
+          "command": "python -m benchmarks.run_task032_phase4_propagation --verified-clean-sha 9206e9c964db387448551cdefdc88081ef705441 --length-nm 100 --first-length-nm 37 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json",
+          "commit_sha": "9206e9c964db387448551cdefdc88081ef705441",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "container_image": "myfenics-stage4:task28",
+          "full_field_vector_gather": false,
+          "git_dirty": false,
+          "host_environment_id": "SK-20260601OSDE",
+          "mpi_size": 4,
+          "provenance": "clean_task032_phase4_stable_propagation",
+          "timestamp_utc": "2026-07-14T13:10:32.728182+00:00",
+          "tracked_source_dirty": false,
+          "verification": "host_git_clean_attestation",
+          "verified_clean_sha": "9206e9c964db387448551cdefdc88081ef705441"
+        },
+        "phase3_record_sha256": "10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8"
+      },
+      "expected": {
+        "commit": "9206e9c964db387448551cdefdc88081ef705441",
+        "mpi_size": 4,
+        "phase3_record_sha256": "10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8",
+        "full_field_vector_gather": false
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json"
+    },
+    {
+      "name": "task032_phase4_two_port_case_and_linear_storage_contract",
+      "passed": true,
+      "observed": {
+        "case_ids": [
+          "air_p2_h10",
+          "lossy_homogeneous_p2_h10",
+          "stage4_xy_p2_h10"
+        ],
+        "cases": [
+          {
+            "case_id": "air_p2_h10",
+            "length_nm": 100.0,
+            "representation": "two_port_diagonal_scattering",
+            "backward_source": "phase3_negative_basis",
+            "stored_complex_scalars": 4,
+            "forward_count": 2,
+            "backward_count": 2
+          },
+          {
+            "case_id": "lossy_homogeneous_p2_h10",
+            "length_nm": 100.0,
+            "representation": "two_port_diagonal_scattering",
+            "backward_source": "reciprocal_mirror_of_phase3_positive_beta",
+            "stored_complex_scalars": 4,
+            "forward_count": 2,
+            "backward_count": 2
+          },
+          {
+            "case_id": "stage4_xy_p2_h10",
+            "length_nm": 100.0,
+            "representation": "two_port_diagonal_scattering",
+            "backward_source": "reciprocal_mirror_of_phase3_positive_beta",
+            "stored_complex_scalars": 4,
+            "forward_count": 2,
+            "backward_count": 2
+          }
+        ]
+      },
+      "expected": {
+        "case_ids": [
+          "air_p2_h10",
+          "lossy_homogeneous_p2_h10",
+          "stage4_xy_p2_h10"
+        ],
+        "length_nm": 100.0,
+        "representation": "two_port_diagonal_scattering",
+        "storage": "one complex factor per directed mode"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json"
+    },
+    {
+      "name": "task032_phase4_reflection_passivity_composition_reciprocity",
+      "passed": true,
+      "observed": {
+        "max_reflection_norm": 0.0,
+        "max_factor_magnitude": 0.9999999999999997,
+        "max_coefficient_power_gain": 0.9999999999999636,
+        "max_composition_relative_error": 9.420554752102975e-16,
+        "max_reciprocity_beta_relative_error": 3.632327207037806e-16,
+        "max_reciprocity_factor_relative_error": 2.7755575615629876e-15
+      },
+      "expected": {
+        "max_reflection_norm": 1e-15,
+        "max_factor_magnitude": 1.000000000001,
+        "max_coefficient_power_gain": 1.000000000001,
+        "max_composition_relative_error": 1e-12,
+        "reciprocity": "paired beta and directed factors within tolerance"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json"
+    },
+    {
+      "name": "task032_phase4_evanescent_negative_controls_and_mpi_agreement",
+      "passed": true,
+      "observed": {
+        "controls": {
+          "all_outputs_finite": true,
+          "ambiguous_branch_rejected": true,
+          "backward_factor": [
+            0.0,
+            -0.0
+          ],
+          "evanescent_beta_per_nm": [
+            0.0,
+            10.0
+          ],
+          "forward_factor": [
+            0.0,
+            0.0
+          ],
+          "growing_branch_rejected": true,
+          "underflow_without_overflow": true
+        },
+        "runner_gates": {
+          "all_cases_composition_le_1e-12": true,
+          "all_cases_passive_without_growing_inverse": true,
+          "all_cases_reciprocity_diagnostic_pass": true,
+          "all_cases_reflection_free": true,
+          "all_cases_use_100_nm_two_port_scattering": true,
+          "growing_and_ambiguous_branches_fail_closed": true,
+          "mpi_ranks_agree_and_storage_is_linear": true,
+          "strong_evanescent_underflows_without_overflow": true
+        },
+        "rank_signature_count": 4,
+        "unique_rank_signatures": 1
+      },
+      "expected": {
+        "strong_evanescent": "finite underflow without overflow",
+        "growing_and_ambiguous": "rejected",
+        "all_runner_gates": true,
+        "rank_signature_count": 4,
+        "unique_rank_signatures": 1
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json"
     },
     {
       "name": "task032_phase1_identity:h5",

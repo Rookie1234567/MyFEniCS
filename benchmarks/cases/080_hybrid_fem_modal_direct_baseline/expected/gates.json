@@ -63,6 +63,35 @@
     "required_constraint_communication_scope": "periodic_boundary_dofs_only",
     "ordinary_default_changed": false
   },
+  "phase4": {
+    "required_schema": 1,
+    "required_commit": "9206e9c964db387448551cdefdc88081ef705441",
+    "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "required_mpi_size": 4,
+    "required_coefficient_distribution": "small_mode_count_replicated",
+    "required_phase3_record_sha256": "10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8",
+    "required_case_ids": [
+      "air_p2_h10",
+      "lossy_homogeneous_p2_h10",
+      "stage4_xy_p2_h10"
+    ],
+    "required_length_nm": 100.0,
+    "required_representation": "two_port_diagonal_scattering",
+    "required_composition_lengths_nm": [37.0, 63.0],
+    "required_backward_sources": {
+      "air_p2_h10": "phase3_negative_basis",
+      "lossy_homogeneous_p2_h10": "reciprocal_mirror_of_phase3_positive_beta",
+      "stage4_xy_p2_h10": "reciprocal_mirror_of_phase3_positive_beta"
+    },
+    "max_reflection_norm": 1e-15,
+    "max_factor_magnitude": 1.000000000001,
+    "max_coefficient_power_gain": 1.000000000001,
+    "max_composition_relative_error": 1e-12,
+    "max_reciprocity_beta_relative_error": 1e-8,
+    "max_reciprocity_factor_relative_error": 1e-8,
+    "required_mpi_rank_signature_count": 4,
+    "ordinary_default_changed": false
+  },
   "future_hybrid": {
     "full_residual": "required before official RTA",
     "interface_continuity": "required",

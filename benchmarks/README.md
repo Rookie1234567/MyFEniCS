@@ -12,7 +12,7 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `scripts/run_level3_iterative.sh` | p2 h5/h3/h2 workstation完整求解并运行checker |
 | `configs/workstation_p2.json` | canonical profile唯一默认来源；CLI只做override |
 | `expected/gates.json` | 残差、迭代比、RTA、RSS阈值 |
-| `check_benchmarks.py` | 从 manifest/records 重算当前 Gate，含 Task030 Case060、Task031 Case070 与 Task032 Case080 Phase 1/2/3 的 provenance、数值、RTA、参考场 schema/hash、QEP/ownership、双正交和 tracking；当前 `282/282` |
+| `check_benchmarks.py` | 从 manifest/records 重算当前 Gate，含 Task030 Case060、Task031 Case070 与 Task032 Case080 Phase 1/2/3/4 的 provenance、数值、RTA、参考场 schema/hash、QEP/ownership、双正交、tracking 和稳定传播；当前 `286/286` |
 | `run_direct_memory_forensics.py` | Task029 h5/h3 direct worker + 0.25 s simultaneous RSS/cgroup/swap/CPU/thread sampler；支持显式 OpenBLAS threads 与 CPU affinity；h2 默认锁定并要求 G1–G10 |
 | `run_task031_memory_forensics.py` | Task031 iterative external sampler；live-rank simultaneous RSS/cgroup/swap/stage、clean SHA、h2 lock 与 9.5/11 GiB watchdog |
 | `run_task032_phase2_qep.py` | Task032 Phase 2：air 网格收敛、homogeneous lossy、当前 epsilon(x,y)、±beta、残差、L2 归一化与分布式 ownership；完整向量不聚集 |

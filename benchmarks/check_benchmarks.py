@@ -243,10 +243,12 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "run.sh",
             "run_phase2.sh",
             "run_phase3.sh",
+            "run_phase4.sh",
             "records/full3d_h5_reference.json",
             "records/full3d_h3_reference.json",
             "records/qep_phase2.json",
             "records/modes_phase3.json",
+            "records/propagation_phase4.json",
         ),
     }
     cases_root = BENCHMARKS / "cases"
@@ -309,6 +311,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     case080_gates = case080_gate_bundle["phase1"]
     case080_phase2_gates = case080_gate_bundle["phase2"]
     case080_phase3_gates = case080_gate_bundle["phase3"]
+    case080_phase4_gates = case080_gate_bundle["phase4"]
     gates.append(
         Gate(
             "task032_phase1_ordinary_default_unchanged",
@@ -316,17 +319,15 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             and case080_expected.get("ordinary_default_changed") is False
             and case080_gates.get("ordinary_default_changed") is False
             and case080_phase2_gates.get("ordinary_default_changed") is False
-            and case080_phase3_gates.get("ordinary_default_changed") is False,
+            and case080_phase3_gates.get("ordinary_default_changed") is False
+            and case080_phase4_gates.get("ordinary_default_changed") is False,
             {
                 "config": case080_config.get("ordinary_default_changed"),
                 "expected": case080_expected.get("ordinary_default_changed"),
                 "gates": case080_gates.get("ordinary_default_changed"),
-                "phase2_gates": case080_phase2_gates.get(
-                    "ordinary_default_changed"
-                ),
-                "phase3_gates": case080_phase3_gates.get(
-                    "ordinary_default_changed"
-                ),
+                "phase2_gates": case080_phase2_gates.get("ordinary_default_changed"),
+                "phase3_gates": case080_phase3_gates.get("ordinary_default_changed"),
+                "phase4_gates": case080_phase4_gates.get("ordinary_default_changed"),
             },
             False,
             "cases/080_hybrid_fem_modal_direct_baseline",
@@ -352,12 +353,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         and phase2_record.get("schema_version")
         == case080_phase2_gates["required_schema"]
         and phase2_record.get("status") == "pass"
-        and phase2_metadata.get("commit_sha")
-        == case080_phase2_gates["required_commit"]
+        and phase2_metadata.get("commit_sha") == case080_phase2_gates["required_commit"]
         and phase2_metadata.get("container_digest")
         == case080_phase2_gates["required_container_digest"]
-        and phase2_metadata.get("mpi_size")
-        == case080_phase2_gates["required_mpi_size"]
+        and phase2_metadata.get("mpi_size") == case080_phase2_gates["required_mpi_size"]
         and phase2_metadata.get("eigen_backend")
         == case080_phase2_gates["required_backend"]
         and phase2_metadata.get("git_dirty") is False
@@ -382,24 +381,20 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     phase2_cases = phase2_record.get("cases", [])
     phase2_by_id = {case.get("case_id"): case for case in phase2_cases}
     expected_phase2_ids = case080_phase2_gates["required_case_ids"]
-    phase2_case_contract_ok = (
-        set(phase2_by_id) == set(expected_phase2_ids)
-        and all(
-            case.get("scalar_dtype") == case080_phase2_gates["required_dtype"]
-            and case.get("formulation")
-            == "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
-            and case.get("polynomial_order") == 2
-            and case.get("leading_coefficient_singular_by_design") is True
-            and case.get("constraint_communication_scope")
-            == case080_phase2_gates["required_constraint_communication_scope"]
-            and int(case.get("global_slave_count", -1))
-            == int(case.get("full_shape", [0])[0])
-            - int(case.get("reduced_shape", [0])[0])
-            and int(case.get("global_slave_count", -1))
-            == int(case.get("transverse_constraint_count_global", -2))
-            + int(case.get("longitudinal_constraint_count_global", -3))
-            for case in phase2_cases
-        )
+    phase2_case_contract_ok = set(phase2_by_id) == set(expected_phase2_ids) and all(
+        case.get("scalar_dtype") == case080_phase2_gates["required_dtype"]
+        and case.get("formulation")
+        == "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
+        and case.get("polynomial_order") == 2
+        and case.get("leading_coefficient_singular_by_design") is True
+        and case.get("constraint_communication_scope")
+        == case080_phase2_gates["required_constraint_communication_scope"]
+        and int(case.get("global_slave_count", -1))
+        == int(case.get("full_shape", [0])[0]) - int(case.get("reduced_shape", [0])[0])
+        and int(case.get("global_slave_count", -1))
+        == int(case.get("transverse_constraint_count_global", -2))
+        + int(case.get("longitudinal_constraint_count_global", -3))
+        for case in phase2_cases
     )
     gates.append(
         Gate(
@@ -446,10 +441,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     phase2_numeric_ok = (
         max_polynomial_residual
         <= float(case080_phase2_gates["max_polynomial_relative_residual"])
-        and max_norm_error
-        <= float(case080_phase2_gates["max_electric_l2_norm_error"])
-        and max_probe_residual
-        <= float(case080_phase2_gates["max_probe_residual"])
+        and max_norm_error <= float(case080_phase2_gates["max_electric_l2_norm_error"])
+        and max_probe_residual <= float(case080_phase2_gates["max_probe_residual"])
         and max_pair_coordinate_error
         <= float(case080_phase2_gates["max_pair_coordinate_error"])
     )
@@ -511,7 +504,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         )
     )
 
-    air_cases = [phase2_by_id[key] for key in ("air_p2_h5", "air_p2_h3", "air_p2_h2", "air_p2_h1p5")]
+    air_cases = [
+        phase2_by_id[key]
+        for key in ("air_p2_h5", "air_p2_h3", "air_p2_h2", "air_p2_h1p5")
+    ]
     air_errors = [float(case["positive_relative_beta_error"]) for case in air_cases]
     lossy_case = phase2_by_id["lossy_homogeneous_p2_h2"]
     phase2_analytic_ok = (
@@ -531,7 +527,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             {
                 "air_relative_errors_h5_h3_h2_h1p5": air_errors,
                 "lossy_h2_relative_error": lossy_case["positive_relative_beta_error"],
-                "lossy_h2_beta": lossy_case["positive_target"]["selected"]["beta_per_nm"],
+                "lossy_h2_beta": lossy_case["positive_target"]["selected"][
+                    "beta_per_nm"
+                ],
             },
             {
                 "air_strictly_decreasing": True,
@@ -588,12 +586,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         and phase3_record.get("schema_version")
         == case080_phase3_gates["required_schema"]
         and phase3_record.get("status") == "pass"
-        and phase3_metadata.get("commit_sha")
-        == case080_phase3_gates["required_commit"]
+        and phase3_metadata.get("commit_sha") == case080_phase3_gates["required_commit"]
         and phase3_metadata.get("container_digest")
         == case080_phase3_gates["required_container_digest"]
-        and phase3_metadata.get("mpi_size")
-        == case080_phase3_gates["required_mpi_size"]
+        and phase3_metadata.get("mpi_size") == case080_phase3_gates["required_mpi_size"]
         and phase3_metadata.get("eigen_backend")
         == case080_phase3_gates["required_backend"]
         and phase3_metadata.get("git_dirty") is False
@@ -651,9 +647,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         and phase3_ownership_ok
         and all(
             case.get("constraint_communication_scope")
-            == case080_phase3_gates[
-                "required_constraint_communication_scope"
-            ]
+            == case080_phase3_gates["required_constraint_communication_scope"]
             for case in phase3_cases
         )
         and all(
@@ -683,9 +677,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "case_ids": case080_phase3_gates["required_case_ids"],
                 "mpi_size": case080_phase3_gates["required_mpi_size"],
                 "no_full_vector_gather": True,
-                "max_overlap_condition": case080_phase3_gates[
-                    "max_overlap_condition"
-                ],
+                "max_overlap_condition": case080_phase3_gates["max_overlap_condition"],
             },
             f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
         )
@@ -700,8 +692,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         for _, _, _, mode in phase3_modes
     )
     max_phase3_left_pair_error = max(
-        float(mode["left_pair_relative_error"])
-        for _, _, _, mode in phase3_modes
+        float(mode["left_pair_relative_error"]) for _, _, _, mode in phase3_modes
     )
     max_phase3_biorth_error = max(
         float(basis["max_biorthogonality_identity_error"])
@@ -713,20 +704,18 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     )
     phase3_numeric_ok = (
         max_phase3_right_residual
-        <= float(
-            case080_phase3_gates["max_right_polynomial_relative_residual"]
-        )
+        <= float(case080_phase3_gates["max_right_polynomial_relative_residual"])
         and max_phase3_left_residual
-        <= float(
-            case080_phase3_gates["max_left_polynomial_relative_residual"]
-        )
+        <= float(case080_phase3_gates["max_left_polynomial_relative_residual"])
         and max_phase3_left_pair_error
         <= float(case080_phase3_gates["max_left_pair_relative_error"])
         and max_phase3_biorth_error
         <= float(case080_phase3_gates["max_biorthogonality_identity_error"])
         and max_phase3_unit_flux_error
         <= float(case080_phase3_gates["max_unit_flux_error"])
-        and all(mode.get("passive_branch_valid") is True for _, _, _, mode in phase3_modes)
+        and all(
+            mode.get("passive_branch_valid") is True for _, _, _, mode in phase3_modes
+        )
     )
     gates.append(
         Gate(
@@ -756,9 +745,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "max_biorthogonality_identity_error": case080_phase3_gates[
                     "max_biorthogonality_identity_error"
                 ],
-                "max_unit_flux_error": case080_phase3_gates[
-                    "max_unit_flux_error"
-                ],
+                "max_unit_flux_error": case080_phase3_gates["max_unit_flux_error"],
             },
             f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
         )
@@ -769,8 +756,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     patterned_phase3 = phase3_by_id["stage4_xy_p2_h10"]
     phase3_pairs = air_phase3.get("reciprocal_pairs", [])
     max_phase3_reciprocal_error = max(
-        float(pair.get("relative_beta_error", float("inf")))
-        for pair in phase3_pairs
+        float(pair.get("relative_beta_error", float("inf"))) for pair in phase3_pairs
     )
     phase3_direction_ok = (
         len(phase3_pairs) >= 2
@@ -807,12 +793,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "max_reciprocal_error": max_phase3_reciprocal_error,
                 "pairs": phase3_pairs,
                 "air_positive_directions": [
-                    mode.get("direction")
-                    for mode in air_phase3["positive"]["modes"]
+                    mode.get("direction") for mode in air_phase3["positive"]["modes"]
                 ],
                 "air_negative_directions": [
-                    mode.get("direction")
-                    for mode in air_phase3["negative"]["modes"]
+                    mode.get("direction") for mode in air_phase3["negative"]["modes"]
                 ],
             },
             {
@@ -830,7 +814,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     phase3_tracking_matches = phase3_tracking.get("matches", [])
     phase3_tracking_subspaces = phase3_tracking.get("subspaces", [])
     min_phase3_tracking_overlap = min(
-        (float(match.get("overlap", float("-inf"))) for match in phase3_tracking_matches),
+        (
+            float(match.get("overlap", float("-inf")))
+            for match in phase3_tracking_matches
+        ),
         default=float("-inf"),
     )
     max_phase3_tracking_angle = max(
@@ -874,6 +861,238 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
         )
     )
+
+    phase4_relative = "records/propagation_phase4.json"
+    phase4_record = _load_json(case080 / phase4_relative)
+    phase4_metadata = phase4_record.get("metadata", {})
+    phase4_complete, phase4_missing = _metadata_complete(phase4_record)
+    phase4_relation = _commit_relation(
+        phase4_metadata.get("commit_sha"), phase4_metadata.get("provenance")
+    )
+    phase4_identity_ok = (
+        phase4_complete
+        and phase4_record.get("schema_version")
+        == case080_phase4_gates["required_schema"]
+        and phase4_record.get("status") == "pass"
+        and phase4_metadata.get("commit_sha") == case080_phase4_gates["required_commit"]
+        and phase4_metadata.get("container_digest")
+        == case080_phase4_gates["required_container_digest"]
+        and phase4_metadata.get("mpi_size") == case080_phase4_gates["required_mpi_size"]
+        and phase4_metadata.get("coefficient_distribution")
+        == case080_phase4_gates["required_coefficient_distribution"]
+        and phase4_metadata.get("git_dirty") is False
+        and phase4_metadata.get("tracked_source_dirty") is False
+        and phase4_metadata.get("full_field_vector_gather") is False
+        and phase4_record.get("phase3_record_sha256")
+        == case080_phase4_gates["required_phase3_record_sha256"]
+        and phase4_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_identity_and_phase3_source",
+            phase4_identity_ok,
+            {
+                "missing": phase4_missing,
+                "relation": phase4_relation,
+                "metadata": phase4_metadata,
+                "phase3_record_sha256": phase4_record.get("phase3_record_sha256"),
+            },
+            {
+                "commit": case080_phase4_gates["required_commit"],
+                "mpi_size": case080_phase4_gates["required_mpi_size"],
+                "phase3_record_sha256": case080_phase4_gates[
+                    "required_phase3_record_sha256"
+                ],
+                "full_field_vector_gather": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase4_cases = phase4_record.get("cases", [])
+    phase4_by_id = {case.get("case_id"): case for case in phase4_cases}
+    phase4_case_contract_ok = set(phase4_by_id) == set(
+        case080_phase4_gates["required_case_ids"]
+    ) and all(
+        float(case["propagation"].get("length_nm", float("nan")))
+        == float(case080_phase4_gates["required_length_nm"])
+        and case["propagation"].get("representation")
+        == case080_phase4_gates["required_representation"]
+        and case.get("composition_lengths_nm")
+        == case080_phase4_gates["required_composition_lengths_nm"]
+        and case.get("backward_source")
+        == case080_phase4_gates["required_backward_sources"].get(case.get("case_id"))
+        and case["propagation"].get("local_reflection_terms_present") is False
+        and case["propagation"].get("growing_inverse_factors_present") is False
+        and len(case["propagation"]["forward"].get("factors", [])) > 0
+        and len(case["propagation"]["backward"].get("factors", [])) > 0
+        and int(case["propagation"].get("stored_complex_scalars", -1))
+        == len(case["propagation"]["forward"].get("factors", []))
+        + len(case["propagation"]["backward"].get("factors", []))
+        for case in phase4_cases
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_two_port_case_and_linear_storage_contract",
+            phase4_case_contract_ok,
+            {
+                "case_ids": list(phase4_by_id),
+                "cases": [
+                    {
+                        "case_id": case.get("case_id"),
+                        "length_nm": case["propagation"].get("length_nm"),
+                        "representation": case["propagation"].get("representation"),
+                        "backward_source": case.get("backward_source"),
+                        "stored_complex_scalars": case["propagation"].get(
+                            "stored_complex_scalars"
+                        ),
+                        "forward_count": len(
+                            case["propagation"]["forward"].get("factors", [])
+                        ),
+                        "backward_count": len(
+                            case["propagation"]["backward"].get("factors", [])
+                        ),
+                    }
+                    for case in phase4_cases
+                ],
+            },
+            {
+                "case_ids": case080_phase4_gates["required_case_ids"],
+                "length_nm": case080_phase4_gates["required_length_nm"],
+                "representation": case080_phase4_gates["required_representation"],
+                "storage": "one complex factor per directed mode",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    max_phase4_reflection = max(
+        (float(case.get("reflection_norm", float("inf"))) for case in phase4_cases),
+        default=float("inf"),
+    )
+    max_phase4_factor = max(
+        (
+            float(case["propagation"].get("max_factor_magnitude", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_power_gain = max(
+        (
+            float(case.get("coefficient_power_gain", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_composition_error = max(
+        (
+            float(case.get("composition_max_relative_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_reciprocity_beta_error = max(
+        (
+            float(case["reciprocity"].get("max_relative_beta_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_reciprocity_factor_error = max(
+        (
+            float(case["reciprocity"].get("max_relative_factor_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    phase4_numeric_ok = (
+        max_phase4_reflection <= float(case080_phase4_gates["max_reflection_norm"])
+        and max_phase4_factor <= float(case080_phase4_gates["max_factor_magnitude"])
+        and max_phase4_power_gain
+        <= float(case080_phase4_gates["max_coefficient_power_gain"])
+        and max_phase4_composition_error
+        <= float(case080_phase4_gates["max_composition_relative_error"])
+        and max_phase4_reciprocity_beta_error
+        <= float(case080_phase4_gates["max_reciprocity_beta_relative_error"])
+        and max_phase4_reciprocity_factor_error
+        <= float(case080_phase4_gates["max_reciprocity_factor_relative_error"])
+        and all(
+            case["propagation"].get("passivity_valid") is True
+            and case["reciprocity"].get("passivity_valid") is True
+            and case["reciprocity"].get("reciprocity_valid") is True
+            and not case["reciprocity"].get("unmatched_forward")
+            and not case["reciprocity"].get("unmatched_backward")
+            for case in phase4_cases
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_reflection_passivity_composition_reciprocity",
+            phase4_numeric_ok,
+            {
+                "max_reflection_norm": max_phase4_reflection,
+                "max_factor_magnitude": max_phase4_factor,
+                "max_coefficient_power_gain": max_phase4_power_gain,
+                "max_composition_relative_error": max_phase4_composition_error,
+                "max_reciprocity_beta_relative_error": (
+                    max_phase4_reciprocity_beta_error
+                ),
+                "max_reciprocity_factor_relative_error": (
+                    max_phase4_reciprocity_factor_error
+                ),
+            },
+            {
+                "max_reflection_norm": case080_phase4_gates["max_reflection_norm"],
+                "max_factor_magnitude": case080_phase4_gates["max_factor_magnitude"],
+                "max_coefficient_power_gain": case080_phase4_gates[
+                    "max_coefficient_power_gain"
+                ],
+                "max_composition_relative_error": case080_phase4_gates[
+                    "max_composition_relative_error"
+                ],
+                "reciprocity": "paired beta and directed factors within tolerance",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase4_controls = phase4_record.get("controls", {})
+    phase4_runner_gates = phase4_record.get("gates", {})
+    phase4_rank_signatures = phase4_record.get("mpi_rank_signatures", [])
+    phase4_controls_and_mpi_ok = (
+        phase4_controls.get("all_outputs_finite") is True
+        and phase4_controls.get("underflow_without_overflow") is True
+        and phase4_controls.get("growing_branch_rejected") is True
+        and phase4_controls.get("ambiguous_branch_rejected") is True
+        and phase4_runner_gates
+        and all(value is True for value in phase4_runner_gates.values())
+        and len(phase4_rank_signatures)
+        == case080_phase4_gates["required_mpi_rank_signature_count"]
+        and len(set(phase4_rank_signatures)) == 1
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_evanescent_negative_controls_and_mpi_agreement",
+            phase4_controls_and_mpi_ok,
+            {
+                "controls": phase4_controls,
+                "runner_gates": phase4_runner_gates,
+                "rank_signature_count": len(phase4_rank_signatures),
+                "unique_rank_signatures": len(set(phase4_rank_signatures)),
+            },
+            {
+                "strong_evanescent": "finite underflow without overflow",
+                "growing_and_ambiguous": "rejected",
+                "all_runner_gates": True,
+                "rank_signature_count": case080_phase4_gates[
+                    "required_mpi_rank_signature_count"
+                ],
+                "unique_rank_signatures": 1,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
     task032_reference_records: dict[str, dict[str, Any]] = {}
     for level in case080_gates["required_levels"]:
         relative = f"records/full3d_{level}_reference.json"
@@ -882,7 +1101,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         task032_reference_records[level] = record
         metadata = record.get("metadata", {})
         complete, missing = _metadata_complete(record)
-        relation = _commit_relation(metadata.get("commit_sha"), metadata.get("provenance"))
+        relation = _commit_relation(
+            metadata.get("commit_sha"), metadata.get("provenance")
+        )
         identity_ok = (
             complete
             and metadata.get("commit_sha") == case080_gates["required_commit"]
@@ -908,7 +1129,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             and results.get("official_result") is True
             and float(results.get("linear_system_true_relative_residual", float("inf")))
             <= float(case080_gates["max_true_relative_residual"])
-            and abs(float(results.get("energy_closure_error_port_volume", float("inf"))))
+            and abs(
+                float(results.get("energy_closure_error_port_volume", float("inf")))
+            )
             <= float(case080_gates["max_abs_energy_closure"])
         )
         gates.append(
@@ -940,7 +1163,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             and reference_contract.get("dtype") == case080_gates["required_dtype"]
             and reference_contract.get("interface_trace_sides")
             == case080_gates["required_interface_trace_sides"]
-            and int(reference_contract.get("replicated_payload_bytes_uncompressed", 2**63))
+            and int(
+                reference_contract.get("replicated_payload_bytes_uncompressed", 2**63)
+            )
             <= int(case080_gates["max_replicated_payload_bytes"])
         )
         gates.append(
@@ -967,10 +1192,13 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "dtn_port_diffraction_orders_sha256",
             "power_metrics_sha256",
         )
-        hashes_ok = all(
-            re.fullmatch(r"[0-9a-f]{64}", str(artifacts.get(key, "")))
-            for key in hash_keys
-        ) and int(artifacts.get("reference_npz_bytes", 0)) > 0
+        hashes_ok = (
+            all(
+                re.fullmatch(r"[0-9a-f]{64}", str(artifacts.get(key, "")))
+                for key in hash_keys
+            )
+            and int(artifacts.get("reference_npz_bytes", 0)) > 0
+        )
         gates.append(
             Gate(
                 f"task032_phase1_artifact_hashes:{level}",
@@ -986,7 +1214,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             key: abs(float(results.get(key, float("inf"))) - float(expected_rta[key]))
             for key in ("R_total", "T_total", "A_balance")
         }
-        rta_ok = max(rta_delta.values()) <= float(case080_gates["rta_absolute_tolerance"])
+        rta_ok = max(rta_delta.values()) <= float(
+            case080_gates["rta_absolute_tolerance"]
+        )
         gates.append(
             Gate(
                 f"task032_phase1_rta:{level}",
@@ -1950,15 +2180,24 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             hash_pattern = contract["source_artifact_sha256_pattern"]
             source_path = ROOT / str(record.get("source_artifact", ""))
             sampler_path = ROOT / str(record.get("memory_sampler_artifact", ""))
-            observed_source_hash = _sha256(source_path) if source_path.is_file() else None
-            observed_sampler_hash = _sha256(sampler_path) if sampler_path.is_file() else None
+            observed_source_hash = (
+                _sha256(source_path) if source_path.is_file() else None
+            )
+            observed_sampler_hash = (
+                _sha256(sampler_path) if sampler_path.is_file() else None
+            )
             hashes_ok = (
                 isinstance(source_hash, str)
                 and re.fullmatch(hash_pattern, source_hash) is not None
                 and isinstance(sampler_hash, str)
                 and re.fullmatch(hash_pattern, sampler_hash) is not None
-                and (observed_source_hash is None or observed_source_hash == source_hash)
-                and (observed_sampler_hash is None or observed_sampler_hash == sampler_hash)
+                and (
+                    observed_source_hash is None or observed_source_hash == source_hash
+                )
+                and (
+                    observed_sampler_hash is None
+                    or observed_sampler_hash == sampler_hash
+                )
             )
             gates.append(
                 Gate(
@@ -1966,7 +2205,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     hashes_ok,
                     {
                         "source": observed_source_hash or "heavy artifact unavailable",
-                        "sampler": observed_sampler_hash or "heavy artifact unavailable",
+                        "sampler": observed_sampler_hash
+                        or "heavy artifact unavailable",
                     },
                     {"source": source_hash, "sampler": sampler_hash},
                     benchmark_id,
@@ -2001,7 +2241,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     benchmark_id,
                 )
             )
-            relation = _commit_relation(metadata.get("commit_sha"), metadata.get("provenance"))
+            relation = _commit_relation(
+                metadata.get("commit_sha"), metadata.get("provenance")
+            )
             gates.append(
                 Gate(
                     f"task031_source_commit_relation:{benchmark_id}",
@@ -2129,7 +2371,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                         and int(record.get("swap_in_delta_pages", -1)) == 0
                         and int(record.get("swap_out_delta_pages", -1)) == 0,
                         {
-                            "worker_peak_gib": record.get("simultaneous_worker_peak_gib"),
+                            "worker_peak_gib": record.get(
+                                "simultaneous_worker_peak_gib"
+                            ),
                             "swap_in": record.get("swap_in_delta_pages"),
                             "swap_out": record.get("swap_out_delta_pages"),
                         },
@@ -2216,7 +2460,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             float(pc_contract["task030_flexible_pc"]["linearity_relative_error"])
             > float(pc_contract["task030_flexible_pc"]["gate"])
             and pc_contract["task030_flexible_pc"]["result"] == "fail"
-            and float(pc_contract["fixed_richardson_variant"]["linearity_relative_error"])
+            and float(
+                pc_contract["fixed_richardson_variant"]["linearity_relative_error"]
+            )
             <= 1.0e-11
             and pc_contract["fixed_richardson_variant"]["solver_result"]
             == "numeric_negative"
@@ -2237,7 +2483,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "task031_exact_factor_dedup_negative",
                 factor_contract.get("unique_factor_classes") == 16
                 and factor_contract.get("exact_duplicate_factor_count") == 0
-                and "approximate sharing prohibited" in factor_contract.get("disposition", ""),
+                and "approximate sharing prohibited"
+                in factor_contract.get("disposition", ""),
                 factor_contract,
                 "16 unique exact factors and no approximate sharing",
                 "cases/070_compact_physical_slab_memory_optimization/records/memory_components.json",

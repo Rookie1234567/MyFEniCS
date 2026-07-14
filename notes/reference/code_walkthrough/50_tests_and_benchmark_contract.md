@@ -81,3 +81,16 @@ checker 还要求 air h5/h3/h2/h1.5 解析误差严格下降、h2/h1.5 与 lossy
 `run_task032_phase3_modes` 的完整 MPI4 路径仍覆盖 air 正反 basis、homogeneous lossy、当前 Stage4 `epsilon(x,y)` 和角度 tracking。正式 record 必须固定 clean full SHA/image/MPI4、右/左残差、left-beta conjugate pairing、biorthogonality identity、unit-absolute-Poynting 或 near-zero classification、passive branch、reciprocal pairs、tracking/subspace、ownership 与 no-full-vector-gather。
 
 clean source `72dca66...` 的正式 Phase 3 record 已满足上述合同；checker 新增 identity、case/ownership/condition、residual/biorthogonality/flux、direction/reciprocal、tracking/subspace 五类 Gate，Case080 总计 `282/282 passed`。
+
+## Task032 Phase 4 contract
+
+`test_34_task032_stable_propagation` 覆盖单模无反射正反传播、lossy/evanescent
+被动衰减、强衰减安全下溢、37+63 nm composition、reciprocity/passivity 与
+nonreciprocal/growing/ambiguous/incompatible 负对照。`test_33` 还把真实 Phase 3
+air 正反 mode basis 直接交给 Phase 4 API，防止只有合成 beta 通过。
+
+`run_task032_phase4_propagation` 的 MPI4 路径固定 100 nm two-port scattering、
+Phase 3 record SHA-256、三个材料 case、O(M) 因子存储、无 full-field gather、
+四 rank 签名一致和全部负对照。clean source `9206e9c...` 的正式 record 通过
+identity/source、case/storage、reflection/passivity/composition/reciprocity、
+evanescent/negative/MPI 四类 Gate，Case080 总计 `286/286 passed`。

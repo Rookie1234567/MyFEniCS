@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation 实现和 MPI4 research Gate，clean formal record 待实现提交后生成。接口 coupling 与 Hybrid solvers 尚未开始。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation 和 clean MPI4 formal record。接口 coupling 与 Hybrid solvers 尚未开始。
 
 ## 4. eigenproblem implementation and validation
 
@@ -64,13 +64,28 @@ SLEPc 3.24 PEP 的 Python API 不提供 two-sided left vectors，因此 Phase 3 
 
 ## 6. stable propagation
 
-`implementation_and_mpi4_research_pass / clean_record_pending`。新增 two-port
+`clean_mpi4_formal_record_pass`。新增 two-port
 scattering 表示，正向用 `exp(+i beta+ L)` 从 bottom 到 top，反向用
 `exp(-i beta- L)` 从 top 到 bottom；不保存 growing inverse，也不形成普通
 transfer matrix。100 nm air/lossy/current-patterned 模式、37+63 nm composition、
 无界面反射、reciprocity/passivity、强衰减安全下溢和增长/ambiguous 负对照的
-8 个 research Gate 全通过，MPI4 四个 rank 的记录签名一致。接口 coupling
-尚未加入。
+8 个 runner Gate 全通过，MPI4 四个 rank 的记录签名一致。
+
+```text
+formal source commit = 9206e9c964db387448551cdefdc88081ef705441
+clean formal record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json
+record SHA-256 = 808fd6991de0ace38f1e582d09d7d1f3b20d131fc5a9cc4cf96708719caf37f9
+Phase 3 record SHA-256 = 10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8
+```
+
+air 的 independently solved 正反 basis 得到 reciprocity beta/factor 最大误差
+`3.63e-16/2.78e-15`；三个 case 的 reflection norm 均为 0，composition 最大误差
+`9.42e-16`。air/lossy/current-patterned 最大 factor magnitude 分别约
+`1.000/0.620/0.853`；强衰减 `exp(-1000)` 安全下溢为 0。Case080 新增四类
+Phase 4 Gate 后为 `286/286 passed`。接口 coupling 尚未加入。
+
+回归口径为完整 serial `196 tests / 10 skipped`、Phase 3+4 真实模式集成
+`10/10`、Phase 4 单元合同 `6/6` 和正式 MPI4 runner `8/8` Gates。
 
 ## 7. interface projection
 
@@ -110,6 +125,10 @@ Phase 2 QEP formal record 的单 rank 进程生命周期 historical peak 最大�
 
 Phase 3 formal record 的单 rank 进程生命周期 historical peak 最大为 `236.465 MB`，内部 elapsed 最大 rank `7.563 s`。前者同样不是 simultaneous total，后者不含宿主 Docker 启动/JIT 固定成本；二者都不作为最终 Hybrid 内存/性能权威。
 
+Phase 4 lightweight coefficient runner 的单 rank historical peak 最大为
+`86.926 MB`，内部 elapsed 最大 rank `0.0126 s`。它只处理小型复制的 mode-count
+数组，因此既不是 full eigensolve 资源，也不是最终 Hybrid 内存/性能结论。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
@@ -147,15 +166,16 @@ src/test/test_34_task032_stable_propagation.py
 benchmarks/run_task032_phase4_propagation.py
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
 notes/reference/code_walkthrough/44_task032_stable_propagation.md
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1/2/3 are complete and Phase 4 implementation passes research gates, but its clean record, coupling and Hybrid direct solvers are pending
+reason = Phase 1/2/3/4 are complete, but interface coupling and Hybrid direct solvers are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是提交 Phase 4 实现并生成 clean formal record；通过后进入 Phase 5 interface coupling。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 5 matching-interface trace coupling。

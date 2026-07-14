@@ -77,3 +77,10 @@ The formal runner also reads the frozen Phase 3 record for air, homogeneous
 lossy, and current Stage4 x/y cases. Where Phase 3 intentionally did not solve
 the negative lossy/patterned basis, the runner labels and uses the reciprocal
 `-beta` mirror; only the air case uses two independently solved bases.
+
+The clean MPI4 record is
+`benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json`
+on source `9206e9c964db387448551cdefdc88081ef705441`. Its maximum 100 nm
+composition error is `9.42e-16`, all local reflection norms are zero, and the
+largest factor magnitude is `0.9999999999999997`. The record is tied to the
+exact Phase 3 record SHA-256 and Case080 passes `286/286` gates.

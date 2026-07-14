@@ -1,7 +1,7 @@
 {
   "case_id": "080_hybrid_fem_modal_direct_baseline",
   "task": "Task032",
-  "status": "phase1_reference_phase2_qep_phase3_modes_complete_hybrid_coupling_pending",
+  "status": "phase1_reference_phase2_qep_phase3_modes_phase4_propagation_complete_hybrid_coupling_pending",
   "ordinary_default_changed": false,
   "physical_model": {
     "geometry_kind": "rectangular_block_grating",
@@ -45,8 +45,10 @@
   "hybrid": {
     "eigenproblem": "phase2_distributed_qep_pass",
     "mode_classification": "phase3_poynting_adjoint_qep_biorthogonal_pass",
-    "augmented_direct": "pending_phase5",
-    "modal_schur_direct": "pending_phase6",
+    "stable_propagation": "phase4_two_port_diagonal_scattering_pass",
+    "interface_coupling": "pending_phase5",
+    "augmented_direct": "pending_phase6",
+    "modal_schur_direct": "pending_phase7",
     "iterative_solver": "out_of_scope"
   }
 }
