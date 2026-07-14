@@ -58,12 +58,16 @@ def _source_provenance(
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+        tracked_status = (
+            None
+            if verified_clean_sha is not None
+            else _git("status", "--porcelain", "--untracked-files=no")
+        )
         payload = (head, branch, tracked_status)
     else:
         payload = None
     head, branch, tracked_status = comm.bcast(payload, root=0)
-    if head is None or tracked_status is None:
+    if head is None or (verified_clean_sha is None and tracked_status is None):
         raise SystemExit("Cannot verify Task32 Phase2 source identity and cleanliness.")
     if verified_clean_sha is not None:
         verified = verified_clean_sha.strip().lower()
