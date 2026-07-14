@@ -1,0 +1,23 @@
+{
+  "record_type": "task031_object_lifecycle_summary",
+  "authority": "external simultaneous worker RSS; allocator retention means object destruction need not immediately lower process RSS",
+  "matrix_free_contract": {
+    "assembled_F_present_during_solve": false,
+    "condensed_shell_owns_external_fine_action": true,
+    "fine_action_public_api": "dolfinx_mpc.assemble_vector(ufl.action(form, function)) plus MPC slave unit rows",
+    "no_double_destroy_tests": true
+  },
+  "h2_stage_peaks_gib": {
+    "process_start": 7.2509307861328125,
+    "stage4_system_assembled": 5.3853759765625,
+    "coarse_basis": 6.060832977294922,
+    "coarse_operator_ready": 7.867530822753906,
+    "outer_ksp_ready": 6.484539031982422,
+    "outer_krylov_solve": 7.897674560546875,
+    "solver_stack_released_before_rta": 6.500091552734375,
+    "official_rta_complete": 6.4984130859375
+  },
+  "h2_legacy_internal_peak_gib": 8.176441192626953,
+  "h2_after_solver_release_current_gib": 6.498165130615234,
+  "interpretation": "compact lifecycle safely releases solver objects before RTA and lowers the live stage, but the task claims peak success only from the external full-run maximum"
+}

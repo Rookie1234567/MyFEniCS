@@ -1,0 +1,8 @@
+{
+  "status": "strong_memory_success_slow_but_memory_efficient",
+  "ordinary_default_changed": false,
+  "numeric_gate": "three residuals <= 1e-6 and official R/T/A available",
+  "h3_gate": "simultaneous worker RSS <= 3.50 GiB and >=8% reduction vs Task030",
+  "h2_gate": "converged and simultaneous worker RSS <= 8.0 GiB",
+  "heavy_artifacts": "benchmarks/artifacts/cases/070 (gitignored)"
+}

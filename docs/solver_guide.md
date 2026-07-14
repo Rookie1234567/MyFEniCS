@@ -17,7 +17,10 @@
 | 单 rank + OpenBLAS threads | 当前 image 不推荐 | diagnostic_only | MPI1×4 KSPSetUp 仍约 1 核，Stage4 48.273 s |
 | 目标 p2 h=5/3/2，MPI4 | matrix-free condensed workstation | recommended | h=2 为 13.08 GB |
 | 目标 p2 h=5/3/2，内存优先 | Task30 compact physical-slab low-memory profile | experimental | `workstation_memory_success_with_qualifications`；clean h5/h3 为 1.688/3.793 GB；h2 9.375 GB 为历史审阅参考；需显式 flags |
+| frozen p2 h=5/3/2，约 8 GiB 硬限制 | Task31 assembled-F-free memory-first profile | experimental | h2 external simultaneous peak 7.898 GiB、legacy internal 8.176 GiB；solve 约为 Task30 的 5.01x；显式 opt-in |
 | h=1.5 或新物理参数 | 无 production 推荐 | not_verified | 先做 qualification |
+
+完整命令、outer KSP/local smoother 合法性和组件 flag 身份统一见 [`iterative_solver_ports.md`](iterative_solver_ports.md)。
 
 ## 2. Ordinary auxiliary direct
 
@@ -95,6 +98,39 @@ Task030 没有替换 ordinary/canonical profile。最终成功求解器仍是 Ta
 
 Task030 还建立了 nonmatching p2/p1 H(curl) transfer 和 exact Galerkin coarse；它们代数正确，但五个 100 步 solver 候选均明显失败。`hcurl_multilevel.py` 只公开 validated transfer/cache/Galerkin API；Jacobi、p/h multilevel、Woodbury 等失败候选只允许 research runner/tests 直接导入，不属于普通 `src.solvers` 公共 API，更不能理解为可推荐 GMG profile。
 
+## 5.2 Task031 assembled-F-free compact memory-first experimental profile
+
+Task031 面向“机器内存不足，但允许明显增加时间”的场景。它保留 Task030 的 75D wave coarse、16-slab ILU0 symmetric pre/post、local shift、factor-only 与 FGMRES90，再显式增加：
+
+```bash
+--overlap-layers 0.125 --matrix-free-fine --compact-lifecycle
+```
+
+推荐通过带外部采样与 h2 lock/watchdog 的 wrapper 运行：
+
+```bash
+mpiexec -n 4 python -m benchmarks.run_task031_memory_forensics \
+  --h-nm 5 --num-slabs 16 --overlap-layers 0.125 \
+  --ksp-type fgmres --smoother-ksp-type gmres --restart 90 \
+  --max-it 5000 --matrix-free-fine --compact-lifecycle \
+  --case-label task031_local --run-dir /tmp/task031_local \
+  --verified-clean-sha <full-clean-sha>
+```
+
+h2 默认锁定，只有 h5/h3 数值、内存、预测、clean source 与无 swap Gate 通过后才可加 `--unlock-h2`；必须保留 9.5 GiB warning 与 11 GiB termination。Case070 的 frozen MPI4 h5/h3/h2 为 1157/1994/1977 步，external simultaneous worker peak 1.620/3.474/7.898 GiB。Task030 的 9.374729 GiB 是历史采样口径；与 Task31 external peak 对照的观察降幅约 15.8%，与 Task31 legacy internal peak 8.176441 GiB 对照约 12.8%。保守结论是 h2 从约 9.4 GiB 压到约 8.0–8.2 GiB。solve 11982.581 s，约慢 5.01x。因此选择规则是：
+
+```text
+速度/吞吐优先且可承受约 9.4 GiB -> Task030 compact profile
+内存硬约束约 8 GiB、可接受数小时 -> Task031 memory-first profile
+普通使用/参数域外 -> ordinary/canonical profile + 重新资格化
+```
+
+Task031 的 adaptive local GMRES PC 实测非线性（linearity error `2.374308e-2`），所以必须与 FGMRES 配对。普通 GMRES 是 `port_implemented_but_incompatible_with_current_adaptive_pc`；TFQMR/BCGS 是 `interface_exposed_not_target_qualified`，runner 会对所有非 FGMRES 路线强制 certification 并 fail closed。fixed Richardson 虽线性，但 200 步 residual 0.7703，不能替代。public MPC form action 对 assembled `F` 的误差 `<1e-15`，solve ledger 中不保留 `F`；这只是 frozen target 的资格证据，不是任意参数的数学收敛保证。
+
+当前“matrix-free fine”精确指 assembled-F-free public MPC form-action path，不是已经缓存优化的低层 element-kernel 实现。释放 `F` 只是一次性的必要生命周期动作；主要时间成本是每次 outer apply 都重复执行 Function 写入、MPC backsubstitution、`ufl.action`、`assemble_vector` 和通信。h5 200-step 为 18.478→58.837 s（3.18x），h2 每步平均成本约 4.74x；不能写成“destroy F 本身导致变慢”。
+
+内存判断以 external simultaneous live-rank RSS 为权威，cgroup 与 legacy internal peak 分开记录。release 后 current RSS 下降只能证明 lifecycle 生效，不能单独构成 solve-peak success。完整端口矩阵见 [`iterative_solver_ports.md`](iterative_solver_ports.md)，配置、records 与限制见 Case070。
+
 ## 6. 可信停止条件
 
 | Gate | 阈值 |
@@ -122,7 +158,7 @@ Task030 还建立了 nonmatching p2/p1 H(curl) transfer 和 exact Galerkin coars
 
 ## 8. 参数域外流程
 
-角度、波长、材料、几何、p、MPI 数或 smoother 参数改变后：先在可承受网格运行 direct reference；再运行迭代法；比较 full residual、R/T/A、能量闭合和 RSS；最后把新组合加入 canonical config/manifest。只出现 KSP improvement 或 diagnostic flux 正信号不构成 production qualification。
+角度、波长、材料、几何、p、MPI 数或 smoother 参数改变后：先在可承受网格运行 direct reference；再运行迭代法；比较 full residual、R/T/A、能量闭合和 RSS；最后把新组合加入 canonical config/manifest。当前 benchmark 只资格化 13.5 nm、固定 Si、theta=80°（10° grazing）、S polarization 的单点；项目第一阶段 `1–10° grazing + S/P` 是后续规划范围，不等于已经通过。只出现 KSP improvement 或 diagnostic flux 正信号不构成 production qualification。
 
 ## 9. 研究路线边界
 

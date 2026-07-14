@@ -1,0 +1,4 @@
+candidate,ilu_slabs,jacobi_slabs,stored_factor_nnz,iterations,full_true_residual,worker_peak_gib,solve_s,disposition
+all_ilu0,16,0,7046752,200,8.611995756278665e-4,1.6936187744140625,18.47797544299101,baseline
+boundary_jacobi1,14,2,6345796,200,1.1775245514260967e-2,1.6827125549316406,18.50891240000783,negative_stop
+fixed_richardson,16,0,7046752,200,7.703155637491123e-1,1.6569061279296875,12.491137154996977,linear_but_numeric_negative

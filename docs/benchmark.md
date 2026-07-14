@@ -59,3 +59,17 @@ Task029 Review V2 已接受 Case050 为诊断 benchmark 并批准其基础设施
 h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 与 `6.56e-9`。最终实现提交 `5b81359daee0874793c44b019d9c914b334db483` 上的 clean h3 复跑峰值为 3.792912 GB，同时通过 `<=3.8 GB` 绝对线，并较 Task27 降低 25.37%。Case060 最终分类为 `workstation_memory_success_with_qualifications`；h2 的 1873 步仍未达到 1200 目标，ordinary default 和 Case031 canonical records 不变。
 
 三份正式 lightweight records 已进入 manifest，checker 可重复生成同一 `benchmark_summary.csv`，并执行 203 项 Gate。h5/h3 是 final implementation HEAD `5b81359daee0874793c44b019d9c914b334db483` 的 clean 复跑，heavy JSON SHA-256 分别为 `2be05820cf69db67ba72b257c44624c08e15f7f7ceeae6e479eed2a9e68523f3` 与 `48c9bb51b89a99b7ba1653f8c95f8450e7917f987274c1aef631464484275232`；h2 明确保留为 `reviewed_historical_dirty_worktree_reference`，不是 clean final-HEAD 复跑。Task27 ILU1 与 Task30 ILU0 的 reported slab-factor nnz 相同，因此该统计口径保持 `measurement_unresolved`，内存下降不归因于已证明的 factor-nnz compression。
+
+## Task031 Case070
+
+[`Case070`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) 在 Task030 Review V3 合入后的 clean master 上运行，使用 external 0.25 s simultaneous RSS/cgroup/swap/stage sampler。最终 candidate 保留 Task030 physical-slab/wave coarse 与 FGMRES90，改为 overlap0.125、assembled-F-free public MPC form action 和 compact lifecycle。该 form-action path 每次 apply 仍执行 `assemble_vector(ufl.action(...))`，不是缓存优化的低层 element kernel。普通默认、物理、80 modes、exact condensation 与 official R/T/A 都不改变。
+
+| h/nm | iterations | full true residual | simultaneous worker peak | vs Task030 historical（辅助） | solve/total s |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 1157 | `9.959903e-7` | 1.619598 GiB | 4.032% | 350.851 / 374.342 |
+| 3 | 1994 | `9.973853e-7` | 3.474346 GiB | 8.399% | 2311.581 / 2370.351 |
+| 2 | 1977 | `9.998454e-7` | 7.897675 GiB | 15.756% | 11982.581 / 12173.086 |
+
+h3 同时通过 `<=3.50 GiB` 与任务书历史基线 `>=8%`；h2 在两套 8.501/8.587 GiB 中央预测、9.447 GiB 上界和 9.5/11 GiB watchdog 放行后完成，无 swap。Task31 h2 external simultaneous / legacy internal 分别为 7.897675 / 8.176441 GiB；相对 Task030 历史 9.374729 GiB 的观察降幅约 15.8% / 12.8%，保守结论为约 8.0–8.2 GiB。h2 official R/T/A 为 `0.001342934186 / 0.5992132355694105 / 0.399443835926`，对 direct 最大差 `6.125e-9`。classification 是 `strong_memory_success_slow_but_memory_efficient`：memory 强成功，但 solve 约为 Task030 的 5.01x。主要性能成本来自每次 public form action 的装配/通信，不是一次性的 `release_f()`。
+
+Case070 还固定 PC linearity、public form-action equivalence、factor fingerprint、overlap/selective solver 与 lifecycle 负/正证据。16 个 factor 全部 unique，禁止近似 dedup；adaptive PC 非线性，普通 GMRES、TFQMR、BCGS 必须 certification fail closed，只有 FGMRES 当前 target-qualified。三份 best records、baseline、screen、object/PC/memory records 可提交，完整 timeline 与场输出只留在 ignored `benchmarks/artifacts/cases/070/`。端口状态见 [`iterative_solver_ports.md`](iterative_solver_ports.md)。

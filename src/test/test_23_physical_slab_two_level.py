@@ -11,6 +11,7 @@ from src.solvers.physical_slab_two_level import (
     SparseCoarseVector,
     SparseGalerkinTwoLevelPc,
     balanced_subdomain_owners,
+    certify_fixed_linear_preconditioner,
     gather_global_subdomain_indices,
 )
 
@@ -18,6 +19,14 @@ from src.solvers.physical_slab_two_level import (
 class _IdentitySmoother:
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         source.copy(target)
+
+
+class _SolveAdapter:
+    def __init__(self, smoother: DistributedPhysicalSlabSmoother) -> None:
+        self.smoother = smoother
+
+    def apply(self, _pc, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.smoother.solve(source, target)
 
 
 def _distributed_matrix(values: np.ndarray) -> PETSc.Mat:
@@ -131,6 +140,12 @@ class PhysicalSlabTwoLevelTests(unittest.TestCase):
         )
         self.assertEqual(cached.coarse_rank, 2)
         self.assertLess(cached.coarse_action_relative_error, 1e-13)
+        template = matrix.createVecRight()
+        certificate = certify_fixed_linear_preconditioner(cached, template)
+        self.assertLess(certificate["linearity_relative_error"], 1e-11)
+        self.assertLess(certificate["determinism_relative_error"], 1e-13)
+        self.assertEqual(certificate["global_size"], size)
+        template.destroy()
         cached.destroy()
         invalid = coarse.copy()
         invalid[0, 0] += 0.1
@@ -178,6 +193,35 @@ class PhysicalSlabTwoLevelTests(unittest.TestCase):
         source.destroy()
         matrix.destroy()
 
+    def test_exact_factor_fingerprints_detect_only_exact_duplicates(self) -> None:
+        size = 8
+        values = np.diag(3.0 + 0.1j * np.arange(size)).astype(np.complex128)
+        matrix = _distributed_matrix(values)
+        duplicate = np.arange(size, dtype=PETSc.IntType)
+        smoother = DistributedPhysicalSlabSmoother(
+            matrix,
+            (duplicate, duplicate.copy()),
+            ilu_levels=0,
+            factor_only_storage=True,
+        )
+        diagnostics = smoother.diagnostics
+        self.assertEqual(len(diagnostics["factor_fingerprints"]), 2)
+        self.assertEqual(diagnostics["unique_factor_classes"], 1)
+        self.assertEqual(diagnostics["exact_duplicate_factor_count"], 1)
+        self.assertEqual(
+            diagnostics["factor_fingerprints"][0]["sha256"],
+            diagnostics["factor_fingerprints"][1]["sha256"],
+        )
+        # Detection alone must not create unsafe shared PETSc ownership.
+        factor_matrices = [factor.factor_matrix for factor in smoother._factors]
+        self.assertEqual(
+            MPI.COMM_WORLD.allreduce(len(factor_matrices), op=MPI.SUM), 2
+        )
+        if len(factor_matrices) == 2:
+            self.assertIsNot(factor_matrices[0], factor_matrices[1])
+        smoother.destroy()
+        matrix.destroy()
+
     def test_two_step_smoother_repeated_apply_is_stable(self) -> None:
         matrix, subdomains, source, _source_values, _diagonal = self._two_step_fixture()
         smoother = DistributedPhysicalSlabSmoother(
@@ -202,6 +246,52 @@ class PhysicalSlabTwoLevelTests(unittest.TestCase):
         repeated.destroy()
         first.destroy()
         smoother.destroy()
+        source.destroy()
+        matrix.destroy()
+
+    def test_two_step_richardson_action_is_fixed_linear(self) -> None:
+        matrix, subdomains, source, _source_values, _diagonal = self._two_step_fixture()
+        smoother = DistributedPhysicalSlabSmoother(
+            matrix,
+            subdomains,
+            ilu_levels=0,
+            smoother_iterations=2,
+            smoother_ksp_type="richardson",
+            action_operator=matrix,
+        )
+        certificate = certify_fixed_linear_preconditioner(
+            _SolveAdapter(smoother), source
+        )
+        self.assertLess(certificate["linearity_relative_error"], 1e-11)
+        self.assertLess(certificate["determinism_relative_error"], 1e-13)
+        self.assertEqual(smoother.diagnostics["smoother_ksp_type"], "richardson")
+        smoother.destroy()
+        source.destroy()
+        matrix.destroy()
+
+    def test_selective_jacobi_slab_is_deterministic_and_reported(self) -> None:
+        matrix, subdomains, source, source_values, diagonal = self._two_step_fixture()
+        smoother = DistributedPhysicalSlabSmoother(
+            matrix,
+            subdomains,
+            ilu_levels=0,
+            factor_only_storage=True,
+            local_solver_types=("jacobi", "ilu"),
+        )
+        target = matrix.createVecRight()
+        smoother.solve(source, target)
+        expected = np.zeros_like(source_values)
+        for indices in subdomains:
+            expected[indices] += source_values[indices] / diagonal[indices]
+        start, end = target.getOwnershipRange()
+        np.testing.assert_allclose(
+            target.getArray(readonly=True), expected[start:end], rtol=2e-12, atol=2e-12
+        )
+        diagnostics = smoother.diagnostics
+        self.assertEqual(diagnostics["local_solver_type_counts"]["jacobi"], 1)
+        self.assertEqual(diagnostics["local_solver_type_counts"]["ilu"], 1)
+        smoother.destroy()
+        target.destroy()
         source.destroy()
         matrix.destroy()
 

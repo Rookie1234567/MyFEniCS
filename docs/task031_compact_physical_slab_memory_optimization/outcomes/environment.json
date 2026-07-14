@@ -1,0 +1,32 @@
+{
+  "task": "Task031",
+  "date": "2026-07-14",
+  "branch": "codex/20260714-task31-compact-pc-memory-optimization",
+  "base_commit": "545165b3d29396dcc3a8d5b029089175eafa3c4a",
+  "clean_implementation_commit": "45a0fc6e19535cb8f14fbfb186f099019612fec2",
+  "host": "SK-20260601OSDE",
+  "host_os": "Windows with Docker Desktop / WSL2",
+  "container_image": "myfenics-stage4:task28",
+  "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+  "kernel": "6.6.114.1-microsoft-standard-WSL2",
+  "python": "3.12.3",
+  "numpy": "2.2.6",
+  "petsc_scalar": "complex128",
+  "mpi_size": 4,
+  "thread_caps": {
+    "OPENBLAS_NUM_THREADS": 1,
+    "OMP_NUM_THREADS": 1,
+    "MKL_NUM_THREADS": 1
+  },
+  "container_memory_limit_gib": 12.20703125,
+  "sampler_poll_seconds": 0.25,
+  "memory_authority": "simultaneous sum of live MPI worker RSS; cgroup current/peak and WSL swap recorded separately",
+  "h2_watchdog": {
+    "warning_gib": 9.5,
+    "terminate_gib": 11.0,
+    "warning_triggered": false,
+    "terminated": false,
+    "swap_in_delta_pages": 0,
+    "swap_out_delta_pages": 0
+  }
+}

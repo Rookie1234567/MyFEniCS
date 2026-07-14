@@ -1,0 +1,21 @@
+{
+  "record_type": "task031_pc_linearity_contract",
+  "task030_flexible_pc": {
+    "linearity_relative_error": 0.02374308,
+    "gate": 1e-11,
+    "result": "fail",
+    "consequence": "ordinary GMRES/TFQMR/BiCGStab are not legal with the adaptive two-step local GMRES PC; retain FGMRES"
+  },
+  "fixed_richardson_variant": {
+    "linearity_relative_error": 3.611043013196607e-15,
+    "determinism_relative_error": 0.0,
+    "result": "pass",
+    "iteration_200_full_true_residual": 0.7703155637491123,
+    "solver_result": "numeric_negative"
+  },
+  "final_disposition": "nonlinear flexible PC is explicitly paired with FGMRES; fixed linear substitute is rejected for nonconvergence",
+  "evidence": [
+    "benchmarks/artifacts/cases/070/task031_screen20_gmres90/worker_stdout.txt",
+    "benchmarks/artifacts/cases/070/task031_screen200_gmres90_fixedrich/solver_record.json"
+  ]
+}

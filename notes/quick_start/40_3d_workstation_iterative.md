@@ -14,6 +14,8 @@
 
 这是冻结 target 的 workstation profile，不是任意参数的 mesh-independent 定理。
 
+当前还保留两个显式 experimental 入口：Task30 compact profile 约 9.4 GiB 且速度明显优于 Task31；Task31 assembled-F-free memory-first profile 的 h2 external simultaneous peak 为 7.898 GiB、legacy internal peak 为 8.176 GiB，但 solve 约为 Task30 的 5.01x。它们的完整命令、outer KSP/local smoother 合法性和 component flags 见 [`../../docs/iterative_solver_ports.md`](../../docs/iterative_solver_ports.md)。不要把 argparse 中的 GMRES/TFQMR/BCGS 选项误认为已资格化求解器。
+
 ## 3. 运行前提
 
 1. 使用 qualified complex image。
@@ -175,6 +177,7 @@ h2 total peak RSS <= 14 GB
 
 ## 16. 链接
 
+- 迭代端口、合法性与选择规则：[`../../docs/iterative_solver_ports.md`](../../docs/iterative_solver_ports.md)
 - 迭代理论：[`../theory/iterative_solver_and_preconditioner.md`](../theory/iterative_solver_and_preconditioner.md)
 - 运行代码：[`../reference/code_walkthrough/33_workstation_fgmres_runtime.md`](../reference/code_walkthrough/33_workstation_fgmres_runtime.md)
 - PC 代码：[`../reference/code_walkthrough/32_physical_slab_two_level_pc.md`](../reference/code_walkthrough/32_physical_slab_two_level_pc.md)

@@ -1,0 +1,61 @@
+{
+  "record_type": "task031_candidate_screen_summary",
+  "screen_mesh": "h5",
+  "iterations": 200,
+  "candidates": [
+    {
+      "name": "assembled_f_fgmres90_overlap025",
+      "full_true_residual": 0.0008611995756278665,
+      "solve_s": 18.47797544299101,
+      "simultaneous_worker_peak_gib": 1.6936187744140625,
+      "factor_nnz": 7046752,
+      "disposition": "screen_baseline"
+    },
+    {
+      "name": "restart50",
+      "full_true_residual": 0.0009922889152776102,
+      "solve_s": 19.31139870500192,
+      "simultaneous_worker_peak_gib": 1.66156005859375,
+      "disposition": "stop_memory_reduction_below_3_percent_and_slower"
+    },
+    {
+      "name": "16_slab_overlap0125",
+      "full_true_residual": 0.0011069641913765598,
+      "solve_s": 16.849495344009483,
+      "simultaneous_worker_peak_gib": 1.6542625427246094,
+      "factor_nnz": 5666368,
+      "disposition": "weak_positive_keep_for_combination"
+    },
+    {
+      "name": "20_slab_overlap0125",
+      "full_true_residual": 0.0014776878474693975,
+      "solve_s": 19.04711068799952,
+      "simultaneous_worker_peak_gib": 1.6804122924804688,
+      "factor_nnz": 6392768,
+      "disposition": "negative_vs_16_slab"
+    },
+    {
+      "name": "selective_boundary_jacobi1",
+      "full_true_residual": 0.011775245514260967,
+      "solve_s": 18.50891240000783,
+      "simultaneous_worker_peak_gib": 1.6827125549316406,
+      "stored_factor_nnz": 6345796,
+      "disposition": "stop_large_residual_degradation_without_rss_gain"
+    },
+    {
+      "name": "matrix_free_fine_fgmres90",
+      "full_true_residual": 0.0008611995762545732,
+      "solve_s": 58.83706048699969,
+      "simultaneous_worker_peak_gib": 1.6593055725097656,
+      "fine_action_relative_error": 9.718e-16,
+      "disposition": "memory_primary_positive_keep_for_h3_h2_despite_3.18x_screen_time"
+    },
+    {
+      "name": "fixed_richardson_gmres90",
+      "full_true_residual": 0.7703155637491123,
+      "solve_s": 12.491137154996977,
+      "simultaneous_worker_peak_gib": 1.6569061279296875,
+      "disposition": "linear_but_numeric_negative"
+    }
+  ]
+}

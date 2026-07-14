@@ -1,0 +1,10 @@
+{
+  "record_type": "task031_task030_baseline",
+  "mesh": "h5",
+  "source_benchmark_id": "task030_compact_h5",
+  "n_fe": 44698,
+  "iterations": 855,
+  "full_augmented_true_residual": 9.924905377128957e-7,
+  "peak_rss_gib_including_rta": 1.687652587890625,
+  "evidence": "benchmarks/cases/060_multilevel_hcurl_iterative_solver/records/best_h5.json"
+}

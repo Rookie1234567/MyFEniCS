@@ -1,8 +1,8 @@
-# 项目开发进度：Task000–Task030
+# 项目开发进度：Task000–Task031
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task030 当前阶段的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task031 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -35,13 +35,24 @@ docs/taskXXX_*/review_report*.md
 
 ```text
 2026-07-14
-current branch = codex/20260713-task30-multilevel-hcurl-low-memory-iterative
+current branch = codex/20260714-task31-compact-pc-memory-optimization
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
-Task030 status = workstation_memory_success_with_qualifications; Review V2 responded; h5/h3 clean final-HEAD passed; h2 reviewed historical reference
+Task030 status = final review V3 passed and merged to master at 545165b
+Task031 status = strong_memory_success_slow_but_memory_efficient; Review V1 hardening complete in response_v1; pending final review
 ```
 
 ## 1.1 2026-07-14 最新更新
+
+Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
+
+新增 [`iterative_solver_ports.md`](iterative_solver_ports.md)，统一列出 Task27 canonical、Task30 compact、Task31 memory-first 的命令和身份；FGMRES 是当前 adaptive PC 的合法/已资格化 outer port，普通 GMRES 被线性认证阻塞，TFQMR/BCGS 只有未资格化接口，fixed Richardson 与 selective boundary Jacobi 是 research-only numeric negative。Task31 的精确术语是 assembled-F-free public MPC form-action path，不是缓存优化的低层 element-kernel matrix-free；一次性 `release_f()` 不是变慢主因，每次 form action 的装配与通信才是主要成本。
+
+Task030 Review V3 已通过并按用户许可合入 master（merge `545165b`）。Task031 从该 clean merge point 创建独立分支，目标是在 frozen p2/80-mode/exact-condensed target 上继续压缩内存，同时把 explicit true residual 收敛置于所有性能目标之前。
+
+Task031 新增外部 simultaneous RSS/cgroup/swap/stage sampler、public DOLFINx-MPC form action、condensed fine-action lifecycle、PC linearity/determinism certification、exact factor fingerprints 与对象 ledger。研究漏斗否定了 restart50、ordinary GMRES、fixed Richardson、20 slabs、boundary Jacobi 与 factor dedup；保留的组合是 FGMRES90 + Task030 physical-slab/wave coarse + 16 slabs overlap0.125 + assembled-F-free public form action + compact lifecycle。
+
+clean SHA `45a0fc6e...` 的 full h5/h3/h2 分别在 1157/1994/1977 步达到 full residual `9.960e-7 / 9.974e-7 / 9.998e-7`。外部 simultaneous worker peak 为 1.619598/3.474346/7.897675 GiB，h2 legacy internal peak 为 8.176441 GiB。相对 Task030 历史 9.374729 GiB 的辅助观察降幅约 15.8% / 12.8%，因 sampler 不完全同口径，保守结论为从约 9.4 GiB 压到约 8.0–8.2 GiB。h2 达到 strong memory success 且无 swap；代价是 solve 11982.581 s，约为 Task030 的 5.01x，因此分类为 `strong_memory_success_slow_but_memory_efficient`，ordinary default 仍不改变。
 
 Task029 已按用户许可合并；Task030 从 `bfb6586e` clean master 创建独立分支。Task030 建立了 active/master-aware nonmatching H(curl) transfer 与 exact condensed Galerkin 基础设施，但五个正式 p/h 候选 100 步残差均比 Task027 基线差 146–264 倍，证明当前 792D p1 coarse 不是目标慢误差的有效表示。
 
@@ -1919,3 +1930,133 @@ R2 把 `hcurl_multilevel.py` 的 validated infrastructure API 限定为 active D
 # 43. 当前一句话状态（Task030）
 
 > Task030 已获得 `workstation_memory_success_with_qualifications`：Task27-derived compact physical-slab profile 的 clean final-HEAD h5/h3 分别为 855/962 步、1.687653/3.792912 GB，h2 保留为 1873 步、9.374729 GB 的 reviewed historical dirty-worktree reference；80 modes 与 official R/T/A 通过，H(curl) transfer/Galerkin validated infrastructure 正确，但 792D p1 coarse 的 p/h multigrid solver 明确失败。ordinary default 未改变，master 等待 final review 与用户选择性合并许可。
+
+---
+
+# 44. Task031：compact physical-slab 内存优先结构优化
+
+## 44.1 最终状态
+
+```text
+Task = Task031
+branch = codex/20260714-task31-compact-pc-memory-optimization
+base = Task030 merged master 545165b3d29396dcc3a8d5b029089175eafa3c4a
+clean implementation SHA = 45a0fc6e19535cb8f14fbfb186f099019612fec2
+classification = strong_memory_success_slow_but_memory_efficient
+ordinary_default_changed = false
+review_status = Review V1 response_v1 hardening complete; pending final review
+master_decision = pending review and explicit user approval
+```
+
+## 44.2 为什么启动
+
+Task030 已把 h2 从 Task027 的 13.08 GiB 压到 9.374729 GiB并真实收敛，但对内存受限工作站仍接近 10 GiB。Task030 也证明当前 p/h coarse 不是有效慢误差空间，因此 Task031 不再扩大失败层级，而是围绕已经能收敛的 physical-slab + 75D wave coarse，逐项审计 Krylov basis、assembled fine `F`、slab factor、对象重叠和 PC 合法性。
+
+如果不做这一步，工程风险有两个：一是用 per-rank historical peak sum 或 current RSS 下降误判真实峰值；二是为了省 Krylov 存储把非线性 PC 错配给普通 GMRES，得到不受支持的算法。Task031 不解决任意材料/角度鲁棒、真正 mesh-independent multigrid或多 RHS 吞吐。
+
+## 44.3 冻结问题与 baseline
+
+物理仍为 50×25×140 nm cell、17×25×120 nm complex-Si block、13.5 nm、theta80/phi0/s、p2 Nédélec、double Floquet、80 个 auxiliary DtN modes、exact `F-C H^-1D` 与 official volume-absorption R/T/A，MPI4。ordinary config、模式数、物理、RTA 定义与 full residual 都禁止改变。
+
+Task030 baseline：h5/h3/h2 为 855/962/1873 步，full residual 都 `<=1e-6`，peak 1.687653/3.792912/9.374729 GiB。Task031 h3 continuation 需要 `<=3.50 GiB` 或降幅 `>=8%`；h2 解锁还要求 h3 full pass 且降幅 `>=8%`、两套中心预测 `<=8.8 GiB`、保守上界 `<=10 GiB`、无 swap、clean source 和 watchdog。
+
+## 44.4 采用的方法
+
+### 外部同时内存权威
+
+`run_task031_memory_forensics.py` 每 0.25 s 同时采样 live MPI ranks 的 RSS sum、MPI process tree、cgroup current/peak、线程/CPU 和 WSL swap，并从 runner 的 stage JSONL 标注峰值阶段。它不把各 rank 在不同时刻的历史最大值相加。h2 额外强制 `--unlock-h2`、9.5 GiB warning 与 11 GiB controlled termination。
+
+### Assembled-F-free public MPC form action
+
+`mpc_form_action.py` 把 active vector 写入 MPC Function，backsubstitute 后通过 public `dolfinx_mpc.assemble_vector(ufl.action(...))` 计算 action，并显式恢复 MPC slave unit rows。最初遗漏 unit rows 时误差约 0.0263；修复后 h5/h3/h2 action error 都 `<1e-15`。`CondensedDtnOperator` 接受 external fine action，并通过 `require_f/release_f` 只让 assembled `F` 存活到 coarse/slab setup 完成；solve ledger 中没有 `F`。该路径只是 solve 阶段 assembled-F-free，不是缓存优化的低层 element-kernel matrix-free；每次 apply 仍发生 Function/MPC/form assembly 与通信。
+
+### Slab、lifecycle 与合法性
+
+overlap0.125 缩小 factor；compact lifecycle 在 RTA 前释放 KSP/PC/factors/work vectors；exact SHA-256 fingerprints 只允许完全相同 factor 共享。PC certificate 用随机向量检查 linearity/determinism：Task030 adaptive local GMRES PC 的线性误差为 `2.374308e-2`，因此普通 GMRES fail closed，必须保留 flexible Krylov。固定 Richardson 虽达到 `3.611e-15`，却失去收敛能力。
+
+## 44.5 实验漏斗与负结果
+
+| lane | 关键观测 | 决定 |
+|---|---|---|
+| FGMRES50 | worker RSS -1.89%，residual/time 更差 | `<3%` 停止 |
+| ordinary GMRES | PC linearity `2.374308e-2` | 算法不合法，fail closed |
+| fixed Richardson | linear，但 200 步 residual 0.7703 | numeric negative |
+| 16 slab overlap0.125 | factor nnz -19.59%，residual 略差 | weak positive，进入组合 |
+| 20 slab overlap0.125 | factor/RSS/residual 均差于16 slab | 停止 |
+| boundary Jacobi1 | stored factor -9.95%，residual 恶化约13.7x | 停止 |
+| exact factor dedup | 16/16 fingerprints unique | 无可共享 factor，停止 |
+| assembled-F-free public form action | action 等价，200步 RSS约 -2–3%，时间3.18x | 内存优先保留 |
+
+h3 第一次在 max_it1600 时 full residual 为 `5.490e-6`，严格判负；任务书允许 h5/h3 上限 5000 且不以高迭代数自动判失败。同一配置提高安全上限后在 1994 步通过，残差历史与第一次共同点逐位一致，证明是延长同一过程而非参数漂移。
+
+## 44.6 h5/h3/h2 正式结果
+
+| h | DoF | iterations | full residual | simultaneous worker peak | cgroup peak | solve/total s |
+|---:|---:|---:|---:|---:|---:|---:|
+| 5 | 44,698 | 1,157 | `9.959903e-7` | 1.619598 GiB | 1.056248 GiB | 350.851 / 374.342 |
+| 3 | 198,438 | 1,994 | `9.973853e-7` | 3.474346 GiB | 2.899216 GiB | 2311.581 / 2370.351 |
+| 2 | 615,108 | 1,977 | `9.998454e-7` | 7.897675 GiB | 7.424026 GiB | 11982.581 / 12173.086 |
+
+三份 run 都来自 clean SHA `45a0fc6e...`、同一 image digest 与 MPI4。h3 external simultaneous peak 3.474346 GiB，通过 3.50 GiB 绝对线；相对 Task030 历史口径的观察降幅 8.399% 只作辅助。h2 external simultaneous / legacy internal peak 为 7.897675 / 8.176441 GiB，相对 Task030 历史值的辅助对照约降 15.8% / 12.8%；保守工程结论约 8.0–8.2 GiB。h2 通过 strong `<=8.0 GiB` external Gate，但未达到 stretch `<=7.0 GiB`。峰值在 `outer_krylov_solve`；coarse operator ready 7.867531 GiB，solver release/RTA 约 6.50 GiB。swap in/out=0，watchdog 未触发。
+
+## 44.7 h2 预测与条件解锁
+
+h5/h3 DoF–RSS 仿射外推给出 8.501130 GiB；Task030 h2 按 h3 实测比例迁移给出 8.587349 GiB。以 h5 最弱的 4.032% 收益应用到 Task030 h2 后再加 5% 余量，保守上界为 9.446530 GiB。三者全部过 Gate，才解锁唯一 h2 candidate。实测 7.897675 GiB 低于两套中心预测和上界；没有运行第二个 h2，因为首个已经 `<8.0 GiB`，也没有机制不同且预测 `<=7.5 GiB` 的候选。
+
+## 44.8 数值正确性与 R/T/A
+
+h5/h3/h2 的 reported、condensed true 和 full augmented true residual 一致。official R/T/A 为：
+
+```text
+h5 = 0.089021602568 / 0.442588275323 / 0.468390124569
+h3 = 0.004613031629 / 0.583653357934 / 0.411733610310
+h2 = 0.001342934186 / 0.599213235569 / 0.399443835926
+```
+
+energy closure 分别为 `2.460e-9 / -1.270e-10 / 5.682e-9`；对 direct 最大 delta 为 `6.162e-9 / 1.104e-9 / 6.125e-9`，都远低于 `1e-6`。这排除了仅 reported residual 收敛或 public form-action wrapper 改变物理解的可能。
+
+## 44.9 结果解释
+
+Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assembled `F`、slab factor 规模与 solver/RTA 对象重叠是三个正交来源；restart50 的 payload 模型下降没有转化为足够的 full-process peak。相对 Task030 历史口径的 h5/h3/h2 百分比只能作为趋势证据，不能包装成严格同 sampler 的精确 A/B。
+
+代价同样清晰：public form action 每次需要 MPC field 写入/backsub/assembly，h2 约 13,960 次 form apply，使 solve 达 11982.581 s，是 Task030 的约 5.01x。迭代数只增加约 5.55%，每步平均成本约增加 4.74x；一次性 `release_f()` 不是主要耗时。因此最终分类必须同时包含 strong memory success 和 slow-but-memory-efficient，不能只报道 7.898 GiB。
+
+## 44.10 最终决策与合并边界
+
+建议 review 后选择性合并 external sampler/watchdog、public MPC form action、safe condensed lifecycle、PC certificate、object ledger、测试、Case070 与文档。最终 candidate 只作为显式 opt-in memory-first profile；ordinary default 不变。
+
+不得提升 fixed Richardson、boundary Jacobi、restart50、20-slab 或 approximate factor sharing。16 个 factor 没有 exact duplicate，因此不存在 dedup implementation。不能把 release 后 current RSS 下降冒充 peak success，也不能把冻结 target 的验证写成任意参数数学保证。
+
+## 44.11 局限与下一步因果关系
+
+当前证据只覆盖一个物理/RHS、MPI4 partition 与当前 image；运行方差、其他机器、参数扫描、多 RHS 和跨 PETSc 版本未验证。Task030 与 Task031 的 memory sampler 口径并非完全一致，故所有轻量 record 同时保留 external simultaneous、cgroup 与 legacy internal 值。
+
+下一步若追求平衡，应优化 public form action 的缓存/批量路径，或设计固定线性且有足够平滑能力的 polynomial/Chebyshev local action；不应继续压 restart 或近似共享 factor，因为已有负证据。新路线必须从 h5 action equivalence、PC legality、true residual 与 simultaneous peak 联合 Gate 开始，再进入 h3/h2。
+
+## 44.12 证据入口
+
+- [Task031 task](task031_compact_physical_slab_memory_optimization/task.md)
+- [Task031 outcomes](task031_compact_physical_slab_memory_optimization/outcomes/summary.md)
+- [迭代求解器端口与合法性](iterative_solver_ports.md)
+- [Case070](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md)
+- [h2 prediction](task031_compact_physical_slab_memory_optimization/outcomes/h2_memory_prediction.md)
+- [negative results](task031_compact_physical_slab_memory_optimization/outcomes/negative_results.md)
+- [matrix-free validation](task031_compact_physical_slab_memory_optimization/outcomes/matrix_free_validation.md)
+- [iterative theory](../notes/theory/iterative_solver_and_preconditioner.md)
+- [workstation runtime walkthrough](../notes/reference/code_walkthrough/33_workstation_fgmres_runtime.md)
+
+---
+
+# 45. Task031 后的当前推荐顺序
+
+```text
+1. 完成 Task031 分支 full tests、Case070 checker 与 clean-tree 审计；
+2. 推送分支，等待 ChatGPT Task031 review；
+3. 按 review 修正，不静默改变 ordinary default；
+4. 用户明确批准后才选择性合并 master；
+5. 后续若继续，优先降低 public form-action apply 时间，而不是重复已失败的 restart/dedup 路线。
+```
+
+# 46. 当前一句话状态（Task031）
+
+> Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
