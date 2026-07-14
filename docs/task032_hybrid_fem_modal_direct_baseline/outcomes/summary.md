@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / task_in_progress
+status = phase0_complete / phase1_export_ready / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 只完成环境与旧能力迁移；`eigenmodes -> coupling -> solvers -> runner -> Case080` 尚未开始实现。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出。`eigenmodes -> coupling -> solvers -> runner -> Case080` 尚未开始实现。
 
 ## 4. eigenproblem implementation and validation
 
@@ -57,7 +57,7 @@ planned first gate = homogeneous air analytic beta
 
 ## 11. full-3D comparison
 
-Phase 0 已证明现有 full-3D h5 MPI4 direct 在新目录可运行：44,698 FE DoF、80 auxiliary modes、真相对残差 `1.3033e-11`，`R/T/A = 0.0890216029 / 0.4425882787 / 0.4683901184`，闭合误差 `1.2124e-13`。这只是迁移基线，不是 Hybrid 对比结果。
+Phase 0 已证明现有 full-3D h5 MPI4 direct 在新目录可运行。Phase 1 exporter 诊断进一步生成 z=`10/30/60/90/110 nm`、40x20 周期单元中心网格上的 complex128 E/H；主数组 shape 为 `(5,20,40,3)`，接口显式保存 x/y tangential traces。z=10 从 +z 单元、z=110 从 -z 单元取迹，二者均来自中间模态区域。诊断的真相对残差为 `5.6433e-12`，`R/T/A = 0.0890216029 / 0.4425882787 / 0.4683901184`，闭合误差 `-9.5035e-14`。NPZ/JSON/run-summary 哈希一致；正式 h5/h3 clean-SHA reference 仍待运行。
 
 ## 12. angle/polarization smoke
 
@@ -67,22 +67,26 @@ Phase 0 已证明现有 full-3D h5 MPI4 direct 在新目录可运行：44,698 FE
 
 Phase 0 h5 full-3D direct 的 simultaneous total peak RSS 为 `2367.133 MB`，elapsed `23.849 s`。该数值用于环境迁移 sanity，不替代后续外部同时 sampler 的正式 Hybrid 内存结论。
 
+Phase 1 冻结参考采样的 E/H 未压缩复制载荷仅 `384000 bytes`，并有 `64 MiB` fail-closed 上限；没有聚集完整 FE vector、matrix 或 volume mesh。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
 
 ## 15. changed files
 
-Phase 0 当前 tracked 变化：
+Phase 0 已提交。Phase 1 当前 tracked 变化：
 
 ```text
-src/main.py
-src/test/test_27_main_preset_contract.py
-docs/development_progress.md
+src/common/config_3d.py
+src/postprocessing/full3d_reference.py
+src/postprocessing/postprocess_3d.py
+src/runners/run_3d_cases.py
+src/test/test_31_full3d_reference_export.py
+notes/reference/code_walkthrough.md
+notes/reference/code_walkthrough/41_task032_full3d_reference_export.md
 docs/task032_hybrid_fem_modal_direct_baseline/README.md
-docs/task032_hybrid_fem_modal_direct_baseline/outcomes/local_migration_record.md
-docs/task032_hybrid_fem_modal_direct_baseline/outcomes/environment_capability.md
-docs/task032_hybrid_fem_modal_direct_baseline/outcomes/old_vs_new_smoke.md
+docs/task032_hybrid_fem_modal_direct_baseline/outcomes/full3d_reference_contract.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
 ```
 
@@ -90,9 +94,9 @@ docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Task032 implementation has not started; only Phase 0 migration Gate is complete
+reason = Phase 1 reference export is ready, but formal h5/h3 references and Hybrid implementation are incomplete
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 1 full-3D reference contract 与 field/trace extraction 设计。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是从 clean exporter SHA 生成 Phase 1 h5/h3 正式 reference，再进入 Phase 2 截面 QEP。

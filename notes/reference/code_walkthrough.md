@@ -2,7 +2,7 @@
 
 本索引解释当前代码如何把参数、方程、约束、求解器和结果串起来。运行方法见 [`../quick_start/README.md`](../quick_start/README.md)，推导见 [`../theory/README.md`](../theory/README.md)，数值证据见 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md)。
 
-Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇都给出真实签名、对象 shape/ownership、公式映射、调用顺序、测试和限制，并由 `test_26_documentation_contract.py` 防止退化为函数摘要。Task29 direct telemetry 已同步到第 30、40、50 章。Task30 的 symmetric pre/post、local shift、factor-only storage、runner flags、H(curl) transfer/Galerkin 测试和 Case060 边界已同步到第 32、33、50 章；p/h coarse 的代数成功与 solver 负结果被明确分开。Task31 的 PC certificate、factor fingerprint、public MPC matrix-free fine action、external simultaneous RSS/watchdog、compact lifecycle 与 Case070 合同也已同步到第 32、33、50 章。
+Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇都给出真实签名、对象 shape/ownership、公式映射、调用顺序、测试和限制，并由 `test_26_documentation_contract.py` 防止退化为函数摘要。Task29 direct telemetry 已同步到第 30、40、50 章。Task30 的 symmetric pre/post、local shift、factor-only storage、runner flags、H(curl) transfer/Galerkin 测试和 Case060 边界已同步到第 32、33、50 章；p/h coarse 的代数成功与 solver 负结果被明确分开。Task31 的 PC certificate、factor fingerprint、public MPC matrix-free fine action、external simultaneous RSS/watchdog、compact lifecycle 与 Case070 合同也已同步到第 32、33、50 章。Task32 Phase 1 的显式 full-3D 参考面导出、单侧接口取迹和小数据通信边界见第 41 章。
 
 | 顺序 | 文档 | 内容 |
 |---:|---|---|
@@ -20,7 +20,8 @@ Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇�
 | 11 | [`code_walkthrough/32_physical_slab_two_level_pc.md`](code_walkthrough/32_physical_slab_two_level_pc.md) | sparse coarse、slab owner、sm2 |
 | 12 | [`code_walkthrough/33_workstation_fgmres_runtime.md`](code_walkthrough/33_workstation_fgmres_runtime.md) | benchmark production runner 数据流 |
 | 13 | [`code_walkthrough/40_output_schema_and_visualization.md`](code_walkthrough/40_output_schema_and_visualization.md) | JSON/CSV/VTU、RSS、字段口径 |
-| 14 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
+| 14 | [`code_walkthrough/41_task032_full3d_reference_export.md`](code_walkthrough/41_task032_full3d_reference_export.md) | Task032 参考平面、接口取迹、复杂场 NPZ |
+| 15 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
 
 ## 一句话调用链
 
