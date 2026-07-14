@@ -52,4 +52,7 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <f
 ```
 
 第二条命令要求 tracked source clean；研究工作树必须显式使用
-`--allow-dirty-research`，其结果不能升级为正式 record。
+`--allow-dirty-research`，其结果不能升级为正式 record。Windows 宿主先用
+`git status` 确认 clean，再把完整 SHA 作为 host clean attestation；Linux
+容器只复核挂载仓库 HEAD 与该 SHA 相等，因为 CRLF bind mount 会让容器内
+`git status` 把全部文本文件误报为修改。

@@ -78,5 +78,10 @@ electric-L2 normalization and MPI ownership. The Phase 2 benchmark runner is
 `benchmarks.run_task032_phase2_qep`; it keeps eigenvectors/matrices out of Git
 and writes only lightweight scalar evidence.
 
+For a formal Windows bind-mount run, `--verified-clean-sha` is the host-side
+clean attestation and the container rechecks the mounted `HEAD`. Container-side
+`git status` is not authoritative here because host `core.autocrlf=true` makes
+the Linux Git client report every CRLF file as modified.
+
 This module does not yet classify modes by Poynting flux, propagate them
 through 100 nm, project 3D traces, or assemble a Hybrid direct system.
