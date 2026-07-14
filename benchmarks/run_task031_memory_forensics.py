@@ -327,7 +327,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--factor-only-storage", action=argparse.BooleanOptionalAction, default=True
     )
-    parser.add_argument("--certify-pc", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--certify-pc",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Explicitly require fixed-PC certification for FGMRES research runs. "
+            "The worker always certifies every non-FGMRES outer KSP and fails closed."
+        ),
+    )
     parser.add_argument(
         "--compact-lifecycle", action=argparse.BooleanOptionalAction, default=True
     )

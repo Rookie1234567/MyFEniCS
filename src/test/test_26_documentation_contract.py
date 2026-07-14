@@ -127,6 +127,9 @@ class DocumentationContractTests(unittest.TestCase):
             "notes/reference/code_walkthrough/00_repository_architecture.md",
             "notes/reference/code_walkthrough/50_tests_and_benchmark_contract.md",
             "benchmarks/cases/README.md",
+            "docs/iterative_solver_ports.md",
+            "docs/project_service_requirements_and_forward_model_roadmap.md",
+            "docs/project_service_requirements_phase1_scope.md",
         )
         required += tuple(f"notes/quick_start/{name}" for name in CORE_QUICK_START)
         required += tuple(
@@ -388,6 +391,16 @@ class DocumentationContractTests(unittest.TestCase):
             ROOT / "benchmarks" / "cases",
         )
         markdown = [ROOT / "notes" / "reference" / "code_walkthrough.md"]
+        markdown.extend(
+            ROOT / "docs" / name
+            for name in (
+                "README.md",
+                "solver_guide.md",
+                "capability_matrix.md",
+                "benchmark.md",
+                "iterative_solver_ports.md",
+            )
+        )
         for folder in roots:
             markdown.extend(folder.rglob("*.md"))
         broken: list[str] = []

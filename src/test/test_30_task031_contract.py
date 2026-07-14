@@ -17,6 +17,8 @@ CASE = ROOT / "benchmarks" / "cases" / "070_compact_physical_slab_memory_optimiz
 class Task031ContractTests(unittest.TestCase):
     def test_task_book_is_present_and_outcomes_are_complete(self) -> None:
         self.assertTrue((TASK / "task.md").is_file())
+        self.assertTrue((TASK / "review_report_v1.md").is_file())
+        self.assertTrue((TASK / "response_v1.md").is_file())
         required = (
             "README.md",
             "summary.md",
@@ -201,6 +203,80 @@ class Task031ContractTests(unittest.TestCase):
         self.assertIn("matrix_free_fine=True, expected False", runner)
         self.assertIn("compact_lifecycle=True, expected False", runner)
         self.assertIn('os.environ.get("TASK031_IMAGE_DIGEST", "unknown")', runner)
+
+    def test_iterative_port_document_separates_interface_and_qualification(self) -> None:
+        ports = (DOCS / "iterative_solver_ports.md").read_text(encoding="utf-8")
+        for value in (
+            "argparse port exists != solver is currently usable",
+            "Task27 canonical workstation profile",
+            "compact_physical_slab_low_memory_experimental_opt_in",
+            "task031_matrix_free_compact_physical_slab_opt_in",
+            "port_implemented_but_incompatible_with_current_adaptive_pc",
+            "interface_exposed_not_target_qualified",
+            "linear_research_port_numeric_negative",
+            "assembled-F-free public MPC form-action path",
+            "8.0–8.2 GiB",
+            "1–10° grazing + S/P",
+        ):
+            with self.subTest(value=value):
+                self.assertIn(value, ports)
+        for flag in (
+            "--matrix-free-fine",
+            "--compact-lifecycle",
+            "--certify-pc",
+            "--subdomain-local-shift",
+            "--factor-only-storage",
+            "--post-smooth",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, ports)
+        linked_docs = (
+            DOCS / "README.md",
+            DOCS / "solver_guide.md",
+            DOCS / "capability_matrix.md",
+            ROOT / "notes" / "quick_start" / "40_3d_workstation_iterative.md",
+        )
+        for path in linked_docs:
+            with self.subTest(path=path.name):
+                self.assertIn(
+                    "iterative_solver_ports.md", path.read_text(encoding="utf-8")
+                )
+
+    def test_task031_wrapper_certifies_non_fgmres_but_not_flexible_default(self) -> None:
+        wrapper = (
+            ROOT / "benchmarks" / "run_task031_memory_forensics.py"
+        ).read_text(encoding="utf-8")
+        worker = (ROOT / "benchmarks" / "run_workstation_iterative.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertRegex(
+            wrapper,
+            r'"--certify-pc",\s+action=argparse\.BooleanOptionalAction,\s+'
+            r'default=False',
+        )
+        self.assertIn('args.ksp_type != "fgmres"', worker)
+        self.assertIn("fixed-PC linearity gate failed", worker)
+        for label in ("h5", "h3", "h2"):
+            record = json.loads(
+                (CASE / "records" / f"best_{label}.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            with self.subTest(label=label):
+                self.assertNotIn("--certify-pc", record["metadata"]["command"])
+
+    def test_review_v1_hardening_terms_are_synchronized(self) -> None:
+        summary = (OUTCOMES / "summary.md").read_text(encoding="utf-8")
+        response = (TASK / "response_v1.md").read_text(encoding="utf-8")
+        case = (CASE / "README.md").read_text(encoding="utf-8")
+        for text in (summary, response, case):
+            self.assertIn("external simultaneous", text)
+            self.assertIn("legacy internal", text)
+            self.assertIn("8.0–8.2 GiB", text)
+        self.assertIn("release_f()", response)
+        self.assertIn("4.74x", response)
+        self.assertIn("origin/master", response)
+        self.assertIn("project_service_requirements_phase1_scope.md", response)
 
 
 if __name__ == "__main__":

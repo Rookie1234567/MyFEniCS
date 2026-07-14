@@ -9,11 +9,11 @@ base = Task030 merged master 545165b3d29396dcc3a8d5b029089175eafa3c4a
 clean implementation commit = 45a0fc6e19535cb8f14fbfb186f099019612fec2
 classification = strong_memory_success_slow_but_memory_efficient
 ordinary_default_changed = false
-review_status = pending Task031 review
+review_status = Review V1 response_v1 hardening complete; pending final review
 master_decision = pending review and explicit user approval
 ```
 
-Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed DtN 与 official R/T/A 的条件下，把 Task030 h2 的 9.374729 GiB 峰值降到外部同时 worker RSS 7.897675 GiB，并保持 full true residual `<=1e-6`。这是强内存成功，但 h2 solve 约 3.33 小时，明确标记 `slow_but_memory_efficient`，不提升 ordinary default。
+Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed DtN 与 official R/T/A 的条件下，取得 h2 external simultaneous worker RSS 7.897675 GiB，并保持 full true residual `<=1e-6`。相对 Task030 历史 9.374729 GiB 的观察降幅约 15.8%，但采样实现并非完全同口径；以 Task31 legacy internal 8.176441 GiB 对照时约降 12.8%，故保守表述为从约 9.4 GiB 压缩到约 8.0–8.2 GiB。这是强内存成功，但 h2 solve 约 3.33 小时，明确标记 `slow_but_memory_efficient`，不提升 ordinary default。
 
 ## 2. 任务目标与非目标
 
@@ -36,7 +36,7 @@ Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed Dt
 | 方法 | 目的 | 实现/证据 |
 |---|---|---|
 | external memory forensics | 给出同时 RSS/cgroup/swap/stage authority | `run_task031_memory_forensics.py` |
-| public MPC form action | solve 中不保留 assembled `F`，又保持约束 slave unit rows | `mpc_form_action.py`，action error `<1e-15` |
+| assembled-F-free public MPC form action | solve 中不保留 assembled `F`，又保持约束 slave unit rows | `mpc_form_action.py`，action error `<1e-15`；每次 apply 仍执行 form assembly/通信 |
 | condensed operator lifecycle | 允许 external fine action，并安全 `require_f/release_f` | `condensed_dtn.py` |
 | overlap0.125 | 降低 factor rows/nnz | h5 factor nnz -19.59% |
 | compact lifecycle | RTA 前销毁 KSP/PC/factors/work vectors | stage ledger + no-double-destroy tests |
@@ -52,7 +52,7 @@ Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed Dt
 | fixed linear PC | Richardson + GMRES90 | linearity `3.611e-15`，但 200 步 residual 0.7703；numeric negative |
 | overlap/slabs | 16/20 slab、overlap0.125 | 16 slab weak-positive；20 slab 更差 |
 | selective local solver | boundary Jacobi1 | stored factor nnz 下降，residual 恶化到 0.0118 且 RSS 无收益；停止 |
-| matrix-free fine | assembled equivalence + 200-step | residual 等价，RSS -2.03%，screen time 3.18x；因内存优先保留 |
+| public form-action fine | assembled equivalence + 200-step | residual 等价，RSS -2.03%，screen time 3.18x；因内存优先保留 |
 | full h5 | combined candidate | 1,157 步 full pass |
 | full h3 attempt1 | max_it=1600 | residual `5.490e-6`，未通过；保留负结果 |
 | full h3 qualification | same candidate, max_it=5000 | 1,994 步 full pass + 3.474 GiB |
@@ -66,7 +66,7 @@ Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed Dt
 | h3 | 1,994 | `9.973853e-7 / 9.973853e-7 / 9.973853e-7` | 3.474346 GiB | 2.899216 GiB | 2311.581 / 2370.351 |
 | h2 | 1,977 | `9.998454e-7 / 9.998454e-7 / 9.998454e-7` | 7.897675 GiB | 7.424026 GiB | 11982.581 / 12173.086 |
 
-相对 Task030，同口径任务比较采用任务书冻结基线：h5/h3/h2 分别下降 4.032%、8.399%、15.756%。h3 同时通过 `<=3.50 GiB` 和 `>=8%`；h2 通过 `<9.0` memory-positive、`<=8.5` engineering 与 `<=8.0` strong Gate，但未达到 `<=7.0` stretch。
+相对 Task030 历史基线，h5/h3/h2 的辅助观察降幅分别为 4.032%、8.399%、15.756%；这不是严格相同 sampler 的精确 A/B。Task31 h2 自身的 external simultaneous / legacy internal peak 分别为 7.897675 / 8.176441 GiB，后者相对 Task030 历史值约降 12.8%。主要结论是 h3 external peak `<=3.50 GiB`、h2 external peak `<=8.0 GiB`，保守工程范围约 8.0–8.2 GiB；h2 未达到 `<=7.0` stretch。
 
 ## 7. 数值正确性与 Gate
 
@@ -76,23 +76,23 @@ Task031 在冻结 3D p2 Nédélec、双 Floquet、80 模态、exact condensed Dt
 - h3：`0.004613031629 / 0.583653357934 / 0.411733610310`，closure `-1.270e-10`；
 - h2：`0.001342934186 / 0.599213235569 / 0.399443835926`，closure `5.682e-9`。
 
-对 canonical direct 的最大 R/T/A delta 分别为 `6.162e-9 / 1.104e-9 / 6.125e-9`，远低于 `1e-6`。matrix-free fine action error 为 `9.718e-16 / 9.460e-16 / 9.248e-16`，ledger 证明 solve 中不再保留 assembled `F`。
+对 canonical direct 的最大 R/T/A delta 分别为 `6.162e-9 / 1.104e-9 / 6.125e-9`，远低于 `1e-6`。public form action 对 assembled `F` 的 action error 为 `9.718e-16 / 9.460e-16 / 9.248e-16`，ledger 证明 solve 中不再保留 assembled `F`。
 
 ## 8. 性能或资源结果
 
 h2 外部峰值发生在 `outer_krylov_solve`，为 7.897675 GiB；coarse operator ready 为 7.867531 GiB。solver stack release 后同时 RSS 约 6.50 GiB，RTA complete 约 6.498 GiB。全程 swap in/out delta 都为 0，9.5 GiB warning 与 11 GiB termination 均未触发。
 
-内存收益的成本很高：h2 solve 相对 Task030 约 5.01x。matrix-free h5 200-step screen 也从 18.478 s 增到 58.837 s。故这条路线适用于内存受限工作站，不适合作为默认高吞吐 profile。
+内存收益的成本很高：h2 solve 相对 Task030 约 5.01x。h5 200-step public form-action screen 也从 assembled action 的 18.478 s 增到 58.837 s。释放 `F` 本身只是一次性生命周期动作；主要时间成本是每次 outer apply 都进行 MPC Function 写入/backsubstitution、`ufl.action`、`assemble_vector` 和通信。故这条路线适用于内存受限工作站，不适合作为默认高吞吐 profile。
 
 ## 9. 根因解释
 
-峰值下降来自三个互补机制，而不是 Krylov restart：matrix-free fine action 消除 solve 中 assembled `F`；overlap0.125 把 slab factor nnz 压低约 19.6%；compact lifecycle 明确缩短 KSP/PC/factor/work-vector 与 RTA 的重叠。FGMRES50 只降低约 1.9% worker RSS且更慢，达不到 3% 停止规则。
+峰值下降来自三个互补机制，而不是 Krylov restart：assembled-F-free public form action 消除 solve 中常驻 `F`；overlap0.125 把 slab factor nnz 压低约 19.6%；compact lifecycle 明确缩短 KSP/PC/factor/work-vector 与 RTA 的重叠。FGMRES50 只降低约 1.9% worker RSS且更慢，达不到 3% 停止规则。这里的“matrix-free”不是已缓存优化的低层 element-kernel 实现，当前路径每次 apply 仍调用 `assemble_vector(ufl.action(...))`。
 
 h3/h2 迭代数上升不是 false convergence：稀疏 true-residual history 持续下降，最终三残差一致并通过 R/T/A。adaptive inner GMRES 令 PC 非线性，因此 FGMRES 是合法性要求，不是可随意替换的偏好。fixed Richardson 虽恢复线性，却丢失了有效平滑能力。
 
 ## 10. 成功路线
 
-接受的 opt-in profile 是 Task030 physical-slab/wave coarse + 16 slab overlap0.125 + ILU0 symmetric pre/post + local shift + factor-only + FGMRES90 + matrix-free fine action + compact lifecycle。h5/h3/h2 都在 clean source 上 full pass，h2 达到 strong memory success。
+接受的 opt-in profile 是 Task030 physical-slab/wave coarse + 16 slab overlap0.125 + ILU0 symmetric pre/post + local shift + factor-only + FGMRES90 + assembled-F-free public form action + compact lifecycle。h5/h3/h2 都在 clean source 上 full pass，h2 达到 strong memory success。
 
 ## 11. 失败、负结果与未运行项
 
@@ -100,7 +100,7 @@ factor dedup 因 16 个 exact fingerprints 全部不同而停止；禁止近似�
 
 ## 12. 代码和文件变化
 
-新增 external sampler 与 public MPC form action；扩展 condensed operator 的 external action/释放生命周期；扩展 physical slab 的 fixed/ selective research path；runner 加入 KSP/PC certification、matrix-free、ledger 与 compact lifecycle opt-in。Case070、Task031 outcomes、理论/走读/solver guide 与合同测试同步更新。完整清单见 `changed_files.md`。
+新增 external sampler 与 public MPC form action；扩展 condensed operator 的 external action/释放生命周期；扩展 physical slab 的 fixed/selective research path；runner 加入 KSP/PC certification、assembled-F-free action、ledger 与 compact lifecycle opt-in。Case070、Task031 outcomes、理论/走读、统一端口文档、solver guide 与合同测试同步更新。完整清单见 `changed_files.md`。
 
 ## 13. 最终合并建议
 
@@ -108,7 +108,7 @@ factor dedup 因 16 个 exact fingerprints 全部不同而停止；禁止近似�
 
 ## 14. 局限
 
-“保证收敛”只表示冻结 target、MPI4、当前 partition 与 RHS 经 explicit true residual/full RTA 验证，不是一般数学保证。memory authority 与 Task030 历史 peak 的采样口径并非完全相同，因此报告同时保留外部 simultaneous、cgroup 与 legacy internal 值。h2 只运行一次 clean final candidate；多次运行方差、其他机器、其他角度和多 RHS 未覆盖。
+“保证收敛”只表示冻结 target、MPI4、当前 partition 与 RHS 经 explicit true residual/full RTA 验证，不是一般数学保证。当前单点为 13.5 nm、固定 Si、theta=80°（10° grazing）、S polarization；项目规划中的 1–10° grazing + S/P 仍需后续逐点资格化。memory authority 与 Task030 历史 peak 的采样口径并非完全相同，因此报告同时保留外部 simultaneous、cgroup 与 legacy internal 值。h2 只运行一次 clean final candidate；多次运行方差、其他机器、其他角度和多 RHS 未覆盖。
 
 ## 15. 下一步决定
 
@@ -122,4 +122,5 @@ factor dedup 因 16 个 exact fingerprints 全部不同而停止；禁止近似�
 - lightweight records：Case070 `records/`；
 - heavy evidence：`benchmarks/artifacts/cases/070/`（ignored）；
 - implementation：`benchmarks/run_task031_memory_forensics.py`、`benchmarks/run_workstation_iterative.py`、`src/solvers/mpc_form_action.py`、`src/solvers/condensed_dtn.py`、`src/solvers/physical_slab_two_level.py`；
+- ports/guide：`docs/iterative_solver_ports.md`、`docs/solver_guide.md`；
 - theory/walkthrough：`notes/theory/iterative_solver_and_preconditioner.md`、walkthrough 32/33/50。

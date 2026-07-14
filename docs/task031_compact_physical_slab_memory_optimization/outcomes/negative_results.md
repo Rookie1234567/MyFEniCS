@@ -11,4 +11,4 @@
 | h3 max_it1600 | full residual `5.490e-6` | 未达到 numeric Gate；同候选延长上限后才通过 |
 | second h2 | not_run | 首个已 `<8.0 GiB`，没有机制不同且预测 `<=7.5 GiB` 的候选 |
 
-matrix-free fine action 不是纯负结果：200-step RSS 仅下降约 2–3%，时间约 3.18x，但 h3/h2 的结构比例更有利，最终 h2 达到 7.898 GiB。因此保留为内存优先 opt-in，同时明确它不是吞吐优化。
+assembled-F-free public MPC form action 不是纯负结果：200-step RSS 仅下降约 2–3%，时间约 3.18x，但 h3/h2 的结构比例更有利，最终 h2 external simultaneous peak 达到 7.898 GiB。因此保留为内存优先 opt-in，同时明确它不是吞吐优化，也不是缓存优化的低层 element-kernel matrix-free。

@@ -123,7 +123,7 @@ Case060 best records 写入实际重型运行的 commit、tracked-source qualifi
 
 Case060 入口：[`../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md`](../../../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md)。
 
-## 16. Task031 external sampler 与 matrix-free/compact pipeline
+## 16. Task031 external sampler 与 assembled-F-free/compact pipeline
 
 Task031 wrapper `benchmarks.run_task031_memory_forensics` 是 runner 的父进程。它先核对 host clean full SHA，再启动 `mpiexec -n 4` worker；每 0.25 s 读取 live rank RSS、process tree、cgroup、swap 与 `*_memory_stages.jsonl`，最后把 solver numeric pass 和 full-run memory summary合并。h2 默认锁定，并可在 9.5/11 GiB warning/termination 时受控结束。
 
@@ -136,7 +136,7 @@ assemble Stage4 form/F/C/D/H
 -> build 75D coarse and 16 overlap0.125 slab factors
 -> release assembled F when all require_f users finish
 -> build FGMRES90 and write object ledger
--> solve with matrix-free fine action
+-> solve with assembled-F-free public MPC form action
 -> recompute condensed/full true residual
 -> destroy solver stack before official RTA
 -> external sampler reports full-run simultaneous peak
@@ -144,6 +144,8 @@ assemble Stage4 form/F/C/D/H
 
 `--matrix-free-fine`、`--compact-lifecycle`、`--ksp-type`、`--smoother-ksp-type`、`--certify-pc` 与 selective slab flags 默认都不改变 ordinary profile。最终 adaptive PC 非线性，所以 Case070 正式 run 用 FGMRES 并记录 certificate negative disposition，不用 `--certify-pc` 把已知非线性误判成运行失败。
 
-`object_ledger_at_solve` 只做可解释 payload 模型；外部 RSS/cgroup 才是内存 authority。h2 ledger payload 3.383 GiB、legacy internal peak 8.176 GiB、external worker peak 7.898 GiB，三个数不能混写。matrix-free h2 调用 form action 13,960 次，解释了 solve 11982.581 s 的主要成本。
+`object_ledger_at_solve` 只做可解释 payload 模型；外部 RSS/cgroup 才是内存 authority。h2 ledger payload 3.383 GiB、legacy internal peak 8.176 GiB、external worker peak 7.898 GiB，三个数不能混写。h2 调用 public form action 13,960 次，解释了 solve 11982.581 s 的主要成本；`release_f()` 只执行一次，不是变慢主因。该路径每次 apply 仍调用 `assemble_vector(ufl.action(...))`，不能包装成已缓存优化的低层 element-kernel matrix-free。
+
+outer KSP/smoother/flag 的完整状态见 [`../../../docs/iterative_solver_ports.md`](../../../docs/iterative_solver_ports.md)。FGMRES 与当前 adaptive PC 合法；普通 GMRES port 被 certification 阻塞，TFQMR/BCGS 只有未资格化接口。
 
 Case070 入口：[`../../../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md`](../../../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md)。

@@ -154,4 +154,4 @@ Task031 为 physical-slab context 增加 `certify_fixed_pc_action`：用分布�
 
 每个 local factor 记录结构/数值 SHA-256 fingerprint、owner、rows 与 stored nnz。Case070 的 16 个 factor 全部 unique，`exact_duplicate_factor_count=0`；代码不做近似 dedup。`selective_diagonal_boundary_slabs=1` 只用于 research screen：两个 boundary slabs 改为 Jacobi 后 stored factor nnz 下降约 9.95%，但 residual 恶化约 13.7x 且 RSS 几乎不降，因此最终仍是 16 个 ILU0 factors。
 
-最终 Task031 使用 overlap0.125，把 h5 factor rows/nnz 从 71,344/7,046,752 降到 58,720/5,666,368。该参数与 matrix-free/lifecycle 一样触发 qualification deviation，不改变 ordinary overlap0.25。
+最终 Task031 使用 overlap0.125，把 h5 factor rows/nnz 从 71,344/7,046,752 降到 58,720/5,666,368。该参数与 assembled-F-free public form action / compact lifecycle 一样触发 qualification deviation，不改变 ordinary overlap0.25。

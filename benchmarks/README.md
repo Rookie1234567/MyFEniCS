@@ -48,4 +48,4 @@ Review V1 后的固定四核 h5 矩阵进一步判定当前 image 的 threaded d
 
 Task029 Review V2 已技术通过并接受 Case050 的 telemetry、Gate 与负结果记录进入 master；`engineering_success=no`，没有新 optimized direct profile，h2 保持 `not_run`。
 
-Task030 Case060 已通过 Review V3 并合入 master。Task031 Case070 从该 clean merge point 完成 h5/h3/h2：external simultaneous worker peak 为 1.620/3.474/7.898 GiB，三残差与 official R/T/A 全通过、无 swap；h2 达到 strong memory success，但 solve 约为 Task030 的 5.01x。Case070 candidate 保持显式 opt-in，ordinary default 不变，完整 timeline 仍只写 `artifacts/cases/070/`。
+Task030 Case060 已通过 Review V3 并合入 master。Task031 Case070 从该 clean merge point 完成 h5/h3/h2：external simultaneous worker peak 为 1.620/3.474/7.898 GiB，h2 legacy internal peak 为 8.176 GiB，三残差与 official R/T/A 全通过、无 swap；保守结论为 Task030 历史约 9.4 GiB 压到约 8.0–8.2 GiB。h2 达到 strong memory success，但 assembled-F-free public MPC form action 使 solve 约为 Task030 的 5.01x。Case070 candidate 保持显式 opt-in，ordinary default 不变，完整 timeline 仍只写 `artifacts/cases/070/`；KSP/smoother 合法性见 `docs/iterative_solver_ports.md`。

@@ -90,7 +90,7 @@ Task030 h5/h3 的 full true residual 与 R/T/A 已通过，但该组合仍是显
 
 factor-only 生命周期只在 qualified local image 的 PETSc 3.24.0 complex build 完成 action/destroy 回归；`PC.getFactorMatrix()` 的跨版本引用计数与生命周期语义必须重新验证。
 
-## 11. Task031：matrix-free fine action、PC 合法性与内存/时间交换
+## 11. Task031：assembled-F-free public form action、PC 合法性与内存/时间交换
 
 ### 11.1 “Condensed matrix-free”仍可能保留 assembled F
 
@@ -100,7 +100,7 @@ $$y_F = a(u,\cdot),$$
 
 其中输入 active vector 先写入 MPC Function、backsubstitute 到 slave，再由 `dolfinx_mpc.assemble_vector(ufl.action(a,u))` 形成输出；MPC slave 行保持原 assembled operator 的 unit-row 约定。h5/h3/h2 action error 均小于 `10^{-15}`，而 solve ledger 中不再出现 F。
 
-这不是“零存储”：form、Function、MPC map、C/D/H、coarse basis、slab factors、Krylov vectors 和装配临时量仍存在。memory-free 与 matrix-free 不是同义词。
+这不是“零存储”：form、Function、MPC map、C/D/H、coarse basis、slab factors、Krylov vectors 和装配临时量仍存在。它也不是已缓存优化的低层 element-kernel matrix-free；当前每次 apply 仍进行 vector assembly 和通信。memory-free 与 matrix-free 不是同义词。
 
 ### 11.2 非线性 PC 为什么必须用 FGMRES
 
@@ -108,7 +108,7 @@ $$y_F = a(u,\cdot),$$
 
 $$M^{-1}(\alpha x+\beta y)\ne\alpha M^{-1}x+\beta M^{-1}y.$$
 
-Task031 的随机向量 certificate 给出 linearity error `2.374308e-2`，因此普通 GMRES、TFQMR、BiCGStab 的固定线性 PC 假设不成立。FGMRES 保存每一步实际预条件向量，允许 $M_k^{-1}$ 随迭代变化。固定 Richardson 变体虽把 error 降到 `3.611e-15`，但 200 步 residual 为 0.7703，说明算法合法性与实际平滑能力必须分别验证。
+Task031 的随机向量 certificate 给出 linearity error `2.374308e-2`，因此普通 GMRES、TFQMR、BCGS 的固定线性 PC 假设不成立。FGMRES 保存每一步实际预条件向量，允许 $M_k^{-1}$ 随迭代变化。固定 Richardson 变体虽把 error 降到 `3.611e-15`，但 200 步 residual 为 0.7703，说明算法合法性与实际平滑能力必须分别验证。普通 GMRES 是已实现但被当前 PC 阻塞的 port；TFQMR/BCGS 只是未 target-qualified 的 exposed interfaces。
 
 ### 11.3 overlap 与 factor 存储
 
@@ -127,4 +127,4 @@ M_{\rm peak}=\max_t M_{\rm worker}(t).$$
 
 ### 11.5 最终边界
 
-Task031 h2 比 Task030 内存下降 15.756%，但 solve time 增至约 5.01x。因此它是 memory-first opt-in，不是 ordinary speed profile。所谓“保证收敛”只指 frozen target 的 reported/condensed/full residual 与 official R/T/A 全部通过，不是参数域外的谱界或数学无条件保证。
+Task031 h2 external simultaneous / legacy internal peak 为 7.897675 / 8.176441 GiB。相对 Task030 历史 9.374729 GiB 的辅助观察降幅约 15.8% / 12.8%，但 sampler 不完全同口径，故保守结论为从约 9.4 GiB 压到约 8.0–8.2 GiB。solve time 增至约 5.01x，主要来自每次 public form action 的装配/通信，不是一次性释放 `F`。因此它是 memory-first opt-in，不是 ordinary speed profile。所谓“保证收敛”只指 frozen target 的 reported/condensed/full residual 与 official R/T/A 全部通过，不是参数域外的谱界或数学无条件保证。

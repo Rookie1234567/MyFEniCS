@@ -8,7 +8,7 @@
 | `environment.json` | branch/SHA/image/host/物理与采样口径 |
 | `memory_breakdown.csv` | Task030/Task031 内存、stage 和 payload 对比 |
 | `krylov_comparison.csv` / `.md` | FGMRES restart、普通 GMRES 与 fixed-PC 结果 |
-| `matrix_free_validation.md` | public MPC form action、误差、ledger 与时间代价 |
+| `matrix_free_validation.md` | assembled-F-free public MPC form action、误差、ledger 与时间代价；非低层缓存 kernel |
 | `factor_dedup.md` | exact fingerprint 负结果 |
 | `overlap_funnel.csv` / `.md` | overlap/slab 筛选 |
 | `selective_solver_funnel.csv` / `.md` | selective diagonal/fixed linear solver 筛选 |
