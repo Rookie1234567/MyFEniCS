@@ -26,6 +26,7 @@
 
 | 文件 | 内容 |
 |---|---|
+| [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力和 Task031–Task035 前向模型路线；后续任务的上位需求基线 |
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`task_retrospective_standard.md`](task_retrospective_standard.md) | 从 Task029 起适用于所有新 Task 的阶段回顾标准：背景、基线、方法、结果、解释、负结果、决策、局限、下一步与证据入口 |
 | [`development_progress.md`](development_progress.md) | Task000 起的项目发展时间线；每个新 Task 必须按阶段回顾标准留下可理解的结构化记录 |
@@ -50,7 +51,7 @@
 | Task027 | fixed coarse physical-slab MPI4 | h5/h3/h2 production residual候选 |
 | Task028 | 阶段收口、选择性整合、benchmark | 已以 merge commit `2f9e56d` 进入 master |
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
-| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；clean h5/h3，historical h2；p/h multigrid solver-negative |
+| Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | planned；目标为在保证收敛下继续压缩 Krylov、F、slab factors 和对象生命周期 |
 
 ## 当前任务
@@ -61,8 +62,8 @@
 | Task027 | `task027_mesh_independent_spectral_schwarz_pc/` | 已审查；fixed coarse成功，spectral失败 |
 | Task028 | `task028_stage_consolidation_master_integration_benchmarks/` | V4 完成并已合并 `master` |
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
-| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | Response V2 已完成；等待最终审查与用户选择性合并许可 |
-| Task031 | `task031_compact_physical_slab_memory_optimization/` | 任务书已创建；只能在 Task030 合并后的 clean master 上启动 |
+| Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
+| Task031 | `task031_compact_physical_slab_memory_optimization/` | 任务书已创建；应从当前 clean master 新建独立执行分支 |
 
 ## Task28 审计入口
 
@@ -109,6 +110,7 @@
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v1.md) | V1 回应：203 项 Gate、统一身份和 factor-nnz 限定 |
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v2.md) | V2：clean h5/h3 加固与 validated infrastructure / failed lanes 选择性合并边界 |
 | [`task030_multilevel_hcurl_low_memory_iterative_solver/response_v2.md`](task030_multilevel_hcurl_low_memory_iterative_solver/response_v2.md) | V2 回应：final-HEAD clean h5/h3、historical h2、API 隔离、文档与最终验证 |
+| [`task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v3.md`](task030_multilevel_hcurl_low_memory_iterative_solver/review_report_v3.md) | V3 最终审查：通过并允许按边界选择性合并，Task031 可从 clean master 启动 |
 
 ## Task031 任务入口
 
@@ -116,4 +118,4 @@
 |---|---|
 | [`task031_compact_physical_slab_memory_optimization/task.md`](task031_compact_physical_slab_memory_optimization/task.md) | 内存优先结构性优化：固定 PC 的低存储 Krylov、真正 matrix-free F、提前释放、slab factor 精确去重、overlap/slab 重构和选择性局部因子；迭代数/时间完整统计但内存优先，h2 条件解锁 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task031 必须从 Task030 合并后的 clean master 独立启动，ordinary default 仍不得改变。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。后续 Task032–Task035 在编写任务书前必须读取 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md)，ordinary default 仍不得静默改变。
