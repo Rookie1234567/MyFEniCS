@@ -25,7 +25,8 @@ Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇�
 | 16 | [`code_walkthrough/43_task032_mode_classification.md`](code_walkthrough/43_task032_mode_classification.md) | Task032 Poynting 分类、伴随 QEP、双正交和 mode tracking |
 | 17 | [`code_walkthrough/44_task032_stable_propagation.md`](code_walkthrough/44_task032_stable_propagation.md) | Task032 two-port 稳定传播、被动分支和 composition |
 | 18 | [`code_walkthrough/45_task032_modal_trace_projection.md`](code_walkthrough/45_task032_modal_trace_projection.md) | Task032 匹配 Nedelec 接口迹、top/bottom 法向、left/right 投影与近简并子空间 |
-| 19 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
+| 19 | [`code_walkthrough/46_task032_hybrid_local_mesh.md`](code_walkthrough/46_task032_hybrid_local_mesh.md) | Task032 上下局部 FEM 网格、接口标签、显式法向与 p2 Floquet ownership |
+| 20 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
 
 ## 一句话调用链
 
