@@ -68,7 +68,7 @@
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
-| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Phase 1 reference、Phase 2 clean QEP、Phase 3 clean Poynting/adjoint-QEP/biorthogonal/tracking 完成；Phase 4/coupling/Hybrid pending |
+| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Phase 1/2/3 complete；Phase 4 stable propagation implementation/MPI4 research pass，clean record pending；coupling/Hybrid pending |
 
 ## Task28 审计入口
 

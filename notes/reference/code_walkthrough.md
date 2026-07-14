@@ -23,7 +23,8 @@ Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇�
 | 14 | [`code_walkthrough/41_task032_full3d_reference_export.md`](code_walkthrough/41_task032_full3d_reference_export.md) | Task032 参考平面、接口取迹、复杂场 NPZ |
 | 15 | [`code_walkthrough/42_task032_cross_section_qep.md`](code_walkthrough/42_task032_cross_section_qep.md) | Task032 匹配截面、混合 QEP、双 Floquet 与分布式 PEP |
 | 16 | [`code_walkthrough/43_task032_mode_classification.md`](code_walkthrough/43_task032_mode_classification.md) | Task032 Poynting 分类、伴随 QEP、双正交和 mode tracking |
-| 17 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
+| 17 | [`code_walkthrough/44_task032_stable_propagation.md`](code_walkthrough/44_task032_stable_propagation.md) | Task032 two-port 稳定传播、被动分支和 composition |
+| 18 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
 
 ## 一句话调用链
 

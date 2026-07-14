@@ -6,22 +6,24 @@
 Phase 1 full-3D h5/h3 reference = complete
 Phase 2 cross-section eigenproblem = clean MPI4 formal record complete
 Phase 3 classification/biorthogonality = clean MPI4 formal record complete
+Phase 4 stable two-sided propagation = implementation/MPI4 research pass; clean record pending
 Hybrid augmented/Schur direct = pending
 ordinary default changed = false
 ```
 
 This case is the canonical Task032 evidence bundle. It freezes the existing
 full-3D direct reference and now contains the Phase 2 distributed cross-section
-QEP and Phase 3 classification/biorthogonality implementation; it does not
-claim that stable propagation, coupling or a Hybrid solve exists.
+QEP, Phase 3 classification/biorthogonality and Phase 4 stable-propagation
+implementation. Phase 4 has research evidence until its clean record is
+generated; this case does not claim that coupling or a Hybrid solve exists.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking |
-| 3. 尚不证明 | 稳定 100 nm 传播、接口耦合、augmented/Schur、一致性、截断收敛或内存收益 |
+| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 100 nm two-port research pass |
+| 3. 尚不证明 | Phase 4 clean formal record、接口耦合、augmented/Schur、一致性、截断收敛或内存收益 |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -143,7 +145,8 @@ formal Case080 reference identity requires MPI4.
 
 This is numerical reference evidence for the frozen current model, not
 experimental validation. Phase 3 supplies a clean-recorded Poynting/Q'
-biorthogonal basis and near-degenerate subspace tracking. Stable propagation,
-interface coupling and Hybrid direct solvers remain pending. It does not add
+biorthogonal basis and near-degenerate subspace tracking. Phase 4 stable
+propagation has implementation/MPI4 research evidence but not yet a clean
+formal record; interface coupling and Hybrid direct solvers remain pending. It does not add
 h/p adaptivity, a new iterative
 solver, nonmatching interfaces, material scans or shorter wavelengths.

@@ -17,6 +17,7 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `run_task031_memory_forensics.py` | Task031 iterative external sampler；live-rank simultaneous RSS/cgroup/swap/stage、clean SHA、h2 lock 与 9.5/11 GiB watchdog |
 | `run_task032_phase2_qep.py` | Task032 Phase 2：air 网格收敛、homogeneous lossy、当前 epsilon(x,y)、±beta、残差、L2 归一化与分布式 ownership；完整向量不聚集 |
 | `run_task032_phase3_modes.py` | Task032 Phase 3：Poynting/衰减分类、显式伴随 QEP、Q' 双正交、近简并 block、正反配对和角度 tracking；完整向量不聚集 |
+| `run_task032_phase4_propagation.py` | Task032 Phase 4：读取 Phase 3 mode record，验证 100 nm two-port 正反传播、无反射、被动性、composition、强衰减和 MPI rank 一致性 |
 | `scripts/audit_direct_thread_capability.sh` | 只读审计活动 PETSc/MUMPS、BLAS/OpenMP 链路、OpenBLAS 控制 API 与 CPU 可见性 |
 | `records/` | canonical轻量记录与machine-readable Gate report |
 | `artifacts/` | ignored重型输出 |

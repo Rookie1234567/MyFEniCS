@@ -21,6 +21,10 @@ from src.modes.quadratic_beta_eigenproblem import (
     assemble_quadratic_beta_operators,
     solve_quadratic_beta_modes,
 )
+from src.modes.stable_propagation import (
+    build_two_sided_propagation,
+    diagnose_reciprocity_and_passivity,
+)
 
 
 class Task032ModeClassificationTests(unittest.TestCase):
@@ -30,9 +34,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
         cfg.incident_theta_deg = float(theta_deg)
         cross_section = build_matching_cross_section(cfg, "air")
         spaces = build_cross_section_spaces(cross_section, transverse_degree=2)
-        operators = assemble_quadratic_beta_operators(
-            cfg, cross_section, spaces
-        )
+        operators = assemble_quadratic_beta_operators(cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(cfg, cfg.n_air)
         right_modes, _ = solve_quadratic_beta_modes(
             operators,
@@ -81,9 +83,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
         cfg = target_stage4_config(degree=2, h_nm=10.0)
         cross_section = build_matching_cross_section(cfg, "air")
         spaces = build_cross_section_spaces(cross_section, transverse_degree=2)
-        operators = assemble_quadratic_beta_operators(
-            cfg, cross_section, spaces
-        )
+        operators = assemble_quadratic_beta_operators(cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(cfg, cfg.n_air)
         positive_right, _ = solve_quadratic_beta_modes(
             operators, target=target, requested_modes=2
@@ -149,19 +149,24 @@ class Task032ModeClassificationTests(unittest.TestCase):
                     self.assertAlmostEqual(
                         mode.poynting_z_after_normalization, -1.0, places=9
                     )
-                    self.assertLess(
-                        mode.left_polynomial_relative_residual, 1.0e-8
-                    )
+                    self.assertLess(mode.left_polynomial_relative_residual, 1.0e-8)
 
-                pairs = pair_reciprocal_mode_bases(
-                    operators, positive, negative
-                )
+                pairs = pair_reciprocal_mode_bases(operators, positive, negative)
                 self.assertEqual(len(pairs), 2)
                 for pair in pairs:
                     self.assertLess(pair.relative_beta_error, 1.0e-8)
                     self.assertGreater(pair.electric_mass_overlap, 0.5)
                     self.assertTrue(pair.opposite_direction)
                     self.assertTrue(pair.passive_branches_valid)
+
+                propagation = build_two_sided_propagation(
+                    [*positive.modes, *negative.modes], 100.0
+                )
+                propagation_report = diagnose_reciprocity_and_passivity(propagation)
+                self.assertTrue(propagation.passivity_valid)
+                self.assertTrue(propagation_report.reciprocity_valid)
+                self.assertLessEqual(propagation.max_factor_magnitude, 1.0)
+                self.assertEqual(propagation.stored_complex_scalars, 4)
         finally:
             positive.destroy()
             if negative is not None:
@@ -174,15 +179,9 @@ class Task032ModeClassificationTests(unittest.TestCase):
     )
     def test_lossy_modes_use_complex_adjoint_branch(self):
         cfg = target_stage4_config(degree=2, h_nm=10.0)
-        cross_section = build_matching_cross_section(
-            cfg, "lossy_homogeneous"
-        )
-        spaces = build_cross_section_spaces(
-            cross_section, transverse_degree=2
-        )
-        operators = assemble_quadratic_beta_operators(
-            cfg, cross_section, spaces
-        )
+        cross_section = build_matching_cross_section(cfg, "lossy_homogeneous")
+        spaces = build_cross_section_spaces(cross_section, transverse_degree=2)
+        operators = assemble_quadratic_beta_operators(cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(cfg, cfg.n_grating)
         right_modes, _ = solve_quadratic_beta_modes(
             operators, target=target, requested_modes=2
@@ -206,9 +205,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
                 self.assertAlmostEqual(
                     mode.poynting_z_after_normalization, 1.0, places=8
                 )
-                self.assertLess(
-                    mode.left_polynomial_relative_residual, 1.0e-8
-                )
+                self.assertLess(mode.left_polynomial_relative_residual, 1.0e-8)
         finally:
             basis.destroy()
             operators.destroy()

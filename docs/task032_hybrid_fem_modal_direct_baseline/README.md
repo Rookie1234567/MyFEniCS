@@ -25,6 +25,7 @@
 - [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
 - [Phase 3 mode classification walkthrough](../../notes/reference/code_walkthrough/43_task032_mode_classification.md)
 - [Phase 3 clean MPI4 mode-basis record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json)
+- [Phase 4 stable propagation walkthrough](../../notes/reference/code_walkthrough/44_task032_stable_propagation.md)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -60,7 +61,7 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <f
 容器只复核挂载仓库 HEAD 与该 SHA 相等，因为 CRLF bind mount 会让容器内
 `git status` 把全部文本文件误报为修改。
 
-Phase 2 已在 clean source `33211a4ac6d4f6717351197a93c506e1adec609f` 后完成正式记录与自动 Gate。Phase 3 也已完成 Poynting 方向分类、物理衰减分支、left/right 双正交归一化和近简并子空间处理；当前分支下一步是 Phase 4 稳定双向传播。
+Phase 2 已在 clean source `33211a4ac6d4f6717351197a93c506e1adec609f` 后完成正式记录与自动 Gate。Phase 3 也已完成 Poynting 方向分类、物理衰减分支、left/right 双正交归一化和近简并子空间处理；Phase 4 稳定双向传播当前已进入 clean record 前的实现收口。
 
 Phase 3 的测试与研究入口为：
 
@@ -74,4 +75,15 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 Phase 3 已在 clean source `72dca66b70515bcf6ccef239005afa43028df72b`
 完成正式 MPI4 record，Case080 checker 为 `282/282 passed`。h10 runner 是
 分类、双正交和 tracking 合同，不替代 Phase 2 beta 精度或后续 h3 Hybrid
-场/RTA 对比。当前下一步是 Phase 4 稳定双向传播。
+场/RTA 对比。
+
+Phase 4 的测试与研究入口为：
+
+```bash
+python -m unittest -v src.test.test_34_task032_stable_propagation
+mpiexec -n 4 python -m benchmarks.run_task032_phase4_propagation --allow-dirty-research
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
+```
+
+当前 Phase 4 的实现、真实 Phase 3 air basis 集成测试和 MPI4 research runner
+均通过；clean formal record 等待本阶段实现提交后生成。接口 coupling 尚未开始。

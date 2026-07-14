@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`。稳定传播、接口 coupling 与 Hybrid solvers 尚未开始。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation 实现和 MPI4 research Gate，clean formal record 待实现提交后生成。接口 coupling 与 Hybrid solvers 尚未开始。
 
 ## 4. eigenproblem implementation and validation
 
@@ -64,7 +64,13 @@ SLEPc 3.24 PEP 的 Python API 不提供 two-sided left vectors，因此 Phase 3 
 
 ## 6. stable propagation
 
-`not_started`。禁止形成含指数增长衰减模的普通 transfer matrix。
+`implementation_and_mpi4_research_pass / clean_record_pending`。新增 two-port
+scattering 表示，正向用 `exp(+i beta+ L)` 从 bottom 到 top，反向用
+`exp(-i beta- L)` 从 top 到 bottom；不保存 growing inverse，也不形成普通
+transfer matrix。100 nm air/lossy/current-patterned 模式、37+63 nm composition、
+无界面反射、reciprocity/passivity、强衰减安全下溢和增长/ambiguous 负对照的
+8 个 research Gate 全通过，MPI4 四个 rank 的记录签名一致。接口 coupling
+尚未加入。
 
 ## 7. interface projection
 
@@ -112,7 +118,7 @@ Phase 3 首次 block 双正交测试出现大 overlap 误差，根因是把 pets
 
 ## 15. changed files
 
-Phase 0/1 已提交；Phase 2/3 implementation 与 evidence 包括：
+Phase 0/1 已提交；Phase 2/3 evidence 与 Phase 4 implementation 包括：
 
 ```text
 src/modes/cross_section_spaces.py
@@ -136,15 +142,20 @@ notes/reference/code_walkthrough/43_task032_mode_classification.md
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/expected/gates.json
 benchmarks/check_benchmarks.py
+src/modes/stable_propagation.py
+src/test/test_34_task032_stable_propagation.py
+benchmarks/run_task032_phase4_propagation.py
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
+notes/reference/code_walkthrough/44_task032_stable_propagation.md
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1/2/3 are complete, but stable propagation, coupling and Hybrid direct solvers are pending
+reason = Phase 1/2/3 are complete and Phase 4 implementation passes research gates, but its clean record, coupling and Hybrid direct solvers are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 4 稳定双向传播。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是提交 Phase 4 实现并生成 clean formal record；通过后进入 Phase 5 interface coupling。

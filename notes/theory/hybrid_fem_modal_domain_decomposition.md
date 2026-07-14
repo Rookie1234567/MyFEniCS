@@ -68,7 +68,20 @@ mode-count overlap 矩阵上做逆变换，奇异或条件数超过 `1e12` 时 f
 
 相邻参数 tracking 用 left/right QEP overlap 做最大权指派；近简并组另用
 electric-mass Gram whitening 后的 principal angles 比较子空间。Phase 3
-仍不包含 100 nm 稳定传播和 3D 接口投影。
+不包含 3D 接口投影。
+
+## 0.3 Phase 4 稳定传播实现锚点
+
+当前 Phase 4 代码位于 `src/modes/stable_propagation.py`。它直接消费 Phase 3
+的 `beta/direction/passive_branch_valid`，用 two-port scattering 顺序
+`incoming=[a_b+,a_t-]`、`outgoing=[a_b-,a_t+]` 保存正反向对角传播因子。
+forward 使用 `exp(+i beta+ L)`，backward 因坐标位移为 `-L` 使用
+`exp(-i beta- L)`；不形成 growing inverse 或普通 transfer matrix。
+
+衰减实部与相位分开计算。强衰减允许安全下溢为零，增长分支、ambiguous
+cutoff 和未经 Phase 3 被动认证的模式均 fail closed。`compose` 检查模式顺序与
+beta identity 后验证 `P(L1+L2)=P(L2)P(L1)`；reciprocity/passivity diagnostic
+只处理小型 mode-count 数组。Phase 4 仍不包含 3D interface trace/coupling。
 
 ---
 
@@ -558,7 +571,7 @@ $$
 L_m=z_t-z_b.
 $$
 
-对第 m 个模式：
+对第 m 个正向模式：
 
 $$
 p_m=e^{i\beta_mL_m}.
@@ -572,15 +585,25 @@ a_{t,m}^{+}
 p_m a_{b,m}^{+}.
 $$
 
-反向振幅：
+反向模式仍采用全局场约定 `exp(i beta_m^- z)`，但它从 top 向 bottom
+传播的坐标位移是 `-L_m`，因此反向振幅为：
 
 $$
 a_{b,m}^{-}
 =
-p_m a_{t,m}^{-},
+p_m^- a_{t,m}^{-},
 $$
 
-这里对反向模式的 $\beta_m$ 和 branch 已按物理衰减方向定义。
+其中：
+
+$$
+p_m^-=e^{-i\beta_m^-L_m}.
+$$
+
+这里对反向模式的 $\beta_m^-$ 和 branch 已按物理衰减方向定义。对互易成对
+模式 $\beta_m^-=-\beta_m^+$，有 $p_m^-=p_m^+$；有损/衰减时两者的模均不
+大于 1。实现必须显式保留该 travel sign，不能把反向传播误写成会增长的
+`exp(+i beta_m^- L_m)`。
 
 ## 8.1 为什么不使用普通 transfer matrix
 
