@@ -1,3 +1,15 @@
+"""Task030 H(curl) research infrastructure and failed candidate prototypes.
+
+Only the active/master map, nonmatching transfer/cache, transfer validation,
+and exact condensed Galerkin builder listed in ``__all__`` are validated
+research-infrastructure surfaces. The Jacobi, p/h multilevel, shifted-matrix,
+and all-mode Woodbury components remain negative research candidates. They
+are intentionally absent from the ordinary ``src.solvers`` package API and
+may only be imported explicitly by the Task030 research runner and tests.
+
+This module does not provide a production p/h multigrid solver.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,6 +28,31 @@ from .condensed_dtn import gather_small_petsc_matrix
 
 
 TINY = np.finfo(float).tiny
+
+
+VALIDATED_INFRASTRUCTURE_API = (
+    "ActiveDofMap",
+    "NonmatchingTransfer",
+    "CondensedGalerkinCoarse",
+    "build_active_dof_map",
+    "build_nonmatching_active_transfer",
+    "save_nonmatching_transfer_cache",
+    "load_nonmatching_transfer_cache",
+    "validate_transfer_action_against_interpolation",
+    "build_condensed_galerkin_coarse",
+)
+
+RESEARCH_ONLY_CANDIDATE_API = (
+    "CanonicalScreenBaseline",
+    "load_canonical_screen_baseline",
+    "classify_screen_candidate",
+    "DampedJacobiSmoother",
+    "build_absorption_shifted_matrix",
+    "GalerkinMultilevelPc",
+    "ModalWoodburyPc",
+)
+
+__all__ = list(VALIDATED_INFRASTRUCTURE_API)
 
 
 @dataclass(frozen=True)

@@ -8,6 +8,8 @@ import unittest
 
 import numpy as np
 
+import src.solvers as ordinary_solvers
+import src.solvers.hcurl_multilevel as hcurl_multilevel
 from src.solvers.hcurl_multilevel import (
     CanonicalScreenBaseline,
     ModalWoodburyPc,
@@ -20,6 +22,20 @@ from src.solvers.hcurl_multilevel import (
     validate_transfer_action_against_interpolation,
 )
 from src.solvers.condensed_dtn import gather_small_petsc_matrix
+
+
+class TestTask030ResearchApiBoundary(unittest.TestCase):
+    def test_only_validated_infrastructure_is_public(self) -> None:
+        self.assertEqual(
+            tuple(hcurl_multilevel.__all__),
+            hcurl_multilevel.VALIDATED_INFRASTRUCTURE_API,
+        )
+        for name in hcurl_multilevel.RESEARCH_ONLY_CANDIDATE_API:
+            self.assertNotIn(name, hcurl_multilevel.__all__)
+
+    def test_ordinary_solver_package_exports_no_failed_candidate(self) -> None:
+        for name in hcurl_multilevel.RESEARCH_ONLY_CANDIDATE_API:
+            self.assertFalse(hasattr(ordinary_solvers, name), name)
 
 
 class _FakeComm:
