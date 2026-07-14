@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "33211a4ac6d4f6717351197a93c506e1adec609f",
+  "checkout_commit": "72dca66b70515bcf6ccef239005afa43028df72b",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 277,
-  "total_count": 277,
+  "passed_count": 282,
+  "total_count": 282,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -181,7 +181,8 @@
         "config": false,
         "expected": false,
         "gates": false,
-        "phase2_gates": false
+        "phase2_gates": false,
+        "phase3_gates": false
       },
       "expected": false,
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline"
@@ -191,7 +192,7 @@
       "passed": true,
       "observed": {
         "missing": [],
-        "relation": "exact_checkout",
+        "relation": "checkout_ancestor",
         "metadata": {
           "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
           "command": "python -m benchmarks.run_task032_phase2_qep --verified-clean-sha 33211a4ac6d4f6717351197a93c506e1adec609f --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json",
@@ -427,6 +428,210 @@
         "all_runner_gates": true
       },
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase3_identity",
+      "passed": true,
+      "observed": {
+        "missing": [],
+        "relation": "exact_checkout",
+        "metadata": {
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "command": "python -m benchmarks.run_task032_phase3_modes --verified-clean-sha 72dca66b70515bcf6ccef239005afa43028df72b --basis-h-nm 10 --tracking-h-nm 10 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json",
+          "commit_sha": "72dca66b70515bcf6ccef239005afa43028df72b",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "container_image": "myfenics-stage4:task28",
+          "eigen_backend": "SLEPc.PEP/TOAR + explicit adjoint QEP",
+          "full_eigenvector_gather": false,
+          "git_dirty": false,
+          "host_environment_id": "SK-20260601OSDE",
+          "mpi_size": 4,
+          "provenance": "clean_task032_phase3_modes",
+          "timestamp_utc": "2026-07-14T12:42:10.478340+00:00",
+          "tracked_source_dirty": false,
+          "verification": "host_git_clean_attestation",
+          "verified_clean_sha": "72dca66b70515bcf6ccef239005afa43028df72b"
+        }
+      },
+      "expected": "clean MPI4 adjoint-QEP record on the frozen commit and image",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
+    },
+    {
+      "name": "task032_phase3_case_ownership_and_condition_contract",
+      "passed": true,
+      "observed": {
+        "case_ids": [
+          "air_p2_h10",
+          "lossy_homogeneous_p2_h10",
+          "stage4_xy_p2_h10"
+        ],
+        "basis_sides": [
+          [
+            "air_p2_h10",
+            "positive",
+            2
+          ],
+          [
+            "air_p2_h10",
+            "negative",
+            2
+          ],
+          [
+            "lossy_homogeneous_p2_h10",
+            "positive",
+            2
+          ],
+          [
+            "stage4_xy_p2_h10",
+            "positive",
+            2
+          ]
+        ],
+        "ownership": {
+          "air_p2_h10:positive:0": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "air_p2_h10:positive:1": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "air_p2_h10:negative:0": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "air_p2_h10:negative:1": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "lossy_homogeneous_p2_h10:positive:0": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "lossy_homogeneous_p2_h10:positive:1": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "stage4_xy_p2_h10:positive:0": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          },
+          "stage4_xy_p2_h10:positive:1": {
+            "ranks": 4,
+            "reduced_sum": 216,
+            "full_sum": 253
+          }
+        }
+      },
+      "expected": {
+        "case_ids": [
+          "air_p2_h10",
+          "lossy_homogeneous_p2_h10",
+          "stage4_xy_p2_h10"
+        ],
+        "mpi_size": 4,
+        "no_full_vector_gather": true,
+        "max_overlap_condition": 1000000000000.0
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
+    },
+    {
+      "name": "task032_phase3_residual_biorthogonality_and_flux",
+      "passed": true,
+      "observed": {
+        "max_right_residual": 1.1862011743608485e-15,
+        "max_left_residual": 8.218059510548437e-16,
+        "max_left_pair_error": 4.4562086372405454e-14,
+        "max_biorthogonality_identity_error": 2.4593702362817536e-10,
+        "max_unit_flux_error": 6.661338147750939e-16,
+        "all_passive": true
+      },
+      "expected": {
+        "max_right_residual": 1e-08,
+        "max_left_residual": 1e-08,
+        "max_left_pair_error": 1e-07,
+        "max_biorthogonality_identity_error": 1e-07,
+        "max_unit_flux_error": 1e-07
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
+    },
+    {
+      "name": "task032_phase3_direction_and_reciprocal_identity",
+      "passed": true,
+      "observed": {
+        "max_reciprocal_error": 3.632327207037806e-16,
+        "pairs": [
+          {
+            "electric_mass_overlap": 0.8564406970130051,
+            "negative_index": 0,
+            "opposite_direction": true,
+            "passive_branches_valid": true,
+            "positive_index": 0,
+            "relative_beta_error": 3.632327207037806e-16
+          },
+          {
+            "electric_mass_overlap": 0.34827483541902854,
+            "negative_index": 1,
+            "opposite_direction": true,
+            "passive_branches_valid": true,
+            "positive_index": 1,
+            "relative_beta_error": 1.6412013545902726e-16
+          }
+        ],
+        "air_positive_directions": [
+          "forward",
+          "forward"
+        ],
+        "air_negative_directions": [
+          "backward",
+          "backward"
+        ]
+      },
+      "expected": {
+        "max_reciprocal_error": 1e-07,
+        "air_directions": [
+          "forward",
+          "backward"
+        ],
+        "lossy_and_patterned": "forward passive lossy_propagating"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
+    },
+    {
+      "name": "task032_phase3_tracking_subspace_and_runner_gates",
+      "passed": true,
+      "observed": {
+        "match_count": 2,
+        "min_overlap": 0.8700102437838072,
+        "max_principal_angle_rad": 0.00591795202241749,
+        "unmatched_previous": [],
+        "unmatched_current": [],
+        "runner_gates": {
+          "air_reciprocal_pairs_complete": true,
+          "all_biorthogonality_identity_errors_le_1e-7": true,
+          "all_flux_normalized_or_near_zero": true,
+          "all_left_pairs_le_1e-7": true,
+          "all_left_residuals_le_1e-8": true,
+          "all_passive_branches_valid": true,
+          "all_right_residuals_le_1e-8": true,
+          "angle_tracking_complete": true,
+          "no_full_vector_gather": true
+        }
+      },
+      "expected": {
+        "min_match_count": 2,
+        "min_overlap": 0.5,
+        "max_principal_angle_rad": 0.2,
+        "all_runner_gates": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json"
     },
     {
       "name": "task032_phase1_identity:h5",

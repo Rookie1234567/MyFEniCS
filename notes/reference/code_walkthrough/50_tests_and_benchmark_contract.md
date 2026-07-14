@@ -79,3 +79,5 @@ checker 还要求 air h5/h3/h2/h1.5 解析误差严格下降、h2/h1.5 与 lossy
 `test_33_task032_mode_classification` 覆盖 Poynting 正反方向、lossy complex beta、near-zero flux evanescent/cutoff branch、显式 adjoint QEP 左残差、`Q'(beta)` block 双正交、左右向量 MPI ownership、正反 mode identity、相邻角度 overlap matching、模式数增加时 unmatched 新模和近简并 principal angles。MPI4 固定覆盖正向 distributed basis；重复负向/相邻参数 PEP 留在 serial 合同，避免日常 MPI 回归重复昂贵 factor setup。
 
 `run_task032_phase3_modes` 的完整 MPI4 路径仍覆盖 air 正反 basis、homogeneous lossy、当前 Stage4 `epsilon(x,y)` 和角度 tracking。正式 record 必须固定 clean full SHA/image/MPI4、右/左残差、left-beta conjugate pairing、biorthogonality identity、unit-absolute-Poynting 或 near-zero classification、passive branch、reciprocal pairs、tracking/subspace、ownership 与 no-full-vector-gather。
+
+clean source `72dca66...` 的正式 Phase 3 record 已满足上述合同；checker 新增 identity、case/ownership/condition、residual/biorthogonality/flux、direction/reciprocal、tracking/subspace 五类 Gate，Case080 总计 `282/282 passed`。

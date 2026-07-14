@@ -102,11 +102,17 @@ angles. MPI4 runs the distributed positive-basis core, while repeated negative
 and adjacent-parameter solves stay in the serial small-dense contract to avoid
 duplicating expensive shift-invert setups in every MPI regression.
 
-`benchmarks.run_task032_phase3_modes` is the research/formal runner. Its h10
-MPI4 research pass covers air, homogeneous lossy and current Stage4 x/y
-materials, an air reciprocal basis and 80 to 79.8 degree tracking. h10 is a
-classification/normalization contract, not a replacement for Phase 2 beta
-accuracy or the later h3 Hybrid comparison.
+`benchmarks.run_task032_phase3_modes` is the research/formal runner. Its clean
+MPI4 record is
+`benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json`
+on source
+`72dca66b70515bcf6ccef239005afa43028df72b`. It covers air, homogeneous
+lossy and current Stage4 x/y materials, an air reciprocal basis and 80 to 79.8
+degree tracking. Air/lossy biorthogonality errors are about `1e-15`, the
+patterned error is `2.46e-10`, and the tracking principal angle is
+`0.005918 rad`. Case080 passes `282/282` gates. h10 is a classification/
+normalization contract, not a replacement for Phase 2 beta accuracy or the
+later h3 Hybrid comparison.
 
 This phase does not yet build stable 100 nm propagation, extract 3D interface
 traces or solve either Hybrid direct formulation.

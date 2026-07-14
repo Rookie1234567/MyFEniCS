@@ -40,6 +40,29 @@
     "required_constraint_communication_scope": "periodic_boundary_dofs_only",
     "ordinary_default_changed": false
   },
+  "phase3": {
+    "required_schema": 1,
+    "required_commit": "72dca66b70515bcf6ccef239005afa43028df72b",
+    "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "required_mpi_size": 4,
+    "required_backend": "SLEPc.PEP/TOAR + explicit adjoint QEP",
+    "required_case_ids": [
+      "air_p2_h10",
+      "lossy_homogeneous_p2_h10",
+      "stage4_xy_p2_h10"
+    ],
+    "max_right_polynomial_relative_residual": 1e-8,
+    "max_left_polynomial_relative_residual": 1e-8,
+    "max_left_pair_relative_error": 1e-7,
+    "max_biorthogonality_identity_error": 1e-7,
+    "max_unit_flux_error": 1e-7,
+    "max_reciprocal_pair_relative_error": 1e-7,
+    "min_tracking_overlap": 0.5,
+    "max_tracking_principal_angle_rad": 0.2,
+    "max_overlap_condition": 1e12,
+    "required_constraint_communication_scope": "periodic_boundary_dofs_only",
+    "ordinary_default_changed": false
+  },
   "future_hybrid": {
     "full_residual": "required before official RTA",
     "interface_continuity": "required",

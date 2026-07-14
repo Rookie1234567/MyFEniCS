@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_implementation_research_pass_clean_record_pending / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -45,20 +45,22 @@ lossy h2 得到 `beta=0.0773232064+0.00511171935j 1/nm`，相对解析误差 `1.
 ## 5. mode classification/normalization
 
 ```text
-implementation = serial and MPI4 research gates passed
+implementation = serial/MPI4 tests and clean formal benchmark passed
 direction = cross-section Poynting flux first; Im(beta) decay branch fallback
 left modes = explicit distributed adjoint QEP at lambda approximately conj(beta)
 normalization = unit-absolute-Poynting right mode + Q'(beta) left/right basis
 near degeneracy = small block inverse with condition fail-closed
 tracking = maximum left/right overlap + principal-angle subspace report
-clean formal record = pending Phase 3 implementation commit
+clean formal record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json
+formal source commit = 72dca66b70515bcf6ccef239005afa43028df72b
+record SHA-256 = 10f2737c51a9506f2cbb73d98c5b0d6ec2747e180ceb8ccef4680ad1e46fdea8
 ```
 
 SLEPc 3.24 PEP 的 Python API 不提供 two-sided left vectors，因此 Phase 3 显式求解 `K0^H + lambda K1^H + lambda^2 K2^H`，不把普通右模 Euclidean 正交冒充双正交。研究 MPI4 h10 runner 对 air、homogeneous lossy 和当前 Stage4 `epsilon(x,y)` 均通过；air/有损双正交单位阵误差约 `1e-15`，patterned 为 `2.51e-10`，左右 beta 配对约 `1e-14`，右/左 QEP 残差均远小于 `1e-8`。air 正反 beta 配对误差约 `5e-16`，所有选中分支通过被动性方向规则。
 
 回归结果为全量 serial `190 tests / 10 skipped`、Phase 3 serial `4/4`，以及 MPI4 Phase 3 每 rank `4 tests / 2 skipped`；MPI skip 仅用于避免重复负向和相邻参数 factor setup，完整 MPI4 runner 仍覆盖这些路径。
 
-80° 到 79.8° 的 tracking 对两维近简并子空间得到 singular values `0.9999929/0.9999825`，最大 principal angle `0.005918 rad`，无未匹配旧模；serial 合同另覆盖模式数增加时的 unmatched 新模。当前 h10 是分类/归一化合同，不替代 Phase 2 beta 精度或最终 h3 Hybrid 对比。正式 clean Case080 record 等待本阶段代码提交后生成。
+80° 到 79.8° 的 tracking 对两维近简并子空间得到 singular values `0.9999929/0.9999825`，最大 principal angle `0.005918 rad`，无未匹配旧模；serial 合同另覆盖模式数增加时的 unmatched 新模。当前 h10 是分类/归一化合同，不替代 Phase 2 beta 精度或最终 h3 Hybrid 对比。clean formal record 固定在 `72dca66...`，Case080 checker 加入五类 Phase 3 Gate 后为 `282/282 passed`。
 
 ## 6. stable propagation
 
@@ -100,6 +102,8 @@ Phase 1 冻结参考采样的 E/H 未压缩复制载荷仅 `384000 bytes`，并�
 
 Phase 2 QEP formal record 的单 rank 进程生命周期 historical peak 最大为 `231.277 MB`。各 rank 高水位并非同一采样时刻，既不求和也不升级为 Task032 最终 Hybrid 内存结论；最终结论仍要求外部 simultaneous stage sampler。
 
+Phase 3 formal record 的单 rank 进程生命周期 historical peak 最大为 `236.465 MB`，内部 elapsed 最大 rank `7.563 s`。前者同样不是 simultaneous total，后者不含宿主 Docker 启动/JIT 固定成本；二者都不作为最终 Hybrid 内存/性能权威。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
@@ -129,15 +133,18 @@ src/test/test_33_task032_mode_classification.py
 benchmarks/run_task032_phase3_modes.py
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase3.sh
 notes/reference/code_walkthrough/43_task032_mode_classification.md
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/expected/gates.json
+benchmarks/check_benchmarks.py
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1/2 are complete and Phase 3 implementation has research evidence, but the Phase 3 clean record, propagation, coupling and Hybrid direct solvers are pending
+reason = Phase 1/2/3 are complete, but stable propagation, coupling and Hybrid direct solvers are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是提交 Phase 3 实现并生成 clean formal record；通过后进入 Phase 4 稳定双向传播。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 4 稳定双向传播。

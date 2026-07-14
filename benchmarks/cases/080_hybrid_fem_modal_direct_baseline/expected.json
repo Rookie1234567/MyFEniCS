@@ -1,5 +1,5 @@
 {
-  "status": "phase1_reference_and_phase2_qep_pass_hybrid_coupling_pending",
+  "status": "phase1_reference_phase2_qep_phase3_modes_pass_hybrid_coupling_pending",
   "ordinary_default_changed": false,
   "full3d_reference": {
     "h5": {
@@ -21,6 +21,15 @@
     "homogeneous_lossy_h_nm": 2.0,
     "stage4_xy_h_nm": 3.0,
     "normalization": "cross_section_electric_L2_phase2_only",
+    "full_eigenvector_gather": false
+  },
+  "phase3_modes": {
+    "status": "pass",
+    "record": "records/modes_phase3.json",
+    "basis_h_nm": 10.0,
+    "tracking_angles_deg": [80.0, 79.8],
+    "right_normalization": "unit_absolute_impedance_scaled_poynting_or_near_zero_flux",
+    "left_normalization": "qprime_biorthogonal",
     "full_eigenvector_gather": false
   },
   "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
