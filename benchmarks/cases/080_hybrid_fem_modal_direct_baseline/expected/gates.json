@@ -14,6 +14,32 @@
     "max_replicated_payload_bytes": 67108864,
     "ordinary_default_changed": false
   },
+  "phase2": {
+    "required_schema": 1,
+    "required_commit": "33211a4ac6d4f6717351197a93c506e1adec609f",
+    "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "required_mpi_size": 4,
+    "required_backend": "SLEPc.PEP/TOAR",
+    "required_dtype": "complex128",
+    "required_case_ids": [
+      "air_p2_h5",
+      "air_p2_h3",
+      "air_p2_h2",
+      "air_p2_h1p5",
+      "lossy_homogeneous_p2_h2",
+      "stage4_xy_p2_h3"
+    ],
+    "max_polynomial_relative_residual": 1e-10,
+    "max_electric_l2_norm_error": 1e-10,
+    "max_pair_relative_error": 1e-9,
+    "max_probe_residual": 1e-10,
+    "max_pair_coordinate_error": 1e-12,
+    "max_air_h2_relative_beta_error": 0.015,
+    "max_air_h1p5_relative_beta_error": 0.005,
+    "max_lossy_h2_relative_beta_error": 0.02,
+    "required_constraint_communication_scope": "periodic_boundary_dofs_only",
+    "ordinary_default_changed": false
+  },
   "future_hybrid": {
     "full_residual": "required before official RTA",
     "interface_continuity": "required",

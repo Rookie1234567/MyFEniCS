@@ -85,3 +85,15 @@ the Linux Git client report every CRLF file as modified.
 
 This module does not yet classify modes by Poynting flux, propagate them
 through 100 nm, project 3D traces, or assemble a Hybrid direct system.
+
+## Formal Phase 2 evidence
+
+The clean MPI4 record is
+`benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json`
+on source `33211a4ac6d4f6717351197a93c506e1adec609f`. It contains six cases:
+air h5/h3/h2/h1.5, homogeneous lossy h2 and current Stage4 x/y material h3.
+Air analytic errors decrease strictly to `1.12629%` at h2 and `0.454640%` at
+h1.5; the maximum selected QEP relative residual is `1.8177e-15`. Case080's
+full checker passes `277/277` gates. Per-rank process-lifetime memory peaks in
+this record are diagnostics only and are not summed or used as the final
+Hybrid memory authority.

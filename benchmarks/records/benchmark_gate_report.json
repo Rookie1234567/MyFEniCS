@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "20bb3464e65738a58928f5eab563ed57f981e615",
+  "checkout_commit": "33211a4ac6d4f6717351197a93c506e1adec609f",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 271,
-  "total_count": 271,
+  "passed_count": 277,
+  "total_count": 277,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -180,10 +180,253 @@
       "observed": {
         "config": false,
         "expected": false,
-        "gates": false
+        "gates": false,
+        "phase2_gates": false
       },
       "expected": false,
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline"
+    },
+    {
+      "name": "task032_phase2_identity",
+      "passed": true,
+      "observed": {
+        "missing": [],
+        "relation": "exact_checkout",
+        "metadata": {
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "command": "python -m benchmarks.run_task032_phase2_qep --verified-clean-sha 33211a4ac6d4f6717351197a93c506e1adec609f --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json",
+          "commit_sha": "33211a4ac6d4f6717351197a93c506e1adec609f",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "container_image": "myfenics-stage4:task28",
+          "eigen_backend": "SLEPc.PEP/TOAR",
+          "full_eigenvector_gather": false,
+          "git_dirty": false,
+          "host_environment_id": "SK-20260601OSDE",
+          "mpi_size": 4,
+          "provenance": "clean_task032_phase2_qep",
+          "tracked_source_dirty": false,
+          "verification": "host_git_clean_attestation",
+          "verified_clean_sha": "33211a4ac6d4f6717351197a93c506e1adec609f"
+        }
+      },
+      "expected": "clean MPI4 SLEPc PEP record on the frozen commit and image",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase2_case_and_qep_contract",
+      "passed": true,
+      "observed": {
+        "case_ids": [
+          "air_p2_h5",
+          "air_p2_h3",
+          "air_p2_h2",
+          "air_p2_h1p5",
+          "lossy_homogeneous_p2_h2",
+          "stage4_xy_p2_h3"
+        ],
+        "formulations": [
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+          "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
+        ],
+        "shapes": [
+          [
+            [
+              789,
+              789
+            ],
+            [
+              720,
+              720
+            ]
+          ],
+          [
+            [
+              2053,
+              2053
+            ],
+            [
+              1944,
+              1944
+            ]
+          ],
+          [
+            [
+              4373,
+              4373
+            ],
+            [
+              4212,
+              4212
+            ]
+          ],
+          [
+            [
+              7141,
+              7141
+            ],
+            [
+              6936,
+              6936
+            ]
+          ],
+          [
+            [
+              4373,
+              4373
+            ],
+            [
+              4212,
+              4212
+            ]
+          ],
+          [
+            [
+              2053,
+              2053
+            ],
+            [
+              1944,
+              1944
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "case_ids": [
+          "air_p2_h5",
+          "air_p2_h3",
+          "air_p2_h2",
+          "air_p2_h1p5",
+          "lossy_homogeneous_p2_h2",
+          "stage4_xy_p2_h3"
+        ],
+        "dtype": "complex128",
+        "polynomial": "singular-leading quadratic"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase2_residual_normalization_and_orientation",
+      "passed": true,
+      "observed": {
+        "max_polynomial_residual": 4.2190080243390954e-16,
+        "max_electric_l2_norm_error": 4.440892098500626e-16,
+        "max_probe_residual": 1.8177161407756063e-15,
+        "max_pair_coordinate_error": 0.0
+      },
+      "expected": {
+        "max_polynomial_residual": 1e-10,
+        "max_electric_l2_norm_error": 1e-10,
+        "max_probe_residual": 1e-10,
+        "max_pair_coordinate_error": 1e-12
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase2_distributed_ownership",
+      "passed": true,
+      "observed": {
+        "air_p2_h5:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 720,
+          "full_sum": 789
+        },
+        "air_p2_h3:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 1944,
+          "full_sum": 2053
+        },
+        "air_p2_h2:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 4212,
+          "full_sum": 4373
+        },
+        "air_p2_h2:negative_target": {
+          "ranks": 4,
+          "reduced_sum": 4212,
+          "full_sum": 4373
+        },
+        "air_p2_h1p5:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 6936,
+          "full_sum": 7141
+        },
+        "lossy_homogeneous_p2_h2:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 4212,
+          "full_sum": 4373
+        },
+        "lossy_homogeneous_p2_h2:negative_target": {
+          "ranks": 4,
+          "reduced_sum": 4212,
+          "full_sum": 4373
+        },
+        "stage4_xy_p2_h3:positive_target": {
+          "ranks": 4,
+          "reduced_sum": 1944,
+          "full_sum": 2053
+        },
+        "stage4_xy_p2_h3:negative_target": {
+          "ranks": 4,
+          "reduced_sum": 1944,
+          "full_sum": 2053
+        }
+      },
+      "expected": "all local sizes sum to global shapes on MPI4; no full vector gather",
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase2_homogeneous_analytic_beta",
+      "passed": true,
+      "observed": {
+        "air_relative_errors_h5_h3_h2_h1p5": [
+          0.2953234758504231,
+          0.05588593850764194,
+          0.01126294724608186,
+          0.004546396757462909
+        ],
+        "lossy_h2_relative_error": 0.011965641746316804,
+        "lossy_h2_beta": [
+          0.07732320643992535,
+          0.0051117193492111294
+        ]
+      },
+      "expected": {
+        "air_strictly_decreasing": true,
+        "air_h2_max": 0.015,
+        "air_h1p5_max": 0.005,
+        "lossy_h2_max": 0.02,
+        "lossy_forward_imag_positive": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
+    },
+    {
+      "name": "task032_phase2_reciprocal_pairs_and_runner_gates",
+      "passed": true,
+      "observed": {
+        "max_pair_relative_error": 7.492873363054524e-16,
+        "runner_gates": {
+          "air_beta_error_strictly_decreases": true,
+          "air_h1p5_relative_beta_error_le_5e-3": true,
+          "air_h2_relative_beta_error_le_1p5e-2": true,
+          "all_electric_l2_norm_error_le_1e-10": true,
+          "all_polynomial_relative_residual_le_1e-10": true,
+          "all_requested_pair_errors_le_1e-9": true,
+          "boundary_only_constraint_communication": true,
+          "lossy_forward_imag_beta_positive": true,
+          "lossy_h2_relative_beta_error_le_2e-2": true,
+          "no_full_eigenvector_gather": true
+        }
+      },
+      "expected": {
+        "max_pair_relative_error": 1e-09,
+        "all_runner_gates": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json"
     },
     {
       "name": "task032_phase1_identity:h5",

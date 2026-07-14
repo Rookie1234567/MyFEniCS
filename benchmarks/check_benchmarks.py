@@ -241,8 +241,10 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "expected.json",
             "expected/gates.json",
             "run.sh",
+            "run_phase2.sh",
             "records/full3d_h5_reference.json",
             "records/full3d_h3_reference.json",
+            "records/qep_phase2.json",
         ),
     }
     cases_root = BENCHMARKS / "cases"
@@ -301,20 +303,269 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     case080 = cases_root / "080_hybrid_fem_modal_direct_baseline"
     case080_config = _load_json(case080 / "config.json")
     case080_expected = _load_json(case080 / "expected.json")
-    case080_gates = _load_json(case080 / "expected" / "gates.json")["phase1"]
+    case080_gate_bundle = _load_json(case080 / "expected" / "gates.json")
+    case080_gates = case080_gate_bundle["phase1"]
+    case080_phase2_gates = case080_gate_bundle["phase2"]
     gates.append(
         Gate(
             "task032_phase1_ordinary_default_unchanged",
             case080_config.get("ordinary_default_changed") is False
             and case080_expected.get("ordinary_default_changed") is False
-            and case080_gates.get("ordinary_default_changed") is False,
+            and case080_gates.get("ordinary_default_changed") is False
+            and case080_phase2_gates.get("ordinary_default_changed") is False,
             {
                 "config": case080_config.get("ordinary_default_changed"),
                 "expected": case080_expected.get("ordinary_default_changed"),
                 "gates": case080_gates.get("ordinary_default_changed"),
+                "phase2_gates": case080_phase2_gates.get(
+                    "ordinary_default_changed"
+                ),
             },
             False,
             "cases/080_hybrid_fem_modal_direct_baseline",
+        )
+    )
+
+    phase2_relative = "records/qep_phase2.json"
+    phase2_path = case080 / phase2_relative
+    phase2_record = _load_json(phase2_path)
+    phase2_metadata = phase2_record.get("metadata", {})
+    phase2_metadata_for_contract = dict(phase2_metadata)
+    phase2_metadata_for_contract.setdefault(
+        "timestamp_utc", phase2_record.get("timestamp_utc")
+    )
+    phase2_complete, phase2_missing = _metadata_complete(
+        {"metadata": phase2_metadata_for_contract}
+    )
+    phase2_relation = _commit_relation(
+        phase2_metadata.get("commit_sha"), phase2_metadata.get("provenance")
+    )
+    phase2_identity_ok = (
+        phase2_complete
+        and phase2_record.get("schema_version")
+        == case080_phase2_gates["required_schema"]
+        and phase2_record.get("status") == "pass"
+        and phase2_metadata.get("commit_sha")
+        == case080_phase2_gates["required_commit"]
+        and phase2_metadata.get("container_digest")
+        == case080_phase2_gates["required_container_digest"]
+        and phase2_metadata.get("mpi_size")
+        == case080_phase2_gates["required_mpi_size"]
+        and phase2_metadata.get("eigen_backend")
+        == case080_phase2_gates["required_backend"]
+        and phase2_metadata.get("git_dirty") is False
+        and phase2_metadata.get("tracked_source_dirty") is False
+        and phase2_metadata.get("full_eigenvector_gather") is False
+        and phase2_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_identity",
+            phase2_identity_ok,
+            {
+                "missing": phase2_missing,
+                "relation": phase2_relation,
+                "metadata": phase2_metadata,
+            },
+            "clean MPI4 SLEPc PEP record on the frozen commit and image",
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    phase2_cases = phase2_record.get("cases", [])
+    phase2_by_id = {case.get("case_id"): case for case in phase2_cases}
+    expected_phase2_ids = case080_phase2_gates["required_case_ids"]
+    phase2_case_contract_ok = (
+        set(phase2_by_id) == set(expected_phase2_ids)
+        and all(
+            case.get("scalar_dtype") == case080_phase2_gates["required_dtype"]
+            and case.get("formulation")
+            == "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
+            and case.get("polynomial_order") == 2
+            and case.get("leading_coefficient_singular_by_design") is True
+            and case.get("constraint_communication_scope")
+            == case080_phase2_gates["required_constraint_communication_scope"]
+            and int(case.get("global_slave_count", -1))
+            == int(case.get("full_shape", [0])[0])
+            - int(case.get("reduced_shape", [0])[0])
+            and int(case.get("global_slave_count", -1))
+            == int(case.get("transverse_constraint_count_global", -2))
+            + int(case.get("longitudinal_constraint_count_global", -3))
+            for case in phase2_cases
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_case_and_qep_contract",
+            phase2_case_contract_ok,
+            {
+                "case_ids": list(phase2_by_id),
+                "formulations": [case.get("formulation") for case in phase2_cases],
+                "shapes": [
+                    [case.get("full_shape"), case.get("reduced_shape")]
+                    for case in phase2_cases
+                ],
+            },
+            {
+                "case_ids": expected_phase2_ids,
+                "dtype": case080_phase2_gates["required_dtype"],
+                "polynomial": "singular-leading quadratic",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    phase2_targets = [
+        target
+        for case in phase2_cases
+        for target in (case.get("positive_target"), case.get("negative_target"))
+        if target is not None
+    ]
+    max_polynomial_residual = max(
+        float(target["selected"]["polynomial_relative_residual"])
+        for target in phase2_targets
+    )
+    max_norm_error = max(
+        abs(float(target["selected"]["electric_l2_norm_after"]) - 1.0)
+        for target in phase2_targets
+    )
+    max_probe_residual = max(
+        float(case.get("max_probe_residual", float("inf"))) for case in phase2_cases
+    )
+    max_pair_coordinate_error = max(
+        float(case.get("max_pair_coordinate_error", float("inf")))
+        for case in phase2_cases
+    )
+    phase2_numeric_ok = (
+        max_polynomial_residual
+        <= float(case080_phase2_gates["max_polynomial_relative_residual"])
+        and max_norm_error
+        <= float(case080_phase2_gates["max_electric_l2_norm_error"])
+        and max_probe_residual
+        <= float(case080_phase2_gates["max_probe_residual"])
+        and max_pair_coordinate_error
+        <= float(case080_phase2_gates["max_pair_coordinate_error"])
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_residual_normalization_and_orientation",
+            phase2_numeric_ok,
+            {
+                "max_polynomial_residual": max_polynomial_residual,
+                "max_electric_l2_norm_error": max_norm_error,
+                "max_probe_residual": max_probe_residual,
+                "max_pair_coordinate_error": max_pair_coordinate_error,
+            },
+            {
+                "max_polynomial_residual": case080_phase2_gates[
+                    "max_polynomial_relative_residual"
+                ],
+                "max_electric_l2_norm_error": case080_phase2_gates[
+                    "max_electric_l2_norm_error"
+                ],
+                "max_probe_residual": case080_phase2_gates["max_probe_residual"],
+                "max_pair_coordinate_error": case080_phase2_gates[
+                    "max_pair_coordinate_error"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    ownership_ok = True
+    ownership_observed: dict[str, Any] = {}
+    for case in phase2_cases:
+        for target_name in ("positive_target", "negative_target"):
+            target = case.get(target_name)
+            if target is None:
+                continue
+            ownership = target.get("ownership_by_rank") or []
+            reduced_sum = sum(int(row["reduced_local_size"]) for row in ownership)
+            full_sum = sum(int(row["full_local_size"]) for row in ownership)
+            key = f"{case['case_id']}:{target_name}"
+            ownership_observed[key] = {
+                "ranks": len(ownership),
+                "reduced_sum": reduced_sum,
+                "full_sum": full_sum,
+            }
+            ownership_ok = ownership_ok and (
+                len(ownership) == case080_phase2_gates["required_mpi_size"]
+                and reduced_sum == int(case["reduced_shape"][0])
+                and full_sum == int(case["full_shape"][0])
+                and target["selected"].get("gathered_to_root") is False
+            )
+    gates.append(
+        Gate(
+            "task032_phase2_distributed_ownership",
+            ownership_ok,
+            ownership_observed,
+            "all local sizes sum to global shapes on MPI4; no full vector gather",
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    air_cases = [phase2_by_id[key] for key in ("air_p2_h5", "air_p2_h3", "air_p2_h2", "air_p2_h1p5")]
+    air_errors = [float(case["positive_relative_beta_error"]) for case in air_cases]
+    lossy_case = phase2_by_id["lossy_homogeneous_p2_h2"]
+    phase2_analytic_ok = (
+        all(later < earlier for earlier, later in zip(air_errors, air_errors[1:]))
+        and air_errors[2]
+        <= float(case080_phase2_gates["max_air_h2_relative_beta_error"])
+        and air_errors[3]
+        <= float(case080_phase2_gates["max_air_h1p5_relative_beta_error"])
+        and float(lossy_case["positive_relative_beta_error"])
+        <= float(case080_phase2_gates["max_lossy_h2_relative_beta_error"])
+        and float(lossy_case["positive_target"]["selected"]["beta_per_nm"][1]) > 0.0
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_homogeneous_analytic_beta",
+            phase2_analytic_ok,
+            {
+                "air_relative_errors_h5_h3_h2_h1p5": air_errors,
+                "lossy_h2_relative_error": lossy_case["positive_relative_beta_error"],
+                "lossy_h2_beta": lossy_case["positive_target"]["selected"]["beta_per_nm"],
+            },
+            {
+                "air_strictly_decreasing": True,
+                "air_h2_max": case080_phase2_gates["max_air_h2_relative_beta_error"],
+                "air_h1p5_max": case080_phase2_gates[
+                    "max_air_h1p5_relative_beta_error"
+                ],
+                "lossy_h2_max": case080_phase2_gates[
+                    "max_lossy_h2_relative_beta_error"
+                ],
+                "lossy_forward_imag_positive": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    requested_pairs = [
+        case for case in phase2_cases if case.get("negative_target") is not None
+    ]
+    max_pair_error = max(
+        float(case.get("reciprocal_pair_relative_error", float("inf")))
+        for case in requested_pairs
+    )
+    runner_gates = phase2_record.get("gates", {})
+    phase2_pair_and_runner_ok = (
+        max_pair_error <= float(case080_phase2_gates["max_pair_relative_error"])
+        and runner_gates
+        and all(value is True for value in runner_gates.values())
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_reciprocal_pairs_and_runner_gates",
+            phase2_pair_and_runner_ok,
+            {"max_pair_relative_error": max_pair_error, "runner_gates": runner_gates},
+            {
+                "max_pair_relative_error": case080_phase2_gates[
+                    "max_pair_relative_error"
+                ],
+                "all_runner_gates": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
         )
     )
     task032_reference_records: dict[str, dict[str, Any]] = {}

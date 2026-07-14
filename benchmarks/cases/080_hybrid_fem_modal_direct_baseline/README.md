@@ -4,7 +4,7 @@
 
 ```text
 Phase 1 full-3D h5/h3 reference = complete
-Phase 2 cross-section eigenproblem implementation = passed; clean record pending
+Phase 2 cross-section eigenproblem = clean MPI4 formal record complete
 Hybrid augmented/Schur direct = pending
 ordinary default changed = false
 ```
@@ -35,7 +35,7 @@ QEP implementation; it does not claim that coupling or a Hybrid solve exists.
 | 16. memory guard | frozen E/H payload 384000 bytes；fail closed above 64 MiB |
 | 17. numeric Gate | true residual `<=1e-9`、absolute closure `<=1e-9` |
 | 18. archive Gate | schema/shape/planes/dtype/sides + six SHA-256 identities |
-| 19. provenance | clean `c468c728...`、image digest、command、host 与 UTC time |
+| 19. provenance | Phase 1 clean `c468c728...`；Phase 2 clean `33211a4...`；image digest、command、host 与 UTC time |
 | 20. heavy artifacts | `benchmarks/artifacts/cases/080/`，gitignored |
 | 21. reference policy | h5 fast development；h3 primary；不宣称 h5--h3 mesh convergence |
 | 22. ordinary default | 不改变；reference exporter 显式 opt-in |
@@ -70,7 +70,17 @@ The clean h5 run has 44,698 FE DoF, residual `9.733991e-12` and
 FE DoF, residual `9.923386e-12` and
 `R/T/A=0.0046130314/0.5836533572/0.4117336114`.  Both closure errors are below
 `1.3e-13`; h3 agrees with the historical direct record to about `2.3e-14` or
-better.  The automatic benchmark checker passes 271/271 gates.
+better.
+
+The Phase 2 clean MPI4 record uses source
+`33211a4ac6d4f6717351197a93c506e1adec609f`. Air h5/h3/h2/h1.5 beta
+errors decrease strictly as `29.5323%/5.58859%/1.12629%/0.454640%`.
+The lossy h2 beta is `0.0773232064+0.00511171935j 1/nm` with `1.19656%`
+analytic error; the current Stage4 x/y material at h3 gives
+`0.0753551902+0.00178364869j 1/nm`. Across selected modes the maximum QEP
+relative residual is `1.8177e-15`, reciprocal-pair error is `7.50e-16`, and
+electric-L2 norm error is `4.44e-16`. The automatic benchmark checker passes
+277/277 gates.
 
 ## CLI 或测试
 
@@ -86,7 +96,8 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 
 The formal host command mounts the repository at `/work` in
 `myfenics-stage4:task28` and executes the same inner command.  The formal Phase
-1 source commit is `c468c728a4e71d4e532002c6d001ad7d0e9cd163`.
+1 source commit is `c468c728a4e71d4e532002c6d001ad7d0e9cd163`; the formal Phase
+2 source commit is `33211a4ac6d4f6717351197a93c506e1adec609f`.
 
 ## 代码路径与理论
 
@@ -108,6 +119,10 @@ The internal `total_peak_rss_mb` field is the sum of per-rank historical peaks,
 not a simultaneous memory measurement.  It is retained only as an upper-bound
 diagnostic and is not the Task032 memory authority.
 
+The Phase 2 record likewise reports per-rank process-lifetime historical peaks
+(maximum `231.277 MB`), not simultaneous total memory. No final Hybrid memory
+claim is made before external stage sampling.
+
 ## PyCharm
 
 Use the existing Docker interpreter and run `src/main.py` with the argument
@@ -117,5 +132,8 @@ formal Case080 reference identity requires MPI4.
 ## 限制
 
 This is numerical reference evidence for the frozen current model, not
-experimental validation.  It does not add h/p adaptivity, a new iterative
-solver, nonmatching interfaces, material scans or shorter wavelengths.
+experimental validation. Phase 2 electric-L2 is a preliminary scale, not
+Poynting/biorthogonal normalization. Mode classification, near-degenerate
+subspaces, interface coupling and Hybrid direct solvers remain pending. It
+does not add h/p adaptivity, a new iterative solver, nonmatching interfaces,
+material scans or shorter wavelengths.

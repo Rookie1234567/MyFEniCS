@@ -1,0 +1,1618 @@
+{
+  "benchmark_id": "case080_task032_phase2_qep",
+  "cases": [
+    {
+      "analytic_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "case_id": "air_p2_h5",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        789,
+        789
+      ],
+      "global_slave_count": 69,
+      "h_nm": 5.0,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 198.15234375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 177.59375,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 177.31640625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 176.8984375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 35,
+      "material_kind": "air",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 23520.0,
+          "shape": [
+            720,
+            720
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 23520.0,
+          "shape": [
+            720,
+            720
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 23520.0,
+          "shape": [
+            720,
+            720
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 23520.0,
+          "shape": [
+            720,
+            720
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.7543630797572496e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        12,
+        5
+      ],
+      "negative_target": null,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": 0.2953234758504231,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.01602373700006865,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 200,
+            "full_ownership_range": [
+              0,
+              200
+            ],
+            "rank": 0,
+            "reduced_local_size": 187,
+            "reduced_ownership_range": [
+              0,
+              187
+            ]
+          },
+          {
+            "full_local_size": 188,
+            "full_ownership_range": [
+              200,
+              388
+            ],
+            "rank": 1,
+            "reduced_local_size": 177,
+            "reduced_ownership_range": [
+              187,
+              364
+            ]
+          },
+          {
+            "full_local_size": 196,
+            "full_ownership_range": [
+              388,
+              584
+            ],
+            "rank": 2,
+            "reduced_local_size": 184,
+            "reduced_ownership_range": [
+              364,
+              548
+            ]
+          },
+          {
+            "full_local_size": 205,
+            "full_ownership_range": [
+              584,
+              789
+            ],
+            "rank": 3,
+            "reduced_local_size": 172,
+            "reduced_ownership_range": [
+              548,
+              720
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.05695162671230759,
+            -4.2882867696357907e-16
+          ],
+          "electric_l2_norm_after": 0.9999999999999998,
+          "gathered_to_root": false,
+          "normalization_factor": 0.8067713020482115,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 2.1666474831594964e-16,
+          "slepc_relative_error": 3.26620628453758e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 2,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.05695162671230759,
+              -4.2882867696357907e-16
+            ],
+            "electric_l2_norm_after": 0.9999999999999998,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8067713020482115,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 2.1666474831594964e-16,
+            "slepc_relative_error": 3.26620628453758e-13
+          },
+          {
+            "beta_per_nm": [
+              0.05695162671229473,
+              -7.302721062795501e-15
+            ],
+            "electric_l2_norm_after": 1.0,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8933595199755782,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.3581372711745538e-13,
+            "slepc_relative_error": 2.0474783697128787e-10
+          }
+        ],
+        "target_per_nm": [
+          0.08081953174336039,
+          0.0
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": null,
+      "reciprocal_pair_relative_error": null,
+      "reduced_shape": [
+        720,
+        720
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 1.2326930980007091,
+        "mesh_and_spaces_seconds_max_rank": 0.014710833999743045
+      },
+      "transverse_constraint_count_global": 34
+    },
+    {
+      "analytic_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "case_id": "air_p2_h3",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        2053,
+        2053
+      ],
+      "global_slave_count": 109,
+      "h_nm": 3.0,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 204.40234375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 183.96875,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 184.56640625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 183.984375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 55,
+      "material_kind": "air",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.6425274439198433e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        18,
+        9
+      ],
+      "negative_target": null,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": 0.05588593850764194,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.026630344999830413,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 512,
+            "full_ownership_range": [
+              0,
+              512
+            ],
+            "rank": 0,
+            "reduced_local_size": 455,
+            "reduced_ownership_range": [
+              0,
+              455
+            ]
+          },
+          {
+            "full_local_size": 511,
+            "full_ownership_range": [
+              512,
+              1023
+            ],
+            "rank": 1,
+            "reduced_local_size": 491,
+            "reduced_ownership_range": [
+              455,
+              946
+            ]
+          },
+          {
+            "full_local_size": 520,
+            "full_ownership_range": [
+              1023,
+              1543
+            ],
+            "rank": 2,
+            "reduced_local_size": 520,
+            "reduced_ownership_range": [
+              946,
+              1466
+            ]
+          },
+          {
+            "full_local_size": 510,
+            "full_ownership_range": [
+              1543,
+              2053
+            ],
+            "rank": 3,
+            "reduced_local_size": 478,
+            "reduced_ownership_range": [
+              1466,
+              1944
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.07630285636213453,
+            1.0280084573362883e-15
+          ],
+          "electric_l2_norm_after": 1.0000000000000002,
+          "gathered_to_root": false,
+          "normalization_factor": 0.8341939390274192,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 4.2190080243390954e-16,
+          "slepc_relative_error": 1.5736547847892784e-12
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.07630285636213453,
+              1.0280084573362883e-15
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8341939390274192,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 4.2190080243390954e-16,
+            "slepc_relative_error": 1.5736547847892784e-12
+          },
+          {
+            "beta_per_nm": [
+              0.0763028563621336,
+              9.025876567571005e-16
+            ],
+            "electric_l2_norm_after": 1.0000000000000004,
+            "gathered_to_root": false,
+            "normalization_factor": 1.2539423705558792,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 9.073814746848371e-16,
+            "slepc_relative_error": 3.3845262405511152e-12
+          }
+        ],
+        "target_per_nm": [
+          0.08081953174336039,
+          0.0
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": null,
+      "reciprocal_pair_relative_error": null,
+      "reduced_shape": [
+        1944,
+        1944
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 0.039513571000497905,
+        "mesh_and_spaces_seconds_max_rank": 0.0044000019997838535
+      },
+      "transverse_constraint_count_global": 54
+    },
+    {
+      "analytic_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "case_id": "air_p2_h2",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        4373,
+        4373
+      ],
+      "global_slave_count": 161,
+      "h_nm": 2.0,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 219.02734375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 195.96875,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 197.56640625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 196.984375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 81,
+      "material_kind": "air",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.1949256724353074e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        27,
+        13
+      ],
+      "negative_target": {
+        "elapsed_seconds_max_rank": 0.03719660299975658,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 1089,
+            "full_ownership_range": [
+              0,
+              1089
+            ],
+            "rank": 0,
+            "reduced_local_size": 1065,
+            "reduced_ownership_range": [
+              0,
+              1065
+            ]
+          },
+          {
+            "full_local_size": 1088,
+            "full_ownership_range": [
+              1089,
+              2177
+            ],
+            "rank": 1,
+            "reduced_local_size": 1008,
+            "reduced_ownership_range": [
+              1065,
+              2073
+            ]
+          },
+          {
+            "full_local_size": 1106,
+            "full_ownership_range": [
+              2177,
+              3283
+            ],
+            "rank": 2,
+            "reduced_local_size": 1049,
+            "reduced_ownership_range": [
+              2073,
+              3122
+            ]
+          },
+          {
+            "full_local_size": 1090,
+            "full_ownership_range": [
+              3283,
+              4373
+            ],
+            "rank": 3,
+            "reduced_local_size": 1090,
+            "reduced_ownership_range": [
+              3122,
+              4212
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            -0.07990926562088188,
+            -3.73565830939641e-17
+          ],
+          "electric_l2_norm_after": 0.9999999999999998,
+          "gathered_to_root": false,
+          "normalization_factor": 0.9388536034928745,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 2.350594162852994e-17,
+          "slepc_relative_error": 2.539569542864046e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              -0.07990926562088188,
+              -3.73565830939641e-17
+            ],
+            "electric_l2_norm_after": 0.9999999999999998,
+            "gathered_to_root": false,
+            "normalization_factor": 0.9388536034928745,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 2.350594162852994e-17,
+            "slepc_relative_error": 2.539569542864046e-13
+          },
+          {
+            "beta_per_nm": [
+              -0.07990926562088049,
+              6.073489666452741e-17
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8206872073884398,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.3019830202131458e-17,
+            "slepc_relative_error": 1.400069928947049e-13
+          }
+        ],
+        "target_per_nm": [
+          -0.08081953174336039,
+          -0.0
+        ]
+      },
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": 0.01126294724608186,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.037244849999297,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 1089,
+            "full_ownership_range": [
+              0,
+              1089
+            ],
+            "rank": 0,
+            "reduced_local_size": 1065,
+            "reduced_ownership_range": [
+              0,
+              1065
+            ]
+          },
+          {
+            "full_local_size": 1088,
+            "full_ownership_range": [
+              1089,
+              2177
+            ],
+            "rank": 1,
+            "reduced_local_size": 1008,
+            "reduced_ownership_range": [
+              1065,
+              2073
+            ]
+          },
+          {
+            "full_local_size": 1106,
+            "full_ownership_range": [
+              2177,
+              3283
+            ],
+            "rank": 2,
+            "reduced_local_size": 1049,
+            "reduced_ownership_range": [
+              2073,
+              3122
+            ]
+          },
+          {
+            "full_local_size": 1090,
+            "full_ownership_range": [
+              3283,
+              4373
+            ],
+            "rank": 3,
+            "reduced_local_size": 1090,
+            "reduced_ownership_range": [
+              3122,
+              4212
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.07990926562088188,
+            5.211273146805164e-17
+          ],
+          "electric_l2_norm_after": 1.0000000000000002,
+          "gathered_to_root": false,
+          "normalization_factor": 0.9387665793651955,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 2.5304016976932835e-17,
+          "slepc_relative_error": 2.7337536901410957e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.07990926562088188,
+              5.211273146805164e-17
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.9387665793651955,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 2.5304016976932835e-17,
+            "slepc_relative_error": 2.7337536901410957e-13
+          },
+          {
+            "beta_per_nm": [
+              0.07990926562088048,
+              -4.7264419389573844e-17
+            ],
+            "electric_l2_norm_after": 1.0,
+            "gathered_to_root": false,
+            "normalization_factor": 0.820223170280454,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.93470124418229e-17,
+            "slepc_relative_error": 2.0890798526766244e-13
+          }
+        ],
+        "target_per_nm": [
+          0.08081953174336039,
+          0.0
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": 1.475614837408754e-17,
+      "reciprocal_pair_relative_error": 1.84661293774066e-16,
+      "reduced_shape": [
+        4212,
+        4212
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 0.05518345600012253,
+        "mesh_and_spaces_seconds_max_rank": 0.006340046000332222
+      },
+      "transverse_constraint_count_global": 80
+    },
+    {
+      "analytic_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "case_id": "air_p2_h1p5",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        7141,
+        7141
+      ],
+      "global_slave_count": 205,
+      "h_nm": 1.5,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 231.15234375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 210.21875,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 209.31640625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 208.484375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 103,
+      "material_kind": "air",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 226576.0,
+          "shape": [
+            6936,
+            6936
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 226576.0,
+          "shape": [
+            6936,
+            6936
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 226576.0,
+          "shape": [
+            6936,
+            6936
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 226576.0,
+          "shape": [
+            6936,
+            6936
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.8177161407756063e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        34,
+        17
+      ],
+      "negative_target": null,
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": 0.004546396757462909,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.08177442499982135,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 1766,
+            "full_ownership_range": [
+              0,
+              1766
+            ],
+            "rank": 0,
+            "reduced_local_size": 1733,
+            "reduced_ownership_range": [
+              0,
+              1733
+            ]
+          },
+          {
+            "full_local_size": 1807,
+            "full_ownership_range": [
+              1766,
+              3573
+            ],
+            "rank": 1,
+            "reduced_local_size": 1704,
+            "reduced_ownership_range": [
+              1733,
+              3437
+            ]
+          },
+          {
+            "full_local_size": 1757,
+            "full_ownership_range": [
+              3573,
+              5330
+            ],
+            "rank": 2,
+            "reduced_local_size": 1757,
+            "reduced_ownership_range": [
+              3437,
+              5194
+            ]
+          },
+          {
+            "full_local_size": 1811,
+            "full_ownership_range": [
+              5330,
+              7141
+            ],
+            "rank": 3,
+            "reduced_local_size": 1742,
+            "reduced_ownership_range": [
+              5194,
+              6936
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.0804520940863027,
+            -2.357486906868694e-16
+          ],
+          "electric_l2_norm_after": 1.0000000000000004,
+          "gathered_to_root": false,
+          "normalization_factor": 0.821281162271633,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 7.061631803190834e-18,
+          "slepc_relative_error": 1.590148060880013e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.0804520940863027,
+              -2.357486906868694e-16
+            ],
+            "electric_l2_norm_after": 1.0000000000000004,
+            "gathered_to_root": false,
+            "normalization_factor": 0.821281162271633,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 7.061631803190834e-18,
+            "slepc_relative_error": 1.590148060880013e-13
+          },
+          {
+            "beta_per_nm": [
+              0.0804520940862941,
+              -1.6093187247331021e-16
+            ],
+            "electric_l2_norm_after": 0.9999999999999974,
+            "gathered_to_root": false,
+            "normalization_factor": 0.7373779014459363,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.1194203195252707e-17,
+            "slepc_relative_error": 2.5218854901700356e-13
+          }
+        ],
+        "target_per_nm": [
+          0.08081953174336039,
+          0.0
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": null,
+      "reciprocal_pair_relative_error": null,
+      "reduced_shape": [
+        6936,
+        6936
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 0.09553476500059332,
+        "mesh_and_spaces_seconds_max_rank": 0.006837924000137718
+      },
+      "transverse_constraint_count_global": 102
+    },
+    {
+      "analytic_beta_per_nm": [
+        0.07825958528525695,
+        0.00505055743729411
+      ],
+      "case_id": "lossy_homogeneous_p2_h2",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        4373,
+        4373
+      ],
+      "global_slave_count": 161,
+      "h_nm": 2.0,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 231.27734375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 210.21875,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 209.44140625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 208.984375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 81,
+      "material_kind": "lossy_homogeneous",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 137592.0,
+          "shape": [
+            4212,
+            4212
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.1949256724353074e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        27,
+        13
+      ],
+      "negative_target": {
+        "elapsed_seconds_max_rank": 0.03416026000013517,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 1089,
+            "full_ownership_range": [
+              0,
+              1089
+            ],
+            "rank": 0,
+            "reduced_local_size": 1065,
+            "reduced_ownership_range": [
+              0,
+              1065
+            ]
+          },
+          {
+            "full_local_size": 1088,
+            "full_ownership_range": [
+              1089,
+              2177
+            ],
+            "rank": 1,
+            "reduced_local_size": 1008,
+            "reduced_ownership_range": [
+              1065,
+              2073
+            ]
+          },
+          {
+            "full_local_size": 1106,
+            "full_ownership_range": [
+              2177,
+              3283
+            ],
+            "rank": 2,
+            "reduced_local_size": 1049,
+            "reduced_ownership_range": [
+              2073,
+              3122
+            ]
+          },
+          {
+            "full_local_size": 1090,
+            "full_ownership_range": [
+              3283,
+              4373
+            ],
+            "rank": 3,
+            "reduced_local_size": 1090,
+            "reduced_ownership_range": [
+              3122,
+              4212
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            -0.07732320643992534,
+            -0.005111719349211117
+          ],
+          "electric_l2_norm_after": 1.0000000000000002,
+          "gathered_to_root": false,
+          "normalization_factor": 0.9394055739101103,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 2.567523390572688e-17,
+          "slepc_relative_error": 2.858028611717913e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              -0.07732320643992534,
+              -0.005111719349211117
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.9394055739101103,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 2.567523390572688e-17,
+            "slepc_relative_error": 2.858028611717913e-13
+          },
+          {
+            "beta_per_nm": [
+              -0.07732320643992324,
+              -0.005111719349210907
+            ],
+            "electric_l2_norm_after": 1.0000000000000004,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8091031280943921,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.4568600136226206e-17,
+            "slepc_relative_error": 1.6251731416512456e-13
+          }
+        ],
+        "target_per_nm": [
+          -0.07825958528525695,
+          -0.00505055743729411
+        ]
+      },
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": 0.011965641746316804,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.034390963000078045,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 1089,
+            "full_ownership_range": [
+              0,
+              1089
+            ],
+            "rank": 0,
+            "reduced_local_size": 1065,
+            "reduced_ownership_range": [
+              0,
+              1065
+            ]
+          },
+          {
+            "full_local_size": 1088,
+            "full_ownership_range": [
+              1089,
+              2177
+            ],
+            "rank": 1,
+            "reduced_local_size": 1008,
+            "reduced_ownership_range": [
+              1065,
+              2073
+            ]
+          },
+          {
+            "full_local_size": 1106,
+            "full_ownership_range": [
+              2177,
+              3283
+            ],
+            "rank": 2,
+            "reduced_local_size": 1049,
+            "reduced_ownership_range": [
+              2073,
+              3122
+            ]
+          },
+          {
+            "full_local_size": 1090,
+            "full_ownership_range": [
+              3283,
+              4373
+            ],
+            "rank": 3,
+            "reduced_local_size": 1090,
+            "reduced_ownership_range": [
+              3122,
+              4212
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.07732320643992535,
+            0.0051117193492111294
+          ],
+          "electric_l2_norm_after": 1.0000000000000002,
+          "gathered_to_root": false,
+          "normalization_factor": 0.9393383364809293,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 2.987907878462436e-17,
+          "slepc_relative_error": 3.3276265068674914e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.07732320643992535,
+              0.0051117193492111294
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.9393383364809293,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 2.987907878462436e-17,
+            "slepc_relative_error": 3.3276265068674914e-13
+          },
+          {
+            "beta_per_nm": [
+              0.07732320643992326,
+              0.005111719349210905
+            ],
+            "electric_l2_norm_after": 0.9999999999999984,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8091065464807492,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 1.7934515563405747e-17,
+            "slepc_relative_error": 1.9946098361948095e-13
+          }
+        ],
+        "target_per_nm": [
+          0.07825958528525695,
+          0.00505055743729411
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": 1.8440363494407353e-17,
+      "reciprocal_pair_relative_error": 2.3796478052882154e-16,
+      "reduced_shape": [
+        4212,
+        4212
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 0.06993409200003953,
+        "mesh_and_spaces_seconds_max_rank": 0.006175478999466577
+      },
+      "transverse_constraint_count_global": 80
+    },
+    {
+      "analytic_beta_per_nm": null,
+      "case_id": "stage4_xy_p2_h3",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "formulation": "mixed_transverse_N1curl_longitudinal_Lagrange_QEP",
+      "full_shape": [
+        2053,
+        2053
+      ],
+      "global_slave_count": 109,
+      "h_nm": 3.0,
+      "historical_peak_rss_by_rank": [
+        {
+          "historical_peak_rss_mb": 231.27734375,
+          "rank": 0
+        },
+        {
+          "historical_peak_rss_mb": 210.34375,
+          "rank": 1
+        },
+        {
+          "historical_peak_rss_mb": 209.44140625,
+          "rank": 2
+        },
+        {
+          "historical_peak_rss_mb": 208.984375,
+          "rank": 3
+        }
+      ],
+      "leading_coefficient_singular_by_design": true,
+      "longitudinal_constraint_count_global": 55,
+      "material_kind": "stage4_xy",
+      "matrix_info": {
+        "K0": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "K1": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "K2": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        },
+        "electric_mass": {
+          "memory_bytes": 0.0,
+          "nnz_used": 63504.0,
+          "shape": [
+            1944,
+            1944
+          ]
+        }
+      },
+      "max_pair_coordinate_error": 0.0,
+      "max_probe_residual": 1.6425274439198433e-15,
+      "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. External stage sampling remains required for the final Task32 memory claim.",
+      "mesh_cells_xy": [
+        18,
+        9
+      ],
+      "negative_target": {
+        "elapsed_seconds_max_rank": 0.019904961999600346,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 512,
+            "full_ownership_range": [
+              0,
+              512
+            ],
+            "rank": 0,
+            "reduced_local_size": 455,
+            "reduced_ownership_range": [
+              0,
+              455
+            ]
+          },
+          {
+            "full_local_size": 511,
+            "full_ownership_range": [
+              512,
+              1023
+            ],
+            "rank": 1,
+            "reduced_local_size": 491,
+            "reduced_ownership_range": [
+              455,
+              946
+            ]
+          },
+          {
+            "full_local_size": 520,
+            "full_ownership_range": [
+              1023,
+              1543
+            ],
+            "rank": 2,
+            "reduced_local_size": 520,
+            "reduced_ownership_range": [
+              946,
+              1466
+            ]
+          },
+          {
+            "full_local_size": 510,
+            "full_ownership_range": [
+              1543,
+              2053
+            ],
+            "rank": 3,
+            "reduced_local_size": 478,
+            "reduced_ownership_range": [
+              1466,
+              1944
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            -0.07535519017416753,
+            -0.001783648691672887
+          ],
+          "electric_l2_norm_after": 0.9999999999999999,
+          "gathered_to_root": false,
+          "normalization_factor": 0.8318890344059992,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 5.0673788275961965e-17,
+          "slepc_relative_error": 1.9107962826367654e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              -0.07535519017416753,
+              -0.001783648691672887
+            ],
+            "electric_l2_norm_after": 0.9999999999999999,
+            "gathered_to_root": false,
+            "normalization_factor": 0.8318890344059992,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 5.0673788275961965e-17,
+            "slepc_relative_error": 1.9107962826367654e-13
+          },
+          {
+            "beta_per_nm": [
+              -0.07535517872248429,
+              -0.0017836340715582004
+            ],
+            "electric_l2_norm_after": 0.9999999999999999,
+            "gathered_to_root": false,
+            "normalization_factor": 1.3536274022391146,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 8.451296333965588e-17,
+            "slepc_relative_error": 3.188938853660604e-13
+          }
+        ],
+        "target_per_nm": [
+          -0.08081953174336039,
+          -0.0
+        ]
+      },
+      "phase_x": [
+        -0.6007411348979813,
+        -0.7994436120462065
+      ],
+      "phase_y": [
+        1.0,
+        0.0
+      ],
+      "polynomial_order": 2,
+      "positive_relative_beta_error": null,
+      "positive_target": {
+        "elapsed_seconds_max_rank": 0.025614453999878606,
+        "ownership_by_rank": [
+          {
+            "full_local_size": 512,
+            "full_ownership_range": [
+              0,
+              512
+            ],
+            "rank": 0,
+            "reduced_local_size": 455,
+            "reduced_ownership_range": [
+              0,
+              455
+            ]
+          },
+          {
+            "full_local_size": 511,
+            "full_ownership_range": [
+              512,
+              1023
+            ],
+            "rank": 1,
+            "reduced_local_size": 491,
+            "reduced_ownership_range": [
+              455,
+              946
+            ]
+          },
+          {
+            "full_local_size": 520,
+            "full_ownership_range": [
+              1023,
+              1543
+            ],
+            "rank": 2,
+            "reduced_local_size": 520,
+            "reduced_ownership_range": [
+              946,
+              1466
+            ]
+          },
+          {
+            "full_local_size": 510,
+            "full_ownership_range": [
+              1543,
+              2053
+            ],
+            "rank": 3,
+            "reduced_local_size": 478,
+            "reduced_ownership_range": [
+              1466,
+              1944
+            ]
+          }
+        ],
+        "selected": {
+          "beta_per_nm": [
+            0.07535519017416757,
+            0.0017836486916728489
+          ],
+          "electric_l2_norm_after": 1.0000000000000002,
+          "gathered_to_root": false,
+          "normalization_factor": 0.831889034405999,
+          "normalization_kind": "cross_section_electric_L2",
+          "polynomial_relative_residual": 9.586394764308279e-17,
+          "slepc_relative_error": 3.6185959941867975e-13
+        },
+        "solver_report": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "spectrum": [
+          {
+            "beta_per_nm": [
+              0.07535519017416757,
+              0.0017836486916728489
+            ],
+            "electric_l2_norm_after": 1.0000000000000002,
+            "gathered_to_root": false,
+            "normalization_factor": 0.831889034405999,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 9.586394764308279e-17,
+            "slepc_relative_error": 3.6185959941867975e-13
+          },
+          {
+            "beta_per_nm": [
+              0.07535517872248433,
+              0.0017836340715582121
+            ],
+            "electric_l2_norm_after": 1.0,
+            "gathered_to_root": false,
+            "normalization_factor": 1.3536274022391146,
+            "normalization_kind": "cross_section_electric_L2",
+            "polynomial_relative_residual": 7.55106351423389e-17,
+            "slepc_relative_error": 2.8489228595484405e-13
+          }
+        ],
+        "target_per_nm": [
+          0.08081953174336039,
+          0.0
+        ]
+      },
+      "reciprocal_pair_absolute_error_per_nm": 5.647850449853784e-17,
+      "reciprocal_pair_relative_error": 7.492873363054524e-16,
+      "reduced_shape": [
+        1944,
+        1944
+      ],
+      "scalar_dtype": "complex128",
+      "timing": {
+        "assembly_and_reduction_seconds_max_rank": 0.042537219999758236,
+        "mesh_and_spaces_seconds_max_rank": 0.005739030999393435
+      },
+      "transverse_constraint_count_global": 54
+    }
+  ],
+  "gates": {
+    "air_beta_error_strictly_decreases": true,
+    "air_h1p5_relative_beta_error_le_5e-3": true,
+    "air_h2_relative_beta_error_le_1p5e-2": true,
+    "all_electric_l2_norm_error_le_1e-10": true,
+    "all_polynomial_relative_residual_le_1e-10": true,
+    "all_requested_pair_errors_le_1e-9": true,
+    "boundary_only_constraint_communication": true,
+    "lossy_forward_imag_beta_positive": true,
+    "lossy_h2_relative_beta_error_le_2e-2": true,
+    "no_full_eigenvector_gather": true
+  },
+  "metadata": {
+    "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+    "command": "python -m benchmarks.run_task032_phase2_qep --verified-clean-sha 33211a4ac6d4f6717351197a93c506e1adec609f --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json",
+    "commit_sha": "33211a4ac6d4f6717351197a93c506e1adec609f",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "container_image": "myfenics-stage4:task28",
+    "eigen_backend": "SLEPc.PEP/TOAR",
+    "full_eigenvector_gather": false,
+    "git_dirty": false,
+    "host_environment_id": "SK-20260601OSDE",
+    "mpi_size": 4,
+    "provenance": "clean_task032_phase2_qep",
+    "tracked_source_dirty": false,
+    "verification": "host_git_clean_attestation",
+    "verified_clean_sha": "33211a4ac6d4f6717351197a93c506e1adec609f"
+  },
+  "physics": {
+    "grazing_angle_deg": 10.0,
+    "incident_phi_deg": 0.0,
+    "incident_theta_deg_from_minus_z": 80.0,
+    "lambda0_nm": 13.5,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "n_si": [
+      0.999002304859,
+      0.00182649365
+    ],
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0
+  },
+  "schema_version": 1,
+  "status": "pass",
+  "timestamp_utc": "2026-07-14T11:43:59.880693+00:00"
+}

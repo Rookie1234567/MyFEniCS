@@ -333,6 +333,7 @@ def main() -> None:
     )
 
     if comm.rank == 0:
+        timestamp_utc = datetime.now(timezone.utc).isoformat()
         air_errors = [
             float(case["positive_relative_beta_error"])
             for case in cases
@@ -342,9 +343,10 @@ def main() -> None:
             "schema_version": 1,
             "benchmark_id": "case080_task032_phase2_qep",
             "status": "pass",
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": timestamp_utc,
             "metadata": {
                 **provenance,
+                "timestamp_utc": timestamp_utc,
                 "command": "python -m benchmarks.run_task032_phase2_qep "
                 + " ".join(shlex.quote(value) for value in sys.argv[1:]),
                 "mpi_size": comm.size,

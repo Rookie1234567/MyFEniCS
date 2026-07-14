@@ -22,6 +22,8 @@
 - [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
 - [Phase 1 full-3D reference contract](outcomes/full3d_reference_contract.md)
 - [Phase 2 cross-section QEP walkthrough](../../notes/reference/code_walkthrough/42_task032_cross_section_qep.md)
+- [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
+- [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -56,3 +58,5 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <f
 `git status` 确认 clean，再把完整 SHA 作为 host clean attestation；Linux
 容器只复核挂载仓库 HEAD 与该 SHA 相等，因为 CRLF bind mount 会让容器内
 `git status` 把全部文本文件误报为修改。
+
+Phase 2 已在 clean source `33211a4ac6d4f6717351197a93c506e1adec609f` 后完成正式记录与自动 Gate。当前分支下一步是 Phase 3：Poynting 方向分类、物理衰减分支、left/right 双正交归一化和近简并子空间处理。

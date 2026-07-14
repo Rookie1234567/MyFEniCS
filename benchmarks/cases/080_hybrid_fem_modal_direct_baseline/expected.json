@@ -1,5 +1,5 @@
 {
-  "status": "phase1_reference_pass_hybrid_pending",
+  "status": "phase1_reference_and_phase2_qep_pass_hybrid_coupling_pending",
   "ordinary_default_changed": false,
   "full3d_reference": {
     "h5": {
@@ -14,6 +14,15 @@
     }
   },
   "h5_h3_grid_convergence_claim": false,
+  "phase2_qep": {
+    "status": "pass",
+    "record": "records/qep_phase2.json",
+    "air_beta_convergence_levels_nm": [5.0, 3.0, 2.0, 1.5],
+    "homogeneous_lossy_h_nm": 2.0,
+    "stage4_xy_h_nm": 3.0,
+    "normalization": "cross_section_electric_L2_phase2_only",
+    "full_eigenvector_gather": false
+  },
   "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
   "heavy_artifacts": "benchmarks/artifacts/cases/080 (gitignored)"
 }

@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_implementation_passed_clean_record_pending / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -26,17 +26,21 @@ ordinary default changed = false
 ## 4. eigenproblem implementation and validation
 
 ```text
-implementation = passed in MPI4 tests and dirty-research benchmark
+implementation = passed in serial/MPI4 tests and clean formal benchmark
 space = transverse N1curl(p2) x longitudinal Lagrange(p2)
 polynomial = K0 + beta*K1 + beta^2*K2
 solver = SLEPc 3.24 PEP/TOAR + shift-invert MUMPS
 ownership = distributed reduced/full vectors; no rank0 full gather
-clean formal record = pending code commit
+clean formal record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json
+formal source commit = 33211a4ac6d4f6717351197a93c506e1adec609f
+record SHA-256 = 8743ab4bfe95b1e532069f6eb643996ea60d2009ad267c3f0e78cbc430003cd1
 ```
 
 二维截面复用 Stage4 三维 hexa 网格的 x/y 轴，并支持 homogeneous air、homogeneous lossy Si 和当前 air/Si `epsilon(x,y)`。双 Floquet 约束只复制周期边界规模元数据，显式构造分布式 `u=Cq`，矩阵通过 `C^H K C` 稀疏约化。MPI4 测试覆盖 Bloch phase、Nedelec orientation、无 slave-chain、解析复 beta、正反向配对、残差、归一化和 ownership。
 
-研究验证中，air 基模从 h5 到 h3/h2/h1.5 单调逼近解析 `0.0808195317 1/nm`；h2/h1.5 相对误差约为 1.13%/0.455%。h5 的大误差来自 10° 掠入射下 `beta^2=k^2-k_t^2` 对横向色散高度敏感，不能拿 h5 单点否定 QEP 符号。正式数值将在 Phase 2 code commit 后 clean 重跑并写入 Case080 record。
+clean formal MPI4 记录包含 air h5/h3/h2/h1.5、homogeneous lossy h2 与当前 `epsilon(x,y)` h3 六个 case。air 正向基模 beta 依次为 `0.0569516267`、`0.0763028564`、`0.0799092656`、`0.0804520941 1/nm`，相对解析误差严格下降为 `29.5323%`、`5.58859%`、`1.12629%`、`0.454640%`。h5 的大误差来自 10° 掠入射下 `beta^2=k^2-k_t^2` 对横向色散高度敏感，不能拿 h5 单点否定 QEP 符号。
+
+lossy h2 得到 `beta=0.0773232064+0.00511171935j 1/nm`，相对解析误差 `1.19656%`；当前 Stage4 x/y 材料 h3 得到 `0.0753551902+0.00178364869j 1/nm`。所有选中模态最大多项式相对残差 `1.8177e-15`，最大 electric-L2 范数误差 `4.44e-16`，最大 `+/- beta` 配对误差 `7.50e-16`，orientation probe 与周期配对坐标 Gate 均通过。Case080 checker 为 `277/277 passed`。
 
 ## 5. mode classification/normalization
 
@@ -66,7 +70,7 @@ Phase 2 已提供 electric-L2 场尺度归一化，验证后范数为 1；它不
 
 Phase 1 已从 clean commit `c468c728...` 完成 h5/h3 MPI4 direct reference。两档均生成 z=`10/30/60/90/110 nm`、40x20 周期单元中心网格上的 complex128 E/H；主数组 shape 为 `(5,20,40,3)`，接口显式保存 x/y tangential traces。z=10 从 +z 单元、z=110 从 -z 单元取迹，二者均来自中间模态区域。
 
-h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`；h3 为 198,438 DoF，残差 `9.9234e-12`，`R/T/A=0.0046130314/0.5836533572/0.4117336114`。两者闭合均优于 `1.3e-13`，NPZ/JSON/run-summary 哈希一致。h3 与历史 direct h3 的 R/T/A 绝对差约 `2.3e-14` 或更小。h5/h3 差异大，因此不宣称网格收敛：h5 用作快速开发，h3 是 Task032 主 full-3D 场/RTA reference。Case080 自动 Gate 为 `271/271 passed`。
+h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`；h3 为 198,438 DoF，残差 `9.9234e-12`，`R/T/A=0.0046130314/0.5836533572/0.4117336114`。两者闭合均优于 `1.3e-13`，NPZ/JSON/run-summary 哈希一致。h3 与历史 direct h3 的 R/T/A 绝对差约 `2.3e-14` 或更小。h5/h3 差异大，因此不宣称网格收敛：h5 用作快速开发，h3 是 Task032 主 full-3D 场/RTA reference。加入 Phase 2 formal QEP Gate 后，Case080 自动 checker 为 `277/277 passed`。
 
 ## 12. angle/polarization smoke
 
@@ -80,13 +84,15 @@ Phase 1 冻结参考采样的 E/H 未压缩复制载荷仅 `384000 bytes`，并�
 
 正式 h5/h3 的内部 historical-peak 上界分别为 `2360.723 MB` 和 `8707.480 MB`，elapsed 分别为 `21.178 s` 和 `79.541 s`。这些 peak 不是外部同时采样值，不作为 Task032 最终内存权威。
 
+Phase 2 QEP formal record 的单 rank 进程生命周期 historical peak 最大为 `231.277 MB`。各 rank 高水位并非同一采样时刻，既不求和也不升级为 Task032 最终 Hybrid 内存结论；最终结论仍要求外部 simultaneous stage sampler。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
 
 ## 15. changed files
 
-Phase 0/1 已提交；Phase 2 implementation 当前 tracked 变化包括：
+Phase 0/1 已提交；Phase 2 implementation 与 evidence 包括：
 
 ```text
 src/modes/cross_section_spaces.py
@@ -97,6 +103,9 @@ src/test/test_32_task032_cross_section_qep.py
 benchmarks/run_task032_phase2_qep.py
 notes/reference/code_walkthrough/42_task032_cross_section_qep.md
 notes/theory/hybrid_fem_modal_domain_decomposition.md
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/expected/gates.json
+benchmarks/check_benchmarks.py
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
 docs/development_progress.md
 ```
@@ -105,9 +114,9 @@ docs/development_progress.md
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1 reference is complete, but the Hybrid eigenproblem/coupling/direct solvers are not implemented
+reason = Phase 1 reference and Phase 2 eigenproblem are complete, but classification/coupling/Hybrid direct solvers are not implemented
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 2 截面 QEP，先从 homogeneous air analytic beta 开始。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 3 模态分类、功率/双正交归一化与近简并子空间处理。

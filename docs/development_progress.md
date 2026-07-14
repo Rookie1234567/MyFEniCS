@@ -40,7 +40,7 @@ Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0 passed; Phase 1 clean h5/h3 full-3D reference complete; Phase 2 implementation/MPI4 research gates passed, clean record pending
+Task032 status = Phase 0/1 complete; Phase 2 clean MPI4 cross-section QEP record complete; Phase 3 next
 ```
 
 ## 1.1 2026-07-14 最新更新
@@ -53,7 +53,7 @@ Phase 1 已加入默认关闭的 full-3D reference exporter：在 z=`10/30/60/90
 
 clean commit `c468c728...` 的正式 MPI4 h5/h3 reference 均通过：DoF 为 44,698/198,438，真相对残差为 `9.734e-12/9.923e-12`，闭合优于 `1.3e-13`；h3 `R/T/A=0.0046130314/0.5836533572/0.4117336114` 与历史 direct h3 一致。h5 与 h3 差异明显，因此 h5 只作快速开发、h3 作为主 reference，不宣称 h5--h3 网格收敛。Case080 已保存 clean identity、命令、image digest、field/diffraction hash 与自动 Gate，checker 为 `271/271 passed`。
 
-Phase 2 已实现匹配 Stage4 x/y 轴的 quadrilateral 截面、`N1curl(p2) x Lagrange(p2)` 混合空间、双 Floquet orientation-aware 约束、无 slave-chain 的分布式 `u=Cq`、`C^H K C` 稀疏约化和原生 SLEPc PEP/TOAR QEP。完整 eigenvector 不聚集到 rank0；Phase 2 electric-L2 只建立稳定场尺度，Poynting/left-right 双正交仍留给 Phase 3。MPI4 测试和 dirty-research runner 已覆盖 air 解析 beta 网格收敛、homogeneous lossy 复 beta、当前 `epsilon(x,y)`、`+/- beta`、残差、Bloch phase、orientation 与 ownership；clean formal Case080 record 等待 Phase 2 code commit 后生成。接口 coupling 和 Hybrid direct solver 尚未开始。
+Phase 2 已实现匹配 Stage4 x/y 轴的 quadrilateral 截面、`N1curl(p2) x Lagrange(p2)` 混合空间、双 Floquet orientation-aware 约束、无 slave-chain 的分布式 `u=Cq`、`C^H K C` 稀疏约化和原生 SLEPc PEP/TOAR QEP。完整 eigenvector 不聚集到 rank0；Phase 2 electric-L2 只建立稳定场尺度，Poynting/left-right 双正交仍留给 Phase 3。正式 MPI4 record 固定在 clean source `33211a4...`：air h5/h3/h2/h1.5 的 beta 解析相对误差严格降至 `29.5323%/5.58859%/1.12629%/0.454640%`，lossy h2 误差 `1.19656%`，当前材料 h3 beta 为 `0.0753551902+0.00178364869j 1/nm`；最大 QEP 相对残差 `1.8177e-15`，`+/- beta` 配对误差 `7.50e-16`，electric-L2 范数误差 `4.44e-16`。完整 serial suite 为 186 tests/10 skipped，MPI4 Phase 2 为每 rank 5/5，checker 为 `277/277 passed`。接口 coupling 和 Hybrid direct solver 尚未开始，下一步为 Phase 3 分类与最终归一化。
 
 Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
 

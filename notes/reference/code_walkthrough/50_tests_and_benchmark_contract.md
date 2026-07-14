@@ -19,6 +19,7 @@
 | 29 | Task030 baseline pin、active DoF、nonmatching H(curl) transfer/cache、condensed Galerkin、low-rank adapter 与 compact slab action |
 | 30 | Task031 Case070/outcomes 合同、public MPC form action、fine lifecycle、PC certificate、factor fingerprint 与 ordinary-default 隔离 |
 | 31 | Task032 full-3D reference grid、64 MiB guard、单侧接口取迹和默认关闭合同 |
+| 32 | Task032 matching cross-section、双 Floquet orientation、distributed QEP、解析/有损 beta、±配对、L2 范数和 MPI ownership |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -65,3 +66,9 @@ Case070 checker 还必须验证 clean full-SHA/image/artifact hash、same 80 mod
 `test_31_full3d_reference_export` 检查普通默认关闭、周期单元中心网格、严格递增 z 平面、接口从中间模态区单侧取迹和冻结样本 payload 边界。实际 complex128 数组、切向 slice、finite 值与三方 SHA 一致性由 clean h5/h3 run 验证，不能只靠 unit test。
 
 Case080 checker 固定 source commit/image、clean provenance、残差、能量闭合、R/T/A、NPZ schema/shape/planes/dtype、接口侧、六个 artifact hash 和 h3 历史一致性。heavy field 不进 Git；h5/h3 的内部 per-rank historical peak sum 不是 simultaneous memory authority。
+
+## Task032 Phase 2 contract
+
+`test_32_task032_cross_section_qep` 覆盖匹配 Stage4 x/y 轴的截面材料、双 Bloch phase、Nédélec orientation probe、无 slave-chain 的 `u=Cq`、air 与 lossy 解析 beta、`+/- beta`、QEP 残差、electric-L2 范数和 MPI ownership。正式 Case080 record 固定 clean SHA、镜像、MPI4、SLEPc PEP/TOAR、六个 case、稀疏约束通信范围和 no-full-vector-gather。
+
+checker 还要求 air h5/h3/h2/h1.5 解析误差严格下降、h2/h1.5 与 lossy h2 分别通过阈值、所有选中模态残差/归一化/orientation 通过、每个 rank 的 local ownership 求和等于全局 shape，并验证需要的 `+/- beta` 配对。当前正式结果为 `277/277 passed`。Phase 2 electric-L2 不是最终 Poynting/双正交归一化，后者必须由 Phase 3 单独证明。
