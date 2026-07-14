@@ -51,6 +51,25 @@ Phase 2 的 electric-L2 归一化只建立稳定的场尺度。本文后述的 P
 方向、left/right 双正交、`Q'(beta)` 与近简并子空间归一化仍属于 Phase 3，
 不能用当前 L2 字段替代最终接口功率归一化。
 
+## 0.2 Phase 3 分类与双正交实现锚点
+
+当前 Phase 3 代码位于 `src/modes/mode_classification.py`。它从混合场按
+`curl E = i omega mu H` 重构阻抗缩放 H，以截面平均 Poynting flux 优先分类
+传播方向，并把有非零 flux 的右模归一到 `abs(Pz)=1`。near-zero flux 模式
+按 `Im(beta)` 选择远离接口的衰减分支；仍无法判定的实 beta 被显式标为
+cutoff/ambiguous。
+
+合格镜像的 SLEPc PEP Python API 没有 two-sided left-vector 接口，因此代码
+显式求解 `K0^H + lambda K1^H + lambda^2 K2^H`，以
+`lambda approx conj(beta)` 配对左模。归一化使用
+`left_i^H [K1 + (beta_i+beta_j)K2] right_j`；严格/近简并 block 只在小型
+mode-count overlap 矩阵上做逆变换，奇异或条件数超过 `1e12` 时 fail closed。
+完整左右向量继续按 PETSc ownership 分布，不在 rank0 聚集。
+
+相邻参数 tracking 用 left/right QEP overlap 做最大权指派；近简并组另用
+electric-mass Gram whitening 后的 principal angles 比较子空间。Phase 3
+仍不包含 100 nm 稳定传播和 3D 接口投影。
+
 ---
 
 # 1. 物理域和基本方程

@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_implementation_research_pass_clean_record_pending / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；`classification -> coupling -> Hybrid solvers` 尚未开始。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`。稳定传播、接口 coupling 与 Hybrid solvers 尚未开始。
 
 ## 4. eigenproblem implementation and validation
 
@@ -44,7 +44,21 @@ lossy h2 得到 `beta=0.0773232064+0.00511171935j 1/nm`，相对解析误差 `1.
 
 ## 5. mode classification/normalization
 
-Phase 2 已提供 electric-L2 场尺度归一化，验证后范数为 1；它不是最终功率归一化。Poynting flux、物理衰减分支、左右模/双正交残差和近简并子空间处理仍属于 Phase 3，当前不得提前宣称完成。
+```text
+implementation = serial and MPI4 research gates passed
+direction = cross-section Poynting flux first; Im(beta) decay branch fallback
+left modes = explicit distributed adjoint QEP at lambda approximately conj(beta)
+normalization = unit-absolute-Poynting right mode + Q'(beta) left/right basis
+near degeneracy = small block inverse with condition fail-closed
+tracking = maximum left/right overlap + principal-angle subspace report
+clean formal record = pending Phase 3 implementation commit
+```
+
+SLEPc 3.24 PEP 的 Python API 不提供 two-sided left vectors，因此 Phase 3 显式求解 `K0^H + lambda K1^H + lambda^2 K2^H`，不把普通右模 Euclidean 正交冒充双正交。研究 MPI4 h10 runner 对 air、homogeneous lossy 和当前 Stage4 `epsilon(x,y)` 均通过；air/有损双正交单位阵误差约 `1e-15`，patterned 为 `2.51e-10`，左右 beta 配对约 `1e-14`，右/左 QEP 残差均远小于 `1e-8`。air 正反 beta 配对误差约 `5e-16`，所有选中分支通过被动性方向规则。
+
+回归结果为全量 serial `190 tests / 10 skipped`、Phase 3 serial `4/4`，以及 MPI4 Phase 3 每 rank `4 tests / 2 skipped`；MPI skip 仅用于避免重复负向和相邻参数 factor setup，完整 MPI4 runner 仍覆盖这些路径。
+
+80° 到 79.8° 的 tracking 对两维近简并子空间得到 singular values `0.9999929/0.9999825`，最大 principal angle `0.005918 rad`，无未匹配旧模；serial 合同另覆盖模式数增加时的 unmatched 新模。当前 h10 是分类/归一化合同，不替代 Phase 2 beta 精度或最终 h3 Hybrid 对比。正式 clean Case080 record 等待本阶段代码提交后生成。
 
 ## 6. stable propagation
 
@@ -90,9 +104,11 @@ Phase 2 QEP formal record 的单 rank 进程生命周期 historical peak 最大�
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
 
+Phase 3 首次 block 双正交测试出现大 overlap 误差，根因是把 petsc4py `VecDot(x,y)=y^H x` 当成 NumPy 风格的 `x^H y`。交换 dot 参数顺序后，h5 air block 单位阵误差降到约 `4.9e-12`。完整 MPI4 测试最初还因在每个回归中重复负向和相邻参数 PEP 而两次触及 5 分钟上限；最终合同按职责拆分为 MPI4 正向分布式 basis 与 serial 负向/tracking，完整 research runner 仍在 MPI4 覆盖正反配对和角度 tracking。
+
 ## 15. changed files
 
-Phase 0/1 已提交；Phase 2 implementation 与 evidence 包括：
+Phase 0/1 已提交；Phase 2/3 implementation 与 evidence 包括：
 
 ```text
 src/modes/cross_section_spaces.py
@@ -108,15 +124,20 @@ benchmarks/cases/080_hybrid_fem_modal_direct_baseline/expected/gates.json
 benchmarks/check_benchmarks.py
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md
 docs/development_progress.md
+src/modes/mode_classification.py
+src/test/test_33_task032_mode_classification.py
+benchmarks/run_task032_phase3_modes.py
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase3.sh
+notes/reference/code_walkthrough/43_task032_mode_classification.md
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1 reference and Phase 2 eigenproblem are complete, but classification/coupling/Hybrid direct solvers are not implemented
+reason = Phase 1/2 are complete and Phase 3 implementation has research evidence, but the Phase 3 clean record, propagation, coupling and Hybrid direct solvers are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 3 模态分类、功率/双正交归一化与近简并子空间处理。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是提交 Phase 3 实现并生成 clean formal record；通过后进入 Phase 4 稳定双向传播。

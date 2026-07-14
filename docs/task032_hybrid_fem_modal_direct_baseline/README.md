@@ -23,6 +23,7 @@
 - [Phase 1 full-3D reference contract](outcomes/full3d_reference_contract.md)
 - [Phase 2 cross-section QEP walkthrough](../../notes/reference/code_walkthrough/42_task032_cross_section_qep.md)
 - [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
+- [Phase 3 mode classification walkthrough](../../notes/reference/code_walkthrough/43_task032_mode_classification.md)
 - [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
@@ -60,3 +61,16 @@ mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <f
 `git status` 把全部文本文件误报为修改。
 
 Phase 2 已在 clean source `33211a4ac6d4f6717351197a93c506e1adec609f` 后完成正式记录与自动 Gate。当前分支下一步是 Phase 3：Poynting 方向分类、物理衰减分支、left/right 双正交归一化和近简并子空间处理。
+
+Phase 3 的测试与研究入口为：
+
+```bash
+python -m unittest -v src.test.test_33_task032_mode_classification
+mpiexec -n 4 python -m unittest -v src.test.test_33_task032_mode_classification
+mpiexec -n 4 python -m benchmarks.run_task032_phase3_modes --allow-dirty-research
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase3.sh
+```
+
+当前 Phase 3 implementation/MPI4 research gates 已通过，clean formal record
+等待本阶段实现提交后生成。h10 runner 是分类、双正交和 tracking 合同，不替代
+Phase 2 beta 精度或后续 h3 Hybrid 场/RTA 对比。

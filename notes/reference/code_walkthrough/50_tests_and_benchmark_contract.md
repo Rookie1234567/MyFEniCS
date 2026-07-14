@@ -20,6 +20,7 @@
 | 30 | Task031 Case070/outcomes 合同、public MPC form action、fine lifecycle、PC certificate、factor fingerprint 与 ordinary-default 隔离 |
 | 31 | Task032 full-3D reference grid、64 MiB guard、单侧接口取迹和默认关闭合同 |
 | 32 | Task032 matching cross-section、双 Floquet orientation、distributed QEP、解析/有损 beta、±配对、L2 范数和 MPI ownership |
+| 33 | Task032 Poynting/衰减分类、adjoint QEP、Q' 双正交、近简并 block、正反 identity、tracking 和 principal angles |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -72,3 +73,9 @@ Case080 checker 固定 source commit/image、clean provenance、残差、能量�
 `test_32_task032_cross_section_qep` 覆盖匹配 Stage4 x/y 轴的截面材料、双 Bloch phase、Nédélec orientation probe、无 slave-chain 的 `u=Cq`、air 与 lossy 解析 beta、`+/- beta`、QEP 残差、electric-L2 范数和 MPI ownership。正式 Case080 record 固定 clean SHA、镜像、MPI4、SLEPc PEP/TOAR、六个 case、稀疏约束通信范围和 no-full-vector-gather。
 
 checker 还要求 air h5/h3/h2/h1.5 解析误差严格下降、h2/h1.5 与 lossy h2 分别通过阈值、所有选中模态残差/归一化/orientation 通过、每个 rank 的 local ownership 求和等于全局 shape，并验证需要的 `+/- beta` 配对。当前正式结果为 `277/277 passed`。Phase 2 electric-L2 不是最终 Poynting/双正交归一化，后者必须由 Phase 3 单独证明。
+
+## Task032 Phase 3 contract
+
+`test_33_task032_mode_classification` 覆盖 Poynting 正反方向、lossy complex beta、near-zero flux evanescent/cutoff branch、显式 adjoint QEP 左残差、`Q'(beta)` block 双正交、左右向量 MPI ownership、正反 mode identity、相邻角度 overlap matching、模式数增加时 unmatched 新模和近简并 principal angles。MPI4 固定覆盖正向 distributed basis；重复负向/相邻参数 PEP 留在 serial 合同，避免日常 MPI 回归重复昂贵 factor setup。
+
+`run_task032_phase3_modes` 的完整 MPI4 路径仍覆盖 air 正反 basis、homogeneous lossy、当前 Stage4 `epsilon(x,y)` 和角度 tracking。正式 record 必须固定 clean full SHA/image/MPI4、右/左残差、left-beta conjugate pairing、biorthogonality identity、unit-absolute-Poynting 或 near-zero classification、passive branch、reciprocal pairs、tracking/subspace、ownership 与 no-full-vector-gather。
