@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import time
 from typing import Any, Callable, Sequence
 
@@ -12,6 +13,98 @@ from petsc4py import PETSc
 
 
 TINY = np.finfo(float).tiny
+
+
+def certify_fixed_linear_preconditioner(
+    preconditioner: Any,
+    template: PETSc.Vec,
+) -> dict[str, float | int]:
+    """Certify linearity, repeatability, and an MPI-invariant action signature.
+
+    The input vectors are deterministic functions of their global indices, so
+    the action norm and checksum can be compared across MPI decompositions.
+    This is intentionally an opt-in research certificate; it does not change
+    the preconditioner action or the ordinary workstation profile.
+    """
+
+    start, end = template.getOwnershipRange()
+    indices = np.arange(start, end, dtype=np.float64)
+    x = template.duplicate()
+    y = template.duplicate()
+    combined = template.duplicate()
+    probe = template.duplicate()
+    px = template.duplicate()
+    px_repeated = template.duplicate()
+    py = template.duplicate()
+    p_combined = template.duplicate()
+    expected = template.duplicate()
+    difference = template.duplicate()
+    alpha = PETSc.ScalarType(0.37 - 0.19j)
+    beta = PETSc.ScalarType(-0.23 + 0.41j)
+    try:
+        x.getArray()[:] = np.sin(0.17 * (indices + 1.0)) + 1j * np.cos(
+            0.11 * (indices + 2.0)
+        )
+        y.getArray()[:] = np.cos(0.07 * (indices + 3.0)) - 1j * np.sin(
+            0.13 * (indices + 4.0)
+        )
+        probe.getArray()[:] = np.cos(0.05 * (indices + 5.0)) + 1j * np.sin(
+            0.09 * (indices + 6.0)
+        )
+        x.copy(combined)
+        combined.scale(alpha)
+        combined.axpy(beta, y)
+
+        preconditioner.apply(None, x, px)
+        preconditioner.apply(None, x, px_repeated)
+        preconditioner.apply(None, y, py)
+        preconditioner.apply(None, combined, p_combined)
+
+        px.copy(expected)
+        expected.scale(alpha)
+        expected.axpy(beta, py)
+        p_combined.copy(difference)
+        difference.axpy(PETSc.ScalarType(-1.0), expected)
+        linearity_error = float(difference.norm()) / max(float(expected.norm()), TINY)
+
+        px_repeated.copy(difference)
+        difference.axpy(PETSc.ScalarType(-1.0), px)
+        determinism_error = float(difference.norm()) / max(float(px.norm()), TINY)
+        checksum = complex(probe.dot(px))
+        return {
+            "linearity_relative_error": linearity_error,
+            "determinism_relative_error": determinism_error,
+            "action_norm": float(px.norm()),
+            "action_checksum_real": float(checksum.real),
+            "action_checksum_imag": float(checksum.imag),
+            "global_size": int(template.getSize()),
+        }
+    finally:
+        for vector in (
+            difference,
+            expected,
+            p_combined,
+            py,
+            px_repeated,
+            px,
+            probe,
+            combined,
+            y,
+            x,
+        ):
+            vector.destroy()
+
+
+def _exact_seqaij_fingerprint(matrix: PETSc.Mat) -> str:
+    """Return an exact, canonical fingerprint for a sequential AIJ matrix."""
+
+    indptr, indices, values = matrix.getValuesCSR()
+    digest = hashlib.sha256()
+    digest.update(np.asarray(matrix.getSize(), dtype=np.int64).tobytes())
+    digest.update(np.asarray(indptr, dtype=np.int64).tobytes())
+    digest.update(np.asarray(indices, dtype=np.int64).tobytes())
+    digest.update(np.asarray(values, dtype=PETSc.ScalarType).tobytes())
+    return digest.hexdigest()
 
 
 @dataclass(frozen=True)
@@ -372,14 +465,17 @@ def balanced_subdomain_owners(
 @dataclass
 class _OwnedSubdomainFactor:
     subdomain: int
+    local_solver_type: str
     indices: np.ndarray
     union_positions: np.ndarray
     weights: np.ndarray
     matrix: PETSc.Mat | None
     ksp: PETSc.KSP | None
     factor_matrix: PETSc.Mat | None
+    diagonal_inverse: np.ndarray | None
     matrix_nnz: int
     factor_nnz: int
+    exact_fingerprint: str
     rhs: PETSc.Vec
     solution: PETSc.Vec
 
@@ -413,9 +509,11 @@ class DistributedPhysicalSlabSmoother:
         local_ksp_iterations: int = 1,
         local_ksp_type: str = "gmres",
         smoother_iterations: int = 1,
+        smoother_ksp_type: str = "gmres",
         action_operator: PETSc.Mat | None = None,
         diagonal_shift: PETSc.Vec | None = None,
         factor_only_storage: bool = False,
+        local_solver_types: Sequence[str] | None = None,
         interpolation: str = "basic",
         assembly_order: str = "combined",
         progress: Callable[[int, int], None] | None = None,
@@ -430,12 +528,20 @@ class DistributedPhysicalSlabSmoother:
             raise ValueError("factor_only_storage requires local_ksp_iterations=1")
         if local_ksp_type not in {"gmres", "richardson"}:
             raise ValueError("local_ksp_type must be 'gmres' or 'richardson'")
+        if smoother_ksp_type not in {"gmres", "richardson"}:
+            raise ValueError("smoother_ksp_type must be 'gmres' or 'richardson'")
         if smoother_iterations > 1 and action_operator is None:
             raise ValueError("multiple smoothing steps require an action operator")
         if interpolation not in {"basic", "partition"}:
             raise ValueError("interpolation must be 'basic' or 'partition'")
         if assembly_order not in {"combined", "two_color"}:
             raise ValueError("assembly_order must be 'combined' or 'two_color'")
+        if local_solver_types is None:
+            local_solver_types = ("ilu",) * len(subdomains)
+        if len(local_solver_types) != len(subdomains):
+            raise ValueError("local_solver_types must match the subdomain count")
+        if any(kind not in {"ilu", "jacobi"} for kind in local_solver_types):
+            raise ValueError("local_solver_types entries must be 'ilu' or 'jacobi'")
 
         self.comm = matrix.getComm().tompi4py()
         self.rank = int(self.comm.rank)
@@ -446,7 +552,9 @@ class DistributedPhysicalSlabSmoother:
         self.local_ksp_iterations = int(local_ksp_iterations)
         self.local_ksp_type = local_ksp_type
         self.smoother_iterations = int(smoother_iterations)
+        self.smoother_ksp_type = smoother_ksp_type
         self.factor_only_storage = bool(factor_only_storage)
+        self.local_solver_types = tuple(local_solver_types)
         self.apply_count = 0
         self.apply_elapsed_s = 0.0
         self._destroyed = False
@@ -544,43 +652,66 @@ class DistributedPhysicalSlabSmoother:
                 weights = np.ones(indices.size, dtype=PETSc.ScalarType)
             rhs = submatrix.createVecRight()
             solution = submatrix.createVecLeft()
-            ksp = PETSc.KSP().create(PETSc.COMM_SELF)
-            ksp.setOperators(submatrix)
-            if self.local_ksp_iterations == 1:
-                ksp.setType("preonly")
-            else:
-                ksp.setType(self.local_ksp_type)
-                if self.local_ksp_type == "gmres":
-                    ksp.setGMRESRestart(self.local_ksp_iterations)
-                ksp.setNormType(PETSc.KSP.NormType.NONE)
-                ksp.setTolerances(max_it=self.local_ksp_iterations)
-            pc = ksp.getPC()
-            pc.setType("ilu")
-            pc.setFactorLevels(int(ilu_levels))
-            pc.setFactorOrdering("rcm")
-            ksp.setUp()
+            exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
+            local_solver_type = self.local_solver_types[subdomain]
             matrix_nnz = int(submatrix.getInfo()["nz_used"])
-            factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
-            factor_matrix = None
-            retained_matrix: PETSc.Mat | None = submatrix
-            retained_ksp: PETSc.KSP | None = ksp
-            if self.factor_only_storage:
-                factor_matrix = pc.getFactorMatrix()
-                factor_matrix.incRef()
-                ksp.destroy()
+            factor_matrix: PETSc.Mat | None = None
+            retained_matrix: PETSc.Mat | None = None
+            retained_ksp: PETSc.KSP | None = None
+            diagonal_inverse: np.ndarray | None = None
+            if local_solver_type == "jacobi":
+                diagonal = submatrix.createVecLeft()
+                submatrix.getDiagonal(diagonal)
+                values = np.asarray(
+                    diagonal.getArray(readonly=True), dtype=PETSc.ScalarType
+                )
+                scale = float(np.max(np.abs(values), initial=0.0))
+                if np.any(np.abs(values) <= max(scale, TINY) * 1.0e-14):
+                    diagonal.destroy()
+                    raise RuntimeError("selective Jacobi slab has a zero diagonal")
+                diagonal_inverse = np.asarray(1.0 / values, dtype=PETSc.ScalarType)
+                factor_nnz = int(values.size)
+                diagonal.destroy()
                 submatrix.destroy()
-                retained_ksp = None
-                retained_matrix = None
+            else:
+                ksp = PETSc.KSP().create(PETSc.COMM_SELF)
+                ksp.setOperators(submatrix)
+                if self.local_ksp_iterations == 1:
+                    ksp.setType("preonly")
+                else:
+                    ksp.setType(self.local_ksp_type)
+                    if self.local_ksp_type == "gmres":
+                        ksp.setGMRESRestart(self.local_ksp_iterations)
+                    ksp.setNormType(PETSc.KSP.NormType.NONE)
+                    ksp.setTolerances(max_it=self.local_ksp_iterations)
+                pc = ksp.getPC()
+                pc.setType("ilu")
+                pc.setFactorLevels(int(ilu_levels))
+                pc.setFactorOrdering("rcm")
+                ksp.setUp()
+                factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
+                retained_matrix = submatrix
+                retained_ksp = ksp
+                if self.factor_only_storage:
+                    factor_matrix = pc.getFactorMatrix()
+                    factor_matrix.incRef()
+                    ksp.destroy()
+                    submatrix.destroy()
+                    retained_ksp = None
+                    retained_matrix = None
             return _OwnedSubdomainFactor(
                 subdomain=subdomain,
+                local_solver_type=local_solver_type,
                 indices=indices,
                 union_positions=union_positions,
                 weights=weights,
                 matrix=retained_matrix,
                 ksp=retained_ksp,
                 factor_matrix=factor_matrix,
+                diagonal_inverse=diagonal_inverse,
                 matrix_nnz=matrix_nnz,
                 factor_nnz=factor_nnz,
+                exact_fingerprint=exact_fingerprint,
                 rhs=rhs,
                 solution=solution,
             )
@@ -640,13 +771,29 @@ class DistributedPhysicalSlabSmoother:
         )
         self.maximum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MAX))
         self.minimum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MIN))
+        fingerprint_packets = self.comm.allgather(
+            [
+                (int(factor.subdomain), factor.exact_fingerprint)
+                for factor in self._factors
+            ]
+        )
+        self.factor_fingerprints = sorted(
+            (item for packet in fingerprint_packets for item in packet),
+            key=lambda item: item[0],
+        )
+        unique_fingerprints = {fingerprint for _, fingerprint in self.factor_fingerprints}
+        self.unique_factor_classes = len(unique_fingerprints)
+        self.exact_duplicate_factor_count = (
+            len(self.factor_fingerprints) - self.unique_factor_classes
+        )
 
         if self.smoother_iterations > 1:
             self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)
             self._inner_ksp = PETSc.KSP().create(matrix.getComm())
             self._inner_ksp.setOperators(action_operator)
-            self._inner_ksp.setType("gmres")
-            self._inner_ksp.setGMRESRestart(self.smoother_iterations)
+            self._inner_ksp.setType(self.smoother_ksp_type)
+            if self.smoother_ksp_type == "gmres":
+                self._inner_ksp.setGMRESRestart(self.smoother_iterations)
             self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
             self._inner_ksp.setTolerances(max_it=self.smoother_iterations)
             inner_pc = self._inner_ksp.getPC()
@@ -675,6 +822,10 @@ class DistributedPhysicalSlabSmoother:
             factor.solution.set(0.0)
             if factor.factor_matrix is not None:
                 factor.factor_matrix.solve(factor.rhs, factor.solution)
+            elif factor.diagonal_inverse is not None:
+                factor.solution.getArray()[:] = (
+                    factor.diagonal_inverse * factor.rhs.getArray(readonly=True)
+                )
             else:
                 assert factor.ksp is not None
                 factor.ksp.solve(factor.rhs, factor.solution)
@@ -709,13 +860,24 @@ class DistributedPhysicalSlabSmoother:
             "local_ksp_iterations": self.local_ksp_iterations,
             "local_ksp_type": self.local_ksp_type,
             "smoother_iterations": self.smoother_iterations,
+            "smoother_ksp_type": self.smoother_ksp_type,
             "subdomain_local_diagonal_shift": self.subdomain_local_diagonal_shift,
             "factor_only_storage": self.factor_only_storage,
+            "local_solver_types": list(self.local_solver_types),
+            "local_solver_type_counts": {
+                kind: self.local_solver_types.count(kind) for kind in ("ilu", "jacobi")
+            },
             "global_factor_rows": self.global_factor_rows,
             "global_factor_nnz": self.global_factor_nnz,
             "global_stored_factor_nnz": self.global_stored_factor_nnz,
             "maximum_owner_rows": self.maximum_owner_rows,
             "minimum_owner_rows": self.minimum_owner_rows,
+            "factor_fingerprints": [
+                {"subdomain": subdomain, "sha256": fingerprint}
+                for subdomain, fingerprint in self.factor_fingerprints
+            ],
+            "unique_factor_classes": self.unique_factor_classes,
+            "exact_duplicate_factor_count": self.exact_duplicate_factor_count,
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
         }

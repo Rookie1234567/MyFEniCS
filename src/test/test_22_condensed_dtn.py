@@ -207,6 +207,30 @@ class Task026PetscCondensationTests(unittest.TestCase):
         port.destroy()
         explicit.destroy()
 
+    def test_external_fine_action_survives_assembled_f_release(self) -> None:
+        assembled_f = self.blocks.require_f()
+        external_fine = assembled_f.copy()
+        matrix_free, context = create_matrix_free_condensed_operator(
+            self.blocks, fine_operator=external_fine
+        )
+        x = external_fine.createVecRight()
+        x.setRandom()
+        before = matrix_free.createVecLeft()
+        after = matrix_free.createVecLeft()
+        matrix_free.mult(x, before)
+        self.blocks.release_f()
+        self.blocks.release_f()
+        matrix_free.mult(x, after)
+        after.axpy(PETSc.ScalarType(-1.0), before)
+        self.assertLess(float(after.norm()), 1e-13)
+        self.assertEqual(context.apply_count, 2)
+        self.assertIsNone(self.blocks.F)
+        after.destroy()
+        before.destroy()
+        x.destroy()
+        matrix_free.destroy()
+        external_fine.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

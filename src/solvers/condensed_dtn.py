@@ -77,7 +77,7 @@ def _copy_vector_segment(
 
 @dataclass
 class PetscCondensedBlocks:
-    F: PETSc.Mat
+    F: PETSc.Mat | None
     C: PETSc.Mat
     D: PETSc.Mat
     H: PETSc.Mat
@@ -86,13 +86,23 @@ class PetscCondensedBlocks:
     n_fe: int
     n_aux: int
 
+    def require_f(self) -> PETSc.Mat:
+        if self.F is None:
+            raise RuntimeError("assembled fine-level F has been released")
+        return self.F
+
+    def release_f(self) -> None:
+        if self.F is not None:
+            self.F.destroy()
+            self.F = None
+
     def destroy(self) -> None:
         self.b_aux.destroy()
         self.b_fe.destroy()
         self.H.destroy()
         self.D.destroy()
         self.C.destroy()
-        self.F.destroy()
+        self.release_f()
 
 
 def extract_petsc_condensed_blocks(
@@ -181,8 +191,11 @@ class SmallDenseInverse:
 class CondensedDtnMatContext:
     """PETSc MatPython context for F - C H^{-1} D."""
 
-    def __init__(self, blocks: PetscCondensedBlocks) -> None:
+    def __init__(
+        self, blocks: PetscCondensedBlocks, *, fine_operator: PETSc.Mat | None = None
+    ) -> None:
         self.blocks = blocks
+        self.fine_operator = blocks.require_f() if fine_operator is None else fine_operator
         self.h_solver = SmallDenseInverse(blocks.H)
         self.d_work = blocks.D.createVecLeft()
         self.h_work = blocks.H.createVecLeft()
@@ -196,7 +209,7 @@ class CondensedDtnMatContext:
         self.destroyed = False
 
     def mult(self, _mat: PETSc.Mat, x: PETSc.Vec, y: PETSc.Vec) -> None:
-        self.blocks.F.mult(x, y)
+        self.fine_operator.mult(x, y)
         self.blocks.D.mult(x, self.d_work)
         self.h_solver.solve(self.d_work, self.h_work)
         self.blocks.C.mult(self.h_work, self.c_work)
@@ -204,7 +217,7 @@ class CondensedDtnMatContext:
         self.apply_count += 1
 
     def multTranspose(self, _mat: PETSc.Mat, x: PETSc.Vec, y: PETSc.Vec) -> None:
-        self.blocks.F.multTranspose(x, y)
+        self.fine_operator.multTranspose(x, y)
         self.blocks.C.multTranspose(x, self.ct_work)
         self.h_solver.solve_transpose(self.ct_work, self.ht_work)
         self.blocks.D.multTranspose(self.ht_work, self.dt_work)
@@ -212,7 +225,7 @@ class CondensedDtnMatContext:
         self.transpose_apply_count += 1
 
     def multHermitian(self, _mat: PETSc.Mat, x: PETSc.Vec, y: PETSc.Vec) -> None:
-        self.blocks.F.multHermitian(x, y)
+        self.fine_operator.multHermitian(x, y)
         self.blocks.C.multHermitian(x, self.ct_work)
         self.h_solver.solve_hermitian(self.ct_work, self.ht_work)
         self.blocks.D.multHermitian(self.ht_work, self.dt_work)
@@ -233,10 +246,13 @@ class CondensedDtnMatContext:
 
 def create_matrix_free_condensed_operator(
     blocks: PetscCondensedBlocks,
+    *,
+    fine_operator: PETSc.Mat | None = None,
 ) -> tuple[PETSc.Mat, CondensedDtnMatContext]:
-    context = CondensedDtnMatContext(blocks)
+    fine_operator = blocks.require_f() if fine_operator is None else fine_operator
+    context = CondensedDtnMatContext(blocks, fine_operator=fine_operator)
     matrix = PETSc.Mat().createPython(
-        blocks.F.getSizes(), context=context, comm=blocks.F.getComm()
+        fine_operator.getSizes(), context=context, comm=fine_operator.getComm()
     )
     matrix.setUp()
     return matrix, context
@@ -246,7 +262,7 @@ def condensed_rhs(blocks: PetscCondensedBlocks) -> PETSc.Vec:
     h_inv_b = blocks.H.createVecRight()
     h_solver = SmallDenseInverse(blocks.H)
     h_solver.solve(blocks.b_aux, h_inv_b)
-    correction = blocks.F.createVecLeft()
+    correction = blocks.C.createVecLeft()
     blocks.C.mult(h_inv_b, correction)
     result = blocks.b_fe.copy()
     result.axpy(PETSc.ScalarType(-1.0), correction)
@@ -267,7 +283,7 @@ def build_explicit_condensed_operator(
         )
     port = blocks.C.matMult(blocks.D)
     port.scale(PETSc.ScalarType(-1.0))
-    condensed = blocks.F.copy()
+    condensed = blocks.require_f().copy()
     condensed.axpy(
         PETSc.ScalarType(1.0),
         port,

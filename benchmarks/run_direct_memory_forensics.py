@@ -208,7 +208,7 @@ def _read_processes() -> dict[int, dict[str, Any]]:
         except (OSError, ValueError, IndexError):
             pass
         rank: int | None = None
-        if "--worker" in cmdline:
+        if "--worker" in cmdline or "benchmarks.run_workstation_iterative" in cmdline:
             try:
                 environment = (entry / "environ").read_bytes().split(b"\0")
             except OSError:

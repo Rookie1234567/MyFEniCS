@@ -43,6 +43,7 @@ class RuntimeStage4System:
     log_lines: list[str]
     out_dir: Path
     modes: list[PortMode3D]
+    bilinear_form: Any
 
 
 def stage4_physical_model(cfg: SimulationConfig3D) -> dict[str, Any]:
@@ -164,4 +165,5 @@ def assemble_target_stage4_system(
         log_lines=log_lines,
         out_dir=output_dir,
         modes=modes,
+        bilinear_form=a,
     )

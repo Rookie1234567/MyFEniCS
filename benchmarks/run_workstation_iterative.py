@@ -23,7 +23,9 @@ from src.solvers.condensed_dtn import (
     condensed_rhs,
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
+    matrix_storage_bytes,
     recover_petsc_auxiliary,
+    relative_action_error,
 )
 from src.solvers.dtn_port_3d import (
     _assign_fe_solution_from_augmented,
@@ -33,9 +35,11 @@ from src.solvers.dtn_port_3d import (
 from src.solvers.physical_slab_two_level import (
     DistributedPhysicalSlabSmoother,
     SparseGalerkinTwoLevelPc,
+    certify_fixed_linear_preconditioner,
     compress_petsc_vector,
     gather_global_subdomain_indices,
 )
+from src.solvers.mpc_form_action import create_mpc_form_operator
 from src.solvers.solve_vector_maxwell import _json_default
 from src.solvers.stage4_runtime import (
     RuntimeStage4System,
@@ -125,6 +129,9 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         "absorption_shift": 0.1,
         "ilu_levels": 1,
         "restart": 100,
+        "ksp_type": "fgmres",
+        "smoother_ksp_type": "gmres",
+        "selective_diagonal_boundary_slabs": 0,
         "max_it": 3000,
         "rtol": 1.0e-6,
     }
@@ -147,6 +154,12 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         deviations.append("subdomain_local_shift=True, expected False")
     if args.factor_only_storage:
         deviations.append("factor_only_storage=True, expected False")
+    if args.certify_pc:
+        deviations.append("certify_pc=True, expected False")
+    if args.compact_lifecycle:
+        deviations.append("compact_lifecycle=True, expected False")
+    if args.matrix_free_fine:
+        deviations.append("matrix_free_fine=True, expected False")
     return deviations
 
 
@@ -158,6 +171,15 @@ def _write_json(path: Path, payload: Any) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default),
         encoding="utf-8",
     )
+
+
+def _append_jsonl(path: Path, payload: Any) -> None:
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(payload, ensure_ascii=False, default=_json_default))
+        stream.write("\n")
 
 
 def _rss_mb(*, peak: bool) -> float:
@@ -179,6 +201,140 @@ def _memory_fields(prefix: str) -> dict[str, float]:
     return {
         f"{prefix}_current_total_gb": current,
         f"{prefix}_peak_total_gb": peak,
+    }
+
+
+def _vector_storage_bytes(vector: PETSc.Vec) -> int:
+    return int(vector.getSize()) * np.dtype(PETSc.ScalarType).itemsize
+
+
+def _object_ledger(
+    *,
+    system: RuntimeStage4System,
+    blocks=None,
+    rhs: PETSc.Vec | None = None,
+    operator: PETSc.Mat | None = None,
+    coarse_context: SparseGalerkinTwoLevelPc | None = None,
+    smoother: DistributedPhysicalSlabSmoother | None = None,
+    ksp_type: str | None = None,
+    restart: int | None = None,
+    solution_vectors: int = 0,
+    augmented_buffer_reused: bool = False,
+) -> dict[str, Any]:
+    """Record live solver objects and transparent storage estimates.
+
+    PETSc matrix ``memory`` is preferred when available. Vector and Krylov
+    entries are mathematical payload estimates, not allocator measurements;
+    simultaneous RSS/cgroup sampling remains the peak-memory authority.
+    """
+
+    objects: list[dict[str, Any]] = []
+
+    def add_matrix(name: str, matrix: PETSc.Mat) -> None:
+        objects.append(
+            {
+                "name": name,
+                "kind": "matrix",
+                "shape": list(matrix.getSize()),
+                "estimated_bytes": int(matrix_storage_bytes(matrix)),
+            }
+        )
+
+    def add_vector(name: str, vector: PETSc.Vec) -> None:
+        objects.append(
+            {
+                "name": name,
+                "kind": "vector",
+                "global_size": int(vector.getSize()),
+                "estimated_bytes": _vector_storage_bytes(vector),
+            }
+        )
+
+    if blocks is not None:
+        for name in ("F", "C", "D", "H"):
+            matrix = getattr(blocks, name)
+            if matrix is not None:
+                add_matrix(name, matrix)
+        add_vector("b_fe", blocks.b_fe)
+        add_vector("b_aux", blocks.b_aux)
+    if rhs is not None:
+        add_vector("condensed_rhs", rhs)
+    if operator is not None:
+        objects.append(
+            {
+                "name": "condensed_shell",
+                "kind": "matrix_shell",
+                "shape": list(operator.getSize()),
+                "estimated_bytes": 0,
+            }
+        )
+    if coarse_context is not None:
+        objects.append(
+            {
+                "name": "sparse_coarse_basis_and_work",
+                "kind": "host_sparse",
+                "estimated_bytes": int(coarse_context.basis_storage_bytes),
+            }
+        )
+    if smoother is not None:
+        diagnostics = smoother.diagnostics
+        scalar_bytes = np.dtype(PETSc.ScalarType).itemsize
+        index_bytes = np.dtype(PETSc.IntType).itemsize
+        factor_bytes = int(
+            diagnostics["global_stored_factor_nnz"] * (scalar_bytes + index_bytes)
+            + diagnostics["global_factor_rows"] * index_bytes
+        )
+        objects.append(
+            {
+                "name": "owned_slab_factors",
+                "kind": "local_factors",
+                "factor_nnz": diagnostics["global_stored_factor_nnz"],
+                "estimated_bytes": factor_bytes,
+            }
+        )
+    if solution_vectors:
+        objects.append(
+            {
+                "name": "explicit_solution_work_vectors",
+                "kind": "vector_group",
+                "count": int(solution_vectors),
+                "global_size_each": int(system.n_fe),
+                "estimated_bytes": int(solution_vectors)
+                * int(system.n_fe)
+                * np.dtype(PETSc.ScalarType).itemsize,
+            }
+        )
+    krylov_vectors = None
+    if ksp_type in {"gmres", "fgmres"} and restart is not None:
+        # PETSc work vectors include the Arnoldi basis. FGMRES additionally
+        # retains a preconditioned basis; this is a payload model, not RSS.
+        krylov_vectors = int(restart) + 2
+        if ksp_type == "fgmres":
+            krylov_vectors += int(restart) + 1
+        objects.append(
+            {
+                "name": "outer_krylov_payload_model",
+                "kind": "vector_group_estimate",
+                "ksp_type": ksp_type,
+                "restart": int(restart),
+                "count": krylov_vectors,
+                "global_size_each": int(system.n_fe),
+                "estimated_bytes": krylov_vectors
+                * int(system.n_fe)
+                * np.dtype(PETSc.ScalarType).itemsize,
+            }
+        )
+    total = sum(int(item["estimated_bytes"]) for item in objects)
+    return {
+        "objects": objects,
+        "estimated_live_payload_bytes": total,
+        "estimated_live_payload_gib": total / 1024.0**3,
+        "krylov_vector_count_model": krylov_vectors,
+        "augmented_buffer_reused": bool(augmented_buffer_reused),
+        "semantics": (
+            "payload ledger only; external simultaneous worker RSS and cgroup "
+            "current/peak are authoritative for Task31 memory qualification"
+        ),
     }
 
 
@@ -334,8 +490,12 @@ def _combined_augmented_vector(
     system: RuntimeStage4System,
     u_fe: PETSc.Vec,
     u_aux: PETSc.Vec,
+    *,
+    target: PETSc.Vec | None = None,
 ) -> PETSc.Vec:
-    result = system.b_petsc.duplicate()
+    result = system.b_petsc.duplicate() if target is None else target
+    if result.getSize() != system.n_fe + system.n_aux:
+        raise ValueError("augmented target has the wrong global size")
     result.set(0.0)
     row_start, row_end = result.getOwnershipRange()
     fe_end = min(row_end, system.n_fe)
@@ -350,12 +510,19 @@ def _combined_augmented_vector(
     return result
 
 
-def _full_augmented_residual(blocks, u_fe: PETSc.Vec, u_aux: PETSc.Vec) -> float:
-    fe_residual = blocks.F.createVecLeft()
+def _full_augmented_residual(
+    blocks,
+    u_fe: PETSc.Vec,
+    u_aux: PETSc.Vec,
+    *,
+    fine_operator: PETSc.Mat | None = None,
+) -> float:
+    fine_operator = blocks.require_f() if fine_operator is None else fine_operator
+    fe_residual = fine_operator.createVecLeft()
     fe_work = blocks.C.createVecLeft()
     aux_residual = blocks.D.createVecLeft()
     aux_work = blocks.H.createVecLeft()
-    blocks.F.mult(u_fe, fe_residual)
+    fine_operator.mult(u_fe, fe_residual)
     blocks.C.mult(u_aux, fe_work)
     fe_residual.axpy(1.0, fe_work)
     fe_residual.axpy(-1.0, blocks.b_fe)
@@ -431,6 +598,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     case = args.case_label or f"workstation_p2_h{args.h_nm:g}".replace(".", "p")
     heavy_dir = Path(args.results_dir) / case
     record_path = Path(args.record)
+    memory_stage_path = record_path.with_name(record_path.stem + "_memory_stages.jsonl")
+    if comm.rank == 0:
+        memory_stage_path.unlink(missing_ok=True)
+    comm.barrier()
     deviations = _qualification_deviations(args, comm.size)
     qualified_profile = not deviations
     if deviations:
@@ -451,28 +622,83 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "lambda0": args.lambda_nm,
         },
     )
+    memory_checkpoints: list[dict[str, Any]] = []
+
+    def checkpoint(stage: str, **extra: Any) -> None:
+        row = {
+            "case": case,
+            "stage": stage,
+            "elapsed_s": time.perf_counter() - started,
+            **_memory_fields("checkpoint"),
+            **extra,
+        }
+        memory_checkpoints.append(row)
+        _write_json(record_path.with_name(record_path.stem + "_progress.json"), row)
+        _append_jsonl(
+            memory_stage_path, row
+        )
+
+    def progress(stage: str, completed: int, total: int) -> None:
+        checkpoint(stage, completed=completed, total=total)
+
+    checkpoint("stage4_system_assembled", matrix_stats=system.matrix_stats)
     blocks = extract_petsc_condensed_blocks(
         system.A_petsc,
         system.b_petsc,
         n_fe=system.n_fe,
         n_aux=system.n_aux,
     )
+    checkpoint(
+        "condensed_blocks_extracted",
+        object_ledger=_object_ledger(system=system, blocks=blocks),
+    )
     system.A_petsc.destroy()
-    rhs = condensed_rhs(blocks)
-    operator, operator_context = create_matrix_free_condensed_operator(blocks)
-
-    def progress(stage: str, completed: int, total: int) -> None:
-        _write_json(
-            record_path.with_name(record_path.stem + "_progress.json"),
-            {
-                "case": case,
-                "stage": stage,
-                "completed": completed,
-                "total": total,
-                "elapsed_s": time.perf_counter() - started,
-                **_memory_fields("progress"),
-            },
+    if args.compact_lifecycle:
+        system.b_petsc.destroy()
+        checkpoint(
+            "compact_augmented_rhs_released",
+            released_objects=["A_augmented", "b_augmented"],
+            retained_reusable_augmented_buffer="system.x_petsc",
         )
+    rhs = condensed_rhs(blocks)
+    assembled_f = blocks.require_f()
+    fine_operator = assembled_f
+    fine_operator_context = None
+    fine_action_relative_error = None
+    if args.matrix_free_fine:
+        fine_operator, fine_operator_context = create_mpc_form_operator(
+            system.bilinear_form,
+            system.floquet_data.mpc,
+            assembled_f,
+        )
+        action_test = assembled_f.createVecRight()
+        start, end = action_test.getOwnershipRange()
+        indices = np.arange(start, end, dtype=float)
+        action_test.getArray()[:] = np.sin(0.17 * (indices + 1.0)) + 1j * np.cos(
+            0.11 * (indices + 2.0)
+        )
+        fine_action_relative_error = relative_action_error(
+            assembled_f, fine_operator, action_test
+        )
+        action_test.destroy()
+        if fine_action_relative_error > 1.0e-11:
+            raise RuntimeError(
+                "MPC form fine action failed assembled-F certification: "
+                f"{fine_action_relative_error:.6e} > 1e-11"
+            )
+        checkpoint(
+            "matrix_free_fine_action_certified",
+            fine_action_relative_error=fine_action_relative_error,
+        )
+    operator, operator_context = create_matrix_free_condensed_operator(
+        blocks, fine_operator=fine_operator
+    )
+    checkpoint(
+        "condensed_operator_ready",
+        object_ledger=_object_ledger(
+            system=system, blocks=blocks, rhs=rhs, operator=operator
+        ),
+    )
 
     basis = _fixed_floquet_hat_basis(
         system,
@@ -480,6 +706,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         coarse_slabs=args.coarse_slabs,
         progress=lambda done, total: progress("coarse_basis", done, total),
     )
+    checkpoint("coarse_basis_ready", coarse_dimension=len(basis))
     coarse_context = SparseGalerkinTwoLevelPc(
         operator,
         None,
@@ -488,30 +715,53 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         coarse_progress=lambda done, total: progress("coarse_operator", done, total),
         setup_progress=lambda stage: progress(stage, 0, len(basis)),
     )
-    diagonal_shift, diagonal_scale = _absorption_diagonal_shift(
-        blocks.F, args.absorption_shift
+    checkpoint(
+        "coarse_operator_ready",
+        object_ledger=_object_ledger(
+            system=system,
+            blocks=blocks,
+            rhs=rhs,
+            operator=operator,
+            coarse_context=coarse_context,
+        ),
     )
-    action = _shifted_action(blocks.F, diagonal_shift)
+    diagonal_shift, diagonal_scale = _absorption_diagonal_shift(
+        assembled_f, args.absorption_shift
+    )
+    action = _shifted_action(fine_operator, diagonal_shift)
     shifted = (
         None
         if args.subdomain_local_shift
-        else _shifted_matrix(blocks.F, diagonal_shift)
+        else _shifted_matrix(assembled_f, diagonal_shift)
     )
     slabs = _complete_physical_slabs(
         system,
         num_slabs=args.num_slabs,
         overlap_layers=args.overlap_layers,
     )
+    boundary_count = int(args.selective_diagonal_boundary_slabs)
+    if boundary_count < 0 or 2 * boundary_count >= args.num_slabs:
+        raise ValueError(
+            "selective_diagonal_boundary_slabs must be nonnegative and leave an ILU core"
+        )
+    local_solver_types = tuple(
+        "jacobi"
+        if slab < boundary_count or slab >= args.num_slabs - boundary_count
+        else "ilu"
+        for slab in range(args.num_slabs)
+    )
     smoother = DistributedPhysicalSlabSmoother(
-        blocks.F if shifted is None else shifted,
+        assembled_f if shifted is None else shifted,
         slabs,
         ilu_levels=args.ilu_levels,
         local_ksp_iterations=1,
         local_ksp_type="gmres",
         smoother_iterations=2,
+        smoother_ksp_type=args.smoother_ksp_type,
         action_operator=action,
         diagonal_shift=diagonal_shift if args.subdomain_local_shift else None,
         factor_only_storage=args.factor_only_storage,
+        local_solver_types=local_solver_types,
         interpolation="basic",
         assembly_order="two_color",
         progress=lambda done, total: progress("slab_factorization", done, total),
@@ -519,18 +769,83 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if shifted is not None:
         shifted.destroy()
     coarse_context.set_smoother(smoother)
+    if args.matrix_free_fine:
+        blocks.release_f()
+        checkpoint(
+            "assembled_f_released",
+            released_objects=["assembled_F"],
+            fine_action_relative_error=fine_action_relative_error,
+        )
+    checkpoint(
+        "slab_factors_ready",
+        slab_diagnostics=smoother.diagnostics,
+        object_ledger=_object_ledger(
+            system=system,
+            blocks=blocks,
+            rhs=rhs,
+            operator=operator,
+            coarse_context=coarse_context,
+            smoother=smoother,
+        ),
+    )
+    pc_certificate = None
+    if args.certify_pc or args.ksp_type != "fgmres":
+        certificate_template = operator.createVecRight()
+        try:
+            pc_certificate = certify_fixed_linear_preconditioner(
+                coarse_context, certificate_template
+            )
+        finally:
+            certificate_template.destroy()
+        if pc_certificate["linearity_relative_error"] > 1.0e-11:
+            raise RuntimeError(
+                "fixed-PC linearity gate failed: "
+                f"{pc_certificate['linearity_relative_error']:.6e} > 1e-11"
+            )
+        if pc_certificate["determinism_relative_error"] > 1.0e-13:
+            raise RuntimeError(
+                "fixed-PC determinism gate failed: "
+                f"{pc_certificate['determinism_relative_error']:.6e} > 1e-13"
+            )
+        checkpoint("pc_action_certified", pc_action_certificate=pc_certificate)
+    pc_apply_count_before_solve = coarse_context.apply_count
+    smoother_apply_count_before_solve = smoother.apply_count
+    operator_apply_count_before_solve = operator_context.apply_count
     solution = operator.createVecRight()
     solution.set(0.0)
     monitor_solution = operator.createVecRight()
     history: list[dict[str, Any]] = []
     ksp = PETSc.KSP().create(comm)
     ksp.setOperators(operator)
-    ksp.setType("fgmres")
-    ksp.setGMRESRestart(args.restart)
-    ksp.setPCSide(PETSc.PC.Side.RIGHT)
+    ksp.setType(args.ksp_type)
+    if args.ksp_type in {"fgmres", "gmres"}:
+        ksp.setGMRESRestart(args.restart)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        pc_side = "right"
+    else:
+        ksp.setPCSide(PETSc.PC.Side.LEFT)
+        pc_side = "left"
     ksp.setTolerances(rtol=args.rtol, atol=0.0, max_it=args.max_it)
     ksp.getPC().setType(PETSc.PC.Type.PYTHON)
     ksp.getPC().setPythonContext(coarse_context)
+    ksp.setUp()
+    checkpoint(
+        "outer_ksp_ready",
+        ksp_type=args.ksp_type,
+        pc_side=pc_side,
+        object_ledger=_object_ledger(
+            system=system,
+            blocks=blocks,
+            rhs=rhs,
+            operator=operator,
+            coarse_context=coarse_context,
+            smoother=smoother,
+            ksp_type=args.ksp_type,
+            restart=args.restart,
+            solution_vectors=2,
+            augmented_buffer_reused=args.compact_lifecycle,
+        ),
+    )
     rhs_norm = float(rhs.norm())
     solve_started = time.perf_counter()
 
@@ -538,6 +853,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         if iteration == 0 or iteration % args.monitor_stride == 0:
             current_solution = current.buildSolution(monitor_solution)
             row = {
+                "case": case,
+                "stage": "outer_krylov_solve",
                 "iteration": int(iteration),
                 "reported_relative_residual": float(residual_norm)
                 / max(rhs_norm, TINY),
@@ -549,14 +866,41 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             }
             history.append(row)
             _write_json(record_path.with_name(record_path.stem + "_progress.json"), row)
+            _append_jsonl(
+                memory_stage_path, row
+            )
 
     ksp.setMonitor(monitor)
     ksp.solve(rhs, solution)
     solve_s = time.perf_counter() - solve_started
+    checkpoint(
+        "outer_krylov_solved",
+        iterations=int(ksp.getIterationNumber()),
+        ksp_reason=int(ksp.getConvergedReason()),
+    )
     condensed_residual = _linear_residual(operator, rhs, solution)
     auxiliary = recover_petsc_auxiliary(blocks, solution)
-    augmented = _combined_augmented_vector(system, solution, auxiliary)
-    full_residual = _full_augmented_residual(blocks, solution, auxiliary)
+    augmented = _combined_augmented_vector(
+        system,
+        solution,
+        auxiliary,
+        target=system.x_petsc if args.compact_lifecycle else None,
+    )
+    full_residual = _full_augmented_residual(
+        blocks, solution, auxiliary, fine_operator=fine_operator
+    )
+    checkpoint(
+        "true_residuals_verified",
+        condensed_true_residual=condensed_residual,
+        full_augmented_true_residual=full_residual,
+    )
+    ksp_reason = int(ksp.getConvergedReason())
+    iterations = int(ksp.getIterationNumber())
+    reported_relative_residual = float(ksp.getResidualNorm()) / max(rhs_norm, TINY)
+    slab_diagnostics = smoother.diagnostics
+    pc_apply_count = coarse_context.apply_count - pc_apply_count_before_solve
+    operator_apply_count = operator_context.apply_count - operator_apply_count_before_solve
+    smoother_apply_count = smoother.apply_count - smoother_apply_count_before_solve
     result = {
         "benchmark_id": f"l3_iterative_h{args.h_nm:g}".replace(".", "p"),
         "case": case,
@@ -586,26 +930,84 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "shift_diagonal_scale": diagonal_scale,
         "ilu_levels": args.ilu_levels,
         "smoother_iterations": 2,
+        "smoother_ksp_type": args.smoother_ksp_type,
+        "selective_diagonal_boundary_slabs": boundary_count,
         "post_smooth": args.post_smooth,
         "subdomain_local_shift": args.subdomain_local_shift,
         "factor_only_storage": args.factor_only_storage,
+        "matrix_free_fine": args.matrix_free_fine,
+        "fine_action_relative_error": fine_action_relative_error,
+        "fine_form_apply_count": (
+            fine_operator_context.apply_count
+            if fine_operator_context is not None
+            else None
+        ),
+        "compact_lifecycle": args.compact_lifecycle,
+        "ksp_type": args.ksp_type,
+        "pc_side": pc_side,
         "restart": args.restart,
         "rtol": args.rtol,
         "max_it": args.max_it,
-        "ksp_reason": int(ksp.getConvergedReason()),
-        "iterations": int(ksp.getIterationNumber()),
-        "reported_relative_residual": float(ksp.getResidualNorm())
-        / max(rhs_norm, TINY),
+        "ksp_reason": ksp_reason,
+        "iterations": iterations,
+        "reported_relative_residual": reported_relative_residual,
         "condensed_true_residual": condensed_residual,
         "full_augmented_true_residual": full_residual,
         "solve_s": solve_s,
         "total_s": time.perf_counter() - started,
-        "pc_apply_count": coarse_context.apply_count,
-        "operator_apply_count": operator_context.apply_count,
-        "slab_diagnostics": smoother.diagnostics,
+        "pc_apply_count": pc_apply_count,
+        "pc_certification_apply_count": pc_apply_count_before_solve,
+        "one_level_apply_count": smoother_apply_count,
+        "operator_apply_count": operator_apply_count,
+        "operator_setup_apply_count": operator_apply_count_before_solve,
+        "pc_action_certificate": pc_certificate,
+        "slab_diagnostics": slab_diagnostics,
         "history": history,
+        "memory_checkpoints": memory_checkpoints,
+        "object_ledger_at_solve": _object_ledger(
+            system=system,
+            blocks=blocks,
+            rhs=rhs,
+            operator=operator,
+            coarse_context=coarse_context,
+            smoother=smoother,
+            ksp_type=args.ksp_type,
+            restart=args.restart,
+            solution_vectors=2,
+            augmented_buffer_reused=args.compact_lifecycle,
+        ),
         **_memory_fields("final"),
     }
+    if args.compact_lifecycle:
+        auxiliary.destroy()
+        monitor_solution.destroy()
+        solution.destroy()
+        ksp.destroy()
+        coarse_context.destroy()
+        smoother.destroy()
+        action.destroy()
+        operator.destroy()
+        if args.matrix_free_fine:
+            fine_operator.destroy()
+        rhs.destroy()
+        blocks.destroy()
+        checkpoint(
+            "solver_stack_released_before_rta",
+            released_objects=[
+                "u_auxiliary",
+                "monitor_solution",
+                "condensed_solution",
+                "outer_ksp",
+                "coarse_context",
+                "slab_smoother_and_factors",
+                "shifted_action",
+                "condensed_shell_and_work",
+                "condensed_rhs",
+                "F_C_D_H_and_block_rhs",
+            ],
+            retained_objects=["augmented_solution", "mesh", "space", "MPC", "modes"],
+        )
+        result.update(_memory_fields("after_solver_release"))
     if full_residual <= args.rta_threshold:
         result["official_rta"] = _official_rta(
             system, augmented, output_dir=heavy_dir / "rta"
@@ -614,19 +1016,26 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             result["final_peak_total_gb"],
             result["official_rta"]["rta_peak_total_gb"],
         )
+        checkpoint("official_rta_complete", official_rta=result["official_rta"])
+    result["memory_checkpoints"] = memory_checkpoints
     _write_json(record_path, result)
     PETSc.Sys.Print(json.dumps(result, indent=2, default=_json_default))
     augmented.destroy()
-    auxiliary.destroy()
-    monitor_solution.destroy()
-    solution.destroy()
-    ksp.destroy()
-    coarse_context.destroy()
-    smoother.destroy()
-    action.destroy()
-    operator.destroy()
-    rhs.destroy()
-    blocks.destroy()
+    if not args.compact_lifecycle:
+        auxiliary.destroy()
+        monitor_solution.destroy()
+        solution.destroy()
+        ksp.destroy()
+        coarse_context.destroy()
+        smoother.destroy()
+        action.destroy()
+        operator.destroy()
+        if args.matrix_free_fine:
+            fine_operator.destroy()
+        rhs.destroy()
+        blocks.destroy()
+        system.b_petsc.destroy()
+        system.x_petsc.destroy()
     return result
 
 
@@ -643,7 +1052,18 @@ def main() -> int:
     parser.add_argument("--overlap-layers", type=float, default=None)
     parser.add_argument("--absorption-shift", type=float, default=None)
     parser.add_argument("--ilu-levels", type=int, default=None)
+    parser.add_argument(
+        "--ksp-type",
+        choices=("fgmres", "gmres", "tfqmr", "bcgs"),
+        default="fgmres",
+    )
+    parser.add_argument(
+        "--smoother-ksp-type",
+        choices=("gmres", "richardson"),
+        default="gmres",
+    )
     parser.add_argument("--restart", type=int, default=None)
+    parser.add_argument("--selective-diagonal-boundary-slabs", type=int, default=0)
     parser.add_argument("--max-it", type=int, default=None)
     parser.add_argument("--rtol", type=float, default=None)
     parser.add_argument("--rta-threshold", type=float, default=None)
@@ -651,6 +1071,9 @@ def main() -> int:
     parser.add_argument("--post-smooth", action="store_true")
     parser.add_argument("--subdomain-local-shift", action="store_true")
     parser.add_argument("--factor-only-storage", action="store_true")
+    parser.add_argument("--certify-pc", action="store_true")
+    parser.add_argument("--compact-lifecycle", action="store_true")
+    parser.add_argument("--matrix-free-fine", action="store_true")
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -696,6 +1119,12 @@ def main() -> int:
         "post_smooth": args.post_smooth,
         "subdomain_local_shift": args.subdomain_local_shift,
         "factor_only_storage": args.factor_only_storage,
+        "certify_pc": args.certify_pc,
+        "compact_lifecycle": args.compact_lifecycle,
+        "matrix_free_fine": args.matrix_free_fine,
+        "ksp_type": args.ksp_type,
+        "smoother_ksp_type": args.smoother_ksp_type,
+        "selective_diagonal_boundary_slabs": args.selective_diagonal_boundary_slabs,
     }
     args.exact_command = os.environ.get(
         "BENCHMARK_EXACT_COMMAND",
