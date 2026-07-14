@@ -14,7 +14,8 @@
 | 6 | [`3d_stages_and_validation_ladder.md`](3d_stages_and_validation_ladder.md) | Stage 1、2A/B/C、4A/B 各增加并证明什么 |
 | 7 | [`direct_solvers_and_factorization.md`](direct_solvers_and_factorization.md) | PETSc LU、MUMPS OOC、BLR 的真实含义 |
 | 8 | [`iterative_solver_and_preconditioner.md`](iterative_solver_and_preconditioner.md) | h=5/3/2 生产迭代器的算子与预条件器 |
-| 9 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
+| 9 | [`hybrid_fem_modal_domain_decomposition.md`](hybrid_fem_modal_domain_decomposition.md) | 如何用二维截面本征模替代 z 不变中间体域，并与上下局部 3D FEM 通过双接口和 Modal-Schur 耦合 |
+| 10 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
 
 ## 旧理论长文
 
@@ -42,11 +43,11 @@
 | bottom outgoing | 向 `-y` | 向 `-z` | 透射 T |
 | `alpha_m` | `kx+2*pi*m/Lx` | 同左 | x-Floquet 波数 |
 | `gamma_n` | 不使用 | `ky+2*pi*n/Ly` | y-Floquet 波数 |
-| `beta` | y 向纵向常数 | z 向纵向常数 | 取出射/衰减平方根分支 |
+| `beta` | y 向纵向常数 | z 向纵向常数 | 取出射/衰减平方根分支；Task032 中也表示结构化横截面 eigenmode 的 z 传播常数 |
 | TM | 面内 `(Ex,Ey)` H(curl) | 不作为 3D求解空间标签 | 2D 向量路线 |
 | TE | 标量 `Ez` H1 | 不作为 3D求解空间标签 | 2D 标量路线 |
 | s/p | 不作为 2D主路线标签 | 每个非退化 order 的两种 E 极化 | 正入射退化时用 x/y 基 |
-| `F,C,D,H` | 2D 文档可类比使用 | 3D FE/modal 增广块 | 当前 3D port 的 `H=I` |
+| `F,C,D,H` | 2D 文档可类比使用 | 3D FE/modal 增广块 | 当前 3D port 的 `H=I`；Hybrid 内部 modal block 另记 `H_m` |
 | `R,T,A` | 入射功率归一化比例 | 入射功率归一化比例 | `A` 优先指 `A_volume` |
 
 3D 波矢写成 `(alpha,gamma,sign*beta)`；`sign=+1` 表示 top outgoing，`sign=-1` 表示 bottom outgoing。2D 代码中的 `ky` 是向下入射波的 y 分量，不能机械套用 3D `gamma_n` 的横向含义。
@@ -62,6 +63,7 @@
 | 3D DtN 增广装配 | `dtn_port_3d::solve_stage4_dtn_port_total_field` |
 | exact condensation | `condensed_dtn::create_matrix_free_condensed_operator` |
 | 两级 PC | `physical_slab_two_level::SparseGalerkinTwoLevelPc.apply` |
+| Hybrid eigenmodes / coupling / Schur | Task032 计划中的 `src/modes/`、`src/coupling/`、`hybrid_fem_modal_*`；完成前不得把计划文件名当作已实现 API |
 | 2D official RTA | `power_metrics::compute_dtn_auxiliary_power_metrics` |
 | 3D official RTA/A | `dtn_port_3d::_port_power_metrics`、`rta_3d::compute_volume_absorption_3d` |
 
@@ -75,4 +77,4 @@
 
 所以 `R`、`T`、`A` 和能量 closure 可以跨 2D/3D 比较物理比例；`incident_power_code_units`、未归一化 modal power、体吸收积分原值不能直接跨维度比较，也不能当作 SI W 或 W/m，除非把被省略常数和几何维度完整恢复。
 
-连续理论只能说明公式结构。可运行性、离散误差、MPI 一致性和内存上限必须由 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md) 的案例证据确认。
+连续理论只能说明公式结构。可运行性、离散误差、MPI 一致性和内存上限必须由 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md) 的案例证据确认。Task032 的 Hybrid 公式在通过 Case080 前只属于计划/理论，不属于已验证功能。
