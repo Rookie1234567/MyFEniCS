@@ -5,9 +5,11 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
+from benchmarks import run_workstation_iterative
 import src.solvers as ordinary_solvers
 import src.solvers.hcurl_multilevel as hcurl_multilevel
 from src.solvers.hcurl_multilevel import (
@@ -36,6 +38,55 @@ class TestTask030ResearchApiBoundary(unittest.TestCase):
     def test_ordinary_solver_package_exports_no_failed_candidate(self) -> None:
         for name in hcurl_multilevel.RESEARCH_ONLY_CANDIDATE_API:
             self.assertFalse(hasattr(ordinary_solvers, name), name)
+
+
+class TestTask030CleanSourceMetadata(unittest.TestCase):
+    SHA = "a" * 40
+
+    @classmethod
+    def _git_output(cls, *args: str) -> str:
+        if args == ("rev-parse", "HEAD"):
+            return cls.SHA
+        if args == ("branch", "--show-current"):
+            return "codex/task030"
+        raise AssertionError(args)
+
+    def test_full_sha_attestation_marks_both_dirty_flags_false(self) -> None:
+        with (
+            mock.patch.dict(
+                run_workstation_iterative.os.environ,
+                {"BENCHMARK_VERIFIED_CLEAN_SHA": self.SHA},
+                clear=True,
+            ),
+            mock.patch.object(
+                run_workstation_iterative,
+                "_git_output",
+                side_effect=self._git_output,
+            ),
+        ):
+            metadata = run_workstation_iterative._runtime_metadata("command")
+        self.assertFalse(metadata["git_dirty"])
+        self.assertFalse(metadata["tracked_source_dirty"])
+        self.assertEqual(
+            metadata["tracked_source_verification"], "host_git_clean_attestation"
+        )
+        self.assertEqual(metadata["verified_clean_sha"], self.SHA)
+
+    def test_sha_attestation_must_match_mounted_head(self) -> None:
+        with (
+            mock.patch.dict(
+                run_workstation_iterative.os.environ,
+                {"BENCHMARK_VERIFIED_CLEAN_SHA": "b" * 40},
+                clear=True,
+            ),
+            mock.patch.object(
+                run_workstation_iterative,
+                "_git_output",
+                side_effect=self._git_output,
+            ),
+            self.assertRaisesRegex(RuntimeError, "does not match mounted HEAD"),
+        ):
+            run_workstation_iterative._runtime_metadata("command")
 
 
 class _FakeComm:

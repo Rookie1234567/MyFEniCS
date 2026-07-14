@@ -61,31 +61,50 @@ def _git_output(*args: str) -> str | None:
 
 def _runtime_metadata(command: str) -> dict[str, Any]:
     dirty_override = os.environ.get("BENCHMARK_GIT_DIRTY")
+    verified_clean_sha = os.environ.get("BENCHMARK_VERIFIED_CLEAN_SHA")
     commit_sha = os.environ.get("BENCHMARK_COMMIT_SHA") or _git_output(
         "rev-parse", "HEAD"
     )
     branch = os.environ.get("BENCHMARK_BRANCH") or _git_output(
         "branch", "--show-current"
     )
-    full_status = _git_output("status", "--short")
-    tracked_status = _git_output("status", "--short", "--untracked-files=no")
-    if (
-        commit_sha is None
-        or branch is None
-        or full_status is None
-        or tracked_status is None
-    ):
+    if commit_sha is None or branch is None:
         raise RuntimeError("cannot verify benchmark source identity and cleanliness")
+    if verified_clean_sha is not None:
+        verified_clean_sha = verified_clean_sha.strip().lower()
+        if len(verified_clean_sha) != 40 or any(
+            character not in "0123456789abcdef" for character in verified_clean_sha
+        ):
+            raise RuntimeError("clean-source attestation must be a full Git SHA")
+        if commit_sha.lower() != verified_clean_sha:
+            raise RuntimeError(
+                "clean-source attestation does not match mounted HEAD: "
+                f"expected {verified_clean_sha}, mounted {commit_sha}"
+            )
+        full_dirty = False
+        tracked_source_dirty = False
+        tracked_source_verification = "host_git_clean_attestation"
+    else:
+        full_status = _git_output("status", "--short")
+        tracked_status = _git_output("status", "--short", "--untracked-files=no")
+        if full_status is None or tracked_status is None:
+            raise RuntimeError(
+                "cannot verify benchmark source identity and cleanliness"
+            )
+        full_dirty = bool(full_status)
+        tracked_source_dirty = bool(tracked_status)
+        tracked_source_verification = "git_status_untracked_files_no"
     return {
         "commit_sha": commit_sha,
         "branch": branch,
         "git_dirty": (
             dirty_override.lower() in {"1", "true", "yes"}
             if dirty_override is not None
-            else bool(full_status)
+            else full_dirty
         ),
-        "tracked_source_dirty": bool(tracked_status),
-        "tracked_source_verification": "git_status_untracked_files_no",
+        "tracked_source_dirty": tracked_source_dirty,
+        "tracked_source_verification": tracked_source_verification,
+        "verified_clean_sha": verified_clean_sha,
         "command": command,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "container_image": os.environ.get("BENCHMARK_CONTAINER_IMAGE", "unknown"),
