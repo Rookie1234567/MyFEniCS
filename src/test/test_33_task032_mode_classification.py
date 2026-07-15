@@ -11,6 +11,7 @@ from src.modes.cross_section_spaces import (
     build_matching_cross_section,
 )
 from src.modes.mode_classification import (
+    _require_admissible_left_pairs,
     build_biorthogonal_mode_basis,
     classify_mode_branch,
     pair_reciprocal_mode_bases,
@@ -79,6 +80,23 @@ class Task032ModeClassificationTests(unittest.TestCase):
                 False,
             ),
         )
+
+    def test_left_pair_admissibility_fails_closed_before_normalization(self):
+        _require_admissible_left_pairs(
+            (6.6e-12, 1.0e-7), maximum_relative_error=1.0e-7
+        )
+        for errors in ((6.6e-12, 1.310935), (float("nan"),), (float("inf"),)):
+            with self.subTest(errors=errors):
+                with self.assertRaisesRegex(
+                    RuntimeError, "no admissible conjugate partner"
+                ):
+                    _require_admissible_left_pairs(
+                        errors, maximum_relative_error=1.0e-7
+                    )
+        with self.assertRaisesRegex(ValueError, "finite and non-negative"):
+            _require_admissible_left_pairs(
+                (0.0,), maximum_relative_error=float("nan")
+            )
 
     def test_wide_candidate_pool_filters_reciprocal_and_growing_branches(self):
         class Candidate:

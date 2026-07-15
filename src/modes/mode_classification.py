@@ -240,6 +240,32 @@ def _relative_beta_distance(first: complex, second: complex) -> float:
     return float(abs(first - second) / max(abs(first), abs(second), 1.0e-12))
 
 
+def _require_admissible_left_pairs(
+    errors: Sequence[float], *, maximum_relative_error: float
+) -> None:
+    """Reject incomplete adjoint candidate pools before vector normalization."""
+
+    limit = float(maximum_relative_error)
+    if not np.isfinite(limit) or limit < 0.0:
+        raise ValueError(
+            "Maximum left/right beta pair relative error must be finite and "
+            "non-negative."
+        )
+    failures = [
+        (index, float(error))
+        for index, error in enumerate(errors)
+        if not np.isfinite(error) or float(error) > limit
+    ]
+    if failures:
+        rendered = ", ".join(
+            f"index={index}, error={error:.6e}" for index, error in failures
+        )
+        raise RuntimeError(
+            "Adjoint QEP candidate pool has no admissible conjugate partner "
+            f"for every right mode (limit={limit:.6e}; {rendered})."
+        )
+
+
 def _near_degenerate_groups(
     betas: Sequence[complex],
     *,
@@ -416,6 +442,7 @@ def build_biorthogonal_mode_basis(
     near_degenerate_tolerance: float = 1.0e-6,
     block_rotation_tolerance: float = 1.0e-8,
     maximum_overlap_condition: float = 1.0e12,
+    maximum_left_pair_relative_error: float = 1.0e-7,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
     log=None,
 ) -> BiorthogonalModeBasis:
@@ -506,6 +533,10 @@ def build_biorthogonal_mode_basis(
         left_pair_errors = tuple(
             _relative_beta_distance(np.conj(left.beta), right.beta)
             for right, left in zip(right_modes, left_candidates)
+        )
+        _require_admissible_left_pairs(
+            left_pair_errors,
+            maximum_relative_error=maximum_left_pair_relative_error,
         )
 
         flux_evaluator = poynting_evaluator or PoyntingFluxEvaluator(

@@ -1034,7 +1034,7 @@ try {
                     -HNm $hLevel.Value `
                     -MpiSize 1 `
                     -RequestedModes 8 `
-                    -CandidateModes 8 `
+                    -CandidateModes 12 `
                     -SummaryOutput $passSummary `
                     -AttemptRoot (Join-Path $passRoot "attempts") `
                     -MaterialKind $material `
@@ -1061,7 +1061,7 @@ try {
             -HNm "3.0" `
             -MpiSize $negativeMpi `
             -RequestedModes 8 `
-            -CandidateModes 8 `
+            -CandidateModes 12 `
             -SummaryOutput $negativeSummary `
             -AttemptRoot (Join-Path $negativeRoot "attempts") `
             -MaterialKind "stage4_xy" `

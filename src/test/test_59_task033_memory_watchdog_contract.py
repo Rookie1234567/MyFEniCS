@@ -251,6 +251,10 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--no-swap-verified", command)
         self.assertIn("--watchdog-enabled-verified", command)
         self.assertIn("--one-large-case-verified", command)
+        self.assertIn("--left-candidate-modes", command)
+        self.assertEqual(
+            command[command.index("--left-candidate-modes") + 1], "16"
+        )
         self.assertIn("b" * 64, command)
         self.assertIn("--container-limit-gib", command)
         self.assertIn("9.25", command)
@@ -458,6 +462,29 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                     "5",
                     "--mpi-size",
                     "1",
+                    "--verified-clean-sha",
+                    "d" * 40,
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target",
+                    "qep",
+                    "--case-label",
+                    "undersampled_left_pool",
+                    "--degree",
+                    "1",
+                    "--h-nm",
+                    "3",
+                    "--mpi-size",
+                    "1",
+                    "--requested-modes",
+                    "8",
+                    "--candidate-modes",
+                    "8",
+                    "--material-kind",
+                    "air",
                     "--verified-clean-sha",
                     "d" * 40,
                 ]

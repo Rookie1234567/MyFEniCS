@@ -6,6 +6,7 @@ from pathlib import Path
 import unittest
 
 from benchmarks.task033_qep_measurement import (
+    LEFT_CANDIDATE_POOL_POLICY,
     QepCandidate,
     build_qep_plan,
     mixed_quad_local_dimension,
@@ -13,11 +14,75 @@ from benchmarks.task033_qep_measurement import (
     qep_candidates,
     qep_memory_prediction,
     qep_runtime_preflight,
+    task033_left_candidate_pool_size,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CASE = ROOT / "benchmarks" / "cases" / "091_hybrid_hp_adaptivity_feasibility"
+
+
+def _measured_qep_numerical_results() -> dict:
+    pair_errors = [1.0e-10] * 8
+    return {
+        "full_dof": 120,
+        "reduced_dof": 100,
+        "four_matrix_nnz": {
+            "K0": 1000,
+            "K1": 900,
+            "K2": 800,
+            "electric_mass": 700,
+        },
+        "four_matrix_nnz_total": 3400,
+        "selected_beta_per_nm": [0.08, 0.0],
+        "analytic_beta_per_nm": [0.08, 0.0],
+        "analytic_beta_relative_error": 1.0e-3,
+        "polynomial_relative_residual": 1.0e-12,
+        "assembly_seconds_max_rank": 1.0,
+        "solve_seconds_max_rank": 2.0,
+        "classification_seconds_max_rank": 0.5,
+        "retained_eigenvector_bytes": {
+            "right_reduced": 12800,
+            "right_full": 15360,
+            "left_reduced": 12800,
+            "left_full": 15360,
+            "total": 56320,
+            "scalar_bytes": 16,
+            "full_vector_gathered_to_root": False,
+        },
+        "left_right_classification": {
+            "right_polynomial_relative_residual_max": 1.0e-12,
+            "left_polynomial_relative_residual_max": 1.0e-10,
+            "biorthogonality_identity_error": 1.0e-8,
+            "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
+            "right_requested_modes": 8,
+            "left_candidate_requested_modes": 12,
+            "left_candidate_converged_modes": 12,
+            "left_pair_relative_errors": pair_errors,
+            "left_pair_relative_error_max": max(pair_errors),
+            "near_degenerate_groups": [
+                {
+                    "indices": [0],
+                    "beta_center_per_nm": [0.08, 0.0],
+                    "max_relative_beta_spread": 0.0,
+                    "overlap_condition": 1.0,
+                    "normalization_method": "diagonal_qprime",
+                    "post_normalization_identity_error": 1.0e-12,
+                }
+            ],
+            "directions": ["forward"] * 8,
+            "kinds": ["propagating"] * 8,
+            "passive_branch_valid": [True] * 8,
+            "full_vector_gathered": False,
+        },
+        "quadrature": {
+            "field_degree": 2,
+            "geometry_degree": 1,
+            "coefficient_degree": 0,
+            "selected_degree": 8,
+            "policy": "test-policy",
+        },
+    }
 
 
 class Task033QepMeasurementMatrixTests(unittest.TestCase):
@@ -45,6 +110,13 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
         self.assertGreater(prediction["full_dof_upper_bound"], 0)
         self.assertGreater(prediction["four_matrix_nnz_upper_bound"], 0)
         self.assertEqual(mixed_quad_local_dimension(4), 65)
+        self.assertEqual(task033_left_candidate_pool_size(8), 12)
+        self.assertEqual(prediction["requested_modes"], 8)
+        self.assertEqual(prediction["left_candidate_modes"], 12)
+        self.assertEqual(
+            prediction["left_candidate_pool_policy"],
+            LEFT_CANDIDATE_POOL_POLICY,
+        )
         self.assertTrue(prediction["prediction_gate_pass"])
 
         tiny_limit = qep_memory_prediction(candidate, container_limit_gib=0.1)
@@ -145,6 +217,55 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
         with self.assertRaises(jsonschema.ValidationError):
             validator.validate(invalid)
 
+        measured = not_run_measurement_record(
+            candidate,
+            prediction=prediction,
+            preflight=qep_runtime_preflight(candidate, prediction=prediction),
+            provenance={"commit_sha": "a" * 40},
+        )
+        measured["schema_version"] = "task033.case091.qep-measurement.v2"
+        measured["status"] = "measured_shard_pass"
+        measured["identity"].update(
+            {
+                "is_pde_run": True,
+                "is_solver_pass": True,
+                "is_memory_measurement": True,
+                "result_identity": "measured_shard",
+                "is_physical_qualification_record": False,
+                "physical_qualified": False,
+            }
+        )
+        measured["numerical_results"] = _measured_qep_numerical_results()
+        measured["resource_measurements"] = {}
+        measured["gates"] = {
+            "all_required_numerical_gates_pass": True,
+            "left_right_beta_pair_relative_error_le_1e-7": True,
+        }
+        validator.validate(measured)
+
+        missing_raw_pairing = copy.deepcopy(measured)
+        del missing_raw_pairing["numerical_results"][
+            "left_right_classification"
+        ]["left_candidate_pool_policy"]
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(missing_raw_pairing)
+
+        forged_all_pass = copy.deepcopy(measured)
+        classification = forged_all_pass["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_pair_relative_errors"][-1] = 2.0e-7
+        classification["left_pair_relative_error_max"] = 2.0e-7
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(forged_all_pass)
+
+        missing_explicit_gate = copy.deepcopy(measured)
+        del missing_explicit_gate["gates"][
+            "left_right_beta_pair_relative_error_le_1e-7"
+        ]
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(missing_explicit_gate)
+
     def test_invalid_candidate_and_mode_inputs_fail_closed(self) -> None:
         with self.assertRaises(ValueError):
             QepCandidate("air", 5, 5.0, 1)
@@ -154,6 +275,12 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
             QepCandidate("air", 2, 5.0, 3)
         with self.assertRaises(ValueError):
             qep_memory_prediction(QepCandidate("air", 2, 5.0, 1), requested_modes=1)
+        with self.assertRaises(ValueError):
+            qep_memory_prediction(
+                QepCandidate("air", 2, 5.0, 1),
+                requested_modes=8,
+                left_candidate_modes=8,
+            )
 
 
 if __name__ == "__main__":

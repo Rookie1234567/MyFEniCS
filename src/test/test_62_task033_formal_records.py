@@ -150,6 +150,9 @@ def _qep_shard(
         else 1.0e-3 * (h_nm / 5.0) ** 2 / degree**2
     )
     tracking = _tracking_compact(h_nm) if material == "stage4_xy" else None
+    right_requested_modes = 8
+    left_candidate_requested_modes = 12
+    left_pair_relative_errors = [1.0e-10] * right_requested_modes
     return {
         "schema_version": "task033.case091.qep-measurement.v2",
         "record_type": "task033_qep_measurement_shard",
@@ -177,6 +180,30 @@ def _qep_shard(
                 "right_polynomial_relative_residual_max": 1.0e-12,
                 "left_polynomial_relative_residual_max": 1.0e-10,
                 "biorthogonality_identity_error": 1.0e-8,
+                "left_candidate_pool_policy": (
+                    "max_requested_plus_4_or_1p5x"
+                ),
+                "right_requested_modes": right_requested_modes,
+                "left_candidate_requested_modes": (
+                    left_candidate_requested_modes
+                ),
+                "left_candidate_converged_modes": (
+                    left_candidate_requested_modes
+                ),
+                "left_pair_relative_errors": left_pair_relative_errors,
+                "left_pair_relative_error_max": max(
+                    left_pair_relative_errors
+                ),
+                "near_degenerate_groups": [
+                    {
+                        "indices": [0],
+                        "beta_center_per_nm": [1.0, 0.0],
+                        "max_relative_beta_spread": 0.0,
+                        "overlap_condition": 1.0,
+                        "normalization_method": "diagonal_qprime",
+                        "post_normalization_identity_error": 1.0e-12,
+                    }
+                ],
             },
             "quadrature": {
                 "raised_comparison": {
@@ -189,7 +216,10 @@ def _qep_shard(
         "resource_measurements": {
             "formal_resource_authority": _resource_authority()
         },
-        "gates": {"all_required_numerical_gates_pass": True},
+        "gates": {
+            "all_required_numerical_gates_pass": True,
+            "left_right_beta_pair_relative_error_le_1e-7": True,
+        },
     }
 
 
@@ -508,6 +538,22 @@ class Task033FormalRecordTests(unittest.TestCase):
             self.assertEqual(result["status"], "qep_component_aggregate_qualified")
             self.assertEqual(result["required_shard_count"], 36)
             self.assertEqual(result["formal_source"]["commit_sha"], SOURCE_SHA)
+
+            forged_pair_gate = json.loads(paths[0].read_text(encoding="utf-8"))
+            classification = forged_pair_gate["measurements"][
+                "numerical_results"
+            ]["left_right_classification"]
+            classification["left_pair_relative_errors"][-1] = 2.0e-7
+            classification["left_pair_relative_error_max"] = 2.0e-7
+            _write(paths[0], forged_pair_gate)
+            with self.assertRaisesRegex(
+                FormalRecordError, "native QEP aggregate did not qualify"
+            ):
+                build_qep_order_study(paths)
+            _write(
+                paths[0],
+                _qep_watchdog(_qep_shard("air", 1, 5.0)),
+            )
 
             changed = json.loads(paths[-1].read_text(encoding="utf-8"))
             changed["source"] = _source("b" * 40)

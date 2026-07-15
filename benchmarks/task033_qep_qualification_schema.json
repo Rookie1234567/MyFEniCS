@@ -49,9 +49,110 @@
         },
         "candidate": {"type": "object"},
         "provenance": {"type": "object"},
-        "numerical_results": {"type": ["object", "null"]},
+        "numerical_results": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "required": ["left_right_classification"],
+              "properties": {
+                "left_right_classification": {
+                  "type": "object",
+                  "required": [
+                    "left_candidate_pool_policy",
+                    "right_requested_modes",
+                    "left_candidate_requested_modes",
+                    "left_candidate_converged_modes",
+                    "left_pair_relative_errors",
+                    "left_pair_relative_error_max",
+                    "near_degenerate_groups"
+                  ],
+                  "properties": {
+                    "left_candidate_pool_policy": {
+                      "const": "max_requested_plus_4_or_1p5x"
+                    },
+                    "right_requested_modes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "left_candidate_requested_modes": {
+                      "type": "integer",
+                      "minimum": 5
+                    },
+                    "left_candidate_converged_modes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "left_pair_relative_errors": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {"type": "number", "minimum": 0}
+                    },
+                    "left_pair_relative_error_max": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "near_degenerate_groups": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "indices",
+                          "beta_center_per_nm",
+                          "max_relative_beta_spread",
+                          "overlap_condition",
+                          "normalization_method",
+                          "post_normalization_identity_error"
+                        ],
+                        "properties": {
+                          "indices": {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {"type": "integer", "minimum": 0}
+                          },
+                          "beta_center_per_nm": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {"type": "number"}
+                          },
+                          "max_relative_beta_spread": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "overlap_condition": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "normalization_method": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "post_normalization_identity_error": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
         "resource_measurements": {"type": ["object", "null"]},
-        "gates": {"type": "object"}
+        "gates": {
+          "type": "object",
+          "properties": {
+            "all_required_numerical_gates_pass": {"type": "boolean"},
+            "left_right_beta_pair_relative_error_le_1e-7": {
+              "type": "boolean"
+            }
+          }
+        }
       },
       "allOf": [
         {
@@ -66,8 +167,52 @@
                   "physical_qualified": {"const": false}
                 }
               },
-              "numerical_results": {"type": "object"},
-              "resource_measurements": {"type": "object"}
+              "resource_measurements": {"type": "object"},
+              "gates": {
+                "required": [
+                  "all_required_numerical_gates_pass",
+                  "left_right_beta_pair_relative_error_le_1e-7"
+                ],
+                "properties": {
+                  "all_required_numerical_gates_pass": {"const": true},
+                  "left_right_beta_pair_relative_error_le_1e-7": {
+                    "const": true
+                  }
+                }
+              },
+              "numerical_results": {
+                "type": "object",
+                "properties": {
+                  "left_right_classification": {
+                    "properties": {
+                      "left_pair_relative_errors": {
+                        "items": {"maximum": 1e-7}
+                      },
+                      "left_pair_relative_error_max": {
+                        "maximum": 1e-7
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "measured_shard_failed"}}
+          },
+          "then": {
+            "properties": {
+              "gates": {
+                "required": [
+                  "all_required_numerical_gates_pass",
+                  "left_right_beta_pair_relative_error_le_1e-7"
+                ],
+                "properties": {
+                  "all_required_numerical_gates_pass": {"const": false}
+                }
+              }
             }
           }
         }

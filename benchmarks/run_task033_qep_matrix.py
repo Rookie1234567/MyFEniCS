@@ -22,6 +22,7 @@ from typing import Any
 from benchmarks.task033_qep_measurement import (
     DEFAULT_REQUESTED_MODES,
     DEGREES,
+    LEFT_CANDIDATE_POOL_POLICY,
     MATERIAL_KINDS,
     MESH_LEVELS_NM,
     MPI_SIZES,
@@ -30,8 +31,10 @@ from benchmarks.task033_qep_measurement import (
     not_run_measurement_record,
     qep_memory_prediction,
     qep_runtime_preflight,
+    task033_left_candidate_pool_size,
 )
 from benchmarks.task033_qep_qualification import (
+    LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX,
     RAISED_QUADRATURE_MATRIX_DELTA_MAX,
     apply_formal_preflight_gates,
     resource_authority_gate,
@@ -516,6 +519,32 @@ def _numerical_results(
                 "left_pair_relative_errors": [
                     float(value) for value in basis.left_pair_relative_errors
                 ],
+                "left_pair_relative_error_max": max(
+                    float(value) for value in basis.left_pair_relative_errors
+                ),
+                "left_candidate_pool_policy": LEFT_CANDIDATE_POOL_POLICY,
+                "right_requested_modes": int(report.requested_modes),
+                "left_candidate_requested_modes": int(
+                    basis.adjoint_solver_report.requested_modes
+                ),
+                "left_candidate_converged_modes": int(
+                    basis.adjoint_solver_report.converged_modes
+                ),
+                "near_degenerate_groups": [
+                    {
+                        "indices": [int(index) for index in group.indices],
+                        "beta_center_per_nm": _complex_json(group.beta_center),
+                        "max_relative_beta_spread": float(
+                            group.max_relative_beta_spread
+                        ),
+                        "overlap_condition": float(group.overlap_condition),
+                        "normalization_method": group.normalization_method,
+                        "post_normalization_identity_error": float(
+                            group.post_normalization_identity_error
+                        ),
+                    }
+                    for group in basis.groups
+                ],
                 "directions": [mode.direction for mode in basis.modes],
                 "kinds": [mode.kind for mode in basis.modes],
                 "passive_branch_valid": [
@@ -777,6 +806,7 @@ def _run_shard(
 
     modes = []
     basis = None
+    left_candidate_modes = int(args.left_candidate_modes)
     try:
         started = time.perf_counter()
         modes, report = solve_quadratic_beta_modes(
@@ -793,7 +823,7 @@ def _run_shard(
             operators,
             modes,
             adjoint_target=np.conj(target),
-            requested_left_modes=args.requested_modes,
+            requested_left_modes=left_candidate_modes,
             poynting_evaluator=PoyntingFluxEvaluator(
                 cfg, cross_section, spaces
             ),
@@ -960,6 +990,11 @@ def _run_shard(
             classification is not None
             and classification["biorthogonality_identity_error"] <= 1.0e-6
         )
+        left_right_beta_pair_pass = bool(
+            classification is not None
+            and classification["left_pair_relative_error_max"]
+            <= LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX
+        )
         analytic_error = numerics["analytic_beta_relative_error"]
         analytic_gate = (
             "not_applicable_patterned_cross_section"
@@ -979,6 +1014,7 @@ def _run_shard(
             residual_pass
             and left_residual_pass
             and biorthogonality_pass
+            and left_right_beta_pair_pass
             and converged_pass
             and no_swap
             and below_termination
@@ -1039,6 +1075,9 @@ def _run_shard(
                 ),
                 "biorthogonality_identity_error_le_1e-6": (
                     biorthogonality_pass
+                ),
+                "left_right_beta_pair_relative_error_le_1e-7": (
+                    left_right_beta_pair_pass
                 ),
                 "analytic_beta_error_finite": analytic_gate,
                 "no_swap": no_swap,
@@ -1116,6 +1155,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--h-nm", type=float, choices=MESH_LEVELS_NM)
     parser.add_argument("--material-kind", choices=MATERIAL_KINDS)
     parser.add_argument("--requested-modes", type=int, default=DEFAULT_REQUESTED_MODES)
+    parser.add_argument(
+        "--left-candidate-modes",
+        type=int,
+        help=(
+            "Transient adjoint candidate pool. Execution requires at least "
+            "the audited max(requested+4, ceil(1.5*requested)) policy."
+        ),
+    )
     parser.add_argument("--container-limit-gib", type=float)
     parser.add_argument("--verified-clean-sha")
     parser.add_argument("--no-swap-verified", action="store_true", default=None)
@@ -1142,6 +1189,17 @@ def main() -> None:
     args = _parser().parse_args()
     if args.requested_modes < 2:
         raise SystemExit("--requested-modes must be at least two.")
+    required_left_candidates = task033_left_candidate_pool_size(
+        args.requested_modes
+    )
+    if args.left_candidate_modes is None:
+        args.left_candidate_modes = required_left_candidates
+    if args.left_candidate_modes < required_left_candidates:
+        raise SystemExit(
+            "--left-candidate-modes must satisfy the audited Task033 policy: "
+            f"at least {required_left_candidates} for "
+            f"--requested-modes {args.requested_modes}."
+        )
 
     if not args.execute:
         output = DEFAULT_PLAN_OUTPUT if args.output is None else args.output
@@ -1184,6 +1242,7 @@ def main() -> None:
     prediction = qep_memory_prediction(
         candidate,
         requested_modes=args.requested_modes,
+        left_candidate_modes=args.left_candidate_modes,
         container_limit_gib=args.container_limit_gib,
     )
     swap_start = _vmstat_swap_pages()

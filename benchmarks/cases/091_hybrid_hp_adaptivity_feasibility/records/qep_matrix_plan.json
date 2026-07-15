@@ -47,10 +47,10 @@
       "matrix_key": "air_p1_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2534904479980469,
-          "four_sparse_coefficients_and_pep_vectors": 0.20074386596679689
+          "direct_factor_workspace": 0.2537193298339844,
+          "four_sparse_coefficients_and_pep_vectors": 0.20097274780273439
         },
-        "conservative_upper_gib": 0.6302356719970703,
+        "conservative_upper_gib": 0.6305789947509766,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -66,6 +66,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -123,10 +125,10 @@
       "matrix_key": "air_p1_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2537696838378906,
-          "four_sparse_coefficients_and_pep_vectors": 0.20080337524414063
+          "direct_factor_workspace": 0.2540168762207031,
+          "four_sparse_coefficients_and_pep_vectors": 0.20105056762695314
         },
-        "conservative_upper_gib": 0.6306545257568359,
+        "conservative_upper_gib": 0.6310253143310547,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -142,6 +144,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -199,10 +203,10 @@
       "matrix_key": "air_p1_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25432815551757815,
-          "four_sparse_coefficients_and_pep_vectors": 0.20092239379882815
+          "direct_factor_workspace": 0.2546119689941406,
+          "four_sparse_coefficients_and_pep_vectors": 0.20120620727539062
         },
-        "conservative_upper_gib": 0.6314922332763673,
+        "conservative_upper_gib": 0.6319179534912109,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -218,6 +222,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -275,10 +281,10 @@
       "matrix_key": "air_p1_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25942420959472656,
-          "four_sparse_coefficients_and_pep_vectors": 0.20200843811035157
+          "direct_factor_workspace": 0.2600421905517578,
+          "four_sparse_coefficients_and_pep_vectors": 0.20262641906738282
         },
-        "conservative_upper_gib": 0.6391363143920898,
+        "conservative_upper_gib": 0.6400632858276367,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -294,6 +300,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -351,10 +359,10 @@
       "matrix_key": "air_p1_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2601781463623047,
-          "four_sparse_coefficients_and_pep_vectors": 0.2021691131591797
+          "direct_factor_workspace": 0.26084556579589846,
+          "four_sparse_coefficients_and_pep_vectors": 0.20283653259277346
         },
-        "conservative_upper_gib": 0.640267219543457,
+        "conservative_upper_gib": 0.6412683486938477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -370,6 +378,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -427,10 +437,10 @@
       "matrix_key": "air_p1_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26168601989746093,
-          "four_sparse_coefficients_and_pep_vectors": 0.20249046325683595
+          "direct_factor_workspace": 0.2624523162841797,
+          "four_sparse_coefficients_and_pep_vectors": 0.2032567596435547
         },
-        "conservative_upper_gib": 0.6425290298461914,
+        "conservative_upper_gib": 0.6436784744262696,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -446,6 +456,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -503,10 +515,10 @@
       "matrix_key": "air_p1_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26221656799316406,
-          "four_sparse_coefficients_and_pep_vectors": 0.20260353088378907
+          "direct_factor_workspace": 0.2630176544189453,
+          "four_sparse_coefficients_and_pep_vectors": 0.20340461730957032
         },
-        "conservative_upper_gib": 0.6433248519897461,
+        "conservative_upper_gib": 0.644526481628418,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -522,6 +534,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -579,10 +593,10 @@
       "matrix_key": "air_p1_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2631938934326172,
-          "four_sparse_coefficients_and_pep_vectors": 0.2028118133544922
+          "direct_factor_workspace": 0.26405906677246094,
+          "four_sparse_coefficients_and_pep_vectors": 0.20367698669433595
         },
-        "conservative_upper_gib": 0.6447908401489257,
+        "conservative_upper_gib": 0.6460886001586914,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -598,6 +612,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -655,10 +671,10 @@
       "matrix_key": "air_p1_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26514854431152346,
-          "four_sparse_coefficients_and_pep_vectors": 0.20322837829589846
+          "direct_factor_workspace": 0.2661418914794922,
+          "four_sparse_coefficients_and_pep_vectors": 0.2042217254638672
         },
-        "conservative_upper_gib": 0.6477228164672852,
+        "conservative_upper_gib": 0.6492128372192383,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -674,6 +690,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -731,10 +749,10 @@
       "matrix_key": "air_p1_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2704191207885742,
-          "four_sparse_coefficients_and_pep_vectors": 0.20435161590576173
+          "direct_factor_workspace": 0.2717580795288086,
+          "four_sparse_coefficients_and_pep_vectors": 0.2056905746459961
         },
-        "conservative_upper_gib": 0.6556286811828613,
+        "conservative_upper_gib": 0.6576371192932129,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -750,6 +768,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -807,10 +827,10 @@
       "matrix_key": "air_p1_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27205265045166016,
-          "four_sparse_coefficients_and_pep_vectors": 0.20469974517822268
+          "direct_factor_workspace": 0.2734987258911133,
+          "four_sparse_coefficients_and_pep_vectors": 0.20614582061767578
         },
-        "conservative_upper_gib": 0.6580789756774903,
+        "conservative_upper_gib": 0.66024808883667,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -826,6 +846,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -883,10 +905,10 @@
       "matrix_key": "air_p1_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27531970977783204,
-          "four_sparse_coefficients_and_pep_vectors": 0.20539600372314454
+          "direct_factor_workspace": 0.27698001861572263,
+          "four_sparse_coefficients_and_pep_vectors": 0.20705631256103516
         },
-        "conservative_upper_gib": 0.662979564666748,
+        "conservative_upper_gib": 0.6654700279235839,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -902,6 +924,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -959,10 +983,10 @@
       "matrix_key": "air_p1_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.28362464904785156,
-          "four_sparse_coefficients_and_pep_vectors": 0.20716590881347657
+          "direct_factor_workspace": 0.2858295440673828,
+          "four_sparse_coefficients_and_pep_vectors": 0.20937080383300782
         },
-        "conservative_upper_gib": 0.6754369735717773,
+        "conservative_upper_gib": 0.6787443161010742,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -978,6 +1002,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1035,10 +1061,10 @@
       "matrix_key": "air_p1_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2863146209716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2077391815185547
+          "direct_factor_workspace": 0.2886959075927734,
+          "four_sparse_coefficients_and_pep_vectors": 0.21012046813964844
         },
-        "conservative_upper_gib": 0.6794719314575195,
+        "conservative_upper_gib": 0.6830438613891601,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -1054,6 +1080,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1111,10 +1139,10 @@
       "matrix_key": "air_p1_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2916945648193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.20888572692871094
+          "direct_factor_workspace": 0.2944286346435547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2116197967529297
         },
-        "conservative_upper_gib": 0.6875418472290039,
+        "conservative_upper_gib": 0.691642951965332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -1130,6 +1158,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1187,10 +1217,10 @@
       "matrix_key": "air_p2_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2728309631347656,
-          "four_sparse_coefficients_and_pep_vectors": 0.2039052963256836
+          "direct_factor_workspace": 0.27343177795410156,
+          "four_sparse_coefficients_and_pep_vectors": 0.20450611114501954
         },
-        "conservative_upper_gib": 0.6592464447021484,
+        "conservative_upper_gib": 0.6601476669311523,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -1206,6 +1236,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1263,10 +1295,10 @@
       "matrix_key": "air_p2_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2746574401855469,
-          "four_sparse_coefficients_and_pep_vectors": 0.2042177200317383
+          "direct_factor_workspace": 0.27530632019042967,
+          "four_sparse_coefficients_and_pep_vectors": 0.2048666000366211
         },
-        "conservative_upper_gib": 0.6619861602783204,
+        "conservative_upper_gib": 0.6629594802856444,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -1282,6 +1314,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1339,10 +1373,10 @@
       "matrix_key": "air_p2_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27831039428710935,
-          "four_sparse_coefficients_and_pep_vectors": 0.20484256744384766
+          "direct_factor_workspace": 0.2790554046630859,
+          "four_sparse_coefficients_and_pep_vectors": 0.20558757781982423
         },
-        "conservative_upper_gib": 0.667465591430664,
+        "conservative_upper_gib": 0.6685831069946289,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -1358,6 +1392,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1415,10 +1451,10 @@
       "matrix_key": "air_p2_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3116436004638672,
-          "four_sparse_coefficients_and_pep_vectors": 0.21054430007934571
+          "direct_factor_workspace": 0.3132658004760742,
+          "four_sparse_coefficients_and_pep_vectors": 0.21216650009155275
         },
-        "conservative_upper_gib": 0.7174654006958008,
+        "conservative_upper_gib": 0.7198987007141113,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -1434,6 +1470,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1491,10 +1529,10 @@
       "matrix_key": "air_p2_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3165750885009766,
-          "four_sparse_coefficients_and_pep_vectors": 0.21138784408569336
+          "direct_factor_workspace": 0.31832706451416015,
+          "four_sparse_coefficients_and_pep_vectors": 0.21313982009887697
         },
-        "conservative_upper_gib": 0.7248626327514649,
+        "conservative_upper_gib": 0.7274905967712402,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -1510,6 +1548,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1567,10 +1607,10 @@
       "matrix_key": "air_p2_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3264380645751953,
-          "four_sparse_coefficients_and_pep_vectors": 0.21307493209838868
+          "direct_factor_workspace": 0.328449592590332,
+          "four_sparse_coefficients_and_pep_vectors": 0.2150864601135254
         },
-        "conservative_upper_gib": 0.7396570968627929,
+        "conservative_upper_gib": 0.7426743888854981,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -1586,6 +1626,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1643,10 +1685,10 @@
       "matrix_key": "air_p2_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3299083709716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2136685371398926
+          "direct_factor_workspace": 0.33201122283935547,
+          "four_sparse_coefficients_and_pep_vectors": 0.21577138900756837
         },
-        "conservative_upper_gib": 0.7448625564575195,
+        "conservative_upper_gib": 0.7480168342590332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -1662,6 +1704,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1719,10 +1763,10 @@
       "matrix_key": "air_p2_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3363010406494141,
-          "four_sparse_coefficients_and_pep_vectors": 0.214762020111084
+          "direct_factor_workspace": 0.3385721206665039,
+          "four_sparse_coefficients_and_pep_vectors": 0.21703310012817384
         },
-        "conservative_upper_gib": 0.7544515609741211,
+        "conservative_upper_gib": 0.7578581809997558,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -1738,6 +1782,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1795,10 +1841,10 @@
       "matrix_key": "air_p2_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3490863800048828,
-          "four_sparse_coefficients_and_pep_vectors": 0.2169489860534668
+          "direct_factor_workspace": 0.35169391632080077,
+          "four_sparse_coefficients_and_pep_vectors": 0.21955652236938478
         },
-        "conservative_upper_gib": 0.7736295700073241,
+        "conservative_upper_gib": 0.7775408744812011,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -1814,6 +1860,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1871,10 +1919,10 @@
       "matrix_key": "air_p2_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3835611343383789,
-          "four_sparse_coefficients_and_pep_vectors": 0.22284598350524903
+          "direct_factor_workspace": 0.38707590103149414,
+          "four_sparse_coefficients_and_pep_vectors": 0.22636075019836427
         },
-        "conservative_upper_gib": 0.8253417015075684,
+        "conservative_upper_gib": 0.8306138515472412,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -1890,6 +1938,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -1947,10 +1997,10 @@
       "matrix_key": "air_p2_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.39424602508544926,
-          "four_sparse_coefficients_and_pep_vectors": 0.22467366218566895
+          "direct_factor_workspace": 0.3980419731140137,
+          "four_sparse_coefficients_and_pep_vectors": 0.2284696102142334
         },
-        "conservative_upper_gib": 0.8413690376281739,
+        "conservative_upper_gib": 0.8470629596710205,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -1966,6 +2016,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2023,10 +2075,10 @@
       "matrix_key": "air_p2_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.41561580657958985,
-          "four_sparse_coefficients_and_pep_vectors": 0.2283290195465088
+          "direct_factor_workspace": 0.41997411727905276,
+          "four_sparse_coefficients_and_pep_vectors": 0.23268733024597169
         },
-        "conservative_upper_gib": 0.8734237098693848,
+        "conservative_upper_gib": 0.8799611759185791,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -2042,6 +2094,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2099,10 +2153,10 @@
       "matrix_key": "air_p2_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4699382781982422,
-          "four_sparse_coefficients_and_pep_vectors": 0.23762102127075196
+          "direct_factor_workspace": 0.4757261276245117,
+          "four_sparse_coefficients_and_pep_vectors": 0.2434088706970215
         },
-        "conservative_upper_gib": 0.9549074172973633,
+        "conservative_upper_gib": 0.9635891914367676,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -2118,6 +2172,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2175,10 +2231,10 @@
       "matrix_key": "air_p2_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48753334045410157,
-          "four_sparse_coefficients_and_pep_vectors": 0.24063070297241212
+          "direct_factor_workspace": 0.4937842178344727,
+          "four_sparse_coefficients_and_pep_vectors": 0.2468815803527832
         },
-        "conservative_upper_gib": 0.9813000106811524,
+        "conservative_upper_gib": 0.990676326751709,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -2194,6 +2250,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2251,10 +2309,10 @@
       "matrix_key": "air_p2_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5227234649658203,
-          "four_sparse_coefficients_and_pep_vectors": 0.24665006637573245
+          "direct_factor_workspace": 0.5299003982543946,
+          "four_sparse_coefficients_and_pep_vectors": 0.25382699966430666
         },
-        "conservative_upper_gib": 1.0340851974487304,
+        "conservative_upper_gib": 1.044850597381592,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -2270,6 +2328,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2327,10 +2387,10 @@
       "matrix_key": "air_p3_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3315391540527344,
-          "four_sparse_coefficients_and_pep_vectors": 0.21287460327148439
+          "direct_factor_workspace": 0.3326835632324219,
+          "four_sparse_coefficients_and_pep_vectors": 0.21401901245117189
         },
-        "conservative_upper_gib": 0.7473087310791016,
+        "conservative_upper_gib": 0.7490253448486328,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -2346,6 +2406,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2404,10 +2466,10 @@
       "matrix_key": "air_p3_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3380622863769531,
-          "four_sparse_coefficients_and_pep_vectors": 0.21390457153320314
+          "direct_factor_workspace": 0.3392982482910156,
+          "four_sparse_coefficients_and_pep_vectors": 0.21514053344726564
         },
-        "conservative_upper_gib": 0.7570934295654297,
+        "conservative_upper_gib": 0.7589473724365234,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -2423,6 +2485,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2481,10 +2545,10 @@
       "matrix_key": "air_p3_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3511085510253906,
-          "four_sparse_coefficients_and_pep_vectors": 0.21596450805664064
+          "direct_factor_workspace": 0.3525276184082031,
+          "four_sparse_coefficients_and_pep_vectors": 0.21738357543945314
         },
-        "conservative_upper_gib": 0.7766628265380859,
+        "conservative_upper_gib": 0.7787914276123047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -2500,6 +2564,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2558,10 +2624,10 @@
       "matrix_key": "air_p3_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4701557159423828,
-          "four_sparse_coefficients_and_pep_vectors": 0.23476142883300782
+          "direct_factor_workspace": 0.47324562072753906,
+          "four_sparse_coefficients_and_pep_vectors": 0.23785133361816407
         },
-        "conservative_upper_gib": 0.9552335739135742,
+        "conservative_upper_gib": 0.9598684310913086,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -2577,6 +2643,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2635,10 +2703,10 @@
       "matrix_key": "air_p3_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48776817321777344,
-          "four_sparse_coefficients_and_pep_vectors": 0.23754234313964845
+          "direct_factor_workspace": 0.4911052703857422,
+          "four_sparse_coefficients_and_pep_vectors": 0.2408794403076172
         },
-        "conservative_upper_gib": 0.9816522598266602,
+        "conservative_upper_gib": 0.9866579055786133,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -2654,6 +2722,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2712,10 +2782,10 @@
       "matrix_key": "air_p3_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5229930877685547,
-          "four_sparse_coefficients_and_pep_vectors": 0.2431041717529297
+          "direct_factor_workspace": 0.5268245697021484,
+          "four_sparse_coefficients_and_pep_vectors": 0.24693565368652345
         },
-        "conservative_upper_gib": 1.034489631652832,
+        "conservative_upper_gib": 1.0402368545532226,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -2731,6 +2801,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2789,10 +2861,10 @@
       "matrix_key": "air_p3_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5353870391845703,
-          "four_sparse_coefficients_and_pep_vectors": 0.24506111145019532
+          "direct_factor_workspace": 0.5393924713134766,
+          "four_sparse_coefficients_and_pep_vectors": 0.24906654357910157
         },
-        "conservative_upper_gib": 1.0530805587768555,
+        "conservative_upper_gib": 1.0590887069702148,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -2808,6 +2880,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2866,10 +2940,10 @@
       "matrix_key": "air_p3_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5582180023193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.24866600036621095
+          "direct_factor_workspace": 0.5625438690185547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2529918670654297
         },
-        "conservative_upper_gib": 1.087327003479004,
+        "conservative_upper_gib": 1.093815803527832,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -2885,6 +2959,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -2943,10 +3019,10 @@
       "matrix_key": "air_p3_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.6038799285888672,
-          "four_sparse_coefficients_and_pep_vectors": 0.2558757781982422
+          "direct_factor_workspace": 0.6088466644287109,
+          "four_sparse_coefficients_and_pep_vectors": 0.26084251403808595
         },
-        "conservative_upper_gib": 1.1558198928833008,
+        "conservative_upper_gib": 1.1632699966430664,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -2962,6 +3038,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3020,10 +3098,10 @@
       "matrix_key": "air_p3_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7270040512084961,
-          "four_sparse_coefficients_and_pep_vectors": 0.2753164291381836
+          "direct_factor_workspace": 0.733698844909668,
+          "four_sparse_coefficients_and_pep_vectors": 0.2820112228393555
         },
-        "conservative_upper_gib": 1.3405060768127441,
+        "conservative_upper_gib": 1.350548267364502,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -3039,6 +3117,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3097,10 +3177,10 @@
       "matrix_key": "air_p3_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7651643753051758,
-          "four_sparse_coefficients_and_pep_vectors": 0.2813417434692383
+          "direct_factor_workspace": 0.7723947525024415,
+          "four_sparse_coefficients_and_pep_vectors": 0.28857212066650395
         },
-        "conservative_upper_gib": 1.3977465629577637,
+        "conservative_upper_gib": 1.4085921287536622,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -3116,6 +3196,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3174,10 +3256,10 @@
       "matrix_key": "air_p3_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8414850234985352,
-          "four_sparse_coefficients_and_pep_vectors": 0.29339237213134767
+          "direct_factor_workspace": 0.8497865676879883,
+          "four_sparse_coefficients_and_pep_vectors": 0.3016939163208008
         },
-        "conservative_upper_gib": 1.5122275352478027,
+        "conservative_upper_gib": 1.5246798515319826,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -3193,6 +3275,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3251,10 +3335,10 @@
       "matrix_key": "air_p3_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0354938507080078,
-          "four_sparse_coefficients_and_pep_vectors": 0.3240253448486328
+          "direct_factor_workspace": 1.046518325805664,
+          "four_sparse_coefficients_and_pep_vectors": 0.3350498199462891
         },
-        "conservative_upper_gib": 1.8032407760620117,
+        "conservative_upper_gib": 1.819777488708496,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -3270,6 +3354,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3328,10 +3414,10 @@
       "matrix_key": "air_p3_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0983333587646484,
-          "four_sparse_coefficients_and_pep_vectors": 0.33394737243652345
+          "direct_factor_workspace": 1.1102397918701172,
+          "four_sparse_coefficients_and_pep_vectors": 0.3458538055419922
         },
-        "conservative_upper_gib": 1.8975000381469727,
+        "conservative_upper_gib": 1.915359687805176,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -3347,6 +3433,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3405,10 +3493,10 @@
       "matrix_key": "air_p3_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.2240123748779297,
-          "four_sparse_coefficients_and_pep_vectors": 0.3537914276123047
+          "direct_factor_workspace": 1.2376827239990233,
+          "four_sparse_coefficients_and_pep_vectors": 0.3674617767333984
         },
-        "conservative_upper_gib": 2.0860185623168945,
+        "conservative_upper_gib": 2.106524085998535,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -3424,6 +3512,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3482,10 +3572,10 @@
       "matrix_key": "air_p4_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.46386146545410156,
-          "four_sparse_coefficients_and_pep_vectors": 0.2325441360473633
+          "direct_factor_workspace": 0.46572113037109375,
+          "four_sparse_coefficients_and_pep_vectors": 0.23440380096435548
         },
-        "conservative_upper_gib": 0.9457921981811523,
+        "conservative_upper_gib": 0.9485816955566406,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -3501,6 +3591,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3559,10 +3651,10 @@
       "matrix_key": "air_p4_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4809703826904297,
-          "four_sparse_coefficients_and_pep_vectors": 0.23514766693115235
+          "direct_factor_workspace": 0.48297882080078125,
+          "four_sparse_coefficients_and_pep_vectors": 0.23715610504150392
         },
-        "conservative_upper_gib": 0.9714555740356445,
+        "conservative_upper_gib": 0.9744682312011719,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -3578,6 +3670,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3636,10 +3730,10 @@
       "matrix_key": "air_p4_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5151882171630859,
-          "four_sparse_coefficients_and_pep_vectors": 0.24035472869873048
+          "direct_factor_workspace": 0.5174942016601562,
+          "four_sparse_coefficients_and_pep_vectors": 0.2426607131958008
         },
-        "conservative_upper_gib": 1.022782325744629,
+        "conservative_upper_gib": 1.0262413024902344,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -3655,6 +3749,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3713,10 +3809,10 @@
       "matrix_key": "air_p4_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8274259567260742,
-          "four_sparse_coefficients_and_pep_vectors": 0.28786916732788087
+          "direct_factor_workspace": 0.8324470520019531,
+          "four_sparse_coefficients_and_pep_vectors": 0.2928902626037598
         },
-        "conservative_upper_gib": 1.4911389350891113,
+        "conservative_upper_gib": 1.4986705780029297,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -3732,6 +3828,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3790,10 +3888,10 @@
       "matrix_key": "air_p4_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8736200332641602,
-          "four_sparse_coefficients_and_pep_vectors": 0.29489870071411134
+          "direct_factor_workspace": 0.8790428161621094,
+          "four_sparse_coefficients_and_pep_vectors": 0.30032148361206057
         },
-        "conservative_upper_gib": 1.5604300498962402,
+        "conservative_upper_gib": 1.568564224243164,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -3809,6 +3907,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3867,10 +3967,10 @@
       "matrix_key": "air_p4_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.966008186340332,
-          "four_sparse_coefficients_and_pep_vectors": 0.3089577674865723
+          "direct_factor_workspace": 0.9722343444824219,
+          "four_sparse_coefficients_and_pep_vectors": 0.31518392562866215
         },
-        "conservative_upper_gib": 1.699012279510498,
+        "conservative_upper_gib": 1.7083515167236327,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -3886,6 +3986,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -3944,10 +4046,10 @@
       "matrix_key": "air_p4_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.9985151290893555,
-          "four_sparse_coefficients_and_pep_vectors": 0.3139044761657715
+          "direct_factor_workspace": 1.0050239562988281,
+          "four_sparse_coefficients_and_pep_vectors": 0.32041330337524415
         },
-        "conservative_upper_gib": 1.7477726936340332,
+        "conservative_upper_gib": 1.7575359344482422,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -3963,6 +4065,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4021,10 +4125,10 @@
       "matrix_key": "air_p4_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.058396339416504,
-          "four_sparse_coefficients_and_pep_vectors": 0.3230168342590332
+          "direct_factor_workspace": 1.0654258728027344,
+          "four_sparse_coefficients_and_pep_vectors": 0.3300463676452637
         },
-        "conservative_upper_gib": 1.8375945091247559,
+        "conservative_upper_gib": 1.8481388092041016,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -4040,6 +4144,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4098,10 +4204,10 @@
       "matrix_key": "air_p4_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.1781587600708008,
-          "four_sparse_coefficients_and_pep_vectors": 0.34124155044555665
+          "direct_factor_workspace": 1.1862297058105469,
+          "four_sparse_coefficients_and_pep_vectors": 0.34931249618530275
         },
-        "conservative_upper_gib": 2.017238140106201,
+        "conservative_upper_gib": 2.0293445587158203,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -4117,6 +4223,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4175,10 +4283,10 @@
       "matrix_key": "air_p4_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.5010895729064941,
-          "four_sparse_coefficients_and_pep_vectors": 0.3903831958770752
+          "direct_factor_workspace": 1.5119686126708984,
+          "four_sparse_coefficients_and_pep_vectors": 0.4012622356414795
         },
-        "conservative_upper_gib": 2.501634359359741,
+        "conservative_upper_gib": 2.5179529190063477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -4194,6 +4302,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4252,10 +4362,10 @@
       "matrix_key": "air_p4_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.6011767387390137,
-          "four_sparse_coefficients_and_pep_vectors": 0.4056138515472412
+          "direct_factor_workspace": 1.6129261016845704,
+          "four_sparse_coefficients_and_pep_vectors": 0.4173632144927979
         },
-        "conservative_upper_gib": 2.6517651081085205,
+        "conservative_upper_gib": 2.669389152526856,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -4271,6 +4381,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4329,10 +4441,10 @@
       "matrix_key": "air_p4_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.8013510704040527,
-          "four_sparse_coefficients_and_pep_vectors": 0.43607516288757325
+          "direct_factor_workspace": 1.814841079711914,
+          "four_sparse_coefficients_and_pep_vectors": 0.44956517219543457
         },
-        "conservative_upper_gib": 2.952026605606079,
+        "conservative_upper_gib": 2.9722616195678713,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -4348,6 +4460,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4406,10 +4520,10 @@
       "matrix_key": "air_p4_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.3101987838745117,
-          "four_sparse_coefficients_and_pep_vectors": 0.5135085105895996
+          "direct_factor_workspace": 2.328113555908203,
+          "four_sparse_coefficients_and_pep_vectors": 0.531423282623291
         },
-        "conservative_upper_gib": 3.7152981758117676,
+        "conservative_upper_gib": 3.7421703338623047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -4425,6 +4539,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4483,10 +4599,10 @@
       "matrix_key": "air_p4_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.4750146865844727,
-          "four_sparse_coefficients_and_pep_vectors": 0.5385891914367675
+          "direct_factor_workspace": 2.4943626403808596,
+          "four_sparse_coefficients_and_pep_vectors": 0.5579371452331543
         },
-        "conservative_upper_gib": 3.962522029876709,
+        "conservative_upper_gib": 3.9915439605712892,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -4502,6 +4618,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4560,10 +4678,10 @@
       "matrix_key": "air_p4_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.8046464920043945,
-          "four_sparse_coefficients_and_pep_vectors": 0.5887505531311035
+          "direct_factor_workspace": 2.826860809326172,
+          "four_sparse_coefficients_and_pep_vectors": 0.610964870452881
         },
-        "conservative_upper_gib": 4.456969738006592,
+        "conservative_upper_gib": 4.4902912139892575,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -4579,6 +4697,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4637,10 +4757,10 @@
       "matrix_key": "lossy_homogeneous_p1_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2534904479980469,
-          "four_sparse_coefficients_and_pep_vectors": 0.20074386596679689
+          "direct_factor_workspace": 0.2537193298339844,
+          "four_sparse_coefficients_and_pep_vectors": 0.20097274780273439
         },
-        "conservative_upper_gib": 0.6302356719970703,
+        "conservative_upper_gib": 0.6305789947509766,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -4656,6 +4776,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4713,10 +4835,10 @@
       "matrix_key": "lossy_homogeneous_p1_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2537696838378906,
-          "four_sparse_coefficients_and_pep_vectors": 0.20080337524414063
+          "direct_factor_workspace": 0.2540168762207031,
+          "four_sparse_coefficients_and_pep_vectors": 0.20105056762695314
         },
-        "conservative_upper_gib": 0.6306545257568359,
+        "conservative_upper_gib": 0.6310253143310547,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -4732,6 +4854,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4789,10 +4913,10 @@
       "matrix_key": "lossy_homogeneous_p1_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25432815551757815,
-          "four_sparse_coefficients_and_pep_vectors": 0.20092239379882815
+          "direct_factor_workspace": 0.2546119689941406,
+          "four_sparse_coefficients_and_pep_vectors": 0.20120620727539062
         },
-        "conservative_upper_gib": 0.6314922332763673,
+        "conservative_upper_gib": 0.6319179534912109,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -4808,6 +4932,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4865,10 +4991,10 @@
       "matrix_key": "lossy_homogeneous_p1_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25942420959472656,
-          "four_sparse_coefficients_and_pep_vectors": 0.20200843811035157
+          "direct_factor_workspace": 0.2600421905517578,
+          "four_sparse_coefficients_and_pep_vectors": 0.20262641906738282
         },
-        "conservative_upper_gib": 0.6391363143920898,
+        "conservative_upper_gib": 0.6400632858276367,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -4884,6 +5010,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -4941,10 +5069,10 @@
       "matrix_key": "lossy_homogeneous_p1_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2601781463623047,
-          "four_sparse_coefficients_and_pep_vectors": 0.2021691131591797
+          "direct_factor_workspace": 0.26084556579589846,
+          "four_sparse_coefficients_and_pep_vectors": 0.20283653259277346
         },
-        "conservative_upper_gib": 0.640267219543457,
+        "conservative_upper_gib": 0.6412683486938477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -4960,6 +5088,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5017,10 +5147,10 @@
       "matrix_key": "lossy_homogeneous_p1_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26168601989746093,
-          "four_sparse_coefficients_and_pep_vectors": 0.20249046325683595
+          "direct_factor_workspace": 0.2624523162841797,
+          "four_sparse_coefficients_and_pep_vectors": 0.2032567596435547
         },
-        "conservative_upper_gib": 0.6425290298461914,
+        "conservative_upper_gib": 0.6436784744262696,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -5036,6 +5166,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5093,10 +5225,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26221656799316406,
-          "four_sparse_coefficients_and_pep_vectors": 0.20260353088378907
+          "direct_factor_workspace": 0.2630176544189453,
+          "four_sparse_coefficients_and_pep_vectors": 0.20340461730957032
         },
-        "conservative_upper_gib": 0.6433248519897461,
+        "conservative_upper_gib": 0.644526481628418,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -5112,6 +5244,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5169,10 +5303,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2631938934326172,
-          "four_sparse_coefficients_and_pep_vectors": 0.2028118133544922
+          "direct_factor_workspace": 0.26405906677246094,
+          "four_sparse_coefficients_and_pep_vectors": 0.20367698669433595
         },
-        "conservative_upper_gib": 0.6447908401489257,
+        "conservative_upper_gib": 0.6460886001586914,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -5188,6 +5322,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5245,10 +5381,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26514854431152346,
-          "four_sparse_coefficients_and_pep_vectors": 0.20322837829589846
+          "direct_factor_workspace": 0.2661418914794922,
+          "four_sparse_coefficients_and_pep_vectors": 0.2042217254638672
         },
-        "conservative_upper_gib": 0.6477228164672852,
+        "conservative_upper_gib": 0.6492128372192383,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -5264,6 +5400,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5321,10 +5459,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2704191207885742,
-          "four_sparse_coefficients_and_pep_vectors": 0.20435161590576173
+          "direct_factor_workspace": 0.2717580795288086,
+          "four_sparse_coefficients_and_pep_vectors": 0.2056905746459961
         },
-        "conservative_upper_gib": 0.6556286811828613,
+        "conservative_upper_gib": 0.6576371192932129,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -5340,6 +5478,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5397,10 +5537,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27205265045166016,
-          "four_sparse_coefficients_and_pep_vectors": 0.20469974517822268
+          "direct_factor_workspace": 0.2734987258911133,
+          "four_sparse_coefficients_and_pep_vectors": 0.20614582061767578
         },
-        "conservative_upper_gib": 0.6580789756774903,
+        "conservative_upper_gib": 0.66024808883667,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -5416,6 +5556,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5473,10 +5615,10 @@
       "matrix_key": "lossy_homogeneous_p1_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27531970977783204,
-          "four_sparse_coefficients_and_pep_vectors": 0.20539600372314454
+          "direct_factor_workspace": 0.27698001861572263,
+          "four_sparse_coefficients_and_pep_vectors": 0.20705631256103516
         },
-        "conservative_upper_gib": 0.662979564666748,
+        "conservative_upper_gib": 0.6654700279235839,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -5492,6 +5634,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5549,10 +5693,10 @@
       "matrix_key": "lossy_homogeneous_p1_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.28362464904785156,
-          "four_sparse_coefficients_and_pep_vectors": 0.20716590881347657
+          "direct_factor_workspace": 0.2858295440673828,
+          "four_sparse_coefficients_and_pep_vectors": 0.20937080383300782
         },
-        "conservative_upper_gib": 0.6754369735717773,
+        "conservative_upper_gib": 0.6787443161010742,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -5568,6 +5712,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5625,10 +5771,10 @@
       "matrix_key": "lossy_homogeneous_p1_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2863146209716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2077391815185547
+          "direct_factor_workspace": 0.2886959075927734,
+          "four_sparse_coefficients_and_pep_vectors": 0.21012046813964844
         },
-        "conservative_upper_gib": 0.6794719314575195,
+        "conservative_upper_gib": 0.6830438613891601,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -5644,6 +5790,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5701,10 +5849,10 @@
       "matrix_key": "lossy_homogeneous_p1_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2916945648193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.20888572692871094
+          "direct_factor_workspace": 0.2944286346435547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2116197967529297
         },
-        "conservative_upper_gib": 0.6875418472290039,
+        "conservative_upper_gib": 0.691642951965332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -5720,6 +5868,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5777,10 +5927,10 @@
       "matrix_key": "lossy_homogeneous_p2_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2728309631347656,
-          "four_sparse_coefficients_and_pep_vectors": 0.2039052963256836
+          "direct_factor_workspace": 0.27343177795410156,
+          "four_sparse_coefficients_and_pep_vectors": 0.20450611114501954
         },
-        "conservative_upper_gib": 0.6592464447021484,
+        "conservative_upper_gib": 0.6601476669311523,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -5796,6 +5946,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5853,10 +6005,10 @@
       "matrix_key": "lossy_homogeneous_p2_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2746574401855469,
-          "four_sparse_coefficients_and_pep_vectors": 0.2042177200317383
+          "direct_factor_workspace": 0.27530632019042967,
+          "four_sparse_coefficients_and_pep_vectors": 0.2048666000366211
         },
-        "conservative_upper_gib": 0.6619861602783204,
+        "conservative_upper_gib": 0.6629594802856444,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -5872,6 +6024,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -5929,10 +6083,10 @@
       "matrix_key": "lossy_homogeneous_p2_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27831039428710935,
-          "four_sparse_coefficients_and_pep_vectors": 0.20484256744384766
+          "direct_factor_workspace": 0.2790554046630859,
+          "four_sparse_coefficients_and_pep_vectors": 0.20558757781982423
         },
-        "conservative_upper_gib": 0.667465591430664,
+        "conservative_upper_gib": 0.6685831069946289,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -5948,6 +6102,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6005,10 +6161,10 @@
       "matrix_key": "lossy_homogeneous_p2_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3116436004638672,
-          "four_sparse_coefficients_and_pep_vectors": 0.21054430007934571
+          "direct_factor_workspace": 0.3132658004760742,
+          "four_sparse_coefficients_and_pep_vectors": 0.21216650009155275
         },
-        "conservative_upper_gib": 0.7174654006958008,
+        "conservative_upper_gib": 0.7198987007141113,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -6024,6 +6180,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6081,10 +6239,10 @@
       "matrix_key": "lossy_homogeneous_p2_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3165750885009766,
-          "four_sparse_coefficients_and_pep_vectors": 0.21138784408569336
+          "direct_factor_workspace": 0.31832706451416015,
+          "four_sparse_coefficients_and_pep_vectors": 0.21313982009887697
         },
-        "conservative_upper_gib": 0.7248626327514649,
+        "conservative_upper_gib": 0.7274905967712402,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -6100,6 +6258,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6157,10 +6317,10 @@
       "matrix_key": "lossy_homogeneous_p2_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3264380645751953,
-          "four_sparse_coefficients_and_pep_vectors": 0.21307493209838868
+          "direct_factor_workspace": 0.328449592590332,
+          "four_sparse_coefficients_and_pep_vectors": 0.2150864601135254
         },
-        "conservative_upper_gib": 0.7396570968627929,
+        "conservative_upper_gib": 0.7426743888854981,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -6176,6 +6336,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6233,10 +6395,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3299083709716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2136685371398926
+          "direct_factor_workspace": 0.33201122283935547,
+          "four_sparse_coefficients_and_pep_vectors": 0.21577138900756837
         },
-        "conservative_upper_gib": 0.7448625564575195,
+        "conservative_upper_gib": 0.7480168342590332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -6252,6 +6414,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6309,10 +6473,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3363010406494141,
-          "four_sparse_coefficients_and_pep_vectors": 0.214762020111084
+          "direct_factor_workspace": 0.3385721206665039,
+          "four_sparse_coefficients_and_pep_vectors": 0.21703310012817384
         },
-        "conservative_upper_gib": 0.7544515609741211,
+        "conservative_upper_gib": 0.7578581809997558,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -6328,6 +6492,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6385,10 +6551,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3490863800048828,
-          "four_sparse_coefficients_and_pep_vectors": 0.2169489860534668
+          "direct_factor_workspace": 0.35169391632080077,
+          "four_sparse_coefficients_and_pep_vectors": 0.21955652236938478
         },
-        "conservative_upper_gib": 0.7736295700073241,
+        "conservative_upper_gib": 0.7775408744812011,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -6404,6 +6570,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6461,10 +6629,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3835611343383789,
-          "four_sparse_coefficients_and_pep_vectors": 0.22284598350524903
+          "direct_factor_workspace": 0.38707590103149414,
+          "four_sparse_coefficients_and_pep_vectors": 0.22636075019836427
         },
-        "conservative_upper_gib": 0.8253417015075684,
+        "conservative_upper_gib": 0.8306138515472412,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -6480,6 +6648,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6537,10 +6707,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.39424602508544926,
-          "four_sparse_coefficients_and_pep_vectors": 0.22467366218566895
+          "direct_factor_workspace": 0.3980419731140137,
+          "four_sparse_coefficients_and_pep_vectors": 0.2284696102142334
         },
-        "conservative_upper_gib": 0.8413690376281739,
+        "conservative_upper_gib": 0.8470629596710205,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -6556,6 +6726,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6613,10 +6785,10 @@
       "matrix_key": "lossy_homogeneous_p2_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.41561580657958985,
-          "four_sparse_coefficients_and_pep_vectors": 0.2283290195465088
+          "direct_factor_workspace": 0.41997411727905276,
+          "four_sparse_coefficients_and_pep_vectors": 0.23268733024597169
         },
-        "conservative_upper_gib": 0.8734237098693848,
+        "conservative_upper_gib": 0.8799611759185791,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -6632,6 +6804,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6689,10 +6863,10 @@
       "matrix_key": "lossy_homogeneous_p2_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4699382781982422,
-          "four_sparse_coefficients_and_pep_vectors": 0.23762102127075196
+          "direct_factor_workspace": 0.4757261276245117,
+          "four_sparse_coefficients_and_pep_vectors": 0.2434088706970215
         },
-        "conservative_upper_gib": 0.9549074172973633,
+        "conservative_upper_gib": 0.9635891914367676,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -6708,6 +6882,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6765,10 +6941,10 @@
       "matrix_key": "lossy_homogeneous_p2_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48753334045410157,
-          "four_sparse_coefficients_and_pep_vectors": 0.24063070297241212
+          "direct_factor_workspace": 0.4937842178344727,
+          "four_sparse_coefficients_and_pep_vectors": 0.2468815803527832
         },
-        "conservative_upper_gib": 0.9813000106811524,
+        "conservative_upper_gib": 0.990676326751709,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -6784,6 +6960,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6841,10 +7019,10 @@
       "matrix_key": "lossy_homogeneous_p2_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5227234649658203,
-          "four_sparse_coefficients_and_pep_vectors": 0.24665006637573245
+          "direct_factor_workspace": 0.5299003982543946,
+          "four_sparse_coefficients_and_pep_vectors": 0.25382699966430666
         },
-        "conservative_upper_gib": 1.0340851974487304,
+        "conservative_upper_gib": 1.044850597381592,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -6860,6 +7038,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6917,10 +7097,10 @@
       "matrix_key": "lossy_homogeneous_p3_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3315391540527344,
-          "four_sparse_coefficients_and_pep_vectors": 0.21287460327148439
+          "direct_factor_workspace": 0.3326835632324219,
+          "four_sparse_coefficients_and_pep_vectors": 0.21401901245117189
         },
-        "conservative_upper_gib": 0.7473087310791016,
+        "conservative_upper_gib": 0.7490253448486328,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -6936,6 +7116,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -6994,10 +7176,10 @@
       "matrix_key": "lossy_homogeneous_p3_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3380622863769531,
-          "four_sparse_coefficients_and_pep_vectors": 0.21390457153320314
+          "direct_factor_workspace": 0.3392982482910156,
+          "four_sparse_coefficients_and_pep_vectors": 0.21514053344726564
         },
-        "conservative_upper_gib": 0.7570934295654297,
+        "conservative_upper_gib": 0.7589473724365234,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -7013,6 +7195,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7071,10 +7255,10 @@
       "matrix_key": "lossy_homogeneous_p3_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3511085510253906,
-          "four_sparse_coefficients_and_pep_vectors": 0.21596450805664064
+          "direct_factor_workspace": 0.3525276184082031,
+          "four_sparse_coefficients_and_pep_vectors": 0.21738357543945314
         },
-        "conservative_upper_gib": 0.7766628265380859,
+        "conservative_upper_gib": 0.7787914276123047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -7090,6 +7274,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7148,10 +7334,10 @@
       "matrix_key": "lossy_homogeneous_p3_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4701557159423828,
-          "four_sparse_coefficients_and_pep_vectors": 0.23476142883300782
+          "direct_factor_workspace": 0.47324562072753906,
+          "four_sparse_coefficients_and_pep_vectors": 0.23785133361816407
         },
-        "conservative_upper_gib": 0.9552335739135742,
+        "conservative_upper_gib": 0.9598684310913086,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -7167,6 +7353,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7225,10 +7413,10 @@
       "matrix_key": "lossy_homogeneous_p3_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48776817321777344,
-          "four_sparse_coefficients_and_pep_vectors": 0.23754234313964845
+          "direct_factor_workspace": 0.4911052703857422,
+          "four_sparse_coefficients_and_pep_vectors": 0.2408794403076172
         },
-        "conservative_upper_gib": 0.9816522598266602,
+        "conservative_upper_gib": 0.9866579055786133,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -7244,6 +7432,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7302,10 +7492,10 @@
       "matrix_key": "lossy_homogeneous_p3_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5229930877685547,
-          "four_sparse_coefficients_and_pep_vectors": 0.2431041717529297
+          "direct_factor_workspace": 0.5268245697021484,
+          "four_sparse_coefficients_and_pep_vectors": 0.24693565368652345
         },
-        "conservative_upper_gib": 1.034489631652832,
+        "conservative_upper_gib": 1.0402368545532226,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -7321,6 +7511,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7379,10 +7571,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5353870391845703,
-          "four_sparse_coefficients_and_pep_vectors": 0.24506111145019532
+          "direct_factor_workspace": 0.5393924713134766,
+          "four_sparse_coefficients_and_pep_vectors": 0.24906654357910157
         },
-        "conservative_upper_gib": 1.0530805587768555,
+        "conservative_upper_gib": 1.0590887069702148,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -7398,6 +7590,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7456,10 +7650,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5582180023193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.24866600036621095
+          "direct_factor_workspace": 0.5625438690185547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2529918670654297
         },
-        "conservative_upper_gib": 1.087327003479004,
+        "conservative_upper_gib": 1.093815803527832,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -7475,6 +7669,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7533,10 +7729,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.6038799285888672,
-          "four_sparse_coefficients_and_pep_vectors": 0.2558757781982422
+          "direct_factor_workspace": 0.6088466644287109,
+          "four_sparse_coefficients_and_pep_vectors": 0.26084251403808595
         },
-        "conservative_upper_gib": 1.1558198928833008,
+        "conservative_upper_gib": 1.1632699966430664,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -7552,6 +7748,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7610,10 +7808,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7270040512084961,
-          "four_sparse_coefficients_and_pep_vectors": 0.2753164291381836
+          "direct_factor_workspace": 0.733698844909668,
+          "four_sparse_coefficients_and_pep_vectors": 0.2820112228393555
         },
-        "conservative_upper_gib": 1.3405060768127441,
+        "conservative_upper_gib": 1.350548267364502,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -7629,6 +7827,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7687,10 +7887,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7651643753051758,
-          "four_sparse_coefficients_and_pep_vectors": 0.2813417434692383
+          "direct_factor_workspace": 0.7723947525024415,
+          "four_sparse_coefficients_and_pep_vectors": 0.28857212066650395
         },
-        "conservative_upper_gib": 1.3977465629577637,
+        "conservative_upper_gib": 1.4085921287536622,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -7706,6 +7906,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7764,10 +7966,10 @@
       "matrix_key": "lossy_homogeneous_p3_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8414850234985352,
-          "four_sparse_coefficients_and_pep_vectors": 0.29339237213134767
+          "direct_factor_workspace": 0.8497865676879883,
+          "four_sparse_coefficients_and_pep_vectors": 0.3016939163208008
         },
-        "conservative_upper_gib": 1.5122275352478027,
+        "conservative_upper_gib": 1.5246798515319826,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -7783,6 +7985,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7841,10 +8045,10 @@
       "matrix_key": "lossy_homogeneous_p3_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0354938507080078,
-          "four_sparse_coefficients_and_pep_vectors": 0.3240253448486328
+          "direct_factor_workspace": 1.046518325805664,
+          "four_sparse_coefficients_and_pep_vectors": 0.3350498199462891
         },
-        "conservative_upper_gib": 1.8032407760620117,
+        "conservative_upper_gib": 1.819777488708496,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -7860,6 +8064,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7918,10 +8124,10 @@
       "matrix_key": "lossy_homogeneous_p3_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0983333587646484,
-          "four_sparse_coefficients_and_pep_vectors": 0.33394737243652345
+          "direct_factor_workspace": 1.1102397918701172,
+          "four_sparse_coefficients_and_pep_vectors": 0.3458538055419922
         },
-        "conservative_upper_gib": 1.8975000381469727,
+        "conservative_upper_gib": 1.915359687805176,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -7937,6 +8143,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -7995,10 +8203,10 @@
       "matrix_key": "lossy_homogeneous_p3_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.2240123748779297,
-          "four_sparse_coefficients_and_pep_vectors": 0.3537914276123047
+          "direct_factor_workspace": 1.2376827239990233,
+          "four_sparse_coefficients_and_pep_vectors": 0.3674617767333984
         },
-        "conservative_upper_gib": 2.0860185623168945,
+        "conservative_upper_gib": 2.106524085998535,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -8014,6 +8222,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8072,10 +8282,10 @@
       "matrix_key": "lossy_homogeneous_p4_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.46386146545410156,
-          "four_sparse_coefficients_and_pep_vectors": 0.2325441360473633
+          "direct_factor_workspace": 0.46572113037109375,
+          "four_sparse_coefficients_and_pep_vectors": 0.23440380096435548
         },
-        "conservative_upper_gib": 0.9457921981811523,
+        "conservative_upper_gib": 0.9485816955566406,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -8091,6 +8301,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8149,10 +8361,10 @@
       "matrix_key": "lossy_homogeneous_p4_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4809703826904297,
-          "four_sparse_coefficients_and_pep_vectors": 0.23514766693115235
+          "direct_factor_workspace": 0.48297882080078125,
+          "four_sparse_coefficients_and_pep_vectors": 0.23715610504150392
         },
-        "conservative_upper_gib": 0.9714555740356445,
+        "conservative_upper_gib": 0.9744682312011719,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -8168,6 +8380,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8226,10 +8440,10 @@
       "matrix_key": "lossy_homogeneous_p4_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5151882171630859,
-          "four_sparse_coefficients_and_pep_vectors": 0.24035472869873048
+          "direct_factor_workspace": 0.5174942016601562,
+          "four_sparse_coefficients_and_pep_vectors": 0.2426607131958008
         },
-        "conservative_upper_gib": 1.022782325744629,
+        "conservative_upper_gib": 1.0262413024902344,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -8245,6 +8459,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8303,10 +8519,10 @@
       "matrix_key": "lossy_homogeneous_p4_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8274259567260742,
-          "four_sparse_coefficients_and_pep_vectors": 0.28786916732788087
+          "direct_factor_workspace": 0.8324470520019531,
+          "four_sparse_coefficients_and_pep_vectors": 0.2928902626037598
         },
-        "conservative_upper_gib": 1.4911389350891113,
+        "conservative_upper_gib": 1.4986705780029297,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -8322,6 +8538,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8380,10 +8598,10 @@
       "matrix_key": "lossy_homogeneous_p4_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8736200332641602,
-          "four_sparse_coefficients_and_pep_vectors": 0.29489870071411134
+          "direct_factor_workspace": 0.8790428161621094,
+          "four_sparse_coefficients_and_pep_vectors": 0.30032148361206057
         },
-        "conservative_upper_gib": 1.5604300498962402,
+        "conservative_upper_gib": 1.568564224243164,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -8399,6 +8617,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8457,10 +8677,10 @@
       "matrix_key": "lossy_homogeneous_p4_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.966008186340332,
-          "four_sparse_coefficients_and_pep_vectors": 0.3089577674865723
+          "direct_factor_workspace": 0.9722343444824219,
+          "four_sparse_coefficients_and_pep_vectors": 0.31518392562866215
         },
-        "conservative_upper_gib": 1.699012279510498,
+        "conservative_upper_gib": 1.7083515167236327,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -8476,6 +8696,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8534,10 +8756,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.9985151290893555,
-          "four_sparse_coefficients_and_pep_vectors": 0.3139044761657715
+          "direct_factor_workspace": 1.0050239562988281,
+          "four_sparse_coefficients_and_pep_vectors": 0.32041330337524415
         },
-        "conservative_upper_gib": 1.7477726936340332,
+        "conservative_upper_gib": 1.7575359344482422,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -8553,6 +8775,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8611,10 +8835,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.058396339416504,
-          "four_sparse_coefficients_and_pep_vectors": 0.3230168342590332
+          "direct_factor_workspace": 1.0654258728027344,
+          "four_sparse_coefficients_and_pep_vectors": 0.3300463676452637
         },
-        "conservative_upper_gib": 1.8375945091247559,
+        "conservative_upper_gib": 1.8481388092041016,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -8630,6 +8854,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8688,10 +8914,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.1781587600708008,
-          "four_sparse_coefficients_and_pep_vectors": 0.34124155044555665
+          "direct_factor_workspace": 1.1862297058105469,
+          "four_sparse_coefficients_and_pep_vectors": 0.34931249618530275
         },
-        "conservative_upper_gib": 2.017238140106201,
+        "conservative_upper_gib": 2.0293445587158203,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -8707,6 +8933,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8765,10 +8993,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.5010895729064941,
-          "four_sparse_coefficients_and_pep_vectors": 0.3903831958770752
+          "direct_factor_workspace": 1.5119686126708984,
+          "four_sparse_coefficients_and_pep_vectors": 0.4012622356414795
         },
-        "conservative_upper_gib": 2.501634359359741,
+        "conservative_upper_gib": 2.5179529190063477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -8784,6 +9012,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8842,10 +9072,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.6011767387390137,
-          "four_sparse_coefficients_and_pep_vectors": 0.4056138515472412
+          "direct_factor_workspace": 1.6129261016845704,
+          "four_sparse_coefficients_and_pep_vectors": 0.4173632144927979
         },
-        "conservative_upper_gib": 2.6517651081085205,
+        "conservative_upper_gib": 2.669389152526856,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -8861,6 +9091,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8919,10 +9151,10 @@
       "matrix_key": "lossy_homogeneous_p4_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.8013510704040527,
-          "four_sparse_coefficients_and_pep_vectors": 0.43607516288757325
+          "direct_factor_workspace": 1.814841079711914,
+          "four_sparse_coefficients_and_pep_vectors": 0.44956517219543457
         },
-        "conservative_upper_gib": 2.952026605606079,
+        "conservative_upper_gib": 2.9722616195678713,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -8938,6 +9170,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -8996,10 +9230,10 @@
       "matrix_key": "lossy_homogeneous_p4_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.3101987838745117,
-          "four_sparse_coefficients_and_pep_vectors": 0.5135085105895996
+          "direct_factor_workspace": 2.328113555908203,
+          "four_sparse_coefficients_and_pep_vectors": 0.531423282623291
         },
-        "conservative_upper_gib": 3.7152981758117676,
+        "conservative_upper_gib": 3.7421703338623047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -9015,6 +9249,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9073,10 +9309,10 @@
       "matrix_key": "lossy_homogeneous_p4_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.4750146865844727,
-          "four_sparse_coefficients_and_pep_vectors": 0.5385891914367675
+          "direct_factor_workspace": 2.4943626403808596,
+          "four_sparse_coefficients_and_pep_vectors": 0.5579371452331543
         },
-        "conservative_upper_gib": 3.962522029876709,
+        "conservative_upper_gib": 3.9915439605712892,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -9092,6 +9328,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9150,10 +9388,10 @@
       "matrix_key": "lossy_homogeneous_p4_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.8046464920043945,
-          "four_sparse_coefficients_and_pep_vectors": 0.5887505531311035
+          "direct_factor_workspace": 2.826860809326172,
+          "four_sparse_coefficients_and_pep_vectors": 0.610964870452881
         },
-        "conservative_upper_gib": 4.456969738006592,
+        "conservative_upper_gib": 4.4902912139892575,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -9169,6 +9407,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9227,10 +9467,10 @@
       "matrix_key": "stage4_xy_p1_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2534904479980469,
-          "four_sparse_coefficients_and_pep_vectors": 0.20074386596679689
+          "direct_factor_workspace": 0.2537193298339844,
+          "four_sparse_coefficients_and_pep_vectors": 0.20097274780273439
         },
-        "conservative_upper_gib": 0.6302356719970703,
+        "conservative_upper_gib": 0.6305789947509766,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -9246,6 +9486,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9303,10 +9545,10 @@
       "matrix_key": "stage4_xy_p1_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2537696838378906,
-          "four_sparse_coefficients_and_pep_vectors": 0.20080337524414063
+          "direct_factor_workspace": 0.2540168762207031,
+          "four_sparse_coefficients_and_pep_vectors": 0.20105056762695314
         },
-        "conservative_upper_gib": 0.6306545257568359,
+        "conservative_upper_gib": 0.6310253143310547,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -9322,6 +9564,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9379,10 +9623,10 @@
       "matrix_key": "stage4_xy_p1_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25432815551757815,
-          "four_sparse_coefficients_and_pep_vectors": 0.20092239379882815
+          "direct_factor_workspace": 0.2546119689941406,
+          "four_sparse_coefficients_and_pep_vectors": 0.20120620727539062
         },
-        "conservative_upper_gib": 0.6314922332763673,
+        "conservative_upper_gib": 0.6319179534912109,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 15360,
@@ -9398,6 +9642,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9455,10 +9701,10 @@
       "matrix_key": "stage4_xy_p1_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.25942420959472656,
-          "four_sparse_coefficients_and_pep_vectors": 0.20200843811035157
+          "direct_factor_workspace": 0.2600421905517578,
+          "four_sparse_coefficients_and_pep_vectors": 0.20262641906738282
         },
-        "conservative_upper_gib": 0.6391363143920898,
+        "conservative_upper_gib": 0.6400632858276367,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -9474,6 +9720,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9531,10 +9779,10 @@
       "matrix_key": "stage4_xy_p1_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2601781463623047,
-          "four_sparse_coefficients_and_pep_vectors": 0.2021691131591797
+          "direct_factor_workspace": 0.26084556579589846,
+          "four_sparse_coefficients_and_pep_vectors": 0.20283653259277346
         },
-        "conservative_upper_gib": 0.640267219543457,
+        "conservative_upper_gib": 0.6412683486938477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -9550,6 +9798,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9607,10 +9857,10 @@
       "matrix_key": "stage4_xy_p1_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26168601989746093,
-          "four_sparse_coefficients_and_pep_vectors": 0.20249046325683595
+          "direct_factor_workspace": 0.2624523162841797,
+          "four_sparse_coefficients_and_pep_vectors": 0.2032567596435547
         },
-        "conservative_upper_gib": 0.6425290298461914,
+        "conservative_upper_gib": 0.6436784744262696,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 41472,
@@ -9626,6 +9876,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9683,10 +9935,10 @@
       "matrix_key": "stage4_xy_p1_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26221656799316406,
-          "four_sparse_coefficients_and_pep_vectors": 0.20260353088378907
+          "direct_factor_workspace": 0.2630176544189453,
+          "four_sparse_coefficients_and_pep_vectors": 0.20340461730957032
         },
-        "conservative_upper_gib": 0.6433248519897461,
+        "conservative_upper_gib": 0.644526481628418,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -9702,6 +9954,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9759,10 +10013,10 @@
       "matrix_key": "stage4_xy_p1_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2631938934326172,
-          "four_sparse_coefficients_and_pep_vectors": 0.2028118133544922
+          "direct_factor_workspace": 0.26405906677246094,
+          "four_sparse_coefficients_and_pep_vectors": 0.20367698669433595
         },
-        "conservative_upper_gib": 0.6447908401489257,
+        "conservative_upper_gib": 0.6460886001586914,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -9778,6 +10032,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9835,10 +10091,10 @@
       "matrix_key": "stage4_xy_p1_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.26514854431152346,
-          "four_sparse_coefficients_and_pep_vectors": 0.20322837829589846
+          "direct_factor_workspace": 0.2661418914794922,
+          "four_sparse_coefficients_and_pep_vectors": 0.2042217254638672
         },
-        "conservative_upper_gib": 0.6477228164672852,
+        "conservative_upper_gib": 0.6492128372192383,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 53760,
@@ -9854,6 +10110,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9911,10 +10169,10 @@
       "matrix_key": "stage4_xy_p1_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2704191207885742,
-          "four_sparse_coefficients_and_pep_vectors": 0.20435161590576173
+          "direct_factor_workspace": 0.2717580795288086,
+          "four_sparse_coefficients_and_pep_vectors": 0.2056905746459961
         },
-        "conservative_upper_gib": 0.6556286811828613,
+        "conservative_upper_gib": 0.6576371192932129,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -9930,6 +10188,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -9987,10 +10247,10 @@
       "matrix_key": "stage4_xy_p1_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27205265045166016,
-          "four_sparse_coefficients_and_pep_vectors": 0.20469974517822268
+          "direct_factor_workspace": 0.2734987258911133,
+          "four_sparse_coefficients_and_pep_vectors": 0.20614582061767578
         },
-        "conservative_upper_gib": 0.6580789756774903,
+        "conservative_upper_gib": 0.66024808883667,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -10006,6 +10266,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10063,10 +10325,10 @@
       "matrix_key": "stage4_xy_p1_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27531970977783204,
-          "four_sparse_coefficients_and_pep_vectors": 0.20539600372314454
+          "direct_factor_workspace": 0.27698001861572263,
+          "four_sparse_coefficients_and_pep_vectors": 0.20705631256103516
         },
-        "conservative_upper_gib": 0.662979564666748,
+        "conservative_upper_gib": 0.6654700279235839,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 89856,
@@ -10082,6 +10344,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10139,10 +10403,10 @@
       "matrix_key": "stage4_xy_p1_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.28362464904785156,
-          "four_sparse_coefficients_and_pep_vectors": 0.20716590881347657
+          "direct_factor_workspace": 0.2858295440673828,
+          "four_sparse_coefficients_and_pep_vectors": 0.20937080383300782
         },
-        "conservative_upper_gib": 0.6754369735717773,
+        "conservative_upper_gib": 0.6787443161010742,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -10158,6 +10422,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10215,10 +10481,10 @@
       "matrix_key": "stage4_xy_p1_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2863146209716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2077391815185547
+          "direct_factor_workspace": 0.2886959075927734,
+          "four_sparse_coefficients_and_pep_vectors": 0.21012046813964844
         },
-        "conservative_upper_gib": 0.6794719314575195,
+        "conservative_upper_gib": 0.6830438613891601,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -10234,6 +10500,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10291,10 +10559,10 @@
       "matrix_key": "stage4_xy_p1_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2916945648193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.20888572692871094
+          "direct_factor_workspace": 0.2944286346435547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2116197967529297
         },
-        "conservative_upper_gib": 0.6875418472290039,
+        "conservative_upper_gib": 0.691642951965332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 147968,
@@ -10310,6 +10578,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10367,10 +10637,10 @@
       "matrix_key": "stage4_xy_p2_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2728309631347656,
-          "four_sparse_coefficients_and_pep_vectors": 0.2039052963256836
+          "direct_factor_workspace": 0.27343177795410156,
+          "four_sparse_coefficients_and_pep_vectors": 0.20450611114501954
         },
-        "conservative_upper_gib": 0.6592464447021484,
+        "conservative_upper_gib": 0.6601476669311523,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -10386,6 +10656,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10443,10 +10715,10 @@
       "matrix_key": "stage4_xy_p2_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.2746574401855469,
-          "four_sparse_coefficients_and_pep_vectors": 0.2042177200317383
+          "direct_factor_workspace": 0.27530632019042967,
+          "four_sparse_coefficients_and_pep_vectors": 0.2048666000366211
         },
-        "conservative_upper_gib": 0.6619861602783204,
+        "conservative_upper_gib": 0.6629594802856444,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -10462,6 +10734,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10519,10 +10793,10 @@
       "matrix_key": "stage4_xy_p2_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.27831039428710935,
-          "four_sparse_coefficients_and_pep_vectors": 0.20484256744384766
+          "direct_factor_workspace": 0.2790554046630859,
+          "four_sparse_coefficients_and_pep_vectors": 0.20558757781982423
         },
-        "conservative_upper_gib": 0.667465591430664,
+        "conservative_upper_gib": 0.6685831069946289,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 105840,
@@ -10538,6 +10812,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10595,10 +10871,10 @@
       "matrix_key": "stage4_xy_p2_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3116436004638672,
-          "four_sparse_coefficients_and_pep_vectors": 0.21054430007934571
+          "direct_factor_workspace": 0.3132658004760742,
+          "four_sparse_coefficients_and_pep_vectors": 0.21216650009155275
         },
-        "conservative_upper_gib": 0.7174654006958008,
+        "conservative_upper_gib": 0.7198987007141113,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -10614,6 +10890,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10671,10 +10949,10 @@
       "matrix_key": "stage4_xy_p2_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3165750885009766,
-          "four_sparse_coefficients_and_pep_vectors": 0.21138784408569336
+          "direct_factor_workspace": 0.31832706451416015,
+          "four_sparse_coefficients_and_pep_vectors": 0.21313982009887697
         },
-        "conservative_upper_gib": 0.7248626327514649,
+        "conservative_upper_gib": 0.7274905967712402,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -10690,6 +10968,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10747,10 +11027,10 @@
       "matrix_key": "stage4_xy_p2_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3264380645751953,
-          "four_sparse_coefficients_and_pep_vectors": 0.21307493209838868
+          "direct_factor_workspace": 0.328449592590332,
+          "four_sparse_coefficients_and_pep_vectors": 0.2150864601135254
         },
-        "conservative_upper_gib": 0.7396570968627929,
+        "conservative_upper_gib": 0.7426743888854981,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 285768,
@@ -10766,6 +11046,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10823,10 +11105,10 @@
       "matrix_key": "stage4_xy_p2_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3299083709716797,
-          "four_sparse_coefficients_and_pep_vectors": 0.2136685371398926
+          "direct_factor_workspace": 0.33201122283935547,
+          "four_sparse_coefficients_and_pep_vectors": 0.21577138900756837
         },
-        "conservative_upper_gib": 0.7448625564575195,
+        "conservative_upper_gib": 0.7480168342590332,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -10842,6 +11124,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10899,10 +11183,10 @@
       "matrix_key": "stage4_xy_p2_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3363010406494141,
-          "four_sparse_coefficients_and_pep_vectors": 0.214762020111084
+          "direct_factor_workspace": 0.3385721206665039,
+          "four_sparse_coefficients_and_pep_vectors": 0.21703310012817384
         },
-        "conservative_upper_gib": 0.7544515609741211,
+        "conservative_upper_gib": 0.7578581809997558,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -10918,6 +11202,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -10975,10 +11261,10 @@
       "matrix_key": "stage4_xy_p2_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3490863800048828,
-          "four_sparse_coefficients_and_pep_vectors": 0.2169489860534668
+          "direct_factor_workspace": 0.35169391632080077,
+          "four_sparse_coefficients_and_pep_vectors": 0.21955652236938478
         },
-        "conservative_upper_gib": 0.7736295700073241,
+        "conservative_upper_gib": 0.7775408744812011,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 370440,
@@ -10994,6 +11280,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11051,10 +11339,10 @@
       "matrix_key": "stage4_xy_p2_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3835611343383789,
-          "four_sparse_coefficients_and_pep_vectors": 0.22284598350524903
+          "direct_factor_workspace": 0.38707590103149414,
+          "four_sparse_coefficients_and_pep_vectors": 0.22636075019836427
         },
-        "conservative_upper_gib": 0.8253417015075684,
+        "conservative_upper_gib": 0.8306138515472412,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -11070,6 +11358,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11127,10 +11417,10 @@
       "matrix_key": "stage4_xy_p2_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.39424602508544926,
-          "four_sparse_coefficients_and_pep_vectors": 0.22467366218566895
+          "direct_factor_workspace": 0.3980419731140137,
+          "four_sparse_coefficients_and_pep_vectors": 0.2284696102142334
         },
-        "conservative_upper_gib": 0.8413690376281739,
+        "conservative_upper_gib": 0.8470629596710205,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -11146,6 +11436,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11203,10 +11495,10 @@
       "matrix_key": "stage4_xy_p2_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.41561580657958985,
-          "four_sparse_coefficients_and_pep_vectors": 0.2283290195465088
+          "direct_factor_workspace": 0.41997411727905276,
+          "four_sparse_coefficients_and_pep_vectors": 0.23268733024597169
         },
-        "conservative_upper_gib": 0.8734237098693848,
+        "conservative_upper_gib": 0.8799611759185791,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 619164,
@@ -11222,6 +11514,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11279,10 +11573,10 @@
       "matrix_key": "stage4_xy_p2_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4699382781982422,
-          "four_sparse_coefficients_and_pep_vectors": 0.23762102127075196
+          "direct_factor_workspace": 0.4757261276245117,
+          "four_sparse_coefficients_and_pep_vectors": 0.2434088706970215
         },
-        "conservative_upper_gib": 0.9549074172973633,
+        "conservative_upper_gib": 0.9635891914367676,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -11298,6 +11592,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11355,10 +11651,10 @@
       "matrix_key": "stage4_xy_p2_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48753334045410157,
-          "four_sparse_coefficients_and_pep_vectors": 0.24063070297241212
+          "direct_factor_workspace": 0.4937842178344727,
+          "four_sparse_coefficients_and_pep_vectors": 0.2468815803527832
         },
-        "conservative_upper_gib": 0.9813000106811524,
+        "conservative_upper_gib": 0.990676326751709,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -11374,6 +11670,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11431,10 +11729,10 @@
       "matrix_key": "stage4_xy_p2_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5227234649658203,
-          "four_sparse_coefficients_and_pep_vectors": 0.24665006637573245
+          "direct_factor_workspace": 0.5299003982543946,
+          "four_sparse_coefficients_and_pep_vectors": 0.25382699966430666
         },
-        "conservative_upper_gib": 1.0340851974487304,
+        "conservative_upper_gib": 1.044850597381592,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1019592,
@@ -11450,6 +11748,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11507,10 +11807,10 @@
       "matrix_key": "stage4_xy_p3_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3315391540527344,
-          "four_sparse_coefficients_and_pep_vectors": 0.21287460327148439
+          "direct_factor_workspace": 0.3326835632324219,
+          "four_sparse_coefficients_and_pep_vectors": 0.21401901245117189
         },
-        "conservative_upper_gib": 0.7473087310791016,
+        "conservative_upper_gib": 0.7490253448486328,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -11526,6 +11826,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11584,10 +11886,10 @@
       "matrix_key": "stage4_xy_p3_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3380622863769531,
-          "four_sparse_coefficients_and_pep_vectors": 0.21390457153320314
+          "direct_factor_workspace": 0.3392982482910156,
+          "four_sparse_coefficients_and_pep_vectors": 0.21514053344726564
         },
-        "conservative_upper_gib": 0.7570934295654297,
+        "conservative_upper_gib": 0.7589473724365234,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -11603,6 +11905,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11661,10 +11965,10 @@
       "matrix_key": "stage4_xy_p3_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.3511085510253906,
-          "four_sparse_coefficients_and_pep_vectors": 0.21596450805664064
+          "direct_factor_workspace": 0.3525276184082031,
+          "four_sparse_coefficients_and_pep_vectors": 0.21738357543945314
         },
-        "conservative_upper_gib": 0.7766628265380859,
+        "conservative_upper_gib": 0.7787914276123047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 384000,
@@ -11680,6 +11984,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11738,10 +12044,10 @@
       "matrix_key": "stage4_xy_p3_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4701557159423828,
-          "four_sparse_coefficients_and_pep_vectors": 0.23476142883300782
+          "direct_factor_workspace": 0.47324562072753906,
+          "four_sparse_coefficients_and_pep_vectors": 0.23785133361816407
         },
-        "conservative_upper_gib": 0.9552335739135742,
+        "conservative_upper_gib": 0.9598684310913086,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -11757,6 +12063,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11815,10 +12123,10 @@
       "matrix_key": "stage4_xy_p3_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.48776817321777344,
-          "four_sparse_coefficients_and_pep_vectors": 0.23754234313964845
+          "direct_factor_workspace": 0.4911052703857422,
+          "four_sparse_coefficients_and_pep_vectors": 0.2408794403076172
         },
-        "conservative_upper_gib": 0.9816522598266602,
+        "conservative_upper_gib": 0.9866579055786133,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -11834,6 +12142,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11892,10 +12202,10 @@
       "matrix_key": "stage4_xy_p3_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5229930877685547,
-          "four_sparse_coefficients_and_pep_vectors": 0.2431041717529297
+          "direct_factor_workspace": 0.5268245697021484,
+          "four_sparse_coefficients_and_pep_vectors": 0.24693565368652345
         },
-        "conservative_upper_gib": 1.034489631652832,
+        "conservative_upper_gib": 1.0402368545532226,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1036800,
@@ -11911,6 +12221,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -11969,10 +12281,10 @@
       "matrix_key": "stage4_xy_p3_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5353870391845703,
-          "four_sparse_coefficients_and_pep_vectors": 0.24506111145019532
+          "direct_factor_workspace": 0.5393924713134766,
+          "four_sparse_coefficients_and_pep_vectors": 0.24906654357910157
         },
-        "conservative_upper_gib": 1.0530805587768555,
+        "conservative_upper_gib": 1.0590887069702148,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -11988,6 +12300,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12046,10 +12360,10 @@
       "matrix_key": "stage4_xy_p3_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5582180023193359,
-          "four_sparse_coefficients_and_pep_vectors": 0.24866600036621095
+          "direct_factor_workspace": 0.5625438690185547,
+          "four_sparse_coefficients_and_pep_vectors": 0.2529918670654297
         },
-        "conservative_upper_gib": 1.087327003479004,
+        "conservative_upper_gib": 1.093815803527832,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -12065,6 +12379,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12123,10 +12439,10 @@
       "matrix_key": "stage4_xy_p3_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.6038799285888672,
-          "four_sparse_coefficients_and_pep_vectors": 0.2558757781982422
+          "direct_factor_workspace": 0.6088466644287109,
+          "four_sparse_coefficients_and_pep_vectors": 0.26084251403808595
         },
-        "conservative_upper_gib": 1.1558198928833008,
+        "conservative_upper_gib": 1.1632699966430664,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1344000,
@@ -12142,6 +12458,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12200,10 +12518,10 @@
       "matrix_key": "stage4_xy_p3_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7270040512084961,
-          "four_sparse_coefficients_and_pep_vectors": 0.2753164291381836
+          "direct_factor_workspace": 0.733698844909668,
+          "four_sparse_coefficients_and_pep_vectors": 0.2820112228393555
         },
-        "conservative_upper_gib": 1.3405060768127441,
+        "conservative_upper_gib": 1.350548267364502,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -12219,6 +12537,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12277,10 +12597,10 @@
       "matrix_key": "stage4_xy_p3_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.7651643753051758,
-          "four_sparse_coefficients_and_pep_vectors": 0.2813417434692383
+          "direct_factor_workspace": 0.7723947525024415,
+          "four_sparse_coefficients_and_pep_vectors": 0.28857212066650395
         },
-        "conservative_upper_gib": 1.3977465629577637,
+        "conservative_upper_gib": 1.4085921287536622,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -12296,6 +12616,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12354,10 +12676,10 @@
       "matrix_key": "stage4_xy_p3_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8414850234985352,
-          "four_sparse_coefficients_and_pep_vectors": 0.29339237213134767
+          "direct_factor_workspace": 0.8497865676879883,
+          "four_sparse_coefficients_and_pep_vectors": 0.3016939163208008
         },
-        "conservative_upper_gib": 1.5122275352478027,
+        "conservative_upper_gib": 1.5246798515319826,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2246400,
@@ -12373,6 +12695,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12431,10 +12755,10 @@
       "matrix_key": "stage4_xy_p3_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0354938507080078,
-          "four_sparse_coefficients_and_pep_vectors": 0.3240253448486328
+          "direct_factor_workspace": 1.046518325805664,
+          "four_sparse_coefficients_and_pep_vectors": 0.3350498199462891
         },
-        "conservative_upper_gib": 1.8032407760620117,
+        "conservative_upper_gib": 1.819777488708496,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -12450,6 +12774,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12508,10 +12834,10 @@
       "matrix_key": "stage4_xy_p3_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.0983333587646484,
-          "four_sparse_coefficients_and_pep_vectors": 0.33394737243652345
+          "direct_factor_workspace": 1.1102397918701172,
+          "four_sparse_coefficients_and_pep_vectors": 0.3458538055419922
         },
-        "conservative_upper_gib": 1.8975000381469727,
+        "conservative_upper_gib": 1.915359687805176,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -12527,6 +12853,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12585,10 +12913,10 @@
       "matrix_key": "stage4_xy_p3_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.2240123748779297,
-          "four_sparse_coefficients_and_pep_vectors": 0.3537914276123047
+          "direct_factor_workspace": 1.2376827239990233,
+          "four_sparse_coefficients_and_pep_vectors": 0.3674617767333984
         },
-        "conservative_upper_gib": 2.0860185623168945,
+        "conservative_upper_gib": 2.106524085998535,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3699200,
@@ -12604,6 +12932,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12662,10 +12992,10 @@
       "matrix_key": "stage4_xy_p4_h5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.46386146545410156,
-          "four_sparse_coefficients_and_pep_vectors": 0.2325441360473633
+          "direct_factor_workspace": 0.46572113037109375,
+          "four_sparse_coefficients_and_pep_vectors": 0.23440380096435548
         },
-        "conservative_upper_gib": 0.9457921981811523,
+        "conservative_upper_gib": 0.9485816955566406,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -12681,6 +13011,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12739,10 +13071,10 @@
       "matrix_key": "stage4_xy_p4_h5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.4809703826904297,
-          "four_sparse_coefficients_and_pep_vectors": 0.23514766693115235
+          "direct_factor_workspace": 0.48297882080078125,
+          "four_sparse_coefficients_and_pep_vectors": 0.23715610504150392
         },
-        "conservative_upper_gib": 0.9714555740356445,
+        "conservative_upper_gib": 0.9744682312011719,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -12758,6 +13090,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12816,10 +13150,10 @@
       "matrix_key": "stage4_xy_p4_h5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.5151882171630859,
-          "four_sparse_coefficients_and_pep_vectors": 0.24035472869873048
+          "direct_factor_workspace": 0.5174942016601562,
+          "four_sparse_coefficients_and_pep_vectors": 0.2426607131958008
         },
-        "conservative_upper_gib": 1.022782325744629,
+        "conservative_upper_gib": 1.0262413024902344,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 1014000,
@@ -12835,6 +13169,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12893,10 +13229,10 @@
       "matrix_key": "stage4_xy_p4_h3_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8274259567260742,
-          "four_sparse_coefficients_and_pep_vectors": 0.28786916732788087
+          "direct_factor_workspace": 0.8324470520019531,
+          "four_sparse_coefficients_and_pep_vectors": 0.2928902626037598
         },
-        "conservative_upper_gib": 1.4911389350891113,
+        "conservative_upper_gib": 1.4986705780029297,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -12912,6 +13248,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -12970,10 +13308,10 @@
       "matrix_key": "stage4_xy_p4_h3_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.8736200332641602,
-          "four_sparse_coefficients_and_pep_vectors": 0.29489870071411134
+          "direct_factor_workspace": 0.8790428161621094,
+          "four_sparse_coefficients_and_pep_vectors": 0.30032148361206057
         },
-        "conservative_upper_gib": 1.5604300498962402,
+        "conservative_upper_gib": 1.568564224243164,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -12989,6 +13327,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13047,10 +13387,10 @@
       "matrix_key": "stage4_xy_p4_h3_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.966008186340332,
-          "four_sparse_coefficients_and_pep_vectors": 0.3089577674865723
+          "direct_factor_workspace": 0.9722343444824219,
+          "four_sparse_coefficients_and_pep_vectors": 0.31518392562866215
         },
-        "conservative_upper_gib": 1.699012279510498,
+        "conservative_upper_gib": 1.7083515167236327,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 2737800,
@@ -13066,6 +13406,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13124,10 +13466,10 @@
       "matrix_key": "stage4_xy_p4_h2p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 0.9985151290893555,
-          "four_sparse_coefficients_and_pep_vectors": 0.3139044761657715
+          "direct_factor_workspace": 1.0050239562988281,
+          "four_sparse_coefficients_and_pep_vectors": 0.32041330337524415
         },
-        "conservative_upper_gib": 1.7477726936340332,
+        "conservative_upper_gib": 1.7575359344482422,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -13143,6 +13485,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13201,10 +13545,10 @@
       "matrix_key": "stage4_xy_p4_h2p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.058396339416504,
-          "four_sparse_coefficients_and_pep_vectors": 0.3230168342590332
+          "direct_factor_workspace": 1.0654258728027344,
+          "four_sparse_coefficients_and_pep_vectors": 0.3300463676452637
         },
-        "conservative_upper_gib": 1.8375945091247559,
+        "conservative_upper_gib": 1.8481388092041016,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -13220,6 +13564,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13278,10 +13624,10 @@
       "matrix_key": "stage4_xy_p4_h2p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.1781587600708008,
-          "four_sparse_coefficients_and_pep_vectors": 0.34124155044555665
+          "direct_factor_workspace": 1.1862297058105469,
+          "four_sparse_coefficients_and_pep_vectors": 0.34931249618530275
         },
-        "conservative_upper_gib": 2.017238140106201,
+        "conservative_upper_gib": 2.0293445587158203,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 3549000,
@@ -13297,6 +13643,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13355,10 +13703,10 @@
       "matrix_key": "stage4_xy_p4_h2_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.5010895729064941,
-          "four_sparse_coefficients_and_pep_vectors": 0.3903831958770752
+          "direct_factor_workspace": 1.5119686126708984,
+          "four_sparse_coefficients_and_pep_vectors": 0.4012622356414795
         },
-        "conservative_upper_gib": 2.501634359359741,
+        "conservative_upper_gib": 2.5179529190063477,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -13374,6 +13722,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13432,10 +13782,10 @@
       "matrix_key": "stage4_xy_p4_h2_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.6011767387390137,
-          "four_sparse_coefficients_and_pep_vectors": 0.4056138515472412
+          "direct_factor_workspace": 1.6129261016845704,
+          "four_sparse_coefficients_and_pep_vectors": 0.4173632144927979
         },
-        "conservative_upper_gib": 2.6517651081085205,
+        "conservative_upper_gib": 2.669389152526856,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -13451,6 +13801,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13509,10 +13861,10 @@
       "matrix_key": "stage4_xy_p4_h2_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 1.8013510704040527,
-          "four_sparse_coefficients_and_pep_vectors": 0.43607516288757325
+          "direct_factor_workspace": 1.814841079711914,
+          "four_sparse_coefficients_and_pep_vectors": 0.44956517219543457
         },
-        "conservative_upper_gib": 2.952026605606079,
+        "conservative_upper_gib": 2.9722616195678713,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 5931900,
@@ -13528,6 +13880,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13586,10 +13940,10 @@
       "matrix_key": "stage4_xy_p4_h1p5_mpi1",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.3101987838745117,
-          "four_sparse_coefficients_and_pep_vectors": 0.5135085105895996
+          "direct_factor_workspace": 2.328113555908203,
+          "four_sparse_coefficients_and_pep_vectors": 0.531423282623291
         },
-        "conservative_upper_gib": 3.7152981758117676,
+        "conservative_upper_gib": 3.7421703338623047,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -13605,6 +13959,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13663,10 +14019,10 @@
       "matrix_key": "stage4_xy_p4_h1p5_mpi2",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.4750146865844727,
-          "four_sparse_coefficients_and_pep_vectors": 0.5385891914367675
+          "direct_factor_workspace": 2.4943626403808596,
+          "four_sparse_coefficients_and_pep_vectors": 0.5579371452331543
         },
-        "conservative_upper_gib": 3.962522029876709,
+        "conservative_upper_gib": 3.9915439605712892,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -13682,6 +14038,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",
@@ -13740,10 +14098,10 @@
       "matrix_key": "stage4_xy_p4_h1p5_mpi4",
       "memory_prediction": {
         "centers_gib": {
-          "direct_factor_workspace": 2.8046464920043945,
-          "four_sparse_coefficients_and_pep_vectors": 0.5887505531311035
+          "direct_factor_workspace": 2.826860809326172,
+          "four_sparse_coefficients_and_pep_vectors": 0.610964870452881
         },
-        "conservative_upper_gib": 4.456969738006592,
+        "conservative_upper_gib": 4.4902912139892575,
         "conservative_upper_pass": true,
         "data_identity": "predicted_not_measured",
         "four_matrix_nnz_upper_bound": 9768200,
@@ -13759,6 +14117,8 @@
           "two_center_limit_gib": 11.211267857142857,
           "warning_gib": 11.211267857142857
         },
+        "left_candidate_modes": 12,
+        "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
         "limitations": [
           "Element-dense NNZ and discontinuous DoF are conservative pre-run bounds.",
           "The prediction is QEP-component-only and is not a Hybrid launch gate.",

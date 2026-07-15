@@ -64,6 +64,9 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
         else 1.0e-3 * (h_nm / 5.0) ** 2 / degree**2
     )
     tracking = None
+    right_requested_modes = 8
+    left_candidate_requested_modes = 12
+    left_pair_relative_errors = [1.0e-10] * right_requested_modes
     if material == "stage4_xy":
         # Compact common-probe moments are the measured shard input.  The
         # aggregate must recompute the assignment; no claimed overlap/pass is
@@ -142,6 +145,30 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
                 "right_polynomial_relative_residual_max": 1.0e-12,
                 "left_polynomial_relative_residual_max": 1.0e-10,
                 "biorthogonality_identity_error": 1.0e-8,
+                "left_candidate_pool_policy": (
+                    "max_requested_plus_4_or_1p5x"
+                ),
+                "right_requested_modes": right_requested_modes,
+                "left_candidate_requested_modes": (
+                    left_candidate_requested_modes
+                ),
+                "left_candidate_converged_modes": (
+                    left_candidate_requested_modes
+                ),
+                "left_pair_relative_errors": left_pair_relative_errors,
+                "left_pair_relative_error_max": max(
+                    left_pair_relative_errors
+                ),
+                "near_degenerate_groups": [
+                    {
+                        "indices": [0],
+                        "beta_center_per_nm": [1.0, 0.0],
+                        "max_relative_beta_spread": 0.0,
+                        "overlap_condition": 1.0,
+                        "normalization_method": "diagonal_qprime",
+                        "post_normalization_identity_error": 1.0e-12,
+                    }
+                ],
             },
             "quadrature": {
                 "raised_comparison": {
@@ -154,7 +181,10 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
         "resource_measurements": {
             "formal_resource_authority": _resource(),
         },
-        "gates": {"all_required_numerical_gates_pass": True},
+        "gates": {
+            "all_required_numerical_gates_pass": True,
+            "left_right_beta_pair_relative_error_le_1e-7": True,
+        },
     }
 
 
@@ -384,6 +414,57 @@ class Task033QepQualificationTests(unittest.TestCase):
         ] = False
         self.assertFalse(qep_shard_gate(failed)["pass"])
 
+    def test_qep_pairing_pool_and_raw_beta_pair_gate_are_recomputed(self) -> None:
+        shard = _qep_shard("air", 3, 3.0)
+        result = qep_shard_gate(shard)
+        self.assertTrue(result["pass"])
+        self.assertTrue(
+            result["checks"][
+                "left_right_beta_pair_relative_error_le_1e-7"
+            ]
+        )
+
+        undersampled = copy.deepcopy(shard)
+        classification = undersampled["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_candidate_requested_modes"] = 11
+        self.assertFalse(qep_shard_gate(undersampled)["pass"])
+
+        incomplete = copy.deepcopy(shard)
+        classification = incomplete["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_candidate_converged_modes"] = 7
+        self.assertFalse(qep_shard_gate(incomplete)["pass"])
+
+        inconsistent = copy.deepcopy(shard)
+        classification = inconsistent["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_pair_relative_error_max"] = 9.0e-8
+        self.assertFalse(qep_shard_gate(inconsistent)["pass"])
+
+        above_gate = copy.deepcopy(shard)
+        classification = above_gate["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_pair_relative_errors"][-1] = 2.0e-7
+        classification["left_pair_relative_error_max"] = 2.0e-7
+        # A forged stored True cannot override the recomputed raw-list Gate.
+        self.assertTrue(
+            above_gate["gates"][
+                "left_right_beta_pair_relative_error_le_1e-7"
+            ]
+        )
+        failed = qep_shard_gate(above_gate)
+        self.assertFalse(failed["pass"])
+        self.assertFalse(
+            failed["checks"][
+                "left_right_beta_pair_relative_error_le_1e-7"
+            ]
+        )
+
     def test_qep_aggregate_requires_air_lossy_trends_p2_comparison_and_tracking(self) -> None:
         records = [
             _qep_shard(material, degree, h_nm)
@@ -494,7 +575,26 @@ class Task033QepQualificationTests(unittest.TestCase):
             for degree in TREND_DEGREES
             for h_nm in TREND_H_NM
         ]
+        live_shard = _qep_shard("air", 3, 3.0)
+        validator.validate(live_shard)
         validator.validate(aggregate_qep_shards(qep_records))
+
+        missing_pairing_policy = copy.deepcopy(live_shard)
+        del missing_pairing_policy["numerical_results"][
+            "left_right_classification"
+        ]["left_candidate_pool_policy"]
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(missing_pairing_policy)
+
+        forged_pair_pass = copy.deepcopy(live_shard)
+        classification = forged_pair_pass["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["left_pair_relative_errors"][-1] = 2.0e-7
+        classification["left_pair_relative_error_max"] = 2.0e-7
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(forged_pair_pass)
+
         forged = copy.deepcopy(_hybrid_shard(160, 0.0))
         forged["physical_qualified"] = True
         with self.assertRaises(jsonschema.ValidationError):

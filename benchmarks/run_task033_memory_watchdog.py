@@ -20,6 +20,7 @@ from benchmarks.run_direct_memory_forensics import (
 )
 from benchmarks.run_task031_memory_forensics import _sampler_summary
 from benchmarks.run_task033_qep_matrix import _resource_environment_snapshot
+from benchmarks.task033_qep_measurement import task033_left_candidate_pool_size
 from benchmarks.task033_qep_qualification import (
     resource_authority_gate,
     source_identity_gate,
@@ -140,6 +141,8 @@ def _worker_command(
             args.material_kind,
             "--requested-modes",
             str(args.requested_modes),
+            "--left-candidate-modes",
+            str(args.candidate_modes),
             "--verified-clean-sha",
             args.verified_clean_sha,
             "--watchdog-enabled-verified",
@@ -559,6 +562,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--incident-grazing-deg must lie strictly between 0 and 90.")
     if args.candidate_modes < args.requested_modes:
         parser.error("--candidate-modes must be at least --requested-modes.")
+    if (
+        args.target == "qep"
+        and args.candidate_modes
+        < task033_left_candidate_pool_size(args.requested_modes)
+    ):
+        parser.error(
+            "QEP --candidate-modes must satisfy the audited adjoint-pool "
+            "oversampling policy."
+        )
     if args.target == "hybrid" and args.requested_modes == 240:
         if args.candidate_modes != 240:
             parser.error("Conditional M240 requires --candidate-modes 240.")

@@ -20,6 +20,7 @@ MESH_LEVELS_NM = (5.0, 3.0, 2.5, 2.0, 1.5)
 MPI_SIZES = (1, 2, 4)
 MATERIAL_KINDS = ("air", "lossy_homogeneous", "stage4_xy")
 DEFAULT_REQUESTED_MODES = 8
+LEFT_CANDIDATE_POOL_POLICY = "max_requested_plus_4_or_1p5x"
 COMPLEX128_BYTES = 16
 
 
@@ -74,6 +75,21 @@ def mixed_quad_local_dimension(degree: int) -> int:
     return (degree + 1) * (3 * degree + 1)
 
 
+def task033_left_candidate_pool_size(requested_modes: int) -> int:
+    """Return the audited adjoint pool for a retained right-mode basis.
+
+    Independent right and adjoint PEP solves can cut a degenerate cluster at
+    different members when both request exactly the retained basis size.
+    Task033 keeps the public right basis unchanged and oversamples only the
+    transient adjoint candidate pool before matching.
+    """
+
+    requested = int(requested_modes)
+    if requested < 2:
+        raise ValueError("requested_modes must be at least two.")
+    return max(requested + 4, math.ceil(1.5 * requested))
+
+
 def conservative_cross_section_cells(h_nm: float) -> dict[str, int]:
     """Bound the reviewed 50 x 25 nm Stage-4 matching cross-section grid.
 
@@ -96,6 +112,7 @@ def qep_memory_prediction(
     candidate: QepCandidate,
     *,
     requested_modes: int = DEFAULT_REQUESTED_MODES,
+    left_candidate_modes: int | None = None,
     container_limit_gib: float | None = None,
 ) -> dict[str, Any]:
     """Return two independent conservative QEP memory centers.
@@ -110,6 +127,17 @@ def qep_memory_prediction(
 
     if requested_modes < 2:
         raise ValueError("requested_modes must be at least two.")
+    left_candidates = (
+        task033_left_candidate_pool_size(requested_modes)
+        if left_candidate_modes is None
+        else int(left_candidate_modes)
+    )
+    required_left_candidates = task033_left_candidate_pool_size(requested_modes)
+    if left_candidates < required_left_candidates:
+        raise ValueError(
+            "left_candidate_modes must satisfy the audited Task033 "
+            f"oversampling policy (at least {required_left_candidates})."
+        )
     cells = conservative_cross_section_cells(candidate.h_nm)
     local_dimension = mixed_quad_local_dimension(candidate.degree)
     full_dof_upper = cells["cells"] * local_dimension
@@ -121,8 +149,11 @@ def qep_memory_prediction(
     # overhead.  The estimate is intentionally larger than raw PETSc payload.
     sparse_bytes_per_nnz = 32
     four_matrix_payload_bytes = four_matrix_nnz_upper * sparse_bytes_per_nnz
-    retained_vectors = requested_modes * 2  # full + reduced vector per mode
-    pep_work_vectors = max(16, 2 * requested_modes + 8)
+    # During the adjoint solve the retained right basis remains live while the
+    # larger transient left pool is formed. Count full+reduced vectors for
+    # both pools and size PEP workspace from the larger solve.
+    retained_vectors = 2 * (requested_modes + left_candidates)
+    pep_work_vectors = max(16, 2 * max(requested_modes, left_candidates) + 8)
     vector_bytes = (
         (retained_vectors + pep_work_vectors)
         * full_dof_upper
@@ -164,6 +195,8 @@ def qep_memory_prediction(
         "four_matrix_nnz_upper_bound": four_matrix_nnz_upper,
         "sparse_bytes_per_nnz_assumption": sparse_bytes_per_nnz,
         "requested_modes": requested_modes,
+        "left_candidate_modes": left_candidates,
+        "left_candidate_pool_policy": LEFT_CANDIDATE_POOL_POLICY,
         "mpi_total_overhead_factor": rank_overhead,
         "centers_gib": {
             "four_sparse_coefficients_and_pep_vectors": (

@@ -17,9 +17,11 @@ TREND_H_NM = (5.0, 3.0, 2.5)
 RIGHT_RESIDUAL_MAX = 1.0e-10
 LEFT_RESIDUAL_MAX = 1.0e-8
 BIORTHOGONALITY_MAX = 1.0e-6
+LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX = 1.0e-7
 RAISED_QUADRATURE_MATRIX_DELTA_MAX = 2.0e-12
 TRACKING_OVERLAP_MIN = 0.5
 TRACKING_RELATIVE_BETA_DRIFT_MAX = 0.25
+LEFT_CANDIDATE_POOL_POLICY = "max_requested_plus_4_or_1p5x"
 TRACKING_COMPACT_KIND = (
     "measured_common_fourier_left_right_mode_fingerprints"
 )
@@ -387,6 +389,55 @@ def qep_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
     candidate = candidate if isinstance(candidate, Mapping) else {}
     material = candidate.get("material_kind")
     analytic_error = _finite_number(numerical.get("analytic_beta_relative_error"))
+    right_requested = classification.get("right_requested_modes")
+    left_requested = classification.get("left_candidate_requested_modes")
+    left_converged = classification.get("left_candidate_converged_modes")
+    right_requested_valid = type(right_requested) is int and right_requested > 0
+    left_requested_valid = type(left_requested) is int and left_requested > 0
+    left_converged_valid = type(left_converged) is int and left_converged >= 0
+    required_left_requested = (
+        max(int(right_requested) + 4, math.ceil(1.5 * int(right_requested)))
+        if right_requested_valid
+        else None
+    )
+    raw_pair_errors = classification.get("left_pair_relative_errors")
+    pair_errors = (
+        [_finite_number(value) for value in raw_pair_errors]
+        if isinstance(raw_pair_errors, list)
+        else []
+    )
+    pair_errors_valid = bool(
+        right_requested_valid
+        and len(pair_errors) == int(right_requested)
+        and all(value is not None and value >= 0.0 for value in pair_errors)
+    )
+    recomputed_pair_max = (
+        max(float(value) for value in pair_errors if value is not None)
+        if pair_errors_valid
+        else None
+    )
+    recorded_pair_max = _finite_number(
+        classification.get("left_pair_relative_error_max")
+    )
+    pair_max_consistent = bool(
+        recomputed_pair_max is not None
+        and recorded_pair_max is not None
+        and math.isclose(
+            recorded_pair_max,
+            recomputed_pair_max,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+    )
+    pair_error_pass = bool(
+        recomputed_pair_max is not None
+        and recomputed_pair_max <= LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX
+    )
+    record_gates = record.get("gates")
+    record_gates = record_gates if isinstance(record_gates, Mapping) else {}
+    reported_pair_gate = record_gates.get(
+        "left_right_beta_pair_relative_error_le_1e-7"
+    )
     checks = {
         "measured_shard_status": record.get("status") == "measured_shard_pass",
         "not_physical_qualified": (
@@ -416,6 +467,29 @@ def qep_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
             is not None
             and float(classification["biorthogonality_identity_error"])
             <= BIORTHOGONALITY_MAX
+        ),
+        "left_candidate_pool_policy": (
+            classification.get("left_candidate_pool_policy")
+            == LEFT_CANDIDATE_POOL_POLICY
+        ),
+        "right_requested_modes": right_requested_valid,
+        "left_candidate_requested_modes": bool(
+            left_requested_valid
+            and required_left_requested is not None
+            and int(left_requested) >= int(right_requested) + 4
+            and int(left_requested) >= math.ceil(1.5 * int(right_requested))
+        ),
+        "left_candidate_converged_modes": bool(
+            left_converged_valid
+            and right_requested_valid
+            and int(left_converged) >= int(right_requested)
+        ),
+        "left_pair_relative_errors_complete_and_finite": pair_errors_valid,
+        "left_pair_relative_error_max_matches_list": pair_max_consistent,
+        "left_right_beta_pair_relative_error_le_1e-7": pair_error_pass,
+        "reported_left_right_beta_pair_gate_matches_recomputed": (
+            type(reported_pair_gate) is bool
+            and reported_pair_gate is pair_error_pass
         ),
         "raised_quadrature": bool(
             raised.get("pass") is True
