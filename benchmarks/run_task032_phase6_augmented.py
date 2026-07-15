@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import time
@@ -12,6 +13,7 @@ from typing import Any
 
 from mpi4py import MPI
 import numpy as np
+from petsc4py import PETSc
 
 try:
     import resource
@@ -484,10 +486,11 @@ def main() -> None:
         }
         integration_pass = all(gates.values())
         rss = comm.gather(_historical_peak_rss_mb(), root=0)
+        timestamp = datetime.now(timezone.utc).isoformat()
         record = {
             "schema_version": 1,
             "benchmark_id": "task032_phase6_hybrid_augmented_direct",
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": timestamp,
             "status": (
                 "physical_integration_pass_mode_convergence_pending"
                 if integration_pass
@@ -495,10 +498,20 @@ def main() -> None:
             ),
             "metadata": {
                 **provenance,
+                "timestamp_utc": timestamp,
+                "command": "python -m benchmarks.run_task032_phase6_augmented "
+                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
                 "mpi_size": comm.size,
                 "container_image": args.container_image,
                 "container_digest": args.container_digest,
                 "host_environment_id": args.host_environment_id,
+                "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+                "full_field_or_mode_vector_gather": False,
+                "provenance": (
+                    "clean_task032_phase6_real_qep_hybrid_integration"
+                    if not provenance["tracked_source_dirty"]
+                    else "dirty_task032_phase6_real_qep_hybrid_research"
+                ),
             },
             "case": {
                 "material_kind": "stage4_xy",
@@ -564,6 +577,9 @@ def main() -> None:
             "gates": gates,
             "qualification": {
                 "integration_pass": integration_pass,
+                "clean_source_integration_record": bool(
+                    integration_pass and not provenance["tracked_source_dirty"]
+                ),
                 "physical_augmented_direct_pass": False,
                 "mode_count_converged": False,
                 "pointwise_h_jump_checked": False,
