@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_matched_trace_projection_complete / phase6a_local_mesh_complete / phase6b_one_sided_dtn_complete / phase6c_internal_blocks_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_matched_trace_projection_complete / phase6a_local_mesh_complete / phase6b_one_sided_dtn_complete / phase6c_internal_blocks_complete / phase6d_augmented_algebra_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation；Phase 5 已完成 matching Nédélec trace、modal projection 与 clean MPI4 formal record。Phase 6a/6b 已建立上下局部 FEM 和各自单侧外部 Fourier-DtN；Phase 6c 已建立内部模态投影、牵引和稳定传播稀疏块。最终 monolithic augmented matrix、MUMPS solve 与 Phase 7 modal-Schur 尚未开始。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation；Phase 5 已完成 matching Nédélec trace、modal projection 与 clean MPI4 formal record。Phase 6a/6b 已建立上下局部 FEM 和各自单侧外部 Fourier-DtN；Phase 6c 已建立内部模态投影、牵引和稳定传播稀疏块；Phase 6d 已通过 rank-major monolithic AIJ 与 MUMPS algebra Gate。真实 QEP 模式截断、接口 E/H 连续、Hybrid R/T/A 和 Phase 7 modal-Schur 尚未完成。
 
 ## 4. eigenproblem implementation and validation
 
@@ -101,9 +101,11 @@ record SHA-256 = 8b0eeff9e8666ed327f36e0ab243561e5cecbfc305cb353cab8f2108d6ac7ae
 
 ## 8. augmented direct result
 
-`assembly_in_progress`。Phase 6a 已建立 bottom/top 局部 p2 Nédélec/Floquet 网格，并完全移除中间 100 nm 三维体网格；Phase 6b 为每个局部系统只保留真实拥有的一侧外部 40 个 Fourier-DtN auxiliary unknown，bottom 无入射源、top 保留既有入射 traction/projection。Phase 6c 新增内部 `M x N` 投影、`N x M` 正/负向牵引、`M x M` 负迹映射和 O(M) 稳定传播对象，内部 unknown/equation 均为 `2M`，未构造 dense `N_interface^2`。
+`augmented_algebra_pass / physical_validation_pending`。Phase 6a 已建立 bottom/top 局部 p2 Nédélec/Floquet 网格，并完全移除中间 100 nm 三维体网格；Phase 6b 为每个局部系统只保留真实拥有的一侧外部 40 个 Fourier-DtN auxiliary unknown，bottom 无入射源、top 保留既有入射 traction/projection。Phase 6c 新增内部 `M x N` 投影、`N x M` 正/负向牵引、`M x M` 负迹映射和 O(M) 稳定传播对象，内部 unknown/equation 均为 `2M`，未构造 dense `N_interface^2`。
 
 Phase 6c 的二维到三维提升只 allgather 小型结构化轴/cell-owner metadata，并用 alltoall 交换请求点和两个复切向分量；所有 collective 均在 DOLFINx interpolation callback 外执行，不聚集完整 field/mode。真实接口 surface Gram 取代 raw 2D Gram；bottom/top local FEM 法向为 `+z/-z`，traction 字段逐值变号。最终验证为 serial `4/4`、MPI2 每 rank `4/4`、MPI4 每 rank `4/4`。这些结果只资格化 block shape、projection round trip、normal sign、distributed ownership 和无 growing inverse；尚未声称 augmented residual、接口 E/H 连续、MUMPS 解或 Hybrid R/T/A 通过。
+
+Phase 6d 把 unknown 冻结为 `[u_bottom,u_top,a_b+,a_t-]`，用 `a_b-=P-a_t-`、`a_t+=P+a_b+` 消去 outgoing amplitude。两个独立 local matrix 通过 rank-major 连续 ownership 复制到单个 MPI AIJ；每个 rank 依次拥有自身 bottom/top rows，最后一个 rank 再拥有 `2M` modal rows。h10 两条解析 Bloch mode 的 serial/MPI2/MPI4 均为每 rank `3/3`；MPI4 单体为 `2432 x 2432`、`251720` nnz，MUMPS 真相对残差 `3.732133e-13`，setup/solve 为 `0.046960/0.003048 s`。该结果分类为 `augmented_algebra_pass`，不是 `physical_augmented_direct_pass`；真实 Phase 3 basis、M 收敛、R/T/A 与 full-3D 比较仍待执行。
 
 ## 9. modal-Schur result
 
@@ -191,15 +193,18 @@ src/test/test_37_task032_hybrid_local_dtn.py
 src/test/test_38_task032_hybrid_internal_modes.py
 notes/reference/code_walkthrough/46_task032_hybrid_local_mesh.md
 notes/reference/code_walkthrough/47_task032_hybrid_internal_modes.md
+src/solvers/hybrid_fem_modal_augmented_direct.py
+src/test/test_39_task032_hybrid_augmented_direct.py
+notes/reference/code_walkthrough/48_task032_hybrid_augmented_direct.md
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1/2/3/4/5 and Phase 6a/6b/6c blocks are complete, but monolithic augmented/Schur direct solves and full comparison are pending
+reason = Phase 1/2/3/4/5, Phase 6a/6b/6c blocks, and Phase 6d augmented algebra are complete, but physical augmented/Schur runs and full comparison are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 6d monolithic augmented matrix + MUMPS direct。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是用真实 Phase 3 QEP basis 执行 Phase 6 physical augmented direct 与模式截断 Gate。
