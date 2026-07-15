@@ -1,0 +1,85 @@
+{
+  "current_explicit_layout_payload": {
+    "all_mode_dense_multi_rhs_bytes": 1754383058208000,
+    "cumulative_explicit_object_volume_bytes": 1771638527006464,
+    "cumulative_explicit_object_volume_tib": 1611.2958537691738,
+    "excludes_sparse_matrices_factors_mesh_and_krylov": true,
+    "four_replicated_modal_squares_all_ranks_bytes": 3601614475264,
+    "largest_single_explicit_object_bytes": 1754383058208000,
+    "largest_single_explicit_object_tib": 1595.6020963203628,
+    "one_complex_2m_square_bytes": 225100904704,
+    "retained_right_left_eigenvector_bytes": 13653854323200
+  },
+  "engineering_gates": {
+    "current_direct_hybrid_at_target": "not_resource_feasible",
+    "one_tib_local_rows_candidate_max": 350000000,
+    "one_tib_local_rows_high_risk_max": 500000000,
+    "one_tib_local_rows_preferred_max": 200000000,
+    "required_redesign": [
+      "h/p_adaptive_local_fem",
+      "matrix_free_low_storage_iterative_local_solver",
+      "distributed_streamed_generic_modal_core",
+      "no_replicated_dense_m_squared_arrays",
+      "no_all_mode_dense_multi_rhs"
+    ],
+    "whole_solver_bytes_per_fe_dof_exploratory_ceiling": 3000,
+    "whole_solver_bytes_per_fe_dof_preferred_max": 2000
+  },
+  "generic_2d_modal_estimate": {
+    "includes_evanescent_buffer_by_physics": false,
+    "internal_modal_amplitudes_2m": 118612,
+    "reciprocal_orders": 8014.266973443351,
+    "retained_modes_per_direction_after_safety_factor": 59306,
+    "two_polarization_modes_per_direction_lower_bound": 16028.533946886702
+  },
+  "identity": {
+    "deterministic": true,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "model_scope": "mechanical_uniform_grid_and_current_layout_scaling"
+  },
+  "inputs": {
+    "local_thickness_nm": 20.0,
+    "mesh_target_nm": 0.1,
+    "mode_safety_factor": 3.7,
+    "mpi_size": 4,
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "wavelength_nm": 0.7
+  },
+  "limitations": [
+    "Mode count is an analytical lower-bound scaling, not a converged M.",
+    "Uniform-grid row scaling is not an adaptive-mesh prediction.",
+    "The local-system proxy mechanically scales a baseline that includes 80 external auxiliary rows.",
+    "Future external Fourier-DtN truncation and auxiliary counts are not projected.",
+    "Explicit payload estimates extrapolate the current object layout.",
+    "Cumulative object volume is not a simultaneous process-peak estimate.",
+    "No material-dispersion, angle, cutoff, convergence, or runtime model is applied."
+  ],
+  "optional_current_geometry_diagnostic": {
+    "allowed_for_future_service_budget": false,
+    "y_invariant_two_polarization_modes_per_direction": 285.7142857142857
+  },
+  "record_type": "analytical_resource_projection",
+  "reference": {
+    "external_auxiliary_rows": 80,
+    "local_fe_rows": 68396,
+    "local_system_rows": 68476,
+    "local_thickness_nm": 40.0,
+    "mesh_target_nm": 3.0,
+    "modes_per_direction": 160,
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "qep_full_dofs": 2053,
+    "retained_right_left_eigenvector_bytes": 40929280,
+    "wavelength_nm": 13.5
+  },
+  "uniform_grid_estimates": {
+    "cross_section_qep_full_dofs": 1847700,
+    "external_fourier_dtn_auxiliary_count_projected": false,
+    "local_fe_rows": 923346000,
+    "local_system_rows_mechanical_proxy": 924426000,
+    "transverse_scale_from_h3": 900.0,
+    "volume_and_thickness_scale_from_h3": 13500.0
+  }
+}

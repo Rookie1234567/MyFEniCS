@@ -58,6 +58,12 @@
 | Task31 assembled-F-free compact physical-slab memory-first profile | experimental | Case070 显式 flags | clean h5/h3/h2 full pass；h2 external simultaneous 7.898 GiB、legacy internal 8.176 GiB；相对 Task030 历史值观察降幅约 15.8%/保守约 12.8%；solve 约 5.01x，非 ordinary default |
 | Task31 simultaneous RSS/cgroup/swap/stage telemetry | recommended | `run_task031_memory_forensics.py` | 0.25 s live-rank sum，禁止 per-rank historical peak sum；h2 watchdog 9.5/11 GiB |
 | public MPC form action + condensed fine lifecycle | experimental | `mpc_form_action.py` / Case070 | assembled-F-free public form-action path；h5/h3/h2 action error `<1e-15`；每次 apply 仍 assemble/通信，非低层缓存 kernel；跨参数/版本需复验 |
+| Task32 generic 2D cross-section QEP / classification / propagation | experimental | Case080 显式 runner | 13.5 nm h5/h3 infrastructure validated；当前 all-modes MUMPS shift-invert、显式 right/left vectors 仅 current-scale，非 0.7 nm production |
+| Task32 matched Hybrid FEM–Modal interface | experimental | Case080 显式 runner | h5/h3 M160 与同网格 full3D 的 R/T/A、E/H、吸收通过；M=每方向模式数，M160=320 internal amplitudes |
+| Task32 augmented / Modal-Schur direct | experimental | Case080 explicit opt-in | `hybrid_direct_engineering_success` at 13.5 nm；h3 minimal 3.224 GiB；h2 `not_run_by_gate`；last-rank modal ownership、replicated M²、all-mode multi-RHS 和 local LU 不是 scalable service API |
+| Task32 parameter interface | diagnostic_only | Case080 M4 smoke | 1–10° S/P 30/30 只证明接口/API/algebra；未证明全范围截断或物理资格 |
+| 0.7 nm current direct Hybrid | not_implemented | no solver entry | analytical projection 判定 not resource feasible；禁止把 current direct reference 作为 0.7 nm profile |
+| future complex-ends Hybrid route | research_only | Task033–Task036 roadmap | exact complex 3D FEM ends required；generic epsilon(x,y) modal middle retained；1 TiB 为 conditional opportunity，尚未证明 |
 | FGMRES outer port | recommended | `--ksp-type fgmres` | 与当前 variable/adaptive PC 合法配对；Task27/30/31 frozen target verified |
 | ordinary GMRES outer port | research_only | `--ksp-type gmres` | port implemented；当前 PC linearity error `2.374308e-2`，certification fail closed，not target-qualified |
 | TFQMR / BCGS outer ports | research_only | `--ksp-type tfqmr|bcgs` | interface exposed；非 FGMRES 自动 certification，当前 adaptive PC 不合法且无 full target qualification |
@@ -87,6 +93,7 @@
 | mesh target | h=5/3/2 nm |
 | MPI | 4 ranks |
 | solver | canonical: fixed 75D coarse + 16 physical slabs + sm2 + FGMRES(100)；Task30 compact experimental: symmetric pre/post ILU0 + local shift + factor-only + FGMRES(90)；Task31 memory-first experimental: Task30 架构 + overlap0.125 + assembled-F-free public MPC form action + compact lifecycle |
+| Task32 Hybrid direct | h5/h3、M160、13.5 nm 主点 only；h2 not run；30-point parameter set is smoke only |
 
 任何偏离都自动标记为 `experimental`，必须重新取得 direct 或其他可信参考、三残差、R/T/A、能量闭合和总 RSS 证据。
 
@@ -107,4 +114,5 @@
 | MPI4 workstation iterative | [`40_3d_workstation_iterative.md`](../notes/quick_start/40_3d_workstation_iterative.md) | [`iterative_solver_ports.md`](iterative_solver_ports.md)、[`iterative_solver_and_preconditioner.md`](../notes/theory/iterative_solver_and_preconditioner.md)、walkthrough 32/33 | [`031`](../benchmarks/cases/031_workstation_iterative/README.md) |
 | Task30 H(curl) infrastructure + physical-slab low-memory research | [`iterative_solver_ports.md`](iterative_solver_ports.md) / solver guide Task030 | iterative theory、walkthrough 32/33/50 | [`060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) |
 | Task31 assembled-F-free compact memory-first research | [`iterative_solver_ports.md`](iterative_solver_ports.md) / solver guide Task031 | iterative theory、walkthrough 31/32/33/50 | [`070`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) |
+| Task32 Hybrid FEM–Modal direct reference | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | [`hybrid_fem_modal_domain_decomposition.md`](../notes/theory/hybrid_fem_modal_domain_decomposition.md)、walkthrough 41–51 | [`080`](../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md) |
 | MPI/p/algebra regression | 环境/验证章节 | walkthrough 50 | [`040`](../benchmarks/cases/040_mpi_p_algebra_regression/README.md) |

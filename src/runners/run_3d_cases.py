@@ -239,6 +239,14 @@ def _config_updates(args) -> dict[str, object]:
         )
     if args.diffraction_rayleigh_tol is not None:
         updates["diffraction_rayleigh_tol"] = args.diffraction_rayleigh_tol
+    if args.full3d_reference_export is not None:
+        updates["full3d_reference_export"] = args.full3d_reference_export
+    if args.full3d_reference_plane_z is not None:
+        updates["full3d_reference_plane_z"] = tuple(args.full3d_reference_plane_z)
+    if args.full3d_reference_sample_count_x is not None:
+        updates["full3d_reference_sample_count_x"] = args.full3d_reference_sample_count_x
+    if args.full3d_reference_sample_count_y is not None:
+        updates["full3d_reference_sample_count_y"] = args.full3d_reference_sample_count_y
     if args.petsc_direct_solver_profile is not None:
         updates["petsc_direct_solver_profile"] = args.petsc_direct_solver_profile
     if args.petsc_ksp_view is not None:
@@ -612,6 +620,21 @@ def main(argv: list[str] | None = None):
         help="Compute the old E/H modal-fit diagnostic. Default is off because EUV cells may have many orders.",
     )
     parser.add_argument("--diffraction-rayleigh-tol", type=float, default=None)
+    parser.add_argument(
+        "--full3d-reference-export",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Export small structured complex E/H samples for full-3D reference validation.",
+    )
+    parser.add_argument(
+        "--full3d-reference-plane-z",
+        type=float,
+        nargs="+",
+        default=None,
+        help="Physical z planes in nm for the opt-in full-3D reference export.",
+    )
+    parser.add_argument("--full3d-reference-sample-count-x", type=int, default=None)
+    parser.add_argument("--full3d-reference-sample-count-y", type=int, default=None)
     parser.add_argument(
         "--petsc-direct-solver-profile",
         choices=("default", "mumps_ooc", "mumps_blr"),

@@ -1,0 +1,106 @@
+{
+  "status": "hybrid_direct_engineering_success_h2_locked_by_memory_gate",
+  "ordinary_default_changed": false,
+  "full3d_reference": {
+    "h5": {
+      "R_total": 0.08902160293643864,
+      "T_total": 0.44258827865712697,
+      "A_balance": 0.46839011840643435
+    },
+    "h3": {
+      "R_total": 0.004613031407434661,
+      "T_total": 0.583653357179091,
+      "A_balance": 0.4117336114134744
+    }
+  },
+  "h5_h3_grid_convergence_claim": false,
+  "phase2_qep": {
+    "status": "pass",
+    "record": "records/qep_phase2.json",
+    "air_beta_convergence_levels_nm": [5.0, 3.0, 2.0, 1.5],
+    "homogeneous_lossy_h_nm": 2.0,
+    "stage4_xy_h_nm": 3.0,
+    "normalization": "cross_section_electric_L2_phase2_only",
+    "full_eigenvector_gather": false
+  },
+  "phase3_modes": {
+    "status": "pass",
+    "record": "records/modes_phase3.json",
+    "basis_h_nm": 10.0,
+    "tracking_angles_deg": [80.0, 79.8],
+    "right_normalization": "unit_absolute_impedance_scaled_poynting_or_near_zero_flux",
+    "left_normalization": "qprime_biorthogonal",
+    "full_eigenvector_gather": false
+  },
+  "phase4_propagation": {
+    "status": "pass",
+    "record": "records/propagation_phase4.json",
+    "length_nm": 100.0,
+    "composition_lengths_nm": [37.0, 63.0],
+    "representation": "two_port_diagonal_scattering",
+    "storage": "linear_in_mode_count",
+    "growing_inverse_factors": false,
+    "full_field_vector_gather": false
+  },
+  "phase5_trace_projection": {
+    "status": "pass",
+    "record": "records/trace_phase5.json",
+    "h_nm": 10.0,
+    "interface_z_nm": [10.0, 110.0],
+    "trace_space": "matched_2d_N1curl_p2",
+    "projection": "left_Petrov_right_reconstruction_small_Gram",
+    "near_degenerate_gate": "mass_weighted_trace_subspace",
+    "dense_interface_square": false,
+    "full_field_or_mode_vector_gather": false
+  },
+  "phase6_hybrid_augmented_direct": {
+    "status": "clean_source_integration_pass_physical_field_gates_pending",
+    "record": "records/hybrid_phase6_m6.json",
+    "h_nm": 5.0,
+    "mode_count_per_direction": 6,
+    "matrix_shape": [13744, 13744],
+    "solver": "MUMPS",
+    "pointwise_h_jump_checked": false,
+    "volume_absorption_reconstructed": false,
+    "official_record": false,
+    "dense_interface_square": false,
+    "full_field_or_mode_vector_gather": false
+  },
+  "final_hybrid_physical": {
+    "status": "pass",
+    "records": [
+      "records/hybrid_h5_m120.json",
+      "records/hybrid_h5_m160.json",
+      "records/hybrid_h3_m120.json",
+      "records/hybrid_h3_m160.json"
+    ],
+    "selected_mode_count_per_direction": 160,
+    "pointwise_h_jump_checked": true,
+    "volume_absorption_reconstructed": true,
+    "selected_middle_planes_reconstructed": true,
+    "h5_h3_mode_truncation_converged": true,
+    "full_field_or_mode_vector_gather": false
+  },
+  "modal_schur_direct": {
+    "status": "numeric_pass_with_memory_minimal_benefit",
+    "paths": ["modal-schur-fast", "modal-schur-memory-minimal"],
+    "storage": "O(N_interface*M)+O(M^2)",
+    "dense_interface_square": false,
+    "h3_memory_minimal_worker_rss_gib": 3.224353790283203,
+    "h3_augmented_worker_rss_gib": 3.8526077270507812
+  },
+  "parameter_smoke": {
+    "status": "pass",
+    "record": "records/parameter_smoke.json",
+    "pass_count": 30,
+    "claim_boundary": "parameter entry and algebra/output smoke only"
+  },
+  "h2_decision": {
+    "status": "h2_remains_locked",
+    "record": "records/h2_prediction.json",
+    "selected_solver_path": "modal-schur-memory-minimal",
+    "run_performed": false
+  },
+  "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
+  "heavy_artifacts": "benchmarks/artifacts/cases/080 (gitignored)"
+}

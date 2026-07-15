@@ -54,6 +54,18 @@ class MainPresetContractTests(unittest.TestCase):
         self.assertIn("3d_stage4b_demo_direct_h5", names)
         self.assertIn("3d_target_grating_direct_h5", names)
 
+    def test_flat_stage4_preset_contains_no_grating_block(self):
+        settings = main_module.PRESETS_3D["3d_stage4a_flat_layer_direct"]
+        self.assertEqual(settings.stage_case, "stage4_flat_layer_sanity")
+        self.assertEqual(
+            (
+                settings.grating_width_x,
+                settings.grating_width_y,
+                settings.grating_height,
+            ),
+            (0.0, 0.0, 0.0),
+        )
+
     def test_target_direct_presets_share_the_canonical_physical_config(self):
         physical_fields = (
             "stage_case",

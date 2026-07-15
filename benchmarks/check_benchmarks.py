@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 import subprocess
 from dataclasses import dataclass
@@ -235,6 +236,25 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "records/best_h3.json",
             "records/best_h2.json",
         ),
+        "080_hybrid_fem_modal_direct_baseline": (
+            "README.md",
+            "config.json",
+            "expected.json",
+            "expected/gates.json",
+            "run.sh",
+            "run_phase2.sh",
+            "run_phase3.sh",
+            "run_phase4.sh",
+            "run_phase5.sh",
+            "run_phase6.sh",
+            "records/full3d_h5_reference.json",
+            "records/full3d_h3_reference.json",
+            "records/qep_phase2.json",
+            "records/modes_phase3.json",
+            "records/propagation_phase4.json",
+            "records/trace_phase5.json",
+            "records/hybrid_phase6_m6.json",
+        ),
     }
     cases_root = BENCHMARKS / "cases"
     for case_name, required_names in case_requirements.items():
@@ -288,6 +308,1455 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 str(reference.get("canonical_record")),
             )
         )
+
+    case080 = cases_root / "080_hybrid_fem_modal_direct_baseline"
+    case080_config = _load_json(case080 / "config.json")
+    case080_expected = _load_json(case080 / "expected.json")
+    case080_gate_bundle = _load_json(case080 / "expected" / "gates.json")
+    case080_gates = case080_gate_bundle["phase1"]
+    case080_phase2_gates = case080_gate_bundle["phase2"]
+    case080_phase3_gates = case080_gate_bundle["phase3"]
+    case080_phase4_gates = case080_gate_bundle["phase4"]
+    case080_phase5_gates = case080_gate_bundle["phase5"]
+    case080_phase6_gates = case080_gate_bundle["phase6"]
+    gates.append(
+        Gate(
+            "task032_phase1_ordinary_default_unchanged",
+            case080_config.get("ordinary_default_changed") is False
+            and case080_expected.get("ordinary_default_changed") is False
+            and case080_gates.get("ordinary_default_changed") is False
+            and case080_phase2_gates.get("ordinary_default_changed") is False
+            and case080_phase3_gates.get("ordinary_default_changed") is False
+            and case080_phase4_gates.get("ordinary_default_changed") is False
+            and case080_phase5_gates.get("ordinary_default_changed") is False
+            and case080_phase6_gates.get("ordinary_default_changed") is False,
+            {
+                "config": case080_config.get("ordinary_default_changed"),
+                "expected": case080_expected.get("ordinary_default_changed"),
+                "gates": case080_gates.get("ordinary_default_changed"),
+                "phase2_gates": case080_phase2_gates.get("ordinary_default_changed"),
+                "phase3_gates": case080_phase3_gates.get("ordinary_default_changed"),
+                "phase4_gates": case080_phase4_gates.get("ordinary_default_changed"),
+                "phase5_gates": case080_phase5_gates.get("ordinary_default_changed"),
+                "phase6_gates": case080_phase6_gates.get("ordinary_default_changed"),
+            },
+            False,
+            "cases/080_hybrid_fem_modal_direct_baseline",
+        )
+    )
+
+    phase2_relative = "records/qep_phase2.json"
+    phase2_path = case080 / phase2_relative
+    phase2_record = _load_json(phase2_path)
+    phase2_metadata = phase2_record.get("metadata", {})
+    phase2_metadata_for_contract = dict(phase2_metadata)
+    phase2_metadata_for_contract.setdefault(
+        "timestamp_utc", phase2_record.get("timestamp_utc")
+    )
+    phase2_complete, phase2_missing = _metadata_complete(
+        {"metadata": phase2_metadata_for_contract}
+    )
+    phase2_relation = _commit_relation(
+        phase2_metadata.get("commit_sha"), phase2_metadata.get("provenance")
+    )
+    phase2_identity_ok = (
+        phase2_complete
+        and phase2_record.get("schema_version")
+        == case080_phase2_gates["required_schema"]
+        and phase2_record.get("status") == "pass"
+        and phase2_metadata.get("commit_sha") == case080_phase2_gates["required_commit"]
+        and phase2_metadata.get("container_digest")
+        == case080_phase2_gates["required_container_digest"]
+        and phase2_metadata.get("mpi_size") == case080_phase2_gates["required_mpi_size"]
+        and phase2_metadata.get("eigen_backend")
+        == case080_phase2_gates["required_backend"]
+        and phase2_metadata.get("git_dirty") is False
+        and phase2_metadata.get("tracked_source_dirty") is False
+        and phase2_metadata.get("full_eigenvector_gather") is False
+        and phase2_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_identity",
+            phase2_identity_ok,
+            {
+                "missing": phase2_missing,
+                "relation": phase2_relation,
+                "metadata": phase2_metadata,
+            },
+            "clean MPI4 SLEPc PEP record on the frozen commit and image",
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    phase2_cases = phase2_record.get("cases", [])
+    phase2_by_id = {case.get("case_id"): case for case in phase2_cases}
+    expected_phase2_ids = case080_phase2_gates["required_case_ids"]
+    phase2_case_contract_ok = set(phase2_by_id) == set(expected_phase2_ids) and all(
+        case.get("scalar_dtype") == case080_phase2_gates["required_dtype"]
+        and case.get("formulation")
+        == "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
+        and case.get("polynomial_order") == 2
+        and case.get("leading_coefficient_singular_by_design") is True
+        and case.get("constraint_communication_scope")
+        == case080_phase2_gates["required_constraint_communication_scope"]
+        and int(case.get("global_slave_count", -1))
+        == int(case.get("full_shape", [0])[0]) - int(case.get("reduced_shape", [0])[0])
+        and int(case.get("global_slave_count", -1))
+        == int(case.get("transverse_constraint_count_global", -2))
+        + int(case.get("longitudinal_constraint_count_global", -3))
+        for case in phase2_cases
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_case_and_qep_contract",
+            phase2_case_contract_ok,
+            {
+                "case_ids": list(phase2_by_id),
+                "formulations": [case.get("formulation") for case in phase2_cases],
+                "shapes": [
+                    [case.get("full_shape"), case.get("reduced_shape")]
+                    for case in phase2_cases
+                ],
+            },
+            {
+                "case_ids": expected_phase2_ids,
+                "dtype": case080_phase2_gates["required_dtype"],
+                "polynomial": "singular-leading quadratic",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    phase2_targets = [
+        target
+        for case in phase2_cases
+        for target in (case.get("positive_target"), case.get("negative_target"))
+        if target is not None
+    ]
+    max_polynomial_residual = max(
+        float(target["selected"]["polynomial_relative_residual"])
+        for target in phase2_targets
+    )
+    max_norm_error = max(
+        abs(float(target["selected"]["electric_l2_norm_after"]) - 1.0)
+        for target in phase2_targets
+    )
+    max_probe_residual = max(
+        float(case.get("max_probe_residual", float("inf"))) for case in phase2_cases
+    )
+    max_pair_coordinate_error = max(
+        float(case.get("max_pair_coordinate_error", float("inf")))
+        for case in phase2_cases
+    )
+    phase2_numeric_ok = (
+        max_polynomial_residual
+        <= float(case080_phase2_gates["max_polynomial_relative_residual"])
+        and max_norm_error <= float(case080_phase2_gates["max_electric_l2_norm_error"])
+        and max_probe_residual <= float(case080_phase2_gates["max_probe_residual"])
+        and max_pair_coordinate_error
+        <= float(case080_phase2_gates["max_pair_coordinate_error"])
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_residual_normalization_and_orientation",
+            phase2_numeric_ok,
+            {
+                "max_polynomial_residual": max_polynomial_residual,
+                "max_electric_l2_norm_error": max_norm_error,
+                "max_probe_residual": max_probe_residual,
+                "max_pair_coordinate_error": max_pair_coordinate_error,
+            },
+            {
+                "max_polynomial_residual": case080_phase2_gates[
+                    "max_polynomial_relative_residual"
+                ],
+                "max_electric_l2_norm_error": case080_phase2_gates[
+                    "max_electric_l2_norm_error"
+                ],
+                "max_probe_residual": case080_phase2_gates["max_probe_residual"],
+                "max_pair_coordinate_error": case080_phase2_gates[
+                    "max_pair_coordinate_error"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    ownership_ok = True
+    ownership_observed: dict[str, Any] = {}
+    for case in phase2_cases:
+        for target_name in ("positive_target", "negative_target"):
+            target = case.get(target_name)
+            if target is None:
+                continue
+            ownership = target.get("ownership_by_rank") or []
+            reduced_sum = sum(int(row["reduced_local_size"]) for row in ownership)
+            full_sum = sum(int(row["full_local_size"]) for row in ownership)
+            key = f"{case['case_id']}:{target_name}"
+            ownership_observed[key] = {
+                "ranks": len(ownership),
+                "reduced_sum": reduced_sum,
+                "full_sum": full_sum,
+            }
+            ownership_ok = ownership_ok and (
+                len(ownership) == case080_phase2_gates["required_mpi_size"]
+                and reduced_sum == int(case["reduced_shape"][0])
+                and full_sum == int(case["full_shape"][0])
+                and target["selected"].get("gathered_to_root") is False
+            )
+    gates.append(
+        Gate(
+            "task032_phase2_distributed_ownership",
+            ownership_ok,
+            ownership_observed,
+            "all local sizes sum to global shapes on MPI4; no full vector gather",
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    air_cases = [
+        phase2_by_id[key]
+        for key in ("air_p2_h5", "air_p2_h3", "air_p2_h2", "air_p2_h1p5")
+    ]
+    air_errors = [float(case["positive_relative_beta_error"]) for case in air_cases]
+    lossy_case = phase2_by_id["lossy_homogeneous_p2_h2"]
+    phase2_analytic_ok = (
+        all(later < earlier for earlier, later in zip(air_errors, air_errors[1:]))
+        and air_errors[2]
+        <= float(case080_phase2_gates["max_air_h2_relative_beta_error"])
+        and air_errors[3]
+        <= float(case080_phase2_gates["max_air_h1p5_relative_beta_error"])
+        and float(lossy_case["positive_relative_beta_error"])
+        <= float(case080_phase2_gates["max_lossy_h2_relative_beta_error"])
+        and float(lossy_case["positive_target"]["selected"]["beta_per_nm"][1]) > 0.0
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_homogeneous_analytic_beta",
+            phase2_analytic_ok,
+            {
+                "air_relative_errors_h5_h3_h2_h1p5": air_errors,
+                "lossy_h2_relative_error": lossy_case["positive_relative_beta_error"],
+                "lossy_h2_beta": lossy_case["positive_target"]["selected"][
+                    "beta_per_nm"
+                ],
+            },
+            {
+                "air_strictly_decreasing": True,
+                "air_h2_max": case080_phase2_gates["max_air_h2_relative_beta_error"],
+                "air_h1p5_max": case080_phase2_gates[
+                    "max_air_h1p5_relative_beta_error"
+                ],
+                "lossy_h2_max": case080_phase2_gates[
+                    "max_lossy_h2_relative_beta_error"
+                ],
+                "lossy_forward_imag_positive": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    requested_pairs = [
+        case for case in phase2_cases if case.get("negative_target") is not None
+    ]
+    max_pair_error = max(
+        float(case.get("reciprocal_pair_relative_error", float("inf")))
+        for case in requested_pairs
+    )
+    runner_gates = phase2_record.get("gates", {})
+    phase2_pair_and_runner_ok = (
+        max_pair_error <= float(case080_phase2_gates["max_pair_relative_error"])
+        and runner_gates
+        and all(value is True for value in runner_gates.values())
+    )
+    gates.append(
+        Gate(
+            "task032_phase2_reciprocal_pairs_and_runner_gates",
+            phase2_pair_and_runner_ok,
+            {"max_pair_relative_error": max_pair_error, "runner_gates": runner_gates},
+            {
+                "max_pair_relative_error": case080_phase2_gates[
+                    "max_pair_relative_error"
+                ],
+                "all_runner_gates": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase2_relative}",
+        )
+    )
+
+    phase3_relative = "records/modes_phase3.json"
+    phase3_record = _load_json(case080 / phase3_relative)
+    phase3_metadata = phase3_record.get("metadata", {})
+    phase3_complete, phase3_missing = _metadata_complete(phase3_record)
+    phase3_relation = _commit_relation(
+        phase3_metadata.get("commit_sha"), phase3_metadata.get("provenance")
+    )
+    phase3_identity_ok = (
+        phase3_complete
+        and phase3_record.get("schema_version")
+        == case080_phase3_gates["required_schema"]
+        and phase3_record.get("status") == "pass"
+        and phase3_metadata.get("commit_sha") == case080_phase3_gates["required_commit"]
+        and phase3_metadata.get("container_digest")
+        == case080_phase3_gates["required_container_digest"]
+        and phase3_metadata.get("mpi_size") == case080_phase3_gates["required_mpi_size"]
+        and phase3_metadata.get("eigen_backend")
+        == case080_phase3_gates["required_backend"]
+        and phase3_metadata.get("git_dirty") is False
+        and phase3_metadata.get("tracked_source_dirty") is False
+        and phase3_metadata.get("full_eigenvector_gather") is False
+        and phase3_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase3_identity",
+            phase3_identity_ok,
+            {
+                "missing": phase3_missing,
+                "relation": phase3_relation,
+                "metadata": phase3_metadata,
+            },
+            "clean MPI4 adjoint-QEP record on the frozen commit and image",
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
+        )
+    )
+
+    phase3_cases = phase3_record.get("cases", [])
+    phase3_by_id = {case.get("case_id"): case for case in phase3_cases}
+    phase3_bases = [
+        (case, side, case.get(side))
+        for case in phase3_cases
+        for side in ("positive", "negative")
+        if case.get(side) is not None
+    ]
+    phase3_modes = [
+        (case, side, basis, mode)
+        for case, side, basis in phase3_bases
+        for mode in basis.get("modes", [])
+    ]
+    phase3_ownership_ok = True
+    phase3_ownership_observed: dict[str, Any] = {}
+    for case, side, basis, mode in phase3_modes:
+        ownership = mode.get("left_ownership_by_rank") or []
+        reduced_sum = sum(int(row["reduced_local_size"]) for row in ownership)
+        full_sum = sum(int(row["full_local_size"]) for row in ownership)
+        key = f"{case['case_id']}:{side}:{mode['index']}"
+        phase3_ownership_observed[key] = {
+            "ranks": len(ownership),
+            "reduced_sum": reduced_sum,
+            "full_sum": full_sum,
+        }
+        phase3_ownership_ok = phase3_ownership_ok and (
+            len(ownership) == case080_phase3_gates["required_mpi_size"]
+            and reduced_sum == int(case["reduced_shape"][0])
+            and full_sum == int(case["full_shape"][0])
+            and mode.get("full_vector_gathered") is False
+        )
+    phase3_case_contract_ok = (
+        set(phase3_by_id) == set(case080_phase3_gates["required_case_ids"])
+        and phase3_ownership_ok
+        and all(
+            case.get("constraint_communication_scope")
+            == case080_phase3_gates["required_constraint_communication_scope"]
+            for case in phase3_cases
+        )
+        and all(
+            int(basis.get("mode_count", 0)) >= 2
+            and basis.get("full_vector_gathered") is False
+            and all(
+                float(group.get("overlap_condition", float("inf")))
+                <= float(case080_phase3_gates["max_overlap_condition"])
+                for group in basis.get("near_degenerate_groups", [])
+            )
+            for _, _, basis in phase3_bases
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase3_case_ownership_and_condition_contract",
+            phase3_case_contract_ok,
+            {
+                "case_ids": list(phase3_by_id),
+                "basis_sides": [
+                    [case["case_id"], side, basis.get("mode_count")]
+                    for case, side, basis in phase3_bases
+                ],
+                "ownership": phase3_ownership_observed,
+            },
+            {
+                "case_ids": case080_phase3_gates["required_case_ids"],
+                "mpi_size": case080_phase3_gates["required_mpi_size"],
+                "no_full_vector_gather": True,
+                "max_overlap_condition": case080_phase3_gates["max_overlap_condition"],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
+        )
+    )
+
+    max_phase3_right_residual = max(
+        float(mode["right_polynomial_relative_residual"])
+        for _, _, _, mode in phase3_modes
+    )
+    max_phase3_left_residual = max(
+        float(mode["left_polynomial_relative_residual"])
+        for _, _, _, mode in phase3_modes
+    )
+    max_phase3_left_pair_error = max(
+        float(mode["left_pair_relative_error"]) for _, _, _, mode in phase3_modes
+    )
+    max_phase3_biorth_error = max(
+        float(basis["max_biorthogonality_identity_error"])
+        for _, _, basis in phase3_bases
+    )
+    max_phase3_unit_flux_error = max(
+        abs(abs(float(mode["poynting_z_after_normalization"])) - 1.0)
+        for _, _, _, mode in phase3_modes
+    )
+    phase3_numeric_ok = (
+        max_phase3_right_residual
+        <= float(case080_phase3_gates["max_right_polynomial_relative_residual"])
+        and max_phase3_left_residual
+        <= float(case080_phase3_gates["max_left_polynomial_relative_residual"])
+        and max_phase3_left_pair_error
+        <= float(case080_phase3_gates["max_left_pair_relative_error"])
+        and max_phase3_biorth_error
+        <= float(case080_phase3_gates["max_biorthogonality_identity_error"])
+        and max_phase3_unit_flux_error
+        <= float(case080_phase3_gates["max_unit_flux_error"])
+        and all(
+            mode.get("passive_branch_valid") is True for _, _, _, mode in phase3_modes
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase3_residual_biorthogonality_and_flux",
+            phase3_numeric_ok,
+            {
+                "max_right_residual": max_phase3_right_residual,
+                "max_left_residual": max_phase3_left_residual,
+                "max_left_pair_error": max_phase3_left_pair_error,
+                "max_biorthogonality_identity_error": max_phase3_biorth_error,
+                "max_unit_flux_error": max_phase3_unit_flux_error,
+                "all_passive": all(
+                    mode.get("passive_branch_valid") is True
+                    for _, _, _, mode in phase3_modes
+                ),
+            },
+            {
+                "max_right_residual": case080_phase3_gates[
+                    "max_right_polynomial_relative_residual"
+                ],
+                "max_left_residual": case080_phase3_gates[
+                    "max_left_polynomial_relative_residual"
+                ],
+                "max_left_pair_error": case080_phase3_gates[
+                    "max_left_pair_relative_error"
+                ],
+                "max_biorthogonality_identity_error": case080_phase3_gates[
+                    "max_biorthogonality_identity_error"
+                ],
+                "max_unit_flux_error": case080_phase3_gates["max_unit_flux_error"],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
+        )
+    )
+
+    air_phase3 = phase3_by_id["air_p2_h10"]
+    lossy_phase3 = phase3_by_id["lossy_homogeneous_p2_h10"]
+    patterned_phase3 = phase3_by_id["stage4_xy_p2_h10"]
+    phase3_pairs = air_phase3.get("reciprocal_pairs", [])
+    max_phase3_reciprocal_error = max(
+        float(pair.get("relative_beta_error", float("inf"))) for pair in phase3_pairs
+    )
+    phase3_direction_ok = (
+        len(phase3_pairs) >= 2
+        and max_phase3_reciprocal_error
+        <= float(case080_phase3_gates["max_reciprocal_pair_relative_error"])
+        and all(
+            pair.get("opposite_direction") is True
+            and pair.get("passive_branches_valid") is True
+            for pair in phase3_pairs
+        )
+        and all(
+            mode.get("direction") == "forward"
+            and float(mode["poynting_z_after_normalization"]) > 0.0
+            for mode in air_phase3["positive"]["modes"]
+        )
+        and all(
+            mode.get("direction") == "backward"
+            and float(mode["poynting_z_after_normalization"]) < 0.0
+            for mode in air_phase3["negative"]["modes"]
+        )
+        and all(
+            mode.get("direction") == "forward"
+            and mode.get("kind") == "lossy_propagating"
+            and float(mode["beta_per_nm"][1]) > 0.0
+            for case in (lossy_phase3, patterned_phase3)
+            for mode in case["positive"]["modes"]
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase3_direction_and_reciprocal_identity",
+            phase3_direction_ok,
+            {
+                "max_reciprocal_error": max_phase3_reciprocal_error,
+                "pairs": phase3_pairs,
+                "air_positive_directions": [
+                    mode.get("direction") for mode in air_phase3["positive"]["modes"]
+                ],
+                "air_negative_directions": [
+                    mode.get("direction") for mode in air_phase3["negative"]["modes"]
+                ],
+            },
+            {
+                "max_reciprocal_error": case080_phase3_gates[
+                    "max_reciprocal_pair_relative_error"
+                ],
+                "air_directions": ["forward", "backward"],
+                "lossy_and_patterned": "forward passive lossy_propagating",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
+        )
+    )
+
+    phase3_tracking = phase3_record.get("angle_tracking") or {}
+    phase3_tracking_matches = phase3_tracking.get("matches", [])
+    phase3_tracking_subspaces = phase3_tracking.get("subspaces", [])
+    min_phase3_tracking_overlap = min(
+        (
+            float(match.get("overlap", float("-inf")))
+            for match in phase3_tracking_matches
+        ),
+        default=float("-inf"),
+    )
+    max_phase3_tracking_angle = max(
+        (
+            float(report.get("max_principal_angle_rad", float("inf")))
+            for report in phase3_tracking_subspaces
+        ),
+        default=float("inf"),
+    )
+    phase3_runner_gates = phase3_record.get("gates", {})
+    phase3_tracking_ok = (
+        len(phase3_tracking_matches) >= 2
+        and not phase3_tracking.get("unmatched_previous")
+        and min_phase3_tracking_overlap
+        >= float(case080_phase3_gates["min_tracking_overlap"])
+        and max_phase3_tracking_angle
+        <= float(case080_phase3_gates["max_tracking_principal_angle_rad"])
+        and phase3_runner_gates
+        and all(value is True for value in phase3_runner_gates.values())
+    )
+    gates.append(
+        Gate(
+            "task032_phase3_tracking_subspace_and_runner_gates",
+            phase3_tracking_ok,
+            {
+                "match_count": len(phase3_tracking_matches),
+                "min_overlap": min_phase3_tracking_overlap,
+                "max_principal_angle_rad": max_phase3_tracking_angle,
+                "unmatched_previous": phase3_tracking.get("unmatched_previous"),
+                "unmatched_current": phase3_tracking.get("unmatched_current"),
+                "runner_gates": phase3_runner_gates,
+            },
+            {
+                "min_match_count": 2,
+                "min_overlap": case080_phase3_gates["min_tracking_overlap"],
+                "max_principal_angle_rad": case080_phase3_gates[
+                    "max_tracking_principal_angle_rad"
+                ],
+                "all_runner_gates": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase3_relative}",
+        )
+    )
+
+    phase4_relative = "records/propagation_phase4.json"
+    phase4_record = _load_json(case080 / phase4_relative)
+    phase4_metadata = phase4_record.get("metadata", {})
+    phase4_complete, phase4_missing = _metadata_complete(phase4_record)
+    phase4_relation = _commit_relation(
+        phase4_metadata.get("commit_sha"), phase4_metadata.get("provenance")
+    )
+    phase4_identity_ok = (
+        phase4_complete
+        and phase4_record.get("schema_version")
+        == case080_phase4_gates["required_schema"]
+        and phase4_record.get("status") == "pass"
+        and phase4_metadata.get("commit_sha") == case080_phase4_gates["required_commit"]
+        and phase4_metadata.get("container_digest")
+        == case080_phase4_gates["required_container_digest"]
+        and phase4_metadata.get("mpi_size") == case080_phase4_gates["required_mpi_size"]
+        and phase4_metadata.get("coefficient_distribution")
+        == case080_phase4_gates["required_coefficient_distribution"]
+        and phase4_metadata.get("git_dirty") is False
+        and phase4_metadata.get("tracked_source_dirty") is False
+        and phase4_metadata.get("full_field_vector_gather") is False
+        and phase4_record.get("phase3_record_sha256")
+        == case080_phase4_gates["required_phase3_record_sha256"]
+        and phase4_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_identity_and_phase3_source",
+            phase4_identity_ok,
+            {
+                "missing": phase4_missing,
+                "relation": phase4_relation,
+                "metadata": phase4_metadata,
+                "phase3_record_sha256": phase4_record.get("phase3_record_sha256"),
+            },
+            {
+                "commit": case080_phase4_gates["required_commit"],
+                "mpi_size": case080_phase4_gates["required_mpi_size"],
+                "phase3_record_sha256": case080_phase4_gates[
+                    "required_phase3_record_sha256"
+                ],
+                "full_field_vector_gather": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase4_cases = phase4_record.get("cases", [])
+    phase4_by_id = {case.get("case_id"): case for case in phase4_cases}
+    phase4_case_contract_ok = set(phase4_by_id) == set(
+        case080_phase4_gates["required_case_ids"]
+    ) and all(
+        float(case["propagation"].get("length_nm", float("nan")))
+        == float(case080_phase4_gates["required_length_nm"])
+        and case["propagation"].get("representation")
+        == case080_phase4_gates["required_representation"]
+        and case.get("composition_lengths_nm")
+        == case080_phase4_gates["required_composition_lengths_nm"]
+        and case.get("backward_source")
+        == case080_phase4_gates["required_backward_sources"].get(case.get("case_id"))
+        and case["propagation"].get("local_reflection_terms_present") is False
+        and case["propagation"].get("growing_inverse_factors_present") is False
+        and len(case["propagation"]["forward"].get("factors", [])) > 0
+        and len(case["propagation"]["backward"].get("factors", [])) > 0
+        and int(case["propagation"].get("stored_complex_scalars", -1))
+        == len(case["propagation"]["forward"].get("factors", []))
+        + len(case["propagation"]["backward"].get("factors", []))
+        for case in phase4_cases
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_two_port_case_and_linear_storage_contract",
+            phase4_case_contract_ok,
+            {
+                "case_ids": list(phase4_by_id),
+                "cases": [
+                    {
+                        "case_id": case.get("case_id"),
+                        "length_nm": case["propagation"].get("length_nm"),
+                        "representation": case["propagation"].get("representation"),
+                        "backward_source": case.get("backward_source"),
+                        "stored_complex_scalars": case["propagation"].get(
+                            "stored_complex_scalars"
+                        ),
+                        "forward_count": len(
+                            case["propagation"]["forward"].get("factors", [])
+                        ),
+                        "backward_count": len(
+                            case["propagation"]["backward"].get("factors", [])
+                        ),
+                    }
+                    for case in phase4_cases
+                ],
+            },
+            {
+                "case_ids": case080_phase4_gates["required_case_ids"],
+                "length_nm": case080_phase4_gates["required_length_nm"],
+                "representation": case080_phase4_gates["required_representation"],
+                "storage": "one complex factor per directed mode",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    max_phase4_reflection = max(
+        (float(case.get("reflection_norm", float("inf"))) for case in phase4_cases),
+        default=float("inf"),
+    )
+    max_phase4_factor = max(
+        (
+            float(case["propagation"].get("max_factor_magnitude", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_power_gain = max(
+        (
+            float(case.get("coefficient_power_gain", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_composition_error = max(
+        (
+            float(case.get("composition_max_relative_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_reciprocity_beta_error = max(
+        (
+            float(case["reciprocity"].get("max_relative_beta_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    max_phase4_reciprocity_factor_error = max(
+        (
+            float(case["reciprocity"].get("max_relative_factor_error", float("inf")))
+            for case in phase4_cases
+        ),
+        default=float("inf"),
+    )
+    phase4_numeric_ok = (
+        max_phase4_reflection <= float(case080_phase4_gates["max_reflection_norm"])
+        and max_phase4_factor <= float(case080_phase4_gates["max_factor_magnitude"])
+        and max_phase4_power_gain
+        <= float(case080_phase4_gates["max_coefficient_power_gain"])
+        and max_phase4_composition_error
+        <= float(case080_phase4_gates["max_composition_relative_error"])
+        and max_phase4_reciprocity_beta_error
+        <= float(case080_phase4_gates["max_reciprocity_beta_relative_error"])
+        and max_phase4_reciprocity_factor_error
+        <= float(case080_phase4_gates["max_reciprocity_factor_relative_error"])
+        and all(
+            case["propagation"].get("passivity_valid") is True
+            and case["reciprocity"].get("passivity_valid") is True
+            and case["reciprocity"].get("reciprocity_valid") is True
+            and not case["reciprocity"].get("unmatched_forward")
+            and not case["reciprocity"].get("unmatched_backward")
+            for case in phase4_cases
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_reflection_passivity_composition_reciprocity",
+            phase4_numeric_ok,
+            {
+                "max_reflection_norm": max_phase4_reflection,
+                "max_factor_magnitude": max_phase4_factor,
+                "max_coefficient_power_gain": max_phase4_power_gain,
+                "max_composition_relative_error": max_phase4_composition_error,
+                "max_reciprocity_beta_relative_error": (
+                    max_phase4_reciprocity_beta_error
+                ),
+                "max_reciprocity_factor_relative_error": (
+                    max_phase4_reciprocity_factor_error
+                ),
+            },
+            {
+                "max_reflection_norm": case080_phase4_gates["max_reflection_norm"],
+                "max_factor_magnitude": case080_phase4_gates["max_factor_magnitude"],
+                "max_coefficient_power_gain": case080_phase4_gates[
+                    "max_coefficient_power_gain"
+                ],
+                "max_composition_relative_error": case080_phase4_gates[
+                    "max_composition_relative_error"
+                ],
+                "reciprocity": "paired beta and directed factors within tolerance",
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase4_controls = phase4_record.get("controls", {})
+    phase4_runner_gates = phase4_record.get("gates", {})
+    phase4_rank_signatures = phase4_record.get("mpi_rank_signatures", [])
+    phase4_controls_and_mpi_ok = (
+        phase4_controls.get("all_outputs_finite") is True
+        and phase4_controls.get("underflow_without_overflow") is True
+        and phase4_controls.get("growing_branch_rejected") is True
+        and phase4_controls.get("ambiguous_branch_rejected") is True
+        and phase4_runner_gates
+        and all(value is True for value in phase4_runner_gates.values())
+        and len(phase4_rank_signatures)
+        == case080_phase4_gates["required_mpi_rank_signature_count"]
+        and len(set(phase4_rank_signatures)) == 1
+    )
+    gates.append(
+        Gate(
+            "task032_phase4_evanescent_negative_controls_and_mpi_agreement",
+            phase4_controls_and_mpi_ok,
+            {
+                "controls": phase4_controls,
+                "runner_gates": phase4_runner_gates,
+                "rank_signature_count": len(phase4_rank_signatures),
+                "unique_rank_signatures": len(set(phase4_rank_signatures)),
+            },
+            {
+                "strong_evanescent": "finite underflow without overflow",
+                "growing_and_ambiguous": "rejected",
+                "all_runner_gates": True,
+                "rank_signature_count": case080_phase4_gates[
+                    "required_mpi_rank_signature_count"
+                ],
+                "unique_rank_signatures": 1,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase4_relative}",
+        )
+    )
+
+    phase5_relative = "records/trace_phase5.json"
+    phase5_record = _load_json(case080 / phase5_relative)
+    phase5_metadata = phase5_record.get("metadata", {})
+    phase5_complete, phase5_missing = _metadata_complete(phase5_record)
+    phase5_relation = _commit_relation(
+        phase5_metadata.get("commit_sha"), phase5_metadata.get("provenance")
+    )
+    phase5_config = phase5_record.get("configuration", {})
+    phase5_identity_ok = (
+        phase5_complete
+        and phase5_record.get("schema_version")
+        == case080_phase5_gates["required_schema"]
+        and phase5_record.get("status") == "pass"
+        and phase5_metadata.get("commit_sha")
+        == case080_phase5_gates["required_commit"]
+        and phase5_metadata.get("container_digest")
+        == case080_phase5_gates["required_container_digest"]
+        and phase5_metadata.get("mpi_size")
+        == case080_phase5_gates["required_mpi_size"]
+        and phase5_metadata.get("scalar_dtype")
+        == case080_phase5_gates["required_dtype"]
+        and phase5_metadata.get("git_dirty") is False
+        and phase5_metadata.get("tracked_source_dirty") is False
+        and phase5_metadata.get("full_field_or_mode_vector_gather") is False
+        and float(phase5_config.get("h_nm", float("nan")))
+        == float(case080_phase5_gates["required_h_nm"])
+        and int(phase5_config.get("degree", -1))
+        == int(case080_phase5_gates["required_degree"])
+        and [
+            phase5_config.get("bottom_interface_z_nm"),
+            phase5_config.get("top_interface_z_nm"),
+        ]
+        == case080_phase5_gates["required_interface_z_nm"]
+        and phase5_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_identity_and_matched_configuration",
+            phase5_identity_ok,
+            {
+                "missing": phase5_missing,
+                "relation": phase5_relation,
+                "metadata": phase5_metadata,
+                "configuration": phase5_config,
+            },
+            {
+                "commit": case080_phase5_gates["required_commit"],
+                "mpi_size": case080_phase5_gates["required_mpi_size"],
+                "dtype": case080_phase5_gates["required_dtype"],
+                "h_nm": case080_phase5_gates["required_h_nm"],
+                "interface_z_nm": case080_phase5_gates[
+                    "required_interface_z_nm"
+                ],
+                "full_field_or_mode_vector_gather": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_trace = phase5_record.get("affine_trace_validation", {})
+    phase5_interfaces = phase5_trace.get("interfaces", [])
+    phase5_interface_contract_ok = (
+        [item.get("side") for item in phase5_interfaces]
+        == case080_phase5_gates["required_interface_sides"]
+        and [item.get("z_nm") for item in phase5_interfaces]
+        == case080_phase5_gates["required_interface_z_nm"]
+        and [item.get("local_fem_outward_normal", [None, None, None])[2]
+             for item in phase5_interfaces]
+        == case080_phase5_gates["required_local_fem_normal_signs"]
+        and [item.get("modal_outward_normal", [None, None, None])[2]
+             for item in phase5_interfaces]
+        == case080_phase5_gates["required_modal_normal_signs"]
+        and [item.get("middle_adjacent_cell_sign") for item in phase5_interfaces]
+        == case080_phase5_gates["required_middle_adjacent_cell_signs"]
+        and all(
+            item.get("canonical_trace") == "(E_x,E_y)"
+            and int(item.get("global_interface_facets", -1))
+            == int(case080_phase5_gates["required_global_interface_facets"])
+            and int(item.get("global_middle_adjacent_cells", -2))
+            == int(item.get("global_interface_facets", -1))
+            and int(item.get("global_trace_dofs", -1))
+            == int(case080_phase5_gates["required_global_trace_dofs"])
+            and int(item.get("global_query_points", -1)) > 0
+            and int(item.get("global_query_points", -1))
+            == int(item.get("global_source_evaluations", -2))
+            and int(item.get("unresolved_points", -1)) == 0
+            and float(item.get("relative_trace_coefficient_error", float("inf")))
+            <= float(case080_phase5_gates["max_trace_coefficient_error"])
+            and float(item.get("normal_opposition_error", float("inf")))
+            <= float(case080_phase5_gates["max_normal_opposition_error"])
+            and item.get("field_vector_gathered") is False
+            for item in phase5_interfaces
+        )
+        and phase5_trace.get("communication_scope")
+        == "interface_interpolation_points_and_two_complex_tangential_values_only"
+        and phase5_trace.get("full_3d_field_or_mode_gathered") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_nedelec_trace_orientation_and_point_ownership",
+            phase5_interface_contract_ok,
+            {
+                "interfaces": phase5_interfaces,
+                "communication_scope": phase5_trace.get("communication_scope"),
+                "full_3d_field_or_mode_gathered": phase5_trace.get(
+                    "full_3d_field_or_mode_gathered"
+                ),
+            },
+            {
+                "sides": case080_phase5_gates["required_interface_sides"],
+                "z_nm": case080_phase5_gates["required_interface_z_nm"],
+                "facets": case080_phase5_gates[
+                    "required_global_interface_facets"
+                ],
+                "trace_dofs": case080_phase5_gates["required_global_trace_dofs"],
+                "max_trace_error": case080_phase5_gates[
+                    "max_trace_coefficient_error"
+                ],
+                "unresolved_points": 0,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_projection = phase5_record.get("stage4_modal_projection", {})
+    phase5_storage = phase5_projection.get("storage", {})
+    phase5_projection_ok = (
+        phase5_projection.get("material_kind") == "stage4_xy"
+        and int(phase5_projection.get("mode_count", -1))
+        == int(case080_phase5_gates["required_mode_count"])
+        and phase5_projection.get("reconstruction_shape")
+        == case080_phase5_gates["required_reconstruction_shape"]
+        and phase5_projection.get("projection_shape")
+        == case080_phase5_gates["required_projection_shape"]
+        and phase5_projection.get("small_dense_gram_shape")
+        == case080_phase5_gates["required_small_dense_gram_shape"]
+        and float(phase5_projection.get("coefficient_relative_error", float("inf")))
+        <= float(case080_phase5_gates["max_coefficient_round_trip_error"])
+        and float(
+            phase5_projection.get(
+                "trace_reconstruction_relative_residual", float("inf")
+            )
+        )
+        <= float(case080_phase5_gates["max_trace_reconstruction_residual"])
+        and float(phase5_projection.get("gram_condition", float("inf")))
+        <= float(case080_phase5_gates["max_gram_condition"])
+        and int(phase5_projection.get("trace_mass_nz_used", 0)) > 0
+        and phase5_projection.get("constraint_communication_scope")
+        == case080_phase5_gates["required_constraint_communication_scope"]
+        and phase5_projection.get("full_vector_gathered") is False
+        and phase5_projection.get("dense_interface_operator_formed") is False
+        and int(phase5_storage.get("distributed_right_trace_bytes", 0)) > 0
+        and int(phase5_storage.get("distributed_left_trace_bytes", 0)) > 0
+        and int(phase5_storage.get("replicated_gram_bytes_per_rank", 0)) > 0
+        and int(phase5_storage.get("dense_NGamma_squared_bytes", -1)) == 0
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_left_right_round_trip_and_storage_contract",
+            phase5_projection_ok,
+            phase5_projection,
+            {
+                "reconstruction_shape": case080_phase5_gates[
+                    "required_reconstruction_shape"
+                ],
+                "projection_shape": case080_phase5_gates[
+                    "required_projection_shape"
+                ],
+                "small_dense_gram_shape": case080_phase5_gates[
+                    "required_small_dense_gram_shape"
+                ],
+                "max_round_trip_error": case080_phase5_gates[
+                    "max_coefficient_round_trip_error"
+                ],
+                "max_reconstruction_residual": case080_phase5_gates[
+                    "max_trace_reconstruction_residual"
+                ],
+                "dense_NGamma_squared_bytes": 0,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase5_subspace = phase5_record.get(
+        "near_degenerate_subspace_validation", {}
+    )
+    phase5_runner_gates = phase5_record.get("gates", {})
+    phase5_rank_signatures = phase5_record.get("mpi_rank_signatures", [])
+    phase5_subspace_and_mpi_ok = (
+        phase5_subspace.get("comparison") == "mass_weighted_trace_subspace"
+        and phase5_subspace.get("phase3_group_indices") == [[0, 1]]
+        and len(phase5_subspace.get("singular_values", [])) == 2
+        and float(phase5_subspace.get("projector_error", float("inf")))
+        <= float(case080_phase5_gates["max_subspace_projector_error"])
+        and float(phase5_subspace.get("max_principal_angle_rad", float("inf")))
+        <= float(case080_phase5_gates["max_subspace_principal_angle_rad"])
+        and float(
+            phase5_subspace.get("first_vector_relative_difference", -float("inf"))
+        )
+        >= float(case080_phase5_gates["min_rotated_vector_relative_difference"])
+        and phase5_subspace.get("individual_vector_equality_used_as_gate") is False
+        and phase5_runner_gates
+        and all(value is True for value in phase5_runner_gates.values())
+        and len(phase5_rank_signatures)
+        == int(case080_phase5_gates["required_mpi_rank_signature_count"])
+        and len(set(phase5_rank_signatures)) == 1
+    )
+    gates.append(
+        Gate(
+            "task032_phase5_near_degenerate_subspace_and_mpi_agreement",
+            phase5_subspace_and_mpi_ok,
+            {
+                "subspace": phase5_subspace,
+                "runner_gates": phase5_runner_gates,
+                "rank_signature_count": len(phase5_rank_signatures),
+                "unique_rank_signatures": len(set(phase5_rank_signatures)),
+            },
+            {
+                "comparison": "mass_weighted_trace_subspace",
+                "max_projector_error": case080_phase5_gates[
+                    "max_subspace_projector_error"
+                ],
+                "max_principal_angle_rad": case080_phase5_gates[
+                    "max_subspace_principal_angle_rad"
+                ],
+                "individual_vector_equality_used_as_gate": False,
+                "all_runner_gates": True,
+                "rank_signature_count": case080_phase5_gates[
+                    "required_mpi_rank_signature_count"
+                ],
+                "unique_rank_signatures": 1,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase6_relative = "records/hybrid_phase6_m6.json"
+    phase6_record = _load_json(case080 / phase6_relative)
+    phase6_metadata = phase6_record.get("metadata", {})
+    phase6_complete, phase6_missing = _metadata_complete(phase6_record)
+    phase6_relation = _commit_relation(
+        phase6_metadata.get("commit_sha"), phase6_metadata.get("provenance")
+    )
+    phase6_case = phase6_record.get("case", {})
+    phase6_qualification = phase6_record.get("qualification", {})
+    phase6_identity_ok = (
+        phase6_complete
+        and phase6_record.get("schema_version")
+        == case080_phase6_gates["required_schema"]
+        and phase6_record.get("status")
+        == case080_phase6_gates["required_status"]
+        and phase6_metadata.get("commit_sha")
+        == case080_phase6_gates["required_commit"]
+        and phase6_metadata.get("container_digest")
+        == case080_phase6_gates["required_container_digest"]
+        and phase6_metadata.get("mpi_size")
+        == case080_phase6_gates["required_mpi_size"]
+        and phase6_metadata.get("scalar_dtype")
+        == case080_phase6_gates["required_dtype"]
+        and phase6_metadata.get("verification")
+        == case080_phase6_gates["required_verification"]
+        and phase6_metadata.get("git_dirty") is False
+        and phase6_metadata.get("tracked_source_dirty") is False
+        and phase6_metadata.get("full_field_or_mode_vector_gather") is False
+        and float(phase6_case.get("h_nm", float("nan")))
+        == float(case080_phase6_gates["required_h_nm"])
+        and int(phase6_case.get("requested_modes_per_direction", -1))
+        == int(case080_phase6_gates["required_mode_count_per_direction"])
+        and phase6_qualification.get("clean_source_integration_record") is True
+        and phase6_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_clean_identity_and_configuration",
+            phase6_identity_ok,
+            {
+                "missing": phase6_missing,
+                "relation": phase6_relation,
+                "metadata": phase6_metadata,
+                "case": phase6_case,
+                "qualification": phase6_qualification,
+            },
+            {
+                "commit": case080_phase6_gates["required_commit"],
+                "mpi_size": case080_phase6_gates["required_mpi_size"],
+                "dtype": case080_phase6_gates["required_dtype"],
+                "verification": case080_phase6_gates["required_verification"],
+                "h_nm": case080_phase6_gates["required_h_nm"],
+                "mode_count_per_direction": case080_phase6_gates[
+                    "required_mode_count_per_direction"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_qep = phase6_record.get("qep", {})
+    phase6_positive = phase6_qep.get("positive", {})
+    phase6_negative = phase6_qep.get("negative", {})
+    phase6_pairs = phase6_qep.get("reciprocal_pairs", [])
+    phase6_requested = int(
+        case080_phase6_gates["required_mode_count_per_direction"]
+    )
+    phase6_groups = [
+        *phase6_positive.get("near_degenerate_groups", []),
+        *phase6_negative.get("near_degenerate_groups", []),
+    ]
+    phase6_qep_residuals = [
+        float(value)
+        for basis in (phase6_positive, phase6_negative)
+        for key in (
+            "polynomial_relative_residuals",
+            "left_polynomial_relative_residuals",
+        )
+        for value in basis.get(key, [])
+    ]
+    phase6_qep_ok = (
+        int(phase6_qep.get("positive_solver_converged_modes", -1))
+        >= phase6_requested
+        and int(phase6_qep.get("negative_solver_converged_modes", -1))
+        >= phase6_requested
+        and int(phase6_positive.get("mode_count", -1)) == phase6_requested
+        and int(phase6_negative.get("mode_count", -1)) == phase6_requested
+        and phase6_positive.get("directions") == ["forward"] * phase6_requested
+        and phase6_negative.get("directions") == ["backward"] * phase6_requested
+        and all(phase6_positive.get("passive_branch_valid", []))
+        and len(phase6_positive.get("passive_branch_valid", []))
+        == phase6_requested
+        and all(phase6_negative.get("passive_branch_valid", []))
+        and len(phase6_negative.get("passive_branch_valid", []))
+        == phase6_requested
+        and max(
+            float(phase6_positive.get("max_biorthogonality_identity_error", float("inf"))),
+            float(phase6_negative.get("max_biorthogonality_identity_error", float("inf"))),
+        )
+        <= float(case080_phase6_gates["max_biorthogonality_identity_error"])
+        and len(phase6_qep_residuals) == 4 * phase6_requested
+        and max(phase6_qep_residuals, default=float("inf"))
+        <= float(case080_phase6_gates["max_qep_polynomial_relative_residual"])
+        and len(phase6_pairs) == phase6_requested
+        and all(
+            pair.get("opposite_direction") is True
+            and pair.get("passive_branches_valid") is True
+            and float(pair.get("relative_beta_error", float("inf")))
+            <= float(case080_phase6_gates["max_reciprocal_pair_relative_error"])
+            for pair in phase6_pairs
+        )
+        and len(phase6_groups)
+        == 2 * int(case080_phase6_gates["required_near_degenerate_group_count"])
+        and all(
+            group.get("normalization_method")
+            == case080_phase6_gates["required_group_normalization_method"]
+            for group in phase6_groups
+        )
+        and phase6_positive.get("full_vector_gathered") is False
+        and phase6_negative.get("full_vector_gathered") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_real_qep_biorthogonal_reciprocal_basis",
+            phase6_qep_ok,
+            phase6_qep,
+            {
+                "mode_count_per_direction": phase6_requested,
+                "max_biorthogonality_identity_error": case080_phase6_gates[
+                    "max_biorthogonality_identity_error"
+                ],
+                "max_qep_polynomial_relative_residual": case080_phase6_gates[
+                    "max_qep_polynomial_relative_residual"
+                ],
+                "near_degenerate_groups_per_direction": case080_phase6_gates[
+                    "required_near_degenerate_group_count"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_system = phase6_record.get("hybrid_system", {})
+    phase6_matrix_stats = phase6_system.get("matrix_stats", {})
+    phase6_solve = phase6_record.get("solve", {})
+    phase6_validation = phase6_record.get("validation", {})
+    phase6_e = phase6_validation.get("interface_e_projection", {})
+    phase6_traction = phase6_validation.get(
+        "fe_modal_traction_equilibrium", {}
+    )
+    phase6_runner_gates = phase6_record.get("gates", {})
+    phase6_augmented_ok = (
+        phase6_system.get("matrix_size")
+        == case080_phase6_gates["required_matrix_shape"]
+        and int(phase6_matrix_stats.get("matrix_nnz_used", -1))
+        >= int(case080_phase6_gates["minimum_matrix_nnz"])
+        and phase6_matrix_stats.get("matrix_type") == "mpiaij"
+        and phase6_system.get("dense_interface_square_formed") is False
+        and phase6_system.get("full_field_or_mode_gathered") is False
+        and phase6_solve.get("factor_solver") == "mumps"
+        and int(phase6_solve.get("converged_reason", -1)) > 0
+        and float(phase6_solve.get("true_relative_residual", float("inf")))
+        <= float(case080_phase6_gates["max_true_relative_residual"])
+        and float(phase6_e.get("combined_relative_residual", float("inf")))
+        <= float(case080_phase6_gates["max_interface_e_relative_residual"])
+        and max(
+            float(phase6_traction.get("bottom_relative_residual", float("inf"))),
+            float(phase6_traction.get("top_relative_residual", float("inf"))),
+        )
+        <= float(case080_phase6_gates["max_fe_modal_traction_relative_residual"])
+        and phase6_traction.get("interpretation")
+        == "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
+        and phase6_runner_gates
+        and all(value is True for value in phase6_runner_gates.values())
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_augmented_aij_mumps_and_interface_algebra",
+            phase6_augmented_ok,
+            {
+                "system": phase6_system,
+                "solve": phase6_solve,
+                "interface_e_projection": phase6_e,
+                "fe_modal_traction_equilibrium": phase6_traction,
+                "runner_gates": phase6_runner_gates,
+            },
+            {
+                "matrix_shape": case080_phase6_gates["required_matrix_shape"],
+                "factor_solver": "mumps",
+                "max_true_relative_residual": case080_phase6_gates[
+                    "max_true_relative_residual"
+                ],
+                "max_interface_e_relative_residual": case080_phase6_gates[
+                    "max_interface_e_relative_residual"
+                ],
+                "max_fe_modal_traction_relative_residual": case080_phase6_gates[
+                    "max_fe_modal_traction_relative_residual"
+                ],
+                "all_runner_gates": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_power = phase6_validation.get("port_power", {})
+    phase6_reference = phase6_record.get("full3d_reference_comparison", {})
+    phase6_delta = phase6_reference.get("hybrid_minus_full3d", {})
+    phase6_power_values = [
+        float(phase6_power.get(key, float("nan")))
+        for key in ("R_total", "T_total", "A_balance")
+    ]
+    phase6_boundary_ok = (
+        all(math.isfinite(value) for value in phase6_power_values)
+        and abs(sum(phase6_power_values) - 1.0)
+        <= float(case080_phase6_gates["max_rta_balance_closure"])
+        and phase6_reference.get("reference_grid_converged") is False
+        and all(
+            abs(float(phase6_delta.get(key, float("inf"))))
+            <= float(case080_phase6_gates["max_abs_h5_hybrid_full3d_delta"])
+            for key in ("R_total", "T_total", "A_balance")
+        )
+        and phase6_qualification.get("integration_pass") is True
+        and phase6_qualification.get("clean_source_integration_record") is True
+        and phase6_qualification.get("physical_augmented_direct_pass") is False
+        and phase6_qualification.get("mode_count_converged") is False
+        and phase6_qualification.get("pointwise_h_jump_checked") is False
+        and phase6_qualification.get("volume_absorption_reconstructed") is False
+        and phase6_qualification.get("official_record") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_rta_h5_diagnostic_and_qualification_boundary",
+            phase6_boundary_ok,
+            {
+                "port_power": phase6_power,
+                "reference_comparison": phase6_reference,
+                "qualification": phase6_qualification,
+            },
+            {
+                "rta_balance_closure": case080_phase6_gates[
+                    "max_rta_balance_closure"
+                ],
+                "max_abs_h5_hybrid_full3d_delta": case080_phase6_gates[
+                    "max_abs_h5_hybrid_full3d_delta"
+                ],
+                "reference_grid_converged": False,
+                "clean_source_integration_record": True,
+                "physical_augmented_direct_pass": False,
+                "official_record": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    try:
+        from benchmarks.task032_final_gates import evaluate_task032_final
+    except ModuleNotFoundError:
+        from task032_final_gates import evaluate_task032_final
+
+    gates.extend(
+        evaluate_task032_final(
+            case080, case080_gate_bundle["final"], Gate
+        )
+    )
+
+    task032_reference_records: dict[str, dict[str, Any]] = {}
+    for level in case080_gates["required_levels"]:
+        relative = f"records/full3d_{level}_reference.json"
+        record_path = case080 / relative
+        record = _load_json(record_path)
+        task032_reference_records[level] = record
+        metadata = record.get("metadata", {})
+        complete, missing = _metadata_complete(record)
+        relation = _commit_relation(
+            metadata.get("commit_sha"), metadata.get("provenance")
+        )
+        identity_ok = (
+            complete
+            and metadata.get("commit_sha") == case080_gates["required_commit"]
+            and metadata.get("container_digest")
+            == case080_gates["required_container_digest"]
+            and metadata.get("git_dirty") is False
+            and metadata.get("tracked_source_dirty") is False
+            and relation in {"exact_checkout", "checkout_ancestor"}
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_identity:{level}",
+                identity_ok,
+                {"missing": missing, "relation": relation, "metadata": metadata},
+                "complete clean metadata on frozen commit and image",
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        results = record.get("results", {})
+        numeric_ok = (
+            results.get("case_status") == "completed"
+            and results.get("official_result") is True
+            and float(results.get("linear_system_true_relative_residual", float("inf")))
+            <= float(case080_gates["max_true_relative_residual"])
+            and abs(
+                float(results.get("energy_closure_error_port_volume", float("inf")))
+            )
+            <= float(case080_gates["max_abs_energy_closure"])
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_numeric:{level}",
+                numeric_ok,
+                {
+                    "residual": results.get("linear_system_true_relative_residual"),
+                    "closure": results.get("energy_closure_error_port_volume"),
+                    "status": results.get("case_status"),
+                    "official": results.get("official_result"),
+                },
+                {
+                    "residual_max": case080_gates["max_true_relative_residual"],
+                    "closure_abs_max": case080_gates["max_abs_energy_closure"],
+                },
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        reference_contract = record.get("reference_contract", {})
+        archive_ok = (
+            reference_contract.get("schema_version")
+            == case080_gates["required_archive_schema"]
+            and reference_contract.get("array_shape")
+            == case080_gates["required_archive_shape"]
+            and reference_contract.get("plane_z_nm")
+            == case080_gates["required_plane_z_nm"]
+            and reference_contract.get("dtype") == case080_gates["required_dtype"]
+            and reference_contract.get("interface_trace_sides")
+            == case080_gates["required_interface_trace_sides"]
+            and int(
+                reference_contract.get("replicated_payload_bytes_uncompressed", 2**63)
+            )
+            <= int(case080_gates["max_replicated_payload_bytes"])
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_archive_contract:{level}",
+                archive_ok,
+                reference_contract,
+                {
+                    "schema": case080_gates["required_archive_schema"],
+                    "shape": case080_gates["required_archive_shape"],
+                    "planes": case080_gates["required_plane_z_nm"],
+                    "dtype": case080_gates["required_dtype"],
+                },
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        artifacts = record.get("artifacts", {})
+        hash_keys = (
+            "run_summary_sha256",
+            "reference_metadata_sha256",
+            "reference_npz_sha256",
+            "diffraction_orders_sha256",
+            "dtn_port_diffraction_orders_sha256",
+            "power_metrics_sha256",
+        )
+        hashes_ok = (
+            all(
+                re.fullmatch(r"[0-9a-f]{64}", str(artifacts.get(key, "")))
+                for key in hash_keys
+            )
+            and int(artifacts.get("reference_npz_bytes", 0)) > 0
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_artifact_hashes:{level}",
+                hashes_ok,
+                {key: artifacts.get(key) for key in hash_keys},
+                "six SHA-256 identities and a positive NPZ byte count",
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+        expected_rta = case080_expected["full3d_reference"][level]
+        rta_delta = {
+            key: abs(float(results.get(key, float("inf"))) - float(expected_rta[key]))
+            for key in ("R_total", "T_total", "A_balance")
+        }
+        rta_ok = max(rta_delta.values()) <= float(
+            case080_gates["rta_absolute_tolerance"]
+        )
+        gates.append(
+            Gate(
+                f"task032_phase1_rta:{level}",
+                rta_ok,
+                rta_delta,
+                {"absolute_tolerance": case080_gates["rta_absolute_tolerance"]},
+                f"cases/080_hybrid_fem_modal_direct_baseline/{relative}",
+            )
+        )
+
+    h3_consistency = task032_reference_records["h3"].get("historical_consistency", {})
+    h3_history_ok = all(
+        float(h3_consistency.get(key, float("inf"))) <= 1.0e-12
+        for key in (
+            "R_total_absolute_difference",
+            "T_total_absolute_difference",
+            "A_volume_total_absolute_difference",
+        )
+    )
+    gates.append(
+        Gate(
+            "task032_phase1_h3_historical_consistency",
+            h3_history_ok,
+            h3_consistency,
+            "all h3 R/T/A absolute differences <= 1e-12",
+            "cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json",
+        )
+    )
 
     records: dict[str, dict[str, Any]] = {}
     summaries: list[dict[str, Any]] = []
@@ -1223,15 +2692,24 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             hash_pattern = contract["source_artifact_sha256_pattern"]
             source_path = ROOT / str(record.get("source_artifact", ""))
             sampler_path = ROOT / str(record.get("memory_sampler_artifact", ""))
-            observed_source_hash = _sha256(source_path) if source_path.is_file() else None
-            observed_sampler_hash = _sha256(sampler_path) if sampler_path.is_file() else None
+            observed_source_hash = (
+                _sha256(source_path) if source_path.is_file() else None
+            )
+            observed_sampler_hash = (
+                _sha256(sampler_path) if sampler_path.is_file() else None
+            )
             hashes_ok = (
                 isinstance(source_hash, str)
                 and re.fullmatch(hash_pattern, source_hash) is not None
                 and isinstance(sampler_hash, str)
                 and re.fullmatch(hash_pattern, sampler_hash) is not None
-                and (observed_source_hash is None or observed_source_hash == source_hash)
-                and (observed_sampler_hash is None or observed_sampler_hash == sampler_hash)
+                and (
+                    observed_source_hash is None or observed_source_hash == source_hash
+                )
+                and (
+                    observed_sampler_hash is None
+                    or observed_sampler_hash == sampler_hash
+                )
             )
             gates.append(
                 Gate(
@@ -1239,7 +2717,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     hashes_ok,
                     {
                         "source": observed_source_hash or "heavy artifact unavailable",
-                        "sampler": observed_sampler_hash or "heavy artifact unavailable",
+                        "sampler": observed_sampler_hash
+                        or "heavy artifact unavailable",
                     },
                     {"source": source_hash, "sampler": sampler_hash},
                     benchmark_id,
@@ -1274,7 +2753,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                     benchmark_id,
                 )
             )
-            relation = _commit_relation(metadata.get("commit_sha"), metadata.get("provenance"))
+            relation = _commit_relation(
+                metadata.get("commit_sha"), metadata.get("provenance")
+            )
             gates.append(
                 Gate(
                     f"task031_source_commit_relation:{benchmark_id}",
@@ -1402,7 +2883,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                         and int(record.get("swap_in_delta_pages", -1)) == 0
                         and int(record.get("swap_out_delta_pages", -1)) == 0,
                         {
-                            "worker_peak_gib": record.get("simultaneous_worker_peak_gib"),
+                            "worker_peak_gib": record.get(
+                                "simultaneous_worker_peak_gib"
+                            ),
                             "swap_in": record.get("swap_in_delta_pages"),
                             "swap_out": record.get("swap_out_delta_pages"),
                         },
@@ -1489,7 +2972,9 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             float(pc_contract["task030_flexible_pc"]["linearity_relative_error"])
             > float(pc_contract["task030_flexible_pc"]["gate"])
             and pc_contract["task030_flexible_pc"]["result"] == "fail"
-            and float(pc_contract["fixed_richardson_variant"]["linearity_relative_error"])
+            and float(
+                pc_contract["fixed_richardson_variant"]["linearity_relative_error"]
+            )
             <= 1.0e-11
             and pc_contract["fixed_richardson_variant"]["solver_result"]
             == "numeric_negative"
@@ -1510,7 +2995,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "task031_exact_factor_dedup_negative",
                 factor_contract.get("unique_factor_classes") == 16
                 and factor_contract.get("exact_duplicate_factor_count") == 0
-                and "approximate sharing prohibited" in factor_contract.get("disposition", ""),
+                and "approximate sharing prohibited"
+                in factor_contract.get("disposition", ""),
                 factor_contract,
                 "16 unique exact factors and no approximate sharing",
                 "cases/070_compact_physical_slab_memory_optimization/records/memory_components.json",

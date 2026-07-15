@@ -1,0 +1,204 @@
+{
+  "affine_trace_validation": {
+    "communication_scope": "interface_interpolation_points_and_two_complex_tangential_values_only",
+    "full_3d_field_or_mode_gathered": false,
+    "interfaces": [
+      {
+        "canonical_trace": "(E_x,E_y)",
+        "coordinate_axis_metadata_gathered": true,
+        "field_vector_gathered": false,
+        "global_interface_facets": 18,
+        "global_middle_adjacent_cells": 18,
+        "global_query_points": 216,
+        "global_source_evaluations": 216,
+        "global_trace_dofs": 162,
+        "local_fem_outward_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "middle_adjacent_cell_sign": 1,
+        "modal_outward_normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "normal_opposition_error": 0.0,
+        "relative_trace_coefficient_error": 4.516576783061028e-15,
+        "side": "bottom",
+        "unresolved_points": 0,
+        "z_nm": 10.0
+      },
+      {
+        "canonical_trace": "(E_x,E_y)",
+        "coordinate_axis_metadata_gathered": true,
+        "field_vector_gathered": false,
+        "global_interface_facets": 18,
+        "global_middle_adjacent_cells": 18,
+        "global_query_points": 216,
+        "global_source_evaluations": 216,
+        "global_trace_dofs": 162,
+        "local_fem_outward_normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "middle_adjacent_cell_sign": -1,
+        "modal_outward_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "normal_opposition_error": 0.0,
+        "relative_trace_coefficient_error": 6.6138398980526916e-15,
+        "side": "top",
+        "unresolved_points": 0,
+        "z_nm": 110.0
+      }
+    ],
+    "source_global_dofs": 7246,
+    "source_space": "3D hexahedron N1curl p2",
+    "top_bottom_physical_trace_relative_difference": 0.7422239876397037,
+    "trace_space": "matched 2D quadrilateral N1curl p2"
+  },
+  "benchmark_id": "case080_task032_phase5_matched_trace_projection",
+  "configuration": {
+    "bottom_interface_z_nm": 10.0,
+    "degree": 2,
+    "h_nm": 10.0,
+    "middle_length_nm": 100.0,
+    "top_interface_z_nm": 110.0
+  },
+  "elapsed_seconds_max_rank": 1.7515388119973068,
+  "gates": {
+    "affine_3d_to_2d_trace_error_le_1e-10": true,
+    "all_interface_points_resolved_without_field_gather": true,
+    "left_right_modal_round_trip_le_1e-10": true,
+    "matched_bottom_top_facets_and_middle_side_cells": true,
+    "mpi_ranks_agree": true,
+    "near_degenerate_block_uses_subspace_error": true,
+    "storage_has_no_dense_interface_square_or_full_gather": true,
+    "top_bottom_local_and_modal_normals_are_opposites": true
+  },
+  "historical_peak_rss_by_rank": [
+    {
+      "historical_peak_rss_mb": 236.7421875,
+      "rank": 0
+    },
+    {
+      "historical_peak_rss_mb": 215.1796875,
+      "rank": 1
+    },
+    {
+      "historical_peak_rss_mb": 213.5078125,
+      "rank": 2
+    },
+    {
+      "historical_peak_rss_mb": 215.3828125,
+      "rank": 3
+    }
+  ],
+  "memory_note": "Per-rank process-lifetime peaks are diagnostic only. The Phase5 storage claim is structural: sparse trace mass, distributed trace columns, small replicated Gram block, and no dense N_Gamma square.",
+  "metadata": {
+    "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+    "command": "python -m benchmarks.run_task032_phase5_trace --verified-clean-sha b565ac4610dee08a2d313060b7cb26b48145370d --h-nm 10 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/trace_phase5.json",
+    "commit_sha": "b565ac4610dee08a2d313060b7cb26b48145370d",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "container_image": "myfenics-stage4:task28",
+    "full_field_or_mode_vector_gather": false,
+    "git_dirty": false,
+    "host_environment_id": "SK-20260601OSDE",
+    "mpi_size": 4,
+    "provenance": "clean_task032_phase5_matched_trace_projection",
+    "scalar_dtype": "complex128",
+    "timestamp_utc": "2026-07-14T15:24:09.002547+00:00",
+    "tracked_source_dirty": false,
+    "verification": "host_git_clean_attestation",
+    "verified_clean_sha": "b565ac4610dee08a2d313060b7cb26b48145370d"
+  },
+  "mpi_rank_signatures": [
+    "43026b52c576ac4df18cd1247f1c5414ba63b20836f276c40d3bb764d0233943",
+    "43026b52c576ac4df18cd1247f1c5414ba63b20836f276c40d3bb764d0233943",
+    "43026b52c576ac4df18cd1247f1c5414ba63b20836f276c40d3bb764d0233943",
+    "43026b52c576ac4df18cd1247f1c5414ba63b20836f276c40d3bb764d0233943"
+  ],
+  "near_degenerate_subspace_validation": {
+    "comparison": "mass_weighted_trace_subspace",
+    "first_vector_relative_difference": 2.446343060627647,
+    "individual_vector_equality_used_as_gate": false,
+    "material_kind": "air",
+    "max_principal_angle_rad": 2.1073424255447017e-08,
+    "phase3_group_indices": [
+      [
+        0,
+        1
+      ]
+    ],
+    "projector_error": 2.1073424255447017e-08,
+    "singular_values": [
+      1.0,
+      0.9999999999999998
+    ]
+  },
+  "schema_version": 1,
+  "stage4_modal_projection": {
+    "coefficient_relative_error": 3.784312029310894e-16,
+    "constraint_communication_scope": "periodic_boundary_dofs_only",
+    "dense_interface_operator_formed": false,
+    "expected_coefficients": [
+      [
+        0.7,
+        0.2
+      ],
+      [
+        -0.3,
+        0.4
+      ]
+    ],
+    "full_vector_gathered": false,
+    "gram_condition": 30.499464005779608,
+    "material_kind": "stage4_xy",
+    "mode_count": 2,
+    "periodic_constraint_source": "Phase3 full vectors reconstructed through distributed T; collapsed transverse N1curl dofs retain Bloch slave values",
+    "phase_x": [
+      -0.6007411348979813,
+      -0.7994436120462065
+    ],
+    "phase_y": [
+      1.0,
+      0.0
+    ],
+    "projected_coefficients": [
+      [
+        0.6999999999999996,
+        0.19999999999999998
+      ],
+      [
+        -0.3,
+        0.4
+      ]
+    ],
+    "projection_shape": [
+      2,
+      162
+    ],
+    "reconstruction_shape": [
+      162,
+      2
+    ],
+    "small_dense_gram_shape": [
+      2,
+      2
+    ],
+    "storage": {
+      "dense_NGamma_squared_bytes": 0,
+      "distributed_left_trace_bytes": 5184,
+      "distributed_right_trace_bytes": 5184,
+      "replicated_gram_bytes_per_rank": 64
+    },
+    "trace_mass_nz_used": 2484,
+    "trace_reconstruction_relative_residual": 4.689074504383912e-16
+  },
+  "status": "pass",
+  "timestamp_utc": "2026-07-14T15:24:09.002547+00:00"
+}

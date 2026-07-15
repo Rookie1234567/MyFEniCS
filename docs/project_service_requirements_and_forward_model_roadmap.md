@@ -11,7 +11,7 @@ target_grazing_angle_range = 1–10 deg from surface
 target_compute_memory = 1–2 TB
 ```
 
-本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task035 的技术路线。
+本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task036 的技术路线。
 
 本文档不是某一个 Task 的任务书。后续任务书必须与本文档保持一致；若实验测量能力、材料数据来源或最终服务接口发生变化，应先更新本文档，再调整算法路线。
 
@@ -63,7 +63,7 @@ target_compute_memory = 1–2 TB
 
 ## 2.1 当前前向模型阶段
 
-Task031–Task035 的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
+Task031–Task036 的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
 
 - 几何参数；
 - 波长；
@@ -185,7 +185,7 @@ $$
 - 周期抖动；
 - 单胞间随机差异。
 
-这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task035 的硬目标。
+这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task036 的硬目标。
 
 ## 3.4 实验校准和 nuisance 参数
 
@@ -294,7 +294,7 @@ alpha_from_surface = 1°, 2°, 3°, 4°, 5°, 6°, 7°, 8°, 9°, 10°
 
 ## 4.4 S/P 偏振
 
-项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task035 应将：
+项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task036 应将：
 
 ```text
 S polarization
@@ -317,7 +317,7 @@ $$
 
 第一版反演服务不必进行密集能量扫描，但从 Task032 起，前向接口必须把 `lambda` 和材料色散设为参数。
 
-Task035 的波长序列为：
+Task036 的波长序列为：
 
 ```text
 13.5 nm
@@ -565,7 +565,7 @@ bottom local 3D FEM
 + top local 3D FEM
 ```
 
-第一阶段使用直接法，验证：
+Task032 已在 13.5 nm 直接法 reference 上验证：
 
 - 截面本征模；
 - 正向、反向和衰减模；
@@ -577,17 +577,21 @@ bottom local 3D FEM
 - S/P 偏振；
 - 当前材料数据和小扰动验证。
 
-当前 benchmark 初步内存目标：
+当前 clean h5/h3 benchmark 结论：
 
 ```text
-acceptable <= 5 GB
-target <= 3 GB
-preferred <= 2 GB
+h3 augmented / Schur-fast / Schur-minimal = 3.853 / 3.998 / 3.224 GiB
+h2 = not_run_by_gate
+same-grid Hybrid/full3D = pass
+parameter 1–10° S/P = API/interface smoke only
+current direct implementation at 0.7 nm = not resource feasible
 ```
 
-这些是工程估算，不是预先保证。
+Hybrid 在 h5/h3 分别把 total rows 降低 68.62%/65.35%，assembled NNZ 降低
+59.14%/59.68%。这证明架构有效，但 local LU、replicated dense modal arrays、all-mode
+multi-RHS 和 all-modes shift-invert QEP 仍需重构。
 
-## Task033：多参数 robust h/p 自适应直接法
+## Task033：Hybrid local h/p adaptivity and interface-budget optimization
 
 只在上下局部 3D 区域进行 h/p 自适应，中间模态区保持解析传播。
 
@@ -610,25 +614,43 @@ $$
 
 目标是形成可覆盖目标角度范围的公共网格，避免每个角度重新划分网格。
 
-当前 benchmark 目标：
+Task033 第一 Gate 在 13.5 nm direct reference 上比较相同 observable error：
 
 ```text
-same observable accuracy
-DoF reduction >= 2x minimum
->= 3x preferred
->= 5x strong
+local DoF reduction >= 3x minimum
+>= 5x preferred
 ```
 
-## Task034：针对最终 hybrid-adaptive 系统的迭代法
+同时优化 interface position / buffer thickness，使 local 3D volume 与所需 evanescent M 联合受控；
+未来上下复杂区域继续使用精确 complex 3D Nédélec FEM。
 
-在 Task033 确定的最终离散系统上构造：
+## Task034：Scalable generic 2D modal core
+
+不依赖当前规则 benchmark 的 y 不变性，面向通用 `epsilon(x,y)`：
 
 ```text
-bottom adaptive 3D block PC
-+ top adaptive 3D block PC
-+ exact/near-exact modal block
-+ interface Schur correction
-+ outer Krylov
+distributed modal ownership
++ streamed/blocked right-left modes
++ adaptive modal truncation
++ block or matrix-free projection/Schur action
++ no replicated M^2 arrays
++ no all-mode dense multi-RHS
++ spectrum slicing / continuation
+```
+
+必须给出 13.5/5/2/1/0.7 nm 的模式数、QEP DoF、payload 和 1 TiB/2 TiB 预算。
+pure-modal 或 y-sector 只允许作为当前简单几何的可选诊断/reference，不是未来服务 Gate。
+
+## Task035：针对最终 hybrid-adaptive 系统的迭代法
+
+在 Task033 + Task034 确定的最终离散系统上构造：
+
+```text
+matrix-free bottom/top adaptive 3D FEM
++ low-memory H(curl) multilevel/Schwarz
++ scalable modal/interface action
++ outer flexible Krylov
++ low-restart or validated low-storage alternative
 ```
 
 必须支持：
@@ -640,9 +662,11 @@ bottom adaptive 3D block PC
 - 内存、迭代数和时间统计；
 - 失效检测和 fallback。
 
-先自适应、后构造最终迭代法，避免在均匀网格上开发一次 PC，加入 h/p 自适应后再次重构。
+先完成自适应和 scalable modal core，再构造最终迭代法，避免在会被替换的均匀网格或复制
+modal layout 上开发一次性 PC。whole-solver memory 以 `<=2 kB/FE DoF` 为优选目标，
+`<=3 kB/FE DoF` 为探索硬上限；所有成功仍由 full explicit true residual 判定。
 
-## Task035：逐波长缩短至 0.7 nm
+## Task036：逐波长缩短至 0.7 nm
 
 建议顺序：
 
@@ -732,7 +756,7 @@ $$
 7. 当前材料体系和数据来源继续沿用；改变波长时更新对应材料色散。
 8. S/P 入射偏振已经支持，后续作为正式服务参数。
 9. 逐反射衍射级效率是结构反演核心，R00 是重要辅助约束。
-10. Task031–Task035 不因实验噪声模型尚未确定而暂停。
+10. Task031–Task036 不因实验噪声模型尚未确定而暂停。
 ```
 
 ---
@@ -752,7 +776,7 @@ $$
 9. 单次反演允许的总时间是多少？
 10. 结构参数的合理先验范围和制造约束是什么？
 
-这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task035 的主技术路线。
+这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task036 的主技术路线。
 
 ---
 
@@ -814,12 +838,15 @@ $$
 技术路线：
 Task031 full-3D PC 内存收口
 → Task032 hybrid FEM-modal parameterized direct
-→ Task033 multi-parameter robust h/p adaptivity
-→ Task034 hybrid-adaptive iterative solver
-→ Task035 wavelength continuation to 0.7 nm
+→ Task033 local h/p adaptivity and interface-budget optimization
+→ Task034 scalable generic 2D modal core
+→ Task035 final Hybrid iterative solver
+→ Task036 wavelength continuation to 0.7 nm
 → inversion / uncertainty / deployment。
 
 关键原则：
 不能依靠全域均匀 3D FEM 和继续节约几十个百分点内存解决 0.7 nm 问题；
-必须采用中间规则区模态消元、局部 3D 自适应和低存储迭代的组合路线。
+必须采用中间 generic 2D 模态消元、精确复杂 3D 端部的局部 h/p 自适应、scalable modal
+core 和低存储迭代的组合路线。1 TiB 是可信但高风险的 conditional opportunity，不是 Task032
+已经证明的能力。
 ```

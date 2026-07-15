@@ -121,6 +121,13 @@ class SimulationConfig3D:
     diffraction_probe_fraction: float = 0.75
     diffraction_compute_modal_diagnostic: bool = False
     diffraction_rayleigh_tol: float = 1.0e-6
+    # Explicit opt-in export used by Hybrid FEM-modal validation.  The default
+    # remains off so ordinary Stage-4 runs do not gather or persist sampled
+    # volume fields.
+    full3d_reference_export: bool = False
+    full3d_reference_plane_z: tuple[float, ...] = ()
+    full3d_reference_sample_count_x: int = 40
+    full3d_reference_sample_count_y: int = 20
     # Direct-factorization profiles. BLR is still a direct MUMPS factorization,
     # not an iterative solver or a replacement for the qualified MPI4 runtime.
     petsc_direct_solver_profile: str = "default"  # default / mumps_ooc / mumps_blr

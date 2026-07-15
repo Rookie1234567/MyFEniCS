@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
 import unittest
@@ -58,6 +59,7 @@ CASES = {
     "050_stage4_direct_memory_forensics",
     "060_multilevel_hcurl_iterative_solver",
     "070_compact_physical_slab_memory_optimization",
+    "080_hybrid_fem_modal_direct_baseline",
 }
 
 RECORDED_CASES = {
@@ -103,6 +105,29 @@ RECORDED_CASES = {
         "records/best_h3.json",
         "records/best_h2.json",
     ),
+    "080_hybrid_fem_modal_direct_baseline": (
+        "records/full3d_h5_reference.json",
+        "records/full3d_h3_reference.json",
+        "records/hybrid_phase6_m6.json",
+        "records/qep_phase2.json",
+        "records/modes_phase3.json",
+        "records/propagation_phase4.json",
+        "records/trace_phase5.json",
+        "records/hybrid_h5_m120.json",
+        "records/hybrid_h5_m160.json",
+        "records/hybrid_h3_m120.json",
+        "records/hybrid_h3_m160.json",
+        "records/hybrid_h5_funnel.json",
+        "records/hybrid_h3_funnel.json",
+        "records/parameter_smoke.json",
+        "records/memory_h5_augmented.json",
+        "records/memory_h5_schur_fast.json",
+        "records/memory_h5_schur_minimal.json",
+        "records/memory_h3_augmented.json",
+        "records/memory_h3_schur_fast.json",
+        "records/memory_h3_schur_minimal.json",
+        "records/h2_prediction.json",
+    ),
 }
 
 
@@ -115,6 +140,52 @@ def _load(path: Path) -> dict:
 
 
 class DocumentationContractTests(unittest.TestCase):
+    def test_task032_summary_is_table_first_and_traceable(self):
+        root = ROOT / "docs" / "task032_hybrid_fem_modal_direct_baseline"
+        text = _read(root / "outcomes" / "summary.md")
+        table_separators = re.findall(
+            r"^\|(?:\s*:?-{3,}:?\s*\|)+$", text, flags=re.MULTILINE
+        )
+        self.assertGreaterEqual(len(table_separators), 8)
+        for heading in (
+            "最终状态与适用范围",
+            "Phase 0–10 实施矩阵",
+            "QEP 与 mode validation",
+            "direct path 内存与时间",
+            "h2 决策",
+            "负结果与停止边界",
+            "选择性合并决定",
+            "下一步与硬 Gate",
+        ):
+            self.assertIn(heading, text)
+        for identity in ("measured", "derived", "predicted", "not_run"):
+            self.assertIn(identity, text)
+        for value in ("3.2244 GiB", "M160", "302/302", "not_run_by_gate"):
+            self.assertIn(value, text)
+
+    def test_task032_review_closeout_artifacts_are_machine_readable(self):
+        root = (
+            ROOT
+            / "docs"
+            / "task032_hybrid_fem_modal_direct_baseline"
+            / "outcomes"
+        )
+        projection = _load(root / "task032_0p7nm_projection.json")
+        self.assertEqual(
+            projection["record_type"], "analytical_resource_projection"
+        )
+        self.assertFalse(projection["identity"]["is_pde_run"])
+        self.assertFalse(projection["identity"]["is_solver_pass"])
+        self.assertNotIn("status", projection)
+        for name in (
+            "selective_merge_manifest.csv",
+            "compact_record_size_inventory.csv",
+        ):
+            with (root / name).open(encoding="utf-8", newline="") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertGreater(len(rows), 0, name)
+            self.assertTrue(all(None not in row for row in rows), name)
+
     def test_required_document_layers_exist(self):
         required = (
             "notes/quick_start/README.md",

@@ -266,6 +266,9 @@ _STAGE4_FLAT_3D = replace(
     period_y=10.0,
     air_height=5.0,
     substrate_thickness=5.0,
+    grating_width_x=0.0,
+    grating_width_y=0.0,
+    grating_height=0.0,
 )
 _TARGET_STAGE4_DIRECT_H5 = Stage4GratingInputs3D.from_simulation_config(
     target_stage4_config(degree=2, h_nm=5.0)

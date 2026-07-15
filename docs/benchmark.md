@@ -11,6 +11,8 @@
 | L3 direct | target p2 h5/h3 rerun，h2 reviewed reference | 通过 |
 | L3 iterative | Task27 target p2 h5/h3/h2 canonical | 全通过 |
 | L3 Task30 | compact physical-slab low-memory h5/h3/h2 | `workstation_memory_success_with_qualifications`；h5/h3 为 clean final-HEAD 复跑，h2 为 reviewed historical reference |
+| L3 Task31 | assembled-F-free compact memory-first h5/h3/h2 | `strong_memory_success_slow_but_memory_efficient`；h2 7.898 GiB simultaneous |
+| L3 Task32 | Hybrid FEM–Modal h5/h3 M160 | `hybrid_direct_engineering_success` at 13.5 nm；h2 not_run；Case080 302/302 |
 
 ## 目标模型
 
@@ -73,3 +75,24 @@ h5/h3/h2 official R/T/A 对 direct 的最大差分别为 `5.44e-9`、`7.72e-10` 
 h3 同时通过 `<=3.50 GiB` 与任务书历史基线 `>=8%`；h2 在两套 8.501/8.587 GiB 中央预测、9.447 GiB 上界和 9.5/11 GiB watchdog 放行后完成，无 swap。Task31 h2 external simultaneous / legacy internal 分别为 7.897675 / 8.176441 GiB；相对 Task030 历史 9.374729 GiB 的观察降幅约 15.8% / 12.8%，保守结论为约 8.0–8.2 GiB。h2 official R/T/A 为 `0.001342934186 / 0.5992132355694105 / 0.399443835926`，对 direct 最大差 `6.125e-9`。classification 是 `strong_memory_success_slow_but_memory_efficient`：memory 强成功，但 solve 约为 Task030 的 5.01x。主要性能成本来自每次 public form action 的装配/通信，不是一次性的 `release_f()`。
 
 Case070 还固定 PC linearity、public form-action equivalence、factor fingerprint、overlap/selective solver 与 lifecycle 负/正证据。16 个 factor 全部 unique，禁止近似 dedup；adaptive PC 非线性，普通 GMRES、TFQMR、BCGS 必须 certification fail closed，只有 FGMRES 当前 target-qualified。三份 best records、baseline、screen、object/PC/memory records 可提交，完整 timeline 与场输出只留在 ignored `benchmarks/artifacts/cases/070/`。端口状态见 [`iterative_solver_ports.md`](iterative_solver_ports.md)。
+
+## Task032 Case080
+
+[`Case080`](../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md) 证明 13.5 nm
+generic `epsilon(x,y)` 截面模态中段可以替代同网格 100 nm 三维体区，同时保留 bottom/top exact
+3D FEM。h5/h3 Hybrid augmented rows 为 14,052/68,796，较 full3D 降 68.62%/65.35%；NNZ
+降 59.14%/59.68%。M160 代表每方向160个模式、共320个 internal amplitudes。
+
+| mesh | Hybrid true residual | max same-grid `|ΔR/T/A|` | minimal worker RSS | M120→160 max total delta |
+|---|---:|---:|---:|---:|
+| h5 | `2.5455e-12` | `2.07e-6` | 1.698 GiB | `6.24e-14` |
+| h3 | `2.6036e-12` | `2.63e-6` | 3.224 GiB | `1.22e-14` |
+
+六条 memory path 全部零 swap；h3 Schur-fast 3.998 GiB 比 augmented 3.853 GiB 更高，只有
+sequential-factor minimal 降到 3.224 GiB（-16.31%）。h2 两类预测中心/上界
+5.365/6.170 GiB 与 11.647/13.394 GiB 都失败，因此 `not_run_by_gate`。1–10° S/P 的
+30/30 是 M4 interface/API smoke，不是全区间 qualification。
+
+Review V1 接受当前物理/数值实现，但 current direct layout 在 0.7 nm 不具资源可行性。配套
+projection 只标记 `analytical_resource_projection`，不计入 solver pass。未来保留 complex 3D
+ends + generic modal middle；y-invariant/pure-modal 只作当前简单 geometry 的可选诊断/reference。

@@ -18,6 +18,10 @@
 | 28 | Task029 memory snapshot、stage marker、matrix inventory、candidate parser/record、cleanup、prediction 与 h2 G1–G10 guard |
 | 29 | Task030 baseline pin、active DoF、nonmatching H(curl) transfer/cache、condensed Galerkin、low-rank adapter 与 compact slab action |
 | 30 | Task031 Case070/outcomes 合同、public MPC form action、fine lifecycle、PC certificate、factor fingerprint 与 ordinary-default 隔离 |
+| 31 | Task032 full-3D reference grid、64 MiB guard、单侧接口取迹和默认关闭合同 |
+| 32 | Task032 matching cross-section、双 Floquet orientation、distributed QEP、解析/有损 beta、±配对、L2 范数和 MPI ownership |
+| 33 | Task032 Poynting/衰减分类、adjoint QEP、Q' 双正交、近简并 block、正反 identity、tracking 和 principal angles |
+| 41 | Task032 deterministic 0.7 nm analytical projection；验证 non-PDE/non-solver-pass 身份、generic mode/local-row scaling 与 invalid-input fail-closed |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -58,3 +62,48 @@ Case060 的 solver 性能结论不由单元测试代替：正式 p/h 候选必�
 `test_22_condensation` 覆盖 external fine action、`require_f/release_f`、重复 destroy 与 assembled equivalence；`test_23_physical_slab` 覆盖 PC linearity/determinism helper、fixed Richardson、selective slab、exact fingerprint 与 compact factor lifecycle。`test_30_task031_contract` 检查 Case070 JSON/CSV、Task031 summary/development progress、索引、ordinary default 与三份 clean best records。Review V1 后还固定 `iterative_solver_ports.md` 的 interface-vs-qualification 状态、保守 8.0–8.2 GiB 口径、response_v1 和 wrapper 规则：FGMRES 默认不强制 fixed-PC cert，所有非 FGMRES outer KSP 仍自动 certification/fail closed。
 
 Case070 checker 还必须验证 clean full-SHA/image/artifact hash、same 80 modes、FGMRES/matrix-free/compact identity、三残差、fine action、official R/T/A/direct delta、external simultaneous peak、swap、h3 8% Gate、两套 h2 prediction/upper 和 h2 strong classification。单元 action pass 不能替代 h5/h3/h2 full solve。
+
+## Task032 Phase 1 contract
+
+`test_31_full3d_reference_export` 检查普通默认关闭、周期单元中心网格、严格递增 z 平面、接口从中间模态区单侧取迹和冻结样本 payload 边界。实际 complex128 数组、切向 slice、finite 值与三方 SHA 一致性由 clean h5/h3 run 验证，不能只靠 unit test。
+
+Case080 checker 固定 source commit/image、clean provenance、残差、能量闭合、R/T/A、NPZ schema/shape/planes/dtype、接口侧、六个 artifact hash 和 h3 历史一致性。heavy field 不进 Git；h5/h3 的内部 per-rank historical peak sum 不是 simultaneous memory authority。
+
+## Task032 Phase 2 contract
+
+`test_32_task032_cross_section_qep` 覆盖匹配 Stage4 x/y 轴的截面材料、双 Bloch phase、Nédélec orientation probe、无 slave-chain 的 `u=Cq`、air 与 lossy 解析 beta、`+/- beta`、QEP 残差、electric-L2 范数和 MPI ownership。正式 Case080 record 固定 clean SHA、镜像、MPI4、SLEPc PEP/TOAR、六个 case、稀疏约束通信范围和 no-full-vector-gather。
+
+checker 还要求 air h5/h3/h2/h1.5 解析误差严格下降、h2/h1.5 与 lossy h2 分别通过阈值、所有选中模态残差/归一化/orientation 通过、每个 rank 的 local ownership 求和等于全局 shape，并验证需要的 `+/- beta` 配对。当前正式结果为 `277/277 passed`。Phase 2 electric-L2 不是最终 Poynting/双正交归一化，后者必须由 Phase 3 单独证明。
+
+## Task032 Phase 3 contract
+
+`test_33_task032_mode_classification` 覆盖 Poynting 正反方向、lossy complex beta、near-zero flux evanescent/cutoff branch、显式 adjoint QEP 左残差、`Q'(beta)` block 双正交、左右向量 MPI ownership、正反 mode identity、相邻角度 overlap matching、模式数增加时 unmatched 新模和近简并 principal angles。MPI4 固定覆盖正向 distributed basis；重复负向/相邻参数 PEP 留在 serial 合同，避免日常 MPI 回归重复昂贵 factor setup。
+
+`run_task032_phase3_modes` 的完整 MPI4 路径仍覆盖 air 正反 basis、homogeneous lossy、当前 Stage4 `epsilon(x,y)` 和角度 tracking。正式 record 必须固定 clean full SHA/image/MPI4、右/左残差、left-beta conjugate pairing、biorthogonality identity、unit-absolute-Poynting 或 near-zero classification、passive branch、reciprocal pairs、tracking/subspace、ownership 与 no-full-vector-gather。
+
+clean source `72dca66...` 的正式 Phase 3 record 已满足上述合同；checker 新增 identity、case/ownership/condition、residual/biorthogonality/flux、direction/reciprocal、tracking/subspace 五类 Gate，Case080 总计 `282/282 passed`。
+
+## Task032 Phase 4 contract
+
+`test_34_task032_stable_propagation` 覆盖单模无反射正反传播、lossy/evanescent
+被动衰减、强衰减安全下溢、37+63 nm composition、reciprocity/passivity 与
+nonreciprocal/growing/ambiguous/incompatible 负对照。`test_33` 还把真实 Phase 3
+air 正反 mode basis 直接交给 Phase 4 API，防止只有合成 beta 通过。
+
+`run_task032_phase4_propagation` 的 MPI4 路径固定 100 nm two-port scattering、
+Phase 3 record SHA-256、三个材料 case、O(M) 因子存储、无 full-field gather、
+四 rank 签名一致和全部负对照。clean source `9206e9c...` 的正式 record 通过
+identity/source、case/storage、reflection/passivity/composition/reciprocity、
+evanescent/negative/MPI 四类 Gate，Case080 总计 `286/286 passed`。
+
+## Task032 Phase 5–10 final contract
+
+`test_35`–`test_40` 依次覆盖 matched trace/projection、精确 10/110 nm local mesh、单侧 external
+DtN、internal modal blocks、augmented/Modal-Schur direct 与 E/H/吸收重构。正式 Case080 还固定
+h5/h3 M120/M160 截断漏斗、same-grid full3D R/T/A/field/absorption、30-point parameter-interface
+smoke、six-path simultaneous RSS 和 h2 fail-closed prediction。最终 checker 为 `302/302 passed`；
+h2 `not_run_by_gate`，30/30 不得写成 1–10° production qualification。
+
+`test_41_task032_scalability_projection` 不依赖 PDE runtime，锁定 checked-in projection JSON 与
+deterministic script 输出相同，并验证 `record_type=analytical_resource_projection`、
+`is_pde_run=false`、`is_solver_pass=false`。该记录不得计入 Case080 solver pass。

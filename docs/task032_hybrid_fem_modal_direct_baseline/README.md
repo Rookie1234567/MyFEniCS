@@ -16,6 +16,40 @@
 ## 文件
 
 - [Task032 任务书](task.md)
+- [滚动结果总结](outcomes/summary.md)
+- [Review 前最终 17 节执行总结（历史文件）](response_v1.md)
+- [Review V1](review_report_v1.md)
+- [Review V1 强制补充](review_report_v1_addendum.md)
+- [Review V1 follow-up 回应](response_v1_review_followup.md)
+- [0.7 nm 可扩展性评估](outcomes/task032_0p7nm_scalability_assessment.md)
+- [0.7 nm deterministic analytical projection](outcomes/task032_0p7nm_projection.json)
+- [选择性合并清单](outcomes/selective_merge_manifest.csv)
+- [轻量 record 大小清单](outcomes/compact_record_size_inventory.csv)
+- [本地迁移记录](outcomes/local_migration_record.md)
+- [环境能力记录](outcomes/environment_capability.md)
+- [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
+- [Phase 1 full-3D reference contract](outcomes/full3d_reference_contract.md)
+- [Phase 2 cross-section QEP walkthrough](../../notes/reference/code_walkthrough/42_task032_cross_section_qep.md)
+- [Phase 2 clean MPI4 QEP record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/qep_phase2.json)
+- [Phase 3 mode classification walkthrough](../../notes/reference/code_walkthrough/43_task032_mode_classification.md)
+- [Phase 3 clean MPI4 mode-basis record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json)
+- [Phase 4 stable propagation walkthrough](../../notes/reference/code_walkthrough/44_task032_stable_propagation.md)
+- [Phase 4 clean MPI4 propagation record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/propagation_phase4.json)
+- [Phase 5 matched trace/projection walkthrough](../../notes/reference/code_walkthrough/45_task032_modal_trace_projection.md)
+- [Phase 5 clean MPI4 trace record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/trace_phase5.json)
+- [Phase 6a local FEM mesh walkthrough](../../notes/reference/code_walkthrough/46_task032_hybrid_local_mesh.md)
+- [Phase 6c internal modal blocks walkthrough](../../notes/reference/code_walkthrough/47_task032_hybrid_internal_modes.md)
+- [Phase 6d augmented direct algebra walkthrough](../../notes/reference/code_walkthrough/48_task032_hybrid_augmented_direct.md)
+- [Phase 6e real-QEP h5/M6 runner walkthrough](../../notes/reference/code_walkthrough/49_task032_hybrid_physical_runner.md)
+- [Phase 6e clean-source MPI4 integration record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json)
+- [Phase 6e research diagnostic](outcomes/phase6e_research_diagnostic.md)
+- [Phase 6f--9 physical/truncation/full-3D evidence](outcomes/phase6f_to_phase9_numerics.md)
+- [Phase 10 memory and h2 decision](outcomes/phase10_memory_and_h2_decision.md)
+- [Negative results](outcomes/negative_results.md)
+- [Changed files](outcomes/changed_files.md)
+- [Regression summary](outcomes/test_summary.md)
+- [Fields/Schur/memory walkthrough](../../notes/reference/code_walkthrough/51_task032_fields_schur_and_memory.md)
+- [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
 - [Hybrid FEM–Modal 理论笔记](../../notes/theory/hybrid_fem_modal_domain_decomposition.md)
@@ -36,3 +70,61 @@ no 0.7 nm
 ```
 
 Task032 的第一目标是证明中间 z 不变区可以由二维截面模式可靠替代；第二目标才是评估 h2 Hybrid direct 是否进入 2–5 GiB 范围。
+
+Phase 2 的测试入口为：
+
+```bash
+mpiexec -n 4 python -m unittest -v src.test.test_32_task032_cross_section_qep
+mpiexec -n 4 python -m benchmarks.run_task032_phase2_qep --verified-clean-sha <full-sha>
+```
+
+第二条命令要求 tracked source clean；研究工作树必须显式使用
+`--allow-dirty-research`，其结果不能升级为正式 record。Windows 宿主先用
+`git status` 确认 clean，再把完整 SHA 作为 host clean attestation；Linux
+容器只复核挂载仓库 HEAD 与该 SHA 相等，因为 CRLF bind mount 会让容器内
+`git status` 把全部文本文件误报为修改。
+
+Phase 2 已在 clean source `33211a4ac6d4f6717351197a93c506e1adec609f` 后完成正式记录与自动 Gate。Phase 3/4 也已分别完成 Poynting 双正交基和稳定双向传播的 clean record；后续状态见下文。
+
+Phase 3 的测试与研究入口为：
+
+```bash
+python -m unittest -v src.test.test_33_task032_mode_classification
+mpiexec -n 4 python -m unittest -v src.test.test_33_task032_mode_classification
+mpiexec -n 4 python -m benchmarks.run_task032_phase3_modes --allow-dirty-research
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase3.sh
+```
+
+Phase 3 已在 clean source `72dca66b70515bcf6ccef239005afa43028df72b`
+完成正式 MPI4 record，Case080 checker 为 `282/282 passed`。h10 runner 是
+分类、双正交和 tracking 合同，不替代 Phase 2 beta 精度或后续 h3 Hybrid
+场/RTA 对比。
+
+Phase 4 的测试与研究入口为：
+
+```bash
+python -m unittest -v src.test.test_34_task032_stable_propagation
+mpiexec -n 4 python -m benchmarks.run_task032_phase4_propagation --allow-dirty-research
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
+```
+
+Phase 4 已在 clean source `9206e9c964db387448551cdefdc88081ef705441`
+完成正式 MPI4 record；100 nm two-port、无反射、被动衰减、composition、
+reciprocity 和强衰减负对照均通过，Case080 checker 为 `286/286 passed`。
+
+Phase 5 已在 clean source `b565ac4610dee08a2d313060b7cb26b48145370d`
+完成正式 MPI4 record；匹配 3D/2D Nédélec trace、bottom/top 法向、Stage4
+left/right round trip、近简并子空间和无 dense `N_Gamma^2` 存储均通过，
+Case080 checker 为 `290/290 passed`。Phase 6a--6d 已完成局部 FEM、外端口
+DtN、内部模态 blocks 和 rank-major 单体 AIJ。Phase 6e 的真实 QEP h5/M6
+已在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成 MPI4
+集成记录，10 个 runner Gate 与 Case080 `294/294` 均通过；研究漏斗的
+M4->M6 R/T/A 变化约 `1e-12`。Phase 6f--10 已完成 clean h5/h3
+M120--M160 强截断收敛、物理 E/H/体吸收/五个选面、augmented 与 Modal-Schur
+一致性、30/30 角度/S-P smoke 和六条 direct lifecycle 独立内存采样。h3
+memory-minimal 为 `3.224 GiB`，相对 augmented 降低 `16.31%`；但 h2 两种
+预测均未过 4/5 GiB 强制 Gate，所以 h2 按任务书保持锁定。正式记录和 Case080
+`302/302` checker 已完成。Review V1 接受 13.5 nm 实现，并要求在选择性合并前关闭文档和
+0.7 nm 可扩展性 P0；follow-up 保留 `h2=not_run_by_gate`、parameter smoke only、ordinary
+default unchanged。当前 direct implementation 不具 0.7 nm 资源可行性，但保留 future complex
+3D ends + generic modal middle 主架构。Task033 只在 follow-up 复审和选择性合并许可后启动。

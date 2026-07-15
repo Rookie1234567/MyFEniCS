@@ -20,6 +20,10 @@ REQUIRED_CLAUSES = (
     "未通过最终 review 之前，不建议合并到 `master`",
     "official R/T/A 只能从通过 residual Gate 的场计算",
     "从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`",
+    (
+        "从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` "
+        "必须以表格作为主要信息载体"
+    ),
 )
 
 
@@ -48,11 +52,13 @@ class RepositoryWorkPrinciplesTests(unittest.TestCase):
         self.assertIn("docs/repository_work_principles.md", root_readme)
         self.assertIn("repository_work_principles.md", docs_readme)
 
-    def test_retrospective_clause_is_synchronized_in_protected_files(self) -> None:
-        clause = REQUIRED_CLAUSES[-1]
-        for path in PROTECTED_FILES:
-            with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
-                self.assertIn(clause, path.read_text(encoding="utf-8"))
+    def test_retrospective_clauses_are_synchronized_in_protected_files(self) -> None:
+        for clause in REQUIRED_CLAUSES[-2:]:
+            for path in PROTECTED_FILES:
+                with self.subTest(
+                    clause=clause, path=path.relative_to(REPOSITORY_ROOT)
+                ):
+                    self.assertIn(clause, path.read_text(encoding="utf-8"))
 
     def test_readmes_link_to_retrospective_standard(self) -> None:
         for path in PROTECTED_FILES[:2]:

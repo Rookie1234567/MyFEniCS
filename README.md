@@ -19,6 +19,7 @@
 9. ordinary solver default 不得静默改变；新求解器在审查通过前必须保持显式 opt-in，未通过最终 review 前不合并 `master`。
 10. solver 成功必须以 full explicit true residual 为准；official R/T/A 只能从通过 residual Gate 的场计算，probe/flux 近似量默认仅作 diagnostic。
 11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；两者分别承担详细技术档案与项目级回顾，一句状态或纯链接不构成完成。完整框架见 [`docs/task_retrospective_standard.md`](docs/task_retrospective_standard.md)。
+12. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -34,6 +35,9 @@
 | p=2 h=2 direct reference | 已验证 |
 | exact auxiliary condensation | 稳定模块 |
 | p=2 h=5/3/2 MPI4 physical-slab iterative | 显式 opt-in 候选 |
+| Hybrid FEM–Modal h5/h3 direct reference | 13.5 nm 工程成功；Case080 302/302；显式 opt-in |
+| Hybrid h2 direct | `not_run_by_gate` |
+| 当前 direct Hybrid at 0.7 nm | 不具资源可行性；需 h/p + scalable modal core + iterative |
 | h=1.5 production solve | 未完成 |
 | spectral/GenEO/HPDDM research routes | 不进入普通 API |
 
@@ -55,7 +59,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task028 已以 `2f9e56d` 合入 master；Task029 已以 `diagnostic_success` 收口并合入。Task030 Response V2 已完成 final implementation HEAD 上的 clean h5/h3 复跑：855/962 步、1.687653/3.792912 GB；h2 不重跑，保留为 1873 步、9.374729 GB 的 reviewed historical dirty-worktree reference。Task030 最终状态为 `workstation_memory_success_with_qualifications`；真正 p/h multigrid solver 仍为 negative，ordinary default 未改变，master 等待最终审查和用户选择性合并许可。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Review V1 接受当前物理实现，但 current direct implementation at 0.7 nm 不具资源可行性；未来保留“complex 3D ends + generic modal middle”，在 follow-up 复审前不整体合并 research branch，ordinary default 未改变。
 
 ## 文档导航
 
@@ -63,14 +67,14 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
 |---|---|
 | [仓库工作原则](docs/repository_work_principles.md) | 不得删除的分支、审查、结果、合并和数值可信度规则 |
 | [Task 阶段回顾标准](docs/task_retrospective_standard.md) | 从 Task029 起所有新 Task 的强制 outcomes 与 development progress 写作/审查合同 |
-| [开发进度](docs/development_progress.md) | Task000-Task030 分阶段开发内容、关键结果、失败路线与当前进展 |
+| [开发进度](docs/development_progress.md) | Task000-Task032 分阶段开发内容、关键结果、失败路线与当前进展 |
 | [快速开始](docs/quick_start.md) | Windows Docker、2D/3D、direct/workstation完整命令与资源边界 |
 | [架构概览](docs/architecture_overview.md) | 模块边界与数据流 |
 | [求解器指南](docs/solver_guide.md) | direct/iterative 选择与限制 |
 | [能力矩阵](docs/capability_matrix.md) | 2D/3D逐能力状态、qualification范围与研究边界 |
 | [结果 schema](docs/result_schema.md) | JSON、RSS、R/T/A 字段 |
 | [Benchmark](docs/benchmark.md) | 分层验证与当前记录 |
-| [任务索引](docs/README.md) | Task000-Task030 闭环与 Task031 任务入口 |
+| [任务索引](docs/README.md) | Task000-Task032 闭环、Review 与下一阶段入口 |
 | [理论笔记](notes/README.md) | 物理和数值解释 |
 
 ## 重要边界

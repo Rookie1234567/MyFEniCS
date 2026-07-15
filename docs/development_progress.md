@@ -1,8 +1,8 @@
-# 项目开发进度：Task000–Task031
+# 项目开发进度：Task000–Task032
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task031 当前阶段的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task032 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -34,15 +34,81 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-14
-current branch = codex/20260714-task31-compact-pc-memory-optimization
+2026-07-15
+current branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
-Task031 status = strong_memory_success_slow_but_memory_efficient; Review V1 hardening complete in response_v1; pending final review
+Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
+Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
 ```
 
-## 1.1 2026-07-14 最新更新
+## 1.1 2026-07-15 最新更新
+
+Task032 Review V1 接受 13.5 nm h5/h3 物理与数值实现，但在选择性合并前要求表格化回顾、
+0.7 nm 资源评估、长期规则、manifest 和项目文档闭环；addendum 又明确撤回 pure-modal/y-invariant
+优先主线，保留未来复杂 3D 两端。当前 review follow-up 的统一结论为：
+
+| 项目 | 结论 | 数据身份 / 边界 |
+|---|---|---|
+| 13.5 nm Task032 | `hybrid_direct_engineering_success` | measured/derived，h5/h3 same-grid |
+| h2 | `not_run_by_gate` | predicted 两方法均失败，未运行 |
+| 参数 1–10° S/P | 30/30 interface/API smoke | measured M4；非 production qualification |
+| h3 best direct memory | 3.224 GiB，较 augmented -16.31% | measured simultaneous worker RSS |
+| full3D→Hybrid algebra | h5/h3 rows -68.62%/-65.35%；NNZ -59.14%/-59.68% | derived from measured rows/NNZ |
+| current direct at 0.7 nm | not resource feasible | analytical projection，非 PDE run |
+| 1 TiB final Hybrid | credible conditional opportunity | 尚未证明，需 h/p + scalable modal + iterative |
+| ordinary default | unchanged | explicit opt-in only |
+
+`M` 的统一含义是每个传播方向保留的中间截面模式数；M160 即 160 forward + 160 backward =
+320 internal modal amplitudes。未来主线是 exact complex 3D FEM ends + generic `epsilon(x,y)` modal
+middle；y-sector/pure-modal 只作当前简单结构的可选诊断/reference。
+
+修正后的顺序为：Task033 local h/p + interface budget（13.5 nm 同误差至少 3x、优选 5x DoF
+下降）→ Task034 scalable generic modal core → Task035 matrix-free low-memory Hybrid iterative →
+Task036 13.5→5→2→1→0.7 nm continuation。详情见
+[`task032_0p7nm_scalability_assessment.md`](task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md)
+和 [`response_v1_review_followup.md`](task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md)。
+
+Task032 Phase 6f--10 已闭合。clean h5/h3 M120/M160 记录完成物理 E/H、接口连续、
+体吸收、五个选面、逐衍射级输出和 augmented/Modal-Schur 对照；两档 M120->M160
+最大 total delta 分别为 `6.24e-14/1.22e-14`。h3 M160 相对同网格 full-3D
+的 R/T/A 差为 `-2.12e-7/-2.42e-6/+2.63e-6`，场与吸收 Gate 通过。
+30 组角度/S-P 参数入口 smoke 全过，但不升级为全区间 production qualification。
+
+六条 clean MPI4 M160 外部内存记录全部数值通过、零 swap。h3
+augmented/Schur-fast/Schur-memory-minimal 为 `3.853/3.998/3.224 GiB`；只有顺序
+factor 生命周期相对 augmented 下降 `16.31%`。h2 的网格尺度与 factor-payload
+预测分别为 `5.365/6.170 GiB` 和 `11.647/13.394 GiB`（中心/上界），均未过
+4/5 GiB 强制 Gate，因此 h2 按任务书未运行。最终 Case080 checker 为
+`302/302 passed`，分类为 `hybrid_direct_engineering_success`；Review V1 已完成，当前等待
+follow-up 复审和用户许可后按 manifest 选择性合并；Task033 在该闭环完成前不启动。
+
+Phase 6a/6b/6c 已按小步完成。上下局部三维 p2 Nédélec/Floquet 网格只覆盖外边界到 z=10/110 nm 接口，中间 100 nm 不再生成三维体单元；每个局部系统只装配其真实拥有的一侧外部 40-mode Fourier-DtN。内部耦合新增分布式 `M x N` trace projection、`N x M` 正/负 traction、`M x M` 负迹映射和无 growing inverse 的 `P+/P-`，内部 unknown/equation 均为 `2M`，没有 dense `N_interface^2`。
+
+Phase 6c 的 MPI 路由按结构化 `(x,y)` cell owner 只交换接口点值，不聚集完整 field/mode；collective 已移出 DOLFINx interpolation callback。修复测试辅助函数的临时 PETSc 包装器后，最终 serial 为 `4/4`、MPI2 每 rank `4/4`、MPI4 每 rank `4/4`，所有具名测试容器均已删除。该子步边界是 block assembly；随后 monolithic augmented matrix 与 MUMPS algebra Gate 已按下一段完成。
+
+Phase 6d 已建立 rank-major monolithic PETSc AIJ：每个 rank 连续保存自身 bottom/top rows，最后一个 rank 再保存 `2M` 内部 modal rows，从而把两个独立 local distributions 合法拼入普通 MPI AIJ。unknown 为 `[u_bottom,u_top,a_b+,a_t-]`，outgoing amplitudes 只通过稳定 `P+/P-` 消元；MUMPS 设置 error-if-not-converged 并显式计算 `||Ax-b||/||b||`。h10 两条解析 Bloch mode 的 serial/MPI2/MPI4 均为每 rank `3/3`；MPI4 矩阵 `2432 x 2432`、`251720` nnz、真相对残差 `3.732133e-13`，setup/solve `0.046960/0.003048 s`。这只分类为 `augmented_algebra_pass`；真实 Phase 3 QEP basis、M 收敛、接口 E/H 连续、official R/T/A 和 full-3D 比较是下一步。
+
+Phase 6e 已完成真实 QEP h5/M2/4/6 研究漏斗，并在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成 h5/M6 MPI4 集成记录。修复了正负 basis 重复 Poynting evaluator、SLEPc 超额 `nconv`、Windows bind mount 容器内 Git status 卡顿、Nédélec 边界点任意 source-cell 路由和近简并 block threshold 五个问题。clean M6 的 10 个集成 Gate 全过，单体 `13744 x 13744`、约 `1.4704e6` nnz、真残差 `1.8590e-12`；研究漏斗 M4->M6 R/T/A 变化约 `1e-12`，Case080 为 `294/294 passed`。当前仍不称完整 physical pass：pointwise H jump、体吸收、中间选面重建、h3 和 simultaneous RSS 未完成。
+
+### 2026-07-14 前序更新
+
+Task032 已从 Review V2 通过后的 Task031 clean merge `dae03170` 启动。旧目录 `fenics_vector_maxwell_floquet_demo_v2_parallel` 保持 Task031 分支和既有未跟踪材料不变；新目录 `fenics_v3_hybrid_FEM_modal` 从更新后的 `origin/master` clean clone，并创建、推送 `codex/20260714-task32-hybrid-fem-modal-direct-baseline`。迁移、环境和 smoke 证据见 [`task032_hybrid_fem_modal_direct_baseline/outcomes/`](task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md)。
+
+Phase 0 确认本机合格镜像提供 PETSc complex128、DOLFINx 0.10.0.post2 和 SLEPc 3.24 PEP/TOAR；compile/import、8 个 condensation/action 合同测试、最小 Stage4 和 h5 MPI4 target direct 均通过。最小 Stage4 首次暴露 flat preset 仍继承 `50 x 50 x 50 nm` 光栅块的旧回归；通过显式零尺寸 A/B 定位后，只修复三个 preset 几何字段并新增合同测试，原始命令恢复通过。h5 基线为 44,698 FE DoF、80 auxiliary modes、真相对残差 `1.3033e-11`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`，闭合误差 `1.2124e-13`。
+
+Phase 1 已加入默认关闭的 full-3D reference exporter：在 z=`10/30/60/90/110 nm` 输出 40x20 结构化 complex128 E/H，并显式保存 z=10/110 的 x/y tangential traces。接口在单元公共面时从中间模态区单侧取迹，384000-byte 冻结载荷受 64 MiB fail-closed guard 保护，不聚集完整 FE vector。
+
+clean commit `c468c728...` 的正式 MPI4 h5/h3 reference 均通过：DoF 为 44,698/198,438，真相对残差为 `9.734e-12/9.923e-12`，闭合优于 `1.3e-13`；h3 `R/T/A=0.0046130314/0.5836533572/0.4117336114` 与历史 direct h3 一致。h5 与 h3 差异明显，因此 h5 只作快速开发、h3 作为主 reference，不宣称 h5--h3 网格收敛。Case080 已保存 clean identity、命令、image digest、field/diffraction hash 与自动 Gate，checker 为 `271/271 passed`。
+
+Phase 2 已实现匹配 Stage4 x/y 轴的 quadrilateral 截面、`N1curl(p2) x Lagrange(p2)` 混合空间、双 Floquet orientation-aware 约束、无 slave-chain 的分布式 `u=Cq`、`C^H K C` 稀疏约化和原生 SLEPc PEP/TOAR QEP。完整 eigenvector 不聚集到 rank0；Phase 2 electric-L2 只建立稳定场尺度，Poynting/left-right 双正交仍留给 Phase 3。正式 MPI4 record 固定在 clean source `33211a4...`：air h5/h3/h2/h1.5 的 beta 解析相对误差严格降至 `29.5323%/5.58859%/1.12629%/0.454640%`，lossy h2 误差 `1.19656%`，当前材料 h3 beta 为 `0.0753551902+0.00178364869j 1/nm`；最大 QEP 相对残差 `1.8177e-15`，`+/- beta` 配对误差 `7.50e-16`，electric-L2 范数误差 `4.44e-16`。完整 serial suite 为 186 tests/10 skipped，MPI4 Phase 2 为每 rank 5/5，checker 为 `277/277 passed`。接口 coupling 和 Hybrid direct solver 尚未开始，下一步为 Phase 3 分类与最终归一化。
+
+Phase 3 已实现由混合 E 场重构阻抗缩放 H、z 向 Poynting 分类、near-zero flux 的 `Im(beta)` 衰减分支、显式伴随 QEP 左模、`Q'(beta)` left/right 双正交、近简并 block inverse、正反向 identity 和相邻角度/模式数变化的 overlap tracking。全量 serial suite 为 190 tests/10 skipped；Phase 3 serial 4/4 与精简 MPI4 4 项（每 rank 2 skip）通过。clean source `72dca66...` 的正式 MPI4 h10 record 对 air/lossy/current-patterned、air 正反配对和 80°→79.8° tracking 的 9 个 runner Gate 全通过。双正交误差 air/lossy 约 `1e-15`、patterned `2.46e-10`，左右残差约 `1e-16–1e-15`，principal angle 最大 `0.005918 rad`，完整向量不聚集。Case080 checker 增至 `282/282 passed`。h10 仅是分类合同；Phase 4 尚未开始。
+
+Phase 4 已实现 O(M) 存储的 two-port 对角传播：incoming 为 bottom-forward/top-backward，outgoing 为 bottom-backward/top-forward；正反方向分别使用 `+L/-L` 坐标位移，禁止 growing inverse。纯传播 6 项合同、真实 Phase 3 air basis 集成和 MPI4 runner 的 8 个 Gate 均通过；覆盖 100 nm 无反射、lossy/evanescent 被动衰减、37+63 nm composition、reciprocity 负对照和四 rank 一致性。clean source `9206e9c...` 的正式 record 固定 exact Phase 3 record hash；最大 composition 误差 `9.42e-16`，air reciprocity beta/factor 误差 `3.63e-16/2.78e-15`，三个 case reflection norm 为 0。Phase 4 冻结时 Case080 checker 为 `286/286 passed`；Phase 5 见下一段。
+
+Phase 5 已实现匹配网格的 3D Nédélec 切向迹提取、2D mode trace 重构、left/right Petrov 投影、bottom/top 双域法向约定和质量范数 residual。3D→2D 路径只交换接口插值点及两个复切向分量，允许某些 rank 没有本地 source evaluation，不聚集完整 field/mode vector。clean source `b565ac4...` 的正式 MPI4 record 通过 8/8 Gate：bottom/top 各 18 个匹配接口面、162 个 trace DoF，Stage4 两模 Gram 条件数 `30.4995`，系数 round trip/重构 residual 为 `3.78e-16/4.69e-16`，3D→2D 迹误差为 `4.52e-15/6.61e-15`；air 近简并旋转的 projector error 为 `2.11e-8`，且未形成 dense `N_Gamma^2`。完整 serial 回归为 `199 tests / 10 skipped`，Phase 5 MPI4 为每 rank `3/3`，Case080 checker 在 Phase 5 冻结时为 `290/290 passed`；Phase 6 后续进展见本节顶部最新更新。
 
 Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
 

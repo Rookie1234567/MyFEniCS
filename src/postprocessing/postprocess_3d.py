@@ -11,6 +11,7 @@ from dolfinx import fem, io, plot
 
 from ..common.analytic_fields_3d import electric_field_code_values, magnetic_field_code_values
 from ..common.config_3d import SimulationConfig3D
+from .full3d_reference import export_full3d_reference_samples
 
 
 def _field_grid(V_dg):
@@ -223,6 +224,15 @@ def save_airbox_3d_fields(
     H_dg = fem.Function(V_dg, name="H_A_per_m_from_curl")
     H_dg.interpolate(fem.Expression(h_expr, _interpolation_points(V_dg)))
 
+    reference_export_metrics: dict[str, object] = {}
+    if cfg.full3d_reference_export:
+        reference_export_metrics = export_full3d_reference_samples(
+            cfg,
+            E_numerical,
+            H_dg,
+            out_dir,
+        )
+
     H_exact_dg = None
     if has_exact_reference:
         H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
@@ -399,6 +409,7 @@ def save_airbox_3d_fields(
         ],
     }
     result.update(_field_component_l2_metrics(mesh_data, cfg, E_numerical))
+    result.update(reference_export_metrics)
     if e_sca is not None:
         result["max_abs_E_sca"] = _global_max_norm(comm, e_sca, owned_point_mask)
         result["max_abs_E_sca_Ex"] = _global_max_component_abs(comm, e_sca, 0, owned_point_mask)

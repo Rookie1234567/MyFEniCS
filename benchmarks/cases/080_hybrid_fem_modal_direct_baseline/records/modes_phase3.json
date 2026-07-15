@@ -1,0 +1,1090 @@
+{
+  "angle_tracking": {
+    "current_mode_count": 2,
+    "h_nm": 10.0,
+    "matches": [
+      {
+        "current_index": 1,
+        "overlap": 0.8700102437838072,
+        "previous_index": 0,
+        "relative_beta_change": 0.02335602175597905
+      },
+      {
+        "current_index": 0,
+        "overlap": 1.2595080494356812,
+        "previous_index": 1,
+        "relative_beta_change": 0.02335602175601624
+      }
+    ],
+    "overlap_matrix": [
+      [
+        0.7199364837908343,
+        0.8700102437838072
+      ],
+      [
+        1.2595080494356812,
+        0.38890705732708525
+      ]
+    ],
+    "previous_mode_count": 2,
+    "subspaces": [
+      {
+        "current_indices": [
+          1,
+          0
+        ],
+        "max_principal_angle_rad": 0.00591795202241749,
+        "previous_indices": [
+          0,
+          1
+        ],
+        "singular_values": [
+          0.9999928966850611,
+          0.9999824889730364
+        ]
+      }
+    ],
+    "theta_current_deg": 79.8,
+    "theta_previous_deg": 80.0,
+    "unmatched_current": [],
+    "unmatched_previous": []
+  },
+  "benchmark_id": "case080_task032_phase3_modes",
+  "cases": [
+    {
+      "case_id": "air_p2_h10",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "full_shape": [
+        253,
+        253
+      ],
+      "h_nm": 10.0,
+      "material_kind": "air",
+      "mesh_cells_xy": [
+        6,
+        3
+      ],
+      "negative": {
+        "adjoint_solver": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "biorthogonality_matrix": [
+          [
+            [
+              1.0,
+              5.039371697712625e-16
+            ],
+            [
+              3.8337388819087437e-16,
+              -2.3314683517128287e-15
+            ]
+          ],
+          [
+            [
+              -1.5612511283791264e-17,
+              1.734723475976807e-18
+            ],
+            [
+              1.0,
+              -2.949029909160572e-17
+            ]
+          ]
+        ],
+        "full_vector_gathered": false,
+        "max_biorthogonality_identity_error": 2.8667152408530815e-15,
+        "mode_count": 2,
+        "modes": [
+          {
+            "beta_per_nm": [
+              -0.08508577988471973,
+              -3.752061258718649e-16
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "backward",
+            "flux_tolerance": 9.140730157450469e-10,
+            "full_vector_gathered": false,
+            "index": 0,
+            "kind": "propagating",
+            "left_adjoint_beta_per_nm": [
+              -0.08508577988471948,
+              -5.152599037528653e-16
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 1.0869506787528695e-14,
+            "left_polynomial_relative_residual": 2.3308394027750437e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": -0.9999999999999999,
+            "poynting_z_before_normalization": -0.09140730157450415,
+            "qprime_overlap_after": [
+              1.0,
+              5.039371697712625e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 8.305868888149319e-16,
+            "right_scale": 3.3075738965990533
+          },
+          {
+            "beta_per_nm": [
+              -0.08508577988472033,
+              -4.397049401378739e-18
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "backward",
+            "flux_tolerance": 9.140730157450469e-10,
+            "full_vector_gathered": false,
+            "index": 1,
+            "kind": "propagating",
+            "left_adjoint_beta_per_nm": [
+              -0.08508577988472411,
+              1.5428470399571033e-16
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 4.4562086372405454e-14,
+            "left_polynomial_relative_residual": 1.7672056173268687e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": -1.0,
+            "poynting_z_before_normalization": -0.09140730157450469,
+            "qprime_overlap_after": [
+              1.0,
+              -2.949029909160572e-17
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 1.9557753482107825e-16,
+            "right_scale": 3.3075738965990436
+          }
+        ],
+        "near_degenerate_groups": [
+          {
+            "beta_center_per_nm": [
+              -0.08508577988472002,
+              -1.8980158763662182e-16
+            ],
+            "indices": [
+              0,
+              1
+            ],
+            "max_relative_beta_spread": 4.198083603012448e-15,
+            "normalization_method": "near_degenerate_block_inverse",
+            "overlap_condition": 1.9863455273796755,
+            "post_normalization_identity_error": 2.8667152408530815e-15
+          }
+        ]
+      },
+      "positive": {
+        "adjoint_solver": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "biorthogonality_matrix": [
+          [
+            [
+              1.0000000000000004,
+              2.38524477946811e-16
+            ],
+            [
+              2.3696322681843185e-15,
+              -5.199833619240479e-16
+            ]
+          ],
+          [
+            [
+              -1.1275702593849246e-17,
+              -1.734723475976807e-18
+            ],
+            [
+              0.9999999999999998,
+              -1.708702623837155e-16
+            ]
+          ]
+        ],
+        "full_vector_gathered": false,
+        "max_biorthogonality_identity_error": 2.9301055508032334e-15,
+        "mode_count": 2,
+        "modes": [
+          {
+            "beta_per_nm": [
+              0.08508577988471974,
+              3.4759120072516376e-16
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 9.140730157450488e-10,
+            "full_vector_gathered": false,
+            "index": 0,
+            "kind": "propagating",
+            "left_adjoint_beta_per_nm": [
+              0.08508577988471946,
+              5.104189311941475e-16
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 1.0598555138365428e-14,
+            "left_polynomial_relative_residual": 2.734427087660366e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 0.9999999999999998,
+            "poynting_z_before_normalization": 0.0914073015745044,
+            "qprime_overlap_after": [
+              1.0000000000000004,
+              2.38524477946811e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 1.0349993784705288e-15,
+            "right_scale": 3.307573896599049
+          },
+          {
+            "beta_per_nm": [
+              0.08508577988472031,
+              2.8451496126568165e-18
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 9.140730157450488e-10,
+            "full_vector_gathered": false,
+            "index": 1,
+            "kind": "propagating",
+            "left_adjoint_beta_per_nm": [
+              0.0850857798847241,
+              -1.3488595663665142e-16
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 4.45542875512511e-14,
+            "left_polynomial_relative_residual": 1.8239585922614263e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 1.0,
+            "poynting_z_before_normalization": 0.09140730157450488,
+            "qprime_overlap_after": [
+              0.9999999999999998,
+              -1.708702623837155e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 2.0817002540170613e-16,
+            "right_scale": 3.30757389659904
+          }
+        ],
+        "near_degenerate_groups": [
+          {
+            "beta_center_per_nm": [
+              0.08508577988472002,
+              1.7521817516891028e-16
+            ],
+            "indices": [
+              0,
+              1
+            ],
+            "max_relative_beta_spread": 3.97944414705517e-15,
+            "normalization_method": "near_degenerate_block_inverse",
+            "overlap_condition": 2.1156952099383437,
+            "post_normalization_identity_error": 2.9301055508032334e-15
+          }
+        ]
+      },
+      "reciprocal_pairs": [
+        {
+          "electric_mass_overlap": 0.8564406970130051,
+          "negative_index": 0,
+          "opposite_direction": true,
+          "passive_branches_valid": true,
+          "positive_index": 0,
+          "relative_beta_error": 3.632327207037806e-16
+        },
+        {
+          "electric_mass_overlap": 0.34827483541902854,
+          "negative_index": 1,
+          "opposite_direction": true,
+          "passive_branches_valid": true,
+          "positive_index": 1,
+          "relative_beta_error": 1.6412013545902726e-16
+        }
+      ],
+      "reduced_shape": [
+        216,
+        216
+      ],
+      "target_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "timing_seconds_max_rank": {
+        "negative_right_and_adjoint": 0.2865786479997041,
+        "positive_right_and_adjoint": 0.6934964160009258
+      }
+    },
+    {
+      "case_id": "lossy_homogeneous_p2_h10",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "full_shape": [
+        253,
+        253
+      ],
+      "h_nm": 10.0,
+      "material_kind": "lossy_homogeneous",
+      "mesh_cells_xy": [
+        6,
+        3
+      ],
+      "negative": null,
+      "positive": {
+        "adjoint_solver": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "biorthogonality_matrix": [
+          [
+            [
+              1.0000000000000007,
+              -1.973247953923618e-16
+            ],
+            [
+              -2.7929047963226594e-16,
+              4.7704895589362195e-17
+            ]
+          ],
+          [
+            [
+              1.6479873021779667e-16,
+              -7.359564346831604e-16
+            ],
+            [
+              0.9999999999999998,
+              2.441623292437356e-16
+            ]
+          ]
+        ],
+        "full_vector_gathered": false,
+        "max_biorthogonality_identity_error": 1.0842108658152573e-15,
+        "mode_count": 2,
+        "modes": [
+          {
+            "beta_per_nm": [
+              0.08264213354315018,
+              0.004782724181432302
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 8.878210241210845e-10,
+            "full_vector_gathered": false,
+            "index": 0,
+            "kind": "lossy_propagating",
+            "left_adjoint_beta_per_nm": [
+              0.08264213354314856,
+              -0.004782724181431146
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 2.407919606622392e-14,
+            "left_polynomial_relative_residual": 1.6566760866197643e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 0.9999999999999998,
+            "poynting_z_before_normalization": 0.08878210241210688,
+            "qprime_overlap_after": [
+              1.0000000000000007,
+              -1.973247953923618e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 3.163106243004857e-16,
+            "right_scale": 3.3561185049711106
+          },
+          {
+            "beta_per_nm": [
+              0.08264213354315134,
+              0.004782724181433163
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 8.878210241210845e-10,
+            "full_vector_gathered": false,
+            "index": 1,
+            "kind": "lossy_propagating",
+            "left_adjoint_beta_per_nm": [
+              0.08264213354315034,
+              -0.004782724181432171
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 1.7011092116776276e-14,
+            "left_polynomial_relative_residual": 8.218059510548437e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 1.0,
+            "poynting_z_before_normalization": 0.08878210241210845,
+            "qprime_overlap_after": [
+              0.9999999999999998,
+              2.441623292437356e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 1.1862011743608485e-15,
+            "right_scale": 3.3561185049710813
+          }
+        ],
+        "near_degenerate_groups": [
+          {
+            "beta_center_per_nm": [
+              0.08264213354315075,
+              0.004782724181432732
+            ],
+            "indices": [
+              0,
+              1
+            ],
+            "max_relative_beta_spread": 8.757593626215328e-15,
+            "normalization_method": "near_degenerate_block_inverse",
+            "overlap_condition": 1.3343297445518638,
+            "post_normalization_identity_error": 1.0842108658152573e-15
+          }
+        ]
+      },
+      "reciprocal_pairs": [],
+      "reduced_shape": [
+        216,
+        216
+      ],
+      "target_beta_per_nm": [
+        0.07825958528525695,
+        0.00505055743729411
+      ],
+      "timing_seconds_max_rank": {
+        "negative_right_and_adjoint": null,
+        "positive_right_and_adjoint": 0.30743535500005237
+      }
+    },
+    {
+      "case_id": "stage4_xy_p2_h10",
+      "constraint_communication_scope": "periodic_boundary_dofs_only",
+      "full_shape": [
+        253,
+        253
+      ],
+      "h_nm": 10.0,
+      "material_kind": "stage4_xy",
+      "mesh_cells_xy": [
+        6,
+        3
+      ],
+      "negative": null,
+      "positive": {
+        "adjoint_solver": {
+          "converged_modes": 2,
+          "convergence_reason": 1,
+          "iteration_count": 1,
+          "problem_type": "general_quadratic_polynomial",
+          "requested_modes": 2,
+          "solver": "SLEPc.PEP/TOAR",
+          "spectral_transform": "sinvert_with_MUMPS_LU"
+        },
+        "biorthogonality_matrix": [
+          [
+            [
+              0.9999999999999999,
+              1.3097162243624894e-16
+            ],
+            [
+              1.0022963732397652e-10,
+              -2.2458618599595856e-10
+            ]
+          ],
+          [
+            [
+              1.083923702192033e-10,
+              -1.5606169188667765e-10
+            ],
+            [
+              1.0,
+              -1.1275702593849246e-17
+            ]
+          ]
+        ],
+        "full_vector_gathered": false,
+        "max_biorthogonality_identity_error": 2.4593702362817536e-10,
+        "mode_count": 2,
+        "modes": [
+          {
+            "beta_per_nm": [
+              0.0842319232106747,
+              0.0015959879439832146
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 9.049000687953181e-10,
+            "full_vector_gathered": false,
+            "index": 0,
+            "kind": "lossy_propagating",
+            "left_adjoint_beta_per_nm": [
+              0.08423192321067562,
+              -0.001595987943982426
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 1.4346826635678068e-14,
+            "left_polynomial_relative_residual": 1.1720887335932092e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 1.0000000000000007,
+            "poynting_z_before_normalization": 0.0904900068795318,
+            "qprime_overlap_after": [
+              0.9999999999999999,
+              1.3097162243624894e-16
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 1.055241521916841e-16,
+            "right_scale": 3.324296018051573
+          },
+          {
+            "beta_per_nm": [
+              0.08423253366431765,
+              0.0015951263207352252
+            ],
+            "classification_basis": "poynting_flux",
+            "direction": "forward",
+            "flux_tolerance": 9.049000687953181e-10,
+            "full_vector_gathered": false,
+            "index": 1,
+            "kind": "lossy_propagating",
+            "left_adjoint_beta_per_nm": [
+              0.08423253366431879,
+              -0.0015951263207359377
+            ],
+            "left_ownership_by_rank": [
+              {
+                "full_local_size": 50,
+                "full_ownership_range": [
+                  0,
+                  50
+                ],
+                "rank": 0,
+                "reduced_local_size": 46,
+                "reduced_ownership_range": [
+                  0,
+                  46
+                ]
+              },
+              {
+                "full_local_size": 74,
+                "full_ownership_range": [
+                  50,
+                  124
+                ],
+                "rank": 1,
+                "reduced_local_size": 54,
+                "reduced_ownership_range": [
+                  46,
+                  100
+                ]
+              },
+              {
+                "full_local_size": 48,
+                "full_ownership_range": [
+                  124,
+                  172
+                ],
+                "rank": 2,
+                "reduced_local_size": 48,
+                "reduced_ownership_range": [
+                  100,
+                  148
+                ]
+              },
+              {
+                "full_local_size": 81,
+                "full_ownership_range": [
+                  172,
+                  253
+                ],
+                "rank": 3,
+                "reduced_local_size": 68,
+                "reduced_ownership_range": [
+                  148,
+                  216
+                ]
+              }
+            ],
+            "left_pair_relative_error": 1.593692891797631e-14,
+            "left_polynomial_relative_residual": 7.431717313941412e-16,
+            "passive_branch_valid": true,
+            "poynting_z_after_normalization": 1.0000000000000002,
+            "poynting_z_before_normalization": 0.09048931331803306,
+            "qprime_overlap_after": [
+              1.0,
+              -1.1275702593849246e-17
+            ],
+            "right_normalization_kind": "phase3_unit_abs_poynting",
+            "right_polynomial_relative_residual": 7.874519875202753e-16,
+            "right_scale": 3.3243087576736685
+          }
+        ],
+        "near_degenerate_groups": [
+          {
+            "beta_center_per_nm": [
+              0.0842319232106747,
+              0.0015959879439832146
+            ],
+            "indices": [
+              0
+            ],
+            "max_relative_beta_spread": 0.0,
+            "normalization_method": "diagonal_qprime",
+            "overlap_condition": 1.0,
+            "post_normalization_identity_error": 1.7169600323729629e-16
+          },
+          {
+            "beta_center_per_nm": [
+              0.08423253366431765,
+              0.0015951263207352252
+            ],
+            "indices": [
+              1
+            ],
+            "max_relative_beta_spread": 0.0,
+            "normalization_method": "diagonal_qprime",
+            "overlap_condition": 1.0,
+            "post_normalization_identity_error": 1.1275702593849246e-17
+          }
+        ]
+      },
+      "reciprocal_pairs": [],
+      "reduced_shape": [
+        216,
+        216
+      ],
+      "target_beta_per_nm": [
+        0.08081953174336039,
+        0.0
+      ],
+      "timing_seconds_max_rank": {
+        "negative_right_and_adjoint": null,
+        "positive_right_and_adjoint": 0.14668672700099705
+      }
+    }
+  ],
+  "elapsed_seconds_max_rank": 7.562838068000929,
+  "gates": {
+    "air_reciprocal_pairs_complete": true,
+    "all_biorthogonality_identity_errors_le_1e-7": true,
+    "all_flux_normalized_or_near_zero": true,
+    "all_left_pairs_le_1e-7": true,
+    "all_left_residuals_le_1e-8": true,
+    "all_passive_branches_valid": true,
+    "all_right_residuals_le_1e-8": true,
+    "angle_tracking_complete": true,
+    "no_full_vector_gather": true
+  },
+  "historical_peak_rss_by_rank": [
+    {
+      "historical_peak_rss_mb": 236.46484375,
+      "rank": 0
+    },
+    {
+      "historical_peak_rss_mb": 213.79296875,
+      "rank": 1
+    },
+    {
+      "historical_peak_rss_mb": 213.55859375,
+      "rank": 2
+    },
+    {
+      "historical_peak_rss_mb": 215.31640625,
+      "rank": 3
+    }
+  ],
+  "memory_note": "Per-rank process-lifetime historical peaks; not simultaneous and never summed. Full eigenvectors remain distributed.",
+  "metadata": {
+    "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+    "command": "python -m benchmarks.run_task032_phase3_modes --verified-clean-sha 72dca66b70515bcf6ccef239005afa43028df72b --basis-h-nm 10 --tracking-h-nm 10 --output benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/modes_phase3.json",
+    "commit_sha": "72dca66b70515bcf6ccef239005afa43028df72b",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "container_image": "myfenics-stage4:task28",
+    "eigen_backend": "SLEPc.PEP/TOAR + explicit adjoint QEP",
+    "full_eigenvector_gather": false,
+    "git_dirty": false,
+    "host_environment_id": "SK-20260601OSDE",
+    "mpi_size": 4,
+    "provenance": "clean_task032_phase3_modes",
+    "timestamp_utc": "2026-07-14T12:42:10.478340+00:00",
+    "tracked_source_dirty": false,
+    "verification": "host_git_clean_attestation",
+    "verified_clean_sha": "72dca66b70515bcf6ccef239005afa43028df72b"
+  },
+  "schema_version": 1,
+  "status": "pass",
+  "timestamp_utc": "2026-07-14T12:42:10.478340+00:00"
+}

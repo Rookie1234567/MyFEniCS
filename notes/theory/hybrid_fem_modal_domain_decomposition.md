@@ -30,6 +30,59 @@ $$
 
 本文不讨论 h/p 自适应、迭代法、非匹配 mortar、0.7 nm 材料色散和参数反演。
 
+## 0.1 Phase 2 离散实现锚点
+
+当前 Phase 2 代码把本文的截面问题落实为：
+
+```text
+src/modes/cross_section_spaces.py
+src/constraints/cross_section_floquet.py
+src/modes/quadratic_beta_eigenproblem.py
+```
+
+匹配二维网格复用 `stage4_axis_plan` 的 x/y 轴；横向场使用二维
+`N1curl(p2)`，纵向分量使用 `Lagrange(p2)`。离散多项式保持
+`K0 + beta K1 + beta^2 K2`，其中 `K2` 的纵向块为零，因此最高次矩阵
+按物理设计奇异。双 Floquet 条件通过分布式 `u=Cq` 消元，每个系数矩阵
+以 `C^H K C` 稀疏约化，再交给 SLEPc PEP/TOAR；没有 dense 全谱和 rank0
+全本征向量聚集。
+
+Phase 2 的 electric-L2 归一化只建立稳定的场尺度。本文后述的 Poynting
+方向、left/right 双正交、`Q'(beta)` 与近简并子空间归一化仍属于 Phase 3，
+不能用当前 L2 字段替代最终接口功率归一化。
+
+## 0.2 Phase 3 分类与双正交实现锚点
+
+当前 Phase 3 代码位于 `src/modes/mode_classification.py`。它从混合场按
+`curl E = i omega mu H` 重构阻抗缩放 H，以截面平均 Poynting flux 优先分类
+传播方向，并把有非零 flux 的右模归一到 `abs(Pz)=1`。near-zero flux 模式
+按 `Im(beta)` 选择远离接口的衰减分支；仍无法判定的实 beta 被显式标为
+cutoff/ambiguous。
+
+合格镜像的 SLEPc PEP Python API 没有 two-sided left-vector 接口，因此代码
+显式求解 `K0^H + lambda K1^H + lambda^2 K2^H`，以
+`lambda approx conj(beta)` 配对左模。归一化使用
+`left_i^H [K1 + (beta_i+beta_j)K2] right_j`；严格/近简并 block 只在小型
+mode-count overlap 矩阵上做逆变换，奇异或条件数超过 `1e12` 时 fail closed。
+完整左右向量继续按 PETSc ownership 分布，不在 rank0 聚集。
+
+相邻参数 tracking 用 left/right QEP overlap 做最大权指派；近简并组另用
+electric-mass Gram whitening 后的 principal angles 比较子空间。Phase 3
+不包含 3D 接口投影。
+
+## 0.3 Phase 4 稳定传播实现锚点
+
+当前 Phase 4 代码位于 `src/modes/stable_propagation.py`。它直接消费 Phase 3
+的 `beta/direction/passive_branch_valid`，用 two-port scattering 顺序
+`incoming=[a_b+,a_t-]`、`outgoing=[a_b-,a_t+]` 保存正反向对角传播因子。
+forward 使用 `exp(+i beta+ L)`，backward 因坐标位移为 `-L` 使用
+`exp(-i beta- L)`；不形成 growing inverse 或普通 transfer matrix。
+
+衰减实部与相位分开计算。强衰减允许安全下溢为零，增长分支、ambiguous
+cutoff 和未经 Phase 3 被动认证的模式均 fail closed。`compose` 检查模式顺序与
+beta identity 后验证 `P(L1+L2)=P(L2)P(L1)`；reciprocity/passivity diagnostic
+只处理小型 mode-count 数组。Phase 4 仍不包含 3D interface trace/coupling。
+
 ---
 
 # 1. 物理域和基本方程
@@ -518,7 +571,7 @@ $$
 L_m=z_t-z_b.
 $$
 
-对第 m 个模式：
+对第 m 个正向模式：
 
 $$
 p_m=e^{i\beta_mL_m}.
@@ -532,15 +585,25 @@ a_{t,m}^{+}
 p_m a_{b,m}^{+}.
 $$
 
-反向振幅：
+反向模式仍采用全局场约定 `exp(i beta_m^- z)`，但它从 top 向 bottom
+传播的坐标位移是 `-L_m`，因此反向振幅为：
 
 $$
 a_{b,m}^{-}
 =
-p_m a_{t,m}^{-},
+p_m^- a_{t,m}^{-},
 $$
 
-这里对反向模式的 $\beta_m$ 和 branch 已按物理衰减方向定义。
+其中：
+
+$$
+p_m^-=e^{-i\beta_m^-L_m}.
+$$
+
+这里对反向模式的 $\beta_m^-$ 和 branch 已按物理衰减方向定义。对互易成对
+模式 $\beta_m^-=-\beta_m^+$，有 $p_m^-=p_m^+$；有损/衰减时两者的模均不
+大于 1。实现必须显式保留该 travel sign，不能把反向传播误写成会增长的
+`exp(+i beta_m^- L_m)`。
 
 ## 8.1 为什么不使用普通 transfer matrix
 
@@ -1293,29 +1356,39 @@ Step 14 memory prediction
 Step 15 conditional h2
 ```
 
-不得跳过前四层直接运行 h2。
+Task032 最终完成 Step 1–14；conditional h2 的两类预测均未过中心 4 GiB / 上界 5 GiB Gate，
+所以 Step 15 正确收口为 `not_run_by_gate`。不得跳过前四层或放宽资源 Gate 直接运行 h2。
 
 ---
 
-# 21. Task032 后与 Task033/Task034 的连接
+# 21. Task032 后与 Task033–Task036 的连接
 
-若 Task032 成功，Task033 应：
+Task033 应：
 
-- 保持内部接口 trace 网格和模式空间可控；
-- 只对上下局部 3D interior 做 h/p 自适应；
+- 保留 future bottom/top exact complex 3D FEM；
+- 对上下局部 3D interior 做 h/p 自适应；
+- 联合优化 interface position、buffer thickness 与所需 evanescent M；
 - 为多个掠角和 S/P 构造 robust common mesh；
-- 检查自适应后接口 projection 是否仍稳定。
+- 检查自适应后接口 projection 是否仍稳定；
+- 在 13.5 nm direct reference 上实现同误差 local DoF 至少 3x、优选 5x 下降。
 
-Task034 的最终块系统应围绕：
+Task034 构造不依赖 y 不变性的 scalable generic `epsilon(x,y)` modal core：
 
 ```text
-bottom adaptive 3D block
-+ top adaptive 3D block
-+ modal two-port block
-+ interface Schur
+distributed modal ownership
++ streamed/blocked right-left modes
++ adaptive M
++ block or matrix-free projection/Schur
++ no replicated M^2
++ no all-mode dense multi-RHS
 ```
 
-设计迭代法，而不是继续求解原来的全域 3D 矩阵。
+pure-modal/y-sector 只作当前简单 geometry 的可选诊断/reference，不能替代 future complex 3D
+ends，也不能进入通用服务资源预算。
+
+Task035 在 Task033 + Task034 的最终离散上设计 matrix-free local FEM、low-memory H(curl)
+preconditioner、scalable modal action 和 outer flexible Krylov，而不是继续求解原来的全域 3D
+矩阵。Task036 最后按 13.5→5→2→1→0.7 nm continuation 逐步更新材料、网格、M 和资源 Gate。
 
 ---
 
