@@ -147,6 +147,28 @@
     "max_abs_h5_hybrid_full3d_delta": 2e-5,
     "ordinary_default_changed": false
   },
+  "final": {
+    "required_commit": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+    "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "required_mpi_size": 4,
+    "required_dtype": "complex128",
+    "required_mode_counts": [120, 160],
+    "max_true_relative_residual": 1e-9,
+    "max_interface_projection_residual": 1e-8,
+    "max_total_delta_strong": 1e-6,
+    "max_significant_order_relative_delta": 1e-4,
+    "max_hybrid_full3d_rta_delta": 1e-5,
+    "max_middle_plane_relative_l2": 5e-3,
+    "max_sampled_interface_e_relative_l2": 5e-3,
+    "max_sampled_interface_h_relative_l2": 1e-2,
+    "max_abs_volume_closure": 1e-5,
+    "required_parameter_smoke_count": 30,
+    "h3_memory_minimal_max_gib": 4.0,
+    "required_h3_memory_reduction_fraction": 0.1,
+    "h2_center_limit_gib": 4.0,
+    "h2_upper_limit_gib": 5.0,
+    "ordinary_default_changed": false
+  },
   "future_hybrid": {
     "full_residual": "required before official RTA",
     "interface_continuity": "required",

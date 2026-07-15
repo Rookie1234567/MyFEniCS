@@ -1594,6 +1594,17 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
         )
     )
 
+    try:
+        from benchmarks.task032_final_gates import evaluate_task032_final
+    except ModuleNotFoundError:
+        from task032_final_gates import evaluate_task032_final
+
+    gates.extend(
+        evaluate_task032_final(
+            case080, case080_gate_bundle["final"], Gate
+        )
+    )
+
     task032_reference_records: dict[str, dict[str, Any]] = {}
     for level in case080_gates["required_levels"]:
         relative = f"records/full3d_{level}_reference.json"

@@ -166,6 +166,7 @@ def run(args: argparse.Namespace) -> int:
         "warning_triggered": warning_triggered,
         "terminated_for_memory": terminated_for_memory,
         "memory": memory,
+        "source": solver_record.get("metadata"),
         "object_payload_ledger": solver_record.get("object_payload_ledger"),
         "solver_record": str(record_path.relative_to(ROOT)),
         "timeline": str(timeline_path.relative_to(ROOT)),
@@ -225,7 +226,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--container-image", default="myfenics-stage4:task28")
     parser.add_argument(
         "--container-digest",
-        default="sha256:08c61bc59cdd4f3dfc88d70ca14eea3da48fba3a27d2c4ec052d3b5a6f38476d",
+        default="sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     return parser.parse_args(argv)
