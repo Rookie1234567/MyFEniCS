@@ -267,6 +267,14 @@ function Get-DockerRunArguments {
         "--workdir", "/work",
         "--env", "OMPI_ALLOW_RUN_AS_ROOT=1",
         "--env", "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1",
+        # The bind-mounted checkout is produced by Windows Git with CRLF
+        # working-tree files.  Inject the matching normalization policy into
+        # every *container process* so Linux Git checks content rather than
+        # reporting the whole checkout dirty from line-ending presentation.
+        # Host Git still performs the first complete nonignored clean gate.
+        "--env", "GIT_CONFIG_COUNT=1",
+        "--env", "GIT_CONFIG_KEY_0=core.autocrlf",
+        "--env", "GIT_CONFIG_VALUE_0=true",
         $ImageDigest
     ) + $ContainerCommand
 }
@@ -889,6 +897,7 @@ raise SystemExit(
         docker_image_digest = $ImageDigest
         docker_repo_digests = $DockerRepoDigests
         host_aggregation_runtime = $HostAggregationRuntime
+        container_git_checkout_normalization = "core.autocrlf=true"
         cgroup = $cgroup
         warning_gib = [double]$WarningGiB
         controlled_termination_gib = [double]$TerminateGiB

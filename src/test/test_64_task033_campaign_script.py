@@ -43,6 +43,10 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         text = self.text
         self.assertIn('"--memory", "13g"', text)
         self.assertIn('"--memory-swap", "13g"', text)
+        self.assertIn('"GIT_CONFIG_COUNT=1"', text)
+        self.assertIn('"GIT_CONFIG_KEY_0=core.autocrlf"', text)
+        self.assertIn('"GIT_CONFIG_VALUE_0=true"', text)
+        self.assertIn("container_git_checkout_normalization", text)
         self.assertIn('$WarningGiB = "10.678571428571429"', text)
         self.assertIn('$TerminateGiB = "12.071428571428571"', text)
         self.assertIn("[IO.FileShare]::None", text)
