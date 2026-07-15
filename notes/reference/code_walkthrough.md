@@ -32,6 +32,7 @@ Task32 Phase 6e 的真实 QEP runner、Nedelec target-cell 路由、M2/4/6 研�
 | 21 | [`code_walkthrough/48_task032_hybrid_augmented_direct.md`](code_walkthrough/48_task032_hybrid_augmented_direct.md) | Task032 rank-major 单体增广 AIJ、传播消元、MUMPS 与真残差 |
 | 22 | [`code_walkthrough/49_task032_hybrid_physical_runner.md`](code_walkthrough/49_task032_hybrid_physical_runner.md) | Task032 真实 QEP h5/M6 runner、target-cell Nédélec 路由、R/T/A 与收敛边界 |
 | 23 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
+| 24 | [`code_walkthrough/51_task032_fields_schur_and_memory.md`](code_walkthrough/51_task032_fields_schur_and_memory.md) | Task032 E/H/吸收重构、Modal-Schur 生命周期、截断/参数 smoke 与外部同时内存采样 |
 
 ## 一句话调用链
 

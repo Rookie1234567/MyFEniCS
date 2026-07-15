@@ -114,6 +114,20 @@ class Task032HybridLocalMeshTests(unittest.TestCase):
         self.assertGreater(global_count(top, self.cfg.tags.air), 0)
         self.assertEqual(global_count(top, self.cfg.tags.substrate), 0)
 
+    def test_h3_inserts_the_frozen_exact_interface_planes(self):
+        cfg = target_stage4_config(degree=2, h_nm=3.0)
+        plan = stage4_axis_plan(cfg, MPI.COMM_WORLD.size)
+        self.assertFalse(np.any(np.isclose(plan.z_values, 10.0)))
+        self.assertFalse(np.any(np.isclose(plan.z_values, 110.0)))
+        bottom = build_hybrid_local_mesh(cfg, "bottom")
+        top = build_hybrid_local_mesh(cfg, "top")
+        self.assertAlmostEqual(bottom.interface_z_nm, 10.0)
+        self.assertAlmostEqual(top.interface_z_nm, 110.0)
+        self.assertAlmostEqual(bottom.z_values[-1], 10.0)
+        self.assertAlmostEqual(top.z_values[0], 110.0)
+        self.assertLess(bottom.z_values[-2], 10.0)
+        self.assertGreater(top.z_values[1], 110.0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -911,8 +911,9 @@ def build_hybrid_internal_mode_coupling(
                 f"top_gram_condition={top.trace_gram_condition:.6e} "
                 f"canonical_mapping_condition="
                 f"{np.linalg.cond(canonical_negative_mapping):.6e} "
-                f"bottom_column_errors={column_errors['bottom']} "
-                f"top_column_errors={column_errors['top']}"
+                f"max_bottom_column_error={max(column_errors['bottom'], default=0.0):.6e} "
+                f"max_top_column_error={max(column_errors['top'], default=0.0):.6e} "
+                f"mode_count={mode_count}"
             )
         if bottom_top_error > 1.0e-8 or canonical_error > 1.0e-8:
             raise RuntimeError(

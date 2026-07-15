@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_matched_trace_projection_complete / phase6a_local_mesh_complete / phase6b_one_sided_dtn_complete / phase6c_internal_blocks_complete / phase6d_augmented_algebra_complete / phase6e_real_qep_h5_m6_clean_source_integration_complete / task_in_progress
+status = phase0--phase10_implemented / h5_h3_physics_and_truncation_pass / h2_locked_by_memory_gate / clean_formal_record_pending
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation；Phase 5 已完成 matching Nédélec trace、modal projection 与 clean MPI4 formal record。Phase 6a/6b 已建立上下局部 FEM 和各自单侧外部 Fourier-DtN；Phase 6c 已建立内部模态投影、牵引和稳定传播稀疏块；Phase 6d 已通过 rank-major monolithic AIJ 与 MUMPS algebra Gate；Phase 6e 已完成真实 QEP h5/M6 clean-source 集成记录及外端口 R/T/A。尚未完成的是 pointwise H jump、体吸收、选面 E/H、h3 Hybrid、最终 official 物理资格和 Phase 7 modal-Schur。
+前置理论和 Task031 交接链已全部读取。Phase 0--5 与 Phase 6a--6e 的 clean 记录保持不变。本轮完成 `physical E/H + absorption -> wide M funnel -> augmented/Modal-Schur -> h5/h3 full-3D comparison -> angle/S-P smoke -> independent memory forensics`。h5/h3 的 M120--M160 均强收敛，h3 同网格 full-3D R/T/A、界面场和中间选面通过；三种 direct lifecycle 已独立测量。h2 因两种预测未过 4/5 GiB 强制 Gate 而按任务书保持锁定。
 
 ## 4. eigenproblem implementation and validation
 
@@ -117,13 +117,15 @@ clean integration record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline
 record SHA-256 = 43e46de0a7b82f9d0d0d1bb29474ddca08bc017dd5c436122fe6223561812011
 ```
 
+Phase 6f 已用共享 scratch 模态重构器补齐物理 H、界面 E/H、局部+中间体吸收和五个选面。h5/M160 的体吸收闭合为 `1.74e-11`，相对 full-3D 的体吸收差 `2.07e-6`，选面 E/H 最大相对误差 `2.88e-4/8.79e-4`；h3/M160 对应为 `2.63e-6`、`4.35e-5/7.80e-4`。h3 local z 轴显式插入冻结的 10/110 nm，而不是把接口移动到 9/111 nm。
+
 ## 9. modal-Schur result
 
-`not_started`；必须在 augmented direct 通过后开始。
+`implemented_and_numerically_passed`。fast 路径各局部 LU 只做一次 `MatMatSolve([f,C])`，形成 `2M x 2M` modal Schur 后恢复上下场；memory-minimal 路径按 bottom factor/contribution/release、top factor/contribution/release、modal solve、逐侧 refactor/recovery 执行。M160 的 h5/h3 modal coefficients、局部解、接口投影、R/T/A 和 full residual 均与 augmented 一致，未形成 dense `N_interface^2` 或完整 field/mode gather。内存结果见第13节。
 
 ## 10. truncation convergence
 
-研究漏斗已完成 h5 `M=2 -> 4 -> 6`。M2->M4 的 `|delta R/T/A|` 为 `8.25e-6/7.39e-6/8.67e-7`；M4->M6 为 `8.33e-14/9.82e-13/1.07e-12`，通过 strong total delta `1e-6`。M6 已有独立 clean-source 集成记录，但完整 M2/4/6 漏斗仍是 research evidence，不替代后续更广参数 funnel。
+宽漏斗已完成 h5 `M=20/40/80/120/160`。M20->M40 的最大 total delta 为 `2.25e-5`，M40->M80 仅过 mandatory，M80->M120 和 M120->M160 才进入 strong 平台。最终一对最大 `|delta R/T/A|=7.71e-14`，显著衍射级复振幅最大相对变化 `2.22e-10`，界面投影 `3.91e-13`。h3 的 M120->M160 最大 total delta `3.55e-14`，显著复振幅变化 `9.86e-11`。两档均标记 `mode_truncation_converged`；clean formal record 尚待第一轮实现提交后重跑。
 
 ## 11. full-3D comparison
 
@@ -133,9 +135,11 @@ h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.468
 
 clean Phase 6e h5/M6 对同网格 full-3D h5 的 `Hybrid-full3D R/T/A` 为 `-4.8325e-6/-1.1162e-5/1.5994e-5`。full-3D h5 本身未网格收敛，且 Hybrid 尚未重建体吸收与点值 H，因此这些仍是同网格诊断，不能单独升级最终物理资格。
 
+本轮 h3/M160 `Hybrid R/T/A=0.0046128199040/0.5836509402052/0.4117362398908`，相对冻结 full-3D h3 的差为 `-2.1150e-7/-2.4170e-6/+2.6285e-6`。界面 E/H 采样误差 `1.04e-7/4.82e-4`，中间选面 E/H `4.35e-5/7.80e-4`。这些同网格对照通过 `1e-5` 主阈值，但仍不把 h5--h3 差异解释为 full-3D 网格收敛。
+
 ## 12. angle/polarization smoke
 
-`not_started`。
+研究批次 `30/30 pass`：h5 覆盖 1--10° 的 S/P，h3 覆盖 1/3/5/7/10° 的 S/P。每点验证参数 round trip、complex128、无 full gather、QEP 重算、被动方向分类、真实残差、界面投影、有限 R/T/A 与逐衍射级输出。较小 M=4 只用于 smoke；该批次明确不宣称整个角度范围 production qualification。
 
 ## 13. memory and timing
 
@@ -153,11 +157,17 @@ Phase 4 lightweight coefficient runner 的单 rank historical peak 最大为
 `86.926 MB`，内部 elapsed 最大 rank `0.0126 s`。它只处理小型复制的 mode-count
 数组，因此既不是 full eigensolve 资源，也不是最终 Hybrid 内存/性能结论。
 
+外部 0.25 s simultaneous sampler 的独立 M160 结果为：h5 augmented/Schur-fast/Schur-minimal `1.869/1.649/1.680 GiB`，h3 为 `3.869/3.974/3.215 GiB`；全部零 swap。h5 fast 有收益而 minimal 略差，h3 fast 反而比 augmented 高，只有 sequential-factor minimal 降约 `16.9%`。这说明因子填充和 allocator 高水位必须实测，不能仅按矩阵维数推断。
+
+h2 最佳候选是 memory-minimal；网格尺度预测中心/上界 `5.380/6.188 GiB`，MUMPS factor-payload 预测为 `11.511/13.238 GiB`。两者均未满足中心 `<=4`、上界 `<=5`，故 `h2_unlock=false`，没有运行 h2。详见 `phase10_memory_and_h2_decision.md`。
+
 ## 14. negative results
 
 首次最小 Stage4 preset 被继承的 `50 x 50 x 50 nm` 光栅块与 `10 x 10 nm` 平层周期冲突。通过显式零尺寸 A/B 定位后，在新库最小修复 preset 并新增合同测试；原始命令现已通过。失败过程和根因保存在 `old_vs_new_smoke.md`。
 
 Phase 3 首次 block 双正交测试出现大 overlap 误差，根因是把 petsc4py `VecDot(x,y)=y^H x` 当成 NumPy 风格的 `x^H y`。交换 dot 参数顺序后，h5 air block 单位阵误差降到约 `4.9e-12`。完整 MPI4 测试最初还因在每个回归中重复负向和相邻参数 PEP 而两次触及 5 分钟上限；最终合同按职责拆分为 MPI4 正向分布式 basis 与 serial 负向/tracking，完整 research runner 仍在 MPI4 覆盖正反配对和角度 tracking。
+
+本轮负结果包括：宽 target slice 混入反向候选、M120 per-mode Function 耗尽 MPI context、h3 缺少精确接口平面、M40 total delta 未过 mandatory、h5 minimal 不优于 fast、h3 fast 不优于 augmented，以及 h2 预测失败。均已保留根因与停止边界，详见 `negative_results.md`。
 
 ## 15. changed files
 
@@ -213,15 +223,26 @@ benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase6.sh
 notes/reference/code_walkthrough/49_task032_hybrid_physical_runner.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/phase6e_research_diagnostic.md
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json
+src/postprocessing/hybrid_field_reconstruction.py
+src/solvers/hybrid_fem_modal_schur_direct.py
+benchmarks/run_task032_phase8_funnel.py
+benchmarks/run_task032_phase9_smoke.py
+benchmarks/run_task032_memory_forensics.py
+benchmarks/run_task032_h2_prediction.py
+src/test/test_40_task032_hybrid_field_reconstruction.py
+notes/reference/code_walkthrough/51_task032_fields_schur_and_memory.md
+docs/task032_hybrid_fem_modal_direct_baseline/outcomes/phase6f_to_phase9_numerics.md
+docs/task032_hybrid_fem_modal_direct_baseline/outcomes/phase10_memory_and_h2_decision.md
+docs/task032_hybrid_fem_modal_direct_baseline/outcomes/negative_results.md
 ```
 
 ## 16. merge recommendation
 
 ```text
-current recommendation = do_not_merge_yet
-reason = Phase 1-5, Phase 6a-6d, and Phase 6e clean-source real-QEP h5/M6 integration are complete, but physical field/absorption gates, h3, and Schur are pending
+current recommendation = implementation_ready_for_clean_formal_rerun_and_review
+reason = h5/h3 physical, Schur, truncation, parameter smoke and independent memory research pass; h2 correctly remains locked; clean records/checker still pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 pointwise H jump、体吸收和中间选面重建。
+`do_not_start_yet`。Task032 已证明 h5/h3 数值正确，并在 h3 memory-minimal 取得结构性下降，但 h2 未解锁。先完成 clean formal records、Case080 checker、review 和合并；Task033 只能在审阅接受 Task032 的“工程成功但非 h2 强成功”边界后开始。

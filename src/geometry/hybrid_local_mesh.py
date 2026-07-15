@@ -102,10 +102,23 @@ def build_hybrid_local_mesh(
     interface_z = float(
         bottom_interface_z_nm if side == "bottom" else top_interface_z_nm
     )
-    if not np.any(np.isclose(plan.z_values, interface_z, atol=tolerance, rtol=0.0)):
-        raise ValueError(f"Interface z={interface_z:g} nm is not a Stage-4 mesh plane.")
+    if not float(cfg.domain_z_min) < interface_z < float(cfg.domain_z_max):
+        raise ValueError(f"Interface z={interface_z:g} nm lies outside the 3D domain.")
+    # Task32 freezes the physical matching planes at z=10/110 nm.  They are
+    # already present for h5/h2, but h3's target-spacing Stage-4 axis contains
+    # multiples of 3 nm and therefore omits them.  Insert the exact interface
+    # into the local z axis instead of moving the physical decomposition.  The
+    # transverse x/y grid remains exactly the reviewed Stage-4 grid and hence
+    # still matches the independent 2D cross-section mesh.
+    global_z_values = np.asarray(plan.z_values, dtype=np.float64)
+    if not np.any(
+        np.isclose(global_z_values, interface_z, atol=tolerance, rtol=0.0)
+    ):
+        global_z_values = np.sort(
+            np.concatenate((global_z_values, np.asarray([interface_z])))
+        )
     if side == "bottom":
-        z_values = plan.z_values[plan.z_values <= interface_z + tolerance]
+        z_values = global_z_values[global_z_values <= interface_z + tolerance]
         external_z = float(cfg.domain_z_min)
         expected_first = external_z
         expected_last = interface_z
@@ -113,7 +126,7 @@ def build_hybrid_local_mesh(
         external_tag = cfg.tags.z_min
         local_normal_sign = +1
     else:
-        z_values = plan.z_values[plan.z_values >= interface_z - tolerance]
+        z_values = global_z_values[global_z_values >= interface_z - tolerance]
         external_z = float(cfg.domain_z_max)
         expected_first = interface_z
         expected_last = external_z

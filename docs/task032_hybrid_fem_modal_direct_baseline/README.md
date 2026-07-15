@@ -35,6 +35,12 @@
 - [Phase 6e real-QEP h5/M6 runner walkthrough](../../notes/reference/code_walkthrough/49_task032_hybrid_physical_runner.md)
 - [Phase 6e clean-source MPI4 integration record](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json)
 - [Phase 6e research diagnostic](outcomes/phase6e_research_diagnostic.md)
+- [Phase 6f--9 physical/truncation/full-3D evidence](outcomes/phase6f_to_phase9_numerics.md)
+- [Phase 10 memory and h2 decision](outcomes/phase10_memory_and_h2_decision.md)
+- [Negative results](outcomes/negative_results.md)
+- [Changed files](outcomes/changed_files.md)
+- [Regression summary](outcomes/test_summary.md)
+- [Fields/Schur/memory walkthrough](../../notes/reference/code_walkthrough/51_task032_fields_schur_and_memory.md)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -105,5 +111,9 @@ Case080 checker 为 `290/290 passed`。Phase 6a--6d 已完成局部 FEM、外端
 DtN、内部模态 blocks 和 rank-major 单体 AIJ。Phase 6e 的真实 QEP h5/M6
 已在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成 MPI4
 集成记录，10 个 runner Gate 与 Case080 `294/294` 均通过；研究漏斗的
-M4->M6 R/T/A 变化约 `1e-12`。当前下一步是 pointwise H jump、体吸收和
-中间选面重建，而不是 Phase 7；该 clean record 仍不是最终 physical official record。
+M4->M6 R/T/A 变化约 `1e-12`。本轮 Phase 6f--10 research 已进一步完成：
+h5/h3 M120--M160 强截断收敛、物理 E/H/体吸收/五个选面、augmented 与
+Modal-Schur 一致性、30/30 角度/S-P smoke 和三种 direct lifecycle 独立内存
+采样。h3 memory-minimal 为 `3.215 GiB`，但 h2 两种预测均未过 4/5 GiB
+强制 Gate，因此 h2 按任务书保持锁定。下一步是 clean formal records、
+Case080 checker、review 和合并，不启动 Task033。

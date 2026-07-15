@@ -14,11 +14,20 @@ from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
 )
+from src.postprocessing.hybrid_field_reconstruction import (
+    ModalFieldReconstructor,
+    interface_field_continuity,
+)
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
     internal_modal_constraint_matrix,
     solve_hybrid_augmented_direct,
+)
+from src.solvers.hybrid_fem_modal_schur_direct import (
+    build_hybrid_modal_schur_direct_system,
+    build_hybrid_modal_schur_memory_minimal_system,
+    solve_hybrid_modal_schur_direct,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 
@@ -55,6 +64,7 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
 
         cls.cfg = target_stage4_config(degree=2, h_nm=10.0)
         cross_section = build_matching_cross_section(cls.cfg, "stage4_xy")
+        cls.cross_section = cross_section
         cls.spaces = build_cross_section_spaces(
             cross_section, transverse_degree=2
         )
@@ -326,6 +336,179 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(solution.modal_amplitudes)))
         self.assertGreaterEqual(solution.setup_seconds, 0.0)
         self.assertGreaterEqual(solution.solve_seconds, 0.0)
+
+    def test_modal_schur_multi_rhs_matches_augmented_solution(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        schur_system = build_hybrid_modal_schur_direct_system(
+            self.bottom_system,
+            self.top_system,
+            self.coupling,
+        )
+        schur_solution = None
+        try:
+            schur_solution = solve_hybrid_modal_schur_direct(
+                schur_system,
+                self.bottom_system,
+                self.top_system,
+                self.coupling,
+            )
+            self.assertEqual(schur_system.modal_schur.shape, (4, 4))
+            self.assertEqual(schur_system.multi_rhs_count, 5)
+            self.assertFalse(schur_system.dense_interface_square_formed)
+            self.assertFalse(schur_system.full_field_or_mode_gathered)
+            self.assertTrue(np.isfinite(schur_system.modal_schur_condition))
+            self.assertLess(schur_solution.relative_residual, 1.0e-9)
+            self.assertLess(schur_solution.bottom_relative_residual, 1.0e-10)
+            self.assertLess(schur_solution.top_relative_residual, 1.0e-10)
+            self.assertLess(schur_solution.modal_relative_residual, 1.0e-10)
+            np.testing.assert_allclose(
+                schur_solution.modal_amplitudes,
+                self.solution.modal_amplitudes,
+                atol=1.0e-10,
+                rtol=1.0e-10,
+            )
+            self.assertLess(
+                _relative_vector_error(schur_solution.bottom, self.solution.bottom),
+                1.0e-10,
+            )
+            self.assertLess(
+                _relative_vector_error(schur_solution.top, self.solution.top),
+                1.0e-10,
+            )
+            augmented_metrics = evaluate_hybrid_augmented_solution(
+                self.cfg,
+                self.bottom_system,
+                self.top_system,
+                self.coupling,
+                self.solution,
+            )
+            schur_metrics = evaluate_hybrid_augmented_solution(
+                self.cfg,
+                self.bottom_system,
+                self.top_system,
+                self.coupling,
+                schur_solution,
+            )
+            for key in ("R_total", "T_total", "A_balance"):
+                self.assertAlmostEqual(
+                    schur_metrics["port_power"][key],
+                    augmented_metrics["port_power"][key],
+                    places=11,
+                )
+        finally:
+            if schur_solution is not None:
+                schur_solution.destroy()
+                schur_solution.destroy()
+            schur_system.destroy()
+            schur_system.destroy()
+
+    def test_memory_minimal_modal_schur_releases_and_refactors_local_factors(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        schur_system = build_hybrid_modal_schur_memory_minimal_system(
+            self.bottom_system,
+            self.top_system,
+            self.coupling,
+        )
+        schur_solution = None
+        try:
+            self.assertEqual(schur_system.lifecycle_strategy, "memory_minimal_direct")
+            self.assertTrue(schur_system.recovery_refactor_required)
+            self.assertIsNone(schur_system.bottom_factor)
+            self.assertIsNone(schur_system.top_factor)
+            schur_solution = solve_hybrid_modal_schur_direct(
+                schur_system,
+                self.bottom_system,
+                self.top_system,
+                self.coupling,
+            )
+            self.assertEqual(
+                set(schur_solution.recovery_factor_setup_seconds),
+                {"bottom", "top"},
+            )
+            self.assertLess(schur_solution.relative_residual, 1.0e-9)
+            np.testing.assert_allclose(
+                schur_solution.modal_amplitudes,
+                self.solution.modal_amplitudes,
+                atol=1.0e-10,
+                rtol=1.0e-10,
+            )
+            self.assertLess(
+                _relative_vector_error(schur_solution.bottom, self.solution.bottom),
+                1.0e-10,
+            )
+            self.assertLess(
+                _relative_vector_error(schur_solution.top, self.solution.top),
+                1.0e-10,
+            )
+        finally:
+            if schur_solution is not None:
+                schur_solution.destroy()
+                schur_solution.destroy()
+            schur_system.destroy()
+            schur_system.destroy()
+
+    def test_selected_middle_field_reconstruction_is_bounded_and_finite(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        reconstructor = ModalFieldReconstructor(
+            self.cfg,
+            self.cross_section,
+            self.spaces,
+            self.positive,
+            self.negative,
+        )
+        x_values = np.asarray([0.25, 0.75]) * self.cfg.period_x
+        y_values = np.asarray([0.25, 0.75]) * self.cfg.period_y
+        samples = reconstructor.selected_planes(
+            self.solution.modal_amplitudes,
+            x_values,
+            y_values,
+            [10.0, 60.0, 110.0],
+        )
+        self.assertEqual(samples.electric_V_per_m.shape, (3, 2, 2, 3))
+        self.assertEqual(samples.magnetic_A_per_m.shape, (3, 2, 2, 3))
+        self.assertTrue(np.all(np.isfinite(samples.electric_V_per_m)))
+        self.assertTrue(np.all(np.isfinite(samples.magnetic_A_per_m)))
+        self.assertEqual(samples.electric_V_per_m.nbytes, 576)
+        self.assertEqual(samples.magnetic_A_per_m.nbytes, 576)
+        interfaces = reconstructor.selected_planes(
+            self.solution.modal_amplitudes,
+            x_values,
+            y_values,
+            [10.0, 110.0],
+        )
+        continuity = interface_field_continuity(
+            self.cfg,
+            self.bottom_system,
+            self.top_system,
+            self.solution.bottom,
+            self.solution.top,
+            interfaces,
+        )
+        for side in ("bottom", "top"):
+            for field in ("electric_tangential", "magnetic_tangential"):
+                self.assertTrue(
+                    np.isfinite(continuity[side][field]["relative_l2"])
+                )
+        absorption = reconstructor.absorbed_power_code_units(
+            self.solution.modal_amplitudes
+        )
+        self.assertGreaterEqual(absorption["absorbed_power_code_units"], 0.0)
+        self.assertGreater(absorption["z_evaluation_count"], 0)
 
 
 if __name__ == "__main__":

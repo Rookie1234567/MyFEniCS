@@ -14,6 +14,7 @@ from src.modes.mode_classification import (
     build_biorthogonal_mode_basis,
     classify_mode_branch,
     pair_reciprocal_mode_bases,
+    select_passive_direction_modes,
     track_mode_bases,
 )
 from src.modes.quadratic_beta_eigenproblem import (
@@ -78,6 +79,51 @@ class Task032ModeClassificationTests(unittest.TestCase):
                 False,
             ),
         )
+
+    def test_wide_candidate_pool_filters_reciprocal_and_growing_branches(self):
+        class Candidate:
+            def __init__(self, beta: complex, flux: float):
+                self.beta = beta
+                self.right_full = self
+                self.flux = flux
+                self.destroyed = False
+
+            def destroy(self):
+                self.destroyed = True
+
+        class Evaluator:
+            @staticmethod
+            def evaluate(vector, _beta):
+                return vector.flux
+
+        candidates = [
+            Candidate(0.5 + 0.01j, +1.0),
+            Candidate(-0.5 - 0.01j, -1.0),
+            Candidate(0.0 + 0.4j, 0.0),
+            Candidate(0.0 - 0.4j, 0.0),
+            Candidate(0.7 + 0.02j, +0.5),
+        ]
+        selected, report = select_passive_direction_modes(
+            candidates,
+            desired_direction="forward",
+            requested_modes=2,
+            poynting_evaluator=Evaluator(),
+        )
+        try:
+            self.assertEqual(selected, [candidates[0], candidates[2]])
+            self.assertEqual(report.candidate_modes, 5)
+            self.assertEqual(report.selected_modes, 2)
+            self.assertEqual(report.direction_counts["forward"], 3)
+            self.assertEqual(report.direction_counts["backward"], 2)
+            self.assertEqual(report.selected_candidate_indices, (0, 2))
+            self.assertFalse(candidates[0].destroyed)
+            self.assertFalse(candidates[2].destroyed)
+            self.assertTrue(candidates[1].destroyed)
+            self.assertTrue(candidates[3].destroyed)
+            self.assertTrue(candidates[4].destroyed)
+        finally:
+            for mode in selected:
+                mode.destroy()
 
     def test_air_modes_use_poynting_and_adjoint_qep_biorthogonality(self):
         cfg = target_stage4_config(degree=2, h_nm=10.0)

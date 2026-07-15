@@ -115,6 +115,18 @@ class ModeTrackingReport:
     overlap_matrix: np.ndarray
 
 
+@dataclass(frozen=True)
+class DirectionalModeSelectionReport:
+    requested_modes: int
+    candidate_modes: int
+    selected_modes: int
+    desired_direction: ModeDirection
+    direction_counts: dict[str, int]
+    passive_candidate_count: int
+    selected_candidate_indices: tuple[int, ...]
+    flux_tolerance: float
+
+
 class PoyntingFluxEvaluator:
     """Evaluate impedance-scaled cross-section power without vector gathering."""
 
@@ -318,6 +330,75 @@ def classify_mode_branch(
         "near_zero_flux_and_beta_imag",
         False,
     )
+
+
+def select_passive_direction_modes(
+    right_modes: list[QuadraticBetaMode],
+    *,
+    desired_direction: ModeDirection,
+    requested_modes: int,
+    poynting_evaluator: PoyntingFluxEvaluator,
+    relative_flux_tolerance: float = 1.0e-8,
+    absolute_flux_tolerance: float = 1.0e-12,
+    beta_imag_tolerance: float = 1.0e-10,
+) -> tuple[list[QuadraticBetaMode], DirectionalModeSelectionReport]:
+    """Filter a target-slice candidate pool before biorthogonalization.
+
+    A large shift-invert target slice can contain the reciprocal branch even
+    when its target beta is positive (and vice versa).  This filter keeps only
+    the requested passive direction and destroys every rejected distributed
+    candidate.  Candidate ordering from the QEP target is preserved.
+    """
+
+    if desired_direction not in {"forward", "backward"}:
+        raise ValueError("Directional selection requires forward or backward.")
+    if requested_modes < 1:
+        raise ValueError("requested_modes must be positive.")
+    if not right_modes:
+        raise ValueError("At least one directional candidate is required.")
+    fluxes = [
+        poynting_evaluator.evaluate(mode.right_full, mode.beta)
+        for mode in right_modes
+    ]
+    flux_tolerance = max(
+        float(absolute_flux_tolerance),
+        float(relative_flux_tolerance)
+        * max((abs(value) for value in fluxes), default=0.0),
+    )
+    classifications = [
+        classify_mode_branch(
+            mode.beta,
+            flux,
+            flux_tolerance,
+            beta_imag_tolerance,
+        )
+        for mode, flux in zip(right_modes, fluxes)
+    ]
+    eligible = [
+        index
+        for index, (_kind, direction, _basis, passive) in enumerate(classifications)
+        if direction == desired_direction and passive
+    ]
+    selected_indices = tuple(eligible[:requested_modes])
+    selected_ids = set(selected_indices)
+    selected = [right_modes[index] for index in selected_indices]
+    for index, mode in enumerate(right_modes):
+        if index not in selected_ids:
+            mode.destroy()
+    counts: dict[str, int] = {"forward": 0, "backward": 0, "ambiguous": 0}
+    for _kind, direction, _basis, _passive in classifications:
+        counts[direction] = counts.get(direction, 0) + 1
+    report = DirectionalModeSelectionReport(
+        requested_modes=int(requested_modes),
+        candidate_modes=len(right_modes),
+        selected_modes=len(selected),
+        desired_direction=desired_direction,
+        direction_counts=counts,
+        passive_candidate_count=sum(1 for *_prefix, passive in classifications if passive),
+        selected_candidate_indices=selected_indices,
+        flux_tolerance=flux_tolerance,
+    )
+    return selected, report
 
 
 def build_biorthogonal_mode_basis(

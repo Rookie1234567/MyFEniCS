@@ -11,7 +11,12 @@ from petsc4py import PETSc
 from ..common.config_3d import SimulationConfig3D
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
 from .common_3d_solve import _petsc_matrix_stats
-from .dtn_port_3d import _gather_auxiliary_values, _port_power_metrics
+from .dtn_port_3d import (
+    _gather_auxiliary_values,
+    _mode_boundary_phase,
+    _mode_power_at_boundary,
+    _port_power_metrics,
+)
 from .hybrid_local_dtn import HybridLocalDtnSystem
 
 
@@ -567,6 +572,59 @@ def _fe_traction_equilibrium_residual(
         negative.destroy()
 
 
+def _external_diffraction_order_rows(
+    cfg: SimulationConfig3D,
+    systems: tuple[HybridLocalDtnSystem, HybridLocalDtnSystem],
+    auxiliary: tuple[np.ndarray, np.ndarray],
+    *,
+    incident_power: float,
+) -> list[dict]:
+    rows: list[dict] = []
+    auxiliary_index = 0
+    for system, values in zip(systems, auxiliary):
+        for local_index, (mode, value, incident) in enumerate(
+            zip(system.external_modes, values, system.incident_projections)
+        ):
+            outgoing = (
+                complex(value - incident)
+                if mode.side == "top"
+                else complex(value)
+            )
+            boundary_amplitude = outgoing * _mode_boundary_phase(mode, cfg)
+            modal_power = _mode_power_at_boundary(mode, cfg, outgoing)
+            power_ratio = float(modal_power / incident_power)
+            rows.append(
+                {
+                    "auxiliary_index": auxiliary_index,
+                    "local_auxiliary_index": local_index,
+                    "side": mode.side,
+                    "m": int(mode.m),
+                    "n": int(mode.n),
+                    "polarization": mode.polarization,
+                    "propagating": bool(mode.propagating),
+                    "rayleigh_warning": bool(mode.rayleigh_warning),
+                    "beta_per_nm": complex(mode.beta),
+                    "total_projection": complex(value),
+                    "incident_projection": complex(incident),
+                    "outgoing_amplitude": outgoing,
+                    "outgoing_amplitude_at_boundary": boundary_amplitude,
+                    "power_ratio": power_ratio,
+                    "R": (
+                        power_ratio
+                        if mode.side == "top" and mode.propagating
+                        else 0.0
+                    ),
+                    "T": (
+                        power_ratio
+                        if mode.side == "bottom" and mode.propagating
+                        else 0.0
+                    ),
+                }
+            )
+            auxiliary_index += 1
+    return rows
+
+
 def evaluate_hybrid_augmented_solution(
     cfg: SimulationConfig3D,
     bottom_system: HybridLocalDtnSystem,
@@ -660,6 +718,12 @@ def evaluate_hybrid_augmented_solution(
             *np.asarray(top_system.incident_projections, dtype=np.complex128),
         ],
     )
+    external_orders = _external_diffraction_order_rows(
+        cfg,
+        (bottom_system, top_system),
+        (bottom_aux, top_aux),
+        incident_power=float(port_power["incident_power_code_units"]),
+    )
     return {
         "interface_e_projection": {
             "bottom_relative_residual": bottom_e_relative,
@@ -681,5 +745,6 @@ def evaluate_hybrid_augmented_solution(
             "bottom": bottom_aux,
             "top": top_aux,
         },
+        "external_diffraction_orders": external_orders,
         "port_power": port_power,
     }
