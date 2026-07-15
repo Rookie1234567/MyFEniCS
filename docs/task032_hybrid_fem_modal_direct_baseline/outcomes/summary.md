@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_matched_trace_projection_complete / phase6a_local_mesh_complete / phase6b_one_sided_dtn_complete / phase6c_internal_blocks_complete / phase6d_augmented_algebra_complete / phase6e_real_qep_h5_m6_research_integration_complete / task_in_progress
+status = phase0_complete / phase1_full3d_reference_complete / phase2_cross_section_qep_complete / phase3_mode_basis_complete / phase4_stable_propagation_complete / phase5_matched_trace_projection_complete / phase6a_local_mesh_complete / phase6b_one_sided_dtn_complete / phase6c_internal_blocks_complete / phase6d_augmented_algebra_complete / phase6e_real_qep_h5_m6_clean_source_integration_complete / task_in_progress
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -21,7 +21,7 @@ ordinary default changed = false
 
 ## 3. theory-to-code mapping
 
-前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation；Phase 5 已完成 matching Nédélec trace、modal projection 与 clean MPI4 formal record。Phase 6a/6b 已建立上下局部 FEM 和各自单侧外部 Fourier-DtN；Phase 6c 已建立内部模态投影、牵引和稳定传播稀疏块；Phase 6d 已通过 rank-major monolithic AIJ 与 MUMPS algebra Gate。真实 QEP 模式截断、接口 E/H 连续、Hybrid R/T/A 和 Phase 7 modal-Schur 尚未完成。
+前置理论和 Task031 交接链已全部读取。Phase 0 完成环境与旧能力迁移；Phase 1 已加入显式、默认关闭的 full-3D 参考面导出，并建立 Case080 配置、命令、records 和 checker。Phase 2 已实现 `matching cross-section -> mixed QEP -> distributed PEP`；Phase 3 已实现 `Poynting classification -> adjoint QEP -> biorthogonal blocks -> overlap tracking`；Phase 4 已完成稳定 two-port propagation；Phase 5 已完成 matching Nédélec trace、modal projection 与 clean MPI4 formal record。Phase 6a/6b 已建立上下局部 FEM 和各自单侧外部 Fourier-DtN；Phase 6c 已建立内部模态投影、牵引和稳定传播稀疏块；Phase 6d 已通过 rank-major monolithic AIJ 与 MUMPS algebra Gate；Phase 6e 已完成真实 QEP h5/M6 clean-source 集成记录及外端口 R/T/A。尚未完成的是 pointwise H jump、体吸收、选面 E/H、h3 Hybrid、最终 official 物理资格和 Phase 7 modal-Schur。
 
 ## 4. eigenproblem implementation and validation
 
@@ -107,7 +107,15 @@ Phase 6c 的二维到三维提升只 allgather 小型结构化轴/cell-owner met
 
 Phase 6d 把 unknown 冻结为 `[u_bottom,u_top,a_b+,a_t-]`，用 `a_b-=P-a_t-`、`a_t+=P+a_b+` 消去 outgoing amplitude。两个独立 local matrix 通过 rank-major 连续 ownership 复制到单个 MPI AIJ；每个 rank 依次拥有自身 bottom/top rows，最后一个 rank 再拥有 `2M` modal rows。h10 两条解析 Bloch mode 的 serial/MPI2/MPI4 均为每 rank `3/3`；MPI4 单体为 `2432 x 2432`、`251720` nnz，MUMPS 真相对残差 `3.732133e-13`，setup/solve 为 `0.046960/0.003048 s`。该结果分类为 `augmented_algebra_pass`，不是 `physical_augmented_direct_pass`；真实 Phase 3 basis、M 收敛、R/T/A 与 full-3D 比较仍待执行。
 
-Phase 6e 已接入真实正/负 QEP basis，并在 h5 上执行 M=2/4/6 研究漏斗。M6 单体为 `13744 x 13744`、`1470406` nnz，真残差 `4.6392e-12`，接口 E 残差 `6.8809e-14`；M4->M6 的 `|delta R/T/A|` 为 `8.33e-14/9.82e-13/1.07e-12`。target-cell Nédélec 路由把新增两列映射误差从最高 `1.24e-2` 降到约 `2e-14`，三组 block inverse 将正/负双正交误差降到 `1.8161e-11/6.8695e-11`。当前分类是 `physical_integration_pass_mode_convergence_pending`；clean record、pointwise H jump、体吸收、中间选面和 h3 仍待完成。
+Phase 6e 已接入真实正/负 QEP basis，并在 h5 上执行 M=2/4/6 研究漏斗。研究 M6 单体为 `13744 x 13744`、`1470406` nnz，真残差 `4.6392e-12`；M4->M6 的 `|delta R/T/A|` 为 `8.33e-14/9.82e-13/1.07e-12`。target-cell Nédélec 路由把新增两列映射误差从最高 `1.24e-2` 降到约 `2e-14`，三组 block inverse 将正/负双正交误差降到约 `1e-11`。
+
+随后从 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成正式 MPI4 h5/M6 集成记录。该次精确交付正/负 `6/6` 模式，单体 `13744 x 13744`、`1470403` used nnz，真残差 `1.8590e-12`，接口 E 残差 `1.3090e-13`，bottom/top 变分 FE-modal traction residual 为 `2.6770e-12/1.5094e-12`；10 个 runner Gate 和 Case080 `294/294` checker 全过。记录分类仍是 `physical_integration_pass_mode_convergence_pending` 且 `official_record=false`；pointwise H jump、体吸收、中间选面和 h3 仍待完成。
+
+```text
+formal source commit = 5c1f12e610dd8c6040389c44c31584ab7fba66cd
+clean integration record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json
+record SHA-256 = 43e46de0a7b82f9d0d0d1bb29474ddca08bc017dd5c436122fe6223561812011
+```
 
 ## 9. modal-Schur result
 
@@ -115,7 +123,7 @@ Phase 6e 已接入真实正/负 QEP basis，并在 h5 上执行 M=2/4/6 研究�
 
 ## 10. truncation convergence
 
-研究漏斗已完成 h5 `M=2 -> 4 -> 6`。M2->M4 的 `|delta R/T/A|` 为 `8.25e-6/7.39e-6/8.67e-7`；M4->M6 为 `8.33e-14/9.82e-13/1.07e-12`，通过 strong total delta `1e-6`。当前仍标记 `clean_formal_record_pending`，不替代后续更广参数 funnel。
+研究漏斗已完成 h5 `M=2 -> 4 -> 6`。M2->M4 的 `|delta R/T/A|` 为 `8.25e-6/7.39e-6/8.67e-7`；M4->M6 为 `8.33e-14/9.82e-13/1.07e-12`，通过 strong total delta `1e-6`。M6 已有独立 clean-source 集成记录，但完整 M2/4/6 漏斗仍是 research evidence，不替代后续更广参数 funnel。
 
 ## 11. full-3D comparison
 
@@ -123,7 +131,7 @@ Phase 1 已从 clean commit `c468c728...` 完成 h5/h3 MPI4 direct reference。�
 
 h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.4683901184`；h3 为 198,438 DoF，残差 `9.9234e-12`，`R/T/A=0.0046130314/0.5836533572/0.4117336114`。两者闭合均优于 `1.3e-13`，NPZ/JSON/run-summary 哈希一致。h3 与历史 direct h3 的 R/T/A 绝对差约 `2.3e-14` 或更小。h5/h3 差异大，因此不宣称网格收敛：h5 用作快速开发，h3 是 Task032 主 full-3D 场/RTA reference。加入 Phase 2 formal QEP Gate 后，Case080 自动 checker 为 `277/277 passed`。
 
-Phase 6e h5/M6 对同网格 full-3D h5 的 `Hybrid-full3D R/T/A` 为 `-4.8325e-6/-1.1162e-5/1.5994e-5`。这些是 dirty-research 诊断；full-3D h5 本身未网格收敛，不能单独升级最终物理资格。
+clean Phase 6e h5/M6 对同网格 full-3D h5 的 `Hybrid-full3D R/T/A` 为 `-4.8325e-6/-1.1162e-5/1.5994e-5`。full-3D h5 本身未网格收敛，且 Hybrid 尚未重建体吸收与点值 H，因此这些仍是同网格诊断，不能单独升级最终物理资格。
 
 ## 12. angle/polarization smoke
 
@@ -204,15 +212,16 @@ benchmarks/run_task032_phase6_augmented.py
 benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase6.sh
 notes/reference/code_walkthrough/49_task032_hybrid_physical_runner.md
 docs/task032_hybrid_fem_modal_direct_baseline/outcomes/phase6e_research_diagnostic.md
+benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json
 ```
 
 ## 16. merge recommendation
 
 ```text
 current recommendation = do_not_merge_yet
-reason = Phase 1-5, Phase 6a-6d, and Phase 6e real-QEP h5/M6 integration are complete, but clean physical field/absorption gates, h3, and Schur are pending
+reason = Phase 1-5, Phase 6a-6d, and Phase 6e clean-source real-QEP h5/M6 integration are complete, but physical field/absorption gates, h3, and Schur are pending
 ```
 
 ## 17. next Task033 decision
 
-`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 Phase 6e clean formal record、pointwise H jump、体吸收和中间选面重建。
+`not_applicable_yet`。只有 Task032 证明 Hybrid 正确且内存结构性下降后才评估 Task033。当前下一步是 pointwise H jump、体吸收和中间选面重建。

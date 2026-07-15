@@ -40,7 +40,7 @@ Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0-5 + Phase 6a-6d + Phase 6e real-QEP h5/M6 integration complete; clean field/absorption gates next
+Task032 status = Phase 0-5 + Phase 6a-6d + Phase 6e clean-source real-QEP h5/M6 integration complete; pointwise field/absorption gates next
 ```
 
 ## 1.1 2026-07-15 最新更新
@@ -51,7 +51,7 @@ Phase 6c 的 MPI 路由按结构化 `(x,y)` cell owner 只交换接口点值，�
 
 Phase 6d 已建立 rank-major monolithic PETSc AIJ：每个 rank 连续保存自身 bottom/top rows，最后一个 rank 再保存 `2M` 内部 modal rows，从而把两个独立 local distributions 合法拼入普通 MPI AIJ。unknown 为 `[u_bottom,u_top,a_b+,a_t-]`，outgoing amplitudes 只通过稳定 `P+/P-` 消元；MUMPS 设置 error-if-not-converged 并显式计算 `||Ax-b||/||b||`。h10 两条解析 Bloch mode 的 serial/MPI2/MPI4 均为每 rank `3/3`；MPI4 矩阵 `2432 x 2432`、`251720` nnz、真相对残差 `3.732133e-13`，setup/solve `0.046960/0.003048 s`。这只分类为 `augmented_algebra_pass`；真实 Phase 3 QEP basis、M 收敛、接口 E/H 连续、official R/T/A 和 full-3D 比较是下一步。
 
-Phase 6e 已完成真实 QEP h5/M2/4/6 研究漏斗。修复了正负 basis 重复 Poynting evaluator、SLEPc 超额 `nconv`、Windows bind mount 容器内 Git status 卡顿、Nédélec 边界点任意 source-cell 路由和近简并 block threshold 五个问题。M6 的 10 个集成 Gate 全过，单体 `13744 x 13744`、`1470406` nnz、真残差 `4.6392e-12`；M4->M6 R/T/A 变化约 `1e-12`。当前仍不称完整 physical pass：clean record、pointwise H jump、体吸收、中间选面重建、h3 和 simultaneous RSS 未完成。
+Phase 6e 已完成真实 QEP h5/M2/4/6 研究漏斗，并在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成 h5/M6 MPI4 集成记录。修复了正负 basis 重复 Poynting evaluator、SLEPc 超额 `nconv`、Windows bind mount 容器内 Git status 卡顿、Nédélec 边界点任意 source-cell 路由和近简并 block threshold 五个问题。clean M6 的 10 个集成 Gate 全过，单体 `13744 x 13744`、约 `1.4704e6` nnz、真残差 `1.8590e-12`；研究漏斗 M4->M6 R/T/A 变化约 `1e-12`，Case080 为 `294/294 passed`。当前仍不称完整 physical pass：pointwise H jump、体吸收、中间选面重建、h3 和 simultaneous RSS 未完成。
 
 ### 2026-07-14 前序更新
 
@@ -69,7 +69,7 @@ Phase 3 已实现由混合 E 场重构阻抗缩放 H、z 向 Poynting 分类、n
 
 Phase 4 已实现 O(M) 存储的 two-port 对角传播：incoming 为 bottom-forward/top-backward，outgoing 为 bottom-backward/top-forward；正反方向分别使用 `+L/-L` 坐标位移，禁止 growing inverse。纯传播 6 项合同、真实 Phase 3 air basis 集成和 MPI4 runner 的 8 个 Gate 均通过；覆盖 100 nm 无反射、lossy/evanescent 被动衰减、37+63 nm composition、reciprocity 负对照和四 rank 一致性。clean source `9206e9c...` 的正式 record 固定 exact Phase 3 record hash；最大 composition 误差 `9.42e-16`，air reciprocity beta/factor 误差 `3.63e-16/2.78e-15`，三个 case reflection norm 为 0。Phase 4 冻结时 Case080 checker 为 `286/286 passed`；Phase 5 见下一段。
 
-Phase 5 已实现匹配网格的 3D Nédélec 切向迹提取、2D mode trace 重构、left/right Petrov 投影、bottom/top 双域法向约定和质量范数 residual。3D→2D 路径只交换接口插值点及两个复切向分量，允许某些 rank 没有本地 source evaluation，不聚集完整 field/mode vector。clean source `b565ac4...` 的正式 MPI4 record 通过 8/8 Gate：bottom/top 各 18 个匹配接口面、162 个 trace DoF，Stage4 两模 Gram 条件数 `30.4995`，系数 round trip/重构 residual 为 `3.78e-16/4.69e-16`，3D→2D 迹误差为 `4.52e-15/6.61e-15`；air 近简并旋转的 projector error 为 `2.11e-8`，且未形成 dense `N_Gamma^2`。完整 serial 回归为 `199 tests / 10 skipped`，Phase 5 MPI4 为每 rank `3/3`，Case080 checker 为 `290/290 passed`。Phase 6 augmented direct 尚未开始。
+Phase 5 已实现匹配网格的 3D Nédélec 切向迹提取、2D mode trace 重构、left/right Petrov 投影、bottom/top 双域法向约定和质量范数 residual。3D→2D 路径只交换接口插值点及两个复切向分量，允许某些 rank 没有本地 source evaluation，不聚集完整 field/mode vector。clean source `b565ac4...` 的正式 MPI4 record 通过 8/8 Gate：bottom/top 各 18 个匹配接口面、162 个 trace DoF，Stage4 两模 Gram 条件数 `30.4995`，系数 round trip/重构 residual 为 `3.78e-16/4.69e-16`，3D→2D 迹误差为 `4.52e-15/6.61e-15`；air 近简并旋转的 projector error 为 `2.11e-8`，且未形成 dense `N_Gamma^2`。完整 serial 回归为 `199 tests / 10 skipped`，Phase 5 MPI4 为每 rank `3/3`，Case080 checker 在 Phase 5 冻结时为 `290/290 passed`；Phase 6 后续进展见本节顶部最新更新。
 
 Task031 Review V1 接受正式 h5/h3/h2 的数值正确性与 absolute memory strong Gate，不要求重跑正式计算；合并前加固集中在 master 同步、端口文档、matrix-free/performance 术语、内存口径和选择性合并边界。分支已真实 merge 当前 `master`，保留 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 与 [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md)：后续统一规划范围为 `13.5 nm + fixed Si + 1–10° grazing + S/P`，但 Task031 只资格化 theta=80°（10° grazing）、S polarization 的 frozen 单点。
 

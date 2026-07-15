@@ -103,6 +103,11 @@ broadcast 前等待。`--allow-dirty-research` 现在只读取 HEAD，并明确�
 正式路径仍必须传 `--verified-clean-sha <40-char SHA>`。这条路径比较 mounted HEAD 与宿主 clean
 attestation，不运行容器内昂贵且会误报的 status scan。
 
+clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 的 MPI4 h5/M6
+集成记录已写入 `records/hybrid_phase6_m6.json`。其 10 个 runner Gate 和 Case080
+`294/294` checker 均通过；metadata 固定 command、UTC time、image digest、host、
+complex128 和 clean attestation。`official_record` 仍为 false，因为下面的场 Gate 尚未完成。
+
 ## 9. 当前 Gate 与下一步
 
 runner 当前同时检查：精确 mode count、方向/被动分支、reciprocal pairing、双正交、左右 QEP

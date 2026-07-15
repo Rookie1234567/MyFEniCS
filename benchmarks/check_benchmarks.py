@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 import subprocess
 from dataclasses import dataclass
@@ -245,12 +246,14 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             "run_phase3.sh",
             "run_phase4.sh",
             "run_phase5.sh",
+            "run_phase6.sh",
             "records/full3d_h5_reference.json",
             "records/full3d_h3_reference.json",
             "records/qep_phase2.json",
             "records/modes_phase3.json",
             "records/propagation_phase4.json",
             "records/trace_phase5.json",
+            "records/hybrid_phase6_m6.json",
         ),
     }
     cases_root = BENCHMARKS / "cases"
@@ -315,6 +318,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
     case080_phase3_gates = case080_gate_bundle["phase3"]
     case080_phase4_gates = case080_gate_bundle["phase4"]
     case080_phase5_gates = case080_gate_bundle["phase5"]
+    case080_phase6_gates = case080_gate_bundle["phase6"]
     gates.append(
         Gate(
             "task032_phase1_ordinary_default_unchanged",
@@ -324,7 +328,8 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
             and case080_phase2_gates.get("ordinary_default_changed") is False
             and case080_phase3_gates.get("ordinary_default_changed") is False
             and case080_phase4_gates.get("ordinary_default_changed") is False
-            and case080_phase5_gates.get("ordinary_default_changed") is False,
+            and case080_phase5_gates.get("ordinary_default_changed") is False
+            and case080_phase6_gates.get("ordinary_default_changed") is False,
             {
                 "config": case080_config.get("ordinary_default_changed"),
                 "expected": case080_expected.get("ordinary_default_changed"),
@@ -333,6 +338,7 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "phase3_gates": case080_phase3_gates.get("ordinary_default_changed"),
                 "phase4_gates": case080_phase4_gates.get("ordinary_default_changed"),
                 "phase5_gates": case080_phase5_gates.get("ordinary_default_changed"),
+                "phase6_gates": case080_phase6_gates.get("ordinary_default_changed"),
             },
             False,
             "cases/080_hybrid_fem_modal_direct_baseline",
@@ -1331,6 +1337,260 @@ def evaluate() -> tuple[list[Gate], list[dict[str, Any]]]:
                 "unique_rank_signatures": 1,
             },
             f"cases/080_hybrid_fem_modal_direct_baseline/{phase5_relative}",
+        )
+    )
+
+    phase6_relative = "records/hybrid_phase6_m6.json"
+    phase6_record = _load_json(case080 / phase6_relative)
+    phase6_metadata = phase6_record.get("metadata", {})
+    phase6_complete, phase6_missing = _metadata_complete(phase6_record)
+    phase6_relation = _commit_relation(
+        phase6_metadata.get("commit_sha"), phase6_metadata.get("provenance")
+    )
+    phase6_case = phase6_record.get("case", {})
+    phase6_qualification = phase6_record.get("qualification", {})
+    phase6_identity_ok = (
+        phase6_complete
+        and phase6_record.get("schema_version")
+        == case080_phase6_gates["required_schema"]
+        and phase6_record.get("status")
+        == case080_phase6_gates["required_status"]
+        and phase6_metadata.get("commit_sha")
+        == case080_phase6_gates["required_commit"]
+        and phase6_metadata.get("container_digest")
+        == case080_phase6_gates["required_container_digest"]
+        and phase6_metadata.get("mpi_size")
+        == case080_phase6_gates["required_mpi_size"]
+        and phase6_metadata.get("scalar_dtype")
+        == case080_phase6_gates["required_dtype"]
+        and phase6_metadata.get("verification")
+        == case080_phase6_gates["required_verification"]
+        and phase6_metadata.get("git_dirty") is False
+        and phase6_metadata.get("tracked_source_dirty") is False
+        and phase6_metadata.get("full_field_or_mode_vector_gather") is False
+        and float(phase6_case.get("h_nm", float("nan")))
+        == float(case080_phase6_gates["required_h_nm"])
+        and int(phase6_case.get("requested_modes_per_direction", -1))
+        == int(case080_phase6_gates["required_mode_count_per_direction"])
+        and phase6_qualification.get("clean_source_integration_record") is True
+        and phase6_relation in {"exact_checkout", "checkout_ancestor"}
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_clean_identity_and_configuration",
+            phase6_identity_ok,
+            {
+                "missing": phase6_missing,
+                "relation": phase6_relation,
+                "metadata": phase6_metadata,
+                "case": phase6_case,
+                "qualification": phase6_qualification,
+            },
+            {
+                "commit": case080_phase6_gates["required_commit"],
+                "mpi_size": case080_phase6_gates["required_mpi_size"],
+                "dtype": case080_phase6_gates["required_dtype"],
+                "verification": case080_phase6_gates["required_verification"],
+                "h_nm": case080_phase6_gates["required_h_nm"],
+                "mode_count_per_direction": case080_phase6_gates[
+                    "required_mode_count_per_direction"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_qep = phase6_record.get("qep", {})
+    phase6_positive = phase6_qep.get("positive", {})
+    phase6_negative = phase6_qep.get("negative", {})
+    phase6_pairs = phase6_qep.get("reciprocal_pairs", [])
+    phase6_requested = int(
+        case080_phase6_gates["required_mode_count_per_direction"]
+    )
+    phase6_groups = [
+        *phase6_positive.get("near_degenerate_groups", []),
+        *phase6_negative.get("near_degenerate_groups", []),
+    ]
+    phase6_qep_residuals = [
+        float(value)
+        for basis in (phase6_positive, phase6_negative)
+        for key in (
+            "polynomial_relative_residuals",
+            "left_polynomial_relative_residuals",
+        )
+        for value in basis.get(key, [])
+    ]
+    phase6_qep_ok = (
+        int(phase6_qep.get("positive_solver_converged_modes", -1))
+        >= phase6_requested
+        and int(phase6_qep.get("negative_solver_converged_modes", -1))
+        >= phase6_requested
+        and int(phase6_positive.get("mode_count", -1)) == phase6_requested
+        and int(phase6_negative.get("mode_count", -1)) == phase6_requested
+        and phase6_positive.get("directions") == ["forward"] * phase6_requested
+        and phase6_negative.get("directions") == ["backward"] * phase6_requested
+        and all(phase6_positive.get("passive_branch_valid", []))
+        and len(phase6_positive.get("passive_branch_valid", []))
+        == phase6_requested
+        and all(phase6_negative.get("passive_branch_valid", []))
+        and len(phase6_negative.get("passive_branch_valid", []))
+        == phase6_requested
+        and max(
+            float(phase6_positive.get("max_biorthogonality_identity_error", float("inf"))),
+            float(phase6_negative.get("max_biorthogonality_identity_error", float("inf"))),
+        )
+        <= float(case080_phase6_gates["max_biorthogonality_identity_error"])
+        and len(phase6_qep_residuals) == 4 * phase6_requested
+        and max(phase6_qep_residuals, default=float("inf"))
+        <= float(case080_phase6_gates["max_qep_polynomial_relative_residual"])
+        and len(phase6_pairs) == phase6_requested
+        and all(
+            pair.get("opposite_direction") is True
+            and pair.get("passive_branches_valid") is True
+            and float(pair.get("relative_beta_error", float("inf")))
+            <= float(case080_phase6_gates["max_reciprocal_pair_relative_error"])
+            for pair in phase6_pairs
+        )
+        and len(phase6_groups)
+        == 2 * int(case080_phase6_gates["required_near_degenerate_group_count"])
+        and all(
+            group.get("normalization_method")
+            == case080_phase6_gates["required_group_normalization_method"]
+            for group in phase6_groups
+        )
+        and phase6_positive.get("full_vector_gathered") is False
+        and phase6_negative.get("full_vector_gathered") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_real_qep_biorthogonal_reciprocal_basis",
+            phase6_qep_ok,
+            phase6_qep,
+            {
+                "mode_count_per_direction": phase6_requested,
+                "max_biorthogonality_identity_error": case080_phase6_gates[
+                    "max_biorthogonality_identity_error"
+                ],
+                "max_qep_polynomial_relative_residual": case080_phase6_gates[
+                    "max_qep_polynomial_relative_residual"
+                ],
+                "near_degenerate_groups_per_direction": case080_phase6_gates[
+                    "required_near_degenerate_group_count"
+                ],
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_system = phase6_record.get("hybrid_system", {})
+    phase6_matrix_stats = phase6_system.get("matrix_stats", {})
+    phase6_solve = phase6_record.get("solve", {})
+    phase6_validation = phase6_record.get("validation", {})
+    phase6_e = phase6_validation.get("interface_e_projection", {})
+    phase6_traction = phase6_validation.get(
+        "fe_modal_traction_equilibrium", {}
+    )
+    phase6_runner_gates = phase6_record.get("gates", {})
+    phase6_augmented_ok = (
+        phase6_system.get("matrix_size")
+        == case080_phase6_gates["required_matrix_shape"]
+        and int(phase6_matrix_stats.get("matrix_nnz_used", -1))
+        >= int(case080_phase6_gates["minimum_matrix_nnz"])
+        and phase6_matrix_stats.get("matrix_type") == "mpiaij"
+        and phase6_system.get("dense_interface_square_formed") is False
+        and phase6_system.get("full_field_or_mode_gathered") is False
+        and phase6_solve.get("factor_solver") == "mumps"
+        and int(phase6_solve.get("converged_reason", -1)) > 0
+        and float(phase6_solve.get("true_relative_residual", float("inf")))
+        <= float(case080_phase6_gates["max_true_relative_residual"])
+        and float(phase6_e.get("combined_relative_residual", float("inf")))
+        <= float(case080_phase6_gates["max_interface_e_relative_residual"])
+        and max(
+            float(phase6_traction.get("bottom_relative_residual", float("inf"))),
+            float(phase6_traction.get("top_relative_residual", float("inf"))),
+        )
+        <= float(case080_phase6_gates["max_fe_modal_traction_relative_residual"])
+        and phase6_traction.get("interpretation")
+        == "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
+        and phase6_runner_gates
+        and all(value is True for value in phase6_runner_gates.values())
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_augmented_aij_mumps_and_interface_algebra",
+            phase6_augmented_ok,
+            {
+                "system": phase6_system,
+                "solve": phase6_solve,
+                "interface_e_projection": phase6_e,
+                "fe_modal_traction_equilibrium": phase6_traction,
+                "runner_gates": phase6_runner_gates,
+            },
+            {
+                "matrix_shape": case080_phase6_gates["required_matrix_shape"],
+                "factor_solver": "mumps",
+                "max_true_relative_residual": case080_phase6_gates[
+                    "max_true_relative_residual"
+                ],
+                "max_interface_e_relative_residual": case080_phase6_gates[
+                    "max_interface_e_relative_residual"
+                ],
+                "max_fe_modal_traction_relative_residual": case080_phase6_gates[
+                    "max_fe_modal_traction_relative_residual"
+                ],
+                "all_runner_gates": True,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
+        )
+    )
+
+    phase6_power = phase6_validation.get("port_power", {})
+    phase6_reference = phase6_record.get("full3d_reference_comparison", {})
+    phase6_delta = phase6_reference.get("hybrid_minus_full3d", {})
+    phase6_power_values = [
+        float(phase6_power.get(key, float("nan")))
+        for key in ("R_total", "T_total", "A_balance")
+    ]
+    phase6_boundary_ok = (
+        all(math.isfinite(value) for value in phase6_power_values)
+        and abs(sum(phase6_power_values) - 1.0)
+        <= float(case080_phase6_gates["max_rta_balance_closure"])
+        and phase6_reference.get("reference_grid_converged") is False
+        and all(
+            abs(float(phase6_delta.get(key, float("inf"))))
+            <= float(case080_phase6_gates["max_abs_h5_hybrid_full3d_delta"])
+            for key in ("R_total", "T_total", "A_balance")
+        )
+        and phase6_qualification.get("integration_pass") is True
+        and phase6_qualification.get("clean_source_integration_record") is True
+        and phase6_qualification.get("physical_augmented_direct_pass") is False
+        and phase6_qualification.get("mode_count_converged") is False
+        and phase6_qualification.get("pointwise_h_jump_checked") is False
+        and phase6_qualification.get("volume_absorption_reconstructed") is False
+        and phase6_qualification.get("official_record") is False
+    )
+    gates.append(
+        Gate(
+            "task032_phase6_rta_h5_diagnostic_and_qualification_boundary",
+            phase6_boundary_ok,
+            {
+                "port_power": phase6_power,
+                "reference_comparison": phase6_reference,
+                "qualification": phase6_qualification,
+            },
+            {
+                "rta_balance_closure": case080_phase6_gates[
+                    "max_rta_balance_closure"
+                ],
+                "max_abs_h5_hybrid_full3d_delta": case080_phase6_gates[
+                    "max_abs_h5_hybrid_full3d_delta"
+                ],
+                "reference_grid_converged": False,
+                "clean_source_integration_record": True,
+                "physical_augmented_direct_pass": False,
+                "official_record": False,
+            },
+            f"cases/080_hybrid_fem_modal_direct_baseline/{phase6_relative}",
         )
     )
 

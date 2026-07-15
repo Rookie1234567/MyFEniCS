@@ -107,6 +107,7 @@ RECORDED_CASES = {
     "080_hybrid_fem_modal_direct_baseline": (
         "records/full3d_h5_reference.json",
         "records/full3d_h3_reference.json",
+        "records/hybrid_phase6_m6.json",
     ),
 }
 

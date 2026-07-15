@@ -15,6 +15,10 @@ requested_modes_per_direction = 6
 该记录说明真实 QEP 到 MUMPS/RTA 的链路和 M4->M6 截断变化通过；它不是 clean formal record，
 也不是完整 `physical_augmented_direct_pass`。
 
+后续已在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成
+`records/hybrid_phase6_m6.json`。该正式集成记录通过 Case080 `294/294` checker，
+但仍保持 `official_record=false`，不会反向把本页的 dirty-research 漏斗冒充 clean funnel。
+
 ## 关键修复证据
 
 - 正负共享一个已编译 `PoyntingFluxEvaluator`，消除第二次 evaluator 的 MPI/JIT 长等待；
@@ -58,7 +62,6 @@ full-3D h5 只是 fast-development reference，未通过 h5--h3 网格收敛，�
 
 ## 尚未完成
 
-- clean SHA 的 MPI4 formal record；
 - pointwise interface H jump；
 - lossy volume absorption reconstruction；
 - z=30/60/90 nm selected-plane E/H reconstruction；
