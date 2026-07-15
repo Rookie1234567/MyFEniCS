@@ -49,6 +49,14 @@ TREND_LIMITS = {
     "p4_per_constrained_dof_cost_ratio_warning": 5.0,
 }
 
+NATIVE_VTU_ORACLE_METHOD = (
+    "distributed rank-local VTU field oracle plus official zero-order DtN "
+    "amplitude oracle"
+)
+NATIVE_VTU_ORACLE_REDUCTION = (
+    "MPI MAX of rank-local pointwise vector-norm numerator and denominator"
+)
+
 _FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -537,7 +545,7 @@ def extract_case_artifact_validation(
             "max_abs_H_exact_A_per_m": h_exact,
             "global_rank_local_points_compared": points,
             "interface_points_excluded": True,
-            "reduction": "MPI MAX of rank-local pointwise vector-norm numerator and denominator",
+            "reduction": NATIVE_VTU_ORACLE_REDUCTION,
         }
     else:
         # Keep collective ordering identical when any rank could not read its shard.
@@ -621,7 +629,7 @@ def extract_case_artifact_validation(
         failures.append(amplitude_error)
     return {
         "status": "completed" if not failures else "failed",
-        "method": "distributed rank-local VTU field oracle plus official zero-order DtN amplitude oracle",
+        "method": NATIVE_VTU_ORACLE_METHOD,
         "field_errors": field_errors,
         "zero_order_complex_amplitudes": amplitude_payload,
         "failures": failures,
@@ -1716,13 +1724,17 @@ def _case_key_without_mpi(item: Mapping[str, Any]) -> tuple[Any, ...]:
     )
 
 
-def _nested_number(item: Mapping[str, Any], path: Sequence[str]) -> float | None:
+def _nested_value(item: Mapping[str, Any], path: Sequence[str]) -> Any:
     current: Any = item
     for name in path:
         if not isinstance(current, Mapping):
             return None
         current = current.get(name)
-    return _finite_or_none(current)
+    return current
+
+
+def _nested_number(item: Mapping[str, Any], path: Sequence[str]) -> float | None:
+    return _finite_or_none(_nested_value(item, path))
 
 
 def _nested_complex(item: Mapping[str, Any], path: Sequence[str]) -> complex | None:
@@ -1992,7 +2004,8 @@ def _low_order_fixture_b_sampling_diagnostic(
 ) -> dict[str, Any] | None:
     """Explain the narrow native-VTU H-Linf sampling artifact, if present.
 
-    This does not waive a general p1/p2 regression.  It applies only when the
+    This does not waive a general low-order regression.  It applies only to the
+    observed p1 case when the oracle provenance is exactly the native-VTU
     mesh-native point set grows, H is the sole native field component that
     regresses, and every mesh-independent Fresnel/power observable is
     non-regressing.  The raw H result remains a failed diagnostic row.
@@ -2001,10 +2014,31 @@ def _low_order_fixture_b_sampling_diagnostic(
     if (
         coarse.get("fixture") != "fixture_b_flat_air_si"
         or fine.get("fixture") != "fixture_b_flat_air_si"
-        or int(coarse.get("degree", 0)) not in (1, 2)
+        or int(coarse.get("degree", 0)) != 1
         or coarse.get("degree") != fine.get("degree")
     ):
         return None
+
+    for row in (coarse, fine):
+        if (
+            _nested_value(row, ("artifact_validation", "method"))
+            != NATIVE_VTU_ORACLE_METHOD
+            or _nested_value(
+                row,
+                ("artifact_validation", "field_errors", "reduction"),
+            )
+            != NATIVE_VTU_ORACLE_REDUCTION
+            or _nested_value(
+                row,
+                (
+                    "artifact_validation",
+                    "field_errors",
+                    "interface_points_excluded",
+                ),
+            )
+            is not True
+        ):
+            return None
 
     field_paths = {
         "E": ("fields", "relative_max_abs_E_error"),
@@ -2214,32 +2248,42 @@ def analyze_accuracy_trends(
         overall_passed = p3_nonregression_passed and (
             errors[4] <= errors[1] * (1.0 + p_tolerance) + absolute_tolerance
         )
+        p3_classification = (
+            "nonregressing_with_tolerance"
+            if p3_nonregression_passed
+            else "negative_p3_regression"
+        )
         if not p3_nonregression_passed:
             problems.append(f"p3 physical error regressed by more than 5% for {key!r}")
         if errors[4] > errors[3] * (1.0 + p_tolerance) + absolute_tolerance:
-            classification = "negative_p4_regression"
+            p4_classification = "negative_p4_regression"
             overall_passed = False
             problems.append(f"p4 physical error regressed by more than 5% for {key!r}")
         elif p4_vs_p3_improvement < minimum_benefit:
-            classification = "negative_no_clear_p4_benefit"
+            p4_classification = "negative_no_clear_p4_benefit"
             item = {
                 **identity,
-                "classification": classification,
+                "classification": p4_classification,
                 "p4_vs_p3_relative_improvement": p4_vs_p3_improvement,
             }
             negative.append(item)
             warnings.append(f"no clear p4 benefit for {key!r}")
         else:
-            classification = "positive_p4_benefit"
-        if not overall_passed:
-            problems.append(f"p3/p4 physical trend failed for {key!r}")
+            p4_classification = "positive_p4_benefit"
+        classification = (
+            "negative_p3_regression"
+            if not p3_nonregression_passed
+            else p4_classification
+        )
         p_rows.append(
             {
                 **identity,
                 "errors_by_degree": {f"p{degree}": errors[degree] for degree in DEGREES},
                 "p3_vs_p2_relative_improvement": p3_vs_p2_improvement,
                 "p3_nonregression_passed": p3_nonregression_passed,
+                "p3_classification": p3_classification,
                 "p4_vs_p3_relative_improvement": p4_vs_p3_improvement,
+                "p4_classification": p4_classification,
                 "classification": classification,
                 "passed": overall_passed,
             }

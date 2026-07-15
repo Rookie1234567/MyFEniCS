@@ -103,13 +103,15 @@ def _result(entry: dict, *, perturbation: float = 0.0) -> dict:
         }
         artifact_validation = {
             "status": "completed",
-            "method": "synthetic distributed VTU and DtN oracle",
+            "method": core.NATIVE_VTU_ORACLE_METHOD,
             "field_errors": {
                 "relative_max_abs_E_error": 1.0e-3,
                 "relative_max_abs_H_error": field_error,
                 "global_rank_local_points_compared": (
                     32 if entry["mesh_target_nm"] == 5.0 else 384
                 ),
+                "interface_points_excluded": True,
+                "reduction": core.NATIVE_VTU_ORACLE_REDUCTION,
             },
             "zero_order_complex_amplitudes": amplitude_evidence,
             "failures": [],
@@ -783,6 +785,32 @@ class Task033Case090PDECoreRecordTests(unittest.TestCase):
             any("sampling diagnostic only" in warning for warning in analysis["warnings"])
         )
 
+        wrong_oracle_rows = copy.deepcopy(diagnostic_rows)
+        wrong_oracle_fine = next(
+            item
+            for item in wrong_oracle_rows
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 10.0
+            and item["degree"] == 1
+            and item["mesh_target_nm"] == 2.5
+            and item["polarization"] == "p"
+        )
+        wrong_oracle_fine["artifact_validation"]["method"] = "fixed common probe oracle"
+        analysis, problems = core.analyze_accuracy_trends(wrong_oracle_rows)
+        wrong_oracle_h_regression = next(
+            item
+            for item in analysis["h_refinement"]
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 10.0
+            and item["degree"] == 1
+            and item["polarization"] == "p"
+        )
+        self.assertEqual(
+            wrong_oracle_h_regression["classification"],
+            "negative_h_refinement_regression",
+        )
+        self.assertTrue(any("h5->h2.5" in problem for problem in problems))
+
         p3_rows = [_result(entry) for entry in core.build_shard_plan(1)]
         p3_fine = next(
             item
@@ -829,6 +857,9 @@ class Task033Case090PDECoreRecordTests(unittest.TestCase):
             and item["polarization"] == "s"
         )
         self.assertFalse(p_trend["p3_nonregression_passed"])
+        self.assertEqual(p_trend["p3_classification"], "negative_p3_regression")
+        self.assertEqual(p_trend["classification"], "negative_p3_regression")
+        self.assertEqual(p_trend["p4_classification"], "positive_p4_benefit")
 
 
 if __name__ == "__main__":
