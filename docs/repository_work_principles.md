@@ -27,21 +27,22 @@
 11. Git 中只提交必要的轻量 JSON、CSV、Markdown、配置、compact residual history 和可复现元数据；矩阵、因子、OOC scratch、VTU/XDMF/HDF5、完整场数组和大型缓存必须忽略。
 12. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`。前者保存详细技术档案，后者在最终审查前保存项目级回顾；回顾必须包含背景、基线、方法、结果、解释、负结果、最终决策、局限、下一步和证据入口。一句状态或纯文件链接不构成完成，两层记录均不可省略；具体执行和审查框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 13. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
+14. **Markdown 公式和表格的可渲染性属于交付 Gate。** 独立公式必须使用空行隔开的 `$$` block，不得把需要渲染的公式放入代码围栏；表格必须列数一致，单元格中的竖线必须转义或改写，多行公式不得塞入表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；若页面显示原始 LaTeX、破损表格或错位列，则文档不得标记完成。完整规范见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
 
 ## 4. 合并与生产边界
 
-14. **failed solver code 默认留在对应 research branch，不合并 production。** 文档、review、精简 outcomes 和理论笔记可以选择性合并。
-15. 禁止整体合并大型 research branch；必须从 clean base 通过 `selective_merge_manifest` 抽取经过验证、可维护的最小组件。
-16. ordinary solver default 不得静默改变。新的 direct、iterative、condensed 或 workstation profile 在完成审查前必须保持显式 opt-in。
-17. 未通过最终 review 之前，不建议合并到 `master`；最终状态必须明确为 `pass`、`pass_with_qualifications` 或 `fail`。
-18. 若审查后发现问题，可在同一任务分支持续修改和复审；只有新增物理功能、新求解算法、大规模参数研究、ordinary default 变更或超范围架构重写才拆分为新任务。
+15. **failed solver code 默认留在对应 research branch，不合并 production。** 文档、review、精简 outcomes 和理论笔记可以选择性合并。
+16. 禁止整体合并大型 research branch；必须从 clean base 通过 `selective_merge_manifest` 抽取经过验证、可维护的最小组件。
+17. ordinary solver default 不得静默改变。新的 direct、iterative、condensed 或 workstation profile 在完成审查前必须保持显式 opt-in。
+18. 未通过最终 review 之前，不建议合并到 `master`；最终状态必须明确为 `pass`、`pass_with_qualifications` 或 `fail`。
+19. 若审查后发现问题，可在同一任务分支持续修改和复审；只有新增物理功能、新求解算法、大规模参数研究、ordinary default 变更或超范围架构重写才拆分为新任务。
 
 ## 5. 数值可信度
 
-19. solver 成功必须使用 full explicit true residual 判断，不能只使用 preconditioned/KSP residual、相对零解 improvement 或内部 projected residual。
-20. official R/T/A 只能从通过 residual Gate 的场计算；probe-plane Fourier、sampled flux 和其他近似量只能标记为 diagnostic，除非独立任务重新证明其 official 资格。
-21. direct/iterative、auxiliary/condensed、MPI1/MPI4 或缓存复用结果必须有明确等价性、R/T/A、能量闭合、内存和环境证据；不得把未运行项写成通过。
-22. 失败结果同样必须保留准确结论，禁止把研究正信号包装成 production 能力，也禁止因后续文档精简而删除关键负结果边界。
+20. solver 成功必须使用 full explicit true residual 判断，不能只使用 preconditioned/KSP residual、相对零解 improvement 或内部 projected residual。
+21. official R/T/A 只能从通过 residual Gate 的场计算；probe-plane Fourier、sampled flux 和其他近似量只能标记为 diagnostic，除非独立任务重新证明其 official 资格。
+22. direct/iterative、auxiliary/condensed、MPI1/MPI4 或缓存复用结果必须有明确等价性、R/T/A、能量闭合、内存和环境证据；不得把未运行项写成通过。
+23. 失败结果同样必须保留准确结论，禁止把研究正信号包装成 production 能力，也禁止因后续文档精简而删除关键负结果边界。
 
 ## 6. 不可删除保护
 
