@@ -1,0 +1,5 @@
+path_or_glob,category,decision,status,ordinary_default_effect,qualification,evidence,notes
+docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/*.md,task_documentation,provisional_include,in_progress,unchanged,review_required,outcomes/summary.md,Phase0 skeleton and future append-only evidence
+docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/*.csv,lightweight_evidence,provisional_include,in_progress,unchanged,parser_and_review_required,outcomes/test_summary.md,no fabricated pass rows
+benchmarks/artifacts/cases/090/**,heavy_artifact,do_not_merge,not_run,unchanged,gitignored,not_run,fields meshes eigenvectors matrices factors timelines logs
+benchmarks/artifacts/cases/091/**,heavy_artifact,do_not_merge,not_run,unchanged,gitignored,not_run,fields meshes eigenvectors matrices factors timelines logs

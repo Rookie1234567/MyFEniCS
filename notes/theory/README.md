@@ -15,7 +15,8 @@
 | 7 | [`direct_solvers_and_factorization.md`](direct_solvers_and_factorization.md) | PETSc LU、MUMPS OOC、BLR 的真实含义 |
 | 8 | [`iterative_solver_and_preconditioner.md`](iterative_solver_and_preconditioner.md) | h=5/3/2 生产迭代器的算子与预条件器 |
 | 9 | [`hybrid_fem_modal_domain_decomposition.md`](hybrid_fem_modal_domain_decomposition.md) | 如何用二维截面本征模替代 z 不变中间体域，并与上下局部 3D FEM 通过双接口和 Modal-Schur 耦合 |
-| 10 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
+| 10 | [`high_order_hcurl_floquet_and_hp_adaptivity.md`](high_order_hcurl_floquet_and_hp_adaptivity.md) | Task033 的高阶 H(curl) orientation、分布式 Floquet、QEP、graded-h、buffer 与 variable-p 边界 |
+| 11 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
 
 ## 旧理论长文
 
@@ -63,7 +64,8 @@
 | 3D DtN 增广装配 | `dtn_port_3d::solve_stage4_dtn_port_total_field` |
 | exact condensation | `condensed_dtn::create_matrix_free_condensed_operator` |
 | 两级 PC | `physical_slab_two_level::SparseGalerkinTwoLevelPc.apply` |
-| Hybrid eigenmodes / coupling / Schur | Task032 计划中的 `src/modes/`、`src/coupling/`、`hybrid_fem_modal_*`；完成前不得把计划文件名当作已实现 API |
+| Hybrid eigenmodes / coupling / Schur | `src/modes/`、`src/coupling/`、`hybrid_fem_modal_*`；资格边界由 Case080/091 records 决定 |
+| 高阶 p1--p4 Floquet / graded-h | `floquet_3d_high_order`、`high_order_floquet_trace`、`task033_periodic_graded_mesh`；正式结论由 Case090/091 checker 决定 |
 | 2D official RTA | `power_metrics::compute_dtn_auxiliary_power_metrics` |
 | 3D official RTA/A | `dtn_port_3d::_port_power_metrics`、`rta_3d::compute_volume_absorption_3d` |
 

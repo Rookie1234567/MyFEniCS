@@ -1,0 +1,78 @@
+{
+  "baseline": {
+    "data_identity": "predicted_mechanical_uniform_grid_scaling",
+    "mesh_target_nm": 0.1,
+    "source_is_pde_run": false,
+    "source_is_solver_pass": false,
+    "source_record": "docs/task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_projection.json",
+    "source_record_type": "analytical_resource_projection",
+    "unit": "local_fe_rows",
+    "value": 923346000,
+    "wavelength_nm": 0.7
+  },
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "compression_boundaries_for_task032_baseline": {
+    "candidate_at_or_above": 2.6381314285714286,
+    "high_risk_at_or_above": 1.846692,
+    "preferred_at_or_above": 4.61673,
+    "unit": "dimensionless_ratio"
+  },
+  "equation": {
+    "denominator": "measured_same_error_local_dof_compression",
+    "numerator": "task032_uniform_0p7nm_local_fe_rows",
+    "output_unit": "local_fe_rows",
+    "text": "projected_local_fe_rows = task032_uniform_0p7nm_local_fe_rows / measured_same_error_local_dof_compression"
+  },
+  "identity": {
+    "is_0p7nm_feasibility_proof": false,
+    "is_0p7nm_wavelength_transfer_validation": false,
+    "is_memory_measurement": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false
+  },
+  "input": {
+    "data_identity": null,
+    "evidence_record": null,
+    "qualification_failures": [
+      "measured_compression_missing",
+      "measurement_identity_not_measured",
+      "measurement_evidence_record_missing"
+    ],
+    "qualified": false,
+    "same_error_local_dof_compression": null,
+    "unit": "dimensionless_ratio"
+  },
+  "limitations": [
+    "The numerator is a Task032 mechanical uniform-grid prediction, not a 0.7 nm PDE measurement.",
+    "A 13.5 nm measured compression ratio is not proven to transfer to 0.7 nm material, modal, accuracy, or mesh requirements.",
+    "The row zone omits modal-core, matrix-free solver, mesh, vectors, runtime, and safety-margin memory qualification.",
+    "Even a preferred row classification does not prove that 0.7 nm is solvable or that the whole solver fits in 1 TiB."
+  ],
+  "one_tib_row_zones": {
+    "candidate": {
+      "maximum_local_fe_rows": 350000000,
+      "minimum_exclusive_local_fe_rows": 200000000
+    },
+    "high-risk": {
+      "maximum_local_fe_rows": 500000000,
+      "minimum_exclusive_local_fe_rows": 350000000
+    },
+    "infeasible": {
+      "minimum_exclusive_local_fe_rows": 500000000
+    },
+    "preferred": {
+      "maximum_local_fe_rows": 200000000
+    }
+  },
+  "record_type": "task033_one_tib_local_fe_row_projection",
+  "result": {
+    "classification": null,
+    "data_identity": "not_qualified",
+    "projected_local_fe_rows": null,
+    "unit": "local_fe_rows"
+  },
+  "schema_version": "task033.case091.one-tib-projection.v1",
+  "status": "not_qualified"
+}
+

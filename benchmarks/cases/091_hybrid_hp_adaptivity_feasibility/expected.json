@@ -1,0 +1,62 @@
+{
+  "status": "resource_matrix_prediction_contract_only",
+  "record_type": "task033_resource_prediction_and_launch_decision",
+  "records": {
+    "json": "records/resource_matrix.json",
+    "csv": "records/resource_matrix.csv"
+  },
+  "matrix_entry_count": 20,
+  "policy_counts": {
+    "required": 10,
+    "conditional": 4,
+    "locked_by_default": 6
+  },
+  "default_decision_counts": {
+    "planning": {
+      "planning_eligible_by_resource_prediction": 8,
+      "reuse_task032_clean_anchor": 1,
+      "not_run_by_memory_gate": 11
+    },
+    "launch": {
+      "not_launch_eligible_runtime_contract": 7,
+      "reuse_task032_clean_anchor": 1,
+      "not_run_by_memory_gate": 11,
+      "not_run_pending_high_order_qualification": 1
+    }
+  },
+  "default_runtime_contract": {
+    "clean_source": null,
+    "swap_activity_detected": null,
+    "watchdog_enabled": null,
+    "one_large_case_at_a_time": null,
+    "behavior": "unknown_fail_closed"
+  },
+  "required_before_guarded_launch": {
+    "clean_source": true,
+    "swap_activity_detected": false,
+    "watchdog_enabled": true,
+    "one_large_case_at_a_time": true,
+    "high_order_degree_qualified_if_applicable": true
+  },
+  "claims": {
+    "pde_run_performed": false,
+    "solver_pass": false,
+    "memory_measurement_performed": false,
+    "adaptive_compression_measured": false,
+    "proves_0p7nm_feasible": false,
+    "ordinary_default_changed": false
+  },
+  "csv_contract": {
+    "every_json_entry_leaf_exported": true,
+    "every_nonempty_cell_is_canonical_json": true,
+    "json_csv_field_values_match_exactly": true
+  },
+  "compression_classification": {
+    "less_than_1p3x": "weak_signal",
+    "1p3x_to_less_than_2x": "useful_engineering_positive",
+    "2x_to_less_than_3x": "clear_success",
+    "at_least_3x": "combined_engineering_target",
+    "at_least_5x": "strong_preferred_target"
+  },
+  "heavy_artifacts": "benchmarks/artifacts/cases/091 (gitignored)"
+}

@@ -1,0 +1,413 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.formal-evidence-manifest.v1",
+  "title": "Task033 Case090/Case091 formal evidence manifest and local evidence contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "identity",
+    "required_roles",
+    "clean_source_sha",
+    "entries",
+    "reason",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "task033.case091.formal-evidence-manifest.v1"
+    },
+    "record_type": {
+      "const": "task033_formal_evidence_manifest"
+    },
+    "case_id": {
+      "const": "091_hybrid_hp_adaptivity_feasibility"
+    },
+    "status": {
+      "enum": [
+        "not_run",
+        "submitted_for_verification"
+      ]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "is_formal_evidence_submission",
+        "is_pde_run",
+        "is_solver_pass",
+        "claims_task033_complete",
+        "ordinary_default_changed",
+        "proves_0p7nm_feasible"
+      ],
+      "properties": {
+        "is_formal_evidence_submission": {
+          "type": "boolean"
+        },
+        "is_pde_run": {
+          "const": false
+        },
+        "is_solver_pass": {
+          "const": false
+        },
+        "claims_task033_complete": {
+          "const": false
+        },
+        "ordinary_default_changed": {
+          "const": false
+        },
+        "proves_0p7nm_feasible": {
+          "const": false
+        }
+      }
+    },
+    "required_roles": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "prefixItems": [
+        {"const": "case090_clean_core"},
+        {"const": "case090_mpi_memory"},
+        {"const": "qep_order_study"},
+        {"const": "qep_mpi_timeout_negative"},
+        {"const": "hybrid_funnel_p1"},
+        {"const": "hybrid_funnel_p3"},
+        {"const": "uniform_p_h_matrix"},
+        {"const": "adaptive_p2_h5"},
+        {"const": "adaptive_p2_h3"},
+        {"const": "interface_buffer_10"},
+        {"const": "interface_buffer_7p5"},
+        {"const": "interface_buffer_5"},
+        {"const": "interface_buffer_2p5"},
+        {"const": "interface_buffer_tradeoff"},
+        {"const": "variable_p_capability_audit"},
+        {"const": "one_tib_projection"}
+      ],
+      "items": false
+    },
+    "clean_source_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/manifestEntry"
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "not_run"}
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "identity": {
+            "properties": {
+              "is_formal_evidence_submission": {"const": false}
+            }
+          },
+          "clean_source_sha": {"type": "null"},
+          "entries": {"maxItems": 0}
+        }
+      },
+      "else": {
+        "properties": {
+          "identity": {
+            "properties": {
+              "is_formal_evidence_submission": {"const": true}
+            }
+          },
+          "clean_source_sha": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "entries": {
+            "minItems": 16,
+            "maxItems": 16
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "role": {
+      "enum": [
+        "case090_clean_core",
+        "case090_mpi_memory",
+        "qep_order_study",
+        "qep_mpi_timeout_negative",
+        "hybrid_funnel_p1",
+        "hybrid_funnel_p3",
+        "uniform_p_h_matrix",
+        "adaptive_p2_h5",
+        "adaptive_p2_h3",
+        "interface_buffer_10",
+        "interface_buffer_7p5",
+        "interface_buffer_5",
+        "interface_buffer_2p5",
+        "interface_buffer_tradeoff",
+        "variable_p_capability_audit",
+        "one_tib_projection"
+      ]
+    },
+    "manifestEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "path",
+        "sha256",
+        "schema_ref",
+        "source_sha_pointer",
+        "source_clean_pointer",
+        "source_clean_expected"
+      ],
+      "properties": {
+        "role": {"$ref": "#/$defs/role"},
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha_pointer": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "source_clean_pointer": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "source_clean_expected": {
+          "type": "boolean"
+        }
+      }
+    },
+    "case090CoreNotRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "record_type",
+        "case_id",
+        "status",
+        "is_pde_run",
+        "is_solver_pass",
+        "all_core_gates_passed",
+        "required_shards",
+        "canonical_record",
+        "reason"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case090.pde-core-not-run.v1"},
+        "record_type": {"const": "high_order_floquet_pde_core_not_run"},
+        "case_id": {"const": "090_high_order_3d_floquet_hcurl"},
+        "status": {"const": "not_run"},
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "all_core_gates_passed": {"const": false},
+        "required_shards": {
+          "const": [1, 2, 4]
+        },
+        "canonical_record": {"type": "null"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "uniformMatrixEvidence": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "case_id",
+        "status",
+        "formal_source",
+        "identity",
+        "matrix_shape",
+        "entries"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case091.uniform-p-h-matrix.v1"},
+        "record_type": {"const": "task033_uniform_p_h_matrix"},
+        "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+        "status": {"const": "formal_matrix_complete"},
+        "formal_source": {
+          "type": "object",
+          "required": ["commit_sha", "tracked_source_clean"],
+          "properties": {
+            "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tracked_source_clean": {"const": true}
+          }
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_pde_matrix_record",
+            "ordinary_default_changed",
+            "proves_0p7nm_feasible"
+          ],
+          "properties": {
+            "is_pde_matrix_record": {"const": true},
+            "ordinary_default_changed": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "matrix_shape": {
+          "type": "object",
+          "required": ["degrees", "mesh_levels", "entries"],
+          "properties": {
+            "degrees": {"const": 4},
+            "mesh_levels": {"const": 5},
+            "entries": {"const": 20}
+          }
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 20,
+          "maxItems": 20,
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "adaptiveEvidence": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "task_id",
+        "case_id",
+        "record_type",
+        "status",
+        "formal_source",
+        "identity",
+        "plan",
+        "same_accuracy_qualification"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "task_id": {"const": "Task033"},
+        "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+        "record_type": {"const": "p2_periodic_graded_mesh_plan"},
+        "status": {"const": "measured_same_accuracy_qualification_attached"},
+        "formal_source": {
+          "type": "object",
+          "required": ["commit_sha", "tracked_source_clean"],
+          "properties": {
+            "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tracked_source_clean": {"const": true}
+          }
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_adaptive_compression_measurement",
+            "ordinary_default_changed",
+            "proves_0p7nm_feasible"
+          ],
+          "properties": {
+            "is_adaptive_compression_measurement": {"const": true},
+            "ordinary_default_changed": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "plan": {
+          "type": "object",
+          "required": ["reference_h_nm"],
+          "properties": {
+            "reference_h_nm": {"enum": [5.0, 3.0]}
+          }
+        },
+        "same_accuracy_qualification": {
+          "type": "object",
+          "required": ["status", "mandatory_gate_pass", "compression"],
+          "properties": {
+            "status": {
+              "enum": [
+                "same_accuracy_mandatory_gate_pass",
+                "same_accuracy_strong_gate_pass"
+              ]
+            },
+            "mandatory_gate_pass": {"const": true},
+            "compression": {"type": "number", "exclusiveMinimum": 0}
+          }
+        }
+      }
+    },
+    "bufferTradeoffEvidence": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "case_id",
+        "status",
+        "formal_source",
+        "identity",
+        "candidates",
+        "selected_buffer_nm"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case091.interface-buffer-tradeoff.v1"},
+        "record_type": {"const": "task033_interface_buffer_tradeoff"},
+        "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+        "status": {"const": "qualified"},
+        "formal_source": {
+          "type": "object",
+          "required": ["commit_sha", "tracked_source_clean"],
+          "properties": {
+            "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "tracked_source_clean": {"const": true}
+          }
+        },
+        "identity": {
+          "type": "object",
+          "required": ["ordinary_default_changed", "proves_0p7nm_feasible"],
+          "properties": {
+            "ordinary_default_changed": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["buffer_nm", "source_record_sha256"],
+            "properties": {
+              "buffer_nm": {"enum": [10.0, 7.5, 5.0, 2.5]},
+              "source_record_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "selected_buffer_nm": {"enum": [10.0, 7.5, 5.0, 2.5]}
+      }
+    }
+  }
+}

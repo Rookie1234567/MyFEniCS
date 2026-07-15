@@ -10,7 +10,12 @@ from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 
 from ..common.config_3d import SimulationConfig3D
-from ..geometry.mesh_builder_3d import HexaAxisPlan, _rank_cell_ids, stage4_axis_plan
+from ..geometry.mesh_builder_3d import (
+    HexaAxisPlan,
+    _axis_stats,
+    _rank_cell_ids,
+    stage4_axis_plan,
+)
 
 
 CrossSectionMaterial = Literal["air", "lossy_homogeneous", "stage4_xy"]
@@ -125,19 +130,62 @@ def build_matching_cross_section(
     cfg: SimulationConfig3D,
     material_kind: CrossSectionMaterial,
     *,
+    x_values: np.ndarray | None = None,
+    y_values: np.ndarray | None = None,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
 ) -> CrossSectionMesh:
     """Build one x-y slice from the exact Stage-4 hexahedral axis plan."""
 
     plan = stage4_axis_plan(cfg, comm.size)
-    msh = _structured_quad_mesh(comm, plan.x_values, plan.y_values)
+    if (x_values is None) != (y_values is None):
+        raise ValueError("Explicit matching x/y axes must be supplied together.")
+    if x_values is None:
+        resolved_x = np.asarray(plan.x_values, dtype=np.float64)
+        resolved_y = np.asarray(plan.y_values, dtype=np.float64)
+    else:
+        resolved_x = np.asarray(x_values, dtype=np.float64)
+        resolved_y = np.asarray(y_values, dtype=np.float64)
+        if (
+            resolved_x.ndim != 1
+            or resolved_y.ndim != 1
+            or len(resolved_x) < 2
+            or len(resolved_y) < 2
+            or np.any(np.diff(resolved_x) <= 0.0)
+            or np.any(np.diff(resolved_y) <= 0.0)
+        ):
+            raise ValueError("Explicit matching x/y axes must be strictly increasing.")
+        tolerance = 1.0e-10 * max(cfg.period_x, cfg.period_y, 1.0)
+        if not (
+            np.isclose(resolved_x[0], cfg.x_min, atol=tolerance, rtol=0.0)
+            and np.isclose(resolved_x[-1], cfg.x_max, atol=tolerance, rtol=0.0)
+            and np.isclose(resolved_y[0], cfg.y_min, atol=tolerance, rtol=0.0)
+            and np.isclose(resolved_y[-1], cfg.y_max, atol=tolerance, rtol=0.0)
+        ):
+            raise ValueError("Explicit matching x/y axes must span the full period.")
+        plan = HexaAxisPlan(
+            x_values=resolved_x,
+            y_values=resolved_y,
+            z_values=plan.z_values,
+            mesh_spacing_mode_resolved="task033_explicit_matching_xy_axes",
+            axis_cell_stats={
+                **plan.axis_cell_stats,
+                "x": _axis_stats(resolved_x),
+                "y": _axis_stats(resolved_y),
+            },
+            material_plane_alignment={
+                "all_aligned": True,
+                "source": "Task033 certified graded matching x/y axes",
+            },
+            local_refinement_regions=plan.local_refinement_regions,
+        )
+    msh = _structured_quad_mesh(comm, resolved_x, resolved_y)
     msh.name = f"{cfg.case_name}_{material_kind}_cross_section"
     msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
     epsilon_r = _cross_section_epsilon(msh, cfg, material_kind)
     return CrossSectionMesh(
         mesh=msh,
-        x_values=np.asarray(plan.x_values, dtype=np.float64),
-        y_values=np.asarray(plan.y_values, dtype=np.float64),
+        x_values=resolved_x,
+        y_values=resolved_y,
         axis_plan=plan,
         material_kind=material_kind,
         epsilon_r=epsilon_r,

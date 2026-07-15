@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.qep-qualification-records.v1",
+  "title": "Task033 QEP shard, aggregate, and Hybrid mode-funnel identities",
+  "oneOf": [
+    {"$ref": "#/$defs/qepShard"},
+    {"$ref": "#/$defs/qepAggregate"},
+    {"$ref": "#/$defs/watchdogShard"}
+  ],
+  "$defs": {
+    "qepShard": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "status",
+        "identity",
+        "candidate",
+        "provenance",
+        "numerical_results",
+        "resource_measurements",
+        "gates"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case091.qep-measurement.v2"},
+        "record_type": {"const": "task033_qep_measurement_shard"},
+        "status": {
+          "enum": [
+            "not_run_by_memory_gate",
+            "not_run_runtime_contract",
+            "terminated_by_memory_gate",
+            "measured_shard_pass",
+            "measured_shard_failed",
+            "execution_failed"
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_pde_run",
+            "is_solver_pass",
+            "is_physical_qualification_record",
+            "physical_qualified"
+          ],
+          "properties": {
+            "is_physical_qualification_record": {"const": false},
+            "physical_qualified": {"const": false}
+          }
+        },
+        "candidate": {"type": "object"},
+        "provenance": {"type": "object"},
+        "numerical_results": {"type": ["object", "null"]},
+        "resource_measurements": {"type": ["object", "null"]},
+        "gates": {"type": "object"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "measured_shard_pass"}}},
+          "then": {
+            "properties": {
+              "identity": {
+                "properties": {
+                  "is_pde_run": {"const": true},
+                  "is_solver_pass": {"const": true},
+                  "is_physical_qualification_record": {"const": false},
+                  "physical_qualified": {"const": false}
+                }
+              },
+              "numerical_results": {"type": "object"},
+              "resource_measurements": {"type": "object"}
+            }
+          }
+        }
+      ]
+    },
+    "qepAggregate": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "status",
+        "identity",
+        "gates"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.qep-aggregate.v1"},
+        "record_type": {"const": "task033_qep_aggregate"},
+        "status": {
+          "enum": [
+            "qep_component_aggregate_qualified",
+            "qep_component_aggregate_not_qualified"
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_single_shard",
+            "is_qep_component_qualified",
+            "is_physical_qualification_record",
+            "proves_0p7nm_feasible"
+          ],
+          "properties": {
+            "is_single_shard": {"const": false},
+            "is_physical_qualification_record": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "gates": {"type": "object"}
+      }
+    },
+    "watchdogShard": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "benchmark_id",
+        "status",
+        "formal_pass",
+        "memory_authority_pass",
+        "physical_qualified",
+        "resource_authority",
+        "launch_gate"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.memory-watchdog.v2"},
+        "benchmark_id": {"const": "task033_external_memory_watchdog"},
+        "status": {"enum": ["measured_shard_pass", "formal_not_pass"]},
+        "formal_pass": {"type": "boolean"},
+        "memory_authority_pass": {"type": "boolean"},
+        "physical_qualified": {"const": false},
+        "resource_authority": {"type": "object"},
+        "launch_gate": {"type": "object"}
+      }
+    }
+  }
+}

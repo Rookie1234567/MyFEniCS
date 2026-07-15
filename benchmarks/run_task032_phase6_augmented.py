@@ -41,7 +41,6 @@ from src.modes.quadratic_beta_eigenproblem import (
     solve_quadratic_beta_modes,
 )
 from src.postprocessing.hybrid_field_reconstruction import (
-    ModalPlaneSamples,
     ModalFieldReconstructor,
     compare_selected_planes_to_reference,
     hybrid_volume_absorption,
@@ -110,21 +109,12 @@ def _source_provenance(
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        if verified_clean_sha is not None:
-            tracked_status = None
-        elif allow_dirty_research:
-            tracked_status = "dirty_research_status_scan_skipped"
-        else:
-            tracked_status = _git(
-                "status", "--porcelain", "--untracked-files=no"
-            )
+        tracked_status = _git("status", "--porcelain", "--untracked-files=no")
         payload = (head, branch, tracked_status)
     else:
         payload = None
     head, branch, tracked_status = comm.bcast(payload, root=0)
-    if head is None or (
-        verified_clean_sha is None and tracked_status is None
-    ):
+    if head is None or tracked_status is None:
         raise SystemExit("Cannot verify Task32 Phase6 source provenance.")
     if verified_clean_sha is not None:
         verified = verified_clean_sha.strip().lower()
@@ -136,12 +126,17 @@ def _source_provenance(
             raise SystemExit(
                 f"Clean-source attestation {verified} does not match HEAD {head}."
             )
+        if tracked_status:
+            raise SystemExit(
+                "Tracked source is dirty despite --verified-clean-sha. "
+                "Commit the implementation before a qualifying run."
+            )
         tracked_dirty = False
-        verification = "host_git_clean_attestation"
+        verification = "local_full_sha_and_tracked_status"
     else:
         if allow_dirty_research:
             tracked_dirty = True
-            verification = "dirty_research_opt_in_status_scan_skipped"
+            verification = "dirty_research_opt_in_with_status_scan"
         elif tracked_status:
             raise SystemExit(
                 "Tracked source is dirty. Commit Phase6 code first or pass "
@@ -158,6 +153,29 @@ def _source_provenance(
         "verification": verification,
         "verified_clean_sha": verified_clean_sha,
     }
+
+
+def _verify_source_stable_at_end(
+    comm: MPI.Intracomm,
+    start: dict[str, Any],
+    verified_clean_sha: str | None,
+    allow_dirty_research: bool,
+) -> None:
+    """Require the same tracked-source state at the end of a formal shard."""
+
+    end = _source_provenance(
+        comm, verified_clean_sha, allow_dirty_research
+    )
+    if end["commit_sha"] != start["commit_sha"]:
+        raise SystemExit("Tracked source HEAD changed during the Hybrid run.")
+    if not allow_dirty_research and end["tracked_source_dirty"]:
+        raise SystemExit("Tracked source became dirty during the Hybrid run.")
+    start["source_commit_at_end_full_sha"] = end["commit_sha"]
+    start["source_clean_and_stable"] = bool(
+        not start["tracked_source_dirty"]
+        and not end["tracked_source_dirty"]
+        and end["commit_sha"] == start["commit_sha"]
+    )
 
 
 def _max_elapsed(comm: MPI.Intracomm, started: float) -> float:
@@ -331,6 +349,11 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
+    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
+    parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
+    parser.add_argument("--top-interface-nm", type=float, default=110.0)
+    parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
+    parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
         "--polarization-kind",
@@ -361,6 +384,15 @@ def _parse_args() -> argparse.Namespace:
         help="Also build the Phase7 multi-RHS modal-Schur direct path and compare it with augmented.",
     )
     parser.add_argument(
+        "--comparison-solver-path",
+        choices=("fast", "minimal"),
+        default="fast",
+        help=(
+            "Modal-Schur builder used by --compare-modal-schur. The fast default "
+            "preserves Task32 behavior; Task33 formal comparisons use minimal."
+        ),
+    )
+    parser.add_argument(
         "--solver-path",
         choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
         default="augmented",
@@ -387,6 +419,28 @@ def main() -> None:
     args = _parse_args()
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
+    if not (
+        0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0
+    ):
+        raise SystemExit(
+            "Task33 buffer interfaces must satisfy "
+            "0 < bottom-interface-nm < top-interface-nm < 120."
+        )
+    if args.graded_reference_h is not None:
+        if args.degree != 2:
+            raise SystemExit("The Task033 graded feasibility path is fixed to p2.")
+        if (
+            args.bottom_interface_nm != 10.0
+            or args.top_interface_nm != 110.0
+        ):
+            raise SystemExit(
+                "The first Task033 graded path is qualified only at the "
+                "reviewed 10/110 nm matching interfaces."
+            )
+        if not np.isclose(args.h_nm, args.graded_reference_h):
+            raise SystemExit("--h-nm must equal --graded-reference-h.")
+        if args.graded_coarse_factor <= 1.0:
+            raise SystemExit("--graded-coarse-factor must be greater than one.")
     if not 0.0 < args.incident_grazing_deg < 90.0:
         raise SystemExit("--incident-grazing-deg must lie strictly between 0 and 90.")
     if args.requested_modes < 2:
@@ -408,6 +462,14 @@ def main() -> None:
         raise SystemExit("--block-rotation-tolerance must be positive.")
     if args.compare_modal_schur and args.solver_path != "augmented":
         raise SystemExit("--compare-modal-schur requires --solver-path augmented.")
+    task33_variant = bool(
+        args.degree != 2
+        or args.bottom_interface_nm != 10.0
+        or args.top_interface_nm != 110.0
+        or args.graded_reference_h is not None
+        or not np.isclose(args.incident_grazing_deg, 10.0)
+        or args.polarization_kind != "s"
+    )
     comm = MPI.COMM_WORLD
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
@@ -439,7 +501,7 @@ def main() -> None:
 
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
-    cfg = target_stage4_config(degree=2, h_nm=args.h_nm)
+    cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
     cfg.polarization_kind = args.polarization_kind
     operators = None
@@ -454,12 +516,37 @@ def main() -> None:
     schur_solution = None
     primary_schur_system = None
     record = None
+    graded_plan = None
+    graded_bottom_mesh = None
+    graded_top_mesh = None
     try:
         mark_stage("cross_section_eigen_assembly")
         started = time.perf_counter()
-        cross_section = build_matching_cross_section(cfg, "stage4_xy")
+        if args.graded_reference_h is not None:
+            from src.geometry.task033_periodic_graded_mesh import (
+                Task033Stage4Geometry,
+                build_physics_informed_graded_plan,
+                build_task033_graded_local_mesh_pair,
+            )
+
+            graded_plan = build_physics_informed_graded_plan(
+                reference_h_nm=args.graded_reference_h,
+                geometry=Task033Stage4Geometry.from_config(cfg),
+                coarse_factor=args.graded_coarse_factor,
+            )
+            graded_bottom_mesh, graded_top_mesh = (
+                build_task033_graded_local_mesh_pair(cfg, graded_plan)
+            )
+            cross_section = build_matching_cross_section(
+                cfg,
+                "stage4_xy",
+                x_values=graded_plan.x_values,
+                y_values=graded_plan.y_values,
+            )
+        else:
+            cross_section = build_matching_cross_section(cfg, "stage4_xy")
         spaces = build_cross_section_spaces(
-            cross_section, transverse_degree=2
+            cross_section, transverse_degree=args.degree
         )
         operators = assemble_quadratic_beta_operators(
             cfg, cross_section, spaces
@@ -566,8 +653,20 @@ def main() -> None:
 
         mark_stage("local_fem_dtn_assembly")
         started = time.perf_counter()
-        bottom = assemble_hybrid_local_dtn_system(cfg, "bottom")
-        top = assemble_hybrid_local_dtn_system(cfg, "top")
+        bottom = assemble_hybrid_local_dtn_system(
+            cfg,
+            "bottom",
+            bottom_interface_z_nm=args.bottom_interface_nm,
+            top_interface_z_nm=args.top_interface_nm,
+            local_mesh_override=graded_bottom_mesh,
+        )
+        top = assemble_hybrid_local_dtn_system(
+            cfg,
+            "top",
+            bottom_interface_z_nm=args.bottom_interface_nm,
+            top_interface_z_nm=args.top_interface_nm,
+            local_mesh_override=graded_top_mesh,
+        )
         timings["two_local_fem_dtn_systems"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: bottom/top local FEM-DtN systems complete")
 
@@ -580,6 +679,7 @@ def main() -> None:
             negative,
             bottom,
             top,
+            length_nm=args.top_interface_nm - args.bottom_interface_nm,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -623,9 +723,17 @@ def main() -> None:
         modal_schur_comparison = None
         if args.compare_modal_schur:
             started = time.perf_counter()
-            schur_system = build_hybrid_modal_schur_direct_system(
-                bottom, top, coupling
+            comparison_builder = (
+                build_hybrid_modal_schur_direct_system
+                if args.comparison_solver_path == "fast"
+                else build_hybrid_modal_schur_memory_minimal_system
             )
+            comparison_solver_path = (
+                "modal-schur-fast"
+                if args.comparison_solver_path == "fast"
+                else "modal-schur-memory-minimal"
+            )
+            schur_system = comparison_builder(bottom, top, coupling)
             timings["modal_schur_build"] = _max_elapsed(comm, started)
             schur_solution = solve_hybrid_modal_schur_direct(
                 schur_system, bottom, top, coupling
@@ -680,6 +788,13 @@ def main() -> None:
                 "status": (
                     "pass" if all(comparison_gates.values()) else "failed"
                 ),
+                "comparison_solver_path": comparison_solver_path,
+                "comparison_solver_path_argument": (
+                    args.comparison_solver_path
+                ),
+                "comparison_lifecycle_strategy": (
+                    schur_system.lifecycle_strategy
+                ),
                 "multi_rhs_count": schur_system.multi_rhs_count,
                 "modal_schur_shape": list(schur_system.modal_schur.shape),
                 "modal_schur_bytes": int(schur_system.modal_schur.nbytes),
@@ -729,7 +844,10 @@ def main() -> None:
                     "its process peak is not a standalone Schur memory measurement."
                 ),
             }
-            progress("Task32 Phase7: modal-Schur direct comparison complete")
+            progress(
+                "Task32 Phase7: "
+                f"{comparison_solver_path} direct comparison complete"
+            )
         pinned_reference_case = (
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
             and args.polarization_kind == "s"
@@ -755,7 +873,12 @@ def main() -> None:
             sample_y = cfg.y_min + (
                 np.arange(20, dtype=np.float64) + 0.5
             ) * cfg.period_y / 20.0
-            sample_z = np.asarray([10.0, 30.0, 60.0, 90.0, 110.0])
+            sample_z = np.linspace(
+                args.bottom_interface_nm,
+                args.top_interface_nm,
+                5,
+                dtype=np.float64,
+            )
         mark_stage("middle_plane_reconstruction")
         started = time.perf_counter()
         reconstructor = ModalFieldReconstructor(
@@ -764,6 +887,8 @@ def main() -> None:
             spaces,
             positive,
             negative,
+            bottom_z_nm=args.bottom_interface_nm,
+            top_z_nm=args.top_interface_nm,
         )
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
@@ -771,12 +896,14 @@ def main() -> None:
             sample_y,
             sample_z,
         )
-        interface_samples = ModalPlaneSamples(
-            x_nm=selected_planes.x_nm,
-            y_nm=selected_planes.y_nm,
-            z_nm=selected_planes.z_nm[[0, -1]],
-            electric_V_per_m=selected_planes.electric_V_per_m[[0, -1]],
-            magnetic_A_per_m=selected_planes.magnetic_A_per_m[[0, -1]],
+        interface_samples = reconstructor.selected_planes(
+            solution.modal_amplitudes,
+            sample_x,
+            sample_y,
+            np.asarray(
+                [args.bottom_interface_nm, args.top_interface_nm],
+                dtype=np.float64,
+            ),
         )
         interface_continuity = interface_field_continuity(
             cfg,
@@ -977,7 +1104,16 @@ def main() -> None:
                         ),
                     }
                 )
+        physical_gate_prefixes = ("sampled_interface_", "volume_", "middle_plane_")
+        algebraic_chain_pass = all(
+            value
+            for key, value in gates.items()
+            if not key.startswith(physical_gate_prefixes)
+        )
         integration_pass = all(gates.values())
+        task033_physical_truncation_allowed = bool(
+            not task33_variant or args.requested_modes >= 80
+        )
         projection_stats = {
             "bottom": _petsc_matrix_stats(
                 coupling.bottom.projection, assemble=False
@@ -1023,20 +1159,41 @@ def main() -> None:
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
             "dense_interface_square_formed": False,
         }
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
         rss = comm.gather(_historical_peak_rss_mb(), root=0)
         timestamp = datetime.now(timezone.utc).isoformat()
         record = {
             "schema_version": 1,
             "benchmark_id": (
                 "task032_phase6_hybrid_augmented_direct"
-                if args.solver_path == "augmented"
-                else "task032_phase10_hybrid_modal_schur_direct"
+                if args.degree == 2
+                and args.bottom_interface_nm == 10.0
+                and args.top_interface_nm == 110.0
+                and args.solver_path == "augmented"
+                else (
+                    "task032_phase10_hybrid_modal_schur_direct"
+                    if args.degree == 2
+                    and args.bottom_interface_nm == 10.0
+                    and args.top_interface_nm == 110.0
+                    else "task033_high_order_or_buffer_hybrid_direct"
+                )
             ),
             "timestamp_utc": timestamp,
             "status": (
-                "physical_integration_pass_mode_convergence_pending"
-                if integration_pass
-                else "physical_integration_failed"
+                "algebraic_smoke_pass_physical_truncation_not_qualified"
+                if task33_variant
+                and algebraic_chain_pass
+                and not task033_physical_truncation_allowed
+                else (
+                    "physical_integration_pass_mode_convergence_pending"
+                    if integration_pass
+                    else "physical_integration_failed"
+                )
             ),
             "metadata": {
                 **provenance,
@@ -1050,28 +1207,64 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "task33_variant": task33_variant,
                 "provenance": (
-                    "clean_task032_phase6_real_qep_hybrid_integration"
+                    (
+                        "clean_task033_high_order_or_buffer_hybrid_integration"
+                        if task33_variant
+                        else "clean_task032_phase6_real_qep_hybrid_integration"
+                    )
                     if not provenance["tracked_source_dirty"]
-                    else "dirty_task032_phase6_real_qep_hybrid_research"
+                    else (
+                        "dirty_task033_high_order_or_buffer_hybrid_research"
+                        if task33_variant
+                        else "dirty_task032_phase6_real_qep_hybrid_research"
+                    )
                 ),
             },
             "case": {
                 "material_kind": "stage4_xy",
+                "degree": args.degree,
                 "h_nm": args.h_nm,
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
                 "block_rotation_tolerance": args.block_rotation_tolerance,
-                "middle_length_nm": 100.0,
+                "bottom_interface_nm": args.bottom_interface_nm,
+                "top_interface_nm": args.top_interface_nm,
+                "middle_length_nm": (
+                    args.top_interface_nm - args.bottom_interface_nm
+                ),
                 "wavelength_nm": cfg.lambda0,
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "polarization_kind": cfg.polarization_kind,
+                "mesh_policy": (
+                    "task033_periodic_graded_conforming_p2"
+                    if graded_plan is not None
+                    else "reviewed_stage4_axis_plan"
+                ),
+                "graded_reference_h_nm": args.graded_reference_h,
+                "graded_coarse_factor": (
+                    args.graded_coarse_factor
+                    if graded_plan is not None
+                    else None
+                ),
+                "graded_plan_hash": (
+                    graded_plan.plan_hash if graded_plan is not None else None
+                ),
+                "graded_plan": (
+                    graded_plan.to_record() if graded_plan is not None else None
+                ),
             },
             "qep": {
                 "target_beta_per_nm": _complex_json(target),
                 "full_shape": list(operators.full_shape),
                 "reduced_shape": list(operators.reduced_shape),
+                "field_degree": operators.field_degree,
+                "geometry_degree": operators.geometry_degree,
+                "coefficient_degree": operators.coefficient_degree,
+                "quadrature_degree": operators.quadrature_degree,
+                "quadrature_policy": operators.quadrature_policy,
                 "positive_solver_converged_modes": (
                     positive_report.converged_modes
                 ),
@@ -1116,7 +1309,23 @@ def main() -> None:
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
+                "bottom_local_fe_dofs": bottom.n_fe,
+                "top_local_fe_dofs": top.n_fe,
+                "bottom_local_mesh_cells": list(bottom.local_mesh.mesh_cells),
+                "top_local_mesh_cells": list(top.local_mesh.mesh_cells),
+                "bottom_local_thickness_nm": (
+                    bottom.local_mesh.interface_z_nm
+                    - bottom.local_mesh.external_z_nm
+                ),
+                "top_local_thickness_nm": (
+                    top.local_mesh.external_z_nm - top.local_mesh.interface_z_nm
+                ),
+                "bottom_matrix_stats": bottom.augmented_matrix_stats,
+                "top_matrix_stats": top.augmented_matrix_stats,
                 "internal_unknown_count": coupling.internal_unknown_count,
+                "qep_to_interface_quadrature_degree": (
+                    coupling.interface_quadrature_degree
+                ),
                 "dense_interface_square_formed": (
                     system.dense_interface_square_formed
                     if system is not None
@@ -1173,8 +1382,17 @@ def main() -> None:
             "gates": gates,
             "qualification": {
                 "integration_pass": integration_pass,
+                "algebraic_chain_pass": algebraic_chain_pass,
+                "task033_physical_truncation_allowed": (
+                    task033_physical_truncation_allowed
+                ),
+                "task033_minimum_physical_modes_per_direction": (
+                    80 if task33_variant else None
+                ),
                 "clean_source_integration_record": bool(
-                    integration_pass and not provenance["tracked_source_dirty"]
+                    integration_pass
+                    and task033_physical_truncation_allowed
+                    and not provenance["tracked_source_dirty"]
                 ),
                 "physical_augmented_direct_pass": False,
                 "mode_count_converged": False,

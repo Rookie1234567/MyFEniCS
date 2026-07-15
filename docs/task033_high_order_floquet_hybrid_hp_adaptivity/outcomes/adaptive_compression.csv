@@ -1,0 +1,5 @@
+study_id,target_accuracy_baseline,candidate_degree,mesh_strategy,interface_position_nm,mode_count_per_direction,mpi_ranks,baseline_local_dofs,candidate_local_dofs,compression_ratio,baseline_error,candidate_error,peak_rss_gib,wall_time_s,status,data_identity,evidence_record,notes
+p2_adaptive_h5,uniform_p2_h5,2,conforming_graded,10_and_110,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run_pending_mechanism,planned,not_run,3x is stretch not minimum pass
+p2_adaptive_h3,uniform_p2_h3_M160,2,conforming_graded,10_and_110,160,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run_pending_h5_gate,planned,not_run,h5 mechanism must pass first
+p3_equal_accuracy_h5,uniform_p2_h5,3,fixed_order_coarse,10_and_110,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run_pending_high_order_gate,planned,not_run,compare total resources at equal error
+hp_zoning_h3,uniform_p2_h3_M160,2_and_3,native_safe_only,10_and_110,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run_pending_framework_audit,planned,not_run,fail closed without native variable-p route

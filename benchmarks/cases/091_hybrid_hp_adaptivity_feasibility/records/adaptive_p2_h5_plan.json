@@ -1,0 +1,140 @@
+{
+  "algorithm_boundaries": {
+    "cellwise_variable_p": "not_used",
+    "dwr": "not_implemented_in_this_minimal_path",
+    "generic_y_material": "not_qualified_fail_closed",
+    "hanging_nodes": "not_used",
+    "indicator_ladder": [
+      "physics_informed_geometry_planes",
+      "element_residual_plus_tangential_curl_jump"
+    ],
+    "interface_policy": "bottom_and_top_share_exact_x_y_axis_arrays",
+    "mesh_family": "nonuniform_graded_conforming_hexahedral_tensor_product",
+    "periodic_policy": "opposite_cell_marks_union_then_common_axis_rebuild"
+  },
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "derived_mesh_cell_comparison": {
+    "accuracy_qualified": false,
+    "baseline": "uniform_fitted_p2_h5",
+    "data_identity": "derived_from_axis_coordinate_counts",
+    "denominator": "graded_plan_cells",
+    "evidence_record": "098cdb7bb1c2fe08a6c14b1559fb359df773099759f68664de08b233a1a4ea52",
+    "graded_plan_cells": 240,
+    "mesh_cell_compression_only": 2.0,
+    "uniform_reference_cells": 480,
+    "unit": "hexahedral_cells",
+    "warning": "Mesh-cell compression is not local-DoF same-accuracy compression."
+  },
+  "identity": {
+    "deterministic": true,
+    "explicit_opt_in": true,
+    "is_adaptive_compression_measurement": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false
+  },
+  "plan": {
+    "axis_cells": {
+      "bottom_z": 4,
+      "top_z": 4,
+      "x": 10,
+      "y": 3
+    },
+    "axis_coordinates_nm": {
+      "bottom_z": [
+        -10.0,
+        -5.0,
+        0.0,
+        5.0,
+        10.0
+      ],
+      "top_z": [
+        110.0,
+        115.0,
+        120.0,
+        125.0,
+        130.0
+      ],
+      "x": [
+        0.0,
+        8.25,
+        12.375,
+        16.5,
+        20.75,
+        25.0,
+        29.25,
+        33.5,
+        37.625,
+        41.75,
+        50.0
+      ],
+      "y": [
+        0.0,
+        8.333333333333334,
+        16.666666666666668,
+        25.0
+      ]
+    },
+    "certificate": {
+      "axis_hashes": {
+        "bottom_z": "3f37dce9cac0ae4f0acf25c4a81c63c2d73cfcbbd4b30a161801602ccab134e8",
+        "top_z": "f4c1e935d2851a335818dd00968c8d9ca8408b3db32110499f40ae99f58401cb",
+        "x": "11b627bca079b98520f9bd65e93b7f123a84b22848439605db6cef6a3d5c48d7",
+        "y": "29230710e659412d2dfae8fae8f179fee08ec5ec514cde1f4ac29c395b73f0ae"
+      },
+      "checks": {
+        "bottom_material_and_interface_planes_present": true,
+        "bottom_top_modal_trace_xy_exact_match": true,
+        "conforming_tensor_product": true,
+        "custom_hanging_node_constraints_used": false,
+        "degree_is_fixed_p2": true,
+        "material_x_planes_present": true,
+        "neighbor_ratio_gate_pass": true,
+        "ordinary_default_changed": false,
+        "periodic_cell_mark_sync_required": true,
+        "top_material_and_interface_planes_present": true,
+        "x_opposite_faces_share_yz_coordinates": true,
+        "y_opposite_faces_share_xz_coordinates": true
+      },
+      "eligible_for_mesh_smoke": true,
+      "explicit_y_feature_planes_present": false,
+      "full_mesh_or_field_gathered": false,
+      "neighbor_width_ratios": {
+        "bottom_z": 1.0,
+        "top_z": 1.0,
+        "x_periodic": 2.0,
+        "y_periodic": 1.0000000000000002
+      }
+    },
+    "cycle": 0,
+    "degree": 2,
+    "mesh_cells": {
+      "bottom": 120,
+      "top": 120,
+      "total": 240
+    },
+    "parent_plan_hash": null,
+    "plan_hash": "098cdb7bb1c2fe08a6c14b1559fb359df773099759f68664de08b233a1a4ea52",
+    "policy": "physics_informed_conforming_tensor_rebuild",
+    "reference_h_nm": 5.0
+  },
+  "record_type": "p2_periodic_graded_mesh_plan",
+  "same_accuracy_qualification": {
+    "compression": null,
+    "compression_baseline": "uniform_p2_h5",
+    "compression_classification": null,
+    "compression_denominator": "candidate_local_fe_rows",
+    "compression_unit": "dimensionless_local_fe_row_ratio",
+    "data_identity": "not_run",
+    "mandatory_gate_pass": false,
+    "reasons": [
+      "reference_and_candidate_measured_records_are_required"
+    ],
+    "status": "not_qualified_missing_evidence",
+    "strong_gate_pass": false
+  },
+  "schema_version": 1,
+  "status": "plan_only_no_pde_run",
+  "task_id": "Task033"
+}

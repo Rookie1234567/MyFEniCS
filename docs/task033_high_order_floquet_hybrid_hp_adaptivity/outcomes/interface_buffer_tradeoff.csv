@@ -1,0 +1,5 @@
+candidate_id,bottom_interface_nm,top_interface_nm,local_height_per_side_nm,degree,h_nm,mode_count_per_direction,local_fe_dofs,total_rows,assembled_nnz,peak_rss_gib,wall_time_s,error_baseline,error_value,joint_cost_metric,status,data_identity,evidence_record,notes
+interface_10_110,10,110,10,2,3,160,not_run,not_run,not_run,not_run,not_run,Task032_h3_M160,not_run,not_run,not_run,planned,not_run,canonical geometry candidate
+interface_7p5_112p5,7.5,112.5,7.5,2,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,planned,not_run,preserve matching trace Gate
+interface_5_115,5,115,5,2,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,planned,not_run,preserve matching trace Gate
+interface_2p5_117p5,2.5,117.5,2.5,2,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,not_run,planned,not_run,preserve matching trace Gate

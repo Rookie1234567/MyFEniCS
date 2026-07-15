@@ -256,7 +256,6 @@ def _parallel_lu_failure_summary(
     _write_case_outputs(out_dir, summary, log_lines, comm)
     return summary
 
-
 def _direct_solve_failure_summary(
     *,
     cfg: SimulationConfig3D,
@@ -419,6 +418,27 @@ def _direct_solve_failure_summary(
         "floquet_estimated_constraint_memory_mb": None
         if floquet_data is None
         else floquet_data.estimated_constraint_memory_mb,
+        "floquet_topology_cache_hit": None
+        if floquet_data is None
+        else floquet_data.topology_cache_hit,
+        "floquet_topology_build_seconds_current": None
+        if floquet_data is None
+        else floquet_data.topology_build_seconds_current,
+        "floquet_phase_update_seconds": None
+        if floquet_data is None
+        else floquet_data.phase_update_seconds,
+        "floquet_communication_bytes_sent_current": None
+        if floquet_data is None
+        else floquet_data.communication_bytes_sent_current,
+        "floquet_communication_bytes_received_current": None
+        if floquet_data is None
+        else floquet_data.communication_bytes_received_current,
+        "floquet_used_full_boundary_gather": None
+        if floquet_data is None
+        else floquet_data.used_full_boundary_gather,
+        "floquet_created_dense_boundary_square": None
+        if floquet_data is None
+        else floquet_data.created_dense_boundary_square,
         "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
         "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
         "mesh_spacing_mode_resolved": mesh_data.mesh_spacing_mode_resolved,
@@ -1245,6 +1265,27 @@ def run_prepared_3d_case_flow(
         "floquet_estimated_constraint_memory_mb": None
         if floquet_data is None
         else floquet_data.estimated_constraint_memory_mb,
+        "floquet_topology_cache_hit": None
+        if floquet_data is None
+        else floquet_data.topology_cache_hit,
+        "floquet_topology_build_seconds_current": None
+        if floquet_data is None
+        else floquet_data.topology_build_seconds_current,
+        "floquet_phase_update_seconds": None
+        if floquet_data is None
+        else floquet_data.phase_update_seconds,
+        "floquet_communication_bytes_sent_current": None
+        if floquet_data is None
+        else floquet_data.communication_bytes_sent_current,
+        "floquet_communication_bytes_received_current": None
+        if floquet_data is None
+        else floquet_data.communication_bytes_received_current,
+        "floquet_used_full_boundary_gather": None
+        if floquet_data is None
+        else floquet_data.used_full_boundary_gather,
+        "floquet_created_dense_boundary_square": None
+        if floquet_data is None
+        else floquet_data.created_dense_boundary_square,
         "floquet_num_slave_edges": None if floquet_data is None else floquet_data.num_slave_edges,
         "floquet_num_matched_master_edges": None if floquet_data is None else floquet_data.num_matched_master_edges,
         "floquet_num_slave_faces": None if floquet_data is None else floquet_data.num_slave_faces,

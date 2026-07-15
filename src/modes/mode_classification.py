@@ -447,6 +447,11 @@ def build_biorthogonal_mode_basis(
         full_shape=operators.full_shape,
         reduced_shape=operators.reduced_shape,
         scalar_dtype=operators.scalar_dtype,
+        field_degree=operators.field_degree,
+        geometry_degree=operators.geometry_degree,
+        coefficient_degree=operators.coefficient_degree,
+        quadrature_degree=operators.quadrature_degree,
+        quadrature_policy=operators.quadrature_policy,
     )
     left_candidates: list[QuadraticBetaMode] = []
     try:

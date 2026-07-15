@@ -1,0 +1,153 @@
+{
+  "algorithm_boundaries": {
+    "cellwise_variable_p": "not_used",
+    "dwr": "not_implemented_in_this_minimal_path",
+    "generic_y_material": "not_qualified_fail_closed",
+    "hanging_nodes": "not_used",
+    "indicator_ladder": [
+      "physics_informed_geometry_planes",
+      "element_residual_plus_tangential_curl_jump"
+    ],
+    "interface_policy": "bottom_and_top_share_exact_x_y_axis_arrays",
+    "mesh_family": "nonuniform_graded_conforming_hexahedral_tensor_product",
+    "periodic_policy": "opposite_cell_marks_union_then_common_axis_rebuild"
+  },
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "derived_mesh_cell_comparison": {
+    "accuracy_qualified": false,
+    "baseline": "uniform_fitted_p2_h3",
+    "data_identity": "derived_from_axis_coordinate_counts",
+    "denominator": "graded_plan_cells",
+    "evidence_record": "49f0d409b2b36289b49f878091bc5652c7aa1a0576680c88190d4abb0b93516f",
+    "graded_plan_cells": 1040,
+    "mesh_cell_compression_only": 2.4923076923076923,
+    "uniform_reference_cells": 2592,
+    "unit": "hexahedral_cells",
+    "warning": "Mesh-cell compression is not local-DoF same-accuracy compression."
+  },
+  "identity": {
+    "deterministic": true,
+    "explicit_opt_in": true,
+    "is_adaptive_compression_measurement": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false
+  },
+  "plan": {
+    "axis_cells": {
+      "bottom_z": 8,
+      "top_z": 8,
+      "x": 13,
+      "y": 5
+    },
+    "axis_coordinates_nm": {
+      "bottom_z": [
+        -10.0,
+        -7.5,
+        -5.0,
+        -2.5,
+        0.0,
+        2.5,
+        5.0,
+        7.5,
+        10.0
+      ],
+      "top_z": [
+        110.0,
+        112.5,
+        115.0,
+        117.5,
+        120.0,
+        122.5,
+        125.0,
+        127.5,
+        130.0
+      ],
+      "x": [
+        0.0,
+        5.5,
+        11.0,
+        13.75,
+        16.5,
+        19.333333333333336,
+        22.166666666666668,
+        27.833333333333336,
+        30.666666666666668,
+        33.5,
+        36.25,
+        39.0,
+        44.5,
+        50.0
+      ],
+      "y": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0,
+        25.0
+      ]
+    },
+    "certificate": {
+      "axis_hashes": {
+        "bottom_z": "31e68230dede5706cf0695f630fe5dcb811df909464ae98b0be79f04e3daa773",
+        "top_z": "1df0ed538aeaa74c96db9a39d8f16e819040802993103e5a51258f70e79161fd",
+        "x": "88b76938f6da90158c2dad594c40efc1e0068c0dc28e92e02cba41b3bb49bb4a",
+        "y": "c3d64312cddd7eb6a2afadbf8a8744fbe5b41c731e75b758d53639e0c759a9ac"
+      },
+      "checks": {
+        "bottom_material_and_interface_planes_present": true,
+        "bottom_top_modal_trace_xy_exact_match": true,
+        "conforming_tensor_product": true,
+        "custom_hanging_node_constraints_used": false,
+        "degree_is_fixed_p2": true,
+        "material_x_planes_present": true,
+        "neighbor_ratio_gate_pass": true,
+        "ordinary_default_changed": false,
+        "periodic_cell_mark_sync_required": true,
+        "top_material_and_interface_planes_present": true,
+        "x_opposite_faces_share_yz_coordinates": true,
+        "y_opposite_faces_share_xz_coordinates": true
+      },
+      "eligible_for_mesh_smoke": true,
+      "explicit_y_feature_planes_present": false,
+      "full_mesh_or_field_gathered": false,
+      "neighbor_width_ratios": {
+        "bottom_z": 1.0,
+        "top_z": 1.0,
+        "x_periodic": 2.0000000000000013,
+        "y_periodic": 1.0
+      }
+    },
+    "cycle": 0,
+    "degree": 2,
+    "mesh_cells": {
+      "bottom": 520,
+      "top": 520,
+      "total": 1040
+    },
+    "parent_plan_hash": null,
+    "plan_hash": "49f0d409b2b36289b49f878091bc5652c7aa1a0576680c88190d4abb0b93516f",
+    "policy": "physics_informed_conforming_tensor_rebuild",
+    "reference_h_nm": 3.0
+  },
+  "record_type": "p2_periodic_graded_mesh_plan",
+  "same_accuracy_qualification": {
+    "compression": null,
+    "compression_baseline": "uniform_p2_h3",
+    "compression_classification": null,
+    "compression_denominator": "candidate_local_fe_rows",
+    "compression_unit": "dimensionless_local_fe_row_ratio",
+    "data_identity": "not_run",
+    "mandatory_gate_pass": false,
+    "reasons": [
+      "reference_and_candidate_measured_records_are_required"
+    ],
+    "status": "not_qualified_missing_evidence",
+    "strong_gate_pass": false
+  },
+  "schema_version": 1,
+  "status": "plan_only_no_pde_run",
+  "task_id": "Task033"
+}

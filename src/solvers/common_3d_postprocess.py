@@ -8,11 +8,14 @@ from typing import Any
 import numpy as np
 import ufl
 from mpi4py import MPI
-from petsc4py import PETSc
 
-from dolfinx import default_scalar_type, fem
+from dolfinx import fem
 
-from ..common.analytic_fields_3d import electric_field_code_values, fresnel_reference
+from ..common.analytic_fields_3d import (
+    electric_field_code_values,
+    fresnel_normal_admittance,
+    fresnel_reference,
+)
 from ..common.config_3d import SimulationConfig3D
 from ..constraints.floquet_3d import DoubleFloquet3DData
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
@@ -22,7 +25,6 @@ from .common_3d_fields import (
     _mode_basis,
     _positive_sqrt,
     _sample_field_at_points,
-    incident_air_plane_wave_field,
     plane_wave_electric_field,
 )
 from .solve_vector_maxwell import _json_default
@@ -259,7 +261,14 @@ def _fresnel_numerical_metrics(E, cfg: SimulationConfig3D) -> dict[str, Any]:
     cos_i = max(float(np.cos(cfg.theta_rad)), 1.0e-30)
     sin_t = n1 / n2 * np.sin(cfg.theta_rad)
     cos_t = _positive_sqrt(1.0 - sin_t**2)
-    admittance_ratio = float(np.real((n2 * cos_t) / (n1 * cos_i)))
+    polarization_kind = cfg.polarization_kind.lower()
+    incident_admittance = fresnel_normal_admittance(
+        n1, cos_i, polarization_kind
+    )
+    transmitted_admittance = fresnel_normal_admittance(
+        n2, cos_t, polarization_kind
+    )
+    admittance_ratio = float(transmitted_admittance / incident_admittance)
     # These are numerical postprocess values.  The analytic Fresnel values are
     # only used below as the reference to compute errors.
     R_total = float(abs(reflected / incident) ** 2)

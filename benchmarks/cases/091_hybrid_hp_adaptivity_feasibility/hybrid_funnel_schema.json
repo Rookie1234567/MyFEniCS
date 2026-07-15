@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.hybrid-funnel.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "identity",
+    "case",
+    "tolerances",
+    "source_records",
+    "individual_gates",
+    "comparisons",
+    "qualification",
+    "failures",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case091.hybrid-funnel.v1"},
+    "record_type": {"const": "task033_hybrid_mode_truncation_funnel"},
+    "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+    "status": {"enum": ["qualified", "not_qualified"]},
+    "identity": {
+      "type": "object",
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_mode_convergence_measurement",
+        "ordinary_default_changed",
+        "proves_0p7nm_feasible",
+        "source_commit_full_sha",
+        "tracked_source_clean"
+      ],
+      "properties": {
+        "is_pde_run": {"type": "boolean"},
+        "is_solver_pass": {"type": "boolean"},
+        "is_mode_convergence_measurement": {"const": true},
+        "ordinary_default_changed": {"const": false},
+        "proves_0p7nm_feasible": {"const": false},
+        "source_commit_full_sha": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "tracked_source_clean": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "case": {"type": "object"},
+    "tolerances": {"type": "object"},
+    "source_records": {"type": "array"},
+    "individual_gates": {"type": "object"},
+    "comparisons": {"type": "array"},
+    "qualification": {
+      "type": "object",
+      "required": [
+        "mode_count_converged",
+        "selected_mode_count_per_direction",
+        "selected_pair_strong",
+        "all_sources_same_clean_sha",
+        "all_external_watchdogs_pass"
+      ],
+      "properties": {
+        "mode_count_converged": {"type": "boolean"},
+        "selected_mode_count_per_direction": {
+          "anyOf": [
+            {"enum": [160, 240]},
+            {"type": "null"}
+          ]
+        },
+        "selected_pair_strong": {"type": "boolean"},
+        "all_sources_same_clean_sha": {"type": "boolean"},
+        "all_external_watchdogs_pass": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "failures": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "qualified"}}},
+      "then": {
+        "properties": {
+          "identity": {
+            "properties": {
+              "is_solver_pass": {"const": true},
+              "tracked_source_clean": {"const": true}
+            }
+          },
+          "qualification": {
+            "properties": {
+              "mode_count_converged": {"const": true},
+              "all_sources_same_clean_sha": {"const": true},
+              "all_external_watchdogs_pass": {"const": true}
+            }
+          },
+          "failures": {"maxItems": 0}
+        }
+      }
+    }
+  ]
+}

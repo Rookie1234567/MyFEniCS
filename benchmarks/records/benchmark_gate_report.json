@@ -1,10 +1,10 @@
 {
-  "checkout_commit": "d8af0f36a7a0204fe477a77dd52dfe2c8d90b9d6",
+  "checkout_commit": "ad4046d7f4a360f2b160b9c196e2f7b8990ac135",
   "checkout_dirty": true,
   "checkout_dirty_note": "This reports the checkout at checker execution time. It is independent of metadata.git_dirty, which records the original benchmark run. Writing this report can itself make the checkout dirty.",
   "passed": true,
-  "passed_count": 294,
-  "total_count": 294,
+  "passed_count": 302,
+  "total_count": 302,
   "gates": [
     {
       "name": "case_contract:001_2d_tm_pml_floquet",
@@ -1641,6 +1641,405 @@
         "official_record": false
       },
       "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_phase6_m6.json"
+    },
+    {
+      "name": "task032_final_clean_main_records",
+      "passed": true,
+      "observed": {
+        "hybrid_h5_m120.json": {
+          "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "mpi_size": 4,
+          "residual": 2.8114363392581767e-12,
+          "all_runner_gates": true,
+          "physical_field_gates_pass": true
+        },
+        "hybrid_h5_m160.json": {
+          "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "mpi_size": 4,
+          "residual": 2.545464412800789e-12,
+          "all_runner_gates": true,
+          "physical_field_gates_pass": true
+        },
+        "hybrid_h3_m120.json": {
+          "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "mpi_size": 4,
+          "residual": 2.5522891812794824e-12,
+          "all_runner_gates": true,
+          "physical_field_gates_pass": true
+        },
+        "hybrid_h3_m160.json": {
+          "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "mpi_size": 4,
+          "residual": 2.603585114001399e-12,
+          "all_runner_gates": true,
+          "physical_field_gates_pass": true
+        }
+      },
+      "expected": {
+        "levels": [
+          "h5",
+          "h3"
+        ],
+        "mode_counts": [
+          120,
+          160
+        ],
+        "commit": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+        "mpi_size": 4,
+        "all_runner_and_physical_field_gates": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_h{5,3}_m{120,160}.json"
+    },
+    {
+      "name": "task032_final_mode_funnels",
+      "passed": true,
+      "observed": {
+        "h5": {
+          "mode_counts": [
+            120,
+            160
+          ],
+          "max_absolute_total_delta": 6.23945339839338e-14,
+          "interface_projection_residual": 2.8014894971300364e-13,
+          "max_significant_power_relative_delta": 2.878269566285286e-10,
+          "max_significant_complex_amplitude_relative_delta": 1.4792590418640718e-10,
+          "qualified": true
+        },
+        "h3": {
+          "mode_counts": [
+            120,
+            160
+          ],
+          "max_absolute_total_delta": 1.2212453270876722e-14,
+          "interface_projection_residual": 5.19012856286316e-13,
+          "max_significant_power_relative_delta": 2.6419807343150936e-10,
+          "max_significant_complex_amplitude_relative_delta": 1.3335175419919057e-10,
+          "qualified": true
+        }
+      },
+      "expected": {
+        "max_total_delta": 1e-06,
+        "max_significant_order_relative_delta": 0.0001,
+        "all_sources_clean": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_h{5,3}_funnel.json"
+    },
+    {
+      "name": "task032_final_physical_full3d_comparison",
+      "passed": true,
+      "observed": {
+        "h5": {
+          "rta_delta": {
+            "R_total": -5.338300697460552e-07,
+            "T_total": -1.5359142539472792e-06,
+            "A_balance": 2.0697443237627233e-06
+          },
+          "volume_energy_closure_error": 1.731237375679484e-11,
+          "volume_absorption_delta": 2.069761514900126e-06,
+          "interface_e_relative_l2": [
+            1.6533513305876963e-07,
+            2.4590420374027143e-07
+          ],
+          "interface_h_relative_l2": [
+            0.007417484192729658,
+            0.0067324677740783065
+          ],
+          "max_plane_relative_l2": 0.000961409014892608
+        },
+        "h3": {
+          "rta_delta": {
+            "R_total": -2.1150344646503338e-07,
+            "T_total": -2.4169739106794097e-06,
+            "A_balance": 2.6284773571028097e-06
+          },
+          "volume_energy_closure_error": 3.268274539891536e-12,
+          "volume_absorption_delta": 2.6284805629828156e-06,
+          "interface_e_relative_l2": [
+            2.257590190191256e-08,
+            2.503697824160086e-08
+          ],
+          "interface_h_relative_l2": [
+            0.0004814108065211856,
+            0.0004816936122739297
+          ],
+          "max_plane_relative_l2": 0.0007798086794371273
+        }
+      },
+      "expected": {
+        "rta_and_volume_delta_max": 1e-05,
+        "middle_plane_relative_l2_max": 0.005,
+        "interface_e_relative_l2_max": 0.005,
+        "interface_h_relative_l2_max": 0.01
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_h{5,3}_m160.json"
+    },
+    {
+      "name": "task032_final_modal_schur_equivalence",
+      "passed": true,
+      "observed": {
+        "h5": {
+          "shape": [
+            320,
+            320
+          ],
+          "residuals": {
+            "combined_relative": 2.603647327089266e-12,
+            "bottom_relative": 2.5664400650111286e-12,
+            "top_relative": 1.4935417518300754e-12,
+            "modal_relative": 1.0345938953151947e-12
+          },
+          "augmented_vs_schur": {
+            "modal_coefficients_relative_error": 7.475480684432993e-13,
+            "bottom_solution_relative_error": 3.3237793054396e-13,
+            "top_solution_relative_error": 2.8425492439297503e-13,
+            "interface_e_projection_combined_residual_delta": 7.54445427664202e-13,
+            "RTA_delta": {
+              "R_total": -1.1629586182948515e-14,
+              "T_total": -2.609024107869118e-14,
+              "A_balance": 3.7636560534792807e-14
+            }
+          },
+          "dense_interface_square_formed": false,
+          "full_field_or_mode_gathered": false
+        },
+        "h3": {
+          "shape": [
+            320,
+            320
+          ],
+          "residuals": {
+            "combined_relative": 3.0387681818104205e-12,
+            "bottom_relative": 3.18999546269455e-12,
+            "top_relative": 1.840052494586202e-12,
+            "modal_relative": 1.1002807961094476e-12
+          },
+          "augmented_vs_schur": {
+            "modal_coefficients_relative_error": 6.288700867901042e-13,
+            "bottom_solution_relative_error": 3.481504147078672e-13,
+            "top_solution_relative_error": 3.7366230356524503e-13,
+            "interface_e_projection_combined_residual_delta": 5.812672790835377e-13,
+            "RTA_delta": {
+              "R_total": -3.228320388792838e-15,
+              "T_total": -2.1649348980190553e-14,
+              "A_balance": 2.4868995751603507e-14
+            }
+          },
+          "dense_interface_square_formed": false,
+          "full_field_or_mode_gathered": false
+        }
+      },
+      "expected": {
+        "relative_error_max": 1e-09,
+        "rta_absolute_delta_max": 1e-10,
+        "dense_interface_square_formed": false,
+        "full_field_or_mode_gathered": false
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_h{5,3}_m160.json"
+    },
+    {
+      "name": "task032_final_memory_paths",
+      "passed": true,
+      "observed": {
+        "h5_augmented": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 1.8653526306152344,
+          "cgroup_current_gib": 1.5837669372558594,
+          "peak_stage": "record_and_release",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h5_schur_fast": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 1.7551193237304688,
+          "cgroup_current_gib": 1.1597633361816406,
+          "peak_stage": "middle_plane_reconstruction",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h5_schur_minimal": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 1.6977119445800781,
+          "cgroup_current_gib": 1.0610771179199219,
+          "peak_stage": "interface_projection_and_coupling",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h3_augmented": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 3.8526077270507812,
+          "cgroup_current_gib": 3.2150421142578125,
+          "peak_stage": "augmented_matrix_and_factor",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h3_schur_fast": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 3.9983062744140625,
+          "cgroup_current_gib": 3.3622779846191406,
+          "peak_stage": "top_schur_contribution",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h3_schur_minimal": {
+          "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "worker_rss_gib": 3.224353790283203,
+          "cgroup_current_gib": 2.58648681640625,
+          "peak_stage": "bottom_schur_contribution",
+          "numeric_pass": true,
+          "no_swap": true,
+          "dense_interface_square_formed": false
+        },
+        "h3_comparison": {
+          "augmented_gib": 3.8526077270507812,
+          "schur_fast_gib": 3.9983062744140625,
+          "schur_memory_minimal_gib": 3.224353790283203,
+          "minimal_reduction_fraction": 0.16307238662175302,
+          "fast_negative_result_retained": true
+        }
+      },
+      "expected": {
+        "six_clean_zero_swap_numeric_runs": true,
+        "h3_memory_minimal_max_gib": 4.0,
+        "h3_minimal_reduction_fraction_min": 0.1,
+        "h3_fast_negative_result_retained": true
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/memory_h{5,3}_{augmented,schur_fast,schur_minimal}.json"
+    },
+    {
+      "name": "task032_final_h2_locked_by_mandatory_prediction_gate",
+      "passed": true,
+      "observed": {
+        "status": "h2_remains_locked",
+        "selected_solver_path": "modal-schur-memory-minimal",
+        "methods": {
+          "mesh_resolution_power_law": {
+            "center_gib": 5.364917276663818,
+            "conservative_upper_gib": 6.169654868163391,
+            "observed_scaling_exponent": 1.2557144662844992,
+            "independent_variable": "target mesh spacing h"
+          },
+          "mumps_factor_payload_affine": {
+            "center_gib": 11.646799818279632,
+            "conservative_upper_gib": 13.393819791021578,
+            "projected_factor_payload_gib": 8.046635480697953,
+            "factor_payload_scaling_exponent": 4.390626787988815,
+            "rss_per_factor_payload_slope": 1.2589606349186688,
+            "rss_intercept_gib": 1.51640250454105,
+            "independent_variable": "MUMPS factor nnz payload estimate"
+          }
+        },
+        "decision": "Do not run h2: at least one mandatory center/upper memory prediction gate failed."
+      },
+      "expected": {
+        "h2_unlock": false,
+        "center_limit_gib": 4.0,
+        "upper_limit_gib": 5.0,
+        "independent_prediction_methods": 2
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/h2_prediction.json"
+    },
+    {
+      "name": "task032_final_parameter_entry_smoke",
+      "passed": true,
+      "observed": {
+        "status": "parameter_smoke_pass",
+        "run_count": 30,
+        "pass_count": 30,
+        "scope": {
+          "h5_angles_deg": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "h3_angles_deg": [
+            1,
+            3,
+            5,
+            7,
+            10
+          ],
+          "polarizations": [
+            "s",
+            "p"
+          ],
+          "requested_modes_per_direction": 4,
+          "candidate_modes_per_target_branch": 8,
+          "claim_boundary": "Parameter-entry/mode-recompute/classification/output smoke only; not a production qualification of the entire angle range."
+        },
+        "source": {
+          "commit_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "branch": "codex/20260714-task32-hybrid-fem-modal-direct-baseline",
+          "git_dirty": false,
+          "tracked_source_dirty": false,
+          "verification": "host_git_clean_attestation",
+          "verified_clean_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+          "mpi_size": 4,
+          "container_image": "myfenics-stage4:task28",
+          "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+          "host_environment_id": "SK-20260601OSDE",
+          "scalar_dtype": "complex128",
+          "full_field_or_mode_vector_gather": false,
+          "run_metadata_count": 30,
+          "all_run_metadata_consistent": true
+        }
+      },
+      "expected": {
+        "run_count": 30,
+        "h5_angles_deg": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "h3_angles_deg": [
+          1,
+          3,
+          5,
+          7,
+          10
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ],
+        "claim": "parameter entry and algebra smoke only"
+      },
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/records/parameter_smoke.json"
+    },
+    {
+      "name": "task032_final_ordinary_default_unchanged",
+      "passed": true,
+      "observed": false,
+      "expected": false,
+      "evidence": "cases/080_hybrid_fem_modal_direct_baseline/expected/gates.json"
     },
     {
       "name": "task032_phase1_identity:h5",

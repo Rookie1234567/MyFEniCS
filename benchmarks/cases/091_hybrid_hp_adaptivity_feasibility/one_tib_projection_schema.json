@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.one-tib-projection.v1",
+  "title": "Task033 Case091 1 TiB local FE row projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "identity",
+    "baseline",
+    "input",
+    "equation",
+    "one_tib_row_zones",
+    "result",
+    "compression_boundaries_for_task032_baseline",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case091.one-tib-projection.v1"},
+    "record_type": {"const": "task033_one_tib_local_fe_row_projection"},
+    "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+    "status": {"enum": ["not_qualified", "classified"]},
+    "formal_source": {"$ref": "#/$defs/formalSource"},
+    "identity": {
+      "type": "object",
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_memory_measurement",
+        "is_0p7nm_wavelength_transfer_validation",
+        "is_0p7nm_feasibility_proof",
+        "ordinary_default_changed"
+      ],
+      "properties": {
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "is_memory_measurement": {"const": false},
+        "is_0p7nm_wavelength_transfer_validation": {"const": false},
+        "is_0p7nm_feasibility_proof": {"const": false},
+        "ordinary_default_changed": {"const": false}
+        ,"is_formal_record": {"type": "boolean"}
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": [
+        "value",
+        "unit",
+        "data_identity",
+        "wavelength_nm",
+        "mesh_target_nm",
+        "source_record",
+        "source_record_type",
+        "source_is_pde_run",
+        "source_is_solver_pass"
+      ],
+      "properties": {
+        "value": {"const": 923346000},
+        "unit": {"const": "local_fe_rows"},
+        "data_identity": {"const": "predicted_mechanical_uniform_grid_scaling"},
+        "wavelength_nm": {"const": 0.7},
+        "mesh_target_nm": {"const": 0.1},
+        "source_record": {"type": "string", "minLength": 1},
+        "source_record_type": {"const": "analytical_resource_projection"},
+        "source_is_pde_run": {"const": false},
+        "source_is_solver_pass": {"const": false}
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "same_error_local_dof_compression",
+        "unit",
+        "data_identity",
+        "evidence_record",
+        "qualified",
+        "qualification_failures"
+      ],
+      "properties": {
+        "same_error_local_dof_compression": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "number", "exclusiveMinimum": 0}
+          ]
+        },
+        "unit": {"const": "dimensionless_ratio"},
+        "data_identity": {"type": ["string", "null"]},
+        "evidence_record": {"type": ["string", "null"]},
+        "source_commit_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "same_accuracy_status": {
+          "type": ["string", "null"],
+          "enum": [
+            "same_accuracy_mandatory_gate_pass",
+            "same_accuracy_strong_gate_pass",
+            null
+          ]
+        },
+        "compression_source_unit": {
+          "type": ["string", "null"]
+        },
+        "compression_baseline": {"type": ["string", "null"]},
+        "physical_equal_accuracy_qualified": {"type": "boolean"},
+        "qualified": {"type": "boolean"},
+        "qualification_failures": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "equation": {
+      "type": "object",
+      "required": ["text", "numerator", "denominator", "output_unit"]
+    },
+    "one_tib_row_zones": {"type": "object"},
+    "result": {
+      "type": "object",
+      "required": [
+        "projected_local_fe_rows",
+        "unit",
+        "classification",
+        "data_identity"
+      ],
+      "properties": {
+        "projected_local_fe_rows": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "number", "exclusiveMinimum": 0}
+          ]
+        },
+        "unit": {"const": "local_fe_rows"},
+        "classification": {
+          "type": ["string", "null"],
+          "enum": ["preferred", "candidate", "high-risk", "infeasible", null]
+        },
+        "data_identity": {
+          "enum": [
+            "not_qualified",
+            "derived_scenario_from_prediction_and_measurement"
+          ]
+        }
+      }
+    },
+    "compression_boundaries_for_task032_baseline": {"type": "object"},
+    "limitations": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "not_qualified"}}},
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "qualified": {"const": false},
+              "qualification_failures": {"minItems": 1}
+            }
+          },
+          "result": {
+            "properties": {
+              "projected_local_fe_rows": {"type": "null"},
+              "classification": {"type": "null"},
+              "data_identity": {"const": "not_qualified"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "classified"}}},
+      "then": {
+        "required": ["formal_source"],
+        "properties": {
+          "identity": {
+            "required": ["is_formal_record"],
+            "properties": {"is_formal_record": {"const": true}}
+          },
+          "input": {
+            "required": [
+              "source_commit_sha",
+              "same_accuracy_status",
+              "compression_source_unit",
+              "compression_baseline",
+              "physical_equal_accuracy_qualified"
+            ],
+            "properties": {
+              "data_identity": {"const": "measured"},
+              "evidence_record": {"type": "string", "minLength": 1},
+              "source_commit_sha": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "same_accuracy_status": {
+                "enum": [
+                  "same_accuracy_mandatory_gate_pass",
+                  "same_accuracy_strong_gate_pass"
+                ]
+              },
+              "compression_source_unit": {
+                "const": "dimensionless_local_fe_row_ratio"
+              },
+              "compression_baseline": {
+                "enum": ["uniform_p2_h5", "uniform_p2_h3"]
+              },
+              "physical_equal_accuracy_qualified": {"const": true},
+              "qualified": {"const": true},
+              "qualification_failures": {"maxItems": 0}
+            }
+          },
+          "result": {
+            "properties": {
+              "projected_local_fe_rows": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "classification": {
+                "enum": ["preferred", "candidate", "high-risk", "infeasible"]
+              },
+              "data_identity": {
+                "const": "derived_scenario_from_prediction_and_measurement"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "formalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit_sha",
+        "tracked_source_clean",
+        "head_before_sha",
+        "head_after_sha",
+        "source_stable_during_run",
+        "nonignored_untracked_clean",
+        "complete_worktree_clean"
+      ],
+      "properties": {
+        "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tracked_source_clean": {"const": true},
+        "head_before_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "head_after_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_stable_during_run": {"const": true},
+        "nonignored_untracked_clean": {"const": true},
+        "complete_worktree_clean": {"const": true}
+      }
+    }
+  }
+}

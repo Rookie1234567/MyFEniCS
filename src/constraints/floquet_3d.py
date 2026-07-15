@@ -10,6 +10,7 @@ from mpi4py import MPI
 from dolfinx import cpp, fem, mesh
 
 from ..common.config_3d import SimulationConfig3D
+from .floquet_3d_high_order import build_high_order_constraint_data
 
 
 @dataclass
@@ -49,10 +50,30 @@ class DoubleFloquet3DData:
     max_face_midpoint_pairing_error: float = 0.0
     max_face_transform_fit_residual: float = 0.0
     num_face_transform_fits: int = 0
+    topology_cache_hit: bool = False
+    topology_build_seconds_current: float = 0.0
+    phase_update_seconds: float = 0.0
+    communication_bytes_sent_current: int = 0
+    communication_bytes_received_current: int = 0
+    used_full_boundary_gather: bool = False
+    created_dense_boundary_square: bool = False
 
 
 def _mesh_is_hexahedron(msh) -> bool:
     return "hexahedron" in str(msh.basix_cell()).lower()
+
+
+def _qualified_constraint_mode(degree: int) -> str:
+    """Return the stable public mode name for a qualified N1curl degree."""
+
+    if degree == 1:
+        return "topological_edges_p1"
+    if degree in {2, 3, 4}:
+        return f"topological_trace_p{degree}"
+    raise NotImplementedError(
+        "3D explicit Floquet constraints qualify N1curl degree=1--4 on "
+        f"hexahedra. Requested degree={degree}."
+    )
 
 
 def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
@@ -61,27 +82,37 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     if requested in {"topological_edges", "sparse_facet"}:
         requested = "topological_edges_p1"
     if requested == "auto":
-        if degree == 1:
-            return "topological_edges_p1"
-        if degree == 2:
-            return "topological_trace_p2"
-        raise NotImplementedError(
-            "3D explicit Floquet high-order constraints currently support only degree=1 or degree=2 "
-            f"N1curl on hexahedra. Requested degree={cfg.nedelec_degree}."
-        )
+        return _qualified_constraint_mode(degree)
+    if requested == "topological_trace":
+        if degree not in {1, 2, 3, 4}:
+            raise NotImplementedError(
+                "floquet_constraint_mode='topological_trace' requires degree=1--4."
+            )
+        return _qualified_constraint_mode(degree)
     if requested == "topological_edges_p1":
         if degree != 1:
-            raise NotImplementedError("floquet_constraint_mode='topological_edges_p1' requires nedelec_degree=1.")
+            raise NotImplementedError(
+                "floquet_constraint_mode='topological_edges_p1' requires nedelec_degree=1."
+            )
         return requested
     if requested == "topological_trace_p2":
         if degree != 2:
-            raise NotImplementedError("floquet_constraint_mode='topological_trace_p2' requires nedelec_degree=2.")
+            raise NotImplementedError(
+                "floquet_constraint_mode='topological_trace_p2' requires nedelec_degree=2."
+            )
+        return requested
+    if requested in {"topological_trace_p3", "topological_trace_p4"}:
+        requested_degree = int(requested[-1])
+        if degree != requested_degree:
+            raise NotImplementedError(
+                f"floquet_constraint_mode={requested!r} requires "
+                f"nedelec_degree={requested_degree}."
+            )
         return requested
     raise RuntimeError(
         "3D Floquet dense probe/pseudo-inverse constraint construction is disabled. "
-        "Use floquet_constraint_mode='auto', 'topological_edges_p1', or 'topological_trace_p2'."
+        "Use floquet_constraint_mode='auto' or a qualified topological trace mode."
     )
-
 
 def _require_supported_topological_edges(V, cfg: SimulationConfig3D) -> None:
     if int(cfg.nedelec_degree) != 1:
@@ -1506,7 +1537,10 @@ def _build_double_floquet_mpc_p2_trace(
     dolfinx_mpc,
     log=None,
 ) -> DoubleFloquet3DData:
-    """Create p=2 double-periodic Floquet MPC from edge and face trace topology."""
+    """Retain the former p2 implementation as a legacy diagnostic helper.
+
+    The public dispatcher does not call this function.
+    """
 
     comm = V.mesh.comm
     timings: dict[str, float] = {}
@@ -1625,11 +1659,13 @@ def _build_double_floquet_mpc_p2_trace(
     orientation_stats = _orientation_stats(orientation_values)
     orientation_stats.update(
         {
-            "mapping_kind": "topological_trace_p2_edge_and_face_blocks",
+            "mapping_kind": "legacy_topological_trace_p2_diagnostic",
             "uses_basix_interval_transform": True,
             "uses_p2_face_local_moment_fit": True,
             "face_transform_limit": "constant-size 4x4 local Nedelec moment fit per periodic face",
             "basix_interval_transform_shape": list(np.asarray(_context()["basix_interval_transform"]).shape),
+            "used_full_boundary_gather": True,
+            "created_dense_boundary_square": False,
         }
     )
 
@@ -1754,11 +1790,172 @@ def _build_double_floquet_mpc_p2_trace(
         max_face_midpoint_pairing_error=max_face_pair_error,
         max_face_transform_fit_residual=max_face_transform_fit_residual,
         num_face_transform_fits=num_face_transform_fits,
+        used_full_boundary_gather=True,
+        created_dense_boundary_square=False,
     )
 
 
-def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) -> DoubleFloquet3DData:
-    """Create double-periodic x/y Floquet constraints for 3D Nedelec trace dofs."""
+def _build_double_floquet_mpc_high_order(
+    V,
+    mesh_data,
+    cfg: SimulationConfig3D,
+    dolfinx_mpc,
+    log=None,
+) -> DoubleFloquet3DData:
+    """Create the Task033 distributed, phase-cacheable p1--p4 Floquet MPC."""
+
+    degree = int(cfg.nedelec_degree)
+    if degree not in {1, 2, 3, 4}:
+        raise NotImplementedError(
+            "The Task033 public generalized dispatcher is restricted to p1--p4."
+        )
+    allowed_stage_cases = {
+        "floquet_airbox",
+        "fresnel_interface",
+        "stage4_flat_layer_sanity",
+        "stage4_block_grating",
+    }
+    if degree in {1, 2}:
+        allowed_stage_cases.add("pml_airbox")
+    if cfg.stage_case not in allowed_stage_cases:
+        raise NotImplementedError(
+            "Task033 p1--p4 generalized Floquet constraints are qualified for "
+            f"the 3D stages {sorted(allowed_stage_cases)!r}; got "
+            f"stage_case={cfg.stage_case!r}."
+        )
+    comm = V.mesh.comm
+    comm.barrier()
+    total_start = time.perf_counter()
+    constraint_data = build_high_order_constraint_data(V, mesh_data, cfg)
+    used_full_boundary_gather = bool(
+        constraint_data.topology.used_full_boundary_gather
+    )
+    created_dense_boundary_square = bool(
+        constraint_data.topology.created_dense_boundary_square
+    )
+    if used_full_boundary_gather or created_dense_boundary_square:
+        raise RuntimeError(
+            "The generalized Floquet topology violated its sparse distributed "
+            "contract (full boundary gather or dense boundary square detected)."
+        )
+    constraint_mode_resolved = _qualified_constraint_mode(degree)
+
+    if log is not None:
+        log(
+            "3D Floquet formal mapping = distributed exact Basix entity "
+            f"transforms for N1curl p={degree}; no fit/full-boundary gather."
+        )
+        log(f"3D Floquet topology cache hit = {constraint_data.topology_cache_hit}")
+
+    comm.barrier()
+    finalize_start = time.perf_counter()
+    mpc = dolfinx_mpc.MultiPointConstraint(V)
+    mpc.add_constraint(
+        V,
+        constraint_data.slave_local_dofs,
+        constraint_data.master_global_dofs,
+        constraint_data.coefficients,
+        constraint_data.master_owners,
+        constraint_data.offsets,
+    )
+    mpc.finalize()
+    finalize_seconds = float(
+        comm.allreduce(time.perf_counter() - finalize_start, op=MPI.MAX)
+    )
+    total_seconds = float(comm.allreduce(time.perf_counter() - total_start, op=MPI.MAX))
+    timings = {
+        "floquet_topology_build_current": constraint_data.topology_build_seconds_current,
+        "floquet_phase_update": constraint_data.phase_update_seconds,
+        "floquet_mpc_finalize": finalize_seconds,
+        "floquet_total": total_seconds,
+    }
+    orientation_stats = _orientation_stats(constraint_data.orientation_values)
+    orientation_stats.update(
+        {
+            "mapping_kind": f"distributed_exact_{constraint_mode_resolved}",
+            "uses_exact_basix_entity_transforms": True,
+            "uses_local_moment_fit": False,
+            "used_full_boundary_gather": used_full_boundary_gather,
+            "created_dense_boundary_square": created_dense_boundary_square,
+            "topology_cache_hit": constraint_data.topology_cache_hit,
+        }
+    )
+    phase_x = complex(cfg.floquet_phase_x)
+    phase_y = complex(cfg.floquet_phase_y)
+    if log is not None:
+        log(
+            f"3D Floquet p={degree} global constraints = "
+            f"{constraint_data.global_constraint_rows}"
+        )
+        log(
+            f"3D Floquet p={degree} global constraint nnz = "
+            f"{constraint_data.global_constraint_nnz}"
+        )
+        log(
+            "3D Floquet distributed pairing bytes sent/received = "
+            f"{constraint_data.communication_bytes_sent_current}/"
+            f"{constraint_data.communication_bytes_received_current}"
+        )
+
+    return DoubleFloquet3DData(
+        mpc=mpc,
+        local_slave_dofs=constraint_data.slave_local_dofs,
+        num_local_slaves=len(constraint_data.slave_local_dofs),
+        num_local_slave_records_seen=constraint_data.num_local_slave_records_seen,
+        num_local_ghost_slave_constraints=constraint_data.num_local_ghost_slave_constraints,
+        num_global_ghost_slave_constraints=constraint_data.num_global_ghost_slave_constraints,
+        num_local_ghost_slave_records_skipped=(
+            constraint_data.num_local_ghost_slave_records_skipped
+        ),
+        num_global_ghost_slave_records_skipped=(
+            constraint_data.num_global_ghost_slave_records_skipped
+        ),
+        constraint_mode_resolved=constraint_mode_resolved,
+        phase_x=phase_x,
+        phase_y=phase_y,
+        phase_corner=phase_x * phase_y,
+        max_face_pairing_coordinate_error=max(
+            constraint_data.max_edge_pairing_error,
+            constraint_data.max_face_pairing_error,
+        ),
+        edge_corner_phase_mismatch=0.0,
+        orientation_factor_stats=orientation_stats,
+        timings_seconds=timings,
+        raw_map_nnz=constraint_data.global_constraint_nnz,
+        max_masters_per_slave=constraint_data.max_masters_per_slave,
+        estimated_constraint_memory_mb=(constraint_data.estimated_constraint_memory_mb),
+        num_slave_edges=constraint_data.num_slave_edges,
+        num_matched_master_edges=constraint_data.num_matched_master_edges,
+        num_constraints=constraint_data.global_constraint_rows,
+        max_edge_midpoint_pairing_error=constraint_data.max_edge_pairing_error,
+        num_x_constraints=constraint_data.num_x_constraints,
+        num_y_constraints=constraint_data.num_y_constraints,
+        num_corner_constraints=constraint_data.num_corner_constraints,
+        num_slave_faces=constraint_data.num_slave_faces,
+        num_matched_master_faces=constraint_data.num_matched_master_faces,
+        num_edge_constraints=constraint_data.num_edge_constraints,
+        num_face_constraints=constraint_data.num_face_constraints,
+        max_face_midpoint_pairing_error=constraint_data.max_face_pairing_error,
+        max_face_transform_fit_residual=0.0,
+        num_face_transform_fits=0,
+        topology_cache_hit=constraint_data.topology_cache_hit,
+        topology_build_seconds_current=(constraint_data.topology_build_seconds_current),
+        phase_update_seconds=constraint_data.phase_update_seconds,
+        communication_bytes_sent_current=(
+            constraint_data.communication_bytes_sent_current
+        ),
+        communication_bytes_received_current=(
+            constraint_data.communication_bytes_received_current
+        ),
+        used_full_boundary_gather=used_full_boundary_gather,
+        created_dense_boundary_square=created_dense_boundary_square,
+    )
+
+
+def _build_double_floquet_mpc_p1_legacy(
+    V, mesh_data, cfg: SimulationConfig3D, log=None
+) -> DoubleFloquet3DData:
+    """Retain the former p1 implementation as an explicit diagnostic helper."""
 
     try:
         import dolfinx_mpc
@@ -1770,16 +1967,13 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
     comm.barrier()
     total_start = time.perf_counter()
     constraint_mode_resolved = _resolve_constraint_mode(V, cfg)
+    if constraint_mode_resolved != "topological_edges_p1":
+        raise NotImplementedError(
+            "The legacy diagnostic helper accepts only topological_edges_p1."
+        )
     if log is not None:
         log(f"3D Floquet constraint mode requested = {cfg.floquet_constraint_mode_requested}")
         log(f"3D Floquet constraint mode resolved = {constraint_mode_resolved}")
-    if constraint_mode_resolved == "topological_trace_p2":
-        if log is not None:
-            log(
-                "3D Floquet formal mapping = explicit p=2 N1curl edge + face-interior trace topology; "
-                "probe/pinv is disabled."
-            )
-        return _build_double_floquet_mpc_p2_trace(V, mesh_data, cfg, dolfinx_mpc, log)
     if log is not None:
         log("3D Floquet formal mapping = explicit degree-1 N1curl edge topology; probe/pinv is disabled.")
 
@@ -1877,6 +2071,13 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         ]
     )
     orientation_stats = _orientation_stats(orientation_values)
+    orientation_stats.update(
+        {
+            "mapping_kind": "legacy_topological_edges_p1_diagnostic",
+            "used_full_boundary_gather": True,
+            "created_dense_boundary_square": False,
+        }
+    )
     max_edge_pair_error = max(
         float(x_data["pair_error"]),
         float(y_data["pair_error"]),
@@ -1968,4 +2169,39 @@ def build_double_floquet_mpc(V, mesh_data, cfg: SimulationConfig3D, log=None) ->
         num_x_constraints=num_x_constraints,
         num_y_constraints=num_y_constraints,
         num_corner_constraints=num_corner_constraints,
+        used_full_boundary_gather=True,
+        created_dense_boundary_square=False,
+    )
+
+
+def build_double_floquet_mpc(
+    V, mesh_data, cfg: SimulationConfig3D, log=None
+) -> DoubleFloquet3DData:
+    """Create distributed sparse double-periodic p1--p4 Floquet constraints."""
+
+    try:
+        import dolfinx_mpc
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "The 3D Floquet path requires dolfinx_mpc, but it is not installed."
+        ) from exc
+
+    constraint_mode_resolved = _resolve_constraint_mode(V, cfg)
+    if log is not None:
+        log(
+            "3D Floquet constraint mode requested = "
+            f"{cfg.floquet_constraint_mode_requested}"
+        )
+        log(f"3D Floquet constraint mode resolved = {constraint_mode_resolved}")
+    if constraint_mode_resolved not in {
+        "topological_edges_p1",
+        "topological_trace_p2",
+        "topological_trace_p3",
+        "topological_trace_p4",
+    }:
+        raise RuntimeError(
+            f"Unsupported qualified Floquet mode {constraint_mode_resolved!r}."
+        )
+    return _build_double_floquet_mpc_high_order(
+        V, mesh_data, cfg, dolfinx_mpc, log
     )

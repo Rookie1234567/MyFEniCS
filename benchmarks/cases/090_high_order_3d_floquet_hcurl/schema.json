@@ -1,0 +1,466 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case090.oracle-plan.v1",
+  "title": "Task033 Case090 analytic oracle and fail-closed matrix record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "ordinary_default_changed",
+    "identity",
+    "core_gate",
+    "fixtures",
+    "oracles",
+    "matrix_axes",
+    "matrix_summary",
+    "execution_matrix",
+    "promotion_rule"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case090.oracle-plan.v1"},
+    "record_type": {"const": "analytical_oracle_and_execution_plan"},
+    "case_id": {"const": "090_high_order_3d_floquet_hcurl"},
+    "status": {"const": "not_run"},
+    "ordinary_default_changed": {"const": false},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_physical_qualification_record",
+        "evidence_scope"
+      ],
+      "properties": {
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "is_physical_qualification_record": {"const": false},
+        "evidence_scope": {"const": "analytic_oracles_and_fail_closed_matrix_only"}
+      }
+    },
+    "core_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_id",
+        "evidence_sha256",
+        "source_commit_full_sha",
+        "problems",
+        "required_limits",
+        "required_degree_mpi_coverage_count",
+        "validated_degree_mpi_coverage",
+        "storage_vetoes_passed",
+        "p1_p2_regression_passed"
+      ],
+      "properties": {
+        "status": {"enum": ["not_provided", "failed", "passed"]},
+        "evidence_id": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "minLength": 1}
+          ]
+        },
+        "evidence_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          ]
+        },
+        "source_commit_full_sha": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+          ]
+        },
+        "problems": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "required_limits": {"$ref": "#/$defs/coreLimits"},
+        "required_degree_mpi_coverage_count": {"const": 12},
+        "validated_degree_mpi_coverage": {
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/degreeMpiPair"}
+        },
+        "storage_vetoes_passed": {"type": "boolean"},
+        "p1_p2_regression_passed": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "passed"}}},
+          "then": {
+            "properties": {
+              "evidence_id": {"type": "string", "minLength": 1},
+              "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "source_commit_full_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+              "problems": {"maxItems": 0},
+              "validated_degree_mpi_coverage": {"minItems": 12, "maxItems": 12},
+              "storage_vetoes_passed": {"const": true},
+              "p1_p2_regression_passed": {"const": true}
+            }
+          }
+        }
+      ]
+    },
+    "fixtures": {
+      "const": {
+        "fixture_a_air_box": {
+          "fixture_id": "case090_fixture_a_air_box_10nm",
+          "purpose": "analytic high-order Hcurl/Floquet algebra qualification",
+          "geometry": {
+            "x_nm": [0.0, 10.0],
+            "y_nm": [0.0, 10.0],
+            "z_nm": [-5.0, 5.0],
+            "period_x_nm": 10.0,
+            "period_y_nm": 10.0
+          },
+          "material": {"uniform": "air", "n": {"real": 1.0, "imag": 0.0}},
+          "incidence": {
+            "wavelength_nm": 13.5,
+            "phi_deg": 0.0,
+            "boundary_xy": "double_floquet",
+            "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+            "incident_side": "upper_air",
+            "primary_grazing_deg": 10.0,
+            "polarizations": ["s", "p"]
+          }
+        },
+        "fixture_b_flat_air_si": {
+          "fixture_id": "case090_fixture_b_flat_air_si_10nm",
+          "purpose": "analytic complex Fresnel and field-phase qualification",
+          "geometry": {
+            "x_nm": [0.0, 10.0],
+            "y_nm": [0.0, 10.0],
+            "z_nm": [-5.0, 5.0],
+            "period_x_nm": 10.0,
+            "period_y_nm": 10.0,
+            "interface_z_nm": 0.0
+          },
+          "material": {
+            "upper": {"label": "air", "n": {"real": 1.0, "imag": 0.0}},
+            "lower": {
+              "label": "current_Si_13p5nm",
+              "n": {"real": 0.999002304859, "imag": 0.00182649365}
+            }
+          },
+          "incidence": {
+            "wavelength_nm": 13.5,
+            "phi_deg": 0.0,
+            "boundary_xy": "double_floquet",
+            "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+            "incident_side": "upper_air",
+            "primary_grazing_deg": 10.0,
+            "smoke_grazing_deg": [1.0, 5.0],
+            "polarizations": ["s", "p"]
+          },
+          "outer_z_treatment": "existing_analytic_homogeneous_port_or_reviewed_fresnel_path"
+        }
+      }
+    },
+    "oracles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["air_plane_waves", "flat_air_si_fresnel"],
+      "properties": {
+        "air_plane_waves": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {"$ref": "#/$defs/planeWaveOracle"}
+        },
+        "flat_air_si_fresnel": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {"$ref": "#/$defs/fresnelOracle"}
+        }
+      }
+    },
+    "matrix_axes": {
+      "const": {
+        "degrees": [1, 2, 3, 4],
+        "mesh_targets_nm": [5.0, 2.5],
+        "mpi_sizes": [1, 2, 4],
+        "polarizations": ["s", "p"],
+        "fresnel_grazing_angles_deg": [1.0, 5.0, 10.0]
+      }
+    },
+    "matrix_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "requirements", "execution_statuses"],
+      "properties": {
+        "total": {"const": 192},
+        "requirements": {"const": {"not_run": 80, "required": 96, "smoke": 16}},
+        "execution_statuses": {
+          "oneOf": [
+            {"const": {"not_run_by_core_gate": 112, "not_run_by_scope": 80}},
+            {"const": {"eligible_not_run": 112, "not_run_by_scope": 80}}
+          ]
+        }
+      }
+    },
+    "execution_matrix": {
+      "type": "array",
+      "minItems": 192,
+      "maxItems": 192,
+      "items": {"$ref": "#/$defs/matrixEntry"}
+    },
+    "promotion_rule": {
+      "const": "This planner never emits a PDE pass. A separate clean PDE record must satisfy every core gate before any physical qualification."
+    }
+  },
+  "$defs": {
+    "complex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["real", "imag"],
+      "properties": {
+        "real": {"type": "number"},
+        "imag": {"type": "number"}
+      }
+    },
+    "complexVector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/complex"}
+    },
+    "realVector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"type": "number"}
+    },
+    "coreLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraint_round_trip_relative_error",
+        "bloch_trace_mismatch",
+        "reduced_full_action_relative_error",
+        "full_true_residual",
+        "mpi_result_difference"
+      ],
+      "properties": {
+        "constraint_round_trip_relative_error": {"const": 1e-12},
+        "bloch_trace_mismatch": {"const": 1e-11},
+        "reduced_full_action_relative_error": {"const": 1e-11},
+        "full_true_residual": {"const": 1e-10},
+        "mpi_result_difference": {"const": 1e-10}
+      }
+    },
+    "degreeMpiPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["degree", "mpi_size"],
+      "properties": {
+        "degree": {"enum": [1, 2, 3, 4]},
+        "mpi_size": {"enum": [1, 2, 4]}
+      }
+    },
+    "fieldSample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wavevector_per_nm",
+        "electric_basis",
+        "magnetic_code_basis",
+        "amplitude",
+        "phase",
+        "electric_field",
+        "magnetic_code_field"
+      ],
+      "properties": {
+        "wavevector_per_nm": {"$ref": "#/$defs/complexVector3"},
+        "electric_basis": {"$ref": "#/$defs/complexVector3"},
+        "magnetic_code_basis": {"$ref": "#/$defs/complexVector3"},
+        "amplitude": {"$ref": "#/$defs/complex"},
+        "phase": {"$ref": "#/$defs/complex"},
+        "electric_field": {"$ref": "#/$defs/complexVector3"},
+        "magnetic_code_field": {"$ref": "#/$defs/complexVector3"}
+      }
+    },
+    "planeWaveOracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oracle_type",
+        "field_convention",
+        "incident_side",
+        "propagation_z",
+        "wavelength_nm",
+        "refractive_index",
+        "grazing_deg_from_surface",
+        "theta_deg_from_normal",
+        "phi_deg",
+        "polarization",
+        "direction",
+        "wavevector_per_nm",
+        "electric_unit_vector",
+        "magnetic_code_unit_vector",
+        "bloch_phase_plus_period",
+        "sample"
+      ],
+      "properties": {
+        "oracle_type": {"const": "analytic_bloch_plane_wave"},
+        "field_convention": {"const": "exp(i*k_dot_r) with exp(-i*omega*t)"},
+        "incident_side": {"const": "upper_air"},
+        "propagation_z": {"const": "minus_z"},
+        "wavelength_nm": {"const": 13.5},
+        "refractive_index": {"const": {"real": 1.0, "imag": 0.0}},
+        "grazing_deg_from_surface": {"enum": [1.0, 5.0, 10.0]},
+        "theta_deg_from_normal": {"enum": [89.0, 85.0, 80.0]},
+        "phi_deg": {"const": 0.0},
+        "polarization": {"enum": ["s", "p"]},
+        "direction": {"$ref": "#/$defs/realVector3"},
+        "wavevector_per_nm": {"$ref": "#/$defs/complexVector3"},
+        "electric_unit_vector": {"$ref": "#/$defs/complexVector3"},
+        "magnetic_code_unit_vector": {"$ref": "#/$defs/complexVector3"},
+        "bloch_phase_plus_period": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y"],
+          "properties": {
+            "x": {"$ref": "#/$defs/complex"},
+            "y": {"$ref": "#/$defs/complex"}
+          }
+        },
+        "sample": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["point_nm", "electric_field", "magnetic_code_field"],
+          "properties": {
+            "point_nm": {"const": [2.0, 3.0, -1.0]},
+            "electric_field": {"$ref": "#/$defs/complexVector3"},
+            "magnetic_code_field": {"$ref": "#/$defs/complexVector3"}
+          }
+        }
+      }
+    },
+    "fresnelOracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oracle_type",
+        "amplitude_basis",
+        "grazing_deg_from_surface",
+        "theta_deg_from_normal",
+        "polarization",
+        "n_incident",
+        "n_transmitted",
+        "cos_theta_transmitted",
+        "r",
+        "t",
+        "R_interface",
+        "T_into_substrate_at_interface",
+        "interface_power_closure",
+        "normal_power_admittance_ratio",
+        "field_phase_samples",
+        "substrate_is_absorbing",
+        "interpretation"
+      ],
+      "properties": {
+        "oracle_type": {"const": "complex_fresnel_interface"},
+        "amplitude_basis": {"const": "analytic_s_or_k_over_k0n_cross_s_electric_basis"},
+        "grazing_deg_from_surface": {"enum": [1.0, 5.0, 10.0]},
+        "theta_deg_from_normal": {"enum": [89.0, 85.0, 80.0]},
+        "polarization": {"enum": ["s", "p"]},
+        "n_incident": {"const": {"real": 1.0, "imag": 0.0}},
+        "n_transmitted": {"const": {"real": 0.999002304859, "imag": 0.00182649365}},
+        "cos_theta_transmitted": {"$ref": "#/$defs/complex"},
+        "r": {"$ref": "#/$defs/complex"},
+        "t": {"$ref": "#/$defs/complex"},
+        "R_interface": {"type": "number", "minimum": 0.0},
+        "T_into_substrate_at_interface": {"type": "number", "minimum": 0.0},
+        "interface_power_closure": {"type": "number"},
+        "normal_power_admittance_ratio": {"type": "number", "minimum": 0.0},
+        "field_phase_samples": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upper_point_nm",
+            "lower_point_nm",
+            "incident",
+            "reflected",
+            "upper_total",
+            "transmitted"
+          ],
+          "properties": {
+            "upper_point_nm": {"const": [2.0, 3.0, 1.0]},
+            "lower_point_nm": {"const": [2.0, 3.0, -1.0]},
+            "incident": {"$ref": "#/$defs/fieldSample"},
+            "reflected": {"$ref": "#/$defs/fieldSample"},
+            "upper_total": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["electric_field", "magnetic_code_field"],
+              "properties": {
+                "electric_field": {"$ref": "#/$defs/complexVector3"},
+                "magnetic_code_field": {"$ref": "#/$defs/complexVector3"}
+              }
+            },
+            "transmitted": {"$ref": "#/$defs/fieldSample"}
+          }
+        },
+        "substrate_is_absorbing": {"const": true},
+        "interpretation": {
+          "const": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+        }
+      }
+    },
+    "matrixEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "matrix_id",
+        "fixture",
+        "grazing_deg_from_surface",
+        "theta_deg_from_normal",
+        "polarization",
+        "degree",
+        "mesh_target_nm",
+        "mpi_size",
+        "requirement",
+        "requirement_rationale",
+        "execution_status",
+        "result_identity",
+        "is_pde_run",
+        "is_solver_pass",
+        "not_run_reason"
+      ],
+      "properties": {
+        "matrix_id": {"type": "string", "minLength": 1},
+        "fixture": {"enum": ["fixture_a_air_box", "fixture_b_flat_air_si"]},
+        "grazing_deg_from_surface": {"enum": [1.0, 5.0, 10.0]},
+        "theta_deg_from_normal": {"enum": [89.0, 85.0, 80.0]},
+        "polarization": {"enum": ["s", "p"]},
+        "degree": {"enum": [1, 2, 3, 4]},
+        "mesh_target_nm": {"enum": [5.0, 2.5]},
+        "mpi_size": {"enum": [1, 2, 4]},
+        "requirement": {"enum": ["required", "smoke", "not_run"]},
+        "requirement_rationale": {
+          "enum": [
+            "two_mesh_all_rank_plane_wave_contract",
+            "primary_fresnel_contract",
+            "lightweight_angle_entry_smoke",
+            "lightweight_angle_smoke_scope"
+          ]
+        },
+        "execution_status": {
+          "enum": ["not_run_by_scope", "not_run_by_core_gate", "eligible_not_run"]
+        },
+        "result_identity": {"const": "not_run"},
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "not_run_reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

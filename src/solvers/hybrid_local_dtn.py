@@ -215,16 +215,35 @@ def assemble_hybrid_local_dtn_system(
     cfg: SimulationConfig3D,
     side: HybridLocalSide,
     *,
+    bottom_interface_z_nm: float = 10.0,
+    top_interface_z_nm: float = 110.0,
+    local_mesh_override: HybridLocalMesh | None = None,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     log=None,
 ) -> HybridLocalDtnSystem:
-    """Build one Task32 terminal FEM matrix with one external DtN port."""
+    """Build one terminal FEM matrix with one external DtN port.
+
+    The reviewed Task32 decomposition remains the default.  Task33 may pass a
+    symmetric alternative pair explicitly when measuring the local-FEM versus
+    modal-buffer trade-off.
+    """
 
     if cfg.stage4_dtn_assembly.lower() != "auxiliary":
         raise NotImplementedError("Task32 direct baseline requires auxiliary external DtN.")
     if cfg.use_pml:
         raise ValueError("Task32 external DtN local blocks require use_pml=False.")
-    local_mesh = build_hybrid_local_mesh(cfg, side, comm=comm)
+    if local_mesh_override is not None:
+        if local_mesh_override.side != side:
+            raise ValueError("The local mesh override side does not match the request.")
+        local_mesh = local_mesh_override
+    else:
+        local_mesh = build_hybrid_local_mesh(
+            cfg,
+            side,
+            bottom_interface_z_nm=bottom_interface_z_nm,
+            top_interface_z_nm=top_interface_z_nm,
+            comm=comm,
+        )
     V = _create_nedelec_space(local_mesh.mesh, cfg)
     floquet_data = build_double_floquet_mpc(V, local_mesh.mesh_data, cfg, log)
     a, L = _build_variational_forms(

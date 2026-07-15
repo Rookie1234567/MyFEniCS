@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "benchmarks" / "scripts" / "run_task033_formal.ps1"
+
+
+class Task033FormalCampaignScriptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.text = SCRIPT.read_text(encoding="utf-8")
+
+    def test_complete_clean_source_image_and_cgroup_preflight(self) -> None:
+        text = self.text
+        self.assertIn('[string]$RepositoryRoot = ""', text)
+        self.assertIn("[string]::IsNullOrWhiteSpace($RepositoryRoot)", text)
+        self.assertIn('"rev-parse", "HEAD"', text)
+        self.assertIn("^[0-9a-f]{40}$", text)
+        self.assertIn('"--untracked-files=all"', text)
+        self.assertIn('"--ignored=no"', text)
+        self.assertIn('"check-ignore", "--quiet", "--no-index"', text)
+        self.assertIn('@("image", "inspect", $DockerImage)', text)
+        self.assertIn("^sha256:[0-9a-f]{64}$", text)
+        self.assertIn(
+            "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+            text,
+        )
+        self.assertIn("if ($ImageDigest -ne $ExpectedImageDigest)", text)
+        self.assertIn("memory.max", text)
+        self.assertIn("memory.swap.max", text)
+        self.assertIn("memory.swap.current", text)
+        self.assertIn("import jsonschema", text)
+        self.assertIn("host_aggregation_runtime", text)
+        self.assertGreaterEqual(text.count("13958643712"), 2)
+
+    def test_serial_13g_no_swap_and_explicit_native_exit_contract(self) -> None:
+        text = self.text
+        self.assertIn('"--memory", "13g"', text)
+        self.assertIn('"--memory-swap", "13g"', text)
+        self.assertIn('$WarningGiB = "10.678571428571429"', text)
+        self.assertIn('$TerminateGiB = "12.071428571428571"', text)
+        self.assertIn("[IO.FileShare]::None", text)
+        self.assertIn("$LASTEXITCODE", text)
+        self.assertIn("if ($exitCode -ne 0)", text)
+        for forbidden in (
+            "Start-Job",
+            "ForEach-Object -Parallel",
+            "Start-ThreadJob",
+            "Start-Process",
+        ):
+            self.assertNotIn(forbidden, text)
+        self.assertNotRegex(text, r"(?m)^\s*[^#\r\n]+(?:2>|\*>|>>)")
+
+    def test_resume_markers_are_bound_to_source_image_and_output_hashes(self) -> None:
+        text = self.text
+        self.assertIn("task033-complete-$CommitSha.json", text)
+        self.assertIn('schema_version = "task033.campaign-step-marker.v1"', text)
+        self.assertIn("source_commit_full_sha = $CommitSha", text)
+        self.assertIn("docker_image_digest = $ImageDigest", text)
+        self.assertIn("Get-FileSha256 -Path $output", text)
+        self.assertIn("Test-StepComplete", text)
+        self.assertIn("Assert-FormalSourceStable -ExpectedSha $CommitSha", text)
+
+    def test_case090_and_qep_campaign_matrix(self) -> None:
+        text = self.text
+        self.assertIn("foreach ($mpiSize in @(1, 2, 4))", text)
+        self.assertIn("benchmarks.run_task033_case090_watchdog", text)
+        self.assertIn("benchmarks.run_task033_case090_pde_core", text)
+        self.assertIn('"aggregate"', text)
+        self.assertIn('"--memory-summaries"', text)
+        self.assertIn('"--require-pass"', text)
+        self.assertIn(
+            '$QepMaterials = @("air", "lossy_homogeneous", "stage4_xy")',
+            text,
+        )
+        self.assertIn("$Degrees = @(1, 2, 3, 4)", text)
+        self.assertIn("$QepNegativeMpiSizes = @(2, 4)", text)
+        for level in ('Value = "5.0"', 'Value = "3.0"', 'Value = "2.5"'):
+            self.assertIn(level, text)
+        self.assertIn("-MpiSize 1", text)
+        self.assertIn("-ExpectedTimeoutNegative", text)
+        self.assertIn("$summary.terminated_for_timeout -eq $true", text)
+        self.assertIn("$summary.terminated_for_memory -eq $false", text)
+        self.assertIn("Negatives are never supplied to the aggregate", text)
+        self.assertIn('foreach ($negativeMpi in $QepNegativeMpiSizes)', text)
+        self.assertIn('$slug = "stage4_xy_p2_h3"', text)
+
+    def test_hybrid_uniform_anchors_graded_buffers_and_conditional_m240(self) -> None:
+        text = self.text
+        expected_uniform = {
+            "p1_h5",
+            "p1_h3",
+            "p1_h2p5",
+            "p1_h2",
+            "p1_h1p5",
+            "p2_h5",
+            "p2_h3",
+            "p2_h2p5",
+            "p3_h5",
+        }
+        safe_matrix_match = re.search(
+            r"\$safeUniform\s*=\s*@\((.*?)\n\s*\)",
+            text,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(safe_matrix_match)
+        keys = set(re.findall(r'Key\s*=\s*"([^"]+)"', safe_matrix_match.group(1)))
+        self.assertEqual(keys, expected_uniform)
+        self.assertIn("foreach ($modeCount in @(80, 120, 160))", text)
+        self.assertIn("-MpiSize 4", text)
+        self.assertIn('"--incident-grazing-deg", "10.0"', text)
+        self.assertIn('"--polarization-kind", "s"', text)
+        self.assertIn('-SolverPath "augmented"', text)
+        self.assertIn('"--compare-modal-schur"', text)
+        self.assertIn('"--comparison-solver-path", "minimal"', text)
+        self.assertIn('comparison.comparison_solver_path_argument -ne "minimal"', text)
+        self.assertIn("augmented-vs-memory-minimal anchor did not qualify", text)
+        self.assertIn("required_complete_mode_funnel", text)
+        self.assertIn("requires_same_case_and_source_sha_across_funnel", text)
+        self.assertIn("checks.common_candidate_basis_is_m160", text)
+        self.assertIn("p2/h3 watchdog lacks complete same-SHA", text)
+        self.assertIn('Key = "p2_h5_graded"; H = "5.0"', text)
+        self.assertIn('Key = "p2_h3_graded"; H = "3.0"', text)
+        self.assertIn('"buffer_10" = $uniformFunnels["p2_h3"]', text)
+        for buffer_name in ("buffer_7p5", "buffer_5", "buffer_2p5"):
+            self.assertIn(buffer_name, text)
+        self.assertIn("$comparisons[0].mandatory_convergence_pass -eq $false", text)
+        self.assertIn("conditional M240 is prohibited", text)
+        self.assertIn("-RequestedModes 240", text)
+        self.assertIn("-CandidateModes 240", text)
+        self.assertIn('"--m160-funnel-evidence-file"', text)
+        self.assertIn('"--m160-funnel-evidence-sha256"', text)
+
+    def test_primary_aggregates_and_explicit_deferred_follow_up(self) -> None:
+        text = self.text
+        self.assertIn("benchmarks.run_task033_formal_records", text)
+        self.assertIn("Invoke-HostJsonCaptureStep", text)
+        self.assertIn("Invoke-HostFileStep", text)
+        self.assertIn("[string]$HostPythonExecutable", text)
+        for subcommand in (
+            "qep-order-study",
+            "uniform-matrix",
+            "adaptive",
+            "buffer-tradeoff",
+        ):
+            self.assertIn(f'"{subcommand}"', text)
+        self.assertIn("benchmarks.run_task033_variable_p_audit", text)
+        self.assertIn("benchmarks.run_task033_equal_accuracy", text)
+        self.assertIn("benchmarks.run_task033_one_tib_projection", text)
+        self.assertIn(
+            'status = "one_tib_deferred_pending_reviewed_measured_compression_evidence"',
+            text,
+        )
+        self.assertIn('"--watchdog"', text)
+        self.assertIn('"p2_h3=$p2H3SelectedWatchdog"', text)
+        self.assertIn('"--compression-evidence"', text)
+        self.assertIn("Do not classify 1 TiB", text)
+
+    def test_powershell_parser_accepts_script_when_available(self) -> None:
+        executable = shutil.which("pwsh") or shutil.which("powershell")
+        if executable is None:
+            self.skipTest("PowerShell parser is not available")
+        script_path = str(SCRIPT).replace("'", "''")
+        command = (
+            "$tokens=$null; $errors=$null; "
+            "[System.Management.Automation.Language.Parser]::ParseFile("
+            f"'{script_path}', [ref]$tokens, [ref]$errors) | Out-Null; "
+            "if ($errors.Count -ne 0) { "
+            "$errors | ForEach-Object { Write-Error $_.Message }; exit 2 }"
+        )
+        completed = subprocess.run(
+            [executable, "-NoProfile", "-NonInteractive", "-Command", command],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+        self.assertEqual(
+            completed.returncode,
+            0,
+            msg=f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

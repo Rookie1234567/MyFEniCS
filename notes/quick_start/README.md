@@ -29,6 +29,7 @@
 | OOC 与 BLR | [`32_3d_direct_ooc_blr.md`](32_3d_direct_ooc_blr.md) | `3d_stage4b_demo_mumps_*` | experimental direct fallback |
 | MPI4 迭代生产档 | [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md) | 无 main preset | h=5/3/2 已限定验证 |
 | 扫描和新案例 | [`50_parameter_scans_and_new_cases.md`](50_parameter_scans_and_new_cases.md) | 从最近 preset 复制 | 新结果必须降级为未验证 |
+| Task33 高阶 Floquet / Hybrid h-p / 自适应 | [`60_task033_high_order_hybrid_hp.md`](60_task033_high_order_hybrid_hp.md) | 无 main preset | explicit opt-in；planning 可验，formal 当前 NOT_RUN |
 
 ## 旧文档迁移说明
 

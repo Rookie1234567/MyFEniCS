@@ -3,11 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from dolfinx import fem, mesh
+from dolfinx import cpp, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
+from .high_order_floquet_trace import (
+    _alltoallv_json_records,
+    distributed_match_periodic_records,
+    edge_coefficient_transform,
+)
 
 
 @dataclass(frozen=True)
@@ -26,7 +31,12 @@ class CrossSectionFloquetConstraints:
     longitudinal_constraint_count: int
     max_pair_coordinate_error: float
     max_probe_residual: float
-    communication_scope: str = "periodic_boundary_dofs_only"
+    communication_scope: str = "distributed_hash_periodic_boundary_entities_only"
+    orientation_schema: str = "basix_interval_exact_p1_p4"
+    used_full_boundary_gather: bool = False
+    created_dense_boundary_square: bool = False
+    pairing_bytes_sent: int = 0
+    pairing_bytes_received: int = 0
 
 
 @dataclass(frozen=True)
@@ -73,147 +83,150 @@ def _coordinate_key(value: float, tolerance: float) -> int:
     return int(round(float(value) / tolerance))
 
 
-def _facet_probe_arrays(
-    space,
-    *,
-    normal_axis: int,
-    tangent_midpoint: float,
-    tangent_scale: float,
-    kx: float,
-    ky: float,
-    num_probes: int,
-) -> list[np.ndarray]:
-    """Interpolate a fixed number of collective-safe trace probes.
+def _collective_guard(comm, local_errors: list[str], prefix: str) -> None:
+    error_count = int(comm.allreduce(len(local_errors), op=MPI.SUM))
+    if error_count:
+        detail = (
+            local_errors[0] if local_errors else "failure was reported by another rank"
+        )
+        raise RuntimeError(f"{prefix}: global_error_count={error_count}; {detail}.")
 
-    ``Function.x.scatter_forward`` communicates with neighboring ranks.  Every
-    rank must therefore execute the same number of scatters even when its
-    partition owns a different number of exterior facets.
-    """
 
-    arrays: list[np.ndarray] = []
-    tangent_axis = 1 - normal_axis
-    tangent_component = tangent_axis
-    for power in range(num_probes):
-        probe = fem.Function(space, name=f"cross_section_probe_{normal_axis}_{power}")
+def _transverse_entity_dof_map(
+    spaces: CrossSectionSpaces,
+) -> dict[int, dict[str, object]]:
+    """Return Basix entity-ordered N1curl dofs for every local/ghost edge."""
 
-        def field(x, power=power):
-            result = np.zeros((2, x.shape[1]), dtype=np.complex128)
-            eta = (x[tangent_axis] - tangent_midpoint) / tangent_scale
-            result[tangent_component] = eta**power * np.exp(
-                1j * (kx * x[0] + ky * x[1])
+    V = spaces.transverse
+    msh = V.mesh
+    tdim = msh.topology.dim
+    fdim = tdim - 1
+    cell_type = msh.basix_cell()
+    cell_name = str(getattr(cell_type, "name", cell_type))
+    if tdim != 2 or cell_name != "quadrilateral":
+        raise NotImplementedError(
+            "Exact cross-section Floquet constraints require a quadrilateral mesh."
+        )
+    if int(spaces.transverse_degree) not in {1, 2, 3, 4}:
+        raise ValueError(
+            "Task033 qualifies exact cross-section N1curl constraints for p=1..4."
+        )
+
+    msh.topology.create_entity_permutations()
+    msh.topology.create_connectivity(tdim, fdim)
+    cell_to_facet = msh.topology.connectivity(tdim, fdim)
+    cell_map = msh.topology.index_map(tdim)
+    num_cells = int(cell_map.size_local + cell_map.num_ghosts)
+    reference_dofs = [
+        np.asarray(V.dofmap.dof_layout.entity_dofs(fdim, local_facet), dtype=np.int32)
+        for local_facet in range(4)
+    ]
+    if any(len(dofs) != int(spaces.transverse_degree) for dofs in reference_dofs):
+        raise RuntimeError(
+            "Basix/DOLFINx interval entity layout disagrees with the requested "
+            f"N1curl degree p={spaces.transverse_degree}."
+        )
+
+    records: dict[int, dict[str, object]] = {}
+    for cell in range(num_cells):
+        facets = cell_to_facet.links(cell)
+        cell_dofs = V.dofmap.cell_dofs(cell)
+        if len(facets) != 4:
+            raise RuntimeError(
+                "A quadrilateral cell must expose four interval entities."
             )
-            return result
+        for local_facet, facet in enumerate(facets):
+            collapsed_dofs = np.asarray(
+                [int(cell_dofs[int(index)]) for index in reference_dofs[local_facet]],
+                dtype=np.int32,
+            )
+            parent_local, parent_global, parent_owners, parent_owned = _parent_info(
+                spaces, spaces.transverse_to_mixed, collapsed_dofs
+            )
+            record = {
+                "facet": int(facet),
+                "collapsed_dofs": collapsed_dofs,
+                "parent_local": parent_local,
+                "parent_global": parent_global,
+                "parent_owners": parent_owners,
+                "parent_owned": parent_owned,
+                "touches_owned_cell": bool(cell < cell_map.size_local),
+            }
+            current = records.get(int(facet))
+            if current is not None and not np.array_equal(
+                np.asarray(current["parent_global"], dtype=np.int64), parent_global
+            ):
+                raise RuntimeError(
+                    "DOLFINx returned inconsistent global coefficient ordering "
+                    f"for cross-section edge {int(facet)}."
+                )
+            if current is None:
+                records[int(facet)] = record
+            else:
+                current["touches_owned_cell"] = bool(
+                    current["touches_owned_cell"]
+                ) or bool(record["touches_owned_cell"])
+                if np.any(parent_owned) and not np.any(current["parent_owned"]):
+                    record["touches_owned_cell"] = bool(
+                        record["touches_owned_cell"]
+                    ) or bool(current["touches_owned_cell"])
+                    records[int(facet)] = record
+    return records
 
-        probe.interpolate(field)
-        probe.x.scatter_forward()
-        arrays.append(np.asarray(probe.x.array, dtype=np.complex128).copy())
-    return arrays
 
-
-def _local_facet_records(
+def _local_transverse_records(
     cross_section: CrossSectionMesh,
     spaces: CrossSectionSpaces,
+    dof_map: dict[int, dict[str, object]],
     *,
     normal_axis: int,
     side: str,
-    kx: float,
-    ky: float,
     tolerance: float,
 ) -> list[dict[str, object]]:
     msh = cross_section.mesh
     fdim = msh.topology.dim - 1
-    coordinate = (
-        cross_section.x_values[0 if side == "min" else -1]
-        if normal_axis == 0
-        else cross_section.y_values[0 if side == "min" else -1]
+    boundary_values = (
+        cross_section.x_values if normal_axis == 0 else cross_section.y_values
     )
-    facets = mesh.locate_entities_boundary(
-        msh,
-        fdim,
-        lambda x: np.isclose(x[normal_axis], coordinate, atol=tolerance, rtol=0.0),
-    )
-    midpoints = mesh.compute_midpoints(msh, fdim, facets)
-    facet_index_map = msh.topology.index_map(fdim)
-    tangent_axis = 1 - normal_axis
-    tangent_scale = max(
-        float(
-            (cross_section.y_values[-1] - cross_section.y_values[0])
-            if tangent_axis == 1
-            else (cross_section.x_values[-1] - cross_section.x_values[0])
+    coordinate = float(boundary_values[0 if side == "min" else -1])
+    facets = np.asarray(
+        mesh.locate_entities_boundary(
+            msh,
+            fdim,
+            lambda x: np.isclose(x[normal_axis], coordinate, atol=tolerance, rtol=0.0),
         ),
-        1.0e-12,
+        dtype=np.int32,
     )
-    pending_records: list[dict[str, object]] = []
-    for facet, midpoint in zip(facets, midpoints):
-        dofs = np.asarray(
-            fem.locate_dofs_topological(
-                spaces.transverse,
-                fdim,
-                np.asarray([facet], dtype=np.int32),
-                remote=False,
-            ),
-            dtype=np.int32,
+    if len(facets) == 0:
+        return []
+    midpoints = mesh.compute_midpoints(msh, fdim, facets)
+    geometry = cpp.mesh.entities_to_geometry(msh._cpp_object, fdim, facets, True)
+    records: list[dict[str, object]] = []
+    for facet, midpoint, geometry_dofs in zip(facets, midpoints, geometry, strict=True):
+        dofs = dof_map.get(int(facet))
+        if dofs is None:
+            raise RuntimeError(
+                f"No exact N1curl entity dof record exists for boundary edge {int(facet)}."
+            )
+        coordinates = np.asarray(
+            msh.geometry.x[np.asarray(geometry_dofs, dtype=np.int64)],
+            dtype=np.float64,
         )
-        if len(dofs) == 0:
-            raise RuntimeError("No transverse H(curl) dofs were found on a periodic facet.")
-        _, parent_global, parent_owners, _ = _parent_info(
-            spaces, spaces.transverse_to_mixed, dofs
-        )
-        pending_records.append(
+        if coordinates.shape[0] != 2:
+            raise RuntimeError(
+                "Task033 exact interval orientation requires linear edge geometry."
+            )
+        tangent = np.asarray(coordinates[1] - coordinates[0], dtype=np.float64)
+        if float(np.linalg.norm(tangent)) <= 1.0e-30:
+            raise RuntimeError("A periodic cross-section edge has a zero tangent.")
+        records.append(
             {
-                "key": _coordinate_key(float(midpoint[tangent_axis]), tolerance),
-                "tangent": float(midpoint[tangent_axis]),
-                "parent_global": parent_global.tolist(),
-                "parent_owners": parent_owners.tolist(),
-                "dofs": dofs,
-                "facet_owned": bool(int(facet) < facet_index_map.size_local),
-                "rank": msh.comm.rank,
+                **dofs,
+                "midpoint": np.asarray(midpoint, dtype=np.float64),
+                "tangent": tangent,
             }
         )
-    num_probes = max(2 * int(spaces.transverse_degree) + 2, 4)
-    # The midpoint merely centers polynomial probes.  On a structured matching
-    # pair, using one common center per side preserves the exact translated
-    # trace relation and keeps the interpolation collective count fixed.
-    common_midpoint = 0.5 * float(
-        (cross_section.y_values[0] + cross_section.y_values[-1])
-        if tangent_axis == 1
-        else (cross_section.x_values[0] + cross_section.x_values[-1])
-    )
-    probe_arrays = _facet_probe_arrays(
-        spaces.transverse,
-        normal_axis=normal_axis,
-        tangent_midpoint=common_midpoint,
-        tangent_scale=tangent_scale,
-        kx=kx,
-        ky=ky,
-        num_probes=num_probes,
-    )
-    records: list[dict[str, object]] = []
-    for record in pending_records:
-        dofs = np.asarray(record.pop("dofs"), dtype=np.int32)
-        values = np.column_stack([array[dofs] for array in probe_arrays])
-        record["probe_values"] = values.tolist()
-        records.append(record)
     return records
-
-
-def _merge_facet_records(
-    records_by_rank: list[list[dict[str, object]]],
-) -> dict[int, dict[str, object]]:
-    merged: dict[int, dict[str, object]] = {}
-    for records in records_by_rank:
-        for record in records:
-            key = int(record["key"])
-            priority = (not bool(record["facet_owned"]), int(record["rank"]))
-            old = merged.get(key)
-            old_priority = (
-                (not bool(old["facet_owned"]), int(old["rank"]))
-                if old is not None
-                else None
-            )
-            if old is None or priority < old_priority:
-                merged[key] = record
-    return merged
 
 
 def _owned_parent_lookup(spaces: CrossSectionSpaces) -> dict[int, int]:
@@ -223,7 +236,10 @@ def _owned_parent_lookup(spaces: CrossSectionSpaces) -> dict[int, int]:
         raise NotImplementedError("Cross-section mixed-space block size must be one.")
     local = np.arange(index_map.size_local, dtype=np.int32)
     global_dofs = index_map.local_to_global(local).astype(np.int64)
-    return {int(global_dof): int(local_dof) for local_dof, global_dof in zip(local, global_dofs)}
+    return {
+        int(global_dof): int(local_dof)
+        for local_dof, global_dof in zip(local, global_dofs)
+    }
 
 
 def _transverse_axis_constraints(
@@ -231,95 +247,148 @@ def _transverse_axis_constraints(
     spaces: CrossSectionSpaces,
     *,
     normal_axis: int,
-    kx: float,
-    ky: float,
     phase: complex,
     tolerance: float,
-) -> tuple[list[tuple[int, int, list[int], list[int], list[complex]]], float, float]:
+) -> tuple[
+    list[tuple[int, int, list[int], list[int], list[complex]]],
+    float,
+    int,
+    int,
+]:
     comm = cross_section.mesh.comm
-    low = _merge_facet_records(
-        comm.allgather(
-            _local_facet_records(
-                cross_section,
-                spaces,
-                normal_axis=normal_axis,
-                side="min",
-                kx=kx,
-                ky=ky,
-                tolerance=tolerance,
-            )
-        )
+    dof_map = _transverse_entity_dof_map(spaces)
+    low = _local_transverse_records(
+        cross_section,
+        spaces,
+        dof_map,
+        normal_axis=normal_axis,
+        side="min",
+        tolerance=tolerance,
     )
-    high = _merge_facet_records(
-        comm.allgather(
-            _local_facet_records(
-                cross_section,
-                spaces,
-                normal_axis=normal_axis,
-                side="max",
-                kx=kx,
-                ky=ky,
-                tolerance=tolerance,
-            )
-        )
+    high = _local_transverse_records(
+        cross_section,
+        spaces,
+        dof_map,
+        normal_axis=normal_axis,
+        side="max",
+        tolerance=tolerance,
     )
-    if set(low) != set(high):
-        raise RuntimeError(
-            f"Periodic facet keys differ on axis {normal_axis}: min={sorted(low)}, max={sorted(high)}"
-        )
+    span = float(
+        (cross_section.x_values[-1] - cross_section.x_values[0])
+        if normal_axis == 0
+        else (cross_section.y_values[-1] - cross_section.y_values[0])
+    )
+    tangent_axis = 1 - normal_axis
+    packets: list[dict] = []
+    slaves_by_token: dict[str, dict[str, object]] = {}
+    for role, records in (("master", low), ("slave", high)):
+        for record in records:
+            midpoint = np.asarray(record["midpoint"], dtype=np.float64)
+            canonical = midpoint.copy()
+            if role == "slave":
+                canonical[normal_axis] -= span
+            token = f"t:{normal_axis}:{int(record['facet'])}"
+            if role == "slave":
+                if token in slaves_by_token:
+                    raise RuntimeError(
+                        f"Duplicate local transverse slave token {token}."
+                    )
+                slaves_by_token[token] = record
+            packets.append(
+                {
+                    "pair_key": [
+                        1,
+                        normal_axis + 1,
+                        _coordinate_key(float(canonical[0]), tolerance),
+                        _coordinate_key(float(canonical[1]), tolerance),
+                        tangent_axis,
+                    ],
+                    "role": role,
+                    "global_dofs": [
+                        int(value)
+                        for value in np.asarray(record["parent_global"], dtype=np.int64)
+                    ],
+                    "owners": [
+                        int(value)
+                        for value in np.asarray(record["parent_owners"], dtype=np.int32)
+                    ],
+                    "owns_any": bool(np.any(record["parent_owned"])),
+                    "reply_rank": int(comm.rank),
+                    "token": token,
+                    "midpoint": [float(value) for value in midpoint],
+                    "tangent": [
+                        float(value)
+                        for value in np.asarray(record["tangent"], dtype=np.float64)
+                    ],
+                }
+            )
 
-    owned_parent = _owned_parent_lookup(spaces)
+    replies, metrics = distributed_match_periodic_records(comm, packets)
+    replies_by_token = {str(reply["token"]): reply for reply in replies}
+    local_errors: list[str] = []
+    if len(replies_by_token) != len(replies):
+        local_errors.append("duplicate distributed transverse pairing replies")
+    if set(replies_by_token) != set(slaves_by_token):
+        local_errors.append("reply tokens disagree with local transverse slave tokens")
+    _collective_guard(comm, local_errors, "Exact transverse Floquet pairing failed")
+
     rows: list[tuple[int, int, list[int], list[int], list[complex]]] = []
     max_pair_error = 0.0
-    max_probe_residual = 0.0
-    for key in sorted(low):
-        low_record = low[key]
-        high_record = high[key]
-        max_pair_error = max(
-            max_pair_error,
-            abs(float(low_record["tangent"]) - float(high_record["tangent"])),
-        )
-        low_values = np.asarray(low_record["probe_values"], dtype=np.complex128)
-        high_values = np.asarray(high_record["probe_values"], dtype=np.complex128)
-        rank = np.linalg.matrix_rank(low_values, tol=1.0e-11)
-        if rank < low_values.shape[0]:
+    for token, record in slaves_by_token.items():
+        master = replies_by_token[token]["master"]
+        target = np.asarray(record["midpoint"], dtype=np.float64).copy()
+        target[normal_axis] -= span
+        master_midpoint = np.asarray(master["midpoint"], dtype=np.float64)
+        pair_error = float(np.linalg.norm(target - master_midpoint))
+        max_pair_error = max(max_pair_error, pair_error)
+        if pair_error > 10.0 * tolerance:
             raise RuntimeError(
-                f"Periodic probe rank {rank} is smaller than {low_values.shape[0]} on axis {normal_axis}."
+                "Exact transverse Floquet pair exceeds coordinate tolerance: "
+                f"axis={normal_axis}, token={token}, error={pair_error:.3e}."
             )
-        transform = (high_values / phase) @ np.linalg.pinv(low_values)
-        residual = high_values - phase * transform @ low_values
-        max_probe_residual = max(
-            max_probe_residual,
-            float(np.linalg.norm(residual) / max(np.linalg.norm(high_values), 1.0e-30)),
+        tangent = np.asarray(record["tangent"], dtype=np.float64)
+        master_tangent = np.asarray(master["tangent"], dtype=np.float64)
+        tangent_dot = float(np.dot(tangent, master_tangent))
+        tangent_norm = float(np.linalg.norm(tangent) * np.linalg.norm(master_tangent))
+        if tangent_norm <= 1.0e-30 or abs(tangent_dot) / tangent_norm < 0.99:
+            raise RuntimeError(
+                "Paired cross-section interval tangents are not collinear."
+            )
+        transform = edge_coefficient_transform(
+            int(spaces.transverse_degree),
+            reversed_orientation=tangent_dot < 0.0,
         )
-
-        low_global = np.asarray(low_record["parent_global"], dtype=np.int64)
-        low_owners = np.asarray(low_record["parent_owners"], dtype=np.int32)
-        high_global = np.asarray(high_record["parent_global"], dtype=np.int64)
-        high_owners = np.asarray(high_record["parent_owners"], dtype=np.int32)
-        cutoff = max(1.0e-13, 1.0e-11 * float(np.max(np.abs(transform))))
-        for row_index, (slave_global, slave_owner) in enumerate(
-            zip(high_global, high_owners)
-        ):
-            if int(slave_owner) != comm.rank:
+        slave_global = np.asarray(record["parent_global"], dtype=np.int64)
+        slave_local = np.asarray(record["parent_local"], dtype=np.int64)
+        slave_owned = np.asarray(record["parent_owned"], dtype=bool)
+        master_global = np.asarray(master["global_dofs"], dtype=np.int64)
+        master_owners = np.asarray(master["owners"], dtype=np.int32)
+        if transform.shape != (len(slave_global), len(master_global)):
+            raise RuntimeError(
+                "Basix interval transform shape disagrees with paired entity dofs."
+            )
+        for row_index, is_owned in enumerate(slave_owned):
+            if not bool(is_owned):
                 continue
-            slave_local = owned_parent.get(int(slave_global))
-            if slave_local is None:
-                raise RuntimeError("An owned transverse slave has no local mixed-space index.")
             row_coefficients = phase * transform[row_index]
+            cutoff = max(
+                1.0e-14,
+                1.0e-13 * float(np.max(np.abs(row_coefficients), initial=0.0)),
+            )
             selected = np.flatnonzero(np.abs(row_coefficients) > cutoff)
             if len(selected) == 0:
-                selected = np.asarray([int(np.argmax(np.abs(row_coefficients)))])
+                raise RuntimeError("An exact Basix interval row has no nonzero master.")
             rows.append(
                 (
-                    slave_local,
-                    int(slave_global),
-                    [int(value) for value in low_global[selected]],
-                    [int(value) for value in low_owners[selected]],
+                    int(slave_local[row_index]),
+                    int(slave_global[row_index]),
+                    [int(value) for value in master_global[selected]],
+                    [int(value) for value in master_owners[selected]],
                     [complex(value) for value in row_coefficients[selected]],
                 )
             )
-    return rows, max_pair_error, max_probe_residual
+    max_pair_error = float(comm.allreduce(max_pair_error, op=MPI.MAX))
+    return rows, max_pair_error, int(metrics.bytes_sent), int(metrics.bytes_received)
 
 
 def _longitudinal_constraints(
@@ -329,81 +398,227 @@ def _longitudinal_constraints(
     phase_x: complex,
     phase_y: complex,
     tolerance: float,
-) -> list[tuple[int, int, list[int], list[int], list[complex]]]:
+) -> tuple[
+    list[tuple[int, int, list[int], list[int], list[complex]]],
+    float,
+    int,
+    int,
+]:
     Vz = spaces.longitudinal
     comm = cross_section.mesh.comm
     coordinates = np.asarray(Vz.tabulate_dof_coordinates(), dtype=np.float64)
     all_local = np.arange(len(coordinates), dtype=np.int32)
-    _, parent_global, parent_owners, parent_owned = _parent_info(
+    parent_local, parent_global, parent_owners, parent_owned = _parent_info(
         spaces, spaces.longitudinal_to_mixed, all_local
     )
 
     x_min, x_max = cross_section.x_values[[0, -1]]
     y_min, y_max = cross_section.y_values[[0, -1]]
 
-    local_master_records: list[tuple[int, int, int, int]] = []
-    for dof, coordinate in enumerate(coordinates):
-        if not parent_owned[dof]:
-            continue
-        on_master_edge = np.isclose(coordinate[0], x_min, atol=tolerance, rtol=0.0) or np.isclose(
-            coordinate[1], y_min, atol=tolerance, rtol=0.0
-        )
-        if on_master_edge:
-            local_master_records.append(
-                (
-                    _coordinate_key(coordinate[0], tolerance),
-                    _coordinate_key(coordinate[1], tolerance),
-                    int(parent_global[dof]),
-                    int(parent_owners[dof]),
-                )
-            )
-    master_records = [
-        record for records in comm.allgather(local_master_records) for record in records
-    ]
-    master_by_coordinate = {
-        (record[0], record[1]): (record[2], record[3]) for record in master_records
+    length_x = float(x_max - x_min)
+    length_y = float(y_max - y_min)
+    phase_by_kind = {
+        "x": complex(phase_x),
+        "y": complex(phase_y),
+        "corner": complex(phase_x) * complex(phase_y),
     }
+    code_by_kind = {"x": 1, "y": 2, "corner": 3}
+    packets: list[dict] = []
+    slaves_by_token: dict[str, dict[str, object]] = {}
+    for dof, coordinate in enumerate(coordinates):
+        on_x_min = bool(np.isclose(coordinate[0], x_min, atol=tolerance, rtol=0.0))
+        on_x_max = bool(np.isclose(coordinate[0], x_max, atol=tolerance, rtol=0.0))
+        on_y_min = bool(np.isclose(coordinate[1], y_min, atol=tolerance, rtol=0.0))
+        on_y_max = bool(np.isclose(coordinate[1], y_max, atol=tolerance, rtol=0.0))
+        specifications: list[tuple[str, str]] = []
+        if on_x_min and not on_y_max:
+            specifications.append(("x", "master"))
+        if on_y_min and not on_x_max:
+            specifications.append(("y", "master"))
+        if on_x_min and on_y_min:
+            specifications.append(("corner", "master"))
+        if on_x_max and on_y_max:
+            specifications.append(("corner", "slave"))
+        elif on_x_max:
+            specifications.append(("x", "slave"))
+        elif on_y_max:
+            specifications.append(("y", "slave"))
+
+        for kind, role in specifications:
+            canonical = np.asarray(coordinate, dtype=np.float64).copy()
+            if role == "slave":
+                if kind in {"x", "corner"}:
+                    canonical[0] -= length_x
+                if kind in {"y", "corner"}:
+                    canonical[1] -= length_y
+            token = f"l:{kind}:{dof}"
+            if role == "slave":
+                if token in slaves_by_token:
+                    raise RuntimeError(
+                        f"Duplicate local longitudinal slave token {token}."
+                    )
+                slaves_by_token[token] = {
+                    "kind": kind,
+                    "coordinate": np.asarray(coordinate, dtype=np.float64),
+                    "parent_local": int(parent_local[dof]),
+                    "parent_global": int(parent_global[dof]),
+                    "parent_owner": int(parent_owners[dof]),
+                    "parent_owned": bool(parent_owned[dof]),
+                }
+            packets.append(
+                {
+                    "pair_key": [
+                        0,
+                        code_by_kind[kind],
+                        _coordinate_key(float(canonical[0]), tolerance),
+                        _coordinate_key(float(canonical[1]), tolerance),
+                    ],
+                    "role": role,
+                    "global_dofs": [int(parent_global[dof])],
+                    "owners": [int(parent_owners[dof])],
+                    "owns_any": bool(parent_owned[dof]),
+                    "reply_rank": int(comm.rank),
+                    "token": token,
+                    # Hash/signature coordinate: ghost copies may differ by a
+                    # final floating-point bit.  Keep the unrounded coordinate
+                    # separately for the geometric error gate below.
+                    "midpoint": [
+                        float(_coordinate_key(float(value), tolerance) * tolerance)
+                        for value in coordinate
+                    ],
+                    "actual_coordinate": [float(value) for value in coordinate],
+                }
+            )
+
+    replies, metrics = distributed_match_periodic_records(comm, packets)
+    replies_by_token = {str(reply["token"]): reply for reply in replies}
+    local_errors: list[str] = []
+    if len(replies_by_token) != len(replies):
+        local_errors.append("duplicate distributed longitudinal pairing replies")
+    if set(replies_by_token) != set(slaves_by_token):
+        local_errors.append(
+            "reply tokens disagree with local longitudinal slave tokens"
+        )
+    _collective_guard(comm, local_errors, "Exact longitudinal Floquet pairing failed")
 
     rows: list[tuple[int, int, list[int], list[int], list[complex]]] = []
-    owned_parent = _owned_parent_lookup(spaces)
-    for dof, coordinate in enumerate(coordinates):
-        if not parent_owned[dof]:
+    max_pair_error = 0.0
+    for token, record in slaves_by_token.items():
+        master = replies_by_token[token]["master"]
+        kind = str(record["kind"])
+        target = np.asarray(record["coordinate"], dtype=np.float64).copy()
+        if kind in {"x", "corner"}:
+            target[0] -= length_x
+        if kind in {"y", "corner"}:
+            target[1] -= length_y
+        master_coordinate = np.asarray(master["actual_coordinate"], dtype=np.float64)
+        pair_error = float(np.linalg.norm(target - master_coordinate))
+        max_pair_error = max(max_pair_error, pair_error)
+        if pair_error > 10.0 * tolerance:
+            raise RuntimeError(
+                "Exact longitudinal Floquet pair exceeds coordinate tolerance: "
+                f"kind={kind}, token={token}, error={pair_error:.3e}."
+            )
+        if not bool(record["parent_owned"]):
             continue
-        on_right = np.isclose(coordinate[0], x_max, atol=tolerance, rtol=0.0)
-        on_top = np.isclose(coordinate[1], y_max, atol=tolerance, rtol=0.0)
-        if not (on_right or on_top):
-            continue
-
-        if on_right and on_top:
-            master_coordinate = (x_min, y_min)
-            coefficient = phase_x * phase_y
-        elif on_right:
-            master_coordinate = (x_min, coordinate[1])
-            coefficient = phase_x
-        else:
-            master_coordinate = (coordinate[0], y_min)
-            coefficient = phase_y
-        key = (
-            _coordinate_key(master_coordinate[0], tolerance),
-            _coordinate_key(master_coordinate[1], tolerance),
-        )
-        if key not in master_by_coordinate:
-            raise RuntimeError(f"No scalar periodic master was found at coordinate key {key}.")
-        master_global, master_owner = master_by_coordinate[key]
-        slave_global = int(parent_global[dof])
-        slave_local = owned_parent.get(slave_global)
-        if slave_local is None:
-            raise RuntimeError("An owned longitudinal slave has no local mixed-space index.")
+        master_global = np.asarray(master["global_dofs"], dtype=np.int64)
+        master_owner = np.asarray(master["owners"], dtype=np.int32)
+        if len(master_global) != 1 or len(master_owner) != 1:
+            raise RuntimeError("A scalar periodic pair must expose one master dof.")
         rows.append(
             (
-                slave_local,
-                slave_global,
-                [int(master_global)],
-                [int(master_owner)],
-                [complex(coefficient)],
+                int(record["parent_local"]),
+                int(record["parent_global"]),
+                [int(master_global[0])],
+                [int(master_owner[0])],
+                [phase_by_kind[kind]],
             )
         )
-    return rows
+    max_pair_error = float(comm.allreduce(max_pair_error, op=MPI.MAX))
+    return rows, max_pair_error, int(metrics.bytes_sent), int(metrics.bytes_received)
+
+
+def _distributed_owner_lookup(
+    spaces: CrossSectionSpaces,
+    masters: np.ndarray,
+    owners: np.ndarray,
+    *,
+    owned_values: dict[int, int],
+    local_slaves: set[int],
+    context: str,
+) -> tuple[dict[int, int], int, int]:
+    """Resolve owner-held values and reject slave masters without global maps."""
+
+    comm = spaces.mixed.mesh.comm
+    if len(masters) != len(owners):
+        raise ValueError("Master dofs and owner arrays have different lengths.")
+    owner_by_master: dict[int, int] = {}
+    local_errors: list[str] = []
+    for master, owner in zip(masters, owners, strict=True):
+        master_int = int(master)
+        owner_int = int(owner)
+        if not 0 <= owner_int < int(comm.size):
+            local_errors.append(f"invalid owner {owner_int} for master {master_int}")
+            continue
+        previous = owner_by_master.setdefault(master_int, owner_int)
+        if previous != owner_int:
+            local_errors.append(
+                f"conflicting owners {previous}/{owner_int} for master {master_int}"
+            )
+    _collective_guard(comm, local_errors, f"{context} owner declarations failed")
+
+    request_buckets: list[list[dict]] = [[] for _ in range(int(comm.size))]
+    for master, owner in sorted(owner_by_master.items()):
+        request_buckets[owner].append(
+            {
+                "master": master,
+                "request_rank": int(comm.rank),
+            }
+        )
+    received, first_sent, first_received = _alltoallv_json_records(
+        comm, request_buckets
+    )
+    reply_buckets: list[list[dict]] = [[] for _ in range(int(comm.size))]
+    for request in received:
+        master = int(request["master"])
+        if master in local_slaves:
+            status = "slave_chain"
+            value = -1
+        elif master not in owned_values:
+            status = "not_owned_by_declared_rank"
+            value = -1
+        else:
+            status = "ok"
+            value = int(owned_values[master])
+        reply_buckets[int(request["request_rank"])].append(
+            {
+                "master": master,
+                "status": status,
+                "value": value,
+            }
+        )
+    replies, second_sent, second_received = _alltoallv_json_records(comm, reply_buckets)
+    resolved: dict[int, int] = {}
+    local_errors = []
+    for reply in replies:
+        master = int(reply["master"])
+        status = str(reply["status"])
+        if status != "ok":
+            local_errors.append(f"master {master}: {status}")
+            continue
+        if master in resolved and resolved[master] != int(reply["value"]):
+            local_errors.append(f"master {master}: conflicting owner values")
+            continue
+        resolved[master] = int(reply["value"])
+    missing = set(owner_by_master) - set(resolved)
+    if missing and not local_errors:
+        local_errors.append(f"missing replies for masters {sorted(missing)[:5]}")
+    _collective_guard(comm, local_errors, f"{context} distributed owner query failed")
+    return (
+        resolved,
+        int(first_sent + second_sent),
+        int(first_received + second_received),
+    )
 
 
 def build_cross_section_floquet_constraints(
@@ -413,10 +628,11 @@ def build_cross_section_floquet_constraints(
     kx: float,
     ky: float,
 ) -> CrossSectionFloquetConstraints:
-    """Build orientation-aware double-periodic constraints on the mixed space.
+    """Build exact p1--p4 double-periodic constraints on the mixed space.
 
-    Only periodic-boundary records are replicated.  Interior vectors and
-    matrices stay distributed.
+    Boundary entities are hash-routed to pairing ranks and replied only to
+    contributing slave ranks.  No boundary-sized global map or probe fit is
+    constructed.
     """
 
     length_x = float(cross_section.x_values[-1] - cross_section.x_values[0])
@@ -425,25 +641,21 @@ def build_cross_section_floquet_constraints(
     phase_y = complex(np.exp(1j * ky * length_y))
     tolerance = 1.0e-11 * max(length_x, length_y, 1.0)
 
-    transverse_x, pair_x, probe_x = _transverse_axis_constraints(
+    transverse_x, pair_x, sent_x, received_x = _transverse_axis_constraints(
         cross_section,
         spaces,
         normal_axis=0,
-        kx=kx,
-        ky=ky,
         phase=phase_x,
         tolerance=tolerance,
     )
-    transverse_y, pair_y, probe_y = _transverse_axis_constraints(
+    transverse_y, pair_y, sent_y, received_y = _transverse_axis_constraints(
         cross_section,
         spaces,
         normal_axis=1,
-        kx=kx,
-        ky=ky,
         phase=phase_y,
         tolerance=tolerance,
     )
-    longitudinal = _longitudinal_constraints(
+    longitudinal, pair_z, sent_z, received_z = _longitudinal_constraints(
         cross_section,
         spaces,
         phase_x=phase_x,
@@ -467,15 +679,32 @@ def build_cross_section_floquet_constraints(
         coefficients.extend(row_coefficients)
         offsets.append(len(master_global))
 
-    local_slaves = list(slave_global)
-    slaves_by_rank = cross_section.mesh.comm.allgather(local_slaves)
-    all_slaves = {
-        int(value) for values in slaves_by_rank for value in values
-    }
-    if len(all_slaves) != sum(len(values) for values in slaves_by_rank):
-        raise RuntimeError("A mixed-space periodic slave is owned by more than one rank.")
-    if any(int(master) in all_slaves for master in master_global):
-        raise RuntimeError("Periodic masters must not also be slave dofs.")
+    comm = cross_section.mesh.comm
+    local_slave_set = {int(value) for value in slave_global}
+    owned_parent = _owned_parent_lookup(spaces)
+    local_errors: list[str] = []
+    if len(local_slave_set) != len(slave_global):
+        local_errors.append("duplicate locally owned mixed-space slave rows")
+    for local, global_dof in zip(slave_local, slave_global, strict=True):
+        if owned_parent.get(int(global_dof)) != int(local):
+            local_errors.append(
+                f"slave {int(global_dof)} is not owned at mixed local row {int(local)}"
+            )
+            break
+    _collective_guard(comm, local_errors, "Cross-section slave ownership failed")
+    _, owner_sent, owner_received = _distributed_owner_lookup(
+        spaces,
+        np.asarray(master_global, dtype=np.int64),
+        np.asarray(master_owners, dtype=np.int32),
+        owned_values=owned_parent,
+        local_slaves=local_slave_set,
+        context="Cross-section master-to-slave chain veto",
+    )
+
+    local_sent = sent_x + sent_y + sent_z + owner_sent
+    local_received = received_x + received_y + received_z + owner_received
+    global_sent = int(comm.allreduce(local_sent, op=MPI.SUM))
+    global_received = int(comm.allreduce(local_received, op=MPI.SUM))
 
     return CrossSectionFloquetConstraints(
         slave_local=np.asarray(slave_local, dtype=np.int32),
@@ -488,8 +717,10 @@ def build_cross_section_floquet_constraints(
         phase_y=phase_y,
         transverse_constraint_count=len(transverse_x) + len(transverse_y),
         longitudinal_constraint_count=len(longitudinal),
-        max_pair_coordinate_error=max(pair_x, pair_y),
-        max_probe_residual=max(probe_x, probe_y),
+        max_pair_coordinate_error=max(pair_x, pair_y, pair_z),
+        max_probe_residual=0.0,
+        pairing_bytes_sent=global_sent,
+        pairing_bytes_received=global_received,
     )
 
 
@@ -503,31 +734,49 @@ def build_distributed_constraint_transform(
     comm = V.mesh.comm
     index_map = V.dofmap.index_map
     if int(V.dofmap.index_map_bs) != 1:
-        raise NotImplementedError("The QEP constraint transform currently requires block size one.")
+        raise NotImplementedError(
+            "The QEP constraint transform currently requires block size one."
+        )
     full_local = int(index_map.size_local)
     full_global = int(index_map.size_global)
     ownership_start, ownership_end = map(int, index_map.local_range)
-
-    global_slaves = np.asarray(
-        sorted(
-            int(value)
-            for values in comm.allgather(constraints.slave_global.tolist())
-            for value in values
-        ),
-        dtype=np.int64,
+    local_slaves = {int(value) for value in constraints.slave_global}
+    local_errors: list[str] = []
+    if len(local_slaves) != len(constraints.slave_global):
+        local_errors.append("duplicate locally owned slave rows")
+    outside = sorted(
+        slave for slave in local_slaves if not ownership_start <= slave < ownership_end
     )
-    if len(np.unique(global_slaves)) != len(global_slaves):
-        raise RuntimeError("Duplicate globally owned slave rows were detected.")
-    slave_set = set(int(value) for value in global_slaves)
-    if any(int(master) in slave_set for master in constraints.master_global):
-        raise RuntimeError("Constraint transform cannot contain slave-to-slave chains.")
+    if outside:
+        local_errors.append(f"non-owned slave rows {outside[:5]}")
+    _collective_guard(comm, local_errors, "Constraint transform slave audit failed")
 
-    reduced_global = full_global - len(global_slaves)
-    local_slave_count = len(constraints.slave_global)
-    reduced_local = full_local - local_slave_count
-
-    def reduced_index(global_dof: int) -> int:
-        return int(global_dof - np.searchsorted(global_slaves, global_dof, side="left"))
+    free_globals = [
+        global_dof
+        for global_dof in range(ownership_start, ownership_end)
+        if global_dof not in local_slaves
+    ]
+    reduced_local = len(free_globals)
+    prefix = comm.exscan(reduced_local, op=MPI.SUM)
+    reduced_start = 0 if prefix is None else int(prefix)
+    owned_free_reduced = {
+        int(global_dof): int(reduced_start + local_index)
+        for local_index, global_dof in enumerate(free_globals)
+    }
+    reduced_global = int(comm.allreduce(reduced_local, op=MPI.SUM))
+    global_slave_count = int(comm.allreduce(len(local_slaves), op=MPI.SUM))
+    if reduced_global != full_global - global_slave_count:
+        raise RuntimeError(
+            "Distributed free-dof numbering does not conserve the full-space size."
+        )
+    reduced_master, _, _ = _distributed_owner_lookup(
+        spaces,
+        constraints.master_global,
+        constraints.master_owners,
+        owned_values=owned_free_reduced,
+        local_slaves=local_slaves,
+        context="Constraint transform reduced-index lookup",
+    )
 
     C = PETSc.Mat().createAIJ(
         size=((full_local, full_global), (reduced_local, reduced_global)),
@@ -541,12 +790,12 @@ def build_distributed_constraint_transform(
     for global_row in range(ownership_start, ownership_end):
         constraint_row = local_constraint_rows.get(global_row)
         if constraint_row is None:
-            C.setValue(global_row, reduced_index(global_row), 1.0)
+            C.setValue(global_row, owned_free_reduced[global_row], 1.0)
             continue
         start = int(constraints.offsets[constraint_row])
         stop = int(constraints.offsets[constraint_row + 1])
         columns = [
-            reduced_index(int(master))
+            reduced_master[int(master)]
             for master in constraints.master_global[start:stop]
         ]
         C.setValues(
@@ -561,7 +810,11 @@ def build_distributed_constraint_transform(
         reduced_global_size=reduced_global,
         full_local_size=full_local,
         reduced_local_size=reduced_local,
-        global_slave_count=len(global_slaves),
+        global_slave_count=global_slave_count,
+        ownership_note=(
+            "Owned free rows use rank-local order plus MPI exscan; remote master "
+            "columns are resolved by owner query; no global slave map"
+        ),
     )
 
 

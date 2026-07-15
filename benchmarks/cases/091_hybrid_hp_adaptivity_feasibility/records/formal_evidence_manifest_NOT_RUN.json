@@ -1,0 +1,39 @@
+{
+  "schema_version": "task033.case091.formal-evidence-manifest.v1",
+  "record_type": "task033_formal_evidence_manifest",
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "status": "not_run",
+  "identity": {
+    "is_formal_evidence_submission": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "claims_task033_complete": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false
+  },
+  "required_roles": [
+    "case090_clean_core",
+    "case090_mpi_memory",
+    "qep_order_study",
+    "qep_mpi_timeout_negative",
+    "hybrid_funnel_p1",
+    "hybrid_funnel_p3",
+    "uniform_p_h_matrix",
+    "adaptive_p2_h5",
+    "adaptive_p2_h3",
+    "interface_buffer_10",
+    "interface_buffer_7p5",
+    "interface_buffer_5",
+    "interface_buffer_2p5",
+    "interface_buffer_tradeoff",
+    "variable_p_capability_audit",
+    "one_tib_projection"
+  ],
+  "clean_source_sha": null,
+  "entries": [],
+  "reason": "Formal Case090/091 evidence has not been supplied; this committed manifest is a fail-closed inventory only.",
+  "limitations": [
+    "This manifest does not claim a PDE run, solver pass, Task033 completion, or 0.7 nm feasibility.",
+    "Only the checker may verify a future submitted manifest after every role, file hash, schema, accepted status, and clean source SHA agrees."
+  ]
+}

@@ -1,0 +1,1507 @@
+{
+  "artifact_provenance": {
+    "calibration_source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+    "default_container_limit_evidence": "Task033 Phase-0 Docker Engine MemTotal snapshot",
+    "generator_module": "benchmarks.task033_resource_gates",
+    "runner_module": "benchmarks.run_task033_resource_matrix"
+  },
+  "benchmark_id": "task033_case091_resource_matrix",
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "data_identity": "prediction_with_measured_task032_calibration_and_anchor",
+  "decision_counts": {
+    "launch": {
+      "not_launch_eligible_runtime_contract": 7,
+      "not_run_by_memory_gate": 11,
+      "not_run_pending_high_order_qualification": 1,
+      "reuse_task032_clean_anchor": 1
+    },
+    "planning": {
+      "not_run_by_memory_gate": 11,
+      "planning_eligible_by_resource_prediction": 8,
+      "reuse_task032_clean_anchor": 1
+    }
+  },
+  "entries": [
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 1.747062319018332,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 1,
+      "degree_cell_dimension": 12,
+      "degree_cell_dimension_ratio_from_p2": 0.2222222222222222,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 5.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p1_h5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 0.7109781988258388,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.5191846252333323,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 98797,
+          "projected_factor_payload_gib": 0.002209855189365846,
+          "projected_fill_ratio": 1.0,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 0.6362630252230452
+        }
+      },
+      "projected_assembled_nnz": 98797,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 3034,
+      "projected_total_rows": 3434,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 1.7630454583572408,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 1,
+      "degree_cell_dimension": 12,
+      "degree_cell_dimension_ratio_from_p2": 0.2222222222222222,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 3.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p1_h3",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 1.3503146146267144,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.533083007267166,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 592348,
+          "projected_factor_payload_gib": 0.013249423582805958,
+          "projected_fill_ratio": 1.3956348221264034,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 1.3956348221264034
+        }
+      },
+      "projected_assembled_nnz": 424429,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 15200,
+      "projected_total_rows": 15600,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 1.9523687362670898,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 1,
+      "degree_cell_dimension": 12,
+      "degree_cell_dimension_ratio_from_p2": 0.2222222222222222,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p1_h2p5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 1.6977119445800781,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.553548801505952,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 1319117,
+          "projected_factor_payload_gib": 0.029505526967728846,
+          "projected_fill_ratio": 1.847261536330177,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 1.847261536330177
+        }
+      },
+      "projected_assembled_nnz": 714093,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 27015,
+      "projected_total_rows": 27415,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 2.583765826439335,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 1,
+      "degree_cell_dimension": 12,
+      "degree_cell_dimension_ratio_from_p2": 0.2222222222222222,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p1_h2",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 2.2467528925559432,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.6153658804357354,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 3514328,
+          "projected_factor_payload_gib": 0.07860720434763904,
+          "projected_fill_ratio": 2.603434951886077,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 2.603434951886077
+        }
+      },
+      "projected_assembled_nnz": 1349881,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 54615,
+      "projected_total_rows": 55015,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required_if_gate",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 3.7080068588256836,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 1,
+      "degree_cell_dimension": 12,
+      "degree_cell_dimension_ratio_from_p2": 0.2222222222222222,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 1.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p1_h1p5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 3.224353790283203,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.866440832925844,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 12430351,
+          "projected_factor_payload_gib": 0.27803754833637595,
+          "projected_fill_ratio": 4.05195706398245,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 4.05195706398245
+        }
+      },
+      "projected_assembled_nnz": 3067740,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 135343,
+      "projected_total_rows": 135743,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required_if_gate",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 1.9523687362670898,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 2,
+      "degree_cell_dimension": 54,
+      "degree_cell_dimension_ratio_from_p2": 1.0,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 5.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p2_h5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 1.6977119445800781,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.6977119445800781,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 6438552,
+          "projected_factor_payload_gib": 0.14401517808437347,
+          "projected_fill_ratio": 3.2182718991674593,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 3.2182718991674593
+        }
+      },
+      "projected_assembled_nnz": 2000624,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 13652,
+      "projected_total_rows": 14052,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 3.708664226579173,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 2,
+      "degree_cell_dimension": 54,
+      "degree_cell_dimension_ratio_from_p2": 1.0,
+      "execution_identity": "clean_measured_task032_anchor_reused",
+      "h_nm": 3.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "reuse_task032_clean_anchor",
+      "launch_eligible": false,
+      "launch_reasons": [],
+      "locked_override_present": false,
+      "matrix_key": "p2_h3",
+      "measured_anchor": {
+        "assembled_nnz": 8594673,
+        "data_identity": "measured",
+        "degree": 2,
+        "execution_identity": "clean_measured_task032_anchor_reused",
+        "factor_nnz": 60672040,
+        "factor_payload_gib": 1.3566359728574753,
+        "h_nm": 3.0,
+        "local_fe_rows": 68396,
+        "modes_per_direction": 160,
+        "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h3_schur_minimal.json",
+        "simultaneous_worker_rss_gib": 3.224353790283203,
+        "total_rows": 68796
+      },
+      "modes_per_direction": 160,
+      "planning_decision": "reuse_task032_clean_anchor",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 3.224353790283203,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 3.2249254144166724,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 60672040,
+          "projected_factor_payload_gib": 1.3570900173427551,
+          "projected_fill_ratio": 7.059261009697519,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 7.059261009697519
+        }
+      },
+      "projected_assembled_nnz": 8594673,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 68396,
+      "projected_total_rows": 68796,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 6.119344158981923,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 2,
+      "degree_cell_dimension": 54,
+      "degree_cell_dimension_ratio_from_p2": 1.0,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "tracked_source_clean_unknown",
+        "swap_activity_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p2_h2p5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 4.05388780068051,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 5.321168833897324,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 135112578,
+          "projected_factor_payload_gib": 3.022148766074857,
+          "projected_fill_ratio": 9.343640779743938,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 9.343640779743938
+        }
+      },
+      "projected_assembled_nnz": 14460378,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 121567,
+      "projected_total_rows": 121967,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": "p2_h2p5",
+      "conditional_predecessor_clean": false,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 13.400815199772781,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 2,
+      "degree_cell_dimension": 54,
+      "degree_cell_dimension_ratio_from_p2": 1.0,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p2_h2",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "policy_class": "conditional",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 5.364917276663818,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 11.652882782411114,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 359960603,
+          "projected_factor_payload_gib": 8.051467215672632,
+          "projected_fill_ratio": 13.16844595444993,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 13.16844595444993
+        }
+      },
+      "projected_assembled_nnz": 27335086,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 245766,
+      "projected_total_rows": 246166,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "conditional",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 42.975085860544986,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 2,
+      "degree_cell_dimension": 54,
+      "degree_cell_dimension_ratio_from_p2": 1.0,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 1.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p2_h1p5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 7.699285227530245,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 37.36963987873477,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 1273198644,
+          "projected_factor_payload_gib": 28.478441962174543,
+          "projected_fill_ratio": 20.495222589928282,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 20.495222589928282
+        }
+      },
+      "projected_assembled_nnz": 62121728,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 609042,
+      "projected_total_rows": 609442,
+      "qualification_gate_pass": true,
+      "qualification_state": "ordinary_degree_not_high_order_gated",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 6.0109916474142535,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 5.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_pending_high_order_qualification",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "p3_qualification_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 2.8247781523615623,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 5.22694925862109,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 131766709,
+          "projected_factor_payload_gib": 2.94730959107371,
+          "projected_fill_ratio": 9.26195667524106,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 9.26195667524106
+        }
+      },
+      "projected_assembled_nnz": 14226660,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 36406,
+      "projected_total_rows": 36806,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": "p3_h5",
+      "conditional_predecessor_clean": false,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 41.95405240999245,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 3.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h3",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "policy_class": "conditional",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 5.364917276663818,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 36.48178470434126,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 1241669664,
+          "projected_factor_payload_gib": 27.77321326020574,
+          "projected_fill_ratio": 20.316048727715316,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 20.316048727715316
+        }
+      },
+      "projected_assembled_nnz": 61117675,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 182390,
+      "projected_total_rows": 182790,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "conditional",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": "p3_h3",
+      "conditional_predecessor_clean": false,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 91.28926418800384,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h2p5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "policy_class": "conditional",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 6.745157049784325,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 79.38196885913378,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 2765115252,
+          "projected_factor_payload_gib": 61.84908740980848,
+          "projected_fill_ratio": 26.890330149140453,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 26.890330149140453
+        }
+      },
+      "projected_assembled_nnz": 102829353,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 324177,
+      "projected_total_rows": 324577,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "conditional",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 240.30652316327465,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h2",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 8.926544435720217,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 208.96219405502143,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 7366690426,
+          "projected_factor_payload_gib": 164.77543919701807,
+          "projected_fill_ratio": 37.89784571501898,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 37.89784571501898
+        }
+      },
+      "projected_assembled_nnz": 194382828,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 655375,
+      "projected_total_rows": 655775,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 845.5519362933622,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 1.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h1p5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 12.810637734487416,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 735.2625532985759,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 26056352861,
+          "projected_factor_payload_gib": 582.818978165617,
+          "projected_fill_ratio": 58.98378539428812,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 58.98378539428812
+        }
+      },
+      "projected_assembled_nnz": 441754504,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 1624111,
+      "projected_total_rows": 1624511,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 42.59363903070746,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 4,
+      "degree_cell_dimension": 300,
+      "degree_cell_dimension_ratio_from_p2": 5.555555555555555,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 5.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p4_h5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit"
+      ],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 4.05388780068051,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 37.037946983223875,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 1261419765,
+          "projected_factor_payload_gib": 28.214976301445347,
+          "projected_fill_ratio": 20.428626235314102,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 20.428626235314102
+        }
+      },
+      "projected_assembled_nnz": 61747655,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 75845,
+      "projected_total_rows": 76245,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "required",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": "p4_h5",
+      "conditional_predecessor_clean": false,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 386.68122493820425,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 4,
+      "degree_cell_dimension": 300,
+      "degree_cell_dimension_ratio_from_p2": 5.555555555555555,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 3.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p4_h3",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "conditional_predecessor_clean_record_missing"
+      ],
+      "policy_class": "conditional",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 7.699285227530245,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 336.24454342452543,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 11886664813,
+          "projected_factor_payload_gib": 265.8765744026686,
+          "projected_fill_ratio": 44.810074650962804,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 44.810074650962804
+        }
+      },
+      "projected_assembled_nnz": 265267686,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 379978,
+      "projected_total_rows": 380378,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "conditional",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 858.9736101200048,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 4,
+      "degree_cell_dimension": 300,
+      "degree_cell_dimension_ratio_from_p2": 5.555555555555555,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p4_h2p5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 9.680091109078665,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 746.9335740173955,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 26470807143,
+          "projected_factor_payload_gib": 592.0893400777458,
+          "projected_fill_ratio": 59.310632594330464,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 59.310632594330464
+        }
+      },
+      "projected_assembled_nnz": 446307955,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 675368,
+      "projected_total_rows": 675768,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 2285.5351716566483,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 4,
+      "degree_cell_dimension": 300,
+      "degree_cell_dimension_ratio_from_p2": 5.555555555555555,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 2.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p4_h2",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 12.810637734487416,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1987.4218883970855,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 70522283535,
+          "projected_factor_payload_gib": 1577.4166648354637,
+          "projected_fill_ratio": 83.58934947082071,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 83.58934947082071
+        }
+      },
+      "projected_assembled_nnz": 843675468,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 1365363,
+      "projected_total_rows": 1365763,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    },
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": false,
+      "conservative_upper_gib": 8079.628069152987,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 4,
+      "degree_cell_dimension": 300,
+      "degree_cell_dimension_ratio_from_p2": 5.555555555555555,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 1.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_run_by_memory_gate",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p4_h1p5",
+      "modes_per_direction": 160,
+      "planning_decision": "not_run_by_memory_gate",
+      "planning_eligible": false,
+      "planning_reasons": [
+        "one_or_both_center_predictions_exceed_limit",
+        "conservative_upper_exceeds_limit",
+        "locked_by_default_without_independent_unlock"
+      ],
+      "policy_class": "locked_by_default",
+      "policy_gate_pass": false,
+      "prediction_gate_pass": false,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 18.38476695501173,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 7025.763538393902,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 249440847843,
+          "projected_factor_payload_gib": 5579.401723186635,
+          "projected_fill_ratio": 130.09753347363065,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 130.09753347363065
+        }
+      },
+      "projected_assembled_nnz": 1917337256,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 3383564,
+      "projected_total_rows": 3383964,
+      "qualification_gate_pass": false,
+      "qualification_state": "unknown_fail_closed",
+      "task_matrix_label": "locked_by_default",
+      "two_center_gate_pass": false
+    }
+  ],
+  "gate_limits": {
+    "conservative_upper_limit_gib": 12.478628571428573,
+    "container_limit_gib": 13.6485,
+    "container_limit_identity": "measured_phase0_docker_engine_memtotal",
+    "controlled_termination_gib": 12.673607142857142,
+    "effective_hard_budget_gib": 13.6485,
+    "host_hard_budget_gib": 14.0,
+    "scale_from_14_gib": 0.9748928571428571,
+    "two_center_limit_gib": 11.211267857142857,
+    "warning_gib": 11.211267857142857
+  },
+  "identity": {
+    "deterministic": true,
+    "is_adaptive_compression_measurement": false,
+    "is_memory_measurement": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false,
+    "runtime_preflight_performed": false,
+    "scope": "Task033 13.5 nm p/h launch planning only"
+  },
+  "limitations": [
+    "This record plans launches; it does not execute a PDE.",
+    "The two centers extrapolate only measured Task032 p2/h5-h3 data.",
+    "Predicted rows and NNZ are not assembled Task033 measurements.",
+    "Default runtime attestations and p3/p4 qualification are unknown.",
+    "Launch eligibility still requires an external guarded runner.",
+    "No Task033 result in this record proves 0.7 nm feasibility."
+  ],
+  "matrix_shape": {
+    "degrees": 4,
+    "entries": 20,
+    "mesh_levels": 5
+  },
+  "physical_model": {
+    "modes_per_direction": 160,
+    "solver_path": "modal-schur-memory-minimal",
+    "wavelength_nm": 13.5
+  },
+  "record_type": "task033_resource_prediction_and_launch_decision",
+  "resolved_config": {
+    "conditional_clean_records": [],
+    "degrees": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "locked_overrides": [],
+    "mesh_levels_nm": [
+      5.0,
+      3.0,
+      2.5,
+      2.0,
+      1.5
+    ],
+    "qualified_high_order_degrees": []
+  },
+  "runtime_launch_contract": {
+    "contract_failures": [
+      "tracked_source_clean_unknown",
+      "swap_activity_state_unknown",
+      "watchdog_state_unknown",
+      "one_large_case_contract_unknown"
+    ],
+    "default_state": "unknown_fail_closed",
+    "inputs_are_caller_attestations": true,
+    "memory_authority": "max(simultaneous live MPI worker RSS sum, container cgroup current)",
+    "one_large_case_at_a_time": null,
+    "runtime_contract_verified": false,
+    "runtime_measurements_performed": false,
+    "source_clean": null,
+    "swap_activity_detected": null,
+    "swap_allowed": false,
+    "watchdog_enabled": null
+  },
+  "schema_version": 2,
+  "solver_path": "modal-schur-memory-minimal",
+  "status": "planning_complete_runtime_launch_fail_closed",
+  "task032_measured_calibration": {
+    "degree": 2,
+    "h3": {
+      "assembled_nnz": 8594673,
+      "data_identity": "measured",
+      "factor_nnz": 60672040,
+      "factor_payload_gib": 1.3566359728574753,
+      "h_nm": 3.0,
+      "local_fe_rows": 68396,
+      "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h3_schur_minimal.json",
+      "simultaneous_worker_rss_gib": 3.224353790283203,
+      "total_rows": 68796
+    },
+    "h5": {
+      "assembled_nnz": 2000624,
+      "data_identity": "measured",
+      "factor_nnz": 6438552,
+      "factor_payload_gib": 0.14401517808437347,
+      "h_nm": 5.0,
+      "local_fe_rows": 13652,
+      "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h5_schur_minimal.json",
+      "simultaneous_worker_rss_gib": 1.6977119445800781,
+      "total_rows": 14052
+    },
+    "modes_per_direction": 160,
+    "solver_path": "modal-schur-memory-minimal",
+    "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101"
+  },
+  "task032_p2_h3_measured_anchor": {
+    "assembled_nnz": 8594673,
+    "data_identity": "measured",
+    "degree": 2,
+    "factor_nnz": 60672040,
+    "factor_payload_gib": 1.3566359728574753,
+    "h_nm": 3.0,
+    "local_fe_rows": 68396,
+    "modes_per_direction": 160,
+    "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h3_schur_minimal.json",
+    "simultaneous_worker_rss_gib": 3.224353790283203,
+    "solver_path": "modal-schur-memory-minimal",
+    "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+    "total_rows": 68796
+  },
+  "task_id": "Task033"
+}

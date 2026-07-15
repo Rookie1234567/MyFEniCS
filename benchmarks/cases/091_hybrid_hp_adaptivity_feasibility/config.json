@@ -1,0 +1,74 @@
+{
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "task": "Task033",
+  "status": "resource_prediction_complete_runtime_launch_fail_closed",
+  "ordinary_default_changed": false,
+  "explicit_opt_in": true,
+  "physical_scope": {
+    "wavelength_nm": 13.5,
+    "period_x_nm": 50.0,
+    "period_y_nm": 25.0,
+    "local_fem_regions": "complex 3D Nedelec FEM ends",
+    "middle_region": "generic epsilon(x,y) modal target architecture",
+    "solver_path": "modal-schur-memory-minimal",
+    "mpi_size": 4,
+    "modes_per_direction": 160
+  },
+  "task032_anchor": {
+    "case_id": "080_hybrid_fem_modal_direct_baseline",
+    "degree": 2,
+    "h_nm": 3.0,
+    "modes_per_direction": 160,
+    "local_fe_rows": 68396,
+    "total_rows": 68796,
+    "assembled_nnz": 8594673,
+    "factor_nnz": 60672040,
+    "simultaneous_worker_rss_gib": 3.224353790283203,
+    "factor_payload_gib": 1.3566359728574753,
+    "solver_path": "modal-schur-memory-minimal",
+    "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+    "record": "../080_hybrid_fem_modal_direct_baseline/records/memory_h3_schur_minimal.json",
+    "data_identity": "measured"
+  },
+  "uniform_resource_matrix": {
+    "degrees": [1, 2, 3, 4],
+    "h_nm": [5.0, 3.0, 2.5, 2.0, 1.5],
+    "entry_count": 20,
+    "policy_classes": ["required", "conditional", "locked_by_default"],
+    "prediction_methods": [
+      "effective_resolution_rss_power_law",
+      "factor_nnz_fill_payload_affine"
+    ],
+    "planning_and_launch_decisions_are_separate": true
+  },
+  "memory_gate": {
+    "host_hard_budget_gib": 14.0,
+    "default_measured_docker_limit_gib": 13.6485,
+    "default_two_independent_center_predictions_max_gib": 11.211267857142857,
+    "default_conservative_upper_max_gib": 12.478628571428573,
+    "default_warning_gib": 11.211267857142857,
+    "default_controlled_termination_gib": 12.673607142857142,
+    "memory_authority": "max(simultaneous live MPI worker RSS sum, container cgroup current)",
+    "smaller_container_scales_all_thresholds_down": true,
+    "larger_container_does_not_widen_host_contract": true,
+    "swap_allowed": false
+  },
+  "default_runtime_attestations": {
+    "source_clean": null,
+    "swap_activity_detected": null,
+    "watchdog_enabled": null,
+    "one_large_case_at_a_time": null,
+    "p3_qualified": null,
+    "p4_qualified": null,
+    "default_behavior": "unknown_fail_closed"
+  },
+  "same_error_local_dof_compression_classification": {
+    "weak_signal": "<1.3x",
+    "useful_engineering_positive": "1.3x to <2x",
+    "clear_success": "2x to <3x",
+    "combined_engineering_target": ">=3x",
+    "strong_preferred_target": ">=5x",
+    "p2_h_adaptive_3x_is_stretch": true,
+    "three_x_is_minimum_pass_gate": false
+  }
+}

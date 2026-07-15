@@ -589,10 +589,10 @@ def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
         return
     if cfg.mesh_cell_type_resolved != "hexahedron":
         raise ValueError("stage4_block_grating requires a hexahedron mesh for explicit edge Floquet constraints.")
-    if int(cfg.nedelec_degree) not in {1, 2}:
+    if int(cfg.nedelec_degree) not in {1, 2, 3, 4}:
         raise NotImplementedError(
-            "Stage 4 hexahedral Floquet currently supports only degree=1 or degree=2 N1curl. "
-            f"Requested degree={cfg.nedelec_degree}. p>=3 remains disabled."
+            "Task033 Stage-4 hexahedral Floquet supports N1curl degree 1 through 4. "
+            f"Requested degree={cfg.nedelec_degree}; higher degrees remain fail-closed."
         )
     if cfg.scattering_background.lower() != "layered":
         raise ValueError("stage4_block_grating currently requires scattering_background='layered'.")
