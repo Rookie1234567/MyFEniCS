@@ -335,6 +335,8 @@ def build_biorthogonal_mode_basis(
     near_degenerate_tolerance: float = 1.0e-6,
     block_rotation_tolerance: float = 1.0e-8,
     maximum_overlap_condition: float = 1.0e12,
+    poynting_evaluator: PoyntingFluxEvaluator | None = None,
+    log=None,
 ) -> BiorthogonalModeBasis:
     """Add Poynting classification and adjoint-QEP biorthogonality.
 
@@ -372,6 +374,8 @@ def build_biorthogonal_mode_basis(
             target=complex(adjoint_target),
             requested_modes=requested,
         )
+        if log is not None:
+            log("Task32 mode basis: adjoint QEP solve returned")
         if len(left_candidates) < len(right_modes):
             raise RuntimeError(
                 "Adjoint QEP returned fewer left modes than the right-mode basis."
@@ -410,17 +414,23 @@ def build_biorthogonal_mode_basis(
             if id(candidate) not in selected_ids:
                 candidate.destroy()
         left_candidates = selected_left
+        if log is not None:
+            log("Task32 mode basis: left/right assignment complete")
 
         left_pair_errors = tuple(
             _relative_beta_distance(np.conj(left.beta), right.beta)
             for right, left in zip(right_modes, left_candidates)
         )
 
-        flux_evaluator = PoyntingFluxEvaluator(cfg, cross_section, spaces)
+        flux_evaluator = poynting_evaluator or PoyntingFluxEvaluator(
+            cfg, cross_section, spaces
+        )
         flux_before = [
             flux_evaluator.evaluate(mode.right_full, mode.beta)
             for mode in right_modes
         ]
+        if log is not None:
+            log("Task32 mode basis: Poynting classification inputs complete")
         flux_tolerance = max(
             float(absolute_flux_tolerance),
             float(relative_flux_tolerance)
@@ -450,6 +460,8 @@ def build_biorthogonal_mode_basis(
                 scale = 1.0
                 mode.normalization_kind = "phase3_electric_L2_near_zero_flux"
             right_scales.append(scale)
+        if log is not None:
+            log("Task32 mode basis: right-mode flux normalization complete")
 
         betas = [complex(mode.beta) for mode in right_modes]
         left_reduced = [mode.right_reduced for mode in left_candidates]
@@ -524,6 +536,8 @@ def build_biorthogonal_mode_basis(
                     left_full[global_index].scale(left_scale)
                 method = "diagonal_qprime"
             group_payload.append((indices, center, spread, condition, method))
+        if log is not None:
+            log("Task32 mode basis: biorthogonal group normalization complete")
 
         biorthogonality = _biorthogonality_matrix(
             operators,
@@ -580,6 +594,8 @@ def build_biorthogonal_mode_basis(
                     left_ownership=left_candidate.ownership,
                 )
             )
+        if log is not None:
+            log("Task32 mode basis: classified mode records complete")
 
         return BiorthogonalModeBasis(
             modes=classified,

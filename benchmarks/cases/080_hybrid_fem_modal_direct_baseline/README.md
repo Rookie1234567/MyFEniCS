@@ -8,23 +8,24 @@ Phase 2 cross-section eigenproblem = clean MPI4 formal record complete
 Phase 3 classification/biorthogonality = clean MPI4 formal record complete
 Phase 4 stable two-sided propagation = clean MPI4 formal record complete
 Phase 5 matched trace/projection = clean MPI4 formal record complete
-Hybrid augmented/Schur direct = pending
+Phase 6e real-QEP h5/M6 augmented integration = dirty research pass; clean record pending
+Hybrid pointwise field/absorption + Schur direct = pending
 ordinary default changed = false
 ```
 
 This case is the canonical Task032 evidence bundle. It freezes the existing
 full-3D direct reference and now contains the Phase 2 distributed cross-section
 QEP, Phase 3 classification/biorthogonality, Phase 4 stable-propagation clean
-and Phase 5 matched-trace/projection clean records; this case does not claim
-that a Hybrid solve exists.
+and Phase 5 matched-trace/projection clean records. A Phase 6e dirty-research
+h5/M6 Hybrid solve exists, but clean field/absorption qualification is pending.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2 clean mixed QEP；Phase 3 clean Poynting/衰减分类、left/right Q' 双正交、近简并 block、正反 identity 和 angle tracking；Phase 4 clean 100 nm two-port propagation；Phase 5 clean matching trace/projection |
-| 3. 尚不证明 | augmented/Schur、Hybrid 一致性、截断收敛或内存收益 |
+| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2--5 clean QEP/mode/propagation/trace；Phase 6e dirty-research real-QEP h5/M6 augmented integration 与 M4->M6 total R/T/A strong stability |
+| 3. 尚不证明 | clean pointwise H/volume absorption/selected-plane/h3 Hybrid、Schur 或内存收益 |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -101,6 +102,7 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase4.sh
 mpiexec -n 4 python -m unittest -v src.test.test_35_task032_modal_trace_projection
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase5.sh
+VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase6.sh
 ```
 
 The formal host command mounts the repository at `/work` in
@@ -137,10 +139,11 @@ field/mode gather is formed. The full Case080 checker passes 290/290 gates.
 
 ## 代码路径与理论
 
-The call chain is `src/main.py -> run_3d_cases -> Stage-4 direct solve ->
-postprocess_3d -> full3d_reference`.  The future consumer chain is
-`cross-section eigenmodes -> modal trace projection -> augmented/Schur direct
-solve -> Case080 comparison`.  The mathematical split and field comparison
+The reference call chain is `src/main.py -> run_3d_cases -> Stage-4 direct solve ->
+postprocess_3d -> full3d_reference`.  The Hybrid chain is now
+`cross-section eigenmodes -> modal trace projection -> augmented direct ->
+external R/T/A`; Schur and physical field reconstruction remain future work.
+The mathematical split and field comparison
 conventions are documented in
 `notes/theory/hybrid_fem_modal_domain_decomposition.md`.
 
@@ -171,6 +174,8 @@ This is numerical reference evidence for the frozen current model, not
 experimental validation. Phase 3 supplies a clean-recorded Poynting/Q'
 biorthogonal basis and near-degenerate subspace tracking. Phase 4 supplies a
 clean-recorded stable two-port propagation block, and Phase 5 supplies a
-clean-recorded matched-interface trace/projection block. Hybrid direct solvers
-remain pending. It does not add h/p adaptivity, a new iterative solver,
+clean-recorded matched-interface trace/projection block. The augmented solver
+has a dirty-research h5/M6 integration pass, but clean pointwise H, absorption,
+selected-plane, h3 and memory qualification remain pending. It does not add
+h/p adaptivity, a new iterative solver,
 nonmatching interfaces, material scans or shorter wavelengths.

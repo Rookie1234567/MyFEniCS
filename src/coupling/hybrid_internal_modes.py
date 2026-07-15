@@ -85,6 +85,7 @@ class _DistributedTwoDimensionalEvaluator:
         self.local_query_points = 0
         self.local_source_evaluations = 0
         self._cached_points: np.ndarray | None = None
+        self._cached_cell_keys: np.ndarray | None = None
         self._cached_received_requests = None
         msh = source.function_space.mesh
         comm = msh.comm
@@ -153,7 +154,12 @@ class _DistributedTwoDimensionalEvaluator:
             raise ValueError("The lifted cross-section field must have two components.")
         self.source = source
 
-    def evaluate_points(self, x: np.ndarray) -> np.ndarray:
+    def evaluate_points(
+        self,
+        x: np.ndarray,
+        *,
+        cell_keys: np.ndarray | None = None,
+    ) -> np.ndarray:
         """Collectively evaluate one rank-local set of interpolation points.
 
         This method must be called explicitly by every rank.  In particular,
@@ -176,15 +182,27 @@ class _DistributedTwoDimensionalEvaluator:
         # mesh, and its point-ownership ABI requires the padded third column.
         points = np.zeros((len(xy), 3), dtype=np.float64)
         points[:, :2] = xy
+        if cell_keys is None:
+            routed_keys = np.asarray(
+                [self._cell_key(float(point[0]), float(point[1])) for point in points],
+                dtype=np.int64,
+            )
+        else:
+            routed_keys = np.asarray(cell_keys, dtype=np.int64)
+            if routed_keys.shape != (len(points), 2):
+                raise ValueError(
+                    "Interpolation cell keys must have shape (point_count, 2)."
+                )
         self.local_query_points += len(points)
         if self._cached_points is None:
             self._cached_points = points.copy()
+            self._cached_cell_keys = routed_keys.copy()
             comm = self.source.function_space.mesh.comm
             requests: list[list[tuple[int, float, float, int, int]]] = [
                 [] for _ in range(comm.size)
             ]
             for index, point in enumerate(points):
-                key = self._cell_key(float(point[0]), float(point[1]))
+                key = tuple(map(int, routed_keys[index]))
                 owner = self.owner_by_key[key]
                 requests[owner].append(
                     (index, float(point[0]), float(point[1]), key[0], key[1])
@@ -195,6 +213,8 @@ class _DistributedTwoDimensionalEvaluator:
                 self._cached_points, points, rtol=0.0, atol=1.0e-13
             ):
                 raise RuntimeError("Cached 2D-to-3D interpolation points changed ordering.")
+            if not np.array_equal(self._cached_cell_keys, routed_keys):
+                raise RuntimeError("Cached 2D-to-3D source-cell routing changed.")
         comm = self.source.function_space.mesh.comm
         received_requests = self._cached_received_requests
         dest_points_list: list[tuple[float, float, float]] = []
@@ -324,23 +344,82 @@ class _ReusableInterfaceLifter:
             ),
             dtype=np.float64,
         )
+        geometry_dofmap = np.asarray(msh.geometry.dofmap)
+        geometry = np.asarray(msh.geometry.x)
+        self.cell_midpoints_xy = np.asarray(
+            [
+                np.mean(geometry[geometry_dofmap[cell], :2], axis=0)
+                for cell in self.cells
+            ],
+            dtype=np.float64,
+        ).reshape(-1, 2)
         self.padding = 1.0e-10 * max(
             system.local_mesh.mesh_data.mesh_axis_cell_stats["x"]["max"],
             system.local_mesh.mesh_data.mesh_axis_cell_stats["y"]["max"],
             1.0,
         )
         self.evaluator: _DistributedTwoDimensionalEvaluator | None = None
+        self.point_cell_keys: np.ndarray | None = None
+
+    def _build_point_cell_keys(
+        self, evaluator: _DistributedTwoDimensionalEvaluator
+    ) -> np.ndarray:
+        coordinates = self.interpolation_points
+        if coordinates.shape[0] == 3:
+            points = np.asarray(coordinates.T, dtype=np.float64)
+        elif coordinates.shape[1] == 3:
+            points = np.asarray(coordinates, dtype=np.float64)
+        else:
+            raise RuntimeError("Target interpolation coordinates need three columns.")
+        if len(self.cells) == 0:
+            if len(points) != 0:
+                raise RuntimeError("A rank without target cells received interpolation points.")
+            return np.empty((0, 2), dtype=np.int64)
+        if len(points) % len(self.cells) != 0:
+            raise RuntimeError("Target interpolation points are not cell-factorable.")
+        points_per_cell = len(points) // len(self.cells)
+        cell_keys = np.asarray(
+            [
+                evaluator._cell_key(float(midpoint[0]), float(midpoint[1]))
+                for midpoint in self.cell_midpoints_xy
+            ],
+            dtype=np.int64,
+        )
+        cell_major = np.repeat(cell_keys, points_per_cell, axis=0)
+        point_major = np.tile(cell_keys, (points_per_cell, 1))
+
+        def routing_matches(keys: np.ndarray) -> bool:
+            lower_x = evaluator.x_values[keys[:, 0]] - evaluator.tolerance
+            upper_x = evaluator.x_values[keys[:, 0] + 1] + evaluator.tolerance
+            lower_y = evaluator.y_values[keys[:, 1]] - evaluator.tolerance
+            upper_y = evaluator.y_values[keys[:, 1] + 1] + evaluator.tolerance
+            return bool(
+                np.all((points[:, 0] >= lower_x) & (points[:, 0] <= upper_x))
+                and np.all((points[:, 1] >= lower_y) & (points[:, 1] <= upper_y))
+            )
+
+        if routing_matches(cell_major):
+            return cell_major
+        if routing_matches(point_major):
+            return point_major
+        raise RuntimeError(
+            "Could not associate target interpolation points with target cells."
+        )
 
     def lift(self, source: fem.Function) -> tuple[fem.Function, int]:
         if self.evaluator is None:
             self.evaluator = _DistributedTwoDimensionalEvaluator(
                 source, padding=self.padding
             )
+            self.point_cell_keys = self._build_point_cell_keys(self.evaluator)
         else:
             self.evaluator.set_source(source)
         before_queries = self.evaluator.local_query_points
         before_evaluations = self.evaluator.local_source_evaluations
-        values = self.evaluator.evaluate_points(self.interpolation_points)
+        values = self.evaluator.evaluate_points(
+            self.interpolation_points,
+            cell_keys=self.point_cell_keys,
+        )
 
         def cached_values(x: np.ndarray) -> np.ndarray:
             coordinates = np.asarray(x, dtype=np.float64)
@@ -807,6 +886,34 @@ def build_hybrid_internal_mode_coupling(
             )
             for block in (bottom, top)
         )
+        if log is not None:
+            column_errors = {
+                block.side: [
+                    float(
+                        np.linalg.norm(
+                            block.negative_trace_to_positive[:, column]
+                            - canonical_negative_mapping[:, column]
+                        )
+                        / max(
+                            np.linalg.norm(
+                                canonical_negative_mapping[:, column]
+                            ),
+                            1.0e-30,
+                        )
+                    )
+                    for column in range(mode_count)
+                ]
+                for block in (bottom, top)
+            }
+            log(
+                "Task32 internal coupling diagnostics: "
+                f"bottom_gram_condition={bottom.trace_gram_condition:.6e} "
+                f"top_gram_condition={top.trace_gram_condition:.6e} "
+                f"canonical_mapping_condition="
+                f"{np.linalg.cond(canonical_negative_mapping):.6e} "
+                f"bottom_column_errors={column_errors['bottom']} "
+                f"top_column_errors={column_errors['top']}"
+            )
         if bottom_top_error > 1.0e-8 or canonical_error > 1.0e-8:
             raise RuntimeError(
                 "Lifted negative trace maps disagree across interfaces or with "

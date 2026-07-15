@@ -97,3 +97,10 @@ h1.5; the maximum selected QEP relative residual is `1.8177e-15`. Case080's
 full checker passes `277/277` gates. Per-rank process-lifetime memory peaks in
 this record are diagnostics only and are not summed or used as the final
 Hybrid memory authority.
+
+## Phase 6 mode-count 补充合同
+
+SLEPc 的 `nev=M` 可能返回多于 M 个已收敛本征对。当前
+`solve_quadratic_beta_modes` 在 report 中保留原始 `converged_modes`，但只交付
+按 `abs(beta-target)` 排序后的前 M 个，并释放超额 vectors；少于 M 时不会补造
+模式。h5/M4 曾观察到正向 `5 -> 4`、负向 `6 -> 4`，h5/M6 为两侧 `8 -> 6`。

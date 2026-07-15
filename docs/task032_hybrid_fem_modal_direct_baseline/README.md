@@ -32,6 +32,8 @@
 - [Phase 6a local FEM mesh walkthrough](../../notes/reference/code_walkthrough/46_task032_hybrid_local_mesh.md)
 - [Phase 6c internal modal blocks walkthrough](../../notes/reference/code_walkthrough/47_task032_hybrid_internal_modes.md)
 - [Phase 6d augmented direct algebra walkthrough](../../notes/reference/code_walkthrough/48_task032_hybrid_augmented_direct.md)
+- [Phase 6e real-QEP h5/M6 runner walkthrough](../../notes/reference/code_walkthrough/49_task032_hybrid_physical_runner.md)
+- [Phase 6e research diagnostic](outcomes/phase6e_research_diagnostic.md)
 - [Case080 benchmark contract](../../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md)
 - [项目服务需求与技术路线](../project_service_requirements_and_forward_model_roadmap.md)
 - [第一阶段冻结范围](../project_service_requirements_phase1_scope.md)
@@ -98,7 +100,7 @@ reciprocity 和强衰减负对照均通过，Case080 checker 为 `286/286 passed
 Phase 5 已在 clean source `b565ac4610dee08a2d313060b7cb26b48145370d`
 完成正式 MPI4 record；匹配 3D/2D Nédélec trace、bottom/top 法向、Stage4
 left/right round trip、近简并子空间和无 dense `N_Gamma^2` 存储均通过，
-Case080 checker 为 `290/290 passed`。Phase 6a--6c 已完成上下局部 FEM、单侧
-外端口 DtN 和内部模态稀疏块；Phase 6d 的 rank-major 单体 AIJ 与 MUMPS 代数
-Gate 也已通过。当前下一步是接入真实 Phase 3 QEP basis，执行 h5 physical
-augmented direct、模式截断和接口/RTA Gate。
+Case080 checker 为 `290/290 passed`。Phase 6a--6d 已完成局部 FEM、外端口
+DtN、内部模态 blocks 和 rank-major 单体 AIJ。Phase 6e 的真实 QEP h5/M6
+研究路径已通过 10 个集成 Gate，M4->M6 R/T/A 变化约 `1e-12`；当前下一步是
+clean formal record、pointwise H jump、体吸收和中间选面重建，而不是 Phase 7。

@@ -16,6 +16,7 @@ from src.modes.cross_section_spaces import (
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
+    evaluate_hybrid_augmented_solution,
     internal_modal_constraint_matrix,
     solve_hybrid_augmented_direct,
 )
@@ -163,6 +164,41 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
         self.assertFalse(self.system.dense_interface_square_formed)
         self.assertGreater(self.system.matrix_stats["matrix_nnz_used"], 0)
         self.assertIn("aij", self.system.matrix_stats["matrix_type"])
+
+    def test_solution_interface_and_external_port_metrics_are_finite(self):
+        if type(self).solution is None:
+            type(self).solution = solve_hybrid_augmented_direct(
+                self.system,
+                self.bottom_system,
+                self.top_system,
+            )
+        metrics = evaluate_hybrid_augmented_solution(
+            self.cfg,
+            self.bottom_system,
+            self.top_system,
+            self.coupling,
+            self.solution,
+        )
+        interface = metrics["interface_e_projection"]
+        traction = metrics["fe_modal_traction_equilibrium"]
+        power = metrics["port_power"]
+        self.assertLess(interface["combined_relative_residual"], 1.0e-10)
+        self.assertLess(traction["bottom_relative_residual"], 1.0e-10)
+        self.assertLess(traction["top_relative_residual"], 1.0e-10)
+        self.assertEqual(
+            traction["interpretation"],
+            "variational_FE_rows_with_modal_traction_not_pointwise_H_jump",
+        )
+        for key in ("R_total", "T_total", "A_balance", "R_plus_T"):
+            self.assertTrue(np.isfinite(power[key]))
+        self.assertEqual(
+            metrics["external_auxiliary_amplitudes"]["bottom"].shape,
+            (self.bottom_system.n_external_aux,),
+        )
+        self.assertEqual(
+            metrics["external_auxiliary_amplitudes"]["top"].shape,
+            (self.top_system.n_external_aux,),
+        )
 
     def test_rhs_pack_and_modal_only_action_match_explicit_blocks(self):
         bottom_rhs, top_rhs, modal_rhs = self.system.layout.split(

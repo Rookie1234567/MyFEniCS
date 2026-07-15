@@ -135,6 +135,12 @@ class Task032QuadraticBetaEigenproblemTests(unittest.TestCase):
             self.assertTrue(operators.leading_coefficient_singular_by_design)
             self.assertGreater(positive_report.converged_modes, 0)
             self.assertGreater(negative_report.converged_modes, 0)
+            self.assertLessEqual(
+                len(positive), positive_report.requested_modes
+            )
+            self.assertLessEqual(
+                len(negative), negative_report.requested_modes
+            )
 
             plus = min(positive, key=lambda mode: abs(mode.beta - target))
             minus = min(negative, key=lambda mode: abs(mode.beta + target))

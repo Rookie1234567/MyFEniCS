@@ -116,3 +116,9 @@ later h3 Hybrid comparison.
 
 This phase does not yet build stable 100 nm propagation, extract 3D interface
 traces or solve either Hybrid direct formulation.
+
+Phase 6 runner 会向 `build_biorthogonal_mode_basis` 注入同一个已编译
+`PoyntingFluxEvaluator`，供正/负基复用；默认 `None` 保留 Phase 3 原行为。
+对 h5/M6 的三个完整近简并对，runner 显式令 block-rotation tolerance 与
+near-degenerate tolerance 同为 `1e-6`，使块内 Q' identity error 从约
+`1.8e-5` 降到 `1e-10` 以下。Phase 3 正式记录和全局默认未被改写。

@@ -40,7 +40,7 @@ Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0/1/2/3/4/5 + Phase 6a/6b/6c + Phase 6d augmented algebra complete; real-QEP physical augmented direct next
+Task032 status = Phase 0-5 + Phase 6a-6d + Phase 6e real-QEP h5/M6 integration complete; clean field/absorption gates next
 ```
 
 ## 1.1 2026-07-15 最新更新
@@ -50,6 +50,8 @@ Phase 6a/6b/6c 已按小步完成。上下局部三维 p2 Nédélec/Floquet 网�
 Phase 6c 的 MPI 路由按结构化 `(x,y)` cell owner 只交换接口点值，不聚集完整 field/mode；collective 已移出 DOLFINx interpolation callback。修复测试辅助函数的临时 PETSc 包装器后，最终 serial 为 `4/4`、MPI2 每 rank `4/4`、MPI4 每 rank `4/4`，所有具名测试容器均已删除。该子步边界是 block assembly；随后 monolithic augmented matrix 与 MUMPS algebra Gate 已按下一段完成。
 
 Phase 6d 已建立 rank-major monolithic PETSc AIJ：每个 rank 连续保存自身 bottom/top rows，最后一个 rank 再保存 `2M` 内部 modal rows，从而把两个独立 local distributions 合法拼入普通 MPI AIJ。unknown 为 `[u_bottom,u_top,a_b+,a_t-]`，outgoing amplitudes 只通过稳定 `P+/P-` 消元；MUMPS 设置 error-if-not-converged 并显式计算 `||Ax-b||/||b||`。h10 两条解析 Bloch mode 的 serial/MPI2/MPI4 均为每 rank `3/3`；MPI4 矩阵 `2432 x 2432`、`251720` nnz、真相对残差 `3.732133e-13`，setup/solve `0.046960/0.003048 s`。这只分类为 `augmented_algebra_pass`；真实 Phase 3 QEP basis、M 收敛、接口 E/H 连续、official R/T/A 和 full-3D 比较是下一步。
+
+Phase 6e 已完成真实 QEP h5/M2/4/6 研究漏斗。修复了正负 basis 重复 Poynting evaluator、SLEPc 超额 `nconv`、Windows bind mount 容器内 Git status 卡顿、Nédélec 边界点任意 source-cell 路由和近简并 block threshold 五个问题。M6 的 10 个集成 Gate 全过，单体 `13744 x 13744`、`1470406` nnz、真残差 `4.6392e-12`；M4->M6 R/T/A 变化约 `1e-12`。当前仍不称完整 physical pass：clean record、pointwise H jump、体吸收、中间选面重建、h3 和 simultaneous RSS 未完成。
 
 ### 2026-07-14 前序更新
 

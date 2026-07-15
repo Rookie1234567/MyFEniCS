@@ -323,6 +323,11 @@ def solve_quadratic_beta_modes(
         )
 
     modes.sort(key=lambda mode: abs(mode.beta - target))
+    if len(modes) > requested_modes:
+        extras = modes[requested_modes:]
+        modes = modes[:requested_modes]
+        for mode in extras:
+            mode.destroy()
     report = QuadraticBetaSolveReport(
         solver="SLEPc.PEP/TOAR",
         problem_type="general_quadratic_polynomial",

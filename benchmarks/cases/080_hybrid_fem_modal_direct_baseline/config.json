@@ -1,7 +1,7 @@
 {
   "case_id": "080_hybrid_fem_modal_direct_baseline",
   "task": "Task032",
-  "status": "phase1_to_phase5_matching_trace_complete_hybrid_direct_pending",
+  "status": "phase1_to_phase6e_real_qep_h5_m6_research_integration_complete",
   "ordinary_default_changed": false,
   "physical_model": {
     "geometry_kind": "rectangular_block_grating",
@@ -47,7 +47,7 @@
     "mode_classification": "phase3_poynting_adjoint_qep_biorthogonal_pass",
     "stable_propagation": "phase4_two_port_diagonal_scattering_pass",
     "interface_coupling": "phase5_matched_nedelec_trace_projection_pass",
-    "augmented_direct": "pending_phase6",
+    "augmented_direct": "phase6e_real_qep_h5_m6_research_integration_pass_clean_field_gates_pending",
     "modal_schur_direct": "pending_phase7",
     "iterative_solver": "out_of_scope"
   }

@@ -8,8 +8,10 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from ..common.config_3d import SimulationConfig3D
 from ..coupling.hybrid_internal_modes import HybridInternalModeCoupling
 from .common_3d_solve import _petsc_matrix_stats
+from .dtn_port_3d import _gather_auxiliary_values, _port_power_metrics
 from .hybrid_local_dtn import HybridLocalDtnSystem
 
 
@@ -489,3 +491,195 @@ def solve_hybrid_augmented_direct(
         solve_seconds=solve_seconds,
         converged_reason=int(ksp.getConvergedReason()),
     )
+
+
+def _replicated_small_vector(vector: PETSc.Vec) -> np.ndarray:
+    """Replicate one mode-count vector whose rows live on the final rank."""
+
+    comm = vector.getComm().tompi4py()
+    owner = comm.size - 1
+    size = int(vector.getSize())
+    local = None
+    if comm.rank == owner:
+        local = np.asarray(
+            vector.getValues(np.arange(size, dtype=PETSc.IntType)),
+            dtype=np.complex128,
+        )
+    return np.asarray(comm.bcast(local, root=owner), dtype=np.complex128)
+
+
+def _modal_action(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
+    source = matrix.createVecRight()
+    source.set(0.0)
+    first, last = source.getOwnershipRange()
+    if last > first:
+        source.setValues(
+            np.arange(first, last, dtype=PETSc.IntType),
+            np.asarray(values[first:last], dtype=PETSc.ScalarType),
+        )
+    source.assemble()
+    result = matrix.createVecLeft()
+    try:
+        matrix.mult(source, result)
+    finally:
+        source.destroy()
+    return result
+
+
+def _relative_array_residual(actual: np.ndarray, expected: np.ndarray) -> float:
+    scale = max(
+        float(np.linalg.norm(actual)),
+        float(np.linalg.norm(expected)),
+        1.0e-30,
+    )
+    return float(np.linalg.norm(actual - expected) / scale)
+
+
+def _fe_traction_equilibrium_residual(
+    local_system: HybridLocalDtnSystem,
+    field: PETSc.Vec,
+    positive_traction: PETSc.Mat,
+    positive_values: np.ndarray,
+    negative_traction: PETSc.Mat,
+    negative_values: np.ndarray,
+) -> tuple[float, float]:
+    residual = local_system.A.createVecLeft()
+    positive = _modal_action(positive_traction, positive_values)
+    negative = _modal_action(negative_traction, negative_values)
+    try:
+        local_system.A.mult(field, residual)
+        operator_norm = float(residual.norm())
+        residual.axpy(PETSc.ScalarType(-1.0), local_system.b)
+        residual.axpy(PETSc.ScalarType(1.0), positive)
+        residual.axpy(PETSc.ScalarType(1.0), negative)
+        absolute = float(residual.norm())
+        scale = max(
+            operator_norm,
+            float(local_system.b.norm()),
+            float(positive.norm()),
+            float(negative.norm()),
+            1.0e-30,
+        )
+        return absolute, float(absolute / scale)
+    finally:
+        residual.destroy()
+        positive.destroy()
+        negative.destroy()
+
+
+def evaluate_hybrid_augmented_solution(
+    cfg: SimulationConfig3D,
+    bottom_system: HybridLocalDtnSystem,
+    top_system: HybridLocalDtnSystem,
+    coupling: HybridInternalModeCoupling,
+    solution: HybridAugmentedDirectSolution,
+) -> dict:
+    """Evaluate algebraic interface contracts and external modal R/T/A.
+
+    The FE residuals verify the variational traction coupling used by the
+    augmented matrix.  They are not presented as a pointwise H-field jump;
+    a later physical field reconstruction must provide that stronger Gate.
+    """
+
+    mode_count = coupling.mode_count_per_direction
+    modal = np.asarray(solution.modal_amplitudes, dtype=np.complex128)
+    if modal.shape != (2 * mode_count,):
+        raise ValueError("The solved internal modal vector has the wrong shape.")
+    bottom_incident = modal[:mode_count]
+    top_incident = modal[mode_count:]
+    forward = np.asarray(
+        coupling.propagation.forward.factors, dtype=np.complex128
+    )
+    backward = np.asarray(
+        coupling.propagation.backward.factors, dtype=np.complex128
+    )
+    negative_map = np.asarray(
+        coupling.negative_trace_to_positive, dtype=np.complex128
+    )
+
+    bottom_projection = coupling.bottom.projection.createVecLeft()
+    top_projection = coupling.top.projection.createVecLeft()
+    try:
+        coupling.bottom.projection.mult(solution.bottom, bottom_projection)
+        coupling.top.projection.mult(solution.top, top_projection)
+        bottom_actual = _replicated_small_vector(bottom_projection)
+        top_actual = _replicated_small_vector(top_projection)
+    finally:
+        bottom_projection.destroy()
+        top_projection.destroy()
+    bottom_expected = bottom_incident + negative_map @ (
+        backward * top_incident
+    )
+    top_expected = forward * bottom_incident + negative_map @ top_incident
+    bottom_e_relative = _relative_array_residual(
+        bottom_actual, bottom_expected
+    )
+    top_e_relative = _relative_array_residual(top_actual, top_expected)
+    combined_actual = np.concatenate((bottom_actual, top_actual))
+    combined_expected = np.concatenate((bottom_expected, top_expected))
+
+    bottom_fe_absolute, bottom_fe_relative = (
+        _fe_traction_equilibrium_residual(
+            bottom_system,
+            solution.bottom,
+            coupling.bottom.positive_traction,
+            bottom_incident,
+            coupling.bottom.negative_traction,
+            backward * top_incident,
+        )
+    )
+    top_fe_absolute, top_fe_relative = _fe_traction_equilibrium_residual(
+        top_system,
+        solution.top,
+        coupling.top.positive_traction,
+        forward * bottom_incident,
+        coupling.top.negative_traction,
+        top_incident,
+    )
+
+    bottom_aux = _gather_auxiliary_values(
+        solution.bottom,
+        bottom_system.n_fe,
+        bottom_system.n_external_aux,
+        bottom_system.local_mesh.mesh.comm,
+    )
+    top_aux = _gather_auxiliary_values(
+        solution.top,
+        top_system.n_fe,
+        top_system.n_external_aux,
+        top_system.local_mesh.mesh.comm,
+    )
+    port_power = _port_power_metrics(
+        cfg,
+        [*bottom_system.external_modes, *top_system.external_modes],
+        np.concatenate((bottom_aux, top_aux)),
+        [
+            *np.asarray(
+                bottom_system.incident_projections, dtype=np.complex128
+            ),
+            *np.asarray(top_system.incident_projections, dtype=np.complex128),
+        ],
+    )
+    return {
+        "interface_e_projection": {
+            "bottom_relative_residual": bottom_e_relative,
+            "top_relative_residual": top_e_relative,
+            "combined_relative_residual": _relative_array_residual(
+                combined_actual, combined_expected
+            ),
+        },
+        "fe_modal_traction_equilibrium": {
+            "interpretation": (
+                "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
+            ),
+            "bottom_absolute_residual": bottom_fe_absolute,
+            "bottom_relative_residual": bottom_fe_relative,
+            "top_absolute_residual": top_fe_absolute,
+            "top_relative_residual": top_fe_relative,
+        },
+        "external_auxiliary_amplitudes": {
+            "bottom": bottom_aux,
+            "top": top_aux,
+        },
+        "port_power": port_power,
+    }

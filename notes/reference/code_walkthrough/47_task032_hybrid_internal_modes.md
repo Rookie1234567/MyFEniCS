@@ -87,3 +87,10 @@ mpiexec -n 4 python -m unittest -v src.test.test_38_task032_hybrid_internal_mode
 创建临时 `field.x.petsc_vec` 包装器，导致 PETSc collective 次序错位。最终实现分别改成回调外的
 确定性结构化路由，以及基于 owned DoF 和已有 `system.b` layout 的测试向量。长测试今后使用具名
 容器、短周期日志轮询和显式删除，避免 shell timeout 留下孤儿容器。
+
+## 7. Phase 6e target-cell 路由修复
+
+M6 高阶对证明“只按 `(x,y)` 任选 source cell”不足以插值 Nédélec 边界值：
+法向分量在二维内部边界可能双值。当前 lifter 为每个 3D target cell 的插值点
+附带匹配的 2D source-cell key，并验证 cell-major/point-major 排列。新增两列的
+bottom/top 映射误差由最高 `1.24e-2` 降到约 `2e-14`，通信仍只限接口点和值。
