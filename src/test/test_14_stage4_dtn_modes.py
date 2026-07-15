@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+import tempfile
 import unittest
 
+from mpi4py import MPI
 import numpy as np
 
+from src.common.config_3d import SI_SUBSTRATE_INDEX_EUV_13P5_NM
 from src.common.modes_3d import (
     incident_power_3d,
     outgoing_port_modes_3d,
@@ -16,6 +21,7 @@ from src.solvers.dtn_port_3d import (
     _mode_projection_denominator,
     _port_power_metrics,
     _traction_vector,
+    _write_port_outputs,
 )
 from src.test.stage2_test_utils import stage4_block_config
 
@@ -35,7 +41,42 @@ def _dtn_cfg(**updates):
     return stage4_block_config(**values)
 
 
+def _grazing_fixture_b_cfg(**updates):
+    values = {
+        "stage_case": "stage4_flat_layer_sanity",
+        "stage4_dtn_order_policy": "zero_order",
+        "period_x": 10.0,
+        "period_y": 10.0,
+        "air_height": 5.0,
+        "substrate_thickness": 5.0,
+        "z_min": -5.0,
+        "z_max": 5.0,
+        "grating_width_x": 0.0,
+        "grating_width_y": 0.0,
+        "grating_height": 0.0,
+        "incident_theta_deg": 89.0,
+    }
+    values.update(updates)
+    return _dtn_cfg(**values)
+
+
 class Stage4DtnModeTests(unittest.TestCase):
+    def _single_bottom_s_power(self, cfg):
+        modes = outgoing_port_modes_3d(cfg)
+        bottom_index = next(
+            idx
+            for idx, mode in enumerate(modes)
+            if mode.side == "bottom" and mode.m == 0 and mode.n == 0 and mode.polarization == "s"
+        )
+        incident_projections = [
+            _incident_projection_onto_top_mode(mode, cfg) if mode.side == "top" else 0.0 + 0.0j
+            for mode in modes
+        ]
+        aux_values = np.asarray(incident_projections, dtype=np.complex128)
+        aux_values[bottom_index] = 1.0 + 0.0j
+        metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+        return modes, bottom_index, incident_projections, aux_values, metrics
+
     def test_auto_dtn_orders_ignore_probe_zero_order_flag(self):
         cfg = _dtn_cfg(stage4_dtn_order_policy="auto_propagating", diffraction_zero_order_only=True)
         modes = outgoing_port_modes_3d(cfg)
@@ -122,6 +163,45 @@ class Stage4DtnModeTests(unittest.TestCase):
         self.assertEqual(metrics["T_total"], metrics["T_total_dtn_port_modal"])
         self.assertEqual(metrics["R_plus_T"], metrics["R_plus_T_dtn_port_modal"])
         self.assertIn("top outgoing amplitude", metrics["dtn_port_modal_amplitude_convention"])
+
+    def test_lossy_below_critical_mode_counts_finite_port_transmission(self):
+        cfg = _grazing_fixture_b_cfg()
+        modes, bottom_index, incident_projections, aux_values, metrics = self._single_bottom_s_power(cfg)
+        mode = modes[bottom_index]
+        expected = _mode_power_at_boundary(mode, cfg, 1.0 + 0.0j) / incident_power_3d(cfg)
+
+        self.assertFalse(mode.propagating)
+        self.assertGreater(mode.power_per_unit_amplitude, 0.0)
+        self.assertGreater(expected, 0.0)
+        self.assertAlmostEqual(metrics["T_total"], expected, places=12)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            out_dir = Path(temp_dir)
+            _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, metrics, MPI.COMM_SELF)
+            payload = json.loads((out_dir / "dtn_port_diffraction_orders_3d.json").read_text(encoding="utf-8"))
+        row = payload["orders"][bottom_index]
+        self.assertFalse(row["propagating"])
+        self.assertTrue(row["power_carrying"])
+        self.assertAlmostEqual(row["T"], expected, places=12)
+
+    def test_lossless_evanescent_mode_carries_zero_finite_port_transmission(self):
+        lossless_index = complex(SI_SUBSTRATE_INDEX_EUV_13P5_NM.real, 0.0)
+        cfg = _grazing_fixture_b_cfg(n_substrate=lossless_index)
+        modes, bottom_index, incident_projections, aux_values, metrics = self._single_bottom_s_power(cfg)
+        mode = modes[bottom_index]
+
+        self.assertFalse(mode.propagating)
+        self.assertEqual(mode.power_per_unit_amplitude, 0.0)
+        self.assertEqual(metrics["T_total"], 0.0)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            out_dir = Path(temp_dir)
+            _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, metrics, MPI.COMM_SELF)
+            payload = json.loads((out_dir / "dtn_port_diffraction_orders_3d.json").read_text(encoding="utf-8"))
+        row = payload["orders"][bottom_index]
+        self.assertFalse(row["propagating"])
+        self.assertFalse(row["power_carrying"])
+        self.assertEqual(row["T"], 0.0)
 
 
 if __name__ == "__main__":
