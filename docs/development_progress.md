@@ -34,16 +34,22 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-14
+2026-07-15
 current branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0/1/2/3/4/5 complete; Phase 6 augmented direct next
+Task032 status = Phase 0/1/2/3/4/5 + Phase 6a/6b/6c blocks complete; Phase 6d monolithic augmented direct next
 ```
 
-## 1.1 2026-07-14 最新更新
+## 1.1 2026-07-15 最新更新
+
+Phase 6a/6b/6c 已按小步完成。上下局部三维 p2 Nédélec/Floquet 网格只覆盖外边界到 z=10/110 nm 接口，中间 100 nm 不再生成三维体单元；每个局部系统只装配其真实拥有的一侧外部 40-mode Fourier-DtN。内部耦合新增分布式 `M x N` trace projection、`N x M` 正/负 traction、`M x M` 负迹映射和无 growing inverse 的 `P+/P-`，内部 unknown/equation 均为 `2M`，没有 dense `N_interface^2`。
+
+Phase 6c 的 MPI 路由按结构化 `(x,y)` cell owner 只交换接口点值，不聚集完整 field/mode；collective 已移出 DOLFINx interpolation callback。修复测试辅助函数的临时 PETSc 包装器后，最终 serial 为 `4/4`、MPI2 每 rank `4/4`、MPI4 每 rank `4/4`，所有具名测试容器均已删除。当前边界仍是 block assembly：monolithic augmented matrix、MUMPS residual、接口 E/H 连续性、Hybrid R/T/A 与 full-3D 比较留给 Phase 6d。
+
+### 2026-07-14 前序更新
 
 Task032 已从 Review V2 通过后的 Task031 clean merge `dae03170` 启动。旧目录 `fenics_vector_maxwell_floquet_demo_v2_parallel` 保持 Task031 分支和既有未跟踪材料不变；新目录 `fenics_v3_hybrid_FEM_modal` 从更新后的 `origin/master` clean clone，并创建、推送 `codex/20260714-task32-hybrid-fem-modal-direct-baseline`。迁移、环境和 smoke 证据见 [`task032_hybrid_fem_modal_direct_baseline/outcomes/`](task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md)。
 
