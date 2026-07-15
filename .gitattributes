@@ -1,0 +1,3 @@
+# Canonical benchmark records may be referenced by byte-level SHA256 evidence.
+# Keep their checkout bytes stable on Windows even when core.autocrlf=true.
+benchmarks/cases/**/records/*.json text eol=lf

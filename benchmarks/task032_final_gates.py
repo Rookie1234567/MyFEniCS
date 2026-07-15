@@ -13,6 +13,20 @@ def _load(path: Path) -> dict[str, Any]:
         return json.load(stream)
 
 
+def _canonical_text_sha256(path: Path) -> str:
+    """Hash generated text with checkout-independent LF line endings.
+
+    Task032 funnel records were generated and signed with LF bytes.  Git may
+    materialize the same text with CRLF when ``core.autocrlf=true`` on Windows,
+    which must not turn an otherwise identical tracked record into a failed
+    provenance gate.  Semantic or formatting changes other than line endings
+    still change this digest.
+    """
+
+    payload = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def _all_true(values: dict[str, Any]) -> bool:
     return bool(values) and all(value is True for value in values.values())
 
@@ -107,9 +121,9 @@ def evaluate_task032_final(
         sources = funnel.get("sources", [])
         source_counts = [int(source.get("mode_count_per_direction", -1)) for source in sources]
         expected_source_hashes = [
-            hashlib.sha256(
-                (records / f"hybrid_{level}_m{mode_count}.json").read_bytes()
-            ).hexdigest()
+            _canonical_text_sha256(
+                records / f"hybrid_{level}_m{mode_count}.json"
+            )
             for mode_count in mode_counts
         ]
         level_ok = (
