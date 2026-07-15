@@ -519,6 +519,22 @@ function Assert-MinimalComparisonPass {
     }
 }
 
+function Assert-AdaptiveFormalPass {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][double]$ExpectedReferenceH
+    )
+
+    $record = Get-Content -Raw -LiteralPath $Path | ConvertFrom-Json
+    if (
+        $record.status -ne "measured_same_accuracy_qualification_attached" -or
+        $record.plan.reference_h_nm -ne $ExpectedReferenceH -or
+        $record.same_accuracy_qualification.mandatory_gate_pass -ne $true
+    ) {
+        throw "Adaptive h=$ExpectedReferenceH formal same-accuracy gate did not pass."
+    }
+}
+
 function Invoke-Task033Watchdog {
     param(
         [Parameter(Mandatory = $true)][string]$StepName,
@@ -651,7 +667,8 @@ function Invoke-HybridFunnel {
         [string]$BottomInterfaceNm = "10.0",
         [string]$TopInterfaceNm = "110.0",
         [string]$GradedReferenceH,
-        [switch]$AnchorRequalification
+        [switch]$AnchorRequalification,
+        [switch]$AllowConditionalM240
     )
 
     $root = Join-Path $ArtifactRootHost "hybrid/$Category/$Name"
@@ -719,6 +736,21 @@ function Invoke-HybridFunnel {
         throw (
             "Funnel $Name failed for a reason other than measured M120->M160 " +
             "nonconvergence; conditional M240 is prohibited."
+        )
+    }
+    $conditionalM240InScope = (
+        [bool]$AllowConditionalM240 -and
+        $Category -eq "uniform" -and
+        $Degree -in @(3, 4) -and
+        -not $GradedReferenceH -and
+        $BottomInterfaceNm -eq "10.0" -and
+        $TopInterfaceNm -eq "110.0"
+    )
+    if (-not $conditionalM240InScope) {
+        throw (
+            "Funnel $Name has measured M120->M160 nonconvergence, but " +
+            "conditional M240 is restricted to explicitly authorized " +
+            "uniform p3/p4 cases."
         )
     }
 
@@ -1011,10 +1043,11 @@ try {
             }
         }
     }
-    # MPI2/MPI4 are bounded timeout-only negatives for the known distributed
-    # PEP/MUMPS boundary, not another 72-member physical matrix.  One fixed
-    # patterned p2/h3 case per communicator is sufficient and keeps the
-    # negative evidence distinct from the qualified MPI1 aggregate.
+    # MPI2/MPI4 are bounded clean wall-timeout diagnostics, not another
+    # 72-member physical matrix.  They prove only the watchdog/source/resource
+    # timeout contract; they do not attribute the timeout to a PEP/MUMPS
+    # boundary.  One fixed patterned p2/h3 case per communicator is sufficient
+    # and keeps the diagnostic evidence distinct from the qualified MPI1 aggregate.
     foreach ($negativeMpi in $QepNegativeMpiSizes) {
         $slug = "stage4_xy_p2_h3"
         $negativeRoot = Join-Path $ArtifactRootHost (
@@ -1051,12 +1084,14 @@ try {
     $uniformFunnels = @{}
     foreach ($entry in $safeUniform) {
         $requalify = $entry.Key -eq "p2_h3"
+        $allowConditionalM240 = $entry.Degree -in @(3, 4)
         $uniformFunnels[$entry.Key] = Invoke-HybridFunnel `
             -Name $entry.Key `
             -Category "uniform" `
             -Degree $entry.Degree `
             -HNm $entry.H `
-            -AnchorRequalification:$requalify
+            -AnchorRequalification:$requalify `
+            -AllowConditionalM240:$allowConditionalM240
     }
 
     # Task033 8.3 anchors: augmented primary versus the memory-minimal Schur
@@ -1065,19 +1100,56 @@ try {
     $p3Anchor = Invoke-HybridComparisonAnchor -Name "p3_h5" -Degree 3
     Write-Host "comparison anchors: $p1Anchor ; $p3Anchor"
 
-    # Phase 4: graded p2/h5 and p2/h3 funnels.
+    # Phase 4: adaptive evidence is strictly gated.  The h5 funnel and formal
+    # same-accuracy aggregate must pass before the h3 funnel is launched.
+    $aggregateRoot = Join-Path $ArtifactRootHost "aggregates"
+    [IO.Directory]::CreateDirectory($aggregateRoot) | Out-Null
     $gradedFunnels = @{}
-    foreach ($graded in @(
-        [pscustomobject]@{ Key = "p2_h5_graded"; H = "5.0" },
-        [pscustomobject]@{ Key = "p2_h3_graded"; H = "3.0" }
-    )) {
-        $gradedFunnels[$graded.Key] = Invoke-HybridFunnel `
-            -Name $graded.Key `
-            -Category "graded" `
-            -Degree 2 `
-            -HNm $graded.H `
-            -GradedReferenceH $graded.H
-    }
+    $gradedFunnels["p2_h5_graded"] = Invoke-HybridFunnel `
+        -Name "p2_h5_graded" `
+        -Category "graded" `
+        -Degree 2 `
+        -HNm "5.0" `
+        -GradedReferenceH "5.0"
+
+    $adaptiveH5 = Join-Path $aggregateRoot "adaptive_p2_h5.json"
+    Invoke-HostJsonCaptureStep `
+        -StepName "aggregate_adaptive_p2_h5" `
+        -PythonArguments @(
+            "-m", "benchmarks.run_task033_formal_records",
+            "adaptive",
+            "--graded-plan",
+            (Join-Path $RepoRoot "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/adaptive_p2_h5_plan.json"),
+            "--reference-evidence",
+            $uniformFunnels["p2_h5"],
+            "--candidate-evidence",
+            $gradedFunnels["p2_h5_graded"]
+        ) `
+        -Output $adaptiveH5
+    Assert-AdaptiveFormalPass -Path $adaptiveH5 -ExpectedReferenceH 5.0
+
+    $gradedFunnels["p2_h3_graded"] = Invoke-HybridFunnel `
+        -Name "p2_h3_graded" `
+        -Category "graded" `
+        -Degree 2 `
+        -HNm "3.0" `
+        -GradedReferenceH "3.0"
+
+    $adaptiveH3 = Join-Path $aggregateRoot "adaptive_p2_h3.json"
+    Invoke-HostJsonCaptureStep `
+        -StepName "aggregate_adaptive_p2_h3" `
+        -PythonArguments @(
+            "-m", "benchmarks.run_task033_formal_records",
+            "adaptive",
+            "--graded-plan",
+            (Join-Path $RepoRoot "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/adaptive_p2_h3_plan.json"),
+            "--reference-evidence",
+            $uniformFunnels["p2_h3"],
+            "--candidate-evidence",
+            $gradedFunnels["p2_h3_graded"]
+        ) `
+        -Output $adaptiveH3
+    Assert-AdaptiveFormalPass -Path $adaptiveH3 -ExpectedReferenceH 3.0
 
     # Phase 5: buffer 10 reuses the same-SHA uniform p2/h3 funnel.  Only the
     # three altered buffers are launched.
@@ -1105,9 +1177,6 @@ try {
     }
 
     # Phase 6: read-only primary formal aggregation.
-    $aggregateRoot = Join-Path $ArtifactRootHost "aggregates"
-    [IO.Directory]::CreateDirectory($aggregateRoot) | Out-Null
-
     $qepAggregate = Join-Path $aggregateRoot "qep_order_study.json"
     $qepAggregateCommand = @(
         "-m", "benchmarks.run_task033_formal_records",
@@ -1145,36 +1214,6 @@ try {
         -StepName "aggregate_uniform_matrix" `
         -PythonArguments $uniformAggregateCommand `
         -Output $uniformAggregate
-
-    $adaptiveH5 = Join-Path $aggregateRoot "adaptive_p2_h5.json"
-    Invoke-HostJsonCaptureStep `
-        -StepName "aggregate_adaptive_p2_h5" `
-        -PythonArguments @(
-            "-m", "benchmarks.run_task033_formal_records",
-            "adaptive",
-            "--graded-plan",
-            (Join-Path $RepoRoot "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/adaptive_p2_h5_plan.json"),
-            "--reference-evidence",
-            $uniformFunnels["p2_h5"],
-            "--candidate-evidence",
-            $gradedFunnels["p2_h5_graded"]
-        ) `
-        -Output $adaptiveH5
-
-    $adaptiveH3 = Join-Path $aggregateRoot "adaptive_p2_h3.json"
-    Invoke-HostJsonCaptureStep `
-        -StepName "aggregate_adaptive_p2_h3" `
-        -PythonArguments @(
-            "-m", "benchmarks.run_task033_formal_records",
-            "adaptive",
-            "--graded-plan",
-            (Join-Path $RepoRoot "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/adaptive_p2_h3_plan.json"),
-            "--reference-evidence",
-            $uniformFunnels["p2_h3"],
-            "--candidate-evidence",
-            $gradedFunnels["p2_h3_graded"]
-        ) `
-        -Output $adaptiveH3
 
     $bufferAggregate = Join-Path $aggregateRoot "buffer_tradeoff.json"
     Invoke-HostJsonCaptureStep `

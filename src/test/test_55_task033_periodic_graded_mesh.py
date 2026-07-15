@@ -123,7 +123,7 @@ class Task033PeriodicGradedMeshTests(unittest.TestCase):
             "degree": 2,
             "h_nm": 3.0,
             "local_fe_rows": 68_396,
-            "full_field_available": True,
+            "reference_field_evidence_available": True,
             "source_commit": "a" * 40,
             "physics_signature": "task033_13p5nm_si_10deg_s_m160",
         }

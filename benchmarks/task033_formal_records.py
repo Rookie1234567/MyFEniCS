@@ -48,6 +48,8 @@ TRADEOFF_SCHEMA = f"{FORMAL_SCHEMA}#/$defs/bufferTradeoffEvidence"
 QEP_SCHEMA = Path("benchmarks/task033_qep_qualification_schema.json").as_posix()
 
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+SELECTED_PLANE_FIELD_RELATIVE_MAX = 5.0e-3
 EXPECTED_DEGREES = (1, 2, 3, 4)
 EXPECTED_H_NM = (5.0, 3.0, 2.5, 2.0, 1.5)
 BUFFER_INTERFACES: Mapping[float, tuple[float, float]] = {
@@ -888,26 +890,28 @@ def _port_and_order_deltas(
     return max(total_deltas), max(relative_deltas)
 
 
-def _candidate_interface_errors(measurements: Mapping[str, Any]) -> tuple[float, float]:
+def _interface_errors(
+    measurements: Mapping[str, Any], *, label: str
+) -> tuple[float, float]:
     physical = measurements.get("physical_field_reconstruction")
     if not isinstance(physical, Mapping):
-        raise FormalRecordError("adaptive candidate lacks physical field reconstruction")
+        raise FormalRecordError(f"{label} lacks physical field reconstruction")
     continuity = physical.get("interface_continuity")
     if not isinstance(continuity, Mapping):
-        raise FormalRecordError("adaptive candidate lacks interface E/H evidence")
+        raise FormalRecordError(f"{label} lacks interface E/H evidence")
     electric: list[float] = []
     magnetic: list[float] = []
     for side in ("bottom", "top"):
         row = continuity.get(side)
         if not isinstance(row, Mapping):
-            raise FormalRecordError(f"adaptive candidate lacks {side} interface evidence")
+            raise FormalRecordError(f"{label} lacks {side} interface evidence")
         electric_row = row.get("electric_tangential")
         magnetic_row = row.get("magnetic_tangential")
         if not isinstance(electric_row, Mapping) or not isinstance(
             magnetic_row, Mapping
         ):
             raise FormalRecordError(
-                f"adaptive candidate lacks {side} interface E/H mappings"
+                f"{label} lacks {side} interface E/H mappings"
             )
         electric.append(
             _nonnegative_number(
@@ -922,6 +926,128 @@ def _candidate_interface_errors(measurements: Mapping[str, Any]) -> tuple[float,
             )
         )
     return max(electric), max(magnetic)
+
+
+def _positive_shape(value: Any, *, label: str) -> tuple[int, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise FormalRecordError(f"{label} must be a positive integer shape")
+    shape: list[int] = []
+    for entry in value:
+        if type(entry) is not int or entry <= 0:
+            raise FormalRecordError(f"{label} must be a positive integer shape")
+        shape.append(entry)
+    if len(shape) != 4 or shape[-1] != 3:
+        raise FormalRecordError(f"{label} must be [z, y, x, 3]")
+    return tuple(shape)
+
+
+def _selected_plane_reference(
+    measurements: Mapping[str, Any], *, label: str
+) -> dict[str, Any]:
+    physical = measurements.get("physical_field_reconstruction")
+    if not isinstance(physical, Mapping):
+        raise FormalRecordError(f"{label} lacks physical field reconstruction")
+    comparison = physical.get("selected_plane_full3d_comparison")
+    if not isinstance(comparison, Mapping):
+        raise FormalRecordError(f"{label} lacks pinned selected-plane field evidence")
+    if comparison.get("reference_binding_verified") is not True:
+        raise FormalRecordError(f"{label} selected-plane reference binding is not verified")
+
+    binding: dict[str, str] = {}
+    for key in (
+        "reference_npz",
+        "reference_record",
+        "reference_record_sha256",
+        "reference_record_source_commit_full_sha",
+    ):
+        value = comparison.get(key)
+        if not isinstance(value, str) or not value:
+            raise FormalRecordError(f"{label} lacks selected-plane binding field {key}")
+        binding[key] = value.lower() if key.endswith("sha256") else value
+    for key in (
+        "reference_npz_sha256_expected",
+        "reference_npz_sha256_observed",
+        "reference_record_sha256",
+    ):
+        value = str(comparison.get(key, "")).lower()
+        if SHA256_RE.fullmatch(value) is None:
+            raise FormalRecordError(f"{label} has invalid {key}")
+        binding[key] = value
+    if (
+        binding["reference_npz_sha256_expected"]
+        != binding["reference_npz_sha256_observed"]
+    ):
+        raise FormalRecordError(f"{label} selected-plane NPZ SHA256 differs")
+    binding["reference_record_source_commit_full_sha"] = _full_sha(
+        comparison.get("reference_record_source_commit_full_sha"),
+        label=f"{label} selected-plane reference source",
+    )
+
+    comparison_shape = _positive_shape(
+        comparison.get("sample_shape_z_y_x_component"),
+        label=f"{label} selected-plane comparison shape",
+    )
+    physical_shape = _positive_shape(
+        physical.get("sample_grid_shape_z_y_x_component"),
+        label=f"{label} selected-plane physical shape",
+    )
+    if comparison_shape != physical_shape:
+        raise FormalRecordError(f"{label} selected-plane sample shapes differ")
+
+    planes = comparison.get("planes")
+    if not isinstance(planes, list) or len(planes) != comparison_shape[0]:
+        raise FormalRecordError(f"{label} selected-plane coverage differs from shape")
+    z_nm: list[float] = []
+    electric: list[float] = []
+    magnetic: list[float] = []
+    for index, plane in enumerate(planes):
+        if not isinstance(plane, Mapping):
+            raise FormalRecordError(f"{label} selected plane {index} is invalid")
+        z_value = _nonnegative_number(
+            plane.get("z_nm"), label=f"{label} selected plane {index} z"
+        )
+        z_nm.append(z_value)
+        for field, target in (("electric", electric), ("magnetic", magnetic)):
+            metrics = plane.get(field)
+            if not isinstance(metrics, Mapping):
+                raise FormalRecordError(
+                    f"{label} selected plane {index} lacks {field} metrics"
+                )
+            target.append(
+                _nonnegative_number(
+                    metrics.get("relative_l2"),
+                    label=f"{label} selected plane {index} {field} relative L2",
+                )
+            )
+    if len(z_nm) < 3 or any(second <= first for first, second in zip(z_nm, z_nm[1:])):
+        raise FormalRecordError(f"{label} selected-plane z coverage is not increasing")
+    max_e = max(electric[1:-1])
+    max_h = max(magnetic[1:-1])
+    reported_e = _nonnegative_number(
+        comparison.get("max_middle_plane_electric_relative_l2"),
+        label=f"{label} reported middle-plane E error",
+    )
+    reported_h = _nonnegative_number(
+        comparison.get("max_middle_plane_magnetic_relative_l2"),
+        label=f"{label} reported middle-plane H error",
+    )
+    if not math.isclose(reported_e, max_e, rel_tol=1.0e-12, abs_tol=1.0e-15):
+        raise FormalRecordError(f"{label} middle-plane E summary is inconsistent")
+    if not math.isclose(reported_h, max_h, rel_tol=1.0e-12, abs_tol=1.0e-15):
+        raise FormalRecordError(f"{label} middle-plane H summary is inconsistent")
+    if max(max_e, max_h) > SELECTED_PLANE_FIELD_RELATIVE_MAX:
+        raise FormalRecordError(f"{label} selected middle-plane field Gate failed")
+    full_volume = physical.get("full_middle_volume_reconstructed")
+    if type(full_volume) is not bool:
+        raise FormalRecordError(f"{label} lacks full-volume reconstruction status")
+    return {
+        "binding": binding,
+        "sample_shape_z_y_x_component": list(comparison_shape),
+        "z_nm": z_nm,
+        "max_middle_plane_electric_relative_l2": max_e,
+        "max_middle_plane_magnetic_relative_l2": max_h,
+        "full_middle_volume_reconstructed": full_volume,
+    }
 
 
 def build_adaptive_evidence(
@@ -973,17 +1099,31 @@ def build_adaptive_evidence(
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
-    reference_physical = reference_measurements.get("physical_field_reconstruction")
-    if not isinstance(reference_physical, Mapping) or reference_physical.get(
-        "full_middle_volume_reconstructed"
-    ) is not True:
-        raise FormalRecordError(
-            "adaptive reference selected watchdog lacks full-field availability"
-        )
     max_rta, max_order = _port_and_order_deltas(
         reference_measurements, candidate_measurements
     )
-    interface_e, interface_h = _candidate_interface_errors(candidate_measurements)
+    reference_selected_planes = _selected_plane_reference(
+        reference_measurements, label="adaptive reference"
+    )
+    candidate_selected_planes = _selected_plane_reference(
+        candidate_measurements, label="adaptive candidate"
+    )
+    if (
+        reference_selected_planes["binding"]
+        != candidate_selected_planes["binding"]
+        or reference_selected_planes["sample_shape_z_y_x_component"]
+        != candidate_selected_planes["sample_shape_z_y_x_component"]
+        or reference_selected_planes["z_nm"] != candidate_selected_planes["z_nm"]
+    ):
+        raise FormalRecordError(
+            "adaptive reference/candidate selected-plane bindings or coverage differ"
+        )
+    reference_interface_e, reference_interface_h = _interface_errors(
+        reference_measurements, label="adaptive reference"
+    )
+    interface_e, interface_h = _interface_errors(
+        candidate_measurements, label="adaptive candidate"
+    )
     candidate_solve = candidate_measurements.get("solve")
     if not isinstance(candidate_solve, Mapping):
         raise FormalRecordError("adaptive candidate lacks solve residual")
@@ -995,7 +1135,7 @@ def build_adaptive_evidence(
         "local_fe_rows": _local_fe_dofs(
             reference_measurements, label="adaptive reference"
         ),
-        "full_field_available": True,
+        "reference_field_evidence_available": True,
         "source_commit": reference_sha,
         "physics_signature": physical_signature,
     }
@@ -1016,8 +1156,12 @@ def build_adaptive_evidence(
         ),
         "max_abs_rta_delta": max_rta,
         "max_significant_order_amplitude_relative_delta": max_order,
-        "sampled_interface_e_relative_error": interface_e,
-        "sampled_interface_h_relative_error": interface_h,
+        "sampled_interface_e_relative_error": max(
+            reference_interface_e, interface_e
+        ),
+        "sampled_interface_h_relative_error": max(
+            reference_interface_h, interface_h
+        ),
     }
     result = build_adaptive_planning_record(
         plan,
@@ -1049,12 +1193,19 @@ def build_adaptive_evidence(
                 "sha256": reference_file.sha256,
                 "selected_watchdog_path": str(reference_watchdog.path),
                 "selected_watchdog_sha256": reference_watchdog.sha256,
+                "field_evidence_kind": (
+                    "sampled_interface_EH_and_pinned_full3d_selected_planes"
+                ),
+                "sampled_interface_e_relative_error": reference_interface_e,
+                "sampled_interface_h_relative_error": reference_interface_h,
+                "selected_plane_reference": reference_selected_planes,
             },
             "candidate": {
                 "path": str(candidate_file.path),
                 "sha256": candidate_file.sha256,
                 "selected_watchdog_path": str(candidate_watchdog.path),
                 "selected_watchdog_sha256": candidate_watchdog.sha256,
+                "selected_plane_reference": candidate_selected_planes,
             },
         },
     }

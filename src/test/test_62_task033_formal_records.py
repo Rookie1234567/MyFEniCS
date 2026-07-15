@@ -355,11 +355,37 @@ def _watchdog_summary(
     graded_plan_hash: str | None = None,
     local_rta_offset: float = 0.0,
     amplitude_offset: float = 0.0,
-    full_field_available: bool = True,
+    full_field_available: bool = False,
     interface_e_error: float = 1.0e-3,
     interface_h_error: float = 2.0e-3,
+    selected_plane_error: float = 1.0e-3,
     sha: str = SOURCE_SHA,
 ) -> dict:
+    h_tag = str(float(h_nm)).replace(".", "p")
+    reference_npz_sha = "1" * 64
+    reference_record_sha = "2" * 64
+    sample_shape = [5, 2, 2, 3]
+    z_planes = [bottom, 30.0, 60.0, 90.0, top]
+    selected_plane_comparison = {
+        "reference_npz": f"/work/reference/h{h_tag}/samples.npz",
+        "reference_npz_sha256_expected": reference_npz_sha,
+        "reference_npz_sha256_observed": reference_npz_sha,
+        "reference_record": f"benchmarks/reference_h{h_tag}.json",
+        "reference_record_sha256": reference_record_sha,
+        "reference_record_source_commit_full_sha": SOURCE_SHA,
+        "reference_binding_verified": True,
+        "sample_shape_z_y_x_component": sample_shape,
+        "planes": [
+            {
+                "z_nm": z_nm,
+                "electric": {"relative_l2": selected_plane_error},
+                "magnetic": {"relative_l2": selected_plane_error},
+            }
+            for z_nm in z_planes
+        ],
+        "max_middle_plane_electric_relative_l2": selected_plane_error,
+        "max_middle_plane_magnetic_relative_l2": selected_plane_error,
+    }
     return {
         "schema_version": "task033.memory-watchdog.v2",
         "benchmark_id": "task033_external_memory_watchdog",
@@ -431,6 +457,8 @@ def _watchdog_summary(
             },
             "physical_field_reconstruction": {
                 "full_middle_volume_reconstructed": full_field_available,
+                "sample_grid_shape_z_y_x_component": sample_shape,
+                "selected_plane_full3d_comparison": selected_plane_comparison,
                 "interface_continuity": {
                     side: {
                         "electric_tangential": {"relative_l2": interface_e_error},
@@ -671,6 +699,198 @@ class Task033FormalRecordTests(unittest.TestCase):
                 result["status"], "measured_same_accuracy_qualification_attached"
             )
             self.assertEqual(result["same_accuracy_qualification"]["compression"], 2.0)
+            self.assertEqual(
+                result["measured_evidence"]["reference"]["field_evidence_kind"],
+                "sampled_interface_EH_and_pinned_full3d_selected_planes",
+            )
+            self.assertFalse(
+                result["measured_evidence"]["reference"][
+                    "selected_plane_reference"
+                ]["full_middle_volume_reconstructed"]
+            )
+            self.assertEqual(
+                result["measured_evidence"]["reference"][
+                    "selected_plane_reference"
+                ]["binding"]["reference_npz_sha256_expected"],
+                "1" * 64,
+            )
+
+            missing_binding = json.loads(
+                reference_watchdog.read_text(encoding="utf-8")
+            )
+            missing_binding["measurements"]["physical_field_reconstruction"][
+                "selected_plane_full3d_comparison"
+            ] = None
+            _write(reference_watchdog, missing_binding)
+            changed_reference_funnel = json.loads(
+                reference_path.read_text(encoding="utf-8")
+            )
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+            with self.assertRaisesRegex(
+                FormalRecordError, "lacks pinned selected-plane field evidence"
+            ):
+                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+
+            _write(
+                reference_watchdog,
+                _watchdog_summary(
+                    bottom=10.0,
+                    top=110.0,
+                    local_dofs=2000,
+                    interface_dofs=400,
+                    total_seconds=30.0,
+                    memory_bytes=2_000_000_000,
+                    h_nm=5.0,
+                ),
+            )
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+
+            bad_reference_interface = _watchdog_summary(
+                bottom=10.0,
+                top=110.0,
+                local_dofs=2000,
+                interface_dofs=400,
+                total_seconds=30.0,
+                memory_bytes=2_000_000_000,
+                h_nm=5.0,
+                interface_e_error=6.0e-3,
+            )
+            _write(reference_watchdog, bad_reference_interface)
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+            with self.assertRaisesRegex(
+                FormalRecordError, "native same-accuracy gate did not qualify"
+            ):
+                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+
+            _write(
+                reference_watchdog,
+                _watchdog_summary(
+                    bottom=10.0,
+                    top=110.0,
+                    local_dofs=2000,
+                    interface_dofs=400,
+                    total_seconds=30.0,
+                    memory_bytes=2_000_000_000,
+                    h_nm=5.0,
+                ),
+            )
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+
+            missing_reference_field = json.loads(
+                reference_watchdog.read_text(encoding="utf-8")
+            )
+            del missing_reference_field["measurements"][
+                "physical_field_reconstruction"
+            ]["interface_continuity"]
+            _write(reference_watchdog, missing_reference_field)
+            changed_reference_funnel = json.loads(
+                reference_path.read_text(encoding="utf-8")
+            )
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+            with self.assertRaisesRegex(
+                FormalRecordError, "adaptive reference lacks interface E/H evidence"
+            ):
+                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+
+            _write(
+                reference_watchdog,
+                _watchdog_summary(
+                    bottom=10.0,
+                    top=110.0,
+                    local_dofs=2000,
+                    interface_dofs=400,
+                    total_seconds=30.0,
+                    memory_bytes=2_000_000_000,
+                    h_nm=5.0,
+                ),
+            )
+            changed_reference_funnel["source_records"][0]["sha256"] = _sha256(
+                reference_watchdog
+            )
+            _write(reference_path, changed_reference_funnel)
+
+            bad_candidate_binding = json.loads(
+                candidate_watchdog.read_text(encoding="utf-8")
+            )
+            bad_candidate_binding["measurements"][
+                "physical_field_reconstruction"
+            ]["selected_plane_full3d_comparison"][
+                "reference_npz_sha256_observed"
+            ] = "3" * 64
+            _write(candidate_watchdog, bad_candidate_binding)
+            changed_candidate_funnel = json.loads(
+                candidate_path.read_text(encoding="utf-8")
+            )
+            changed_candidate_funnel["source_records"][0]["sha256"] = _sha256(
+                candidate_watchdog
+            )
+            _write(candidate_path, changed_candidate_funnel)
+            with self.assertRaisesRegex(
+                FormalRecordError, "selected-plane NPZ SHA256 differs"
+            ):
+                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+
+            _write(
+                candidate_watchdog,
+                _watchdog_summary(
+                    bottom=10.0,
+                    top=110.0,
+                    local_dofs=1000,
+                    interface_dofs=400,
+                    total_seconds=25.0,
+                    memory_bytes=1_800_000_000,
+                    h_nm=5.0,
+                    graded_reference_h=5.0,
+                    graded_plan_hash=plan.plan_hash,
+                    local_rta_offset=1.0e-7,
+                    amplitude_offset=1.0e-5,
+                    selected_plane_error=6.0e-3,
+                ),
+            )
+            changed_candidate_funnel["source_records"][0]["sha256"] = _sha256(
+                candidate_watchdog
+            )
+            _write(candidate_path, changed_candidate_funnel)
+            with self.assertRaisesRegex(
+                FormalRecordError, "selected middle-plane field Gate failed"
+            ):
+                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+
+            _write(
+                candidate_watchdog,
+                _watchdog_summary(
+                    bottom=10.0,
+                    top=110.0,
+                    local_dofs=1000,
+                    interface_dofs=400,
+                    total_seconds=25.0,
+                    memory_bytes=1_800_000_000,
+                    h_nm=5.0,
+                    graded_reference_h=5.0,
+                    graded_plan_hash=plan.plan_hash,
+                    local_rta_offset=1.0e-7,
+                    amplitude_offset=1.0e-5,
+                ),
+            )
+            changed_candidate_funnel["source_records"][0]["sha256"] = _sha256(
+                candidate_watchdog
+            )
+            _write(candidate_path, changed_candidate_funnel)
 
             changed_watchdog = json.loads(
                 candidate_watchdog.read_text(encoding="utf-8")

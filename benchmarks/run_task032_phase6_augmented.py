@@ -320,7 +320,9 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _reference_archive(h_nm: float) -> tuple[Path, dict[str, Any]] | None:
+def _reference_archive(
+    h_nm: float,
+) -> tuple[Path, Path, dict[str, Any]] | None:
     record_path = next(
         (path for level, path in REFERENCE_BY_H.items() if abs(h_nm - level) <= 1.0e-12),
         None,
@@ -340,7 +342,7 @@ def _reference_archive(h_nm: float) -> tuple[Path, dict[str, Any]] | None:
         raise RuntimeError(
             f"Full-3D selected-plane archive SHA256 {actual_sha} != {expected_sha}."
         )
-    return archive, record
+    return archive, record_path, record
 
 
 def _parse_args() -> argparse.Namespace:
@@ -861,7 +863,7 @@ def main() -> None:
             _reference_archive(args.h_nm) if pinned_reference_case else None
         )
         if reference_archive is not None:
-            archive_path, reference_record = reference_archive
+            archive_path, reference_record_path, reference_record = reference_archive
             with np.load(archive_path) as archive:
                 sample_x = np.asarray(archive["x_nm"], dtype=np.float64)
                 sample_y = np.asarray(archive["y_nm"], dtype=np.float64)
@@ -927,6 +929,25 @@ def main() -> None:
         if reference_archive is not None:
             field_reference = compare_selected_planes_to_reference(
                 selected_planes, archive_path
+            )
+            expected_reference_npz_sha256 = str(
+                reference_record["artifacts"]["reference_npz_sha256"]
+            ).lower()
+            observed_reference_npz_sha256 = _sha256(archive_path)
+            field_reference.update(
+                {
+                    "reference_npz_sha256_expected": expected_reference_npz_sha256,
+                    "reference_npz_sha256_observed": observed_reference_npz_sha256,
+                    "reference_record": str(reference_record_path.relative_to(ROOT)),
+                    "reference_record_sha256": _sha256(reference_record_path),
+                    "reference_record_source_commit_full_sha": str(
+                        reference_record["metadata"]["commit_sha"]
+                    ).lower(),
+                    "reference_binding_verified": (
+                        expected_reference_npz_sha256
+                        == observed_reference_npz_sha256
+                    ),
+                }
             )
         absorption["R_plus_T_plus_A_volume"] = float(
             port_power["R_total"]

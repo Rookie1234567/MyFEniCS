@@ -129,17 +129,53 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("requires_same_case_and_source_sha_across_funnel", text)
         self.assertIn("checks.common_candidate_basis_is_m160", text)
         self.assertIn("p2/h3 watchdog lacks complete same-SHA", text)
-        self.assertIn('Key = "p2_h5_graded"; H = "5.0"', text)
-        self.assertIn('Key = "p2_h3_graded"; H = "3.0"', text)
+        self.assertIn('-Name "p2_h5_graded"', text)
+        self.assertIn('-GradedReferenceH "5.0"', text)
+        self.assertIn('-Name "p2_h3_graded"', text)
+        self.assertIn('-GradedReferenceH "3.0"', text)
         self.assertIn('"buffer_10" = $uniformFunnels["p2_h3"]', text)
         for buffer_name in ("buffer_7p5", "buffer_5", "buffer_2p5"):
             self.assertIn(buffer_name, text)
         self.assertIn("$comparisons[0].mandatory_convergence_pass -eq $false", text)
         self.assertIn("conditional M240 is prohibited", text)
+        self.assertIn("[switch]$AllowConditionalM240", text)
+        self.assertIn('$Category -eq "uniform"', text)
+        self.assertIn('$Degree -in @(3, 4)', text)
+        self.assertIn("conditional M240 is restricted to explicitly authorized", text)
+        self.assertIn("-AllowConditionalM240:$allowConditionalM240", text)
         self.assertIn("-RequestedModes 240", text)
         self.assertIn("-CandidateModes 240", text)
         self.assertIn('"--m160-funnel-evidence-file"', text)
         self.assertIn('"--m160-funnel-evidence-sha256"', text)
+
+        h5_funnel = text.index('$gradedFunnels["p2_h5_graded"] = Invoke-HybridFunnel')
+        h5_aggregate = text.index('-StepName "aggregate_adaptive_p2_h5"')
+        h3_funnel = text.index('$gradedFunnels["p2_h3_graded"] = Invoke-HybridFunnel')
+        h3_aggregate = text.index('-StepName "aggregate_adaptive_p2_h3"')
+        self.assertLess(h5_funnel, h5_aggregate)
+        self.assertLess(h5_aggregate, h3_funnel)
+        self.assertLess(h3_funnel, h3_aggregate)
+
+        graded_h5_block = text[h5_funnel:h5_aggregate]
+        h5_gate_block = text[h5_aggregate:h3_funnel]
+        graded_h3_block = text[h3_funnel:h3_aggregate]
+        buffer_start = text.index("# Phase 5:")
+        buffer_end = text.index("# Phase 6:")
+        self.assertNotIn("-AllowConditionalM240", graded_h5_block)
+        self.assertNotIn("-AllowConditionalM240", graded_h3_block)
+        self.assertNotIn("-AllowConditionalM240", text[buffer_start:buffer_end])
+        self.assertIn(
+            "Assert-AdaptiveFormalPass -Path $adaptiveH5 -ExpectedReferenceH 5.0",
+            h5_gate_block,
+        )
+        self.assertIn(
+            "Assert-AdaptiveFormalPass -Path $adaptiveH3 -ExpectedReferenceH 3.0",
+            text[h3_aggregate:buffer_start],
+        )
+
+        self.assertIn("bounded clean wall-timeout diagnostics", text)
+        self.assertIn("prove only the watchdog/source/resource", text)
+        self.assertNotIn("known distributed PEP/MUMPS boundary", text)
 
     def test_primary_aggregates_and_explicit_deferred_follow_up(self) -> None:
         text = self.text

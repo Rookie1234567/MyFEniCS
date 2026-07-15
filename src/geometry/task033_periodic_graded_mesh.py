@@ -724,7 +724,9 @@ def qualify_same_accuracy_candidate(
         reference_h = float(_required(reference, "h_nm"))
         reference_rows = int(_required(reference, "local_fe_rows"))
         candidate_rows = int(_required(candidate, "local_fe_rows"))
-        full_field_available = bool(_required(reference, "full_field_available"))
+        reference_field_evidence_available = bool(
+            _required(reference, "reference_field_evidence_available")
+        )
         modal_gate = bool(_required(candidate, "modal_truncation_gate_pass"))
         reference_commit = str(_required(reference, "source_commit"))
         candidate_commit = str(_required(candidate, "source_commit"))
@@ -761,8 +763,8 @@ def qualify_same_accuracy_candidate(
         reasons.append("reference_h_does_not_match_mesh_plan")
     if reference_rows <= 0 or candidate_rows <= 0:
         reasons.append("local_fe_rows_must_be_positive")
-    if not full_field_available:
-        reasons.append("h5_h3_reference_requires_full_field_evidence")
+    if not reference_field_evidence_available:
+        reasons.append("h5_h3_reference_requires_sampled_interface_field_evidence")
     if not modal_gate:
         reasons.append("modal_truncation_gate_failed_or_missing")
     certificate = plan.certificate()
