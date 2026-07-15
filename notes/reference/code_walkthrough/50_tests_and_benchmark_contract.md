@@ -21,6 +21,7 @@
 | 31 | Task032 full-3D reference grid、64 MiB guard、单侧接口取迹和默认关闭合同 |
 | 32 | Task032 matching cross-section、双 Floquet orientation、distributed QEP、解析/有损 beta、±配对、L2 范数和 MPI ownership |
 | 33 | Task032 Poynting/衰减分类、adjoint QEP、Q' 双正交、近简并 block、正反 identity、tracking 和 principal angles |
+| 41 | Task032 deterministic 0.7 nm analytical projection；验证 non-PDE/non-solver-pass 身份、generic mode/local-row scaling 与 invalid-input fail-closed |
 
 测试号 21 仍为空缺，是历史任务清理结果；不为连续编号而塞入无意义测试。
 
@@ -94,3 +95,15 @@ Phase 3 record SHA-256、三个材料 case、O(M) 因子存储、无 full-field 
 四 rank 签名一致和全部负对照。clean source `9206e9c...` 的正式 record 通过
 identity/source、case/storage、reflection/passivity/composition/reciprocity、
 evanescent/negative/MPI 四类 Gate，Case080 总计 `286/286 passed`。
+
+## Task032 Phase 5–10 final contract
+
+`test_35`–`test_40` 依次覆盖 matched trace/projection、精确 10/110 nm local mesh、单侧 external
+DtN、internal modal blocks、augmented/Modal-Schur direct 与 E/H/吸收重构。正式 Case080 还固定
+h5/h3 M120/M160 截断漏斗、same-grid full3D R/T/A/field/absorption、30-point parameter-interface
+smoke、six-path simultaneous RSS 和 h2 fail-closed prediction。最终 checker 为 `302/302 passed`；
+h2 `not_run_by_gate`，30/30 不得写成 1–10° production qualification。
+
+`test_41_task032_scalability_projection` 不依赖 PDE runtime，锁定 checked-in projection JSON 与
+deterministic script 输出相同，并验证 `record_type=analytical_resource_projection`、
+`is_pde_run=false`、`is_solver_pass=false`。该记录不得计入 Case080 solver pass。

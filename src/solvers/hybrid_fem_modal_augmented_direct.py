@@ -1,3 +1,10 @@
+"""Task032 augmented direct reference for 13.5 nm Hybrid FEM-modal solves.
+
+Last-rank modal ownership and local MUMPS LU are current-scale experimental
+choices.  This module must not be selected as a 0.7 nm production solver or an
+ordinary default without a distributed modal core and iterative local solver.
+"""
+
 from __future__ import annotations
 
 import time

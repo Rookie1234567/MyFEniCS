@@ -2,7 +2,7 @@
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task031 当前阶段的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task032 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -45,6 +45,31 @@ Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080
 
 ## 1.1 2026-07-15 最新更新
 
+Task032 Review V1 接受 13.5 nm h5/h3 物理与数值实现，但在选择性合并前要求表格化回顾、
+0.7 nm 资源评估、长期规则、manifest 和项目文档闭环；addendum 又明确撤回 pure-modal/y-invariant
+优先主线，保留未来复杂 3D 两端。当前 review follow-up 的统一结论为：
+
+| 项目 | 结论 | 数据身份 / 边界 |
+|---|---|---|
+| 13.5 nm Task032 | `hybrid_direct_engineering_success` | measured/derived，h5/h3 same-grid |
+| h2 | `not_run_by_gate` | predicted 两方法均失败，未运行 |
+| 参数 1–10° S/P | 30/30 interface/API smoke | measured M4；非 production qualification |
+| h3 best direct memory | 3.224 GiB，较 augmented -16.31% | measured simultaneous worker RSS |
+| full3D→Hybrid algebra | h5/h3 rows -68.62%/-65.35%；NNZ -59.14%/-59.68% | derived from measured rows/NNZ |
+| current direct at 0.7 nm | not resource feasible | analytical projection，非 PDE run |
+| 1 TiB final Hybrid | credible conditional opportunity | 尚未证明，需 h/p + scalable modal + iterative |
+| ordinary default | unchanged | explicit opt-in only |
+
+`M` 的统一含义是每个传播方向保留的中间截面模式数；M160 即 160 forward + 160 backward =
+320 internal modal amplitudes。未来主线是 exact complex 3D FEM ends + generic `epsilon(x,y)` modal
+middle；y-sector/pure-modal 只作当前简单结构的可选诊断/reference。
+
+修正后的顺序为：Task033 local h/p + interface budget（13.5 nm 同误差至少 3x、优选 5x DoF
+下降）→ Task034 scalable generic modal core → Task035 matrix-free low-memory Hybrid iterative →
+Task036 13.5→5→2→1→0.7 nm continuation。详情见
+[`task032_0p7nm_scalability_assessment.md`](task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md)
+和 [`response_v1_review_followup.md`](task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md)。
+
 Task032 Phase 6f--10 已闭合。clean h5/h3 M120/M160 记录完成物理 E/H、接口连续、
 体吸收、五个选面、逐衍射级输出和 augmented/Modal-Schur 对照；两档 M120->M160
 最大 total delta 分别为 `6.24e-14/1.22e-14`。h3 M160 相对同网格 full-3D
@@ -56,8 +81,8 @@ augmented/Schur-fast/Schur-memory-minimal 为 `3.853/3.998/3.224 GiB`；只有�
 factor 生命周期相对 augmented 下降 `16.31%`。h2 的网格尺度与 factor-payload
 预测分别为 `5.365/6.170 GiB` 和 `11.647/13.394 GiB`（中心/上界），均未过
 4/5 GiB 强制 Gate，因此 h2 按任务书未运行。最终 Case080 checker 为
-`302/302 passed`，分类为 `hybrid_direct_engineering_success`；待独立 review 后合并，
-再决定启动 Task033。
+`302/302 passed`，分类为 `hybrid_direct_engineering_success`；Review V1 已完成，当前等待
+follow-up 复审和用户许可后按 manifest 选择性合并；Task033 在该闭环完成前不启动。
 
 Phase 6a/6b/6c 已按小步完成。上下局部三维 p2 Nédélec/Floquet 网格只覆盖外边界到 z=10/110 nm 接口，中间 100 nm 不再生成三维体单元；每个局部系统只装配其真实拥有的一侧外部 40-mode Fourier-DtN。内部耦合新增分布式 `M x N` trace projection、`N x M` 正/负 traction、`M x M` 负迹映射和无 growing inverse 的 `P+/P-`，内部 unknown/equation 均为 `2M`，没有 dense `N_interface^2`。
 

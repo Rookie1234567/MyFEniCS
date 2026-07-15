@@ -4,20 +4,20 @@
 
 ```text
 status = approved current-phase scope
-scope_applies_to = Task031–Task034
+scope_applies_to = Task031–Task035
 reference_wavelength = 13.5 nm
 material = existing validated Si optical constant
 instrument_model = deferred
-wavelength_continuation = deferred_to_Task035
+wavelength_continuation = deferred_to_Task036
 ```
 
-本文件是 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 的当前阶段执行补充。若主规划文档中关于 Task032–Task034 的材料扰动或多波长验证与本文件冲突，以本文件为准。
+本文件是 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 的当前阶段执行补充。若主规划文档中关于 Task032–Task035 的材料扰动或多波长验证与本文件冲突，以本文件为准。
 
 ---
 
 ## 2. 当前阶段冻结的物理问题
 
-Task031–Task034 统一使用：
+Task031–Task035 统一使用：
 
 ```text
 wavelength = 13.5 nm
@@ -52,7 +52,7 @@ $$
 
 ## 3. 当前阶段暂不考虑的因素
 
-以下内容不进入 Task031–Task034 的 Maxwell 前向模型和通过门槛：
+以下内容不进入 Task031–Task035 的 Maxwell 前向模型和通过门槛：
 
 ```text
 - detector absolute calibration
@@ -145,15 +145,25 @@ bottom local 3D FEM
 + top local 3D FEM
 ```
 
-Task032 的参数化范围只包括角度、方位角、S/P 偏振和几何；材料保持固定。
+Task032 的正式物理资格只覆盖主点；M4 的 1–10° S/P 30/30 结果是 parameter-interface smoke，
+不能升级为整个范围的截断或生产资格。材料保持固定。
 
 ### Task033
 
-在 13.5 nm、固定材料下构造面向 `1–10° + S/P` 的 robust h/p 自适应公共网格。当前不加入材料扰动样本。
+保留上下 exact complex 3D FEM，在 13.5 nm、固定材料下构造 local h/p 自适应与
+interface-position/buffer budget；同等 observable error 的 local DoF 至少下降 3x、优选 5x。
+当前不加入材料扰动样本。
 
 ### Task034
 
-针对 Task033 的最终 hybrid-adaptive 离散系统构造参数鲁棒迭代法。鲁棒性首先指：
+构造不依赖 y 不变性的 scalable generic 2D modal core：distributed ownership、streamed/blocked
+right-left modes、adaptive M、block/matrix-free projection/Schur，禁止 replicated M² 和 all-mode
+dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断。
+
+### Task035
+
+针对 Task033 + Task034 的最终 hybrid-adaptive 离散系统构造 matrix-free、low-memory 参数鲁棒
+迭代法。鲁棒性首先指：
 
 ```text
 - 1–10° grazing-angle range
@@ -163,9 +173,9 @@ Task032 的参数化范围只包括角度、方位角、S/P 偏振和几何；�
 
 不要求对波长和材料色散同时鲁棒。
 
-### Task035
+### Task036
 
-只有 Task032–Task034 在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
+只有 Task032–Task035 在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
 
 ```text
 13.5 nm
@@ -175,7 +185,7 @@ Task032 的参数化范围只包括角度、方位角、S/P 偏振和几何；�
 → 0.7 nm
 ```
 
-从 Task035 开始，每个波长再更新对应的材料复折射率、传播衍射级、截面本征模和资源预算。
+从 Task036 开始，每个波长再更新对应的材料复折射率、传播衍射级、截面本征模和资源预算。
 
 ---
 
@@ -198,5 +208,5 @@ Task032 的参数化范围只包括角度、方位角、S/P 偏振和几何；�
 + 多波长鲁棒性。
 
 先证明新 hybrid 方法、自适应离散和迭代框架在 13.5 nm 下成立，
-再在 Task035 处理波长缩短和材料色散。
+再在 Task036 处理波长缩短和材料色散。
 ```

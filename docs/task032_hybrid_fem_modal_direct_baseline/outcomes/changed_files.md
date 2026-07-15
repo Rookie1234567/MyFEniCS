@@ -1,4 +1,19 @@
-# Task032 Phase 6f--10 与最终闭合变更
+# Task032 变更清单
+
+## 2026-07-15 Review V1 跟进
+
+| 类别 | 本轮同步内容 |
+|---|---|
+| 结论与回复 | 重写 `outcomes/summary.md`；新增 `response_v1_review_followup.md`，逐项回应 Review V1 与 addendum |
+| 0.7 nm 可扩展性 | 新增确定性投影脚本、投影 JSON、可扩展性评估、轻量记录尺寸清单与选择性合并清单 |
+| 契约与测试 | 新增 `test_41_task032_scalability_projection.py`；扩展仓库原则与文档契约测试，固定 table-first 和 evidence identity 规则 |
+| 求解器边界 | 给 QEP、耦合、augmented-direct 与 Modal-Schur direct 接口补充“当前尺度基线、非 0.7 nm 生产路径”的边界说明 |
+| 全局文档 | 同步根 README、benchmark 索引、能力矩阵、开发进展、迭代端口、项目路线图、Phase-1 scope、理论说明与代码导读 |
+| 保留不动 | `task.md`、`review_report_v1.md`、`review_report_v1_addendum.md` 作为不可改写的任务与审阅输入；Case080 原始记录保留完整精确振幅 |
+
+本轮新增轻量证据位于 `outcomes/`；没有把重型场数组或 solver 工作目录纳入 Git。
+
+## Task032 Phase 6f--10 与最终闭合变更
 
 ## 物理、模式与求解
 

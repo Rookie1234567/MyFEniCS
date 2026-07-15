@@ -1356,29 +1356,39 @@ Step 14 memory prediction
 Step 15 conditional h2
 ```
 
-不得跳过前四层直接运行 h2。
+Task032 最终完成 Step 1–14；conditional h2 的两类预测均未过中心 4 GiB / 上界 5 GiB Gate，
+所以 Step 15 正确收口为 `not_run_by_gate`。不得跳过前四层或放宽资源 Gate 直接运行 h2。
 
 ---
 
-# 21. Task032 后与 Task033/Task034 的连接
+# 21. Task032 后与 Task033–Task036 的连接
 
-若 Task032 成功，Task033 应：
+Task033 应：
 
-- 保持内部接口 trace 网格和模式空间可控；
-- 只对上下局部 3D interior 做 h/p 自适应；
+- 保留 future bottom/top exact complex 3D FEM；
+- 对上下局部 3D interior 做 h/p 自适应；
+- 联合优化 interface position、buffer thickness 与所需 evanescent M；
 - 为多个掠角和 S/P 构造 robust common mesh；
-- 检查自适应后接口 projection 是否仍稳定。
+- 检查自适应后接口 projection 是否仍稳定；
+- 在 13.5 nm direct reference 上实现同误差 local DoF 至少 3x、优选 5x 下降。
 
-Task034 的最终块系统应围绕：
+Task034 构造不依赖 y 不变性的 scalable generic `epsilon(x,y)` modal core：
 
 ```text
-bottom adaptive 3D block
-+ top adaptive 3D block
-+ modal two-port block
-+ interface Schur
+distributed modal ownership
++ streamed/blocked right-left modes
++ adaptive M
++ block or matrix-free projection/Schur
++ no replicated M^2
++ no all-mode dense multi-RHS
 ```
 
-设计迭代法，而不是继续求解原来的全域 3D 矩阵。
+pure-modal/y-sector 只作当前简单 geometry 的可选诊断/reference，不能替代 future complex 3D
+ends，也不能进入通用服务资源预算。
+
+Task035 在 Task033 + Task034 的最终离散上设计 matrix-free local FEM、low-memory H(curl)
+preconditioner、scalable modal action 和 outer flexible Krylov，而不是继续求解原来的全域 3D
+矩阵。Task036 最后按 13.5→5→2→1→0.7 nm continuation 逐步更新材料、网格、M 和资源 Gate。
 
 ---
 

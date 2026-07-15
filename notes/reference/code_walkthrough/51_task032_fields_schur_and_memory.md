@@ -86,6 +86,11 @@ Task32 阶段标记覆盖 eigen assembly/solve、classification、local assembly
 - `run_task032_phase8_funnel.py`：比较 M 递增时 total、复振幅、per-order power 和界面投影；
 - `run_task032_phase9_smoke.py`：固定 h5/h3 角度/S-P 参数入口 smoke，不升级为全范围 production qualification；
 - `run_task032_h2_prediction.py`：分别用网格尺度和 MUMPS factor payload 外推 h2，执行中心 4 GiB、上界 5 GiB 的 fail-closed 解锁判据。
+- `run_task032_scalability_projection.py`：输入 wavelength/period/local thickness/mesh/mode safety/MPI，输出 deterministic `analytical_resource_projection`；它不是 PDE run 或 solver pass。
 
 完整 volume reconstruction 仍是 heavy opt-in；普通 Task32 记录不聚集完整 FE
 field、mode vector、mesh 或 interface-square matrix。
+
+Review V1 后，current-scale QEP/augmented/Schur docstring 明确标记：last-rank modal ownership、
+replicated dense M²、all-mode dense multi-RHS、all-modes MUMPS shift-invert 和 local LU 不能直接
+扩展到 0.7 nm。未来主线保留 complex 3D ends + generic `epsilon(x,y)` modal middle。

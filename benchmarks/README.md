@@ -12,12 +12,13 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `scripts/run_level3_iterative.sh` | p2 h5/h3/h2 workstation完整求解并运行checker |
 | `configs/workstation_p2.json` | canonical profile唯一默认来源；CLI只做override |
 | `expected/gates.json` | 残差、迭代比、RTA、RSS阈值 |
-| `check_benchmarks.py` | 从 manifest/records 重算当前 Gate，含 Task030 Case060、Task031 Case070 与 Task032 Case080 Phase 1/2/3/4 的 provenance、数值、RTA、参考场 schema/hash、QEP/ownership、双正交、tracking 和稳定传播；当前 `286/286` |
+| `check_benchmarks.py` | 从 manifest/records 重算当前 Gate，含 Task030 Case060、Task031 Case070 与 Task032 Case080 Phase 1–10 的 provenance、数值、RTA、场/吸收、QEP/modes/trace、Schur、截断、参数 smoke、内存和 h2 not-run；当前 `302/302` |
 | `run_direct_memory_forensics.py` | Task029 h5/h3 direct worker + 0.25 s simultaneous RSS/cgroup/swap/CPU/thread sampler；支持显式 OpenBLAS threads 与 CPU affinity；h2 默认锁定并要求 G1–G10 |
 | `run_task031_memory_forensics.py` | Task031 iterative external sampler；live-rank simultaneous RSS/cgroup/swap/stage、clean SHA、h2 lock 与 9.5/11 GiB watchdog |
 | `run_task032_phase2_qep.py` | Task032 Phase 2：air 网格收敛、homogeneous lossy、当前 epsilon(x,y)、±beta、残差、L2 归一化与分布式 ownership；完整向量不聚集 |
 | `run_task032_phase3_modes.py` | Task032 Phase 3：Poynting/衰减分类、显式伴随 QEP、Q' 双正交、近简并 block、正反配对和角度 tracking；完整向量不聚集 |
 | `run_task032_phase4_propagation.py` | Task032 Phase 4：读取 Phase 3 mode record，验证 100 nm two-port 正反传播、无反射、被动性、composition、强衰减和 MPI rank 一致性 |
+| `run_task032_scalability_projection.py` | Task032 Review closeout：确定性、non-PDE 的 `analytical_resource_projection`；只做 generic 2D mode/local DoF/current-layout payload 外推，不计入 solver pass |
 | `scripts/audit_direct_thread_capability.sh` | 只读审计活动 PETSc/MUMPS、BLAS/OpenMP 链路、OpenBLAS 控制 API 与 CPU 可见性 |
 | `records/` | canonical轻量记录与machine-readable Gate report |
 | `artifacts/` | ignored重型输出 |

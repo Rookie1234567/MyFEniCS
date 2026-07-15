@@ -17,7 +17,14 @@
 
 - [Task032 任务书](task.md)
 - [滚动结果总结](outcomes/summary.md)
-- [最终 17 节答复](response_v1.md)
+- [Review 前最终 17 节执行总结（历史文件）](response_v1.md)
+- [Review V1](review_report_v1.md)
+- [Review V1 强制补充](review_report_v1_addendum.md)
+- [Review V1 follow-up 回应](response_v1_review_followup.md)
+- [0.7 nm 可扩展性评估](outcomes/task032_0p7nm_scalability_assessment.md)
+- [0.7 nm deterministic analytical projection](outcomes/task032_0p7nm_projection.json)
+- [选择性合并清单](outcomes/selective_merge_manifest.csv)
+- [轻量 record 大小清单](outcomes/compact_record_size_inventory.csv)
 - [本地迁移记录](outcomes/local_migration_record.md)
 - [环境能力记录](outcomes/environment_capability.md)
 - [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
@@ -117,5 +124,7 @@ M120--M160 强截断收敛、物理 E/H/体吸收/五个选面、augmented 与 M
 一致性、30/30 角度/S-P smoke 和六条 direct lifecycle 独立内存采样。h3
 memory-minimal 为 `3.224 GiB`，相对 augmented 降低 `16.31%`；但 h2 两种
 预测均未过 4/5 GiB 强制 Gate，所以 h2 按任务书保持锁定。正式记录和 Case080
-`302/302` checker 已完成。当前分支应先推送并接受独立 review，再合并；
-Task033 只在 review 接受“工程成功、h2 锁定”的边界后启动。
+`302/302` checker 已完成。Review V1 接受 13.5 nm 实现，并要求在选择性合并前关闭文档和
+0.7 nm 可扩展性 P0；follow-up 保留 `h2=not_run_by_gate`、parameter smoke only、ordinary
+default unchanged。当前 direct implementation 不具 0.7 nm 资源可行性，但保留 future complex
+3D ends + generic modal middle 主架构。Task033 只在 follow-up 复审和选择性合并许可后启动。

@@ -19,6 +19,7 @@
 9. Codex 不得删除或改写 ChatGPT 的 `task.md`、`review_report*.md`；需要纠正时新增 response，而不是覆盖审查记录。
 10. solver 成功使用 full explicit true residual 判断，official R/T/A 只能从通过 residual Gate 的场计算。
 11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；详细档案与项目级回顾都不可省略，一句状态或纯链接不构成完成。完整框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
+12. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -26,7 +27,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力和 Task031–Task035 前向模型路线；后续任务的上位需求基线 |
+| [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力和 Task031–Task036 前向模型路线；后续任务的上位需求基线 |
 | [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md) | 第一阶段冻结范围：13.5 nm、固定 Si 光学常数、1–10° 掠入射角、S/P 偏振；后续前向模型资格化不得越界宣传 |
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`task_retrospective_standard.md`](task_retrospective_standard.md) | 从 Task029 起适用于所有新 Task 的阶段回顾标准：背景、基线、方法、结果、解释、负结果、决策、局限、下一步与证据入口 |
@@ -56,7 +57,7 @@
 | Task029 | Stage4 direct memory forensics | `diagnostic_success`；Review V2 已关闭并以 `bfb6586e` 合入 master |
 | Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
-| Task032 | Hybrid FEM–Modal direct baseline | Phase 0/1/2/3 complete；Phase 4 stable propagation next |
+| Task032 | Hybrid FEM–Modal direct baseline | `hybrid_direct_engineering_success` at 13.5 nm；Review V1 changes 已回应；h2 not_run；current direct 0.7 nm infeasible |
 
 ## 当前任务
 
@@ -68,7 +69,7 @@
 | Task029 | `task029_stage4_direct_memory_forensics/` | 已按用户许可合入 master；不提升失败 direct profile |
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
-| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Phase 1/2/3/4/5 clean MPI4 records complete；Phase 6/7 Hybrid direct pending |
+| Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Phase 0–10 complete；Case080 302/302；Review V1 follow-up 等待复审和选择性合并许可 |
 
 ## Task28 审计入口
 
@@ -135,6 +136,12 @@
 |---|---|
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | 执行顺序、新本地目录、冻结物理边界和入口文件 |
 | [`task032_hybrid_fem_modal_direct_baseline/task.md`](task032_hybrid_fem_modal_direct_baseline/task.md) | 新目录迁移、二维截面本征模、稳定双向传播、匹配接口、增广 direct、Modal-Schur、内存 Gate、Case080 与验收标准 |
+| [`task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md`](task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md) | 表格优先的 Phase 0–10、QEP/场/RTA/截断/规模/内存/h2/负结果/合并与下一步总结 |
+| [`task032_hybrid_fem_modal_direct_baseline/review_report_v1.md`](task032_hybrid_fem_modal_direct_baseline/review_report_v1.md) | 接受 13.5 nm 实现，要求文档、0.7 nm 资源和选择性合并闭环 |
+| [`task032_hybrid_fem_modal_direct_baseline/review_report_v1_addendum.md`](task032_hybrid_fem_modal_direct_baseline/review_report_v1_addendum.md) | 强制修正：complex 3D ends、M 定义、1 TiB budget 和 Task033–036 顺序 |
+| [`task032_hybrid_fem_modal_direct_baseline/response_v1.md`](task032_hybrid_fem_modal_direct_baseline/response_v1.md) | Review 前的原始 17 节执行总结；历史文件，未覆盖 |
+| [`task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md`](task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md) | 对 Review V1 + addendum 的逐项回应、采纳/暂不采纳理由和验证 |
+| [`task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md`](task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md) | current direct 不可行、1 TiB conditional opportunity 与 hard Gates |
 | [`../notes/theory/hybrid_fem_modal_domain_decomposition.md`](../notes/theory/hybrid_fem_modal_domain_decomposition.md) | Hybrid FEM–Modal 的 Maxwell 分解、QEP、双正交、传播、接口投影、Schur 消元、内存复杂度和验证阶梯 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task032 只能在 Task031 合入 master 后，从新本地目录的 clean `origin/master` 创建执行分支；旧目录保留为只读历史基线。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先。Task032 已从 Task031 clean merge 建立并完成实现，当前等待 follow-up 复审后按 manifest 选择性合并；旧目录继续保留为只读历史基线。

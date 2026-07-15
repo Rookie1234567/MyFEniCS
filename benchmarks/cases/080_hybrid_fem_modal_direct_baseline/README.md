@@ -16,6 +16,9 @@ h2 = locked by mandatory two-method prediction gate; not run
 classification = hybrid_direct_engineering_success
 checker = 302/302 passed
 ordinary default changed = false
+current direct at 0.7 nm = not resource feasible
+future architecture = complex 3D FEM ends + generic epsilon(x,y) modal middle
+parameter 1-10 deg S/P = interface/API smoke only
 ```
 
 This case is the canonical Task032 evidence bundle. It freezes the existing

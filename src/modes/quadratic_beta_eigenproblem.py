@@ -1,3 +1,10 @@
+"""Generic 2D cross-section QEP infrastructure for Task032 references.
+
+The current shift-invert MUMPS path is validated at the Task032 13.5 nm scale.
+Requesting all target modes this way is experimental and is not scalable to the
+0.7 nm service target without distributed spectrum slicing or continuation.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

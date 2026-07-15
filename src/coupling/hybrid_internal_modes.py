@@ -1,3 +1,9 @@
+"""Matched internal-mode coupling for the Task032 current-scale reference.
+
+The generic ``epsilon(x, y)`` interface algebra is retained, but replicated
+dense modal arrays are not a scalable production API for the 0.7 nm target.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

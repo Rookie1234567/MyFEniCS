@@ -271,9 +271,13 @@ response_vN.md（若有）
 
 ---
 
-# 4. `outcomes/summary.md` 推荐模板
+# 4. `outcomes/summary.md` 强制模板
 
-每个 Task 的详细 summary 建议使用：
+从 Task032 起，中型和大型算法、物理或性能任务的 summary 必须表格优先。叙述只解释表中根因、
+边界和决策，不能替代状态、实验、数值、资源、负结果、合并与下一步表。每张表必须给出适用的
+单位、baseline/分母、`measured` / `derived` / `predicted` / `not_run` 数据身份和证据入口。
+
+Task032 及以后同规模 summary 至少应包含 8 张 Markdown 表，并使用下列结构：
 
 ```markdown
 # TaskXXX 结果总结
@@ -296,7 +300,8 @@ response_vN.md（若有）
 ## 16. 证据索引
 ```
 
-不适用的章节可以写 `not applicable` 并解释原因，不应直接删除导致读者误解为遗漏。
+不适用的章节必须在相应表中写 `not applicable` 或 `not_run` 并解释原因，不应直接删除导致读者
+误解为遗漏。本规则不追溯要求一次性重写 Task000–Task031。
 
 ---
 

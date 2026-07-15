@@ -1,3 +1,10 @@
+"""Task032 Modal-Schur direct reference with explicit scalability limits.
+
+The fast/minimal paths validate current-scale algebra and lifecycle behavior.
+Their replicated dense modal block, all-mode dense multi-RHS, and local direct
+LU are not scalable to the 0.7 nm service target without redesign.
+"""
+
 from __future__ import annotations
 
 import time

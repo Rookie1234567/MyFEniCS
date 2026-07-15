@@ -1,5 +1,22 @@
 # Task032 回归摘要
 
+## 2026-07-15 Review V1 follow-up 回归
+
+| 层级 | 范围 | 结果 |
+|---|---|---|
+| local governance/docs/projection | tests 24/26/41 | 22/22 passed |
+| Docker focused serial | tests 31–41 | 49/49 passed |
+| Docker MPI2 selected | tests 33/34/35/38/39/40 | each rank 28 passed, 2 skipped |
+| Docker MPI4 selected | same | each rank 28 passed, 2 skipped |
+| projection Docker recheck | test41 after final schema | 4/4 passed |
+| Ruff 0.12.0 | 8 changed Python files | all checks passed |
+| compileall | same changed Python scope | passed |
+| Case080 | `python -m benchmarks.check_benchmarks --no-write` | 302/302 passed |
+| repository whitespace | `git diff --check` | passed；only expected LF→CRLF warnings |
+
+MPI skips 仍是 formal runner 覆盖的 lossy branch 和 serial small-dense tracking 分工。Review follow-up
+没有重跑 formal h5/h3 physics、h2 或 0.7 nm PDE；这些都不是本次文档/可扩展性闭环要求。
+
 ## 实现回归
 
 在 complex128 Docker 环境完成：
