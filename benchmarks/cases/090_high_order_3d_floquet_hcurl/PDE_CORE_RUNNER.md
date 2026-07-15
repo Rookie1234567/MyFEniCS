@@ -31,9 +31,20 @@ Fixture B 还读取官方 `port_power.json` 的 `(m,n)=(0,0)`、同名 S/P 模�
 
 有限但巨大的误差不能通过。当前宽松的 sanity 上限为：相对 E/H 误差不超过 10，
 0 阶复振幅绝对误差不超过 2。这些只是排除失真结果的硬上限，不代表宣称达到工程
-精度；真正的精度判断还包括逐 fixture/角度/极化/degree/MPI 的 h5→h2.5 非增检查
-（5% 相对容差和 `1e-10` 绝对容差）以及逐 h/MPI 的 p 趋势比较。p4 对 p3 没有至少
-1% 收益时保留 `negative_no_clear_p4_benefit`；超过 5% 回退才作为失败。
+精度；真正的精度判断还包括逐 fixture/角度/极化/degree/MPI 的 h5→h2.5 趋势检查
+（5% 相对容差和 `1e-10` 绝对容差）以及逐 h/MPI 的 p 趋势比较。一般 h 回退对
+p1–p4 都是硬失败，p3 相对 p2、p4 相对 p3 超过 5% 的回退也会失败。p4 对 p3 没有
+至少 1% 收益时保留 `negative_no_clear_p4_benefit`。
+
+Fixture B 当前场误差来自各网格自己的 native VTU 点集：每个 rank 分别取点上误差
+向量范数与解析场向量范数的最大值，再对这四个标量做 MPI MAX。h5 与 h2.5 的采样
+点并不构成同一可观测集合，因此该 max-based 指标可能因细网格采样到新的局部峰值而
+轻微升高；它不是共同探针或相对 L2 收敛证明。只有同时满足以下条件时才允许把回退
+保留为非阻塞的 `negative_diagnostic_mesh_native_H_linf_sampling_regression`：Fixture B
+的 p1/p2、唯一退化 native 场分量是 H-Linf、细网格采样点更多、r/t 复振幅与 R/T/A
+误差全部不退化，且两级 closure 均通过。任何其他 p1/p2 回退仍硬失败，p3/p4 也绝不
+按此规则降级。后续应改用固定共同探针、共同积分规则或可辩护的分布式相对 L2 指标，
+而不是放宽 5% 阈值。
 
 每个 degree 还有一个真实稀疏代数 probe：
 

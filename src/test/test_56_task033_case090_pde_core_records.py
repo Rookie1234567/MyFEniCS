@@ -107,6 +107,9 @@ def _result(entry: dict, *, perturbation: float = 0.0) -> dict:
             "field_errors": {
                 "relative_max_abs_E_error": 1.0e-3,
                 "relative_max_abs_H_error": field_error,
+                "global_rank_local_points_compared": (
+                    32 if entry["mesh_target_nm"] == 5.0 else 384
+                ),
             },
             "zero_order_complex_amplitudes": amplitude_evidence,
             "failures": [],
@@ -704,7 +707,7 @@ class Task033Case090PDECoreRecordTests(unittest.TestCase):
         aggregate = core.aggregate_core_records(shards, [*memories[:2], bad])
         self.assertFalse(aggregate["all_core_gates_passed"])
 
-    def test_trend_analysis_preserves_no_p4_benefit_and_rejects_h_regression(self) -> None:
+    def test_trend_analysis_preserves_no_p4_benefit_and_scopes_h_regression(self) -> None:
         rows = [_result(entry) for entry in core.build_shard_plan(1)]
         analysis, problems = core.analyze_accuracy_trends(rows)
         self.assertEqual(problems, [])
@@ -715,17 +718,117 @@ class Task033Case090PDECoreRecordTests(unittest.TestCase):
                 for item in analysis["negative_classifications"]
             )
         )
+        hard_rows = [_result(entry) for entry in core.build_shard_plan(1)]
         fine = next(
             item
-            for item in rows
+            for item in hard_rows
             if item["fixture"] == "fixture_a_air_box"
             and item["degree"] == 1
             and item["mesh_target_nm"] == 2.5
             and item["polarization"] == "s"
         )
         fine["physical_error_scalar"] = 1.0
-        _, problems = core.analyze_accuracy_trends(rows)
+        analysis, problems = core.analyze_accuracy_trends(hard_rows)
+        p1_h_regression = next(
+            item
+            for item in analysis["h_refinement"]
+            if item["fixture"] == "fixture_a_air_box"
+            and item["degree"] == 1
+            and item["polarization"] == "s"
+        )
+        self.assertEqual(
+            p1_h_regression["classification"],
+            "negative_h_refinement_regression",
+        )
+        self.assertEqual(p1_h_regression["gate_scope"], "hard_qualification")
+        self.assertFalse(p1_h_regression["passed"])
         self.assertTrue(any("h5->h2.5" in problem for problem in problems))
+
+        diagnostic_rows = [_result(entry) for entry in core.build_shard_plan(1)]
+        diagnostic_fine = next(
+            item
+            for item in diagnostic_rows
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 10.0
+            and item["degree"] == 1
+            and item["mesh_target_nm"] == 2.5
+            and item["polarization"] == "p"
+        )
+        diagnostic_fine["fields"]["relative_max_abs_H_error"] = 1.0
+        diagnostic_fine["physical_error_scalar"] = 1.0
+        analysis, problems = core.analyze_accuracy_trends(diagnostic_rows)
+        self.assertEqual(problems, [])
+        diagnostic_h_regression = next(
+            item
+            for item in analysis["h_refinement"]
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 10.0
+            and item["degree"] == 1
+            and item["polarization"] == "p"
+        )
+        self.assertEqual(
+            diagnostic_h_regression["classification"],
+            "negative_diagnostic_mesh_native_H_linf_sampling_regression",
+        )
+        self.assertEqual(
+            diagnostic_h_regression["gate_scope"],
+            "diagnostic_mesh_native_vtu_linf",
+        )
+        self.assertFalse(diagnostic_h_regression["passed"])
+        self.assertIn(
+            diagnostic_h_regression,
+            analysis["negative_classifications"],
+        )
+        self.assertTrue(
+            any("sampling diagnostic only" in warning for warning in analysis["warnings"])
+        )
+
+        p3_rows = [_result(entry) for entry in core.build_shard_plan(1)]
+        p3_fine = next(
+            item
+            for item in p3_rows
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 10.0
+            and item["degree"] == 3
+            and item["mesh_target_nm"] == 2.5
+            and item["polarization"] == "p"
+        )
+        p3_fine["fields"]["relative_max_abs_H_error"] = 1.0
+        p3_fine["physical_error_scalar"] = 1.0
+        analysis, problems = core.analyze_accuracy_trends(p3_rows)
+        p3_h_regression = next(
+            item
+            for item in analysis["h_refinement"]
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["degree"] == 3
+            and item["polarization"] == "p"
+            and item["grazing_deg_from_surface"] == 10.0
+        )
+        self.assertEqual(p3_h_regression["gate_scope"], "hard_qualification")
+        self.assertTrue(any("h5->h2.5" in problem for problem in problems))
+
+        p_trend_rows = [_result(entry) for entry in core.build_shard_plan(1)]
+        p3_smoke = next(
+            item
+            for item in p_trend_rows
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 1.0
+            and item["degree"] == 3
+            and item["polarization"] == "s"
+        )
+        p3_smoke["physical_error_scalar"] = 1.0
+        analysis, problems = core.analyze_accuracy_trends(p_trend_rows)
+        self.assertTrue(
+            any("p3 physical error regressed" in problem for problem in problems)
+        )
+        p_trend = next(
+            item
+            for item in analysis["p_refinement"]
+            if item["fixture"] == "fixture_b_flat_air_si"
+            and item["grazing_deg_from_surface"] == 1.0
+            and item["polarization"] == "s"
+        )
+        self.assertFalse(p_trend["p3_nonregression_passed"])
 
 
 if __name__ == "__main__":
