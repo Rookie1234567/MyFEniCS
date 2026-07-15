@@ -827,9 +827,9 @@ from importlib.metadata import version
 import benchmarks.task033_formal_records
 import benchmarks.task033_equal_accuracy
 print(json.dumps({
-    "python_executable": sys.executable,
-    "python_version": sys.version.split()[0],
-    "jsonschema_version": version("jsonschema"),
+    'python_executable': sys.executable,
+    'python_version': sys.version.split()[0],
+    'jsonschema_version': version('jsonschema'),
 }, sort_keys=True))
 '@
 Push-Location $RepoRoot
@@ -851,13 +851,13 @@ if (-not (Test-StepComplete -StepName "phase_00_preflight" -Outputs @($preflight
 from pathlib import Path
 import json
 
-memory_max = int(Path("/sys/fs/cgroup/memory.max").read_text().strip())
-swap_max = int(Path("/sys/fs/cgroup/memory.swap.max").read_text().strip())
-swap_current = int(Path("/sys/fs/cgroup/memory.swap.current").read_text().strip())
+memory_max = int(Path('/sys/fs/cgroup/memory.max').read_text().strip())
+swap_max = int(Path('/sys/fs/cgroup/memory.swap.max').read_text().strip())
+swap_current = int(Path('/sys/fs/cgroup/memory.swap.current').read_text().strip())
 payload = {
-    "memory_max_bytes": memory_max,
-    "memory_swap_max_bytes": swap_max,
-    "memory_swap_current_bytes": swap_current,
+    'memory_max_bytes': memory_max,
+    'memory_swap_max_bytes': swap_max,
+    'memory_swap_current_bytes': swap_current,
 }
 print(json.dumps(payload, sort_keys=True))
 raise SystemExit(
