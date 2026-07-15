@@ -23,6 +23,9 @@
     "record_type": {"const": "task033_one_tib_local_fe_row_projection"},
     "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
     "status": {"enum": ["not_qualified", "classified"]},
+    "route_basis": {
+      "enum": ["p2_adaptive_only", "equal_accuracy_best_candidate"]
+    },
     "formal_source": {"$ref": "#/$defs/formalSource"},
     "identity": {
       "type": "object",
@@ -89,6 +92,25 @@
         "unit": {"const": "dimensionless_ratio"},
         "data_identity": {"type": ["string", "null"]},
         "evidence_record": {"type": ["string", "null"]},
+        "evidence_record_type": {
+          "type": ["string", "null"],
+          "enum": [
+            "p2_periodic_graded_mesh_plan",
+            "task033_global_equal_accuracy_efficiency",
+            null
+          ]
+        },
+        "evidence_schema_version": {
+          "enum": [
+            1,
+            "task033.case091.equal-accuracy.v1",
+            null
+          ]
+        },
+        "evidence_payload_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
         "source_commit_sha": {
           "type": ["string", "null"],
           "pattern": "^[0-9a-f]{40}$"
@@ -98,6 +120,7 @@
           "enum": [
             "same_accuracy_mandatory_gate_pass",
             "same_accuracy_strong_gate_pass",
+            "equal_accuracy_qualified",
             null
           ]
         },
@@ -106,6 +129,16 @@
         },
         "compression_baseline": {"type": ["string", "null"]},
         "physical_equal_accuracy_qualified": {"type": "boolean"},
+        "best_candidate_id": {"type": ["string", "null"]},
+        "best_candidate_label": {"type": ["string", "null"]},
+        "reference_local_dofs": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "candidate_local_dofs": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
         "qualified": {"type": "boolean"},
         "qualification_failures": {
           "type": "array",
@@ -178,7 +211,7 @@
     {
       "if": {"properties": {"status": {"const": "classified"}}},
       "then": {
-        "required": ["formal_source"],
+        "required": ["route_basis", "formal_source"],
         "properties": {
           "identity": {
             "required": ["is_formal_record"],
@@ -187,10 +220,17 @@
           "input": {
             "required": [
               "source_commit_sha",
+              "evidence_record_type",
+              "evidence_schema_version",
+              "evidence_payload_sha256",
               "same_accuracy_status",
               "compression_source_unit",
               "compression_baseline",
-              "physical_equal_accuracy_qualified"
+              "physical_equal_accuracy_qualified",
+              "best_candidate_id",
+              "best_candidate_label",
+              "reference_local_dofs",
+              "candidate_local_dofs"
             ],
             "properties": {
               "data_identity": {"const": "measured"},
@@ -202,14 +242,19 @@
               "same_accuracy_status": {
                 "enum": [
                   "same_accuracy_mandatory_gate_pass",
-                  "same_accuracy_strong_gate_pass"
+                  "same_accuracy_strong_gate_pass",
+                  "equal_accuracy_qualified"
                 ]
               },
               "compression_source_unit": {
                 "const": "dimensionless_local_fe_row_ratio"
               },
               "compression_baseline": {
-                "enum": ["uniform_p2_h5", "uniform_p2_h3"]
+                "enum": [
+                  "uniform_p2_h5",
+                  "uniform_p2_h3",
+                  "measured_equal_accuracy_reference_local_dofs"
+                ]
               },
               "physical_equal_accuracy_qualified": {"const": true},
               "qualified": {"const": true},
@@ -228,6 +273,71 @@
               "data_identity": {
                 "const": "derived_scenario_from_prediction_and_measurement"
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["route_basis"],
+        "properties": {"route_basis": {"const": "p2_adaptive_only"}}
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "evidence_record_type": {
+                "enum": ["p2_periodic_graded_mesh_plan", null]
+              },
+              "evidence_schema_version": {"enum": [1, null]},
+              "evidence_payload_sha256": {"type": "null"},
+              "same_accuracy_status": {
+                "enum": [
+                  "same_accuracy_mandatory_gate_pass",
+                  "same_accuracy_strong_gate_pass",
+                  null
+                ]
+              },
+              "compression_baseline": {
+                "enum": ["uniform_p2_h5", "uniform_p2_h3", null]
+              },
+              "best_candidate_id": {"type": "null"},
+              "best_candidate_label": {"type": "null"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["route_basis"],
+        "properties": {
+          "route_basis": {"const": "equal_accuracy_best_candidate"}
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "evidence_record_type": {
+                "const": "task033_global_equal_accuracy_efficiency"
+              },
+              "evidence_schema_version": {
+                "const": "task033.case091.equal-accuracy.v1"
+              },
+              "evidence_payload_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "same_accuracy_status": {"const": "equal_accuracy_qualified"},
+              "compression_baseline": {
+                "const": "measured_equal_accuracy_reference_local_dofs"
+              },
+              "best_candidate_id": {"type": "string", "minLength": 1},
+              "best_candidate_label": {"type": "string", "minLength": 1},
+              "reference_local_dofs": {"type": "integer", "minimum": 1},
+              "candidate_local_dofs": {"type": "integer", "minimum": 1}
             }
           }
         }

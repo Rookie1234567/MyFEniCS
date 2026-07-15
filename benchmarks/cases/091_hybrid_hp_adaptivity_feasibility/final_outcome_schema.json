@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.final-outcome.v1",
+  "title": "Task033 fail-closed final outcome classification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "task_id",
+    "status",
+    "formal_source",
+    "identity",
+    "input_evidence",
+    "classifications",
+    "limitations",
+    "payload_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case091.final-outcome.v1"},
+    "record_type": {"const": "task033_final_outcome_classification"},
+    "task_id": {"const": "Task033"},
+    "status": {"const": "classified"},
+    "formal_source": {"$ref": "#/$defs/formalSource"},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "consumes_formal_records",
+        "ordinary_default_changed",
+        "proves_0p7nm_feasible"
+      ],
+      "properties": {
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "consumes_formal_records": {"const": true},
+        "ordinary_default_changed": {"const": false},
+        "proves_0p7nm_feasible": {"const": false}
+      }
+    },
+    "input_evidence": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {"$ref": "#/$defs/inputEvidence"}
+    },
+    "classifications": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overall",
+        "high_order_floquet",
+        "distributed_qep",
+        "augmented_vs_minimal_anchors",
+        "uniform_p_h_matrix",
+        "equal_accuracy",
+        "adaptive",
+        "hp_compression",
+        "interface_buffer",
+        "variable_p",
+        "one_tib"
+      ],
+      "properties": {
+        "overall": {"$ref": "#/$defs/overall"},
+        "high_order_floquet": {"$ref": "#/$defs/highOrder"},
+        "distributed_qep": {"$ref": "#/$defs/distributedQep"},
+        "augmented_vs_minimal_anchors": {"$ref": "#/$defs/anchors"},
+        "uniform_p_h_matrix": {"$ref": "#/$defs/uniformMatrix"},
+        "equal_accuracy": {"$ref": "#/$defs/equalAccuracy"},
+        "adaptive": {"$ref": "#/$defs/adaptive"},
+        "hp_compression": {"$ref": "#/$defs/hpCompression"},
+        "interface_buffer": {"$ref": "#/$defs/interfaceBuffer"},
+        "variable_p": {"$ref": "#/$defs/variableP"},
+        "one_tib": {"$ref": "#/$defs/oneTib"}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 20}
+    },
+    "payload_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "disposition": {"enum": ["pass", "partial", "failed", "negative", "legitimate_not_run"]},
+    "formalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit_sha", "tracked_source_clean"],
+      "properties": {
+        "commit_sha": {"$ref": "#/$defs/sha40"},
+        "tracked_source_clean": {"const": true}
+      }
+    },
+    "inputEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "path",
+        "sha256",
+        "schema_version",
+        "record_type",
+        "source_commit_sha",
+        "source_clean"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "case090_core",
+            "qep_mpi1_aggregate",
+            "qep_mpi2_timeout_negative",
+            "qep_mpi4_timeout_negative",
+            "augmented_vs_minimal_p1",
+            "augmented_vs_minimal_p3",
+            "uniform_p_h_matrix",
+            "equal_accuracy",
+            "adaptive_p2_h5",
+            "adaptive_p2_h3",
+            "interface_buffer_tradeoff",
+            "variable_p_capability_audit",
+            "one_tib_projection"
+          ]
+        },
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": ["string", "integer"]},
+        "record_type": {"type": "string", "minLength": 1},
+        "source_commit_sha": {"$ref": "#/$defs/sha40"},
+        "source_clean": {"const": true}
+      }
+    },
+    "overall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "classification", "mandatory_failures", "partial_reasons"],
+      "properties": {
+        "disposition": {"enum": ["pass", "partial", "failed"]},
+        "classification": {"enum": ["task033_pass", "task033_partial", "task033_failed"]},
+        "mandatory_failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "partial_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "highOrder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "case090_core_pass", "qep_mpi1_component_pass"],
+      "properties": {
+        "classification": {
+          "enum": [
+            "high_order_floquet_pass",
+            "high_order_floquet_partial_p3_only",
+            "high_order_floquet_failed"
+          ]
+        },
+        "case090_core_pass": {"type": "boolean"},
+        "qep_mpi1_component_pass": {"type": "boolean"}
+      }
+    },
+    "timeoutResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mpi_size",
+        "disposition",
+        "classification",
+        "positive_qep_qualification",
+        "proves_watchdog_source_resource_timeout_contract_only",
+        "proves_pep_or_mumps_boundary",
+        "checks",
+        "failures"
+      ],
+      "properties": {
+        "mpi_size": {"enum": [2, 4]},
+        "disposition": {"enum": ["legitimate_not_run", "failed"]},
+        "classification": {"enum": ["clean_wall_timeout_only", "invalid_timeout_negative"]},
+        "positive_qep_qualification": {"const": false},
+        "proves_watchdog_source_resource_timeout_contract_only": {"type": "boolean"},
+        "proves_pep_or_mumps_boundary": {"const": false},
+        "checks": {"type": "object", "minProperties": 6, "additionalProperties": {"type": "boolean"}},
+        "failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "distributedQep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disposition",
+        "mpi1_positive_qualified",
+        "mpi2",
+        "mpi4",
+        "matching_interface_mpi2_mpi4_positive_qualified",
+        "timeout_attribution"
+      ],
+      "properties": {
+        "disposition": {"enum": ["partial", "failed"]},
+        "mpi1_positive_qualified": {"type": "boolean"},
+        "mpi2": {"$ref": "#/$defs/timeoutResult"},
+        "mpi4": {"$ref": "#/$defs/timeoutResult"},
+        "matching_interface_mpi2_mpi4_positive_qualified": {"const": false},
+        "timeout_attribution": {"const": "clean_wall_timeout_only_not_pep_or_mumps_boundary"}
+      }
+    },
+    "anchorResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["degree", "disposition", "classification", "checks", "failures"],
+      "properties": {
+        "degree": {"enum": [1, 3]},
+        "disposition": {"enum": ["pass", "failed"]},
+        "classification": {"enum": ["augmented_vs_memory_minimal_qualified", "augmented_vs_memory_minimal_not_qualified"]},
+        "checks": {"type": "object", "minProperties": 8, "additionalProperties": {"type": "boolean"}},
+        "failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "anchors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "p1", "p3"],
+      "properties": {
+        "disposition": {"enum": ["pass", "failed"]},
+        "p1": {"$ref": "#/$defs/anchorResult"},
+        "p3": {"$ref": "#/$defs/anchorResult"}
+      }
+    },
+    "uniformMatrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "measured_entries", "not_run_by_memory_gate_entries", "entry_count"],
+      "properties": {
+        "disposition": {"enum": ["pass", "failed"]},
+        "measured_entries": {"type": "integer", "minimum": 0, "maximum": 20},
+        "not_run_by_memory_gate_entries": {"type": "integer", "minimum": 0, "maximum": 20},
+        "entry_count": {"const": 20}
+      }
+    },
+    "degreeResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "degree",
+        "disposition",
+        "classification",
+        "measured_candidate_count",
+        "qualified_candidate_count",
+        "best_candidate_id",
+        "best_h_nm",
+        "local_dof_compression",
+        "compression_classification",
+        "failures"
+      ],
+      "properties": {
+        "degree": {"enum": [3, 4]},
+        "disposition": {"enum": ["pass", "negative", "failed", "legitimate_not_run"]},
+        "classification": {"enum": ["equal_accuracy_qualified", "measured_no_equal_accuracy_candidate", "not_run_by_memory_gate", "missing_required_result", "incomplete_equal_accuracy_evidence"]},
+        "measured_candidate_count": {"type": "integer", "minimum": 0},
+        "qualified_candidate_count": {"type": "integer", "minimum": 0},
+        "best_candidate_id": {"type": ["string", "null"]},
+        "best_h_nm": {"type": ["number", "null"]},
+        "local_dof_compression": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "compression_classification": {
+          "enum": [null, "hp_compression_weak", "hp_compression_positive", "hp_compression_clear", "hp_compression_engineering", "hp_compression_strong"]
+        },
+        "failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "equalAccuracy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p3", "p4"],
+      "properties": {
+        "p3": {"$ref": "#/$defs/degreeResult"},
+        "p4": {"$ref": "#/$defs/degreeResult"}
+      }
+    },
+    "adaptiveResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_h_nm", "disposition", "qualification_status", "compression", "compression_classification"],
+      "properties": {
+        "reference_h_nm": {"enum": [5.0, 3.0]},
+        "disposition": {"enum": ["pass", "failed"]},
+        "qualification_status": {"enum": ["same_accuracy_mandatory_gate_pass", "same_accuracy_strong_gate_pass"]},
+        "compression": {"type": "number", "exclusiveMinimum": 0},
+        "compression_classification": {"enum": ["hp_compression_weak", "hp_compression_positive", "hp_compression_clear", "hp_compression_engineering", "hp_compression_strong"]}
+      }
+    },
+    "adaptive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["h5", "h3"],
+      "properties": {
+        "h5": {"$ref": "#/$defs/adaptiveResult"},
+        "h3": {"$ref": "#/$defs/adaptiveResult"}
+      }
+    },
+    "hpCompression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "best_observed_same_accuracy_local_dof_compression", "source", "combination_rule"],
+      "properties": {
+        "classification": {"enum": ["hp_compression_weak", "hp_compression_positive", "hp_compression_clear", "hp_compression_engineering", "hp_compression_strong"]},
+        "best_observed_same_accuracy_local_dof_compression": {"type": "number", "exclusiveMinimum": 0},
+        "source": {"type": "string", "minLength": 1},
+        "combination_rule": {"const": "maximum_observed_h3_reference_ratio_not_product_of_components"}
+      }
+    },
+    "interfaceBuffer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "selected_buffer_nm", "candidate_count"],
+      "properties": {
+        "disposition": {"enum": ["pass", "failed"]},
+        "selected_buffer_nm": {"enum": [null, 10.0, 7.5, 5.0, 2.5]},
+        "candidate_count": {"const": 4}
+      }
+    },
+    "variableP": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_disposition", "hp_zoning_prototype_disposition", "bespoke_constraints_implemented"],
+      "properties": {
+        "capability_disposition": {"enum": ["not_qualified_fail_closed", "failed"]},
+        "hp_zoning_prototype_disposition": {"enum": ["legitimate_not_run", "failed"]},
+        "bespoke_constraints_implemented": {"const": false}
+      }
+    },
+    "oneTib": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "classification", "projected_local_fe_rows", "same_error_local_dof_compression", "compression_evidence_role", "compression_evidence_sha256", "proves_0p7nm_feasible"],
+      "properties": {
+        "disposition": {"enum": ["pass", "failed"]},
+        "classification": {"enum": [null, "preferred", "candidate", "high-risk", "infeasible"]},
+        "projected_local_fe_rows": {"type": ["integer", "number", "null"], "minimum": 0},
+        "same_error_local_dof_compression": {"type": "number", "exclusiveMinimum": 0},
+        "compression_evidence_role": {"enum": ["equal_accuracy", "adaptive_p2_h5", "adaptive_p2_h3"]},
+        "compression_evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "proves_0p7nm_feasible": {"const": false}
+      }
+    }
+  }
+}

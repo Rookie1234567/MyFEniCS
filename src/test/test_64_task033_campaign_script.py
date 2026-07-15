@@ -177,9 +177,11 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("prove only the watchdog/source/resource", text)
         self.assertNotIn("known distributed PEP/MUMPS boundary", text)
 
-    def test_primary_aggregates_and_explicit_deferred_follow_up(self) -> None:
+    def test_primary_aggregates_projection_manifest_and_checker(self) -> None:
         text = self.text
         self.assertIn("benchmarks.run_task033_formal_records", text)
+        self.assertIn('$gradedKey in @("p2_h5_graded", "p2_h3_graded")', text)
+        self.assertIn('$equalAccuracyCommand += "--require-qualified"', text)
         self.assertIn("Invoke-HostJsonCaptureStep", text)
         self.assertIn("Invoke-HostFileStep", text)
         self.assertIn("[string]$HostPythonExecutable", text)
@@ -193,14 +195,27 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("benchmarks.run_task033_variable_p_audit", text)
         self.assertIn("benchmarks.run_task033_equal_accuracy", text)
         self.assertIn("benchmarks.run_task033_one_tib_projection", text)
-        self.assertIn(
-            'status = "one_tib_deferred_pending_reviewed_measured_compression_evidence"',
-            text,
-        )
         self.assertIn('"--watchdog"', text)
         self.assertIn('"p2_h3=$p2H3SelectedWatchdog"', text)
         self.assertIn('"--compression-evidence"', text)
-        self.assertIn("Do not classify 1 TiB", text)
+        self.assertIn("$equalAccuracy", text)
+        self.assertIn('"aggregate_one_tib_projection"', text)
+        self.assertIn('"aggregate_final_outcome"', text)
+        self.assertIn("benchmarks.run_task033_final_outcome", text)
+        self.assertIn('"--qep-mpi2-timeout-negative"', text)
+        self.assertIn('"--qep-mpi4-timeout-negative"', text)
+        self.assertIn('"--augmented-vs-minimal-p1"', text)
+        self.assertIn('"--augmented-vs-minimal-p3"', text)
+        self.assertIn('"--expected-source-sha"', text)
+        self.assertIn('"--require-nonfailed"', text)
+        self.assertIn('"aggregate_formal_evidence_manifest"', text)
+        self.assertIn('"verify_formal_evidence_manifest"', text)
+        self.assertIn('"formal-manifest"', text)
+        self.assertIn('"--formal-manifest"', text)
+        self.assertIn('"--require-formal"', text)
+        self.assertIn('"case090_clean_core" = $Case090Aggregate', text)
+        self.assertIn('"one_tib_projection" = $oneTib', text)
+        self.assertNotIn("one_tib_deferred_pending", text)
 
     def test_powershell_parser_accepts_script_when_available(self) -> None:
         executable = shutil.which("pwsh") or shutil.which("powershell")

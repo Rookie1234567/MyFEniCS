@@ -5,7 +5,10 @@ import json
 from pathlib import Path
 import sys
 
-from benchmarks.task033_one_tib_projection import build_one_tib_projection
+from benchmarks.task033_one_tib_projection import (
+    build_one_tib_projection,
+    validate_one_tib_projection,
+)
 from benchmarks.task033_variable_p_capability import (
     inspect_repository_source,
     qualify_formal_source,
@@ -31,7 +34,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--compression-evidence",
         type=Path,
-        help="Measured adaptive formal JSON; required for a classified result.",
+        help=(
+            "Reviewed adaptive or equal-accuracy formal JSON; the record type "
+            "is detected automatically and strict validation is required for "
+            "a classified result."
+        ),
     )
     parser.add_argument(
         "--formal",
@@ -55,6 +62,15 @@ def _load_evidence(path: Path | None) -> dict | None:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.compression_evidence is not None and (
+            args.measured_compression is not None
+            or args.measurement_identity is not None
+            or args.evidence_record is not None
+        ):
+            raise ValueError(
+                "--compression-evidence cannot be combined with manual "
+                "compression or evidence-identity arguments"
+            )
         before = (
             inspect_repository_source(args.repo_root) if args.formal else None
         )
@@ -76,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         if before is not None:
             after = inspect_repository_source(args.repo_root)
             record["formal_source"] = qualify_formal_source(before, after)
+        validate_one_tib_projection(record)
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
         print(
             json.dumps(

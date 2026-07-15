@@ -1243,14 +1243,20 @@ try {
             )
         }
     }
+    foreach ($gradedKey in @("p2_h5_graded", "p2_h3_graded")) {
+        $equalAccuracyCommand += @(
+            "--candidate",
+            $gradedFunnels[$gradedKey]
+        )
+    }
+    $equalAccuracyCommand += "--require-qualified"
     Invoke-HostFileStep `
         -StepName "aggregate_equal_accuracy" `
         -PythonArguments $equalAccuracyCommand `
         -Outputs @($equalAccuracy)
 
     # Variable-p has no evidence-selection ambiguity, so produce its formal
-    # fail-closed capability audit on the same clean SHA now.  Only the 1 TiB
-    # projection waits for review of the two measured adaptive records.
+    # fail-closed capability audit on the same clean SHA now.
     $variableP = Join-Path $aggregateRoot "variable_p_capability_audit.json"
     Invoke-DockerFileStep `
         -StepName "aggregate_variable_p_capability_audit" `
@@ -1261,49 +1267,100 @@ try {
         ) `
         -Outputs @($variableP)
 
-    # Phase 7 is deliberately explicit but deferred.  It must run only after
-    # reviewing which measured adaptive record is the approved compression
-    # evidence; no raw CLI compression number may be promoted automatically.
-    $followUpPath = Join-Path $aggregateRoot "phase_07_follow_up_aggregation.json"
-    if (-not (
-        Test-StepComplete `
-            -StepName "phase_07_follow_up_aggregation_plan" `
-            -Outputs @($followUpPath)
-    )) {
-        $followUp = [ordered]@{
-            schema_version = "task033.follow-up-aggregation-plan.v1"
-            status = "one_tib_deferred_pending_reviewed_measured_compression_evidence"
-            source_commit_full_sha = $CommitSha
-            phase = "one_tib_projection"
-            dependencies = @(
-                Convert-ToRepoRelativePath -HostPath $adaptiveH5
-                Convert-ToRepoRelativePath -HostPath $adaptiveH3
-                Convert-ToRepoRelativePath -HostPath $bufferAggregate
-                Convert-ToRepoRelativePath -HostPath $equalAccuracy
-                Convert-ToRepoRelativePath -HostPath $variableP
-            )
-            one_tib_command_template = @(
-                "python", "-m", "benchmarks.run_task033_one_tib_projection",
-                "--compression-evidence", "<reviewed-adaptive-formal-json>",
-                "--formal", "--repo-root", "/work"
-            )
-            prohibition = (
-                "Do not classify 1 TiB from a raw --measured-compression value; " +
-                "bind one reviewed same-accuracy adaptive formal JSON."
-            )
-        }
-        Write-Utf8NoBom `
-            -Path $followUpPath `
-            -Text (($followUp | ConvertTo-Json -Depth 8) + "`n")
-        Complete-Step `
-            -StepName "phase_07_follow_up_aggregation_plan" `
-            -Outputs @($followUpPath) `
-            -ExitCode 0
+    # Phase 7: the equal-accuracy record has already re-opened and checked every
+    # candidate watchdog.  The projection builder independently revalidates its
+    # schema, payload hash, best-candidate selection, local-DoF ratio, and clean
+    # source SHA before classifying the conservative 0.7 nm row scenario.
+    $oneTib = Join-Path $aggregateRoot "one_tib_projection.json"
+    Invoke-HostFileStep `
+        -StepName "aggregate_one_tib_projection" `
+        -PythonArguments @(
+            "-m", "benchmarks.run_task033_one_tib_projection",
+            "--compression-evidence", $equalAccuracy,
+            "--formal", "--repo-root", $RepoRoot,
+            "--output", $oneTib
+        ) `
+        -Outputs @($oneTib)
+
+    # The supplemental task-level classifier consumes both distributed-QEP
+    # timeout negatives and all primary aggregates.  A clean timeout remains a
+    # legitimate negative diagnostic, so --require-nonfailed accepts the
+    # expected partial result but rejects any mandatory evidence failure.
+    $finalOutcome = Join-Path $aggregateRoot "final_outcome_classification.json"
+    Invoke-HostFileStep `
+        -StepName "aggregate_final_outcome" `
+        -PythonArguments @(
+            "-m", "benchmarks.run_task033_final_outcome",
+            "--case090-core", $Case090Aggregate,
+            "--qep-mpi1-aggregate", $qepAggregate,
+            "--qep-mpi2-timeout-negative", (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi2/stage4_xy_p2_h3/watchdog_summary.json"),
+            "--qep-mpi4-timeout-negative", (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi4/stage4_xy_p2_h3/watchdog_summary.json"),
+            "--augmented-vs-minimal-p1", $p1Anchor,
+            "--augmented-vs-minimal-p3", $p3Anchor,
+            "--uniform-p-h-matrix", $uniformAggregate,
+            "--equal-accuracy", $equalAccuracy,
+            "--adaptive-p2-h5", $adaptiveH5,
+            "--adaptive-p2-h3", $adaptiveH3,
+            "--interface-buffer-tradeoff", $bufferAggregate,
+            "--variable-p-capability-audit", $variableP,
+            "--one-tib-projection", $oneTib,
+            "--expected-source-sha", $CommitSha,
+            "--output", $finalOutcome,
+            "--require-nonfailed"
+        ) `
+        -Outputs @($finalOutcome)
+
+    # Build the frozen evidence-integrity manifest and immediately run the
+    # independent checker.  This manifest deliberately does not claim that a
+    # clean timeout diagnostic is a positive MPI QEP/interface qualification.
+    $formalManifest = Join-Path $aggregateRoot "formal_evidence_manifest.json"
+    $formalManifestCommand = @(
+        "-m", "benchmarks.run_task033_formal_records",
+        "formal-manifest", "--repo-root", $RepoRoot
+    )
+    $formalRolePaths = [ordered]@{
+        "case090_clean_core" = $Case090Aggregate
+        "case090_mpi_memory" = $Case090Aggregate
+        "qep_order_study" = $qepAggregate
+        "qep_mpi_timeout_negative" = (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi2/stage4_xy_p2_h3/watchdog_summary.json")
+        "hybrid_funnel_p1" = $uniformFunnels["p1_h5"]
+        "hybrid_funnel_p3" = $uniformFunnels["p3_h5"]
+        "uniform_p_h_matrix" = $uniformAggregate
+        "adaptive_p2_h5" = $adaptiveH5
+        "adaptive_p2_h3" = $adaptiveH3
+        "interface_buffer_10" = $bufferFunnels["buffer_10"]
+        "interface_buffer_7p5" = $bufferFunnels["buffer_7p5"]
+        "interface_buffer_5" = $bufferFunnels["buffer_5"]
+        "interface_buffer_2p5" = $bufferFunnels["buffer_2p5"]
+        "interface_buffer_tradeoff" = $bufferAggregate
+        "variable_p_capability_audit" = $variableP
+        "one_tib_projection" = $oneTib
     }
+    foreach ($role in $formalRolePaths.Keys) {
+        $formalManifestCommand += @(
+            "--role",
+            "$role=$(Convert-ToRepoRelativePath -HostPath $formalRolePaths[$role])"
+        )
+    }
+    Invoke-HostJsonCaptureStep `
+        -StepName "aggregate_formal_evidence_manifest" `
+        -PythonArguments $formalManifestCommand `
+        -Output $formalManifest
+
+    $formalVerification = Join-Path $aggregateRoot "formal_verification.json"
+    Invoke-HostJsonCaptureStep `
+        -StepName "verify_formal_evidence_manifest" `
+        -PythonArguments @(
+            "-m", "benchmarks.check_task033",
+            "--repo-root", $RepoRoot,
+            "--formal-manifest", $formalManifest,
+            "--require-formal"
+        ) `
+        -Output $formalVerification
 
     Assert-FormalSourceStable -ExpectedSha $CommitSha
-    Write-Host "Task033 formal measurements and primary aggregates completed."
-    Write-Host "Only 1 TiB remains the explicit reviewed-evidence follow-up phase."
+    Write-Host "Task033 formal measurements, 1 TiB projection, manifest, and checker completed."
+    Write-Host "Task-level pass/partial/negative classification remains evidence-derived."
 } finally {
     if ($null -ne $campaignLock) {
         $campaignLock.Dispose()

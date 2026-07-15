@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import redirect_stdout
+import hashlib
 import io
 import json
 import math
@@ -63,6 +64,153 @@ def _adaptive_evidence(compression: float, sha: str = SOURCE_SHA) -> dict:
             "compression_denominator": "candidate_local_fe_rows",
         },
     }
+
+
+def _payload_sha256(payload: dict) -> str:
+    canonical = dict(payload)
+    canonical.pop("payload_sha256", None)
+    rendered = json.dumps(
+        canonical,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(rendered).hexdigest()
+
+
+def _seal_equal_accuracy(payload: dict) -> dict:
+    payload["payload_sha256"] = _payload_sha256(payload)
+    return payload
+
+
+def _equal_accuracy_evidence(
+    *,
+    reference_local_dofs: int = 1000,
+    candidate_local_dofs: int = 250,
+    sha: str = SOURCE_SHA,
+) -> dict:
+    reference_costs = {
+        "local_dofs": reference_local_dofs,
+        "total_rows": 1400,
+        "assembled_nnz": 10_000,
+        "authoritative_rss_bytes": 5_000_000,
+        "authoritative_rss_gib": 5_000_000 / (1024**3),
+        "total_time_seconds": 100.0,
+    }
+    candidate_costs = {
+        "local_dofs": candidate_local_dofs,
+        "total_rows": 400,
+        "assembled_nnz": 2_500,
+        "authoritative_rss_bytes": 1_500_000,
+        "authoritative_rss_gib": 1_500_000 / (1024**3),
+        "total_time_seconds": 30.0,
+    }
+    compression = {
+        key: float(reference_costs[key]) / float(candidate_costs[key])
+        for key in (
+            "local_dofs",
+            "total_rows",
+            "assembled_nnz",
+            "authoritative_rss_bytes",
+            "total_time_seconds",
+        )
+    }
+    reference_input = {
+        "funnel_path": "records/reference_funnel.json",
+        "funnel_sha256": "1" * 64,
+        "selected_mode_count_per_direction": 160,
+        "selected_watchdog_path": "records/reference_m160.json",
+        "selected_watchdog_sha256": "2" * 64,
+        "source_commit_full_sha": sha,
+    }
+    candidate_input = {
+        "funnel_path": "records/candidate_funnel.json",
+        "funnel_sha256": "3" * 64,
+        "selected_mode_count_per_direction": 160,
+        "selected_watchdog_path": "records/candidate_m160.json",
+        "selected_watchdog_sha256": "4" * 64,
+        "source_commit_full_sha": sha,
+    }
+    payload = {
+        "schema_version": "task033.case091.equal-accuracy.v1",
+        "record_type": "task033_global_equal_accuracy_efficiency",
+        "case_id": "091_hybrid_hp_adaptivity_feasibility",
+        "status": "qualified",
+        "identity": {
+            "is_pde_run": False,
+            "consumes_measured_pde_records": True,
+            "ordinary_default_changed": False,
+            "proves_0p7nm_feasible": False,
+            "source_commit_full_sha": sha,
+            "all_qualified_inputs_same_clean_sha": True,
+        },
+        "tolerances": {
+            "rta_absolute_max": 0.00001,
+            "significant_order_power": 1.0e-8,
+            "significant_order_complex_amplitude_relative_max": 0.001,
+            "interface_e_relative_max": 0.005,
+            "interface_h_relative_max": 0.01,
+            "selected_plane_field_relative_max": 0.005,
+            "qep_beta_relative_max_when_available": 0.001,
+            "true_residual_max": 1.0e-9,
+        },
+        "inputs": {
+            "reference": reference_input,
+            "candidates": [{"candidate_id": "candidate_1", **candidate_input}],
+        },
+        "reference": {
+            "label": "reference_p2_h3",
+            "case": {"degree": 2, "h_nm": 3.0},
+            "selected_mode_count_per_direction": 160,
+            "source_commit_full_sha": sha,
+            "costs": reference_costs,
+        },
+        "candidates": [
+            {
+                "candidate_id": "candidate_1",
+                "label": "candidate_p4_h5",
+                "status": "equal_accuracy_qualified",
+                "case": {"degree": 4, "h_nm": 5.0},
+                "selected_mode_count_per_direction": 160,
+                "source_commit_full_sha": sha,
+                "input": candidate_input,
+                "costs": candidate_costs,
+                "compression_ratios": compression,
+                "local_dof_compression_classification": "engineering",
+                "gates": {
+                    "same_clean_source_sha": True,
+                    "same_physical_case": True,
+                    "rta_absolute_delta": True,
+                    "significant_diffraction_complex_amplitude": True,
+                    "interface_e_h": True,
+                    "selected_plane_fields": True,
+                    "qep_beta_when_available": True,
+                },
+                "comparisons": {"test_fixture": "measured_equal_accuracy"},
+                "failures": [],
+            }
+        ],
+        "selection": {
+            "qualified_candidate_count": 1,
+            "pareto_frontier_candidate_ids": ["candidate_1"],
+            "best_candidate_id": "candidate_1",
+            "best_candidate_label": "candidate_p4_h5",
+            "criterion": (
+                "lexicographic minimum measured local DoF, total rows, "
+                "assembled NNZ, authoritative RSS, then total time among "
+                "equal-accuracy-qualified candidates"
+            ),
+        },
+        "classification_boundaries": {
+            "weak": "<1.3",
+            "positive": ">=1.3 and <2",
+            "clear": ">=2 and <3",
+            "engineering": ">=3 and <5",
+            "strong": ">=5",
+        },
+    }
+    return _seal_equal_accuracy(payload)
 
 
 class Task033CapabilityAndProjectionTests(unittest.TestCase):
@@ -227,10 +375,158 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
                     formal_source=_formal_source(),
                 )
                 self.assertEqual(projection["status"], "classified")
+                self.assertEqual(projection["route_basis"], "p2_adaptive_only")
                 self.assertEqual(projection["result"]["classification"], expected)
                 self.assertEqual(
                     projection["result"]["projected_local_fe_rows"], target_rows
                 )
+
+    def test_equal_accuracy_projection_recomputes_best_local_dof_ratio(self) -> None:
+        evidence = _equal_accuracy_evidence()
+        projection = build_one_tib_projection(
+            compression_evidence=evidence,
+            evidence_record="records/equal_accuracy.json",
+            formal_source=_formal_source(),
+        )
+        self.assertEqual(projection["status"], "classified")
+        self.assertEqual(
+            projection["route_basis"], "equal_accuracy_best_candidate"
+        )
+        self.assertEqual(
+            projection["input"]["evidence_payload_sha256"],
+            evidence["payload_sha256"],
+        )
+        self.assertEqual(projection["input"]["best_candidate_id"], "candidate_1")
+        self.assertEqual(projection["input"]["reference_local_dofs"], 1000)
+        self.assertEqual(projection["input"]["candidate_local_dofs"], 250)
+        self.assertEqual(projection["input"]["same_error_local_dof_compression"], 4.0)
+        self.assertEqual(
+            projection["result"]["projected_local_fe_rows"], 230_836_500.0
+        )
+        self.assertEqual(projection["result"]["classification"], "candidate")
+        self.assertFalse(projection["identity"]["is_0p7nm_feasibility_proof"])
+
+    def test_equal_accuracy_projection_fail_closes_tampered_evidence(self) -> None:
+        cases = []
+
+        payload_tamper = _equal_accuracy_evidence()
+        payload_tamper["reference"]["label"] = "tampered_after_hash"
+        cases.append(
+            (
+                "payload_hash",
+                payload_tamper,
+                "equal_accuracy_payload_sha256_mismatch",
+            )
+        )
+
+        wrong_best = _equal_accuracy_evidence()
+        wrong_best["selection"]["best_candidate_id"] = "candidate_99"
+        _seal_equal_accuracy(wrong_best)
+        cases.append(
+            (
+                "best_not_qualified",
+                wrong_best,
+                "equal_accuracy_best_candidate_not_uniquely_qualified",
+            )
+        )
+
+        false_ratio = _equal_accuracy_evidence()
+        false_ratio["candidates"][0]["compression_ratios"]["local_dofs"] = 9.0
+        _seal_equal_accuracy(false_ratio)
+        cases.append(
+            (
+                "reported_ratio",
+                false_ratio,
+                "equal_accuracy_local_dof_compression_mismatch",
+            )
+        )
+
+        changed_sha = _equal_accuracy_evidence()
+        changed_sha["candidates"][0]["source_commit_full_sha"] = "b" * 40
+        _seal_equal_accuracy(changed_sha)
+        cases.append(
+            (
+                "candidate_sha",
+                changed_sha,
+                "equal_accuracy_qualified_candidate_source_sha_mismatch",
+            )
+        )
+
+        false_gate = _equal_accuracy_evidence()
+        false_gate["candidates"][0]["gates"]["interface_e_h"] = False
+        false_gate["candidates"][0]["failures"] = ["interface_e_h_gate_failed"]
+        _seal_equal_accuracy(false_gate)
+        cases.append(
+            (
+                "false_gate",
+                false_gate,
+                "equal_accuracy_best_candidate_gates_not_all_true",
+            )
+        )
+
+        descriptor_mismatch = _equal_accuracy_evidence()
+        descriptor_mismatch["inputs"]["candidates"][0]["funnel_sha256"] = "f" * 64
+        _seal_equal_accuracy(descriptor_mismatch)
+        cases.append(
+            (
+                "candidate_descriptor",
+                descriptor_mismatch,
+                "equal_accuracy_candidate_input_descriptor_mismatch",
+            )
+        )
+
+        reference_mode_mismatch = _equal_accuracy_evidence()
+        reference_mode_mismatch["reference"]["selected_mode_count_per_direction"] = 999
+        _seal_equal_accuracy(reference_mode_mismatch)
+        cases.append(
+            (
+                "reference_selected_mode",
+                reference_mode_mismatch,
+                "equal_accuracy_reference_selected_mode_count_mismatch",
+            )
+        )
+
+        candidate_mode_mismatch = _equal_accuracy_evidence()
+        candidate_mode_mismatch["candidates"][0][
+            "selected_mode_count_per_direction"
+        ] = 999
+        _seal_equal_accuracy(candidate_mode_mismatch)
+        cases.append(
+            (
+                "candidate_selected_mode",
+                candidate_mode_mismatch,
+                "equal_accuracy_candidate_selected_mode_count_mismatch",
+            )
+        )
+
+        for label, evidence, expected_failure in cases:
+            with self.subTest(label=label):
+                projection = build_one_tib_projection(
+                    compression_evidence=evidence,
+                    evidence_record=f"records/{label}.json",
+                    formal_source=_formal_source(),
+                )
+                self.assertEqual(projection["status"], "not_qualified")
+                self.assertEqual(
+                    projection["route_basis"], "equal_accuracy_best_candidate"
+                )
+                self.assertIn(
+                    expected_failure,
+                    projection["input"]["qualification_failures"],
+                )
+                self.assertIsNone(projection["result"]["classification"])
+
+    def test_equal_accuracy_projection_requires_current_same_clean_sha(self) -> None:
+        projection = build_one_tib_projection(
+            compression_evidence=_equal_accuracy_evidence(sha="b" * 40),
+            evidence_record="records/equal_accuracy_other_sha.json",
+            formal_source=_formal_source(),
+        )
+        self.assertEqual(projection["status"], "not_qualified")
+        self.assertIn(
+            "equal_accuracy_evidence_source_sha_mismatch",
+            projection["input"]["qualification_failures"],
+        )
 
     def test_invalid_numeric_inputs_fail_closed(self) -> None:
         for value in (0.0, -1.0, math.inf, math.nan):
@@ -304,7 +600,38 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
                     ),
                     0,
                 )
-            self.assertEqual(json.loads(stream.getvalue())["status"], "classified")
+            adaptive_projection = json.loads(stream.getvalue())
+            self.assertEqual(adaptive_projection["status"], "classified")
+            self.assertEqual(adaptive_projection["route_basis"], "p2_adaptive_only")
+
+            equal_path = Path(tmp) / "equal_accuracy.json"
+            equal_path.write_text(
+                json.dumps(_equal_accuracy_evidence()), encoding="utf-8"
+            )
+            stream = io.StringIO()
+            with (
+                patch(
+                    "benchmarks.run_task033_one_tib_projection.inspect_repository_source",
+                    return_value=clean,
+                ),
+                redirect_stdout(stream),
+            ):
+                self.assertEqual(
+                    one_tib_main(
+                        [
+                            "--formal",
+                            "--compression-evidence",
+                            str(equal_path),
+                        ]
+                    ),
+                    0,
+                )
+            equal_projection = json.loads(stream.getvalue())
+            self.assertEqual(equal_projection["status"], "classified")
+            self.assertEqual(
+                equal_projection["route_basis"],
+                "equal_accuracy_best_candidate",
+            )
 
     def test_checked_plan_records_preserve_identity_and_units(self) -> None:
         variable_p = json.loads(
@@ -374,6 +701,14 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
             build_one_tib_projection(
                 compression_evidence=_adaptive_evidence(2.0),
                 evidence_record="records/adaptive_h3.json",
+                formal_source=_formal_source(),
+            ),
+            projection_schema,
+        )
+        jsonschema.validate(
+            build_one_tib_projection(
+                compression_evidence=_equal_accuracy_evidence(),
+                evidence_record="records/equal_accuracy.json",
                 formal_source=_formal_source(),
             ),
             projection_schema,
