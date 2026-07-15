@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task032_h2_two_method_memory_prediction",
+  "status": "h2_remains_locked",
+  "target": {
+    "h_nm": 2.0,
+    "center_limit_gib": 4.0,
+    "conservative_upper_limit_gib": 5.0,
+    "warning_gib": 4.5,
+    "controlled_termination_gib": 6.0
+  },
+  "predictions": [
+    {
+      "solver_path": "augmented",
+      "observations": {
+        "h5_worker_rss_gib": 1.8653526306152344,
+        "h3_worker_rss_gib": 3.8526077270507812,
+        "h5_factor_payload_gib": 0.2669482007622719,
+        "h3_factor_payload_gib": 1.7361314073204994,
+        "h5_total_seconds": 70.71851894501015,
+        "h3_total_seconds": 102.57670198300912,
+        "h5_no_swap": true,
+        "h3_no_swap": true,
+        "h5_numeric_pass": true,
+        "h3_numeric_pass": true
+      },
+      "h2_predictions": {
+        "mesh_resolution_power_law": {
+          "center_gib": 6.851402374337911,
+          "conservative_upper_gib": 7.879112730488598,
+          "observed_scaling_exponent": 1.419858565566439,
+          "independent_variable": "target mesh spacing h"
+        },
+        "mumps_factor_payload_affine": {
+          "center_gib": 11.884290998850732,
+          "conservative_upper_gib": 13.666934648678343,
+          "projected_factor_payload_gib": 7.673977134569256,
+          "factor_payload_scaling_exponent": 3.6653602829664513,
+          "rss_per_factor_payload_slope": 1.3526257906874508,
+          "rss_intercept_gib": 1.504271609486574,
+          "independent_variable": "MUMPS factor nnz payload estimate"
+        }
+      },
+      "h2_time_power_law": {
+        "center_seconds": 137.8005198156759,
+        "observed_scaling_exponent": 0.728043656913155
+      },
+      "two_method_center_le_4_gib": false,
+      "two_method_upper_le_5_gib": false
+    },
+    {
+      "solver_path": "modal-schur-fast",
+      "observations": {
+        "h5_worker_rss_gib": 1.7551193237304688,
+        "h3_worker_rss_gib": 3.9983062744140625,
+        "h5_factor_payload_gib": 0.14472328126430511,
+        "h3_factor_payload_gib": 1.351892575621605,
+        "h5_total_seconds": 63.00780022099207,
+        "h3_total_seconds": 111.96602099700249,
+        "h5_no_swap": true,
+        "h3_no_swap": true,
+        "h5_numeric_pass": true,
+        "h3_numeric_pass": true
+      },
+      "h2_predictions": {
+        "mesh_resolution_power_law": {
+          "center_gib": 7.685902425768953,
+          "conservative_upper_gib": 8.838787789634296,
+          "observed_scaling_exponent": 1.6117711336501228,
+          "independent_variable": "target mesh spacing h"
+        },
+        "mumps_factor_payload_affine": {
+          "center_gib": 16.287233406533105,
+          "conservative_upper_gib": 18.73031841751307,
+          "projected_factor_payload_gib": 7.965169052630187,
+          "factor_payload_scaling_exponent": 4.374168365028642,
+          "rss_per_factor_payload_slope": 1.858220683021823,
+          "rss_intercept_gib": 1.4861915291703522,
+          "independent_variable": "MUMPS factor nnz payload estimate"
+        }
+      },
+      "h2_time_power_law": {
+        "center_seconds": 176.71681565325775,
+        "observed_scaling_exponent": 1.1255052268363968
+      },
+      "two_method_center_le_4_gib": false,
+      "two_method_upper_le_5_gib": false
+    },
+    {
+      "solver_path": "modal-schur-memory-minimal",
+      "observations": {
+        "h5_worker_rss_gib": 1.6977119445800781,
+        "h3_worker_rss_gib": 3.224353790283203,
+        "h5_factor_payload_gib": 0.14401517808437347,
+        "h3_factor_payload_gib": 1.3566359728574753,
+        "h5_total_seconds": 60.9098189429933,
+        "h3_total_seconds": 99.68630260600185,
+        "h5_no_swap": true,
+        "h3_no_swap": true,
+        "h5_numeric_pass": true,
+        "h3_numeric_pass": true
+      },
+      "h2_predictions": {
+        "mesh_resolution_power_law": {
+          "center_gib": 5.364917276663818,
+          "conservative_upper_gib": 6.169654868163391,
+          "observed_scaling_exponent": 1.2557144662844992,
+          "independent_variable": "target mesh spacing h"
+        },
+        "mumps_factor_payload_affine": {
+          "center_gib": 11.646799818279632,
+          "conservative_upper_gib": 13.393819791021578,
+          "projected_factor_payload_gib": 8.046635480697953,
+          "factor_payload_scaling_exponent": 4.390626787988815,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "rss_intercept_gib": 1.51640250454105,
+          "independent_variable": "MUMPS factor nnz payload estimate"
+        }
+      },
+      "h2_time_power_law": {
+        "center_seconds": 147.38582340458737,
+        "observed_scaling_exponent": 0.9643875839443754
+      },
+      "two_method_center_le_4_gib": false,
+      "two_method_upper_le_5_gib": false
+    }
+  ],
+  "selected_solver_path": "modal-schur-memory-minimal",
+  "h2_unlock": false,
+  "decision": "Do not run h2: at least one mandatory center/upper memory prediction gate failed."
+}

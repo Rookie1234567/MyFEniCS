@@ -1,5 +1,5 @@
 {
-  "status": "phase1_to_phase6_clean_integration_pass_physical_field_gates_pending",
+  "status": "hybrid_direct_engineering_success_h2_locked_by_memory_gate",
   "ordinary_default_changed": false,
   "full3d_reference": {
     "h5": {
@@ -65,6 +65,41 @@
     "official_record": false,
     "dense_interface_square": false,
     "full_field_or_mode_vector_gather": false
+  },
+  "final_hybrid_physical": {
+    "status": "pass",
+    "records": [
+      "records/hybrid_h5_m120.json",
+      "records/hybrid_h5_m160.json",
+      "records/hybrid_h3_m120.json",
+      "records/hybrid_h3_m160.json"
+    ],
+    "selected_mode_count_per_direction": 160,
+    "pointwise_h_jump_checked": true,
+    "volume_absorption_reconstructed": true,
+    "selected_middle_planes_reconstructed": true,
+    "h5_h3_mode_truncation_converged": true,
+    "full_field_or_mode_vector_gather": false
+  },
+  "modal_schur_direct": {
+    "status": "numeric_pass_with_memory_minimal_benefit",
+    "paths": ["modal-schur-fast", "modal-schur-memory-minimal"],
+    "storage": "O(N_interface*M)+O(M^2)",
+    "dense_interface_square": false,
+    "h3_memory_minimal_worker_rss_gib": 3.224353790283203,
+    "h3_augmented_worker_rss_gib": 3.8526077270507812
+  },
+  "parameter_smoke": {
+    "status": "pass",
+    "record": "records/parameter_smoke.json",
+    "pass_count": 30,
+    "claim_boundary": "parameter entry and algebra/output smoke only"
+  },
+  "h2_decision": {
+    "status": "h2_remains_locked",
+    "record": "records/h2_prediction.json",
+    "selected_solver_path": "modal-schur-memory-minimal",
+    "run_performed": false
   },
   "comparison_policy": "h5 is the fast development reference; h3 is the primary Task032 field and RTA reference",
   "heavy_artifacts": "benchmarks/artifacts/cases/080 (gitignored)"

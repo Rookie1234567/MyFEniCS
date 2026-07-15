@@ -4,7 +4,7 @@
 
 ```text
 task = Task032
-status = phase0--phase10_implemented / h5_h3_physics_and_truncation_pass / h2_locked_by_memory_gate / clean_formal_record_pending
+status = hybrid_direct_engineering_success / phase0--phase10 complete / h2 locked by mandatory memory gate
 base and Task031 merge = dae03170b0cdd87f2d72769aea7ce04e32acce2b
 branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
 old directory = read-only historical baseline
@@ -117,7 +117,7 @@ clean integration record = benchmarks/cases/080_hybrid_fem_modal_direct_baseline
 record SHA-256 = 43e46de0a7b82f9d0d0d1bb29474ddca08bc017dd5c436122fe6223561812011
 ```
 
-Phase 6f 已用共享 scratch 模态重构器补齐物理 H、界面 E/H、局部+中间体吸收和五个选面。h5/M160 的体吸收闭合为 `1.74e-11`，相对 full-3D 的体吸收差 `2.07e-6`，选面 E/H 最大相对误差 `2.88e-4/8.79e-4`；h3/M160 对应为 `2.63e-6`、`4.35e-5/7.80e-4`。h3 local z 轴显式插入冻结的 10/110 nm，而不是把接口移动到 9/111 nm。
+Phase 6f 已用共享 scratch 模态重构器补齐物理 H、界面 E/H、局部+中间体吸收和五个选面。正式 h5/M160 的体吸收闭合为 `1.73e-11`，相对 full-3D 的体吸收差 `2.07e-6`，五个选面 E/H 最大相对误差 `3.20e-4/9.61e-4`；h3/M160 对应为 `3.27e-12`、`2.63e-6`、`9.96e-5/7.80e-4`。h3 local z 轴显式插入冻结的 10/110 nm，而不是把接口移动到 9/111 nm。
 
 ## 9. modal-Schur result
 
@@ -125,7 +125,7 @@ Phase 6f 已用共享 scratch 模态重构器补齐物理 H、界面 E/H、局�
 
 ## 10. truncation convergence
 
-宽漏斗已完成 h5 `M=20/40/80/120/160`。M20->M40 的最大 total delta 为 `2.25e-5`，M40->M80 仅过 mandatory，M80->M120 和 M120->M160 才进入 strong 平台。最终一对最大 `|delta R/T/A|=7.71e-14`，显著衍射级复振幅最大相对变化 `2.22e-10`，界面投影 `3.91e-13`。h3 的 M120->M160 最大 total delta `3.55e-14`，显著复振幅变化 `9.86e-11`。两档均标记 `mode_truncation_converged`；clean formal record 尚待第一轮实现提交后重跑。
+宽漏斗研究先完成 h5 `M=20/40/80/120/160`：M20->M40 最大 total delta 为 `2.25e-5`，说明 M6 表面平台不足；M80->M120 后才进入 strong 平台。clean formal M120->M160 的 h5 最大 `|delta R/T/A|=6.2395e-14`，显著衍射级复振幅最大相对变化 `1.4793e-10`；h3 对应为 `1.2212e-14` 与 `1.3335e-10`。两档正式记录均为 `mode_truncation_converged` 且 source clean。
 
 ## 11. full-3D comparison
 
@@ -135,11 +135,11 @@ h5 为 44,698 DoF，残差 `9.7340e-12`，`R/T/A=0.0890216029/0.4425882787/0.468
 
 clean Phase 6e h5/M6 对同网格 full-3D h5 的 `Hybrid-full3D R/T/A` 为 `-4.8325e-6/-1.1162e-5/1.5994e-5`。full-3D h5 本身未网格收敛，且 Hybrid 尚未重建体吸收与点值 H，因此这些仍是同网格诊断，不能单独升级最终物理资格。
 
-本轮 h3/M160 `Hybrid R/T/A=0.0046128199040/0.5836509402052/0.4117362398908`，相对冻结 full-3D h3 的差为 `-2.1150e-7/-2.4170e-6/+2.6285e-6`。界面 E/H 采样误差 `1.04e-7/4.82e-4`，中间选面 E/H `4.35e-5/7.80e-4`。这些同网格对照通过 `1e-5` 主阈值，但仍不把 h5--h3 差异解释为 full-3D 网格收敛。
+正式 h3/M160 `Hybrid R/T/A=0.0046128199040/0.5836509402052/0.4117362398908`，相对冻结 full-3D h3 的差为 `-2.1150e-7/-2.4170e-6/+2.6285e-6`。界面 E/H 采样误差 `2.50e-8/4.82e-4`，五个选面 E/H 最大误差 `9.96e-5/7.80e-4`。这些同网格对照通过 `1e-5` 主阈值，但仍不把 h5--h3 差异解释为 full-3D 网格收敛。
 
 ## 12. angle/polarization smoke
 
-研究批次 `30/30 pass`：h5 覆盖 1--10° 的 S/P，h3 覆盖 1/3/5/7/10° 的 S/P。每点验证参数 round trip、complex128、无 full gather、QEP 重算、被动方向分类、真实残差、界面投影、有限 R/T/A 与逐衍射级输出。较小 M=4 只用于 smoke；该批次明确不宣称整个角度范围 production qualification。
+正式参数 smoke `30/30 pass`：h5 覆盖 1--10° 的 S/P，h3 覆盖 1/3/5/7/10° 的 S/P。每点验证参数 round trip、complex128、无 full gather、QEP 重算、被动方向分类、Hybrid algebra、有限 R/T/A 与逐衍射级输出。较小 M=4 只用于 smoke；该批次明确不宣称整个角度范围 production qualification。
 
 ## 13. memory and timing
 
@@ -157,9 +157,9 @@ Phase 4 lightweight coefficient runner 的单 rank historical peak 最大为
 `86.926 MB`，内部 elapsed 最大 rank `0.0126 s`。它只处理小型复制的 mode-count
 数组，因此既不是 full eigensolve 资源，也不是最终 Hybrid 内存/性能结论。
 
-外部 0.25 s simultaneous sampler 的独立 M160 结果为：h5 augmented/Schur-fast/Schur-minimal `1.869/1.649/1.680 GiB`，h3 为 `3.869/3.974/3.215 GiB`；全部零 swap。h5 fast 有收益而 minimal 略差，h3 fast 反而比 augmented 高，只有 sequential-factor minimal 降约 `16.9%`。这说明因子填充和 allocator 高水位必须实测，不能仅按矩阵维数推断。
+clean SHA `793354a...` 的外部 0.25 s simultaneous sampler 独立 M160 结果为：h5 augmented/Schur-fast/Schur-minimal `1.865/1.755/1.698 GiB`，h3 为 `3.853/3.998/3.224 GiB`；全部零 swap且 source/image identity 完整。h3 fast 反而比 augmented 高，sequential-factor minimal 则下降 `16.31%`。这说明因子填充和 allocator 高水位必须实测，不能仅按矩阵维数推断。
 
-h2 最佳候选是 memory-minimal；网格尺度预测中心/上界 `5.380/6.188 GiB`，MUMPS factor-payload 预测为 `11.511/13.238 GiB`。两者均未满足中心 `<=4`、上界 `<=5`，故 `h2_unlock=false`，没有运行 h2。详见 `phase10_memory_and_h2_decision.md`。
+h2 最佳候选是 memory-minimal；网格尺度预测中心/上界 `5.365/6.170 GiB`，MUMPS factor-payload 预测为 `11.647/13.394 GiB`。两者均未满足中心 `<=4`、上界 `<=5`，故 `h2_unlock=false`，没有运行 h2。该停止决定已纳入最终 checker，详见 `phase10_memory_and_h2_decision.md`。
 
 ## 14. negative results
 
@@ -239,10 +239,11 @@ docs/task032_hybrid_fem_modal_direct_baseline/outcomes/negative_results.md
 ## 16. merge recommendation
 
 ```text
-current recommendation = implementation_ready_for_clean_formal_rerun_and_review
-reason = h5/h3 physical, Schur, truncation, parameter smoke and independent memory research pass; h2 correctly remains locked; clean records/checker still pending
+current recommendation = push Task32 branch for independent review; do not merge before review acceptance
+classification = hybrid_direct_engineering_success
+reason = clean h5/h3 physical, Schur, truncation, parameter smoke and six-path memory evidence pass; checker 302/302; h2 correctly remains locked
 ```
 
 ## 17. next Task033 decision
 
-`do_not_start_yet`。Task032 已证明 h5/h3 数值正确，并在 h3 memory-minimal 取得结构性下降，但 h2 未解锁。先完成 clean formal records、Case080 checker、review 和合并；Task033 只能在审阅接受 Task032 的“工程成功但非 h2 强成功”边界后开始。
+`ready_after_review_acceptance`。Task032 已证明 h5/h3 数值正确，并在 h3 memory-minimal 取得 `16.31%` 结构性下降，满足进入 Task033 的技术前提；但 h2 未解锁，所以不是强成功。先由独立审阅接受“工程成功、h2 锁定”的边界并完成合并，再启动 Task033。Task033 应固定 10/110 nm 匹配接口网格，优先只对 local 3D interior 做 h/p 自适应。

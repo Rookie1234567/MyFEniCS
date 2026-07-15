@@ -9,24 +9,30 @@ Phase 3 classification/biorthogonality = clean MPI4 formal record complete
 Phase 4 stable two-sided propagation = clean MPI4 formal record complete
 Phase 5 matched trace/projection = clean MPI4 formal record complete
 Phase 6e real-QEP h5/M6 augmented integration = clean-source MPI4 integration record complete
-Hybrid pointwise field/absorption + Schur direct = pending
+Phase 6f--9 h5/h3 physical field, M160 funnel and Modal-Schur = clean formal records pass
+Phase 10 six-path memory forensics = clean formal records pass, zero swap
+parameter entry S/P smoke = 30/30 pass
+h2 = locked by mandatory two-method prediction gate; not run
+classification = hybrid_direct_engineering_success
+checker = 302/302 passed
 ordinary default changed = false
 ```
 
 This case is the canonical Task032 evidence bundle. It freezes the existing
 full-3D direct reference and now contains the Phase 2 distributed cross-section
 QEP, Phase 3 classification/biorthogonality, Phase 4 stable-propagation clean
-and Phase 5 matched-trace/projection clean records. Phase 6e now also has a
-clean-source h5/M6 Hybrid integration record; pointwise field, absorption,
-h3 Hybrid and final physical qualification remain pending.
+and Phase 5 matched-trace/projection clean records. Final records add h5/h3
+M120/M160 physical fields, volume absorption, mode funnels, augmented/Schur
+equivalence, six independent memory paths, parameter smoke and the fail-closed
+h2 decision.
 
 ## 22 项合同
 
 | 项目 | 值 |
 |---|---|
 | 1. ID | `080_hybrid_fem_modal_direct_baseline` |
-| 2. 当前证明 | Phase 1 clean h5/h3 reference；Phase 2--5 clean QEP/mode/propagation/trace；Phase 6e clean-source real-QEP h5/M6 augmented integration，以及 research M4->M6 total R/T/A strong stability |
-| 3. 尚不证明 | pointwise H/volume absorption/selected-plane/h3 Hybrid、Schur、最终 official RTA 或内存收益 |
+| 2. 当前证明 | Phase 1--10：clean h5/h3 reference、QEP/mode/propagation/trace、h5/h3 M160 field/RTA/absorption、Modal-Schur、截断漏斗、参数 smoke 与六路径内存 |
+| 3. 尚不证明 | h5--h3 网格收敛、整个 1--10° production qualification、h2 实测或 h2 strong-memory success |
 | 4. 几何 | 50 x 25 x 140 nm regular double-periodic cell；17 x 25 x 120 nm Si block |
 | 5. 材料 | 13.5 nm Si，`0.999002304859+0.00182649365j` |
 | 6. 入射 | theta=80 degrees、10 degrees grazing、phi=0、S polarization |
@@ -40,9 +46,9 @@ h3 Hybrid and final physical qualification remain pending.
 | 14. field dtype | PETSc/NumPy complex128 |
 | 15. interface trace | z=10 从 +z cell，z=110 从 -z cell；均取中间区域侧 |
 | 16. memory guard | frozen E/H payload 384000 bytes；fail closed above 64 MiB |
-| 17. numeric Gate | full-3D true residual/closure；Hybrid QEP/biorthogonal/AIJ/interface-algebra/RTA h5 diagnostic |
+| 17. numeric Gate | full residual、interface E/H、volume absorption、selected planes、R/T/A、order funnel、augmented/Schur equivalence |
 | 18. archive Gate | schema/shape/planes/dtype/sides + six SHA-256 identities |
-| 19. provenance | Phase 1 clean `c468c728...`；Phase 2 `33211a4...`；Phase 3 `72dca66...`；Phase 4 `9206e9c...`；Phase 5 `b565ac4...`；Phase 6 `5c1f12e...`；image digest、command、host 与 UTC time |
+| 19. provenance | Phase 1--6 历史 clean SHA；final fields `7357744...`；memory `793354a...`；实际 image ID、command、host 与 UTC time |
 | 20. heavy artifacts | `benchmarks/artifacts/cases/080/`，gitignored |
 | 21. reference policy | h5 fast development；h3 primary；不宣称 h5--h3 mesh convergence |
 | 22. ordinary default | 不改变；reference exporter 显式 opt-in |
@@ -68,8 +74,8 @@ opt-in NPZ contains complex128 E/H on z=10/30/60/90/110 nm and explicit x/y
 tangential E/H traces at z=10/110.  z=10 uses the +z cell and z=110 the -z
 cell, so both interface traces are taken from the middle region.
 
-Heavy artifacts stay below ignored `benchmarks/artifacts/cases/080/`.  The two
-Seven lightweight JSON records in `records/` retain clean commit, command, image digest, material,
+Heavy artifacts stay below ignored `benchmarks/artifacts/cases/080/`.
+Lightweight JSON records in `records/` retain clean commit, command, image digest, material,
 residual, R/T/A, closure, schema and artifact hashes.
 
 The clean h5 run has 44,698 FE DoF, residual `9.733991e-12` and
@@ -104,6 +110,9 @@ VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_ba
 mpiexec -n 4 python -m unittest -v src.test.test_35_task032_modal_trace_projection
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase5.sh
 VERIFIED_CLEAN_SHA=<full-sha> sh benchmarks/cases/080_hybrid_fem_modal_direct_baseline/run_phase6.sh
+mpiexec -n 4 python -m benchmarks.run_task032_phase6_augmented --verified-clean-sha <full-sha> --compare-modal-schur --h-nm 3 --requested-modes 160 --candidate-modes 320 --output <record.json>
+python -m benchmarks.run_task032_phase8_funnel --records <m120.json> <m160.json> --output <funnel.json>
+python benchmarks/check_benchmarks.py --no-write
 ```
 
 The formal host command mounts the repository at `/work` in
@@ -146,15 +155,28 @@ and solves a `13744 x 13744` MPI AIJ with MUMPS. The true residual is
 residuals are `1.3090e-13` and `2.6770e-12/1.5094e-12`. External
 `R/T/A=0.0890167705/0.4425771168/0.4684061127`; h5 Hybrid-minus-full-3D deltas
 remain below `2e-5`. All 10 runner gates and the full Case080 `294/294` checker
-pass. Qualification deliberately remains non-official because pointwise H,
-volume absorption, selected planes, h3 Hybrid and simultaneous RSS are absent.
+pass. This M6 record remains an intentionally historical integration boundary;
+the final M120/M160 records below provide the physical-field qualification.
+
+Final clean h5/h3 M160 records use source `735774473e54415ab5393f2d2cbc9c8d7d2a24e6`.
+Both M120->M160 funnels pass the strong total and significant-order gates. h3
+`Hybrid-full3D R/T/A` deltas are
+`-2.1150e-7/-2.4170e-6/+2.6285e-6`; selected-plane field errors remain below
+`7.80e-4`, and volume absorption differs by `2.6285e-6`. Augmented and Modal-Schur
+agree below their `1e-9` algebra gates without dense interface-square storage.
+
+Six clean memory records use source `793354af0ac72cbfe1c6eb1030b2438afe10c101`.
+h3 augmented/Schur-fast/Schur-minimal peaks are `3.853/3.998/3.224 GiB`, all
+zero swap. The memory-minimal lifecycle reduces h3 worker RSS by `16.31%`.
+Two independent h2 predictions still exceed the 4/5 GiB unlock gates, so h2
+was not run. The final checker passes `302/302`.
 
 ## 代码路径与理论
 
 The reference call chain is `src/main.py -> run_3d_cases -> Stage-4 direct solve ->
 postprocess_3d -> full3d_reference`.  The Hybrid chain is now
-`cross-section eigenmodes -> modal trace projection -> augmented direct ->
-external R/T/A`; Schur and physical field reconstruction remain future work.
+`cross-section eigenmodes -> modal trace projection -> augmented or Modal-Schur
+direct -> physical E/H and absorption -> external R/T/A and diffraction output`.
 The mathematical split and field comparison
 conventions are documented in
 `notes/theory/hybrid_fem_modal_domain_decomposition.md`.
@@ -171,8 +193,8 @@ not a simultaneous memory measurement.  It is retained only as an upper-bound
 diagnostic and is not the Task032 memory authority.
 
 The Phase 2 record likewise reports per-rank process-lifetime historical peaks
-(maximum `231.277 MB`), not simultaneous total memory. No final Hybrid memory
-claim is made before external stage sampling.
+(maximum `231.277 MB`), not simultaneous total memory. Final memory authority
+comes only from the six external stage-sampled records summarized above.
 
 ## PyCharm
 
@@ -186,8 +208,8 @@ This is numerical reference evidence for the frozen current model, not
 experimental validation. Phase 3 supplies a clean-recorded Poynting/Q'
 biorthogonal basis and near-degenerate subspace tracking. Phase 4 supplies a
 clean-recorded stable two-port propagation block, and Phase 5 supplies a
-clean-recorded matched-interface trace/projection block. The augmented solver
-has a clean-source h5/M6 integration pass, but pointwise H, absorption,
-selected-plane, h3, final official RTA and memory qualification remain pending. It does not add
-h/p adaptivity, a new iterative solver,
+clean-recorded matched-interface trace/projection block. The h5/h3 M160 field,
+truncation, Schur and memory evidence is complete. h2 is deliberately locked by
+the mandatory prediction gate, so no h2 measured peak or strong-memory
+classification is claimed. Task032 does not add h/p adaptivity, a new iterative solver,
 nonmatching interfaces, material scans or shorter wavelengths.

@@ -149,6 +149,7 @@
   },
   "final": {
     "required_commit": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+    "required_memory_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
     "required_container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
     "required_mpi_size": 4,
     "required_dtype": "complex128",

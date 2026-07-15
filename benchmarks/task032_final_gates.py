@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import re
@@ -105,6 +106,12 @@ def evaluate_task032_final(
         qualification = funnel.get("qualification", {})
         sources = funnel.get("sources", [])
         source_counts = [int(source.get("mode_count_per_direction", -1)) for source in sources]
+        expected_source_hashes = [
+            hashlib.sha256(
+                (records / f"hybrid_{level}_m{mode_count}.json").read_bytes()
+            ).hexdigest()
+            for mode_count in mode_counts
+        ]
         level_ok = (
             funnel.get("status") == "mode_truncation_converged"
             and source_counts == mode_counts
@@ -113,6 +120,8 @@ def evaluate_task032_final(
                 and source.get("tracked_source_dirty") is False
                 for source in sources
             )
+            and [source.get("sha256") for source in sources]
+            == expected_source_hashes
             and qualification.get("mode_count_converged") is True
             and qualification.get("selected_mode_count_per_direction") == mode_counts[-1]
             and qualification.get("latest_pair_mandatory_total_gate_pass") is True
@@ -347,6 +356,7 @@ def evaluate_task032_final(
                 and record.get("terminated_for_memory") is False
                 and isinstance(source_sha, str)
                 and re.fullmatch(r"[0-9a-f]{40}", source_sha) is not None
+                and source_sha == config["required_memory_commit"]
                 and source.get("verified_clean_sha") == source_sha
                 and source.get("git_dirty") is False
                 and source.get("tracked_source_dirty") is False
@@ -434,11 +444,26 @@ def evaluate_task032_final(
         {},
     )
     methods = selected.get("h2_predictions", {})
+    prediction_inputs_match = all(
+        float(item.get("observations", {}).get(f"{level}_worker_rss_gib", -1.0))
+        == float(
+            memory_records[(level, item.get("solver_path"))]["memory"][
+                "max_simultaneous_worker_rss_gib"
+            ]
+        )
+        and item.get("observations", {}).get(f"{level}_no_swap")
+        is memory_records[(level, item.get("solver_path"))].get("no_swap")
+        and item.get("observations", {}).get(f"{level}_numeric_pass")
+        is memory_records[(level, item.get("solver_path"))].get("numeric_pass")
+        for item in predictions
+        for level in ("h5", "h3")
+    )
     h2_ok = (
         prediction.get("status") == "h2_remains_locked"
         and prediction.get("h2_unlock") is False
         and selected_path == "modal-schur-memory-minimal"
         and len(predictions) == 3
+        and prediction_inputs_match
         and all(
             item.get("observations", {}).get(key) is True
             for item in predictions
@@ -483,11 +508,24 @@ def evaluate_task032_final(
     smoke = _load(records / "parameter_smoke.json")
     smoke_runs = smoke.get("runs", [])
     scope = smoke.get("scope", {})
+    smoke_source = smoke.get("source", {})
     smoke_ok = (
         smoke.get("status") == "parameter_smoke_pass"
         and smoke.get("run_count") == config["required_parameter_smoke_count"]
         and smoke.get("pass_count") == config["required_parameter_smoke_count"]
         and len(smoke_runs) == config["required_parameter_smoke_count"]
+        and smoke_source.get("commit_sha") == config["required_commit"]
+        and smoke_source.get("verified_clean_sha") == config["required_commit"]
+        and smoke_source.get("tracked_source_dirty") is False
+        and smoke_source.get("git_dirty") is False
+        and smoke_source.get("container_digest")
+        == config["required_container_digest"]
+        and smoke_source.get("mpi_size") == config["required_mpi_size"]
+        and smoke_source.get("scalar_dtype") == config["required_dtype"]
+        and smoke_source.get("full_field_or_mode_vector_gather") is False
+        and smoke_source.get("run_metadata_count")
+        == config["required_parameter_smoke_count"]
+        and smoke_source.get("all_run_metadata_consistent") is True
         and scope.get("h5_angles_deg") == list(range(1, 11))
         and scope.get("h3_angles_deg") == [1, 3, 5, 7, 10]
         and scope.get("polarizations") == ["s", "p"]
@@ -510,6 +548,7 @@ def evaluate_task032_final(
                 "run_count": smoke.get("run_count"),
                 "pass_count": smoke.get("pass_count"),
                 "scope": scope,
+                "source": smoke_source,
             },
             {
                 "run_count": config["required_parameter_smoke_count"],

@@ -103,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     ).resolve()
     output_root.mkdir(parents=True, exist_ok=False)
     runs = []
+    source_metadata = []
     for h_nm, angles in ((5.0, H5_ANGLES), (3.0, H3_ANGLES)):
         for grazing_deg in angles:
             for polarization in ("s", "p"):
@@ -154,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
                     polarization=polarization,
                     requested_modes=args.requested_modes,
                 )
+                source_metadata.append(record.get("metadata", {}))
                 runs.append(
                     {
                         "label": label,
@@ -181,6 +183,36 @@ def main(argv: list[str] | None = None) -> int:
                     f"{'pass' if all(gates.values()) else 'failed'}",
                     flush=True,
                 )
+    source_fields = (
+        "commit_sha",
+        "branch",
+        "git_dirty",
+        "tracked_source_dirty",
+        "verification",
+        "verified_clean_sha",
+        "mpi_size",
+        "container_image",
+        "container_digest",
+        "host_environment_id",
+        "scalar_dtype",
+        "full_field_or_mode_vector_gather",
+    )
+    source_signatures = {
+        tuple(metadata.get(field) for field in source_fields)
+        for metadata in source_metadata
+    }
+    source = {
+        field: source_metadata[0].get(field) if source_metadata else None
+        for field in source_fields
+    }
+    source.update(
+        {
+            "run_metadata_count": len(source_metadata),
+            "all_run_metadata_consistent": (
+                len(source_metadata) == len(runs) and len(source_signatures) == 1
+            ),
+        }
+    )
     summary = {
         "schema_version": 1,
         "benchmark_id": "task032_phase9_angle_polarization_smoke",
@@ -188,8 +220,10 @@ def main(argv: list[str] | None = None) -> int:
         "status": (
             "parameter_smoke_pass"
             if all(run["algebraic_smoke_pass"] for run in runs)
+            and source["all_run_metadata_consistent"]
             else "parameter_smoke_failed"
         ),
+        "source": source,
         "scope": {
             "h5_angles_deg": list(H5_ANGLES),
             "h3_angles_deg": list(H3_ANGLES),

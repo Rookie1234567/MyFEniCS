@@ -17,6 +17,7 @@
 
 - [Task032 任务书](task.md)
 - [滚动结果总结](outcomes/summary.md)
+- [最终 17 节答复](response_v1.md)
 - [本地迁移记录](outcomes/local_migration_record.md)
 - [环境能力记录](outcomes/environment_capability.md)
 - [新旧目录 smoke 记录](outcomes/old_vs_new_smoke.md)
@@ -111,9 +112,10 @@ Case080 checker 为 `290/290 passed`。Phase 6a--6d 已完成局部 FEM、外端
 DtN、内部模态 blocks 和 rank-major 单体 AIJ。Phase 6e 的真实 QEP h5/M6
 已在 clean source `5c1f12e610dd8c6040389c44c31584ab7fba66cd` 生成 MPI4
 集成记录，10 个 runner Gate 与 Case080 `294/294` 均通过；研究漏斗的
-M4->M6 R/T/A 变化约 `1e-12`。本轮 Phase 6f--10 research 已进一步完成：
-h5/h3 M120--M160 强截断收敛、物理 E/H/体吸收/五个选面、augmented 与
-Modal-Schur 一致性、30/30 角度/S-P smoke 和三种 direct lifecycle 独立内存
-采样。h3 memory-minimal 为 `3.215 GiB`，但 h2 两种预测均未过 4/5 GiB
-强制 Gate，因此 h2 按任务书保持锁定。下一步是 clean formal records、
-Case080 checker、review 和合并，不启动 Task033。
+M4->M6 R/T/A 变化约 `1e-12`。Phase 6f--10 已完成 clean h5/h3
+M120--M160 强截断收敛、物理 E/H/体吸收/五个选面、augmented 与 Modal-Schur
+一致性、30/30 角度/S-P smoke 和六条 direct lifecycle 独立内存采样。h3
+memory-minimal 为 `3.224 GiB`，相对 augmented 降低 `16.31%`；但 h2 两种
+预测均未过 4/5 GiB 强制 Gate，所以 h2 按任务书保持锁定。正式记录和 Case080
+`302/302` checker 已完成。当前分支应先推送并接受独立 review，再合并；
+Task033 只在 review 接受“工程成功、h2 锁定”的边界后启动。

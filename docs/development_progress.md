@@ -40,10 +40,24 @@ Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
-Task032 status = Phase 0-5 + Phase 6a-6d + Phase 6e clean-source real-QEP h5/M6 integration complete; pointwise field/absorption gates next
+Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
 ```
 
 ## 1.1 2026-07-15 最新更新
+
+Task032 Phase 6f--10 已闭合。clean h5/h3 M120/M160 记录完成物理 E/H、接口连续、
+体吸收、五个选面、逐衍射级输出和 augmented/Modal-Schur 对照；两档 M120->M160
+最大 total delta 分别为 `6.24e-14/1.22e-14`。h3 M160 相对同网格 full-3D
+的 R/T/A 差为 `-2.12e-7/-2.42e-6/+2.63e-6`，场与吸收 Gate 通过。
+30 组角度/S-P 参数入口 smoke 全过，但不升级为全区间 production qualification。
+
+六条 clean MPI4 M160 外部内存记录全部数值通过、零 swap。h3
+augmented/Schur-fast/Schur-memory-minimal 为 `3.853/3.998/3.224 GiB`；只有顺序
+factor 生命周期相对 augmented 下降 `16.31%`。h2 的网格尺度与 factor-payload
+预测分别为 `5.365/6.170 GiB` 和 `11.647/13.394 GiB`（中心/上界），均未过
+4/5 GiB 强制 Gate，因此 h2 按任务书未运行。最终 Case080 checker 为
+`302/302 passed`，分类为 `hybrid_direct_engineering_success`；待独立 review 后合并，
+再决定启动 Task033。
 
 Phase 6a/6b/6c 已按小步完成。上下局部三维 p2 Nédélec/Floquet 网格只覆盖外边界到 z=10/110 nm 接口，中间 100 nm 不再生成三维体单元；每个局部系统只装配其真实拥有的一侧外部 40-mode Fourier-DtN。内部耦合新增分布式 `M x N` trace projection、`N x M` 正/负 traction、`M x M` 负迹映射和无 growing inverse 的 `P+/P-`，内部 unknown/equation 均为 `2M`，没有 dense `N_interface^2`。
 
