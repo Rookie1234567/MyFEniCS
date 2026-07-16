@@ -886,26 +886,6 @@ def build_equal_accuracy(
         path, candidate_descriptor = _repo_path(requested, root=root)
         try:
             evidence = _load_evidence(path, repo_root=root)
-            comparison = _comparison(reference_evidence, evidence)
-            compression = _compression(reference_evidence.costs, evidence.costs)
-            row = {
-                "candidate_id": candidate_id,
-                "label": evidence.funnel.path.stem,
-                "status": comparison["status"],
-                "case": dict(evidence.case),
-                "selected_mode_count_per_direction": evidence.selected_m,
-                "source_commit_full_sha": evidence.source_sha,
-                "input": evidence.input_descriptor(),
-                "costs": evidence.costs,
-                "compression_ratios": compression,
-                "local_dof_compression_classification": classify_compression(
-                    compression["local_dofs"]
-                ),
-                "gates": comparison["gates"],
-                "comparisons": comparison["comparisons"],
-                "failures": comparison["failures"],
-            }
-            input_rows.append({"candidate_id": candidate_id, **evidence.input_descriptor()})
         except EqualAccuracyError as exc:
             funnel_hash = _file_sha256(path) if path.is_file() else None
             row = {
@@ -929,6 +909,55 @@ def build_equal_accuracy(
                 "failures": [f"candidate_evidence_invalid: {exc}"],
             }
             input_rows.append({"candidate_id": candidate_id, **row["input"]})
+        else:
+            descriptor = evidence.input_descriptor()
+            input_rows.append({"candidate_id": candidate_id, **descriptor})
+            try:
+                comparison = _comparison(reference_evidence, evidence)
+            except EqualAccuracyError as exc:
+                # A canonical measured funnel can legitimately lack an
+                # independent selected-plane reference for its FE degree.  It
+                # remains measured evidence, but it is not an equal-accuracy
+                # candidate and receives no compression classification.
+                row = {
+                    "candidate_id": candidate_id,
+                    "label": evidence.funnel.path.stem,
+                    "status": "not_qualified",
+                    "case": dict(evidence.case),
+                    "selected_mode_count_per_direction": evidence.selected_m,
+                    "source_commit_full_sha": evidence.source_sha,
+                    "input": descriptor,
+                    "costs": evidence.costs,
+                    "compression_ratios": None,
+                    "local_dof_compression_classification": None,
+                    "gates": {
+                        "canonical_measured_funnel": True,
+                        "equal_accuracy_comparison_available": False,
+                    },
+                    "comparisons": {},
+                    "failures": [f"candidate_comparison_unavailable: {exc}"],
+                }
+            else:
+                compression = _compression(
+                    reference_evidence.costs, evidence.costs
+                )
+                row = {
+                    "candidate_id": candidate_id,
+                    "label": evidence.funnel.path.stem,
+                    "status": comparison["status"],
+                    "case": dict(evidence.case),
+                    "selected_mode_count_per_direction": evidence.selected_m,
+                    "source_commit_full_sha": evidence.source_sha,
+                    "input": descriptor,
+                    "costs": evidence.costs,
+                    "compression_ratios": compression,
+                    "local_dof_compression_classification": classify_compression(
+                        compression["local_dofs"]
+                    ),
+                    "gates": comparison["gates"],
+                    "comparisons": comparison["comparisons"],
+                    "failures": comparison["failures"],
+                }
         candidate_rows.append(row)
 
     qualified = [row for row in candidate_rows if row["status"] == "equal_accuracy_qualified"]

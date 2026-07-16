@@ -44,6 +44,10 @@ class Task033PeriodicGradedMeshTests(unittest.TestCase):
             with self.subTest(reference_h=reference_h):
                 plan = build_physics_informed_graded_plan(reference_h_nm=reference_h)
                 certificate = plan.certificate()
+                self.assertEqual(
+                    plan.policy,
+                    "feature_axes_reference_fitted_smooth_y_coarsened",
+                )
                 self.assertTrue(certificate["eligible_for_mesh_smoke"])
                 self.assertTrue(certificate["checks"]["degree_is_fixed_p2"])
                 self.assertTrue(certificate["checks"]["conforming_tensor_product"])
@@ -68,12 +72,29 @@ class Task033PeriodicGradedMeshTests(unittest.TestCase):
                     plan.mesh_cells["total"],
                     uniform_reference_mesh_cells(reference_h),
                 )
+                self.assertLessEqual(float(np.max(np.diff(plan.x_values))), reference_h)
+                self.assertLessEqual(
+                    float(np.max(np.diff(plan.bottom_z_values))), reference_h
+                )
+                self.assertLessEqual(
+                    float(np.max(np.diff(plan.top_z_values))), reference_h
+                )
+                self.assertGreater(float(np.max(np.diff(plan.y_values))), reference_h)
                 for value in (16.5, 33.5):
                     self.assertTrue(np.any(np.isclose(plan.x_values, value)))
                 for value in (0.0, 10.0):
                     self.assertTrue(np.any(np.isclose(plan.bottom_z_values, value)))
                 for value in (110.0, 120.0):
                     self.assertTrue(np.any(np.isclose(plan.top_z_values, value)))
+
+    def test_explicit_y_features_disable_cycle0_smooth_axis_coarsening(self):
+        plan = build_physics_informed_graded_plan(
+            reference_h_nm=5.0,
+            feature_planes_y_nm=(12.5,),
+        )
+        self.assertTrue(plan.explicit_y_feature_planes_present)
+        self.assertTrue(np.any(np.isclose(plan.y_values, 12.5)))
+        self.assertLessEqual(float(np.max(np.diff(plan.y_values))), 5.0)
 
     def test_dorfler_indicator_rebuild_is_deterministic_and_budgeted(self):
         plan = build_physics_informed_graded_plan(reference_h_nm=5.0)

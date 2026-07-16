@@ -5,12 +5,12 @@
     "generic_y_material": "not_qualified_fail_closed",
     "hanging_nodes": "not_used",
     "indicator_ladder": [
-      "physics_informed_geometry_planes",
+      "cycle0_preserve_material_axes_and_coarsen_smooth_y",
       "element_residual_plus_tangential_curl_jump"
     ],
     "interface_policy": "bottom_and_top_share_exact_x_y_axis_arrays",
     "mesh_family": "nonuniform_graded_conforming_hexahedral_tensor_product",
-    "periodic_policy": "opposite_cell_marks_union_then_common_axis_rebuild"
+    "periodic_policy": "cycle0_feature_axes_reference_fitted_and_smooth_y_coarsened; later_cycles_use_opposite_mark_union_then_common_axis_rebuild"
   },
   "case_id": "091_hybrid_hp_adaptivity_feasibility",
   "derived_mesh_cell_comparison": {
@@ -18,9 +18,9 @@
     "baseline": "uniform_fitted_p2_h3",
     "data_identity": "derived_from_axis_coordinate_counts",
     "denominator": "graded_plan_cells",
-    "evidence_record": "49f0d409b2b36289b49f878091bc5652c7aa1a0576680c88190d4abb0b93516f",
-    "graded_plan_cells": 1040,
-    "mesh_cell_compression_only": 2.4923076923076923,
+    "evidence_record": "980c6af24378cdc5305eee27014721676ae4d248069370de74ff08d5fd539490",
+    "graded_plan_cells": 1440,
+    "mesh_cell_compression_only": 1.8,
     "uniform_reference_cells": 2592,
     "unit": "hexahedral_cells",
     "warning": "Mesh-cell compression is not local-DoF same-accuracy compression."
@@ -38,7 +38,7 @@
     "axis_cells": {
       "bottom_z": 8,
       "top_z": 8,
-      "x": 13,
+      "x": 18,
       "y": 5
     },
     "axis_coordinates_nm": {
@@ -66,18 +66,23 @@
       ],
       "x": [
         0.0,
+        2.75,
         5.5,
+        8.25,
         11.0,
         13.75,
         16.5,
-        19.333333333333336,
+        19.333333333333332,
         22.166666666666668,
+        25.0,
         27.833333333333336,
         30.666666666666668,
         33.5,
         36.25,
         39.0,
+        41.75,
         44.5,
+        47.25,
         50.0
       ],
       "y": [
@@ -93,7 +98,7 @@
       "axis_hashes": {
         "bottom_z": "31e68230dede5706cf0695f630fe5dcb811df909464ae98b0be79f04e3daa773",
         "top_z": "1df0ed538aeaa74c96db9a39d8f16e819040802993103e5a51258f70e79161fd",
-        "x": "88b76938f6da90158c2dad594c40efc1e0068c0dc28e92e02cba41b3bb49bb4a",
+        "x": "ea71ea1394ebf087c6ffd69ec004b854f43a3999e40fe55eb6b0019cac0d23cf",
         "y": "c3d64312cddd7eb6a2afadbf8a8744fbe5b41c731e75b758d53639e0c759a9ac"
       },
       "checks": {
@@ -116,20 +121,20 @@
       "neighbor_width_ratios": {
         "bottom_z": 1.0,
         "top_z": 1.0,
-        "x_periodic": 2.0000000000000013,
+        "x_periodic": 1.0303030303030298,
         "y_periodic": 1.0
       }
     },
     "cycle": 0,
     "degree": 2,
     "mesh_cells": {
-      "bottom": 520,
-      "top": 520,
-      "total": 1040
+      "bottom": 720,
+      "top": 720,
+      "total": 1440
     },
     "parent_plan_hash": null,
-    "plan_hash": "49f0d409b2b36289b49f878091bc5652c7aa1a0576680c88190d4abb0b93516f",
-    "policy": "physics_informed_conforming_tensor_rebuild",
+    "plan_hash": "980c6af24378cdc5305eee27014721676ae4d248069370de74ff08d5fd539490",
+    "policy": "feature_axes_reference_fitted_smooth_y_coarsened",
     "reference_h_nm": 3.0
   },
   "record_type": "p2_periodic_graded_mesh_plan",

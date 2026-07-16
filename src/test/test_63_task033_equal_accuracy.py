@@ -389,6 +389,26 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                 "missing selected-plane",
                 missing_result["candidates"][0]["failures"][0],
             )
+            measured_negative = missing_result["candidates"][0]
+            self.assertEqual(measured_negative["case"]["degree"], 3)
+            self.assertEqual(measured_negative["source_commit_full_sha"], SHA)
+            self.assertEqual(
+                measured_negative["selected_mode_count_per_direction"], 160
+            )
+            self.assertIsNotNone(
+                measured_negative["input"]["selected_watchdog_path"]
+            )
+            self.assertIsInstance(measured_negative["costs"], dict)
+            self.assertIsNone(measured_negative["compression_ratios"])
+            self.assertIsNone(
+                measured_negative["local_dof_compression_classification"]
+            )
+            self.assertTrue(
+                measured_negative["gates"]["canonical_measured_funnel"]
+            )
+            Draft202012Validator(
+                json.loads(SCHEMA.read_text(encoding="utf-8"))
+            ).validate(missing_result)
 
             inaccurate = _funnel(
                 root,

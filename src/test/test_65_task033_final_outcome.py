@@ -1125,19 +1125,11 @@ class Task033FinalOutcomeTests(unittest.TestCase):
                     "true_relative_residual": 8.0e-13,
                     "true_relative_residual_le_1e-9": True,
                     "all_reported_gates_pass": False,
+                    "failed_gate_names": [
+                        "sampled_interface_h_t_relative_l2_le_1e-2"
+                    ],
                 },
-                "terminal_physical_reference_evidence": {
-                    "reference_binding_verified": True,
-                    "reference_record": (
-                        "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
-                        "records/full3d_h3_reference.json"
-                    ),
-                    "reference_record_sha256": "2" * 64,
-                    "reference_record_source_commit_full_sha": "3" * 40,
-                    "reference_npz_sha256_expected": "4" * 64,
-                    "reference_npz_sha256_observed": "4" * 64,
-                    "reference_grid_converged": False,
-                },
+                "terminal_physical_reference_evidence": None,
             }
         )
         self._replace("uniform_p_h_matrix", payload)
@@ -1150,6 +1142,18 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         )
 
         row["terminal_physical_gate_evidence"]["algebraic_chain_pass"] = False
+        self._replace("uniform_p_h_matrix", payload)
+        with self.assertRaisesRegex(
+            FinalOutcomeError,
+            "non-exact p1 terminal physical negative",
+        ):
+            build_final_outcome(**self.paths)
+
+        row["terminal_physical_gate_evidence"]["algebraic_chain_pass"] = True
+        row["terminal_physical_reference_evidence"] = {
+            "reference_degree": 2,
+            "reference_binding_verified": True,
+        }
         self._replace("uniform_p_h_matrix", payload)
         with self.assertRaisesRegex(
             FinalOutcomeError,

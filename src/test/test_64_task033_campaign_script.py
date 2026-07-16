@@ -195,11 +195,21 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn(
             "Controlled terminal physical negatives are restricted to", text
         )
-        self.assertIn("[switch]$TerminalReferenceRequired", text)
-        self.assertIn("-TerminalReferenceRequired", text)
-        self.assertIn("reference_not_grid_converged", text)
+        self.assertNotIn("TerminalReferenceRequired", text)
+        self.assertNotIn("reference_binding_verified", text)
         self.assertIn(
-            "Hybrid terminal physical negative lacks the exact bound", text
+            "[switch]$TerminalNoSameDegreeReferenceRequired", text
+        )
+        self.assertIn("-TerminalNoSameDegreeReferenceRequired", text)
+        self.assertIn("selected_plane_comparison_present_and_null", text)
+        self.assertIn("full3d_comparison_present_and_null", text)
+        self.assertIn("exact_interface_h_false_gate", text)
+        self.assertIn(
+            '$falseGates[0] -eq "sampled_interface_h_t_relative_l2_le_1e-2"',
+            text,
+        )
+        self.assertIn(
+            "no-same-degree-reference contract", text
         )
         self.assertIn('$StepName -notlike "hybrid_uniform_*"', text)
         self.assertIn("-AllowHybridComparisonPhysicalNegative", text)
@@ -222,8 +232,11 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("conditional M240 is restricted to explicitly authorized", text)
         self.assertIn("-AllowConditionalM240:$allowConditionalM240", text)
         self.assertIn(
-            '"M160 is not qualified because final p1 physical field gates failed "',
+            '"M160 is not qualified because the final p1 interface-H gate failed "',
             text,
+        )
+        self.assertIn(
+            '"without a pinned same-degree Case080 full3D comparison"', text
         )
         self.assertIn(
             "$provisional.qualification.terminal_physical_gate_limited "

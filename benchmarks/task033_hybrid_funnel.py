@@ -18,7 +18,6 @@ from typing import Any
 
 
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 MANDATORY_TOTAL_TOLERANCE = 1.0e-5
 STRONG_TOTAL_TOLERANCE = 1.0e-6
 MANDATORY_ORDER_RELATIVE_TOLERANCE = 1.0e-3
@@ -38,12 +37,11 @@ P1_H5_CAPACITY_FAILURE = (
     "modes per direction before singular-K2 numerical-infinity roots"
 )
 P1_TERMINAL_PHYSICAL_FAILURE = (
-    "M160 is not qualified because final p1 physical field gates failed "
-    "against the bound full3d reference"
+    "M160 is not qualified because the final p1 interface-H gate failed "
+    "without a pinned same-degree Case080 full3D comparison"
 )
-P1_TERMINAL_REFERENCE_RECORD = (
-    "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/"
-    "full3d_h3_reference.json"
+P1_TERMINAL_FAILED_GATE_NAMES = (
+    "sampled_interface_h_t_relative_l2_le_1e-2",
 )
 
 
@@ -179,6 +177,9 @@ def _individual_physical_gates(payload: Mapping[str, Any]) -> dict[str, Any]:
     residual = _finite(solve.get("true_relative_residual"))
     gate_values_are_boolean = all(type(value) is bool for value in gates.values())
     all_reported_gates_pass = bool(gates) and gate_values_are_boolean and all(gates.values())
+    failed_gate_names = sorted(
+        name for name, value in gates.items() if value is False
+    )
     return {
         "integration_pass": qualification.get("integration_pass") is True,
         "algebraic_chain_pass": qualification.get("algebraic_chain_pass") is True,
@@ -192,6 +193,7 @@ def _individual_physical_gates(payload: Mapping[str, Any]) -> dict[str, Any]:
         "true_relative_residual": residual,
         "true_relative_residual_le_1e-9": residual is not None and residual <= 1.0e-9,
         "all_reported_gates_pass": all_reported_gates_pass,
+        "failed_gate_names": failed_gate_names,
     }
 
 
@@ -386,9 +388,17 @@ def _controlled_modal_basis_capacity_negative(
 def _controlled_p1_terminal_physical_negative(
     payload: Mapping[str, Any],
 ) -> bool:
-    """Recognize the terminal M160 physical negative for safe non-h5 p1 rows."""
+    """Recognize the exact no-same-degree-reference p1 M160 negative."""
 
     case = _case(payload)
+    measurements = _measurements(payload)
+    physical = measurements.get("physical_field_reconstruction")
+    physical = physical if isinstance(physical, Mapping) else {}
+    gates = measurements.get("gates")
+    gates = gates if isinstance(gates, Mapping) else {}
+    failed_gate_names = sorted(
+        name for name, value in gates.items() if value is False
+    )
     return bool(
         _controlled_physical_truncation_negative(payload)
         and case.get("degree") == 1
@@ -398,66 +408,12 @@ def _controlled_p1_terminal_physical_negative(
         and case.get("bottom_interface_nm") == 10.0
         and case.get("top_interface_nm") == 110.0
         and case.get("graded_reference_h_nm") is None
-        and _terminal_reference_evidence(payload) is not None
+        and failed_gate_names == list(P1_TERMINAL_FAILED_GATE_NAMES)
+        and "selected_plane_full3d_comparison" in physical
+        and physical.get("selected_plane_full3d_comparison") is None
+        and "full3d_reference_comparison" in measurements
+        and measurements.get("full3d_reference_comparison") is None
     )
-
-
-def is_exact_p1_terminal_reference_evidence(value: Any) -> bool:
-    """Validate the compact binding to the frozen, non-grid-converged reference."""
-
-    if not isinstance(value, Mapping):
-        return False
-    expected = value.get("reference_npz_sha256_expected")
-    observed = value.get("reference_npz_sha256_observed")
-    record_sha = value.get("reference_record_sha256")
-    commit = value.get("reference_record_source_commit_full_sha")
-    return bool(
-        value.get("reference_binding_verified") is True
-        and value.get("reference_record") == P1_TERMINAL_REFERENCE_RECORD
-        and isinstance(record_sha, str)
-        and SHA256_RE.fullmatch(record_sha) is not None
-        and isinstance(commit, str)
-        and FULL_SHA_RE.fullmatch(commit) is not None
-        and isinstance(expected, str)
-        and SHA256_RE.fullmatch(expected) is not None
-        and observed == expected
-        and value.get("reference_grid_converged") is False
-    )
-
-
-def _terminal_reference_evidence(
-    payload: Mapping[str, Any],
-) -> dict[str, Any] | None:
-    measurements = _measurements(payload)
-    physical = measurements.get("physical_field_reconstruction")
-    physical = physical if isinstance(physical, Mapping) else {}
-    planes = physical.get("selected_plane_full3d_comparison")
-    planes = planes if isinstance(planes, Mapping) else {}
-    full3d = measurements.get("full3d_reference_comparison")
-    full3d = full3d if isinstance(full3d, Mapping) else {}
-    evidence = {
-        "reference_binding_verified": planes.get("reference_binding_verified"),
-        "reference_record": planes.get("reference_record"),
-        "reference_record_sha256": planes.get("reference_record_sha256"),
-        "reference_record_source_commit_full_sha": planes.get(
-            "reference_record_source_commit_full_sha"
-        ),
-        "reference_npz_sha256_expected": planes.get(
-            "reference_npz_sha256_expected"
-        ),
-        "reference_npz_sha256_observed": planes.get(
-            "reference_npz_sha256_observed"
-        ),
-        "reference_grid_converged": full3d.get("reference_grid_converged"),
-    }
-    if (
-        full3d.get("reference_file") != evidence["reference_record"]
-        or full3d.get("reference_commit_sha")
-        != evidence["reference_record_source_commit_full_sha"]
-        or not is_exact_p1_terminal_reference_evidence(evidence)
-    ):
-        return None
-    return evidence
 
 
 def is_exact_p1_h5_modal_basis_capacity(capacity: Any) -> bool:
@@ -548,6 +504,8 @@ def is_controlled_p1_terminal_physical_funnel(payload: Any) -> bool:
         and terminal.get("candidate_pool_is_twice_requested_modes") is True
         and terminal.get("true_relative_residual_le_1e-9") is True
         and terminal.get("all_reported_gates_pass") is False
+        and terminal.get("failed_gate_names")
+        == list(P1_TERMINAL_FAILED_GATE_NAMES)
         and _finite(terminal.get("true_relative_residual")) is not None
         and _finite(terminal.get("true_relative_residual")) <= 1.0e-9
     )
@@ -574,9 +532,8 @@ def is_controlled_p1_terminal_physical_funnel(payload: Any) -> bool:
         and payload.get("modal_basis_capacity") is None
         and payload.get("failures") == [P1_TERMINAL_PHYSICAL_FAILURE]
         and terminal_gate_contract
-        and is_exact_p1_terminal_reference_evidence(
-            payload.get("terminal_physical_reference_evidence")
-        )
+        and "terminal_physical_reference_evidence" in payload
+        and payload.get("terminal_physical_reference_evidence") is None
     )
 
 
@@ -865,11 +822,6 @@ def build_hybrid_funnel(
         if capacity_limited_m160
         else None
     )
-    terminal_reference_evidence = (
-        _terminal_reference_evidence(by_m[160])
-        if terminal_physical_limited_m160
-        else None
-    )
     return {
         "schema_version": "task033.case091.hybrid-funnel.v1",
         "record_type": "task033_hybrid_mode_truncation_funnel",
@@ -912,9 +864,7 @@ def build_hybrid_funnel(
         "individual_gates": individual,
         "comparisons": comparisons,
         "modal_basis_capacity": capacity_evidence,
-        "terminal_physical_reference_evidence": (
-            terminal_reference_evidence
-        ),
+        "terminal_physical_reference_evidence": None,
         "qualification": {
             "mode_count_converged": qualified,
             "selected_mode_count_per_direction": selected_m,

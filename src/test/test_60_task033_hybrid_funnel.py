@@ -176,71 +176,125 @@ def _p1_h5_capacity_negative() -> dict:
     return shard
 
 
-def _p1_h3_terminal_physical_negative() -> dict:
+def _p1_terminal_physical_negative(h_nm: float = 3.0) -> dict:
     shard = _controlled_physical_negative(160)
     case = shard["measurements"]["case"]
     case.update(
         {
             "degree": 1,
-            "h_nm": 3.0,
+            "h_nm": h_nm,
             "candidate_modes_per_target_branch": 320,
         }
     )
     measurements = shard["measurements"]
     measurements["physical_field_reconstruction"] = {
-        "selected_plane_full3d_comparison": {
-            "reference_binding_verified": True,
-            "reference_record": (
-                "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
-                "records/full3d_h3_reference.json"
-            ),
-            "reference_record_sha256": "2" * 64,
-            "reference_record_source_commit_full_sha": "3" * 40,
-            "reference_npz_sha256_expected": "4" * 64,
-            "reference_npz_sha256_observed": "4" * 64,
-        }
+        "selected_plane_full3d_comparison": None,
     }
-    measurements["full3d_reference_comparison"] = {
-        "reference_file": (
-            "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
-            "records/full3d_h3_reference.json"
-        ),
-        "reference_commit_sha": "3" * 40,
-        "reference_grid_converged": False,
-    }
+    measurements["full3d_reference_comparison"] = None
     return shard
 
 
 class Task033HybridFunnelTests(unittest.TestCase):
     def test_p1_h3_terminal_physical_negative_is_never_promoted(self) -> None:
+        for h_nm in (3.0, 2.5, 2.0, 1.5):
+            with self.subTest(h_nm=h_nm):
+                m80 = _controlled_physical_negative(80)
+                m120 = _controlled_physical_negative(120, delta=1.0e-8)
+                for shard in (m80, m120):
+                    shard["measurements"]["case"].update(
+                        {"degree": 1, "h_nm": h_nm}
+                    )
+                record = build_hybrid_funnel(
+                    [m80, m120, _p1_terminal_physical_negative(h_nm)]
+                )
+                self.assertEqual(record["status"], "not_qualified")
+                self.assertEqual(
+                    record["failures"], [P1_TERMINAL_PHYSICAL_FAILURE]
+                )
+                self.assertTrue(
+                    record["qualification"]["terminal_physical_gate_limited"]
+                )
+                self.assertFalse(
+                    record["qualification"]["mode_count_converged"]
+                )
+                self.assertIsNone(
+                    record["qualification"][
+                        "selected_mode_count_per_direction"
+                    ]
+                )
+                self.assertEqual(
+                    record["individual_gates"]["160"]["failed_gate_names"],
+                    ["sampled_interface_h_t_relative_l2_le_1e-2"],
+                )
+                self.assertIsNone(
+                    record["terminal_physical_reference_evidence"]
+                )
+                self.assertTrue(
+                    is_controlled_p1_terminal_physical_funnel(record)
+                )
+                self.assertEqual(
+                    _semantic_problems("hybrid_funnel_p1", record), []
+                )
+                Draft202012Validator(
+                    json.loads(SCHEMA.read_text(encoding="utf-8"))
+                ).validate(record)
+
+    def test_terminal_physical_negative_rejects_reference_or_extra_gate(self) -> None:
+        mutations = {
+            "selected_plane_reference": lambda row: row["measurements"][
+                "physical_field_reconstruction"
+            ].update(selected_plane_full3d_comparison={"degree": 2}),
+            "full3d_reference": lambda row: row["measurements"].update(
+                full3d_reference_comparison={"reference_degree": 2}
+            ),
+            "missing_selected_plane_field": lambda row: row["measurements"][
+                "physical_field_reconstruction"
+            ].pop("selected_plane_full3d_comparison"),
+            "extra_failed_gate": lambda row: row["measurements"][
+                "gates"
+            ].__setitem__("middle_plane_e_relative_l2_le_5e-3", False),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                m80 = _controlled_physical_negative(80)
+                m120 = _controlled_physical_negative(120)
+                terminal = _p1_terminal_physical_negative()
+                for shard in (m80, m120):
+                    shard["measurements"]["case"].update(
+                        {"degree": 1, "h_nm": 3.0}
+                    )
+                mutate(terminal)
+                record = build_hybrid_funnel([m80, m120, terminal])
+                self.assertFalse(
+                    record["qualification"]["terminal_physical_gate_limited"]
+                )
+                self.assertFalse(
+                    is_controlled_p1_terminal_physical_funnel(record)
+                )
+
+    def test_terminal_aggregate_rejects_legacy_reference_injection(self) -> None:
         m80 = _controlled_physical_negative(80)
-        m120 = _controlled_physical_negative(120, delta=1.0e-8)
+        m120 = _controlled_physical_negative(120)
         for shard in (m80, m120):
             shard["measurements"]["case"].update(
                 {"degree": 1, "h_nm": 3.0}
             )
         record = build_hybrid_funnel(
-            [m80, m120, _p1_h3_terminal_physical_negative()]
+            [m80, m120, _p1_terminal_physical_negative()]
         )
-        self.assertEqual(record["status"], "not_qualified")
-        self.assertEqual(record["failures"], [P1_TERMINAL_PHYSICAL_FAILURE])
-        self.assertTrue(
-            record["qualification"]["terminal_physical_gate_limited"]
+        record["terminal_physical_reference_evidence"] = {"reference_degree": 2}
+        self.assertFalse(is_controlled_p1_terminal_physical_funnel(record))
+        errors = list(
+            Draft202012Validator(
+                json.loads(SCHEMA.read_text(encoding="utf-8"))
+            ).iter_errors(record)
         )
-        self.assertFalse(record["qualification"]["mode_count_converged"])
-        self.assertIsNone(
-            record["qualification"]["selected_mode_count_per_direction"]
-        )
-        self.assertTrue(is_controlled_p1_terminal_physical_funnel(record))
-        self.assertEqual(_semantic_problems("hybrid_funnel_p1", record), [])
-        Draft202012Validator(
-            json.loads(SCHEMA.read_text(encoding="utf-8"))
-        ).validate(record)
+        self.assertTrue(errors)
 
     def test_terminal_physical_negative_rejects_wrong_degree(self) -> None:
         m80 = _controlled_physical_negative(80)
         m120 = _controlled_physical_negative(120)
-        terminal = _p1_h3_terminal_physical_negative()
+        terminal = _p1_terminal_physical_negative()
         for shard in (m80, m120, terminal):
             shard["measurements"]["case"].update(
                 {"degree": 2, "h_nm": 3.0}

@@ -73,14 +73,14 @@ DEFAULT_OUTPUT = (
     / "phase6"
     / "hybrid_augmented_research.json"
 )
-REFERENCE_BY_H = {
-    5.0: ROOT
+REFERENCE_BY_DEGREE_AND_H = {
+    (2, 5.0): ROOT
     / "benchmarks"
     / "cases"
     / "080_hybrid_fem_modal_direct_baseline"
     / "records"
     / "full3d_h5_reference.json",
-    3.0: ROOT
+    (2, 3.0): ROOT
     / "benchmarks"
     / "cases"
     / "080_hybrid_fem_modal_direct_baseline"
@@ -292,20 +292,97 @@ class _ModalBasisCapacityStop(RuntimeError):
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
-def _reference_comparison(
-    h_nm: float, port_power: dict[str, Any]
-) -> dict[str, Any] | None:
-    reference_path = next(
-        (
-            path
-            for level, path in REFERENCE_BY_H.items()
-            if abs(h_nm - level) <= 1.0e-12
-        ),
-        None,
+def _case080_reference_path(
+    degree: int,
+    h_nm: float,
+    reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
+) -> Path | None:
+    references = (
+        REFERENCE_BY_DEGREE_AND_H
+        if reference_by_degree_and_h is None
+        else reference_by_degree_and_h
     )
-    if reference_path is None or not reference_path.exists():
+    matches = [
+        path
+        for (reference_degree, level), path in references.items()
+        if degree == reference_degree and abs(h_nm - level) <= 1.0e-12
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Multiple Case080 references match degree={degree}, h={h_nm} nm."
+        )
+    return matches[0] if matches else None
+
+
+def _validate_case080_reference_identity(
+    reference: dict[str, Any], *, degree: int, h_nm: float, path: Path
+) -> None:
+    try:
+        physical_model = reference["physical_model"]
+        qualification = reference["qualification"]
+        metadata = reference["metadata"]
+        commit_sha = str(metadata["commit_sha"]).lower()
+        identity_valid = (
+            physical_model["nedelec_degree"] == degree
+            and abs(float(physical_model["mesh_h_nm"]) - h_nm) <= 1.0e-12
+            and abs(float(physical_model["incident_grazing_deg"]) - 10.0)
+            <= 1.0e-12
+            and abs(float(physical_model["incident_theta_deg"]) - 80.0)
+            <= 1.0e-12
+            and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
+            and physical_model["polarization_kind"] == "s"
+            and abs(float(physical_model["wavelength_nm"]) - 13.5)
+            <= 1.0e-12
+            and qualification["phase1_reference_pass"] is True
+            and metadata["git_dirty"] is False
+            and metadata["tracked_source_dirty"] is False
+            and len(commit_sha) == 40
+            and all(character in "0123456789abcdef" for character in commit_sha)
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeError(
+            f"Case080 reference identity is incomplete or invalid: {path}"
+        ) from error
+    if not identity_valid:
+        raise RuntimeError(
+            "Case080 reference identity does not match the requested p/h and "
+            f"pinned 10-degree s-polarized 13.5-nm model: {path}"
+        )
+
+
+def _load_case080_reference(
+    degree: int,
+    h_nm: float,
+    reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
+) -> tuple[Path, dict[str, Any]] | None:
+    reference_path = _case080_reference_path(
+        degree, h_nm, reference_by_degree_and_h
+    )
+    if reference_path is None:
         return None
-    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    if not reference_path.exists():
+        raise FileNotFoundError(
+            f"Pinned Case080 reference record is missing: {reference_path}"
+        )
+    try:
+        reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(
+            f"Cannot load pinned Case080 reference record: {reference_path}"
+        ) from error
+    _validate_case080_reference_identity(
+        reference, degree=degree, h_nm=h_nm, path=reference_path
+    )
+    return reference_path, reference
+
+
+def _reference_comparison(
+    loaded_reference: tuple[Path, dict[str, Any]] | None,
+    port_power: dict[str, Any],
+) -> dict[str, Any] | None:
+    if loaded_reference is None:
+        return None
+    reference_path, reference = loaded_reference
     results = reference["results"]
     return {
         "reference_file": str(reference_path.relative_to(ROOT)),
@@ -338,15 +415,11 @@ def _sha256(path: Path) -> str:
 
 
 def _reference_archive(
-    h_nm: float,
+    loaded_reference: tuple[Path, dict[str, Any]] | None,
 ) -> tuple[Path, Path, dict[str, Any]] | None:
-    record_path = next(
-        (path for level, path in REFERENCE_BY_H.items() if abs(h_nm - level) <= 1.0e-12),
-        None,
-    )
-    if record_path is None or not record_path.exists():
+    if loaded_reference is None:
         return None
-    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record_path, record = loaded_reference
     run_root = ROOT / record["artifacts"]["ignored_run_root"]
     archive = run_root / "full3d_reference_samples.npz"
     if not archive.exists():
@@ -1042,13 +1115,18 @@ def main() -> None:
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
             and args.polarization_kind == "s"
         )
+        loaded_reference = (
+            _load_case080_reference(args.degree, args.h_nm)
+            if pinned_reference_case
+            else None
+        )
         reference = (
-            _reference_comparison(args.h_nm, port_power)
+            _reference_comparison(loaded_reference, port_power)
             if pinned_reference_case
             else None
         )
         reference_archive = (
-            _reference_archive(args.h_nm) if pinned_reference_case else None
+            _reference_archive(loaded_reference) if pinned_reference_case else None
         )
         if reference_archive is not None:
             archive_path, reference_record_path, reference_record = reference_archive
@@ -1620,8 +1698,17 @@ def main() -> None:
                 "selected_middle_planes_reconstructed": physical_fields is not None,
                 "official_record": False,
                 "boundary": (
-                    "real_QEP_physical_field_chain; requires wider M funnel "
-                    "and h3 end-to-end comparison before official qualification"
+                    (
+                        "real_QEP_internal_physical_chain; no pinned "
+                        "degree-compatible Case080 full3D reference is registered; "
+                        "requires an M funnel and a separate equal-accuracy comparison"
+                    )
+                    if loaded_reference is None
+                    else (
+                        "real_QEP_physical_field_chain with a degree-compatible "
+                        "full3D reference; requires a wider M funnel before "
+                        "official qualification"
+                    )
                 ),
             },
             "timing_seconds_max_rank": {

@@ -821,7 +821,7 @@ function Assert-HybridFunnelShardOutcome {
         [Parameter(Mandatory = $true)][string]$AttemptRoot,
         [string]$ExpectedSolverPath = "modal-schur-memory-minimal",
         [switch]$AllowModalBasisCapacityNegative,
-        [switch]$TerminalReferenceRequired
+        [switch]$TerminalNoSameDegreeReferenceRequired
     )
 
     if (-not (Test-Path -LiteralPath $SummaryOutput -PathType Leaf)) {
@@ -1067,53 +1067,48 @@ function Assert-HybridFunnelShardOutcome {
             "physical Gate failures: " + ($unexpectedFalseGates -join ", ")
         )
     }
-    if ($TerminalReferenceRequired) {
-        $planes = (
-            $record.physical_field_reconstruction.selected_plane_full3d_comparison
+    if ($TerminalNoSameDegreeReferenceRequired) {
+        $reconstructionProperty = (
+            $record.PSObject.Properties["physical_field_reconstruction"]
         )
-        $full3d = $record.full3d_reference_comparison
-        $expectedReferenceRecord = (
-            "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/" +
-            "full3d_h3_reference.json"
-        )
-        $referenceChecks = [ordered]@{
-            binding_verified = ($planes.reference_binding_verified -eq $true)
-            reference_record = (
-                $planes.reference_record -eq $expectedReferenceRecord -and
-                $full3d.reference_file -eq $expectedReferenceRecord
-            )
-            reference_record_sha256 = (
-                "$($planes.reference_record_sha256)" -match '^[0-9a-f]{64}$'
-            )
-            reference_commit = (
-                "$($planes.reference_record_source_commit_full_sha)" -match (
-                    '^[0-9a-f]{40}$'
-                ) -and
-                $full3d.reference_commit_sha -eq (
-                    $planes.reference_record_source_commit_full_sha
-                )
-            )
-            reference_npz_sha256 = (
-                "$($planes.reference_npz_sha256_expected)" -match (
-                    '^[0-9a-f]{64}$'
-                ) -and
-                $planes.reference_npz_sha256_observed -eq (
-                    $planes.reference_npz_sha256_expected
-                )
-            )
-            reference_not_grid_converged = (
-                $full3d.reference_grid_converged -eq $false
+        $selectedPlaneProperty = $null
+        if (
+            $null -ne $reconstructionProperty -and
+            $null -ne $reconstructionProperty.Value
+        ) {
+            $selectedPlaneProperty = (
+                $reconstructionProperty.Value.PSObject.Properties[
+                    "selected_plane_full3d_comparison"
+                ]
             )
         }
-        $referenceFailures = @(
-            $referenceChecks.GetEnumerator() |
+        $full3dProperty = (
+            $record.PSObject.Properties["full3d_reference_comparison"]
+        )
+        $noSameDegreeReferenceChecks = [ordered]@{
+            selected_plane_comparison_present_and_null = (
+                $null -ne $selectedPlaneProperty -and
+                $null -eq $selectedPlaneProperty.Value
+            )
+            full3d_comparison_present_and_null = (
+                $null -ne $full3dProperty -and
+                $null -eq $full3dProperty.Value
+            )
+            exact_interface_h_false_gate = (
+                $falseGates.Count -eq 1 -and
+                $falseGates[0] -eq "sampled_interface_h_t_relative_l2_le_1e-2"
+            )
+        }
+        $noSameDegreeReferenceFailures = @(
+            $noSameDegreeReferenceChecks.GetEnumerator() |
                 Where-Object { $_.Value -ne $true } |
                 ForEach-Object { $_.Key }
         )
-        if ($referenceFailures.Count -ne 0) {
+        if ($noSameDegreeReferenceFailures.Count -ne 0) {
             throw (
-                "Hybrid terminal physical negative lacks the exact bound " +
-                "full3d reference: " + ($referenceFailures -join ", ")
+                "Hybrid terminal physical negative violates the exact " +
+                "no-same-degree-reference contract: " +
+                ($noSameDegreeReferenceFailures -join ", ")
             )
         }
     }
@@ -1133,7 +1128,7 @@ function Invoke-DockerHybridFunnelShardStep {
         [switch]$RequalificationRequired,
         [string]$ExpectedSolverPath = "modal-schur-memory-minimal",
         [switch]$AllowModalBasisCapacityNegative,
-        [switch]$TerminalReferenceRequired,
+        [switch]$TerminalNoSameDegreeReferenceRequired,
         [switch]$MinimalComparisonRequired
     )
 
@@ -1148,7 +1143,9 @@ function Invoke-DockerHybridFunnelShardStep {
             -AttemptRoot $AttemptRoot `
             -ExpectedSolverPath $ExpectedSolverPath `
             -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative `
-            -TerminalReferenceRequired:$TerminalReferenceRequired
+            -TerminalNoSameDegreeReferenceRequired:(
+                $TerminalNoSameDegreeReferenceRequired
+            )
         $marker = Get-Content -Raw -LiteralPath (
             Get-StepMarkerPath -PrimaryOutput $SummaryOutput
         ) | ConvertFrom-Json
@@ -1189,7 +1186,9 @@ function Invoke-DockerHybridFunnelShardStep {
         -AttemptRoot $AttemptRoot `
         -ExpectedSolverPath $ExpectedSolverPath `
         -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative `
-        -TerminalReferenceRequired:$TerminalReferenceRequired
+        -TerminalNoSameDegreeReferenceRequired:(
+            $TerminalNoSameDegreeReferenceRequired
+        )
     if ($summary.return_code -ne $exitCode) {
         throw "Hybrid funnel watchdog return code differs from Docker exit code."
     }
@@ -1601,7 +1600,7 @@ function Invoke-Task033Watchdog {
             -RequestedModes $RequestedModes `
             -CandidateModes $CandidateModes `
             -AttemptRoot $AttemptRoot `
-            -TerminalReferenceRequired
+            -TerminalNoSameDegreeReferenceRequired
     } elseif ($AllowHybridComparisonPhysicalNegative) {
         if (
             $Target -ne "hybrid" -or
@@ -1758,8 +1757,8 @@ function Invoke-HybridFunnel {
         return $m160Funnel
     }
     $expectedTerminalPhysicalFailure = (
-        "M160 is not qualified because final p1 physical field gates failed " +
-        "against the bound full3d reference"
+        "M160 is not qualified because the final p1 interface-H gate failed " +
+        "without a pinned same-degree Case080 full3D comparison"
     )
     $terminalPhysicalLimitedP1 = (
         $Category -eq "uniform" -and

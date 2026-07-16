@@ -16,9 +16,9 @@ from benchmarks.task033_qep_qualification import (
     qep_source_record_file_gate,
 )
 from benchmarks.task033_hybrid_funnel import (
+    P1_TERMINAL_FAILED_GATE_NAMES,
     _controlled_physical_truncation_negative,
     is_exact_p1_h5_modal_basis_capacity,
-    is_exact_p1_terminal_reference_evidence,
 )
 
 
@@ -474,9 +474,8 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
                     and row.get("attempted_mode_count_per_direction") == 160
                     and row.get("modal_basis_capacity") is None
                     and row.get("terminal_physical_gate_limited") is True
-                    and is_exact_p1_terminal_reference_evidence(
-                        row.get("terminal_physical_reference_evidence")
-                    )
+                    and "terminal_physical_reference_evidence" in row
+                    and row.get("terminal_physical_reference_evidence") is None
                     and terminal.get("integration_pass") is False
                     and terminal.get("algebraic_chain_pass") is True
                     and terminal.get("physical_field_gates_pass") is False
@@ -484,6 +483,8 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
                     and terminal.get("candidate_pool_is_twice_requested_modes") is True
                     and terminal.get("true_relative_residual_le_1e-9") is True
                     and terminal.get("all_reported_gates_pass") is False
+                    and terminal.get("failed_gate_names")
+                    == list(P1_TERMINAL_FAILED_GATE_NAMES)
                     and _finite_nonnegative(
                         terminal.get("true_relative_residual"),
                         label="uniform terminal p1 true residual",

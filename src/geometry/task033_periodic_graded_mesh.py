@@ -452,7 +452,19 @@ def build_physics_informed_graded_plan(
     max_neighbor_ratio: float = 2.0,
     feature_planes_y_nm: Sequence[float] = (),
 ) -> PeriodicGradedHybridPlan:
-    """Build the explicit-opt-in cycle-0 p2 graded plan for h5 or h3."""
+    """Build the explicit-opt-in cycle-0 p2 graded plan for h5 or h3.
+
+    The frozen Stage-4 target is invariant in ``y``.  Cycle 0 therefore keeps
+    the material-bearing ``x`` and local-slab ``z`` axes at the reference
+    fitted resolution and coarsens only the smooth periodic ``y`` axis.  The
+    older coarse-then-refine construction changed all three axes at once; the
+    resulting meshes could not separate a useful smooth-axis compression from
+    a different FE discretization on the material axes.
+
+    Explicit ``y`` feature planes disable smooth-axis coarsening and retain
+    reference resolution on that axis.  Generic y-dependent materials remain
+    outside the qualified Task033 path.
+    """
 
     reference_h = _validate_reference_h(reference_h_nm)
     if coarse_factor <= 1.0 or not np.isfinite(coarse_factor):
@@ -460,89 +472,41 @@ def build_physics_informed_graded_plan(
     geometry = geometry or Task033Stage4Geometry()
     geometry.validate()
     coarse_h = coarse_factor * reference_h
-    x_parent = fitted_axis(
+    x_values = fitted_axis(
         geometry.x_min_nm,
         geometry.x_max_nm,
-        coarse_h,
+        reference_h,
         required_planes_nm=(geometry.grating_x_min_nm, geometry.grating_x_max_nm),
         min_cells=2,
     )
-    y_parent = fitted_axis(
+    y_values = fitted_axis(
         geometry.y_min_nm,
         geometry.y_max_nm,
-        coarse_h,
+        reference_h if feature_planes_y_nm else coarse_h,
         required_planes_nm=feature_planes_y_nm,
         min_cells=2,
     )
-    bottom_parent = fitted_axis(
+    bottom_z_values = fitted_axis(
         geometry.bottom_external_z_nm,
         geometry.bottom_interface_z_nm,
-        coarse_h,
+        reference_h,
         required_planes_nm=(geometry.grating_z_min_nm,),
     )
-    top_parent = fitted_axis(
+    top_z_values = fitted_axis(
         geometry.top_interface_z_nm,
         geometry.top_external_z_nm,
-        coarse_h,
+        reference_h,
         required_planes_nm=(geometry.grating_z_max_nm,),
-    )
-    x_marks = mark_axis_intervals_near_planes(
-        x_parent,
-        (geometry.grating_x_min_nm, geometry.grating_x_max_nm),
-        radius_nm=reference_h,
-    )
-    y_marks = mark_axis_intervals_near_planes(
-        y_parent,
-        feature_planes_y_nm,
-        radius_nm=reference_h,
-    )
-    bottom_marks = mark_axis_intervals_near_planes(
-        bottom_parent,
-        (
-            geometry.bottom_external_z_nm,
-            geometry.grating_z_min_nm,
-            geometry.bottom_interface_z_nm,
-        ),
-        radius_nm=reference_h,
-    )
-    top_marks = mark_axis_intervals_near_planes(
-        top_parent,
-        (
-            geometry.top_interface_z_nm,
-            geometry.grating_z_max_nm,
-            geometry.top_external_z_nm,
-        ),
-        radius_nm=reference_h,
     )
     plan = PeriodicGradedHybridPlan(
         geometry=geometry,
         reference_h_nm=reference_h,
         cycle=0,
-        x_values=refine_marked_axis(
-            x_parent,
-            x_marks,
-            periodic=True,
-            max_neighbor_ratio=max_neighbor_ratio,
-        ),
-        y_values=refine_marked_axis(
-            y_parent,
-            y_marks,
-            periodic=True,
-            max_neighbor_ratio=max_neighbor_ratio,
-        ),
-        bottom_z_values=refine_marked_axis(
-            bottom_parent,
-            bottom_marks,
-            periodic=False,
-            max_neighbor_ratio=max_neighbor_ratio,
-        ),
-        top_z_values=refine_marked_axis(
-            top_parent,
-            top_marks,
-            periodic=False,
-            max_neighbor_ratio=max_neighbor_ratio,
-        ),
-        policy="physics_informed_conforming_tensor_rebuild",
+        x_values=x_values,
+        y_values=y_values,
+        bottom_z_values=bottom_z_values,
+        top_z_values=top_z_values,
+        policy="feature_axes_reference_fitted_smooth_y_coarsened",
         explicit_y_feature_planes_present=bool(feature_planes_y_nm),
         max_neighbor_ratio=float(max_neighbor_ratio),
     )
@@ -866,12 +830,15 @@ def build_adaptive_planning_record(
         "same_accuracy_qualification": qualification,
         "algorithm_boundaries": {
             "mesh_family": "nonuniform_graded_conforming_hexahedral_tensor_product",
-            "periodic_policy": "opposite_cell_marks_union_then_common_axis_rebuild",
+            "periodic_policy": (
+                "cycle0_feature_axes_reference_fitted_and_smooth_y_coarsened; "
+                "later_cycles_use_opposite_mark_union_then_common_axis_rebuild"
+            ),
             "interface_policy": "bottom_and_top_share_exact_x_y_axis_arrays",
             "hanging_nodes": "not_used",
             "cellwise_variable_p": "not_used",
             "indicator_ladder": [
-                "physics_informed_geometry_planes",
+                "cycle0_preserve_material_axes_and_coarsen_smooth_y",
                 "element_residual_plus_tangential_curl_jump",
             ],
             "dwr": "not_implemented_in_this_minimal_path",

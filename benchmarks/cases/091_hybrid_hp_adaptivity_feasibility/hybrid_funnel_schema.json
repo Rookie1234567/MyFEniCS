@@ -100,33 +100,7 @@
         {"type": "null"}
       ]
     },
-    "terminal_physical_reference_evidence": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "reference_binding_verified",
-            "reference_record",
-            "reference_record_sha256",
-            "reference_record_source_commit_full_sha",
-            "reference_npz_sha256_expected",
-            "reference_npz_sha256_observed",
-            "reference_grid_converged"
-          ],
-          "properties": {
-            "reference_binding_verified": {"const": true},
-            "reference_record": {"const": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"},
-            "reference_record_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-            "reference_record_source_commit_full_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-            "reference_npz_sha256_expected": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-            "reference_npz_sha256_observed": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-            "reference_grid_converged": {"const": false}
-          },
-          "additionalProperties": false
-        },
-        {"type": "null"}
-      ]
-    },
+    "terminal_physical_reference_evidence": {"type": "null"},
     "qualification": {
       "type": "object",
       "required": [
