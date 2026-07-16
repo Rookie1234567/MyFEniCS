@@ -671,6 +671,12 @@ def hybrid_launch_gate(
     anchor_reuse = entry.get("planning_decision") == "reuse_task032_clean_anchor"
     variant_can_replace_anchor = bool(anchor_reuse and independent_required)
     requalification_requested = bool(task033_same_sha_anchor_requalification)
+    candidate_pool_is_twice_requested_modes = bool(
+        type(requested_modes) is int
+        and type(candidate_modes) is int
+        and requested_modes > 0
+        and candidate_modes == 2 * requested_modes
+    )
     canonical_anchor_case_identity = (
         "p2_h3_10_110_primary_modal_schur_memory_minimal"
     )
@@ -695,7 +701,9 @@ def hybrid_launch_gate(
         "canonical_resource_matrix_tracked": bool(resource_matrix_is_tracked),
         "external_watchdog_is_launch_authority": bool(external_watchdog_active),
         "one_required_funnel_mode_selected": requested_modes in FORMAL_FUNNEL_MODES,
-        "common_candidate_basis_is_m160": candidate_modes == 160,
+        "candidate_pool_is_twice_requested_modes": (
+            candidate_pool_is_twice_requested_modes
+        ),
     }
     requalification_allowed = bool(
         requalification_requested and all(requalification_checks.values())
@@ -779,21 +787,8 @@ def hybrid_launch_gate(
             or (m240_requested and m240_gate["pass"])
         ),
         "conditional_m240_prior_nonconvergence_evidence": m240_gate["pass"],
-        "candidate_mode_count_within_m160_prediction": bool(
-            (
-                requested_modes in FORMAL_FUNNEL_MODES
-                and candidate_modes >= requested_modes
-                and candidate_modes <= 160
-            )
-            or (m240_requested and candidate_modes == CONDITIONAL_FUNNEL_MODE)
-        ),
-        "candidate_mode_count_within_authorized_prediction": bool(
-            (
-                requested_modes in FORMAL_FUNNEL_MODES
-                and candidate_modes >= requested_modes
-                and candidate_modes <= 160
-            )
-            or (m240_requested and candidate_modes == CONDITIONAL_FUNNEL_MODE)
+        "candidate_pool_is_twice_requested_modes": (
+            candidate_pool_is_twice_requested_modes
         ),
         "warning_threshold_not_wider_than_scaled_gate": bool(
             limits and warning_gib <= float(limits["warning_gib"])

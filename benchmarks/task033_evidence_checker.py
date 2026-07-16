@@ -738,7 +738,7 @@ def _semantic_problems(role: str, payload: Mapping[str, Any]) -> list[str]:
             and case.get("h_nm") == 5.0
             and _command_mpi_size(payload.get("command")) == 4
             and payload.get("requested_modes") == 160
-            and payload.get("candidate_modes") == 160,
+            and payload.get("candidate_modes") == 320,
             "augmented_primary": isinstance(hybrid, Mapping)
             and hybrid.get("primary_solver_path") == "augmented",
             "minimal_comparison": isinstance(comparison, Mapping)

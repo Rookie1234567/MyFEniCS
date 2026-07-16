@@ -30,6 +30,8 @@ def _shard(mode_count: int, *, delta: float = 0.0) -> dict:
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "requested_modes": mode_count,
+        "candidate_modes": 2 * mode_count,
         "formal_pass": True,
         "numeric_pass": True,
         "no_swap": True,
@@ -143,6 +145,11 @@ class Task033HybridFunnelTests(unittest.TestCase):
         )
         self.assertEqual(record["status"], "qualified", record["failures"])
         self.assertTrue(record["qualification"]["all_external_watchdogs_pass"])
+        self.assertTrue(
+            record["individual_gates"]["160"][
+                "candidate_pool_is_twice_requested_modes"
+            ]
+        )
         self.assertEqual(
             record["qualification"]["selected_mode_count_per_direction"], 160
         )
@@ -151,6 +158,8 @@ class Task033HybridFunnelTests(unittest.TestCase):
         valid = _controlled_physical_negative(120, delta=1.0e-7)
         mutations = {
             "wrong_return_code": lambda row: row.update(return_code=3),
+            "short_candidate_pool": lambda row: row.update(candidate_modes=239),
+            "wide_candidate_pool": lambda row: row.update(candidate_modes=241),
             "memory_failure": lambda row: row.update(memory_authority_pass=False),
             "swap_failure": lambda row: row.update(no_swap=False),
             "algebraic_failure": lambda row: row["measurements"]["qualification"].update(

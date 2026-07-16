@@ -173,10 +173,25 @@ def _individual_physical_gates(payload: Mapping[str, Any]) -> dict[str, Any]:
         "task033_physical_truncation_allowed": (
             qualification.get("task033_physical_truncation_allowed") is True
         ),
+        "candidate_pool_is_twice_requested_modes": (
+            _candidate_pool_is_exactly_twice_retained(payload)
+        ),
         "true_relative_residual": residual,
         "true_relative_residual_le_1e-9": residual is not None and residual <= 1.0e-9,
         "all_reported_gates_pass": all_reported_gates_pass,
     }
+
+
+def _candidate_pool_is_exactly_twice_retained(
+    payload: Mapping[str, Any],
+) -> bool:
+    retained = _case(payload).get("requested_modes_per_direction")
+    return bool(
+        type(retained) is int
+        and retained > 0
+        and payload.get("requested_modes") == retained
+        and payload.get("candidate_modes") == 2 * retained
+    )
 
 
 def _external_watchdog_pass(payload: Mapping[str, Any]) -> bool:
@@ -206,6 +221,7 @@ def _external_watchdog_pass(payload: Mapping[str, Any]) -> bool:
         and payload.get("terminated_for_authority_unreadable", False) is False
         and payload.get("memory_authority_pass") is True
         and nested_gates_pass
+        and _candidate_pool_is_exactly_twice_retained(payload)
     )
     if measured_pass:
         return True
@@ -260,6 +276,7 @@ def _controlled_physical_truncation_negative(
         and resource_gate.get("pass") is True
         and source_gate.get("pass") is True
         and launch_gate.get("pass") is True
+        and _candidate_pool_is_exactly_twice_retained(payload)
         and measurements.get("status") == "physical_integration_failed"
         and qualification.get("integration_pass") is False
         and qualification.get("algebraic_chain_pass") is True
@@ -482,6 +499,7 @@ def build_hybrid_funnel(
         "algebraic_chain_pass",
         "physical_field_gates_pass",
         "task033_physical_truncation_allowed",
+        "candidate_pool_is_twice_requested_modes",
         "true_relative_residual_le_1e-9",
         "all_reported_gates_pass",
     )

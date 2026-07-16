@@ -563,6 +563,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.candidate_modes < args.requested_modes:
         parser.error("--candidate-modes must be at least --requested-modes.")
     if (
+        args.target == "hybrid"
+        and args.candidate_modes != 2 * args.requested_modes
+    ):
+        parser.error(
+            "Hybrid --candidate-modes must equal exactly twice "
+            "--requested-modes so Task32 can retain M forward and M backward "
+            "modes."
+        )
+    if (
         args.target == "qep"
         and args.candidate_modes
         < task033_left_candidate_pool_size(args.requested_modes)
@@ -572,8 +581,6 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "oversampling policy."
         )
     if args.target == "hybrid" and args.requested_modes == 240:
-        if args.candidate_modes != 240:
-            parser.error("Conditional M240 requires --candidate-modes 240.")
         if (
             args.m160_funnel_evidence_file is None
             or args.m160_funnel_evidence_sha256 is None
@@ -592,7 +599,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.degree == 2
             and math.isclose(args.h_nm, 3.0)
             and args.requested_modes in (80, 120, 160)
-            and args.candidate_modes == 160
+            and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "modal-schur-memory-minimal"
             and not args.compare_modal_schur
             and args.graded_reference_h is None
@@ -605,7 +612,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task033-same-sha-anchor-requalification is restricted to the "
                 "uniform p2/h3 10/110 nm primary modal-schur-memory-minimal "
-                "M80/M120/M160 funnel with candidate M160."
+                "M80/M120/M160 funnel with an exact 2M candidate pool."
             )
     return args
 

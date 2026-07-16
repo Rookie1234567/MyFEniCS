@@ -80,6 +80,8 @@ def _watchdog(
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "requested_modes": mode,
+        "candidate_modes": 2 * mode,
         "formal_pass": True,
         "numeric_pass": True,
         "memory_authority_pass": True,

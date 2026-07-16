@@ -34,6 +34,8 @@ def _funnel_shard(mode_count: int, delta: float) -> dict:
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "requested_modes": mode_count,
+        "candidate_modes": 2 * mode_count,
         "formal_pass": True,
         "numeric_pass": True,
         "no_swap": True,
@@ -208,7 +210,6 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         common = {
             "degree": 2,
             "h_nm": 3.0,
-            "candidate_modes": 160,
             "solver_path": "modal-schur-memory-minimal",
             "compare_modal_schur": False,
             "bottom_interface_nm": 10.0,
@@ -222,7 +223,9 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "expected_core_sha256": None,
             "current_source_sha": "b" * 40,
         }
-        default = hybrid_launch_gate(matrix, requested_modes=80, **common)
+        default = hybrid_launch_gate(
+            matrix, requested_modes=80, candidate_modes=160, **common
+        )
         self.assertFalse(default["pass"])
         self.assertIn(
             "existing_uniform_anchor_not_relaunched_without_variant",
@@ -233,6 +236,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 gate = hybrid_launch_gate(
                     matrix,
                     requested_modes=requested_modes,
+                    candidate_modes=2 * requested_modes,
                     task033_same_sha_anchor_requalification=True,
                     source_clean_verified=True,
                     resource_matrix_is_canonical=True,
@@ -256,6 +260,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         denied = hybrid_launch_gate(
             matrix,
             requested_modes=80,
+            candidate_modes=160,
             task033_same_sha_anchor_requalification=True,
             source_clean_verified=False,
             resource_matrix_is_canonical=True,
@@ -413,6 +418,71 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--comparison-solver-path fast", rendered)
         self.assertIn("--memory-stages", command)
 
+    def test_hybrid_candidate_pool_is_exactly_twice_requested_modes(self) -> None:
+        matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
+        evidence = _m160_nonconvergence_evidence()
+        digest = "f" * 64
+        common = {
+            "degree": 1,
+            "h_nm": 5.0,
+            "solver_path": "modal-schur-memory-minimal",
+            "compare_modal_schur": False,
+            "bottom_interface_nm": 10.0,
+            "top_interface_nm": 110.0,
+            "graded_reference_h": None,
+            "incident_grazing_deg": 10.0,
+            "polarization_kind": "s",
+            "container_limit_bytes": 14 * 1024**3,
+            "host_available_memory_bytes": 20 * 1024**3,
+            "warning_gib": 11.0,
+            "terminate_gib": 12.5,
+            "core_evidence": None,
+            "expected_core_sha256": None,
+            "current_source_sha": SOURCE_SHA,
+        }
+        for requested_modes in (80, 120, 160, 240):
+            conditional = (
+                {
+                    "m160_funnel_evidence": evidence,
+                    "expected_m160_funnel_sha256": digest,
+                    "observed_m160_funnel_sha256": digest,
+                }
+                if requested_modes == 240
+                else {}
+            )
+            with self.subTest(requested_modes=requested_modes, relation="exact"):
+                gate = hybrid_launch_gate(
+                    matrix,
+                    requested_modes=requested_modes,
+                    candidate_modes=2 * requested_modes,
+                    **conditional,
+                    **common,
+                )
+                self.assertTrue(gate["pass"], gate["failures"])
+                self.assertTrue(
+                    gate["checks"]["candidate_pool_is_twice_requested_modes"]
+                )
+            for candidate_modes in (
+                2 * requested_modes - 1,
+                2 * requested_modes + 1,
+            ):
+                with self.subTest(
+                    requested_modes=requested_modes,
+                    candidate_modes=candidate_modes,
+                ):
+                    gate = hybrid_launch_gate(
+                        matrix,
+                        requested_modes=requested_modes,
+                        candidate_modes=candidate_modes,
+                        **conditional,
+                        **common,
+                    )
+                    self.assertFalse(gate["pass"])
+                    self.assertIn(
+                        "candidate_pool_is_twice_requested_modes",
+                        gate["failures"],
+                    )
+
     def test_hybrid_nondefault_physics_and_minimal_comparison_are_forwarded(self) -> None:
         args = _parse_args(
             [
@@ -505,7 +575,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "degree": 1,
             "h_nm": 5.0,
             "requested_modes": 240,
-            "candidate_modes": 240,
+            "candidate_modes": 480,
             "solver_path": "modal-schur-memory-minimal",
             "compare_modal_schur": False,
             "bottom_interface_nm": 10.0,
@@ -672,6 +742,59 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                     "--task033-same-sha-anchor-requalification",
                 ]
             )
+
+    def test_hybrid_cli_accepts_only_exact_two_m_candidate_pools(self) -> None:
+        for requested_modes in (80, 120, 160, 240):
+            base = [
+                "--target",
+                "hybrid",
+                "--case-label",
+                f"m{requested_modes}",
+                "--degree",
+                "1",
+                "--h-nm",
+                "5",
+                "--mpi-size",
+                "1",
+                "--requested-modes",
+                str(requested_modes),
+                "--verified-clean-sha",
+                "f" * 40,
+            ]
+            if requested_modes == 240:
+                base.extend(
+                    [
+                        "--m160-funnel-evidence-file",
+                        "m160_funnel.json",
+                        "--m160-funnel-evidence-sha256",
+                        "a" * 64,
+                    ]
+                )
+            with self.subTest(requested_modes=requested_modes, relation="exact"):
+                args = _parse_args(
+                    [
+                        *base,
+                        "--candidate-modes",
+                        str(2 * requested_modes),
+                    ]
+                )
+                self.assertEqual(args.candidate_modes, 2 * requested_modes)
+            for candidate_modes in (
+                2 * requested_modes - 1,
+                2 * requested_modes + 1,
+            ):
+                with self.subTest(
+                    requested_modes=requested_modes,
+                    candidate_modes=candidate_modes,
+                ):
+                    with self.assertRaises(SystemExit):
+                        _parse_args(
+                            [
+                                *base,
+                                "--candidate-modes",
+                                str(candidate_modes),
+                            ]
+                        )
 
 
 if __name__ == "__main__":

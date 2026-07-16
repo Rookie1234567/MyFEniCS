@@ -817,6 +817,7 @@ function Assert-HybridFunnelShardOutcome {
         [Parameter(Mandatory = $true)][int]$Degree,
         [Parameter(Mandatory = $true)][string]$HNm,
         [Parameter(Mandatory = $true)][int]$RequestedModes,
+        [Parameter(Mandatory = $true)][int]$CandidateModes,
         [Parameter(Mandatory = $true)][string]$AttemptRoot
     )
 
@@ -838,7 +839,7 @@ function Assert-HybridFunnelShardOutcome {
         )
         target = ($summary.target -eq "hybrid")
         requested_modes = ($summary.requested_modes -eq $RequestedModes)
-        candidate_modes = ($summary.candidate_modes -eq 160)
+        candidate_modes = ($summary.candidate_modes -eq $CandidateModes)
         command_requested_modes = (
             [int](Get-Task033CommandValue `
                 -Command $command `
@@ -847,7 +848,7 @@ function Assert-HybridFunnelShardOutcome {
         command_candidate_modes = (
             (Get-Task033CommandValue `
                 -Command $command `
-                -Option "--candidate-modes") -eq "160"
+                -Option "--candidate-modes") -eq "$CandidateModes"
         )
         command_degree = (
             [int](Get-Task033CommandValue `
@@ -882,6 +883,9 @@ function Assert-HybridFunnelShardOutcome {
         h_nm = ($record.case.h_nm -eq [double]$HNm)
         record_requested_modes = (
             $record.case.requested_modes_per_direction -eq $RequestedModes
+        )
+        record_candidate_modes = (
+            $record.case.candidate_modes_per_target_branch -eq $CandidateModes
         )
         solver_path = (
             $record.hybrid_system.primary_solver_path -eq (
@@ -973,6 +977,7 @@ function Invoke-DockerHybridFunnelShardStep {
         [Parameter(Mandatory = $true)][int]$Degree,
         [Parameter(Mandatory = $true)][string]$HNm,
         [Parameter(Mandatory = $true)][int]$RequestedModes,
+        [Parameter(Mandatory = $true)][int]$CandidateModes,
         [Parameter(Mandatory = $true)][string]$AttemptRoot,
         [switch]$RequalificationRequired
     )
@@ -984,6 +989,7 @@ function Invoke-DockerHybridFunnelShardStep {
             -Degree $Degree `
             -HNm $HNm `
             -RequestedModes $RequestedModes `
+            -CandidateModes $CandidateModes `
             -AttemptRoot $AttemptRoot
         $marker = Get-Content -Raw -LiteralPath (
             Get-StepMarkerPath -PrimaryOutput $SummaryOutput
@@ -1018,6 +1024,7 @@ function Invoke-DockerHybridFunnelShardStep {
         -Degree $Degree `
         -HNm $HNm `
         -RequestedModes $RequestedModes `
+        -CandidateModes $CandidateModes `
         -AttemptRoot $AttemptRoot
     if ($summary.return_code -ne $exitCode) {
         throw "Hybrid funnel watchdog return code differs from Docker exit code."
@@ -1172,7 +1179,8 @@ function Assert-P2H3Requalification {
                 -ne $true
         ) -or
         $requalification.does_not_replace_task032_anchor -ne $true -or
-        $requalification.checks.common_candidate_basis_is_m160 -ne $true -or
+        $requalification.checks.candidate_pool_is_twice_requested_modes `
+            -ne $true -or
         $requalificationChecks.Count -eq 0 -or
         @(
             $requalificationChecks | Where-Object { $_ -ne $true }
@@ -1349,7 +1357,7 @@ function Invoke-Task033Watchdog {
         if (
             $Target -ne "hybrid" -or
             $RequestedModes -notin @(80, 120) -or
-            $CandidateModes -ne 160 -or
+            $CandidateModes -ne (2 * $RequestedModes) -or
             $SolverPath -ne "modal-schur-memory-minimal" -or
             $CompareModalSchur
         ) {
@@ -1365,6 +1373,7 @@ function Invoke-Task033Watchdog {
             -Degree $Degree `
             -HNm $HNm `
             -RequestedModes $RequestedModes `
+            -CandidateModes $CandidateModes `
             -AttemptRoot $AttemptRoot `
             -RequalificationRequired:$AnchorRequalification
     } else {
@@ -1420,7 +1429,7 @@ function Invoke-HybridFunnel {
             -HNm $HNm `
             -MpiSize 4 `
             -RequestedModes $modeCount `
-            -CandidateModes 160 `
+            -CandidateModes (2 * $modeCount) `
             -SummaryOutput $summary `
             -AttemptRoot (Join-Path $modeRoot "attempts") `
             -SolverPath "modal-schur-memory-minimal" `
@@ -1501,7 +1510,7 @@ function Invoke-HybridFunnel {
         -HNm $HNm `
         -MpiSize 4 `
         -RequestedModes 240 `
-        -CandidateModes 240 `
+        -CandidateModes 480 `
         -SummaryOutput $m240Summary `
         -AttemptRoot (Join-Path $m240Root "attempts") `
         -SolverPath "modal-schur-memory-minimal" `
@@ -1545,7 +1554,7 @@ function Invoke-HybridComparisonAnchor {
         -HNm "5.0" `
         -MpiSize 4 `
         -RequestedModes 160 `
-        -CandidateModes 160 `
+        -CandidateModes 320 `
         -SummaryOutput $summary `
         -AttemptRoot (Join-Path $root "attempts") `
         -SolverPath "augmented" `

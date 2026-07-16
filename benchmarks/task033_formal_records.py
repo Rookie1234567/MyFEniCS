@@ -76,7 +76,7 @@ ANCHOR_REQUALIFICATION_REQUIRED_CHECKS = (
     "canonical_resource_matrix_tracked",
     "external_watchdog_is_launch_authority",
     "one_required_funnel_mode_selected",
-    "common_candidate_basis_is_m160",
+    "candidate_pool_is_twice_requested_modes",
 )
 APPROVED_SOURCE_BINDINGS: tuple[tuple[str, str, bool], ...] = (
     (

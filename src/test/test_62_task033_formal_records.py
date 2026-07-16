@@ -95,7 +95,7 @@ def _anchor_requalification(requested_mode: int = 160) -> dict:
         degree=2,
         h_nm=3.0,
         requested_modes=requested_mode,
-        candidate_modes=160,
+        candidate_modes=2 * requested_mode,
         solver_path="modal-schur-memory-minimal",
         compare_modal_schur=False,
         bottom_interface_nm=10.0,
@@ -774,7 +774,7 @@ class Task033FormalRecordTests(unittest.TestCase):
                 ),
                 (
                     "/task033_anchor_requalification/checks/"
-                    "common_candidate_basis_is_m160",
+                    "candidate_pool_is_twice_requested_modes",
                     False,
                 ),
                 (

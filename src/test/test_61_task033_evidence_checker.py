@@ -198,7 +198,7 @@ class Task033EvidenceCheckerTests(unittest.TestCase):
             "numeric_pass": True,
             "terminated_for_timeout": False,
             "requested_modes": 160,
-            "candidate_modes": 160,
+            "candidate_modes": 320,
             "command": ["mpiexec", "-n", "4", "python", "hybrid"],
             "measurements": {
                 "case": {"degree": 1, "h_nm": 5.0},
