@@ -59,6 +59,25 @@ def _load_evidence(path: Path | None) -> dict | None:
     return payload
 
 
+def _repo_evidence_path(
+    path: Path,
+    *,
+    repo_root: Path,
+    label: str,
+) -> tuple[Path, str]:
+    """Resolve one evidence path inside the repository and make it portable."""
+
+    root = repo_root.resolve()
+    resolved = path.resolve() if path.is_absolute() else (root / path).resolve()
+    try:
+        relative = resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{label} path escapes repository root: {path}") from exc
+    if relative == Path("."):
+        raise ValueError(f"{label} path must identify a repository file")
+    return resolved, relative.as_posix()
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -71,21 +90,31 @@ def main(argv: list[str] | None = None) -> int:
                 "--compression-evidence cannot be combined with manual "
                 "compression or evidence-identity arguments"
             )
+        evidence_path = args.compression_evidence
+        evidence_record = args.evidence_record
+        if evidence_path is not None:
+            evidence_path, evidence_record = _repo_evidence_path(
+                evidence_path,
+                repo_root=args.repo_root,
+                label="compression evidence",
+            )
+        elif evidence_record is not None:
+            _, evidence_record = _repo_evidence_path(
+                Path(evidence_record),
+                repo_root=args.repo_root,
+                label="evidence record",
+            )
         before = (
             inspect_repository_source(args.repo_root) if args.formal else None
         )
-        evidence = _load_evidence(args.compression_evidence)
+        evidence = _load_evidence(evidence_path)
         provisional_source = (
             qualify_formal_source(before, before) if before is not None else None
         )
         record = build_one_tib_projection(
             measured_compression=args.measured_compression,
             measurement_identity=args.measurement_identity,
-            evidence_record=(
-                str(args.compression_evidence)
-                if args.compression_evidence is not None
-                else args.evidence_record
-            ),
+            evidence_record=evidence_record,
             compression_evidence=evidence,
             formal_source=provisional_source,
         )

@@ -472,29 +472,61 @@ function Assert-QepP4ControlledOutcome {
     }
     $record = Get-QepP4SolverRecord -Summary $summary
     $command = @($summary.command)
-    $common = @(
-        $summary.schema_version -eq "task033.memory-watchdog.v2",
-        $summary.benchmark_id -eq "task033_external_memory_watchdog",
-        $summary.target -eq "qep",
-        $summary.requested_modes -eq 8,
-        $summary.candidate_modes -eq 16,
-        (Get-Task033CommandValue -Command $command -Option "--requested-modes") -eq "8",
-        (Get-Task033CommandValue -Command $command -Option "--left-candidate-modes") -eq "16",
-        $summary.memory_authority_pass -eq $true,
-        $summary.no_swap -eq $true,
-        $summary.terminated_for_memory -eq $false,
-        $summary.terminated_for_timeout -eq $false,
-        $summary.terminated_for_authority_unreadable -eq $false,
-        $summary.resource_authority.gate.pass -eq $true,
-        $summary.source_gate.pass -eq $true,
-        $summary.launch_gate.pass -eq $true,
-        $record.candidate.material_kind -eq $MaterialKind,
-        $record.candidate.degree -eq 4,
-        $record.candidate.h_nm -eq [double]$HNm,
-        $record.candidate.mpi_size -eq 1
+    # Keep each comparison in a named hashtable entry.  In PowerShell, comma
+    # has higher precedence than comparison operators inside @(...), so an
+    # unparenthesized comma-separated comparison list can collapse to one
+    # false Boolean instead of an array of independent checks.
+    $commonChecks = [ordered]@{
+        schema_version = (
+            $summary.schema_version -eq "task033.memory-watchdog.v2"
+        )
+        benchmark_id = (
+            $summary.benchmark_id -eq "task033_external_memory_watchdog"
+        )
+        target = ($summary.target -eq "qep")
+        requested_modes = ($summary.requested_modes -eq 8)
+        candidate_modes = ($summary.candidate_modes -eq 16)
+        command_requested_modes = (
+            (Get-Task033CommandValue `
+                -Command $command `
+                -Option "--requested-modes") -eq "8"
+        )
+        command_left_candidate_modes = (
+            (Get-Task033CommandValue `
+                -Command $command `
+                -Option "--left-candidate-modes") -eq "16"
+        )
+        memory_authority_pass = ($summary.memory_authority_pass -eq $true)
+        no_swap = ($summary.no_swap -eq $true)
+        not_terminated_for_memory = (
+            $summary.terminated_for_memory -eq $false
+        )
+        not_terminated_for_timeout = (
+            $summary.terminated_for_timeout -eq $false
+        )
+        authority_readable = (
+            $summary.terminated_for_authority_unreadable -eq $false
+        )
+        resource_gate = ($summary.resource_authority.gate.pass -eq $true)
+        source_gate = ($summary.source_gate.pass -eq $true)
+        launch_gate = ($summary.launch_gate.pass -eq $true)
+        material_kind = (
+            $record.candidate.material_kind -eq $MaterialKind
+        )
+        degree = ($record.candidate.degree -eq 4)
+        h_nm = ($record.candidate.h_nm -eq [double]$HNm)
+        mpi_size = ($record.candidate.mpi_size -eq 1)
+    }
+    $failedCommonChecks = @(
+        $commonChecks.GetEnumerator() |
+            Where-Object { $_.Value -ne $true } |
+            ForEach-Object { $_.Key }
     )
-    if (@($common | Where-Object { $_ -ne $true }).Count -ne 0) {
-        throw "p4 QEP outcome failed source/resource/launch/identity checks."
+    if ($failedCommonChecks.Count -ne 0) {
+        throw (
+            "p4 QEP outcome failed source/resource/launch/identity checks: " +
+            ($failedCommonChecks -join ", ")
+        )
     }
 
     if ($summary.status -eq "measured_shard_pass") {

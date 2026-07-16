@@ -92,6 +92,10 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertGreaterEqual(text.count("-CandidateModes 16"), 2)
         self.assertIn("Invoke-DockerQepP4Step", text)
         self.assertIn("-AllowP4ControlledNumericalNegative:($degree -eq 4)", text)
+        self.assertIn("$commonChecks = [ordered]@{", text)
+        self.assertIn("$failedCommonChecks = @(", text)
+        self.assertIn("$commonChecks.GetEnumerator()", text)
+        self.assertNotIn("$common = @(", text)
         self.assertIn("$exitCode -notin @(0, 2)", text)
         self.assertIn('$summary.return_code -ne 2', text)
         self.assertIn('$record.status -ne "measured_shard_failed"', text)
@@ -279,17 +283,27 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         )
         self.assertNotIn("one_tib_deferred_pending", text)
 
-    def test_powershell_parser_accepts_script_when_available(self) -> None:
+    def test_powershell_parser_and_boolean_array_ast_guard(self) -> None:
         executable = shutil.which("pwsh") or shutil.which("powershell")
         if executable is None:
             self.skipTest("PowerShell parser is not available")
         script_path = str(SCRIPT).replace("'", "''")
         command = (
             "$tokens=$null; $errors=$null; "
-            "[System.Management.Automation.Language.Parser]::ParseFile("
-            f"'{script_path}', [ref]$tokens, [ref]$errors) | Out-Null; "
+            "$ast=[System.Management.Automation.Language.Parser]::ParseFile("
+            f"'{script_path}', [ref]$tokens, [ref]$errors); "
             "if ($errors.Count -ne 0) { "
-            "$errors | ForEach-Object { Write-Error $_.Message }; exit 2 }"
+            "$errors | ForEach-Object { Write-Error $_.Message }; exit 2 }; "
+            "$hazards=@($ast.FindAll({ param($node) "
+            "$node -is "
+            "[System.Management.Automation.Language.BinaryExpressionAst] "
+            "-and ($node.Left -is "
+            "[System.Management.Automation.Language.ArrayLiteralAst] "
+            "-or $node.Right -is "
+            "[System.Management.Automation.Language.ArrayLiteralAst]) "
+            "}, $true)); "
+            "if ($hazards.Count -ne 0) { "
+            "$hazards | ForEach-Object { Write-Error $_.Extent.Text }; exit 3 }"
         )
         completed = subprocess.run(
             [executable, "-NoProfile", "-NonInteractive", "-Command", command],

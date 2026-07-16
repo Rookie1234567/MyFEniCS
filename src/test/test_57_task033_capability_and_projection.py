@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import hashlib
 import io
 import json
@@ -578,7 +578,10 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmp:
-            evidence_path = Path(tmp) / "adaptive.json"
+            repo_root = Path(tmp)
+            evidence_root = repo_root / "records"
+            evidence_root.mkdir()
+            evidence_path = evidence_root / "adaptive.json"
             evidence_path.write_text(
                 json.dumps(_adaptive_evidence(2.0)), encoding="utf-8"
             )
@@ -596,6 +599,8 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
                             "--formal",
                             "--compression-evidence",
                             str(evidence_path),
+                            "--repo-root",
+                            str(repo_root),
                         ]
                     ),
                     0,
@@ -603,8 +608,12 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
             adaptive_projection = json.loads(stream.getvalue())
             self.assertEqual(adaptive_projection["status"], "classified")
             self.assertEqual(adaptive_projection["route_basis"], "p2_adaptive_only")
+            self.assertEqual(
+                adaptive_projection["input"]["evidence_record"],
+                "records/adaptive.json",
+            )
 
-            equal_path = Path(tmp) / "equal_accuracy.json"
+            equal_path = evidence_root / "equal_accuracy.json"
             equal_path.write_text(
                 json.dumps(_equal_accuracy_evidence()), encoding="utf-8"
             )
@@ -622,6 +631,8 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
                             "--formal",
                             "--compression-evidence",
                             str(equal_path),
+                            "--repo-root",
+                            str(repo_root),
                         ]
                     ),
                     0,
@@ -632,6 +643,36 @@ class Task033CapabilityAndProjectionTests(unittest.TestCase):
                 equal_projection["route_basis"],
                 "equal_accuracy_best_candidate",
             )
+            self.assertEqual(
+                equal_projection["input"]["evidence_record"],
+                "records/equal_accuracy.json",
+            )
+
+    def test_one_tib_runner_rejects_evidence_outside_repo_root(self) -> None:
+        with (
+            tempfile.TemporaryDirectory() as repo_tmp,
+            tempfile.TemporaryDirectory() as outside_tmp,
+        ):
+            evidence_path = Path(outside_tmp) / "equal_accuracy.json"
+            evidence_path.write_text(
+                json.dumps(_equal_accuracy_evidence()), encoding="utf-8"
+            )
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                return_code = one_tib_main(
+                    [
+                        "--compression-evidence",
+                        str(evidence_path),
+                        "--repo-root",
+                        repo_tmp,
+                    ]
+                )
+            self.assertEqual(return_code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            blocker = json.loads(stderr.getvalue())
+            self.assertEqual(blocker["status"], "blocked_fail_closed")
+            self.assertIn("escapes repository root", blocker["problems"][0])
 
     def test_checked_plan_records_preserve_identity_and_units(self) -> None:
         variable_p = json.loads(
