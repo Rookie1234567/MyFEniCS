@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from benchmarks.task033_final_outcome import FinalOutcomeError, build_final_outcome
+from benchmarks.task033_final_outcome import ROOT, FinalOutcomeError, build_final_outcome
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -29,6 +29,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--variable-p-capability-audit", type=Path, required=True)
     parser.add_argument("--one-tib-projection", type=Path, required=True)
     parser.add_argument("--expected-source-sha", required=True)
+    parser.add_argument("--repo-root", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--require-nonfailed",
@@ -56,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
             variable_p_capability_audit=args.variable_p_capability_audit,
             one_tib_projection=args.one_tib_projection,
             expected_source_sha=args.expected_source_sha,
+            repo_root=args.repo_root,
         )
     except (FinalOutcomeError, OSError, ValueError, json.JSONDecodeError) as exc:
         print(

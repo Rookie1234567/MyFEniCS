@@ -20,6 +20,8 @@ from benchmarks.task033_qep_qualification import (
     TREND_DEGREES,
     TREND_H_NM,
     aggregate_qep_shards,
+    qep_full_aggregate_gate,
+    qep_p3_only_partial_aggregate_gate,
     qep_shard_gate,
     resource_authority_gate,
     source_identity_gate,
@@ -65,7 +67,7 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
     )
     tracking = None
     right_requested_modes = 8
-    left_candidate_requested_modes = 12
+    left_candidate_requested_modes = 16
     left_pair_relative_errors = [1.0e-10] * right_requested_modes
     if material == "stage4_xy":
         # Compact common-probe moments are the measured shard input.  The
@@ -127,8 +129,11 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
             "is_pde_run": True,
             "is_solver_pass": True,
             "is_memory_measurement": True,
+            "result_identity": "measured_shard",
             "is_physical_qualification_record": False,
             "physical_qualified": False,
+            "ordinary_default_changed": False,
+            "proves_0p7nm_feasible": False,
         },
         "candidate": {
             "material_kind": material,
@@ -137,16 +142,22 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
             "mpi_size": 1,
         },
         "memory_prediction": {},
-        "runtime_preflight": {},
+        "runtime_preflight": {
+            "runtime_contract_verified": True,
+            "launch_eligible": True,
+            "failures": [],
+        },
         "provenance": _source(),
         "numerical_results": {
+            "converged_eigenpairs": right_requested_modes,
             "analytic_beta_relative_error": analytic_error,
             "left_right_classification": {
                 "right_polynomial_relative_residual_max": 1.0e-12,
                 "left_polynomial_relative_residual_max": 1.0e-10,
                 "biorthogonality_identity_error": 1.0e-8,
+                "biorthogonality_infinity_norm_error": 8.0e-8,
                 "left_candidate_pool_policy": (
-                    "max_requested_plus_4_or_1p5x"
+                    "max_requested_plus_8_or_2x"
                 ),
                 "right_requested_modes": right_requested_modes,
                 "left_candidate_requested_modes": (
@@ -161,13 +172,14 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
                 ),
                 "near_degenerate_groups": [
                     {
-                        "indices": [0],
+                        "indices": [index],
                         "beta_center_per_nm": [1.0, 0.0],
                         "max_relative_beta_spread": 0.0,
                         "overlap_condition": 1.0,
                         "normalization_method": "diagonal_qprime",
                         "post_normalization_identity_error": 1.0e-12,
                     }
+                    for index in range(right_requested_modes)
                 ],
             },
             "quadrature": {
@@ -182,10 +194,41 @@ def _qep_shard(material: str, degree: int, h_nm: float) -> dict:
             "formal_resource_authority": _resource(),
         },
         "gates": {
+            "converged_eigenpair": True,
+            "polynomial_relative_residual_le_1e-10": True,
+            "left_polynomial_relative_residual_le_1e-8": True,
+            "biorthogonality_identity_error_le_1e-6": True,
             "all_required_numerical_gates_pass": True,
             "left_right_beta_pair_relative_error_le_1e-7": True,
+            "analytic_beta_error_finite": (
+                "not_applicable_patterned_cross_section"
+                if material == "stage4_xy"
+                else True
+            ),
+            "no_swap": True,
+            "below_controlled_termination": True,
+            "formal_resource_authority_pass": True,
+            "raised_quadrature_pass": True,
+            "patterned_tracking_compact_ready": True,
+            "single_shard_only_not_physical_qualification": True,
+            "source_identity_stable_clean_pass": True,
         },
     }
+
+
+def _controlled_p4_negative(shard: dict) -> dict:
+    record = copy.deepcopy(shard)
+    record["status"] = "measured_shard_failed"
+    record["identity"]["is_solver_pass"] = False
+    record["gates"]["all_required_numerical_gates_pass"] = False
+    record["gates"]["biorthogonality_identity_error_le_1e-6"] = False
+    record["numerical_results"]["left_right_classification"][
+        "biorthogonality_identity_error"
+    ] = 2.0e-6
+    record["numerical_results"]["left_right_classification"][
+        "biorthogonality_infinity_norm_error"
+    ] = 3.0e-6
+    return record
 
 
 def _hybrid_shard(mode: int, offset: float) -> dict:
@@ -414,6 +457,61 @@ class Task033QepQualificationTests(unittest.TestCase):
         ] = False
         self.assertFalse(qep_shard_gate(failed)["pass"])
 
+    def test_qep_shard_rejects_false_identity_zero_convergence_and_failure_payload(self) -> None:
+        shard = _qep_shard("air", 3, 3.0)
+        mutations = {
+            "identity_false": lambda row: row["identity"].__setitem__(
+                "is_pde_run", False
+            ),
+            "zero_converged_eigenpairs": lambda row: row[
+                "numerical_results"
+            ].__setitem__("converged_eigenpairs", 0),
+            "insufficient_converged_eigenpairs": lambda row: row[
+                "numerical_results"
+            ].__setitem__("converged_eigenpairs", 1),
+            "exception_failure_payload": lambda row: row.__setitem__(
+                "failure", {"type": "RuntimeError", "message": "pairing failed"}
+            ),
+        }
+        expected_check = {
+            "identity_false": "measurement_identity",
+            "zero_converged_eigenpairs": "converged_eigenpairs",
+            "insufficient_converged_eigenpairs": "converged_eigenpairs",
+            "exception_failure_payload": "no_exception_failure_payload",
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                forged = copy.deepcopy(shard)
+                mutate(forged)
+                gate = qep_shard_gate(forged)
+                self.assertFalse(gate["pass"])
+                self.assertFalse(gate["checks"][expected_check[name]])
+
+        for field, value in (
+            ("schema_version", "evil.v9"),
+            ("record_type", "other"),
+            ("case_id", "000"),
+        ):
+            with self.subTest(identity_field=field):
+                forged = copy.deepcopy(shard)
+                forged[field] = value
+                gate = qep_shard_gate(forged)
+                self.assertFalse(gate["pass"])
+                self.assertFalse(gate["checks"]["record_identity"])
+
+        for field, value in (
+            ("is_memory_measurement", False),
+            ("result_identity", "forged"),
+            ("ordinary_default_changed", True),
+            ("proves_0p7nm_feasible", True),
+        ):
+            with self.subTest(identity_field=field):
+                forged = copy.deepcopy(shard)
+                forged["identity"][field] = value
+                gate = qep_shard_gate(forged)
+                self.assertFalse(gate["pass"])
+                self.assertFalse(gate["checks"]["measurement_identity"])
+
     def test_qep_pairing_pool_and_raw_beta_pair_gate_are_recomputed(self) -> None:
         shard = _qep_shard("air", 3, 3.0)
         result = qep_shard_gate(shard)
@@ -428,7 +526,7 @@ class Task033QepQualificationTests(unittest.TestCase):
         classification = undersampled["numerical_results"][
             "left_right_classification"
         ]
-        classification["left_candidate_requested_modes"] = 11
+        classification["left_candidate_requested_modes"] = 15
         self.assertFalse(qep_shard_gate(undersampled)["pass"])
 
         incomplete = copy.deepcopy(shard)
@@ -437,6 +535,13 @@ class Task033QepQualificationTests(unittest.TestCase):
         ]
         classification["left_candidate_converged_modes"] = 7
         self.assertFalse(qep_shard_gate(incomplete)["pass"])
+
+        invalid_infinity_diagnostic = copy.deepcopy(shard)
+        classification = invalid_infinity_diagnostic["numerical_results"][
+            "left_right_classification"
+        ]
+        classification["biorthogonality_infinity_norm_error"] = 5.0e-9
+        self.assertFalse(qep_shard_gate(invalid_infinity_diagnostic)["pass"])
 
         inconsistent = copy.deepcopy(shard)
         classification = inconsistent["numerical_results"][
@@ -465,6 +570,84 @@ class Task033QepQualificationTests(unittest.TestCase):
             ]
         )
 
+    def test_qep_shard_rejects_negative_metrics_and_coerced_axes(self) -> None:
+        metric_mutations = {
+            "analytic": (
+                lambda row: row["numerical_results"].__setitem__(
+                    "analytic_beta_relative_error", -1.0
+                ),
+                "analytic_beta_identity",
+            ),
+            "right_residual": (
+                lambda row: row["numerical_results"][
+                    "left_right_classification"
+                ].__setitem__("right_polynomial_relative_residual_max", -1.0),
+                "right_residual",
+            ),
+            "left_residual": (
+                lambda row: row["numerical_results"][
+                    "left_right_classification"
+                ].__setitem__("left_polynomial_relative_residual_max", -1.0),
+                "left_residual",
+            ),
+            "biorthogonality": (
+                lambda row: row["numerical_results"][
+                    "left_right_classification"
+                ].__setitem__("biorthogonality_identity_error", -1.0),
+                "biorthogonality",
+            ),
+            "infinity_diagnostic": (
+                lambda row: row["numerical_results"][
+                    "left_right_classification"
+                ].__setitem__("biorthogonality_infinity_norm_error", -1.0),
+                "biorthogonality_infinity_norm_diagnostic",
+            ),
+            "oversized_infinity_diagnostic": (
+                lambda row: row["numerical_results"][
+                    "left_right_classification"
+                ].__setitem__("biorthogonality_infinity_norm_error", 1.0),
+                "biorthogonality_infinity_norm_diagnostic",
+            ),
+            "quadrature_delta": (
+                lambda row: row["numerical_results"]["quadrature"][
+                    "raised_comparison"
+                ].__setitem__("max_matrix_relative_difference", -1.0),
+                "raised_quadrature",
+            ),
+        }
+        for name, (mutate, expected_check) in metric_mutations.items():
+            with self.subTest(metric=name):
+                forged = _qep_shard("air", 3, 3.0)
+                mutate(forged)
+                gate = qep_shard_gate(forged)
+                self.assertFalse(gate["pass"])
+                self.assertFalse(gate["checks"][expected_check])
+
+        for name, field, value in (
+            ("degree_string", "degree", "3"),
+            ("h_string", "h_nm", "3.0"),
+            ("mpi_bool", "mpi_size", True),
+        ):
+            with self.subTest(axis=name):
+                forged = _qep_shard("air", 3, 3.0)
+                forged["candidate"][field] = value
+                gate = qep_shard_gate(forged)
+                self.assertFalse(gate["pass"])
+                self.assertFalse(gate["checks"]["candidate_axes"])
+
+        invalid_groups = _qep_shard("air", 3, 3.0)
+        groups = invalid_groups["numerical_results"][
+            "left_right_classification"
+        ]["near_degenerate_groups"]
+        groups[0]["indices"] = [0, 1]
+        groups.pop(1)
+        self.assertFalse(qep_shard_gate(invalid_groups)["pass"])
+        self.assertFalse(
+            qep_shard_gate(invalid_groups)["checks"][
+                "near_degenerate_group_contract"
+            ]
+        )
+
     def test_qep_aggregate_requires_air_lossy_trends_p2_comparison_and_tracking(self) -> None:
         records = [
             _qep_shard(material, degree, h_nm)
@@ -477,6 +660,7 @@ class Task033QepQualificationTests(unittest.TestCase):
             aggregate["status"], "qep_component_aggregate_qualified"
         )
         self.assertTrue(aggregate["identity"]["is_qep_component_qualified"])
+        self.assertTrue(qep_full_aggregate_gate(aggregate)["pass"])
         self.assertFalse(aggregate["identity"]["is_physical_qualification_record"])
         first_tracking = aggregate["patterned_cross_h_tracking"]["p1"][0]
         self.assertEqual(
@@ -507,6 +691,138 @@ class Task033QepQualificationTests(unittest.TestCase):
         self.assertEqual(
             blocked_forgery["status"],
             "qep_component_aggregate_not_qualified",
+        )
+
+        forged_counts = copy.deepcopy(aggregate)
+        forged_counts["received_unique_shard_count"] = 0
+        forged_counts["p1_p2_p3_passed_shard_count"] = 0
+        forged_counts["p4_completed_shard_count"] = 0
+        self.assertFalse(qep_full_aggregate_gate(forged_counts)["pass"])
+
+        truncated_shard_gate = copy.deepcopy(aggregate)
+        first_shard_gate = next(
+            iter(truncated_shard_gate["shard_gates"].values())
+        )
+        first_shard_gate["positive_gate"]["checks"] = {
+            "source_identity": True
+        }
+        self.assertFalse(
+            qep_full_aggregate_gate(truncated_shard_gate)["pass"]
+        )
+
+        coerced_axis_records = copy.deepcopy(records)
+        coerced_axis_records[0]["candidate"]["degree"] = "1"
+        coerced_axis_aggregate = aggregate_qep_shards(coerced_axis_records)
+        self.assertEqual(
+            coerced_axis_aggregate["qualification_classification"],
+            "not_qualified",
+        )
+        self.assertFalse(qep_full_aggregate_gate(coerced_axis_aggregate)["pass"])
+
+    def test_qep_aggregate_accepts_only_complete_controlled_p4_partial(self) -> None:
+        records = [
+            _qep_shard(material, degree, h_nm)
+            for material in ("air", "lossy_homogeneous", "stage4_xy")
+            for degree in TREND_DEGREES
+            for h_nm in TREND_H_NM
+        ]
+        p4_index = next(
+            index
+            for index, record in enumerate(records)
+            if record["candidate"] == {
+                "material_kind": "lossy_homogeneous",
+                "degree": 4,
+                "h_nm": 3.0,
+                "mpi_size": 1,
+            }
+        )
+        records[p4_index] = _controlled_p4_negative(records[p4_index])
+        partial = aggregate_qep_shards(
+            records, allow_p4_controlled_negative=True
+        )
+        self.assertEqual(
+            partial["status"], "qep_component_aggregate_not_qualified"
+        )
+        self.assertEqual(
+            partial["qualification_classification"], "partial_p3_only"
+        )
+        self.assertFalse(partial["identity"]["is_qep_component_qualified"])
+        self.assertTrue(partial["identity"]["is_qep_p3_only_partial"])
+        self.assertEqual(partial["p1_p2_p3_passed_shard_count"], 27)
+        self.assertEqual(partial["p4_completed_shard_count"], 9)
+        self.assertEqual(partial["negative_observation_count"], 1)
+        self.assertTrue(qep_p3_only_partial_aggregate_gate(partial)["pass"])
+
+        missing_core = copy.deepcopy(partial)
+        for name in (
+            "analytic_beta_trends",
+            "relative_to_p2",
+            "patterned_cross_h_tracking",
+        ):
+            del missing_core[name]
+        self.assertFalse(
+            qep_p3_only_partial_aggregate_gate(missing_core)["pass"]
+        )
+
+        forged = copy.deepcopy(partial)
+        lower = next(
+            row
+            for key, row in forged["shard_gates"].items()
+            if "|1|" in key
+        )
+        lower["positive_gate"]["failures"] = ["forged"]
+        self.assertFalse(qep_p3_only_partial_aggregate_gate(forged)["pass"])
+
+        truncated_controlled_gate = copy.deepcopy(partial)
+        controlled = next(
+            row
+            for row in truncated_controlled_gate["shard_gates"].values()
+            if row["disposition"] == "controlled_numeric_negative"
+        )
+        del controlled["controlled_negative_gate"]["checks"][
+            "source_identity_stable_clean_pass"
+        ]
+        self.assertFalse(
+            qep_p3_only_partial_aggregate_gate(truncated_controlled_gate)[
+                "pass"
+            ]
+        )
+
+        lower_negative = copy.deepcopy(records)
+        p3_index = next(
+            index
+            for index, record in enumerate(lower_negative)
+            if record["candidate"]["degree"] == 3
+        )
+        lower_negative[p3_index] = _controlled_p4_negative(
+            lower_negative[p3_index]
+        )
+        blocked_lower = aggregate_qep_shards(
+            lower_negative, allow_p4_controlled_negative=True
+        )
+        self.assertEqual(
+            blocked_lower["qualification_classification"], "not_qualified"
+        )
+
+        infrastructure = copy.deepcopy(records)
+        infrastructure[p4_index]["gates"]["no_swap"] = False
+        blocked_infrastructure = aggregate_qep_shards(
+            infrastructure, allow_p4_controlled_negative=True
+        )
+        self.assertEqual(
+            blocked_infrastructure["qualification_classification"],
+            "not_qualified",
+        )
+
+        unexpected = [*records, _qep_shard("air", 4, 5.0)]
+        unexpected[-1]["candidate"]["degree"] = 5
+        blocked_unexpected = aggregate_qep_shards(
+            unexpected, allow_p4_controlled_negative=True
+        )
+        self.assertEqual(blocked_unexpected["unexpected_record_count"], 1)
+        self.assertEqual(
+            blocked_unexpected["qualification_classification"],
+            "not_qualified",
         )
 
     def test_watchdog_promotes_lightweight_orders_and_field_summaries(self) -> None:
@@ -577,7 +893,30 @@ class Task033QepQualificationTests(unittest.TestCase):
         ]
         live_shard = _qep_shard("air", 3, 3.0)
         validator.validate(live_shard)
-        validator.validate(aggregate_qep_shards(qep_records))
+        qualified_aggregate = aggregate_qep_shards(qep_records)
+        validator.validate(qualified_aggregate)
+
+        contradictory_aggregate = copy.deepcopy(qualified_aggregate)
+        contradictory_aggregate["qualification_classification"] = (
+            "not_qualified"
+        )
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(contradictory_aggregate)
+
+        partial_records = copy.deepcopy(qep_records)
+        p4_index = next(
+            index
+            for index, record in enumerate(partial_records)
+            if record["candidate"]["degree"] == 4
+        )
+        partial_records[p4_index] = _controlled_p4_negative(
+            partial_records[p4_index]
+        )
+        validator.validate(
+            aggregate_qep_shards(
+                partial_records, allow_p4_controlled_negative=True
+            )
+        )
 
         missing_pairing_policy = copy.deepcopy(live_shard)
         del missing_pairing_policy["numerical_results"][

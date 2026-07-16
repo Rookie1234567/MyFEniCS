@@ -255,6 +255,15 @@ function Complete-Step {
     Write-Utf8NoBom -Path $markerPath -Text $rendered
 }
 
+function Convert-ToNativeExitCode {
+    param([Parameter(Mandatory = $true)][int]$Code)
+
+    # POSIX subprocesses report signal termination as a negative return code
+    # (for example SIGTERM as -15), while Docker/PowerShell exposes the same
+    # container result as the unsigned 8-bit process exit code (241).
+    return (($Code % 256) + 256) % 256
+}
+
 function Get-DockerRunArguments {
     param([Parameter(Mandatory = $true)][string[]]$ContainerCommand)
 
@@ -314,9 +323,36 @@ function Invoke-DockerTimeoutNegativeStep {
 
     $outputs = @($SummaryOutput)
     if (Test-StepComplete -StepName $StepName -Outputs $outputs) {
+        $summary = Get-Content -Raw -LiteralPath $SummaryOutput | ConvertFrom-Json
+        $marker = Get-Content -Raw -LiteralPath (
+            Get-StepMarkerPath -PrimaryOutput $SummaryOutput
+        ) | ConvertFrom-Json
+        $normalizedSummaryExit = Convert-ToNativeExitCode `
+            -Code ([int]$summary.return_code)
+        $validResume = (
+            $summary.status -eq "formal_not_pass" -and
+            $summary.formal_pass -eq $false -and
+            $summary.numeric_pass -eq $false -and
+            $summary.return_code -ne 0 -and
+            $summary.terminated_for_timeout -eq $true -and
+            $summary.terminated_for_memory -eq $false -and
+            $summary.terminated_for_authority_unreadable -eq $false -and
+            $summary.memory_authority_pass -eq $true -and
+            $summary.no_swap -eq $true -and
+            $summary.resource_authority.gate.pass -eq $true -and
+            $summary.source_gate.pass -eq $true -and
+            $summary.launch_gate.pass -eq $true -and
+            $marker.native_exit_code -eq $normalizedSummaryExit
+        )
+        if (-not $validResume) {
+            throw "Timeout-negative resume marker is not bound to its summary."
+        }
         return
     }
     Assert-FormalSourceStable -ExpectedSha $CommitSha
+    if (Test-Path -LiteralPath $SummaryOutput -PathType Leaf) {
+        Remove-Item -LiteralPath $SummaryOutput -Force
+    }
     Write-Host "[run expected-timeout-negative] $StepName"
     $dockerArguments = Get-DockerRunArguments -ContainerCommand $ContainerCommand
     $exitCode = Invoke-NativeStreaming `
@@ -329,18 +365,319 @@ function Invoke-DockerTimeoutNegativeStep {
         throw "Timeout-negative step $StepName produced no watchdog summary."
     }
     $summary = Get-Content -Raw -LiteralPath $SummaryOutput | ConvertFrom-Json
+    $normalizedSummaryExit = Convert-ToNativeExitCode `
+        -Code ([int]$summary.return_code)
     $validTimeoutNegative = (
         $summary.status -eq "formal_not_pass" -and
+        $summary.formal_pass -eq $false -and
+        $summary.numeric_pass -eq $false -and
+        $summary.return_code -ne 0 -and
+        $normalizedSummaryExit -eq $exitCode -and
         $summary.terminated_for_timeout -eq $true -and
         $summary.terminated_for_memory -eq $false -and
         $summary.terminated_for_authority_unreadable -eq $false -and
         $summary.memory_authority_pass -eq $true -and
         $summary.no_swap -eq $true -and
+        $summary.resource_authority.gate.pass -eq $true -and
         $summary.source_gate.pass -eq $true -and
         $summary.launch_gate.pass -eq $true
     )
     if (-not $validTimeoutNegative) {
         throw "Step $StepName was not the required clean timeout-only negative."
+    }
+    Complete-Step -StepName $StepName -Outputs $outputs -ExitCode $exitCode
+}
+
+function Get-Task033CommandValue {
+    param(
+        [Parameter(Mandatory = $true)][object[]]$Command,
+        [Parameter(Mandatory = $true)][string]$Option
+    )
+
+    for ($index = 0; $index -lt $Command.Count - 1; $index++) {
+        if ([string]$Command[$index] -eq $Option) {
+            return [string]$Command[$index + 1]
+        }
+    }
+    return $null
+}
+
+function Get-QepP4SolverRecord {
+    param([Parameter(Mandatory = $true)][psobject]$Summary)
+
+    if (
+        $null -eq $Summary.solver_record_ignored_path -or
+        [string]::IsNullOrWhiteSpace(
+            [string]$Summary.solver_record_ignored_path
+        ) -or
+        [string]$Summary.solver_record_sha256 -notmatch '^[0-9a-f]{64}$'
+    ) {
+        throw "p4 QEP watchdog has no complete solver-record descriptor."
+    }
+    $rawPath = [string]$Summary.solver_record_ignored_path
+    $solverPath = if ([IO.Path]::IsPathRooted($rawPath)) {
+        [IO.Path]::GetFullPath($rawPath)
+    } else {
+        [IO.Path]::GetFullPath((Join-Path $RepoRoot $rawPath))
+    }
+    $repoPrefix = $RepoRoot + [IO.Path]::DirectorySeparatorChar
+    if (-not $solverPath.StartsWith(
+        $repoPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "p4 QEP solver record escapes the repository: $solverPath"
+    }
+    if (-not (Test-Path -LiteralPath $solverPath -PathType Leaf)) {
+        throw "p4 QEP watchdog solver record is missing: $solverPath"
+    }
+    $observedSha = Get-FileSha256 -Path $solverPath
+    if ($observedSha -ne ([string]$Summary.solver_record_sha256).ToLowerInvariant()) {
+        throw "p4 QEP solver-record SHA256 does not match its watchdog."
+    }
+    $record = Get-Content -Raw -LiteralPath $solverPath | ConvertFrom-Json
+    $embedded = $Summary.measurements | ConvertTo-Json -Depth 100 -Compress
+    $preserved = $record | ConvertTo-Json -Depth 100 -Compress
+    if ($embedded -ne $preserved) {
+        throw "p4 QEP embedded measurements differ from the solver record."
+    }
+    return $record
+}
+
+function Assert-QepP4ControlledOutcome {
+    param(
+        [Parameter(Mandatory = $true)][string]$SummaryOutput,
+        [Parameter(Mandatory = $true)][string]$MaterialKind,
+        [Parameter(Mandatory = $true)][string]$HNm,
+        [Parameter(Mandatory = $true)][string]$AttemptRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $SummaryOutput -PathType Leaf)) {
+        throw "p4 QEP step produced no watchdog summary."
+    }
+    $summary = Get-Content -Raw -LiteralPath $SummaryOutput | ConvertFrom-Json
+    $rawSolverPath = [string]$summary.solver_record_ignored_path
+    $solverPath = if ([IO.Path]::IsPathRooted($rawSolverPath)) {
+        [IO.Path]::GetFullPath($rawSolverPath)
+    } else {
+        [IO.Path]::GetFullPath((Join-Path $RepoRoot $rawSolverPath))
+    }
+    $attemptPrefix = [IO.Path]::GetFullPath($AttemptRoot).TrimEnd(
+        [char[]]@(47, 92)
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $solverPath.StartsWith(
+        $attemptPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "p4 QEP solver record is not bound to this step attempt root."
+    }
+    $record = Get-QepP4SolverRecord -Summary $summary
+    $command = @($summary.command)
+    $common = @(
+        $summary.schema_version -eq "task033.memory-watchdog.v2",
+        $summary.benchmark_id -eq "task033_external_memory_watchdog",
+        $summary.target -eq "qep",
+        $summary.requested_modes -eq 8,
+        $summary.candidate_modes -eq 16,
+        (Get-Task033CommandValue -Command $command -Option "--requested-modes") -eq "8",
+        (Get-Task033CommandValue -Command $command -Option "--left-candidate-modes") -eq "16",
+        $summary.memory_authority_pass -eq $true,
+        $summary.no_swap -eq $true,
+        $summary.terminated_for_memory -eq $false,
+        $summary.terminated_for_timeout -eq $false,
+        $summary.terminated_for_authority_unreadable -eq $false,
+        $summary.resource_authority.gate.pass -eq $true,
+        $summary.source_gate.pass -eq $true,
+        $summary.launch_gate.pass -eq $true,
+        $record.candidate.material_kind -eq $MaterialKind,
+        $record.candidate.degree -eq 4,
+        $record.candidate.h_nm -eq [double]$HNm,
+        $record.candidate.mpi_size -eq 1
+    )
+    if (@($common | Where-Object { $_ -ne $true }).Count -ne 0) {
+        throw "p4 QEP outcome failed source/resource/launch/identity checks."
+    }
+
+    if ($summary.status -eq "measured_shard_pass") {
+        Assert-WatchdogPass -Outputs @($SummaryOutput)
+        if ($record.status -ne "measured_shard_pass") {
+            throw "p4 QEP pass summary does not embed a passing solver record."
+        }
+        return $summary
+    }
+
+    if (
+        $summary.status -ne "formal_not_pass" -or
+        $summary.formal_pass -ne $false -or
+        $summary.numeric_pass -ne $false -or
+        $summary.return_code -ne 2 -or
+        $record.status -ne "measured_shard_failed" -or
+        $record.identity.is_pde_run -ne $true -or
+        $record.identity.is_solver_pass -ne $false -or
+        $record.identity.is_physical_qualification_record -ne $false -or
+        $record.identity.physical_qualified -ne $false -or
+        $record.runtime_preflight.runtime_contract_verified -ne $true -or
+        $record.runtime_preflight.launch_eligible -ne $true -or
+        @($record.runtime_preflight.failures).Count -ne 0 -or
+        $record.gates.all_required_numerical_gates_pass -ne $false
+    ) {
+        throw "p4 QEP nonzero result is not a complete measured shard failure."
+    }
+    $failureProperty = $record.PSObject.Properties["failure"]
+    if ($null -ne $failureProperty -and $null -ne $failureProperty.Value) {
+        throw "p4 QEP exception failure payload is not a controlled negative."
+    }
+
+    $classification = $record.numerical_results.left_right_classification
+    if (
+        $classification.left_candidate_pool_policy -ne (
+            "max_requested_plus_8_or_2x"
+        ) -or
+        $classification.right_requested_modes -ne 8 -or
+        $classification.left_candidate_requested_modes -ne 16 -or
+        $classification.left_candidate_converged_modes -lt 8
+    ) {
+        throw "p4 QEP negative violates the audited 8-to-16 candidate pool."
+    }
+    $pairErrors = @($classification.left_pair_relative_errors)
+    if ($pairErrors.Count -ne 8) {
+        throw "p4 QEP negative lacks eight raw left/right pair errors."
+    }
+    $pairMaximum = 0.0
+    foreach ($rawError in $pairErrors) {
+        $errorValue = [double]$rawError
+        if (
+            [double]::IsNaN($errorValue) -or
+            [double]::IsInfinity($errorValue) -or
+            $errorValue -lt 0.0
+        ) {
+            throw "p4 QEP negative contains a non-finite pair error."
+        }
+        $pairMaximum = [Math]::Max($pairMaximum, $errorValue)
+    }
+    $recordedPairMaximum = [double]$classification.left_pair_relative_error_max
+    $pairScale = [Math]::Max([Math]::Abs($pairMaximum), 1.0e-15)
+    if (
+        [Math]::Abs($recordedPairMaximum - $pairMaximum) `
+            -gt 1.0e-12 * $pairScale
+    ) {
+        throw "p4 QEP negative pair-error maximum disagrees with its raw list."
+    }
+
+    $recomputed = [ordered]@{
+        "polynomial_relative_residual_le_1e-10" = (
+            [double]$classification.right_polynomial_relative_residual_max `
+                -le 1.0e-10
+        )
+        "left_polynomial_relative_residual_le_1e-8" = (
+            [double]$classification.left_polynomial_relative_residual_max `
+                -le 1.0e-8
+        )
+        "biorthogonality_identity_error_le_1e-6" = (
+            [double]$classification.biorthogonality_identity_error `
+                -le 1.0e-6
+        )
+        "left_right_beta_pair_relative_error_le_1e-7" = (
+            [double]$classification.left_pair_relative_error_max `
+                -le 1.0e-7
+        )
+    }
+    $controlledFailures = @()
+    foreach ($name in $recomputed.Keys) {
+        $property = $record.gates.PSObject.Properties[$name]
+        if (
+            $null -eq $property -or
+            $property.Value -isnot [bool] -or
+            $property.Value -ne $recomputed[$name]
+        ) {
+            throw "p4 QEP numerical Gate $name is absent or inconsistent."
+        }
+        if ($property.Value -eq $false) {
+            $controlledFailures += $name
+        }
+    }
+    if ($controlledFailures.Count -eq 0) {
+        throw "p4 QEP measured failure has no controlled numerical Gate failure."
+    }
+    $requiredTrueGates = @(
+        "converged_eigenpair",
+        "no_swap",
+        "below_controlled_termination",
+        "formal_resource_authority_pass",
+        "raised_quadrature_pass",
+        "patterned_tracking_compact_ready",
+        "single_shard_only_not_physical_qualification",
+        "source_identity_stable_clean_pass"
+    )
+    foreach ($name in $requiredTrueGates) {
+        $property = $record.gates.PSObject.Properties[$name]
+        if ($null -eq $property -or $property.Value -ne $true) {
+            throw "p4 QEP negative failed non-whitelisted Gate $name."
+        }
+    }
+    $analyticExpected = if ($MaterialKind -eq "stage4_xy") {
+        "not_applicable_patterned_cross_section"
+    } else {
+        $true
+    }
+    if ($record.gates.analytic_beta_error_finite -ne $analyticExpected) {
+        throw "p4 QEP negative failed the analytic identity Gate."
+    }
+    if (
+        $record.numerical_results.quadrature.raised_comparison.failure -ne $null -or
+        $record.numerical_results.cross_h_tracking.failure -ne $null
+    ) {
+        throw "p4 QEP exception-derived failure is not a controlled negative."
+    }
+    return $summary
+}
+
+function Invoke-DockerQepP4Step {
+    param(
+        [Parameter(Mandatory = $true)][string]$StepName,
+        [Parameter(Mandatory = $true)][string[]]$ContainerCommand,
+        [Parameter(Mandatory = $true)][string]$SummaryOutput,
+        [Parameter(Mandatory = $true)][string]$MaterialKind,
+        [Parameter(Mandatory = $true)][string]$HNm,
+        [Parameter(Mandatory = $true)][string]$AttemptRoot
+    )
+
+    $outputs = @($SummaryOutput)
+    if (Test-StepComplete -StepName $StepName -Outputs $outputs) {
+        $summary = Assert-QepP4ControlledOutcome `
+            -SummaryOutput $SummaryOutput `
+            -MaterialKind $MaterialKind `
+            -HNm $HNm `
+            -AttemptRoot $AttemptRoot
+        $marker = Get-Content -Raw -LiteralPath (
+            Get-StepMarkerPath -PrimaryOutput $SummaryOutput
+        ) | ConvertFrom-Json
+        if (
+            $marker.native_exit_code -notin @(0, 2) -or
+            $marker.native_exit_code -ne $summary.return_code
+        ) {
+            throw "p4 QEP resume marker exit code is not bound to its summary."
+        }
+        return
+    }
+    Assert-FormalSourceStable -ExpectedSha $CommitSha
+    if (Test-Path -LiteralPath $SummaryOutput -PathType Leaf) {
+        Remove-Item -LiteralPath $SummaryOutput -Force
+    }
+    Write-Host "[run p4 pass-or-controlled-numerical-negative] $StepName"
+    $dockerArguments = Get-DockerRunArguments -ContainerCommand $ContainerCommand
+    $exitCode = Invoke-NativeStreaming `
+        -FilePath $DockerExecutable `
+        -ArgumentList $dockerArguments
+    if ($exitCode -notin @(0, 2)) {
+        throw "p4 QEP step $StepName failed with non-controlled exit $exitCode."
+    }
+    $summary = Assert-QepP4ControlledOutcome `
+        -SummaryOutput $SummaryOutput `
+        -MaterialKind $MaterialKind `
+        -HNm $HNm `
+        -AttemptRoot $AttemptRoot
+    if ($summary.return_code -ne $exitCode) {
+        throw "p4 QEP watchdog return code differs from Docker exit code."
     }
     Complete-Step -StepName $StepName -Outputs $outputs -ExitCode $exitCode
 }
@@ -556,7 +893,8 @@ function Invoke-Task033Watchdog {
         [string]$M160FunnelEvidence,
         [string]$M160FunnelSha256,
         [double]$TimeoutSeconds = 3600.0,
-        [switch]$ExpectedTimeoutNegative
+        [switch]$ExpectedTimeoutNegative,
+        [switch]$AllowP4ControlledNumericalNegative
     )
 
     $attemptRun = Join-Path $AttemptRoot (
@@ -628,11 +966,25 @@ function Invoke-Task033Watchdog {
 
     [IO.Directory]::CreateDirectory((Split-Path -Parent $SummaryOutput)) | Out-Null
     [IO.Directory]::CreateDirectory($AttemptRoot) | Out-Null
+    if ($ExpectedTimeoutNegative -and $AllowP4ControlledNumericalNegative) {
+        throw "A QEP step cannot be both timeout-negative and p4 controlled."
+    }
     if ($ExpectedTimeoutNegative) {
         Invoke-DockerTimeoutNegativeStep `
             -StepName $StepName `
             -ContainerCommand $command `
             -SummaryOutput $SummaryOutput
+    } elseif ($AllowP4ControlledNumericalNegative) {
+        if ($Target -ne "qep" -or $Degree -ne 4 -or $MpiSize -ne 1) {
+            throw "Controlled numerical negatives are restricted to QEP p4 MPI1."
+        }
+        Invoke-DockerQepP4Step `
+            -StepName $StepName `
+            -ContainerCommand $command `
+            -SummaryOutput $SummaryOutput `
+            -MaterialKind $MaterialKind `
+            -HNm $HNm `
+            -AttemptRoot $AttemptRoot
     } else {
         $requalificationRequired = [bool]$AnchorRequalification
         $minimalComparisonRequired = [bool]$CompareModalSchur
@@ -1010,7 +1362,9 @@ try {
     $Case090AggregateSha256 = Get-FileSha256 -Path $Case090Aggregate
 
     # Phase 2: the formal 36-shard MPI1 QEP matrix plus explicit MPI2/MPI4
-    # timeout-only negatives.  Negatives are never supplied to the aggregate.
+    # timeout-only negatives.  All 27 p1-p3 shards are strict passes.  Every
+    # p4 shard must finish and may continue only as a pass or an exit-2,
+    # record-backed, controlled numerical negative.
     $QepMaterials = @("air", "lossy_homogeneous", "stage4_xy")
     $Degrees = @(1, 2, 3, 4)
     $QepHLevels = @(
@@ -1034,11 +1388,12 @@ try {
                     -HNm $hLevel.Value `
                     -MpiSize 1 `
                     -RequestedModes 8 `
-                    -CandidateModes 12 `
+                    -CandidateModes 16 `
                     -SummaryOutput $passSummary `
                     -AttemptRoot (Join-Path $passRoot "attempts") `
                     -MaterialKind $material `
-                    -TimeoutSeconds $QepTimeoutSeconds
+                    -TimeoutSeconds $QepTimeoutSeconds `
+                    -AllowP4ControlledNumericalNegative:($degree -eq 4)
 
             }
         }
@@ -1061,7 +1416,7 @@ try {
             -HNm "3.0" `
             -MpiSize $negativeMpi `
             -RequestedModes 8 `
-            -CandidateModes 12 `
+            -CandidateModes 16 `
             -SummaryOutput $negativeSummary `
             -AttemptRoot (Join-Path $negativeRoot "attempts") `
             -MaterialKind "stage4_xy" `
@@ -1123,7 +1478,8 @@ try {
             "--reference-evidence",
             $uniformFunnels["p2_h5"],
             "--candidate-evidence",
-            $gradedFunnels["p2_h5_graded"]
+            $gradedFunnels["p2_h5_graded"],
+            "--repo-root", $RepoRoot
         ) `
         -Output $adaptiveH5
     Assert-AdaptiveFormalPass -Path $adaptiveH5 -ExpectedReferenceH 5.0
@@ -1146,7 +1502,8 @@ try {
             "--reference-evidence",
             $uniformFunnels["p2_h3"],
             "--candidate-evidence",
-            $gradedFunnels["p2_h3_graded"]
+            $gradedFunnels["p2_h3_graded"],
+            "--repo-root", $RepoRoot
         ) `
         -Output $adaptiveH3
     Assert-AdaptiveFormalPass -Path $adaptiveH3 -ExpectedReferenceH 3.0
@@ -1180,7 +1537,8 @@ try {
     $qepAggregate = Join-Path $aggregateRoot "qep_order_study.json"
     $qepAggregateCommand = @(
         "-m", "benchmarks.run_task033_formal_records",
-        "qep-order-study", "--mpi-size", "1"
+        "qep-order-study", "--mpi-size", "1",
+        "--repo-root", $RepoRoot
     )
     foreach ($summary in $qepPassSummaries) {
         $qepAggregateCommand += $summary
@@ -1194,6 +1552,7 @@ try {
     $uniformAggregateCommand = @(
         "-m", "benchmarks.run_task033_formal_records",
         "uniform-matrix",
+        "--repo-root", $RepoRoot,
         "--resource-matrix",
         (Join-Path $RepoRoot "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/resource_matrix.json")
     )
@@ -1224,7 +1583,8 @@ try {
             $bufferFunnels["buffer_10"],
             $bufferFunnels["buffer_7p5"],
             $bufferFunnels["buffer_5"],
-            $bufferFunnels["buffer_2p5"]
+            $bufferFunnels["buffer_2p5"],
+            "--repo-root", $RepoRoot
         ) `
         -Output $bufferAggregate
 
@@ -1233,6 +1593,7 @@ try {
         "-m", "benchmarks.run_task033_equal_accuracy",
         "--reference",
         $uniformFunnels["p2_h3"],
+        "--repo-root", $RepoRoot,
         "--output", $equalAccuracy
     )
     foreach ($entry in $safeUniform) {
@@ -1305,6 +1666,7 @@ try {
             "--variable-p-capability-audit", $variableP,
             "--one-tib-projection", $oneTib,
             "--expected-source-sha", $CommitSha,
+            "--repo-root", $RepoRoot,
             "--output", $finalOutcome,
             "--require-nonfailed"
         ) `
@@ -1322,9 +1684,12 @@ try {
         "case090_clean_core" = $Case090Aggregate
         "case090_mpi_memory" = $Case090Aggregate
         "qep_order_study" = $qepAggregate
-        "qep_mpi_timeout_negative" = (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi2/stage4_xy_p2_h3/watchdog_summary.json")
+        "qep_mpi2_timeout_negative" = (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi2/stage4_xy_p2_h3/watchdog_summary.json")
+        "qep_mpi4_timeout_negative" = (Join-Path $ArtifactRootHost "qep/timeout_negatives/mpi4/stage4_xy_p2_h3/watchdog_summary.json")
         "hybrid_funnel_p1" = $uniformFunnels["p1_h5"]
         "hybrid_funnel_p3" = $uniformFunnels["p3_h5"]
+        "augmented_vs_minimal_p1" = $p1Anchor
+        "augmented_vs_minimal_p3" = $p3Anchor
         "uniform_p_h_matrix" = $uniformAggregate
         "adaptive_p2_h5" = $adaptiveH5
         "adaptive_p2_h3" = $adaptiveH3
@@ -1333,8 +1698,10 @@ try {
         "interface_buffer_5" = $bufferFunnels["buffer_5"]
         "interface_buffer_2p5" = $bufferFunnels["buffer_2p5"]
         "interface_buffer_tradeoff" = $bufferAggregate
+        "equal_accuracy" = $equalAccuracy
         "variable_p_capability_audit" = $variableP
         "one_tib_projection" = $oneTib
+        "final_outcome" = $finalOutcome
     }
     foreach ($role in $formalRolePaths.Keys) {
         $formalManifestCommand += @(
@@ -1358,8 +1725,26 @@ try {
         ) `
         -Output $formalVerification
 
+    # The checker report cannot be a manifest role because it is produced from
+    # that manifest.  Bind the manifest, verification, and final outcome only
+    # after verification, in a separate self-hashed publication descriptor.
+    $publicationDescriptor = Join-Path $aggregateRoot (
+        "formal_publication_descriptor.json"
+    )
+    Invoke-HostJsonCaptureStep `
+        -StepName "aggregate_formal_publication_descriptor" `
+        -PythonArguments @(
+            "-m", "benchmarks.run_task033_formal_records",
+            "publication-descriptor",
+            "--repo-root", $RepoRoot,
+            "--formal-manifest", $formalManifest,
+            "--formal-verification", $formalVerification,
+            "--final-outcome", $finalOutcome
+        ) `
+        -Output $publicationDescriptor
+
     Assert-FormalSourceStable -ExpectedSha $CommitSha
-    Write-Host "Task033 formal measurements, 1 TiB projection, manifest, and checker completed."
+    Write-Host "Task033 formal measurements, manifest, checker, and publication descriptor completed."
     Write-Host "Task-level pass/partial/negative classification remains evidence-derived."
 } finally {
     if ($null -ne $campaignLock) {

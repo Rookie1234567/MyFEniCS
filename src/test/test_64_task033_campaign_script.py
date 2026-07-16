@@ -89,9 +89,28 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
             self.assertIn(level, text)
         self.assertIn("-MpiSize 1", text)
         self.assertIn("-ExpectedTimeoutNegative", text)
+        self.assertGreaterEqual(text.count("-CandidateModes 16"), 2)
+        self.assertIn("Invoke-DockerQepP4Step", text)
+        self.assertIn("-AllowP4ControlledNumericalNegative:($degree -eq 4)", text)
+        self.assertIn("$exitCode -notin @(0, 2)", text)
+        self.assertIn('$summary.return_code -ne 2', text)
+        self.assertIn('$record.status -ne "measured_shard_failed"', text)
+        self.assertIn("p1-p3 shards are strict passes", text)
+        self.assertIn("p4 QEP solver-record SHA256", text)
+        self.assertIn("max_requested_plus_8_or_2x", text)
         self.assertIn("$summary.terminated_for_timeout -eq $true", text)
         self.assertIn("$summary.terminated_for_memory -eq $false", text)
-        self.assertIn("Negatives are never supplied to the aggregate", text)
+        self.assertIn("function Convert-ToNativeExitCode", text)
+        self.assertIn("(($Code % 256) + 256) % 256", text)
+        self.assertIn("$normalizedSummaryExit -eq $exitCode", text)
+        self.assertIn(
+            "$marker.native_exit_code -eq $normalizedSummaryExit", text
+        )
+        self.assertGreaterEqual(
+            text.count("Remove-Item -LiteralPath $SummaryOutput -Force"), 2
+        )
+        self.assertNotIn("Negatives are never supplied to the aggregate", text)
+        self.assertIn("record-backed, controlled numerical negative", text)
         self.assertIn('foreach ($negativeMpi in $QepNegativeMpiSizes)', text)
         self.assertIn('$slug = "stage4_xy_p2_h3"', text)
 
@@ -190,11 +209,22 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
             "uniform-matrix",
             "adaptive",
             "buffer-tradeoff",
+            "publication-descriptor",
         ):
             self.assertIn(f'"{subcommand}"', text)
         self.assertIn("benchmarks.run_task033_variable_p_audit", text)
         self.assertIn("benchmarks.run_task033_equal_accuracy", text)
         self.assertIn("benchmarks.run_task033_one_tib_projection", text)
+        self.assertIn(
+            '"qep-order-study", "--mpi-size", "1",\n'
+            '        "--repo-root", $RepoRoot',
+            text,
+        )
+        self.assertIn(
+            '"uniform-matrix",\n        "--repo-root", $RepoRoot',
+            text,
+        )
+        self.assertGreaterEqual(text.count('"--repo-root", $RepoRoot'), 10)
         self.assertIn('"--watchdog"', text)
         self.assertIn('"p2_h3=$p2H3SelectedWatchdog"', text)
         self.assertIn('"--compression-evidence"', text)
@@ -214,7 +244,29 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn('"--formal-manifest"', text)
         self.assertIn('"--require-formal"', text)
         self.assertIn('"case090_clean_core" = $Case090Aggregate', text)
+        self.assertIn(
+            '"qep_mpi2_timeout_negative" = (Join-Path $ArtifactRootHost',
+            text,
+        )
+        self.assertIn(
+            '"qep_mpi4_timeout_negative" = (Join-Path $ArtifactRootHost',
+            text,
+        )
+        self.assertIn('"augmented_vs_minimal_p1" = $p1Anchor', text)
+        self.assertIn('"augmented_vs_minimal_p3" = $p3Anchor', text)
+        self.assertIn('"equal_accuracy" = $equalAccuracy', text)
         self.assertIn('"one_tib_projection" = $oneTib', text)
+        self.assertIn('"final_outcome" = $finalOutcome', text)
+        self.assertNotIn('"qep_mpi_timeout_negative" =', text)
+        self.assertIn('"aggregate_formal_publication_descriptor"', text)
+        self.assertLess(
+            text.index('"aggregate_final_outcome"'),
+            text.index('"aggregate_formal_evidence_manifest"'),
+        )
+        self.assertLess(
+            text.index('"verify_formal_evidence_manifest"'),
+            text.index('"aggregate_formal_publication_descriptor"'),
+        )
         self.assertNotIn("one_tib_deferred_pending", text)
 
     def test_powershell_parser_accepts_script_when_available(self) -> None:

@@ -20,7 +20,7 @@ MESH_LEVELS_NM = (5.0, 3.0, 2.5, 2.0, 1.5)
 MPI_SIZES = (1, 2, 4)
 MATERIAL_KINDS = ("air", "lossy_homogeneous", "stage4_xy")
 DEFAULT_REQUESTED_MODES = 8
-LEFT_CANDIDATE_POOL_POLICY = "max_requested_plus_4_or_1p5x"
+LEFT_CANDIDATE_POOL_POLICY = "max_requested_plus_8_or_2x"
 COMPLEX128_BYTES = 16
 
 
@@ -81,13 +81,15 @@ def task033_left_candidate_pool_size(requested_modes: int) -> int:
     Independent right and adjoint PEP solves can cut a degenerate cluster at
     different members when both request exactly the retained basis size.
     Task033 keeps the public right basis unchanged and oversamples only the
-    transient adjoint candidate pool before matching.
+    transient adjoint candidate pool before matching.  The audited pool keeps
+    eight spare candidates and is at least twice the retained right basis, so
+    the default R8 solve uses an L16 adjoint pool.
     """
 
     requested = int(requested_modes)
     if requested < 2:
         raise ValueError("requested_modes must be at least two.")
-    return max(requested + 4, math.ceil(1.5 * requested))
+    return max(requested + 8, 2 * requested)
 
 
 def conservative_cross_section_cells(h_nm: float) -> dict[str, int]:

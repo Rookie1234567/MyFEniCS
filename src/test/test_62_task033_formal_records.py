@@ -9,17 +9,30 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from jsonschema import Draft202012Validator
+
 from benchmarks.run_task033_formal_records import main as formal_records_main
-from benchmarks.task033_evidence_checker import REQUIRED_FORMAL_ROLES, ROLE_SPECS
+from benchmarks.task033_evidence_checker import (
+    FINAL_OUTCOME_INPUT_ROLE_MAP,
+    REQUIRED_FORMAL_ROLES,
+    ROLE_SPECS,
+    _check_formal_entry,
+)
 from benchmarks.task033_formal_records import (
     FormalRecordError,
     build_adaptive_evidence,
     build_formal_manifest,
+    build_formal_publication_descriptor,
     build_interface_buffer_tradeoff,
     build_qep_order_study,
     build_uniform_p_h_matrix,
+    formal_publication_descriptor_problems,
 )
-from benchmarks.task033_qep_qualification import TREND_DEGREES, TREND_H_NM
+from benchmarks.task033_qep_qualification import (
+    TREND_DEGREES,
+    TREND_H_NM,
+    source_identity_gate,
+)
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     hybrid_launch_gate,
@@ -151,7 +164,7 @@ def _qep_shard(
     )
     tracking = _tracking_compact(h_nm) if material == "stage4_xy" else None
     right_requested_modes = 8
-    left_candidate_requested_modes = 12
+    left_candidate_requested_modes = 16
     left_pair_relative_errors = [1.0e-10] * right_requested_modes
     return {
         "schema_version": "task033.case091.qep-measurement.v2",
@@ -162,8 +175,11 @@ def _qep_shard(
             "is_pde_run": True,
             "is_solver_pass": True,
             "is_memory_measurement": True,
+            "result_identity": "measured_shard",
             "is_physical_qualification_record": False,
             "physical_qualified": False,
+            "ordinary_default_changed": False,
+            "proves_0p7nm_feasible": False,
         },
         "candidate": {
             "material_kind": material,
@@ -172,16 +188,22 @@ def _qep_shard(
             "mpi_size": 1,
         },
         "memory_prediction": {},
-        "runtime_preflight": {},
+        "runtime_preflight": {
+            "runtime_contract_verified": True,
+            "launch_eligible": True,
+            "failures": [],
+        },
         "provenance": _source(sha),
         "numerical_results": {
+            "converged_eigenpairs": right_requested_modes,
             "analytic_beta_relative_error": analytic_error,
             "left_right_classification": {
                 "right_polynomial_relative_residual_max": 1.0e-12,
                 "left_polynomial_relative_residual_max": 1.0e-10,
                 "biorthogonality_identity_error": 1.0e-8,
+                "biorthogonality_infinity_norm_error": 2.0e-8,
                 "left_candidate_pool_policy": (
-                    "max_requested_plus_4_or_1p5x"
+                    "max_requested_plus_8_or_2x"
                 ),
                 "right_requested_modes": right_requested_modes,
                 "left_candidate_requested_modes": (
@@ -196,13 +218,24 @@ def _qep_shard(
                 ),
                 "near_degenerate_groups": [
                     {
-                        "indices": [0],
+                        "indices": [0, 1],
                         "beta_center_per_nm": [1.0, 0.0],
                         "max_relative_beta_spread": 0.0,
                         "overlap_condition": 1.0,
-                        "normalization_method": "diagonal_qprime",
+                        "normalization_method": "near_degenerate_block_inverse",
                         "post_normalization_identity_error": 1.0e-12,
-                    }
+                    },
+                    *[
+                        {
+                            "indices": [index],
+                            "beta_center_per_nm": [float(index + 1), 0.0],
+                            "max_relative_beta_spread": 0.0,
+                            "overlap_condition": 1.0,
+                            "normalization_method": "diagonal_qprime",
+                            "post_normalization_identity_error": 1.0e-12,
+                        }
+                        for index in range(2, right_requested_modes)
+                    ],
                 ],
             },
             "quadrature": {
@@ -217,29 +250,80 @@ def _qep_shard(
             "formal_resource_authority": _resource_authority()
         },
         "gates": {
+            "converged_eigenpair": True,
+            "polynomial_relative_residual_le_1e-10": True,
+            "left_polynomial_relative_residual_le_1e-8": True,
+            "biorthogonality_identity_error_le_1e-6": True,
             "all_required_numerical_gates_pass": True,
             "left_right_beta_pair_relative_error_le_1e-7": True,
+            "analytic_beta_error_finite": (
+                "not_applicable_patterned_cross_section"
+                if material == "stage4_xy"
+                else True
+            ),
+            "no_swap": True,
+            "below_controlled_termination": True,
+            "formal_resource_authority_pass": True,
+            "raised_quadrature_pass": True,
+            "patterned_tracking_compact_ready": True,
+            "single_shard_only_not_physical_qualification": True,
+            "source_identity_stable_clean_pass": True,
         },
     }
 
 
-def _qep_watchdog(shard: dict, *, sha: str = SOURCE_SHA) -> dict:
+def _qep_watchdog(
+    shard: dict, *, solver_path: Path, sha: str = SOURCE_SHA
+) -> dict:
+    _write(solver_path, shard)
+    passed = shard["status"] == "measured_shard_pass"
+    source = _source(sha)
+    source_gate = source_identity_gate(source)
     return {
         "schema_version": "task033.memory-watchdog.v2",
         "benchmark_id": "task033_external_memory_watchdog",
-        "status": "measured_shard_pass",
+        "status": "measured_shard_pass" if passed else "formal_not_pass",
         "target": "qep",
-        "return_code": 0,
-        "formal_pass": True,
+        "command": [
+            "mpiexec", "-n", "1", "python", "-m",
+            "benchmarks.run_task033_qep_matrix",
+            "--requested-modes", "8",
+            "--left-candidate-modes", "16",
+        ],
+        "return_code": 0 if passed else 2,
+        "numeric_pass": passed,
+        "formal_pass": passed,
         "memory_authority_pass": True,
+        "requested_modes": 8,
+        "candidate_modes": 16,
         "no_swap": True,
         "terminated_for_memory": False,
         "terminated_for_timeout": False,
         "terminated_for_authority_unreadable": False,
-        "source": _source(sha),
+        "source": source,
+        "source_gate": source_gate,
+        "worker_source": shard["provenance"],
+        "launch_gate": {"pass": True},
         "resource_authority": {"gate": {"pass": True}},
+        "solver_record_sha256": _sha256(solver_path),
+        "solver_record_ignored_path": str(solver_path),
         "measurements": shard,
     }
+
+
+def _controlled_p4_negative(shard: dict) -> dict:
+    record = json.loads(json.dumps(shard))
+    record["status"] = "measured_shard_failed"
+    record["identity"]["is_solver_pass"] = False
+    record["gates"]["all_required_numerical_gates_pass"] = False
+    record["gates"]["biorthogonality_identity_error_le_1e-6"] = False
+    record["numerical_results"]["left_right_classification"][
+        "biorthogonality_identity_error"
+    ] = 2.0e-6
+    record["numerical_results"]["left_right_classification"][
+        "biorthogonality_infinity_norm_error"
+    ] = 3.0e-6
+    return record
 
 
 def _funnel(
@@ -530,14 +614,59 @@ class Task033FormalRecordTests(unittest.TestCase):
                             _write(
                                 path,
                                 _qep_watchdog(
-                                    _qep_shard(material, degree, h_nm)
+                                    _qep_shard(material, degree, h_nm),
+                                    solver_path=path.with_suffix(".solver.json"),
                                 ),
                             )
                         )
-            result = build_qep_order_study(paths)
+            result = build_qep_order_study(paths, repo_root=root)
             self.assertEqual(result["status"], "qep_component_aggregate_qualified")
             self.assertEqual(result["required_shard_count"], 36)
             self.assertEqual(result["formal_source"]["commit_sha"], SOURCE_SHA)
+            for source in result["source_records"]:
+                for descriptor_path in (
+                    source["path"],
+                    source["solver_record"]["path"],
+                ):
+                    self.assertFalse(Path(descriptor_path).is_absolute())
+                    self.assertNotIn("\\", descriptor_path)
+                    self.assertNotIn("..", Path(descriptor_path).parts)
+
+            p4_path = next(path for path in paths if "air_p4_h5.0" in path.name)
+            p4_shard = _controlled_p4_negative(_qep_shard("air", 4, 5.0))
+            _write(
+                p4_path,
+                _qep_watchdog(
+                    p4_shard,
+                    solver_path=p4_path.with_suffix(".solver.json"),
+                ),
+            )
+            partial = build_qep_order_study(paths, repo_root=root)
+            self.assertEqual(
+                partial["qualification_classification"], "partial_p3_only"
+            )
+            self.assertFalse(
+                partial["identity"]["is_qep_component_qualified"]
+            )
+            self.assertEqual(partial["negative_observation_count"], 1)
+            self.assertIn(
+                "evidence", partial["negative_observations"][0]
+            )
+
+            invalid_outer = json.loads(p4_path.read_text(encoding="utf-8"))
+            invalid_outer["no_swap"] = False
+            _write(p4_path, invalid_outer)
+            with self.assertRaisesRegex(
+                FormalRecordError, "execution/source/resource contract"
+            ):
+                build_qep_order_study(paths, repo_root=root)
+            _write(
+                p4_path,
+                _qep_watchdog(
+                    _qep_shard("air", 4, 5.0),
+                    solver_path=p4_path.with_suffix(".solver.json"),
+                ),
+            )
 
             forged_pair_gate = json.loads(paths[0].read_text(encoding="utf-8"))
             classification = forged_pair_gate["measurements"][
@@ -545,22 +674,35 @@ class Task033FormalRecordTests(unittest.TestCase):
             ]["left_right_classification"]
             classification["left_pair_relative_errors"][-1] = 2.0e-7
             classification["left_pair_relative_error_max"] = 2.0e-7
+            forged_solver = Path(
+                forged_pair_gate["solver_record_ignored_path"]
+            )
+            _write(forged_solver, forged_pair_gate["measurements"])
+            forged_pair_gate["solver_record_sha256"] = _sha256(
+                forged_solver
+            )
             _write(paths[0], forged_pair_gate)
             with self.assertRaisesRegex(
                 FormalRecordError, "native QEP aggregate did not qualify"
             ):
-                build_qep_order_study(paths)
+                build_qep_order_study(paths, repo_root=root)
             _write(
                 paths[0],
-                _qep_watchdog(_qep_shard("air", 1, 5.0)),
+                _qep_watchdog(
+                    _qep_shard("air", 1, 5.0),
+                    solver_path=paths[0].with_suffix(".solver.json"),
+                ),
             )
 
             changed = json.loads(paths[-1].read_text(encoding="utf-8"))
             changed["source"] = _source("b" * 40)
             changed["measurements"]["provenance"] = _source("b" * 40)
+            solver_path = Path(changed["solver_record_ignored_path"])
+            _write(solver_path, changed["measurements"])
+            changed["solver_record_sha256"] = _sha256(solver_path)
             _write(paths[-1], changed)
             with self.assertRaisesRegex(FormalRecordError, "mixes clean-source SHAs"):
-                build_qep_order_study(paths)
+                build_qep_order_study(paths, repo_root=root)
 
     def test_uniform_matrix_requires_every_non_memory_gated_measurement(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -598,11 +740,20 @@ class Task033FormalRecordTests(unittest.TestCase):
                 funnel_paths={},
                 anchor_paths={},
                 watchdog_paths=watchdogs,
+                repo_root=root,
             )
             self.assertEqual(result["status"], "formal_matrix_complete")
             self.assertEqual(len(result["entries"]), 20)
             self.assertEqual(result["summary"]["not_run_by_memory_gate_entries"], 11)
             self.assertEqual(result["summary"]["measured_watchdog_entries"], 9)
+            self.assertEqual(result["resource_matrix"]["path"], "resource_matrix.json")
+            self.assertTrue(
+                all(
+                    row["source_record_path"] is None
+                    or not Path(row["source_record_path"]).is_absolute()
+                    for row in result["entries"]
+                )
+            )
             self.assertIsNotNone(p2_h3_watchdog)
             invalid_contract_values = (
                 ("/task033_anchor_requalification/allowed", False),
@@ -661,6 +812,7 @@ class Task033FormalRecordTests(unittest.TestCase):
                             funnel_paths={},
                             anchor_paths={},
                             watchdog_paths=watchdogs,
+                            repo_root=root,
                         )
             _write(watchdogs["p2_h3"], p2_h3_watchdog)
             missing = dict(watchdogs)
@@ -671,6 +823,7 @@ class Task033FormalRecordTests(unittest.TestCase):
                     funnel_paths={},
                     anchor_paths={},
                     watchdog_paths=missing,
+                    repo_root=root,
                 )
 
     def test_adaptive_record_recomputes_gate_and_rejects_mixed_source(self) -> None:
@@ -739,7 +892,10 @@ class Task033FormalRecordTests(unittest.TestCase):
                 ),
             )
             result = build_adaptive_evidence(
-                plan_path, reference_path, candidate_path
+                plan_path,
+                reference_path,
+                candidate_path,
+                repo_root=root,
             )
             self.assertEqual(
                 result["status"], "measured_same_accuracy_qualification_attached"
@@ -760,6 +916,13 @@ class Task033FormalRecordTests(unittest.TestCase):
                 ]["binding"]["reference_npz_sha256_expected"],
                 "1" * 64,
             )
+            for evidence in result["measured_evidence"].values():
+                self.assertFalse(Path(evidence["path"]).is_absolute())
+                self.assertNotIn("\\", evidence["path"])
+                selected = evidence.get("selected_watchdog_path")
+                if selected is not None:
+                    self.assertFalse(Path(selected).is_absolute())
+                    self.assertNotIn("\\", selected)
 
             missing_binding = json.loads(
                 reference_watchdog.read_text(encoding="utf-8")
@@ -778,7 +941,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 FormalRecordError, "lacks pinned selected-plane field evidence"
             ):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
             _write(
                 reference_watchdog,
@@ -815,7 +983,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 FormalRecordError, "native same-accuracy gate did not qualify"
             ):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
             _write(
                 reference_watchdog,
@@ -851,7 +1024,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 FormalRecordError, "adaptive reference lacks interface E/H evidence"
             ):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
             _write(
                 reference_watchdog,
@@ -889,7 +1067,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 FormalRecordError, "selected-plane NPZ SHA256 differs"
             ):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
             _write(
                 candidate_watchdog,
@@ -915,7 +1098,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 FormalRecordError, "selected middle-plane field Gate failed"
             ):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
             _write(
                 candidate_watchdog,
@@ -950,7 +1138,12 @@ class Task033FormalRecordTests(unittest.TestCase):
             )
             _write(candidate_path, changed_funnel)
             with self.assertRaisesRegex(FormalRecordError, "mixes clean-source SHAs"):
-                build_adaptive_evidence(plan_path, reference_path, candidate_path)
+                build_adaptive_evidence(
+                    plan_path,
+                    reference_path,
+                    candidate_path,
+                    repo_root=root,
+                )
 
     def test_buffer_tradeoff_reads_selected_watchdogs_and_never_guesses_cost(self) -> None:
         costs = {
@@ -994,10 +1187,21 @@ class Task033FormalRecordTests(unittest.TestCase):
                         ),
                     )
                 )
-            result = build_interface_buffer_tradeoff(funnel_paths)
+            result = build_interface_buffer_tradeoff(
+                funnel_paths, repo_root=root
+            )
             self.assertEqual(result["status"], "qualified")
             self.assertEqual(result["selected_buffer_nm"], 7.5)
             self.assertEqual(len(result["candidates"]), 4)
+            for candidate in result["candidates"]:
+                self.assertFalse(
+                    Path(candidate["source_record_path"]).is_absolute()
+                )
+                self.assertFalse(
+                    Path(candidate["selected_watchdog_path"]).is_absolute()
+                )
+                self.assertNotIn("\\", candidate["source_record_path"])
+                self.assertNotIn("\\", candidate["selected_watchdog_path"])
 
             broken = json.loads(
                 summary_paths[10.0].read_text(encoding="utf-8")
@@ -1008,7 +1212,66 @@ class Task033FormalRecordTests(unittest.TestCase):
             funnel["source_records"][0]["sha256"] = _sha256(summary_paths[10.0])
             _write(funnel_paths[0], funnel)
             with self.assertRaisesRegex(FormalRecordError, "bottom_local_fe_dofs"):
-                build_interface_buffer_tradeoff(funnel_paths)
+                build_interface_buffer_tradeoff(
+                    funnel_paths, repo_root=root
+                )
+
+    def test_formal_record_builders_reject_repository_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "repo"
+            repo.mkdir()
+            outside = root / "outside.json"
+
+            with self.subTest(kind="absolute"):
+                with self.assertRaisesRegex(
+                    FormalRecordError, "escapes repository root"
+                ):
+                    build_qep_order_study([outside], repo_root=repo)
+            with self.subTest(kind="dot-dot"):
+                with self.assertRaisesRegex(
+                    FormalRecordError, "escapes repository root"
+                ):
+                    build_qep_order_study(
+                        [Path("../outside.json")], repo_root=repo
+                    )
+
+    def test_formal_checker_role_detail_uses_posix_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            evidence = _write(
+                root / "nested" / "uniform.json",
+                {
+                    "status": "formal_matrix_complete",
+                    "formal_source": {
+                        "commit_sha": SOURCE_SHA,
+                        "tracked_source_clean": True,
+                    },
+                },
+            )
+            spec = ROLE_SPECS["uniform_p_h_matrix"]
+            entry = {
+                "role": "uniform_p_h_matrix",
+                "path": "nested/uniform.json",
+                "sha256": _sha256(evidence),
+                "schema_ref": spec.schema_ref,
+                "source_sha_pointer": "/formal_source/commit_sha",
+                "source_clean_pointer": "/formal_source/tracked_source_clean",
+                "source_clean_expected": True,
+            }
+            with (
+                patch(
+                    "benchmarks.task033_evidence_checker._validate_instance"
+                ),
+                patch(
+                    "benchmarks.task033_evidence_checker._semantic_problems",
+                    return_value=[],
+                ),
+            ):
+                details = _check_formal_entry(root, entry, SOURCE_SHA)
+
+            self.assertEqual(details["path"], "nested/uniform.json")
+            self.assertNotIn("\\", details["path"])
 
     def test_manifest_binds_all_roles_hashes_statuses_and_one_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1047,6 +1310,22 @@ class Task033FormalRecordTests(unittest.TestCase):
                     ROLE_SPECS[role].accepted_statuses[0],
                 )
                 role_paths[role] = _write(root / f"{role}.json", payload)
+            final_payload = json.loads(
+                Path(role_paths["final_outcome"]).read_text(encoding="utf-8")
+            )
+            final_payload["input_evidence"] = [
+                {
+                    "role": input_role,
+                    "path": Path(role_paths[manifest_role])
+                    .relative_to(root)
+                    .as_posix(),
+                    "sha256": _sha256(Path(role_paths[manifest_role])),
+                    "source_commit_sha": SOURCE_SHA,
+                    "source_clean": True,
+                }
+                for input_role, manifest_role in FINAL_OUTCOME_INPUT_ROLE_MAP
+            ]
+            _write(Path(role_paths["final_outcome"]), final_payload)
             with (
                 patch(
                     "benchmarks.task033_formal_records._validate_payload"
@@ -1058,11 +1337,119 @@ class Task033FormalRecordTests(unittest.TestCase):
             ):
                 result = build_formal_manifest(role_paths, repo_root=root)
                 self.assertEqual(result["status"], "submitted_for_verification")
-                self.assertEqual(len(result["entries"]), 16)
+                self.assertEqual(len(result["entries"]), 21)
+                self.assertEqual(
+                    result["schema_version"],
+                    "task033.case091.formal-evidence-manifest.v2",
+                )
                 self.assertEqual(result["clean_source_sha"], SOURCE_SHA)
                 self.assertEqual(
                     result["entries"][0]["path"], result["entries"][1]["path"]
                 )
+
+                manifest_path = _write(root / "formal_manifest.json", result)
+                verification_payload = {
+                    "record_type": "task033_evidence_verification_report",
+                    "mode": "formal",
+                    "status": "evidence_verified",
+                    "verified": True,
+                    "problems": [],
+                    "checks": [
+                        {
+                            "name": "formal_manifest_schema",
+                            "status": "verified",
+                            "details": {
+                                "path": "formal_manifest.json",
+                                "sha256": _sha256(manifest_path),
+                            },
+                        },
+                        {
+                            "name": "formal_manifest_role_inventory",
+                            "status": "verified",
+                            "details": {},
+                        },
+                        *[
+                            {
+                                "name": f"formal_role:{role}",
+                                "status": "verified",
+                                "details": {},
+                            }
+                            for role in REQUIRED_FORMAL_ROLES
+                        ],
+                        {
+                            "name": "formal_final_outcome_input_closure",
+                            "status": "verified",
+                            "details": {},
+                        },
+                    ],
+                }
+                verification_path = _write(
+                    root / "formal_verification.json", verification_payload
+                )
+                publication = build_formal_publication_descriptor(
+                    manifest_path,
+                    verification_path,
+                    role_paths["final_outcome"],
+                    repo_root=root,
+                )
+                self.assertEqual(publication["status"], "publication_bound")
+                self.assertEqual(
+                    formal_publication_descriptor_problems(publication), []
+                )
+                self.assertNotIn(
+                    "formal_verification", publication.get("required_roles", [])
+                )
+                publication_schema = json.loads(
+                    (
+                        Path(__file__).resolve().parents[2]
+                        / "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility"
+                        / "formal_publication_descriptor_schema.json"
+                    ).read_text(encoding="utf-8")
+                )
+                publication_validator = Draft202012Validator(
+                    publication_schema
+                )
+                for bad_path in (
+                    "/absolute.json",
+                    "C:/absolute.json",
+                    "nested\\record.json",
+                    "../escape.json",
+                    "nested/../escape.json",
+                    "./record.json",
+                    "nested/./record.json",
+                    "nested//record.json",
+                    "nested/",
+                ):
+                    with self.subTest(publication_path=bad_path):
+                        forged_publication = json.loads(
+                            json.dumps(publication)
+                        )
+                        forged_publication["artifacts"]["formal_manifest"][
+                            "path"
+                        ] = bad_path
+                        self.assertTrue(
+                            list(
+                                publication_validator.iter_errors(
+                                    forged_publication
+                                )
+                            )
+                        )
+                        self.assertTrue(
+                            formal_publication_descriptor_problems(
+                                forged_publication
+                            )
+                        )
+                verification_payload["checks"][0]["details"]["sha256"] = "0" * 64
+                _write(verification_path, verification_payload)
+                with self.assertRaisesRegex(
+                    FormalRecordError, "not bound to the supplied manifest hash"
+                ):
+                    build_formal_publication_descriptor(
+                        manifest_path,
+                        verification_path,
+                        role_paths["final_outcome"],
+                        repo_root=root,
+                    )
 
                 changed_role = REQUIRED_FORMAL_ROLES[-1]
                 changed = json.loads(

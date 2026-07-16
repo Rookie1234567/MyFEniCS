@@ -1,5 +1,5 @@
 {
-  "schema_version": "task033.case091.formal-evidence-manifest.v1",
+  "schema_version": "task033.case091.formal-evidence-manifest.v2",
   "record_type": "task033_formal_evidence_manifest",
   "case_id": "091_hybrid_hp_adaptivity_feasibility",
   "status": "not_run",
@@ -15,9 +15,12 @@
     "case090_clean_core",
     "case090_mpi_memory",
     "qep_order_study",
-    "qep_mpi_timeout_negative",
+    "qep_mpi2_timeout_negative",
+    "qep_mpi4_timeout_negative",
     "hybrid_funnel_p1",
     "hybrid_funnel_p3",
+    "augmented_vs_minimal_p1",
+    "augmented_vs_minimal_p3",
     "uniform_p_h_matrix",
     "adaptive_p2_h5",
     "adaptive_p2_h3",
@@ -26,8 +29,10 @@
     "interface_buffer_5",
     "interface_buffer_2p5",
     "interface_buffer_tradeoff",
+    "equal_accuracy",
     "variable_p_capability_audit",
-    "one_tib_projection"
+    "one_tib_projection",
+    "final_outcome"
   ],
   "clean_source_sha": null,
   "entries": [],

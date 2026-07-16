@@ -55,6 +55,8 @@ class _JsonFile:
 class _Evidence:
     funnel: _JsonFile
     watchdog: _JsonFile
+    funnel_descriptor_path: str
+    watchdog_descriptor_path: str
     source_sha: str
     selected_m: int
     case: Mapping[str, Any]
@@ -63,10 +65,10 @@ class _Evidence:
 
     def input_descriptor(self) -> dict[str, Any]:
         return {
-            "funnel_path": str(self.funnel.path),
+            "funnel_path": self.funnel_descriptor_path,
             "funnel_sha256": self.funnel.sha256,
             "selected_mode_count_per_direction": self.selected_m,
-            "selected_watchdog_path": str(self.watchdog.path),
+            "selected_watchdog_path": self.watchdog_descriptor_path,
             "selected_watchdog_sha256": self.watchdog.sha256,
             "source_commit_full_sha": self.source_sha,
         }
@@ -78,6 +80,23 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _repo_path(path: Path | str, *, root: Path) -> tuple[Path, str]:
+    requested = Path(path)
+    resolved_root = root.resolve()
+    resolved = (
+        requested.resolve()
+        if requested.is_absolute()
+        else (resolved_root / requested).resolve()
+    )
+    try:
+        relative = resolved.relative_to(resolved_root)
+    except ValueError as exc:
+        raise EqualAccuracyError(
+            f"equal-accuracy evidence path escapes repository root: {path}"
+        ) from exc
+    return resolved, relative.as_posix()
 
 
 def _payload_sha256(payload: Mapping[str, Any]) -> str:
@@ -396,8 +415,9 @@ def _costs(payload: Mapping[str, Any], measurements: Mapping[str, Any]) -> dict[
     }
 
 
-def _load_evidence(path: Path | str) -> _Evidence:
-    funnel = _read_json(path)
+def _load_evidence(path: Path | str, *, repo_root: Path) -> _Evidence:
+    funnel_path, funnel_descriptor = _repo_path(path, root=repo_root)
+    funnel = _read_json(funnel_path)
     _validate_schema(funnel.payload, FUNNEL_SCHEMA_PATH, label=f"funnel {funnel.path}")
     payload = funnel.payload
     identity = payload.get("identity")
@@ -419,6 +439,7 @@ def _load_evidence(path: Path | str) -> _Evidence:
         raise EqualAccuracyError(f"funnel {funnel.path} lacks a full clean source SHA")
     funnel_sha = funnel_sha.lower()
     watchdog, selected_m = _selected_watchdog(funnel)
+    _, watchdog_descriptor = _repo_path(watchdog.path, root=repo_root)
     measurements, watchdog_sha = _watchdog_measurements(
         watchdog, funnel_sha=funnel_sha
     )
@@ -446,6 +467,8 @@ def _load_evidence(path: Path | str) -> _Evidence:
     return _Evidence(
         funnel=funnel,
         watchdog=watchdog,
+        funnel_descriptor_path=funnel_descriptor,
+        watchdog_descriptor_path=watchdog_descriptor,
         source_sha=watchdog_sha,
         selected_m=selected_m,
         case=case,
@@ -833,12 +856,15 @@ def _pareto_frontier(rows: Sequence[Mapping[str, Any]]) -> list[str]:
 def build_equal_accuracy(
     reference: Path | str,
     candidates: Sequence[Path | str],
+    *,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Compare arbitrary qualified Hybrid p/h candidates against one reference."""
 
     if not candidates:
         raise EqualAccuracyError("at least one --candidate funnel is required")
-    reference_evidence = _load_evidence(reference)
+    root = Path(repo_root).resolve()
+    reference_evidence = _load_evidence(reference, repo_root=root)
     # A reference that lacks complete observable evidence cannot define equal accuracy.
     _port_power(reference_evidence.measurements)
     _diffraction_orders(reference_evidence.measurements)
@@ -857,9 +883,9 @@ def build_equal_accuracy(
     input_rows: list[dict[str, Any]] = []
     for index, requested in enumerate(candidates, start=1):
         candidate_id = f"candidate_{index}"
-        path = Path(requested).resolve()
+        path, candidate_descriptor = _repo_path(requested, root=root)
         try:
-            evidence = _load_evidence(path)
+            evidence = _load_evidence(path, repo_root=root)
             comparison = _comparison(reference_evidence, evidence)
             compression = _compression(reference_evidence.costs, evidence.costs)
             row = {
@@ -890,7 +916,7 @@ def build_equal_accuracy(
                 "selected_mode_count_per_direction": None,
                 "source_commit_full_sha": None,
                 "input": {
-                    "funnel_path": str(path),
+                    "funnel_path": candidate_descriptor,
                     "funnel_sha256": funnel_hash,
                     "selected_watchdog_path": None,
                     "selected_watchdog_sha256": None,
@@ -977,10 +1003,12 @@ def build_equal_accuracy(
 def build_equal_accuracy_from_paths(
     reference: Path | str,
     candidates: Sequence[Path | str],
+    *,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """CLI-friendly alias for :func:`build_equal_accuracy`."""
 
-    return build_equal_accuracy(reference, candidates)
+    return build_equal_accuracy(reference, candidates, repo_root=repo_root)
 
 
 build_equal_accuracy_comparison = build_equal_accuracy

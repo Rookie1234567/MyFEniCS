@@ -54,10 +54,11 @@ def _measured_qep_numerical_results() -> dict:
             "right_polynomial_relative_residual_max": 1.0e-12,
             "left_polynomial_relative_residual_max": 1.0e-10,
             "biorthogonality_identity_error": 1.0e-8,
-            "left_candidate_pool_policy": "max_requested_plus_4_or_1p5x",
+            "biorthogonality_infinity_norm_error": 8.0e-8,
+            "left_candidate_pool_policy": "max_requested_plus_8_or_2x",
             "right_requested_modes": 8,
-            "left_candidate_requested_modes": 12,
-            "left_candidate_converged_modes": 12,
+            "left_candidate_requested_modes": 16,
+            "left_candidate_converged_modes": 16,
             "left_pair_relative_errors": pair_errors,
             "left_pair_relative_error_max": max(pair_errors),
             "near_degenerate_groups": [
@@ -110,9 +111,11 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
         self.assertGreater(prediction["full_dof_upper_bound"], 0)
         self.assertGreater(prediction["four_matrix_nnz_upper_bound"], 0)
         self.assertEqual(mixed_quad_local_dimension(4), 65)
-        self.assertEqual(task033_left_candidate_pool_size(8), 12)
+        self.assertEqual(task033_left_candidate_pool_size(2), 10)
+        self.assertEqual(task033_left_candidate_pool_size(8), 16)
+        self.assertEqual(task033_left_candidate_pool_size(12), 24)
         self.assertEqual(prediction["requested_modes"], 8)
-        self.assertEqual(prediction["left_candidate_modes"], 12)
+        self.assertEqual(prediction["left_candidate_modes"], 16)
         self.assertEqual(
             prediction["left_candidate_pool_policy"],
             LEFT_CANDIDATE_POOL_POLICY,
@@ -250,6 +253,13 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
         with self.assertRaises(jsonschema.ValidationError):
             validator.validate(missing_raw_pairing)
 
+        missing_infinity_norm = copy.deepcopy(measured)
+        del missing_infinity_norm["numerical_results"][
+            "left_right_classification"
+        ]["biorthogonality_infinity_norm_error"]
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(missing_infinity_norm)
+
         forged_all_pass = copy.deepcopy(measured)
         classification = forged_all_pass["numerical_results"][
             "left_right_classification"
@@ -258,6 +268,13 @@ class Task033QepMeasurementMatrixTests(unittest.TestCase):
         classification["left_pair_relative_error_max"] = 2.0e-7
         with self.assertRaises(jsonschema.ValidationError):
             validator.validate(forged_all_pass)
+
+        forged_biorthogonality_pass = copy.deepcopy(measured)
+        forged_biorthogonality_pass["numerical_results"][
+            "left_right_classification"
+        ]["biorthogonality_identity_error"] = 1.000001e-6
+        with self.assertRaises(jsonschema.ValidationError):
+            validator.validate(forged_biorthogonality_pass)
 
         missing_explicit_gate = copy.deepcopy(measured)
         del missing_explicit_gate["gates"][

@@ -10,6 +10,12 @@ from typing import Any, Mapping, Sequence
 
 from jsonschema import Draft202012Validator
 
+from benchmarks.task033_qep_qualification import (
+    qep_full_aggregate_gate,
+    qep_p3_only_partial_aggregate_gate,
+    qep_source_record_file_gate,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = (
@@ -53,6 +59,7 @@ class FinalOutcomeError(ValueError):
 class Evidence:
     role: str
     path: Path
+    descriptor_path: str
     payload: Mapping[str, Any]
     sha256: str
     source_sha: str
@@ -60,7 +67,7 @@ class Evidence:
     def descriptor(self) -> dict[str, Any]:
         return {
             "role": self.role,
-            "path": str(self.path),
+            "path": self.descriptor_path,
             "sha256": self.sha256,
             "schema_version": self.payload.get("schema_version"),
             "record_type": self.payload.get("record_type")
@@ -115,14 +122,33 @@ def _canonical_payload_sha(payload: Mapping[str, Any], field: str) -> str:
     return hashlib.sha256(rendered).hexdigest()
 
 
-def _read_json(role: str, path: Path | str) -> tuple[Path, Mapping[str, Any], str]:
-    resolved = Path(path).resolve()
+def _read_json(
+    role: str, path: Path | str, *, repo_root: Path
+) -> tuple[Path, str, Mapping[str, Any], str]:
+    root = repo_root.resolve()
+    requested = Path(path)
+    resolved = (
+        requested.resolve()
+        if requested.is_absolute()
+        else (root / requested).resolve()
+    )
+    try:
+        descriptor_path = resolved.relative_to(root).as_posix()
+    except ValueError as exc:
+        raise FinalOutcomeError(
+            f"{role} evidence path escapes repository root: {path}"
+        ) from exc
     try:
         raw = resolved.read_bytes()
         payload = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise FinalOutcomeError(f"cannot read {role} evidence {resolved}: {exc}") from exc
-    return resolved, _mapping(payload, label=f"{role} evidence"), hashlib.sha256(raw).hexdigest()
+    return (
+        resolved,
+        descriptor_path,
+        _mapping(payload, label=f"{role} evidence"),
+        hashlib.sha256(raw).hexdigest(),
+    )
 
 
 def _formal_source(payload: Mapping[str, Any], *, role: str) -> str:
@@ -189,8 +215,10 @@ def _validate_kind(role: str, payload: Mapping[str, Any]) -> None:
     raise FinalOutcomeError(f"unsupported final-outcome evidence role: {role}")
 
 
-def _load(role: str, path: Path | str) -> Evidence:
-    resolved, payload, file_sha = _read_json(role, path)
+def _load(role: str, path: Path | str, *, repo_root: Path) -> Evidence:
+    resolved, descriptor_path, payload, file_sha = _read_json(
+        role, path, repo_root=repo_root
+    )
     _validate_kind(role, payload)
     if role == "case090_core":
         identity = _mapping(payload.get("identity"), label="case090_core.identity")
@@ -220,7 +248,18 @@ def _load(role: str, path: Path | str) -> Evidence:
         source_sha = _watchdog_source(payload, role=role)
     else:
         source_sha = _formal_source(payload, role=role)
-    return Evidence(role, resolved, payload, file_sha, source_sha)
+    if role == "qep_mpi1_aggregate":
+        files = qep_source_record_file_gate(
+            payload, root=repo_root
+        )
+        if files.get("pass") is not True:
+            raise FinalOutcomeError(
+                "qep_mpi1_aggregate source-record files failed hash/binding "
+                f"checks: {files.get('failures')!r}"
+            )
+    return Evidence(
+        role, resolved, descriptor_path, payload, file_sha, source_sha
+    )
 
 
 def _command_mpi_size(command: Any, *, label: str) -> int | None:
@@ -240,15 +279,31 @@ def _all_true(value: Any) -> bool:
 def _timeout_result(evidence: Evidence, expected_mpi: int) -> dict[str, Any]:
     payload = evidence.payload
     reasons: list[str] = []
+    resource_authority = payload.get("resource_authority")
+    resource_authority = (
+        resource_authority
+        if isinstance(resource_authority, Mapping)
+        else {}
+    )
+    resource_gate = resource_authority.get("gate")
+    resource_gate = resource_gate if isinstance(resource_gate, Mapping) else {}
     checks = {
         "formal_not_pass": payload.get("status") == "formal_not_pass" and payload.get("formal_pass") is False,
+        "numeric_not_pass": payload.get("numeric_pass") is False,
+        "nonzero_integer_return_code": (
+            type(payload.get("return_code")) is int
+            and payload.get("return_code") != 0
+        ),
         "wall_timeout_only": (
             payload.get("terminated_for_timeout") is True
             and payload.get("terminated_for_memory") is False
             and payload.get("terminated_for_authority_unreadable") is False
         ),
-        "resource_authority_pass": payload.get("memory_authority_pass") is True,
+        "memory_authority_pass": payload.get("memory_authority_pass") is True,
+        "resource_authority_gate_pass": resource_gate.get("pass") is True,
         "no_swap": payload.get("no_swap") is True,
+        "source_gate_pass": isinstance(payload.get("source_gate"), Mapping)
+        and payload["source_gate"].get("pass") is True,
         "launch_gate_pass": isinstance(payload.get("launch_gate"), Mapping)
         and payload["launch_gate"].get("pass") is True,
         "expected_mpi_size": _command_mpi_size(payload.get("command"), label=evidence.role)
@@ -756,14 +811,20 @@ def _core_pass(payload: Mapping[str, Any]) -> bool:
 
 
 def _qep_pass(payload: Mapping[str, Any]) -> bool:
-    identity = payload.get("identity")
     return bool(
-        payload.get("status") == "qep_component_aggregate_qualified"
-        and isinstance(identity, Mapping)
-        and identity.get("is_qep_component_qualified") is True
-        and _all_true(payload.get("gates"))
-        and payload.get("missing_candidates") == []
-        and payload.get("duplicate_count") == 0
+        qep_full_aggregate_gate(
+            payload, require_evidence_descriptors=True
+        ).get("pass")
+        is True
+    )
+
+
+def _qep_p3_only_partial(payload: Mapping[str, Any]) -> bool:
+    return bool(
+        qep_p3_only_partial_aggregate_gate(
+            payload, require_evidence_descriptors=True
+        ).get("pass")
+        is True
     )
 
 
@@ -783,12 +844,14 @@ def build_final_outcome(
     variable_p_capability_audit: Path | str,
     one_tib_projection: Path | str,
     expected_source_sha: str,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Classify Task033 from immutable formal inputs without promoting NOT_RUN."""
 
+    root = Path(repo_root).resolve()
     requested = locals()
     evidence = {
-        role: _load(role, requested[role])
+        role: _load(role, requested[role], repo_root=root)
         for role in INPUT_ROLES
     }
     expected_sha = _full_sha(expected_source_sha, label="expected_source_sha")
@@ -800,6 +863,9 @@ def build_final_outcome(
 
     core_pass = _core_pass(evidence["case090_core"].payload)
     qep_pass = _qep_pass(evidence["qep_mpi1_aggregate"].payload)
+    qep_p3_only_partial = _qep_p3_only_partial(
+        evidence["qep_mpi1_aggregate"].payload
+    )
     timeout2 = _timeout_result(evidence["qep_mpi2_timeout_negative"], 2)
     timeout4 = _timeout_result(evidence["qep_mpi4_timeout_negative"], 4)
     anchor1 = _anchor_result(evidence["augmented_vs_minimal_p1"], 1)
@@ -842,7 +908,7 @@ def build_final_outcome(
     mandatory_failures: list[str] = []
     if not core_pass:
         mandatory_failures.append("case090_core_not_qualified")
-    if not qep_pass:
+    if not qep_pass and not qep_p3_only_partial:
         mandatory_failures.append("qep_mpi1_aggregate_not_qualified")
     for name, result in (
         ("qep_mpi2_timeout_negative", timeout2),
@@ -863,6 +929,8 @@ def build_final_outcome(
         mandatory_failures.append("variable_p_fail_closed_contract_failed")
 
     partial_reasons: list[str] = []
+    if qep_p3_only_partial:
+        partial_reasons.append("qep_p4_controlled_numeric_negative")
     if timeout2["disposition"] == "legitimate_not_run" and timeout4["disposition"] == "legitimate_not_run":
         partial_reasons.append("matching_interface_qep_mpi2_mpi4_not_positively_qualified")
     if p3["disposition"] == "negative":
@@ -904,18 +972,27 @@ def build_final_outcome(
                 "classification": (
                     "high_order_floquet_pass"
                     if core_pass and qep_pass
+                    else "high_order_floquet_partial_p3_only"
+                    if core_pass and qep_p3_only_partial
                     else "high_order_floquet_failed"
                 ),
                 "case090_core_pass": core_pass,
                 "qep_mpi1_component_pass": qep_pass,
+                "qep_mpi1_p3_only_partial": qep_p3_only_partial,
             },
             "distributed_qep": {
                 "disposition": (
                     "partial"
-                    if timeout2["disposition"] == timeout4["disposition"] == "legitimate_not_run"
+                    if (
+                        timeout2["disposition"]
+                        == timeout4["disposition"]
+                        == "legitimate_not_run"
+                        and (qep_pass or qep_p3_only_partial)
+                    )
                     else "failed"
                 ),
                 "mpi1_positive_qualified": qep_pass,
+                "mpi1_p3_only_partial": qep_p3_only_partial,
                 "mpi2": timeout2,
                 "mpi4": timeout4,
                 "matching_interface_mpi2_mpi4_positive_qualified": False,

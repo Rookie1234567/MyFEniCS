@@ -30,6 +30,32 @@ ModeKind = Literal[
 ]
 
 
+class NoAdmissibleLeftPairError(RuntimeError):
+    """Raised when the adjoint solve cannot pair every requested right mode."""
+
+    def __init__(
+        self,
+        errors: Sequence[float],
+        *,
+        maximum_relative_error: float,
+    ) -> None:
+        self.pair_relative_errors = tuple(float(error) for error in errors)
+        self.maximum_relative_error = float(maximum_relative_error)
+        failures = [
+            (index, error)
+            for index, error in enumerate(self.pair_relative_errors)
+            if not np.isfinite(error) or error > self.maximum_relative_error
+        ]
+        rendered = ", ".join(
+            f"index={index}, error={error:.6e}" for index, error in failures
+        )
+        super().__init__(
+            "Adjoint QEP candidate pool has no admissible conjugate partner "
+            "for every right mode "
+            f"(limit={self.maximum_relative_error:.6e}; {rendered})."
+        )
+
+
 @dataclass(frozen=True)
 class NearDegenerateGroup:
     indices: tuple[int, ...]
@@ -71,6 +97,7 @@ class BiorthogonalModeBasis:
     groups: tuple[NearDegenerateGroup, ...]
     biorthogonality_matrix: np.ndarray
     max_identity_error: float
+    max_entry_identity_error: float
     adjoint_solver_report: QuadraticBetaSolveReport
     left_pair_relative_errors: tuple[float, ...]
     full_vector_gathered: bool = False
@@ -251,18 +278,12 @@ def _require_admissible_left_pairs(
             "Maximum left/right beta pair relative error must be finite and "
             "non-negative."
         )
-    failures = [
-        (index, float(error))
-        for index, error in enumerate(errors)
-        if not np.isfinite(error) or float(error) > limit
-    ]
-    if failures:
-        rendered = ", ".join(
-            f"index={index}, error={error:.6e}" for index, error in failures
-        )
-        raise RuntimeError(
-            "Adjoint QEP candidate pool has no admissible conjugate partner "
-            f"for every right mode (limit={limit:.6e}; {rendered})."
+    if any(
+        not np.isfinite(error) or float(error) > limit for error in errors
+    ):
+        raise NoAdmissibleLeftPairError(
+            errors,
+            maximum_relative_error=limit,
         )
 
 
@@ -313,17 +334,36 @@ def _linear_combination(
 
 def _biorthogonality_matrix(
     operators: QuadraticBetaOperators,
-    betas: Sequence[complex],
+    left_betas: Sequence[complex],
+    right_betas: Sequence[complex],
     left_vectors: Sequence[PETSc.Vec],
     right_vectors: Sequence[PETSc.Vec],
 ) -> np.ndarray:
-    matrix = np.empty((len(betas), len(betas)), dtype=np.complex128)
-    for row, (beta_left, left) in enumerate(zip(betas, left_vectors)):
-        for column, (beta_right, right) in enumerate(zip(betas, right_vectors)):
+    matrix = np.empty(
+        (len(left_betas), len(right_betas)), dtype=np.complex128
+    )
+    for row, (beta_left, left) in enumerate(zip(left_betas, left_vectors)):
+        for column, (beta_right, right) in enumerate(
+            zip(right_betas, right_vectors)
+        ):
             matrix[row, column] = _qep_overlap(
                 operators, left, beta_left, right, beta_right
             )
     return matrix
+
+
+def _identity_error_metrics(matrix: np.ndarray) -> tuple[float, float]:
+    """Return induced-infinity and componentwise identity errors."""
+
+    values = np.asarray(matrix, dtype=np.complex128)
+    if values.ndim != 2 or values.shape[0] != values.shape[1]:
+        raise ValueError("Biorthogonality matrix must be square.")
+    difference = values - np.eye(values.shape[0], dtype=np.complex128)
+    infinity_norm = float(np.linalg.norm(difference, ord=np.inf))
+    max_entry = (
+        float(np.max(np.abs(difference))) if difference.size else 0.0
+    )
+    return infinity_norm, max_entry
 
 
 def classify_mode_branch(
@@ -440,7 +480,7 @@ def build_biorthogonal_mode_basis(
     absolute_flux_tolerance: float = 1.0e-12,
     beta_imag_tolerance: float = 1.0e-10,
     near_degenerate_tolerance: float = 1.0e-6,
-    block_rotation_tolerance: float = 1.0e-8,
+    block_rotation_tolerance: float = 1.0e-6,
     maximum_overlap_condition: float = 1.0e12,
     maximum_left_pair_relative_error: float = 1.0e-7,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
@@ -455,6 +495,19 @@ def build_biorthogonal_mode_basis(
 
     if not right_modes:
         raise ValueError("At least one right mode is required.")
+    if (
+        not np.isfinite(near_degenerate_tolerance)
+        or near_degenerate_tolerance <= 0.0
+    ):
+        raise ValueError("Near-degenerate tolerance must be finite and positive.")
+    if (
+        not np.isfinite(block_rotation_tolerance)
+        or block_rotation_tolerance < near_degenerate_tolerance
+    ):
+        raise ValueError(
+            "Block-rotation tolerance must be finite and no smaller than the "
+            "near-degenerate tolerance so every identified group is rotated."
+        )
     requested = max(
         len(right_modes),
         int(requested_left_modes or len(right_modes)),
@@ -506,7 +559,7 @@ def build_biorthogonal_mode_basis(
                     _qep_overlap(
                         operators,
                         left.right_reduced,
-                        right.beta,
+                        np.conj(left.beta),
                         right.right_reduced,
                         right.beta,
                     )
@@ -581,6 +634,7 @@ def build_biorthogonal_mode_basis(
             log("Task32 mode basis: right-mode flux normalization complete")
 
         betas = [complex(mode.beta) for mode in right_modes]
+        left_betas = [np.conj(complex(mode.beta)) for mode in left_candidates]
         left_reduced = [mode.right_reduced for mode in left_candidates]
         left_full = [mode.right_full for mode in left_candidates]
         group_indices = _near_degenerate_groups(
@@ -606,7 +660,7 @@ def build_biorthogonal_mode_basis(
                     raw_overlap[local_row, local_column] = _qep_overlap(
                         operators,
                         left_reduced[global_row],
-                        betas[global_row],
+                        left_betas[global_row],
                         right_modes[global_column].right_reduced,
                         betas[global_column],
                     )
@@ -617,7 +671,7 @@ def build_biorthogonal_mode_basis(
                     f"indices={indices}, condition={condition:.6e}."
                 )
 
-            if len(indices) > 1 and spread <= block_rotation_tolerance:
+            if len(indices) > 1:
                 transform = np.linalg.inv(raw_overlap).conj().T
                 old_reduced = [left_reduced[index] for index in indices]
                 old_full = [left_full[index] for index in indices]
@@ -640,7 +694,7 @@ def build_biorthogonal_mode_basis(
                     diagonal = _qep_overlap(
                         operators,
                         left_reduced[global_index],
-                        betas[global_index],
+                        left_betas[global_index],
                         right_modes[global_index].right_reduced,
                         betas[global_index],
                     )
@@ -658,6 +712,7 @@ def build_biorthogonal_mode_basis(
 
         biorthogonality = _biorthogonality_matrix(
             operators,
+            left_betas,
             betas,
             left_reduced,
             [mode.right_reduced for mode in right_modes],
@@ -714,15 +769,15 @@ def build_biorthogonal_mode_basis(
         if log is not None:
             log("Task32 mode basis: classified mode records complete")
 
+        max_identity_error, max_entry_identity_error = (
+            _identity_error_metrics(biorthogonality)
+        )
         return BiorthogonalModeBasis(
             modes=classified,
             groups=tuple(groups),
             biorthogonality_matrix=biorthogonality,
-            max_identity_error=float(
-                np.linalg.norm(
-                    biorthogonality - np.eye(len(right_modes)), ord=np.inf
-                )
-            ),
+            max_identity_error=max_identity_error,
+            max_entry_identity_error=max_entry_identity_error,
             adjoint_solver_report=adjoint_report,
             left_pair_relative_errors=left_pair_errors,
         )
@@ -866,7 +921,7 @@ def track_mode_bases(
                 _qep_overlap(
                     operators,
                     previous_mode.left_reduced,
-                    previous_mode.beta,
+                    np.conj(previous_mode.left_adjoint_beta),
                     current_mode.right.right_reduced,
                     current_mode.beta,
                 )

@@ -514,6 +514,9 @@ def _numerical_results(
                     for mode in basis.modes
                 ),
                 "biorthogonality_identity_error": float(
+                    basis.max_entry_identity_error
+                ),
+                "biorthogonality_infinity_norm_error": float(
                     basis.max_identity_error
                 ),
                 "left_pair_relative_errors": [
@@ -979,29 +982,41 @@ def _run_shard(
                 for stage in memory_stages
             )
         )
-        residual_pass = numerics["polynomial_relative_residual"] <= 1.0e-10
         classification = numerics["left_right_classification"]
+        residual_pass = bool(
+            classification is not None
+            and 0.0
+            <= classification["right_polynomial_relative_residual_max"]
+            <= 1.0e-10
+        )
         left_residual_pass = bool(
             classification is not None
-            and classification["left_polynomial_relative_residual_max"]
+            and 0.0
+            <= classification["left_polynomial_relative_residual_max"]
             <= 1.0e-8
         )
         biorthogonality_pass = bool(
             classification is not None
-            and classification["biorthogonality_identity_error"] <= 1.0e-6
+            and 0.0
+            <= classification["biorthogonality_identity_error"]
+            <= 1.0e-6
         )
         left_right_beta_pair_pass = bool(
             classification is not None
-            and classification["left_pair_relative_error_max"]
+            and 0.0
+            <= classification["left_pair_relative_error_max"]
             <= LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX
         )
         analytic_error = numerics["analytic_beta_relative_error"]
         analytic_gate = (
             "not_applicable_patterned_cross_section"
             if analytic_error is None
-            else bool(math.isfinite(analytic_error))
+            else bool(math.isfinite(analytic_error) and analytic_error >= 0.0)
         )
-        converged_pass = numerics["converged_eigenpairs"] > 0
+        converged_pass = (
+            numerics["converged_eigenpairs"]
+            >= numerics["requested_eigenpairs"]
+        )
         below_termination = all(
             item.get("memory_authority_gib") is not None
             and float(item["memory_authority_gib"]) < termination
@@ -1160,7 +1175,7 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         help=(
             "Transient adjoint candidate pool. Execution requires at least "
-            "the audited max(requested+4, ceil(1.5*requested)) policy."
+            "the audited max(requested+8, 2*requested) policy."
         ),
     )
     parser.add_argument("--container-limit-gib", type=float)

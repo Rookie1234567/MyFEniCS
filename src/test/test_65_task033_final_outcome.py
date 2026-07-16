@@ -1,18 +1,32 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
 
 from benchmarks.run_task033_final_outcome import main as cli_main
+from benchmarks.task033_evidence_checker import (
+    FINAL_OUTCOME_INPUT_ROLE_MAP,
+    final_outcome_manifest_closure_problems,
+)
+from benchmarks.task033_qep_qualification import (
+    qep_p4_controlled_negative_gate,
+    qep_shard_gate,
+    source_identity_gate,
+)
 from benchmarks.task033_final_outcome import (
     FinalOutcomeError,
     SCHEMA_PATH,
     build_final_outcome,
+)
+from src.test.test_62_task033_formal_records import (
+    _controlled_p4_negative,
+    _qep_shard,
 )
 
 
@@ -34,6 +48,10 @@ def _payload_sha(payload: dict, field: str) -> str:
         allow_nan=False,
     ).encode()
     return hashlib.sha256(rendered).hexdigest()
+
+
+def _file_sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _formal_source(sha: str = SOURCE_SHA) -> dict:
@@ -101,16 +119,7 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         }
         core["evidence_sha256"] = _payload_sha(core, "evidence_sha256")
 
-        qep = {
-            "schema_version": "task033.qep-aggregate.v1",
-            "record_type": "task033_qep_aggregate",
-            "status": "qep_component_aggregate_qualified",
-            "formal_source": _formal_source(),
-            "identity": {"is_qep_component_qualified": True},
-            "gates": {"complete": True, "numerical": True},
-            "missing_candidates": [],
-            "duplicate_count": 0,
-        }
+        qep = self._materialize_qep_sources(self._full_qep_payload())
 
         def timeout(mpi: int) -> dict:
             return {
@@ -119,11 +128,14 @@ class Task033FinalOutcomeTests(unittest.TestCase):
                 "status": "formal_not_pass",
                 "target": "qep",
                 "formal_pass": False,
+                "numeric_pass": False,
+                "return_code": -15,
                 "terminated_for_timeout": True,
                 "terminated_for_memory": False,
                 "terminated_for_authority_unreadable": False,
                 "memory_authority_pass": True,
                 "no_swap": True,
+                "resource_authority": {"gate": {"pass": True}},
                 "launch_gate": {"pass": True},
                 "source_gate": _source_gate(),
                 "command": ["mpiexec", "-n", str(mpi), "python", "qep"],
@@ -406,6 +418,7 @@ class Task033FinalOutcomeTests(unittest.TestCase):
             "variable_p_capability_audit": self._write("variable_p.json", variable_p),
             "one_tib_projection": self._write("one_tib.json", one_tib),
             "expected_source_sha": SOURCE_SHA,
+            "repo_root": self.root,
         }
         return paths
 
@@ -417,6 +430,358 @@ class Task033FinalOutcomeTests(unittest.TestCase):
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+
+    def _materialize_qep_sources(self, payload: dict) -> dict:
+        for index, row in enumerate(payload["source_records"]):
+            negative = row["disposition"] == "controlled_numeric_negative"
+            candidate = row["candidate"]
+            solver_payload = _qep_shard(
+                candidate["material_kind"],
+                candidate["degree"],
+                candidate["h_nm"],
+            )
+            if negative:
+                solver_payload = _controlled_p4_negative(solver_payload)
+            source = solver_payload["provenance"]
+            solver_path = self._write(
+                f"qep_source_{index}.solver.json", solver_payload
+            )
+            summary = {
+                "schema_version": "task033.memory-watchdog.v2",
+                "benchmark_id": "task033_external_memory_watchdog",
+                "target": "qep",
+                "status": "formal_not_pass" if negative else "measured_shard_pass",
+                "formal_pass": not negative,
+                "numeric_pass": not negative,
+                "return_code": 2 if negative else 0,
+                "memory_authority_pass": True,
+                "no_swap": True,
+                "terminated_for_memory": False,
+                "terminated_for_timeout": False,
+                "terminated_for_authority_unreadable": False,
+                "resource_authority": {"gate": {"pass": True}},
+                "source": source,
+                "source_gate": source_identity_gate(source),
+                "worker_source": source,
+                "launch_gate": {"pass": True},
+                "solver_record_sha256": _file_sha(solver_path),
+                "solver_record_ignored_path": solver_path.relative_to(
+                    self.root
+                ).as_posix(),
+                "measurements": solver_payload,
+            }
+            watchdog_path = self._write(
+                f"qep_source_{index}.watchdog.json", summary
+            )
+            row["path"] = watchdog_path.relative_to(self.root).as_posix()
+            row["sha256"] = _file_sha(watchdog_path)
+            row["solver_record"] = {
+                "path": solver_path.relative_to(self.root).as_posix(),
+                "sha256": _file_sha(solver_path),
+            }
+            key = "|".join(
+                str(candidate[name])
+                for name in ("material_kind", "degree", "h_nm", "mpi_size")
+            )
+            positive_gate = qep_shard_gate(solver_payload)
+            controlled_gate = qep_p4_controlled_negative_gate(solver_payload)
+            payload["shard_gates"][key] = {
+                "pass": positive_gate["pass"],
+                "disposition": (
+                    "controlled_numeric_negative" if negative else "pass"
+                ),
+                "positive_gate": positive_gate,
+                "controlled_negative_gate": controlled_gate,
+            }
+        by_candidate = {
+            (
+                row["candidate"]["material_kind"],
+                row["candidate"]["degree"],
+                row["candidate"]["h_nm"],
+                row["candidate"]["mpi_size"],
+            ): row
+            for row in payload["source_records"]
+        }
+        for observation in payload["negative_observations"]:
+            candidate = observation["candidate"]
+            source = by_candidate[
+                (
+                    candidate["material_kind"],
+                    candidate["degree"],
+                    candidate["h_nm"],
+                    candidate["mpi_size"],
+                )
+            ]
+            observation["evidence"] = {
+                "watchdog_summary": {
+                    "path": source["path"],
+                    "sha256": source["sha256"],
+                },
+                "solver_record": source["solver_record"],
+                "watchdog_return_code": 2,
+            }
+        return payload
+
+    @staticmethod
+    def _partial_qep_payload() -> dict:
+        materials = ("air", "lossy_homogeneous", "stage4_xy")
+        degrees = (1, 2, 3, 4)
+        levels = (5.0, 3.0, 2.5)
+        shard_gates = {}
+        source_records = []
+        for material in materials:
+            for degree in degrees:
+                for h_nm in levels:
+                    key = f"{material}|{degree}|{h_nm}|1"
+                    shard_gates[key] = {
+                        "pass": True,
+                        "disposition": "pass",
+                        "positive_gate": {
+                            "pass": True,
+                            "checks": {"complete": True},
+                            "failures": [],
+                        },
+                        "controlled_negative_gate": {
+                            "pass": False,
+                            "checks": {"not_negative": False},
+                            "failures": ["not_negative"],
+                            "controlled_failure_gates": [],
+                        },
+                    }
+                    source_records.append(
+                        {
+                            "candidate": {
+                                "material_kind": material,
+                                "degree": degree,
+                                "h_nm": h_nm,
+                                "mpi_size": 1,
+                            },
+                            "path": f"qep/{key}/watchdog.json",
+                            "sha256": _digest(f"watchdog-{key}"),
+                            "disposition": "pass",
+                            "solver_record": {
+                                "path": f"qep/{key}/solver.json",
+                                "sha256": _digest(f"solver-{key}"),
+                            },
+                        }
+                    )
+        controlled_key = "lossy_homogeneous|4|3.0|1"
+        positive_check_names = {
+            "measured_shard_status",
+            "measured_pde_solver_identity",
+            "no_exception_failure_payload",
+            "source_identity",
+            "resource_authority",
+            "converged_eigenpairs",
+            "right_residual",
+            "left_residual",
+            "biorthogonality",
+            "left_candidate_pool_policy",
+            "right_requested_modes",
+            "left_candidate_requested_modes",
+            "left_candidate_converged_modes",
+            "left_pair_relative_errors_complete_and_finite",
+            "left_pair_relative_error_max_matches_list",
+            "left_right_beta_pair_relative_error_le_1e-7",
+            "reported_left_right_beta_pair_gate_matches_recomputed",
+            "raised_quadrature",
+            "analytic_beta_identity",
+            "patterned_tracking_compact_input",
+            "runtime_preflight_complete",
+            "reported_all_required_numerical_gates_pass",
+            "reported_converged_eigenpair_gate",
+            "reported_right_residual_gate_matches_recomputed",
+            "reported_left_residual_gate_matches_recomputed",
+            "reported_biorthogonality_gate_matches_recomputed",
+            "reported_no_swap_gate",
+            "reported_below_termination_gate",
+            "reported_formal_resource_gate",
+            "reported_raised_quadrature_gate_matches_recomputed",
+            "reported_tracking_gate_matches_recomputed",
+            "reported_single_shard_identity_gate",
+            "reported_source_identity_gate",
+            "reported_analytic_gate_matches_recomputed",
+        }
+        expected_failures = {
+            "measured_shard_status",
+            "measured_pde_solver_identity",
+            "biorthogonality",
+            "reported_all_required_numerical_gates_pass",
+        }
+        shard_gates[controlled_key] = {
+            "pass": False,
+            "disposition": "controlled_numeric_negative",
+            "positive_gate": {
+                "pass": False,
+                "checks": {
+                    name: name not in expected_failures
+                    for name in positive_check_names
+                },
+                "failures": sorted(expected_failures),
+            },
+            "controlled_negative_gate": {
+                "pass": True,
+                "checks": {"complete": True},
+                "failures": [],
+                "controlled_failure_gates": [
+                    "biorthogonality_identity_error_le_1e-6"
+                ],
+            },
+        }
+        controlled_source = next(
+            row
+            for row in source_records
+            if row["candidate"]
+            == {
+                "material_kind": "lossy_homogeneous",
+                "degree": 4,
+                "h_nm": 3.0,
+                "mpi_size": 1,
+            }
+        )
+        controlled_source["disposition"] = "controlled_numeric_negative"
+        analytic_trends = {
+            material: {
+                f"p{degree}": {
+                    "h_nm": list(levels),
+                    "relative_errors": [1.0e-3, 5.0e-4, 2.5e-4],
+                    "h_refinement_trend_pass": True,
+                }
+                for degree in degrees
+            }
+            for material in ("air", "lossy_homogeneous")
+        }
+        relative_to_p2 = {
+            material: [
+                {
+                    "h_nm": h_nm,
+                    **{
+                        f"p{degree}_error_over_p2": 1.0
+                        for degree in degrees
+                    },
+                }
+                for h_nm in levels
+            ]
+            for material in ("air", "lossy_homogeneous")
+        }
+        patterned_tracking = {
+            f"p{degree}": [{"pass": True}, {"pass": True}]
+            for degree in degrees
+        }
+        return {
+            "schema_version": "task033.qep-aggregate.v1",
+            "record_type": "task033_qep_aggregate",
+            "status": "qep_component_aggregate_not_qualified",
+            "qualification_classification": "partial_p3_only",
+            "formal_source": _formal_source(),
+            "identity": {
+                "is_qep_component_qualified": False,
+                "is_qep_p3_only_partial": True,
+                "is_physical_qualification_record": False,
+            },
+            "mpi_size": 1,
+            "required_shard_count": 36,
+            "received_unique_shard_count": 36,
+            "duplicate_count": 0,
+            "unexpected_record_count": 0,
+            "missing_candidates": [],
+            "p1_p2_p3_passed_shard_count": 27,
+            "p4_completed_shard_count": 9,
+            "negative_observation_count": 1,
+            "negative_observations": [
+                {
+                    "candidate": {
+                        "material_kind": "lossy_homogeneous",
+                        "degree": 4,
+                        "h_nm": 3.0,
+                        "mpi_size": 1,
+                    },
+                    "status": "measured_shard_failed",
+                    "disposition": "controlled_numeric_negative",
+                    "controlled_failure_gates": [
+                        "biorthogonality_identity_error_le_1e-6"
+                    ],
+                    "is_qep_component_qualified": False,
+                    "evidence": {
+                        "watchdog_summary": {
+                            "path": controlled_source["path"],
+                            "sha256": controlled_source["sha256"],
+                        },
+                        "solver_record": controlled_source["solver_record"],
+                        "watchdog_return_code": 2,
+                    },
+                }
+            ],
+            "degree_qualification": {
+                **{
+                    f"p{degree}": {
+                        "status": "qualified",
+                        "required_shard_count": 9,
+                        "passed_shard_count": 9,
+                        "controlled_negative_shard_count": 0,
+                    }
+                    for degree in (1, 2, 3)
+                },
+                "p4": {
+                    "status": "controlled_numeric_negative",
+                    "required_shard_count": 9,
+                    "passed_shard_count": 8,
+                    "controlled_negative_shard_count": 1,
+                },
+            },
+            "shard_gates": shard_gates,
+            "analytic_beta_trends": analytic_trends,
+            "relative_to_p2": relative_to_p2,
+            "patterned_cross_h_tracking": patterned_tracking,
+            "source_records": source_records,
+            "gates": {
+                "complete_unique_required_shards": True,
+                "p1_p2_p3_27_shards_pass": True,
+                "p4_9_shards_complete_pass_or_controlled_numeric_negative": True,
+                "p1_p2_p3_analytic_trends_and_p2_relative_pass": True,
+                "p1_p2_p3_patterned_cross_h_tracking_pass": True,
+                "all_shard_contracts_pass": False,
+                "air_lossy_h_p_trends_and_p2_relative_pass": True,
+                "patterned_residual_biorth_and_cross_h_tracking_pass": False,
+            },
+        }
+
+    @classmethod
+    def _full_qep_payload(cls) -> dict:
+        payload = cls._partial_qep_payload()
+        payload["status"] = "qep_component_aggregate_qualified"
+        payload["qualification_classification"] = "full_p1_p4_qualified"
+        payload["identity"]["is_qep_component_qualified"] = True
+        payload["identity"]["is_qep_p3_only_partial"] = False
+        payload["negative_observation_count"] = 0
+        payload["negative_observations"] = []
+        payload["degree_qualification"]["p4"] = {
+            "status": "qualified",
+            "required_shard_count": 9,
+            "passed_shard_count": 9,
+            "controlled_negative_shard_count": 0,
+        }
+        controlled_key = "lossy_homogeneous|4|3.0|1"
+        payload["shard_gates"][controlled_key] = {
+            "pass": True,
+            "disposition": "pass",
+            "positive_gate": {
+                "pass": True,
+                "checks": {"complete": True},
+                "failures": [],
+            },
+            "controlled_negative_gate": {
+                "pass": False,
+                "checks": {"not_negative": False},
+                "failures": ["not_negative"],
+                "controlled_failure_gates": [],
+            },
+        }
+        for row in payload["source_records"]:
+            row["disposition"] = "pass"
+        for name in payload["gates"]:
+            payload["gates"][name] = True
+        return payload
 
     def test_equal_route_builds_strict_partial_outcome(self) -> None:
         result = build_final_outcome(**self.paths)
@@ -445,6 +810,59 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         result = build_final_outcome(**self.paths)
         self.assertEqual(result["classifications"]["equal_accuracy"]["p3"]["best_h_nm"], 5.0)
 
+    def test_input_descriptors_are_repo_relative_and_escape_is_rejected(self) -> None:
+        result = build_final_outcome(**self.paths)
+        self.assertEqual(len(result["input_evidence"]), 13)
+        self.assertTrue(
+            all(
+                not Path(item["path"]).is_absolute()
+                and "\\" not in item["path"]
+                for item in result["input_evidence"]
+            )
+        )
+        escaped = dict(self.paths)
+        with tempfile.TemporaryDirectory() as outside:
+            path = Path(outside) / "outside.json"
+            path.write_text("{}", encoding="utf-8")
+            escaped["case090_core"] = path
+            with self.assertRaisesRegex(
+                FinalOutcomeError, "escapes repository root"
+            ):
+                build_final_outcome(**escaped)
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema)
+        descriptors = {item["role"]: item for item in result["input_evidence"]}
+        entries = [
+            {
+                "role": manifest_role,
+                "path": descriptors[input_role]["path"],
+                "sha256": descriptors[input_role]["sha256"],
+            }
+            for input_role, manifest_role in FINAL_OUTCOME_INPUT_ROLE_MAP
+        ]
+        for bad_path in (
+            "/absolute.json",
+            "C:/absolute.json",
+            "nested\\record.json",
+            "../escape.json",
+            "nested/../escape.json",
+            "./record.json",
+            "nested/./record.json",
+            "nested//record.json",
+            "nested/",
+        ):
+            with self.subTest(descriptor_path=bad_path):
+                forged = copy.deepcopy(result)
+                forged["input_evidence"][0]["path"] = bad_path
+                self.assertTrue(list(validator.iter_errors(forged)))
+                forged_entries = copy.deepcopy(entries)
+                forged_entries[0]["path"] = bad_path
+                self.assertTrue(
+                    final_outcome_manifest_closure_problems(
+                        forged, forged_entries, SOURCE_SHA
+                    )
+                )
+
     def test_mixed_clean_source_sha_is_rejected(self) -> None:
         payload = self._load("interface_buffer_tradeoff")
         payload["formal_source"]["commit_sha"] = "b" * 40
@@ -468,6 +886,114 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         self.assertEqual(
             result["classifications"]["distributed_qep"]["mpi2"]["classification"],
             "invalid_timeout_negative",
+        )
+
+    def test_timeout_negative_missing_hard_contract_fields_fails_closed(self) -> None:
+        original = self._load("qep_mpi2_timeout_negative")
+        expected_failure = {
+            "numeric_pass": "numeric_not_pass",
+            "return_code": "nonzero_integer_return_code",
+            "resource_authority": "resource_authority_gate_pass",
+            "source_gate": "source_gate_pass",
+        }
+        for field, failure in expected_failure.items():
+            with self.subTest(field=field):
+                payload = dict(original)
+                payload.pop(field)
+                self._replace("qep_mpi2_timeout_negative", payload)
+                if field == "source_gate":
+                    with self.assertRaisesRegex(
+                        FinalOutcomeError, "source_gate must be one JSON object"
+                    ):
+                        build_final_outcome(**self.paths)
+                    continue
+                result = build_final_outcome(**self.paths)
+                mpi2 = result["classifications"]["distributed_qep"]["mpi2"]
+                self.assertEqual(mpi2["disposition"], "failed")
+                self.assertIn(failure, mpi2["failures"])
+        self._replace("qep_mpi2_timeout_negative", original)
+
+    def test_final_schema_rejects_cross_classification_contradictions(self) -> None:
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        validator = Draft202012Validator(schema)
+        baseline = build_final_outcome(**self.paths)
+
+        contradictions: dict[str, dict] = {}
+
+        overall = copy.deepcopy(baseline)
+        overall["classifications"]["overall"]["classification"] = (
+            "task033_failed"
+        )
+        contradictions["overall_disposition_classification"] = overall
+
+        high_order = copy.deepcopy(baseline)
+        high_order["classifications"]["high_order_floquet"][
+            "classification"
+        ] = "high_order_floquet_failed"
+        contradictions["high_order_failed_with_pass_flags"] = high_order
+
+        distributed_failed = copy.deepcopy(baseline)
+        distributed_failed["classifications"]["distributed_qep"][
+            "disposition"
+        ] = "failed"
+        contradictions["distributed_failed_with_partial_contract"] = (
+            distributed_failed
+        )
+
+        timeout = copy.deepcopy(baseline)
+        timeout["classifications"]["distributed_qep"]["mpi2"][
+            "classification"
+        ] = "invalid_timeout_negative"
+        contradictions["timeout_disposition_classification"] = timeout
+
+        distributed_partial = copy.deepcopy(baseline)
+        mpi2 = distributed_partial["classifications"]["distributed_qep"][
+            "mpi2"
+        ]
+        mpi2["disposition"] = "failed"
+        mpi2["classification"] = "invalid_timeout_negative"
+        mpi2[
+            "proves_watchdog_source_resource_timeout_contract_only"
+        ] = False
+        mpi2["checks"]["numeric_not_pass"] = False
+        mpi2["failures"] = ["numeric_not_pass"]
+        contradictions["distributed_partial_with_failed_mpi2"] = (
+            distributed_partial
+        )
+
+        for name, record in contradictions.items():
+            with self.subTest(name=name), self.assertRaises(ValidationError):
+                validator.validate(record)
+
+    def test_controlled_p4_qep_negative_classifies_high_order_as_p3_only(self) -> None:
+        partial = self._materialize_qep_sources(self._partial_qep_payload())
+        self._replace("qep_mpi1_aggregate", partial)
+        result = build_final_outcome(**self.paths)
+        high_order = result["classifications"]["high_order_floquet"]
+        self.assertEqual(
+            high_order["classification"],
+            "high_order_floquet_partial_p3_only",
+        )
+        self.assertFalse(high_order["qep_mpi1_component_pass"])
+        self.assertTrue(high_order["qep_mpi1_p3_only_partial"])
+        self.assertNotIn(
+            "qep_mpi1_aggregate_not_qualified",
+            result["classifications"]["overall"]["mandatory_failures"],
+        )
+        self.assertIn(
+            "qep_p4_controlled_numeric_negative",
+            result["classifications"]["overall"]["partial_reasons"],
+        )
+
+        forged = self._materialize_qep_sources(self._partial_qep_payload())
+        forged["negative_observations"][0]["controlled_failure_gates"] = [
+            "raised_quadrature_pass"
+        ]
+        self._replace("qep_mpi1_aggregate", forged)
+        failed = build_final_outcome(**self.paths)
+        self.assertEqual(
+            failed["classifications"]["high_order_floquet"]["classification"],
+            "high_order_floquet_failed",
         )
 
     def test_measured_p4_without_equal_accuracy_is_failed_not_not_run(self) -> None:
@@ -513,7 +1039,15 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         argv: list[str] = []
         for key, option in option_names.items():
             argv.extend((option, str(self.paths[key])))
-        argv.extend(("--output", str(output), "--require-nonfailed"))
+        argv.extend(
+            (
+                "--repo-root",
+                str(self.root),
+                "--output",
+                str(output),
+                "--require-nonfailed",
+            )
+        )
         self.assertEqual(cli_main(argv), 0)
         self.assertEqual(
             json.loads(output.read_text(encoding="utf-8"))["status"], "classified"

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.formal-publication-descriptor.v1",
+  "title": "Task033 non-cyclic formal publication descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "clean_source_sha",
+    "identity",
+    "artifacts",
+    "limitations",
+    "payload_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "task033.case091.formal-publication-descriptor.v1"
+    },
+    "record_type": {
+      "const": "task033_formal_publication_descriptor"
+    },
+    "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+    "status": {"const": "publication_bound"},
+    "clean_source_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_formal_verification_report",
+        "ordinary_default_changed",
+        "proves_0p7nm_feasible"
+      ],
+      "properties": {
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "is_formal_verification_report": {"const": false},
+        "ordinary_default_changed": {"const": false},
+        "proves_0p7nm_feasible": {"const": false}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formal_manifest",
+        "formal_verification",
+        "final_outcome"
+      ],
+      "properties": {
+        "formal_manifest": {"$ref": "#/$defs/artifact"},
+        "formal_verification": {"$ref": "#/$defs/artifact"},
+        "final_outcome": {"$ref": "#/$defs/artifact"}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 20}
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "record_type", "status"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$))[^/]+(?:/[^/]+)*$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "record_type": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

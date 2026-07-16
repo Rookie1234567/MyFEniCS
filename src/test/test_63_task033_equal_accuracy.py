@@ -264,7 +264,11 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                 total_seconds=30.0,
                 candidate_offset=2.0e-7,
             )
-            result = build_equal_accuracy(reference, [candidate_p1, candidate_p4])
+            result = build_equal_accuracy(
+                reference,
+                [candidate_p1, candidate_p4],
+                repo_root=root,
+            )
             self.assertEqual(result["status"], "qualified")
             self.assertEqual(result["selection"]["best_candidate_id"], "candidate_2")
             self.assertEqual(
@@ -277,6 +281,14 @@ class Task033EqualAccuracyTests(unittest.TestCase):
             )
             self.assertEqual(len(result["payload_sha256"]), 64)
             self.assertEqual(len(result["inputs"]["reference"]["funnel_sha256"]), 64)
+            self.assertEqual(
+                result["inputs"]["reference"]["funnel_path"],
+                "reference_p2_funnel.json",
+            )
+            self.assertNotIn(
+                "\\",
+                result["inputs"]["reference"]["selected_watchdog_path"],
+            )
             schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
             Draft202012Validator(schema).validate(result)
 
@@ -304,7 +316,9 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                 total_seconds=50.0,
                 sha="b" * 40,
             )
-            result = build_equal_accuracy(reference, [changed])
+            result = build_equal_accuracy(
+                reference, [changed], repo_root=root
+            )
             self.assertEqual(result["status"], "not_qualified")
             self.assertIn("source_sha_mismatch", result["candidates"][0]["failures"])
 
@@ -327,7 +341,9 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                     }
                 ),
             )
-            result = build_equal_accuracy(reference, [dirty])
+            result = build_equal_accuracy(
+                reference, [dirty], repo_root=root
+            )
             self.assertEqual(result["status"], "not_qualified")
             self.assertIn("dirty", result["candidates"][0]["failures"][0])
 
@@ -360,7 +376,9 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                     "physical_field_reconstruction"
                 ].pop("selected_plane_full3d_comparison"),
             )
-            missing_result = build_equal_accuracy(reference, [missing])
+            missing_result = build_equal_accuracy(
+                reference, [missing], repo_root=root
+            )
             self.assertEqual(missing_result["status"], "not_qualified")
             self.assertIn(
                 "missing selected-plane",
@@ -378,12 +396,23 @@ class Task033EqualAccuracyTests(unittest.TestCase):
                 total_seconds=30.0,
                 plane_error=6.0e-3,
             )
-            field_result = build_equal_accuracy(reference, [inaccurate])
+            field_result = build_equal_accuracy(
+                reference, [inaccurate], repo_root=root
+            )
             self.assertEqual(field_result["status"], "not_qualified")
             self.assertIn(
                 "selected_plane_field_gate_failed",
                 field_result["candidates"][0]["failures"],
             )
+
+            with self.assertRaisesRegex(
+                ValueError, "escapes repository root"
+            ):
+                build_equal_accuracy(
+                    reference,
+                    [inaccurate],
+                    repo_root=root / "nested_root",
+                )
 
     def test_classification_boundaries_are_exact(self) -> None:
         for ratio, expected in (

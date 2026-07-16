@@ -143,10 +143,16 @@
         "source_commit_full_sha"
       ],
       "properties": {
-        "funnel_path": {"type": "string"},
+        "funnel_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+        },
         "funnel_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "selected_mode_count_per_direction": {"type": "integer", "minimum": 1},
-        "selected_watchdog_path": {"type": "string"},
+        "selected_watchdog_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+        },
         "selected_watchdog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "source_commit_full_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
       }

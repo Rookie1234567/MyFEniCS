@@ -11,6 +11,7 @@ from benchmarks.task033_formal_records import (
     FormalRecordError,
     build_adaptive_evidence,
     build_formal_manifest,
+    build_formal_publication_descriptor,
     build_interface_buffer_tradeoff,
     build_qep_order_study,
     build_uniform_p_h_matrix,
@@ -46,6 +47,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     qep.add_argument("records", nargs="+", type=Path)
     qep.add_argument("--mpi-size", type=int, choices=(1, 2, 4), default=1)
+    qep.add_argument("--repo-root", type=Path, default=ROOT)
 
     matrix = subparsers.add_parser(
         "uniform-matrix",
@@ -71,6 +73,7 @@ def _parser() -> argparse.ArgumentParser:
         metavar="MATRIX_KEY=PATH",
         help="Measured Hybrid watchdog summary for one matrix row.",
     )
+    matrix.add_argument("--repo-root", type=Path, default=ROOT)
 
     adaptive = subparsers.add_parser(
         "adaptive", help="Recompute one h5/h3 measured same-accuracy gate."
@@ -78,15 +81,17 @@ def _parser() -> argparse.ArgumentParser:
     adaptive.add_argument("--graded-plan", type=Path, required=True)
     adaptive.add_argument("--reference-evidence", type=Path, required=True)
     adaptive.add_argument("--candidate-evidence", type=Path, required=True)
+    adaptive.add_argument("--repo-root", type=Path, default=ROOT)
 
     tradeoff = subparsers.add_parser(
         "buffer-tradeoff",
         help="Build the four-buffer measured local/modal joint-cost tradeoff.",
     )
     tradeoff.add_argument("funnels", nargs=4, type=Path)
+    tradeoff.add_argument("--repo-root", type=Path, default=ROOT)
 
     manifest = subparsers.add_parser(
-        "formal-manifest", help="Build the frozen 16-role SHA256 manifest."
+        "formal-manifest", help="Build the frozen 21-role SHA256 manifest."
     )
     manifest.add_argument(
         "--role",
@@ -96,30 +101,54 @@ def _parser() -> argparse.ArgumentParser:
         metavar="ROLE=REPO_RELATIVE_PATH",
     )
     manifest.add_argument("--repo-root", type=Path, default=ROOT)
+
+    publication = subparsers.add_parser(
+        "publication-descriptor",
+        help="Bind the manifest, checker report, and final outcome without a cycle.",
+    )
+    publication.add_argument("--formal-manifest", type=Path, required=True)
+    publication.add_argument("--formal-verification", type=Path, required=True)
+    publication.add_argument("--final-outcome", type=Path, required=True)
+    publication.add_argument("--repo-root", type=Path, default=ROOT)
     return parser
 
 
 def _dispatch(args: argparse.Namespace) -> dict:
     if args.command == "qep-order-study":
-        return build_qep_order_study(args.records, mpi_size=args.mpi_size)
+        return build_qep_order_study(
+            args.records,
+            mpi_size=args.mpi_size,
+            repo_root=args.repo_root,
+        )
     if args.command == "uniform-matrix":
         return build_uniform_p_h_matrix(
             args.resource_matrix,
             funnel_paths=_bindings(args.funnel, label="funnel"),
             anchor_paths=_bindings(args.anchor, label="anchor"),
             watchdog_paths=_bindings(args.watchdog, label="watchdog"),
+            repo_root=args.repo_root,
         )
     if args.command == "adaptive":
         return build_adaptive_evidence(
             args.graded_plan,
             args.reference_evidence,
             args.candidate_evidence,
+            repo_root=args.repo_root,
         )
     if args.command == "buffer-tradeoff":
-        return build_interface_buffer_tradeoff(args.funnels)
+        return build_interface_buffer_tradeoff(
+            args.funnels, repo_root=args.repo_root
+        )
     if args.command == "formal-manifest":
         return build_formal_manifest(
             _bindings(args.role, label="role"), repo_root=args.repo_root
+        )
+    if args.command == "publication-descriptor":
+        return build_formal_publication_descriptor(
+            args.formal_manifest,
+            args.formal_verification,
+            args.final_outcome,
+            repo_root=args.repo_root,
         )
     raise FormalRecordError(f"unsupported subcommand {args.command!r}")
 

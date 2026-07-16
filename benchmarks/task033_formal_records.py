@@ -25,9 +25,13 @@ from benchmarks.task033_evidence_checker import (
     REQUIRED_FORMAL_ROLES,
     ROLE_SPECS,
     _semantic_problems as checker_semantic_problems,
+    final_outcome_manifest_closure_problems,
 )
 from benchmarks.task033_qep_qualification import (
     aggregate_qep_shards,
+    qep_full_aggregate_gate,
+    qep_p3_only_partial_aggregate_gate,
+    qep_p4_controlled_negative_gate,
     source_identity_gate,
 )
 from benchmarks.task033_watchdog_launch import FORMAL_FUNNEL_MODES
@@ -42,6 +46,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CASE091 = Path("benchmarks/cases/091_hybrid_hp_adaptivity_feasibility")
 FUNNEL_SCHEMA = (CASE091 / "hybrid_funnel_schema.json").as_posix()
 FORMAL_SCHEMA = (CASE091 / "formal_evidence_manifest_schema.json").as_posix()
+PUBLICATION_SCHEMA = (
+    CASE091 / "formal_publication_descriptor_schema.json"
+).as_posix()
 UNIFORM_SCHEMA = f"{FORMAL_SCHEMA}#/$defs/uniformMatrixEvidence"
 ADAPTIVE_SCHEMA = f"{FORMAL_SCHEMA}#/$defs/adaptiveEvidence"
 TRADEOFF_SCHEMA = f"{FORMAL_SCHEMA}#/$defs/bufferTradeoffEvidence"
@@ -82,6 +89,11 @@ APPROVED_SOURCE_BINDINGS: tuple[tuple[str, str, bool], ...] = (
         "/identity/tracked_source_clean",
         True,
     ),
+    (
+        "/identity/source_commit_full_sha",
+        "/identity/all_qualified_inputs_same_clean_sha",
+        True,
+    ),
     ("/source/commit_sha", "/source/source_clean_verified", True),
     ("/formal_source/commit_sha", "/formal_source/tracked_source_clean", True),
 )
@@ -109,6 +121,73 @@ def _sha256(path: Path) -> str:
     except OSError as exc:
         raise FormalRecordError(f"cannot hash evidence file {path}: {exc}") from exc
     return digest.hexdigest()
+
+
+def _canonical_payload_sha256(
+    payload: Mapping[str, Any], *, field: str = "payload_sha256"
+) -> str:
+    canonical = dict(payload)
+    canonical.pop(field, None)
+    rendered = json.dumps(
+        canonical,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(rendered).hexdigest()
+
+
+def formal_publication_descriptor_problems(
+    payload: Mapping[str, Any],
+) -> list[str]:
+    """Recompute the portable-path and self-hash publication semantics."""
+
+    problems: list[str] = []
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, Mapping):
+        return ["publication artifacts must be one object"]
+    for role in ("formal_manifest", "formal_verification", "final_outcome"):
+        descriptor = artifacts.get(role)
+        descriptor = descriptor if isinstance(descriptor, Mapping) else {}
+        path = descriptor.get("path")
+        if (
+            not isinstance(path, str)
+            or not path
+            or path.startswith("/")
+            or (
+                len(path) >= 2
+                and path[0].isalpha()
+                and path[1] == ":"
+            )
+            or Path(path).is_absolute()
+            or "\\" in path
+            or any(part in {"", ".", ".."} for part in path.split("/"))
+        ):
+            problems.append(
+                f"publication {role} path is not portable repository-relative POSIX"
+            )
+    if payload.get("payload_sha256") != _canonical_payload_sha256(payload):
+        problems.append("publication canonical payload SHA256 is invalid")
+    return problems
+
+
+def _repo_relative(path: Path | str, *, root: Path) -> tuple[Path, str]:
+    """Resolve one path inside ``root`` and return its portable descriptor."""
+
+    requested = Path(path)
+    resolved = (
+        requested.resolve()
+        if requested.is_absolute()
+        else (root / requested).resolve()
+    )
+    try:
+        relative = resolved.relative_to(root.resolve())
+    except ValueError as exc:
+        raise FormalRecordError(
+            f"formal evidence path escapes repository root: {path}"
+        ) from exc
+    return resolved, relative.as_posix()
 
 
 def _read_json(path: Path | str) -> EvidenceFile:
@@ -235,17 +314,29 @@ def _same_source(shas: Sequence[str], *, context: str) -> str:
 
 
 def build_qep_order_study(
-    record_paths: Sequence[Path | str], *, mpi_size: int = 1
+    record_paths: Sequence[Path | str],
+    *,
+    mpi_size: int = 1,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Build one QEP h/p aggregate from measured external-watchdog summaries."""
 
-    files = [_read_json(path) for path in record_paths]
+    root = Path(repo_root).resolve()
+    files = [
+        _read_json(_repo_relative(path, root=root)[0]) for path in record_paths
+    ]
     if not files:
         raise FormalRecordError("QEP order study requires measured shard files")
     source_shas: list[str] = []
     shards: list[Mapping[str, Any]] = []
+    source_records: list[dict[str, Any]] = []
+    negative_evidence: dict[tuple[str, int, float, int], dict[str, Any]] = {}
     for item in files:
-        shard, source_sha = _validated_watchdog_summary(item, target="qep")
+        shard, source_sha, disposition, solver_descriptor = (
+            _validated_qep_watchdog_summary(
+                item, mpi_size=mpi_size, repo_root=root
+            )
+        )
         candidate = shard.get("candidate")
         if not isinstance(candidate, Mapping) or candidate.get("mpi_size") != mpi_size:
             raise FormalRecordError(
@@ -267,9 +358,81 @@ def build_qep_order_study(
             )
         source_shas.append(source_sha)
         shards.append(shard)
+        item_relative = _repo_relative(item.path, root=root)[1]
+        source_record = {
+            "candidate": {
+                "material_kind": str(candidate.get("material_kind")),
+                "degree": int(candidate.get("degree")),
+                "h_nm": float(candidate.get("h_nm")),
+                "mpi_size": int(candidate.get("mpi_size")),
+            },
+            "path": item_relative,
+            "sha256": item.sha256,
+            "disposition": disposition,
+            "solver_record": solver_descriptor,
+        }
+        source_records.append(source_record)
+        if disposition == "controlled_numeric_negative":
+            key = (
+                str(candidate.get("material_kind")),
+                int(candidate.get("degree")),
+                float(candidate.get("h_nm")),
+                int(candidate.get("mpi_size")),
+            )
+            if key in negative_evidence:
+                raise FormalRecordError(
+                    f"duplicate controlled QEP negative candidate {key!r}"
+                )
+            negative_evidence[key] = {
+                "watchdog_summary": {
+                    "path": item_relative,
+                    "sha256": item.sha256,
+                },
+                "solver_record": solver_descriptor,
+                "watchdog_return_code": 2,
+            }
     source_sha = _same_source(source_shas, context="QEP order study")
-    aggregate = aggregate_qep_shards(shards, mpi_size=mpi_size)
-    if aggregate.get("status") != "qep_component_aggregate_qualified":
+    aggregate = aggregate_qep_shards(
+        shards,
+        mpi_size=mpi_size,
+        allow_p4_controlled_negative=True,
+    )
+    observations = aggregate.get("negative_observations")
+    if isinstance(observations, list):
+        for observation in observations:
+            candidate = observation.get("candidate") if isinstance(observation, dict) else None
+            candidate = candidate if isinstance(candidate, Mapping) else {}
+            key = (
+                str(candidate.get("material_kind")),
+                int(candidate.get("degree")),
+                float(candidate.get("h_nm")),
+                int(candidate.get("mpi_size")),
+            )
+            evidence = negative_evidence.get(key)
+            if evidence is None:
+                raise FormalRecordError(
+                    f"controlled QEP negative {key!r} lacks outer evidence"
+                )
+            observation["evidence"] = evidence
+    accepted_partial = (
+        aggregate.get("qualification_classification") == "partial_p3_only"
+        and qep_p3_only_partial_aggregate_gate(
+            {
+                **aggregate,
+                "source_records": source_records,
+                "formal_source": {
+                    "commit_sha": source_sha,
+                    "tracked_source_clean": True,
+                },
+            },
+            require_evidence_descriptors=True,
+        ).get("pass")
+        is True
+    )
+    if (
+        aggregate.get("status") != "qep_component_aggregate_qualified"
+        and not accepted_partial
+    ):
         false_gates = [
             key for key, value in (aggregate.get("gates") or {}).items() if value is not True
         ]
@@ -285,10 +448,26 @@ def build_qep_order_study(
             "commit_sha": source_sha,
             "tracked_source_clean": True,
         },
-        "source_records": [
-            {"path": str(item.path), "sha256": item.sha256} for item in files
-        ],
+        "source_records": source_records,
     }
+    if result.get("status") == "qep_component_aggregate_qualified":
+        full_gate = qep_full_aggregate_gate(
+            result, require_evidence_descriptors=True
+        )
+        if full_gate.get("pass") is not True:
+            raise FormalRecordError(
+                "qualified QEP aggregate failed full evidence closure: "
+                f"{full_gate.get('failures')!r}"
+            )
+    else:
+        partial_gate = qep_p3_only_partial_aggregate_gate(
+            result, require_evidence_descriptors=True
+        )
+        if partial_gate.get("pass") is not True:
+            raise FormalRecordError(
+                "partial QEP aggregate failed p3-only evidence closure: "
+                f"{partial_gate.get('failures')!r}"
+            )
     _validate_payload(result, QEP_SCHEMA)
     return result
 
@@ -418,10 +597,14 @@ def build_uniform_p_h_matrix(
     funnel_paths: Mapping[str, Path | str],
     anchor_paths: Mapping[str, Path | str],
     watchdog_paths: Mapping[str, Path | str] | None = None,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Assemble all 20 p/h dispositions without converting NOT_RUN to pass."""
 
-    resource_file = _read_json(resource_matrix_path)
+    root = Path(repo_root).resolve()
+    resource_file = _read_json(
+        _repo_relative(resource_matrix_path, root=root)[0]
+    )
     rows = _validate_resource_matrix(resource_file.payload)
     watchdog_paths = watchdog_paths or {}
     row_keys = {str(row["matrix_key"]) for row in rows}
@@ -479,7 +662,7 @@ def build_uniform_p_h_matrix(
                 "funnel/watchdog/anchor binding"
             )
         if has_funnel:
-            item = _read_json(funnel_paths[key])
+            item = _read_json(_repo_relative(funnel_paths[key], root=root)[0])
             funnel, source_sha = _validated_funnel(item)
             case = funnel.get("case")
             if not isinstance(case, Mapping):
@@ -500,7 +683,9 @@ def build_uniform_p_h_matrix(
                     "source_is_solver_pass": funnel.get("identity", {}).get(
                         "is_solver_pass"
                     ),
-                    "source_record_path": str(item.path),
+                    "source_record_path": _repo_relative(
+                        item.path, root=root
+                    )[1],
                     "source_record_sha256": item.sha256,
                     "source_status": funnel.get("status"),
                     "source_commit_sha": source_sha,
@@ -513,7 +698,9 @@ def build_uniform_p_h_matrix(
             )
             continue
         if has_watchdog:
-            item = _read_json(watchdog_paths[key])
+            item = _read_json(
+                _repo_relative(watchdog_paths[key], root=root)[0]
+            )
             measurements, source_sha = _validated_watchdog_summary(
                 item, target="hybrid"
             )
@@ -595,7 +782,9 @@ def build_uniform_p_h_matrix(
                     "source_physical_qualified": item.payload.get(
                         "physical_qualified"
                     ),
-                    "source_record_path": str(item.path),
+                    "source_record_path": _repo_relative(
+                        item.path, root=root
+                    )[1],
                     "source_record_sha256": item.sha256,
                     "source_status": item.payload.get("status"),
                     "source_commit_sha": source_sha,
@@ -612,7 +801,7 @@ def build_uniform_p_h_matrix(
                 }
             )
             continue
-        item = _read_json(anchor_paths[key])
+        item = _read_json(_repo_relative(anchor_paths[key], root=root)[0])
         source_sha = _validate_task032_anchor(item, row)
         source_shas.append(source_sha)
         output_rows.append(
@@ -621,7 +810,7 @@ def build_uniform_p_h_matrix(
                 "evidence_disposition": "measured_task032_clean_anchor",
                 "data_identity": "measured",
                 "source_numeric_pass": item.payload.get("numeric_pass"),
-                "source_record_path": str(item.path),
+                "source_record_path": _repo_relative(item.path, root=root)[1],
                 "source_record_sha256": item.sha256,
                 "source_status": "numeric_pass",
                 "source_commit_sha": source_sha,
@@ -648,7 +837,7 @@ def build_uniform_p_h_matrix(
         },
         "matrix_shape": {"degrees": 4, "mesh_levels": 5, "entries": 20},
         "resource_matrix": {
-            "path": str(resource_file.path),
+            "path": _repo_relative(resource_file.path, root=root)[1],
             "sha256": resource_file.sha256,
             "data_identity": "planning_decisions_only",
         },
@@ -757,9 +946,13 @@ def _complex_pair(value: Any, *, label: str) -> complex:
 
 def _adaptive_funnel_bundle(
     item: EvidenceFile,
+    *,
+    repo_root: Path,
 ) -> tuple[Mapping[str, Any], EvidenceFile, Mapping[str, Any], str]:
     funnel, source_sha = _validated_funnel(item)
-    watchdog_file = _selected_watchdog(item, funnel)
+    watchdog_file = _selected_watchdog(
+        item, funnel, repo_root=repo_root
+    )
     measurements, watchdog_sha = _validated_watchdog_summary(
         watchdog_file, target="hybrid"
     )
@@ -1054,18 +1247,25 @@ def build_adaptive_evidence(
     graded_plan_path: Path | str,
     reference_evidence_path: Path | str,
     candidate_evidence_path: Path | str,
+    *,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Recompute the native same-accuracy gate for one h5 or h3 graded plan."""
 
-    plan_file = _read_json(graded_plan_path)
-    reference_file = _read_json(reference_evidence_path)
-    candidate_file = _read_json(candidate_evidence_path)
+    root = Path(repo_root).resolve()
+    plan_file = _read_json(_repo_relative(graded_plan_path, root=root)[0])
+    reference_file = _read_json(
+        _repo_relative(reference_evidence_path, root=root)[0]
+    )
+    candidate_file = _read_json(
+        _repo_relative(candidate_evidence_path, root=root)[0]
+    )
     plan = _plan_from_record(plan_file.payload)
     reference_funnel, reference_watchdog, reference_measurements, reference_sha = (
-        _adaptive_funnel_bundle(reference_file)
+        _adaptive_funnel_bundle(reference_file, repo_root=root)
     )
     candidate_funnel, candidate_watchdog, candidate_measurements, candidate_sha = (
-        _adaptive_funnel_bundle(candidate_file)
+        _adaptive_funnel_bundle(candidate_file, repo_root=root)
     )
     source_sha = _same_source(
         [reference_sha, candidate_sha], context="adaptive same-accuracy evidence"
@@ -1184,14 +1384,16 @@ def build_adaptive_evidence(
         },
         "measured_evidence": {
             "graded_plan": {
-                "path": str(plan_file.path),
+                "path": _repo_relative(plan_file.path, root=root)[1],
                 "sha256": plan_file.sha256,
                 "plan_hash": plan.plan_hash,
             },
             "reference": {
-                "path": str(reference_file.path),
+                "path": _repo_relative(reference_file.path, root=root)[1],
                 "sha256": reference_file.sha256,
-                "selected_watchdog_path": str(reference_watchdog.path),
+                "selected_watchdog_path": _repo_relative(
+                    reference_watchdog.path, root=root
+                )[1],
                 "selected_watchdog_sha256": reference_watchdog.sha256,
                 "field_evidence_kind": (
                     "sampled_interface_EH_and_pinned_full3d_selected_planes"
@@ -1201,9 +1403,11 @@ def build_adaptive_evidence(
                 "selected_plane_reference": reference_selected_planes,
             },
             "candidate": {
-                "path": str(candidate_file.path),
+                "path": _repo_relative(candidate_file.path, root=root)[1],
                 "sha256": candidate_file.sha256,
-                "selected_watchdog_path": str(candidate_watchdog.path),
+                "selected_watchdog_path": _repo_relative(
+                    candidate_watchdog.path, root=root
+                )[1],
                 "selected_watchdog_sha256": candidate_watchdog.sha256,
                 "selected_plane_reference": candidate_selected_planes,
             },
@@ -1213,7 +1417,9 @@ def build_adaptive_evidence(
     return result
 
 
-def _resolve_source_record(raw: Any, *, funnel_path: Path) -> Path:
+def _resolve_source_record(
+    raw: Any, *, funnel_path: Path, repo_root: Path = ROOT
+) -> Path:
     if not isinstance(raw, str) or not raw:
         raise FormalRecordError(f"funnel {funnel_path} has an invalid source-record path")
     requested = Path(raw)
@@ -1221,9 +1427,13 @@ def _resolve_source_record(raw: Any, *, funnel_path: Path) -> Path:
     if requested.is_absolute():
         candidates.append(requested)
     if raw.replace("\\", "/").startswith("/work/"):
-        candidates.append(ROOT / raw.replace("\\", "/")[len("/work/") :])
+        candidates.append(
+            repo_root / raw.replace("\\", "/")[len("/work/") :]
+        )
     if not requested.is_absolute():
-        candidates.extend((ROOT / requested, funnel_path.parent / requested))
+        candidates.extend(
+            (repo_root / requested, funnel_path.parent / requested)
+        )
     for candidate in candidates:
         resolved = candidate.resolve()
         if resolved.is_file():
@@ -1293,8 +1503,156 @@ def _validated_watchdog_summary(
     return measurements, _watchdog_source_sha(payload, path=item.path)
 
 
+def _command_value(command: Any, option: str) -> str | None:
+    if not isinstance(command, list):
+        return None
+    try:
+        index = command.index(option)
+    except ValueError:
+        return None
+    if index + 1 >= len(command):
+        return None
+    return str(command[index + 1])
+
+
+def _validated_qep_solver_record(
+    item: EvidenceFile, shard: Mapping[str, Any], *, repo_root: Path
+) -> dict[str, str]:
+    raw_path = item.payload.get("solver_record_ignored_path")
+    solver_path = _resolve_source_record(
+        raw_path, funnel_path=item.path, repo_root=repo_root
+    )
+    expected_sha = item.payload.get("solver_record_sha256")
+    if not isinstance(expected_sha, str) or not SHA256_RE.fullmatch(
+        expected_sha.lower()
+    ):
+        raise FormalRecordError(
+            f"QEP watchdog {item.path} has no valid solver-record SHA256"
+        )
+    solver = _read_json(solver_path)
+    if solver.sha256 != expected_sha.lower():
+        raise FormalRecordError(
+            f"QEP watchdog {item.path} solver-record SHA256 mismatch"
+        )
+    if solver.payload != dict(shard):
+        raise FormalRecordError(
+            f"QEP watchdog {item.path} embedded measurements differ from "
+            "the preserved solver record"
+        )
+    return {
+        "path": _repo_relative(solver.path, root=repo_root)[1],
+        "sha256": solver.sha256,
+    }
+
+
+def _validated_qep_watchdog_summary(
+    item: EvidenceFile, *, mpi_size: int, repo_root: Path
+) -> tuple[Mapping[str, Any], str, str, dict[str, str]]:
+    """Validate a QEP pass or the one controlled p4 numerical negative."""
+
+    payload = item.payload
+    measurements = payload.get("measurements")
+    if not isinstance(measurements, Mapping):
+        raise FormalRecordError(f"QEP watchdog {item.path} lacks a solver record")
+    candidate = measurements.get("candidate")
+    candidate = candidate if isinstance(candidate, Mapping) else {}
+    resource = payload.get("resource_authority")
+    resource = resource if isinstance(resource, Mapping) else {}
+    resource_gate = resource.get("gate")
+    resource_gate = resource_gate if isinstance(resource_gate, Mapping) else {}
+    source_gate = payload.get("source_gate")
+    source_gate = source_gate if isinstance(source_gate, Mapping) else {}
+    launch_gate = payload.get("launch_gate")
+    launch_gate = launch_gate if isinstance(launch_gate, Mapping) else {}
+    command = payload.get("command")
+    common = {
+        "schema": payload.get("schema_version") == "task033.memory-watchdog.v2",
+        "benchmark": payload.get("benchmark_id")
+        == "task033_external_memory_watchdog",
+        "target": payload.get("target") == "qep",
+        "memory_authority_pass": payload.get("memory_authority_pass") is True,
+        "no_swap": payload.get("no_swap") is True,
+        "not_memory_terminated": payload.get("terminated_for_memory") is False,
+        "not_timeout_terminated": payload.get("terminated_for_timeout") is False,
+        "not_authority_terminated": (
+            payload.get("terminated_for_authority_unreadable") is False
+        ),
+        "resource_gate": resource_gate.get("pass") is True,
+        "source_gate": source_gate.get("pass") is True,
+        "launch_gate": launch_gate.get("pass") is True,
+        "requested_modes_8": payload.get("requested_modes") == 8,
+        "candidate_modes_16": payload.get("candidate_modes") == 16,
+        "worker_requested_modes_8": _command_value(
+            command, "--requested-modes"
+        )
+        == "8",
+        "worker_left_candidate_modes_16": _command_value(
+            command, "--left-candidate-modes"
+        )
+        == "16",
+        "candidate_mpi_size": candidate.get("mpi_size") == mpi_size,
+    }
+    failed_common = [name for name, passed in common.items() if not passed]
+    if failed_common:
+        raise FormalRecordError(
+            f"QEP watchdog {item.path} failed execution/source/resource "
+            f"contract: {failed_common!r}"
+        )
+    source_sha = _watchdog_source_sha(payload, path=item.path)
+    solver_descriptor = _validated_qep_solver_record(
+        item, measurements, repo_root=repo_root
+    )
+
+    if payload.get("status") == "measured_shard_pass":
+        pass_conditions = {
+            "formal_pass": payload.get("formal_pass") is True,
+            "numeric_pass": payload.get("numeric_pass") is True,
+            "return_code": payload.get("return_code") == 0,
+            "worker_status": measurements.get("status") == "measured_shard_pass",
+        }
+        failures = [name for name, passed in pass_conditions.items() if not passed]
+        if failures:
+            raise FormalRecordError(
+                f"QEP watchdog {item.path} is not a complete measured pass: "
+                f"{failures!r}"
+            )
+        disposition = "pass"
+    elif payload.get("status") == "formal_not_pass":
+        negative_conditions = {
+            "formal_not_pass": payload.get("formal_pass") is False,
+            "numeric_not_pass": payload.get("numeric_pass") is False,
+            "return_code_2": payload.get("return_code") == 2,
+            "worker_measured_shard_failed": (
+                measurements.get("status") == "measured_shard_failed"
+            ),
+            "degree_4": candidate.get("degree") == 4,
+        }
+        failures = [
+            name for name, passed in negative_conditions.items() if not passed
+        ]
+        controlled = qep_p4_controlled_negative_gate(
+            measurements, mpi_size=mpi_size
+        )
+        if failures or controlled.get("pass") is not True:
+            raise FormalRecordError(
+                f"QEP watchdog {item.path} is not the controlled p4 numerical "
+                f"negative: outer={failures!r}, "
+                f"worker={controlled.get('failures')!r}"
+            )
+        disposition = "controlled_numeric_negative"
+    else:
+        raise FormalRecordError(
+            f"QEP watchdog {item.path} has unsupported status "
+            f"{payload.get('status')!r}"
+        )
+    return measurements, source_sha, disposition, solver_descriptor
+
+
 def _selected_watchdog(
-    funnel_file: EvidenceFile, funnel: Mapping[str, Any]
+    funnel_file: EvidenceFile,
+    funnel: Mapping[str, Any],
+    *,
+    repo_root: Path = ROOT,
 ) -> EvidenceFile:
     qualification = funnel.get("qualification")
     if not isinstance(qualification, Mapping):
@@ -1315,7 +1673,11 @@ def _selected_watchdog(
             "to exactly one watchdog source"
         )
     descriptor = selected[0]
-    path = _resolve_source_record(descriptor.get("path"), funnel_path=funnel_file.path)
+    path = _resolve_source_record(
+        descriptor.get("path"),
+        funnel_path=funnel_file.path,
+        repo_root=repo_root,
+    )
     item = _read_json(path)
     if descriptor.get("sha256") != item.sha256:
         raise FormalRecordError(
@@ -1450,16 +1812,19 @@ def _joint_cost_metrics(
 
 def build_interface_buffer_tradeoff(
     funnel_paths: Sequence[Path | str],
+    *,
+    repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
     """Rank four qualified interface buffers using measured joint costs."""
 
     if len(funnel_paths) != 4:
         raise FormalRecordError("buffer tradeoff requires exactly four funnel files")
+    root = Path(repo_root).resolve()
     by_buffer: dict[float, tuple[EvidenceFile, Mapping[str, Any], str]] = {}
     common_case: dict[str, Any] | None = None
     source_shas: list[str] = []
     for path in funnel_paths:
-        item = _read_json(path)
+        item = _read_json(_repo_relative(path, root=root)[0])
         funnel, source_sha = _validated_funnel(item)
         case = funnel.get("case")
         if not isinstance(case, Mapping):
@@ -1507,7 +1872,9 @@ def build_interface_buffer_tradeoff(
     raw_rows: list[dict[str, Any]] = []
     for buffer_nm in BUFFER_INTERFACES:
         funnel_file, funnel, funnel_sha = by_buffer[buffer_nm]
-        summary_file = _selected_watchdog(funnel_file, funnel)
+        summary_file = _selected_watchdog(
+            funnel_file, funnel, repo_root=root
+        )
         metrics = _joint_cost_metrics(
             summary_file, funnel=funnel, source_sha=funnel_sha
         )
@@ -1516,9 +1883,13 @@ def build_interface_buffer_tradeoff(
                 "buffer_nm": buffer_nm,
                 "bottom_interface_nm": BUFFER_INTERFACES[buffer_nm][0],
                 "top_interface_nm": BUFFER_INTERFACES[buffer_nm][1],
-                "source_record_path": str(funnel_file.path),
+                "source_record_path": _repo_relative(
+                    funnel_file.path, root=root
+                )[1],
                 "source_record_sha256": funnel_file.sha256,
-                "selected_watchdog_path": str(summary_file.path),
+                "selected_watchdog_path": _repo_relative(
+                    summary_file.path, root=root
+                )[1],
                 "selected_watchdog_sha256": summary_file.sha256,
                 "measured_costs": metrics,
             }
@@ -1587,18 +1958,6 @@ def build_interface_buffer_tradeoff(
     return result
 
 
-def _repo_relative(path: Path | str, *, root: Path) -> tuple[Path, str]:
-    requested = Path(path)
-    resolved = requested.resolve() if requested.is_absolute() else (root / requested).resolve()
-    try:
-        relative = resolved.relative_to(root.resolve())
-    except ValueError as exc:
-        raise FormalRecordError(
-            f"formal evidence path escapes repository root: {path}"
-        ) from exc
-    return resolved, relative.as_posix()
-
-
 def _approved_binding(
     payload: Mapping[str, Any], *, role: str
 ) -> tuple[str, str, bool, str]:
@@ -1624,7 +1983,7 @@ def _approved_binding(
 def build_formal_manifest(
     role_paths: Mapping[str, Path | str], *, repo_root: Path | str = ROOT
 ) -> dict[str, Any]:
-    """Build a 16-role manifest only after frozen schema/status/source checks."""
+    """Build a 21-role manifest only after frozen schema/status/source checks."""
 
     root = Path(repo_root).resolve()
     missing = sorted(set(REQUIRED_FORMAL_ROLES) - set(role_paths))
@@ -1686,8 +2045,18 @@ def build_formal_manifest(
             }
         )
     source_sha = _same_source(source_shas, context="formal evidence manifest")
+    closure_problems = final_outcome_manifest_closure_problems(
+        resolved["final_outcome"][0].payload,
+        entries,
+        source_sha,
+    )
+    if closure_problems:
+        raise FormalRecordError(
+            "final outcome is not closed by the formal manifest: "
+            + "; ".join(closure_problems)
+        )
     result = {
-        "schema_version": "task033.case091.formal-evidence-manifest.v1",
+        "schema_version": "task033.case091.formal-evidence-manifest.v2",
         "record_type": "task033_formal_evidence_manifest",
         "case_id": "091_hybrid_hp_adaptivity_feasibility",
         "status": "submitted_for_verification",
@@ -1715,11 +2084,179 @@ def build_formal_manifest(
     return result
 
 
+def build_formal_publication_descriptor(
+    formal_manifest: Path | str,
+    formal_verification: Path | str,
+    final_outcome: Path | str,
+    *,
+    repo_root: Path | str = ROOT,
+) -> dict[str, Any]:
+    """Bind manifest, checker report, and outcome without a hash cycle."""
+
+    root = Path(repo_root).resolve()
+    resolved: dict[str, tuple[EvidenceFile, str]] = {}
+    for name, requested in (
+        ("formal_manifest", formal_manifest),
+        ("formal_verification", formal_verification),
+        ("final_outcome", final_outcome),
+    ):
+        path, relative = _repo_relative(requested, root=root)
+        resolved[name] = (_read_json(path), relative)
+
+    manifest, manifest_relative = resolved["formal_manifest"]
+    verification, verification_relative = resolved["formal_verification"]
+    outcome, outcome_relative = resolved["final_outcome"]
+    _validate_payload(manifest.payload, FORMAL_SCHEMA, root=root)
+    _validate_payload(
+        outcome.payload, ROLE_SPECS["final_outcome"].schema_ref, root=root
+    )
+    if manifest.payload.get("status") != "submitted_for_verification":
+        raise FormalRecordError("publication manifest is not submitted for verification")
+    clean_source_sha = _full_sha(
+        manifest.payload.get("clean_source_sha"), label="publication manifest source"
+    )
+    outcome_source = _pointer(
+        outcome.payload, "/formal_source/commit_sha"
+    )
+    if outcome_source != clean_source_sha:
+        raise FormalRecordError(
+            "publication final outcome source SHA differs from manifest"
+        )
+    semantic = checker_semantic_problems("final_outcome", outcome.payload)
+    if semantic:
+        raise FormalRecordError(
+            "publication final outcome failed semantics: " + "; ".join(semantic)
+        )
+
+    final_entries = [
+        entry
+        for entry in manifest.payload.get("entries", [])
+        if isinstance(entry, Mapping) and entry.get("role") == "final_outcome"
+    ]
+    if len(final_entries) != 1:
+        raise FormalRecordError(
+            "publication manifest must contain exactly one final_outcome role"
+        )
+    final_entry = final_entries[0]
+    if (
+        final_entry.get("path") != outcome_relative
+        or final_entry.get("sha256") != outcome.sha256
+    ):
+        raise FormalRecordError(
+            "publication final outcome differs from the manifest role binding"
+        )
+
+    report = verification.payload
+    if (
+        report.get("record_type") != "task033_evidence_verification_report"
+        or report.get("mode") != "formal"
+        or report.get("status") != "evidence_verified"
+        or report.get("verified") is not True
+        or report.get("problems") != []
+    ):
+        raise FormalRecordError(
+            "publication verification report is not one clean formal verification"
+        )
+    manifest_checks = [
+        check
+        for check in report.get("checks", [])
+        if isinstance(check, Mapping)
+        and check.get("name") == "formal_manifest_schema"
+    ]
+    if len(manifest_checks) != 1:
+        raise FormalRecordError(
+            "publication verification lacks one formal_manifest_schema check"
+        )
+    manifest_check = manifest_checks[0]
+    details = manifest_check.get("details", {})
+    if (
+        manifest_check.get("status") != "verified"
+        or not isinstance(details, Mapping)
+        or details.get("path") != manifest_relative
+        or details.get("sha256") != manifest.sha256
+    ):
+        raise FormalRecordError(
+            "publication verification is not bound to the supplied manifest hash"
+        )
+    checks_by_name = {
+        str(check.get("name")): check
+        for check in report.get("checks", [])
+        if isinstance(check, Mapping) and isinstance(check.get("name"), str)
+    }
+    required_check_names = {
+        "formal_manifest_schema",
+        "formal_manifest_role_inventory",
+        "formal_final_outcome_input_closure",
+        *(f"formal_role:{role}" for role in REQUIRED_FORMAL_ROLES),
+    }
+    missing_or_unverified = sorted(
+        name
+        for name in required_check_names
+        if name not in checks_by_name
+        or checks_by_name[name].get("status") != "verified"
+    )
+    if missing_or_unverified:
+        raise FormalRecordError(
+            "publication verification lacks verified formal checks: "
+            f"{missing_or_unverified!r}"
+        )
+
+    result: dict[str, Any] = {
+        "schema_version": "task033.case091.formal-publication-descriptor.v1",
+        "record_type": "task033_formal_publication_descriptor",
+        "case_id": "091_hybrid_hp_adaptivity_feasibility",
+        "status": "publication_bound",
+        "clean_source_sha": clean_source_sha,
+        "identity": {
+            "is_pde_run": False,
+            "is_solver_pass": False,
+            "is_formal_verification_report": False,
+            "ordinary_default_changed": False,
+            "proves_0p7nm_feasible": False,
+        },
+        "artifacts": {
+            "formal_manifest": {
+                "path": manifest_relative,
+                "sha256": manifest.sha256,
+                "record_type": manifest.payload.get("record_type"),
+                "status": manifest.payload.get("status"),
+            },
+            "formal_verification": {
+                "path": verification_relative,
+                "sha256": verification.sha256,
+                "record_type": report.get("record_type"),
+                "status": report.get("status"),
+            },
+            "final_outcome": {
+                "path": outcome_relative,
+                "sha256": outcome.sha256,
+                "record_type": outcome.payload.get("record_type"),
+                "status": outcome.payload.get("status"),
+            },
+        },
+        "limitations": [
+            "This descriptor is a publication hash binding, not a PDE run or solver qualification.",
+            "The verification report stays outside the formal manifest to avoid a manifest-verification hash cycle.",
+        ],
+    }
+    result["payload_sha256"] = _canonical_payload_sha256(result)
+    _validate_payload(result, PUBLICATION_SCHEMA, root=root)
+    semantic = formal_publication_descriptor_problems(result)
+    if semantic:
+        raise FormalRecordError(
+            "generated publication descriptor failed semantics: "
+            + "; ".join(semantic)
+        )
+    return result
+
+
 __all__ = [
     "FormalRecordError",
     "build_adaptive_evidence",
     "build_formal_manifest",
+    "build_formal_publication_descriptor",
     "build_interface_buffer_tradeoff",
     "build_qep_order_study",
     "build_uniform_p_h_matrix",
+    "formal_publication_descriptor_problems",
 ]

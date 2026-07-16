@@ -50,6 +50,7 @@
         "full_dof_upper_bound",
         "reduced_dof_upper_bound",
         "four_matrix_nnz_upper_bound",
+        "requested_modes",
         "left_candidate_modes",
         "left_candidate_pool_policy",
         "centers_gib",
@@ -63,9 +64,10 @@
         "full_dof_upper_bound": {"type": "integer", "minimum": 1},
         "reduced_dof_upper_bound": {"type": "integer", "minimum": 1},
         "four_matrix_nnz_upper_bound": {"type": "integer", "minimum": 1},
-        "left_candidate_modes": {"type": "integer", "minimum": 6},
+        "requested_modes": {"type": "integer", "minimum": 2},
+        "left_candidate_modes": {"type": "integer", "minimum": 10},
         "left_candidate_pool_policy": {
-          "const": "max_requested_plus_4_or_1p5x"
+          "const": "max_requested_plus_8_or_2x"
         },
         "centers_gib": {
           "type": "object",
@@ -305,6 +307,7 @@
             "right_polynomial_relative_residual_max",
             "left_polynomial_relative_residual_max",
             "biorthogonality_identity_error",
+            "biorthogonality_infinity_norm_error",
             "left_candidate_pool_policy",
             "right_requested_modes",
             "left_candidate_requested_modes",
@@ -320,12 +323,21 @@
           "properties": {
             "right_polynomial_relative_residual_max": {"type": "number", "minimum": 0},
             "left_polynomial_relative_residual_max": {"type": "number", "minimum": 0},
-            "biorthogonality_identity_error": {"type": "number", "minimum": 0},
+            "biorthogonality_identity_error": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Maximum componentwise absolute error of the post-normalization biorthogonality matrix relative to identity."
+            },
+            "biorthogonality_infinity_norm_error": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Matrix infinity-norm error of the post-normalization biorthogonality matrix relative to identity."
+            },
             "left_candidate_pool_policy": {
-              "const": "max_requested_plus_4_or_1p5x"
+              "const": "max_requested_plus_8_or_2x"
             },
             "right_requested_modes": {"type": "integer", "minimum": 1},
-            "left_candidate_requested_modes": {"type": "integer", "minimum": 5},
+            "left_candidate_requested_modes": {"type": "integer", "minimum": 10},
             "left_candidate_converged_modes": {"type": "integer", "minimum": 0},
             "left_pair_relative_errors": {
               "type": "array",
@@ -361,7 +373,12 @@
                   },
                   "max_relative_beta_spread": {"type": "number", "minimum": 0},
                   "overlap_condition": {"type": "number", "minimum": 0},
-                  "normalization_method": {"type": "string", "minLength": 1},
+                  "normalization_method": {
+                    "enum": [
+                      "diagonal_qprime",
+                      "near_degenerate_block_inverse"
+                    ]
+                  },
                   "post_normalization_identity_error": {
                     "type": "number",
                     "minimum": 0
@@ -619,6 +636,9 @@
                       },
                       "left_pair_relative_error_max": {
                         "maximum": 1e-7
+                      },
+                      "biorthogonality_identity_error": {
+                        "maximum": 1e-6
                       }
                     }
                   }

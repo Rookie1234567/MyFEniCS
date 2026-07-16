@@ -172,7 +172,30 @@ class Task033HighOrderQEPTraceTests(unittest.TestCase):
                     round_trip = projection.round_trip(
                         np.asarray([0.7 + 0.2j, -0.3 + 0.4j])
                     )
-                    self.assertLess(basis.max_identity_error, 1.0e-6)
+                    self.assertLess(
+                        basis.max_entry_identity_error,
+                        1.0e-6,
+                    )
+                    self.assertGreaterEqual(
+                        basis.max_identity_error,
+                        basis.max_entry_identity_error,
+                    )
+                    self.assertTrue(math.isfinite(basis.max_identity_error))
+                    self.assertTrue(
+                        all(
+                            len(group.indices) == 1
+                            or group.normalization_method
+                            == "near_degenerate_block_inverse"
+                            for group in basis.groups
+                        )
+                    )
+                    self.assertLess(
+                        max(
+                            mode.left_polynomial_relative_residual
+                            for mode in basis.modes
+                        ),
+                        1.0e-8,
+                    )
                     self.assertLess(
                         max(
                             mode.right.polynomial_relative_residual
@@ -187,6 +210,83 @@ class Task033HighOrderQEPTraceTests(unittest.TestCase):
                 finally:
                     if projection is not None:
                         projection.destroy()
+                    if basis is not None:
+                        basis.destroy()
+                    else:
+                        for mode in right_modes:
+                            mode.destroy()
+                    operators.destroy()
+
+    def test_p4_h2p5_near_blocks_preserve_left_residual_gate(self) -> None:
+        for material_kind in ("lossy_homogeneous", "stage4_xy"):
+            with self.subTest(material_kind=material_kind):
+                cfg = target_stage4_config(degree=4, h_nm=2.5)
+                cross_section = build_matching_cross_section(
+                    cfg, material_kind
+                )
+                spaces = build_cross_section_spaces(
+                    cross_section, transverse_degree=4
+                )
+                operators = assemble_quadratic_beta_operators(
+                    cfg, cross_section, spaces
+                )
+                target_index = (
+                    cfg.n_grating
+                    if material_kind == "lossy_homogeneous"
+                    else cfg.n_air
+                )
+                target = analytic_homogeneous_beta(cfg, target_index)
+                right_modes, _report = solve_quadratic_beta_modes(
+                    operators,
+                    target=target,
+                    requested_modes=8,
+                )
+                basis = None
+                try:
+                    basis = build_biorthogonal_mode_basis(
+                        cfg,
+                        cross_section,
+                        spaces,
+                        operators,
+                        right_modes,
+                        adjoint_target=np.conj(target),
+                        requested_left_modes=16,
+                    )
+                    near_groups = [
+                        group
+                        for group in basis.groups
+                        if len(group.indices) > 1
+                    ]
+                    self.assertTrue(near_groups)
+                    self.assertTrue(
+                        all(
+                            group.normalization_method
+                            == "near_degenerate_block_inverse"
+                            for group in near_groups
+                        )
+                    )
+                    self.assertLess(
+                        max(basis.left_pair_relative_errors), 1.0e-7
+                    )
+                    self.assertLess(
+                        basis.max_entry_identity_error, 1.0e-6
+                    )
+                    self.assertLess(
+                        max(
+                            mode.left_polynomial_relative_residual
+                            for mode in basis.modes
+                        ),
+                        1.0e-8,
+                    )
+                    if material_kind == "stage4_xy":
+                        self.assertGreater(
+                            max(
+                                group.max_relative_beta_spread
+                                for group in near_groups
+                            ),
+                            1.0e-8,
+                        )
+                finally:
                     if basis is not None:
                         basis.destroy()
                     else:

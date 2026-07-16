@@ -127,7 +127,11 @@
             "one_tib_projection"
           ]
         },
-        "path": {"type": "string", "minLength": 1},
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$))[^/]+(?:/[^/]+)*$"
+        },
         "sha256": {"$ref": "#/$defs/sha256"},
         "schema_version": {"type": ["string", "integer"]},
         "record_type": {"type": "string", "minLength": 1},
@@ -144,12 +148,42 @@
         "classification": {"enum": ["task033_pass", "task033_partial", "task033_failed"]},
         "mandatory_failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
         "partial_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "disposition": {"const": "pass"},
+            "classification": {"const": "task033_pass"},
+            "mandatory_failures": {"maxItems": 0},
+            "partial_reasons": {"maxItems": 0}
+          }
+        },
+        {
+          "properties": {
+            "disposition": {"const": "partial"},
+            "classification": {"const": "task033_partial"},
+            "mandatory_failures": {"maxItems": 0},
+            "partial_reasons": {"minItems": 1}
+          }
+        },
+        {
+          "properties": {
+            "disposition": {"const": "failed"},
+            "classification": {"const": "task033_failed"},
+            "mandatory_failures": {"minItems": 1}
+          }
+        }
+      ]
     },
     "highOrder": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["classification", "case090_core_pass", "qep_mpi1_component_pass"],
+      "required": [
+        "classification",
+        "case090_core_pass",
+        "qep_mpi1_component_pass",
+        "qep_mpi1_p3_only_partial"
+      ],
       "properties": {
         "classification": {
           "enum": [
@@ -159,8 +193,52 @@
           ]
         },
         "case090_core_pass": {"type": "boolean"},
-        "qep_mpi1_component_pass": {"type": "boolean"}
-      }
+        "qep_mpi1_component_pass": {"type": "boolean"},
+        "qep_mpi1_p3_only_partial": {"type": "boolean"}
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "classification": {"const": "high_order_floquet_pass"},
+            "case090_core_pass": {"const": true},
+            "qep_mpi1_component_pass": {"const": true},
+            "qep_mpi1_p3_only_partial": {"const": false}
+          }
+        },
+        {
+          "properties": {
+            "classification": {
+              "const": "high_order_floquet_partial_p3_only"
+            },
+            "case090_core_pass": {"const": true},
+            "qep_mpi1_component_pass": {"const": false},
+            "qep_mpi1_p3_only_partial": {"const": true}
+          }
+        },
+        {
+          "properties": {
+            "classification": {"const": "high_order_floquet_failed"}
+          },
+          "not": {
+            "anyOf": [
+              {
+                "properties": {
+                  "case090_core_pass": {"const": true},
+                  "qep_mpi1_component_pass": {"const": true},
+                  "qep_mpi1_p3_only_partial": {"const": false}
+                }
+              },
+              {
+                "properties": {
+                  "case090_core_pass": {"const": true},
+                  "qep_mpi1_component_pass": {"const": false},
+                  "qep_mpi1_p3_only_partial": {"const": true}
+                }
+              }
+            ]
+          }
+        }
+      ]
     },
     "timeoutResult": {
       "type": "object",
@@ -182,9 +260,101 @@
         "positive_qep_qualification": {"const": false},
         "proves_watchdog_source_resource_timeout_contract_only": {"type": "boolean"},
         "proves_pep_or_mumps_boundary": {"const": false},
-        "checks": {"type": "object", "minProperties": 6, "additionalProperties": {"type": "boolean"}},
-        "failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
-      }
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "formal_not_pass",
+            "numeric_not_pass",
+            "nonzero_integer_return_code",
+            "wall_timeout_only",
+            "memory_authority_pass",
+            "resource_authority_gate_pass",
+            "no_swap",
+            "source_gate_pass",
+            "launch_gate_pass",
+            "expected_mpi_size"
+          ],
+          "properties": {
+            "formal_not_pass": {"type": "boolean"},
+            "numeric_not_pass": {"type": "boolean"},
+            "nonzero_integer_return_code": {"type": "boolean"},
+            "wall_timeout_only": {"type": "boolean"},
+            "memory_authority_pass": {"type": "boolean"},
+            "resource_authority_gate_pass": {"type": "boolean"},
+            "no_swap": {"type": "boolean"},
+            "source_gate_pass": {"type": "boolean"},
+            "launch_gate_pass": {"type": "boolean"},
+            "expected_mpi_size": {"type": "boolean"}
+          }
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "formal_not_pass",
+              "numeric_not_pass",
+              "nonzero_integer_return_code",
+              "wall_timeout_only",
+              "memory_authority_pass",
+              "resource_authority_gate_pass",
+              "no_swap",
+              "source_gate_pass",
+              "launch_gate_pass",
+              "expected_mpi_size"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "disposition": {"const": "legitimate_not_run"},
+            "classification": {"const": "clean_wall_timeout_only"},
+            "proves_watchdog_source_resource_timeout_contract_only": {"const": true},
+            "checks": {
+              "properties": {
+                "formal_not_pass": {"const": true},
+                "numeric_not_pass": {"const": true},
+                "nonzero_integer_return_code": {"const": true},
+                "wall_timeout_only": {"const": true},
+                "memory_authority_pass": {"const": true},
+                "resource_authority_gate_pass": {"const": true},
+                "no_swap": {"const": true},
+                "source_gate_pass": {"const": true},
+                "launch_gate_pass": {"const": true},
+                "expected_mpi_size": {"const": true}
+              }
+            },
+            "failures": {"maxItems": 0}
+          }
+        },
+        {
+          "properties": {
+            "disposition": {"const": "failed"},
+            "classification": {"const": "invalid_timeout_negative"},
+            "proves_watchdog_source_resource_timeout_contract_only": {"const": false},
+            "checks": {
+              "not": {
+                "properties": {
+                  "formal_not_pass": {"const": true},
+                  "numeric_not_pass": {"const": true},
+                  "nonzero_integer_return_code": {"const": true},
+                  "wall_timeout_only": {"const": true},
+                  "memory_authority_pass": {"const": true},
+                  "resource_authority_gate_pass": {"const": true},
+                  "no_swap": {"const": true},
+                  "source_gate_pass": {"const": true},
+                  "launch_gate_pass": {"const": true},
+                  "expected_mpi_size": {"const": true}
+                }
+              }
+            },
+            "failures": {"minItems": 1}
+          }
+        }
+      ]
     },
     "distributedQep": {
       "type": "object",
@@ -192,6 +362,7 @@
       "required": [
         "disposition",
         "mpi1_positive_qualified",
+        "mpi1_p3_only_partial",
         "mpi2",
         "mpi4",
         "matching_interface_mpi2_mpi4_positive_qualified",
@@ -200,11 +371,73 @@
       "properties": {
         "disposition": {"enum": ["partial", "failed"]},
         "mpi1_positive_qualified": {"type": "boolean"},
+        "mpi1_p3_only_partial": {"type": "boolean"},
         "mpi2": {"$ref": "#/$defs/timeoutResult"},
         "mpi4": {"$ref": "#/$defs/timeoutResult"},
         "matching_interface_mpi2_mpi4_positive_qualified": {"const": false},
         "timeout_attribution": {"const": "clean_wall_timeout_only_not_pep_or_mumps_boundary"}
-      }
+      },
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "mpi1_positive_qualified": {"const": true},
+              "mpi1_p3_only_partial": {"const": true}
+            },
+            "required": ["mpi1_positive_qualified", "mpi1_p3_only_partial"]
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "disposition": {"const": "partial"},
+                "mpi2": {
+                  "properties": {
+                    "disposition": {"const": "legitimate_not_run"}
+                  }
+                },
+                "mpi4": {
+                  "properties": {
+                    "disposition": {"const": "legitimate_not_run"}
+                  }
+                }
+              },
+              "anyOf": [
+                {"properties": {"mpi1_positive_qualified": {"const": true}}},
+                {"properties": {"mpi1_p3_only_partial": {"const": true}}}
+              ]
+            },
+            {
+              "properties": {"disposition": {"const": "failed"}},
+              "not": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {"properties": {"mpi1_positive_qualified": {"const": true}}},
+                      {"properties": {"mpi1_p3_only_partial": {"const": true}}}
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "mpi2": {
+                        "properties": {
+                          "disposition": {"const": "legitimate_not_run"}
+                        }
+                      },
+                      "mpi4": {
+                        "properties": {
+                          "disposition": {"const": "legitimate_not_run"}
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
     },
     "anchorResult": {
       "type": "object",
