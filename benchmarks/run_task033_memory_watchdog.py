@@ -363,6 +363,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
             ),
         },
         "modal_schur_comparison": record.get("modal_schur_comparison"),
+        "modal_basis_capacity": record.get("modal_basis_capacity"),
         "object_payload_ledger": {
             key: (record.get("object_payload_ledger") or {}).get(key)
             for key in (

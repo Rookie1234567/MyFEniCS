@@ -80,6 +80,7 @@ def _watchdog(
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "command": ["mpiexec", "-n", "4", "python", "hybrid"],
         "requested_modes": mode,
         "candidate_modes": 2 * mode,
         "formal_pass": True,

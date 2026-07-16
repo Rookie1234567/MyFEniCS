@@ -55,6 +55,49 @@
     "source_records": {"type": "array"},
     "individual_gates": {"type": "object"},
     "comparisons": {"type": "array"},
+    "modal_basis_capacity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "direction",
+            "requested_modes_per_direction",
+            "delivered_finite_admissible_modes",
+            "finite_candidate_count_both_directions",
+            "numerically_infinite_candidate_count",
+            "finite_spectrum_abs_beta_h_cutoff",
+            "finite_spectrum_abs_beta_cutoff_per_nm",
+            "first_rejected_numerical_infinity_beta_per_nm",
+            "leading_coefficient_singular_by_design",
+            "pair_tolerance_relaxed",
+            "left_pair_relative_error_tolerance"
+          ],
+          "properties": {
+            "status": {"const": "insufficient_finite_admissible_modes"},
+            "direction": {"const": "positive"},
+            "requested_modes_per_direction": {"const": 160},
+            "delivered_finite_admissible_modes": {"const": 120},
+            "finite_candidate_count_both_directions": {"const": 240},
+            "numerically_infinite_candidate_count": {"const": 80},
+            "finite_spectrum_abs_beta_h_cutoff": {"const": 10000.0},
+            "finite_spectrum_abs_beta_cutoff_per_nm": {"const": 2000.0},
+            "first_rejected_numerical_infinity_beta_per_nm": {
+              "type": "array",
+              "prefixItems": [{"type": "number"}, {"type": "number"}],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "leading_coefficient_singular_by_design": {"const": true},
+            "pair_tolerance_relaxed": {"const": false},
+            "left_pair_relative_error_tolerance": {"const": 1e-7}
+          },
+          "additionalProperties": false
+        },
+        {"type": "null"}
+      ]
+    },
     "qualification": {
       "type": "object",
       "required": [
@@ -74,7 +117,8 @@
         },
         "selected_pair_strong": {"type": "boolean"},
         "all_sources_same_clean_sha": {"type": "boolean"},
-        "all_external_watchdogs_pass": {"type": "boolean"}
+        "all_external_watchdogs_pass": {"type": "boolean"},
+        "modal_basis_capacity_limited": {"type": "boolean"}
       },
       "additionalProperties": false
     },

@@ -234,6 +234,10 @@ terminated_for_memory = false
 
 ### 5.4 p1/p3 Hybrid M 漏斗
 
+这里的 `M` 始终表示**每个传播方向最终保留的模态数**。为完成稳定筛选，watchdog
+合同要求 `candidate_modes=2M`。Hybrid 内部振幅总数同样写成 `2M`，但它表示
+`M forward + M backward`；这个数值与候选池大小相同，物理语义并不相同。
+
 下面示例是 p1/h5/MPI4 的 M80/M120/M160 漏斗。必须使用同一 p/h/interface、同一
 clean SHA 和同一 resource matrix；M120→M160 未收敛时才条件增加 M240。
 
@@ -247,7 +251,7 @@ foreach ($M in 80, 120, 160) {
         --h-nm 5 `
         --mpi-size 4 `
         --requested-modes $M `
-        --candidate-modes $M `
+        --candidate-modes (2 * $M) `
         --solver-path modal-schur-memory-minimal `
         --compare-modal-schur `
         --resource-matrix $Resource `
@@ -319,7 +323,7 @@ Invoke-Task33Docker python -m benchmarks.run_task033_memory_watchdog `
     --h-nm 3 `
     --mpi-size 4 `
     --requested-modes 80 `
-    --candidate-modes 80 `
+    --candidate-modes 160 `
     --bottom-interface-nm $Buffer `
     --top-interface-nm $TopInterface `
     --solver-path modal-schur-memory-minimal `

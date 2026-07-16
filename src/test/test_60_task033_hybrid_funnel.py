@@ -7,7 +7,12 @@ import unittest
 
 from jsonschema import Draft202012Validator
 
-from benchmarks.task033_hybrid_funnel import build_hybrid_funnel
+from benchmarks.task033_hybrid_funnel import (
+    P1_H5_CAPACITY_FAILURE,
+    build_hybrid_funnel,
+    is_controlled_p1_h5_capacity_funnel,
+)
+from benchmarks.task033_evidence_checker import _semantic_problems
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +35,7 @@ def _shard(mode_count: int, *, delta: float = 0.0) -> dict:
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "command": ["mpiexec", "-n", "4", "python", "hybrid"],
         "requested_modes": mode_count,
         "candidate_modes": 2 * mode_count,
         "formal_pass": True,
@@ -124,7 +130,140 @@ def _controlled_physical_negative(mode_count: int, *, delta: float = 0.0) -> dic
     return shard
 
 
+def _p1_h5_capacity_negative() -> dict:
+    shard = _shard(160)
+    shard.update(
+        {
+            "status": "formal_not_pass",
+            "return_code": 2,
+            "formal_pass": False,
+            "numeric_pass": False,
+        }
+    )
+    measurements = shard["measurements"]
+    measurements["status"] = "insufficient_finite_admissible_modes"
+    measurements["case"]["degree"] = 1
+    measurements["case"]["candidate_modes_per_target_branch"] = 320
+    measurements["solve"] = {"true_relative_residual": None}
+    measurements["gates"] = {"finite_admissible_mode_capacity": False}
+    measurements["qualification"] = {
+        "integration_pass": False,
+        "algebraic_chain_pass": False,
+        "physical_field_gates_pass": False,
+        "task033_physical_truncation_allowed": False,
+        "mode_count_converged": False,
+        "modal_basis_capacity_pass": False,
+        "capacity_disposition": "insufficient_finite_admissible_modes",
+        "official_record": False,
+    }
+    measurements["modal_basis_capacity"] = {
+        "status": "insufficient_finite_admissible_modes",
+        "direction": "positive",
+        "requested_modes_per_direction": 160,
+        "delivered_finite_admissible_modes": 120,
+        "finite_candidate_count_both_directions": 240,
+        "numerically_infinite_candidate_count": 80,
+        "finite_spectrum_abs_beta_h_cutoff": 1.0e4,
+        "finite_spectrum_abs_beta_cutoff_per_nm": 2.0e3,
+        "leading_coefficient_singular_by_design": True,
+        "pair_tolerance_relaxed": False,
+        "left_pair_relative_error_tolerance": 1.0e-7,
+        "first_rejected_numerical_infinity_beta_per_nm": [1.1e7, 2.0e6],
+    }
+    measurements["object_payload_ledger"] = {"mode_count_per_direction": 120}
+    return shard
+
+
 class Task033HybridFunnelTests(unittest.TestCase):
+    def test_p1_h5_m160_capacity_negative_is_structured_and_not_promoted(self) -> None:
+        m80 = _controlled_physical_negative(80)
+        m120 = _controlled_physical_negative(120)
+        for shard in (m80, m120):
+            shard["measurements"]["case"]["degree"] = 1
+        record = build_hybrid_funnel([m80, m120, _p1_h5_capacity_negative()])
+        self.assertEqual(record["status"], "not_qualified")
+        self.assertEqual(record["failures"], [P1_H5_CAPACITY_FAILURE])
+        self.assertTrue(record["qualification"]["modal_basis_capacity_limited"])
+        self.assertEqual(
+            record["modal_basis_capacity"]["delivered_finite_admissible_modes"],
+            120,
+        )
+        self.assertTrue(is_controlled_p1_h5_capacity_funnel(record))
+        self.assertEqual(_semantic_problems("hybrid_funnel_p1", record), [])
+
+    def test_aggregate_capacity_contract_rejects_mutated_cutoff(self) -> None:
+        shards = [_controlled_physical_negative(mode) for mode in (80, 120)]
+        for shard in shards:
+            shard["measurements"]["case"]["degree"] = 1
+        record = build_hybrid_funnel(
+            [*shards, _p1_h5_capacity_negative()]
+        )
+        record["modal_basis_capacity"][
+            "finite_spectrum_abs_beta_cutoff_per_nm"
+        ] = 123.0
+        self.assertFalse(is_controlled_p1_h5_capacity_funnel(record))
+        self.assertTrue(_semantic_problems("hybrid_funnel_p1", record))
+
+    def test_p1_h5_capacity_negative_contract_fails_closed_per_field(self) -> None:
+        mutations = {
+            "integration_pass": lambda row: row["measurements"][
+                "qualification"
+            ].update(integration_pass=True),
+            "algebraic_chain_pass": lambda row: row["measurements"][
+                "qualification"
+            ].update(algebraic_chain_pass=True),
+            "physical_field_gates_pass": lambda row: row["measurements"][
+                "qualification"
+            ].update(physical_field_gates_pass=True),
+            "physical_truncation_allowed": lambda row: row["measurements"][
+                "qualification"
+            ].update(task033_physical_truncation_allowed=True),
+            "mode_count_converged": lambda row: row["measurements"][
+                "qualification"
+            ].update(mode_count_converged=True),
+            "non_null_true_residual": lambda row: row["measurements"][
+                "solve"
+            ].update(true_relative_residual=0.0),
+            "wrong_solver_path": lambda row: row["measurements"][
+                "hybrid_system"
+            ].update(primary_solver_path="augmented-direct"),
+            "wrong_dimensionless_cutoff": lambda row: row["measurements"][
+                "modal_basis_capacity"
+            ].update(finite_spectrum_abs_beta_h_cutoff=1.0e3),
+            "wrong_per_nm_cutoff": lambda row: row["measurements"][
+                "modal_basis_capacity"
+            ].update(finite_spectrum_abs_beta_cutoff_per_nm=200.0),
+        }
+        m80 = _controlled_physical_negative(80)
+        m120 = _controlled_physical_negative(120)
+        for shard in (m80, m120):
+            shard["measurements"]["case"]["degree"] = 1
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                rejected = _p1_h5_capacity_negative()
+                mutate(rejected)
+                record = build_hybrid_funnel([m80, m120, rejected])
+                self.assertEqual(record["status"], "not_qualified")
+                self.assertNotEqual(record["failures"], [P1_H5_CAPACITY_FAILURE])
+                self.assertFalse(
+                    record["qualification"]["modal_basis_capacity_limited"]
+                )
+
+    def test_missing_or_wrong_mpi4_command_fails_closed(self) -> None:
+        for command in (None, ["mpiexec", "-n", "2", "python", "hybrid"]):
+            with self.subTest(command=command):
+                shards = [_shard(mode) for mode in (80, 120, 160)]
+                if command is None:
+                    shards[1].pop("command")
+                else:
+                    shards[1]["command"] = command
+                record = build_hybrid_funnel(shards)
+                self.assertEqual(record["status"], "not_qualified")
+                self.assertIn(
+                    "one or more funnel shards failed the external watchdog contract",
+                    record["failures"],
+                )
+
     def test_m80_m120_m160_can_qualify(self) -> None:
         record = build_hybrid_funnel(
             [_shard(80, delta=2.0e-7), _shard(120, delta=1.0e-7), _shard(160)]

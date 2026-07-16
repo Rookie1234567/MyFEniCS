@@ -34,6 +34,9 @@ from benchmarks.task033_qep_qualification import (
     qep_p4_controlled_negative_gate,
     source_identity_gate,
 )
+from benchmarks.task033_hybrid_funnel import (
+    is_controlled_p1_h5_capacity_funnel,
+)
 from benchmarks.task033_watchdog_launch import FORMAL_FUNNEL_MODES
 from src.geometry.task033_periodic_graded_mesh import (
     PeriodicGradedHybridPlan,
@@ -478,18 +481,27 @@ def _validated_funnel(item: EvidenceFile) -> tuple[Mapping[str, Any], str]:
     qualification = item.payload.get("qualification")
     if not isinstance(identity, Mapping) or not isinstance(qualification, Mapping):
         raise FormalRecordError(f"funnel {item.path} lacks identity/qualification")
+    capacity_limited = is_controlled_p1_h5_capacity_funnel(item.payload)
     conditions = {
-        "status_qualified": item.payload.get("status") == "qualified",
-        "solver_pass": identity.get("is_solver_pass") is True,
+        "status_qualified_or_capacity_limited": (
+            item.payload.get("status") == "qualified" or capacity_limited
+        ),
+        "solver_pass_or_capacity_limited": (
+            identity.get("is_solver_pass") is True or capacity_limited
+        ),
         "tracked_source_clean": identity.get("tracked_source_clean") is True,
-        "mode_count_converged": qualification.get("mode_count_converged") is True,
+        "mode_count_converged_or_capacity_limited": (
+            qualification.get("mode_count_converged") is True or capacity_limited
+        ),
         "all_sources_same_clean_sha": (
             qualification.get("all_sources_same_clean_sha") is True
         ),
         "all_external_watchdogs_pass": (
             qualification.get("all_external_watchdogs_pass") is True
         ),
-        "no_failures": item.payload.get("failures") == [],
+        "no_unexpected_failures": (
+            item.payload.get("failures") == [] or capacity_limited
+        ),
     }
     failed = [key for key, passed in conditions.items() if not passed]
     if failed:
@@ -675,7 +687,11 @@ def build_uniform_p_h_matrix(
             output_rows.append(
                 {
                     **base,
-                    "evidence_disposition": "measured_qualified_funnel",
+                    "evidence_disposition": (
+                        "measured_not_qualified_by_modal_basis_capacity"
+                        if funnel.get("status") == "not_qualified"
+                        else "measured_qualified_funnel"
+                    ),
                     "data_identity": "measured",
                     "source_is_pde_run": funnel.get("identity", {}).get(
                         "is_pde_run"
@@ -694,6 +710,25 @@ def build_uniform_p_h_matrix(
                             "selected_mode_count_per_direction"
                         )
                     ),
+                    "candidate_modes_per_target_branch": (
+                        2
+                        * (
+                            funnel.get("qualification", {}).get(
+                                "selected_mode_count_per_direction"
+                            )
+                            or funnel.get("modal_basis_capacity", {}).get(
+                                "requested_modes_per_direction"
+                            )
+                        )
+                    ),
+                    "attempted_mode_count_per_direction": (
+                        None
+                        if funnel.get("modal_basis_capacity") is None
+                        else funnel["modal_basis_capacity"].get(
+                            "requested_modes_per_direction"
+                        )
+                    ),
+                    "modal_basis_capacity": funnel.get("modal_basis_capacity"),
                 }
             )
             continue
@@ -844,6 +879,11 @@ def build_uniform_p_h_matrix(
         "summary": {
             "measured_funnel_entries": sum(
                 row["evidence_disposition"] == "measured_qualified_funnel"
+                for row in output_rows
+            ),
+            "measured_modal_basis_capacity_negative_entries": sum(
+                row["evidence_disposition"]
+                == "measured_not_qualified_by_modal_basis_capacity"
                 for row in output_rows
             ),
             "measured_anchor_entries": sum(

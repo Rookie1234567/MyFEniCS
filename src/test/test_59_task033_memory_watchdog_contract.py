@@ -34,6 +34,7 @@ def _funnel_shard(mode_count: int, delta: float) -> dict:
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "command": ["mpiexec", "-n", "4", "python", "hybrid"],
         "requested_modes": mode_count,
         "candidate_modes": 2 * mode_count,
         "formal_pass": True,

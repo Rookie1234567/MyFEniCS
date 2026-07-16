@@ -32,6 +32,10 @@ CONTROLLED_PHYSICAL_GATE_FAILURES = frozenset(
         "middle_plane_h_relative_l2_le_5e-3",
     }
 )
+P1_H5_CAPACITY_FAILURE = (
+    "M160 is not qualified because p1/h5 supplies only 120 finite admissible "
+    "modes per direction before singular-K2 numerical-infinity roots"
+)
 
 
 def _sha256(path: Path) -> str:
@@ -222,10 +226,24 @@ def _external_watchdog_pass(payload: Mapping[str, Any]) -> bool:
         and payload.get("memory_authority_pass") is True
         and nested_gates_pass
         and _candidate_pool_is_exactly_twice_retained(payload)
+        and _command_mpi_size(payload.get("command")) == 4
     )
     if measured_pass:
         return True
-    return _controlled_physical_truncation_negative(payload)
+    return bool(
+        _controlled_physical_truncation_negative(payload)
+        or _controlled_modal_basis_capacity_negative(payload)
+    )
+
+
+def _command_mpi_size(command: Any) -> int | None:
+    if not isinstance(command, Sequence) or isinstance(command, (str, bytes)):
+        return None
+    values = [str(value) for value in command]
+    try:
+        return int(values[values.index("-n") + 1])
+    except (ValueError, IndexError):
+        return None
 
 
 def _controlled_physical_truncation_negative(
@@ -277,6 +295,7 @@ def _controlled_physical_truncation_negative(
         and source_gate.get("pass") is True
         and launch_gate.get("pass") is True
         and _candidate_pool_is_exactly_twice_retained(payload)
+        and _command_mpi_size(payload.get("command")) == 4
         and measurements.get("status") == "physical_integration_failed"
         and qualification.get("integration_pass") is False
         and qualification.get("algebraic_chain_pass") is True
@@ -287,6 +306,135 @@ def _controlled_physical_truncation_negative(
         and residual is not None
         and residual <= 1.0e-9
         and only_physical_gates_failed
+    )
+
+
+def _controlled_modal_basis_capacity_negative(
+    payload: Mapping[str, Any],
+) -> bool:
+    """Recognize only the measured p1/h5 M160 singular-K2 capacity boundary."""
+
+    measurements = _measurements(payload)
+    case = _case(payload)
+    qualification = measurements.get("qualification")
+    qualification = qualification if isinstance(qualification, Mapping) else {}
+    capacity = measurements.get("modal_basis_capacity")
+    capacity = capacity if isinstance(capacity, Mapping) else {}
+    gates = measurements.get("gates")
+    gates = gates if isinstance(gates, Mapping) else {}
+    solve = measurements.get("solve")
+    solve = solve if isinstance(solve, Mapping) else {}
+    hybrid = measurements.get("hybrid_system")
+    hybrid = hybrid if isinstance(hybrid, Mapping) else {}
+    resource = payload.get("resource_authority")
+    resource = resource if isinstance(resource, Mapping) else {}
+    resource_gate = resource.get("gate")
+    resource_gate = resource_gate if isinstance(resource_gate, Mapping) else {}
+    source_gate = payload.get("source_gate")
+    source_gate = source_gate if isinstance(source_gate, Mapping) else {}
+    launch_gate = payload.get("launch_gate")
+    launch_gate = launch_gate if isinstance(launch_gate, Mapping) else {}
+    return bool(
+        payload.get("status") == "formal_not_pass"
+        and payload.get("target") == "hybrid"
+        and payload.get("return_code") == 2
+        and payload.get("formal_pass") is False
+        and payload.get("numeric_pass") is False
+        and payload.get("no_swap") is True
+        and payload.get("terminated_for_memory") is False
+        and payload.get("terminated_for_timeout") is False
+        and payload.get("terminated_for_authority_unreadable") is False
+        and payload.get("memory_authority_pass") is True
+        and resource_gate.get("pass") is True
+        and source_gate.get("pass") is True
+        and launch_gate.get("pass") is True
+        and _command_mpi_size(payload.get("command")) == 4
+        and _candidate_pool_is_exactly_twice_retained(payload)
+        and case.get("degree") == 1
+        and _finite(case.get("h_nm")) == 5.0
+        and case.get("requested_modes_per_direction") == 160
+        and case.get("candidate_modes_per_target_branch") == 320
+        and measurements.get("status")
+        == "insufficient_finite_admissible_modes"
+        and hybrid.get("primary_solver_path")
+        == "modal-schur-memory-minimal"
+        and "true_relative_residual" in solve
+        and solve.get("true_relative_residual") is None
+        and gates == {"finite_admissible_mode_capacity": False}
+        and qualification.get("capacity_disposition")
+        == "insufficient_finite_admissible_modes"
+        and qualification.get("modal_basis_capacity_pass") is False
+        and qualification.get("integration_pass") is False
+        and qualification.get("algebraic_chain_pass") is False
+        and qualification.get("physical_field_gates_pass") is False
+        and qualification.get("task033_physical_truncation_allowed") is False
+        and qualification.get("mode_count_converged") is False
+        and qualification.get("official_record") is False
+        and is_exact_p1_h5_modal_basis_capacity(capacity)
+    )
+
+
+def is_exact_p1_h5_modal_basis_capacity(capacity: Any) -> bool:
+    """Return whether ``capacity`` is the one frozen p1/h5 finite-spectrum limit."""
+
+    if not isinstance(capacity, Mapping):
+        return False
+    first_rejected = _complex(
+        capacity.get("first_rejected_numerical_infinity_beta_per_nm")
+    )
+    return bool(
+        capacity.get("status") == "insufficient_finite_admissible_modes"
+        and capacity.get("direction") == "positive"
+        and capacity.get("requested_modes_per_direction") == 160
+        and capacity.get("delivered_finite_admissible_modes") == 120
+        and capacity.get("finite_candidate_count_both_directions") == 240
+        and capacity.get("numerically_infinite_candidate_count") == 80
+        and _finite(capacity.get("finite_spectrum_abs_beta_h_cutoff")) == 1.0e4
+        and _finite(
+            capacity.get("finite_spectrum_abs_beta_cutoff_per_nm")
+        )
+        == 2.0e3
+        and capacity.get("leading_coefficient_singular_by_design") is True
+        and capacity.get("pair_tolerance_relaxed") is False
+        and _finite(capacity.get("left_pair_relative_error_tolerance")) == 1.0e-7
+        and first_rejected is not None
+        and abs(first_rejected) > 1.0e6
+    )
+
+
+def is_controlled_p1_h5_capacity_funnel(payload: Any) -> bool:
+    """Recognize only the aggregate built from the exact p1/h5 capacity negative."""
+
+    if not isinstance(payload, Mapping):
+        return False
+    identity = payload.get("identity")
+    case = payload.get("case")
+    qualification = payload.get("qualification")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (identity, case, qualification)
+    ):
+        return False
+    return bool(
+        payload.get("status") == "not_qualified"
+        and identity.get("is_pde_run") is True
+        and identity.get("is_solver_pass") is False
+        and identity.get("is_mode_convergence_measurement") is True
+        and identity.get("tracked_source_clean") is True
+        and case.get("degree") == 1
+        and _finite(case.get("h_nm")) == 5.0
+        and case.get("primary_solver_path") == "modal-schur-memory-minimal"
+        and case.get("mode_counts") == [80, 120, 160]
+        and qualification.get("mode_count_converged") is False
+        and qualification.get("selected_mode_count_per_direction") is None
+        and qualification.get("selected_pair_strong") is False
+        and qualification.get("all_sources_same_clean_sha") is True
+        and qualification.get("all_external_watchdogs_pass") is True
+        and qualification.get("modal_basis_capacity_limited") is True
+        and payload.get("failures") == [P1_H5_CAPACITY_FAILURE]
+        and is_exact_p1_h5_modal_basis_capacity(
+            payload.get("modal_basis_capacity")
+        )
     )
 
 
@@ -509,6 +657,7 @@ def build_hybrid_funnel(
             mode in (80, 120)
             and _controlled_physical_truncation_negative(payload)
         )
+        or (mode == 160 and _controlled_modal_basis_capacity_negative(payload))
         for mode, payload in by_m.items()
     )
     if not individual_contracts_pass:
@@ -539,12 +688,18 @@ def build_hybrid_funnel(
     )
     selected_m: int | None = None
     convergence_pair: Mapping[str, Any] | None = None
+    capacity_limited_m160 = bool(
+        160 in by_m
+        and _controlled_modal_basis_capacity_negative(by_m[160])
+    )
     if pair_120_160 is not None and pair_120_160["mandatory_convergence_pass"]:
         selected_m = 160
         convergence_pair = pair_120_160
     elif pair_160_240 is not None and pair_160_240["mandatory_convergence_pass"]:
         selected_m = 240
         convergence_pair = pair_160_240
+    elif capacity_limited_m160:
+        problems.append(P1_H5_CAPACITY_FAILURE)
     else:
         problems.append("M120->M160 did not converge and no qualifying M160->M240 result exists")
 
@@ -556,6 +711,11 @@ def build_hybrid_funnel(
     qualified = not problems and selected_m is not None
     identity = next(iter(identities), None)
     source_sha = next((value for value in source_shas if value is not None), None)
+    capacity_evidence = (
+        dict(_measurements(by_m[160]).get("modal_basis_capacity", {}))
+        if capacity_limited_m160
+        else None
+    )
     return {
         "schema_version": "task033.case091.hybrid-funnel.v1",
         "record_type": "task033_hybrid_mode_truncation_funnel",
@@ -597,6 +757,7 @@ def build_hybrid_funnel(
         "source_records": list(source_descriptors or []),
         "individual_gates": individual,
         "comparisons": comparisons,
+        "modal_basis_capacity": capacity_evidence,
         "qualification": {
             "mode_count_converged": qualified,
             "selected_mode_count_per_direction": selected_m,
@@ -608,6 +769,7 @@ def build_hybrid_funnel(
             "all_external_watchdogs_pass": all(
                 _external_watchdog_pass(payload) for payload in by_m.values()
             ),
+            "modal_basis_capacity_limited": capacity_limited_m160,
         },
         "failures": problems,
         "limitations": [

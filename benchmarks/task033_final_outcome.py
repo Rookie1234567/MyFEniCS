@@ -15,6 +15,10 @@ from benchmarks.task033_qep_qualification import (
     qep_p3_only_partial_aggregate_gate,
     qep_source_record_file_gate,
 )
+from benchmarks.task033_hybrid_funnel import (
+    _controlled_physical_truncation_negative,
+    is_exact_p1_h5_modal_basis_capacity,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -334,9 +338,19 @@ def _anchor_result(evidence: Evidence, expected_degree: int) -> dict[str, Any]:
     hybrid = hybrid if isinstance(hybrid, Mapping) else {}
     comparison = measurements.get("modal_schur_comparison")
     comparison = comparison if isinstance(comparison, Mapping) else {}
+    expected_modes = 120 if expected_degree == 1 else 160
+    controlled_p1_negative = bool(
+        expected_degree == 1
+        and _controlled_physical_truncation_negative(payload)
+    )
     checks = {
-        "formal_watchdog_pass": payload.get("status") == "measured_shard_pass"
-        and payload.get("formal_pass") is True,
+        "formal_watchdog_pass_or_controlled_p1_physical_negative": bool(
+            controlled_p1_negative
+            or (
+                payload.get("status") == "measured_shard_pass"
+                and payload.get("formal_pass") is True
+            )
+        ),
         "no_termination_or_swap": (
             payload.get("terminated_for_timeout") is False
             and payload.get("terminated_for_memory") is False
@@ -348,7 +362,9 @@ def _anchor_result(evidence: Evidence, expected_degree: int) -> dict[str, Any]:
         and payload["launch_gate"].get("pass") is True,
         "case_is_expected_p_h_mpi": case.get("degree") == expected_degree
         and float(case.get("h_nm", -1.0)) == 5.0
-        and _command_mpi_size(payload.get("command"), label=evidence.role) == 4,
+        and _command_mpi_size(payload.get("command"), label=evidence.role) == 4
+        and payload.get("requested_modes") == expected_modes
+        and payload.get("candidate_modes") == 2 * expected_modes,
         "augmented_primary": hybrid.get("primary_solver_path") == "augmented",
         "minimal_comparison_pass": comparison.get("status") == "pass"
         and comparison.get("comparison_solver_path") == "modal-schur-memory-minimal"
@@ -361,7 +377,12 @@ def _anchor_result(evidence: Evidence, expected_degree: int) -> dict[str, Any]:
         "degree": expected_degree,
         "disposition": "pass" if not failures else "failed",
         "classification": (
-            "augmented_vs_memory_minimal_qualified"
+            (
+                "augmented_vs_memory_minimal_algebraic_qualified_"
+                "with_controlled_p1_physical_truncation_negative"
+            )
+            if not failures and controlled_p1_negative
+            else "augmented_vs_memory_minimal_qualified"
             if not failures
             else "augmented_vs_memory_minimal_not_qualified"
         ),
@@ -382,6 +403,7 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
         raise FinalOutcomeError("uniform_p_h_matrix does not cover the frozen 4x5 matrix")
     measured = 0
     not_run = 0
+    capacity_negatives = 0
     for row in rows:
         disposition = row.get("evidence_disposition")
         if disposition == "not_run_by_memory_gate":
@@ -394,15 +416,47 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
                 raise FinalOutcomeError("uniform matrix contains an invalid memory-gated row")
             not_run += 1
         else:
+            if disposition not in {
+                "measured_qualified_funnel",
+                "measured_not_qualified_by_modal_basis_capacity",
+                "measured_external_watchdog_shard",
+                "measured_task032_clean_anchor",
+            }:
+                raise FinalOutcomeError(
+                    "uniform matrix contains an unknown measured disposition"
+                )
+            if disposition == "measured_not_qualified_by_modal_basis_capacity":
+                exact_capacity_row = bool(
+                    row.get("degree") == 1
+                    and float(row.get("h_nm", -1.0)) == 5.0
+                    and row.get("source_status") == "not_qualified"
+                    and row.get("source_is_pde_run") is True
+                    and row.get("source_is_solver_pass") is False
+                    and row.get("selected_mode_count_per_direction") is None
+                    and row.get("candidate_modes_per_target_branch") == 320
+                    and row.get("attempted_mode_count_per_direction") == 160
+                    and is_exact_p1_h5_modal_basis_capacity(
+                        row.get("modal_basis_capacity")
+                    )
+                )
+                if not exact_capacity_row:
+                    raise FinalOutcomeError(
+                        "uniform matrix contains a non-exact modal-basis capacity negative"
+                    )
             _sha256(row.get("source_record_sha256"), label=f"uniform.{row.get('matrix_key')}.source_record_sha256")
             if row.get("source_commit_sha") != evidence.source_sha or row.get("data_identity") != "measured":
                 raise FinalOutcomeError("uniform measured row is not bound to the common clean SHA")
             measured += 1
+            capacity_negatives += int(
+                disposition
+                == "measured_not_qualified_by_modal_basis_capacity"
+            )
     passed = payload.get("status") == "formal_matrix_complete"
     return rows, {
         "disposition": "pass" if passed else "failed",
         "measured_entries": measured,
         "not_run_by_memory_gate_entries": not_run,
+        "modal_basis_capacity_negative_entries": capacity_negatives,
         "entry_count": len(rows),
     }
 
@@ -937,6 +991,8 @@ def build_final_outcome(
         partial_reasons.append("p3_equal_accuracy_negative")
     if p4["disposition"] in {"negative", "legitimate_not_run"}:
         partial_reasons.append(f"p4_equal_accuracy_{p4['disposition']}")
+    if uniform_result["modal_basis_capacity_negative_entries"]:
+        partial_reasons.append("p1_h5_modal_basis_capacity_negative")
     if mandatory_failures:
         overall_disposition = "failed"
     elif partial_reasons:

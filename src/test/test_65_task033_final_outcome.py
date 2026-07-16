@@ -142,23 +142,52 @@ class Task033FinalOutcomeTests(unittest.TestCase):
             }
 
         def anchor(degree: int) -> dict:
+            mode_count = 120 if degree == 1 else 160
+            controlled = degree == 1
             return {
                 "schema_version": "task033.memory-watchdog.v2",
                 "benchmark_id": "task033_external_memory_watchdog",
-                "status": "measured_shard_pass",
+                "status": "formal_not_pass" if controlled else "measured_shard_pass",
                 "target": "hybrid",
-                "formal_pass": True,
+                "formal_pass": not controlled,
+                "numeric_pass": not controlled,
+                "return_code": 2 if controlled else 0,
+                "requested_modes": mode_count,
+                "candidate_modes": 2 * mode_count,
                 "terminated_for_timeout": False,
                 "terminated_for_memory": False,
                 "terminated_for_authority_unreadable": False,
                 "memory_authority_pass": True,
                 "no_swap": True,
+                "resource_authority": {"gate": {"pass": True}},
                 "launch_gate": {"pass": True},
                 "source_gate": _source_gate(),
                 "command": ["mpiexec", "-n", "4", "python", "hybrid"],
                 "measurements": {
-                    "case": {"degree": degree, "h_nm": 5.0},
+                    "status": (
+                        "physical_integration_failed" if controlled else "pass"
+                    ),
+                    "case": {
+                        "degree": degree,
+                        "h_nm": 5.0,
+                        "requested_modes_per_direction": mode_count,
+                    },
                     "hybrid_system": {"primary_solver_path": "augmented"},
+                    "solve": {"true_relative_residual": 1.0e-12},
+                    "gates": {
+                        "algebraic": True,
+                        "sampled_interface_h_t_relative_l2_le_1e-2": (
+                            not controlled
+                        ),
+                    },
+                    "qualification": {
+                        "integration_pass": not controlled,
+                        "algebraic_chain_pass": True,
+                        "physical_field_gates_pass": not controlled,
+                        "task033_physical_truncation_allowed": True,
+                        "mode_count_converged": not controlled,
+                        "official_record": False,
+                    },
                     "modal_schur_comparison": {
                         "status": "pass",
                         "comparison_solver_path": "modal-schur-memory-minimal",
@@ -1017,6 +1046,50 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         result = build_final_outcome(**self.paths)
         self.assertEqual(result["classifications"]["equal_accuracy"]["p4"]["disposition"], "failed")
         self.assertEqual(result["classifications"]["overall"]["disposition"], "failed")
+
+    def test_uniform_capacity_disposition_requires_exact_p1_h5_evidence(self) -> None:
+        payload = self._load("uniform_p_h_matrix")
+        row = next(
+            row
+            for row in payload["entries"]
+            if row["degree"] == 1 and row["h_nm"] == 5.0
+        )
+        row.update(
+            {
+                "evidence_disposition": (
+                    "measured_not_qualified_by_modal_basis_capacity"
+                ),
+                "source_status": "not_qualified",
+                "source_is_pde_run": True,
+                "source_is_solver_pass": False,
+                "selected_mode_count_per_direction": None,
+                "candidate_modes_per_target_branch": 320,
+                "attempted_mode_count_per_direction": 160,
+                "modal_basis_capacity": {
+                    "status": "insufficient_finite_admissible_modes",
+                    "direction": "positive",
+                    "requested_modes_per_direction": 160,
+                    "delivered_finite_admissible_modes": 120,
+                    "finite_candidate_count_both_directions": 240,
+                    "numerically_infinite_candidate_count": 80,
+                    "finite_spectrum_abs_beta_h_cutoff": 1.0e4,
+                    "finite_spectrum_abs_beta_cutoff_per_nm": 123.0,
+                    "first_rejected_numerical_infinity_beta_per_nm": [
+                        1.1e7,
+                        2.0e6,
+                    ],
+                    "leading_coefficient_singular_by_design": True,
+                    "pair_tolerance_relaxed": False,
+                    "left_pair_relative_error_tolerance": 1.0e-7,
+                },
+            }
+        )
+        self._replace("uniform_p_h_matrix", payload)
+        with self.assertRaisesRegex(
+            FinalOutcomeError,
+            "non-exact modal-basis capacity negative",
+        ):
+            build_final_outcome(**self.paths)
 
     def test_cli_writes_same_classified_record(self) -> None:
         output = self.root / "final.json"

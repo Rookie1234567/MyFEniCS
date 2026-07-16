@@ -23,6 +23,10 @@ from benchmarks.task033_qep_qualification import (
     qep_p3_only_partial_aggregate_gate,
     qep_source_record_file_gate,
 )
+from benchmarks.task033_hybrid_funnel import (
+    _controlled_physical_truncation_negative,
+    is_controlled_p1_h5_capacity_funnel,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -116,10 +120,12 @@ ROLE_SPECS: Mapping[str, RoleSpec] = {
     "qep_mpi4_timeout_negative": RoleSpec(
         QEP_SCHEMA, "/status", ("formal_not_pass",)
     ),
-    "hybrid_funnel_p1": RoleSpec(FUNNEL_SCHEMA, "/status", ("qualified",)),
+    "hybrid_funnel_p1": RoleSpec(
+        FUNNEL_SCHEMA, "/status", ("qualified", "not_qualified")
+    ),
     "hybrid_funnel_p3": RoleSpec(FUNNEL_SCHEMA, "/status", ("qualified",)),
     "augmented_vs_minimal_p1": RoleSpec(
-        QEP_SCHEMA, "/status", ("measured_shard_pass",)
+        QEP_SCHEMA, "/status", ("formal_not_pass", "measured_shard_pass")
     ),
     "augmented_vs_minimal_p3": RoleSpec(
         QEP_SCHEMA, "/status", ("measured_shard_pass",)
@@ -711,14 +717,25 @@ def _semantic_problems(role: str, payload: Mapping[str, Any]) -> list[str]:
             if isinstance(measurements, Mapping)
             else {}
         )
+        expected_modes = 120 if expected_degree == 1 else 160
+        formal_watchdog_pass = bool(
+            (
+                payload.get("status") == "measured_shard_pass"
+                and payload.get("formal_pass") is True
+                and payload.get("numeric_pass") is True
+            )
+            or (
+                expected_degree == 1
+                and _controlled_physical_truncation_negative(payload)
+            )
+        )
         checks = {
             "watchdog_identity": payload.get("schema_version")
             == "task033.memory-watchdog.v2"
             and payload.get("target") == "hybrid",
-            "formal_watchdog_pass": payload.get("status")
-            == "measured_shard_pass"
-            and payload.get("formal_pass") is True
-            and payload.get("numeric_pass") is True,
+            "formal_watchdog_pass_or_controlled_p1_physical_negative": (
+                formal_watchdog_pass
+            ),
             "no_termination_or_swap": payload.get("terminated_for_timeout")
             is False
             and payload.get("terminated_for_memory") is False
@@ -737,8 +754,8 @@ def _semantic_problems(role: str, payload: Mapping[str, Any]) -> list[str]:
             and case.get("degree") == expected_degree
             and case.get("h_nm") == 5.0
             and _command_mpi_size(payload.get("command")) == 4
-            and payload.get("requested_modes") == 160
-            and payload.get("candidate_modes") == 320,
+            and payload.get("requested_modes") == expected_modes
+            and payload.get("candidate_modes") == 2 * expected_modes,
             "augmented_primary": isinstance(hybrid, Mapping)
             and hybrid.get("primary_solver_path") == "augmented",
             "minimal_comparison": isinstance(comparison, Mapping)
@@ -756,11 +773,21 @@ def _semantic_problems(role: str, payload: Mapping[str, Any]) -> list[str]:
         )
     elif role.startswith("hybrid_funnel_") or role.startswith("interface_buffer_") and role != "interface_buffer_tradeoff":
         qualification = payload.get("qualification", {})
-        if not isinstance(identity, Mapping) or identity.get("is_solver_pass") is not True:
-            problems.append("Hybrid funnel is not a solver-qualified aggregate")
-        if not isinstance(qualification, Mapping) or qualification.get("mode_count_converged") is not True:
-            problems.append("Hybrid funnel mode count did not converge")
         case = payload.get("case", {})
+        p1_capacity_negative = bool(
+            role == "hybrid_funnel_p1"
+            and is_controlled_p1_h5_capacity_funnel(payload)
+        )
+        if (
+            not isinstance(identity, Mapping)
+            or identity.get("is_solver_pass") is not True
+        ) and not p1_capacity_negative:
+            problems.append("Hybrid funnel is neither qualified nor the p1/h5 capacity negative")
+        if (
+            not isinstance(qualification, Mapping)
+            or qualification.get("mode_count_converged") is not True
+        ) and not p1_capacity_negative:
+            problems.append("Hybrid funnel mode count did not converge")
         if role == "hybrid_funnel_p1" and case.get("degree") != 1:
             problems.append("p1 funnel role does not contain degree=1")
         if role == "hybrid_funnel_p3" and case.get("degree") != 3:

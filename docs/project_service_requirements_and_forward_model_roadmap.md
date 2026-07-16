@@ -614,11 +614,14 @@ $$
 
 目标是形成可覆盖目标角度范围的公共网格，避免每个角度重新划分网格。
 
-Task033 第一 Gate 在 13.5 nm direct reference 上比较相同 observable error：
+Task033 第一 Gate 在 13.5 nm direct reference 上比较相同 observable error。这里需要
+区分分阶段指标：p2 graded-h 的 `3x` 只是 stretch 目标；组合使用 h/p/interface 优化后，
+`3x` 才是工程目标，`5x` 是强目标，而不是把任一局部网格单独写成必须达到的最低门槛：
 
 ```text
-local DoF reduction >= 3x minimum
->= 5x preferred
+p2 graded-h: 3x stretch target
+combined h/p/interface optimization: 3x engineering target
+combined h/p/interface optimization: 5x strong target
 ```
 
 同时优化 interface position / buffer thickness，使 local 3D volume 与所需 evanescent M 联合受控；

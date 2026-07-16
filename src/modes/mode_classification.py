@@ -152,6 +152,10 @@ class DirectionalModeSelectionReport:
     passive_candidate_count: int
     selected_candidate_indices: tuple[int, ...]
     flux_tolerance: float
+    finite_candidate_count: int
+    numerically_infinite_candidate_count: int
+    abs_beta_cutoff: float | None
+    first_rejected_numerical_infinity_beta: complex | None
 
 
 class PoyntingFluxEvaluator:
@@ -407,6 +411,7 @@ def select_passive_direction_modes(
     relative_flux_tolerance: float = 1.0e-8,
     absolute_flux_tolerance: float = 1.0e-12,
     beta_imag_tolerance: float = 1.0e-10,
+    maximum_abs_beta: float | None = None,
 ) -> tuple[list[QuadraticBetaMode], DirectionalModeSelectionReport]:
     """Filter a target-slice candidate pool before biorthogonalization.
 
@@ -422,9 +427,25 @@ def select_passive_direction_modes(
         raise ValueError("requested_modes must be positive.")
     if not right_modes:
         raise ValueError("At least one directional candidate is required.")
+    if maximum_abs_beta is not None and (
+        not np.isfinite(maximum_abs_beta) or maximum_abs_beta <= 0.0
+    ):
+        raise ValueError("maximum_abs_beta must be finite and positive when supplied.")
+    finite_indices = [
+        index
+        for index, mode in enumerate(right_modes)
+        if np.isfinite(mode.beta.real)
+        and np.isfinite(mode.beta.imag)
+        and (maximum_abs_beta is None or abs(mode.beta) <= maximum_abs_beta)
+    ]
+    finite_ids = set(finite_indices)
+    rejected_indices = [
+        index for index in range(len(right_modes)) if index not in finite_ids
+    ]
+    finite_modes = [right_modes[index] for index in finite_indices]
     fluxes = [
         poynting_evaluator.evaluate(mode.right_full, mode.beta)
-        for mode in right_modes
+        for mode in finite_modes
     ]
     flux_tolerance = max(
         float(absolute_flux_tolerance),
@@ -438,16 +459,21 @@ def select_passive_direction_modes(
             flux_tolerance,
             beta_imag_tolerance,
         )
-        for mode, flux in zip(right_modes, fluxes)
+        for mode, flux in zip(finite_modes, fluxes)
     ]
     eligible = [
-        index
+        finite_indices[index]
         for index, (_kind, direction, _basis, passive) in enumerate(classifications)
         if direction == desired_direction and passive
     ]
     selected_indices = tuple(eligible[:requested_modes])
     selected_ids = set(selected_indices)
     selected = [right_modes[index] for index in selected_indices]
+    first_rejected_beta = (
+        None
+        if not rejected_indices
+        else complex(right_modes[rejected_indices[0]].beta)
+    )
     for index, mode in enumerate(right_modes):
         if index not in selected_ids:
             mode.destroy()
@@ -463,6 +489,14 @@ def select_passive_direction_modes(
         passive_candidate_count=sum(1 for *_prefix, passive in classifications if passive),
         selected_candidate_indices=selected_indices,
         flux_tolerance=flux_tolerance,
+        finite_candidate_count=len(finite_modes),
+        numerically_infinite_candidate_count=len(rejected_indices),
+        abs_beta_cutoff=(
+            None if maximum_abs_beta is None else float(maximum_abs_beta)
+        ),
+        first_rejected_numerical_infinity_beta=(
+            first_rejected_beta
+        ),
     )
     return selected, report
 

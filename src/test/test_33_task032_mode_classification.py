@@ -155,6 +155,44 @@ class Task032ModeClassificationTests(unittest.TestCase):
             for mode in selected:
                 mode.destroy()
 
+    def test_numerical_infinity_roots_are_rejected_before_flux_classification(self):
+        class Candidate:
+            def __init__(self, beta: complex, flux: float):
+                self.beta = beta
+                self.right_full = self
+                self.flux = flux
+                self.destroyed = False
+
+            def destroy(self):
+                self.destroyed = True
+
+        class Evaluator:
+            @staticmethod
+            def evaluate(vector, _beta):
+                return vector.flux
+
+        finite = Candidate(0.1 + 0.9j, 0.0)
+        numerical_infinity = Candidate(1.1e7 + 2.0e6j, 1.0e30)
+        selected, report = select_passive_direction_modes(
+            [finite, numerical_infinity],
+            desired_direction="forward",
+            requested_modes=2,
+            poynting_evaluator=Evaluator(),
+            maximum_abs_beta=2.0e3,
+        )
+        try:
+            self.assertEqual(selected, [finite])
+            self.assertEqual(report.finite_candidate_count, 1)
+            self.assertEqual(report.numerically_infinite_candidate_count, 1)
+            self.assertEqual(
+                report.first_rejected_numerical_infinity_beta,
+                numerical_infinity.beta,
+            )
+            self.assertTrue(numerical_infinity.destroyed)
+        finally:
+            for mode in selected:
+                mode.destroy()
+
     def test_air_modes_use_poynting_and_adjoint_qep_biorthogonality(self):
         cfg = target_stage4_config(degree=2, h_nm=10.0)
         cross_section = build_matching_cross_section(cfg, "air")

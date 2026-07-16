@@ -272,7 +272,24 @@ def _directional_selection_summary(report) -> dict[str, Any]:
         "passive_candidate_count": report.passive_candidate_count,
         "selected_candidate_indices": list(report.selected_candidate_indices),
         "flux_tolerance": report.flux_tolerance,
+        "finite_candidate_count": report.finite_candidate_count,
+        "numerically_infinite_candidate_count": (
+            report.numerically_infinite_candidate_count
+        ),
+        "finite_spectrum_abs_beta_cutoff_per_nm": report.abs_beta_cutoff,
+        "first_rejected_numerical_infinity_beta_per_nm": (
+            None
+            if report.first_rejected_numerical_infinity_beta is None
+            else _complex_json(report.first_rejected_numerical_infinity_beta)
+        ),
     }
+
+
+class _ModalBasisCapacityStop(RuntimeError):
+    """Internal control flow after writing a structured finite-spectrum negative."""
+
+
+NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
 def _reference_comparison(
@@ -521,6 +538,157 @@ def main() -> None:
     graded_plan = None
     graded_bottom_mesh = None
     graded_top_mesh = None
+
+    def finite_spectrum_capacity_record(
+        *,
+        direction: str,
+        selection,
+        solver_report,
+    ) -> dict[str, Any]:
+        """Preserve a clean measured negative when singular K2 yields infinity roots."""
+
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        rss = comm.gather(_historical_peak_rss_mb(), root=0)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        case = {
+            "material_kind": "stage4_xy",
+            "degree": args.degree,
+            "h_nm": args.h_nm,
+            "requested_modes_per_direction": args.requested_modes,
+            "candidate_modes_per_target_branch": candidate_modes,
+            "near_degenerate_tolerance": args.near_degenerate_tolerance,
+            "block_rotation_tolerance": args.block_rotation_tolerance,
+            "bottom_interface_nm": args.bottom_interface_nm,
+            "top_interface_nm": args.top_interface_nm,
+            "middle_length_nm": args.top_interface_nm - args.bottom_interface_nm,
+            "wavelength_nm": cfg.lambda0,
+            "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
+            "polarization_kind": cfg.polarization_kind,
+            "mesh_policy": "reviewed_stage4_axis_plan",
+            "graded_reference_h_nm": args.graded_reference_h,
+            "graded_coarse_factor": None,
+            "graded_plan_hash": None,
+            "graded_plan": None,
+        }
+        selection_record = _directional_selection_summary(selection)
+        capacity = {
+            "status": "insufficient_finite_admissible_modes",
+            "direction": direction,
+            "requested_modes_per_direction": args.requested_modes,
+            "delivered_finite_admissible_modes": selection.selected_modes,
+            "finite_candidate_count_both_directions": (
+                selection.finite_candidate_count
+            ),
+            "numerically_infinite_candidate_count": (
+                selection.numerically_infinite_candidate_count
+            ),
+            "finite_spectrum_abs_beta_h_cutoff": (
+                NUMERICAL_INFINITY_BETA_H_CUTOFF
+            ),
+            "finite_spectrum_abs_beta_cutoff_per_nm": (
+                selection.abs_beta_cutoff
+            ),
+            "first_rejected_numerical_infinity_beta_per_nm": (
+                selection_record[
+                    "first_rejected_numerical_infinity_beta_per_nm"
+                ]
+            ),
+            "leading_coefficient_singular_by_design": (
+                operators.leading_coefficient_singular_by_design
+            ),
+            "pair_tolerance_relaxed": False,
+            "left_pair_relative_error_tolerance": 1.0e-7,
+        }
+        return {
+            "schema_version": 1,
+            "benchmark_id": "task033_hybrid_modal_basis_capacity",
+            "timestamp_utc": timestamp,
+            "status": "insufficient_finite_admissible_modes",
+            "metadata": {
+                **provenance,
+                "timestamp_utc": timestamp,
+                "command": "python -m benchmarks.run_task032_phase6_augmented "
+                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
+                "mpi_size": comm.size,
+                "container_image": args.container_image,
+                "container_digest": args.container_digest,
+                "host_environment_id": args.host_environment_id,
+                "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+                "full_field_or_mode_vector_gather": False,
+                "primary_solver_path": args.solver_path,
+                "task33_variant": True,
+                "provenance": (
+                    "clean_task033_finite_spectrum_capacity_negative"
+                    if not provenance["tracked_source_dirty"]
+                    else "dirty_task033_finite_spectrum_capacity_research"
+                ),
+            },
+            "case": case,
+            "qep": {
+                "target_beta_per_nm": _complex_json(target),
+                "full_shape": list(operators.full_shape),
+                "reduced_shape": list(operators.reduced_shape),
+                "field_degree": operators.field_degree,
+                "geometry_degree": operators.geometry_degree,
+                "coefficient_degree": operators.coefficient_degree,
+                "quadrature_degree": operators.quadrature_degree,
+                "quadrature_policy": operators.quadrature_policy,
+                f"{direction}_solver_converged_modes": (
+                    solver_report.converged_modes
+                ),
+                f"{direction}_directional_selection": selection_record,
+            },
+            "hybrid_system": {
+                "primary_solver_path": args.solver_path,
+                "dense_interface_square_formed": False,
+                "full_field_or_mode_gathered": False,
+            },
+            "solve": {"true_relative_residual": None},
+            "validation": {
+                "port_power": None,
+                "external_diffraction_orders": None,
+            },
+            "physical_field_reconstruction": None,
+            "modal_schur_comparison": None,
+            "object_payload_ledger": {
+                "mode_count_per_direction": selection.selected_modes,
+                "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
+                "dense_interface_square_formed": False,
+            },
+            "full3d_reference_comparison": None,
+            "gates": {"finite_admissible_mode_capacity": False},
+            "qualification": {
+                "integration_pass": False,
+                "algebraic_chain_pass": False,
+                "task033_physical_truncation_allowed": False,
+                "clean_source_integration_record": False,
+                "physical_augmented_direct_pass": False,
+                "mode_count_converged": False,
+                "physical_field_gates_pass": False,
+                "modal_basis_capacity_pass": False,
+                "capacity_disposition": "insufficient_finite_admissible_modes",
+                "official_record": False,
+                "boundary": (
+                    "Measured finite-spectrum capacity negative; numerical-infinity "
+                    "roots from singular K2 are rejected before adjoint pairing."
+                ),
+            },
+            "modal_basis_capacity": capacity,
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": rss,
+            "memory_semantics": (
+                "per-rank ru_maxrss historical peaks; not simultaneous RSS"
+            ),
+        }
+
     try:
         mark_stage("cross_section_eigen_assembly")
         started = time.perf_counter()
@@ -575,13 +743,23 @@ def main() -> None:
             desired_direction="forward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
+            maximum_abs_beta=(
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+            ),
         )
         if len(positive_right) != args.requested_modes:
             for mode in positive_right:
                 mode.destroy()
+            if positive_selection.numerically_infinite_candidate_count:
+                record = finite_spectrum_capacity_record(
+                    direction="positive",
+                    selection=positive_selection,
+                    solver_report=positive_report,
+                )
+                raise _ModalBasisCapacityStop
             raise RuntimeError(
-                "Positive target candidate pool did not deliver enough passive forward modes: "
-                f"{positive_selection.direction_counts}. Increase --candidate-modes."
+                "Positive finite candidate pool did not deliver enough passive "
+                f"forward modes: {positive_selection.direction_counts}."
             )
         mark_stage("mode_classification")
         positive = build_biorthogonal_mode_basis(
@@ -609,13 +787,23 @@ def main() -> None:
             desired_direction="backward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
+            maximum_abs_beta=(
+                NUMERICAL_INFINITY_BETA_H_CUTOFF / args.h_nm
+            ),
         )
         if len(negative_right) != args.requested_modes:
             for mode in negative_right:
                 mode.destroy()
+            if negative_selection.numerically_infinite_candidate_count:
+                record = finite_spectrum_capacity_record(
+                    direction="negative",
+                    selection=negative_selection,
+                    solver_report=negative_report,
+                )
+                raise _ModalBasisCapacityStop
             raise RuntimeError(
-                "Negative target candidate pool did not deliver enough passive backward modes: "
-                f"{negative_selection.direction_counts}. Increase --candidate-modes."
+                "Negative finite candidate pool did not deliver enough passive "
+                f"backward modes: {negative_selection.direction_counts}."
             )
         negative = build_biorthogonal_mode_basis(
             cfg,
@@ -1445,6 +1633,8 @@ def main() -> None:
                 "per-rank ru_maxrss historical peaks; not simultaneous RSS"
             ),
         }
+    except _ModalBasisCapacityStop:
+        pass
     finally:
         if schur_solution is not None:
             schur_solution.destroy()

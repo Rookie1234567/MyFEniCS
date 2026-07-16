@@ -446,7 +446,7 @@
       "properties": {
         "degree": {"enum": [1, 3]},
         "disposition": {"enum": ["pass", "failed"]},
-        "classification": {"enum": ["augmented_vs_memory_minimal_qualified", "augmented_vs_memory_minimal_not_qualified"]},
+        "classification": {"enum": ["augmented_vs_memory_minimal_qualified", "augmented_vs_memory_minimal_algebraic_qualified_with_controlled_p1_physical_truncation_negative", "augmented_vs_memory_minimal_not_qualified"]},
         "checks": {"type": "object", "minProperties": 8, "additionalProperties": {"type": "boolean"}},
         "failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
       }
@@ -464,11 +464,12 @@
     "uniformMatrix": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["disposition", "measured_entries", "not_run_by_memory_gate_entries", "entry_count"],
+      "required": ["disposition", "measured_entries", "not_run_by_memory_gate_entries", "modal_basis_capacity_negative_entries", "entry_count"],
       "properties": {
         "disposition": {"enum": ["pass", "failed"]},
         "measured_entries": {"type": "integer", "minimum": 0, "maximum": 20},
         "not_run_by_memory_gate_entries": {"type": "integer", "minimum": 0, "maximum": 20},
+        "modal_basis_capacity_negative_entries": {"type": "integer", "minimum": 0, "maximum": 1},
         "entry_count": {"const": 20}
       }
     },
