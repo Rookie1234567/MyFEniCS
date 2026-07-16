@@ -1091,6 +1091,72 @@ class Task033FinalOutcomeTests(unittest.TestCase):
         ):
             build_final_outcome(**self.paths)
 
+    def test_uniform_terminal_p1_negative_is_partial_and_fail_closed(self) -> None:
+        payload = self._load("uniform_p_h_matrix")
+        row = next(
+            row
+            for row in payload["entries"]
+            if row["degree"] == 1 and row["h_nm"] == 3.0
+        )
+        row.update(
+            {
+                "planning_decision": "run",
+                "launch_decision": "run",
+                "evidence_disposition": (
+                    "measured_not_qualified_by_physical_field_gates"
+                ),
+                "data_identity": "measured",
+                "source_commit_sha": SOURCE_SHA,
+                "source_record_sha256": _digest("uniform-p1-h3-terminal"),
+                "source_status": "not_qualified",
+                "source_is_pde_run": True,
+                "source_is_solver_pass": False,
+                "selected_mode_count_per_direction": None,
+                "candidate_modes_per_target_branch": 320,
+                "attempted_mode_count_per_direction": 160,
+                "modal_basis_capacity": None,
+                "terminal_physical_gate_limited": True,
+                "terminal_physical_gate_evidence": {
+                    "integration_pass": False,
+                    "algebraic_chain_pass": True,
+                    "physical_field_gates_pass": False,
+                    "task033_physical_truncation_allowed": True,
+                    "candidate_pool_is_twice_requested_modes": True,
+                    "true_relative_residual": 8.0e-13,
+                    "true_relative_residual_le_1e-9": True,
+                    "all_reported_gates_pass": False,
+                },
+                "terminal_physical_reference_evidence": {
+                    "reference_binding_verified": True,
+                    "reference_record": (
+                        "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
+                        "records/full3d_h3_reference.json"
+                    ),
+                    "reference_record_sha256": "2" * 64,
+                    "reference_record_source_commit_full_sha": "3" * 40,
+                    "reference_npz_sha256_expected": "4" * 64,
+                    "reference_npz_sha256_observed": "4" * 64,
+                    "reference_grid_converged": False,
+                },
+            }
+        )
+        self._replace("uniform_p_h_matrix", payload)
+        result = build_final_outcome(**self.paths)
+        uniform = result["classifications"]["uniform_p_h_matrix"]
+        self.assertEqual(uniform["p1_terminal_physical_gate_negative_entries"], 1)
+        self.assertIn(
+            "p1_terminal_physical_field_gate_negatives",
+            result["classifications"]["overall"]["partial_reasons"],
+        )
+
+        row["terminal_physical_gate_evidence"]["algebraic_chain_pass"] = False
+        self._replace("uniform_p_h_matrix", payload)
+        with self.assertRaisesRegex(
+            FinalOutcomeError,
+            "non-exact p1 terminal physical negative",
+        ):
+            build_final_outcome(**self.paths)
+
     def test_cli_writes_same_classified_record(self) -> None:
         output = self.root / "final.json"
         option_names = {

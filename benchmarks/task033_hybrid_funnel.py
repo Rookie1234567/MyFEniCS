@@ -18,6 +18,7 @@ from typing import Any
 
 
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 MANDATORY_TOTAL_TOLERANCE = 1.0e-5
 STRONG_TOTAL_TOLERANCE = 1.0e-6
 MANDATORY_ORDER_RELATIVE_TOLERANCE = 1.0e-3
@@ -35,6 +36,14 @@ CONTROLLED_PHYSICAL_GATE_FAILURES = frozenset(
 P1_H5_CAPACITY_FAILURE = (
     "M160 is not qualified because p1/h5 supplies only 120 finite admissible "
     "modes per direction before singular-K2 numerical-infinity roots"
+)
+P1_TERMINAL_PHYSICAL_FAILURE = (
+    "M160 is not qualified because final p1 physical field gates failed "
+    "against the bound full3d reference"
+)
+P1_TERMINAL_REFERENCE_RECORD = (
+    "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/"
+    "full3d_h3_reference.json"
 )
 
 
@@ -374,6 +383,83 @@ def _controlled_modal_basis_capacity_negative(
     )
 
 
+def _controlled_p1_terminal_physical_negative(
+    payload: Mapping[str, Any],
+) -> bool:
+    """Recognize the terminal M160 physical negative for safe non-h5 p1 rows."""
+
+    case = _case(payload)
+    return bool(
+        _controlled_physical_truncation_negative(payload)
+        and case.get("degree") == 1
+        and _finite(case.get("h_nm")) in {3.0, 2.5, 2.0, 1.5}
+        and case.get("requested_modes_per_direction") == 160
+        and case.get("candidate_modes_per_target_branch") == 320
+        and case.get("bottom_interface_nm") == 10.0
+        and case.get("top_interface_nm") == 110.0
+        and case.get("graded_reference_h_nm") is None
+        and _terminal_reference_evidence(payload) is not None
+    )
+
+
+def is_exact_p1_terminal_reference_evidence(value: Any) -> bool:
+    """Validate the compact binding to the frozen, non-grid-converged reference."""
+
+    if not isinstance(value, Mapping):
+        return False
+    expected = value.get("reference_npz_sha256_expected")
+    observed = value.get("reference_npz_sha256_observed")
+    record_sha = value.get("reference_record_sha256")
+    commit = value.get("reference_record_source_commit_full_sha")
+    return bool(
+        value.get("reference_binding_verified") is True
+        and value.get("reference_record") == P1_TERMINAL_REFERENCE_RECORD
+        and isinstance(record_sha, str)
+        and SHA256_RE.fullmatch(record_sha) is not None
+        and isinstance(commit, str)
+        and FULL_SHA_RE.fullmatch(commit) is not None
+        and isinstance(expected, str)
+        and SHA256_RE.fullmatch(expected) is not None
+        and observed == expected
+        and value.get("reference_grid_converged") is False
+    )
+
+
+def _terminal_reference_evidence(
+    payload: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    measurements = _measurements(payload)
+    physical = measurements.get("physical_field_reconstruction")
+    physical = physical if isinstance(physical, Mapping) else {}
+    planes = physical.get("selected_plane_full3d_comparison")
+    planes = planes if isinstance(planes, Mapping) else {}
+    full3d = measurements.get("full3d_reference_comparison")
+    full3d = full3d if isinstance(full3d, Mapping) else {}
+    evidence = {
+        "reference_binding_verified": planes.get("reference_binding_verified"),
+        "reference_record": planes.get("reference_record"),
+        "reference_record_sha256": planes.get("reference_record_sha256"),
+        "reference_record_source_commit_full_sha": planes.get(
+            "reference_record_source_commit_full_sha"
+        ),
+        "reference_npz_sha256_expected": planes.get(
+            "reference_npz_sha256_expected"
+        ),
+        "reference_npz_sha256_observed": planes.get(
+            "reference_npz_sha256_observed"
+        ),
+        "reference_grid_converged": full3d.get("reference_grid_converged"),
+    }
+    if (
+        full3d.get("reference_file") != evidence["reference_record"]
+        or full3d.get("reference_commit_sha")
+        != evidence["reference_record_source_commit_full_sha"]
+        or not is_exact_p1_terminal_reference_evidence(evidence)
+    ):
+        return None
+    return evidence
+
+
 def is_exact_p1_h5_modal_basis_capacity(capacity: Any) -> bool:
     """Return whether ``capacity`` is the one frozen p1/h5 finite-spectrum limit."""
 
@@ -434,6 +520,62 @@ def is_controlled_p1_h5_capacity_funnel(payload: Any) -> bool:
         and payload.get("failures") == [P1_H5_CAPACITY_FAILURE]
         and is_exact_p1_h5_modal_basis_capacity(
             payload.get("modal_basis_capacity")
+        )
+    )
+
+
+def is_controlled_p1_terminal_physical_funnel(payload: Any) -> bool:
+    """Recognize a non-promoted p1 M160 physical-gate aggregate."""
+
+    if not isinstance(payload, Mapping):
+        return False
+    identity = payload.get("identity")
+    case = payload.get("case")
+    qualification = payload.get("qualification")
+    individual = payload.get("individual_gates")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (identity, case, qualification, individual)
+    ):
+        return False
+    terminal = individual.get("160")
+    terminal = terminal if isinstance(terminal, Mapping) else {}
+    terminal_gate_contract = bool(
+        terminal.get("integration_pass") is False
+        and terminal.get("algebraic_chain_pass") is True
+        and terminal.get("physical_field_gates_pass") is False
+        and terminal.get("task033_physical_truncation_allowed") is True
+        and terminal.get("candidate_pool_is_twice_requested_modes") is True
+        and terminal.get("true_relative_residual_le_1e-9") is True
+        and terminal.get("all_reported_gates_pass") is False
+        and _finite(terminal.get("true_relative_residual")) is not None
+        and _finite(terminal.get("true_relative_residual")) <= 1.0e-9
+    )
+    return bool(
+        payload.get("status") == "not_qualified"
+        and identity.get("is_pde_run") is True
+        and identity.get("is_solver_pass") is False
+        and identity.get("is_mode_convergence_measurement") is True
+        and identity.get("tracked_source_clean") is True
+        and case.get("degree") == 1
+        and _finite(case.get("h_nm")) in {3.0, 2.5, 2.0, 1.5}
+        and case.get("bottom_interface_nm") == 10.0
+        and case.get("top_interface_nm") == 110.0
+        and case.get("graded_reference_h_nm") is None
+        and case.get("primary_solver_path") == "modal-schur-memory-minimal"
+        and case.get("mode_counts") == [80, 120, 160]
+        and qualification.get("mode_count_converged") is False
+        and qualification.get("selected_mode_count_per_direction") is None
+        and qualification.get("selected_pair_strong") is False
+        and qualification.get("all_sources_same_clean_sha") is True
+        and qualification.get("all_external_watchdogs_pass") is True
+        and qualification.get("modal_basis_capacity_limited") is False
+        and qualification.get("terminal_physical_gate_limited") is True
+        and payload.get("modal_basis_capacity") is None
+        and payload.get("failures") == [P1_TERMINAL_PHYSICAL_FAILURE]
+        and terminal_gate_contract
+        and is_exact_p1_terminal_reference_evidence(
+            payload.get("terminal_physical_reference_evidence")
         )
     )
 
@@ -658,6 +800,7 @@ def build_hybrid_funnel(
             and _controlled_physical_truncation_negative(payload)
         )
         or (mode == 160 and _controlled_modal_basis_capacity_negative(payload))
+        or (mode == 160 and _controlled_p1_terminal_physical_negative(payload))
         for mode, payload in by_m.items()
     )
     if not individual_contracts_pass:
@@ -692,7 +835,13 @@ def build_hybrid_funnel(
         160 in by_m
         and _controlled_modal_basis_capacity_negative(by_m[160])
     )
-    if pair_120_160 is not None and pair_120_160["mandatory_convergence_pass"]:
+    terminal_physical_limited_m160 = bool(
+        160 in by_m
+        and _controlled_p1_terminal_physical_negative(by_m[160])
+    )
+    if terminal_physical_limited_m160:
+        problems.append(P1_TERMINAL_PHYSICAL_FAILURE)
+    elif pair_120_160 is not None and pair_120_160["mandatory_convergence_pass"]:
         selected_m = 160
         convergence_pair = pair_120_160
     elif pair_160_240 is not None and pair_160_240["mandatory_convergence_pass"]:
@@ -714,6 +863,11 @@ def build_hybrid_funnel(
     capacity_evidence = (
         dict(_measurements(by_m[160]).get("modal_basis_capacity", {}))
         if capacity_limited_m160
+        else None
+    )
+    terminal_reference_evidence = (
+        _terminal_reference_evidence(by_m[160])
+        if terminal_physical_limited_m160
         else None
     )
     return {
@@ -758,6 +912,9 @@ def build_hybrid_funnel(
         "individual_gates": individual,
         "comparisons": comparisons,
         "modal_basis_capacity": capacity_evidence,
+        "terminal_physical_reference_evidence": (
+            terminal_reference_evidence
+        ),
         "qualification": {
             "mode_count_converged": qualified,
             "selected_mode_count_per_direction": selected_m,
@@ -770,6 +927,9 @@ def build_hybrid_funnel(
                 _external_watchdog_pass(payload) for payload in by_m.values()
             ),
             "modal_basis_capacity_limited": capacity_limited_m160,
+            "terminal_physical_gate_limited": (
+                terminal_physical_limited_m160
+            ),
         },
         "failures": problems,
         "limitations": [

@@ -26,6 +26,7 @@ from benchmarks.task033_qep_qualification import (
 from benchmarks.task033_hybrid_funnel import (
     _controlled_physical_truncation_negative,
     is_controlled_p1_h5_capacity_funnel,
+    is_controlled_p1_terminal_physical_funnel,
 )
 
 
@@ -778,15 +779,24 @@ def _semantic_problems(role: str, payload: Mapping[str, Any]) -> list[str]:
             role == "hybrid_funnel_p1"
             and is_controlled_p1_h5_capacity_funnel(payload)
         )
+        p1_terminal_physical_negative = bool(
+            role == "hybrid_funnel_p1"
+            and is_controlled_p1_terminal_physical_funnel(payload)
+        )
+        p1_controlled_negative = bool(
+            p1_capacity_negative or p1_terminal_physical_negative
+        )
         if (
             not isinstance(identity, Mapping)
             or identity.get("is_solver_pass") is not True
-        ) and not p1_capacity_negative:
-            problems.append("Hybrid funnel is neither qualified nor the p1/h5 capacity negative")
+        ) and not p1_controlled_negative:
+            problems.append(
+                "Hybrid funnel is neither qualified nor an exact p1 controlled negative"
+            )
         if (
             not isinstance(qualification, Mapping)
             or qualification.get("mode_count_converged") is not True
-        ) and not p1_capacity_negative:
+        ) and not p1_controlled_negative:
             problems.append("Hybrid funnel mode count did not converge")
         if role == "hybrid_funnel_p1" and case.get("degree") != 1:
             problems.append("p1 funnel role does not contain degree=1")

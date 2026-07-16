@@ -182,6 +182,26 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("-CandidateModes (2 * $modeCount)", text)
         self.assertIn('$requestedModes = if ($Degree -eq 1) { 120 } else { 160 }', text)
         self.assertIn("-AllowHybridModalBasisCapacityNegative", text)
+        self.assertIn("[switch]$AllowHybridTerminalPhysicalNegative", text)
+        self.assertIn(
+            "-AllowHybridTerminalPhysicalNegative:(", text
+        )
+        self.assertIn(
+            "[double]$HNm -notin @(3.0, 2.5, 2.0, 1.5)", text
+        )
+        self.assertIn(
+            "[double]$HNm -in @(3.0, 2.5, 2.0, 1.5)", text
+        )
+        self.assertIn(
+            "Controlled terminal physical negatives are restricted to", text
+        )
+        self.assertIn("[switch]$TerminalReferenceRequired", text)
+        self.assertIn("-TerminalReferenceRequired", text)
+        self.assertIn("reference_not_grid_converged", text)
+        self.assertIn(
+            "Hybrid terminal physical negative lacks the exact bound", text
+        )
+        self.assertIn('$StepName -notlike "hybrid_uniform_*"', text)
         self.assertIn("-AllowHybridComparisonPhysicalNegative", text)
         self.assertIn('task033_formal_campaign.lock', text)
         self.assertIn('-Option "-n"', text)
@@ -201,6 +221,28 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn('$Degree -in @(3, 4)', text)
         self.assertIn("conditional M240 is restricted to explicitly authorized", text)
         self.assertIn("-AllowConditionalM240:$allowConditionalM240", text)
+        self.assertIn(
+            '"M160 is not qualified because final p1 physical field gates failed "',
+            text,
+        )
+        self.assertIn(
+            "$provisional.qualification.terminal_physical_gate_limited "
+            "-eq $true",
+            text,
+        )
+        self.assertIn(
+            "$provisional.qualification.modal_basis_capacity_limited "
+            "-eq $false",
+            text,
+        )
+        self.assertIn(
+            "$null -eq "
+            "$provisional.qualification.selected_mode_count_per_direction",
+            text,
+        )
+        terminal_return = text.index("if ($terminalPhysicalLimitedP1)")
+        conditional_m240 = text.index("$conditionalM240InScope = (")
+        self.assertLess(terminal_return, conditional_m240)
         self.assertIn("-RequestedModes 240", text)
         self.assertIn("-CandidateModes 480", text)
         self.assertIn('"--m160-funnel-evidence-file"', text)

@@ -820,7 +820,8 @@ function Assert-HybridFunnelShardOutcome {
         [Parameter(Mandatory = $true)][int]$CandidateModes,
         [Parameter(Mandatory = $true)][string]$AttemptRoot,
         [string]$ExpectedSolverPath = "modal-schur-memory-minimal",
-        [switch]$AllowModalBasisCapacityNegative
+        [switch]$AllowModalBasisCapacityNegative,
+        [switch]$TerminalReferenceRequired
     )
 
     if (-not (Test-Path -LiteralPath $SummaryOutput -PathType Leaf)) {
@@ -1066,6 +1067,56 @@ function Assert-HybridFunnelShardOutcome {
             "physical Gate failures: " + ($unexpectedFalseGates -join ", ")
         )
     }
+    if ($TerminalReferenceRequired) {
+        $planes = (
+            $record.physical_field_reconstruction.selected_plane_full3d_comparison
+        )
+        $full3d = $record.full3d_reference_comparison
+        $expectedReferenceRecord = (
+            "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/" +
+            "full3d_h3_reference.json"
+        )
+        $referenceChecks = [ordered]@{
+            binding_verified = ($planes.reference_binding_verified -eq $true)
+            reference_record = (
+                $planes.reference_record -eq $expectedReferenceRecord -and
+                $full3d.reference_file -eq $expectedReferenceRecord
+            )
+            reference_record_sha256 = (
+                "$($planes.reference_record_sha256)" -match '^[0-9a-f]{64}$'
+            )
+            reference_commit = (
+                "$($planes.reference_record_source_commit_full_sha)" -match (
+                    '^[0-9a-f]{40}$'
+                ) -and
+                $full3d.reference_commit_sha -eq (
+                    $planes.reference_record_source_commit_full_sha
+                )
+            )
+            reference_npz_sha256 = (
+                "$($planes.reference_npz_sha256_expected)" -match (
+                    '^[0-9a-f]{64}$'
+                ) -and
+                $planes.reference_npz_sha256_observed -eq (
+                    $planes.reference_npz_sha256_expected
+                )
+            )
+            reference_not_grid_converged = (
+                $full3d.reference_grid_converged -eq $false
+            )
+        }
+        $referenceFailures = @(
+            $referenceChecks.GetEnumerator() |
+                Where-Object { $_.Value -ne $true } |
+                ForEach-Object { $_.Key }
+        )
+        if ($referenceFailures.Count -ne 0) {
+            throw (
+                "Hybrid terminal physical negative lacks the exact bound " +
+                "full3d reference: " + ($referenceFailures -join ", ")
+            )
+        }
+    }
     return $summary
 }
 
@@ -1082,6 +1133,7 @@ function Invoke-DockerHybridFunnelShardStep {
         [switch]$RequalificationRequired,
         [string]$ExpectedSolverPath = "modal-schur-memory-minimal",
         [switch]$AllowModalBasisCapacityNegative,
+        [switch]$TerminalReferenceRequired,
         [switch]$MinimalComparisonRequired
     )
 
@@ -1095,7 +1147,8 @@ function Invoke-DockerHybridFunnelShardStep {
             -CandidateModes $CandidateModes `
             -AttemptRoot $AttemptRoot `
             -ExpectedSolverPath $ExpectedSolverPath `
-            -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative
+            -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative `
+            -TerminalReferenceRequired:$TerminalReferenceRequired
         $marker = Get-Content -Raw -LiteralPath (
             Get-StepMarkerPath -PrimaryOutput $SummaryOutput
         ) | ConvertFrom-Json
@@ -1135,7 +1188,8 @@ function Invoke-DockerHybridFunnelShardStep {
         -CandidateModes $CandidateModes `
         -AttemptRoot $AttemptRoot `
         -ExpectedSolverPath $ExpectedSolverPath `
-        -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative
+        -AllowModalBasisCapacityNegative:$AllowModalBasisCapacityNegative `
+        -TerminalReferenceRequired:$TerminalReferenceRequired
     if ($summary.return_code -ne $exitCode) {
         throw "Hybrid funnel watchdog return code differs from Docker exit code."
     }
@@ -1366,6 +1420,7 @@ function Invoke-Task033Watchdog {
         [switch]$AllowP4ControlledNumericalNegative,
         [switch]$AllowHybridIntermediatePhysicalNegative,
         [switch]$AllowHybridModalBasisCapacityNegative,
+        [switch]$AllowHybridTerminalPhysicalNegative,
         [switch]$AllowHybridComparisonPhysicalNegative
     )
 
@@ -1444,6 +1499,7 @@ function Invoke-Task033Watchdog {
         [bool]$AllowP4ControlledNumericalNegative
         [bool]$AllowHybridIntermediatePhysicalNegative
         [bool]$AllowHybridModalBasisCapacityNegative
+        [bool]$AllowHybridTerminalPhysicalNegative
         [bool]$AllowHybridComparisonPhysicalNegative
     )
     if (@($controlledModes | Where-Object { $_ }).Count -gt 1) {
@@ -1491,6 +1547,7 @@ function Invoke-Task033Watchdog {
     } elseif ($AllowHybridModalBasisCapacityNegative) {
         if (
             $Target -ne "hybrid" -or
+            $StepName -notlike "hybrid_uniform_*" -or
             $Degree -ne 1 -or
             [double]$HNm -ne 5.0 -or
             $RequestedModes -ne 160 -or
@@ -1516,6 +1573,35 @@ function Invoke-Task033Watchdog {
             -CandidateModes $CandidateModes `
             -AttemptRoot $AttemptRoot `
             -AllowModalBasisCapacityNegative
+    } elseif ($AllowHybridTerminalPhysicalNegative) {
+        if (
+            $Target -ne "hybrid" -or
+            $StepName -notlike "hybrid_uniform_*" -or
+            $Degree -ne 1 -or
+            [double]$HNm -notin @(3.0, 2.5, 2.0, 1.5) -or
+            $RequestedModes -ne 160 -or
+            $CandidateModes -ne 320 -or
+            $SolverPath -ne "modal-schur-memory-minimal" -or
+            $CompareModalSchur -or
+            $GradedReferenceH -or
+            $BottomInterfaceNm -ne "10.0" -or
+            $TopInterfaceNm -ne "110.0"
+        ) {
+            throw (
+                "Controlled terminal physical negatives are restricted to " +
+                "uniform p1 h=3/2.5/2/1.5 10/110 nm M160/candidate320."
+            )
+        }
+        Invoke-DockerHybridFunnelShardStep `
+            -StepName $StepName `
+            -ContainerCommand $command `
+            -SummaryOutput $SummaryOutput `
+            -Degree $Degree `
+            -HNm $HNm `
+            -RequestedModes $RequestedModes `
+            -CandidateModes $CandidateModes `
+            -AttemptRoot $AttemptRoot `
+            -TerminalReferenceRequired
     } elseif ($AllowHybridComparisonPhysicalNegative) {
         if (
             $Target -ne "hybrid" -or
@@ -1597,6 +1683,15 @@ function Invoke-HybridFunnel {
             $BottomInterfaceNm -eq "10.0" -and
             $TopInterfaceNm -eq "110.0"
         )
+        $allowP1TerminalPhysicalNegative = (
+            $Category -eq "uniform" -and
+            $Degree -eq 1 -and
+            [double]$HNm -in @(3.0, 2.5, 2.0, 1.5) -and
+            $modeCount -eq 160 -and
+            -not $GradedReferenceH -and
+            $BottomInterfaceNm -eq "10.0" -and
+            $TopInterfaceNm -eq "110.0"
+        )
         Invoke-Task033Watchdog `
             -StepName "hybrid_${Category}_${Name}_${modeLabel}" `
             -Target "hybrid" `
@@ -1617,6 +1712,9 @@ function Invoke-HybridFunnel {
             ) `
             -AllowHybridModalBasisCapacityNegative:(
                 $allowP1H5CapacityNegative
+            ) `
+            -AllowHybridTerminalPhysicalNegative:(
+                $allowP1TerminalPhysicalNegative
             ) `
             -TimeoutSeconds $HybridTimeoutSeconds
     }
@@ -1657,6 +1755,29 @@ function Invoke-HybridFunnel {
         $provisional.failures[0] -eq $expectedCapacityFailure
     )
     if ($capacityLimitedP1H5) {
+        return $m160Funnel
+    }
+    $expectedTerminalPhysicalFailure = (
+        "M160 is not qualified because final p1 physical field gates failed " +
+        "against the bound full3d reference"
+    )
+    $terminalPhysicalLimitedP1 = (
+        $Category -eq "uniform" -and
+        $Degree -eq 1 -and
+        [double]$HNm -in @(3.0, 2.5, 2.0, 1.5) -and
+        -not $GradedReferenceH -and
+        $BottomInterfaceNm -eq "10.0" -and
+        $TopInterfaceNm -eq "110.0" -and
+        $provisional.status -eq "not_qualified" -and
+        $provisional.identity.is_solver_pass -eq $false -and
+        $provisional.qualification.mode_count_converged -eq $false -and
+        $null -eq $provisional.qualification.selected_mode_count_per_direction -and
+        $provisional.qualification.modal_basis_capacity_limited -eq $false -and
+        $provisional.qualification.terminal_physical_gate_limited -eq $true -and
+        @($provisional.failures).Count -eq 1 -and
+        $provisional.failures[0] -eq $expectedTerminalPhysicalFailure
+    )
+    if ($terminalPhysicalLimitedP1) {
         return $m160Funnel
     }
     $expectedFailure = (

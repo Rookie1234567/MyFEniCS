@@ -9,8 +9,10 @@ from jsonschema import Draft202012Validator
 
 from benchmarks.task033_hybrid_funnel import (
     P1_H5_CAPACITY_FAILURE,
+    P1_TERMINAL_PHYSICAL_FAILURE,
     build_hybrid_funnel,
     is_controlled_p1_h5_capacity_funnel,
+    is_controlled_p1_terminal_physical_funnel,
 )
 from benchmarks.task033_evidence_checker import _semantic_problems
 
@@ -174,7 +176,83 @@ def _p1_h5_capacity_negative() -> dict:
     return shard
 
 
+def _p1_h3_terminal_physical_negative() -> dict:
+    shard = _controlled_physical_negative(160)
+    case = shard["measurements"]["case"]
+    case.update(
+        {
+            "degree": 1,
+            "h_nm": 3.0,
+            "candidate_modes_per_target_branch": 320,
+        }
+    )
+    measurements = shard["measurements"]
+    measurements["physical_field_reconstruction"] = {
+        "selected_plane_full3d_comparison": {
+            "reference_binding_verified": True,
+            "reference_record": (
+                "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
+                "records/full3d_h3_reference.json"
+            ),
+            "reference_record_sha256": "2" * 64,
+            "reference_record_source_commit_full_sha": "3" * 40,
+            "reference_npz_sha256_expected": "4" * 64,
+            "reference_npz_sha256_observed": "4" * 64,
+        }
+    }
+    measurements["full3d_reference_comparison"] = {
+        "reference_file": (
+            "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/"
+            "records/full3d_h3_reference.json"
+        ),
+        "reference_commit_sha": "3" * 40,
+        "reference_grid_converged": False,
+    }
+    return shard
+
+
 class Task033HybridFunnelTests(unittest.TestCase):
+    def test_p1_h3_terminal_physical_negative_is_never_promoted(self) -> None:
+        m80 = _controlled_physical_negative(80)
+        m120 = _controlled_physical_negative(120, delta=1.0e-8)
+        for shard in (m80, m120):
+            shard["measurements"]["case"].update(
+                {"degree": 1, "h_nm": 3.0}
+            )
+        record = build_hybrid_funnel(
+            [m80, m120, _p1_h3_terminal_physical_negative()]
+        )
+        self.assertEqual(record["status"], "not_qualified")
+        self.assertEqual(record["failures"], [P1_TERMINAL_PHYSICAL_FAILURE])
+        self.assertTrue(
+            record["qualification"]["terminal_physical_gate_limited"]
+        )
+        self.assertFalse(record["qualification"]["mode_count_converged"])
+        self.assertIsNone(
+            record["qualification"]["selected_mode_count_per_direction"]
+        )
+        self.assertTrue(is_controlled_p1_terminal_physical_funnel(record))
+        self.assertEqual(_semantic_problems("hybrid_funnel_p1", record), [])
+        Draft202012Validator(
+            json.loads(SCHEMA.read_text(encoding="utf-8"))
+        ).validate(record)
+
+    def test_terminal_physical_negative_rejects_wrong_degree(self) -> None:
+        m80 = _controlled_physical_negative(80)
+        m120 = _controlled_physical_negative(120)
+        terminal = _p1_h3_terminal_physical_negative()
+        for shard in (m80, m120, terminal):
+            shard["measurements"]["case"].update(
+                {"degree": 2, "h_nm": 3.0}
+            )
+        record = build_hybrid_funnel([m80, m120, terminal])
+        self.assertEqual(record["status"], "not_qualified")
+        self.assertFalse(is_controlled_p1_terminal_physical_funnel(record))
+        self.assertIn(
+            "one or more individual Hybrid physical/algebraic gates failed",
+            record["failures"],
+        )
+
     def test_p1_h5_m160_capacity_negative_is_structured_and_not_promoted(self) -> None:
         m80 = _controlled_physical_negative(80)
         m120 = _controlled_physical_negative(120)

@@ -36,6 +36,7 @@ from benchmarks.task033_qep_qualification import (
 )
 from benchmarks.task033_hybrid_funnel import (
     is_controlled_p1_h5_capacity_funnel,
+    is_controlled_p1_terminal_physical_funnel,
 )
 from benchmarks.task033_watchdog_launch import FORMAL_FUNNEL_MODES
 from src.geometry.task033_periodic_graded_mesh import (
@@ -482,16 +483,25 @@ def _validated_funnel(item: EvidenceFile) -> tuple[Mapping[str, Any], str]:
     if not isinstance(identity, Mapping) or not isinstance(qualification, Mapping):
         raise FormalRecordError(f"funnel {item.path} lacks identity/qualification")
     capacity_limited = is_controlled_p1_h5_capacity_funnel(item.payload)
+    terminal_physical_limited = is_controlled_p1_terminal_physical_funnel(
+        item.payload
+    )
     conditions = {
         "status_qualified_or_capacity_limited": (
-            item.payload.get("status") == "qualified" or capacity_limited
+            item.payload.get("status") == "qualified"
+            or capacity_limited
+            or terminal_physical_limited
         ),
         "solver_pass_or_capacity_limited": (
-            identity.get("is_solver_pass") is True or capacity_limited
+            identity.get("is_solver_pass") is True
+            or capacity_limited
+            or terminal_physical_limited
         ),
         "tracked_source_clean": identity.get("tracked_source_clean") is True,
         "mode_count_converged_or_capacity_limited": (
-            qualification.get("mode_count_converged") is True or capacity_limited
+            qualification.get("mode_count_converged") is True
+            or capacity_limited
+            or terminal_physical_limited
         ),
         "all_sources_same_clean_sha": (
             qualification.get("all_sources_same_clean_sha") is True
@@ -500,7 +510,9 @@ def _validated_funnel(item: EvidenceFile) -> tuple[Mapping[str, Any], str]:
             qualification.get("all_external_watchdogs_pass") is True
         ),
         "no_unexpected_failures": (
-            item.payload.get("failures") == [] or capacity_limited
+            item.payload.get("failures") == []
+            or capacity_limited
+            or terminal_physical_limited
         ),
     }
     failed = [key for key, passed in conditions.items() if not passed]
@@ -689,7 +701,13 @@ def build_uniform_p_h_matrix(
                     **base,
                     "evidence_disposition": (
                         "measured_not_qualified_by_modal_basis_capacity"
-                        if funnel.get("status") == "not_qualified"
+                        if funnel.get("qualification", {}).get(
+                            "modal_basis_capacity_limited"
+                        )
+                        else "measured_not_qualified_by_physical_field_gates"
+                        if funnel.get("qualification", {}).get(
+                            "terminal_physical_gate_limited"
+                        )
                         else "measured_qualified_funnel"
                     ),
                     "data_identity": "measured",
@@ -719,16 +737,36 @@ def build_uniform_p_h_matrix(
                             or funnel.get("modal_basis_capacity", {}).get(
                                 "requested_modes_per_direction"
                             )
+                            or (
+                                160
+                                if funnel.get("qualification", {}).get(
+                                    "terminal_physical_gate_limited"
+                                )
+                                else None
+                            )
                         )
                     ),
                     "attempted_mode_count_per_direction": (
-                        None
+                        160
+                        if funnel.get("qualification", {}).get(
+                            "terminal_physical_gate_limited"
+                        )
+                        else None
                         if funnel.get("modal_basis_capacity") is None
                         else funnel["modal_basis_capacity"].get(
                             "requested_modes_per_direction"
                         )
                     ),
                     "modal_basis_capacity": funnel.get("modal_basis_capacity"),
+                    "terminal_physical_gate_limited": funnel.get(
+                        "qualification", {}
+                    ).get("terminal_physical_gate_limited"),
+                    "terminal_physical_gate_evidence": funnel.get(
+                        "individual_gates", {}
+                    ).get("160"),
+                    "terminal_physical_reference_evidence": funnel.get(
+                        "terminal_physical_reference_evidence"
+                    ),
                 }
             )
             continue

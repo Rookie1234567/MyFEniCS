@@ -14,6 +14,8 @@
     "source_records",
     "individual_gates",
     "comparisons",
+    "modal_basis_capacity",
+    "terminal_physical_reference_evidence",
     "qualification",
     "failures",
     "limitations"
@@ -98,6 +100,33 @@
         {"type": "null"}
       ]
     },
+    "terminal_physical_reference_evidence": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "reference_binding_verified",
+            "reference_record",
+            "reference_record_sha256",
+            "reference_record_source_commit_full_sha",
+            "reference_npz_sha256_expected",
+            "reference_npz_sha256_observed",
+            "reference_grid_converged"
+          ],
+          "properties": {
+            "reference_binding_verified": {"const": true},
+            "reference_record": {"const": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/full3d_h3_reference.json"},
+            "reference_record_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "reference_record_source_commit_full_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "reference_npz_sha256_expected": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "reference_npz_sha256_observed": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "reference_grid_converged": {"const": false}
+          },
+          "additionalProperties": false
+        },
+        {"type": "null"}
+      ]
+    },
     "qualification": {
       "type": "object",
       "required": [
@@ -105,7 +134,9 @@
         "selected_mode_count_per_direction",
         "selected_pair_strong",
         "all_sources_same_clean_sha",
-        "all_external_watchdogs_pass"
+        "all_external_watchdogs_pass",
+        "modal_basis_capacity_limited",
+        "terminal_physical_gate_limited"
       ],
       "properties": {
         "mode_count_converged": {"type": "boolean"},
@@ -118,7 +149,8 @@
         "selected_pair_strong": {"type": "boolean"},
         "all_sources_same_clean_sha": {"type": "boolean"},
         "all_external_watchdogs_pass": {"type": "boolean"},
-        "modal_basis_capacity_limited": {"type": "boolean"}
+        "modal_basis_capacity_limited": {"type": "boolean"},
+        "terminal_physical_gate_limited": {"type": "boolean"}
       },
       "additionalProperties": false
     },
@@ -140,9 +172,13 @@
             "properties": {
               "mode_count_converged": {"const": true},
               "all_sources_same_clean_sha": {"const": true},
-              "all_external_watchdogs_pass": {"const": true}
+              "all_external_watchdogs_pass": {"const": true},
+              "modal_basis_capacity_limited": {"const": false},
+              "terminal_physical_gate_limited": {"const": false}
             }
           },
+          "modal_basis_capacity": {"type": "null"},
+          "terminal_physical_reference_evidence": {"type": "null"},
           "failures": {"maxItems": 0}
         }
       }

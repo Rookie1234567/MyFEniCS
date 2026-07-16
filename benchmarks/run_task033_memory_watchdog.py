@@ -362,6 +362,9 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
                 "full_middle_volume_reconstructed"
             ),
         },
+        "full3d_reference_comparison": record.get(
+            "full3d_reference_comparison"
+        ),
         "modal_schur_comparison": record.get("modal_schur_comparison"),
         "modal_basis_capacity": record.get("modal_basis_capacity"),
         "object_payload_ledger": {

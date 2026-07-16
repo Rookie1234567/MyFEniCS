@@ -18,6 +18,7 @@ from benchmarks.task033_qep_qualification import (
 from benchmarks.task033_hybrid_funnel import (
     _controlled_physical_truncation_negative,
     is_exact_p1_h5_modal_basis_capacity,
+    is_exact_p1_terminal_reference_evidence,
 )
 
 
@@ -110,6 +111,20 @@ def _finite_positive(value: Any, *, label: str) -> float:
         raise FinalOutcomeError(f"{label} must be positive and finite") from exc
     if not math.isfinite(result) or result <= 0.0:
         raise FinalOutcomeError(f"{label} must be positive and finite")
+    return result
+
+
+def _finite_nonnegative(value: Any, *, label: str) -> float:
+    if isinstance(value, bool):
+        raise FinalOutcomeError(f"{label} must be nonnegative and finite")
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise FinalOutcomeError(
+            f"{label} must be nonnegative and finite"
+        ) from exc
+    if not math.isfinite(result) or result < 0.0:
+        raise FinalOutcomeError(f"{label} must be nonnegative and finite")
     return result
 
 
@@ -404,6 +419,7 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
     measured = 0
     not_run = 0
     capacity_negatives = 0
+    terminal_physical_negatives = 0
     for row in rows:
         disposition = row.get("evidence_disposition")
         if disposition == "not_run_by_memory_gate":
@@ -419,6 +435,7 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
             if disposition not in {
                 "measured_qualified_funnel",
                 "measured_not_qualified_by_modal_basis_capacity",
+                "measured_not_qualified_by_physical_field_gates",
                 "measured_external_watchdog_shard",
                 "measured_task032_clean_anchor",
             }:
@@ -443,6 +460,40 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
                     raise FinalOutcomeError(
                         "uniform matrix contains a non-exact modal-basis capacity negative"
                     )
+            if disposition == "measured_not_qualified_by_physical_field_gates":
+                terminal = row.get("terminal_physical_gate_evidence")
+                terminal = terminal if isinstance(terminal, Mapping) else {}
+                exact_terminal_row = bool(
+                    row.get("degree") == 1
+                    and float(row.get("h_nm", -1.0)) in {3.0, 2.5, 2.0, 1.5}
+                    and row.get("source_status") == "not_qualified"
+                    and row.get("source_is_pde_run") is True
+                    and row.get("source_is_solver_pass") is False
+                    and row.get("selected_mode_count_per_direction") is None
+                    and row.get("candidate_modes_per_target_branch") == 320
+                    and row.get("attempted_mode_count_per_direction") == 160
+                    and row.get("modal_basis_capacity") is None
+                    and row.get("terminal_physical_gate_limited") is True
+                    and is_exact_p1_terminal_reference_evidence(
+                        row.get("terminal_physical_reference_evidence")
+                    )
+                    and terminal.get("integration_pass") is False
+                    and terminal.get("algebraic_chain_pass") is True
+                    and terminal.get("physical_field_gates_pass") is False
+                    and terminal.get("task033_physical_truncation_allowed") is True
+                    and terminal.get("candidate_pool_is_twice_requested_modes") is True
+                    and terminal.get("true_relative_residual_le_1e-9") is True
+                    and terminal.get("all_reported_gates_pass") is False
+                    and _finite_nonnegative(
+                        terminal.get("true_relative_residual"),
+                        label="uniform terminal p1 true residual",
+                    )
+                    <= 1.0e-9
+                )
+                if not exact_terminal_row:
+                    raise FinalOutcomeError(
+                        "uniform matrix contains a non-exact p1 terminal physical negative"
+                    )
             _sha256(row.get("source_record_sha256"), label=f"uniform.{row.get('matrix_key')}.source_record_sha256")
             if row.get("source_commit_sha") != evidence.source_sha or row.get("data_identity") != "measured":
                 raise FinalOutcomeError("uniform measured row is not bound to the common clean SHA")
@@ -451,12 +502,19 @@ def _uniform_rows(evidence: Evidence) -> tuple[list[Mapping[str, Any]], dict[str
                 disposition
                 == "measured_not_qualified_by_modal_basis_capacity"
             )
+            terminal_physical_negatives += int(
+                disposition
+                == "measured_not_qualified_by_physical_field_gates"
+            )
     passed = payload.get("status") == "formal_matrix_complete"
     return rows, {
         "disposition": "pass" if passed else "failed",
         "measured_entries": measured,
         "not_run_by_memory_gate_entries": not_run,
         "modal_basis_capacity_negative_entries": capacity_negatives,
+        "p1_terminal_physical_gate_negative_entries": (
+            terminal_physical_negatives
+        ),
         "entry_count": len(rows),
     }
 
@@ -993,6 +1051,8 @@ def build_final_outcome(
         partial_reasons.append(f"p4_equal_accuracy_{p4['disposition']}")
     if uniform_result["modal_basis_capacity_negative_entries"]:
         partial_reasons.append("p1_h5_modal_basis_capacity_negative")
+    if uniform_result["p1_terminal_physical_gate_negative_entries"]:
+        partial_reasons.append("p1_terminal_physical_field_gate_negatives")
     if mandatory_failures:
         overall_disposition = "failed"
     elif partial_reasons:
