@@ -960,7 +960,8 @@ function Invoke-Task033Watchdog {
         $command += @(
             "--high-order-core-evidence-file",
             (Convert-ToContainerPath -HostPath $Case090Aggregate),
-            "--high-order-core-evidence-sha256", $Case090AggregateSha256
+            "--high-order-core-evidence-sha256",
+            $Case090AggregateEvidenceSha256
         )
     }
 
@@ -1359,7 +1360,13 @@ try {
         -StepName "case090_mpi1_mpi2_mpi4_aggregate" `
         -ContainerCommand $case090AggregateCommand `
         -Outputs @($Case090Aggregate)
-    $Case090AggregateSha256 = Get-FileSha256 -Path $Case090Aggregate
+    $case090AggregatePayload = Get-Content `
+        -Raw `
+        -LiteralPath $Case090Aggregate | ConvertFrom-Json
+    $Case090AggregateEvidenceSha256 = "$($case090AggregatePayload.evidence_sha256)".ToLowerInvariant()
+    if ($Case090AggregateEvidenceSha256 -notmatch '^[0-9a-f]{64}$') {
+        throw "Case090 aggregate lacks one canonical evidence_sha256."
+    }
 
     # Phase 2: the formal 36-shard MPI1 QEP matrix plus explicit MPI2/MPI4
     # timeout-only negatives.  All 27 p1-p3 shards are strict passes.  Every

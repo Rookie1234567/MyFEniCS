@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import copy
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,8 +16,10 @@ from benchmarks.run_task033_memory_watchdog import (
 )
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
+    high_order_core_evidence_gate,
     hybrid_launch_gate,
 )
+from benchmarks.task033_case090_pde_core import attach_evidence_sha256
 from benchmarks.task033_hybrid_funnel import build_hybrid_funnel
 
 
@@ -114,6 +117,46 @@ def _m160_nonconvergence_evidence() -> dict:
 
 
 class Task033MemoryWatchdogContractTests(unittest.TestCase):
+    def test_high_order_core_uses_canonical_evidence_not_file_sha(self) -> None:
+        evidence = attach_evidence_sha256(
+            {
+                "record_type": "high_order_floquet_core_gate_result",
+                "all_core_gates_passed": True,
+                "identity": {
+                    "is_pde_run": True,
+                    "is_solver_pass": True,
+                    "tracked_source_dirty": False,
+                    "source_commit_full_sha": SOURCE_SHA,
+                },
+                "coverage": [
+                    {"degree": degree, "mpi_size": mpi_size}
+                    for degree in (3, 4)
+                    for mpi_size in (1, 2, 4)
+                ],
+            }
+        )
+        canonical_sha = evidence["evidence_sha256"]
+        accepted = high_order_core_evidence_gate(
+            3,
+            evidence,
+            expected_sha256=canonical_sha,
+            current_source_sha=SOURCE_SHA,
+        )
+        self.assertTrue(accepted["pass"], accepted["failures"])
+
+        rendered_file_sha = hashlib.sha256(
+            (json.dumps(evidence, indent=2) + "\n").encode("utf-8")
+        ).hexdigest()
+        self.assertNotEqual(rendered_file_sha, canonical_sha)
+        rejected = high_order_core_evidence_gate(
+            3,
+            evidence,
+            expected_sha256=rendered_file_sha,
+            current_source_sha=SOURCE_SHA,
+        )
+        self.assertFalse(rejected["pass"])
+        self.assertIn("expected_sha256_matches", rejected["failures"])
+
     def test_source_preflight_rejects_nonignored_untracked_before_and_after(self) -> None:
         sha = "a" * 40
 

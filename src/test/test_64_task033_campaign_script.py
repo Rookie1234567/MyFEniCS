@@ -113,6 +113,16 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
         self.assertIn("record-backed, controlled numerical negative", text)
         self.assertIn('foreach ($negativeMpi in $QepNegativeMpiSizes)', text)
         self.assertIn('$slug = "stage4_xy_p2_h3"', text)
+        self.assertIn(
+            "$Case090AggregateEvidenceSha256", text
+        )
+        self.assertIn(
+            "$case090AggregatePayload.evidence_sha256", text
+        )
+        self.assertNotIn(
+            "$Case090AggregateSha256 = Get-FileSha256 -Path $Case090Aggregate",
+            text,
+        )
 
     def test_hybrid_uniform_anchors_graded_buffers_and_conditional_m240(self) -> None:
         text = self.text
