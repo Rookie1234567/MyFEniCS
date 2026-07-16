@@ -21,11 +21,13 @@ $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
 
 $ExpectedMemoryMaxBytes = 13958643712
+$ExpectedRuntimeGuardBytes = 12884901888
 $ExpectedImageDigest = (
     "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d"
 )
-$WarningGiB = "10.678571428571429"
-$TerminateGiB = "12.071428571428571"
+$RuntimeGuardBudgetGiB = 12.0
+$WarningGiB = "9.857142857142856"
+$TerminateGiB = "11.142857142857142"
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 $RepositoryRoot = if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
@@ -1301,14 +1303,28 @@ import json
 memory_max = int(Path('/sys/fs/cgroup/memory.max').read_text().strip())
 swap_max = int(Path('/sys/fs/cgroup/memory.swap.max').read_text().strip())
 swap_current = int(Path('/sys/fs/cgroup/memory.swap.current').read_text().strip())
+mem_available_kib = next(
+    int(line.split()[1])
+    for line in Path('/proc/meminfo').read_text().splitlines()
+    if line.startswith('MemAvailable:')
+)
+host_available = mem_available_kib * 1024
 payload = {
     'memory_max_bytes': memory_max,
     'memory_swap_max_bytes': swap_max,
     'memory_swap_current_bytes': swap_current,
+    'host_available_memory_bytes': host_available,
 }
 print(json.dumps(payload, sort_keys=True))
 raise SystemExit(
-    0 if memory_max == 13958643712 and swap_max == 0 and swap_current == 0 else 2
+    0
+    if (
+        memory_max == 13958643712
+        and swap_max == 0
+        and swap_current == 0
+        and host_available >= 12884901888
+    )
+    else 2
 )
 '@
     $preflightArgs = Get-DockerRunArguments -ContainerCommand @(
@@ -1318,15 +1334,22 @@ raise SystemExit(
         -FilePath $DockerExecutable `
         -ArgumentList $preflightArgs
     if ($preflightResult.ExitCode -ne 0) {
-        throw "13g/no-swap Docker cgroup preflight failed."
+        throw (
+            "13g/no-swap Docker cgroup and 12 GiB host-available " +
+            "runtime-guard preflight failed."
+        )
     }
     $cgroup = $preflightResult.Text | ConvertFrom-Json
     if (
         $cgroup.memory_max_bytes -ne $ExpectedMemoryMaxBytes -or
         $cgroup.memory_swap_max_bytes -ne 0 -or
-        $cgroup.memory_swap_current_bytes -ne 0
+        $cgroup.memory_swap_current_bytes -ne 0 -or
+        $cgroup.host_available_memory_bytes -lt $ExpectedRuntimeGuardBytes
     ) {
-        throw "Docker cgroup authority is not exactly 13g with swap disabled."
+        throw (
+            "Docker authority is not 13g/no-swap with at least the 12 GiB " +
+            "Task033 runtime guard available."
+        )
     }
     $preflightRecord = [ordered]@{
         schema_version = "task033.formal-campaign-preflight.v1"
@@ -1338,6 +1361,7 @@ raise SystemExit(
         host_aggregation_runtime = $HostAggregationRuntime
         container_git_checkout_normalization = "core.autocrlf=true"
         cgroup = $cgroup
+        runtime_guard_budget_gib = $RuntimeGuardBudgetGiB
         warning_gib = [double]$WarningGiB
         controlled_termination_gib = [double]$TerminateGiB
         one_large_case_at_a_time = $true

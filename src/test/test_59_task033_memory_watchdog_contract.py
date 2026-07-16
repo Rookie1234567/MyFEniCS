@@ -302,6 +302,72 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--container-limit-gib", command)
         self.assertIn("9.25", command)
 
+    def test_twelve_gib_runtime_guard_fits_smaller_live_host_ceiling(self) -> None:
+        matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
+        common = {
+            "degree": 1,
+            "h_nm": 5.0,
+            "requested_modes": 80,
+            "candidate_modes": 160,
+            "solver_path": "modal-schur-memory-minimal",
+            "compare_modal_schur": False,
+            "bottom_interface_nm": 10.0,
+            "top_interface_nm": 110.0,
+            "graded_reference_h": None,
+            "incident_grazing_deg": 10.0,
+            "polarization_kind": "s",
+            "container_limit_bytes": 13 * 1024**3,
+            "host_available_memory_bytes": int(12.75 * 1024**3),
+            "core_evidence": None,
+            "expected_core_sha256": None,
+            "current_source_sha": SOURCE_SHA,
+        }
+        wider = hybrid_launch_gate(
+            matrix,
+            warning_gib=10.678571428571429,
+            terminate_gib=12.071428571428571,
+            **common,
+        )
+        self.assertFalse(wider["pass"])
+        self.assertIn(
+            "warning_threshold_not_wider_than_scaled_gate",
+            wider["failures"],
+        )
+        self.assertIn(
+            "termination_threshold_not_wider_than_scaled_gate",
+            wider["failures"],
+        )
+
+        guarded = hybrid_launch_gate(
+            matrix,
+            warning_gib=9.857142857142856,
+            terminate_gib=11.142857142857142,
+            **common,
+        )
+        self.assertTrue(guarded["pass"], guarded["failures"])
+        self.assertEqual(
+            guarded["live_scaled_limits"]["effective_hard_budget_gib"],
+            12.75,
+        )
+        undersized = hybrid_launch_gate(
+            matrix,
+            warning_gib=9.857142857142856,
+            terminate_gib=11.142857142857142,
+            **{
+                **common,
+                "host_available_memory_bytes": 12 * 1024**3 - 1,
+            },
+        )
+        self.assertFalse(undersized["pass"])
+        self.assertIn(
+            "warning_threshold_not_wider_than_scaled_gate",
+            undersized["failures"],
+        )
+        self.assertIn(
+            "termination_threshold_not_wider_than_scaled_gate",
+            undersized["failures"],
+        )
+
     def test_hybrid_command_preserves_degree_buffer_and_graded_policy(self) -> None:
         args = _parse_args(
             [
