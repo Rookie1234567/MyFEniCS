@@ -63,7 +63,11 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
 
     def test_resume_markers_are_bound_to_source_image_and_output_hashes(self) -> None:
         text = self.text
-        self.assertIn("task033-complete-$CommitSha.json", text)
+        self.assertIn('Join-Path $ArtifactRootHost "_step_markers"', text)
+        self.assertIn("Get-TextSha256 -Text $relativeOutput", text)
+        self.assertIn("$CommitSha.Substring(0, 12)", text)
+        self.assertIn(".Substring(0, 24)", text)
+        self.assertNotIn("$PrimaryOutput.task033-complete-$CommitSha.json", text)
         self.assertIn('schema_version = "task033.campaign-step-marker.v1"', text)
         self.assertIn("source_commit_full_sha = $CommitSha", text)
         self.assertIn("docker_image_digest = $ImageDigest", text)
@@ -318,6 +322,66 @@ class Task033FormalCampaignScriptTests(unittest.TestCase):
             0,
             msg=f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
         )
+
+    def test_step_marker_path_avoids_windows_max_path_boundary(self) -> None:
+        executable = shutil.which("pwsh") or shutil.which("powershell")
+        if executable is None:
+            self.skipTest("PowerShell parser is not available")
+        script_path = str(SCRIPT).replace("'", "''")
+        repo_root = str(ROOT).replace("'", "''")
+        artifact_root = str(
+            ROOT
+            / "benchmarks"
+            / "artifacts"
+            / "cases"
+            / "091"
+            / "task033_formal_campaign_aaaaaaaaaaaa"
+        ).replace("'", "''")
+        primary_output = str(
+            Path(artifact_root)
+            / "qep"
+            / "timeout_negatives"
+            / "mpi2"
+            / "stage4_xy_p2_h3"
+            / "watchdog_summary.json"
+        ).replace("'", "''")
+        command = (
+            "$tokens=$null; $errors=$null; "
+            "$ast=[System.Management.Automation.Language.Parser]::ParseFile("
+            f"'{script_path}', [ref]$tokens, [ref]$errors); "
+            "$wanted=@('Convert-ToRepoRelativePath','Get-TextSha256',"
+            "'Get-StepMarkerPath'); "
+            "$functions=@($ast.FindAll({ param($node) $node -is "
+            "[System.Management.Automation.Language.FunctionDefinitionAst] "
+            "}, $true) | Where-Object { $wanted -contains $_.Name }); "
+            "if ($errors.Count -ne 0 -or $functions.Count -ne 3) { exit 2 }; "
+            "$functions | ForEach-Object { Invoke-Expression $_.Extent.Text }; "
+            f"$RepoRoot='{repo_root}'; $ArtifactRootHost='{artifact_root}'; "
+            "$CommitSha='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; "
+            f"$primary='{primary_output}'; "
+            "$one=Get-StepMarkerPath -PrimaryOutput $primary; "
+            "$two=Get-StepMarkerPath -PrimaryOutput $primary; "
+            "$other=Get-StepMarkerPath -PrimaryOutput ($primary + '.other'); "
+            "$markerRoot=Join-Path $ArtifactRootHost '_step_markers'; "
+            "if ($one -ne $two -or $one -eq $other -or "
+            "-not $one.StartsWith($markerRoot) -or "
+            "($one + '.tmp-99999').Length -ge 240) { "
+            "Write-Error $one; exit 3 }; Write-Output $one"
+        )
+        completed = subprocess.run(
+            [executable, "-NoProfile", "-NonInteractive", "-Command", command],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+        self.assertEqual(
+            completed.returncode,
+            0,
+            msg=f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+        )
+        self.assertIn("_step_markers", completed.stdout)
 
 
 if __name__ == "__main__":

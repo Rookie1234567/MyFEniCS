@@ -170,10 +170,32 @@ function Get-FileSha256 {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
+function Get-TextSha256 {
+    param([Parameter(Mandatory = $true)][string]$Text)
+
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+        return ([BitConverter]::ToString(
+            $algorithm.ComputeHash($bytes)
+        )).Replace("-", "").ToLowerInvariant()
+    } finally {
+        $algorithm.Dispose()
+    }
+}
+
 function Get-StepMarkerPath {
     param([Parameter(Mandatory = $true)][string]$PrimaryOutput)
 
-    return "$PrimaryOutput.task033-complete-$CommitSha.json"
+    # Keep marker paths independent of deeply nested output paths.  Windows
+    # PowerShell 5.1/.NET can fail at the legacy MAX_PATH boundary even when
+    # the parent directory exists (the timeout-negative marker reached exactly
+    # 260 characters once the atomic-write suffix was appended).
+    $relativeOutput = Convert-ToRepoRelativePath -HostPath $PrimaryOutput
+    $outputKey = (Get-TextSha256 -Text $relativeOutput).Substring(0, 24)
+    $markerRoot = Join-Path $ArtifactRootHost "_step_markers"
+    $sourceKey = $CommitSha.Substring(0, 12)
+    return Join-Path $markerRoot "$sourceKey-$outputKey.json"
 }
 
 function Test-StepComplete {
