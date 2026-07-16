@@ -24,6 +24,14 @@ MANDATORY_ORDER_RELATIVE_TOLERANCE = 1.0e-3
 STRONG_ORDER_RELATIVE_TOLERANCE = 1.0e-4
 SIGNIFICANT_ORDER_POWER = 1.0e-8
 WEAK_ORDER_ABSOLUTE_TOLERANCE = 1.0e-8
+CONTROLLED_PHYSICAL_GATE_FAILURES = frozenset(
+    {
+        "sampled_interface_h_t_relative_l2_le_1e-2",
+        "volume_absorption_full3d_abs_delta_le_1e-5",
+        "middle_plane_e_relative_l2_le_5e-3",
+        "middle_plane_h_relative_l2_le_5e-3",
+    }
+)
 
 
 def _sha256(path: Path) -> str:
@@ -177,20 +185,91 @@ def _external_watchdog_pass(payload: Mapping[str, Any]) -> bool:
     resource = resource if isinstance(resource, Mapping) else {}
     resource_gate = resource.get("gate")
     resource_gate = resource_gate if isinstance(resource_gate, Mapping) else {}
-    authority_pass = (
-        payload.get("memory_authority_pass") is True
-        or resource_gate.get("pass") is True
+    source_gate = payload.get("source_gate")
+    source_gate = source_gate if isinstance(source_gate, Mapping) else {}
+    launch_gate = payload.get("launch_gate")
+    launch_gate = launch_gate if isinstance(launch_gate, Mapping) else {}
+    nested_gates_pass = bool(
+        resource_gate.get("pass") is True
+        and source_gate.get("pass") is True
+        and launch_gate.get("pass") is True
     )
     # ``measured_shard_pass`` is the Task033 identity after the watchdog
     # hardening.  The former ``formal_measured_pass`` is intentionally rejected.
-    return bool(
+    measured_pass = bool(
         status == "measured_shard_pass"
         and payload.get("target") == "hybrid"
         and payload.get("return_code") == 0
         and payload.get("no_swap") is True
         and payload.get("terminated_for_memory") is False
         and payload.get("terminated_for_timeout") is False
-        and authority_pass
+        and payload.get("terminated_for_authority_unreadable", False) is False
+        and payload.get("memory_authority_pass") is True
+        and nested_gates_pass
+    )
+    if measured_pass:
+        return True
+    return _controlled_physical_truncation_negative(payload)
+
+
+def _controlled_physical_truncation_negative(
+    payload: Mapping[str, Any],
+) -> bool:
+    """Accept only a complete fail-closed physical-truncation negative.
+
+    This is an external-execution contract, not an individual physical pass.
+    It lets M80/M120 contribute measured fields to the funnel while preserving
+    the existing physical qualification requirement on M160/the selected end.
+    """
+
+    measurements = _measurements(payload)
+    qualification = measurements.get("qualification")
+    qualification = qualification if isinstance(qualification, Mapping) else {}
+    gates = measurements.get("gates")
+    gates = gates if isinstance(gates, Mapping) else {}
+    solve = measurements.get("solve")
+    solve = solve if isinstance(solve, Mapping) else {}
+    residual = _finite(solve.get("true_relative_residual"))
+    resource = payload.get("resource_authority")
+    resource = resource if isinstance(resource, Mapping) else {}
+    resource_gate = resource.get("gate")
+    resource_gate = resource_gate if isinstance(resource_gate, Mapping) else {}
+    source_gate = payload.get("source_gate")
+    source_gate = source_gate if isinstance(source_gate, Mapping) else {}
+    launch_gate = payload.get("launch_gate")
+    launch_gate = launch_gate if isinstance(launch_gate, Mapping) else {}
+    gates_are_boolean = bool(gates) and all(type(value) is bool for value in gates.values())
+    failed_gate_names = [name for name, value in gates.items() if value is False]
+    only_physical_gates_failed = bool(
+        gates_are_boolean
+        and failed_gate_names
+        and set(failed_gate_names).issubset(CONTROLLED_PHYSICAL_GATE_FAILURES)
+    )
+    return bool(
+        payload.get("status") == "formal_not_pass"
+        and payload.get("target") == "hybrid"
+        and type(payload.get("return_code")) is int
+        and payload.get("return_code") == 2
+        and payload.get("formal_pass") is False
+        and payload.get("numeric_pass") is False
+        and payload.get("no_swap") is True
+        and payload.get("terminated_for_memory") is False
+        and payload.get("terminated_for_timeout") is False
+        and payload.get("terminated_for_authority_unreadable") is False
+        and payload.get("memory_authority_pass") is True
+        and resource_gate.get("pass") is True
+        and source_gate.get("pass") is True
+        and launch_gate.get("pass") is True
+        and measurements.get("status") == "physical_integration_failed"
+        and qualification.get("integration_pass") is False
+        and qualification.get("algebraic_chain_pass") is True
+        and qualification.get("physical_field_gates_pass") is False
+        and qualification.get("task033_physical_truncation_allowed") is True
+        and qualification.get("mode_count_converged") is False
+        and qualification.get("official_record") is False
+        and residual is not None
+        and residual <= 1.0e-9
+        and only_physical_gates_failed
     )
 
 
@@ -398,20 +477,23 @@ def build_hybrid_funnel(
         str(mode): _individual_physical_gates(payload)
         for mode, payload in sorted(by_m.items())
     }
-    if not all(
-        all(
-            gates[key]
-            for key in (
-                "integration_pass",
-                "algebraic_chain_pass",
-                "physical_field_gates_pass",
-                "task033_physical_truncation_allowed",
-                "true_relative_residual_le_1e-9",
-                "all_reported_gates_pass",
-            )
+    required_physical_gate_names = (
+        "integration_pass",
+        "algebraic_chain_pass",
+        "physical_field_gates_pass",
+        "task033_physical_truncation_allowed",
+        "true_relative_residual_le_1e-9",
+        "all_reported_gates_pass",
+    )
+    individual_contracts_pass = all(
+        all(individual[str(mode)][key] for key in required_physical_gate_names)
+        or (
+            mode in (80, 120)
+            and _controlled_physical_truncation_negative(payload)
         )
-        for gates in individual.values()
-    ):
+        for mode, payload in by_m.items()
+    )
+    if not individual_contracts_pass:
         problems.append("one or more individual Hybrid physical/algebraic gates failed")
 
     comparisons = [

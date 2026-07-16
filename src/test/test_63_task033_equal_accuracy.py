@@ -81,6 +81,7 @@ def _watchdog(
         "target": "hybrid",
         "return_code": 0,
         "formal_pass": True,
+        "numeric_pass": True,
         "memory_authority_pass": True,
         "physical_qualified": False,
         "no_swap": True,
@@ -88,6 +89,7 @@ def _watchdog(
         "terminated_for_timeout": False,
         "terminated_for_authority_unreadable": False,
         "source": _source(sha),
+        "source_gate": {"pass": True},
         "resource_authority": {
             "memory_authority_bytes": rss_bytes,
             "gate": {"pass": True},

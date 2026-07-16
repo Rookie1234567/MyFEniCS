@@ -738,6 +738,298 @@ function Invoke-DockerQepP4Step {
     Complete-Step -StepName $StepName -Outputs $outputs -ExitCode $exitCode
 }
 
+function Get-HybridFunnelSolverRecord {
+    param(
+        [Parameter(Mandatory = $true)][psobject]$Summary,
+        [Parameter(Mandatory = $true)][string]$AttemptRoot
+    )
+
+    if (
+        $null -eq $Summary.solver_record_ignored_path -or
+        [string]::IsNullOrWhiteSpace(
+            [string]$Summary.solver_record_ignored_path
+        ) -or
+        [string]$Summary.solver_record_sha256 -notmatch '^[0-9a-f]{64}$'
+    ) {
+        throw "Hybrid funnel watchdog has no complete solver-record descriptor."
+    }
+    $rawPath = [string]$Summary.solver_record_ignored_path
+    $solverPath = if ([IO.Path]::IsPathRooted($rawPath)) {
+        [IO.Path]::GetFullPath($rawPath)
+    } else {
+        [IO.Path]::GetFullPath((Join-Path $RepoRoot $rawPath))
+    }
+    $attemptPrefix = [IO.Path]::GetFullPath($AttemptRoot).TrimEnd(
+        [char[]]@(47, 92)
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $solverPath.StartsWith(
+        $attemptPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "Hybrid funnel solver record is not bound to its attempt root."
+    }
+    if (-not (Test-Path -LiteralPath $solverPath -PathType Leaf)) {
+        throw "Hybrid funnel solver record is missing: $solverPath"
+    }
+    $observedSha = Get-FileSha256 -Path $solverPath
+    if ($observedSha -ne ([string]$Summary.solver_record_sha256).ToLowerInvariant()) {
+        throw "Hybrid funnel solver-record SHA256 does not match its watchdog."
+    }
+    $record = Get-Content -Raw -LiteralPath $solverPath | ConvertFrom-Json
+    $requiredProjectionKeys = @(
+        "case",
+        "solve",
+        "gates",
+        "qualification"
+    )
+    foreach ($key in $requiredProjectionKeys) {
+        $embeddedProperty = $Summary.measurements.PSObject.Properties[$key]
+        $recordProperty = $record.PSObject.Properties[$key]
+        if ($null -eq $embeddedProperty -or $null -eq $recordProperty) {
+            throw "Hybrid funnel projection lacks required solver field $key."
+        }
+        $embedded = $embeddedProperty.Value | ConvertTo-Json -Depth 100 -Compress
+        $preserved = $recordProperty.Value | ConvertTo-Json -Depth 100 -Compress
+        if ($embedded -ne $preserved) {
+            throw "Hybrid funnel projection differs from solver field $key."
+        }
+    }
+    foreach ($key in @("port_power", "external_diffraction_orders")) {
+        $embeddedProperty = (
+            $Summary.measurements.validation.PSObject.Properties[$key]
+        )
+        $recordProperty = $record.validation.PSObject.Properties[$key]
+        if ($null -eq $embeddedProperty -or $null -eq $recordProperty) {
+            throw "Hybrid funnel validation projection lacks required field $key."
+        }
+        $embedded = $embeddedProperty.Value | ConvertTo-Json -Depth 100 -Compress
+        $preserved = $recordProperty.Value | ConvertTo-Json -Depth 100 -Compress
+        if ($embedded -ne $preserved) {
+            throw "Hybrid funnel validation projection differs for field $key."
+        }
+    }
+    return $record
+}
+
+function Assert-HybridFunnelShardOutcome {
+    param(
+        [Parameter(Mandatory = $true)][string]$SummaryOutput,
+        [Parameter(Mandatory = $true)][int]$Degree,
+        [Parameter(Mandatory = $true)][string]$HNm,
+        [Parameter(Mandatory = $true)][int]$RequestedModes,
+        [Parameter(Mandatory = $true)][string]$AttemptRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $SummaryOutput -PathType Leaf)) {
+        throw "Hybrid funnel step produced no watchdog summary."
+    }
+    $summary = Get-Content -Raw -LiteralPath $SummaryOutput | ConvertFrom-Json
+    $record = Get-HybridFunnelSolverRecord `
+        -Summary $summary `
+        -AttemptRoot $AttemptRoot
+    $command = @($summary.command)
+    $residual = [double]$record.solve.true_relative_residual
+    $commonChecks = [ordered]@{
+        schema_version = (
+            $summary.schema_version -eq "task033.memory-watchdog.v2"
+        )
+        benchmark_id = (
+            $summary.benchmark_id -eq "task033_external_memory_watchdog"
+        )
+        target = ($summary.target -eq "hybrid")
+        requested_modes = ($summary.requested_modes -eq $RequestedModes)
+        candidate_modes = ($summary.candidate_modes -eq 160)
+        command_requested_modes = (
+            [int](Get-Task033CommandValue `
+                -Command $command `
+                -Option "--requested-modes") -eq $RequestedModes
+        )
+        command_candidate_modes = (
+            (Get-Task033CommandValue `
+                -Command $command `
+                -Option "--candidate-modes") -eq "160"
+        )
+        command_degree = (
+            [int](Get-Task033CommandValue `
+                -Command $command `
+                -Option "--degree") -eq $Degree
+        )
+        command_h_nm = (
+            [double](Get-Task033CommandValue `
+                -Command $command `
+                -Option "--h-nm") -eq [double]$HNm
+        )
+        command_solver_path = (
+            (Get-Task033CommandValue `
+                -Command $command `
+                -Option "--solver-path") -eq "modal-schur-memory-minimal"
+        )
+        memory_authority_pass = ($summary.memory_authority_pass -eq $true)
+        no_swap = ($summary.no_swap -eq $true)
+        not_terminated_for_memory = (
+            $summary.terminated_for_memory -eq $false
+        )
+        not_terminated_for_timeout = (
+            $summary.terminated_for_timeout -eq $false
+        )
+        authority_readable = (
+            $summary.terminated_for_authority_unreadable -eq $false
+        )
+        resource_gate = ($summary.resource_authority.gate.pass -eq $true)
+        source_gate = ($summary.source_gate.pass -eq $true)
+        launch_gate = ($summary.launch_gate.pass -eq $true)
+        degree = ($record.case.degree -eq $Degree)
+        h_nm = ($record.case.h_nm -eq [double]$HNm)
+        record_requested_modes = (
+            $record.case.requested_modes_per_direction -eq $RequestedModes
+        )
+        solver_path = (
+            $record.hybrid_system.primary_solver_path -eq (
+                "modal-schur-memory-minimal"
+            )
+        )
+        embedded_solver_path = (
+            $summary.measurements.hybrid_system.primary_solver_path -eq (
+                "modal-schur-memory-minimal"
+            )
+        )
+        finite_true_residual = (
+            -not [double]::IsNaN($residual) -and
+            -not [double]::IsInfinity($residual) -and
+            $residual -ge 0.0 -and
+            $residual -le 1.0e-9
+        )
+    }
+    $failedCommonChecks = @(
+        $commonChecks.GetEnumerator() |
+            Where-Object { $_.Value -ne $true } |
+            ForEach-Object { $_.Key }
+    )
+    if ($failedCommonChecks.Count -ne 0) {
+        throw (
+            "Hybrid funnel shard failed identity/resource/algebraic checks: " +
+            ($failedCommonChecks -join ", ")
+        )
+    }
+
+    if ($summary.status -eq "measured_shard_pass") {
+        Assert-WatchdogPass -Outputs @($SummaryOutput)
+        return $summary
+    }
+
+    $qualification = $record.qualification
+    if (
+        $summary.status -ne "formal_not_pass" -or
+        $summary.formal_pass -ne $false -or
+        $summary.numeric_pass -ne $false -or
+        $summary.return_code -ne 2 -or
+        $record.status -ne "physical_integration_failed" -or
+        $qualification.integration_pass -ne $false -or
+        $qualification.algebraic_chain_pass -ne $true -or
+        $qualification.task033_physical_truncation_allowed -ne $true -or
+        $qualification.mode_count_converged -ne $false -or
+        $qualification.physical_field_gates_pass -ne $false -or
+        $qualification.official_record -ne $false
+    ) {
+        throw "Hybrid funnel exit 2 is not a controlled physical truncation negative."
+    }
+    $allowedFalseGates = @(
+        "sampled_interface_h_t_relative_l2_le_1e-2",
+        "volume_absorption_full3d_abs_delta_le_1e-5",
+        "middle_plane_e_relative_l2_le_5e-3",
+        "middle_plane_h_relative_l2_le_5e-3"
+    )
+    $gateProperties = @($record.gates.PSObject.Properties)
+    $invalidGateTypes = @(
+        $gateProperties | Where-Object { $_.Value -isnot [bool] }
+    )
+    $falseGates = @(
+        $gateProperties |
+            Where-Object { $_.Value -eq $false } |
+            ForEach-Object { $_.Name }
+    )
+    $unexpectedFalseGates = @(
+        $falseGates | Where-Object { $_ -notin $allowedFalseGates }
+    )
+    if (
+        $gateProperties.Count -eq 0 -or
+        $invalidGateTypes.Count -ne 0 -or
+        $falseGates.Count -eq 0 -or
+        $unexpectedFalseGates.Count -ne 0
+    ) {
+        throw (
+            "Hybrid intermediate negative has absent or non-whitelisted " +
+            "physical Gate failures: " + ($unexpectedFalseGates -join ", ")
+        )
+    }
+    return $summary
+}
+
+function Invoke-DockerHybridFunnelShardStep {
+    param(
+        [Parameter(Mandatory = $true)][string]$StepName,
+        [Parameter(Mandatory = $true)][string[]]$ContainerCommand,
+        [Parameter(Mandatory = $true)][string]$SummaryOutput,
+        [Parameter(Mandatory = $true)][int]$Degree,
+        [Parameter(Mandatory = $true)][string]$HNm,
+        [Parameter(Mandatory = $true)][int]$RequestedModes,
+        [Parameter(Mandatory = $true)][string]$AttemptRoot,
+        [switch]$RequalificationRequired
+    )
+
+    $outputs = @($SummaryOutput)
+    if (Test-StepComplete -StepName $StepName -Outputs $outputs) {
+        $summary = Assert-HybridFunnelShardOutcome `
+            -SummaryOutput $SummaryOutput `
+            -Degree $Degree `
+            -HNm $HNm `
+            -RequestedModes $RequestedModes `
+            -AttemptRoot $AttemptRoot
+        $marker = Get-Content -Raw -LiteralPath (
+            Get-StepMarkerPath -PrimaryOutput $SummaryOutput
+        ) | ConvertFrom-Json
+        if (
+            $marker.native_exit_code -notin @(0, 2) -or
+            $marker.native_exit_code -ne $summary.return_code
+        ) {
+            throw "Hybrid funnel resume marker exit code differs from its summary."
+        }
+        if ($RequalificationRequired) {
+            Assert-P2H3Requalification `
+                -Outputs $outputs `
+                -ExpectedRequestedModes $RequestedModes
+        }
+        return
+    }
+    Assert-FormalSourceStable -ExpectedSha $CommitSha
+    if (Test-Path -LiteralPath $SummaryOutput -PathType Leaf) {
+        Remove-Item -LiteralPath $SummaryOutput -Force
+    }
+    Write-Host "[run Hybrid funnel pass-or-controlled-physical-negative] $StepName"
+    $dockerArguments = Get-DockerRunArguments -ContainerCommand $ContainerCommand
+    $exitCode = Invoke-NativeStreaming `
+        -FilePath $DockerExecutable `
+        -ArgumentList $dockerArguments
+    if ($exitCode -notin @(0, 2)) {
+        throw "Hybrid funnel step $StepName failed with exit code $exitCode."
+    }
+    $summary = Assert-HybridFunnelShardOutcome `
+        -SummaryOutput $SummaryOutput `
+        -Degree $Degree `
+        -HNm $HNm `
+        -RequestedModes $RequestedModes `
+        -AttemptRoot $AttemptRoot
+    if ($summary.return_code -ne $exitCode) {
+        throw "Hybrid funnel watchdog return code differs from Docker exit code."
+    }
+    if ($RequalificationRequired) {
+        Assert-P2H3Requalification `
+            -Outputs $outputs `
+            -ExpectedRequestedModes $RequestedModes
+    }
+    Complete-Step -StepName $StepName -Outputs $outputs -ExitCode $exitCode
+}
+
 function Invoke-DockerJsonCaptureStep {
     param(
         [Parameter(Mandatory = $true)][string]$StepName,
@@ -950,7 +1242,8 @@ function Invoke-Task033Watchdog {
         [string]$M160FunnelSha256,
         [double]$TimeoutSeconds = 3600.0,
         [switch]$ExpectedTimeoutNegative,
-        [switch]$AllowP4ControlledNumericalNegative
+        [switch]$AllowP4ControlledNumericalNegative,
+        [switch]$AllowHybridIntermediatePhysicalNegative
     )
 
     $attemptRun = Join-Path $AttemptRoot (
@@ -1023,8 +1316,18 @@ function Invoke-Task033Watchdog {
 
     [IO.Directory]::CreateDirectory((Split-Path -Parent $SummaryOutput)) | Out-Null
     [IO.Directory]::CreateDirectory($AttemptRoot) | Out-Null
-    if ($ExpectedTimeoutNegative -and $AllowP4ControlledNumericalNegative) {
-        throw "A QEP step cannot be both timeout-negative and p4 controlled."
+    if (
+        ($ExpectedTimeoutNegative -and $AllowP4ControlledNumericalNegative) -or
+        (
+            $ExpectedTimeoutNegative -and
+            $AllowHybridIntermediatePhysicalNegative
+        ) -or
+        (
+            $AllowP4ControlledNumericalNegative -and
+            $AllowHybridIntermediatePhysicalNegative
+        )
+    ) {
+        throw "A watchdog step cannot enable multiple controlled-negative modes."
     }
     if ($ExpectedTimeoutNegative) {
         Invoke-DockerTimeoutNegativeStep `
@@ -1042,6 +1345,28 @@ function Invoke-Task033Watchdog {
             -MaterialKind $MaterialKind `
             -HNm $HNm `
             -AttemptRoot $AttemptRoot
+    } elseif ($AllowHybridIntermediatePhysicalNegative) {
+        if (
+            $Target -ne "hybrid" -or
+            $RequestedModes -notin @(80, 120) -or
+            $CandidateModes -ne 160 -or
+            $SolverPath -ne "modal-schur-memory-minimal" -or
+            $CompareModalSchur
+        ) {
+            throw (
+                "Controlled Hybrid physical negatives are restricted to " +
+                "memory-minimal M80/M120 funnel shards."
+            )
+        }
+        Invoke-DockerHybridFunnelShardStep `
+            -StepName $StepName `
+            -ContainerCommand $command `
+            -SummaryOutput $SummaryOutput `
+            -Degree $Degree `
+            -HNm $HNm `
+            -RequestedModes $RequestedModes `
+            -AttemptRoot $AttemptRoot `
+            -RequalificationRequired:$AnchorRequalification
     } else {
         $requalificationRequired = [bool]$AnchorRequalification
         $minimalComparisonRequired = [bool]$CompareModalSchur
@@ -1103,6 +1428,9 @@ function Invoke-HybridFunnel {
             -TopInterfaceNm $TopInterfaceNm `
             -GradedReferenceH $GradedReferenceH `
             -AnchorRequalification:$AnchorRequalification `
+            -AllowHybridIntermediatePhysicalNegative:(
+                $modeCount -in @(80, 120)
+            ) `
             -TimeoutSeconds $HybridTimeoutSeconds
     }
 

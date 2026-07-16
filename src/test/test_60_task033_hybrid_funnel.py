@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 import unittest
@@ -29,10 +30,16 @@ def _shard(mode_count: int, *, delta: float = 0.0) -> dict:
         "status": "measured_shard_pass",
         "target": "hybrid",
         "return_code": 0,
+        "formal_pass": True,
+        "numeric_pass": True,
         "no_swap": True,
         "terminated_for_memory": False,
         "terminated_for_timeout": False,
+        "terminated_for_authority_unreadable": False,
         "memory_authority_pass": True,
+        "resource_authority": {"gate": {"pass": True}},
+        "source_gate": {"pass": True},
+        "launch_gate": {"pass": True},
         "source": {
             "commit_sha": SHA,
             "verified_clean_sha": SHA,
@@ -87,6 +94,34 @@ def _shard(mode_count: int, *, delta: float = 0.0) -> dict:
     }
 
 
+def _controlled_physical_negative(mode_count: int, *, delta: float = 0.0) -> dict:
+    shard = _shard(mode_count, delta=delta)
+    shard.update(
+        {
+            "status": "formal_not_pass",
+            "return_code": 2,
+            "formal_pass": False,
+            "numeric_pass": False,
+            "terminated_for_authority_unreadable": False,
+            "resource_authority": {"gate": {"pass": True}},
+            "source_gate": {"pass": True},
+            "launch_gate": {"pass": True},
+        }
+    )
+    measurements = shard["measurements"]
+    measurements["status"] = "physical_integration_failed"
+    measurements["gates"]["sampled_interface_h_t_relative_l2_le_1e-2"] = False
+    measurements["qualification"].update(
+        {
+            "integration_pass": False,
+            "physical_field_gates_pass": False,
+            "mode_count_converged": False,
+            "official_record": False,
+        }
+    )
+    return shard
+
+
 class Task033HybridFunnelTests(unittest.TestCase):
     def test_m80_m120_m160_can_qualify(self) -> None:
         record = build_hybrid_funnel(
@@ -97,6 +132,67 @@ class Task033HybridFunnelTests(unittest.TestCase):
             record["qualification"]["selected_mode_count_per_direction"], 160
         )
         self.assertTrue(record["qualification"]["mode_count_converged"])
+
+    def test_controlled_physical_negatives_at_m80_and_m120_can_qualify(self) -> None:
+        record = build_hybrid_funnel(
+            [
+                _controlled_physical_negative(80, delta=2.0e-7),
+                _controlled_physical_negative(120, delta=1.0e-7),
+                _shard(160),
+            ]
+        )
+        self.assertEqual(record["status"], "qualified", record["failures"])
+        self.assertTrue(record["qualification"]["all_external_watchdogs_pass"])
+        self.assertEqual(
+            record["qualification"]["selected_mode_count_per_direction"], 160
+        )
+
+    def test_controlled_negative_contract_fails_closed(self) -> None:
+        valid = _controlled_physical_negative(120, delta=1.0e-7)
+        mutations = {
+            "wrong_return_code": lambda row: row.update(return_code=3),
+            "memory_failure": lambda row: row.update(memory_authority_pass=False),
+            "swap_failure": lambda row: row.update(no_swap=False),
+            "algebraic_failure": lambda row: row["measurements"]["qualification"].update(
+                algebraic_chain_pass=False
+            ),
+            "nonphysical_worker_gate_failure": lambda row: row["measurements"][
+                "gates"
+            ].update(monolithic_true_relative_residual_le_1e_9=False),
+            "resource_failure": lambda row: row["resource_authority"]["gate"].__setitem__(
+                "pass", False
+            ),
+            "source_failure": lambda row: row["source_gate"].__setitem__("pass", False),
+            "launch_failure": lambda row: row["launch_gate"].__setitem__("pass", False),
+            "official_record": lambda row: row["measurements"][
+                "qualification"
+            ].update(official_record=True),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                rejected = copy.deepcopy(valid)
+                mutate(rejected)
+                record = build_hybrid_funnel(
+                    [_shard(80, delta=2.0e-7), rejected, _shard(160)]
+                )
+                self.assertEqual(record["status"], "not_qualified")
+                self.assertFalse(
+                    record["qualification"]["all_external_watchdogs_pass"]
+                )
+
+    def test_m160_cannot_be_a_controlled_physical_negative(self) -> None:
+        record = build_hybrid_funnel(
+            [
+                _controlled_physical_negative(80, delta=2.0e-7),
+                _controlled_physical_negative(120, delta=1.0e-7),
+                _controlled_physical_negative(160),
+            ]
+        )
+        self.assertEqual(record["status"], "not_qualified")
+        self.assertIn(
+            "one or more individual Hybrid physical/algebraic gates failed",
+            record["failures"],
+        )
 
     def test_single_m_and_legacy_formal_label_never_qualify(self) -> None:
         single = build_hybrid_funnel([_shard(80)])
