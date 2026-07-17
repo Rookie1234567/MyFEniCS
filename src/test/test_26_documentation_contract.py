@@ -59,6 +59,7 @@ CASES = {
     "060_multilevel_hcurl_iterative_solver",
     "070_compact_physical_slab_memory_optimization",
     "090_neural_local_pc_acceleration",
+    "091_batched_neural_smoother_acceleration",
 }
 
 RECORDED_CASES = {

@@ -46,6 +46,10 @@ from src.solvers.neural_local_pc import (
     IluNeuralCorrectionSlabSolver,
     NeuralLocalSlabSolver,
 )
+from src.solvers.batched_reduced_smoother import (
+    FrozenLinearReducedMap,
+    IluLinearReducedCorrectionSlabSolver,
+)
 from src.solvers.solve_vector_maxwell import _json_default
 from src.solvers.stage4_runtime import (
     RuntimeStage4System,
@@ -178,6 +182,10 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
     if args.neural_checkpoint_root:
         deviations.append(
             f"neural local backend {args.neural_lane!r} is enabled for research"
+        )
+    if args.linear_reduced_checkpoint_root:
+        deviations.append(
+            f"linear reduced backend {args.linear_reduced_mode!r} is enabled for research"
         )
     return deviations
 
@@ -788,6 +796,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             },
         )
     local_solver_factory = None
+    if args.neural_checkpoint_root and args.linear_reduced_checkpoint_root:
+        raise ValueError("neural and linear-reduced local backends are mutually exclusive")
     if args.neural_checkpoint_root:
         checkpoint_root = Path(args.neural_checkpoint_root)
         enabled_slabs = (
@@ -826,6 +836,29 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 model,
                 fallback,
                 residual_ratio_limit=args.neural_residual_limit,
+            )
+    elif args.linear_reduced_checkpoint_root:
+        checkpoint_root = Path(args.linear_reduced_checkpoint_root)
+        enabled_slabs = (
+            None
+            if args.linear_reduced_enabled_slabs is None
+            else {int(value) for value in args.linear_reduced_enabled_slabs.split(",") if value}
+        )
+
+        def local_solver_factory(subdomain, portable_operator, fallback_action):
+            fallback = IluLocalSlabSolver(portable_operator.shape[0], fallback_action)
+            if enabled_slabs is not None and int(subdomain) not in enabled_slabs:
+                return fallback
+            checkpoint_dir = checkpoint_root / f"slab_{int(subdomain):03d}"
+            model = FrozenLinearReducedMap.load(
+                checkpoint_dir,
+                expected_operator_fingerprint=portable_operator.fingerprint,
+            )
+            return IluLinearReducedCorrectionSlabSolver(
+                portable_operator,
+                model,
+                fallback,
+                shadow=args.linear_reduced_mode == "shadow",
             )
     smoother = DistributedPhysicalSlabSmoother(
         assembled_f if shifted is None else shifted,
@@ -1173,6 +1206,11 @@ def main() -> int:
         "--neural-lane", choices=("nn_only", "ilu_correction"), default="ilu_correction"
     )
     parser.add_argument("--neural-residual-limit", type=float, default=0.95)
+    parser.add_argument("--linear-reduced-checkpoint-root")
+    parser.add_argument("--linear-reduced-enabled-slabs")
+    parser.add_argument(
+        "--linear-reduced-mode", choices=("shadow", "active"), default="shadow"
+    )
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -1228,6 +1266,9 @@ def main() -> int:
         "neural_enabled_slabs": args.neural_enabled_slabs,
         "neural_lane": args.neural_lane,
         "neural_residual_limit": args.neural_residual_limit,
+        "linear_reduced_checkpoint_root": args.linear_reduced_checkpoint_root,
+        "linear_reduced_enabled_slabs": args.linear_reduced_enabled_slabs,
+        "linear_reduced_mode": args.linear_reduced_mode,
         "ksp_type": args.ksp_type,
         "smoother_ksp_type": args.smoother_ksp_type,
         "selective_diagonal_boundary_slabs": args.selective_diagonal_boundary_slabs,

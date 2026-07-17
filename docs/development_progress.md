@@ -2110,3 +2110,11 @@ one-slab run 的 official R/T/A 为 `0.089021604131 / 0.442588273317 / 0.4683901
 # 48. 当前一句话状态（PARA-Task001）
 
 > PARA-Task001 在当前 WSL/RTX 8000 机器上完成真实 MPI4 h5 one-slab ILU+NN 验证：数值、R/T/A、local rho 与 memory guard 通过，迭代 861→854，但 solve/total 恶化到 4.419x/2.888x，因此分类为 `h5_numeric_pass_engineering_negative`，ordinary default 不变，all-slab/h3/h2 按 Gate 停止。
+
+---
+
+# 49. PARA-Task002：低开销批量线性降阶 smoother
+
+PARA-Task002 在同一 Ubuntu WSL/双 RTX 8000 机器上完成 h5 P0-P4。持久 SciPy CSR 将三个真实 slab 的 action mean 降到 Python 行循环的 7.13%-7.49%；GPU 离线构造的 rank-32 complex POD/ridge 固定线性映射在独立 ILU-residual validation 上达到 `rho median/p95=0.593884/0.745695`，线性误差 `3.894e-15`，batch 一致性误差 0，推理加融合审计均值为 Task001 的 10.40%。
+
+P3 shadow 的 5166 次候选全部通过非退化审计。P4 主动 slab-9 的迭代 849→847、solve 151.343→137.261 s、peak 1.595348→1.618153 GiB；数值和内存通过，但 0.24% iteration improvement 与 9.30% solve improvement 均未达到独立性能信号门。因此最终分类为 `local_microkernel_success_global_signal_insufficient`，P5/all-slab/h3/h2 未运行，ordinary default 未改变。

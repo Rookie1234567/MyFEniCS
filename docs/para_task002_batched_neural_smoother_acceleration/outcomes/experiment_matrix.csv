@@ -1,0 +1,8 @@
+phase,run,status,iterations,solve_s,total_s,full_residual,peak_gib,decision
+P0,original_ilu_baseline,pass,849,151.342682,227.120425,9.988413e-7,1.595348,baseline
+P0,task001_one_slab_ilu_nn,engineering_negative,847,439.848240,486.811031,9.885644e-7,1.650707,negative_reference
+P1,three_slab_local_action,pass,,,,,,scipy_selected
+P2,rank32_linear_reduced,pass,,,,,,local_gate_pass
+P3,rank32_slab9_shadow,pass,861,140.565812,216.332593,9.992481e-7,1.611607,shadow_only
+P4,rank32_slab9_active,signal_fail,847,137.260902,191.937946,9.985467e-7,1.618153,stop_before_P5
+P5,all_slab,not_run,,,,,,P4_signal_failed

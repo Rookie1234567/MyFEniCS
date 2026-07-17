@@ -1,0 +1,1 @@
+{"case_id":"091_batched_neural_smoother_acceleration","task":"PARA-Task002","mesh":"h5","mpi_size":4,"enabled_slabs":[9],"selected_rank":32,"offline_construction_device":"cuda:0","ordinary_default_changed":false,"artifact_root":"benchmarks/artifacts/cases/091"}

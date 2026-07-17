@@ -1,0 +1,8 @@
+component,mean_s,p95_s,notes
+task001_nn_inference_plus_audit,0.021951838,,same-round negative accumulated 111.559238 s / 5082 calls
+rank128_linear_inference_plus_fused_audit,0.005890037,0.006883532,quality pass but mean performance gate failed
+rank96_linear_inference_plus_fused_audit,0.005207206,0.006429553,P2 pass
+rank32_linear_inference_plus_fused_audit,0.002281386,0.002490071,selected; p95 is 7.54% of measured Task001 p95
+rank32_validation_ilu_solve,0.001595618,0.001792009,SciPy spilu comparison
+P3_shadow_adapter_including_ilu_and_two_actions,0.007815276,,5166 calls
+P4_active_adapter_including_ilu_and_two_actions,0.007742859,,5082 calls

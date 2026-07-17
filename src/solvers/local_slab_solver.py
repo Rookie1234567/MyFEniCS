@@ -5,6 +5,7 @@ import hashlib
 from typing import Any, Callable, Protocol, runtime_checkable
 
 import numpy as np
+import scipy.sparse as sp
 
 
 TINY = np.finfo(float).tiny
@@ -76,6 +77,44 @@ class LocalCsrOperator:
             first, last = int(self.indptr[row]), int(self.indptr[row + 1])
             matrix[row, self.indices[first:last]] = self.values[first:last]
         return matrix
+
+
+class ScipyCsrAction:
+    """Persistent compiled CSR matvec for production-sized local actions."""
+
+    def __init__(self, operator: LocalCsrOperator) -> None:
+        self.operator_fingerprint = operator.fingerprint
+        self.shape = operator.shape
+        self._matrix = sp.csr_matrix(
+            (operator.values, operator.indices, operator.indptr),
+            shape=operator.shape,
+            copy=True,
+        )
+        self._matrix.sum_duplicates()
+        self._matrix.sort_indices()
+        self.apply_count = 0
+
+    @property
+    def storage_bytes(self) -> int:
+        return int(
+            self._matrix.data.nbytes
+            + self._matrix.indices.nbytes
+            + self._matrix.indptr.nbytes
+        )
+
+    def action(self, vector: np.ndarray) -> np.ndarray:
+        source = np.asarray(vector, dtype=np.complex128)
+        if source.shape != (self.shape[1],):
+            raise ValueError("compiled CSR input has the wrong shape")
+        self.apply_count += 1
+        return np.asarray(self._matrix @ source, dtype=np.complex128)
+
+    def action_many(self, vectors: np.ndarray) -> np.ndarray:
+        source = np.asarray(vectors, dtype=np.complex128)
+        if source.ndim != 2 or source.shape[1] != self.shape[1]:
+            raise ValueError("compiled CSR batch has the wrong shape")
+        self.apply_count += int(source.shape[0])
+        return np.asarray((self._matrix @ source.T).T, dtype=np.complex128)
 
 
 @runtime_checkable
