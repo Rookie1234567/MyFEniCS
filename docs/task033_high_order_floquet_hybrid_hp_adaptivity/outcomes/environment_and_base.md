@@ -8,6 +8,10 @@
 > 未变化，并通过严格的 non-numerical descendant audit 复用 Case090。
 > Case090 与 QEP 分片已完成；完整 campaign 在 Hybrid `p1/h3/M160`
 > middle-plane reconstruction 时因用户缩小范围终止，不是资源或数值崩溃。
+>
+> Phase B matching-trace 五条 shard 绑定 clean source
+> `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc`；独立聚合器绑定 clean source
+> `9ac29db45b387d4590de084710abe2cc38b25ffe`。镜像 digest 与上文一致。
 
 ## 1. 执行身份
 
@@ -20,6 +24,8 @@
 | selective merge is base ancestor | `true` | ancestry relation | measured | `git merge-base --is-ancestor` |
 | current branch | `codex/20260715-task33-high-order-floquet-hybrid-hp` | Task033 execution branch | measured | `git branch --show-current` |
 | Phase A source SHA | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | clean selected-QEP execution source | measured | watchdog source gate |
+| Phase B measurement SHA | `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc` | clean matching-trace execution source | measured | five shard source gates |
+| Phase B aggregate SHA | `9ac29db45b387d4590de084710abe2cc38b25ffe` | clean fail-closed aggregate source | measured | aggregate tool identity |
 | local `master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | branch tip | measured | `git rev-parse master` |
 | `origin/master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | remote-tracking tip | measured | `git rev-parse origin/master` |
 | origin fetch/push | `https://github.com/Rookie1234567/MyFEniCS` | remote URL | measured | `git remote -v` |
@@ -96,5 +102,7 @@ state immediately before execution. No large numerical case was launched during 
 | tracked-source clean | pass | `6613f94b91ebc77eb50e74086475c67df46236f6` |
 | Case090 | 144 PDE complete；all core gates pass | stage summary + ignored aggregate hash |
 | QEP MPI1 | 36/36 measured shards pass | stage summary + ignored watchdog index hash |
+| Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 共 5 条 pass | tracked Phase B aggregate + raw shard SHA256 |
+| Phase C target full3D/Hybrid | not started | wait for Phase B review |
 | swap/watchdog | zero swap；authority readable | retained watchdog summaries |
 | campaign stop | user scope reduction at p1/h3/M160 middle-plane reconstruction | `summary.md`；not a formal solver record |

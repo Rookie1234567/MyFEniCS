@@ -47,3 +47,31 @@ planning checker 继续报告 planner/完整 formal manifest 为 `not_run` 是�
 
 host 环境直接导入 Task032 DOLFINx tests 会缺少 `dolfinx/ufl`；相同 13 个测试已在正式
 `myfenics-stage4:task28` 环境运行通过。该 host import failure 是环境边界，不是回归失败。
+
+## 4. Phase B matching-interface 验证
+
+| 验证 | 结果 |
+|---|---|
+| `python -m unittest -v src.test.test_66_task033_matched_trace_qualification` | 4 passed |
+| Phase B runner p2/MPI1 dirty-source smoke | 数值 Gate 全过；仅 source identity 按预期 fail |
+| Docker MPI4 `test_52_task033_high_order_matched_trace` | 每 rank 1 passed；p1–p4 subtests 全过 |
+| Docker MPI1 `test_35` + `test_53` | 6 passed；默认 projection 与 p3/p4 sparse Hybrid blocks 无回归 |
+| Ruff：runner、qualification、projection、test66 | pass |
+| py_compile：runner、qualification、projection、test66 | pass |
+| 正式 p2 MPI1 | pass；无 failed check |
+| 正式 p3 MPI1 / MPI4 | pass / pass；无 failed check |
+| 正式 p4 MPI1 / MPI4 | pass / pass；无 failed check |
+| 独立 Phase B aggregate | `phaseB_p3_p4_matched_trace_pass` |
+| `git diff --check` | pass |
+
+四个纯 Python 负向合同测试包括：
+
+1. 五条零误差基准通过；
+2. p4 MPI identity 失败时 p3 不被阻塞；
+3. p4 shard 数值失败时 p4 独立 fail-closed、p3 仍可通过；
+4. 任意 full-mode gather 声明会被复算拒绝。
+
+正式五条记录全部绑定 source
+`bd7a6023bde7a7c06d456e702af4b7f9f047b3fc`，并记录
+`source_clean_verified=true`、`source_stable_during_run=true`。聚合器绑定 clean source
+`9ac29db45b387d4590de084710abe2cc38b25ffe`，没有重跑 Case090、QEP36 或目标 Hybrid。

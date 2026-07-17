@@ -3,11 +3,17 @@
 > 2026-07-17 范围调整：本阶段只闭合 p3/p4 高阶能力与 Task032 p2
 > Hybrid/full3D 对比；自适应、buffer 和 1 TiB 工作为 `deferred_by_user_scope`。
 > 阶段证据见 [`records/stage1_high_order/stage_summary.json`](records/stage1_high_order/stage_summary.json)。
+>
+> 2026-07-17 Phase B 更新：p2 MPI1 与 p3/p4 MPI1/MPI4 matching-trace 最小矩阵已
+> 独立聚合通过，见
+> [`records/stage2_matched_trace/phaseB_summary.json`](records/stage2_matched_trace/phaseB_summary.json)；
+> Phase C 目标 full3D/Hybrid 仍等待复审。
 
 ## 当前身份
 
 ```text
 Task033 stage1 high-order evidence = completed
+Task033 Phase B matched trace = p3/p4 passed; waiting for review
 original h/p adaptivity scope = deferred by user
 runtime preflight = unknown by default and fail-closed
 adaptive compression measurement = deferred
@@ -16,7 +22,8 @@ ordinary default changed = false
 ```
 
 Case091 原先冻结 Task033 的 20 项 p/h 资源矩阵、两中心内存预测和 fail-closed
-启动规则。当前阶段新增 p3/p4 高阶执行摘要，但没有完成 h/p 压缩或 0.7 nm 可行性证明。
+启动规则。当前阶段新增 p3/p4 高阶执行摘要和 matching-trace Phase B 记录，但没有
+完成目标 p3/p4 Hybrid、h/p 压缩或 0.7 nm 可行性证明。
 
 ## 物理问题
 

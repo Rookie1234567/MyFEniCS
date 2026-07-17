@@ -42,7 +42,8 @@
 | p2 Nedelec | recommended | ordinary/benchmark | workstation qualification 使用 p2 |
 | p3 Nedelec + double Floquet | supported | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 已资格化；目标光栅 Hybrid/full3D 同阶对照尚无 |
 | p4 Nedelec + double Floquet | experimental | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 通过且有精度收益；代价高，目标光栅 Hybrid 未资格化 |
-| p3/p4 cross-section QEP | experimental | Task033 MPI1 watchdog shards | 单项数值 Gate 通过；全局趋势/跟踪 aggregate 尚未资格化 |
+| p3/p4 cross-section QEP | experimental | Task033 Phase A | p3/p4 组件与 selected MPI identity 已资格化；p4 只具有 compact Fourier subspace 证明；legacy p1–p4 aggregate 因 p1/p2 负结果未资格化 |
+| p3/p4 matching-interface trace/projection | experimental | Task033 Phase B，p2 MPI1 + p3/p4 MPI1/MPI4 | 3D→2D 迹、右重构、左 Petrov、积分加阶、MPI compact identity、no-gather/no-dense 通过；目标 Hybrid/full3D 未资格化 |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
 | auxiliary DtN | recommended | ordinary Stage4 | 稀疏增广系统 |
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |

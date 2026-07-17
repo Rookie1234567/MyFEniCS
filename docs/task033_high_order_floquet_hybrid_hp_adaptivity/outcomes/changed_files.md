@@ -7,6 +7,11 @@
 `bb830ba5dd74ced30475402bd6bc6d3c1856c630` 增加 aggregate block tracking 与严格的
 Case090 非数值后继提交复用门禁，没有改动数值装配或求解器。
 
+Phase B 的 matching-trace 实测冻结在
+`bd7a6023bde7a7c06d456e702af4b7f9f047b3fc`；它为
+`ModalTraceProjection` 增加可选显式积分阶次和切向值通信字节遥测，普通默认调用不变。
+远程可审计聚合器冻结在 `9ac29db45b387d4590de084710abe2cc38b25ffe`。
+
 ## 本轮新增或更新
 
 | 类别 | 文件 |
@@ -14,10 +19,14 @@ Case090 非数值后继提交复用门禁，没有改动数值装配或求解器
 | 阶段摘要 | `outcomes/summary.md` |
 | 高阶结果 | `outcomes/high_order_floquet_results.md`、`outcomes/qep_order_study.md` |
 | Phase A 诊断 | `outcomes/qep_tracking_diagnostic.md`、`response_v2.md` |
+| Phase B 实现 | `src/coupling/modal_trace_projection.py`、`benchmarks/run_task033_matched_trace.py` |
+| Phase B 资格判定 | `benchmarks/task033_matched_trace_qualification.py`、`src/test/test_66_task033_matched_trace_qualification.py` |
+| Phase B 结果与回复 | `outcomes/matched_trace_phaseB.md`、`response_v3.md` |
 | 方法对比 | `outcomes/hybrid_vs_full3d_summary.md` |
 | 边界与暂停点 | `outcomes/negative_results.md`、`response_v1.md` |
 | 环境/审计/测试 | `outcomes/environment_and_base.md`、`high_order_assumption_audit.md`、`memory_prediction_and_launch_decisions.md`、`test_summary.md` |
 | 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage1_high_order/stage_summary.json` |
+| Phase B 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json` |
 | Case/项目索引 | Case090/091 README、项目 README、docs/notes 索引与 roadmap |
 
 ## 明确保留不改

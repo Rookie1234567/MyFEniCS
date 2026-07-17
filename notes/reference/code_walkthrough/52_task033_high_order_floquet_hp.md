@@ -1,7 +1,8 @@
 # Task033 高阶 Floquet、QEP 与 graded-h 走读
 
-> 阶段状态（2026-07-17）：高阶 p3/p4 与 Case090 已完成；QEP 分片已测但 aggregate
-> 未资格化；graded-h、equal-accuracy 和 buffer 路径因范围调整延期。
+> 阶段状态（2026-07-17）：高阶 p3/p4、Case090、QEP Phase A 与 matching-trace
+> Phase B 已完成；legacy 全阶 QEP aggregate 仍因 p1/p2 负结果未资格化。Phase C
+> 目标 Hybrid、graded-h、equal-accuracy 和 buffer 路径尚未启动。
 
 ## 调用链
 
@@ -59,7 +60,27 @@ physics-informed marks
 
 `benchmarks/run_task033_qep_matrix.py` 生成 air、lossy homogeneous 与 patterned Stage4 截面 shard。`task033_qep_measurement.py` 提取 beta、QEP residual、biorthogonality、tracking、full/reduced DoF/NNZ、quadrature 和时间；`task033_qep_qualification.py` 聚合同一 clean SHA 的 p1--p4 与 h5/h3/h2.5 矩阵。
 
-聚合器要求解析 beta 误差和 p2 相对改进，不能以“finite beta”作为 pass。MPI2/4 PEP 若在规定 wall time 内不返回，外部 watchdog 生成 timeout negative record；该结果是已测扩展限制，不可改写成跳过或成功。
+聚合器要求解析 beta 误差和 p2 相对改进，不能以“finite beta”作为 pass。Phase A
+以公共 Fourier fingerprints 的近简并块 principal-angle tracking 资格化 p3/p4；
+legacy p1–p4 aggregate 仍保留 p1/p2 真实负结果。MPI2/4 PEP 若在规定 wall time 内
+不返回，外部 watchdog 生成 timeout negative record；该结果不可改写成跳过或成功。
+
+## Phase B matching trace
+
+`benchmarks/run_task033_matched_trace.py` 在 `h10` matching-interface fixture 上执行一条
+p2/MPI1 回归和 p3/p4 的 MPI1/MPI4 记录。3D 六面体 N1curl 与 2D 四边形 N1curl
+使用相同 degree，并记录 Basix entity/trace DoF、matching mesh hash、bottom/top
+normal convention、point ownership 和 ghost/scatter 行为。
+
+`ModalTraceProjection` 只新增可选 `quadrature_degree`；普通默认调用不变。Phase B
+显式比较 `2p+4` 与 `2p+6` 的稀疏 trace mass、`2×2` Gram、右重构、左 Petrov
+projection 和 coefficient round-trip。切向值通信只传两个 complex128 分量，不 gather
+3D 场或模态向量，也不形成 dense interface square。
+
+`task033_matched_trace_qualification.py` 不信任 shard 自报状态。它逐条复算数值、空间、
+积分、MPI 和存储 Gate，并以网格/DoF/NNZ、beta assignment、Gram condition/奇异值和
+近简并块结构比较 MPI1/MPI4。p3 与 p4 判定链分开，p4 失败不会阻塞 p3。tracked
+`phaseB_summary.json` 保存原始 ignored shard 的文件 SHA256 与 compact observed data。
 
 ## Hybrid 漏斗
 

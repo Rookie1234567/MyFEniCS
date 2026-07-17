@@ -4,11 +4,13 @@
 
 | 字段 | 结果 | 说明 |
 |---|---|---|
-| 阶段分类 | `task033_stage1_phaseA_qep_tracking_closed` | 直接 3D p3/p4 与 QEP Phase A 已闭合 |
+| 阶段分类 | `task033_phaseB_matched_trace_completed_waiting_review` | 直接 3D、QEP Phase A 与 matching-trace Phase B 已闭合 |
 | 原 Task033 分类 | `partial_deferred_by_user_scope` | 自适应及其后续阶段延期 |
 | 正式源码 | `6613f94b91ebc77eb50e74086475c67df46236f6` | clean worktree、同一 Docker image digest |
 | Phase A 源码 | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | block tracking、Case090 reuse audit 与 selected MPI runs |
-| 正式计算 | Case090 144 PDE；QEP MPI1 36 shards；selected p3/p4 h3 MPI2/4 4 shards | 大 campaign 已停止；Phase A 只补最小正向 MPI 身份 |
+| Phase B 实测源码 | `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc` | p2 MPI1、p3/p4 MPI1/MPI4 matching-trace 五条 shard |
+| Phase B 聚合源码 | `9ac29db45b387d4590de084710abe2cc38b25ffe` | fail-closed 复算、原始文件 hash 与 compact observed evidence |
+| 正式计算 | Case090 144 PDE；QEP MPI1 36 shards；selected p3/p4 h3 MPI2/4 4 shards；Phase B 5 shards | 大 campaign 已停止；Phase B 只补审阅批准的最小迹矩阵 |
 | ordinary default | unchanged | 新能力保持显式 opt-in |
 
 ## 2. 本阶段完成项
@@ -20,6 +22,7 @@
 | p4 是否带来精度收益？ | 在 Case090 的 36 个 p-refinement 对照中均为正收益；代价是更高 DoF、NNZ 与时间 | `high_order_floquet_results.md` |
 | p3/p4 QEP 是否资格化？ | 是。p3 直接通过；p4 四维近简并块 principal-angle tracking 通过 | `qep_tracking_diagnostic.md` |
 | QEP legacy 全阶 aggregate 是否资格化？ | 否。p1/p2 真实低阶负结果保留；p3/p4 不再被阻塞 | `qep_order_study.md` |
+| p3/p4 matching trace 是否资格化？ | 是。p3、p4 的 3D→2D 迹、右重构、左 Petrov、积分加阶与 MPI identity 均通过；p4 独立判定 | `matched_trace_phaseB.md` |
 | Hybrid 相比直接 3D FEM 是否一致？ | p2/h5、p2/h3 同阶同网格一致，行数降约 65%–69%，NNZ 降约 59% | `hybrid_vs_full3d_summary.md` |
 | p3/p4 Hybrid 是否已与同阶 full3D 对照？ | 否。目标光栅没有 p3/p4 同阶 full3D reference | `negative_results.md` |
 
@@ -38,7 +41,19 @@
 每个 MPI 规模固定 48 项：Fixture A 16、Fixture B 10° 主矩阵 16、Fixture B
 1°/5° smoke 16。MPI1/2/4 合计 144，不是 192。
 
-### 3.2 Hybrid p2 M160 与直接 3D p2
+### 3.2 Phase B matching-interface
+
+| shard | 最大 3D→2D 迹误差 | coefficient round-trip | Gram cond | raised trace-mass delta |
+|---|---:|---:|---:|---:|
+| p2 MPI1 | `5.951e-15` | `2.948e-16` | `30.4995` | `0` |
+| p3 MPI1 / MPI4 | `9.566e-15` | `2.828e-16` | `90.7920` | `0` |
+| p4 MPI1 / MPI4 | `9.835e-15` | `5.769e-16` | `35.2663` | `0` |
+
+p3/p4 MPI1→MPI4 最大 beta 匹配差分别为 `5.546e-14` 与 `4.267e-14`。
+没有 full field/mode gather，也没有 dense interface square。该结论只覆盖小型匹配迹
+组件；Phase C 目标 full3D/Hybrid 尚未启动。
+
+### 3.3 Hybrid p2 M160 与直接 3D p2
 
 | 网格 | 行数 full3D → Hybrid | 行数降低 | NNZ full3D → Hybrid | NNZ 降低 | 最大 R/T/A 绝对差 |
 |---|---:|---:|---:|---:|---:|
@@ -69,7 +84,8 @@
 | QEP MPI2/4 | p3/h3、p4/h3 各 MPI2/MPI4 正向运行通过；旧 timeout-negative 保留为合同测试 |
 | Hybrid p1/h5 | M80/M120/M160 漏斗已完成，结论为 modal-capacity negative |
 | Hybrid p1/h3 | M80、M120 已完成；M160 在 `middle_plane_reconstruction` 阶段被用户范围调整终止 |
-| Hybrid p2/p3、adaptive、buffer | 尚未进入 |
+| Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 共 5 条已完成并聚合通过 |
+| Phase C target full3D/Hybrid、adaptive、buffer | 尚未进入 |
 
 `p1/h3/M160` 已完成局部因子、Schur、场恢复与 official RTA，停止时正在中间平面
 重建；由于没有生成 solver record、watchdog summary 和 funnel aggregate，它不是有效正式结果。
@@ -78,13 +94,15 @@
 
 当前用户要求的两项总结不需要补算。若未来要升级结论，最小顺序是：
 
-1. p3 目标光栅：先做资源预测，再生成 p3/h5 同阶 full3D reference，随后做
+1. Phase B 已完成，先提交 `phaseB_summary.json` 与 `response_v3.md` 独立复审；
+2. 仅在复审批准 Phase C 后，p3 目标光栅先做资源预测，再生成 p3/h5 同阶 full3D reference，随后做
    p3/h5 的 M80/M120/M160 Hybrid 漏斗与 augmented/minimal anchor；h5 通过后才考虑 h3；
-2. p4 目标光栅：只在 p3 闭合且预测 Gate 通过后，考虑 p4/h5 direct + Hybrid；
-3. QEP Phase A 已闭合；下一步按审阅报告做 p3/p4 matched-trace 小 fixture，不重跑完整 36 项；
+3. p4 目标光栅：只在 p3 闭合且预测 Gate 通过后，考虑 p4/h5 direct + Hybrid；
 4. adaptive/graded/buffer 不属于当前阶段，除非用户重新开启，不建议继续。
 
 ## 7. 证据边界
 
 Case090 与 QEP 原始 watchdog 位于 ignored campaign 目录；仓库跟踪的是其 SHA、关键数值与
-阶段描述符。Task032 的六份 p2 Hybrid/full3D 记录仍是可复核的 tracked clean evidence。
+阶段描述符。Phase B 的五条原始 shard 同样位于 ignored 目录，但 tracked
+`phaseB_summary.json` 保存每条文件 SHA256、关键实测量和独立重算 Gate。Task032 的六份
+p2 Hybrid/full3D 记录仍是可复核的 tracked clean evidence。

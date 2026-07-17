@@ -1,7 +1,8 @@
 # Task33 高阶 Floquet、Hybrid h/p 与自适应研究入口
 
-> 2026-07-17 阶段更新：Case090 p3/p4 高阶路径已完成；QEP MPI1 分片已运行；
-> Hybrid/full3D 对比复用 Task032 p2 记录。自适应、buffer 与 1 TiB 阶段已延期。
+> 2026-07-17 阶段更新：Case090 p3/p4、QEP Phase A 与 matching-trace Phase B
+> 已完成；Hybrid/full3D 对比仍只资格化 Task032 p2。Phase C、自适应、buffer 与
+> 1 TiB 阶段尚未启动。
 
 本页保留为 Task33 的操作与恢复入口。完整原始任务边界见
 [`../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md)，
@@ -13,11 +14,12 @@
 | 项目 | 当前合同 |
 |---|---|
 | ordinary default | 不变；Task33 runner 全部显式 opt-in，不修改 `ACTIVE_PYCHARM_PRESET` |
-| 当前可提交证据 | Case090 144 PDE、QEP MPI1 36 shards、阶段 summary 与 Task032 p2 对照 |
+| 当前可提交证据 | Case090 144 PDE、QEP Phase A、Phase B 五条 matched-trace shard/aggregate、Task032 p2 对照 |
 | formal evidence | 本阶段不是原任务书的 21-role closure；完整 manifest 仍是 `NOT_RUN` |
 | 内存 | host hard budget 为 14 GiB；swap 禁止；预测或现场 Gate 不通过就不启动 |
 
-当前仓库可以声明高阶 Stage1 完成，但不能声称自适应压缩、buffer 最优点或 1 TiB 路线已经完成。
+当前仓库可以声明高阶 Stage1 与 matching-trace Phase B 完成，但不能声称目标
+p3/p4 Hybrid、自适应压缩、buffer 最优点或 1 TiB 路线已经完成。
 `planning_eligible` 也不等于 `launch_eligible`。
 
 ## 2. Windows PowerShell 与 Docker 准备
@@ -419,7 +421,8 @@ PowerShell，或建立调用同一 Docker 命令的 External Tool。
 | 项目 | 当前状态 | 正确动作 |
 |---|---|---|
 | Case090 committed record | oracle/planner/core 均为 NOT_RUN | 保留；只有 clean watchdog 三 shard 可替代 |
-| QEP formal aggregate | 尚无正式 aggregate；无独立 aggregate CLI | 保存 shards，不能宣称 study 完成 |
+| QEP legacy 全阶 aggregate | 因 p1/p2 真实负结果未资格化；p3/p4 Phase A 已通过 | 保留低阶负结果，不重跑 QEP36 或放宽阈值 |
+| Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 与独立 aggregate 通过 | 提交复审；不要在同一阶段进入 Phase C |
 | p1/p3 Hybrid funnel | 尚无正式 M80/120/160 records | 逐 shard watchdog，再用 funnel CLI |
 | adaptive h5/h3 | planning path 存在，measured compression 未提交 | 缺 same-accuracy evidence 就停止 |
 | 四 buffer + tradeoff | 参数入口存在，正式 funnel/tradeoff record 缺失 | 不从 smoke 选最优点 |

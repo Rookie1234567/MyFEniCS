@@ -593,8 +593,9 @@ multi-RHS 和 all-modes shift-invert QEP 仍需重构。
 
 ## Task033：Hybrid local h/p adaptivity and interface-budget optimization
 
-> 2026-07-17 阶段状态：p3/p4 直接 3D Floquet 与 QEP 分片扩展已完成；
-> p2 Hybrid/full3D 同阶同网格对比已总结。用户缩小当前范围后，以下 local h/p
+> 2026-07-17 阶段状态：p3/p4 直接 3D Floquet、QEP Phase A 与 matching-trace
+> Phase B 已完成；p2 Hybrid/full3D 同阶同网格对比已总结。Phase C 目标 Hybrid
+> 等待复审。用户缩小当前范围后，以下 local h/p
 > adaptivity、interface buffer 和 1 TiB 更新保留为后续路线，不再计入本阶段交付。
 
 只在上下局部 3D 区域进行 h/p 自适应，中间模态区保持解析传播。
