@@ -63,6 +63,16 @@ def _process_memory() -> dict[str, int | None]:
 
 
 def _load_raw_rhs(capture: Path) -> np.ndarray:
+    batch_path = capture / "real_krylov" / "samples.npz"
+    if batch_path.is_file():
+        with np.load(batch_path, allow_pickle=False) as payload:
+            if set(payload.files) != {"rhs", "apply_index"}:
+                raise ValueError(f"capture {batch_path} is not raw-RHS-only")
+            rhs = np.asarray(payload["rhs"], dtype=np.complex128)
+            apply_index = np.asarray(payload["apply_index"], dtype=np.int64)
+        if rhs.ndim != 2 or apply_index.shape != (rhs.shape[0],):
+            raise ValueError(f"capture {batch_path} has invalid batched shapes")
+        return rhs
     files = sorted((capture / "real_krylov").glob("sample_*.npz"))
     if not files:
         raise FileNotFoundError(f"no raw local RHS samples under {capture}")

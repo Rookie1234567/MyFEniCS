@@ -22,6 +22,7 @@ class LocalSlabCapture:
         sample_stride: int = 10,
         included_slabs: set[int] | None = None,
         store_local_correction: bool = True,
+        batched_storage: bool = False,
         run_metadata: dict[str, Any] | None = None,
     ) -> None:
         if maximum_samples_per_slab < 1 or sample_stride < 1:
@@ -35,10 +36,13 @@ class LocalSlabCapture:
             None if included_slabs is None else {int(value) for value in included_slabs}
         )
         self.store_local_correction = bool(store_local_correction)
+        self.batched_storage = bool(batched_storage)
         self.run_metadata = dict(run_metadata or {})
         self.seen: dict[int, int] = {}
         self.saved: dict[int, int] = {}
         self.operator_fingerprints: dict[int, str] = {}
+        self._batched_rhs: dict[int, list[np.ndarray]] = {}
+        self._batched_apply_indices: dict[int, list[int]] = {}
 
     def observe_operator(self, slab: int, operator: LocalCsrOperator) -> None:
         slab_id = int(slab)
@@ -72,6 +76,13 @@ class LocalSlabCapture:
         saved = self.saved.get(slab_id, 0)
         if seen % self.sample_stride or saved >= self.maximum_samples_per_slab:
             return
+        if self.batched_storage:
+            self._batched_rhs.setdefault(slab_id, []).append(
+                np.asarray(rhs, dtype=np.complex128).copy()
+            )
+            self._batched_apply_indices.setdefault(slab_id, []).append(seen)
+            self.saved[slab_id] = saved + 1
+            return
         directory = self.root / f"slab_{slab_id:03d}" / "real_krylov"
         directory.mkdir(parents=True, exist_ok=True)
         payload: dict[str, np.ndarray] = {
@@ -98,6 +109,11 @@ class LocalSlabCapture:
                 None if self.included_slabs is None else sorted(self.included_slabs)
             ),
             "store_local_correction": self.store_local_correction,
+            "storage_layout": (
+                "one_uncompressed_batch_per_slab"
+                if self.batched_storage
+                else "one_compressed_file_per_sample"
+            ),
             "seen_by_slab": {str(key): value for key, value in sorted(self.seen.items())},
             "saved_by_slab": {str(key): value for key, value in sorted(self.saved.items())},
             "operator_fingerprints": {
@@ -106,6 +122,19 @@ class LocalSlabCapture:
         }
 
     def write_manifest(self) -> None:
+        if self.batched_storage:
+            for slab_id, rows in sorted(self._batched_rhs.items()):
+                directory = self.root / f"slab_{slab_id:03d}" / "real_krylov"
+                directory.mkdir(parents=True, exist_ok=True)
+                np.savez(
+                    directory / "samples.npz",
+                    rhs=np.stack(rows),
+                    apply_index=np.asarray(
+                        self._batched_apply_indices[slab_id], dtype=np.int64
+                    ),
+                )
+            self._batched_rhs.clear()
+            self._batched_apply_indices.clear()
         (self.root / "capture.json").write_text(
             json.dumps(self.diagnostics, indent=2, sort_keys=True), encoding="utf-8"
         )

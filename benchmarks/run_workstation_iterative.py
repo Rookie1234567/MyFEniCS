@@ -798,6 +798,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 }
             ),
             store_local_correction=not args.neural_capture_raw_rhs_only,
+            batched_storage=args.neural_capture_batched_storage,
             run_metadata={
                 "branch": runtime_metadata.get("branch"),
                 "commit_sha": runtime_metadata.get("commit_sha"),
@@ -1317,6 +1318,7 @@ def main() -> int:
     parser.add_argument("--neural-capture-stride", type=int, default=10)
     parser.add_argument("--neural-capture-slabs")
     parser.add_argument("--neural-capture-raw-rhs-only", action="store_true")
+    parser.add_argument("--neural-capture-batched-storage", action="store_true")
     parser.add_argument("--neural-checkpoint-root")
     parser.add_argument(
         "--neural-enabled-slabs",
@@ -1385,6 +1387,7 @@ def main() -> int:
         "neural_capture_stride": args.neural_capture_stride,
         "neural_capture_slabs": args.neural_capture_slabs,
         "neural_capture_raw_rhs_only": args.neural_capture_raw_rhs_only,
+        "neural_capture_batched_storage": args.neural_capture_batched_storage,
         "neural_checkpoint_root": args.neural_checkpoint_root,
         "neural_enabled_slabs": args.neural_enabled_slabs,
         "neural_lane": args.neural_lane,

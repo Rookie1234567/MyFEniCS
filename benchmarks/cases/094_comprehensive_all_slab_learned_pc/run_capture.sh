@@ -66,4 +66,5 @@ mpiexec -n 4 /home/fenics/.local/bin/myfenics-python-complex \
   --neural-capture-dir "$target/raw" \
   --neural-capture-limit "$limit" \
   --neural-capture-stride "$stride" \
-  --neural-capture-raw-rhs-only
+  --neural-capture-raw-rhs-only \
+  --neural-capture-batched-storage
