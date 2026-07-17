@@ -12,6 +12,22 @@ TINY = np.finfo(float).tiny
 
 
 @dataclass(frozen=True)
+class LocalBackendPlan:
+    """Resolve local storage/lifecycle before any factor is constructed."""
+
+    identity: str
+    requires_ilu_factor: bool
+    requires_portable_operator: bool
+    allows_fallback: bool
+
+    def __post_init__(self) -> None:
+        if not self.identity:
+            raise ValueError("local backend plan identity must be non-empty")
+        if self.allows_fallback and not self.requires_ilu_factor:
+            raise ValueError("a local fallback requires an ILU factor")
+
+
+@dataclass(frozen=True)
 class LocalCsrOperator:
     """Portable complex CSR representation of one owner-computes slab."""
 

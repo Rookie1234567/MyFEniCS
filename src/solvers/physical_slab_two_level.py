@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from .local_slab_solver import LocalCsrOperator, LocalSlabSolver
+from .local_slab_solver import LocalBackendPlan, LocalCsrOperator, LocalSlabSolver
 
 
 TINY = np.finfo(float).tiny
@@ -467,6 +467,8 @@ def balanced_subdomain_owners(
 @dataclass
 class _OwnedSubdomainFactor:
     subdomain: int
+    owner_rank: int
+    backend_plan: LocalBackendPlan
     local_solver_type: str
     indices: np.ndarray
     union_positions: np.ndarray
@@ -477,6 +479,9 @@ class _OwnedSubdomainFactor:
     diagonal_inverse: np.ndarray | None
     matrix_nnz: int
     factor_nnz: int
+    factorization_s: float
+    ilu_factor_constructed: bool
+    ilu_apply_count: int
     exact_fingerprint: str
     rhs: PETSc.Vec
     solution: PETSc.Vec
@@ -526,9 +531,15 @@ class DistributedPhysicalSlabSmoother:
         ]
         | None = None,
         local_solver_factory: Callable[
-            [int, LocalCsrOperator, Callable[[np.ndarray], np.ndarray]], LocalSlabSolver
+            [
+                int,
+                LocalCsrOperator,
+                Callable[[np.ndarray], np.ndarray] | None,
+            ],
+            LocalSlabSolver,
         ]
         | None = None,
+        local_backend_plan_resolver: Callable[[int], LocalBackendPlan] | None = None,
     ) -> None:
         if not subdomains:
             raise ValueError("distributed physical-slab smoother needs subdomains")
@@ -570,9 +581,11 @@ class DistributedPhysicalSlabSmoother:
         self.local_operator_observer = local_operator_observer
         self.local_sample_observer = local_sample_observer
         self.local_solver_factory = local_solver_factory
+        self.local_backend_plan_resolver = local_backend_plan_resolver
         self.apply_count = 0
         self.apply_elapsed_s = 0.0
         self._destroyed = False
+        self.destroy_diagnostics: list[dict[str, Any]] = []
         self._inner_ksp: PETSc.KSP | None = None
         self._inner_pc_context: _DistributedPhysicalSlabPcContext | None = None
 
@@ -647,6 +660,23 @@ class DistributedPhysicalSlabSmoother:
         def build_factor(
             subdomain: int, indices: np.ndarray, submatrix: PETSc.Mat
         ) -> _OwnedSubdomainFactor:
+            backend_plan = (
+                LocalBackendPlan(
+                    identity=self.local_solver_types[subdomain],
+                    requires_ilu_factor=True,
+                    requires_portable_operator=(
+                        self.local_operator_observer is not None
+                        or self.local_solver_factory is not None
+                    ),
+                    allows_fallback=self.local_solver_factory is not None,
+                )
+                if self.local_backend_plan_resolver is None
+                else self.local_backend_plan_resolver(subdomain)
+            )
+            if not isinstance(backend_plan, LocalBackendPlan):
+                raise TypeError("local backend plan resolver returned an invalid plan")
+            if not backend_plan.requires_ilu_factor and self.local_solver_factory is None:
+                raise ValueError("a no-ILU backend plan requires a local solver factory")
             if global_diagonal_shift is not None:
                 submatrix_diagonal = submatrix.createVecLeft()
                 submatrix.getDiagonal(submatrix_diagonal)
@@ -671,7 +701,10 @@ class DistributedPhysicalSlabSmoother:
             local_solver_type = self.local_solver_types[subdomain]
             matrix_nnz = int(submatrix.getInfo()["nz_used"])
             portable_operator = None
-            if self.local_operator_observer is not None or self.local_solver_factory is not None:
+            if (
+                self.local_operator_observer is not None
+                or backend_plan.requires_portable_operator
+            ):
                 indptr, column_indices, values = submatrix.getValuesCSR()
                 portable_operator = LocalCsrOperator(
                     shape=tuple(int(value) for value in submatrix.getSize()),
@@ -692,7 +725,10 @@ class DistributedPhysicalSlabSmoother:
             retained_matrix: PETSc.Mat | None = None
             retained_ksp: PETSc.KSP | None = None
             diagonal_inverse: np.ndarray | None = None
-            if local_solver_type == "jacobi":
+            factor_nnz = 0
+            factorization_s = 0.0
+            ilu_factor_constructed = False
+            if local_solver_type == "jacobi" and backend_plan.requires_ilu_factor:
                 diagonal = submatrix.createVecLeft()
                 submatrix.getDiagonal(diagonal)
                 values = np.asarray(
@@ -706,7 +742,8 @@ class DistributedPhysicalSlabSmoother:
                 factor_nnz = int(values.size)
                 diagonal.destroy()
                 submatrix.destroy()
-            else:
+            elif backend_plan.requires_ilu_factor:
+                factor_started = time.perf_counter()
                 ksp = PETSc.KSP().create(PETSc.COMM_SELF)
                 ksp.setOperators(submatrix)
                 if self.local_ksp_iterations == 1:
@@ -722,7 +759,9 @@ class DistributedPhysicalSlabSmoother:
                 pc.setFactorLevels(int(ilu_levels))
                 pc.setFactorOrdering("rcm")
                 ksp.setUp()
+                factorization_s = time.perf_counter() - factor_started
                 factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
+                ilu_factor_constructed = True
                 retained_matrix = submatrix
                 retained_ksp = ksp
                 if self.factor_only_storage:
@@ -734,6 +773,8 @@ class DistributedPhysicalSlabSmoother:
                     retained_matrix = None
             owned_factor = _OwnedSubdomainFactor(
                 subdomain=subdomain,
+                owner_rank=self.rank,
+                backend_plan=backend_plan,
                 local_solver_type=local_solver_type,
                 indices=indices,
                 union_positions=union_positions,
@@ -744,6 +785,9 @@ class DistributedPhysicalSlabSmoother:
                 diagonal_inverse=diagonal_inverse,
                 matrix_nnz=matrix_nnz,
                 factor_nnz=factor_nnz,
+                factorization_s=factorization_s,
+                ilu_factor_constructed=ilu_factor_constructed,
+                ilu_apply_count=0,
                 exact_fingerprint=exact_fingerprint,
                 rhs=rhs,
                 solution=solution,
@@ -752,6 +796,8 @@ class DistributedPhysicalSlabSmoother:
                 assert portable_operator is not None
 
                 def baseline_action(source: np.ndarray) -> np.ndarray:
+                    if not owned_factor.ilu_factor_constructed:
+                        raise RuntimeError("hidden ILU fallback is unavailable")
                     owned_factor.rhs.getArray()[:] = source
                     owned_factor.solution.set(0.0)
                     if owned_factor.factor_matrix is not None:
@@ -766,14 +812,25 @@ class DistributedPhysicalSlabSmoother:
                     else:
                         assert owned_factor.ksp is not None
                         owned_factor.ksp.solve(owned_factor.rhs, owned_factor.solution)
+                    owned_factor.ilu_apply_count += 1
                     return np.asarray(
                         owned_factor.solution.getArray(readonly=True),
                         dtype=np.complex128,
                     ).copy()
 
                 owned_factor.local_backend = self.local_solver_factory(
-                    subdomain, portable_operator, baseline_action
+                    subdomain,
+                    portable_operator,
+                    baseline_action if backend_plan.allows_fallback else None,
                 )
+                if (
+                    not backend_plan.allows_fallback
+                    and owned_factor.local_backend.diagnostics.get("identity")
+                    != backend_plan.identity
+                ):
+                    raise RuntimeError("local backend identity violates the resolved plan")
+            if not backend_plan.requires_ilu_factor:
+                submatrix.destroy()
             return owned_factor
 
         local_factor_count = len(local_indices)
@@ -887,11 +944,14 @@ class DistributedPhysicalSlabSmoother:
                 factor.local_backend.solve(source_values, factor.solution.getArray())
             elif factor.factor_matrix is not None:
                 factor.factor_matrix.solve(factor.rhs, factor.solution)
+                factor.ilu_apply_count += 1
             elif factor.diagonal_inverse is not None:
                 factor.solution.getArray()[:] = factor.diagonal_inverse * source_values
+                factor.ilu_apply_count += 1
             else:
                 assert factor.ksp is not None
                 factor.ksp.solve(factor.rhs, factor.solution)
+                factor.ilu_apply_count += 1
             if self.local_sample_observer is not None:
                 self.local_sample_observer(
                     factor.subdomain,
@@ -924,6 +984,80 @@ class DistributedPhysicalSlabSmoother:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
+        local_backend_diagnostics = []
+        for factor in self._factors:
+            backend = (
+                dict(factor.local_backend.diagnostics)
+                if factor.local_backend is not None
+                else {
+                    "identity": factor.local_solver_type,
+                    "apply_count": factor.ilu_apply_count,
+                }
+            )
+            exact_identity = backend.get("identity") == "sparse_lu_teacher"
+            local_backend_diagnostics.append(
+                {
+                    "subdomain": factor.subdomain,
+                    "owner_rank": factor.owner_rank,
+                    "backend_identity": backend.get("identity"),
+                    "requires_ilu_factor": factor.backend_plan.requires_ilu_factor,
+                    "allows_fallback": factor.backend_plan.allows_fallback,
+                    "ilu_factor_constructed": factor.ilu_factor_constructed,
+                    "ilu_factor_nnz": factor.factor_nnz,
+                    "ilu_factor_storage_estimate": (
+                        factor.factor_nnz
+                        * (np.dtype(PETSc.ScalarType).itemsize + np.dtype(PETSc.IntType).itemsize)
+                        + factor.indices.size * np.dtype(PETSc.IntType).itemsize
+                    )
+                    if factor.ilu_factor_constructed
+                    else 0,
+                    "ilu_apply_count": factor.ilu_apply_count,
+                    "exact_factor_constructed": exact_identity,
+                    "exact_factor_nnz": (
+                        int(backend.get("factor_nnz", 0)) if exact_identity else 0
+                    ),
+                    "exact_factor_storage_bytes": (
+                        int(backend.get("factor_storage_bytes", 0))
+                        if exact_identity
+                        else 0
+                    ),
+                    "matrix_nnz": factor.matrix_nnz,
+                    "operator_fingerprint": factor.exact_fingerprint,
+                    "factorization_s": (
+                        float(backend.get("factorization_s", 0.0))
+                        if exact_identity
+                        else factor.factorization_s
+                    ),
+                    "exact_apply_count": (
+                        int(backend.get("solve_count", 0)) if exact_identity else 0
+                    ),
+                    "apply_elapsed_s": (
+                        float(backend.get("solve_elapsed_s", 0.0))
+                        if exact_identity
+                        else 0.0
+                    ),
+                    "apply_mean_s": (
+                        float(backend.get("solve_mean_s", 0.0))
+                        if exact_identity
+                        else 0.0
+                    ),
+                    "apply_p95_s": (
+                        float(backend.get("solve_p95_s", 0.0))
+                        if exact_identity
+                        else 0.0
+                    ),
+                    "destroyed": bool(backend.get("destroyed", False)),
+                    **backend,
+                }
+            )
+        global_backend_diagnostics = sorted(
+            (
+                item
+                for packet in self.comm.allgather(local_backend_diagnostics)
+                for item in packet
+            ),
+            key=lambda item: item["subdomain"],
+        )
         return {
             "subdomain_owners": list(self.subdomain_owners),
             "local_subdomains": list(self.local_subdomains),
@@ -952,14 +1086,24 @@ class DistributedPhysicalSlabSmoother:
             "exact_duplicate_factor_count": self.exact_duplicate_factor_count,
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
-            "local_backend_diagnostics": [
-                {
-                    "subdomain": factor.subdomain,
-                    **factor.local_backend.diagnostics,
-                }
-                for factor in self._factors
-                if factor.local_backend is not None
-            ],
+            "local_backend_diagnostics": local_backend_diagnostics,
+            "global_backend_diagnostics": global_backend_diagnostics,
+            "exact_backend_count": sum(
+                item["exact_factor_constructed"] for item in global_backend_diagnostics
+            ),
+            "ilu_factor_constructed_count": sum(
+                item["ilu_factor_constructed"] for item in global_backend_diagnostics
+            ),
+            "global_ilu_apply_count": sum(
+                item["ilu_apply_count"] for item in global_backend_diagnostics
+            ),
+            "global_exact_apply_count": sum(
+                item["exact_apply_count"] for item in global_backend_diagnostics
+            ),
+            "hidden_fallback_count": sum(
+                bool(item["allows_fallback"]) and item["exact_factor_constructed"]
+                for item in global_backend_diagnostics
+            ),
         }
 
     def destroy(self) -> None:
@@ -971,9 +1115,21 @@ class DistributedPhysicalSlabSmoother:
         if self._inner_pc_context is not None:
             self._inner_pc_context.smoother = None
             self._inner_pc_context = None
+        local_destroy_diagnostics = []
         for factor in self._factors:
             if factor.local_backend is not None:
                 factor.local_backend.destroy()
+                backend = dict(factor.local_backend.diagnostics)
+            else:
+                backend = {"identity": factor.local_solver_type, "destroyed": True}
+            local_destroy_diagnostics.append(
+                {
+                    "subdomain": factor.subdomain,
+                    "owner_rank": factor.owner_rank,
+                    "backend_identity": backend.get("identity"),
+                    "destroyed": bool(backend.get("destroyed", True)),
+                }
+            )
             factor.solution.destroy()
             factor.rhs.destroy()
             if factor.factor_matrix is not None:
@@ -988,4 +1144,12 @@ class DistributedPhysicalSlabSmoother:
             gathered_target.destroy()
         self._gathered_targets = []
         self._gathered_source.destroy()
+        self.destroy_diagnostics = sorted(
+            (
+                item
+                for packet in self.comm.allgather(local_destroy_diagnostics)
+                for item in packet
+            ),
+            key=lambda item: item["subdomain"],
+        )
         self._destroyed = True

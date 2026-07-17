@@ -61,6 +61,7 @@ CASES = {
     "090_neural_local_pc_acceleration",
     "091_batched_neural_smoother_acceleration",
     "092_lu_teacher_nn_only_local_inverse",
+    "093_full_16_slab_exact_oracle",
 }
 
 RECORDED_CASES = {

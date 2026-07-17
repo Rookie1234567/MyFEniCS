@@ -40,7 +40,7 @@ from src.solvers.physical_slab_two_level import (
     gather_global_subdomain_indices,
 )
 from src.solvers.mpc_form_action import create_mpc_form_operator
-from src.solvers.local_slab_solver import IluLocalSlabSolver
+from src.solvers.local_slab_solver import IluLocalSlabSolver, LocalBackendPlan
 from src.solvers.neural_local_pc import (
     FrozenNumpyMlp,
     IluNeuralCorrectionSlabSolver,
@@ -809,6 +809,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             },
         )
     local_solver_factory = None
+    local_backend_plan_resolver = None
+    exact_enabled_slabs: set[int] = set()
     selected_backend_count = sum(
         bool(value)
         for value in (
@@ -885,20 +887,40 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         enabled_slabs = {
             int(value) for value in args.exact_lu_enabled_slabs.split(",") if value
         }
+        exact_enabled_slabs = set(enabled_slabs)
         if not enabled_slabs:
             raise ValueError("exact-LU slab allow-list is empty")
+        if min(enabled_slabs) < 0 or max(enabled_slabs) >= args.num_slabs:
+            raise ValueError("exact-LU slab allow-list is outside the slab partition")
 
         def local_solver_factory(subdomain, portable_operator, fallback_action):
             if int(subdomain) not in enabled_slabs:
+                if fallback_action is None:
+                    raise RuntimeError("ILU backend requires its planned factor action")
                 return IluLocalSlabSolver(portable_operator.shape[0], fallback_action)
             return SparseLuTeacherLocalSolver(portable_operator)
+
+        def local_backend_plan_resolver(subdomain):
+            if int(subdomain) in enabled_slabs:
+                return LocalBackendPlan(
+                    identity="sparse_lu_teacher",
+                    requires_ilu_factor=False,
+                    requires_portable_operator=True,
+                    allows_fallback=False,
+                )
+            return LocalBackendPlan(
+                identity="ilu",
+                requires_ilu_factor=True,
+                requires_portable_operator=True,
+                allows_fallback=True,
+            )
     smoother = DistributedPhysicalSlabSmoother(
         assembled_f if shifted is None else shifted,
         slabs,
         ilu_levels=args.ilu_levels,
         local_ksp_iterations=1,
         local_ksp_type="gmres",
-        smoother_iterations=2,
+        smoother_iterations=args.smoother_iterations,
         smoother_ksp_type=args.smoother_ksp_type,
         action_operator=action,
         diagonal_shift=diagonal_shift if args.subdomain_local_shift else None,
@@ -914,9 +936,45 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             local_capture.observe_sample if local_capture is not None else None
         ),
         local_solver_factory=local_solver_factory,
+        local_backend_plan_resolver=local_backend_plan_resolver,
     )
     if shifted is not None:
         shifted.destroy()
+    setup_slab_diagnostics = smoother.diagnostics
+    exact_oracle_contract = None
+    if exact_enabled_slabs:
+        rows = setup_slab_diagnostics["global_backend_diagnostics"]
+        selected_rows = [
+            row for row in rows if int(row["subdomain"]) in exact_enabled_slabs
+        ]
+        exact_oracle_contract = {
+            "enabled_slabs": sorted(exact_enabled_slabs),
+            "selected_backend_count": len(selected_rows),
+            "expected_backend_count": len(exact_enabled_slabs),
+            "selected_ilu_factor_constructed_count": sum(
+                bool(row["ilu_factor_constructed"]) for row in selected_rows
+            ),
+            "selected_ilu_apply_count": sum(
+                int(row["ilu_apply_count"]) for row in selected_rows
+            ),
+            "selected_hidden_fallback_count": sum(
+                bool(row["allows_fallback"]) for row in selected_rows
+            ),
+            "selected_exact_factor_count": sum(
+                bool(row["exact_factor_constructed"]) for row in selected_rows
+            ),
+        }
+        exact_oracle_contract["pass"] = bool(
+            exact_oracle_contract["selected_backend_count"]
+            == exact_oracle_contract["expected_backend_count"]
+            and exact_oracle_contract["selected_ilu_factor_constructed_count"] == 0
+            and exact_oracle_contract["selected_ilu_apply_count"] == 0
+            and exact_oracle_contract["selected_hidden_fallback_count"] == 0
+            and exact_oracle_contract["selected_exact_factor_count"]
+            == exact_oracle_contract["expected_backend_count"]
+        )
+        if not exact_oracle_contract["pass"]:
+            raise RuntimeError("exact oracle no-hidden-ILU setup contract failed")
     coarse_context.set_smoother(smoother)
     if args.matrix_free_fine:
         blocks.release_f()
@@ -927,7 +985,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
     checkpoint(
         "slab_factors_ready",
-        slab_diagnostics=smoother.diagnostics,
+        slab_diagnostics=setup_slab_diagnostics,
         object_ledger=_object_ledger(
             system=system,
             blocks=blocks,
@@ -1047,6 +1105,29 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     iterations = int(ksp.getIterationNumber())
     reported_relative_residual = float(ksp.getResidualNorm()) / max(rhs_norm, TINY)
     slab_diagnostics = smoother.diagnostics
+    if exact_oracle_contract is not None:
+        selected_rows = [
+            row
+            for row in slab_diagnostics["global_backend_diagnostics"]
+            if int(row["subdomain"]) in exact_enabled_slabs
+        ]
+        exact_oracle_contract.update(
+            {
+                "selected_ilu_apply_count": sum(
+                    int(row["ilu_apply_count"]) for row in selected_rows
+                ),
+                "selected_exact_apply_count": sum(
+                    int(row["exact_apply_count"]) for row in selected_rows
+                ),
+            }
+        )
+        exact_oracle_contract["pass"] = bool(
+            exact_oracle_contract["pass"]
+            and exact_oracle_contract["selected_ilu_apply_count"] == 0
+            and exact_oracle_contract["selected_exact_apply_count"] > 0
+        )
+        if not exact_oracle_contract["pass"]:
+            raise RuntimeError("exact oracle no-hidden-ILU runtime contract failed")
     pc_apply_count = coarse_context.apply_count - pc_apply_count_before_solve
     operator_apply_count = operator_context.apply_count - operator_apply_count_before_solve
     smoother_apply_count = smoother.apply_count - smoother_apply_count_before_solve
@@ -1078,7 +1159,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "absorption_shift": args.absorption_shift,
         "shift_diagonal_scale": diagonal_scale,
         "ilu_levels": args.ilu_levels,
-        "smoother_iterations": 2,
+        "smoother_iterations": args.smoother_iterations,
         "smoother_ksp_type": args.smoother_ksp_type,
         "selective_diagonal_boundary_slabs": boundary_count,
         "post_smooth": args.post_smooth,
@@ -1111,6 +1192,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "operator_setup_apply_count": operator_apply_count_before_solve,
         "pc_action_certificate": pc_certificate,
         "slab_diagnostics": slab_diagnostics,
+        "exact_oracle_contract": exact_oracle_contract,
         "history": history,
         "memory_checkpoints": memory_checkpoints,
         "object_ledger_at_solve": _object_ledger(
@@ -1134,6 +1216,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         ksp.destroy()
         coarse_context.destroy()
         smoother.destroy()
+        result["slab_destroy_diagnostics"] = smoother.destroy_diagnostics
         action.destroy()
         operator.destroy()
         if args.matrix_free_fine:
@@ -1180,6 +1263,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         ksp.destroy()
         coarse_context.destroy()
         smoother.destroy()
+        result["slab_destroy_diagnostics"] = smoother.destroy_diagnostics
         action.destroy()
         operator.destroy()
         if args.matrix_free_fine:
@@ -1188,6 +1272,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         blocks.destroy()
         system.b_petsc.destroy()
         system.x_petsc.destroy()
+    _write_json(record_path, result)
     return result
 
 
@@ -1214,6 +1299,7 @@ def main() -> int:
         choices=("gmres", "richardson"),
         default="gmres",
     )
+    parser.add_argument("--smoother-iterations", type=int, choices=(1, 2), default=2)
     parser.add_argument("--restart", type=int, default=None)
     parser.add_argument("--selective-diagonal-boundary-slabs", type=int, default=0)
     parser.add_argument("--max-it", type=int, default=None)
@@ -1309,6 +1395,7 @@ def main() -> int:
         "exact_lu_enabled_slabs": args.exact_lu_enabled_slabs,
         "ksp_type": args.ksp_type,
         "smoother_ksp_type": args.smoother_ksp_type,
+        "smoother_iterations": args.smoother_iterations,
         "selective_diagonal_boundary_slabs": args.selective_diagonal_boundary_slabs,
     }
     args.exact_command = os.environ.get(

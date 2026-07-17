@@ -56,6 +56,7 @@ class SparseLuTeacherLocalSolver:
         )
         self.solve_count = 0
         self.solve_elapsed_s = 0.0
+        self._solve_samples_s: list[float] = []
         self._destroyed = False
 
     def solve(self, rhs: np.ndarray, out: np.ndarray) -> None:
@@ -66,7 +67,9 @@ class SparseLuTeacherLocalSolver:
             raise ValueError("sparse-LU teacher rhs/output shape mismatch")
         started = time.perf_counter()
         values = np.asarray(self._factor.solve(source), dtype=np.complex128)
-        self.solve_elapsed_s += time.perf_counter() - started
+        elapsed = time.perf_counter() - started
+        self.solve_elapsed_s += elapsed
+        self._solve_samples_s.append(elapsed)
         if not np.all(np.isfinite(values)):
             raise RuntimeError("sparse-LU teacher returned NaN or Inf")
         out[:] = values
@@ -86,6 +89,7 @@ class SparseLuTeacherLocalSolver:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
+        samples = np.asarray(self._solve_samples_s, dtype=np.float64)
         return {
             "identity": "sparse_lu_teacher",
             "operator_fingerprint": self.operator_fingerprint,
@@ -101,6 +105,15 @@ class SparseLuTeacherLocalSolver:
             "factor_storage_bytes": self.factor_storage_bytes,
             "solve_count": self.solve_count,
             "solve_elapsed_s": self.solve_elapsed_s,
+            "solve_mean_s": (
+                float(np.mean(samples)) if samples.size else 0.0
+            ),
+            "solve_p95_s": (
+                float(np.quantile(samples, 0.95)) if samples.size else 0.0
+            ),
+            "solve_max_s": (
+                float(np.max(samples)) if samples.size else 0.0
+            ),
             "destroyed": self._destroyed,
         }
 
@@ -108,5 +121,6 @@ class SparseLuTeacherLocalSolver:
         if self._destroyed:
             return
         self._factor = None  # type: ignore[assignment]
+        self._solve_samples_s = []
         gc.collect()
         self._destroyed = True

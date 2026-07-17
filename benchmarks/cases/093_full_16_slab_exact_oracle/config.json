@@ -1,0 +1,18 @@
+{
+  "case_id": "093_full_16_slab_exact_oracle",
+  "task": "PARA-Task004",
+  "mesh": "h5",
+  "mpi_size": 4,
+  "num_slabs": 16,
+  "overlap_layers": 0.25,
+  "g4": [0, 5, 10, 15],
+  "g8": [0, 2, 5, 7, 8, 10, 13, 15],
+  "g16": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "lane_a_smoother_iterations": 2,
+  "lane_b_smoother_iterations": 1,
+  "warning_gib": 9.5,
+  "terminate_gib": 11.0,
+  "artifact_root": "benchmarks/artifacts/cases/093",
+  "ordinary_default_changed": false,
+  "model_training_allowed": false
+}

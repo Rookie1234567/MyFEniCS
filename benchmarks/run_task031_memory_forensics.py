@@ -87,6 +87,8 @@ def _worker_command(args: argparse.Namespace, record_path: Path, heavy_dir: Path
         args.ksp_type,
         "--smoother-ksp-type",
         args.smoother_ksp_type,
+        "--smoother-iterations",
+        str(args.smoother_iterations),
         "--restart",
         str(args.restart),
         "--selective-diagonal-boundary-slabs",
@@ -116,6 +118,8 @@ def _worker_command(args: argparse.Namespace, record_path: Path, heavy_dir: Path
     ):
         if enabled:
             command.append(flag)
+    if args.exact_lu_enabled_slabs:
+        command.extend(["--exact-lu-enabled-slabs", args.exact_lu_enabled_slabs])
     return command
 
 
@@ -313,6 +317,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("gmres", "richardson"),
         default="gmres",
     )
+    parser.add_argument("--smoother-iterations", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--exact-lu-enabled-slabs")
     parser.add_argument("--restart", type=int, default=70)
     parser.add_argument("--selective-diagonal-boundary-slabs", type=int, default=0)
     parser.add_argument("--max-it", type=int, default=5000)

@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 from petsc4py import PETSc
 
+from src.solvers.local_slab_solver import LocalBackendPlan
 from src.solvers.lu_teacher_local_solver import SparseLuTeacherLocalSolver
 from src.solvers.physical_slab_two_level import DistributedPhysicalSlabSmoother
 
@@ -24,8 +25,17 @@ class ExactLuOraclePetscAdapterTests(unittest.TestCase):
             matrix.setValue(row, row, diagonal[row])
         matrix.assemble()
 
-        def factory(_subdomain, operator, _fallback_action):
+        def factory(_subdomain, operator, fallback_action):
+            self.assertIsNone(fallback_action)
             return SparseLuTeacherLocalSolver(operator)
+
+        def plan(_subdomain):
+            return LocalBackendPlan(
+                identity="sparse_lu_teacher",
+                requires_ilu_factor=False,
+                requires_portable_operator=True,
+                allows_fallback=False,
+            )
 
         smoother = DistributedPhysicalSlabSmoother(
             matrix,
@@ -33,6 +43,7 @@ class ExactLuOraclePetscAdapterTests(unittest.TestCase):
             ilu_levels=0,
             factor_only_storage=True,
             local_solver_factory=factory,
+            local_backend_plan_resolver=plan,
         )
         source = matrix.createVecRight()
         source_values = 1.0 + 0.13j * np.arange(1, size + 1)
@@ -45,10 +56,17 @@ class ExactLuOraclePetscAdapterTests(unittest.TestCase):
             rtol=2.0e-12,
             atol=2.0e-12,
         )
-        diagnostics = smoother.diagnostics["local_backend_diagnostics"]
-        if diagnostics:
-            self.assertEqual(diagnostics[0]["identity"], "sparse_lu_teacher")
-            self.assertEqual(diagnostics[0]["solve_count"], 1)
+        diagnostics = smoother.diagnostics
+        self.assertEqual(diagnostics["exact_backend_count"], 1)
+        self.assertEqual(diagnostics["ilu_factor_constructed_count"], 0)
+        self.assertEqual(diagnostics["global_stored_factor_nnz"], 0)
+        self.assertEqual(diagnostics["global_ilu_apply_count"], 0)
+        self.assertEqual(diagnostics["hidden_fallback_count"], 0)
+        backend = diagnostics["global_backend_diagnostics"][0]
+        self.assertEqual(backend["identity"], "sparse_lu_teacher")
+        self.assertEqual(backend["solve_count"], 1)
+        smoother.destroy()
+        self.assertTrue(all(row["destroyed"] for row in smoother.destroy_diagnostics))
         smoother.destroy()
         target.destroy()
         source.destroy()

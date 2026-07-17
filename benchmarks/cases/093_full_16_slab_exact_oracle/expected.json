@@ -1,0 +1,14 @@
+{
+  "status": "pending_measurement",
+  "exact_enabled_slab_ilu_factor_count": 0,
+  "exact_enabled_slab_ilu_apply_count": 0,
+  "hidden_fallback_count": 0,
+  "g4_numeric_pass_required": true,
+  "g8_numeric_pass_required": true,
+  "g16_numeric_pass_required": true,
+  "lane_b_requires_lane_a_numeric_and_resource_pass": true,
+  "learned_model_training_run": false,
+  "h3_run": false,
+  "h2_run": false,
+  "ordinary_default_changed": false
+}
