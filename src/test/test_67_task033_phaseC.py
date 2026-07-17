@@ -8,6 +8,7 @@ import unittest
 from benchmarks.task033_phaseC import (
     build_phasec_preflight,
     build_phasec_summary_from_paths,
+    full3d_p3_h5_phasec1_prediction,
     full3d_p3_h5_prediction,
     validate_preflight_for_candidate,
 )
@@ -40,6 +41,41 @@ class Task033PhaseCTest(unittest.TestCase):
         )
         self.assertGreater(prediction["conservative_upper_gib"], 12.8)
         self.assertGreater(prediction["projected_factor_nnz"], 500_000_000)
+
+    def test_phasec1_exact_assembly_replaces_case090_nnz_transfer(self) -> None:
+        old = full3d_p3_h5_prediction()
+        exact = full3d_p3_h5_phasec1_prediction(
+            {
+                "status": "assembly_calibration_pass",
+                "degree": 3,
+                "h_nm": 5.0,
+                "run_kind": "assembly-only",
+                "mpi_size": 4,
+                "no_swap": True,
+                "qualification": {"pass": True},
+                "calibration": {
+                    "exact_rows": 145_943,
+                    "exact_assembled_nnz": 35_566_727,
+                    "factorization_or_solve_stage_seen": False,
+                },
+            }
+        )
+        self.assertEqual(exact["exact_rows"], 145_943)
+        self.assertEqual(exact["exact_assembled_nnz"], 35_566_727)
+        self.assertGreater(
+            exact["exact_assembled_nnz"], old["projected_assembled_nnz"]
+        )
+        self.assertGreater(
+            exact["centers_gib"][
+                "exact_assembly_nnz_fill_factor_payload_gib"
+            ],
+            old["centers_gib"]["assembled_nnz_fill_factor_payload_gib"],
+        )
+        self.assertGreater(exact["conservative_upper_gib"], 19.0)
+        self.assertIn(
+            "not a proxy",
+            " ".join(exact["limitations"]),
+        )
 
     def test_preflight_blocks_full3d_but_keeps_hybrid_candidates(self) -> None:
         resource = json.loads(RESOURCE.read_text(encoding="utf-8"))

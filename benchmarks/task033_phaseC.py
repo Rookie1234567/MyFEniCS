@@ -26,7 +26,7 @@ PHASEC_H_NM = 5.0
 PHASEC_MPI_SIZE = 4
 PHASEC_MODES = (80, 120, 160)
 PHASEC_SOURCE_REVIEW = (
-    "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v3.md"
+    "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v4.md"
 )
 
 # Clean, external simultaneous-worker RSS anchors from Task029.  These are the
@@ -77,6 +77,46 @@ def _power_law(
     return exponent, y1 * (target / x1) ** exponent
 
 
+def _full3d_factor_chain(assembled_nnz: float) -> dict[str, float]:
+    """Map target assembled NNZ through the reviewed p2 fill/RSS anchors."""
+
+    fill_h5 = FULL3D_H5_FACTOR_NNZ / FULL3D_H5_ASSEMBLED_NNZ
+    fill_h3 = FULL3D_H3_FACTOR_NNZ / FULL3D_H3_ASSEMBLED_NNZ
+    fill_exponent, projected_fill = _power_law(
+        FULL3D_H5_ASSEMBLED_NNZ,
+        fill_h5,
+        FULL3D_H3_ASSEMBLED_NNZ,
+        fill_h3,
+        assembled_nnz,
+    )
+    projected_factor_nnz = assembled_nnz * projected_fill
+    payload_h5 = (
+        FULL3D_H5_FACTOR_NNZ * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
+    )
+    payload_h3 = (
+        FULL3D_H3_FACTOR_NNZ * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
+    )
+    rss_per_payload = (
+        (FULL3D_H3_RSS_GIB - FULL3D_H5_RSS_GIB)
+        / (payload_h3 - payload_h5)
+    )
+    rss_intercept = FULL3D_H5_RSS_GIB - rss_per_payload * payload_h5
+    projected_payload = (
+        projected_factor_nnz * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
+    )
+    return {
+        "fill_exponent": fill_exponent,
+        "projected_fill_ratio": projected_fill,
+        "projected_factor_nnz": projected_factor_nnz,
+        "projected_factor_payload_gib": projected_payload,
+        "rss_per_factor_payload_slope": rss_per_payload,
+        "rss_intercept_gib": rss_intercept,
+        "factor_center_gib": (
+            rss_intercept + rss_per_payload * projected_payload
+        ),
+    }
+
+
 def full3d_p3_h5_prediction() -> dict[str, Any]:
     """Return two genuinely independent p3/h5 full-3D memory centers.
 
@@ -98,36 +138,12 @@ def full3d_p3_h5_prediction() -> dict[str, Any]:
     assembled_ratio = CASE090_P3_ASSEMBLED_NNZ / CASE090_P2_ASSEMBLED_NNZ
     projected_rows = int(round(44_778.0 * CASE090_P3_ROWS / CASE090_P2_ROWS))
     projected_assembled_nnz = FULL3D_H5_ASSEMBLED_NNZ * assembled_ratio
-
-    fill_h5 = FULL3D_H5_FACTOR_NNZ / FULL3D_H5_ASSEMBLED_NNZ
-    fill_h3 = FULL3D_H3_FACTOR_NNZ / FULL3D_H3_ASSEMBLED_NNZ
-    fill_exponent, projected_fill = _power_law(
-        FULL3D_H5_ASSEMBLED_NNZ,
-        fill_h5,
-        FULL3D_H3_ASSEMBLED_NNZ,
-        fill_h3,
-        projected_assembled_nnz,
-    )
-    projected_factor_nnz = projected_assembled_nnz * projected_fill
-
-    payload_h5 = (
-        FULL3D_H5_FACTOR_NNZ * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
-    )
-    payload_h3 = (
-        FULL3D_H3_FACTOR_NNZ * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
-    )
-    rss_per_payload = (
-        (FULL3D_H3_RSS_GIB - FULL3D_H5_RSS_GIB)
-        / (payload_h3 - payload_h5)
-    )
-    rss_intercept = FULL3D_H5_RSS_GIB - rss_per_payload * payload_h5
-    projected_payload = (
-        projected_factor_nnz * FACTOR_STORAGE_BYTES_PER_NNZ / 1024.0**3
-    )
-    factor_center = rss_intercept + rss_per_payload * projected_payload
+    factor_chain = _full3d_factor_chain(projected_assembled_nnz)
     centers = {
         "effective_p_over_h_power_law_gib": effective_center,
-        "assembled_nnz_fill_factor_payload_gib": factor_center,
+        "assembled_nnz_fill_factor_payload_gib": factor_chain[
+            "factor_center_gib"
+        ],
     }
     conservative_upper = 1.20 * max(centers.values())
     return {
@@ -140,18 +156,26 @@ def full3d_p3_h5_prediction() -> dict[str, Any]:
         "conservative_upper_gib": conservative_upper,
         "projected_rows": projected_rows,
         "projected_assembled_nnz": int(round(projected_assembled_nnz)),
-        "projected_factor_nnz": int(round(projected_factor_nnz)),
-        "projected_factor_payload_gib": projected_payload,
+        "projected_factor_nnz": int(
+            round(factor_chain["projected_factor_nnz"])
+        ),
+        "projected_factor_payload_gib": factor_chain[
+            "projected_factor_payload_gib"
+        ],
         "method_details": {
             "effective_resolution_exponent": effective_exponent,
             "case090_same_mesh_p3_to_p2_row_ratio": (
                 CASE090_P3_ROWS / CASE090_P2_ROWS
             ),
             "case090_same_mesh_p3_to_p2_assembled_nnz_ratio": assembled_ratio,
-            "target_p2_fill_exponent_vs_assembled_nnz": fill_exponent,
-            "projected_fill_ratio": projected_fill,
-            "rss_per_factor_payload_slope": rss_per_payload,
-            "rss_intercept_gib": rss_intercept,
+            "target_p2_fill_exponent_vs_assembled_nnz": factor_chain[
+                "fill_exponent"
+            ],
+            "projected_fill_ratio": factor_chain["projected_fill_ratio"],
+            "rss_per_factor_payload_slope": factor_chain[
+                "rss_per_factor_payload_slope"
+            ],
+            "rss_intercept_gib": factor_chain["rss_intercept_gib"],
         },
         "calibration": {
             "task029_h5_record": (
@@ -171,6 +195,109 @@ def full3d_p3_h5_prediction() -> dict[str, Any]:
             "No p3 target factor has been formed.",
             "The factor-payload chain is deliberately retained even though it is more pessimistic than the effective-resolution center.",
             "A failed center Gate cannot be overridden by the lower center.",
+        ],
+    }
+
+
+def full3d_p3_h5_phasec1_prediction(
+    assembly_record: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Recompute the p3/h5 direct prediction from exact Phase C1 assembly.
+
+    The exact target rows and assembled NNZ replace the Case090 row/NNZ
+    transfer.  The p2 target fill/RSS chain remains predictive because Phase
+    C1 deliberately performs no symbolic or numerical factorization.
+    """
+
+    calibration = assembly_record.get("calibration")
+    calibration = (
+        calibration if isinstance(calibration, Mapping) else {}
+    )
+    qualification = assembly_record.get("qualification")
+    qualification = (
+        qualification if isinstance(qualification, Mapping) else {}
+    )
+    checks = {
+        "assembly_calibration_pass": (
+            assembly_record.get("status") == "assembly_calibration_pass"
+        ),
+        "exact_target_identity": bool(
+            assembly_record.get("degree") == PHASEC_DEGREE
+            and _finite(assembly_record.get("h_nm")) == PHASEC_H_NM
+            and assembly_record.get("run_kind") == "assembly-only"
+            and assembly_record.get("mpi_size") == PHASEC_MPI_SIZE
+        ),
+        "qualification_pass": qualification.get("pass") is True,
+        "no_swap": assembly_record.get("no_swap") is True,
+        "no_factorization_or_solve": (
+            calibration.get("factorization_or_solve_stage_seen") is False
+        ),
+        "exact_rows_available": _positive(calibration.get("exact_rows"))
+        is not None,
+        "exact_assembled_nnz_available": _positive(
+            calibration.get("exact_assembled_nnz")
+        )
+        is not None,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    if failures:
+        raise ValueError(
+            f"Phase C1 exact-assembly record failed validation: {failures}"
+        )
+    exact_rows = int(round(float(calibration["exact_rows"])))
+    exact_assembled_nnz = float(calibration["exact_assembled_nnz"])
+    effective_exponent, effective_center = _power_law(
+        2.0 / 5.0,
+        FULL3D_H5_RSS_GIB,
+        2.0 / 3.0,
+        FULL3D_H3_RSS_GIB,
+        3.0 / 5.0,
+    )
+    factor_chain = _full3d_factor_chain(exact_assembled_nnz)
+    centers = {
+        "effective_p_over_h_power_law_gib": effective_center,
+        "exact_assembly_nnz_fill_factor_payload_gib": factor_chain[
+            "factor_center_gib"
+        ],
+    }
+    return {
+        "candidate_id": "p3_h5_full3d_direct",
+        "degree": PHASEC_DEGREE,
+        "h_nm": PHASEC_H_NM,
+        "mpi_size": PHASEC_MPI_SIZE,
+        "solver_path": "ordinary_in_core_mumps_direct",
+        "centers_gib": centers,
+        "conservative_upper_gib": 1.20 * max(centers.values()),
+        "exact_rows": exact_rows,
+        "exact_assembled_nnz": int(round(exact_assembled_nnz)),
+        "projected_factor_nnz": int(
+            round(factor_chain["projected_factor_nnz"])
+        ),
+        "projected_factor_payload_gib": factor_chain[
+            "projected_factor_payload_gib"
+        ],
+        "method_details": {
+            "effective_resolution_exponent": effective_exponent,
+            "target_rows_source": "phaseC1_exact_assembly",
+            "target_assembled_nnz_source": "phaseC1_exact_assembly",
+            "target_p2_fill_exponent_vs_assembled_nnz": factor_chain[
+                "fill_exponent"
+            ],
+            "projected_fill_ratio": factor_chain["projected_fill_ratio"],
+            "rss_per_factor_payload_slope": factor_chain[
+                "rss_per_factor_payload_slope"
+            ],
+            "rss_intercept_gib": factor_chain["rss_intercept_gib"],
+        },
+        "assembly_resource_authority": assembly_record.get(
+            "resource_authority"
+        ),
+        "calibration_validation": {"checks": checks, "failures": []},
+        "limitations": [
+            "Phase C1 formed no p3 target symbolic or numerical factor.",
+            "The exact target assembled NNZ replaces the Case090 p3/p2 NNZ transfer.",
+            "The factor fill and factor-payload-to-RSS mappings remain p2-based predictions.",
+            "The measured assembly-only RSS is not a proxy for factorization peak RSS.",
         ],
     }
 
