@@ -1076,6 +1076,9 @@ class DistributedPhysicalSlabSmoother:
             "global_factor_rows": self.global_factor_rows,
             "global_factor_nnz": self.global_factor_nnz,
             "global_stored_factor_nnz": self.global_stored_factor_nnz,
+            # Explicit alias retained beside the historical field so no-ILU
+            # profiles cannot be misread as having no exact/learned storage.
+            "global_stored_ilu_factor_nnz": self.global_stored_factor_nnz,
             "maximum_owner_rows": self.maximum_owner_rows,
             "minimum_owner_rows": self.minimum_owner_rows,
             "factor_fingerprints": [

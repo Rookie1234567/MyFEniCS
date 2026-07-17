@@ -1,0 +1,16 @@
+{
+  "p0_numeric_gate_required": true,
+  "p1_all_16_teacher_datasets_required": true,
+  "p2_representative_slabs": [0, 5, 9, 15],
+  "p3_all_16_models_admissible_required": true,
+  "true_profile_ilu_factor_count": 0,
+  "true_profile_ilu_apply_count": 0,
+  "true_profile_hidden_fallback_count": 0,
+  "primary_iteration_reduction_minimum": 0.2,
+  "primary_solve_reduction_minimum": 0.2,
+  "external_peak_ratio_maximum": 1.1,
+  "paired_runs_required": 3,
+  "shared_or_expert_requires_independent_engineering_pass": true,
+  "ordinary_default_changed": false,
+  "production_claim_allowed": false
+}

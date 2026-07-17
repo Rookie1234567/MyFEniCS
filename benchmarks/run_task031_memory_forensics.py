@@ -278,7 +278,9 @@ def run(args: argparse.Namespace) -> int:
         )
     )
     summary = {
-        "task": "Task031",
+        "task": args.task_label,
+        "current_task": args.task_label,
+        "sampler_schema_origin": "Task031",
         "case": args.case_label,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "source": provenance,
@@ -326,6 +328,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rta-threshold", type=float, default=1.1e-6)
     parser.add_argument("--monitor-stride", type=int, default=70)
     parser.add_argument("--case-label", default="task031_candidate")
+    parser.add_argument(
+        "--task-label",
+        default="Task031",
+        help="Current task identity; sampler_schema_origin remains Task031.",
+    )
     parser.add_argument("--post-smooth", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--subdomain-local-shift", action=argparse.BooleanOptionalAction, default=True
