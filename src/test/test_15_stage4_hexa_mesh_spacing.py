@@ -31,6 +31,13 @@ class Stage4HexaMeshSpacingTests(unittest.TestCase):
         with mock.patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(_optional_seeded_box_partitioner())
 
+    def test_create_box_rejects_unknown_research_partition_policy(self):
+        with mock.patch.dict(
+            "os.environ", {"MYFENICS_CELL_PARTITION_POLICY": "unknown"}
+        ):
+            with self.assertRaisesRegex(ValueError, "must be 'contiguous'"):
+                _optional_seeded_box_partitioner()
+
     def test_explicit_scotch_partition_seed_rejects_invalid_values(self):
         with mock.patch.dict(
             "os.environ", {"MYFENICS_SCOTCH_PARTITION_SEED": "not-an-int"}

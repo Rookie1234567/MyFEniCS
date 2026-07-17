@@ -62,10 +62,62 @@ def _shared_facet_cell_partitioner():
 
 
 def _optional_seeded_box_partitioner():
-    """Keep create_box defaults unless a research seed was explicitly set."""
-    if os.environ.get("MYFENICS_SCOTCH_PARTITION_SEED") is None:
+    """Keep create_box defaults unless an explicit research policy was set."""
+    policy = os.environ.get("MYFENICS_CELL_PARTITION_POLICY")
+    if policy is None:
         return None
-    return _shared_facet_cell_partitioner()
+    if policy != "contiguous":
+        raise ValueError(
+            "MYFENICS_CELL_PARTITION_POLICY must be 'contiguous' when set"
+        )
+    return mesh.create_cell_partitioner(
+        _contiguous_graph_partitioner,
+        mesh.GhostMode.shared_facet,
+    )
+
+
+def _contiguous_graph_partitioner(
+    comm: MPI.Intracomm,
+    nparts: int,
+    dual_graph: cpp.graph.AdjacencyList_int64,
+    ghost_mode: bool,
+) -> cpp.graph.AdjacencyList_int32:
+    """Assign contiguous global cell ids and explicitly distribute facet ghosts."""
+    local_cells = dual_graph.num_nodes
+    global_start = comm.exscan(local_cells)
+    if comm.rank == 0:
+        global_start = 0
+    global_cells = comm.allreduce(local_cells, op=MPI.SUM)
+    if global_cells <= 0:
+        return cpp.graph.AdjacencyList_int32(np.empty((0, 1), dtype=np.int32))
+
+    global_ids = int(global_start) + np.arange(local_cells, dtype=np.int64)
+    owners = np.minimum((global_ids * nparts) // global_cells, nparts - 1).astype(np.int32)
+    destinations: list[int] = []
+    offsets = [0]
+    for local_cell, owner in enumerate(owners):
+        row = [int(owner)]
+        if ghost_mode:
+            neighbors = dual_graph.links(local_cell)
+            neighbor_owners = np.minimum(
+                (neighbors * nparts) // global_cells,
+                nparts - 1,
+            )
+            row.extend(
+                sorted(
+                    {
+                        int(neighbor_owner)
+                        for neighbor_owner in neighbor_owners
+                        if neighbor_owner != owner
+                    }
+                )
+            )
+        destinations.extend(row)
+        offsets.append(len(destinations))
+    return cpp.graph.AdjacencyList_int32(
+        np.asarray(destinations, dtype=np.int32),
+        np.asarray(offsets, dtype=np.int32),
+    )
 
 
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
