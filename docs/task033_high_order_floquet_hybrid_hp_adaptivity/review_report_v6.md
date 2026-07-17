@@ -1,89 +1,155 @@
-# REVIEW REPORT V6：Task033 Phase D 固定阶次等精度、variable-p 审计与自适应准入
+# REVIEW REPORT V6：Task033 缩减范围完成、遗留项移交与合并准入
 
-## 0. 审阅身份与决定
+## 0. 审阅身份与修正后决定
 
 ```text
-review = Task033 review_report_v6
+review = Task033 review_report_v6 revised
 branch = codex/20260715-task33-high-order-floquet-hybrid-hp
 review_v5_control_commit = 737c699c287268d587a594fe514eb515bb1012bc
-reviewed_response = response_v6.md
+reviewed_phaseD_commit = c1029ddf9feee31844f555d3f351237f4d84abd9
 reviewed_equal_accuracy_payload_sha256 = 3c322f4bb2864facf5076570c8f57d70972912cd60435d0debe7acdd110ebe0f
-review_status = PHASE_D_ACCEPTED_WITH_QUALIFICATIONS
-D0_document_and_evidence_closure = PASS_WITH_MINOR_HARDENING
+review_status = TASK033_REDUCED_SCOPE_ACCEPTED_MERGE_PREPARATION_APPROVED
+
+D0_document_and_evidence_closure = PASS_WITH_LIGHT_FINAL_HARDENING
 D1_p3_h10 = ACCEPTED_NEGATIVE_NOT_EQUAL_ACCURACY
-D1_p3_h7p5 = ACCEPTED_FIXED_P_EQUAL_ACCURACY_POSITIVE_WITH_QUALIFICATIONS
+D1_p3_h7p5 = ACCEPTED_FIXED_P_EQUAL_ACCURACY_CLEAR_SUCCESS_WITH_QUALIFICATIONS
 D2_variable_p_hcurl = ACCEPTED_FAIL_CLOSED
-p2_h5_conforming_graded_h_mechanism = APPROVED_WITH_STOP_GATES
-p2_h3_adaptive_compression = WAIT_FOR_E1_REVIEW
-p3_h3 = NOT_APPROVED
-p4_target = RESOURCE_GATED
-interface_buffer = DEFERRED_UNTIL_DEFECT_GEOMETRY
-updated_1TiB_0p7nm_projection = WAIT_FOR_ADAPTIVE_MEASUREMENT
-whole_original_Task033 = PARTIAL_NOT_COMPLETE
-same_branch_continuation = APPROVED
-selective_merge = NOT_YET_APPROVED
+p3_h5_same_degree_hybrid_full3d = ACCEPTED
+p4_target = ACCEPTED_RESOURCE_GATED_NEGATIVE
+
+h_adaptivity = TRANSFER_TO_NEXT_TASK
+updated_1TiB_0p7nm_projection = TRANSFER_TO_NEXT_ADAPTIVE_SCALABILITY_TASK
+interface_buffer = DEFERRED_UNTIL_DEFECT_OR_NONUNIFORM_END_GEOMETRY
+variable_p_target_prototype = NOT_REQUIRED_BY_CAPABILITY_GATE
+p3_h3 = NOT_REQUIRED_IN_TASK033_REDUCED_SCOPE
+
+task033_reduced_scope = COMPLETE_WITH_QUALIFICATIONS_AND_NEGATIVE_RESULTS
+original_task033_full_scope = PARTIAL_BY_EXPLICIT_USER_SCOPE_TRANSFER
+additional_task033_PDE = NOT_APPROVED
+same_branch_light_closure = APPROVED
+selective_merge_to_master = APPROVED_AFTER_F0_MERGE_CLOSURE
 whole_branch_merge = NOT_APPROVED
 ```
 
-本轮审阅覆盖 Review V5 之后完成的三个阶段：
+本修正吸收用户的最新决定：固定 p=2 的 conforming graded-h / h-adaptive 研究不再属于 Task033 的最后阶段，而是移交到一个新的独立任务。与自适应直接相关的压缩率、1 TiB / 0.7 nm 更新和 adaptive profile 研究一起移交，不再阻塞 Task033 收口。
 
-1. D0：历史状态、source compatibility、缩减矩阵和文档口径收口；
-2. D1：`p3/h10 -> 条件 p3/h7.5` 的固定阶次等精度漏斗；
-3. D2：当前冻结 DOLFINx/Basix 环境下的 native variable-p H(curl) 能力审计。
-
-没有运行 Review V5 禁止的 `M240`、`p3/h3`、p4 target、adaptive、buffer 或 0.7 nm PDE。执行边界得到遵守。
+因此，Task033 当前不再需要新的大型 Maxwell、QEP、Hybrid、p3/h3、p4 target 或 adaptive PDE。剩余工作全部属于不需要重跑 PDE 的合并前轻量收口。
 
 ---
 
-# 1. D0 文档与证据收口
+# 1. Task033 当前接受的主要成果
 
-## 1.1 已完成事项
+## 1.1 高阶 Floquet 与解析资格化
 
-D0 已完成以下修正：
+已接受：
 
-- 历史 `phaseC_summary.json` 被明确标记为已被 p3/h5 full3D closure 推进的历史阶段；
-- `hybrid_vs_full3d_summary.md` 不再把旧 C0 内存否决写成当前 p3 状态；
-- p3/h5 full3D source 与 Hybrid closure source 已建立 fail-closed compatibility audit；
-- 12 个关键数值 kernel blob 完全一致；
-- Phase6 runner 去除 reference registry 差异后的规范化 AST 完全一致；
-- 原始 20 项 p/h 矩阵已缩减为 Review V5 指定的决策矩阵；
-- completion matrix、negative results、capability matrix 和项目路线已同步；
-- planning checker 继续正确保持 `claims_task033_complete=false`。
+- p=3、p=4 六面体 Nédélec 高阶双 Floquet；
+- edge/face entity transformation 与 orientation；
+- 双周期角点、边和面 ownership；
+- 稀疏、分布式约束路径；
+- topology cache 与 phase-only update；
+- Case090 空气盒与 air-Si Fresnel fixture；
+- p1-p4、S/P、h、MPI1/2/4 共 144 个正式 PDE；
+- 无 boundary-size dense square；
+- 无完整边界场或完整模态向量 gather。
 
-### 决定
+该组件链不需要重复运行 Case090。
+
+## 1.2 高阶 QEP、tracking 与 matching trace
+
+已接受：
+
+- p3/p4 横截面 QEP；
+- right/left modes；
+- Poynting classification；
+- biorthogonality；
+- near-degenerate block tracking；
+- p3/p4 matching trace；
+- p4 四模态近简并迹 MPI1/MPI4；
+- p1、p2 的真实负结果按原样保留。
+
+当前冻结环境中 native cellwise variable-p H(curl) 没有合格证据，因此 fail closed 是正式结果，不是未完成的实现缺口。
+
+## 1.3 p3/h5 Hybrid-full3D 同阶闭合
+
+p3/h5 full3D：
+
+| 指标 | 实测值 |
+|---|---:|
+| Nédélec DoF | 145,863 |
+| final rows | 145,943 |
+| assembled NNZ | 35,566,727 |
+| true relative residual | `5.442e-12` |
+| memory authority | 7.781 GiB |
+| elapsed | 103.59 s |
+| swap | 0 |
+
+p3/h5 Hybrid M160：
+
+| 指标 | 实测值 |
+|---|---:|
+| retained modes / direction | 160 |
+| local rows | 21,847 x 2 |
+| local assembled NNZ | 5,156,503 x 2 |
+| true relative residual | `2.343e-12` |
+| memory authority | 2.618 GiB |
+| elapsed | 111.94 s |
+| swap | 0 |
+
+同阶差异：
+
+| 指标 | Hybrid-full3D / 最大误差 |
+|---|---:|
+| max abs R/T/A delta | `1.214e-7` |
+| five-plane max E relative L2 | `1.100e-5` |
+| five-plane max H relative L2 | `1.098e-4` |
+| middle-plane max E relative L2 | `8.387e-6` |
+| middle-plane max H relative L2 | `1.098e-4` |
+
+决定：
 
 ```text
-D0_scope = ACCEPTED
-D0_requires_PDE_rerun = FALSE
+p3_h5_M_funnel = PASS
+p3_h5_augmented_vs_schur_minimal = PASS
+p3_h5_same_degree_full3d_reference = PASS
+p3_h5_RTA_and_field_closure = PASS
+p3_h5_Hybrid_memory_reduction = PASS
+p3_h5_wall_clock_speedup = NOT_DEMONSTRATED
+p3_h5_grid_convergence = NOT_PROVEN
 ```
 
-## 1.2 仍需补强的 D1 source audit
+## 1.4 p4 目标资源负结果
 
-当前 tracked `source_compatibility_audit.json` 的正式 scope 是 p3/h5 full3D reference 与 p3/h5 Hybrid closure。D1 的新记录还有两组相邻 source split：
+p4 的 Floquet、QEP、近简并 block 和四模态迹组件已经通过，但目标 h5 装配得到：
 
 ```text
-p3/h10 full3D source = bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6
-p3/h10 Hybrid source = 6cb63a5b49ef2db0491ef21a5536eef5f54e1feb
-
-p3/h7.5 full3D source = 6cb63a5b49ef2db0491ef21a5536eef5f54e1feb
-p3/h7.5 Hybrid source = 7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73
+Nedelec DoF = 339,892
+base NNZ = 155,205,040
+external memory authority = 12.616 GiB
+factorization stage = not entered
+solve stage = not entered
+OOM killed = false
+termination = controlled
 ```
 
-独立比较显示：
+p4 Hybrid M160 的独立资源预测中心/上界约为 37.04/42.59 GiB。因此：
 
-- `bb03ad4 -> 6cb63a5` 只增加 p3/h10 descriptor，并更新 variable-p capability record；
-- `6cb63a5 -> 7a7db58` 只增加 p3/h7.5 descriptor；
-- 没有修改 Maxwell、Floquet、QEP、Hybrid coupling、Schur solver 或后处理数值 kernel。
+```text
+p4_h5_full3d = NOT_RUN_BY_MEASURED_MEMORY_GATE
+p4_h5_hybrid = NOT_RUN_BY_RESOURCE_GATE
+p4_numerical_method_failure = FALSE
+p4_current_host_target_feasibility = FALSE
+```
 
-因此 D1 数值比较可以接受。但选择性合并前应生成一份 tracked 的 D1 source-compatibility audit，显式保存上述 changed-path 分类和 kernel-unchanged 结论。该补强不需要重跑 PDE。
+该负结果可随 Task33 一并合入 master，作为资源边界证据。
 
 ---
 
-# 2. D1 等精度方法审阅
+# 2. Phase D 固定阶次等精度结论
 
-## 2.1 比较定义合理，但必须保留离散参考边界
+## 2.1 等精度定义
 
-D1 使用 p3/h5 full3D 作为：
+p3/h5 full3D 被用作：
 
 ```text
 provisional_best_available_discrete_reference
@@ -91,61 +157,27 @@ not_continuum_reference
 not_grid_converged
 ```
 
-所有 p2/h3、p3/h10 和 p3/h7.5 都相对同一个 p3/h5 reference 计算：
+p2/h3、p3/h10 和 p3/h7.5 均相对该同一离散参考比较：
 
-- R/T/A 与体吸收绝对误差；
-- 五个选定平面的 E/H relative L2；
-- 两个接口的切向 E/H relative L2；
-- 显著衍射级功率和复振幅的 max/RMS 相对误差；
+- R/T/A 和体吸收；
+- 五个选定截面 E/H；
+- 上下接口切向 E/H；
+- 显著衍射级功率 max/RMS；
+- 显著衍射级复振幅 max/RMS；
 - full true residual。
 
-候选只有在所有规定误差均不劣于 p2/h3 时，才通过等精度 Gate。该方法能回答“候选是否至少达到当前 p2/h3 的离散精度水平”，但不能证明连续解误差，也不能证明 p3/h5 已收敛。
+该方法只支持 provisional discrete ranking，不支持连续解误差或网格收敛声明。
 
-### 决定
-
-```text
-equal_accuracy_methodology = ACCEPTED_FOR_PROVISIONAL_DISCRETE_RANKING
-continuum_accuracy_claim = NOT_ALLOWED
-grid_convergence_claim = NOT_ALLOWED
-```
-
----
-
-# 3. p3/h10 负结果
-
-## 3.1 full3D direct
+## 2.2 p3/h10 负结果
 
 ```text
 Nedelec DoF = 23,073
-true residual = 1.349e-11
 memory authority = 1.980 GiB
 elapsed = 22.390 s
-R/T/A = 0.0553985 / 0.4060679 / 0.5385336
-swap = 0
+true residual = 1.349e-11
 ```
 
-p3/h10 虽然便宜且资源安全，但除线性残差外，所有 12 个物理等精度指标均劣于 p2/h3，包括：
-
-- R/T/A 和体吸收；
-- 五平面 E/H；
-- 接口切向 E/H；
-- 显著级功率 max/RMS；
-- 显著级复振幅 max/RMS。
-
-因此它不能作为等精度候选。
-
-## 3.2 Hybrid M120/M160
-
-p3/h10 的 M120 和 M160：
-
-- 代数、QEP、残差、R/T/A、体吸收及中间平面 Gate 通过；
-- sampled interface H-t Gate 未通过；
-- M120 到 M160 几乎无变化；
-- direct 候选本身已经等精度失败。
-
-所以不运行 M240 是正确的。该负结果更接近粗网格/interface field representation 限制，而不是 modal truncation 不足。
-
-### 决定
+除真残差外，p3/h10 的全部 12 个物理等精度指标均劣于 p2/h3。Hybrid M120/M160 的 sampled interface H-t Gate 均失败，且 M 增加不改善。因此：
 
 ```text
 p3_h10_equal_accuracy = FAIL
@@ -154,76 +186,20 @@ p3_h10_selected = FALSE
 p3_h10_M240 = NOT_REQUIRED
 ```
 
----
-
-# 4. p3/h7.5 等精度正结果
-
-## 4.1 full3D direct
+## 2.3 p3/h7.5 固定阶次正结果
 
 ```text
-Nedelec DoF = 63,747
-true residual = 6.449e-12
-memory authority = 3.667 GiB
-elapsed = 44.487 s
-R/T/A = 0.003090727 / 0.591160863 / 0.405748409
-swap = 0
+full3D Nedelec DoF = 63,747
+full3D memory = 3.667 GiB
+full3D elapsed = 44.487 s
+full3D true residual = 6.449e-12
 ```
 
-相对 p3/h5 provisional reference，p3/h7.5 的全部规定误差均不劣于 p2/h3：
+p3/h7.5 的全部规定误差均不劣于 p2/h3。Hybrid M120、M160 均通过 16 项 Gate，M120->M160 收敛，M160 相对同网格 full3D 的最大 R/T/A 差为 `1.264e-6`。
 
-| 指标 | p2/h3 误差 | p3/h7.5 误差 |
-|---|---:|---:|
-| abs ΔR | 0.003523 | 0.002001 |
-| abs ΔT | 0.016969 | 0.009462 |
-| abs ΔA | 0.013446 | 0.007461 |
-| abs ΔAvol | 0.013446 | 0.007461 |
-| 五平面 max E L2 | 0.496254 | 0.286621 |
-| 五平面 max H L2 | 0.499354 | 0.290470 |
-| 接口 max Et L2 | 0.496254 | 0.286621 |
-| 接口 max Ht L2 | 0.456215 | 0.272020 |
-| 显著级 power max/RMS | 0.765156 / 0.350882 | 0.649135 / 0.293093 |
-| 显著级 amplitude max/RMS | 0.724457 / 0.400581 | 0.554958 / 0.324776 |
+资源比较：
 
-这些误差仍然不是“小误差”，尤其场和逐阶复振幅相对 p3/h5 仍有明显差异。因此正确措辞是：
-
-> p3/h7.5 在当前 provisional reference 下不劣于 p2/h3，而不是 p3/h7.5 已达到最终生产精度。
-
-## 4.2 Hybrid M 漏斗和同网格 direct 闭合
-
-p3/h7.5 的 M120 与 M160：
-
-- 两档均通过全部 16 项物理和代数 Gate；
-- M120→M160 的 R/T/A 差约为机器精度；
-- 显著级复振幅最大相对变化为 `1.405e-10`；
-- M160 相对同网格 full3D 的最大 R/T/A 差为 `1.264e-6`；
-- M160 selected-plane E/H 相对同网格 full3D 为约 `8.737e-5 / 3.500e-4`；
-- M240 没有必要。
-
-### 决定
-
-```text
-p3_h7p5_equal_accuracy_vs_p2_h3 = PASS
-p3_h7p5_M120_to_M160 = PASS
-p3_h7p5_Hybrid_full3D_same_grid = PASS
-selected_mode_count_per_direction = 160
-```
-
----
-
-# 5. 资源效率审阅
-
-## 5.1 同口径比较
-
-资源比较使用：
-
-```text
-baseline = p2/h3 Hybrid M160 Schur-minimal
-candidate = p3/h7.5 Hybrid M160 Schur-minimal
-MPI = 4
-swap = 0
-```
-
-| 指标 | p2/h3 | p3/h7.5 | baseline/candidate | 正式等级 |
+| 指标 | p2/h3 M160 | p3/h7.5 M160 | baseline/candidate | 分类 |
 |---|---:|---:|---:|---|
 | local FE DoF | 68,396 | 26,598 | 2.571x | clear success |
 | local-system rows | 68,476 | 26,678 | 2.567x | clear success |
@@ -232,318 +208,267 @@ swap = 0
 | memory authority | 3.224 GiB | 2.008 GiB | 1.606x | useful positive |
 | wall time | 99.686 s | 74.908 s | 1.331x | useful positive |
 
-相应减少比例约为：
-
-```text
-local FE DoF reduction ≈ 61.1%
-total-row reduction ≈ 60.8%
-factor-inventory reduction ≈ 71.9%
-measured-memory reduction ≈ 37.7%
-wall-time reduction ≈ 24.9%
-```
-
-## 5.2 正式总分类需要收紧
-
-当前 summary 使用：
-
-```text
-equal_accuracy_engineering_positive_with_qualification
-```
-
-该自然语言结论可以保留，但不能映射为原 Task33 的正式：
-
-```text
-hp_compression_engineering >= 3x combined
-```
-
-因为：
-
-- local DoF/rows 为 2–3x，只达到 `clear_success`；
-- 只有 factor-inventory NNZ 超过 3x；
-- 实测内存和时间为 1.3–2x，只达到 `useful_positive`；
-- variable-p/hp 并未实现；
-- adaptive compression 尚未测量。
-
-建议在 completion matrix 和最终 summary 中冻结为：
+正式分类冻结为：
 
 ```text
 fixed_p_equal_accuracy_clear_success
-with_useful_memory_and_time_positive
+with_useful_measured_memory_positive
+with_indicative_measured_time_positive
 factor_inventory_engineering_target
-```
-
-不得把本轮结果写成“Task33 已达到联合 hp 3x 工程目标”。
-
-## 5.3 跨提交资源可比性
-
-DoF、local rows、total rows 和 factor-inventory NNZ 是最稳健的结构指标。
-
-内存与时间虽然使用相同 solver family、MPI4、zero-swap 和 watchdog 口径，但 p2/h3 baseline 与 p3/h7.5 来自不同 clean source SHA。Review V5 已批准复用，且数值主路径兼容，但仍应将：
-
-- 1.606x memory improvement 标为 measured engineering comparison；
-- 1.331x wall-time improvement 标为 indicative measured comparison；
-- 不把 1.331x 外推为普适 speedup。
-
-选择性合并前，reduced summary 应显式保存 container digest、solver path、MPI、memory-authority definition、one-heavy-case 和 zero-swap 的跨记录兼容性检查。
-
-### 决定
-
-```text
-fixed_p_equal_accuracy_resource_result = ACCEPTED_WITH_QUALIFICATIONS
-strict_structural_compression = PASS
-measured_memory_positive = PASS_WITH_CROSS_SOURCE_QUALIFICATION
-universal_wall_clock_speedup = NOT_PROVEN
 formal_hp_3x_combined_target = NOT_ACHIEVED
 ```
 
----
-
-# 6. 内存预测模型负结果
-
-Review V5 的预测为：
-
-```text
-p3/h10 center/upper = 1.693 / 1.947 GiB
-p3/h7.5 center/upper = 2.142 / 2.463 GiB
-```
-
-实测为：
-
-```text
-p3/h10 assembly = 1.406 GiB
-p3/h10 solve = 1.980 GiB
-p3/h7.5 assembly = 2.556 GiB
-p3/h7.5 solve = 3.667 GiB
-```
-
-p3/h7.5 assembly 比预测 upper 高约 3.8%，full solve 比该 upper 高约 48.9%。由于绝对值仍远低于 watchdog controlled line，继续运行在本次是安全的；但这再次证明旧的高阶资源预测不能作为精确估计。
-
-### 要求
-
-```text
-p3_h7p5_prediction_underestimated = TRUE
-prediction_is_launch_guard_not_measurement = TRUE
-old_high_order_model_for_1TiB_projection = NOT_ALLOWED_WITHOUT_RECALIBRATION
-```
-
-下一阶段资源表应把 p3/h10、p3/h7.5、p3/h5 三个实测 anchor 纳入校准。不得仅因这次未触发内存问题而忽略预测偏差。
+不得将其写成“联合 hp 压缩达到 3x”，也不得将 1.331x 时间改善外推为普适 speedup。
 
 ---
 
-# 7. D2 variable-p / hp 审阅
+# 3. variable-p / hp zoning 的最终处置
 
-冻结环境为：
+当前冻结环境：
 
 ```text
-Basix 0.10.0
-DOLFINx 0.10.0.post2
-UFL 2025.2.0.post0
+Basix = 0.10.0
+DOLFINx = 0.10.0.post2
+UFL = 2025.2.0.post0
 ```
 
-审计确认公开 API 中存在：
+公开 API 中虽然存在 mixed element、submesh、mixed-topology form 和 MixedFunctionSpace，但没有合格证据证明：
 
-- mixed element；
-- function space；
-- submesh；
-- mixed-topology form；
-- MixedFunctionSpace。
-
-但这些 API 的存在不能证明：
-
-- adjacent unequal-p Nédélec 的切向连续；
-- periodic paired face 的 p 同步；
+- unequal-p Nédélec 邻接单元切向连续；
+- periodic paired faces 的 p 同步；
 - edge/face orientation；
 - variable-p trace；
 - MPI ownership；
-- 稀疏、可维护的原生 cellwise variable-degree 路径。
+- 原生、稀疏、可维护的 cellwise variable-degree H(curl) 路径。
 
-因此 fail closed 是正确处置：
+因此：
 
 ```text
 native_cellwise_variable_p_hcurl = NOT_QUALIFIED
 bespoke_unequal_p_constraints = FORBIDDEN
 variable_p_target_PDE = NOT_RUN
-p2_p3_microfixture = NOT_TRIGGERED
+p2_p3_variable_p_microfixture = NOT_TRIGGERED
 hp_zoning = DESIGN_REPORT_ONLY
+D2_requires_more_Task033_PDE = FALSE
 ```
 
-该结论只适用于当前冻结版本和现有证据，不是对未来 DOLFINx/Basix 的永久否定。
+该负结果已经完成 Task33 在 variable-p 方面的审计职责。
 
-### 决定
+---
+
+# 4. 从 Task33 移交到后续任务的内容
+
+以下内容不再视为 Task33 的 merge blocker。
+
+| 内容 | Task33 处置 | 后续重启条件 |
+|---|---|---|
+| p2/h5 conforming graded-h / h-adaptive | 移交下一任务 | 新 task、独立 mesh/accuracy Gate |
+| p2/h3 adaptive compression | 移交下一任务 | h5 mechanism 先通过 |
+| adaptive measured compression | 移交下一任务 | 至少一条合格 graded-h 结果 |
+| 1 TiB / 0.7 nm 更新 | 移交 adaptive/scalability task | adaptive 实测 + 重新校准的高阶资源模型 |
+| interface buffer sweep | 等待 defect/nonuniform-end geometry | 新几何有实际接口位置问题 |
+| p4 target | 等待更大内存或低内存算法 | candidate-specific 新资源 Gate |
+| p3/h3 | 当前范围取消 | 新的明确科研问题与资源授权 |
+| variable-p target prototype | capability Gate 关闭 | 未来原生 API/语义证据 |
+
+原始 Task033 的 full-scope 21-role manifest 应继续保留为 `NOT_RUN` 历史身份，不能改写为 full-scope pass。与此同时，应新增一个 **reduced-scope completion record**，准确说明用户批准的缩减范围已经完成。
+
+---
+
+# 5. 除自适应外仍需完善的事项
+
+当前不再有数值算法或大型 PDE 缺口。合并前只剩以下轻量事项。
+
+## 5.1 D1 source compatibility audit
+
+需新增 tracked D1 audit，覆盖：
 
 ```text
-D2_variable_p_capability_audit = ACCEPTED
-D2_requires_more_PDE = FALSE
+p3/h10 full3D source = bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6
+p3/h10 Hybrid source = 6cb63a5b49ef2db0491ef21a5536eef5f54e1feb
+p3/h7.5 full3D source = 6cb63a5b49ef2db0491ef21a5536eef5f54e1feb
+p3/h7.5 Hybrid source = 7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73
+```
+
+已独立确认这些相邻 source split 只增加 descriptor/audit 记录，没有修改 Maxwell、Floquet、QEP、Hybrid coupling、Schur solver 或后处理数值 kernel。正式文件只需冻结该结论，不需要重跑 PDE。
+
+## 5.2 跨记录资源口径
+
+`reduced_equal_accuracy_summary.json` 应显式冻结：
+
+- container image/digest；
+- solver path；
+- MPI=4；
+- zero-swap；
+- one-heavy-case-at-a-time；
+- memory authority 定义；
+- p2/h3 与 p3/h7.5 不同 clean SHA；
+- wall-time 只作为 indicative measured comparison。
+
+## 5.3 高阶内存预测负结果
+
+必须把以下事实写入资源模型：
+
+```text
+p3_h10_predicted_upper = 1.947 GiB
+p3_h10_full_solve_actual = 1.980 GiB
+p3_h7p5_predicted_upper = 2.463 GiB
+p3_h7p5_full_solve_actual = 3.667 GiB
+prediction_is_launch_guard_not_measurement = TRUE
+old_high_order_model_for_1TiB_projection = NOT_ALLOWED_WITHOUT_RECALIBRATION
+```
+
+## 5.4 scoped completion record
+
+新增一个轻量、tracked、fail-closed 的 scoped completion record，至少绑定：
+
+- Case090 Stage1 summary；
+- QEP/tracking summary；
+- Phase B matched trace；
+- p3/h5 full3D closure；
+- p4 resource negative；
+- D1 equal-accuracy summary；
+- D2 variable-p audit；
+- source compatibility audits；
+- test summary；
+- selective merge manifest；
+- adaptive/buffer/1TiB transfer disposition。
+
+该记录应声明：
+
+```text
+task033_reduced_scope_complete = true
+original_task033_full_scope_complete = false
+adaptive_transferred_to_next_task = true
+ordinary_default_changed = false
 ```
 
 ---
 
-# 8. 当前 Task33 完成度
+# 6. 合并策略
 
-当前已完成：
+## 6.1 不批准 whole-branch merge
 
-- p3/p4 高阶 Floquet；
-- Case090 144 PDE；
-- p3/p4 QEP、tracking 和 matched trace；
-- p4 四模态近简并迹；
-- p3/h5 Hybrid/full3D 同阶闭合；
-- p4 当前主机资源负结果；
-- p3/h10 与 p3/h7.5 固定阶次等精度研究；
-- variable-p capability fail-closed audit；
-- Review V5 缩减后的 D0/D1/D2。
+当前分支相对 master 为 46 个提交，包含：
 
-尚未完成：
+- 已资格化高阶数值内核；
+- 正式 runner、watchdog、聚合器和测试；
+- 大量历史任务书、规划器和 full-scope schema；
+- 未资格化的 adaptive、buffer 和 1 TiB 规划/runner；
+- 原始 21-role full-scope NOT_RUN 路线。
 
-- p2 conforming graded-h / h-adaptive h5 mechanism；
-- p2 adaptive h3 compression；
-- adaptive measured compression 后的 1 TiB / 0.7 nm 更新；
-- 原始 21-role formal manifest；
-- 最终 publication/merge closure。
-
-按用户决定，interface buffer 等待 defect/nonuniform-end geometry，不再作为当前 Task33 的阻塞项。
-
----
-
-# 9. Phase E：最终 h-adaptive 数值阶段准入
-
-## 9.1 本次只批准 E1：p2/h5 机制验证
+直接 whole-branch merge 会把已接受能力和未资格化研究脚手架混在一起。因此：
 
 ```text
-Phase_E1_p2_h5_conforming_graded_h = APPROVED
-Phase_E2_p2_h3_compression = WAIT_FOR_E1_REVIEW
-```
-
-E1 的目标不是立即追求 3x，而是证明一个可维护的 conforming graded-h 路线可以在减少 local DoF 的同时复现 uniform p2/h5 reference。
-
-## 9.2 允许的离散路线
-
-只允许：
-
-- fixed p=2；
-- conforming hexahedral graded mesh；
-- 周期两侧完全同步；
-- matching 3D interface / 2D cross-section trace；
-- 10/110 nm 已资格化接口；
-- physics-informed material/interface/strong-gradient refinement；
-- smooth region coarsening。
-
-禁止：
-
-- hanging-node H(curl) 自定义约束；
-- variable-p；
-- mortar/nonmatching interface；
-- p3/h3 或 p4 target；
-- DWR 作为第一阶段阻塞项；
-- buffer sweep。
-
-## 9.3 执行阶梯
-
-### E1-0：文档和证据硬化
-
-先完成且不运行 PDE：
-
-1. 新增 D1 source compatibility audit；
-2. 在 equal-accuracy summary 中保存跨记录资源口径检查；
-3. 收紧正式 fixed-p compression 分类；
-4. 将 p3/h7.5 预测低估写入资源模型 calibration negative。
-
-### E1-1：mesh-only / trace preflight
-
-最多提出一个 primary graded profile，并验证：
-
-- 周期 paired faces 的网格完全一致；
-- 无 hanging nodes；
-- material interfaces 和几何特征精确保留；
-- 3D interface mesh 与 2D QEP trace mesh 一致；
-- Floquet entity pairing 和 orientation smoke 通过；
-- candidate local FE DoF 小于 uniform p2/h5 baseline；
-- no dense boundary square / no full gather；
-- candidate-specific memory Gate 通过。
-
-若 primary profile 不满足上述 mesh contract，只允许修正一次；不得铺开 profile sweep。
-
-### E1-2：Hybrid M 漏斗
-
-对通过 mesh Gate 的候选只运行：
-
-```text
-p2 graded-h Hybrid M120
-p2 graded-h Hybrid M160
-```
-
-M160 只有在 M120→M160 通过后才作为候选结果；不得运行 M240，除非新审阅明确批准。
-
-### E1-3：accuracy Gate
-
-相对现有 uniform p2/h5 reference，至少要求：
-
-```text
-full true residual <= 1e-9
-max abs R/T/A delta <= 1e-5
-significant-order complex-amplitude relative delta <= 1e-3
-sampled interface E relative error <= 5e-3
-sampled interface H relative error <= 1e-2
-selected-plane E/H relative error <= 5e-3
-abs volume-energy closure <= 1e-5
-M120 -> M160 convergence pass
-```
-
-### E1-4：compression 处置
-
-使用：
-
-```text
-baseline = uniform p2/h5 Hybrid M160
-candidate = graded p2/h5-equivalent Hybrid M160
-```
-
-记录：
-
-- local FE DoF；
-- local-system rows；
-- total rows；
-- assembled NNZ 与 factor inventory；
-- memory authority；
-- wall time；
-- QEP/trace DoF 与 modal storage；
-- accuracy metrics。
-
-分类保持：
-
-```text
-<1.3x = weak
-1.3-2x = useful positive
-2-3x = clear success
->=3x = engineering target
-```
-
-若 accuracy 通过但 compression <1.3x，记录 weak signal 并停止。若 accuracy 未通过，只允许一次 physics-informed profile 修正；第二次仍失败则保存 negative 并停止。
-
-## 9.4 E1 停止点
-
-E1 summary 完成后必须停止复审。不得自动进入 p2/h3 adaptive compression。
-
----
-
-# 10. 最终处置
-
-```text
-Task033 Review V5 D0 = ACCEPTED
-Task033 Phase D1 p3/h10 = ACCEPTED_NEGATIVE
-Task033 Phase D1 p3/h7.5 = ACCEPTED_FIXED_P_EQUAL_ACCURACY_POSITIVE_WITH_QUALIFICATIONS
-Task033 Phase D2 variable-p = ACCEPTED_FAIL_CLOSED
-fixed_p_equal_accuracy_clear_success = ACHIEVED
-measured_memory_useful_positive = ACHIEVED
-formal_combined_hp_3x_target = NOT_ACHIEVED
-p2_h5_conforming_graded_h_mechanism = APPROVED
-p2_h3_adaptive_compression = NOT_YET_APPROVED
-updated_1TiB_projection = DEFERRED
-same_branch_continuation = APPROVED
-selective_merge = AFTER_D1_HARDENING_AND_E1_REVIEW
-whole_original_Task033 = PARTIAL
 whole_branch_merge = NOT_APPROVED
+selective_merge = REQUIRED
 ```
 
-本轮最重要的工程结论是：
+## 6.2 当前 manifest 需要收紧
 
-> 在当前最好可用但尚未网格收敛的 p3/h5 离散参考下，p3/h7.5 的全部规定物理误差均不劣于 p2/h3；使用同为 M160 的 Schur-minimal Hybrid 路径时，local FE DoF 和 total rows 约减少 61%，factor inventory 约减少 72%，实测内存约减少 38%，时间约减少 25%。这是 fixed-p 等精度的明确工程正结果，但不是联合 hp 3x 成功、连续解收敛或 0.7 nm 可行性证明。下一步只批准 fixed-p p2 的 h5 conforming graded-h 机制验证。
+现有 `selective_merge_manifest.csv` 的：
+
+```text
+src/**
+```
+
+过宽，不可作为最终合并清单。必须改成文件级精确 allowlist。
+
+### 应纳入的类别
+
+1. 已资格化的高阶 Floquet、QEP、mode tracking、matching trace 和 Hybrid 兼容改动；
+2. p3 full3D reference 接线和必要的通用 watchdog；
+3. D1 fixed-p equal-accuracy 聚合与资源 Gate；
+4. D2 variable-p capability audit；
+5. 与上述能力一一对应的测试；
+6. Case090/091 的轻量 hash-bound 记录；
+7. Task33 当前 summary、completion matrix、negative results、review/response 和 quick-start/theory 文档。
+
+### 不应纳入本次 master 能力合并的类别
+
+- `benchmarks/run_task033_adaptive_mesh.py`；
+- `src/geometry/task033_periodic_graded_mesh.py`；
+- adaptive profile/mesh prototype tests；
+- buffer sweep runner/资格化声明；
+- 1 TiB projection runner 及未资格化 production claim；
+- full-scope campaign 自动执行脚本；
+- 任何 heavy artifacts、mesh、field、matrix、factor、timeline 和 log；
+- 仅为原 20 项矩阵服务、但未进入缩减范围的自动批量执行路径。
+
+规划文档和 `NOT_RUN` 记录可作为历史文档保留，但不得作为 master 当前可执行能力宣传。
+
+---
+
+# 7. Phase F0：合并前最后收口
+
+F0 不允许运行新的 Maxwell/QEP/Hybrid PDE。
+
+按顺序完成：
+
+1. 生成 D1 source compatibility audit；
+2. 加强 equal-accuracy 跨记录资源口径；
+3. 将正式分类统一为 fixed-p clear success；
+4. 记录高阶内存预测低估；
+5. 新增 reduced-scope completion record/checker；
+6. 将 selective merge manifest 收紧为精确文件 allowlist；
+7. 更新 summary、completion matrix、capability matrix 和 roadmap，明确 adaptive 已移交；
+8. 运行合并前测试；
+9. 生成 merge response，停止等待最终合并。
+
+## 7.1 合并前最低测试
+
+至少包括：
+
+```text
+Task033 focused tests
+Task032 regression anchors
+Case090/091 lightweight evidence checker
+D1 equal-accuracy aggregator tests
+D2 capability-audit tests
+source compatibility tests
+documentation contracts
+Ruff
+compileall
+git diff --check
+```
+
+涉及 DOLFINx/Basix/PETSc 的测试应在冻结 Docker image 中运行；host-only 环境缺依赖不能替代容器验证。
+
+## 7.2 变更冻结规则
+
+F0 只允许修改：
+
+- 文档；
+- tracked summary/manifest；
+- checker/aggregator；
+- merge allowlist；
+- 与证据合同直接对应的测试。
+
+若 F0 修改 Maxwell、Floquet、QEP、Hybrid coupling、solver 或 physical postprocess 数值 kernel，则本审阅的 no-PDE-rerun 许可失效，必须重新评估受影响证据。
+
+---
+
+# 8. 修正后的最终处置
+
+```text
+Task033 high-order Floquet p3/p4 = ACCEPTED
+Task033 QEP/tracking p3/p4 = ACCEPTED_WITH_LEGACY_NEGATIVES_PRESERVED
+Task033 matched trace p3/p4 = ACCEPTED
+Task033 p3/h5 Hybrid-full3D closure = ACCEPTED_WITH_GRID_CONVERGENCE_QUALIFICATION
+Task033 p4 target = ACCEPTED_RESOURCE_GATED_NEGATIVE
+Task033 p3/h10 = ACCEPTED_ACCURACY_NEGATIVE
+Task033 p3/h7p5 = ACCEPTED_FIXED_P_EQUAL_ACCURACY_CLEAR_SUCCESS
+Task033 variable-p Hcurl = ACCEPTED_FAIL_CLOSED
+Task033 adaptive work = TRANSFERRED_TO_NEXT_TASK
+Task033 interface buffer = DEFERRED_TO_DEFECT_GEOMETRY_TASK
+Task033 1TiB/0p7nm update = TRANSFERRED_TO_ADAPTIVE_SCALABILITY_TASK
+Task033 reduced scope = COMPLETE_AFTER_F0_LIGHT_CLOSURE
+original full scope = PARTIAL_BY_USER_SCOPE_TRANSFER
+additional Task033 PDE = NOT_APPROVED
+selective merge to master = APPROVED_AFTER_F0
+whole branch merge = NOT_APPROVED
+```
+
+Task33 当前最准确的工程结论是：
+
+> p3/p4 高阶 Floquet、QEP 和 matching-trace 组件已经资格化；p3/h5 Hybrid 已用同阶 full3D 正式闭合，并显著降低峰值内存；在当前最好可用离散参考下，p3/h7.5 相对 p2/h3 获得约 2.55-2.57x 的行数/DoF 改善、3.56x 的因子库存改善、1.61x 的实测内存改善和 1.33x 的指示性时间改善。p4 目标规模在当前主机上被资源 Gate 合理否决，variable-p 在当前框架中 fail closed。自适应及其后的 1 TiB 推演移交新任务后，Task33 只需完成无 PDE 的 F0 证据和精确选择性合并收口，即可进入 master。
