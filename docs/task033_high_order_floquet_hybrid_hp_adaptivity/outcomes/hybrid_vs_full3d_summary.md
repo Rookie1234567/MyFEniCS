@@ -1,12 +1,32 @@
 # Hybrid FEM–modal 与直接 3D FEM 对比
 
+## 2026-07-17 新增 p3/h5 同阶比较
+
+此前只有 p2/h5、p2/h3；现在新增同物理模型、同 p3、同 h5 的正式比较：
+
+| 方法 | rows / 主 FE DoF | assembled NNZ | true residual | memory authority | R | T | A |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| full3D p3 direct | 145,943 / 145,863 | 35,566,727 | `5.442e-12` | 7.781 GiB | 0.001090107012 | 0.600622478293 | 0.398287414695 |
+| Hybrid p3 M160 Schur-minimal | local 21,847×2 + modal 320 | local 5,156,503×2 | `2.343e-12` | 2.618 GiB | 0.001090095685 | 0.600622368221 | 0.398287536094 |
+
+Hybrid 相对 direct 的峰值内存为 `0.336×`，即约降低 66.35%。由于两条路径的
+矩阵分块语义不同，不把 local NNZ 与 full3D NNZ 直接相除作为统一稀疏规模比。
+物理差异的最大 R/T/A 绝对值为 `1.214e-7`，体吸收差为 `1.214e-7`；
+五截面最大 E/H 相对 L2 为 `1.100e-5 / 1.098e-4`。这证明当前 p3/h5
+离散的一致性，但 direct reference 仍为 `grid_converged=false`，不升级为连续解
+或 h 收敛证明。
+
+p4/h5 未形成 target 解：四模态迹组件通过，但 direct base matrix 已达
+155,205,040 NNZ，增广插入后外部权威值 12.616 GiB 并受控终止；Hybrid M160
+资源矩阵中心/上界为 37.038/42.594 GiB。因此没有伪造 p4 同阶比较。
+
 ## 1. 可比口径
 
-本表复用 Task032 Case080 的 clean tracked records。严格可比对象只有 p2/h5 与 p2/h3：
+下方历史表复用 Task032 Case080 的 clean tracked records；它只讨论 p2/h5 与 p2/h3：
 
 - 相同 13.5 nm、相同目标光栅、相同 p2、相同拟合网格；
 - 直接 3D reference 的 `grid_converged=false`，所以是同离散一致性，不是连续解收敛；
-- p3/p4 目标光栅没有同阶直接 3D reference，不参与本表。
+- p3 的新增同阶比较见上节；p4 仍没有同阶 target reference。
 
 `M160` 表示每个传播方向保留 160 个模态；Hybrid 内部 forward/backward 振幅共 320。
 外部 Fourier-DtN 的 80 个辅助未知量不属于 M。

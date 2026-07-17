@@ -1,0 +1,61 @@
+{
+  "schema_version": "task033.p4-four-mode-matched-trace-tracked-summary.v1",
+  "record_type": "tracked_p4_four_mode_matched_trace_summary_not_raw_aggregate",
+  "status": "p4_four_mode_matched_trace_pass",
+  "source_commit_sha": "95921ab76e39eb1a7c5b3321b93d36939afb4075",
+  "fixture": {
+    "degree": 4,
+    "h_nm": 10.0,
+    "material_kind": "stage4_xy",
+    "selected_source_basis_indices": [4, 5, 6, 7],
+    "qep_requested_modes": 8,
+    "interface_mode_count": 4,
+    "near_degenerate_block_size": 4
+  },
+  "observed": {
+    "mpi1": {
+      "gram_rank": 4,
+      "gram_condition": 5.662597754821827,
+      "coefficient_round_trip_relative_error": 2.43428843575526e-15,
+      "right_reconstruction_relative_residual": 9.53174516732404e-16,
+      "block_post_normalization_identity_error": 1.30441942153828e-11,
+      "minimum_base_raised_principal_cosine": 1.0,
+      "maximum_right_qep_residual": 4.6482067250835e-14,
+      "maximum_left_qep_residual": 5.25863987013003e-14,
+      "maximum_rank_historical_rss_mib": 252.55859375
+    },
+    "mpi4": {
+      "gram_rank": 4,
+      "gram_condition": 5.592125718335593,
+      "coefficient_round_trip_relative_error": 8.96688040102747e-16,
+      "right_reconstruction_relative_residual": 4.48759084413338e-16,
+      "block_post_normalization_identity_error": 2.34502179361924e-13,
+      "minimum_base_raised_principal_cosine": 0.9999999999999994,
+      "maximum_right_qep_residual": 1.69421359054744e-14,
+      "maximum_left_qep_residual": 4.17743911990031e-15,
+      "maximum_rank_historical_rss_mib": 230.3203125
+    },
+    "mpi1_mpi4_maximum_relative_beta_assignment_delta": 5.225677923613223e-13,
+    "mpi4_indices_for_mpi1_modes": [0, 1, 3, 2],
+    "raw_gram_condition_relative_delta_reported_not_gated": 0.012445177909065786,
+    "raw_gram_singular_values_relative_delta_reported_not_gated": 0.0062420706786948865
+  },
+  "gates": {
+    "both_expected_shards_present_and_recomputed_pass": true,
+    "mode_count_4_block_size_4_gram_rank_4": true,
+    "right_reconstruction_and_left_petrov_projection": true,
+    "principal_angle_or_block_invariant": true,
+    "mpi1_mpi4_compact_identity": true,
+    "single_clean_stable_source": true,
+    "no_full_vector_gather": true,
+    "no_dense_interface_square": true,
+    "p4_four_mode_matched_trace": true
+  },
+  "basis_invariance_note": "Raw Gram spectra are basis dependent inside a near-degenerate block. MPI identity therefore recomputes full rank, Petrov round trip, exact block identity, per-mode beta assignment, block normalization and the principal-angle invariant; raw Gram deltas remain reported diagnostics.",
+  "raw_evidence": {
+    "root": "benchmarks/artifacts/cases/091/task033_p4_four_mode_95921ab",
+    "p4_mpi1.json": "709de6c416d17d6a75b82576b113c9ef3bd11bd07059415959fa0e5fcdf9ff30",
+    "p4_mpi4.json": "19889892ff0df08dba55e4a2b837a9a58d3952d19f1bf782f74c9c54e15ee0e1",
+    "p4_four_mode_summary.json": "25218c2683401469a0a7a11873a89bb2f5877971e0ec304f2c75110516ddb812"
+  }
+}

@@ -69,11 +69,15 @@ runtime disposition。已实施结果以第 3 节 Gate routing 和 `summary.md` 
 ## 4. Audit boundary
 
 本文件的静态表保留审计历史；当前 runtime 结论是：p3/p4 entity/Floquet、解析 PDE 与
-MPI Gate 已通过，QEP p3/p4 components 与 selected MPI1/2/4 identity 通过；legacy 全阶
-aggregate 因 p1/p2 未资格化，p3/p4 Hybrid 同阶
-full3D 对照仍未运行。Phase C 已在新 clean SHA 上闭合 p3/h5 Hybrid M 漏斗与
-augmented/minimal 锚点，但 p3/h5 full3D 被内存 Gate 阻止。Case090 的后继复用
-只按 `case090_pure3d_floquet_core` 审计；`modal_trace_projection.py` 是显式记录的
-component-disjoint numerical change，不得把兼容结论表述成全仓 numerical source
-完全不变。不得用历史表的 blocker 状态覆盖当前阶段证据，也不得把当前组件通过外推成
+MPI Gate 已通过，QEP p3/p4 components 与 selected MPI1/2/4 identity 通过；legacy
+全阶 aggregate 仍因 p1/p2 未资格化。Phase C 已在新 clean SHA 上闭合 p3/h5 Hybrid
+M 漏斗、augmented/minimal 锚点，并由用户授权的真实同阶 full3D 补齐
+Hybrid/direct、R/T/A 与五平面对照，16 项 Gate 全过。p4 四模态 trace 组件也已通过，
+但目标 full3D assembly 在 12.616 GiB 受控停止，Hybrid 独立上界为 42.594 GiB，
+故没有进入 p4 target solve。
+
+Case090 的后继复用只按 `case090_pure3d_floquet_core` 审计；
+`modal_trace_projection.py` 是显式记录的 component-disjoint numerical change，
+不得把兼容结论表述成全仓 numerical source 完全不变。不得用历史表的 blocker
+状态覆盖当前阶段证据，也不得把 p3 同阶数值闭合外推成 h 收敛、p4 target 成功或
 完整 Task033 通过。

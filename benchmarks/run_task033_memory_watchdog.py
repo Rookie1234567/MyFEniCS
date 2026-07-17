@@ -50,9 +50,13 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage3_p3_h5/full3d_reference.json",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage3_p3_h5/full3d_closure_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage3_p3_h5/phaseC1_full3d_assembly_summary.json",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage3_p3_h5/phaseC_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage4_p4_h5/calibration_summary.json",
         "benchmarks/cases/README.md",
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/run_task033_full3d_watchdog.py",

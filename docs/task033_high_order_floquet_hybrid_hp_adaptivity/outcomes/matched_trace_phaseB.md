@@ -1,5 +1,31 @@
 # Task033 Phase B：p3/p4 matching-interface 迹组件
 
+## p4 四模态补测（覆盖原“两模态基础组件”范围限制）
+
+review v3/v4 要求的 p4 四维近简并块已经在 clean source
+`95921ab76e39eb1a7c5b3321b93d36939afb4075` 上完成 MPI1/MPI4：
+
+| 指标 | MPI1 | MPI4 |
+|---|---:|---:|
+| mode count / selected QEP indices | 4 / `[4,5,6,7]` | 4 / `[4,5,6,7]` |
+| near-degenerate block size | 4 | 4 |
+| Gram rank | 4/4 | 4/4 |
+| coefficient round-trip | `2.434e-15` | `8.967e-16` |
+| right reconstruction residual | `9.532e-16` | `4.488e-16` |
+| block normalization error | `1.304e-11` | `2.345e-13` |
+| minimum principal cosine | 1.0 | 0.9999999999999994 |
+
+MPI1/MPI4 最大 beta assignment 相对差为 `5.226e-13`；紧凑身份、右重构、左
+Petrov、principal-angle/block invariant、无全向量 gather、无 dense interface
+square 全部通过。
+
+原始 Gram condition/奇异值在近简并块内会随 MPI 允许的基底旋转而改变，因此只报告
+而不作为跨 MPI 等值 Gate。聚合器改为复算满秩、Petrov round-trip、精确块身份、
+beta assignment、block normalization 与主角不变量；这不是放宽误差阈值，而是去掉
+非基底不变量的错误判据。轻量摘要见
+`records/stage2_matched_trace/p4_four_mode_summary.json`。下文保留原两模态 Phase B
+记录作为基础回归。
+
 ## 1. 结论
 
 `review_report_v2.md` 批准的 Phase B 最小矩阵已经执行完毕：

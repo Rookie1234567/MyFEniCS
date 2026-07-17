@@ -1,5 +1,25 @@
 # Task033 阶段测试摘要
 
+## 2026-07-17 Phase C1 / p4 补测
+
+| 验证 | 结果 |
+|---|---|
+| focused Task33 unit contracts | 31 passed，36 subtests passed |
+| Ruff / compileall / diff check | pass |
+| p3 full3D descriptor → NPZ SHA binding | pass |
+| p4 四模态 dirty-source smoke | 数值项全过；仅 source identity 按预期 fail |
+| p4 四模态 formal MPI1/MPI4 | pass / pass，无 failed check |
+| p4 四模态 aggregate | `p4_four_mode_matched_trace_pass` |
+| p3 Hybrid M160 → p3 full3D | `measured_shard_pass`，16 个 Gate 全过 |
+| p4 assembly-only | 12.616 GiB 受控终止；OOM=false；未进入 factor/solve |
+| 最终 Task33 合同回归 | 78 passed |
+| tracked JSON 与 raw SHA256 | 3 份摘要可解析；9 个关键 raw 文件逐一匹配 |
+| 最终 evidence checker | planning mode `evidence_verified` |
+
+四模态 smoke 发现原两模态 MPI 聚合器的 raw Gram 谱等值判据不是近简并块的
+基底不变量；修正后新增单元测试覆盖 4×4 pass 与伪造 block-size fail-closed。
+正式 MPI1/MPI4 beta assignment 最大相对差 `5.226e-13`。
+
 ## 1. 源码冻结前验证
 
 正式计算源码 `6613f94b91ebc77eb50e74086475c67df46236f6` 在 campaign 前完成：
@@ -76,13 +96,13 @@ host 环境直接导入 Task032 DOLFINx tests 会缺少 `dolfinx/ufl`；相同 1
 `source_clean_verified=true`、`source_stable_during_run=true`。聚合器绑定 clean source
 `9ac29db45b387d4590de084710abe2cc38b25ffe`，没有重跑 Case090、QEP36 或目标 Hybrid。
 
-## 5. Phase C p3/h5 验证
+## 5. Phase C p3/h5 初始漏斗验证（历史阶段）
 
 | 验证 | 结果 |
 |---|---|
 | Ruff：watchdog、Phase C0/aggregate、tests | pass |
 | Task33 QEP/Phase B/watchdog/funnel/Phase C focused group | 55 passed，1 skipped |
-| Phase C aggregate 正向合同 | Hybrid component closed，whole Phase C 保持 false |
+| Phase C aggregate 正向合同 | 当时 Hybrid component closed，whole Phase C 保持 false；已被顶部 Phase C1 闭合记录推进 |
 | mixed source SHA 负向合同 | 按预期 fail closed |
 | full3D factor-chain veto 合同 | 第二中心与上界失败时保持 `not_run_by_memory_gate` |
 | live effective ceiling 缩放 | 13 GiB/现场 host available 下不放宽限值 |

@@ -109,13 +109,14 @@ state immediately before execution. No large numerical case was launched during 
 | Case090 | 144 PDE complete；all core gates pass | stage summary + ignored aggregate hash |
 | QEP MPI1 | 36/36 measured shards pass | stage summary + ignored watchdog index hash |
 | Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 共 5 条 pass | tracked Phase B aggregate + raw shard SHA256 |
-| Phase C p3/h5 C0 | full3D memory-gated；四个 Hybrid candidates eligible | effective ceiling 12.8433 GiB；swap 0 |
+| Phase C p3/h5 C0 | 历史预测曾 memory-gate full3D；随后由用户授权实测取代 | effective ceiling 12.8433 GiB；旧 C0 身份保留 |
 | Phase C p3/h5 Hybrid | M80/M120/M160 + augmented M160 pass | `b636444...`；2.278–4.148 GiB |
-| Phase C p3/h5 full3D | `not_run_by_memory_gate` | centers 6.445/15.031 GiB；upper 18.038 GiB |
-| swap/watchdog | zero swap；authority readable | retained watchdog summaries |
+| Phase C p3/h5 same-degree closure | direct + Hybrid M160 的 16 项 Gate pass | direct 7.781 GiB；Hybrid 2.618 GiB；两者 zero swap |
+| Phase C p4/h5 | 四模态组件 pass；target resource-gated | full3D assembly 12.616 GiB controlled stop；Hybrid upper 42.594 GiB |
+| swap/watchdog | p3 formal positives zero swap；p4 calibration fail-closed | p4 cgroup swap 0，但 `pswpout` +4 pages |
 | campaign stop | user scope reduction at p1/h3/M160 middle-plane reconstruction | `summary.md`；not a formal solver record |
 
-Phase C 使用显式 `--memory 13g --memory-swap 13g` 容器。C0 读取的 host available
-为 12.8433 GiB、container current 为 0.0110 GiB，pswpin/pswpout 为 0；因此没有
-沿用 Phase 0 的 13.6485 GiB 默认快照。四条正式记录的 source 前后状态均为空，
-并包含 nonignored untracked 检查。
+Phase C 使用显式 `--memory 13g --memory-swap 13g` 容器。旧 C0 读取的 host
+available 为 12.8433 GiB、container current 为 0.0110 GiB，pswpin/pswpout
+为 0；因此没有沿用 Phase 0 的 13.6485 GiB 默认快照。该段只描述历史 C0，
+当前 p3/p4 决策以各自的新 watchdog 实测为准。

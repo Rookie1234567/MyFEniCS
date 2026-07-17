@@ -1,5 +1,15 @@
 # Task033 阶段负结果与延期边界
 
+## 2026-07-17 更新
+
+- 旧的“p3/h5 full3D 未运行”已经被新实测取代，不再是当前负结果。p3 direct
+  以 7.781 GiB、零 cgroup swap 完成，并与 Hybrid 同阶闭合。
+- p4 四模态 matched-trace 不是负结果；MPI1/MPI4 正式通过。
+- 当前新的可复现负结果是 p4/h5 target 资源门禁：assembly-only 在 base
+  155,205,040 NNZ、DtN 插入后达到 12.616 GiB 并受控终止，未进入 factor/solve。
+- p4 Hybrid M160 仍被其独立 37.038/42.594 GiB 中心/上界拒绝。没有用 p3 的低峰值
+  反向覆盖 p4 自己的候选 Gate。
+
 | 项目 | 观测 | 解释 | 处理 |
 |---|---|---|---|
 | QEP legacy 全阶 aggregate | 未资格化 | p1 解析趋势/分支闭合失败，p2 h5→h3 beta drift `0.26087 > 0.25` | 保留真实低阶负结果；p3/p4 独立资格不受阻塞 |
@@ -7,9 +17,11 @@
 | QEP MPI2/4 timeout negatives | 1 秒 clean timeout | 有意的合同负向测试 | 已由 p3/p4 h3 四个正向 MPI2/4 pass 补足身份 |
 | p1/h5 Hybrid funnel | M160 仅有每方向 120 个有限有效模态 | singular-K2 数值无穷根导致 modal capacity 不足 | 作为已测负结果保留，不继续完整 p/h 矩阵 |
 | p3/p4 matched trace | Phase B 五条最小 shard 已通过并获 review v3 接受 | 只验证 matching-interface 迹、投影、积分和 MPI，不是目标求解 | Phase C Hybrid 在新 clean SHA 独立实测 |
-| p3/h5 full3D direct | centers `6.445 / 15.031 GiB`，upper `18.038 GiB` | 第二中心与上界超过现场缩放 Gate | `not_run_by_memory_gate`；未强跑 |
-| p3/h5 Hybrid same-degree reference | 不存在 | Case080 full3D 只有 p2；本轮 p3 full3D 被 C0 阻止 | Hybrid component 可通过，但 whole Phase C 不通过 |
-| p4 Hybrid | 未运行 | 用户缩小范围 | `deferred_by_user_scope` |
+| p3/h5 full3D 旧 C0 | centers `6.445 / 15.031 GiB`，upper `18.038 GiB` | 历史预测曾超过现场缩放 Gate | 已由用户授权实测取代；不得继续写成当前 `not_run` |
+| p3/h5 Hybrid same-degree reference | direct 7.781 GiB；16 项闭合 Gate 全过 | 真实同阶 reference 已建立 | whole Phase C 数值闭合通过；仍待独立复审 |
+| p4 四模态 matched trace | MPI1/MPI4、4×4 Gram 与块不变量全过 | 近简并子空间需块跟踪而非逐向量比较 | 正结果；不再阻塞 p4 候选校准 |
+| p4/h5 full3D target | 12.616 GiB 受控终止；`pswpout` +4 pages | 自身 assembly-only 资源 Gate 失败 | 未进入 factorization/solve；不重复装配 |
+| p4/h5 Hybrid M160 | center/upper `37.038 / 42.594 GiB` | 自身预测远超当前主机预算 | `not_run_by_memory_gate` |
 | adaptive/graded/buffer/1 TiB | 未运行 | 用户缩小范围 | `deferred_by_user_scope` |
 
 ## 不能升级的结论
@@ -17,7 +29,9 @@
 - Case090 p3/p4 通过，不等于目标光栅 p3/p4 Hybrid/full3D 等价；
 - p3/p4 QEP component 通过，不等于 p1–p4 legacy 全阶 aggregate 通过；
 - p3/p4 matched-trace Phase B 通过，不等于目标光栅 p3/p4 Hybrid/full3D 等价；
-- p3/h5 Hybrid M 漏斗和 augmented/minimal 等价通过，不等于 Hybrid/full3D 等价；
+- p3/h5 的旧 M 漏斗和 augmented/minimal 记录单独看不等于 Hybrid/full3D
+  等价；本轮新增的同阶 direct/Hybrid、R/T/A 与五平面对照已另行完成数值闭合，
+  但仍不等于 h 收敛或连续解误差证明；
 - Task032 p2 同网格一致性，不等于连续解已网格收敛；
 - 当前阶段没有 0.7 nm PDE、材料转移验证或 1 TiB 可行性证明；
 - 已终止的完整 campaign 没有生成 final outcome、21-role manifest 或 publication descriptor。
@@ -26,5 +40,5 @@
 
 Phase B 修改了 `modal_trace_projection.py`。Phase C 将 Case090 复用范围严格收窄为
 `case090_pure3d_floquet_core`，并把该文件明确记为 component-disjoint numerical
-change；目标 Hybrid 在新 clean SHA 独立实测。旧 Case090 仍不是当前 p3/h5 full3D
-reference，full3D 缺口只能由未来通过新 C0 的真实同阶运行补齐。
+change；目标 Hybrid 在新 clean SHA 独立实测。旧 Case090 本身仍不是 p3/h5
+full3D reference，但该缺口已经由本轮真实同阶 direct 运行补齐。

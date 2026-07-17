@@ -1,5 +1,39 @@
 # Task033 Phase C：p3/h5 目标 Hybrid 与 full3D Gate
 
+## Phase C1 后续结论（覆盖本文件下方的历史 C0 停止状态）
+
+review v4 批准 assembly-only；随后用户明确允许受控 p3 full solve，并允许
+swap 作为可用后备。实测并未使用 swap：
+
+```text
+p3/h5 full3D direct = full3d_reference_pass
+memory authority = 7.781337738 GiB
+cgroup swap peak = 0
+true residual = 5.441900114e-12
+R/T/A = 0.001090107012 / 0.600622478293 / 0.398287414695
+```
+
+在 clean source `95921ab76e39eb1a7c5b3321b93d36939afb4075` 上只重跑
+Schur-minimal M160，并绑定上述 direct NPZ；没有重复 M80、M120 或 augmented：
+
+| 指标 | Hybrid | full3D | Hybrid − full3D |
+|---|---:|---:|---:|
+| R | 0.001090095685 | 0.001090107012 | `-1.133e-8` |
+| T | 0.600622368221 | 0.600622478293 | `-1.101e-7` |
+| A(balance) | 0.398287536094 | 0.398287414695 | `+1.214e-7` |
+| A(volume) | 0.398287536096 | 0.398287414695 | `+1.214e-7` |
+
+Hybrid true residual 为 `2.343e-12`，能量闭合误差为 `1.885e-12`，内存权威值
+2.618 GiB、零 swap。10/30/60/90/110 nm 五个截面全部完成同源比较；最大
+E/H 相对 L2 为 `1.100e-5 / 1.098e-4`。16 项 Gate 全过。因此 p3/h5
+same-degree Hybrid/full3D 的数值闭合已完成，状态从
+`HYBRID_COMPONENT_ACCEPTED_FULL3D_REFERENCE_OPEN` 更新为
+`same_degree_p3_h5_hybrid_full3d_numerical_closure_pass`，等待独立复审。
+
+详细轻量证据见 `records/stage3_p3_h5/full3d_reference.json` 与
+`records/stage3_p3_h5/full3d_closure_summary.json`。下文保留为此前 C0/Phase C
+执行历史，不能再作为当前停止状态。
+
 ## 1. 结论先行
 
 Phase C 的准确分类是：

@@ -1,5 +1,20 @@
 # Task033 阶段交付文件
 
+## 2026-07-17 Phase C1 / p4 后续增量
+
+| 文件 | 作用 |
+|---|---|
+| `benchmarks/run_task032_phase6_augmented.py` | 接入 p3/h5 同阶 full3D reference |
+| `benchmarks/run_task033_full3d_watchdog.py` | p3/p4 assembly/full-solve 监控；p4 强制 p3 与四模态双前置 |
+| `benchmarks/run_task033_matched_trace.py` | p4 `[4,5,6,7]` 四模态近简并块实测 |
+| `benchmarks/task033_matched_trace_qualification.py` | 四模态 fail-closed 聚合与基底无关 MPI block invariant |
+| `benchmarks/run_task033_memory_watchdog.py` | 审计 Case090-core-compatible descendant 路径 |
+| `records/stage2_matched_trace/p4_four_mode_summary.json` | p4 四模态 MPI1/MPI4 轻量证据 |
+| `records/stage3_p3_h5/full3d_reference.json` | p3 direct NPZ 固定描述符 |
+| `records/stage3_p3_h5/full3d_closure_summary.json` | p3 同阶 Hybrid/full3D 闭合 |
+| `records/stage4_p4_h5/calibration_summary.json` | p4 受控内存负校准与停止理由 |
+| `response_v5.md` | 对 review v4 后续执行的正式回复 |
+
 ## 源码与测试
 
 高阶 PDE/QEP measurement 实现冻结在正式计算源码
@@ -16,7 +31,13 @@ Phase C 候选级 Gate 与数值运行冻结在
 `b636444b693a932988b6d5d69f7e44e6a8cddb38`。该提交新增 C0/aggregate，
 并把 Case090 复用语义收窄为 pure-3D core compatible descendant；Phase B 的
 Hybrid trace 数值改动显式记录为 component-disjoint。四条 Hybrid 正式记录使用
-同一 clean source，full3D 没有因文档交付而补跑。
+同一 clean source；在该历史阶段 full3D 没有因文档交付而补跑。
+
+Phase C1 实现与 p3 Hybrid 闭合冻结在
+`95921ab76e39eb1a7c5b3321b93d36939afb4075`。用户授权的 p3 full3D reference
+来自 `bd828f24dc1546263210d73d08bf7bc16ba8a129`，随后由 `95921ab...` 上的
+Hybrid M160 绑定 NPZ SHA 并完成 16 项同阶闭合 Gate。p4 四模态正式记录和
+p4 assembly-only 负校准也绑定 `95921ab...`。
 
 ## 本轮新增或更新
 
