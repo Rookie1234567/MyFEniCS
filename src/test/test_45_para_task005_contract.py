@@ -6,6 +6,10 @@ from pathlib import Path
 import numpy as np
 
 from benchmarks.neural_pc.screen_task005_linear import _structured_synthetic
+from benchmarks.neural_pc.screen_task005_nonlinear import (
+    _build_mlp,
+    _numpy_forward,
+)
 from src.solvers.local_slab_solver import LocalCsrOperator
 
 
@@ -98,3 +102,19 @@ def test_task005_structured_synthetic_pairs_use_true_operator_action() -> None:
         "high_frequency_randomized",
         "real_error_pod_combination",
     }
+
+
+def test_task005_numpy_nonlinear_export_matches_torch() -> None:
+    import torch
+
+    torch.manual_seed(23)
+    packed = np.random.default_rng(29).standard_normal((5, 8)).astype(
+        np.float32
+    )
+    for activation in ("tanh", "relu", "gelu"):
+        model = _build_mlp(4, 7, 3, activation).eval()
+        expected = model(torch.from_numpy(packed)).detach().numpy()
+        actual = _numpy_forward(
+            model, packed, activation=activation, base=None
+        )
+        np.testing.assert_allclose(actual, expected, rtol=2e-6, atol=2e-6)
