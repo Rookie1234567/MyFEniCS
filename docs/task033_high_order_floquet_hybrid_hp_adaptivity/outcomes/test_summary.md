@@ -75,3 +75,24 @@ host 环境直接导入 Task032 DOLFINx tests 会缺少 `dolfinx/ufl`；相同 1
 `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc`，并记录
 `source_clean_verified=true`、`source_stable_during_run=true`。聚合器绑定 clean source
 `9ac29db45b387d4590de084710abe2cc38b25ffe`，没有重跑 Case090、QEP36 或目标 Hybrid。
+
+## 5. Phase C p3/h5 验证
+
+| 验证 | 结果 |
+|---|---|
+| Ruff：watchdog、Phase C0/aggregate、tests | pass |
+| Task33 QEP/Phase B/watchdog/funnel/Phase C focused group | 55 passed，1 skipped |
+| Phase C aggregate 正向合同 | Hybrid component closed，whole Phase C 保持 false |
+| mixed source SHA 负向合同 | 按预期 fail closed |
+| full3D factor-chain veto 合同 | 第二中心与上界失败时保持 `not_run_by_memory_gate` |
+| live effective ceiling 缩放 | 13 GiB/现场 host available 下不放宽限值 |
+| 正式 Schur M80/M120/M160 | 3/3 `measured_shard_pass` |
+| 正式 augmented vs minimal M160 | `measured_shard_pass`，全部等价 Gate 通过 |
+| funnel | `qualified`，M160 selected，M240 not required |
+| source | 四条记录同一 `b636444...`，前后完整 nonignored worktree clean |
+| memory/swap | 2.278/2.492/2.641/4.148 GiB；全部 no swap |
+
+第一次 C0 因 Windows bind mount 的 CRLF 视图导致容器 Git 把文件误判为 dirty，
+在求解前按预期拒绝。进程级 `core.autocrlf=true` 统一视图后，正式 C0 仍使用相同
+完整 source Gate；没有把失败记录改写成 pass。原始证据与 SHA-256 见 tracked
+`records/stage3_p3_h5/phaseC_summary.json`。

@@ -1,6 +1,6 @@
 # 项目开发进度：Task000–Task033
 
-## 2026-07-17：Task033 Phase B matching-trace 收口
+## 2026-07-17：Task033 Phase C p3/h5 部分收口
 
 | 项目 | 结果 |
 |---|---|
@@ -8,9 +8,10 @@
 | QEP p3/p4 | Phase A p3/p4 组件与 selected MPI identity 通过；legacy 全阶 aggregate 保留 p1/p2 负结果 |
 | matching trace p3/p4 | Phase B p2 MPI1、p3/p4 MPI1/MPI4 五条通过；积分加阶 delta 0；无 full gather/dense square |
 | Hybrid/full3D | 复用 Task032 p2/h5、p2/h3 同阶同网格对照；行数降低 65%–69%，NNZ 降低约 59% |
-| p3/p4 Hybrid 同阶对照 | 尚无；不得跨阶使用 p2 reference |
+| p3/h5 Hybrid | M80/M120/M160 漏斗与 augmented/minimal M160 通过；2.278–4.148 GiB，零 swap |
+| p3/p4 Hybrid 同阶对照 | 尚无；p3/h5 full3D C0 为 `not_run_by_memory_gate`，不得跨阶使用 p2 reference |
 | adaptive/graded/buffer/1 TiB | 2026-07-17 用户缩小范围后延期 |
-| source | Stage1 `6613f94...`；Phase A `bb830ba...`；Phase B measurement `bd7a602...`；aggregate `9ac29db...` |
+| source | Stage1 `6613f94...`；Phase A `bb830ba...`；Phase B `bd7a602...`/`9ac29db...`；Phase C `b636444...` |
 
 详细结论见
 [`task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md`](task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md)。
@@ -56,7 +57,7 @@ Task029 status = diagnostic_success; review V2 closed; merged to master at bfb65
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
 Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
-Task033 status = Phase B p3/p4 matched trace completed; Phase C waiting for review; adaptivity deferred
+Task033 status = p3/h5 Hybrid component closed; full3D memory-gated; whole Phase C not passed; adaptivity deferred
 ```
 
 ## 1.1 2026-07-15 最新更新

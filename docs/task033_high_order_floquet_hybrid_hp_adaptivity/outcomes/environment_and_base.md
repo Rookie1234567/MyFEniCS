@@ -12,6 +12,11 @@
 > Phase B matching-trace 五条 shard 绑定 clean source
 > `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc`；独立聚合器绑定 clean source
 > `9ac29db45b387d4590de084710abe2cc38b25ffe`。镜像 digest 与上文一致。
+>
+> Phase C p3/h5 C0 与四条 Hybrid 正式记录绑定 clean source
+> `b636444b693a932988b6d5d69f7e44e6a8cddb38`；source Gate 包含 nonignored
+> untracked paths。Case090 复用仅表示 pure-3D core compatible，不表示
+> `modal_trace_projection.py` 没有变化。
 
 ## 1. 执行身份
 
@@ -26,6 +31,7 @@
 | Phase A source SHA | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | clean selected-QEP execution source | measured | watchdog source gate |
 | Phase B measurement SHA | `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc` | clean matching-trace execution source | measured | five shard source gates |
 | Phase B aggregate SHA | `9ac29db45b387d4590de084710abe2cc38b25ffe` | clean fail-closed aggregate source | measured | aggregate tool identity |
+| Phase C numerical SHA | `b636444b693a932988b6d5d69f7e44e6a8cddb38` | clean p3/h5 C0 and Hybrid execution source | measured | four watchdog source gates |
 | local `master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | branch tip | measured | `git rev-parse master` |
 | `origin/master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | remote-tracking tip | measured | `git rev-parse origin/master` |
 | origin fetch/push | `https://github.com/Rookie1234567/MyFEniCS` | remote URL | measured | `git remote -v` |
@@ -103,6 +109,13 @@ state immediately before execution. No large numerical case was launched during 
 | Case090 | 144 PDE complete；all core gates pass | stage summary + ignored aggregate hash |
 | QEP MPI1 | 36/36 measured shards pass | stage summary + ignored watchdog index hash |
 | Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 共 5 条 pass | tracked Phase B aggregate + raw shard SHA256 |
-| Phase C target full3D/Hybrid | not started | wait for Phase B review |
+| Phase C p3/h5 C0 | full3D memory-gated；四个 Hybrid candidates eligible | effective ceiling 12.8433 GiB；swap 0 |
+| Phase C p3/h5 Hybrid | M80/M120/M160 + augmented M160 pass | `b636444...`；2.278–4.148 GiB |
+| Phase C p3/h5 full3D | `not_run_by_memory_gate` | centers 6.445/15.031 GiB；upper 18.038 GiB |
 | swap/watchdog | zero swap；authority readable | retained watchdog summaries |
 | campaign stop | user scope reduction at p1/h3/M160 middle-plane reconstruction | `summary.md`；not a formal solver record |
+
+Phase C 使用显式 `--memory 13g --memory-swap 13g` 容器。C0 读取的 host available
+为 12.8433 GiB、container current 为 0.0110 GiB，pswpin/pswpout 为 0；因此没有
+沿用 Phase 0 的 13.6485 GiB 默认快照。四条正式记录的 source 前后状态均为空，
+并包含 nonignored untracked 检查。

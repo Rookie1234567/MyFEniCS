@@ -1,8 +1,9 @@
 # 高阶 H(curl) Floquet 与 Hybrid h/p 可行性
 
 > 观测状态（2026-07-17）：Case090 证明 p3/p4 直接 3D Floquet 核心正确；QEP
-> p3/p4 分片通过但全局跟踪 aggregate 未资格化；Hybrid/full3D 仍只在 p2/h5、p2/h3
-> 有同阶同网格对照。本文中的 adaptive/graded/buffer 部分保留为延期理论与实现入口。
+> p3/p4 组件通过但 legacy 全阶 aggregate 因 p1/p2 负结果未资格化；p3/h5 Hybrid
+> M 漏斗与路径锚点已通过，但同阶 full3D 被内存 Gate 阻止。本文中的
+> adaptive/graded/buffer 部分保留为延期理论与实现入口。
 
 ## 0. 文档身份
 
@@ -184,6 +185,20 @@ Task033 的高阶 Hybrid anchor 只用于 current-scale 代数与物理对照：
 
 截断误差与 FE 离散误差必须分开：先在固定 p/h 上用 M 漏斗确认 modal truncation，再在各自通过截断 Gate 的 M 上比较 p/h。
 
+Phase C 的实测说明了这一区分为何必要。固定 p3/h5 时，M120→M160 的最大 R/T/A
+绝对差为 `7.216e-14`，显著逐阶复振幅相对差为 `1.925e-10`，所以模态截断在 M160
+闭合；augmented 与 Schur-minimal 的 modal coefficient/local-field 误差约
+`1e-13`，所以 Hybrid 路径代数等价也闭合。但 p3/h5 full3D 没有通过 C0，
+selected-plane E/H 的同阶参考误差不可得。因此：
+
+```text
+modal truncation pass
++ Hybrid path equivalence pass
+!= Hybrid/full3D discretization equivalence pass
+```
+
+这种负缺口不能用更高 M 修复，也不能用 p2 full3D reference 跨阶替代。
+
 ---
 
 ## 7. 固定 p 与 conforming graded h
@@ -328,7 +343,10 @@ warning 和 controlled termination 必须实时使用这个最大值，而不只
 5. equal-accuracy：通过物理 Gate 后的 p/h/graded/buffer 资源比较；
 6. task classification：统一 Case090/091 checker 在同一 clean SHA 上给出结论。
 
-所有正式 large record 必须来自 tracked-source-clean commit。ignored artifacts 可保存 raw log、VTU、mesh、eigenvector、matrix、factor 和 memory timeline；tracked records 只保留紧凑摘要、SHA256、单位、baseline 和 evidence path。
+所有正式 large record 必须来自完整 nonignored worktree clean 的 commit，既检查
+tracked changes，也检查 nonignored untracked paths。ignored artifacts 可保存 raw
+log、VTU、mesh、eigenvector、matrix、factor 和 memory timeline；tracked records
+只保留紧凑摘要、SHA256、单位、baseline 和 evidence path。
 
 ---
 

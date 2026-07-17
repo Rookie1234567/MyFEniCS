@@ -1,8 +1,9 @@
 # Task33 高阶 Floquet、Hybrid h/p 与自适应研究入口
 
 > 2026-07-17 阶段更新：Case090 p3/p4、QEP Phase A 与 matching-trace Phase B
-> 已完成；Hybrid/full3D 对比仍只资格化 Task032 p2。Phase C、自适应、buffer 与
-> 1 TiB 阶段尚未启动。
+> 已完成；Phase C p3/h5 Hybrid M80/M120/M160 与 augmented M160 已通过，
+> 同阶 full3D 因内存 Gate 未运行。p3/h3、p4 target、自适应、buffer 与 1 TiB
+> 阶段尚未启动。
 
 本页保留为 Task33 的操作与恢复入口。完整原始任务边界见
 [`../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md)，
@@ -14,7 +15,7 @@
 | 项目 | 当前合同 |
 |---|---|
 | ordinary default | 不变；Task33 runner 全部显式 opt-in，不修改 `ACTIVE_PYCHARM_PRESET` |
-| 当前可提交证据 | Case090 144 PDE、QEP Phase A、Phase B 五条 matched-trace shard/aggregate、Task032 p2 对照 |
+| 当前可提交证据 | Case090 144 PDE、QEP Phase A、Phase B matched-trace、Task032 p2 对照、Phase C p3/h5 Hybrid component |
 | formal evidence | 本阶段不是原任务书的 21-role closure；完整 manifest 仍是 `NOT_RUN` |
 | 内存 | host hard budget 为 14 GiB；swap 禁止；预测或现场 Gate 不通过就不启动 |
 
@@ -47,14 +48,14 @@ function Invoke-Task33Docker {
 }
 ```
 
-Planning 命令不要求 clean tree。正式运行前必须重新取 SHA，并且只检查 tracked
-源码；ignored artifact 不会破坏该检查：
+Planning 命令不要求 clean tree。正式运行前必须重新取 SHA，并检查所有 tracked
+改动与 nonignored untracked paths；ignored artifact 不会破坏该检查：
 
 ```powershell
 $CleanSha = (git rev-parse HEAD).Trim().ToLowerInvariant()
-$TrackedChanges = @(git status --short --untracked-files=no)
-if ($CleanSha.Length -ne 40 -or $TrackedChanges.Count -ne 0) {
-    throw "Formal Task33 run requires one committed tracked-source-clean SHA."
+$WorktreeChanges = @(git status --short --untracked-files=normal)
+if ($CleanSha.Length -ne 40 -or $WorktreeChanges.Count -ne 0) {
+    throw "Formal Task33 run requires one completely clean nonignored worktree SHA."
 }
 
 $ImageDigest = (docker image inspect $Image --format '{{.Id}}').Trim()
@@ -279,6 +280,26 @@ p3 使用相同流程，但只能在含真实 `--p3-qualified` attestation 的 r
 运行。单个 M80、普通 smoke、dirty SHA 或缺少显著衍射级/场证据都不能成为 funnel
 qualification。
 
+### 5.5 已执行的 p3/h5 Phase C0
+
+review v3 后新增 `benchmarks.run_task033_phaseC preflight`。它在任何候选启动前读取
+现场 container/host/cgroup/swap，并分别生成 full3D、M80、M120、M160 和 augmented
+M160 的两中心预测。正式 SHA `b636444...` 的结果是：
+
+```text
+full3D centers = 6.445 / 15.031 GiB
+full3D upper = 18.038 GiB
+full3D = not_run_by_memory_gate
+Hybrid Schur-minimal M80/M120/M160 = launch_eligible
+Hybrid augmented M160 = launch_eligible
+```
+
+因此只按顺序运行四个安全 Hybrid 候选。漏斗选定 M160，M240 不需要。聚合命令
+`benchmarks.run_task033_phaseC aggregate` 保持
+`whole_phaseC_pass=false`；不要把 `hybrid_component_closed` 手工改成完整通过。
+tracked 结果见
+`benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json`。
+
 ## 6. Graded-h 与四个 interface buffer
 
 ### 6.1 Graded h5/h3
@@ -422,14 +443,15 @@ PowerShell，或建立调用同一 Docker 命令的 External Tool。
 |---|---|---|
 | Case090 committed record | oracle/planner/core 均为 NOT_RUN | 保留；只有 clean watchdog 三 shard 可替代 |
 | QEP legacy 全阶 aggregate | 因 p1/p2 真实负结果未资格化；p3/p4 Phase A 已通过 | 保留低阶负结果，不重跑 QEP36 或放宽阈值 |
-| Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 与独立 aggregate 通过 | 提交复审；不要在同一阶段进入 Phase C |
-| p1/p3 Hybrid funnel | 尚无正式 M80/120/160 records | 逐 shard watchdog，再用 funnel CLI |
+| Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 与独立 aggregate 通过 | review v3 已接受；保留两模态范围 |
+| p3/h5 full3D | 第二中心/上界失败，未运行 | 不强跑；新预算或低内存路径获批后重做 C0 |
+| p3/h5 Hybrid funnel | M80/120/160 与 augmented M160 通过 | 不重复；M240 不需要 |
 | adaptive h5/h3 | planning path 存在，measured compression 未提交 | 缺 same-accuracy evidence 就停止 |
 | 四 buffer + tradeoff | 参数入口存在，正式 funnel/tradeoff record 缺失 | 不从 smoke 选最优点 |
 | variable-p | fail-closed negative audit | 不自造任意 variable-p 约束系统 |
 | 1 TiB | 当前 NOT_QUALIFIED | 只用 measured compression 更新分类 |
 | unified formal manifest | committed entries 为空 | `--require-formal` 返回 2 是正确结果 |
 
-任何资源预测超过 Gate、现场可用内存不足、swap 非零、tracked source 变脏、SHA 变化、
+任何资源预测超过 Gate、现场可用内存不足、swap 非零、nonignored worktree 变脏、SHA 变化、
 watchdog 不可用或前序角色缺失时，都应停止，不得通过放宽 residual/RTA/field Gate 或
 手工编辑 record 继续推进。

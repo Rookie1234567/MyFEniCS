@@ -44,6 +44,7 @@
 | p4 Nedelec + double Floquet | experimental | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 通过且有精度收益；代价高，目标光栅 Hybrid 未资格化 |
 | p3/p4 cross-section QEP | experimental | Task033 Phase A | p3/p4 组件与 selected MPI identity 已资格化；p4 只具有 compact Fourier subspace 证明；legacy p1–p4 aggregate 因 p1/p2 负结果未资格化 |
 | p3/p4 matching-interface trace/projection | experimental | Task033 Phase B，p2 MPI1 + p3/p4 MPI1/MPI4 | 3D→2D 迹、右重构、左 Petrov、积分加阶、MPI compact identity、no-gather/no-dense 通过；目标 Hybrid/full3D 未资格化 |
+| p3/h5 Hybrid modal funnel | experimental | Task033 Phase C，MPI4，M80/M120/M160 | Schur-minimal 漏斗与 augmented/minimal M160 等价通过；2.278–4.148 GiB，零 swap；同阶 full3D 被内存 Gate 阻止，不能声明 Hybrid/full3D 等价 |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
 | auxiliary DtN | recommended | ordinary Stage4 | 稀疏增广系统 |
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |

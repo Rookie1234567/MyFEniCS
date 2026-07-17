@@ -2,7 +2,8 @@
 
 > 阶段状态（2026-07-17）：高阶 p3/p4、Case090、QEP Phase A 与 matching-trace
 > Phase B 已完成；legacy 全阶 QEP aggregate 仍因 p1/p2 负结果未资格化。Phase C
-> 目标 Hybrid、graded-h、equal-accuracy 和 buffer 路径尚未启动。
+> p3/h5 Hybrid 组件已通过，full3D 被内存 Gate 阻止；graded-h、equal-accuracy
+> 和 buffer 路径尚未启动。
 
 ## 调用链
 
@@ -89,6 +90,14 @@ projection 和 coefficient round-trip。切向值通信只传两个 complex128 �
 每个新 degree 的 h5 anchor 运行 M80/M120/M160；若 M120--M160 不满足 R/T/A 和显著衍射级复振幅 Gate，再考虑 M240。`task033_hybrid_funnel.py` 拒绝单个 M80、dirty SHA、缺少外部 watchdog、缺少 diffraction order 或缺少物理字段的摘要。
 
 小规模 augmented direct 只用于与 Modal-Schur 代数锚定；主求解路径保持 `modal-schur-memory-minimal`。p4 只有 Case090/QEP/trace 通过、资源预测安全且 p3 已显示收益时才会运行 Hybrid。
+
+Phase C 新增 `task033_phaseC.py` 和 `run_task033_phaseC.py`。前者构造候选级 C0、
+验证 preflight 身份并聚合 partial chain；后者只提供 `preflight` 与 `aggregate`
+两个入口，不直接求解 PDE。正式 p3/h5 记录中，full3D 的 factor-payload 中心
+`15.031 GiB` 与 upper `18.038 GiB` 失败，因此保持 not-run；三个 Schur-minimal
+shard 和一个 augmented anchor 在同一 `b636444...` clean SHA 上通过。聚合器即使
+看到全部 Hybrid pass，也固定 `whole_phaseC_pass=false`，避免组件成功掩盖 reference
+缺口。
 
 ## graded-h 与 buffer
 

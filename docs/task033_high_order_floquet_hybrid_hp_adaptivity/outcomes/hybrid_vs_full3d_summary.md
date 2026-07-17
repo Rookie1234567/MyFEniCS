@@ -49,6 +49,14 @@ direct reference 与 Hybrid memory runner 的源码提交、工作负载和遥�
 
 ## 5. 高阶边界
 
-p3/h5/M160 曾有一个 clean-reference-disabled 的诊断运行，残差约 `2.37e-12`，但它没有
-同阶 full3D reference，且不是本阶段正式 aggregate。p4 没有目标光栅 Hybrid 全链路记录。
-因此这里只将 Hybrid/full3D 对比收口在 p2。
+Phase C 已用 clean source `b636444...` 正式完成 p3/h5 的 Schur-minimal
+M80/M120/M160 漏斗与 augmented/minimal M160 锚点。M160 residual 为
+`2.277e-12`，memory authority 为 `2.641 GiB`；M120→M160 最大 R/T/A 差为
+`7.216e-14`。这替代了旧的 clean-reference-disabled 诊断身份，证明 p3/h5
+Hybrid 组件和两条 Hybrid 路径在当前尺度上成立。
+
+但 candidate-specific C0 对 p3/h5 full3D 得到 `6.445 / 15.031 GiB` 两中心和
+`18.038 GiB` upper，超过现场 Gate，因此 full3D 记录未生成。p3 表中没有可填写的
+rows/NNZ、逐阶、selected-plane E/H 或 R/T/A reference 差，whole Phase C 保持
+未通过。p4 没有目标光栅 Hybrid 全链路记录。因此 Hybrid/full3D 的正式离散对比仍
+只收口在 p2，p3 只新增 Hybrid component evidence。

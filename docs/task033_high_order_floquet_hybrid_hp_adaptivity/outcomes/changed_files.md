@@ -12,6 +12,12 @@ Phase B 的 matching-trace 实测冻结在
 `ModalTraceProjection` 增加可选显式积分阶次和切向值通信字节遥测，普通默认调用不变。
 远程可审计聚合器冻结在 `9ac29db45b387d4590de084710abe2cc38b25ffe`。
 
+Phase C 候选级 Gate 与数值运行冻结在
+`b636444b693a932988b6d5d69f7e44e6a8cddb38`。该提交新增 C0/aggregate，
+并把 Case090 复用语义收窄为 pure-3D core compatible descendant；Phase B 的
+Hybrid trace 数值改动显式记录为 component-disjoint。四条 Hybrid 正式记录使用
+同一 clean source，full3D 没有因文档交付而补跑。
+
 ## 本轮新增或更新
 
 | 类别 | 文件 |
@@ -22,11 +28,16 @@ Phase B 的 matching-trace 实测冻结在
 | Phase B 实现 | `src/coupling/modal_trace_projection.py`、`benchmarks/run_task033_matched_trace.py` |
 | Phase B 资格判定 | `benchmarks/task033_matched_trace_qualification.py`、`src/test/test_66_task033_matched_trace_qualification.py` |
 | Phase B 结果与回复 | `outcomes/matched_trace_phaseB.md`、`response_v3.md` |
+| Phase C 实现 | `benchmarks/task033_phaseC.py`、`benchmarks/run_task033_phaseC.py` |
+| Phase C watchdog hardening | `benchmarks/run_task033_memory_watchdog.py`、`benchmarks/task033_watchdog_launch.py` |
+| Phase C tests | `src/test/test_67_task033_phaseC.py`、`src/test/test_59_task033_memory_watchdog_contract.py` |
+| Phase C 结果与回复 | `outcomes/p3_h5_phaseC.md`、`response_v4.md` |
 | 方法对比 | `outcomes/hybrid_vs_full3d_summary.md` |
 | 边界与暂停点 | `outcomes/negative_results.md`、`response_v1.md` |
 | 环境/审计/测试 | `outcomes/environment_and_base.md`、`high_order_assumption_audit.md`、`memory_prediction_and_launch_decisions.md`、`test_summary.md` |
 | 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage1_high_order/stage_summary.json` |
 | Phase B 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json` |
+| Phase C 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json` |
 | Case/项目索引 | Case090/091 README、项目 README、docs/notes 索引与 roadmap |
 
 ## 明确保留不改

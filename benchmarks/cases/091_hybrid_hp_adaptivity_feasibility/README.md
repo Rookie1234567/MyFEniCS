@@ -7,13 +7,16 @@
 > 2026-07-17 Phase B 更新：p2 MPI1 与 p3/p4 MPI1/MPI4 matching-trace 最小矩阵已
 > 独立聚合通过，见
 > [`records/stage2_matched_trace/phaseB_summary.json`](records/stage2_matched_trace/phaseB_summary.json)；
-> Phase C 目标 full3D/Hybrid 仍等待复审。
+> Phase C p3/h5 已按 review v3 执行：full3D 为 `not_run_by_memory_gate`，
+> Hybrid M80/M120/M160 与 augmented M160 通过，见
+> [`records/stage3_p3_h5/phaseC_summary.json`](records/stage3_p3_h5/phaseC_summary.json)。
 
 ## 当前身份
 
 ```text
 Task033 stage1 high-order evidence = completed
-Task033 Phase B matched trace = p3/p4 passed; waiting for review
+Task033 Phase B matched trace = p3/p4 accepted
+Task033 Phase C p3/h5 = Hybrid component pass; full3D memory-gated
 original h/p adaptivity scope = deferred by user
 runtime preflight = unknown by default and fail-closed
 adaptive compression measurement = deferred
@@ -22,15 +25,16 @@ ordinary default changed = false
 ```
 
 Case091 原先冻结 Task033 的 20 项 p/h 资源矩阵、两中心内存预测和 fail-closed
-启动规则。当前阶段新增 p3/p4 高阶执行摘要和 matching-trace Phase B 记录，但没有
-完成目标 p3/p4 Hybrid、h/p 压缩或 0.7 nm 可行性证明。
+启动规则。当前阶段新增 p3/p4 高阶摘要、matching-trace Phase B 和 p3/h5 Phase C
+Hybrid 记录，但没有完成同阶 p3 full3D reference、p4 target、h/p 压缩或
+0.7 nm 可行性证明。
 
 ## 物理问题
 
 目标模型仍是 13.5 nm、50 nm × 25 nm 双周期 Hybrid FEM–Modal 问题：
 上下端保留复杂三维 Nédélec FEM，中段目标为通用 `epsilon(x,y)` 的模态传播，
-主求解路径为 `modal-schur-memory-minimal`。本 Case 不改变该物理模型，
-也不运行它；资源矩阵仅为后续受控运行提供逐项准入判断。
+主求解路径为 `modal-schur-memory-minimal`。Phase C 已在 p3/h5、10/110 nm、
+M80/M120/M160 上运行该模型；资源矩阵和 C0 仍只提供逐候选准入，不能被结果反向覆盖。
 
 ## 参数说明
 
