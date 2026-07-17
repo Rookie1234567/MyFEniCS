@@ -788,6 +788,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             rank=comm.rank,
             maximum_samples_per_slab=args.neural_capture_limit,
             sample_stride=args.neural_capture_stride,
+            sample_offset=args.neural_capture_offset,
             included_slabs=(
                 None
                 if args.neural_capture_slabs is None
@@ -1316,6 +1317,7 @@ def main() -> int:
     parser.add_argument("--neural-capture-dir")
     parser.add_argument("--neural-capture-limit", type=int, default=128)
     parser.add_argument("--neural-capture-stride", type=int, default=10)
+    parser.add_argument("--neural-capture-offset", type=int, default=0)
     parser.add_argument("--neural-capture-slabs")
     parser.add_argument("--neural-capture-raw-rhs-only", action="store_true")
     parser.add_argument("--neural-capture-batched-storage", action="store_true")
@@ -1385,6 +1387,7 @@ def main() -> int:
         "neural_capture_dir": args.neural_capture_dir,
         "neural_capture_limit": args.neural_capture_limit,
         "neural_capture_stride": args.neural_capture_stride,
+        "neural_capture_offset": args.neural_capture_offset,
         "neural_capture_slabs": args.neural_capture_slabs,
         "neural_capture_raw_rhs_only": args.neural_capture_raw_rhs_only,
         "neural_capture_batched_storage": args.neural_capture_batched_storage,

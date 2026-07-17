@@ -119,3 +119,35 @@ def test_batched_raw_loader_rejects_wrong_apply_index_shape(tmp_path) -> None:
     )
     with pytest.raises(ValueError, match="invalid batched shapes"):
         _load_raw_rhs(tmp_path)
+
+
+def test_capture_offset_produces_disjoint_schedules(tmp_path) -> None:
+    rhs = np.ones(4, dtype=np.complex128)
+    captured = []
+    for offset in (0, 1):
+        capture = LocalSlabCapture(
+            tmp_path / str(offset),
+            rank=0,
+            included_slabs={9},
+            store_local_correction=False,
+            batched_storage=True,
+            maximum_samples_per_slab=3,
+            sample_stride=2,
+            sample_offset=offset,
+        )
+        for _ in range(6):
+            capture.observe_sample(9, rhs, rhs, "ilu")
+        capture.write_manifest()
+        path = (
+            tmp_path
+            / str(offset)
+            / "rank_0000"
+            / "slab_009"
+            / "real_krylov"
+            / "samples.npz"
+        )
+        with np.load(path, allow_pickle=False) as payload:
+            captured.append(set(payload["apply_index"].tolist()))
+    assert captured[0] == {2, 4, 6}
+    assert captured[1] == {1, 3, 5}
+    assert captured[0].isdisjoint(captured[1])

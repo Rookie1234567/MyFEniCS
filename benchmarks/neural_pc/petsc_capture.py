@@ -20,6 +20,7 @@ class LocalSlabCapture:
         rank: int,
         maximum_samples_per_slab: int = 128,
         sample_stride: int = 10,
+        sample_offset: int = 0,
         included_slabs: set[int] | None = None,
         store_local_correction: bool = True,
         batched_storage: bool = False,
@@ -27,11 +28,14 @@ class LocalSlabCapture:
     ) -> None:
         if maximum_samples_per_slab < 1 or sample_stride < 1:
             raise ValueError("capture limit and stride must be positive")
+        if sample_offset < 0 or sample_offset >= sample_stride:
+            raise ValueError("capture offset must satisfy 0 <= offset < stride")
         self.root = Path(root) / f"rank_{int(rank):04d}"
         self.root.mkdir(parents=True, exist_ok=True)
         self.rank = int(rank)
         self.maximum_samples_per_slab = int(maximum_samples_per_slab)
         self.sample_stride = int(sample_stride)
+        self.sample_offset = int(sample_offset)
         self.included_slabs = (
             None if included_slabs is None else {int(value) for value in included_slabs}
         )
@@ -74,7 +78,10 @@ class LocalSlabCapture:
         seen = self.seen.get(slab_id, 0) + 1
         self.seen[slab_id] = seen
         saved = self.saved.get(slab_id, 0)
-        if seen % self.sample_stride or saved >= self.maximum_samples_per_slab:
+        if (
+            seen % self.sample_stride != self.sample_offset
+            or saved >= self.maximum_samples_per_slab
+        ):
             return
         if self.batched_storage:
             self._batched_rhs.setdefault(slab_id, []).append(
@@ -104,6 +111,7 @@ class LocalSlabCapture:
             "rank": self.rank,
             "root": str(self.root),
             "sample_stride": self.sample_stride,
+            "sample_offset": self.sample_offset,
             "maximum_samples_per_slab": self.maximum_samples_per_slab,
             "included_slabs": (
                 None if self.included_slabs is None else sorted(self.included_slabs)

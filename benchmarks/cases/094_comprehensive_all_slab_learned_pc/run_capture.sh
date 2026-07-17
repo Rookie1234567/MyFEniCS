@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 4 ]; then
-  echo "usage: run_capture.sh <T1|T2|V|H> <sample-limit> <stride> <host-clean-sha>" >&2
+if [ "$#" -ne 5 ]; then
+  echo "usage: run_capture.sh <T1|T2|V|H> <sample-limit> <stride> <offset> <host-clean-sha>" >&2
   exit 2
 fi
 
 split="$1"
 limit="$2"
 stride="$3"
-sha="$4"
+offset="$4"
+sha="$5"
 case "$split" in
   T1|T2|V|H) ;;
   *) echo "invalid split identity: $split" >&2; exit 2 ;;
@@ -66,5 +67,6 @@ mpiexec -n 4 /home/fenics/.local/bin/myfenics-python-complex \
   --neural-capture-dir "$target/raw" \
   --neural-capture-limit "$limit" \
   --neural-capture-stride "$stride" \
+  --neural-capture-offset "$offset" \
   --neural-capture-raw-rhs-only \
   --neural-capture-batched-storage
