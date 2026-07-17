@@ -1,0 +1,13 @@
+candidate,lane,recipe,rank,hidden,depth,activation,map,admissible_R4,median_ratio_s0,median_ratio_s5,median_ratio_s9,median_ratio_s15,p95_ratio_s0,p95_ratio_s5,p95_ratio_s9,p95_ratio_s15,decision
+A_D0_R32,A,D0,32,,,,linear,2/4,0.573,1.188,1.160,0.596,0.978,1.091,0.975,0.765,reject_not_R4_admissible
+A_D0_R64,A,D0,64,,,,linear,4/4,0.418,0.917,0.865,0.436,0.684,0.836,0.777,0.491,quality_runtime_pass_storage_conditional
+A_D0_R96,A,D0,96,,,,linear,4/4,0.292,0.764,0.696,0.312,0.478,0.726,0.640,0.333,reject_storage
+A_D0_R128,A,D0,128,,,,linear,4/4,0.219,0.632,0.546,0.225,0.366,0.614,0.493,0.231,reject_storage
+A_D1_R96,A,D1,96,,,,linear,4/4,0.353,0.800,0.732,0.367,0.591,0.745,0.663,0.404,reject_D1_worse_than_D0
+B_D0_R32_W64_D2_TANH_DIRECT,B,D0,32,64,2,tanh,direct,2/4,0.580,1.153,1.150,0.602,1.003,1.071,0.965,0.768,reject_not_R4_admissible
+B_D0_R64_W64_D3_RELU_SKIP,B,D0,64,64,3,relu,skip,4/4,0.420,0.919,0.864,0.432,0.684,0.833,0.775,0.484,reject_no_clear_gain_over_A
+B_D0_R64_W128_D2_GELU_DIRECT,B,D0,64,128,2,gelu,direct,4/4,0.452,0.937,0.896,0.461,0.752,0.845,0.772,0.560,reject_no_clear_gain_over_A
+B_D0_R96_W128_D3_RELU_SKIP,B,D0,96,128,3,relu,skip,4/4,0.289,0.767,0.696,0.313,0.471,0.721,0.622,0.335,reject_no_clear_gain_and_storage
+B_D0_R96_W64_D2_TANH_SKIP,B,D0,96,64,2,tanh,skip,4/4,0.284,0.757,0.687,0.308,0.460,0.716,0.620,0.330,reject_no_clear_gain_and_storage
+B_D0_R64_W128_D3_GELU_SKIP,B,D0,64,128,3,gelu,skip,4/4,0.409,0.910,0.847,0.422,0.665,0.822,0.742,0.473,quality_runtime_pass_storage_conditional
+B_D1_R64_W128_D3_GELU_SKIP,B,D1,64,128,3,gelu,skip,4/4,0.483,0.997,0.960,0.512,0.819,0.884,0.815,0.608,reject_D1_worse_than_D0

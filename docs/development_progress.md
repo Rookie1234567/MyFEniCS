@@ -2230,3 +2230,55 @@ G16 iteration reduction 34.26%达到positive `>=20%`、未达到strong `>=40%`�
 - [Case093](../benchmarks/cases/093_full_16_slab_exact_oracle/README.md)
 - [Task003 Review V1](para_task003_lu_teacher_nn_only_local_inverse/review_report_v1.md)
 - [Task003 response](para_task003_lu_teacher_nn_only_local_inverse/response_v1.md)
+
+---
+
+# 52. PARA-Task005：All-slab learned local inverse feasibility
+
+## 52.1 最终状态
+
+```text
+classification = learned_pc_memory_budget_failure
+secondary_finding = local_quality_and_model_runtime_positive
+P0 = PASS
+P1 = PASS
+P2 = FAIL_STORAGE_GATE
+P3-P9 = not_run_by_gate
+ordinary default = unchanged
+```
+
+Task005 在当前 h5/MPI4/fixed-operator 上完成四次独立 raw-RHS capture、16-slab
+顺序 LU teacher、R4 线性/非线性模型能力与 CPU/CUDA owner-batch 筛选。P1 的
+16/16 teacher 最大 local residual 为 `1.050e-14`，无 fingerprint drift、split
+overlap、duplicate、factor leak 或 swap。
+
+## 52.2 R4 能力与 runtime
+
+| candidate | R4 admissible | median-ratio range | owner grouped mean |
+|---|---:|---:|---:|
+| linear D0 rank 64 | 4/4 | 0.418–0.917 | 4.097 ms NumPy / 1.361 ms CUDA |
+| nonlinear D0 rank 64 GELU skip | 4/4 | 0.409–0.910 | 2.931 ms CPU / 1.343 ms CUDA |
+| structured D1 | 4/4 at selected ranks | consistently worse than D0 | not promoted |
+
+Lane B 没有明确优于 Lane A，因此不触发 Lane C；Lane A/B 已达到 local
+admissibility，因此不触发 Lane D。
+
+## 52.3 Storage 早停
+
+| owner storage | linear smallest-admissible | nonlinear smallest-admissible |
+|---|---:|---:|
+| model/basis | 27.824 MiB | 28.234 MiB |
+| required private exact-audit CSR | 40.458 MiB | 40.458 MiB |
+| total | **68.282 MiB** | **68.692 MiB** |
+
+两者均超过 33.670 MiB memory-neutral 和 50.505 MiB speed-first guard。当前没有
+资格化的 operator-free proxy/periodic exact audit，因此按 P2 Gate 停止 full-16
+训练，未运行 shadow、fallback、true no-hidden-ILU 或 global A/B。
+
+后续若继续，应先研究不复制 private CSR 的 strict proxy + periodic exact audit，
+并通过 zero-false-accept、injected failure、drift 与 end-to-end storage
+资格化；不能优先继续扩大神经网络。
+
+- [Task005 summary](para_task005_comprehensive_all_slab_learned_pc/outcomes/summary.md)
+- [Task005 decision](para_task005_comprehensive_all_slab_learned_pc/outcomes/decision.md)
+- [Task005 memory](para_task005_comprehensive_all_slab_learned_pc/outcomes/memory_report.md)

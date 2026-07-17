@@ -118,3 +118,34 @@ def test_task005_numpy_nonlinear_export_matches_torch() -> None:
             model, packed, activation=activation, base=None
         )
         np.testing.assert_allclose(actual, expected, rtol=2e-6, atol=2e-6)
+
+
+def test_task005_early_stop_is_gate_driven_and_fully_recorded() -> None:
+    outcomes = TASK / "outcomes"
+    required = {
+        "summary.md",
+        "changed_files.md",
+        "experiment_matrix.csv",
+        "data_and_teacher_report.md",
+        "local_quality_by_slab.csv",
+        "model_ablation.csv",
+        "runtime_backend_report.md",
+        "owner_batch_report.md",
+        "shadow_safety_report.md",
+        "global_ab.csv",
+        "robustness_matrix.csv",
+        "memory_report.md",
+        "amortization_report.md",
+        "model_and_dataset_provenance.md",
+        "decision.md",
+    }
+    assert required.issubset({path.name for path in outcomes.iterdir()})
+    summary = (outcomes / "summary.md").read_text(encoding="utf-8")
+    decision = (outcomes / "decision.md").read_text(encoding="utf-8")
+    experiment = (outcomes / "experiment_matrix.csv").read_text(
+        encoding="utf-8"
+    )
+    assert "learned_pc_memory_budget_failure" in summary
+    assert "68.282 MiB" in summary
+    assert "P2 = FAIL_STORAGE_GATE" in decision
+    assert "P3,not_run_by_gate" in experiment

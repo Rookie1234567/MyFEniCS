@@ -1,0 +1,7 @@
+profile,status,reason,baseline_s,candidate_s,iterations,full_residual,R,T,A_volume,closure
+P_shadow,not_run_by_gate,P2_storage_failure,,,,,,,,
+P_fallback,not_run_by_gate,P2_storage_failure,,,,,,,,
+P_replace,not_run_by_gate,P2_storage_failure,,,,,,,,
+paired_AB_1,not_run_by_gate,P2_storage_failure,,,,,,,,
+paired_AB_2,not_run_by_gate,P2_storage_failure,,,,,,,,
+paired_AB_3,not_run_by_gate,P2_storage_failure,,,,,,,,
