@@ -86,6 +86,13 @@ REFERENCE_BY_DEGREE_AND_H = {
     / "080_hybrid_fem_modal_direct_baseline"
     / "records"
     / "full3d_h3_reference.json",
+    (3, 5.0): ROOT
+    / "benchmarks"
+    / "cases"
+    / "091_hybrid_hp_adaptivity_feasibility"
+    / "records"
+    / "stage3_p3_h5"
+    / "full3d_reference.json",
 }
 
 

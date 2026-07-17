@@ -96,6 +96,8 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
     def test_p4_requires_p3_zero_swap_below_10_gib(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "p3.json"
+            trace_path = Path(directory) / "p4_trace.json"
+            source_sha = "a" * 40
             record = {
                 "degree": 3,
                 "h_nm": 5.0,
@@ -105,12 +107,32 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
                 "resource_authority": {"memory_authority_gib": 9.9},
             }
             path.write_text(json.dumps(record), encoding="utf-8")
+            trace_path.write_text(
+                json.dumps(
+                    {
+                        "record_type": (
+                            "p4_four_mode_matched_trace_aggregate"
+                        ),
+                        "status": "p4_four_mode_matched_trace_pass",
+                        "source_commit_sha": source_sha,
+                        "gates": {
+                            "p4_four_mode_matched_trace": True,
+                            "mpi1_mpi4_compact_identity": True,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
             args = _parse_args(
                 [
                     "--degree",
                     "4",
                     "--p3-gate-record",
                     str(path),
+                    "--p4-trace-record",
+                    str(trace_path),
+                    "--verified-clean-sha",
+                    source_sha,
                 ]
             )
             self.assertTrue(_validate_p4_gate(args)["pass"])

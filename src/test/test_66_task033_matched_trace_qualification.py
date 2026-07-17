@@ -4,6 +4,7 @@ import copy
 import unittest
 
 from benchmarks.task033_matched_trace_qualification import (
+    aggregate_p4_four_mode_records,
     aggregate_matched_trace_records,
     matched_trace_shard_gate,
 )
@@ -137,7 +138,85 @@ def _record(degree: int, mpi_size: int) -> dict:
     return record
 
 
+def _p4_four_mode_record(mpi_size: int) -> dict:
+    record = _record(4, mpi_size)
+    trace_global = record["space_identity"]["trace_2d"]["global_dofs"]
+    record["configuration"]["requested_modes"] = 4
+    projection = record["modal_projection"]
+    projection.update(
+        {
+            "mode_count": 4,
+            "reconstruction_shape": [trace_global, 4],
+            "projection_shape": [4, trace_global],
+            "gram_rank": 4,
+            "gram_singular_values": [4.0, 3.0, 2.0, 1.0],
+            "left_unit_projection_relative_errors": [0.0] * 4,
+            "mode_diagnostics": [
+                {
+                    "beta_per_nm": [1.0 + 0.1 * index, 0.0],
+                    "right_polynomial_relative_residual": 0.0,
+                    "left_polynomial_relative_residual": 0.0,
+                    "left_unit_projection_relative_error": 0.0,
+                }
+                for index in range(4)
+            ],
+            "block_diagnostics": [
+                {
+                    "indices": [0, 1, 2, 3],
+                    "source_basis_indices": [4, 5, 6, 7],
+                    "normalization_method": "near_degenerate_block_inverse",
+                    "post_normalization_identity_error": 0.0,
+                }
+            ],
+            "selected_block_contract": {
+                "requested_interface_mode_count": 4,
+                "qep_requested_mode_count": 8,
+                "selected_source_basis_indices": [4, 5, 6, 7],
+                "selected_near_degenerate_group_exact": True,
+                "selected_block_size": 4,
+                "selected_block_normalization_method": (
+                    "near_degenerate_block_inverse"
+                ),
+                "selected_block_post_normalization_identity_error": 0.0,
+                "base_raised_right_trace_subspace": {
+                    "dimension": 4,
+                    "minimum_principal_cosine": 1.0,
+                    "maximum_principal_angle_rad": 0.0,
+                },
+            },
+        }
+    )
+    record["status"] = matched_trace_shard_gate(record)["status"]
+    return record
+
+
 class Task033MatchedTraceQualificationTests(unittest.TestCase):
+    def test_p4_four_mode_pair_passes_exact_block_gate(self) -> None:
+        aggregate = aggregate_p4_four_mode_records(
+            [_p4_four_mode_record(1), _p4_four_mode_record(4)]
+        )
+        self.assertEqual(
+            aggregate["status"], "p4_four_mode_matched_trace_pass"
+        )
+        self.assertTrue(
+            aggregate["gates"]["mode_count_4_block_size_4_gram_rank_4"]
+        )
+        self.assertTrue(
+            aggregate["gates"]["mpi1_mpi4_compact_identity"]
+        )
+
+        failed = _p4_four_mode_record(4)
+        failed["modal_projection"]["selected_block_contract"][
+            "selected_block_size"
+        ] = 2
+        failed["status"] = "fail"
+        aggregate = aggregate_p4_four_mode_records(
+            [_p4_four_mode_record(1), failed]
+        )
+        self.assertFalse(
+            aggregate["gates"]["p4_four_mode_matched_trace"]
+        )
+
     def test_zero_error_five_shard_matrix_passes(self) -> None:
         records = [
             _record(2, 1),

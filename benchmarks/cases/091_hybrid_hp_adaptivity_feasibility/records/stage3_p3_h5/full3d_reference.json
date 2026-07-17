@@ -1,0 +1,76 @@
+{
+  "record_type": "task033_full3d_reference",
+  "benchmark_id": "task033_p3_h5_full3d_reference",
+  "level": "p3_h5",
+  "metadata": {
+    "commit_sha": "bd828f24dc1546263210d73d08bf7bc16ba8a129",
+    "branch": "codex/20260715-task33-high-order-floquet-hybrid-hp",
+    "git_dirty": false,
+    "tracked_source_dirty": false,
+    "command": "docker run --memory 13g --memory-swap 20g ... mpiexec -n 4 python -m benchmarks.run_task033_full3d_watchdog --degree 3 --h-nm 5 --run-kind full-solve --allow-swap",
+    "timestamp_utc": "2026-07-17T07:11:49Z",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "host_environment_id": "SK-20260601OSDE",
+    "provenance": "clean_task033_user_authorized_controlled_full3d_reference"
+  },
+  "physical_model": {
+    "wavelength_nm": 13.5,
+    "n_substrate": [0.999002304859, 0.00182649365],
+    "n_grating": [0.999002304859, 0.00182649365],
+    "incident_theta_deg": 80.0,
+    "incident_grazing_deg": 10.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "nedelec_degree": 3,
+    "mesh_h_nm": 5.0,
+    "mpi_size": 4,
+    "linear_solver": "direct_lu_mumps"
+  },
+  "reference_contract": {
+    "schema_version": 1,
+    "dtype": "complex128",
+    "array_shape": [5, 20, 40, 3],
+    "plane_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "interface_trace_sides": ["positive_z", "negative_z"],
+    "interface_trace_region": "inside_middle_modal_region",
+    "point_count": 4000,
+    "replicated_payload_bytes_uncompressed": 384000
+  },
+  "results": {
+    "case_status": "completed",
+    "official_result": true,
+    "num_nedelec_dofs": 145863,
+    "external_fourier_dtn_auxiliary_dofs": 80,
+    "linear_system_true_relative_residual": 5.4419001137798905e-12,
+    "R_total": 0.0010901070120301636,
+    "T_total": 0.6006224782934686,
+    "A_balance": 0.39828741469450124,
+    "A_volume_total": 0.3982874146945467,
+    "R_plus_T_plus_A_volume": 1.0000000000000455,
+    "energy_closure_error_port_volume": 4.551914400963142e-14,
+    "elapsed_seconds": 103.58807312700003,
+    "external_memory_authority_gib": 7.781337738037109,
+    "external_swap_peak_mib": 0.0
+  },
+  "artifacts": {
+    "ignored_run_root": "benchmarks/artifacts/cases/091/task033_full3d/p3_h5_full-solve_mpi4_20260717T071149Z",
+    "watchdog_summary_sha256": "213604fba391247d37fcbb0d0133c1597fa962b594cf0c5c526ca7366500f9e4",
+    "run_summary_sha256": "9ae5ce1d67a9fe7dc9f5cdf55e03ca1fb973e88fc68bf8fc5a78c6a05d7b3081",
+    "reference_metadata_sha256": "6a084decbd5002dfe278ab5f90586bdb9f1098256e822cce10e85fbd4097d063",
+    "reference_npz_sha256": "4986d7e355e3afd27ad1a34acbb2faeec5a72279036b002fcf24940e0a8113a3",
+    "reference_npz_bytes": 357080,
+    "diffraction_orders_sha256": "b15b034dd383bb9e7d53449b1a96a7255a22a45573d9d384ffee3ac51792fb52",
+    "dtn_port_diffraction_orders_sha256": "c106f95da298b8bf5d73cf672f0ebabc83c1c87a100a1a1d9bc3b376bdae0d96",
+    "power_metrics_sha256": "e15ce9169be2f8655236f5850e6e3688af2f352990b511087b944b0f59ebeb29"
+  },
+  "qualification": {
+    "phase1_reference_pass": true,
+    "grid_converged": false,
+    "role": "same_degree_p3_h5_reference",
+    "heavy_artifacts_tracked": false,
+    "watchdog_status": "full3d_reference_pass",
+    "no_swap": true,
+    "memory_below_10_gib": true
+  }
+}

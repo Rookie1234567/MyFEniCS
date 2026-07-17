@@ -37,6 +37,7 @@ from src.coupling.modal_trace_projection import (
     ModalTraceProjection,
     build_matched_interface_trace,
     extract_tangential_trace,
+    trace_subspace_report,
 )
 from src.geometry.mesh_builder_3d import _structured_hexa_mesh, stage4_axis_plan
 from src.modes.cross_section_spaces import (
@@ -389,6 +390,7 @@ def _modal_projection_validation(
     spaces,
     *,
     degree: int,
+    mode_count: int,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     policy = high_order_quadrature_policy(
         field_degree=degree,
@@ -401,10 +403,14 @@ def _modal_projection_validation(
         spaces,
     )
     target = analytic_homogeneous_beta(cfg, cfg.n_air)
+    qep_requested_modes = 8 if mode_count == 4 else mode_count
+    selected_indices = (
+        tuple(range(4, 8)) if mode_count == 4 else tuple(range(mode_count))
+    )
     right_modes, solve_report = solve_quadratic_beta_modes(
         operators,
         target=target,
-        requested_modes=2,
+        requested_modes=qep_requested_modes,
     )
     basis = None
     base = None
@@ -417,19 +423,24 @@ def _modal_projection_validation(
             operators,
             right_modes,
             adjoint_target=np.conj(target),
-            requested_left_modes=2,
+            requested_left_modes=qep_requested_modes,
         )
         base = ModalTraceProjection(
             spaces,
             basis,
+            mode_indices=selected_indices,
             quadrature_degree=policy.selected_degree,
         )
         raised = ModalTraceProjection(
             spaces,
             basis,
+            mode_indices=selected_indices,
             quadrature_degree=policy.raised_comparison_degree,
         )
-        coefficients = np.asarray([0.7 + 0.2j, -0.3 + 0.4j])
+        coefficient_seed = np.asarray(
+            [0.7 + 0.2j, -0.3 + 0.4j, 0.2 - 0.1j, -0.15 - 0.25j]
+        )
+        coefficients = coefficient_seed[:mode_count]
         base_round_trip = base.round_trip(coefficients)
         raised_round_trip = raised.round_trip(coefficients)
         base_trace = base.reconstruct(coefficients)
@@ -451,10 +462,12 @@ def _modal_projection_validation(
             compute_uv=False,
         )
         mode_diagnostics = []
-        for index, mode in enumerate(basis.modes):
+        for local_index, basis_index in enumerate(selected_indices):
+            mode = basis.modes[basis_index]
             mode_diagnostics.append(
                 {
-                    "mode_index": index,
+                    "mode_index": local_index,
+                    "source_basis_index": basis_index,
                     "beta_per_nm": _complex_pair(complex(mode.beta)),
                     "direction": mode.direction,
                     "kind": mode.kind,
@@ -466,17 +479,28 @@ def _modal_projection_validation(
                         mode.left_polynomial_relative_residual
                     ),
                     "left_right_beta_pair_relative_error": float(
-                        basis.left_pair_relative_errors[index]
+                        basis.left_pair_relative_errors[basis_index]
                     ),
                     "qprime_left_right_overlap_after": _complex_pair(
                         complex(mode.qprime_overlap_after)
                     ),
-                    "left_unit_projection_relative_error": left_unit_errors[index],
+                    "left_unit_projection_relative_error": left_unit_errors[
+                        local_index
+                    ],
                 }
             )
+        selected_set = set(selected_indices)
+        selected_groups = [
+            group
+            for group in basis.groups
+            if set(group.indices).issubset(selected_set)
+        ]
         block_diagnostics = [
             {
-                "indices": list(group.indices),
+                "indices": [
+                    selected_indices.index(index) for index in group.indices
+                ],
+                "source_basis_indices": list(group.indices),
                 "beta_center_per_nm": _complex_pair(group.beta_center),
                 "max_relative_beta_spread": float(
                     group.max_relative_beta_spread
@@ -487,12 +511,59 @@ def _modal_projection_validation(
                     group.post_normalization_identity_error
                 ),
             }
-            for group in basis.groups
+            for group in selected_groups
         ]
+        exact_selected_group = next(
+            (
+                group
+                for group in basis.groups
+                if tuple(group.indices) == selected_indices
+            ),
+            None,
+        )
+        subspace = trace_subspace_report(
+            base.mass,
+            base.right_traces,
+            raised.right_traces,
+        )
+        block_contract = {
+            "requested_interface_mode_count": mode_count,
+            "qep_requested_mode_count": qep_requested_modes,
+            "selected_source_basis_indices": list(selected_indices),
+            "selected_near_degenerate_group_exact": (
+                exact_selected_group is not None
+            ),
+            "selected_block_size": (
+                0
+                if exact_selected_group is None
+                else len(exact_selected_group.indices)
+            ),
+            "selected_block_normalization_method": (
+                None
+                if exact_selected_group is None
+                else exact_selected_group.normalization_method
+            ),
+            "selected_block_post_normalization_identity_error": (
+                None
+                if exact_selected_group is None
+                else float(
+                    exact_selected_group.post_normalization_identity_error
+                )
+            ),
+            "base_raised_right_trace_subspace": {
+                "dimension": subspace.dimension,
+                "singular_values": list(subspace.singular_values),
+                "minimum_principal_cosine": min(subspace.singular_values),
+                "maximum_principal_angle_rad": (
+                    subspace.max_principal_angle_rad
+                ),
+                "projector_error": subspace.projector_error,
+            },
+        }
         projection_record = {
             "material_kind": cross_section.material_kind,
             "mode_count": len(base.right_traces),
-            "qep_requested_modes": 2,
+            "qep_requested_modes": qep_requested_modes,
             "qep_converged_modes": int(solve_report.converged_modes),
             "reconstruction_shape": list(base.reconstruction_shape),
             "projection_shape": list(base.projection_shape),
@@ -515,6 +586,7 @@ def _modal_projection_validation(
             "trace_mass_nz_used": int(mass_info["nz_used"]),
             "mode_diagnostics": mode_diagnostics,
             "block_diagnostics": block_diagnostics,
+            "selected_block_contract": block_contract,
             "biorthogonality_max_entry_identity_error": float(
                 basis.max_entry_identity_error
             ),
@@ -587,6 +659,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--degree", type=int, choices=(2, 3, 4), required=True)
     parser.add_argument("--h-nm", type=float, default=10.0)
+    parser.add_argument("--mode-count", type=int, choices=(2, 4), default=2)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--verified-clean-sha")
     parser.add_argument("--allow-dirty-research", action="store_true")
@@ -601,6 +674,8 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
+    if args.mode_count == 4 and args.degree != 4:
+        raise SystemExit("--mode-count 4 is reserved for the p4 near-degenerate block.")
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     source = _source_start(
@@ -633,6 +708,7 @@ def main() -> None:
         cross_section,
         spaces,
         degree=args.degree,
+        mode_count=args.mode_count,
     )
     projection_seconds = float(
         comm.allreduce(time.perf_counter() - projection_started, op=MPI.MAX)
@@ -730,7 +806,7 @@ def main() -> None:
                 "h_nm": args.h_nm,
                 "fixture": "small_matching_stage4_xy_interface",
                 "material_kind": "stage4_xy",
-                "requested_modes": 2,
+                "requested_modes": args.mode_count,
             },
             "space_identity": {
                 "source_3d": {

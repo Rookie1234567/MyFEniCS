@@ -169,6 +169,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--p4-trace-record",
+        type=Path,
+        help=(
+            "Required for degree 4. Must be the passing MPI1/MPI4 p4 "
+            "four-mode matched-trace aggregate."
+        ),
+    )
+    parser.add_argument(
         "--verified-clean-sha",
         default=os.environ.get("TASK033_VERIFIED_CLEAN_SHA"),
     )
@@ -181,6 +189,8 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
         return None
     if args.p3_gate_record is None:
         raise SystemExit("p4 is locked: --p3-gate-record is required.")
+    if args.p4_trace_record is None:
+        raise SystemExit("p4 is locked: --p4-trace-record is required.")
     path = (
         args.p3_gate_record
         if args.p3_gate_record.is_absolute()
@@ -205,10 +215,54 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
     failures = [name for name, passed in checks.items() if not passed]
     if failures:
         raise SystemExit(f"p4 is locked; failed p3 gates: {failures}")
+    trace_path = (
+        args.p4_trace_record
+        if args.p4_trace_record.is_absolute()
+        else ROOT / args.p4_trace_record
+    )
+    try:
+        trace_record = json.loads(trace_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"p4 is locked: cannot read four-mode trace record: {exc}"
+        ) from exc
+    trace_gates = trace_record.get("gates") or {}
+    trace_checks = {
+        "record_type": (
+            trace_record.get("record_type")
+            == "p4_four_mode_matched_trace_aggregate"
+        ),
+        "status": (
+            trace_record.get("status") == "p4_four_mode_matched_trace_pass"
+        ),
+        "four_mode_trace_pass": (
+            trace_gates.get("p4_four_mode_matched_trace") is True
+        ),
+        "mpi_identity_pass": (
+            trace_gates.get("mpi1_mpi4_compact_identity") is True
+        ),
+        "same_current_source": (
+            trace_record.get("source_commit_sha") == args.verified_clean_sha
+        ),
+    }
+    trace_failures = [
+        name for name, passed in trace_checks.items() if not passed
+    ]
+    if trace_failures:
+        raise SystemExit(
+            f"p4 is locked; failed four-mode trace gates: {trace_failures}"
+        )
     return {
-        "path": _path_from_root(path),
-        "sha256": _sha256(path),
-        "checks": checks,
+        "p3": {
+            "path": _path_from_root(path),
+            "sha256": _sha256(path),
+            "checks": checks,
+        },
+        "p4_four_mode_trace": {
+            "path": _path_from_root(trace_path),
+            "sha256": _sha256(trace_path),
+            "checks": trace_checks,
+        },
         "pass": True,
     }
 

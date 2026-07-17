@@ -254,6 +254,9 @@ def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
     scalability = _mapping(record.get("scalability"))
     mode_diagnostics = _sequence(projection.get("mode_diagnostics"))
     block_diagnostics = _sequence(projection.get("block_diagnostics"))
+    configuration = _mapping(record.get("configuration"))
+    requested_modes = configuration.get("requested_modes", 2)
+    block_contract = _mapping(projection.get("selected_block_contract"))
 
     interface_accuracy = (
         len(interfaces) == 2
@@ -324,6 +327,39 @@ def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
             BIORTHOGONALITY_MAX,
         )
         for item in block_diagnostics
+    )
+    four_mode_block_ok = (
+        requested_modes != 4
+        or (
+            degree == 4
+            and projection.get("mode_count") == 4
+            and projection.get("gram_rank") == 4
+            and block_contract.get("requested_interface_mode_count") == 4
+            and block_contract.get("qep_requested_mode_count") == 8
+            and block_contract.get("selected_source_basis_indices")
+            == [4, 5, 6, 7]
+            and block_contract.get("selected_near_degenerate_group_exact")
+            is True
+            and block_contract.get("selected_block_size") == 4
+            and block_contract.get("selected_block_normalization_method")
+            == "near_degenerate_block_inverse"
+            and _finite_le(
+                block_contract.get(
+                    "selected_block_post_normalization_identity_error"
+                ),
+                BIORTHOGONALITY_MAX,
+            )
+            and _mapping(
+                block_contract.get("base_raised_right_trace_subspace")
+            ).get("dimension")
+            == 4
+            and _finite_le(
+                _mapping(
+                    block_contract.get("base_raised_right_trace_subspace")
+                ).get("maximum_principal_angle_rad"),
+                1.0e-7,
+            )
+        )
     )
 
     selected_expected = 2 * degree + 4
@@ -409,6 +445,7 @@ def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
         "right_reconstruction_and_left_petrov_projection": projection_accuracy,
         "per_mode_diagnostics": modes_ok,
         "per_block_diagnostics": blocks_ok,
+        "p4_four_mode_block_contract": four_mode_block_ok,
         "degree_aware_raised_quadrature": quadrature_ok,
         "mpi_ownership_and_ghost_handling": ownership_ok,
         "rank_local_results_agree": rank_agreement,
@@ -436,6 +473,131 @@ def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
             name for name, passed in checks.items() if not passed
         ],
     }
+
+
+def aggregate_p4_four_mode_records(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Qualify the two-shard p4 four-dimensional near-degenerate trace block."""
+
+    indexed: dict[int, Mapping[str, Any]] = {}
+    duplicates: list[int] = []
+    for record in records:
+        identity = _record_identity(record)
+        if identity is None or identity[0] != 4:
+            continue
+        if identity[1] in indexed:
+            duplicates.append(identity[1])
+        indexed[identity[1]] = record
+    reports = {
+        f"p4_mpi{mpi_size}": matched_trace_shard_gate(record)
+        for mpi_size, record in sorted(indexed.items())
+    }
+    expected = set(indexed) == {1, 4} and not duplicates
+    shards_pass = expected and all(
+        reports[f"p4_mpi{mpi_size}"]["status"] == "pass"
+        and reports[f"p4_mpi{mpi_size}"]["reported_status_matches"] is True
+        for mpi_size in (1, 4)
+    )
+    four_mode_exact = expected and all(
+        _mapping(indexed[mpi_size].get("configuration")).get(
+            "requested_modes"
+        )
+        == 4
+        and _mapping(indexed[mpi_size].get("modal_projection")).get(
+            "mode_count"
+        )
+        == 4
+        and reports[f"p4_mpi{mpi_size}"]["checks"].get(
+            "p4_four_mode_block_contract"
+        )
+        is True
+        for mpi_size in (1, 4)
+    )
+    source_shas = {
+        _mapping(_mapping(record.get("metadata")).get("source")).get(
+            "commit_sha"
+        )
+        for record in indexed.values()
+    }
+    stable_source = (
+        len(source_shas) == 1
+        and None not in source_shas
+        and all(
+            _mapping(_mapping(record.get("metadata")).get("source")).get(
+                "source_clean_verified"
+            )
+            is True
+            for record in indexed.values()
+        )
+    )
+    mpi_identity = (
+        _mpi_pair_diagnostic(indexed[1], indexed[4])
+        if expected
+        else {"status": "fail", "checks": {}}
+    )
+    no_gather = expected and all(
+        reports[f"p4_mpi{mpi_size}"]["checks"]["no_full_vector_gather"]
+        is True
+        for mpi_size in (1, 4)
+    )
+    no_dense = expected and all(
+        reports[f"p4_mpi{mpi_size}"]["checks"]["no_dense_interface_square"]
+        is True
+        for mpi_size in (1, 4)
+    )
+    passed = bool(
+        shards_pass
+        and four_mode_exact
+        and stable_source
+        and mpi_identity["status"] == "pass"
+        and no_gather
+        and no_dense
+    )
+    payload = {
+        "schema_version": "task033.p4-four-mode-matched-trace-aggregate.v1",
+        "record_type": "p4_four_mode_matched_trace_aggregate",
+        "status": (
+            "p4_four_mode_matched_trace_pass"
+            if passed
+            else "p4_four_mode_matched_trace_not_qualified"
+        ),
+        "source_commit_sha": next(iter(source_shas), None),
+        "expected_shards": [
+            {"degree": 4, "mpi_size": mpi_size, "mode_count": 4}
+            for mpi_size in (1, 4)
+        ],
+        "shard_reports": reports,
+        "observed_shards": {
+            f"p4_mpi{mpi_size}": _compact_observed_shard(record)
+            for mpi_size, record in sorted(indexed.items())
+        },
+        "mpi_identity_diagnostic": mpi_identity,
+        "gates": {
+            "both_expected_shards_present_and_recomputed_pass": shards_pass,
+            "mode_count_4_block_size_4_gram_rank_4": four_mode_exact,
+            "right_reconstruction_and_left_petrov_projection": (
+                expected
+                and all(
+                    reports[f"p4_mpi{mpi_size}"]["checks"][
+                        "right_reconstruction_and_left_petrov_projection"
+                    ]
+                    is True
+                    for mpi_size in (1, 4)
+                )
+            ),
+            "principal_angle_or_block_invariant": four_mode_exact,
+            "mpi1_mpi4_compact_identity": mpi_identity["status"] == "pass",
+            "single_clean_stable_source": stable_source,
+            "no_full_vector_gather": no_gather,
+            "no_dense_interface_square": no_dense,
+            "p4_four_mode_matched_trace": passed,
+        },
+        "duplicate_mpi_sizes": duplicates,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    _refresh_evidence_sha256(payload)
+    return payload
 
 
 def _beta_assignment_delta(
@@ -520,6 +682,51 @@ def _mpi_pair_diagnostic(
         )
         for item in _sequence(projection4.get("block_diagnostics"))
     ]
+    four_mode_pair = (
+        projection1.get("mode_count") == 4
+        and projection4.get("mode_count") == 4
+    )
+    selected1 = _mapping(projection1.get("selected_block_contract"))
+    selected4 = _mapping(projection4.get("selected_block_contract"))
+    subspace1 = _mapping(
+        selected1.get("base_raised_right_trace_subspace")
+    )
+    subspace4 = _mapping(
+        selected4.get("base_raised_right_trace_subspace")
+    )
+    principal_cosine1 = _finite(subspace1.get("minimum_principal_cosine"))
+    principal_cosine4 = _finite(subspace4.get("minimum_principal_cosine"))
+    block_error1 = _finite(
+        selected1.get("selected_block_post_normalization_identity_error")
+    )
+    block_error4 = _finite(
+        selected4.get("selected_block_post_normalization_identity_error")
+    )
+    four_mode_block_invariant = (
+        four_mode_pair
+        and selected1.get("selected_source_basis_indices") == [4, 5, 6, 7]
+        and selected4.get("selected_source_basis_indices") == [4, 5, 6, 7]
+        and selected1.get("selected_block_size") == 4
+        and selected4.get("selected_block_size") == 4
+        and selected1.get("selected_near_degenerate_group_exact") is True
+        and selected4.get("selected_near_degenerate_group_exact") is True
+        and selected1.get("selected_block_normalization_method")
+        == "near_degenerate_block_inverse"
+        and selected4.get("selected_block_normalization_method")
+        == "near_degenerate_block_inverse"
+        and projection1.get("gram_rank") == 4
+        and projection4.get("gram_rank") == 4
+        and _finite_le(projection1.get("gram_condition"), GRAM_CONDITION_MAX)
+        and _finite_le(projection4.get("gram_condition"), GRAM_CONDITION_MAX)
+        and block_error1 is not None
+        and block_error1 <= BIORTHOGONALITY_MAX
+        and block_error4 is not None
+        and block_error4 <= BIORTHOGONALITY_MAX
+        and principal_cosine1 is not None
+        and 1.0 - principal_cosine1 <= MPI_INVARIANT_RELATIVE_DELTA_MAX
+        and principal_cosine4 is not None
+        and 1.0 - principal_cosine4 <= MPI_INVARIANT_RELATIVE_DELTA_MAX
+    )
     checks = {
         "matching_mesh_hash_exact": (
             geometry1.get("matching_mesh_sha256")
@@ -548,16 +755,21 @@ def _mpi_pair_diagnostic(
             beta is not None and beta[0] <= MPI_BETA_RELATIVE_DELTA_MAX
         ),
         "per_block_structure": sorted(block1) == sorted(block4),
-        "gram_condition_invariant": (
+    }
+    if four_mode_pair:
+        checks["four_mode_basis_independent_block_invariant"] = (
+            four_mode_block_invariant
+        )
+    else:
+        checks["gram_condition_invariant"] = (
             condition1 is not None
             and condition4 is not None
             and _relative_delta(condition1, condition4)
             <= MPI_INVARIANT_RELATIVE_DELTA_MAX
-        ),
-        "gram_singular_values_invariant": (
+        )
+        checks["gram_singular_values_invariant"] = (
             singular_delta <= MPI_INVARIANT_RELATIVE_DELTA_MAX
-        ),
-    }
+        )
     return {
         "status": "pass" if all(checks.values()) else "fail",
         "checks": checks,
@@ -577,9 +789,17 @@ def _mpi_pair_diagnostic(
         "gram_singular_values_max_relative_delta": (
             None if not math.isfinite(singular_delta) else singular_delta
         ),
+        "four_mode_basis_independent_block_invariant": (
+            four_mode_block_invariant if four_mode_pair else None
+        ),
         "scope_note": (
             "MPI identity is recomputed from mesh/space/algebra invariants, "
-            "per-mode beta assignment, and per-block structure. No full "
+            "per-mode beta assignment, and per-block structure. For the "
+            "four-dimensional near-degenerate block, raw Gram condition and "
+            "singular values are reported but not compared because they vary "
+            "under an admissible MPI-dependent basis rotation; full rank, "
+            "Petrov round trip, block normalization, and the within-shard "
+            "principal-angle invariant are recomputed instead. No full "
             "eigenvector gather or cross-MPI full-vector dot is performed."
         ),
     }
@@ -826,9 +1046,10 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Aggregate the five Task033 Phase-B matched-trace shards."
     )
-    parser.add_argument("--p2-mpi1", type=Path, required=True)
-    parser.add_argument("--p3-mpi1", type=Path, required=True)
-    parser.add_argument("--p3-mpi4", type=Path, required=True)
+    parser.add_argument("--p4-four-mode-only", action="store_true")
+    parser.add_argument("--p2-mpi1", type=Path)
+    parser.add_argument("--p3-mpi1", type=Path)
+    parser.add_argument("--p3-mpi4", type=Path)
     parser.add_argument("--p4-mpi1", type=Path, required=True)
     parser.add_argument("--p4-mpi4", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -837,15 +1058,30 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    paths = (
-        args.p2_mpi1,
-        args.p3_mpi1,
-        args.p3_mpi4,
-        args.p4_mpi1,
-        args.p4_mpi4,
-    )
+    if args.p4_four_mode_only:
+        paths = (args.p4_mpi1, args.p4_mpi4)
+    else:
+        if any(
+            path is None
+            for path in (args.p2_mpi1, args.p3_mpi1, args.p3_mpi4)
+        ):
+            raise SystemExit(
+                "The ordinary Phase-B aggregate requires p2-mpi1, "
+                "p3-mpi1, and p3-mpi4."
+            )
+        paths = (
+            args.p2_mpi1,
+            args.p3_mpi1,
+            args.p3_mpi4,
+            args.p4_mpi1,
+            args.p4_mpi4,
+        )
     records = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
-    aggregate = aggregate_matched_trace_records(records)
+    aggregate = (
+        aggregate_p4_four_mode_records(records)
+        if args.p4_four_mode_only
+        else aggregate_matched_trace_records(records)
+    )
     aggregate["raw_shards"] = [
         {
             "degree": _record_identity(record)[0],
@@ -875,7 +1111,12 @@ def main() -> None:
             indent=2,
         )
     )
-    if aggregate["gates"]["p3_phaseB_matched_trace"] is not True:
+    pass_gate = (
+        "p4_four_mode_matched_trace"
+        if args.p4_four_mode_only
+        else "p3_phaseB_matched_trace"
+    )
+    if aggregate["gates"][pass_gate] is not True:
         raise SystemExit(1)
 
 

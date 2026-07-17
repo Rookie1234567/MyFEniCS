@@ -45,7 +45,17 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "stage1_high_order/stage_summary.json",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage2_matched_trace/phaseB_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage2_matched_trace/p4_four_mode_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage3_p3_h5/full3d_reference.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage3_p3_h5/phaseC1_full3d_assembly_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage3_p3_h5/phaseC_summary.json",
         "benchmarks/cases/README.md",
+        "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/run_task033_full3d_watchdog.py",
         "benchmarks/run_task033_matched_trace.py",
         "benchmarks/run_task033_memory_watchdog.py",
         "benchmarks/run_task033_phaseC.py",
@@ -63,7 +73,10 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
 )
 
 CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
-    {"src/coupling/modal_trace_projection.py"}
+    {
+        "benchmarks/run_task032_phase6_augmented.py",
+        "src/coupling/modal_trace_projection.py",
+    }
 )
 
 
