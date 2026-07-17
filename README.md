@@ -63,7 +63,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Task033 已完成 p3/p4 高阶 Floquet、QEP/匹配迹阶段，并在 p3/h5 上闭合 Hybrid M80/M120/M160 与 augmented/minimal 锚点；同阶 full3D 因内存 Gate 未运行，所以 whole Phase C 和 Hybrid/full3D 等价仍未关闭。ordinary default 未改变。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Task033 已完成 p3/p4 高阶 Floquet、QEP/匹配迹和 p3/h5 同阶 closure；Review V5 的 fixed-p 减缩研究进一步得到 p3/h10 精度负结果和 p3/h7.5 带资格的等精度工程正结果，后者相对 p2/h3 将 FE DoF/local-system rows/total rows/factor-inventory NNZ/memory/time 分别改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x。p4 target 当前主机资源受限，native variable-p H(curl) 未资格化；p2 h-adaptive、buffer 和 1 TiB 更新仍未完成。ordinary default 未改变。
 
 ## 文档导航
 

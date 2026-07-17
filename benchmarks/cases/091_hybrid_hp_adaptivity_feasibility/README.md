@@ -1,8 +1,8 @@
-# Case091：Hybrid h/p 自适应可行性
+# Case091：Hybrid fixed-p 等精度与 h/p 自适应可行性
 
-> 2026-07-17 范围调整：本阶段只闭合 p3/p4 高阶能力与 Task032 p2
-> Hybrid/full3D 对比；自适应、buffer 和 1 TiB 工作为 `deferred_by_user_scope`。
-> 阶段证据见 [`records/stage1_high_order/stage_summary.json`](records/stage1_high_order/stage_summary.json)。
+> 2026-07-17 Review V5 更新：D0、D1、D2 已完成。`p3/h10` 为等精度负结果，
+> 条件 `p3/h7.5` 为带资格的工程正结果；native cellwise variable-p H(curl)
+> 未资格化。p2 h-adaptive、buffer 和 1 TiB 更新仍未启动。
 >
 > 2026-07-17 Phase B 更新：p2 MPI1 与 p3/p4 MPI1/MPI4 matching-trace 最小矩阵已
 > 独立聚合通过，见
@@ -10,31 +10,38 @@
 > Phase C p3/h5 已按 review v3 执行：full3D 为 `not_run_by_memory_gate`，
 > Hybrid M80/M120/M160 与 augmented M160 通过，见
 > [`records/stage3_p3_h5/phaseC_summary.json`](records/stage3_p3_h5/phaseC_summary.json)。
+>
+> 当前主入口是
+> [`records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json`](records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json)
+> 和
+> [`records/variable_p_capability_audit.json`](records/variable_p_capability_audit.json)。
 
 ## 当前身份
 
 ```text
 Task033 stage1 high-order evidence = completed
 Task033 Phase B matched trace = p3/p4 accepted
-Task033 Phase C p3/h5 = Hybrid component pass; full3D memory-gated
-original h/p adaptivity scope = deferred by user
-runtime preflight = unknown by default and fail-closed
-adaptive compression measurement = deferred
+Task033 Phase C p3/h5 = same-degree Hybrid/full3D closure accepted with qualifications
+Task033 Phase D1 = p3/h10 negative; p3/h7.5 equal-accuracy engineering positive with qualification
+Task033 Phase D2 = native variable-p not qualified; no hp target prototype
+adaptive compression measurement = not run; waits for new review
+interface buffer = deferred until defect geometry
 0.7 nm feasibility claim = false
 ordinary default changed = false
 ```
 
 Case091 原先冻结 Task033 的 20 项 p/h 资源矩阵、两中心内存预测和 fail-closed
-启动规则。当前阶段新增 p3/p4 高阶摘要、matching-trace Phase B 和 p3/h5 Phase C
-Hybrid 记录，但没有完成同阶 p3 full3D reference、p4 target、h/p 压缩或
-0.7 nm 可行性证明。
+启动规则。Review V5 已把当前决策矩阵减缩为复用 p2/h5、p2/h3、p3/h5，运行
+p3/h10 和条件 p3/h7.5，并保留 p4 resource negative。原 20 项不是已完成矩阵，
+也不应再自动运行。
 
 ## 物理问题
 
 目标模型仍是 13.5 nm、50 nm × 25 nm 双周期 Hybrid FEM–Modal 问题：
 上下端保留复杂三维 Nédélec FEM，中段目标为通用 `epsilon(x,y)` 的模态传播，
 主求解路径为 `modal-schur-memory-minimal`。Phase C 已在 p3/h5、10/110 nm、
-M80/M120/M160 上运行该模型；资源矩阵和 C0 仍只提供逐候选准入，不能被结果反向覆盖。
+M80/M120/M160 上运行；Phase D1 又在 p3/h10、p3/h7.5 上执行 direct 与
+M120/M160。资源矩阵和 C0 只提供逐候选准入，最终判定由实测物理误差和资源记录共同决定。
 
 ## 参数说明
 
@@ -43,8 +50,8 @@ M80/M120/M160 上运行该模型；资源矩阵和 C0 仍只提供逐候选准�
 | 1. | wavelength | 13.5 nm | task input |
 | 2. | period x | 50 nm | task input |
 | 3. | period y | 25 nm | task input |
-| 4. | degree | p1、p2、p3、p4 | planned |
-| 5. | h | 5、3、2.5、2、1.5 nm | planned |
+| 4. | degree | p1–p4 history；当前 D1 只新增 p3 | scoped |
+| 5. | h | 当前 D1：10、7.5 nm；p3/h5 reference | measured/reused |
 | 6. | M / direction | 160 | Task032 measured anchor |
 | 7. | solver path | `modal-schur-memory-minimal` | retained policy |
 | 8. | p2/h3 local FE rows | 68,396 | measured anchor |
@@ -117,13 +124,15 @@ CSV 对每个 JSON entry 的所有叶字段做 lossless flatten；列名是点�
 
 ## 当前证据
 
-默认 13.6485 GiB 记录得到：8 项仅在资源层面 planning eligible、1 项复用
-Task032 p2/h3 clean anchor、11 项 `not_run_by_memory_gate`。因为运行前提默认均为
-unknown，7 个普通低阶 planning 候选仍不是 launch eligible；p3/h5 还被高阶
-资格 Gate 拦截。p4/h5 的独立 factor-NNZ/fill 中心超过门限，保持 fail-closed。
+原 20 项默认记录只有预测/决策身份。当前 Review V5 结果另行跟踪：
 
-这 20 项只有预测与决策身份。正式 PDE、mesh、field、matrix、factor、timeline
-和 raw log 均尚未生成。
+- p3/h10 direct 1.980 GiB，物理等精度失败；
+- p3/h7.5 direct 3.667 GiB，Hybrid M160 2.008 GiB，全部等精度和闭合 Gate 通过；
+- p4/h5 direct assembly 12.616 GiB 受控停止，Hybrid 上界 42.594 GiB；
+- variable-p audit `not_qualified_fail_closed`。
+
+重型 mesh、field、matrix、factor、timeline 和 raw log 已生成于
+gitignored `benchmarks/artifacts/`；tracked descriptors/summary 保存 SHA256 和关键数值。
 
 ## 结果解释
 
@@ -133,8 +142,10 @@ p3/p4 资格 Gate。`reuse_task032_clean_anchor` 表示引用已有实测，不�
 重新运行。
 
 h/p 同误差 local DoF 压缩按 `<1.3x`、`1.3x–<2x`、`2x–<3x`、`>=3x`、
-`>=5x` 分级。固定 p2 h-adaptive 的 3x 是 stretch；在产生同误差实测曲线前，
-所有压缩分类均为 `not_run`。
+`>=5x` 分级。fixed-p p3/h7.5 的 FE-only DoF 为 2.571x、含外部 aux 的
+local-system rows 为 2.567x，均为 `clear_success`；factor
+inventory NNZ 为 3.557x `engineering_target`。固定 p2 h-adaptive 的 3x 仍只是
+stretch；该阶段尚未产生 measured compression。
 
 ## 限制
 
@@ -142,10 +153,11 @@ h/p 同误差 local DoF 压缩按 `<1.3x`、`1.3x–<2x`、`2x–<3x`、`>=3x`�
 - 预测 assembled NNZ 和 factor fill 是保守 planning 模型，不是装配结果。
 - 默认 Docker 上限是 Phase-0 快照；正式运行前必须刷新并可注入更小值。
 - clean/no-swap/watchdog/one-large-case 默认 unknown，不能靠脚本默认值冒充通过。
-- p3/p4 未通过独立高阶 Gate 前一律不能启动 Hybrid 大算例。
+- 新候选必须通过独立高阶和 candidate-specific C0 Gate。
 - conditional/locked 候选仍需前序 clean 记录或独立解锁证据。
 - 不得依靠 swap、OOM 后补写或手工覆盖 Gate 完成矩阵。
-- 本 Case 不证明自适应压缩、1 TiB 路线或 0.7 nm 可行性。
+- p3/h5 是 provisional discrete reference，不是 continuum/grid-converged reference。
+- 本 Case 不证明 p2 自适应压缩、1 TiB 路线或 0.7 nm 可行性。
 
 轻量记录保存在本目录；后续重型产物只能写入 gitignored 的
 `benchmarks/artifacts/cases/091/`。

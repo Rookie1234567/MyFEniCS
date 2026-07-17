@@ -40,7 +40,7 @@
 | [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
 | [`iterative_solver_ports.md`](iterative_solver_ports.md) | Task27/30/31 入口、outer KSP 与 local smoother 合法性、组件 flags、资格化和资源选择规则 |
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
-| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033：p3/h5 Hybrid Phase C 组件通过；同阶 full3D 被内存 Gate 阻止，whole Phase C 未通过；自适应与 buffer 延期 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033：p3/h5 同阶闭合、p3/h7.5 等精度工程正结果、p4 资源负结论与 variable-p capability fail-closed；自适应与 buffer 未完成 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -61,7 +61,7 @@
 | Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
 | Task032 | Hybrid FEM–Modal direct baseline | `hybrid_direct_engineering_success` at 13.5 nm；Review V2 PASS_WITH_QUALIFICATIONS；允许选择性合并；h2 not_run |
-| Task033 | high-order Floquet + Hybrid local h/p feasibility | p3/h5 Hybrid M 漏斗与路径锚点通过；full3D 未运行；p3/h3、p4 target 与自适应未启动 |
+| Task033 | high-order Floquet + Hybrid local h/p feasibility | Review V5 D0/D1/D2 完成；p3/h7.5 fixed-p positive；p4 resource-gated；h-adaptive/buffer 未启动 |
 
 ## 当前任务
 
@@ -74,7 +74,7 @@
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
 | Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Review V2 PASS_WITH_QUALIFICATIONS；按 manifest 选择性合并获批 |
-| Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | review v3 的 Phase C 安全部分已执行；Hybrid component pass，full3D memory-gated |
+| Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | review v5 D0/D1/D2 已执行并停止；完整任务仍 partial，整分支待复审 |
 
 ## Task28 审计入口
 
@@ -154,9 +154,9 @@
 
 | 文件 | 内容 |
 |---|---|
-| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | p3/p4 高阶、Phase B、p3/h5 Phase C partial closure、14 GiB 边界与后续缺口 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | p3/p4 高阶、p3 closure、fixed-p 等精度、14 GiB 边界与后续缺口 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](task033_high_order_floquet_hybrid_hp_adaptivity/task.md) | p=3/p=4 高阶 3D Floquet、10 nm 解析 fixture、Hybrid p/h 矩阵、局部 h/p 可行性、QEP 精度、接口缓冲和 1 TiB 预算任务书 |
-| [`task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v3.md`](task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v3.md) | Phase B 验收、Phase C p3/h5 最小矩阵与 candidate-specific 内存 Gate |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md`](task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md) | 当前审阅：D0 证据收口、D1 减缩等精度、D2 variable-p capability 及剩余阶段门禁 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md`](task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md) | C0 full3D veto、Hybrid partial closure、未升级结论与后续要求 |
 | [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | Task033 及后续文档必须遵守的公式与表格渲染规范 |
 

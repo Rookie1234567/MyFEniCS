@@ -1,5 +1,34 @@
 # Hybrid FEM–modal 与直接 3D FEM 对比
 
+## 2026-07-17 Review V5 等精度扩展
+
+Review V5 用统一 provisional p3/h5 discrete reference 比较 `p2/h3`、`p3/h10`
+和条件 `p3/h7.5`。`p3/h10` 全部规定物理误差劣于 p2/h3，因此即使成本更低也不是
+等精度候选。`p3/h7.5` 的 R/T/A、Avol、五平面/接口 E/H 和逐阶功率/复振幅误差
+全部不劣于 p2/h3，并在同网格 direct/Hybrid 闭合中通过。
+
+| 方法 | direct memory/time | Hybrid M160 memory/time | Hybrid vs same-grid direct |
+|---|---:|---:|---|
+| p3/h10 | 1.980 GiB / 22.390 s | 1.661 GiB / 66.942 s | 只有 sampled H-interface Gate 未过；direct 等精度已失败 |
+| p3/h7.5 | 3.667 GiB / 44.487 s | 2.008 GiB / 74.908 s | 16 Gate pass；R/T/A 差不超过 `1.264e-6` |
+
+等精度资源结论比较 `p2/h3 Hybrid M160` 与 `p3/h7.5 Hybrid M160`：
+
+| metric | p2/h3 | p3/h7.5 | baseline / candidate |
+|---|---:|---:|---:|
+| local FE DoF | 68,396 | 26,598 | 2.571x |
+| local-system rows（含每端 40 aux） | 68,476 | 26,678 | 2.567x |
+| total rows | 68,796 | 26,998 | 2.548x |
+| factor-inventory NNZ | 60,672,040 | 17,057,414 | 3.557x |
+| memory authority | 3.224 GiB | 2.008 GiB | 1.606x |
+| wall time | 99.686 s | 74.908 s | 1.331x |
+
+这六项资源指标都降低，构成
+`equal_accuracy_engineering_positive_with_qualification`。factor-inventory NNZ
+是 bottom/top local factor inventory 的统一口径，不与下方旧表的最终 assembled
+system NNZ 混用。详细物理误差见
+[`reduced_equal_accuracy_phaseD.md`](reduced_equal_accuracy_phaseD.md)。
+
 ## 2026-07-17 新增 p3/h5 同阶比较
 
 此前只有 p2/h5、p2/h3；现在新增同物理模型、同 p3、同 h5 的正式比较：
@@ -86,4 +115,5 @@ review v5 分类为 `PASS_WITH_QUALIFICATIONS`。
 - p3/h5 reference 为 `provisional_best_available_discrete_reference`，不是连续解；
 - 没有 p3/h3 或 h 收敛证明；
 - p3/h5 Hybrid 有 66.35% 峰值内存下降，但没有墙钟加速；
+- p3/h7.5 对 p2/h3 有带资格的等精度资源正结果，但不是一般化 p3 优势证明；
 - p4 四模态组件通过，但目标 full3D/Hybrid 求解均被当前主机资源 Gate 阻止。

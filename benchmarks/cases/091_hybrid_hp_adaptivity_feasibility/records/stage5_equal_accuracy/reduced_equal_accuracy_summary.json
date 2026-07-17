@@ -900,9 +900,10 @@
       "max_selected_plane_magnetic_relative_l2": 0.0012420743790700552,
       "true_relative_residual": 1.8175738183160295e-12,
       "costs": {
-        "local_fe_dofs": 7274,
+        "local_fe_dofs": 7194,
+        "local_system_rows": 7274,
         "total_rows": 7514,
-        "assembled_nnz": 3554824,
+        "factor_inventory_nnz": 3554824,
         "memory_authority_gib": 1.4669075012207031,
         "wall_time_seconds": 47.51700031399923
       },
@@ -960,9 +961,10 @@
       "max_selected_plane_magnetic_relative_l2": 0.001242074379661824,
       "true_relative_residual": 4.580501862888489e-12,
       "costs": {
-        "local_fe_dofs": 7274,
+        "local_fe_dofs": 7194,
+        "local_system_rows": 7274,
         "total_rows": 7594,
-        "assembled_nnz": 3554824,
+        "factor_inventory_nnz": 3554824,
         "memory_authority_gib": 1.6605606079101562,
         "wall_time_seconds": 66.94199659700098
       },
@@ -1020,9 +1022,10 @@
       "max_selected_plane_magnetic_relative_l2": 0.00034997833815015195,
       "true_relative_residual": 2.4908459182746174e-12,
       "costs": {
-        "local_fe_dofs": 26678,
+        "local_fe_dofs": 26598,
+        "local_system_rows": 26678,
         "total_rows": 26918,
-        "assembled_nnz": 17054762,
+        "factor_inventory_nnz": 17054762,
         "memory_authority_gib": 1.9854316711425781,
         "wall_time_seconds": 63.269009010000445
       },
@@ -1080,9 +1083,10 @@
       "max_selected_plane_magnetic_relative_l2": 0.00034997833816551184,
       "true_relative_residual": 4.191674538493706e-12,
       "costs": {
-        "local_fe_dofs": 26678,
+        "local_fe_dofs": 26598,
+        "local_system_rows": 26678,
         "total_rows": 26998,
-        "assembled_nnz": 17057414,
+        "factor_inventory_nnz": 17057414,
         "memory_authority_gib": 2.0079269409179688,
         "wall_time_seconds": 74.90818886300076
       },
@@ -1489,17 +1493,19 @@
       "source_commit_sha": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
       "no_swap": true,
       "costs": {
-        "local_fe_dofs": 68476,
+        "local_fe_dofs": 68396,
+        "local_system_rows": 68476,
         "total_rows": 68796,
-        "assembled_nnz": 60672040,
+        "factor_inventory_nnz": 60672040,
         "memory_authority_gib": 3.224353790283203,
         "wall_time_seconds": 99.68630260600185
       }
     },
     "candidate": {
-      "local_fe_dofs": 26678,
+      "local_fe_dofs": 26598,
+      "local_system_rows": 26678,
       "total_rows": 26998,
-      "assembled_nnz": 17057414,
+      "factor_inventory_nnz": 17057414,
       "memory_authority_gib": 2.0079269409179688,
       "wall_time_seconds": 74.90818886300076
     },
@@ -1507,6 +1513,13 @@
     "all_major_metrics_reduced": true,
     "rows": {
       "local_fe_dofs": {
+        "baseline": 68396,
+        "candidate": 26598,
+        "baseline_over_candidate": 2.5714715392134746,
+        "classification": "clear_success",
+        "reduced": true
+      },
+      "local_system_rows": {
         "baseline": 68476,
         "candidate": 26678,
         "baseline_over_candidate": 2.5667591273708674,
@@ -1520,7 +1533,7 @@
         "classification": "clear_success",
         "reduced": true
       },
-      "assembled_nnz": {
+      "factor_inventory_nnz": {
         "baseline": 60672040,
         "candidate": 17057414,
         "baseline_over_candidate": 3.556930728186582,
@@ -1556,5 +1569,5 @@
     "M120-to-M160 selected-plane comparison uses changes in reference-error metrics; raw Hybrid plane arrays are not exported as a separate cross-M NPZ.",
     "No M240, p3/h3, p4 target, adaptivity, or 0.7 nm PDE was run."
   ],
-  "payload_sha256": "c9b0d795906b63aaa3d4dc5e21b1ca1a264264d863fa4125cd5c5c57356723d7"
+  "payload_sha256": "3c322f4bb2864facf5076570c8f57d70972912cd60435d0debe7acdd110ebe0f"
 }

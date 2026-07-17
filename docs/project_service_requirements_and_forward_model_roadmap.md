@@ -593,10 +593,11 @@ multi-RHS 和 all-modes shift-invert QEP 仍需重构。
 
 ## Task033：Hybrid local h/p adaptivity and interface-budget optimization
 
-> 2026-07-17 阶段状态：p3/p4 直接 3D Floquet、QEP Phase A 与 matching-trace
-> Phase B 已完成；p3/h5 Hybrid M80/M120/M160 与 augmented M160 已通过，
-> 但同阶 full3D 因内存 Gate 未运行，whole Phase C 未通过。用户缩小当前范围后，以下 local h/p
-> adaptivity、interface buffer 和 1 TiB 更新保留为后续路线，不再计入本阶段交付。
+> 2026-07-17 阶段状态：p3/p4 直接 3D Floquet、QEP/matching trace 与 p3/h5
+> 同阶 closure 已完成；Review V5 的 fixed-p 减缩研究得到 p3/h10 accuracy negative
+> 和 p3/h7.5 qualified engineering positive。p4 target 当前主机资源受限，
+> native variable-p H(curl) 未资格化。local h-adaptivity、interface buffer 和
+> 1 TiB 更新仍是后续路线，完整 Task33 尚未完成。
 
 只在上下局部 3D 区域进行 h/p 自适应，中间模态区保持解析传播。
 
@@ -619,7 +620,7 @@ $$
 
 目标是形成可覆盖目标角度范围的公共网格，避免每个角度重新划分网格。
 
-Task033 第一 Gate 在 13.5 nm direct reference 上比较相同 observable error。这里需要
+Task033 第一 Gate 在 13.5 nm provisional p3/h5 discrete reference 上比较相同 observable error。这里需要
 区分分阶段指标：p2 graded-h 的 `3x` 只是 stretch 目标；组合使用 h/p/interface 优化后，
 `3x` 才是工程目标，`5x` 是强目标，而不是把任一局部网格单独写成必须达到的最低门槛：
 
@@ -630,7 +631,8 @@ combined h/p/interface optimization: 5x strong target
 ```
 
 同时优化 interface position / buffer thickness，使 local 3D volume 与所需 evanescent M 联合受控；
-未来上下复杂区域继续使用精确 complex 3D Nédélec FEM。
+未来上下复杂区域继续使用精确 complex 3D Nédélec FEM。当前规则光栅不运行 buffer
+矩阵；它等待 defect/nonuniform-end geometry 后为每个位置重新做 M 漏斗。
 
 ## Task034：Scalable generic 2D modal core
 

@@ -1,9 +1,10 @@
 # 高阶 H(curl) Floquet 与 Hybrid h/p 可行性
 
 > 观测状态（2026-07-17）：Case090 证明 p3/p4 直接 3D Floquet 核心正确；QEP
-> p3/p4 组件通过但 legacy 全阶 aggregate 因 p1/p2 负结果未资格化；p3/h5 Hybrid
-> M 漏斗与路径锚点已通过，但同阶 full3D 被内存 Gate 阻止。本文中的
-> adaptive/graded/buffer 部分保留为延期理论与实现入口。
+> p3/p4 组件通过但 legacy 全阶 aggregate 因 p1/p2 负结果未资格化；p3/h5
+> Hybrid/full3D 同阶 closure 已通过。Review V5 fixed-p 减缩研究得到 p3/h10
+> accuracy negative 和 p3/h7.5 qualified engineering positive；variable-p
+> capability fail closed。adaptive/graded/buffer 仍是延期理论与实现入口。
 
 ## 0. 文档身份
 
@@ -188,16 +189,19 @@ Task033 的高阶 Hybrid anchor 只用于 current-scale 代数与物理对照：
 Phase C 的实测说明了这一区分为何必要。固定 p3/h5 时，M120→M160 的最大 R/T/A
 绝对差为 `7.216e-14`，显著逐阶复振幅相对差为 `1.925e-10`，所以模态截断在 M160
 闭合；augmented 与 Schur-minimal 的 modal coefficient/local-field 误差约
-`1e-13`，所以 Hybrid 路径代数等价也闭合。但 p3/h5 full3D 没有通过 C0，
-selected-plane E/H 的同阶参考误差不可得。因此：
+`1e-13`，所以 Hybrid 路径代数等价也闭合。后续受控 p3/h5 full3D 已完成，
+selected-plane E/H 与同阶 R/T/A closure 也通过。因此：
 
 ```text
 modal truncation pass
 + Hybrid path equivalence pass
-!= Hybrid/full3D discretization equivalence pass
++ same-grid direct field/observable closure
+= qualified discretization-equivalence evidence
 ```
 
-这种负缺口不能用更高 M 修复，也不能用 p2 full3D reference 跨阶替代。
+该等价仍不是 grid convergence 或 continuum error。Review V5 再用同一 provisional
+p3/h5 reference 做跨网格等精度比较：p3/h10 失败，p3/h7.5 全指标不劣于 p2/h3；
+这也不能用更高 M 替代 FE 离散误差。
 
 ---
 
@@ -288,14 +292,15 @@ $$
 - MPI partition 后 ownership；
 - submesh/multimesh 耦合维护成本。
 
-当前审计若不能找到稀疏、原生、可测试的公开路径，就必须输出 fail-closed：
+冻结运行时审计没有找到稀疏、原生、可测试的公开路径，已经输出 fail-closed：
 
 ```text
 native_variable_p_qualified = false
 bespoke_arbitrary_variable_p_implemented = false
 ```
 
-Task033 此时仍可完成固定 p2 graded-h、全局 p3/p4 等精度比较和 hp zoning 设计报告；不得临时自造任意 variable-p mortar/constraint 系统来制造完成感。
+Task033 已完成 fixed-p p3 等精度比较和 fixed-p subdomain zoning 设计报告；p2
+graded-h 尚待新审阅。不得临时自造任意 variable-p mortar/constraint 系统来制造完成感。
 
 ---
 
@@ -352,14 +357,16 @@ log、VTU、mesh、eigenvector、matrix、factor 和 memory timeline；tracked r
 
 ## 12. Task033 能证明与不能证明的内容
 
-若全部 Gate 通过，Task033 可以证明：
+在已完成 Gate 的范围内，Task033 当前可以证明：
 
 - p3/p4 双 Floquet 高阶 trace 在微型 3D 问题上的 orientation 与 MPI 正确性；
 - 高阶约束保持 sparse、distributed、phase-cacheable；
 - 在当前 13.5 nm、当前结构与安全 p/h 范围内，QEP/Hybrid 的精度和资源趋势；
-- p2 conforming graded-h 与四种接口 buffer 的可行性/负结果；
-- 当前 native variable-p 是否足以进入最小 hp 原型；
-- measured compression 对 1 TiB 路线分类的影响。
+- fixed-p p3/h7.5 在 provisional reference 口径下相对 p2/h3 的等精度资源正结果；
+- 当前 native variable-p 不足以进入最小 hp 原型。
+
+p2 conforming graded-h、四种 interface buffer 和 measured adaptive compression
+对 1 TiB 路线的影响尚未证明。
 
 Task033 不能单独证明：
 

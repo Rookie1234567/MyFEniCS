@@ -395,13 +395,8 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
     inventory = ledger.get("local_or_augmented_factor_inventory")
     if not isinstance(inventory, Mapping):
         raise ReducedEqualAccuracyError("Hybrid factor inventory is missing")
-    local_dofs = _integer(hybrid.get("bottom_global_size"), label="bottom global size") + _integer(
-        hybrid.get("top_global_size"), label="top global size"
-    )
-    total_rows = local_dofs + _integer(
-        hybrid.get("internal_unknown_count"), label="internal unknown count"
-    )
-    assembled_nnz = 0
+    dimensions = hybrid_dimension_costs(hybrid, validation=validation)
+    factor_inventory_nnz = 0
     for side in ("bottom", "top"):
         side_record = inventory.get(side)
         if not isinstance(side_record, Mapping):
@@ -409,7 +404,9 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
         matrix = side_record.get("matrix_stats")
         if not isinstance(matrix, Mapping):
             raise ReducedEqualAccuracyError(f"Hybrid {side} matrix stats are missing")
-        assembled_nnz += _integer(matrix.get("matrix_nnz_used"), label=f"{side} NNZ")
+        factor_inventory_nnz += _integer(
+            matrix.get("matrix_nnz_used"), label=f"{side} factor-inventory NNZ"
+        )
     port_power = validation.get("port_power")
     selected = reconstruction.get("selected_plane_full3d_comparison")
     if not isinstance(port_power, Mapping) or not isinstance(selected, Mapping):
@@ -441,9 +438,8 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
             solve.get("true_relative_residual"), label="Hybrid true residual"
         ),
         "costs": {
-            "local_fe_dofs": local_dofs,
-            "total_rows": total_rows,
-            "assembled_nnz": assembled_nnz,
+            **dimensions,
+            "factor_inventory_nnz": factor_inventory_nnz,
             "memory_authority_gib": _finite(
                 resource.get("memory_authority_gib"), label="Hybrid memory", positive=True
             ),
@@ -496,6 +492,60 @@ def _hybrid_funnel(m120: Mapping[str, Any], m160: Mapping[str, Any]) -> dict[str
     }
 
 
+def hybrid_dimension_costs(
+    hybrid: Mapping[str, Any], *, validation: Mapping[str, Any]
+) -> dict[str, int]:
+    """Return FE-only, local-system, and total Hybrid row counts.
+
+    ``bottom_global_size`` and ``top_global_size`` include each end's external
+    Fourier-DtN auxiliary rows.  Newer records expose FE-only counts directly;
+    legacy Task032 records require subtracting the recorded auxiliary arrays.
+    """
+
+    local_system_rows = _integer(
+        hybrid.get("bottom_global_size"), label="bottom global size"
+    ) + _integer(hybrid.get("top_global_size"), label="top global size")
+    explicit_fe = (
+        hybrid.get("bottom_local_fe_dofs"),
+        hybrid.get("top_local_fe_dofs"),
+    )
+    if all(value is not None for value in explicit_fe):
+        local_fe_dofs = _integer(
+            explicit_fe[0], label="bottom local FE DoFs"
+        ) + _integer(explicit_fe[1], label="top local FE DoFs")
+    elif any(value is not None for value in explicit_fe):
+        raise ReducedEqualAccuracyError(
+            "Hybrid record exposes only one side's local FE DoFs"
+        )
+    else:
+        amplitudes = validation.get("external_auxiliary_amplitudes")
+        if not isinstance(amplitudes, Mapping):
+            raise ReducedEqualAccuracyError(
+                "legacy Hybrid record lacks external auxiliary amplitudes"
+            )
+        auxiliary_rows = 0
+        for side in ("bottom", "top"):
+            side_amplitudes = amplitudes.get(side)
+            if not isinstance(side_amplitudes, list) or not side_amplitudes:
+                raise ReducedEqualAccuracyError(
+                    f"legacy Hybrid record lacks {side} auxiliary amplitudes"
+                )
+            auxiliary_rows += len(side_amplitudes)
+        local_fe_dofs = local_system_rows - auxiliary_rows
+        if local_fe_dofs <= 0:
+            raise ReducedEqualAccuracyError(
+                "external auxiliary rows exceed Hybrid local-system rows"
+            )
+    internal_rows = _integer(
+        hybrid.get("internal_unknown_count"), label="internal unknown count"
+    )
+    return {
+        "local_fe_dofs": local_fe_dofs,
+        "local_system_rows": local_system_rows,
+        "total_rows": local_system_rows + internal_rows,
+    }
+
+
 def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, Any]:
     watchdog_path, watchdog_repo_path = _repo_path(path, root=root)
     watchdog = _read_json(watchdog_path)
@@ -505,13 +555,17 @@ def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, 
     ledger = watchdog.get("object_payload_ledger")
     timing = solver.get("timing_seconds_max_rank")
     memory = watchdog.get("memory")
-    if not all(isinstance(value, Mapping) for value in (hybrid, ledger, timing, memory)):
+    validation = solver.get("validation")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (hybrid, ledger, timing, memory, validation)
+    ):
         raise ReducedEqualAccuracyError("Task032 Hybrid baseline is incomplete")
     inventory = ledger.get("local_or_augmented_factor_inventory")
     if not isinstance(inventory, Mapping):
         raise ReducedEqualAccuracyError("Task032 Hybrid factor inventory is missing")
-    local_dofs = int(hybrid["bottom_global_size"]) + int(hybrid["top_global_size"])
-    assembled_nnz = sum(
+    dimensions = hybrid_dimension_costs(hybrid, validation=validation)
+    factor_inventory_nnz = sum(
         int(inventory[side]["matrix_stats"]["matrix_nnz_used"]) for side in ("bottom", "top")
     )
     return {
@@ -522,9 +576,8 @@ def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, 
         "source_commit_sha": watchdog.get("source", {}).get("commit_sha"),
         "no_swap": watchdog.get("no_swap") is True,
         "costs": {
-            "local_fe_dofs": local_dofs,
-            "total_rows": local_dofs + int(hybrid["internal_unknown_count"]),
-            "assembled_nnz": assembled_nnz,
+            **dimensions,
+            "factor_inventory_nnz": factor_inventory_nnz,
             "memory_authority_gib": _finite(
                 memory.get("max_simultaneous_worker_rss_gib"),
                 label="Task032 Hybrid memory",
@@ -543,8 +596,9 @@ def _resource_reduction(
     rows = {}
     for key in (
         "local_fe_dofs",
+        "local_system_rows",
         "total_rows",
-        "assembled_nnz",
+        "factor_inventory_nnz",
         "memory_authority_gib",
         "wall_time_seconds",
     ):

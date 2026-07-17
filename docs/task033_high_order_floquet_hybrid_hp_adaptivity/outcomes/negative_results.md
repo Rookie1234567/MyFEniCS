@@ -9,6 +9,11 @@
   155,205,040 NNZ、DtN 插入后达到 12.616 GiB 并受控终止，未进入 factor/solve。
 - p4 Hybrid M160 仍被其独立 37.038/42.594 GiB 中心/上界拒绝。没有用 p3 的低峰值
   反向覆盖 p4 自己的候选 Gate。
+- Review V5 的 `p3/h10` 是新的 accuracy negative：direct solve 安全完成，但相对
+  provisional p3/h5 reference 的全部规定物理误差都劣于 p2/h3。低资源不能替代精度。
+- `p3/h7.5` 不是负结果；它在同一口径下通过，并降低全部五项主要资源。
+- variable-p capability audit 为 fail-closed negative：当前运行时观察到 mixed/submesh
+  API，但没有 native cellwise variable-p H(curl) 的共形、周期和 MPI 证据。
 
 | 项目 | 观测 | 解释 | 处理 |
 |---|---|---|---|
@@ -22,7 +27,12 @@
 | p4 四模态 matched trace | MPI1/MPI4、4×4 Gram 与块不变量全过 | 近简并子空间需块跟踪而非逐向量比较 | 正结果；不再阻塞 p4 候选校准 |
 | p4/h5 full3D target | 12.616 GiB 受控终止；`pswpout` +4 pages | 自身 assembly-only 资源 Gate 失败 | 未进入 factorization/solve；不重复装配 |
 | p4/h5 Hybrid M160 | center/upper `37.038 / 42.594 GiB` | 自身预测远超当前主机预算 | `not_run_by_memory_gate` |
-| adaptive/graded/buffer/1 TiB | 未运行 | 用户缩小范围 | `deferred_by_user_scope` |
+| p3/h10 fixed-p equal accuracy | scalar/field/interface/order 12 类比较均劣于 p2/h3 | coarse h=10 物理离散不足；不是残差或内存问题 | `negative_not_equal_accuracy`；合法触发 h7.5 |
+| p3/h10 Hybrid H-interface | M120/M160 同一 sampled H Gate 未过，增加 M 不改善 | 不是 modal truncation 收敛问题 | 不跑 M240；direct 等精度已失败 |
+| variable-p H(curl) | 无 native operational/conformity/periodic/MPI evidence | API 存在不等于 unequal-p 语义资格 | `not_qualified_fail_closed`；不做 bespoke prototype |
+| adaptive/graded | 未运行 | 等待 D1/D2 summary 新审阅 | `deferred_pending_review` |
+| buffer | 未运行 | 等待 defect/nonuniform-end geometry | 保留 10/110 nm，不选伪最优 |
+| 1 TiB | 未更新 | 缺 measured adaptive compression | 不宣称 0.7 nm 可行 |
 
 ## 不能升级的结论
 
@@ -35,6 +45,8 @@
 - Task032 p2 同网格一致性，不等于连续解已网格收敛；
 - 当前阶段没有 0.7 nm PDE、材料转移验证或 1 TiB 可行性证明；
 - 已终止的完整 campaign 没有生成 final outcome、21-role manifest 或 publication descriptor。
+- p3/h7.5 的等精度正结果使用 provisional p3/h5 离散参考；不能改写成连续解误差、
+  网格收敛或“任意问题 p3 都优于 p2”。
 
 这些限制是当前证据的组成部分，不是待隐藏的问题。
 

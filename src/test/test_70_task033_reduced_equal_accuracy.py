@@ -7,6 +7,7 @@ from benchmarks.task033_reduced_equal_accuracy import (
     ReducedEqualAccuracyError,
     classify_resource_reduction,
     compare_full3d_to_reference,
+    hybrid_dimension_costs,
 )
 
 
@@ -81,3 +82,40 @@ def test_direct_comparison_rejects_different_sample_coordinates() -> None:
     candidate["arrays"]["x_nm"] = np.array([0.0, 2.0])
     with pytest.raises(ReducedEqualAccuracyError, match="sample coordinates differ"):
         compare_full3d_to_reference(reference, candidate)
+
+
+def test_hybrid_dimension_costs_distinguish_fe_auxiliary_and_modal_rows() -> None:
+    modern = hybrid_dimension_costs(
+        {
+            "bottom_global_size": 13339,
+            "top_global_size": 13339,
+            "bottom_local_fe_dofs": 13299,
+            "top_local_fe_dofs": 13299,
+            "internal_unknown_count": 320,
+        },
+        validation={},
+    )
+    assert modern == {
+        "local_fe_dofs": 26598,
+        "local_system_rows": 26678,
+        "total_rows": 26998,
+    }
+
+    legacy = hybrid_dimension_costs(
+        {
+            "bottom_global_size": 34238,
+            "top_global_size": 34238,
+            "internal_unknown_count": 320,
+        },
+        validation={
+            "external_auxiliary_amplitudes": {
+                "bottom": [[0.0, 0.0]] * 40,
+                "top": [[0.0, 0.0]] * 40,
+            }
+        },
+    )
+    assert legacy == {
+        "local_fe_dofs": 68396,
+        "local_system_rows": 68476,
+        "total_rows": 68796,
+    }

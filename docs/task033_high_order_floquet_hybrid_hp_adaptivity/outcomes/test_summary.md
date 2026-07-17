@@ -1,5 +1,34 @@
 # Task033 阶段测试摘要
 
+## 2026-07-17 Review V5 D0/D1/D2 与最终文档审计
+
+| 验证 | 结果 |
+|---|---|
+| D1 reduced aggregator unit contracts | 8 passed |
+| Task33 resource/capability/evidence/equal-accuracy/final/Phase C/D focused group | 73 passed |
+| documentation + retrospective contracts | 21 passed |
+| Ruff：D0/D1/D2 代码与 tests | pass |
+| compileall：D1 aggregator/runner/test | pass |
+| reduced summary JSON parse | pass |
+| planning evidence checker | `evidence_verified`；正确保持 `claims_task033_complete=false` |
+| 四个更新 CSV | 22/5/4/13 行均可解析，列数分别为 23/18/19/8 |
+| `git diff --check` | pass |
+
+最终审计发现并修正了一处纯聚合口径问题，没有重跑 PDE：
+
+- `bottom/top_global_size` 包含每端 40 个外部 Fourier-DtN auxiliary，不能标成
+  FE-only DoF；
+- MUMPS local factor inventory NNZ 不能标成 assembled system NNZ。
+
+修正后 summary 分别记录 `local_fe_dofs`、`local_system_rows`、`total_rows` 和
+`factor_inventory_nnz`，并新增 modern/legacy 两类合同测试。p3/h7.5 相对 p2/h3
+的六项资源改善为 `2.571x / 2.567x / 2.548x / 3.557x / 1.606x / 1.331x`；
+等精度正判定不变。新 payload SHA256 为
+`3c322f4bb2864facf5076570c8f57d70972912cd60435d0debe7acdd110ebe0f`。
+
+Phase D 的 PDE 记录此前已经在 clean SHA、MPI4、watchdog、zero-swap 条件下完成。
+本轮文档/聚合收口没有重新启动 Maxwell solve。
+
 ## 2026-07-17 Phase C1 / p4 补测
 
 | 验证 | 结果 |

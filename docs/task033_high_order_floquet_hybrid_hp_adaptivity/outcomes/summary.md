@@ -1,5 +1,25 @@
 # Task033 阶段性执行摘要
 
+## 2026-07-17 Review V5 Phase D 更新（当前状态）
+
+Review V5 批准的 D0、D1、D2 已完成；数值 campaign 已按停止规则结束。
+
+| 项目 | 当前结论 |
+|---|---|
+| D0 source/evidence/document convergence | 完成；历史 Phase C 标记 superseded，pure-3D/Hybrid 数值源兼容性通过 |
+| p3/h10 direct / Hybrid M120/M160 | 安全完成、零 swap；direct 等精度失败，Hybrid H-interface Gate 也未过 |
+| 条件 p3/h7.5 direct | 3.667 GiB、44.487 s、零 swap、true residual `6.449e-12` |
+| p3/h7.5 等精度 | 全部 R/T/A、Avol、五平面/接口 E/H 和逐阶误差不劣于 p2/h3 |
+| p3/h7.5 Hybrid M120/M160 | 16 项 Gate 全过；M160 2.008 GiB、74.908 s |
+| p3/h7.5 对 p2/h3 资源 | FE DoF 2.571x、local-system rows 2.567x、total rows 2.548x、factor-inventory NNZ 3.557x、memory 1.606x、time 1.331x |
+| variable-p / hp | 当前 native cellwise variable-p H(curl) 未资格化；fail closed，无 target prototype |
+| 原 Task33 | 仍为 partial；h-adaptive、buffer、1 TiB update、21-role formal closure 未完成 |
+
+等精度 reference 是 `p3/h5` 最佳可用离散解，不是连续解，也未证明网格收敛。
+详细误差、资源口径和 SHA 见
+[`reduced_equal_accuracy_phaseD.md`](reduced_equal_accuracy_phaseD.md)；Task33 全量完成/
+延期对账见 [`task33_completion_matrix.md`](task33_completion_matrix.md)。
+
 ## 2026-07-17 Phase C1 更新（覆盖下文旧停止点）
 
 用户允许 p3/h5 受控 direct 运行，并规定：若 p3 实际零 swap 且峰值低于
@@ -106,17 +126,20 @@ volume closure error 为 `1.874e-12`，E/H interface Gate 均通过。旧 C0 曾
 `1.100e-5 / 1.098e-4`。因此 p3/h5 whole Phase C 当前为数值闭合通过，而非
 “保持未通过”。
 
-## 4. 明确延期
+## 4. 原范围中尚未完成的项目
 
-- uniform p/h 20 项完整矩阵；
-- p2 graded/adaptive h5、h3；
-- p3 equal-accuracy 与 p4 工程收益对照；
-- native variable-p 与 hp zoning；
-- 四个 interface buffer 与联合代价选择；
-- 更新后的 1 TiB 与 0.7 nm 推演；
+- uniform p/h 原 20 项完整矩阵：被 Review V5 的减缩矩阵取代，不再机械执行；
+- p2 graded/adaptive h5、h3：未运行，等待 D1/D2 summary 新审阅；
+- p4 工程收益：当前主机资源 Gate negative，未建立；
+- native variable-p target prototype：capability audit fail closed，未实现；
+- 四个 interface buffer 与联合代价选择：等待 defect/nonuniform-end geometry；
+- 更新后的 1 TiB 与 0.7 nm 推演：等待 measured adaptive compression；
 - 原任务书要求的 21-role formal manifest、final outcome 与 publication descriptor。
 
-这些项目均为 `deferred_by_user_scope`，不是数值失败。
+fixed-p p3 equal-accuracy 不再属于延期项：`p3/h10` 为精度负结果，
+`p3/h7.5` 为带资格的工程正结果。variable-p capability audit 也已完成；未完成的是
+target prototype。各项是 `removed_by_reduced_scope`、`deferred`、`resource_gated`
+或 `capability_gated`，不能统一写成数值失败。
 
 ## 5. 正式 campaign 的暂停点
 
@@ -132,21 +155,26 @@ volume closure error 为 `1.874e-12`，E/H interface Gate 均通过。旧 C0 曾
 | Phase C p3/h5 Hybrid | M80/M120/M160 与 augmented M160 完成；新 SHA 上 M160 对同阶 direct 的 16 项 Gate 全过 |
 | Phase C p4 四模态 | MPI1/MPI4 四模态 QEP→matched-trace 资格化通过 |
 | Phase C p4/h5 target | full3D assembly-only 在 12.616 GiB 受控终止；Hybrid 独立上界 42.594 GiB；均未进入目标求解 |
-| Phase C p3/h3、adaptive、buffer | 用户缩小范围后延期，未启动 |
+| Phase D p3/h10 | direct + Hybrid M120/M160 完成；等精度 negative，按规则触发 h7.5 |
+| Phase D p3/h7.5 | direct + Hybrid M120/M160 完成；equal-accuracy engineering positive with qualification |
+| Phase D variable-p | 运行时 capability audit 完成；fail closed，未触发 microfixture |
+| p3/h3、adaptive、buffer | 未获当前批准或等待目标几何，未启动 |
 
 `p1/h3/M160` 已完成局部因子、Schur、场恢复与 official RTA，停止时正在中间平面
 重建；由于没有生成 solver record、watchdog summary 和 funnel aggregate，它不是有效正式结果。
 
 ## 6. 是否需要继续计算
 
-当前 p3/h5 不需要重复计算：M 漏斗、路径等价和同阶 full3D 闭合均已完成，M240
-也没有数值必要。若未来要升级结论，最小顺序是：
+当前没有需要自动补算的项目。p3/h5、p3/h10、p3/h7.5 均不需要重复，M240 没有
+数值必要。若未来继续，最小顺序是：
 
-1. 先独立复审 p3/h5 的 tracked 摘要、raw SHA256 与 16 项 Gate；无需重跑；
-2. p4/h5 只能在显著更大的内存预算、或经过资格化的低内存算法上继续；当前主机
-   不应重做装配，也不应启动 factorization/solve；
-3. 若要研究 h 收敛，再单独批准 p3/h3，并建立同阶 direct/Hybrid 预算；
-4. adaptive/graded/buffer 继续按用户范围延期，不由本轮 p3 闭合自动扩权。
+1. 先独立复审 D1 reduced summary 与 D2 capability report；无需重跑；
+2. 只有新审阅批准后，才启动最后的 p2 conforming graded-h h5 mechanism，随后
+   条件进入 h3 compression；
+3. p4/h5 只能在显著更大的内存预算或已资格化低内存算法上继续；当前主机不应
+   重做装配或启动 factorization/solve；
+4. interface buffer 等待 defect geometry；1 TiB 推演等待 adaptive measured data；
+5. p3/h3 不在当前减缩范围内，不由 p3/h7.5 正结果自动解锁。
 
 ## 7. 证据边界
 
@@ -157,4 +185,7 @@ Case090 与 QEP 原始 watchdog 位于 ignored campaign 目录；仓库跟踪的
 `phaseC_summary.json` 保存历史漏斗与 C0 身份；新同阶闭合由
 `full3d_closure_summary.json` 保存 p3 direct、Hybrid、五平面和 16 项 Gate，
 p4 负校准则由 `calibration_summary.json` 保存。Task032 的六份 p2
-Hybrid/full3D 记录仍是可复核的 tracked clean evidence。
+Hybrid/full3D 记录仍是可复核的 tracked clean evidence。Phase D1 由
+`stage5_equal_accuracy/reduced_equal_accuracy_summary.json` 哈希绑定 p3/h10、
+p3/h7.5 direct/Hybrid raw records；D2 由 `variable_p_capability_audit.json`
+保存运行时 API 和逐项 semantic requirement。

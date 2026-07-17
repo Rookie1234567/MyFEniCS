@@ -1,9 +1,9 @@
 # Task33 高阶 Floquet、Hybrid h/p 与自适应研究入口
 
-> 2026-07-17 阶段更新：Case090 p3/p4、QEP Phase A 与 matching-trace Phase B
-> 已完成；Phase C p3/h5 Hybrid M80/M120/M160 与 augmented M160 已通过，
-> 同阶 full3D 因内存 Gate 未运行。p3/h3、p4 target、自适应、buffer 与 1 TiB
-> 阶段尚未启动。
+> 2026-07-17 当前状态：Case090 p3/p4、QEP/matching trace、p3/h5 同阶
+> Hybrid/full3D closure 和 Review V5 D0/D1/D2 已完成。p3/h10 为精度负结果，
+> p3/h7.5 为带资格的等精度工程正结果；variable-p capability fail closed。
+> p3/h3、p4 target、自适应、buffer 与 1 TiB 更新均不在当前可直接运行范围。
 
 本页保留为 Task33 的操作与恢复入口。完整原始任务边界见
 [`../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md)，
@@ -15,12 +15,12 @@
 | 项目 | 当前合同 |
 |---|---|
 | ordinary default | 不变；Task33 runner 全部显式 opt-in，不修改 `ACTIVE_PYCHARM_PRESET` |
-| 当前可提交证据 | Case090 144 PDE、QEP Phase A、Phase B matched-trace、Task032 p2 对照、Phase C p3/h5 Hybrid component |
+| 当前可提交证据 | Case090 144 PDE、QEP/trace、p3/h5 closure、p4 resource negative、Phase D1 equal-accuracy、Phase D2 capability audit |
 | formal evidence | 本阶段不是原任务书的 21-role closure；完整 manifest 仍是 `NOT_RUN` |
 | 内存 | host hard budget 为 14 GiB；swap 禁止；预测或现场 Gate 不通过就不启动 |
 
-当前仓库可以声明高阶 Stage1 与 matching-trace Phase B 完成，但不能声称目标
-p3/p4 Hybrid、自适应压缩、buffer 最优点或 1 TiB 路线已经完成。
+当前仓库可以声明 p3/h5 与 p3/h7.5 的限定结论，但不能声称 p4 target、
+自适应压缩、buffer 最优点、native variable-p prototype 或 1 TiB 路线已经完成。
 `planning_eligible` 也不等于 `launch_eligible`。
 
 ## 2. Windows PowerShell 与 Docker 准备
@@ -444,11 +444,12 @@ PowerShell，或建立调用同一 Docker 命令的 External Tool。
 | Case090 committed record | oracle/planner/core 均为 NOT_RUN | 保留；只有 clean watchdog 三 shard 可替代 |
 | QEP legacy 全阶 aggregate | 因 p1/p2 真实负结果未资格化；p3/p4 Phase A 已通过 | 保留低阶负结果，不重跑 QEP36 或放宽阈值 |
 | Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 与独立 aggregate 通过 | review v3 已接受；保留两模态范围 |
-| p3/h5 full3D | 第二中心/上界失败，未运行 | 不强跑；新预算或低内存路径获批后重做 C0 |
-| p3/h5 Hybrid funnel | M80/120/160 与 augmented M160 通过 | 不重复；M240 不需要 |
-| adaptive h5/h3 | planning path 存在，measured compression 未提交 | 缺 same-accuracy evidence 就停止 |
-| 四 buffer + tradeoff | 参数入口存在，正式 funnel/tradeoff record 缺失 | 不从 smoke 选最优点 |
-| variable-p | fail-closed negative audit | 不自造任意 variable-p 约束系统 |
+| p3/h5 full3D + Hybrid | 同阶 closure 已通过；direct 7.781 GiB，Hybrid 2.618 GiB | 不重复；reference 仍非 grid-converged |
+| p3/h10 | direct/Hybrid 已跑；等精度 negative | 停止；不因低成本接受，不跑 M240 |
+| p3/h7.5 | direct + Hybrid M120/M160 通过；等精度资源正结果 | 不重复；等待 D1 summary 复审 |
+| adaptive h5/h3 | planning path 存在，measured compression 未提交 | 等待新审阅批准；不要直接执行本页计划命令 |
+| 四 buffer + tradeoff | 正式 funnel/tradeoff record 缺失 | 等待 defect geometry，不从 smoke 选最优点 |
+| variable-p | 当前运行时 fail-closed negative audit | 不自造 arbitrary unequal-p 约束；无 microfixture |
 | 1 TiB | 当前 NOT_QUALIFIED | 只用 measured compression 更新分类 |
 | unified formal manifest | committed entries 为空 | `--require-formal` 返回 2 是正确结果 |
 

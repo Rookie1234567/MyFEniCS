@@ -1,5 +1,24 @@
 # Task033 阶段交付文件
 
+## 2026-07-17 Review V5 D0/D1/D2 增量
+
+| 文件 | 作用 |
+|---|---|
+| `benchmarks/task033_source_compatibility.py` / runner | pure-3D 与 Hybrid numerical source fail-closed 兼容性审计 |
+| `benchmarks/task033_reduced_equal_accuracy.py` / runner | 聚合 p2/h3、p3/h10、p3/h7.5 的物理误差、M 收敛与资源 |
+| `src/test/test_70_task033_reduced_equal_accuracy.py` | D1 聚合正/负合同与 payload hash 测试 |
+| `records/stage5_equal_accuracy/full3d_reference_p3_h10.json` | p3/h10 direct descriptor |
+| `records/stage5_equal_accuracy/full3d_reference_p3_h7p5.json` | p3/h7.5 direct descriptor |
+| `records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json` | Review V5 D1 hash-bound aggregate |
+| `records/variable_p_capability_audit.json` | D2 当前运行时 API 与 semantic requirement audit |
+| `outcomes/reduced_equal_accuracy_phaseD.md` | D1 物理、闭合和资源结论 |
+| `outcomes/variable_p_hp_capability.md` | D2 fail-closed 结论和 fixed-p zoning 设计 |
+| `outcomes/task33_completion_matrix.md` | 原 task Phase 0–8、14 问与全文档审计 |
+| `response_v6.md` | 对 Review V5 的正式回复 |
+
+D1 的重型 raw field/NPZ/matrix/factor/timeline/log 继续保存在 gitignored
+`benchmarks/artifacts/`。tracked descriptors 和 aggregate 保存路径、SHA256 与关键数值。
+
 ## 2026-07-17 Phase C1 / p4 后续增量
 
 | 文件 | 作用 |
@@ -60,6 +79,7 @@ p4 assembly-only 负校准也绑定 `95921ab...`。
 | Phase B 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json` |
 | Phase C 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json` |
 | Case/项目索引 | Case090/091 README、项目 README、docs/notes 索引与 roadmap |
+| Review V5 当前态同步 | root/docs README、capability matrix、development progress、roadmap、quick start、code walkthrough、theory note |
 
 ## 明确保留不改
 

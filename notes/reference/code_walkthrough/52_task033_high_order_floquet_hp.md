@@ -1,9 +1,9 @@
 # Task033 高阶 Floquet、QEP 与 graded-h 走读
 
-> 阶段状态（2026-07-17）：高阶 p3/p4、Case090、QEP Phase A 与 matching-trace
-> Phase B 已完成；legacy 全阶 QEP aggregate 仍因 p1/p2 负结果未资格化。Phase C
-> p3/h5 Hybrid 组件已通过，full3D 被内存 Gate 阻止；graded-h、equal-accuracy
-> 和 buffer 路径尚未启动。
+> 阶段状态（2026-07-17）：高阶 p3/p4、Case090、QEP/matching trace、p3/h5
+> 同阶 closure 与 Review V5 D0/D1/D2 已完成；legacy 全阶 QEP aggregate 仍因
+> p1/p2 负结果未资格化。fixed-p p3/h7.5 给出带资格的等精度正结果；graded-h
+> 和 buffer 尚未启动，native variable-p H(curl) fail closed。
 
 ## 调用链
 
@@ -91,13 +91,15 @@ projection 和 coefficient round-trip。切向值通信只传两个 complex128 �
 
 小规模 augmented direct 只用于与 Modal-Schur 代数锚定；主求解路径保持 `modal-schur-memory-minimal`。p4 只有 Case090/QEP/trace 通过、资源预测安全且 p3 已显示收益时才会运行 Hybrid。
 
-Phase C 新增 `task033_phaseC.py` 和 `run_task033_phaseC.py`。前者构造候选级 C0、
-验证 preflight 身份并聚合 partial chain；后者只提供 `preflight` 与 `aggregate`
-两个入口，不直接求解 PDE。正式 p3/h5 记录中，full3D 的 factor-payload 中心
-`15.031 GiB` 与 upper `18.038 GiB` 失败，因此保持 not-run；三个 Schur-minimal
-shard 和一个 augmented anchor 在同一 `b636444...` clean SHA 上通过。聚合器即使
-看到全部 Hybrid pass，也固定 `whole_phaseC_pass=false`，避免组件成功掩盖 reference
-缺口。
+Phase C 的历史 C0 曾阻止 p3/h5 full3D；后续用户授权的受控 direct 以
+7.781 GiB 完成，同阶 Hybrid 2.618 GiB 并通过 16 项 closure Gate。因此历史
+`phaseC_summary.json` 已明确 superseded，当前 p3/h5 由
+`full3d_closure_summary.json` 管理。
+
+Review V5 的 `task033_reduced_equal_accuracy.py` 只聚合 p2/h3 baseline、
+p3/h10 和条件 p3/h7.5。它同时复算 scalar、plane/interface field、diffraction
+order、residual、M convergence 与五类资源指标，并绑定 raw SHA256。结果为
+p3/h10 accuracy negative、p3/h7.5 qualified engineering positive。
 
 ## graded-h 与 buffer
 
@@ -109,7 +111,10 @@ shard 和一个 augmented anchor 在同一 `b636444...` clean SHA 上通过。�
 
 ## variable-p 与 1 TiB
 
-`task033_variable_p_capability.py` 探测当前 DOLFINx/Basix 公开 API 和运行时，并逐项审计 cellwise degree、切向连续、periodic p 同步、trace 与 MPI ownership。没有原生可维护路径时 fail closed，不构造任意 bespoke variable-p。
+`task033_variable_p_capability.py` 已在 DOLFINx 0.10.0.post2 / Basix 0.10.0
+运行时执行。mixed element、submesh 和 mixed-topology API 的存在不能证明
+cellwise unequal-p H(curl) 语义；审计因此 fail closed，不构造 bespoke variable-p，
+也没有触发 microfixture。
 
 `task033_one_tib_projection.py` 只在输入真实 measured compression 时更新 1 TiB 路线分类。没有实测压缩、单位或 baseline 时输出 not-run/fail-closed；它始终是 analytical projection，不是 PDE solver pass。
 

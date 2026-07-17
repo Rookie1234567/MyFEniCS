@@ -1,5 +1,24 @@
 # Task033 内存预测与启动决策
 
+## Review V5 Phase D1 实测
+
+Review V5 的减缩矩阵只批准 `p3/h10`，并在其等精度失败后条件批准
+`p3/h7.5`。两者均先做 assembly-only C0，再做 full solve 和 Hybrid
+M120/M160；一次只有一个重型 case，外部 watchdog 生效，swap 峰值为零。
+
+| candidate/path | predicted center / upper | measured memory | measured time | 决定 |
+|---|---:|---:|---:|---|
+| p3/h10 full3D assembly | 1.693 / 1.947 GiB | 1.406 GiB | — | C0 pass |
+| p3/h10 full3D solve | 同上只作 launch 预测 | 1.980 GiB | 22.390 s | solve pass；equal-accuracy fail |
+| p3/h10 Hybrid M160 | — | 1.661 GiB | 66.942 s | formal fail on sampled H-interface；停止，不跑 M240 |
+| p3/h7.5 full3D assembly | 2.142 / 2.463 GiB | 2.556 GiB | — | 略超预测 upper，但远低于 termination；C0 pass |
+| p3/h7.5 full3D solve | 同上只作 launch 预测 | 3.667 GiB | 44.487 s | solve/equal-accuracy pass |
+| p3/h7.5 Hybrid M160 | — | 2.008 GiB | 74.908 s | 16 Gate pass；selected |
+
+`p3/h7.5` 说明经验预测不能当作实测权威：assembly 峰值比上界高约 3.8%，但现场
+仍有充足绝对余量，watchdog/no-swap/串行合同全部满足，所以继续 full solve 是合法的。
+`p3/h10` 则说明“安全且便宜”不等于物理等精度；其精度失败才是解锁 h7.5 的条件。
+
 ## 2026-07-17 实测更新
 
 用户给出的 p4 前置条件已经满足：p3/h5 full solve 为 7.781 GiB、cgroup swap 0。
@@ -59,7 +78,8 @@ termination 相应收紧到 `10.5498 / 11.7424 / 11.9259 GiB`。
 | concurrency | one large case at a time | pass | measured | serialized campaign runner |
 | Phase C p3/h5 | user-authorized measured override + candidate watchdog | direct/Hybrid closure pass | measured | `full3d_closure_summary.json` |
 | Phase C p4/h5 | p3 prerequisite + four-mode prerequisite + own resource Gate | prerequisites pass；target resource veto | measured + predicted negative | `calibration_summary.json` |
-| p3/h3、adaptive | explicit new scope required | deferred | not_run | no launch now |
+| p3/h3 | Review V5 explicitly not approved | not_run | scope gate | no launch now |
+| adaptive | wait for D1/D2 review | not_run | review gate | no launch now |
 
 ## 3. Candidate decisions
 
@@ -75,9 +95,11 @@ termination 相应收紧到 `10.5498 / 11.7424 / 11.9259 GiB`。
 | p3/h5 Hybrid M160 closure rerun | p3 direct available | launch after reference | 16 Gate pass；2.618 GiB | measured | full3D closure summary |
 | p4/h5 full3D | p3 condition met；own assembly unknown | assembly-only calibration | 12.616 GiB controlled stop；no factor/solve | measured negative | p4 calibration summary |
 | p4/h5 Hybrid M160 | center 37.038 GiB；upper 42.594 GiB | do_not_launch | `not_run_by_memory_gate` | predicted negative | p4 calibration summary |
-| remaining uniform/adaptive combinations | not approved | do_not_launch | deferred | not_run | `summary.md` |
+| p3/h10 full3D + Hybrid M120/M160 | 1.693/1.947 GiB planning center/upper | serialized launch complete | resource safe；equal-accuracy negative | measured | stage5 reduced summary |
+| p3/h7.5 full3D + Hybrid M120/M160 | conditional after h10 accuracy fail | serialized launch complete | equal-accuracy engineering positive with qualification | measured | stage5 reduced summary |
+| p3/h3、p4 target、adaptive/buffer | not approved or deferred | do_not_launch | not_run | scope/resource decision | Review V5 |
 
 p3 的旧预测否决和当前实测通过必须同时保留身份，但前者不能再冒充当前状态。
 p4 停止原因是它自己的实测/预测资源 Gate，不是四模态组件失败，也不是未获准做
-校准。p3/h3 与 adaptive 的停止原因才是范围延期。三者不能混写，且 p3 的安全
-运行不能反向许可 p4 的 factorization/solve。
+校准。p3/h3 是明确未批准，adaptive 等待 D1/D2 审阅，buffer 等待 defect geometry。
+这些原因不能混写，且 p3/h7.5 的安全运行不能反向许可 p4 factorization/solve。
