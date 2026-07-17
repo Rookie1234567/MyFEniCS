@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import cmath
 import json
 import unittest
 from pathlib import Path
@@ -23,6 +24,7 @@ from benchmarks.task033_qep_qualification import (
     qep_full_aggregate_gate,
     qep_p3_only_partial_aggregate_gate,
     qep_shard_gate,
+    recompute_cross_h_tracking,
     resource_authority_gate,
     source_identity_gate,
 )
@@ -228,6 +230,80 @@ def _controlled_p4_negative(shard: dict) -> dict:
     record["numerical_results"]["left_right_classification"][
         "biorthogonality_infinity_norm_error"
     ] = 3.0e-6
+    return record
+
+
+def _rotated_near_degenerate_tracking_record(*, beta_scale: float) -> dict:
+    mode_count = 5
+    modes = []
+    for mode_index in range(mode_count):
+        fingerprint = [
+            [
+                float((cmath.exp(2j * cmath.pi * mode_index * axis / mode_count)).real),
+                float((cmath.exp(2j * cmath.pi * mode_index * axis / mode_count)).imag),
+            ]
+            for axis in range(mode_count)
+        ]
+        modes.append(
+            {
+                "mode_index": mode_index,
+                "beta_per_nm": [beta_scale * (1.0 + 1.0e-8 * mode_index), 0.0],
+                "direction": "forward",
+                "kind": "propagating",
+                "right_fourier_fingerprint": fingerprint,
+                "left_fourier_fingerprint": fingerprint,
+            }
+        )
+    return {
+        "numerical_results": {
+            "left_right_classification": {
+                "near_degenerate_groups": [
+                    {
+                        "indices": list(range(mode_count)),
+                        "beta_center_per_nm": [beta_scale, 0.0],
+                        "max_relative_beta_spread": 4.0e-8,
+                        "overlap_condition": 1.0,
+                        "normalization_method": "near_degenerate_block_inverse",
+                        "post_normalization_identity_error": 1.0e-12,
+                    }
+                ]
+            },
+            "cross_h_tracking": {
+                "evidence_kind": "measured_per_shard_input_for_cross_h_tracking",
+                "status": "compact_input_ready_for_aggregate",
+                "aggregate_recomputation_required": True,
+                "compact_evidence": {
+                    "schema_version": 1,
+                    "evidence_kind": (
+                        "measured_common_fourier_left_right_mode_fingerprints"
+                    ),
+                    "status": "compact_input_ready_for_cross_h_aggregate",
+                    "assignment_performed_in_shard": False,
+                    "cross_h_vector_dot_performed": False,
+                    "probe_orders": [[axis, 0] for axis in range(mode_count)],
+                    "components_per_order": ["Et_x"],
+                    "fingerprint_length": mode_count,
+                    "mode_count": mode_count,
+                    "modes": modes,
+                    "full_eigenvector_gathered": False,
+                },
+            },
+        }
+    }
+
+
+def _canonical_near_degenerate_tracking_record(*, beta_scale: float) -> dict:
+    record = _rotated_near_degenerate_tracking_record(beta_scale=beta_scale)
+    modes = record["numerical_results"]["cross_h_tracking"][
+        "compact_evidence"
+    ]["modes"]
+    for mode_index, mode in enumerate(modes):
+        fingerprint = [
+            [1.0 if axis == mode_index else 0.0, 0.0]
+            for axis in range(len(modes))
+        ]
+        mode["right_fourier_fingerprint"] = fingerprint
+        mode["left_fourier_fingerprint"] = fingerprint
     return record
 
 
@@ -718,6 +794,38 @@ class Task033QepQualificationTests(unittest.TestCase):
             "not_qualified",
         )
         self.assertFalse(qep_full_aggregate_gate(coerced_axis_aggregate)["pass"])
+
+    def test_near_degenerate_block_tracking_resolves_basis_rotation_only(self) -> None:
+        previous = _canonical_near_degenerate_tracking_record(beta_scale=1.0)
+        rotated = _rotated_near_degenerate_tracking_record(beta_scale=1.001)
+        resolved = recompute_cross_h_tracking(
+            previous,
+            rotated,
+            previous_h_nm=5.0,
+            current_h_nm=3.0,
+        )
+        self.assertLess(resolved["minimum_overlap"], 0.5)
+        self.assertTrue(resolved["near_degenerate_basis_rotation_resolved"])
+        self.assertEqual(
+            resolved["tracking_basis_resolution"],
+            "near_degenerate_block_subspace",
+        )
+        self.assertTrue(resolved["block_subspace_tracking"]["pass"])
+        self.assertTrue(resolved["pass"])
+
+        drifted = _rotated_near_degenerate_tracking_record(beta_scale=1.4)
+        rejected = recompute_cross_h_tracking(
+            previous,
+            drifted,
+            previous_h_nm=5.0,
+            current_h_nm=3.0,
+        )
+        self.assertFalse(rejected["near_degenerate_basis_rotation_resolved"])
+        self.assertFalse(rejected["block_subspace_tracking"]["pass"])
+        self.assertIn(
+            "maximum_relative_beta_drift_above_gate", rejected["failures"]
+        )
+        self.assertFalse(rejected["pass"])
 
     def test_qep_aggregate_accepts_only_complete_controlled_p4_partial(self) -> None:
         records = [

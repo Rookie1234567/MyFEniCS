@@ -32,6 +32,7 @@ LEFT_RIGHT_BETA_PAIR_RELATIVE_ERROR_MAX = 1.0e-7
 RAISED_QUADRATURE_MATRIX_DELTA_MAX = 2.0e-12
 TRACKING_OVERLAP_MIN = 0.5
 TRACKING_RELATIVE_BETA_DRIFT_MAX = 0.25
+TRACKING_BLOCK_SUBSPACE_OVERLAP_MIN = 0.5
 TRACKING_COMPACT_KIND = (
     "measured_common_fourier_left_right_mode_fingerprints"
 )
@@ -230,6 +231,314 @@ def _fingerprint_overlap(left: Sequence[complex], right: Sequence[complex]) -> f
     return min(1.0, max(0.0, float(value)))
 
 
+def _tracking_blocks(
+    record: Mapping[str, Any], compact: Mapping[str, Any]
+) -> list[dict[str, Any]] | None:
+    """Return the measured near-degenerate partition on the compact modes."""
+
+    classification = _classification(record)
+    raw_groups = classification.get("near_degenerate_groups")
+    modes = compact.get("modes")
+    if not isinstance(raw_groups, list) or not isinstance(modes, list):
+        return None
+    by_index = {int(mode["mode_index"]): mode for mode in modes}
+    observed: set[int] = set()
+    blocks: list[dict[str, Any]] = []
+    for block_index, raw_group in enumerate(raw_groups):
+        if not isinstance(raw_group, Mapping):
+            return None
+        indices = raw_group.get("indices")
+        if (
+            not isinstance(indices, list)
+            or not indices
+            or any(type(index) is not int for index in indices)
+            or any(index not in by_index for index in indices)
+            or observed.intersection(indices)
+        ):
+            return None
+        selected = [by_index[index] for index in indices]
+        center = sum((mode["beta"] for mode in selected), 0.0j) / len(selected)
+        directions = sorted({str(mode.get("direction")) for mode in selected})
+        blocks.append(
+            {
+                "block_index": block_index,
+                "mode_indices": list(indices),
+                "block_size": len(indices),
+                "beta_center": center,
+                "directions": directions,
+                "modes": selected,
+            }
+        )
+        observed.update(indices)
+    if observed != set(by_index):
+        return None
+    return blocks
+
+
+def _relative_beta_drift(first: complex, second: complex) -> float:
+    return float(
+        abs(first - second) / max(abs(first), abs(second), 1.0e-12)
+    )
+
+
+def _block_spectral_gap(
+    block: Mapping[str, Any], blocks: Sequence[Mapping[str, Any]]
+) -> float | None:
+    center = complex(block["beta_center"])
+    candidates = [
+        _relative_beta_drift(center, complex(other["beta_center"]))
+        for other in blocks
+        if other["block_index"] != block["block_index"]
+    ]
+    return min(candidates, default=None)
+
+
+def _subspace_principal_cosines(
+    previous_vectors: Sequence[Sequence[complex]],
+    current_vectors: Sequence[Sequence[complex]],
+) -> tuple[list[float], int, int]:
+    import numpy as np
+
+    def basis(vectors: Sequence[Sequence[complex]]) -> tuple[Any, int]:
+        matrix = np.asarray(vectors, dtype=complex).T
+        left, singular_values, _ = np.linalg.svd(matrix, full_matrices=False)
+        if not len(singular_values):
+            return left[:, :0], 0
+        tolerance = (
+            max(matrix.shape)
+            * np.finfo(float).eps
+            * float(singular_values[0])
+        )
+        rank = int(np.count_nonzero(singular_values > tolerance))
+        return left[:, :rank], rank
+
+    previous_basis, previous_rank = basis(previous_vectors)
+    current_basis, current_rank = basis(current_vectors)
+    if previous_rank == 0 or current_rank == 0:
+        return [], previous_rank, current_rank
+    values = np.linalg.svd(
+        previous_basis.conjugate().T @ current_basis,
+        compute_uv=False,
+    )
+    return [float(min(1.0, max(0.0, value))) for value in values], previous_rank, current_rank
+
+
+def recompute_cross_h_subspace_tracking(
+    previous_record: Mapping[str, Any],
+    current_record: Mapping[str, Any],
+    *,
+    previous_h_nm: float,
+    current_h_nm: float,
+) -> dict[str, Any]:
+    """Match measured near-degenerate blocks with basis-invariant metrics."""
+
+    previous = _tracking_compact(previous_record)
+    current = _tracking_compact(current_record)
+    failures: list[str] = []
+    if previous is None:
+        failures.append("previous_compact_tracking_evidence_missing_or_invalid")
+    if current is None:
+        failures.append("current_compact_tracking_evidence_missing_or_invalid")
+    if previous is None or current is None:
+        return {
+            "evidence_kind": "aggregate_recomputed_cross_h_subspace_tracking",
+            "previous_h_nm": previous_h_nm,
+            "current_h_nm": current_h_nm,
+            "matches": [],
+            "complete_block_assignment": False,
+            "pass": False,
+            "failures": failures,
+        }
+    previous_blocks = _tracking_blocks(previous_record, previous)
+    current_blocks = _tracking_blocks(current_record, current)
+    if previous_blocks is None:
+        failures.append("previous_near_degenerate_partition_missing_or_invalid")
+    if current_blocks is None:
+        failures.append("current_near_degenerate_partition_missing_or_invalid")
+    if previous_blocks is None or current_blocks is None:
+        return {
+            "evidence_kind": "aggregate_recomputed_cross_h_subspace_tracking",
+            "previous_h_nm": previous_h_nm,
+            "current_h_nm": current_h_nm,
+            "matches": [],
+            "complete_block_assignment": False,
+            "pass": False,
+            "failures": failures,
+        }
+
+    from scipy.optimize import linear_sum_assignment
+    import numpy as np
+
+    previous_multi = [block for block in previous_blocks if block["block_size"] > 1]
+    current_multi = [block for block in current_blocks if block["block_size"] > 1]
+    metrics: dict[tuple[int, int], dict[str, Any]] = {}
+    cost = np.empty((len(previous_multi), len(current_multi)), dtype=float)
+    for row, first in enumerate(previous_multi):
+        for column, second in enumerate(current_multi):
+            same_size = first["block_size"] == second["block_size"]
+            directions_compatible = bool(
+                first["directions"] == second["directions"]
+                or "ambiguous" in first["directions"]
+                or "ambiguous" in second["directions"]
+            )
+            right_cosines, previous_right_rank, current_right_rank = (
+                _subspace_principal_cosines(
+                    [mode["right"] for mode in first["modes"]],
+                    [mode["right"] for mode in second["modes"]],
+                )
+            )
+            left_cosines, previous_left_rank, current_left_rank = (
+                _subspace_principal_cosines(
+                    [mode["left"] for mode in first["modes"]],
+                    [mode["left"] for mode in second["modes"]],
+                )
+            )
+            full_rank = bool(
+                same_size
+                and previous_right_rank == current_right_rank == first["block_size"]
+                and previous_left_rank == current_left_rank == first["block_size"]
+            )
+            minimum_right = min(right_cosines, default=0.0)
+            minimum_left = min(left_cosines, default=0.0)
+            symmetric_minimum = math.sqrt(minimum_right * minimum_left)
+            center_drift = _relative_beta_drift(
+                complex(first["beta_center"]), complex(second["beta_center"])
+            )
+            metrics[(row, column)] = {
+                "previous": first,
+                "current": second,
+                "same_size": same_size,
+                "directions_compatible": directions_compatible,
+                "right_principal_cosines": right_cosines,
+                "left_principal_cosines": left_cosines,
+                "previous_right_rank": previous_right_rank,
+                "current_right_rank": current_right_rank,
+                "previous_left_rank": previous_left_rank,
+                "current_left_rank": current_left_rank,
+                "full_rank": full_rank,
+                "symmetric_minimum_principal_cosine": symmetric_minimum,
+                "relative_beta_center_drift": center_drift,
+            }
+            cost[row, column] = (
+                1.0
+                - symmetric_minimum
+                + 0.05 * min(center_drift, 10.0)
+                + 4.0 * (not same_size)
+                + 2.0 * (not directions_compatible)
+                + 4.0 * (not full_rank)
+            )
+
+    if previous_multi and current_multi:
+        rows, columns = linear_sum_assignment(cost)
+    else:
+        rows, columns = np.asarray([], dtype=int), np.asarray([], dtype=int)
+    matches: list[dict[str, Any]] = []
+    matched_previous: set[int] = set()
+    matched_current: set[int] = set()
+    for row, column in zip(rows, columns):
+        metric = metrics[(int(row), int(column))]
+        first = metric["previous"]
+        second = metric["current"]
+        if not metric["same_size"]:
+            continue
+        block_pass = bool(
+            metric["full_rank"]
+            and metric["directions_compatible"]
+            and metric["symmetric_minimum_principal_cosine"]
+            >= TRACKING_BLOCK_SUBSPACE_OVERLAP_MIN
+            and metric["relative_beta_center_drift"]
+            <= TRACKING_RELATIVE_BETA_DRIFT_MAX
+        )
+        matches.append(
+            {
+                "previous_block_index": first["block_index"],
+                "current_block_index": second["block_index"],
+                "previous_mode_indices": first["mode_indices"],
+                "current_mode_indices": second["mode_indices"],
+                "block_size": first["block_size"],
+                "previous_beta_center_per_nm": [
+                    float(complex(first["beta_center"]).real),
+                    float(complex(first["beta_center"]).imag),
+                ],
+                "current_beta_center_per_nm": [
+                    float(complex(second["beta_center"]).real),
+                    float(complex(second["beta_center"]).imag),
+                ],
+                "relative_beta_center_drift": metric[
+                    "relative_beta_center_drift"
+                ],
+                "previous_relative_spectral_gap": _block_spectral_gap(
+                    first, previous_blocks
+                ),
+                "current_relative_spectral_gap": _block_spectral_gap(
+                    second, current_blocks
+                ),
+                "right_principal_cosines": metric["right_principal_cosines"],
+                "left_principal_cosines": metric["left_principal_cosines"],
+                "symmetric_minimum_principal_cosine": metric[
+                    "symmetric_minimum_principal_cosine"
+                ],
+                "previous_right_rank": metric["previous_right_rank"],
+                "current_right_rank": metric["current_right_rank"],
+                "previous_left_rank": metric["previous_left_rank"],
+                "current_left_rank": metric["current_left_rank"],
+                "direction_compatible": metric["directions_compatible"],
+                "pass": block_pass,
+            }
+        )
+        matched_previous.add(int(first["block_index"]))
+        matched_current.add(int(second["block_index"]))
+
+    complete = bool(
+        len(matches) == len(previous_multi) == len(current_multi)
+        and len(matched_previous) == len(previous_multi)
+        and len(matched_current) == len(current_multi)
+    )
+    if not complete:
+        failures.append("near_degenerate_block_assignment_incomplete")
+    if any(not row["direction_compatible"] for row in matches):
+        failures.append("near_degenerate_block_direction_mismatch")
+    if any(
+        row["symmetric_minimum_principal_cosine"]
+        < TRACKING_BLOCK_SUBSPACE_OVERLAP_MIN
+        for row in matches
+    ):
+        failures.append("minimum_block_subspace_overlap_below_gate")
+    if any(
+        row["relative_beta_center_drift"] > TRACKING_RELATIVE_BETA_DRIFT_MAX
+        for row in matches
+    ):
+        failures.append("maximum_block_beta_center_drift_above_gate")
+    if any(
+        row["previous_right_rank"] != row["block_size"]
+        or row["current_right_rank"] != row["block_size"]
+        or row["previous_left_rank"] != row["block_size"]
+        or row["current_left_rank"] != row["block_size"]
+        for row in matches
+    ):
+        failures.append("near_degenerate_fingerprint_subspace_rank_deficient")
+    failures = list(dict.fromkeys(failures))
+    return {
+        "evidence_kind": "aggregate_recomputed_cross_h_subspace_tracking",
+        "overlap_identity": (
+            "minimum principal cosine of measured common-Fourier right/right "
+            "and left/left subspaces, combined by symmetric geometric mean"
+        ),
+        "previous_h_nm": previous_h_nm,
+        "current_h_nm": current_h_nm,
+        "previous_near_degenerate_block_count": len(previous_multi),
+        "current_near_degenerate_block_count": len(current_multi),
+        "matches": matches,
+        "minimum_subspace_overlap_gate": TRACKING_BLOCK_SUBSPACE_OVERLAP_MIN,
+        "maximum_relative_beta_center_drift_gate": (
+            TRACKING_RELATIVE_BETA_DRIFT_MAX
+        ),
+        "complete_block_assignment": complete,
+        "pass": not failures,
+        "failures": failures,
+    }
+
+
 def recompute_cross_h_tracking(
     previous_record: Mapping[str, Any],
     current_record: Mapping[str, Any],
@@ -320,7 +629,44 @@ def recompute_cross_h_tracking(
         and len(matches) == len(previous_modes) == len(current_modes)
         and all(row["direction_compatible"] for row in matches)
     )
-    if minimum_overlap is None or minimum_overlap < TRACKING_OVERLAP_MIN:
+    block_tracking = recompute_cross_h_subspace_tracking(
+        previous_record,
+        current_record,
+        previous_h_nm=previous_h_nm,
+        current_h_nm=current_h_nm,
+    )
+    low_overlap_matches = [
+        row
+        for row in matches
+        if row["symmetric_left_right_fourier_overlap"] < TRACKING_OVERLAP_MIN
+    ]
+
+    def resolved_by_block(row: Mapping[str, Any]) -> bool:
+        for block in block_tracking.get("matches", []):
+            if (
+                isinstance(block, Mapping)
+                and row["previous_mode_index"] in block.get(
+                    "previous_mode_indices", []
+                )
+                and row["current_mode_index"] in block.get(
+                    "current_mode_indices", []
+                )
+                and block.get("pass") is True
+            ):
+                return True
+        return False
+
+    basis_rotation_resolved = bool(
+        low_overlap_matches
+        and complete
+        and block_tracking.get("pass") is True
+        and all(resolved_by_block(row) for row in low_overlap_matches)
+    )
+    if (
+        minimum_overlap is None
+        or minimum_overlap < TRACKING_OVERLAP_MIN
+        and not basis_rotation_resolved
+    ):
         failures.append("minimum_common_fourier_overlap_below_gate")
     if maximum_drift is None or maximum_drift > TRACKING_RELATIVE_BETA_DRIFT_MAX:
         failures.append("maximum_relative_beta_drift_above_gate")
@@ -339,6 +685,13 @@ def recompute_cross_h_tracking(
         "minimum_overlap_gate": TRACKING_OVERLAP_MIN,
         "maximum_relative_beta_drift": maximum_drift,
         "maximum_relative_beta_drift_gate": TRACKING_RELATIVE_BETA_DRIFT_MAX,
+        "near_degenerate_basis_rotation_resolved": basis_rotation_resolved,
+        "tracking_basis_resolution": (
+            "near_degenerate_block_subspace"
+            if basis_rotation_resolved
+            else "single_mode_assignment"
+        ),
+        "block_subspace_tracking": block_tracking,
         "complete_stable_assignment": complete,
         "pass": not failures,
         "failures": failures,
@@ -1209,9 +1562,18 @@ def aggregate_qep_shards(
             and positive_by_key.get(key, {}).get("pass") is not True
             for key in keys
         )
-        if degree <= 3 and lower_shards_pass:
-            degree_status = "qualified"
-        elif degree == 4 and qualified:
+        degree_analytic_pass = analytic_trend_pass_by_degree[degree]
+        degree_relative_pass = bool(
+            degree < 3 or p2_relative_pass_by_degree[degree]
+        )
+        degree_tracking_pass = patterned_pass_by_degree[degree]
+        degree_positive_qualified = bool(
+            passed_count == len(keys)
+            and degree_analytic_pass
+            and degree_relative_pass
+            and degree_tracking_pass
+        )
+        if degree_positive_qualified:
             degree_status = "qualified"
         elif degree == 4 and p3_only_partial:
             degree_status = "controlled_numeric_negative"
