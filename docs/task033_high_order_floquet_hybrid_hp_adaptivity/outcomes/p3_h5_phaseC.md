@@ -28,7 +28,7 @@ Hybrid true residual 为 `2.343e-12`，能量闭合误差为 `1.885e-12`，内�
 E/H 相对 L2 为 `1.100e-5 / 1.098e-4`。16 项 Gate 全过。因此 p3/h5
 same-degree Hybrid/full3D 的数值闭合已完成，状态从
 `HYBRID_COMPONENT_ACCEPTED_FULL3D_REFERENCE_OPEN` 更新为
-`same_degree_p3_h5_hybrid_full3d_numerical_closure_pass`，等待独立复审。
+`same_degree_p3_h5_hybrid_full3d_numerical_closure_pass`；Review V6 已接受。
 
 详细轻量证据见 `records/stage3_p3_h5/full3d_reference.json` 与
 `records/stage3_p3_h5/full3d_closure_summary.json`。下文保留为此前 C0/Phase C
@@ -196,11 +196,10 @@ tracked 轻量摘要位于
 `benchmarks/artifacts/cases/091/task033_phaseC_b636444/`；轻量摘要保存七个关键
 文件的 SHA-256。
 
-当前停止点是合理的：
+以下是当时 C0 停止点的历史理由，不是 Review V6 当前待办：
 
 1. 不补跑 M240，因为截断已收敛；
 2. 不跑 p3/h3、p4 或自适应，因为未获评审授权；
 3. 不强跑 p3/h5 full3D，因为 C0 明确失败；
-4. 若要关闭 whole Phase C，下一步不是重复 Hybrid，而是先取得新的 full3D
-   内存方案/预算授权，再在同一可审计 source 上生成 p3/h5 full3D reference，
-   补 selected-plane E/H、逐阶与 R/T/A 对照。
+4. 当时关闭 whole Phase C 所需的 full3D reference、selected-plane E/H、
+   逐阶与 R/T/A 对照，后来已按本文件顶部 Phase C1 记录完成。

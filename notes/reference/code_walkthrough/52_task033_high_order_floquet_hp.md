@@ -1,9 +1,9 @@
 # Task033 高阶 Floquet、QEP 与 graded-h 走读
 
-> 阶段状态（2026-07-17）：高阶 p3/p4、Case090、QEP/matching trace、p3/h5
-> 同阶 closure 与 Review V5 D0/D1/D2 已完成；legacy 全阶 QEP aggregate 仍因
-> p1/p2 负结果未资格化。fixed-p p3/h7.5 给出带资格的等精度正结果；graded-h
-> 和 buffer 尚未启动，native variable-p H(curl) fail closed。
+> 阶段状态（2026-07-17）：Review V6 接受 Task33 reduced scope，F0 已完成。
+> fixed-p p3/h7.5 为 clear success（有 reference 资格）；legacy p1/p2 negatives
+> 保留，variable-p fail closed。graded-h/1 TiB 移交下一任务，buffer 等待目标几何；
+> 其 prototype 不进入本次 master 能力合并。
 
 ## 调用链
 
@@ -96,16 +96,20 @@ Phase C 的历史 C0 曾阻止 p3/h5 full3D；后续用户授权的受控 direct
 `phaseC_summary.json` 已明确 superseded，当前 p3/h5 由
 `full3d_closure_summary.json` 管理。
 
-Review V5 的 `task033_reduced_equal_accuracy.py` 只聚合 p2/h3 baseline、
+Review V6 最终版 `task033_reduced_equal_accuracy.py` 只聚合 p2/h3 baseline、
 p3/h10 和条件 p3/h7.5。它同时复算 scalar、plane/interface field、diffraction
-order、residual、M convergence 与五类资源指标，并绑定 raw SHA256。结果为
-p3/h10 accuracy negative、p3/h7.5 qualified engineering positive。
+order、residual、M convergence 与六类资源指标，并绑定 raw SHA256。它还核对
+image/digest/MPI4/zero-swap/solver/memory authority/source split，并把 wall time
+限定为 indicative。结果为 p3/h10 accuracy negative、p3/h7.5 fixed-p clear success。
 
-## graded-h 与 buffer
+## graded-h 与 buffer（未合入的 research prototype）
 
 `task033_periodic_graded_mesh.py` 构造 fitted axis 和周期同步的 conforming 六面体计划。它支持 physics-informed marks、Dörfler selection、cell indicator rebuild、neighbor-ratio 检查和相同精度候选资格。
 
 `run_task033_adaptive_mesh.py` 分别以 uniform p2/h5 和 p2/h3 为 reference。候选只有同时满足 R/T/A、显著 order、interface E/H Gate 后才计算 local DoF/rows/NNZ/RSS/time 压缩，未达到 3 倍不会被自动判失败。
+
+这些文件只存在于 Task33 research branch；Review V6 的 selective merge 排除 runner、
+graded mesh 模块和 prototype tests。下一 adaptive task 必须重新审计后才能进入 master。
 
 四个 buffer 使用 10/110、7.5/112.5、5/115、2.5/117.5 nm 接口。比较时同时计入 local FEM、QEP/mode storage 和 interface/Schur；不能只按 local cells 排名。
 
@@ -116,11 +120,18 @@ p3/h10 accuracy negative、p3/h7.5 qualified engineering positive。
 cellwise unequal-p H(curl) 语义；审计因此 fail closed，不构造 bespoke variable-p，
 也没有触发 microfixture。
 
-`task033_one_tib_projection.py` 只在输入真实 measured compression 时更新 1 TiB 路线分类。没有实测压缩、单位或 baseline 时输出 not-run/fail-closed；它始终是 analytical projection，不是 PDE solver pass。
+`task033_one_tib_projection.py` 是 research branch 历史规划器，不合入本次 master。
+没有实测压缩、单位、baseline 和高阶模型重校准时，1 TiB 仍为 not qualified。
 
-## 统一证据入口
+## 双层证据入口
 
-最终只通过 `benchmarks/check_task033.py` 读取 Case090/091 manifest。正式模式要求：
+当前 accepted reduced scope 使用
+`benchmarks.run_task033_reduced_scope_completion --verify`。它 hash-bind Stage1、
+QEP/tracking、Phase B、p3 closure、p4 negative、D1/D2、source audits、测试摘要和
+exact merge manifest，并明确 `original_task033_full_scope_complete=false`。
+
+历史 `benchmarks/check_task033.py` 继续读取原 full-scope Case090/091 manifest。
+其正式模式要求：
 
 - Case090 core 和 MPI memory；
 - QEP study 与 MPI timeout negative；

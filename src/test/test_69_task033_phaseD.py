@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from benchmarks.task033_source_compatibility import (
+    build_d1_source_compatibility_audit,
     build_full3d_hybrid_source_compatibility_audit,
     normalized_phase6_ast,
 )
@@ -50,6 +51,27 @@ def solve(value):
             ]
         )
         self.assertEqual(record["disallowed_changed_paths"], [])
+
+    def test_d1_direct_to_hybrid_source_splits_are_compatible(self) -> None:
+        record = build_d1_source_compatibility_audit()
+        self.assertTrue(record["compatible"])
+        self.assertEqual(
+            record["status"],
+            "d1_source_splits_numerically_compatible",
+        )
+        self.assertEqual(
+            [row["candidate"] for row in record["source_splits"]],
+            ["p3_h10", "p3_h7p5"],
+        )
+        for row in record["source_splits"]:
+            self.assertTrue(row["compatible"], row["failures"])
+            self.assertEqual(row["unexpected_changed_paths"], [])
+            self.assertEqual(row["missing_expected_changed_paths"], [])
+            self.assertTrue(
+                row["checks"][
+                    "all_critical_numerical_kernel_blobs_identical"
+                ]
+            )
 
 
 if __name__ == "__main__":

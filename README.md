@@ -32,14 +32,14 @@
 | 3D Stage1-Stage4 staged workflow | 稳定 |
 | p=2 topological-trace Floquet MPC | 稳定 |
 | p=3/p=4 sparse distributed Floquet MPC | Case090 144 PDE 核心资格通过；显式高阶入口 |
-| p=3/p=4 cross-section QEP | MPI1 数值分片通过；全局 aggregate 尚未资格化 |
+| p=3/p=4 cross-section QEP | Task033 Review V6 接受；legacy p1/p2 negatives 保留 |
 | complex refractive index 与 A_volume | 稳定 |
 | DtN modal official R/T/A | 稳定 |
 | p=2 h=2 direct reference | 已验证 |
 | exact auxiliary condensation | 稳定模块 |
 | p=2 h=5/3/2 MPI4 physical-slab iterative | 显式 opt-in 候选 |
 | Hybrid FEM–Modal h5/h3 direct reference | 13.5 nm 工程成功；Case080 302/302；显式 opt-in |
-| Hybrid vs full3D | p2/h5、p2/h3 同阶同网格一致；p3/p4 同阶 reference 尚无 |
+| Hybrid vs full3D | p2/h5、p2/h3 与 p3/h5 同阶闭合；p4 target 资源 Gate negative |
 | Hybrid h2 direct | `not_run_by_gate` |
 | 当前 direct Hybrid at 0.7 nm | 不具资源可行性；需 h/p + scalable modal core + iterative |
 | h=1.5 production solve | 未完成 |
@@ -63,7 +63,7 @@ mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
   --record benchmarks/records/workstation_p2_h2_mpi4.json
 ```
 
-普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Task033 已完成 p3/p4 高阶 Floquet、QEP/匹配迹和 p3/h5 同阶 closure；Review V5 的 fixed-p 减缩研究进一步得到 p3/h10 精度负结果和 p3/h7.5 带资格的等精度工程正结果，后者相对 p2/h3 将 FE DoF/local-system rows/total rows/factor-inventory NNZ/memory/time 分别改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x。p4 target 当前主机资源受限，native variable-p H(curl) 未资格化；p2 h-adaptive、buffer 和 1 TiB 更新仍未完成。ordinary default 未改变。
+普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Task033 的用户缩减范围已由 Review V6 接受并完成 F0：p3/p4 高阶 Floquet、QEP/匹配迹、p3/h5 同阶 closure、p3/h10 精度负结果和 p3/h7.5 fixed-p clear success。后者相对 p2/h3 将 FE DoF/local-system rows/total rows/factor-inventory NNZ/memory/指示性时间分别改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x。p4 target 当前主机资源受限，native variable-p H(curl) fail closed；adaptive 与 1 TiB 更新移交下一独立任务，buffer 等待目标 defect geometry。原 full scope 保持 partial/NOT_RUN，ordinary default 未改变。
 
 ## 文档导航
 

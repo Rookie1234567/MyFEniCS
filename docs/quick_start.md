@@ -105,18 +105,26 @@ ParaView 打开 `.pvd` 或 `.vtu`；MPI 输出优先打开 `fields_3d_for_paravi
 | benchmark 写入 `results/` | 忘记 output root | 使用 scripts 或显式 `--results-root benchmarks/artifacts/...` |
 | 复基座 T 被判为 0 | 旧代码把 complex beta 当 evanescent | 使用 Response V2 后代码；official 功率应在实际端口平面评价 |
 
-## 10. Task33 高阶 Floquet、Hybrid h/p 与自适应入口
+## 10. Task33 高阶 Floquet 与 Hybrid fixed-p 收口
 
-Task33 不改变普通 `src/main.py` 默认路径。Case090/091 planning、formal clean SHA、
-14 GiB Gate、QEP/Hybrid watchdog、graded-h、四个 buffer、variable-p、1 TiB 和统一
-checker 的 Windows PowerShell/Docker/PyCharm 命令见
+Task33 不改变普通 `src/main.py` 默认路径。Case090/091 的 clean-source、
+14 GiB Gate、QEP/Hybrid watchdog、fixed-p D1/D2 与 reduced-scope checker
+命令见
 [`../notes/quick_start/60_task033_high_order_hybrid_hp.md`](../notes/quick_start/60_task033_high_order_hybrid_hp.md)。
+该笔记中的 graded-h/adaptive、buffer 与 1 TiB 命令是研究分支历史和下一任务
+重启材料，不属于 master 可执行能力。
 
 最安全的当前入口是只读 planning checker：
 
 ```powershell
-docker run --rm --memory 14g -v "${Repo}:/work" -w /work myfenics-stage4:task28 python -m benchmarks.check_task033
+docker run --rm --memory 14g -v "${Repo}:/work" -w /work myfenics-stage4:task28 \
+  python -m benchmarks.run_task033_reduced_scope_completion --verify
 ```
 
-当前 `--require-formal` 返回 2 是正确行为：committed formal manifest 仍为 NOT_RUN，
-不能据 planning record 声称正式 Task33 数据已经完成。
+该命令验证 Review V6 接受的 reduced scope。历史
+`python -m benchmarks.check_task033 --require-formal` 只用于原 21-role full scope；
+其 committed manifest 继续是 `NOT_RUN`，不能用来否定或升级 reduced-scope 记录。
+
+原 full-scope `--require-formal` 返回 2 是正确行为：committed formal manifest
+仍为 `NOT_RUN`。这不否定 reduced scope completion；两套 checker 分别回答
+“Review V6 缩减范围是否完成”和“原始 21-role 全范围是否完成”，不得混用。

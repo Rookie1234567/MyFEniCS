@@ -1,5 +1,25 @@
 # Task033 阶段交付文件
 
+## 2026-07-17 Review V6 F0 与选择性合并收口
+
+| 文件 | 作用 |
+|---|---|
+| `benchmarks/task033_source_compatibility.py` / runner | 新增 p3/h10、p3/h7.5 两段 descriptor-only D1 source split 审计 |
+| `records/stage5_equal_accuracy/d1_source_compatibility_audit.json` | tracked D1 kernel-blob/source compatibility 证据 |
+| `benchmarks/task033_reduced_equal_accuracy.py` / runner | 冻结镜像/digest/MPI4/zero-swap/solver/memory authority/clean SHA 与指示性时间语义 |
+| `benchmarks/task033_resource_gates.py` | 冻结 1.947→1.980 GiB、2.463→3.667 GiB 高阶预测低估 |
+| `benchmarks/task033_reduced_scope_completion.py` / runner | fail-closed reduced-scope completion record/checker |
+| `records/task033_reduced_scope_completion.json` | 绑定 Stage1、QEP、Phase B/C、D1/D2、测试与 merge manifest |
+| `outcomes/selective_merge_manifest.csv` | 文件级精确 allowlist/exclude list；不再使用 glob |
+| `src/test/test_71_task033_reduced_scope_completion.py` | completion record 防陈旧合同 |
+| `src/test/test_72_task033_variable_p_capability.py` | 可独立合入 master 的 D2 fail-closed 合同 |
+| `src/test/test_53_task033_high_order_hybrid_components.py` | 同步已接受的 p3/h5 reference wiring；继续拒绝 p3/h3 与 p1 |
+| `response_v7.md` | 对 Review V6 与实际选择性合并的回复 |
+
+F0 未修改 Maxwell、Floquet、QEP、Hybrid coupling、solver 或 physical
+postprocess numerical kernel，也未运行新的 PDE。adaptive/graded-h、1 TiB runner、
+full-scope campaign 与对应 prototype tests 不进入本次 master 能力合并。
+
 ## 2026-07-17 Review V5 D0/D1/D2 增量
 
 | 文件 | 作用 |
@@ -79,7 +99,7 @@ p4 assembly-only 负校准也绑定 `95921ab...`。
 | Phase B 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json` |
 | Phase C 轻量证据 | `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json` |
 | Case/项目索引 | Case090/091 README、项目 README、docs/notes 索引与 roadmap |
-| Review V5 当前态同步 | root/docs README、capability matrix、development progress、roadmap、quick start、code walkthrough、theory note |
+| Review V6 当前态同步 | root/docs README、capability matrix、development progress、roadmap、quick start、code walkthrough、theory note |
 
 ## 明确保留不改
 

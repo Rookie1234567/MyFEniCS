@@ -1,9 +1,10 @@
 # Task33 高阶 Floquet、Hybrid h/p 与自适应研究入口
 
-> 2026-07-17 当前状态：Case090 p3/p4、QEP/matching trace、p3/h5 同阶
-> Hybrid/full3D closure 和 Review V5 D0/D1/D2 已完成。p3/h10 为精度负结果，
-> p3/h7.5 为带资格的等精度工程正结果；variable-p capability fail closed。
-> p3/h3、p4 target、自适应、buffer 与 1 TiB 更新均不在当前可直接运行范围。
+> 2026-07-17 当前状态：Review V6 接受 Task33 reduced scope，F0 已完成。
+> p3/h10 为精度负结果，p3/h7.5 为 fixed-p clear success（有 provisional
+> reference 资格）；variable-p capability fail closed。adaptive 与 1 TiB 更新
+> 移交下一独立任务，buffer 等待目标 defect geometry。下文 adaptive/1 TiB 命令只
+> 是 research branch 历史恢复笔记，其模块明确不进入本次 master 能力合并。
 
 本页保留为 Task33 的操作与恢复入口。完整原始任务边界见
 [`../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md)，
@@ -15,8 +16,8 @@
 | 项目 | 当前合同 |
 |---|---|
 | ordinary default | 不变；Task33 runner 全部显式 opt-in，不修改 `ACTIVE_PYCHARM_PRESET` |
-| 当前可提交证据 | Case090 144 PDE、QEP/trace、p3/h5 closure、p4 resource negative、Phase D1 equal-accuracy、Phase D2 capability audit |
-| formal evidence | 本阶段不是原任务书的 21-role closure；完整 manifest 仍是 `NOT_RUN` |
+| 当前可提交证据 | Case090 144 PDE、QEP/trace、p3/h5 closure、p4 resource negative、D1/D2、F0 completion record |
+| completion identity | reduced scope complete；原 21-role full-scope manifest 仍是 `NOT_RUN` |
 | 内存 | host hard budget 为 14 GiB；swap 禁止；预测或现场 Gate 不通过就不启动 |
 
 当前仓库可以声明 p3/h5 与 p3/h7.5 的限定结论，但不能声称 p4 target、
@@ -102,7 +103,11 @@ Invoke-Task33Docker python -m benchmarks.run_task033_qep_matrix `
 当前计划是 p1--p4、h5/h3/h2.5/h2/h1.5、MPI1/2/4 与三种 material kind 的
 180 项矩阵，默认 `requested_modes=8`。没有 `--execute` 就不是 QEP measurement。
 
-### 3.4 Graded-h、variable-p 与 1 TiB 计划
+### 3.4 历史 research-branch 计划（不属于 master 当前能力）
+
+以下命令仅说明 Task33 research branch 当时的规划器接口。选择性合并明确排除
+`run_task033_adaptive_mesh.py`、graded-mesh prototype 和 1 TiB runner；在 master
+上不要调用它们。variable-p audit 是唯一保留的 fail-closed 能力审计。
 
 ```powershell
 Invoke-Task33Docker python -m benchmarks.run_task033_adaptive_mesh `
@@ -300,12 +305,13 @@ Hybrid augmented M160 = launch_eligible
 tracked 结果见
 `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json`。
 
-## 6. Graded-h 与四个 interface buffer
+## 6. 已移交/延期的 graded-h 与 interface buffer
 
 ### 6.1 Graded h5/h3
 
-planning 见第 3 节。取得同一 clean SHA 的 uniform reference 与 graded candidate
-measured evidence 后，才可附着 same-accuracy 资格：
+本节命令是 research branch 历史合同，不是 master 可执行教程。graded-h 已移交
+下一独立任务；新任务不得直接继承这些 prototype 作为已资格能力。只有重新建立
+uniform reference、graded candidate、mesh/MPI/accuracy Gate 后，才可考虑同类命令：
 
 ```powershell
 Invoke-Task33Docker python -m benchmarks.run_task033_adaptive_mesh `
@@ -363,13 +369,15 @@ Invoke-Task33Docker python -m benchmarks.run_task033_memory_watchdog `
 `interface_buffer_tradeoff` 生成 CLI，也没有四个正式 funnel record；不能手工挑一个
 最快 smoke 后写成最优 buffer。
 
-## 7. Variable-p 与 1 TiB 的正确解释
+## 7. Variable-p 与 1 TiB 的最终处置
 
 `run_task033_variable_p_audit` 是能力审计，不是实现入口。当前可接受的正式结论可以是
-negative：原生安全 cellwise variable-p 未资格化，Task33 退回 fixed-p equal-accuracy、
-p2 h-adaptive 和 hp zoning 设计报告。
+negative：原生安全 cellwise variable-p 未资格化，Task33 接受 fixed-p
+equal-accuracy clear success，hp zoning 仅为设计报告；p2 h-adaptive 已移交。
 
-只有 measured same-accuracy compression 已存在时，才可更新 1 TiB 分类：
+下列 1 TiB 命令只保留为 research branch 历史示例；其 runner 不合入 master。
+未来 adaptive/scalability task 只有在 measured same-accuracy compression 已存在，
+并以 p3/h10/h7.5 实测重新校准高阶资源模型后，才可重建投影：
 
 ```powershell
 $Compression = 2.1  # 示例位置；必须替换为真实 measured record 中的值
@@ -385,40 +393,23 @@ Invoke-Task33Docker python -m benchmarks.run_task033_one_tib_projection `
 不要复制示例数值作为结果。即便得到 `classified`，它也只更新 local FE row resource
 zone，不证明 0.7 nm 已可解。
 
-## 8. 统一 Case090/091 checker
+## 8. Review V6 reduced-scope checker
+
+```powershell
+Invoke-Task33Docker python -m benchmarks.run_task033_reduced_scope_completion --verify
+```
+
+该 checker 绑定 Stage1/QEP/Phase B/p3 closure/p4 negative/D1/D2/source audits、
+测试摘要和 exact merge manifest。历史 research branch 中的
+`benchmarks.check_task033 --require-formal` 只检查原 21-role full scope，并按
+`NOT_RUN` 正确 fail closed；该 full-scope checker、schema 和自动 campaign
+不进入本次 master allowlist。
 
 checker 是纯读取验收器，只向 stdout 输出报告。
 
-```powershell
-Invoke-Task33Docker python -m benchmarks.check_task033
-```
-
-当前 planning 模式应返回 0，并验证 committed Case090 oracle/planner/core NOT_RUN、
-Case091 resource JSON/CSV、QEP plan、variable-p/1 TiB schema/records 和全部 Task33
-schema。报告中的 `evidence_verified` 不是 PDE 或 solver pass。
-
-当前正式检查应 fail closed 并返回 2，因为 committed manifest 仍是 NOT_RUN：
-
-```powershell
-docker run --rm --memory 14g -v "${Repo}:/work" -w /work $Image `
-    python -m benchmarks.check_task033 --require-formal
-$LASTEXITCODE  # 当前预期为 2
-```
-
-未来 formal manifest 必须符合
-[`../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/formal_evidence_manifest_schema.json`](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/formal_evidence_manifest_schema.json)，
-然后运行：
-
-```powershell
-docker run --rm --memory 14g -v "${Repo}:/work" -w /work $Image `
-    python -m benchmarks.check_task033 `
-    --formal-manifest "$Artifact/case091/formal/formal_manifest.json"
-```
-
-验收器要求 16 个唯一角色、每个文件 SHA256、冻结 JSON schema、角色接受状态、角色
-语义和同一 clean source SHA。缺一个文件、用错 SHA、把 timeout negative 写成 pass、
-或让 variable-p audit 冒充实现，都会返回 2。不要复制 committed NOT_RUN manifest 后
-只改 `status`；这不会通过角色与证据检查。
+原 checker 的命令与 schema 只保存在 Task33 research branch 历史中，不应在
+master 重建或调用。master 的唯一 Task33 完成入口是上方 reduced-scope checker；
+`formal_evidence_manifest_NOT_RUN.json` 仅作为原 full-scope 身份证据保留。
 
 ## 9. PyCharm 友好入口
 
@@ -446,12 +437,13 @@ PowerShell，或建立调用同一 Docker 命令的 External Tool。
 | Phase B matched trace | p2 MPI1、p3/p4 MPI1/MPI4 与独立 aggregate 通过 | review v3 已接受；保留两模态范围 |
 | p3/h5 full3D + Hybrid | 同阶 closure 已通过；direct 7.781 GiB，Hybrid 2.618 GiB | 不重复；reference 仍非 grid-converged |
 | p3/h10 | direct/Hybrid 已跑；等精度 negative | 停止；不因低成本接受，不跑 M240 |
-| p3/h7.5 | direct + Hybrid M120/M160 通过；等精度资源正结果 | 不重复；等待 D1 summary 复审 |
-| adaptive h5/h3 | planning path 存在，measured compression 未提交 | 等待新审阅批准；不要直接执行本页计划命令 |
+| p3/h7.5 | direct + Hybrid M120/M160 通过；Review V6 fixed-p clear success | 不重复 |
+| adaptive h5/h3 | measured compression 未提交；prototype 不合入 master | 已移交下一任务；不要在 master 执行历史命令 |
 | 四 buffer + tradeoff | 正式 funnel/tradeoff record 缺失 | 等待 defect geometry，不从 smoke 选最优点 |
 | variable-p | 当前运行时 fail-closed negative audit | 不自造 arbitrary unequal-p 约束；无 microfixture |
-| 1 TiB | 当前 NOT_QUALIFIED | 只用 measured compression 更新分类 |
-| unified formal manifest | committed entries 为空 | `--require-formal` 返回 2 是正确结果 |
+| 1 TiB | 当前 NOT_QUALIFIED，且旧高阶预测低估 | 下一 adaptive/scalability task 重校准后再评估 |
+| reduced completion | tracked record complete | 使用 reduced-scope checker |
+| original full manifest | committed entries 为空 | `--require-formal` 返回 2 是正确历史结果 |
 
 任何资源预测超过 Gate、现场可用内存不足、swap 非零、nonignored worktree 变脏、SHA 变化、
 watchdog 不可用或前序角色缺失时，都应停止，不得通过放宽 residual/RTA/field Gate 或

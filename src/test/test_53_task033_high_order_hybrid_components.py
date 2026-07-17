@@ -33,11 +33,24 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                 self.assertEqual(reference["physical_model"]["nedelec_degree"], 2)
                 self.assertEqual(reference["physical_model"]["mesh_h_nm"], h_nm)
 
-            for degree in (1, 3):
-                with self.subTest(degree=degree, h_nm=h_nm):
-                    self.assertIsNone(
-                        phase6._load_case080_reference(degree, h_nm)
-                    )
+        with self.subTest(degree=3, h_nm=5.0):
+            loaded = phase6._load_case080_reference(3, 5.0)
+            self.assertIsNotNone(loaded)
+            assert loaded is not None
+            path, reference = loaded
+            self.assertTrue(path.is_file())
+            self.assertEqual(reference["physical_model"]["nedelec_degree"], 3)
+            self.assertEqual(reference["physical_model"]["mesh_h_nm"], 5.0)
+            self.assertEqual(
+                reference["qualification"]["role"],
+                "same_degree_p3_h5_reference",
+            )
+
+        for degree, h_nm in ((1, 5.0), (1, 3.0), (3, 3.0)):
+            with self.subTest(degree=degree, h_nm=h_nm):
+                self.assertIsNone(
+                    phase6._load_case080_reference(degree, h_nm)
+                )
 
     def test_case080_reference_rejects_tampered_identity(self) -> None:
         loaded = phase6._load_case080_reference(2, 5.0)

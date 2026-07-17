@@ -324,11 +324,12 @@ def build_reduced_equal_accuracy_resource_matrix(
     *,
     container_limit_gib: float | None = None,
 ) -> dict[str, Any]:
-    """Build the review-v5 p3/h10 then conditional p3/h7.5 planning matrix.
+    """Build the p3/h10 then conditional p3/h7.5 planning/calibration record.
 
     This record is deliberately separate from the immutable original 20-case
-    planning matrix. It predicts only the two candidates authorized by review
-    v5, leaves runtime attestations unresolved, and never launches a PDE.
+    planning matrix. It preserves the predictions that authorized the two
+    Review-V5 launches and, after Review V6, freezes their measured full-solve
+    memory solely as a model-calibration negative. It never launches a PDE.
     """
 
     limits = scaled_gate_limits(container_limit_gib)
@@ -418,9 +419,9 @@ def build_reduced_equal_accuracy_resource_matrix(
         "case_id": "091_hybrid_hp_adaptivity_feasibility",
         "task_id": "Task033",
         "record_type": "task033_resource_prediction_and_launch_decision",
-        "status": "review_v5_reduced_equal_accuracy_planning_complete",
+        "status": "review_v6_reduced_equal_accuracy_planning_and_calibration_frozen",
         "data_identity": (
-            "prediction_with_measured_task032_calibration_reduced_review_v5"
+            "prediction_with_measured_task032_calibration_and_task033_postrun_audit"
         ),
         "identity": {
             "deterministic": True,
@@ -431,7 +432,10 @@ def build_reduced_equal_accuracy_resource_matrix(
             "ordinary_default_changed": False,
             "runtime_preflight_performed": False,
             "proves_0p7nm_feasible": False,
-            "scope": "Task033 review-v5 p3 coarse equal-accuracy planning only",
+            "scope": (
+                "Task033 reduced p3 coarse equal-accuracy launch planning "
+                "plus post-run prediction audit"
+            ),
         },
         "physical_model": {
             "wavelength_nm": 13.5,
@@ -464,6 +468,32 @@ def build_reduced_equal_accuracy_resource_matrix(
             ],
         },
         "task032_measured_calibration": TASK032_ANCHOR,
+        "post_run_high_order_prediction_audit": {
+            "data_identity": "measured_full_solve_vs_prior_prediction",
+            "p3_h10": {
+                "predicted_upper_gib": 1.9472054689389793,
+                "full_solve_actual_gib": 1.9795913696289062,
+                "actual_over_predicted_upper": (
+                    1.9795913696289062 / 1.9472054689389793
+                ),
+            },
+            "p3_h7p5": {
+                "predicted_upper_gib": 2.4630956334897443,
+                "full_solve_actual_gib": 3.6666221618652344,
+                "actual_over_predicted_upper": (
+                    3.6666221618652344 / 2.4630956334897443
+                ),
+            },
+            "prediction_is_launch_guard_not_measurement": True,
+            "old_high_order_model_for_1tib_projection": (
+                "not_allowed_without_recalibration"
+            ),
+            "interpretation": (
+                "Both runs remained safely below their controlled termination "
+                "limits, but the two-point high-order extrapolation "
+                "underestimated actual full-solve memory."
+            ),
+        },
         "entries": entries,
         "matrix_shape": {
             "degrees": 1,
@@ -474,7 +504,7 @@ def build_reduced_equal_accuracy_resource_matrix(
             "generator_module": "benchmarks.task033_resource_gates",
             "review_authority": (
                 "docs/task033_high_order_floquet_hybrid_hp_adaptivity/"
-                "review_report_v5.md"
+                "review_report_v6.md"
             ),
         },
     }

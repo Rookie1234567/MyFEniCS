@@ -19,6 +19,10 @@ M120/M160；一次只有一个重型 case，外部 watchdog 生效，swap 峰值
 仍有充足绝对余量，watchdog/no-swap/串行合同全部满足，所以继续 full solve 是合法的。
 `p3/h10` 则说明“安全且便宜”不等于物理等精度；其精度失败才是解锁 h7.5 的条件。
 
+Review V6 进一步冻结 full-solve 偏差：`p3/h10` 的 1.947 GiB 上界对应
+1.980 GiB 实测，`p3/h7.5` 的 2.463 GiB 上界对应 3.667 GiB 实测。因此旧模型只
+是 launch guard；未用新高阶实测重新校准前，禁止把它用于 1 TiB / 0.7 nm 推演。
+
 ## 2026-07-17 实测更新
 
 用户给出的 p4 前置条件已经满足：p3/h5 full solve 为 7.781 GiB、cgroup swap 0。
@@ -79,7 +83,7 @@ termination 相应收紧到 `10.5498 / 11.7424 / 11.9259 GiB`。
 | Phase C p3/h5 | user-authorized measured override + candidate watchdog | direct/Hybrid closure pass | measured | `full3d_closure_summary.json` |
 | Phase C p4/h5 | p3 prerequisite + four-mode prerequisite + own resource Gate | prerequisites pass；target resource veto | measured + predicted negative | `calibration_summary.json` |
 | p3/h3 | Review V5 explicitly not approved | not_run | scope gate | no launch now |
-| adaptive | wait for D1/D2 review | not_run | review gate | no launch now |
+| adaptive | transferred to next task | not_run | scope transfer | new task must rebuild mesh/accuracy Gate |
 
 ## 3. Candidate decisions
 
@@ -96,10 +100,10 @@ termination 相应收紧到 `10.5498 / 11.7424 / 11.9259 GiB`。
 | p4/h5 full3D | p3 condition met；own assembly unknown | assembly-only calibration | 12.616 GiB controlled stop；no factor/solve | measured negative | p4 calibration summary |
 | p4/h5 Hybrid M160 | center 37.038 GiB；upper 42.594 GiB | do_not_launch | `not_run_by_memory_gate` | predicted negative | p4 calibration summary |
 | p3/h10 full3D + Hybrid M120/M160 | 1.693/1.947 GiB planning center/upper | serialized launch complete | resource safe；equal-accuracy negative | measured | stage5 reduced summary |
-| p3/h7.5 full3D + Hybrid M120/M160 | conditional after h10 accuracy fail | serialized launch complete | equal-accuracy engineering positive with qualification | measured | stage5 reduced summary |
-| p3/h3、p4 target、adaptive/buffer | not approved or deferred | do_not_launch | not_run | scope/resource decision | Review V5 |
+| p3/h7.5 full3D + Hybrid M120/M160 | conditional after h10 accuracy fail | serialized launch complete | fixed-p equal-accuracy clear success with qualifications | measured | stage5 reduced summary |
+| p3/h3、p4 target、adaptive/buffer | cancelled/resource-gated/transferred/deferred | do_not_launch | not_run | scope/resource decision | Review V6 |
 
 p3 的旧预测否决和当前实测通过必须同时保留身份，但前者不能再冒充当前状态。
 p4 停止原因是它自己的实测/预测资源 Gate，不是四模态组件失败，也不是未获准做
-校准。p3/h3 是明确未批准，adaptive 等待 D1/D2 审阅，buffer 等待 defect geometry。
+校准。p3/h3 已从当前范围取消，adaptive 已移交下一任务，buffer 等待 defect geometry。
 这些原因不能混写，且 p3/h7.5 的安全运行不能反向许可 p4 factorization/solve。

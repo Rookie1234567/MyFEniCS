@@ -1,0 +1,210 @@
+{
+  "schema_version": "task033.phaseF0-d1-source-compatibility.v1",
+  "record_type": "task033_d1_source_compatibility_audit",
+  "status": "d1_source_splits_numerically_compatible",
+  "identity": {
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "scope": "p3_h10_and_p3_h7p5_direct_to_hybrid_source_splits"
+  },
+  "source_splits": [
+    {
+      "candidate": "p3_h10",
+      "full3d_reference_source_commit_sha": "bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6",
+      "hybrid_source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+      "merge_base": "bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6",
+      "changed_paths": [
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/full3d_reference_p3_h10.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/variable_p_capability_audit.json"
+      ],
+      "allowed_changed_paths": [
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/full3d_reference_p3_h10.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/variable_p_capability_audit.json"
+      ],
+      "unexpected_changed_paths": [],
+      "missing_expected_changed_paths": [],
+      "critical_numerical_kernels": [
+        {
+          "path": "src/common/config_3d.py",
+          "full3d_blob": "5d49460c567f5841162a5dd82ea5d29be4714991",
+          "hybrid_blob": "5d49460c567f5841162a5dd82ea5d29be4714991",
+          "identical": true
+        },
+        {
+          "path": "src/geometry/mesh_builder_3d.py",
+          "full3d_blob": "3b1bd36f03df29ba0f5b13a8e0e371a981112fe7",
+          "hybrid_blob": "3b1bd36f03df29ba0f5b13a8e0e371a981112fe7",
+          "identical": true
+        },
+        {
+          "path": "src/constraints/floquet_3d.py",
+          "full3d_blob": "12be652ee9e20b4fa7ba9e9251eef65d9b77f7d3",
+          "hybrid_blob": "12be652ee9e20b4fa7ba9e9251eef65d9b77f7d3",
+          "identical": true
+        },
+        {
+          "path": "src/constraints/floquet_3d_high_order.py",
+          "full3d_blob": "763c7ea60b891efe66df9d3cb0979ba4c11db51e",
+          "hybrid_blob": "763c7ea60b891efe66df9d3cb0979ba4c11db51e",
+          "identical": true
+        },
+        {
+          "path": "src/modes/cross_section_spaces.py",
+          "full3d_blob": "77ab7ee35fef7bb9f94324808328d20e470c8675",
+          "hybrid_blob": "77ab7ee35fef7bb9f94324808328d20e470c8675",
+          "identical": true
+        },
+        {
+          "path": "src/modes/mode_classification.py",
+          "full3d_blob": "db0c001f17e4bf479da74e4ef7206794e2fb2403",
+          "hybrid_blob": "db0c001f17e4bf479da74e4ef7206794e2fb2403",
+          "identical": true
+        },
+        {
+          "path": "src/modes/quadratic_beta_eigenproblem.py",
+          "full3d_blob": "6c75e99ba0b0f36a9e66299bfbd3468df6960971",
+          "hybrid_blob": "6c75e99ba0b0f36a9e66299bfbd3468df6960971",
+          "identical": true
+        },
+        {
+          "path": "src/coupling/hybrid_internal_modes.py",
+          "full3d_blob": "51e43dc1a1ce06212eb6596f60145cf900480689",
+          "hybrid_blob": "51e43dc1a1ce06212eb6596f60145cf900480689",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/common_3d_case_flow.py",
+          "full3d_blob": "8bd49beda78e76962570db5d63f92504033e6c54",
+          "hybrid_blob": "8bd49beda78e76962570db5d63f92504033e6c54",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/common_3d_solve.py",
+          "full3d_blob": "c96a1f36e8b6c21bb3c56ea2c498745a7abac48e",
+          "hybrid_blob": "c96a1f36e8b6c21bb3c56ea2c498745a7abac48e",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/hybrid_fem_modal_schur_direct.py",
+          "full3d_blob": "c9fb8de1e934d0f993b467a787cf8a6131de08d9",
+          "hybrid_blob": "c9fb8de1e934d0f993b467a787cf8a6131de08d9",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/hybrid_local_dtn.py",
+          "full3d_blob": "4ed60cae3f742f951c4388b9f6fa4848ca98dbab",
+          "hybrid_blob": "4ed60cae3f742f951c4388b9f6fa4848ca98dbab",
+          "identical": true
+        }
+      ],
+      "checks": {
+        "full3d_source_is_ancestor_of_hybrid_source": true,
+        "all_critical_numerical_kernel_blobs_identical": true,
+        "changed_paths_exactly_match_audited_allow_list": true
+      },
+      "failures": [],
+      "compatible": true
+    },
+    {
+      "candidate": "p3_h7p5",
+      "full3d_reference_source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+      "hybrid_source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+      "merge_base": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+      "changed_paths": [
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/full3d_reference_p3_h7p5.json"
+      ],
+      "allowed_changed_paths": [
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/full3d_reference_p3_h7p5.json"
+      ],
+      "unexpected_changed_paths": [],
+      "missing_expected_changed_paths": [],
+      "critical_numerical_kernels": [
+        {
+          "path": "src/common/config_3d.py",
+          "full3d_blob": "5d49460c567f5841162a5dd82ea5d29be4714991",
+          "hybrid_blob": "5d49460c567f5841162a5dd82ea5d29be4714991",
+          "identical": true
+        },
+        {
+          "path": "src/geometry/mesh_builder_3d.py",
+          "full3d_blob": "3b1bd36f03df29ba0f5b13a8e0e371a981112fe7",
+          "hybrid_blob": "3b1bd36f03df29ba0f5b13a8e0e371a981112fe7",
+          "identical": true
+        },
+        {
+          "path": "src/constraints/floquet_3d.py",
+          "full3d_blob": "12be652ee9e20b4fa7ba9e9251eef65d9b77f7d3",
+          "hybrid_blob": "12be652ee9e20b4fa7ba9e9251eef65d9b77f7d3",
+          "identical": true
+        },
+        {
+          "path": "src/constraints/floquet_3d_high_order.py",
+          "full3d_blob": "763c7ea60b891efe66df9d3cb0979ba4c11db51e",
+          "hybrid_blob": "763c7ea60b891efe66df9d3cb0979ba4c11db51e",
+          "identical": true
+        },
+        {
+          "path": "src/modes/cross_section_spaces.py",
+          "full3d_blob": "77ab7ee35fef7bb9f94324808328d20e470c8675",
+          "hybrid_blob": "77ab7ee35fef7bb9f94324808328d20e470c8675",
+          "identical": true
+        },
+        {
+          "path": "src/modes/mode_classification.py",
+          "full3d_blob": "db0c001f17e4bf479da74e4ef7206794e2fb2403",
+          "hybrid_blob": "db0c001f17e4bf479da74e4ef7206794e2fb2403",
+          "identical": true
+        },
+        {
+          "path": "src/modes/quadratic_beta_eigenproblem.py",
+          "full3d_blob": "6c75e99ba0b0f36a9e66299bfbd3468df6960971",
+          "hybrid_blob": "6c75e99ba0b0f36a9e66299bfbd3468df6960971",
+          "identical": true
+        },
+        {
+          "path": "src/coupling/hybrid_internal_modes.py",
+          "full3d_blob": "51e43dc1a1ce06212eb6596f60145cf900480689",
+          "hybrid_blob": "51e43dc1a1ce06212eb6596f60145cf900480689",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/common_3d_case_flow.py",
+          "full3d_blob": "8bd49beda78e76962570db5d63f92504033e6c54",
+          "hybrid_blob": "8bd49beda78e76962570db5d63f92504033e6c54",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/common_3d_solve.py",
+          "full3d_blob": "c96a1f36e8b6c21bb3c56ea2c498745a7abac48e",
+          "hybrid_blob": "c96a1f36e8b6c21bb3c56ea2c498745a7abac48e",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/hybrid_fem_modal_schur_direct.py",
+          "full3d_blob": "c9fb8de1e934d0f993b467a787cf8a6131de08d9",
+          "hybrid_blob": "c9fb8de1e934d0f993b467a787cf8a6131de08d9",
+          "identical": true
+        },
+        {
+          "path": "src/solvers/hybrid_local_dtn.py",
+          "full3d_blob": "4ed60cae3f742f951c4388b9f6fa4848ca98dbab",
+          "hybrid_blob": "4ed60cae3f742f951c4388b9f6fa4848ca98dbab",
+          "identical": true
+        }
+      ],
+      "checks": {
+        "full3d_source_is_ancestor_of_hybrid_source": true,
+        "all_critical_numerical_kernel_blobs_identical": true,
+        "changed_paths_exactly_match_audited_allow_list": true
+      },
+      "failures": [],
+      "compatible": true
+    }
+  ],
+  "compatible": true,
+  "limitations": [
+    "This proves numerical-kernel blob identity across the two tracked source splits; it does not prove continuum accuracy.",
+    "The full3D and Hybrid records correctly retain their different clean source SHAs."
+  ]
+}

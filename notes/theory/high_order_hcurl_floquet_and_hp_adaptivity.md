@@ -1,10 +1,13 @@
 # 高阶 H(curl) Floquet 与 Hybrid h/p 可行性
 
-> 观测状态（2026-07-17）：Case090 证明 p3/p4 直接 3D Floquet 核心正确；QEP
-> p3/p4 组件通过但 legacy 全阶 aggregate 因 p1/p2 负结果未资格化；p3/h5
-> Hybrid/full3D 同阶 closure 已通过。Review V5 fixed-p 减缩研究得到 p3/h10
-> accuracy negative 和 p3/h7.5 qualified engineering positive；variable-p
-> capability fail closed。adaptive/graded/buffer 仍是延期理论与实现入口。
+> 观测状态（2026-07-17，Review V6）：Case090 证明 p3/p4 直接 3D Floquet
+> 核心正确；QEP p3/p4 组件通过但 legacy 全阶 aggregate 因 p1/p2 负结果未
+> 资格化；p3/h5 Hybrid/full3D 同阶 closure 已通过。fixed-p 减缩研究得到
+> p3/h10 accuracy negative 和 p3/h7.5
+> `fixed_p_equal_accuracy_clear_success_with_qualifications`；variable-p
+> capability fail closed。Task033 reduced scope 已完成；adaptive/graded-h 与
+> 更新后的 1 TiB 推演移交下一独立任务，buffer 等待 defect/nonuniform-end
+> geometry。
 
 ## 0. 文档身份
 
@@ -28,10 +31,15 @@ src/constraints/floquet_3d.py
 src/common/high_order_quadrature.py
 src/constraints/cross_section_floquet.py
 src/modes/quadratic_beta_eigenproblem.py
-src/geometry/task033_periodic_graded_mesh.py
 benchmarks/task033_resource_gates.py
 benchmarks/task033_variable_p_capability.py
+benchmarks/task033_reduced_equal_accuracy.py
+benchmarks/task033_reduced_scope_completion.py
 ```
+
+`src/geometry/task033_periodic_graded_mesh.py` 与 adaptive runner 是研究分支历史，
+不进入本次 master allowlist。后续任务如重启 adaptive，必须重新建立 mesh、
+accuracy、MPI 与资源 Gate，不能把该 prototype 当成已资格化入口。
 
 `papers/` 中的二维/三维 self-adaptive hp FEM、adaptive edge FEM DtN、hybrid FEM–mode-matching 和 FEM–RCWA 论文是研究背景；本仓库的可运行资格仍只由 Case090/091、clean-source record、MPI 回归和统一 checker 决定。
 
@@ -199,15 +207,21 @@ modal truncation pass
 = qualified discretization-equivalence evidence
 ```
 
-该等价仍不是 grid convergence 或 continuum error。Review V5 再用同一 provisional
-p3/h5 reference 做跨网格等精度比较：p3/h10 失败，p3/h7.5 全指标不劣于 p2/h3；
-这也不能用更高 M 替代 FE 离散误差。
+该等价仍不是 grid convergence 或 continuum error。Review V6 接受使用同一
+provisional p3/h5 reference 的 fixed-p 跨网格比较：p3/h10 失败，p3/h7.5
+全物理指标不劣于 reference，且相对 p2/h3 的 FE DoF、local-system rows、
+total rows、factor-inventory NNZ、memory 与指示性时间分别改善
+`2.571x/2.567x/2.548x/3.557x/1.606x/1.331x`。因此它的精确分类是
+`fixed_p_equal_accuracy_clear_success_with_qualifications`，不是无条件
+engineering success，也不是 continuum/grid-converged 证明。
 
 ---
 
-## 7. 固定 p 与 conforming graded h
+## 7. 固定 p 结论与已移交的 conforming graded h
 
-Task033 的第一版局部 h 路线采用周期同步的 conforming graded hexahedral mesh，不引入 hanging-node H(curl) 自定义约束。流程是：
+Task033 研究分支设计过周期同步的 conforming graded hexahedral mesh，不引入
+hanging-node H(curl) 自定义约束。Review V6 已把实现、实测与压缩资格化整体移交
+下一独立 adaptive task；下列流程仅是重启条件，不是本次 master 已有能力：
 
 ```text
 physics-informed marks
@@ -254,9 +268,11 @@ $$
 
 ---
 
-## 8. 接口 buffer 联合预算
+## 8. 延期的接口 buffer 联合预算
 
-Task033 比较 10、7.5、5、2.5 nm 对称 buffer，对应接口：
+Task033 任务书提出比较 10、7.5、5、2.5 nm 对称 buffer；Review V6 判定在当前
+均匀端部几何下不需要为完成 reduced scope 执行该 sweep。只有出现目标 defect
+或 nonuniform-end geometry 后才重启，对应接口为：
 
 ```text
 10.0 / 110.0 nm
@@ -299,8 +315,9 @@ native_variable_p_qualified = false
 bespoke_arbitrary_variable_p_implemented = false
 ```
 
-Task033 已完成 fixed-p p3 等精度比较和 fixed-p subdomain zoning 设计报告；p2
-graded-h 尚待新审阅。不得临时自造任意 variable-p mortar/constraint 系统来制造完成感。
+Task033 已完成 fixed-p p3 等精度比较和 fixed-p subdomain zoning 设计报告；
+p2 graded-h/adaptive 已移交下一任务。不得临时自造任意 variable-p
+mortar/constraint 系统来制造完成感。
 
 ---
 
@@ -335,6 +352,11 @@ warning 和 controlled termination 必须实时使用这个最大值，而不只
 
 未运行组合必须显式写成 `not_run_by_memory_gate`，不能留空，也不能依赖 swap 或 OOM 来探测边界。
 
+Task033 两次高阶 direct 实测同时冻结了预测偏差：p3/h10 为
+`1.947 -> 1.980 GiB`，p3/h7.5 为 `2.463 -> 3.667 GiB`。因此旧模型只能作为
+launch guard；未使用这些偏差重新校准前，禁止把它外推成 1 TiB / 0.7 nm
+可行性结论。运行时间来自不同 clean SHA，只能作指示性比较。
+
 ---
 
 ## 11. 资格层级与证据身份
@@ -346,7 +368,9 @@ warning 和 controlled termination 必须实时使用这个最大值，而不只
 3. component：QEP、trace、Hybrid augmented/Schur anchor；
 4. physical funnel：同 p/h 下 M80/M120/M160，必要时 M240；
 5. equal-accuracy：通过物理 Gate 后的 p/h/graded/buffer 资源比较；
-6. task classification：统一 Case090/091 checker 在同一 clean SHA 上给出结论。
+6. task classification：Case090/091 reduced-scope checker 绑定每段可兼容的
+   clean source split、tracked evidence、测试摘要与文件级 selective merge
+   manifest；原 21-role full-scope checker 继续保持 `NOT_RUN`。
 
 所有正式 large record 必须来自完整 nonignored worktree clean 的 commit，既检查
 tracked changes，也检查 nonignored untracked paths。ignored artifacts 可保存 raw
@@ -365,8 +389,9 @@ log、VTU、mesh、eigenvector、matrix、factor 和 memory timeline；tracked r
 - fixed-p p3/h7.5 在 provisional reference 口径下相对 p2/h3 的等精度资源正结果；
 - 当前 native variable-p 不足以进入最小 hp 原型。
 
-p2 conforming graded-h、四种 interface buffer 和 measured adaptive compression
-对 1 TiB 路线的影响尚未证明。
+p2 conforming graded-h、measured adaptive compression 和更新后的 1 TiB
+路线已移交下一独立任务；四种 interface buffer 等待目标 defect/nonuniform-end
+geometry。它们均未由 Task033 证明，也不属于本次 master 可执行能力。
 
 Task033 不能单独证明：
 

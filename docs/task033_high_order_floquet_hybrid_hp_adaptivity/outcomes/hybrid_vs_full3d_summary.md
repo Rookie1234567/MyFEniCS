@@ -1,6 +1,6 @@
 # Hybrid FEM–modal 与直接 3D FEM 对比
 
-## 2026-07-17 Review V5 等精度扩展
+## 2026-07-17 Review V6 接受的 fixed-p 等精度扩展
 
 Review V5 用统一 provisional p3/h5 discrete reference 比较 `p2/h3`、`p3/h10`
 和条件 `p3/h7.5`。`p3/h10` 全部规定物理误差劣于 p2/h3，因此即使成本更低也不是
@@ -23,10 +23,11 @@ Review V5 用统一 provisional p3/h5 discrete reference 比较 `p2/h3`、`p3/h1
 | memory authority | 3.224 GiB | 2.008 GiB | 1.606x |
 | wall time | 99.686 s | 74.908 s | 1.331x |
 
-这六项资源指标都降低，构成
-`equal_accuracy_engineering_positive_with_qualification`。factor-inventory NNZ
+这六项资源指标都降低。Review V6 将正式分类冻结为
+`fixed_p_equal_accuracy_clear_success_with_qualifications`。factor-inventory NNZ
 是 bottom/top local factor inventory 的统一口径，不与下方旧表的最终 assembled
-system NNZ 混用。详细物理误差见
+system NNZ 混用。wall time 只作不同 clean SHA 下的指示性实测比较，不是受控
+speedup。详细物理误差见
 [`reduced_equal_accuracy_phaseD.md`](reduced_equal_accuracy_phaseD.md)。
 
 ## 2026-07-17 新增 p3/h5 同阶比较
@@ -108,7 +109,7 @@ full3D；此状态现已由后续实测取代，不再是当前结论。
 `95921ab76...` 上绑定同一 reference NPZ 并通过 16 项 Gate。D0 source audit
 进一步证明两个提交之间 12 个关键数值内核 blob 完全一致，Phase6 runner 去除
 reference registry 后 AST 完全一致。因此当前 p3/h5 离散比较已正式收口，
-review v5 分类为 `PASS_WITH_QUALIFICATIONS`。
+Review V6 接受为 same-degree numerical closure with qualifications。
 
 资格限制仍然是：
 

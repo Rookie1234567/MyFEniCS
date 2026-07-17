@@ -6,9 +6,10 @@ Review V5 批准的减缩矩阵已经按停止规则完成：
 
 ```text
 p3/h10 = negative_not_equal_accuracy
-p3/h7.5 = positive_equal_accuracy_engineering_candidate
+p3/h7.5 = fixed_p_equal_accuracy_clear_success_with_qualifications
 selected candidate = p3/h7.5
-whole original Task033 = still partial
+Task33 reduced scope = complete after F0
+whole original Task33 = partial by explicit scope transfer
 ```
 
 `p3/h10` 先运行并在精度 Gate 上失败，因此才解锁 `p3/h7.5`。没有运行
@@ -86,9 +87,24 @@ assembled system NNZ，也不与旧文档中的最终全局稀疏系统 NNZ 混�
 | wall time | 99.686 s | 74.908 s | 1.331x | useful positive |
 
 六项资源指标全部降低，同时所有规定物理误差不劣于 `p2/h3`。因此本轮可以给出
-`equal_accuracy_engineering_positive_with_qualification`：它是当前尺度、固定 p、
+Review V6 将正式分类冻结为
+`fixed_p_equal_accuracy_clear_success_with_qualifications`：它是当前尺度、固定 p、
 provisional discrete reference 下的工程正信号，不是 p3 普遍优于 p2 的定理，也不是
 连续解误差或 0.7 nm 可行性证明。
+
+## 跨记录执行语义与预测偏差
+
+资源比较使用冻结镜像 `myfenics-stage4:task28`，digest
+`sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`，
+MPI4、`modal-schur-memory-minimal`、零 swap，并且一次只运行一个重型 case。
+内存权威定义为 simultaneous live MPI worker RSS sum 与 container cgroup current
+的最大值。p2/h3 clean SHA `793354af...` 与 p3/h7.5 clean SHA `7a7db587...`
+不同，已由 source compatibility audit 明确接受；wall time 只能作指示性实测比较。
+
+原 launch 模型的 `p3/h10` 上界 1.947 GiB 对应实际 1.980 GiB；
+`p3/h7.5` 上界 2.463 GiB 对应实际 3.667 GiB。预测仍可作为受 watchdog 保护的
+launch guard，但不是 measurement。该旧高阶模型在重新校准前不得用于 1 TiB /
+0.7 nm 投影。
 
 ## 证据
 
@@ -96,8 +112,10 @@ provisional discrete reference 下的工程正信号，不是 p3 普遍优于 p2
   `benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json`
 - p3/h10 descriptor：`records/stage5_equal_accuracy/full3d_reference_p3_h10.json`
 - p3/h7.5 descriptor：`records/stage5_equal_accuracy/full3d_reference_p3_h7p5.json`
+- D1 source-split audit：
+  `records/stage5_equal_accuracy/d1_source_compatibility_audit.json`
 - 聚合 payload SHA256：
-  `3c322f4bb2864facf5076570c8f57d70972912cd60435d0debe7acdd110ebe0f`
+  `b942b9471271c00778011ad3a282e8ff04617bebf84e3215c414a7c560b6aac1`
 
 重型 mesh、field、NPZ、matrix、factor、timeline 和 log 继续位于 gitignored
 `benchmarks/artifacts/`；tracked 聚合记录保存其路径、SHA256、关键数值和判定。

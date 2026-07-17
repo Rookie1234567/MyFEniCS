@@ -181,6 +181,23 @@ class Task033ResourceGateTests(unittest.TestCase):
             record["entries"][0]["conservative_upper_gib"],
             record["entries"][1]["conservative_upper_gib"],
         )
+        audit = record["post_run_high_order_prediction_audit"]
+        self.assertEqual(
+            audit["p3_h10"]["predicted_upper_gib"],
+            record["entries"][0]["conservative_upper_gib"],
+        )
+        self.assertEqual(
+            audit["p3_h7p5"]["predicted_upper_gib"],
+            record["entries"][1]["conservative_upper_gib"],
+        )
+        self.assertGreater(
+            audit["p3_h7p5"]["actual_over_predicted_upper"], 1.0
+        )
+        self.assertTrue(audit["prediction_is_launch_guard_not_measurement"])
+        self.assertEqual(
+            audit["old_high_order_model_for_1tib_projection"],
+            "not_allowed_without_recalibration",
+        )
 
     def test_measured_p2_h3_anchor_is_not_mixed_with_predicted_fields(self) -> None:
         entry = self._entry(self._matrix(), "p2_h3")

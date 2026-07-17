@@ -1,5 +1,39 @@
 # Task033 阶段测试摘要
 
+## 2026-07-17 Review V6 F0 选择性合并验证
+
+```text
+F0_MERGE_VALIDATION = PASS
+```
+
+本轮没有重跑 Case090 的 MPI1/2/4×48 campaign，也没有启动新的目标
+Maxwell/QEP/Hybrid PDE。验证只覆盖 F0 聚合、证据合同、文档、已资格化组件和
+小型 DOLFINx/MPI 回归。
+
+| 验证 | 结果 |
+|---|---|
+| host F0/D1/D2/证据/文档与 Task32 scalability 组 | 146 passed，4 skipped |
+| 文档同步后 host focused regression | 46 passed |
+| Docker image | `myfenics-stage4:task28`；digest `sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d` |
+| DOLFINx Task33 high-order + Task32 anchors 首轮 | 47 passed，7 skipped，81 subtests；发现 1 个 p3/h5 reference 旧断言 |
+| 修正后的 `test_53` | 3 passed，8 subtests |
+| matching trace MPI2 | 每 rank 1 passed，4 subtests |
+| matching trace MPI4 | 每 rank 1 passed，4 subtests |
+| D1 source split audit | p3/h10 与 p3/h7.5 均为 numerical-kernel compatible |
+| exact merge manifest | 191 个逐文件条目；159 include / 32 exclude；无 glob、重复或缺失 include |
+| Ruff targeted F0/Task33 files | pass |
+| `compileall -q src benchmarks` | pass |
+| `git diff --check` | pass |
+
+首轮 Docker 唯一失败是 `test_53` 仍断言 degree=3 的 Case080-style reference 必须
+不存在；这与已经接受的 p3/h5 full3D wiring 冲突。合同已改为只接受 p3/h5，
+继续拒绝 p3/h3 与 p1，隔离重跑通过。该修正不改变 solver 或 numerical kernel。
+
+本节在生成 `task033_reduced_scope_completion.json` 前冻结；completion builder
+会把本摘要、exact manifest 与所有接受的 JSON evidence 一起哈希绑定。生成后的
+exact-equality checker 结果记录在 `response_v7.md`，避免为写入 checker 自身结果
+反复改变本摘要哈希。
+
 ## 2026-07-17 Review V5 D0/D1/D2 与最终文档审计
 
 | 验证 | 结果 |

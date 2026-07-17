@@ -5,6 +5,7 @@ import pytest
 
 from benchmarks.task033_reduced_equal_accuracy import (
     ReducedEqualAccuracyError,
+    _execution_contract,
     classify_resource_reduction,
     compare_full3d_to_reference,
     hybrid_dimension_costs,
@@ -119,3 +120,113 @@ def test_hybrid_dimension_costs_distinguish_fe_auxiliary_and_modal_rows() -> Non
         "local_system_rows": 68476,
         "total_rows": 68796,
     }
+
+
+def test_cross_record_execution_contract_freezes_resource_semantics() -> None:
+    common = {
+        "container_image": "frozen:image",
+        "container_digest": "sha256:" + "a" * 64,
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": True,
+        "memory_authority_semantics": (
+            "max(simultaneous live MPI worker RSS sum, "
+            "container cgroup current)"
+        ),
+    }
+    direct = {
+        "container_image": common["container_image"],
+        "container_digest": common["container_digest"],
+        "mpi_size": 4,
+        "solver_path": "direct_lu_mumps",
+        "no_swap": True,
+    }
+    hybrid = {
+        key: {
+            "execution": {
+                **common,
+                "source_commit_sha": (
+                    "2" * 40 if "h7p5" in key else "1" * 40
+                ),
+            },
+            "source_commit_sha": (
+                "2" * 40 if "h7p5" in key else "1" * 40
+            ),
+        }
+        for key in (
+            "p3_h10_m120",
+            "p3_h10_m160",
+            "p3_h7p5_m120",
+            "p3_h7p5_m160",
+        )
+    }
+    result = _execution_contract(
+        full3d={
+            "candidate_p3_h10": {"execution": direct},
+            "candidate_p3_h7p5": {"execution": direct},
+        },
+        hybrid=hybrid,
+        p2_hybrid={
+            "execution": {
+                **common,
+                "source_commit_sha": "0" * 40,
+            },
+            "source_commit_sha": "0" * 40,
+        },
+    )
+    assert result["mpi_size"] == 4
+    assert result["zero_swap_required_and_observed"]
+    assert result["one_heavy_case_at_a_time"]
+    assert result["clean_source_identity"]["sources_intentionally_different"]
+    assert "indicative measured comparison" in result["wall_time_semantics"]
+
+
+def test_cross_record_execution_contract_fails_closed_on_mixed_image() -> None:
+    direct = {
+        "container_image": "frozen:image",
+        "container_digest": "sha256:" + "a" * 64,
+        "mpi_size": 4,
+        "solver_path": "direct_lu_mumps",
+        "no_swap": True,
+    }
+    common_hybrid = {
+        "container_image": "frozen:image",
+        "container_digest": "sha256:" + "a" * 64,
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": True,
+    }
+    hybrid = {
+        key: {
+            "execution": {
+                **common_hybrid,
+                "source_commit_sha": "2" * 40,
+            },
+            "source_commit_sha": "2" * 40,
+        }
+        for key in (
+            "p3_h10_m120",
+            "p3_h10_m160",
+            "p3_h7p5_m120",
+            "p3_h7p5_m160",
+        )
+    }
+    hybrid["p3_h7p5_m160"]["execution"]["container_image"] = "wrong:image"
+    with pytest.raises(
+        ReducedEqualAccuracyError,
+        match="single_frozen_container_image",
+    ):
+        _execution_contract(
+            full3d={
+                "candidate_p3_h10": {"execution": direct},
+                "candidate_p3_h7p5": {"execution": direct},
+            },
+            hybrid=hybrid,
+            p2_hybrid={
+                "execution": {
+                    **common_hybrid,
+                    "source_commit_sha": "0" * 40,
+                },
+                "source_commit_sha": "0" * 40,
+            },
+        )

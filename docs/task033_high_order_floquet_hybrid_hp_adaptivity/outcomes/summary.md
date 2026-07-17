@@ -1,6 +1,23 @@
 # Task033 阶段性执行摘要
 
-## 2026-07-17 Review V5 Phase D 更新（当前状态）
+## 2026-07-17 Review V6 F0 收口（当前状态）
+
+Review V6 接受数值阶段结论。F0 没有运行 Maxwell/QEP/Hybrid PDE，只补齐 D1
+source-split 审计、跨记录资源语义、高阶内存预测偏差、reduced-scope completion
+record 和文件级选择性合并清单。
+
+| 项目 | 当前最终处置 |
+|---|---|
+| Task33 reduced scope | `complete`；由 fail-closed tracked completion record 绑定 |
+| 原 Task33 full scope | `partial_by_user_scope_transfer`；21-role manifest 保持 `NOT_RUN` |
+| p3/h7.5 | `fixed_p_equal_accuracy_clear_success_with_qualifications` |
+| adaptive / measured compression | 移交下一独立任务，不再阻塞 Task33 |
+| interface buffer | 等待 defect/nonuniform-end geometry |
+| 1 TiB / 0.7 nm update | 移交 adaptive/scalability task；旧高阶模型未重校准前禁止用于该推演 |
+| merge | 只允许精确 allowlist；whole branch 不批准 |
+| ordinary default | unchanged |
+
+## 2026-07-17 Review V5 Phase D 更新（数值阶段历史）
 
 Review V5 批准的 D0、D1、D2 已完成；数值 campaign 已按停止规则结束。
 
@@ -13,7 +30,7 @@ Review V5 批准的 D0、D1、D2 已完成；数值 campaign 已按停止规则�
 | p3/h7.5 Hybrid M120/M160 | 16 项 Gate 全过；M160 2.008 GiB、74.908 s |
 | p3/h7.5 对 p2/h3 资源 | FE DoF 2.571x、local-system rows 2.567x、total rows 2.548x、factor-inventory NNZ 3.557x、memory 1.606x、time 1.331x |
 | variable-p / hp | 当前 native cellwise variable-p H(curl) 未资格化；fail closed，无 target prototype |
-| 原 Task33 | 仍为 partial；h-adaptive、buffer、1 TiB update、21-role formal closure 未完成 |
+| 原 Task33 full scope | 仍为 partial；adaptive/1 TiB 已移交，buffer 延期，21-role formal closure 保持 `NOT_RUN` |
 
 等精度 reference 是 `p3/h5` 最佳可用离散解，不是连续解，也未证明网格收敛。
 详细误差、资源口径和 SHA 见
@@ -36,14 +53,15 @@ Review V5 批准的 D0、D1、D2 已完成；数值 campaign 已按停止规则�
 
 因此当前阶段分类更新为
 `p3_h5_same_degree_numerical_closure_pass_p4_target_memory_gated`。这表示 p3
-数值闭合已经完成，但新证据仍等待独立复审；原 Task33 自适应范围继续延期。
+数值闭合已经完成；Review V6 已接受该证据。原 Task33 adaptive 范围已明确
+移交下一独立任务，不再是“仍待 Task33 复审”的延期项。
 
 ## 1. 身份与范围
 
 | 字段 | 结果 | 说明 |
 |---|---|---|
 | 阶段分类 | `p3_h5_same_degree_numerical_closure_pass_p4_target_memory_gated` | Phase C1 已取得 p3 同阶 direct；p4 通过组件门禁但目标求解被自身内存 Gate 阻止 |
-| 原 Task033 分类 | `partial_deferred_by_user_scope` | 自适应及其后续阶段延期 |
+| 原 Task033 full-scope 分类 | `partial_by_explicit_user_scope_transfer` | 自适应与 1 TiB 更新转交后续任务；不伪装为完成 |
 | Stage1 正式源码 | `6613f94b91ebc77eb50e74086475c67df46236f6` | clean worktree、同一 Docker image digest |
 | Phase A 源码 | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | block tracking、Case090 reuse audit 与 selected MPI runs |
 | Phase B 实测源码 | `bd7a6023bde7a7c06d456e702af4b7f9f047b3fc` | p2 MPI1、p3/p4 MPI1/MPI4 matching-trace 五条 shard |
@@ -126,18 +144,18 @@ volume closure error 为 `1.874e-12`，E/H interface Gate 均通过。旧 C0 曾
 `1.100e-5 / 1.098e-4`。因此 p3/h5 whole Phase C 当前为数值闭合通过，而非
 “保持未通过”。
 
-## 4. 原范围中尚未完成的项目
+## 4. 原范围的取消、移交与资源门禁
 
 - uniform p/h 原 20 项完整矩阵：被 Review V5 的减缩矩阵取代，不再机械执行；
-- p2 graded/adaptive h5、h3：未运行，等待 D1/D2 summary 新审阅；
+- p2 graded/adaptive h5、h3：未运行，已移交下一独立任务；
 - p4 工程收益：当前主机资源 Gate negative，未建立；
 - native variable-p target prototype：capability audit fail closed，未实现；
 - 四个 interface buffer 与联合代价选择：等待 defect/nonuniform-end geometry；
-- 更新后的 1 TiB 与 0.7 nm 推演：等待 measured adaptive compression；
+- 更新后的 1 TiB 与 0.7 nm 推演：移交 adaptive/scalability task；需要实测压缩和重新校准的高阶模型；
 - 原任务书要求的 21-role formal manifest、final outcome 与 publication descriptor。
 
 fixed-p p3 equal-accuracy 不再属于延期项：`p3/h10` 为精度负结果，
-`p3/h7.5` 为带资格的工程正结果。variable-p capability audit 也已完成；未完成的是
+`p3/h7.5` 为带资格的 fixed-p clear success。variable-p capability audit 也已完成；未完成的是
 target prototype。各项是 `removed_by_reduced_scope`、`deferred`、`resource_gated`
 或 `capability_gated`，不能统一写成数值失败。
 
@@ -156,25 +174,25 @@ target prototype。各项是 `removed_by_reduced_scope`、`deferred`、`resource
 | Phase C p4 四模态 | MPI1/MPI4 四模态 QEP→matched-trace 资格化通过 |
 | Phase C p4/h5 target | full3D assembly-only 在 12.616 GiB 受控终止；Hybrid 独立上界 42.594 GiB；均未进入目标求解 |
 | Phase D p3/h10 | direct + Hybrid M120/M160 完成；等精度 negative，按规则触发 h7.5 |
-| Phase D p3/h7.5 | direct + Hybrid M120/M160 完成；equal-accuracy engineering positive with qualification |
+| Phase D p3/h7.5 | direct + Hybrid M120/M160 完成；fixed-p equal-accuracy clear success with qualifications |
 | Phase D variable-p | 运行时 capability audit 完成；fail closed，未触发 microfixture |
-| p3/h3、adaptive、buffer | 未获当前批准或等待目标几何，未启动 |
+| p3/h3、adaptive、buffer | p3/h3 取消；adaptive 移交；buffer 等待目标几何，均未启动 |
 
 `p1/h3/M160` 已完成局部因子、Schur、场恢复与 official RTA，停止时正在中间平面
 重建；由于没有生成 solver record、watchdog summary 和 funnel aggregate，它不是有效正式结果。
 
 ## 6. 是否需要继续计算
 
-当前没有需要自动补算的项目。p3/h5、p3/h10、p3/h7.5 均不需要重复，M240 没有
-数值必要。若未来继续，最小顺序是：
+当前 Task33 没有需要自动补算的项目。p3/h5、p3/h10、p3/h7.5 均不需要重复，
+M240 没有数值必要。后续工作属于新任务：
 
-1. 先独立复审 D1 reduced summary 与 D2 capability report；无需重跑；
-2. 只有新审阅批准后，才启动最后的 p2 conforming graded-h h5 mechanism，随后
-   条件进入 h3 compression；
-3. p4/h5 只能在显著更大的内存预算或已资格化低内存算法上继续；当前主机不应
+1. 新建 adaptive task，从 p2 conforming graded-h h5 mechanism 和独立
+   mesh/accuracy Gate 开始，再条件进入 h3 compression；
+2. p4/h5 只能在显著更大的内存预算或已资格化低内存算法上继续；当前主机不应
    重做装配或启动 factorization/solve；
-4. interface buffer 等待 defect geometry；1 TiB 推演等待 adaptive measured data；
-5. p3/h3 不在当前减缩范围内，不由 p3/h7.5 正结果自动解锁。
+3. interface buffer 等待 defect geometry；1 TiB 推演等待 adaptive measured data
+   与高阶预测重校准；
+4. p3/h3 不在当前减缩范围内，不由 p3/h7.5 正结果自动解锁。
 
 ## 7. 证据边界
 
@@ -188,4 +206,6 @@ p4 负校准则由 `calibration_summary.json` 保存。Task032 的六份 p2
 Hybrid/full3D 记录仍是可复核的 tracked clean evidence。Phase D1 由
 `stage5_equal_accuracy/reduced_equal_accuracy_summary.json` 哈希绑定 p3/h10、
 p3/h7.5 direct/Hybrid raw records；D2 由 `variable_p_capability_audit.json`
-保存运行时 API 和逐项 semantic requirement。
+保存运行时 API 和逐项 semantic requirement。F0 completion record 另行绑定这些
+摘要、两份 source compatibility audit、测试摘要与精确 merge manifest；它只声明
+reduced scope complete，不升级原 full-scope manifest。

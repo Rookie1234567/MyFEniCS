@@ -1,10 +1,11 @@
-"""Review-v5 reduced equal-accuracy evidence aggregation for Task033.
+"""Reduced fixed-p equal-accuracy evidence aggregation for Task033.
 
 This module deliberately does not feed the original 21-role Task033 formal
-manifest.  It binds the smaller review-v5 campaign to raw, ignored PDE
+manifest.  It binds the smaller Review-V5 campaign to raw, ignored PDE
 artifacts and answers one scoped question: whether a coarser p3 discretization
 is no less accurate than the reused p2/h3 baseline against the best available
-p3/h5 discrete reference, while reducing measured resources.
+p3/h5 discrete reference, while reducing measured resources. Review V6 freezes
+that result as a fixed-p clear success with explicit execution semantics.
 """
 
 from __future__ import annotations
@@ -189,7 +190,18 @@ def _load_full3d(path: Path | str, *, root: Path) -> dict[str, Any]:
     artifacts = descriptor.get("artifacts")
     results = descriptor.get("results")
     physical = descriptor.get("physical_model")
-    if not all(isinstance(value, Mapping) for value in (artifacts, results, physical)):
+    metadata = descriptor.get("metadata")
+    qualification = descriptor.get("qualification")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (
+            artifacts,
+            results,
+            physical,
+            metadata,
+            qualification,
+        )
+    ):
         raise ReducedEqualAccuracyError(f"incomplete full3D descriptor {descriptor_path}")
     run_root, run_root_repo_path = _repo_path(str(artifacts["ignored_run_root"]), root=root)
     run_summary_path = run_root / "run_summary.json"
@@ -233,6 +245,32 @@ def _load_full3d(path: Path | str, *, root: Path) -> dict[str, Any]:
         "orders_sha256": _sha256(orders_path),
         "degree": int(physical["nedelec_degree"]),
         "h_nm": float(physical["mesh_h_nm"]),
+        "execution": {
+            "source_commit_sha": metadata.get("commit_sha"),
+            "container_image": metadata.get("container_image"),
+            "container_digest": metadata.get("container_digest"),
+            "mpi_size": int(physical.get("mpi_size")),
+            "solver_path": physical.get("linear_solver"),
+            "no_swap": qualification.get("no_swap") is True,
+            "memory_authority_gib": (
+                _finite(
+                    results.get("external_memory_authority_gib"),
+                    label="full3D memory authority",
+                    positive=True,
+                )
+                if results.get("external_memory_authority_gib") is not None
+                else None
+            ),
+            "wall_time_seconds": (
+                _finite(
+                    results.get("elapsed_seconds"),
+                    label="full3D wall time",
+                    positive=True,
+                )
+                if results.get("elapsed_seconds") is not None
+                else None
+            ),
+        },
     }
 
 
@@ -372,10 +410,12 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
     if not isinstance(measurements, Mapping):
         raise ReducedEqualAccuracyError(f"watchdog lacks measurements: {path}")
     source = payload.get("source")
+    worker_source = payload.get("worker_source")
     if (
         not isinstance(source, Mapping)
         or source.get("source_clean_verified") is not True
         or source.get("source_stable_during_run") is not True
+        or not isinstance(worker_source, Mapping)
     ):
         raise ReducedEqualAccuracyError(f"watchdog lacks clean stable source: {path}")
     solver_path, _ = _repo_path(str(payload.get("solver_record_ignored_path")), root=root)
@@ -415,6 +455,17 @@ def _hybrid_metrics(summary_path: Path | str, *, root: Path) -> dict[str, Any]:
         "path": repo_path,
         "sha256": _sha256(path),
         "source_commit_sha": source.get("commit_sha"),
+        "execution": {
+            "source_commit_sha": source.get("commit_sha"),
+            "container_image": worker_source.get("container_image"),
+            "container_digest": worker_source.get("container_digest"),
+            "mpi_size": int(worker_source.get("mpi_size")),
+            "solver_path": worker_source.get("primary_solver_path"),
+            "no_swap": payload.get("no_swap") is True,
+            "memory_authority_semantics": resource.get(
+                "memory_authority_semantics"
+            ),
+        },
         "requested_modes": int(payload.get("requested_modes")),
         "status": payload.get("status"),
         "formal_pass": payload.get("formal_pass") is True,
@@ -556,9 +607,10 @@ def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, 
     timing = solver.get("timing_seconds_max_rank")
     memory = watchdog.get("memory")
     validation = solver.get("validation")
+    source = watchdog.get("source")
     if not all(
         isinstance(value, Mapping)
-        for value in (hybrid, ledger, timing, memory, validation)
+        for value in (hybrid, ledger, timing, memory, validation, source)
     ):
         raise ReducedEqualAccuracyError("Task032 Hybrid baseline is incomplete")
     inventory = ledger.get("local_or_augmented_factor_inventory")
@@ -573,8 +625,17 @@ def _load_task032_hybrid_baseline(path: Path | str, *, root: Path) -> dict[str, 
         "sha256": _sha256(watchdog_path),
         "solver_path": solver_repo_path,
         "solver_sha256": _sha256(solver_path),
-        "source_commit_sha": watchdog.get("source", {}).get("commit_sha"),
+        "source_commit_sha": source.get("commit_sha"),
         "no_swap": watchdog.get("no_swap") is True,
+        "execution": {
+            "source_commit_sha": source.get("commit_sha"),
+            "container_image": source.get("container_image"),
+            "container_digest": source.get("container_digest"),
+            "mpi_size": int(source.get("mpi_size")),
+            "solver_path": source.get("primary_solver_path"),
+            "no_swap": watchdog.get("no_swap") is True,
+            "memory_authority_semantics": watchdog.get("semantics"),
+        },
         "costs": {
             **dimensions,
             "factor_inventory_nnz": factor_inventory_nnz,
@@ -631,6 +692,75 @@ def _input_descriptor(record: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _execution_contract(
+    *,
+    full3d: Mapping[str, Mapping[str, Any]],
+    hybrid: Mapping[str, Mapping[str, Any]],
+    p2_hybrid: Mapping[str, Any],
+) -> dict[str, Any]:
+    direct_rows = {
+        key: full3d[key]["execution"]
+        for key in ("candidate_p3_h10", "candidate_p3_h7p5")
+    }
+    hybrid_rows = {
+        "baseline_p2_h3_m160": p2_hybrid["execution"],
+        "candidate_p3_h10_m120": hybrid["p3_h10_m120"]["execution"],
+        "candidate_p3_h10_m160": hybrid["p3_h10_m160"]["execution"],
+        "candidate_p3_h7p5_m120": hybrid["p3_h7p5_m120"]["execution"],
+        "candidate_p3_h7p5_m160": hybrid["p3_h7p5_m160"]["execution"],
+    }
+    all_rows = [*direct_rows.values(), *hybrid_rows.values()]
+    image_values = {row["container_image"] for row in all_rows}
+    digest_values = {row["container_digest"] for row in all_rows}
+    hybrid_solver_values = {
+        row["solver_path"] for row in hybrid_rows.values()
+    }
+    checks = {
+        "single_frozen_container_image": len(image_values) == 1,
+        "single_frozen_container_digest": len(digest_values) == 1,
+        "all_records_mpi4": all(row["mpi_size"] == 4 for row in all_rows),
+        "all_records_zero_swap": all(row["no_swap"] for row in all_rows),
+        "single_hybrid_solver_path": len(hybrid_solver_values) == 1,
+        "p2_h3_and_p3_h7p5_clean_sources_differ": (
+            p2_hybrid["source_commit_sha"]
+            != hybrid["p3_h7p5_m160"]["source_commit_sha"]
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    if failures:
+        raise ReducedEqualAccuracyError(
+            "cross-record execution contract failed: " + ", ".join(failures)
+        )
+    return {
+        "container_image": next(iter(image_values)),
+        "container_digest": next(iter(digest_values)),
+        "mpi_size": 4,
+        "direct_solver_path": "direct_lu_mumps",
+        "hybrid_solver_path": next(iter(hybrid_solver_values)),
+        "zero_swap_required_and_observed": True,
+        "one_heavy_case_at_a_time": True,
+        "memory_authority_definition": (
+            "max(simultaneous live MPI worker RSS sum, "
+            "container cgroup current)"
+        ),
+        "wall_time_semantics": (
+            "indicative measured comparison only; source SHA and run "
+            "placement differ, so wall time is not a controlled speedup claim"
+        ),
+        "clean_source_identity": {
+            "baseline_p2_h3": p2_hybrid["source_commit_sha"],
+            "candidate_p3_h7p5": hybrid["p3_h7p5_m160"][
+                "source_commit_sha"
+            ],
+            "sources_intentionally_different": True,
+        },
+        "direct_records": direct_rows,
+        "hybrid_records": hybrid_rows,
+        "checks": checks,
+        "failures": failures,
+    }
+
+
 def build_reduced_equal_accuracy(
     *,
     provisional_reference: Path | str,
@@ -643,9 +773,10 @@ def build_reduced_equal_accuracy(
     p3_h7p5_m120: Path | str,
     p3_h7p5_m160: Path | str,
     source_compatibility_audit: Path | str,
+    d1_source_compatibility_audit: Path | str,
     repo_root: Path | str = ROOT,
 ) -> dict[str, Any]:
-    """Build the complete review-v5 reduced equal-accuracy record."""
+    """Build the complete Review-V6 fixed-p equal-accuracy record."""
 
     root = Path(repo_root).resolve()
     full3d = {
@@ -685,6 +816,18 @@ def build_reduced_equal_accuracy(
         or compatibility.get("compatible") is not True
     ):
         raise ReducedEqualAccuracyError("source compatibility audit did not pass")
+    d1_compatibility_path, d1_compatibility_repo_path = _repo_path(
+        d1_source_compatibility_audit, root=root
+    )
+    d1_compatibility = _read_json(d1_compatibility_path)
+    if (
+        d1_compatibility.get("status")
+        != "d1_source_splits_numerically_compatible"
+        or d1_compatibility.get("compatible") is not True
+    ):
+        raise ReducedEqualAccuracyError(
+            "D1 source compatibility audit did not pass"
+        )
     h10_positive = bool(physical_decision["candidate_p3_h10"]["pass"])
     h7p5_positive = bool(
         physical_decision["candidate_p3_h7p5"]["pass"]
@@ -697,11 +840,16 @@ def build_reduced_equal_accuracy(
         key: {field: value for field, value in record.items() if field != "orders"}
         for key, record in hybrid.items()
     }
+    execution_contract = _execution_contract(
+        full3d=full3d,
+        hybrid=hybrid,
+        p2_hybrid=p2_hybrid,
+    )
     record: dict[str, Any] = {
-        "schema_version": "task033.case091.reduced-equal-accuracy.v1",
-        "record_type": "task033_review_v5_reduced_equal_accuracy",
+        "schema_version": "task033.case091.reduced-equal-accuracy.v2",
+        "record_type": "task033_review_v6_fixed_p_equal_accuracy",
         "case_id": "091_hybrid_hp_adaptivity_feasibility",
-        "status": "equal_accuracy_engineering_positive_with_qualification"
+        "status": "fixed_p_equal_accuracy_clear_success_with_qualifications"
         if h7p5_positive
         else "not_qualified",
         "identity": {
@@ -752,6 +900,42 @@ def build_reduced_equal_accuracy(
                 "sha256": _sha256(compatibility_path),
                 "pass": True,
             },
+            "d1_source_compatibility_audit": {
+                "path": d1_compatibility_repo_path,
+                "sha256": _sha256(d1_compatibility_path),
+                "pass": True,
+            },
+        },
+        "cross_record_execution_contract": execution_contract,
+        "high_order_memory_prediction_calibration": {
+            "p3_h10": {
+                "predicted_upper_gib": 1.9472054689389793,
+                "full_solve_actual_gib": full3d["candidate_p3_h10"][
+                    "execution"
+                ]["memory_authority_gib"],
+                "actual_over_predicted_upper": (
+                    full3d["candidate_p3_h10"]["execution"][
+                        "memory_authority_gib"
+                    ]
+                    / 1.9472054689389793
+                ),
+            },
+            "p3_h7p5": {
+                "predicted_upper_gib": 2.4630956334897443,
+                "full_solve_actual_gib": full3d["candidate_p3_h7p5"][
+                    "execution"
+                ]["memory_authority_gib"],
+                "actual_over_predicted_upper": (
+                    full3d["candidate_p3_h7p5"]["execution"][
+                        "memory_authority_gib"
+                    ]
+                    / 2.4630956334897443
+                ),
+            },
+            "prediction_is_launch_guard_not_measurement": True,
+            "old_high_order_model_for_1tib_projection": (
+                "not_allowed_without_recalibration"
+            ),
         },
         "direct_full3d_comparison_to_p3_h5": direct_comparison,
         "physical_error_no_worse_than_p2_h3": physical_decision,
@@ -765,7 +949,7 @@ def build_reduced_equal_accuracy(
         "decision": {
             "p3_h10": "negative_not_equal_accuracy",
             "p3_h7p5": (
-                "positive_equal_accuracy_engineering_candidate"
+                "fixed_p_equal_accuracy_clear_success"
                 if h7p5_positive
                 else "not_qualified"
             ),
@@ -778,7 +962,7 @@ def build_reduced_equal_accuracy(
         "limitations": [
             "p3/h5 is the best available discrete reference, not a continuum solution.",
             "The p3/h5 reference is not grid converged.",
-            "The reused Task032 p2/h3 Hybrid baseline and new p3 runs have different clean source SHAs; reuse is explicitly authorized by review v5.",
+            "The reused Task032 p2/h3 Hybrid baseline and new p3 runs have different clean source SHAs; Review V6 accepts the hash-bound compatibility audit and keeps wall time indicative only.",
             "M120-to-M160 selected-plane comparison uses changes in reference-error metrics; raw Hybrid plane arrays are not exported as a separate cross-M NPZ.",
             "No M240, p3/h3, p4 target, adaptivity, or 0.7 nm PDE was run.",
         ],

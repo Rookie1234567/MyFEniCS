@@ -12,6 +12,34 @@ ROOT = Path(__file__).resolve().parents[1]
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DEFAULT_FULL3D_SOURCE = "bd828f24dc1546263210d73d08bf7bc16ba8a129"
 DEFAULT_HYBRID_SOURCE = "95921ab76e39eb1a7c5b3321b93d36939afb4075"
+D1_SOURCE_SPLITS = (
+    {
+        "candidate": "p3_h10",
+        "full3d_source": "bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6",
+        "hybrid_source": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "allowed_changed_paths": (
+            (
+                "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/"
+                "records/stage5_equal_accuracy/full3d_reference_p3_h10.json"
+            ),
+            (
+                "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/"
+                "records/variable_p_capability_audit.json"
+            ),
+        ),
+    },
+    {
+        "candidate": "p3_h7p5",
+        "full3d_source": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "hybrid_source": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+        "allowed_changed_paths": (
+            (
+                "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/"
+                "records/stage5_equal_accuracy/full3d_reference_p3_h7p5.json"
+            ),
+        ),
+    },
+)
 
 CRITICAL_NUMERICAL_KERNELS = (
     "src/common/config_3d.py",
@@ -205,6 +233,124 @@ def build_full3d_hybrid_source_compatibility_audit(
             (
                 "The direct and Hybrid formal records retain their distinct "
                 "source SHAs."
+            ),
+        ],
+    }
+
+
+def build_d1_source_compatibility_audit(
+    *,
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Audit the two Review-V5 D1 direct-to-Hybrid source splits.
+
+    The accepted direct and Hybrid records intentionally have different clean
+    SHAs.  This audit proves that each intervening commit range contains only
+    tracked descriptors/audits and leaves every critical numerical-kernel blob
+    unchanged.
+    """
+
+    root = Path(repo_root).resolve()
+    split_rows: list[dict[str, Any]] = []
+    for split in D1_SOURCE_SPLITS:
+        full3d_source = str(split["full3d_source"])
+        hybrid_source = str(split["hybrid_source"])
+        allowed_changed_paths = frozenset(split["allowed_changed_paths"])
+        for label, value in (
+            ("full3d_source", full3d_source),
+            ("hybrid_source", hybrid_source),
+        ):
+            if FULL_SHA_RE.fullmatch(value) is None:
+                raise ValueError(f"{label} must be a full lowercase Git SHA")
+
+        merge_base = _git(
+            "merge-base", full3d_source, hybrid_source, root=root
+        )
+        changed_paths = tuple(
+            line
+            for line in _git(
+                "diff",
+                "--name-only",
+                f"{full3d_source}..{hybrid_source}",
+                root=root,
+            ).splitlines()
+            if line
+        )
+        kernel_rows = []
+        for path in CRITICAL_NUMERICAL_KERNELS:
+            before = _git(
+                "rev-parse", f"{full3d_source}:{path}", root=root
+            )
+            after = _git(
+                "rev-parse", f"{hybrid_source}:{path}", root=root
+            )
+            kernel_rows.append(
+                {
+                    "path": path,
+                    "full3d_blob": before,
+                    "hybrid_blob": after,
+                    "identical": before == after,
+                }
+            )
+        changed_set = set(changed_paths)
+        checks = {
+            "full3d_source_is_ancestor_of_hybrid_source": (
+                merge_base == full3d_source
+            ),
+            "all_critical_numerical_kernel_blobs_identical": all(
+                row["identical"] for row in kernel_rows
+            ),
+            "changed_paths_exactly_match_audited_allow_list": (
+                changed_set == allowed_changed_paths
+            ),
+        }
+        failures = [name for name, passed in checks.items() if not passed]
+        split_rows.append(
+            {
+                "candidate": split["candidate"],
+                "full3d_reference_source_commit_sha": full3d_source,
+                "hybrid_source_commit_sha": hybrid_source,
+                "merge_base": merge_base,
+                "changed_paths": list(changed_paths),
+                "allowed_changed_paths": sorted(allowed_changed_paths),
+                "unexpected_changed_paths": sorted(
+                    changed_set - allowed_changed_paths
+                ),
+                "missing_expected_changed_paths": sorted(
+                    allowed_changed_paths - changed_set
+                ),
+                "critical_numerical_kernels": kernel_rows,
+                "checks": checks,
+                "failures": failures,
+                "compatible": not failures,
+            }
+        )
+
+    compatible = all(row["compatible"] for row in split_rows)
+    return {
+        "schema_version": "task033.phaseF0-d1-source-compatibility.v1",
+        "record_type": "task033_d1_source_compatibility_audit",
+        "status": (
+            "d1_source_splits_numerically_compatible"
+            if compatible
+            else "d1_source_compatibility_not_qualified"
+        ),
+        "identity": {
+            "is_pde_run": False,
+            "is_solver_pass": False,
+            "ordinary_default_changed": False,
+            "scope": "p3_h10_and_p3_h7p5_direct_to_hybrid_source_splits",
+        },
+        "source_splits": split_rows,
+        "compatible": compatible,
+        "limitations": [
+            (
+                "This proves numerical-kernel blob identity across the two "
+                "tracked source splits; it does not prove continuum accuracy."
+            ),
+            (
+                "The full3D and Hybrid records correctly retain their "
+                "different clean source SHAs."
             ),
         ],
     }

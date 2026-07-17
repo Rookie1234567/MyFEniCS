@@ -1,8 +1,8 @@
 {
-  "schema_version": "task033.case091.reduced-equal-accuracy.v1",
-  "record_type": "task033_review_v5_reduced_equal_accuracy",
+  "schema_version": "task033.case091.reduced-equal-accuracy.v2",
+  "record_type": "task033_review_v6_fixed_p_equal_accuracy",
   "case_id": "091_hybrid_hp_adaptivity_feasibility",
-  "status": "equal_accuracy_engineering_positive_with_qualification",
+  "status": "fixed_p_equal_accuracy_clear_success_with_qualifications",
   "identity": {
     "is_pde_run": false,
     "consumes_measured_pde_records": true,
@@ -94,7 +94,120 @@
       "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/source_compatibility_audit.json",
       "sha256": "08a91f85d29fce22cd325e14c4fe645551689fb4bbe6302c2ceb02103591c177",
       "pass": true
+    },
+    "d1_source_compatibility_audit": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/d1_source_compatibility_audit.json",
+      "sha256": "0bb6e05a7a4e387338ba51ecca8a9357e0f59600637b66768a303deb827eed08",
+      "pass": true
     }
+  },
+  "cross_record_execution_contract": {
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "mpi_size": 4,
+    "direct_solver_path": "direct_lu_mumps",
+    "hybrid_solver_path": "modal-schur-memory-minimal",
+    "zero_swap_required_and_observed": true,
+    "one_heavy_case_at_a_time": true,
+    "memory_authority_definition": "max(simultaneous live MPI worker RSS sum, container cgroup current)",
+    "wall_time_semantics": "indicative measured comparison only; source SHA and run placement differ, so wall time is not a controlled speedup claim",
+    "clean_source_identity": {
+      "baseline_p2_h3": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+      "candidate_p3_h7p5": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+      "sources_intentionally_different": true
+    },
+    "direct_records": {
+      "candidate_p3_h10": {
+        "source_commit_sha": "bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "direct_lu_mumps",
+        "no_swap": true,
+        "memory_authority_gib": 1.9795913696289062,
+        "wall_time_seconds": 22.389750799999092
+      },
+      "candidate_p3_h7p5": {
+        "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "direct_lu_mumps",
+        "no_swap": true,
+        "memory_authority_gib": 3.6666221618652344,
+        "wall_time_seconds": 44.48671327699958
+      }
+    },
+    "hybrid_records": {
+      "baseline_p2_h3_m160": {
+        "source_commit_sha": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "External 0.25 s samples sum current RSS of live MPI workers at one instant. Container cgroup and swap are separate authorities; historical rank peaks are not summed."
+      },
+      "candidate_p3_h10_m120": {
+        "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
+      "candidate_p3_h10_m160": {
+        "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
+      "candidate_p3_h7p5_m120": {
+        "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
+      "candidate_p3_h7p5_m160": {
+        "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      }
+    },
+    "checks": {
+      "single_frozen_container_image": true,
+      "single_frozen_container_digest": true,
+      "all_records_mpi4": true,
+      "all_records_zero_swap": true,
+      "single_hybrid_solver_path": true,
+      "p2_h3_and_p3_h7p5_clean_sources_differ": true
+    },
+    "failures": []
+  },
+  "high_order_memory_prediction_calibration": {
+    "p3_h10": {
+      "predicted_upper_gib": 1.9472054689389793,
+      "full_solve_actual_gib": 1.9795913696289062,
+      "actual_over_predicted_upper": 1.0166319893850615
+    },
+    "p3_h7p5": {
+      "predicted_upper_gib": 2.4630956334897443,
+      "full_solve_actual_gib": 3.6666221618652344,
+      "actual_over_predicted_upper": 1.4886235483558221
+    },
+    "prediction_is_launch_guard_not_measurement": true,
+    "old_high_order_model_for_1tib_projection": "not_allowed_without_recalibration"
   },
   "direct_full3d_comparison_to_p3_h5": {
     "baseline_p2_h3": {
@@ -867,6 +980,15 @@
       "path": "benchmarks/artifacts/cases/091/task033_phaseD1_6cb63a5/hybrid/phaseD1_p3_h10_m120_hybrid_p3_h10_mpi4_20260717T095027Z/memory_sampler_summary.json",
       "sha256": "ea81255e87aa1729f08d1ae0b4b3038dabf614ffab1e7fea451b265d7729802d",
       "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+      "execution": {
+        "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
       "requested_modes": 120,
       "status": "formal_not_pass",
       "formal_pass": false,
@@ -928,6 +1050,15 @@
       "path": "benchmarks/artifacts/cases/091/task033_phaseD1_6cb63a5/hybrid/phaseD1_p3_h10_m160_hybrid_p3_h10_mpi4_20260717T095154Z/memory_sampler_summary.json",
       "sha256": "8b2ec16f2577f211b72016157f88d3224b5d79f3de1e0757e9368b9111928e35",
       "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+      "execution": {
+        "source_commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
       "requested_modes": 160,
       "status": "formal_not_pass",
       "formal_pass": false,
@@ -989,6 +1120,15 @@
       "path": "benchmarks/artifacts/cases/091/task033_phaseD1_7a7db58/hybrid/phaseD1_p3_h7p5_m120_hybrid_p3_h7.5_mpi4_20260717T095821Z/memory_sampler_summary.json",
       "sha256": "43eeccb01fcff5cf4838dcf9ba32f1e29d70a1751b4d8b1521367ca44ec55859",
       "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+      "execution": {
+        "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
       "requested_modes": 120,
       "status": "measured_shard_pass",
       "formal_pass": true,
@@ -1050,6 +1190,15 @@
       "path": "benchmarks/artifacts/cases/091/task033_phaseD1_7a7db58/hybrid/phaseD1_p3_h7p5_m160_hybrid_p3_h7.5_mpi4_20260717T095955Z/memory_sampler_summary.json",
       "sha256": "dda68698c2a665dd7d72a933b9c87283ed8c43802a9f45300a9502d8540003da",
       "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+      "execution": {
+        "source_commit_sha": "7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "max(simultaneous live MPI worker RSS sum, container cgroup current)"
+      },
       "requested_modes": 160,
       "status": "measured_shard_pass",
       "formal_pass": true,
@@ -1492,6 +1641,15 @@
       "solver_sha256": "b8bd0e88724f81bbe680e9f9c540a8d4847d1c38ef527663e45b10e76eb724c7",
       "source_commit_sha": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
       "no_swap": true,
+      "execution": {
+        "source_commit_sha": "793354af0ac72cbfe1c6eb1030b2438afe10c101",
+        "container_image": "myfenics-stage4:task28",
+        "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+        "mpi_size": 4,
+        "solver_path": "modal-schur-memory-minimal",
+        "no_swap": true,
+        "memory_authority_semantics": "External 0.25 s samples sum current RSS of live MPI workers at one instant. Container cgroup and swap are separate authorities; historical rank peaks are not summed."
+      },
       "costs": {
         "local_fe_dofs": 68396,
         "local_system_rows": 68476,
@@ -1558,16 +1716,16 @@
   },
   "decision": {
     "p3_h10": "negative_not_equal_accuracy",
-    "p3_h7p5": "positive_equal_accuracy_engineering_candidate",
+    "p3_h7p5": "fixed_p_equal_accuracy_clear_success",
     "selected_candidate": "p3_h7p5",
     "scope": "fixed-p reduced campaign only; provisional discrete-reference comparison, not continuum or grid-converged accuracy"
   },
   "limitations": [
     "p3/h5 is the best available discrete reference, not a continuum solution.",
     "The p3/h5 reference is not grid converged.",
-    "The reused Task032 p2/h3 Hybrid baseline and new p3 runs have different clean source SHAs; reuse is explicitly authorized by review v5.",
+    "The reused Task032 p2/h3 Hybrid baseline and new p3 runs have different clean source SHAs; Review V6 accepts the hash-bound compatibility audit and keeps wall time indicative only.",
     "M120-to-M160 selected-plane comparison uses changes in reference-error metrics; raw Hybrid plane arrays are not exported as a separate cross-M NPZ.",
     "No M240, p3/h3, p4 target, adaptivity, or 0.7 nm PDE was run."
   ],
-  "payload_sha256": "3c322f4bb2864facf5076570c8f57d70972912cd60435d0debe7acdd110ebe0f"
+  "payload_sha256": "b942b9471271c00778011ad3a282e8ff04617bebf84e3215c414a7c560b6aac1"
 }

@@ -21,6 +21,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--p3-h7p5-m120", type=Path, required=True)
     parser.add_argument("--p3-h7p5-m160", type=Path, required=True)
     parser.add_argument("--source-compatibility-audit", type=Path, required=True)
+    parser.add_argument(
+        "--d1-source-compatibility-audit",
+        type=Path,
+        required=True,
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     return parser.parse_args(argv)
@@ -39,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
         p3_h7p5_m120=args.p3_h7p5_m120,
         p3_h7p5_m160=args.p3_h7p5_m160,
         source_compatibility_audit=args.source_compatibility_audit,
+        d1_source_compatibility_audit=args.d1_source_compatibility_audit,
         repo_root=args.repo_root,
     )
     output = args.output if args.output.is_absolute() else args.repo_root / args.output

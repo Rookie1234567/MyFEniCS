@@ -1,11 +1,11 @@
 {
   "artifact_provenance": {
     "generator_module": "benchmarks.task033_resource_gates",
-    "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md"
+    "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md"
   },
   "benchmark_id": "task033_case091_resource_matrix",
   "case_id": "091_hybrid_hp_adaptivity_feasibility",
-  "data_identity": "prediction_with_measured_task032_calibration_reduced_review_v5",
+  "data_identity": "prediction_with_measured_task032_calibration_and_task033_postrun_audit",
   "entries": [
     {
       "conditional_predecessor": null,
@@ -160,7 +160,7 @@
     "ordinary_default_changed": false,
     "proves_0p7nm_feasible": false,
     "runtime_preflight_performed": false,
-    "scope": "Task033 review-v5 p3 coarse equal-accuracy planning only"
+    "scope": "Task033 reduced p3 coarse equal-accuracy launch planning plus post-run prediction audit"
   },
   "matrix_shape": {
     "degrees": 1,
@@ -171,6 +171,22 @@
     "modes_per_direction": 160,
     "solver_path": "modal-schur-memory-minimal",
     "wavelength_nm": 13.5
+  },
+  "post_run_high_order_prediction_audit": {
+    "data_identity": "measured_full_solve_vs_prior_prediction",
+    "interpretation": "Both runs remained safely below their controlled termination limits, but the two-point high-order extrapolation underestimated actual full-solve memory.",
+    "old_high_order_model_for_1tib_projection": "not_allowed_without_recalibration",
+    "p3_h10": {
+      "actual_over_predicted_upper": 1.0166319893850615,
+      "full_solve_actual_gib": 1.9795913696289062,
+      "predicted_upper_gib": 1.9472054689389793
+    },
+    "p3_h7p5": {
+      "actual_over_predicted_upper": 1.4886235483558221,
+      "full_solve_actual_gib": 3.6666221618652344,
+      "predicted_upper_gib": 2.4630956334897443
+    },
+    "prediction_is_launch_guard_not_measurement": true
   },
   "record_type": "task033_resource_prediction_and_launch_decision",
   "resolved_config": {
@@ -202,7 +218,7 @@
   },
   "schema_version": 2,
   "solver_path": "modal-schur-memory-minimal",
-  "status": "review_v5_reduced_equal_accuracy_planning_complete",
+  "status": "review_v6_reduced_equal_accuracy_planning_and_calibration_frozen",
   "task032_measured_calibration": {
     "degree": 2,
     "h3": {

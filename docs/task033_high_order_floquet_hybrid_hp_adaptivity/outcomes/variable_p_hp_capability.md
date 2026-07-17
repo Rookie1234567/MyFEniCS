@@ -61,9 +61,9 @@ cellwise hp；区域间的物理一致性、负载均衡和 MPI 伸缩仍需单�
 ## 与后续阶段的关系
 
 - fixed-p `p3/h7.5` 等精度正结果不依赖 variable-p；
-- p2 conforming graded-h / h-adaptive 仍需 D1/D2 复审后单独批准；
+- p2 conforming graded-h / h-adaptive 已移交下一独立任务，在新任务中重新建立 Gate；
 - interface buffer 等待 defect/nonuniform-end geometry，不应在当前规则光栅上机械跑矩阵；
-- 1 TiB / 0.7 nm 投影等待 adaptive compression 数据，不因本审计更新；
+- 1 TiB / 0.7 nm 投影移交 adaptive/scalability task，等待实测压缩和高阶模型重校准；
 - 本审计不证明未来版本永远不支持 variable-p，只证明当前冻结环境没有合格证据。
 
 正式记录：
