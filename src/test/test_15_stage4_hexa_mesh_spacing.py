@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from src.geometry.mesh_builder_3d import (
+    _optional_seeded_box_partitioner,
     _rank_cell_ids,
     _shared_facet_cell_partitioner,
     _stage4_axis_plan,
@@ -26,6 +27,10 @@ def _max_spacing_inside(values: np.ndarray, low: float, high: float) -> float:
 
 
 class Stage4HexaMeshSpacingTests(unittest.TestCase):
+    def test_create_box_preserves_default_partitioner_without_research_seed(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            self.assertIsNone(_optional_seeded_box_partitioner())
+
     def test_explicit_scotch_partition_seed_rejects_invalid_values(self):
         with mock.patch.dict(
             "os.environ", {"MYFENICS_SCOTCH_PARTITION_SEED": "not-an-int"}

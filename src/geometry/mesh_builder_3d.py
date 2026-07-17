@@ -61,6 +61,13 @@ def _shared_facet_cell_partitioner():
     )
 
 
+def _optional_seeded_box_partitioner():
+    """Keep create_box defaults unless a research seed was explicitly set."""
+    if os.environ.get("MYFENICS_SCOTCH_PARTITION_SEED") is None:
+        return None
+    return _shared_facet_cell_partitioner()
+
+
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
     """Tag the six exterior box faces used by Dirichlet and Floquet logic."""
     fdim = msh.topology.dim - 1
@@ -659,6 +666,7 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 mesh_cells_resolved,
                 cell_type=mesh.CellType.hexahedron,
                 ghost_mode=mesh.GhostMode.shared_facet,
+                partitioner=_optional_seeded_box_partitioner(),
             )
             mesh_note = "Using dolfinx.mesh.create_box with uniform hexahedron cells."
         else:
@@ -699,6 +707,7 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
             mesh_cells_resolved,
             cell_type=mesh.CellType.tetrahedron,
             ghost_mode=mesh.GhostMode.shared_facet,
+            partitioner=_optional_seeded_box_partitioner(),
         )
         if comm.rank == 0:
             (out_dir / "mesh_3d_partition_note.txt").write_text(
