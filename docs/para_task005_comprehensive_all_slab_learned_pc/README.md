@@ -1,7 +1,7 @@
 # PARA-Task005：Comprehensive All-Slab Learned Local Inverse Capability Qualification
 
 ```text
-status = planned / research-only continuation
+status = active / P1 complete / research-only continuation
 branch = ChatGPT/20260715-para-task-neural-local-pc
 predecessor = PARA-Task004
 ordinary_default_changed = false
@@ -25,6 +25,9 @@ raw local residual r_s
 ## 入口
 
 - [任务书](task.md)
+- [P0 环境与基线](outcomes/p0_environment_and_baseline.md)
+- [P1 数据与教师报告](outcomes/data_and_teacher_report.md)
+- [P1 逐 slab 教师摘要](outcomes/p1_teacher_summary.csv)
 - `outcomes/summary.md`：执行后维护
 - `review_report_vN.md`：ChatGPT 审阅
 - `response_vN.md`：执行者回应审阅
