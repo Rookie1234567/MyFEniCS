@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ "$#" -ne 5 ]; then
-  echo "usage: run_capture.sh <T1|T2|V|H> <sample-limit> <stride> <offset> <host-clean-sha>" >&2
+  echo "usage: run_capture.sh <T1|T2|V|H|PROBE_A|PROBE_B> <sample-limit> <stride> <offset> <host-clean-sha>" >&2
   exit 2
 fi
 
@@ -12,7 +12,7 @@ stride="$3"
 offset="$4"
 sha="$5"
 case "$split" in
-  T1|T2|V|H) ;;
+  T1|T2|V|H|PROBE_A|PROBE_B) ;;
   *) echo "invalid split identity: $split" >&2; exit 2 ;;
 esac
 
@@ -43,6 +43,7 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export MYFENICS_CELL_PARTITION_POLICY=contiguous
+max_it="${TASK005_MAX_IT:-1200}"
 
 mpiexec -n 4 /home/fenics/.local/bin/myfenics-python-complex \
   -m benchmarks.run_workstation_iterative \
@@ -54,7 +55,7 @@ mpiexec -n 4 /home/fenics/.local/bin/myfenics-python-complex \
   --smoother-ksp-type gmres \
   --smoother-iterations 2 \
   --restart 90 \
-  --max-it 1200 \
+  --max-it "$max_it" \
   --rtol 1e-6 \
   --rta-threshold 1.1e-6 \
   --monitor-stride 50 \
