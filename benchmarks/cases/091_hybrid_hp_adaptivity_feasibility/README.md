@@ -1,19 +1,22 @@
 # Case091：Hybrid h/p 自适应可行性
 
+> 2026-07-17 范围调整：本阶段只闭合 p3/p4 高阶能力与 Task032 p2
+> Hybrid/full3D 对比；自适应、buffer 和 1 TiB 工作为 `deferred_by_user_scope`。
+> 阶段证据见 [`records/stage1_high_order/stage_summary.json`](records/stage1_high_order/stage_summary.json)。
+
 ## 当前身份
 
 ```text
-Task033 resource prediction and launch-decision contract = ready
-PDE execution = not performed by this record
+Task033 stage1 high-order evidence = completed
+original h/p adaptivity scope = deferred by user
 runtime preflight = unknown by default and fail-closed
-adaptive compression measurement = not yet available
+adaptive compression measurement = deferred
 0.7 nm feasibility claim = false
 ordinary default changed = false
 ```
 
-Case091 先冻结 Task033 的 20 项 p/h 资源矩阵、两中心内存预测和
-fail-closed 启动规则。当前轻量记录只完成 planning；它不是 PDE、求解器通过、
-内存实测、h/p 压缩实测或 0.7 nm 可行性证据。
+Case091 原先冻结 Task033 的 20 项 p/h 资源矩阵、两中心内存预测和 fail-closed
+启动规则。当前阶段新增 p3/p4 高阶执行摘要，但没有完成 h/p 压缩或 0.7 nm 可行性证明。
 
 ## 物理问题
 

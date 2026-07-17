@@ -1,20 +1,27 @@
 # Task033 高阶假设审计
 
+> 阶段更新（2026-07-17）：p3/p4 高阶 Floquet 的实现假设已由 Case090 正式 PDE
+> 覆盖；QEP 分片已测，但全局 tracking aggregate 未资格化。本文中 adaptive、
+> variable-p 与 buffer 相关条目保留为延期审计，不再代表当前阶段阻塞项。
+
 ## 1. 审计身份
 
 | 字段 | 值 | 数据身份 | 证据 |
 |---|---|---|---|
 | source snapshot | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | measured static audit | `git rev-parse HEAD` before Task033 edits |
 | scope | `src/`, Task032 benchmark runners and relevant tests | measured static audit | `rg` searches listed below |
-| execution status | `in_progress` | planned | runtime qualification has not started |
+| execution status | `historical_static_snapshot_superseded_by_stage1_runtime` | measured history | current runtime result见本文顶部与 `summary.md` |
 | allowed dispositions | `remove`, `generalize`, `retain-with-reason`, `out-of-scope` | task contract | `../task.md` Phase 1 |
 
 Search families included `degree == 2`, degree guards, fixed entity DoF counts,
 `topological_trace_p2`, `N1curl`/`Lagrange` construction, quadrature, visualization,
-orientation, pseudo-inverse probes, point ownership and gather operations. This document is
-an implementation map, not evidence that p3 or p4 passes.
+orientation, pseudo-inverse probes, point ownership and gather operations. 下表是实现前静态
+快照；它本身不是 p3/p4 通过证据，当前通过证据来自 Case090 与 QEP watchdog。
 
-## 2. Confirmed assumptions and disposition
+## 2. 实现前 confirmed assumptions and disposition（历史快照）
+
+本表“当前状态”冻结在 source snapshot `ad4046d...`，不能覆盖 2026-07-17 的
+runtime disposition。已实施结果以第 3 节 Gate routing 和 `summary.md` 为准。
 
 | ID | 假设 / 静态发现 | 路径与符号 | 处置 | 当前状态 | 必须通过的 Gate | 数据身份 / 证据 |
 |---|---|---|---|---|---|---|
@@ -50,18 +57,17 @@ an implementation map, not evidence that p3 or p4 passes.
 
 | Gate | 进入条件 | 通过条件 | 失败处置 | 当前状态 |
 |---|---|---|---|---|
-| G1 framework/entity probe | Basix/DOLFINx complex image available | p1–4 entity DoFs and local transforms can be enumerated without private unsupported hacks | fail closed at the unsupported degree | in_progress |
-| G2 sparse 3D Floquet algebra | G1 pass | round-trip `<=1e-12`; trace `<=1e-11`; action `<=1e-11`; no dense boundary square/full gather | repair mapping; do not enter Hybrid high order | not_run |
-| G3 MPI identity | G2 serial pass | MPI1/2/4 result difference `<=1e-10`; ownership has no slave chain | repair ownership/communication | not_run |
-| G4 analytic fixtures | G2/G3 pass | full true residual `<=1e-10`; plane-wave/Fresnel errors decrease reasonably | retain negative result; stop affected degree | not_run |
-| G5 high-order QEP/trace | pure 3D degree passes | beta/residual/biorthogonality/trace Gates pass; same degree semantics | pause Hybrid at failed degree | not_run |
-| G6 quadrature | each candidate assembled | raised-order comparison shows no material change within declared tolerance | increase order or stop qualification | not_run |
-| G7 ordinary regression | implementation changes complete | existing p1/p2 and Case080 results unchanged within canonical Gates | fix before benchmark expansion | not_run |
+| G1 framework/entity probe | Basix/DOLFINx complex image available | p1–4 entity DoFs and local transforms can be enumerated without private unsupported hacks | fail closed at the unsupported degree | pass |
+| G2 sparse 3D Floquet algebra | G1 pass | round-trip `<=1e-12`; trace `<=1e-11`; action `<=1e-11`; no dense boundary square/full gather | repair mapping; do not enter Hybrid high order | pass，Case090 |
+| G3 MPI identity | G2 serial pass | MPI1/2/4 result difference `<=1e-10`; ownership has no slave chain | repair ownership/communication | pass，Case090 |
+| G4 analytic fixtures | G2/G3 pass | full true residual `<=1e-10`; plane-wave/Fresnel errors decrease reasonably | retain negative result; stop affected degree | pass，Case090 |
+| G5 high-order QEP/trace | pure 3D degree passes | beta/residual/biorthogonality/trace Gates pass; same degree semantics | pause Hybrid at failed degree | partial：p3/p4 shards pass；global aggregate 未资格化 |
+| G6 quadrature | each candidate assembled | raised-order comparison shows no material change within declared tolerance | increase order or stop qualification | pass for retained component records |
+| G7 ordinary regression | implementation changes complete | existing p1/p2 and Case080 results unchanged within canonical Gates | fix before benchmark expansion | pass |
 
 ## 4. Audit boundary
 
-This Phase 1 document records confirmed source assumptions and intended dispositions. It does
-not assert that Basix p3/p4 entity transformations, QEP convergence, Fresnel physics, MPI
-ownership or Hybrid coupling have passed. Those claims remain `not_run` until the
-corresponding tracked records exist.
-
+本文件的静态表保留审计历史；当前 runtime 结论是：p3/p4 entity/Floquet、解析 PDE 与
+MPI Gate 已通过，QEP p3/p4 分片通过但全局 aggregate 未资格化，p3/p4 Hybrid 同阶
+full3D 对照仍未运行。不得用历史表的 blocker 状态覆盖当前阶段证据，也不得把当前
+组件通过外推成完整 Task033 通过。

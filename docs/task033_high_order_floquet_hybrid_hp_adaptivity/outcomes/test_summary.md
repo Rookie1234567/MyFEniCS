@@ -1,38 +1,31 @@
-# Task033 测试摘要
+# Task033 阶段测试摘要
 
-## 1. Phase 0 verification
+## 1. 源码冻结前验证
 
-| Check | Scope | Result | 数据身份 | Evidence |
-|---|---|---|---|---|
-| Review V2 disposition | Task032 predecessor | pass: Task033 approved after selective merge | measured document audit | Task032 `review_report_v2.md` |
-| Git ancestry | selective merge to Task033 base | pass | measured | `git merge-base --is-ancestor` |
-| branch/base/origin identity | Task033 execution branch | pass | measured | `environment_and_base.md` |
-| pre-edit worktree | tracked and untracked status | pass: empty | measured | `git status --short` before outcomes creation |
-| image identity | local qualified image | pass | measured | `docker image inspect` |
-| PETSc scalar type | container stack | pass: `complex128` | measured | read-only container probe |
-| package versions | PETSc/SLEPc/DOLFINx/Basix | pass: captured | measured | `environment_and_base.md` |
-| effective memory ceiling | Docker/host | pass: captured and tightened | measured + derived | `environment_and_base.md` |
+正式计算源码 `6613f94b91ebc77eb50e74086475c67df46236f6` 在 campaign 前完成：
 
-## 2. Numerical and contract status
+| 验证 | 结果 |
+|---|---|
+| Task33 host pure group | 131 passed, 5 skipped |
+| final focused group | 57 passed, 1 skipped |
+| Docker DOLFINx test53 + test55 | 12 passed, 10 subtests |
+| MPI2 smoke + graded materialization | 每 rank 2 passed, 4 subtests |
+| Ruff / compileall | pass |
+| PowerShell formal runner parser | pass |
+| planning checker | pass |
 
-| Test group | Required scope | Current result | 数据身份 | Evidence |
-|---|---|---|---|---|
-| p1/p2 ordinary regression | existing Floquet suite | not_run | not_run | pending implementation change |
-| p3/p4 entity orientation | unit tests | not_run | not_run | implementation pending |
-| MPI1/2/4 constraint/action | Fixture A | not_run | not_run | Case090 pending |
-| analytic plane wave | p1–4 | not_run | not_run | Case090 pending |
-| Fresnel S/P | p1–4 | not_run | not_run | Case090 pending |
-| QEP beta/left/right/trace | p1–4 | not_run | not_run | high-order Gate first |
-| augmented/Schur anchors | qualified degrees | not_run | not_run | Case091 pending |
-| periodic adaptive mesh | p2 h-adaptive | not_run | not_run | mechanism pending |
-| memory watchdog | launch/not-run decision | not_run | not_run | runner pending |
-| CSV parser | four initial Task033 CSV files | pass: 4/4 | measured | PowerShell `Import-Csv` |
-| JSON parser/schema | future Task033 JSON records | not_run | not_run | no Task033 JSON record exists yet |
-| Task033 Markdown structure | tables, fences and display-math delimiters | pass | measured | local read-only structure check |
-| repository documentation contract | `test_26_documentation_contract` | 12/13 passed; one in-progress Case090/091 registry failure | measured | local links passed; benchmark case registry is being implemented outside this Phase 0 scope |
-| Case080 checker | regression | not_run | not_run | final validation pending |
-| Case090/091 checker | new cases | not_run | not_run | cases pending |
-| Ruff / compileall / diff check | changed Python and repository | not_run | not_run | final validation pending |
+## 2. 阶段文档收口验证
 
-Execution remains in progress. Phase 0 environment probes are not substitutes for the
-numerical qualification suite.
+| 命令/检查 | 结果 |
+|---|---|
+| `python -m pytest -q test_24 test_44 test_45 test_61` | 39 passed |
+| `python -m benchmarks.check_task033 --repo-root .` | planning mode `evidence_verified` |
+| `python -m json.tool .../stage_summary.json` | pass |
+| `git diff --check` | pass |
+
+本轮没有为文档收口重跑 PDE。host 环境缺少 `basix`/`petsc4py`，因此尝试收集
+test46/test50 时在 import 阶段停止；这不是代码回归，DOLFINx 相关测试使用冻结源码前的
+Docker 验证结果。
+
+planning checker 继续报告 planner/完整 formal manifest 为 `not_run` 是正确的：
+本阶段新增的是独立 stage summary，没有伪造原任务书的 21-role formal closure。

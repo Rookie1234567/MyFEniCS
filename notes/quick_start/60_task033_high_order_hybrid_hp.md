@@ -1,6 +1,9 @@
 # Task33 高阶 Floquet、Hybrid h/p 与自适应研究入口
 
-本页是 Task33 的操作入口，不是完成声明。完整任务边界见
+> 2026-07-17 阶段更新：Case090 p3/p4 高阶路径已完成；QEP MPI1 分片已运行；
+> Hybrid/full3D 对比复用 Task032 p2 记录。自适应、buffer 与 1 TiB 阶段已延期。
+
+本页保留为 Task33 的操作与恢复入口。完整原始任务边界见
 [`../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](../../docs/task033_high_order_floquet_hybrid_hp_adaptivity/task.md)，
 代码调用链见
 [`../reference/code_walkthrough/52_task033_high_order_floquet_hp.md`](../reference/code_walkthrough/52_task033_high_order_floquet_hp.md)。
@@ -10,11 +13,11 @@
 | 项目 | 当前合同 |
 |---|---|
 | ordinary default | 不变；Task33 runner 全部显式 opt-in，不修改 `ACTIVE_PYCHARM_PRESET` |
-| 当前可提交证据 | Case090/091 planning、schema 和 `NOT_RUN` 身份 |
-| formal evidence | 必须来自同一 40 位 tracked-source-clean SHA，并由外部 watchdog 记录资源 |
+| 当前可提交证据 | Case090 144 PDE、QEP MPI1 36 shards、阶段 summary 与 Task032 p2 对照 |
+| formal evidence | 本阶段不是原任务书的 21-role closure；完整 manifest 仍是 `NOT_RUN` |
 | 内存 | host hard budget 为 14 GiB；swap 禁止；预测或现场 Gate 不通过就不启动 |
 
-当前仓库不能声称 Task33 正式矩阵、自适应压缩、buffer 最优点或 1 TiB 路线已经完成。
+当前仓库可以声明高阶 Stage1 完成，但不能声称自适应压缩、buffer 最优点或 1 TiB 路线已经完成。
 `planning_eligible` 也不等于 `launch_eligible`。
 
 ## 2. Windows PowerShell 与 Docker 准备

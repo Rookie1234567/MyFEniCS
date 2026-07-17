@@ -1,5 +1,11 @@
 # Task033 环境与基线
 
+> 阶段更新（2026-07-17）：正式高阶运行绑定 clean source
+> `6613f94b91ebc77eb50e74086475c67df46236f6` 与镜像 digest
+> `sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`。
+> Case090 与 QEP 分片已完成；完整 campaign 在 Hybrid `p1/h3/M160`
+> middle-plane reconstruction 时因用户缩小范围终止，不是资源或数值崩溃。
+
 ## 1. 执行身份
 
 | 字段 | 值 | 单位 / baseline | 数据身份 | 证据 |
@@ -62,7 +68,10 @@ derived thresholds above. The low host-free-memory snapshot is also a launch vet
 large case: every launch must refresh host available memory, Docker/cgroup state and swap
 state immediately before execution. No large numerical case was launched during Phase 0.
 
-## 4. Phase 0 status
+## 4. Phase 0 历史快照（正式 source freeze 之前）
+
+下表保留 `ad4046d...` 时点的执行前状态；其中 `not_run` 不代表 2026-07-17 的
+最终 runtime 状态。
 
 | Gate | 状态 | 数据身份 | 证据 / 后续动作 |
 |---|---|---|---|
@@ -75,3 +84,13 @@ state immediately before execution. No large numerical case was launched during 
 | Case080 checker on Task033 base | not_run | not_run | execution owner must run before Phase 0 is closed |
 | final tracked-source-clean record | not_run | not_run | required separately before each formal benchmark |
 | large-case memory preflight | not_run | not_run | refresh immediately before any launch |
+
+## 5. 当前正式阶段状态
+
+| Gate | 当前状态 | 证据 |
+|---|---|---|
+| tracked-source clean | pass | `6613f94b91ebc77eb50e74086475c67df46236f6` |
+| Case090 | 144 PDE complete；all core gates pass | stage summary + ignored aggregate hash |
+| QEP MPI1 | 36/36 measured shards pass | stage summary + ignored watchdog index hash |
+| swap/watchdog | zero swap；authority readable | retained watchdog summaries |
+| campaign stop | user scope reduction at p1/h3/M160 middle-plane reconstruction | `summary.md`；not a formal solver record |

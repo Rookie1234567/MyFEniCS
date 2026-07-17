@@ -1,59 +1,44 @@
-# Task033：高阶 Floquet 与 Hybrid h/p 自适应入口
+# Task033：高阶 Floquet 与 Hybrid 阶段性收口
 
 ## 当前状态
 
 ```text
-status = task document ready
-execution = not started
-base requirement = Task032 selective merge accepted by Review V2
+stage status = p3/p4 high-order stage completed
+original Task033 scope = partial; adaptivity deferred by user on 2026-07-17
+formal source SHA = 6613f94b91ebc77eb50e74086475c67df46236f6
 ordinary default = unchanged
 ```
 
-Task033 的正式任务书见：
+本轮按用户缩小后的范围收口，只回答两件事：
 
-- [`task.md`](task.md)
+1. 直接 3D FEM/Floquet 与 QEP 是否已经扩展到 `p=3,4`；
+2. 已有 Hybrid FEM–modal 复合方法相对直接 3D FEM 的规模与精度表现如何。
 
-## 执行前置条件
+原任务书 [`task.md`](task.md) 保持不改。其 uniform p/h 全矩阵、graded/adaptive h、
+equal-accuracy、interface buffer、variable-p/hp zoning 与 1 TiB 推演均延期，不计为失败，
+也不计为已完成。
 
-1. Codex 先读取 Task032 `review_report_v2.md`；
-2. 按 Task032 `selective_merge_manifest.csv` 将验证组件选择性合入 clean `master`；
-3. 在 `master` 运行轻量回归与 Case080 checker；
-4. 记录 Task032 selective-merge SHA；
-5. 在本地库 `C:\Users\admin\Desktop\Code\fenics_v3_hybrid_FEM_modal` 更新 clean `origin/master`；
-6. 由 Codex 创建独立执行分支：
+## 阶段结论
 
-```text
-codex/20260715-task33-high-order-floquet-hybrid-hp
-```
+| 对象 | 结论 | 证据身份 |
+|---|---|---|
+| 直接 3D FEM p3/p4 Floquet | 通过 | Case090，MPI1/2/4 共 144 次 clean-source PDE |
+| p3/p4 QEP 单项 | 18/18 数值分片通过 | MPI1 external-watchdog measured shards |
+| QEP 全局 aggregate | 未资格化 | p1 趋势、p1/p2 patterned tracking 和 p4 一项 tracking Gate 阻止升级 |
+| Hybrid vs full3D | p2/h5、p2/h3 同阶同网格一致性通过 | 复用 Task032 clean Case080 records |
+| p3 Hybrid vs p3 full3D | 没有正式同阶 reference | 仅有非正式 p3 Hybrid 诊断，不作等价性结论 |
+| p4 Hybrid | 未运行 | 延期 |
+| 自适应与 interface 优化 | 未运行 | 用户缩小范围后延期 |
 
-不得直接在 Task032 research branch 上实现 Task033。
+## 结果入口
 
-## Task033 的两级主线
+- [阶段总结](outcomes/summary.md)
+- [高阶 3D Floquet 结果](outcomes/high_order_floquet_results.md)
+- [QEP 阶次研究](outcomes/qep_order_study.md)
+- [Hybrid 与直接 3D FEM 对比](outcomes/hybrid_vs_full3d_summary.md)
+- [负结果与延期边界](outcomes/negative_results.md)
+- [阶段回复](response_v1.md)
+- [轻量阶段证据记录](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage1_high_order/stage_summary.json)
 
-| 阶段 | 主要目的 |
-|---|---|
-| 高阶资格化 | 在 10 nm 纯 3D 空气盒和 air–Si 平坦界面上验证 p=1–4 Nédélec、双 Floquet、orientation、Fresnel 和 MPI |
-| Hybrid h/p 可行性 | 在当前 13.5 nm 光栅 Hybrid 模型上比较 p1–4、h5/h3/h2.5/h2/h1.5、分级 h 网格、p3/p4 等精度效率和接口缓冲厚度 |
-
-## 关键边界
-
-- 主求解路径为 `modal-schur-memory-minimal`；
-- `augmented direct` 仅用于小规模代数 reference；
-- 14 GiB 是硬资源边界，大组合必须通过预测 Gate；
-- 不使用 swap 强行完成大算例；
-- Task033 不新增最终 Hybrid 迭代法；
-- Task033 不重构 Task034 的 scalable modal core；
-- 当前结构简单不等于未来结构 y 不变；
-- 上下复杂 3D FEM 仍是未来目标架构的必要部分；
-- p2 h-adaptive 的 3 倍压缩是 stretch，不是最低通过线；
-- combined h/p/interface 的 3 倍是工程目标，5 倍是强目标；
-- 公式和表格必须按 [`../markdown_rendering_standard.md`](../markdown_rendering_standard.md) 正确渲染。
-
-## 预期 Benchmark
-
-```text
-Case090 = high-order 3D Floquet H(curl) qualification
-Case091 = Hybrid h/p adaptivity feasibility
-```
-
-Task033 完成后，Codex 必须提供表格化 `outcomes/summary.md`、完整运行矩阵、14 GiB launch/not-run 决策、DoF/NNZ/RSS/time 对比、负结果和选择性合并清单。
+完整 21-role formal manifest 尚未生成；
+`records/formal_evidence_manifest_NOT_RUN.json` 继续代表原 Task33 完整范围未闭合。

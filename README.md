@@ -31,12 +31,15 @@
 | 2D Floquet + DtN | 稳定；具体组合和 backend 限制见能力矩阵 |
 | 3D Stage1-Stage4 staged workflow | 稳定 |
 | p=2 topological-trace Floquet MPC | 稳定 |
+| p=3/p=4 sparse distributed Floquet MPC | Case090 144 PDE 核心资格通过；显式高阶入口 |
+| p=3/p=4 cross-section QEP | MPI1 数值分片通过；全局 aggregate 尚未资格化 |
 | complex refractive index 与 A_volume | 稳定 |
 | DtN modal official R/T/A | 稳定 |
 | p=2 h=2 direct reference | 已验证 |
 | exact auxiliary condensation | 稳定模块 |
 | p=2 h=5/3/2 MPI4 physical-slab iterative | 显式 opt-in 候选 |
 | Hybrid FEM–Modal h5/h3 direct reference | 13.5 nm 工程成功；Case080 302/302；显式 opt-in |
+| Hybrid vs full3D | p2/h5、p2/h3 同阶同网格一致；p3/p4 同阶 reference 尚无 |
 | Hybrid h2 direct | `not_run_by_gate` |
 | 当前 direct Hybrid at 0.7 nm | 不具资源可行性；需 h/p + scalable modal core + iterative |
 | h=1.5 production solve | 未完成 |

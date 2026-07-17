@@ -1,10 +1,13 @@
 # Case090：高阶 3D Floquet H(curl) 资格化入口
 
+> 2026-07-17 正式阶段已完成：clean source `6613f94b91ebc77eb50e74086475c67df46236f6`
+> 上 MPI1/2/4 各 48 个 PDE、总计 144 个；p1–p4 全部核心 Gate 通过。
+
 | 契约字段 | 固定内容 |
 |---|---|
 | 1. ID | `090_high_order_3d_floquet_hcurl` / Task033 Phase 2 |
-| 2. 当前证明 | 两个 10 nm fixture 的解析 E/H、Bloch/Fresnel oracle、严格 JSON Schema 与 fail-closed 192 项执行计划 |
-| 3. 尚不证明 | p3/p4 PDE 精度、正式 R/T、MPI 等价、高阶工程可用性或任何 physical pass |
+| 2. 当前证明 | 两个 10 nm fixture 上 p1–p4 的解析 E/H、Bloch/Fresnel、PDE、MPI1/2/4 与稀疏分布式 Floquet 核心 Gate |
+| 3. 尚不证明 | 目标光栅 p3/p4 Hybrid/full3D 同阶等价、QEP 全局资格或自适应收益 |
 | 4. 物理问题 | Fixture A 均匀空气 Bloch 平面波；Fixture B 平坦 air–Si 复数 Fresnel 界面 |
 | 5. 几何 | `x,y=0..10 nm`、`z=-5..5 nm`；Fixture B 的界面为 `z=0` |
 | 6. 材料 | air `n=1`；Si `n=0.999002304859+0.00182649365j` at 13.5 nm |
@@ -16,14 +19,14 @@
 | 12. 精确命令 | `python -m unittest -v src.test.test_44_task033_fixture_oracles` |
 | 13. 调用链 | runner -> fixture/oracle builder -> semantic validator -> Draft 2020-12 validator -> JSON record |
 | 14. 理论 | `exp(i k·r)`、`exp(-i omega t)`；P 基为每个传播方向的 `k-hat × S` |
-| 15. 求解器 | 当前 planner 不调用 PDE 或 solver；正式记录需单独 clean-source runner |
+| 15. 求解器 | clean-source DOLFINx/PETSc complex128 PDE runner；外部 watchdog 记录资源 |
 | 16. RTA 恒等式 | 解析界面记录 `R_interface + T_into_substrate_at_interface = 1`；不是有限体积 A |
 | 17. 输出 | [`records/analytic_oracles.json`](records/analytic_oracles.json)，身份恒为 `not_run` |
 | 18. Gates | clean source SHA、evidence SHA-256、五个代数阈值、12 项 p×MPI、稀疏/无 allgather/无 dense、p1/p2 回归 |
-| 19. Canonical 结果 | oracle contract ready；PDE `not_run`；无 canonical physical record |
-| 20. Records | 解析 E/H 相位样本、复数 Fresnel S/P、192 项矩阵和 gate 拒绝原因 |
+| 19. Canonical 结果 | `all_core_gates_passed=true`；12 个 p×MPI coverage 全通过 |
+| 20. Records | 每 MPI 48 项：Fixture A 16、Fixture B primary 16、Fixture B smoke 16；总计 144 |
 | 21. Artifact 规则 | 仅提交轻量确定性 JSON；正式大记录必须来自 tracked-source-clean commit |
-| 22. 限制 | oracle 与 planner 是进入 PDE 资格化的前置合同，不能替代 Case090 正式物理运行 |
+| 22. 限制 | Case090 是解析小夹具资格化，不能替代目标光栅 p3/p4 Hybrid/full3D 对照 |
 
 ## 物理问题
 
@@ -39,12 +42,12 @@ Fixture B 在同一盒内放置 `z=0` 平坦 air–Si 界面。
 
 角度输入是从表面量起的 grazing angle；代码显式使用
 `theta_from_normal = 90° - grazing`。10° 是 primary，1°、5° 只用于轻量
-入口 smoke。完整矩阵包含 p1–4、h5/h2.5、MPI1/2/4 和 S/P，共 192 项。
+入口 smoke。正式运行对每个 MPI 固定 48 项：Fixture A 16、Fixture B 的 10°
+primary 16、Fixture B 的 1°/5° h5 smoke 16。MPI1/2/4 合计 144 项，不是 192。
 
-Fixture A 的 48 项与 Fixture B 的 10° 48 项均为 `required`。
-Fixture B 的 1°/5° 仅把 h5/MPI1 的 16 项标为 `smoke`，其余 80 项明确为
-`not_run_by_scope`。缺少合格核心 Gate 时，112 个 required/smoke 项全部为
-`not_run_by_core_gate`，不会留空。
+仓库中 `expected.json`、`schema.json` 与 `analytic_oracles.json` 仍保留早期 192 行
+planner 枚举，其中包含不会启动 PDE 的 scope/not-run 行；该 planning 行数不是正式 PDE 次数，
+也不应与上述 144 次 measured PDE 相加。
 
 ## PyCharm
 
@@ -117,16 +120,16 @@ is_physical_qualification_record = false
 和 S/P 下保存复振幅与界面通量闭合；`T_into_substrate_at_interface` 表示穿过
 `z=0` 的向下功率，不是半无限衬底内部的有限体积吸收 A。
 
-核心 Gate 通过只说明某个外部 clean PDE evidence 具备进入运行矩阵的资格。
-本 planner 从不把 `eligible_not_run` 改写成 pass，也不从解析系数推断 p3/p4
-有限元精度、MPI rank independence 或资源可行性。
+tracked planner 本身仍不把 `eligible_not_run` 改写成 pass，也不从解析系数推断
+p3/p4 有限元精度。2026-07-17 的结论来自独立 external-watchdog PDE aggregate，
+不是从 planner 身份升级而来。
 
 ## 限制
 
-Case090 的正式接受仍需真实 PDE 记录：Fixture A 至少两个 mesh levels，
-p1–4、MPI1/2/4、S/P；Fixture B 至少 10° S/P 全阶次，并保留 1°/5° smoke。
-正式记录还必须报告 DoF/rows/NNZ、Floquet setup/assembly/factor/solve/postprocess
-时间、simultaneous RSS、场误差、R/T 和能量闭合。
+上述正式接受条件已由 ignored campaign aggregate 满足：两个 mesh、p1–4、
+MPI1/2/4、S/P、10° primary 与 1°/5° smoke 均有真实 PDE 记录，DoF/NNZ、
+时间、simultaneous RSS、误差和核心 Gate 也已记录。轻量 stage summary 跟踪其 SHA，
+但不把 heavy artifact 提交 Git。
 
-本目录目前不提供这些结果，不声称 p4 一定优于 p3，也不改变 ordinary default。
-若后续 p4 成本更高而精度无收益，必须保留为负结果，不能用解析 oracle 掩盖。
+p4 在 Case090 解析小夹具的 36 个 p-refinement 对照中均有正精度收益；这不代表
+p4 在目标光栅、Hybrid 或任意工程问题上必然优于 p3。ordinary default 保持不变。

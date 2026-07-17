@@ -1,5 +1,8 @@
 # Task033 高阶 Floquet、QEP 与 graded-h 走读
 
+> 阶段状态（2026-07-17）：高阶 p3/p4 与 Case090 已完成；QEP 分片已测但 aggregate
+> 未资格化；graded-h、equal-accuracy 和 buffer 路径因范围调整延期。
+
 ## 调用链
 
 ```text
@@ -94,4 +97,3 @@ physics-informed marks
 - 所有正式角色使用同一个 tracked-source-clean SHA。
 
 规划模式只验证 schema 和 NOT_RUN 结构，不产生物理通过结论。
-

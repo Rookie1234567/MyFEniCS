@@ -1,5 +1,9 @@
 # 高阶 H(curl) Floquet 与 Hybrid h/p 可行性
 
+> 观测状态（2026-07-17）：Case090 证明 p3/p4 直接 3D Floquet 核心正确；QEP
+> p3/p4 分片通过但全局跟踪 aggregate 未资格化；Hybrid/full3D 仍只在 p2/h5、p2/h3
+> 有同阶同网格对照。本文中的 adaptive/graded/buffer 部分保留为延期理论与实现入口。
+
 ## 0. 文档身份
 
 本文是 Task033 的理论与实现边界说明，覆盖：
@@ -346,4 +350,3 @@ Task033 不能单独证明：
 - 0.7 nm 已可运行；
 - 当前 direct QEP/Hybrid 路径已经可扩展到最终生产尺度；
 - 未通过 M 漏斗的单点结果具有物理资格。
-
