@@ -53,7 +53,7 @@ Windows PyCharm 应使用 WSL 解释器 `/home/fenics/.local/bin/myfenics-python
 
 ## 当前证据
 
-slab-9 teacher residual median/p95/max 为 `5.94e-15 / 7.50e-15 / 9.59e-15`。Factorization 为 2.924 s，L+U fill 为 7.783×，显式存储估算 82.07 MB。
+slab-9 teacher residual median/p95/max 为 `5.94e-15 / 7.50e-15 / 9.59e-15`。最终完整资源记录中的 factorization 为 2.576 s，L+U fill 为 7.783×，显式存储估算 82.07 MB。
 
 P0 baseline 为 860 iterations。slab-9 exact LU 为 862；slab 0/9/10 exact LU 为 840，只下降 2.33%。所有 formal run 的 full residual、R/T/A 和 closure 通过。
 
