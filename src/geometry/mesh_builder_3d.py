@@ -510,7 +510,10 @@ def _structured_hexa_mesh(
     ]
     coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
-    partitioner = _shared_facet_cell_partitioner()
+    partitioner = (
+        _optional_seeded_box_partitioner()
+        or _shared_facet_cell_partitioner()
+    )
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
@@ -708,19 +711,31 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     if mesh_cell_type_resolved == "hexahedron":
         assert hexa_axis_plan is not None
         if hexa_axis_plan.mesh_spacing_mode_resolved == "uniform_strict":
-            points = [
-                np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
-                np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
-            ]
-            msh = mesh.create_box(
-                comm,
-                points,
-                mesh_cells_resolved,
-                cell_type=mesh.CellType.hexahedron,
-                ghost_mode=mesh.GhostMode.shared_facet,
-                partitioner=_optional_seeded_box_partitioner(),
-            )
-            mesh_note = "Using dolfinx.mesh.create_box with uniform hexahedron cells."
+            if os.environ.get("MYFENICS_CELL_PARTITION_POLICY") == "contiguous":
+                msh = _structured_hexa_mesh(
+                    comm,
+                    hexa_axis_plan.x_values,
+                    hexa_axis_plan.y_values,
+                    hexa_axis_plan.z_values,
+                )
+                mesh_note = (
+                    "Using explicit tensor-product uniform hexahedron cells with "
+                    "deterministic contiguous research partitioning."
+                )
+            else:
+                points = [
+                    np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
+                    np.asarray((cfg.x_max, cfg.y_max, cfg.domain_z_max), dtype=np.float64),
+                ]
+                msh = mesh.create_box(
+                    comm,
+                    points,
+                    mesh_cells_resolved,
+                    cell_type=mesh.CellType.hexahedron,
+                    ghost_mode=mesh.GhostMode.shared_facet,
+                    partitioner=_optional_seeded_box_partitioner(),
+                )
+                mesh_note = "Using dolfinx.mesh.create_box with uniform hexahedron cells."
         else:
             msh = _structured_hexa_mesh(
                 comm,
