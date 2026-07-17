@@ -3,6 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
+
+from benchmarks.neural_pc.screen_task005_linear import _structured_synthetic
+from src.solvers.local_slab_solver import LocalCsrOperator
+
 
 ROOT = Path(__file__).resolve().parents[2]
 TASK = ROOT / "docs" / "para_task005_comprehensive_all_slab_learned_pc"
@@ -43,3 +48,53 @@ def test_task004_response_and_task005_p0_are_recorded() -> None:
     assert "852" in p0
     assert "97.252974" in p0
     assert "swap in/out delta" in p0
+
+
+def test_task005_p2_pool_is_frozen_and_bounded() -> None:
+    pool = json.loads(
+        (CASE / "p2_candidate_pool.json").read_text(encoding="utf-8")
+    )
+    candidates = pool["candidates"]
+    assert pool["frozen_before_screening"] is True
+    assert pool["representative_slabs"] == [0, 5, 9, 15]
+    assert len(candidates) <= 16
+    assert {
+        row["rank"] for row in candidates if row["lane"] == "A"
+    }.issuperset({32, 64, 96, 128})
+    lane_b = [row for row in candidates if row["lane"] == "B"]
+    assert {row["rank"] for row in lane_b}.issuperset({32, 64, 96})
+    assert {row["hidden"] for row in lane_b} == {64, 128}
+    assert {row["depth"] for row in lane_b} == {2, 3}
+    assert {row["activation"] for row in lane_b}.issuperset(
+        {"tanh", "relu"}
+    )
+    assert {row["map"] for row in lane_b} == {"direct", "skip"}
+    assert {row["recipe"] for row in candidates} == {"D0", "D1"}
+
+
+def test_task005_structured_synthetic_pairs_use_true_operator_action() -> None:
+    size = 32
+    diagonal = np.linspace(2.0, 4.0, size) + 0.25j
+    operator = LocalCsrOperator(
+        shape=(size, size),
+        indptr=np.arange(size + 1, dtype=np.int64),
+        indices=np.arange(size, dtype=np.int64),
+        values=diagonal,
+        metadata={"slab_id": 0},
+    )
+    rng = np.random.default_rng(17)
+    real_target = rng.standard_normal((16, size)) + 1j * rng.standard_normal(
+        (16, size)
+    )
+    rhs, target, families = _structured_synthetic(
+        operator, real_target, count=25, seed=19
+    )
+    np.testing.assert_allclose(rhs, target * diagonal, rtol=1e-13, atol=1e-13)
+    assert rhs.shape == target.shape == (25, size)
+    assert set(families) == {
+        "smooth_low_frequency",
+        "interface_localized",
+        "boundary_localized",
+        "high_frequency_randomized",
+        "real_error_pod_combination",
+    }

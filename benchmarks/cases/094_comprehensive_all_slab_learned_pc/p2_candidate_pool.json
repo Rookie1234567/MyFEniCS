@@ -1,0 +1,53 @@
+{
+  "schema": "myfenics.task005.p2_candidate_pool.v1",
+  "frozen_before_screening": true,
+  "representative_slabs": [0, 5, 9, 15],
+  "selection_order": [
+    "holdout_local_residual",
+    "model_only_runtime",
+    "persistent_storage"
+  ],
+  "synthetic_samples_per_slab": 256,
+  "candidates": [
+    {"id": "A_D0_R32", "lane": "A", "recipe": "D0", "rank": 32},
+    {"id": "A_D0_R64", "lane": "A", "recipe": "D0", "rank": 64},
+    {"id": "A_D0_R96", "lane": "A", "recipe": "D0", "rank": 96},
+    {"id": "A_D0_R128", "lane": "A", "recipe": "D0", "rank": 128},
+    {"id": "A_D1_R96", "lane": "A", "recipe": "D1", "rank": 96},
+    {
+      "id": "B_D0_R32_W64_D2_TANH_DIRECT",
+      "lane": "B", "recipe": "D0", "rank": 32, "hidden": 64,
+      "depth": 2, "activation": "tanh", "map": "direct"
+    },
+    {
+      "id": "B_D0_R64_W64_D3_RELU_SKIP",
+      "lane": "B", "recipe": "D0", "rank": 64, "hidden": 64,
+      "depth": 3, "activation": "relu", "map": "skip"
+    },
+    {
+      "id": "B_D0_R64_W128_D2_GELU_DIRECT",
+      "lane": "B", "recipe": "D0", "rank": 64, "hidden": 128,
+      "depth": 2, "activation": "gelu", "map": "direct"
+    },
+    {
+      "id": "B_D0_R96_W128_D3_RELU_SKIP",
+      "lane": "B", "recipe": "D0", "rank": 96, "hidden": 128,
+      "depth": 3, "activation": "relu", "map": "skip"
+    },
+    {
+      "id": "B_D0_R96_W64_D2_TANH_SKIP",
+      "lane": "B", "recipe": "D0", "rank": 96, "hidden": 64,
+      "depth": 2, "activation": "tanh", "map": "skip"
+    },
+    {
+      "id": "B_D0_R64_W128_D3_GELU_SKIP",
+      "lane": "B", "recipe": "D0", "rank": 64, "hidden": 128,
+      "depth": 3, "activation": "gelu", "map": "skip"
+    },
+    {
+      "id": "B_D1_R64_W128_D3_GELU_SKIP",
+      "lane": "B", "recipe": "D1", "rank": 64, "hidden": 128,
+      "depth": 3, "activation": "gelu", "map": "skip"
+    }
+  ]
+}
