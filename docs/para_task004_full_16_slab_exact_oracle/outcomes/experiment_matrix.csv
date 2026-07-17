@@ -1,0 +1,10 @@
+stage,run,exact_slabs,smoother_steps,formal,executed,numeric_pass,resource_pass,decision
+P0,clean_ilu_baseline,none,2,true,true,true,true,baseline
+P2,operator_capture,none,2,false,true,false,true,diagnostic_only_max_it1
+P2,sequential_factor_census,0-15,not_applicable,false,true,true,true,g16_unlocked
+P3,G4_two_step,"0;5;10;15",2,true,true,true,true,continue_g8
+P4,G8_two_step,"0;2;5;7;8;10;13;15",2,true,true,true,true,continue_g16
+P5,G16_two_step,0-15,2,true,true,true,true,positive_signal
+P6,G16_one_step,0-15,1,true,true,false,true,architecture_negative
+P7,model_training,not_applicable,not_applicable,false,false,not_run,not_run,prohibited_in_task004
+P7,h3_h2,not_applicable,not_applicable,false,false,not_run,not_run,out_of_scope

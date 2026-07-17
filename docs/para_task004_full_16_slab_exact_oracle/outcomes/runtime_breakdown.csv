@@ -1,0 +1,6 @@
+run,solve_s,total_s,one_level_accumulated_root_s,exact_critical_rank_accumulated_s,factorization_sum_all_ranks_s,notes
+baseline,89.190254,109.941615,46.989215,0,0.833073,root one-level includes ILU plus gather/scatter
+G4_two_step,153.415283,185.434632,109.127046,not_reported,7.218411,4 exact slabs
+G8_two_step,198.548164,230.165893,158.398318,not_reported,13.247870,8 exact slabs
+G16_two_step,174.428555,206.382849,147.080992,142.176235,26.306742,positive iteration signal but sparse-LU wall time slow
+G16_one_step,140.115305,171.622930,109.825997,not_qualified,25.593712,numeric failure at 1200

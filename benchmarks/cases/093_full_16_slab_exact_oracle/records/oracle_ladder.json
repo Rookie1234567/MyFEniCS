@@ -1,0 +1,45 @@
+{
+  "schema": "myfenics.para_task004.oracle_ladder.v1",
+  "source_commit": "c8a70dc17e405fcf0bcd5742592530967d26bbc1",
+  "baseline_iterations": 861,
+  "runs": [
+    {
+      "name": "G4",
+      "exact_slabs": [0, 5, 10, 15],
+      "iterations": 804,
+      "iteration_reduction": 0.0662020905923345,
+      "operator_apply_count": 2430,
+      "full_residual": 9.93750229951208e-7,
+      "external_peak_gib": 2.0171546936035156,
+      "no_hidden_ilu": true,
+      "artifact_sha256": "60e8aa9d194e1791a30e8cac5eb71a67d8dffeadfbeace9a681ab115171d6767"
+    },
+    {
+      "name": "G8",
+      "exact_slabs": [0, 2, 5, 7, 8, 10, 13, 15],
+      "iterations": 792,
+      "iteration_reduction": 0.0801393728222996,
+      "operator_apply_count": 2394,
+      "full_residual": 9.88725210032245e-7,
+      "external_peak_gib": 2.4191513061523438,
+      "no_hidden_ilu": true,
+      "artifact_sha256": "3372cf4dbd475c9fcd5c28a9598592d7802e556c952ae6b0bc26019b0bfaf9eb"
+    },
+    {
+      "name": "G16",
+      "exact_slabs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "iterations": 566,
+      "iteration_reduction": 0.342624854819977,
+      "operator_apply_count": 1712,
+      "full_residual": 9.97442875039048e-7,
+      "external_peak_gib": 3.2747535705566406,
+      "exact_backend_count": 16,
+      "ilu_factor_constructed_count": 0,
+      "global_stored_ilu_factor_nnz": 0,
+      "ilu_apply_count": 0,
+      "hidden_fallback_count": 0,
+      "no_hidden_ilu": true,
+      "artifact_sha256": "35c5787fa1c2a5e5e033a3d1b6c7202f8f4bce4c526b6ad8f35eb567dc49f30e"
+    }
+  ]
+}

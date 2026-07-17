@@ -1,0 +1,13 @@
+{
+  "schema": "myfenics.para_task004.decision.v1",
+  "classification": "all_slab_oracle_positive_signal",
+  "lane_a_iteration_reduction": 0.342624854819977,
+  "lane_a_signal": "positive",
+  "lane_b_numeric_pass": false,
+  "lane_b_architecture_signal": false,
+  "learned_pc_followup_review_allowed": true,
+  "training_started": false,
+  "h3_run": false,
+  "h2_run": false,
+  "ordinary_default_changed": false
+}

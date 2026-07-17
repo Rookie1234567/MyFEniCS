@@ -1,0 +1,18 @@
+{
+  "schema": "myfenics.para_task004.lightweight_record.v1",
+  "case": "para093_p0_baseline_h5",
+  "source_commit": "c8a70dc17e405fcf0bcd5742592530967d26bbc1",
+  "tracked_source_dirty": false,
+  "iterations": 861,
+  "solve_s": 89.19025389399758,
+  "total_s": 109.9416147400043,
+  "full_augmented_true_residual": 9.99248065333227e-7,
+  "operator_apply_count": 2603,
+  "one_level_apply_count": 5166,
+  "global_stored_ilu_factor_nnz": 7046752,
+  "global_ilu_apply_count": 82656,
+  "external_simultaneous_worker_peak_gib": 1.607025146484375,
+  "swap_in_delta_pages": 0,
+  "swap_out_delta_pages": 0,
+  "artifact_sha256": "b34706e4e232f3dabd655a2e50b3699be1da0fe9a33441b340f5fe5e7f147fd9"
+}

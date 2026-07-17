@@ -2149,3 +2149,84 @@ Task002 Review V1 指出前两轮都保留 ILU，并未直接回答 NN 是否能
 - [Task003 outcomes](para_task003_lu_teacher_nn_only_local_inverse/outcomes/summary.md)
 - [Case092](../benchmarks/cases/092_lu_teacher_nn_only_local_inverse/README.md)
 - [Task002 Review V1](para_task002_batched_neural_smoother_acceleration/review_report_v1.md)
+
+---
+
+# 51. PARA-Task004：Full 16-slab no-hidden-ILU exact oracle
+
+## 51.1 最终状态
+
+```text
+implementation commit = c8a70dc17e405fcf0bcd5742592530967d26bbc1
+classification = all_slab_oracle_positive_signal
+G16 two-step = positive / not strong
+G16 one-step = numeric_failure
+training = not run
+ordinary default = unchanged
+```
+
+## 51.2 为什么启动
+
+Task003 用 exact LU 证明单 slab 860→862、三 slabs 860→840，少量 selected replacement缺乏足够杠杆，但没有回答全部16个local inverse同时达到exact精度时的全局上限。Task004因此不训练模型，先建立真正不构造隐藏ILU的replacement lifecycle，再用预先冻结的G4/G8/G16梯度和one/two-step对照决定是否值得开启全slab learned-PC研究。
+
+## 51.3 冻结问题与方法
+
+物理固定为13.5 nm complex-Si block grating、p2 Nédélec h5、44,698 FE DoF、double Floquet、80 DtN modes、MPI4。求解器固定为right FGMRES90、16 slabs overlap0.25、75D true-action coarse、shifted-F ILU0 baseline、post-smooth和每rank单线程。
+
+| 方法 | 解决的问题 | 证据 |
+|---|---|---|
+| `LocalBackendPlan` | factorization前决定backend | exact slab `requires_ilu=false` |
+| global slab diagnostics | 修复Task003仅root local timing | 16/16 owner/factor/apply/destroy |
+| sequential census | G16前避免盲跑 | 16 factors residual约`1e-14` |
+| external sampler | 权威同时RSS/swap | 0.25 s timeline |
+| one/two-step CLI | 区分谱收益与action数量 | Lane A/B formal records |
+
+## 51.4 Factor census 与安全 Gate
+
+16个captured operators分为3,670和5,248两种shape。逐slab COLAMD LU的总显式storage为915,625,532 B，最大owner预测229,375,308 B；测试RHS最大相对残差`8.301e-15`，16/16 destroy后拒绝apply，swap增量为0。保守峰值上界约1.81 GiB，远低于当前约241 GB可用内存的50% stop line，因此解锁formal G4/G8/G16。
+
+## 51.5 Oracle 梯度结果
+
+| run | exact/ILU | iterations | reduction | operator applies | one-level applies | external peak |
+|---|---:|---:|---:|---:|---:|---:|
+| clean ILU baseline | 0/16 | 861 | baseline | 2603 | 5166 | 1.607 GiB |
+| G4 two-step | 4/12 | 804 | 6.62% | 2430 | 4824 | 2.017 GiB |
+| G8 two-step | 8/8 | 792 | 8.01% | 2394 | 4752 | 2.419 GiB |
+| G16 two-step | 16/0 | 566 | **34.26%** | 1712 | 3396 | 3.275 GiB |
+| G16 one-step | 16/0 | 1200 | -39.37% | 3629 | 2400 | 3.262 GiB |
+
+G16 two-step的full residual为`9.974429e-7`，R/T/A相对baseline最大delta `6.131e-9`，closure `-5.484e-9`。其16 exact factors、0 ILU factors、0 stored ILU nnz、0 ILU applies、0 hidden fallback和16/16 destroy全部通过。G4/G8也数值通过，显示从少量slab到all-slab存在非线性谱收益。
+
+## 51.6 One-step 负结果
+
+One-step虽把one-level applies从5166降到2400，但在1200步时full residual仍为`1.048e-5`，KSP reason `-3`，因此不运行official R/T/A。Outer至少增加39.37%，total operator actions增至3629（+39.42%），同时失败numeric、operator-action和outer-increase Gate。后续若训练，应瞄准G16 two-step，而不是本次one-step。
+
+## 51.7 Runtime 与 storage budget
+
+G16 critical owner exact solves累计142.176 s；扣除后candidate non-local estimate为32.252 s。要使projected solve不超过baseline的80%（71.352 s），learned local path总critical预算为39.100 s，即：
+
+| 预算 | 上限 |
+|---|---:|
+| per slab independent call | 2.878 ms |
+| per-owner 4-slab batch | 11.514 ms |
+| synchronized critical apply | 11.514 ms |
+| model+basis+buffers per rank | 33.670 MiB |
+| global memory-neutral storage | 134.678 MiB |
+
+这些是预测上限，不是模型实测。Exact factor916,096,012 B只代表oracle，不代表neural storage。
+
+## 51.8 最终决策与边界
+
+G16 iteration reduction 34.26%达到positive `>=20%`、未达到strong `>=40%`，因此分类为`all_slab_oracle_positive_signal`。最终review可以建议新的Task005，但Task004没有自动训练、没有checkpoint、没有h3/h2，也没有改变ordinary default。
+
+后续Task005若由用户批准，应先在h5上选择16 independent、3 experts或shared trunk+adapters之一，并同时满足独立local-quality、2.878 ms per-slab/11.514 ms per-owner预算、33.670 MiB per-rank storage和full global residual/RTA Gate。若近似误差或runtime不能满足，应转向learned coarse/deflation/cross-slab global correction。
+
+## 51.9 局限与证据入口
+
+结论限定于当前单一物理/RHS、h5、MPI4 partition和75D coarse。Sparse-LU host wall time慢且不能当作NN时间；census与formal numeric pivot fill约有0.05%差异，但fingerprints与residual合同一致。
+
+- [Task004 task](para_task004_full_16_slab_exact_oracle/task.md)
+- [Task004 outcomes](para_task004_full_16_slab_exact_oracle/outcomes/summary.md)
+- [Case093](../benchmarks/cases/093_full_16_slab_exact_oracle/README.md)
+- [Task003 Review V1](para_task003_lu_teacher_nn_only_local_inverse/review_report_v1.md)
+- [Task003 response](para_task003_lu_teacher_nn_only_local_inverse/response_v1.md)

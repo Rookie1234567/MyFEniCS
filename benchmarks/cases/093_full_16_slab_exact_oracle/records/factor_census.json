@@ -1,0 +1,17 @@
+{
+  "schema": "myfenics.para_task004.factor_census_summary.v1",
+  "source_commit": "c8a70dc17e405fcf0bcd5742592530967d26bbc1",
+  "slab_count": 16,
+  "factor_nnz_total": 45724195,
+  "exact_factor_storage_bytes_global": 915625532,
+  "maximum_exact_factor_storage_bytes_per_rank": 229375308,
+  "removed_ilu_storage_bytes_global": 141220416,
+  "maximum_test_rhs_relative_residual": 8.301400912827603e-15,
+  "all_destroyed": true,
+  "swap_in_delta_pages": 0,
+  "swap_out_delta_pages": 0,
+  "predicted_peak_worker_conservative_upper_bytes": 1946000716,
+  "available_memory_bytes": 241121124352,
+  "safety_gate_passed": true,
+  "artifact_sha256": "9483f485d04f70b40dfb0bc605b4216f475a55164979a7dde19d2ffe77f954fb"
+}

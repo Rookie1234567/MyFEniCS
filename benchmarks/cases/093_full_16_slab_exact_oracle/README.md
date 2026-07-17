@@ -96,11 +96,11 @@ backend planning 位于 `local_slab_solver.py` 和 `physical_slab_two_level.py`�
 
 ## 当前证据
 
-开始执行前只有 Task003 的历史 1/3-slab oracle：860→862 和 860→840。G4/G8/G16、no-hidden-ILU 内存、one-step actions 和 learned runtime budget 均等待本 Task 正式运行，不预写为通过。
+Clean implementation SHA `c8a70dc...` 的同轮 baseline/G4/G8/G16 iterations为861/804/792/566；G16下降34.26%，达到positive Gate。G16 exact backend 16、ILU factor/apply 0、hidden fallback 0。One-step在1200步时residual仍为`1.048e-5`，numeric Gate失败。
 
 ## 结果解释
 
-G4/G8 只解释趋势和资源 scaling，最终 local-inverse learning 的 go/no-go 由 G16 two-step 与条件性 G16 one-step Gate 决定。exact factor memory只代表 oracle lifecycle，不冒充 neural model memory。
+G4/G8只解释趋势和资源scaling；G16 two-step形成positive signal，允许最终review讨论独立Task005。One-step减少local actions但削弱平滑、总operator actions反而增加。Exact factor memory只代表oracle lifecycle，不冒充neural model memory。
 
 ## 限制
 
