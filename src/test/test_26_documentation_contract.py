@@ -293,8 +293,18 @@ class DocumentationContractTests(unittest.TestCase):
         for case, record_names in RECORDED_CASES.items():
             folder = cases_root / case
             with self.subTest(case=case):
-                for name in ("README.md", "config.json", "expected.json", "run.sh"):
+                for name in ("README.md", "config.json", "expected.json"):
                     self.assertTrue((folder / name).is_file(), name)
+                if case == "091_hybrid_hp_adaptivity_feasibility":
+                    self.assertTrue(
+                        (
+                            ROOT
+                            / "benchmarks"
+                            / "run_task033_reduced_scope_completion.py"
+                        ).is_file()
+                    )
+                else:
+                    self.assertTrue((folder / "run.sh").is_file(), "run.sh")
                 for name in record_names:
                     self.assertTrue((folder / name).is_file(), name)
 

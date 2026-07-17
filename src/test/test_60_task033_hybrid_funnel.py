@@ -11,10 +11,10 @@ from benchmarks.task033_hybrid_funnel import (
     P1_H5_CAPACITY_FAILURE,
     P1_TERMINAL_PHYSICAL_FAILURE,
     build_hybrid_funnel,
+    hybrid_funnel_semantic_problems,
     is_controlled_p1_h5_capacity_funnel,
     is_controlled_p1_terminal_physical_funnel,
 )
-from benchmarks.task033_evidence_checker import _semantic_problems
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -233,7 +233,10 @@ class Task033HybridFunnelTests(unittest.TestCase):
                     is_controlled_p1_terminal_physical_funnel(record)
                 )
                 self.assertEqual(
-                    _semantic_problems("hybrid_funnel_p1", record), []
+                    hybrid_funnel_semantic_problems(
+                        "hybrid_funnel_p1", record
+                    ),
+                    [],
                 )
                 Draft202012Validator(
                     json.loads(SCHEMA.read_text(encoding="utf-8"))
@@ -321,7 +324,9 @@ class Task033HybridFunnelTests(unittest.TestCase):
             120,
         )
         self.assertTrue(is_controlled_p1_h5_capacity_funnel(record))
-        self.assertEqual(_semantic_problems("hybrid_funnel_p1", record), [])
+        self.assertEqual(
+            hybrid_funnel_semantic_problems("hybrid_funnel_p1", record), []
+        )
 
     def test_aggregate_capacity_contract_rejects_mutated_cutoff(self) -> None:
         shards = [_controlled_physical_negative(mode) for mode in (80, 120)]
@@ -334,7 +339,9 @@ class Task033HybridFunnelTests(unittest.TestCase):
             "finite_spectrum_abs_beta_cutoff_per_nm"
         ] = 123.0
         self.assertFalse(is_controlled_p1_h5_capacity_funnel(record))
-        self.assertTrue(_semantic_problems("hybrid_funnel_p1", record))
+        self.assertTrue(
+            hybrid_funnel_semantic_problems("hybrid_funnel_p1", record)
+        )
 
     def test_p1_h5_capacity_negative_contract_fails_closed_per_field(self) -> None:
         mutations = {

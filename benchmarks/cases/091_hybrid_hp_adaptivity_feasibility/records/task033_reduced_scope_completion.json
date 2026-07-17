@@ -3,6 +3,7 @@
   "record_type": "task033_reduced_scope_completion",
   "status": "task033_reduced_scope_complete",
   "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md",
+  "hash_policy": "sha256_and_bytes_of_utf8_text_after_lf_line_ending_canonicalization",
   "identity": {
     "is_pde_run": false,
     "is_solver_pass": false,
@@ -33,8 +34,8 @@
     },
     "phaseB_matched_trace": {
       "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json",
-      "sha256": "066b6da689ded7f2b944f082d7bcc3693d93ab42f989507264a3fc01a49ff409",
-      "bytes": 41700,
+      "sha256": "8bb376cd910c5bb93a8519c775f4f734370d9b7b8c4486ee4b119e3828f1543c",
+      "bytes": 40481,
       "record_type": "independent_lightweight_phaseB_aggregate",
       "status": "phaseB_p3_p4_matched_trace_pass",
       "accepted_interpretation": "p3/p4 matching trace accepted"
@@ -57,8 +58,8 @@
     },
     "d1_fixed_p_equal_accuracy": {
       "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json",
-      "sha256": "d69a131b0acce404d701f68487bb2b7bb5bb8c5f7526c779143d7d775534484d",
-      "bytes": 67186,
+      "sha256": "ac14fbb15e9226ffbf33d10b48f6e9880009eaf84ea4b611bc2e947b5cd064a3",
+      "bytes": 65455,
       "record_type": "task033_review_v6_fixed_p_equal_accuracy",
       "status": "fixed_p_equal_accuracy_clear_success_with_qualifications",
       "accepted_interpretation": "p3/h7.5 fixed-p clear success with reference qualifications"
@@ -73,16 +74,16 @@
     },
     "p3_h5_source_compatibility": {
       "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/source_compatibility_audit.json",
-      "sha256": "08a91f85d29fce22cd325e14c4fe645551689fb4bbe6302c2ceb02103591c177",
-      "bytes": 5509,
+      "sha256": "11884edb22e57826a19697a9b8a2648a1c60f42a0e67a02291f516377e3e446a",
+      "bytes": 5380,
       "record_type": "task033_full3d_hybrid_source_compatibility_audit",
       "status": "full3d_hybrid_numerical_source_compatible",
       "accepted_interpretation": "p3/h5 direct-to-Hybrid numerical source compatible"
     },
     "d1_source_compatibility": {
       "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/d1_source_compatibility_audit.json",
-      "sha256": "0bb6e05a7a4e387338ba51ecca8a9357e0f59600637b66768a303deb827eed08",
-      "bytes": 8859,
+      "sha256": "9f73bffdc4bd01e247a5586a91c1a31dd49dae00f5f6591c8b1776d4687ef23f",
+      "bytes": 8649,
       "record_type": "task033_d1_source_compatibility_audit",
       "status": "d1_source_splits_numerically_compatible",
       "accepted_interpretation": "p3/h10 and p3/h7.5 D1 source splits are descriptor-only"
@@ -105,11 +106,11 @@
     },
     "selective_merge_manifest": {
       "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/selective_merge_manifest.csv",
-      "sha256": "c7ed22f660cd8029fabcc5a63157c54acc94efca6d28d512323ff6ee83e6afe0",
-      "bytes": 30044,
+      "sha256": "a83b05adb08e01c1efbf7d3b363c1894a66b3bd10636b08770502f7fdadc4a7a",
+      "bytes": 30084,
       "row_count": 191,
-      "include_count": 159,
-      "exclude_count": 32,
+      "include_count": 162,
+      "exclude_count": 29,
       "all_paths_file_level_exact": true,
       "missing_include_paths": [],
       "required_excludes_present": [
@@ -124,19 +125,20 @@
     },
     "test_summary": {
       "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/test_summary.md",
-      "sha256": "b0dd4bead0b7bd94ae96a86a4fb8bc3a227b12ad205c0ff87c49fadd1d27a5f2",
-      "bytes": 9136,
+      "sha256": "313b277b6bc8cb034c0c9738479b1a7bff619a528d31e67fe8b3af285a402337",
+      "bytes": 9994,
       "f0_merge_validation_pass": true
     }
   },
   "checks": {
     "all_required_evidence_statuses_accepted": true,
     "all_evidence_hashes_recorded": true,
+    "tracked_text_hashes_checkout_independent": true,
     "selective_merge_manifest_file_level_exact": true,
     "adaptive_transfer_explicit": true,
     "original_full_scope_not_upgraded": true,
     "ordinary_default_unchanged": true
   },
   "failures": [],
-  "payload_sha256": "a656f2608a12a0b915bf46755669732cece7d37510fbb87c503e67af80682cd2"
+  "payload_sha256": "94242bad4f15769cd29950a13f506a9be88beeaf531eb5e813f25b0456e26707"
 }

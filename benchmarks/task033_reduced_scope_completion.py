@@ -33,12 +33,21 @@ class ReducedScopeCompletionError(ValueError):
     """Raised when one reduced-scope completion contract fails."""
 
 
+def _canonical_bytes(path: Path) -> bytes:
+    data = path.read_bytes()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data
+    return text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+
+
 def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+    return hashlib.sha256(_canonical_bytes(path)).hexdigest()
+
+
+def _canonical_size(path: Path) -> int:
+    return len(_canonical_bytes(path))
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -264,7 +273,7 @@ def build_reduced_scope_completion(
         evidence[name] = {
             "path": relative.as_posix(),
             "sha256": _sha256(path),
-            "bytes": path.stat().st_size,
+            "bytes": _canonical_size(path),
             "record_type": payload.get("record_type"),
             "status": payload.get("status"),
             "accepted_interpretation": interpretation,
@@ -281,13 +290,13 @@ def build_reduced_scope_completion(
     evidence["selective_merge_manifest"] = {
         "path": MANIFEST_PATH.as_posix(),
         "sha256": _sha256(manifest_path),
-        "bytes": manifest_path.stat().st_size,
+        "bytes": _canonical_size(manifest_path),
         **manifest,
     }
     evidence["test_summary"] = {
         "path": TEST_SUMMARY_PATH.as_posix(),
         "sha256": _sha256(test_summary_path),
-        "bytes": test_summary_path.stat().st_size,
+        "bytes": _canonical_size(test_summary_path),
         "f0_merge_validation_pass": True,
     }
 
@@ -298,6 +307,9 @@ def build_reduced_scope_completion(
         "review_authority": (
             "docs/task033_high_order_floquet_hybrid_hp_adaptivity/"
             "review_report_v6.md"
+        ),
+        "hash_policy": (
+            "sha256_and_bytes_of_utf8_text_after_lf_line_ending_canonicalization"
         ),
         "identity": {
             "is_pde_run": False,
@@ -328,6 +340,7 @@ def build_reduced_scope_completion(
         "checks": {
             "all_required_evidence_statuses_accepted": True,
             "all_evidence_hashes_recorded": True,
+            "tracked_text_hashes_checkout_independent": True,
             "selective_merge_manifest_file_level_exact": True,
             "adaptive_transfer_explicit": True,
             "original_full_scope_not_upgraded": True,

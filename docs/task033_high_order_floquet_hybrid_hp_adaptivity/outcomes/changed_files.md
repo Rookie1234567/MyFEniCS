@@ -14,6 +14,9 @@
 | `src/test/test_71_task033_reduced_scope_completion.py` | completion record 防陈旧合同 |
 | `src/test/test_72_task033_variable_p_capability.py` | 可独立合入 master 的 D2 fail-closed 合同 |
 | `src/test/test_53_task033_high_order_hybrid_components.py` | 同步已接受的 p3/h5 reference wiring；继续拒绝 p3/h3 与 p1 |
+| `benchmarks/task033_hybrid_funnel.py` / `src/test/test_60_task033_hybrid_funnel.py` | 将 master 所需 funnel 语义检查从已排除 full-scope checker 解耦 |
+| completion text hashing | UTF-8 tracked text 统一 LF 后计算 SHA256 与字节数，消除 Windows/Linux checkout 假 stale |
+| 三份 Case091 planning records | 只读测试/launch-guard 依赖；不恢复旧 20 项自动执行路径 |
 | `response_v7.md` | 对 Review V6 与实际选择性合并的回复 |
 
 F0 未修改 Maxwell、Floquet、QEP、Hybrid coupling、solver 或 physical

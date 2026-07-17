@@ -12,15 +12,17 @@ Maxwell/QEP/Hybrid PDE。验证只覆盖 F0 聚合、证据合同、文档、已
 
 | 验证 | 结果 |
 |---|---|
-| host F0/D1/D2/证据/文档与 Task32 scalability 组 | 146 passed，4 skipped |
+| task branch host F0/D1/D2/证据/文档与 Task32 scalability 组 | 146 passed，4 skipped |
 | 文档同步后 host focused regression | 46 passed |
 | Docker image | `myfenics-stage4:task28`；digest `sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d` |
 | DOLFINx Task33 high-order + Task32 anchors 首轮 | 47 passed，7 skipped，81 subtests；发现 1 个 p3/h5 reference 旧断言 |
 | 修正后的 `test_53` | 3 passed，8 subtests |
-| matching trace MPI2 | 每 rank 1 passed，4 subtests |
-| matching trace MPI4 | 每 rank 1 passed，4 subtests |
+| selective master host 最终组 | 146 passed，4 skipped |
+| selective master DOLFINx 最终组 | 47 passed，7 skipped，82 subtests |
+| selective master matching trace MPI2 | 每 rank 1 passed，4 subtests |
+| selective master matching trace MPI4 | 每 rank 1 passed，4 subtests |
 | D1 source split audit | p3/h10 与 p3/h7.5 均为 numerical-kernel compatible |
-| exact merge manifest | 191 个逐文件条目；159 include / 32 exclude；无 glob、重复或缺失 include |
+| exact merge manifest | 191 个逐文件条目；162 include / 29 exclude；无 glob、重复或缺失 include |
 | Ruff targeted F0/Task33 files | pass |
 | `compileall -q src benchmarks` | pass |
 | `git diff --check` | pass |
@@ -29,10 +31,18 @@ Maxwell/QEP/Hybrid PDE。验证只覆盖 F0 聚合、证据合同、文档、已
 不存在；这与已经接受的 p3/h5 full3D wiring 冲突。合同已改为只接受 p3/h5，
 继续拒绝 p3/h3 与 p1，隔离重跑通过。该修正不改变 solver 或 numerical kernel。
 
-本节在生成 `task033_reduced_scope_completion.json` 前冻结；completion builder
-会把本摘要、exact manifest 与所有接受的 JSON evidence 一起哈希绑定。生成后的
-exact-equality checker 结果记录在 `response_v7.md`，避免为写入 checker 自身结果
-反复改变本摘要哈希。
+第一次 selective master 检查还发现两个文件边界问题：`test_60` 依赖已排除
+full-scope checker 的私有 helper；completion 原始字节哈希受 CRLF/LF checkout
+影响。前者已把所需 Hybrid funnel 语义检查移入保留的聚合模块，后者改为
+UTF-8 文本先规范化为 LF，再统一计算 SHA256 和记录字节数。QEP/watchdog/Phase C 合同所需的
+`resource_matrix.json/.csv` 与 `qep_matrix_plan.json` 作为只读 historical
+planning dependencies 纳入；它们不执行旧 20 项矩阵。Case091 的文档合同改由
+reduced-scope checker 入口满足，full campaign `run.sh` 仍排除。上述修正后
+selective master 的 host、Docker 与 MPI 组全部通过。
+
+本节现已最终冻结；completion builder 把本摘要、exact manifest 与所有接受的
+JSON evidence 一起哈希绑定。生成后的 exact-equality checker 结果记录在
+`response_v7.md`，避免为写入 checker 自身结果再次改变本摘要哈希。
 
 ## 2026-07-17 Review V5 D0/D1/D2 与最终文档审计
 

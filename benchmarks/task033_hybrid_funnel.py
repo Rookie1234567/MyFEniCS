@@ -537,6 +537,49 @@ def is_controlled_p1_terminal_physical_funnel(payload: Any) -> bool:
     )
 
 
+def hybrid_funnel_semantic_problems(
+    role: str, payload: Mapping[str, Any]
+) -> list[str]:
+    """Validate the funnel semantics retained by the selective master merge."""
+
+    problems: list[str] = []
+    identity = payload.get("identity")
+    qualification = payload.get("qualification")
+    case = payload.get("case")
+    identity = identity if isinstance(identity, Mapping) else {}
+    qualification = (
+        qualification if isinstance(qualification, Mapping) else {}
+    )
+    case = case if isinstance(case, Mapping) else {}
+    p1_controlled_negative = bool(
+        role == "hybrid_funnel_p1"
+        and (
+            is_controlled_p1_h5_capacity_funnel(payload)
+            or is_controlled_p1_terminal_physical_funnel(payload)
+        )
+    )
+    if (
+        identity.get("is_solver_pass") is not True
+        and not p1_controlled_negative
+    ):
+        problems.append(
+            "Hybrid funnel is neither qualified nor an exact p1 "
+            "controlled negative"
+        )
+    if (
+        qualification.get("mode_count_converged") is not True
+        and not p1_controlled_negative
+    ):
+        problems.append("Hybrid funnel mode count did not converge")
+    if role == "hybrid_funnel_p1" and case.get("degree") != 1:
+        problems.append("p1 funnel role does not contain degree=1")
+    if role == "hybrid_funnel_p3" and case.get("degree") != 3:
+        problems.append("p3 funnel role does not contain degree=3")
+    if role not in {"hybrid_funnel_p1", "hybrid_funnel_p3"}:
+        problems.append(f"unsupported retained Hybrid funnel role: {role}")
+    return problems
+
+
 def _identity(payload: Mapping[str, Any]) -> tuple[Any, ...]:
     case = _case(payload)
     return (

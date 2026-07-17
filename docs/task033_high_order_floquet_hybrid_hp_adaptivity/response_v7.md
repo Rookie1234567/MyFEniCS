@@ -49,13 +49,23 @@ postprocess numerical kernel，也没有运行新 PDE。
   断言外，其余 `47 passed, 7 skipped, 81 subtests`；
 - 旧断言把已接受的 p3/h5 reference wiring 当成不存在，已改为只接受 p3/h5、
   继续拒绝 p3/h3/p1；隔离重跑 `3 passed, 8 subtests`；
-- matching trace MPI2/MPI4：各 rank `1 passed, 4 subtests`；
+- selective master host 最终组：`146 passed, 4 skipped`；
+- selective master DOLFINx 最终组：`47 passed, 7 skipped, 82 subtests`；
+- selective master matching trace MPI2/MPI4：各 rank
+  `1 passed, 4 subtests`；
 - targeted Ruff、`compileall`、CSV/manifest 审计与 `git diff --check`：通过。
 
+第一次 selective master 检查发现 full-scope 私有 helper 依赖和 CRLF/LF
+原始字节哈希两项集成缺陷。Hybrid funnel 所需语义检查已移入保留模块；
+completion 对 UTF-8 tracked text 先规范化 LF，再统一计算 SHA256 和记录字节数。另把三份只读
+resource/QEP planning records 纳入测试依赖，但没有恢复旧 20 项自动执行路径。
+Case091 不再要求被排除的 full campaign `run.sh`，改由 reduced-scope checker
+作为 master 验收入口。
+
 completion record 的 payload SHA256 为
-`a656f2608a12a0b915bf46755669732cece7d37510fbb87c503e67af80682cd2`，
+`94242bad4f15769cd29950a13f506a9be88beeaf531eb5e813f25b0456e26707`，
 文件 SHA256 为
-`7c3306a1bf5fadc94155eace314503efdfdeed551eb0216916b8efd1ee7f2b34`。
+`b34e754badd2249a546f4c83776bee321710144cdc2c74c45d498498bd5ea980`。
 生成后 unit test 与 CLI exact-equality verify 均通过。
 
 ## 选择性合并
