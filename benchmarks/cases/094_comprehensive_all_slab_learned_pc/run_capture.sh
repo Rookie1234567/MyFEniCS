@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 3 ]; then
-  echo "usage: run_capture.sh <T1|T2|V|H> <sample-limit> <stride>" >&2
+if [ "$#" -ne 4 ]; then
+  echo "usage: run_capture.sh <T1|T2|V|H> <sample-limit> <stride> <host-clean-sha>" >&2
   exit 2
 fi
 
 split="$1"
 limit="$2"
 stride="$3"
+sha="$4"
 case "$split" in
   T1|T2|V|H) ;;
   *) echo "invalid split identity: $split" >&2; exit 2 ;;
@@ -16,11 +17,14 @@ esac
 
 root="/mnt/c/Users/Administrator/Desktop/MyProject"
 cd "$root"
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  echo "tracked source must be clean before an independent capture" >&2
+if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "host clean attestation must be a full lowercase Git SHA" >&2
   exit 2
 fi
-sha="$(git rev-parse HEAD)"
+if [ "$(git rev-parse HEAD)" != "$sha" ]; then
+  echo "host clean attestation does not match mounted HEAD" >&2
+  exit 2
+fi
 branch="$(git branch --show-current)"
 target="$root/benchmarks/artifacts/cases/094/captures/$split"
 if [ -e "$target" ]; then
