@@ -50,6 +50,7 @@ from src.solvers.batched_reduced_smoother import (
     FrozenLinearReducedMap,
     IluLinearReducedCorrectionSlabSolver,
 )
+from src.solvers.lu_teacher_local_solver import SparseLuTeacherLocalSolver
 from src.solvers.solve_vector_maxwell import _json_default
 from src.solvers.stage4_runtime import (
     RuntimeStage4System,
@@ -187,6 +188,8 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         deviations.append(
             f"linear reduced backend {args.linear_reduced_mode!r} is enabled for research"
         )
+    if args.exact_lu_enabled_slabs:
+        deviations.append("exact sparse-LU local oracle is enabled for research")
     return deviations
 
 
@@ -785,9 +788,19 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             rank=comm.rank,
             maximum_samples_per_slab=args.neural_capture_limit,
             sample_stride=args.neural_capture_stride,
+            included_slabs=(
+                None
+                if args.neural_capture_slabs is None
+                else {
+                    int(value)
+                    for value in args.neural_capture_slabs.split(",")
+                    if value
+                }
+            ),
+            store_local_correction=not args.neural_capture_raw_rhs_only,
             run_metadata={
                 "branch": runtime_metadata.get("branch"),
-                "git_commit": runtime_metadata.get("git_commit"),
+                "commit_sha": runtime_metadata.get("commit_sha"),
                 "h_nm": float(args.h_nm),
                 "degree": 2,
                 "wavelength_nm": float(args.lambda_nm),
@@ -796,8 +809,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             },
         )
     local_solver_factory = None
-    if args.neural_checkpoint_root and args.linear_reduced_checkpoint_root:
-        raise ValueError("neural and linear-reduced local backends are mutually exclusive")
+    selected_backend_count = sum(
+        bool(value)
+        for value in (
+            args.neural_checkpoint_root,
+            args.linear_reduced_checkpoint_root,
+            args.exact_lu_enabled_slabs,
+        )
+    )
+    if selected_backend_count > 1:
+        raise ValueError("neural, linear-reduced, and exact-LU backends are mutually exclusive")
     if args.neural_checkpoint_root:
         checkpoint_root = Path(args.neural_checkpoint_root)
         enabled_slabs = (
@@ -860,6 +881,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 fallback,
                 shadow=args.linear_reduced_mode == "shadow",
             )
+    elif args.exact_lu_enabled_slabs:
+        enabled_slabs = {
+            int(value) for value in args.exact_lu_enabled_slabs.split(",") if value
+        }
+        if not enabled_slabs:
+            raise ValueError("exact-LU slab allow-list is empty")
+
+        def local_solver_factory(subdomain, portable_operator, fallback_action):
+            if int(subdomain) not in enabled_slabs:
+                return IluLocalSlabSolver(portable_operator.shape[0], fallback_action)
+            return SparseLuTeacherLocalSolver(portable_operator)
     smoother = DistributedPhysicalSlabSmoother(
         assembled_f if shifted is None else shifted,
         slabs,
@@ -1197,6 +1229,8 @@ def main() -> int:
     parser.add_argument("--neural-capture-dir")
     parser.add_argument("--neural-capture-limit", type=int, default=128)
     parser.add_argument("--neural-capture-stride", type=int, default=10)
+    parser.add_argument("--neural-capture-slabs")
+    parser.add_argument("--neural-capture-raw-rhs-only", action="store_true")
     parser.add_argument("--neural-checkpoint-root")
     parser.add_argument(
         "--neural-enabled-slabs",
@@ -1211,6 +1245,7 @@ def main() -> int:
     parser.add_argument(
         "--linear-reduced-mode", choices=("shadow", "active"), default="shadow"
     )
+    parser.add_argument("--exact-lu-enabled-slabs")
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -1262,6 +1297,8 @@ def main() -> int:
         "neural_capture_dir": args.neural_capture_dir,
         "neural_capture_limit": args.neural_capture_limit,
         "neural_capture_stride": args.neural_capture_stride,
+        "neural_capture_slabs": args.neural_capture_slabs,
+        "neural_capture_raw_rhs_only": args.neural_capture_raw_rhs_only,
         "neural_checkpoint_root": args.neural_checkpoint_root,
         "neural_enabled_slabs": args.neural_enabled_slabs,
         "neural_lane": args.neural_lane,
@@ -1269,6 +1306,7 @@ def main() -> int:
         "linear_reduced_checkpoint_root": args.linear_reduced_checkpoint_root,
         "linear_reduced_enabled_slabs": args.linear_reduced_enabled_slabs,
         "linear_reduced_mode": args.linear_reduced_mode,
+        "exact_lu_enabled_slabs": args.exact_lu_enabled_slabs,
         "ksp_type": args.ksp_type,
         "smoother_ksp_type": args.smoother_ksp_type,
         "selective_diagonal_boundary_slabs": args.selective_diagonal_boundary_slabs,

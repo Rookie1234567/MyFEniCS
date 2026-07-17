@@ -5,4 +5,4 @@
 - P4：数值通过，性能信号失败。849→847 不满足 5% 迭代下降；151.343→137.261 s 的 9.30% 下降不满足独立 10% 门。
 - P5/all-slab/h3/h2：按停机规则未运行。
 
-最终分类为 `local_microkernel_success_global_signal_insufficient`。保留显式 opt-in 研究实现，不启用 ordinary default。
+最终分类按 Review V1 统一为 `microkernel_success_global_neutral`。保留显式 opt-in 研究实现，不启用 ordinary default。

@@ -2117,4 +2117,35 @@ one-slab run 的 official R/T/A 为 `0.089021604131 / 0.442588273317 / 0.4683901
 
 PARA-Task002 在同一 Ubuntu WSL/双 RTX 8000 机器上完成 h5 P0-P4。持久 SciPy CSR 将三个真实 slab 的 action mean 降到 Python 行循环的 7.13%-7.49%；GPU 离线构造的 rank-32 complex POD/ridge 固定线性映射在独立 ILU-residual validation 上达到 `rho median/p95=0.593884/0.745695`，线性误差 `3.894e-15`，batch 一致性误差 0，推理加融合审计均值为 Task001 的 10.40%。
 
-P3 shadow 的 5166 次候选全部通过非退化审计。P4 主动 slab-9 的迭代 849→847、solve 151.343→137.261 s、peak 1.595348→1.618153 GiB；数值和内存通过，但 0.24% iteration improvement 与 9.30% solve improvement 均未达到独立性能信号门。因此最终分类为 `local_microkernel_success_global_signal_insufficient`，P5/all-slab/h3/h2 未运行，ordinary default 未改变。
+P3 shadow 的 5166 次候选全部通过非退化审计。P4 主动 slab-9 的迭代 849→847、solve 151.343→137.261 s、peak 1.595348→1.618153 GiB；数值和内存通过，但 0.24% iteration improvement 与 9.30% solve improvement 均未达到独立性能信号门。Review V1 将最终分类统一为 `microkernel_success_global_neutral`；P5/all-slab/h3/h2 未运行，ordinary default 未改变。
+
+---
+
+# 50. PARA-Task003：LU-teacher NN-only local inverse feasibility
+
+## 50.1 为什么启动
+
+Task002 Review V1 指出前两轮都保留 ILU，并未直接回答 NN 是否能独立替代 local PC。Task003 因此冻结 raw residual `r_s -> A_s^{-1}r_s` 合同，禁止 ILU output/residual 作为 input 或 teacher，并要求在训练前先测 exact-LU global oracle 上限。
+
+## 50.2 Teacher 与数据
+
+三次独立 h5 capture 只保存 slab9 的 512/128/64 个 raw RHS，exact fingerprint 一致。COLAMD sparse LU 对 5,248×5,248、526,696 nnz operator 一次 factor、多 RHS复用：factor 2.576 s、fill 7.783×、显式 factor storage 82.07 MB；704 个 teacher pairs 的 rho median/p95/max 为 `5.940e-15/7.503e-15/9.585e-15`，无 swap，teacher Gate 通过。
+
+## 50.3 Exact oracle Gate
+
+同轮 P0 baseline 为 860 iterations、104.725 s solve、full residual `9.930033e-7`。slab9 exact LU 为 862 iterations，未达到单 slab 2% reduction；条件式 slab0/9/10 exact LU 为 840 iterations，只下降 2.33%，未达到三-slab 5% Gate。两次 oracle 的 full residual、official R/T/A 和 closure 均通过。
+
+## 50.4 结果解释与停止
+
+即使 selected slabs 使用理想 exact local inverse，当前 16-slab two-step + 75D coarse 架构的 outer spectrum 也只小幅变化。因此近似这些 LU 的 learned/NN-only model 缺少足够全局上限。P3 linear/NN training、P4 shadow、P5 active、P6 factor removal、P7 conditional models、h3/h2 全部按 Gate 未运行。
+
+## 50.5 最终状态
+
+最终分类为 `exact_lu_oracle_global_signal_insufficient`。保留 raw-only capture、LU teacher schema/lifecycle、oracle port、telemetry 和测试；不改变 ordinary default，不作 memory saving 或 NN acceleration claim。
+
+## 50.6 证据入口
+
+- [Task003 task](para_task003_lu_teacher_nn_only_local_inverse/task.md)
+- [Task003 outcomes](para_task003_lu_teacher_nn_only_local_inverse/outcomes/summary.md)
+- [Case092](../benchmarks/cases/092_lu_teacher_nn_only_local_inverse/README.md)
+- [Task002 Review V1](para_task002_batched_neural_smoother_acceleration/review_report_v1.md)

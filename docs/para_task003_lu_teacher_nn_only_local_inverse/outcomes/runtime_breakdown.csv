@@ -1,0 +1,9 @@
+run,component,seconds,notes
+p0_baseline,solve,104.725182,860 iterations
+p0_baseline,total,197.204525,full residual and RTA pass
+slab9_oracle,solve,180.402225,862 iterations; wall time is not NN performance
+slab9_oracle,local_exact_lu_accumulated,83.237407,5172 applies on slab9
+three_slab_oracle,solve,206.000909,840 iterations
+three_slab_oracle,slab0_exact_lu_accumulated,39.929419,5040 applies
+three_slab_oracle,slab9_exact_lu_accumulated,81.163808,5040 applies
+three_slab_oracle,slab10_exact_lu_accumulated,not_available_in_root_record,rank-local diagnostic was not gathered in this runner revision

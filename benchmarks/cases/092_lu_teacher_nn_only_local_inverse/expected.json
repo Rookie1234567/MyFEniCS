@@ -1,0 +1,14 @@
+{
+  "status": "exact_lu_oracle_global_signal_insufficient",
+  "teacher_resource_gate_passed": true,
+  "teacher_accuracy_gate_passed": true,
+  "single_slab_oracle_signal_passed": false,
+  "three_slab_oracle_signal_passed": false,
+  "model_training_run": false,
+  "shadow_run": false,
+  "active_run": false,
+  "factor_removal_run": false,
+  "h3_run": false,
+  "h2_run": false,
+  "ordinary_default_changed": false
+}

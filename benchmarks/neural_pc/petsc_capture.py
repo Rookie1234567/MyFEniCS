@@ -20,6 +20,8 @@ class LocalSlabCapture:
         rank: int,
         maximum_samples_per_slab: int = 128,
         sample_stride: int = 10,
+        included_slabs: set[int] | None = None,
+        store_local_correction: bool = True,
         run_metadata: dict[str, Any] | None = None,
     ) -> None:
         if maximum_samples_per_slab < 1 or sample_stride < 1:
@@ -29,6 +31,10 @@ class LocalSlabCapture:
         self.rank = int(rank)
         self.maximum_samples_per_slab = int(maximum_samples_per_slab)
         self.sample_stride = int(sample_stride)
+        self.included_slabs = (
+            None if included_slabs is None else {int(value) for value in included_slabs}
+        )
+        self.store_local_correction = bool(store_local_correction)
         self.run_metadata = dict(run_metadata or {})
         self.seen: dict[int, int] = {}
         self.saved: dict[int, int] = {}
@@ -36,6 +42,8 @@ class LocalSlabCapture:
 
     def observe_operator(self, slab: int, operator: LocalCsrOperator) -> None:
         slab_id = int(slab)
+        if self.included_slabs is not None and slab_id not in self.included_slabs:
+            return
         directory = self.root / f"slab_{slab_id:03d}"
         metadata = dict(operator.metadata)
         metadata.update(self.run_metadata)
@@ -57,6 +65,8 @@ class LocalSlabCapture:
         local_solver_type: str,
     ) -> None:
         slab_id = int(slab)
+        if self.included_slabs is not None and slab_id not in self.included_slabs:
+            return
         seen = self.seen.get(slab_id, 0) + 1
         self.seen[slab_id] = seen
         saved = self.saved.get(slab_id, 0)
@@ -64,13 +74,16 @@ class LocalSlabCapture:
             return
         directory = self.root / f"slab_{slab_id:03d}" / "real_krylov"
         directory.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(
-            directory / f"sample_{saved:06d}.npz",
-            rhs=np.asarray(rhs, dtype=np.complex128),
-            local_correction=np.asarray(local_correction, dtype=np.complex128),
-            local_solver_type=np.asarray(str(local_solver_type)),
-            apply_index=np.asarray(seen, dtype=np.int64),
-        )
+        payload: dict[str, np.ndarray] = {
+            "rhs": np.asarray(rhs, dtype=np.complex128),
+            "apply_index": np.asarray(seen, dtype=np.int64),
+        }
+        if self.store_local_correction:
+            payload["local_correction"] = np.asarray(
+                local_correction, dtype=np.complex128
+            )
+            payload["local_solver_type"] = np.asarray(str(local_solver_type))
+        np.savez_compressed(directory / f"sample_{saved:06d}.npz", **payload)
         self.saved[slab_id] = saved + 1
 
     @property
@@ -81,6 +94,10 @@ class LocalSlabCapture:
             "root": str(self.root),
             "sample_stride": self.sample_stride,
             "maximum_samples_per_slab": self.maximum_samples_per_slab,
+            "included_slabs": (
+                None if self.included_slabs is None else sorted(self.included_slabs)
+            ),
+            "store_local_correction": self.store_local_correction,
             "seen_by_slab": {str(key): value for key, value in sorted(self.seen.items())},
             "saved_by_slab": {str(key): value for key, value in sorted(self.saved.items())},
             "operator_fingerprints": {

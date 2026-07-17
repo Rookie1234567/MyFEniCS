@@ -1,0 +1,4 @@
+candidate,split,samples,rho_median,rho_p95,rho_max,correction_error,mean_s,p95_s,status
+sparse_lu_teacher,all,704,5.939910e-15,7.503075e-15,9.585444e-15,0,0.017636659,0.025924520,pass
+learned_linear_inverse,not_run,0,,,,,,,oracle_gate_failed
+nonlinear_nn_only,not_run,0,,,,,,,oracle_gate_failed

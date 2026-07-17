@@ -1,0 +1,13 @@
+phase,run,status,iterations,solve_s,total_s,full_residual,peak_gib,gate
+P0,original_ilu_baseline,pass,860,104.725182,197.204525,9.930033e-7,1.595139,reference
+P0,capture_A_512,pass,852,159.608938,205.391581,9.980248e-7,1.603523,data_only
+P0,capture_B_128,pass,861,120.195401,168.179211,9.992481e-7,1.596657,data_only
+P0,capture_C_64,pass,849,114.317930,166.113269,9.988413e-7,1.599819,data_only
+P1,slab9_sparse_lu_teacher,pass,,,,,,teacher_gate_pass
+P2,slab9_exact_lu_oracle,signal_fail,862,180.402225,243.495257,9.890735e-7,1.778637,iteration_reduction_-0.23pct
+P2,slab0_9_10_exact_lu_oracle,signal_fail,840,206.000909,294.004460,9.974997e-7,2.002991,iteration_reduction_2.33pct_lt_5pct
+P3,learned_linear_inverse,not_run,,,,,,oracle_gate_failed
+P4,shadow_nn_only,not_run,,,,,,oracle_gate_failed
+P5,active_with_fallback,not_run,,,,,,oracle_gate_failed
+P6,true_factor_removal,not_run,,,,,,oracle_gate_failed
+P7,conditional_slab_models,not_run,,,,,,oracle_gate_failed

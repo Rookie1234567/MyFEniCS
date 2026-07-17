@@ -1,6 +1,6 @@
 # Case091：Batched linear reduced smoother
 
-本 case 对应 PARA-Task002，最终状态为 `local_microkernel_success_global_signal_insufficient`。
+本 case 对应 PARA-Task002，Review V1 统一后的最终状态为 `microkernel_success_global_neutral`。
 
 | 编号 | 冻结合同 |
 |---|---|

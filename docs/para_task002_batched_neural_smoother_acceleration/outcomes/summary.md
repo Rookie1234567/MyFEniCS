@@ -10,7 +10,7 @@
 | Task002 开始时 HEAD | `0f29454` |
 | Task002 首次本地实现 commit | `f34266b` — `feat: evaluate batched linear reduced smoother` |
 | 前置审阅 | PARA-Task001 `PASS_WITH_QUALIFICATIONS`，允许同分支继续 PARA-Task002 |
-| 最终 classification | `local_microkernel_success_global_signal_insufficient` |
+| 最终 classification | `microkernel_success_global_neutral`（按 Review V1 冻结枚举统一） |
 | P1/P2 | pass / pass |
 | P3 | shadow 数值与安全语义通过；运行间轨迹不具备位级复现性 |
 | P4 | numeric pass，performance signal fail |
@@ -466,7 +466,7 @@ Task001 同数据实测 p95 为 33.031 ms；rank32 p95 为 2.490 ms。作为直�
 
 ## 16. Provenance 限定
 
-本任务的重型 h5 JSON 均记录了正确分支名，但 metadata 中 `git_commit=null` 且 `git_dirty=true`。P3/P4 运行时实现尚在工作树，之后才在本地提交为 `f34266b`。因此：
+本任务的重型 h5 JSON 使用 metadata 字段 `commit_sha`（不是 `git_commit`），其值为基础 HEAD `0f2945499890a20031b6ba58c63391bba97564e9`；同时 `git_dirty=true`、`tracked_source_dirty=true`。P3/P4 运行时实现尚在工作树，之后才在本地提交为 `f34266b`。因此 provenance 限定仍然成立，但不能把 schema 中不存在的 `git_commit` 字段误解为完全没有记录基础 SHA。
 
 | 可用于 | 不可用于 |
 |---|---|
@@ -495,7 +495,7 @@ Task001 同数据实测 p95 为 33.031 ms；rank32 p95 为 2.490 ms。作为直�
 最终 classification 保持：
 
 ```text
-local_microkernel_success_global_signal_insufficient
+microkernel_success_global_neutral
 ```
 
 这不是“线性 reduced map 完全失败”，也不是“h5 加速成功”。准确含义是：局部算法与微核研究取得可复用成功，但它尚未改变全局求解器的工程结论。

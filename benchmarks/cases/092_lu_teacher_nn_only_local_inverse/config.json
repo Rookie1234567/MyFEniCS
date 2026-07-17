@@ -1,0 +1,13 @@
+{
+  "case_id": "092_lu_teacher_nn_only_local_inverse",
+  "task": "PARA-Task003",
+  "mesh": "h5",
+  "mpi_size": 4,
+  "selected_slabs": [9, 0, 10],
+  "teacher": "scipy_sparse_lu_colamd",
+  "capture_counts": {"train": 512, "validation": 128, "holdout": 64},
+  "single_slab_oracle_iteration_gate": 0.02,
+  "three_slab_oracle_iteration_gate": 0.05,
+  "artifact_root": "benchmarks/artifacts/cases/092",
+  "ordinary_default_changed": false
+}
