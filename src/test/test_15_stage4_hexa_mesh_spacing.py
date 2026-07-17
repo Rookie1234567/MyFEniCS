@@ -2,11 +2,17 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import numpy as np
 
-from src.geometry.mesh_builder_3d import _rank_cell_ids, _stage4_axis_plan, build_airbox_mesh_3d
+from src.geometry.mesh_builder_3d import (
+    _rank_cell_ids,
+    _shared_facet_cell_partitioner,
+    _stage4_axis_plan,
+    build_airbox_mesh_3d,
+)
 from src.test.stage2_test_utils import stage4_block_config
 
 
@@ -20,6 +26,18 @@ def _max_spacing_inside(values: np.ndarray, low: float, high: float) -> float:
 
 
 class Stage4HexaMeshSpacingTests(unittest.TestCase):
+    def test_explicit_scotch_partition_seed_rejects_invalid_values(self):
+        with mock.patch.dict(
+            "os.environ", {"MYFENICS_SCOTCH_PARTITION_SEED": "not-an-int"}
+        ):
+            with self.assertRaisesRegex(ValueError, "must be an integer"):
+                _shared_facet_cell_partitioner()
+        with mock.patch.dict(
+            "os.environ", {"MYFENICS_SCOTCH_PARTITION_SEED": "-1"}
+        ):
+            with self.assertRaisesRegex(ValueError, "must be nonnegative"):
+                _shared_facet_cell_partitioner()
+
     def test_auto_keeps_uniform_when_material_planes_align(self):
         cfg = stage4_block_config(
             use_pml=False,

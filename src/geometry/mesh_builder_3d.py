@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +9,7 @@ import ufl
 from basix.ufl import element
 from mpi4py import MPI
 
-from dolfinx import default_real_type, io, mesh
+from dolfinx import cpp, default_real_type, io, mesh
 
 from ..common.config_3d import SimulationConfig3D
 
@@ -41,6 +42,23 @@ class HexaAxisPlan:
     @property
     def mesh_cells_resolved(self) -> tuple[int, int, int]:
         return (len(self.x_values) - 1, len(self.y_values) - 1, len(self.z_values) - 1)
+
+
+def _shared_facet_cell_partitioner():
+    """Return the default or an explicitly seeded research partitioner."""
+    raw_seed = os.environ.get("MYFENICS_SCOTCH_PARTITION_SEED")
+    if raw_seed is None:
+        return mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    try:
+        seed = int(raw_seed)
+    except ValueError as exc:
+        raise ValueError("MYFENICS_SCOTCH_PARTITION_SEED must be an integer") from exc
+    if seed < 0:
+        raise ValueError("MYFENICS_SCOTCH_PARTITION_SEED must be nonnegative")
+    return mesh.create_cell_partitioner(
+        cpp.graph.partitioner_scotch(seed=seed),
+        mesh.GhostMode.shared_facet,
+    )
 
 
 def _mark_boundary_facets(msh: mesh.Mesh, cfg: SimulationConfig3D) -> tuple[mesh.MeshTags, np.ndarray]:
@@ -433,7 +451,7 @@ def _structured_hexa_mesh(
     ]
     coordinate_element = element("Lagrange", "hexahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    partitioner = _shared_facet_cell_partitioner()
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 
@@ -519,7 +537,7 @@ def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> me
                 )
     coordinate_element = element("Lagrange", "tetrahedron", 1, shape=(3,), dtype=default_real_type)
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    partitioner = _shared_facet_cell_partitioner()
     return mesh.create_mesh(msh_comm, np.asarray(cells, dtype=np.int64), domain, points, partitioner=partitioner)
 
 

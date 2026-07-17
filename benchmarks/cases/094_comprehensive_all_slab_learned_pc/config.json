@@ -5,6 +5,7 @@
   "mpi_size": 4,
   "gpu_device": 0,
   "gpu_name": "Quadro RTX 8000",
+  "scotch_partition_seed": 20260718,
   "num_slabs": 16,
   "owner_slabs": 4,
   "overlap_layers": 0.25,

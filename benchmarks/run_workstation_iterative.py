@@ -136,6 +136,7 @@ def _runtime_metadata(command: str) -> dict[str, Any]:
         "kernel": platform.release(),
         "python": platform.python_version(),
         "numpy": np.__version__,
+        "scotch_partition_seed": os.environ.get("MYFENICS_SCOTCH_PARTITION_SEED"),
     }
 
 
