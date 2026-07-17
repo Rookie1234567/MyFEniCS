@@ -62,7 +62,7 @@ def _process_memory() -> dict[str, int | None]:
     }
 
 
-def _load_raw_rhs(capture: Path) -> np.ndarray:
+def _load_raw_capture(capture: Path) -> tuple[np.ndarray, np.ndarray]:
     batch_path = capture / "real_krylov" / "samples.npz"
     if batch_path.is_file():
         with np.load(batch_path, allow_pickle=False) as payload:
@@ -72,17 +72,23 @@ def _load_raw_rhs(capture: Path) -> np.ndarray:
             apply_index = np.asarray(payload["apply_index"], dtype=np.int64)
         if rhs.ndim != 2 or apply_index.shape != (rhs.shape[0],):
             raise ValueError(f"capture {batch_path} has invalid batched shapes")
-        return rhs
+        return rhs, apply_index
     files = sorted((capture / "real_krylov").glob("sample_*.npz"))
     if not files:
         raise FileNotFoundError(f"no raw local RHS samples under {capture}")
     rows = []
+    apply_indices = []
     for path in files:
         with np.load(path, allow_pickle=False) as payload:
             if set(payload.files) != {"rhs", "apply_index"}:
                 raise ValueError(f"capture {path} is not raw-RHS-only")
             rows.append(np.asarray(payload["rhs"], dtype=np.complex128))
-    return np.stack(rows)
+            apply_indices.append(int(payload["apply_index"]))
+    return np.stack(rows), np.asarray(apply_indices, dtype=np.int64)
+
+
+def _load_raw_rhs(capture: Path) -> np.ndarray:
+    return _load_raw_capture(capture)[0]
 
 
 def _record_provenance(path: Path) -> dict[str, Any]:
@@ -104,19 +110,28 @@ def main() -> int:
     parser.add_argument("--capture-a", required=True)
     parser.add_argument("--capture-b", required=True)
     parser.add_argument("--capture-c", required=True)
+    parser.add_argument("--capture-d")
     parser.add_argument("--capture-a-record", required=True)
     parser.add_argument("--capture-b-record", required=True)
     parser.add_argument("--capture-c-record", required=True)
+    parser.add_argument("--capture-d-record")
     parser.add_argument("--output", required=True)
     parser.add_argument("--ordering", default="COLAMD")
     args = parser.parse_args()
 
+    if (args.capture_d is None) != (args.capture_d_record is None):
+        raise ValueError("capture D and its solver record must be supplied together")
     captures = [Path(args.capture_a), Path(args.capture_b), Path(args.capture_c)]
     capture_records = [
         Path(args.capture_a_record),
         Path(args.capture_b_record),
         Path(args.capture_c_record),
     ]
+    capture_names = ["A", "B", "C"]
+    if args.capture_d is not None:
+        captures.append(Path(args.capture_d))
+        capture_records.append(Path(args.capture_d_record))
+        capture_names.append("D")
     operators = [load_operator(path) for path in captures]
     if len({operator.fingerprint for operator in operators}) != 1:
         raise ValueError("capture A/B/C operator fingerprints differ")
@@ -140,22 +155,28 @@ def main() -> int:
         original.values,
         sanitized_metadata,
     )
-    rhs_parts = [_load_raw_rhs(path) for path in captures]
+    capture_parts = [_load_raw_capture(path) for path in captures]
+    rhs_parts = [part[0] for part in capture_parts]
+    apply_index_parts = [part[1] for part in capture_parts]
     rhs = np.concatenate(rhs_parts)
+    roles = (
+        ["train", "train", "validation", "holdout"]
+        if len(captures) == 4
+        else ["train", "validation", "holdout"]
+    )
     split = np.concatenate(
         [
-            np.full(len(rhs_parts[0]), "train", dtype="U16"),
-            np.full(len(rhs_parts[1]), "validation", dtype="U16"),
-            np.full(len(rhs_parts[2]), "holdout", dtype="U16"),
+            np.full(len(part), role, dtype="U16")
+            for part, role in zip(rhs_parts, roles, strict=True)
         ]
     )
     capture_id = np.concatenate(
         [
-            np.full(len(rhs_parts[0]), "A", dtype="U1"),
-            np.full(len(rhs_parts[1]), "B", dtype="U1"),
-            np.full(len(rhs_parts[2]), "C", dtype="U1"),
+            np.full(len(part), name, dtype="U1")
+            for part, name in zip(rhs_parts, capture_names, strict=True)
         ]
     )
+    apply_index = np.concatenate(apply_index_parts)
 
     resource_before: dict[str, Any] = {
         **_process_memory(),
@@ -191,6 +212,7 @@ def main() -> int:
         target=target,
         split=split,
         capture_id=capture_id,
+        apply_index=apply_index,
     )
     teacher_diagnostics = dict(teacher.diagnostics)
     teacher.destroy()
@@ -208,10 +230,10 @@ def main() -> int:
         "ilu_output_present": False,
         "ilu_residual_present": False,
         "current_pc_output_present": False,
-        "capture_roles": {"A": "train", "B": "validation", "C": "holdout"},
+        "capture_roles": dict(zip(capture_names, roles, strict=True)),
         "capture_source_records": {
             name: _record_provenance(path)
-            for name, path in zip(("A", "B", "C"), capture_records, strict=True)
+            for name, path in zip(capture_names, capture_records, strict=True)
         },
         "split_counts": {
             name: int(np.count_nonzero(split == name))
