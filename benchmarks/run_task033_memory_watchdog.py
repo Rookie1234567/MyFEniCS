@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping
 import csv
 from datetime import datetime, timezone
 import hashlib
@@ -35,6 +36,20 @@ from benchmarks.task033_watchdog_launch import (
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "091"
 
+CASE090_NON_NUMERICAL_REUSE_FILES = frozenset(
+    {
+        "README.md",
+        "benchmarks/cases/090_high_order_3d_floquet_hcurl/README.md",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/README.md",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage1_high_order/stage_summary.json",
+        "benchmarks/cases/README.md",
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/task033_qep_qualification.py",
+        "benchmarks/task033_watchdog_launch.py",
+    }
+)
+
 
 def _git(*args: str) -> str | None:
     try:
@@ -43,6 +58,78 @@ def _git(*args: str) -> str | None:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return None
+
+
+def _case090_source_compatibility(
+    evidence: Mapping[str, Any] | None,
+    *,
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Audit whether Case090 may be reused across non-numerical descendants."""
+
+    payload = evidence if isinstance(evidence, Mapping) else {}
+    identity = payload.get("identity")
+    identity = identity if isinstance(identity, Mapping) else {}
+    evidence_source_sha = identity.get("source_commit_full_sha")
+    if not (
+        isinstance(evidence_source_sha, str)
+        and len(evidence_source_sha) == 40
+        and isinstance(current_source_sha, str)
+        and len(current_source_sha) == 40
+    ):
+        return {
+            "pass": False,
+            "evidence_source_sha": evidence_source_sha,
+            "current_source_sha": current_source_sha,
+            "numerical_source_unchanged": False,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "failures": ["source_sha_missing_or_invalid"],
+        }
+    if evidence_source_sha == current_source_sha:
+        return {
+            "pass": True,
+            "evidence_source_sha": evidence_source_sha,
+            "current_source_sha": current_source_sha,
+            "numerical_source_unchanged": True,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "failures": [],
+        }
+    merge_base = _git("merge-base", evidence_source_sha, current_source_sha)
+    rendered_paths = _git(
+        "diff", "--name-only", f"{evidence_source_sha}..{current_source_sha}"
+    )
+    changed_paths = (
+        [] if rendered_paths is None else rendered_paths.splitlines()
+    )
+
+    def allowed(path: str) -> bool:
+        return bool(
+            path in CASE090_NON_NUMERICAL_REUSE_FILES
+            or path.startswith("docs/")
+            or path.startswith("notes/")
+            or path.startswith("src/test/")
+        )
+
+    disallowed = [path for path in changed_paths if not allowed(path)]
+    failures = []
+    if merge_base != evidence_source_sha:
+        failures.append("case090_source_is_not_ancestor_of_current_source")
+    if rendered_paths is None:
+        failures.append("case090_source_diff_unreadable")
+    if disallowed:
+        failures.append("numerical_or_unapproved_source_changed_since_case090")
+    return {
+        "pass": not failures,
+        "evidence_source_sha": evidence_source_sha,
+        "current_source_sha": current_source_sha,
+        "case090_source_is_ancestor": merge_base == evidence_source_sha,
+        "numerical_source_unchanged": not disallowed and rendered_paths is not None,
+        "changed_paths": changed_paths,
+        "disallowed_changed_paths": disallowed,
+        "failures": failures,
+    }
 
 
 def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
@@ -678,6 +765,10 @@ def run(args: argparse.Namespace) -> int:
         if args.degree >= 3
         else (None, None)
     )
+    core_source_compatibility = _case090_source_compatibility(
+        core_evidence,
+        current_source_sha=source_before.get("commit_sha"),
+    )
     m160_funnel_path = args.m160_funnel_evidence_file
     if m160_funnel_path is not None and not m160_funnel_path.is_absolute():
         m160_funnel_path = ROOT / m160_funnel_path
@@ -779,6 +870,7 @@ def run(args: argparse.Namespace) -> int:
             core_evidence,
             expected_sha256=args.high_order_core_evidence_sha256,
             current_source_sha=source_before.get("commit_sha"),
+            source_compatibility=core_source_compatibility,
         )
         launch_gate = {
             "pass": bool(

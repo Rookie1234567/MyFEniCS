@@ -77,12 +77,15 @@ def high_order_core_evidence_gate(
     *,
     expected_sha256: str | None,
     current_source_sha: str | None,
+    source_compatibility: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Verify real Case090 aggregate evidence for a p3/p4 launch.
 
     A caller-supplied 64-character string is not evidence.  The aggregate JSON
     must carry a valid canonical payload digest, clean real-PDE identity, the
-    complete p3/p4 x MPI1/2/4 coverage, and the same source SHA as the launch.
+    complete p3/p4 x MPI1/2/4 coverage, and either the same source SHA as the
+    launch or an externally audited descendant containing only non-numerical
+    Task033 qualification/documentation changes.
     """
 
     if degree < 3:
@@ -110,6 +113,22 @@ def high_order_core_evidence_gate(
         for mpi_size in (1, 2, 4)
     }
     observed_digest = payload.get("evidence_sha256")
+    compatibility = (
+        source_compatibility
+        if isinstance(source_compatibility, Mapping)
+        else {}
+    )
+    evidence_source_sha = identity.get("source_commit_full_sha")
+    exact_source_match = bool(
+        _valid_hex(current_source_sha, 40)
+        and evidence_source_sha == current_source_sha
+    )
+    audited_non_numerical_descendant = bool(
+        compatibility.get("pass") is True
+        and compatibility.get("evidence_source_sha") == evidence_source_sha
+        and compatibility.get("current_source_sha") == current_source_sha
+        and compatibility.get("numerical_source_unchanged") is True
+    )
     expected_digest_valid = (
         expected_sha256 is None or _valid_hex(expected_sha256, 64)
     )
@@ -130,9 +149,8 @@ def high_order_core_evidence_gate(
             and identity.get("is_solver_pass") is True
         ),
         "tracked_source_clean": identity.get("tracked_source_dirty") is False,
-        "same_full_source_sha": bool(
-            _valid_hex(current_source_sha, 40)
-            and identity.get("source_commit_full_sha") == current_source_sha
+        "same_full_source_sha_or_audited_non_numerical_descendant": bool(
+            exact_source_match or audited_non_numerical_descendant
         ),
         "p3_p4_mpi_coverage_complete": required_pairs.issubset(covered_pairs),
     }
@@ -141,6 +159,14 @@ def high_order_core_evidence_gate(
         "pass": not failures,
         "applicable": True,
         "evidence_sha256": observed_digest,
+        "source_reuse_kind": (
+            "exact_same_sha"
+            if exact_source_match
+            else "audited_non_numerical_descendant"
+            if audited_non_numerical_descendant
+            else "not_accepted"
+        ),
+        "source_compatibility": dict(compatibility),
         "checks": checks,
         "failures": failures,
     }

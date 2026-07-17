@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 from benchmarks.run_task033_memory_watchdog import (
+    _case090_source_compatibility,
     _parse_args,
     _watchdog_source_after,
     _watchdog_source_before,
@@ -165,6 +166,85 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         )
         self.assertFalse(rejected["pass"])
         self.assertIn("expected_sha256_matches", rejected["failures"])
+
+    def test_high_order_core_accepts_only_audited_non_numerical_descendant(self) -> None:
+        current_sha = "b" * 40
+        evidence = attach_evidence_sha256(
+            {
+                "record_type": "high_order_floquet_core_gate_result",
+                "all_core_gates_passed": True,
+                "identity": {
+                    "is_pde_run": True,
+                    "is_solver_pass": True,
+                    "tracked_source_dirty": False,
+                    "source_commit_full_sha": SOURCE_SHA,
+                },
+                "coverage": [
+                    {"degree": degree, "mpi_size": mpi_size}
+                    for degree in (3, 4)
+                    for mpi_size in (1, 2, 4)
+                ],
+            }
+        )
+        compatibility = {
+            "pass": True,
+            "evidence_source_sha": SOURCE_SHA,
+            "current_source_sha": current_sha,
+            "numerical_source_unchanged": True,
+            "changed_paths": ["benchmarks/task033_qep_qualification.py"],
+            "disallowed_changed_paths": [],
+            "failures": [],
+        }
+        accepted = high_order_core_evidence_gate(
+            4,
+            evidence,
+            expected_sha256=evidence["evidence_sha256"],
+            current_source_sha=current_sha,
+            source_compatibility=compatibility,
+        )
+        self.assertTrue(accepted["pass"], accepted["failures"])
+        self.assertEqual(
+            accepted["source_reuse_kind"],
+            "audited_non_numerical_descendant",
+        )
+
+        forged = {**compatibility, "current_source_sha": "c" * 40}
+        rejected = high_order_core_evidence_gate(
+            4,
+            evidence,
+            expected_sha256=evidence["evidence_sha256"],
+            current_source_sha=current_sha,
+            source_compatibility=forged,
+        )
+        self.assertFalse(rejected["pass"])
+        self.assertIn(
+            "same_full_source_sha_or_audited_non_numerical_descendant",
+            rejected["failures"],
+        )
+
+    def test_case090_source_compatibility_rejects_numerical_changes(self) -> None:
+        evidence = {"identity": {"source_commit_full_sha": SOURCE_SHA}}
+        with mock.patch(
+            "benchmarks.run_task033_memory_watchdog._git",
+            side_effect=(SOURCE_SHA, "docs/README.md\nsrc/test/test_x.py"),
+        ):
+            accepted = _case090_source_compatibility(
+                evidence, current_source_sha="b" * 40
+            )
+        self.assertTrue(accepted["pass"], accepted["failures"])
+
+        with mock.patch(
+            "benchmarks.run_task033_memory_watchdog._git",
+            side_effect=(SOURCE_SHA, "benchmarks/run_task033_qep_matrix.py"),
+        ):
+            rejected = _case090_source_compatibility(
+                evidence, current_source_sha="b" * 40
+            )
+        self.assertFalse(rejected["pass"])
+        self.assertEqual(
+            rejected["disallowed_changed_paths"],
+            ["benchmarks/run_task033_qep_matrix.py"],
+        )
 
     def test_source_preflight_rejects_nonignored_untracked_before_and_after(self) -> None:
         sha = "a" * 40
