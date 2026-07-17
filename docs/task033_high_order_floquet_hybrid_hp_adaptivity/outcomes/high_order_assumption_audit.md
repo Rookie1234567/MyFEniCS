@@ -1,7 +1,8 @@
 # Task033 高阶假设审计
 
 > 阶段更新（2026-07-17）：p3/p4 高阶 Floquet 的实现假设已由 Case090 正式 PDE
-> 覆盖；QEP 分片已测，但全局 tracking aggregate 未资格化。本文中 adaptive、
+> 覆盖；Phase A 已使 p3/p4 QEP component 资格化，legacy 全阶 aggregate 因 p1/p2
+> 真实负结果仍未资格化。本文中 adaptive、
 > variable-p 与 buffer 相关条目保留为延期审计，不再代表当前阶段阻塞项。
 
 ## 1. 审计身份
@@ -61,13 +62,14 @@ runtime disposition。已实施结果以第 3 节 Gate routing 和 `summary.md` 
 | G2 sparse 3D Floquet algebra | G1 pass | round-trip `<=1e-12`; trace `<=1e-11`; action `<=1e-11`; no dense boundary square/full gather | repair mapping; do not enter Hybrid high order | pass，Case090 |
 | G3 MPI identity | G2 serial pass | MPI1/2/4 result difference `<=1e-10`; ownership has no slave chain | repair ownership/communication | pass，Case090 |
 | G4 analytic fixtures | G2/G3 pass | full true residual `<=1e-10`; plane-wave/Fresnel errors decrease reasonably | retain negative result; stop affected degree | pass，Case090 |
-| G5 high-order QEP/trace | pure 3D degree passes | beta/residual/biorthogonality/trace Gates pass; same degree semantics | pause Hybrid at failed degree | partial：p3/p4 shards pass；global aggregate 未资格化 |
+| G5 high-order QEP/trace | pure 3D degree passes | beta/residual/biorthogonality/trace Gates pass; near-degenerate block tracking; same degree semantics | pause Hybrid at failed degree | pass for p3/p4 QEP components；legacy p1/p2 negatives retained |
 | G6 quadrature | each candidate assembled | raised-order comparison shows no material change within declared tolerance | increase order or stop qualification | pass for retained component records |
 | G7 ordinary regression | implementation changes complete | existing p1/p2 and Case080 results unchanged within canonical Gates | fix before benchmark expansion | pass |
 
 ## 4. Audit boundary
 
 本文件的静态表保留审计历史；当前 runtime 结论是：p3/p4 entity/Floquet、解析 PDE 与
-MPI Gate 已通过，QEP p3/p4 分片通过但全局 aggregate 未资格化，p3/p4 Hybrid 同阶
+MPI Gate 已通过，QEP p3/p4 components 与 selected MPI1/2/4 identity 通过；legacy 全阶
+aggregate 因 p1/p2 未资格化，p3/p4 Hybrid 同阶
 full3D 对照仍未运行。不得用历史表的 blocker 状态覆盖当前阶段证据，也不得把当前
 组件通过外推成完整 Task033 通过。

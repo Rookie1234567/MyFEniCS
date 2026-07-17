@@ -3,6 +3,9 @@
 > 阶段更新（2026-07-17）：正式高阶运行绑定 clean source
 > `6613f94b91ebc77eb50e74086475c67df46236f6` 与镜像 digest
 > `sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d`。
+> Phase A tracking/MPI 复测绑定 clean source
+> `bb830ba5dd74ced30475402bd6bc6d3c1856c630`；数值装配与求解器相对 Case090 source
+> 未变化，并通过严格的 non-numerical descendant audit 复用 Case090。
 > Case090 与 QEP 分片已完成；完整 campaign 在 Hybrid `p1/h3/M160`
 > middle-plane reconstruction 时因用户缩小范围终止，不是资源或数值崩溃。
 
@@ -16,6 +19,7 @@
 | Task033 base SHA | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | `master` / `origin/master` | measured | `git rev-parse HEAD` |
 | selective merge is base ancestor | `true` | ancestry relation | measured | `git merge-base --is-ancestor` |
 | current branch | `codex/20260715-task33-high-order-floquet-hybrid-hp` | Task033 execution branch | measured | `git branch --show-current` |
+| Phase A source SHA | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | clean selected-QEP execution source | measured | watchdog source gate |
 | local `master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | branch tip | measured | `git rev-parse master` |
 | `origin/master` | `ad4046d7f4a360f2b160b9c196e2f7b8990ac135` | remote-tracking tip | measured | `git rev-parse origin/master` |
 | origin fetch/push | `https://github.com/Rookie1234567/MyFEniCS` | remote URL | measured | `git remote -v` |

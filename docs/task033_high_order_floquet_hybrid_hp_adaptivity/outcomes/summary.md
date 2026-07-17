@@ -4,10 +4,11 @@
 
 | 字段 | 结果 | 说明 |
 |---|---|---|
-| 阶段分类 | `task033_stage1_high_order_p3_p4_completed` | 直接 3D p3/p4 与 QEP 分片扩展已完成 |
+| 阶段分类 | `task033_stage1_phaseA_qep_tracking_closed` | 直接 3D p3/p4 与 QEP Phase A 已闭合 |
 | 原 Task033 分类 | `partial_deferred_by_user_scope` | 自适应及其后续阶段延期 |
 | 正式源码 | `6613f94b91ebc77eb50e74086475c67df46236f6` | clean worktree、同一 Docker image digest |
-| 正式计算 | Case090 144 PDE；QEP MPI1 36 shards | campaign 在进入 Hybrid p/h 后按用户要求终止 |
+| Phase A 源码 | `bb830ba5dd74ced30475402bd6bc6d3c1856c630` | block tracking、Case090 reuse audit 与 selected MPI runs |
+| 正式计算 | Case090 144 PDE；QEP MPI1 36 shards；selected p3/p4 h3 MPI2/4 4 shards | 大 campaign 已停止；Phase A 只补最小正向 MPI 身份 |
 | ordinary default | unchanged | 新能力保持显式 opt-in |
 
 ## 2. 本阶段完成项
@@ -17,8 +18,8 @@
 | p3/p4 双 Floquet 直接 3D FEM 是否正确？ | 是。p3/p4 在两个解析夹具、S/P、h5/h2.5、MPI1/2/4 的核心 Gate 全过 | Case090 aggregate |
 | 是否保持稀疏、分布式？ | 是。无全边界 allgather，无 dense boundary square | Case090 storage contract |
 | p4 是否带来精度收益？ | 在 Case090 的 36 个 p-refinement 对照中均为正收益；代价是更高 DoF、NNZ 与时间 | `high_order_floquet_results.md` |
-| p3/p4 QEP 是否可运行？ | 18/18 MPI1 分片数值通过；p3 自身趋势/跟踪通过 | `qep_order_study.md` |
-| QEP 是否已整体资格化？ | 否。全局 aggregate 被低阶趋势/跟踪及 p4 一项 tracking Gate 阻止 | `qep_order_study.md` |
+| p3/p4 QEP 是否资格化？ | 是。p3 直接通过；p4 四维近简并块 principal-angle tracking 通过 | `qep_tracking_diagnostic.md` |
+| QEP legacy 全阶 aggregate 是否资格化？ | 否。p1/p2 真实低阶负结果保留；p3/p4 不再被阻塞 | `qep_order_study.md` |
 | Hybrid 相比直接 3D FEM 是否一致？ | p2/h5、p2/h3 同阶同网格一致，行数降约 65%–69%，NNZ 降约 59% | `hybrid_vs_full3d_summary.md` |
 | p3/p4 Hybrid 是否已与同阶 full3D 对照？ | 否。目标光栅没有 p3/p4 同阶 full3D reference | `negative_results.md` |
 
@@ -65,7 +66,7 @@
 |---|---|
 | Case090 | MPI1/2/4 各 48、总计 144 PDE 已完成，aggregate 已生成 |
 | QEP MPI1 | 36/36 shards 已完成 |
-| QEP MPI2/4 | 两个 1 秒 timeout-negative 已完成 |
+| QEP MPI2/4 | p3/h3、p4/h3 各 MPI2/MPI4 正向运行通过；旧 timeout-negative 保留为合同测试 |
 | Hybrid p1/h5 | M80/M120/M160 漏斗已完成，结论为 modal-capacity negative |
 | Hybrid p1/h3 | M80、M120 已完成；M160 在 `middle_plane_reconstruction` 阶段被用户范围调整终止 |
 | Hybrid p2/p3、adaptive、buffer | 尚未进入 |
@@ -80,8 +81,7 @@
 1. p3 目标光栅：先做资源预测，再生成 p3/h5 同阶 full3D reference，随后做
    p3/h5 的 M80/M120/M160 Hybrid 漏斗与 augmented/minimal anchor；h5 通过后才考虑 h3；
 2. p4 目标光栅：只在 p3 闭合且预测 Gate 通过后，考虑 p4/h5 direct + Hybrid；
-3. QEP aggregate：先离线诊断现有 p1/p2/p4 tracking，不必立即重跑 PDE；若改动算法，
-   先复测失败组合，最终 clean-source aggregate 才重跑完整 36 项；
+3. QEP Phase A 已闭合；下一步按审阅报告做 p3/p4 matched-trace 小 fixture，不重跑完整 36 项；
 4. adaptive/graded/buffer 不属于当前阶段，除非用户重新开启，不建议继续。
 
 ## 7. 证据边界

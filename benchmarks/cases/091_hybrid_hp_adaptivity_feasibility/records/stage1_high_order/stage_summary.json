@@ -1,7 +1,7 @@
 {
   "schema_version": "task033.stage1-high-order-summary.v1",
   "record_type": "tracked_stage_summary_not_formal_manifest",
-  "status": "stage1_high_order_p3_p4_completed_original_scope_partial",
+  "status": "stage1_high_order_phaseA_qep_tracking_closed_original_scope_partial",
   "source": {
     "commit_sha": "6613f94b91ebc77eb50e74086475c67df46236f6",
     "tracked_source_clean": true,
@@ -11,6 +11,8 @@
     "completed": [
       "case090_direct_3d_p1_p4_floquet",
       "qep_mpi1_p1_p4_measured_shards",
+      "qep_phaseA_p3_p4_block_subspace_tracking",
+      "qep_selected_p3_p4_h3_mpi2_mpi4_positive_identity",
       "task032_p2_hybrid_vs_full3d_summary"
     ],
     "deferred_by_user_scope": [
@@ -49,7 +51,40 @@
     "posthoc_aggregate_status": "qep_component_aggregate_not_qualified",
     "p3_own_analytic_and_patterned_tracking_passed": true,
     "p4_h5_to_h3_minimum_patterned_overlap": 0.4844366588791664,
-    "p4_overlap_gate": 0.5
+    "p4_overlap_gate": 0.5,
+    "p4_h5_to_h3_block_size": 4,
+    "p4_h5_to_h3_minimum_block_principal_cosine": 0.9999999999998511,
+    "p4_h5_to_h3_block_beta_center_drift": 8.113629242041291e-07,
+    "p4_near_degenerate_basis_rotation_resolved": true,
+    "p2_h5_to_h3_beta_drift": 0.2608686357571582,
+    "degree_qualification": {
+      "p1": "not_qualified",
+      "p2": "not_qualified",
+      "p3": "qualified",
+      "p4": "qualified"
+    }
+  },
+  "qep_phaseA": {
+    "source_commit_sha": "bb830ba5dd74ced30475402bd6bc6d3c1856c630",
+    "ignored_root": "benchmarks/artifacts/cases/091/task033_phaseA_bb830ba/qep/selected_positive",
+    "selected_positive_run_count": 4,
+    "all_selected_positive_formal_passed": true,
+    "selected_candidates": [
+      "stage4_xy_p3_h3_mpi2",
+      "stage4_xy_p3_h3_mpi4",
+      "stage4_xy_p4_h3_mpi2",
+      "stage4_xy_p4_h3_mpi4"
+    ],
+    "maximum_relative_beta_drift_vs_mpi1": 2.14815450348768e-12,
+    "minimum_fourier_overlap_vs_mpi1": 0.6153220497794682,
+    "maximum_memory_authority_gib": 1.245391845703125,
+    "task032_p2_qep_mode_regression_tests_passed": 13,
+    "case090_reuse": {
+      "kind": "audited_non_numerical_descendant",
+      "evidence_source_sha": "6613f94b91ebc77eb50e74086475c67df46236f6",
+      "numerical_source_unchanged": true,
+      "disallowed_changed_paths": []
+    }
   },
   "campaign_stop_point": {
     "reason": "user_scope_reduction_not_numerical_failure",
@@ -73,7 +108,7 @@
   },
   "limitations": [
     "not_a_task033_formal_manifest",
-    "qep_mpi2_mpi4_are_timeout_contract_negatives_only",
+    "legacy_all_degree_qep_aggregate_remains_not_qualified_by_p1_p2",
     "case080_full3d_references_are_p2_and_grid_converged_false",
     "no_same_degree_p3_or_p4_hybrid_full3d_reference",
     "adaptivity_and_one_tib_work_deferred"

@@ -22,7 +22,7 @@ numeric Docker VM ceiling.
 
 | Check | Required condition | 当前状态 | 数据身份 | Action on failure |
 |---|---|---|---|---|
-| tracked source | clean commit and captured SHA | pass for completed records | measured | source `6613f94...` |
+| tracked source | clean commit and captured SHA | pass for completed records | measured | original source `6613f94...`; Phase A selected runs `bb830ba...` |
 | candidate prediction/guard | candidate-specific gate before launch | pass for launched Case090/QEP/Hybrid p1 | measured | external watchdog summaries |
 | host/container authority | refreshed and readable | pass for completed records | measured | cgroup + simultaneous worker RSS |
 | swap | zero use for formal case | pass for completed records | measured | cgroup swap and pswpin/pswpout delta zero |

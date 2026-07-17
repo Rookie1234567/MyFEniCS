@@ -2,8 +2,10 @@
 
 ## 源码与测试
 
-高阶实现、schemas、runners 与测试已冻结在正式计算源码
-`6613f94b91ebc77eb50e74086475c67df46236f6`。本次范围调整后没有再改求解源码。
+高阶 PDE/QEP measurement 实现冻结在正式计算源码
+`6613f94b91ebc77eb50e74086475c67df46236f6`。Phase A 在
+`bb830ba5dd74ced30475402bd6bc6d3c1856c630` 增加 aggregate block tracking 与严格的
+Case090 非数值后继提交复用门禁，没有改动数值装配或求解器。
 
 ## 本轮新增或更新
 
@@ -11,6 +13,7 @@
 |---|---|
 | 阶段摘要 | `outcomes/summary.md` |
 | 高阶结果 | `outcomes/high_order_floquet_results.md`、`outcomes/qep_order_study.md` |
+| Phase A 诊断 | `outcomes/qep_tracking_diagnostic.md`、`response_v2.md` |
 | 方法对比 | `outcomes/hybrid_vs_full3d_summary.md` |
 | 边界与暂停点 | `outcomes/negative_results.md`、`response_v1.md` |
 | 环境/审计/测试 | `outcomes/environment_and_base.md`、`high_order_assumption_audit.md`、`memory_prediction_and_launch_decisions.md`、`test_summary.md` |

@@ -39,7 +39,7 @@ MPI1 正式运行覆盖：
 | 最大 assembly / solve time | 1.511 / 0.536 s | 1.952 / 1.239 s |
 | 最大同时 worker RSS | 352.3 MiB | 659.1 MiB |
 
-## 4. 为什么不写成“QEP 全面资格通过”
+## 4. Phase A block/subspace tracking 更新
 
 对 36 个分片做 post-hoc 全局聚合时，结果是
 `qep_component_aggregate_not_qualified`：
@@ -49,8 +49,23 @@ MPI1 正式运行覆盖：
 - patterned p2 的 h5→h3 最大 beta drift 为 `0.26087`，略高于 `0.25`；
 - patterned p4 的 h5→h3 最小 overlap 为 `0.48444`，略低于 `0.5`。
 
-p3 自身的解析趋势与两段 patterned tracking 均通过。p4 的解析趋势通过，只有上述
-一段 tracking Gate 阻止升级。这是聚合层负结果，不应改写成“p4 求解失败”。
+p3 自身的解析趋势与两段 patterned tracking 均通过。Phase A 对 p4 的四维近简并块
+`[4,5,6,7]` 做基底无关 principal-angle tracking 后，得到：
 
-MPI2/4 只各做了一次 `stage4_xy_p2_h3` 的 1 秒 clean-timeout 合同测试；
-它们验证 watchdog/来源/资源/超时闭合，不证明 MPI2/4 QEP 正向性能。
+- 四维块中心 beta drift `8.11363e-7`；
+- right/left 子空间满秩；
+- 最小 symmetric principal cosine `0.999999999999851`；
+- 外部相对谱间距约 `0.0437`。
+
+因此 `0.48444` 是近简并子空间内的单模基旋转，p4 patterned tracking 现已通过。阈值没有
+放宽，p2 的 `0.2608686 > 0.25` 真实 beta drift 和 p1 失败仍保留。
+
+按 degree 独立判定：`p1=not_qualified`、`p2=not_qualified`、`p3=qualified`、
+`p4=qualified`。legacy p1–p4 全阶 aggregate 仍为
+`qep_component_aggregate_not_qualified`，因为它要求四个阶次同时通过。
+
+Phase A 在 clean source `bb830ba...` 上新增 p3/h3、p4/h3 各一个 MPI2 与 MPI4 正向测试。
+四项均 formal pass；相对 MPI1 的最大 beta drift 不超过 `2.15e-12`，最小 overlap 为
+`0.615322`。之前的 1 秒 timeout-negative 仍只作为合同负向测试。
+
+完整数值与执行理由见 `qep_tracking_diagnostic.md`。

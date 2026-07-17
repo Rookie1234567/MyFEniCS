@@ -29,3 +29,21 @@ Docker 验证结果。
 
 planning checker 继续报告 planner/完整 formal manifest 为 `not_run` 是正确的：
 本阶段新增的是独立 stage summary，没有伪造原任务书的 21-role formal closure。
+
+## 3. Review Phase A 验证
+
+| 验证 | 结果 |
+|---|---|
+| Ruff：QEP tracking + watchdog reuse files | pass |
+| host focused Task33 tests | 41 passed，1 skipped |
+| watchdog/Case090 reuse focused tests | 29 passed，1 skipped |
+| DOLFINx Task032 p2 QEP/mode regression | 13 passed |
+| p3/h3 MPI2 positive watchdog | formal pass，no swap |
+| p3/h3 MPI4 positive watchdog | formal pass，no swap |
+| p4/h3 MPI2 positive watchdog | formal pass，no swap |
+| p4/h3 MPI4 positive watchdog | formal pass，no swap |
+| p3/p4 MPI1→MPI2/4 maximum beta drift | `2.14815e-12` |
+| p3/p4 MPI1→MPI2/4 minimum Fourier overlap | `0.615322` |
+
+host 环境直接导入 Task032 DOLFINx tests 会缺少 `dolfinx/ufl`；相同 13 个测试已在正式
+`myfenics-stage4:task28` 环境运行通过。该 host import failure 是环境边界，不是回归失败。
