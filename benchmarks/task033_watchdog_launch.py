@@ -84,8 +84,7 @@ def high_order_core_evidence_gate(
     A caller-supplied 64-character string is not evidence.  The aggregate JSON
     must carry a valid canonical payload digest, clean real-PDE identity, the
     complete p3/p4 x MPI1/2/4 coverage, and either the same source SHA as the
-    launch or an externally audited descendant containing only non-numerical
-    Task033 qualification/documentation changes.
+    launch or an externally audited Case090-core-compatible descendant.
     """
 
     if degree < 3:
@@ -129,6 +128,12 @@ def high_order_core_evidence_gate(
         and compatibility.get("current_source_sha") == current_source_sha
         and compatibility.get("numerical_source_unchanged") is True
     )
+    audited_core_compatible_descendant = bool(
+        audited_non_numerical_descendant
+        and compatibility.get("compatibility_scope")
+        == "case090_pure3d_floquet_core"
+        and compatibility.get("case090_core_source_unchanged") is True
+    )
     expected_digest_valid = (
         expected_sha256 is None or _valid_hex(expected_sha256, 64)
     )
@@ -150,7 +155,9 @@ def high_order_core_evidence_gate(
         ),
         "tracked_source_clean": identity.get("tracked_source_dirty") is False,
         "same_full_source_sha_or_audited_non_numerical_descendant": bool(
-            exact_source_match or audited_non_numerical_descendant
+            exact_source_match
+            or audited_core_compatible_descendant
+            or audited_non_numerical_descendant
         ),
         "p3_p4_mpi_coverage_complete": required_pairs.issubset(covered_pairs),
     }
@@ -162,6 +169,8 @@ def high_order_core_evidence_gate(
         "source_reuse_kind": (
             "exact_same_sha"
             if exact_source_match
+            else "audited_case090_core_compatible_descendant"
+            if audited_core_compatible_descendant
             else "audited_non_numerical_descendant"
             if audited_non_numerical_descendant
             else "not_accepted"
@@ -558,6 +567,7 @@ def hybrid_launch_gate(
     core_evidence: Mapping[str, Any] | None,
     expected_core_sha256: str | None,
     current_source_sha: str | None,
+    source_compatibility: Mapping[str, Any] | None = None,
     incident_grazing_deg: float = 10.0,
     polarization_kind: str = "s",
     comparison_solver_path: str = "fast",
@@ -609,6 +619,7 @@ def hybrid_launch_gate(
         core_evidence,
         expected_sha256=expected_core_sha256,
         current_source_sha=current_source_sha,
+        source_compatibility=source_compatibility,
     )
     m240_requested = requested_modes == CONDITIONAL_FUNNEL_MODE
     m240_gate = conditional_m240_evidence_gate(

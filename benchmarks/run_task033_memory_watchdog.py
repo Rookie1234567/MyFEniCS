@@ -36,18 +36,34 @@ from benchmarks.task033_watchdog_launch import (
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "091"
 
-CASE090_NON_NUMERICAL_REUSE_FILES = frozenset(
+CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
     {
         "README.md",
         "benchmarks/cases/090_high_order_3d_floquet_hcurl/README.md",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/README.md",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage1_high_order/stage_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage2_matched_trace/phaseB_summary.json",
         "benchmarks/cases/README.md",
+        "benchmarks/run_task033_matched_trace.py",
         "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/run_task033_phaseC.py",
+        "benchmarks/task033_matched_trace_qualification.py",
+        "benchmarks/task033_phaseC.py",
         "benchmarks/task033_qep_qualification.py",
         "benchmarks/task033_watchdog_launch.py",
+        # Phase B changed only the Hybrid 3D/2D interface trace projection.
+        # It is numerical source for Hybrid, but it is component-disjoint from
+        # the already accepted pure-3D Case090 Floquet core.  Phase C creates
+        # fresh target Hybrid evidence at the new SHA; this exception reuses
+        # Case090 only as the high-order Floquet launch prerequisite.
+        "src/coupling/modal_trace_projection.py",
     }
+)
+
+CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
+    {"src/coupling/modal_trace_projection.py"}
 )
 
 
@@ -65,7 +81,12 @@ def _case090_source_compatibility(
     *,
     current_source_sha: str | None,
 ) -> dict[str, Any]:
-    """Audit whether Case090 may be reused across non-numerical descendants."""
+    """Audit whether Case090 may be reused by a core-compatible descendant.
+
+    The legacy ``numerical_source_unchanged`` field is retained for consumers
+    of the accepted Phase A record.  Its precise scope is the pure-3D Case090
+    Floquet core, not every numerical component in the repository.
+    """
 
     payload = evidence if isinstance(evidence, Mapping) else {}
     identity = payload.get("identity")
@@ -82,7 +103,10 @@ def _case090_source_compatibility(
             "evidence_source_sha": evidence_source_sha,
             "current_source_sha": current_source_sha,
             "numerical_source_unchanged": False,
+            "case090_core_source_unchanged": False,
+            "compatibility_scope": "case090_pure3d_floquet_core",
             "changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
             "disallowed_changed_paths": [],
             "failures": ["source_sha_missing_or_invalid"],
         }
@@ -92,7 +116,10 @@ def _case090_source_compatibility(
             "evidence_source_sha": evidence_source_sha,
             "current_source_sha": current_source_sha,
             "numerical_source_unchanged": True,
+            "case090_core_source_unchanged": True,
+            "compatibility_scope": "case090_pure3d_floquet_core",
             "changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
             "disallowed_changed_paths": [],
             "failures": [],
         }
@@ -106,13 +133,18 @@ def _case090_source_compatibility(
 
     def allowed(path: str) -> bool:
         return bool(
-            path in CASE090_NON_NUMERICAL_REUSE_FILES
+            path in CASE090_CORE_COMPATIBLE_DESCENDANT_FILES
             or path.startswith("docs/")
             or path.startswith("notes/")
             or path.startswith("src/test/")
         )
 
     disallowed = [path for path in changed_paths if not allowed(path)]
+    component_disjoint = [
+        path
+        for path in changed_paths
+        if path in CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES
+    ]
     failures = []
     if merge_base != evidence_source_sha:
         failures.append("case090_source_is_not_ancestor_of_current_source")
@@ -125,8 +157,14 @@ def _case090_source_compatibility(
         "evidence_source_sha": evidence_source_sha,
         "current_source_sha": current_source_sha,
         "case090_source_is_ancestor": merge_base == evidence_source_sha,
+        "compatibility_scope": "case090_pure3d_floquet_core",
+        "case090_core_source_unchanged": (
+            not disallowed and rendered_paths is not None
+        ),
+        # Historical compatibility key; see the function docstring.
         "numerical_source_unchanged": not disallowed and rendered_paths is not None,
         "changed_paths": changed_paths,
+        "component_disjoint_numerical_changed_paths": component_disjoint,
         "disallowed_changed_paths": disallowed,
         "failures": failures,
     }
@@ -826,6 +864,7 @@ def run(args: argparse.Namespace) -> int:
             core_evidence=core_evidence,
             expected_core_sha256=args.high_order_core_evidence_sha256,
             current_source_sha=source_before.get("commit_sha"),
+            source_compatibility=core_source_compatibility,
             m160_funnel_evidence=m160_funnel_evidence,
             expected_m160_funnel_sha256=(
                 args.m160_funnel_evidence_sha256

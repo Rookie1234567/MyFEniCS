@@ -222,16 +222,31 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             rejected["failures"],
         )
 
-    def test_case090_source_compatibility_rejects_numerical_changes(self) -> None:
+    def test_case090_source_compatibility_is_component_scoped(self) -> None:
         evidence = {"identity": {"source_commit_full_sha": SOURCE_SHA}}
         with mock.patch(
             "benchmarks.run_task033_memory_watchdog._git",
-            side_effect=(SOURCE_SHA, "docs/README.md\nsrc/test/test_x.py"),
+            side_effect=(
+                SOURCE_SHA,
+                "docs/README.md\n"
+                "src/test/test_x.py\n"
+                "src/coupling/modal_trace_projection.py\n"
+                "benchmarks/task033_phaseC.py",
+            ),
         ):
             accepted = _case090_source_compatibility(
                 evidence, current_source_sha="b" * 40
             )
         self.assertTrue(accepted["pass"], accepted["failures"])
+        self.assertTrue(accepted["case090_core_source_unchanged"])
+        self.assertEqual(
+            accepted["component_disjoint_numerical_changed_paths"],
+            ["src/coupling/modal_trace_projection.py"],
+        )
+        self.assertEqual(
+            accepted["compatibility_scope"],
+            "case090_pure3d_floquet_core",
+        )
 
         with mock.patch(
             "benchmarks.run_task033_memory_watchdog._git",
