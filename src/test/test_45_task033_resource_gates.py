@@ -9,6 +9,7 @@ from benchmarks.run_task033_resource_matrix import flatten_entry
 from benchmarks.task033_resource_gates import (
     BASE_GATE_GIB,
     DEFAULT_DOCKER_LIMIT_GIB,
+    build_reduced_equal_accuracy_resource_matrix,
     build_resource_matrix,
     matrix_key,
     nedelec_hex_local_dimension,
@@ -158,6 +159,29 @@ class Task033ResourceGateTests(unittest.TestCase):
         self.assertEqual(projection["projected_local_fe_rows"], 13_652)
         self.assertEqual(projection["projected_assembled_nnz"], 2_000_624)
 
+    def test_review_v5_reduced_equal_accuracy_matrix_is_separate(self) -> None:
+        record = build_reduced_equal_accuracy_resource_matrix()
+        self.assertEqual(record["matrix_shape"]["entries"], 2)
+        self.assertEqual(
+            [entry["matrix_key"] for entry in record["entries"]],
+            ["p3_h10", "p3_h7p5"],
+        )
+        self.assertEqual(
+            record["resolved_config"]["execution_order"],
+            ["p3_h10", "p3_h7p5_if_needed"],
+        )
+        for entry in record["entries"]:
+            self.assertTrue(entry["prediction_gate_pass"])
+            self.assertFalse(entry["launch_eligible"])
+            self.assertEqual(
+                entry["launch_decision"],
+                "not_launch_eligible_runtime_contract",
+            )
+        self.assertLess(
+            record["entries"][0]["conservative_upper_gib"],
+            record["entries"][1]["conservative_upper_gib"],
+        )
+
     def test_measured_p2_h3_anchor_is_not_mixed_with_predicted_fields(self) -> None:
         entry = self._entry(self._matrix(), "p2_h3")
         self.assertEqual(entry["launch_decision"], "reuse_task032_clean_anchor")
@@ -265,7 +289,7 @@ class Task033ResourceGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             project_resources(5, 3.0)
         with self.assertRaises(ValueError):
-            project_resources(2, 4.0)
+            project_resources(2, 0.0)
         with self.assertRaises(ValueError):
             build_resource_matrix(conditional_clean_records=("p9_h9",))
         with self.assertRaises(ValueError):

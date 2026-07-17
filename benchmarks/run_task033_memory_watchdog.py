@@ -35,6 +35,15 @@ from benchmarks.task033_watchdog_launch import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "091"
+REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX = (
+    ROOT
+    / "benchmarks"
+    / "cases"
+    / "091_hybrid_hp_adaptivity_feasibility"
+    / "records"
+    / "stage5_equal_accuracy"
+    / "resource_matrix.json"
+)
 
 CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
     {
@@ -57,15 +66,31 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "stage3_p3_h5/phaseC_summary.json",
         "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
         "stage4_p4_h5/calibration_summary.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage5_equal_accuracy/full3d_reference_p3_h10.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage5_equal_accuracy/full3d_reference_p3_h7p5.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage5_equal_accuracy/resource_matrix.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage5_equal_accuracy/resource_matrix.csv",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "stage5_equal_accuracy/source_compatibility_audit.json",
+        "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/"
+        "variable_p_capability_audit.json",
         "benchmarks/cases/README.md",
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/run_task033_full3d_watchdog.py",
         "benchmarks/run_task033_matched_trace.py",
         "benchmarks/run_task033_memory_watchdog.py",
         "benchmarks/run_task033_phaseC.py",
+        "benchmarks/run_task033_resource_matrix.py",
+        "benchmarks/run_task033_source_compatibility.py",
+        "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
         "benchmarks/task033_phaseC.py",
         "benchmarks/task033_qep_qualification.py",
+        "benchmarks/task033_source_compatibility.py",
         "benchmarks/task033_watchdog_launch.py",
         # Phase B changed only the Hybrid 3D/2D interface trace projection.
         # It is numerical source for Hybrid, but it is component-disjoint from
@@ -353,6 +378,10 @@ def _worker_command(
         "--host-environment-id",
         args.host_environment_id,
     ]
+    if args.full3d_reference is not None:
+        command.extend(
+            ("--full3d-reference", str(args.full3d_reference))
+        )
     if args.compare_modal_schur:
         command.append("--compare-modal-schur")
     if args.graded_reference_h is not None:
@@ -657,6 +686,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
     parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
+    parser.add_argument(
+        "--full3d-reference",
+        type=Path,
+        help="Explicit same-p/h full3D descriptor for Hybrid field closure.",
+    )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
         "--polarization-kind", choices=("s", "p"), default="s"
@@ -842,9 +876,12 @@ def run(args: argparse.Namespace) -> int:
         if not resource_matrix_path.is_absolute():
             resource_matrix_path = ROOT / resource_matrix_path
         resource_matrix_path = resource_matrix_path.resolve()
-        canonical_resource_matrix = DEFAULT_RESOURCE_MATRIX.resolve()
+        canonical_resource_matrices = {
+            DEFAULT_RESOURCE_MATRIX.resolve(),
+            REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX.resolve(),
+        }
         resource_matrix_is_canonical = (
-            resource_matrix_path == canonical_resource_matrix
+            resource_matrix_path in canonical_resource_matrices
         )
         try:
             matrix_relative = resource_matrix_path.relative_to(ROOT).as_posix()

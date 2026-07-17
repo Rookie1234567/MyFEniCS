@@ -494,6 +494,8 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 "160",
                 "--graded-reference-h",
                 "5",
+                "--full3d-reference",
+                "records/p2_h5_reference.json",
                 "--verified-clean-sha",
                 "c" * 40,
             ]
@@ -512,6 +514,10 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--incident-grazing-deg 10.0", rendered)
         self.assertIn("--polarization-kind s", rendered)
         self.assertIn("--comparison-solver-path fast", rendered)
+        self.assertEqual(
+            Path(command[command.index("--full3d-reference") + 1]),
+            Path("records/p2_h5_reference.json"),
+        )
         self.assertIn("--memory-stages", command)
 
     def test_hybrid_candidate_pool_is_exactly_twice_requested_modes(self) -> None:

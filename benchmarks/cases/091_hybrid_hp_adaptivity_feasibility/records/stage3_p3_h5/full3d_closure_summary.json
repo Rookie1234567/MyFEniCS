@@ -5,6 +5,14 @@
   "implementation_source_commit_sha": "95921ab76e39eb1a7c5b3321b93d36939afb4075",
   "full3d_reference_source_commit_sha": "bd828f24dc1546263210d73d08bf7bc16ba8a129",
   "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+  "source_compatibility_audit": {
+    "record": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/source_compatibility_audit.json",
+    "status": "full3d_hybrid_numerical_source_compatible",
+    "critical_numerical_kernel_blobs_identical": true,
+    "phase6_ast_identical_after_reference_registry_removed": true,
+    "disallowed_changed_paths": [],
+    "review_v5_accepted": true
+  },
   "case": {
     "degree": 3,
     "h_nm": 5.0,

@@ -133,7 +133,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     )
     parser.add_argument("--degree", type=int, choices=(3, 4), required=True)
-    parser.add_argument("--h-nm", type=float, choices=(5.0,), default=5.0)
+    parser.add_argument(
+        "--h-nm", type=float, choices=(10.0, 7.5, 5.0), default=5.0
+    )
     parser.add_argument(
         "--run-kind",
         choices=("assembly-only", "full-solve"),

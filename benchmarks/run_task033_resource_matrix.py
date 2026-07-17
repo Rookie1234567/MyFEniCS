@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from benchmarks.task033_resource_gates import build_resource_matrix
+from benchmarks.task033_resource_gates import (
+    build_reduced_equal_accuracy_resource_matrix,
+    build_resource_matrix,
+)
 
 
 def _json_cell(value: Any) -> str:
@@ -71,6 +74,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--p4-qualified", action="store_true")
     parser.add_argument("--conditional-clean-record", action="append", default=[])
     parser.add_argument("--locked-override", action="append", default=[])
+    parser.add_argument(
+        "--reduced-equal-accuracy",
+        action="store_true",
+        help=(
+            "Write only the review-v5 p3/h10 and conditional p3/h7.5 "
+            "candidate predictions."
+        ),
+    )
     parser.add_argument("--output-json", type=Path)
     parser.add_argument("--output-csv", type=Path)
     return parser
@@ -83,16 +94,23 @@ def main() -> None:
         qualified.append(3)
     if args.p4_qualified:
         qualified.append(4)
-    record = build_resource_matrix(
-        container_limit_gib=args.container_limit_gib,
-        source_clean=args.source_clean_verified,
-        swap_activity_detected=(False if args.no_swap_verified is True else None),
-        watchdog_enabled=args.watchdog_enabled_verified,
-        one_large_case_at_a_time=args.one_large_case_verified,
-        qualified_high_order_degrees=qualified,
-        conditional_clean_records=args.conditional_clean_record,
-        locked_overrides=args.locked_override,
-    )
+    if args.reduced_equal_accuracy:
+        record = build_reduced_equal_accuracy_resource_matrix(
+            container_limit_gib=args.container_limit_gib,
+        )
+    else:
+        record = build_resource_matrix(
+            container_limit_gib=args.container_limit_gib,
+            source_clean=args.source_clean_verified,
+            swap_activity_detected=(
+                False if args.no_swap_verified is True else None
+            ),
+            watchdog_enabled=args.watchdog_enabled_verified,
+            one_large_case_at_a_time=args.one_large_case_verified,
+            qualified_high_order_degrees=qualified,
+            conditional_clean_records=args.conditional_clean_record,
+            locked_overrides=args.locked_override,
+        )
     payload = json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if args.output_json is None:
         print(payload, end="")

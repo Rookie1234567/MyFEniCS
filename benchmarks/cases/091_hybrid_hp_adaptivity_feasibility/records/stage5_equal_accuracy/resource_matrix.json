@@ -1,0 +1,235 @@
+{
+  "artifact_provenance": {
+    "generator_module": "benchmarks.task033_resource_gates",
+    "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md"
+  },
+  "benchmark_id": "task033_case091_resource_matrix",
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "data_identity": "prediction_with_measured_task032_calibration_reduced_review_v5",
+  "entries": [
+    {
+      "conditional_predecessor": null,
+      "conditional_predecessor_clean": true,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 1.9472054689389793,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 10.0,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "source_clean_unknown",
+        "swap_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h10",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "required",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 1.18297788341553,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 1.6932221469034603,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 6279113,
+          "projected_factor_payload_gib": 0.14044890480140637,
+          "projected_fill_ratio": 3.190137411695291,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 3.190137411695291
+        }
+      },
+      "projected_assembled_nnz": 1968289,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 4089,
+      "projected_total_rows": 4489,
+      "qualification_gate_pass": true,
+      "qualification_state": "review_v5_p3_component_accepted",
+      "task_matrix_label": "review_v5_required_candidate",
+      "two_center_gate_pass": true
+    },
+    {
+      "conditional_predecessor": "p3_h10",
+      "conditional_predecessor_clean": false,
+      "conservative_upper_gate_pass": true,
+      "conservative_upper_gib": 2.4630956334897443,
+      "data_identity": {
+        "pde_execution": "not_run",
+        "predicted_memory_centers": "predicted",
+        "projected_rows_nnz": "predicted",
+        "solver_result": "not_run",
+        "task032_calibration_inputs": "measured"
+      },
+      "degree": 3,
+      "degree_cell_dimension": 144,
+      "degree_cell_dimension_ratio_from_p2": 2.6666666666666665,
+      "execution_identity": "prediction_only_no_pde_run",
+      "h_nm": 7.5,
+      "internal_modal_amplitudes_2m": 320,
+      "launch_decision": "not_launch_eligible_runtime_contract",
+      "launch_eligible": false,
+      "launch_reasons": [
+        "source_clean_unknown",
+        "swap_state_unknown",
+        "watchdog_state_unknown",
+        "one_large_case_contract_unknown"
+      ],
+      "locked_override_present": false,
+      "matrix_key": "p3_h7p5",
+      "modes_per_direction": 160,
+      "planning_decision": "planning_eligible_by_resource_prediction",
+      "planning_eligible": true,
+      "planning_reasons": [],
+      "policy_class": "conditional",
+      "policy_gate_pass": true,
+      "prediction_gate_pass": true,
+      "predictions": {
+        "effective_resolution_rss_power_law": {
+          "center_gib": 1.6977119445800783,
+          "data_identity": "predicted_from_measured_task032_rss",
+          "independent_variable": "effective p/h resolution",
+          "observed_h_exponent": 1.2557144662844992
+        },
+        "factor_nnz_fill_payload_affine": {
+          "center_gib": 2.141822289991082,
+          "conservative_bytes_per_factor_nnz": 24.017064706474375,
+          "data_identity": "predicted_from_measured_task032_factor_inventories",
+          "independent_variable": "projected assembled NNZ and factor fill",
+          "minimum_fill_ratio": 1.0,
+          "observed_fill_vs_assembled_nnz_exponent": 0.5388658484959423,
+          "projected_factor_nnz": 22209532,
+          "projected_factor_payload_gib": 0.49677469501692173,
+          "projected_fill_ratio": 4.965094082791991,
+          "rss_intercept_gib": 1.51640250454105,
+          "rss_per_factor_payload_slope": 1.2589606349186688,
+          "unclamped_projected_fill_ratio": 4.965094082791991
+        }
+      },
+      "projected_assembled_nnz": 4473134,
+      "projected_external_auxiliary_rows": 80,
+      "projected_local_fe_rows": 10132,
+      "projected_total_rows": 10532,
+      "qualification_gate_pass": true,
+      "qualification_state": "review_v5_p3_component_accepted",
+      "task_matrix_label": "run_only_if_p3_h10_not_equal_accuracy",
+      "two_center_gate_pass": true
+    }
+  ],
+  "gate_limits": {
+    "conservative_upper_limit_gib": 12.478628571428573,
+    "container_limit_gib": 13.6485,
+    "container_limit_identity": "measured_phase0_docker_engine_memtotal",
+    "controlled_termination_gib": 12.673607142857142,
+    "effective_hard_budget_gib": 13.6485,
+    "host_hard_budget_gib": 14.0,
+    "scale_from_14_gib": 0.9748928571428571,
+    "two_center_limit_gib": 11.211267857142857,
+    "warning_gib": 11.211267857142857
+  },
+  "identity": {
+    "deterministic": true,
+    "is_adaptive_compression_measurement": false,
+    "is_memory_measurement": false,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false,
+    "runtime_preflight_performed": false,
+    "scope": "Task033 review-v5 p3 coarse equal-accuracy planning only"
+  },
+  "matrix_shape": {
+    "degrees": 1,
+    "entries": 2,
+    "mesh_levels": 2
+  },
+  "physical_model": {
+    "modes_per_direction": 160,
+    "solver_path": "modal-schur-memory-minimal",
+    "wavelength_nm": 13.5
+  },
+  "record_type": "task033_resource_prediction_and_launch_decision",
+  "resolved_config": {
+    "degrees": [
+      3
+    ],
+    "execution_order": [
+      "p3_h10",
+      "p3_h7p5_if_needed"
+    ],
+    "mesh_levels_nm": [
+      10.0,
+      7.5
+    ],
+    "p3_h7p5_stop_gate": "do_not_run_if_p3_h10_matches_or_beats_p2_h3_accuracy"
+  },
+  "runtime_launch_contract": {
+    "contract_failures": [
+      "source_clean_unknown",
+      "swap_state_unknown",
+      "watchdog_state_unknown",
+      "one_large_case_contract_unknown"
+    ],
+    "one_large_case_at_a_time": null,
+    "runtime_contract_verified": false,
+    "source_clean": null,
+    "swap_activity_detected": null,
+    "watchdog_enabled": null
+  },
+  "schema_version": 2,
+  "solver_path": "modal-schur-memory-minimal",
+  "status": "review_v5_reduced_equal_accuracy_planning_complete",
+  "task032_measured_calibration": {
+    "degree": 2,
+    "h3": {
+      "assembled_nnz": 8594673,
+      "data_identity": "measured",
+      "factor_nnz": 60672040,
+      "factor_payload_gib": 1.3566359728574753,
+      "h_nm": 3.0,
+      "local_fe_rows": 68396,
+      "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h3_schur_minimal.json",
+      "simultaneous_worker_rss_gib": 3.224353790283203,
+      "total_rows": 68796
+    },
+    "h5": {
+      "assembled_nnz": 2000624,
+      "data_identity": "measured",
+      "factor_nnz": 6438552,
+      "factor_payload_gib": 0.14401517808437347,
+      "h_nm": 5.0,
+      "local_fe_rows": 13652,
+      "record": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/memory_h5_schur_minimal.json",
+      "simultaneous_worker_rss_gib": 1.6977119445800781,
+      "total_rows": 14052
+    },
+    "modes_per_direction": 160,
+    "solver_path": "modal-schur-memory-minimal",
+    "source_commit": "793354af0ac72cbfe1c6eb1030b2438afe10c101"
+  },
+  "task_id": "Task033"
+}

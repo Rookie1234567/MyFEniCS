@@ -2,6 +2,14 @@
   "schema_version": "task033.stage3-p3-h5-summary.v1",
   "record_type": "tracked_stage_summary_not_formal_manifest",
   "status": "hybrid_component_closed_full3d_not_run_by_memory_gate",
+  "supersession": {
+    "superseded": true,
+    "historical_status_retained_verbatim": true,
+    "superseded_by_record": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/full3d_closure_summary.json",
+    "superseded_by_status": "same_degree_p3_h5_hybrid_full3d_numerical_closure_pass",
+    "reason": "A later user-authorized controlled p3/h5 full3D solve passed at 7.781 GiB with zero swap, after which Hybrid M160 closed all 16 same-degree comparison gates.",
+    "current_phaseC_p3_h5_status": "accepted_with_qualifications_by_review_report_v5"
+  },
   "timestamp_utc": "2026-07-17T06:29:25.3719288Z",
   "source": {
     "commit_sha": "b636444b693a932988b6d5d69f7e44e6a8cddb38",
@@ -218,8 +226,9 @@
   },
   "limitations": [
     "This tracked file is a compact stage summary, not the original Task033 formal manifest.",
-    "The Hybrid modal funnel and augmented-path equivalence do not replace a same-degree full3D reference.",
-    "Selected-plane E/H errors against p3 full3D remain unavailable because the direct candidate failed C0.",
-    "No p3/h3, p4 target, adaptive, buffer, 0.7 nm PDE, or 1 TiB qualification was run."
+    "The next two statements describe the historical C0 state only and are superseded by full3d_closure_summary.json.",
+    "At this historical checkpoint the Hybrid modal funnel and augmented-path equivalence did not replace a same-degree full3D reference.",
+    "At this historical checkpoint selected-plane E/H errors against p3 full3D were unavailable because the direct candidate had not been authorized.",
+    "No p3/h3, p4 target solve, adaptive, buffer, 0.7 nm PDE, or 1 TiB qualification was completed by this historical record."
   ]
 }

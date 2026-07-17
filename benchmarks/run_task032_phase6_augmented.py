@@ -449,6 +449,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--h-nm", type=float, default=5.0)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), default=2)
+    parser.add_argument(
+        "--full3d-reference",
+        type=Path,
+        help=(
+            "Optional explicit same-p/h full3D descriptor. This is required "
+            "for review-v5 coarse p3 candidates that are not in the legacy "
+            "reference registry."
+        ),
+    )
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
@@ -1122,8 +1131,20 @@ def main() -> None:
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
             and args.polarization_kind == "s"
         )
+        explicit_reference = args.full3d_reference
+        if explicit_reference is not None and not explicit_reference.is_absolute():
+            explicit_reference = ROOT / explicit_reference
+        reference_registry = (
+            None
+            if explicit_reference is None
+            else {(args.degree, float(args.h_nm)): explicit_reference}
+        )
         loaded_reference = (
-            _load_case080_reference(args.degree, args.h_nm)
+            _load_case080_reference(
+                args.degree,
+                args.h_nm,
+                reference_by_degree_and_h=reference_registry,
+            )
             if pinned_reference_case
             else None
         )

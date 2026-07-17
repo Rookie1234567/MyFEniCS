@@ -4,13 +4,15 @@
 
 此前只有 p2/h5、p2/h3；现在新增同物理模型、同 p3、同 h5 的正式比较：
 
-| 方法 | rows / 主 FE DoF | assembled NNZ | true residual | memory authority | R | T | A |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| full3D p3 direct | 145,943 / 145,863 | 35,566,727 | `5.442e-12` | 7.781 GiB | 0.001090107012 | 0.600622478293 | 0.398287414695 |
-| Hybrid p3 M160 Schur-minimal | local 21,847×2 + modal 320 | local 5,156,503×2 | `2.343e-12` | 2.618 GiB | 0.001090095685 | 0.600622368221 | 0.398287536094 |
+| 方法 | rows / 主 FE DoF | assembled NNZ | true residual | memory authority | wall time | R | T | A |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| full3D p3 direct | 145,943 / 145,863 | 35,566,727 | `5.442e-12` | 7.781 GiB | 103.59 s | 0.001090107012 | 0.600622478293 | 0.398287414695 |
+| Hybrid p3 M160 Schur-minimal | local 21,847×2 + modal 320 | local 5,156,503×2 | `2.343e-12` | 2.618 GiB | 111.94 s | 0.001090095685 | 0.600622368221 | 0.398287536094 |
 
 Hybrid 相对 direct 的峰值内存为 `0.336×`，即约降低 66.35%。由于两条路径的
 矩阵分块语义不同，不把 local NNZ 与 full3D NNZ 直接相除作为统一稀疏规模比。
+Hybrid/full3D 墙钟比为 `1.081×`，即 Hybrid 约慢 8.1%；因此当前尺度只证明
+内存收益，没有证明 wall-clock speedup。
 物理差异的最大 R/T/A 绝对值为 `1.214e-7`，体吸收差为 `1.214e-7`；
 五截面最大 E/H 相对 L2 为 `1.100e-5 / 1.098e-4`。这证明当前 p3/h5
 离散的一致性，但 direct reference 仍为 `grid_converged=false`，不升级为连续解
@@ -67,16 +69,21 @@ direct reference 与 Hybrid memory runner 的源码提交、工作负载和遥�
 严格 speedup 或内存降幅。可靠结论是：Hybrid 明显降低代数行数和 NNZ；当前小规模运行
 没有证明墙钟时间优于完整 3D direct。
 
-## 5. 高阶边界
+## 5. 高阶边界与当前状态
 
-Phase C 已用 clean source `b636444...` 正式完成 p3/h5 的 Schur-minimal
-M80/M120/M160 漏斗与 augmented/minimal M160 锚点。M160 residual 为
-`2.277e-12`，memory authority 为 `2.641 GiB`；M120→M160 最大 R/T/A 差为
-`7.216e-14`。这替代了旧的 clean-reference-disabled 诊断身份，证明 p3/h5
-Hybrid 组件和两条 Hybrid 路径在当前尺度上成立。
+Phase C 先在 clean source `b636444...` 完成 p3/h5 Schur-minimal
+M80/M120/M160 漏斗与 augmented/minimal M160 锚点。该历史阶段的 C0 预测曾阻止
+full3D；此状态现已由后续实测取代，不再是当前结论。
 
-但 candidate-specific C0 对 p3/h5 full3D 得到 `6.445 / 15.031 GiB` 两中心和
-`18.038 GiB` upper，超过现场 Gate，因此 full3D 记录未生成。p3 表中没有可填写的
-rows/NNZ、逐阶、selected-plane E/H 或 R/T/A reference 差，whole Phase C 保持
-未通过。p4 没有目标光栅 Hybrid 全链路记录。因此 Hybrid/full3D 的正式离散对比仍
-只收口在 p2，p3 只新增 Hybrid component evidence。
+用户随后授权的 p3/h5 full3D 在 `bd828f24...` 上完成；Hybrid M160 在
+`95921ab76...` 上绑定同一 reference NPZ 并通过 16 项 Gate。D0 source audit
+进一步证明两个提交之间 12 个关键数值内核 blob 完全一致，Phase6 runner 去除
+reference registry 后 AST 完全一致。因此当前 p3/h5 离散比较已正式收口，
+review v5 分类为 `PASS_WITH_QUALIFICATIONS`。
+
+资格限制仍然是：
+
+- p3/h5 reference 为 `provisional_best_available_discrete_reference`，不是连续解；
+- 没有 p3/h3 或 h 收敛证明；
+- p3/h5 Hybrid 有 66.35% 峰值内存下降，但没有墙钟加速；
+- p4 四模态组件通过，但目标 full3D/Hybrid 求解均被当前主机资源 Gate 阻止。

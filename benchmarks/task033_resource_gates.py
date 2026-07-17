@@ -10,6 +10,7 @@ DEFAULT_DOCKER_LIMIT_GIB = 13.6485
 
 DEGREES = (1, 2, 3, 4)
 MESH_LEVELS_NM = (5.0, 3.0, 2.5, 2.0, 1.5)
+REDUCED_EQUAL_ACCURACY_LEVELS_NM = (10.0, 7.5)
 
 # Task033 task.md, Phase 4. ``policy_class`` has only the three operational
 # classes used by the planner. The more specific task wording is retained
@@ -235,9 +236,7 @@ def project_resources(degree: int, h_nm: float) -> dict[str, Any]:
 
     if degree not in DEGREES:
         raise ValueError(f"degree must be one of {DEGREES}.")
-    h_nm = float(h_nm)
-    if h_nm not in MESH_LEVELS_NM:
-        raise ValueError(f"h_nm must be one of {MESH_LEVELS_NM}.")
+    h_nm = _positive_finite("h_nm", h_nm)
 
     h5 = TASK032_ANCHOR["h5"]
     h3 = TASK032_ANCHOR["h3"]
@@ -317,6 +316,166 @@ def project_resources(degree: int, h_nm: float) -> dict[str, Any]:
             "task032_calibration_inputs": "measured",
             "pde_execution": "not_run",
             "solver_result": "not_run",
+        },
+    }
+
+
+def build_reduced_equal_accuracy_resource_matrix(
+    *,
+    container_limit_gib: float | None = None,
+) -> dict[str, Any]:
+    """Build the review-v5 p3/h10 then conditional p3/h7.5 planning matrix.
+
+    This record is deliberately separate from the immutable original 20-case
+    planning matrix. It predicts only the two candidates authorized by review
+    v5, leaves runtime attestations unresolved, and never launches a PDE.
+    """
+
+    limits = scaled_gate_limits(container_limit_gib)
+    entries: list[dict[str, Any]] = []
+    for index, h_nm in enumerate(REDUCED_EQUAL_ACCURACY_LEVELS_NM):
+        projection = project_resources(3, h_nm)
+        centers = [
+            float(item["center_gib"])
+            for item in projection["predictions"].values()
+        ]
+        two_centers_pass = all(
+            value <= limits["two_center_limit_gib"] for value in centers
+        )
+        upper_pass = bool(
+            float(projection["conservative_upper_gib"])
+            <= limits["conservative_upper_limit_gib"]
+        )
+        prediction_gate_pass = two_centers_pass and upper_pass
+        key = matrix_key(3, h_nm)
+        predecessor = None if index == 0 else matrix_key(3, 10.0)
+        entries.append(
+            {
+                "matrix_key": key,
+                "policy_class": "required" if index == 0 else "conditional",
+                "task_matrix_label": (
+                    "review_v5_required_candidate"
+                    if index == 0
+                    else "run_only_if_p3_h10_not_equal_accuracy"
+                ),
+                "conditional_predecessor": predecessor,
+                "conditional_predecessor_clean": index == 0,
+                "locked_override_present": False,
+                "two_center_gate_pass": two_centers_pass,
+                "conservative_upper_gate_pass": upper_pass,
+                "prediction_gate_pass": prediction_gate_pass,
+                "policy_gate_pass": True,
+                "planning_eligible": prediction_gate_pass,
+                "planning_decision": (
+                    "planning_eligible_by_resource_prediction"
+                    if prediction_gate_pass
+                    else "not_run_by_memory_gate"
+                ),
+                "planning_reasons": (
+                    []
+                    if prediction_gate_pass
+                    else [
+                        *(
+                            []
+                            if two_centers_pass
+                            else [
+                                "one_or_both_center_predictions_exceed_limit"
+                            ]
+                        ),
+                        *(
+                            []
+                            if upper_pass
+                            else ["conservative_upper_exceeds_limit"]
+                        ),
+                    ]
+                ),
+                "qualification_state": "review_v5_p3_component_accepted",
+                "qualification_gate_pass": True,
+                "launch_eligible": False,
+                "launch_decision": (
+                    "not_launch_eligible_runtime_contract"
+                    if prediction_gate_pass
+                    else "not_run_by_memory_gate"
+                ),
+                "launch_reasons": (
+                    [
+                        "source_clean_unknown",
+                        "swap_state_unknown",
+                        "watchdog_state_unknown",
+                        "one_large_case_contract_unknown",
+                    ]
+                    if prediction_gate_pass
+                    else ["prediction_gate_failed"]
+                ),
+                "execution_identity": "prediction_only_no_pde_run",
+                **projection,
+            }
+        )
+
+    return {
+        "schema_version": 2,
+        "benchmark_id": "task033_case091_resource_matrix",
+        "case_id": "091_hybrid_hp_adaptivity_feasibility",
+        "task_id": "Task033",
+        "record_type": "task033_resource_prediction_and_launch_decision",
+        "status": "review_v5_reduced_equal_accuracy_planning_complete",
+        "data_identity": (
+            "prediction_with_measured_task032_calibration_reduced_review_v5"
+        ),
+        "identity": {
+            "deterministic": True,
+            "is_pde_run": False,
+            "is_solver_pass": False,
+            "is_memory_measurement": False,
+            "is_adaptive_compression_measurement": False,
+            "ordinary_default_changed": False,
+            "runtime_preflight_performed": False,
+            "proves_0p7nm_feasible": False,
+            "scope": "Task033 review-v5 p3 coarse equal-accuracy planning only",
+        },
+        "physical_model": {
+            "wavelength_nm": 13.5,
+            "solver_path": "modal-schur-memory-minimal",
+            "modes_per_direction": int(
+                TASK032_ANCHOR["modes_per_direction"]
+            ),
+        },
+        "resolved_config": {
+            "degrees": [3],
+            "mesh_levels_nm": list(REDUCED_EQUAL_ACCURACY_LEVELS_NM),
+            "execution_order": ["p3_h10", "p3_h7p5_if_needed"],
+            "p3_h7p5_stop_gate": (
+                "do_not_run_if_p3_h10_matches_or_beats_p2_h3_accuracy"
+            ),
+        },
+        "solver_path": "modal-schur-memory-minimal",
+        "gate_limits": limits,
+        "runtime_launch_contract": {
+            "source_clean": None,
+            "swap_activity_detected": None,
+            "watchdog_enabled": None,
+            "one_large_case_at_a_time": None,
+            "runtime_contract_verified": False,
+            "contract_failures": [
+                "source_clean_unknown",
+                "swap_state_unknown",
+                "watchdog_state_unknown",
+                "one_large_case_contract_unknown",
+            ],
+        },
+        "task032_measured_calibration": TASK032_ANCHOR,
+        "entries": entries,
+        "matrix_shape": {
+            "degrees": 1,
+            "mesh_levels": 2,
+            "entries": 2,
+        },
+        "artifact_provenance": {
+            "generator_module": "benchmarks.task033_resource_gates",
+            "review_authority": (
+                "docs/task033_high_order_floquet_hybrid_hp_adaptivity/"
+                "review_report_v5.md"
+            ),
         },
     }
 

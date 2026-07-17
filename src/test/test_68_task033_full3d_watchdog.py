@@ -156,6 +156,13 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             with self.subTest(stage=stage):
                 self.assertTrue(_factorization_stage_seen([{"stage": stage}]))
 
+    def test_review_v5_coarse_p3_meshes_are_parser_qualified(self) -> None:
+        for h_nm in ("10", "7.5"):
+            with self.subTest(h_nm=h_nm):
+                args = self._args("--h-nm", h_nm)
+                self.assertEqual(args.degree, 3)
+                self.assertEqual(args.h_nm, float(h_nm))
+
 
 if __name__ == "__main__":
     unittest.main()
