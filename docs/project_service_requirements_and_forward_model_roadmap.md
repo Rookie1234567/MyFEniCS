@@ -591,9 +591,18 @@ Hybrid 在 h5/h3 分别把 total rows 降低 68.62%/65.35%，assembled NNZ 降�
 59.14%/59.68%。这证明架构有效，但 local LU、replicated dense modal arrays、all-mode
 multi-RHS 和 all-modes shift-invert QEP 仍需重构。
 
-## Task033：Hybrid local h/p adaptivity and interface-budget optimization
+## Task033：high-order Floquet 与 fixed-p Hybrid feasibility（缩减范围已完成）
 
-只在上下局部 3D 区域进行 h/p 自适应，中间模态区保持解析传播。
+> 2026-07-17 最终状态：Review V6 接受 Task33 用户缩减范围。p3/p4 直接 3D
+> Floquet、QEP/matching trace、p3/h5 同阶 closure、p3/h10 accuracy negative 与
+> p3/h7.5 fixed-p clear success 已完成；p4 target 当前主机资源受限，native
+> variable-p H(curl) fail closed。local h-adaptivity 与后续 1 TiB 更新移交下一
+> 独立任务，interface buffer 等待 defect/nonuniform-end geometry。原 full scope
+> 保持 partial/NOT_RUN，但不再阻塞 Task33 reduced-scope merge。
+
+Task33 本轮已验证固定 p 的高阶路线，中间模态区保持解析传播。上下局部 3D 区域的
+conforming graded-h / h-adaptive 工作不在本次 master 可执行能力中；它由下一独立
+adaptive task 从 h5 mechanism 和新的 mesh/accuracy Gate 重新启动。
 
 代表参数集合至少包括：
 
@@ -614,15 +623,25 @@ $$
 
 目标是形成可覆盖目标角度范围的公共网格，避免每个角度重新划分网格。
 
-Task033 第一 Gate 在 13.5 nm direct reference 上比较相同 observable error：
+Task33 已完成的 fixed-p Gate 在 13.5 nm provisional p3/h5 discrete reference 上比较相同 observable error。这里需要
+区分分阶段指标：p2 graded-h 的 `3x` 只是 stretch 目标；组合使用 h/p/interface 优化后，
+`3x` 才是工程目标，`5x` 是强目标，而不是把任一局部网格单独写成必须达到的最低门槛：
 
 ```text
-local DoF reduction >= 3x minimum
->= 5x preferred
+p2 graded-h: 3x stretch target
+combined h/p/interface optimization: 3x engineering target
+combined h/p/interface optimization: 5x strong target
 ```
 
-同时优化 interface position / buffer thickness，使 local 3D volume 与所需 evanescent M 联合受控；
-未来上下复杂区域继续使用精确 complex 3D Nédélec FEM。
+interface position / buffer thickness 的联合优化没有在规则光栅上运行；它等待
+defect/nonuniform-end geometry 后为每个位置重新做 M 漏斗。未来上下复杂区域仍须
+使用精确 complex 3D Nédélec FEM。
+
+### 下一独立 adaptive task
+
+该任务承接 p2/h5 conforming graded-h mechanism、条件 p2/h3 compression，以及
+基于实测压缩并重新校准高阶资源模型后的 1 TiB / 0.7 nm 更新。不得复用 Task33
+research branch 中未资格化的 graded-mesh runner 作为 master production 能力。
 
 ## Task034：Scalable generic 2D modal core
 

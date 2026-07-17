@@ -1,0 +1,77 @@
+{
+  "record_type": "task033_full3d_reference",
+  "benchmark_id": "task033_p3_h7p5_full3d_reference",
+  "level": "p3_h7p5",
+  "metadata": {
+    "commit_sha": "6cb63a5b49ef2db0491ef21a5536eef5f54e1feb",
+    "branch": "codex/20260715-task33-high-order-floquet-hybrid-hp",
+    "git_dirty": false,
+    "tracked_source_dirty": false,
+    "command": "docker run --rm --memory 13g --memory-swap 13g ... /dolfinx-env/bin/python -m benchmarks.run_task033_full3d_watchdog --degree 3 --h-nm 7.5 --run-kind full-solve --mpi-size 4 --warning-gib 10.5 --terminate-gib 11.9",
+    "timestamp_utc": "2026-07-17T09:55:09Z",
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "host_environment_id": "SK-20260601OSDE",
+    "provenance": "clean_task033_review_v5_conditional_equal_accuracy_full3d_reference"
+  },
+  "physical_model": {
+    "wavelength_nm": 13.5,
+    "n_substrate": [0.999002304859, 0.00182649365],
+    "n_grating": [0.999002304859, 0.00182649365],
+    "incident_theta_deg": 80.0,
+    "incident_grazing_deg": 10.0,
+    "incident_phi_deg": 0.0,
+    "polarization_kind": "s",
+    "nedelec_degree": 3,
+    "mesh_h_nm": 7.5,
+    "mpi_size": 4,
+    "linear_solver": "direct_lu_mumps"
+  },
+  "reference_contract": {
+    "schema_version": 1,
+    "dtype": "complex128",
+    "array_shape": [5, 20, 40, 3],
+    "plane_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "interface_trace_sides": ["positive_z", "negative_z"],
+    "interface_trace_region": "inside_middle_modal_region",
+    "point_count": 4000,
+    "replicated_payload_bytes_uncompressed": 384000
+  },
+  "results": {
+    "case_status": "completed",
+    "official_result": true,
+    "num_nedelec_dofs": 63747,
+    "external_fourier_dtn_auxiliary_dofs": 80,
+    "linear_system_true_relative_residual": 6.44904723932212e-12,
+    "R_total": 0.003090727449909943,
+    "T_total": 0.5911608633289741,
+    "A_balance": 0.405748409221116,
+    "A_volume_total": 0.4057484092210973,
+    "R_plus_T_plus_A_volume": 0.9999999999999813,
+    "energy_closure_error_port_volume": -1.865174681370263e-14,
+    "elapsed_seconds": 44.48671327699958,
+    "external_memory_authority_gib": 3.6666221618652344,
+    "external_swap_peak_mib": 0.0
+  },
+  "artifacts": {
+    "ignored_run_root": "benchmarks/artifacts/cases/091/task033_phaseD1_6cb63a5/full3d/p3_h7.5_full-solve_mpi4_20260717T095509Z",
+    "watchdog_summary_sha256": "0fdce51b65f7afd6e50ddc9888bc9224d54b8345544f3c38c2d0b4e4dc1ce744",
+    "run_summary_sha256": "dfdfb24738c0504fb87be55b210ad32d35b604ff5e68f9667c5abd25e775dc5c",
+    "reference_metadata_sha256": "ca21ea4d7bfd6411f6bf51a6aca8b3d85d143adda7433bc6a824a397fd0a449b",
+    "reference_npz_sha256": "30613a8af7e4895f724635858af1f883a37042f73824fcc858b77f81cad52226",
+    "reference_npz_bytes": 355833,
+    "diffraction_orders_sha256": "8341d525f9b487ddccce2a9e3e8b3b147050888fd1efaa7e5828ae12167eb1db",
+    "dtn_port_diffraction_orders_sha256": "a34b8e553182ef1846bb2cd37edf00612a88c310bf44f531c1a6de30d180c1b2",
+    "power_metrics_sha256": "6c9a050ce45ca05fad414019a6e13a080393ae68c64b9c241a46926cb6593c55"
+  },
+  "qualification": {
+    "phase1_reference_pass": true,
+    "grid_converged": false,
+    "role": "same_degree_p3_h7p5_equal_accuracy_candidate_reference",
+    "heavy_artifacts_tracked": false,
+    "watchdog_status": "full3d_reference_pass",
+    "assembly_gate_status": "assembly_calibration_pass",
+    "no_swap": true,
+    "memory_below_10_gib": true
+  }
+}

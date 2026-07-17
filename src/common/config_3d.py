@@ -108,7 +108,7 @@ class SimulationConfig3D:
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = (
-        "auto"  # auto / topological_edges_p1 / topological_trace_p2
+        "auto"  # auto / topological_trace / degree-specific compatibility modes
     )
     divergence_penalty: float = 0.0
     diffraction_zero_order_only: bool = True
@@ -262,18 +262,22 @@ class SimulationConfig3D:
         if mode == "dense_side_fit":
             raise ValueError(
                 "floquet_constraint_mode='dense_side_fit' is disabled. "
-                "Use 'auto', 'topological_edges_p1', or 'topological_trace_p2'."
+                "Use 'auto' or a qualified topological trace mode."
             )
         if mode not in {
             "auto",
             "topological_edges",
             "topological_edges_p1",
             "topological_trace_p2",
+            "topological_trace_p3",
+            "topological_trace_p4",
+            "topological_trace",
             "sparse_facet",
         }:
             raise ValueError(
                 "floquet_constraint_mode must be 'auto', 'topological_edges_p1', "
-                "'topological_trace_p2', or legacy aliases 'topological_edges'/'sparse_facet'."
+                "'topological_trace', 'topological_trace_p2/p3/p4', or legacy "
+                "aliases 'topological_edges'/'sparse_facet'."
             )
         return mode
 

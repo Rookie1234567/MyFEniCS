@@ -1,0 +1,2 @@
+python -m unittest -v src.test.test_44_task033_fixture_oracles
+python -m benchmarks.run_task033_case090_matrix --output benchmarks/cases/090_high_order_3d_floquet_hcurl/records/analytic_oracles.json

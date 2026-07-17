@@ -1,0 +1,12 @@
+{
+  "schema_version": "task033.case090.pde-core-not-run.v1",
+  "record_type": "high_order_floquet_pde_core_not_run",
+  "case_id": "090_high_order_3d_floquet_hcurl",
+  "status": "not_run",
+  "is_pde_run": false,
+  "is_solver_pass": false,
+  "all_core_gates_passed": false,
+  "required_shards": [1, 2, 4],
+  "canonical_record": null,
+  "reason": "Formal records must be generated from one tracked-source-clean commit with the PDE core runner; this skeleton is not evidence."
+}

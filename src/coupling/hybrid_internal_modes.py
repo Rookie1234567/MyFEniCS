@@ -17,6 +17,10 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.high_order_quadrature import (
+    HighOrderQuadraturePolicy,
+    high_order_quadrature_policy,
+)
 from ..modes.cross_section_spaces import CrossSectionSpaces
 from ..modes.mode_classification import (
     BiorthogonalModeBasis,
@@ -44,6 +48,7 @@ class HybridInterfaceModeBlocks:
     positive_projection_identity_error: float
     local_fem_outward_normal_sign: int
     lifted_query_points: int
+    quadrature_degree: int
     full_field_or_mode_gathered: bool = False
 
     def destroy(self) -> None:
@@ -63,6 +68,7 @@ class HybridInternalModeCoupling:
     negative_trace_to_positive: np.ndarray
     positive_projection_identity_error: float
     mode_count_per_direction: int
+    interface_quadrature_degree: int
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
 
@@ -268,6 +274,14 @@ class _DistributedTwoDimensionalEvaluator:
         return result.T
 
 
+def _function_space_polynomial_degree(space) -> int:
+    basix_element = getattr(space.element, "basix_element", None)
+    degree = int(getattr(basix_element, "degree", 0))
+    if degree < 1:
+        raise RuntimeError("Could not determine a positive function-space degree.")
+    return degree
+
+
 def _interface_owned_cells(system: HybridLocalDtnSystem) -> np.ndarray:
     msh = system.local_mesh.mesh
     tdim = msh.topology.dim
@@ -309,12 +323,13 @@ def lift_cross_section_vector_to_local_interface(
 
     msh = system.local_mesh.mesh
     if target_space is None:
+        target_degree = _function_space_polynomial_degree(system.V)
         target_space = fem.functionspace(
             msh,
             element(
                 "DG",
                 msh.basix_cell(),
-                2,
+                target_degree,
                 shape=(3,),
                 dtype=default_real_type,
             ),
@@ -330,12 +345,13 @@ class _ReusableInterfaceLifter:
         self.system = system
         msh = system.local_mesh.mesh
         if target_space is None:
+            target_degree = _function_space_polynomial_degree(system.V)
             target_space = fem.functionspace(
                 msh,
                 element(
                     "DG",
                     msh.basix_cell(),
-                    2,
+                    target_degree,
                     shape=(3,),
                     dtype=default_real_type,
                 ),
@@ -472,6 +488,15 @@ class _ReusableInterfaceSurfaceLoad:
     def __init__(self, system: HybridLocalDtnSystem) -> None:
         self.system = system
         self.lifter = _ReusableInterfaceLifter(system)
+        self.quadrature_policy: HighOrderQuadraturePolicy = (
+            high_order_quadrature_policy(
+                field_degree=_function_space_polynomial_degree(system.V),
+                geometry_degree=int(
+                    getattr(system.local_mesh.mesh.geometry.cmap, "degree", 1)
+                ),
+                coefficient_degree=0,
+            )
+        )
         v = ufl.TestFunction(system.V)
         ds = ufl.Measure(
             "ds",
@@ -481,7 +506,9 @@ class _ReusableInterfaceSurfaceLoad:
         self.form = fem.form(
             ufl.inner(self.lifter.target, v)
             * ds(system.local_mesh.interface_facet_tag),
-            form_compiler_options={"quadrature_degree": 8},
+            form_compiler_options={
+                "quadrature_degree": self.quadrature_policy.selected_degree
+            },
         )
 
     def assemble_entries(
@@ -530,7 +557,7 @@ class _ReusableModeTractionEvaluator:
             element(
                 "DG",
                 msh.basix_cell(),
-                2,
+                max(spaces.transverse_degree, spaces.longitudinal_degree),
                 shape=(2,),
                 dtype=default_real_type,
             ),
@@ -783,6 +810,7 @@ def _build_interface_blocks(
         lifted_query_points=(
             projection_queries + positive_queries + negative_queries
         ),
+        quadrature_degree=surface_load.quadrature_policy.selected_degree,
     )
 
 
@@ -931,6 +959,8 @@ def build_hybrid_internal_mode_coupling(
             bottom.negative_trace_to_positive
             + top.negative_trace_to_positive
         )
+        if bottom.quadrature_degree != top.quadrature_degree:
+            raise RuntimeError("Bottom/top interface quadrature policies disagree.")
         return HybridInternalModeCoupling(
             projection=projection,
             bottom=bottom,
@@ -943,6 +973,7 @@ def build_hybrid_internal_mode_coupling(
                 top.positive_projection_identity_error,
             ),
             mode_count_per_direction=mode_count,
+            interface_quadrature_degree=bottom.quadrature_degree,
         )
     except Exception:
         if bottom is not None:

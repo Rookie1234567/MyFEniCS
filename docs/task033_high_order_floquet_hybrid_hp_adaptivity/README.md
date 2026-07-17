@@ -1,59 +1,85 @@
-# Task033：高阶 Floquet 与 Hybrid h/p 自适应入口
+# Task033：高阶 Floquet、Hybrid 与等精度阶段性收口
 
 ## 当前状态
 
 ```text
-status = task document ready
-execution = not started
-base requirement = Task032 selective merge accepted by Review V2
+stage status = review-v6 F0 closed; reduced scope complete
+fixed-p p3/h7.5 = accepted equal-accuracy clear success with qualifications
+original Task33 full scope = partial by explicit user scope transfer
+h-adaptivity = transferred to the next independent task
+selective merge = approved; whole-branch merge prohibited
+Stage1 formal source SHA = 6613f94b91ebc77eb50e74086475c67df46236f6
+Phase A source SHA = bb830ba5dd74ced30475402bd6bc6d3c1856c630
+Phase B measurement SHA = bd7a6023bde7a7c06d456e702af4b7f9f047b3fc
+Phase B aggregate SHA = 9ac29db45b387d4590de084710abe2cc38b25ffe
+Phase C numerical SHA = b636444b693a932988b6d5d69f7e44e6a8cddb38
+Phase C1 implementation and p3 Hybrid closure SHA = 95921ab76e39eb1a7c5b3321b93d36939afb4075
+Phase D1 p3/h10 full3D SHA = bb03ad4557e4cf8ada2a7448e9a4e8386ec196b6
+Phase D1/D2 audit and p3/h7.5 full3D SHA = 6cb63a5b49ef2db0491ef21a5536eef5f54e1feb
+Phase D1 p3/h7.5 Hybrid SHA = 7a7db5874b1eca5e60e5367e0e8bfb3fe0fd0d73
+Phase D1 aggregate implementation SHA = df35889
 ordinary default = unchanged
 ```
 
-Task033 的正式任务书见：
+原任务书 [`task.md`](task.md) 保持不改。Review V5 把数值阶段减缩为 D0
+证据收口、D1 fixed-p 等精度、D2 variable-p capability audit；三项已经完成。
+Review V6 接受这些结论，并以无 PDE 的 F0 完成 source split、资源口径、预测偏差、
+reduced-scope completion record 和精确选择性合并收口。
+原 uniform p/h 20 项矩阵不再机械执行，取而代之的是有决策价值的
+`p2/h3 → p3/h10 → conditional p3/h7.5`。p2 graded/adaptive h 与基于其
+实测压缩的 1 TiB 更新已移交下一独立任务；interface buffer 等待真实
+defect/nonuniform-end geometry；原 21-role full-scope manifest 保持 `NOT_RUN` 历史身份。
 
-- [`task.md`](task.md)
+## 阶段结论
 
-## 执行前置条件
+| 对象 | 结论 | 证据身份 |
+|---|---|---|
+| 直接 3D FEM p3/p4 Floquet | 通过 | Case090，MPI1/2/4 共 144 次 clean-source PDE |
+| p3/p4 QEP component | p3、p4 均资格化 | MPI1 36-shard replay + p3/p4 h3 MPI2/4 positive identity |
+| QEP legacy 全阶 aggregate | 未资格化 | p1 与 p2 真实低阶负结果保留；不再由 p4 基旋转阻止 |
+| p3/p4 matched trace | p3 基础迹通过；p4 新增四模态近简并块 MPI1/MPI4 正式通过 | 两模态 Phase B + `95921ab...` 四模态补测 |
+| Hybrid vs full3D | p2/h5、p2/h3 同阶同网格一致性通过 | 复用 Task032 clean Case080 records |
+| p3/h5 Hybrid M funnel | M80/M120/M160 与 augmented/minimal M160 通过 | Phase C 同一 clean SHA、MPI4、零 swap |
+| p3 Hybrid vs p3 full3D | 同阶 h5 数值闭合通过 | direct 7.781 GiB、Hybrid 2.618 GiB；最大 R/T/A 差 `1.214e-7` |
+| p4 target | 四模态组件通过；full3D/Hybrid 目标求解未启动 | full3D 装配在 12.616 GiB 受控终止；Hybrid 资源上界 42.594 GiB |
+| p3/h10 fixed-p equal accuracy | 不通过 | direct 安全完成，但全部规定物理误差劣于 p2/h3 |
+| p3/h7.5 fixed-p equal accuracy | Review V6 接受的 clear success（有 reference 资格） | 所有物理误差不劣；FE DoF/local-system rows/total rows/factor-NNZ/memory/time 改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x |
+| variable-p / hp | 当前原生能力未资格化 | fail closed；不做 bespoke constraint，不触发 microfixture；提交 fixed-p zoning 设计 |
+| p2 h-adaptive | 未运行、已移交 | 不再是 Task33 blocker；下一独立任务重新建立 mesh/accuracy Gate |
+| interface 优化 | 未运行 | 等待 defect/nonuniform-end geometry；暂保留 10/110 nm |
+| 1 TiB / 0.7 nm | 未更新 / 未证明、已移交 | 旧高阶预测低估，必须等待 adaptive 实测并重新校准 |
 
-1. Codex 先读取 Task032 `review_report_v2.md`；
-2. 按 Task032 `selective_merge_manifest.csv` 将验证组件选择性合入 clean `master`；
-3. 在 `master` 运行轻量回归与 Case080 checker；
-4. 记录 Task032 selective-merge SHA；
-5. 在本地库 `C:\Users\admin\Desktop\Code\fenics_v3_hybrid_FEM_modal` 更新 clean `origin/master`；
-6. 由 Codex 创建独立执行分支：
+## 结果入口
 
-```text
-codex/20260715-task33-high-order-floquet-hybrid-hp
-```
+- [阶段总结](outcomes/summary.md)
+- [高阶 3D Floquet 结果](outcomes/high_order_floquet_results.md)
+- [QEP 阶次研究](outcomes/qep_order_study.md)
+- [QEP tracking 诊断](outcomes/qep_tracking_diagnostic.md)
+- [Phase B matching-interface 迹组件](outcomes/matched_trace_phaseB.md)
+- [Phase C p3/h5 候选级 Gate 与 Hybrid 结果](outcomes/p3_h5_phaseC.md)
+- [Hybrid 与直接 3D FEM 对比](outcomes/hybrid_vs_full3d_summary.md)
+- [Phase D1 精简等精度结果](outcomes/reduced_equal_accuracy_phaseD.md)
+- [Phase D2 variable-p/hp capability 与 zoning 设计](outcomes/variable_p_hp_capability.md)
+- [Task33 全任务与全文档完成矩阵](outcomes/task33_completion_matrix.md)
+- [负结果与延期边界](outcomes/negative_results.md)
+- [原阶段回复](response_v1.md)
+- [对审阅报告的回复](response_v2.md)
+- [对 Phase A 复审及 Phase B 执行要求的回复](response_v3.md)
+- [对 Phase B 复审及 Phase C 执行要求的回复](response_v4.md)
+- [对 review v4 后续执行与 p3/p4 结果的回复](response_v5.md)
+- [对 review v5 D0/D1/D2 的回复](response_v6.md)
+- [对 review v6 F0 与选择性合并的回复](response_v7.md)
+- [轻量阶段证据记录](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage1_high_order/stage_summary.json)
+- [Phase B 独立轻量聚合](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json)
+- [Phase C p3/h5 轻量摘要](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/phaseC_summary.json)
+- [p3/h5 同阶 full3D 闭合摘要](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/full3d_closure_summary.json)
+- [p4 四模态迹摘要](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/p4_four_mode_summary.json)
+- [p4/h5 目标装配负校准](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage4_p4_h5/calibration_summary.json)
+- [Review V6 接受的减缩等精度聚合](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json)
+- [Review V6 reduced-scope completion record](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/task033_reduced_scope_completion.json)
+- [variable-p capability 正式审计](../../benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/variable_p_capability_audit.json)
 
-不得直接在 Task032 research branch 上实现 Task033。
-
-## Task033 的两级主线
-
-| 阶段 | 主要目的 |
-|---|---|
-| 高阶资格化 | 在 10 nm 纯 3D 空气盒和 air–Si 平坦界面上验证 p=1–4 Nédélec、双 Floquet、orientation、Fresnel 和 MPI |
-| Hybrid h/p 可行性 | 在当前 13.5 nm 光栅 Hybrid 模型上比较 p1–4、h5/h3/h2.5/h2/h1.5、分级 h 网格、p3/p4 等精度效率和接口缓冲厚度 |
-
-## 关键边界
-
-- 主求解路径为 `modal-schur-memory-minimal`；
-- `augmented direct` 仅用于小规模代数 reference；
-- 14 GiB 是硬资源边界，大组合必须通过预测 Gate；
-- 不使用 swap 强行完成大算例；
-- Task033 不新增最终 Hybrid 迭代法；
-- Task033 不重构 Task034 的 scalable modal core；
-- 当前结构简单不等于未来结构 y 不变；
-- 上下复杂 3D FEM 仍是未来目标架构的必要部分；
-- p2 h-adaptive 的 3 倍压缩是 stretch，不是最低通过线；
-- combined h/p/interface 的 3 倍是工程目标，5 倍是强目标；
-- 公式和表格必须按 [`../markdown_rendering_standard.md`](../markdown_rendering_standard.md) 正确渲染。
-
-## 预期 Benchmark
-
-```text
-Case090 = high-order 3D Floquet H(curl) qualification
-Case091 = Hybrid h/p adaptivity feasibility
-```
-
-Task033 完成后，Codex 必须提供表格化 `outcomes/summary.md`、完整运行矩阵、14 GiB launch/not-run 决策、DoF/NNZ/RSS/time 对比、负结果和选择性合并清单。
+完整 21-role formal manifest 尚未生成；
+`records/formal_evidence_manifest_NOT_RUN.json` 继续代表原 Task33 完整范围未闭合。
+该文件不被 reduced-scope completion 覆盖。Review V6 明确批准精确文件级选择性
+合并，但不批准 whole-branch merge；普通默认入口未改变。

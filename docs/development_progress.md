@@ -1,8 +1,32 @@
-# 项目开发进度：Task000–Task032
+# 项目开发进度：Task000–Task033
+
+## 2026-07-17：Task033 Review V6 F0 与选择性合并收口
+
+Review V6 接受 Task33 的用户缩减范围。F0 没有重跑 PDE，也没有修改 Maxwell、
+Floquet、QEP、Hybrid coupling、solver 或 physical postprocess kernel；新增的是
+D1 descriptor-only source audit、跨记录执行语义、预测偏差、completion checker、
+exact manifest 和文档同步。
+
+| 项目 | 结果 |
+|---|---|
+| direct 3D p3/p4 Floquet | Case090 MPI1/2/4 共 144 PDE，核心 Gate 全过 |
+| QEP p3/p4 | Phase A p3/p4 组件与 selected MPI identity 通过；legacy 全阶 aggregate 保留 p1/p2 负结果 |
+| matching trace p3/p4 | Phase B p2 MPI1、p3/p4 MPI1/MPI4 五条通过；积分加阶 delta 0；无 full gather/dense square |
+| Hybrid/full3D | 复用 Task032 p2/h5、p2/h3 同阶同网格对照；行数降低 65%–69%，NNZ 降低约 59% |
+| p3/h5 Hybrid/full3D | 同阶 closure 通过；Hybrid 2.618 GiB vs direct 7.781 GiB，未证明网格收敛或墙钟加速 |
+| fixed-p equal accuracy | p3/h10 accuracy negative；p3/h7.5 由 Review V6 接受为 fixed-p clear success，并将 FE DoF/local-system rows/total rows/factor-NNZ/memory/指示性时间改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x |
+| p4 / variable-p | p4 target 当前主机资源受限；native variable-p H(curl) capability fail closed |
+| adaptive/graded/buffer/1 TiB | adaptive 与 1 TiB 更新移交下一独立任务；buffer 等待 defect geometry；不再阻塞 Task33 |
+| prediction audit | p3/h10 1.947→1.980 GiB；p3/h7.5 2.463→3.667 GiB；旧模型未重校准前禁止用于 1 TiB |
+| completion/merge | reduced scope complete；original full scope partial/NOT_RUN；精确 selective merge 获批，whole branch 禁止 |
+| source | Stage1 `6613f94...`；Phase A `bb830ba...`；Phase B `bd7a602...`/`9ac29db...`；Phase C `b636444...` |
+
+详细结论见
+[`task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md`](task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md)。
 
 ## 1. 文档定位
 
-本文档记录项目从初始代码审查到 Task032 当前阶段的完整开发进程，面向：
+本文档记录项目从初始代码审查到 Task033 当前阶段的完整开发进程，面向：
 
 ```text
 - 项目开发者；
@@ -34,13 +58,14 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-15
-current branch = codex/20260714-task32-hybrid-fem-modal-direct-baseline
+2026-07-17
+current branch = codex/20260715-task33-high-order-floquet-hybrid-hp
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
 Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
+Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 ```
 
 ## 1.1 2026-07-15 最新更新

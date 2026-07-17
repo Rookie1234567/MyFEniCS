@@ -1,0 +1,144 @@
+{
+  "schema_version": "task033.reduced-scope-completion.v1",
+  "record_type": "task033_reduced_scope_completion",
+  "status": "task033_reduced_scope_complete",
+  "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md",
+  "hash_policy": "sha256_and_bytes_of_utf8_text_after_lf_line_ending_canonicalization",
+  "identity": {
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "task033_reduced_scope_complete": true,
+    "original_task033_full_scope_complete": false,
+    "adaptive_transferred_to_next_task": true,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false
+  },
+  "scope_dispositions": {
+    "p2_h5_conforming_graded_h": "transferred_to_next_task",
+    "p2_h3_adaptive_compression": "transferred_to_next_task",
+    "adaptive_measured_compression": "transferred_to_next_task",
+    "one_tib_0p7nm_update": "transferred_to_adaptive_scalability_task",
+    "interface_buffer_sweep": "deferred_until_defect_or_nonuniform_end_geometry",
+    "p4_target": "resource_gated_until_new_candidate_specific_gate",
+    "p3_h3": "not_required_in_task033_reduced_scope",
+    "variable_p_target_prototype": "not_required_by_capability_gate"
+  },
+  "evidence": {
+    "case090_and_qep_tracking": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage1_high_order/stage_summary.json",
+      "sha256": "fd6c13c7a10dd1bca4743963b4911f30f7bc96b6ad7687f89a61809563e5e05e",
+      "bytes": 5101,
+      "record_type": "tracked_stage_summary_not_formal_manifest",
+      "status": "stage1_high_order_phaseA_qep_tracking_closed_original_scope_partial",
+      "accepted_interpretation": "Case090 core and selected p3/p4 QEP tracking pass"
+    },
+    "phaseB_matched_trace": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage2_matched_trace/phaseB_summary.json",
+      "sha256": "8bb376cd910c5bb93a8519c775f4f734370d9b7b8c4486ee4b119e3828f1543c",
+      "bytes": 40481,
+      "record_type": "independent_lightweight_phaseB_aggregate",
+      "status": "phaseB_p3_p4_matched_trace_pass",
+      "accepted_interpretation": "p3/p4 matching trace accepted"
+    },
+    "p3_h5_full3d_closure": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/full3d_closure_summary.json",
+      "sha256": "ac09e072a8e4b5a4d9f5ad43736503591d444b62bc8bb940b9333e093ec73a40",
+      "bytes": 4561,
+      "record_type": "tracked_stage_summary_not_formal_manifest",
+      "status": "same_degree_p3_h5_hybrid_full3d_numerical_closure_pass",
+      "accepted_interpretation": "same-degree p3/h5 closure accepted"
+    },
+    "p4_resource_negative": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage4_p4_h5/calibration_summary.json",
+      "sha256": "bbb13221187f318b0790b41ec51f1ec4b8e5f6844e2c8c459ab51eb7c8509435",
+      "bytes": 2840,
+      "record_type": "tracked_controlled_negative_calibration",
+      "status": "p4_h5_target_solve_not_launched_by_measured_memory_gate",
+      "accepted_interpretation": "p4 target is a resource-gated negative"
+    },
+    "d1_fixed_p_equal_accuracy": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/reduced_equal_accuracy_summary.json",
+      "sha256": "ac14fbb15e9226ffbf33d10b48f6e9880009eaf84ea4b611bc2e947b5cd064a3",
+      "bytes": 65455,
+      "record_type": "task033_review_v6_fixed_p_equal_accuracy",
+      "status": "fixed_p_equal_accuracy_clear_success_with_qualifications",
+      "accepted_interpretation": "p3/h7.5 fixed-p clear success with reference qualifications"
+    },
+    "d2_variable_p_capability": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/variable_p_capability_audit.json",
+      "sha256": "44183f11aa45049f4c255b646e32ebba0b118771d656b8a9de75d1875c4d62d3",
+      "bytes": 6891,
+      "record_type": "task033_variable_p_hcurl_capability_audit",
+      "status": "not_qualified_fail_closed",
+      "accepted_interpretation": "native cellwise variable-p H(curl) remains fail closed"
+    },
+    "p3_h5_source_compatibility": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/source_compatibility_audit.json",
+      "sha256": "11884edb22e57826a19697a9b8a2648a1c60f42a0e67a02291f516377e3e446a",
+      "bytes": 5380,
+      "record_type": "task033_full3d_hybrid_source_compatibility_audit",
+      "status": "full3d_hybrid_numerical_source_compatible",
+      "accepted_interpretation": "p3/h5 direct-to-Hybrid numerical source compatible"
+    },
+    "d1_source_compatibility": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/d1_source_compatibility_audit.json",
+      "sha256": "9f73bffdc4bd01e247a5586a91c1a31dd49dae00f5f6591c8b1776d4687ef23f",
+      "bytes": 8649,
+      "record_type": "task033_d1_source_compatibility_audit",
+      "status": "d1_source_splits_numerically_compatible",
+      "accepted_interpretation": "p3/h10 and p3/h7.5 D1 source splits are descriptor-only"
+    },
+    "original_full_scope_not_run": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/formal_evidence_manifest_NOT_RUN.json",
+      "sha256": "04d33bb949a3911581aadfcd47b0c02eab93320ffb7f7eafea01698bbb3eea44",
+      "bytes": 1463,
+      "record_type": "task033_formal_evidence_manifest",
+      "status": "not_run",
+      "accepted_interpretation": "original 21-role full scope remains NOT_RUN"
+    },
+    "one_tib_projection_not_qualified": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/one_tib_projection_plan.json",
+      "sha256": "c5aefd7d4f770cd528c9cabc87d4d74965d4a175c5ccc1d1e3e9056dad252e6f",
+      "bytes": 2793,
+      "record_type": "task033_one_tib_local_fe_row_projection",
+      "status": "not_qualified",
+      "accepted_interpretation": "old 1 TiB projection is not a feasibility claim"
+    },
+    "selective_merge_manifest": {
+      "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/selective_merge_manifest.csv",
+      "sha256": "a83b05adb08e01c1efbf7d3b363c1894a66b3bd10636b08770502f7fdadc4a7a",
+      "bytes": 30084,
+      "row_count": 191,
+      "include_count": 162,
+      "exclude_count": 29,
+      "all_paths_file_level_exact": true,
+      "missing_include_paths": [],
+      "required_excludes_present": [
+        "benchmarks/run_task033_adaptive_mesh.py",
+        "benchmarks/run_task033_one_tib_projection.py",
+        "benchmarks/scripts/run_task033_formal.ps1",
+        "benchmarks/task033_one_tib_projection.py",
+        "src/geometry/task033_periodic_graded_mesh.py",
+        "src/test/test_55_task033_periodic_graded_mesh.py",
+        "src/test/test_64_task033_campaign_script.py"
+      ]
+    },
+    "test_summary": {
+      "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/test_summary.md",
+      "sha256": "313b277b6bc8cb034c0c9738479b1a7bff619a528d31e67fe8b3af285a402337",
+      "bytes": 9994,
+      "f0_merge_validation_pass": true
+    }
+  },
+  "checks": {
+    "all_required_evidence_statuses_accepted": true,
+    "all_evidence_hashes_recorded": true,
+    "tracked_text_hashes_checkout_independent": true,
+    "selective_merge_manifest_file_level_exact": true,
+    "adaptive_transfer_explicit": true,
+    "original_full_scope_not_upgraded": true,
+    "ordinary_default_unchanged": true
+  },
+  "failures": [],
+  "payload_sha256": "94242bad4f15769cd29950a13f506a9be88beeaf531eb5e813f25b0456e26707"
+}

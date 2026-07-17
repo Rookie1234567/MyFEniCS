@@ -1,0 +1,646 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.qep-qualification-records.v1",
+  "title": "Task033 QEP shard, aggregate, and Hybrid mode-funnel identities",
+  "oneOf": [
+    {"$ref": "#/$defs/qepShard"},
+    {"$ref": "#/$defs/qepAggregate"},
+    {"$ref": "#/$defs/watchdogShard"}
+  ],
+  "$defs": {
+    "qepShard": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "status",
+        "identity",
+        "candidate",
+        "provenance",
+        "numerical_results",
+        "resource_measurements",
+        "gates"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case091.qep-measurement.v2"},
+        "record_type": {"const": "task033_qep_measurement_shard"},
+        "status": {
+          "enum": [
+            "not_run_by_memory_gate",
+            "not_run_runtime_contract",
+            "terminated_by_memory_gate",
+            "measured_shard_pass",
+            "measured_shard_failed",
+            "execution_failed"
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_pde_run",
+            "is_solver_pass",
+            "is_memory_measurement",
+            "result_identity",
+            "is_physical_qualification_record",
+            "physical_qualified",
+            "ordinary_default_changed",
+            "proves_0p7nm_feasible"
+          ],
+          "properties": {
+            "is_pde_run": {"type": "boolean"},
+            "is_solver_pass": {"type": "boolean"},
+            "is_memory_measurement": {"const": true},
+            "result_identity": {
+              "enum": ["measured_shard", "terminated_not_pass"]
+            },
+            "is_physical_qualification_record": {"const": false},
+            "physical_qualified": {"const": false},
+            "ordinary_default_changed": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "candidate": {"type": "object"},
+        "provenance": {"type": "object"},
+        "numerical_results": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "required": ["left_right_classification"],
+              "properties": {
+                "left_right_classification": {
+                  "type": "object",
+                  "required": [
+                    "left_candidate_pool_policy",
+                    "right_requested_modes",
+                    "left_candidate_requested_modes",
+                    "left_candidate_converged_modes",
+                    "left_pair_relative_errors",
+                    "left_pair_relative_error_max",
+                    "biorthogonality_identity_error",
+                    "biorthogonality_infinity_norm_error",
+                    "near_degenerate_groups"
+                  ],
+                  "properties": {
+                    "left_candidate_pool_policy": {
+                      "const": "max_requested_plus_8_or_2x"
+                    },
+                    "right_requested_modes": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "left_candidate_requested_modes": {
+                      "type": "integer",
+                      "minimum": 5
+                    },
+                    "left_candidate_converged_modes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "left_pair_relative_errors": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {"type": "number", "minimum": 0}
+                    },
+                    "left_pair_relative_error_max": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "biorthogonality_identity_error": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "biorthogonality_infinity_norm_error": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "near_degenerate_groups": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "indices",
+                          "beta_center_per_nm",
+                          "max_relative_beta_spread",
+                          "overlap_condition",
+                          "normalization_method",
+                          "post_normalization_identity_error"
+                        ],
+                        "properties": {
+                          "indices": {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {"type": "integer", "minimum": 0}
+                          },
+                          "beta_center_per_nm": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {"type": "number"}
+                          },
+                          "max_relative_beta_spread": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "overlap_condition": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "normalization_method": {
+                            "enum": [
+                              "diagonal_qprime",
+                              "near_degenerate_block_inverse"
+                            ]
+                          },
+                          "post_normalization_identity_error": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "resource_measurements": {"type": ["object", "null"]},
+        "gates": {
+          "type": "object",
+          "properties": {
+            "all_required_numerical_gates_pass": {"type": "boolean"},
+            "left_right_beta_pair_relative_error_le_1e-7": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "measured_shard_pass"}}},
+          "then": {
+            "properties": {
+              "identity": {
+                "properties": {
+                  "is_pde_run": {"const": true},
+                  "is_solver_pass": {"const": true},
+                  "result_identity": {"const": "measured_shard"},
+                  "is_physical_qualification_record": {"const": false},
+                  "physical_qualified": {"const": false}
+                }
+              },
+              "resource_measurements": {"type": "object"},
+              "gates": {
+                "required": [
+                  "all_required_numerical_gates_pass",
+                  "left_right_beta_pair_relative_error_le_1e-7"
+                ],
+                "properties": {
+                  "all_required_numerical_gates_pass": {"const": true},
+                  "left_right_beta_pair_relative_error_le_1e-7": {
+                    "const": true
+                  }
+                }
+              },
+              "numerical_results": {
+                "type": "object",
+                "properties": {
+                  "left_right_classification": {
+                    "properties": {
+                      "left_pair_relative_errors": {
+                        "items": {"maximum": 1e-7}
+                      },
+                      "left_pair_relative_error_max": {
+                        "maximum": 1e-7
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "measured_shard_failed"}}
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "properties": {
+                  "result_identity": {"const": "measured_shard"}
+                }
+              },
+              "gates": {
+                "required": [
+                  "all_required_numerical_gates_pass",
+                  "left_right_beta_pair_relative_error_le_1e-7"
+                ],
+                "properties": {
+                  "all_required_numerical_gates_pass": {"const": false}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "qepAggregate": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "record_type",
+        "status",
+        "identity",
+        "qualification_classification",
+        "mpi_size",
+        "required_shard_count",
+        "received_unique_shard_count",
+        "duplicate_count",
+        "unexpected_record_count",
+        "missing_candidates",
+        "p1_p2_p3_passed_shard_count",
+        "p4_completed_shard_count",
+        "negative_observation_count",
+        "negative_observations",
+        "degree_qualification",
+        "shard_gates",
+        "analytic_beta_trends",
+        "relative_to_p2",
+        "patterned_cross_h_tracking",
+        "source_records",
+        "gates"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.qep-aggregate.v1"},
+        "record_type": {"const": "task033_qep_aggregate"},
+        "status": {
+          "enum": [
+            "qep_component_aggregate_qualified",
+            "qep_component_aggregate_not_qualified"
+          ]
+        },
+        "qualification_classification": {
+          "enum": [
+            "full_p1_p4_qualified",
+            "partial_p3_only",
+            "not_qualified"
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_single_shard",
+            "is_qep_component_qualified",
+            "is_qep_p3_only_partial",
+            "is_physical_qualification_record",
+            "proves_0p7nm_feasible"
+          ],
+          "properties": {
+            "is_single_shard": {"const": false},
+            "is_qep_component_qualified": {"type": "boolean"},
+            "is_qep_p3_only_partial": {"type": "boolean"},
+            "is_physical_qualification_record": {"const": false},
+            "proves_0p7nm_feasible": {"const": false}
+          }
+        },
+        "mpi_size": {"enum": [1, 2, 4]},
+        "required_shard_count": {"const": 36},
+        "received_unique_shard_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 36
+        },
+        "duplicate_count": {"type": "integer", "minimum": 0},
+        "unexpected_record_count": {"type": "integer", "minimum": 0},
+        "missing_candidates": {"type": "array"},
+        "p1_p2_p3_passed_shard_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 27
+        },
+        "p4_completed_shard_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "negative_observation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "negative_observations": {
+          "type": "array",
+          "maxItems": 9,
+          "items": {"$ref": "#/$defs/qepNegativeObservation"}
+        },
+        "degree_qualification": {
+          "type": "object",
+          "required": ["p1", "p2", "p3", "p4"],
+          "properties": {
+            "p1": {"$ref": "#/$defs/qepDegreeQualification"},
+            "p2": {"$ref": "#/$defs/qepDegreeQualification"},
+            "p3": {"$ref": "#/$defs/qepDegreeQualification"},
+            "p4": {"$ref": "#/$defs/qepDegreeQualification"}
+          }
+        },
+        "shard_gates": {
+          "type": "object",
+          "minProperties": 36,
+          "maxProperties": 36,
+          "additionalProperties": {"$ref": "#/$defs/qepAggregateShardGate"}
+        },
+        "analytic_beta_trends": {"type": "object", "minProperties": 2},
+        "relative_to_p2": {"type": "object", "minProperties": 2},
+        "patterned_cross_h_tracking": {
+          "type": "object",
+          "minProperties": 4
+        },
+        "source_records": {
+          "type": "array",
+          "maxItems": 36,
+          "items": {"$ref": "#/$defs/qepSourceRecord"}
+        },
+        "gates": {"type": "object"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "qualification_classification": {
+                "const": "full_p1_p4_qualified"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {"const": "qep_component_aggregate_qualified"},
+              "identity": {
+                "properties": {
+                  "is_qep_component_qualified": {"const": true},
+                  "is_qep_p3_only_partial": {"const": false}
+                }
+              },
+              "negative_observation_count": {"const": 0},
+              "negative_observations": {"maxItems": 0},
+              "received_unique_shard_count": {"const": 36},
+              "duplicate_count": {"const": 0},
+              "unexpected_record_count": {"const": 0},
+              "missing_candidates": {"maxItems": 0},
+              "p1_p2_p3_passed_shard_count": {"const": 27},
+              "p4_completed_shard_count": {"const": 9}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "qualification_classification": {"const": "partial_p3_only"}
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "qep_component_aggregate_not_qualified"
+              },
+              "identity": {
+                "properties": {
+                  "is_qep_component_qualified": {"const": false},
+                  "is_qep_p3_only_partial": {"const": true}
+                }
+              },
+              "received_unique_shard_count": {"const": 36},
+              "duplicate_count": {"const": 0},
+              "unexpected_record_count": {"const": 0},
+              "missing_candidates": {"maxItems": 0},
+              "p1_p2_p3_passed_shard_count": {"const": 27},
+              "p4_completed_shard_count": {"const": 9},
+              "negative_observation_count": {"minimum": 1},
+              "negative_observations": {"minItems": 1}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "qualification_classification": {"const": "not_qualified"}
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "qep_component_aggregate_not_qualified"
+              },
+              "identity": {
+                "properties": {
+                  "is_qep_component_qualified": {"const": false},
+                  "is_qep_p3_only_partial": {"const": false}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {"required": ["formal_source"]},
+          "then": {
+            "properties": {
+              "source_records": {"minItems": 36, "maxItems": 36}
+            }
+          }
+        }
+      ]
+    },
+    "qepDegreeQualification": {
+      "type": "object",
+      "required": [
+        "status",
+        "required_shard_count",
+        "passed_shard_count",
+        "controlled_negative_shard_count"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "qualified",
+            "controlled_numeric_negative",
+            "not_qualified"
+          ]
+        },
+        "required_shard_count": {"const": 9},
+        "passed_shard_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "controlled_negative_shard_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        }
+      }
+    },
+    "qepGateResult": {
+      "type": "object",
+      "required": ["pass", "checks", "failures"],
+      "properties": {
+        "pass": {"type": "boolean"},
+        "checks": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "boolean"}
+        },
+        "failures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "qepAggregateShardGate": {
+      "type": "object",
+      "required": [
+        "pass",
+        "disposition",
+        "positive_gate",
+        "controlled_negative_gate"
+      ],
+      "properties": {
+        "pass": {"type": "boolean"},
+        "disposition": {
+          "enum": ["pass", "controlled_numeric_negative", "failed"]
+        },
+        "positive_gate": {"$ref": "#/$defs/qepGateResult"},
+        "controlled_negative_gate": {
+          "allOf": [
+            {"$ref": "#/$defs/qepGateResult"},
+            {
+              "type": "object",
+              "properties": {
+                "controlled_failure_gates": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {"type": "string"}
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "qepNegativeObservation": {
+      "type": "object",
+      "required": [
+        "candidate",
+        "status",
+        "disposition",
+        "controlled_failure_gates",
+        "is_qep_component_qualified"
+      ],
+      "properties": {
+        "candidate": {
+          "type": "object",
+          "required": ["material_kind", "degree", "h_nm", "mpi_size"],
+          "properties": {
+            "material_kind": {
+              "enum": ["air", "lossy_homogeneous", "stage4_xy"]
+            },
+            "degree": {"const": 4},
+            "h_nm": {"enum": [5.0, 3.0, 2.5]},
+            "mpi_size": {"const": 1}
+          }
+        },
+        "status": {"const": "measured_shard_failed"},
+        "disposition": {"const": "controlled_numeric_negative"},
+        "controlled_failure_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "polynomial_relative_residual_le_1e-10",
+              "left_polynomial_relative_residual_le_1e-8",
+              "biorthogonality_identity_error_le_1e-6",
+              "left_right_beta_pair_relative_error_le_1e-7"
+            ]
+          }
+        },
+        "is_qep_component_qualified": {"const": false},
+        "evidence": {
+          "type": "object",
+          "required": [
+            "watchdog_summary",
+            "solver_record",
+            "watchdog_return_code"
+          ],
+          "properties": {
+            "watchdog_summary": {"$ref": "#/$defs/evidenceDescriptor"},
+            "solver_record": {"$ref": "#/$defs/evidenceDescriptor"},
+            "watchdog_return_code": {"const": 2}
+          }
+        }
+      }
+    },
+    "qepSourceRecord": {
+      "type": "object",
+      "required": [
+        "candidate",
+        "path",
+        "sha256",
+        "disposition",
+        "solver_record"
+      ],
+      "properties": {
+        "candidate": {
+          "type": "object",
+          "required": ["material_kind", "degree", "h_nm", "mpi_size"]
+        },
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "disposition": {
+          "enum": ["pass", "controlled_numeric_negative"]
+        },
+        "solver_record": {"$ref": "#/$defs/evidenceDescriptor"}
+      }
+    },
+    "evidenceDescriptor": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "watchdogShard": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "benchmark_id",
+        "status",
+        "formal_pass",
+        "memory_authority_pass",
+        "physical_qualified",
+        "resource_authority",
+        "launch_gate"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.memory-watchdog.v2"},
+        "benchmark_id": {"const": "task033_external_memory_watchdog"},
+        "status": {"enum": ["measured_shard_pass", "formal_not_pass"]},
+        "formal_pass": {"type": "boolean"},
+        "memory_authority_pass": {"type": "boolean"},
+        "physical_qualified": {"const": false},
+        "resource_authority": {"type": "object"},
+        "launch_gate": {"type": "object"}
+      }
+    }
+  }
+}

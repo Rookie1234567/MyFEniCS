@@ -60,6 +60,8 @@ CASES = {
     "060_multilevel_hcurl_iterative_solver",
     "070_compact_physical_slab_memory_optimization",
     "080_hybrid_fem_modal_direct_baseline",
+    "090_high_order_3d_floquet_hcurl",
+    "091_hybrid_hp_adaptivity_feasibility",
 }
 
 RECORDED_CASES = {
@@ -127,6 +129,10 @@ RECORDED_CASES = {
         "records/memory_h3_schur_fast.json",
         "records/memory_h3_schur_minimal.json",
         "records/h2_prediction.json",
+    ),
+    "091_hybrid_hp_adaptivity_feasibility": (
+        "records/resource_matrix.json",
+        "records/resource_matrix.csv",
     ),
 }
 
@@ -287,8 +293,18 @@ class DocumentationContractTests(unittest.TestCase):
         for case, record_names in RECORDED_CASES.items():
             folder = cases_root / case
             with self.subTest(case=case):
-                for name in ("README.md", "config.json", "expected.json", "run.sh"):
+                for name in ("README.md", "config.json", "expected.json"):
                     self.assertTrue((folder / name).is_file(), name)
+                if case == "091_hybrid_hp_adaptivity_feasibility":
+                    self.assertTrue(
+                        (
+                            ROOT
+                            / "benchmarks"
+                            / "run_task033_reduced_scope_completion.py"
+                        ).is_file()
+                    )
+                else:
+                    self.assertTrue((folder / "run.sh").is_file(), "run.sh")
                 for name in record_names:
                     self.assertTrue((folder / name).is_file(), name)
 
@@ -311,6 +327,7 @@ class DocumentationContractTests(unittest.TestCase):
         for case in (
             "022_dtn_condensation_equivalence",
             "040_mpi_p_algebra_regression",
+            "090_high_order_3d_floquet_hcurl",
         ):
             folder = cases_root / case
             with self.subTest(case=case):
@@ -321,6 +338,14 @@ class DocumentationContractTests(unittest.TestCase):
                     "test_command.txt",
                 ):
                     self.assertTrue((folder / name).is_file(), name)
+        self.assertTrue(
+            (
+                cases_root
+                / "090_high_order_3d_floquet_hcurl"
+                / "records"
+                / "analytic_oracles.json"
+            ).is_file()
+        )
         folder = cases_root / "030_mumps_ooc_blr"
         for name in ("README.md", "config.json", "expected.json", "test_command.txt"):
             self.assertTrue((folder / name).is_file(), name)

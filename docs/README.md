@@ -40,7 +40,7 @@
 | [`solver_guide.md`](solver_guide.md) | direct/iterative 求解器选择与边界 |
 | [`iterative_solver_ports.md`](iterative_solver_ports.md) | Task27/30/31 入口、outer KSP 与 local smoother 合法性、组件 flags、资格化和资源选择规则 |
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
-| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 高阶 p=3/p=4 Floquet 资格化、p/h 运行矩阵、局部 h/p 可行性和接口缓冲研究入口 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 reduced scope complete：p3/h5 闭合、p3/h7.5 fixed-p clear success、p4 resource negative、variable-p fail closed；adaptive/1 TiB 已移交 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -61,7 +61,7 @@
 | Task030 | H(curl) hierarchy infrastructure + compact physical-slab low-memory profile | `workstation_memory_success_with_qualifications`；已以 merge commit `545165b3` 合入 master；p/h multigrid solver-negative |
 | Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
 | Task032 | Hybrid FEM–Modal direct baseline | `hybrid_direct_engineering_success` at 13.5 nm；Review V2 PASS_WITH_QUALIFICATIONS；允许选择性合并；h2 not_run |
-| Task033 | high-order Floquet + Hybrid local h/p feasibility | 任务书已准备；必须从 Task032 selective-merge 后的 clean master 启动 |
+| Task033 | high-order Floquet + Hybrid fixed-p feasibility | Review V6 reduced scope accepted；F0 完成；p3/h7.5 fixed-p clear success；adaptive 移交 |
 
 ## 当前任务
 
@@ -74,7 +74,7 @@
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
 | Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Review V2 PASS_WITH_QUALIFICATIONS；按 manifest 选择性合并获批 |
-| Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | task ready；尚未创建执行分支或运行 |
+| Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | reduced scope complete；original full scope partial by transfer；已按 exact manifest 选择性合并，whole branch 禁止 |
 
 ## Task28 审计入口
 
@@ -154,8 +154,12 @@
 
 | 文件 | 内容 |
 |---|---|
-| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | 前置合并、执行分支、两级主线、14 GiB 边界和预期 Case090/091 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | p3/p4 高阶、p3 closure、fixed-p 等精度、14 GiB 边界与后续缺口 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/task.md`](task033_high_order_floquet_hybrid_hp_adaptivity/task.md) | p=3/p=4 高阶 3D Floquet、10 nm 解析 fixture、Hybrid p/h 矩阵、局部 h/p 可行性、QEP 精度、接口缓冲和 1 TiB 预算任务书 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md`](task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v5.md) | 历史审阅：D0/D1/D2 减缩数值阶段 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md`](task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md) | 最终 scoped acceptance、adaptive 移交与 selective merge 权威 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md`](task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md) | F0、资源语义、completion record、测试和选择性合并回复 |
+| [`task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md`](task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md) | C0 full3D veto、Hybrid partial closure、未升级结论与后续要求 |
 | [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | Task033 及后续文档必须遵守的公式与表格渲染规范 |
 
-完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 必须在 Task032 选择性合并完成后由 Codex 从 clean master 创建执行分支。
+完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 已从 Task032 clean master 建立独立执行分支；后续阶段继续绑定 clean SHA 与独立审阅。

@@ -1,0 +1,60 @@
+{
+  "schema_version": "task033.stage4-p4-h5-calibration.v1",
+  "record_type": "tracked_controlled_negative_calibration",
+  "status": "p4_h5_target_solve_not_launched_by_measured_memory_gate",
+  "source_commit_sha": "95921ab76e39eb1a7c5b3321b93d36939afb4075",
+  "prerequisites": {
+    "p3_h5_full_solve_pass_no_swap_below_10_gib": true,
+    "p3_h5_memory_authority_gib": 7.781337738037109,
+    "p4_four_mode_matched_trace_pass": true,
+    "p4_four_mode_mpi_identity_pass": true
+  },
+  "assembly_only_attempt": {
+    "watchdog_status": "formal_not_pass",
+    "termination_kind": "controlled_memory_termination",
+    "container_oom_killed": false,
+    "factorization_or_solve_stage_seen": false,
+    "degree": 4,
+    "h_nm": 5.0,
+    "mpi_size": 4,
+    "num_nedelec_dofs": 339892,
+    "floquet_constraint_rows": 15412,
+    "base_matrix_rows": 339892,
+    "base_matrix_nnz": 155205040,
+    "base_matrix_payload_estimate_mib": 3554.9546279907227,
+    "base_matrix_assembly_seconds": 463.10909311099977,
+    "dtn_auxiliary_dofs": 80,
+    "dtn_auxiliary_coupling_nnz_estimate": 214600,
+    "derived_unfinalized_augmented_nnz": 155419640,
+    "derived_unfinalized_augmented_nnz_identity": "base_nnz_plus_reported_sparse_dtn_coupling_estimate_not_finalized_matinfo",
+    "internal_rss_after_base_copy_gib": 10.98992919921875,
+    "internal_rss_after_dtn_insert_gib": 10.99530029296875,
+    "external_memory_authority_gib": 12.61612319946289,
+    "cgroup_swap_peak_mib": 0.0,
+    "pswpin_delta_pages": 0,
+    "pswpout_delta_pages": 4,
+    "formal_no_swap": false,
+    "warning_gib": 10.5,
+    "controlled_termination_gib": 11.9,
+    "return_code_after_sigterm": 59
+  },
+  "target_launch_decisions": {
+    "p4_h5_full3d_direct": {
+      "decision": "do_not_launch_factorization_or_solve",
+      "reason": "assembly_copy_and_dtn_insert_already_exceed_the_current_controlled_memory_gate"
+    },
+    "p4_h5_hybrid_m160": {
+      "decision": "do_not_launch",
+      "resource_matrix_center_gib": 37.037946983223875,
+      "resource_matrix_conservative_upper_gib": 42.59363903070746,
+      "reason": "independent_candidate_specific_resource_gate_fails"
+    }
+  },
+  "interpretation": "The user-specified p3 predecessor condition was satisfied, so p4 assembly calibration was legitimately attempted. The p4 candidate then failed its own measured memory gate. This is stronger evidence than inferring p4 feasibility solely from p3 peak memory.",
+  "raw_evidence": {
+    "root": "benchmarks/artifacts/cases/091/task033_full3d/p4_h5_assembly-only_mpi4_20260717T074124Z",
+    "watchdog_summary.json": "827f6acce08b7efc338c19a0cf695fbeb08edfddc03e7ae8b4e4a47ed25454de",
+    "progress_3d.jsonl": "ccb5f6b0b897a1ac6d1a10f987a87ed36a2e40890ee78f66f9fb0f30eb26e5c9",
+    "memory_timeline.csv": "3fab87a2ce1022b4cde4f29cb0c8149aa19c9578b189551021ec0fc3fbb17a8f"
+  }
+}

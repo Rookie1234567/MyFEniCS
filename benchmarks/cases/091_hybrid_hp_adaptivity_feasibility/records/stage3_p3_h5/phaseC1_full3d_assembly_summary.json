@@ -1,0 +1,122 @@
+{
+  "schema_version": "task033.phaseC1-full3d-assembly-summary.v1",
+  "record_type": "tracked_stage_summary_not_formal_manifest",
+  "status": "assembly_calibration_pass_review_gate_still_fails",
+  "timestamp_utc": "2026-07-17T07:05:54.140104+00:00",
+  "source": {
+    "commit_sha": "35fa6a0c454d96875f9865260b13d22b43d06838",
+    "complete_nonignored_worktree_clean": true,
+    "source_stable_during_run": true,
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "mpi_size": 4
+  },
+  "authority": {
+    "review": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v4.md",
+    "review_phaseC1_assembly_only_approved": true,
+    "review_current_host_forced_factorization_or_swap_approved": false,
+    "user_override_after_review": {
+      "p3_h5_controlled_swap_attempt_authorized": true,
+      "p4_h5_condition": "only_if_p3_full_solve_has_zero_swap_and_memory_authority_below_10_GiB",
+      "semantics": "User resource authorization does not rewrite the independent review Gate as passed."
+    }
+  },
+  "case": {
+    "degree": 3,
+    "h_nm": 5.0,
+    "mpi_size": 4,
+    "target_geometry": "50 x 25 x 140 nm target grating",
+    "boundary": "auxiliary Fourier-DtN",
+    "floquet": true,
+    "ordinary_default_changed": false
+  },
+  "assembly": {
+    "status": "assembly_calibration_pass",
+    "num_nedelec_dofs": 145863,
+    "floquet_constraint_rows": 8703,
+    "floquet_constraint_raw_map_nnz": 8703,
+    "floquet_total_seconds": 0.23621489699999643,
+    "base_rows": 145863,
+    "base_assembled_nnz": 35441847,
+    "dtn_auxiliary_dofs": 80,
+    "final_rows": 145943,
+    "final_assembled_nnz": 35566727,
+    "matrix_payload_estimate_bytes": 854769000,
+    "matrix_payload_estimate_mib": 815.1712417602539,
+    "petsc_reported_matrix_memory_bytes": 0,
+    "petsc_reported_memory_semantics": "PETSc MatInfo memory is unavailable in this build; the explicit AIJ storage estimate is retained separately.",
+    "assembly_total_seconds": 75.19235803999999,
+    "factorization_or_solve_stage_seen": false,
+    "ksp_iterations": 0,
+    "symbolic_analysis_run": false,
+    "symbolic_analysis_reason": "No fail-closed interface was demonstrated that guarantees numerical factorization cannot start."
+  },
+  "dense_boundary_audit": {
+    "floquet_created_dense_boundary_square": false,
+    "dtn_auxiliary_block_is_dense": false,
+    "explicit_chac_constructed": false,
+    "dtn_auxiliary_coupling_nnz_estimate": 124880,
+    "dense_boundary_object_formed": false
+  },
+  "resource_authority": {
+    "definition": "max(simultaneous live MPI worker RSS sum, container cgroup memory.current)",
+    "memory_authority_gib": 4.14788818359375,
+    "max_simultaneous_worker_rss_mb": 4247.4375,
+    "max_container_cgroup_current_mb": 3971.71484375,
+    "max_container_swap_current_mb": 0,
+    "pswpin_delta_pages": 0,
+    "pswpout_delta_pages": 0,
+    "no_swap": true,
+    "all_four_mpi_ranks_observed": true,
+    "sample_count": 308,
+    "poll_interval_seconds": 0.25
+  },
+  "recomputed_C0": {
+    "effective_live_ceiling_gib": 12.859516143798828,
+    "two_center_limit_gib": 10.563173975263323,
+    "conservative_upper_limit_gib": 11.757271902901786,
+    "centers_gib": {
+      "effective_p_over_h_power_law": 6.444557042885593,
+      "exact_assembly_nnz_fill_factor_payload": 15.870052098628806
+    },
+    "conservative_upper_gib": 19.044062518354565,
+    "projected_fill_ratio": 15.331684977083212,
+    "projected_factor_nnz": 545297854,
+    "projected_factor_payload_gib": 12.197023112828102,
+    "review_gate_pass": false,
+    "review_gate_failures": [
+      "all_centers_within_limit",
+      "conservative_upper_within_limit"
+    ],
+    "review_disposition": "not_run_by_memory_gate",
+    "limitations": [
+      "Exact target rows and assembled NNZ replace the former Case090 transfer.",
+      "No p3 target symbolic or numerical factor was formed.",
+      "Fill and factor-payload-to-RSS mappings remain predictions from p2 target anchors.",
+      "Measured assembly-only RSS is not a proxy for factorization peak RSS."
+    ]
+  },
+  "next_decision": {
+    "review_contract": "stop_after_phaseC1_summary",
+    "user_override": "permit_one_p3_h5_full_solve_under_controlled_swap_and_hard_watchdog",
+    "planned_container_memory_gib": 13,
+    "planned_container_memory_plus_swap_gib": 20,
+    "planned_warning_gib": 12,
+    "planned_combined_termination_gib": 18.5,
+    "p4_h5": "locked_pending_p3_zero_swap_and_memory_authority_below_10_GiB_plus_p4_candidate_specific_gate"
+  },
+  "raw_evidence": {
+    "root": "benchmarks/artifacts/cases/091/task033_full3d/p3_h5_assembly-only_mpi4_20260717T070352Z",
+    "watchdog_summary.json": "bb5b2a7573ebde036cc22953ef60b6b4d6ff8e0427353742abee758b494ac029",
+    "run_summary.json": "cc1d067d312646836f688e4c4936affc4a7f648afd40f381bc5ad3df06a39781",
+    "memory_timeline.csv": "41c740656ce391b09e61a109da39b990055e705c20c7e06d035f40288769ea6e",
+    "progress_3d.jsonl": "540a1c90df13d57b901e043d4d96d2770ad5672b0f2c01b8f195e55f54000358"
+  },
+  "verification": {
+    "focused_tests": "11 passed",
+    "ruff": "pass",
+    "container_exit_code": 0,
+    "container_oom_killed": false,
+    "qualification_failures": []
+  }
+}

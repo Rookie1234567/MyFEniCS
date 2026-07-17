@@ -33,13 +33,43 @@ def _phase(kx: complex, ky: complex, kz: complex, coords: np.ndarray, zeta: np.n
     return np.exp(1j * (kx * coords[:, 0] + ky * coords[:, 1] + kz * zeta))
 
 
-def _p_vector(kvec: np.ndarray, s_vector: np.ndarray, n_medium: complex, cfg: SimulationConfig3D) -> np.ndarray:
+def p_polarization_vector(
+    kvec: np.ndarray,
+    s_vector: np.ndarray,
+    n_medium: complex,
+    cfg: SimulationConfig3D,
+) -> np.ndarray:
+    """Return the algebraically normalized local ``k-hat cross S`` basis.
+
+    A Hermitian Euclidean normalization is incorrect in a lossy medium: it
+    rescales the complex transmitted P basis and invalidates the Fresnel
+    amplitudes derived from tangential E/H continuity.  The Maxwell basis is
+    normalized with the unconjugated bilinear dot product instead.
+    """
+
     direction = kvec / (cfg.k0 * n_medium)
     p = np.cross(direction, s_vector)
-    norm = np.sqrt(np.sum(np.abs(p) ** 2))
-    if norm == 0.0:
+    norm_squared = complex(np.dot(p, p))
+    if abs(norm_squared) <= 1.0e-30:
         raise ValueError("Cannot build p polarization for a zero transverse basis.")
-    return p / norm
+    return p / _positive_sqrt(norm_squared)
+
+
+def fresnel_normal_admittance(
+    refractive_index: complex,
+    cos_theta: complex,
+    polarization_kind: str,
+) -> float:
+    """Return the positive propagation-normal power factor for S or P."""
+
+    kind = polarization_kind.lower()
+    if kind == "p":
+        value = np.conj(complex(refractive_index)) * complex(cos_theta)
+    elif kind in {"s", "custom"}:
+        value = complex(refractive_index) * complex(cos_theta)
+    else:
+        raise ValueError(f"Unsupported Fresnel polarization kind: {kind!r}.")
+    return float(np.real(value))
 
 
 def fresnel_reference(cfg: SimulationConfig3D) -> dict[str, complex | float]:
@@ -64,7 +94,11 @@ def fresnel_reference(cfg: SimulationConfig3D) -> dict[str, complex | float]:
         r = r_s
         t = t_s
 
-    admittance_ratio = (n2 * cos_t) / (n1 * cos_i)
+    incident_admittance = fresnel_normal_admittance(n1, cos_i, kind)
+    transmitted_admittance = fresnel_normal_admittance(n2, cos_t, kind)
+    if incident_admittance <= 0.0:
+        raise ValueError("Incident Fresnel power admittance must be positive.")
+    admittance_ratio = transmitted_admittance / incident_admittance
     return {
         "r_s": complex(r_s),
         "t_s": complex(t_s),
@@ -73,8 +107,9 @@ def fresnel_reference(cfg: SimulationConfig3D) -> dict[str, complex | float]:
         "r": complex(r),
         "t": complex(t),
         "R": float(abs(r) ** 2),
-        "T": float(np.real(admittance_ratio) * abs(t) ** 2),
-        "R_plus_T": float(abs(r) ** 2 + np.real(admittance_ratio) * abs(t) ** 2),
+        "T": float(admittance_ratio * abs(t) ** 2),
+        "R_plus_T": float(abs(r) ** 2 + admittance_ratio * abs(t) ** 2),
+        "normal_power_admittance_ratio": float(admittance_ratio),
         "cos_theta_i": float(cos_i),
         "cos_theta_t_real": float(np.real(cos_t)),
         "cos_theta_t_imag": float(np.imag(cos_t)),
@@ -95,9 +130,9 @@ def _fresnel_components(cfg: SimulationConfig3D):
 
     s = cfg.s_polarization_vector
     if cfg.polarization_kind.lower() == "p":
-        pol_inc = _p_vector(k_inc, s, n1, cfg)
-        pol_ref = _p_vector(k_ref, s, n1, cfg)
-        pol_trn = _p_vector(k_trn, s, n2, cfg)
+        pol_inc = p_polarization_vector(k_inc, s, n1, cfg)
+        pol_ref = p_polarization_vector(k_ref, s, n1, cfg)
+        pol_trn = p_polarization_vector(k_trn, s, n2, cfg)
     else:
         pol_inc = s
         pol_ref = s

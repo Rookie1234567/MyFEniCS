@@ -1,0 +1,97 @@
+{
+  "schema_version": "task033.stage3-p3-h5-full3d-closure.v1",
+  "record_type": "tracked_stage_summary_not_formal_manifest",
+  "status": "same_degree_p3_h5_hybrid_full3d_numerical_closure_pass",
+  "implementation_source_commit_sha": "95921ab76e39eb1a7c5b3321b93d36939afb4075",
+  "full3d_reference_source_commit_sha": "bd828f24dc1546263210d73d08bf7bc16ba8a129",
+  "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+  "source_compatibility_audit": {
+    "record": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage5_equal_accuracy/source_compatibility_audit.json",
+    "status": "full3d_hybrid_numerical_source_compatible",
+    "critical_numerical_kernel_blobs_identical": true,
+    "phase6_ast_identical_after_reference_registry_removed": true,
+    "disallowed_changed_paths": [],
+    "review_v5_accepted": true
+  },
+  "case": {
+    "degree": 3,
+    "h_nm": 5.0,
+    "wavelength_nm": 13.5,
+    "incident_grazing_deg": 10.0,
+    "polarization_kind": "s",
+    "bottom_interface_nm": 10.0,
+    "top_interface_nm": 110.0,
+    "mpi_size": 4
+  },
+  "full3d_direct": {
+    "status": "full3d_reference_pass",
+    "num_nedelec_dofs": 145863,
+    "external_dtn_auxiliary_dofs": 80,
+    "final_rows": 145943,
+    "final_assembled_nnz": 35566727,
+    "true_relative_residual": 5.4419001137798905e-12,
+    "R_total": 0.0010901070120301636,
+    "T_total": 0.6006224782934686,
+    "A_balance": 0.39828741469450124,
+    "A_volume_total": 0.3982874146945467,
+    "energy_closure_error": 4.551914400963142e-14,
+    "memory_authority_gib": 7.781337738037109,
+    "cgroup_swap_peak_mib": 0.0,
+    "no_swap": true,
+    "elapsed_seconds": 103.58807312700003,
+    "selected_plane_shape": [5, 20, 40, 3],
+    "selected_plane_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0]
+  },
+  "hybrid_schur_minimal_m160": {
+    "status": "measured_shard_pass",
+    "requested_modes_per_direction": 160,
+    "candidate_modes_per_direction": 320,
+    "true_relative_residual": 2.343406351825193e-12,
+    "R_total": 0.001090095685263455,
+    "T_total": 0.6006223682210285,
+    "A_balance": 0.39828753609370804,
+    "A_volume_total": 0.3982875360955934,
+    "energy_closure_error": 1.885380740418441e-12,
+    "memory_authority_gib": 2.6184616088867188,
+    "no_swap": true,
+    "total_seconds_max_rank": 111.9402010699996
+  },
+  "hybrid_minus_full3d": {
+    "R_total": -1.1326766708591451e-08,
+    "T_total": -1.1007244005156736e-07,
+    "A_balance": 1.2139920679832272e-07,
+    "A_volume_total": 1.2140104671543028e-07,
+    "maximum_absolute_rta_delta": 1.2139920679832272e-07,
+    "maximum_all_five_plane_electric_relative_l2": 1.1003389959244679e-05,
+    "maximum_all_five_plane_magnetic_relative_l2": 0.00010981078833337359,
+    "maximum_middle_plane_electric_relative_l2": 8.386853578784746e-06,
+    "maximum_middle_plane_magnetic_relative_l2": 0.00010981078833337359,
+    "reference_npz_sha256": "4986d7e355e3afd27ad1a34acbb2faeec5a72279036b002fcf24940e0a8113a3",
+    "reference_binding_verified": true
+  },
+  "gates": {
+    "full3d_direct_reference_pass": true,
+    "hybrid_measured_shard_pass": true,
+    "maximum_absolute_rta_delta_le_1e_5": true,
+    "volume_absorption_delta_le_1e_5": true,
+    "middle_plane_e_relative_l2_le_5e_3": true,
+    "middle_plane_h_relative_l2_le_5e_3": true,
+    "all_sixteen_hybrid_physical_and_algebraic_gates": true,
+    "same_degree_p3_h5_hybrid_full3d_numerical_closure": true
+  },
+  "resource_authority_note": "The user authorized a controlled p3 run with swap available. The measured full solve used zero cgroup swap and stayed below the user's 10 GiB p4-precondition threshold.",
+  "raw_evidence": {
+    "full3d_root": "benchmarks/artifacts/cases/091/task033_full3d/p3_h5_full-solve_mpi4_20260717T071149Z",
+    "full3d_watchdog_summary.json": "213604fba391247d37fcbb0d0133c1597fa962b594cf0c5c526ca7366500f9e4",
+    "full3d_run_summary.json": "9ae5ce1d67a9fe7dc9f5cdf55e03ca1fb973e88fc68bf8fc5a78c6a05d7b3081",
+    "hybrid_root": "benchmarks/artifacts/cases/091/task033_phaseC_full3d_closure_95921ab/phaseC_p3_h5_m160_full3d_closure_hybrid_p3_h5_mpi4_20260717T073751Z",
+    "hybrid_memory_sampler_summary.json": "9a2a882a29a8e97000e719709aef6b8fafcd403ce18b03ad4139e36e57cd1ac9",
+    "hybrid_solver_record.json": "68926fe5503cba0879c8bca2d6bf6d7ea7627c578de0b0b9de7ff22a9e8e02cd"
+  },
+  "disposition": {
+    "whole_phaseC_numerical_closure": true,
+    "independent_review_after_new_evidence": "pending",
+    "p3_h3": "not_started_by_reduced_user_scope",
+    "adaptivity": "deferred_by_user_scope"
+  }
+}

@@ -11,6 +11,9 @@ from src.modes.cross_section_spaces import (
     build_matching_cross_section,
 )
 from src.modes.mode_classification import (
+    NoAdmissibleLeftPairError,
+    _identity_error_metrics,
+    _require_admissible_left_pairs,
     build_biorthogonal_mode_basis,
     classify_mode_branch,
     pair_reciprocal_mode_bases,
@@ -80,6 +83,33 @@ class Task032ModeClassificationTests(unittest.TestCase):
             ),
         )
 
+    def test_left_pair_admissibility_fails_closed_before_normalization(self):
+        _require_admissible_left_pairs(
+            (6.6e-12, 1.0e-7), maximum_relative_error=1.0e-7
+        )
+        for errors in ((6.6e-12, 1.310935), (float("nan"),), (float("inf"),)):
+            with self.subTest(errors=errors):
+                with self.assertRaisesRegex(
+                    NoAdmissibleLeftPairError,
+                    "no admissible conjugate partner",
+                ):
+                    _require_admissible_left_pairs(
+                        errors, maximum_relative_error=1.0e-7
+                    )
+        with self.assertRaisesRegex(ValueError, "finite and non-negative"):
+            _require_admissible_left_pairs(
+                (0.0,), maximum_relative_error=float("nan")
+            )
+
+    def test_identity_error_metrics_separate_entry_and_matrix_norms(self):
+        matrix = np.eye(3, dtype=np.complex128)
+        matrix[0, 1:] = 4.0e-7
+        infinity_norm, max_entry = _identity_error_metrics(matrix)
+        self.assertAlmostEqual(infinity_norm, 8.0e-7)
+        self.assertAlmostEqual(max_entry, 4.0e-7)
+        with self.assertRaisesRegex(ValueError, "must be square"):
+            _identity_error_metrics(np.ones((2, 3), dtype=np.complex128))
+
     def test_wide_candidate_pool_filters_reciprocal_and_growing_branches(self):
         class Candidate:
             def __init__(self, beta: complex, flux: float):
@@ -125,6 +155,44 @@ class Task032ModeClassificationTests(unittest.TestCase):
             for mode in selected:
                 mode.destroy()
 
+    def test_numerical_infinity_roots_are_rejected_before_flux_classification(self):
+        class Candidate:
+            def __init__(self, beta: complex, flux: float):
+                self.beta = beta
+                self.right_full = self
+                self.flux = flux
+                self.destroyed = False
+
+            def destroy(self):
+                self.destroyed = True
+
+        class Evaluator:
+            @staticmethod
+            def evaluate(vector, _beta):
+                return vector.flux
+
+        finite = Candidate(0.1 + 0.9j, 0.0)
+        numerical_infinity = Candidate(1.1e7 + 2.0e6j, 1.0e30)
+        selected, report = select_passive_direction_modes(
+            [finite, numerical_infinity],
+            desired_direction="forward",
+            requested_modes=2,
+            poynting_evaluator=Evaluator(),
+            maximum_abs_beta=2.0e3,
+        )
+        try:
+            self.assertEqual(selected, [finite])
+            self.assertEqual(report.finite_candidate_count, 1)
+            self.assertEqual(report.numerically_infinite_candidate_count, 1)
+            self.assertEqual(
+                report.first_rejected_numerical_infinity_beta,
+                numerical_infinity.beta,
+            )
+            self.assertTrue(numerical_infinity.destroyed)
+        finally:
+            for mode in selected:
+                mode.destroy()
+
     def test_air_modes_use_poynting_and_adjoint_qep_biorthogonality(self):
         cfg = target_stage4_config(degree=2, h_nm=10.0)
         cross_section = build_matching_cross_section(cfg, "air")
@@ -163,7 +231,16 @@ class Task032ModeClassificationTests(unittest.TestCase):
             self.assertEqual(len(positive.modes), 2)
             self.assertFalse(positive.full_vector_gathered)
             self.assertLess(positive.max_identity_error, 1.0e-8)
+            self.assertLess(positive.max_entry_identity_error, 1.0e-8)
             self.assertTrue(any(len(group.indices) == 2 for group in positive.groups))
+            self.assertTrue(
+                all(
+                    len(group.indices) == 1
+                    or group.normalization_method
+                    == "near_degenerate_block_inverse"
+                    for group in positive.groups
+                )
+            )
             for mode in positive.modes:
                 self.assertEqual(mode.direction, "forward")
                 self.assertEqual(mode.classification_basis, "poynting_flux")
@@ -189,6 +266,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
             if negative is not None:
                 self.assertEqual(len(negative.modes), 2)
                 self.assertLess(negative.max_identity_error, 1.0e-8)
+                self.assertLess(negative.max_entry_identity_error, 1.0e-8)
                 for mode in negative.modes:
                     self.assertEqual(mode.direction, "backward")
                     self.assertTrue(mode.passive_branch_valid)
@@ -243,6 +321,7 @@ class Task032ModeClassificationTests(unittest.TestCase):
         )
         try:
             self.assertLess(basis.max_identity_error, 1.0e-7)
+            self.assertLess(basis.max_entry_identity_error, 1.0e-7)
             for mode in basis.modes:
                 self.assertGreater(mode.beta.imag, 0.0)
                 self.assertEqual(mode.kind, "lossy_propagating")

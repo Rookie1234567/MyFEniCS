@@ -1,0 +1,437 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case090.pde-core-records.v1",
+  "title": "Task033 Case090 PDE shards, external watchdog summaries, and aggregate",
+  "oneOf": [
+    {"$ref": "#/$defs/shard"},
+    {"$ref": "#/$defs/watchdog"},
+    {"$ref": "#/$defs/aggregate"}
+  ],
+  "$defs": {
+    "sha40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "mpiSize": {"enum": [1, 2, 4]},
+    "degree": {"enum": [1, 2, 3, 4]},
+    "nonnegativeNumber": {"type": "number", "minimum": 0},
+    "nonnegativeInteger": {"type": "integer", "minimum": 0},
+    "complexPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"type": "number"}
+    },
+    "sparseMatrixEvidence": {
+      "type": "object",
+      "required": ["matrix_type", "matrix_nnz"],
+      "properties": {
+        "matrix_type": {"type": "string", "pattern": "aij$"},
+        "matrix_nnz": {"type": "integer", "minimum": 1}
+      }
+    },
+    "phaseCacheProbe": {
+      "type": "object",
+      "required": [
+        "second_angle_deg_from_normal",
+        "topology_cache_hit",
+        "topology_build_seconds_current",
+        "phase_update_seconds",
+        "communication_bytes_sent_current",
+        "communication_bytes_received_current",
+        "global_constraint_rows",
+        "global_constraint_nnz",
+        "topology_rebuilt"
+      ],
+      "properties": {
+        "topology_cache_hit": {"const": true},
+        "topology_build_seconds_current": {"const": 0.0},
+        "phase_update_seconds": {"$ref": "#/$defs/nonnegativeNumber"},
+        "communication_bytes_sent_current": {"const": 0},
+        "communication_bytes_received_current": {"const": 0},
+        "global_constraint_rows": {"type": "integer", "minimum": 1},
+        "global_constraint_nnz": {"type": "integer", "minimum": 1},
+        "topology_rebuilt": {"const": false}
+      }
+    },
+    "algebraProbe": {
+      "type": "object",
+      "required": ["degree", "mpi_size", "core_algebra_gates_passed"],
+      "allOf": [
+        {
+          "if": {
+            "properties": {"core_algebra_gates_passed": {"const": true}},
+            "required": ["core_algebra_gates_passed"]
+          },
+          "then": {
+            "required": [
+              "constraint_round_trip_relative_error",
+              "bloch_trace_mismatch",
+              "reduced_full_action_relative_error",
+              "constraint_rows",
+              "constraint_nnz",
+              "phase_cache_probe",
+              "full_operator",
+              "embedded_reduced_operator",
+              "constraint_prolongation",
+              "reduced_full_action_paths",
+              "all_action_matrices_sparse",
+              "sparse_distributed_constraints",
+              "global_boundary_allgather_used",
+              "dense_boundary_square_formed",
+              "method"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "degree": {"$ref": "#/$defs/degree"},
+        "mpi_size": {"$ref": "#/$defs/mpiSize"},
+        "constraint_round_trip_relative_error": {"$ref": "#/$defs/nonnegativeNumber"},
+        "bloch_trace_mismatch": {"$ref": "#/$defs/nonnegativeNumber"},
+        "reduced_full_action_relative_error": {"$ref": "#/$defs/nonnegativeNumber"},
+        "constraint_rows": {"type": "integer", "minimum": 1},
+        "constraint_nnz": {"type": "integer", "minimum": 1},
+        "phase_cache_probe": {"$ref": "#/$defs/phaseCacheProbe"},
+        "full_operator": {"$ref": "#/$defs/sparseMatrixEvidence"},
+        "embedded_reduced_operator": {"$ref": "#/$defs/sparseMatrixEvidence"},
+        "constraint_prolongation": {"$ref": "#/$defs/sparseMatrixEvidence"},
+        "reduced_full_action_paths": {
+          "type": "object",
+          "required": ["assembled", "explicit", "random_vector"],
+          "properties": {
+            "assembled": {"type": "string", "minLength": 1},
+            "explicit": {"const": "C^H times assembled full H(curl) operator times C q"},
+            "random_vector": {"const": "deterministic nonzero free entries and zero slave entries"}
+          }
+        },
+        "all_action_matrices_sparse": {"const": true},
+        "sparse_distributed_constraints": {"const": true},
+        "global_boundary_allgather_used": {"const": false},
+        "dense_boundary_square_formed": {"const": false},
+        "core_algebra_gates_passed": {"type": "boolean"},
+        "method": {"type": "string", "minLength": 1}
+      }
+    },
+    "amplitudeComparison": {
+      "type": "object",
+      "required": [
+        "analytic_interface_amplitude",
+        "boundary_phase",
+        "analytic_boundary_amplitude",
+        "numerical_outgoing_amplitude_at_boundary",
+        "absolute_error",
+        "relative_error",
+        "phase_error_rad"
+      ],
+      "properties": {
+        "analytic_interface_amplitude": {"$ref": "#/$defs/complexPair"},
+        "boundary_phase": {"$ref": "#/$defs/complexPair"},
+        "analytic_boundary_amplitude": {"$ref": "#/$defs/complexPair"},
+        "numerical_outgoing_amplitude_at_boundary": {"$ref": "#/$defs/complexPair"},
+        "absolute_error": {"$ref": "#/$defs/nonnegativeNumber"},
+        "relative_error": {"$ref": "#/$defs/nonnegativeNumber"},
+        "phase_error_rad": {"type": "number", "minimum": 0, "maximum": 3.141592653589793}
+      }
+    },
+    "zeroOrderAmplitudes": {
+      "type": "object",
+      "required": ["status", "definition", "source_files", "reflection_top", "transmission_bottom"],
+      "properties": {
+        "status": {"const": "ok"},
+        "definition": {"type": "string", "minLength": 1},
+        "source_files": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+        "reflection_top": {"$ref": "#/$defs/amplitudeComparison"},
+        "transmission_bottom": {"$ref": "#/$defs/amplitudeComparison"}
+      }
+    },
+    "periodicConstraint": {
+      "type": "object",
+      "required": [
+        "global_constraint_rows",
+        "global_constraint_nnz",
+        "max_masters_per_slave",
+        "rank0_local_slaves",
+        "rank0_local_slave_records_seen",
+        "rank0_local_ghost_slave_constraints",
+        "global_ghost_slave_constraints",
+        "rank0_local_ghost_slave_records_skipped",
+        "global_ghost_slave_records_skipped",
+        "slave_edges",
+        "matched_master_edges",
+        "slave_faces",
+        "matched_master_faces",
+        "edge_constraint_rows",
+        "face_constraint_rows",
+        "x_constraint_rows",
+        "y_constraint_rows",
+        "corner_constraint_rows",
+        "topology_cache_hit",
+        "topology_cache_miss",
+        "topology_build_seconds_current",
+        "phase_update_seconds",
+        "constraint_setup_outer_seconds",
+        "constraint_total_seconds",
+        "constraint_timings_seconds",
+        "communication_bytes_sent_current",
+        "communication_bytes_received_current",
+        "rank_local_semantics_note"
+      ],
+      "properties": {
+        "global_constraint_rows": {"type": "integer", "minimum": 1},
+        "global_constraint_nnz": {"type": "integer", "minimum": 1},
+        "max_masters_per_slave": {"type": "integer", "minimum": 1},
+        "topology_cache_hit": {"type": "boolean"},
+        "topology_cache_miss": {"type": "boolean"},
+        "topology_build_seconds_current": {"$ref": "#/$defs/nonnegativeNumber"},
+        "phase_update_seconds": {"$ref": "#/$defs/nonnegativeNumber"},
+        "constraint_setup_outer_seconds": {"$ref": "#/$defs/nonnegativeNumber"},
+        "constraint_total_seconds": {"$ref": "#/$defs/nonnegativeNumber"},
+        "constraint_timings_seconds": {"type": "object"},
+        "communication_bytes_sent_current": {"$ref": "#/$defs/nonnegativeInteger"},
+        "communication_bytes_received_current": {"$ref": "#/$defs/nonnegativeInteger"}
+      }
+    },
+    "pdeResult": {
+      "type": "object",
+      "required": [
+        "matrix_id", "fixture", "grazing_deg_from_surface", "polarization",
+        "degree", "mesh_target_nm", "mpi_size", "requirement", "case_status",
+        "official_result", "discretization", "algebra", "periodic_constraint",
+        "fields", "zero_order_complex_amplitudes", "artifact_validation", "power",
+        "resources", "physical_error_scalar", "physical_qualification_passed",
+        "numerical_gates_passed", "gate_failures"
+      ],
+      "properties": {
+        "matrix_id": {"type": "string", "minLength": 1},
+        "fixture": {"enum": ["fixture_a_air_box", "fixture_b_flat_air_si"]},
+        "grazing_deg_from_surface": {"enum": [1.0, 5.0, 10.0]},
+        "polarization": {"enum": ["s", "p"]},
+        "degree": {"$ref": "#/$defs/degree"},
+        "mesh_target_nm": {"enum": [5.0, 2.5]},
+        "mpi_size": {"$ref": "#/$defs/mpiSize"},
+        "requirement": {"enum": ["required", "smoke"]},
+        "case_status": {"type": "string"},
+        "official_result": {"type": "boolean"},
+        "discretization": {"type": ["object", "null"]},
+        "algebra": {"type": ["object", "null"]},
+        "periodic_constraint": {"oneOf": [{"$ref": "#/$defs/periodicConstraint"}, {"type": "null"}]},
+        "fields": {"type": ["object", "null"]},
+        "zero_order_complex_amplitudes": {"oneOf": [{"$ref": "#/$defs/zeroOrderAmplitudes"}, {"type": "null"}]},
+        "artifact_validation": {"type": ["object", "null"]},
+        "power": {"type": ["object", "null"]},
+        "resources": {"type": ["object", "null"]},
+        "physical_error_scalar": {"type": ["number", "null"], "minimum": 0},
+        "physical_qualification_passed": {"type": "boolean"},
+        "numerical_gates_passed": {"type": "boolean"},
+        "gate_failures": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "shard": {
+      "type": "object",
+      "required": [
+        "schema_version", "record_type", "case_id", "status", "identity",
+        "limits", "coverage", "algebra_probes", "pde_results", "failures",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case090.pde-core-shard.v1"},
+        "record_type": {"const": "high_order_floquet_pde_core_shard"},
+        "case_id": {"const": "090_high_order_3d_floquet_hcurl"},
+        "status": {"enum": ["passed", "failed"]},
+        "identity": {
+          "type": "object",
+          "required": [
+            "is_pde_run", "is_solver_pass", "mpi_size", "source_commit_full_sha",
+            "source_commit_at_end_full_sha", "tracked_source_dirty_at_start",
+            "tracked_source_dirty_at_end", "source_worktree_dirty_at_start",
+            "source_worktree_dirty_at_end", "nonignored_untracked_paths_at_start",
+            "nonignored_untracked_paths_at_end", "source_cleanliness_semantics",
+            "source_clean_and_stable"
+          ],
+          "properties": {
+            "mpi_size": {"$ref": "#/$defs/mpiSize"},
+            "source_commit_full_sha": {"$ref": "#/$defs/sha40"},
+            "source_commit_at_end_full_sha": {"$ref": "#/$defs/sha40"}
+            ,"source_worktree_dirty_at_start": {"type": "boolean"}
+            ,"source_worktree_dirty_at_end": {"type": "boolean"}
+            ,"nonignored_untracked_paths_at_start": {"type": "array", "items": {"type": "string"}}
+            ,"nonignored_untracked_paths_at_end": {"type": "array", "items": {"type": "string"}}
+            ,"source_cleanliness_semantics": {"type": "string", "minLength": 1}
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["expected_case_count", "observed_case_count", "expected_matrix_ids", "observed_matrix_ids", "exact"],
+          "properties": {
+            "expected_case_count": {"const": 48},
+            "observed_case_count": {"type": "integer", "minimum": 0},
+            "expected_matrix_ids": {"type": "array", "minItems": 48, "maxItems": 48, "uniqueItems": true, "items": {"type": "string"}},
+            "observed_matrix_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+            "exact": {"type": "boolean"}
+          }
+        },
+        "algebra_probes": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/algebraProbe"}},
+        "pde_results": {"type": "array", "maxItems": 48, "items": {"$ref": "#/$defs/pdeResult"}},
+        "failures": {"type": "array", "items": {"type": "string"}},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "watchdog": {
+      "type": "object",
+      "required": [
+        "schema_version", "record_type", "case_id", "status", "identity",
+        "worker", "preflight", "sampling", "control", "qualification", "failures", "evidence_sha256"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case090.watchdog-summary.v1"},
+        "record_type": {"const": "external_shard_memory_watchdog"},
+        "case_id": {"const": "090_high_order_3d_floquet_hcurl"},
+        "status": {"enum": ["passed", "failed"]},
+        "identity": {
+          "type": "object",
+          "required": [
+            "mpi_size", "source_commit_full_sha", "source_commit_at_end_full_sha",
+            "source_worktree_dirty_at_start", "source_worktree_dirty_at_end",
+            "nonignored_untracked_paths_at_start", "nonignored_untracked_paths_at_end",
+            "source_cleanliness_semantics", "source_clean_and_stable"
+          ],
+          "properties": {
+            "mpi_size": {"$ref": "#/$defs/mpiSize"},
+            "source_commit_full_sha": {"$ref": "#/$defs/sha40"},
+            "source_commit_at_end_full_sha": {"$ref": "#/$defs/sha40"},
+            "source_worktree_dirty_at_start": {"type": "boolean"},
+            "source_worktree_dirty_at_end": {"type": "boolean"},
+            "nonignored_untracked_paths_at_start": {"type": "array", "items": {"type": "string"}},
+            "nonignored_untracked_paths_at_end": {"type": "array", "items": {"type": "string"}},
+            "source_cleanliness_semantics": {"type": "string", "minLength": 1},
+            "source_clean_and_stable": {"type": "boolean"}
+          }
+        },
+        "worker": {
+          "type": "object",
+          "required": ["command", "launched", "pid", "exit_code"],
+          "properties": {
+            "command": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+            "launched": {"type": "boolean"},
+            "pid": {"type": ["integer", "null"]},
+            "exit_code": {"type": ["integer", "null"]}
+          }
+        },
+        "preflight": {
+          "type": "object",
+          "required": [
+            "passed", "cgroup_memory_limit_state", "cgroup_memory_limit_bytes",
+            "cgroup_memory_current_bytes", "host_available_memory_bytes",
+            "swap_current_bytes", "effective_memory_bytes", "warning_threshold_bytes",
+            "termination_threshold_bytes", "warning_scale", "termination_scale", "failures"
+          ],
+          "properties": {
+            "passed": {"type": "boolean"},
+            "cgroup_memory_limit_state": {"enum": ["finite", "unbounded", "unreadable"]},
+            "cgroup_memory_limit_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "cgroup_memory_current_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "host_available_memory_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "swap_current_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "effective_memory_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "warning_threshold_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "termination_threshold_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "failures": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "sampling": {
+          "type": "object",
+          "required": [
+            "sample_interval_seconds", "sample_count", "worker_tree_rss_peak_bytes",
+            "cgroup_memory_current_peak_bytes", "observed_memory_peak_bytes",
+            "observed_memory_definition", "cgroup_memory_limit_bytes",
+            "cgroup_memory_limit_state", "effective_memory_bytes",
+            "warning_threshold_bytes", "termination_threshold_bytes",
+            "host_available_memory_min_bytes", "swap_current_initial_bytes",
+            "swap_current_final_bytes", "swap_current_peak_bytes",
+            "swap_current_delta_bytes", "nonzero_swap_sample_count",
+            "authority_unreadable_sample_count", "raw_output", "raw_output_ignored_by_git",
+            "summary_output_ignored_by_git", "sources"
+          ],
+          "properties": {
+            "sample_count": {"type": "integer", "minimum": 2},
+            "worker_tree_rss_peak_bytes": {"$ref": "#/$defs/nonnegativeInteger"},
+            "cgroup_memory_current_peak_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "observed_memory_peak_bytes": {"$ref": "#/$defs/nonnegativeInteger"},
+            "cgroup_memory_limit_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "cgroup_memory_limit_state": {"enum": ["finite", "unbounded", "unreadable"]},
+            "effective_memory_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "warning_threshold_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "termination_threshold_bytes": {"type": ["integer", "null"], "minimum": 1},
+            "host_available_memory_min_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "swap_current_initial_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "swap_current_final_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "swap_current_peak_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "swap_current_delta_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "nonzero_swap_sample_count": {"$ref": "#/$defs/nonnegativeInteger"},
+            "authority_unreadable_sample_count": {"$ref": "#/$defs/nonnegativeInteger"},
+            "raw_output_ignored_by_git": {"type": "boolean"},
+            "summary_output_ignored_by_git": {"type": "boolean"}
+          }
+        },
+        "control": {
+          "type": "object",
+          "required": [
+            "wall_timeout_seconds", "termination_grace_seconds", "warning_triggered",
+            "warning_first_observed_bytes", "termination_trigger", "termination_detail",
+            "wall_timeout_triggered", "controlled_termination", "process_tree_cleanup",
+            "threshold_rule"
+          ],
+          "properties": {
+            "wall_timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+            "termination_grace_seconds": {"type": "number", "exclusiveMinimum": 0},
+            "warning_triggered": {"type": "boolean"},
+            "warning_first_observed_bytes": {"type": ["integer", "null"], "minimum": 0},
+            "termination_trigger": {"type": ["string", "null"]},
+            "termination_detail": {"type": ["string", "null"]},
+            "wall_timeout_triggered": {"type": "boolean"},
+            "controlled_termination": {"type": "boolean"},
+            "process_tree_cleanup": {"type": ["object", "null"]},
+            "threshold_rule": {"type": "string", "minLength": 1}
+          }
+        },
+        "qualification": {
+          "type": "object",
+          "required": [
+            "memory_summary_qualified", "requires_zero_swap_every_sample",
+            "requires_finite_container_limit", "warning_scale", "termination_scale"
+          ],
+          "properties": {"memory_summary_qualified": {"type": "boolean"}}
+        },
+        "failures": {"type": "array", "items": {"type": "string"}},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "required": [
+        "schema_version", "record_type", "case_id", "evidence_id",
+        "evidence_sha256", "identity", "all_core_gates_passed", "gates",
+        "coverage", "storage_contract", "ordinary_regression",
+        "accuracy_trend_analysis", "constraint_cost_analysis",
+        "external_memory_watchdog", "pde_evidence", "failures"
+      ],
+      "properties": {
+        "schema_version": {"const": "task033.case090.core-gates.v1"},
+        "record_type": {"const": "high_order_floquet_core_gate_result"},
+        "case_id": {"const": "090_high_order_3d_floquet_hcurl"},
+        "evidence_id": {"type": "string", "minLength": 1},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "identity": {"type": "object"},
+        "all_core_gates_passed": {"type": "boolean"},
+        "gates": {"type": "array", "minItems": 5, "maxItems": 5},
+        "coverage": {"type": "array", "minItems": 12, "maxItems": 12},
+        "storage_contract": {"type": "object"},
+        "ordinary_regression": {"type": "object"},
+        "accuracy_trend_analysis": {"type": "object"},
+        "constraint_cost_analysis": {"type": "object"},
+        "external_memory_watchdog": {"type": "object"},
+        "pde_evidence": {"type": "object"},
+        "failures": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

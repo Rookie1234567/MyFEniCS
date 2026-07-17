@@ -4,7 +4,7 @@
 
 Task28 V3 将 01、11、12、20-23、30-33 定为核心源码级章节：每篇都给出真实签名、对象 shape/ownership、公式映射、调用顺序、测试和限制，并由 `test_26_documentation_contract.py` 防止退化为函数摘要。Task29 direct telemetry 已同步到第 30、40、50 章。Task30 的 symmetric pre/post、local shift、factor-only storage、runner flags、H(curl) transfer/Galerkin 测试和 Case060 边界已同步到第 32、33、50 章；p/h coarse 的代数成功与 solver 负结果被明确分开。Task31 的 PC certificate、factor fingerprint、public MPC matrix-free fine action、external simultaneous RSS/watchdog、compact lifecycle 与 Case070 合同也已同步到第 32、33、50 章。Task32 Phase 1 的显式 full-3D 参考面导出、单侧接口取迹和小数据通信边界见第 41 章；Phase 2 的匹配截面、`N1curl x Lagrange` QEP、双 Floquet 降维与分布式 PEP 见第 42 章；Phase 3 的 Poynting 分类、伴随 QEP 双正交、近简并 block 和 overlap tracking 见第 43 章；Phase 4 的稳定 two-port 传播见第 44 章；Phase 5 的匹配 Nedelec 迹、法向和 left/right 投影见第 45 章；Phase 6a/6b 的上下局部 FEM 与单侧外端口 DtN 见第 46 章，Phase 6c 的内部模态稀疏块、牵引和 MPI 路由见第 47 章，Phase 6d 的 rank-major 单体 AIJ 与 MUMPS algebra Gate 见第 48 章。
 
-Task32 Phase 6e 的真实 QEP runner、Nedelec target-cell 路由、M2/4/6 研究漏斗和当前物理资格边界见第 49 章。
+Task32 Phase 6e 的真实 QEP runner、Nedelec target-cell 路由、M2/4/6 研究漏斗和当前物理资格边界见第 49 章。Task33 的 p1--p4 分布式高阶 Floquet、Case090、QEP 资格矩阵、M80/120/160 漏斗、graded-h、buffer、variable-p 与统一证据入口见第 52 章。
 
 | 顺序 | 文档 | 内容 |
 |---:|---|---|
@@ -33,6 +33,7 @@ Task32 Phase 6e 的真实 QEP runner、Nedelec target-cell 路由、M2/4/6 研�
 | 22 | [`code_walkthrough/49_task032_hybrid_physical_runner.md`](code_walkthrough/49_task032_hybrid_physical_runner.md) | Task032 真实 QEP h5/M6 runner、target-cell Nédélec 路由、R/T/A 与收敛边界 |
 | 23 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
 | 24 | [`code_walkthrough/51_task032_fields_schur_and_memory.md`](code_walkthrough/51_task032_fields_schur_and_memory.md) | Task032 E/H/吸收重构、Modal-Schur 生命周期、截断/参数 smoke、外部同时内存采样与 non-PDE 0.7 nm projection |
+| 25 | [`code_walkthrough/52_task033_high_order_floquet_hp.md`](code_walkthrough/52_task033_high_order_floquet_hp.md) | Task033 高阶实体变换、Floquet、Case090/QEP/Hybrid/fixed-p D1、F0 completion；graded-h/1 TiB 仅为移交历史 |
 
 ## 一句话调用链
 

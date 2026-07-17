@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.variable-p-audit.v1",
+  "title": "Task033 Case091 variable-p H(curl) capability audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "identity",
+    "runtime_evidence",
+    "api_interpretation",
+    "semantic_requirements",
+    "decision",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case091.variable-p-audit.v1"},
+    "record_type": {"const": "task033_variable_p_hcurl_capability_audit"},
+    "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+    "status": {"const": "not_qualified_fail_closed"},
+    "formal_source": {"$ref": "#/$defs/formalSource"},
+    "identity": {
+      "type": "object",
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_capability_implementation",
+        "ordinary_default_changed",
+        "proves_native_cellwise_variable_p",
+        "proves_0p7nm_feasible"
+      ],
+      "properties": {
+        "is_pde_run": {"const": false},
+        "is_solver_pass": {"const": false},
+        "is_capability_implementation": {"const": false},
+        "is_formal_record": {"type": "boolean"},
+        "ordinary_default_changed": {"const": false},
+        "proves_native_cellwise_variable_p": {"const": false},
+        "proves_0p7nm_feasible": {"const": false}
+      }
+    },
+    "runtime_evidence": {
+      "type": "object",
+      "required": ["active_python", "repository_environment"]
+    },
+    "api_interpretation": {
+      "type": "object",
+      "required": ["mixed_fields", "mixed_topology", "cellwise_polynomial_order"],
+      "properties": {
+        "mixed_fields": {"$ref": "#/$defs/nonQualifyingApi"},
+        "mixed_topology": {"$ref": "#/$defs/nonQualifyingApi"},
+        "cellwise_polynomial_order": {
+          "type": "object",
+          "required": [
+            "native_sparse_operational_path_observed",
+            "scope",
+            "counts_as_qualified"
+          ],
+          "properties": {
+            "native_sparse_operational_path_observed": {"const": false},
+            "scope": {"type": "string", "minLength": 1},
+            "counts_as_qualified": {"const": false}
+          }
+        }
+      }
+    },
+    "semantic_requirements": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirement", "qualified", "reason"],
+        "properties": {
+          "requirement": {"type": "string", "minLength": 1},
+          "qualified": {"const": false},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "native_cellwise_variable_p_hcurl_qualified",
+        "implement_bespoke_arbitrary_variable_p_constraints",
+        "disposition",
+        "allowed_task033_fallback"
+      ],
+      "properties": {
+        "native_cellwise_variable_p_hcurl_qualified": {"const": false},
+        "implement_bespoke_arbitrary_variable_p_constraints": {"const": false},
+        "disposition": {"const": "fail_closed_no_hp_zoning_prototype"},
+        "allowed_task033_fallback": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["formal_source"]},
+      "then": {
+        "properties": {
+          "identity": {
+            "required": ["is_formal_record"],
+            "properties": {"is_formal_record": {"const": true}}
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "formalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit_sha",
+        "tracked_source_clean",
+        "head_before_sha",
+        "head_after_sha",
+        "source_stable_during_run",
+        "nonignored_untracked_clean",
+        "complete_worktree_clean"
+      ],
+      "properties": {
+        "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tracked_source_clean": {"const": true},
+        "head_before_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "head_after_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_stable_during_run": {"const": true},
+        "nonignored_untracked_clean": {"const": true},
+        "complete_worktree_clean": {"const": true}
+      }
+    },
+    "nonQualifyingApi": {
+      "type": "object",
+      "required": [
+        "public_symbol_observed",
+        "scope",
+        "counts_as_cellwise_variable_p_evidence"
+      ],
+      "properties": {
+        "public_symbol_observed": {"type": "boolean"},
+        "scope": {"type": "string", "minLength": 1},
+        "counts_as_cellwise_variable_p_evidence": {"const": false}
+      }
+    }
+  }
+}

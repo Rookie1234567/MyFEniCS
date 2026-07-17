@@ -259,6 +259,12 @@ def _mode_power_at_boundary(mode: PortMode3D, cfg: SimulationConfig3D, amplitude
     return mode_power(mode.k_vector, e_at_boundary, cfg, _outward_normal(mode.side))
 
 
+def _mode_carries_outward_power(mode: PortMode3D) -> bool:
+    """Return whether the selected mode carries positive real power at its finite port."""
+
+    return bool(mode.power_per_unit_amplitude > 0.0)
+
+
 def _traction_vector(mode: PortMode3D, cfg: SimulationConfig3D) -> np.ndarray:
     del cfg
     curl_vector = 1j * np.cross(mode.k_vector, mode.e_vector)
@@ -956,6 +962,7 @@ def _write_port_outputs(
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(zip(modes, aux_values, incident_projections)):
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
+        power_carrying = _mode_carries_outward_power(mode)
         modal_power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude)
         power = modal_power / metrics["incident_power_code_units"]
         direction = "outgoing_up" if mode.side == "top" else "outgoing_down"
@@ -977,6 +984,7 @@ def _write_port_outputs(
                 "kz": mode.vertical_sign * mode.beta,
                 "vertical_sign": mode.vertical_sign,
                 "propagating": mode.propagating,
+                "power_carrying": power_carrying,
                 "rayleigh_warning": mode.rayleigh_warning,
                 "refractive_index": mode.refractive_index,
                 "auxiliary_amplitude_total_projection": complex(aux_value),
@@ -987,8 +995,8 @@ def _write_port_outputs(
                 "modal_power_code_units": float(modal_power),
                 "power_ratio": float(power),
                 "power_source": DTN_PORT_MODAL_POWER_SOURCE,
-                "R": float(power) if mode.side == "top" and mode.propagating else 0.0,
-                "T": float(power) if mode.side == "bottom" and mode.propagating else 0.0,
+                "R": float(power) if mode.side == "top" and power_carrying else 0.0,
+                "T": float(power) if mode.side == "bottom" and power_carrying else 0.0,
             }
         )
     if comm.rank != 0:
@@ -1093,7 +1101,7 @@ def _port_power_metrics(
     for mode, aux_value, inc_proj in zip(modes, aux_values, incident_projections):
         rows_by_side[mode.side] += 1
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
-        if not mode.propagating:
+        if not _mode_carries_outward_power(mode):
             continue
         power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / incident_power
         if mode.side == "top":
@@ -1125,7 +1133,9 @@ def _port_power_metrics(
         ),
         "dtn_port_power_metric_note": (
             "Stage-4 dtn_port R/T is computed directly from auxiliary outgoing modal amplitudes "
-            "on the top and bottom port faces."
+            "on the finite top and bottom port faces. Selected modes with positive outward real-Poynting "
+            "flux contribute even when a below-critical lossy mode retains propagating=false; lossless "
+            "evanescent modes carry zero modal power."
         ),
         "incident_power_code_units": float(incident_power),
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,

@@ -1,0 +1,166 @@
+{
+  "api_interpretation": {
+    "cellwise_polynomial_order": {
+      "counts_as_qualified": false,
+      "native_sparse_operational_path_observed": false,
+      "scope": "different Nedelec p on adjacent cells with conformity"
+    },
+    "mixed_fields": {
+      "counts_as_cellwise_variable_p_evidence": false,
+      "public_symbol_observed": true,
+      "scope": "product space combining multiple fields/elements"
+    },
+    "mixed_topology": {
+      "counts_as_cellwise_variable_p_evidence": false,
+      "public_symbol_observed": true,
+      "scope": "form assembly across cell types/topologies"
+    }
+  },
+  "case_id": "091_hybrid_hp_adaptivity_feasibility",
+  "decision": {
+    "allowed_task033_fallback": [
+      "fixed_p_high_order_equal_accuracy_efficiency",
+      "p2_h_adaptive_feasibility",
+      "hp_zoning_design_report_only"
+    ],
+    "disposition": "fail_closed_no_hp_zoning_prototype",
+    "implement_bespoke_arbitrary_variable_p_constraints": false,
+    "native_cellwise_variable_p_hcurl_qualified": false
+  },
+  "formal_source": {
+    "commit_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "complete_worktree_clean": true,
+    "head_after_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "head_before_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "nonignored_untracked_clean": true,
+    "source_stable_during_run": true,
+    "tracked_source_clean": true
+  },
+  "identity": {
+    "is_capability_implementation": false,
+    "is_formal_record": true,
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "ordinary_default_changed": false,
+    "proves_0p7nm_feasible": false,
+    "proves_native_cellwise_variable_p": false
+  },
+  "limitations": [
+    "Absence of qualifying evidence is not a universal claim that future DOLFINx/Basix releases can never support variable p.",
+    "A public symbol or callable signature does not prove H(curl) conformity, periodic synchronization, sparse ownership, or MPI safety.",
+    "The repository environment record is configuration evidence, not a direct import or API-semantics test in this Python process."
+  ],
+  "record_type": "task033_variable_p_hcurl_capability_audit",
+  "runtime_evidence": {
+    "active_python": {
+      "data_identity": "direct_current_python_import_and_public_symbol_probe",
+      "packages": {
+        "basix": {
+          "error_type": null,
+          "imported": true,
+          "version": "0.10.0"
+        },
+        "dolfinx": {
+          "error_type": null,
+          "imported": true,
+          "version": "0.10.0.post2"
+        },
+        "ufl": {
+          "error_type": null,
+          "imported": true,
+          "version": "2025.2.0.post0"
+        }
+      },
+      "symbols": {
+        "basix_ufl_element": {
+          "available": true,
+          "error_type": null,
+          "module": "basix.ufl",
+          "signature": "(family: Union[basix._basixcpp.ElementFamily, str], cell: Union[basix._basixcpp.CellType, str], degree: int, lagrange_variant: basix._basixcpp.LagrangeVariant = LagrangeVariant.unset, dpc_variant: basix._basixcpp.DPCVariant = DPCVariant.unset, discontinuous: bool = False, shape: Optional[tuple[int, ...]] = None, symmetry: Optional[bool] = None, dof_ordering: Optional[list[int]] = None, dtype: Union[numpy.dtype[Any], NoneType, type[Any], numpy._typing._dtype_like._SupportsDType[numpy.dtype[Any]], str, tuple[Any, int], tuple[Any, SupportsIndex | collections.abc.Sequence[SupportsIndex]], list[Any], numpy._typing._dtype_like._DTypeDict, tuple[Any, Any]] = None) -> basix.ufl._ElementBase",
+          "symbol": "element"
+        },
+        "basix_ufl_mixed_element": {
+          "available": true,
+          "error_type": null,
+          "module": "basix.ufl",
+          "signature": "(elements: list[basix.ufl._ElementBase]) -> basix.ufl._ElementBase",
+          "symbol": "mixed_element"
+        },
+        "dolfinx_create_submesh": {
+          "available": true,
+          "error_type": null,
+          "module": "dolfinx.mesh",
+          "signature": "(msh: 'Mesh', dim: 'int', entities: 'npt.NDArray[np.int32]') -> 'tuple[Mesh, EntityMap, EntityMap, npt.NDArray[np.int32]]'",
+          "symbol": "create_submesh"
+        },
+        "dolfinx_functionspace": {
+          "available": true,
+          "error_type": null,
+          "module": "dolfinx.fem",
+          "signature": "(mesh: 'Mesh', element: 'ufl.finiteelement.AbstractFiniteElement | ElementMetaData | tuple[str, int] | tuple[str, int, tuple] | tuple[str, int, tuple, bool]') -> 'FunctionSpace'",
+          "symbol": "functionspace"
+        },
+        "dolfinx_mixed_topology_form": {
+          "available": true,
+          "error_type": null,
+          "module": "dolfinx.fem",
+          "signature": "(forms: 'Sequence[ufl.Form]', dtype: 'npt.DTypeLike' = <class 'numpy.complex128'>, form_compiler_options: 'dict | None' = None, jit_options: 'dict | None' = None, entity_maps: 'Sequence[_EntityMap] | None' = None)",
+          "symbol": "mixed_topology_form"
+        },
+        "ufl_mixed_function_space": {
+          "available": true,
+          "error_type": null,
+          "module": "ufl",
+          "signature": "(*args)",
+          "symbol": "MixedFunctionSpace"
+        }
+      }
+    },
+    "repository_environment": {
+      "basix_version": null,
+      "data_identity": "repository_pinned_environment_record_not_direct_import",
+      "dolfinx": "0.10.0.post2",
+      "limitation": "This file identifies the pinned qualified image, but does not prove cellwise variable-order H(curl) semantics or current-host imports.",
+      "mpi4py": "4.1.1",
+      "petsc": "3.24.0",
+      "petsc_scalar_type": "numpy.complex128",
+      "python": "3.12.3",
+      "record": "benchmarks/environment.json",
+      "reproducibility_status": "qualified_local_image"
+    }
+  },
+  "schema_version": "task033.case091.variable-p-audit.v1",
+  "semantic_requirements": [
+    {
+      "qualified": false,
+      "reason": "no_native_operational_evidence_record",
+      "requirement": "cellwise_variable_order_nedelec"
+    },
+    {
+      "qualified": false,
+      "reason": "no_native_conformity_and_orientation_evidence_record",
+      "requirement": "tangential_continuity_across_unequal_p_neighbors"
+    },
+    {
+      "qualified": false,
+      "reason": "no_native_periodic_pairing_evidence_record",
+      "requirement": "periodic_paired_face_synchronized_p"
+    },
+    {
+      "qualified": false,
+      "reason": "fixed_p_trace_evidence_does_not_qualify_variable_p",
+      "requirement": "high_order_interface_trace"
+    },
+    {
+      "qualified": false,
+      "reason": "no_variable_p_mpi_ownership_evidence_record",
+      "requirement": "mpi_partition_ownership"
+    },
+    {
+      "qualified": false,
+      "reason": "submesh_api_presence_does_not_prove_variable_p_coupling",
+      "requirement": "maintainable_submesh_or_multimesh_coupling"
+    }
+  ],
+  "status": "not_qualified_fail_closed"
+}

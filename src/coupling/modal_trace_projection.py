@@ -92,6 +92,8 @@ class TraceExtractionReport:
     unresolved_points: int
     used_middle_side_only: bool
     field_vector_gathered: bool = False
+    tangential_value_bytes_sent: int = 0
+    tangential_value_bytes_received: int = 0
 
 
 @dataclass(frozen=True)
@@ -265,6 +267,8 @@ class _DistributedTangentialEvaluator:
         self.local_query_points = 0
         self.local_source_evaluations = 0
         self.unresolved_points = 0
+        self.local_tangential_value_bytes_sent = 0
+        self.local_tangential_value_bytes_received = 0
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         xy = np.asarray(x[:2, :].T, dtype=np.float64)
@@ -306,6 +310,21 @@ class _DistributedTangentialEvaluator:
         for owner, value in zip(dest_owner, tangential):
             send[int(owner)].append((complex(value[0]), complex(value[1])))
         received = comm.alltoall(send)
+        value_bytes = 2 * np.dtype(PETSc.ScalarType).itemsize
+        self.local_tangential_value_bytes_sent += int(
+            sum(
+                len(values) * value_bytes
+                for rank, values in enumerate(send)
+                if rank != comm.rank
+            )
+        )
+        self.local_tangential_value_bytes_received += int(
+            sum(
+                len(values) * value_bytes
+                for rank, values in enumerate(received)
+                if rank != comm.rank
+            )
+        )
 
         result = np.empty((len(points), 2), dtype=PETSc.ScalarType)
         offsets = np.zeros(comm.size, dtype=np.int32)
@@ -374,6 +393,18 @@ def extract_tangential_trace(
         ),
         unresolved_points=int(comm.allreduce(evaluator.unresolved_points, op=MPI.SUM)),
         used_middle_side_only=True,
+        tangential_value_bytes_sent=int(
+            comm.allreduce(
+                evaluator.local_tangential_value_bytes_sent,
+                op=MPI.SUM,
+            )
+        ),
+        tangential_value_bytes_received=int(
+            comm.allreduce(
+                evaluator.local_tangential_value_bytes_received,
+                op=MPI.SUM,
+            )
+        ),
     )
     return trace, report
 
@@ -397,11 +428,23 @@ def _trace_from_full_mode_vector(
     return trace
 
 
-def _assemble_trace_mass(spaces: CrossSectionSpaces) -> PETSc.Mat:
+def _assemble_trace_mass(
+    spaces: CrossSectionSpaces,
+    *,
+    quadrature_degree: int | None = None,
+) -> PETSc.Mat:
     trial = ufl.TrialFunction(spaces.transverse)
     test = ufl.TestFunction(spaces.transverse)
     form = ufl.inner(trial, test) * ufl.dx
-    matrix = fem_petsc.assemble_matrix(fem.form(form), bcs=[])
+    compiler_options = (
+        {}
+        if quadrature_degree is None
+        else {"quadrature_degree": int(quadrature_degree)}
+    )
+    matrix = fem_petsc.assemble_matrix(
+        fem.form(form, form_compiler_options=compiler_options),
+        bcs=[],
+    )
     matrix.assemble()
     return matrix
 
@@ -454,6 +497,7 @@ class ModalTraceProjection:
         *,
         mode_indices: Sequence[int] | None = None,
         condition_limit: float = 1.0e12,
+        quadrature_degree: int | None = None,
     ) -> None:
         selected = (
             tuple(range(len(basis.modes)))
@@ -485,7 +529,15 @@ class ModalTraceProjection:
             )
             for index in selected
         )
-        self.mass = _assemble_trace_mass(spaces)
+        if quadrature_degree is not None and int(quadrature_degree) < 1:
+            raise ValueError("Trace quadrature degree must be positive.")
+        self.quadrature_degree = (
+            None if quadrature_degree is None else int(quadrature_degree)
+        )
+        self.mass = _assemble_trace_mass(
+            spaces,
+            quadrature_degree=self.quadrature_degree,
+        )
         self.gram = _overlap_matrix(
             self.mass, self.left_traces, self.right_traces
         )

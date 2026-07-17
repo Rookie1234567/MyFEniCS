@@ -1,0 +1,67 @@
+{
+  "schema_version": "task033.case090.expected.v1",
+  "case_id": "090_high_order_3d_floquet_hcurl",
+  "status": "oracle_contract_ready_pde_not_run",
+  "ordinary_default_changed": false,
+  "record_schema": "schema.json",
+  "canonical_record": "records/analytic_oracles.json",
+  "record_identity": {
+    "record_type": "analytical_oracle_and_execution_plan",
+    "status": "not_run",
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "is_physical_qualification_record": false
+  },
+  "matrix": {
+    "degrees": [1, 2, 3, 4],
+    "mesh_targets_nm": [5.0, 2.5],
+    "mpi_sizes": [1, 2, 4],
+    "polarizations": ["s", "p"],
+    "primary_grazing_deg": 10.0,
+    "smoke_grazing_deg": [1.0, 5.0],
+    "total_entries": 192,
+    "requirement_counts": {
+      "required": 96,
+      "smoke": 16,
+      "not_run": 80
+    }
+  },
+  "core_algebra_gate_limits": {
+    "constraint_round_trip_relative_error": 1e-12,
+    "bloch_trace_mismatch": 1e-11,
+    "reduced_full_action_relative_error": 1e-11,
+    "full_true_residual": 1e-10,
+    "mpi_result_difference": 1e-10
+  },
+  "core_gate_provenance": {
+    "tracked_source_dirty": false,
+    "source_commit_full_sha_pattern": "^[0-9a-f]{40}$",
+    "evidence_sha256_pattern": "^[0-9a-f]{64}$"
+  },
+  "core_gate_coverage": {
+    "degrees": [1, 2, 3, 4],
+    "mpi_sizes": [1, 2, 4],
+    "required_unique_degree_mpi_pairs": 12,
+    "every_pair_core_algebra_gates_passed": true
+  },
+  "core_gate_storage_contract": {
+    "sparse_distributed_constraints": true,
+    "global_boundary_allgather_used": false,
+    "dense_boundary_square_formed": false
+  },
+  "ordinary_regression": {
+    "p1_existing_floquet_passed": true,
+    "p2_existing_floquet_passed": true
+  },
+  "oracle_payload": {
+    "plane_wave_sample_fields": ["electric_field", "magnetic_code_field"],
+    "fresnel_phase_waves": ["incident", "reflected", "transmitted"],
+    "fresnel_sample_fields": ["electric_field", "magnetic_code_field"]
+  },
+  "fail_closed": {
+    "missing_or_failed_core_gate": "not_run_by_core_gate",
+    "planner_can_emit_pde_pass": false,
+    "planner_can_emit_solver_pass": false,
+    "no_canonical_physical_record": true
+  }
+}

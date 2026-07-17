@@ -1,0 +1,5971 @@
+{
+  "schema_version": "task033.case090.oracle-plan.v1",
+  "record_type": "analytical_oracle_and_execution_plan",
+  "case_id": "090_high_order_3d_floquet_hcurl",
+  "status": "not_run",
+  "ordinary_default_changed": false,
+  "identity": {
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "is_physical_qualification_record": false,
+    "evidence_scope": "analytic_oracles_and_fail_closed_matrix_only"
+  },
+  "core_gate": {
+    "status": "not_provided",
+    "evidence_id": null,
+    "evidence_sha256": null,
+    "source_commit_full_sha": null,
+    "problems": [
+      "core gate record was not provided"
+    ],
+    "required_limits": {
+      "constraint_round_trip_relative_error": 1e-12,
+      "bloch_trace_mismatch": 1e-11,
+      "reduced_full_action_relative_error": 1e-11,
+      "full_true_residual": 1e-10,
+      "mpi_result_difference": 1e-10
+    },
+    "required_degree_mpi_coverage_count": 12,
+    "validated_degree_mpi_coverage": [],
+    "storage_vetoes_passed": false,
+    "p1_p2_regression_passed": false
+  },
+  "fixtures": {
+    "fixture_a_air_box": {
+      "fixture_id": "case090_fixture_a_air_box_10nm",
+      "purpose": "analytic high-order Hcurl/Floquet algebra qualification",
+      "geometry": {
+        "x_nm": [
+          0.0,
+          10.0
+        ],
+        "y_nm": [
+          0.0,
+          10.0
+        ],
+        "z_nm": [
+          -5.0,
+          5.0
+        ],
+        "period_x_nm": 10.0,
+        "period_y_nm": 10.0
+      },
+      "material": {
+        "uniform": "air",
+        "n": {
+          "real": 1.0,
+          "imag": 0.0
+        }
+      },
+      "incidence": {
+        "wavelength_nm": 13.5,
+        "phi_deg": 0.0,
+        "boundary_xy": "double_floquet",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "primary_grazing_deg": 10.0,
+        "polarizations": [
+          "s",
+          "p"
+        ]
+      }
+    },
+    "fixture_b_flat_air_si": {
+      "fixture_id": "case090_fixture_b_flat_air_si_10nm",
+      "purpose": "analytic complex Fresnel and field-phase qualification",
+      "geometry": {
+        "x_nm": [
+          0.0,
+          10.0
+        ],
+        "y_nm": [
+          0.0,
+          10.0
+        ],
+        "z_nm": [
+          -5.0,
+          5.0
+        ],
+        "period_x_nm": 10.0,
+        "period_y_nm": 10.0,
+        "interface_z_nm": 0.0
+      },
+      "material": {
+        "upper": {
+          "label": "air",
+          "n": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "lower": {
+          "label": "current_Si_13p5nm",
+          "n": {
+            "real": 0.999002304859,
+            "imag": 0.00182649365
+          }
+        }
+      },
+      "incidence": {
+        "wavelength_nm": 13.5,
+        "phi_deg": 0.0,
+        "boundary_xy": "double_floquet",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "primary_grazing_deg": 10.0,
+        "smoke_grazing_deg": [
+          1.0,
+          5.0
+        ],
+        "polarizations": [
+          "s",
+          "p"
+        ]
+      },
+      "outer_z_treatment": "existing_analytic_homogeneous_port_or_reviewed_fresnel_path"
+    }
+  },
+  "oracles": {
+    "air_plane_waves": [
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 1.0,
+        "theta_deg_from_normal": 89.0,
+        "phi_deg": 0.0,
+        "polarization": "s",
+        "direction": [
+          0.9998476951564,
+          0.0,
+          -0.01745240643728
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4653502479721,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.008122718792716,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.01745240643728,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998476951564,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.05885247389581,
+            "imag": -0.9982666909781
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5907379389072,
+              "imag": 0.8068634875465
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.01030979860773,
+              "imag": 0.01408170952407
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5906479666578,
+              "imag": 0.8067405983292
+            }
+          ]
+        }
+      },
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 1.0,
+        "theta_deg_from_normal": 89.0,
+        "phi_deg": 0.0,
+        "polarization": "p",
+        "direction": [
+          0.9998476951564,
+          0.0,
+          -0.01745240643728
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4653502479721,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.008122718792716,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.01745240643728,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9998476951564,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.05885247389581,
+            "imag": -0.9982666909781
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.01030979860773,
+              "imag": 0.01408170952407
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5906479666578,
+              "imag": 0.8067405983292
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.5907379389072,
+              "imag": -0.8068634875465
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        }
+      },
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 5.0,
+        "theta_deg_from_normal": 85.0,
+        "phi_deg": 0.0,
+        "polarization": "s",
+        "direction": [
+          0.9961946980917,
+          0.0,
+          -0.08715574274766
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4636500659363,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.04056412461247,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.08715574274766,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9961946980917,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.07581550138176,
+            "imag": -0.9971218630389
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5670599848556,
+              "imag": 0.8236764981324
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.04942253416256,
+              "imag": 0.07178813697852
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5649021504131,
+              "imag": 0.8205421603822
+            }
+          ]
+        }
+      },
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 5.0,
+        "theta_deg_from_normal": 85.0,
+        "phi_deg": 0.0,
+        "polarization": "p",
+        "direction": [
+          0.9961946980917,
+          0.0,
+          -0.08715574274766
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4636500659363,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.04056412461247,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.08715574274766,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9961946980917,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.07581550138176,
+            "imag": -0.9971218630389
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.04942253416256,
+              "imag": 0.07178813697852
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5649021504131,
+              "imag": 0.8205421603822
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.5670599848556,
+              "imag": -0.8236764981324
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        }
+      },
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 10.0,
+        "theta_deg_from_normal": 80.0,
+        "phi_deg": 0.0,
+        "polarization": "s",
+        "direction": [
+          0.9848077530122,
+          0.0,
+          -0.1736481776669
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4583503410461,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.08081953174336,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.1736481776669,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9848077530122,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.1285290359513,
+            "imag": -0.9917057461351
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5423873105851,
+              "imag": 0.8401285647544
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.09418456807277,
+              "imag": 0.1458867942755
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5341472285996,
+              "imag": 0.8273651240971
+            }
+          ]
+        }
+      },
+      {
+        "oracle_type": "analytic_bloch_plane_wave",
+        "field_convention": "exp(i*k_dot_r) with exp(-i*omega*t)",
+        "incident_side": "upper_air",
+        "propagation_z": "minus_z",
+        "wavelength_nm": 13.5,
+        "refractive_index": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "grazing_deg_from_surface": 10.0,
+        "theta_deg_from_normal": 80.0,
+        "phi_deg": 0.0,
+        "polarization": "p",
+        "direction": [
+          0.9848077530122,
+          0.0,
+          -0.1736481776669
+        ],
+        "wavevector_per_nm": [
+          {
+            "real": 0.4583503410461,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -0.08081953174336,
+            "imag": 0.0
+          }
+        ],
+        "electric_unit_vector": [
+          {
+            "real": 0.1736481776669,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.9848077530122,
+            "imag": 0.0
+          }
+        ],
+        "magnetic_code_unit_vector": [
+          {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          {
+            "real": -1.0,
+            "imag": 0.0
+          },
+          {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        ],
+        "bloch_phase_plus_period": {
+          "x": {
+            "real": -0.1285290359513,
+            "imag": -0.9917057461351
+          },
+          "y": {
+            "real": 1.0,
+            "imag": 0.0
+          }
+        },
+        "sample": {
+          "point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "electric_field": [
+            {
+              "real": 0.09418456807277,
+              "imag": 0.1458867942755
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": 0.5341472285996,
+              "imag": 0.8273651240971
+            }
+          ],
+          "magnetic_code_field": [
+            {
+              "real": 0.0,
+              "imag": 0.0
+            },
+            {
+              "real": -0.5423873105851,
+              "imag": -0.8401285647544
+            },
+            {
+              "real": 0.0,
+              "imag": 0.0
+            }
+          ]
+        }
+      }
+    ],
+    "flat_air_si_fresnel": [
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 1.0,
+        "theta_deg_from_normal": 89.0,
+        "polarization": "s",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.03426277050312,
+          "imag": 0.05345163755614
+        },
+        "r": {
+          "real": -0.6737566643494,
+          "imag": -0.3381179057993
+        },
+        "t": {
+          "real": 0.3262433356506,
+          "imag": -0.3381179057993
+        },
+        "R_interface": 0.5682717609773,
+        "T_into_substrate_at_interface": 0.4317282390227,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 1.95565910922,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.008122718792716,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.01745240643728,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9998476951564,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6037672624202,
+              "imag": 0.7971606443055
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6037672624202,
+                "imag": 0.7971606443055
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.01053719165728,
+                "imag": 0.01391237156023
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6036753057417,
+                "imag": 0.7970392328783
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.008122718792716,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": -0.01745240643728,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9998476951564,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": -0.6737566643494,
+              "imag": -0.3381179057993
+            },
+            "phase": {
+              "real": 0.5907379389072,
+              "imag": 0.8068634875465
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.1251986305476,
+                "imag": -0.7433687267341
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.002185017385708,
+                "imag": 0.01297357315173
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.1251795621898,
+                "imag": -0.7432555080764
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.4785686318726,
+                "imag": 0.05379191757143
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.01272220904299,
+                "imag": 0.02688594471196
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.478495743552,
+                "imag": 0.05378372480183
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.01588526899861,
+                "imag": -0.02488182797135
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.03413095762689,
+                "imag": 0.05346088984983
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9998476951564,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.3262433356506,
+              "imag": -0.3381179057993
+            },
+            "phase": {
+              "real": 0.5700939587253,
+              "imag": 0.7914841417972
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.4536043152266,
+                "imag": 0.06545745110151
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.01198253607919,
+                "imag": 0.02648421582165
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.4535352290923,
+                "imag": 0.06544748161466
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      },
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 1.0,
+        "theta_deg_from_normal": 89.0,
+        "polarization": "p",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.03426277050312,
+          "imag": 0.05345163755614
+        },
+        "r": {
+          "real": -0.6735834391402,
+          "imag": -0.3364584803853
+        },
+        "t": {
+          "real": 0.3261256927981,
+          "imag": -0.3373907600142
+        },
+        "R_interface": 0.5669189585071,
+        "T_into_substrate_at_interface": 0.4330810414929,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 1.966847145315,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.008122718792716,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.01745240643728,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9998476951564,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6037672624202,
+              "imag": 0.7971606443055
+            },
+            "electric_field": [
+              {
+                "real": 0.01053719165728,
+                "imag": 0.01391237156023
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6036753057417,
+                "imag": 0.7970392328783
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.6037672624202,
+                "imag": -0.7971606443055
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.008122718792716,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": -0.01745240643728,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9998476951564,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": -0.6735834391402,
+              "imag": -0.3364584803853
+            },
+            "phase": {
+              "real": 0.5907379389072,
+              "imag": 0.8068634875465
+            },
+            "electric_field": [
+              {
+                "real": 0.002206599015344,
+                "imag": 0.01295402550283
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.1264159729236,
+                "imag": -0.7421356240209
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.1264352296214,
+                "imag": 0.7422486720889
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.01274379067263,
+                "imag": 0.02686639706306
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.4772593328182,
+                "imag": 0.05490360885732
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.4773320327988,
+                "imag": -0.05491197221666
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4653502479721,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.01588526899861,
+                "imag": -0.02488182797135
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.03426277050312,
+                "imag": 0.05345163755614
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.000842889018,
+                "imag": -0.001829858822695
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.999002304859,
+                "imag": -0.00182649365
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.3261256927981,
+              "imag": -0.3373907600142
+            },
+            "phase": {
+              "real": 0.5700939587253,
+              "imag": 0.7914841417972
+            },
+            "electric_field": [
+              {
+                "real": 0.01200373471891,
+                "imag": 0.02646531253716
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.4534638859158,
+                "imag": 0.06500546835831
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.4523896609722,
+                "imag": -0.066540584511
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      },
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 5.0,
+        "theta_deg_from_normal": 85.0,
+        "polarization": "s",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.07848254166244,
+          "imag": 0.02316494030312
+        },
+        "r": {
+          "real": 0.03269104025344,
+          "imag": -0.1452799145463
+        },
+        "t": {
+          "real": 1.032691040253,
+          "imag": -0.1452799145463
+        },
+        "R_interface": 0.02217495768342,
+        "T_into_substrate_at_interface": 0.9778250423166,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 0.8991023072626,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.04056412461247,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.08715574274766,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9961946980917,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6319450258481,
+              "imag": 0.7750132155685
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6319450258481,
+                "imag": 0.7750132155685
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.05507763810348,
+                "imag": 0.06754685244213
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6295402842353,
+                "imag": 0.7720640563004
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.04056412461247,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": -0.08715574274766,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9961946980917,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.03269104025344,
+              "imag": -0.1452799145463
+            },
+            "phase": {
+              "real": 0.5670599848556,
+              "imag": 0.8236764981324
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.1382014320535,
+                "imag": -0.05545558458617
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": -0.01204504845941,
+                "imag": 0.004833272664113
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.1376755338804,
+                "imag": -0.05524455934432
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.7701464579016,
+                "imag": 0.7195576309824
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.04303258964407,
+                "imag": 0.07238012510624
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.7672158181157,
+                "imag": 0.7168194969561
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": -1.084202172486e-19
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.03647129803116,
+                "imag": -0.01083741330414
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0783619293956,
+                "imag": 0.02328517661872
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9961946980917,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.032691040253,
+              "imag": -0.1452799145463
+            },
+            "phase": {
+              "real": 0.564277821952,
+              "imag": 0.8124954917558
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.7007639265551,
+                "imag": 0.757078580829
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.03728450486684,
+                "imag": 0.07564355009571
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6980973082481,
+                "imag": 0.7541976682607
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      },
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 5.0,
+        "theta_deg_from_normal": 85.0,
+        "polarization": "p",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.07848254166244,
+          "imag": 0.02316494030312
+        },
+        "r": {
+          "real": 0.03165780117746,
+          "imag": -0.1434246503379
+        },
+        "t": {
+          "real": 1.032422170244,
+          "imag": -0.1454554831047
+        },
+        "R_interface": 0.02157284669994,
+        "T_into_substrate_at_interface": 0.9784271533001,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 0.9000732270215,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.04056412461247,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.08715574274766,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9961946980917,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6319450258481,
+              "imag": 0.7750132155685
+            },
+            "electric_field": [
+              {
+                "real": 0.05507763810348,
+                "imag": 0.06754685244213
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6295402842353,
+                "imag": 0.7720640563004
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.6319450258481,
+                "imag": -0.7750132155685
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.04056412461247,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": -0.08715574274766,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9961946980917,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.03165780117746,
+              "imag": -0.1434246503379
+            },
+            "phase": {
+              "real": 0.5670599848556,
+              "imag": 0.8236764981324
+            },
+            "electric_field": [
+              {
+                "real": -0.01186079720476,
+                "imag": 0.004815755113712
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.1355695324028,
+                "imag": -0.05504433282702
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.1360873859924,
+                "imag": 0.0552545932361
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.04321684089872,
+                "imag": 0.07236260755584
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.7651098166381,
+                "imag": 0.7170197234734
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.7680324118405,
+                "imag": -0.7197586223324
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4636500659363,
+                "imag": -1.084202172486e-19
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.03647129803116,
+                "imag": -0.01083741330414
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.07848254166244,
+                "imag": 0.02316494030312
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9971862559595,
+                "imag": -0.001823173335555
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.999002304859,
+                "imag": -0.00182649365
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.032422170244,
+              "imag": -0.1454554831047
+            },
+            "phase": {
+              "real": 0.564277821952,
+              "imag": 0.8124954917558
+            },
+            "electric_field": [
+              {
+                "real": 0.03746669764576,
+                "imag": 0.07562547553248
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.700162819607,
+                "imag": 0.7533541262324
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.6986734988544,
+                "imag": -0.7572859631845
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      },
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 10.0,
+        "theta_deg_from_normal": 80.0,
+        "polarization": "s",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.1683351230148,
+          "imag": 0.01055465324345
+        },
+        "r": {
+          "real": 0.01506911456859,
+          "imag": -0.032227139311
+        },
+        "t": {
+          "real": 1.015069114569,
+          "imag": -0.032227139311
+        },
+        "R_interface": 0.001265666722052,
+        "T_into_substrate_at_interface": 0.9987343332779,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 0.9683251510757,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.08081953174336,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.1736481776669,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9848077530122,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6705242285045,
+              "imag": 0.7418876323193
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6705242285045,
+                "imag": 0.7418876323193
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.1164353103613,
+                "imag": 0.1288274353859
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6603374588138,
+                "imag": 0.7306166921719
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.08081953174336,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": -0.1736481776669,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9848077530122,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.01506911456859,
+              "imag": -0.032227139311
+            },
+            "phase": {
+              "real": 0.5423873105851,
+              "imag": 0.8401285647544
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.03524823681924,
+                "imag": -0.004819597824117
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": -0.006120792089634,
+                "imag": 0.0008369143792455
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0347127368996,
+                "imag": -0.004746377303591
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.7057724653238,
+                "imag": 0.7370680344952
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.1103145182717,
+                "imag": 0.1296643497651
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6950501957134,
+                "imag": 0.7258703148684
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.07825958528526,
+                "imag": -0.005050557437294
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.1681478978733,
+                "imag": 0.01085158595045
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9848077530122,
+                "imag": 2.168404344971e-19
+              }
+            ],
+            "amplitude": {
+              "real": 1.015069114569,
+              "imag": -0.032227139311
+            },
+            "phase": {
+              "real": 0.541792937102,
+              "imag": 0.8345119192389
+            },
+            "electric_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.5768512088217,
+                "imag": 0.8296268384971
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.08799355120431,
+                "imag": 0.1457597593857
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.568087542782,
+                "imag": 0.8170229426589
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      },
+      {
+        "oracle_type": "complex_fresnel_interface",
+        "amplitude_basis": "analytic_s_or_k_over_k0n_cross_s_electric_basis",
+        "grazing_deg_from_surface": 10.0,
+        "theta_deg_from_normal": 80.0,
+        "polarization": "p",
+        "n_incident": {
+          "real": 1.0,
+          "imag": 0.0
+        },
+        "n_transmitted": {
+          "real": 0.999002304859,
+          "imag": 0.00182649365
+        },
+        "cos_theta_transmitted": {
+          "real": 0.1683351230148,
+          "imag": 0.01055465324345
+        },
+        "r": {
+          "real": 0.01407015826792,
+          "imag": -0.03039832825857
+        },
+        "t": {
+          "real": 1.015023875271,
+          "imag": -0.03228447298317
+        },
+        "R_interface": 0.0011220277146,
+        "T_into_substrate_at_interface": 0.9988779722854,
+        "interface_power_closure": 1.0,
+        "normal_power_admittance_ratio": 0.9685471863125,
+        "field_phase_samples": {
+          "upper_point_nm": [
+            2.0,
+            3.0,
+            1.0
+          ],
+          "lower_point_nm": [
+            2.0,
+            3.0,
+            -1.0
+          ],
+          "incident": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.08081953174336,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.1736481776669,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9848077530122,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.0,
+              "imag": 0.0
+            },
+            "phase": {
+              "real": 0.6705242285045,
+              "imag": 0.7418876323193
+            },
+            "electric_field": [
+              {
+                "real": 0.1164353103613,
+                "imag": 0.1288274353859
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6603374588138,
+                "imag": 0.7306166921719
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.6705242285045,
+                "imag": -0.7418876323193
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "reflected": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.08081953174336,
+                "imag": 0.0
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": -0.1736481776669,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9848077530122,
+                "imag": 0.0
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -1.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 0.01407015826792,
+              "imag": -0.03039832825857
+            },
+            "phase": {
+              "real": 0.5423873105851,
+              "imag": 0.8401285647544
+            },
+            "electric_field": [
+              {
+                "real": -0.005759906440158,
+                "imag": 0.0008104031325107
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.03266605267676,
+                "imag": -0.004596024551969
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.03316997919325,
+                "imag": 0.00466692563895
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "upper_total": {
+            "electric_field": [
+              {
+                "real": 0.1106754039212,
+                "imag": 0.1296378385184
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.6930035114906,
+                "imag": 0.72602066762
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.7036942076978,
+                "imag": -0.7372207066804
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          },
+          "transmitted": {
+            "wavevector_per_nm": [
+              {
+                "real": 0.4583503410461,
+                "imag": 0.0
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.07825958528526,
+                "imag": -0.005050557437294
+              }
+            ],
+            "electric_basis": [
+              {
+                "real": 0.1683351230148,
+                "imag": 0.01055465324345
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.9857879769359,
+                "imag": -0.001802333659654
+              }
+            ],
+            "magnetic_code_basis": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.999002304859,
+                "imag": -0.00182649365
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ],
+            "amplitude": {
+              "real": 1.015023875271,
+              "imag": -0.03228447298317
+            },
+            "phase": {
+              "real": 0.541792937102,
+              "imag": 0.8345119192389
+            },
+            "electric_field": [
+              {
+                "real": 0.08835255007317,
+                "imag": 0.1457324625917
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": 0.5701711301437,
+                "imag": 0.8167286046246
+              }
+            ],
+            "magnetic_code_field": [
+              {
+                "real": 0.0,
+                "imag": 0.0
+              },
+              {
+                "real": -0.5747838167322,
+                "imag": -0.8297840344689
+              },
+              {
+                "real": 0.0,
+                "imag": 0.0
+              }
+            ]
+          }
+        },
+        "substrate_is_absorbing": true,
+        "interpretation": "T is downward flux crossing z=0; absorption occurs below the semi-infinite interface and is not a finite-volume A record."
+      }
+    ]
+  },
+  "matrix_axes": {
+    "degrees": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "mesh_targets_nm": [
+      5.0,
+      2.5
+    ],
+    "mpi_sizes": [
+      1,
+      2,
+      4
+    ],
+    "polarizations": [
+      "s",
+      "p"
+    ],
+    "fresnel_grazing_angles_deg": [
+      1.0,
+      5.0,
+      10.0
+    ]
+  },
+  "matrix_summary": {
+    "total": 192,
+    "requirements": {
+      "not_run": 80,
+      "required": 96,
+      "smoke": 16
+    },
+    "execution_statuses": {
+      "not_run_by_core_gate": 112,
+      "not_run_by_scope": 80
+    }
+  },
+  "execution_matrix": [
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p1_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p2_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p3_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_s_p4_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p1_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p2_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p3_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h5p0_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h5p0_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h5p0_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h2p5_mpi1",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h2p5_mpi2",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_a_air_box_a10_p_p4_h2p5_mpi4",
+      "fixture": "fixture_a_air_box",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "two_mesh_all_rank_plane_wave_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_s_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a1_p_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 1.0,
+      "theta_deg_from_normal": 89.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_s_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "smoke",
+      "requirement_rationale": "lightweight_angle_entry_smoke",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a5_p_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 5.0,
+      "theta_deg_from_normal": 85.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "not_run",
+      "requirement_rationale": "lightweight_angle_smoke_scope",
+      "execution_status": "not_run_by_scope",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "lightweight_angle_smoke_scope"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_s_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "s",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p1_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 1,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p2_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 2,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p3_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 3,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h5p0_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h5p0_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h5p0_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 5.0,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h2p5_mpi1",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 1,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h2p5_mpi2",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 2,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    },
+    {
+      "matrix_id": "fixture_b_flat_air_si_a10_p_p4_h2p5_mpi4",
+      "fixture": "fixture_b_flat_air_si",
+      "grazing_deg_from_surface": 10.0,
+      "theta_deg_from_normal": 80.0,
+      "polarization": "p",
+      "degree": 4,
+      "mesh_target_nm": 2.5,
+      "mpi_size": 4,
+      "requirement": "required",
+      "requirement_rationale": "primary_fresnel_contract",
+      "execution_status": "not_run_by_core_gate",
+      "result_identity": "not_run",
+      "is_pde_run": false,
+      "is_solver_pass": false,
+      "not_run_reason": "high_order_core_gate_not_passed"
+    }
+  ],
+  "promotion_rule": "This planner never emits a PDE pass. A separate clean PDE record must satisfy every core gate before any physical qualification."
+}

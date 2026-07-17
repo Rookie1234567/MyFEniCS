@@ -40,6 +40,14 @@
 | Stage4 block grating | supported | MPI | 当前目标几何 |
 | p1 Nedelec | supported | ordinary CLI | 低阶验证 |
 | p2 Nedelec | recommended | ordinary/benchmark | workstation qualification 使用 p2 |
+| p3 Nedelec + double Floquet | supported | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 已资格化；目标光栅 Hybrid/full3D 同阶对照尚无 |
+| p4 Nedelec + double Floquet | experimental | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 通过且有精度收益；代价高，目标光栅 Hybrid 未资格化 |
+| p3/p4 cross-section QEP | experimental | Task033 Phase A | p3/p4 组件与 selected MPI identity 已资格化；p4 只具有 compact Fourier subspace 证明；legacy p1–p4 aggregate 因 p1/p2 负结果未资格化 |
+| p3/p4 matching-interface trace/projection | experimental | Task033 Phase B，p2 MPI1 + p3/p4 MPI1/MPI4 | 3D→2D 迹、右重构、左 Petrov、积分加阶、MPI compact identity、no-gather/no-dense 通过；p4 四模态块通过 |
+| p3/h5 Hybrid modal funnel | experimental | Task033 Phase C，MPI4，M80/M120/M160 | Schur-minimal 漏斗、augmented/minimal 和同阶 full3D closure 通过；Hybrid 2.618 vs direct 7.781 GiB，未证明 wall-clock speedup 或 grid convergence |
+| p3/h7.5 fixed-p equal accuracy | experimental | Task033 Review V6 accepted，MPI4，M120/M160 | `fixed_p_equal_accuracy_clear_success_with_qualifications`；相对 provisional p3/h5 reference 全部物理误差不劣，DoF/rows/factor-NNZ/memory/指示性时间全降；不是 continuum/grid-converged 证明 |
+| native cellwise variable-p H(curl) | unavailable | Task033 Phase D2 runtime audit | DOLFINx/Basix 公开 mixed/submesh API 不构成 unequal-p conformity/periodic/MPI 证据；fail closed，不做 bespoke prototype |
+| conforming graded-h / h-adaptive | research_only | transferred from Task033 | 未进入本次 master 可执行能力；下一独立任务须重新建立 mesh/accuracy/MPI Gate |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
 | auxiliary DtN | recommended | ordinary Stage4 | 稀疏增广系统 |
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |
@@ -59,14 +67,14 @@
 | Task31 simultaneous RSS/cgroup/swap/stage telemetry | recommended | `run_task031_memory_forensics.py` | 0.25 s live-rank sum，禁止 per-rank historical peak sum；h2 watchdog 9.5/11 GiB |
 | public MPC form action + condensed fine lifecycle | experimental | `mpc_form_action.py` / Case070 | assembled-F-free public form-action path；h5/h3/h2 action error `<1e-15`；每次 apply 仍 assemble/通信，非低层缓存 kernel；跨参数/版本需复验 |
 | Task32 generic 2D cross-section QEP / classification / propagation | experimental | Case080 显式 runner | 13.5 nm h5/h3 infrastructure validated；当前 all-modes MUMPS shift-invert、显式 right/left vectors 仅 current-scale，非 0.7 nm production |
-| Task32 matched Hybrid FEM–Modal interface | experimental | Case080 显式 runner | h5/h3 M160 与同网格 full3D 的 R/T/A、E/H、吸收通过；M=每方向模式数，M160=320 internal amplitudes |
+| Task32 matched Hybrid FEM–Modal interface | experimental | Case080 显式 runner | p2/h5、p2/h3 M160 与同网格 full3D 的 R/T/A、E/H、吸收通过；M=每方向模式数，M160=320 internal amplitudes；p3/p4 无同阶 reference |
 | Task32 augmented / Modal-Schur direct | experimental | Case080 explicit opt-in | `hybrid_direct_engineering_success` at 13.5 nm；h3 minimal 3.224 GiB；h2 `not_run_by_gate`；last-rank modal ownership、replicated M²、all-mode multi-RHS 和 local LU 不是 scalable service API |
 | Task32 parameter interface | diagnostic_only | Case080 M4 smoke | 1–10° S/P 30/30 只证明接口/API/algebra；未证明全范围截断或物理资格 |
 | 0.7 nm current direct Hybrid | not_implemented | no solver entry | analytical projection 判定 not resource feasible；禁止把 current direct reference 作为 0.7 nm profile |
 | future complex-ends Hybrid route | research_only | Task033–Task036 roadmap | exact complex 3D FEM ends required；generic epsilon(x,y) modal middle retained；1 TiB 为 conditional opportunity，尚未证明 |
 | FGMRES outer port | recommended | `--ksp-type fgmres` | 与当前 variable/adaptive PC 合法配对；Task27/30/31 frozen target verified |
 | ordinary GMRES outer port | research_only | `--ksp-type gmres` | port implemented；当前 PC linearity error `2.374308e-2`，certification fail closed，not target-qualified |
-| TFQMR / BCGS outer ports | research_only | `--ksp-type tfqmr|bcgs` | interface exposed；非 FGMRES 自动 certification，当前 adaptive PC 不合法且无 full target qualification |
+| TFQMR / BCGS outer ports | research_only | `--ksp-type tfqmr` / `--ksp-type bcgs` | interface exposed；非 FGMRES 自动 certification，当前 adaptive PC 不合法且无 full target qualification |
 | fixed Richardson local smoother | research_only | `--smoother-ksp-type richardson` | 线性通过但 h5 200 步 residual 0.7703；numeric negative |
 | nonmatching H(curl) transfer + condensed Galerkin | research_only | `hcurl_multilevel.py` / Case060 | validated infrastructure API 与失败 p/h/Woodbury research candidates 已隔离；当前 792D p1 coarse 的 solver 性能为负，不是可推荐 GMG |
 | subdomain-local shift + factor-only storage | experimental | workstation runner 显式 opt-in | PETSc 3.24 complex action/lifecycle 等价通过；跨版本需回归；普通 Task27 profile 不变 |

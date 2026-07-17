@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 from mpi4py import MPI
-from petsc4py import PETSc
 
-from dolfinx import default_scalar_type, fem, geometry
+from dolfinx import fem, geometry
 
-from ..common.analytic_fields_3d import electric_field_code_values, fresnel_reference
+from ..common.analytic_fields_3d import (
+    electric_field_code_values,
+    p_polarization_vector,
+)
 from ..common.config_3d import SimulationConfig3D
 
 
@@ -150,8 +152,13 @@ def _mode_basis(cfg: SimulationConfig3D, n_medium: complex, vertical_sign: int) 
     elif kind == "s":
         polarization = cfg.s_polarization_vector
     elif kind == "p":
-        direction = kvec / (cfg.k0 * complex(n_medium))
-        polarization = np.cross(direction, cfg.s_polarization_vector)
+        polarization = p_polarization_vector(
+            kvec,
+            cfg.s_polarization_vector,
+            complex(n_medium),
+            cfg,
+        )
+        return kvec, polarization
     else:
         polarization = np.asarray(cfg.polarization_vector, dtype=np.complex128)
         if abs(kvec[0]) + abs(kvec[1]) > 1.0e-14:

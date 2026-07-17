@@ -1,0 +1,234 @@
+{
+  "schema_version": "task033.stage3-p3-h5-summary.v1",
+  "record_type": "tracked_stage_summary_not_formal_manifest",
+  "status": "hybrid_component_closed_full3d_not_run_by_memory_gate",
+  "supersession": {
+    "superseded": true,
+    "historical_status_retained_verbatim": true,
+    "superseded_by_record": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage3_p3_h5/full3d_closure_summary.json",
+    "superseded_by_status": "same_degree_p3_h5_hybrid_full3d_numerical_closure_pass",
+    "reason": "A later user-authorized controlled p3/h5 full3D solve passed at 7.781 GiB with zero swap, after which Hybrid M160 closed all 16 same-degree comparison gates.",
+    "current_phaseC_p3_h5_status": "accepted_with_qualifications_by_review_report_v5"
+  },
+  "timestamp_utc": "2026-07-17T06:29:25.3719288Z",
+  "source": {
+    "commit_sha": "b636444b693a932988b6d5d69f7e44e6a8cddb38",
+    "complete_nonignored_worktree_clean": true,
+    "source_stable_during_all_runs": true,
+    "container_image": "myfenics-stage4:task28",
+    "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+    "mpi_size": 4
+  },
+  "review_authority": {
+    "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v4.md",
+    "phaseC_p3_h5_approved": true,
+    "p3_h3_approved": false,
+    "p4_target_approved": false,
+    "adaptivity_approved": false
+  },
+  "case": {
+    "degree": 3,
+    "h_nm": 5.0,
+    "wavelength_nm": 13.5,
+    "incident_grazing_deg": 10.0,
+    "polarization_kind": "s",
+    "material_kind": "stage4_xy",
+    "bottom_interface_nm": 10.0,
+    "top_interface_nm": 110.0,
+    "ordinary_default_changed": false
+  },
+  "preflight": {
+    "status": "full3d_memory_gated_hybrid_candidates_eligible",
+    "effective_live_ceiling_gib": 12.843284606933594,
+    "two_center_limit_gib": 10.549840927124023,
+    "conservative_upper_limit_gib": 11.742431640625,
+    "warning_gib": 10.549840927124023,
+    "controlled_termination_gib": 11.925907135009766,
+    "container_swap_current_bytes": 0,
+    "pswpin_pages": 0,
+    "pswpout_pages": 0
+  },
+  "full3d_direct": {
+    "status": "not_run_by_memory_gate",
+    "solver_path": "ordinary_in_core_mumps_direct",
+    "centers_gib": {
+      "effective_p_over_h_power_law": 6.444557042885593,
+      "assembled_nnz_fill_factor_payload": 15.031264266908613
+    },
+    "conservative_upper_gib": 18.037517120290335,
+    "projected_rows": 130504,
+    "projected_assembled_nnz": 34085833,
+    "projected_factor_nnz": 513746598,
+    "projected_factor_payload_gib": 11.491296153719519,
+    "forced_run": false
+  },
+  "hybrid_schur_minimal": {
+    "status": "component_pass",
+    "requested_modes_per_direction": [
+      80,
+      120,
+      160
+    ],
+    "candidate_pool_rule": "candidate_modes_equals_two_times_requested_modes",
+    "runs": {
+      "M80": {
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 2.278247833251953,
+        "simultaneous_worker_rss_gib": 2.278247833251953,
+        "peak_cgroup_current_gib": 1.9668960571289062,
+        "total_seconds_max_rank": 63.655990213999985
+      },
+      "M120": {
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 2.4919662475585938,
+        "simultaneous_worker_rss_gib": 2.4919662475585938,
+        "peak_cgroup_current_gib": 1.8656959533691406,
+        "total_seconds_max_rank": 85.10173558399998
+      },
+      "M160": {
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 2.6409339904785156,
+        "simultaneous_worker_rss_gib": 2.6409339904785156,
+        "peak_cgroup_current_gib": 2.015666961669922,
+        "total_seconds_max_rank": 106.98034766199999
+      }
+    },
+    "all_no_swap": true,
+    "all_memory_authority_pass": true,
+    "all_physical_and_algebraic_gates_pass": true
+  },
+  "m_funnel": {
+    "status": "qualified",
+    "selected_mode_count_per_direction": 160,
+    "M80_to_M120": {
+      "max_absolute_rta_delta": 1.2494005829921662e-11,
+      "max_significant_order_power_relative_delta": 5.563135240350411e-09,
+      "max_significant_order_complex_amplitude_relative_delta": 4.9141756650069745e-09,
+      "mandatory_pass": true,
+      "strong_pass": true
+    },
+    "M120_to_M160": {
+      "max_absolute_rta_delta": 7.216449660063518e-14,
+      "max_significant_order_power_relative_delta": 3.6759852022860023e-10,
+      "max_significant_order_complex_amplitude_relative_delta": 1.9253438634438622e-10,
+      "mandatory_pass": true,
+      "strong_pass": true
+    },
+    "M240_required": false,
+    "M240_run": false
+  },
+  "M160_observed_physics": {
+    "R_total": 0.001090095685264426,
+    "T_total": 0.6006223682210123,
+    "A_balance": 0.39828753609372325,
+    "A_volume_total": 0.398287536095597,
+    "energy_closure_error": 1.873612376357414e-12,
+    "true_relative_residual": 2.277008334667471e-12,
+    "bottom_interface_e_relative_l2": 1.9134682064565434e-08,
+    "top_interface_e_relative_l2": 2.0613199169597722e-08,
+    "bottom_interface_h_relative_l2": 0.0006914476978748745,
+    "top_interface_h_relative_l2": 0.0006174634601129959
+  },
+  "M160_algebraic_interface_and_qep": {
+    "source": "hybrid/m160/attempt/solver_record.json",
+    "source_sha256": "4bde1f8d3c1f56d7b1cbe81d4d1141632965b97474dcb334c301cfe4b8709c64",
+    "interface_e_projection_relative_residual": {
+      "bottom": 5.379153214025253e-13,
+      "top": 7.175389546385523e-13,
+      "combined": 6.454544567381362e-13
+    },
+    "fe_modal_traction_equilibrium_relative_residual": {
+      "bottom": 3.284582365026469e-12,
+      "top": 1.3672412976885866e-12,
+      "interpretation": "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
+    },
+    "qep_polynomial_relative_residual_max": {
+      "right_across_both_directions": 1.8699243106922856e-14,
+      "left_across_both_directions": 7.90020520262823e-15,
+      "positive_right": 1.8699243106922856e-14,
+      "positive_left": 4.569517087938081e-15,
+      "negative_right": 2.590354304692316e-15,
+      "negative_left": 7.90020520262823e-15
+    },
+    "biorthogonality_identity_error_max": {
+      "across_both_directions": 2.001179542204579e-07,
+      "positive": 2.001179542204579e-07,
+      "negative": 1.142964124353471e-07
+    },
+    "finite_effective_mode_filtering": {
+      "positive": {
+        "finite_candidate_count": 320,
+        "numerically_infinite_candidate_count": 0,
+        "retained_mode_count": 160,
+        "finite_spectrum_abs_beta_cutoff_per_nm": 2000.0,
+        "first_rejected_numerical_infinity_beta_per_nm": null
+      },
+      "negative": {
+        "finite_candidate_count": 320,
+        "numerically_infinite_candidate_count": 0,
+        "retained_mode_count": 160,
+        "finite_spectrum_abs_beta_cutoff_per_nm": 2000.0,
+        "first_rejected_numerical_infinity_beta_per_nm": null
+      }
+    }
+  },
+  "augmented_anchor_M160": {
+    "status": "component_pass",
+    "comparison_path": "modal-schur-memory-minimal",
+    "memory_authority_gib": 4.148006439208984,
+    "total_seconds_max_rank": 114.05124962899993,
+    "modal_coefficients_relative_error": 2.8005921654064453e-13,
+    "bottom_solution_relative_error": 1.6800119757685089e-13,
+    "top_solution_relative_error": 2.2786366813547856e-13,
+    "interface_e_projection_combined_residual_delta": 2.1230491095040589e-13,
+    "max_absolute_rta_delta": 3.1308289294429414e-14,
+    "dense_interface_square_formed": false,
+    "full_field_or_mode_gathered": false,
+    "all_equivalence_gates_pass": true,
+    "no_swap": true
+  },
+  "source_reuse_audit": {
+    "kind": "audited_case090_core_compatible_descendant",
+    "case090_evidence_source_sha": "6613f94b91ebc77eb50e74086475c67df46236f6",
+    "current_source_sha": "b636444b693a932988b6d5d69f7e44e6a8cddb38",
+    "compatibility_scope": "case090_pure3d_floquet_core",
+    "case090_core_source_unchanged": true,
+    "component_disjoint_numerical_changed_paths": [
+      "src/coupling/modal_trace_projection.py"
+    ],
+    "disallowed_changed_paths": []
+  },
+  "disposition": {
+    "whole_phaseC_pass": false,
+    "full3d_direct": "not_run_by_memory_gate",
+    "hybrid_m80_m120_m160": "component_pass",
+    "augmented_vs_schur_minimal_m160": "component_pass",
+    "selected_plane_e_h_against_same_degree_full3d": "not_available",
+    "p3_h3": "not_approved",
+    "p4_target": "not_approved",
+    "h_adaptivity": "deferred"
+  },
+  "raw_evidence": {
+    "root": "benchmarks/artifacts/cases/091/task033_phaseC_b636444",
+    "phaseC_preflight.json": "2d1cae6ecfe5dfbec1def85c7c90c9304140e4ca63f0b12a7f9541a64045044b",
+    "hybrid/m080/watchdog_summary.json": "d553b035b61e408e2ba34c3c10c190745bbbf87baf1f3ded46dce5ace432ca8e",
+    "hybrid/m120/watchdog_summary.json": "315aed25ee494bc77c05e5735a81a6855bf6b1f85b3213e22ed540635666caaf",
+    "hybrid/m160/watchdog_summary.json": "b6e0111adbbf4832e4de5077be047284ecb7971eb70f3f852f092263479ce68f",
+    "hybrid/m160/attempt/solver_record.json": "4bde1f8d3c1f56d7b1cbe81d4d1141632965b97474dcb334c301cfe4b8709c64",
+    "hybrid/funnel.json": "40e7877a6fe08a04ce0d8c7756b253d35e1b6d971b22d327de0d01ee9ca1ba97",
+    "hybrid/augmented_m160/watchdog_summary.json": "f01ad74099551ee22aad1ea34adf7a1b1fc4dcc5e5b702fcbaf0c572d95a9d61",
+    "phaseC_summary.json": "d387d13244b63a3713ded1cd7eb7a454ac492cf0ce1a7b70c2245f02848dad96"
+  },
+  "verification": {
+    "focused_task033_tests": "55 passed, 1 skipped",
+    "ruff": "pass",
+    "git_diff_check": "pass"
+  },
+  "limitations": [
+    "This tracked file is a compact stage summary, not the original Task033 formal manifest.",
+    "The next two statements describe the historical C0 state only and are superseded by full3d_closure_summary.json.",
+    "At this historical checkpoint the Hybrid modal funnel and augmented-path equivalence did not replace a same-degree full3D reference.",
+    "At this historical checkpoint selected-plane E/H errors against p3 full3D were unavailable because the direct candidate had not been authorized.",
+    "No p3/h3, p4 target solve, adaptive, buffer, 0.7 nm PDE, or 1 TiB qualification was completed by this historical record."
+  ]
+}

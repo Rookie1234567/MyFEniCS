@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task033.case091.hybrid-funnel.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "case_id",
+    "status",
+    "identity",
+    "case",
+    "tolerances",
+    "source_records",
+    "individual_gates",
+    "comparisons",
+    "modal_basis_capacity",
+    "terminal_physical_reference_evidence",
+    "qualification",
+    "failures",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "task033.case091.hybrid-funnel.v1"},
+    "record_type": {"const": "task033_hybrid_mode_truncation_funnel"},
+    "case_id": {"const": "091_hybrid_hp_adaptivity_feasibility"},
+    "status": {"enum": ["qualified", "not_qualified"]},
+    "identity": {
+      "type": "object",
+      "required": [
+        "is_pde_run",
+        "is_solver_pass",
+        "is_mode_convergence_measurement",
+        "ordinary_default_changed",
+        "proves_0p7nm_feasible",
+        "source_commit_full_sha",
+        "tracked_source_clean"
+      ],
+      "properties": {
+        "is_pde_run": {"type": "boolean"},
+        "is_solver_pass": {"type": "boolean"},
+        "is_mode_convergence_measurement": {"const": true},
+        "ordinary_default_changed": {"const": false},
+        "proves_0p7nm_feasible": {"const": false},
+        "source_commit_full_sha": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "tracked_source_clean": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "case": {"type": "object"},
+    "tolerances": {"type": "object"},
+    "source_records": {"type": "array"},
+    "individual_gates": {"type": "object"},
+    "comparisons": {"type": "array"},
+    "modal_basis_capacity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "direction",
+            "requested_modes_per_direction",
+            "delivered_finite_admissible_modes",
+            "finite_candidate_count_both_directions",
+            "numerically_infinite_candidate_count",
+            "finite_spectrum_abs_beta_h_cutoff",
+            "finite_spectrum_abs_beta_cutoff_per_nm",
+            "first_rejected_numerical_infinity_beta_per_nm",
+            "leading_coefficient_singular_by_design",
+            "pair_tolerance_relaxed",
+            "left_pair_relative_error_tolerance"
+          ],
+          "properties": {
+            "status": {"const": "insufficient_finite_admissible_modes"},
+            "direction": {"const": "positive"},
+            "requested_modes_per_direction": {"const": 160},
+            "delivered_finite_admissible_modes": {"const": 120},
+            "finite_candidate_count_both_directions": {"const": 240},
+            "numerically_infinite_candidate_count": {"const": 80},
+            "finite_spectrum_abs_beta_h_cutoff": {"const": 10000.0},
+            "finite_spectrum_abs_beta_cutoff_per_nm": {"const": 2000.0},
+            "first_rejected_numerical_infinity_beta_per_nm": {
+              "type": "array",
+              "prefixItems": [{"type": "number"}, {"type": "number"}],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "leading_coefficient_singular_by_design": {"const": true},
+            "pair_tolerance_relaxed": {"const": false},
+            "left_pair_relative_error_tolerance": {"const": 1e-7}
+          },
+          "additionalProperties": false
+        },
+        {"type": "null"}
+      ]
+    },
+    "terminal_physical_reference_evidence": {"type": "null"},
+    "qualification": {
+      "type": "object",
+      "required": [
+        "mode_count_converged",
+        "selected_mode_count_per_direction",
+        "selected_pair_strong",
+        "all_sources_same_clean_sha",
+        "all_external_watchdogs_pass",
+        "modal_basis_capacity_limited",
+        "terminal_physical_gate_limited"
+      ],
+      "properties": {
+        "mode_count_converged": {"type": "boolean"},
+        "selected_mode_count_per_direction": {
+          "anyOf": [
+            {"enum": [160, 240]},
+            {"type": "null"}
+          ]
+        },
+        "selected_pair_strong": {"type": "boolean"},
+        "all_sources_same_clean_sha": {"type": "boolean"},
+        "all_external_watchdogs_pass": {"type": "boolean"},
+        "modal_basis_capacity_limited": {"type": "boolean"},
+        "terminal_physical_gate_limited": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "failures": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "qualified"}}},
+      "then": {
+        "properties": {
+          "identity": {
+            "properties": {
+              "is_solver_pass": {"const": true},
+              "tracked_source_clean": {"const": true}
+            }
+          },
+          "qualification": {
+            "properties": {
+              "mode_count_converged": {"const": true},
+              "all_sources_same_clean_sha": {"const": true},
+              "all_external_watchdogs_pass": {"const": true},
+              "modal_basis_capacity_limited": {"const": false},
+              "terminal_physical_gate_limited": {"const": false}
+            }
+          },
+          "modal_basis_capacity": {"type": "null"},
+          "terminal_physical_reference_evidence": {"type": "null"},
+          "failures": {"maxItems": 0}
+        }
+      }
+    }
+  ]
+}

@@ -17,6 +17,7 @@ from petsc4py import PETSc
 from slepc4py import SLEPc
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.high_order_quadrature import high_order_quadrature_policy
 from ..constraints.cross_section_floquet import (
     CrossSectionFloquetConstraints,
     DistributedConstraintTransform,
@@ -40,6 +41,11 @@ class QuadraticBetaOperators:
     full_shape: tuple[int, int]
     reduced_shape: tuple[int, int]
     scalar_dtype: str
+    field_degree: int
+    geometry_degree: int
+    coefficient_degree: int
+    quadrature_degree: int
+    quadrature_policy: str = "2p_plus_2g_plus_c_plus_2"
     formulation: str = "mixed_transverse_N1curl_longitudinal_Lagrange_QEP"
     polynomial_order: int = 2
     leading_coefficient_singular_by_design: bool = True
@@ -119,8 +125,36 @@ def analytic_homogeneous_beta(
     return beta
 
 
-def _assemble_unconstrained_matrix(form) -> PETSc.Mat:
-    matrix = fem_petsc.assemble_matrix(fem.form(form), bcs=[])
+def qep_quadrature_degree(
+    *,
+    field_degree: int,
+    geometry_degree: int,
+    coefficient_degree: int,
+) -> int:
+    """Return the conservative planar high-order QEP quadrature degree.
+
+    The extra two orders preserve the reviewed p=2 value of eight on the
+    current linear-geometry, piecewise-constant-material meshes while making
+    the p=3/p=4 policy explicit.  Curved production geometry remains outside
+    Task033 and must be qualified separately rather than relying on this
+    polynomial rule alone.
+    """
+
+    return high_order_quadrature_policy(
+        field_degree=field_degree,
+        geometry_degree=geometry_degree,
+        coefficient_degree=coefficient_degree,
+    ).selected_degree
+
+
+def _assemble_unconstrained_matrix(form, *, quadrature_degree: int) -> PETSc.Mat:
+    matrix = fem_petsc.assemble_matrix(
+        fem.form(
+            form,
+            form_compiler_options={"quadrature_degree": int(quadrature_degree)},
+        ),
+        bcs=[],
+    )
     matrix.assemble()
     return matrix
 
@@ -130,6 +164,7 @@ def assemble_quadratic_beta_operators(
     cross_section: CrossSectionMesh,
     spaces: CrossSectionSpaces,
     *,
+    quadrature_degree: int | None = None,
     log=None,
 ) -> QuadraticBetaOperators:
     """Assemble and explicitly Floquet-reduce the mixed Maxwell QEP.
@@ -149,6 +184,32 @@ def assemble_quadratic_beta_operators(
     mu_inv = complex(1.0 / cfg.mu_r)
     k0_squared = float(cfg.k0**2)
     epsilon_r = cross_section.epsilon_r
+    field_degree = max(
+        int(spaces.transverse_degree), int(spaces.longitudinal_degree)
+    )
+    geometry_degree = int(getattr(cross_section.mesh.geometry.cmap, "degree", 1))
+    coefficient_degree = int(
+        getattr(
+            cross_section.epsilon_r.function_space.element.basix_element,
+            "degree",
+            0,
+        )
+    )
+    recommended_quadrature = qep_quadrature_degree(
+        field_degree=field_degree,
+        geometry_degree=geometry_degree,
+        coefficient_degree=coefficient_degree,
+    )
+    selected_quadrature = (
+        recommended_quadrature
+        if quadrature_degree is None
+        else int(quadrature_degree)
+    )
+    if selected_quadrature < recommended_quadrature:
+        raise ValueError(
+            "QEP quadrature degree cannot be lower than the Task033 policy: "
+            f"requested={selected_quadrature}, recommended={recommended_quadrature}."
+        )
 
     a0 = (
         mu_inv * ufl.inner(ufl.curl(Et), ufl.curl(Vt))
@@ -182,7 +243,11 @@ def assemble_quadratic_beta_operators(
         ("K2", a2),
         ("electric_mass", electric_mass),
     ):
-        full_matrices.append(_assemble_unconstrained_matrix(form))
+        full_matrices.append(
+            _assemble_unconstrained_matrix(
+                form, quadrature_degree=selected_quadrature
+            )
+        )
         if log is not None:
             log(f"QEP full {name} assembled")
     try:
@@ -222,6 +287,10 @@ def assemble_quadratic_beta_operators(
         full_shape=(transform.full_global_size, transform.full_global_size),
         reduced_shape=reduced_shape,
         scalar_dtype=str(np.dtype(PETSc.ScalarType)),
+        field_degree=field_degree,
+        geometry_degree=geometry_degree,
+        coefficient_degree=coefficient_degree,
+        quadrature_degree=selected_quadrature,
     )
 
 
