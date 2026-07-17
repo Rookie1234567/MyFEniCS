@@ -11,6 +11,7 @@ import json
 import math
 from pathlib import Path
 import re
+import subprocess
 from typing import Any
 
 
@@ -26,6 +27,7 @@ RAISED_QUADRATURE_DELTA_MAX = 2.0e-12
 MPI_BETA_RELATIVE_DELTA_MAX = 1.0e-8
 MPI_INVARIANT_RELATIVE_DELTA_MAX = 1.0e-7
 EXPECTED_SHARDS = ((2, 1), (3, 1), (3, 4), (4, 1), (4, 4))
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _finite(value: object) -> float | None:
@@ -101,6 +103,136 @@ def _record_identity(record: Mapping[str, Any]) -> tuple[int, int] | None:
     ):
         return int(degree), int(mpi_size)
     return None
+
+
+def _compact_observed_shard(record: Mapping[str, Any]) -> dict[str, Any]:
+    spaces = _mapping(record.get("space_identity"))
+    source_space = _mapping(spaces.get("source_3d"))
+    trace_space = _mapping(spaces.get("trace_2d"))
+    geometry = _mapping(record.get("interface_geometry"))
+    accuracy = _mapping(record.get("accuracy"))
+    projection = _mapping(record.get("modal_projection"))
+    quadrature = _mapping(record.get("quadrature"))
+    mpi = _mapping(record.get("mpi"))
+    scalability = _mapping(record.get("scalability"))
+    ownership = _sequence(mpi.get("ownership_by_rank"))
+    rss_rows = _sequence(scalability.get("historical_peak_rss_by_rank"))
+    rss_values = [
+        _finite(_mapping(item).get("historical_peak_rss_mb"))
+        for item in rss_rows
+    ]
+    return {
+        "source_3d": {
+            "family": source_space.get("family"),
+            "degree": source_space.get("degree"),
+            "global_dofs": source_space.get("global_dofs"),
+            "face_trace_dofs_per_cell": source_space.get(
+                "face_trace_dofs_per_cell"
+            ),
+        },
+        "trace_2d": {
+            "family": trace_space.get("family"),
+            "degree": trace_space.get("degree"),
+            "global_dofs": trace_space.get("global_dofs"),
+            "cell_dofs": trace_space.get("cell_dofs"),
+        },
+        "matching_mesh_sha256": geometry.get("matching_mesh_sha256"),
+        "affine_tangential_trace": accuracy.get("affine_tangential_trace"),
+        "modal_projection": {
+            "mode_count": projection.get("mode_count"),
+            "reconstruction_shape": projection.get("reconstruction_shape"),
+            "projection_shape": projection.get("projection_shape"),
+            "trace_mass_nz_used": projection.get("trace_mass_nz_used"),
+            "gram_rank": projection.get("gram_rank"),
+            "gram_condition": projection.get("gram_condition"),
+            "gram_singular_values": projection.get("gram_singular_values"),
+            "coefficient_relative_error": projection.get(
+                "coefficient_relative_error"
+            ),
+            "trace_reconstruction_relative_residual": projection.get(
+                "trace_reconstruction_relative_residual"
+            ),
+            "right_reconstruction_base_raised_relative_error": (
+                projection.get(
+                    "right_reconstruction_base_raised_relative_error"
+                )
+            ),
+            "left_unit_projection_relative_errors": projection.get(
+                "left_unit_projection_relative_errors"
+            ),
+            "mode_diagnostics": projection.get("mode_diagnostics"),
+            "block_diagnostics": projection.get("block_diagnostics"),
+            "storage": projection.get("storage"),
+        },
+        "quadrature": {
+            name: quadrature.get(name)
+            for name in (
+                "policy",
+                "field_degree",
+                "geometry_degree",
+                "coefficient_degree",
+                "selected_degree",
+                "raised_degree",
+                "qep_selected_degree",
+                "trace_mass_matrix_relative_delta",
+                "gram_relative_delta",
+                "coefficient_round_trip_relative_delta",
+            )
+        },
+        "mpi": {
+            "ownership_rank_count": len(ownership),
+            "source_owned_dofs_sum": _owned_sum(
+                ownership,
+                "source_owned_dofs",
+            ),
+            "source_ghost_dofs_sum": _owned_sum(
+                ownership,
+                "source_ghost_dofs",
+            ),
+            "trace_owned_dofs_sum": _owned_sum(
+                ownership,
+                "trace_owned_dofs",
+            ),
+            "trace_ghost_dofs_sum": _owned_sum(
+                ownership,
+                "trace_ghost_dofs",
+            ),
+            "tangential_value_bytes_sent": mpi.get(
+                "tangential_value_bytes_sent"
+            ),
+            "tangential_value_bytes_received": mpi.get(
+                "tangential_value_bytes_received"
+            ),
+            "coordinate_axis_allgather_logical_payload_bytes": mpi.get(
+                "coordinate_axis_allgather_logical_payload_bytes"
+            ),
+        },
+        "scalability": {
+            "maximum_historical_peak_rss_mb": (
+                max(float(value) for value in rss_values if value is not None)
+                if any(value is not None for value in rss_values)
+                else None
+            ),
+            "trace_seconds_max_rank": scalability.get(
+                "trace_seconds_max_rank"
+            ),
+            "projection_seconds_max_rank": scalability.get(
+                "projection_seconds_max_rank"
+            ),
+            "total_seconds_max_rank": scalability.get(
+                "total_seconds_max_rank"
+            ),
+            "full_3d_field_gathered": scalability.get(
+                "full_3d_field_gathered"
+            ),
+            "full_mode_vector_gathered": scalability.get(
+                "full_mode_vector_gathered"
+            ),
+            "dense_interface_square_formed": scalability.get(
+                "dense_interface_square_formed"
+            ),
+        },
+    }
 
 
 def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
@@ -602,6 +734,10 @@ def aggregate_matched_trace_records(
             for degree, mpi_size in EXPECTED_SHARDS
         ],
         "shard_reports": shard_reports,
+        "observed_shards": {
+            f"p{degree}_mpi{mpi_size}": _compact_observed_shard(record)
+            for (degree, mpi_size), record in sorted(indexed.items())
+        },
         "mpi_identity_diagnostics": mpi_diagnostics,
         "gates": {
             "all_five_expected_shards_present_and_pass": (
@@ -653,6 +789,39 @@ def aggregate_matched_trace_records(
     return payload
 
 
+def _sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git(*args: str) -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", *args],
+            cwd=ROOT,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _refresh_evidence_sha256(payload: dict[str, Any]) -> None:
+    payload.pop("evidence_sha256", None)
+    digest_payload = dict(payload)
+    digest_payload.pop("generated_at_utc", None)
+    payload["evidence_sha256"] = hashlib.sha256(
+        json.dumps(
+            digest_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Aggregate the five Task033 Phase-B matched-trace shards."
@@ -677,6 +846,24 @@ def main() -> None:
     )
     records = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
     aggregate = aggregate_matched_trace_records(records)
+    aggregate["raw_shards"] = [
+        {
+            "degree": _record_identity(record)[0],
+            "mpi_size": _record_identity(record)[1],
+            "path": path.resolve().relative_to(ROOT).as_posix(),
+            "file_sha256": _sha256_path(path),
+        }
+        for path, record in zip(paths, records)
+        if _record_identity(record) is not None
+    ]
+    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    aggregate["aggregation_tool"] = {
+        "module": "benchmarks.task033_matched_trace_qualification",
+        "commit_sha": _git("rev-parse", "HEAD"),
+        "tracked_source_clean": tracked_status == "",
+        "tracked_status": tracked_status,
+    }
+    _refresh_evidence_sha256(aggregate)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(aggregate, indent=2, sort_keys=True) + "\n",
