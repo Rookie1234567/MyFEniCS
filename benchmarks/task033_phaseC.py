@@ -505,7 +505,7 @@ def build_phasec_summary_from_paths(
         ),
         "exact_m80_m120_m160": modes == list(PHASEC_MODES),
         "all_hybrid_watchdogs_measured": all(
-            row.get("status") in {"measured_shard_pass", "formal_not_pass"}
+            row.get("status") == "measured_shard_pass"
             and row.get("target") == "hybrid"
             and row.get("memory_authority_pass") is True
             and row.get("no_swap") is True

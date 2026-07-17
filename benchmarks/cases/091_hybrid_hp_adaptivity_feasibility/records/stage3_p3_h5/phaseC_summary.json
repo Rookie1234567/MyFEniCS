@@ -2,7 +2,7 @@
   "schema_version": "task033.stage3-p3-h5-summary.v1",
   "record_type": "tracked_stage_summary_not_formal_manifest",
   "status": "hybrid_component_closed_full3d_not_run_by_memory_gate",
-  "timestamp_utc": "2026-07-17T05:22:13.779080+00:00",
+  "timestamp_utc": "2026-07-17T06:29:25.3719288Z",
   "source": {
     "commit_sha": "b636444b693a932988b6d5d69f7e44e6a8cddb38",
     "complete_nonignored_worktree_clean": true,
@@ -12,7 +12,7 @@
     "mpi_size": 4
   },
   "review_authority": {
-    "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v3.md",
+    "path": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v4.md",
     "phaseC_p3_h5_approved": true,
     "p3_h3_approved": false,
     "p4_target_approved": false,
@@ -121,6 +121,49 @@
     "bottom_interface_h_relative_l2": 0.0006914476978748745,
     "top_interface_h_relative_l2": 0.0006174634601129959
   },
+  "M160_algebraic_interface_and_qep": {
+    "source": "hybrid/m160/attempt/solver_record.json",
+    "source_sha256": "4bde1f8d3c1f56d7b1cbe81d4d1141632965b97474dcb334c301cfe4b8709c64",
+    "interface_e_projection_relative_residual": {
+      "bottom": 5.379153214025253e-13,
+      "top": 7.175389546385523e-13,
+      "combined": 6.454544567381362e-13
+    },
+    "fe_modal_traction_equilibrium_relative_residual": {
+      "bottom": 3.284582365026469e-12,
+      "top": 1.3672412976885866e-12,
+      "interpretation": "variational_FE_rows_with_modal_traction_not_pointwise_H_jump"
+    },
+    "qep_polynomial_relative_residual_max": {
+      "right_across_both_directions": 1.8699243106922856e-14,
+      "left_across_both_directions": 7.90020520262823e-15,
+      "positive_right": 1.8699243106922856e-14,
+      "positive_left": 4.569517087938081e-15,
+      "negative_right": 2.590354304692316e-15,
+      "negative_left": 7.90020520262823e-15
+    },
+    "biorthogonality_identity_error_max": {
+      "across_both_directions": 2.001179542204579e-07,
+      "positive": 2.001179542204579e-07,
+      "negative": 1.142964124353471e-07
+    },
+    "finite_effective_mode_filtering": {
+      "positive": {
+        "finite_candidate_count": 320,
+        "numerically_infinite_candidate_count": 0,
+        "retained_mode_count": 160,
+        "finite_spectrum_abs_beta_cutoff_per_nm": 2000.0,
+        "first_rejected_numerical_infinity_beta_per_nm": null
+      },
+      "negative": {
+        "finite_candidate_count": 320,
+        "numerically_infinite_candidate_count": 0,
+        "retained_mode_count": 160,
+        "finite_spectrum_abs_beta_cutoff_per_nm": 2000.0,
+        "first_rejected_numerical_infinity_beta_per_nm": null
+      }
+    }
+  },
   "augmented_anchor_M160": {
     "status": "component_pass",
     "comparison_path": "modal-schur-memory-minimal",
@@ -163,6 +206,7 @@
     "hybrid/m080/watchdog_summary.json": "d553b035b61e408e2ba34c3c10c190745bbbf87baf1f3ded46dce5ace432ca8e",
     "hybrid/m120/watchdog_summary.json": "315aed25ee494bc77c05e5735a81a6855bf6b1f85b3213e22ed540635666caaf",
     "hybrid/m160/watchdog_summary.json": "b6e0111adbbf4832e4de5077be047284ecb7971eb70f3f852f092263479ce68f",
+    "hybrid/m160/attempt/solver_record.json": "4bde1f8d3c1f56d7b1cbe81d4d1141632965b97474dcb334c301cfe4b8709c64",
     "hybrid/funnel.json": "40e7877a6fe08a04ce0d8c7756b253d35e1b6d971b22d327de0d01ee9ca1ba97",
     "hybrid/augmented_m160/watchdog_summary.json": "f01ad74099551ee22aad1ea34adf7a1b1fc4dcc5e5b702fcbaf0c572d95a9d61",
     "phaseC_summary.json": "d387d13244b63a3713ded1cd7eb7a454ac492cf0ce1a7b70c2245f02848dad96"

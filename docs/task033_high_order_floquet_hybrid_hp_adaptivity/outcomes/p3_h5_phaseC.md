@@ -115,14 +115,25 @@ M80/M120 没有在缺少实测前宣称低于 M160 的折扣，而是共同继�
 | bottom/top E tangential relative L2 | `1.913e-8 / 2.061e-8` |
 | bottom/top H tangential relative L2 | `6.914e-4 / 6.175e-4` |
 | full true residual | `2.277e-12 <= 1e-9` |
+| interface-E projection bottom/top/combined relative residual | `5.379e-13 / 7.175e-13 / 6.455e-13` |
+| FE-modal traction equilibrium bottom/top relative residual | `3.285e-12 / 1.367e-12` |
+| max right/left QEP polynomial relative residual | `1.870e-14 / 7.900e-15` |
+| max biorthogonality identity error | `2.001e-7` |
+| forward finite / numerical-infinity / retained modes | `320 / 0 / 160` |
+| backward finite / numerical-infinity / retained modes | `320 / 0 / 160` |
 | QEP shape | full `1723×1723`，reduced `1620×1620` |
 | local bottom/top rows | `21,847 / 21,847` |
 | local bottom/top assembled NNZ | `5,156,503 / 5,156,503` |
 | dense interface square | false |
 
-actual E continuity、actual H/traction、QEP left/right residual、biorthogonality、
-stable propagation、external R/T/A、volume closure 和 selected middle-plane
-reconstruction 的已声明 Gate 全部通过。`selected_plane_full3d_comparison` 仍为
+上表的代数接口和 QEP 数值直接提取自 canonical M160 原始记录
+`hybrid/m160/attempt/solver_record.json`，其 SHA-256 为
+`4bde1f8d3c1f56d7b1cbe81d4d1141632965b97474dcb334c301cfe4b8709c64`。
+正反向的 numerical-infinity 过滤数均为 0，`first_rejected` 因而为 `null`；
+这表示没有候选因数值无穷特征值被丢弃，而不是该检查缺失。actual E continuity、
+actual H/traction、QEP left/right residual、biorthogonality、stable propagation、
+external R/T/A、volume closure 和 selected middle-plane reconstruction 的已声明
+Gate 全部通过。`selected_plane_full3d_comparison` 仍为
 `None`，因为同阶 full3D 没有被 C0 允许生成；不能把“选面已重建”写成“已与
 full3D 对照”。
 

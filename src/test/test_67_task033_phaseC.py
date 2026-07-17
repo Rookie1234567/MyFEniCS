@@ -185,6 +185,69 @@ class Task033PhaseCTest(unittest.TestCase):
             "not_available",
         )
 
+    def test_aggregate_rejects_formal_not_pass_for_every_required_mode(self) -> None:
+        for rejected_mode in (80, 120, 160):
+            with self.subTest(rejected_mode=rejected_mode):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    preflight = self._write_json(
+                        root / "preflight.json",
+                        {
+                            "identity": {"source_commit_full_sha": SHA},
+                            "qualification": {
+                                "full3d_disposition": "not_run_by_memory_gate",
+                                "hybrid_component_chain_launchable": True,
+                            },
+                        },
+                    )
+                    funnel = self._write_json(
+                        root / "funnel.json",
+                        {"status": "qualified"},
+                    )
+                    hybrid_paths = [
+                        self._write_json(
+                            root / f"m{mode}.json",
+                            {
+                                "status": (
+                                    "formal_not_pass"
+                                    if mode == rejected_mode
+                                    else "measured_shard_pass"
+                                ),
+                                "target": "hybrid",
+                                "requested_modes": mode,
+                                "memory_authority_pass": True,
+                                "no_swap": True,
+                                "terminated_for_memory": False,
+                                "terminated_for_timeout": False,
+                                "source": {"head_before_sha": SHA},
+                            },
+                        )
+                        for mode in (80, 120, 160)
+                    ]
+                    augmented = self._write_json(
+                        root / "augmented.json",
+                        {
+                            "status": "measured_shard_pass",
+                            "target": "hybrid",
+                            "source": {"head_before_sha": SHA},
+                            "measurements": {
+                                "modal_schur_comparison": {
+                                    "gates": {"all": True}
+                                }
+                            },
+                        },
+                    )
+                    record = build_phasec_summary_from_paths(
+                        preflight_path=preflight,
+                        funnel_path=funnel,
+                        hybrid_paths=hybrid_paths,
+                        augmented_path=augmented,
+                    )
+                self.assertIn(
+                    "all_hybrid_watchdogs_measured", record["failures"]
+                )
+                self.assertEqual(record["status"], "phaseC_not_closed")
+
     def test_aggregate_rejects_mixed_source_sha(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
