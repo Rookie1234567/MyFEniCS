@@ -55,6 +55,8 @@ class SparseLuTeacherLocalSolver:
             + self._factor.perm_c.nbytes
         )
         self.solve_count = 0
+        self.solve_batch_count = 0
+        self.solve_batch_size_max = 0
         self.solve_elapsed_s = 0.0
         self._solve_samples_s: list[float] = []
         self._destroyed = False
@@ -74,17 +76,44 @@ class SparseLuTeacherLocalSolver:
             raise RuntimeError("sparse-LU teacher returned NaN or Inf")
         out[:] = values
         self.solve_count += 1
+        self.solve_batch_count += 1
+        self.solve_batch_size_max = max(self.solve_batch_size_max, 1)
 
-    def solve_many(self, rhs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def solve_many(
+        self,
+        rhs: np.ndarray,
+        *,
+        batch_size: int = 64,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if self._destroyed:
+            raise RuntimeError("sparse-LU teacher has been destroyed")
         source = np.asarray(rhs, dtype=np.complex128)
         if source.ndim != 2 or source.shape[1] != self.size:
             raise ValueError("sparse-LU teacher batch shape mismatch")
+        if batch_size < 1:
+            raise ValueError("sparse-LU teacher batch size must be positive")
         output = np.empty_like(source)
         elapsed = np.empty(source.shape[0], dtype=np.float64)
-        for index, row in enumerate(source):
+        for first in range(0, source.shape[0], batch_size):
+            stop = min(first + batch_size, source.shape[0])
+            factor_rhs = np.asfortranarray(source[first:stop].T)
             started = time.perf_counter()
-            self.solve(row, output[index])
-            elapsed[index] = time.perf_counter() - started
+            solved = np.asarray(
+                self._factor.solve(factor_rhs),
+                dtype=np.complex128,
+            ).T
+            batch_elapsed = time.perf_counter() - started
+            if not np.all(np.isfinite(solved)):
+                raise RuntimeError("sparse-LU teacher returned NaN or Inf")
+            output[first:stop] = solved
+            count = stop - first
+            per_rhs_elapsed = batch_elapsed / count
+            elapsed[first:stop] = per_rhs_elapsed
+            self.solve_elapsed_s += batch_elapsed
+            self._solve_samples_s.extend([per_rhs_elapsed] * count)
+            self.solve_count += count
+            self.solve_batch_count += 1
+            self.solve_batch_size_max = max(self.solve_batch_size_max, count)
         return output, elapsed
 
     @property
@@ -104,6 +133,8 @@ class SparseLuTeacherLocalSolver:
             "fill_ratio": self.factor_nnz / max(self.matrix_nnz, 1),
             "factor_storage_bytes": self.factor_storage_bytes,
             "solve_count": self.solve_count,
+            "solve_batch_count": self.solve_batch_count,
+            "solve_batch_size_max": self.solve_batch_size_max,
             "solve_elapsed_s": self.solve_elapsed_s,
             "solve_mean_s": (
                 float(np.mean(samples)) if samples.size else 0.0

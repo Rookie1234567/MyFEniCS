@@ -28,18 +28,42 @@ def test_sparse_lu_teacher_reuses_one_factor_and_destroys() -> None:
             [-2 + 1j, 0.5j, 3 - 4j, 2 + 2j],
         ]
     )
-    target, elapsed = teacher.solve_many(rhs)
+    target, elapsed = teacher.solve_many(rhs, batch_size=2)
     residual = rhs - ScipyCsrAction(operator).action_many(target)
     rho = np.linalg.norm(residual, axis=1) / np.linalg.norm(rhs, axis=1)
     assert np.max(rho) < 1e-13
     assert np.all(elapsed >= 0.0)
     assert teacher.diagnostics["solve_count"] == 2
+    assert teacher.diagnostics["solve_batch_count"] == 1
+    assert teacher.diagnostics["solve_batch_size_max"] == 2
     assert teacher.diagnostics["factor_nnz"] > 0
 
     teacher.destroy()
     assert teacher.diagnostics["destroyed"] is True
     with pytest.raises(RuntimeError, match="destroyed"):
         teacher.solve(rhs[0], np.empty(4, dtype=np.complex128))
+
+
+def test_sparse_lu_teacher_batched_and_scalar_actions_agree() -> None:
+    operator = _operator()
+    rhs = np.array(
+        [
+            [1 + 2j, 2 - 3j, 4 + 0j, -1j],
+            [-2 + 1j, 0.5j, 3 - 4j, 2 + 2j],
+            [3 - 1j, -2 + 0.25j, 1 + 5j, 4 - 2j],
+        ]
+    )
+    batched = SparseLuTeacherLocalSolver(operator)
+    batched_target, elapsed = batched.solve_many(rhs, batch_size=2)
+    scalar = SparseLuTeacherLocalSolver(operator)
+    scalar_target, _ = scalar.solve_many(rhs, batch_size=1)
+    np.testing.assert_allclose(batched_target, scalar_target, rtol=1e-14, atol=1e-14)
+    assert elapsed.shape == (3,)
+    assert batched.diagnostics["solve_count"] == 3
+    assert batched.diagnostics["solve_batch_count"] == 2
+    assert batched.diagnostics["solve_batch_size_max"] == 2
+    batched.destroy()
+    scalar.destroy()
 
 
 def test_capture_can_store_selected_raw_rhs_without_ilu_payload(tmp_path) -> None:
