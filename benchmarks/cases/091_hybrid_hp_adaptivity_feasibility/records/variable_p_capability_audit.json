@@ -7,12 +7,12 @@
     },
     "mixed_fields": {
       "counts_as_cellwise_variable_p_evidence": false,
-      "public_symbol_observed": false,
+      "public_symbol_observed": true,
       "scope": "product space combining multiple fields/elements"
     },
     "mixed_topology": {
       "counts_as_cellwise_variable_p_evidence": false,
-      "public_symbol_observed": false,
+      "public_symbol_observed": true,
       "scope": "form assembly across cell types/topologies"
     }
   },
@@ -27,8 +27,18 @@
     "implement_bespoke_arbitrary_variable_p_constraints": false,
     "native_cellwise_variable_p_hcurl_qualified": false
   },
+  "formal_source": {
+    "commit_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "complete_worktree_clean": true,
+    "head_after_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "head_before_sha": "546b50cda17e61a164ea26c3794319581571c95c",
+    "nonignored_untracked_clean": true,
+    "source_stable_during_run": true,
+    "tracked_source_clean": true
+  },
   "identity": {
     "is_capability_implementation": false,
+    "is_formal_record": true,
     "is_pde_run": false,
     "is_solver_pass": false,
     "ordinary_default_changed": false,
@@ -46,62 +56,62 @@
       "data_identity": "direct_current_python_import_and_public_symbol_probe",
       "packages": {
         "basix": {
-          "error_type": "ModuleNotFoundError",
-          "imported": false,
-          "version": null
+          "error_type": null,
+          "imported": true,
+          "version": "0.10.0"
         },
         "dolfinx": {
-          "error_type": "ModuleNotFoundError",
-          "imported": false,
-          "version": null
+          "error_type": null,
+          "imported": true,
+          "version": "0.10.0.post2"
         },
         "ufl": {
-          "error_type": "ModuleNotFoundError",
-          "imported": false,
-          "version": null
+          "error_type": null,
+          "imported": true,
+          "version": "2025.2.0.post0"
         }
       },
       "symbols": {
         "basix_ufl_element": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "basix.ufl",
-          "signature": null,
+          "signature": "(family: Union[basix._basixcpp.ElementFamily, str], cell: Union[basix._basixcpp.CellType, str], degree: int, lagrange_variant: basix._basixcpp.LagrangeVariant = LagrangeVariant.unset, dpc_variant: basix._basixcpp.DPCVariant = DPCVariant.unset, discontinuous: bool = False, shape: Optional[tuple[int, ...]] = None, symmetry: Optional[bool] = None, dof_ordering: Optional[list[int]] = None, dtype: Union[numpy.dtype[Any], NoneType, type[Any], numpy._typing._dtype_like._SupportsDType[numpy.dtype[Any]], str, tuple[Any, int], tuple[Any, SupportsIndex | collections.abc.Sequence[SupportsIndex]], list[Any], numpy._typing._dtype_like._DTypeDict, tuple[Any, Any]] = None) -> basix.ufl._ElementBase",
           "symbol": "element"
         },
         "basix_ufl_mixed_element": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "basix.ufl",
-          "signature": null,
+          "signature": "(elements: list[basix.ufl._ElementBase]) -> basix.ufl._ElementBase",
           "symbol": "mixed_element"
         },
         "dolfinx_create_submesh": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "dolfinx.mesh",
-          "signature": null,
+          "signature": "(msh: 'Mesh', dim: 'int', entities: 'npt.NDArray[np.int32]') -> 'tuple[Mesh, EntityMap, EntityMap, npt.NDArray[np.int32]]'",
           "symbol": "create_submesh"
         },
         "dolfinx_functionspace": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "dolfinx.fem",
-          "signature": null,
+          "signature": "(mesh: 'Mesh', element: 'ufl.finiteelement.AbstractFiniteElement | ElementMetaData | tuple[str, int] | tuple[str, int, tuple] | tuple[str, int, tuple, bool]') -> 'FunctionSpace'",
           "symbol": "functionspace"
         },
         "dolfinx_mixed_topology_form": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "dolfinx.fem",
-          "signature": null,
+          "signature": "(forms: 'Sequence[ufl.Form]', dtype: 'npt.DTypeLike' = <class 'numpy.complex128'>, form_compiler_options: 'dict | None' = None, jit_options: 'dict | None' = None, entity_maps: 'Sequence[_EntityMap] | None' = None)",
           "symbol": "mixed_topology_form"
         },
         "ufl_mixed_function_space": {
-          "available": false,
-          "error_type": "ModuleNotFoundError",
+          "available": true,
+          "error_type": null,
           "module": "ufl",
-          "signature": null,
+          "signature": "(*args)",
           "symbol": "MixedFunctionSpace"
         }
       }
@@ -154,4 +164,3 @@
   ],
   "status": "not_qualified_fail_closed"
 }
-
