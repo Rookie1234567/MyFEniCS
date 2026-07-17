@@ -1,0 +1,6 @@
+dataset,split,samples,rho_median,rho_p95,correction_error_median,determinism_relative_error,gate
+complex_sparse_toy,validation,205,0.1330512535291396,0.1459462367020525,0.13351158177303493,0.0,pass
+real_h5_slab009_all,independent_validation,96,0.6959449214980342,0.9928810667633055,0.8203714412900589,0.0,fail_nn_only
+real_h5_slab009_real_krylov_rhs,independent_validation,32,0.6493076325611438,0.8131991724102337,0.8050433686918154,0.0,pass_lane_b_input
+real_h5_slab009_ilu_residual,independent_validation,32,0.5733180125394599,0.7115646561821752,0.6148046671847021,0.0,pass_lane_b_runtime_input
+real_h5_slab009_online,full_h5_runtime,5124,0.3778888515139672,0.5302550375387388,,0.0,local_accept_all

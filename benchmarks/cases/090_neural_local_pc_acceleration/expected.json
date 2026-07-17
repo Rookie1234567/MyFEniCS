@@ -1,0 +1,12 @@
+{
+  "status": "h5_numeric_pass_engineering_negative",
+  "current_status": "h5_numeric_pass_engineering_negative",
+  "toy_local_feasibility_gate": true,
+  "global_acceleration_claim_allowed": false,
+  "h5_numeric_correctness_passed": true,
+  "h5_wall_time_gate_passed": false,
+  "h3_allowed": false,
+  "h2_allowed": false,
+  "ordinary_default_changed": false,
+  "heavy_artifacts": "benchmarks/artifacts/cases/090 (gitignored)"
+}

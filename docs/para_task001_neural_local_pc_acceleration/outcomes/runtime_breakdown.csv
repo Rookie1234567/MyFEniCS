@@ -1,0 +1,11 @@
+case,stage,seconds,notes
+complex_sparse_toy,gpu_training,3.678896828,"cuda:0; 300 epochs"
+complex_sparse_toy,frozen_inference_mean,0.0000352637,"NumPy CPU runtime export; 205 validation samples"
+complex_sparse_toy,frozen_inference_p95,0.0000526516,"NumPy CPU runtime export; 205 validation samples"
+real_h5_baseline,solve,93.311718469,"861 iterations; original ILU physical-slab"
+real_h5_baseline,total,156.745570644,"full residual and official R/T/A pass"
+real_h5_capture,solve,183.52991759,"bounded file capture intentionally excluded from performance A/B"
+real_h5_one_slab_ilu_nn,solve,412.318154497,"854 iterations; 4.4187x baseline solve time"
+real_h5_one_slab_ilu_nn,total,452.640684922,"2.8877x baseline total time; engineering negative"
+real_h5_one_slab_ilu_nn,nn_inference,35.036240659,"5124 slab-9 calls; frozen NumPy CPU"
+real_h5_one_slab_ilu_nn,nn_residual_check,69.543171739,"local sparse residual and non-degradation checks"

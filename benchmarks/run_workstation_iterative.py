@@ -40,12 +40,19 @@ from src.solvers.physical_slab_two_level import (
     gather_global_subdomain_indices,
 )
 from src.solvers.mpc_form_action import create_mpc_form_operator
+from src.solvers.local_slab_solver import IluLocalSlabSolver
+from src.solvers.neural_local_pc import (
+    FrozenNumpyMlp,
+    IluNeuralCorrectionSlabSolver,
+    NeuralLocalSlabSolver,
+)
 from src.solvers.solve_vector_maxwell import _json_default
 from src.solvers.stage4_runtime import (
     RuntimeStage4System,
     assemble_target_stage4_system,
     stage4_physical_model,
 )
+from benchmarks.neural_pc.petsc_capture import LocalSlabCapture
 
 
 TINY = np.finfo(float).tiny
@@ -166,6 +173,12 @@ def _qualification_deviations(args: argparse.Namespace, mpi_size: int) -> list[s
         deviations.append("compact_lifecycle=True, expected False")
     if args.matrix_free_fine:
         deviations.append("matrix_free_fine=True, expected False")
+    if args.neural_capture_dir:
+        deviations.append("neural_capture_dir is enabled for research data export")
+    if args.neural_checkpoint_root:
+        deviations.append(
+            f"neural local backend {args.neural_lane!r} is enabled for research"
+        )
     return deviations
 
 
@@ -601,6 +614,7 @@ def _official_rta(
 def run(args: argparse.Namespace) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
+    runtime_metadata = _runtime_metadata(args.exact_command)
     case = args.case_label or f"workstation_p2_h{args.h_nm:g}".replace(".", "p")
     heavy_dir = Path(args.results_dir) / case
     record_path = Path(args.record)
@@ -756,6 +770,63 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         else "ilu"
         for slab in range(args.num_slabs)
     )
+    local_capture = None
+    if args.neural_capture_dir:
+        local_capture = LocalSlabCapture(
+            Path(args.neural_capture_dir),
+            rank=comm.rank,
+            maximum_samples_per_slab=args.neural_capture_limit,
+            sample_stride=args.neural_capture_stride,
+            run_metadata={
+                "branch": runtime_metadata.get("branch"),
+                "git_commit": runtime_metadata.get("git_commit"),
+                "h_nm": float(args.h_nm),
+                "degree": 2,
+                "wavelength_nm": float(args.lambda_nm),
+                "theta_deg": float(args.theta_deg),
+                "mpi_size": int(comm.size),
+            },
+        )
+    local_solver_factory = None
+    if args.neural_checkpoint_root:
+        checkpoint_root = Path(args.neural_checkpoint_root)
+        enabled_slabs = (
+            None
+            if args.neural_enabled_slabs is None
+            else {int(value) for value in args.neural_enabled_slabs.split(",") if value}
+        )
+
+        def local_solver_factory(subdomain, portable_operator, fallback_action):
+            fallback = IluLocalSlabSolver(
+                portable_operator.shape[0], fallback_action
+            )
+            if enabled_slabs is not None and int(subdomain) not in enabled_slabs:
+                return fallback
+            checkpoint_dir = checkpoint_root / f"slab_{int(subdomain):03d}"
+            rank_checkpoint_dir = (
+                checkpoint_root
+                / f"rank_{int(comm.rank):04d}"
+                / f"slab_{int(subdomain):03d}"
+            )
+            if not checkpoint_dir.is_dir() and rank_checkpoint_dir.is_dir():
+                checkpoint_dir = rank_checkpoint_dir
+            model = FrozenNumpyMlp.load(
+                checkpoint_dir,
+                expected_operator_fingerprint=portable_operator.fingerprint,
+            )
+            if args.neural_lane == "nn_only":
+                return NeuralLocalSlabSolver(
+                    portable_operator,
+                    model,
+                    fallback=fallback,
+                    residual_ratio_limit=args.neural_residual_limit,
+                )
+            return IluNeuralCorrectionSlabSolver(
+                portable_operator,
+                model,
+                fallback,
+                residual_ratio_limit=args.neural_residual_limit,
+            )
     smoother = DistributedPhysicalSlabSmoother(
         assembled_f if shifted is None else shifted,
         slabs,
@@ -771,6 +842,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         interpolation="basic",
         assembly_order="two_color",
         progress=lambda done, total: progress("slab_factorization", done, total),
+        local_operator_observer=(
+            local_capture.observe_operator if local_capture is not None else None
+        ),
+        local_sample_observer=(
+            local_capture.observe_sample if local_capture is not None else None
+        ),
+        local_solver_factory=local_solver_factory,
     )
     if shifted is not None:
         shifted.destroy()
@@ -919,7 +997,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "artifact_root": str(Path(args.results_dir)),
         "artifact_directory": str(heavy_dir),
         "record_path": str(record_path),
-        "metadata": _runtime_metadata(args.exact_command),
+        "metadata": runtime_metadata,
         "ordinary_default_changed": False,
         "h_nm": args.h_nm,
         "mpi_size": comm.size,
@@ -1024,6 +1102,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
         checkpoint("official_rta_complete", official_rta=result["official_rta"])
     result["memory_checkpoints"] = memory_checkpoints
+    if local_capture is not None:
+        local_capture.write_manifest()
+        result["neural_local_capture"] = local_capture.diagnostics
     _write_json(record_path, result)
     PETSc.Sys.Print(json.dumps(result, indent=2, default=_json_default))
     augmented.destroy()
@@ -1080,6 +1161,18 @@ def main() -> int:
     parser.add_argument("--certify-pc", action="store_true")
     parser.add_argument("--compact-lifecycle", action="store_true")
     parser.add_argument("--matrix-free-fine", action="store_true")
+    parser.add_argument("--neural-capture-dir")
+    parser.add_argument("--neural-capture-limit", type=int, default=128)
+    parser.add_argument("--neural-capture-stride", type=int, default=10)
+    parser.add_argument("--neural-checkpoint-root")
+    parser.add_argument(
+        "--neural-enabled-slabs",
+        help="comma-separated slab ids; omit to require checkpoints for every slab",
+    )
+    parser.add_argument(
+        "--neural-lane", choices=("nn_only", "ilu_correction"), default="ilu_correction"
+    )
+    parser.add_argument("--neural-residual-limit", type=float, default=0.95)
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)
@@ -1128,6 +1221,13 @@ def main() -> int:
         "certify_pc": args.certify_pc,
         "compact_lifecycle": args.compact_lifecycle,
         "matrix_free_fine": args.matrix_free_fine,
+        "neural_capture_dir": args.neural_capture_dir,
+        "neural_capture_limit": args.neural_capture_limit,
+        "neural_capture_stride": args.neural_capture_stride,
+        "neural_checkpoint_root": args.neural_checkpoint_root,
+        "neural_enabled_slabs": args.neural_enabled_slabs,
+        "neural_lane": args.neural_lane,
+        "neural_residual_limit": args.neural_residual_limit,
         "ksp_type": args.ksp_type,
         "smoother_ksp_type": args.smoother_ksp_type,
         "selective_diagonal_boundary_slabs": args.selective_diagonal_boundary_slabs,

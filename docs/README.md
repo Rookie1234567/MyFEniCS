@@ -69,6 +69,7 @@
 | Task030 | `task030_multilevel_hcurl_low_memory_iterative_solver/` | V3 最终审查通过并已选择性合入 master；ordinary default 不变 |
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
 | Task032 | `task032_hybrid_fem_modal_direct_baseline/` | 任务书和理论笔记已创建；不得在 Task031 分支直接开发 |
+| PARA-Task001 | `para_task001_neural_local_pc_acceleration/` | h5 数值通过但工程性能失败；all-slab/h3/h2 停止 |
 
 ## Task28 审计入口
 
@@ -136,5 +137,14 @@
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | 执行顺序、新本地目录、冻结物理边界和入口文件 |
 | [`task032_hybrid_fem_modal_direct_baseline/task.md`](task032_hybrid_fem_modal_direct_baseline/task.md) | 新目录迁移、二维截面本征模、稳定双向传播、匹配接口、增广 direct、Modal-Schur、内存 Gate、Case080 与验收标准 |
 | [`../notes/theory/hybrid_fem_modal_domain_decomposition.md`](../notes/theory/hybrid_fem_modal_domain_decomposition.md) | Hybrid FEM–Modal 的 Maxwell 分解、QEP、双正交、传播、接口投影、Schur 消元、内存复杂度和验证阶梯 |
+
+## PARA-Task001 任务入口
+
+| 文件 | 内容 |
+|---|---|
+| [`para_task001_neural_local_pc_acceleration/task.md`](para_task001_neural_local_pc_acceleration/task.md) | neural local PC 冻结边界、h5→h3→h2 Gate、数据/训练/runtime 与安全合同 |
+| [`para_task001_neural_local_pc_acceleration/outcomes/summary.md`](para_task001_neural_local_pc_acceleration/outcomes/summary.md) | WSL complex 环境、真实 capture、slab-9 训练、one-slab h5 数值通过与性能负结果 |
+| [`../benchmarks/cases/090_neural_local_pc_acceleration/README.md`](../benchmarks/cases/090_neural_local_pc_acceleration/README.md) | Case090 22 项合同、机器参数、CLI、证据与限制 |
+| [`../notes/quick_start/wsl_pycharm_fenics_gpu_guide.md`](../notes/quick_start/wsl_pycharm_fenics_gpu_guide.md) | Windows PyCharm 使用 WSL complex FE、MPI4 与 CUDA trainer 的配置指南 |
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)。Task032 只能在 Task031 合入 master 后，从新本地目录的 clean `origin/master` 创建执行分支；旧目录保留为只读历史基线。

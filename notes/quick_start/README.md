@@ -4,7 +4,7 @@
 
 ## 最短路线
 
-1. 阅读 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)，确认 Docker 复杂数环境。
+1. 当前 WSL 机器优先阅读 [`wsl_pycharm_fenics_gpu_guide.md`](wsl_pycharm_fenics_gpu_guide.md)；历史 Docker 环境见 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)。
 2. 打开 `src/main.py`，只修改 `ACTIVE_PYCHARM_PRESET`。
 3. 第一次保持默认 `3d_stage1_airbox_smoke`，在 PyCharm 运行 `main.py`。
 4. 在 `results/` 最新时间戳目录查看 `run_summary.json`、`solver_log.txt` 和 ParaView 文件。
@@ -15,6 +15,7 @@
 | 功能 | 文档 | 推荐 preset | 当前定位 |
 |---|---|---|---|
 | 参数总表 | [`01_main_py_parameter_map.md`](01_main_py_parameter_map.md) | 全部 | 入口契约 |
+| Windows PyCharm + WSL + GPU | [`wsl_pycharm_fenics_gpu_guide.md`](wsl_pycharm_fenics_gpu_guide.md) | complex FE / neural training | 当前机器入口 |
 | 输出与 ParaView | [`02_results_and_paraview.md`](02_results_and_paraview.md) | 全部 | 通用 |
 | 2D TM PML | [`10_2d_pml_floquet.md`](10_2d_pml_floquet.md) | `2d_tm_pml_floquet_smoke` | experimental path smoke |
 | 2D TM DtN | [`11_2d_dtn_floquet.md`](11_2d_dtn_floquet.md) | `2d_tm_dtn_auxiliary_smoke` | auxiliary 推荐、explicit 交叉核验 |

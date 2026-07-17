@@ -58,6 +58,7 @@ CASES = {
     "050_stage4_direct_memory_forensics",
     "060_multilevel_hcurl_iterative_solver",
     "070_compact_physical_slab_memory_optimization",
+    "090_neural_local_pc_acceleration",
 }
 
 RECORDED_CASES = {

@@ -268,6 +268,12 @@ class TestTask030CondensedGalerkin(unittest.TestCase):
         return matrix
 
     def test_complex_hermitian_condensed_action(self):
+        from petsc4py import PETSc
+
+        if PETSc.Sys.getVersion() < (3, 24, 0):
+            self.skipTest(
+                "PETSc <3.24 cannot MatMatMult a virtual complex Hermitian transpose"
+            )
         F_values = np.asarray(
             [
                 [4 + 1j, 1, 0, 0],

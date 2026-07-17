@@ -2060,3 +2060,53 @@ Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assem
 # 46. 当前一句话状态（Task031）
 
 > Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
+
+---
+
+# 47. PARA-Task001：Neural local PC 可行性与 h5 工程判定
+
+## 47.1 目标、冻结边界与环境
+
+PARA-Task001 只允许替换或增强 physical-slab 的 owner-local correction；exact condensed `F-C H^-1D`、right FGMRES、75D wave coarse、MPI4 ownership、full augmented true residual 与 official R/T/A 均冻结。ordinary default 不变，实验顺序固定为 h5 one-slab Gate 后才能考虑 all-slab/h3/h2。
+
+本机改用持久 Ubuntu-24.04 WSL2，不再使用 Docker。硬件为 48 visible Xeon Platinum 8260 cores、约 228 GiB WSL memory、32 GiB swap 和两张 Quadro RTX 8000。FE solver 使用 system Python、DOLFINx 0.10.0.post2 与 PETSc 3.19.6 complex；GPU trainer 使用 conda `fenics-ml` 的 PyTorch 2.7.1+cu118。PPA 的 MPC Python 扩展实际链接 real DOLFINx/PETSc，故从官方 dolfinx_mpc v0.10.1 源码在用户目录重编译；最终 `ldd` 只包含 complex DOLFINx/PETSc/SLEPc。PyCharm 通过 `/home/fenics/.local/bin/myfenics-python-complex` 使用这套 ABI。
+
+## 47.2 实现和安全合同
+
+新增 portable complex CSR/operator fingerprint、稳定 `solve(rhs,out)` local backend、bounded Krylov capture、独立-run validation exporter、GPU POD-MLP trainer、frozen NumPy checkpoint/checksum，以及 NN-only 与 ILU+NN residual correction。runtime 对 checkpoint/operator mismatch fail closed；每次候选都检查 finite、norm、local rho，Lane B 还要求组合修正不劣于原 ILU。缺 checkpoint 的 slab 可通过显式 allow-list 保持原 ILU，因而 one-slab 实验不触碰其余 15 个 slab。
+
+训练初版暴露出 trainer/runtime 合同错误：runtime 对每个 RHS 做齐次范数归一化，而 trainer 原先没有。真实 Krylov 跨多个数量级后初版 validation `rho_median=1.004`。统一归一化后，rank256/hidden512 的 slab-9 候选在独立 `ilu_residual` validation 上达到 median/p95 `0.5733/0.7116`；全体 NN-only validation p95 仍为 `0.9929`，所以 NN-only 路线停止，只放行带 ILU/non-degradation 的 Lane B。
+
+## 47.3 数据、独立验证和 fingerprint
+
+第一次 h5 capture 对 16 个 slab 各保存 128 个真实 Krylov RHS/ILU correction，约 287 MiB；第二次独立运行使用 stride17、每 slab 32 个 validation samples。两次运行中 10/16 operator fingerprints 完全一致，6/16 因 MPI 装配顺序出现位级变化，故只允许 exact fingerprint match 的样本组合。代表 slab 选择 0、9、15；每个 dataset 为 480 samples（384 train/96 validation）。最终只训练并在线运行内部 slab 9，所有大型 CSR、dataset 与 checkpoint 保持 Git-ignored。
+
+## 47.4 h5 baseline 与 one-slab A/B
+
+| run | iterations | full residual | solve / total s | peak GiB |
+|---|---:|---:|---:|---:|
+| original ILU baseline | 861 | `9.992481e-7` | 93.312 / 156.746 | 1.602940 |
+| one-slab ILU+NN | 854 | `9.903219e-7` | 412.318 / 452.641 | 1.654888 |
+
+one-slab run 的 official R/T/A 为 `0.089021604131 / 0.442588273317 / 0.468390121024`，energy closure `-1.529e-9`；相对 baseline 的 R/T/A delta 均低于 `2e-9`。在线 slab 9 共 5124 applies，fallback=0，rho median/p95 为 `0.3779/0.5303`，说明局部修正确实有效；外层迭代只减少 7 步（-0.813%）。
+
+工程结果为负：solve/total 变为 baseline 的 4.419x/2.888x，one-level mean apply 从 0.00937 s 增至 0.07125 s。NN inference 与 residual check 累计 35.036/69.543 s，且 owner-rank 额外工作会转化为 MPI 等待。peak 只增加 3.241%，通过 `<=10%` memory guard，但远未达到 wall-time 至少下降 20% 的 Gate。
+
+## 47.5 最终分类和停止规则
+
+最终分类为 `h5_numeric_pass_engineering_negative`。它证明本机 GPU 离线训练、真实 slab 数据合同、局部 learned correction 和全局数值安全均可实现；它同时证明当前 frozen NumPy per-slab 在线方式没有加速价值。all-slab、h3、h2 均未解锁，不允许用 toy loss、局部 rho 或 7 步迭代下降替代工程成功。
+
+可选择性保留 local protocol、capture/dataset schema、独立 validation、fingerprint/checksum、fallback、telemetry、tests 与 WSL/PyCharm 文档；不得提升 checkpoint 或当前 neural runtime。若未来重开，应先验证 batched GPU/廉价线性 reduced map 或融合 residual action 能把 one-level overhead 降到接近 baseline，再重新从 one-slab h5 Gate 开始。
+
+## 47.6 证据入口
+
+- [PARA-Task001 task](para_task001_neural_local_pc_acceleration/task.md)
+- [PARA-Task001 outcomes](para_task001_neural_local_pc_acceleration/outcomes/summary.md)
+- [Case090](../benchmarks/cases/090_neural_local_pc_acceleration/README.md)
+- [WSL/PyCharm guide](../notes/quick_start/wsl_pycharm_fenics_gpu_guide.md)
+
+---
+
+# 48. 当前一句话状态（PARA-Task001）
+
+> PARA-Task001 在当前 WSL/RTX 8000 机器上完成真实 MPI4 h5 one-slab ILU+NN 验证：数值、R/T/A、local rho 与 memory guard 通过，迭代 861→854，但 solve/total 恶化到 4.419x/2.888x，因此分类为 `h5_numeric_pass_engineering_negative`，ordinary default 不变，all-slab/h3/h2 按 Gate 停止。

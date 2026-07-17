@@ -1,0 +1,48 @@
+{
+  "case_id": "090_neural_local_pc_acceleration",
+  "task": "PARA-Task001",
+  "status": "h5_numeric_pass_engineering_negative",
+  "ordinary_default_changed": false,
+  "explicit_opt_in": true,
+  "formal_solver_mpi_size": 4,
+  "host": {
+    "environment": "WSL2 Ubuntu 24.04",
+    "cpu": "Intel Xeon Platinum 8260",
+    "visible_cpu_count": 48,
+    "memory_gib": 228,
+    "swap_gib": 32,
+    "gpus": [
+      {"index": 0, "name": "Quadro RTX 8000", "memory_mib": 49152},
+      {"index": 1, "name": "Quadro RTX 8000", "memory_mib": 46080}
+    ]
+  },
+  "training": {
+    "backend": "pytorch_gpu",
+    "device": "cuda:0",
+    "seed": 20260717,
+    "pod_rank_h5_start": 128,
+    "pod_rank_h5_final": 256,
+    "hidden_width_h5_start": 256,
+    "hidden_width_h5_final": 512,
+    "batch_size_h5_start": 512,
+    "epochs_h5_start": 500,
+    "gpu_warning_gib": 42,
+    "gpu_stop_gib": 46,
+    "online_training": false
+  },
+  "capture": {
+    "maximum_samples_per_slab": 128,
+    "sample_stride": 10,
+    "validation_sample_stride": 17,
+    "validation_samples_per_slab": 32,
+    "artifact_root": "benchmarks/artifacts/cases/090"
+  },
+  "gates": {
+    "local_rho_median_max": 0.5,
+    "local_rho_p95_max": 0.95,
+    "full_true_residual_max": 1e-6,
+    "official_rta_delta_max": 1e-6,
+    "h5_wall_time_reduction_min": 0.2,
+    "peak_memory_increase_max": 0.1
+  }
+}

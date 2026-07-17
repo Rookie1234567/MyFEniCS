@@ -1,0 +1,12 @@
+stage,candidate,status,reason
+P0,repository_utf8_ast_json_csv_audit,pass,"2303 tracked files readable; 110 Python AST parse; JSON/JSONL/CSV parse pass"
+P0,WSL_hardware_inventory,pass,"48 cores; 228 GiB; 32 GiB swap; 2 RTX 8000"
+P0,complex_FE_environment,pass,"DOLFINx 0.10.0.post2; PETSc 3.19.6 complex; user-built dolfinx_mpc 0.10.1 complex extension; MPI2/4 verified"
+P0,h5_baseline,pass,"861 iterations; full residual 9.99248e-7; total 156.746 s"
+P0,real_slab_action_export,pass,"16 slabs x 128 train-run samples plus independent 32-sample validation run; 287 MiB primary capture"
+P1,complex_sparse_toy_gpu,pass,"rho median 0.133051; p95 0.145946"
+P1,real_h5_single_slab,conditional_pass,"Lane-B ilu_residual validation rho median/p95 0.573/0.712; NN-only aggregate Gate failed"
+P2,h5_one_slab,engineering_negative,"numeric pass and iterations 861->854; solve 4.419x slower; total 2.888x slower"
+P3,h5_all_slabs,not_run_by_gate,"one-slab performance Gate failed"
+P4,h3,not_run_by_gate,"h5 Engineering Positive Gate failed"
+P5,h2,not_run_by_gate,"h3 was not unlocked"

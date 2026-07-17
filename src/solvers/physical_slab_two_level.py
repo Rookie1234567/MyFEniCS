@@ -11,6 +11,8 @@ import scipy.sparse as sp
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from .local_slab_solver import LocalCsrOperator, LocalSlabSolver
+
 
 TINY = np.finfo(float).tiny
 
@@ -478,6 +480,7 @@ class _OwnedSubdomainFactor:
     exact_fingerprint: str
     rhs: PETSc.Vec
     solution: PETSc.Vec
+    local_backend: LocalSlabSolver | None = None
 
 
 class _DistributedPhysicalSlabPcContext:
@@ -517,6 +520,15 @@ class DistributedPhysicalSlabSmoother:
         interpolation: str = "basic",
         assembly_order: str = "combined",
         progress: Callable[[int, int], None] | None = None,
+        local_operator_observer: Callable[[int, LocalCsrOperator], None] | None = None,
+        local_sample_observer: Callable[
+            [int, np.ndarray, np.ndarray, str], None
+        ]
+        | None = None,
+        local_solver_factory: Callable[
+            [int, LocalCsrOperator, Callable[[np.ndarray], np.ndarray]], LocalSlabSolver
+        ]
+        | None = None,
     ) -> None:
         if not subdomains:
             raise ValueError("distributed physical-slab smoother needs subdomains")
@@ -555,6 +567,9 @@ class DistributedPhysicalSlabSmoother:
         self.smoother_ksp_type = smoother_ksp_type
         self.factor_only_storage = bool(factor_only_storage)
         self.local_solver_types = tuple(local_solver_types)
+        self.local_operator_observer = local_operator_observer
+        self.local_sample_observer = local_sample_observer
+        self.local_solver_factory = local_solver_factory
         self.apply_count = 0
         self.apply_elapsed_s = 0.0
         self._destroyed = False
@@ -655,6 +670,24 @@ class DistributedPhysicalSlabSmoother:
             exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
             local_solver_type = self.local_solver_types[subdomain]
             matrix_nnz = int(submatrix.getInfo()["nz_used"])
+            portable_operator = None
+            if self.local_operator_observer is not None or self.local_solver_factory is not None:
+                indptr, column_indices, values = submatrix.getValuesCSR()
+                portable_operator = LocalCsrOperator(
+                    shape=tuple(int(value) for value in submatrix.getSize()),
+                    indptr=np.asarray(indptr, dtype=np.int64).copy(),
+                    indices=np.asarray(column_indices, dtype=np.int64).copy(),
+                    values=np.asarray(values, dtype=np.complex128).copy(),
+                    metadata={
+                        "slab_id": int(subdomain),
+                        "owner_rank": self.rank,
+                        "global_dof_indices": indices.astype(np.int64).tolist(),
+                        "local_solver_type": local_solver_type,
+                        "factor_only_storage": self.factor_only_storage,
+                    },
+                )
+                if self.local_operator_observer is not None:
+                    self.local_operator_observer(subdomain, portable_operator)
             factor_matrix: PETSc.Mat | None = None
             retained_matrix: PETSc.Mat | None = None
             retained_ksp: PETSc.KSP | None = None
@@ -699,7 +732,7 @@ class DistributedPhysicalSlabSmoother:
                     submatrix.destroy()
                     retained_ksp = None
                     retained_matrix = None
-            return _OwnedSubdomainFactor(
+            owned_factor = _OwnedSubdomainFactor(
                 subdomain=subdomain,
                 local_solver_type=local_solver_type,
                 indices=indices,
@@ -715,6 +748,33 @@ class DistributedPhysicalSlabSmoother:
                 rhs=rhs,
                 solution=solution,
             )
+            if self.local_solver_factory is not None:
+                assert portable_operator is not None
+
+                def baseline_action(source: np.ndarray) -> np.ndarray:
+                    owned_factor.rhs.getArray()[:] = source
+                    owned_factor.solution.set(0.0)
+                    if owned_factor.factor_matrix is not None:
+                        owned_factor.factor_matrix.solve(
+                            owned_factor.rhs, owned_factor.solution
+                        )
+                    elif owned_factor.diagonal_inverse is not None:
+                        owned_factor.solution.getArray()[:] = (
+                            owned_factor.diagonal_inverse
+                            * owned_factor.rhs.getArray(readonly=True)
+                        )
+                    else:
+                        assert owned_factor.ksp is not None
+                        owned_factor.ksp.solve(owned_factor.rhs, owned_factor.solution)
+                    return np.asarray(
+                        owned_factor.solution.getArray(readonly=True),
+                        dtype=np.complex128,
+                    ).copy()
+
+                owned_factor.local_backend = self.local_solver_factory(
+                    subdomain, portable_operator, baseline_action
+                )
+            return owned_factor
 
         local_factor_count = len(local_indices)
         factor_counts = self.comm.allgather(local_factor_count)
@@ -818,17 +878,29 @@ class DistributedPhysicalSlabSmoother:
             gathered_target.getArray() for gathered_target in self._gathered_targets
         ]
         for factor in self._factors:
-            factor.rhs.getArray()[:] = gathered_source[factor.union_positions]
+            source_values = np.asarray(
+                gathered_source[factor.union_positions], dtype=np.complex128
+            )
+            factor.rhs.getArray()[:] = source_values
             factor.solution.set(0.0)
-            if factor.factor_matrix is not None:
+            if factor.local_backend is not None:
+                factor.local_backend.solve(source_values, factor.solution.getArray())
+            elif factor.factor_matrix is not None:
                 factor.factor_matrix.solve(factor.rhs, factor.solution)
             elif factor.diagonal_inverse is not None:
-                factor.solution.getArray()[:] = (
-                    factor.diagonal_inverse * factor.rhs.getArray(readonly=True)
-                )
+                factor.solution.getArray()[:] = factor.diagonal_inverse * source_values
             else:
                 assert factor.ksp is not None
                 factor.ksp.solve(factor.rhs, factor.solution)
+            if self.local_sample_observer is not None:
+                self.local_sample_observer(
+                    factor.subdomain,
+                    np.asarray(factor.rhs.getArray(readonly=True), dtype=np.complex128).copy(),
+                    np.asarray(
+                        factor.solution.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    factor.local_solver_type,
+                )
             color = factor.subdomain % 2 if self.assembly_order == "two_color" else 0
             gathered_target_arrays[color][factor.union_positions] += (
                 factor.weights * factor.solution.getArray(readonly=True)
@@ -880,6 +952,14 @@ class DistributedPhysicalSlabSmoother:
             "exact_duplicate_factor_count": self.exact_duplicate_factor_count,
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
+            "local_backend_diagnostics": [
+                {
+                    "subdomain": factor.subdomain,
+                    **factor.local_backend.diagnostics,
+                }
+                for factor in self._factors
+                if factor.local_backend is not None
+            ],
         }
 
     def destroy(self) -> None:
@@ -892,6 +972,8 @@ class DistributedPhysicalSlabSmoother:
             self._inner_pc_context.smoother = None
             self._inner_pc_context = None
         for factor in self._factors:
+            if factor.local_backend is not None:
+                factor.local_backend.destroy()
             factor.solution.destroy()
             factor.rhs.destroy()
             if factor.factor_matrix is not None:
