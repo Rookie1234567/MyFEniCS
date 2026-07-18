@@ -62,15 +62,17 @@ def task034_workstation_hybrid_launch_gate(
     authority_is_tracked: bool,
     external_watchdog_active: bool,
     full3d_reference_sha256: str | None,
+    resource_anchor_sha256: str | None = None,
     m160_funnel_evidence: Mapping[str, Any] | None = None,
     expected_m160_funnel_sha256: str | None = None,
     observed_m160_funnel_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Authorize one Task034 p3/h3 or p4/h5 Hybrid shard.
 
-    The checked Case092 record combines current WSL Full-3D measurements with
-    historical Task033 Hybrid predictions. The historical model is never a
-    standalone launch authority.
+    The checked Case092 record combines a current WSL measured resource anchor
+    with historical Task033 Hybrid predictions.  The p3/h3 path uses a Full-3D
+    reference; the pre-E2 p4/h5 path uses its E0 assembly calibration.  The
+    historical model is never a standalone launch authority.
     """
 
     payload = authority if isinstance(authority, Mapping) else {}
@@ -86,6 +88,20 @@ def task034_workstation_hybrid_launch_gate(
     entry = matches[0] if len(matches) == 1 else {}
     reference = entry.get("full3d_reference")
     reference = reference if isinstance(reference, Mapping) else {}
+    assembly_anchor = entry.get("assembly_resource_anchor")
+    assembly_anchor = (
+        assembly_anchor if isinstance(assembly_anchor, Mapping) else {}
+    )
+    anchor_kind = (
+        "full3d_reference"
+        if reference.get("status") == "full3d_reference_pass"
+        else (
+            "assembly_calibration"
+            if assembly_anchor.get("status") == "assembly_calibration_pass"
+            else None
+        )
+    )
+    anchor = reference if anchor_kind == "full3d_reference" else assembly_anchor
     prediction = entry.get("workstation_prediction")
     prediction = prediction if isinstance(prediction, Mapping) else {}
     centers = prediction.get("centers_gib")
@@ -130,7 +146,31 @@ def task034_workstation_hybrid_launch_gate(
         solver_path=solver_path,
         required=m240_requested,
     )
-    expected_reference_sha = reference.get("descriptor_sha256")
+    expected_anchor_sha = (
+        reference.get("descriptor_sha256")
+        if anchor_kind == "full3d_reference"
+        else assembly_anchor.get("watchdog_record_sha256")
+    )
+    observed_anchor_sha = (
+        full3d_reference_sha256
+        if anchor_kind == "full3d_reference"
+        else resource_anchor_sha256
+    )
+    full3d_residual = _positive_finite(reference.get("true_relative_residual"))
+    anchor_stage_scope_valid = bool(
+        (
+            anchor_kind == "full3d_reference"
+            and full3d_residual is not None
+            and full3d_residual <= 1.0e-9
+        )
+        or (
+            anchor_kind == "assembly_calibration"
+            and assembly_anchor.get("factorization_or_solve_stage_seen") is False
+            and _positive_finite(assembly_anchor.get("exact_rows")) is not None
+            and _positive_finite(assembly_anchor.get("exact_assembled_nnz"))
+            is not None
+        )
+    )
     checks = {
         "authority_object_present": bool(payload),
         "authority_identity_valid": bool(
@@ -211,26 +251,25 @@ def task034_workstation_hybrid_launch_gate(
             and polarization_kind == "s"
         ),
         "high_order_core_evidence": core.get("pass") is True,
-        "full3d_reference_status_pass": (
-            reference.get("status") == "full3d_reference_pass"
+        "measured_resource_anchor_kind_supported": anchor_kind
+        in {"full3d_reference", "assembly_calibration"},
+        "measured_resource_anchor_status_pass": (
+            anchor.get("status")
+            in {"full3d_reference_pass", "assembly_calibration_pass"}
         ),
-        "full3d_reference_qualification_pass": (
-            reference.get("qualification_pass") is True
+        "measured_resource_anchor_qualification_pass": (
+            anchor.get("qualification_pass") is True
         ),
-        "full3d_reference_no_swap": reference.get("no_swap") is True,
-        "full3d_reference_true_residual_pass": bool(
-            _positive_finite(reference.get("true_relative_residual"))
-            is not None
-            and float(reference["true_relative_residual"]) <= 1.0e-9
+        "measured_resource_anchor_no_swap": anchor.get("no_swap") is True,
+        "measured_resource_anchor_stage_scope_valid": anchor_stage_scope_valid,
+        "measured_resource_anchor_sha256_valid": _valid_hex(
+            expected_anchor_sha, 64
         ),
-        "full3d_reference_descriptor_sha256_valid": _valid_hex(
-            expected_reference_sha, 64
+        "measured_resource_anchor_sha256_matches": bool(
+            expected_anchor_sha == observed_anchor_sha
         ),
-        "full3d_reference_descriptor_sha256_matches": bool(
-            expected_reference_sha == full3d_reference_sha256
-        ),
-        "measured_full3d_peak_is_positive": (
-            _positive_finite(reference.get("peak_memory_gib")) is not None
+        "measured_resource_anchor_peak_is_positive": (
+            _positive_finite(anchor.get("peak_memory_gib")) is not None
         ),
         "two_independent_prediction_centers_present": bool(
             len(parsed_centers) >= 2
@@ -270,6 +309,8 @@ def task034_workstation_hybrid_launch_gate(
             "conservative_upper_gib": upper,
             "historical_task033_model_is_standalone_authority": False,
         },
+        "resource_anchor_kind": anchor_kind,
+        "resource_anchor": dict(anchor),
         "full3d_reference": dict(reference),
         "conditional_m240_evidence": m240_gate,
         "high_order_core_evidence": dict(core),
@@ -279,6 +320,7 @@ def task034_workstation_hybrid_launch_gate(
         "semantics": (
             "Task033's 14 GiB policy is unchanged. This explicit Task034 Gate "
             "requires a tracked Case092 authority, current WSL effective limits, "
-            "measured Full-3D evidence, clean compatible source, and a live watchdog."
+            "a measured candidate-specific resource anchor, clean compatible source, "
+            "and a live watchdog."
         ),
     }

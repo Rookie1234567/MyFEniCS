@@ -252,6 +252,9 @@ def _task034_authority_source_compatibility(
     ]
     reference = matches[0].get("full3d_reference", {}) if len(matches) == 1 else {}
     reference = reference if isinstance(reference, Mapping) else {}
+    if not reference and len(matches) == 1:
+        reference = matches[0].get("assembly_resource_anchor", {})
+        reference = reference if isinstance(reference, Mapping) else {}
     reference_source_sha = reference.get("source_sha")
     if not (
         isinstance(reference_source_sha, str)
@@ -892,6 +895,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task034-workstation-resource-authority-sha256")
     parser.add_argument(
+        "--task034-workstation-resource-anchor",
+        type=Path,
+        help=(
+            "Explicit p4/h5 E0 assembly watchdog record used only as the "
+            "pre-E2 Task034 launch resource anchor."
+        ),
+    )
+    parser.add_argument(
         "--task033-same-sha-anchor-requalification",
         action="store_true",
         help=(
@@ -978,6 +989,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "M80/M120/M160 funnel with an exact 2M candidate pool."
             )
     if args.task034_workstation_gate:
+        anchor_selection_valid = bool(
+            (
+                args.degree == 3
+                and args.full3d_reference is not None
+                and args.task034_workstation_resource_anchor is None
+            )
+            or (
+                args.degree == 4
+                and args.full3d_reference is None
+                and args.task034_workstation_resource_anchor is not None
+            )
+        )
         scoped = bool(
             args.target == "hybrid"
             and (args.degree, args.h_nm) in {(3, 3.0), (4, 5.0)}
@@ -991,7 +1014,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and math.isclose(args.top_interface_nm, 110.0)
             and math.isclose(args.incident_grazing_deg, 10.0)
             and args.polarization_kind == "s"
-            and args.full3d_reference is not None
+            and anchor_selection_valid
             and args.host_environment_id == "WSL2-Ubuntu-24.04"
             and isinstance(
                 args.task034_workstation_resource_authority_sha256, str
@@ -1002,8 +1025,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task034-workstation-gate is restricted to the fixed p3/h3 or "
                 "p4/h5 WSL Hybrid M80/M120/M160 (conditional M240) funnel, exact "
-                "2M pool, same-p/h Full-3D descriptor, canonical resource authority, "
-                "and WSL2-Ubuntu-24.04 identity."
+                "2M pool, p3 Full-3D descriptor or p4 E0 assembly resource anchor, "
+                "canonical resource authority, and WSL2-Ubuntu-24.04 identity."
             )
     return args
 
@@ -1132,6 +1155,22 @@ def run(args: argparse.Namespace) -> int:
             full3d_reference_sha256 = (
                 None if full3d_path is None else _sha256(full3d_path)
             )
+            resource_anchor_path = args.task034_workstation_resource_anchor
+            if (
+                resource_anchor_path is not None
+                and not resource_anchor_path.is_absolute()
+            ):
+                resource_anchor_path = ROOT / resource_anchor_path
+            resource_anchor_path = (
+                None
+                if resource_anchor_path is None
+                else resource_anchor_path.resolve()
+            )
+            resource_anchor_sha256 = (
+                None
+                if resource_anchor_path is None
+                else _sha256(resource_anchor_path)
+            )
             core_gate = high_order_core_evidence_gate(
                 args.degree,
                 core_evidence,
@@ -1166,6 +1205,7 @@ def run(args: argparse.Namespace) -> int:
                 authority_is_tracked=authority_is_tracked,
                 external_watchdog_active=True,
                 full3d_reference_sha256=full3d_reference_sha256,
+                resource_anchor_sha256=resource_anchor_sha256,
                 m160_funnel_evidence=m160_funnel_evidence,
                 expected_m160_funnel_sha256=(
                     args.m160_funnel_evidence_sha256
@@ -1185,6 +1225,12 @@ def run(args: argparse.Namespace) -> int:
                     "full3d_reference_observed_sha256": (
                         full3d_reference_sha256
                     ),
+                    "resource_anchor_path": (
+                        None
+                        if resource_anchor_path is None
+                        else str(resource_anchor_path)
+                    ),
+                    "resource_anchor_observed_sha256": resource_anchor_sha256,
                     "m160_funnel_evidence_path": (
                         None
                         if m160_funnel_path is None
@@ -1200,8 +1246,9 @@ def run(args: argparse.Namespace) -> int:
                     "task034_resource_authority_readable": (
                         authority_read_error is None
                     ),
-                    "task034_full3d_descriptor_readable": (
+                    "task034_measured_resource_anchor_readable": (
                         full3d_reference_sha256 is not None
+                        or resource_anchor_sha256 is not None
                     ),
                 }
             )
