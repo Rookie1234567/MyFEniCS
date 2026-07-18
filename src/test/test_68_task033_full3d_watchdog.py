@@ -218,6 +218,13 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
                 self.assertEqual(args.degree, 3)
                 self.assertEqual(args.h_nm, float(h_nm))
 
+    def test_task034_p3_h3_is_opt_in_without_opening_p4_h3(self) -> None:
+        args = self._args("--h-nm", "3")
+        self.assertEqual(args.degree, 3)
+        self.assertEqual(args.h_nm, 3.0)
+        with self.assertRaises(SystemExit):
+            _parse_args(["--degree", "4", "--h-nm", "3"])
+
 
 if __name__ == "__main__":
     unittest.main()

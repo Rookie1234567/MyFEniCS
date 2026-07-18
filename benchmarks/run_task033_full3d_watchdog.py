@@ -151,7 +151,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--degree", type=int, choices=(3, 4), required=True)
     parser.add_argument(
-        "--h-nm", type=float, choices=(10.0, 7.5, 5.0), default=5.0
+        "--h-nm", type=float, choices=(10.0, 7.5, 5.0, 3.0), default=5.0
     )
     parser.add_argument(
         "--run-kind",
@@ -200,7 +200,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK033_VERIFIED_CLEAN_SHA"),
     )
     parser.add_argument("--worker", action="store_true")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.h_nm == 3.0 and args.degree != 3:
+        parser.error("Task034 h=3 nm full3D is restricted to degree 3.")
+    return args
 
 
 def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
