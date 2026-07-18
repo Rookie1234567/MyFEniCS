@@ -231,13 +231,15 @@ class Task033Case090WatchdogTests(unittest.TestCase):
         )
 
 
-    def test_wsl_summary_accepts_unbounded_nondedicated_cgroup(self) -> None:
+    def test_wsl_summary_accepts_nondedicated_cgroup_diagnostic(self) -> None:
         summary = _summary()
         effective = 1_000_000_000
         summary["preflight"].update(
             {
                 "resource_authority_mode": "task034_wsl_effective_limit",
-                "cgroup_memory_limit_state": "unbounded",
+                "cgroup_memory_limit_state": (
+                    "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+                ),
                 "cgroup_memory_limit_bytes": None,
                 "cgroup_memory_is_dedicated_job_authority": False,
                 "effective_memory_bytes": effective,
@@ -260,7 +262,9 @@ class Task033Case090WatchdogTests(unittest.TestCase):
                 "resource_authority_mode": "task034_wsl_effective_limit",
                 "process_tree_swap_peak_bytes": 0,
                 "dedicated_job_cgroup_observed": False,
-                "cgroup_memory_limit_state": "unbounded",
+                "cgroup_memory_limit_state": (
+                    "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+                ),
                 "cgroup_memory_limit_bytes": None,
                 "effective_memory_bytes": effective,
                 "warning_threshold_bytes": int(0.80 * effective),

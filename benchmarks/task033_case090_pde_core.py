@@ -1905,11 +1905,18 @@ def validate_watchdog_summary(
                 problems.append("watchdog WSL warning threshold is incorrectly scaled")
             if termination_threshold != int(expected_effective * 0.95):
                 problems.append("watchdog WSL termination threshold is incorrectly scaled")
-        if preflight.get("cgroup_memory_limit_state") not in {
-            "finite",
-            "unbounded",
-        }:
-            problems.append("watchdog WSL cgroup diagnostic state is unreadable")
+        dedicated_cgroup = (
+            preflight.get("cgroup_memory_is_dedicated_job_authority") is True
+        )
+        cgroup_state = preflight.get("cgroup_memory_limit_state")
+        if dedicated_cgroup and cgroup_state not in {"finite", "unbounded"}:
+            problems.append("watchdog WSL dedicated cgroup authority is unreadable")
+        if (
+            not dedicated_cgroup
+            and cgroup_state
+            != "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+        ):
+            problems.append("watchdog WSL non-dedicated cgroup diagnostic drifted")
     else:
         if preflight.get("cgroup_memory_limit_state") != "finite":
             problems.append("watchdog container limit is not finite/readable")
@@ -1999,11 +2006,18 @@ def validate_watchdog_summary(
         if task034_wsl:
             if sampling.get("resource_authority_mode") != resource_mode:
                 problems.append("watchdog WSL sampling authority mode drifted")
-            if sampling.get("cgroup_memory_limit_state") not in {
-                "finite",
-                "unbounded",
-            }:
-                problems.append("watchdog WSL sampled cgroup diagnostic is unreadable")
+            sampled_cgroup_state = sampling.get("cgroup_memory_limit_state")
+            if (
+                sampling.get("dedicated_job_cgroup_observed") is True
+                and sampled_cgroup_state not in {"finite", "unbounded"}
+            ):
+                problems.append("watchdog WSL sampled dedicated cgroup is unreadable")
+            if (
+                sampling.get("dedicated_job_cgroup_observed") is not True
+                and sampled_cgroup_state
+                != "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+            ):
+                problems.append("watchdog WSL sampled non-dedicated cgroup drifted")
         elif sampling.get("cgroup_memory_limit_state") != "finite":
             problems.append("watchdog sampled container limit was not finite")
         if sampling.get("raw_output_ignored_by_git") is not True:

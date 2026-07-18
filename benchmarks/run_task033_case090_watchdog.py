@@ -196,6 +196,12 @@ def sample_memory(root_pid: int, *, worker_alive: bool) -> dict[str, Any]:
     memory = effective_memory_limit()
     cgroup_limit, cgroup_limit_source, cgroup_limit_state = _cgroup_limit()
     dedicated = cgroup.get("dedicated_job_cgroup") is True
+    if not dedicated:
+        cgroup_limit = cgroup.get("memory_limit_bytes")
+        cgroup_limit_source = cgroup.get("path")
+        cgroup_limit_state = (
+            "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+        )
     dedicated_swap = cgroup.get("swap_current_bytes") if dedicated else None
     process_tree_swap = process_tree.get("swap_bytes")
     job_swap = (
