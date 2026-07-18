@@ -523,18 +523,61 @@ def _read_json_object(path: Path | None) -> tuple[dict[str, Any] | None, str | N
     return payload, None
 
 
-def _resource_readability_sample_is_formal(
-    *, task034_workstation_gate: bool, process_running: bool
+def _task034_terminal_record_is_complete(record_path: Path) -> bool:
+    payload, error = _read_json_object(record_path)
+    if error is not None or payload is None:
+        return False
+    return bool(
+        isinstance(payload.get("schema_version"), str)
+        and isinstance(payload.get("benchmark_id"), str)
+        and isinstance(payload.get("timestamp_utc"), str)
+        and isinstance(payload.get("status"), str)
+        and isinstance(payload.get("qualification"), dict)
+        and isinstance(payload.get("solve"), dict)
+        and isinstance(payload.get("gates"), dict)
+    )
+
+
+def _task034_terminal_worker_drain(
+    *,
+    task034_workstation_gate: bool,
+    process_running: bool,
+    authority_readable: bool,
+    stage: str | None,
+    terminal_record_complete: bool,
+    live_worker_count: int | None,
 ) -> bool:
-    """Exclude only Task034 samples observed after the worker has exited.
+    """Recognize only the normal worker-before-launcher MPI exit window."""
+
+    return bool(
+        task034_workstation_gate
+        and process_running
+        and not authority_readable
+        and stage == "record_and_release"
+        and terminal_record_complete
+        and live_worker_count == 0
+    )
+
+
+def _resource_readability_sample_is_formal(
+    *,
+    task034_workstation_gate: bool,
+    process_running: bool,
+    terminal_worker_drain: bool = False,
+) -> bool:
+    """Exclude only Task034 samples observed during or after terminal drain.
 
     A process-tree read racing with ``Popen.poll`` may contain a disappearing
-    launcher PID and report ``all_status_readable=False``. It is not a live
-    authority sample and must not invalidate otherwise complete WSL evidence.
-    Task033's historical default semantics remain unchanged.
+    worker or launcher PID and report ``all_status_readable=False``. Once the
+    complete terminal worker record exists and no worker remains, it is not a
+    live authority sample. Task033's historical default semantics remain
+    unchanged.
     """
 
-    return bool(process_running or not task034_workstation_gate)
+    return bool(
+        (process_running and not terminal_worker_drain)
+        or not task034_workstation_gate
+    )
 
 
 def _live_task033_worker_rss(
@@ -1366,6 +1409,7 @@ def run(args: argparse.Namespace) -> int:
     max_dedicated_cgroup_swap_bytes = 0
     dedicated_job_cgroup_observed = False
     post_exit_readability_samples_excluded = 0
+    terminal_worker_drain_samples_excluded = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -1410,9 +1454,46 @@ def run(args: argparse.Namespace) -> int:
                 row["container_cgroup_current_mb"] = None
                 row["container_swap_current_mb"] = None
             process_running = process.poll() is None
+            cgroup_current_mb = row.get("container_cgroup_current_mb")
+            authority_readable = bool(
+                process_tree["all_status_readable"]
+                and (
+                    not job_cgroup["dedicated_job_cgroup"]
+                    or cgroup_current_mb is not None
+                )
+            )
+            live_worker_count: int | None = None
+            terminal_record_complete = False
+            if (
+                args.task034_workstation_gate
+                and process_running
+                and not authority_readable
+                and row.get("stage") == "record_and_release"
+            ):
+                terminal_record_complete = (
+                    _task034_terminal_record_is_complete(record_path)
+                )
+                live_worker_rss, discovered_workers = (
+                    _live_task033_worker_rss(process.pid, args.target)
+                )
+                if live_worker_rss is not None:
+                    process_tree_pids = set(process_tree["pids"])
+                    live_worker_count = sum(
+                        int(worker["pid"]) in process_tree_pids
+                        for worker in discovered_workers
+                    )
+            terminal_worker_drain = _task034_terminal_worker_drain(
+                task034_workstation_gate=args.task034_workstation_gate,
+                process_running=process_running,
+                authority_readable=authority_readable,
+                stage=row.get("stage"),
+                terminal_record_complete=terminal_record_complete,
+                live_worker_count=live_worker_count,
+            )
             readability_sample_is_formal = _resource_readability_sample_is_formal(
                 task034_workstation_gate=args.task034_workstation_gate,
                 process_running=process_running,
+                terminal_worker_drain=terminal_worker_drain,
             )
             if readability_sample_is_formal:
                 job_swap_all_samples_readable &= bool(
@@ -1430,19 +1511,13 @@ def run(args: argparse.Namespace) -> int:
                             max_dedicated_cgroup_swap_bytes,
                             int(job_cgroup["swap_current_bytes"]),
                         )
+            elif terminal_worker_drain:
+                terminal_worker_drain_samples_excluded += 1
             else:
                 post_exit_readability_samples_excluded += 1
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
-            cgroup_current_mb = row.get("container_cgroup_current_mb")
-            authority_readable = bool(
-                process_tree["all_status_readable"]
-                and (
-                    not job_cgroup["dedicated_job_cgroup"]
-                    or cgroup_current_mb is not None
-                )
-            )
             if readability_sample_is_formal:
                 live_authority_all_readable &= authority_readable
             live_authority_gib = (
@@ -1493,6 +1568,9 @@ def run(args: argparse.Namespace) -> int:
             "dedicated_job_cgroup_observed": dedicated_job_cgroup_observed,
             "post_exit_readability_samples_excluded": (
                 post_exit_readability_samples_excluded
+            ),
+            "terminal_worker_drain_samples_excluded": (
+                terminal_worker_drain_samples_excluded
             ),
         }
     )

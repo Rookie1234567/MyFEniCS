@@ -9,6 +9,7 @@ import unittest
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args,
     _resource_readability_sample_is_formal,
+    _task034_terminal_worker_drain,
     _task034_authority_source_compatibility,
 )
 from benchmarks.task033_resource_gates import scaled_gate_limits
@@ -153,6 +154,41 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.assertTrue(
             _resource_readability_sample_is_formal(
                 task034_workstation_gate=False, process_running=False
+            )
+        )
+
+    def test_task034_ignores_only_complete_terminal_worker_drain(self) -> None:
+        complete_drain = {
+            "task034_workstation_gate": True,
+            "process_running": True,
+            "authority_readable": False,
+            "stage": "record_and_release",
+            "terminal_record_complete": True,
+            "live_worker_count": 0,
+        }
+        self.assertTrue(_task034_terminal_worker_drain(**complete_drain))
+        self.assertFalse(
+            _resource_readability_sample_is_formal(
+                task034_workstation_gate=True,
+                process_running=True,
+                terminal_worker_drain=True,
+            )
+        )
+        for key, value in (
+            ("task034_workstation_gate", False),
+            ("authority_readable", True),
+            ("stage", "middle_plane_reconstruction"),
+            ("terminal_record_complete", False),
+            ("live_worker_count", 1),
+            ("live_worker_count", None),
+        ):
+            incomplete = complete_drain | {key: value}
+            self.assertFalse(_task034_terminal_worker_drain(**incomplete))
+        self.assertTrue(
+            _resource_readability_sample_is_formal(
+                task034_workstation_gate=False,
+                process_running=True,
+                terminal_worker_drain=True,
             )
         )
 
