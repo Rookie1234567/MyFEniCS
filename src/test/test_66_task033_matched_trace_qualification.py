@@ -191,6 +191,29 @@ def _p4_four_mode_record(mpi_size: int) -> dict:
 
 
 class Task033MatchedTraceQualificationTests(unittest.TestCase):
+    def test_task034_mpi2_shards_do_not_widen_task033_aggregate(self) -> None:
+        self.assertEqual(matched_trace_shard_gate(_record(3, 2))["status"], "pass")
+        self.assertEqual(
+            matched_trace_shard_gate(_p4_four_mode_record(2))["status"],
+            "pass",
+        )
+
+        records = [
+            _record(2, 1),
+            _record(3, 2),
+            _record(3, 4),
+            _record(4, 2),
+            _record(4, 4),
+        ]
+        aggregate = aggregate_matched_trace_records(records)
+        self.assertFalse(
+            aggregate["gates"]["all_five_expected_shards_present_and_pass"]
+        )
+        self.assertEqual(
+            aggregate["status"],
+            "phaseB_matched_trace_not_qualified",
+        )
+
     def test_p4_four_mode_pair_passes_exact_block_gate(self) -> None:
         aggregate = aggregate_p4_four_mode_records(
             [_p4_four_mode_record(1), _p4_four_mode_record(4)]
