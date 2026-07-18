@@ -225,6 +225,27 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             _parse_args(["--degree", "4", "--h-nm", "3"])
 
+    def test_task034_fixed_geometry_candidate_matrix(self) -> None:
+        allowed = {
+            2: ("5", "3", "2"),
+            3: ("10", "7.5", "5", "3"),
+            4: ("10", "7.5", "5"),
+        }
+        for degree, h_values in allowed.items():
+            for h_nm in h_values:
+                with self.subTest(degree=degree, h_nm=h_nm):
+                    args = _parse_args(
+                        ["--degree", str(degree), "--h-nm", h_nm]
+                    )
+                    self.assertEqual(args.degree, degree)
+                    self.assertEqual(args.h_nm, float(h_nm))
+        for degree, h_nm in ((2, "10"), (3, "2"), (4, "3"), (4, "2")):
+            with self.subTest(rejected_degree=degree, rejected_h_nm=h_nm):
+                with self.assertRaises(SystemExit):
+                    _parse_args(
+                        ["--degree", str(degree), "--h-nm", h_nm]
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

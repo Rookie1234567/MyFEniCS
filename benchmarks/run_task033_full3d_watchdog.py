@@ -145,13 +145,16 @@ def _worker(args: argparse.Namespace) -> int:
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Task33 p3/p4 target full3D assembly calibration and controlled "
-            "direct-reference watchdog."
+            "Task33/34 p2/p3/p4 target full3D assembly calibration and "
+            "controlled direct-reference watchdog."
         )
     )
-    parser.add_argument("--degree", type=int, choices=(3, 4), required=True)
+    parser.add_argument("--degree", type=int, choices=(2, 3, 4), required=True)
     parser.add_argument(
-        "--h-nm", type=float, choices=(10.0, 7.5, 5.0, 3.0), default=5.0
+        "--h-nm",
+        type=float,
+        choices=(10.0, 7.5, 5.0, 3.0, 2.0),
+        default=5.0,
     )
     parser.add_argument(
         "--run-kind",
@@ -201,8 +204,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--worker", action="store_true")
     args = parser.parse_args(argv)
-    if args.h_nm == 3.0 and args.degree != 3:
-        parser.error("Task034 h=3 nm full3D is restricted to degree 3.")
+    allowed_h_by_degree = {
+        2: {5.0, 3.0, 2.0},
+        3: {10.0, 7.5, 5.0, 3.0},
+        4: {10.0, 7.5, 5.0},
+    }
+    if args.h_nm not in allowed_h_by_degree[args.degree]:
+        parser.error(
+            f"Task034 p{args.degree}/h{args.h_nm:g} is outside the "
+            "fixed-geometry candidate matrix."
+        )
     return args
 
 
