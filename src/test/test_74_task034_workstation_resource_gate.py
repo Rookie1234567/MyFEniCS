@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from benchmarks.run_task033_memory_watchdog import (
+    _authority_unreadable_requires_termination,
     _parse_args,
     _resource_readability_sample_is_formal,
     _task034_terminal_record_is_complete,
@@ -216,6 +217,24 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             wrong_schema = complete | {"schema_version": "1"}
             path.write_text(json.dumps(wrong_schema))
             self.assertFalse(_task034_terminal_record_is_complete(path))
+
+    def test_only_formal_live_unreadable_authority_terminates(self) -> None:
+        required = {
+            "process_running": True,
+            "readability_sample_is_formal": True,
+            "authority_readable": False,
+        }
+        self.assertTrue(_authority_unreadable_requires_termination(**required))
+        for key, value in (
+            ("process_running", False),
+            ("readability_sample_is_formal", False),
+            ("authority_readable", True),
+        ):
+            self.assertFalse(
+                _authority_unreadable_requires_termination(
+                    **(required | {key: value})
+                )
+            )
 
     def test_task033_gate_still_caps_larger_hosts_at_14_gib(self) -> None:
         limits = scaled_gate_limits(200.0)

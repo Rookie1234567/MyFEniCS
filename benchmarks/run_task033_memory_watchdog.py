@@ -580,6 +580,21 @@ def _resource_readability_sample_is_formal(
     )
 
 
+def _authority_unreadable_requires_termination(
+    *,
+    process_running: bool,
+    readability_sample_is_formal: bool,
+    authority_readable: bool,
+) -> bool:
+    """Terminate only when a formal live authority sample is unreadable."""
+
+    return bool(
+        process_running
+        and readability_sample_is_formal
+        and not authority_readable
+    )
+
+
 def _live_task033_worker_rss(
     root_pid: int, target: str
 ) -> tuple[float | None, list[dict[str, Any]]]:
@@ -1532,7 +1547,11 @@ def run(args: argparse.Namespace) -> int:
                     max_live_authority_gib, live_authority_gib
                 )
                 warning_triggered |= live_authority_gib >= args.warning_gib
-            if process_running and not authority_readable:
+            if _authority_unreadable_requires_termination(
+                process_running=process_running,
+                readability_sample_is_formal=readability_sample_is_formal,
+                authority_readable=authority_readable,
+            ):
                 terminated_for_authority_unreadable = True
                 process.terminate()
             if (
