@@ -53,3 +53,20 @@ manifest 的 operator fingerprint 与对应 teacher dataset 一致。heavy artif
 | output | `benchmarks/artifacts/cases/095/p1_borrowed_0b20f25/` |
 | full tests | 212 passed, 12 skipped |
 | branch operations | 无 |
+
+## P2 Q0 calibration identity
+
+| 项目 | 值 |
+|---|---|
+| clean implementation SHA | `ac039bd` |
+| corpus accessed | Q0 = Task005 V only |
+| forbidden Q1-Q5 access | none |
+| model | frozen `A_D0_R64`，no retraining |
+| ILU reference | PETSc complex128，ILU(0)+RCM，256 V samples/slab |
+| q | 64 / 128 / 256 / 512 / 1024 / 2048 |
+| seeds | one and two deterministic procedural seeds |
+| selected/locked certificate | none |
+| heavy result | `benchmarks/artifacts/cases/095/q0/proxy_calibration_ac039bd/` |
+
+P2 worker 以无 usable family 的预期非零退出码结束，并完整保存
+`calibration.json`；这表示 Gate failure，不是崩溃或卡住。

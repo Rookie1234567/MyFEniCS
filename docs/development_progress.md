@@ -2282,3 +2282,44 @@ admissibility，因此不触发 Lane D。
 - [Task005 summary](para_task005_comprehensive_all_slab_learned_pc/outcomes/summary.md)
 - [Task005 decision](para_task005_comprehensive_all_slab_learned_pc/outcomes/decision.md)
 - [Task005 memory](para_task005_comprehensive_all_slab_learned_pc/outcomes/memory_report.md)
+
+---
+
+# 53. PARA-Task006：Zero-copy audit architecture qualification
+
+## 53.1 最终状态
+
+```text
+classification = audit_architecture_false_reject_failure
+P0 = PASS
+P1 borrowed exact action = PASS
+P2 Q0 proxy calibration = FAIL_USABILITY
+P3-P7 = not_run_by_gate
+ordinary default = unchanged
+```
+
+Task005 Review V1 的 H/V、execution independence、capture metadata 与 D1 结论
+边界已先修正。Task006 clean h5/MPI4 baseline 为 852 iterations、93.347 s、
+三种 residual约`9.98025e-7`、external peak 1.608 GiB、zero swap。
+
+## 53.2 Borrowed exact action 正结果
+
+新的 collective auditor复用 shifted-F/global MatMult 与 owner-union scatter。
+16 slabs × 4 probes 最大 action relative error `6.030e-16`、rho difference
+`3.558e-16`，persistent private CSR 0。每 rank work vectors约0.753–0.762 MiB；
+同轮 ordinary solve仍为852 iterations且R/T/A一致。
+
+## 53.3 Proxy false-reject 早停
+
+Q0-only screen比较 q=64/128/256/512/1024/2048 与 one/two seeds。12/12 family
+均可达到 observed false accept 0，但最佳 overall non-harmful acceptance仅43.37%，
+two-seed最佳42.96%，远低于99%；最差slab false reject超过79%。
+
+未修改 `A_D0_R64` 在 Q0 中已有58/1024 samples按 exact-vs-ILU ground truth有害，
+所以若99% acceptance覆盖全部输出，其理论上限也只有94.34%。没有阈值被锁定，
+没有读取Q1-Q5；按Gate不运行 injection、periodic schedule、lifecycle或live shadow，
+不得恢复Task005 P3。
+
+- [Task006 summary](para_task006_zero_copy_audit_architecture/outcomes/summary.md)
+- [Task006 decision](para_task006_zero_copy_audit_architecture/outcomes/decision.md)
+- [Borrowed action](para_task006_zero_copy_audit_architecture/outcomes/borrowed_action_equivalence.md)

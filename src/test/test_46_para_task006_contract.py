@@ -35,3 +35,33 @@ def test_task006_p0_provenance_records_frozen_r4() -> None:
     assert "没有 retraining" in text
     for slab in (0, 5, 9, 15):
         assert f"| {slab} |" in text
+
+
+def test_task006_final_outcomes_are_complete_and_gate_consistent() -> None:
+    outcomes = TASK / "outcomes"
+    required = {
+        "summary.md",
+        "changed_files.md",
+        "experiment_matrix.csv",
+        "borrowed_action_equivalence.md",
+        "proxy_qualification.csv",
+        "failure_injection_matrix.csv",
+        "periodic_audit_report.md",
+        "runtime_breakdown.csv",
+        "memory_report.md",
+        "live_shadow_report.md",
+        "provenance.md",
+        "decision.md",
+    }
+    assert required <= {path.name for path in outcomes.iterdir()}
+    decision = (outcomes / "decision.md").read_text(encoding="utf-8")
+    summary = (outcomes / "summary.md").read_text(encoding="utf-8")
+    assert "audit_architecture_false_reject_failure" in decision
+    assert "P3-P8 = not_run_by_gate" in decision
+    assert "persistent private CSR" in summary
+    expected = json.loads((CASE / "expected.json").read_text(encoding="utf-8"))
+    assert expected["status"] == "qualified_negative_result"
+    assert (
+        expected["classification"]
+        == "audit_architecture_false_reject_failure"
+    )

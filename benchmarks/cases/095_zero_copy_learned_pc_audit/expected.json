@@ -1,5 +1,6 @@
 {
-  "status": "qualification_in_progress",
+  "status": "qualified_negative_result",
+  "classification": "audit_architecture_false_reject_failure",
   "borrowed_action_relative_error_max": 1e-12,
   "private_persistent_local_csr_bytes": 0,
   "proxy_false_accept_max": 0,

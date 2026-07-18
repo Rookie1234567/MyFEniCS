@@ -4,10 +4,10 @@ P0,R4_checkpoint_dataset_checksums,PASS,4_of_4_manifest_sha_fingerprint_match,P0
 P0,clean_h5_MPI4_baseline,PASS,852_iterations_numeric_RTA_memory_no_swap,P0_checkpoint
 P0,complete_tests_and_diff,PASS,209_passed_12_skipped_diff_clean,P1
 P1,borrowed_exact_action,PASS,16_of_16_64_probes_max_6.030e-16_private_CSR_0,P2
-P2,proxy_Q0_calibration,planned,not_run,P3
-P3,locked_Q1_Q2_replay,planned,not_run,P4
-P4,failure_injection,planned,not_run,P5
-P5,periodic_schedule,planned,not_run,P6
-P6,storage_lifecycle,planned,not_run,P7
-P7,R4_live_shadow,planned,not_run,P8
-P8,decision,planned,not_run,none
+P2,proxy_Q0_calibration,FAIL_USABILITY,12_families_zero_FA_but_best_two_seed_accept_42.96pct,stop
+P3,locked_Q1_Q2_replay,not_run_by_gate,P2_no_usable_locked_proxy,none
+P4,failure_injection,not_run_by_gate,P2_no_usable_locked_proxy,none
+P5,periodic_schedule,not_run_by_gate,P2_no_usable_locked_proxy,none
+P6,storage_lifecycle,not_run_by_gate,P2_no_usable_locked_proxy,none
+P7,R4_live_shadow,not_run_by_gate,P2_no_usable_locked_proxy,none
+P8,decision,PASS,audit_architecture_false_reject_failure,none

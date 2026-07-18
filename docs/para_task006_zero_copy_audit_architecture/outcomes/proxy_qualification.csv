@@ -1,0 +1,14 @@
+phase,q,seed_count,false_accept_count,false_reject_count,nonharmful_accept_fraction,maximum_slab_false_reject_fraction,proxy_storage_bytes_R4,usable,decision
+Q0,64,1,0,559,0.421325052,0.814960630,524608,false,reject_false_reject
+Q0,64,2,0,576,0.403726708,0.826771654,786816,false,reject_false_reject
+Q0,128,1,0,556,0.424430642,0.799212598,786752,false,reject_false_reject
+Q0,128,2,0,564,0.416149068,0.818897638,1311104,false,reject_false_reject
+Q0,256,1,0,547,0.433747412,0.795275591,1311040,false,reject_false_reject
+Q0,256,2,0,551,0.429606625,0.818897638,2359680,false,reject_false_reject
+Q0,512,1,0,571,0.408902692,0.826771654,2359616,false,reject_false_reject
+Q0,512,2,0,564,0.416149068,0.838582677,4456832,false,reject_false_reject
+Q0,1024,1,0,570,0.409937888,0.830708661,4456768,false,reject_false_reject
+Q0,1024,2,0,573,0.406832298,0.830708661,8651136,false,reject_false_reject
+Q0,2048,1,0,563,0.417184265,0.814960630,8651072,false,reject_false_reject
+Q0,2048,2,0,575,0.404761905,0.834645669,17039744,false,reject_false_reject
+P3,locked_Q1_Q2,0,not_run,not_run,not_run,not_run,not_run,false,not_run_by_P2_gate

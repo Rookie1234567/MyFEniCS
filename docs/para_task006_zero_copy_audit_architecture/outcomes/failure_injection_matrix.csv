@@ -1,0 +1,5 @@
+phase,fault_family,status,reason,false_accept,detection_latency,fail_closed
+P4,numeric_corruption,not_run_by_gate,P2_no_usable_locked_proxy,not_run,not_run,not_run
+P4,scale_and_phase,not_run_by_gate,P2_no_usable_locked_proxy,not_run,not_run,not_run
+P4,spatial_direction,not_run_by_gate,P2_no_usable_locked_proxy,not_run,not_run,not_run
+P4,drift,not_run_by_gate,P2_no_usable_locked_proxy,not_run,not_run,not_run

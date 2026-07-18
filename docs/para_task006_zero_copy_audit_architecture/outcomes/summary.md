@@ -6,8 +6,9 @@
 |---|---|---|
 | P0 provenance / clean baseline | **PASS** | 允许进入 P1 |
 | P1 borrowed exact action | **PASS** | 16/16 等价，允许进入 P2 |
-| P2 proxy Q0 calibration | in progress | 尚无结论 |
-| P3-P8 | not run | 按 Gate 等待 |
+| P2 proxy Q0 calibration | **FAIL** | false-reject/usability Gate |
+| P3-P7 | `not_run_by_gate` | 无 usable locked proxy |
+| P8 decision | **PASS** | `audit_architecture_false_reject_failure` |
 
 P0 在 clean `9822bc5` 上得到 852 iterations、93.347 s solve、三种 residual
 约 `9.98025e-7`、R/T/A closure `-1.860e-9`、外部 simultaneous worker peak
@@ -35,5 +36,19 @@ shadow、memory-neutral 或恢复 Task005 P3 的结论。
 | external peak ratio vs P0 | `1.00309x` |
 
 P1 证明 exact local action 可复用既有 shifted-F/global operator 与 union scatter，
-无需 persistent local CSR。P2 将只用 Q0 校准 reduced/sketch/composite proxy；
-在阈值冻结前不会读取 Q1-Q5。
+无需 persistent local CSR。
+
+## P2 与最终处置
+
+P2 只访问 Q0/Task005 V，比较 q=64–2048、one/two procedural CountSketch seeds。
+所有 12 个 family 都能用保守阈值得到 Q0 false accept 0，但最佳 non-harmful
+acceptance 仅 43.37%；满足最终 two-seed 结构的最佳值为 42.96%，最差 slab
+false reject 81.89%。
+
+Q0 的未修改模型输出本身有 58/1024 harmful samples，因此若 99% acceptance
+覆盖全部 unmodified outputs，zero-false-accept 下理论上限也只有 94.34%。
+没有 family 被选择或冻结，Q1-Q5 未读取。按 Gate 停止 P3-P7，最终分类为
+`audit_architecture_false_reject_failure`。
+
+最终 validation：complete `src/test` 218 passed、12 skipped；MPI2/MPI4 每 rank
+3 passed；Task006 Ruff、compileall、diff-check 与 artifact-ignore audit 全部通过。

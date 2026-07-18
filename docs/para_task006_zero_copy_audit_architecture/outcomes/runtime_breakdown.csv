@@ -1,0 +1,8 @@
+phase,component,configuration,mean_ms,status,semantics
+P1,borrowed_exact_audit,h5_MPI4_16slab_64probe,6.207,measured,one_collective_slab_audit
+P1,full_solve,borrowed_qualification_then_ordinary_ILU,95025.742,pass,solve_wall_not_audit_only
+P2,Q0_ILU_reference,R4_1024_samples,not_reported,offline_only,qualification_ground_truth
+P2,proxy_calibration,12_families_Q0_only,111655.888,offline_only,total_calibration_wall
+P3,locked_proxy_runtime,none,not_run,not_run_by_gate,no_usable_P2_proxy
+P5,amortized_periodic_exact,none,not_run,not_run_by_gate,no_locked_schedule
+P7,live_shadow_owner_path,none,not_run,not_run_by_gate,no_locked_proxy

@@ -70,9 +70,9 @@ accept，并由 periodic exact audit 与 fail-closed runtime 补充，不是普�
 ## 当前证据
 
 Task005 R4 fixed-operator local quality 与 model-only runtime 为正信号，但 private
-exact-audit CSR 使最小 owner storage 达到 68.282 MiB。Task006 P0 已核验四个
-`A_D0_R64` checkpoint manifest、SHA 和 operator fingerprints；正式 baseline 与
-后续 P1-P7 结果写入 outcomes。
+exact-audit CSR 使最小 owner storage 达到 68.282 MiB。Task006 P1 已证明 16/16
+borrowed action 等价且 persistent CSR 为 0；P2 的 12 个 Q0 proxy family 全部因
+false reject 过高失败，P3-P7 按 Gate 未运行。
 
 ## 结果解释
 
@@ -80,8 +80,8 @@ P0-P8 必须按序通过。P1 borrowed action 要求 16/16 CSR/action 与 rho �
 `<=1e-12`；P2 只能看 Q0 冻结 proxy；P3-P5 才可做 locked replay、故障注入和
 K=4/8/16/32 周期比较。
 
-Live shadow 始终由 ILU 写回，因此只测 audit runtime/safety/storage，不能声称
-learned acceleration。Task006 即使通过，也只允许建议后续任务恢复 Task005 P3。
+最终分类为 `audit_architecture_false_reject_failure`。没有 proxy threshold 被锁定，
+Q1-Q5 未读取，live shadow 未解锁；不得恢复 Task005 P3。
 
 ## 限制
 
