@@ -3,7 +3,7 @@ P0,repository_and_review_identity,PASS,response_v1_and_provenance,P0_checkpoint
 P0,R4_checkpoint_dataset_checksums,PASS,4_of_4_manifest_sha_fingerprint_match,P0_checkpoint
 P0,clean_h5_MPI4_baseline,PASS,852_iterations_numeric_RTA_memory_no_swap,P0_checkpoint
 P0,complete_tests_and_diff,PASS,209_passed_12_skipped_diff_clean,P1
-P1,borrowed_exact_action,planned,not_run,P2
+P1,borrowed_exact_action,PASS,16_of_16_64_probes_max_6.030e-16_private_CSR_0,P2
 P2,proxy_Q0_calibration,planned,not_run,P3
 P3,locked_Q1_Q2_replay,planned,not_run,P4
 P4,failure_injection,planned,not_run,P5

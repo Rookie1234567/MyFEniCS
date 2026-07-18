@@ -42,3 +42,14 @@
 每个实测 weights SHA 与 checkpoint manifest 中的 `weights_sha256` 一致；每个
 manifest 的 operator fingerprint 与对应 teacher dataset 一致。heavy artifacts
 位于 `benchmarks/artifacts/cases/094/`，只读复用并保持 Git ignored。
+
+## P1 implementation identity
+
+| 项目 | 值 |
+|---|---|
+| clean implementation SHA | `0b20f2554a9cc0526efa893f941174fb81918472` |
+| formal run | h5 / MPI4 / 16 slabs / 64 probes |
+| reference | Task005 captured CSR，逐 slab ephemeral load/release |
+| output | `benchmarks/artifacts/cases/095/p1_borrowed_0b20f25/` |
+| full tests | 212 passed, 12 skipped |
+| branch operations | 无 |
