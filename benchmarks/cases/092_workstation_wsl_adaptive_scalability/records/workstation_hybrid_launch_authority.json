@@ -120,20 +120,37 @@
         "base_matrix_assembly_seconds": 1219.2766429219992,
         "elapsed_seconds": 1242.2117529419993
       },
+      "full3d_reference": {
+        "role": "current_wsl_measured_post_e3_same_ph_resource_anchor",
+        "source_sha": "4e1143f9a1e91ff703e871fcb74e5f6703223a82",
+        "watchdog_record_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_full_mpi4_4e1143f.json",
+        "watchdog_record_sha256": "4e4a6f2233da926418359b9760c8b9dc356365bcf6354823476d6a72a41f5300",
+        "descriptor_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_full_reference_descriptor_4e1143f.json",
+        "descriptor_sha256": "f1b0084e7c01a242cdbfc2a06f21bfb5988a3741599a88d9fd39a033c372018e",
+        "status": "full3d_reference_pass",
+        "qualification_pass": true,
+        "no_swap": true,
+        "peak_memory_gib": 26.78598403930664,
+        "true_relative_residual": 3.3539739620667165e-11,
+        "exact_rows": 339972,
+        "exact_assembled_nnz": 155421000,
+        "factor_nnz": 562270960,
+        "elapsed_seconds": 1701.8430658610014
+      },
       "workstation_prediction": {
-        "method": "1.5 * max(historical Hybrid center, 3.0 * measured same-p/h E0 assembly peak)",
+        "method": "1.5 * max(historical Hybrid center, measured same-p/h Full-3D peak)",
         "centers_gib": {
           "historical_task033_hybrid_factor_center": 37.037946983223875,
-          "three_times_measured_same_ph_assembly_peak": 58.24082565307617
+          "measured_same_ph_full3d_peak": 26.78598403930664
         },
-        "conservative_upper_gib": 87.36123847961426,
-        "measured_assembly_multiplier": 3.0,
+        "conservative_upper_gib": 55.55692047483581,
+        "measured_full3d_multiplier": 1.5,
         "task033_old_model_is_launch_authority": false,
         "limitations": [
-          "Authorizes only a guarded pre-E2 launch, not a physical result.",
+          "Authorizes only a guarded post-E3 closure launch, not a physical result.",
           "Hybrid memory remains measured by the live process-tree/cgroup watchdog.",
           "M240 additionally requires formal M160 nonconvergence evidence.",
-          "Same-degree full3D closure remains unavailable until E2/E3 pass."
+          "The E0 assembly anchor remains preserved for pre-E2 audit history."
         ]
       },
       "observed_task034_resource_policy": {
@@ -145,8 +162,8 @@
       },
       "qualification": {
         "assembly_gate_pass": true,
-        "factorization_gate_pass": false,
-        "factorization_gate_status": "pending_e1_and_measured_factorization",
+        "factorization_gate_pass": true,
+        "full_solve_gate_pass": true,
         "source_clean_and_stable": true,
         "zero_job_swap": true,
         "prediction_below_observed_task034_warning": true,

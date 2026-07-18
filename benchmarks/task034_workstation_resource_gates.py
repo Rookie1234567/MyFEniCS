@@ -71,8 +71,9 @@ def task034_workstation_hybrid_launch_gate(
 
     The checked Case092 record combines a current WSL measured resource anchor
     with historical Task033 Hybrid predictions.  The p3/h3 path uses a Full-3D
-    reference; the pre-E2 p4/h5 path uses its E0 assembly calibration.  The
-    historical model is never a standalone launch authority.
+    reference.  The p4/h5 path uses exactly one stage-appropriate anchor: its
+    E0 assembly calibration before E2, or its measured Full-3D descriptor after
+    E3.  The historical model is never a standalone launch authority.
     """
 
     payload = authority if isinstance(authority, Mapping) else {}
@@ -94,10 +95,18 @@ def task034_workstation_hybrid_launch_gate(
     )
     anchor_kind = (
         "full3d_reference"
-        if reference.get("status") == "full3d_reference_pass"
+        if (
+            full3d_reference_sha256 is not None
+            and resource_anchor_sha256 is None
+            and reference.get("status") == "full3d_reference_pass"
+        )
         else (
             "assembly_calibration"
-            if assembly_anchor.get("status") == "assembly_calibration_pass"
+            if (
+                resource_anchor_sha256 is not None
+                and full3d_reference_sha256 is None
+                and assembly_anchor.get("status") == "assembly_calibration_pass"
+            )
             else None
         )
     )

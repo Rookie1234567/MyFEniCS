@@ -1,0 +1,15 @@
+{
+  "status": "task034_in_progress_hash_bound_measured_evidence",
+  "record_type": "task034_case092_workstation_study_contract",
+  "claims": {
+    "wsl_native_environment_qualified": true,
+    "p3_h3_staged_reference_measured": true,
+    "p4_h5_staged_full3d_measured": true,
+    "fixed_geometry_convergence_complete": false,
+    "adaptive_compression_complete": false,
+    "proves_continuum_convergence": false,
+    "proves_0p7nm_feasible": false,
+    "ordinary_default_changed": false
+  },
+  "heavy_artifacts": "benchmarks/artifacts/task034 (gitignored)"
+}

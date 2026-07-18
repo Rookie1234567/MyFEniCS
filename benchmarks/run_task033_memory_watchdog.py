@@ -994,17 +994,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "M80/M120/M160 funnel with an exact 2M candidate pool."
             )
     if args.task034_workstation_gate:
+        p4_anchor_is_exclusive = bool(
+            (args.full3d_reference is None)
+            != (args.task034_workstation_resource_anchor is None)
+        )
         anchor_selection_valid = bool(
             (
                 args.degree == 3
                 and args.full3d_reference is not None
                 and args.task034_workstation_resource_anchor is None
             )
-            or (
-                args.degree == 4
-                and args.full3d_reference is None
-                and args.task034_workstation_resource_anchor is not None
-            )
+            or (args.degree == 4 and p4_anchor_is_exclusive)
         )
         scoped = bool(
             args.target == "hybrid"
@@ -1030,8 +1030,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task034-workstation-gate is restricted to the fixed p3/h3 or "
                 "p4/h5 WSL Hybrid M80/M120/M160 (conditional M240) funnel, exact "
-                "2M pool, p3 Full-3D descriptor or p4 E0 assembly resource anchor, "
-                "canonical resource authority, and WSL2-Ubuntu-24.04 identity."
+                "2M pool, p3 Full-3D descriptor or exactly one p4 E0 assembly / "
+                "post-E3 Full-3D resource anchor, canonical resource authority, "
+                "and WSL2-Ubuntu-24.04 identity."
             )
     return args
 

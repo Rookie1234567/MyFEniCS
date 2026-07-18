@@ -79,7 +79,8 @@ class Task034HardeningTests(unittest.TestCase):
             for row in range(first, last):
                 columns = [0, 2] if row % 2 == 0 else [2, 5]
                 matrix.setValues(row, columns, np.ones(len(columns)))
-            matrix.assemblyBegin(); matrix.assemblyEnd()
+            matrix.assemblyBegin()
+            matrix.assemblyEnd()
             result = distributed_active_column_count(matrix)
             self.assertEqual(result.global_count, 3)
             self.assertFalse(result.python_object_allgather_used)
@@ -95,7 +96,8 @@ class Task034HardeningTests(unittest.TestCase):
             first, last = matrix.getOwnershipRange()
             for row in range(first, last):
                 matrix.setValues(row, [1, columns - 1], [1.0, 1.0])
-            matrix.assemblyBegin(); matrix.assemblyEnd()
+            matrix.assemblyBegin()
+            matrix.assemblyEnd()
             result = distributed_active_column_count(matrix)
             self.assertEqual(result.global_count, 2)
             self.assertLessEqual(

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
-import hashlib
 import importlib
 import json
 import os
@@ -129,13 +128,17 @@ def _mumps_probe() -> dict[str, Any]:
     ksp = PETSc.KSP().create(comm=PETSc.COMM_SELF)
     try:
         matrix.setValue(0, 0, PETSc.ScalarType(2.0))
-        matrix.assemblyBegin(); matrix.assemblyEnd()
-        rhs.setValue(0, PETSc.ScalarType(4.0)); rhs.assemblyBegin(); rhs.assemblyEnd()
+        matrix.assemblyBegin()
+        matrix.assemblyEnd()
+        rhs.setValue(0, PETSc.ScalarType(4.0))
+        rhs.assemblyBegin()
+        rhs.assemblyEnd()
         ksp.setOperators(matrix)
         ksp.setType(PETSc.KSP.Type.PREONLY)
         ksp.getPC().setType(PETSc.PC.Type.LU)
         ksp.getPC().setFactorSolverType("mumps")
-        ksp.setUp(); ksp.solve(rhs, solution)
+        ksp.setUp()
+        ksp.solve(rhs, solution)
         error = abs(complex(solution.getValue(0)) - 2.0)
         return {
             "pass": error <= 1.0e-13,
@@ -145,7 +148,10 @@ def _mumps_probe() -> dict[str, Any]:
     except Exception as exc:
         return {"pass": False, "error": f"{type(exc).__name__}: {exc}"}
     finally:
-        ksp.destroy(); solution.destroy(); rhs.destroy(); matrix.destroy()
+        ksp.destroy()
+        solution.destroy()
+        rhs.destroy()
+        matrix.destroy()
 
 
 def _rank_probe() -> int:
