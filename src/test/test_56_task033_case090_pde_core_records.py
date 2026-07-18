@@ -683,6 +683,42 @@ class Task033Case090PDECoreRecordTests(unittest.TestCase):
         planner = build_case090_record(core_gate_payload=aggregate)
         self.assertEqual(planner["core_gate"]["status"], "failed")
 
+    def test_partition_dependent_constraint_sparsity_uses_strict_bounds(self) -> None:
+        shards = [_shard(size) for size in core.MPI_SIZES]
+        changed = copy.deepcopy(shards[1])
+        p4_rows = [
+            item for item in changed["pde_results"] if item["degree"] == 4
+        ]
+        self.assertTrue(p4_rows)
+        for item in p4_rows:
+            periodic = item["periodic_constraint"]
+            rows = periodic["global_constraint_rows"]
+            periodic["global_constraint_nnz"] = rows * 3
+            periodic["max_masters_per_slave"] = 3
+        changed = core.attach_evidence_sha256(changed)
+        self.assertEqual(core.validate_shard_record(changed), [])
+        aggregate = core.aggregate_core_records(
+            [shards[0], changed, shards[2]],
+            [_memory_summary(size) for size in core.MPI_SIZES],
+        )
+        self.assertTrue(aggregate["all_core_gates_passed"])
+        mpi_gate = next(
+            gate
+            for gate in aggregate["gates"]
+            if gate["name"] == "mpi_result_difference"
+        )
+        self.assertTrue(mpi_gate["passed"])
+
+        invalid = copy.deepcopy(changed)
+        invalid["pde_results"][0]["periodic_constraint"][
+            "max_masters_per_slave"
+        ] = invalid["pde_results"][0]["degree"] + 1
+        invalid = core.attach_evidence_sha256(invalid)
+        self.assertIn(
+            "one or more shard periodic max-master bounds failed",
+            core.validate_shard_record(invalid),
+        )
+
     def test_production_runner_does_not_import_test_helpers(self) -> None:
         source = inspect.getsource(core) + inspect.getsource(
             run_task033_case090_pde_core

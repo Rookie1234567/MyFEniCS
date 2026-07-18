@@ -1643,6 +1643,7 @@ def validate_shard_record(record: Mapping[str, Any]) -> list[str]:
         if not isinstance(periodic, Mapping):
             problems.append("one or more shard periodic constraint records are missing")
             continue
+        periodic_integers: dict[str, int] = {}
         for name in (
             "global_constraint_rows",
             "global_constraint_nnz",
@@ -1650,8 +1651,30 @@ def validate_shard_record(record: Mapping[str, Any]) -> list[str]:
             "communication_bytes_sent_current",
             "communication_bytes_received_current",
         ):
-            if _integer_or_none(periodic.get(name)) is None:
+            value = _integer_or_none(periodic.get(name))
+            if value is None:
                 problems.append(f"one or more shard periodic {name} fields are missing")
+            else:
+                periodic_integers[name] = value
+        degree = item.get("degree")
+        rows = periodic_integers.get("global_constraint_rows")
+        nnz = periodic_integers.get("global_constraint_nnz")
+        max_masters = periodic_integers.get("max_masters_per_slave")
+        if (
+            type(degree) is int
+            and degree in DEGREES
+            and rows is not None
+            and nnz is not None
+            and max_masters is not None
+        ):
+            if rows <= 0 or not rows <= nnz <= rows * degree:
+                problems.append(
+                    "one or more shard periodic constraint sparsity bounds failed"
+                )
+            if not 1 <= max_masters <= degree:
+                problems.append(
+                    "one or more shard periodic max-master bounds failed"
+                )
         if periodic.get("topology_cache_hit") not in (True, False):
             problems.append("one or more shard topology cache fields are missing")
     probes = record.get("algebra_probes")
@@ -1670,8 +1693,6 @@ _FIXTURE_A_MPI_PATHS = (
     ("fields", "relative_max_abs_E_error"),
     ("fields", "relative_max_abs_H_error"),
     ("periodic_constraint", "global_constraint_rows"),
-    ("periodic_constraint", "global_constraint_nnz"),
-    ("periodic_constraint", "max_masters_per_slave"),
 )
 _FIXTURE_B_MPI_PATHS = (
     ("algebra", "full_true_residual"),
@@ -1695,8 +1716,6 @@ _FIXTURE_B_MPI_PATHS = (
     ("power", "T_port_minus_T_ref"),
     ("power", "A_volume_minus_A_ref"),
     ("periodic_constraint", "global_constraint_rows"),
-    ("periodic_constraint", "global_constraint_nnz"),
-    ("periodic_constraint", "max_masters_per_slave"),
 )
 
 _FIXTURE_B_MPI_COMPLEX_PATHS = (
@@ -1749,7 +1768,13 @@ def _nested_complex(item: Mapping[str, Any], path: Sequence[str]) -> complex | N
 def compute_mpi_result_difference(
     shards: Sequence[Mapping[str, Any]],
 ) -> tuple[float | None, list[str]]:
-    """Compare all rank-independent numerical outputs across MPI1/2/4."""
+    """Compare rank-independent physics/algebra outputs across MPI1/2/4.
+
+    Constraint NNZ and masters-per-slave describe a partition-dependent sparse
+    representation when DOLFINx entity orientation changes across MPI layouts.
+    ``validate_shard_record`` fail-closes their degree-scaled sparsity bounds;
+    the global constraint-row count remains an exact cross-MPI invariant here.
+    """
 
     problems: list[str] = []
     by_key: dict[tuple[Any, ...], dict[int, Mapping[str, Any]]] = {}
@@ -2767,7 +2792,10 @@ def aggregate_core_records(
                 if size in by_mpi
             },
             "mpi_result_comparison_method": (
-                "maximum rank-pair relative difference with scale max(1, abs(values))"
+                "maximum rank-pair relative difference over rank-independent "
+                "physics/algebra and global constraint-row outputs with scale "
+                "max(1, abs(values)); partition-dependent constraint NNZ and "
+                "masters-per-slave are fail-closed by per-shard degree bounds"
             ),
             "rss_note": (
                 "PDE rows preserve max-rank historical RSS and the sum of rank "
