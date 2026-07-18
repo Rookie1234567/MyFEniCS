@@ -10,6 +10,7 @@ from benchmarks.run_task033_full3d_watchdog import (
     _factorization_stage_seen,
     _parse_args,
     _qualify,
+    _solve_stage_seen,
     _validate_p4_gate,
 )
 
@@ -62,6 +63,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             "case_status": "completed",
             "official_result": True,
             "matrix_diagnostics_assemble_only": False,
+            "matrix_diagnostics_factorization_only": False,
             "matrix_stats": {"matrix_rows": 10, "matrix_nnz_used": 20},
             "ksp_converged": True,
             "linear_system_relative_residual": 1.0e-12,
@@ -89,6 +91,46 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             terminated_for_timeout=False,
             terminated_for_authority_unreadable=False,
             no_swap=False,
+            observed_worker_rank_count=4,
+        )
+        self.assertFalse(result["pass"])
+
+    def test_factorization_only_requires_setup_but_no_solve(self) -> None:
+        args = self._args("--run-kind", "factorization-only")
+        summary = {
+            "case_status": "diagnostic_factorization_only",
+            "official_result": False,
+            "matrix_diagnostics_assemble_only": False,
+            "matrix_diagnostics_factorization_only": True,
+            "matrix_stats": {"matrix_rows": 10, "matrix_nnz_used": 20},
+            "ksp_iterations": 0,
+            "stage4_dtn_factor_inventory": {"factor_solver_type": "mumps"},
+        }
+        events = [
+            {"stage": "before_ksp_setup"},
+            {"stage": "after_ksp_setup_factorized"},
+        ]
+        result = _qualify(
+            args=args,
+            solver_summary=summary,
+            events=events,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=4,
+        )
+        self.assertTrue(result["pass"])
+        result = _qualify(
+            args=args,
+            solver_summary=summary,
+            events=[*events, {"stage": "before_ksp_solve"}],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
             observed_worker_rank_count=4,
         )
         self.assertFalse(result["pass"])
@@ -150,11 +192,24 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
         for stage in (
             "before_ksp_setup",
             "after_ksp_setup_factorized",
-            "before_kspsolve",
-            "after_kspsolve",
+            "before_ksp_solve",
+            "after_ksp_solve",
         ):
             with self.subTest(stage=stage):
                 self.assertTrue(_factorization_stage_seen([{"stage": stage}]))
+
+    def test_solve_stage_detection_is_fail_closed(self) -> None:
+        self.assertFalse(
+            _solve_stage_seen([{"stage": "after_ksp_setup_factorized"}])
+        )
+        for stage in (
+            "stage4_dtn_augmented_solve",
+            "before_ksp_solve",
+            "during_ksp_solve_peak",
+            "after_ksp_solve",
+        ):
+            with self.subTest(stage=stage):
+                self.assertTrue(_solve_stage_seen([{"stage": stage}]))
 
     def test_review_v5_coarse_p3_meshes_are_parser_qualified(self) -> None:
         for h_nm in ("10", "7.5"):

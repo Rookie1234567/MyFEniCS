@@ -41,6 +41,11 @@ NUMERICAL_KERNELS = (
     "src/solvers/hcurl_multilevel.py",
 )
 INTENTIONAL_CLASSIFICATIONS = {
+    "src/common/config_3d.py": {
+        "classification": "diagnostic only",
+        "reason": "explicit factorization-only Gate flag defaults off; physical and full-solve configuration unchanged",
+        "requires_corresponding_pde_rerun": False,
+    },
     "src/constraints/floquet_3d_high_order.py": {
         "classification": "lifecycle only",
         "reason": "weak-owner cache lookup and explicit clear; topology coefficients unchanged",
@@ -49,6 +54,16 @@ INTENTIONAL_CLASSIFICATIONS = {
     "src/constraints/high_order_floquet_trace.py": {
         "classification": "lifecycle only",
         "reason": "cache ownership storage changed from strong to weak references",
+        "requires_corresponding_pde_rerun": False,
+    },
+    "src/solvers/common_3d_case_flow.py": {
+        "classification": "diagnostic only",
+        "reason": "factorization-only status and postprocess skip path; ordinary solve path unchanged",
+        "requires_corresponding_pde_rerun": False,
+    },
+    "src/solvers/dtn_port_3d.py": {
+        "classification": "diagnostic only",
+        "reason": "explicit return after KSPSetUp for staged Gate; KSPSolve path unchanged when the flag is false",
         "requires_corresponding_pde_rerun": False,
     },
     "src/solvers/hcurl_multilevel.py": {

@@ -119,10 +119,12 @@ def _full3d_config(args: argparse.Namespace):
 
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
     full_solve = args.run_kind == "full-solve"
+    factorization_only = args.run_kind == "factorization-only"
     return replace(
         cfg,
         petsc_direct_solver_profile=args.profile,
-        matrix_diagnostics_assemble_only=not full_solve,
+        matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
+        matrix_diagnostics_factorization_only=factorization_only,
         full3d_reference_export=full_solve,
         full3d_reference_plane_z=REFERENCE_PLANES_NM if full_solve else (),
         full3d_reference_sample_count_x=40,
@@ -153,7 +155,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--run-kind",
-        choices=("assembly-only", "full-solve"),
+        choices=("assembly-only", "factorization-only", "full-solve"),
         default="assembly-only",
     )
     parser.add_argument("--mpi-size", type=int, default=4)
@@ -365,8 +367,21 @@ def _factorization_stage_seen(events: list[dict[str, Any]]) -> bool:
         in {
             "before_ksp_setup",
             "after_ksp_setup_factorized",
-            "before_kspsolve",
-            "after_kspsolve",
+            "before_ksp_solve",
+            "after_ksp_solve",
+        }
+        for event in events
+    )
+
+
+def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
+    return any(
+        str(event.get("stage"))
+        in {
+            "stage4_dtn_augmented_solve",
+            "before_ksp_solve",
+            "during_ksp_solve_peak",
+            "after_ksp_solve",
         }
         for event in events
     )
@@ -416,6 +431,30 @@ def _qualify(
             "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
             "no_swap": no_swap,
         }
+    elif args.run_kind == "factorization-only":
+        factor_inventory = solver_summary.get("stage4_dtn_factor_inventory")
+        checks = {
+            **common,
+            "diagnostic_factorization_only_status": (
+                solver_summary.get("case_status")
+                == "diagnostic_factorization_only"
+            ),
+            "assemble_only_false": (
+                solver_summary.get("matrix_diagnostics_assemble_only") is False
+            ),
+            "factorization_only_flag": (
+                solver_summary.get("matrix_diagnostics_factorization_only")
+                is True
+            ),
+            "factorization_stage_seen": _factorization_stage_seen(events),
+            "solve_stage_not_seen": not _solve_stage_seen(events),
+            "factor_inventory_recorded": isinstance(
+                factor_inventory, dict
+            ),
+            "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
+            "official_result_false": solver_summary.get("official_result") is False,
+            "no_swap": no_swap,
+        }
     else:
         residual = solver_summary.get("linear_system_relative_residual")
         checks = {
@@ -424,6 +463,10 @@ def _qualify(
             "official_result": solver_summary.get("official_result") is True,
             "assemble_only_false": (
                 solver_summary.get("matrix_diagnostics_assemble_only") is False
+            ),
+            "factorization_only_false": (
+                solver_summary.get("matrix_diagnostics_factorization_only")
+                is False
             ),
             "ksp_converged": solver_summary.get("ksp_converged") is True,
             "true_residual_le_1e-9": (
@@ -462,8 +505,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         raise SystemExit("Require 0 < warning-gib < terminate-gib.")
     if args.timeout_seconds <= 0:
         raise SystemExit("--timeout-seconds must be positive.")
-    if args.run_kind == "assembly-only" and args.allow_swap:
-        raise SystemExit("assembly-only calibration forbids --allow-swap.")
+    if args.run_kind != "full-solve" and args.allow_swap:
+        raise SystemExit(
+            "assembly-only and factorization-only calibration forbid --allow-swap."
+        )
     p4_gate = _validate_p4_gate(args)
     source_before = _source_provenance(args)
     environment_before = _resource_snapshot()
@@ -625,6 +670,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     status = (
         "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
+        else "factorization_calibration_pass"
+        if qualification["pass"] and args.run_kind == "factorization-only"
         else "full3d_reference_pass"
         if qualification["pass"]
         else "formal_not_pass"

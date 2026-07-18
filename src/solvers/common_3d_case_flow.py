@@ -677,6 +677,17 @@ def run_prepared_3d_case_flow(
             raise ValueError("stage4_boundary_model='dtn_port' requires use_floquet_xy=True.")
         if cfg.stage4_dtn_assembly.lower() != "auxiliary":
             raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
+    if (
+        cfg.matrix_diagnostics_assemble_only
+        and cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "assemble-only and factorization-only diagnostics are mutually exclusive."
+        )
+    if cfg.matrix_diagnostics_factorization_only and not solve_stage4_dtn_port:
+        raise NotImplementedError(
+            "factorization-only diagnostics currently require the Stage-4 auxiliary DtN path."
+        )
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
     _write_progress_event(out_dir, comm, stage="after_config", status="end", started=started)
 
@@ -694,6 +705,9 @@ def run_prepared_3d_case_flow(
             "stage_case": cfg.stage_case,
             "solver_profile": cfg.petsc_direct_solver_profile_requested,
             "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
+            "matrix_diagnostics_factorization_only": (
+                cfg.matrix_diagnostics_factorization_only
+            ),
         },
     )
     if disabled_reason is not None:
@@ -1040,6 +1054,16 @@ def run_prepared_3d_case_flow(
         cfg.matrix_diagnostics_assemble_only
         or (dtn_result is not None and (dtn_result.get("solver_info", {}) or {}).get("assemble_only"))
     )
+    factorization_only_result = bool(
+        cfg.matrix_diagnostics_factorization_only
+        or (
+            dtn_result is not None
+            and (dtn_result.get("solver_info", {}) or {}).get(
+                "factorization_only"
+            )
+        )
+    )
+    diagnostic_only_result = assemble_only_result or factorization_only_result
     matrix_stats = _petsc_matrix_stats(system_A)
     _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
     _log_matrix_stats(matrix_stats, log)
@@ -1084,6 +1108,11 @@ def run_prepared_3d_case_flow(
         reason_name = "ASSEMBLE_ONLY_SKIPPED_SOLVE"
         iterations = 0
         residual_norm = None
+    elif factorization_only_result:
+        reason = 0
+        reason_name = "FACTORIZATION_ONLY_SKIPPED_SOLVE"
+        iterations = 0
+        residual_norm = None
     else:
         reason = int(system_ksp.getConvergedReason())
         reason_name = _ksp_reason_name(reason)
@@ -1100,7 +1129,7 @@ def run_prepared_3d_case_flow(
             "linear_system_residual_norm": None,
             "linear_system_relative_residual": None,
         }
-        if assemble_only_result
+        if diagnostic_only_result
         else _linear_system_diagnostics(system_A, system_b, system_x)
     )
     log(f"solver converged reason = {reason}")
@@ -1132,7 +1161,7 @@ def run_prepared_3d_case_flow(
     )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
-    converged = (reason > 0) and not assemble_only_result
+    converged = (reason > 0) and not diagnostic_only_result
     stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
     summary = {
         "case_name": cfg.case_name,
@@ -1141,6 +1170,8 @@ def run_prepared_3d_case_flow(
         "config": cfg.as_jsonable(),
         "case_status": "diagnostic_assemble_only"
         if assemble_only_result
+        else "diagnostic_factorization_only"
+        if factorization_only_result
         else "completed"
         if converged
         else "failed_not_converged",
@@ -1151,6 +1182,8 @@ def run_prepared_3d_case_flow(
         if converged
         else "Matrix diagnostics assemble-only mode skipped LU factorization/solve."
         if assemble_only_result
+        else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
+        if factorization_only_result
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "num_nedelec_dofs": int(num_dofs),
@@ -1173,6 +1206,9 @@ def run_prepared_3d_case_flow(
         if dtn_result is None
         else dtn_result["solver_info"].get("num_auxiliary_dofs"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+        "stage4_dtn_factor_inventory": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("factor_inventory"),
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
@@ -1229,6 +1265,9 @@ def run_prepared_3d_case_flow(
         "linear_solve_method": "direct_lu",
         "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
         "matrix_diagnostics_assemble_only": bool(assemble_only_result),
+        "matrix_diagnostics_factorization_only": bool(
+            factorization_only_result
+        ),
         "linear_solve_petsc_options": petsc_options,
         "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,
@@ -1352,6 +1391,11 @@ def run_prepared_3d_case_flow(
         _clear_official_field_outputs(out_dir, comm)
         if assemble_only_result:
             log("Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.")
+        elif factorization_only_result:
+            log(
+                "Matrix diagnostics factorization-only mode: KSPSetUp/LU completed; "
+                "KSPSolve and field postprocess were skipped."
+            )
         else:
             log("WARNING: PETSc KSP did not converge.")
         _log_solver_summary(summary, log)
