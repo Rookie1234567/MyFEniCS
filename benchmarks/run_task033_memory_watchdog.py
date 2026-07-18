@@ -528,7 +528,7 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     if error is not None or payload is None:
         return False
     return bool(
-        isinstance(payload.get("schema_version"), str)
+        payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
         and isinstance(payload.get("timestamp_utc"), str)
         and isinstance(payload.get("status"), str)

@@ -4,11 +4,13 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args,
     _resource_readability_sample_is_formal,
+    _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
     _task034_authority_source_compatibility,
 )
@@ -191,6 +193,29 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 terminal_worker_drain=True,
             )
         )
+
+    def test_task034_terminal_record_requires_complete_schema_v1(self) -> None:
+        complete = {
+            "schema_version": 1,
+            "benchmark_id": "task033_high_order_or_buffer_hybrid_direct",
+            "timestamp_utc": "2026-07-18T17:31:57+00:00",
+            "status": "physical_integration_pass_mode_convergence_pending",
+            "qualification": {},
+            "solve": {},
+            "gates": {},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "solver_record.json"
+            path.write_text(json.dumps(complete))
+            self.assertTrue(_task034_terminal_record_is_complete(path))
+            for key in complete:
+                incomplete = complete.copy()
+                incomplete.pop(key)
+                path.write_text(json.dumps(incomplete))
+                self.assertFalse(_task034_terminal_record_is_complete(path))
+            wrong_schema = complete | {"schema_version": "1"}
+            path.write_text(json.dumps(wrong_schema))
+            self.assertFalse(_task034_terminal_record_is_complete(path))
 
     def test_task033_gate_still_caps_larger_hosts_at_14_gib(self) -> None:
         limits = scaled_gate_limits(200.0)
