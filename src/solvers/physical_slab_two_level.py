@@ -11,6 +11,10 @@ import scipy.sparse as sp
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from .borrowed_local_audit import (
+    BorrowedLocalExactAuditor,
+    BorrowedSlabLayout,
+)
 from .local_slab_solver import LocalBackendPlan, LocalCsrOperator, LocalSlabSolver
 
 
@@ -588,6 +592,8 @@ class DistributedPhysicalSlabSmoother:
         self.destroy_diagnostics: list[dict[str, Any]] = []
         self._inner_ksp: PETSc.KSP | None = None
         self._inner_pc_context: _DistributedPhysicalSlabPcContext | None = None
+        self._action_operator = action_operator
+        self._borrowed_auditors: list[BorrowedLocalExactAuditor] = []
 
         global_diagonal_shift: np.ndarray | None = None
         self.subdomain_local_diagonal_shift = diagonal_shift is not None
@@ -1107,11 +1113,38 @@ class DistributedPhysicalSlabSmoother:
                 bool(item["allows_fallback"]) and item["exact_factor_constructed"]
                 for item in global_backend_diagnostics
             ),
+            "borrowed_auditor_count": len(self._borrowed_auditors),
         }
+
+    def create_borrowed_exact_auditor(self) -> BorrowedLocalExactAuditor:
+        if self._destroyed:
+            raise RuntimeError("distributed physical-slab smoother has been destroyed")
+        if self._action_operator is None:
+            raise RuntimeError("borrowed exact audit requires an action operator")
+        layouts = {
+            factor.subdomain: BorrowedSlabLayout(
+                slab_id=factor.subdomain,
+                owner_rank=factor.owner_rank,
+                union_positions=factor.union_positions,
+            )
+            for factor in self._factors
+        }
+        auditor = BorrowedLocalExactAuditor(
+            action_operator=self._action_operator,
+            union_scatter=self._scatter,
+            union_size=self._union_indices.size,
+            slab_owners=self.subdomain_owners,
+            local_layouts=layouts,
+        )
+        self._borrowed_auditors.append(auditor)
+        return auditor
 
     def destroy(self) -> None:
         if self._destroyed:
             return
+        for auditor in self._borrowed_auditors:
+            auditor.destroy()
+        self._borrowed_auditors = []
         if self._inner_ksp is not None:
             self._inner_ksp.destroy()
             self._inner_ksp = None

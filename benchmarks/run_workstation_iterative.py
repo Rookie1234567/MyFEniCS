@@ -58,6 +58,9 @@ from src.solvers.stage4_runtime import (
     stage4_physical_model,
 )
 from benchmarks.neural_pc.petsc_capture import LocalSlabCapture
+from benchmarks.neural_pc.qualify_task006_borrowed_action import (
+    qualify_borrowed_action,
+)
 
 
 TINY = np.finfo(float).tiny
@@ -945,6 +948,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if shifted is not None:
         shifted.destroy()
     setup_slab_diagnostics = smoother.diagnostics
+    borrowed_action_qualification = None
+    if args.borrowed_audit_reference_root:
+        if not args.borrowed_audit_output:
+            raise ValueError(
+                "--borrowed-audit-reference-root requires --borrowed-audit-output"
+            )
+        borrowed_action_qualification = qualify_borrowed_action(
+            smoother,
+            reference_root=Path(args.borrowed_audit_reference_root),
+            output_path=Path(args.borrowed_audit_output),
+        )
     exact_oracle_contract = None
     if exact_enabled_slabs:
         rows = setup_slab_diagnostics["global_backend_diagnostics"]
@@ -1197,6 +1211,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "pc_action_certificate": pc_certificate,
         "slab_diagnostics": slab_diagnostics,
         "exact_oracle_contract": exact_oracle_contract,
+        "borrowed_action_qualification": borrowed_action_qualification,
         "history": history,
         "memory_checkpoints": memory_checkpoints,
         "object_ledger_at_solve": _object_ledger(
@@ -1338,6 +1353,8 @@ def main() -> int:
         "--linear-reduced-mode", choices=("shadow", "active"), default="shadow"
     )
     parser.add_argument("--exact-lu-enabled-slabs")
+    parser.add_argument("--borrowed-audit-reference-root")
+    parser.add_argument("--borrowed-audit-output")
     parser.add_argument("--case-label")
     parser.add_argument("--record", required=True)
     parser.add_argument("--results-dir", default=None)

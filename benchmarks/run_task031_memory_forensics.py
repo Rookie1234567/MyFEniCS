@@ -68,6 +68,10 @@ def _source_provenance(
 
 
 def _worker_command(args: argparse.Namespace, record_path: Path, heavy_dir: Path) -> list[str]:
+    if bool(args.borrowed_audit_reference_root) != bool(args.borrowed_audit_output):
+        raise ValueError(
+            "borrowed audit reference root and output must be provided together"
+        )
     command = [
         "mpiexec",
         "-n",
@@ -120,6 +124,15 @@ def _worker_command(args: argparse.Namespace, record_path: Path, heavy_dir: Path
             command.append(flag)
     if args.exact_lu_enabled_slabs:
         command.extend(["--exact-lu-enabled-slabs", args.exact_lu_enabled_slabs])
+    if args.borrowed_audit_reference_root:
+        command.extend(
+            [
+                "--borrowed-audit-reference-root",
+                str(args.borrowed_audit_reference_root),
+                "--borrowed-audit-output",
+                str(args.borrowed_audit_output),
+            ]
+        )
     return command
 
 
@@ -321,6 +334,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--smoother-iterations", type=int, choices=(1, 2), default=2)
     parser.add_argument("--exact-lu-enabled-slabs")
+    parser.add_argument("--borrowed-audit-reference-root", type=Path)
+    parser.add_argument("--borrowed-audit-output", type=Path)
     parser.add_argument("--restart", type=int, default=70)
     parser.add_argument("--selective-diagonal-boundary-slabs", type=int, default=0)
     parser.add_argument("--max-it", type=int, default=5000)
