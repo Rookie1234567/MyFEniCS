@@ -192,7 +192,7 @@ memory约8 GiB硬限制且可接受数小时
   -> 先重新 qualification，不继承既有“收敛保证”
 ```
 
-当前 iterative qualification 是单点 frozen target：13.5 nm、固定 Si、`theta=80°`（按表面掠入射角记法对应 10°）、`phi=0°`、S polarization、p2 Nédélec、MPI4、当前 partition/RHS/image。Task032 的 1–10° S/P 30/30 结果只是 M4 parameter-interface smoke，不能升级为 iterative 或物理资格。项目第一阶段规划范围由 Task033 local h/p、Task034 scalable modal core 和 Task035 final Hybrid iterative 继续资格化；Task036 才逐波长 continuation。规划范围不等于已验证范围。
+当前 iterative qualification 是单点 frozen target：13.5 nm、固定 Si、`theta=80°`（按表面掠入射角记法对应 10°）、`phi=0°`、S polarization、p2 Nédélec、MPI4、当前 partition/RHS/image。Task032 的 1–10° grazing + S/P 30/30 结果只是 M4 parameter-interface smoke，不能升级为 iterative 或物理资格。项目第一阶段规划范围由 Task033 local h/p、Task034 scalable modal core 和 Task035 final Hybrid iterative 继续资格化；Task036 才逐波长 continuation。规划范围不等于已验证范围。
 
 ## 8. 公共 API 与选择性合并边界
 

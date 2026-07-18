@@ -46,7 +46,7 @@ def _write(path: Path, payload: dict) -> None:
 
 def _preflight(args: argparse.Namespace) -> int:
     head = _git("rev-parse", "HEAD")
-    status = _git("status", "--short", "--untracked-files=normal")
+    status = _git("status", "--short", "--untracked-files=all")
     if head != args.verified_clean_sha or status:
         raise SystemExit(
             "Phase C0 requires exact HEAD and a completely clean nonignored worktree."

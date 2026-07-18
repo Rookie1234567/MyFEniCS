@@ -22,6 +22,9 @@ except ModuleNotFoundError:  # pragma: no cover - Windows host path
     resource = None
 
 from src.common.config_3d import target_stage4_config
+from src.common.distributed_matrix_diagnostics import (
+    distributed_active_column_count,
+)
 from src.coupling.hybrid_internal_modes import (
     build_hybrid_internal_mode_coupling,
 )
@@ -116,7 +119,7 @@ def _source_provenance(
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+        tracked_status = _git("status", "--porcelain", "--untracked-files=all")
         payload = (head, branch, tracked_status)
     else:
         payload = None
@@ -224,15 +227,9 @@ def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
 
 
 def _global_active_column_count(matrix: PETSc.Mat) -> int:
-    """Count distributed matrix columns that contain at least one stored entry."""
+    """Count active columns without replicating their IDs on every rank."""
 
-    first, last = matrix.getOwnershipRange()
-    local_columns: set[int] = set()
-    for row in range(first, last):
-        columns, _values = matrix.getRow(row)
-        local_columns.update(int(column) for column in columns)
-    gathered = matrix.getComm().tompi4py().allgather(tuple(sorted(local_columns)))
-    return len({column for columns in gathered for column in columns})
+    return distributed_active_column_count(matrix).global_count
 
 
 def _basis_summary(basis) -> dict[str, Any]:
@@ -1453,14 +1450,22 @@ def main() -> None:
             * (full_vector_size + reduced_vector_size)
             * np.dtype(PETSc.ScalarType).itemsize
         )
+        active_column_counts = {
+            "bottom": distributed_active_column_count(
+                coupling.bottom.projection
+            ),
+            "top": distributed_active_column_count(coupling.top.projection),
+        }
         object_payload_ledger = {
             "scalar_bytes": int(np.dtype(PETSc.ScalarType).itemsize),
             "index_bytes": int(np.dtype(PETSc.IntType).itemsize),
             "interface_active_dofs": {
-                "bottom": _global_active_column_count(
-                    coupling.bottom.projection
-                ),
-                "top": _global_active_column_count(coupling.top.projection),
+                side: result.global_count
+                for side, result in active_column_counts.items()
+            },
+            "interface_active_column_count_diagnostics": {
+                side: result.to_dict()
+                for side, result in active_column_counts.items()
             },
             "mode_count_per_direction": args.requested_modes,
             "retained_right_left_eigenvector_bytes": eigenvector_bytes,

@@ -1092,7 +1092,7 @@ def main() -> None:
         for path, record in zip(paths, records)
         if _record_identity(record) is not None
     ]
-    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    tracked_status = _git("status", "--porcelain", "--untracked-files=all")
     aggregate["aggregation_tool"] = {
         "module": "benchmarks.task033_matched_trace_qualification",
         "commit_sha": _git("rev-parse", "HEAD"),

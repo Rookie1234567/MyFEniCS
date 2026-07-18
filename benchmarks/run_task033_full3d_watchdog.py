@@ -13,6 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from benchmarks.task034_wsl_resources import (
+    cgroup_snapshot,
+    effective_memory_limit,
+    vmstat_swap_pages,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -67,18 +72,28 @@ def _host_available_bytes() -> int | None:
 
 
 def _resource_snapshot() -> dict[str, Any]:
-    root = Path("/sys/fs/cgroup")
-    memory_max, memory_max_state = _read_int_or_max(root / "memory.max")
-    swap_max, swap_max_state = _read_int_or_max(root / "memory.swap.max")
+    cgroup = cgroup_snapshot()
+    memory = effective_memory_limit()
+    swap = vmstat_swap_pages()
+    memory_max = cgroup.get("memory_limit_bytes")
     return {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "cgroup_path": cgroup.get("path"),
+        "cgroup_is_dedicated_job_authority": cgroup.get(
+            "dedicated_job_cgroup", False
+        ),
         "cgroup_memory_max_bytes": memory_max,
-        "cgroup_memory_max_state": memory_max_state,
-        "cgroup_swap_max_bytes": swap_max,
-        "cgroup_swap_max_state": swap_max_state,
-        "cgroup_memory_current_bytes": _read_int(root / "memory.current"),
-        "cgroup_swap_current_bytes": _read_int(root / "memory.swap.current"),
-        "host_available_bytes": _host_available_bytes(),
+        "cgroup_memory_max_state": (
+            "finite" if isinstance(memory_max, int) else "unbounded_or_unreadable"
+        ),
+        "cgroup_swap_max_bytes": None,
+        "cgroup_swap_max_state": "not_used_as_limit",
+        "cgroup_memory_current_bytes": cgroup.get("memory_current_bytes"),
+        "cgroup_swap_current_bytes": cgroup.get("swap_current_bytes"),
+        "host_available_bytes": memory.get("mem_available_bytes"),
+        "wsl_total_bytes": memory.get("mem_total_bytes"),
+        "task034_effective_limit": memory,
+        "wsl_vm_global_swap_diagnostic": swap,
     }
 
 
@@ -151,8 +166,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
     parser.add_argument("--poll-interval", type=float, default=0.25)
-    parser.add_argument("--warning-gib", type=float, default=10.549840927124023)
-    parser.add_argument("--terminate-gib", type=float, default=11.925907135009766)
+    parser.add_argument("--warning-gib", type=float)
+    parser.add_argument("--terminate-gib", type=float)
     parser.add_argument("--timeout-seconds", type=float, default=7200.0)
     parser.add_argument(
         "--allow-swap",
@@ -287,18 +302,27 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         return max(values) - min(values) if values else None
 
     worker_mb = maximum("worker_rank_rss_sum_mb")
-    cgroup_mb = maximum("container_cgroup_current_mb")
-    swap_mb = maximum("container_swap_current_mb")
+    process_tree_mb = maximum("mpi_process_tree_rss_mb")
+    process_tree_swap_mb = maximum("mpi_process_tree_swap_mb")
+    dedicated_rows = [row for row in rows if row.get("job_cgroup_dedicated") is True]
+    dedicated_cgroup_values = [
+        float(row["container_cgroup_current_mb"])
+        for row in dedicated_rows
+        if isinstance(row.get("container_cgroup_current_mb"), (int, float))
+    ]
+    dedicated_swap_values = [
+        float(row["container_swap_current_mb"])
+        for row in dedicated_rows
+        if isinstance(row.get("container_swap_current_mb"), (int, float))
+    ]
+    cgroup_mb = max(dedicated_cgroup_values) if dedicated_cgroup_values else None
+    swap_mb = max(dedicated_swap_values) if dedicated_swap_values else None
     memory_authority_mb = (
         None
-        if worker_mb is None or cgroup_mb is None
-        else max(worker_mb, cgroup_mb)
+        if process_tree_mb is None
+        else max(process_tree_mb, float(cgroup_mb or 0.0))
     )
-    combined_authority_mb = (
-        None
-        if worker_mb is None or cgroup_mb is None or swap_mb is None
-        else max(worker_mb, cgroup_mb + swap_mb)
-    )
+    combined_authority_mb = memory_authority_mb
     worker_rank_counts: list[int] = []
     for row in rows:
         try:
@@ -311,6 +335,9 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "poll_interval_seconds": None,
         "sample_count": len(rows),
         "max_simultaneous_worker_rss_mb": worker_mb,
+        "max_process_tree_rss_mb": process_tree_mb,
+        "max_process_tree_swap_mb": process_tree_swap_mb,
+        "dedicated_job_cgroup_observed": bool(dedicated_rows),
         "max_container_cgroup_current_mb": cgroup_mb,
         "max_container_swap_current_mb": swap_mb,
         "memory_authority_mb": memory_authority_mb,
@@ -424,6 +451,13 @@ def _run_parent(args: argparse.Namespace) -> int:
         raise SystemExit("--mpi-size must be positive.")
     if args.poll_interval < 0.05:
         raise SystemExit("--poll-interval must be at least 0.05 seconds.")
+    effective = effective_memory_limit()
+    if effective["effective_limit_bytes"] is None:
+        raise SystemExit("Task034 effective WSL memory limit is unreadable.")
+    if args.warning_gib is None:
+        args.warning_gib = float(effective["warning_bytes"]) / GIB
+    if args.terminate_gib is None:
+        args.terminate_gib = float(effective["termination_bytes"]) / GIB
     if args.warning_gib <= 0 or args.terminate_gib <= args.warning_gib:
         raise SystemExit("Require 0 < warning-gib < terminate-gib.")
     if args.timeout_seconds <= 0:
@@ -433,17 +467,10 @@ def _run_parent(args: argparse.Namespace) -> int:
     p4_gate = _validate_p4_gate(args)
     source_before = _source_provenance(args)
     environment_before = _resource_snapshot()
-    if environment_before["cgroup_memory_max_state"] != "finite":
-        raise SystemExit("Finite cgroup memory.max is required.")
-    if environment_before["cgroup_memory_current_bytes"] is None:
-        raise SystemExit("Readable cgroup memory.current is required.")
-    if environment_before["cgroup_swap_current_bytes"] is None:
-        raise SystemExit("Readable cgroup memory.swap.current is required.")
-    if (
-        args.run_kind == "assembly-only"
-        and environment_before["cgroup_swap_current_bytes"] != 0
-    ):
-        raise SystemExit("assembly-only preflight requires zero cgroup swap current.")
+    if environment_before["host_available_bytes"] is None:
+        raise SystemExit("Readable WSL MemAvailable is required.")
+    if environment_before["wsl_total_bytes"] is None:
+        raise SystemExit("Readable WSL MemTotal is required.")
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = (
@@ -506,18 +533,28 @@ def _run_parent(args: argparse.Namespace) -> int:
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
-            worker_mb = row.get("worker_rank_rss_sum_mb")
-            cgroup_mb = row.get("container_cgroup_current_mb")
-            swap_mb = row.get("container_swap_current_mb")
+            process_tree_mb = row.get("mpi_process_tree_rss_mb")
+            process_tree_swap_mb = row.get("mpi_process_tree_swap_mb")
+            cgroup_mb = (
+                row.get("container_cgroup_current_mb")
+                if row.get("job_cgroup_dedicated") is True
+                else 0.0
+            )
+            cgroup_swap_mb = (
+                row.get("container_swap_current_mb")
+                if row.get("job_cgroup_dedicated") is True
+                else 0.0
+            )
             authority_readable = all(
                 isinstance(value, (int, float))
-                for value in (worker_mb, cgroup_mb, swap_mb)
+                for value in (
+                    process_tree_mb, process_tree_swap_mb, cgroup_mb, cgroup_swap_mb
+                )
             )
             authority_gib = (
                 None
                 if not authority_readable
-                else max(float(worker_mb), float(cgroup_mb) + float(swap_mb))
-                / 1024.0
+                else max(float(process_tree_mb), float(cgroup_mb)) / 1024.0
             )
             if authority_gib is not None:
                 warning_triggered |= authority_gib >= args.warning_gib
@@ -553,9 +590,11 @@ def _run_parent(args: argparse.Namespace) -> int:
     sampler = _sampler_summary(rows)
     sampler["poll_interval_seconds"] = args.poll_interval
     no_swap = bool(
-        sampler["max_container_swap_current_mb"] == 0.0
-        and sampler["pswpin_delta_pages"] == 0
-        and sampler["pswpout_delta_pages"] == 0
+        sampler["max_process_tree_swap_mb"] == 0.0
+        and (
+            not sampler["dedicated_job_cgroup_observed"]
+            or sampler["max_container_swap_current_mb"] == 0.0
+        )
     )
     qualification = _qualify(
         args=args,
@@ -617,10 +656,13 @@ def _run_parent(args: argparse.Namespace) -> int:
             "warning_gib": args.warning_gib,
             "termination_gib": args.terminate_gib,
             "termination_authority": (
-                "max(simultaneous worker RSS, cgroup memory.current + "
-                "cgroup memory.swap.current)"
+                "max(process-tree RSS, dedicated job cgroup memory.current when present)"
             ),
             "timeout_seconds": args.timeout_seconds,
+            "formal_no_swap_authority": "process-tree VmSwap plus dedicated job cgroup swap",
+            "wsl_global_pswp_role": "diagnostic_only",
+            "mumps_ooc_role": "explicit_scratch_profile_not_linux_swap",
+            "effective_limit": effective,
         },
         "environment_before": environment_before,
         "environment_after": _resource_snapshot(),

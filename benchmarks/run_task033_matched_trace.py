@@ -78,7 +78,7 @@ def _source_start(
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        status = _git("status", "--porcelain", "--untracked-files=no")
+        status = _git("status", "--porcelain", "--untracked-files=all")
         payload = (head, branch, status)
     else:
         payload = None
@@ -128,7 +128,7 @@ def _source_finish(
     if comm.rank == 0:
         payload = (
             _git("rev-parse", "HEAD"),
-            _git("status", "--porcelain", "--untracked-files=no"),
+            _git("status", "--porcelain", "--untracked-files=all"),
         )
     else:
         payload = None

@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from benchmarks.task034_wsl_resources import cgroup_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "050"
@@ -28,6 +30,7 @@ TIMELINE_FIELDS = (
     "stage_status",
     "worker_rank_rss_sum_mb",
     "mpi_process_tree_rss_mb",
+    "mpi_process_tree_swap_mb",
     "container_process_rss_sum_mb",
     "worker_rank_rss_mb_json",
     "worker_rank_cpu_affinity_json",
@@ -40,6 +43,8 @@ TIMELINE_FIELDS = (
     "container_cgroup_current_mb",
     "container_cgroup_peak_mb",
     "container_swap_current_mb",
+    "job_cgroup_path",
+    "job_cgroup_dedicated",
     "wsl_pswpin_pages",
     "wsl_pswpout_pages",
     "ooc_scratch_file_count",
@@ -85,7 +90,7 @@ def _source_provenance(args: argparse.Namespace) -> dict[str, Any]:
             "verified_clean_sha": verified,
         }
 
-    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    tracked_status = _git("status", "--porcelain", "--untracked-files=all")
     if tracked_status is None:
         raise SystemExit("Cannot verify tracked-source cleanliness with git.")
     if tracked_status:
@@ -113,17 +118,27 @@ def _read_number(path: Path, *, scale: float = 1.0) -> float | str | None:
         return None
 
 
-def _cgroup_snapshot() -> dict[str, float | str | None]:
-    root = Path("/sys/fs/cgroup")
+def _cgroup_snapshot() -> dict[str, float | str | bool | None]:
+    snapshot = cgroup_snapshot()
     scale = 1024.0 * 1024.0
     return {
-        "container_cgroup_current_mb": _read_number(
-            root / "memory.current", scale=scale
+        "container_cgroup_current_mb": (
+            None
+            if snapshot["memory_current_bytes"] is None
+            else float(snapshot["memory_current_bytes"]) / scale
         ),
-        "container_cgroup_peak_mb": _read_number(root / "memory.peak", scale=scale),
-        "container_swap_current_mb": _read_number(
-            root / "memory.swap.current", scale=scale
+        "container_cgroup_peak_mb": (
+            None
+            if snapshot["memory_peak_bytes"] is None
+            else float(snapshot["memory_peak_bytes"]) / scale
         ),
+        "container_swap_current_mb": (
+            None
+            if snapshot["swap_current_bytes"] is None
+            else float(snapshot["swap_current_bytes"]) / scale
+        ),
+        "job_cgroup_path": snapshot["path"],
+        "job_cgroup_dedicated": snapshot["dedicated_job_cgroup"],
     }
 
 
@@ -177,6 +192,11 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             rss_mb = float(rss_parts[0]) / 1024.0
         except (ValueError, IndexError):
             rss_mb = 0.0
+        swap_parts = fields.get("VmSwap", "0 kB").split()
+        try:
+            swap_mb = float(swap_parts[0]) / 1024.0
+        except (ValueError, IndexError):
+            swap_mb = 0.0
         try:
             cmdline = (
                 (entry / "cmdline")
@@ -235,6 +255,7 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             "pid": pid,
             "ppid": ppid,
             "rss_mb": rss_mb,
+            "swap_mb": swap_mb,
             "cpu_affinity": fields.get("Cpus_allowed_list", "unknown"),
             "thread_count": thread_count,
             "cpu_seconds": cpu_seconds,
@@ -325,6 +346,9 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         "worker_rank_rss_sum_mb": sum(item["rss_mb"] for item in worker_ranks),
         "mpi_process_tree_rss_mb": sum(
             processes[pid]["rss_mb"] for pid in tree if pid in processes
+        ),
+        "mpi_process_tree_swap_mb": sum(
+            processes[pid]["swap_mb"] for pid in tree if pid in processes
         ),
         "container_process_rss_sum_mb": sum(
             item["rss_mb"] for item in processes.values()

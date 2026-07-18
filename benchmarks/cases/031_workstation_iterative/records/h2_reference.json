@@ -2,5 +2,5 @@
   "record_type": "sha256_pinned_canonical_reference",
   "benchmark_id": "l3_iterative_h2",
   "canonical_record": "benchmarks/records/workstation_p2_h2_mpi4.json",
-  "sha256": "797080b1d3d8b8309de196a2573f6cad81be5c9110f561494d9bb9b4d5c262af"
+  "sha256": "dc6667031b425f27d6b93cfeb58db4c448a4eb3a2a32563d6da512fccb0890cb"
 }

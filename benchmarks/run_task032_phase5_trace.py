@@ -75,7 +75,7 @@ def _source_provenance(
         tracked_status = (
             None
             if verified_clean_sha is not None
-            else _git("status", "--porcelain", "--untracked-files=no")
+            else _git("status", "--porcelain", "--untracked-files=all")
         )
         payload = (head, branch, tracked_status)
     else:

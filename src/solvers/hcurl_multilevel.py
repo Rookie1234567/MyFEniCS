@@ -704,7 +704,12 @@ def build_condensed_galerkin_coarse(
         raise NotImplementedError(
             "Task030 Galerkin builder currently requires verified H=I"
         )
-    hermitian = PETSc.Mat().createHermitianTranspose(transfer)
+    # PETSc 3.19 cannot MatMatMult through a virtual complex Hermitian
+    # transpose wrapper.  Materialise the transpose and conjugate it so the
+    # algebra remains exactly P^H while retaining support on the WSL stack.
+    hermitian = transfer.copy()
+    hermitian.transpose()
+    hermitian.conjugate()
     f_times_p = F.matMult(transfer)
     coarse = hermitian.matMult(f_times_p)
     ph_c = hermitian.matMult(C)

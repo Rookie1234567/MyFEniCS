@@ -26,6 +26,10 @@ from benchmarks.task033_qep_qualification import (
     resource_authority_gate,
     source_identity_gate,
 )
+from benchmarks.task034_wsl_resources import (
+    effective_memory_limit,
+    resource_authority_sample,
+)
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     high_order_core_evidence_gate,
@@ -214,7 +218,7 @@ def _case090_source_compatibility(
 
 def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
-    worktree = _git("status", "--short", "--untracked-files=normal")
+    worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
         line[3:]
         for line in (worktree or "").splitlines()
@@ -245,7 +249,7 @@ def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
 
 def _watchdog_source_after(source: dict[str, Any]) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
-    worktree = _git("status", "--short", "--untracked-files=normal")
+    worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
         line[3:]
         for line in (worktree or "").splitlines()
@@ -575,10 +579,11 @@ def _external_resource_authority(
     cgroup_bytes = (
         None if cgroup_gib is None else int(float(cgroup_gib) * 1024**3)
     )
+    dedicated_cgroup = memory.get("dedicated_job_cgroup_observed") is True
     authority = (
         None
-        if worker_bytes is None or cgroup_bytes is None
-        else max(worker_bytes, cgroup_bytes)
+        if worker_bytes is None or (dedicated_cgroup and cgroup_bytes is None)
+        else max(worker_bytes, cgroup_bytes if dedicated_cgroup else 0)
     )
     limits = [
         environment_before.get("memory_limit_bytes"),
@@ -588,28 +593,14 @@ def _external_resource_authority(
         environment_before.get("host_available_memory_bytes"),
         environment_after.get("host_available_memory_bytes"),
     ]
-    sampled_swap_all_readable = bool(rows) and all(
-        row.get("container_swap_current_mb") is not None for row in rows
+    sampled_swap_all_readable = memory.get("job_swap_all_samples_readable") is True
+    swap_current = (
+        0
+        if sampled_swap_all_readable
+        and int(memory.get("max_process_tree_swap_bytes") or 0) == 0
+        and int(memory.get("max_dedicated_cgroup_swap_bytes") or 0) == 0
+        else None
     )
-    sampled_swap = [
-        row.get("container_swap_current_mb")
-        for row in rows
-        if row.get("container_swap_current_mb") is not None
-    ]
-    environment_swap = [
-        environment_before.get("swap_current_bytes"),
-        environment_after.get("swap_current_bytes"),
-    ]
-    swap_current = None
-    if (
-        sampled_swap_all_readable
-        and sampled_swap
-        and all(value is not None for value in environment_swap)
-    ):
-        swap_current = max(
-            [int(float(value) * 1024**2) for value in sampled_swap]
-            + [int(value) for value in environment_swap]
-        )
     record = {
         "simultaneous_live_worker_rss_sum_bytes": worker_bytes,
         "container_cgroup_current_bytes": cgroup_bytes,
@@ -633,6 +624,10 @@ def _external_resource_authority(
         "container_swap_current_bytes": swap_current,
         "pswpin_delta_pages": memory.get("wsl_pswpin_delta_pages"),
         "pswpout_delta_pages": memory.get("wsl_pswpout_delta_pages"),
+        "job_cgroup_dedicated": dedicated_cgroup,
+        "wsl_global_pswp_formal": False,
+        "wsl_global_pswp_role": "diagnostic_only",
+        "job_process_tree_swap_bytes": memory.get("max_process_tree_swap_bytes"),
         "environment_before": environment_before,
         "environment_after": environment_after,
         "all_live_authority_samples_readable": live_authority_all_readable,
@@ -826,10 +821,12 @@ def run(args: argparse.Namespace) -> int:
     source_before = _watchdog_source_before(args.verified_clean_sha)
     environment_before = _resource_environment_snapshot()
     environment_preflight = _environment_preflight(environment_before)
+    effective = effective_memory_limit()
     finite_authorities = (
-        environment_before.get("memory_limit_bytes"),
+        effective.get("effective_limit_bytes"),
         environment_before.get("host_available_memory_bytes"),
     )
+    environment_before["task034_effective_limit"] = effective
     args._qep_effective_limit_gib = (
         None
         if any(
@@ -1078,6 +1075,10 @@ def run(args: argparse.Namespace) -> int:
     terminated_for_timeout = False
     terminated_for_authority_unreadable = False
     live_authority_all_readable = True
+    job_swap_all_samples_readable = True
+    max_process_tree_swap_bytes = 0
+    max_dedicated_cgroup_swap_bytes = 0
+    dedicated_job_cgroup_observed = False
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -1092,28 +1093,66 @@ def run(args: argparse.Namespace) -> int:
         while True:
             elapsed = time.perf_counter() - started
             row = _sample(process.pid, stage_path, elapsed)
-            live_worker_rss_mb, live_workers = _live_task033_worker_rss(
-                process.pid, args.target
-            )
-            row["worker_rank_rss_sum_mb"] = (
-                0.0 if live_worker_rss_mb is None else live_worker_rss_mb
-            )
+            job_sample = resource_authority_sample(process.pid)
+            process_tree = job_sample["process_tree"]
+            job_cgroup = job_sample["job_cgroup"]
+            live_worker_rss_mb = float(process_tree["rss_bytes"]) / 1024**2
+            live_workers = [
+                {"pid": pid, "scope": "process_tree"}
+                for pid in process_tree["pids"]
+            ]
+            row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
             row["worker_rank_rss_mb_json"] = json.dumps(
                 live_workers, separators=(",", ":")
             )
+            row["mpi_process_tree_swap_mb"] = (
+                float(process_tree["swap_bytes"]) / 1024**2
+            )
+            row["job_cgroup_path"] = job_cgroup["path"]
+            row["job_cgroup_dedicated"] = job_cgroup["dedicated_job_cgroup"]
+            if job_cgroup["dedicated_job_cgroup"]:
+                row["container_cgroup_current_mb"] = (
+                    None if job_cgroup["memory_current_bytes"] is None
+                    else float(job_cgroup["memory_current_bytes"]) / 1024**2
+                )
+                row["container_swap_current_mb"] = (
+                    None if job_cgroup["swap_current_bytes"] is None
+                    else float(job_cgroup["swap_current_bytes"]) / 1024**2
+                )
+            else:
+                row["container_cgroup_current_mb"] = None
+                row["container_swap_current_mb"] = None
+            job_swap_all_samples_readable &= bool(process_tree["all_status_readable"])
+            max_process_tree_swap_bytes = max(
+                max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
+            )
+            if job_cgroup["dedicated_job_cgroup"]:
+                dedicated_job_cgroup_observed = True
+                if job_cgroup["swap_current_bytes"] is None:
+                    job_swap_all_samples_readable = False
+                else:
+                    max_dedicated_cgroup_swap_bytes = max(
+                        max_dedicated_cgroup_swap_bytes,
+                        int(job_cgroup["swap_current_bytes"]),
+                    )
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
             cgroup_current_mb = row.get("container_cgroup_current_mb")
             authority_readable = bool(
-                live_worker_rss_mb is not None and cgroup_current_mb is not None
+                process_tree["all_status_readable"]
+                and (
+                    not job_cgroup["dedicated_job_cgroup"]
+                    or cgroup_current_mb is not None
+                )
             )
             live_authority_all_readable &= authority_readable
             live_authority_gib = (
                 None
                 if not authority_readable
-                else max(float(live_worker_rss_mb), float(cgroup_current_mb))
-                / 1024.0
+                else max(
+                    float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
+                ) / 1024.0
             )
             if live_authority_gib is not None:
                 max_live_authority_gib = max(
@@ -1148,7 +1187,16 @@ def run(args: argparse.Namespace) -> int:
         else {}
     )
     memory = _sampler_summary(rows, poll_interval=args.poll_interval)
+    memory.update(
+        {
+            "job_swap_all_samples_readable": job_swap_all_samples_readable,
+            "max_process_tree_swap_bytes": max_process_tree_swap_bytes,
+            "max_dedicated_cgroup_swap_bytes": max_dedicated_cgroup_swap_bytes,
+            "dedicated_job_cgroup_observed": dedicated_job_cgroup_observed,
+        }
+    )
     environment_after = _resource_environment_snapshot()
+    environment_after["task034_effective_limit"] = effective_memory_limit()
     source = _watchdog_source_after(source_before)
     resource_authority = _external_resource_authority(
         rows,
@@ -1166,9 +1214,9 @@ def run(args: argparse.Namespace) -> int:
     source_gate = source_identity_gate(source)
     no_swap = bool(
         resource_gate["checks"].get("container_current_swap_zero")
-        and resource_gate["checks"].get("pswpin_delta_zero")
-        and resource_gate["checks"].get("pswpout_delta_zero")
         and resource_gate["checks"].get("all_live_swap_samples_readable")
+        and max_process_tree_swap_bytes == 0
+        and max_dedicated_cgroup_swap_bytes == 0
     )
     if args.target == "qep":
         numerical_pass = solver_record.get("status") == "measured_shard_pass"
@@ -1237,8 +1285,8 @@ def run(args: argparse.Namespace) -> int:
         "measurements": measurements,
         "memory_semantics": (
             "Authority is max(simultaneous live MPI worker RSS sum, container "
-            "cgroup current); current cgroup swap and pswpin/pswpout deltas must "
-            "all be zero. Container limit and host available memory must be readable."
+            "dedicated job cgroup current when present); process-tree VmSwap and "
+            "dedicated cgroup swap must be zero. WSL-global pswp is diagnostic only."
         ),
     }
     summary_path = run_dir / "memory_sampler_summary.json"

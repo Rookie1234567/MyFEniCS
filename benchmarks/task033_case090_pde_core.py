@@ -135,7 +135,7 @@ def inspect_tracked_source(repo_root: Path) -> SourceIdentity:
             text=True,
         ).stdout.strip().lower()
         status = subprocess.run(
-            ["git", "status", "--porcelain=v1", "--untracked-files=normal"],
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
             cwd=root,
             check=True,
             capture_output=True,

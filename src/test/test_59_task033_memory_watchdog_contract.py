@@ -269,7 +269,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 return sha
             self.assertEqual(
                 args,
-                ("status", "--short", "--untracked-files=normal"),
+                ("status", "--short", "--untracked-files=all"),
             )
             return "?? uncommitted_solver.py"
 
