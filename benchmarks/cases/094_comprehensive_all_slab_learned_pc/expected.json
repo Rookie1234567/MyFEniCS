@@ -1,4 +1,5 @@
 {
+  "status": "qualified_negative_result",
   "p0_numeric_gate_required": true,
   "p1_all_16_teacher_datasets_required": true,
   "p2_representative_slabs": [0, 5, 9, 15],

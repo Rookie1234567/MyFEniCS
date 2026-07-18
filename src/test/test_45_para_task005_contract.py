@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from benchmarks.neural_pc.screen_task005_linear import _structured_synthetic
 from benchmarks.neural_pc.screen_task005_nonlinear import (
@@ -105,7 +106,7 @@ def test_task005_structured_synthetic_pairs_use_true_operator_action() -> None:
 
 
 def test_task005_numpy_nonlinear_export_matches_torch() -> None:
-    import torch
+    torch = pytest.importorskip("torch")
 
     torch.manual_seed(23)
     packed = np.random.default_rng(29).standard_normal((5, 8)).astype(
