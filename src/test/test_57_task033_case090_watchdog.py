@@ -206,6 +206,17 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             preflight["termination_threshold_bytes"],
             int(0.95 * preflight["effective_memory_bytes"]),
         )
+        sampling, sampling_failures = watchdog.summarize_samples(
+            [sample, sample],
+            raw_output=ARTIFACT_ROOT / "wsl_raw.jsonl",
+            summary_output=ARTIFACT_ROOT / "wsl_summary.json",
+            preflight=preflight,
+        )
+        self.assertEqual(sampling_failures, [])
+        self.assertEqual(
+            sampling["cgroup_memory_limit_state"],
+            "not_dedicated_unbounded_or_unreadable_diagnostic_only",
+        )
 
     def test_unbounded_or_unreadable_container_limit_fails_closed(self) -> None:
         samples = [

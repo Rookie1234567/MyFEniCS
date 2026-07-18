@@ -644,8 +644,16 @@ def summarize_samples(
             ),
             "cgroup_memory_limit_bytes": limit,
             "cgroup_memory_limit_state": (
-                "finite" if limit_states and all(state == "finite" for state in limit_states)
-                else "unbounded" if "unbounded" in limit_states
+                "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+                if task034_wsl
+                and not any(
+                    sample.get("cgroup_memory_is_dedicated_job_authority") is True
+                    for sample in samples
+                )
+                else "finite"
+                if limit_states and all(state == "finite" for state in limit_states)
+                else "unbounded"
+                if "unbounded" in limit_states
                 else "unreadable"
             ),
             "effective_memory_bytes": effective,
