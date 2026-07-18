@@ -30,6 +30,9 @@ from benchmarks.task034_wsl_resources import (
     effective_memory_limit,
     resource_authority_sample,
 )
+from benchmarks.task034_workstation_resource_gates import (
+    task034_workstation_hybrid_launch_gate,
+)
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     high_order_core_evidence_gate,
@@ -47,6 +50,14 @@ REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX = (
     / "records"
     / "stage5_equal_accuracy"
     / "resource_matrix.json"
+)
+TASK034_WORKSTATION_RESOURCE_AUTHORITY = (
+    ROOT
+    / "benchmarks"
+    / "cases"
+    / "092_workstation_wsl_adaptive_scalability"
+    / "records"
+    / "workstation_hybrid_launch_authority.json"
 )
 
 CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
@@ -96,6 +107,10 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/task033_qep_qualification.py",
         "benchmarks/task033_source_compatibility.py",
         "benchmarks/task033_watchdog_launch.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/README.md",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/"
+        "workstation_hybrid_launch_authority.json",
         # Phase B changed only the Hybrid 3D/2D interface trace projection.
         # It is numerical source for Hybrid, but it is component-disjoint from
         # the already accepted pure-3D Case090 Floquet core.  Phase C creates
@@ -211,6 +226,92 @@ def _case090_source_compatibility(
         "numerical_source_unchanged": not disallowed and rendered_paths is not None,
         "changed_paths": changed_paths,
         "component_disjoint_numerical_changed_paths": component_disjoint,
+        "disallowed_changed_paths": disallowed,
+        "failures": failures,
+    }
+
+
+def _task034_authority_source_compatibility(
+    authority: Mapping[str, Any] | None,
+    *,
+    degree: int,
+    h_nm: float,
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Audit a Case092 measured authority against the current clean source."""
+
+    payload = authority if isinstance(authority, Mapping) else {}
+    entries = payload.get("entries")
+    entries = entries if isinstance(entries, list) else []
+    matches = [
+        item
+        for item in entries
+        if isinstance(item, Mapping)
+        and item.get("degree") == degree
+        and math.isclose(float(item.get("h_nm", math.nan)), float(h_nm))
+    ]
+    reference = matches[0].get("full3d_reference", {}) if len(matches) == 1 else {}
+    reference = reference if isinstance(reference, Mapping) else {}
+    reference_source_sha = reference.get("source_sha")
+    if not (
+        isinstance(reference_source_sha, str)
+        and len(reference_source_sha) == 40
+        and isinstance(current_source_sha, str)
+        and len(current_source_sha) == 40
+    ):
+        return {
+            "pass": False,
+            "reference_source_sha": reference_source_sha,
+            "current_source_sha": current_source_sha,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "failures": ["source_sha_missing_or_invalid"],
+        }
+    if reference_source_sha == current_source_sha:
+        return {
+            "pass": True,
+            "reference_source_sha": reference_source_sha,
+            "current_source_sha": current_source_sha,
+            "reference_source_is_ancestor": True,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "failures": [],
+        }
+    merge_base = _git("merge-base", reference_source_sha, current_source_sha)
+    rendered_paths = _git(
+        "diff", "--name-only", f"{reference_source_sha}..{current_source_sha}"
+    )
+    changed_paths = [] if rendered_paths is None else rendered_paths.splitlines()
+
+    def allowed(path: str) -> bool:
+        return bool(
+            path
+            in {
+                "benchmarks/run_task033_memory_watchdog.py",
+                "benchmarks/task034_workstation_resource_gates.py",
+            }
+            or path.startswith(
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+            )
+            or path.startswith("docs/")
+            or path.startswith("notes/")
+            or path.startswith("src/test/")
+        )
+
+    disallowed = [path for path in changed_paths if not allowed(path)]
+    failures = []
+    if merge_base != reference_source_sha:
+        failures.append("reference_source_is_not_ancestor_of_current_source")
+    if rendered_paths is None:
+        failures.append("reference_source_diff_unreadable")
+    if disallowed:
+        failures.append("numerical_or_unapproved_source_changed_since_reference")
+    return {
+        "pass": not failures,
+        "reference_source_sha": reference_source_sha,
+        "current_source_sha": current_source_sha,
+        "reference_source_is_ancestor": merge_base == reference_source_sha,
+        "changed_paths": changed_paths,
         "disallowed_changed_paths": disallowed,
         "failures": failures,
     }
@@ -704,6 +805,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task034-workstation-gate",
+        action="store_true",
+        help=(
+            "Explicitly use the Task034 WSL dynamic workstation Gate. Task033's "
+            "14 GiB Case091 policy remains unchanged when this flag is absent."
+        ),
+    )
+    parser.add_argument(
+        "--task034-workstation-resource-authority",
+        type=Path,
+        default=TASK034_WORKSTATION_RESOURCE_AUTHORITY,
+        help="Tracked Case092 measured launch-authority record.",
+    )
+    parser.add_argument("--task034-workstation-resource-authority-sha256")
+    parser.add_argument(
         "--task033-same-sha-anchor-requalification",
         action="store_true",
         help=(
@@ -789,6 +905,34 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "uniform p2/h3 10/110 nm primary modal-schur-memory-minimal "
                 "M80/M120/M160 funnel with an exact 2M candidate pool."
             )
+    if args.task034_workstation_gate:
+        scoped = bool(
+            args.target == "hybrid"
+            and (args.degree, args.h_nm) in {(3, 3.0), (4, 5.0)}
+            and args.requested_modes in (80, 120, 160, 240)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.graded_reference_h is None
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.full3d_reference is not None
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and isinstance(
+                args.task034_workstation_resource_authority_sha256, str
+            )
+            and len(args.task034_workstation_resource_authority_sha256) == 64
+        )
+        if not scoped:
+            parser.error(
+                "--task034-workstation-gate is restricted to the fixed p3/h3 or "
+                "p4/h5 WSL Hybrid M80/M120/M160 (conditional M240) funnel, exact "
+                "2M pool, same-p/h Full-3D descriptor, canonical resource authority, "
+                "and WSL2-Ubuntu-24.04 identity."
+            )
     return args
 
 
@@ -822,6 +966,17 @@ def run(args: argparse.Namespace) -> int:
     environment_before = _resource_environment_snapshot()
     environment_preflight = _environment_preflight(environment_before)
     effective = effective_memory_limit()
+    if args.task034_workstation_gate:
+        warning_bytes = effective.get("warning_bytes")
+        termination_bytes = effective.get("termination_bytes")
+        if (
+            type(warning_bytes) is int
+            and warning_bytes > 0
+            and type(termination_bytes) is int
+            and termination_bytes > warning_bytes
+        ):
+            args.warning_gib = warning_bytes / 1024**3
+            args.terminate_gib = termination_bytes / 1024**3
     finite_authorities = (
         effective.get("effective_limit_bytes"),
         environment_before.get("host_available_memory_bytes"),
@@ -869,91 +1024,208 @@ def run(args: argparse.Namespace) -> int:
         else None
     )
     if args.target == "hybrid":
-        resource_matrix_path = args.resource_matrix
-        if not resource_matrix_path.is_absolute():
-            resource_matrix_path = ROOT / resource_matrix_path
-        resource_matrix_path = resource_matrix_path.resolve()
-        canonical_resource_matrices = {
-            DEFAULT_RESOURCE_MATRIX.resolve(),
-            REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX.resolve(),
-        }
-        resource_matrix_is_canonical = (
-            resource_matrix_path in canonical_resource_matrices
-        )
-        try:
-            matrix_relative = resource_matrix_path.relative_to(ROOT).as_posix()
-        except ValueError:
-            matrix_relative = None
-        resource_matrix_is_tracked = bool(
-            matrix_relative is not None
-            and _git("ls-files", "--error-unmatch", "--", matrix_relative)
-            is not None
-        )
-        resource_matrix, resource_matrix_read_error = _read_json_object(
-            resource_matrix_path
-        )
-        launch_gate = hybrid_launch_gate(
-            resource_matrix,
-            degree=args.degree,
-            h_nm=args.h_nm,
-            requested_modes=args.requested_modes,
-            candidate_modes=args.candidate_modes,
-            solver_path=args.solver_path,
-            compare_modal_schur=args.compare_modal_schur,
-            comparison_solver_path=args.comparison_solver_path,
-            bottom_interface_nm=args.bottom_interface_nm,
-            top_interface_nm=args.top_interface_nm,
-            graded_reference_h=args.graded_reference_h,
-            incident_grazing_deg=args.incident_grazing_deg,
-            polarization_kind=args.polarization_kind,
-            container_limit_bytes=environment_before.get("memory_limit_bytes"),
-            host_available_memory_bytes=environment_before.get(
-                "host_available_memory_bytes"
-            ),
-            warning_gib=args.warning_gib,
-            terminate_gib=args.terminate_gib,
-            core_evidence=core_evidence,
-            expected_core_sha256=args.high_order_core_evidence_sha256,
-            current_source_sha=source_before.get("commit_sha"),
-            source_compatibility=core_source_compatibility,
-            m160_funnel_evidence=m160_funnel_evidence,
-            expected_m160_funnel_sha256=(
-                args.m160_funnel_evidence_sha256
-            ),
-            observed_m160_funnel_sha256=observed_m160_funnel_sha256,
-            task033_same_sha_anchor_requalification=(
-                args.task033_same_sha_anchor_requalification
-            ),
-            source_clean_verified=source_before["source_clean_verified"],
-            resource_matrix_is_canonical=resource_matrix_is_canonical,
-            resource_matrix_is_tracked=resource_matrix_is_tracked,
-            external_watchdog_active=True,
-        )
-        launch_gate["resource_matrix_path"] = str(resource_matrix_path)
-        launch_gate["resource_matrix_read_error"] = resource_matrix_read_error
-        launch_gate["m160_funnel_evidence_path"] = (
-            None if m160_funnel_path is None else str(m160_funnel_path)
-        )
-        launch_gate["m160_funnel_evidence_read_error"] = (
-            m160_funnel_read_error
-        )
-        launch_gate["checks"].update(
-            {
-                "canonical_case091_resource_matrix_path": (
-                    resource_matrix_is_canonical
+        if args.task034_workstation_gate:
+            authority_path = args.task034_workstation_resource_authority
+            if not authority_path.is_absolute():
+                authority_path = ROOT / authority_path
+            authority_path = authority_path.resolve()
+            authority_is_canonical = (
+                authority_path == TASK034_WORKSTATION_RESOURCE_AUTHORITY.resolve()
+            )
+            try:
+                authority_relative = authority_path.relative_to(ROOT).as_posix()
+            except ValueError:
+                authority_relative = None
+            authority_is_tracked = bool(
+                authority_relative is not None
+                and _git(
+                    "ls-files", "--error-unmatch", "--", authority_relative
+                )
+                is not None
+            )
+            authority, authority_read_error = _read_json_object(authority_path)
+            authority_observed_sha256 = _sha256(authority_path)
+            authority_source_compatibility = (
+                _task034_authority_source_compatibility(
+                    authority,
+                    degree=args.degree,
+                    h_nm=args.h_nm,
+                    current_source_sha=source_before.get("commit_sha"),
+                )
+            )
+            full3d_path = args.full3d_reference
+            if full3d_path is not None and not full3d_path.is_absolute():
+                full3d_path = ROOT / full3d_path
+            full3d_path = None if full3d_path is None else full3d_path.resolve()
+            full3d_reference_sha256 = (
+                None if full3d_path is None else _sha256(full3d_path)
+            )
+            core_gate = high_order_core_evidence_gate(
+                args.degree,
+                core_evidence,
+                expected_sha256=args.high_order_core_evidence_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=core_source_compatibility,
+            )
+            launch_gate = task034_workstation_hybrid_launch_gate(
+                authority,
+                authority_expected_sha256=(
+                    args.task034_workstation_resource_authority_sha256
                 ),
-                "case091_resource_matrix_is_git_tracked": (
-                    resource_matrix_is_tracked
+                authority_observed_sha256=authority_observed_sha256,
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                candidate_modes=args.candidate_modes,
+                solver_path=args.solver_path,
+                comparison_solver_path=args.comparison_solver_path,
+                bottom_interface_nm=args.bottom_interface_nm,
+                top_interface_nm=args.top_interface_nm,
+                incident_grazing_deg=args.incident_grazing_deg,
+                polarization_kind=args.polarization_kind,
+                effective_limit=effective,
+                warning_gib=args.warning_gib,
+                terminate_gib=args.terminate_gib,
+                core_gate=core_gate,
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=authority_source_compatibility,
+                source_clean_verified=source_before["source_clean_verified"],
+                authority_is_canonical=authority_is_canonical,
+                authority_is_tracked=authority_is_tracked,
+                external_watchdog_active=True,
+                full3d_reference_sha256=full3d_reference_sha256,
+                m160_funnel_evidence=m160_funnel_evidence,
+                expected_m160_funnel_sha256=(
+                    args.m160_funnel_evidence_sha256
                 ),
+                observed_m160_funnel_sha256=observed_m160_funnel_sha256,
+            )
+            launch_gate.update(
+                {
+                    "resource_authority_path": str(authority_path),
+                    "resource_authority_read_error": authority_read_error,
+                    "resource_authority_observed_sha256": (
+                        authority_observed_sha256
+                    ),
+                    "full3d_reference_path": (
+                        None if full3d_path is None else str(full3d_path)
+                    ),
+                    "full3d_reference_observed_sha256": (
+                        full3d_reference_sha256
+                    ),
+                    "m160_funnel_evidence_path": (
+                        None
+                        if m160_funnel_path is None
+                        else str(m160_funnel_path)
+                    ),
+                    "m160_funnel_evidence_read_error": (
+                        m160_funnel_read_error
+                    ),
+                }
+            )
+            launch_gate["checks"].update(
+                {
+                    "task034_resource_authority_readable": (
+                        authority_read_error is None
+                    ),
+                    "task034_full3d_descriptor_readable": (
+                        full3d_reference_sha256 is not None
+                    ),
+                }
+            )
+            launch_gate["failures"] = [
+                name
+                for name, passed in launch_gate["checks"].items()
+                if not passed
+            ]
+            launch_gate["pass"] = not launch_gate["failures"]
+            launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
+        else:
+            resource_matrix_path = args.resource_matrix
+            if not resource_matrix_path.is_absolute():
+                resource_matrix_path = ROOT / resource_matrix_path
+            resource_matrix_path = resource_matrix_path.resolve()
+            canonical_resource_matrices = {
+                DEFAULT_RESOURCE_MATRIX.resolve(),
+                REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX.resolve(),
             }
-        )
-        launch_gate["failures"] = [
-            name
-            for name, passed in launch_gate["checks"].items()
-            if not passed
-        ]
-        launch_gate["pass"] = not launch_gate["failures"]
-        launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
+            resource_matrix_is_canonical = (
+                resource_matrix_path in canonical_resource_matrices
+            )
+            try:
+                matrix_relative = resource_matrix_path.relative_to(ROOT).as_posix()
+            except ValueError:
+                matrix_relative = None
+            resource_matrix_is_tracked = bool(
+                matrix_relative is not None
+                and _git("ls-files", "--error-unmatch", "--", matrix_relative)
+                is not None
+            )
+            resource_matrix, resource_matrix_read_error = _read_json_object(
+                resource_matrix_path
+            )
+            launch_gate = hybrid_launch_gate(
+                resource_matrix,
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                candidate_modes=args.candidate_modes,
+                solver_path=args.solver_path,
+                compare_modal_schur=args.compare_modal_schur,
+                comparison_solver_path=args.comparison_solver_path,
+                bottom_interface_nm=args.bottom_interface_nm,
+                top_interface_nm=args.top_interface_nm,
+                graded_reference_h=args.graded_reference_h,
+                incident_grazing_deg=args.incident_grazing_deg,
+                polarization_kind=args.polarization_kind,
+                container_limit_bytes=environment_before.get("memory_limit_bytes"),
+                host_available_memory_bytes=environment_before.get(
+                    "host_available_memory_bytes"
+                ),
+                warning_gib=args.warning_gib,
+                terminate_gib=args.terminate_gib,
+                core_evidence=core_evidence,
+                expected_core_sha256=args.high_order_core_evidence_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=core_source_compatibility,
+                m160_funnel_evidence=m160_funnel_evidence,
+                expected_m160_funnel_sha256=(
+                    args.m160_funnel_evidence_sha256
+                ),
+                observed_m160_funnel_sha256=observed_m160_funnel_sha256,
+                task033_same_sha_anchor_requalification=(
+                    args.task033_same_sha_anchor_requalification
+                ),
+                source_clean_verified=source_before["source_clean_verified"],
+                resource_matrix_is_canonical=resource_matrix_is_canonical,
+                resource_matrix_is_tracked=resource_matrix_is_tracked,
+                external_watchdog_active=True,
+            )
+            launch_gate["resource_matrix_path"] = str(resource_matrix_path)
+            launch_gate["resource_matrix_read_error"] = resource_matrix_read_error
+            launch_gate["m160_funnel_evidence_path"] = (
+                None if m160_funnel_path is None else str(m160_funnel_path)
+            )
+            launch_gate["m160_funnel_evidence_read_error"] = (
+                m160_funnel_read_error
+            )
+            launch_gate["checks"].update(
+                {
+                    "canonical_case091_resource_matrix_path": (
+                        resource_matrix_is_canonical
+                    ),
+                    "case091_resource_matrix_is_git_tracked": (
+                        resource_matrix_is_tracked
+                    ),
+                }
+            )
+            launch_gate["failures"] = [
+                name
+                for name, passed in launch_gate["checks"].items()
+                if not passed
+            ]
+            launch_gate["pass"] = not launch_gate["failures"]
+            launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
     else:
         core_gate = high_order_core_evidence_gate(
             args.degree,

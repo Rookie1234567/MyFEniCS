@@ -1,0 +1,284 @@
+"""Fail-closed Task034 WSL workstation launch authorization.
+
+Task033's 14 GiB Case091 policy remains unchanged. This module provides the
+explicit Task034 path that re-evaluates a tracked Case092 authority record
+against the live WSL effective-memory formula and the external watchdog.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+import math
+from typing import Any
+
+from benchmarks.task033_watchdog_launch import (
+    CONDITIONAL_FUNNEL_MODE,
+    FORMAL_FUNNEL_MODES,
+    conditional_m240_evidence_gate,
+)
+
+GIB = 1024**3
+
+
+def _positive_finite(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) and number > 0.0 else None
+
+
+def _valid_hex(value: Any, length: int) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value.lower())
+    )
+
+
+def task034_workstation_hybrid_launch_gate(
+    authority: Mapping[str, Any] | None,
+    *,
+    authority_expected_sha256: str | None,
+    authority_observed_sha256: str | None,
+    degree: int,
+    h_nm: float,
+    requested_modes: int,
+    candidate_modes: int,
+    solver_path: str,
+    comparison_solver_path: str,
+    bottom_interface_nm: float,
+    top_interface_nm: float,
+    incident_grazing_deg: float,
+    polarization_kind: str,
+    effective_limit: Mapping[str, Any] | None,
+    warning_gib: float,
+    terminate_gib: float,
+    core_gate: Mapping[str, Any] | None,
+    current_source_sha: str | None,
+    source_compatibility: Mapping[str, Any] | None,
+    source_clean_verified: bool,
+    authority_is_canonical: bool,
+    authority_is_tracked: bool,
+    external_watchdog_active: bool,
+    full3d_reference_sha256: str | None,
+    m160_funnel_evidence: Mapping[str, Any] | None = None,
+    expected_m160_funnel_sha256: str | None = None,
+    observed_m160_funnel_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Authorize one Task034 p3/h3 or p4/h5 Hybrid shard.
+
+    The checked Case092 record combines current WSL Full-3D measurements with
+    historical Task033 Hybrid predictions. The historical model is never a
+    standalone launch authority.
+    """
+
+    payload = authority if isinstance(authority, Mapping) else {}
+    entries = payload.get("entries")
+    entries = entries if isinstance(entries, list) else []
+    matches = [
+        item
+        for item in entries
+        if isinstance(item, Mapping)
+        and item.get("degree") == degree
+        and math.isclose(float(item.get("h_nm", math.nan)), float(h_nm))
+    ]
+    entry = matches[0] if len(matches) == 1 else {}
+    reference = entry.get("full3d_reference")
+    reference = reference if isinstance(reference, Mapping) else {}
+    prediction = entry.get("workstation_prediction")
+    prediction = prediction if isinstance(prediction, Mapping) else {}
+    centers = prediction.get("centers_gib")
+    centers = centers if isinstance(centers, Mapping) else {}
+    parsed_centers = {
+        str(name): _positive_finite(value) for name, value in centers.items()
+    }
+    upper = _positive_finite(prediction.get("conservative_upper_gib"))
+    live = effective_limit if isinstance(effective_limit, Mapping) else {}
+    effective_bytes = live.get("effective_limit_bytes")
+    warning_bytes = live.get("warning_bytes")
+    termination_bytes = live.get("termination_bytes")
+    live_values_valid = bool(
+        type(effective_bytes) is int
+        and effective_bytes > 0
+        and type(warning_bytes) is int
+        and warning_bytes > 0
+        and type(termination_bytes) is int
+        and termination_bytes > warning_bytes
+    )
+    live_warning_gib = warning_bytes / GIB if live_values_valid else None
+    live_termination_gib = termination_bytes / GIB if live_values_valid else None
+    core = core_gate if isinstance(core_gate, Mapping) else {}
+    compatibility = (
+        source_compatibility
+        if isinstance(source_compatibility, Mapping)
+        else {}
+    )
+    m240_requested = requested_modes == CONDITIONAL_FUNNEL_MODE
+    m240_gate = conditional_m240_evidence_gate(
+        m160_funnel_evidence,
+        expected_file_sha256=expected_m160_funnel_sha256,
+        observed_file_sha256=observed_m160_funnel_sha256,
+        current_source_sha=current_source_sha,
+        degree=degree,
+        h_nm=h_nm,
+        incident_grazing_deg=incident_grazing_deg,
+        polarization_kind=polarization_kind,
+        bottom_interface_nm=bottom_interface_nm,
+        top_interface_nm=top_interface_nm,
+        graded_reference_h=None,
+        solver_path=solver_path,
+        required=m240_requested,
+    )
+    expected_reference_sha = reference.get("descriptor_sha256")
+    checks = {
+        "authority_object_present": bool(payload),
+        "authority_identity_valid": bool(
+            payload.get("schema_version") == 1
+            and payload.get("benchmark_id")
+            == "task034_case092_workstation_hybrid_launch_authority"
+            and payload.get("record_type")
+            == "task034_workstation_resource_prediction_and_launch_authority"
+        ),
+        "authority_expected_sha256_valid": _valid_hex(
+            authority_expected_sha256, 64
+        ),
+        "authority_raw_sha256_matches": bool(
+            authority_expected_sha256 == authority_observed_sha256
+        ),
+        "authority_path_is_canonical": bool(authority_is_canonical),
+        "authority_file_is_git_tracked": bool(authority_is_tracked),
+        "exactly_one_matching_p_h_entry": len(matches) == 1,
+        "entry_status_authorizes_guarded_launch": (
+            entry.get("status") == "calibrated_guarded_launch_authority"
+        ),
+        "task033_old_model_not_standalone_authority": (
+            prediction.get("task033_old_model_is_launch_authority") is False
+        ),
+        "current_full_source_sha_valid": _valid_hex(current_source_sha, 40),
+        "complete_nonignored_worktree_clean": bool(source_clean_verified),
+        "authority_source_compatible_with_current": (
+            compatibility.get("pass") is True
+        ),
+        "external_watchdog_is_launch_authority": bool(external_watchdog_active),
+        "live_task034_effective_limit_readable": live_values_valid,
+        "warning_threshold_matches_live_task034_gate": bool(
+            live_warning_gib is not None
+            and math.isclose(
+                warning_gib, live_warning_gib, rel_tol=0.0, abs_tol=1.0e-9
+            )
+        ),
+        "termination_threshold_matches_live_task034_gate": bool(
+            live_termination_gib is not None
+            and math.isclose(
+                terminate_gib,
+                live_termination_gib,
+                rel_tol=0.0,
+                abs_tol=1.0e-9,
+            )
+        ),
+        "formal_funnel_mode_count": bool(
+            requested_modes in FORMAL_FUNNEL_MODES
+            or (m240_requested and m240_gate["pass"])
+        ),
+        "conditional_m240_prior_nonconvergence_evidence": m240_gate["pass"],
+        "requested_mode_within_authorized_ceiling": bool(
+            (
+                type(entry.get("max_formal_modes")) is int
+                and requested_modes <= entry["max_formal_modes"]
+            )
+            or (
+                m240_requested
+                and entry.get("conditional_m240_allowed") is True
+                and m240_gate["pass"]
+            )
+        ),
+        "candidate_pool_is_twice_requested_modes": bool(
+            type(requested_modes) is int
+            and requested_modes > 0
+            and candidate_modes == 2 * requested_modes
+        ),
+        "primary_memory_minimal_solver_path": (
+            solver_path == "modal-schur-memory-minimal"
+        ),
+        "comparison_solver_path_supported": comparison_solver_path == "fast",
+        "fixed_10_110_interfaces": bool(
+            math.isclose(bottom_interface_nm, 10.0)
+            and math.isclose(top_interface_nm, 110.0)
+        ),
+        "fixed_incidence_and_polarization": bool(
+            math.isclose(incident_grazing_deg, 10.0)
+            and polarization_kind == "s"
+        ),
+        "high_order_core_evidence": core.get("pass") is True,
+        "full3d_reference_status_pass": (
+            reference.get("status") == "full3d_reference_pass"
+        ),
+        "full3d_reference_qualification_pass": (
+            reference.get("qualification_pass") is True
+        ),
+        "full3d_reference_no_swap": reference.get("no_swap") is True,
+        "full3d_reference_true_residual_pass": bool(
+            _positive_finite(reference.get("true_relative_residual"))
+            is not None
+            and float(reference["true_relative_residual"]) <= 1.0e-9
+        ),
+        "full3d_reference_descriptor_sha256_valid": _valid_hex(
+            expected_reference_sha, 64
+        ),
+        "full3d_reference_descriptor_sha256_matches": bool(
+            expected_reference_sha == full3d_reference_sha256
+        ),
+        "measured_full3d_peak_is_positive": (
+            _positive_finite(reference.get("peak_memory_gib")) is not None
+        ),
+        "two_independent_prediction_centers_present": bool(
+            len(parsed_centers) >= 2
+            and all(value is not None for value in parsed_centers.values())
+        ),
+        "conservative_upper_is_positive": upper is not None,
+        "prediction_centers_within_live_warning": bool(
+            live_warning_gib is not None
+            and parsed_centers
+            and all(
+                value is not None and value <= live_warning_gib
+                for value in parsed_centers.values()
+            )
+        ),
+        "conservative_upper_within_live_warning": bool(
+            live_warning_gib is not None
+            and upper is not None
+            and upper <= live_warning_gib
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "launch_eligible_recomputed": not failures,
+        "scope": "task034_wsl_workstation_hybrid",
+        "matrix_key": entry.get("matrix_key"),
+        "live_task034_limits": {
+            "effective_limit_gib": (
+                effective_bytes / GIB if live_values_valid else None
+            ),
+            "warning_gib": live_warning_gib,
+            "termination_gib": live_termination_gib,
+            "formula": live.get("formula"),
+        },
+        "prediction": {
+            "centers_gib": parsed_centers,
+            "conservative_upper_gib": upper,
+            "historical_task033_model_is_standalone_authority": False,
+        },
+        "full3d_reference": dict(reference),
+        "conditional_m240_evidence": m240_gate,
+        "high_order_core_evidence": dict(core),
+        "source_compatibility": dict(compatibility),
+        "checks": checks,
+        "failures": failures,
+        "semantics": (
+            "Task033's 14 GiB policy is unchanged. This explicit Task034 Gate "
+            "requires a tracked Case092 authority, current WSL effective limits, "
+            "measured Full-3D evidence, clean compatible source, and a live watchdog."
+        ),
+    }

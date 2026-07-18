@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task034_case092_workstation_hybrid_launch_authority",
+  "record_type": "task034_workstation_resource_prediction_and_launch_authority",
+  "semantics": {
+    "task033_case091_gate_unchanged": true,
+    "task033_old_model_is_standalone_authority": false,
+    "task034_gate_is_explicit_opt_in": true,
+    "live_external_watchdog_is_final_authority": true
+  },
+  "entries": [
+    {
+      "matrix_key": "p3_h3",
+      "degree": 3,
+      "h_nm": 3.0,
+      "status": "calibrated_guarded_launch_authority",
+      "max_formal_modes": 160,
+      "conditional_m240_allowed": true,
+      "candidate_pool_ratio": 2,
+      "solver_path": "modal-schur-memory-minimal",
+      "comparison_solver_path": "fast",
+      "bottom_interface_nm": 10.0,
+      "top_interface_nm": 110.0,
+      "incident_grazing_deg": 10.0,
+      "polarization_kind": "s",
+      "historical_task033_prediction": {
+        "role": "historical_input_only_not_launch_authority",
+        "resource_matrix_path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/resource_matrix.json",
+        "resource_matrix_sha256": "4a7e2c750bbe09de36bfe1ca0b47ae740e3cb2909ec77fc90b5bbe4f0c17fcce",
+        "center_effective_resolution_gib": 5.364917276663818,
+        "center_factor_fill_gib": 36.48178470434126,
+        "conservative_upper_gib": 41.95405240999245,
+        "old_launch_decision": "not_run_by_memory_gate"
+      },
+      "full3d_reference": {
+        "role": "current_wsl_measured_independent_resource_anchor",
+        "source_sha": "685c9a7e8cd9499070e5d1abb11957f6014444e7",
+        "watchdog_record_path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_full_mpi4.json",
+        "watchdog_record_sha256": "75e4d2c41aabc2b33352e7f8873e0aabb4764055736e527fce0de673e033ac37",
+        "descriptor_path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_full_reference_descriptor.json",
+        "descriptor_sha256": "128e4ed549999ebac82eb47005395ae58ab135e9b491208b3f1a1274b5c548f2",
+        "status": "full3d_reference_pass",
+        "qualification_pass": true,
+        "no_swap": true,
+        "peak_memory_gib": 39.121944427490234,
+        "true_relative_residual": 6.966814910907363e-11,
+        "exact_rows": 656405,
+        "exact_assembled_nnz": 157785425,
+        "factor_nnz": 1286075117,
+        "elapsed_seconds": 2281.125368380999
+      },
+      "workstation_prediction": {
+        "method": "max(historical Hybrid upper, 1.5 * measured same-p/h Full-3D peak)",
+        "centers_gib": {
+          "historical_task033_hybrid_factor_center": 36.48178470434126,
+          "measured_same_ph_full3d_peak": 39.121944427490234
+        },
+        "conservative_upper_gib": 58.68291664123535,
+        "measured_full3d_multiplier": 1.5,
+        "task033_old_model_is_launch_authority": false,
+        "limitations": [
+          "Authorizes only a guarded launch, not a physical result.",
+          "Hybrid memory remains measured by the live process-tree/cgroup watchdog.",
+          "M240 additionally requires formal M160 nonconvergence evidence."
+        ]
+      },
+      "observed_task034_resource_policy": {
+        "effective_limit_gib": 193.85588436108083,
+        "warning_gib": 155.08470748830587,
+        "termination_gib": 184.16309014242142,
+        "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)",
+        "note": "Runtime recomputes these values; stored values are evidence, not overrides."
+      },
+      "qualification": {
+        "assembly_gate_pass": true,
+        "factorization_gate_pass": true,
+        "full_solve_gate_pass": true,
+        "source_clean_and_stable": true,
+        "zero_job_swap": true,
+        "prediction_below_observed_task034_warning": true,
+        "guarded_launch_authorized": true
+      }
+    }
+  ]
+}
