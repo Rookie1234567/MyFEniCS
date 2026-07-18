@@ -232,6 +232,9 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 "src/test/test_x.py\n"
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
                 "records/p4_h5_e0_prediction.json\n"
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+                "expected.json\n"
+                "benchmarks/run_task034_wsl_qualification.py\n"
                 "benchmarks/task034_p3_h3_reranking.py\n"
                 "src/coupling/modal_trace_projection.py\n"
                 "benchmarks/task033_phaseC.py",

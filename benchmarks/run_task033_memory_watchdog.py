@@ -101,6 +101,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/run_task033_phaseC.py",
         "benchmarks/run_task033_resource_matrix.py",
         "benchmarks/run_task033_source_compatibility.py",
+        "benchmarks/run_task034_wsl_qualification.py",
         "benchmarks/task034_p3_h3_reranking.py",
         "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
@@ -109,6 +110,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/task033_source_compatibility.py",
         "benchmarks/task033_watchdog_launch.py",
         "benchmarks/task034_workstation_resource_gates.py",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/expected.json",
         "benchmarks/cases/092_workstation_wsl_adaptive_scalability/README.md",
         "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/"
         "workstation_hybrid_launch_authority.json",
@@ -296,6 +298,7 @@ def _task034_authority_source_compatibility(
             path
             in {
                 "benchmarks/run_task033_memory_watchdog.py",
+                "benchmarks/run_task034_wsl_qualification.py",
                 "benchmarks/task034_workstation_resource_gates.py",
             }
             or path.startswith(
