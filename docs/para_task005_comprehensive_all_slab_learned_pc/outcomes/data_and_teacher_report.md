@@ -2,8 +2,10 @@
 
 ## 结论
 
-P1 Gate **通过（16/16）**。四次独立 clean baseline capture 的样本数、算子身份和
-split 独立性均满足合同；16 个 slab 均以 one-factor/many-RHS、最大 64 RHS 的有界批次
+P1 Gate **通过（16/16）**。四次 execution-independent clean baseline capture 的
+样本数、算子身份和 apply-index 互斥性均满足合同，但它们来自相同确定性
+RHS/Krylov trajectory distribution；16 个 slab 均以 one-factor/many-RHS、最大
+64 RHS 的有界批次
 生成 LU teacher，精度、资源、factor destroy 和 no-swap Gate 全部通过。
 
 本结论只资格化离线数据与 teacher，不代表 learned local inverse、runtime 或全局
@@ -16,7 +18,7 @@ factor-removal Gate 已通过。下一阶段按任务书进入 P2 representative
 | branch | `ChatGPT/20260715-para-task-neural-local-pc` |
 | capture clean commit | `a141c8e41527609e51dcfe35af06382f05cc3463` |
 | teacher implementation commit | `92dcc40` |
-| capture runs | T1、T2、V、H 四次独立 clean baseline |
+| capture runs | T1、T2、V、H 四次独立执行、同 trajectory distribution |
 | baseline solve identity | 每次 852 iterations；reported residual `9.980248132e-7` |
 | RTA closure | 每次 `-1.859745e-9` |
 | teacher ordering / pivot | SuperLU `COLAMD` / diagonal pivot threshold `1.0` |
@@ -26,15 +28,18 @@ factor-removal Gate 已通过。下一阶段按任务书进入 P2 representative
 | full teacher wall | 430.304 s |
 | heavy artifact policy | `benchmarks/artifacts/cases/094/` 被 `.gitignore` 命中 |
 
-## Capture 数量与独立性
+## Capture 数量与身份
 
 | split | 采样规则 | 每 slab 数量 | 16 slabs 总数 | 角色 |
 |---|---:|---:|---:|---|
 | T1 | stride 8, offset 0 | 512 | 8192 | train |
 | T2 | stride 8, offset 4 | 512 | 8192 | train |
-| V | stride 16, offset 2 | 256 | 4096 | validation |
-| H | stride 16, offset 6 | 256 | 4096 | holdout |
+| V | stride 16, offset 2 | 256 | 4096 | 当前未用于选择 |
+| H | stride 16, offset 6 | 256 | 4096 | consumed screening |
 | 合计 | 互斥 apply-index schedules | 1536 | 24576 | — |
+
+采样 metadata 只包含 stride/offset，没有 phase、norm bucket 或 outer-iteration
+metadata。故 apply-index 不重叠不等价于跨轨迹、跨随机种子或跨物理的统计独立性。
 
 泄漏审计在 GPU 0 上使用 deterministic 256-dimensional complex JL screen，并对
 screen argmax 做 exact check。审计结果如下。

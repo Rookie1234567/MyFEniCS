@@ -17,12 +17,16 @@
 
 ## 数据与 teacher
 
-| split | 每 slab | 总样本 | 独立性 |
+| split | 每 slab | 总样本 | 当前身份 |
 |---|---:|---:|---|
-| T1 train | 512 | 8192 | clean run |
-| T2 train | 512 | 8192 | clean run |
-| V validation | 256 | 4096 | clean run |
-| H holdout | 256 | 4096 | clean run |
+| T1 train | 512 | 8192 | 独立执行、同分布相关 |
+| T2 train | 512 | 8192 | 独立执行、同分布相关 |
+| V validation | 256 | 4096 | 未用于选择 |
+| H screening | 256 | 4096 | 已用于候选筛选 |
+
+四次 capture 是 execution-independent but distribution-correlated：它们来自相同
+固定物理、确定性 RHS/Krylov trajectory distribution。互斥性只由 stride/offset
+保证；capture 未记录 phase、norm bucket 或 outer-iteration metadata。
 
 | Teacher Gate | 实测 | 门槛 | 状态 |
 |---|---:|---:|---|
@@ -47,8 +51,9 @@
 | Lane B D0 rank 64 GELU skip | 4/4 | 0.409–0.910 | 0.473–0.822 | no clear gain over A |
 | Lane B D1 rank 64 GELU skip | 4/4 | 0.483–0.997 | 0.608–0.884 | worse than D0 |
 
-D1 的五类 structured exact pairs 与四个幅值尺度没有改善 independent real-Krylov
-H，故不升级为 full recipe。Lane B 没有明确优于 Lane A，按条件不运行 Lane C；
+D1 的五类 index-space structured synthetic exact pairs 与四个幅值尺度没有改善
+当前 R4 consumed screening split，故不升级为 full recipe；该结论不覆盖
+physics-aware structured augmentation。Lane B 没有明确优于 Lane A，按条件不运行 Lane C；
 Lane A/B 已有 local pass，因此也不触发 Lane D。
 
 ## Backend 与 owner batch
