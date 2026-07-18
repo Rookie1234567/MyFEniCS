@@ -63,6 +63,7 @@ CASES = {
     "092_lu_teacher_nn_only_local_inverse",
     "093_full_16_slab_exact_oracle",
     "094_comprehensive_all_slab_learned_pc",
+    "095_zero_copy_learned_pc_audit",
 }
 
 RECORDED_CASES = {

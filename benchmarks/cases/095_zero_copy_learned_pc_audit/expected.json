@@ -1,0 +1,19 @@
+{
+  "status": "qualification_in_progress",
+  "borrowed_action_relative_error_max": 1e-12,
+  "private_persistent_local_csr_bytes": 0,
+  "proxy_false_accept_max": 0,
+  "proxy_must_accept_at_least_one": true,
+  "all_required_faults_detected": true,
+  "slow_drift_max_latency_owner_rotations": 1,
+  "memory_neutral_mib_per_owner_max": 33.67,
+  "speed_first_mib_per_owner_max": 50.505,
+  "external_peak_ratio_max": 1.1,
+  "model_proxy_amortized_audit_ms_max": 7.2,
+  "projected_owner_path_ms_max": 11.514,
+  "ilu_writeback_preserved": true,
+  "full16_training_allowed": false,
+  "learned_active_global_allowed": false,
+  "ordinary_default_changed": false,
+  "production_claim_allowed": false
+}
