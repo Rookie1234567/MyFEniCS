@@ -8,6 +8,7 @@ import unittest
 
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args,
+    _resource_readability_sample_is_formal,
     _task034_authority_source_compatibility,
 )
 from benchmarks.task033_resource_gates import scaled_gate_limits
@@ -137,6 +138,23 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             "external_watchdog_active": True,
             "full3d_reference_sha256": self.reference_sha,
         }
+
+    def test_task034_ignores_only_post_exit_readability_race(self) -> None:
+        self.assertFalse(
+            _resource_readability_sample_is_formal(
+                task034_workstation_gate=True, process_running=False
+            )
+        )
+        self.assertTrue(
+            _resource_readability_sample_is_formal(
+                task034_workstation_gate=True, process_running=True
+            )
+        )
+        self.assertTrue(
+            _resource_readability_sample_is_formal(
+                task034_workstation_gate=False, process_running=False
+            )
+        )
 
     def test_task033_gate_still_caps_larger_hosts_at_14_gib(self) -> None:
         limits = scaled_gate_limits(200.0)

@@ -523,6 +523,20 @@ def _read_json_object(path: Path | None) -> tuple[dict[str, Any] | None, str | N
     return payload, None
 
 
+def _resource_readability_sample_is_formal(
+    *, task034_workstation_gate: bool, process_running: bool
+) -> bool:
+    """Exclude only Task034 samples observed after the worker has exited.
+
+    A process-tree read racing with ``Popen.poll`` may contain a disappearing
+    launcher PID and report ``all_status_readable=False``. It is not a live
+    authority sample and must not invalidate otherwise complete WSL evidence.
+    Task033's historical default semantics remain unchanged.
+    """
+
+    return bool(process_running or not task034_workstation_gate)
+
+
 def _live_task033_worker_rss(
     root_pid: int, target: str
 ) -> tuple[float | None, list[dict[str, Any]]]:
@@ -1351,6 +1365,7 @@ def run(args: argparse.Namespace) -> int:
     max_process_tree_swap_bytes = 0
     max_dedicated_cgroup_swap_bytes = 0
     dedicated_job_cgroup_observed = False
+    post_exit_readability_samples_excluded = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -1394,19 +1409,29 @@ def run(args: argparse.Namespace) -> int:
             else:
                 row["container_cgroup_current_mb"] = None
                 row["container_swap_current_mb"] = None
-            job_swap_all_samples_readable &= bool(process_tree["all_status_readable"])
-            max_process_tree_swap_bytes = max(
-                max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
+            process_running = process.poll() is None
+            readability_sample_is_formal = _resource_readability_sample_is_formal(
+                task034_workstation_gate=args.task034_workstation_gate,
+                process_running=process_running,
             )
-            if job_cgroup["dedicated_job_cgroup"]:
-                dedicated_job_cgroup_observed = True
-                if job_cgroup["swap_current_bytes"] is None:
-                    job_swap_all_samples_readable = False
-                else:
-                    max_dedicated_cgroup_swap_bytes = max(
-                        max_dedicated_cgroup_swap_bytes,
-                        int(job_cgroup["swap_current_bytes"]),
-                    )
+            if readability_sample_is_formal:
+                job_swap_all_samples_readable &= bool(
+                    process_tree["all_status_readable"]
+                )
+                max_process_tree_swap_bytes = max(
+                    max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
+                )
+                if job_cgroup["dedicated_job_cgroup"]:
+                    dedicated_job_cgroup_observed = True
+                    if job_cgroup["swap_current_bytes"] is None:
+                        job_swap_all_samples_readable = False
+                    else:
+                        max_dedicated_cgroup_swap_bytes = max(
+                            max_dedicated_cgroup_swap_bytes,
+                            int(job_cgroup["swap_current_bytes"]),
+                        )
+            else:
+                post_exit_readability_samples_excluded += 1
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
@@ -1418,10 +1443,11 @@ def run(args: argparse.Namespace) -> int:
                     or cgroup_current_mb is not None
                 )
             )
-            live_authority_all_readable &= authority_readable
+            if readability_sample_is_formal:
+                live_authority_all_readable &= authority_readable
             live_authority_gib = (
                 None
-                if not authority_readable
+                if not readability_sample_is_formal or not authority_readable
                 else max(
                     float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
                 ) / 1024.0
@@ -1431,20 +1457,20 @@ def run(args: argparse.Namespace) -> int:
                     max_live_authority_gib, live_authority_gib
                 )
                 warning_triggered |= live_authority_gib >= args.warning_gib
-            if process.poll() is None and not authority_readable:
+            if process_running and not authority_readable:
                 terminated_for_authority_unreadable = True
                 process.terminate()
             if (
-                process.poll() is None
+                process_running
                 and live_authority_gib is not None
                 and live_authority_gib >= args.terminate_gib
             ):
                 terminated_for_memory = True
                 process.terminate()
-            if process.poll() is None and elapsed >= args.timeout_seconds:
+            if process_running and elapsed >= args.timeout_seconds:
                 terminated_for_timeout = True
                 process.terminate()
-            if process.poll() is not None:
+            if not process_running:
                 break
             time.sleep(max(args.poll_interval, 0.05))
         return_code = int(process.returncode or 0)
@@ -1465,6 +1491,9 @@ def run(args: argparse.Namespace) -> int:
             "max_process_tree_swap_bytes": max_process_tree_swap_bytes,
             "max_dedicated_cgroup_swap_bytes": max_dedicated_cgroup_swap_bytes,
             "dedicated_job_cgroup_observed": dedicated_job_cgroup_observed,
+            "post_exit_readability_samples_excluded": (
+                post_exit_readability_samples_excluded
+            ),
         }
     )
     environment_after = _resource_environment_snapshot()
