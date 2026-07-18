@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 GIB = 1024**3
 
@@ -152,6 +152,24 @@ class ProcessTreeSample:
         return asdict(self)
 
 
+def _status_memory_kib(fields: Mapping[str, str]) -> tuple[int | None, int | None]:
+    def kib(name: str) -> int | None:
+        try:
+            return int(fields[name].split()[0])
+        except (KeyError, IndexError, ValueError):
+            return None
+
+    rss_kib = kib("VmRSS")
+    swap_kib = kib("VmSwap")
+    state = fields.get("State", "").split(maxsplit=1)[0]
+    if state in {"Z", "X", "x"}:
+        # A zombie/dead task has no address space. Linux may omit both fields
+        # during normal MPI rank teardown; zero is authoritative.
+        rss_kib = 0 if rss_kib is None else rss_kib
+        swap_kib = 0 if swap_kib is None else swap_kib
+    return rss_kib, swap_kib
+
+
 def process_tree_sample(root_pid: int) -> ProcessTreeSample:
     """Sample RSS and VmSwap for the root and every live descendant."""
 
@@ -180,12 +198,8 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
             ppid = int(fields.get("PPid", "0"))
         except ValueError:
             ppid = 0
-        def kib(name: str) -> int | None:
-            try:
-                return int(fields[name].split()[0])
-            except (KeyError, IndexError, ValueError):
-                return None
-        processes[pid] = (ppid, kib("VmRSS"), kib("VmSwap"))
+        rss_kib, swap_kib = _status_memory_kib(fields)
+        processes[pid] = (ppid, rss_kib, swap_kib)
     selected = {int(root_pid)}
     changed = True
     while changed:

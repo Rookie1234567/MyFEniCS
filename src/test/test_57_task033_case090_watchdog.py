@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 from benchmarks import run_task033_case090_watchdog as watchdog
 from benchmarks import task033_case090_pde_core as core
+from benchmarks import task034_wsl_resources as wsl_resources
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -346,6 +347,24 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             wall_timeout_seconds=100.0,
         )
         self.assertEqual(decision["trigger"], "wall_timeout")
+
+    def test_terminated_process_status_has_zero_memory_authority(self) -> None:
+        self.assertEqual(
+            wsl_resources._status_memory_kib(
+                {"State": "Z (zombie)", "PPid": "1"}
+            ),
+            (0, 0),
+        )
+        self.assertEqual(
+            wsl_resources._status_memory_kib(
+                {"State": "S (sleeping)", "VmRSS": "12 kB", "VmSwap": "3 kB"}
+            ),
+            (12, 3),
+        )
+        self.assertEqual(
+            wsl_resources._status_memory_kib({"State": "R (running)"}),
+            (None, None),
+        )
 
     def test_process_tree_status_exit_race_requires_confirmed_natural_exit(self) -> None:
         decision = {
