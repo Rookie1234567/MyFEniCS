@@ -8,7 +8,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import Any, Mapping
 
 from benchmarks.task033_case090_pde_core import (
     CASE_ID,
@@ -435,6 +435,27 @@ def watchdog_decision(
         "detail": str(observed) if observed >= warning else None,
     }
 
+
+def _natural_exit_after_process_tree_sample(
+    process: subprocess.Popen[Any],
+    decision: Mapping[str, Any],
+) -> int | None:
+    """Return an exit code only for a /proc teardown race.
+
+    A process-tree sample can begin while ``mpiexec`` is alive and lose one
+    rank's ``/proc/<pid>/status`` while that rank exits naturally. Re-polling
+    is intentionally restricted to this authority failure: unreadable status
+    while the worker remains live still fails closed.
+    """
+
+    if (
+        decision.get("trigger") != "authority_unreadable"
+        or decision.get("detail") != "process_tree_status"
+    ):
+        return None
+    return process.poll()
+
+
 def terminate_process_tree(
     process: subprocess.Popen[Any], *, grace_seconds: float = 5.0
 ) -> dict[str, Any]:
@@ -580,6 +601,7 @@ def summarize_samples(
             for field in required_authorities
         )
         for sample in samples
+        if sample.get("process_tree_exit_race_observed") is not True
     )
     initial_swap = swap[0] if swap else None
     final_swap = swap[-1] if swap else None
@@ -741,6 +763,23 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 )
                 sample["sample_kind"] = "worker"
                 sample["elapsed_seconds"] = time.monotonic() - started
+                decision: dict[str, Any] | None = None
+                if return_code is None:
+                    decision = watchdog_decision(
+                        sample,
+                        preflight=preflight,
+                        elapsed_seconds=float(sample["elapsed_seconds"]),
+                        wall_timeout_seconds=float(args.wall_timeout_seconds),
+                    )
+                    exit_race_code = _natural_exit_after_process_tree_sample(
+                        process, decision
+                    )
+                    if exit_race_code is not None:
+                        sample["process_tree_exit_race_observed"] = True
+                        sample["worker_exit_code_observed_after_sample"] = int(
+                            exit_race_code
+                        )
+                        return_code = int(exit_race_code)
                 samples.append(sample)
                 raw_stream.write(
                     json.dumps(sample, ensure_ascii=False, allow_nan=False) + "\n"
@@ -748,12 +787,7 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 raw_stream.flush()
                 if return_code is not None:
                     break
-                decision = watchdog_decision(
-                    sample,
-                    preflight=preflight,
-                    elapsed_seconds=float(sample["elapsed_seconds"]),
-                    wall_timeout_seconds=float(args.wall_timeout_seconds),
-                )
+                assert decision is not None
                 if decision["warning"] and not warning_triggered:
                     warning_triggered = True
                     warning_first_observed_bytes = int(sample["observed_memory_bytes"])

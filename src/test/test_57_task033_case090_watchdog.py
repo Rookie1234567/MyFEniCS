@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from benchmarks import run_task033_case090_watchdog as watchdog
 from benchmarks import task033_case090_pde_core as core
@@ -346,6 +346,60 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             wall_timeout_seconds=100.0,
         )
         self.assertEqual(decision["trigger"], "wall_timeout")
+
+    def test_process_tree_status_exit_race_requires_confirmed_natural_exit(self) -> None:
+        decision = {
+            "trigger": "authority_unreadable",
+            "detail": "process_tree_status",
+        }
+        exited = Mock()
+        exited.poll.return_value = 0
+        self.assertEqual(
+            watchdog._natural_exit_after_process_tree_sample(exited, decision),
+            0,
+        )
+        running = Mock()
+        running.poll.return_value = None
+        self.assertIsNone(
+            watchdog._natural_exit_after_process_tree_sample(running, decision)
+        )
+        self.assertIsNone(
+            watchdog._natural_exit_after_process_tree_sample(
+                exited,
+                {"trigger": "nonzero_swap", "detail": "1"},
+            )
+        )
+
+    def test_confirmed_exit_race_is_not_an_unreadable_live_sample(self) -> None:
+        sample = watchdog.sample_memory(os.getpid(), worker_alive=True)
+        preflight, failures = watchdog.build_preflight(sample)
+        self.assertEqual(failures, [])
+        readable = dict(sample)
+        exit_race = {
+            **sample,
+            "process_tree_all_status_readable": False,
+            "process_tree_exit_race_observed": True,
+            "worker_exit_code_observed_after_sample": 0,
+        }
+        sampling, failures = watchdog.summarize_samples(
+            [readable, exit_race, readable],
+            raw_output=ARTIFACT_ROOT / "exit_race_raw.jsonl",
+            summary_output=ARTIFACT_ROOT / "exit_race_summary.json",
+            preflight=preflight,
+        )
+        self.assertEqual(failures, [])
+        self.assertEqual(sampling["authority_unreadable_sample_count"], 0)
+
+        live_unreadable = dict(exit_race)
+        live_unreadable.pop("process_tree_exit_race_observed")
+        live_unreadable.pop("worker_exit_code_observed_after_sample")
+        sampling, _ = watchdog.summarize_samples(
+            [readable, live_unreadable, readable],
+            raw_output=ARTIFACT_ROOT / "live_unreadable_raw.jsonl",
+            summary_output=ARTIFACT_ROOT / "live_unreadable_summary.json",
+            preflight=preflight,
+        )
+        self.assertEqual(sampling["authority_unreadable_sample_count"], 1)
 
     def test_synthetic_continuous_samples_are_summarized_without_raw_embedding(self) -> None:
         samples = [
