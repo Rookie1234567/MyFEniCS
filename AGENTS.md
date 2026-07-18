@@ -25,7 +25,13 @@ Task034 的执行分支必须是：
 codex/20260717-task34-workstation-wsl-adaptive-scalability
 ```
 
-`agent/wsl-environment-qualification` 只是 WSL bootstrap 报告分支，不是 Task034 执行分支；其报告 `docs/workstation_wsl_environment_qualification.md` 只能作为前置参考，不能冒充完整 Phase A。
+`agent/wsl-environment-qualification` 只是 WSL bootstrap 报告分支，不是 Task034 执行分支。其报告尚未进入 `master`，开始 Task034 前用以下命令只读检查：
+
+```bash
+git show origin/agent/wsl-environment-qualification:docs/workstation_wsl_environment_qualification.md
+```
+
+该报告只能作为前置参考，不能冒充完整 Phase A；Task034 必须把经补测和结构化后的环境证据写入自己的 `outcomes/`。
 
 ## 2. 角色和任务闭环
 
