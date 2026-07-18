@@ -101,6 +101,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/run_task033_phaseC.py",
         "benchmarks/run_task033_resource_matrix.py",
         "benchmarks/run_task033_source_compatibility.py",
+        "benchmarks/task034_p3_h3_reranking.py",
         "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
         "benchmarks/task033_phaseC.py",
@@ -195,6 +196,10 @@ def _case090_source_compatibility(
     def allowed(path: str) -> bool:
         return bool(
             path in CASE090_CORE_COMPATIBLE_DESCENDANT_FILES
+            or path.startswith(
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+                "records/"
+            )
             or path.startswith("docs/")
             or path.startswith("notes/")
             or path.startswith("src/test/")
