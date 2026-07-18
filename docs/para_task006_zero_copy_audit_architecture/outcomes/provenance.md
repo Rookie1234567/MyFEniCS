@@ -13,6 +13,21 @@
 | H identity | consumed screening split |
 | V identity | 未用于 Task005 candidate selection |
 
+## P0 clean validation identity
+
+| 项目 | 值 |
+|---|---|
+| clean SHA | `9822bc5d84375bf1cd3039aec7ca1e849413c0ed` |
+| tracked source dirty | false |
+| WSL kernel | `6.18.33.2-microsoft-standard-WSL2` |
+| complex Python | 3.12.3 |
+| NumPy | 1.26.4 |
+| formal baseline | h5 / MPI4 / one thread per rank |
+| partition policy | contiguous research policy |
+| complete tests | 209 passed, 12 skipped |
+| diff check | PASS |
+| Case095 artifact ignore | PASS，`.gitignore:58` |
+
 ## 冻结 R4 checkpoint 与 dataset identity
 
 候选固定为 Task005 `A_D0_R64`，没有 retraining。
