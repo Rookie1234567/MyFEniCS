@@ -298,6 +298,7 @@ def load_nonmatching_transfer_cache(
     coarse_space: Any,
     coarse_local_slave_dofs: np.ndarray,
     expected_fine_global_dofs: int,
+    expected_fine_local_dofs: int | None = None,
 ) -> NonmatchingTransfer:
     """Load a transfer cache and fail closed on MPI/shape/active-map drift."""
 
@@ -312,25 +313,60 @@ def load_nonmatching_transfer_cache(
     if int(manifest["global_cols"]) != active.global_active_size:
         raise RuntimeError("transfer cache active coarse dimension mismatch")
     with np.load(directory / f"transfer_rank_{comm.rank:04d}.npz") as payload:
-        local_rows = int(payload["local_rows"])
+        saved_local_rows = int(payload["local_rows"])
         local_cols = int(payload["local_cols"])
-        if local_cols != active.local_active_size:
-            raise RuntimeError("transfer cache local active ownership mismatch")
-        matrix = PETSc.Mat().createAIJ(
-            size=(
-                (local_rows, int(manifest["global_rows"])),
-                (local_cols, int(manifest["global_cols"])),
-            ),
-            csr=(
-                np.asarray(payload["indptr"], dtype=PETSc.IntType),
-                np.asarray(payload["indices"], dtype=PETSc.IntType),
-                np.asarray(payload["values"], dtype=PETSc.ScalarType),
-            ),
-            comm=comm,
+        indptr = np.asarray(payload["indptr"], dtype=PETSc.IntType)
+        indices = np.asarray(payload["indices"], dtype=PETSc.IntType)
+        values = np.asarray(payload["values"], dtype=PETSc.ScalarType)
+    if local_cols != active.local_active_size:
+        raise RuntimeError("transfer cache local active ownership mismatch")
+    target_local_rows = (
+        saved_local_rows
+        if expected_fine_local_dofs is None
+        else int(expected_fine_local_dofs)
+    )
+    saved_row_counts = tuple(int(value) for value in comm.allgather(saved_local_rows))
+    target_row_counts = tuple(int(value) for value in comm.allgather(target_local_rows))
+    global_rows = int(manifest["global_rows"])
+    if sum(saved_row_counts) != global_rows:
+        raise RuntimeError("transfer cache saved row ownership is inconsistent")
+    if sum(target_row_counts) != global_rows:
+        raise RuntimeError("requested fine row ownership is inconsistent")
+    local_row_nnz = np.diff(indptr)
+    max_row_nnz = int(
+        comm.allreduce(
+            int(local_row_nnz.max(initial=0)), op=MPI.MAX
         )
+    )
+    matrix = PETSc.Mat().createAIJ(
+        size=(
+            (target_local_rows, global_rows),
+            (local_cols, int(manifest["global_cols"])),
+        ),
+        nnz=max(1, max_row_nnz),
+        comm=comm,
+    )
+    matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+    saved_row_start = sum(saved_row_counts[: comm.rank])
+    for local_row in range(saved_local_rows):
+        start = int(indptr[local_row])
+        stop = int(indptr[local_row + 1])
+        if stop > start:
+            matrix.setValues(
+                saved_row_start + local_row,
+                indices[start:stop],
+                values[start:stop],
+            )
     matrix.assemble()
     validation = dict(manifest["validation"])
-    validation["cache_status"] = "loaded"
+    validation.update({
+        "cache_status": "loaded",
+        "cache_saved_local_rows": saved_local_rows,
+        "cache_loaded_local_rows": target_local_rows,
+        "cache_row_redistributed": bool(
+            comm.allreduce(saved_row_counts != target_row_counts, op=MPI.LOR)
+        ),
+    })
     return NonmatchingTransfer(
         matrix=matrix,
         active_map=active,

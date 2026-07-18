@@ -15,12 +15,15 @@ import src.solvers.hcurl_multilevel as hcurl_multilevel
 from src.solvers.hcurl_multilevel import (
     CanonicalScreenBaseline,
     ModalWoodburyPc,
+    NonmatchingTransfer,
     _apply_solver_action,
     build_active_dof_map,
     build_condensed_galerkin_coarse,
     build_nonmatching_active_transfer,
     classify_screen_candidate,
     load_canonical_screen_baseline,
+    load_nonmatching_transfer_cache,
+    save_nonmatching_transfer_cache,
     validate_transfer_action_against_interpolation,
 )
 from src.solvers.condensed_dtn import gather_small_petsc_matrix
@@ -248,6 +251,85 @@ class TestTask030NonmatchingTransfer(unittest.TestCase):
         self.assertLessEqual(action_error, 1.0e-12)
         self.assertGreater(transfer.validation["matrix_nnz"], 0)
         transfer.destroy()
+
+    def test_cached_rows_redistribute_to_current_fine_ownership(self):
+        import shutil
+
+        from basix.ufl import element
+        from dolfinx import fem, mesh
+        from mpi4py import MPI
+        from petsc4py import PETSc
+
+        comm = MPI.COMM_WORLD
+        coarse_mesh = mesh.create_box(
+            comm,
+            [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+            [1, 1, max(1, comm.size)],
+            cell_type=mesh.CellType.hexahedron,
+        )
+        coarse_space = fem.functionspace(
+            coarse_mesh, element("N1curl", "hexahedron", 1)
+        )
+        no_slaves = np.empty(0, dtype=np.int32)
+        active = build_active_dof_map(coarse_space, no_slaves)
+        saved_counts = tuple(rank + 1 for rank in range(comm.size))
+        target_counts = tuple(reversed(saved_counts))
+        global_rows = sum(saved_counts)
+        saved_local_rows = saved_counts[comm.rank]
+        matrix = PETSc.Mat().createAIJ(
+            size=(
+                (saved_local_rows, global_rows),
+                (active.local_active_size, active.global_active_size),
+            ),
+            nnz=1,
+            comm=comm,
+        )
+        row_start = sum(saved_counts[: comm.rank])
+        for local_row in range(saved_local_rows):
+            row = row_start + local_row
+            matrix.setValue(
+                row,
+                row % active.global_active_size,
+                PETSc.ScalarType(row + 1),
+            )
+        matrix.assemble()
+        expected = gather_small_petsc_matrix(matrix)
+        transfer = NonmatchingTransfer(
+            matrix=matrix,
+            active_map=active,
+            validation={"status": "passed"},
+            owners=(),
+        )
+        directory = comm.bcast(
+            tempfile.mkdtemp(prefix="task030_transfer_cache_")
+            if comm.rank == 0
+            else None,
+            root=0,
+        )
+        try:
+            save_nonmatching_transfer_cache(transfer, Path(directory))
+            loaded = load_nonmatching_transfer_cache(
+                Path(directory),
+                coarse_space=coarse_space,
+                coarse_local_slave_dofs=no_slaves,
+                expected_fine_global_dofs=global_rows,
+                expected_fine_local_dofs=target_counts[comm.rank],
+            )
+            self.assertEqual(loaded.matrix.getLocalSize()[0], target_counts[comm.rank])
+            self.assertEqual(
+                loaded.validation["cache_row_redistributed"], comm.size > 1
+            )
+            np.testing.assert_allclose(
+                gather_small_petsc_matrix(loaded.matrix), expected,
+                rtol=0.0, atol=0.0,
+            )
+            loaded.destroy()
+        finally:
+            transfer.destroy()
+            comm.barrier()
+            if comm.rank == 0:
+                shutil.rmtree(directory)
+            comm.barrier()
 
 
 class TestTask030CondensedGalerkin(unittest.TestCase):

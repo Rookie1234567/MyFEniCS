@@ -304,6 +304,7 @@ def _run_screen(config: dict[str, Any], args: argparse.Namespace) -> dict[str, A
         coarse_space=coarse_floquet.mpc.function_space,
         coarse_local_slave_dofs=coarse_floquet.local_slave_dofs,
         expected_fine_global_dofs=system.n_fe,
+        expected_fine_local_dofs=int(blocks.F.getLocalSize()[0]),
     )
     coarse_data = build_condensed_galerkin_coarse(
         F=blocks.F,
