@@ -1,4 +1,8 @@
-﻿from __future__ import annotations
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
 
 import pytest
 
@@ -64,3 +68,35 @@ def test_reranking_fails_closed_on_zero_baseline_component() -> None:
     baseline["scalar_observables"]["R_total"]["absolute_error"] = 0.0
     with pytest.raises(Task034RerankingError, match="strictly positive"):
         rerank_against_p2_threshold({"p2_h3": baseline})
+
+
+def test_tracked_phase_d_reranking_record_preserves_boundaries() -> None:
+    root = Path(__file__).resolve().parents[2]
+    path = (
+        root
+        / "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/"
+        "p3_h3_reference_summary.json"
+    )
+    record = json.loads(path.read_text(encoding="utf-8"))
+    payload_sha256 = record.pop("payload_sha256")
+    canonical = json.dumps(
+        record,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == payload_sha256
+    assert record["status"] == "p3_h3_reference_and_reranking_pass"
+    assert record["aggregation_source"][
+        "worktree_clean_including_nonignored_untracked"
+    ]
+    assert not record["identity"]["thresholds_relaxed"]
+    assert record["classification"] == {
+        "p3_h3_reference_available": True,
+        "p3_h5_to_h3_grid_change": "measured",
+        "p3_h7p5_equal_accuracy_under_new_reference": "pass",
+        "p2_h3_equal_accuracy_under_new_reference": "pass",
+        "grid_convergence_proven": False,
+        "continuum_reference": False,
+    }
