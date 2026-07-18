@@ -58,7 +58,7 @@ def _build_one(
         np.linalg.norm(rhs, axis=1), np.finfo(float).tiny
     )
     output.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(output / "reference.npz", rho=rho)
+    np.savez_compressed(output / "reference.npz", rho=rho, correction=correction)
     result = {
         "schema": "myfenics.task006.ilu_reference.v1",
         "slab": int(operator.metadata["slab_id"]),

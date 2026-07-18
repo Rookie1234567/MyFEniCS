@@ -65,6 +65,7 @@ class ProxyDecision:
     rho_reduced: float
     rho_sketches: tuple[float, ...]
     composite_score: float
+    baseline_composite_score: float
     input_norm: float
     output_norm: float
     correction_input_ratio: float
@@ -81,6 +82,7 @@ class LowStorageProxyCertificate:
     sketch_seeds: tuple[int, ...]
     score_scales: tuple[float, ...]
     acceptance_threshold: float
+    nondegradation_ratio_threshold: float
     input_norm_range: tuple[float, float]
     output_norm_range: tuple[float, float]
     correction_input_ratio_range: tuple[float, float]
@@ -143,6 +145,9 @@ class LowStorageProxyCertificate:
             "sketch_seeds": list(self.sketch_seeds),
             "score_scales": list(self.score_scales),
             "acceptance_threshold": self.acceptance_threshold,
+            "nondegradation_ratio_threshold": (
+                self.nondegradation_ratio_threshold
+            ),
             "input_norm_range": list(self.input_norm_range),
             "output_norm_range": list(self.output_norm_range),
             "correction_input_ratio_range": list(
@@ -179,6 +184,7 @@ class LowStorageAuditProxy:
         rhs: np.ndarray,
         correction: np.ndarray,
         *,
+        baseline_correction: np.ndarray | None = None,
         slab_id: int,
         operator_fingerprint: str,
         checkpoint_sha256: str,
@@ -187,14 +193,25 @@ class LowStorageAuditProxy:
             raise RuntimeError("low-storage proxy has been destroyed")
         source = np.asarray(rhs, dtype=np.complex128)
         candidate = np.asarray(correction, dtype=np.complex128)
+        baseline = (
+            None
+            if baseline_correction is None
+            else np.asarray(baseline_correction, dtype=np.complex128)
+        )
         if source.shape != (self.model.size,) or candidate.shape != source.shape:
             raise ValueError("proxy rhs/correction shape mismatch")
+        if baseline is not None and baseline.shape != source.shape:
+            raise ValueError("proxy baseline correction shape mismatch")
         identity_ok = (
             int(slab_id) == self.certificate.slab_id
             and operator_fingerprint == self.certificate.operator_fingerprint
             and checkpoint_sha256 == self.certificate.checkpoint_sha256
         )
-        finite = bool(np.all(np.isfinite(source)) and np.all(np.isfinite(candidate)))
+        finite = bool(
+            np.all(np.isfinite(source))
+            and np.all(np.isfinite(candidate))
+            and (baseline is None or np.all(np.isfinite(baseline)))
+        )
         if not finite:
             return self._decision(False, "nonfinite", source, candidate)
         if not identity_ok:
@@ -212,8 +229,65 @@ class LowStorageAuditProxy:
         ):
             return self._decision(False, "correction_input_ratio", source, candidate)
 
+        rho_reduced, rho_sketches, composite = self._score(source, candidate)
+        baseline_composite = (
+            float("inf")
+            if baseline is None
+            else self._score(source, baseline)[2]
+        )
+        accepted = bool(
+            composite <= self.certificate.acceptance_threshold
+            and (
+                baseline is None
+                or composite
+                <= self.certificate.nondegradation_ratio_threshold
+                * max(baseline_composite, TINY)
+            )
+        )
+        self.apply_count += 1
+        self.accept_count += int(accepted)
+        return ProxyDecision(
+            accepted=accepted,
+            reason="accepted" if accepted else "composite_score",
+            rho_reduced=rho_reduced,
+            rho_sketches=tuple(rho_sketches),
+            composite_score=float(composite),
+            baseline_composite_score=baseline_composite,
+            input_norm=input_norm,
+            output_norm=output_norm,
+            correction_input_ratio=ratio,
+        )
+
+    def _decision(
+        self,
+        accepted: bool,
+        reason: str,
+        source: np.ndarray,
+        candidate: np.ndarray,
+    ) -> ProxyDecision:
+        input_norm = float(np.linalg.norm(source))
+        output_norm = float(np.linalg.norm(candidate))
+        self.apply_count += 1
+        self.accept_count += int(accepted)
+        return ProxyDecision(
+            accepted=accepted,
+            reason=reason,
+            rho_reduced=float("inf"),
+            rho_sketches=tuple(
+                float("inf") for _ in self.certificate.sketch_seeds
+            ),
+            composite_score=float("inf"),
+            baseline_composite_score=float("inf"),
+            input_norm=input_norm,
+            output_norm=output_norm,
+            correction_input_ratio=output_norm / max(input_norm, TINY),
+        )
+
+    def _score(
+        self, source: np.ndarray, correction: np.ndarray
+    ) -> tuple[float, tuple[float, ...], float]:
         input_coordinates = self.model.input_basis.conj().T @ source
-        output_coordinates = self.model.output_basis.conj().T @ candidate
+        output_coordinates = self.model.output_basis.conj().T @ correction
         reduced_residual = (
             input_coordinates
             - self.certificate.reduced_operator @ output_coordinates
@@ -245,43 +319,7 @@ class LowStorageAuditProxy:
                 self.certificate.score_scales, components, strict=True
             )
         )
-        accepted = composite <= self.certificate.acceptance_threshold
-        self.apply_count += 1
-        self.accept_count += int(accepted)
-        return ProxyDecision(
-            accepted=accepted,
-            reason="accepted" if accepted else "composite_score",
-            rho_reduced=rho_reduced,
-            rho_sketches=tuple(rho_sketches),
-            composite_score=float(composite),
-            input_norm=input_norm,
-            output_norm=output_norm,
-            correction_input_ratio=ratio,
-        )
-
-    def _decision(
-        self,
-        accepted: bool,
-        reason: str,
-        source: np.ndarray,
-        candidate: np.ndarray,
-    ) -> ProxyDecision:
-        input_norm = float(np.linalg.norm(source))
-        output_norm = float(np.linalg.norm(candidate))
-        self.apply_count += 1
-        self.accept_count += int(accepted)
-        return ProxyDecision(
-            accepted=accepted,
-            reason=reason,
-            rho_reduced=float("inf"),
-            rho_sketches=tuple(
-                float("inf") for _ in self.certificate.sketch_seeds
-            ),
-            composite_score=float("inf"),
-            input_norm=input_norm,
-            output_norm=output_norm,
-            correction_input_ratio=output_norm / max(input_norm, TINY),
-        )
+        return rho_reduced, tuple(rho_sketches), float(composite)
 
     @property
     def diagnostics(self) -> dict[str, Any]:
@@ -320,6 +358,7 @@ def certificate_content_hash(
                 "seeds": certificate.sketch_seeds,
                 "scales": certificate.score_scales,
                 "threshold": certificate.acceptance_threshold,
+                "ratio_threshold": certificate.nondegradation_ratio_threshold,
                 "input": certificate.input_norm_range,
                 "output": certificate.output_norm_range,
                 "ratio": certificate.correction_input_ratio_range,

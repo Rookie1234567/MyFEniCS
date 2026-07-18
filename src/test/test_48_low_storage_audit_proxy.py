@@ -38,6 +38,7 @@ def _proxy() -> LowStorageAuditProxy:
         sketch_seeds=seeds,
         score_scales=(1.0, 1.0, 1.0),
         acceptance_threshold=1.0e-12,
+        nondegradation_ratio_threshold=1.0,
         input_norm_range=(0.1, 10.0),
         output_norm_range=(0.1, 10.0),
         correction_input_ratio_range=(0.1, 2.0),
