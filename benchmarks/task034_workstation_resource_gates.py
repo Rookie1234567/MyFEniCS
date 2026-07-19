@@ -55,6 +55,8 @@ def task034_workstation_hybrid_launch_gate(
     warning_gib: float,
     terminate_gib: float,
     core_gate: Mapping[str, Any] | None,
+    mpi_size: int,
+    available_physical_core_count: int | None,
     current_source_sha: str | None,
     source_compatibility: Mapping[str, Any] | None,
     source_clean_verified: bool,
@@ -67,13 +69,13 @@ def task034_workstation_hybrid_launch_gate(
     expected_m160_funnel_sha256: str | None = None,
     observed_m160_funnel_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Authorize one Task034 p3/h3 or p4/h5 Hybrid shard.
+    """Authorize one Task034 fixed-geometry Hybrid shard.
 
     The checked Case092 record combines a current WSL measured resource anchor
-    with historical Task033 Hybrid predictions.  The p3/h3 path uses a Full-3D
-    reference.  The p4/h5 path uses exactly one stage-appropriate anchor: its
-    E0 assembly calibration before E2, or its measured Full-3D descriptor after
-    E3.  The historical model is never a standalone launch authority.
+    with an independent planning center.  Phase F uses the same-p/h Full-3D
+    watchdog record or descriptor directly.  The preserved p4/h5 path may use
+    its E0 assembly calibration before E3.  Historical models are never a
+    standalone launch authority.
     """
 
     payload = authority if isinstance(authority, Mapping) else {}
@@ -211,6 +213,16 @@ def task034_workstation_hybrid_launch_gate(
         ),
         "external_watchdog_is_launch_authority": bool(external_watchdog_active),
         "live_task034_effective_limit_readable": live_values_valid,
+        "physical_core_inventory_readable": bool(
+            type(available_physical_core_count) is int
+            and available_physical_core_count > 0
+        ),
+        "requested_mpi_size_supported": mpi_size in (1, 2, 4, 8, 16, 32),
+        "requested_mpi_size_does_not_oversubscribe": bool(
+            type(available_physical_core_count) is int
+            and type(mpi_size) is int
+            and mpi_size <= available_physical_core_count
+        ),
         "warning_threshold_matches_live_task034_gate": bool(
             live_warning_gib is not None
             and math.isclose(
@@ -305,6 +317,8 @@ def task034_workstation_hybrid_launch_gate(
         "launch_eligible_recomputed": not failures,
         "scope": "task034_wsl_workstation_hybrid",
         "matrix_key": entry.get("matrix_key"),
+        "mpi_size": mpi_size,
+        "available_physical_core_count": available_physical_core_count,
         "live_task034_limits": {
             "effective_limit_gib": (
                 effective_bytes / GIB if live_values_valid else None

@@ -831,6 +831,40 @@ def _external_resource_authority(
     return record
 
 
+def _available_physical_core_count() -> int | None:
+    allowed = (
+        set(os.sched_getaffinity(0))
+        if hasattr(os, "sched_getaffinity")
+        else set(range(os.cpu_count() or 0))
+    )
+    try:
+        completed = subprocess.run(
+            ["lscpu", "-p=CPU,CORE,SOCKET,ONLINE"],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    physical_cores: set[tuple[int, int]] = set()
+    for line in completed.stdout.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        try:
+            cpu, core, socket, online = line.split(",")
+            if (
+                int(cpu) in allowed
+                and online.strip().lower() in {"y", "yes"}
+            ):
+                physical_cores.add((int(socket), int(core)))
+        except (TypeError, ValueError):
+            return None
+    return len(physical_cores) or None
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -842,7 +876,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--case-label", required=True)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), required=True)
     parser.add_argument("--h-nm", type=float, required=True)
-    parser.add_argument("--mpi-size", type=int, choices=(1, 2, 4), required=True)
+    parser.add_argument(
+        "--mpi-size",
+        type=int,
+        choices=(1, 2, 4, 8, 16, 32),
+        required=True,
+    )
     parser.add_argument("--requested-modes", type=int, default=8)
     parser.add_argument("--candidate-modes", type=int, default=16)
     parser.add_argument("--material-kind", choices=("air", "lossy_homogeneous", "stage4_xy"))
@@ -936,6 +975,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
+    if (
+        args.mpi_size not in (1, 2, 4)
+        and not args.task034_workstation_gate
+    ):
+        parser.error("MPI8/16/32 require --task034-workstation-gate.")
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
     if args.target == "hybrid" and args.requested_modes < 2:
@@ -1001,17 +1045,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             (args.full3d_reference is None)
             != (args.task034_workstation_resource_anchor is None)
         )
+        phase_f_matrix = {
+            (2, 5.0), (2, 3.0), (2, 2.0),
+            (3, 10.0), (3, 7.5), (3, 5.0), (3, 3.0),
+            (4, 10.0), (4, 7.5), (4, 5.0),
+        }
         anchor_selection_valid = bool(
             (
-                args.degree == 3
+                (args.degree, args.h_nm) in phase_f_matrix
                 and args.full3d_reference is not None
                 and args.task034_workstation_resource_anchor is None
             )
-            or (args.degree == 4 and p4_anchor_is_exclusive)
+            or (
+                args.degree == 4
+                and math.isclose(args.h_nm, 5.0)
+                and p4_anchor_is_exclusive
+            )
         )
         scoped = bool(
             args.target == "hybrid"
-            and (args.degree, args.h_nm) in {(3, 3.0), (4, 5.0)}
+            and (args.degree, args.h_nm) in phase_f_matrix
             and args.requested_modes in (80, 120, 160, 240)
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "modal-schur-memory-minimal"
@@ -1031,10 +1084,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
         if not scoped:
             parser.error(
-                "--task034-workstation-gate is restricted to the fixed p3/h3 or "
-                "p4/h5 WSL Hybrid M80/M120/M160 (conditional M240) funnel, exact "
-                "2M pool, p3 Full-3D descriptor or exactly one p4 E0 assembly / "
-                "post-E3 Full-3D resource anchor, canonical resource authority, "
+                "--task034-workstation-gate is restricted to the Task034 fixed "
+                "p2/p3/p4 Phase F matrix, WSL Hybrid M80/M120/M160 "
+                "(conditional M240) funnel, exact 2M pool, a same-p/h Full-3D "
+                "watchdog/descriptor reference (or the preserved p4/h5 E0 "
+                "assembly path), canonical resource authority, "
                 "and WSL2-Ubuntu-24.04 identity."
             )
     return args
@@ -1207,6 +1261,8 @@ def run(args: argparse.Namespace) -> int:
                 warning_gib=args.warning_gib,
                 terminate_gib=args.terminate_gib,
                 core_gate=core_gate,
+                mpi_size=args.mpi_size,
+                available_physical_core_count=_available_physical_core_count(),
                 current_source_sha=source_before.get("commit_sha"),
                 source_compatibility=authority_source_compatibility,
                 source_clean_verified=source_before["source_clean_verified"],

@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shlex
@@ -318,6 +319,134 @@ def _case080_reference_path(
     return matches[0] if matches else None
 
 
+def _normalize_full3d_reference_record(
+    reference: dict[str, Any],
+    *,
+    path: Path,
+) -> dict[str, Any]:
+    """Normalize a native watchdog record without writing a derived descriptor."""
+
+    if reference.get("record_type") == "task034_full3d_reference":
+        return reference
+    if reference.get("schema_version") != "task033.full3d-watchdog.v1":
+        return reference
+    try:
+        source = reference["source"]
+        qualification = reference["qualification"]
+        solver = reference["solver_summary"]
+        resource_authority = reference["resource_authority"]
+        archive = Path(str(solver["full3d_reference_archive"]))
+        metadata = Path(str(solver["full3d_reference_metadata"]))
+        if not archive.is_absolute():
+            archive = ROOT / archive
+        if not metadata.is_absolute():
+            metadata = ROOT / metadata
+        archive = archive.resolve()
+        metadata = metadata.resolve()
+        run_root = archive.parent.relative_to(ROOT)
+        commit_sha = str(source["commit_sha"]).lower()
+        archive_sha256 = str(
+            solver["full3d_reference_archive_sha256"]
+        ).lower()
+        finite_results = (
+            solver["linear_system_relative_residual"],
+            solver["R_total"],
+            solver["T_total"],
+            solver["A_balance"],
+            solver["A_volume_total"],
+            solver["energy_closure_error_port_volume"],
+            resource_authority["memory_authority_gib"],
+        )
+        raw_valid = bool(
+            reference["status"] == "full3d_reference_pass"
+            and reference["run_kind"] == "full-solve"
+            and qualification["pass"] is True
+            and reference["no_swap"] is True
+            and source["tracked_source_dirty"] is False
+            and source["stable_and_clean_after"] is True
+            and solver["case_status"] == "completed"
+            and solver["official_result"] is True
+            and solver["full3d_reference_exported"] is True
+            and solver["polarization_kind"] == "s"
+            and math.isclose(float(solver["incident_theta_deg"]), 80.0)
+            and math.isclose(float(solver["incident_phi_deg"]), 0.0)
+            and float(solver["linear_system_relative_residual"]) <= 1.0e-9
+            and archive.name == "full3d_reference_samples.npz"
+            and metadata.name == "full3d_reference_samples.json"
+            and metadata.parent == archive.parent
+            and len(commit_sha) == 40
+            and all(
+                character in "0123456789abcdef"
+                for character in commit_sha
+            )
+            and len(archive_sha256) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in archive_sha256
+            )
+            and all(np.isfinite(float(value)) for value in finite_results)
+        )
+    except (KeyError, TypeError, ValueError, OSError) as error:
+        raise RuntimeError(
+            f"Native full3D watchdog reference is incomplete: {path}"
+        ) from error
+    if not raw_valid:
+        raise RuntimeError(
+            f"Native full3D watchdog reference failed its raw Gate: {path}"
+        )
+    return {
+        "record_type": "task034_full3d_reference",
+        "metadata": {
+            "commit_sha": commit_sha,
+            "git_dirty": False,
+            "tracked_source_dirty": False,
+            "host_environment_id": "WSL2-Ubuntu-24.04",
+            "provenance": (
+                "in-memory normalization of native full3D watchdog evidence"
+            ),
+        },
+        "physical_model": {
+            "wavelength_nm": 13.5,
+            "incident_theta_deg": 80.0,
+            "incident_grazing_deg": 10.0,
+            "incident_phi_deg": 0.0,
+            "polarization_kind": "s",
+            "nedelec_degree": int(reference["degree"]),
+            "mesh_h_nm": float(reference["h_nm"]),
+            "mpi_size": int(reference["mpi_size"]),
+            "linear_solver": "direct_lu_mumps",
+        },
+        "results": {
+            "case_status": solver["case_status"],
+            "official_result": True,
+            "linear_system_true_relative_residual": float(
+                solver["linear_system_relative_residual"]
+            ),
+            "R_total": float(solver["R_total"]),
+            "T_total": float(solver["T_total"]),
+            "A_balance": float(solver["A_balance"]),
+            "A_volume_total": float(solver["A_volume_total"]),
+            "energy_closure_error_port_volume": float(
+                solver["energy_closure_error_port_volume"]
+            ),
+            "external_memory_authority_gib": float(
+                resource_authority["memory_authority_gib"]
+            ),
+        },
+        "artifacts": {
+            "ignored_run_root": run_root.as_posix(),
+            "reference_npz_sha256": archive_sha256,
+        },
+        "qualification": {
+            "phase1_reference_pass": True,
+            "grid_converged": False,
+            "no_swap": True,
+            "watchdog_status": reference["status"],
+            "heavy_artifacts_tracked": False,
+        },
+    }
+
+
 def _validate_case080_reference_identity(
     reference: dict[str, Any], *, degree: int, h_nm: float, path: Path
 ) -> None:
@@ -374,6 +503,9 @@ def _load_case080_reference(
         raise RuntimeError(
             f"Cannot load pinned Case080 reference record: {reference_path}"
         ) from error
+    reference = _normalize_full3d_reference_record(
+        reference, path=reference_path
+    )
     _validate_case080_reference_identity(
         reference, degree=degree, h_nm=h_nm, path=reference_path
     )

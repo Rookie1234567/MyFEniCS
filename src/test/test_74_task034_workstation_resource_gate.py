@@ -69,6 +69,8 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             "warning_gib": 160.0,
             "terminate_gib": 190.0,
             "core_gate": {"pass": True},
+            "mpi_size": 8,
+            "available_physical_core_count": 48,
             "current_source_sha": "a" * 40,
             "source_compatibility": {"pass": True},
             "source_clean_verified": True,
@@ -181,6 +183,8 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             "warning_gib": 160.0,
             "terminate_gib": 190.0,
             "core_gate": {"pass": True},
+            "mpi_size": 8,
+            "available_physical_core_count": 48,
             "current_source_sha": "a" * 40,
             "source_compatibility": {"pass": True},
             "source_clean_verified": True,
@@ -189,6 +193,22 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             "external_watchdog_active": True,
             "full3d_reference_sha256": self.reference_sha,
         }
+
+    def test_workstation_gate_rejects_oversubscribed_mpi(self) -> None:
+        gate = self._gate(
+            mpi_size=32,
+            available_physical_core_count=16,
+        )
+        self.assertFalse(gate["pass"])
+        self.assertIn(
+            "requested_mpi_size_does_not_oversubscribe",
+            gate["failures"],
+        )
+        qualified = self._gate(
+            mpi_size=32,
+            available_physical_core_count=48,
+        )
+        self.assertTrue(qualified["pass"], qualified["failures"])
 
     def test_task034_ignores_only_post_exit_readability_race(self) -> None:
         self.assertFalse(
@@ -359,6 +379,42 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.assertIsNone(
             p4_closure_args.task034_workstation_resource_anchor
         )
+        phase_f_args = _parse_args(
+            [
+                "--target", "hybrid",
+                "--case-label", "task034_phase_f_p2_h5_m80_mpi8",
+                "--degree", "2",
+                "--h-nm", "5",
+                "--mpi-size", "8",
+                "--requested-modes", "80",
+                "--candidate-modes", "160",
+                "--full3d-reference", "p2_h5_watchdog.json",
+                "--verified-clean-sha", "d" * 40,
+                "--host-environment-id", "WSL2-Ubuntu-24.04",
+                "--task034-workstation-gate",
+                "--task034-workstation-resource-authority-sha256",
+                self.authority_sha,
+            ]
+        )
+        self.assertEqual(phase_f_args.mpi_size, 8)
+        self.assertEqual(
+            phase_f_args.full3d_reference,
+            Path("p2_h5_watchdog.json"),
+        )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target", "hybrid",
+                    "--case-label", "task033_mpi8_must_not_expand",
+                    "--degree", "2",
+                    "--h-nm", "5",
+                    "--mpi-size", "8",
+                    "--requested-modes", "80",
+                    "--candidate-modes", "160",
+                    "--full3d-reference", "p2_h5_watchdog.json",
+                    "--verified-clean-sha", "d" * 40,
+                ]
+            )
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
