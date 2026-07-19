@@ -572,6 +572,7 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 p2_reference_sha,
                 "src/modes/mode_classification.py\n"
                 "benchmarks/run_task032_phase6_augmented.py\n"
+                "benchmarks/task034_mpi_identity.py\n"
                 "benchmarks/task034_numerical_blob_checker.py\n"
                 "src/solvers/hybrid_fem_modal_schur_direct.py\n"
                 "src/test/test_mode_overlap.py",
@@ -589,6 +590,7 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             [
                 "src/modes/mode_classification.py",
                 "benchmarks/run_task032_phase6_augmented.py",
+                "benchmarks/task034_mpi_identity.py",
                 "src/solvers/hybrid_fem_modal_schur_direct.py",
             ],
         )

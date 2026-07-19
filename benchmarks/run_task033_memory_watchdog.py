@@ -141,6 +141,7 @@ TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
     {
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/run_task033_full3d_watchdog.py",
+        "benchmarks/task034_mpi_identity.py",
         "src/modes/mode_classification.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
     }
