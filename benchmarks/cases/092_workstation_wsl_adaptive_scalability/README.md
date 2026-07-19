@@ -36,6 +36,7 @@ identity、Gate 状态和关键测量摘要绑定。Task033 的 14 GiB Gate 保�
 | 20. | `termination` | 现场 effective limit 的 95% |
 | 21. | `heavy_run_policy` | one-heavy-case-at-a-time |
 | 22. | `0.7 nm PDE` | Task034 禁止运行，仅做资源评估 |
+| 23. | `extended_mpi_qualification` | MPI1/2/4/8/16 formal；MPI32 exploratory |
 
 ## PyCharm
 
@@ -60,6 +61,15 @@ pytest -q src/test/test_74_task034_workstation_resource_gate.py
 ruff check .
 ```
 
+扩展 MPI 环境资格化：
+
+```bash
+python -m benchmarks.run_task034_wsl_qualification \
+  --mpi-sizes 1,2,4,8,16,32 \
+  --distributed-solver-sizes 8,16,32 \
+  --exploratory-mpi-sizes 32
+```
+
 重型命令不在 README 中提供无条件一键版本；必须按任务书顺序读取 candidate-specific
 authority、现场内存、swap、磁盘和 source Gate。
 
@@ -71,6 +81,8 @@ authority、现场内存、swap、磁盘和 source Gate。
 - `benchmarks/run_task033_memory_watchdog.py`：QEP/Hybrid RSS、swap、timeout 权威。
 - `records/workstation_hybrid_launch_authority.json`：候选级实测锚与保守预测。
 - `records/p3_h3_reference_summary.json`：p3/h3 reference 与重新排名摘要。
+- `records/wsl_extended_mpi_qualification.json`：MPI1/2/4/8/16 与探索性 MPI32
+  环境、ABI、MUMPS/PEP microfixture 的紧凑 hash-bound 记录。
 
 ## 当前证据
 
@@ -80,6 +92,11 @@ Hybrid/full3D closure 均已在 WSL 原生环境中完成。`records/p4_h5_works
 已冻结 official R/T/A、true residual、五平面/接口/衍射阶 closure、memory、zero-swap、
 source compatibility 和原始工件 SHA-256。重型原始工件继续保留在 gitignored
 `benchmarks/artifacts/task034/phase_e/`。
+
+clean SHA `8440bbaf42de9d633479d0ed65bdda544bd871ef` 上的扩展 MPI 环境资格化通过：
+48 个可用物理核，MPI1/2/4/8/16/32 均无 oversubscription，所有 rank 使用同一
+Python/MPI/PETSc/SLEPc/DOLFINx ABI；MPI8/16/32 的分布式 MUMPS 与 PEP
+microfixture 均通过。MPI32 明确为 exploratory，不替代正式 MPI16 或 PDE identity。
 
 ## 结果解释
 
@@ -95,4 +112,6 @@ p4/h5 普通 setup 为秒级，长耗时主要来自矩阵装配与直接分解�
 - Hybrid-only 结果在同阶 full3D closure 前只属于 measured engineering result。
 - 历史 Task033 资源模型不能单独授权工作站重型运行。
 - git 只保留轻量记录；NPZ、VTU、timeline 和完整 solver output 不进入版本库。
+- MPI32 microfixture 只证明环境与小型分布式代数链，不证明 MPI32 加速，也不构成
+  MPI1/MPI32 代表性 PDE 数值一致性证据。
 - 不得自行合并 master；最终提交与 push 后等待独立 review。
