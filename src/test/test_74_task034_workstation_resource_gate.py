@@ -53,6 +53,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.p2_h5_reference_sha = self.p2_h5_entry["full3d_reference"][
             "descriptor_sha256"
         ]
+        self.p2_h3_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p2_h3_s"
+        )
+        self.p2_h3_reference_sha = self.p2_h3_entry["full3d_reference"][
+            "descriptor_sha256"
+        ]
 
     def _gate(self, **overrides):
         kwargs = {
@@ -157,6 +165,29 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             self.p2_h5_entry["full3d_reference"][
                 "derived_descriptor_written"
             ]
+        )
+
+    def test_explicit_workstation_gate_passes_phase_f_p2_h3_mpi8(self) -> None:
+        gate = self._gate(
+            degree=2,
+            h_nm=3.0,
+            mpi_size=8,
+            full3d_reference_sha256=self.p2_h3_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(gate["matrix_key"], "phase_f_p2_h3_s")
+        self.assertEqual(gate["resource_anchor_kind"], "full3d_reference")
+        self.assertFalse(
+            self.p2_h3_entry["full3d_reference"][
+                "derived_descriptor_written"
+            ]
+        )
+        self.assertEqual(
+            self.p2_h3_entry["staged_resource_evidence"][
+                "factorization_peak_memory_gib"
+            ],
+            9.12186050415039,
         )
 
     def test_gate_fails_closed_on_hash_threshold_and_old_model_override(self) -> None:
