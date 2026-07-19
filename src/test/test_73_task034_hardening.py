@@ -89,6 +89,19 @@ class Task034HardeningTests(unittest.TestCase):
         finally:
             matrix.destroy()
 
+    def test_active_column_count_ignores_explicit_zero_entries(self) -> None:
+        matrix = PETSc.Mat().createAIJ([2, 8], nnz=3, comm=PETSc.COMM_WORLD)
+        try:
+            first, last = matrix.getOwnershipRange()
+            for row in range(first, last):
+                matrix.setValues(row, [0, 2, 5], [1.0, 1.0, 0.0])
+            matrix.assemblyBegin()
+            matrix.assemblyEnd()
+            result = distributed_active_column_count(matrix)
+            self.assertEqual(result.global_count, 2)
+        finally:
+            matrix.destroy()
+
     def test_million_column_sparse_diagnostic_memory_is_owned(self) -> None:
         columns = 1_000_000
         matrix = PETSc.Mat().createAIJ([2, columns], nnz=2, comm=PETSc.COMM_WORLD)

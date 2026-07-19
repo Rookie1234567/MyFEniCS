@@ -122,6 +122,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         # fresh target Hybrid evidence at the new SHA; this exception reuses
         # Case090 only as the high-order Floquet launch prerequisite.
         "src/coupling/modal_trace_projection.py",
+        "src/common/distributed_matrix_diagnostics.py",
         "src/modes/mode_classification.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
     }
@@ -131,6 +132,7 @@ CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
     {
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/task034_mpi_identity.py",
+        "src/common/distributed_matrix_diagnostics.py",
         "src/modes/mode_classification.py",
         "src/coupling/modal_trace_projection.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
@@ -142,6 +144,7 @@ TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
         "benchmarks/run_task032_phase6_augmented.py",
         "benchmarks/run_task033_full3d_watchdog.py",
         "benchmarks/task034_mpi_identity.py",
+        "src/common/distributed_matrix_diagnostics.py",
         "src/modes/mode_classification.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
     }

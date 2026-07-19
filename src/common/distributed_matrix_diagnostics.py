@@ -38,8 +38,12 @@ def distributed_active_column_count(matrix: PETSc.Mat) -> ActiveColumnCount:
     first, last = matrix.getOwnershipRange()
     local_columns: set[int] = set()
     for row in range(first, last):
-        columns, _values = matrix.getRow(row)
-        local_columns.update(int(column) for column in columns)
+        columns, values = matrix.getRow(row)
+        local_columns.update(
+            int(column)
+            for column, value in zip(columns, values, strict=True)
+            if value != 0
+        )
 
     global_columns = int(matrix.getSize()[1])
     marker = PETSc.Vec().createMPI(global_columns, comm=matrix.getComm())
