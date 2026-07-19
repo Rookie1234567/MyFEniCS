@@ -21,6 +21,9 @@ from .hybrid_fem_modal_augmented_direct import internal_modal_constraint_matrix
 from .hybrid_local_dtn import HybridLocalDtnSystem
 
 
+MUMPS_WORKSPACE_RELAXATION_PERCENT = 100
+
+
 def _max_elapsed(comm: MPI.Intracomm, started: float) -> float:
     return float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
 
@@ -59,9 +62,30 @@ def _factor_local(matrix: PETSc.Mat) -> tuple[PETSc.KSP, float]:
     pc.setType(PETSc.PC.Type.LU)
     pc.setFactorSolverType("mumps")
     ksp.setOperators(matrix)
+    pc.setFactorSetUpSolverType()
+    factor = pc.getFactorMatrix()
+    factor.setMumpsIcntl(14, MUMPS_WORKSPACE_RELAXATION_PERCENT)
     started = time.perf_counter()
     ksp.setUp()
     return ksp, _max_elapsed(comm, started)
+
+
+def _local_factor_inventory(ksp: PETSc.KSP) -> dict:
+    inventory = _petsc_factor_inventory(ksp)
+    inventory["mumps_icntl_14_requested_percent"] = (
+        MUMPS_WORKSPACE_RELAXATION_PERCENT
+    )
+    try:
+        observed = int(
+            ksp.getPC().getFactorMatrix().getMumpsIcntl(14)
+        )
+    except Exception:
+        observed = None
+    inventory["mumps_icntl_14_observed_percent"] = observed
+    inventory["mumps_workspace_relaxation_verified"] = (
+        observed == MUMPS_WORKSPACE_RELAXATION_PERCENT
+    )
+    return inventory
 
 
 def _insert_dense_columns(
@@ -262,8 +286,8 @@ def build_hybrid_modal_schur_direct_system(
             top_system, coupling, top_factor
         )
         factor_inventory = {
-            "bottom": _petsc_factor_inventory(bottom_factor),
-            "top": _petsc_factor_inventory(top_factor),
+            "bottom": _local_factor_inventory(bottom_factor),
+            "top": _local_factor_inventory(top_factor),
         }
         count = coupling.mode_count_per_direction
         internal_count = 2 * count
@@ -339,7 +363,7 @@ def build_hybrid_modal_schur_memory_minimal_system(
         bottom_response, bottom_solve, bottom_bytes = _local_schur_response(
             bottom_system, coupling, bottom_factor
         )
-        bottom_inventory = _petsc_factor_inventory(bottom_factor)
+        bottom_inventory = _local_factor_inventory(bottom_factor)
     finally:
         if bottom_factor is not None:
             bottom_factor.destroy()
@@ -353,7 +377,7 @@ def build_hybrid_modal_schur_memory_minimal_system(
         top_response, top_solve, top_bytes = _local_schur_response(
             top_system, coupling, top_factor
         )
-        top_inventory = _petsc_factor_inventory(top_factor)
+        top_inventory = _local_factor_inventory(top_factor)
     finally:
         if top_factor is not None:
             top_factor.destroy()

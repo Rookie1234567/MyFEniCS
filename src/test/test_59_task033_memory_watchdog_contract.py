@@ -239,6 +239,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 "src/coupling/modal_trace_projection.py\n"
                 "src/modes/mode_classification.py\n"
                 "benchmarks/task034_numerical_blob_checker.py\n"
+                "src/solvers/hybrid_fem_modal_schur_direct.py\n"
                 "benchmarks/task033_phaseC.py",
             ),
         ):
@@ -252,6 +253,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             [
                 "src/coupling/modal_trace_projection.py",
                 "src/modes/mode_classification.py",
+                "src/solvers/hybrid_fem_modal_schur_direct.py",
             ],
         )
         self.assertEqual(

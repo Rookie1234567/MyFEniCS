@@ -174,6 +174,7 @@ class Task034HardeningTests(unittest.TestCase):
             record["corresponding_pde_rerun_required_paths"],
             [
                 "src/modes/mode_classification.py",
+                "src/solvers/hybrid_fem_modal_schur_direct.py",
                 "src/solvers/hcurl_multilevel.py",
             ],
         )

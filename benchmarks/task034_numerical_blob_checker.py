@@ -71,6 +71,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "explicit return after KSPSetUp for staged Gate; KSPSolve path unchanged when the flag is false",
         "requires_corresponding_pde_rerun": False,
     },
+    "src/solvers/hybrid_fem_modal_schur_direct.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "explicit MUMPS ICNTL(14)=100 workspace relaxation prevents INFOG(1)=-9 local-factor failures; Hybrid PDE anchors must be rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/solvers/hcurl_multilevel.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
         "reason": "materialized P^H compatibility path for PETSc 3.19 complex MatMatMult; algebra unchanged",
