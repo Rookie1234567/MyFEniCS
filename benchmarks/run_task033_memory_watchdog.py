@@ -103,6 +103,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/run_task033_source_compatibility.py",
         "benchmarks/run_task034_wsl_qualification.py",
         "benchmarks/task034_p3_h3_reranking.py",
+        "benchmarks/task034_mpi_identity.py",
         "benchmarks/task034_numerical_blob_checker.py",
         "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
@@ -129,6 +130,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
 CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
     {
         "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/task034_mpi_identity.py",
         "src/modes/mode_classification.py",
         "src/coupling/modal_trace_projection.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
