@@ -24,6 +24,10 @@ MANDATORY_ORDER_RELATIVE_TOLERANCE = 1.0e-3
 STRONG_ORDER_RELATIVE_TOLERANCE = 1.0e-4
 SIGNIFICANT_ORDER_POWER = 1.0e-8
 WEAK_ORDER_ABSOLUTE_TOLERANCE = 1.0e-8
+TASK034_WORKSTATION_HYBRID_SCOPE = "task034_wsl_workstation_hybrid"
+TASK034_WORKSTATION_MPI_SIZES = frozenset(
+    {1, 2, 4, 8, 16, 32}
+)
 CONTROLLED_PHYSICAL_GATE_FAILURES = frozenset(
     {
         "sampled_interface_h_t_relative_l2_le_1e-2",
@@ -237,7 +241,7 @@ def _external_watchdog_pass(payload: Mapping[str, Any]) -> bool:
         and payload.get("memory_authority_pass") is True
         and nested_gates_pass
         and _candidate_pool_is_exactly_twice_retained(payload)
-        and _command_mpi_size(payload.get("command")) == 4
+        and _watchdog_mpi_contract_pass(payload, launch_gate)
     )
     if measured_pass:
         return True
@@ -255,6 +259,28 @@ def _command_mpi_size(command: Any) -> int | None:
         return int(values[values.index("-n") + 1])
     except (ValueError, IndexError):
         return None
+
+
+def _watchdog_mpi_contract_pass(
+    payload: Mapping[str, Any],
+    launch_gate: Mapping[str, Any],
+) -> bool:
+    mpi_size = _command_mpi_size(payload.get("command"))
+    if launch_gate.get("scope") != TASK034_WORKSTATION_HYBRID_SCOPE:
+        return mpi_size == 4
+
+    available_cores = launch_gate.get("available_physical_core_count")
+    checks = launch_gate.get("checks")
+    checks = checks if isinstance(checks, Mapping) else {}
+    return bool(
+        mpi_size in TASK034_WORKSTATION_MPI_SIZES
+        and launch_gate.get("mpi_size") == mpi_size
+        and type(available_cores) is int
+        and available_cores >= mpi_size
+        and checks.get("physical_core_inventory_readable") is True
+        and checks.get("requested_mpi_size_supported") is True
+        and checks.get("requested_mpi_size_does_not_oversubscribe") is True
+    )
 
 
 def _controlled_physical_truncation_negative(
@@ -306,7 +332,7 @@ def _controlled_physical_truncation_negative(
         and source_gate.get("pass") is True
         and launch_gate.get("pass") is True
         and _candidate_pool_is_exactly_twice_retained(payload)
-        and _command_mpi_size(payload.get("command")) == 4
+        and _watchdog_mpi_contract_pass(payload, launch_gate)
         and measurements.get("status") == "physical_integration_failed"
         and qualification.get("integration_pass") is False
         and qualification.get("algebraic_chain_pass") is True
@@ -359,7 +385,7 @@ def _controlled_modal_basis_capacity_negative(
         and resource_gate.get("pass") is True
         and source_gate.get("pass") is True
         and launch_gate.get("pass") is True
-        and _command_mpi_size(payload.get("command")) == 4
+        and _watchdog_mpi_contract_pass(payload, launch_gate)
         and _candidate_pool_is_exactly_twice_retained(payload)
         and case.get("degree") == 1
         and _finite(case.get("h_nm")) == 5.0
