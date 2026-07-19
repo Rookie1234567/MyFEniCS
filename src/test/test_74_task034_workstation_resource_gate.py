@@ -697,6 +697,49 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             p2_h1_args.task034_workstation_resource_anchor,
             Path("p2_h1_assembly.json"),
         )
+        p3_h2_args = _parse_args(
+            [
+                "--target", "hybrid",
+                "--case-label", "task034_p3_h2_s_m160_mpi8",
+                "--degree", "3",
+                "--h-nm", "2",
+                "--mpi-size", "8",
+                "--requested-modes", "160",
+                "--candidate-modes", "320",
+                "--task034-workstation-resource-anchor", "p3_h2_assembly.json",
+                "--high-order-core-evidence-file", "core.json",
+                "--high-order-core-evidence-sha256", "c" * 64,
+                "--verified-clean-sha", "d" * 40,
+                "--host-environment-id", "WSL2-Ubuntu-24.04",
+                "--task034-workstation-gate",
+                "--task034-workstation-resource-authority-sha256",
+                self.authority_sha,
+            ]
+        )
+        self.assertIsNone(p3_h2_args.full3d_reference)
+        self.assertEqual(p3_h2_args.requested_modes, 160)
+        self.assertEqual(
+            p3_h2_args.task034_workstation_resource_anchor,
+            Path("p3_h2_assembly.json"),
+        )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target", "hybrid",
+                    "--case-label", "task034_p3_h2_s_m120_mpi8_rejected",
+                    "--degree", "3",
+                    "--h-nm", "2",
+                    "--mpi-size", "8",
+                    "--requested-modes", "120",
+                    "--candidate-modes", "240",
+                    "--task034-workstation-resource-anchor", "p3_h2_assembly.json",
+                    "--verified-clean-sha", "d" * 40,
+                    "--host-environment-id", "WSL2-Ubuntu-24.04",
+                    "--task034-workstation-gate",
+                    "--task034-workstation-resource-authority-sha256",
+                    self.authority_sha,
+                ]
+            )
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
