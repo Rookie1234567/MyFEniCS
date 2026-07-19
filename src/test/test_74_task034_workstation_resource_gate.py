@@ -91,6 +91,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.p2_h1_anchor_sha = self.p2_h1_entry["assembly_resource_anchor"][
             "watchdog_record_sha256"
         ]
+        self.p3_h2_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p3_h2_s"
+        )
+        self.p3_h2_anchor_sha = self.p3_h2_entry["assembly_resource_anchor"][
+            "watchdog_record_sha256"
+        ]
 
     def _gate(self, **overrides):
         kwargs = {
@@ -250,6 +258,46 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.assertFalse(mpi16["pass"])
         self.assertIn(
             "user_approved_p2_h1_added_point_scope", mpi16["failures"]
+        )
+
+    def test_explicit_workstation_gate_narrowly_authorizes_p3_h2(self) -> None:
+        gate = self._gate(
+            degree=3,
+            h_nm=2.0,
+            mpi_size=8,
+            requested_modes=160,
+            candidate_modes=320,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p3_h2_anchor_sha,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(gate["matrix_key"], "phase_f_p3_h2_s")
+        self.assertEqual(gate["resource_anchor_kind"], "assembly_calibration")
+        m120 = self._gate(
+            degree=3,
+            h_nm=2.0,
+            mpi_size=8,
+            requested_modes=120,
+            candidate_modes=240,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p3_h2_anchor_sha,
+        )
+        self.assertFalse(m120["pass"])
+        self.assertIn(
+            "user_approved_p3_h2_added_point_scope", m120["failures"]
+        )
+        mpi16 = self._gate(
+            degree=3,
+            h_nm=2.0,
+            mpi_size=16,
+            requested_modes=160,
+            candidate_modes=320,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p3_h2_anchor_sha,
+        )
+        self.assertFalse(mpi16["pass"])
+        self.assertIn(
+            "user_approved_p3_h2_added_point_scope", mpi16["failures"]
         )
 
     def test_explicit_workstation_gate_passes_p4_post_e3_reference(self) -> None:
