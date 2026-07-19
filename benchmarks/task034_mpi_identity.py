@@ -136,6 +136,10 @@ def _compare_orders(
         amp_b = _complex(b.get("outgoing_amplitude_at_boundary"))
         beta_a = _complex(a.get("beta_per_nm"))
         beta_b = _complex(b.get("beta_per_nm"))
+        if beta_a is None:
+            beta_a = _complex(a.get("beta"))
+        if beta_b is None:
+            beta_b = _complex(b.get("beta"))
         if None in (power_a, power_b, amp_a, amp_b, beta_a, beta_b):
             keys_equal = False
             continue

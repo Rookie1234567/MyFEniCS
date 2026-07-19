@@ -160,6 +160,26 @@ class Task034MPIIdentityTests(unittest.TestCase):
             )
             self.assertEqual(failed["status"], "not_qualified")
 
+    def test_full3d_identity_accepts_native_beta_order_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as directory_value:
+            directory = Path(directory_value)
+            records = [self._full3d(directory, size) for size in (1, 8, 16)]
+            for record in records:
+                run_dir = Path(record["raw_evidence"]["run_directory"])
+                order_path = run_dir / record["solver_summary"][
+                    "dtn_port_orders_json"
+                ]
+                payload = json.loads(order_path.read_text(encoding="utf-8"))
+                for order in payload["orders"]:
+                    order["beta"] = order.pop("beta_per_nm")
+                order_path.write_text(
+                    json.dumps(payload), encoding="utf-8"
+                )
+            result = build_mpi_identity(
+                records, method="full3d", physical_core_count=48
+            )
+            self.assertEqual(result["status"], "qualified", result["failures"])
+
     def test_hybrid_identity_requires_funnel_and_detects_order_drift(self) -> None:
         records = [self._hybrid(size) for size in (1, 8, 16)]
         funnel = {
