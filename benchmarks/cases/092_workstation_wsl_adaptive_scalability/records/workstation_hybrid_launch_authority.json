@@ -33,33 +33,43 @@
         "old_launch_decision": "not_run_by_memory_gate"
       },
       "full3d_reference": {
-        "role": "current_wsl_measured_independent_resource_anchor",
-        "source_sha": "685c9a7e8cd9499070e5d1abb11957f6014444e7",
-        "watchdog_record_path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_full_mpi4.json",
-        "watchdog_record_sha256": "75e4d2c41aabc2b33352e7f8873e0aabb4764055736e527fce0de673e033ac37",
-        "descriptor_path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_full_reference_descriptor.json",
-        "descriptor_sha256": "128e4ed549999ebac82eb47005395ae58ab135e9b491208b3f1a1274b5c548f2",
+        "role": "phase_f_native_full3d_watchdog_reference_and_resource_anchor",
+        "source_sha": "3a1bc99c469b5ac053ddaf53c68ebba63ace9632",
+        "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_full_mpi8_3a1bc99_s.json",
+        "watchdog_record_sha256": "2c1ec18a3877a4452f7ac52cd411df0a4785204b811dc52e466e1f7c91ea393a",
+        "descriptor_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_full_mpi8_3a1bc99_s.json",
+        "descriptor_sha256": "2c1ec18a3877a4452f7ac52cd411df0a4785204b811dc52e466e1f7c91ea393a",
+        "reference_input_kind": "native_watchdog_record_normalized_in_memory",
+        "derived_descriptor_written": false,
         "status": "full3d_reference_pass",
         "qualification_pass": true,
         "no_swap": true,
-        "peak_memory_gib": 39.121944427490234,
-        "true_relative_residual": 6.966814910907363e-11,
+        "peak_memory_gib": 44.06867218017578,
+        "true_relative_residual": 8.489277332587551e-11,
         "exact_rows": 656405,
         "exact_assembled_nnz": 157785425,
-        "factor_nnz": 1286075117,
-        "elapsed_seconds": 2281.125368380999
+        "factor_nnz": 1307605045,
+        "elapsed_seconds": 1726.3617402129894
+      },
+      "staged_resource_evidence": {
+        "assembly_record_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_assembly_mpi8_3a1bc99_s.json",
+        "assembly_record_sha256": "80d397e8f1878315b00858f3368e400cdd30bffa34200613bf1ed9f22fad41cb",
+        "assembly_peak_memory_gib": 19.749343872070312,
+        "factorization_record_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_factorization_mpi8_3a1bc99_s.json",
+        "factorization_record_sha256": "1cc4e443ab3be4392e85f2bff5864a4d870521fe7fbda3e99434763e3256d3f1",
+        "factorization_peak_memory_gib": 43.76607894897461
       },
       "workstation_prediction": {
-        "method": "max(historical Hybrid upper, 1.5 * measured same-p/h Full-3D peak)",
+        "method": "1.5 * max(measured same-p/h factorization peak, measured same-p/h Full-3D peak)",
         "centers_gib": {
-          "historical_task033_hybrid_factor_center": 36.48178470434126,
-          "measured_same_ph_full3d_peak": 39.121944427490234
+          "measured_same_ph_factorization_peak": 43.76607894897461,
+          "measured_same_ph_full3d_peak": 44.06867218017578
         },
-        "conservative_upper_gib": 58.68291664123535,
+        "conservative_upper_gib": 66.10300827026367,
         "measured_full3d_multiplier": 1.5,
         "task033_old_model_is_launch_authority": false,
         "limitations": [
-          "Authorizes only a guarded launch, not a physical result.",
+          "Authorizes only a guarded p3/h3 Hybrid shard launch, not a physical result.",
           "Hybrid memory remains measured by the live process-tree/cgroup watchdog.",
           "M240 additionally requires formal M160 nonconvergence evidence."
         ]

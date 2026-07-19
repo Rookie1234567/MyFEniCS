@@ -531,11 +531,16 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             )
 
     def test_reference_source_compatibility_audit_is_fail_closed(self) -> None:
+        p3_reference_sha = next(
+            entry["full3d_reference"]["source_sha"]
+            for entry in self.authority["entries"]
+            if entry["degree"] == 3 and entry["h_nm"] == 3.0
+        )
         exact = _task034_authority_source_compatibility(
             self.authority,
             degree=3,
             h_nm=3.0,
-            current_source_sha="685c9a7e8cd9499070e5d1abb11957f6014444e7",
+            current_source_sha=p3_reference_sha,
         )
         self.assertTrue(exact["pass"], exact["failures"])
         p4_exact = _task034_authority_source_compatibility(
