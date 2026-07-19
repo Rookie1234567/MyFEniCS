@@ -45,6 +45,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.p4_reference_sha = self.authority["entries"][1][
             "full3d_reference"
         ]["descriptor_sha256"]
+        self.p2_h5_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p2_h5_s"
+        )
+        self.p2_h5_reference_sha = self.p2_h5_entry["full3d_reference"][
+            "descriptor_sha256"
+        ]
 
     def _gate(self, **overrides):
         kwargs = {
@@ -132,6 +140,23 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.assertFalse(both["pass"])
         self.assertIn(
             "measured_resource_anchor_kind_supported", both["failures"]
+        )
+
+    def test_explicit_workstation_gate_passes_phase_f_p2_h5_mpi8(self) -> None:
+        gate = self._gate(
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            full3d_reference_sha256=self.p2_h5_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(gate["matrix_key"], "phase_f_p2_h5_s")
+        self.assertEqual(gate["resource_anchor_kind"], "full3d_reference")
+        self.assertFalse(
+            self.p2_h5_entry["full3d_reference"][
+                "derived_descriptor_written"
+            ]
         )
 
     def test_gate_fails_closed_on_hash_threshold_and_old_model_override(self) -> None:
@@ -452,6 +477,15 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             current_source_sha="4e1143f9a1e91ff703e871fcb74e5f6703223a82",
         )
         self.assertTrue(p4_exact["pass"], p4_exact["failures"])
+        p2_exact = _task034_authority_source_compatibility(
+            self.authority,
+            degree=2,
+            h_nm=5.0,
+            current_source_sha=(
+                "6b30df2d445db42823139f57dd3960ec2aa7a116"
+            ),
+        )
+        self.assertTrue(p2_exact["pass"], p2_exact["failures"])
         missing = _task034_authority_source_compatibility(
             {}, degree=3, h_nm=3.0, current_source_sha="a" * 40
         )
