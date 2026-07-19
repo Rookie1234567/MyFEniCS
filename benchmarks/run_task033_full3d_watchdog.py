@@ -79,9 +79,7 @@ def _resource_snapshot() -> dict[str, Any]:
     return {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "cgroup_path": cgroup.get("path"),
-        "cgroup_is_dedicated_job_authority": cgroup.get(
-            "dedicated_job_cgroup", False
-        ),
+        "cgroup_is_dedicated_job_authority": cgroup.get("dedicated_job_cgroup", False),
         "cgroup_memory_max_bytes": memory_max,
         "cgroup_memory_max_state": (
             "finite" if isinstance(memory_max, int) else "unbounded_or_unreadable"
@@ -122,6 +120,8 @@ def _full3d_config(args: argparse.Namespace):
     factorization_only = args.run_kind == "factorization-only"
     return replace(
         cfg,
+        polarization_kind=args.polarization_kind,
+        custom_polarization=None,
         petsc_direct_solver_profile=args.profile,
         matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
         matrix_diagnostics_factorization_only=factorization_only,
@@ -155,6 +155,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=float,
         choices=(10.0, 7.5, 5.0, 3.0, 2.0),
         default=5.0,
+    )
+    parser.add_argument(
+        "--polarization-kind",
+        choices=("s", "p"),
+        default="s",
     )
     parser.add_argument(
         "--run-kind",
@@ -262,25 +267,16 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
     trace_gates = trace_record.get("gates") or {}
     trace_checks = {
         "record_type": (
-            trace_record.get("record_type")
-            == "p4_four_mode_matched_trace_aggregate"
+            trace_record.get("record_type") == "p4_four_mode_matched_trace_aggregate"
         ),
-        "status": (
-            trace_record.get("status") == "p4_four_mode_matched_trace_pass"
-        ),
-        "four_mode_trace_pass": (
-            trace_gates.get("p4_four_mode_matched_trace") is True
-        ),
-        "mpi_identity_pass": (
-            trace_gates.get("mpi1_mpi4_compact_identity") is True
-        ),
+        "status": (trace_record.get("status") == "p4_four_mode_matched_trace_pass"),
+        "four_mode_trace_pass": (trace_gates.get("p4_four_mode_matched_trace") is True),
+        "mpi_identity_pass": (trace_gates.get("mpi1_mpi4_compact_identity") is True),
         "same_current_source": (
             trace_record.get("source_commit_sha") == args.verified_clean_sha
         ),
     }
-    trace_failures = [
-        name for name, passed in trace_checks.items() if not passed
-    ]
+    trace_failures = [name for name, passed in trace_checks.items() if not passed]
     if trace_failures:
         raise SystemExit(
             f"p4 is locked; failed four-mode trace gates: {trace_failures}"
@@ -303,17 +299,13 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
 def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     def maximum(name: str) -> float | None:
         values = [
-            float(row[name])
-            for row in rows
-            if isinstance(row.get(name), (int, float))
+            float(row[name]) for row in rows if isinstance(row.get(name), (int, float))
         ]
         return max(values) if values else None
 
     def delta(name: str) -> int | None:
         values = [
-            int(row[name])
-            for row in rows
-            if isinstance(row.get(name), (int, float))
+            int(row[name]) for row in rows if isinstance(row.get(name), (int, float))
         ]
         return max(values) - min(values) if values else None
 
@@ -362,9 +354,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "combined_memory_swap_authority_mb": combined_authority_mb,
         "combined_memory_swap_authority_gib": (
-            None
-            if combined_authority_mb is None
-            else combined_authority_mb / 1024.0
+            None if combined_authority_mb is None else combined_authority_mb / 1024.0
         ),
         "max_observed_worker_rank_count": (
             max(worker_rank_counts) if worker_rank_counts else 0
@@ -431,6 +421,9 @@ def _qualify(
             isinstance(matrix.get("matrix_nnz_used"), (int, float))
             and float(matrix["matrix_nnz_used"]) > 0.0
         ),
+        "polarization_identity": (
+            solver_summary.get("polarization_kind") == args.polarization_kind
+        ),
     }
     if args.run_kind == "assembly-only":
         checks = {
@@ -450,21 +443,17 @@ def _qualify(
         checks = {
             **common,
             "diagnostic_factorization_only_status": (
-                solver_summary.get("case_status")
-                == "diagnostic_factorization_only"
+                solver_summary.get("case_status") == "diagnostic_factorization_only"
             ),
             "assemble_only_false": (
                 solver_summary.get("matrix_diagnostics_assemble_only") is False
             ),
             "factorization_only_flag": (
-                solver_summary.get("matrix_diagnostics_factorization_only")
-                is True
+                solver_summary.get("matrix_diagnostics_factorization_only") is True
             ),
             "factorization_stage_seen": _factorization_stage_seen(events),
             "solve_stage_not_seen": not _solve_stage_seen(events),
-            "factor_inventory_recorded": isinstance(
-                factor_inventory, dict
-            ),
+            "factor_inventory_recorded": isinstance(factor_inventory, dict),
             "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
             "official_result_false": solver_summary.get("official_result") is False,
             "no_swap": no_swap,
@@ -479,8 +468,7 @@ def _qualify(
                 solver_summary.get("matrix_diagnostics_assemble_only") is False
             ),
             "factorization_only_false": (
-                solver_summary.get("matrix_diagnostics_factorization_only")
-                is False
+                solver_summary.get("matrix_diagnostics_factorization_only") is False
             ),
             "ksp_converged": solver_summary.get("ksp_converged") is True,
             "true_residual_le_1e-9": (
@@ -535,7 +523,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     run_dir = (
         args.run_dir
         or args.artifact_root
-        / f"p{args.degree}_h{args.h_nm:g}_{args.run_kind}_mpi{args.mpi_size}_{timestamp}"
+        / f"p{args.degree}_h{args.h_nm:g}_pol{args.polarization_kind}_{args.run_kind}_mpi{args.mpi_size}_{timestamp}"
     ).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
@@ -554,6 +542,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         str(args.degree),
         "--h-nm",
         str(args.h_nm),
+        "--polarization-kind",
+        args.polarization_kind,
         "--run-kind",
         args.run_kind,
         "--profile",
@@ -607,7 +597,10 @@ def _run_parent(args: argparse.Namespace) -> int:
             authority_readable = all(
                 isinstance(value, (int, float))
                 for value in (
-                    process_tree_mb, process_tree_swap_mb, cgroup_mb, cgroup_swap_mb
+                    process_tree_mb,
+                    process_tree_swap_mb,
+                    cgroup_mb,
+                    cgroup_swap_mb,
                 )
             )
             authority_gib = (
@@ -698,6 +691,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "status": status,
         "degree": args.degree,
         "h_nm": args.h_nm,
+        "polarization_kind": args.polarization_kind,
         "run_kind": args.run_kind,
         "mpi_size": args.mpi_size,
         "profile": args.profile,
@@ -730,28 +724,18 @@ def _run_parent(args: argparse.Namespace) -> int:
         "warning_triggered": warning_triggered,
         "terminated_for_memory": terminated_for_memory,
         "terminated_for_timeout": terminated_for_timeout,
-        "terminated_for_authority_unreadable": (
-            terminated_for_authority_unreadable
-        ),
+        "terminated_for_authority_unreadable": (terminated_for_authority_unreadable),
         "no_swap": no_swap,
         "resource_authority": sampler,
         "calibration": {
             "exact_rows": matrix.get("matrix_rows"),
             "exact_assembled_nnz": matrix.get("matrix_nnz_used"),
             "matrix_petsc_memory_bytes": matrix.get("matrix_memory_bytes"),
-            "matrix_payload_estimate_bytes": matrix.get(
-                "matrix_memory_estimate_bytes"
-            ),
+            "matrix_payload_estimate_bytes": matrix.get("matrix_memory_estimate_bytes"),
             "num_nedelec_dofs": solver_summary.get("num_nedelec_dofs"),
-            "num_auxiliary_dofs": solver_summary.get(
-                "stage4_dtn_num_auxiliary_dofs"
-            ),
-            "floquet_constraint_rows": solver_summary.get(
-                "floquet_num_constraints"
-            ),
-            "floquet_constraint_raw_map_nnz": solver_summary.get(
-                "floquet_raw_map_nnz"
-            ),
+            "num_auxiliary_dofs": solver_summary.get("stage4_dtn_num_auxiliary_dofs"),
+            "floquet_constraint_rows": solver_summary.get("floquet_num_constraints"),
+            "floquet_constraint_raw_map_nnz": solver_summary.get("floquet_raw_map_nnz"),
             "floquet_constraint_timings_seconds": solver_summary.get(
                 "floquet_constraint_timings_seconds"
             ),
@@ -772,9 +756,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "stage4_dtn_augmented_matrix_stats_after_finalize"
             ),
             "final": matrix,
-            "constraint_transform": solver_summary.get(
-                "constraint_matrix_transform"
-            ),
+            "constraint_transform": solver_summary.get("constraint_matrix_transform"),
         },
         "timings_seconds": solver_summary.get("timings_seconds"),
         "historical_peak_upper_bound_mb": _historical_peak_upper_bound(
@@ -808,6 +790,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "status": status,
                 "degree": args.degree,
                 "h_nm": args.h_nm,
+                "polarization_kind": args.polarization_kind,
                 "run_kind": args.run_kind,
                 "memory_authority_gib": sampler["memory_authority_gib"],
                 "combined_memory_swap_authority_gib": sampler[

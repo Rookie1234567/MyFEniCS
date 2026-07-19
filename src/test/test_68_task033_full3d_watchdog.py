@@ -8,6 +8,7 @@ import unittest
 
 from benchmarks.run_task033_full3d_watchdog import (
     _factorization_stage_seen,
+    _full3d_config,
     _parse_args,
     _qualify,
     _solve_stage_seen,
@@ -26,6 +27,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             "matrix_diagnostics_assemble_only": True,
             "matrix_stats": {"matrix_rows": 10, "matrix_nnz_used": 20},
             "ksp_iterations": 0,
+            "polarization_kind": "s",
         }
         result = _qualify(
             args=args,
@@ -68,6 +70,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             "ksp_converged": True,
             "linear_system_relative_residual": 1.0e-12,
             "full3d_reference_exported": True,
+            "polarization_kind": "s",
         }
         result = _qualify(
             args=args,
@@ -105,6 +108,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             "matrix_stats": {"matrix_rows": 10, "matrix_nnz_used": 20},
             "ksp_iterations": 0,
             "stage4_dtn_factor_inventory": {"factor_solver_type": "mumps"},
+            "polarization_kind": "s",
         }
         events = [
             {"stage": "before_ksp_setup"},
@@ -152,9 +156,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             trace_path.write_text(
                 json.dumps(
                     {
-                        "record_type": (
-                            "p4_four_mode_matched_trace_aggregate"
-                        ),
+                        "record_type": ("p4_four_mode_matched_trace_aggregate"),
                         "status": "p4_four_mode_matched_trace_pass",
                         "source_commit_sha": source_sha,
                         "gates": {
@@ -199,9 +201,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
                 self.assertTrue(_factorization_stage_seen([{"stage": stage}]))
 
     def test_solve_stage_detection_is_fail_closed(self) -> None:
-        self.assertFalse(
-            _solve_stage_seen([{"stage": "after_ksp_setup_factorized"}])
-        )
+        self.assertFalse(_solve_stage_seen([{"stage": "after_ksp_setup_factorized"}]))
         for stage in (
             "stage4_dtn_augmented_solve",
             "before_ksp_solve",
@@ -225,6 +225,30 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             _parse_args(["--degree", "4", "--h-nm", "3"])
 
+    def test_explicit_p_polarization_reaches_full3d_config(self) -> None:
+        args = self._args("--polarization-kind", "p")
+        self.assertEqual(args.polarization_kind, "p")
+        cfg = _full3d_config(args)
+        self.assertEqual(cfg.polarization_kind, "p")
+        self.assertIsNone(cfg.custom_polarization)
+
+        summary = {
+            "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": 1},
+            "polarization_kind": "s",
+        }
+        result = _qualify(
+            args=args,
+            solver_summary=summary,
+            events=[],
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            terminated_for_authority_unreadable=False,
+            no_swap=True,
+            observed_worker_rank_count=4,
+        )
+        self.assertIn("polarization_identity", result["failures"])
+
     def test_task034_fixed_geometry_candidate_matrix(self) -> None:
         allowed = {
             2: ("5", "3", "2"),
@@ -234,17 +258,13 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
         for degree, h_values in allowed.items():
             for h_nm in h_values:
                 with self.subTest(degree=degree, h_nm=h_nm):
-                    args = _parse_args(
-                        ["--degree", str(degree), "--h-nm", h_nm]
-                    )
+                    args = _parse_args(["--degree", str(degree), "--h-nm", h_nm])
                     self.assertEqual(args.degree, degree)
                     self.assertEqual(args.h_nm, float(h_nm))
         for degree, h_nm in ((2, "10"), (3, "2"), (4, "3"), (4, "2")):
             with self.subTest(rejected_degree=degree, rejected_h_nm=h_nm):
                 with self.assertRaises(SystemExit):
-                    _parse_args(
-                        ["--degree", str(degree), "--h-nm", h_nm]
-                    )
+                    _parse_args(["--degree", str(degree), "--h-nm", h_nm])
 
 
 if __name__ == "__main__":
