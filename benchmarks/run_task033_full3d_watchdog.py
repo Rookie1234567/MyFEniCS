@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import math
 import json
 import os
 import subprocess
@@ -204,6 +205,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task034-p4-h3-added-point",
+        action="store_true",
+        help=(
+            "Explicit Task034 user-added p4/h3 path. It retains the same-h "
+            "p3 full-solve and current-SHA p4 trace prerequisites, but uses "
+            "the live Task034 warning threshold instead of Task033's fixed "
+            "10 GiB p3 cap."
+        ),
+    )
+    parser.add_argument(
         "--verified-clean-sha",
         default=os.environ.get("TASK033_VERIFIED_CLEAN_SHA"),
     )
@@ -219,6 +230,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"Task034 p{args.degree}/h{args.h_nm:g} is outside the "
             "fixed-geometry candidate matrix."
         )
+    if args.task034_p4_h3_added_point and not (
+        args.degree == 4 and math.isclose(args.h_nm, 3.0)
+    ):
+        parser.error("--task034-p4-h3-added-point is restricted to p4/h3.")
     return args
 
 
@@ -239,16 +254,24 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
     except (OSError, json.JSONDecodeError) as exc:
         raise SystemExit(f"p4 is locked: cannot read p3 gate record: {exc}") from exc
     resource = record.get("resource_authority") or {}
+    memory = resource.get("memory_authority_gib")
+    workstation_h3 = bool(args.task034_p4_h3_added_point)
+    memory_threshold_gib = (
+        float(args.warning_gib)
+        if workstation_h3 and isinstance(args.warning_gib, (int, float))
+        else 10.0
+    )
+    memory_gate_name = (
+        "memory_below_live_task034_warning" if workstation_h3 else "memory_below_10_gib"
+    )
     checks = {
         "p3_degree": record.get("degree") == 3,
         "same_h": float(record.get("h_nm", -1.0)) == args.h_nm,
         "full_solve": record.get("run_kind") == "full-solve",
         "reference_pass": record.get("status") == "full3d_reference_pass",
         "no_swap": record.get("no_swap") is True,
-        "memory_below_10_gib": (
-            isinstance(resource.get("memory_authority_gib"), (int, float))
-            and float(resource["memory_authority_gib"]) < 10.0
-        ),
+        memory_gate_name: isinstance(memory, (int, float))
+        and float(memory) < memory_threshold_gib,
     }
     failures = [name for name, passed in checks.items() if not passed]
     if failures:
@@ -292,6 +315,8 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
             "sha256": _sha256(trace_path),
             "checks": trace_checks,
         },
+        "task034_p4_h3_added_point": workstation_h3,
+        "p3_memory_threshold_gib": memory_threshold_gib,
         "pass": True,
     }
 

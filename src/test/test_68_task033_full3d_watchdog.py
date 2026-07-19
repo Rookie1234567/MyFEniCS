@@ -185,6 +185,69 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 _validate_p4_gate(args)
 
+    def test_task034_p4_h3_uses_live_warning_without_relaxing_task033(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "p3_h3.json"
+            trace_path = Path(directory) / "p4_trace.json"
+            source_sha = "b" * 40
+            path.write_text(
+                json.dumps(
+                    {
+                        "degree": 3,
+                        "h_nm": 3.0,
+                        "run_kind": "full-solve",
+                        "status": "full3d_reference_pass",
+                        "no_swap": True,
+                        "resource_authority": {"memory_authority_gib": 44.0},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            trace_path.write_text(
+                json.dumps(
+                    {
+                        "record_type": "p4_four_mode_matched_trace_aggregate",
+                        "status": "p4_four_mode_matched_trace_pass",
+                        "source_commit_sha": source_sha,
+                        "gates": {
+                            "p4_four_mode_matched_trace": True,
+                            "mpi1_mpi4_compact_identity": True,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            legacy = _parse_args(
+                [
+                    "--degree", "4", "--h-nm", "3",
+                    "--p3-gate-record", str(path),
+                    "--p4-trace-record", str(trace_path),
+                    "--verified-clean-sha", source_sha,
+                    "--warning-gib", "155",
+                ]
+            )
+            with self.assertRaises(SystemExit):
+                _validate_p4_gate(legacy)
+            workstation = _parse_args(
+                [
+                    "--degree", "4", "--h-nm", "3",
+                    "--p3-gate-record", str(path),
+                    "--p4-trace-record", str(trace_path),
+                    "--verified-clean-sha", source_sha,
+                    "--warning-gib", "155",
+                    "--task034-p4-h3-added-point",
+                ]
+            )
+            gate = _validate_p4_gate(workstation)
+            self.assertTrue(gate["pass"])
+            self.assertTrue(gate["task034_p4_h3_added_point"])
+            self.assertEqual(gate["p3_memory_threshold_gib"], 155.0)
+            with self.assertRaises(SystemExit):
+                _parse_args(
+                    ["--degree", "4", "--h-nm", "5",
+                     "--task034-p4-h3-added-point"]
+                )
+
     def test_factorization_stage_detection_is_fail_closed(self) -> None:
         self.assertFalse(
             _factorization_stage_seen(
