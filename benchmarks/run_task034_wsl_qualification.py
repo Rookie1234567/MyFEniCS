@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import importlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -23,6 +25,7 @@ REQUIRED_IMPORTS = (
     "mpi4py", "petsc4py", "slepc4py", "dolfinx", "dolfinx_mpc",
     "basix", "ufl", "gmsh", "numpy", "scipy",
 )
+DEFAULT_MPI_SIZES = (1, 2, 4)
 AUDIT_COMMANDS = (
     ("uname", "-a"),
     ("cat", "/etc/os-release"),
@@ -154,8 +157,232 @@ def _mumps_probe() -> dict[str, Any]:
         matrix.destroy()
 
 
-def _rank_probe() -> int:
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _rank_library_identity() -> dict[str, Any]:
+    module_names = (
+        "mpi4py.MPI",
+        "petsc4py.PETSc",
+        "slepc4py.SLEPc",
+        "dolfinx.cpp",
+        "dolfinx_mpc.cpp",
+    )
+    libraries: dict[str, Any] = {}
+    failures: list[str] = []
+    relevant_tokens = (
+        "libmpi",
+        "libpetsc",
+        "libslepc",
+        "libdolfinx",
+        "libdolfinx_mpc",
+    )
+    for name in module_names:
+        try:
+            module = importlib.import_module(name)
+            path = Path(module.__file__).resolve()
+            completed = subprocess.run(
+                ["ldd", str(path)],
+                text=True,
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+            linked = sorted(
+                line.strip().rsplit(" (0x", 1)[0]
+                for line in completed.stdout.splitlines()
+                if any(token in line for token in relevant_tokens)
+            )
+            entry = {
+                "path": str(path),
+                "sha256": _file_sha256(path),
+                "ldd_return_code": completed.returncode,
+                "linked_relevant_libraries": linked,
+            }
+            libraries[name] = entry
+            if (
+                not str(path).startswith("/")
+                or ":\\" in str(path)
+                or completed.returncode != 0
+                or not linked
+            ):
+                failures.append(name)
+        except Exception as exc:
+            failures.append(name)
+            libraries[name] = {"error": f"{type(exc).__name__}: {exc}"}
+    signature_payload = json.dumps(
+        libraries,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return {
+        "pass": not failures,
+        "libraries": libraries,
+        "signature_sha256": hashlib.sha256(signature_payload).hexdigest(),
+        "failures": failures,
+    }
+
+
+def _distributed_diagonal_matrix(
+    dimension: int,
+    *,
+    diagonal: Any,
+) -> PETSc.Mat:
+    matrix = PETSc.Mat().createAIJ(
+        [dimension, dimension],
+        nnz=1,
+        comm=PETSc.COMM_WORLD,
+    )
+    first, last = matrix.getOwnershipRange()
+    for row in range(first, last):
+        value = diagonal(row)
+        if value != 0:
+            matrix.setValue(row, row, PETSc.ScalarType(value))
+    matrix.assemblyBegin()
+    matrix.assemblyEnd()
+    return matrix
+
+
+def _distributed_mumps_probe() -> dict[str, Any]:
+    communicator = MPI.COMM_WORLD
+    dimension = max(2 * communicator.size, 32)
+    matrix = _distributed_diagonal_matrix(
+        dimension,
+        diagonal=lambda row: 2.0 + row / dimension,
+    )
+    rhs = matrix.createVecRight()
+    solution = rhs.duplicate()
+    ksp = PETSc.KSP().create(comm=PETSc.COMM_WORLD)
+    try:
+        first, last = rhs.getOwnershipRange()
+        for row in range(first, last):
+            rhs.setValue(
+                row,
+                PETSc.ScalarType(2.0 + row / dimension),
+            )
+        rhs.assemblyBegin()
+        rhs.assemblyEnd()
+        ksp.setOperators(matrix)
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.getPC().setType(PETSc.PC.Type.LU)
+        ksp.getPC().setFactorSolverType("mumps")
+        ksp.setUp()
+        ksp.solve(rhs, solution)
+        values = solution.getArray(readonly=True)
+        local_error = (
+            float(np.max(np.abs(values - 1.0))) if len(values) else 0.0
+        )
+        error = communicator.allreduce(local_error, op=MPI.MAX)
+        solver_type = ksp.getPC().getFactorSolverType()
+        result = {
+            "pass": solver_type == "mumps" and error <= 1.0e-12,
+            "dimension": dimension,
+            "factor_solver_type": solver_type,
+            "solution_absolute_error_max": error,
+            "ksp_converged_reason": ksp.getConvergedReason(),
+            "ksp_iterations": ksp.getIterationNumber(),
+        }
+    except Exception as exc:
+        result = {
+            "pass": False,
+            "dimension": dimension,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    finally:
+        ksp.destroy()
+        solution.destroy()
+        rhs.destroy()
+        matrix.destroy()
+    return result
+
+
+def _distributed_pep_probe() -> dict[str, Any]:
+    communicator = MPI.COMM_WORLD
+    dimension = max(2 * communicator.size, 32)
+    a0 = _distributed_diagonal_matrix(
+        dimension,
+        diagonal=lambda row: -float((1.0 + row / dimension) ** 2),
+    )
+    a1 = _distributed_diagonal_matrix(
+        dimension,
+        diagonal=lambda row: 0.0,
+    )
+    a2 = _distributed_diagonal_matrix(
+        dimension,
+        diagonal=lambda row: 1.0,
+    )
+    pep = SLEPc.PEP().create(comm=PETSc.COMM_WORLD)
+    try:
+        pep.setOperators([a0, a1, a2])
+        pep.setProblemType(SLEPc.PEP.ProblemType.GENERAL)
+        pep.setType(SLEPc.PEP.Type.TOAR)
+        pep.setDimensions(nev=1)
+        pep.setWhichEigenpairs(SLEPc.PEP.Which.SMALLEST_MAGNITUDE)
+        pep.setTolerances(tol=1.0e-12, max_it=500)
+        pep.solve()
+        converged = pep.getConverged()
+        eigenvalue = (
+            complex(pep.getEigenpair(0))
+            if converged
+            else complex(math.nan)
+        )
+        relative_error = (
+            float(pep.computeError(0, SLEPc.PEP.ErrorType.RELATIVE))
+            if converged
+            else math.inf
+        )
+        root_error = min(abs(eigenvalue - 1.0), abs(eigenvalue + 1.0))
+        result = {
+            "pass": (
+                converged >= 1
+                and root_error <= 1.0e-8
+                and relative_error <= 1.0e-8
+            ),
+            "dimension": dimension,
+            "pep_type": pep.getType(),
+            "converged": converged,
+            "eigenvalue": [eigenvalue.real, eigenvalue.imag],
+            "expected_root_absolute_error": root_error,
+            "relative_error": relative_error,
+        }
+    except Exception as exc:
+        result = {
+            "pass": False,
+            "dimension": dimension,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    finally:
+        pep.destroy()
+        a2.destroy()
+        a1.destroy()
+        a0.destroy()
+    return result
+
+
+def _distributed_solver_microfixture() -> dict[str, Any]:
+    mumps = _distributed_mumps_probe()
+    pep = _distributed_pep_probe()
+    return {
+        "pass": mumps.get("pass") is True and pep.get("pass") is True,
+        "mumps": mumps,
+        "pep": pep,
+    }
+
+
+def _rank_probe(*, solver_microfixture: bool = False) -> int:
     imports, failures = _import_inventory()
+    library_identity = _rank_library_identity()
+    solver = (
+        _distributed_solver_microfixture()
+        if solver_microfixture
+        else None
+    )
     payload = {
         "rank": MPI.COMM_WORLD.rank,
         "size": MPI.COMM_WORLD.size,
@@ -169,16 +396,37 @@ def _rank_probe() -> int:
         "slepc_dir": os.environ.get("SLEPC_DIR"),
         "imports": imports,
         "import_failures": failures,
+        "rank_library_identity": library_identity,
+        "solver_microfixture_required": solver_microfixture,
+        "solver_microfixture": solver,
     }
-    print(json.dumps(payload, sort_keys=True), flush=True)
-    return 0 if not failures else 2
+    local_pass = (
+        not failures
+        and library_identity["pass"]
+        and (solver is None or solver["pass"])
+    )
+    passed = MPI.COMM_WORLD.allreduce(local_pass, op=MPI.LAND)
+    rows = MPI.COMM_WORLD.gather(payload, root=0)
+    if MPI.COMM_WORLD.rank == 0:
+        for row in rows:
+            print(json.dumps(row, sort_keys=True), flush=True)
+    return 0 if passed else 2
 
 
-def _mpi_probe(size: int) -> dict[str, Any]:
+def _mpi_probe(
+    size: int,
+    *,
+    solver_microfixture: bool = False,
+) -> dict[str, Any]:
+    command = [
+        "mpiexec", "-n", str(size), sys.executable, "-m",
+        "benchmarks.run_task034_wsl_qualification", "--rank-probe",
+    ]
+    if solver_microfixture:
+        command.append("--solver-microfixture")
     completed = subprocess.run(
-        ["mpiexec", "-n", str(size), sys.executable, "-m",
-         "benchmarks.run_task034_wsl_qualification", "--rank-probe"],
-        cwd=ROOT, text=True, capture_output=True, timeout=120, check=False,
+        command,
+        cwd=ROOT, text=True, capture_output=True, timeout=300, check=False,
         env={**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1",
              "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"},
     )
@@ -193,6 +441,7 @@ def _mpi_probe(size: int) -> dict[str, Any]:
         (row.get("python_executable"), row.get("mpi_library"),
          row.get("petsc_scalar_dtype"), row.get("petsc_int_bits"),
          row.get("petsc_dir"), row.get("slepc_dir"),
+         row.get("rank_library_identity", {}).get("signature_sha256"),
          row.get("imports", {}).get("dolfinx_mpc", {}).get("path"))
         for row in rows
     }
@@ -205,9 +454,18 @@ def _mpi_probe(size: int) -> dict[str, Any]:
         )
         for row in rows
     )
+    libraries_pass = all(
+        row.get("rank_library_identity", {}).get("pass") is True
+        for row in rows
+    )
+    solver_pass = all(
+        row.get("solver_microfixture", {}).get("pass") is True
+        for row in rows
+    ) if solver_microfixture else True
     passed = bool(
         completed.returncode == 0 and len(rows) == size and not parse_failures
-        and len(signatures) == 1 and no_windows_paths
+        and len(signatures) == 1 and no_windows_paths and libraries_pass
+        and solver_pass
         and {row.get("rank") for row in rows} == set(range(size))
     )
     return {
@@ -215,10 +473,95 @@ def _mpi_probe(size: int) -> dict[str, Any]:
         "rank_records": rows, "non_json_stdout": parse_failures,
         "stderr": completed.stderr, "single_abi_signature": len(signatures) == 1,
         "no_windows_paths": no_windows_paths,
+        "rank_library_identity_pass": libraries_pass,
+        "solver_microfixture_required": solver_microfixture,
+        "solver_microfixture_pass": solver_pass,
     }
 
 
-def build_record() -> dict[str, Any]:
+def _parse_required_probe_sizes(value: str) -> tuple[int, ...]:
+    try:
+        sizes = tuple(int(item) for item in value.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "MPI sizes must be comma-separated positive integers"
+        ) from exc
+    if not sizes or any(size <= 0 for size in sizes) or len(set(sizes)) != len(sizes):
+        raise argparse.ArgumentTypeError(
+            "MPI sizes must be unique positive integers"
+        )
+    return sizes
+
+
+def _parse_optional_probe_sizes(value: str) -> tuple[int, ...]:
+    return () if not value else _parse_required_probe_sizes(value)
+
+
+def _validate_probe_sizes(
+    mpi_sizes: tuple[int, ...],
+    distributed_solver_sizes: tuple[int, ...],
+    exploratory_mpi_sizes: tuple[int, ...],
+) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+    if not set(DEFAULT_MPI_SIZES).issubset(mpi_sizes):
+        raise ValueError("MPI1/MPI2/MPI4 baseline probes are required")
+    if not set(distributed_solver_sizes).issubset(mpi_sizes):
+        raise ValueError("distributed solver sizes must be requested MPI sizes")
+    if not set(exploratory_mpi_sizes).issubset(mpi_sizes):
+        raise ValueError("exploratory sizes must be requested MPI sizes")
+    if len(set(mpi_sizes)) != len(mpi_sizes):
+        raise ValueError("requested MPI sizes must be unique")
+    return mpi_sizes, distributed_solver_sizes, exploratory_mpi_sizes
+
+
+def _physical_core_inventory() -> dict[str, Any]:
+    allowed = (
+        set(os.sched_getaffinity(0))
+        if hasattr(os, "sched_getaffinity")
+        else set(range(os.cpu_count() or 0))
+    )
+    completed = subprocess.run(
+        ["lscpu", "-p=CPU,CORE,SOCKET,ONLINE"],
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    cores: set[tuple[int, int]] = set()
+    parse_failures: list[str] = []
+    for line in completed.stdout.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        try:
+            cpu, core, socket, online = line.split(",")
+            if int(cpu) in allowed and online.strip().lower() in {"y", "yes"}:
+                cores.add((int(socket), int(core)))
+        except (ValueError, TypeError):
+            parse_failures.append(line)
+    return {
+        "source": "lscpu -p=CPU,CORE,SOCKET,ONLINE intersect sched_getaffinity",
+        "lscpu_return_code": completed.returncode,
+        "allowed_logical_cpu_count": len(allowed),
+        "available_physical_core_count": len(cores),
+        "parse_failures": parse_failures,
+        "pass": completed.returncode == 0 and bool(cores) and not parse_failures,
+    }
+
+
+def build_record(
+    *,
+    mpi_sizes: tuple[int, ...] = DEFAULT_MPI_SIZES,
+    distributed_solver_sizes: tuple[int, ...] = (),
+    exploratory_mpi_sizes: tuple[int, ...] = (),
+) -> dict[str, Any]:
+    mpi_sizes, distributed_solver_sizes, exploratory_mpi_sizes = (
+        _validate_probe_sizes(
+            mpi_sizes,
+            distributed_solver_sizes,
+            exploratory_mpi_sizes,
+        )
+    )
+    head_before = _git("rev-parse", "HEAD")
+    status_before = _git("status", "--short", "--untracked-files=all")
     audit = [_run_command(command) for command in AUDIT_COMMANDS]
     imports, import_failures = _import_inventory()
     pep = SLEPc.PEP().create(comm=PETSc.COMM_SELF)
@@ -226,10 +569,18 @@ def build_record() -> dict[str, Any]:
     pep.destroy()
     mpc_abi = _dolfinx_mpc_abi_probe()
     mumps = _mumps_probe()
-    mpi = [_mpi_probe(size) for size in (1, 2, 4)]
+    mpi = [
+        _mpi_probe(
+            size,
+            solver_microfixture=size in distributed_solver_sizes,
+        )
+        for size in mpi_sizes
+    ]
     scalar_complex = np.dtype(PETSc.ScalarType) == np.dtype(np.complex128)
-    head = _git("rev-parse", "HEAD")
-    status = _git("status", "--short", "--untracked-files=all")
+    cores = _physical_core_inventory()
+    head_after = _git("rev-parse", "HEAD")
+    status_after = _git("status", "--short", "--untracked-files=all")
+    by_size = {item["mpi_size"]: item for item in mpi}
     checks = {
         "native_wsl_kernel": "microsoft" in platform.release().lower(),
         "docker_runtime_not_used": not Path("/.dockerenv").exists(),
@@ -239,21 +590,65 @@ def build_record() -> dict[str, Any]:
         "slepc_pep_created": pep_created,
         "dolfinx_mpc_complex_abi": mpc_abi.get("pass") is True,
         "mumps_selected_and_solved": mumps.get("pass") is True,
-        "mpi1_mpi2_mpi4_pass": all(item["pass"] for item in mpi),
+        "mpi1_mpi2_mpi4_pass": all(
+            by_size[size]["pass"] for size in DEFAULT_MPI_SIZES
+        ),
+        "all_requested_mpi_sizes_pass": all(item["pass"] for item in mpi),
+        "all_rank_library_identities_pass": all(
+            item["rank_library_identity_pass"] for item in mpi
+        ),
+        "requested_distributed_solver_microfixtures_pass": all(
+            by_size[size]["solver_microfixture_pass"]
+            for size in distributed_solver_sizes
+        ),
+        "mpi16_microfixture_pass_when_requested": (
+            16 not in mpi_sizes
+            or (
+                16 in distributed_solver_sizes
+                and by_size[16]["solver_microfixture_pass"]
+            )
+        ),
+        "mpi32_labeled_exploratory_when_requested": (
+            32 not in mpi_sizes or 32 in exploratory_mpi_sizes
+        ),
+        "physical_core_inventory_readable": cores["pass"],
+        "requested_mpi_sizes_do_not_oversubscribe": (
+            cores["pass"]
+            and max(mpi_sizes) <= cores["available_physical_core_count"]
+        ),
         "linux_paths_only": all(item["no_windows_paths"] for item in mpi),
         "single_mpi_abi_per_run": all(item["single_abi_signature"] for item in mpi),
         "tracked_activation_used": os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") == "1",
-        "source_clean_before_probe": status == "",
+        "source_clean_before_probe": status_before == "",
+        "source_stable_during_probe": head_before == head_after,
+        "source_clean_after_probe": status_after == "",
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {
-        "schema_version": "task034.wsl-environment-qualification.v1",
+        "schema_version": "task034.wsl-environment-qualification.v2",
         "record_type": "native_wsl_environment_qualification",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "status": "environment_gate_pass" if not failures else "environment_gate_fail",
         "formal_pass": not failures,
-        "source": {"head_sha": head, "status_before": status,
-                   "cleanliness": "git status --short --untracked-files=all"},
+        "source": {
+            "head_before_sha": head_before,
+            "head_after_sha": head_after,
+            "status_before": status_before,
+            "status_after": status_after,
+            "cleanliness": "git status --short --untracked-files=all",
+        },
+        "probe_scope": {
+            "requested_mpi_sizes": list(mpi_sizes),
+            "formal_mpi_sizes": [
+                size for size in mpi_sizes
+                if size not in exploratory_mpi_sizes
+            ],
+            "exploratory_mpi_sizes": list(exploratory_mpi_sizes),
+            "distributed_solver_microfixture_sizes": list(
+                distributed_solver_sizes
+            ),
+            "threads_per_rank": 1,
+        },
         "runtime": {"python": sys.executable, "python_version": sys.version,
                     "kernel": platform.release(), "platform": platform.platform(),
                     "petsc_scalar_dtype": str(np.dtype(PETSc.ScalarType)),
@@ -265,6 +660,7 @@ def build_record() -> dict[str, Any]:
         "dolfinx_mpc_abi": mpc_abi,
         "mumps": mumps,
         "mpi_probes": mpi,
+        "physical_core_inventory": cores,
         "audit_commands": audit,
         "checks": checks,
         "failures": failures,
@@ -278,9 +674,10 @@ def render_markdown(record: dict[str, Any]) -> str:
     lines = [
         "# Task034 WSL \u539f\u751f\u73af\u5883\u8d44\u683c\u5316", "",
         f"- \u72b6\u6001\uff1a`{record['status']}`",
-        f"- HEAD\uff1a`{record['source']['head_sha']}`",
+        f"- HEAD\uff1a`{record['source']['head_before_sha']}`",
         f"- Python\uff1a`{runtime['python']}` / `{runtime['python_version'].split()[0]}`",
         f"- PETSc scalar\uff1a`{runtime['petsc_scalar_dtype']}`\uff1bInt\uff1a`{runtime['petsc_int_bits']} bit`",
+        f"- \u53ef\u7528\u7269\u7406\u6838\uff1a`{record['physical_core_inventory']['available_physical_core_count']}`",
         "- \u8fd0\u884c\u8eab\u4efd\uff1aWSL2 Ubuntu \u539f\u751f\uff1bDocker \u672a\u53c2\u4e0e\u3002", "",
         "## Gate", "", "| \u68c0\u67e5 | \u7ed3\u679c |", "|---|---|",
     ]
@@ -289,11 +686,17 @@ def render_markdown(record: dict[str, Any]) -> str:
         for name, passed in record["checks"].items()
     )
     lines.extend([
-        "", "## MPI", "", "| ranks | \u7ed3\u679c | Python/ABI \u4e00\u81f4 |", "|---:|---|---|"
+        "", "## MPI", "",
+        "| ranks | \u8303\u56f4 | \u7ed3\u679c | Python/ABI \u4e00\u81f4 | MUMPS/PEP microfixture |",
+        "|---:|---|---|---|---|",
     ])
+    exploratory = set(record["probe_scope"]["exploratory_mpi_sizes"])
     lines.extend(
-        f"| {item['mpi_size']} | {'PASS' if item['pass'] else 'FAIL'} | "
-        f"{'\u662f' if item['single_abi_signature'] else '\u5426'} |"
+        f"| {item['mpi_size']} | "
+        f"{'exploratory' if item['mpi_size'] in exploratory else 'formal'} | "
+        f"{'PASS' if item['pass'] else 'FAIL'} | "
+        f"{'\u662f' if item['single_abi_signature'] else '\u5426'} | "
+        f"{('PASS' if item['solver_microfixture_pass'] else 'FAIL') if item['solver_microfixture_required'] else 'N/A'} |"
         for item in record["mpi_probes"]
     )
     lines.extend([
@@ -306,6 +709,22 @@ def render_markdown(record: dict[str, Any]) -> str:
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rank-probe", action="store_true")
+    parser.add_argument("--solver-microfixture", action="store_true")
+    parser.add_argument(
+        "--mpi-sizes",
+        type=_parse_required_probe_sizes,
+        default=DEFAULT_MPI_SIZES,
+    )
+    parser.add_argument(
+        "--distributed-solver-sizes",
+        type=_parse_optional_probe_sizes,
+        default=(),
+    )
+    parser.add_argument(
+        "--exploratory-mpi-sizes",
+        type=_parse_optional_probe_sizes,
+        default=(),
+    )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
     return parser.parse_args(argv)
@@ -314,8 +733,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     if args.rank_probe:
-        return _rank_probe()
-    record = build_record()
+        return _rank_probe(solver_microfixture=args.solver_microfixture)
+    record = build_record(
+        mpi_sizes=args.mpi_sizes,
+        distributed_solver_sizes=args.distributed_solver_sizes,
+        exploratory_mpi_sizes=args.exploratory_mpi_sizes,
+    )
     rendered = json.dumps(record, ensure_ascii=False, indent=2) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
