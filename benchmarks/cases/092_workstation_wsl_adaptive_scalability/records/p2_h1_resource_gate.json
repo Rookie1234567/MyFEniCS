@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task034_case092_p2_h1_resource_gate",
+  "record_type": "task034_candidate_factorization_stop_and_hybrid_guarded_prediction",
+  "matrix_key": "phase_f_p2_h1_s",
+  "source_sha": "69b807ccf7ef9e8e49fdbd4321e40f33575e0615",
+  "case": {
+    "degree": 2,
+    "h_nm": 1.0,
+    "polarization_kind": "s",
+    "mpi_size": 8
+  },
+  "assembly_measurement": {
+    "status": "assembly_calibration_pass",
+    "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h1_assembly_mpi8_69b807c_s.json",
+    "watchdog_record_sha256": "520cf7f5a2b8bd3327540d7da808e31abed5b036b66e1aec11001c5f5193b649",
+    "elapsed_seconds": 792.9584831370012,
+    "peak_memory_gib": 67.92290115356445,
+    "exact_rows": 4379832,
+    "exact_assembled_nnz": 461122320,
+    "no_swap": true,
+    "factorization_or_solve_stage_seen": false
+  },
+  "live_task034_resource_policy": {
+    "effective_limit_gib": 193.85588436108083,
+    "warning_gib": 155.08470748830587,
+    "termination_gib": 184.16309014242142,
+    "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)"
+  },
+  "full3d_factorization_prediction": {
+    "status": "factorization_resource_negative",
+    "centers_gib": {
+      "p2_h2_measured_assembly_to_factor_peak_ratio": 217.58351772553075,
+      "p2_h2_factor_fill_payload_projection": 227.18747987399638,
+      "p2_h3_to_h2_factor_peak_h_power_projection": 279.21386118589834
+    },
+    "supporting_values": {
+      "p2_h2_factor_fill_ratio": 18.19390008066193,
+      "projected_factor_nnz": 8389613415.043016,
+      "p2_h3_to_h2_factor_peak_h_exponent": 3.114205316196099
+    },
+    "conservative_upper_gib": 418.8207917788475,
+    "all_centers_above_termination": true,
+    "factorization_launch_authorized": false,
+    "full_solve_launch_authorized": false,
+    "decision": "Stop the p2/h1 full3D lane after assembly; do not launch KSPSetUp or full solve."
+  },
+  "hybrid_m160_prediction": {
+    "status": "guarded_launch_prediction_pass",
+    "requested_modes": 160,
+    "candidate_modes": 320,
+    "centers_gib": {
+      "p2_h3_to_h2_hybrid_peak_h_power_projection": 50.779584915732734,
+      "current_assembly_scaled_by_p2_h2_hybrid_to_assembly_ratio": 76.28542321253582,
+      "p2_h2_hybrid_local_volume_cubic_no_discount": 90.44265747070312
+    },
+    "supporting_values": {
+      "p2_h3_hybrid_m160_peak_gib": 4.695159912109375,
+      "p2_h2_hybrid_m160_peak_gib": 11.30533218383789,
+      "p2_h3_to_h2_hybrid_peak_h_exponent": 2.1672452187786364
+    },
+    "conservative_upper_gib": 135.6639862060547,
+    "all_centers_below_warning": true,
+    "conservative_upper_below_warning": true,
+    "guarded_m160_launch_authorized": true,
+    "live_external_watchdog_is_final_authority": true,
+    "limitations": [
+      "This prediction authorizes only one p2/h1 S-polarized MPI8 Hybrid M160 guarded attempt.",
+      "It does not authorize p2/h1 full3D factorization or full solve.",
+      "It does not assert same-degree Hybrid/full3D closure because no p2/h1 full3D solve is authorized.",
+      "M80, M120 and M240 are outside the user-requested added-point scope."
+    ]
+  },
+  "historical_hybrid_anchors": [
+    {
+      "h_nm": 3.0,
+      "record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
+      "record_sha256": "0a68f1967b98fea8fc763d76fef7a3a63f9162d9d0ad3a2da26aa1196477b029",
+      "peak_memory_gib": 4.695159912109375
+    },
+    {
+      "h_nm": 2.0,
+      "record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h2_hybrid_m160_mpi8_06e0ee1.json",
+      "record_sha256": "152b8233a79a8fc934d75d36fdbb94afcc962ced365305877851773ab5a91878",
+      "peak_memory_gib": 11.30533218383789
+    }
+  ],
+  "qualification": {
+    "assembly_measurement_pass": true,
+    "full3d_factorization_stopped_before_oom": true,
+    "full3d_controlled_resource_negative": true,
+    "hybrid_prediction_below_live_warning": true,
+    "zero_job_swap": true,
+    "thresholds_relaxed": false
+  }
+}

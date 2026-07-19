@@ -83,6 +83,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.p2_h2_reference_sha = self.p2_h2_entry["full3d_reference"][
             "descriptor_sha256"
         ]
+        self.p2_h1_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p2_h1_s"
+        )
+        self.p2_h1_anchor_sha = self.p2_h1_entry["assembly_resource_anchor"][
+            "watchdog_record_sha256"
+        ]
 
     def _gate(self, **overrides):
         kwargs = {
@@ -202,6 +210,46 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.assertIn(
             "measured_resource_anchor_sha256_matches",
             wrong_hash["failures"],
+        )
+
+    def test_explicit_workstation_gate_narrowly_authorizes_p2_h1(self) -> None:
+        gate = self._gate(
+            degree=2,
+            h_nm=1.0,
+            mpi_size=8,
+            requested_modes=160,
+            candidate_modes=320,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p2_h1_anchor_sha,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(gate["matrix_key"], "phase_f_p2_h1_s")
+        self.assertEqual(gate["resource_anchor_kind"], "assembly_calibration")
+        m80 = self._gate(
+            degree=2,
+            h_nm=1.0,
+            mpi_size=8,
+            requested_modes=80,
+            candidate_modes=160,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p2_h1_anchor_sha,
+        )
+        self.assertFalse(m80["pass"])
+        self.assertIn(
+            "user_approved_p2_h1_added_point_scope", m80["failures"]
+        )
+        mpi16 = self._gate(
+            degree=2,
+            h_nm=1.0,
+            mpi_size=16,
+            requested_modes=160,
+            candidate_modes=320,
+            full3d_reference_sha256=None,
+            resource_anchor_sha256=self.p2_h1_anchor_sha,
+        )
+        self.assertFalse(mpi16["pass"])
+        self.assertIn(
+            "user_approved_p2_h1_added_point_scope", mpi16["failures"]
         )
 
     def test_explicit_workstation_gate_passes_p4_post_e3_reference(self) -> None:
@@ -578,6 +626,47 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             p_args.full3d_reference,
             Path("p2_h5_p_watchdog.json"),
         )
+        p2_h1_args = _parse_args(
+            [
+                "--target", "hybrid",
+                "--case-label", "task034_p2_h1_s_m160_mpi8",
+                "--degree", "2",
+                "--h-nm", "1",
+                "--mpi-size", "8",
+                "--requested-modes", "160",
+                "--candidate-modes", "320",
+                "--task034-workstation-resource-anchor", "p2_h1_assembly.json",
+                "--verified-clean-sha", "d" * 40,
+                "--host-environment-id", "WSL2-Ubuntu-24.04",
+                "--task034-workstation-gate",
+                "--task034-workstation-resource-authority-sha256",
+                self.authority_sha,
+            ]
+        )
+        self.assertIsNone(p2_h1_args.full3d_reference)
+        self.assertEqual(p2_h1_args.requested_modes, 160)
+        self.assertEqual(
+            p2_h1_args.task034_workstation_resource_anchor,
+            Path("p2_h1_assembly.json"),
+        )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--target", "hybrid",
+                    "--case-label", "task034_p2_h1_s_m80_mpi8_rejected",
+                    "--degree", "2",
+                    "--h-nm", "1",
+                    "--mpi-size", "8",
+                    "--requested-modes", "80",
+                    "--candidate-modes", "160",
+                    "--task034-workstation-resource-anchor", "p2_h1_assembly.json",
+                    "--verified-clean-sha", "d" * 40,
+                    "--host-environment-id", "WSL2-Ubuntu-24.04",
+                    "--task034-workstation-gate",
+                    "--task034-workstation-resource-authority-sha256",
+                    self.authority_sha,
+                ]
+            )
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
@@ -655,6 +744,17 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             current_source_sha=p2_p_reference_sha,
         )
         self.assertTrue(p2_p_exact["pass"], p2_p_exact["failures"])
+
+        p2_h1_source_sha = self.p2_h1_entry["assembly_resource_anchor"][
+            "source_sha"
+        ]
+        p2_h1_exact = _task034_authority_source_compatibility(
+            self.authority,
+            degree=2,
+            h_nm=1.0,
+            current_source_sha=p2_h1_source_sha,
+        )
+        self.assertTrue(p2_h1_exact["pass"], p2_h1_exact["failures"])
 
         p2_reference_sha = next(
             entry["full3d_reference"]["source_sha"]

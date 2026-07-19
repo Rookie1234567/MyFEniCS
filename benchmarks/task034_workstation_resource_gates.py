@@ -282,6 +282,16 @@ def task034_workstation_hybrid_launch_gate(
                 and requested_modes == 160
             )
         ),
+        "user_approved_p2_h1_added_point_scope": bool(
+            not (degree == 2 and math.isclose(h_nm, 1.0))
+            or (
+                polarization_kind == "s"
+                and mpi_size == 8
+                and requested_modes == 160
+                and candidate_modes == 320
+                and anchor_kind == "assembly_calibration"
+            )
+        ),
         "high_order_core_evidence": core.get("pass") is True,
         "measured_resource_anchor_kind_supported": anchor_kind
         in {"full3d_reference", "assembly_calibration"},

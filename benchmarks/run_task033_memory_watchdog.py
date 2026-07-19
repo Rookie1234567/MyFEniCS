@@ -1079,14 +1079,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             (args.full3d_reference is None)
             != (args.task034_workstation_resource_anchor is None)
         )
+        p2_h1_resource_anchor_scope = bool(
+            args.degree == 2
+            and math.isclose(args.h_nm, 1.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+            and args.full3d_reference is None
+            and args.task034_workstation_resource_anchor is not None
+        )
         phase_f_matrix = {
-            (2, 5.0), (2, 3.0), (2, 2.0),
+            (2, 5.0), (2, 3.0), (2, 2.0), (2, 1.0),
             (3, 10.0), (3, 7.5), (3, 5.0), (3, 3.0),
             (4, 10.0), (4, 7.5), (4, 5.0),
         }
         anchor_selection_valid = bool(
             (
                 (args.degree, args.h_nm) in phase_f_matrix
+                and not (
+                    args.degree == 2 and math.isclose(args.h_nm, 1.0)
+                )
                 and args.full3d_reference is not None
                 and args.task034_workstation_resource_anchor is None
             )
@@ -1095,6 +1107,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 and math.isclose(args.h_nm, 5.0)
                 and p4_anchor_is_exclusive
             )
+            or p2_h1_resource_anchor_scope
         )
         approved_p_scope = bool(
             args.polarization_kind == "p"
@@ -1102,6 +1115,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and math.isclose(args.h_nm, 5.0)
             and args.mpi_size == 8
             and args.requested_modes == 160
+        )
+        approved_p2_h1_scope = bool(
+            not (args.degree == 2 and math.isclose(args.h_nm, 1.0))
+            or p2_h1_resource_anchor_scope
         )
         scoped = bool(
             args.target == "hybrid"
@@ -1116,6 +1133,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and math.isclose(args.top_interface_nm, 110.0)
             and math.isclose(args.incident_grazing_deg, 10.0)
             and (args.polarization_kind == "s" or approved_p_scope)
+            and approved_p2_h1_scope
             and anchor_selection_valid
             and args.host_environment_id == "WSL2-Ubuntu-24.04"
             and isinstance(
@@ -1128,11 +1146,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task034-workstation-gate is restricted to the Task034 fixed "
                 "p2/p3/p4 Phase F matrix, WSL Hybrid M80/M120/M160 "
                 "(conditional M240) funnel, exact 2M pool, a same-p/h Full-3D "
-                "watchdog/descriptor reference (or the preserved p4/h5 E0 "
-                "assembly path), canonical resource authority, "
+                "watchdog/descriptor reference (or an explicitly authorized "
+                "assembly-only resource anchor), canonical resource authority, "
                 "and WSL2-Ubuntu-24.04 identity."
                 " The only P-polarized exception is the user-approved "
-                "p2/h5 MPI8 M160 capability example."
+                "p2/h5 MPI8 M160 capability example. The p2/h1 S added point "
+                "is restricted to MPI8 M160 with its assembly resource anchor."
             )
     return args
 
