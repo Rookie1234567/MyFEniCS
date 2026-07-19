@@ -40,12 +40,17 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.reference_sha = self.authority["entries"][0]["full3d_reference"][
             "descriptor_sha256"
         ]
-        self.p4_anchor_sha = self.authority["entries"][1][
-            "assembly_resource_anchor"
-        ]["watchdog_record_sha256"]
-        self.p4_reference_sha = self.authority["entries"][1][
-            "full3d_reference"
-        ]["descriptor_sha256"]
+        self.p4_h5_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p4_h5_s"
+        )
+        self.p4_anchor_sha = self.p4_h5_entry["assembly_resource_anchor"][
+            "watchdog_record_sha256"
+        ]
+        self.p4_reference_sha = self.p4_h5_entry["full3d_reference"][
+            "descriptor_sha256"
+        ]
         self.p2_h5_entry = next(
             entry
             for entry in self.authority["entries"]
@@ -537,7 +542,7 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             self.authority,
             degree=4,
             h_nm=5.0,
-            current_source_sha="4e1143f9a1e91ff703e871fcb74e5f6703223a82",
+            current_source_sha="e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
         )
         self.assertTrue(p4_exact["pass"], p4_exact["failures"])
         p2_exact = _task034_authority_source_compatibility(
