@@ -75,9 +75,11 @@ authority、现场内存、swap、磁盘和 source Gate。
 ## 当前证据
 
 p3/h3 full3D、Hybrid M160 同阶闭合及 p2/h3 重跑已经形成 hash-bound 摘要。
-p4/h5 E0 assembly、M80/M120/M160 funnel、factorization-only 和 full solve 均已在
-WSL 原生环境中完成；full solve 的 official R/T/A、true residual、volume closure、
-memory 和 zero-swap 证据保留在 gitignored 工件中，待 Case092 紧凑摘要冻结。
+p4/h5 E0 assembly、M80/M120/M160 funnel、factorization-only、full solve 和同阶
+Hybrid/full3D closure 均已在 WSL 原生环境中完成。`records/p4_h5_workstation_summary.json`
+已冻结 official R/T/A、true residual、五平面/接口/衍射阶 closure、memory、zero-swap、
+source compatibility 和原始工件 SHA-256。重型原始工件继续保留在 gitignored
+`benchmarks/artifacts/task034/phase_e/`。
 
 ## 结果解释
 
