@@ -764,6 +764,79 @@
         "prediction_below_observed_task034_warning": true,
         "guarded_launch_authorized": true
       }
+    },
+    {
+      "matrix_key": "phase_f_p2_h5_p",
+      "degree": 2,
+      "h_nm": 5.0,
+      "status": "calibrated_guarded_launch_authority",
+      "max_formal_modes": 160,
+      "conditional_m240_allowed": false,
+      "candidate_pool_ratio": 2,
+      "solver_path": "modal-schur-memory-minimal",
+      "comparison_solver_path": "fast",
+      "bottom_interface_nm": 10.0,
+      "top_interface_nm": 110.0,
+      "incident_grazing_deg": 10.0,
+      "polarization_kind": "p",
+      "full3d_reference": {
+        "role": "user_approved_p_capability_native_full3d_watchdog_reference_and_resource_anchor",
+        "source_sha": "31110efb16fa58d2631b23d6d9635c8354e7e99e",
+        "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_full_mpi8_31110ef_p.json",
+        "watchdog_record_sha256": "48e5bb1d58b98aca716906a63f428cf46a3fec366a5ee6221891c96de00c691d",
+        "descriptor_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_full_mpi8_31110ef_p.json",
+        "descriptor_sha256": "48e5bb1d58b98aca716906a63f428cf46a3fec366a5ee6221891c96de00c691d",
+        "reference_input_kind": "native_watchdog_record_normalized_in_memory",
+        "derived_descriptor_written": false,
+        "status": "full3d_reference_pass",
+        "qualification_pass": true,
+        "no_swap": true,
+        "peak_memory_gib": 2.971832275390625,
+        "true_relative_residual": 1.0194577337195329e-12,
+        "exact_rows": 44778,
+        "exact_assembled_nnz": 4896156,
+        "factor_nnz": 31460044,
+        "elapsed_seconds": 16.453968440997414
+      },
+      "staged_resource_evidence": {
+        "assembly_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_assembly_mpi8_31110ef_p.json",
+        "assembly_record_sha256": "c1bcccea4c5d6ff9ed636cef76aba01d156435803628794971cd5188921378bc",
+        "assembly_peak_memory_gib": 2.155078887939453,
+        "factorization_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_factorization_mpi8_31110ef_p.json",
+        "factorization_record_sha256": "966bb4e9ccac2c95397bcc48239463f0822d342ef2e000692aa24fe3b41b8573",
+        "factorization_peak_memory_gib": 2.876659393310547
+      },
+      "workstation_prediction": {
+        "method": "1.5 * max(measured same-p/h/polarization factorization peak, measured same-p/h/polarization Full-3D peak)",
+        "centers_gib": {
+          "measured_same_phpol_factorization_peak": 2.876659393310547,
+          "measured_same_phpol_full3d_peak": 2.971832275390625
+        },
+        "conservative_upper_gib": 4.4577484130859375,
+        "measured_full3d_multiplier": 1.5,
+        "task033_old_model_is_launch_authority": false,
+        "limitations": [
+          "Authorizes only the user-approved p2/h5 P-polarized MPI8 Hybrid M160 capability shard, not a P production matrix.",
+          "Hybrid memory remains measured by the live process-tree/cgroup watchdog.",
+          "M80/M120/M240 and every other P-polarized p/h/MPI combination remain unauthorized."
+        ]
+      },
+      "observed_task034_resource_policy": {
+        "effective_limit_gib": 193.85588436108083,
+        "warning_gib": 155.08470748830587,
+        "termination_gib": 184.16309014242142,
+        "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)",
+        "note": "Runtime recomputes these values; stored values are evidence, not overrides."
+      },
+      "qualification": {
+        "assembly_gate_pass": true,
+        "factorization_gate_pass": true,
+        "full_solve_gate_pass": true,
+        "source_clean_and_stable": true,
+        "zero_job_swap": true,
+        "prediction_below_observed_task034_warning": true,
+        "guarded_launch_authorized": true
+      }
     }
   ]
 }

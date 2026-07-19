@@ -59,6 +59,14 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
         self.p2_h5_reference_sha = self.p2_h5_entry["full3d_reference"][
             "descriptor_sha256"
         ]
+        self.p2_h5_p_entry = next(
+            entry
+            for entry in self.authority["entries"]
+            if entry["matrix_key"] == "phase_f_p2_h5_p"
+        )
+        self.p2_h5_p_reference_sha = self.p2_h5_p_entry["full3d_reference"][
+            "descriptor_sha256"
+        ]
         self.p2_h3_entry = next(
             entry
             for entry in self.authority["entries"]
@@ -122,6 +130,58 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 "historical_task033_model_is_standalone_authority"
             ]
         )
+
+    def test_explicit_workstation_gate_narrowly_authorizes_p2_h5_p(self) -> None:
+        gate = self._gate(
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            requested_modes=160,
+            candidate_modes=320,
+            polarization_kind="p",
+            full3d_reference_sha256=self.p2_h5_p_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        self.assertEqual(gate["matrix_key"], "phase_f_p2_h5_p")
+        m80 = self._gate(
+            degree=2,
+            h_nm=5.0,
+            mpi_size=8,
+            requested_modes=80,
+            candidate_modes=160,
+            polarization_kind="p",
+            full3d_reference_sha256=self.p2_h5_p_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertFalse(m80["pass"])
+        self.assertIn("user_approved_p_polarization_scope", m80["failures"])
+        mpi16 = self._gate(
+            degree=2,
+            h_nm=5.0,
+            mpi_size=16,
+            requested_modes=160,
+            candidate_modes=320,
+            polarization_kind="p",
+            full3d_reference_sha256=self.p2_h5_p_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertFalse(mpi16["pass"])
+        self.assertIn(
+            "user_approved_p_polarization_scope", mpi16["failures"]
+        )
+        p3 = self._gate(
+            degree=3,
+            h_nm=5.0,
+            mpi_size=8,
+            requested_modes=160,
+            candidate_modes=320,
+            polarization_kind="p",
+            full3d_reference_sha256=self.p2_h5_p_reference_sha,
+            resource_anchor_sha256=None,
+        )
+        self.assertFalse(p3["pass"])
+        self.assertIn("exactly_one_matching_p_h_entry", p3["failures"])
 
     def test_explicit_workstation_gate_passes_p4_e0_resource_anchor(self) -> None:
         gate = self._gate(
@@ -494,6 +554,30 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             phase_f_args.full3d_reference,
             Path("p2_h5_watchdog.json"),
         )
+        p_args = _parse_args(
+            [
+                "--target", "hybrid",
+                "--case-label", "task034_p2_h5_p_m160_mpi8",
+                "--degree", "2",
+                "--h-nm", "5",
+                "--mpi-size", "8",
+                "--requested-modes", "160",
+                "--candidate-modes", "320",
+                "--polarization-kind", "p",
+                "--full3d-reference", "p2_h5_p_watchdog.json",
+                "--verified-clean-sha", "d" * 40,
+                "--host-environment-id", "WSL2-Ubuntu-24.04",
+                "--task034-workstation-gate",
+                "--task034-workstation-resource-authority-sha256",
+                self.authority_sha,
+            ]
+        )
+        self.assertEqual(p_args.polarization_kind, "p")
+        self.assertEqual(p_args.requested_modes, 160)
+        self.assertEqual(
+            p_args.full3d_reference,
+            Path("p2_h5_p_watchdog.json"),
+        )
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
@@ -559,6 +643,18 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             ),
         )
         self.assertTrue(p2_exact["pass"], p2_exact["failures"])
+
+        p2_p_reference_sha = self.p2_h5_p_entry["full3d_reference"][
+            "source_sha"
+        ]
+        p2_p_exact = _task034_authority_source_compatibility(
+            self.authority,
+            degree=2,
+            h_nm=5.0,
+            polarization_kind="p",
+            current_source_sha=p2_p_reference_sha,
+        )
+        self.assertTrue(p2_p_exact["pass"], p2_p_exact["failures"])
 
         p2_reference_sha = next(
             entry["full3d_reference"]["source_sha"]

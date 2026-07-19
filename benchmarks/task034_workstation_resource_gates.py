@@ -87,6 +87,7 @@ def task034_workstation_hybrid_launch_gate(
         if isinstance(item, Mapping)
         and item.get("degree") == degree
         and math.isclose(float(item.get("h_nm", math.nan)), float(h_nm))
+        and item.get("polarization_kind") == polarization_kind
     ]
     entry = matches[0] if len(matches) == 1 else {}
     reference = entry.get("full3d_reference")
@@ -269,7 +270,17 @@ def task034_workstation_hybrid_launch_gate(
         ),
         "fixed_incidence_and_polarization": bool(
             math.isclose(incident_grazing_deg, 10.0)
-            and polarization_kind == "s"
+            and polarization_kind in {"s", "p"}
+        ),
+        "user_approved_p_polarization_scope": bool(
+            polarization_kind == "s"
+            or (
+                polarization_kind == "p"
+                and degree == 2
+                and math.isclose(h_nm, 5.0)
+                and mpi_size == 8
+                and requested_modes == 160
+            )
         ),
         "high_order_core_evidence": core.get("pass") is True,
         "measured_resource_anchor_kind_supported": anchor_kind

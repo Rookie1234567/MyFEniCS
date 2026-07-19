@@ -272,6 +272,7 @@ def _task034_authority_source_compatibility(
     *,
     degree: int,
     h_nm: float,
+    polarization_kind: str = "s",
     current_source_sha: str | None,
 ) -> dict[str, Any]:
     """Audit a Case092 measured authority against the current clean source."""
@@ -285,6 +286,7 @@ def _task034_authority_source_compatibility(
         if isinstance(item, Mapping)
         and item.get("degree") == degree
         and math.isclose(float(item.get("h_nm", math.nan)), float(h_nm))
+        and item.get("polarization_kind") == polarization_kind
     ]
     reference = matches[0].get("full3d_reference", {}) if len(matches) == 1 else {}
     reference = reference if isinstance(reference, Mapping) else {}
@@ -1094,6 +1096,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 and p4_anchor_is_exclusive
             )
         )
+        approved_p_scope = bool(
+            args.polarization_kind == "p"
+            and args.degree == 2
+            and math.isclose(args.h_nm, 5.0)
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+        )
         scoped = bool(
             args.target == "hybrid"
             and (args.degree, args.h_nm) in phase_f_matrix
@@ -1106,7 +1115,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and math.isclose(args.incident_grazing_deg, 10.0)
-            and args.polarization_kind == "s"
+            and (args.polarization_kind == "s" or approved_p_scope)
             and anchor_selection_valid
             and args.host_environment_id == "WSL2-Ubuntu-24.04"
             and isinstance(
@@ -1122,6 +1131,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "watchdog/descriptor reference (or the preserved p4/h5 E0 "
                 "assembly path), canonical resource authority, "
                 "and WSL2-Ubuntu-24.04 identity."
+                " The only P-polarized exception is the user-approved "
+                "p2/h5 MPI8 M160 capability example."
             )
     return args
 
@@ -1240,6 +1251,7 @@ def run(args: argparse.Namespace) -> int:
                     authority,
                     degree=args.degree,
                     h_nm=args.h_nm,
+                    polarization_kind=args.polarization_kind,
                     current_source_sha=source_before.get("commit_sha"),
                 )
             )

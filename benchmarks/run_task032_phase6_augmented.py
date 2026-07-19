@@ -368,6 +368,7 @@ def _normalize_full3d_reference_record(
         metadata = metadata.resolve()
         run_root = archive.parent.relative_to(ROOT)
         commit_sha = str(source["commit_sha"]).lower()
+        polarization_kind = str(solver["polarization_kind"]).lower()
         archive_sha256 = str(
             solver["full3d_reference_archive_sha256"]
         ).lower()
@@ -390,7 +391,7 @@ def _normalize_full3d_reference_record(
             and solver["case_status"] == "completed"
             and solver["official_result"] is True
             and solver["full3d_reference_exported"] is True
-            and solver["polarization_kind"] == "s"
+            and polarization_kind in {"s", "p"}
             and math.isclose(float(solver["incident_theta_deg"]), 80.0)
             and math.isclose(float(solver["incident_phi_deg"]), 0.0)
             and float(solver["linear_system_relative_residual"]) <= 1.0e-9
@@ -433,7 +434,7 @@ def _normalize_full3d_reference_record(
             "incident_theta_deg": 80.0,
             "incident_grazing_deg": 10.0,
             "incident_phi_deg": 0.0,
-            "polarization_kind": "s",
+            "polarization_kind": polarization_kind,
             "nedelec_degree": int(reference["degree"]),
             "mesh_h_nm": float(reference["h_nm"]),
             "mpi_size": int(reference["mpi_size"]),
@@ -471,7 +472,12 @@ def _normalize_full3d_reference_record(
 
 
 def _validate_case080_reference_identity(
-    reference: dict[str, Any], *, degree: int, h_nm: float, path: Path
+    reference: dict[str, Any],
+    *,
+    degree: int,
+    h_nm: float,
+    path: Path,
+    polarization_kind: str = "s",
 ) -> None:
     try:
         physical_model = reference["physical_model"]
@@ -486,7 +492,7 @@ def _validate_case080_reference_identity(
             and abs(float(physical_model["incident_theta_deg"]) - 80.0)
             <= 1.0e-12
             and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
-            and physical_model["polarization_kind"] == "s"
+            and physical_model["polarization_kind"] == polarization_kind
             and abs(float(physical_model["wavelength_nm"]) - 13.5)
             <= 1.0e-12
             and qualification["phase1_reference_pass"] is True
@@ -502,7 +508,7 @@ def _validate_case080_reference_identity(
     if not identity_valid:
         raise RuntimeError(
             "Case080 reference identity does not match the requested p/h and "
-            f"pinned 10-degree s-polarized 13.5-nm model: {path}"
+            f"pinned 10-degree {polarization_kind}-polarized 13.5-nm model: {path}"
         )
 
 
@@ -510,6 +516,8 @@ def _load_case080_reference(
     degree: int,
     h_nm: float,
     reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
+    *,
+    polarization_kind: str = "s",
 ) -> tuple[Path, dict[str, Any]] | None:
     reference_path = _case080_reference_path(
         degree, h_nm, reference_by_degree_and_h
@@ -530,7 +538,11 @@ def _load_case080_reference(
         reference, path=reference_path
     )
     _validate_case080_reference_identity(
-        reference, degree=degree, h_nm=h_nm, path=reference_path
+        reference,
+        degree=degree,
+        h_nm=h_nm,
+        path=reference_path,
+        polarization_kind=polarization_kind,
     )
     return reference_path, reference
 
@@ -1281,7 +1293,10 @@ def main() -> None:
             )
         pinned_reference_case = (
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
-            and args.polarization_kind == "s"
+            and (
+                args.polarization_kind == "s"
+                or args.full3d_reference is not None
+            )
         )
         explicit_reference = args.full3d_reference
         if explicit_reference is not None and not explicit_reference.is_absolute():
@@ -1296,6 +1311,7 @@ def main() -> None:
                 args.degree,
                 args.h_nm,
                 reference_by_degree_and_h=reference_registry,
+                polarization_kind=args.polarization_kind,
             )
             if pinned_reference_case
             else None

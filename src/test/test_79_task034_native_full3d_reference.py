@@ -7,6 +7,7 @@ import pytest
 
 from benchmarks.run_task032_phase6_augmented import (
     _normalize_full3d_reference_record,
+    _validate_case080_reference_identity,
 )
 
 
@@ -73,6 +74,7 @@ def test_native_watchdog_reference_normalizes_in_memory() -> None:
     assert normalized["physical_model"]["nedelec_degree"] == 2
     assert normalized["physical_model"]["mesh_h_nm"] == 5.0
     assert normalized["physical_model"]["mpi_size"] == 8
+    assert normalized["physical_model"]["polarization_kind"] == "s"
     assert (
         normalized["artifacts"]["ignored_run_root"]
         == "benchmarks/artifacts/task034/phase_f/full3d/fixture_full_solve"
@@ -91,7 +93,6 @@ def test_native_watchdog_reference_normalizes_in_memory() -> None:
         ("qualification", "pass", False),
         ("solver_summary", "official_result", False),
         ("solver_summary", "linear_system_relative_residual", 2.0e-9),
-        ("solver_summary", "polarization_kind", "p"),
         ("solver_summary", "full3d_reference_exported", False),
     ],
 )
@@ -103,6 +104,38 @@ def test_native_watchdog_reference_fails_closed(
     fixture = _native_watchdog_fixture()
     target = fixture if section is None else fixture[section]
     target[key] = value
+    with pytest.raises(RuntimeError):
+        _normalize_full3d_reference_record(fixture, path=REFERENCE_PATH)
+
+
+def test_native_p_watchdog_reference_preserves_and_validates_p_identity() -> None:
+    fixture = _native_watchdog_fixture()
+    fixture["solver_summary"]["polarization_kind"] = "p"
+    normalized = _normalize_full3d_reference_record(
+        fixture,
+        path=REFERENCE_PATH,
+    )
+    assert normalized["physical_model"]["polarization_kind"] == "p"
+    _validate_case080_reference_identity(
+        normalized,
+        degree=2,
+        h_nm=5.0,
+        path=REFERENCE_PATH,
+        polarization_kind="p",
+    )
+    with pytest.raises(RuntimeError):
+        _validate_case080_reference_identity(
+            normalized,
+            degree=2,
+            h_nm=5.0,
+            path=REFERENCE_PATH,
+            polarization_kind="s",
+        )
+
+
+def test_native_watchdog_reference_rejects_unknown_polarization() -> None:
+    fixture = _native_watchdog_fixture()
+    fixture["solver_summary"]["polarization_kind"] = "custom"
     with pytest.raises(RuntimeError):
         _normalize_full3d_reference_record(fixture, path=REFERENCE_PATH)
 
