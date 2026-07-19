@@ -153,7 +153,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--h-nm",
         type=float,
-        choices=(10.0, 7.5, 5.0, 3.0, 2.0),
+        choices=(10.0, 7.5, 5.0, 3.0, 2.0, 1.0),
         default=5.0,
     )
     parser.add_argument(
@@ -210,9 +210,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--worker", action="store_true")
     args = parser.parse_args(argv)
     allowed_h_by_degree = {
-        2: {5.0, 3.0, 2.0},
-        3: {10.0, 7.5, 5.0, 3.0},
-        4: {10.0, 7.5, 5.0},
+        2: {5.0, 3.0, 2.0, 1.0},
+        3: {10.0, 7.5, 5.0, 3.0, 2.0},
+        4: {10.0, 7.5, 5.0, 3.0},
     }
     if args.h_nm not in allowed_h_by_degree[args.degree]:
         parser.error(

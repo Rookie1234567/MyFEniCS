@@ -218,12 +218,14 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
                 self.assertEqual(args.degree, 3)
                 self.assertEqual(args.h_nm, float(h_nm))
 
-    def test_task034_p3_h3_is_opt_in_without_opening_p4_h3(self) -> None:
+    def test_task034_requested_finer_candidates_are_opt_in(self) -> None:
         args = self._args("--h-nm", "3")
         self.assertEqual(args.degree, 3)
         self.assertEqual(args.h_nm, 3.0)
-        with self.assertRaises(SystemExit):
-            _parse_args(["--degree", "4", "--h-nm", "3"])
+        for degree, h_nm in ((2, "1"), (3, "2"), (4, "3")):
+            with self.subTest(degree=degree, h_nm=h_nm):
+                parsed = _parse_args(["--degree", str(degree), "--h-nm", h_nm])
+                self.assertEqual(parsed.h_nm, float(h_nm))
 
     def test_explicit_p_polarization_reaches_full3d_config(self) -> None:
         args = self._args("--polarization-kind", "p")
@@ -251,9 +253,9 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
 
     def test_task034_fixed_geometry_candidate_matrix(self) -> None:
         allowed = {
-            2: ("5", "3", "2"),
-            3: ("10", "7.5", "5", "3"),
-            4: ("10", "7.5", "5"),
+            2: ("5", "3", "2", "1"),
+            3: ("10", "7.5", "5", "3", "2"),
+            4: ("10", "7.5", "5", "3"),
         }
         for degree, h_values in allowed.items():
             for h_nm in h_values:
@@ -261,7 +263,7 @@ class Task033Full3DWatchdogTests(unittest.TestCase):
                     args = _parse_args(["--degree", str(degree), "--h-nm", h_nm])
                     self.assertEqual(args.degree, degree)
                     self.assertEqual(args.h_nm, float(h_nm))
-        for degree, h_nm in ((2, "10"), (3, "2"), (4, "3"), (4, "2")):
+        for degree, h_nm in ((2, "10"), (3, "1"), (4, "2"), (4, "1")):
             with self.subTest(rejected_degree=degree, rejected_h_nm=h_nm):
                 with self.assertRaises(SystemExit):
                     _parse_args(["--degree", str(degree), "--h-nm", h_nm])
