@@ -56,6 +56,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "cache ownership storage changed from strong to weak references",
         "requires_corresponding_pde_rerun": False,
     },
+    "src/modes/mode_classification.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/solvers/common_3d_case_flow.py": {
         "classification": "diagnostic only",
         "reason": "factorization-only status and postprocess skip path; ordinary solve path unchanged",

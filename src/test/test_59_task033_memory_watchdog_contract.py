@@ -237,6 +237,8 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 "benchmarks/run_task034_wsl_qualification.py\n"
                 "benchmarks/task034_p3_h3_reranking.py\n"
                 "src/coupling/modal_trace_projection.py\n"
+                "src/modes/mode_classification.py\n"
+                "benchmarks/task034_numerical_blob_checker.py\n"
                 "benchmarks/task033_phaseC.py",
             ),
         ):
@@ -247,7 +249,10 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertTrue(accepted["case090_core_source_unchanged"])
         self.assertEqual(
             accepted["component_disjoint_numerical_changed_paths"],
-            ["src/coupling/modal_trace_projection.py"],
+            [
+                "src/coupling/modal_trace_projection.py",
+                "src/modes/mode_classification.py",
+            ],
         )
         self.assertEqual(
             accepted["compatibility_scope"],

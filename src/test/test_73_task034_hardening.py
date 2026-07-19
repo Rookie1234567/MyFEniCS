@@ -172,7 +172,10 @@ class Task034HardeningTests(unittest.TestCase):
         self.assertTrue(record["formal_pass"], record["failures"])
         self.assertEqual(
             record["corresponding_pde_rerun_required_paths"],
-            ["src/solvers/hcurl_multilevel.py"],
+            [
+                "src/modes/mode_classification.py",
+                "src/solvers/hcurl_multilevel.py",
+            ],
         )
         self.assertTrue(all(row["pass"] for row in record["rows"]))
 

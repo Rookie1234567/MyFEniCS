@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 from benchmarks.run_task033_memory_watchdog import (
     _authority_unreadable_requires_termination,
@@ -548,6 +549,39 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
             ),
         )
         self.assertTrue(p2_exact["pass"], p2_exact["failures"])
+
+        p2_reference_sha = next(
+            entry["full3d_reference"]["source_sha"]
+            for entry in self.authority["entries"]
+            if entry["degree"] == 2
+            and entry["h_nm"] == 5.0
+        )
+        with mock.patch(
+            "benchmarks.run_task033_memory_watchdog._git",
+            side_effect=(
+                p2_reference_sha,
+                "src/modes/mode_classification.py\n"
+                "benchmarks/run_task032_phase6_augmented.py\n"
+                "benchmarks/task034_numerical_blob_checker.py\n"
+                "src/test/test_mode_overlap.py",
+            ),
+        ):
+            hybrid_only = _task034_authority_source_compatibility(
+                self.authority,
+                degree=2,
+                h_nm=5.0,
+                current_source_sha="b" * 40,
+            )
+        self.assertTrue(hybrid_only["pass"], hybrid_only["failures"])
+        self.assertEqual(
+            hybrid_only["component_disjoint_numerical_changed_paths"],
+            [
+                "src/modes/mode_classification.py",
+                "benchmarks/run_task032_phase6_augmented.py",
+            ],
+        )
+        self.assertEqual(hybrid_only["disallowed_changed_paths"], [])
+
         missing = _task034_authority_source_compatibility(
             {}, degree=3, h_nm=3.0, current_source_sha="a" * 40
         )

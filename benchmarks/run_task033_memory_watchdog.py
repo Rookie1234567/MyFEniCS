@@ -103,6 +103,7 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/run_task033_source_compatibility.py",
         "benchmarks/run_task034_wsl_qualification.py",
         "benchmarks/task034_p3_h3_reranking.py",
+        "benchmarks/task034_numerical_blob_checker.py",
         "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
         "benchmarks/task033_phaseC.py",
@@ -120,13 +121,31 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         # fresh target Hybrid evidence at the new SHA; this exception reuses
         # Case090 only as the high-order Floquet launch prerequisite.
         "src/coupling/modal_trace_projection.py",
+        "src/modes/mode_classification.py",
     }
 )
 
 CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
     {
         "benchmarks/run_task032_phase6_augmented.py",
+        "src/modes/mode_classification.py",
         "src/coupling/modal_trace_projection.py",
+    }
+)
+
+TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
+    {
+        "benchmarks/run_task032_phase6_augmented.py",
+        "src/modes/mode_classification.py",
+    }
+)
+TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
+    {
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/run_task034_wsl_qualification.py",
+        "benchmarks/task034_numerical_blob_checker.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+        *TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES,
     }
 )
 
@@ -275,6 +294,7 @@ def _task034_authority_source_compatibility(
             "current_source_sha": current_source_sha,
             "changed_paths": [],
             "disallowed_changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
             "failures": ["source_sha_missing_or_invalid"],
         }
     if reference_source_sha == current_source_sha:
@@ -285,6 +305,7 @@ def _task034_authority_source_compatibility(
             "reference_source_is_ancestor": True,
             "changed_paths": [],
             "disallowed_changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
             "failures": [],
         }
     merge_base = _git("merge-base", reference_source_sha, current_source_sha)
@@ -295,12 +316,7 @@ def _task034_authority_source_compatibility(
 
     def allowed(path: str) -> bool:
         return bool(
-            path
-            in {
-                "benchmarks/run_task033_memory_watchdog.py",
-                "benchmarks/run_task034_wsl_qualification.py",
-                "benchmarks/task034_workstation_resource_gates.py",
-            }
+            path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
             or path.startswith(
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
             )
@@ -310,6 +326,11 @@ def _task034_authority_source_compatibility(
         )
 
     disallowed = [path for path in changed_paths if not allowed(path)]
+    component_disjoint = [
+        path
+        for path in changed_paths
+        if path in TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES
+    ]
     failures = []
     if merge_base != reference_source_sha:
         failures.append("reference_source_is_not_ancestor_of_current_source")
@@ -324,6 +345,7 @@ def _task034_authority_source_compatibility(
         "reference_source_is_ancestor": merge_base == reference_source_sha,
         "changed_paths": changed_paths,
         "disallowed_changed_paths": disallowed,
+        "component_disjoint_numerical_changed_paths": component_disjoint,
         "failures": failures,
     }
 

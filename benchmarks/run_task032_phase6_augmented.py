@@ -237,6 +237,9 @@ def _basis_summary(basis) -> dict[str, Any]:
     return {
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
+        "max_biorthogonality_entry_identity_error": (
+            basis.max_entry_identity_error
+        ),
         "left_pair_relative_errors": list(basis.left_pair_relative_errors),
         "near_degenerate_groups": [
             {
