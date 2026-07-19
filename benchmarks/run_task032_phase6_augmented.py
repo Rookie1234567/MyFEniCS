@@ -234,12 +234,32 @@ def _global_active_column_count(matrix: PETSc.Mat) -> int:
 
 
 def _basis_summary(basis) -> dict[str, Any]:
+    identity_difference = np.asarray(
+        basis.biorthogonality_matrix, dtype=np.complex128
+    ) - np.eye(len(basis.modes), dtype=np.complex128)
+    absolute_difference = np.abs(identity_difference)
+    row_sums = np.sum(absolute_difference, axis=1)
+    worst_row = int(np.argmax(row_sums))
+    worst_entry = tuple(
+        int(index)
+        for index in np.unravel_index(
+            int(np.argmax(absolute_difference)),
+            absolute_difference.shape,
+        )
+    )
     return {
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
         "max_biorthogonality_entry_identity_error": (
             basis.max_entry_identity_error
         ),
+        "biorthogonality_identity_diagnostics": {
+            "worst_row_index": worst_row,
+            "worst_row_sum": float(row_sums[worst_row]),
+            "worst_entry_row": worst_entry[0],
+            "worst_entry_column": worst_entry[1],
+            "worst_entry_abs": float(absolute_difference[worst_entry]),
+        },
         "left_pair_relative_errors": list(basis.left_pair_relative_errors),
         "near_degenerate_groups": [
             {

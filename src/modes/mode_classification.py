@@ -223,12 +223,38 @@ def _qep_overlap(
 def _batched_left_dots(
     action: PETSc.Vec, left_vectors: Sequence[PETSc.Vec]
 ) -> np.ndarray:
-    """Evaluate all ``left^H action`` products in one split reduction."""
+    """Evaluate ``left^H action`` with extended-precision accumulation.
 
-    for left in left_vectors:
-        action.dotBegin(left)
+    PETSc stores the vectors in complex128, but a complex128 dot reduction can
+    lose the small remainder when modal overlap terms cancel.  Accumulate each
+    rank-local dot in ``clongdouble`` and reduce only the resulting scalar
+    real/imaginary pairs in ``longdouble``.  This keeps vectors distributed
+    while avoiding both local and cross-rank complex128 summation loss.
+    """
+
+    action_local = np.asarray(
+        action.getArray(readonly=True), dtype=np.clongdouble
+    )
+    local_values = np.empty((len(left_vectors), 2), dtype=np.longdouble)
+    for index, left in enumerate(left_vectors):
+        left_local = np.asarray(
+            left.getArray(readonly=True), dtype=np.clongdouble
+        )
+        if left_local.shape != action_local.shape:
+            raise ValueError("Left and action vectors have different layouts.")
+        value = np.sum(
+            np.conj(left_local) * action_local,
+            dtype=np.clongdouble,
+        )
+        local_values[index, 0] = value.real
+        local_values[index, 1] = value.imag
+
+    global_values = np.empty_like(local_values)
+    action.getComm().tompi4py().Allreduce(
+        local_values, global_values, op=MPI.SUM
+    )
     return np.asarray(
-        [action.dotEnd(left) for left in left_vectors],
+        global_values[:, 0] + 1j * global_values[:, 1],
         dtype=np.complex128,
     )
 
@@ -245,8 +271,9 @@ def _qep_overlap_matrix(
     The previous elementwise implementation rebuilt ``K1 @ right`` and
     ``K2 @ right`` for every left/right pair, requiring O(M^2) sparse
     MatMults.  Reusing both actions per right mode reduces that work to O(M).
-    Combining the two globally reduced scalar products in extended precision
-    also avoids componentwise cancellation in ``K1 @ right + beta*K2 @ right``.
+    Both dot-product accumulation and the final scalar combination use
+    extended precision to avoid cancellation in
+    ``K1 @ right + beta*K2 @ right``.
     """
 
     if len(left_betas) != len(left_vectors):
