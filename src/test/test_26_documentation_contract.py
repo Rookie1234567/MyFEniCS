@@ -63,6 +63,7 @@ CASES = {
     "090_high_order_3d_floquet_hcurl",
     "091_hybrid_hp_adaptivity_feasibility",
     "092_workstation_wsl_adaptive_scalability",
+    "093_fixed_geometry_ph_convergence_mpi",
 }
 
 RECORDED_CASES = {

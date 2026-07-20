@@ -1,4 +1,5 @@
 {
+  "status": "canonical_partial_with_user_approved_reduced_scope",
   "expected_manifest_status": "canonical_partial_with_user_approved_reduced_scope",
   "required_mpi_sizes": [1, 8, 16],
   "exploratory_mpi_sizes": [32],
