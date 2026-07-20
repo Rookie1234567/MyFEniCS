@@ -4,8 +4,8 @@
   "status": "canonical_partial_with_user_approved_reduced_scope",
   "case_id": "093_fixed_geometry_ph_convergence_mpi",
   "aggregation_source": {
-    "commit_sha": "1ca77c8cbea047e063bd74c28c2995785de99046",
-    "worktree_status_before_record_write": "?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/README.md\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/config.json\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/expected.json\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/mpi_identity_summary.json\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/schema.json\n?? benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/test_command.txt\n?? benchmarks/task034_case093.py\n?? src/test/test_81_task034_case093.py"
+    "commit_sha": "35593ccd643c088993435b5bbe69e046361bea8a",
+    "worktree_status_before_record_write": ""
   },
   "compact_records": {
     "convergence_summary.json": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
