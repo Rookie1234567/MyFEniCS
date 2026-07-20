@@ -1,0 +1,641 @@
+{
+  "schema_version": "task034.case093.mpi-identity.v1",
+  "record_type": "representative_full3d_hybrid_mpi_identity",
+  "status": "qualified_user_approved_representative_scope",
+  "anchor": "p3_h5_s",
+  "required_mpi_sizes": [
+    1,
+    8,
+    16
+  ],
+  "exploratory_mpi_sizes": [
+    32
+  ],
+  "physical_core_count": 48,
+  "methods": {
+    "full3d": {
+      "status": "qualified",
+      "identity": {
+        "config_hash": "2eccf97e184d56a58169864784a1418bb2cb2d896b9463350615856d791b8464",
+        "degree": 3,
+        "h_nm": 5.0,
+        "polarization_kind": "s",
+        "source_sha": "2e944c957b95d95139490ce8c2d151089467e7bb",
+        "structural": {
+          "floquet_constraint_nnz": 8703,
+          "floquet_constraints": 8703,
+          "matrix_nnz": 35566727.0,
+          "matrix_rows": 145943,
+          "mesh_cells": [
+            12,
+            5,
+            28
+          ],
+          "num_nedelec_dofs": 145863,
+          "propagating_orders": 80
+        }
+      },
+      "checks": {
+        "all_no_swap": true,
+        "all_numerical_identity_rows_pass": true,
+        "baseline_field_archive_valid": true,
+        "method_supported": true,
+        "no_oversubscription": true,
+        "required_mpi_sizes_present_once": true,
+        "same_case_source_config_and_structure": true
+      },
+      "comparisons": [
+        {
+          "mpi_size": 1,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 6.339725494384766,
+            "timings_seconds": {
+              "boundary_condition_setup": 3.7299992982298136e-05,
+              "config_validation": 2.7000060072168708e-06,
+              "diffraction_postprocess": 0.5881119719997514,
+              "field_formulation_setup": 0.000577294995309785,
+              "floquet_constraint_setup_outer": 1.7589584920060588,
+              "floquet_mpc_finalize": 0.006247944998904131,
+              "floquet_phase_update": 0.18468777599628083,
+              "floquet_topology_build_current": 1.5528415059961844,
+              "floquet_total": 1.758533496002201,
+              "function_space_setup": 0.016090456003439613,
+              "matrix_stats": 0.2515624039951945,
+              "mesh_build": 0.028357846007565968,
+              "postprocess": 2.6331721620081225,
+              "stage4_dtn_port_assembly_and_solve": 1050.5189426659927,
+              "variational_form_setup": 0.02996813799836673,
+              "volume_absorption_postprocess": 0.04728921799687669
+            }
+          },
+          "true_relative_residual": 1.2650450103755494e-10,
+          "rta_drift": {
+            "A_balance": 0.0,
+            "A_volume_total": 0.0,
+            "R_total": 0.0,
+            "T_total": 0.0
+          },
+          "field_relative_l2_drift": {
+            "E_V_per_m": 0.0,
+            "E_t_interface_V_per_m": 0.0,
+            "H_A_per_m": 0.0,
+            "H_t_interface_A_per_m": 0.0
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 0.0,
+            "max_complex_amplitude_relative_drift": 0.0,
+            "max_power_absolute_drift": 0.0,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 8,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 9.013885498046875,
+            "timings_seconds": {
+              "boundary_condition_setup": 2.780000795610249e-05,
+              "config_validation": 4.399989848025143e-06,
+              "diffraction_postprocess": 0.33609185299428646,
+              "field_formulation_setup": 0.0008681000035721809,
+              "floquet_constraint_setup_outer": 0.40887514100177214,
+              "floquet_mpc_finalize": 0.0031753000075696036,
+              "floquet_phase_update": 0.03728760399098974,
+              "floquet_topology_build_current": 0.35671393599477597,
+              "floquet_total": 0.4083782409870764,
+              "function_space_setup": 0.0267219030065462,
+              "matrix_stats": 0.04437191999750212,
+              "mesh_build": 2.9934866600087844,
+              "postprocess": 0.6798860109993257,
+              "stage4_dtn_port_assembly_and_solve": 150.5113784619898,
+              "variational_form_setup": 0.010906401003012434,
+              "volume_absorption_postprocess": 0.024331811000593007
+            }
+          },
+          "true_relative_residual": 8.304968883227355e-12,
+          "rta_drift": {
+            "A_balance": 8.776313009661862e-13,
+            "A_volume_total": 3.9063197121436133e-13,
+            "R_total": 2.594062117888818e-15,
+            "T_total": 8.749667657070859e-13
+          },
+          "field_relative_l2_drift": {
+            "E_V_per_m": 7.252225805906642e-12,
+            "E_t_interface_V_per_m": 1.011159630796398e-11,
+            "H_A_per_m": 6.9577918611052716e-12,
+            "H_t_interface_A_per_m": 3.249394875091014e-11
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 4.3647579994754437e-10,
+            "max_complex_amplitude_relative_drift": 6.164520628902473e-10,
+            "max_power_absolute_drift": 8.759659664292485e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 16,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 11.358722686767578,
+            "timings_seconds": {
+              "boundary_condition_setup": 2.7699003112502396e-05,
+              "config_validation": 8.300004992634058e-06,
+              "diffraction_postprocess": 0.31635528900369536,
+              "field_formulation_setup": 0.0009785449947230518,
+              "floquet_constraint_setup_outer": 0.2882745489914669,
+              "floquet_mpc_finalize": 0.002895635989261791,
+              "floquet_phase_update": 0.020976510000764392,
+              "floquet_topology_build_current": 0.25210900099773426,
+              "floquet_total": 0.28782307500659954,
+              "function_space_setup": 0.03103264000674244,
+              "matrix_stats": 0.025951973992050625,
+              "mesh_build": 10.293054791996838,
+              "postprocess": 0.5218238140078029,
+              "stage4_dtn_port_assembly_and_solve": 72.97056970300036,
+              "variational_form_setup": 0.00949836200743448,
+              "volume_absorption_postprocess": 0.024029581996728666
+            }
+          },
+          "true_relative_residual": 1.1428012116275753e-11,
+          "rta_drift": {
+            "A_balance": 8.706368959110478e-13,
+            "A_volume_total": 3.9140912733159894e-13,
+            "R_total": 1.82276069238263e-15,
+            "T_total": 8.68749516769185e-13
+          },
+          "field_relative_l2_drift": {
+            "E_V_per_m": 7.2657280802278934e-12,
+            "E_t_interface_V_per_m": 1.0100710930293111e-11,
+            "H_A_per_m": 6.963512353280876e-12,
+            "H_t_interface_A_per_m": 3.2467622288565074e-11
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 4.3299352991965634e-10,
+            "max_complex_amplitude_relative_drift": 6.607098599824896e-10,
+            "max_power_absolute_drift": 8.705258736085852e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 32,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 15.772567749023438,
+            "timings_seconds": {
+              "boundary_condition_setup": 3.540099714882672e-05,
+              "config_validation": 7.499998901039362e-06,
+              "diffraction_postprocess": 0.28742701500596013,
+              "field_formulation_setup": 0.0011263050109846517,
+              "floquet_constraint_setup_outer": 0.21092859999043867,
+              "floquet_mpc_finalize": 0.0024699110072106123,
+              "floquet_phase_update": 0.01786777700181119,
+              "floquet_topology_build_current": 0.17130073100270238,
+              "floquet_total": 0.2104063979932107,
+              "function_space_setup": 0.03489674899901729,
+              "matrix_stats": 0.01876387900847476,
+              "mesh_build": 29.889881871000398,
+              "postprocess": 0.4228554879955482,
+              "stage4_dtn_port_assembly_and_solve": 41.94845431500289,
+              "variational_form_setup": 0.012350452001555823,
+              "volume_absorption_postprocess": 0.029414424003334716
+            }
+          },
+          "true_relative_residual": 6.911946887831288e-12,
+          "rta_drift": {
+            "A_balance": 8.817391261572993e-13,
+            "A_volume_total": 3.7825298448979083e-13,
+            "R_total": 5.57149812396851e-15,
+            "T_total": 8.761880110341735e-13
+          },
+          "field_relative_l2_drift": {
+            "E_V_per_m": 7.280743795170874e-12,
+            "E_t_interface_V_per_m": 1.0137179663143781e-11,
+            "H_A_per_m": 6.972090099224539e-12,
+            "H_t_interface_A_per_m": 3.2560130139952283e-11
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 4.084576010754404e-10,
+            "max_complex_amplitude_relative_drift": 6.245540714175503e-10,
+            "max_power_absolute_drift": 8.774092563612612e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        }
+      ],
+      "evidence": {
+        "path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+        "sha256": "47a7daf8ff787f423c6931c71da500bee3d5939e463c44fed33cdbe01cfa3da8"
+      }
+    },
+    "hybrid": {
+      "status": "qualified",
+      "identity": {
+        "config_hash": "a88fc811c435a882b4366dd3733401a615d08233be305c38ffb32592abb179fa",
+        "degree": 3,
+        "h_nm": 5.0,
+        "polarization_kind": "s",
+        "source_sha": "4f1cec96890af6a91770281d800e968b5740ac9a",
+        "structural": {
+          "bottom_local_fe_dofs": 21807,
+          "bottom_local_mesh_cells": [
+            12,
+            5,
+            4
+          ],
+          "interface_active_dofs": {
+            "bottom": 1080,
+            "top": 1080
+          },
+          "requested_modes": 160,
+          "top_local_fe_dofs": 21807,
+          "top_local_mesh_cells": [
+            12,
+            5,
+            4
+          ]
+        }
+      },
+      "checks": {
+        "all_no_swap": true,
+        "all_numerical_identity_rows_pass": true,
+        "method_supported": true,
+        "no_oversubscription": true,
+        "qualified_selected_mode_funnel": true,
+        "required_mpi_sizes_present_once": true,
+        "same_case_source_config_and_structure": true
+      },
+      "comparisons": [
+        {
+          "mpi_size": 1,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 1.2447738647460938,
+            "timings_seconds": {
+              "cross_section_and_qep_assembly": 0.19818446598947048,
+              "internal_modal_coupling": 63.596963165997295,
+              "physical_field_reconstruction": 20.30638168900623,
+              "positive_and_negative_biorthogonal_bases": 96.44917188399995,
+              "primary_system_build": 47.53334763699968,
+              "total": 431.0716448840103,
+              "two_local_fem_dtn_systems": 177.91451588600466
+            }
+          },
+          "true_relative_residual": 6.418009611031225e-12,
+          "rta_drift": {
+            "A_balance": 0.0,
+            "A_volume_total": 0.0,
+            "R_total": 0.0,
+            "T_total": 0.0
+          },
+          "field_relative_l2_drift": {
+            "interface_bottom_electric_tangential": 0.0,
+            "interface_bottom_magnetic_tangential": 0.0,
+            "interface_top_electric_tangential": 0.0,
+            "interface_top_magnetic_tangential": 0.0,
+            "plane_10_electric": 0.0,
+            "plane_10_magnetic": 0.0,
+            "plane_110_electric": 0.0,
+            "plane_110_magnetic": 0.0,
+            "plane_30_electric": 0.0,
+            "plane_30_magnetic": 0.0,
+            "plane_60_electric": 0.0,
+            "plane_60_magnetic": 0.0,
+            "plane_90_electric": 0.0,
+            "plane_90_magnetic": 0.0
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 0.0,
+            "max_complex_amplitude_relative_drift": 0.0,
+            "max_power_absolute_drift": 0.0,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 8,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 4.900310516357422,
+            "timings_seconds": {
+              "cross_section_and_qep_assembly": 2.702417523993063,
+              "internal_modal_coupling": 19.643600325012812,
+              "physical_field_reconstruction": 10.352480575995287,
+              "positive_and_negative_biorthogonal_bases": 60.28041882599064,
+              "primary_system_build": 14.3273847780074,
+              "total": 144.69150158199773,
+              "two_local_fem_dtn_systems": 31.056415557992295
+            }
+          },
+          "true_relative_residual": 1.1635106976942109e-11,
+          "rta_drift": {
+            "A_balance": 3.852473895449293e-13,
+            "A_volume_total": 1.3500311979441904e-13,
+            "R_total": 2.682099334294641e-15,
+            "T_total": 3.8258285428582894e-13
+          },
+          "field_relative_l2_drift": {
+            "interface_bottom_electric_tangential": 5.11368236470511e-15,
+            "interface_bottom_magnetic_tangential": 3.9174609736680743e-14,
+            "interface_top_electric_tangential": 2.747986786698785e-14,
+            "interface_top_magnetic_tangential": 2.95965509045093e-14,
+            "plane_10_electric": 4.05586835953509e-14,
+            "plane_10_magnetic": 1.0324405989425162e-13,
+            "plane_110_electric": 2.771155446632716e-14,
+            "plane_110_magnetic": 1.535437629904962e-14,
+            "plane_30_electric": 1.5654333535561945e-13,
+            "plane_30_magnetic": 1.2691142082556228e-14,
+            "plane_60_electric": 1.3671907979654827e-14,
+            "plane_60_magnetic": 2.006698301450227e-14,
+            "plane_90_electric": 3.245256473760009e-14,
+            "plane_90_magnetic": 2.0609206073489428e-14
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 9.904370656954598e-10,
+            "max_complex_amplitude_relative_drift": 1.0257669087272866e-09,
+            "max_power_absolute_drift": 3.810285420513537e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 16,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 7.149570465087891,
+            "timings_seconds": {
+              "cross_section_and_qep_assembly": 8.556354287997237,
+              "internal_modal_coupling": 14.824928400994395,
+              "physical_field_reconstruction": 9.959784072998445,
+              "positive_and_negative_biorthogonal_bases": 59.73221998299414,
+              "primary_system_build": 8.865624108002521,
+              "total": 134.13195394199283,
+              "two_local_fem_dtn_systems": 28.62491082100314
+            }
+          },
+          "true_relative_residual": 3.3967054735750233e-12,
+          "rta_drift": {
+            "A_balance": 1.9184653865522705e-13,
+            "A_volume_total": 6.439293542825908e-14,
+            "R_total": 2.3843774177301214e-15,
+            "T_total": 1.9417800700693988e-13
+          },
+          "field_relative_l2_drift": {
+            "interface_bottom_electric_tangential": 5.488492885456864e-16,
+            "interface_bottom_magnetic_tangential": 1.0214919188289429e-14,
+            "interface_top_electric_tangential": 6.16789604375968e-15,
+            "interface_top_magnetic_tangential": 3.51686995497813e-14,
+            "plane_10_electric": 1.845139811068857e-14,
+            "plane_10_magnetic": 8.427655275033974e-14,
+            "plane_110_electric": 5.553293014239763e-14,
+            "plane_110_magnetic": 5.261768668343714e-15,
+            "plane_30_electric": 9.318249263293079e-14,
+            "plane_30_magnetic": 2.49186657636305e-14,
+            "plane_60_electric": 5.183752063462146e-14,
+            "plane_60_magnetic": 1.7963237776592866e-14,
+            "plane_90_electric": 1.0113521636503269e-13,
+            "plane_90_magnetic": 9.57631055616831e-15
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 3.633107148459658e-10,
+            "max_complex_amplitude_relative_drift": 7.571471113774855e-10,
+            "max_power_absolute_drift": 1.915134717478395e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        },
+        {
+          "mpi_size": 32,
+          "checks": {
+            "complex_amplitude_phase_drift_le_1e-7_rad": true,
+            "complex_amplitude_relative_drift_le_1e-7": true,
+            "field_and_interface_relative_l2_drift_le_1e-6": true,
+            "official_result_identity": true,
+            "order_keys_identical": true,
+            "order_power_absolute_drift_le_1e-8": true,
+            "qep_beta_relative_drift_le_1e-7": true,
+            "rta_and_a_volume_absolute_drift_le_1e-8": true,
+            "significant_order_count_positive": true,
+            "true_residual_le_1e-9": true
+          },
+          "resource": {
+            "elapsed_seconds": null,
+            "no_swap": true,
+            "peak_memory_gib": 12.087821960449219,
+            "timings_seconds": {
+              "cross_section_and_qep_assembly": 26.937559917001636,
+              "internal_modal_coupling": 13.949754353001481,
+              "physical_field_reconstruction": 10.246295702003408,
+              "positive_and_negative_biorthogonal_bases": 79.80715107300784,
+              "primary_system_build": 7.432339930004673,
+              "total": 201.09742040900164,
+              "two_local_fem_dtn_systems": 59.93112880899571
+            }
+          },
+          "true_relative_residual": 3.787906702429209e-12,
+          "rta_drift": {
+            "A_balance": 1.4788170688007085e-13,
+            "A_volume_total": 4.701794509287538e-14,
+            "R_total": 9.26342336171615e-16,
+            "T_total": 1.4876988529977098e-13
+          },
+          "field_relative_l2_drift": {
+            "interface_bottom_electric_tangential": 3.0874266323386195e-15,
+            "interface_bottom_magnetic_tangential": 1.5789778338992644e-14,
+            "interface_top_electric_tangential": 4.0142270181200745e-15,
+            "interface_top_magnetic_tangential": 2.7367431237879103e-15,
+            "plane_10_electric": 3.3149417049240307e-14,
+            "plane_10_magnetic": 5.5646852685671544e-14,
+            "plane_110_electric": 4.406763192879972e-14,
+            "plane_110_magnetic": 5.273694892241054e-16,
+            "plane_30_electric": 9.931223290298493e-14,
+            "plane_30_magnetic": 1.7227796337941637e-14,
+            "plane_60_electric": 7.244685926876713e-15,
+            "plane_60_magnetic": 2.3746101114087426e-14,
+            "plane_90_electric": 1.5349992056514633e-14,
+            "plane_90_magnetic": 6.502570292117593e-15
+          },
+          "order_identity": {
+            "checks": {
+              "complex_amplitude_phase_drift_le_1e-7_rad": true,
+              "complex_amplitude_relative_drift_le_1e-7": true,
+              "order_keys_identical": true,
+              "order_power_absolute_drift_le_1e-8": true,
+              "qep_beta_relative_drift_le_1e-7": true,
+              "significant_order_count_positive": true
+            },
+            "max_complex_amplitude_phase_drift_rad": 3.6752512144744287e-10,
+            "max_complex_amplitude_relative_drift": 3.99973649931491e-10,
+            "max_power_absolute_drift": 1.4788170688007085e-13,
+            "max_qep_beta_relative_drift": 0.0,
+            "significant_order_count": 12,
+            "significant_order_power_threshold": 1e-08
+          }
+        }
+      ],
+      "evidence": {
+        "path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json",
+        "sha256": "a4e5664a7d2eed9eedb72929cda57ce3ad4e3cf150ffdb660af3c3b212046214"
+      }
+    }
+  },
+  "scope_note": "User approved one representative case; this closes rank-count expansion but is not a per-degree MPI matrix.",
+  "ordinary_default_changed": false
+}

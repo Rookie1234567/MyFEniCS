@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "myfenics.task034.case093.compact-record.v1",
+  "title": "Case093 compact benchmark record",
+  "type": "object",
+  "required": ["schema_version", "record_type", "status"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^task034\\.case093\\."},
+    "record_type": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

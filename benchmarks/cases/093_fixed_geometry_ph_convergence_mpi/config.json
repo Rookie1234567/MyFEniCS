@@ -1,0 +1,95 @@
+{
+  "schema_version": "task034.case093.config.v1",
+  "case_id": "093_fixed_geometry_ph_convergence_mpi",
+  "matrix": [
+    {
+      "key": "p2_h5",
+      "degree": 2,
+      "h_nm": 5.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p2_h5_full_mpi8_6b30df2.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_m160_mpi8_bd24a7f.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_funnel_mpi8_bd24a7f.json"
+    },
+    {
+      "key": "p2_h3",
+      "degree": 2,
+      "h_nm": 3.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p2_h3_full_mpi8_23f6fe2.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_funnel_mpi8_2141788.json"
+    },
+    {
+      "key": "p2_h2",
+      "degree": 2,
+      "h_nm": 2.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p2_h2_full_mpi8_2141788.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p2_h2_hybrid_m160_mpi8_06e0ee1.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p2_h2_hybrid_funnel_mpi8_06e0ee1.json"
+    },
+    {
+      "key": "p3_h10",
+      "degree": 3,
+      "h_nm": 10.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p3_h10_full_mpi8_06e0ee1.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p3_h10_hybrid_m160_mpi8_e091785_v3.json",
+      "funnel_record": null
+    },
+    {
+      "key": "p3_h7p5",
+      "degree": 3,
+      "h_nm": 7.5,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_full_mpi8_06e0ee1.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_hybrid_m160_mpi8_e091785_v3.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_hybrid_funnel_mpi8_e091785_v3.json"
+    },
+    {
+      "key": "p3_h5",
+      "degree": 3,
+      "h_nm": 5.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full_mpi8_06e0ee1.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_m160_mpi8_e091785_v3.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_funnel_mpi8_e091785.json"
+    },
+    {
+      "key": "p3_h3",
+      "degree": 3,
+      "h_nm": 3.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p3_h3_full_mpi8_3a1bc99_s.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_funnel_mpi8_8438cca_s.json"
+    },
+    {
+      "key": "p4_h10",
+      "degree": 4,
+      "h_nm": 10.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p4_h10_full_mpi8_e091785.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p4_h10_hybrid_m160_mpi8_df6d56f.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p4_h10_hybrid_funnel_mpi8_df6d56f.json"
+    },
+    {
+      "key": "p4_h7p5",
+      "degree": 4,
+      "h_nm": 7.5,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_full_mpi8_e091785.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_hybrid_m160_mpi8_df6d56f.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_hybrid_funnel_mpi8_df6d56f.json"
+    },
+    {
+      "key": "p4_h5",
+      "degree": 4,
+      "h_nm": 5.0,
+      "full3d_record": "benchmarks/artifacts/task034/phase_f/records/p4_h5_full_mpi8_e091785.json",
+      "hybrid_m160_record": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
+      "funnel_record": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_funnel_mpi8_df6d56f.json"
+    }
+  ],
+  "supplemental_outcomes": [
+    "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p2_h1_execution_outcome.json",
+    "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p3_h2_execution_outcome.json",
+    "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p4_h3_execution_outcome.json"
+  ],
+  "mpi_identity_records": {
+    "full3d": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+    "hybrid": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json"
+  }
+}

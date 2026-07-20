@@ -1,0 +1,1 @@
+python -m benchmarks.task034_case093 check --case-dir benchmarks/cases/093_fixed_geometry_ph_convergence_mpi

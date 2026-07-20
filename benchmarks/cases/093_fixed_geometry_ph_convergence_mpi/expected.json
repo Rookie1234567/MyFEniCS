@@ -1,0 +1,10 @@
+{
+  "expected_manifest_status": "canonical_partial_with_user_approved_reduced_scope",
+  "required_mpi_sizes": [1, 8, 16],
+  "exploratory_mpi_sizes": [32],
+  "primary_polarization": "s",
+  "selected_discrete_reference": "p4_h5",
+  "grid_convergence_proven": false,
+  "continuum_reference": false,
+  "ordinary_default_changed": false
+}
