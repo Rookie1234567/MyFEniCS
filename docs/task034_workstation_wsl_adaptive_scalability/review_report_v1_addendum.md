@@ -71,7 +71,7 @@ not_run_by_task034_conservative_resource_gate
 - 必须同时报告 `factorization_launched=false` 和 `full_solve_launched=false`。
 - 不得把预测上界写成实测 factorization peak。
 - p3/h2、p4/h3 的 Hybrid M160 是 measured shard pass，但没有 M funnel 和 same-point Full3D closure；应单列，不得与 Full3D not-run 混成整个案例失败。
-- p2/h1 Hybrid 是 field-recovery timeout negative，而不是 memory negative；必须单独分类。
+- p2/h1 Hybrid 是 field-recovery timeout，而不是 memory negative 或 numerical nonconvergence；必须按 A5 单独分类。
 
 ## A3. 缺少统一的全案例结果总表
 
@@ -130,14 +130,14 @@ R00_p
 R00_total = R00_s + R00_p
 ```
 
-不得只写一个含义不明的 `R(0,0)`。
+这里的 `R00_p` 是 **S 入射下的交叉偏振输出分量**，不是要求重新运行 P 入射案例。不得只写一个含义不明的 `R(0,0)`。
 
 ### `outcomes/summary.md` 必须增加四张汇总表
 
-1. **全模型主表**：所有 p2/p3/p4 Full3D 与 selected-M Hybrid，包括 not-run/controlled-stop 行；
-2. **M 收敛表**：至少 p3/h3、p4/h5 的 M80/M120/M160，列 R/T/A、R00、DoF/rows、memory、time 和相邻 M 差；
-3. **MPI 表**：p3/h5 Full3D 与 Hybrid 的 MPI1/8/16/32，列物理量、DoF/rows、memory、分阶段耗时和漂移；
-4. **资源停止表**：p2/h1、p3/h2、p4/h3，区分 assembly measured、factor upper predicted、是否启动 factor/full solve，以及 Hybrid 实际结果。
+1. **全模型主表**：以 S 偏振为主，列出所有 p2/p3/p4 Full3D 与 selected-M Hybrid，包括 not-run/controlled-stop 行；已有 P capability 可在单独的小型能力表中引用，不要求补跑完整 P 矩阵；
+2. **M 收敛表**：至少 p3/h3、p4/h5 的 S 偏振 M80/M120/M160，列 R/T/A、R00、DoF/rows、memory、time 和相邻 M 差；
+3. **MPI 表**：p3/h5 S 偏振 Full3D 与 Hybrid 的 MPI1/8/16/32，列物理量、DoF/rows、memory、分阶段耗时和漂移；
+4. **资源停止表**：p2/h1、p3/h2、p4/h3 的 S 偏振结果，区分 assembly measured、factor upper predicted、是否启动 factor/full solve，以及 Hybrid 实际结果。
 
 表格应由 JSON/CSV 自动生成或至少通过 checker 验证，避免 Markdown 手工抄写漂移。
 
@@ -145,6 +145,49 @@ R00_total = R00_s + R00_p
 
 根 `AGENTS.md` 已在 master 修正：不再写当前 Task 编号、日期、分支和阶段顺序，并新增 `src/` 与 `benchmarks/` 的架构边界。Codex开始 Review V2 前必须先拉取最新 master 并重新读取该文件。当前 Task 的具体范围仍以 Task034 任务书、补充任务书和两份 Review V1 为准。
 
+## A5. 正式范围以 S 偏振为主，且 p2/h1 Hybrid 超时不得误判
+
+### S 偏振主线
+
+Task034 的统一收敛、M 漏斗、MPI identity、Full3D/Hybrid closure 和结果总表均以 **S polarization** 为正式主线。Review V2 不要求为表格对称性重复运行完整 P 偏振 p/h、M 或 MPI 矩阵。
+
+现有 p2/h5 P capability 结果可以保留并在 summary 中单独说明其能力边界，但不得由此触发新的重型 P 重跑。只有用户后续明确要求，或发现 S 主线无法验证某项与偏振相关的数值内核时，才另行提出 P 偏振任务。
+
+必须区分：
+
+- `polarization_kind = s`：入射偏振为 S；
+- `R00_p` / `T00_p`：S 入射结果中的交叉偏振输出分量；
+- P 入射案例：另一套独立物理输入，本轮不要求补跑。
+
+### p2/h1 Hybrid 实际发生了什么
+
+p2/h1 Hybrid M160 的 watchdog 上限为 7200 s。该运行没有因内存终止，未触发 memory warning，job swap 为 0，实测峰值约 95.879 GiB。已完成的阶段包括：
+
+| 阶段 | 完成时刻 |
+|---|---:|
+| bottom local factor | 2731.663 s |
+| bottom Schur contribution | 3172.848 s |
+| top local factor | 5205.347 s |
+| top Schur contribution | 5542.727 s |
+| field recovery 开始 | 5542.752 s |
+
+进程随后在 `field_recovery` 阶段达到 7200 s 的 wall-time 限制并由 watchdog 终止。因此准确状态是：
+
+```text
+timeout_during_field_recovery_no_official_solution
+```
+
+它不等于：
+
+- 线性系统被证明不收敛；
+- 模态 Schur 系统被证明无解；
+- 内存不足；
+- p2/h1 Hybrid 在更长时间或更优 field-recovery 实现下必然失败。
+
+但是，因为 field recovery、完整 solver record、full explicit true residual 和 official R/T/A 尚未完成，本次运行也不能称为数值成功或已有可用解。最准确的表述是：**主要局部 factor/Schur 阶段已完成，但完整场恢复和正式后处理在时限内未完成，因此没有获得可审查的最终物理解。**
+
+Review V2 不强制仅为补齐表格而重新运行 p2/h1。应保留该 timeout 证据，并把优化 field recovery 或延长时限的复跑留给后续明确任务；当前 S 偏振主线可以使用 p2/h2、p3/h3、p4/h5 等已经正式闭合的案例。
+
 ## Review Addendum 结论
 
-在关闭 A1–A3 前，Task034 仍不具备直接 selective merge 条件。上述要求主要涉及架构清单、状态语义、证据聚合和 summary 完整性；若不修改 Maxwell/Floquet/QEP/Hybrid 数值核心，原则上不要求重跑已经接受的 p3/h3、p4/h5 和 MPI 主 PDE。
+在关闭 A1–A3 和 A5 的状态/汇总要求前，Task034 仍不具备直接 selective merge 条件。上述要求主要涉及架构清单、状态语义、证据聚合和 summary 完整性；若不修改 Maxwell/Floquet/QEP/Hybrid 数值核心，原则上不要求重跑已经接受的 p3/h3、p4/h5 和 MPI 主 PDE，也不要求重复运行完整 P 偏振矩阵。
