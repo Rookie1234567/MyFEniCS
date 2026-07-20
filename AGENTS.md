@@ -21,13 +21,19 @@
 5. 检查 `HEAD`、`origin`、工作树、环境、ABI 和源码身份；未通过前不得正式运行 PDE。
 6. **不得从本文件推断当前 Task。** 若用户指令、分支和任务目录不能唯一对应，先报告歧义。
 
-## 2. 角色与任务闭环
+## 2. 角色、分支与任务闭环
 
 - ChatGPT 负责任务书、补充任务书和 `review_report_vN.md`。
 - Codex 负责执行分支、实现、测试、正式运行、`outcomes/` 和 `response_vN.md`。
+- **一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支。**
+- ChatGPT 不得在活动任务期间把 `task.md`、补充任务书、review、规则修订或其他任务过程材料直接提交到 `master`。
+- Codex 不得为了取得 ChatGPT 的 review 而让 ChatGPT先写 `master`，也不得自行把未批准的执行分支合入 `master`。
+- 若活动任务期间 `master` 出现无关更新，不得默认 merge/rebase 到执行分支；确有必要时先说明原因、影响和冲突风险，并取得用户或最新 review 的明确授权。
 - Codex 不得删除、覆盖或弱化任务书、补充任务书、review 或本文件。
-- 任务结束时必须提交并推送执行分支，给出精确完整 HEAD、base SHA、工作树状态、测试结果和证据索引，然后停止等待 review。
-- 未经最终 review 和用户授权，不得自行合并 `master`。
+- 每轮实现结束后，Codex 提交并推送执行分支，给出精确完整 HEAD、base SHA、工作树状态、测试结果和证据索引，然后停止等待 ChatGPT review。
+- ChatGPT 审阅时直接把新的 `review_report_vN.md` 提交到该执行分支；Codex从同一分支拉取后继续修改，不需要通过 `master` 中转。
+- 只有 ChatGPT 最终审阅明确给出 merge approval，并且用户授权后，ChatGPT 才提醒 Codex将已批准的执行分支合并到 `master`。
+- 最终合并由 Codex 执行；合并后必须报告精确 `master` SHA、合并方式、测试结果和工作树状态。除最终批准合并外，任何人不得直接在 `master` 开发。
 
 ## 3. Git 规则
 
