@@ -1097,10 +1097,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.full3d_reference is None
             and args.task034_workstation_resource_anchor is not None
         )
+        p4_h3_resource_anchor_scope = bool(
+            args.degree == 4
+            and math.isclose(args.h_nm, 3.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+            and args.full3d_reference is None
+            and args.task034_workstation_resource_anchor is not None
+        )
         phase_f_matrix = {
             (2, 5.0), (2, 3.0), (2, 2.0), (2, 1.0),
             (3, 10.0), (3, 7.5), (3, 5.0), (3, 3.0), (3, 2.0),
-            (4, 10.0), (4, 7.5), (4, 5.0),
+            (4, 10.0), (4, 7.5), (4, 5.0), (4, 3.0),
         }
         anchor_selection_valid = bool(
             (
@@ -1110,6 +1119,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     or (
                         args.degree == 3
                         and math.isclose(args.h_nm, 2.0)
+                    )
+                    or (
+                        args.degree == 4
+                        and math.isclose(args.h_nm, 3.0)
                     )
                 )
                 and args.full3d_reference is not None
@@ -1122,6 +1135,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             )
             or p2_h1_resource_anchor_scope
             or p3_h2_resource_anchor_scope
+            or p4_h3_resource_anchor_scope
         )
         approved_p_scope = bool(
             args.polarization_kind == "p"
@@ -1138,6 +1152,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             not (args.degree == 3 and math.isclose(args.h_nm, 2.0))
             or p3_h2_resource_anchor_scope
         )
+        approved_p4_h3_scope = bool(
+            not (args.degree == 4 and math.isclose(args.h_nm, 3.0))
+            or p4_h3_resource_anchor_scope
+        )
         scoped = bool(
             args.target == "hybrid"
             and (args.degree, args.h_nm) in phase_f_matrix
@@ -1153,6 +1171,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and (args.polarization_kind == "s" or approved_p_scope)
             and approved_p2_h1_scope
             and approved_p3_h2_scope
+            and approved_p4_h3_scope
             and anchor_selection_valid
             and args.host_environment_id == "WSL2-Ubuntu-24.04"
             and isinstance(
@@ -1171,7 +1190,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 " The only P-polarized exception is the user-approved "
                 "p2/h5 MPI8 M160 capability example. The p2/h1 S added point "
                 "and the p3/h2 S added point are each restricted to MPI8 M160 "
-                "with their candidate-specific assembly resource anchor."
+                "with their candidate-specific assembly resource anchor. The "
+                "p4/h3 S added point has the same MPI8 M160-only restriction."
             )
     return args
 

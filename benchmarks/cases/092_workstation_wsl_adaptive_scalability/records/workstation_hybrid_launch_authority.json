@@ -960,6 +960,103 @@
       }
     },
     {
+      "matrix_key": "phase_f_p4_h3_s",
+      "degree": 4,
+      "h_nm": 3.0,
+      "status": "calibrated_guarded_launch_authority",
+      "max_formal_modes": 160,
+      "conditional_m240_allowed": false,
+      "candidate_pool_ratio": 2,
+      "solver_path": "modal-schur-memory-minimal",
+      "comparison_solver_path": "fast",
+      "bottom_interface_nm": 10.0,
+      "top_interface_nm": 110.0,
+      "incident_grazing_deg": 10.0,
+      "polarization_kind": "s",
+      "assembly_resource_anchor": {
+        "role": "p4_h3_full3d_assembly_calibration_and_hybrid_resource_anchor",
+        "source_sha": "19f0366a65152821b8fde60d8fbd9b0a4bc1d0a2",
+        "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_assembly_mpi8_19f0366_s.json",
+        "watchdog_record_sha256": "a8fb4074f3dd33b884693a68e29fa3f286230d879a66829eefc8b6c349ab7f71",
+        "status": "assembly_calibration_pass",
+        "qualification_pass": true,
+        "no_swap": true,
+        "peak_memory_gib": 80.53771209716797,
+        "exact_rows": 1540028,
+        "exact_assembled_nnz": 696091072,
+        "factorization_or_solve_stage_seen": false
+      },
+      "staged_resource_evidence": {
+        "assembly_record_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_assembly_mpi8_19f0366_s.json",
+        "assembly_record_sha256": "a8fb4074f3dd33b884693a68e29fa3f286230d879a66829eefc8b6c349ab7f71",
+        "assembly_peak_memory_gib": 80.53771209716797,
+        "resource_decision_record_path": "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p4_h3_resource_gate.json",
+        "resource_decision_record_sha256": "638108912e91feeede12ebf8f5714c163b83e8864a17d7d8b1545f1bf699e479",
+        "full3d_factorization_gate_pass": false,
+        "full3d_full_solve_gate_pass": false,
+        "full3d_stop_stage": "assembly_only"
+      },
+      "full3d_resource_prediction": {
+        "centers_gib": {
+          "assembly_to_factor_center": 111.9142905388768,
+          "factor_fill_payload_without_baseline_credit_center": 136.08806938822494,
+          "p4_h_power_center": 79.48101054163882
+        },
+        "conservative_upper_gib": 204.1321040823374,
+        "observed_termination_gib": 184.16309014242142,
+        "decision": "controlled_resource_negative_stop_after_assembly",
+        "factorization_or_full_solve_launched": false
+      },
+      "workstation_prediction": {
+        "method": "1.5 * max(historical p4/h3 Hybrid M160 centers from h-power, assembly scaling, and local-volume cubic no-discount)",
+        "centers_gib": {
+          "hybrid_h_power_center": 15.896450451485311,
+          "hybrid_assembly_scaled_center": 36.54142825350588,
+          "hybrid_local_volume_cubic_no_discount_center": 42.619987770363146
+        },
+        "conservative_upper_gib": 63.92998165554472,
+        "measured_full3d_multiplier": 1.5,
+        "task033_old_model_is_launch_authority": false,
+        "historical_hybrid_inputs": [
+          {
+            "matrix_key": "phase_f_p4_h7p5_s",
+            "modes": 160,
+            "peak_memory_gib": 5.9671173095703125,
+            "solver_record_sha256": "2646e6af6204ba2aeda88fa3b45b0fda6814169005dd133397a29c33b70bafa5"
+          },
+          {
+            "matrix_key": "phase_f_p4_h5_s",
+            "modes": 160,
+            "peak_memory_gib": 9.205917358398438,
+            "solver_record_sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb"
+          }
+        ],
+        "limitations": [
+          "Authorizes only the user-added p4/h3 S-polarized MPI8 Hybrid M160 shard.",
+          "The p4/h3 Full-3D lane stopped after assembly because its conservative factorization prediction exceeded the fixed termination threshold.",
+          "There is no p4/h3 Full-3D physical reference or closure claim.",
+          "Hybrid memory remains measured by the live process-tree/cgroup watchdog.",
+          "M80/M120/M240 and every other p4/h3 MPI or polarization combination remain unauthorized."
+        ]
+      },
+      "observed_task034_resource_policy": {
+        "effective_limit_gib": 193.85588436108083,
+        "warning_gib": 155.08470748830587,
+        "termination_gib": 184.16309014242142,
+        "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)",
+        "note": "Runtime recomputes these values; stored values are evidence, not overrides."
+      },
+      "qualification": {
+        "assembly_gate_pass": true,
+        "factorization_gate_pass": false,
+        "full_solve_gate_pass": false,
+        "source_clean_and_stable": true,
+        "zero_job_swap": true,
+        "prediction_below_observed_task034_warning": true,
+        "guarded_launch_authorized": true
+      }
+    },
+    {
       "matrix_key": "phase_f_p2_h5_p",
       "degree": 2,
       "h_nm": 5.0,

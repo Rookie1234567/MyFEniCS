@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task034_case092_p4_h3_resource_gate",
+  "record_type": "task034_candidate_factorization_stop_and_hybrid_guarded_prediction",
+  "matrix_key": "phase_f_p4_h3_s",
+  "source_sha": "19f0366a65152821b8fde60d8fbd9b0a4bc1d0a2",
+  "case": {
+    "degree": 4,
+    "h_nm": 3.0,
+    "mpi_size": 8,
+    "polarization_kind": "s"
+  },
+  "assembly_measurement": {
+    "status": "assembly_calibration_pass",
+    "elapsed_seconds": 3035.1390509350167,
+    "peak_memory_gib": 80.53771209716797,
+    "exact_rows": 1540028,
+    "exact_assembled_nnz": 696091072,
+    "factorization_or_solve_stage_seen": false,
+    "no_swap": true,
+    "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_assembly_mpi8_19f0366_s.json",
+    "watchdog_record_sha256": "a8fb4074f3dd33b884693a68e29fa3f286230d879a66829eefc8b6c349ab7f71"
+  },
+  "historical_full3d_anchors": [
+    {
+      "h_nm": 7.5,
+      "assembly_peak_memory_gib": 10.126602172851562,
+      "assembly_record_sha256": "7c9bdb46577808e345a785ae9518a5ace5b54e4392d70b4dd0ea49de8da856df",
+      "factorization_peak_memory_gib": 12.385272979736328,
+      "factorization_record_sha256": "4e775b1b554ae096d82b3a1f2f4be4c534269314969a85b827674b3eab86ef33"
+    },
+    {
+      "h_nm": 5.0,
+      "assembly_peak_memory_gib": 20.28994369506836,
+      "assembly_record_sha256": "ed6af4448521c67f4ee8cf5bd3673e9a63d9a72c57ead3d746838ec8210e6cb0",
+      "factorization_peak_memory_gib": 28.19467544555664,
+      "factorization_record_sha256": "3b038d6d836da71bc17201ae0d7ad4547c4e4568b1dc0c66d7b05dd5082fb2cb"
+    }
+  ],
+  "full3d_factorization_prediction": {
+    "status": "factorization_resource_negative",
+    "centers_gib": {
+      "p4_h5_measured_assembly_to_factor_peak_ratio": 111.9142905388768,
+      "p4_h5_factor_fill_payload_without_baseline_credit": 136.08806938822494,
+      "p4_h7p5_to_h5_factor_peak_h_power_projection": 79.48101054163882
+    },
+    "supporting_values": {
+      "p4_h5_factor_fill_ratio": 3.5703387315742403,
+      "projected_factor_nnz": 2485280915.0646334,
+      "factor_payload_bytes_per_nnz": 24,
+      "p4_h7p5_to_h5_factor_peak_h_exponent": 2.0288429899957885,
+      "payload_projection_semantics": "measured current assembly peak plus projected factor payload; no subtraction or baseline-memory credit"
+    },
+    "conservative_upper_gib": 204.1321040823374,
+    "conservative_upper_above_termination": true,
+    "factorization_launch_authorized": false,
+    "full_solve_launch_authorized": false,
+    "decision": "Stop the p4/h3 full3D lane after assembly; do not launch KSPSetUp or full solve."
+  },
+  "historical_hybrid_anchors": [
+    {
+      "h_nm": 7.5,
+      "peak_memory_gib": 5.9671173095703125,
+      "record_path": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_hybrid_m160_mpi8_df6d56f.json",
+      "record_sha256": "2646e6af6204ba2aeda88fa3b45b0fda6814169005dd133397a29c33b70bafa5"
+    },
+    {
+      "h_nm": 5.0,
+      "peak_memory_gib": 9.205917358398438,
+      "record_path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
+      "record_sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb"
+    }
+  ],
+  "hybrid_m160_prediction": {
+    "status": "guarded_launch_prediction_pass",
+    "requested_modes": 160,
+    "candidate_modes": 320,
+    "centers_gib": {
+      "p4_h7p5_to_h5_hybrid_peak_h_power_projection": 15.896450451485311,
+      "current_assembly_scaled_by_p4_h5_hybrid_to_assembly_ratio": 36.54142825350588,
+      "p4_h5_hybrid_local_volume_cubic_no_discount": 42.619987770363146
+    },
+    "supporting_values": {
+      "p4_h7p5_hybrid_m160_peak_gib": 5.9671173095703125,
+      "p4_h5_hybrid_m160_peak_gib": 9.205917358398438,
+      "p4_h7p5_to_h5_hybrid_peak_h_exponent": 1.069346071180569
+    },
+    "all_centers_below_warning": true,
+    "conservative_upper_gib": 63.92998165554472,
+    "conservative_upper_below_warning": true,
+    "guarded_m160_launch_authorized": true,
+    "live_external_watchdog_is_final_authority": true,
+    "limitations": [
+      "This prediction authorizes only one p4/h3 S-polarized MPI8 Hybrid M160 guarded attempt.",
+      "It does not authorize p4/h3 full3D factorization or full solve.",
+      "It does not assert same-degree Hybrid/full3D closure because no p4/h3 full3D solve is authorized.",
+      "M80, M120 and M240 are outside the user-requested added-point scope."
+    ]
+  },
+  "live_task034_resource_policy": {
+    "effective_limit_gib": 193.85588436108083,
+    "warning_gib": 155.08470748830587,
+    "termination_gib": 184.16309014242142,
+    "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)"
+  },
+  "qualification": {
+    "assembly_measurement_pass": true,
+    "full3d_controlled_resource_negative": true,
+    "full3d_factorization_stopped_before_oom": true,
+    "hybrid_prediction_below_live_warning": true,
+    "thresholds_relaxed": false,
+    "zero_job_swap": true
+  }
+}
