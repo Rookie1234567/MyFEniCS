@@ -10,6 +10,8 @@
     "adaptive_compression_complete": true,
     "adaptive_compression_same_error_pass": false,
     "genuine_adaptive_heavy_lane_executed": false,
+    "resource_model_v2_complete": true,
+    "0p7nm_assessment_complete": true,
     "proves_continuum_convergence": false,
     "proves_0p7nm_feasible": false,
     "ordinary_default_changed": false

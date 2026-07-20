@@ -81,6 +81,8 @@ authority、现场内存、swap、磁盘和 source Gate。
 - `benchmarks/run_task033_memory_watchdog.py`：QEP/Hybrid RSS、swap、timeout 权威。
 - `records/workstation_hybrid_launch_authority.json`：候选级实测锚与保守预测。
 - `records/p3_h3_reference_summary.json`：p3/h3 reference 与重新排名摘要。
+- `benchmarks/task034_resource_model_v2.py`：不授权 launch 的 component-separated
+  wavelength/budget prediction。
 - `records/wsl_extended_mpi_qualification.json`：MPI1/2/4/8/16 与探索性 MPI32
   环境、ABI、MUMPS/PEP microfixture 的紧凑 hash-bound 记录。
 
@@ -107,6 +109,12 @@ Gate。因此 `records/adaptive_summary.json` 将结论冻结为 `controlled_neg
 不得称为 qualified compression。首次 aggressive M80 瞬时 MPI/WSL 启动失败也保留，独立
 retry1 才作为有效 M80 shard。任务书的 critical-observable stop condition 已触发，未继续
 重型 common-mesh 与 p3 adaptive lane，也未改变 ordinary uniform default。
+
+`records/resource_model_v2.json` 使用 p2/h3 Hybrid M160 组件库存、十个 fixed p/h peak
+校准点和三档 adaptive negative 重新评估 13.5/5/2/1/0.7 nm。当前布局在 0.7 nm 下预测
+约 2,014,975 GiB；dense multi-RHS 是首个主导失效组件，单个 complex `(2M)^2` 对象约
+211 GiB。256 GiB、1 TiB、2 TiB 均分类为 `infeasible_current_layout`。该记录是 prediction，
+不运行 PDE、不证明 0.7 nm 可行，也不授权重型 launch。
 
 clean SHA `8440bbaf42de9d633479d0ed65bdda544bd871ef` 上的扩展 MPI 环境资格化通过：
 48 个可用物理核，MPI1/2/4/8/16/32 均无 oversubscription，所有 rank 使用同一
