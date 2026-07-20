@@ -1,39 +1,37 @@
-# Task034 测试汇总
+# Task034 测试汇总（Review V2）
 
 ## 最终结论
 
-Task034 新增/修改路径的 serial、MPI、文档契约、Ruff 与 compileall 均通过；Task032/Task033 回归通过。全仓 Ruff 的 15 个失败均来自未被本任务修改的历史文件，按边界保留，未误报为 Task034 pass。
+Review V2 修改后的全仓 pytest、Task034 serial/native、文档契约、scoped Ruff 与 bytecode compile 均通过。本轮只修改离线聚合、资源模型、测试和报告，没有修改 Maxwell/Floquet/QEP/Hybrid 数值核心；因此按 Review 权威不重跑已经接受的 p3/h3、p4/h5 与 MPI 重型矩阵。
 
 | 层级 | 命令/范围 | 结果 | 判定 |
 |---|---|---:|---|
-| Task034 serial/native | `pytest -q src/test/test_73* ... src/test/test_85*` | 99 passed，2.57 s | pass |
-| selected MPI2 | test80/test82/test83 | 每 rank 16 passed，0.89 s | pass |
-| selected MPI4 | test80/test82/test83 | 每 rank 16 passed，2.34 s | pass |
-| Task032/033 regression | `pytest -q src/test/*task032*.py src/test/*task033*.py` | 217 passed，8 skipped，238.69 s | pass |
-| final docs + Task034 serial/native | test26 + test73..85 | 112 passed，1.88 s | pass |
-| scoped Ruff | Task034 变更的 Python 文件 | clean | pass |
-| bytecode compile | `python -m compileall -q benchmarks src` | exit 0 | pass |
-| numerical blob audit | `python -m benchmarks.task034_numerical_blob_checker ...` | `numerical_blob_compatibility_pass` | pass |
-| full Ruff | `ruff check .` | 15 pre-existing errors | known baseline boundary |
+| Review V2 targeted | `test_85 + test_86` | 5 passed，0.79 s | pass |
+| Task034 serial/native | `test_73 ... test_86` | 102 passed，3.92 s | pass |
+| documentation contract | `test_26` | 13 passed，0.06 s | pass |
+| Review V2 aggregation retest | `test_86` | 3 passed，0.81 s | pass |
+| scoped Ruff | resource model、Review 聚合器及对应测试 | clean | pass |
+| bytecode compile | 同上四个 Python 文件 | exit 0 | pass |
+| full repository pytest | `python -m pytest -q` | 496 passed，18 skipped，243.68 s | pass |
+| diff hygiene | `git diff --check` | clean | pass |
 
-## 数值与 Gate 覆盖
+## Review V2 新覆盖
 
-- Phase A 覆盖 PETSc complex ABI、SLEPc PEP、DOLFINx/MPC、MUMPS 与 MPI1/2/4/8/16；MPI32 仅 exploratory。
-- heavy runner/checker 测试覆盖 source clean/stable、nonignored untracked、cgroup/process-tree memory/swap、terminal drain、assembly/factorization/full-solve 状态和 true residual。
-- Case093 checker 覆盖 fixed physical identity、Full3D/Hybrid reference binding、official R/T/A、field/order observables、MPI identity 和 canonical manifest。
-- adaptive checker fail closed：网格/DoF 减少不能替代物理同误差 Gate；失败 profile 保留为 negative。
-- resource model v2 测试覆盖 component inventory、单位、校准点、预算分类和 0.7 nm joint-compression 下界。
+- `test_85_task034_resource_model_v2.py` 验证 largest component、local/modal subtotal、cumulative envelope 与 simultaneous peak 的语义分离；没有 overlap model 时禁止生成预测 peak。
+- `test_86_task034_review_v2_aggregation.py` 验证 `all_model_results` 的 36 列 schema、40 行覆盖、S 入射与 `R00_p/T00_p` cross-polarized 输出语义、M/MPI 矩阵和三个补充 p/h 点的精确状态。
+- 文档契约验证根 `AGENTS.md`、Task034 文档和 Markdown 结构。
+- 全仓 pytest 覆盖 Task032/Task033 回归、Task034 Gate、Case093、adaptive、资源模型及统一聚合。
 
-## 全仓 Ruff 既有问题
+## 已接受重型证据边界
 
-未清理的 15 项只位于：
+本轮没有重跑下列已接受证据：
 
-```text
-src/postprocessing/diffraction_3d.py
-src/postprocessing/full3d_reference.py
-src/postprocessing/hybrid_field_reconstruction.py
-src/solvers/solve_maxwell_3d_common_old.py
-src/studies/run_3d_memory_profile.py
-```
+- p3/h3、p4/h5 Full3D/Hybrid 主矩阵；
+- p3/h5 Full3D 与 Hybrid MPI1/8/16，及 MPI32 exploratory；
+- P polarization 的完整矩阵。
 
-这些文件不在 Task034 changed-file set。本任务没有扩大范围修复，也没有将 full Ruff 状态改写为 clean。
+原因是 Review V2 没有修改 Maxwell/Floquet/QEP/Hybrid 数值核心。S polarization 仍是正式生产主线；既有 p2/h5 P capability sample 只证明 P 路径可执行，不参与 S 主线收敛结论。
+
+## Ruff 边界
+
+本轮 Review V2 scoped Ruff 为 clean。Review V1 已记录的全仓 Ruff 15 项历史问题仍位于未由 Task034 修改的五个旧文件；本轮未扩大范围修复，也未将该历史全仓状态改写为 clean。

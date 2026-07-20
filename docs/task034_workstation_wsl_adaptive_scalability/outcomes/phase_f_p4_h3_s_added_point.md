@@ -4,7 +4,7 @@
 
 用户新增的 `p4/h3`、S polarization、MPI8 点已按分级 Gate 完成：
 
-- Full3D assembly-only 正式通过；factorization 保守预测超过固定 termination，在 `KSPSetUp` 前形成受控资源负结果。
+- Full3D assembly-only 正式通过；factorization 保守预测超过固定 termination，正式状态为 not_run_by_conservative_resource_gate_after_assembly，factorization/full solve 均未运行。
 - Hybrid M160 在 canonical authority、Case090 high-order core、clean source、外部 watchdog 和 zero-swap Gate 下完整运行，状态为 `measured_shard_pass`。
 - 本点不声称 Full3D/Hybrid closure，也不声称 M 收敛；这是用户缩减范围下的单个 M160 可计算性和数值链证据。
 

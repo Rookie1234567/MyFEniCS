@@ -1,117 +1,111 @@
-# Task034 最终成果汇总
+# Task034 最终成果汇总（Review V2）
 
-## Final status / scope
+## 状态与范围
 
-| 字段 | 结论 | 数据身份 / evidence |
+| 字段 | 结论 | 证据身份 |
 |---|---|---|
-| final status | `PASS_WITH_QUALIFICATIONS` | 本任务所有阶段获得正式 decision；受控物理/资源 negatives 保留 |
-| primary scope | S polarization | 用户批准 reduced scope |
-| P capability | p2/h5 MPI8 Full3D + Hybrid M160 可计算 | `phase_f_p2_h5_p_capability_partial.md` |
-| excluded | p1；重型 P 矩阵 | user-approved，不冒充 not-run pass |
-| base | `82a5107b5c2bfe4c466a0d00ead31d7b172e2af4` | `environment_and_base.md` |
-| ordinary default | unchanged | `post_merge_hardening_audit.md` |
-| master merge | 未执行 | 等待 ChatGPT review / selective merge |
+| final status | `PASS_WITH_QUALIFICATIONS` | 失败和资源 stop 原样保留 |
+| production mainline | S polarization | 用户批准；不重复整套 P 矩阵 |
+| P capability | p2/h5 MPI8 Full3D + Hybrid M160 可计算 | capability sample，不参与 S 收敛主线 |
+| Review authority merge | `a23d59981a64015e35c82b8afa2a945b8d8e1e3e` | normal merge；未 rebase/force/rewrite |
+| numerical core in Review V2 | unchanged | 未重跑 p3/h3、p4/h5 或 MPI 重型矩阵 |
+| unified fact table | 40 rows / 36 columns | `all_model_results.json/csv`；空缺为 `null`，不插值 |
 
-## WSL environment matrix
+## Capability layering
 
-| OS/stack | MPI | memory/swap | 结果 | evidence |
-|---|---|---|---|---|
-| Ubuntu 24.04；Python 3.12.3；DOLFINx 0.10.0.post2；PETSc/SLEPc 3.19.x complex | 1/2/4/8/16 formal；32 exploratory | 228 GiB / 32 GiB；正式作业 job swap=0 | qualified | `wsl_environment_qualification.md` |
-
-## Hardening issue matrix
-
-| issue | 状态 | 主要证据 |
+| capability | 状态 | 边界 |
 |---|---|---|
-| Floquet cache ownership/lifecycle | closed | weak owner + explicit clear tests |
-| Python active-column allgather | closed | numeric distributed reduction + MPI tests |
-| WSL memory/swap authority | closed | process-tree/cgroup watchdog tests |
-| full source-clean semantics | closed | tracked + nonignored untracked fail closed |
-| evidence-to-current numerical blobs | pass | `numerical_blob_compatibility.json` |
+| workflow decision complete | true | Task034 每阶段有正式 decision |
+| uniform benchmark | pass | Case093 固定几何 p2/p3/p4 S 主线 |
+| representative MPI identity | pass | p3/h5 S；Full3D/Hybrid MPI1/8/16，MPI32 exploratory |
+| graded mesh mechanism | pass | mesh/Floquet/标记机制可执行 |
+| equal-accuracy graded compression | controlled negative | 三档均未通过 fixed Full3D 同误差 Gate |
+| field-driven adaptivity | not qualified | 不把 raw DoF reduction 写成 qualified compression |
+| common-mesh / p3 adaptive extension | not run by stop condition | critical observable failure 后停止 |
+| resource model | revised engineering stress test | p2/p3/p4 场景；envelope 与 simultaneous peak 分离 |
+| production 0.7 nm feasibility | unknown / not demonstrated | current-layout stress tests 均有单组件超 2 TiB |
 
-## Task033 reproduction matrix
+## 表 1：all models
 
-单位：h 为 nm，memory 为 GiB；baseline 为 Task033 p3 anchors；环境 `task034-wsl-ubuntu-24.04-native`。
+所有入射均为 S；`R00_p/T00_p` 表示 S 入射下的 cross-polarized p 输出，不是 P 入射复跑。
+完整结构、DoF、NNZ、timing、memory、R00 与 evidence path 见 `all_model_results.csv/json`。
 
-| p/h | Full3D R/T/A_volume | Hybrid M160 R/T/A_volume | max abs R/T/A_volume delta | true residual F/H | 结果 / evidence |
-|---|---|---|---:|---|---|
-| p3/h7.5 | .003090727/.591160863/.405748409 | .003090647/.591159679/.405749673 | `1.264e-6` | `7.682e-12 / 3.164e-12` | pass / `wsl_anchor_summary.json` |
-| p3/h5 | .001090107/.600622478/.398287415 | .001090096/.600622368/.398287536 | `1.214e-7` | `6.982e-12 / 1.055e-11` | pass / `wsl_anchor_summary.json` |
+| p/h nm | Full3D status；R/T/A_volume | Hybrid status；M；R/T/A_volume | closure |
+|---|---|---|---|
+| p2/h5 | pass；.089021603/.442588279/.468390118 | pass；160；.089021069/.442586743/.468392188 | pass |
+| p2/h3 | pass；.004613031/.583653357/.411733611 | pass；160；.004612820/.583650940/.411736240 | pass |
+| p2/h2 | pass；.001342933/.599213229/.399443838 | pass；160；.001342885/.599212676/.399444439 | pass |
+| p2/h1 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | `timeout_during_field_recovery_no_official_solution`；160；无 official | unavailable |
+| p3/h10 | pass；.055398491/.406067867/.538533643 | `formal_not_pass`；160；.055398802/.406069310/.538531887 | not qualified |
+| p3/h7.5 | pass；.003090727/.591160863/.405748409 | pass；160；.003090647/.591159679/.405749673 | pass |
+| p3/h5 | pass；.001090107/.600622478/.398287415 | pass；160；.001090096/.600622368/.398287536 | pass |
+| p3/h3 | pass；.000789468/.602514984/.396695548 | pass；160；.000789467/.602514979/.396695554 | pass |
+| p3/h2 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | shard pass only；160；.000764467/.602690128/.396545405 | no funnel/closure |
+| p4/h10 | pass；.001882317/.596619520/.401498163 | pass；160；.001882348/.596619395/.401498258 | pass |
+| p4/h7.5 | pass；.000802469/.602429773/.396767758 | pass；160；.000802465/.602429757/.396767778 | pass |
+| p4/h5 | pass；.000766313/.602677531/.396556156 | pass；160；.000766313/.602677530/.396556157 | pass |
+| p4/h3 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | shard pass only；160；.000762185/.602706301/.396531514 | no funnel/closure |
 
-## p2/p3/p4 uniform convergence matrix
+## 表 2：M funnel（p3/h3 与 p4/h5）
 
-单位 h=nm；baseline 是冻结 physical identity `abb8613b...`；MPI8 S；source/evidence 在 Case093 `convergence_summary.json`。
+| case | M | R/T/A_balance | true residual | peak GiB | total s | status |
+|---|---:|---|---:|---:|---:|---|
+| p3/h3 | 80 | .000789467335/.602514978712/.396695553953 | `6.762e-12` | 8.698 | 881.93 | pass |
+| p3/h3 | 120 | .000789467334/.602514978699/.396695553967 | `7.632e-12` | 9.806 | 1002.97 | pass |
+| p3/h3 | 160 | .000789467334/.602514978698/.396695553968 | `3.903e-11` | 10.762 | 1113.84 | selected/pass |
+| p4/h5 | 80 | .000766313235/.602677529602/.396556157163 | `5.182e-12` | 5.049 | 558.97 | pass |
+| p4/h5 | 120 | .000766313235/.602677529589/.396556157177 | `5.726e-12` | 5.498 | 634.19 | pass |
+| p4/h5 | 160 | .000766313235/.602677529589/.396556157177 | `7.031e-12` | 5.961 | 734.22 | selected/pass |
 
-| p | 成功 Full3D+Hybrid M160 的 h | 相邻 12 分量差全部下降 | canonical anchor | 结论 |
-|---:|---|---|---|---|
-| 2 | 5, 3, 2 | yes | p2/h2 | measured sequence；非 continuum proof |
-| 3 | 7.5, 5, 3 | yes | p3/h3 | measured sequence；p3/h10 Hybrid negative 保留 |
-| 4 | 10, 7.5, 5 | yes | p4/h5 | measured sequence；非 continuum proof |
+两组 M120→M160 均通过 strong convergence Gate；M240 condition 未触发。
 
-新增 p2/h1、p3/h2、p4/h3 的 Full3D 均在 assembly 后按 factorization 上界受控停止；p3/h2 和 p4/h3 Hybrid M160 pass，p2/h1 Hybrid field recovery timeout negative。详见 `fixed_geometry_ph_convergence.md/csv`。
+## 表 3：MPI identity（p3/h5 S）
 
-## Full3D vs Hybrid same-degree closure matrix
+| method | MPI | true residual | peak GiB | core solve/total s | identity |
+|---|---:|---:|---:|---:|---|
+| Full3D | 1 | `1.265e-10` | 6.340 | 1050.52 | pass |
+| Full3D | 8 | `8.305e-12` | 9.014 | 150.51 | pass |
+| Full3D | 16 | `1.143e-11` | 11.359 | 72.97 | pass |
+| Full3D | 32 | `6.912e-12` | 15.773 | 41.95 | exploratory pass |
+| Hybrid M160 | 1 | `6.418e-12` | 1.245 | 431.07 | pass |
+| Hybrid M160 | 8 | `1.164e-11` | 4.900 | 144.69 | pass |
+| Hybrid M160 | 16 | `3.397e-12` | 7.150 | 134.13 | pass |
+| Hybrid M160 | 32 | `3.788e-12` | 12.088 | 201.10 | exploratory pass |
 
-| anchor | Full3D staged Gate | Hybrid funnel | same-degree closure | data identity / evidence |
-|---|---|---|---|---|
-| p3/h3 S | assembly/factor/full pass；39.122 GiB | M80/120/160；M160 selected | 16 gates pass | `p3_h3_reference_summary.json` |
-| p4/h5 S | assembly/factor/full pass；26.786 GiB | M80/120/160；M160 selected | 16 gates pass | `p4_h5_workstation_summary.json` |
-| Case093 successful anchors | full true residual pass | M160 | closure pass | `convergence_summary.json` |
+同一方法内 case/source/config/structure 一致，official R/T/A、fields/interfaces、orders、complex
+amplitudes、QEP beta 与 true residual 全部满足 identity 阈值；MPI32 不替代 MPI16。
 
-## MPI1/MPI8/MPI16 identity and resource matrix
+## 表 4：资源 stop 与受控负结果
 
-baseline：p3/h5 S；同一方法内 clean SHA；单位 ranks；evidence `mpi_identity_summary.json`。
+| case/method | measured progress | measured peak GiB | predicted upper / timeout | exact status |
+|---|---|---:|---:|---|
+| p2/h1 Full3D | assembly；4,379,832 rows；461,122,320 NNZ | 67.923 | factor upper 418.821 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
+| p2/h1 Hybrid M160 | local factors/Schur 完成；field recovery 开始 | 95.879 | 7200 s timeout | `timeout_during_field_recovery_no_official_solution` |
+| p3/h2 Full3D | assembly 1334.65 s；2,047,298 rows；488,789,000 NNZ | 64.015 | factor upper 232.460 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
+| p3/h2 Hybrid M160 | complete shard；residual `3.613e-11` | 49.642 | 3513.82 s measured | pass only；no M funnel/closure |
+| p4/h3 Full3D | assembly 3035.14 s；1,540,028 rows；696,091,072 NNZ | 80.538 | factor upper 204.132 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
+| p4/h3 Hybrid M160 | complete shard；residual `2.924e-11` | 42.481 | 3662.69 s measured | pass only；no M funnel/closure |
 
-| method | MPI1 | MPI8 | MPI16 | MPI32 | 结论 |
-|---|---|---|---|---|---|
-| Full3D | pass | pass | pass | exploratory pass | numerical identity qualified |
-| Hybrid M160 | pass | pass | pass | exploratory pass | numerical identity qualified |
+三条 Full3D 的 factorization/full-solve 均 `launched=false`；upper 是预测而非 measured peak。
+p2/h1 Hybrid 未触发 memory warning、swap 为 0，但没有 solver record、official R/T/A 或 true residual。
 
-## p3/h3 与 p4 staged results
+## Adaptive 与资源模型
 
-| case | assembly | factorization | full solve | official result | evidence |
-|---|---|---|---|---|---|
-| p3/h3 Full3D | 19.167 GiB / 778.96 s | 40.667 GiB / 2259.35 s | 39.122 GiB / 2281.13 s | residual `6.967e-11`，R/T/A=.000789468/.602514984/.396695548 | `p3_h3_reference_and_reranking.md` |
-| p4/h5 Full3D | 19.414 GiB / 1242.21 s | 27.049 GiB / 1712.71 s | 26.786 GiB / 1701.84 s | residual `3.354e-11`，R/T/A=.000766313/.602677531/.396556156 | `p4_h5_workstation_study.md` |
+| adaptive profile | raw DoF reduction | peak GiB | wall s | same-error result |
+|---|---:|---:|---:|---|
+| conservative | 1.561x | 3.964 | 112.12 | controlled negative |
+| balanced | 3.172x | 3.292 | 96.63 | controlled negative |
+| aggressive | 9.590x | 2.537 | 71.92 | controlled negative |
 
-p3/h7.5 相对新的 p3/h3 finer discrete reference 仍逐项不劣于 p2/h3 baseline（worst ratio 0.8991）；p4/h5 相对 p3/h5 有清晰工程精度收益。两者均不升级为 continuum reference。
+资源模型 v2.1 使用 p2/h3、p3/h3、p4/h5 三个 13.5 nm current-layout 场景。13.5 nm
+simultaneous peaks 分别为 4.695/14.272/9.206 GiB；外推 peak 全为 `unknown`。0.7 nm 的
+cumulative envelopes 分别为 2,014,975/6,804,671/3,008,763 GiB，但这些累计值不是同时峰值。
+三个场景均存在单组件超过 2 TiB，故 current layout stress test 为负；production target-accuracy
+DoF、M 和 peak 仍是 unknown。
 
-## Adaptive / equal-accuracy / compression matrix
+## Review V2 工程边界
 
-baseline：uniform p2/h3 Full3D；MPI8 S；M160；单位 memory=GiB、wall=s；evidence `adaptive_compression.json`。
-
-| profile | elements | raw DoF reduction | memory | wall | max abs R/T/A delta | field/interface 主要结果 | 正式分类 |
-|---|---:|---:|---:|---:|---:|---|---|
-| conservative | 3978 | 1.561x | 3.964 | 112.115 | 0.01699 | middle E/H 0.306/0.315 | physical negative |
-| balanced | 1885 | 3.172x | 3.292 | 96.633 | 0.1896 | middle E/H 1.673/1.672 | physical negative |
-| aggressive | 600 | 9.590x | 2.537 | 71.917 | 0.9568 | interface H ~0.126 fails | physical negative |
-
-三组 M120→M160 modal observable 均收敛 `<1e-5`，但没有一组通过 fixed same-error physical thresholds。因此 DoF 减少只记 raw reduction，不称 qualified compression；critical observable stop condition 阻止 genuine adaptive/common-mesh/p3 adaptive 重型扩展。首次 aggressive M80 的 WSL/MPI 空输出失败和同参数 retry pass 均保留。
-
-## Resource model v2 / 0.7 nm
-
-| wavelength | predicted peak | 256 GiB | 1 TiB | 2 TiB | evidence |
-|---:|---:|---|---|---|---|
-| 13.5 nm | 4.695 GiB calibrated | feasible | feasible | feasible | `resource_model_v2.json` |
-| 5 nm | 201.533 GiB | high-risk | feasible with guardband | feasible | same |
-| 2 nm | 13,225.875 GiB | infeasible | infeasible | infeasible | same |
-| 1 nm | 358,034.098 GiB | infeasible | infeasible | infeasible | same |
-| 0.7 nm | 2,014,975.394 GiB | infeasible | infeasible | infeasible | same |
-
-0.7 nm 的 local direct factor 约 198,690 GiB，modal/dense multi-RHS 约 1,747,721 GiB；不是单一局部 FEM 或单一 modal 问题。相对 256/1024/2048 GiB 的 joint compression 下界分别约 7871x/1968x/984x，当前架构必须同时重构 local factorization 与 modal dense core。
-
-## Failures / not-run / merge decision
-
-| 项 | 原因 | 处理 |
-|---|---|---|
-| p3/h10 Hybrid | formal numerical negative | 保留，不用于 canonical positive |
-| p2/h1/p3h2/p4h3 Full3D | factorization resource upper bound | controlled stop，未进入 solve |
-| adaptive profiles | same-error physical Gate fail | 保留 negative，停止扩展 |
-| P heavy matrix / p1 | user-approved reduced scope | not_run，不列 pass |
-| M240 | M120→M160 strong Gate 已过 | condition not triggered |
-| current 0.7 nm | 多组件远超预算 | infeasible，不放宽模型 |
-
-selective merge 以 `selective_merge_manifest.csv` 为唯一逐文件建议：稳定 hardening、tests、轻量 checker/records 可审查合入；未通过或研究性的 adaptive/resource/solver 路径默认留在 Task034 分支。
-
-## 下一任务建议
-
-优先把 conservative graded-h 的误差来源拆成 interface、absorbing-region 与 grating-neighborhood 三个局部预算，用 goal-oriented indicator 做小规模验证；在任何更重 adaptive 前先证明至少一个 profile 通过同误差 Gate。0.7 nm 另立架构任务，分别研究 sparse/distributed local solve 与 matrix-free/low-rank modal multi-RHS，禁止用单侧压缩外推可行性。
+- benchmark Python inventory 覆盖 31 个变更文件，未发现 Task034 复制独立 solver；数值功能归 `src/`；
+- `selective_merge_manifest.csv` 逐文件给出 action、dependency group、tests、数值变化、PDE 证据和顺序；
+- research-only adaptive/reranking/resource/Review 聚合器不作为 production API；
+- p1 与完整重型 P 矩阵仍按用户批准范围排除；任何 negative 未改写为 pass。

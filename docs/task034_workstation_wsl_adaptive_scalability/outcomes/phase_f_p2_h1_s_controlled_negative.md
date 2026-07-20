@@ -20,7 +20,7 @@ Assembly watchdog：
 - exact assembled NNZ：`461,122,320`
 - swap：`0`
 
-基于实测 assembly 与既有同 degree anchors 得到的 factorization 预测中心为 `217.584 / 227.187 / 279.214 GiB`，保守上界为 `418.821 GiB`；均高于固定 termination threshold `184.163 GiB`。因此 Full-3D 的正式状态是 `controlled_resource_negative_stop_after_assembly`。
+基于实测 assembly 与既有同 degree anchors 得到的 factorization 预测中心为 `217.584 / 227.187 / 279.214 GiB`，保守上界为 `418.821 GiB`；均高于固定 termination threshold `184.163 GiB`。因此 Full-3D 的正式状态是 `not_run_by_conservative_resource_gate_after_assembly`。
 
 ## Hybrid M160 watchdog
 

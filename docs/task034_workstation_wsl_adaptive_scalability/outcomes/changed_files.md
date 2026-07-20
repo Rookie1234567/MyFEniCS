@@ -1,6 +1,6 @@
-# Task034 changed files
+# Task034 changed files（Review V2）
 
-基线：`82a5107b5c2bfe4c466a0d00ead31d7b172e2af4`。本清单由 Git 机械生成；`A/M` 分别表示新增/修改。
+对比权威为 `origin/master`；Review 权威 normal merge commit 为 `a23d59981a64015e35c82b8afa2a945b8d8e1e3e`。本清单由 Git 机械生成；`A/M` 分别表示新增/修改。Review V1 与 Addendum 权威文件没有被 Task034 修改。
 
 | 状态 | 路径 |
 |---|---|
@@ -66,6 +66,7 @@
 | A | `benchmarks/task034_numerical_blob_checker.py` |
 | A | `benchmarks/task034_p3_h3_reranking.py` |
 | A | `benchmarks/task034_resource_model_v2.py` |
+| A | `benchmarks/task034_review_v2_aggregation.py` |
 | A | `benchmarks/task034_workstation_resource_gates.py` |
 | A | `benchmarks/task034_wsl_resources.py` |
 | M | `docs/iterative_solver_ports.md` |
@@ -73,7 +74,11 @@
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.csv` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.json` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_mechanism.md` |
+| A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.csv` |
+| A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/benchmark_freeze_decision.md` |
+| A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/benchmark_python_inventory.csv` |
+| A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/benchmark_python_inventory.md` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/changed_files.md` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/environment_and_base.md` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/fixed_geometry_ph_convergence.csv` |
@@ -135,5 +140,6 @@
 | A | `src/test/test_83_task034_adaptive_mechanism_record.py` |
 | A | `src/test/test_84_task034_adaptive_compression.py` |
 | A | `src/test/test_85_task034_resource_model_v2.py` |
+| A | `src/test/test_86_task034_review_v2_aggregation.py` |
 
-共 131 个 changed files；逐文件合并建议见 `selective_merge_manifest.csv`。
+共 137 个 changed files；逐文件依赖、测试、证据和合并顺序见 `selective_merge_manifest.csv`。

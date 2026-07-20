@@ -19,6 +19,23 @@ MPI_SIZE = 48
 COMPLEX_BYTES = 16
 SPARSE_ENTRY_BYTES = 24
 REPLICATED_MODAL_OBJECT_COUNT = 6
+SCENARIO_METADATA = {
+    "p2_h3_current_layout_stress_test": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline",
+    },
+    "p3_h3_finer_discrete_stress_test": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference",
+    },
+    "p4_h5_best_available_stress_test": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference",
+    },
+}
 
 
 def _sha256(path: Path) -> str:
@@ -133,15 +150,19 @@ def _base_components(payload: Mapping[str, Any]) -> dict[str, float]:
     }
 
 
-def _classification(total_gib: float, largest_gib: float, budget_gib: float) -> str:
-    if largest_gib >= budget_gib or total_gib > budget_gib:
-        return "infeasible_current_layout"
-    if total_gib > 0.7 * budget_gib:
-        return "candidate_high_risk"
-    return "feasible_with_30pct_guardband"
+def _classification(envelope_gib: float, largest_gib: float, budget_gib: float) -> str:
+    if largest_gib >= budget_gib:
+        return "infeasible_current_layout_by_single_component"
+    if envelope_gib > budget_gib:
+        return "cumulative_envelope_exceeds_budget_peak_unknown"
+    if envelope_gib > 0.7 * budget_gib:
+        return "cumulative_envelope_high_risk_peak_unknown"
+    return "cumulative_envelope_within_guardband_peak_unknown"
 
 
-def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, Any]:
+def _prediction(
+    base: Mapping[str, float], wavelength_nm: float, *, scenario_key: str = "test"
+) -> dict[str, Any]:
     scale = REFERENCE_WAVELENGTH_NM / wavelength_nm
     exponents = {
         "local_3d_fe_assembly": 3.0,
@@ -164,7 +185,7 @@ def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, An
         }
         for name, exponent in exponents.items()
     }
-    total_gib = sum(row["gib"] for row in components.values())
+    envelope_gib = sum(row["gib"] for row in components.values())
     largest_name, largest = max(components.items(), key=lambda item: item[1]["gib"])
     local_names = {
         "local_3d_fe_assembly",
@@ -172,14 +193,20 @@ def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, An
         "field_reconstruction",
     }
     local_gib = sum(components[name]["gib"] for name in local_names)
-    modal_gib = total_gib - local_gib
+    modal_gib = envelope_gib - local_gib
+    measured_peak_gib = base["reference_peak_bytes"] / GIB if scale == 1.0 else None
     budgets = {}
     for budget in BUDGETS_GIB:
         available_for_local = budget - modal_gib
         available_for_modal = budget - local_gib
         budgets[str(int(budget))] = {
             "budget_gib": budget,
-            "classification": _classification(total_gib, largest["gib"], budget),
+            "classification": _classification(envelope_gib, largest["gib"], budget),
+            "largest_component_lower_bound_ratio": largest["gib"] / budget,
+            "cumulative_component_envelope_ratio": envelope_gib / budget,
+            "simultaneous_peak_ratio": (
+                measured_peak_gib / budget if measured_peak_gib is not None else None
+            ),
             "required_local_compression_if_modal_unchanged": (
                 None
                 if available_for_local <= 0.0
@@ -191,17 +218,19 @@ def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, An
                 else max(1.0, modal_gib / available_for_modal)
             ),
             "current_modal_layout_alone_exceeds_budget": modal_gib > budget,
-            "required_joint_total_compression": max(1.0, total_gib / budget),
-            "required_local_compression_for_half_budget": max(
+            "cumulative_envelope_compression_ratio": max(1.0, envelope_gib / budget),
+            "local_subtotal_to_half_budget_ratio": max(
                 1.0, 2.0 * local_gib / budget
             ),
-            "required_modal_compression_for_half_budget": max(
+            "modal_subtotal_to_half_budget_ratio": max(
                 1.0, 2.0 * modal_gib / budget
             ),
         }
     predicted_modes = int(math.ceil(base["reference_modes_per_direction"] * scale**2))
     one_square_gib = (2 * predicted_modes) ** 2 * COMPLEX_BYTES / GIB
     return {
+        "scenario_key": scenario_key,
+        "scenario": SCENARIO_METADATA.get(scenario_key, {}),
         "wavelength_nm": wavelength_nm,
         "scale_13p5_over_lambda": scale,
         "predicted_local_fe_dofs_sum_uniform": int(
@@ -214,9 +243,14 @@ def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, An
         "one_complex_2m_square_gib": one_square_gib,
         "one_complex_2m_square_near_or_over_256gib": one_square_gib >= 0.7 * 256.0,
         "components": components,
-        "local_component_total_gib": local_gib,
-        "modal_and_runtime_component_total_gib": modal_gib,
-        "predicted_total_gib": total_gib,
+        "local_component_subtotal_gib": local_gib,
+        "modal_and_runtime_component_subtotal_gib": modal_gib,
+        "cumulative_component_envelope_gib": envelope_gib,
+        "measured_simultaneous_peak_gib": measured_peak_gib,
+        "predicted_simultaneous_peak_gib": None,
+        "simultaneous_peak_model_status": (
+            "measured_at_reference" if scale == 1.0 else "unknown_no_lifecycle_overlap_model"
+        ),
         "largest_component": largest_name,
         "largest_component_gib": largest["gib"],
         "budgets": budgets,
@@ -224,19 +258,34 @@ def _prediction(base: Mapping[str, float], wavelength_nm: float) -> dict[str, An
 
 
 def build_resource_model(
-    *, fixed_geometry_csv: Path, adaptive_json: Path, baseline_hybrid_json: Path
+    *,
+    fixed_geometry_csv: Path,
+    adaptive_json: Path,
+    baseline_hybrid_json: Path | None = None,
+    baseline_hybrid_jsons: Mapping[str, Path] | None = None,
 ) -> dict[str, Any]:
     with fixed_geometry_csv.open(encoding="utf-8", newline="") as stream:
         fixed_rows = list(csv.DictReader(stream))
     adaptive = _load_json(adaptive_json)
-    baseline = _load_json(baseline_hybrid_json)
+    if baseline_hybrid_jsons is None:
+        if baseline_hybrid_json is None:
+            raise ValueError("at least one baseline Hybrid JSON is required")
+        baseline_hybrid_jsons = {
+            "p2_h3_current_layout_stress_test": baseline_hybrid_json
+        }
+    baseline_paths = dict(baseline_hybrid_jsons)
+    baselines = {key: _load_json(path) for key, path in baseline_paths.items()}
     if len(fixed_rows) < 10:
         raise ValueError("Task034 resource model requires at least ten fixed p/h rows")
     decision = _mapping(adaptive.get("decision"))
     if decision.get("same_error_compression_demonstrated") is not False:
         raise ValueError("adaptive compression identity must be explicit")
-    base = _base_components(baseline)
-    predictions = [_prediction(base, value) for value in WAVELENGTHS_NM]
+    base_components = {key: _base_components(value) for key, value in baselines.items()}
+    predictions = [
+        _prediction(base, wavelength, scenario_key=key)
+        for key, base in base_components.items()
+        for wavelength in WAVELENGTHS_NM
+    ]
     adaptive_profiles = _mapping(adaptive.get("profiles"))
     adaptive_calibration = []
     for name, record in adaptive_profiles.items():
@@ -258,7 +307,7 @@ def build_resource_model(
             }
         )
     return {
-        "schema_version": "task034.resource-model.v2",
+        "schema_version": "task034.resource-model.v2.1",
         "record_type": "component_separated_resource_prediction",
         "identity": {
             "is_pde_run": False,
@@ -272,29 +321,37 @@ def build_resource_model(
             "fixed_geometry_csv_sha256": _sha256(fixed_geometry_csv),
             "adaptive_json": str(adaptive_json),
             "adaptive_json_sha256": _sha256(adaptive_json),
-            "baseline_hybrid_json": str(baseline_hybrid_json),
-            "baseline_hybrid_json_sha256": _sha256(baseline_hybrid_json),
+            "baseline_hybrid_jsons": {
+                key: {
+                    "path": str(path),
+                    "sha256": _sha256(path),
+                    "scenario": SCENARIO_METADATA.get(key, {}),
+                }
+                for key, path in baseline_paths.items()
+            },
             "mpi_size_for_replicated_layout": MPI_SIZE,
         },
         "calibration": {
             "fixed_geometry_rows": fixed_rows,
             "adaptive_m160_rows": adaptive_calibration,
-            "reference_components_bytes": base,
+            "reference_components_bytes_by_scenario": base_components,
             "measured_same_error_adaptive_compression_available": False,
             "allowed_adaptive_compression_factor_in_predictions": 1.0,
         },
         "scaling_model": {
-            "spatial_policy": "uniform points-per-wavelength from qualified p2/h3 M160",
+            "spatial_policy": "mechanical fixed-layout scaling from p2/h3, p3/h3 and p4/h5 M160 stress-test scenarios; no common target-accuracy claim",
             "mode_policy": "M scales with transverse reciprocal-order area, s^2",
             "3d_direct_factor_policy": "nested-dissection engineering proxy, s^4",
             "replicated_layout_policy": f"{REPLICATED_MODAL_OBJECT_COUNT} complex (2M)^2 arrays on {MPI_SIZE} ranks",
             "dense_multi_rhs_policy": "local FE rows times modal RHS, s^5",
-            "uncertainty": "engineering prediction; material dispersion, cutoff changes and future solver redesign unknown",
+            "uncertainty": "engineering component envelope; lifecycle overlap, simultaneous extrapolated peak, material dispersion, target-accuracy DoF, cutoff changes and future solver redesign are unknown",
         },
         "predictions": predictions,
         "decision": {
-            "current_replicated_modal_layout_0p7nm": "infeasible",
-            "current_dense_multi_rhs_0p7nm": "infeasible",
+            "current_layout_0p7nm": "single-component bottlenecks or cumulative-envelope budget crossings occur in the stress-test scenarios",
+            "production_target_accuracy_0p7nm": "unknown",
+            "predicted_simultaneous_peak_0p7nm": None,
+            "cumulative_envelope_is_not_peak": True,
             "measured_adaptive_path_enters_budget": False,
             "required_redesign": [
                 "qualified field-driven h-adaptivity",
@@ -309,34 +366,42 @@ def build_resource_model(
             "No failed adaptive raw DoF ratio is credited as accuracy-preserving compression.",
             "Sparse factor and QEP fill exponents are engineering proxies, not exact asymptotics.",
             "Predicted mode counts require future physical convergence validation.",
+            "The p2/p3/p4 scenarios are current-layout mechanical stress tests, not an equal-accuracy p-refinement comparison.",
+            "Extrapolated simultaneous peak is unknown because component lifecycle overlap was not modelled.",
         ],
     }
 
 
 def write_csv(model: Mapping[str, Any], path: Path) -> None:
     fields = [
+        "scenario_key",
+        "degree",
+        "h_nm",
         "wavelength_nm",
         "budget_gib",
         "classification",
-        "predicted_total_gib",
         "largest_component",
         "largest_component_gib",
+        "largest_component_lower_bound_ratio",
+        "cumulative_component_envelope_gib",
+        "cumulative_component_envelope_ratio",
+        "measured_simultaneous_peak_gib",
+        "predicted_simultaneous_peak_gib",
+        "simultaneous_peak_ratio",
+        "simultaneous_peak_model_status",
         "predicted_local_fe_dofs_sum_uniform",
         "predicted_cross_section_qep_dofs",
         "predicted_modes_per_direction",
         "one_complex_2m_square_gib",
-        "one_complex_2m_square_near_or_over_256gib",
-        "local_component_total_gib",
-        "modal_and_runtime_component_total_gib",
-        "required_local_compression_if_modal_unchanged",
-        "required_modal_compression_if_local_unchanged",
-        "required_joint_total_compression",
-        "required_local_compression_for_half_budget",
-        "required_modal_compression_for_half_budget",
+        "local_component_subtotal_gib",
+        "modal_and_runtime_component_subtotal_gib",
+        "cumulative_envelope_compression_ratio",
+        "local_subtotal_to_half_budget_ratio",
+        "modal_subtotal_to_half_budget_ratio",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         for prediction in model["predictions"]:
             for budget in prediction["budgets"].values():
@@ -345,20 +410,23 @@ def write_csv(model: Mapping[str, Any], path: Path) -> None:
                         **{name: prediction.get(name) for name in fields},
                         "budget_gib": budget["budget_gib"],
                         "classification": budget["classification"],
-                        "required_local_compression_if_modal_unchanged": budget[
-                            "required_local_compression_if_modal_unchanged"
+                        "degree": prediction["scenario"].get("degree"),
+                        "h_nm": prediction["scenario"].get("h_nm"),
+                        "largest_component_lower_bound_ratio": budget[
+                            "largest_component_lower_bound_ratio"
                         ],
-                        "required_modal_compression_if_local_unchanged": budget[
-                            "required_modal_compression_if_local_unchanged"
+                        "cumulative_component_envelope_ratio": budget[
+                            "cumulative_component_envelope_ratio"
                         ],
-                        "required_joint_total_compression": budget[
-                            "required_joint_total_compression"
+                        "simultaneous_peak_ratio": budget["simultaneous_peak_ratio"],
+                        "cumulative_envelope_compression_ratio": budget[
+                            "cumulative_envelope_compression_ratio"
                         ],
-                        "required_local_compression_for_half_budget": budget[
-                            "required_local_compression_for_half_budget"
+                        "local_subtotal_to_half_budget_ratio": budget[
+                            "local_subtotal_to_half_budget_ratio"
                         ],
-                        "required_modal_compression_for_half_budget": budget[
-                            "required_modal_compression_for_half_budget"
+                        "modal_subtotal_to_half_budget_ratio": budget[
+                            "modal_subtotal_to_half_budget_ratio"
                         ],
                     }
                 )
@@ -368,14 +436,29 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixed-geometry-csv", type=Path, required=True)
     parser.add_argument("--adaptive-json", type=Path, required=True)
-    parser.add_argument("--baseline-hybrid-json", type=Path, required=True)
+    parser.add_argument("--baseline-hybrid-json", type=Path)
+    parser.add_argument("--p2-baseline-hybrid-json", type=Path)
+    parser.add_argument("--p3-baseline-hybrid-json", type=Path)
+    parser.add_argument("--p4-baseline-hybrid-json", type=Path)
     parser.add_argument("--json-output", type=Path, required=True)
     parser.add_argument("--csv-output", type=Path, required=True)
     args = parser.parse_args()
+    scenario_paths = {
+        key: path
+        for key, path in {
+            "p2_h3_current_layout_stress_test": args.p2_baseline_hybrid_json,
+            "p3_h3_finer_discrete_stress_test": args.p3_baseline_hybrid_json,
+            "p4_h5_best_available_stress_test": args.p4_baseline_hybrid_json,
+        }.items()
+        if path is not None
+    }
+    if not scenario_paths and args.baseline_hybrid_json is None:
+        parser.error("provide --baseline-hybrid-json or one or more p2/p3/p4 baselines")
     model = build_resource_model(
         fixed_geometry_csv=args.fixed_geometry_csv,
         adaptive_json=args.adaptive_json,
         baseline_hybrid_json=args.baseline_hybrid_json,
+        baseline_hybrid_jsons=scenario_paths or None,
     )
     args.json_output.parent.mkdir(parents=True, exist_ok=True)
     args.json_output.write_text(
