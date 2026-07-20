@@ -31,6 +31,7 @@ from benchmarks.task034_wsl_resources import (
     resource_authority_sample,
 )
 from benchmarks.task034_workstation_resource_gates import (
+    task034_adaptive_mechanism_evidence_gate,
     task034_workstation_hybrid_launch_gate,
 )
 from benchmarks.task033_watchdog_launch import (
@@ -147,6 +148,8 @@ TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
         "src/common/distributed_matrix_diagnostics.py",
         "src/modes/mode_classification.py",
         "src/solvers/hybrid_fem_modal_schur_direct.py",
+        "src/geometry/task034_adaptive_mesh.py",
+        "benchmarks/run_task034_adaptive_mechanism.py",
     }
 )
 TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
@@ -982,6 +985,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Tracked Case092 measured launch-authority record.",
     )
     parser.add_argument("--task034-workstation-resource-authority-sha256")
+    parser.add_argument("--task034-adaptive-mechanism-evidence-file", type=Path)
+    parser.add_argument("--task034-adaptive-mechanism-evidence-sha256")
     parser.add_argument(
         "--task034-workstation-resource-anchor",
         type=Path,
@@ -1163,6 +1168,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             not (args.degree == 4 and math.isclose(args.h_nm, 3.0))
             or p4_h3_resource_anchor_scope
         )
+        graded_compression_scope = bool(
+            args.graded_reference_h is not None
+            and args.degree == 2
+            and math.isclose(args.h_nm, 3.0)
+            and math.isclose(args.graded_reference_h, 3.0)
+            and args.graded_profile
+            in {"conservative", "balanced", "aggressive"}
+            and args.mpi_size == 8
+            and args.requested_modes in (80, 120, 160)
+            and args.polarization_kind == "s"
+            and args.task034_adaptive_mechanism_evidence_file is not None
+            and isinstance(
+                args.task034_adaptive_mechanism_evidence_sha256, str
+            )
+            and len(args.task034_adaptive_mechanism_evidence_sha256) == 64
+        )
         scoped = bool(
             args.target == "hybrid"
             and (args.degree, args.h_nm) in phase_f_matrix
@@ -1171,7 +1192,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.solver_path == "modal-schur-memory-minimal"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
-            and args.graded_reference_h is None
+            and (
+                args.graded_reference_h is None or graded_compression_scope
+            )
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and math.isclose(args.incident_grazing_deg, 10.0)
@@ -1344,6 +1367,37 @@ def run(args: argparse.Namespace) -> int:
                 if resource_anchor_path is None
                 else _sha256(resource_anchor_path)
             )
+            adaptive_mechanism_path = (
+                args.task034_adaptive_mechanism_evidence_file
+            )
+            if (
+                adaptive_mechanism_path is not None
+                and not adaptive_mechanism_path.is_absolute()
+            ):
+                adaptive_mechanism_path = ROOT / adaptive_mechanism_path
+            adaptive_mechanism_evidence, adaptive_mechanism_error = (
+                _read_json_object(adaptive_mechanism_path)
+                if args.graded_reference_h is not None
+                else (None, None)
+            )
+            adaptive_mechanism_observed_sha256 = (
+                _sha256(adaptive_mechanism_path)
+                if adaptive_mechanism_path is not None
+                else None
+            )
+            adaptive_mechanism_gate = task034_adaptive_mechanism_evidence_gate(
+                adaptive_mechanism_evidence,
+                expected_sha256=args.task034_adaptive_mechanism_evidence_sha256,
+                observed_sha256=adaptive_mechanism_observed_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                mpi_size=args.mpi_size,
+                polarization_kind=args.polarization_kind,
+                graded_reference_h=args.graded_reference_h,
+                graded_profile=args.graded_profile,
+            )
             core_gate = high_order_core_evidence_gate(
                 args.degree,
                 core_evidence,
@@ -1386,6 +1440,9 @@ def run(args: argparse.Namespace) -> int:
                     args.m160_funnel_evidence_sha256
                 ),
                 observed_m160_funnel_sha256=observed_m160_funnel_sha256,
+                graded_reference_h=args.graded_reference_h,
+                graded_profile=args.graded_profile,
+                adaptive_mechanism_gate=adaptive_mechanism_gate,
             )
             launch_gate.update(
                 {
@@ -1413,6 +1470,13 @@ def run(args: argparse.Namespace) -> int:
                     ),
                     "m160_funnel_evidence_read_error": (
                         m160_funnel_read_error
+                    ),
+                    "adaptive_mechanism_evidence_path": (
+                        None if adaptive_mechanism_path is None
+                        else str(adaptive_mechanism_path)
+                    ),
+                    "adaptive_mechanism_evidence_read_error": (
+                        adaptive_mechanism_error
                     ),
                 }
             )

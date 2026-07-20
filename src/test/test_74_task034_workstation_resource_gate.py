@@ -19,6 +19,7 @@ from benchmarks.run_task033_memory_watchdog import (
 from benchmarks.task033_resource_gates import scaled_gate_limits
 from benchmarks.task034_workstation_resource_gates import (
     GIB,
+    task034_adaptive_mechanism_evidence_gate,
     task034_workstation_hybrid_launch_gate,
 )
 
@@ -154,6 +155,92 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 "historical_task033_model_is_standalone_authority"
             ]
         )
+
+    def test_adaptive_mechanism_gate_narrowly_authorizes_p2_h3_profiles(self) -> None:
+        sha = "a" * 40
+        evidence = {
+            "schema_version": "task034.adaptive-mechanism.v1",
+            "record_type": "task034_p2_h5_conforming_graded_mechanism",
+            "verified_clean_sha": sha,
+            "source_before": {
+                "commit_sha": sha,
+                "tracked_and_nonignored_untracked_clean": True,
+            },
+            "source_after": {
+                "commit_sha": sha,
+                "tracked_and_nonignored_untracked_clean": True,
+            },
+            "case": {
+                "degree": 2,
+                "reference_h_nm": 5.0,
+                "profile": "mechanism",
+                "polarization_kind": "s",
+            },
+            "plan": {
+                "material_planes_exact": True,
+                "matching_planes_exact": True,
+                "ordinary_uniform_default_changed": False,
+                "quality": {"hanging_nodes_present": False},
+                "periodic_pairing": {
+                    "periodic_mate_refinement_synchronized": True
+                },
+            },
+            "claims": {
+                "mechanism_qualified": True,
+                "pde_solved": False,
+                "equal_accuracy_compression_proven": False,
+                "genuine_adaptive_loop_proven": False,
+            },
+            "qualification": {
+                "pass": True,
+                "failures": [],
+                "checks": {"mechanism": True},
+            },
+        }
+        common = {
+            "expected_sha256": "b" * 64,
+            "observed_sha256": "b" * 64,
+            "current_source_sha": sha,
+            "degree": 2,
+            "h_nm": 3.0,
+            "requested_modes": 160,
+            "polarization_kind": "s",
+            "graded_reference_h": 3.0,
+            "graded_profile": "balanced",
+        }
+        gate = task034_adaptive_mechanism_evidence_gate(
+            evidence, mpi_size=8, **common
+        )
+        self.assertTrue(gate["pass"], gate["failures"])
+        wrong_mpi = task034_adaptive_mechanism_evidence_gate(
+            evidence, mpi_size=16, **common
+        )
+        self.assertFalse(wrong_mpi["pass"])
+        self.assertIn("graded_compression_scope_exact", wrong_mpi["failures"])
+
+    def test_workstation_gate_requires_mechanism_gate_for_graded_shard(self) -> None:
+        common = {
+            "degree": 2,
+            "h_nm": 3.0,
+            "requested_modes": 160,
+            "candidate_modes": 320,
+            "mpi_size": 8,
+            "full3d_reference_sha256": self.p2_h3_reference_sha,
+            "graded_reference_h": 3.0,
+            "graded_profile": "balanced",
+        }
+        missing = self._gate(**common)
+        self.assertFalse(missing["pass"])
+        self.assertIn(
+            "task034_graded_compression_scope_authorized",
+            missing["failures"],
+        )
+        passed = self._gate(
+            **common,
+            adaptive_mechanism_gate={"pass": True, "failures": []},
+        )
+        self.assertTrue(passed["pass"], passed["failures"])
+        self.assertTrue(passed["adaptive_mechanism_evidence"]["pass"])
 
     def test_explicit_workstation_gate_narrowly_authorizes_p2_h5_p(self) -> None:
         gate = self._gate(

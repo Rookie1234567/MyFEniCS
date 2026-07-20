@@ -36,6 +36,105 @@ def _valid_hex(value: Any, length: int) -> bool:
     )
 
 
+def task034_adaptive_mechanism_evidence_gate(
+    evidence: Mapping[str, Any] | None,
+    *,
+    expected_sha256: str | None,
+    observed_sha256: str | None,
+    current_source_sha: str | None,
+    degree: int,
+    h_nm: float,
+    requested_modes: int,
+    mpi_size: int,
+    polarization_kind: str,
+    graded_reference_h: float | None,
+    graded_profile: str | None,
+) -> dict[str, Any]:
+    """Authorize only Task034's measured p2/h3 graded-compression matrix."""
+
+    if graded_reference_h is None:
+        return {"pass": True, "applicable": False, "checks": {}, "failures": []}
+    payload = evidence if isinstance(evidence, Mapping) else {}
+    case = payload.get("case")
+    case = case if isinstance(case, Mapping) else {}
+    qualification = payload.get("qualification")
+    qualification = qualification if isinstance(qualification, Mapping) else {}
+    claims = payload.get("claims")
+    claims = claims if isinstance(claims, Mapping) else {}
+    plan = payload.get("plan")
+    plan = plan if isinstance(plan, Mapping) else {}
+    source_before = payload.get("source_before")
+    source_before = source_before if isinstance(source_before, Mapping) else {}
+    source_after = payload.get("source_after")
+    source_after = source_after if isinstance(source_after, Mapping) else {}
+    checks = {
+        "adaptive_mechanism_object_present": bool(payload),
+        "adaptive_mechanism_sha256_valid": bool(
+            _valid_hex(expected_sha256, 64) and _valid_hex(observed_sha256, 64)
+        ),
+        "adaptive_mechanism_sha256_matches": expected_sha256 == observed_sha256,
+        "adaptive_mechanism_record_identity": bool(
+            payload.get("schema_version") == "task034.adaptive-mechanism.v1"
+            and payload.get("record_type")
+            == "task034_p2_h5_conforming_graded_mechanism"
+        ),
+        "adaptive_mechanism_recomputed_qualification_pass": bool(
+            qualification.get("pass") is True
+            and qualification.get("failures") == []
+            and all(
+                value is True for value in qualification.get("checks", {}).values()
+            )
+        ),
+        "adaptive_mechanism_claim_scope": bool(
+            claims.get("mechanism_qualified") is True
+            and claims.get("pde_solved") is False
+            and claims.get("equal_accuracy_compression_proven") is False
+            and claims.get("genuine_adaptive_loop_proven") is False
+        ),
+        "adaptive_mechanism_p2_h5_scope": bool(
+            case.get("degree") == 2
+            and math.isclose(float(case.get("reference_h_nm", math.nan)), 5.0)
+            and case.get("profile") == "mechanism"
+            and case.get("polarization_kind") == "s"
+        ),
+        "adaptive_mechanism_plan_contract": bool(
+            plan.get("material_planes_exact") is True
+            and plan.get("matching_planes_exact") is True
+            and plan.get("ordinary_uniform_default_changed") is False
+            and plan.get("quality", {}).get("hanging_nodes_present") is False
+            and plan.get("periodic_pairing", {}).get(
+                "periodic_mate_refinement_synchronized"
+            )
+            is True
+        ),
+        "adaptive_mechanism_same_clean_source": bool(
+            _valid_hex(current_source_sha, 40)
+            and payload.get("verified_clean_sha") == current_source_sha
+            and source_before.get("commit_sha") == current_source_sha
+            and source_after.get("commit_sha") == current_source_sha
+            and source_before.get("tracked_and_nonignored_untracked_clean") is True
+            and source_after.get("tracked_and_nonignored_untracked_clean") is True
+        ),
+        "graded_compression_scope_exact": bool(
+            degree == 2
+            and math.isclose(h_nm, 3.0)
+            and math.isclose(graded_reference_h, 3.0)
+            and graded_profile in {"conservative", "balanced", "aggressive"}
+            and requested_modes in FORMAL_FUNNEL_MODES
+            and mpi_size == 8
+            and polarization_kind == "s"
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "applicable": True,
+        "graded_profile": graded_profile,
+        "checks": checks,
+        "failures": failures,
+    }
+
+
 def task034_workstation_hybrid_launch_gate(
     authority: Mapping[str, Any] | None,
     *,
@@ -68,6 +167,9 @@ def task034_workstation_hybrid_launch_gate(
     m160_funnel_evidence: Mapping[str, Any] | None = None,
     expected_m160_funnel_sha256: str | None = None,
     observed_m160_funnel_sha256: str | None = None,
+    graded_reference_h: float | None = None,
+    graded_profile: str | None = None,
+    adaptive_mechanism_gate: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Authorize one Task034 fixed-geometry Hybrid shard.
 
@@ -142,6 +244,11 @@ def task034_workstation_hybrid_launch_gate(
         if isinstance(source_compatibility, Mapping)
         else {}
     )
+    adaptive_gate = (
+        adaptive_mechanism_gate
+        if isinstance(adaptive_mechanism_gate, Mapping)
+        else {}
+    )
     m240_requested = requested_modes == CONDITIONAL_FUNNEL_MODE
     m240_gate = conditional_m240_evidence_gate(
         m160_funnel_evidence,
@@ -154,7 +261,7 @@ def task034_workstation_hybrid_launch_gate(
         polarization_kind=polarization_kind,
         bottom_interface_nm=bottom_interface_nm,
         top_interface_nm=top_interface_nm,
-        graded_reference_h=None,
+        graded_reference_h=graded_reference_h,
         solver_path=solver_path,
         required=m240_requested,
     )
@@ -312,6 +419,9 @@ def task034_workstation_hybrid_launch_gate(
                 and anchor_kind == "assembly_calibration"
             )
         ),
+        "task034_graded_compression_scope_authorized": bool(
+            graded_reference_h is None or adaptive_gate.get("pass") is True
+        ),
         "high_order_core_evidence": core.get("pass") is True,
         "measured_resource_anchor_kind_supported": anchor_kind
         in {"full3d_reference", "assembly_calibration"},
@@ -378,6 +488,7 @@ def task034_workstation_hybrid_launch_gate(
         "full3d_reference": dict(reference),
         "conditional_m240_evidence": m240_gate,
         "high_order_core_evidence": dict(core),
+        "adaptive_mechanism_evidence": dict(adaptive_gate),
         "source_compatibility": dict(compatibility),
         "checks": checks,
         "failures": failures,
