@@ -104,6 +104,7 @@
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/test_summary.md` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/wsl_environment_qualification.md` |
 | A | `docs/task034_workstation_wsl_adaptive_scalability/response_v1.md` |
+| A | `docs/task034_workstation_wsl_adaptive_scalability/response_v2.md` |
 | A | `scripts/activate_myfenics_wsl.sh` |
 | M | `src/common/config_3d.py` |
 | A | `src/common/distributed_matrix_diagnostics.py` |
@@ -142,4 +143,4 @@
 | A | `src/test/test_85_task034_resource_model_v2.py` |
 | A | `src/test/test_86_task034_review_v2_aggregation.py` |
 
-共 137 个 changed files；逐文件依赖、测试、证据和合并顺序见 `selective_merge_manifest.csv`。
+共 138 个 changed files；逐文件依赖、测试、证据和合并顺序见 `selective_merge_manifest.csv`。
