@@ -1023,6 +1023,9 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 "src/common/distributed_matrix_diagnostics.py\n"
                 "benchmarks/task034_numerical_blob_checker.py\n"
                 "src/solvers/hybrid_fem_modal_schur_direct.py\n"
+                "src/geometry/task034_adaptive_mesh.py\n"
+                "benchmarks/task034_case093.py\n"
+                "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/config.json\n"
                 "src/test/test_mode_overlap.py",
             ),
         ):
@@ -1041,6 +1044,8 @@ class Task034WorkstationResourceGateTests(unittest.TestCase):
                 "benchmarks/task034_mpi_identity.py",
                 "src/common/distributed_matrix_diagnostics.py",
                 "src/solvers/hybrid_fem_modal_schur_direct.py",
+                "src/geometry/task034_adaptive_mesh.py",
+                "benchmarks/task034_case093.py",
             ],
         )
         self.assertEqual(hybrid_only["disallowed_changed_paths"], [])

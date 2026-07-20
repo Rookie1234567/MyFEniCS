@@ -150,6 +150,8 @@ TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
         "src/solvers/hybrid_fem_modal_schur_direct.py",
         "src/geometry/task034_adaptive_mesh.py",
         "benchmarks/run_task034_adaptive_mechanism.py",
+        "benchmarks/task034_case093.py",
+        "benchmarks/cases/README.md",
     }
 )
 TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
@@ -334,6 +336,9 @@ def _task034_authority_source_compatibility(
             path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
             or path.startswith(
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+            )
+            or path.startswith(
+                "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/"
             )
             or path.startswith("docs/")
             or path.startswith("notes/")
