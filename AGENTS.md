@@ -1,227 +1,142 @@
-# MyFEniCS Codex 执行总则
+# MyFEniCS Codex 仓库总则
 
-本文件作用于整个仓库。它是 Codex 的**导航与硬规则入口**，不是项目知识全文；详细事实、任务范围和数值 Gate 以 `docs/` 中的权威文件为准。进入更深目录时，如存在更深层的 `AGENTS.md`，则其局部规则优先；用户本轮明确指令和当前任务书优先于本文件。
+本文件作用于整个仓库，是长期稳定的**仓库级规则与导航入口**。它不得绑定任何当前 Task 编号、日期、执行分支、阶段顺序或临时环境路径。当前任务的范围只由用户本轮指令及对应任务目录中的 `README.md`、`task.md`、补充任务书和 review 文件确定。
 
-## 1. 每次开始工作前必须做什么
+优先级从高到低为：
 
-1. 确认当前工作目录是仓库根目录，并读取本文件。
-2. 读取 [`docs/repository_work_principles.md`](docs/repository_work_principles.md)。
-3. 读取 [`docs/README.md`](docs/README.md)，确认当前任务和历史入口。
-4. 读取当前任务目录的 `README.md`、`task.md`、全部任务补充书，以及上一任务的最终 `review_report`、`response` 和 `outcomes/summary.md`。
-5. 读取与本次改动相关的 architecture、theory、walkthrough、benchmark 和 solver 文档；不要只依赖聊天摘要或文件名猜测。
-6. 检查 Git、环境和源码身份，未通过前不得写代码或启动正式 PDE。
+1. 用户本轮明确指令；
+2. 当前任务的 `task.md`、正式补充任务书和最新 `review_report_vN.md`；
+3. 更深目录中的 `AGENTS.md`；
+4. 本文件；
+5. 其他说明性文档。
 
-当前正式任务是 **Task034**。必须同时读取：
+若这些来源冲突，停止受影响工作并在 `response_vN.md` 中报告；不得自行猜测或静默改写权威文件。
 
-```text
-docs/task034_workstation_wsl_adaptive_scalability/README.md
-docs/task034_workstation_wsl_adaptive_scalability/task.md
-docs/task034_workstation_wsl_adaptive_scalability/task_fixed_geometry_convergence_addendum.md
-```
+## 1. 每次开始前
 
-Task034 的执行分支必须是：
+1. 确认位于仓库根目录并读取本文件。
+2. 阅读 `docs/repository_work_principles.md` 和 `docs/README.md`。
+3. 从用户指令或当前执行分支识别任务目录，完整阅读其 `README.md`、`task.md`、全部补充任务书、最新 review、response 和 outcomes summary。
+4. 阅读与本次改动直接相关的 architecture、theory、solver、benchmark 和 walkthrough 文档。
+5. 检查 `HEAD`、`origin`、工作树、环境、ABI 和源码身份；未通过前不得正式运行 PDE。
+6. **不得从本文件推断当前 Task。** 若用户指令、分支和任务目录不能唯一对应，先报告歧义。
 
-```text
-codex/20260717-task34-workstation-wsl-adaptive-scalability
-```
+## 2. 角色与任务闭环
 
-`agent/wsl-environment-qualification` 只是 WSL bootstrap 报告分支，不是 Task034 执行分支。其报告尚未进入 `master`，开始 Task034 前用以下命令只读检查：
+- ChatGPT 负责任务书、补充任务书和 `review_report_vN.md`。
+- Codex 负责执行分支、实现、测试、正式运行、`outcomes/` 和 `response_vN.md`。
+- Codex 不得删除、覆盖或弱化任务书、补充任务书、review 或本文件。
+- 任务结束时必须提交并推送执行分支，给出精确完整 HEAD、base SHA、工作树状态、测试结果和证据索引，然后停止等待 review。
+- 未经最终 review 和用户授权，不得自行合并 `master`。
 
-```bash
-git show origin/agent/wsl-environment-qualification:docs/workstation_wsl_environment_qualification.md
-```
+## 3. Git 规则
 
-该报告只能作为前置参考，不能冒充完整 Phase A；Task034 必须把经补测和结构化后的环境证据写入自己的 `outcomes/`。
+- 从最新、干净的 `origin/master` 创建用户或任务书指定的执行分支；不得直接在 `master` 开发。
+- 正式运行前后记录完整 SHA，并确认 tracked 修改和 nonignored untracked 文件均符合任务合同。
+- 不整体 merge 或 cherry-pick 大型 research branch；只允许经过审查的最小文件级迁移。
+- 每次提交只包含一个可说明的阶段或修复，不混入无关重构。
+- 不 amend、强推或重写既有历史，除非用户明确授权。
+- 负结果、受控停止和失败证据不得删除或改写为通过。
 
-## 2. 角色和任务闭环
+## 4. 目录与代码架构
 
-- ChatGPT 负责任务书、补充任务书、远程审查和 `review_report_vN.md`。
-- Codex 负责创建执行分支、实现、测试、正式运行、`outcomes/` 和 `response_vN.md`。
-- Codex 不得删除、覆盖或弱化 ChatGPT 编写的 `task.md`、任务补充书、`review_report*.md` 或本文件。
-- 对任务书有异议、发现冲突或需要改变范围时，在 `response_vN.md` 中说明并停止受影响阶段；不得静默改写权威文件。
-- 任务完成后必须推送执行分支，提交 `response_v1.md`，给出 HEAD、base SHA、测试和证据索引，然后停止等待 ChatGPT review。
-- 未经最终 review，不得自行合并 `master`。
+### `src/`
 
-## 3. Git 与分支规则
+存放可复用的项目主体：
 
-开始 Task034 时必须从最新、干净的 `origin/master` 创建分支：
+- Maxwell/Floquet/DtN/QEP/Hybrid 数值内核；
+- 网格、有限元空间、约束、求解器和后处理；
+- 可被多个任务和 case 调用的通用实现。
 
-```bash
-git fetch origin --prune
-git switch master
-git pull --ff-only origin master
-git status --short --untracked-files=all
-git rev-parse HEAD
-git rev-parse origin/master
-git switch -c codex/20260717-task34-workstation-wsl-adaptive-scalability
-git push -u origin codex/20260717-task34-workstation-wsl-adaptive-scalability
-```
+任何改变物理方程、离散、矩阵、约束、求解或正式后处理的功能，都必须进入合适的 `src/` 模块并有测试。不得把新的数值算法只实现于 benchmark runner 中。
+
+### `benchmarks/`
+
+只用于：
+
+- **通用且参数化**的 runner；
+- watchdog、资源采样和 provenance；
+- checker、聚合器和轻量证据生成；
+- benchmark case 的配置、期望值和复现命令。
 
 硬规则：
 
-- `HEAD` 必须等于 `origin/master`，工作树必须无 tracked 修改和 nonignored untracked 文件。
-- 不得直接在 `master` 开发。
-- 不得从大型 research branch 整体 merge 或整体 cherry-pick。
-- Task033 中被排除的 adaptive、graded mesh、1 TiB 和 full-campaign prototype 不得直接提升；只能只读参考并在 Task034 从 clean base 重新实现。
-- 每次提交只包含本阶段相关文件；不要混入无关重构。
-- 不 amend、重写或强推已有历史，除非用户明确授权。
-- 每次正式运行前后都检查 `git status --short --untracked-files=all` 和完整 SHA。
-- 结束时保持工作树干净，并推送所有已提交工作。
+- 不应为每个单独的 p/h/M/MPI case 复制一个 Python 求解脚本；case 差异优先放在参数、JSON 配置或命令中。
+- 新 runner 必须证明不能由现有通用 runner 加参数实现。
+- task-numbered 脚本只允许作为薄的历史兼容入口或研究工具；不得继续累积数值核心和重复 orchestration。
+- checker 不得重新实现求解器，只能读取原始记录并独立重算结论。
+- 大型 mesh、field、matrix、factor、timeline 和原始输出必须进入 ignored artifact 目录，不进入 Git。
 
-## 4. WSL 原生环境规则
+### `benchmarks/cases/`
 
-Task034 正式环境是 WSL2 Ubuntu，不以 Docker 作为通过依据。
+每个 case 应优先包含：
 
-```bash
-cd /home/Projects/MyFEniCS
-source .venv/bin/activate-myfenics
-```
+- `README.md`；
+- `config.json` / `schema.json` / `expected.json`；
+- `test_command.txt`；
+- 轻量、hash-bound 的 `records/`。
 
-必须满足：
+### `docs/`
 
-- 仓库位于 WSL Linux 文件系统 `/home/...`，不得从 `/mnt/c`、`/mnt/d` 等 Windows 挂载目录运行正式任务。
-- 不得混用 Windows Python、Git、MPI、PowerShell、CMD 或 WindowsApps。
-- Python、mpi4py/Open MPI、PETSc/petsc4py、SLEPc/slepc4py、DOLFINx 和 Basix 必须属于同一套 WSL ABI。
-- `PETSc.ScalarType` 必须是 `numpy.complex128`；记录 `PETSc.IntType`。
-- 每个 MPI rank 的 Python、库路径和 scalar type 必须一致。
-- 当前 `.venv` 激活脚本是本机 bootstrap；Task034 必须补充可复现的环境探针或安装/激活入口，不得只依赖未跟踪文件。
-- 裸 `/usr/bin/python3` 当前可能指向 real PETSc，不得用于 MyFEniCS 正式运行。
-- 环境身份、版本、路径、MPI、MUMPS、SLEPc PEP 和 WSL 资源必须写入结构化 outcomes。
+任务书、review、outcomes 和技术文档默认使用中文；代码标识符、命令、状态枚举和必要术语保留英文。
 
-环境或 ABI Gate 失败时，停止所有正式 PDE，先修复环境并记录负结果。
+## 5. 环境与 ABI
 
-## 5. 代码修改原则
+- 使用当前任务明确指定并已资格化的环境；不得从本文件假设 WSL、Docker、HPC 或固定本地路径。
+- Python、MPI、PETSc/petsc4py、SLEPc/slepc4py、DOLFINx 和 Basix 必须来自同一 ABI 栈。
+- 正式 Maxwell 计算必须确认 `PETSc.ScalarType` 为 `complex128`，并记录 `PETSc.IntType`。
+- 每个 MPI rank 的解释器、库路径、scalar type 和线程设置必须一致。
+- 环境或 ABI Gate 失败时，停止正式 PDE 并保存真实 blocker。
 
-- 先阅读现有实现、测试和历史结论，再修改代码。
-- 优先最小、可审查、可回退的改动；避免顺手重构无关模块。
-- ordinary solver default、默认网格、默认后处理和默认 profile 不得静默改变；新路径必须显式 opt-in。
-- 不允许为了通过测试而放宽数值阈值、删除负结果、跳过检查或伪造记录。
-- 如果 Maxwell、Floquet、QEP、Hybrid coupling、DtN、场重构或 official postprocess 数值 kernel 改变，必须明确标记旧 evidence 失效，并重新运行对应 PDE anchor。
-- diagnostic、lifecycle、watchdog 和资源监控改动也必须有测试，不能因“不改数学”而省略验证。
-- 当前 Task034 hardening 必须处理：Floquet cache 生命周期、active-column 全局 Python allgather、共享主机 swap 权威、完整 source-clean 语义和 evidence-to-current numerical blob checker。
+## 6. 数值可信度
 
-## 6. 数值可信度硬规则
+- solver 成功只由 **full explicit true residual** 和任务规定的物理 Gate 判断。
+- official R/T/A 只能由通过 residual Gate 的场产生。
+- 必须区分 `measured`、`derived`、`predicted`、`not_run`、`failed` 和 `controlled_stop`。
+- 未运行项不得写成通过；资源 Gate 停止不等于数值方法失败或该模型在其他软件中不可计算。
+- 最细成功网格默认只能称为 best available discrete reference；没有独立证据不得宣称 continuum convergence。
+- Full3D/Hybrid、direct/iterative、不同 MPI 数和不同环境之间的等价性必须由完整 observable vector 支持，不能只比较一个 R/T 数值。
+- 数值核心发生变化时，必须明确哪些旧 evidence 失效，并重新运行对应 anchor。
 
-- solver 成功只由 **full explicit true residual** 判断；KSP 内部残差、预条件残差或 projected residual 不能替代。
-- official R/T/A 只能从通过 residual Gate 的场产生。
-- probe、sampled flux、中心线或单点值默认只作 diagnostic，除非任务书另有正式资格化。
-- full3D/Hybrid、direct/iterative、MPI1/MPI8/MPI16、缓存 hit/miss 和不同环境结果必须有明确等价性证据。
-- 每个正式结果都要区分 `measured`、`derived`、`predicted`、`not_run` 和 `failed`。
-- 未运行项不得写成通过；资源受控停止不得写成数值方法失败。
-- 负结果必须完整保留，包括失败 Gate、停止原因、资源边界和未允许的推论。
-- 最细成功网格默认只能称为 best available discrete reference；没有独立证据时不得声称 continuum convergence。
+## 7. 资源与重型运行
 
-## 7. Task034 的科学执行顺序
+- 一次只运行一个 heavy case。
+- direct 大算例按任务合同执行 preflight、assembly、factorization/setup、full solve 分级 Gate。
+- 达到 termination 时终止完整进程组；OOM kill 不是合格停止。
+- 内存必须说明口径：simultaneous process-tree/cgroup peak、单阶段峰值、历史峰值上界或累计对象体积不得混称。
+- swap、pagefile 和 OOC scratch 分开记录。
+- 资源预测必须说明假设、校准点、生命周期和不确定性；预测不得冒充实测或 solver pass。
 
-严格遵守：
+## 8. 测试与证据
 
-```text
-WSL environment qualification
--> post-merge hardening
--> Task033 anchor reproduction
--> p3/h3 staged reference
--> p4/h5 staged workstation study
--> fixed-geometry p2/p3/p4 convergence
--> full3D-Hybrid same-degree closure
--> MPI1/MPI8/MPI16 identity and scalability
--> Case093 canonical benchmark freeze
--> conforming graded-h
--> genuine fixed-p h-adaptivity
--> resource-model recalibration and 0.7 nm assessment
-```
+- 先运行最小相关测试，再运行任务书要求的回归、MPI、Ruff、compileall 和文档合同测试。
+- 测试必须在最终改动后重跑。
+- checker 必须从原始字段重算状态，不能只相信记录中的 `status`。
+- 没有 GitHub Actions 时，只能陈述本地测试，不得声称 CI 通过。
+- 正式记录必须绑定完整源码 SHA、环境、命令、MPI/线程、残差、official-result identity、资源口径、artifact hash 和正/负分类。
 
-补充边界：
+## 9. 汇总与可审阅性
 
-- p1 Hybrid 先做 capability audit；正式 Hybrid 收敛从 p2 开始。
-- p2/p3/p4 固定结构收敛和 Case093 必须在 measured adaptive compression 前完成。
-- 固定 `p`、由场相关 indicator 逐轮局部加密属于 genuine h-adaptivity；一次性手工 graded mesh 不是 adaptive。
-- p4 每个候选必须经过 preflight、assembly-only、factorization-only、full solve 分级 Gate。
-- MPI16 禁止 oversubscription；未资格化时必须写 `mpi16_not_qualified`，不得静默替换。
-- Task034 不运行 0.7 nm 正式 PDE，不实现 arbitrary variable-p H(curl)，不运行 p4/h3 或更细候选，除非新的 ChatGPT review 明确解锁。
+`outcomes/summary.md` 必须表格优先，并至少包含：
 
-## 8. 资源和重型运行规则
+- 任务范围、完成项、未运行项和负结果；
+- 所有正式模型的统一结果表；
+- p/h、Full3D/Hybrid、M 和 MPI 对结果及资源的影响；
+- R/T/A、`A_volume`、重要衍射级、DoF/rows/NNZ、峰值内存和分阶段耗时；
+- 数据身份、单位、baseline 和 evidence path；
+- selective merge 分组和下一步。
 
-- 一次只允许一个 heavy case。
-- 大 direct 运行必须按 `preflight -> assembly-only -> KSPSetUp/factorization-only -> full solve` 推进。
-- 每次运行前刷新可用内存、进程树、job/cgroup swap、磁盘、scratch 和 source identity。
-- 达到任务书 termination threshold 时终止完整进程组；OOM kill 不属于合格停止方式。
-- formal no-swap 以当前 job/process tree 和专用 cgroup 为权威；WSL/host 全局 `pswpin/pswpout` 只作 diagnostic。
-- Linux swap、Windows pagefile 和 MUMPS OOC scratch 必须分开记录。
-- OOC 只作为显式 profile，scratch 必须位于本地 Linux 高速文件系统并在结束后清理。
-- 不得并发启动多个重型案例，也不得假设更多 MPI rank 必然更快或更省内存。
+同一物理量必须定义清楚。例如三维零级反射应优先分别报告 `R00_s`、`R00_p` 和两者之和 `R00_total`，避免含糊的 `R(0,0)`。
 
-## 9. 测试与验收
+## 10. Selective merge
 
-每次改动后先运行最小相关测试，再运行任务书要求的完整组。至少包括：
+最终 manifest 必须按依赖组而不是只按文件罗列：
 
-```text
-focused pure-Python tests
-DOLFINx native WSL tests
-MPI2 / MPI4 component regression
-MPI1 / MPI8 / MPI16 formal matrix where required
-Task032 anchors
-Task033 anchors
-Task034 tests
-Ruff
-compileall
-git diff --check
-git status --short --untracked-files=all
-```
+- production numerical/core；
+- reusable runner/watchdog；
+- checker/benchmark；
+- compact evidence/docs；
+- research-only；
+- do-not-merge。
 
-规则：
-
-- 测试必须在最终改动后重新运行。
-- 缺少依赖、环境或资源时，记录真实 blocker，不得虚构通过。
-- checker 必须从原始字段重新计算结论，不能只相信 JSON 的 `status`。
-- 文档改动也必须运行文档合同测试，并检查 GitHub rendered view。
-- 没有 GitHub Actions 运行时，不得说“CI 已通过”；只能陈述本地测试证据。
-
-## 10. 文档语言与格式
-
-- 项目任务书、outcomes、review 回应、技术总结、benchmark 说明和项目进展默认使用中文。
-- 代码标识符、命令、API 名、文件名、状态枚举和必要英文术语保留英文；首次出现时用中文解释。
-- 不提交只有一句状态或只有文件链接的总结。
-- `outcomes/summary.md` 必须表格优先，并包含范围、实验矩阵、关键数值、资源、失败/not-run、合并决定和下一步。
-- 每张数值表标明单位、baseline、数据身份和 evidence path。
-- 独立公式使用空行包围的 `$$` block；不要把需要渲染的公式放入代码围栏。
-- 表格列数必须一致，单元格中的竖线要转义，不把多行公式塞进表格。
-- 重要 Markdown 推送后必须检查 GitHub rendered view。
-- 详细写作标准见：
-  - [`docs/task_retrospective_standard.md`](docs/task_retrospective_standard.md)
-  - [`docs/markdown_rendering_standard.md`](docs/markdown_rendering_standard.md)
-
-## 11. Evidence 与文件存放
-
-Git 中只提交轻量、可复查内容：
-
-```text
-JSON / CSV summaries
-Markdown outcomes
-配置与 schema
-compact residual history
-source/environment identity
-artifact hash descriptors
-tests and checkers
-```
-
-重型内容必须留在 ignored 路径：
-
-```text
-results/
-benchmarks/artifacts/
-benchmarks/artifacts/cases/<case>/
-```
-
-不得提交 mesh、VTU/XDMF/HDF5、完整场数组、矩阵、因子、OOC scratch、原始 PEP cache、完整 memory timeline 或大型日志。
-
-## 12. 任务结束前检查
-
-结束前必须确认：
-
-1. 任务范围内代码、测试和文档均已完成或明确 fail closed。
-2. 所有正式 positive 均通过 true residual 和对应物理 Gate。
-3. 所有失败、not-run 和受控资源 negative 均被保留。
-4. `outcomes/summary.md`、`outcomes/test_summary.md`、`outcomes/changed_files.md`、`docs/development_progress.md` 和 `response_v1.md` 已更新。
-5. 需要合并的文件有逐文件 `selective_merge_manifest.csv`；失败研究代码默认留在任务分支。
-6. 工作树干净，分支已推送。
-7. 不自行合并 master，停止并等待 ChatGPT review。
+每项应说明数值行为是否改变、依赖文件、对应测试、fresh PDE evidence 和建议合入顺序。研究负结果可以保留为文档证据，但不得把未资格化研究路径提升为 production default。
