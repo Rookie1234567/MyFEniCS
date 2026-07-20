@@ -93,6 +93,13 @@ Hybrid/full3D closure 均已在 WSL 原生环境中完成。`records/p4_h5_works
 source compatibility 和原始工件 SHA-256。重型原始工件继续保留在 gitignored
 `benchmarks/artifacts/task034/phase_e/`。
 
+clean SHA `70590b4f99a6c0e389ec69b7fcf10d1e421b4f7d` 上的 p2/h5 conforming
+graded-h mechanism MPI8 资格化通过：材料面和 10/110 nm trace 精确，bottom/top 与
+matching cross-section 的 x/y topology 一致；两侧各 484 条 p2 Floquet constraints，
+pairing/phase/transform 误差均为 0。该记录只证明机制，不包含 PDE solve，不声明等误差
+压缩或 genuine adaptive 已完成。轻量证据见
+`records/adaptive_mechanism_qualification.json`。
+
 clean SHA `8440bbaf42de9d633479d0ed65bdda544bd871ef` 上的扩展 MPI 环境资格化通过：
 48 个可用物理核，MPI1/2/4/8/16/32 均无 oversubscription，所有 rank 使用同一
 Python/MPI/PETSc/SLEPc/DOLFINx ABI；MPI8/16/32 的分布式 MUMPS 与 PEP

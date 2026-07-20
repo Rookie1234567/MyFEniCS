@@ -6,6 +6,7 @@
     "p3_h3_staged_reference_measured": true,
     "p4_h5_staged_full3d_measured": true,
     "fixed_geometry_convergence_complete": false,
+    "adaptive_mechanism_qualified": true,
     "adaptive_compression_complete": false,
     "proves_continuum_convergence": false,
     "proves_0p7nm_feasible": false,
