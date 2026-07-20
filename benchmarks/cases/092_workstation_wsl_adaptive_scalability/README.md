@@ -100,6 +100,14 @@ pairing/phase/transform 误差均为 0。该记录只证明机制，不包含 PD
 压缩或 genuine adaptive 已完成。轻量证据见
 `records/adaptive_mechanism_qualification.json`。
 
+clean SHA `455128a2f777dbadd8e38430bbcd3a2ad10e5a7e` 上完成 p2/h3 的
+conservative/balanced/aggressive 三档 MPI8 Hybrid M80/M120/M160 funnel。三档 modal totals
+均在 M120→M160 收敛，但全部超过固定 Full3D 同误差 Gate；aggressive 还未通过 interface H
+Gate。因此 `records/adaptive_summary.json` 将结论冻结为 `controlled_negative`，raw DoF ratio
+不得称为 qualified compression。首次 aggressive M80 瞬时 MPI/WSL 启动失败也保留，独立
+retry1 才作为有效 M80 shard。任务书的 critical-observable stop condition 已触发，未继续
+重型 common-mesh 与 p3 adaptive lane，也未改变 ordinary uniform default。
+
 clean SHA `8440bbaf42de9d633479d0ed65bdda544bd871ef` 上的扩展 MPI 环境资格化通过：
 48 个可用物理核，MPI1/2/4/8/16/32 均无 oversubscription，所有 rank 使用同一
 Python/MPI/PETSc/SLEPc/DOLFINx ABI；MPI8/16/32 的分布式 MUMPS 与 PEP

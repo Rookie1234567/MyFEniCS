@@ -77,15 +77,48 @@ $$
 实验项；尺度由全局数值 reduction 计算。当前已资格化的只是 finite/nonnegative 组合、
 MPI-canonical cell identity、robust max aggregate 与 Dörfler marking/periodic mate 同步机制。
 真实 FE solution 到各 cell component 的离散抽取、manufactured/analytic fixture、uniform
-refinement trend 和 observable error reduction 尚未完成，因此：
+refinement trend 和 observable error reduction 尚未完成。随后在 clean source
+`455128a2f777dbadd8e38430bbcd3a2ad10e5a7e` 上完成了 p2/h3 三档 graded-h 的正式
+MPI8 Hybrid M80/M120/M160 funnel；这批计算用于决定是否解锁后续 heavy adaptive lane，
+不能替代真正的 field-driven adaptive loop。
+
+## p2/h3 measured graded-h compression 决策
+
+三档候选均保持 exact material/matching planes、conforming hexahedra、同一 clean SHA、
+同一 Full3D reference 与同一 watchdog。所有有效 shard 均通过资源、source、launch、
+true residual、modal algebra、official R/T/A finite 和 volume energy closure Gate；未通过的
+物理 Gate 原样保留。
+
+| profile | M160 elements | local FE DoF sum | raw DoF ratio vs uniform | peak memory GiB | wall s | max Δ(R/T/A) vs Full3D | max middle E/H rel L2 | 结论 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| conservative | 3978 | 43868 | 1.561x | 3.964 | 112.115 | 1.699e-2 | 0.306/0.315 | 不同误差 |
+| balanced | 1885 | 21584 | 3.172x | 3.292 | 96.633 | 1.896e-1 | 1.673/1.672 | 不同误差 |
+| aggressive | 600 | 7140 | 9.590x | 2.537 | 71.917 | 9.568e-1 | 1.079/1.078 | 不同误差，且 interface H 失败 |
+
+这里的 raw ratio 仅表示 DoF 数量比。任务书规定只有全部同误差 Gate 通过后才允许把它称为
+压缩倍数，因此三项 `qualified_compression_ratio` 均为 `null`，未给出 weak/useful/clear/
+strong 分类。三档的 M120→M160 official R/T/A 变化均小于 `1e-5`，说明失败不是 modal
+truncation；增加 modes 不能修复 graded spatial discretization error。
+
+aggressive M80 首次调用在 `cross_section_eigen_assembly` 起点发生空 stdout 的瞬时 MPI/WSL
+启动中断，未产生 solver record；失败 summary 被保留。相同 SHA、相同参数的独立 `retry1`
+在 watchdog 下完整执行，后续汇总只使用该有效 shard，但不删除首次失败。
+
+固定停止条件已经触发：所有 profile 都有关键 observable 超过等精度容差。因此没有启动
+由这些候选派生的重型 field-driven adaptive、六参数 common-mesh 或 p3 adaptive PDE；这样
+做是 fail-closed 结论，不是缺失结果，也没有放宽任何阈值。当前状态为：
 
 ```text
 genuine_fixed_p_h_adaptivity = not_yet_qualified
-equal_accuracy_compression = not_yet_measured
-robust_common_mesh_1_5_10_deg_s_p = not_yet_measured
-p3_fixed_p_adaptive = not_yet_started
+equal_accuracy_compression = controlled_negative
+robust_common_mesh_1_5_10_deg_s_p = stopped_before_heavy_run
+p3_fixed_p_adaptive = stopped_before_heavy_run
 ```
 
-后续必须依次完成 p2/h3 三档 Hybrid M funnel、完整 observable vector 等误差 Gate、由真实场
-驱动的 adaptive iteration、六参数 common mesh 复验，再允许计算压缩分类。任一 periodic、
-residual、official R/T/A、observable 或资源 Gate 失败都保存为负结果，不放宽阈值。
+结构化证据：
+
+```text
+docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.csv
+docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.json
+benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_summary.json
+```
