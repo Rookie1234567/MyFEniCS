@@ -626,6 +626,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
     parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
+    parser.add_argument(
+        "--graded-profile",
+        choices=("mechanism", "conservative", "balanced", "aggressive"),
+        default="mechanism",
+    )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
         "--polarization-kind",
@@ -699,8 +704,8 @@ def main() -> None:
             "0 < bottom-interface-nm < top-interface-nm < 120."
         )
     if args.graded_reference_h is not None:
-        if args.degree != 2:
-            raise SystemExit("The Task033 graded feasibility path is fixed to p2.")
+        if args.degree not in (2, 3):
+            raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
         if (
             args.bottom_interface_nm != 10.0
             or args.top_interface_nm != 110.0
@@ -946,19 +951,25 @@ def main() -> None:
         mark_stage("cross_section_eigen_assembly")
         started = time.perf_counter()
         if args.graded_reference_h is not None:
-            from src.geometry.task033_periodic_graded_mesh import (
-                Task033Stage4Geometry,
-                build_physics_informed_graded_plan,
-                build_task033_graded_local_mesh_pair,
+            from src.geometry.task034_adaptive_mesh import (
+                Task034Stage4Geometry,
+                build_task034_conforming_graded_plan,
+                build_task034_graded_local_mesh_pair,
             )
 
-            graded_plan = build_physics_informed_graded_plan(
+            graded_plan = build_task034_conforming_graded_plan(
                 reference_h_nm=args.graded_reference_h,
-                geometry=Task033Stage4Geometry.from_config(cfg),
+                geometry=Task034Stage4Geometry.from_config(
+                    cfg,
+                    bottom_interface_z_nm=args.bottom_interface_nm,
+                    top_interface_z_nm=args.top_interface_nm,
+                ),
+                profile=args.graded_profile,
                 coarse_factor=args.graded_coarse_factor,
+                comm_size=comm.size,
             )
             graded_bottom_mesh, graded_top_mesh = (
-                build_task033_graded_local_mesh_pair(cfg, graded_plan)
+                build_task034_graded_local_mesh_pair(cfg, graded_plan)
             )
             cross_section = build_matching_cross_section(
                 cfg,
@@ -1730,11 +1741,14 @@ def main() -> None:
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "polarization_kind": cfg.polarization_kind,
                 "mesh_policy": (
-                    "task033_periodic_graded_conforming_p2"
+                    "task034_periodic_conforming_fixed_p_graded_opt_in"
                     if graded_plan is not None
                     else "reviewed_stage4_axis_plan"
                 ),
                 "graded_reference_h_nm": args.graded_reference_h,
+                "graded_profile": (
+                    args.graded_profile if graded_plan is not None else None
+                ),
                 "graded_coarse_factor": (
                     args.graded_coarse_factor
                     if graded_plan is not None

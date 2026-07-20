@@ -541,6 +541,8 @@ def _worker_command(
                 str(args.graded_reference_h),
                 "--graded-coarse-factor",
                 str(args.graded_coarse_factor),
+                "--graded-profile",
+                args.graded_profile,
             )
         )
     return command
@@ -938,6 +940,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
     parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
+    parser.add_argument(
+        "--graded-profile",
+        choices=("mechanism", "conservative", "balanced", "aggressive"),
+        default="mechanism",
+    )
     parser.add_argument(
         "--full3d-reference",
         type=Path,
