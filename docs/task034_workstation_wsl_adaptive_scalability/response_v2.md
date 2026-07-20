@@ -15,7 +15,7 @@ PASS_WITH_QUALIFICATIONS
 | 字段 | full SHA / 状态 |
 |---|---|
 | branch | `codex/20260717-task34-workstation-wsl-adaptive-scalability` |
-| pre-Review-V2 Task034 HEAD | `2de3814e734a90d2ce640afbb86eb62a2cbd1661` |
+| pre-Review-V2 Task034 HEAD | `2de3814ebd28331d114ec78adabd37cfa3ca288e` |
 | merged `origin/master` | `6b80b209c07d3c1d8354365a4359bf532ad7aec2` |
 | normal merge commit | `a23d59981a64015e35c82b8afa2a945b8d8e1e3e` |
 | Review V2 reviewed-content commit | `a161ce0fb61454f3fb5588f645cf6d8b95b0f5f7` |
