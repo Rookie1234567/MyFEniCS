@@ -16,7 +16,8 @@
 | 8 | [`iterative_solver_and_preconditioner.md`](iterative_solver_and_preconditioner.md) | h=5/3/2 生产迭代器的算子与预条件器 |
 | 9 | [`hybrid_fem_modal_domain_decomposition.md`](hybrid_fem_modal_domain_decomposition.md) | 如何用二维截面本征模替代 z 不变中间体域，并与上下局部 3D FEM 通过双接口和 Modal-Schur 耦合 |
 | 10 | [`high_order_hcurl_floquet_and_hp_adaptivity.md`](high_order_hcurl_floquet_and_hp_adaptivity.md) | Task033 的高阶 H(curl) orientation、分布式 Floquet、QEP、fixed-p 等精度结论，以及已移交 graded-h/adaptive、buffer、variable-p 的能力边界 |
-| 11 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
+| 11 | [`hcurl_adaptive_error_estimators_and_hp_strategy.md`](hcurl_adaptive_error_estimators_and_hp_strategy.md) | Task035 的 residual、frequency-explicit、recovery、equilibrated、two-level、DWR、DtN/M 截断、anisotropic h 与条件 hp 方法清单和验证顺序 |
+| 12 | [`research_routes_and_negative_results.md`](research_routes_and_negative_results.md) | AMS/HX 等历史正负结果为何没有进入默认路径 |
 
 ## 旧理论长文
 
@@ -64,8 +65,9 @@
 | 3D DtN 增广装配 | `dtn_port_3d::solve_stage4_dtn_port_total_field` |
 | exact condensation | `condensed_dtn::create_matrix_free_condensed_operator` |
 | 两级 PC | `physical_slab_two_level::SparseGalerkinTwoLevelPc.apply` |
-| Hybrid eigenmodes / coupling / Schur | `src/modes/`、`src/coupling/`、`hybrid_fem_modal_*`；资格边界由 Case080/091 records 决定 |
-| 高阶 p1--p4 Floquet / fixed-p Hybrid | `floquet_3d_high_order`、`high_order_floquet_trace`、`task033_reduced_equal_accuracy`；正式结论由 Case090/091 reduced-scope completion checker 决定；graded-h/adaptive 已移交下一任务，不是 master 能力 |
+| Hybrid eigenmodes / coupling / Schur | `src/modes/`、`src/coupling/`、`hybrid_fem_modal_*`；资格边界由 Case080/091/093 records 决定 |
+| 高阶 p1--p4 Floquet / fixed-p Hybrid | `floquet_3d_high_order`、`high_order_floquet_trace`；正式结论由 Case090/091/093 records 决定；Task034 graded-h 只得到 mechanism pass 和 same-error negative，field-driven adaptive 仍未资格化 |
+| adaptive estimator / hp strategy | Task035 计划入口为 `hcurl_adaptive_error_estimators_and_hp_strategy.md`；在对应 benchmark Gate 通过前不属于可执行 production 能力 |
 | 2D official RTA | `power_metrics::compute_dtn_auxiliary_power_metrics` |
 | 3D official RTA/A | `dtn_port_3d::_port_power_metrics`、`rta_3d::compute_volume_absorption_3d` |
 
@@ -79,4 +81,4 @@
 
 所以 `R`、`T`、`A` 和能量 closure 可以跨 2D/3D 比较物理比例；`incident_power_code_units`、未归一化 modal power、体吸收积分原值不能直接跨维度比较，也不能当作 SI W 或 W/m，除非把被省略常数和几何维度完整恢复。
 
-连续理论只能说明公式结构。可运行性、离散误差、MPI 一致性和内存上限必须由 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md) 的案例证据确认。Task032 的 Hybrid 公式在通过 Case080 前只属于计划/理论，不属于已验证功能。
+连续理论只能说明公式结构。可运行性、离散误差、MPI 一致性和内存上限必须由 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md) 的案例证据确认。Task035 的 estimator 与 hp 方法在通过独立 fixture 和真实 physical Gate 前只属于计划/理论，不属于已验证功能。
