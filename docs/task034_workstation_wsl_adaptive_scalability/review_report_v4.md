@@ -3,10 +3,11 @@
 ## 1. 审查结论
 
 ```text
-review_status = CHANGES_REQUIRED_BEFORE_FINAL_SELECTIVE_MERGE
-master_merge = not_approved_yet
+review_status = FINAL_PRE_MERGE_CHANGES_AUTHORIZED
+master_merge = conditionally_approved_after_all_final_gates_pass
 heavy_pde_rerun_required = false unless numerical core changes
-expected_next_review = final merge approval
+additional_chatgpt_review_required = false
+user_merge_authorization = granted_conditionally_by_user
 ```
 
 本轮审查基于：
@@ -24,7 +25,7 @@ Review V3 的主要工程阻塞已经关闭：
 4. Task034 adaptive 实现继续保持 research-only；
 5. Task035 仍只是 planning package，未运行代码或 PDE。
 
-当前没有发现需要回滚 Maxwell、Floquet、QEP、DtN 或 Hybrid 数值核心的重大错误。剩余问题规模较小，但会影响机器可读事实语义和最终 file-level merge 的完整性，因此尚不能直接合并。
+当前没有发现需要回滚 Maxwell、Floquet、QEP、DtN 或 Hybrid 数值核心的重大错误。以下剩余问题是 Task034 合并前的最后修改清单。用户已明确授权：Codex 完成这些修正、通过全部规定 Gate、保持工作树干净后，可直接按最终 manifest 执行 file-level selective merge，无需再等待额外 ChatGPT review。
 
 ---
 
@@ -46,7 +47,7 @@ Review V3 的主要工程阻塞已经关闭：
 
 ---
 
-## 3. Blocking Finding 1：Hybrid `elements=0` 是错误的数据语义
+## 3. Final Finding 1：Hybrid `elements=0` 是错误的数据语义
 
 ### 3.1 当前问题
 
@@ -72,7 +73,7 @@ Hybrid 局部三维 FEM 显然拥有非零网格单元。`0` 表示“确切测�
 
 ---
 
-## 4. Blocking Finding 2：最终 manifest 与真实 `master` 状态不一致
+## 4. Final Finding 2：最终 manifest 与真实 `master` 状态不一致
 
 ### 4.1 Review V1 文件并不在当前 master
 
@@ -96,16 +97,16 @@ merge_action = already_on_master_dependency
 
 1. 以当前真实 `origin/master` 重新机械生成 changed-file 集；
 2. 将 Review V1 与 V1 addendum 改为需要选择性合入的 review/evidence 文件；
-3. 将本 `review_report_v4.md`、后续 `response_v5.md` 纳入最终 manifest；
+3. 将本 `review_report_v4.md` 和最终 `response_v5.md` 纳入最终 manifest；
 4. 增加 manifest/changed-files 集合一致性 checker：
    - 每个真实 changed path 有且只有一个 manifest row；
    - `already_on_master` 只允许用于当前 master 实际存在且内容一致的路径；
    - research-only path 仍列出，但明确不合入；
-5. 最终报告 manifest 总行数、changed path 数、merge/include/exclude 数量。
+5. 最终报告 manifest 总行数、changed path 数、实际 include/exclude 数量。
 
 ---
 
-## 5. Blocking Finding 3：仍有少量当前能力/路线文档保留旧表述
+## 5. Final Finding 3：仍有少量当前能力/路线文档保留旧表述
 
 ### 5.1 `docs/capability_matrix.md` 的全局 Qualification 表仍停在旧 p2/MPI4 范围
 
@@ -151,7 +152,7 @@ Task035 = H(curl) field/goal-oriented adaptivity
 
 ---
 
-## 6. P1：compact fixture 的生成身份应表述准确
+## 6. Final P1：compact fixture 的生成身份应表述准确
 
 fixture 当前写：
 
@@ -159,7 +160,7 @@ fixture 当前写：
 generator.name = benchmarks/task034_review_v2_aggregation.py
 ```
 
-但当前该脚本的职责是读取 fixture 并生成 `all_model_results`，并不从重型 artifact 生成 fixture。建议在最终收口时改为更准确的字段，例如：
+但当前该脚本的职责是读取 fixture 并生成 `all_model_results`，并不从重型 artifact 生成 fixture。最终收口时改为更准确的字段，例如：
 
 ```text
 extraction_process
@@ -167,11 +168,11 @@ fixture_schema_version
 output_aggregator
 ```
 
-或者明确该 fixture 是一次性的 reviewed SHA-bound extraction，而不是声称 clean checkout 可由该脚本从 artifact 重新生成。该问题不改变物理结果，但应避免 provenance 描述过度。
+或明确该 fixture 是一次性的 reviewed SHA-bound extraction，而不是声称 clean checkout 可由该脚本从 artifact 重新生成。该问题不改变物理结果，但应避免 provenance 描述过度。
 
 ---
 
-## 7. Response V5 与最终 Review
+## 7. 最终修改、选择性合并与 Task035 启动授权
 
 Codex 应继续在当前 Task034 分支：
 
@@ -191,6 +192,21 @@ Codex 应继续在当前 Task034 分支：
    - Task034 suite；
    - qualified complex ABI 下 full pytest；
    - scoped Ruff、compileall、`git diff --check`；
-10. 提交并推送当前分支，停止等待最终 Review V5。
+10. 所有 Gate 通过且工作树干净后，本 Review 与用户本轮指令共同构成最终合并授权；无需等待 Review V5；
+11. 不得 whole-branch merge，必须严格按最终 manifest 做 file-level selective merge，并排除全部 `research_only_do_not_merge_yet`、`review_only_do_not_merge_to_production`、`historical_compatibility_optional` 中未明确选择的文件；
+12. 在合并后的 `master` 上重新运行 governance、documentation、Task034、hermetic aggregation 和 full repository tests；
+13. 测试通过后推送 `master`，并报告：
+    - 精确 master SHA；
+    - 合并方式；
+    - 实际合入和排除文件数量；
+    - 测试结果；
+    - 工作树状态；
+14. 随后从最新、干净且已推送的 `origin/master` 创建并推送：
 
-上述问题关闭且未产生新 blocker 时，下一轮可给出最终 selective-merge approval，并在用户授权后由 Codex执行 master 合并和 Task035 分支创建。
+```text
+codex/20260721-task35-hcurl-goal-oriented-adaptivity
+```
+
+15. 在 Task035 分支完整读取 `AGENTS.md`、Task035 README、任务书、理论文档和 Task034 最终 evidence，重新完成环境与 baseline binding，然后严格按 Phase A → Phase B → 后续 Gate 顺序执行；
+16. 不得把 Task034 research-only adaptive code 直接提升为 Task035 production，也不得跳过 estimator fixture 直接运行重型 p4 adaptive；
+17. 任一修改、测试、选择性合并或 Task035 启动 Gate 失败时立即停止并报告，不得强行继续。
