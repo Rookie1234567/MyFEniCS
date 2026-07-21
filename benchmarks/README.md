@@ -21,6 +21,7 @@ Benchmark 与普通 `results/` 分离。轻量 JSON/CSV 记录提交 Git，完�
 | `run_task032_scalability_projection.py` | Task032 Review closeout：确定性、non-PDE 的 `analytical_resource_projection`；只做 generic 2D mode/local DoF/current-layout payload 外推，不计入 solver pass |
 | `scripts/audit_direct_thread_capability.sh` | 只读审计活动 PETSc/MUMPS、BLAS/OpenMP 链路、OpenBLAS 控制 API 与 CPU 可见性 |
 | `records/` | canonical轻量记录与machine-readable Gate report |
+| `task034_review_v2_aggregation.py` | 只读 tracked compact fixture 的 40 行 hermetic 聚合；artifact path 仅 provenance，不启动 PDE |
 | `artifacts/` | ignored重型输出 |
 
 ## 推荐顺序

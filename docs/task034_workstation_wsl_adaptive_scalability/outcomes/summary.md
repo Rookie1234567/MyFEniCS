@@ -1,4 +1,4 @@
-# Task034 最终成果汇总（Review V3）
+# Task034 最终成果汇总（Review V4 candidate）
 
 ## 状态与范围
 
@@ -7,9 +7,9 @@
 | final status | `PASS_WITH_QUALIFICATIONS` | 失败和资源 stop 原样保留 |
 | production mainline | S polarization | 用户批准；不重复整套 P 矩阵 |
 | P capability | p2/h5 MPI8 Full3D + Hybrid M160 可计算 | capability sample，不参与 S 收敛主线 |
-| Review V2 authority sync | 1f7911b1932b1bd64160c95253cd410399b3d00b | 当前 Task34 分支 fast-forward pull；未 merge/rebase/cherry-pick origin/master |
-| numerical core in Review V3 | unchanged | 未重跑 p3/h3、p4/h5 或 MPI 重型矩阵 |
-| unified fact table | 40 rows / 36 columns | `all_model_results.json/csv`；空缺为 `null`，不插值 |
+| Review V3 + Task35 planning addendum sync | 3a6a464156b88cc138a732110f1e22b0915c1f3b | 当前 Task34 分支 fast-forward pull；未 merge/rebase/cherry-pick origin/master |
+| numerical core in Review V4 | unchanged | 未重跑 p3/h3、p4/h5、M funnel 或 MPI 重型矩阵；未执行 Task035 PDE |
+| unified fact table | 40 rows / 36 columns | tracked compact fixture 在 no-artifact clean checkout 中字节级重建；空缺为 `null`，不插值 |
 
 ## Capability layering
 
@@ -88,7 +88,7 @@
 | p4/h7.5 | Hybrid | 160 | 8 | 61064 | 80 | 320 | 61464 | 5.967117 | 279.37713 |
 | p4/h5 | Full3D | null | 8 | 339892 | 80 | null | 339972 | 28.88846 | 917.47044 |
 | p4/h5 | Hybrid | 160 | 8 | 100520 | 80 | 320 | 100920 | 9.205917 | 412.42189 |
-| p4/h3 | Full3D | null | 8 | 1539948 | 80 | null | 1540028 | 80.58727 | 3035.1395 |
+| p4/h3 | Full3D | null | 8 | 1539948 | 80 | null | 1540028 | 80.53771 | 3035.1391 |
 | p4/h3 | Hybrid | 160 | 8 | 522136 | 80 | 320 | 522536 | 42.48141 | 3662.6851 |
 
 ## 表 2：M funnel（p3/h3 与 p4/h5）
@@ -130,7 +130,7 @@ R/T/A/Avol 是选定 p3/h5 同方法 baseline physics，MPI comparison 记录保
 | p2/h1 Hybrid M160 | local factors/Schur 完成；field recovery 开始 | 95.879 | 7200 s timeout | `timeout_during_field_recovery_no_official_solution` |
 | p3/h2 Full3D | assembly 1334.65 s；2,047,298 rows；488,789,000 NNZ | 64.015 | factor upper 232.460 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
 | p3/h2 Hybrid M160 | complete shard；residual `3.613e-11` | 49.642 | 3513.82 s measured | pass only；no M funnel/closure |
-| p4/h3 Full3D | assembly 3035.14 s；1,540,028 rows；696,091,072 NNZ | 80.587 | factor upper 204.132 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
+| p4/h3 Full3D | assembly 3035.139050935 s；1,540,028 rows；696,091,072 NNZ | 80.537712 | factor upper 204.132 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
 | p4/h3 Hybrid M160 | complete shard；residual `2.924e-11` | 42.481 | 3662.69 s measured | pass only；no M funnel/closure |
 
 三条 Full3D 的 factorization/full-solve 均 `launched=false`；upper 是预测而非 measured peak。
@@ -150,9 +150,12 @@ cumulative envelopes 分别为 2,014,975/6,804,671/3,008,763 GiB，但这些累�
 三个场景均存在单组件超过 2 TiB，故 current layout stress test 为负；production target-accuracy
 DoF、M 和 peak 仍是 unknown。
 
-## Review V3 工程边界
+## Review V4 工程边界
 
 - benchmark Python inventory 覆盖 31 个变更文件，未发现 Task034 复制独立 solver；数值功能归 `src/`；
 - `selective_merge_manifest.csv` 逐文件给出 action、dependency group、tests、数值变化、PDE 证据和顺序；
+- `all_model_compact_fixture.json` 是 40 行 schema 所需的最小 tracked facts；聚合器只读取 tracked records，artifact path 仅作 provenance string；
+- `factor_nnz` 仅表示存在时的 measured direct-factor `matrix_nnz_used`，Hybrid 或无 inventory 时为 `null`；
+- `all_model_authority_audit.json` 扫描全部 40 行；唯一漂移是 p4/h3 Full3D elapsed/memory 两字段，已统一到 tracked process-tree compact authority；
 - research-only adaptive/reranking/resource/Review 聚合器不作为 production API；
 - p1 与完整重型 P 矩阵仍按用户批准范围排除；任何 negative 未改写为 pass。

@@ -1,10 +1,16 @@
-# Task034 changed files（Review V3）
+# Task034 changed files（Review V4 candidate）
 
-对比权威为 origin/master；Review V3 分支基线为 1f7911b1932b1bd64160c95253cd410399b3d00b。本轮只对当前 Task34 分支执行 fast-forward pull，未 merge/rebase/cherry-pick origin/master。本清单由 Git 机械生成；A/M 分别表示新增/修改。Review 权威文件未被 Task034 修改。
+对比权威为当前 `origin/master`；本轮 Review V3/addendum 同步基线为
+`3a6a464156b88cc138a732110f1e22b0915c1f3b`。只对当前 Task034 分支执行
+fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
+`git diff --name-status origin/master` 机械生成；Review 文件保持不可改写。
 
 | 状态 | 路径 |
 |---|---|
 | M | .gitattributes |
+| M | AGENTS.md |
+| M | README.md |
+| M | benchmarks/README.md |
 | M | benchmarks/cases/010_3d_stage1_airbox/records/canonical_reference.json |
 | M | benchmarks/cases/021_3d_stage4b_direct/records/h2_reviewed_reference.json |
 | M | benchmarks/cases/021_3d_stage4b_direct/records/h3_reference.json |
@@ -16,6 +22,7 @@
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/expected.json |
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_mechanism_qualification.json |
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_summary.json |
+| A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/all_model_compact_fixture.json |
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p2_h1_execution_outcome.json |
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p2_h1_resource_gate.json |
 | A | benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p3_h2_execution_outcome.json |
@@ -69,11 +76,21 @@
 | A | benchmarks/task034_review_v2_aggregation.py |
 | A | benchmarks/task034_workstation_resource_gates.py |
 | A | benchmarks/task034_wsl_resources.py |
+| M | docs/README.md |
+| M | docs/benchmark.md |
+| M | docs/capability_matrix.md |
+| M | docs/development_progress.md |
 | M | docs/iterative_solver_ports.md |
+| M | docs/project_service_requirements_and_forward_model_roadmap.md |
+| M | docs/quick_start.md |
+| M | docs/repository_work_principles.md |
+| M | docs/solver_guide.md |
+| M | docs/task034_workstation_wsl_adaptive_scalability/README.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/0p7nm_workstation_and_tib_assessment.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.csv |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.json |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_mechanism.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/all_model_authority_audit.json |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.csv |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json |
 | A | docs/task034_workstation_wsl_adaptive_scalability/outcomes/benchmark_freeze_decision.md |
@@ -106,6 +123,16 @@
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v1.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v2.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v3.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/response_v4.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v2.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3_task35_planning_addendum.md |
+| A | docs/task035_hcurl_goal_oriented_adaptivity/README.md |
+| A | docs/task035_hcurl_goal_oriented_adaptivity/task.md |
+| M | notes/reference/code_walkthrough.md |
+| M | notes/reference/current_version_boundaries.md |
+| M | notes/theory/README.md |
+| A | notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md |
 | A | scripts/activate_myfenics_wsl.sh |
 | M | src/common/config_3d.py |
 | A | src/common/distributed_matrix_diagnostics.py |
@@ -117,6 +144,7 @@
 | M | src/solvers/dtn_port_3d.py |
 | M | src/solvers/hcurl_multilevel.py |
 | M | src/solvers/hybrid_fem_modal_schur_direct.py |
+| M | src/test/test_24_repository_work_principles.py |
 | M | src/test/test_26_documentation_contract.py |
 | M | src/test/test_28_direct_memory_telemetry.py |
 | M | src/test/test_29_hcurl_multilevel.py |
@@ -144,4 +172,4 @@
 | A | src/test/test_85_task034_resource_model_v2.py |
 | A | src/test/test_86_task034_review_v2_aggregation.py |
 
-共 139 个 changed files；逐文件依赖、测试、证据和合并顺序见 selective_merge_manifest.csv。
+共 164 个 changed files；逐文件 action、依赖组、测试、证据和合并顺序见 `selective_merge_manifest.csv`。Review V4 新增的 hermetic fixture、authority audit、governance/current-capability docs、Task035 planning 与 Response V4均已列入 manifest；未资格化 adaptive files 保持 research-only。

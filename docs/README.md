@@ -21,6 +21,7 @@
 11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；详细档案与项目级回顾都不可省略，一句状态或纯链接不构成完成。完整框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 12. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
 13. **Markdown 公式和表格的可渲染性属于交付 Gate。** 独立公式使用空行隔开的 `$$` block；不得把需要渲染的公式放进代码围栏；表格列数必须一致，单元格竖线必须转义或改写，多行公式不得放进表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；原始 LaTeX、破损表格或错位列均视为文档 Gate 失败。详见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
+14. **同一任务分支协作。** 一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支；ChatGPT 不得在活动任务期间向 `master` 写入 task、review 或规则修订，review 直接提交同一执行分支；Codex 从同一分支 fast-forward 拉取 review；未经最终 review approval 和用户授权，不得 merge master；最终 merge 由 Codex 执行并报告精确 master SHA、测试和工作树；`master` 只接受最终批准的合并，不作为 review 中转分支。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
 
@@ -41,6 +42,8 @@
 | [`iterative_solver_ports.md`](iterative_solver_ports.md) | Task27/30/31 入口、outer KSP 与 local smoother 合法性、组件 flags、资格化和资源选择规则 |
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 reduced scope complete：p3/h5 闭合、p3/h7.5 fixed-p clear success、p4 resource negative、variable-p fail closed；adaptive/1 TiB 已移交 |
+| [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 pending |
+| [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 planning package only；须待 Task034 最终 selective merge 后从 clean master 启动 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -62,6 +65,8 @@
 | Task031 | compact physical-slab PC memory-first structural optimization | `strong_memory_success_slow_but_memory_efficient`；Review V2 PASS；允许合入 master |
 | Task032 | Hybrid FEM–Modal direct baseline | `hybrid_direct_engineering_success` at 13.5 nm；Review V2 PASS_WITH_QUALIFICATIONS；允许选择性合并；h2 not_run |
 | Task033 | high-order Floquet + Hybrid fixed-p feasibility | Review V6 reduced scope accepted；F0 完成；p3/h7.5 fixed-p clear success；adaptive 移交 |
+| Task034 | WSL + fixed-geometry high-order + controlled graded-h | PASS_WITH_QUALIFICATIONS；Review V4 pending；未合并 master |
+| Task035 | H(curl) field/goal-oriented adaptivity | planning package only；execution not started |
 
 ## 当前任务
 
@@ -75,6 +80,8 @@
 | Task031 | `task031_compact_physical_slab_memory_optimization/` | Review V2 PASS；等待用户执行显式 merge commit |
 | Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Review V2 PASS_WITH_QUALIFICATIONS；按 manifest 选择性合并获批 |
 | Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | reduced scope complete；original full scope partial by transfer；已按 exact manifest 选择性合并，whole branch 禁止 |
+| Task034 | `task034_workstation_wsl_adaptive_scalability/` | 实现完成；Review V4/用户 merge 授权待定；adaptive code 仍 research-only |
+| Task035 | `task035_hcurl_goal_oriented_adaptivity/` | 仅任务书/理论规划；Task034 最终 selective merge 前不得启动 |
 
 ## Task28 审计入口
 
@@ -161,5 +168,9 @@
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md`](task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md) | F0、资源语义、completion record、测试和选择性合并回复 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md`](task033_high_order_floquet_hybrid_hp_adaptivity/response_v4.md) | C0 full3D veto、Hybrid partial closure、未升级结论与后续要求 |
 | [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | Task033 及后续文档必须遵守的公式与表格渲染规范 |
+
+## Task034 / Task035 入口
+
+Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](task034_workstation_wsl_adaptive_scalability/outcomes/summary.md)、[`all_model_results.json`](task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json)、Review V1–V3 与 Response V1–V4。Task035 当前只有 [`task.md`](task035_hcurl_goal_oriented_adaptivity/task.md) 和 [`H(curl) adaptive 理论笔记`](../notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md)，不代表可执行能力。
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 已从 Task032 clean master 建立独立执行分支；后续阶段继续绑定 clean SHA 与独立审阅。

@@ -163,3 +163,7 @@ Task031 的 adaptive local GMRES PC 实测非线性（linearity error `2.374308e
 ## 9. 研究路线边界
 
 spectral/GenEO coarse、HPDDM recycling、sampled-Schur、cached-Q、FE-only AMS/HX 和 serial SPILU 都是 `research_only`。它们没有进入当前 runner 的正常参数表，防止用户误把失败探索当作稳定求解器。
+
+## Task034 高阶/Hybrid 与 MPI 边界
+
+Task034 的 S 偏振 fixed-geometry evidence 已覆盖 p3/h3、p4/h5 same-degree closure，并在 p3/h5 对 Full3D/Hybrid 做 MPI1/8/16 identity（MPI32 exploratory）。这不改变 ordinary direct default，也不证明所有 p/h/M 对 MPI 数无关。p2/h1、p3/h2、p4/h3 Full3D 仅完成 assembly 后资源 stop；不得作为 solver pass。graded-h mechanism、未资格化 adaptive runner 和 Task035 planning 不进入 solver selector。

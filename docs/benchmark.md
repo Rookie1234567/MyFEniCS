@@ -13,6 +13,8 @@
 | L3 Task30 | compact physical-slab low-memory h5/h3/h2 | `workstation_memory_success_with_qualifications`；h5/h3 为 clean final-HEAD 复跑，h2 为 reviewed historical reference |
 | L3 Task31 | assembled-F-free compact memory-first h5/h3/h2 | `strong_memory_success_slow_but_memory_efficient`；h2 7.898 GiB simultaneous |
 | L3 Task32 | Hybrid FEM–Modal h5/h3 M160 | `hybrid_direct_engineering_success` at 13.5 nm；h2 not_run；Case080 302/302 |
+| L3 Task33 | high-order Floquet + fixed-p Hybrid | reduced scope accepted；p3/h7.5 clear success；variable-p fail closed |
+| L3 Task34 | WSL + Case093 + p3/h3/p4/h5 + representative MPI | PASS_WITH_QUALIFICATIONS；40-row hermetic fact table；graded-h same-error negative |
 
 ## 目标模型
 
@@ -96,3 +98,7 @@ sequential-factor minimal 降到 3.224 GiB（-16.31%）。h2 两类预测中心/
 Review V1 接受当前物理/数值实现，但 current direct layout 在 0.7 nm 不具资源可行性。配套
 projection 只标记 `analytical_resource_projection`，不计入 solver pass。未来保留 complex 3D
 ends + generic modal middle；y-invariant/pure-modal 只作当前简单 geometry 的可选诊断/reference。
+
+## Task034 Case092/093
+
+Task034 的生产/收敛主线为 S 偏振。Case093 固定几何覆盖 p2/p3/p4 uniform sequence，p3/h3 与 p4/h5 Full3D–Hybrid same-degree closure，以及 p3/h5 的 MPI1/8/16 identity；MPI32 仅 exploratory。p2/h1、p3/h2、p4/h3 Full3D 在 assembly 后按资源 Gate 停止，未进入 factorization/full solve。统一 40 行 JSON/CSV 从 tracked compact fixture 重建，不打开 ignored artifacts；`factor_nnz` 仅表示存在时的 measured direct-factor `matrix_nnz_used`。graded-h runner/mesh 仍 research-only，same-error compression 为 controlled negative；Task035 仅 planning。

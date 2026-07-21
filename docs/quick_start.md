@@ -128,3 +128,7 @@ docker run --rm --memory 14g -v "${Repo}:/work" -w /work myfenics-stage4:task28 
 原 full-scope `--require-formal` 返回 2 是正确行为：committed formal manifest
 仍为 `NOT_RUN`。这不否定 reduced scope completion；两套 checker 分别回答
 “Review V6 缩减范围是否完成”和“原始 21-role 全范围是否完成”，不得混用。
+
+## 11. Task034 只读结果重建
+
+Task034 已接受的重型 PDE 不在 Quick Start 重跑。可用 `python benchmarks/task034_review_v2_aggregation.py --root . --json-output /tmp/all_model_results.json --csv-output /tmp/all_model_results.csv` 从 tracked compact fixture 重建 40 行事实表；命令不读取 `benchmarks/artifacts`。Task034 graded-h runner/mesh 与 Task035 planning 均不是 ordinary production 入口。

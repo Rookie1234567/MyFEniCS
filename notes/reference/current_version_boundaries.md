@@ -1,6 +1,13 @@
 # 当前版本边界
 
-更新时间：2026-07-14，Task29 已合并；Task30 Review V2 R1/R2/D1 已回应，Response V2 等待 final review。
+更新时间：2026-07-21。Task034 实现为 `PASS_WITH_QUALIFICATIONS`，Review V3 blockers 已关闭，等待最终 Review V4 与用户 merge 授权；Task035 仅 planning package，未启动代码/PDE。
+
+## Task034 新增边界
+
+- 可声明：WSL native qualification；Case093 p2/p3/p4 S fixed-geometry evidence；p3/h3、p4/h5 closure；p3/h5 MPI1/8/16 identity；MPI32 exploratory。
+- 只能声明受控负结果：p2/h1、p3/h2、p4/h3 Full3D assembly 后 stop；graded-h same-error compression negative。
+- 不可声明：production field-driven adaptive、variable-p H(curl)、0.7 nm production feasibility 或所有 MPI 数量普遍等价。
+- `src/geometry/task034_adaptive_mesh.py` 与未资格化 adaptive runner 保持 research-only；Task035 任务书/理论笔记不是执行能力。
 
 ## 可声明能力
 

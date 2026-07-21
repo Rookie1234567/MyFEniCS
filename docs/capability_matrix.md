@@ -40,14 +40,17 @@
 | Stage4 block grating | supported | MPI | 当前目标几何 |
 | p1 Nedelec | supported | ordinary CLI | 低阶验证 |
 | p2 Nedelec | recommended | ordinary/benchmark | workstation qualification 使用 p2 |
-| p3 Nedelec + double Floquet | supported | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 已资格化；目标光栅 Hybrid/full3D 同阶对照尚无 |
-| p4 Nedelec + double Floquet | experimental | Case090 explicit runner，MPI1/2/4 | 解析 3D fixtures 通过且有精度收益；代价高，目标光栅 Hybrid 未资格化 |
+| p3 Nedelec + double Floquet | supported | Case090 + Case093，MPI1/2/4/8/16 | 解析 fixtures 已资格化；Task034 p3/h3 目标光栅 Full3D–Hybrid same-degree closure 通过，p3/h5 MPI identity 通过 |
+| p4 Nedelec + double Floquet | experimental | Case090 + Case093，显式入口 | 解析 fixtures 通过；Task034 p4/h5 Full3D–Hybrid same-degree closure 通过；p4/h3 只有 Hybrid M160 shard，Full3D 在 assembly 后资源 stop |
 | p3/p4 cross-section QEP | experimental | Task033 Phase A | p3/p4 组件与 selected MPI identity 已资格化；p4 只具有 compact Fourier subspace 证明；legacy p1–p4 aggregate 因 p1/p2 负结果未资格化 |
 | p3/p4 matching-interface trace/projection | experimental | Task033 Phase B，p2 MPI1 + p3/p4 MPI1/MPI4 | 3D→2D 迹、右重构、左 Petrov、积分加阶、MPI compact identity、no-gather/no-dense 通过；p4 四模态块通过 |
 | p3/h5 Hybrid modal funnel | experimental | Task033 Phase C，MPI4，M80/M120/M160 | Schur-minimal 漏斗、augmented/minimal 和同阶 full3D closure 通过；Hybrid 2.618 vs direct 7.781 GiB，未证明 wall-clock speedup 或 grid convergence |
 | p3/h7.5 fixed-p equal accuracy | experimental | Task033 Review V6 accepted，MPI4，M120/M160 | `fixed_p_equal_accuracy_clear_success_with_qualifications`；相对 provisional p3/h5 reference 全部物理误差不劣，DoF/rows/factor-NNZ/memory/指示性时间全降；不是 continuum/grid-converged 证明 |
 | native cellwise variable-p H(curl) | unavailable | Task033 Phase D2 runtime audit | DOLFINx/Basix 公开 mixed/submesh API 不构成 unequal-p conformity/periodic/MPI 证据；fail closed，不做 bespoke prototype |
-| conforming graded-h / h-adaptive | research_only | transferred from Task033 | 未进入本次 master 可执行能力；下一独立任务须重新建立 mesh/accuracy/MPI Gate |
+| conforming graded-h mechanism | research_only | Task034 explicit research runner | mesh/Floquet/marker mechanism pass；三档 same-error compression controlled negative；未进入 production selective merge |
+| field/goal-oriented h-adaptive / hp | not_verified | Task035 planning package only | 尚未运行 Task035 code/PDE；variable-p H(curl) 仍 unavailable，必须从 clean master 独立资格化 |
+| p2/p3/p4 fixed-geometry S sequence | experimental | Case093，MPI8 | 9 个 same-degree closure positive，p3/h10 Hybrid formal negative；不是 continuum/grid-converged 证明 |
+| representative MPI-count identity | experimental | p3/h5 Full3D/Hybrid MPI1/8/16；MPI32 exploratory | identity 在阈值内；只关闭代表案例，不声明所有 p/h/M 对 MPI 数无关 |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
 | auxiliary DtN | recommended | ordinary Stage4 | 稀疏增广系统 |
 | explicit condensed DtN | supported | `condensed_dtn.py` | reference helper 仅支持 verified `H=I`；一般 H 用 matrix-free exact action |

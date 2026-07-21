@@ -1,4 +1,24 @@
-# 项目开发进度：Task000–Task033
+# 项目开发进度：Task000–Task034
+
+## 2026-07-21：Task034 WSL、固定几何高阶矩阵与 adaptive 决策收口
+
+Task034 在 WSL Ubuntu 24.04 的 qualified complex ABI 上完成环境资格化与 post-merge hardening；Review V4 当前等待最终批准，未合并 master。
+
+| 项目 | Task034 结论 | 数据身份 / 边界 |
+|---|---|---|
+| WSL/ABI | native complex PETSc/SLEPc/DOLFINx stack 通过，零 swap 监测和 watchdog 生效 | measured qualification |
+| uniform benchmark | Case093 覆盖 p2/p3/p4 的 S 偏振固定几何序列；p3/h10 Hybrid 为 formal negative | measured；非 continuum proof |
+| same-degree closure | p3/h3 与 p4/h5 M80/120/160 funnel 和 Full3D–Hybrid closure 通过 | measured accepted evidence |
+| MPI | p3/h5 Full3D/Hybrid MPI1/8/16 identity 通过；MPI32 仅 exploratory | measured；不扩展全部矩阵 |
+| supplemental resource stops | p2/h1、p3/h2、p4/h3 Full3D 只完成 assembly 后受控停止；factorization/full solve 未启动 | measured assembly + predicted upper；不得写成 solve |
+| p4/h3 authority | 3035.139050935 s、80.537712097 GiB，采用 tracked process-tree compact authority | measured；40 行审计仅此两字段发生并已解决漂移 |
+| graded-h | conforming mesh/Floquet/marker mechanism pass；三档 same-error compression 全部 controlled negative | research-only mechanism；field-driven adaptive 未资格化 |
+| 0.7 nm | current-layout stress test 的多个单组件超过 2 TiB | engineering stress test；production DoF/M/peak unknown |
+| merge | governance/docs/compact facts 可按 manifest 合入；未资格化 adaptive runner/mesh 保持 research_only_do_not_merge_yet | final Review V4 + user authorization pending |
+| next | Task035 H(curl) field/goal-oriented adaptivity 仅完成 planning/theory package | 未执行 Task035 code 或 PDE |
+
+统一 40 行事实表由 tracked compact fixture 在无 `benchmarks/artifacts` 的 clean checkout 中字节级重建；重型路径只作为 provenance string。详见 [`task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](task034_workstation_wsl_adaptive_scalability/outcomes/summary.md)。
+
 
 ## 2026-07-17：Task033 Review V6 F0 与选择性合并收口
 
@@ -58,14 +78,16 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-17
-current branch = codex/20260715-task33-high-order-floquet-hybrid-hp
+2026-07-21
+current branch = codex/20260717-task34-workstation-wsl-adaptive-scalability
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
 Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 passed; merged to master at dae03170
 Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
+Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
+Task035 status = planning package only; execution not started
 ```
 
 ## 1.1 2026-07-15 最新更新

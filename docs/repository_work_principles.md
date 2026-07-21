@@ -19,6 +19,11 @@
 6. ChatGPT 负责任务书、远程审查和 `review_report_vN.md`；Codex 负责实现、测试、运行和 `outcomes/`，并通过 `response_vN.md` 回应审查。
 7. Codex 不得删除或改写 ChatGPT 已提交的 `task.md`、`review_report*.md`；需要纠正时，应新增 `response_vN.md` 并提交相应代码、测试和文档修正。
 
+### 同一任务分支协作
+
+- 一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支；ChatGPT 不得在活动任务期间向 `master` 写入 task、review 或规则修订，review 直接提交同一执行分支；Codex 从同一分支 fast-forward 拉取 review；未经最终 review approval 和用户授权，不得 merge master；最终 merge 由 Codex 执行并报告精确 master SHA、测试和工作树；`master` 只接受最终批准的合并，不作为 review 中转分支。
+- 活动任务期间若 `master` 有无关更新，不得默认 merge/rebase；只有用户或最新 review 明确授权后才能同步。
+
 ## 3. 结果与文档闭环
 
 8. 完成工作后，必须把任务结果写入本轮任务目录的 `outcomes/`，至少包含 `summary.md`、Gate 决策、测试证据、changed files 和下一步判断。

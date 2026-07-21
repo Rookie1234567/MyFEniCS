@@ -75,8 +75,7 @@ Task035 应采用分层误差预算，而不是把所有差异混成一个标量
 以电场形式写：
 
 $$
-
-abla\times
+\nabla\times
 \left(\mu_r^{-1}\nabla\times \mathbf E\right)
 -k_0^2\varepsilon_r\mathbf E
 =\mathbf f

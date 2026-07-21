@@ -512,6 +512,17 @@ class DocumentationContractTests(unittest.TestCase):
                     broken.append(f"{source.relative_to(ROOT)} -> {target}")
         self.assertEqual(broken, [])
 
+    def test_task035_planning_markdown_contract(self):
+        theory = ROOT / "notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md"
+        text = _read(theory)
+        self.assertIn(r"\nabla\times", text)
+        self.assertNotIn("\nabla\times", text.replace(r"\nabla\times", ""))
+        self.assertEqual(text.count("$$") % 2, 0)
+        self.assertIn("https://doi.org/", text)
+        index = _read(ROOT / "notes/theory/README.md")
+        self.assertIn(theory.name, index)
+        self.assertTrue((ROOT / "docs/task035_hcurl_goal_oriented_adaptivity/task.md").is_file())
+
     def test_capability_status_does_not_overstate_stage2(self):
         text = _read(ROOT / "docs" / "capability_matrix.md")
         self.assertRegex(text, r"Stage2B PML \| experimental")
