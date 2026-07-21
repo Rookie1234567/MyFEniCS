@@ -9,7 +9,7 @@
 | ABI | activate-myfenics | numpy.complex128；PETSc int32；petsc4py 3.19.6；DOLFINx 0.10.0.post2；SLEPc 3.19.2 |
 | no-artifact aggregation | test86 | 10 passed；临时 root 无 benchmarks/artifacts；JSON/CSV byte-identical |
 | governance/docs + Task034 | test24 + test26 + test73–test86 | 129 passed |
-| manifest exact coverage | origin/master vs final staged tree | 170 manifest rows；170 changed；156 include；14 exclude；0 already-on-master |
+| manifest exact coverage | origin/master vs final staged tree | 170 manifest rows；170 changed；157 include；13 exclude；0 already-on-master |
 | full repository | pytest -q in activated complex ABI | 505 passed，18 skipped，244.80 s |
 | scoped Ruff | changed Review V4 Python files | pass |
 | compileall | python -m compileall -q src benchmarks | pass |

@@ -33,17 +33,17 @@ changed_files.md 与 manifest 以执行时真实 origin/master 和当前 Task034
 
 manifest_rows = 170
 changed_paths = 170
-include_paths = 156
-exclude_paths = 14
+include_paths = 157
+exclude_paths = 13
 already_on_master_paths = 0
 
-每个真实 changed path 有且只有一行；额外行只允许是 master 已存在且与 source 内容相同的 authority dependency。src/geometry/task034_adaptive_mesh.py、adaptive runners/tests 继续为 research_only_do_not_merge_yet；未选 historical compatibility 和 review-only research helpers 明确排除。 合并后 collection Gate 进一步确认：显式选择 run_task033_memory_watchdog.py 与 run_task032_phase6_augmented.py 两个必要兼容依赖；test75/test85 与各自 review-only helper 成组排除，避免孤立测试进入 production。 master test73 又将11个 repository-wide clean-source/resource-authority hardening 文件确认为整体依赖并显式选择；其余 optional 继续排除。
+每个真实 changed path 有且只有一行；额外行只允许是 master 已存在且与 source 内容相同的 authority dependency。src/geometry/task034_adaptive_mesh.py、adaptive runners/tests 继续为 research_only_do_not_merge_yet；未选 historical compatibility 和 review-only research helpers 明确排除。 合并后 collection Gate 进一步确认：显式选择 run_task033_memory_watchdog.py 与 run_task032_phase6_augmented.py 两个必要兼容依赖；test75/test85 与各自 review-only helper 成组排除，避免孤立测试进入 production。 master test73 又将11个 repository-wide clean-source/resource-authority hardening 文件确认为整体依赖并显式选择；全仓 collection Gate 进一步确认 run_task033_full3d_watchdog.py 是已选 test68 的直接依赖并显式选择；其余 optional 继续排除。
 
 ## 最终门禁
 
 - test86 / no-artifact aggregation：10 passed；
 - governance + documentation + Task034 test24/test26/test73–86：129 passed；
-- manifest exact coverage：170 rows / 170 changed / 156 include / 14 exclude / 0 already-on-master；
+- manifest exact coverage：170 rows / 170 changed / 157 include / 13 exclude / 0 already-on-master；
 - qualified complex ABI full pytest：505 passed，18 skipped，244.80 s；
 - scoped Ruff：pass；
 - compileall：pass；
