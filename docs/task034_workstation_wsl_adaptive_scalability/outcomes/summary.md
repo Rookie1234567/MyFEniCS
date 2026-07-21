@@ -1,4 +1,4 @@
-# Task034 最终成果汇总（Review V2）
+# Task034 最终成果汇总（Review V3）
 
 ## 状态与范围
 
@@ -7,8 +7,8 @@
 | final status | `PASS_WITH_QUALIFICATIONS` | 失败和资源 stop 原样保留 |
 | production mainline | S polarization | 用户批准；不重复整套 P 矩阵 |
 | P capability | p2/h5 MPI8 Full3D + Hybrid M160 可计算 | capability sample，不参与 S 收敛主线 |
-| Review authority merge | `a23d59981a64015e35c82b8afa2a945b8d8e1e3e` | normal merge；未 rebase/force/rewrite |
-| numerical core in Review V2 | unchanged | 未重跑 p3/h3、p4/h5 或 MPI 重型矩阵 |
+| Review V2 authority sync | 1f7911b1932b1bd64160c95253cd410399b3d00b | 当前 Task34 分支 fast-forward pull；未 merge/rebase/cherry-pick origin/master |
+| numerical core in Review V3 | unchanged | 未重跑 p3/h3、p4/h5 或 MPI 重型矩阵 |
 | unified fact table | 40 rows / 36 columns | `all_model_results.json/csv`；空缺为 `null`，不插值 |
 
 ## Capability layering
@@ -25,55 +25,102 @@
 | resource model | revised engineering stress test | p2/p3/p4 场景；envelope 与 simultaneous peak 分离 |
 | production 0.7 nm feasibility | unknown / not demonstrated | current-layout stress tests 均有单组件超 2 TiB |
 
-## 表 1：all models
+## 表 1：全模型主表
 
-所有入射均为 S；`R00_p/T00_p` 表示 S 入射下的 cross-polarized p 输出，不是 P 入射复跑。
-完整结构、DoF、NNZ、timing、memory、R00 与 evidence path 见 `all_model_results.csv/json`。
+40 行统一事实表在本 summary 中全部直接覆盖：本表 1a/1b 为 26 个固定几何主线与补充模型；表 2 为 6 个 M-funnel 记录；表 3 为 8 个 MPI identity 记录。所有入射均为 S；R00_p/T00_p 是 S 入射下 cross-polarized p 输出，不是 P 入射复跑。null 表示权威证据未提供，未插值、未跨方法补值。
 
-| p/h nm | Full3D status；R/T/A_volume | Hybrid status；M；R/T/A_volume | closure |
-|---|---|---|---|
-| p2/h5 | pass；.089021603/.442588279/.468390118 | pass；160；.089021069/.442586743/.468392188 | pass |
-| p2/h3 | pass；.004613031/.583653357/.411733611 | pass；160；.004612820/.583650940/.411736240 | pass |
-| p2/h2 | pass；.001342933/.599213229/.399443838 | pass；160；.001342885/.599212676/.399444439 | pass |
-| p2/h1 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | `timeout_during_field_recovery_no_official_solution`；160；无 official | unavailable |
-| p3/h10 | pass；.055398491/.406067867/.538533643 | `formal_not_pass`；160；.055398802/.406069310/.538531887 | not qualified |
-| p3/h7.5 | pass；.003090727/.591160863/.405748409 | pass；160；.003090647/.591159679/.405749673 | pass |
-| p3/h5 | pass；.001090107/.600622478/.398287415 | pass；160；.001090096/.600622368/.398287536 | pass |
-| p3/h3 | pass；.000789468/.602514984/.396695548 | pass；160；.000789467/.602514979/.396695554 | pass |
-| p3/h2 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | shard pass only；160；.000764467/.602690128/.396545405 | no funnel/closure |
-| p4/h10 | pass；.001882317/.596619520/.401498163 | pass；160；.001882348/.596619395/.401498258 | pass |
-| p4/h7.5 | pass；.000802469/.602429773/.396767758 | pass；160；.000802465/.602429757/.396767778 | pass |
-| p4/h5 | pass；.000766313/.602677531/.396556156 | pass；160；.000766313/.602677530/.396556157 | pass |
-| p4/h3 | `not_run_by_conservative_resource_gate_after_assembly`；无 official | shard pass only；160；.000762185/.602706301/.396531514 | no funnel/closure |
+### 表 1a：物理量与状态
+
+| p/h | method | M | MPI | status | R_total | T_total | A_balance | A_volume | R00_total |
+|---|---|---:|---:|---|---:|---:|---:|---:|---:|
+| p2/h5 | Full3D | null | 8 | full3d_reference_pass | 0.0890216029 | 0.442588279 | 0.468390118 | 0.468390118 | 0.0890130359 |
+| p2/h5 | Hybrid | 160 | 8 | measured_shard_pass | 0.0890210691 | 0.442586743 | 0.468392188 | 0.468392188 | 0.0890118197 |
+| p2/h3 | Full3D | null | 8 | full3d_reference_pass | 0.00461303141 | 0.583653357 | 0.411733611 | 0.411733611 | 0.00460127305 |
+| p2/h3 | Hybrid | 160 | 8 | measured_shard_pass | 0.0046128199 | 0.58365094 | 0.41173624 | 0.41173624 | 0.0046011177 |
+| p2/h2 | Full3D | null | 8 | full3d_reference_pass | 0.00134293285 | 0.599213229 | 0.399443838 | 0.399443838 | 0.00133312476 |
+| p2/h2 | Hybrid | 160 | 8 | measured_shard_pass | 0.00134288473 | 0.599212676 | 0.399444439 | 0.399444439 | 0.00133309761 |
+| p2/h1 | Full3D | null | 8 | not_run_by_conservative_resource_gate_after_assembly | null | null | null | null | null |
+| p2/h1 | Hybrid | 160 | 8 | timeout_during_field_recovery_no_official_solution | null | null | null | null | null |
+| p3/h10 | Full3D | null | 8 | full3d_reference_pass | 0.0553984905 | 0.406067867 | 0.538533643 | 0.538533643 | 0.0553826781 |
+| p3/h10 | Hybrid | 160 | 8 | formal_not_pass | 0.0553988021 | 0.40606931 | 0.538531888 | 0.538531887 | 0.0553792864 |
+| p3/h7.5 | Full3D | null | 8 | full3d_reference_pass | 0.00309072745 | 0.591160863 | 0.405748409 | 0.405748409 | 0.00307976819 |
+| p3/h7.5 | Hybrid | 160 | 8 | measured_shard_pass | 0.00309064738 | 0.591159679 | 0.405749673 | 0.405749673 | 0.00307976491 |
+| p3/h5 | Full3D | null | 8 | full3d_reference_pass | 0.00109010701 | 0.600622478 | 0.398287415 | 0.398287415 | 0.00108058337 |
+| p3/h5 | Hybrid | 160 | 8 | measured_shard_pass | 0.00109009569 | 0.600622368 | 0.398287536 | 0.398287536 | 0.00108058359 |
+| p3/h3 | Full3D | null | 8 | full3d_reference_pass | 0.000789467957 | 0.602514984 | 0.396695548 | 0.396695548 | 0.000780309834 |
+| p3/h3 | Hybrid | 160 | 8 | measured_shard_pass | 0.000789467334 | 0.602514979 | 0.396695554 | 0.396695554 | 0.000780309829 |
+| p3/h2 | Full3D | null | 8 | not_run_by_conservative_resource_gate_after_assembly | null | null | null | null | null |
+| p3/h2 | Hybrid | 160 | 8 | measured_shard_pass_no_m_funnel_no_full3d_closure | 0.000764466671 | 0.602690128 | 0.396545405 | 0.396545405 | 0.000755344038 |
+| p4/h10 | Full3D | null | 8 | full3d_reference_pass | 0.00188231722 | 0.59661952 | 0.401498163 | 0.401498163 | 0.00187216051 |
+| p4/h10 | Hybrid | 160 | 8 | measured_shard_pass | 0.00188234769 | 0.596619395 | 0.401498258 | 0.401498258 | 0.00187215501 |
+| p4/h7.5 | Full3D | null | 8 | full3d_reference_pass | 0.000802469015 | 0.602429773 | 0.396767758 | 0.396767758 | 0.000793283286 |
+| p4/h7.5 | Hybrid | 160 | 8 | measured_shard_pass | 0.000802464969 | 0.602429757 | 0.396767778 | 0.396767778 | 0.000793283227 |
+| p4/h5 | Full3D | null | 8 | full3d_reference_pass | 0.000766313377 | 0.602677531 | 0.396556156 | 0.396556156 | 0.000757187647 |
+| p4/h5 | Hybrid | 160 | 8 | measured_shard_pass | 0.000766313235 | 0.60267753 | 0.396556157 | 0.396556157 | 0.000757187631 |
+| p4/h3 | Full3D | null | 8 | not_run_by_conservative_resource_gate_after_assembly | null | null | null | null | null |
+| p4/h3 | Hybrid | 160 | 8 | measured_shard_pass_no_m_funnel_no_full3d_closure | 0.00076218454 | 0.602706301 | 0.396531514 | 0.396531514 | 0.000753065135 |
+
+### 表 1b：规模与资源
+
+| p/h | method | M | MPI | fe DoF | external aux DoF | modal unknowns | total rows | peak GiB | total s |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| p2/h5 | Full3D | null | 8 | 44698 | 80 | null | 44778 | 2.959606 | 16.567574 |
+| p2/h5 | Hybrid | 160 | 8 | 13652 | 80 | 320 | 14052 | 3.284866 | 96.284394 |
+| p2/h3 | Full3D | null | 8 | 198438 | 80 | null | 198518 | 9.534939 | 152.97227 |
+| p2/h3 | Hybrid | 160 | 8 | 68396 | 80 | 320 | 68796 | 4.69516 | 164.31719 |
+| p2/h2 | Full3D | null | 8 | 615108 | 80 | null | 615188 | 32.53961 | 1235.5432 |
+| p2/h2 | Hybrid | 160 | 8 | 180696 | 80 | 320 | 181096 | 11.30533 | 461.77607 |
+| p2/h1 | Full3D | null | 8 | 4379752 | 80 | null | 4379832 | 67.9229 | 792.95848 |
+| p2/h1 | Hybrid | 160 | 8 | null | null | null | null | 95.87872 | 7200 |
+| p3/h10 | Full3D | null | 8 | 23073 | 80 | null | 23153 | 2.744572 | 20.091813 |
+| p3/h10 | Hybrid | 160 | 8 | 7194 | 80 | 320 | 7594 | 2.86771 | 91.920293 |
+| p3/h7.5 | Full3D | null | 8 | 63747 | 80 | null | 63827 | 4.609695 | 52.327746 |
+| p3/h7.5 | Hybrid | 160 | 8 | 26598 | 80 | 320 | 26998 | 3.61446 | 117.67073 |
+| p3/h5 | Full3D | null | 8 | 145863 | 80 | null | 145943 | 9.040073 | 149.65782 |
+| p3/h5 | Hybrid | 160 | 8 | 43614 | 80 | 320 | 44014 | 4.908237 | 143.51496 |
+| p3/h3 | Full3D | null | 8 | 656325 | 80 | null | 656405 | 44.06867 | 1726.3617 |
+| p3/h3 | Hybrid | 160 | 8 | 223770 | 80 | 320 | 224170 | 14.27155 | 661.41003 |
+| p3/h2 | Full3D | null | 8 | 2047218 | 80 | null | 2047298 | 64.01495 | 1334.6453 |
+| p3/h2 | Hybrid | 160 | 8 | 595956 | 80 | 320 | 596356 | 49.6415 | 3513.8182 |
+| p4/h10 | Full3D | null | 8 | 53084 | 80 | null | 53164 | 5.639561 | 115.52464 |
+| p4/h10 | Hybrid | 160 | 8 | 16216 | 80 | 320 | 16616 | 3.517616 | 136.25296 |
+| p4/h7.5 | Full3D | null | 8 | 147844 | 80 | null | 147924 | 12.7244 | 345.38403 |
+| p4/h7.5 | Hybrid | 160 | 8 | 61064 | 80 | 320 | 61464 | 5.967117 | 279.37713 |
+| p4/h5 | Full3D | null | 8 | 339892 | 80 | null | 339972 | 28.88846 | 917.47044 |
+| p4/h5 | Hybrid | 160 | 8 | 100520 | 80 | 320 | 100920 | 9.205917 | 412.42189 |
+| p4/h3 | Full3D | null | 8 | 1539948 | 80 | null | 1540028 | 80.58727 | 3035.1395 |
+| p4/h3 | Hybrid | 160 | 8 | 522136 | 80 | 320 | 522536 | 42.48141 | 3662.6851 |
 
 ## 表 2：M funnel（p3/h3 与 p4/h5）
 
-| case | M | R/T/A_balance | true residual | peak GiB | total s | status |
-|---|---:|---|---:|---:|---:|---|
-| p3/h3 | 80 | .000789467335/.602514978712/.396695553953 | `6.762e-12` | 8.698 | 881.93 | pass |
-| p3/h3 | 120 | .000789467334/.602514978699/.396695553967 | `7.632e-12` | 9.806 | 1002.97 | pass |
-| p3/h3 | 160 | .000789467334/.602514978698/.396695553968 | `3.903e-11` | 10.762 | 1113.84 | selected/pass |
-| p4/h5 | 80 | .000766313235/.602677529602/.396556157163 | `5.182e-12` | 5.049 | 558.97 | pass |
-| p4/h5 | 120 | .000766313235/.602677529589/.396556157177 | `5.726e-12` | 5.498 | 634.19 | pass |
-| p4/h5 | 160 | .000766313235/.602677529589/.396556157177 | `7.031e-12` | 5.961 | 734.22 | selected/pass |
+p3/h3 使用已接受的 current-source MPI8 funnel；p4/h5 保留已接受的 MPI4 formal funnel。max Δ vs prev M 是相邻 M 间 R/T/A_balance/A_volume/R00_total 的最大绝对差；首行为 baseline。
 
-两组 M120→M160 均通过 strong convergence Gate；M240 condition 未触发。
+| case | MPI | M | modal | rows | R/T/A/Avol | R00 | residual | peak GiB | total s | max Δ vs prev M |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|
+| p3/h3 | 8 | 80 | 160 | 224010 | 0.000789467335/0.602514979/0.396695554/0.396695555 | 0.00078030983 | 2.076e-11 | 12.73734 | 529.55618 | baseline |
+| p3/h3 | 8 | 120 | 240 | 224090 | 0.000789467334/0.602514979/0.396695554/0.396695554 | 0.000780309829 | 6.972e-12 | 13.70872 | 567.5734 | 1.103e-09 |
+| p3/h3 | 8 | 160 | 320 | 224170 | 0.000789467334/0.602514979/0.396695554/0.396695554 | 0.000780309829 | 6.718e-12 | 14.27155 | 661.41003 | 8.570e-12 |
+| p4/h5 | 4 | 80 | 160 | 100760 | 0.000766313235/0.60267753/0.396556157/0.396556158 | 0.000757187631 | 5.182e-12 | 5.048573 | 558.96729 | baseline |
+| p4/h5 | 4 | 120 | 240 | 100840 | 0.000766313235/0.60267753/0.396556157/0.396556157 | 0.000757187631 | 5.726e-12 | 5.497772 | 634.19357 | 1.107e-09 |
+| p4/h5 | 4 | 160 | 320 | 100920 | 0.000766313235/0.60267753/0.396556157/0.396556157 | 0.000757187631 | 7.031e-12 | 5.961403 | 734.21756 | 8.713e-12 |
 
 ## 表 3：MPI identity（p3/h5 S）
 
-| method | MPI | true residual | peak GiB | core solve/total s | identity |
-|---|---:|---:|---:|---:|---|
-| Full3D | 1 | `1.265e-10` | 6.340 | 1050.52 | pass |
-| Full3D | 8 | `8.305e-12` | 9.014 | 150.51 | pass |
-| Full3D | 16 | `1.143e-11` | 11.359 | 72.97 | pass |
-| Full3D | 32 | `6.912e-12` | 15.773 | 41.95 | exploratory pass |
-| Hybrid M160 | 1 | `6.418e-12` | 1.245 | 431.07 | pass |
-| Hybrid M160 | 8 | `1.164e-11` | 4.900 | 144.69 | pass |
-| Hybrid M160 | 16 | `3.397e-12` | 7.150 | 134.13 | pass |
-| Hybrid M160 | 32 | `3.788e-12` | 12.088 | 201.10 | exploratory pass |
+R/T/A/Avol 是选定 p3/h5 同方法 baseline physics，MPI comparison 记录保存其漂移；max physical drift 是 R/T/A_balance/A_volume 对 baseline 的最大绝对漂移。Full3D 权威记录没有端到端 total，故 total 明确为 null，另列 stage4_dtn_port_assembly_and_solve；Hybrid 提供端到端 total。MPI32 仅为 exploratory，不替代 MPI16。
 
-同一方法内 case/source/config/structure 一致，official R/T/A、fields/interfaces、orders、complex
-amplitudes、QEP beta 与 true residual 全部满足 identity 阈值；MPI32 不替代 MPI16。
+| method | MPI | M | rows | R/T/A/Avol | residual | peak GiB | total s | reported core s | max physical drift | identity |
+|---|---:|---:|---:|---|---:|---:|---:|---:|---:|---|
+| Full3D | 1 | null | 145943 | 0.00109010701/0.600622478/0.398287415/0.398287415 | 1.265e-10 | 6.339725 | null | 1050.5189 | 0.000e+00 | pass |
+| Full3D | 8 | null | 145943 | 0.00109010701/0.600622478/0.398287415/0.398287415 | 8.305e-12 | 9.013885 | null | 150.51138 | 8.776e-13 | pass |
+| Full3D | 16 | null | 145943 | 0.00109010701/0.600622478/0.398287415/0.398287415 | 1.143e-11 | 11.35872 | null | 72.97057 | 8.706e-13 | pass |
+| Full3D | 32 | null | 145943 | 0.00109010701/0.600622478/0.398287415/0.398287415 | 6.912e-12 | 15.77257 | null | 41.948454 | 8.817e-13 | exploratory pass |
+| Hybrid | 1 | 160 | 44014 | 0.00109009569/0.600622368/0.398287536/0.398287536 | 6.418e-12 | 1.244774 | 431.07164 | null | 0.000e+00 | pass |
+| Hybrid | 8 | 160 | 44014 | 0.00109009569/0.600622368/0.398287536/0.398287536 | 1.164e-11 | 4.900311 | 144.6915 | null | 3.852e-13 | pass |
+| Hybrid | 16 | 160 | 44014 | 0.00109009569/0.600622368/0.398287536/0.398287536 | 3.397e-12 | 7.14957 | 134.13195 | null | 1.942e-13 | pass |
+| Hybrid | 32 | 160 | 44014 | 0.00109009569/0.600622368/0.398287536/0.398287536 | 3.788e-12 | 12.08782 | 201.09742 | null | 1.488e-13 | exploratory pass |
+
+同一方法内 case/source/config/structure 一致；fields/interfaces、orders、complex amplitudes、QEP beta 与 true residual 也全部满足 identity 阈值。
+
 
 ## 表 4：资源 stop 与受控负结果
 
@@ -83,7 +130,7 @@ amplitudes、QEP beta 与 true residual 全部满足 identity 阈值；MPI32 不
 | p2/h1 Hybrid M160 | local factors/Schur 完成；field recovery 开始 | 95.879 | 7200 s timeout | `timeout_during_field_recovery_no_official_solution` |
 | p3/h2 Full3D | assembly 1334.65 s；2,047,298 rows；488,789,000 NNZ | 64.015 | factor upper 232.460 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
 | p3/h2 Hybrid M160 | complete shard；residual `3.613e-11` | 49.642 | 3513.82 s measured | pass only；no M funnel/closure |
-| p4/h3 Full3D | assembly 3035.14 s；1,540,028 rows；696,091,072 NNZ | 80.538 | factor upper 204.132 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
+| p4/h3 Full3D | assembly 3035.14 s；1,540,028 rows；696,091,072 NNZ | 80.587 | factor upper 204.132 GiB | `not_run_by_conservative_resource_gate_after_assembly` |
 | p4/h3 Hybrid M160 | complete shard；residual `2.924e-11` | 42.481 | 3662.69 s measured | pass only；no M funnel/closure |
 
 三条 Full3D 的 factorization/full-solve 均 `launched=false`；upper 是预测而非 measured peak。
@@ -103,7 +150,7 @@ cumulative envelopes 分别为 2,014,975/6,804,671/3,008,763 GiB，但这些累�
 三个场景均存在单组件超过 2 TiB，故 current layout stress test 为负；production target-accuracy
 DoF、M 和 peak 仍是 unknown。
 
-## Review V2 工程边界
+## Review V3 工程边界
 
 - benchmark Python inventory 覆盖 31 个变更文件，未发现 Task034 复制独立 solver；数值功能归 `src/`；
 - `selective_merge_manifest.csv` 逐文件给出 action、dependency group、tests、数值变化、PDE 证据和顺序；
