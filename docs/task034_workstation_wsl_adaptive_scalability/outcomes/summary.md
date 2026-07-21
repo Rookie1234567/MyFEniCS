@@ -1,4 +1,4 @@
-# Task034 最终成果汇总（Review V4 candidate）
+# Task034 最终成果汇总（Response V5 selective-merge candidate）
 
 ## 状态与范围
 
@@ -62,34 +62,36 @@
 
 ### 表 1b：规模与资源
 
-| p/h | method | M | MPI | fe DoF | external aux DoF | modal unknowns | total rows | peak GiB | total s |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| p2/h5 | Full3D | null | 8 | 44698 | 80 | null | 44778 | 2.959606 | 16.567574 |
-| p2/h5 | Hybrid | 160 | 8 | 13652 | 80 | 320 | 14052 | 3.284866 | 96.284394 |
-| p2/h3 | Full3D | null | 8 | 198438 | 80 | null | 198518 | 9.534939 | 152.97227 |
-| p2/h3 | Hybrid | 160 | 8 | 68396 | 80 | 320 | 68796 | 4.69516 | 164.31719 |
-| p2/h2 | Full3D | null | 8 | 615108 | 80 | null | 615188 | 32.53961 | 1235.5432 |
-| p2/h2 | Hybrid | 160 | 8 | 180696 | 80 | 320 | 181096 | 11.30533 | 461.77607 |
-| p2/h1 | Full3D | null | 8 | 4379752 | 80 | null | 4379832 | 67.9229 | 792.95848 |
-| p2/h1 | Hybrid | 160 | 8 | null | null | null | null | 95.87872 | 7200 |
-| p3/h10 | Full3D | null | 8 | 23073 | 80 | null | 23153 | 2.744572 | 20.091813 |
-| p3/h10 | Hybrid | 160 | 8 | 7194 | 80 | 320 | 7594 | 2.86771 | 91.920293 |
-| p3/h7.5 | Full3D | null | 8 | 63747 | 80 | null | 63827 | 4.609695 | 52.327746 |
-| p3/h7.5 | Hybrid | 160 | 8 | 26598 | 80 | 320 | 26998 | 3.61446 | 117.67073 |
-| p3/h5 | Full3D | null | 8 | 145863 | 80 | null | 145943 | 9.040073 | 149.65782 |
-| p3/h5 | Hybrid | 160 | 8 | 43614 | 80 | 320 | 44014 | 4.908237 | 143.51496 |
-| p3/h3 | Full3D | null | 8 | 656325 | 80 | null | 656405 | 44.06867 | 1726.3617 |
-| p3/h3 | Hybrid | 160 | 8 | 223770 | 80 | 320 | 224170 | 14.27155 | 661.41003 |
-| p3/h2 | Full3D | null | 8 | 2047218 | 80 | null | 2047298 | 64.01495 | 1334.6453 |
-| p3/h2 | Hybrid | 160 | 8 | 595956 | 80 | 320 | 596356 | 49.6415 | 3513.8182 |
-| p4/h10 | Full3D | null | 8 | 53084 | 80 | null | 53164 | 5.639561 | 115.52464 |
-| p4/h10 | Hybrid | 160 | 8 | 16216 | 80 | 320 | 16616 | 3.517616 | 136.25296 |
-| p4/h7.5 | Full3D | null | 8 | 147844 | 80 | null | 147924 | 12.7244 | 345.38403 |
-| p4/h7.5 | Hybrid | 160 | 8 | 61064 | 80 | 320 | 61464 | 5.967117 | 279.37713 |
-| p4/h5 | Full3D | null | 8 | 339892 | 80 | null | 339972 | 28.88846 | 917.47044 |
-| p4/h5 | Hybrid | 160 | 8 | 100520 | 80 | 320 | 100920 | 9.205917 | 412.42189 |
-| p4/h3 | Full3D | null | 8 | 1539948 | 80 | null | 1540028 | 80.53771 | 3035.1391 |
-| p4/h3 | Hybrid | 160 | 8 | 522136 | 80 | 320 | 522536 | 42.48141 | 3662.6851 |
+| p/h | method | M | MPI | elements | fe DoF | external aux DoF | modal unknowns | total rows | peak GiB | total s |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| p2/h5 | Full3D | null | 8 | 1680 | 44698 | 80 | null | 44778 | 2.9596062 | 16.567574 |
+| p2/h5 | Hybrid | 160 | 8 | 480 | 13652 | 80 | 320 | 14052 | 3.2848663 | 96.284394 |
+| p2/h3 | Full3D | null | 8 | 7776 | 198438 | 80 | null | 198518 | 9.5349388 | 152.97227 |
+| p2/h3 | Hybrid | 160 | 8 | 2592 | 68396 | 80 | 320 | 68796 | 4.6951599 | 164.31719 |
+| p2/h2 | Full3D | null | 8 | 24570 | 615108 | 80 | null | 615188 | 32.539612 | 1235.5432 |
+| p2/h2 | Hybrid | 160 | 8 | 7020 | 180696 | 80 | 320 | 181096 | 11.305332 | 461.77607 |
+| p3/h10 | Full3D | null | 8 | 252 | 23073 | 80 | null | 23153 | 2.7445717 | 20.091813 |
+| p3/h10 | Hybrid | 160 | 8 | 72 | 7194 | 80 | 320 | 7594 | 2.8677101 | 91.920293 |
+| p3/h7.5 | Full3D | null | 8 | 720 | 63747 | 80 | null | 63827 | 4.6096954 | 52.327746 |
+| p3/h7.5 | Hybrid | 160 | 8 | 288 | 26598 | 80 | 320 | 26998 | 3.61446 | 117.67073 |
+| p3/h5 | Full3D | null | 8 | 1680 | 145863 | 80 | null | 145943 | 9.0400734 | 149.65782 |
+| p3/h5 | Hybrid | 160 | 8 | 480 | 43614 | 80 | 320 | 44014 | 4.9082375 | 143.51496 |
+| p3/h3 | Full3D | null | 8 | 7776 | 656325 | 80 | null | 656405 | 44.068672 | 1726.3617 |
+| p3/h3 | Hybrid | 160 | 8 | 2592 | 223770 | 80 | 320 | 224170 | 14.271553 | 661.41003 |
+| p4/h10 | Full3D | null | 8 | 252 | 53084 | 80 | null | 53164 | 5.6395607 | 115.52464 |
+| p4/h10 | Hybrid | 160 | 8 | 72 | 16216 | 80 | 320 | 16616 | 3.5176163 | 136.25296 |
+| p4/h7.5 | Full3D | null | 8 | 720 | 147844 | 80 | null | 147924 | 12.724396 | 345.38403 |
+| p4/h7.5 | Hybrid | 160 | 8 | 288 | 61064 | 80 | 320 | 61464 | 5.9671173 | 279.37713 |
+| p4/h5 | Full3D | null | 8 | 1680 | 339892 | 80 | null | 339972 | 28.888458 | 917.47044 |
+| p4/h5 | Hybrid | 160 | 8 | 480 | 100520 | 80 | 320 | 100920 | 9.2059174 | 412.42189 |
+| p2/h1 | Full3D | null | 8 | 178500 | 4379752 | 80 | null | 4379832 | 67.922901 | 792.95848 |
+| p2/h1 | Hybrid | 160 | 8 | null | null | null | null | null | 95.878723 | 7200 |
+| p3/h2 | Full3D | null | 8 | 24570 | 2047218 | 80 | null | 2047298 | 64.01495 | 1334.6453 |
+| p3/h2 | Hybrid | 160 | 8 | 7020 | 595956 | 80 | 320 | 596356 | 49.641502 | 3513.8182 |
+| p4/h3 | Full3D | null | 8 | 7776 | 1539948 | 80 | null | 1540028 | 80.537712 | 3035.1391 |
+| p4/h3 | Hybrid | 160 | 8 | 2592 | 522136 | 80 | 320 | 522536 | 42.481407 | 3662.6851 |
+
+Hybrid elements 来自每条 accepted evidence 的 SHA-256 绑定一次性提取，口径为 prod(bottom_local_mesh_cells) + prod(top_local_mesh_cells)；普通聚合与测试不读取 artifacts。
 
 ## 表 2：M funnel（p3/h3 与 p4/h5）
 
@@ -154,7 +156,7 @@ DoF、M 和 peak 仍是 unknown。
 
 - benchmark Python inventory 覆盖 31 个变更文件，未发现 Task034 复制独立 solver；数值功能归 `src/`；
 - `selective_merge_manifest.csv` 逐文件给出 action、dependency group、tests、数值变化、PDE 证据和顺序；
-- `all_model_compact_fixture.json` 是 40 行 schema 所需的最小 tracked facts；聚合器只读取 tracked records，artifact path 仅作 provenance string；
+- `all_model_compact_fixture.json` 是 reviewed SHA-256-bound one-time extraction 形成的 40 行最小 tracked facts；metadata 区分 extraction process、fixture schema 与 output aggregator；普通聚合器只读取 tracked records，artifact path 仅作 provenance string；
 - `factor_nnz` 仅表示存在时的 measured direct-factor `matrix_nnz_used`，Hybrid 或无 inventory 时为 `null`；
 - `all_model_authority_audit.json` 扫描全部 40 行；唯一漂移是 p4/h3 Full3D elapsed/memory 两字段，已统一到 tracked process-tree compact authority；
 - research-only adaptive/reranking/resource/Review 聚合器不作为 production API；

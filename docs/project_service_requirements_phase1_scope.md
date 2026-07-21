@@ -8,10 +8,10 @@ scope_applies_to = Task031–Task035
 reference_wavelength = 13.5 nm
 material = existing validated Si optical constant
 instrument_model = deferred
-wavelength_continuation = deferred_to_Task036
+wavelength_continuation = deferred_to_unfrozen_followup_task
 ```
 
-本文件是 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 的当前阶段执行补充。若主规划文档中关于 Task032–Task035 的材料扰动或多波长验证与本文件冲突，以本文件为准。
+本文件是 [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) 的当前阶段执行补充。若主规划文档中关于 Task032–Task035 与后续独立任务的材料扰动或多波长验证与本文件冲突，以本文件为准。
 
 ---
 
@@ -173,9 +173,9 @@ dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断�
 
 不要求对波长和材料色散同时鲁棒。
 
-### Task036
+### 后续独立任务：wavelength continuation to 0.7 nm
 
-只有 Task032–Task035 在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
+只有 Task032–Task035 与后续独立任务 在 13.5 nm 下完成正确性、内存和求解鲁棒性验证后，才启动：
 
 ```text
 13.5 nm
@@ -185,7 +185,7 @@ dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断�
 → 0.7 nm
 ```
 
-从 Task036 开始，每个波长再更新对应的材料复折射率、传播衍射级、截面本征模和资源预算。
+从 后续 wavelength continuation 独立任务 开始，每个波长再更新对应的材料复折射率、传播衍射级、截面本征模和资源预算。
 
 ---
 
@@ -208,5 +208,5 @@ dense multi-RHS。pure-modal/y-sector 只作当前简单 geometry 可选诊断�
 + 多波长鲁棒性。
 
 先证明新 hybrid 方法、自适应离散和迭代框架在 13.5 nm 下成立，
-再在 Task036 处理波长缩短和材料色散。
+再在 后续 wavelength continuation 独立任务 处理波长缩短和材料色散。
 ```

@@ -29,7 +29,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力和 Task031–Task036 前向模型路线；后续任务的上位需求基线 |
+| [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力、Task031–Task035 与未冻结编号的后续前向模型路线；后续任务的上位需求基线 |
 | [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md) | 第一阶段冻结范围：13.5 nm、固定 Si 光学常数、1–10° 掠入射角、S/P 偏振；后续前向模型资格化不得越界宣传 |
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
 | [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | `$$` 公式、表格列数、竖线转义、GitHub rendered view 与文档 Gate |
@@ -42,7 +42,7 @@
 | [`iterative_solver_ports.md`](iterative_solver_ports.md) | Task27/30/31 入口、outer KSP 与 local smoother 合法性、组件 flags、资格化和资源选择规则 |
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 reduced scope complete：p3/h5 闭合、p3/h7.5 fixed-p clear success、p4 resource negative、variable-p fail closed；adaptive/1 TiB 已移交 |
-| [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 pending |
+| [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 final findings 由 Response V5 关闭，等待最终 file-level selective merge Gate |
 | [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 planning package only；须待 Task034 最终 selective merge 后从 clean master 启动 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |

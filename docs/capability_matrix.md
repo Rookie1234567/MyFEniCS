@@ -74,7 +74,7 @@
 | Task32 augmented / Modal-Schur direct | experimental | Case080 explicit opt-in | `hybrid_direct_engineering_success` at 13.5 nm；h3 minimal 3.224 GiB；h2 `not_run_by_gate`；last-rank modal ownership、replicated M²、all-mode multi-RHS 和 local LU 不是 scalable service API |
 | Task32 parameter interface | diagnostic_only | Case080 M4 smoke | 1–10° S/P 30/30 只证明接口/API/algebra；未证明全范围截断或物理资格 |
 | 0.7 nm current direct Hybrid | not_implemented | no solver entry | analytical projection 判定 not resource feasible；禁止把 current direct reference 作为 0.7 nm profile |
-| future complex-ends Hybrid route | research_only | Task033–Task036 roadmap | exact complex 3D FEM ends required；generic epsilon(x,y) modal middle retained；1 TiB 为 conditional opportunity，尚未证明 |
+| future complex-ends Hybrid route | research_only | 后续未冻结编号路线：scalable modal core → low-memory Hybrid iterative → wavelength continuation | exact complex 3D FEM ends required；generic epsilon(x,y) modal middle retained；1 TiB 为 conditional opportunity，尚未证明 |
 | FGMRES outer port | recommended | `--ksp-type fgmres` | 与当前 variable/adaptive PC 合法配对；Task27/30/31 frozen target verified |
 | ordinary GMRES outer port | research_only | `--ksp-type gmres` | port implemented；当前 PC linearity error `2.374308e-2`，certification fail closed，not target-qualified |
 | TFQMR / BCGS outer ports | research_only | `--ksp-type tfqmr` / `--ksp-type bcgs` | interface exposed；非 FGMRES 自动 certification，当前 adaptive PC 不合法且无 full target qualification |
@@ -95,6 +95,8 @@
 
 ## Qualification 范围
 
+### Task027–Task031 canonical iterative profile qualification
+
 | 参数 | 已验证值 |
 |---|---|
 | geometry | 50 x 25 nm period，17 x 25 x 120 nm block，130 nm air，10 nm substrate |
@@ -106,7 +108,17 @@
 | solver | canonical: fixed 75D coarse + 16 physical slabs + sm2 + FGMRES(100)；Task30 compact experimental: symmetric pre/post ILU0 + local shift + factor-only + FGMRES(90)；Task31 memory-first experimental: Task30 架构 + overlap0.125 + assembled-F-free public MPC form action + compact lifecycle |
 | Task32 Hybrid direct | h5/h3、M160、13.5 nm 主点 only；h2 not run；30-point parameter set is smoke only |
 
-任何偏离都自动标记为 `experimental`，必须重新取得 direct 或其他可信参考、三残差、R/T/A、能量闭合和总 RSS 证据。
+该表只约束旧 iterative profile；偏离后必须重新取得相应参考、三残差、R/T/A、能量闭合和总 RSS 证据，不得把它解释为 Task034 fixed-geometry 的上限。
+
+### Task034 Case093 fixed-geometry qualification
+
+| 能力 | 已接受范围 | 边界 |
+|---|---|---|
+| S-polarization p/h sequence | p2: h5/h3/h2；p3: h10/h7.5/h5/h3；p4: h10/h7.5/h5；Full3D + Hybrid M160，MPI8 | 9 个 same-degree closure positive，p3/h10 Hybrid formal negative；不是 continuum convergence |
+| higher-cost controlled outcomes | p2/h1、p3/h2、p4/h3 Full3D assembly/resource Gate；p2/h1 Hybrid field-recovery timeout；p3/h2、p4/h3 Hybrid M160 shard | stop/timeout 不得写成 solver pass；shard 不构成 M funnel 或 Full3D closure |
+| representative MPI identity | p3/h5 S，Full3D + Hybrid M160，MPI1/8/16；MPI32 exploratory | 只关闭该代表案例的 MPI-count identity，不外推到全部 p/h/M |
+| accepted M funnels | p3/h3 S MPI8 与 p4/h5 S MPI4，M80/M120/M160 | 不把 p4/h5 MPI4 funnel 宣称为 MPI8 production matrix |
+| P-incidence capability | p2/h5 MPI8 单一 Full3D + Hybrid M160 sample | capability only，不重复整套 P 主矩阵 |
 
 ## 能力到使用、理论和证据的映射
 

@@ -3,7 +3,7 @@
   "record_type": "tracked_compact_fixture_for_hermetic_all_model_aggregation",
   "authority": {
     "scope": "40 accepted Task034 fact rows; no PDE execution",
-    "artifact_policy": "artifact paths are provenance strings only and are never opened",
+    "artifact_policy": "ordinary aggregation treats artifact paths as provenance strings only; the reviewed one-time extraction was SHA-256 bound",
     "p4_h3_full3d": "tracked execution_outcome/resource_gate process-tree authority"
   },
   "columns": [
@@ -95,7 +95,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "bd24a7fbf6788781e8a4997a382d6b9978fc5756",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 13652,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -171,7 +171,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "214178873beea1fb3410a4f5cdf76bc9f25a43e5",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 68396,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -247,7 +247,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "06e0ee1067a6cf4764127a66a7db7cca3ce093d8",
-      "elements": 0,
+      "elements": 7020,
       "fe_dofs": 180696,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -323,7 +323,7 @@
       "status": "formal_not_pass",
       "data_identity": "measured_case093",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "elements": 0,
+      "elements": 72,
       "fe_dofs": 7194,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -399,7 +399,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "elements": 0,
+      "elements": 288,
       "fe_dofs": 26598,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -475,7 +475,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 43614,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -551,7 +551,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 223770,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -627,7 +627,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "elements": 0,
+      "elements": 72,
       "fe_dofs": 16216,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -703,7 +703,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "elements": 0,
+      "elements": 288,
       "fe_dofs": 61064,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -779,7 +779,7 @@
       "status": "measured_shard_pass",
       "data_identity": "measured_case093",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 100520,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -817,7 +817,7 @@
       "status": "p3_h3_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 223770,
       "external_aux_dofs": 80,
       "modal_unknowns": 160,
@@ -855,7 +855,7 @@
       "status": "p3_h3_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 223770,
       "external_aux_dofs": 80,
       "modal_unknowns": 240,
@@ -893,7 +893,7 @@
       "status": "p3_h3_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 223770,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -931,7 +931,7 @@
       "status": "p4_h5_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 100520,
       "external_aux_dofs": 80,
       "modal_unknowns": 160,
@@ -969,7 +969,7 @@
       "status": "p4_h5_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 100520,
       "external_aux_dofs": 80,
       "modal_unknowns": 240,
@@ -1007,7 +1007,7 @@
       "status": "p4_h5_m_funnel_pass",
       "data_identity": "measured_mode_funnel",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "elements": 0,
+      "elements": 480,
       "fe_dofs": 100520,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -1463,7 +1463,7 @@
       "status": "measured_shard_pass_no_m_funnel_no_full3d_closure",
       "data_identity": "measured_watchdog_outcome",
       "source_sha": "f7924f52584b801c48930477a7f9ce4e4bb4a2db",
-      "elements": 0,
+      "elements": 7020,
       "fe_dofs": 595956,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -1539,7 +1539,7 @@
       "status": "measured_shard_pass_no_m_funnel_no_full3d_closure",
       "data_identity": "measured_watchdog_outcome",
       "source_sha": "9db1a8a92572945eaf597073aece1d43acac8a5b",
-      "elements": 0,
+      "elements": 2592,
       "fe_dofs": 522136,
       "external_aux_dofs": 80,
       "modal_unknowns": 320,
@@ -1567,16 +1567,12 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_s_hybrid_m160_mpi8_9db1a8a.json"
     }
   ],
-  "generator": {
-    "name": "benchmarks/task034_review_v2_aggregation.py",
-    "version": "task034.compact-fixture-generator.v1",
-    "is_pde_run": false
-  },
   "field_sources": {
     "case_metadata_and_physics": "tracked Case092/Case093 compact summaries",
     "structure_timings_zero_orders": "SHA-bound extraction from accepted artifact records",
     "p4_h3_elapsed_and_memory": "tracked p4_h3 execution_outcome/resource_gate process-tree authority",
-    "factor_nnz": "direct factor inventory matrix_stats.matrix_nnz_used when available"
+    "factor_nnz": "direct factor inventory matrix_stats.matrix_nnz_used when available",
+    "hybrid_elements": "reviewed SHA-256-bound prod(bottom_local_mesh_cells) + prod(top_local_mesh_cells)"
   },
   "provenance": [
     {
@@ -1591,7 +1587,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_m160_mpi8_bd24a7f.json",
       "artifact_sha256": "5a27fbf4bc2f9c826337a0f0a3ab923275daed3967ec627bb4de389957799124",
       "source_sha": "bd24a7fbf6788781e8a4997a382d6b9978fc5756",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "case093_p2_h3_full3d",
@@ -1605,7 +1616,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
       "artifact_sha256": "0a68f1967b98fea8fc763d76fef7a3a63f9162d9d0ad3a2da26aa1196477b029",
       "source_sha": "214178873beea1fb3410a4f5cdf76bc9f25a43e5",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     },
     {
       "case_key": "case093_p2_h2_full3d",
@@ -1619,7 +1645,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h2_hybrid_m160_mpi8_06e0ee1.json",
       "artifact_sha256": "152b8233a79a8fc934d75d36fdbb94afcc962ced365305877851773ab5a91878",
       "source_sha": "06e0ee1067a6cf4764127a66a7db7cca3ce093d8",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          27,
+          13,
+          10
+        ],
+        "top_local_mesh_cells": [
+          27,
+          13,
+          10
+        ],
+        "value": 7020
+      }
     },
     {
       "case_key": "case093_p3_h10_full3d",
@@ -1633,7 +1674,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h10_hybrid_m160_mpi8_e091785_v3.json",
       "artifact_sha256": "c64b55b59630e13f3559127f7821df2284df33c690dd6c831caf3fd224e5b885",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          6,
+          3,
+          2
+        ],
+        "top_local_mesh_cells": [
+          6,
+          3,
+          2
+        ],
+        "value": 72
+      }
     },
     {
       "case_key": "case093_p3_h7p5_full3d",
@@ -1647,7 +1703,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_hybrid_m160_mpi8_e091785_v3.json",
       "artifact_sha256": "0cdf04a43d14f9401e9b7fb0b6e6227e77bb039df4f9e8525ddb6b0a1d6c4f55",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          9,
+          4,
+          4
+        ],
+        "top_local_mesh_cells": [
+          9,
+          4,
+          4
+        ],
+        "value": 288
+      }
     },
     {
       "case_key": "case093_p3_h5_full3d",
@@ -1661,7 +1732,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_m160_mpi8_e091785_v3.json",
       "artifact_sha256": "8e18d6898e5428feb3d3710292388837e42cbe1065378dd34cf3e984241df223",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "case093_p3_h3_full3d",
@@ -1675,7 +1761,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
       "artifact_sha256": "10d179b586ec4fb863b20e0e878d5919975652097cb8005f2ed0bf37ab96fae9",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     },
     {
       "case_key": "case093_p4_h10_full3d",
@@ -1689,7 +1790,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h10_hybrid_m160_mpi8_df6d56f.json",
       "artifact_sha256": "1f69fcb95211b9edd84f94f12b850f4ed94d8684c170b906f0d04e75e6b007a0",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          6,
+          3,
+          2
+        ],
+        "top_local_mesh_cells": [
+          6,
+          3,
+          2
+        ],
+        "value": 72
+      }
     },
     {
       "case_key": "case093_p4_h7p5_full3d",
@@ -1703,7 +1819,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_hybrid_m160_mpi8_df6d56f.json",
       "artifact_sha256": "2646e6af6204ba2aeda88fa3b45b0fda6814169005dd133397a29c33b70bafa5",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          9,
+          4,
+          4
+        ],
+        "top_local_mesh_cells": [
+          9,
+          4,
+          4
+        ],
+        "value": 288
+      }
     },
     {
       "case_key": "case093_p4_h5_full3d",
@@ -1717,49 +1848,154 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
       "artifact_sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb",
       "source_sha": "df6d56fd40d844bf955af775278b453475f5416d",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "m_funnel_p3_h3_m80",
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m80_mpi8_8438cca_s.json",
       "artifact_sha256": "739bb15bc8cba08c2d62ea20c986b45c8a8dcb0c698e723917e10b7d50640605",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     },
     {
       "case_key": "m_funnel_p3_h3_m120",
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m120_mpi8_8438cca_s.json",
       "artifact_sha256": "17a0449003ea5a80bee21d71154b0b43cea5dbb4c1bd4ccec1c76000d32201a5",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     },
     {
       "case_key": "m_funnel_p3_h3_m160",
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
       "artifact_sha256": "10d179b586ec4fb863b20e0e878d5919975652097cb8005f2ed0bf37ab96fae9",
       "source_sha": "8438cca405d0fdea70c77fe556bde274552f4dad",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     },
     {
       "case_key": "m_funnel_p4_h5_m80",
       "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m80_same_sha_mpi4_a6f5a0d.json",
       "artifact_sha256": "97d201c46149b38fdd208c85b82054ff1d306ea5f562da563c6ec280595b1d97",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "m_funnel_p4_h5_m120",
       "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m120_same_sha_mpi4_a6f5a0d.json",
       "artifact_sha256": "7480bb682263b585507587973d89863568916e6dc34370237958d402a7aaf2d7",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "m_funnel_p4_h5_m160",
       "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m160_same_degree_closure_mpi4_a6f5a0d.json",
       "artifact_sha256": "c8a262402f465a288ee9dd82fa1543c22b65b5be6d40b61ac22e0fb2ddacafc2",
       "source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "top_local_mesh_cells": [
+          12,
+          5,
+          4
+        ],
+        "value": 480
+      }
     },
     {
       "case_key": "mpi_p3_h5_full3d_mpi1",
@@ -1843,7 +2079,22 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_s_hybrid_m160_mpi8_f7924f5_attempt2.json",
       "artifact_sha256": "b709705292736c9b22a25cc0bcd8667f5195b862da1d2195807df21b347b9f34",
       "source_sha": "f7924f52584b801c48930477a7f9ce4e4bb4a2db",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          27,
+          13,
+          10
+        ],
+        "top_local_mesh_cells": [
+          27,
+          13,
+          10
+        ],
+        "value": 7020
+      }
     },
     {
       "case_key": "supplemental_p4_h3_full3d",
@@ -1857,7 +2108,36 @@
       "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_s_hybrid_m160_mpi8_9db1a8a.json",
       "artifact_sha256": "7d2e54c7b952ebb3f395d500756f51d3787044834c7984dafd251697a5eaa8bc",
       "source_sha": "9db1a8a92572945eaf597073aece1d43acac8a5b",
-      "field_source": "accepted_artifact_sha_bound_compact_extraction"
+      "field_source": "accepted_artifact_sha_bound_compact_extraction",
+      "elements_extraction": {
+        "field_source": "measurements.hybrid_system.bottom_local_mesh_cells + top_local_mesh_cells",
+        "reduction": "prod(bottom_axis_counts) + prod(top_axis_counts)",
+        "bottom_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "top_local_mesh_cells": [
+          18,
+          9,
+          8
+        ],
+        "value": 2592
+      }
     }
-  ]
+  ],
+  "fixture_schema_version": "task034.compact-fixture.v2",
+  "extraction_process": {
+    "identity": "reviewed_sha256_bound_one_time_extraction",
+    "version": "task034.review-v4-extraction.v1",
+    "input_binding": "each provenance descriptor records evidence_path, artifact_sha256, and source_sha",
+    "hybrid_elements_rule": "prod(bottom_local_mesh_cells) + prod(top_local_mesh_cells)",
+    "ordinary_test_dependency": "none; tracked fixture is self-contained",
+    "is_pde_run": false
+  },
+  "output_aggregator": {
+    "path": "benchmarks/task034_review_v2_aggregation.py",
+    "opens_artifacts": false,
+    "purpose": "fixture_to_all_model_results_json_csv"
+  }
 }

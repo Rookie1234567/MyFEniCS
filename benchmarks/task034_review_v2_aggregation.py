@@ -80,9 +80,16 @@ def _validate_fixture(fixture: Mapping[str, Any]) -> list[dict[str, Any]]:
         raise ValueError("compact fixture rows must be a list")
     if fixture.get("row_count") != len(raw_rows) or len(raw_rows) != 40:
         raise ValueError("compact fixture must contain exactly 40 rows")
-    generator = _mapping(fixture.get("generator"))
-    if generator.get("version") != "task034.compact-fixture-generator.v1":
-        raise ValueError("compact fixture generator version is missing or unsupported")
+    if fixture.get("fixture_schema_version") != "task034.compact-fixture.v2":
+        raise ValueError("compact fixture schema version is missing or unsupported")
+    extraction = _mapping(fixture.get("extraction_process"))
+    if extraction.get("identity") != "reviewed_sha256_bound_one_time_extraction":
+        raise ValueError("compact fixture extraction identity is missing or unsupported")
+    aggregator = _mapping(fixture.get("output_aggregator"))
+    if aggregator.get("path") != "benchmarks/task034_review_v2_aggregation.py":
+        raise ValueError("compact fixture output aggregator is missing or unsupported")
+    if aggregator.get("opens_artifacts") is not False:
+        raise ValueError("compact fixture output aggregator must not open artifacts")
     if not _mapping(fixture.get("field_sources")):
         raise ValueError("compact fixture field_sources metadata is required")
     provenance = fixture.get("provenance")
@@ -139,6 +146,13 @@ def _validate_fixture(fixture: Mapping[str, Any]) -> list[dict[str, Any]]:
                 raise ValueError(f"{key}: total_rows decomposition mismatch")
         if row["factor_nnz"] is not None and row["method"] != "Full3D":
             raise ValueError(f"{key}: factor_nnz is only qualified for Full3D inventory")
+        if (
+            row["method"] in {"Full3D", "Hybrid"}
+            and row["fe_dofs"] is not None
+            and int(row["fe_dofs"]) > 0
+            and row["elements"] == 0
+        ):
+            raise ValueError(f"{key}: elements=0 is invalid when fe_dofs>0")
         rows.append(row)
     return rows
 

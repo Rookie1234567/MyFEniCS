@@ -14,14 +14,15 @@ codex/20260717-task34-workstation-wsl-adaptive-scalability
 - Task033 合并回应：[`../task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md`](../task033_high_order_floquet_hybrid_hp_adaptivity/response_v7.md)；
 - 仓库治理：[`../repository_work_principles.md`](../repository_work_principles.md)。
 
-Codex 必须同时读取两个 Task34 任务文件；如阶段顺序或措辞冲突，以补充任务书为准。Review V1–V3 与 addendum 已直接提交到同一执行分支，Codex 通过 Response V1–V4 逐轮关闭；未经最终 Review V4 和用户授权不得合并 `master`。
+Codex 必须同时读取两个 Task34 任务文件；如阶段顺序或措辞冲突，以补充任务书为准。Review V1–V4 与 addendum 已直接提交到同一执行分支，Codex 通过 Response V1–V5 逐轮关闭；Review V4 与用户本轮指令只授权在全部最终 Gate 通过后进行 file-level selective merge，不授权 whole-branch merge `master`。
 
 当前状态：
 
 ```text
 implementation_complete_pass_with_qualifications
 review_v1_v2_v3_blockers_closed_in_response_v4
-final_review_v4_and_user_merge_authorization_pending
+review_v4_final_findings_closing_in_response_v5
+conditional_file_level_selective_merge_authorized
 ```
 
 修正后的核心顺序：

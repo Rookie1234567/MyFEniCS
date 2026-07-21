@@ -1,9 +1,8 @@
-# Task034 changed files（Review V4 candidate）
+# Task034 changed files（Response V5 final candidate）
 
-对比权威为当前 `origin/master`；本轮 Review V3/addendum 同步基线为
-`3a6a464156b88cc138a732110f1e22b0915c1f3b`。只对当前 Task034 分支执行
-fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
-`git diff --name-status origin/master` 机械生成；Review 文件保持不可改写。
+机械对比：origin/master = 6b80b209c07d3c1d8354365a4359bf532ad7aec2；source = final staged Task034 tree。
+
+真实 changed path 数：168。manifest 对每个 changed path 恰有一行；仅允许额外列出与 master 内容相同的 already-on-master authority dependency。
 
 | 状态 | 路径 |
 |---|---|
@@ -74,6 +73,7 @@ fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
 | A | benchmarks/task034_p3_h3_reranking.py |
 | A | benchmarks/task034_resource_model_v2.py |
 | A | benchmarks/task034_review_v2_aggregation.py |
+| A | benchmarks/task034_selective_merge_manifest.py |
 | A | benchmarks/task034_workstation_resource_gates.py |
 | A | benchmarks/task034_wsl_resources.py |
 | M | docs/README.md |
@@ -82,6 +82,7 @@ fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
 | M | docs/development_progress.md |
 | M | docs/iterative_solver_ports.md |
 | M | docs/project_service_requirements_and_forward_model_roadmap.md |
+| M | docs/project_service_requirements_phase1_scope.md |
 | M | docs/quick_start.md |
 | M | docs/repository_work_principles.md |
 | M | docs/solver_guide.md |
@@ -124,9 +125,11 @@ fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v2.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v3.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v4.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/response_v5.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v2.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3_task35_planning_addendum.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v4.md |
 | A | docs/task035_hcurl_goal_oriented_adaptivity/README.md |
 | A | docs/task035_hcurl_goal_oriented_adaptivity/task.md |
 | M | notes/reference/code_walkthrough.md |
@@ -171,5 +174,3 @@ fast-forward pull，未 merge/rebase/cherry-pick `origin/master`。下表由
 | A | src/test/test_84_task034_adaptive_compression.py |
 | A | src/test/test_85_task034_resource_model_v2.py |
 | A | src/test/test_86_task034_review_v2_aggregation.py |
-
-共 164 个 changed files；逐文件 action、依赖组、测试、证据和合并顺序见 `selective_merge_manifest.csv`。Review V4 新增的 hermetic fixture、authority audit、governance/current-capability docs、Task035 planning 与 Response V4均已列入 manifest；未资格化 adaptive files 保持 research-only。

@@ -111,9 +111,10 @@ Task032 Review V1 接受 13.5 nm h5/h3 物理与数值实现，但在选择性�
 320 internal modal amplitudes。未来主线是 exact complex 3D FEM ends + generic `epsilon(x,y)` modal
 middle；y-sector/pure-modal 只作当前简单结构的可选诊断/reference。
 
-修正后的顺序为：Task033 local h/p + interface budget（13.5 nm 同误差至少 3x、优选 5x DoF
-下降）→ Task034 scalable generic modal core → Task035 matrix-free low-memory Hybrid iterative →
-Task036 13.5→5→2→1→0.7 nm continuation。详情见
+历史顺序已由 Task034/Task035 权威更新：Task034 完成 WSL、fixed-geometry benchmark 与
+controlled graded-h 决策；Task035 为 H(curl) field/goal-oriented adaptivity；其后分别启动
+scalable modal core、low-memory Hybrid iterative 和未冻结编号的
+13.5→5→2→1→0.7 nm wavelength continuation。详情见
 [`task032_0p7nm_scalability_assessment.md`](task032_hybrid_fem_modal_direct_baseline/outcomes/task032_0p7nm_scalability_assessment.md)
 和 [`response_v1_review_followup.md`](task032_hybrid_fem_modal_direct_baseline/response_v1_review_followup.md)。
 

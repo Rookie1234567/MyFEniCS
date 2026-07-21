@@ -7,6 +7,12 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks.task034_selective_merge_manifest import (
+    EXCLUDE_ACTIONS,
+    INCLUDE_ACTIONS,
+    read_changed_files,
+    read_manifest,
+)
 from benchmarks.task034_review_v2_aggregation import (
     CASE092_RECORDS,
     CASE093_RELATIVE,
@@ -57,6 +63,49 @@ def test_all_model_results_schema_and_scope() -> None:
         "cross-polarized p output under S incidence"
     )
     assert "matrix_nnz_used" in result["identity"]["factor_nnz_semantics"]
+    assert all(
+        row["elements"] != 0
+        for row in rows
+        if row["method"] in {"Full3D", "Hybrid"}
+        and row["fe_dofs"] is not None
+        and row["fe_dofs"] > 0
+    )
+
+
+def test_hybrid_elements_are_sha_bound_local_mesh_cell_sums() -> None:
+    rows = {row["case_key"]: row for row in build(ROOT)["rows"]}
+    expected = {
+        "case093_p2_h5_hybrid": 480,
+        "case093_p2_h3_hybrid": 2592,
+        "case093_p2_h2_hybrid": 7020,
+        "case093_p3_h10_hybrid": 72,
+        "case093_p3_h7p5_hybrid": 288,
+        "case093_p3_h5_hybrid": 480,
+        "case093_p3_h3_hybrid": 2592,
+        "case093_p4_h10_hybrid": 72,
+        "case093_p4_h7p5_hybrid": 288,
+        "case093_p4_h5_hybrid": 480,
+        "m_funnel_p3_h3_m80": 2592,
+        "m_funnel_p3_h3_m120": 2592,
+        "m_funnel_p3_h3_m160": 2592,
+        "m_funnel_p4_h5_m80": 480,
+        "m_funnel_p4_h5_m120": 480,
+        "m_funnel_p4_h5_m160": 480,
+        "supplemental_p3_h2_hybrid_m160": 7020,
+        "supplemental_p4_h3_hybrid_m160": 2592,
+    }
+    assert {key: rows[key]["elements"] for key in expected} == expected
+
+    fixture = json.loads((ROOT / FIXTURE_RELATIVE).read_text(encoding="utf-8"))
+    assert fixture["fixture_schema_version"] == "task034.compact-fixture.v2"
+    assert fixture["extraction_process"]["identity"] == (
+        "reviewed_sha256_bound_one_time_extraction"
+    )
+    assert fixture["output_aggregator"] == {
+        "path": "benchmarks/task034_review_v2_aggregation.py",
+        "opens_artifacts": False,
+        "purpose": "fixture_to_all_model_results_json_csv",
+    }
 
 
 def test_clean_checkout_without_artifacts_is_byte_deterministic(tmp_path: Path) -> None:
@@ -167,3 +216,24 @@ def test_adaptive_mesh_stays_out_of_production_selective_merge() -> None:
     assert row["merge_action"] == "research_only_do_not_merge_yet"
     assert row["dependency_group"] == "research_only_conforming_graded_mesh"
     assert "field-driven adaptivity not qualified" in row["fresh_pde_evidence"]
+
+
+def test_selective_merge_manifest_and_changed_files_have_unique_paths() -> None:
+    changed_path = ROOT / OUTCOMES / "changed_files.md"
+    manifest_path = ROOT / OUTCOMES / "selective_merge_manifest.csv"
+    changed = read_changed_files(changed_path)
+    rows = read_manifest(manifest_path)
+    paths = [row["path"] for row in rows]
+    assert len(paths) == len(set(paths))
+    by_path = {row["path"]: row for row in rows}
+    assert set(changed) <= set(by_path)
+    assert all(
+        by_path[path]["status"] == status
+        for path, status in changed.items()
+    )
+    assert all(
+        row["merge_action"] in INCLUDE_ACTIONS | EXCLUDE_ACTIONS
+        | {"already_on_master_dependency"}
+        for row in rows
+    )
+    assert not any(row["merge_action"] == "manual_review" for row in rows)
