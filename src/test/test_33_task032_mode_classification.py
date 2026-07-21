@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from src.common.config_3d import target_stage4_config
 from src.modes.cross_section_spaces import (
@@ -12,7 +13,10 @@ from src.modes.cross_section_spaces import (
 )
 from src.modes.mode_classification import (
     NoAdmissibleLeftPairError,
+    _batched_left_dots,
     _identity_error_metrics,
+    _qep_overlap,
+    _qep_overlap_matrix,
     _require_admissible_left_pairs,
     build_biorthogonal_mode_basis,
     classify_mode_branch,
@@ -109,6 +113,65 @@ class Task032ModeClassificationTests(unittest.TestCase):
         self.assertAlmostEqual(max_entry, 4.0e-7)
         with self.assertRaisesRegex(ValueError, "must be square"):
             _identity_error_metrics(np.ones((2, 3), dtype=np.complex128))
+
+    def test_batched_left_dots_preserve_cancelling_remainder(self):
+        comm = MPI.COMM_WORLD
+        action = PETSc.Vec().createMPI(
+            (3, 3 * comm.size),
+            comm=comm,
+        )
+        left = action.duplicate()
+        try:
+            action_local = action.getArray()
+            left_local = left.getArray()
+            action_local[:] = np.asarray(
+                [1.0e16, 1.0, -1.0e16],
+                dtype=PETSc.ScalarType,
+            )
+            left_local[:] = PETSc.ScalarType(1.0)
+            action.assemble()
+            left.assemble()
+
+            values = _batched_left_dots(action, [left])
+
+            np.testing.assert_array_equal(
+                values,
+                np.asarray([complex(comm.size)], dtype=np.complex128),
+            )
+        finally:
+            action.destroy()
+            left.destroy()
+
+    def test_batched_qep_overlap_matches_elementwise_definition(self):
+        cfg = target_stage4_config(degree=2, h_nm=10.0)
+        cross_section = build_matching_cross_section(cfg, "air")
+        spaces = build_cross_section_spaces(cross_section, transverse_degree=2)
+        operators = assemble_quadratic_beta_operators(cfg, cross_section, spaces)
+        target = analytic_homogeneous_beta(cfg, cfg.n_air)
+        modes, _ = solve_quadratic_beta_modes(
+            operators, target=target, requested_modes=2
+        )
+        try:
+            betas = [complex(mode.beta) for mode in modes]
+            vectors = [mode.right_reduced for mode in modes]
+            batched = _qep_overlap_matrix(
+                operators, betas, betas, vectors, vectors
+            )
+            elementwise = np.asarray(
+                [
+                    [
+                        _qep_overlap(operators, left, beta_left, right, beta_right)
+                        for beta_right, right in zip(betas, vectors)
+                    ]
+                    for beta_left, left in zip(betas, vectors)
+                ],
+                dtype=np.complex128,
+            )
+            np.testing.assert_allclose(batched, elementwise, rtol=1.0e-12, atol=1.0e-12)
+        finally:
+            for mode in modes:
+                mode.destroy()
+            operators.destroy()
 
     def test_wide_candidate_pool_filters_reciprocal_and_growing_branches(self):
         class Candidate:

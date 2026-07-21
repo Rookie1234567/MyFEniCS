@@ -1,0 +1,315 @@
+{
+  "schema_version": "task034.case092.p4-h5-workstation-study.v1",
+  "record_type": "task034_p4_h5_workstation_study",
+  "case_id": "092_workstation_wsl_adaptive_scalability",
+  "status": "p4_same_degree_closure_pass",
+  "aggregation_source": {
+    "commit_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
+    "worktree_clean_including_nonignored_untracked": true,
+    "status_short": ""
+  },
+  "identity": {
+    "is_pde_run": false,
+    "consumes_measured_pde_records": true,
+    "host_environment_id": "WSL2-Ubuntu-24.04",
+    "degree": 4,
+    "h_nm": 5.0,
+    "mpi_size": 4,
+    "polarization_kind": "s",
+    "solver_path": "modal-schur-memory-minimal",
+    "comparison_solver_path": "fast",
+    "direct_solver": "PETSc preonly + LU + MUMPS",
+    "reference_identity": "p3_h3_finer_discrete_reference",
+    "continuum_reference": false,
+    "grid_convergence_proven": false,
+    "thresholds_relaxed": false,
+    "heavy_artifacts_tracked": false,
+    "heavy_run_policy": "one-heavy-case-at-a-time"
+  },
+  "source_compatibility": {
+    "multi_source_evidence": true,
+    "semantics": "Each heavy record retains its own clean full SHA. Later records consume earlier evidence only through audited source-compatible descendant checks; this aggregation does not relabel all runs as same-SHA.",
+    "audited_source_groups": [
+      {
+        "role": "E0 assembly calibration",
+        "source_commit_full_sha": "dc81ae75c0253e5f2d8070613e9ff82f33eab3e4",
+        "source_clean_and_stable": true
+      },
+      {
+        "role": "E2 factorization and E3 full3D reference",
+        "source_commit_full_sha": "4e1143f9a1e91ff703e871fcb74e5f6703223a82",
+        "source_clean_and_stable": true
+      },
+      {
+        "role": "E3 fresh same-SHA Hybrid M80/M120/M160 funnel and closure",
+        "source_commit_full_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
+        "source_clean_and_stable": true
+      }
+    ],
+    "case090_core_reference_source_sha": "b50c65cd02c07a135d709402bcf19c0222068325",
+    "case090_core_compatibility_canonical_sha256": "21f5c0d4deb3bcb18b42b1d37d8b86a33b33b9e8b969686a70fc7db3f852502f",
+    "resource_authority_path": "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/workstation_hybrid_launch_authority.json",
+    "resource_authority_sha256": "7117a455a47cd84eac1c052191a0821fe4f598af1b56bff09eb0f332220488ac",
+    "checks": {
+      "case090_source_is_ancestor": true,
+      "case090_core_source_unchanged": true,
+      "numerical_source_unchanged": true,
+      "full3d_reference_source_is_ancestor_of_hybrid_source": true,
+      "full3d_authority_source_compatible_with_hybrid_source": true,
+      "all_hybrid_records_same_clean_sha": true,
+      "aggregation_source_matches_hybrid_sha": true
+    }
+  },
+  "input_evidence": {
+    "p4_four_mode_trace": {
+      "path": "benchmarks/artifacts/task034/phase_e/matched_trace_4e1143f/p4_four_mode_aggregate.json",
+      "sha256": "9910d32595dc209278465f8be2dd5132fe2481f33364bdd05f6a108e73cd722d",
+      "all_nine_gates_pass": true
+    },
+    "assembly_only": {
+      "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_assembly_mpi4_dc81ae7.json",
+      "sha256": "79e786dc76e1c2f79542b5fc90f104adb65602a6f6e09fd4d9efb3181c9b3fbe"
+    },
+    "factorization_only": {
+      "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_factorization_mpi4_4e1143f_repeat2.json",
+      "sha256": "e8cc03662fce0df378504e4948e765c6379e49b2c94c0260b1fcc7f645ed6a82"
+    },
+    "full3d": {
+      "watchdog_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_full_mpi4_4e1143f.json",
+      "watchdog_sha256": "4e4a6f2233da926418359b9760c8b9dc356365bcf6354823476d6a72a41f5300",
+      "descriptor_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_full_reference_descriptor_4e1143f.json",
+      "descriptor_sha256": "f1b0084e7c01a242cdbfc2a06f21bfb5988a3741599a88d9fd39a033c372018e",
+      "run_summary_sha256": "2f81afe7c6a025684ba1d26618d542f133a558e7c6bf15f4840df0c81aad3fcd",
+      "reference_npz_sha256": "ddda674fd2626985f39abd4f69cd3e2b8f9d7a16fdc1e842dde1f91fa4acdfc4",
+      "official_diffraction_orders_sha256": "ac1a606fe3765c65b7bb37916e6050d43d9acbecaffe1b670cc09c59095cd906"
+    },
+    "hybrid": {
+      "M80": {
+        "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m80_same_sha_mpi4_a6f5a0d.json",
+        "sha256": "97d201c46149b38fdd208c85b82054ff1d306ea5f562da563c6ec280595b1d97"
+      },
+      "M120": {
+        "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m120_same_sha_mpi4_a6f5a0d.json",
+        "sha256": "7480bb682263b585507587973d89863568916e6dc34370237958d402a7aaf2d7"
+      },
+      "M160": {
+        "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m160_same_degree_closure_mpi4_a6f5a0d.json",
+        "sha256": "c8a262402f465a288ee9dd82fa1543c22b65b5be6d40b61ac22e0fb2ddacafc2"
+      },
+      "funnel": {
+        "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_funnel_same_degree_a6f5a0d.json",
+        "sha256": "88b2309e5589c6aaf357fef5d082cb543660ecefed619bdd47c803974ce60a1b"
+      }
+    },
+    "p3_h3_reference_summary": {
+      "path": "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p3_h3_reference_summary.json",
+      "sha256": "d9ccbcceab798095e9af30257a73d52d3e3c1cd6c2acf10c5f45ffe5d3879ab9"
+    }
+  },
+  "staged_full3d": {
+    "assembly_only": {
+      "status": "assembly_calibration_pass",
+      "exact_rows": 339972,
+      "exact_assembled_nnz": 155421000,
+      "memory_authority_gib": 19.41360855102539,
+      "base_matrix_assembly_seconds": 1219.2766429219992,
+      "elapsed_seconds": 1242.2117529419993,
+      "no_swap": true,
+      "factorization_or_solve_seen": false
+    },
+    "factorization_only": {
+      "status": "factorization_calibration_pass",
+      "exact_rows": 339972,
+      "exact_assembled_nnz": 155421000,
+      "factor_nnz": 561990384,
+      "memory_authority_gib": 27.048961639404297,
+      "ksp_setup_seconds": 408.3358374860036,
+      "elapsed_seconds": 1712.7081077729963,
+      "no_swap": true,
+      "solve_executed": false
+    },
+    "full_solve": {
+      "status": "full3d_reference_pass",
+      "exact_rows": 339972,
+      "exact_assembled_nnz": 155421000,
+      "factor_nnz": 562270960,
+      "memory_authority_gib": 26.78598403930664,
+      "base_matrix_assembly_seconds": 1278.4798,
+      "ksp_setup_seconds": 393.3443308659989,
+      "ksp_solve_seconds": 0.7238849729983485,
+      "solver_elapsed_seconds": 1701.8430658610014,
+      "true_relative_residual": 3.3539739620667165e-11,
+      "R_total": 0.0007663133771015695,
+      "T_total": 0.6026775305028832,
+      "A_balance": 0.39655615612001527,
+      "A_volume_total": 0.39655615611994327,
+      "energy_closure_error": -7.194245199571014e-14,
+      "no_swap": true
+    },
+    "setup_diagnosis": {
+      "direct_profile_semantics": "KSPSetUp performs MUMPS symbolic/numeric LU factorization; KSPSolve is the subsequent backsolve.",
+      "ordinary_setup_classification": "normal",
+      "mesh_build_seconds": 0.9118813009990845,
+      "function_space_setup_seconds": 0.08593899800325744,
+      "floquet_total_seconds": 0.8800401289990987,
+      "variational_form_setup_seconds": 0.021361982995586004,
+      "augmented_copy_insert_finalize_seconds": 23.220504,
+      "long_stage": "base_matrix_assembly_and_direct_factorization"
+    }
+  },
+  "hybrid_funnel": {
+    "status": "qualified",
+    "selected_mode_count_per_direction": 160,
+    "M240_required": false,
+    "runs": [
+      {
+        "mode_count_per_direction": 80,
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 5.048572540283203,
+        "elapsed_seconds": 558.9672903289975,
+        "true_relative_residual": 5.1822786211510685e-12,
+        "no_swap": true,
+        "all_reported_gates_pass": true
+      },
+      {
+        "mode_count_per_direction": 120,
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 5.497772216796875,
+        "elapsed_seconds": 634.1935662830001,
+        "true_relative_residual": 5.7257227164184466e-12,
+        "no_swap": true,
+        "all_reported_gates_pass": true
+      },
+      {
+        "mode_count_per_direction": 160,
+        "status": "measured_shard_pass",
+        "memory_authority_gib": 5.961402893066406,
+        "elapsed_seconds": 734.2175627489996,
+        "true_relative_residual": 7.030695397122771e-12,
+        "no_swap": true,
+        "all_reported_gates_pass": true
+      }
+    ],
+    "comparisons": {
+      "M80_to_M120": {
+        "max_absolute_RTA_delta": 1.3598677739423692e-11,
+        "strong_convergence_pass": true
+      },
+      "M120_to_M160": {
+        "max_absolute_RTA_delta": 2.4091839634365897e-14,
+        "max_significant_power_relative_delta": 1.074504068e-09,
+        "max_significant_amplitude_relative_delta": 5.478055213e-10,
+        "strong_convergence_pass": true
+      }
+    },
+    "local_fem_assembly_seconds": {
+      "M80": 372.68,
+      "M120": 372.45,
+      "M160": 372.5566539499996
+    }
+  },
+  "same_degree_closure": {
+    "hybrid_selected_mode_count_per_direction": 160,
+    "full3d_reference_source_sha": "4e1143f9a1e91ff703e871fcb74e5f6703223a82",
+    "hybrid_source_sha": "a6f5a0de0a64d4af46a198878fa21ff7298f38d0",
+    "official_hybrid_values": {
+      "R_total": 0.0007663132345355869,
+      "T_total": 0.6026775295886211,
+      "A_balance": 0.39655615717684334,
+      "A_volume_total": 0.39655615718010045,
+      "true_relative_residual": 7.030695397122771e-12,
+      "energy_closure_error": 3.2571723096452843e-12
+    },
+    "hybrid_minus_full3d": {
+      "R_total": -1.4256598256535274e-10,
+      "T_total": -9.142621104629711e-10,
+      "A_balance": 1.0568280695011367e-09,
+      "A_volume_total": 1.0601571842627777e-09
+    },
+    "selected_planes": {
+      "max_electric_relative_l2": 2.0544009143482458e-07,
+      "max_magnetic_relative_l2": 1.0261037567268854e-05
+    },
+    "full3d_interface_planes": {
+      "max_electric_tangential_relative_l2": 2.0544009143427102e-07,
+      "max_magnetic_tangential_relative_l2": 6.218276199676208e-05
+    },
+    "hybrid_internal_interface_continuity": {
+      "max_electric_tangential_relative_l2": 2.4432865406947094e-08,
+      "max_magnetic_tangential_relative_l2": 5.5383796506449204e-05
+    },
+    "official_diffraction_orders": {
+      "significant_order_count": 12,
+      "power_relative_error_max": 0.0004362169454285756,
+      "power_relative_error_rms": 0.00021864601759867338,
+      "complex_amplitude_relative_error_max": 0.00042771497577779926,
+      "complex_amplitude_relative_error_rms": 0.00019607764634260483
+    },
+    "all_sixteen_measurement_gates_pass": true,
+    "reference_binding_verified": true
+  },
+  "accuracy_benefit_against_p3_h3_finer_discrete_reference": {
+    "p4_h5_metric_vector": {
+      "R_total_absolute_error": 2.3154580269785187e-05,
+      "T_total_absolute_error": 0.00016254636468304717,
+      "A_balance_absolute_error": 0.0001393917844132453,
+      "A_volume_total_absolute_error": 0.00013939178441613187,
+      "max_selected_plane_electric_relative_l2": 0.005473416037929676,
+      "max_selected_plane_magnetic_relative_l2": 0.008450030427637097,
+      "max_interface_electric_tangential_relative_l2": 0.005473416037929676,
+      "max_interface_magnetic_tangential_relative_l2": 0.00545206500617198,
+      "diffraction_power_relative_error_max": 0.029632058999141838,
+      "diffraction_power_relative_error_rms": 0.009480159291975349,
+      "diffraction_complex_amplitude_relative_error_max": 0.02158871240214935,
+      "diffraction_complex_amplitude_relative_error_rms": 0.007480334830016588
+    },
+    "p3_h5_metric_vector": {
+      "R_total_absolute_error": 0.00030063905466537705,
+      "T_total_absolute_error": 0.0018925058448309162,
+      "A_balance_absolute_error": 0.0015918667901655414,
+      "A_volume_total_absolute_error": 0.0015918667901447248,
+      "max_selected_plane_electric_relative_l2": 0.062012079484032104,
+      "max_selected_plane_magnetic_relative_l2": 0.06486494738153224,
+      "max_interface_electric_tangential_relative_l2": 0.062012079484032104,
+      "max_interface_magnetic_tangential_relative_l2": 0.06005366501956715,
+      "diffraction_power_relative_error_max": 0.27788095154091846,
+      "diffraction_power_relative_error_rms": 0.09270083016580413,
+      "diffraction_complex_amplitude_relative_error_max": 0.21085733252852606,
+      "diffraction_complex_amplitude_relative_error_rms": 0.07963077476000821
+    },
+    "p4_h5_better_than_p3_h5_on_all_twelve_components": true,
+    "p4_h5_engineering_accuracy_benefit": true,
+    "grid_convergence_proven": false,
+    "continuum_reference": false
+  },
+  "performance_classification": {
+    "status": "assembly_performance_difference_candidate",
+    "historical_p4_h5_base_assembly_seconds": 463.109,
+    "current_E0_to_historical_ratio": 2.6329,
+    "current_full_to_historical_ratio": 2.7606,
+    "current_p3_total_to_old_environment_ratio": 2.394,
+    "interpretation": "The cross-environment slowdown and mode-count-invariant Hybrid local FEM assembly suggest host/WSL/MPI throughput as the leading confounder. This is not yet classified as a code regression.",
+    "next_gate": "fresh same-SHA MPI8 environment and assembly scaling comparison before optimization"
+  },
+  "classification": {
+    "phase_e_outcome": "p4_same_degree_closure_pass",
+    "assembly_gate_pass": true,
+    "factorization_gate_pass": true,
+    "full_solve_gate_pass": true,
+    "hybrid_funnel_pass": true,
+    "same_degree_observable_closure_pass": true,
+    "p4_clear_engineering_accuracy_benefit_vs_p3_h5": true,
+    "assembly_performance_difference_candidate": true,
+    "grid_convergence_proven": false,
+    "continuum_reference": false,
+    "phase_f_fixed_geometry_required": true
+  },
+  "limitations": [
+    "The p3/h3 comparison is against a finer discrete reference, not a continuum reference.",
+    "The p4/h5 engineering accuracy benefit does not establish fixed-p grid convergence.",
+    "The assembly slowdown is preserved as a performance-difference candidate; thresholds were not changed and no numerical failure was relabeled as pass.",
+    "MPI8/16 qualification and Phase F fixed-geometry convergence remain required.",
+    "Heavy NPZ, VTU, timelines, logs, and raw solver outputs remain gitignored and are bound by the hashes above."
+  ],
+  "payload_sha256": "a20075a79e3404a5fd4efc41aef88e8320242257e15c8212679f6b1b2553b675"
+}

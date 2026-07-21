@@ -140,6 +140,7 @@ class SimulationConfig3D:
     direct_release_base_after_augmentation: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
+    matrix_diagnostics_factorization_only: bool = False
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)
 

@@ -26,6 +26,14 @@ from benchmarks.task033_qep_qualification import (
     resource_authority_gate,
     source_identity_gate,
 )
+from benchmarks.task034_wsl_resources import (
+    effective_memory_limit,
+    resource_authority_sample,
+)
+from benchmarks.task034_workstation_resource_gates import (
+    task034_adaptive_mechanism_evidence_gate,
+    task034_workstation_hybrid_launch_gate,
+)
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     high_order_core_evidence_gate,
@@ -43,6 +51,14 @@ REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX = (
     / "records"
     / "stage5_equal_accuracy"
     / "resource_matrix.json"
+)
+TASK034_WORKSTATION_RESOURCE_AUTHORITY = (
+    ROOT
+    / "benchmarks"
+    / "cases"
+    / "092_workstation_wsl_adaptive_scalability"
+    / "records"
+    / "workstation_hybrid_launch_authority.json"
 )
 
 CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
@@ -86,25 +102,65 @@ CASE090_CORE_COMPATIBLE_DESCENDANT_FILES = frozenset(
         "benchmarks/run_task033_phaseC.py",
         "benchmarks/run_task033_resource_matrix.py",
         "benchmarks/run_task033_source_compatibility.py",
+        "benchmarks/run_task034_wsl_qualification.py",
+        "benchmarks/task034_p3_h3_reranking.py",
+        "benchmarks/task034_mpi_identity.py",
+        "benchmarks/task034_numerical_blob_checker.py",
         "benchmarks/task033_resource_gates.py",
         "benchmarks/task033_matched_trace_qualification.py",
         "benchmarks/task033_phaseC.py",
         "benchmarks/task033_qep_qualification.py",
         "benchmarks/task033_source_compatibility.py",
         "benchmarks/task033_watchdog_launch.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/expected.json",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/README.md",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/"
+        "workstation_hybrid_launch_authority.json",
         # Phase B changed only the Hybrid 3D/2D interface trace projection.
         # It is numerical source for Hybrid, but it is component-disjoint from
         # the already accepted pure-3D Case090 Floquet core.  Phase C creates
         # fresh target Hybrid evidence at the new SHA; this exception reuses
         # Case090 only as the high-order Floquet launch prerequisite.
         "src/coupling/modal_trace_projection.py",
+        "src/common/distributed_matrix_diagnostics.py",
+        "src/modes/mode_classification.py",
+        "src/solvers/hybrid_fem_modal_schur_direct.py",
     }
 )
 
 CASE090_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
     {
         "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/task034_mpi_identity.py",
+        "src/common/distributed_matrix_diagnostics.py",
+        "src/modes/mode_classification.py",
         "src/coupling/modal_trace_projection.py",
+        "src/solvers/hybrid_fem_modal_schur_direct.py",
+    }
+)
+
+TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES = frozenset(
+    {
+        "benchmarks/run_task032_phase6_augmented.py",
+        "benchmarks/run_task033_full3d_watchdog.py",
+        "benchmarks/task034_mpi_identity.py",
+        "src/common/distributed_matrix_diagnostics.py",
+        "src/modes/mode_classification.py",
+        "src/solvers/hybrid_fem_modal_schur_direct.py",
+        "src/geometry/task034_adaptive_mesh.py",
+        "benchmarks/run_task034_adaptive_mechanism.py",
+        "benchmarks/task034_case093.py",
+        "benchmarks/cases/README.md",
+    }
+)
+TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES = frozenset(
+    {
+        "benchmarks/run_task033_memory_watchdog.py",
+        "benchmarks/run_task034_wsl_qualification.py",
+        "benchmarks/task034_numerical_blob_checker.py",
+        "benchmarks/task034_workstation_resource_gates.py",
+        *TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES,
     }
 )
 
@@ -176,6 +232,10 @@ def _case090_source_compatibility(
     def allowed(path: str) -> bool:
         return bool(
             path in CASE090_CORE_COMPATIBLE_DESCENDANT_FILES
+            or path.startswith(
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+                "records/"
+            )
             or path.startswith("docs/")
             or path.startswith("notes/")
             or path.startswith("src/test/")
@@ -212,9 +272,107 @@ def _case090_source_compatibility(
     }
 
 
+def _task034_authority_source_compatibility(
+    authority: Mapping[str, Any] | None,
+    *,
+    degree: int,
+    h_nm: float,
+    polarization_kind: str = "s",
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Audit a Case092 measured authority against the current clean source."""
+
+    payload = authority if isinstance(authority, Mapping) else {}
+    entries = payload.get("entries")
+    entries = entries if isinstance(entries, list) else []
+    matches = [
+        item
+        for item in entries
+        if isinstance(item, Mapping)
+        and item.get("degree") == degree
+        and math.isclose(float(item.get("h_nm", math.nan)), float(h_nm))
+        and item.get("polarization_kind") == polarization_kind
+    ]
+    reference = matches[0].get("full3d_reference", {}) if len(matches) == 1 else {}
+    reference = reference if isinstance(reference, Mapping) else {}
+    if not reference and len(matches) == 1:
+        reference = matches[0].get("assembly_resource_anchor", {})
+        reference = reference if isinstance(reference, Mapping) else {}
+    reference_source_sha = reference.get("source_sha")
+    if not (
+        isinstance(reference_source_sha, str)
+        and len(reference_source_sha) == 40
+        and isinstance(current_source_sha, str)
+        and len(current_source_sha) == 40
+    ):
+        return {
+            "pass": False,
+            "reference_source_sha": reference_source_sha,
+            "current_source_sha": current_source_sha,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
+            "failures": ["source_sha_missing_or_invalid"],
+        }
+    if reference_source_sha == current_source_sha:
+        return {
+            "pass": True,
+            "reference_source_sha": reference_source_sha,
+            "current_source_sha": current_source_sha,
+            "reference_source_is_ancestor": True,
+            "changed_paths": [],
+            "disallowed_changed_paths": [],
+            "component_disjoint_numerical_changed_paths": [],
+            "failures": [],
+        }
+    merge_base = _git("merge-base", reference_source_sha, current_source_sha)
+    rendered_paths = _git(
+        "diff", "--name-only", f"{reference_source_sha}..{current_source_sha}"
+    )
+    changed_paths = [] if rendered_paths is None else rendered_paths.splitlines()
+
+    def allowed(path: str) -> bool:
+        return bool(
+            path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
+            or path.startswith(
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+            )
+            or path.startswith(
+                "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/"
+            )
+            or path.startswith("docs/")
+            or path.startswith("notes/")
+            or path.startswith("src/test/")
+        )
+
+    disallowed = [path for path in changed_paths if not allowed(path)]
+    component_disjoint = [
+        path
+        for path in changed_paths
+        if path in TASK034_AUTHORITY_COMPONENT_DISJOINT_NUMERICAL_FILES
+    ]
+    failures = []
+    if merge_base != reference_source_sha:
+        failures.append("reference_source_is_not_ancestor_of_current_source")
+    if rendered_paths is None:
+        failures.append("reference_source_diff_unreadable")
+    if disallowed:
+        failures.append("numerical_or_unapproved_source_changed_since_reference")
+    return {
+        "pass": not failures,
+        "reference_source_sha": reference_source_sha,
+        "current_source_sha": current_source_sha,
+        "reference_source_is_ancestor": merge_base == reference_source_sha,
+        "changed_paths": changed_paths,
+        "disallowed_changed_paths": disallowed,
+        "component_disjoint_numerical_changed_paths": component_disjoint,
+        "failures": failures,
+    }
+
+
 def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
-    worktree = _git("status", "--short", "--untracked-files=normal")
+    worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
         line[3:]
         for line in (worktree or "").splitlines()
@@ -245,7 +403,7 @@ def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
 
 def _watchdog_source_after(source: dict[str, Any]) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
-    worktree = _git("status", "--short", "--untracked-files=normal")
+    worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
         line[3:]
         for line in (worktree or "").splitlines()
@@ -391,6 +549,8 @@ def _worker_command(
                 str(args.graded_reference_h),
                 "--graded-coarse-factor",
                 str(args.graded_coarse_factor),
+                "--graded-profile",
+                args.graded_profile,
             )
         )
     return command
@@ -416,6 +576,78 @@ def _read_json_object(path: Path | None) -> tuple[dict[str, Any] | None, str | N
     if not isinstance(payload, dict):
         return None, "json_root_is_not_an_object"
     return payload, None
+
+
+def _task034_terminal_record_is_complete(record_path: Path) -> bool:
+    payload, error = _read_json_object(record_path)
+    if error is not None or payload is None:
+        return False
+    return bool(
+        payload.get("schema_version") == 1
+        and isinstance(payload.get("benchmark_id"), str)
+        and isinstance(payload.get("timestamp_utc"), str)
+        and isinstance(payload.get("status"), str)
+        and isinstance(payload.get("qualification"), dict)
+        and isinstance(payload.get("solve"), dict)
+        and isinstance(payload.get("gates"), dict)
+    )
+
+
+def _task034_terminal_worker_drain(
+    *,
+    task034_workstation_gate: bool,
+    process_running: bool,
+    authority_readable: bool,
+    stage: str | None,
+    terminal_record_complete: bool,
+    live_worker_count: int | None,
+) -> bool:
+    """Recognize only the normal worker-before-launcher MPI exit window."""
+
+    return bool(
+        task034_workstation_gate
+        and process_running
+        and not authority_readable
+        and stage == "record_and_release"
+        and terminal_record_complete
+        and live_worker_count == 0
+    )
+
+
+def _resource_readability_sample_is_formal(
+    *,
+    task034_workstation_gate: bool,
+    process_running: bool,
+    terminal_worker_drain: bool = False,
+) -> bool:
+    """Exclude only Task034 samples observed during or after terminal drain.
+
+    A process-tree read racing with ``Popen.poll`` may contain a disappearing
+    worker or launcher PID and report ``all_status_readable=False``. Once the
+    complete terminal worker record exists and no worker remains, it is not a
+    live authority sample. Task033's historical default semantics remain
+    unchanged.
+    """
+
+    return bool(
+        (process_running and not terminal_worker_drain)
+        or not task034_workstation_gate
+    )
+
+
+def _authority_unreadable_requires_termination(
+    *,
+    process_running: bool,
+    readability_sample_is_formal: bool,
+    authority_readable: bool,
+) -> bool:
+    """Terminate only when a formal live authority sample is unreadable."""
+
+    return bool(
+        process_running
+        and readability_sample_is_formal
+        and not authority_readable
+    )
 
 
 def _live_task033_worker_rss(
@@ -575,10 +807,11 @@ def _external_resource_authority(
     cgroup_bytes = (
         None if cgroup_gib is None else int(float(cgroup_gib) * 1024**3)
     )
+    dedicated_cgroup = memory.get("dedicated_job_cgroup_observed") is True
     authority = (
         None
-        if worker_bytes is None or cgroup_bytes is None
-        else max(worker_bytes, cgroup_bytes)
+        if worker_bytes is None or (dedicated_cgroup and cgroup_bytes is None)
+        else max(worker_bytes, cgroup_bytes if dedicated_cgroup else 0)
     )
     limits = [
         environment_before.get("memory_limit_bytes"),
@@ -588,28 +821,14 @@ def _external_resource_authority(
         environment_before.get("host_available_memory_bytes"),
         environment_after.get("host_available_memory_bytes"),
     ]
-    sampled_swap_all_readable = bool(rows) and all(
-        row.get("container_swap_current_mb") is not None for row in rows
+    sampled_swap_all_readable = memory.get("job_swap_all_samples_readable") is True
+    swap_current = (
+        0
+        if sampled_swap_all_readable
+        and int(memory.get("max_process_tree_swap_bytes") or 0) == 0
+        and int(memory.get("max_dedicated_cgroup_swap_bytes") or 0) == 0
+        else None
     )
-    sampled_swap = [
-        row.get("container_swap_current_mb")
-        for row in rows
-        if row.get("container_swap_current_mb") is not None
-    ]
-    environment_swap = [
-        environment_before.get("swap_current_bytes"),
-        environment_after.get("swap_current_bytes"),
-    ]
-    swap_current = None
-    if (
-        sampled_swap_all_readable
-        and sampled_swap
-        and all(value is not None for value in environment_swap)
-    ):
-        swap_current = max(
-            [int(float(value) * 1024**2) for value in sampled_swap]
-            + [int(value) for value in environment_swap]
-        )
     record = {
         "simultaneous_live_worker_rss_sum_bytes": worker_bytes,
         "container_cgroup_current_bytes": cgroup_bytes,
@@ -633,6 +852,10 @@ def _external_resource_authority(
         "container_swap_current_bytes": swap_current,
         "pswpin_delta_pages": memory.get("wsl_pswpin_delta_pages"),
         "pswpout_delta_pages": memory.get("wsl_pswpout_delta_pages"),
+        "job_cgroup_dedicated": dedicated_cgroup,
+        "wsl_global_pswp_formal": False,
+        "wsl_global_pswp_role": "diagnostic_only",
+        "job_process_tree_swap_bytes": memory.get("max_process_tree_swap_bytes"),
         "environment_before": environment_before,
         "environment_after": environment_after,
         "all_live_authority_samples_readable": live_authority_all_readable,
@@ -652,6 +875,40 @@ def _external_resource_authority(
     return record
 
 
+def _available_physical_core_count() -> int | None:
+    allowed = (
+        set(os.sched_getaffinity(0))
+        if hasattr(os, "sched_getaffinity")
+        else set(range(os.cpu_count() or 0))
+    )
+    try:
+        completed = subprocess.run(
+            ["lscpu", "-p=CPU,CORE,SOCKET,ONLINE"],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    physical_cores: set[tuple[int, int]] = set()
+    for line in completed.stdout.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        try:
+            cpu, core, socket, online = line.split(",")
+            if (
+                int(cpu) in allowed
+                and online.strip().lower() in {"y", "yes"}
+            ):
+                physical_cores.add((int(socket), int(core)))
+        except (TypeError, ValueError):
+            return None
+    return len(physical_cores) or None
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -663,7 +920,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--case-label", required=True)
     parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4), required=True)
     parser.add_argument("--h-nm", type=float, required=True)
-    parser.add_argument("--mpi-size", type=int, choices=(1, 2, 4), required=True)
+    parser.add_argument(
+        "--mpi-size",
+        type=int,
+        choices=(1, 2, 4, 8, 16, 32),
+        required=True,
+    )
     parser.add_argument("--requested-modes", type=int, default=8)
     parser.add_argument("--candidate-modes", type=int, default=16)
     parser.add_argument("--material-kind", choices=("air", "lossy_homogeneous", "stage4_xy"))
@@ -687,6 +949,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
     parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
     parser.add_argument(
+        "--graded-profile",
+        choices=("mechanism", "conservative", "balanced", "aggressive"),
+        default="mechanism",
+    )
+    parser.add_argument(
         "--full3d-reference",
         type=Path,
         help="Explicit same-p/h full3D descriptor for Hybrid field closure.",
@@ -706,6 +973,31 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Checked Case091 resource matrix. Hybrid launches are fail-closed "
             "when the matching p/h decision cannot be verified."
+        ),
+    )
+    parser.add_argument(
+        "--task034-workstation-gate",
+        action="store_true",
+        help=(
+            "Explicitly use the Task034 WSL dynamic workstation Gate. Task033's "
+            "14 GiB Case091 policy remains unchanged when this flag is absent."
+        ),
+    )
+    parser.add_argument(
+        "--task034-workstation-resource-authority",
+        type=Path,
+        default=TASK034_WORKSTATION_RESOURCE_AUTHORITY,
+        help="Tracked Case092 measured launch-authority record.",
+    )
+    parser.add_argument("--task034-workstation-resource-authority-sha256")
+    parser.add_argument("--task034-adaptive-mechanism-evidence-file", type=Path)
+    parser.add_argument("--task034-adaptive-mechanism-evidence-sha256")
+    parser.add_argument(
+        "--task034-workstation-resource-anchor",
+        type=Path,
+        help=(
+            "Explicit p4/h5 E0 assembly watchdog record used only as the "
+            "pre-E2 Task034 launch resource anchor."
         ),
     )
     parser.add_argument(
@@ -734,6 +1026,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
+    if (
+        args.mpi_size not in (1, 2, 4)
+        and not args.task034_workstation_gate
+    ):
+        parser.error("MPI8/16/32 require --task034-workstation-gate.")
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
     if args.target == "hybrid" and args.requested_modes < 2:
@@ -794,6 +1091,143 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "uniform p2/h3 10/110 nm primary modal-schur-memory-minimal "
                 "M80/M120/M160 funnel with an exact 2M candidate pool."
             )
+    if args.task034_workstation_gate:
+        p4_anchor_is_exclusive = bool(
+            (args.full3d_reference is None)
+            != (args.task034_workstation_resource_anchor is None)
+        )
+        p2_h1_resource_anchor_scope = bool(
+            args.degree == 2
+            and math.isclose(args.h_nm, 1.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+            and args.full3d_reference is None
+            and args.task034_workstation_resource_anchor is not None
+        )
+        p3_h2_resource_anchor_scope = bool(
+            args.degree == 3
+            and math.isclose(args.h_nm, 2.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+            and args.full3d_reference is None
+            and args.task034_workstation_resource_anchor is not None
+        )
+        p4_h3_resource_anchor_scope = bool(
+            args.degree == 4
+            and math.isclose(args.h_nm, 3.0)
+            and args.polarization_kind == "s"
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+            and args.full3d_reference is None
+            and args.task034_workstation_resource_anchor is not None
+        )
+        phase_f_matrix = {
+            (2, 5.0), (2, 3.0), (2, 2.0), (2, 1.0),
+            (3, 10.0), (3, 7.5), (3, 5.0), (3, 3.0), (3, 2.0),
+            (4, 10.0), (4, 7.5), (4, 5.0), (4, 3.0),
+        }
+        anchor_selection_valid = bool(
+            (
+                (args.degree, args.h_nm) in phase_f_matrix
+                and not (
+                    args.degree == 2 and math.isclose(args.h_nm, 1.0)
+                    or (
+                        args.degree == 3
+                        and math.isclose(args.h_nm, 2.0)
+                    )
+                    or (
+                        args.degree == 4
+                        and math.isclose(args.h_nm, 3.0)
+                    )
+                )
+                and args.full3d_reference is not None
+                and args.task034_workstation_resource_anchor is None
+            )
+            or (
+                args.degree == 4
+                and math.isclose(args.h_nm, 5.0)
+                and p4_anchor_is_exclusive
+            )
+            or p2_h1_resource_anchor_scope
+            or p3_h2_resource_anchor_scope
+            or p4_h3_resource_anchor_scope
+        )
+        approved_p_scope = bool(
+            args.polarization_kind == "p"
+            and args.degree == 2
+            and math.isclose(args.h_nm, 5.0)
+            and args.mpi_size == 8
+            and args.requested_modes == 160
+        )
+        approved_p2_h1_scope = bool(
+            not (args.degree == 2 and math.isclose(args.h_nm, 1.0))
+            or p2_h1_resource_anchor_scope
+        )
+        approved_p3_h2_scope = bool(
+            not (args.degree == 3 and math.isclose(args.h_nm, 2.0))
+            or p3_h2_resource_anchor_scope
+        )
+        approved_p4_h3_scope = bool(
+            not (args.degree == 4 and math.isclose(args.h_nm, 3.0))
+            or p4_h3_resource_anchor_scope
+        )
+        graded_compression_scope = bool(
+            args.graded_reference_h is not None
+            and args.degree == 2
+            and math.isclose(args.h_nm, 3.0)
+            and math.isclose(args.graded_reference_h, 3.0)
+            and args.graded_profile
+            in {"conservative", "balanced", "aggressive"}
+            and args.mpi_size == 8
+            and args.requested_modes in (80, 120, 160)
+            and args.polarization_kind == "s"
+            and args.task034_adaptive_mechanism_evidence_file is not None
+            and isinstance(
+                args.task034_adaptive_mechanism_evidence_sha256, str
+            )
+            and len(args.task034_adaptive_mechanism_evidence_sha256) == 64
+        )
+        scoped = bool(
+            args.target == "hybrid"
+            and (args.degree, args.h_nm) in phase_f_matrix
+            and args.requested_modes in (80, 120, 160, 240)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and (
+                args.graded_reference_h is None or graded_compression_scope
+            )
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and (args.polarization_kind == "s" or approved_p_scope)
+            and approved_p2_h1_scope
+            and approved_p3_h2_scope
+            and approved_p4_h3_scope
+            and anchor_selection_valid
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and isinstance(
+                args.task034_workstation_resource_authority_sha256, str
+            )
+            and len(args.task034_workstation_resource_authority_sha256) == 64
+        )
+        if not scoped:
+            parser.error(
+                "--task034-workstation-gate is restricted to the Task034 fixed "
+                "p2/p3/p4 Phase F matrix, WSL Hybrid M80/M120/M160 "
+                "(conditional M240) funnel, exact 2M pool, a same-p/h Full-3D "
+                "watchdog/descriptor reference (or an explicitly authorized "
+                "assembly-only resource anchor), canonical resource authority, "
+                "and WSL2-Ubuntu-24.04 identity."
+                " The only P-polarized exception is the user-approved "
+                "p2/h5 MPI8 M160 capability example. The p2/h1 S added point "
+                "and the p3/h2 S added point are each restricted to MPI8 M160 "
+                "with their candidate-specific assembly resource anchor. The "
+                "p4/h3 S added point has the same MPI8 M160-only restriction."
+            )
     return args
 
 
@@ -826,10 +1260,23 @@ def run(args: argparse.Namespace) -> int:
     source_before = _watchdog_source_before(args.verified_clean_sha)
     environment_before = _resource_environment_snapshot()
     environment_preflight = _environment_preflight(environment_before)
+    effective = effective_memory_limit()
+    if args.task034_workstation_gate:
+        warning_bytes = effective.get("warning_bytes")
+        termination_bytes = effective.get("termination_bytes")
+        if (
+            type(warning_bytes) is int
+            and warning_bytes > 0
+            and type(termination_bytes) is int
+            and termination_bytes > warning_bytes
+        ):
+            args.warning_gib = warning_bytes / 1024**3
+            args.terminate_gib = termination_bytes / 1024**3
     finite_authorities = (
-        environment_before.get("memory_limit_bytes"),
+        effective.get("effective_limit_bytes"),
         environment_before.get("host_available_memory_bytes"),
     )
+    environment_before["task034_effective_limit"] = effective
     args._qep_effective_limit_gib = (
         None
         if any(
@@ -872,91 +1319,276 @@ def run(args: argparse.Namespace) -> int:
         else None
     )
     if args.target == "hybrid":
-        resource_matrix_path = args.resource_matrix
-        if not resource_matrix_path.is_absolute():
-            resource_matrix_path = ROOT / resource_matrix_path
-        resource_matrix_path = resource_matrix_path.resolve()
-        canonical_resource_matrices = {
-            DEFAULT_RESOURCE_MATRIX.resolve(),
-            REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX.resolve(),
-        }
-        resource_matrix_is_canonical = (
-            resource_matrix_path in canonical_resource_matrices
-        )
-        try:
-            matrix_relative = resource_matrix_path.relative_to(ROOT).as_posix()
-        except ValueError:
-            matrix_relative = None
-        resource_matrix_is_tracked = bool(
-            matrix_relative is not None
-            and _git("ls-files", "--error-unmatch", "--", matrix_relative)
-            is not None
-        )
-        resource_matrix, resource_matrix_read_error = _read_json_object(
-            resource_matrix_path
-        )
-        launch_gate = hybrid_launch_gate(
-            resource_matrix,
-            degree=args.degree,
-            h_nm=args.h_nm,
-            requested_modes=args.requested_modes,
-            candidate_modes=args.candidate_modes,
-            solver_path=args.solver_path,
-            compare_modal_schur=args.compare_modal_schur,
-            comparison_solver_path=args.comparison_solver_path,
-            bottom_interface_nm=args.bottom_interface_nm,
-            top_interface_nm=args.top_interface_nm,
-            graded_reference_h=args.graded_reference_h,
-            incident_grazing_deg=args.incident_grazing_deg,
-            polarization_kind=args.polarization_kind,
-            container_limit_bytes=environment_before.get("memory_limit_bytes"),
-            host_available_memory_bytes=environment_before.get(
-                "host_available_memory_bytes"
-            ),
-            warning_gib=args.warning_gib,
-            terminate_gib=args.terminate_gib,
-            core_evidence=core_evidence,
-            expected_core_sha256=args.high_order_core_evidence_sha256,
-            current_source_sha=source_before.get("commit_sha"),
-            source_compatibility=core_source_compatibility,
-            m160_funnel_evidence=m160_funnel_evidence,
-            expected_m160_funnel_sha256=(
-                args.m160_funnel_evidence_sha256
-            ),
-            observed_m160_funnel_sha256=observed_m160_funnel_sha256,
-            task033_same_sha_anchor_requalification=(
-                args.task033_same_sha_anchor_requalification
-            ),
-            source_clean_verified=source_before["source_clean_verified"],
-            resource_matrix_is_canonical=resource_matrix_is_canonical,
-            resource_matrix_is_tracked=resource_matrix_is_tracked,
-            external_watchdog_active=True,
-        )
-        launch_gate["resource_matrix_path"] = str(resource_matrix_path)
-        launch_gate["resource_matrix_read_error"] = resource_matrix_read_error
-        launch_gate["m160_funnel_evidence_path"] = (
-            None if m160_funnel_path is None else str(m160_funnel_path)
-        )
-        launch_gate["m160_funnel_evidence_read_error"] = (
-            m160_funnel_read_error
-        )
-        launch_gate["checks"].update(
-            {
-                "canonical_case091_resource_matrix_path": (
-                    resource_matrix_is_canonical
+        if args.task034_workstation_gate:
+            authority_path = args.task034_workstation_resource_authority
+            if not authority_path.is_absolute():
+                authority_path = ROOT / authority_path
+            authority_path = authority_path.resolve()
+            authority_is_canonical = (
+                authority_path == TASK034_WORKSTATION_RESOURCE_AUTHORITY.resolve()
+            )
+            try:
+                authority_relative = authority_path.relative_to(ROOT).as_posix()
+            except ValueError:
+                authority_relative = None
+            authority_is_tracked = bool(
+                authority_relative is not None
+                and _git(
+                    "ls-files", "--error-unmatch", "--", authority_relative
+                )
+                is not None
+            )
+            authority, authority_read_error = _read_json_object(authority_path)
+            authority_observed_sha256 = _sha256(authority_path)
+            authority_source_compatibility = (
+                _task034_authority_source_compatibility(
+                    authority,
+                    degree=args.degree,
+                    h_nm=args.h_nm,
+                    polarization_kind=args.polarization_kind,
+                    current_source_sha=source_before.get("commit_sha"),
+                )
+            )
+            full3d_path = args.full3d_reference
+            if full3d_path is not None and not full3d_path.is_absolute():
+                full3d_path = ROOT / full3d_path
+            full3d_path = None if full3d_path is None else full3d_path.resolve()
+            full3d_reference_sha256 = (
+                None if full3d_path is None else _sha256(full3d_path)
+            )
+            resource_anchor_path = args.task034_workstation_resource_anchor
+            if (
+                resource_anchor_path is not None
+                and not resource_anchor_path.is_absolute()
+            ):
+                resource_anchor_path = ROOT / resource_anchor_path
+            resource_anchor_path = (
+                None
+                if resource_anchor_path is None
+                else resource_anchor_path.resolve()
+            )
+            resource_anchor_sha256 = (
+                None
+                if resource_anchor_path is None
+                else _sha256(resource_anchor_path)
+            )
+            adaptive_mechanism_path = (
+                args.task034_adaptive_mechanism_evidence_file
+            )
+            if (
+                adaptive_mechanism_path is not None
+                and not adaptive_mechanism_path.is_absolute()
+            ):
+                adaptive_mechanism_path = ROOT / adaptive_mechanism_path
+            adaptive_mechanism_evidence, adaptive_mechanism_error = (
+                _read_json_object(adaptive_mechanism_path)
+                if args.graded_reference_h is not None
+                else (None, None)
+            )
+            adaptive_mechanism_observed_sha256 = (
+                _sha256(adaptive_mechanism_path)
+                if adaptive_mechanism_path is not None
+                else None
+            )
+            adaptive_mechanism_gate = task034_adaptive_mechanism_evidence_gate(
+                adaptive_mechanism_evidence,
+                expected_sha256=args.task034_adaptive_mechanism_evidence_sha256,
+                observed_sha256=adaptive_mechanism_observed_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                mpi_size=args.mpi_size,
+                polarization_kind=args.polarization_kind,
+                graded_reference_h=args.graded_reference_h,
+                graded_profile=args.graded_profile,
+            )
+            core_gate = high_order_core_evidence_gate(
+                args.degree,
+                core_evidence,
+                expected_sha256=args.high_order_core_evidence_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=core_source_compatibility,
+            )
+            launch_gate = task034_workstation_hybrid_launch_gate(
+                authority,
+                authority_expected_sha256=(
+                    args.task034_workstation_resource_authority_sha256
                 ),
-                "case091_resource_matrix_is_git_tracked": (
-                    resource_matrix_is_tracked
+                authority_observed_sha256=authority_observed_sha256,
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                candidate_modes=args.candidate_modes,
+                solver_path=args.solver_path,
+                comparison_solver_path=args.comparison_solver_path,
+                bottom_interface_nm=args.bottom_interface_nm,
+                top_interface_nm=args.top_interface_nm,
+                incident_grazing_deg=args.incident_grazing_deg,
+                polarization_kind=args.polarization_kind,
+                effective_limit=effective,
+                warning_gib=args.warning_gib,
+                terminate_gib=args.terminate_gib,
+                core_gate=core_gate,
+                mpi_size=args.mpi_size,
+                available_physical_core_count=_available_physical_core_count(),
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=authority_source_compatibility,
+                source_clean_verified=source_before["source_clean_verified"],
+                authority_is_canonical=authority_is_canonical,
+                authority_is_tracked=authority_is_tracked,
+                external_watchdog_active=True,
+                full3d_reference_sha256=full3d_reference_sha256,
+                resource_anchor_sha256=resource_anchor_sha256,
+                m160_funnel_evidence=m160_funnel_evidence,
+                expected_m160_funnel_sha256=(
+                    args.m160_funnel_evidence_sha256
                 ),
+                observed_m160_funnel_sha256=observed_m160_funnel_sha256,
+                graded_reference_h=args.graded_reference_h,
+                graded_profile=args.graded_profile,
+                adaptive_mechanism_gate=adaptive_mechanism_gate,
+            )
+            launch_gate.update(
+                {
+                    "resource_authority_path": str(authority_path),
+                    "resource_authority_read_error": authority_read_error,
+                    "resource_authority_observed_sha256": (
+                        authority_observed_sha256
+                    ),
+                    "full3d_reference_path": (
+                        None if full3d_path is None else str(full3d_path)
+                    ),
+                    "full3d_reference_observed_sha256": (
+                        full3d_reference_sha256
+                    ),
+                    "resource_anchor_path": (
+                        None
+                        if resource_anchor_path is None
+                        else str(resource_anchor_path)
+                    ),
+                    "resource_anchor_observed_sha256": resource_anchor_sha256,
+                    "m160_funnel_evidence_path": (
+                        None
+                        if m160_funnel_path is None
+                        else str(m160_funnel_path)
+                    ),
+                    "m160_funnel_evidence_read_error": (
+                        m160_funnel_read_error
+                    ),
+                    "adaptive_mechanism_evidence_path": (
+                        None if adaptive_mechanism_path is None
+                        else str(adaptive_mechanism_path)
+                    ),
+                    "adaptive_mechanism_evidence_read_error": (
+                        adaptive_mechanism_error
+                    ),
+                }
+            )
+            launch_gate["checks"].update(
+                {
+                    "task034_resource_authority_readable": (
+                        authority_read_error is None
+                    ),
+                    "task034_measured_resource_anchor_readable": (
+                        full3d_reference_sha256 is not None
+                        or resource_anchor_sha256 is not None
+                    ),
+                }
+            )
+            launch_gate["failures"] = [
+                name
+                for name, passed in launch_gate["checks"].items()
+                if not passed
+            ]
+            launch_gate["pass"] = not launch_gate["failures"]
+            launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
+        else:
+            resource_matrix_path = args.resource_matrix
+            if not resource_matrix_path.is_absolute():
+                resource_matrix_path = ROOT / resource_matrix_path
+            resource_matrix_path = resource_matrix_path.resolve()
+            canonical_resource_matrices = {
+                DEFAULT_RESOURCE_MATRIX.resolve(),
+                REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX.resolve(),
             }
-        )
-        launch_gate["failures"] = [
-            name
-            for name, passed in launch_gate["checks"].items()
-            if not passed
-        ]
-        launch_gate["pass"] = not launch_gate["failures"]
-        launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
+            resource_matrix_is_canonical = (
+                resource_matrix_path in canonical_resource_matrices
+            )
+            try:
+                matrix_relative = resource_matrix_path.relative_to(ROOT).as_posix()
+            except ValueError:
+                matrix_relative = None
+            resource_matrix_is_tracked = bool(
+                matrix_relative is not None
+                and _git("ls-files", "--error-unmatch", "--", matrix_relative)
+                is not None
+            )
+            resource_matrix, resource_matrix_read_error = _read_json_object(
+                resource_matrix_path
+            )
+            launch_gate = hybrid_launch_gate(
+                resource_matrix,
+                degree=args.degree,
+                h_nm=args.h_nm,
+                requested_modes=args.requested_modes,
+                candidate_modes=args.candidate_modes,
+                solver_path=args.solver_path,
+                compare_modal_schur=args.compare_modal_schur,
+                comparison_solver_path=args.comparison_solver_path,
+                bottom_interface_nm=args.bottom_interface_nm,
+                top_interface_nm=args.top_interface_nm,
+                graded_reference_h=args.graded_reference_h,
+                incident_grazing_deg=args.incident_grazing_deg,
+                polarization_kind=args.polarization_kind,
+                container_limit_bytes=environment_before.get("memory_limit_bytes"),
+                host_available_memory_bytes=environment_before.get(
+                    "host_available_memory_bytes"
+                ),
+                warning_gib=args.warning_gib,
+                terminate_gib=args.terminate_gib,
+                core_evidence=core_evidence,
+                expected_core_sha256=args.high_order_core_evidence_sha256,
+                current_source_sha=source_before.get("commit_sha"),
+                source_compatibility=core_source_compatibility,
+                m160_funnel_evidence=m160_funnel_evidence,
+                expected_m160_funnel_sha256=(
+                    args.m160_funnel_evidence_sha256
+                ),
+                observed_m160_funnel_sha256=observed_m160_funnel_sha256,
+                task033_same_sha_anchor_requalification=(
+                    args.task033_same_sha_anchor_requalification
+                ),
+                source_clean_verified=source_before["source_clean_verified"],
+                resource_matrix_is_canonical=resource_matrix_is_canonical,
+                resource_matrix_is_tracked=resource_matrix_is_tracked,
+                external_watchdog_active=True,
+            )
+            launch_gate["resource_matrix_path"] = str(resource_matrix_path)
+            launch_gate["resource_matrix_read_error"] = resource_matrix_read_error
+            launch_gate["m160_funnel_evidence_path"] = (
+                None if m160_funnel_path is None else str(m160_funnel_path)
+            )
+            launch_gate["m160_funnel_evidence_read_error"] = (
+                m160_funnel_read_error
+            )
+            launch_gate["checks"].update(
+                {
+                    "canonical_case091_resource_matrix_path": (
+                        resource_matrix_is_canonical
+                    ),
+                    "case091_resource_matrix_is_git_tracked": (
+                        resource_matrix_is_tracked
+                    ),
+                }
+            )
+            launch_gate["failures"] = [
+                name
+                for name, passed in launch_gate["checks"].items()
+                if not passed
+            ]
+            launch_gate["pass"] = not launch_gate["failures"]
+            launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
     else:
         core_gate = high_order_core_evidence_gate(
             args.degree,
@@ -1078,6 +1710,12 @@ def run(args: argparse.Namespace) -> int:
     terminated_for_timeout = False
     terminated_for_authority_unreadable = False
     live_authority_all_readable = True
+    job_swap_all_samples_readable = True
+    max_process_tree_swap_bytes = 0
+    max_dedicated_cgroup_swap_bytes = 0
+    dedicated_job_cgroup_observed = False
+    post_exit_readability_samples_excluded = 0
+    terminal_worker_drain_samples_excluded = 0
     max_live_authority_gib = 0.0
     with stdout_path.open("w", encoding="utf-8") as stdout:
         process = subprocess.Popen(
@@ -1092,48 +1730,132 @@ def run(args: argparse.Namespace) -> int:
         while True:
             elapsed = time.perf_counter() - started
             row = _sample(process.pid, stage_path, elapsed)
-            live_worker_rss_mb, live_workers = _live_task033_worker_rss(
-                process.pid, args.target
-            )
-            row["worker_rank_rss_sum_mb"] = (
-                0.0 if live_worker_rss_mb is None else live_worker_rss_mb
-            )
+            job_sample = resource_authority_sample(process.pid)
+            process_tree = job_sample["process_tree"]
+            job_cgroup = job_sample["job_cgroup"]
+            live_worker_rss_mb = float(process_tree["rss_bytes"]) / 1024**2
+            live_workers = [
+                {"pid": pid, "scope": "process_tree"}
+                for pid in process_tree["pids"]
+            ]
+            row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
             row["worker_rank_rss_mb_json"] = json.dumps(
                 live_workers, separators=(",", ":")
             )
+            row["mpi_process_tree_swap_mb"] = (
+                float(process_tree["swap_bytes"]) / 1024**2
+            )
+            row["job_cgroup_path"] = job_cgroup["path"]
+            row["job_cgroup_dedicated"] = job_cgroup["dedicated_job_cgroup"]
+            if job_cgroup["dedicated_job_cgroup"]:
+                row["container_cgroup_current_mb"] = (
+                    None if job_cgroup["memory_current_bytes"] is None
+                    else float(job_cgroup["memory_current_bytes"]) / 1024**2
+                )
+                row["container_swap_current_mb"] = (
+                    None if job_cgroup["swap_current_bytes"] is None
+                    else float(job_cgroup["swap_current_bytes"]) / 1024**2
+                )
+            else:
+                row["container_cgroup_current_mb"] = None
+                row["container_swap_current_mb"] = None
+            process_running = process.poll() is None
+            cgroup_current_mb = row.get("container_cgroup_current_mb")
+            authority_readable = bool(
+                process_tree["all_status_readable"]
+                and (
+                    not job_cgroup["dedicated_job_cgroup"]
+                    or cgroup_current_mb is not None
+                )
+            )
+            live_worker_count: int | None = None
+            terminal_record_complete = False
+            if (
+                args.task034_workstation_gate
+                and process_running
+                and not authority_readable
+                and row.get("stage") == "record_and_release"
+            ):
+                terminal_record_complete = (
+                    _task034_terminal_record_is_complete(record_path)
+                )
+                live_worker_rss, discovered_workers = (
+                    _live_task033_worker_rss(process.pid, args.target)
+                )
+                if live_worker_rss is not None:
+                    process_tree_pids = set(process_tree["pids"])
+                    live_worker_count = sum(
+                        int(worker["pid"]) in process_tree_pids
+                        for worker in discovered_workers
+                    )
+            terminal_worker_drain = _task034_terminal_worker_drain(
+                task034_workstation_gate=args.task034_workstation_gate,
+                process_running=process_running,
+                authority_readable=authority_readable,
+                stage=row.get("stage"),
+                terminal_record_complete=terminal_record_complete,
+                live_worker_count=live_worker_count,
+            )
+            readability_sample_is_formal = _resource_readability_sample_is_formal(
+                task034_workstation_gate=args.task034_workstation_gate,
+                process_running=process_running,
+                terminal_worker_drain=terminal_worker_drain,
+            )
+            if readability_sample_is_formal:
+                job_swap_all_samples_readable &= bool(
+                    process_tree["all_status_readable"]
+                )
+                max_process_tree_swap_bytes = max(
+                    max_process_tree_swap_bytes, int(process_tree["swap_bytes"])
+                )
+                if job_cgroup["dedicated_job_cgroup"]:
+                    dedicated_job_cgroup_observed = True
+                    if job_cgroup["swap_current_bytes"] is None:
+                        job_swap_all_samples_readable = False
+                    else:
+                        max_dedicated_cgroup_swap_bytes = max(
+                            max_dedicated_cgroup_swap_bytes,
+                            int(job_cgroup["swap_current_bytes"]),
+                        )
+            elif terminal_worker_drain:
+                terminal_worker_drain_samples_excluded += 1
+            else:
+                post_exit_readability_samples_excluded += 1
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
-            cgroup_current_mb = row.get("container_cgroup_current_mb")
-            authority_readable = bool(
-                live_worker_rss_mb is not None and cgroup_current_mb is not None
-            )
-            live_authority_all_readable &= authority_readable
+            if readability_sample_is_formal:
+                live_authority_all_readable &= authority_readable
             live_authority_gib = (
                 None
-                if not authority_readable
-                else max(float(live_worker_rss_mb), float(cgroup_current_mb))
-                / 1024.0
+                if not readability_sample_is_formal or not authority_readable
+                else max(
+                    float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
+                ) / 1024.0
             )
             if live_authority_gib is not None:
                 max_live_authority_gib = max(
                     max_live_authority_gib, live_authority_gib
                 )
                 warning_triggered |= live_authority_gib >= args.warning_gib
-            if process.poll() is None and not authority_readable:
+            if _authority_unreadable_requires_termination(
+                process_running=process_running,
+                readability_sample_is_formal=readability_sample_is_formal,
+                authority_readable=authority_readable,
+            ):
                 terminated_for_authority_unreadable = True
                 process.terminate()
             if (
-                process.poll() is None
+                process_running
                 and live_authority_gib is not None
                 and live_authority_gib >= args.terminate_gib
             ):
                 terminated_for_memory = True
                 process.terminate()
-            if process.poll() is None and elapsed >= args.timeout_seconds:
+            if process_running and elapsed >= args.timeout_seconds:
                 terminated_for_timeout = True
                 process.terminate()
-            if process.poll() is not None:
+            if not process_running:
                 break
             time.sleep(max(args.poll_interval, 0.05))
         return_code = int(process.returncode or 0)
@@ -1148,7 +1870,22 @@ def run(args: argparse.Namespace) -> int:
         else {}
     )
     memory = _sampler_summary(rows, poll_interval=args.poll_interval)
+    memory.update(
+        {
+            "job_swap_all_samples_readable": job_swap_all_samples_readable,
+            "max_process_tree_swap_bytes": max_process_tree_swap_bytes,
+            "max_dedicated_cgroup_swap_bytes": max_dedicated_cgroup_swap_bytes,
+            "dedicated_job_cgroup_observed": dedicated_job_cgroup_observed,
+            "post_exit_readability_samples_excluded": (
+                post_exit_readability_samples_excluded
+            ),
+            "terminal_worker_drain_samples_excluded": (
+                terminal_worker_drain_samples_excluded
+            ),
+        }
+    )
     environment_after = _resource_environment_snapshot()
+    environment_after["task034_effective_limit"] = effective_memory_limit()
     source = _watchdog_source_after(source_before)
     resource_authority = _external_resource_authority(
         rows,
@@ -1166,9 +1903,9 @@ def run(args: argparse.Namespace) -> int:
     source_gate = source_identity_gate(source)
     no_swap = bool(
         resource_gate["checks"].get("container_current_swap_zero")
-        and resource_gate["checks"].get("pswpin_delta_zero")
-        and resource_gate["checks"].get("pswpout_delta_zero")
         and resource_gate["checks"].get("all_live_swap_samples_readable")
+        and max_process_tree_swap_bytes == 0
+        and max_dedicated_cgroup_swap_bytes == 0
     )
     if args.target == "qep":
         numerical_pass = solver_record.get("status") == "measured_shard_pass"
@@ -1237,8 +1974,8 @@ def run(args: argparse.Namespace) -> int:
         "measurements": measurements,
         "memory_semantics": (
             "Authority is max(simultaneous live MPI worker RSS sum, container "
-            "cgroup current); current cgroup swap and pswpin/pswpout deltas must "
-            "all be zero. Container limit and host available memory must be readable."
+            "dedicated job cgroup current when present); process-tree VmSwap and "
+            "dedicated cgroup swap must be zero. WSL-global pswp is diagnostic only."
         ),
     }
     summary_path = run_dir / "memory_sampler_summary.json"

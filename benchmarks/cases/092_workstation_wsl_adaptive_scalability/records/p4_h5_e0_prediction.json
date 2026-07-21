@@ -1,0 +1,85 @@
+{
+  "schema_version": "task034.phaseE.p4-h5-e0-prediction.v1",
+  "record_type": "task034_p4_h5_post_assembly_factor_and_hybrid_prediction",
+  "source_commit_full_sha": "dc81ae75c0253e5f2d8070613e9ff82f33eab3e4",
+  "input_evidence": {
+    "p4_h5_assembly": {
+      "path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_assembly_mpi4_dc81ae7.json",
+      "sha256": "79e786dc76e1c2f79542b5fc90f104adb65602a6f6e09fd4d9efb3181c9b3fbe"
+    },
+    "p3_h3_assembly": {
+      "path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_assembly_mpi4.json",
+      "sha256": "ba0886a5d5016c0d3974683fc2d57efae629f474a920e55593cb75fecebafc98"
+    },
+    "p3_h3_factorization": {
+      "path": "benchmarks/artifacts/task034/phase_d/records/p3_h3_factorization_mpi4.json",
+      "sha256": "0ffb193bd52bda7a0d2cb233deacc123f68c501a4d119c8cfd0c191376391359"
+    },
+    "historical_p4_h5_calibration": {
+      "path": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/stage4_p4_h5/calibration_summary.json",
+      "sha256": "bbb13221187f318b0790b41ec51f1ec4b8e5f6844e2c8c459ab51eb7c8509435",
+      "role": "historical_input_only_not_launch_authority"
+    }
+  },
+  "assembly_gate": {
+    "status": "assembly_calibration_pass",
+    "qualification_pass": true,
+    "no_swap": true,
+    "source_stable_and_clean_after": true,
+    "factorization_or_solve_stage_seen": false,
+    "exact_rows": 339972,
+    "exact_assembled_nnz": 155421000,
+    "memory_authority_gib": 19.41360855102539,
+    "base_matrix_assembly_seconds": 1219.2766429219992,
+    "assembly_and_solve_stage_seconds": 1240.0468377479992
+  },
+  "factorization_model": {
+    "p3_h3_factor_nnz_to_assembled_nnz": 8.169032475591456,
+    "p3_h3_factorization_to_assembly_memory_ratio": 2.1217485159416114,
+    "p3_h3_factorization_to_assembly_stage_time_ratio": 2.910746231024828,
+    "selection_rule": "reuse the largest reviewed measured p3 ratio envelope at comparable assembled NNZ; upper = 1.5 * center"
+  },
+  "selected_conservative_factorization_prediction": {
+    "factor_nnz_center": 1269639196.3888996,
+    "factor_nnz_upper": 1904458794.5833495,
+    "factorization_memory_gib_center": 41.1907951322095,
+    "factorization_memory_gib_upper": 61.78619269831425,
+    "factorization_elapsed_seconds_center": 3609.4616592692455,
+    "factorization_elapsed_seconds_upper": 5414.192488903868
+  },
+  "selected_conservative_hybrid_prediction": {
+    "centers_gib": {
+      "historical_task033_hybrid_factor_center": 37.037946983223875,
+      "three_times_measured_same_ph_assembly_peak": 58.24082565307617
+    },
+    "conservative_upper_gib": 87.36123847961426,
+    "method": "1.5 * max(historical Hybrid center, 3.0 * measured p4/h5 E0 assembly peak)",
+    "task033_old_model_is_launch_authority": false
+  },
+  "live_resource_gate": {
+    "effective_limit_gib": 193.85588436108083,
+    "warning_gib": 155.08470748830587,
+    "termination_gib": 184.16309014242142,
+    "swap_allowed": false,
+    "live_watchdog_is_final_authority": true
+  },
+  "checks": {
+    "measured_assembly_gate_pass": true,
+    "measured_assembly_zero_job_swap": true,
+    "measured_assembly_no_factorization_or_solve": true,
+    "factorization_upper_below_warning": true,
+    "factorization_upper_below_termination": true,
+    "hybrid_upper_below_warning": true,
+    "hybrid_upper_below_termination": true
+  },
+  "factorization_launch_decision": "eligible_after_e1_hybrid_funnel",
+  "full_solve_launch_decision": "blocked_pending_measured_factorization",
+  "hybrid_m80_launch_decision": "eligible_after_resource_anchor_gate_hardening",
+  "limitations": [
+    "All predictions are conservative launch guards, not measurements.",
+    "The historical 42.594 GiB p4 Hybrid upper remains non-authoritative.",
+    "The live WSL watchdog refreshes MemAvailable and remains the runtime termination authority.",
+    "The p4 base assembly time of 1219.277 s is 2.633x the historical 463.109 s and is preserved as a performance-regression candidate.",
+    "No p4 full3D factorization or solve has been performed at this stage."
+  ]
+}

@@ -192,11 +192,11 @@ memory约8 GiB硬限制且可接受数小时
   -> 先重新 qualification，不继承既有“收敛保证”
 ```
 
-当前 iterative qualification 是单点 frozen target：13.5 nm、固定 Si、`theta=80°`（按表面掠入射角记法对应 10°）、`phi=0°`、S polarization、p2 Nédélec、MPI4、当前 partition/RHS/image。Task032 的 1–10° S/P 30/30 结果只是 M4 parameter-interface smoke，不能升级为 iterative 或物理资格。项目第一阶段规划范围由 Task033 local h/p、Task034 scalable modal core 和 Task035 final Hybrid iterative 继续资格化；Task036 才逐波长 continuation。规划范围不等于已验证范围。
+当前 iterative qualification 是单点 frozen target：13.5 nm、固定 Si、`theta=80°`（按表面掠入射角记法对应 10°）、`phi=0°`、S polarization、p2 Nédélec、MPI4、当前 partition/RHS/image。Task032 的 1–10° grazing + S/P 30/30 结果只是 M4 parameter-interface smoke，不能升级为 iterative 或物理资格。项目第一阶段规划范围由 Task033 local h/p、Task034 scalable modal core 和 Task035 final Hybrid iterative 继续资格化；后续 wavelength continuation 独立任务 才逐波长 continuation。规划范围不等于已验证范围。
 
 ## 8. 公共 API 与选择性合并边界
 
-这些入口目前主要是 benchmark/experimental CLI，不是冻结的通用 service API。后续 Task033–Task035 应按适用性在公共 solver abstraction 中复用 `mpc_form_action`、condensed external action/lifecycle、PC certification、true-residual monitor 和 external memory sampler，不应复制整个 benchmark runner；Task034 还必须移除 replicated M² 和 all-mode dense multi-RHS，Task035 才在最终离散上资格化迭代法。
+这些入口目前主要是 benchmark/experimental CLI，不是冻结的通用 service API。后续 Task034–Task035 与后续独立任务应按适用性在公共 solver abstraction 中复用 `mpc_form_action`、condensed external action/lifecycle、PC certification、true-residual monitor 和 external memory sampler，不应复制整个 benchmark runner；Task034 还必须移除 replicated M² 和 all-mode dense multi-RHS，Task035 才在最终离散上资格化迭代法。
 
 建议选择性合并：通用 action/lifecycle/certification/telemetry 基础设施、Task31 显式 profile、Case070 轻量证据、合同测试与文档。不得提升：fixed Richardson、boundary Jacobi、restart50、20-slab、factor sharing、TFQMR/BCGS/普通 GMRES target-supported 声明、ordinary default 替换、通用参数鲁棒或 mesh-independent 宣传。heavy artifacts、raw fields、matrix/cache 和逐步日志继续留在 ignored artifact 目录。
 

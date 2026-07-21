@@ -230,7 +230,18 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 SOURCE_SHA,
                 "docs/README.md\n"
                 "src/test/test_x.py\n"
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+                "records/p4_h5_e0_prediction.json\n"
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
+                "expected.json\n"
+                "benchmarks/run_task034_wsl_qualification.py\n"
+                "benchmarks/task034_p3_h3_reranking.py\n"
                 "src/coupling/modal_trace_projection.py\n"
+                "src/modes/mode_classification.py\n"
+                "benchmarks/task034_numerical_blob_checker.py\n"
+                "benchmarks/task034_mpi_identity.py\n"
+                "src/common/distributed_matrix_diagnostics.py\n"
+                "src/solvers/hybrid_fem_modal_schur_direct.py\n"
                 "benchmarks/task033_phaseC.py",
             ),
         ):
@@ -241,7 +252,13 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertTrue(accepted["case090_core_source_unchanged"])
         self.assertEqual(
             accepted["component_disjoint_numerical_changed_paths"],
-            ["src/coupling/modal_trace_projection.py"],
+            [
+                "src/coupling/modal_trace_projection.py",
+                "src/modes/mode_classification.py",
+                "benchmarks/task034_mpi_identity.py",
+                "src/common/distributed_matrix_diagnostics.py",
+                "src/solvers/hybrid_fem_modal_schur_direct.py",
+            ],
         )
         self.assertEqual(
             accepted["compatibility_scope"],
@@ -269,7 +286,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 return sha
             self.assertEqual(
                 args,
-                ("status", "--short", "--untracked-files=normal"),
+                ("status", "--short", "--untracked-files=all"),
             )
             return "?? uncommitted_solver.py"
 

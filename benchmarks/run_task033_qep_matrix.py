@@ -19,6 +19,11 @@ import sys
 import time
 from typing import Any
 
+from benchmarks.task034_wsl_resources import (
+    effective_memory_limit,
+    resource_authority_sample,
+)
+
 from benchmarks.task033_qep_measurement import (
     DEFAULT_REQUESTED_MODES,
     DEGREES,
@@ -133,20 +138,25 @@ def _current_rss_bytes() -> int | None:
     return None
 
 
-def _cgroup_snapshot() -> dict[str, float | int | None]:
-    root = Path("/sys/fs/cgroup")
-    current = _read_number(root / "memory.current")
-    limit = _read_number(root / "memory.max")
-    swap_current = _read_number(root / "memory.swap.current")
+def _cgroup_snapshot() -> dict[str, float | int | bool | str | None]:
+    authority = resource_authority_sample(os.getpid())
+    cgroup = authority["job_cgroup"]
+    effective = effective_memory_limit()
+    current = authority["memory_authority_bytes"]
+    limit = effective["effective_limit_bytes"]
+    swap_current = authority["process_tree"]["swap_bytes"]
+    if cgroup["dedicated_job_cgroup"] and cgroup["swap_current_bytes"] is not None:
+        swap_current = max(swap_current, int(cgroup["swap_current_bytes"]))
     return {
         "memory_current_bytes": current,
-        "memory_current_gib": None if current is None else current / 1024**3,
+        "memory_current_gib": current / 1024**3,
         "memory_limit_bytes": limit,
         "memory_limit_gib": None if limit is None else limit / 1024**3,
         "swap_current_bytes": swap_current,
-        "swap_current_gib": (
-            None if swap_current is None else swap_current / 1024**3
-        ),
+        "swap_current_gib": swap_current / 1024**3,
+        "job_cgroup_path": cgroup["path"],
+        "job_cgroup_dedicated": cgroup["dedicated_job_cgroup"],
+        "memory_limit_semantics": effective["formula"],
     }
 
 
@@ -186,7 +196,7 @@ def _source_identity(comm, verified_clean_sha: str | None) -> dict[str, Any]:
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        tracked_status = _git("status", "--short", "--untracked-files=no")
+        tracked_status = _git("status", "--short", "--untracked-files=all")
     else:
         head = None
         branch = None
@@ -223,7 +233,7 @@ def _source_identity(comm, verified_clean_sha: str | None) -> dict[str, Any]:
 def _finalize_source_identity(comm, source: dict[str, Any]) -> dict[str, Any]:
     if comm.rank == 0:
         head_after = _git("rev-parse", "HEAD")
-        status_after = _git("status", "--short", "--untracked-files=no")
+        status_after = _git("status", "--short", "--untracked-files=all")
     else:
         head_after = None
         status_after = None

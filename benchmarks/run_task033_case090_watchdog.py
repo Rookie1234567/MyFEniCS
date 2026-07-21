@@ -8,7 +8,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import Any, Mapping
 
 from benchmarks.task033_case090_pde_core import (
     CASE_ID,
@@ -18,6 +18,10 @@ from benchmarks.task033_case090_pde_core import (
     inspect_tracked_source,
     validate_watchdog_summary,
     write_json_object,
+)
+from benchmarks.task034_wsl_resources import (
+    effective_memory_limit,
+    resource_authority_sample,
 )
 
 
@@ -130,59 +134,174 @@ def _portable_process_tree_rss(root_pid: int) -> tuple[int, int]:
         return 0, 0
 
 
-def sample_memory(root_pid: int, *, worker_alive: bool) -> dict[str, Any]:
-    worker_rss, live_workers = _portable_process_tree_rss(root_pid)
-    cgroup_current, cgroup_current_source = _cgroup_value(
-        ("memory.current", "memory.usage_in_bytes")
-    )
-    cgroup_limit, cgroup_limit_source, cgroup_limit_state = _cgroup_limit()
-    swap_current, swap_source = _cgroup_value(("memory.swap.current",))
-    if swap_current is None:
-        memsw_current, memsw_source = _cgroup_value(
-            ("memory.memsw.usage_in_bytes",)
+def _is_wsl_runtime() -> bool:
+    try:
+        release = Path("/proc/sys/kernel/osrelease").read_text(
+            encoding="utf-8"
         )
-        if memsw_current is not None and cgroup_current is not None:
-            swap_current = max(0, memsw_current - cgroup_current)
-            swap_source = (
-                f"{memsw_source} minus {cgroup_current_source}"
-            )
-    meminfo = _proc_meminfo()
-    if swap_current is None and meminfo:
-        swap_current = max(
-            0,
-            meminfo.get("SwapTotal", 0) - meminfo.get("SwapFree", 0),
-        )
-        swap_source = "/proc/meminfo SwapTotal-SwapFree"
-    host_available = meminfo.get("MemAvailable")
-    if host_available is None:
-        try:
-            import psutil
+    except OSError:
+        return False
+    return "microsoft" in release.lower()
 
-            host_available = int(psutil.virtual_memory().available)
-        except Exception:
-            host_available = None
-    observed = max(worker_rss, cgroup_current or 0)
+
+def sample_memory(root_pid: int, *, worker_alive: bool) -> dict[str, Any]:
+    sample_root_pid = (
+        int(root_pid)
+        if worker_alive and int(root_pid) > 0
+        else os.getpid()
+    )
+    if not _is_wsl_runtime():
+        worker_rss, live_workers = _portable_process_tree_rss(sample_root_pid)
+        cgroup_current, cgroup_current_source = _cgroup_value(
+            ("memory.current", "memory.usage_in_bytes")
+        )
+        cgroup_limit, cgroup_limit_source, cgroup_limit_state = _cgroup_limit()
+        swap_current, swap_source = _cgroup_value(("memory.swap.current",))
+        if swap_current is None:
+            memsw_current, memsw_source = _cgroup_value(
+                ("memory.memsw.usage_in_bytes",)
+            )
+            if memsw_current is not None and cgroup_current is not None:
+                swap_current = max(0, memsw_current - cgroup_current)
+                swap_source = f"{memsw_source} minus {cgroup_current_source}"
+        meminfo = _proc_meminfo()
+        if swap_current is None and meminfo:
+            swap_current = max(
+                0, meminfo.get("SwapTotal", 0) - meminfo.get("SwapFree", 0)
+            )
+            swap_source = "/proc/meminfo SwapTotal-SwapFree"
+        host_available = meminfo.get("MemAvailable")
+        return {
+            "monotonic_seconds": time.monotonic(),
+            "worker_alive": bool(worker_alive),
+            "live_worker_process_count": int(live_workers),
+            "worker_tree_rss_sum_bytes": int(worker_rss),
+            "cgroup_memory_current_bytes": cgroup_current,
+            "observed_memory_bytes": int(max(worker_rss, cgroup_current or 0)),
+            "swap_current_bytes": swap_current,
+            "host_available_memory_bytes": host_available,
+            "sources": {
+                "cgroup_memory_current": cgroup_current_source,
+                "cgroup_memory_limit": cgroup_limit_source,
+                "swap_current": swap_source,
+            },
+            "cgroup_memory_limit_bytes": cgroup_limit,
+            "cgroup_memory_limit_state": cgroup_limit_state,
+            "resource_authority_mode": "legacy_finite_cgroup_14g",
+        }
+
+    authority = resource_authority_sample(sample_root_pid)
+    process_tree = authority["process_tree"]
+    cgroup = authority["job_cgroup"]
+    memory = effective_memory_limit()
+    cgroup_limit, cgroup_limit_source, cgroup_limit_state = _cgroup_limit()
+    dedicated = cgroup.get("dedicated_job_cgroup") is True
+    if not dedicated:
+        cgroup_limit = cgroup.get("memory_limit_bytes")
+        cgroup_limit_source = cgroup.get("path")
+        cgroup_limit_state = (
+            "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+        )
+    dedicated_swap = cgroup.get("swap_current_bytes") if dedicated else None
+    process_tree_swap = process_tree.get("swap_bytes")
+    job_swap = (
+        max(int(process_tree_swap), int(dedicated_swap or 0))
+        if isinstance(process_tree_swap, int)
+        and (dedicated_swap is None or isinstance(dedicated_swap, int))
+        else None
+    )
     return {
         "monotonic_seconds": time.monotonic(),
         "worker_alive": bool(worker_alive),
-        "live_worker_process_count": int(live_workers),
-        "worker_tree_rss_sum_bytes": int(worker_rss),
-        "cgroup_memory_current_bytes": cgroup_current,
-        "observed_memory_bytes": int(observed),
-        "swap_current_bytes": swap_current,
-        "host_available_memory_bytes": host_available,
+        "live_worker_process_count": len(process_tree.get("pids") or ()),
+        "worker_tree_rss_sum_bytes": process_tree.get("rss_bytes"),
+        "process_tree_swap_bytes": process_tree_swap,
+        "process_tree_all_status_readable": process_tree.get(
+            "all_status_readable"
+        ),
+        "cgroup_memory_current_bytes": cgroup.get("memory_current_bytes"),
+        "cgroup_memory_is_dedicated_job_authority": dedicated,
+        "dedicated_cgroup_swap_current_bytes": dedicated_swap,
+        "observed_memory_bytes": authority.get("memory_authority_bytes"),
+        "swap_current_bytes": job_swap,
+        "host_available_memory_bytes": memory.get("mem_available_bytes"),
         "sources": {
-            "cgroup_memory_current": cgroup_current_source,
+            "cgroup_memory_current": cgroup.get("path"),
             "cgroup_memory_limit": cgroup_limit_source,
-            "swap_current": swap_source,
+            "swap_current": (
+                "process-tree VmSwap plus dedicated job cgroup swap"
+            ),
         },
         "cgroup_memory_limit_bytes": cgroup_limit,
         "cgroup_memory_limit_state": cgroup_limit_state,
+        "resource_authority_mode": "task034_wsl_effective_limit",
+        "resource_authority_semantics": authority.get(
+            "memory_authority_semantics"
+        ),
+        "formal_swap_semantics": authority.get("formal_swap_semantics"),
+        "task034_effective_limit": memory,
+        "wsl_vm_global_swap_diagnostic": authority.get(
+            "wsl_vm_global_swap_diagnostic"
+        ),
     }
 
-
 def build_preflight(sample: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    failures: list[str] = []
+    mode = sample.get("resource_authority_mode")
+    if mode == "task034_wsl_effective_limit":
+        failures: list[str] = []
+        memory = sample.get("task034_effective_limit")
+        memory = memory if isinstance(memory, dict) else {}
+        effective = memory.get("effective_limit_bytes")
+        warning = memory.get("warning_bytes")
+        termination = memory.get("termination_bytes")
+        host_available = sample.get("host_available_memory_bytes")
+        swap_current = sample.get("swap_current_bytes")
+        observed = sample.get("observed_memory_bytes")
+        if not isinstance(effective, int) or effective <= 0:
+            failures.append("Task034 WSL effective memory limit is unreadable")
+        if not isinstance(warning, int) or not isinstance(termination, int):
+            failures.append("Task034 WSL warning/termination thresholds are unreadable")
+        if not isinstance(host_available, int) or host_available <= 0:
+            failures.append("preflight host available memory is unreadable")
+        if not isinstance(observed, int) or observed < 0:
+            failures.append("preflight process-tree memory authority is unreadable")
+        if sample.get("process_tree_all_status_readable") is not True:
+            failures.append("preflight process-tree status authority is unreadable")
+        if not isinstance(swap_current, int) or swap_current < 0:
+            failures.append("preflight job swap authority is unreadable")
+        elif swap_current != 0:
+            failures.append("preflight job swap authority is nonzero")
+        return (
+            {
+                "passed": not failures,
+                "resource_authority_mode": mode,
+                "cgroup_memory_limit_state": sample.get(
+                    "cgroup_memory_limit_state"
+                ),
+                "cgroup_memory_limit_bytes": sample.get(
+                    "cgroup_memory_limit_bytes"
+                ),
+                "cgroup_memory_current_bytes": sample.get(
+                    "cgroup_memory_current_bytes"
+                ),
+                "cgroup_memory_is_dedicated_job_authority": sample.get(
+                    "cgroup_memory_is_dedicated_job_authority"
+                ),
+                "host_available_memory_bytes": host_available,
+                "swap_current_bytes": swap_current,
+                "effective_memory_bytes": effective,
+                "effective_memory_definition": memory.get("formula"),
+                "warning_threshold_bytes": warning,
+                "termination_threshold_bytes": termination,
+                "warning_scale": 0.80,
+                "termination_scale": 0.95,
+                "task034_effective_limit": memory,
+                "failures": failures,
+            },
+            failures,
+        )
+
+    failures = []
     limit = sample.get("cgroup_memory_limit_bytes")
     limit_state = sample.get("cgroup_memory_limit_state")
     cgroup_current = sample.get("cgroup_memory_current_bytes")
@@ -214,6 +333,7 @@ def build_preflight(sample: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     return (
         {
             "passed": not failures,
+            "resource_authority_mode": "legacy_finite_cgroup_14g",
             "cgroup_memory_limit_state": limit_state,
             "cgroup_memory_limit_bytes": limit,
             "cgroup_memory_current_bytes": cgroup_current,
@@ -232,7 +352,6 @@ def build_preflight(sample: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         failures,
     )
 
-
 def watchdog_decision(
     sample: dict[str, Any],
     *,
@@ -242,13 +361,18 @@ def watchdog_decision(
 ) -> dict[str, Any]:
     """Return the immediate control decision for one live sample."""
 
-    for field in (
+    mode = preflight.get("resource_authority_mode")
+    required = [
         "worker_tree_rss_sum_bytes",
-        "cgroup_memory_current_bytes",
         "observed_memory_bytes",
         "swap_current_bytes",
         "host_available_memory_bytes",
-    ):
+    ]
+    if mode != "task034_wsl_effective_limit":
+        required.extend(
+            ["cgroup_memory_current_bytes", "cgroup_memory_limit_bytes"]
+        )
+    for field in required:
         if not isinstance(sample.get(field), int) or sample[field] < 0:
             return {
                 "warning": False,
@@ -256,9 +380,24 @@ def watchdog_decision(
                 "trigger": "authority_unreadable",
                 "detail": field,
             }
-    if sample.get("cgroup_memory_limit_state") != "finite" or not isinstance(
-        sample.get("cgroup_memory_limit_bytes"), int
-    ):
+    if mode == "task034_wsl_effective_limit":
+        if sample.get("process_tree_all_status_readable") is not True:
+            return {
+                "warning": False,
+                "terminate": True,
+                "trigger": "authority_unreadable",
+                "detail": "process_tree_status",
+            }
+        if sample.get("cgroup_memory_is_dedicated_job_authority") is True and not isinstance(
+            sample.get("dedicated_cgroup_swap_current_bytes"), int
+        ):
+            return {
+                "warning": False,
+                "terminate": True,
+                "trigger": "authority_unreadable",
+                "detail": "dedicated_cgroup_swap",
+            }
+    elif sample.get("cgroup_memory_limit_state") != "finite":
         return {
             "warning": False,
             "terminate": True,
@@ -295,6 +434,26 @@ def watchdog_decision(
         "trigger": "memory_warning_threshold" if observed >= warning else None,
         "detail": str(observed) if observed >= warning else None,
     }
+
+
+def _natural_exit_after_process_tree_sample(
+    process: subprocess.Popen[Any],
+    decision: Mapping[str, Any],
+) -> int | None:
+    """Return an exit code only for a /proc teardown race.
+
+    A process-tree sample can begin while ``mpiexec`` is alive and lose one
+    rank's ``/proc/<pid>/status`` while that rank exits naturally. Re-polling
+    is intentionally restricted to this authority failure: unreadable status
+    while the worker remains live still fails closed.
+    """
+
+    if (
+        decision.get("trigger") != "authority_unreadable"
+        or decision.get("detail") != "process_tree_status"
+    ):
+        return None
+    return process.poll()
 
 
 def terminate_process_tree(
@@ -368,6 +527,12 @@ def summarize_samples(
     preflight: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     failures: list[str] = []
+    resource_mode = (
+        preflight.get("resource_authority_mode")
+        if isinstance(preflight, dict)
+        else None
+    )
+    task034_wsl = resource_mode == "task034_wsl_effective_limit"
     if len(samples) < 2:
         failures.append("watchdog requires at least two samples")
 
@@ -384,38 +549,59 @@ def summarize_samples(
     limits = integers("cgroup_memory_limit_bytes")
     host_available = integers("host_available_memory_bytes")
     swap = integers("swap_current_bytes")
-    for label, values in (
+    process_tree_swap = integers("process_tree_swap_bytes")
+    required_series = [
         ("worker tree RSS", worker_rss),
-        ("cgroup memory.current", cgroup_current),
         ("observed memory", observed),
-        ("cgroup/container limit", limits),
         ("host available memory", host_available),
         ("swap current", swap),
-    ):
+    ]
+    if task034_wsl:
+        required_series.append(("process-tree swap", process_tree_swap))
+    else:
+        required_series.extend(
+            [
+                ("cgroup memory.current", cgroup_current),
+                ("cgroup/container limit", limits),
+            ]
+        )
+    for label, values in required_series:
         if len(values) != len(samples):
             failures.append(f"{label} was not available for every sample")
     limit_states = [sample.get("cgroup_memory_limit_state") for sample in samples]
-    if any(state == "unbounded" for state in limit_states):
-        failures.append("cgroup/container limit was unbounded during sampling")
-    elif any(state != "finite" for state in limit_states):
-        failures.append("cgroup/container limit authority was unreadable during sampling")
+    if not task034_wsl:
+        if any(state == "unbounded" for state in limit_states):
+            failures.append("cgroup/container limit was unbounded during sampling")
+        elif any(state != "finite" for state in limit_states):
+            failures.append("cgroup/container limit authority was unreadable during sampling")
     nonzero_swap_count = sum(value != 0 for value in swap)
     if nonzero_swap_count:
         failures.append("swap current was nonzero during one or more samples")
-    required_authorities = (
+    required_authorities = [
         "worker_tree_rss_sum_bytes",
-        "cgroup_memory_current_bytes",
         "observed_memory_bytes",
-        "cgroup_memory_limit_bytes",
         "host_available_memory_bytes",
         "swap_current_bytes",
-    )
+    ]
+    if task034_wsl:
+        required_authorities.extend(
+            ["process_tree_swap_bytes", "process_tree_all_status_readable"]
+        )
+    else:
+        required_authorities.extend(
+            ["cgroup_memory_current_bytes", "cgroup_memory_limit_bytes"]
+        )
     authority_unreadable_count = sum(
         any(
-            not isinstance(sample.get(field), int) or sample[field] < 0
+            (
+                sample.get(field) is not True
+                if field == "process_tree_all_status_readable"
+                else not isinstance(sample.get(field), int) or sample[field] < 0
+            )
             for field in required_authorities
         )
         for sample in samples
+        if sample.get("process_tree_exit_race_observed") is not True
     )
     initial_swap = swap[0] if swap else None
     final_swap = swap[-1] if swap else None
@@ -466,12 +652,30 @@ def summarize_samples(
             ),
             "observed_memory_peak_bytes": observed_peak,
             "observed_memory_definition": (
-                "max(live worker process-tree RSS sum, cgroup memory.current) per sample"
+                "max(process-tree RSS, dedicated job cgroup memory.current when present)"
+                if task034_wsl
+                else "max(live worker process-tree RSS sum, cgroup memory.current) per sample"
+            ),
+            "resource_authority_mode": resource_mode,
+            "process_tree_swap_peak_bytes": (
+                max(process_tree_swap) if process_tree_swap else None
+            ),
+            "dedicated_job_cgroup_observed": any(
+                sample.get("cgroup_memory_is_dedicated_job_authority") is True
+                for sample in samples
             ),
             "cgroup_memory_limit_bytes": limit,
             "cgroup_memory_limit_state": (
-                "finite" if limit_states and all(state == "finite" for state in limit_states)
-                else "unbounded" if "unbounded" in limit_states
+                "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+                if task034_wsl
+                and not any(
+                    sample.get("cgroup_memory_is_dedicated_job_authority") is True
+                    for sample in samples
+                )
+                else "finite"
+                if limit_states and all(state == "finite" for state in limit_states)
+                else "unbounded"
+                if "unbounded" in limit_states
                 else "unreadable"
             ),
             "effective_memory_bytes": effective,
@@ -559,6 +763,23 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 )
                 sample["sample_kind"] = "worker"
                 sample["elapsed_seconds"] = time.monotonic() - started
+                decision: dict[str, Any] | None = None
+                if return_code is None:
+                    decision = watchdog_decision(
+                        sample,
+                        preflight=preflight,
+                        elapsed_seconds=float(sample["elapsed_seconds"]),
+                        wall_timeout_seconds=float(args.wall_timeout_seconds),
+                    )
+                    exit_race_code = _natural_exit_after_process_tree_sample(
+                        process, decision
+                    )
+                    if exit_race_code is not None:
+                        sample["process_tree_exit_race_observed"] = True
+                        sample["worker_exit_code_observed_after_sample"] = int(
+                            exit_race_code
+                        )
+                        return_code = int(exit_race_code)
                 samples.append(sample)
                 raw_stream.write(
                     json.dumps(sample, ensure_ascii=False, allow_nan=False) + "\n"
@@ -566,12 +787,7 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 raw_stream.flush()
                 if return_code is not None:
                     break
-                decision = watchdog_decision(
-                    sample,
-                    preflight=preflight,
-                    elapsed_seconds=float(sample["elapsed_seconds"]),
-                    wall_timeout_seconds=float(args.wall_timeout_seconds),
-                )
+                assert decision is not None
                 if decision["warning"] and not warning_triggered:
                     warning_triggered = True
                     warning_first_observed_bytes = int(sample["observed_memory_bytes"])
@@ -681,16 +897,27 @@ def run_watchdog(args: argparse.Namespace) -> int:
                 "controlled_termination": controlled_termination,
                 "process_tree_cleanup": cleanup,
                 "threshold_rule": (
-                    "effective=min(container limit, preflight host available, 14 GiB); "
+                    "Task034 effective=min(user 220 GiB, 0.85*WSL total, "
+                    "MemAvailable-24 GiB); warning=0.80*effective; "
+                    "terminate=0.95*effective"
+                    if preflight.get("resource_authority_mode")
+                    == "task034_wsl_effective_limit"
+                    else "effective=min(container limit, preflight host available, 14 GiB); "
                     "warning=effective*(11.5/14); terminate=effective*(13/14)"
                 ),
             },
             "qualification": {
                 "memory_summary_qualified": not failures,
                 "requires_zero_swap_every_sample": True,
-                "requires_finite_container_limit": True,
-                "warning_scale": WARNING_SCALE,
-                "termination_scale": TERMINATION_SCALE,
+                "requires_finite_container_limit": (
+                    preflight.get("resource_authority_mode")
+                    != "task034_wsl_effective_limit"
+                ),
+                "resource_authority_mode": preflight.get(
+                    "resource_authority_mode"
+                ),
+                "warning_scale": preflight.get("warning_scale"),
+                "termination_scale": preflight.get("termination_scale"),
             },
             "failures": failures,
         }

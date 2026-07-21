@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import math
 import json
 import os
 import subprocess
@@ -13,6 +14,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from benchmarks.task034_wsl_resources import (
+    cgroup_snapshot,
+    effective_memory_limit,
+    vmstat_swap_pages,
+)
 from benchmarks.run_direct_memory_forensics import (
     TIMELINE_FIELDS,
     _add_cpu_core_equivalents,
@@ -67,18 +73,26 @@ def _host_available_bytes() -> int | None:
 
 
 def _resource_snapshot() -> dict[str, Any]:
-    root = Path("/sys/fs/cgroup")
-    memory_max, memory_max_state = _read_int_or_max(root / "memory.max")
-    swap_max, swap_max_state = _read_int_or_max(root / "memory.swap.max")
+    cgroup = cgroup_snapshot()
+    memory = effective_memory_limit()
+    swap = vmstat_swap_pages()
+    memory_max = cgroup.get("memory_limit_bytes")
     return {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "cgroup_path": cgroup.get("path"),
+        "cgroup_is_dedicated_job_authority": cgroup.get("dedicated_job_cgroup", False),
         "cgroup_memory_max_bytes": memory_max,
-        "cgroup_memory_max_state": memory_max_state,
-        "cgroup_swap_max_bytes": swap_max,
-        "cgroup_swap_max_state": swap_max_state,
-        "cgroup_memory_current_bytes": _read_int(root / "memory.current"),
-        "cgroup_swap_current_bytes": _read_int(root / "memory.swap.current"),
-        "host_available_bytes": _host_available_bytes(),
+        "cgroup_memory_max_state": (
+            "finite" if isinstance(memory_max, int) else "unbounded_or_unreadable"
+        ),
+        "cgroup_swap_max_bytes": None,
+        "cgroup_swap_max_state": "not_used_as_limit",
+        "cgroup_memory_current_bytes": cgroup.get("memory_current_bytes"),
+        "cgroup_swap_current_bytes": cgroup.get("swap_current_bytes"),
+        "host_available_bytes": memory.get("mem_available_bytes"),
+        "wsl_total_bytes": memory.get("mem_total_bytes"),
+        "task034_effective_limit": memory,
+        "wsl_vm_global_swap_diagnostic": swap,
     }
 
 
@@ -104,10 +118,14 @@ def _full3d_config(args: argparse.Namespace):
 
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
     full_solve = args.run_kind == "full-solve"
+    factorization_only = args.run_kind == "factorization-only"
     return replace(
         cfg,
+        polarization_kind=args.polarization_kind,
+        custom_polarization=None,
         petsc_direct_solver_profile=args.profile,
-        matrix_diagnostics_assemble_only=not full_solve,
+        matrix_diagnostics_assemble_only=args.run_kind == "assembly-only",
+        matrix_diagnostics_factorization_only=factorization_only,
         full3d_reference_export=full_solve,
         full3d_reference_plane_z=REFERENCE_PLANES_NM if full_solve else (),
         full3d_reference_sample_count_x=40,
@@ -128,17 +146,25 @@ def _worker(args: argparse.Namespace) -> int:
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Task33 p3/p4 target full3D assembly calibration and controlled "
-            "direct-reference watchdog."
+            "Task33/34 p2/p3/p4 target full3D assembly calibration and "
+            "controlled direct-reference watchdog."
         )
     )
-    parser.add_argument("--degree", type=int, choices=(3, 4), required=True)
+    parser.add_argument("--degree", type=int, choices=(2, 3, 4), required=True)
     parser.add_argument(
-        "--h-nm", type=float, choices=(10.0, 7.5, 5.0), default=5.0
+        "--h-nm",
+        type=float,
+        choices=(10.0, 7.5, 5.0, 3.0, 2.0, 1.0),
+        default=5.0,
+    )
+    parser.add_argument(
+        "--polarization-kind",
+        choices=("s", "p"),
+        default="s",
     )
     parser.add_argument(
         "--run-kind",
-        choices=("assembly-only", "full-solve"),
+        choices=("assembly-only", "factorization-only", "full-solve"),
         default="assembly-only",
     )
     parser.add_argument("--mpi-size", type=int, default=4)
@@ -151,8 +177,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
     parser.add_argument("--poll-interval", type=float, default=0.25)
-    parser.add_argument("--warning-gib", type=float, default=10.549840927124023)
-    parser.add_argument("--terminate-gib", type=float, default=11.925907135009766)
+    parser.add_argument("--warning-gib", type=float)
+    parser.add_argument("--terminate-gib", type=float)
     parser.add_argument("--timeout-seconds", type=float, default=7200.0)
     parser.add_argument(
         "--allow-swap",
@@ -179,11 +205,36 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task034-p4-h3-added-point",
+        action="store_true",
+        help=(
+            "Explicit Task034 user-added p4/h3 path. It retains the same-h "
+            "p3 full-solve and current-SHA p4 trace prerequisites, but uses "
+            "the live Task034 warning threshold instead of Task033's fixed "
+            "10 GiB p3 cap."
+        ),
+    )
+    parser.add_argument(
         "--verified-clean-sha",
         default=os.environ.get("TASK033_VERIFIED_CLEAN_SHA"),
     )
     parser.add_argument("--worker", action="store_true")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    allowed_h_by_degree = {
+        2: {5.0, 3.0, 2.0, 1.0},
+        3: {10.0, 7.5, 5.0, 3.0, 2.0},
+        4: {10.0, 7.5, 5.0, 3.0},
+    }
+    if args.h_nm not in allowed_h_by_degree[args.degree]:
+        parser.error(
+            f"Task034 p{args.degree}/h{args.h_nm:g} is outside the "
+            "fixed-geometry candidate matrix."
+        )
+    if args.task034_p4_h3_added_point and not (
+        args.degree == 4 and math.isclose(args.h_nm, 3.0)
+    ):
+        parser.error("--task034-p4-h3-added-point is restricted to p4/h3.")
+    return args
 
 
 def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
@@ -203,16 +254,24 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
     except (OSError, json.JSONDecodeError) as exc:
         raise SystemExit(f"p4 is locked: cannot read p3 gate record: {exc}") from exc
     resource = record.get("resource_authority") or {}
+    memory = resource.get("memory_authority_gib")
+    workstation_h3 = bool(args.task034_p4_h3_added_point)
+    memory_threshold_gib = (
+        float(args.warning_gib)
+        if workstation_h3 and isinstance(args.warning_gib, (int, float))
+        else 10.0
+    )
+    memory_gate_name = (
+        "memory_below_live_task034_warning" if workstation_h3 else "memory_below_10_gib"
+    )
     checks = {
         "p3_degree": record.get("degree") == 3,
         "same_h": float(record.get("h_nm", -1.0)) == args.h_nm,
         "full_solve": record.get("run_kind") == "full-solve",
         "reference_pass": record.get("status") == "full3d_reference_pass",
         "no_swap": record.get("no_swap") is True,
-        "memory_below_10_gib": (
-            isinstance(resource.get("memory_authority_gib"), (int, float))
-            and float(resource["memory_authority_gib"]) < 10.0
-        ),
+        memory_gate_name: isinstance(memory, (int, float))
+        and float(memory) < memory_threshold_gib,
     }
     failures = [name for name, passed in checks.items() if not passed]
     if failures:
@@ -231,25 +290,16 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
     trace_gates = trace_record.get("gates") or {}
     trace_checks = {
         "record_type": (
-            trace_record.get("record_type")
-            == "p4_four_mode_matched_trace_aggregate"
+            trace_record.get("record_type") == "p4_four_mode_matched_trace_aggregate"
         ),
-        "status": (
-            trace_record.get("status") == "p4_four_mode_matched_trace_pass"
-        ),
-        "four_mode_trace_pass": (
-            trace_gates.get("p4_four_mode_matched_trace") is True
-        ),
-        "mpi_identity_pass": (
-            trace_gates.get("mpi1_mpi4_compact_identity") is True
-        ),
+        "status": (trace_record.get("status") == "p4_four_mode_matched_trace_pass"),
+        "four_mode_trace_pass": (trace_gates.get("p4_four_mode_matched_trace") is True),
+        "mpi_identity_pass": (trace_gates.get("mpi1_mpi4_compact_identity") is True),
         "same_current_source": (
             trace_record.get("source_commit_sha") == args.verified_clean_sha
         ),
     }
-    trace_failures = [
-        name for name, passed in trace_checks.items() if not passed
-    ]
+    trace_failures = [name for name, passed in trace_checks.items() if not passed]
     if trace_failures:
         raise SystemExit(
             f"p4 is locked; failed four-mode trace gates: {trace_failures}"
@@ -265,6 +315,8 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
             "sha256": _sha256(trace_path),
             "checks": trace_checks,
         },
+        "task034_p4_h3_added_point": workstation_h3,
+        "p3_memory_threshold_gib": memory_threshold_gib,
         "pass": True,
     }
 
@@ -272,33 +324,38 @@ def _validate_p4_gate(args: argparse.Namespace) -> dict[str, Any] | None:
 def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     def maximum(name: str) -> float | None:
         values = [
-            float(row[name])
-            for row in rows
-            if isinstance(row.get(name), (int, float))
+            float(row[name]) for row in rows if isinstance(row.get(name), (int, float))
         ]
         return max(values) if values else None
 
     def delta(name: str) -> int | None:
         values = [
-            int(row[name])
-            for row in rows
-            if isinstance(row.get(name), (int, float))
+            int(row[name]) for row in rows if isinstance(row.get(name), (int, float))
         ]
         return max(values) - min(values) if values else None
 
     worker_mb = maximum("worker_rank_rss_sum_mb")
-    cgroup_mb = maximum("container_cgroup_current_mb")
-    swap_mb = maximum("container_swap_current_mb")
+    process_tree_mb = maximum("mpi_process_tree_rss_mb")
+    process_tree_swap_mb = maximum("mpi_process_tree_swap_mb")
+    dedicated_rows = [row for row in rows if row.get("job_cgroup_dedicated") is True]
+    dedicated_cgroup_values = [
+        float(row["container_cgroup_current_mb"])
+        for row in dedicated_rows
+        if isinstance(row.get("container_cgroup_current_mb"), (int, float))
+    ]
+    dedicated_swap_values = [
+        float(row["container_swap_current_mb"])
+        for row in dedicated_rows
+        if isinstance(row.get("container_swap_current_mb"), (int, float))
+    ]
+    cgroup_mb = max(dedicated_cgroup_values) if dedicated_cgroup_values else None
+    swap_mb = max(dedicated_swap_values) if dedicated_swap_values else None
     memory_authority_mb = (
         None
-        if worker_mb is None or cgroup_mb is None
-        else max(worker_mb, cgroup_mb)
+        if process_tree_mb is None
+        else max(process_tree_mb, float(cgroup_mb or 0.0))
     )
-    combined_authority_mb = (
-        None
-        if worker_mb is None or cgroup_mb is None or swap_mb is None
-        else max(worker_mb, cgroup_mb + swap_mb)
-    )
+    combined_authority_mb = memory_authority_mb
     worker_rank_counts: list[int] = []
     for row in rows:
         try:
@@ -311,6 +368,9 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "poll_interval_seconds": None,
         "sample_count": len(rows),
         "max_simultaneous_worker_rss_mb": worker_mb,
+        "max_process_tree_rss_mb": process_tree_mb,
+        "max_process_tree_swap_mb": process_tree_swap_mb,
+        "dedicated_job_cgroup_observed": bool(dedicated_rows),
         "max_container_cgroup_current_mb": cgroup_mb,
         "max_container_swap_current_mb": swap_mb,
         "memory_authority_mb": memory_authority_mb,
@@ -319,9 +379,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "combined_memory_swap_authority_mb": combined_authority_mb,
         "combined_memory_swap_authority_gib": (
-            None
-            if combined_authority_mb is None
-            else combined_authority_mb / 1024.0
+            None if combined_authority_mb is None else combined_authority_mb / 1024.0
         ),
         "max_observed_worker_rank_count": (
             max(worker_rank_counts) if worker_rank_counts else 0
@@ -338,8 +396,21 @@ def _factorization_stage_seen(events: list[dict[str, Any]]) -> bool:
         in {
             "before_ksp_setup",
             "after_ksp_setup_factorized",
-            "before_kspsolve",
-            "after_kspsolve",
+            "before_ksp_solve",
+            "after_ksp_solve",
+        }
+        for event in events
+    )
+
+
+def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
+    return any(
+        str(event.get("stage"))
+        in {
+            "stage4_dtn_augmented_solve",
+            "before_ksp_solve",
+            "during_ksp_solve_peak",
+            "after_ksp_solve",
         }
         for event in events
     )
@@ -375,6 +446,9 @@ def _qualify(
             isinstance(matrix.get("matrix_nnz_used"), (int, float))
             and float(matrix["matrix_nnz_used"]) > 0.0
         ),
+        "polarization_identity": (
+            solver_summary.get("polarization_kind") == args.polarization_kind
+        ),
     }
     if args.run_kind == "assembly-only":
         checks = {
@@ -389,6 +463,26 @@ def _qualify(
             "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
             "no_swap": no_swap,
         }
+    elif args.run_kind == "factorization-only":
+        factor_inventory = solver_summary.get("stage4_dtn_factor_inventory")
+        checks = {
+            **common,
+            "diagnostic_factorization_only_status": (
+                solver_summary.get("case_status") == "diagnostic_factorization_only"
+            ),
+            "assemble_only_false": (
+                solver_summary.get("matrix_diagnostics_assemble_only") is False
+            ),
+            "factorization_only_flag": (
+                solver_summary.get("matrix_diagnostics_factorization_only") is True
+            ),
+            "factorization_stage_seen": _factorization_stage_seen(events),
+            "solve_stage_not_seen": not _solve_stage_seen(events),
+            "factor_inventory_recorded": isinstance(factor_inventory, dict),
+            "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
+            "official_result_false": solver_summary.get("official_result") is False,
+            "no_swap": no_swap,
+        }
     else:
         residual = solver_summary.get("linear_system_relative_residual")
         checks = {
@@ -397,6 +491,9 @@ def _qualify(
             "official_result": solver_summary.get("official_result") is True,
             "assemble_only_false": (
                 solver_summary.get("matrix_diagnostics_assemble_only") is False
+            ),
+            "factorization_only_false": (
+                solver_summary.get("matrix_diagnostics_factorization_only") is False
             ),
             "ksp_converged": solver_summary.get("ksp_converged") is True,
             "true_residual_le_1e-9": (
@@ -424,32 +521,34 @@ def _run_parent(args: argparse.Namespace) -> int:
         raise SystemExit("--mpi-size must be positive.")
     if args.poll_interval < 0.05:
         raise SystemExit("--poll-interval must be at least 0.05 seconds.")
+    effective = effective_memory_limit()
+    if effective["effective_limit_bytes"] is None:
+        raise SystemExit("Task034 effective WSL memory limit is unreadable.")
+    if args.warning_gib is None:
+        args.warning_gib = float(effective["warning_bytes"]) / GIB
+    if args.terminate_gib is None:
+        args.terminate_gib = float(effective["termination_bytes"]) / GIB
     if args.warning_gib <= 0 or args.terminate_gib <= args.warning_gib:
         raise SystemExit("Require 0 < warning-gib < terminate-gib.")
     if args.timeout_seconds <= 0:
         raise SystemExit("--timeout-seconds must be positive.")
-    if args.run_kind == "assembly-only" and args.allow_swap:
-        raise SystemExit("assembly-only calibration forbids --allow-swap.")
+    if args.run_kind != "full-solve" and args.allow_swap:
+        raise SystemExit(
+            "assembly-only and factorization-only calibration forbid --allow-swap."
+        )
     p4_gate = _validate_p4_gate(args)
     source_before = _source_provenance(args)
     environment_before = _resource_snapshot()
-    if environment_before["cgroup_memory_max_state"] != "finite":
-        raise SystemExit("Finite cgroup memory.max is required.")
-    if environment_before["cgroup_memory_current_bytes"] is None:
-        raise SystemExit("Readable cgroup memory.current is required.")
-    if environment_before["cgroup_swap_current_bytes"] is None:
-        raise SystemExit("Readable cgroup memory.swap.current is required.")
-    if (
-        args.run_kind == "assembly-only"
-        and environment_before["cgroup_swap_current_bytes"] != 0
-    ):
-        raise SystemExit("assembly-only preflight requires zero cgroup swap current.")
+    if environment_before["host_available_bytes"] is None:
+        raise SystemExit("Readable WSL MemAvailable is required.")
+    if environment_before["wsl_total_bytes"] is None:
+        raise SystemExit("Readable WSL MemTotal is required.")
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = (
         args.run_dir
         or args.artifact_root
-        / f"p{args.degree}_h{args.h_nm:g}_{args.run_kind}_mpi{args.mpi_size}_{timestamp}"
+        / f"p{args.degree}_h{args.h_nm:g}_pol{args.polarization_kind}_{args.run_kind}_mpi{args.mpi_size}_{timestamp}"
     ).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
@@ -468,6 +567,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         str(args.degree),
         "--h-nm",
         str(args.h_nm),
+        "--polarization-kind",
+        args.polarization_kind,
         "--run-kind",
         args.run_kind,
         "--profile",
@@ -506,18 +607,31 @@ def _run_parent(args: argparse.Namespace) -> int:
             _add_cpu_core_equivalents(row, previous)
             previous = row
             rows.append(row)
-            worker_mb = row.get("worker_rank_rss_sum_mb")
-            cgroup_mb = row.get("container_cgroup_current_mb")
-            swap_mb = row.get("container_swap_current_mb")
+            process_tree_mb = row.get("mpi_process_tree_rss_mb")
+            process_tree_swap_mb = row.get("mpi_process_tree_swap_mb")
+            cgroup_mb = (
+                row.get("container_cgroup_current_mb")
+                if row.get("job_cgroup_dedicated") is True
+                else 0.0
+            )
+            cgroup_swap_mb = (
+                row.get("container_swap_current_mb")
+                if row.get("job_cgroup_dedicated") is True
+                else 0.0
+            )
             authority_readable = all(
                 isinstance(value, (int, float))
-                for value in (worker_mb, cgroup_mb, swap_mb)
+                for value in (
+                    process_tree_mb,
+                    process_tree_swap_mb,
+                    cgroup_mb,
+                    cgroup_swap_mb,
+                )
             )
             authority_gib = (
                 None
                 if not authority_readable
-                else max(float(worker_mb), float(cgroup_mb) + float(swap_mb))
-                / 1024.0
+                else max(float(process_tree_mb), float(cgroup_mb)) / 1024.0
             )
             if authority_gib is not None:
                 warning_triggered |= authority_gib >= args.warning_gib
@@ -553,9 +667,11 @@ def _run_parent(args: argparse.Namespace) -> int:
     sampler = _sampler_summary(rows)
     sampler["poll_interval_seconds"] = args.poll_interval
     no_swap = bool(
-        sampler["max_container_swap_current_mb"] == 0.0
-        and sampler["pswpin_delta_pages"] == 0
-        and sampler["pswpout_delta_pages"] == 0
+        sampler["max_process_tree_swap_mb"] == 0.0
+        and (
+            not sampler["dedicated_job_cgroup_observed"]
+            or sampler["max_container_swap_current_mb"] == 0.0
+        )
     )
     qualification = _qualify(
         args=args,
@@ -586,6 +702,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     status = (
         "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
+        else "factorization_calibration_pass"
+        if qualification["pass"] and args.run_kind == "factorization-only"
         else "full3d_reference_pass"
         if qualification["pass"]
         else "formal_not_pass"
@@ -598,6 +716,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "status": status,
         "degree": args.degree,
         "h_nm": args.h_nm,
+        "polarization_kind": args.polarization_kind,
         "run_kind": args.run_kind,
         "mpi_size": args.mpi_size,
         "profile": args.profile,
@@ -617,38 +736,31 @@ def _run_parent(args: argparse.Namespace) -> int:
             "warning_gib": args.warning_gib,
             "termination_gib": args.terminate_gib,
             "termination_authority": (
-                "max(simultaneous worker RSS, cgroup memory.current + "
-                "cgroup memory.swap.current)"
+                "max(process-tree RSS, dedicated job cgroup memory.current when present)"
             ),
             "timeout_seconds": args.timeout_seconds,
+            "formal_no_swap_authority": "process-tree VmSwap plus dedicated job cgroup swap",
+            "wsl_global_pswp_role": "diagnostic_only",
+            "mumps_ooc_role": "explicit_scratch_profile_not_linux_swap",
+            "effective_limit": effective,
         },
         "environment_before": environment_before,
         "environment_after": _resource_snapshot(),
         "warning_triggered": warning_triggered,
         "terminated_for_memory": terminated_for_memory,
         "terminated_for_timeout": terminated_for_timeout,
-        "terminated_for_authority_unreadable": (
-            terminated_for_authority_unreadable
-        ),
+        "terminated_for_authority_unreadable": (terminated_for_authority_unreadable),
         "no_swap": no_swap,
         "resource_authority": sampler,
         "calibration": {
             "exact_rows": matrix.get("matrix_rows"),
             "exact_assembled_nnz": matrix.get("matrix_nnz_used"),
             "matrix_petsc_memory_bytes": matrix.get("matrix_memory_bytes"),
-            "matrix_payload_estimate_bytes": matrix.get(
-                "matrix_memory_estimate_bytes"
-            ),
+            "matrix_payload_estimate_bytes": matrix.get("matrix_memory_estimate_bytes"),
             "num_nedelec_dofs": solver_summary.get("num_nedelec_dofs"),
-            "num_auxiliary_dofs": solver_summary.get(
-                "stage4_dtn_num_auxiliary_dofs"
-            ),
-            "floquet_constraint_rows": solver_summary.get(
-                "floquet_num_constraints"
-            ),
-            "floquet_constraint_raw_map_nnz": solver_summary.get(
-                "floquet_raw_map_nnz"
-            ),
+            "num_auxiliary_dofs": solver_summary.get("stage4_dtn_num_auxiliary_dofs"),
+            "floquet_constraint_rows": solver_summary.get("floquet_num_constraints"),
+            "floquet_constraint_raw_map_nnz": solver_summary.get("floquet_raw_map_nnz"),
             "floquet_constraint_timings_seconds": solver_summary.get(
                 "floquet_constraint_timings_seconds"
             ),
@@ -669,9 +781,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "stage4_dtn_augmented_matrix_stats_after_finalize"
             ),
             "final": matrix,
-            "constraint_transform": solver_summary.get(
-                "constraint_matrix_transform"
-            ),
+            "constraint_transform": solver_summary.get("constraint_matrix_transform"),
         },
         "timings_seconds": solver_summary.get("timings_seconds"),
         "historical_peak_upper_bound_mb": _historical_peak_upper_bound(
@@ -705,6 +815,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "status": status,
                 "degree": args.degree,
                 "h_nm": args.h_nm,
+                "polarization_kind": args.polarization_kind,
                 "run_kind": args.run_kind,
                 "memory_authority_gib": sampler["memory_authority_gib"],
                 "combined_memory_swap_authority_gib": sampler[

@@ -220,6 +220,92 @@ def _qep_overlap(
     return value
 
 
+def _batched_left_dots(
+    action: PETSc.Vec, left_vectors: Sequence[PETSc.Vec]
+) -> np.ndarray:
+    """Evaluate ``left^H action`` with extended-precision accumulation.
+
+    PETSc stores the vectors in complex128, but a complex128 dot reduction can
+    lose the small remainder when modal overlap terms cancel.  Accumulate each
+    rank-local dot in ``clongdouble`` and reduce only the resulting scalar
+    real/imaginary pairs in ``longdouble``.  This keeps vectors distributed
+    while avoiding both local and cross-rank complex128 summation loss.
+    """
+
+    action_local = np.asarray(
+        action.getArray(readonly=True), dtype=np.clongdouble
+    )
+    local_values = np.empty((len(left_vectors), 2), dtype=np.longdouble)
+    for index, left in enumerate(left_vectors):
+        left_local = np.asarray(
+            left.getArray(readonly=True), dtype=np.clongdouble
+        )
+        if left_local.shape != action_local.shape:
+            raise ValueError("Left and action vectors have different layouts.")
+        value = np.sum(
+            np.conj(left_local) * action_local,
+            dtype=np.clongdouble,
+        )
+        local_values[index, 0] = value.real
+        local_values[index, 1] = value.imag
+
+    global_values = np.empty_like(local_values)
+    action.getComm().tompi4py().Allreduce(
+        local_values, global_values, op=MPI.SUM
+    )
+    return np.asarray(
+        global_values[:, 0] + 1j * global_values[:, 1],
+        dtype=np.complex128,
+    )
+
+
+def _qep_overlap_matrix(
+    operators: QuadraticBetaOperators,
+    left_betas: Sequence[complex],
+    right_betas: Sequence[complex],
+    left_vectors: Sequence[PETSc.Vec],
+    right_vectors: Sequence[PETSc.Vec],
+) -> np.ndarray:
+    """Build the divided-difference overlap with O(M) sparse MatMults.
+
+    The previous elementwise implementation rebuilt ``K1 @ right`` and
+    ``K2 @ right`` for every left/right pair, requiring O(M^2) sparse
+    MatMults.  Reusing both actions per right mode reduces that work to O(M).
+    Both dot-product accumulation and the final scalar combination use
+    extended precision to avoid cancellation in
+    ``K1 @ right + beta*K2 @ right``.
+    """
+
+    if len(left_betas) != len(left_vectors):
+        raise ValueError("Left beta and vector counts differ.")
+    if len(right_betas) != len(right_vectors):
+        raise ValueError("Right beta and vector counts differ.")
+    matrix = np.empty(
+        (len(left_vectors), len(right_vectors)), dtype=np.complex128
+    )
+    for column, (beta_right, right) in enumerate(
+        zip(right_betas, right_vectors)
+    ):
+        k1_action = operators.K1.createVecLeft()
+        k2_action = operators.K2.createVecLeft()
+        try:
+            operators.K1.mult(right, k1_action)
+            operators.K2.mult(right, k2_action)
+            k1_overlaps = _batched_left_dots(k1_action, left_vectors)
+            k2_overlaps = _batched_left_dots(k2_action, left_vectors)
+            beta_sums = np.asarray(left_betas, dtype=np.clongdouble)
+            beta_sums += np.clongdouble(beta_right)
+            values = np.asarray(k1_overlaps, dtype=np.clongdouble)
+            values += beta_sums * np.asarray(
+                k2_overlaps, dtype=np.clongdouble
+            )
+            matrix[:, column] = np.asarray(values, dtype=np.complex128)
+        finally:
+            k1_action.destroy()
+            k2_action.destroy()
+    return matrix
+
+
 def _electric_mass_overlap(
     mass: PETSc.Mat, first: PETSc.Vec, second: PETSc.Vec
 ) -> complex:
@@ -334,26 +420,6 @@ def _linear_combination(
         if abs(coefficient) > 0.0:
             result.axpy(complex(coefficient), vector)
     return result
-
-
-def _biorthogonality_matrix(
-    operators: QuadraticBetaOperators,
-    left_betas: Sequence[complex],
-    right_betas: Sequence[complex],
-    left_vectors: Sequence[PETSc.Vec],
-    right_vectors: Sequence[PETSc.Vec],
-) -> np.ndarray:
-    matrix = np.empty(
-        (len(left_betas), len(right_betas)), dtype=np.complex128
-    )
-    for row, (beta_left, left) in enumerate(zip(left_betas, left_vectors)):
-        for column, (beta_right, right) in enumerate(
-            zip(right_betas, right_vectors)
-        ):
-            matrix[row, column] = _qep_overlap(
-                operators, left, beta_left, right, beta_right
-            )
-    return matrix
 
 
 def _identity_error_metrics(matrix: np.ndarray) -> tuple[float, float]:
@@ -581,6 +647,16 @@ def build_biorthogonal_mode_basis(
                 "Adjoint QEP returned fewer left modes than the right-mode basis."
             )
 
+        candidate_left_betas = [
+            np.conj(complex(mode.beta)) for mode in left_candidates
+        ]
+        pairing_overlaps = _qep_overlap_matrix(
+            operators,
+            candidate_left_betas,
+            [complex(mode.beta) for mode in right_modes],
+            [mode.right_reduced for mode in left_candidates],
+            [mode.right_reduced for mode in right_modes],
+        )
         pairing_cost = np.empty(
             (len(right_modes), len(left_candidates)), dtype=np.float64
         )
@@ -589,15 +665,7 @@ def build_biorthogonal_mode_basis(
                 beta_error = _relative_beta_distance(
                     np.conj(left.beta), right.beta
                 )
-                overlap = abs(
-                    _qep_overlap(
-                        operators,
-                        left.right_reduced,
-                        np.conj(left.beta),
-                        right.right_reduced,
-                        right.beta,
-                    )
-                )
+                overlap = abs(pairing_overlaps[column, row])
                 pairing_cost[row, column] = beta_error - 1.0e-8 * np.log1p(
                     overlap
                 )
@@ -676,6 +744,13 @@ def build_biorthogonal_mode_basis(
             relative_tolerance=near_degenerate_tolerance,
             absolute_tolerance=1.0e-12,
         )
+        raw_biorthogonality = _qep_overlap_matrix(
+            operators,
+            left_betas,
+            betas,
+            left_reduced,
+            [mode.right_reduced for mode in right_modes],
+        )
         group_payload: list[
             tuple[tuple[int, ...], complex, float, float, str]
         ] = []
@@ -686,18 +761,7 @@ def build_biorthogonal_mode_basis(
                 (_relative_beta_distance(beta, center) for beta in group_betas),
                 default=0.0,
             )
-            raw_overlap = np.empty(
-                (len(indices), len(indices)), dtype=np.complex128
-            )
-            for local_row, global_row in enumerate(indices):
-                for local_column, global_column in enumerate(indices):
-                    raw_overlap[local_row, local_column] = _qep_overlap(
-                        operators,
-                        left_reduced[global_row],
-                        left_betas[global_row],
-                        right_modes[global_column].right_reduced,
-                        betas[global_column],
-                    )
+            raw_overlap = raw_biorthogonality[np.ix_(indices, indices)]
             condition = float(np.linalg.cond(raw_overlap))
             if not np.isfinite(condition) or condition > maximum_overlap_condition:
                 raise RuntimeError(
@@ -724,14 +788,8 @@ def build_biorthogonal_mode_basis(
                     left_full[global_index] = new_full[local_index]
                 method = "near_degenerate_block_inverse"
             else:
-                for global_index in indices:
-                    diagonal = _qep_overlap(
-                        operators,
-                        left_reduced[global_index],
-                        left_betas[global_index],
-                        right_modes[global_index].right_reduced,
-                        betas[global_index],
-                    )
+                for local_index, global_index in enumerate(indices):
+                    diagonal = raw_overlap[local_index, local_index]
                     if abs(diagonal) <= 1.0e-14:
                         raise RuntimeError(
                             "Q'(beta) left/right overlap is numerically zero."
@@ -744,7 +802,7 @@ def build_biorthogonal_mode_basis(
         if log is not None:
             log("Task32 mode basis: biorthogonal group normalization complete")
 
-        biorthogonality = _biorthogonality_matrix(
+        biorthogonality = _qep_overlap_matrix(
             operators,
             left_betas,
             betas,

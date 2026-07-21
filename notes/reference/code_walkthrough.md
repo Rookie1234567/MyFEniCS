@@ -34,6 +34,7 @@ Task32 Phase 6e 的真实 QEP runner、Nedelec target-cell 路由、M2/4/6 研�
 | 23 | [`code_walkthrough/50_tests_and_benchmark_contract.md`](code_walkthrough/50_tests_and_benchmark_contract.md) | test 编号、case contract、checker Gate |
 | 24 | [`code_walkthrough/51_task032_fields_schur_and_memory.md`](code_walkthrough/51_task032_fields_schur_and_memory.md) | Task032 E/H/吸收重构、Modal-Schur 生命周期、截断/参数 smoke、外部同时内存采样与 non-PDE 0.7 nm projection |
 | 25 | [`code_walkthrough/52_task033_high_order_floquet_hp.md`](code_walkthrough/52_task033_high_order_floquet_hp.md) | Task033 高阶实体变换、Floquet、Case090/QEP/Hybrid/fixed-p D1、F0 completion；graded-h/1 TiB 仅为移交历史 |
+| 26 | [`../../docs/task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](../../docs/task034_workstation_wsl_adaptive_scalability/outcomes/summary.md) | Task034 hardening、Case093、40 行 hermetic facts；graded-h mechanism 与 field-driven adaptive 的边界 |
 
 ## 一句话调用链
 

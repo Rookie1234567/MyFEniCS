@@ -1,0 +1,252 @@
+{
+  "schema_version": "task034.numerical-blob-compatibility.v1",
+  "record_type": "evidence_to_current_checkout_numerical_blob_audit",
+  "timestamp_utc": "2026-07-20T09:43:45.164986+00:00",
+  "status": "numerical_blob_compatibility_pass",
+  "formal_pass": true,
+  "baseline": {
+    "commit_sha": "82a5107b5c2bfe4c466a0d00ead31d7b172e2af4",
+    "task033_completion_record": "benchmarks/cases/091_hybrid_hp_adaptivity_feasibility/records/task033_reduced_scope_completion.json",
+    "task033_completion_sha256": "b34e754badd2249a546f4c83776bee321710144cdc2c74c45d498498bd5ea980",
+    "review_authority": "docs/task033_high_order_floquet_hybrid_hp_adaptivity/review_report_v6.md"
+  },
+  "rows": [
+    {
+      "path": "src/common/config_3d.py",
+      "baseline_sha256": "21ff9213fbceff4587487dd928ae87585c7469f9e716aa88ac8fe01f97870b85",
+      "current_sha256": "5a54b2bf531db0e6da65122a098b06bd5b42468733627a77b49ce6dca930a6d2",
+      "byte_identical": false,
+      "classification": "diagnostic only",
+      "reason": "explicit factorization-only Gate flag defaults off; physical and full-solve configuration unchanged",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/common/analytic_fields_3d.py",
+      "baseline_sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "current_sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/common/high_order_quadrature.py",
+      "baseline_sha256": "55cb409f61cd4086013034e6c0f1dcabf696b8ae166b2f7725f78fb9de0124d9",
+      "current_sha256": "55cb409f61cd4086013034e6c0f1dcabf696b8ae166b2f7725f78fb9de0124d9",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/geometry/mesh_builder_3d.py",
+      "baseline_sha256": "357f393b2778d0b2db41954018cba92a81abf82f7f9445fec9e65f0b8039b123",
+      "current_sha256": "357f393b2778d0b2db41954018cba92a81abf82f7f9445fec9e65f0b8039b123",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/constraints/floquet_3d.py",
+      "baseline_sha256": "5a96bce69e980d3772714d3f2a6ed17b1eb1f8a1208bd886507e9a698e033fbf",
+      "current_sha256": "5a96bce69e980d3772714d3f2a6ed17b1eb1f8a1208bd886507e9a698e033fbf",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/constraints/floquet_3d_high_order.py",
+      "baseline_sha256": "db9d7ce4f0635511c735dbc677bc0945b0a1ea1282d31f6aff97a4f207f2a872",
+      "current_sha256": "4488320425ef3f99f8deea8495a882d40d6df6a3ca63e53aad66aee5b71b1ff8",
+      "byte_identical": false,
+      "classification": "lifecycle only",
+      "reason": "weak-owner cache lookup and explicit clear; topology coefficients unchanged",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/constraints/high_order_floquet_trace.py",
+      "baseline_sha256": "1d887708a6b637029a000f0cf55b5f491a119e01ab2111d00899b0c1fe595fa7",
+      "current_sha256": "bff0b8d773d87e46f2296089be01b314d701939fd436dad83641f57fcf566b1a",
+      "byte_identical": false,
+      "classification": "lifecycle only",
+      "reason": "cache ownership storage changed from strong to weak references",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/constraints/cross_section_floquet.py",
+      "baseline_sha256": "051c14252ec0749ea414cac7a6c36f803c7ae0c2947fba80b4567aa65fcadc2e",
+      "current_sha256": "051c14252ec0749ea414cac7a6c36f803c7ae0c2947fba80b4567aa65fcadc2e",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/modes/cross_section_spaces.py",
+      "baseline_sha256": "37fd2fe36fb69791282ff05c4243990fc5fc06b204505272a38319642ae1a1f5",
+      "current_sha256": "37fd2fe36fb69791282ff05c4243990fc5fc06b204505272a38319642ae1a1f5",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/modes/quadratic_beta_eigenproblem.py",
+      "baseline_sha256": "a869c51a062ad520854d8f338ff819a04c5d58ea5a8afaba3149bd2ee9ba56aa",
+      "current_sha256": "a869c51a062ad520854d8f338ff819a04c5d58ea5a8afaba3149bd2ee9ba56aa",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/modes/mode_classification.py",
+      "baseline_sha256": "dcacf3be6349e378f250b0c1dacbf1bac03af21cdebee5eab1e89a71be29f71a",
+      "current_sha256": "eac72888487e83624a7805b3e837cb7463737864e83e50a895dda681c08cedb1",
+      "byte_identical": false,
+      "classification": "numerical kernel intentionally changed and requires PDE rerun",
+      "reason": "batched QEP overlap evaluation reuses MatMult actions and performs the final cancellation in extended precision; Hybrid QEP/PDE anchors must be rerun",
+      "requires_corresponding_pde_rerun": true,
+      "pass": true
+    },
+    {
+      "path": "src/coupling/hybrid_internal_modes.py",
+      "baseline_sha256": "f226955f8b928480aa335d1998dac54f10fb666f26bc77df0b644a4273bf9605",
+      "current_sha256": "f226955f8b928480aa335d1998dac54f10fb666f26bc77df0b644a4273bf9605",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/coupling/modal_trace_projection.py",
+      "baseline_sha256": "6322b1e3a59ca2c36bc5edd575404370018aa45bd067dc625e2e9aa926066e4e",
+      "current_sha256": "6322b1e3a59ca2c36bc5edd575404370018aa45bd067dc625e2e9aa926066e4e",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/postprocessing/hybrid_field_reconstruction.py",
+      "baseline_sha256": "e11a897629e75c19fdd743ffeaa1f492cdf4fe5f2de86781d0ded00e03ba0f23",
+      "current_sha256": "e11a897629e75c19fdd743ffeaa1f492cdf4fe5f2de86781d0ded00e03ba0f23",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "baseline_sha256": "f4097b65c30092bbb773b210a5c7e63aaf7d8faca9216dead1ac28cdadf132e1",
+      "current_sha256": "3ad15db038803757a00d283c3e3b9a1afd907452f42a1159eaaef592af274741",
+      "byte_identical": false,
+      "classification": "diagnostic only",
+      "reason": "factorization-only status and postprocess skip path; ordinary solve path unchanged",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/common_3d_fields.py",
+      "baseline_sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "current_sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/common_3d_postprocess.py",
+      "baseline_sha256": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "current_sha256": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "baseline_sha256": "22dceb2bb5f5bc20084c4669df7f2524911857785d6ef6a93758075958536eec",
+      "current_sha256": "a46daea1195f2dbb9235d0e17dfef9ca1d0ecf8d2f95629cf809c05d5974a2d6",
+      "byte_identical": false,
+      "classification": "diagnostic only",
+      "reason": "explicit return after KSPSetUp for staged Gate; KSPSolve path unchanged when the flag is false",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/hybrid_local_dtn.py",
+      "baseline_sha256": "c91dc839f2933c697c613f0d6f46f328b912f12a04d14ec7c585ef8278e14d4b",
+      "current_sha256": "c91dc839f2933c697c613f0d6f46f328b912f12a04d14ec7c585ef8278e14d4b",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/hybrid_fem_modal_schur_direct.py",
+      "baseline_sha256": "4f5ad904e42fbbf06a5f53a579a65c3e4d3c5b0624a03324759f98f4118aaa21",
+      "current_sha256": "8b1d453873165bf5878a245279ac15f27e2f346e5c4856e965083156a026a567",
+      "byte_identical": false,
+      "classification": "numerical kernel intentionally changed and requires PDE rerun",
+      "reason": "explicit MUMPS ICNTL(14)=100 workspace relaxation prevents INFOG(1)=-9 local-factor failures; Hybrid PDE anchors must be rerun",
+      "requires_corresponding_pde_rerun": true,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/common_3d_solve.py",
+      "baseline_sha256": "c7cdea364bc3c26f1ac08af3254c346e9832a3e131bc54a5863c2105626da17a",
+      "current_sha256": "c7cdea364bc3c26f1ac08af3254c346e9832a3e131bc54a5863c2105626da17a",
+      "byte_identical": true,
+      "classification": "numerical kernel unchanged",
+      "reason": "byte-identical to Task034 base",
+      "requires_corresponding_pde_rerun": false,
+      "pass": true
+    },
+    {
+      "path": "src/solvers/hcurl_multilevel.py",
+      "baseline_sha256": "7e67fa5c272f5b78e7140cc35d10b9872b4bd00611ce78fbf322a585229a28f5",
+      "current_sha256": "37c7d08ec5dd716776ae402bd78238f37a2bea9f797d2843978fb55575c1dddd",
+      "byte_identical": false,
+      "classification": "numerical kernel intentionally changed and requires PDE rerun",
+      "reason": "materialized P^H compatibility path for PETSc 3.19 complex MatMatMult; algebra unchanged",
+      "requires_corresponding_pde_rerun": true,
+      "pass": true
+    }
+  ],
+  "corresponding_pde_rerun_required_paths": [
+    "src/modes/mode_classification.py",
+    "src/solvers/hybrid_fem_modal_schur_direct.py",
+    "src/solvers/hcurl_multilevel.py"
+  ],
+  "checks": {
+    "baseline_commit_exact": true,
+    "task033_completion_status_accepted": true,
+    "task033_original_full_scope_not_upgraded": true,
+    "all_required_kernel_paths_present": true,
+    "all_changes_classified": true
+  },
+  "failures": [],
+  "identity": {
+    "is_pde_run": false,
+    "ordinary_default_changed": false
+  }
+}

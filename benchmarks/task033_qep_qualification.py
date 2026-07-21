@@ -745,12 +745,18 @@ def resource_authority_gate(
     swap_current = _finite_number(values.get("container_swap_current_bytes"))
     pswpin = _finite_number(values.get("pswpin_delta_pages"))
     pswpout = _finite_number(values.get("pswpout_delta_pages"))
+    dedicated_cgroup = values.get("job_cgroup_dedicated", True) is True
+    global_pswp_formal = values.get("wsl_global_pswp_formal", True) is True
     expected_authority = (
-        None if worker is None or cgroup is None else max(worker, cgroup)
+        None
+        if worker is None or (dedicated_cgroup and cgroup is None)
+        else max(worker, cgroup if dedicated_cgroup else 0.0)
     )
     checks = {
         "worker_rss_readable": worker is not None and worker > 0.0,
-        "cgroup_current_readable": cgroup is not None and cgroup > 0.0,
+        "cgroup_current_readable": (
+            not dedicated_cgroup or (cgroup is not None and cgroup > 0.0)
+        ),
         "authority_is_exact_max": bool(
             authority is not None
             and expected_authority is not None
@@ -764,8 +770,8 @@ def resource_authority_gate(
             host_available is not None and host_available > 0.0
         ),
         "container_current_swap_zero": swap_current == 0.0,
-        "pswpin_delta_zero": pswpin == 0.0,
-        "pswpout_delta_zero": pswpout == 0.0,
+        "pswpin_delta_zero": not global_pswp_formal or pswpin == 0.0,
+        "pswpout_delta_zero": not global_pswp_formal or pswpout == 0.0,
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {

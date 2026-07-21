@@ -1,0 +1,2197 @@
+{
+  "schema_version": "task034.resource-model.v2.1",
+  "record_type": "component_separated_resource_prediction",
+  "identity": {
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "authorizes_heavy_launch": false,
+    "proves_0p7nm_feasible": false,
+    "ordinary_default_changed": false
+  },
+  "inputs": {
+    "fixed_geometry_csv": "docs/task034_workstation_wsl_adaptive_scalability/outcomes/fixed_geometry_ph_convergence.csv",
+    "fixed_geometry_csv_sha256": "dcc9603cc731839bffea8a1d5a157cbe1c06cb537dfea95177b9aa60221f9f1f",
+    "adaptive_json": "docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.json",
+    "adaptive_json_sha256": "f1e7dc38e166035b8b8a9574a13538335eb0e65052825e4cbcf6f5a2a5ca3031",
+    "baseline_hybrid_jsons": {
+      "p2_h3_current_layout_stress_test": {
+        "path": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
+        "sha256": "0a68f1967b98fea8fc763d76fef7a3a63f9162d9d0ad3a2da26aa1196477b029",
+        "scenario": {
+          "degree": 2,
+          "h_nm": 3.0,
+          "accuracy_role": "Task033 equal-accuracy threshold baseline"
+        }
+      },
+      "p3_h3_finer_discrete_stress_test": {
+        "path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
+        "sha256": "10d179b586ec4fb863b20e0e878d5919975652097cb8005f2ed0bf37ab96fae9",
+        "scenario": {
+          "degree": 3,
+          "h_nm": 3.0,
+          "accuracy_role": "Task034 p3 finer discrete reference"
+        }
+      },
+      "p4_h5_best_available_stress_test": {
+        "path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
+        "sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb",
+        "scenario": {
+          "degree": 4,
+          "h_nm": 5.0,
+          "accuracy_role": "Case093 best available discrete reference"
+        }
+      }
+    },
+    "mpi_size_for_replicated_layout": 48
+  },
+  "calibration": {
+    "fixed_geometry_rows": [
+      {
+        "key": "p2_h5",
+        "degree": "2",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.08902160293625645",
+        "T_total_full3d": "0.44258827865721156",
+        "A_volume_full3d": "0.4683901184065563",
+        "true_residual_full3d": "9.70703376934104e-12",
+        "full3d_peak_GiB": "2.959606170654297",
+        "hybrid_peak_GiB": "3.2848663330078125"
+      },
+      {
+        "key": "p2_h3",
+        "degree": "2",
+        "h_nm": "3",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.00461303140747413",
+        "T_total_full3d": "0.583653357179117",
+        "A_volume_full3d": "0.4117336114134929",
+        "true_residual_full3d": "7.34068736376572e-12",
+        "full3d_peak_GiB": "9.53493881225586",
+        "hybrid_peak_GiB": "4.695159912109375"
+      },
+      {
+        "key": "p2_h2",
+        "degree": "2",
+        "h_nm": "2",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.001342932846259213",
+        "T_total_full3d": "0.5992132294442238",
+        "A_volume_full3d": "0.39944383770948677",
+        "true_residual_full3d": "1.74783252980985e-11",
+        "full3d_peak_GiB": "32.53961181640625",
+        "hybrid_peak_GiB": "11.30533218383789"
+      },
+      {
+        "key": "p3_h10",
+        "degree": "3",
+        "h_nm": "10",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "false",
+        "same_degree_closure": "false",
+        "R_total_full3d": "0.05539849053529889",
+        "T_total_full3d": "0.4060678667548069",
+        "A_volume_full3d": "0.5385336427098364",
+        "true_residual_full3d": "2.64946972848317e-12",
+        "full3d_peak_GiB": "2.7445716857910156",
+        "hybrid_peak_GiB": "2.8677101135253906"
+      },
+      {
+        "key": "p3_h7p5",
+        "degree": "3",
+        "h_nm": "7.5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.003090727449921082",
+        "T_total_full3d": "0.5911608633289427",
+        "A_volume_full3d": "0.4057484092211082",
+        "true_residual_full3d": "7.68227668568186e-12",
+        "full3d_peak_GiB": "4.6096954345703125",
+        "hybrid_peak_GiB": "3.614459991455078"
+      },
+      {
+        "key": "p3_h5",
+        "degree": "3",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.001090107012034979",
+        "T_total_full3d": "0.6006224782934476",
+        "A_volume_full3d": "0.39828741469453954",
+        "true_residual_full3d": "6.98200317859201e-12",
+        "full3d_peak_GiB": "9.04007339477539",
+        "hybrid_peak_GiB": "4.908237457275391"
+      },
+      {
+        "key": "p3_h3",
+        "degree": "3",
+        "h_nm": "3",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0007894679573742296",
+        "T_total_full3d": "0.6025149841382069",
+        "A_volume_full3d": "0.39669554790437317",
+        "true_residual_full3d": "8.48927733258755e-11",
+        "full3d_peak_GiB": "44.06867218017578",
+        "hybrid_peak_GiB": "14.271553039550781"
+      },
+      {
+        "key": "p4_h10",
+        "degree": "4",
+        "h_nm": "10",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0018823172152018387",
+        "T_total_full3d": "0.5966195196222404",
+        "A_volume_full3d": "0.40149816316260045",
+        "true_residual_full3d": "4.62675953814011e-12",
+        "full3d_peak_GiB": "5.639560699462891",
+        "hybrid_peak_GiB": "3.5176162719726562"
+      },
+      {
+        "key": "p4_h7p5",
+        "degree": "4",
+        "h_nm": "7.5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0008024690153384762",
+        "T_total_full3d": "0.602429772906308",
+        "A_volume_full3d": "0.3967677580783896",
+        "true_residual_full3d": "1.2715167394801e-11",
+        "full3d_peak_GiB": "12.724395751953125",
+        "hybrid_peak_GiB": "5.9671173095703125"
+      },
+      {
+        "key": "p4_h5",
+        "degree": "4",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0007663133771040101",
+        "T_total_full3d": "0.602677530502972",
+        "A_volume_full3d": "0.3965561561199801",
+        "true_residual_full3d": "2.40147422295345e-11",
+        "full3d_peak_GiB": "28.888458251953125",
+        "hybrid_peak_GiB": "9.205917358398438"
+      }
+    ],
+    "adaptive_m160_rows": [
+      {
+        "profile": "conservative",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 43868.0,
+        "factor_nnz_sum": 30149200.0,
+        "peak_memory_gib": 3.9635391235351562,
+        "wall_time_seconds": 112.11475032198359,
+        "raw_dof_ratio_vs_uniform": 1.5591319412783806
+      },
+      {
+        "profile": "balanced",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 21584.0,
+        "factor_nnz_sum": 11556688.0,
+        "peak_memory_gib": 3.291961669921875,
+        "wall_time_seconds": 96.6334681660228,
+        "raw_dof_ratio_vs_uniform": 3.16882876204596
+      },
+      {
+        "profile": "aggressive",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 7140.0,
+        "factor_nnz_sum": 3082072.0,
+        "peak_memory_gib": 2.5366134643554688,
+        "wall_time_seconds": 71.91697877302067,
+        "raw_dof_ratio_vs_uniform": 9.579271708683473
+      }
+    ],
+    "reference_components_bytes_by_scenario": {
+      "p2_h3_current_layout_stress_test": {
+        "local_3d_fe_assembly": 173887296.0,
+        "local_3d_factorization": 1542174528.0,
+        "qep_coefficient_matrices": 11825280.0,
+        "qep_shift_invert_factorization": 4465032.881022042,
+        "right_left_mode_vectors": 40929280.0,
+        "interface_projection_n_times_m": 9955856.0,
+        "replicated_dense_modal_arrays": 471859200.0,
+        "hybrid_schur_dense_multi_rhs": 703385472.0,
+        "field_reconstruction": 2572672.0,
+        "mpi_process_runtime_overhead": 2080334951.118978,
+        "reference_peak_bytes": 5041389568.0,
+        "reference_local_fe_dofs_sum": 68396.0,
+        "reference_qep_dofs": 2053.0,
+        "reference_modes_per_direction": 160.0,
+        "reference_one_complex_2m_square_bytes": 1638400.0
+      },
+      "p3_h3_finer_discrete_stress_test": {
+        "local_3d_fe_assembly": 1271706672.0,
+        "local_3d_factorization": 7813997376.0,
+        "qep_coefficient_matrices": 26133120.0,
+        "qep_shift_invert_factorization": 14668793.886359982,
+        "right_left_mode_vectors": 91248640.0,
+        "interface_projection_n_times_m": 26210576.0,
+        "replicated_dense_modal_arrays": 471859200.0,
+        "hybrid_schur_dense_multi_rhs": 2299387200.0,
+        "field_reconstruction": 7544640.0,
+        "mpi_process_runtime_overhead": 3301207174.11364,
+        "reference_peak_bytes": 15323963392.0,
+        "reference_local_fe_dofs_sum": 223770.0,
+        "reference_qep_dofs": 4537.0,
+        "reference_modes_per_direction": 160.0,
+        "reference_one_complex_2m_square_bytes": 1638400.0
+      },
+      "p4_h5_best_available_stress_test": {
+        "local_3d_fe_assembly": 1073556096.0,
+        "local_3d_factorization": 2819537664.0,
+        "qep_coefficient_matrices": 17377920.0,
+        "qep_shift_invert_factorization": 7954340.954695869,
+        "right_left_mode_vectors": 60385280.0,
+        "interface_projection_n_times_m": 15850256.0,
+        "replicated_dense_modal_arrays": 471859200.0,
+        "hybrid_schur_dense_multi_rhs": 1033363200.0,
+        "field_reconstruction": 3600640.0,
+        "mpi_process_runtime_overhead": 4381293899.045304,
+        "reference_peak_bytes": 9884778496.0,
+        "reference_local_fe_dofs_sum": 100520.0,
+        "reference_qep_dofs": 3017.0,
+        "reference_modes_per_direction": 160.0,
+        "reference_one_complex_2m_square_bytes": 1638400.0
+      }
+    },
+    "measured_same_error_adaptive_compression_available": false,
+    "allowed_adaptive_compression_factor_in_predictions": 1.0
+  },
+  "scaling_model": {
+    "spatial_policy": "mechanical fixed-layout scaling from p2/h3, p3/h3 and p4/h5 M160 stress-test scenarios; no common target-accuracy claim",
+    "mode_policy": "M scales with transverse reciprocal-order area, s^2",
+    "3d_direct_factor_policy": "nested-dissection engineering proxy, s^4",
+    "replicated_layout_policy": "6 complex (2M)^2 arrays on 48 ranks",
+    "dense_multi_rhs_policy": "local FE rows times modal RHS, s^5",
+    "uncertainty": "engineering component envelope; lifecycle overlap, simultaneous extrapolated peak, material dispersion, target-accuracy DoF, cutoff changes and future solver redesign are unknown"
+  },
+  "predictions": [
+    {
+      "scenario_key": "p2_h3_current_layout_stress_test",
+      "scenario": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline"
+      },
+      "wavelength_nm": 13.5,
+      "scale_13p5_over_lambda": 1.0,
+      "predicted_local_fe_dofs_sum_uniform": 68396,
+      "predicted_cross_section_qep_dofs": 2053,
+      "predicted_modes_per_direction": 160,
+      "one_complex_2m_square_gib": 0.00152587890625,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 173887296.0,
+          "gib": 0.1619451642036438,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "local_3d_factorization": {
+          "bytes": 1542174528.0,
+          "gib": 1.4362619519233704,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 11825280.0,
+          "gib": 0.011013150215148926,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 4465032.881022042,
+          "gib": 0.004158385918496215,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 40929280.0,
+          "gib": 0.03811836242675781,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 9955856.0,
+          "gib": 0.00927211344242096,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 471859200.0,
+          "gib": 0.439453125,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 703385472.0,
+          "gib": 0.6550787687301636,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "measured_calibrated"
+        },
+        "field_reconstruction": {
+          "bytes": 2572672.0,
+          "gib": 0.0023959875106811523,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "measured_calibrated"
+        }
+      },
+      "local_component_subtotal_gib": 1.6006031036376953,
+      "modal_and_runtime_component_subtotal_gib": 3.0945568084716797,
+      "cumulative_component_envelope_gib": 4.695159912109375,
+      "measured_simultaneous_peak_gib": 4.695159912109375,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "measured_at_reference",
+      "largest_component": "mpi_process_runtime_overhead",
+      "largest_component_gib": 1.9374629027386923,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.007568214463823017,
+          "cumulative_component_envelope_ratio": 0.018340468406677246,
+          "simultaneous_peak_ratio": 0.018340468406677246,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.0018920536159557542,
+          "cumulative_component_envelope_ratio": 0.0045851171016693115,
+          "simultaneous_peak_ratio": 0.0045851171016693115,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.0009460268079778771,
+          "cumulative_component_envelope_ratio": 0.0022925585508346558,
+          "simultaneous_peak_ratio": 0.0022925585508346558,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p2_h3_current_layout_stress_test",
+      "scenario": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline"
+      },
+      "wavelength_nm": 5.0,
+      "scale_13p5_over_lambda": 2.7,
+      "predicted_local_fe_dofs_sum_uniform": 1346239,
+      "predicted_cross_section_qep_dofs": 14967,
+      "predicted_modes_per_direction": 1167,
+      "one_complex_2m_square_gib": 0.08117491006851196,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 3422623647.1680007,
+          "gib": 3.1875666670203215,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 81957477333.48482,
+          "gib": 76.3288487992108,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 86206291.20000002,
+          "gib": 0.08028586506843569,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 87885242.19715686,
+          "gib": 0.08184951003376102,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 2175149749.2480006,
+          "gib": 2.0257660646438604,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 529095006.84960014,
+          "gib": 0.49275812399536384,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 25076532510.72001,
+          "gib": 23.35434082031251,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 100928127228.79108,
+          "gib": 93.99664330183629,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 50637902.97600001,
+          "gib": 0.04716022217273713,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 79.56357568840386,
+      "modal_and_runtime_component_subtotal_gib": 121.9691065886289,
+      "cumulative_component_envelope_gib": 201.53268227703276,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 93.99664330183629,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "cumulative_envelope_high_risk_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.367174387897798,
+          "cumulative_component_envelope_ratio": 0.7872370401446592,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.0917935969744495,
+          "cumulative_component_envelope_ratio": 0.1968092600361648,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.04589679848722475,
+          "cumulative_component_envelope_ratio": 0.0984046300180824,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p2_h3_current_layout_stress_test",
+      "scenario": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline"
+      },
+      "wavelength_nm": 2.0,
+      "scale_13p5_over_lambda": 6.75,
+      "predicted_local_fe_dofs_sum_uniform": 21034977,
+      "predicted_cross_section_qep_dofs": 93540,
+      "predicted_modes_per_direction": 7290,
+      "one_complex_2m_square_gib": 3.167635202407837,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 53478494487.0,
+          "gib": 49.805729172192514,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 3201463958339.25,
+          "gib": 2981.5956562191714,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 538789320.0,
+          "gib": 0.5017866566777229,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 1373206909.3305757,
+          "gib": 1.2788985942775157,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 84966787080.0,
+          "gib": 79.13148690015078,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 20667773705.0625,
+          "gib": 19.248364218568895,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 979552051200.0,
+          "gib": 912.278938293457,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 9856262424686.625,
+          "gib": 9179.359697444947,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 791217234.0,
+          "gib": 0.7368784714490175,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 3032.138263862813,
+      "modal_and_runtime_component_subtotal_gib": 10193.736635010817,
+      "cumulative_component_envelope_gib": 13225.87489887363,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 9179.359697444947,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 35.85687381814432,
+          "cumulative_component_envelope_ratio": 51.663573823725116,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 51.663573823725116,
+          "local_subtotal_to_half_budget_ratio": 23.688580186428226,
+          "modal_subtotal_to_half_budget_ratio": 79.638567461022
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 8.96421845453608,
+          "cumulative_component_envelope_ratio": 12.915893455931279,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 12.915893455931279,
+          "local_subtotal_to_half_budget_ratio": 5.922145046607056,
+          "modal_subtotal_to_half_budget_ratio": 19.9096418652555
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 4.48210922726804,
+          "cumulative_component_envelope_ratio": 6.4579467279656395,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 6.4579467279656395,
+          "local_subtotal_to_half_budget_ratio": 2.961072523303528,
+          "modal_subtotal_to_half_budget_ratio": 9.95482093262775
+        }
+      }
+    },
+    {
+      "scenario_key": "p2_h3_current_layout_stress_test",
+      "scenario": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline"
+      },
+      "wavelength_nm": 1.0,
+      "scale_13p5_over_lambda": 13.5,
+      "predicted_local_fe_dofs_sum_uniform": 168279809,
+      "predicted_cross_section_qep_dofs": 374160,
+      "predicted_modes_per_direction": 29160,
+      "one_complex_2m_square_gib": 50.68216323852539,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 427827955896.0,
+          "gib": 398.4458333775401,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 51223423333428.0,
+          "gib": 47705.53049950674,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 2155157280.0,
+          "gib": 2.0071466267108917,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 10985655274.644606,
+          "gib": 10.231188754220126,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 1359468593280.0,
+          "gib": 1266.1037904024124,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 330684379281.0,
+          "gib": 307.9738274971023,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 15672832819200.0,
+          "gib": 14596.463012695312,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 315400397589972.0,
+          "gib": 293739.5103182383,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 6329737872.0,
+          "gib": 5.89502777159214,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 48109.871360655874,
+      "modal_and_runtime_component_subtotal_gib": 309924.2267471168,
+      "cumulative_component_envelope_gib": 358034.09810777265,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 293739.5103182383,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 1147.4199621806183,
+          "cumulative_component_envelope_ratio": 1398.570695733487,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 1398.570695733487,
+          "local_subtotal_to_half_budget_ratio": 375.858370005124,
+          "modal_subtotal_to_half_budget_ratio": 2421.28302146185
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 286.8549905451546,
+          "cumulative_component_envelope_ratio": 349.6426739333717,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 349.6426739333717,
+          "local_subtotal_to_half_budget_ratio": 93.964592501281,
+          "modal_subtotal_to_half_budget_ratio": 605.3207553654624
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 143.4274952725773,
+          "cumulative_component_envelope_ratio": 174.82133696668586,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 174.82133696668586,
+          "local_subtotal_to_half_budget_ratio": 46.9822962506405,
+          "modal_subtotal_to_half_budget_ratio": 302.6603776827312
+        }
+      }
+    },
+    {
+      "scenario_key": "p2_h3_current_layout_stress_test",
+      "scenario": {
+        "degree": 2,
+        "h_nm": 3.0,
+        "accuracy_role": "Task033 equal-accuracy threshold baseline"
+      },
+      "wavelength_nm": 0.7,
+      "scale_13p5_over_lambda": 19.28571428571429,
+      "predicted_local_fe_dofs_sum_uniform": 490611687,
+      "predicted_cross_section_qep_dofs": 763591,
+      "predicted_modes_per_direction": 59511,
+      "one_complex_2m_square_gib": 211.09337335824966,
+      "one_complex_2m_square_near_or_over_256gib": true,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 1247311824769.68,
+          "gib": 1161.649659992829,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 213342038040100.1,
+          "gib": 198690.25614121938,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 4398280163.265307,
+          "gib": 4.096217605532433,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 32028149488.759796,
+          "gib": 29.828538642041195,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 5662093266472.307,
+          "gib": 5273.235278643953,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 1377277714623.0745,
+          "gib": 1282.689827143284,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 65276271633486.086,
+          "gib": 60793.26535899759,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 1876601401737205.8,
+          "gib": 1747721.2489929104,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 18454046274.052486,
+          "gib": 17.18666988802374,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 199869.09247110022,
+      "modal_and_runtime_component_subtotal_gib": 1815106.3016768456,
+      "cumulative_component_envelope_gib": 2014975.3941479458,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 1747721.2489929104,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 6827.036128878556,
+          "cumulative_component_envelope_ratio": 7870.997633390413,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 7870.997633390413,
+          "local_subtotal_to_half_budget_ratio": 1561.4772849304704,
+          "modal_subtotal_to_half_budget_ratio": 14180.517981850357
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 1706.759032219639,
+          "cumulative_component_envelope_ratio": 1967.7494083476033,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 1967.7494083476033,
+          "local_subtotal_to_half_budget_ratio": 390.3693212326176,
+          "modal_subtotal_to_half_budget_ratio": 3545.129495462589
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 853.3795161098195,
+          "cumulative_component_envelope_ratio": 983.8747041738017,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 983.8747041738017,
+          "local_subtotal_to_half_budget_ratio": 195.1846606163088,
+          "modal_subtotal_to_half_budget_ratio": 1772.5647477312946
+        }
+      }
+    },
+    {
+      "scenario_key": "p3_h3_finer_discrete_stress_test",
+      "scenario": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference"
+      },
+      "wavelength_nm": 13.5,
+      "scale_13p5_over_lambda": 1.0,
+      "predicted_local_fe_dofs_sum_uniform": 223770,
+      "predicted_cross_section_qep_dofs": 4537,
+      "predicted_modes_per_direction": 160,
+      "one_complex_2m_square_gib": 0.00152587890625,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 1271706672.0,
+          "gib": 1.1843691319227219,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "local_3d_factorization": {
+          "bytes": 7813997376.0,
+          "gib": 7.277352154254913,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 26133120.0,
+          "gib": 0.024338364601135254,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 14668793.886359982,
+          "gib": 0.01366137888874857,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 91248640.0,
+          "gib": 0.08498191833496094,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 26210576.0,
+          "gib": 0.02441050112247467,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 471859200.0,
+          "gib": 0.439453125,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 2299387200.0,
+          "gib": 2.141471207141876,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "measured_calibrated"
+        },
+        "field_reconstruction": {
+          "bytes": 7544640.0,
+          "gib": 0.007026493549346924,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 3301207174.11364,
+          "gib": 3.0744887647346033,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "measured_calibrated"
+        }
+      },
+      "local_component_subtotal_gib": 8.468747779726982,
+      "modal_and_runtime_component_subtotal_gib": 5.802805259823799,
+      "cumulative_component_envelope_gib": 14.271553039550781,
+      "measured_simultaneous_peak_gib": 14.271553039550781,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "measured_at_reference",
+      "largest_component": "local_3d_factorization",
+      "largest_component_gib": 7.277352154254913,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.028427156852558255,
+          "cumulative_component_envelope_ratio": 0.05574825406074524,
+          "simultaneous_peak_ratio": 0.05574825406074524,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.007106789213139564,
+          "cumulative_component_envelope_ratio": 0.01393706351518631,
+          "simultaneous_peak_ratio": 0.01393706351518631,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.003553394606569782,
+          "cumulative_component_envelope_ratio": 0.006968531757593155,
+          "simultaneous_peak_ratio": 0.006968531757593155,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p3_h3_finer_discrete_stress_test",
+      "scenario": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference"
+      },
+      "wavelength_nm": 5.0,
+      "scale_13p5_over_lambda": 2.7,
+      "predicted_local_fe_dofs_sum_uniform": 4404465,
+      "predicted_cross_section_qep_dofs": 33075,
+      "predicted_modes_per_direction": 1167,
+      "one_complex_2m_square_gib": 0.08117491006851196,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 25031002424.976006,
+          "gib": 23.31193762363494,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 415267857949.8817,
+          "gib": 386.74833062093865,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 190510444.8,
+          "gib": 0.177426677942276,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 288725870.0652236,
+          "gib": 0.26889692066723814,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 4849326849.024001,
+          "gib": 4.516287566184999,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 1392937472.0016005,
+          "gib": 1.2972741127029066,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 25076532510.72001,
+          "gib": 23.35434082031251,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 329936930897.9041,
+          "gib": 307.2777119445653,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 148501149.12000003,
+          "gib": 0.13830247253179553,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 3301207174.11364,
+          "gib": 3.0744887647346033,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 410.1985707171054,
+      "modal_and_runtime_component_subtotal_gib": 339.9664268071098,
+      "cumulative_component_envelope_gib": 750.1649975242152,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "local_3d_factorization",
+      "largest_component_gib": 386.74833062093865,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 1.5107356664880416,
+          "cumulative_component_envelope_ratio": 2.9303320215789657,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 2.9303320215789657,
+          "local_subtotal_to_half_budget_ratio": 3.204676333727386,
+          "modal_subtotal_to_half_budget_ratio": 2.6559877094305455
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_high_risk_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.3776839166220104,
+          "cumulative_component_envelope_ratio": 0.7325830053947414,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.1888419583110052,
+          "cumulative_component_envelope_ratio": 0.3662915026973707,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p3_h3_finer_discrete_stress_test",
+      "scenario": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference"
+      },
+      "wavelength_nm": 2.0,
+      "scale_13p5_over_lambda": 6.75,
+      "predicted_local_fe_dofs_sum_uniform": 68819765,
+      "predicted_cross_section_qep_dofs": 206718,
+      "predicted_modes_per_direction": 7290,
+      "one_complex_2m_square_gib": 3.167635202407837,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 391109412890.25,
+          "gib": 364.24902536929585,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 16221400701167.25,
+          "gib": 15107.356664880412,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 1190690280.0,
+          "gib": 1.108916737139225,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 4511341719.769117,
+          "gib": 4.201514385425595,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 189426830040.0,
+          "gib": 176.41748305410147,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 54411620000.0625,
+          "gib": 50.67477002745727,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 979552051200.0,
+          "gib": 912.278938293457,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 32220403407998.438,
+          "gib": 30007.589057086443,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 2320330455.0,
+          "gib": 2.1609761333093047,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 3301207174.11364,
+          "gib": 3.0744887647346033,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 15473.766666383017,
+      "modal_and_runtime_component_subtotal_gib": 31155.34516834876,
+      "cumulative_component_envelope_gib": 46629.111834731775,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 30007.589057086443,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 117.21714475424392,
+          "cumulative_component_envelope_ratio": 182.144968104421,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 182.144968104421,
+          "local_subtotal_to_half_budget_ratio": 120.88880208111732,
+          "modal_subtotal_to_half_budget_ratio": 243.40113412772467
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 29.30428618856098,
+          "cumulative_component_envelope_ratio": 45.53624202610525,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 45.53624202610525,
+          "local_subtotal_to_half_budget_ratio": 30.22220052027933,
+          "modal_subtotal_to_half_budget_ratio": 60.85028353193117
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 14.65214309428049,
+          "cumulative_component_envelope_ratio": 22.768121013052625,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 22.768121013052625,
+          "local_subtotal_to_half_budget_ratio": 15.111100260139665,
+          "modal_subtotal_to_half_budget_ratio": 30.425141765965584
+        }
+      }
+    },
+    {
+      "scenario_key": "p3_h3_finer_discrete_stress_test",
+      "scenario": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference"
+      },
+      "wavelength_nm": 1.0,
+      "scale_13p5_over_lambda": 13.5,
+      "predicted_local_fe_dofs_sum_uniform": 550558114,
+      "predicted_cross_section_qep_dofs": 826869,
+      "predicted_modes_per_direction": 29160,
+      "one_complex_2m_square_gib": 50.68216323852539,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 3128875303122.0,
+          "gib": 2913.992202954367,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 259542411218676.0,
+          "gib": 241717.7066380866,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 4762761120.0,
+          "gib": 4.4356669485569,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 36090733758.15294,
+          "gib": 33.61211508340476,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 3030829280640.0,
+          "gib": 2822.6797288656235,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 870585920001.0,
+          "gib": 810.7963204393163,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 15672832819200.0,
+          "gib": 14596.463012695312,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 1031052909055950.0,
+          "gib": 960242.8498267662,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 18562643640.0,
+          "gib": 17.287809066474438,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 3301207174.11364,
+          "gib": 3.0744887647346033,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 244648.98665010743,
+      "modal_and_runtime_component_subtotal_gib": 978513.9111595631,
+      "cumulative_component_envelope_gib": 1223162.8978096705,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 960242.8498267662,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 3750.9486321358054,
+          "cumulative_component_envelope_ratio": 4777.9800695690255,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 4777.9800695690255,
+          "local_subtotal_to_half_budget_ratio": 1911.3202082039643,
+          "modal_subtotal_to_half_budget_ratio": 7644.639930934087
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 937.7371580339513,
+          "cumulative_component_envelope_ratio": 1194.4950173922564,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 1194.4950173922564,
+          "local_subtotal_to_half_budget_ratio": 477.83005205099107,
+          "modal_subtotal_to_half_budget_ratio": 1911.1599827335217
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 468.8685790169757,
+          "cumulative_component_envelope_ratio": 597.2475086961282,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 597.2475086961282,
+          "local_subtotal_to_half_budget_ratio": 238.91502602549554,
+          "modal_subtotal_to_half_budget_ratio": 955.5799913667609
+        }
+      }
+    },
+    {
+      "scenario_key": "p3_h3_finer_discrete_stress_test",
+      "scenario": {
+        "degree": 3,
+        "h_nm": 3.0,
+        "accuracy_role": "Task034 p3 finer discrete reference"
+      },
+      "wavelength_nm": 0.7,
+      "scale_13p5_over_lambda": 19.28571428571429,
+      "predicted_local_fe_dofs_sum_uniform": 1605125697,
+      "predicted_cross_section_qep_dofs": 1687487,
+      "predicted_modes_per_direction": 59511,
+      "one_complex_2m_square_gib": 211.09337335824966,
+      "one_complex_2m_square_near_or_over_256gib": true,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 9122085431842.57,
+          "gib": 8495.604090245972,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 1080976306616727.0,
+          "gib": 1006737.6369766211,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 9719920653.061226,
+          "gib": 9.052381527667144,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 105220798128.72581,
+          "gib": 97.99450461634045,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 12623195671137.033,
+          "gib": 11756.267092318305,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 3625930528950.4395,
+          "gib": 3376.910955598987,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 65276271633486.086,
+          "gib": 60793.26535899759,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 6134663586933722.0,
+          "gib": 5713350.68618294,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 54118494577.2595,
+          "gib": 50.40177570400713,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 3301207174.11364,
+          "gib": 3.0744887647346033,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 1015283.6428425711,
+      "modal_and_runtime_component_subtotal_gib": 5789387.250964764,
+      "cumulative_component_envelope_gib": 6804670.893807335,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 5713350.68618294,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 22317.77611790211,
+          "cumulative_component_envelope_ratio": 26580.7456789349,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 26580.7456789349,
+          "local_subtotal_to_half_budget_ratio": 7931.903459707587,
+          "modal_subtotal_to_half_budget_ratio": 45229.587898162215
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 5579.444029475528,
+          "cumulative_component_envelope_ratio": 6645.186419733725,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 6645.186419733725,
+          "local_subtotal_to_half_budget_ratio": 1982.9758649268967,
+          "modal_subtotal_to_half_budget_ratio": 11307.396974540554
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 2789.722014737764,
+          "cumulative_component_envelope_ratio": 3322.5932098668627,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 3322.5932098668627,
+          "local_subtotal_to_half_budget_ratio": 991.4879324634484,
+          "modal_subtotal_to_half_budget_ratio": 5653.698487270277
+        }
+      }
+    },
+    {
+      "scenario_key": "p4_h5_best_available_stress_test",
+      "scenario": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference"
+      },
+      "wavelength_nm": 13.5,
+      "scale_13p5_over_lambda": 1.0,
+      "predicted_local_fe_dofs_sum_uniform": 100520,
+      "predicted_cross_section_qep_dofs": 3017,
+      "predicted_modes_per_direction": 160,
+      "one_complex_2m_square_gib": 0.00152587890625,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 1073556096.0,
+          "gib": 0.9998270273208618,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "local_3d_factorization": {
+          "bytes": 2819537664.0,
+          "gib": 2.625899076461792,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 17377920.0,
+          "gib": 0.016184449195861816,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 7954340.954695869,
+          "gib": 0.0074080572972967,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 60385280.0,
+          "gib": 0.05623817443847656,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 15850256.0,
+          "gib": 0.014761701226234436,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 471859200.0,
+          "gib": 0.439453125,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 1033363200.0,
+          "gib": 0.9623944759368896,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "measured_calibrated"
+        },
+        "field_reconstruction": {
+          "bytes": 3600640.0,
+          "gib": 0.0033533573150634766,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 4381293899.045304,
+          "gib": 4.080397914205961,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "measured_calibrated"
+        }
+      },
+      "local_component_subtotal_gib": 3.6290794610977173,
+      "modal_and_runtime_component_subtotal_gib": 5.57683789730072,
+      "cumulative_component_envelope_gib": 9.205917358398438,
+      "measured_simultaneous_peak_gib": 9.205917358398438,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "measured_at_reference",
+      "largest_component": "mpi_process_runtime_overhead",
+      "largest_component_gib": 4.080397914205961,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.015939054352367036,
+          "cumulative_component_envelope_ratio": 0.035960614681243896,
+          "simultaneous_peak_ratio": 0.035960614681243896,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.003984763588091759,
+          "cumulative_component_envelope_ratio": 0.008990153670310974,
+          "simultaneous_peak_ratio": 0.008990153670310974,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.0019923817940458795,
+          "cumulative_component_envelope_ratio": 0.004495076835155487,
+          "simultaneous_peak_ratio": 0.004495076835155487,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p4_h5_best_available_stress_test",
+      "scenario": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference"
+      },
+      "wavelength_nm": 5.0,
+      "scale_13p5_over_lambda": 2.7,
+      "predicted_local_fe_dofs_sum_uniform": 1978536,
+      "predicted_cross_section_qep_dofs": 21994,
+      "predicted_modes_per_direction": 1167,
+      "one_complex_2m_square_gib": 0.08117491006851196,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 21130804637.568005,
+          "gib": 19.679595378756527,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 149841791569.38245,
+          "gib": 139.55104310939316,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 126685036.80000001,
+          "gib": 0.11798463463783265,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 156565293.0112788,
+          "gib": 0.14581279178269096,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 3209121358.848001,
+          "gib": 2.988727166175843,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 842347589.8896003,
+          "gib": 0.7844973261371258,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 25076532510.72001,
+          "gib": 23.35434082031251,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 148276324540.22406,
+          "gib": 138.09308832532173,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 70871397.12,
+          "gib": 0.06600413203239441,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 4381293899.045304,
+          "gib": 4.080397914205961,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 159.2966426201821,
+      "modal_and_runtime_component_subtotal_gib": 169.56484897857368,
+      "cumulative_component_envelope_gib": 328.8614915987558,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "local_3d_factorization",
+      "largest_component_gib": 139.55104310939316,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "cumulative_envelope_exceeds_budget_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.545121262146067,
+          "cumulative_component_envelope_ratio": 1.2846152015576398,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.8429613500726598,
+          "required_modal_compression_if_local_unchanged": 1.7534535880960225,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.2846152015576398,
+          "local_subtotal_to_half_budget_ratio": 1.2445050204701726,
+          "modal_subtotal_to_half_budget_ratio": 1.3247253826451069
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.13628031553651676,
+          "cumulative_component_envelope_ratio": 0.32115380038940994,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "cumulative_envelope_within_guardband_peak_unknown",
+          "largest_component_lower_bound_ratio": 0.06814015776825838,
+          "cumulative_component_envelope_ratio": 0.16057690019470497,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "cumulative_envelope_compression_ratio": 1.0,
+          "local_subtotal_to_half_budget_ratio": 1.0,
+          "modal_subtotal_to_half_budget_ratio": 1.0
+        }
+      }
+    },
+    {
+      "scenario_key": "p4_h5_best_available_stress_test",
+      "scenario": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference"
+      },
+      "wavelength_nm": 2.0,
+      "scale_13p5_over_lambda": 6.75,
+      "predicted_local_fe_dofs_sum_uniform": 30914612,
+      "predicted_cross_section_qep_dofs": 137463,
+      "predicted_modes_per_direction": 7290,
+      "one_complex_2m_square_gib": 3.167635202407837,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 330168822462.0,
+          "gib": 307.4936777930707,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 5853194983179.0,
+          "gib": 5451.212621460669,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 791781480.0,
+          "gib": 0.737403966486454,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 2446332703.3012314,
+          "gib": 2.2783248716045463,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 125356303080.0,
+          "gib": 116.74715492874384,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 32904202730.0625,
+          "gib": 30.644426802231465,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 979552051200.0,
+          "gib": 912.278938293457,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 14480109818381.25,
+          "gib": 13485.653156769695,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 1107365580.0,
+          "gib": 1.0313145630061626,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 4381293899.045304,
+          "gib": 4.080397914205961,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 5759.737613816746,
+      "modal_and_runtime_component_subtotal_gib": 14552.419803546425,
+      "cumulative_component_envelope_gib": 20312.15741736317,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 13485.653156769695,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 52.67833264363162,
+          "cumulative_component_envelope_ratio": 79.34436491157489,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 79.34436491157489,
+          "local_subtotal_to_half_budget_ratio": 44.997950107943325,
+          "modal_subtotal_to_half_budget_ratio": 113.69077971520645
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 13.169583160907905,
+          "cumulative_component_envelope_ratio": 19.83609122789372,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 19.83609122789372,
+          "local_subtotal_to_half_budget_ratio": 11.249487526985831,
+          "modal_subtotal_to_half_budget_ratio": 28.42269492880161
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 6.5847915804539525,
+          "cumulative_component_envelope_ratio": 9.91804561394686,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 9.91804561394686,
+          "local_subtotal_to_half_budget_ratio": 5.624743763492916,
+          "modal_subtotal_to_half_budget_ratio": 14.211347464400806
+        }
+      }
+    },
+    {
+      "scenario_key": "p4_h5_best_available_stress_test",
+      "scenario": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference"
+      },
+      "wavelength_nm": 1.0,
+      "scale_13p5_over_lambda": 13.5,
+      "predicted_local_fe_dofs_sum_uniform": 247316895,
+      "predicted_cross_section_qep_dofs": 549849,
+      "predicted_modes_per_direction": 29160,
+      "one_complex_2m_square_gib": 50.68216323852539,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 2641350579696.0,
+          "gib": 2459.9494223445654,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 93651119730864.0,
+          "gib": 87219.4019433707,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 3167125920.0,
+          "gib": 2.949615865945816,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 19570661626.40985,
+          "gib": 18.22659897283637,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 2005700849280.0,
+          "gib": 1867.9544788599014,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 526467243681.0,
+          "gib": 490.31082883570343,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 15672832819200.0,
+          "gib": 14596.463012695312,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 463363514188200.0,
+          "gib": 431540.90101663023,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 8858924640.0,
+          "gib": 8.250516504049301,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 4381293899.045304,
+          "gib": 4.080397914205961,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 89687.60188221931,
+      "modal_and_runtime_component_subtotal_gib": 448520.8859497742,
+      "cumulative_component_envelope_gib": 538208.4878319935,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 431540.90101663023,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 1685.7066445962118,
+          "cumulative_component_envelope_ratio": 2102.3769055937246,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 2102.3769055937246,
+          "local_subtotal_to_half_budget_ratio": 700.6843897048384,
+          "modal_subtotal_to_half_budget_ratio": 3504.069421482611
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 421.42666114905296,
+          "cumulative_component_envelope_ratio": 525.5942263984311,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 525.5942263984311,
+          "local_subtotal_to_half_budget_ratio": 175.1710974262096,
+          "modal_subtotal_to_half_budget_ratio": 876.0173553706527
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 210.71333057452648,
+          "cumulative_component_envelope_ratio": 262.7971131992156,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 262.7971131992156,
+          "local_subtotal_to_half_budget_ratio": 87.5855487131048,
+          "modal_subtotal_to_half_budget_ratio": 438.00867768532635
+        }
+      }
+    },
+    {
+      "scenario_key": "p4_h5_best_available_stress_test",
+      "scenario": {
+        "degree": 4,
+        "h_nm": 5.0,
+        "accuracy_role": "Case093 best available discrete reference"
+      },
+      "wavelength_nm": 0.7,
+      "scale_13p5_over_lambda": 19.28571428571429,
+      "predicted_local_fe_dofs_sum_uniform": 721040511,
+      "predicted_cross_section_qep_dofs": 1122140,
+      "predicted_modes_per_direction": 59511,
+      "one_complex_2m_square_gib": 211.09337335824966,
+      "one_complex_2m_square_near_or_over_256gib": true,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 7700730553049.566,
+          "gib": 7171.8642050862,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 390050477846164.3,
+          "gib": 363262.8152576874,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 6463522285.714287,
+          "gib": 6.019624216215952,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 57057322525.976265,
+          "gib": 53.13877251555795,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 8353606202748.859,
+          "gib": 7779.902036067899,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 2192699890383.175,
+          "gib": 2042.110907270736,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 65276271633486.086,
+          "gib": 60793.26535899759,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 2756967419457370.5,
+          "gib": 2567625.99522003,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 25827768629.73762,
+          "gib": 24.05398397682013,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 4381293899.045304,
+          "gib": 4.080397914205961,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_subtotal_gib": 370458.73344675044,
+      "modal_and_runtime_component_subtotal_gib": 2638304.5123170125,
+      "cumulative_component_envelope_gib": 3008763.245763763,
+      "measured_simultaneous_peak_gib": null,
+      "predicted_simultaneous_peak_gib": null,
+      "simultaneous_peak_model_status": "unknown_no_lifecycle_overlap_model",
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 2567625.99522003,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 10029.789043828243,
+          "cumulative_component_envelope_ratio": 11752.981428764699,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 11752.981428764699,
+          "local_subtotal_to_half_budget_ratio": 2894.208855052738,
+          "modal_subtotal_to_half_budget_ratio": 20611.75400247666
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 2507.4472609570607,
+          "cumulative_component_envelope_ratio": 2938.2453571911747,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 2938.2453571911747,
+          "local_subtotal_to_half_budget_ratio": 723.5522137631845,
+          "modal_subtotal_to_half_budget_ratio": 5152.938500619165
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout_by_single_component",
+          "largest_component_lower_bound_ratio": 1253.7236304785304,
+          "cumulative_component_envelope_ratio": 1469.1226785955873,
+          "simultaneous_peak_ratio": null,
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "cumulative_envelope_compression_ratio": 1469.1226785955873,
+          "local_subtotal_to_half_budget_ratio": 361.7761068815922,
+          "modal_subtotal_to_half_budget_ratio": 2576.4692503095825
+        }
+      }
+    }
+  ],
+  "decision": {
+    "current_layout_0p7nm": "single-component bottlenecks or cumulative-envelope budget crossings occur in the stress-test scenarios",
+    "production_target_accuracy_0p7nm": "unknown",
+    "predicted_simultaneous_peak_0p7nm": null,
+    "cumulative_envelope_is_not_peak": true,
+    "measured_adaptive_path_enters_budget": false,
+    "required_redesign": [
+      "qualified field-driven h-adaptivity",
+      "matrix-free or low-storage iterative local solver",
+      "distributed/streamed mode vectors",
+      "remove replicated dense M^2 arrays",
+      "blocked/streamed multi-RHS recovery"
+    ]
+  },
+  "limitations": [
+    "Predictions are not PDE runs and do not authorize a launch.",
+    "No failed adaptive raw DoF ratio is credited as accuracy-preserving compression.",
+    "Sparse factor and QEP fill exponents are engineering proxies, not exact asymptotics.",
+    "Predicted mode counts require future physical convergence validation.",
+    "The p2/p3/p4 scenarios are current-layout mechanical stress tests, not an equal-accuracy p-refinement comparison.",
+    "Extrapolated simultaneous peak is unknown because component lifecycle overlap was not modelled."
+  ]
+}

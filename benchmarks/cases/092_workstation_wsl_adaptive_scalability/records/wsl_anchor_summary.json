@@ -1,0 +1,96 @@
+{
+  "schema_version": "task034.wsl-anchor-summary.v1",
+  "record_type": "task033_key_anchor_reproduction_on_wsl",
+  "status": "wsl_task033_anchor_reproduction_pass",
+  "formal_pass": true,
+  "environment": {
+    "id": "task034-wsl-ubuntu-24.04-native",
+    "python": "3.12.3",
+    "dolfinx": "0.10.0.post2",
+    "petsc": "3.19.6-complex128-int32",
+    "slepc": "3.19.2",
+    "openmpi": "4.1.6",
+    "job_swap_bytes": 0
+  },
+  "scope": {
+    "polarization_kind": "s",
+    "degree": 3,
+    "mpi_size": 8,
+    "full3d_and_hybrid": true,
+    "requested_modes_per_direction": 160
+  },
+  "source_record": {
+    "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json",
+    "schema_version": "task034.case093.convergence.v1",
+    "physical_identity_sha256": "abb8613b3c0a9f78ce11def2695d2e3b590ba0c37b15534027fe3348345f4551"
+  },
+  "anchors": [
+    {
+      "key": "p3_h7p5",
+      "h_nm": 7.5,
+      "full3d": {
+        "source_sha": "06e0ee1067a6cf4764127a66a7db7cca3ce093d8",
+        "true_relative_residual": 7.682276685681863e-12,
+        "R_total": 0.003090727449921082,
+        "T_total": 0.5911608633289427,
+        "A_volume_total": 0.4057484092211082,
+        "peak_memory_gib": 4.6096954345703125,
+        "evidence_sha256": "0efc13654669f5f3315fc6e96eff19c58e104d07b42ec92ff419fe36172b6a87"
+      },
+      "hybrid": {
+        "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
+        "true_relative_residual": 3.1642195402717596e-12,
+        "R_total": 0.0030906473816573114,
+        "T_total": 0.5911596794063378,
+        "A_volume_total": 0.40574967315572685,
+        "peak_memory_gib": 3.614459991455078,
+        "evidence_sha256": "0cdf04a43d14f9401e9b7fb0b6e6227e77bb039df4f9e8525ddb6b0a1d6c4f55"
+      },
+      "same_degree_closure": {
+        "status": "same_degree_closure_pass",
+        "selected_mode_count_per_direction": 160,
+        "funnel_sha256": "2202dea1c59a021ac9f631a098e589302af00ba85d7cb3486ed46fd274d48891",
+        "R_total_absolute_delta": 8.006826377046292e-8,
+        "T_total_absolute_delta": 1.1839226048415696e-6,
+        "A_volume_total_absolute_delta": 1.263934618633833e-6
+      }
+    },
+    {
+      "key": "p3_h5",
+      "h_nm": 5.0,
+      "full3d": {
+        "source_sha": "06e0ee1067a6cf4764127a66a7db7cca3ce093d8",
+        "true_relative_residual": 6.982003178592007e-12,
+        "R_total": 0.001090107012034979,
+        "T_total": 0.6006224782934476,
+        "A_volume_total": 0.39828741469453954,
+        "peak_memory_gib": 9.04007339477539,
+        "evidence_sha256": "065aa9af7b721521786798019a539e4894e51bf209a08fc38bed6ce099a3d083"
+      },
+      "hybrid": {
+        "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
+        "true_relative_residual": 1.0554725785587978e-11,
+        "R_total": 0.0010900956852670917,
+        "T_total": 0.6006223682212232,
+        "A_volume_total": 0.3982875360956707,
+        "peak_memory_gib": 4.908237457275391,
+        "evidence_sha256": "8e18d6898e5428feb3d3710292388837e42cbe1065378dd34cf3e984241df223"
+      },
+      "same_degree_closure": {
+        "status": "same_degree_closure_pass",
+        "selected_mode_count_per_direction": 160,
+        "funnel_sha256": "cda7552973a9092f3891a3b95fbbbecfd46b50a3e48206c365310e3ee9a4414a",
+        "R_total_absolute_delta": 1.1326767887336053e-8,
+        "T_total_absolute_delta": 1.1007222444625597e-7,
+        "A_volume_total_absolute_delta": 1.214011311478913e-7
+      }
+    }
+  ],
+  "identity": {
+    "full3d_reference_binding_verified": true,
+    "true_residual_required": true,
+    "official_R_T_A_used": true,
+    "ordinary_default_changed": false,
+    "task033_original_scope_upgraded": false
+  }
+}

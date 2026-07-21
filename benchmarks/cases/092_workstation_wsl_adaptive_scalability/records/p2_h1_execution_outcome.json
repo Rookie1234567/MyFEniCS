@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task034_case092_p2_h1_execution_outcome",
+  "record_type": "task034_added_point_controlled_negative_outcome",
+  "matrix_key": "phase_f_p2_h1_s",
+  "source_sha": "9937747c0f69f0e07e7320081add3abf037a4315",
+  "case": {
+    "degree": 2,
+    "h_nm": 1.0,
+    "polarization_kind": "s",
+    "mpi_size": 8,
+    "requested_modes": 160,
+    "candidate_modes": 320
+  },
+  "full3d": {
+    "status": "controlled_resource_negative_stop_after_assembly",
+    "assembly_watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h1_assembly_mpi8_69b807c_s.json",
+    "assembly_watchdog_record_sha256": "520cf7f5a2b8bd3327540d7da808e31abed5b036b66e1aec11001c5f5193b649",
+    "assembly_peak_memory_gib": 67.92290115356445,
+    "exact_rows": 4379832,
+    "exact_assembled_nnz": 461122320,
+    "factorization_prediction_centers_gib": {
+      "assembly_to_factor_center": 217.58351772553075,
+      "factor_fill_payload_center": 227.18747987399638,
+      "p2_h_power_center": 279.21386118589834
+    },
+    "factorization_prediction_conservative_upper_gib": 418.8207917788475,
+    "termination_threshold_gib": 184.16309014242142,
+    "factorization_launched": false,
+    "full_solve_launched": false,
+    "official_rta_available": false,
+    "true_residual_available": false
+  },
+  "hybrid": {
+    "status": "controlled_timeout_negative_during_field_recovery",
+    "watchdog_record_path": "benchmarks/artifacts/task034/phase_f/records/p2_h1_s_hybrid_m160_mpi8_9937747.json",
+    "watchdog_record_sha256": "ff48998bbe45fe40cbce778a9e91666ad458b3d7754bea27eb47ef40f0ba7162",
+    "return_code": 1,
+    "formal_pass": false,
+    "numeric_pass": false,
+    "terminated_for_timeout": true,
+    "terminated_for_memory": false,
+    "warning_triggered": false,
+    "wall_time_limit_seconds": 7200.0,
+    "peak_memory_gib": 95.87872314453125,
+    "peak_memory_stage": "field_recovery",
+    "no_swap": true,
+    "last_completed_stage_boundaries": {
+      "bottom_local_factor_end_seconds": 2731.663421250996,
+      "bottom_schur_contribution_end_seconds": 3172.8475369719963,
+      "top_local_factor_end_seconds": 5205.347101448002,
+      "top_schur_contribution_end_seconds": 5542.726997342004,
+      "field_recovery_start_seconds": 5542.751718035011
+    },
+    "solver_record_available": false,
+    "official_rta_available": false,
+    "true_residual_available": false,
+    "full3d_closure_available": false
+  },
+  "gates": {
+    "launch_gate_pass": true,
+    "memory_authority_gate_pass": true,
+    "source_gate_pass": true,
+    "authority_sha256": "df11f8146957fb26f3d9b82271419a2aa3c1fa673d31fb83e4ef0cf9acf9521d",
+    "assembly_anchor_sha256": "520cf7f5a2b8bd3327540d7da808e31abed5b036b66e1aec11001c5f5193b649",
+    "source_stable_and_clean": true,
+    "thresholds_relaxed": false,
+    "timeout_extended_or_rerun": false
+  },
+  "validation": {
+    "task034_gate_targeted_tests": "17 passed",
+    "ordinary_wsl_full_suite": "463 passed, 18 skipped in 268.84s",
+    "ordinary_wsl_full_suite_log_sha256": "19b5b6a92bb5c0957384d20278e87a6a27cce1eb2636978f476fca5d8bb85af5",
+    "preserved_systemd_cgroup_harness_negative_sha256": "878c054b3e547608703408eba7e7547bb8821db4e66e3c39369e6422295be7e9"
+  },
+  "qualification": {
+    "full3d_qualified": false,
+    "hybrid_qualified": false,
+    "added_point_complete_as_controlled_negative": true,
+    "result_must_not_be_used_as_physical_convergence_evidence": true
+  }
+}

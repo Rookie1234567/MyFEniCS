@@ -1,0 +1,387 @@
+{
+  "schema_version": "task034.adaptive-mechanism.v1",
+  "record_type": "task034_p2_h5_conforming_graded_mechanism",
+  "timestamp_utc": "2026-07-20T08:21:34.589426+00:00",
+  "verified_clean_sha": "70590b4f99a6c0e389ec69b7fcf10d1e421b4f7d",
+  "source_before": {
+    "commit_sha": "70590b4f99a6c0e389ec69b7fcf10d1e421b4f7d",
+    "tracked_and_nonignored_untracked_clean": true,
+    "status_porcelain": ""
+  },
+  "source_after": {
+    "commit_sha": "70590b4f99a6c0e389ec69b7fcf10d1e421b4f7d",
+    "tracked_and_nonignored_untracked_clean": true,
+    "status_porcelain": ""
+  },
+  "case": {
+    "degree": 2,
+    "reference_h_nm": 5.0,
+    "bottom_interface_nm": 10.0,
+    "top_interface_nm": 110.0,
+    "profile": "mechanism",
+    "polarization_kind": "s"
+  },
+  "runtime": {
+    "mpi_size": 8,
+    "available_physical_cores": 48,
+    "wall_seconds": 7.2861904299934395
+  },
+  "rank_environments": [
+    {
+      "rank": 0,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 1,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 2,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 3,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 4,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 5,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 6,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    },
+    {
+      "rank": 7,
+      "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "python_version": "3.12.3",
+      "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+      "petsc_version": "3.19.6",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "petsc_int_type": "<class 'numpy.int32'>",
+      "dolfinx_version": "0.10.0.post2",
+      "basix_version": "0.10.0",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "mkl_num_threads": "1"
+    }
+  ],
+  "plan_hashes_all_ranks": [
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14"
+  ],
+  "plan": {
+    "schema_version": "task034.conforming-plan.v1",
+    "plan_hash": "2232ea5636dbd5d70532cf2e3ffabb894516451798f0e04fbb503a4120603f14",
+    "parent_plan_hash": null,
+    "adaptive_iteration": 0,
+    "marked_cell_count": 0,
+    "reference_h_nm": 5.0,
+    "profile": "mechanism",
+    "coarse_factor": 2.0,
+    "transition_layers": 2.0,
+    "mesh_cells": [
+      11,
+      3,
+      18
+    ],
+    "element_count": 594,
+    "axes_nm": {
+      "x": [
+        0.0,
+        6.5,
+        11.5,
+        16.5,
+        20.0,
+        23.5,
+        26.5,
+        30.0,
+        33.5,
+        38.5,
+        43.5,
+        50.0
+      ],
+      "y": [
+        0.0,
+        8.33333333333333,
+        16.6666666666667,
+        25.0
+      ],
+      "z": [
+        -10.0,
+        -5.0,
+        0.0,
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        40.0,
+        50.0,
+        60.0,
+        70.0,
+        80.0,
+        90.0,
+        100.0,
+        110.0,
+        115.0,
+        120.0,
+        125.0,
+        130.0
+      ]
+    },
+    "axis_stats_nm": {
+      "x": {
+        "num_cells": 11,
+        "min": 3.0,
+        "max": 6.5,
+        "median": 5.0
+      },
+      "y": {
+        "num_cells": 3,
+        "min": 8.333333333333332,
+        "max": 8.333333333333334,
+        "median": 8.333333333333334
+      },
+      "z": {
+        "num_cells": 18,
+        "min": 5.0,
+        "max": 10.0,
+        "median": 10.0
+      }
+    },
+    "quality": {
+      "minimum_axis_width_nm": 3.0,
+      "maximum_axis_width_nm": 10.0,
+      "axis_width_ratio": 3.3333333333333335,
+      "positive_jacobian_proxy": true,
+      "hanging_nodes_present": false
+    },
+    "periodic_pairing": {
+      "x_trace_synchronized": true,
+      "y_trace_synchronized": true,
+      "periodic_mate_refinement_synchronized": true,
+      "x_trace_signature": "ea2cdac0e2aca5a4e6f193467fd07653f2163138117d2d96c93240c5ea018ac0",
+      "y_trace_signature": "dcfc5d7b192de362ff8adcbc1a02f230e521f1642df731e85baa1dce5337309e"
+    },
+    "material_planes_exact": true,
+    "matching_planes_exact": true,
+    "ordinary_uniform_default_changed": false,
+    "geometry": {
+      "x_bounds_nm": [
+        0.0,
+        50.0
+      ],
+      "y_bounds_nm": [
+        0.0,
+        25.0
+      ],
+      "z_bounds_nm": [
+        -10.0,
+        130.0
+      ],
+      "material_planes_nm": {
+        "x": [
+          16.5,
+          33.5
+        ],
+        "y": [],
+        "z": [
+          0.0,
+          0.0,
+          120.0
+        ]
+      },
+      "matching_planes_z_nm": [
+        10.0,
+        110.0
+      ]
+    }
+  },
+  "local_meshes": {
+    "bottom": {
+      "mesh_cells_xyz": [
+        11,
+        3,
+        4
+      ],
+      "mesh_cells_xy": [
+        11,
+        3
+      ],
+      "global_interface_facet_count": 33,
+      "expected_interface_facet_count": 33,
+      "interface_z_nm": 10.0,
+      "external_z_nm": -10.0,
+      "nedelec_global_dofs": 3916,
+      "floquet": {
+        "constraint_mode_resolved": "topological_trace_p2",
+        "num_constraints": 484,
+        "num_x_constraints": 102,
+        "num_y_constraints": 374,
+        "num_corner_constraints": 8,
+        "raw_map_nnz": 484,
+        "max_masters_per_slave": 1,
+        "max_face_pairing_coordinate_error": 0.0,
+        "edge_corner_phase_mismatch": 0.0,
+        "max_edge_midpoint_pairing_error": 0.0,
+        "max_face_midpoint_pairing_error": 0.0,
+        "max_face_transform_fit_residual": 0.0,
+        "used_full_boundary_gather": false,
+        "created_dense_boundary_square": false,
+        "estimated_constraint_memory_mb": 0.0166168212890625,
+        "communication_bytes_sent_current": 174126,
+        "communication_bytes_received_current": 174126
+      }
+    },
+    "top": {
+      "mesh_cells_xyz": [
+        11,
+        3,
+        4
+      ],
+      "mesh_cells_xy": [
+        11,
+        3
+      ],
+      "global_interface_facet_count": 33,
+      "expected_interface_facet_count": 33,
+      "interface_z_nm": 110.0,
+      "external_z_nm": 130.0,
+      "nedelec_global_dofs": 3916,
+      "floquet": {
+        "constraint_mode_resolved": "topological_trace_p2",
+        "num_constraints": 484,
+        "num_x_constraints": 102,
+        "num_y_constraints": 374,
+        "num_corner_constraints": 8,
+        "raw_map_nnz": 484,
+        "max_masters_per_slave": 1,
+        "max_face_pairing_coordinate_error": 0.0,
+        "edge_corner_phase_mismatch": 0.0,
+        "max_edge_midpoint_pairing_error": 0.0,
+        "max_face_midpoint_pairing_error": 0.0,
+        "max_face_transform_fit_residual": 0.0,
+        "used_full_boundary_gather": false,
+        "created_dense_boundary_square": false,
+        "estimated_constraint_memory_mb": 0.0166168212890625,
+        "communication_bytes_sent_current": 177315,
+        "communication_bytes_received_current": 177315
+      }
+    }
+  },
+  "cross_section": {
+    "mesh_cells_xy": [
+      11,
+      3
+    ],
+    "mixed_global_dofs": 453,
+    "transverse_global_dofs": 292,
+    "longitudinal_global_dofs": 161
+  },
+  "claims": {
+    "mechanism_qualified": true,
+    "pde_solved": false,
+    "equal_accuracy_compression_proven": false,
+    "genuine_adaptive_loop_proven": false
+  },
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "schema_identity": true,
+      "frozen_case_identity": true,
+      "clean_source_before_after": true,
+      "mpi8_without_oversubscription": true,
+      "rank_environment_identity": true,
+      "complex_petsc_scalar": true,
+      "deterministic_plan_hash_all_ranks": true,
+      "conforming_hexa_contract": true,
+      "periodic_trace_contract": true,
+      "bottom_top_trace_identity": true,
+      "matching_cross_section_identity": true,
+      "floquet_constraints_qualified": true,
+      "ordinary_default_unchanged": true,
+      "no_pde_solve_claim": true
+    },
+    "failures": []
+  }
+}

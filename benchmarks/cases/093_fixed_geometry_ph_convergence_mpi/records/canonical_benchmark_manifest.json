@@ -1,0 +1,36 @@
+{
+  "schema_version": "task034.case093.canonical-manifest.v1",
+  "record_type": "case093_canonical_benchmark_manifest",
+  "status": "canonical_partial_with_user_approved_reduced_scope",
+  "case_id": "093_fixed_geometry_ph_convergence_mpi",
+  "aggregation_source": {
+    "commit_sha": "35593ccd643c088993435b5bbe69e046361bea8a",
+    "worktree_status_before_record_write": ""
+  },
+  "compact_records": {
+    "convergence_summary.json": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
+    "mpi_identity_summary.json": "88a085bc6424892142e63aa4b8a8a65bdc1a86410b7cd9baae5fb3d9390c6111"
+  },
+  "canonical_anchors": {
+    "p2": "p2_h2",
+    "p3": "p3_h3",
+    "p4": "p4_h5"
+  },
+  "selected_discrete_reference": "p4_h5",
+  "adaptive_unlock": {
+    "p2_uniform_measured_decision": true,
+    "p3_uniform_measured_decision": true,
+    "p4_same_degree_closure_or_controlled_negative": true,
+    "selected_discrete_reference_frozen": true,
+    "case093_observable_and_checker_available": true,
+    "mpi8_production_baseline_selected": true
+  },
+  "claims": {
+    "canonical_compact_benchmark_available": true,
+    "grid_convergence_proven": false,
+    "continuum_reference": false,
+    "full_addendum_polarization_and_per_degree_mpi_scope_complete": false,
+    "user_approved_reduced_scope_complete": true,
+    "ordinary_default_changed": false
+  }
+}

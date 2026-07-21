@@ -27,6 +27,18 @@ _TOPOLOGY_CACHE = FloquetTopologyCache(max_entries=8)
 _KIND_CODE = {"x": 1, "y": 2, "corner": 3}
 
 
+def clear_floquet_topology_cache() -> None:
+    """Release every cached phase-independent topology on the current rank."""
+
+    _TOPOLOGY_CACHE.clear()
+
+
+def floquet_topology_cache_size() -> int:
+    """Return the number of live-owner topology entries on the current rank."""
+
+    return len(_TOPOLOGY_CACHE)
+
+
 @dataclass(frozen=True)
 class HighOrderFloquetConstraintData:
     topology: FloquetTraceTopology
@@ -598,8 +610,6 @@ def _build_trace_topology(
         used_full_boundary_gather=False,
         created_dense_boundary_square=False,
         pair_counts=tuple(pair_counts),  # type: ignore[arg-type]
-        mesh_reference=mesh_data.mesh,
-        space_reference=V,
     )
 
 
@@ -607,13 +617,16 @@ def _get_or_build_topology(
     V, mesh_data, cfg: SimulationConfig3D
 ) -> tuple[FloquetTraceTopology, bool]:
     key = _topology_key(V, mesh_data, cfg, int(cfg.nedelec_degree))
-    cached = _TOPOLOGY_CACHE.get(key)
+    cached = _TOPOLOGY_CACHE.get(key, mesh=mesh_data.mesh, space=V)
     hit_count = int(V.mesh.comm.allreduce(cached is not None, op=MPI.SUM))
     if hit_count == int(V.mesh.comm.size):
         assert cached is not None
         return cached, True
+    if hit_count:
+        # A partial rank hit must not leave divergent cache state.
+        _TOPOLOGY_CACHE.clear()
     topology = _build_trace_topology(V, mesh_data, cfg, key)
-    _TOPOLOGY_CACHE.put(topology)
+    _TOPOLOGY_CACHE.put(topology, mesh=mesh_data.mesh, space=V)
     return topology, False
 
 

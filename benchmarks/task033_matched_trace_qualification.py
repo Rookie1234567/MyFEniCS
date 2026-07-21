@@ -27,6 +27,8 @@ RAISED_QUADRATURE_DELTA_MAX = 2.0e-12
 MPI_BETA_RELATIVE_DELTA_MAX = 1.0e-8
 MPI_INVARIANT_RELATIVE_DELTA_MAX = 1.0e-7
 EXPECTED_SHARDS = ((2, 1), (3, 1), (3, 4), (4, 1), (4, 4))
+TASK034_ADDITIONAL_SHARDS = ((3, 2), (4, 2))
+SUPPORTED_SHARDS = (*EXPECTED_SHARDS, *TASK034_ADDITIONAL_SHARDS)
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -414,7 +416,7 @@ def matched_trace_shard_gate(record: Mapping[str, Any]) -> dict[str, Any]:
             record.get("schema_version") == "task033.phaseB-matched-trace.v1"
             and record.get("record_type")
             == "measured_phaseB_matched_trace_component"
-            and identity in EXPECTED_SHARDS
+            and identity in SUPPORTED_SHARDS
         ),
         "source_identity": (
             isinstance(source.get("commit_sha"), str)
@@ -1092,7 +1094,7 @@ def main() -> None:
         for path, record in zip(paths, records)
         if _record_identity(record) is not None
     ]
-    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    tracked_status = _git("status", "--porcelain", "--untracked-files=all")
     aggregate["aggregation_tool"] = {
         "module": "benchmarks.task033_matched_trace_qualification",
         "commit_sha": _git("rev-parse", "HEAD"),

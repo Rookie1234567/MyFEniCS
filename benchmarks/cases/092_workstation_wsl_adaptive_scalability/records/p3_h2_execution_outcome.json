@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "task034_case092_p3_h2_execution_outcome",
+  "record_type": "task034_user_added_point_controlled_full3d_negative_and_hybrid_m160_pass",
+  "matrix_key": "phase_f_p3_h2_s",
+  "status": "controlled_resource_negative_full3d_and_guarded_hybrid_shard_pass",
+  "case": {
+    "degree": 3,
+    "h_nm": 2.0,
+    "polarization_kind": "s",
+    "mpi_size": 8
+  },
+  "full3d": {
+    "source_sha": "b93d59c11d7625291824f216db1d431585319ed5",
+    "stop_stage": "assembly_only",
+    "assembly_status": "assembly_calibration_pass",
+    "assembly_record_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_assembly_mpi8_b93d59c_s.json",
+    "assembly_record_sha256": "c355c3ebe746c790ac25bdedf65a1733bfd07f65ae168c3b721f29140fceabf7",
+    "assembly_elapsed_seconds": 1334.645345338009,
+    "assembly_peak_memory_gib": 64.01494979858398,
+    "exact_rows": 2047298,
+    "exact_assembled_nnz": 488789000,
+    "factorization_prediction_centers_gib": {
+      "assembly_to_factor": 141.86209754348533,
+      "factor_fill_payload": 135.57892285292098,
+      "h_power": 154.97345941699274
+    },
+    "factorization_prediction_conservative_upper_gib": 232.4601891254891,
+    "termination_gib": 184.16309014242142,
+    "factorization_launched": false,
+    "full_solve_launched": false,
+    "no_swap": true,
+    "classification": "controlled_resource_negative_stop_after_assembly"
+  },
+  "hybrid_m160": {
+    "source_sha": "f7924f52584b801c48930477a7f9ce4e4bb4a2db",
+    "status": "measured_shard_pass",
+    "formal_pass": true,
+    "numeric_pass": true,
+    "memory_authority_pass": true,
+    "physical_qualified": false,
+    "requested_modes": 160,
+    "candidate_modes": 320,
+    "summary_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_s_hybrid_m160_mpi8_f7924f5_attempt2.json",
+    "summary_sha256": "b709705292736c9b22a25cc0bcd8667f5195b862da1d2195807df21b347b9f34",
+    "solver_record_path": "benchmarks/artifacts/task034/phase_f/hybrid/p3_h2_s_m160_mpi8_f7924f5_attempt2/solver_record.json",
+    "solver_record_sha256": "d797614a03138c6265485398996f10bc2759cdaa8fa98d675f44b42f6f05d4e9",
+    "elapsed_seconds": 3513.818175653025,
+    "peak_memory_gib": 49.641502380371094,
+    "true_relative_residual": 3.612598615400456e-11,
+    "R_total": 0.0007644666706485172,
+    "T_total": 0.6026901281858537,
+    "A_balance": 0.3965454051434978,
+    "A_volume_total": 0.3965454051452797,
+    "energy_closure_error": 1.7819079545233762e-12,
+    "no_swap": true,
+    "warning_triggered": false,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "qualification_boundary": "M160 measured shard pass only; no M80/M120 funnel and no p3/h2 full3D closure are claimed."
+  },
+  "preserved_preflight_negative": {
+    "status": "not_run_preflight_failed",
+    "reason": "The first post-parser launch supplied the file raw SHA instead of the Case090 canonical evidence SHA; the solver did not start.",
+    "record_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_s_hybrid_m160_mpi8_f7924f5.json",
+    "record_sha256": "2fa421a1b331bf66f830660c29f2198b676f4e79c39812d53ebf75fe468f760f"
+  },
+  "tracked_resource_evidence": {
+    "resource_gate_path": "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/p3_h2_resource_gate.json",
+    "resource_gate_sha256": "607c7106a14057b0ecec36bc209116b71fb3b60ef784cbe99e0fb179c16ec606",
+    "launch_authority_sha256": "1cf8ca8650ed77ec852d3056f500791d3dd4bfb29abd18742a00e260b5f80d34"
+  },
+  "qualification": {
+    "user_added_point_attempt_complete": true,
+    "full3d_controlled_resource_negative": true,
+    "hybrid_m160_measured_shard_pass": true,
+    "same_degree_closure_claimed": false,
+    "mode_funnel_claimed": false,
+    "thresholds_relaxed": false,
+    "failed_evidence_preserved": true
+  }
+}

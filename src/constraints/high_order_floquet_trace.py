@@ -6,6 +6,7 @@ from functools import lru_cache
 import hashlib
 import json
 from typing import Hashable, Iterable, Literal
+import weakref
 
 import basix
 import numpy as np
@@ -251,8 +252,6 @@ class FloquetTraceTopology:
     used_full_boundary_gather: bool = False
     created_dense_boundary_square: bool = False
     pair_counts: tuple[tuple[EntityKind, PhaseKind, int], ...] = ()
-    mesh_reference: object | None = None
-    space_reference: object | None = None
 
     def materialize(
         self,
@@ -272,32 +271,75 @@ class FloquetTraceTopology:
 
 
 class FloquetTopologyCache:
-    """Small explicit LRU cache whose values never contain Bloch phases."""
+    """Weak-owner-aware LRU cache whose values never contain Bloch phases.
+
+    Production entries validate live mesh/function-space wrappers by identity.
+    Weak references avoid retaining large DOLFINx graphs, and make ``id()``
+    reuse in :class:`FloquetTopologyKey` fail closed.
+    """
 
     def __init__(self, max_entries: int = 8):
         if int(max_entries) < 1:
             raise ValueError("max_entries must be positive.")
         self.max_entries = int(max_entries)
-        self._values: OrderedDict[FloquetTopologyKey, FloquetTraceTopology] = (
-            OrderedDict()
-        )
+        self._values: OrderedDict[
+            FloquetTopologyKey,
+            tuple[
+                FloquetTraceTopology,
+                weakref.ReferenceType[object] | None,
+                weakref.ReferenceType[object] | None,
+            ],
+        ] = OrderedDict()
         self.hits = 0
         self.misses = 0
 
-    def get(self, key: FloquetTopologyKey) -> FloquetTraceTopology | None:
-        value = self._values.get(key)
-        if value is None:
+    def get(
+        self,
+        key: FloquetTopologyKey,
+        *,
+        mesh: object | None = None,
+        space: object | None = None,
+    ) -> FloquetTraceTopology | None:
+        entry = self._values.get(key)
+        if entry is None:
             self.misses += 1
             return None
+        value, mesh_ref, space_ref = entry
+        if mesh is not None or space is not None:
+            owners_match = bool(
+                mesh is not None
+                and space is not None
+                and mesh_ref is not None
+                and space_ref is not None
+                and mesh_ref() is mesh
+                and space_ref() is space
+            )
+            if not owners_match:
+                self._values.pop(key, None)
+                self.misses += 1
+                return None
         self._values.move_to_end(key)
         self.hits += 1
         return value
 
-    def put(self, topology: FloquetTraceTopology) -> None:
-        self._values[topology.key] = topology
+    def put(
+        self,
+        topology: FloquetTraceTopology,
+        *,
+        mesh: object | None = None,
+        space: object | None = None,
+    ) -> None:
+        if (mesh is None) != (space is None):
+            raise ValueError("mesh and space cache owners must be supplied together.")
+        mesh_ref = None if mesh is None else weakref.ref(mesh)
+        space_ref = None if space is None else weakref.ref(space)
+        self._values[topology.key] = (topology, mesh_ref, space_ref)
         self._values.move_to_end(topology.key)
         while len(self._values) > self.max_entries:
             self._values.popitem(last=False)
+
+    def clear(self) -> None:
+        self._values.clear()
 
     def __len__(self) -> int:
         return len(self._values)

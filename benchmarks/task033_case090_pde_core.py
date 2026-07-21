@@ -135,7 +135,7 @@ def inspect_tracked_source(repo_root: Path) -> SourceIdentity:
             text=True,
         ).stdout.strip().lower()
         status = subprocess.run(
-            ["git", "status", "--porcelain=v1", "--untracked-files=normal"],
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
             cwd=root,
             check=True,
             capture_output=True,
@@ -1643,6 +1643,7 @@ def validate_shard_record(record: Mapping[str, Any]) -> list[str]:
         if not isinstance(periodic, Mapping):
             problems.append("one or more shard periodic constraint records are missing")
             continue
+        periodic_integers: dict[str, int] = {}
         for name in (
             "global_constraint_rows",
             "global_constraint_nnz",
@@ -1650,8 +1651,30 @@ def validate_shard_record(record: Mapping[str, Any]) -> list[str]:
             "communication_bytes_sent_current",
             "communication_bytes_received_current",
         ):
-            if _integer_or_none(periodic.get(name)) is None:
+            value = _integer_or_none(periodic.get(name))
+            if value is None:
                 problems.append(f"one or more shard periodic {name} fields are missing")
+            else:
+                periodic_integers[name] = value
+        degree = item.get("degree")
+        rows = periodic_integers.get("global_constraint_rows")
+        nnz = periodic_integers.get("global_constraint_nnz")
+        max_masters = periodic_integers.get("max_masters_per_slave")
+        if (
+            type(degree) is int
+            and degree in DEGREES
+            and rows is not None
+            and nnz is not None
+            and max_masters is not None
+        ):
+            if rows <= 0 or not rows <= nnz <= rows * degree:
+                problems.append(
+                    "one or more shard periodic constraint sparsity bounds failed"
+                )
+            if not 1 <= max_masters <= degree:
+                problems.append(
+                    "one or more shard periodic max-master bounds failed"
+                )
         if periodic.get("topology_cache_hit") not in (True, False):
             problems.append("one or more shard topology cache fields are missing")
     probes = record.get("algebra_probes")
@@ -1670,8 +1693,6 @@ _FIXTURE_A_MPI_PATHS = (
     ("fields", "relative_max_abs_E_error"),
     ("fields", "relative_max_abs_H_error"),
     ("periodic_constraint", "global_constraint_rows"),
-    ("periodic_constraint", "global_constraint_nnz"),
-    ("periodic_constraint", "max_masters_per_slave"),
 )
 _FIXTURE_B_MPI_PATHS = (
     ("algebra", "full_true_residual"),
@@ -1695,8 +1716,6 @@ _FIXTURE_B_MPI_PATHS = (
     ("power", "T_port_minus_T_ref"),
     ("power", "A_volume_minus_A_ref"),
     ("periodic_constraint", "global_constraint_rows"),
-    ("periodic_constraint", "global_constraint_nnz"),
-    ("periodic_constraint", "max_masters_per_slave"),
 )
 
 _FIXTURE_B_MPI_COMPLEX_PATHS = (
@@ -1749,7 +1768,13 @@ def _nested_complex(item: Mapping[str, Any], path: Sequence[str]) -> complex | N
 def compute_mpi_result_difference(
     shards: Sequence[Mapping[str, Any]],
 ) -> tuple[float | None, list[str]]:
-    """Compare all rank-independent numerical outputs across MPI1/2/4."""
+    """Compare rank-independent physics/algebra outputs across MPI1/2/4.
+
+    Constraint NNZ and masters-per-slave describe a partition-dependent sparse
+    representation when DOLFINx entity orientation changes across MPI layouts.
+    ``validate_shard_record`` fail-closes their degree-scaled sparsity bounds;
+    the global constraint-row count remains an exact cross-MPI invariant here.
+    """
 
     problems: list[str] = []
     by_key: dict[tuple[Any, ...], dict[int, Mapping[str, Any]]] = {}
@@ -1864,11 +1889,60 @@ def validate_watchdog_summary(
     ):
         problems.append("watchdog worker did not exit successfully")
     preflight = record.get("preflight")
+    resource_mode = (
+        preflight.get("resource_authority_mode")
+        if isinstance(preflight, Mapping)
+        else None
+    )
+    task034_wsl = resource_mode == "task034_wsl_effective_limit"
     if not isinstance(preflight, Mapping):
         problems.append("watchdog preflight evidence is missing")
+    elif preflight.get("passed") is not True:
+        problems.append("watchdog preflight did not pass")
+    elif task034_wsl:
+        host_available = _integer_or_none(
+            preflight.get("host_available_memory_bytes")
+        )
+        swap_current = _integer_or_none(preflight.get("swap_current_bytes"))
+        effective = _integer_or_none(preflight.get("effective_memory_bytes"))
+        warning_threshold = _integer_or_none(
+            preflight.get("warning_threshold_bytes")
+        )
+        termination_threshold = _integer_or_none(
+            preflight.get("termination_threshold_bytes")
+        )
+        memory = preflight.get("task034_effective_limit")
+        memory = memory if isinstance(memory, Mapping) else {}
+        candidates = [
+            _integer_or_none(memory.get("user_limit_bytes")),
+            _integer_or_none(memory.get("wsl_total_85_percent_bytes")),
+            _integer_or_none(memory.get("available_minus_reserve_bytes")),
+        ]
+        if None in (host_available, swap_current, effective, *candidates):
+            problems.append("watchdog WSL preflight memory authorities are incomplete")
+        elif swap_current != 0:
+            problems.append("watchdog WSL preflight job swap is nonzero")
+        else:
+            expected_effective = min(int(value) for value in candidates)
+            if effective != expected_effective:
+                problems.append("watchdog WSL effective memory authority is incorrect")
+            if warning_threshold != int(expected_effective * 0.80):
+                problems.append("watchdog WSL warning threshold is incorrectly scaled")
+            if termination_threshold != int(expected_effective * 0.95):
+                problems.append("watchdog WSL termination threshold is incorrectly scaled")
+        dedicated_cgroup = (
+            preflight.get("cgroup_memory_is_dedicated_job_authority") is True
+        )
+        cgroup_state = preflight.get("cgroup_memory_limit_state")
+        if dedicated_cgroup and cgroup_state not in {"finite", "unbounded"}:
+            problems.append("watchdog WSL dedicated cgroup authority is unreadable")
+        if (
+            not dedicated_cgroup
+            and cgroup_state
+            != "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+        ):
+            problems.append("watchdog WSL non-dedicated cgroup diagnostic drifted")
     else:
-        if preflight.get("passed") is not True:
-            problems.append("watchdog preflight did not pass")
         if preflight.get("cgroup_memory_limit_state") != "finite":
             problems.append("watchdog container limit is not finite/readable")
         limit = _integer_or_none(preflight.get("cgroup_memory_limit_bytes"))
@@ -1905,11 +1979,9 @@ def validate_watchdog_summary(
     else:
         if _integer_or_none(sampling.get("sample_count")) in (None, 0, 1):
             problems.append("watchdog has fewer than two samples")
-        for name in (
+        required_sampling_fields = [
             "worker_tree_rss_peak_bytes",
-            "cgroup_memory_current_peak_bytes",
             "observed_memory_peak_bytes",
-            "cgroup_memory_limit_bytes",
             "host_available_memory_min_bytes",
             "swap_current_initial_bytes",
             "swap_current_final_bytes",
@@ -1920,7 +1992,17 @@ def validate_watchdog_summary(
             "termination_threshold_bytes",
             "nonzero_swap_sample_count",
             "authority_unreadable_sample_count",
-        ):
+        ]
+        if task034_wsl:
+            required_sampling_fields.append("process_tree_swap_peak_bytes")
+        else:
+            required_sampling_fields.extend(
+                [
+                    "cgroup_memory_current_peak_bytes",
+                    "cgroup_memory_limit_bytes",
+                ]
+            )
+        for name in required_sampling_fields:
             if _integer_or_none(sampling.get(name)) is None:
                 problems.append(f"watchdog sampling field {name} is missing")
         observed = _integer_or_none(sampling.get("observed_memory_peak_bytes"))
@@ -1933,17 +2015,35 @@ def validate_watchdog_summary(
             and observed >= termination_threshold
         ):
             problems.append("watchdog observed memory reached termination threshold")
-        for name in (
+        zero_fields = [
             "swap_current_initial_bytes",
             "swap_current_final_bytes",
             "swap_current_peak_bytes",
             "swap_current_delta_bytes",
             "nonzero_swap_sample_count",
             "authority_unreadable_sample_count",
-        ):
+        ]
+        if task034_wsl:
+            zero_fields.append("process_tree_swap_peak_bytes")
+        for name in zero_fields:
             if _integer_or_none(sampling.get(name)) != 0:
                 problems.append(f"watchdog requires zero {name}")
-        if sampling.get("cgroup_memory_limit_state") != "finite":
+        if task034_wsl:
+            if sampling.get("resource_authority_mode") != resource_mode:
+                problems.append("watchdog WSL sampling authority mode drifted")
+            sampled_cgroup_state = sampling.get("cgroup_memory_limit_state")
+            if (
+                sampling.get("dedicated_job_cgroup_observed") is True
+                and sampled_cgroup_state not in {"finite", "unbounded"}
+            ):
+                problems.append("watchdog WSL sampled dedicated cgroup is unreadable")
+            if (
+                sampling.get("dedicated_job_cgroup_observed") is not True
+                and sampled_cgroup_state
+                != "not_dedicated_unbounded_or_unreadable_diagnostic_only"
+            ):
+                problems.append("watchdog WSL sampled non-dedicated cgroup drifted")
+        elif sampling.get("cgroup_memory_limit_state") != "finite":
             problems.append("watchdog sampled container limit was not finite")
         if sampling.get("raw_output_ignored_by_git") is not True:
             problems.append("watchdog raw sample output is not git-ignored")
@@ -2692,7 +2792,10 @@ def aggregate_core_records(
                 if size in by_mpi
             },
             "mpi_result_comparison_method": (
-                "maximum rank-pair relative difference with scale max(1, abs(values))"
+                "maximum rank-pair relative difference over rank-independent "
+                "physics/algebra and global constraint-row outputs with scale "
+                "max(1, abs(values)); partition-dependent constraint NNZ and "
+                "masters-per-slave are fail-closed by per-shard degree bounds"
             ),
             "rss_note": (
                 "PDE rows preserve max-rank historical RSS and the sum of rank "

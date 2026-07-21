@@ -699,6 +699,7 @@ def _solve_augmented_system(
     dofs: int | None = None,
     constraints: int | None = None,
     matrix_stats: dict[str, Any] | None = None,
+    factorization_only: bool = False,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
     progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
@@ -803,6 +804,19 @@ def _solve_augmented_system(
                 "factor_inventory": factor_inventory,
             },
         )
+    if factorization_only:
+        x_aug.set(PETSc.ScalarType(0.0))
+        return (
+            x_aug,
+            ksp,
+            {
+                "ksp_setup_seconds": setup_seconds,
+                "ksp_solve_seconds": None,
+                "factor_inventory": factor_inventory,
+                "factorization_only": True,
+            },
+        )
+    if out_dir is not None:
         _write_progress_event(
             out_dir,
             progress_comm,
@@ -1548,6 +1562,7 @@ def solve_stage4_dtn_port_total_field(
             dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
             constraints=floquet_data.num_constraints,
             matrix_stats=augmented_matrix_stats_after_finalize,
+            factorization_only=cfg.matrix_diagnostics_factorization_only,
         )
     except DirectSolveFailure as exc:
         exc.timing_details.update(timing_details)
@@ -1561,7 +1576,60 @@ def solve_stage4_dtn_port_total_field(
             }
         )
         raise
-    timing_details["stage4_dtn_linear_solve_seconds"] = float(comm.allreduce(time.perf_counter() - t0, op=MPI.MAX))
+    setup_and_solve_seconds = float(
+        comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
+    )
+    if cfg.matrix_diagnostics_factorization_only:
+        timing_details["stage4_dtn_factorization_seconds"] = setup_and_solve_seconds
+        E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
+        solver_info = {
+            "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            "assemble_only": False,
+            "factorization_only": True,
+            "num_auxiliary_dofs": int(n_aux),
+            "num_fem_dofs_after_mpc": int(n_fe),
+            "num_total_augmented_dofs": int(n_fe + n_aux),
+            "stage4_dtn_assembly_seconds": float(
+                comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)
+            ),
+            "ksp_converged_reason": 0,
+            "ksp_iterations": 0,
+            "actual_ksp_type": ksp.getType(),
+            "actual_pc_type": ksp.getPC().getType(),
+            "actual_pc_factor_solver_type": None,
+            "dtn_base_matrix_stats": base_matrix_stats,
+            "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+            "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+            "explicit_chac_constructed": False,
+            "dtn_auxiliary_dense_block_constructed": False,
+            **ksp_telemetry,
+            **timing_details,
+        }
+        try:
+            solver_info["actual_pc_factor_solver_type"] = (
+                ksp.getPC().getFactorSolverType()
+            )
+        except Exception:
+            solver_info["actual_pc_factor_solver_type"] = None
+        return {
+            "E_total": E_total,
+            "A": A_aug,
+            "b": b_aug,
+            "x": x_aug,
+            "ksp": ksp,
+            "solver_info": solver_info,
+            "port_metrics": {
+                "R_total": None,
+                "T_total": None,
+                "R_plus_T": None,
+                "A_balance": None,
+                "diffraction_total_power_source": (
+                    "factorization_only_skipped_solve"
+                ),
+                **_port_mode_count_metrics(modes),
+            },
+        }
+    timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
 
     linear_residual = _linear_residual(A_aug, b_aug, x_aug)
     _write_progress_event(

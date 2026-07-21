@@ -23,6 +23,8 @@
 | [`080`](080_hybrid_fem_modal_direct_baseline/README.md) | Task32 Hybrid FEM-modal direct baseline | Phase 0–10 complete；`hybrid_direct_engineering_success`；h2 not_run；302/302 | clean h5/h3 full3D + M120/M160 Hybrid、QEP/modes/propagation/trace、E/H/absorption、Schur、funnel、30-point smoke、six-path memory；current direct 0.7 nm not scalable |
 | [`090`](090_high_order_3d_floquet_hcurl/README.md) | Task33 p1–p4 high-order 3D Floquet | stage complete | clean source 下 MPI1/2/4 各 48、共 144 PDE；p3/p4 核心 Gate 通过 |
 | [`091`](091_hybrid_hp_adaptivity_feasibility/README.md) | Task33 high-order/Hybrid fixed-p feasibility | reduced scope complete；p3/h5 同阶 closure；p3/h7.5 fixed-p clear success；p4 resource negative；variable-p fail closed；adaptive transferred | Stage1--5、D1/D2、source split 与 reduced completion tracked records；原 21-role full scope 保持 `NOT_RUN` |
+| [`092`](092_workstation_wsl_adaptive_scalability/README.md) | Task034 WSL 工作站、hardening、资源与 adaptive 总记录 | PASS_WITH_QUALIFICATIONS；Review V4 pending | WSL qualification、p3/h3、p4/h5、controlled resource stops、graded-h same-error negative、40-row hermetic facts |
+| [`093`](093_fixed_geometry_ph_convergence_mpi/README.md) | Task034 固定结构 p2/p3/p4 收敛、同阶 closure 与 MPI identity | canonical partial（用户批准缩减范围） | 9 个 S 偏振同阶 closure positive、p3/h10 Hybrid negative、p3/h5 MPI1/8/16 identity + MPI32 exploratory |
 
 每个 README 使用相同 22 项契约，并在表后展开物理问题、参数、PyCharm、CLI、代码路径、结果、解释和限制。Recorded case 至少包含 `config.json`、`expected.json`、可执行 `run.sh` 与 `records/`；纯代数 case 用 `fixture.json` 和 `test_command.txt` 代替几何配置。缺少 record 的 case 仍有价值：它明确告诉维护者还差什么证据，防止能力矩阵把“代码存在”写成“工程已验证”。
 

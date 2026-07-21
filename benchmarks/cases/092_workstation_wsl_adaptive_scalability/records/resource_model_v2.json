@@ -1,0 +1,780 @@
+{
+  "schema_version": "task034.resource-model.v2",
+  "record_type": "component_separated_resource_prediction",
+  "identity": {
+    "is_pde_run": false,
+    "is_solver_pass": false,
+    "authorizes_heavy_launch": false,
+    "proves_0p7nm_feasible": false,
+    "ordinary_default_changed": false
+  },
+  "inputs": {
+    "fixed_geometry_csv": "docs/task034_workstation_wsl_adaptive_scalability/outcomes/fixed_geometry_ph_convergence.csv",
+    "fixed_geometry_csv_sha256": "dcc9603cc731839bffea8a1d5a157cbe1c06cb537dfea95177b9aa60221f9f1f",
+    "adaptive_json": "docs/task034_workstation_wsl_adaptive_scalability/outcomes/adaptive_compression.json",
+    "adaptive_json_sha256": "f1e7dc38e166035b8b8a9574a13538335eb0e65052825e4cbcf6f5a2a5ca3031",
+    "baseline_hybrid_json": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
+    "baseline_hybrid_json_sha256": "0a68f1967b98fea8fc763d76fef7a3a63f9162d9d0ad3a2da26aa1196477b029",
+    "mpi_size_for_replicated_layout": 48
+  },
+  "calibration": {
+    "fixed_geometry_rows": [
+      {
+        "key": "p2_h5",
+        "degree": "2",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.08902160293625645",
+        "T_total_full3d": "0.44258827865721156",
+        "A_volume_full3d": "0.4683901184065563",
+        "true_residual_full3d": "9.70703376934104e-12",
+        "full3d_peak_GiB": "2.959606170654297",
+        "hybrid_peak_GiB": "3.2848663330078125"
+      },
+      {
+        "key": "p2_h3",
+        "degree": "2",
+        "h_nm": "3",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.00461303140747413",
+        "T_total_full3d": "0.583653357179117",
+        "A_volume_full3d": "0.4117336114134929",
+        "true_residual_full3d": "7.34068736376572e-12",
+        "full3d_peak_GiB": "9.53493881225586",
+        "hybrid_peak_GiB": "4.695159912109375"
+      },
+      {
+        "key": "p2_h2",
+        "degree": "2",
+        "h_nm": "2",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.001342932846259213",
+        "T_total_full3d": "0.5992132294442238",
+        "A_volume_full3d": "0.39944383770948677",
+        "true_residual_full3d": "1.74783252980985e-11",
+        "full3d_peak_GiB": "32.53961181640625",
+        "hybrid_peak_GiB": "11.30533218383789"
+      },
+      {
+        "key": "p3_h10",
+        "degree": "3",
+        "h_nm": "10",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "false",
+        "same_degree_closure": "false",
+        "R_total_full3d": "0.05539849053529889",
+        "T_total_full3d": "0.4060678667548069",
+        "A_volume_full3d": "0.5385336427098364",
+        "true_residual_full3d": "2.64946972848317e-12",
+        "full3d_peak_GiB": "2.7445716857910156",
+        "hybrid_peak_GiB": "2.8677101135253906"
+      },
+      {
+        "key": "p3_h7p5",
+        "degree": "3",
+        "h_nm": "7.5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.003090727449921082",
+        "T_total_full3d": "0.5911608633289427",
+        "A_volume_full3d": "0.4057484092211082",
+        "true_residual_full3d": "7.68227668568186e-12",
+        "full3d_peak_GiB": "4.6096954345703125",
+        "hybrid_peak_GiB": "3.614459991455078"
+      },
+      {
+        "key": "p3_h5",
+        "degree": "3",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.001090107012034979",
+        "T_total_full3d": "0.6006224782934476",
+        "A_volume_full3d": "0.39828741469453954",
+        "true_residual_full3d": "6.98200317859201e-12",
+        "full3d_peak_GiB": "9.04007339477539",
+        "hybrid_peak_GiB": "4.908237457275391"
+      },
+      {
+        "key": "p3_h3",
+        "degree": "3",
+        "h_nm": "3",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0007894679573742296",
+        "T_total_full3d": "0.6025149841382069",
+        "A_volume_full3d": "0.39669554790437317",
+        "true_residual_full3d": "8.48927733258755e-11",
+        "full3d_peak_GiB": "44.06867218017578",
+        "hybrid_peak_GiB": "14.271553039550781"
+      },
+      {
+        "key": "p4_h10",
+        "degree": "4",
+        "h_nm": "10",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0018823172152018387",
+        "T_total_full3d": "0.5966195196222404",
+        "A_volume_full3d": "0.40149816316260045",
+        "true_residual_full3d": "4.62675953814011e-12",
+        "full3d_peak_GiB": "5.639560699462891",
+        "hybrid_peak_GiB": "3.5176162719726562"
+      },
+      {
+        "key": "p4_h7p5",
+        "degree": "4",
+        "h_nm": "7.5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0008024690153384762",
+        "T_total_full3d": "0.602429772906308",
+        "A_volume_full3d": "0.3967677580783896",
+        "true_residual_full3d": "1.2715167394801e-11",
+        "full3d_peak_GiB": "12.724395751953125",
+        "hybrid_peak_GiB": "5.9671173095703125"
+      },
+      {
+        "key": "p4_h5",
+        "degree": "4",
+        "h_nm": "5",
+        "full3d_qualified": "true",
+        "hybrid_m160_qualified": "true",
+        "same_degree_closure": "true",
+        "R_total_full3d": "0.0007663133771040101",
+        "T_total_full3d": "0.602677530502972",
+        "A_volume_full3d": "0.3965561561199801",
+        "true_residual_full3d": "2.40147422295345e-11",
+        "full3d_peak_GiB": "28.888458251953125",
+        "hybrid_peak_GiB": "9.205917358398438"
+      }
+    ],
+    "adaptive_m160_rows": [
+      {
+        "profile": "conservative",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 43868.0,
+        "factor_nnz_sum": 30149200.0,
+        "peak_memory_gib": 3.9635391235351562,
+        "wall_time_seconds": 112.11475032198359,
+        "raw_dof_ratio_vs_uniform": 1.5591319412783806
+      },
+      {
+        "profile": "balanced",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 21584.0,
+        "factor_nnz_sum": 11556688.0,
+        "peak_memory_gib": 3.291961669921875,
+        "wall_time_seconds": 96.6334681660228,
+        "raw_dof_ratio_vs_uniform": 3.16882876204596
+      },
+      {
+        "profile": "aggressive",
+        "same_error_qualified": false,
+        "local_fe_dofs_sum": 7140.0,
+        "factor_nnz_sum": 3082072.0,
+        "peak_memory_gib": 2.5366134643554688,
+        "wall_time_seconds": 71.91697877302067,
+        "raw_dof_ratio_vs_uniform": 9.579271708683473
+      }
+    ],
+    "reference_components_bytes": {
+      "local_3d_fe_assembly": 173887296.0,
+      "local_3d_factorization": 1542174528.0,
+      "qep_coefficient_matrices": 11825280.0,
+      "qep_shift_invert_factorization": 4465032.881022042,
+      "right_left_mode_vectors": 40929280.0,
+      "interface_projection_n_times_m": 9955856.0,
+      "replicated_dense_modal_arrays": 471859200.0,
+      "hybrid_schur_dense_multi_rhs": 703385472.0,
+      "field_reconstruction": 2572672.0,
+      "mpi_process_runtime_overhead": 2080334951.118978,
+      "reference_peak_bytes": 5041389568.0,
+      "reference_local_fe_dofs_sum": 68396.0,
+      "reference_qep_dofs": 2053.0,
+      "reference_modes_per_direction": 160.0,
+      "reference_one_complex_2m_square_bytes": 1638400.0
+    },
+    "measured_same_error_adaptive_compression_available": false,
+    "allowed_adaptive_compression_factor_in_predictions": 1.0
+  },
+  "scaling_model": {
+    "spatial_policy": "uniform points-per-wavelength from qualified p2/h3 M160",
+    "mode_policy": "M scales with transverse reciprocal-order area, s^2",
+    "3d_direct_factor_policy": "nested-dissection engineering proxy, s^4",
+    "replicated_layout_policy": "6 complex (2M)^2 arrays on 48 ranks",
+    "dense_multi_rhs_policy": "local FE rows times modal RHS, s^5",
+    "uncertainty": "engineering prediction; material dispersion, cutoff changes and future solver redesign unknown"
+  },
+  "predictions": [
+    {
+      "wavelength_nm": 13.5,
+      "scale_13p5_over_lambda": 1.0,
+      "predicted_local_fe_dofs_sum_uniform": 68396,
+      "predicted_cross_section_qep_dofs": 2053,
+      "predicted_modes_per_direction": 160,
+      "one_complex_2m_square_gib": 0.00152587890625,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 173887296.0,
+          "gib": 0.1619451642036438,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "local_3d_factorization": {
+          "bytes": 1542174528.0,
+          "gib": 1.4362619519233704,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 11825280.0,
+          "gib": 0.011013150215148926,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "measured_calibrated"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 4465032.881022042,
+          "gib": 0.004158385918496215,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 40929280.0,
+          "gib": 0.03811836242675781,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 9955856.0,
+          "gib": 0.00927211344242096,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 471859200.0,
+          "gib": 0.439453125,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "measured_calibrated"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 703385472.0,
+          "gib": 0.6550787687301636,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "measured_calibrated"
+        },
+        "field_reconstruction": {
+          "bytes": 2572672.0,
+          "gib": 0.0023959875106811523,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "measured_calibrated"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "measured_calibrated"
+        }
+      },
+      "local_component_total_gib": 1.6006031036376953,
+      "modal_and_runtime_component_total_gib": 3.0945568084716797,
+      "predicted_total_gib": 4.695159912109375,
+      "largest_component": "mpi_process_runtime_overhead",
+      "largest_component_gib": 1.9374629027386923,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "feasible_with_30pct_guardband",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "feasible_with_30pct_guardband",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "feasible_with_30pct_guardband",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        }
+      }
+    },
+    {
+      "wavelength_nm": 5.0,
+      "scale_13p5_over_lambda": 2.7,
+      "predicted_local_fe_dofs_sum_uniform": 1346239,
+      "predicted_cross_section_qep_dofs": 14967,
+      "predicted_modes_per_direction": 1167,
+      "one_complex_2m_square_gib": 0.08117491006851196,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 3422623647.1680007,
+          "gib": 3.1875666670203215,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 81957477333.48482,
+          "gib": 76.3288487992108,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 86206291.20000002,
+          "gib": 0.08028586506843569,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 87885242.19715686,
+          "gib": 0.08184951003376102,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 2175149749.2480006,
+          "gib": 2.0257660646438604,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 529095006.84960014,
+          "gib": 0.49275812399536384,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 25076532510.72001,
+          "gib": 23.35434082031251,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 100928127228.79108,
+          "gib": 93.99664330183629,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 50637902.97600001,
+          "gib": 0.04716022217273713,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_total_gib": 79.56357568840386,
+      "modal_and_runtime_component_total_gib": 121.9691065886289,
+      "predicted_total_gib": 201.53268227703276,
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 93.99664330183629,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "candidate_high_risk",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "feasible_with_30pct_guardband",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "feasible_with_30pct_guardband",
+          "required_local_compression_if_modal_unchanged": 1.0,
+          "required_modal_compression_if_local_unchanged": 1.0,
+          "current_modal_layout_alone_exceeds_budget": false,
+          "required_joint_total_compression": 1.0,
+          "required_local_compression_for_half_budget": 1.0,
+          "required_modal_compression_for_half_budget": 1.0
+        }
+      }
+    },
+    {
+      "wavelength_nm": 2.0,
+      "scale_13p5_over_lambda": 6.75,
+      "predicted_local_fe_dofs_sum_uniform": 21034977,
+      "predicted_cross_section_qep_dofs": 93540,
+      "predicted_modes_per_direction": 7290,
+      "one_complex_2m_square_gib": 3.167635202407837,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 53478494487.0,
+          "gib": 49.805729172192514,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 3201463958339.25,
+          "gib": 2981.5956562191714,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 538789320.0,
+          "gib": 0.5017866566777229,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 1373206909.3305757,
+          "gib": 1.2788985942775157,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 84966787080.0,
+          "gib": 79.13148690015078,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 20667773705.0625,
+          "gib": 19.248364218568895,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 979552051200.0,
+          "gib": 912.278938293457,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 9856262424686.625,
+          "gib": 9179.359697444947,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 791217234.0,
+          "gib": 0.7368784714490175,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_total_gib": 3032.138263862813,
+      "modal_and_runtime_component_total_gib": 10193.736635010817,
+      "predicted_total_gib": 13225.87489887363,
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 9179.359697444947,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 51.663573823725116,
+          "required_local_compression_for_half_budget": 23.688580186428226,
+          "required_modal_compression_for_half_budget": 79.638567461022
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 12.915893455931279,
+          "required_local_compression_for_half_budget": 5.922145046607056,
+          "required_modal_compression_for_half_budget": 19.9096418652555
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 6.4579467279656395,
+          "required_local_compression_for_half_budget": 2.961072523303528,
+          "required_modal_compression_for_half_budget": 9.95482093262775
+        }
+      }
+    },
+    {
+      "wavelength_nm": 1.0,
+      "scale_13p5_over_lambda": 13.5,
+      "predicted_local_fe_dofs_sum_uniform": 168279809,
+      "predicted_cross_section_qep_dofs": 374160,
+      "predicted_modes_per_direction": 29160,
+      "one_complex_2m_square_gib": 50.68216323852539,
+      "one_complex_2m_square_near_or_over_256gib": false,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 427827955896.0,
+          "gib": 398.4458333775401,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 51223423333428.0,
+          "gib": 47705.53049950674,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 2155157280.0,
+          "gib": 2.0071466267108917,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 10985655274.644606,
+          "gib": 10.231188754220126,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 1359468593280.0,
+          "gib": 1266.1037904024124,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 330684379281.0,
+          "gib": 307.9738274971023,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 15672832819200.0,
+          "gib": 14596.463012695312,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 315400397589972.0,
+          "gib": 293739.5103182383,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 6329737872.0,
+          "gib": 5.89502777159214,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_total_gib": 48109.871360655874,
+      "modal_and_runtime_component_total_gib": 309924.2267471168,
+      "predicted_total_gib": 358034.09810777265,
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 293739.5103182383,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 1398.570695733487,
+          "required_local_compression_for_half_budget": 375.858370005124,
+          "required_modal_compression_for_half_budget": 2421.28302146185
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 349.6426739333717,
+          "required_local_compression_for_half_budget": 93.964592501281,
+          "required_modal_compression_for_half_budget": 605.3207553654624
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 174.82133696668586,
+          "required_local_compression_for_half_budget": 46.9822962506405,
+          "required_modal_compression_for_half_budget": 302.6603776827312
+        }
+      }
+    },
+    {
+      "wavelength_nm": 0.7,
+      "scale_13p5_over_lambda": 19.28571428571429,
+      "predicted_local_fe_dofs_sum_uniform": 490611687,
+      "predicted_cross_section_qep_dofs": 763591,
+      "predicted_modes_per_direction": 59511,
+      "one_complex_2m_square_gib": 211.09337335824966,
+      "one_complex_2m_square_near_or_over_256gib": true,
+      "components": {
+        "local_3d_fe_assembly": {
+          "bytes": 1247311824769.68,
+          "gib": 1161.649659992829,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "local_3d_factorization": {
+          "bytes": 213342038040100.1,
+          "gib": 198690.25614121938,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "qep_coefficient_matrices": {
+          "bytes": 4398280163.265307,
+          "gib": 4.096217605532433,
+          "scaling_exponent_in_13p5_over_lambda": 2.0,
+          "data_identity": "predicted"
+        },
+        "qep_shift_invert_factorization": {
+          "bytes": 32028149488.759796,
+          "gib": 29.828538642041195,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "right_left_mode_vectors": {
+          "bytes": 5662093266472.307,
+          "gib": 5273.235278643953,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "interface_projection_n_times_m": {
+          "bytes": 1377277714623.0745,
+          "gib": 1282.689827143284,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "replicated_dense_modal_arrays": {
+          "bytes": 65276271633486.086,
+          "gib": 60793.26535899759,
+          "scaling_exponent_in_13p5_over_lambda": 4.0,
+          "data_identity": "predicted"
+        },
+        "hybrid_schur_dense_multi_rhs": {
+          "bytes": 1876601401737205.8,
+          "gib": 1747721.2489929104,
+          "scaling_exponent_in_13p5_over_lambda": 5.0,
+          "data_identity": "predicted"
+        },
+        "field_reconstruction": {
+          "bytes": 18454046274.052486,
+          "gib": 17.18666988802374,
+          "scaling_exponent_in_13p5_over_lambda": 3.0,
+          "data_identity": "predicted"
+        },
+        "mpi_process_runtime_overhead": {
+          "bytes": 2080334951.118978,
+          "gib": 1.9374629027386923,
+          "scaling_exponent_in_13p5_over_lambda": 0.0,
+          "data_identity": "predicted"
+        }
+      },
+      "local_component_total_gib": 199869.09247110022,
+      "modal_and_runtime_component_total_gib": 1815106.3016768456,
+      "predicted_total_gib": 2014975.3941479458,
+      "largest_component": "hybrid_schur_dense_multi_rhs",
+      "largest_component_gib": 1747721.2489929104,
+      "budgets": {
+        "256": {
+          "budget_gib": 256.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 7870.997633390413,
+          "required_local_compression_for_half_budget": 1561.4772849304704,
+          "required_modal_compression_for_half_budget": 14180.517981850357
+        },
+        "1024": {
+          "budget_gib": 1024.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 1967.7494083476033,
+          "required_local_compression_for_half_budget": 390.3693212326176,
+          "required_modal_compression_for_half_budget": 3545.129495462589
+        },
+        "2048": {
+          "budget_gib": 2048.0,
+          "classification": "infeasible_current_layout",
+          "required_local_compression_if_modal_unchanged": null,
+          "required_modal_compression_if_local_unchanged": null,
+          "current_modal_layout_alone_exceeds_budget": true,
+          "required_joint_total_compression": 983.8747041738017,
+          "required_local_compression_for_half_budget": 195.1846606163088,
+          "required_modal_compression_for_half_budget": 1772.5647477312946
+        }
+      }
+    }
+  ],
+  "decision": {
+    "current_replicated_modal_layout_0p7nm": "infeasible",
+    "current_dense_multi_rhs_0p7nm": "infeasible",
+    "measured_adaptive_path_enters_budget": false,
+    "required_redesign": [
+      "qualified field-driven h-adaptivity",
+      "matrix-free or low-storage iterative local solver",
+      "distributed/streamed mode vectors",
+      "remove replicated dense M^2 arrays",
+      "blocked/streamed multi-RHS recovery"
+    ]
+  },
+  "limitations": [
+    "Predictions are not PDE runs and do not authorize a launch.",
+    "No failed adaptive raw DoF ratio is credited as accuracy-preserving compression.",
+    "Sparse factor and QEP fill exponents are engineering proxies, not exact asymptotics.",
+    "Predicted mode counts require future physical convergence validation."
+  ]
+}

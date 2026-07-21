@@ -362,6 +362,14 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             self.assertFalse(schur_system.dense_interface_square_formed)
             self.assertFalse(schur_system.full_field_or_mode_gathered)
             self.assertTrue(np.isfinite(schur_system.modal_schur_condition))
+            for inventory in schur_system.factor_inventory.values():
+                self.assertEqual(
+                    inventory["mumps_icntl_14_requested_percent"], 100
+                )
+                self.assertEqual(
+                    inventory["mumps_icntl_14_observed_percent"], 100
+                )
+                self.assertTrue(inventory["mumps_workspace_relaxation_verified"])
             self.assertLess(schur_solution.relative_residual, 1.0e-9)
             self.assertLess(schur_solution.bottom_relative_residual, 1.0e-10)
             self.assertLess(schur_solution.top_relative_residual, 1.0e-10)
@@ -425,6 +433,14 @@ class Task032HybridAugmentedDirectTests(unittest.TestCase):
             self.assertTrue(schur_system.recovery_refactor_required)
             self.assertIsNone(schur_system.bottom_factor)
             self.assertIsNone(schur_system.top_factor)
+            for inventory in schur_system.factor_inventory.values():
+                self.assertEqual(
+                    inventory["mumps_icntl_14_requested_percent"], 100
+                )
+                self.assertEqual(
+                    inventory["mumps_icntl_14_observed_percent"], 100
+                )
+                self.assertTrue(inventory["mumps_workspace_relaxation_verified"])
             schur_solution = solve_hybrid_modal_schur_direct(
                 schur_system,
                 self.bottom_system,

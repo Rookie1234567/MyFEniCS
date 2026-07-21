@@ -1,0 +1,313 @@
+{
+  "schema_version": "task034.compact-vs-artifact-audit.v1",
+  "record_type": "review_v3_all_40_rows_authority_audit",
+  "row_count": 40,
+  "rows_with_drift": 1,
+  "field_drifts": 2,
+  "decision": "p4/h3 Full3D uses tracked compact process-tree authority; all other rows aligned",
+  "rows": [
+    {
+      "case_key": "case093_p2_h5_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_full_mpi8_6b30df2.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p2_h5_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h5_hybrid_m160_mpi8_bd24a7f.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "case093_p2_h3_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h3_full_mpi8_23f6fe2.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p2_h3_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_m160_mpi8_2141788.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    },
+    {
+      "case_key": "case093_p2_h2_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h2_full_mpi8_2141788.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p2_h2_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h2_hybrid_m160_mpi8_06e0ee1.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 7020
+    },
+    {
+      "case_key": "case093_p3_h10_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h10_full_mpi8_06e0ee1.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p3_h10_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h10_hybrid_m160_mpi8_e091785_v3.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 72
+    },
+    {
+      "case_key": "case093_p3_h7p5_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_full_mpi8_06e0ee1.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p3_h7p5_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h7p5_hybrid_m160_mpi8_e091785_v3.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 288
+    },
+    {
+      "case_key": "case093_p3_h5_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full_mpi8_06e0ee1.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p3_h5_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_m160_mpi8_e091785_v3.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "case093_p3_h3_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_full_mpi8_3a1bc99_s.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p3_h3_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    },
+    {
+      "case_key": "case093_p4_h10_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h10_full_mpi8_e091785.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p4_h10_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h10_hybrid_m160_mpi8_df6d56f.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 72
+    },
+    {
+      "case_key": "case093_p4_h7p5_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_full_mpi8_e091785.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p4_h7p5_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h7p5_hybrid_m160_mpi8_df6d56f.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 288
+    },
+    {
+      "case_key": "case093_p4_h5_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_full_mpi8_e091785.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "case093_p4_h5_hybrid",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "m_funnel_p3_h3_m80",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m80_mpi8_8438cca_s.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    },
+    {
+      "case_key": "m_funnel_p3_h3_m120",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m120_mpi8_8438cca_s.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    },
+    {
+      "case_key": "m_funnel_p3_h3_m160",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    },
+    {
+      "case_key": "m_funnel_p4_h5_m80",
+      "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m80_same_sha_mpi4_a6f5a0d.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "m_funnel_p4_h5_m120",
+      "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m120_same_sha_mpi4_a6f5a0d.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "m_funnel_p4_h5_m160",
+      "evidence_path": "benchmarks/artifacts/task034/phase_e/records/p4_h5_hybrid_m160_same_degree_closure_mpi4_a6f5a0d.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 480
+    },
+    {
+      "case_key": "mpi_p3_h5_full3d_mpi1",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "mpi_p3_h5_full3d_mpi8",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "mpi_p3_h5_full3d_mpi16",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "mpi_p3_h5_full3d_mpi32",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_full3d_mpi_identity_1_8_16_32_2e944c9_beta_schema_fix_candidate.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "mpi_p3_h5_hybrid_mpi1",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": null
+    },
+    {
+      "case_key": "mpi_p3_h5_hybrid_mpi8",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": null
+    },
+    {
+      "case_key": "mpi_p3_h5_hybrid_mpi16",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": null
+    },
+    {
+      "case_key": "mpi_p3_h5_hybrid_mpi32",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h5_hybrid_mpi_identity_1_8_16_32_4f1cec9_qualified.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": null
+    },
+    {
+      "case_key": "supplemental_p2_h1_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h1_assembly_mpi8_69b807c_s.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "supplemental_p2_h1_hybrid_m160",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p2_h1_s_hybrid_m160_mpi8_9937747.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "supplemental_p3_h2_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_assembly_mpi8_b93d59c_s.json",
+      "status": "authority_aligned",
+      "drifts": []
+    },
+    {
+      "case_key": "supplemental_p3_h2_hybrid_m160",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p3_h2_s_hybrid_m160_mpi8_f7924f5_attempt2.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 7020
+    },
+    {
+      "case_key": "supplemental_p4_h3_full3d",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_assembly_mpi8_19f0366_s.json",
+      "status": "drift_resolved_to_compact_authority",
+      "drifts": [
+        {
+          "field": "assembly_seconds/total_seconds",
+          "artifact_value": 3035.1394660410006,
+          "compact_value": 3035.1390509350167,
+          "selected": "compact"
+        },
+        {
+          "field": "peak_memory_gib",
+          "artifact_value": 80.58727264404297,
+          "compact_value": 80.53771209716797,
+          "selected": "compact"
+        }
+      ]
+    },
+    {
+      "case_key": "supplemental_p4_h3_hybrid_m160",
+      "evidence_path": "benchmarks/artifacts/task034/phase_f/records/p4_h3_s_hybrid_m160_mpi8_9db1a8a.json",
+      "status": "authority_aligned",
+      "drifts": [],
+      "elements_authority": "tracked_sha256_bound_local_mesh_axis_products",
+      "elements": 2592
+    }
+  ],
+  "hybrid_elements_authority": {
+    "row_count": 18,
+    "binding": "per-row artifact_sha256 in tracked compact fixture provenance",
+    "reduction": "prod(bottom_local_mesh_cells) + prod(top_local_mesh_cells)",
+    "zero_semantics": "elements=0 forbidden for Full3D/Hybrid rows with fe_dofs>0"
+  }
+}

@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shlex
@@ -22,6 +23,9 @@ except ModuleNotFoundError:  # pragma: no cover - Windows host path
     resource = None
 
 from src.common.config_3d import target_stage4_config
+from src.common.distributed_matrix_diagnostics import (
+    distributed_active_column_count,
+)
 from src.coupling.hybrid_internal_modes import (
     build_hybrid_internal_mode_coupling,
 )
@@ -116,7 +120,7 @@ def _source_provenance(
     if comm.rank == 0:
         head = _git("rev-parse", "HEAD")
         branch = _git("branch", "--show-current")
-        tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+        tracked_status = _git("status", "--porcelain", "--untracked-files=all")
         payload = (head, branch, tracked_status)
     else:
         payload = None
@@ -224,21 +228,38 @@ def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
 
 
 def _global_active_column_count(matrix: PETSc.Mat) -> int:
-    """Count distributed matrix columns that contain at least one stored entry."""
+    """Count active columns without replicating their IDs on every rank."""
 
-    first, last = matrix.getOwnershipRange()
-    local_columns: set[int] = set()
-    for row in range(first, last):
-        columns, _values = matrix.getRow(row)
-        local_columns.update(int(column) for column in columns)
-    gathered = matrix.getComm().tompi4py().allgather(tuple(sorted(local_columns)))
-    return len({column for columns in gathered for column in columns})
+    return distributed_active_column_count(matrix).global_count
 
 
 def _basis_summary(basis) -> dict[str, Any]:
+    identity_difference = np.asarray(
+        basis.biorthogonality_matrix, dtype=np.complex128
+    ) - np.eye(len(basis.modes), dtype=np.complex128)
+    absolute_difference = np.abs(identity_difference)
+    row_sums = np.sum(absolute_difference, axis=1)
+    worst_row = int(np.argmax(row_sums))
+    worst_entry = tuple(
+        int(index)
+        for index in np.unravel_index(
+            int(np.argmax(absolute_difference)),
+            absolute_difference.shape,
+        )
+    )
     return {
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
+        "max_biorthogonality_entry_identity_error": (
+            basis.max_entry_identity_error
+        ),
+        "biorthogonality_identity_diagnostics": {
+            "worst_row_index": worst_row,
+            "worst_row_sum": float(row_sums[worst_row]),
+            "worst_entry_row": worst_entry[0],
+            "worst_entry_column": worst_entry[1],
+            "worst_entry_abs": float(absolute_difference[worst_entry]),
+        },
         "left_pair_relative_errors": list(basis.left_pair_relative_errors),
         "near_degenerate_groups": [
             {
@@ -321,8 +342,142 @@ def _case080_reference_path(
     return matches[0] if matches else None
 
 
+def _normalize_full3d_reference_record(
+    reference: dict[str, Any],
+    *,
+    path: Path,
+) -> dict[str, Any]:
+    """Normalize a native watchdog record without writing a derived descriptor."""
+
+    if reference.get("record_type") == "task034_full3d_reference":
+        return reference
+    if reference.get("schema_version") != "task033.full3d-watchdog.v1":
+        return reference
+    try:
+        source = reference["source"]
+        qualification = reference["qualification"]
+        solver = reference["solver_summary"]
+        resource_authority = reference["resource_authority"]
+        archive = Path(str(solver["full3d_reference_archive"]))
+        metadata = Path(str(solver["full3d_reference_metadata"]))
+        if not archive.is_absolute():
+            archive = ROOT / archive
+        if not metadata.is_absolute():
+            metadata = ROOT / metadata
+        archive = archive.resolve()
+        metadata = metadata.resolve()
+        run_root = archive.parent.relative_to(ROOT)
+        commit_sha = str(source["commit_sha"]).lower()
+        polarization_kind = str(solver["polarization_kind"]).lower()
+        archive_sha256 = str(
+            solver["full3d_reference_archive_sha256"]
+        ).lower()
+        finite_results = (
+            solver["linear_system_relative_residual"],
+            solver["R_total"],
+            solver["T_total"],
+            solver["A_balance"],
+            solver["A_volume_total"],
+            solver["energy_closure_error_port_volume"],
+            resource_authority["memory_authority_gib"],
+        )
+        raw_valid = bool(
+            reference["status"] == "full3d_reference_pass"
+            and reference["run_kind"] == "full-solve"
+            and qualification["pass"] is True
+            and reference["no_swap"] is True
+            and source["tracked_source_dirty"] is False
+            and source["stable_and_clean_after"] is True
+            and solver["case_status"] == "completed"
+            and solver["official_result"] is True
+            and solver["full3d_reference_exported"] is True
+            and polarization_kind in {"s", "p"}
+            and math.isclose(float(solver["incident_theta_deg"]), 80.0)
+            and math.isclose(float(solver["incident_phi_deg"]), 0.0)
+            and float(solver["linear_system_relative_residual"]) <= 1.0e-9
+            and archive.name == "full3d_reference_samples.npz"
+            and metadata.name == "full3d_reference_samples.json"
+            and metadata.parent == archive.parent
+            and len(commit_sha) == 40
+            and all(
+                character in "0123456789abcdef"
+                for character in commit_sha
+            )
+            and len(archive_sha256) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in archive_sha256
+            )
+            and all(np.isfinite(float(value)) for value in finite_results)
+        )
+    except (KeyError, TypeError, ValueError, OSError) as error:
+        raise RuntimeError(
+            f"Native full3D watchdog reference is incomplete: {path}"
+        ) from error
+    if not raw_valid:
+        raise RuntimeError(
+            f"Native full3D watchdog reference failed its raw Gate: {path}"
+        )
+    return {
+        "record_type": "task034_full3d_reference",
+        "metadata": {
+            "commit_sha": commit_sha,
+            "git_dirty": False,
+            "tracked_source_dirty": False,
+            "host_environment_id": "WSL2-Ubuntu-24.04",
+            "provenance": (
+                "in-memory normalization of native full3D watchdog evidence"
+            ),
+        },
+        "physical_model": {
+            "wavelength_nm": 13.5,
+            "incident_theta_deg": 80.0,
+            "incident_grazing_deg": 10.0,
+            "incident_phi_deg": 0.0,
+            "polarization_kind": polarization_kind,
+            "nedelec_degree": int(reference["degree"]),
+            "mesh_h_nm": float(reference["h_nm"]),
+            "mpi_size": int(reference["mpi_size"]),
+            "linear_solver": "direct_lu_mumps",
+        },
+        "results": {
+            "case_status": solver["case_status"],
+            "official_result": True,
+            "linear_system_true_relative_residual": float(
+                solver["linear_system_relative_residual"]
+            ),
+            "R_total": float(solver["R_total"]),
+            "T_total": float(solver["T_total"]),
+            "A_balance": float(solver["A_balance"]),
+            "A_volume_total": float(solver["A_volume_total"]),
+            "energy_closure_error_port_volume": float(
+                solver["energy_closure_error_port_volume"]
+            ),
+            "external_memory_authority_gib": float(
+                resource_authority["memory_authority_gib"]
+            ),
+        },
+        "artifacts": {
+            "ignored_run_root": run_root.as_posix(),
+            "reference_npz_sha256": archive_sha256,
+        },
+        "qualification": {
+            "phase1_reference_pass": True,
+            "grid_converged": False,
+            "no_swap": True,
+            "watchdog_status": reference["status"],
+            "heavy_artifacts_tracked": False,
+        },
+    }
+
+
 def _validate_case080_reference_identity(
-    reference: dict[str, Any], *, degree: int, h_nm: float, path: Path
+    reference: dict[str, Any],
+    *,
+    degree: int,
+    h_nm: float,
+    path: Path,
+    polarization_kind: str = "s",
 ) -> None:
     try:
         physical_model = reference["physical_model"]
@@ -337,7 +492,7 @@ def _validate_case080_reference_identity(
             and abs(float(physical_model["incident_theta_deg"]) - 80.0)
             <= 1.0e-12
             and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
-            and physical_model["polarization_kind"] == "s"
+            and physical_model["polarization_kind"] == polarization_kind
             and abs(float(physical_model["wavelength_nm"]) - 13.5)
             <= 1.0e-12
             and qualification["phase1_reference_pass"] is True
@@ -353,7 +508,7 @@ def _validate_case080_reference_identity(
     if not identity_valid:
         raise RuntimeError(
             "Case080 reference identity does not match the requested p/h and "
-            f"pinned 10-degree s-polarized 13.5-nm model: {path}"
+            f"pinned 10-degree {polarization_kind}-polarized 13.5-nm model: {path}"
         )
 
 
@@ -361,6 +516,8 @@ def _load_case080_reference(
     degree: int,
     h_nm: float,
     reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
+    *,
+    polarization_kind: str = "s",
 ) -> tuple[Path, dict[str, Any]] | None:
     reference_path = _case080_reference_path(
         degree, h_nm, reference_by_degree_and_h
@@ -377,8 +534,15 @@ def _load_case080_reference(
         raise RuntimeError(
             f"Cannot load pinned Case080 reference record: {reference_path}"
         ) from error
+    reference = _normalize_full3d_reference_record(
+        reference, path=reference_path
+    )
     _validate_case080_reference_identity(
-        reference, degree=degree, h_nm=h_nm, path=reference_path
+        reference,
+        degree=degree,
+        h_nm=h_nm,
+        path=reference_path,
+        polarization_kind=polarization_kind,
     )
     return reference_path, reference
 
@@ -462,6 +626,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--top-interface-nm", type=float, default=110.0)
     parser.add_argument("--graded-reference-h", type=float, choices=(5.0, 3.0))
     parser.add_argument("--graded-coarse-factor", type=float, default=2.0)
+    parser.add_argument(
+        "--graded-profile",
+        choices=("mechanism", "conservative", "balanced", "aggressive"),
+        default="mechanism",
+    )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
     parser.add_argument(
         "--polarization-kind",
@@ -535,8 +704,8 @@ def main() -> None:
             "0 < bottom-interface-nm < top-interface-nm < 120."
         )
     if args.graded_reference_h is not None:
-        if args.degree != 2:
-            raise SystemExit("The Task033 graded feasibility path is fixed to p2.")
+        if args.degree not in (2, 3):
+            raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
         if (
             args.bottom_interface_nm != 10.0
             or args.top_interface_nm != 110.0
@@ -782,19 +951,25 @@ def main() -> None:
         mark_stage("cross_section_eigen_assembly")
         started = time.perf_counter()
         if args.graded_reference_h is not None:
-            from src.geometry.task033_periodic_graded_mesh import (
-                Task033Stage4Geometry,
-                build_physics_informed_graded_plan,
-                build_task033_graded_local_mesh_pair,
+            from src.geometry.task034_adaptive_mesh import (
+                Task034Stage4Geometry,
+                build_task034_conforming_graded_plan,
+                build_task034_graded_local_mesh_pair,
             )
 
-            graded_plan = build_physics_informed_graded_plan(
+            graded_plan = build_task034_conforming_graded_plan(
                 reference_h_nm=args.graded_reference_h,
-                geometry=Task033Stage4Geometry.from_config(cfg),
+                geometry=Task034Stage4Geometry.from_config(
+                    cfg,
+                    bottom_interface_z_nm=args.bottom_interface_nm,
+                    top_interface_z_nm=args.top_interface_nm,
+                ),
+                profile=args.graded_profile,
                 coarse_factor=args.graded_coarse_factor,
+                comm_size=comm.size,
             )
             graded_bottom_mesh, graded_top_mesh = (
-                build_task033_graded_local_mesh_pair(cfg, graded_plan)
+                build_task034_graded_local_mesh_pair(cfg, graded_plan)
             )
             cross_section = build_matching_cross_section(
                 cfg,
@@ -1129,7 +1304,10 @@ def main() -> None:
             )
         pinned_reference_case = (
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
-            and args.polarization_kind == "s"
+            and (
+                args.polarization_kind == "s"
+                or args.full3d_reference is not None
+            )
         )
         explicit_reference = args.full3d_reference
         if explicit_reference is not None and not explicit_reference.is_absolute():
@@ -1144,6 +1322,7 @@ def main() -> None:
                 args.degree,
                 args.h_nm,
                 reference_by_degree_and_h=reference_registry,
+                polarization_kind=args.polarization_kind,
             )
             if pinned_reference_case
             else None
@@ -1453,14 +1632,22 @@ def main() -> None:
             * (full_vector_size + reduced_vector_size)
             * np.dtype(PETSc.ScalarType).itemsize
         )
+        active_column_counts = {
+            "bottom": distributed_active_column_count(
+                coupling.bottom.projection
+            ),
+            "top": distributed_active_column_count(coupling.top.projection),
+        }
         object_payload_ledger = {
             "scalar_bytes": int(np.dtype(PETSc.ScalarType).itemsize),
             "index_bytes": int(np.dtype(PETSc.IntType).itemsize),
             "interface_active_dofs": {
-                "bottom": _global_active_column_count(
-                    coupling.bottom.projection
-                ),
-                "top": _global_active_column_count(coupling.top.projection),
+                side: result.global_count
+                for side, result in active_column_counts.items()
+            },
+            "interface_active_column_count_diagnostics": {
+                side: result.to_dict()
+                for side, result in active_column_counts.items()
             },
             "mode_count_per_direction": args.requested_modes,
             "retained_right_left_eigenvector_bytes": eigenvector_bytes,
@@ -1554,11 +1741,14 @@ def main() -> None:
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "polarization_kind": cfg.polarization_kind,
                 "mesh_policy": (
-                    "task033_periodic_graded_conforming_p2"
+                    "task034_periodic_conforming_fixed_p_graded_opt_in"
                     if graded_plan is not None
                     else "reviewed_stage4_axis_plan"
                 ),
                 "graded_reference_h_nm": args.graded_reference_h,
+                "graded_profile": (
+                    args.graded_profile if graded_plan is not None else None
+                ),
                 "graded_coarse_factor": (
                     args.graded_coarse_factor
                     if graded_plan is not None

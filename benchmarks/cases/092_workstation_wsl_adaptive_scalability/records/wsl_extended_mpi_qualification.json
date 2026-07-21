@@ -1,0 +1,198 @@
+{
+  "schema_version": "task034.case092.wsl-extended-mpi-qualification.v1",
+  "record_type": "task034_wsl_extended_mpi_qualification",
+  "case_id": "092_workstation_wsl_adaptive_scalability",
+  "timestamp_utc": "2026-07-19T01:05:30.687265+00:00",
+  "status": "environment_gate_pass",
+  "source": {
+    "head_before_sha": "8440bbaf42de9d633479d0ed65bdda544bd871ef",
+    "head_after_sha": "8440bbaf42de9d633479d0ed65bdda544bd871ef",
+    "status_before": "",
+    "status_after": "",
+    "clean_before": true,
+    "clean_after": true,
+    "stable_during_probe": true
+  },
+  "identity": {
+    "host_environment_id": "WSL2-Ubuntu-24.04",
+    "native_wsl": true,
+    "docker_runtime_used": false,
+    "is_pde_run": false,
+    "is_environment_microfixture": true,
+    "heavy_artifacts_tracked": false,
+    "thresholds_relaxed": false,
+    "threads_per_rank": 1,
+    "available_physical_core_count": 48,
+    "maximum_requested_mpi_size": 32,
+    "oversubscribed": false,
+    "formal_mpi_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "exploratory_mpi_sizes": [
+      32
+    ],
+    "mpi32_replaces_mpi16": false,
+    "mpi32_proves_pde_identity": false,
+    "mpi32_speedup_claimed": false
+  },
+  "runtime": {
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "python_version": "3.12.3",
+    "mpi_library": "Open MPI 4.1.6",
+    "petsc_version": "3.19.6",
+    "petsc_scalar_dtype": "complex128",
+    "petsc_int_bits": 32,
+    "slepc4py_version": "3.19.2",
+    "dolfinx_version": "0.10.0.post2",
+    "dolfinx_mpc_version": "unknown",
+    "basix_version": "0.10.0",
+    "ufl_version": "2025.2.1",
+    "mpi4py_version": "3.1.5",
+    "rank_library_identity_sha256": "1432cc9dda87762618c48898e344de03e1f327f7c0465d57c1b4828b5793bfc4",
+    "same_rank_library_identity_all_requested_sizes": true
+  },
+  "raw_evidence": {
+    "json_path": "benchmarks/artifacts/task034/phase_a/8440bba/wsl_extended_mpi_qualification.json",
+    "json_sha256": "2f51282aa5eabc8dadf34da4a306adf775202dc21b5459ad2e2460911e3a2d32",
+    "markdown_path": "benchmarks/artifacts/task034/phase_a/8440bba/wsl_extended_mpi_qualification.md",
+    "markdown_sha256": "cf96ef59f9980112bc1cc0a36c2f1dc2af4d7cb4faf983c9c96d0f84c0d2b62d",
+    "raw_schema_version": "task034.wsl-environment-qualification.v2",
+    "gitignored": true
+  },
+  "gate_checks": {
+    "native_wsl_kernel": true,
+    "docker_runtime_not_used": true,
+    "all_required_imports": true,
+    "petsc_scalar_complex128": true,
+    "petsc_int_width_recorded": true,
+    "slepc_pep_created": true,
+    "dolfinx_mpc_complex_abi": true,
+    "mumps_selected_and_solved": true,
+    "mpi1_mpi2_mpi4_pass": true,
+    "all_requested_mpi_sizes_pass": true,
+    "all_rank_library_identities_pass": true,
+    "requested_distributed_solver_microfixtures_pass": true,
+    "mpi16_microfixture_pass_when_requested": true,
+    "mpi32_labeled_exploratory_when_requested": true,
+    "physical_core_inventory_readable": true,
+    "requested_mpi_sizes_do_not_oversubscribe": true,
+    "linux_paths_only": true,
+    "single_mpi_abi_per_run": true,
+    "tracked_activation_used": true,
+    "source_clean_before_probe": true,
+    "source_stable_during_probe": true,
+    "source_clean_after_probe": true
+  },
+  "mpi_summary": [
+    {
+      "mpi_size": 1,
+      "scope": "formal",
+      "pass": true,
+      "rank_records_observed": 1,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": false
+    },
+    {
+      "mpi_size": 2,
+      "scope": "formal",
+      "pass": true,
+      "rank_records_observed": 2,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": false
+    },
+    {
+      "mpi_size": 4,
+      "scope": "formal",
+      "pass": true,
+      "rank_records_observed": 4,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": false
+    },
+    {
+      "mpi_size": 8,
+      "scope": "formal",
+      "pass": true,
+      "rank_records_observed": 8,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": true,
+      "mumps_solution_absolute_error_max": 1.1102230246251565e-16,
+      "pep_expected_root_absolute_error": 4.000254488572078e-15,
+      "pep_relative_error": 6.397388025438171e-13
+    },
+    {
+      "mpi_size": 16,
+      "scope": "formal",
+      "pass": true,
+      "rank_records_observed": 16,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": true,
+      "mumps_solution_absolute_error_max": 1.1102230246251565e-16,
+      "pep_expected_root_absolute_error": 2.0088577217000577e-15,
+      "pep_relative_error": 6.513691294471371e-13
+    },
+    {
+      "mpi_size": 32,
+      "scope": "exploratory",
+      "pass": true,
+      "rank_records_observed": 32,
+      "single_abi_signature": true,
+      "rank_library_identity_pass": true,
+      "distributed_solver_microfixture_required": true,
+      "mumps_solution_absolute_error_max": 2.220446049250313e-16,
+      "pep_expected_root_absolute_error": 5.995206263446584e-15,
+      "pep_relative_error": 1.076777109383444e-12
+    }
+  ],
+  "microfixture_thresholds": {
+    "mumps_solution_absolute_error_max": 1e-12,
+    "pep_expected_root_absolute_error_max": 1e-08,
+    "pep_relative_error_max": 1e-08,
+    "thresholds_relaxed": false
+  },
+  "test_evidence": {
+    "focused_tests": {
+      "command": "pytest -q src/test/test_73_task034_hardening.py src/test/test_77_task034_extended_mpi_qualification.py",
+      "passed": 25,
+      "failed": 0
+    },
+    "full_suite": {
+      "command": "pytest -q",
+      "passed": 432,
+      "skipped": 18,
+      "failed": 0,
+      "elapsed_seconds": 282.6,
+      "source_state": "precommit_content_identical_to_8440bbaf42de9d633479d0ed65bdda544bd871ef"
+    },
+    "targeted_ruff_pass": true,
+    "git_diff_check_pass": true
+  },
+  "decision": {
+    "environment_gate_pass": true,
+    "formal_environment_mpi_sizes_qualified": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "exploratory_environment_mpi_sizes_qualified": [
+      32
+    ],
+    "mpi16_environment_qualified": true,
+    "mpi32_exploratory_environment_qualified": true,
+    "heavy_pde_authorized_by_this_record_alone": false,
+    "mpi_pde_numerical_identity_completed": false,
+    "next_required_identity": "one resource-safe representative PDE anchor: MPI1 versus MPI32; Task034 formal MPI1/MPI8/MPI16 matrix remains required"
+  },
+  "payload_sha256": "67ca891487768a21a541782c5585a0739480baa708331415ac5860085366a542"
+}

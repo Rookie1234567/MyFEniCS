@@ -90,7 +90,7 @@ def _runtime_metadata(command: str) -> dict[str, Any]:
         tracked_source_verification = "host_git_clean_attestation"
     else:
         full_status = _git_output("status", "--short")
-        tracked_status = _git_output("status", "--short", "--untracked-files=no")
+        tracked_status = _git_output("status", "--short", "--untracked-files=all")
         if full_status is None or tracked_status is None:
             raise RuntimeError(
                 "cannot verify benchmark source identity and cleanliness"

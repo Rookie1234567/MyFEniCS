@@ -11,7 +11,7 @@ target_grazing_angle_range = 1–10 deg from surface
 target_compute_memory = 1–2 TB
 ```
 
-本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task036 的技术路线。
+本文档用于统一项目最终服务需求、参数反演所需观测量、当前 FEniCS 前向模型能力、0.7 nm 波长下的资源瓶颈，以及 Task031–Task035 与后续独立任务的技术路线。
 
 本文档不是某一个 Task 的任务书。后续任务书必须与本文档保持一致；若实验测量能力、材料数据来源或最终服务接口发生变化，应先更新本文档，再调整算法路线。
 
@@ -63,7 +63,7 @@ target_compute_memory = 1–2 TB
 
 ## 2.1 当前前向模型阶段
 
-Task031–Task036 的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
+Task031–Task035 与后续独立任务的主要目标是构造可靠、高效、参数化的 Maxwell 前向模型。当前阶段优先处理：
 
 - 几何参数；
 - 波长；
@@ -185,7 +185,7 @@ $$
 - 周期抖动；
 - 单胞间随机差异。
 
-这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task036 的硬目标。
+这些参数通常需要漫散射、峰宽和峰形信息。当前规则周期单胞前向模型暂不把粗糙度反演作为 Task032–Task035 与后续独立任务的硬目标。
 
 ## 3.4 实验校准和 nuisance 参数
 
@@ -294,7 +294,7 @@ alpha_from_surface = 1°, 2°, 3°, 4°, 5°, 6°, 7°, 8°, 9°, 10°
 
 ## 4.4 S/P 偏振
 
-项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task036 应将：
+项目当前已经支持 S/P 入射偏振。因此后续 Task032–Task035 与后续独立任务应将：
 
 ```text
 S polarization
@@ -317,7 +317,7 @@ $$
 
 第一版反演服务不必进行密集能量扫描，但从 Task032 起，前向接口必须把 `lambda` 和材料色散设为参数。
 
-Task036 的波长序列为：
+后续 wavelength continuation 独立任务的波长序列为：
 
 ```text
 13.5 nm
@@ -643,49 +643,29 @@ defect/nonuniform-end geometry 后为每个位置重新做 M 漏斗。未来上�
 基于实测压缩并重新校准高阶资源模型后的 1 TiB / 0.7 nm 更新。不得复用 Task33
 research branch 中未资格化的 graded-mesh runner 作为 master production 能力。
 
-## Task034：Scalable generic 2D modal core
+## Task034：WSL 资格化、高阶固定几何 benchmark 与 controlled graded-h（已完成，Review V4 pending）
 
-不依赖当前规则 benchmark 的 y 不变性，面向通用 `epsilon(x,y)`：
+Task034 已完成 WSL native ABI/hardening、Case093 p2/p3/p4 S 主线、p3/h3 与 p4/h5
+same-degree closure、p3/h5 Full3D/Hybrid MPI1/8/16 identity（MPI32 exploratory）以及
+assembly/resource stop。graded-h 只达到 conforming mechanism pass；同误差 compression 为
+controlled negative，field-driven adaptive 仍未资格化。0.7 nm 只完成 current-layout stress
+test，production DoF/M/peak 保持 unknown。
 
-```text
-distributed modal ownership
-+ streamed/blocked right-left modes
-+ adaptive modal truncation
-+ block or matrix-free projection/Schur action
-+ no replicated M^2 arrays
-+ no all-mode dense multi-RHS
-+ spectrum slicing / continuation
-```
+## Task035：H(curl) field/goal-oriented adaptive mesh 与条件 hp strategy（planning only）
 
-必须给出 13.5/5/2/1/0.7 nm 的模式数、QEP DoF、payload 和 1 TiB/2 TiB 预算。
-pure-modal 或 y-sector 只允许作为当前简单几何的可选诊断/reference，不是未来服务 Gate。
+Task035 必须等 Task034 final selective merge 后从 clean master 建立独立分支。先完成 residual、
+recovery/two-level 与 DWR estimator 的 manufactured/fixture Gate，再做真实目标几何；不得把
+Task034 一次性 graded mesh 或 research runner 当作 production adaptive。native variable-p
+H(curl) 仍 unavailable；只有 h-only 稳定并给出明确 smoothness/anisotropy 证据后才允许条件 hp。
 
-## Task035：针对最终 hybrid-adaptive 系统的迭代法
+## 后续独立任务：scalable modal core、low-memory Hybrid iterative 与 wavelength continuation
 
-在 Task033 + Task034 确定的最终离散系统上构造：
+任务编号尚未冻结。顺序保持：distributed/streamed generic 2D modal core（无 replicated M²、
+无 all-mode dense multi-RHS）→ matrix-free/low-memory Hybrid flexible Krylov →
+13.5→5→2→1→0.7 nm continuation。任何 1 TiB/2 TiB 可行性声明都必须基于 Task035 后的实测
+adaptive DoF/M 与 whole-solver peak，而不是 cumulative envelope。
 
-```text
-matrix-free bottom/top adaptive 3D FEM
-+ low-memory H(curl) multilevel/Schwarz
-+ scalable modal/interface action
-+ outer flexible Krylov
-+ low-restart or validated low-storage alternative
-```
-
-必须支持：
-
-- 参数点之间 continuation；
-- 上一个角度解作为初值；
-- PC 复用和自动重建；
-- Krylov recycling；
-- 内存、迭代数和时间统计；
-- 失效检测和 fallback。
-
-先完成自适应和 scalable modal core，再构造最终迭代法，避免在会被替换的均匀网格或复制
-modal layout 上开发一次性 PC。whole-solver memory 以 `<=2 kB/FE DoF` 为优选目标，
-`<=3 kB/FE DoF` 为探索硬上限；所有成功仍由 full explicit true residual 判定。
-
-## Task036：逐波长缩短至 0.7 nm
+### 后续独立任务：wavelength continuation to 0.7 nm
 
 建议顺序：
 
@@ -775,7 +755,7 @@ $$
 7. 当前材料体系和数据来源继续沿用；改变波长时更新对应材料色散。
 8. S/P 入射偏振已经支持，后续作为正式服务参数。
 9. 逐反射衍射级效率是结构反演核心，R00 是重要辅助约束。
-10. Task031–Task036 不因实验噪声模型尚未确定而暂停。
+10. Task031–Task035 与后续独立任务不因实验噪声模型尚未确定而暂停。
 ```
 
 ---
@@ -795,7 +775,7 @@ $$
 9. 单次反演允许的总时间是多少？
 10. 结构参数的合理先验范围和制造约束是什么？
 
-这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task036 的主技术路线。
+这些问题会影响后续反演接口和优化策略，但不影响当前 Task031–Task035 与后续独立任务的主技术路线。
 
 ---
 
@@ -857,10 +837,11 @@ $$
 技术路线：
 Task031 full-3D PC 内存收口
 → Task032 hybrid FEM-modal parameterized direct
-→ Task033 local h/p adaptivity and interface-budget optimization
-→ Task034 scalable generic 2D modal core
-→ Task035 final Hybrid iterative solver
-→ Task036 wavelength continuation to 0.7 nm
+→ Task033 fixed-p feasibility and high-order infrastructure
+→ Task034 WSL + fixed-geometry high-order benchmark + controlled graded-h decision
+→ Task035 H(curl) field/goal-oriented adaptivity (planning package first)
+→ later independent scalable modal core and low-memory Hybrid iterative tasks
+→ later wavelength continuation to 0.7 nm
 → inversion / uncertainty / deployment。
 
 关键原则：

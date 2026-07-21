@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from mpi4py import MPI
 from petsc4py import PETSc
 
 from benchmarks.run_direct_memory_forensics import (
@@ -35,6 +36,7 @@ from src.solvers.common_3d_utils import (
     _cgroup_memory_fields,
     _current_rss_mb,
 )
+from src.solvers.dtn_port_3d import _solve_augmented_system
 
 
 class DirectMemoryTelemetryTests(unittest.TestCase):
@@ -152,6 +154,59 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             self.assertIn("matrix_mallocs", stats)
             self.assertIn("matrix_petsc_info_global_sum", stats)
         finally:
+            matrix.destroy()
+
+
+    def test_factorization_only_stops_after_ksp_setup(self) -> None:
+        matrix = PETSc.Mat().createAIJ([2, 2], nnz=1, comm=PETSc.COMM_SELF)
+        diagonal = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+        rhs = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+        x = None
+        ksp = None
+        try:
+            diagonal.set(2.0)
+            rhs.set(1.0)
+            matrix.setDiagonal(diagonal)
+            matrix.assemble()
+            with tempfile.TemporaryDirectory() as tmp:
+                x, ksp, telemetry = _solve_augmented_system(
+                    matrix,
+                    rhs,
+                    {"ksp_type": "preonly", "pc_type": "lu"},
+                    "task034_factorization_gate_test_",
+                    out_dir=Path(tmp),
+                    comm=MPI.COMM_SELF,
+                    dofs=2,
+                    constraints=0,
+                    factorization_only=True,
+                )
+                events = [
+                    json.loads(line)
+                    for line in (Path(tmp) / "progress_3d.jsonl")
+                    .read_text(encoding="utf-8")
+                    .splitlines()
+                ]
+            stages = {event["stage"] for event in events}
+            self.assertTrue(telemetry["factorization_only"])
+            self.assertIsInstance(telemetry["factor_inventory"], dict)
+            self.assertEqual(x.norm(), 0.0)
+            self.assertIn("after_ksp_setup_factorized", stages)
+            self.assertFalse(
+                stages
+                & {
+                    "stage4_dtn_augmented_solve",
+                    "before_ksp_solve",
+                    "during_ksp_solve_peak",
+                    "after_ksp_solve",
+                }
+            )
+        finally:
+            if ksp is not None:
+                ksp.destroy()
+            if x is not None:
+                x.destroy()
+            rhs.destroy()
+            diagonal.destroy()
             matrix.destroy()
 
     def test_factor_inventory_does_not_reassemble_factored_matrix(self) -> None:

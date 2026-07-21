@@ -26,6 +26,16 @@ REQUIRED_CLAUSES = (
     ),
 )
 
+SAME_TASK_BRANCH_CLAUSES = (
+    "一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支",
+    "ChatGPT 不得在活动任务期间向 `master` 写入 task、review 或规则修订",
+    "review 直接提交同一执行分支",
+    "Codex 从同一分支 fast-forward 拉取 review",
+    "未经最终 review approval 和用户授权，不得 merge master",
+    "最终 merge 由 Codex 执行并报告精确 master SHA、测试和工作树",
+    "`master` 只接受最终批准的合并，不作为 review 中转分支",
+)
+
 
 class RepositoryWorkPrinciplesTests(unittest.TestCase):
     def test_protected_files_exist_and_keep_markers(self) -> None:
@@ -51,6 +61,14 @@ class RepositoryWorkPrinciplesTests(unittest.TestCase):
         )
         self.assertIn("docs/repository_work_principles.md", root_readme)
         self.assertIn("repository_work_principles.md", docs_readme)
+
+    def test_same_task_branch_rules_are_synchronized(self) -> None:
+        for clause in SAME_TASK_BRANCH_CLAUSES:
+            for path in PROTECTED_FILES:
+                with self.subTest(
+                    clause=clause, path=path.relative_to(REPOSITORY_ROOT)
+                ):
+                    self.assertIn(clause, path.read_text(encoding="utf-8"))
 
     def test_retrospective_clauses_are_synchronized_in_protected_files(self) -> None:
         for clause in REQUIRED_CLAUSES[-2:]:

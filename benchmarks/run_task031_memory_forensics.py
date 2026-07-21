@@ -36,7 +36,7 @@ def _source_provenance(
     verified_clean_sha: str | None, *, allow_dirty_research: bool
 ) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
-    tracked_status = _git("status", "--porcelain", "--untracked-files=no")
+    tracked_status = _git("status", "--porcelain", "--untracked-files=all")
     if head is None or tracked_status is None:
         raise SystemExit("Cannot verify Task31 source identity and cleanliness.")
     if verified_clean_sha is not None:

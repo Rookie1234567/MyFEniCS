@@ -2,5 +2,5 @@
   "record_type": "sha256_pinned_canonical_reference",
   "benchmark_id": "l1_3d_stage1",
   "canonical_record": "benchmarks/records/3d_stage1_mpi2_smoke.json",
-  "sha256": "a429f36a4a6490d55a83175e3a9a98c4420909b605213c05fec128629038e50a"
+  "sha256": "aee69ab498b58027d5ae59cbe6d9a190593e69798b518830614c24aa9f7ed451"
 }

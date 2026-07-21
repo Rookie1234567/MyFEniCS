@@ -104,6 +104,28 @@ def _shard(mode_count: int, *, delta: float = 0.0) -> dict:
     }
 
 
+def _task034_shard(
+    mode_count: int, *, mpi_size: int = 8, delta: float = 0.0
+) -> dict:
+    shard = _shard(mode_count, delta=delta)
+    shard["command"] = [
+        "mpiexec", "-n", str(mpi_size), "python", "hybrid"
+    ]
+    shard["launch_gate"].update(
+        {
+            "scope": "task034_wsl_workstation_hybrid",
+            "mpi_size": mpi_size,
+            "available_physical_core_count": 48,
+            "checks": {
+                "physical_core_inventory_readable": True,
+                "requested_mpi_size_supported": True,
+                "requested_mpi_size_does_not_oversubscribe": True,
+            },
+        }
+    )
+    return shard
+
+
 def _controlled_physical_negative(mode_count: int, *, delta: float = 0.0) -> dict:
     shard = _shard(mode_count, delta=delta)
     shard.update(
@@ -396,6 +418,42 @@ class Task033HybridFunnelTests(unittest.TestCase):
                     shards[1].pop("command")
                 else:
                     shards[1]["command"] = command
+                record = build_hybrid_funnel(shards)
+                self.assertEqual(record["status"], "not_qualified")
+                self.assertIn(
+                    "one or more funnel shards failed the external watchdog contract",
+                    record["failures"],
+                )
+
+    def test_task034_workstation_mpi_sizes_can_qualify(self) -> None:
+        for mpi_size in (1, 2, 4, 8, 16, 32):
+            with self.subTest(mpi_size=mpi_size):
+                record = build_hybrid_funnel(
+                    [
+                        _task034_shard(80, mpi_size=mpi_size, delta=2.0e-7),
+                        _task034_shard(120, mpi_size=mpi_size, delta=1.0e-7),
+                        _task034_shard(160, mpi_size=mpi_size),
+                    ]
+                )
+                self.assertEqual(record["status"], "qualified")
+
+    def test_task034_workstation_mpi_contract_fails_closed(self) -> None:
+        mutations = {
+            "unsupported_size": lambda row: row["command"].__setitem__(2, "48"),
+            "launch_size_mismatch": lambda row: row["launch_gate"].update(
+                mpi_size=16
+            ),
+            "oversubscribed": lambda row: row["launch_gate"]["checks"].update(
+                requested_mpi_size_does_not_oversubscribe=False
+            ),
+            "unreadable_core_inventory": lambda row: row["launch_gate"][
+                "checks"
+            ].update(physical_core_inventory_readable=False),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                shards = [_task034_shard(mode) for mode in (80, 120, 160)]
+                mutate(shards[1])
                 record = build_hybrid_funnel(shards)
                 self.assertEqual(record["status"], "not_qualified")
                 self.assertIn(
