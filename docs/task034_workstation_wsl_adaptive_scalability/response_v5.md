@@ -37,7 +37,7 @@ include_paths = 145
 exclude_paths = 25
 already_on_master_paths = 0
 
-每个真实 changed path 有且只有一行；额外行只允许是 master 已存在且与 source 内容相同的 authority dependency。src/geometry/task034_adaptive_mesh.py、adaptive runners/tests 继续为 research_only_do_not_merge_yet；未选 historical compatibility 和 review-only research helpers 明确排除。
+每个真实 changed path 有且只有一行；额外行只允许是 master 已存在且与 source 内容相同的 authority dependency。src/geometry/task034_adaptive_mesh.py、adaptive runners/tests 继续为 research_only_do_not_merge_yet；未选 historical compatibility 和 review-only research helpers 明确排除。 合并后 collection Gate 进一步确认：显式选择 run_task033_memory_watchdog.py 与 run_task032_phase6_augmented.py 两个必要兼容依赖；test75/test85 与各自 review-only helper 成组排除，避免孤立测试进入 production。
 
 ## 最终门禁
 
