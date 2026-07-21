@@ -1,0 +1,32 @@
+{
+  "schema_version": "task035.case094.phase-a-regression-failure.v1",
+  "record_type": "phase_a_regression_gate_failure",
+  "status": "controlled_stop",
+  "source_sha": "5002636852ffb67b4711443da70eb536c303e34e",
+  "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+  "command": "pytest -q",
+  "result": {
+    "passed": 488,
+    "skipped": 18,
+    "failed": 1,
+    "elapsed_seconds": 247.53
+  },
+  "failure": {
+    "test": "src/test/test_26_documentation_contract.py::DocumentationContractTests::test_numbered_benchmark_cases_use_case_contained_contracts",
+    "reason": "094_hcurl_goal_oriented_adaptivity exists but is not yet present in the authoritative numbered-case contract set",
+    "classification": "case094_documentation_contract_gate_fail"
+  },
+  "prior_checks": {
+    "focused_tests_passed": 24,
+    "hermetic_checker_passed": true,
+    "artifact_checker_passed": true,
+    "ruff_passed": true,
+    "compileall_passed": true
+  },
+  "safety": {
+    "thresholds_relaxed": false,
+    "task035_pde_started": false,
+    "heavy_p4_started": false,
+    "phase_b_unlocked": false
+  }
+}
