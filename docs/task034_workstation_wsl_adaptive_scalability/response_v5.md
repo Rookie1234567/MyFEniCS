@@ -45,6 +45,8 @@ already_on_master_paths = 0
 - governance + documentation + Task034 test24/test26/test73–86：129 passed；
 - manifest exact coverage：170 rows / 170 changed / 159 include / 11 exclude / 0 already-on-master；
 - qualified complex ABI full pytest：505 passed，18 skipped，244.80 s；
+- post-selective master targeted tests：109 passed，2.09 s；
+- post-selective master full pytest：485 passed，18 skipped，238.92 s；
 - scoped Ruff：pass；
 - compileall：pass；
 - staged/working git diff --check：pass；

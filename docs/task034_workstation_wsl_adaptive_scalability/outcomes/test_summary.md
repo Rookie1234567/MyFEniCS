@@ -11,6 +11,8 @@
 | governance/docs + Task034 | test24 + test26 + test73–test86 | 129 passed |
 | manifest exact coverage | origin/master vs final staged tree | 170 manifest rows；170 changed；159 include；11 exclude；0 already-on-master |
 | full repository | pytest -q in activated complex ABI | 505 passed，18 skipped，244.80 s |
+| selective master targeted | test24/test26/test73/test74/test76–81/test86 | 109 passed，2.09 s |
+| selective master full repository | pytest -q in activated complex ABI | 485 passed，18 skipped，238.92 s |
 | scoped Ruff | changed Review V4 Python files | pass |
 | compileall | python -m compileall -q src benchmarks | pass |
 | whitespace | staged + working git diff --check | pass |
