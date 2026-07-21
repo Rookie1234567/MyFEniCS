@@ -42,7 +42,7 @@ CORE_WALKTHROUGH = (
     "33_workstation_fgmres_runtime.md",
 )
 
-CASES = {
+QUALIFIED_OR_FROZEN_CASES = {
     "001_2d_tm_pml_floquet",
     "002_2d_tm_dtn_equivalence",
     "003_2d_te_tm_complex_absorption",
@@ -65,6 +65,10 @@ CASES = {
     "092_workstation_wsl_adaptive_scalability",
     "093_fixed_geometry_ph_convergence_mpi",
 }
+STAGING_OR_IN_PROGRESS_CASES = {
+    "094_hcurl_goal_oriented_adaptivity",
+}
+
 
 RECORDED_CASES = {
     "002_2d_tm_dtn_equivalence": (
@@ -266,7 +270,10 @@ class DocumentationContractTests(unittest.TestCase):
     def test_numbered_benchmark_cases_use_case_contained_contracts(self):
         cases_root = ROOT / "benchmarks" / "cases"
         observed = {path.name for path in cases_root.iterdir() if path.is_dir()}
-        self.assertEqual(observed, CASES)
+        self.assertEqual(
+            observed,
+            QUALIFIED_OR_FROZEN_CASES | STAGING_OR_IN_PROGRESS_CASES,
+        )
         required_sections = (
             "## 物理问题",
             "## 参数说明",
@@ -277,7 +284,7 @@ class DocumentationContractTests(unittest.TestCase):
             "## 结果解释",
             "## 限制",
         )
-        for case in sorted(CASES):
+        for case in sorted(QUALIFIED_OR_FROZEN_CASES):
             folder = cases_root / case
             text = _read(folder / "README.md")
             expected = _load(folder / "expected.json")
@@ -289,6 +296,37 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertIn(section, text)
                 self.assertIsInstance(expected.get("status"), str)
                 self.assertTrue(expected["status"])
+
+        staging_identity = {
+            "status": "phase_a_in_progress",
+            "canonical": False,
+            "production_qualified": False,
+            "pde_run": False,
+            "phase_b_or_later_results": "not_available",
+        }
+        for case in sorted(STAGING_OR_IN_PROGRESS_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "expected.json",
+                    "test_command.txt",
+                    "records/base_manifest.json",
+                ):
+                    self.assertTrue((folder / name).is_file(), name)
+                config = _load(folder / "config.json")
+                expected = _load(folder / "expected.json")
+                for key, value in staging_identity.items():
+                    self.assertEqual(config.get(key), value, key)
+                    self.assertEqual(expected.get(key), value, key)
+                readme = _read(folder / "README.md")
+                self.assertIn("## 升级条件", readme)
+                self.assertIn("staging", readme)
+                command = _read(folder / "test_command.txt").strip()
+                self.assertEqual(command, "python -m benchmarks.task035_case094")
+                self.assertNotIn("mpiexec", command)
+                self.assertNotIn("run_3d", command)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"

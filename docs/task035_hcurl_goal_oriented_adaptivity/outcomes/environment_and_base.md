@@ -3,8 +3,10 @@
 ## 结论
 
 ```text
-phase_a_environment_base_subgates_pass
-phase_a_full_regression_gate_fail
+initial_full_regression = fail_one_document_contract
+contract_fix = pass
+final_phase_a_gate = pass
+phase_b_unlocked = true
 environment_gate_pass
 source_and_abi_gate_pass
 baseline_binding_gate_pass
@@ -97,5 +99,5 @@ same-degree closure 与 M funnel 均由 Case093 compact record 绑定；没有�
 
 - Task034 research-only graded mesh、adaptive runner 与 compression 工具没有恢复或提升。
 - 未运行 Task035 PDE、p4 重型求解、adaptive cycle 或 Task034 重型矩阵。
-- Phase A 完整回归 Gate 失败；按用户指令停止，Phase B 未解锁。
-- 本轮先提交、推送并等待 review，不因 Phase A 通过而跳到重型阶段。
+- 首次文档合同失败历史保留；Review V1 staging contract 修正与最终 full pytest 均通过。
+- Phase B 已解锁，但只允许 estimator 定义与 analytic/manufactured fixtures；真实 p4/heavy PDE 仍锁定。

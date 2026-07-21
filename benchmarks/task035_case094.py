@@ -82,6 +82,8 @@ def validate_base_manifest(
     failures: list[str] = []
     if manifest.get("schema_version") != "task035.case094.base-manifest.v1":
         failures.append("schema_version")
+    if manifest.get("status") != "phase_a_gate_pass":
+        failures.append("manifest_status")
     source = manifest.get("source", {})
     base_sha = source.get("task034_final_master_sha")
     if not isinstance(base_sha, str) or len(base_sha) != 40:
@@ -159,6 +161,7 @@ def validate_base_manifest(
         "baseline_binding",
         "required_artifacts",
         "ordinary_checker_hermetic",
+        "full_regression",
     ):
         if declared_gates.get(gate) is not True:
             failures.append(f"declared_gate:{gate}")

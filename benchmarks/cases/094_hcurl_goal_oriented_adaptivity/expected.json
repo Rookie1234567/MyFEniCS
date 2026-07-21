@@ -1,0 +1,10 @@
+{
+  "schema_version": "task035.case094.staging-expected.v1",
+  "status": "phase_a_in_progress",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": false,
+  "phase_b_or_later_results": "not_available",
+  "ordinary_checker_status": "phase_a_gate_pass",
+  "ignored_artifact_verification_required": false
+}

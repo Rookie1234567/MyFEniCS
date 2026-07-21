@@ -3,7 +3,7 @@
 ## 当前身份
 
 ```text
-status = phase_a_full_regression_gate_fail
+status = phase_a_gate_pass_phase_b_unlocked
 execution_lock_released_by_Task034_final_selective_merge = true
 execution_branch_created_by_codex = true
 base_sha = 5002636852ffb67b4711443da70eb536c303e34e
@@ -70,6 +70,7 @@ Task035 的成功不要求所有候选方法都成功；要求每条方法都有
 
 Task035 执行分支已从 clean `master` 创建并推送。WSL、source、ABI、MPI1/2/4/8、
 MUMPS/PEP microfixture、Task034 compact baseline 与六份必需 ignored artifact 的哈希
-资格化子 Gate 均通过；但完整 pytest 的 Case094 文档合同 Gate 失败，Phase B 未解锁。没有启动 Task035 PDE 或重型 p4。详见
+资格化子 Gate 均通过；首次 Case094 文档合同失败已按 Review V1 修复，最终 full pytest 通过，
+Phase B 已解锁。仍未启动真实 Task035 PDE 或重型 p4。详见
 [`outcomes/environment_and_base.md`](outcomes/environment_and_base.md) 和
 [`base_manifest.json`](../../benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json)。

@@ -1,7 +1,7 @@
 {
   "schema_version": "task035.case094.base-manifest.v1",
   "record_type": "task035_phase_a_environment_and_base_binding",
-  "status": "phase_a_full_regression_gate_fail",
+  "status": "phase_a_gate_pass",
   "task": "Task035",
   "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
   "source": {
@@ -159,14 +159,14 @@
     "baseline_binding": true,
     "required_artifacts": true,
     "ordinary_checker_hermetic": true,
-    "full_regression": false,
+    "full_regression": true,
     "task035_pde_started": false,
     "heavy_p4_started": false,
     "thresholds_relaxed": false
   },
   "decision": {
-    "phase_a_gate_pass": false,
-    "phase_b_fixture_work_authorized_after_phase_a_review": false,
+    "phase_a_gate_pass": true,
+    "phase_b_fixture_work_authorized_after_phase_a_review": true,
     "task035_pde_authorized_by_phase_a_alone": false,
     "heavy_p4_authorized_by_phase_a_alone": false
   }

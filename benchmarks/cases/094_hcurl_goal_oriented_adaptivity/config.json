@@ -1,0 +1,18 @@
+{
+  "schema_version": "task035.case094.staging-config.v1",
+  "case_id": "094_hcurl_goal_oriented_adaptivity",
+  "lifecycle": "staging",
+  "status": "phase_a_in_progress",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": false,
+  "phase_b_or_later_results": "not_available",
+  "checker": {
+    "command": "python -m benchmarks.task035_case094",
+    "hermetic": true,
+    "reads_ignored_artifacts": false,
+    "starts_pde": false
+  },
+  "base_manifest": "records/base_manifest.json",
+  "upgrade_phase": "Phase K"
+}
