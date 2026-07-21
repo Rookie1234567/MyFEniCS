@@ -1,8 +1,8 @@
 # Task034 changed files（Response V5 final candidate）
 
-机械对比：origin/master = 6b80b209c07d3c1d8354365a4359bf532ad7aec2；source = final staged Task034 tree。
+机械对比：origin/master = 82a5107b5c2bfe4c466a0d00ead31d7b172e2af4；source = final Task034 HEAD。
 
-真实 changed path 数：168。manifest 对每个 changed path 恰有一行；仅允许额外列出与 master 内容相同的 already-on-master authority dependency。
+真实 changed path 数：170。manifest 对每个 changed path 恰有一行；当前没有 already-on-master extra。
 
 | 状态 | 路径 |
 |---|---|
@@ -126,6 +126,8 @@
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v3.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v4.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/response_v5.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v1.md |
+| A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v1_addendum.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v2.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3.md |
 | A | docs/task034_workstation_wsl_adaptive_scalability/review_report_v3_task35_planning_addendum.md |

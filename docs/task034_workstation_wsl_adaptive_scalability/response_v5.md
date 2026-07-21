@@ -32,10 +32,10 @@ whole_branch_merge = forbidden
 changed_files.md 与 manifest 以执行时真实 origin/master 和当前 Task034 tree 机械生成，并由 benchmarks/task034_selective_merge_manifest.py 验证：
 
 manifest_rows = 170
-changed_paths = 168
-include_paths = 143
+changed_paths = 170
+include_paths = 145
 exclude_paths = 25
-already_on_master_paths = 2
+already_on_master_paths = 0
 
 每个真实 changed path 有且只有一行；额外行只允许是 master 已存在且与 source 内容相同的 authority dependency。src/geometry/task034_adaptive_mesh.py、adaptive runners/tests 继续为 research_only_do_not_merge_yet；未选 historical compatibility 和 review-only research helpers 明确排除。
 
@@ -43,7 +43,7 @@ already_on_master_paths = 2
 
 - test86 / no-artifact aggregation：10 passed；
 - governance + documentation + Task034 test24/test26/test73–86：129 passed；
-- manifest exact coverage：170 rows / 168 changed / 143 include / 25 exclude / 2 identical already-on-master；
+- manifest exact coverage：170 rows / 170 changed / 145 include / 25 exclude / 0 already-on-master；
 - qualified complex ABI full pytest：505 passed，18 skipped，244.80 s；
 - scoped Ruff：pass；
 - compileall：pass；
