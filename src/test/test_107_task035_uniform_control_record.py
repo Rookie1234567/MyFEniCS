@@ -38,6 +38,10 @@ P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD = (
         "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_tie_stable_mpi8.json"
     )
 )
+P3_P4_DWR_R_THETA03_RECORD = (
+    RECORDS
+    / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json"
+)
 
 
 
@@ -67,6 +71,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.case093 = json.loads(
             CASE093_CONVERGENCE.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_theta03 = json.loads(
+            P3_P4_DWR_R_THETA03_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -574,6 +581,54 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertGreater(
             cycle2_record["resource_authority"]["memory_authority_gib"],
             1.4 * p4_h7p5["resource"]["peak_memory_gib"],
+        )
+
+    def test_theta03_is_a_controlled_negative_cost_screen(self) -> None:
+        theta03 = self.p3_p4_dwr_r_theta03
+        theta05 = self.p3_p4_dwr_r_mpi8
+        self.assertEqual(theta03["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(theta03["qualification"]["pass"])
+        self.assertEqual(theta03["qualification"]["failures"], [])
+        self.assertEqual(
+            theta03["source"]["commit_sha"],
+            "6c4b2aee9d7ef2673a66996540c5022defd270a9",
+        )
+        self.assertTrue(theta03["source"]["stable_and_clean_after"])
+        self.assertEqual(theta03["cycles"][0]["marker"]["marked_count"], 23)
+        final03 = theta03["cycles"][-1]
+        final05 = theta05["cycles"][-1]
+        self.assertEqual(final03["mesh_audit"]["global_cell_count"], 1200)
+        self.assertEqual(final03["enriched"]["num_nedelec_dofs"], 53128)
+        self.assertAlmostEqual(
+            final03["enriched_fixed_reference_error_l2"],
+            0.010596993391412929,
+        )
+        self.assertGreater(
+            final03["enriched_fixed_reference_error_l2"],
+            2.2 * final05["enriched_fixed_reference_error_l2"],
+        )
+        self.assertGreater(
+            final03["enriched"]["num_nedelec_dofs"],
+            0.95 * final05["enriched"]["num_nedelec_dofs"],
+        )
+        points = {entry["key"]: entry for entry in self.case093["points"]}
+        reference = points["p4_h5"]["full3d"]["official_values"]
+        p4_h10 = points["p4_h10"]["full3d"]
+        p4_h10_error = math.sqrt(
+            sum(
+                (p4_h10["official_values"][name] - reference[name]) ** 2
+                for name in ("R_total", "T_total", "A_volume_total")
+            )
+        )
+        self.assertGreater(
+            final03["enriched_fixed_reference_error_l2"], p4_h10_error
+        )
+        self.assertLess(
+            final03["enriched"]["num_nedelec_dofs"],
+            1.01 * p4_h10["resource"]["dofs"],
+        )
+        self.assertEqual(
+            final03["mesh_audit"]["orientation"]["nonpositive_count"], 0
         )
 
 
