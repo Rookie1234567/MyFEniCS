@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
 RECORDS = ROOT / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+CASE093_CONVERGENCE = (
+    ROOT
+    / "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json"
+)
 UNIFORM_RECORD = RECORDS / "actual_uniform_tetra_level2_p2_p3_mpi2.json"
 UNIFORM_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p2_p3_mpi2.json"
 ADAPTIVE_RECORD = (
@@ -26,6 +31,12 @@ P3_P4_DWR_R_MPI8_RECORD = (
 )
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
+)
+P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD = (
+    RECORDS
+    / (
+        "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_tie_stable_mpi8.json"
+    )
 )
 
 
@@ -50,6 +61,12 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
             P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_cycle2_tie_v1 = json.loads(
+            P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD.read_text(encoding="utf-8")
+        )
+        cls.case093 = json.loads(
+            CASE093_CONVERGENCE.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -443,6 +460,121 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
         self.assertGreater(authority["memory_authority_gib"], 16.0)
         self.assertLess(authority["memory_authority_gib"], 20.0)
+
+    def test_tie_policy_v1_cycle2_is_positive_with_repeat_overlap_gate(self) -> None:
+        record = self.p3_p4_dwr_r_cycle2_tie_v1
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "a7ecab0f54ceee14214ccf63d16b09299665dd18",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1268, 7348],
+        )
+        final = record["cycles"][-1]
+        self.assertAlmostEqual(
+            final["enriched_fixed_reference_error_l2"],
+            0.0005363453435066528,
+        )
+        self.assertEqual(final["enriched"]["num_nedelec_dofs"], 315444)
+        self.assertEqual(
+            final["mesh_audit"]["orientation"]["nonpositive_count"], 0
+        )
+        self.assertEqual(
+            final["mesh_audit"]["partition_independent_mesh_sha256"],
+            "f64e68fb2e683d212f373e1cf2c91cb5b7cab2a996e586193f714fd5e19675af",
+        )
+        marker_reports = [
+            source["cycles"][1]["DWR"]["goals"]["R_total"]
+            for source in (
+                self.p3_p4_dwr_r_mpi8,
+                self.p3_p4_dwr_r_cycle2_pre_tie,
+                record,
+            )
+        ]
+        for report in marker_reports:
+            self.assertEqual(report["marking"]["count"], 215)
+        for left_index in range(len(marker_reports)):
+            for right_index in range(left_index + 1, len(marker_reports)):
+                left = set(
+                    marker_reports[left_index]["marked_canonical_cell_ids"]
+                )
+                right = set(
+                    marker_reports[right_index]["marked_canonical_cell_ids"]
+                )
+                overlap = len(left & right) / len(left | right)
+                self.assertGreaterEqual(overlap, 0.99)
+                self.assertNotEqual(
+                    marker_reports[left_index]["marked_geometry_sha256"],
+                    marker_reports[right_index]["marked_geometry_sha256"],
+                )
+        tie_report = marker_reports[-1]["marking"]
+        self.assertEqual(tie_report["minimal_count_before_tie_expansion"], 215)
+        self.assertEqual(tie_report["cutoff_tie_expansion_count"], 0)
+        self.assertEqual(
+            tie_report["tie_policy"],
+            "include_all_cutoff_contributions_within_relative_1e-10",
+        )
+        old_final = self.p3_p4_dwr_r_cycle2_pre_tie["cycles"][-1]
+        self.assertLess(
+            abs(
+                final["enriched_fixed_reference_error_l2"]
+                - old_final["enriched_fixed_reference_error_l2"]
+            ),
+            5.0e-9,
+        )
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(authority["memory_authority_gib"], 19.0)
+
+    def test_one_dwr_cycle_is_engineering_positive_but_cycle2_is_dominated(self) -> None:
+        points = {entry["key"]: entry for entry in self.case093["points"]}
+        reference = points["p4_h5"]["full3d"]["official_values"]
+
+        def observable_error(key: str) -> float:
+            values = points[key]["full3d"]["official_values"]
+            return math.sqrt(
+                sum(
+                    (values[name] - reference[name]) ** 2
+                    for name in ("R_total", "T_total", "A_volume_total")
+                )
+            )
+
+        cycle1 = self.p3_p4_dwr_r_mpi8["cycles"][-1]
+        p4_h10 = points["p4_h10"]["full3d"]
+        self.assertLess(
+            cycle1["enriched_fixed_reference_error_l2"],
+            observable_error("p4_h10"),
+        )
+        self.assertLess(
+            cycle1["enriched"]["num_nedelec_dofs"],
+            1.06 * p4_h10["resource"]["dofs"],
+        )
+        self.assertLess(
+            self.p3_p4_dwr_r_mpi8["resource_authority"]["memory_authority_gib"],
+            p4_h10["resource"]["peak_memory_gib"],
+        )
+
+        cycle2_record = self.p3_p4_dwr_r_cycle2_tie_v1
+        cycle2 = cycle2_record["cycles"][-1]
+        p4_h7p5 = points["p4_h7p5"]["full3d"]
+        self.assertGreater(
+            cycle2["enriched_fixed_reference_error_l2"],
+            observable_error("p4_h7p5"),
+        )
+        self.assertGreater(
+            cycle2["enriched"]["num_nedelec_dofs"],
+            2.0 * p4_h7p5["resource"]["dofs"],
+        )
+        self.assertGreater(
+            cycle2_record["resource_authority"]["memory_authority_gib"],
+            1.4 * p4_h7p5["resource"]["peak_memory_gib"],
+        )
 
 
 if __name__ == "__main__":
