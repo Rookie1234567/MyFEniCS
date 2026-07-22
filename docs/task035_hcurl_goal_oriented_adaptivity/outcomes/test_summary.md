@@ -174,6 +174,13 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | deterministic full-boundary two-level serial | 2 passed |
 | deterministic full-boundary two-level MPI2 | 2 passed per rank |
 | first / second deterministic mesh hashes | `65c11dbe...b0ac` / `f4c0533e...49fc` |
+| actual deterministic two-cycle MPI2 | `actual_r5_adaptive_cycles_pass` |
+| adaptive cells / p2 DoF / p3 DoF | 180→1308→8785 / 1470→9504→60330 / 4011→26730→172257 |
+| p2 fixed-ref error | 1.202635→1.087687→0.195353 |
+| p3 fixed-ref error | 1.147343→0.142113→0.007041 |
+| final p2 / p3 true residual | `4.798e-12` / `2.341e-11` |
+| two-cycle process-tree peak / swap | `6.401 GiB` / 0 |
+| watchdog qualification failures | `[]` |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
 观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。

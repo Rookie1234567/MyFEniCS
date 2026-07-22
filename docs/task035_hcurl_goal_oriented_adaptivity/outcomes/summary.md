@@ -122,6 +122,26 @@ rank 的 `COMM_SELF` 上执行相同 deterministic refine，再将 canonical pos
 两层 fixtures 的 first/second refined mesh hashes 分别为 `65c11dbe...b0ac` 和 `f4c0533e...49fc`。
 该 backend 仍须重新跑 actual cycles 和量化 boundary-sleeve overhead，尚未提升为 ordinary default。
 
+### 两轮 actual adaptive success
+
+clean SHA `9ee77e2bd90dafe1623942221ff75793ac38d5cb`、MPI2 的 recovery run 完成两次
+estimator-marked refinement，并通过全部 watchdog qualification：
+
+| cycle | cells | p2 / p3 DoF | p2 fixed-ref error | p3 fixed-ref error | R5 marked / captured |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 180 | 1,470 / 4,011 | 1.202635 | 1.147343 | 49 / 0.507945 |
+| 1 | 1,308 | 9,504 / 26,730 | 1.087687 | 0.142113 | 345 / 0.500700 |
+| 2 | 8,785 | 60,330 / 172,257 | 0.195353 | 0.007041 | 1,022 / 0.500164 |
+
+p2 reference error 两步分别下降 9.56% 和 82.04%，p3 分别下降 87.61% 和 95.05%。cycle2
+p3 official vector为 `(R,T,A_volume)=(0.004574, 0.597043, 0.398383)`；best-available
+p4/h5 reference 是 `(0.000766, 0.602678, 0.396556)`。三轮最差 true residual 为
+`2.341e-11`，process-tree peak `6.401 GiB`，swap 0，总 wall time `295.96 s`。
+
+periodic sleeve overhead：第一次 initial estimator edges 174，加入全部 periodic boundary 后 244；
+第二次 911→1256。该成功证明 actual R5+tetra 路线有强正信号，但 8,785-cell adaptive mesh
+与候选 uniform h5 的 10,080 cells（p2/p3 DoF 69,290/197,871）仍需正式 cost-matched 对照。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
