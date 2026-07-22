@@ -35,9 +35,27 @@ def _observable_vector(result: dict[str, Any], level: str) -> dict[str, float]:
 
 
 def _delta_norm(left: dict[str, float], right: dict[str, float]) -> float:
-    return math.sqrt(
-        sum((left[name] - right[name]) ** 2 for name in OBSERVABLES)
-    )
+    return math.sqrt(sum((left[name] - right[name]) ** 2 for name in OBSERVABLES))
+
+
+def _resolve_theta_schedule(
+    marked_cycles: int,
+    theta: float,
+    theta_schedule: tuple[float, ...] | None,
+) -> tuple[float, ...]:
+    if marked_cycles < 1:
+        raise ValueError("marked_cycles must be at least one")
+    if theta_schedule is None:
+        schedule = (float(theta),) * marked_cycles
+    else:
+        schedule = tuple(float(value) for value in theta_schedule)
+    if len(schedule) != marked_cycles:
+        raise ValueError(
+            "theta_schedule must contain exactly one value per marked cycle"
+        )
+    if any(not 0.0 < value <= 1.0 for value in schedule):
+        raise ValueError("every theta_schedule value must lie in (0, 1]")
+    return schedule
 
 
 def run_target_dwr_adaptive_cycles(
@@ -48,6 +66,7 @@ def run_target_dwr_adaptive_cycles(
     enriched_degree: int = 3,
     h_nm: float = 50.0,
     theta: float = 0.5,
+    theta_schedule: tuple[float, ...] | None = None,
     polarization_kind: str = "s",
     marker_policy: str = "combined_relative_R_T",
     stop_on_nonpositive_signal: bool = True,
@@ -55,8 +74,9 @@ def run_target_dwr_adaptive_cycles(
 ) -> dict[str, Any]:
     """Refine with the MPI-stable physical R/T adjoint-weighted marker."""
 
-    if marked_cycles < 1:
-        raise ValueError("marked_cycles must be at least one")
+    resolved_theta_schedule = _resolve_theta_schedule(
+        marked_cycles, theta, theta_schedule
+    )
     if marker_policy not in {
         "combined_relative_R_T",
         "R_total",
@@ -89,9 +109,7 @@ def run_target_dwr_adaptive_cycles(
         mesh_cfg,
     )
     if not initial_audit["pass"]:
-        raise RuntimeError(
-            f"initial periodic tetra audit failed: {initial_audit}"
-        )
+        raise RuntimeError(f"initial periodic tetra audit failed: {initial_audit}")
     progress("dwr_adaptive_initial_mesh", "end")
 
     started = time.perf_counter()
@@ -106,13 +124,14 @@ def run_target_dwr_adaptive_cycles(
     previous_enriched_reference_error: float | None = None
 
     for cycle_index in range(marked_cycles + 1):
+        cycle_theta = resolved_theta_schedule[min(cycle_index, marked_cycles - 1)]
         progress(f"dwr_adaptive_cycle_{cycle_index}", "begin")
         result = run_target_goal_weighted_two_level(
             out_dir / f"cycle_{cycle_index}",
             coarse_degree=coarse_degree,
             enriched_degree=enriched_degree,
             h_nm=h_nm,
-            theta=theta,
+            theta=cycle_theta,
             polarization_kind=polarization_kind,
             mesh_cell_type="tetrahedron",
             mesh_data_override=mesh_data,
@@ -136,9 +155,7 @@ def run_target_dwr_adaptive_cycles(
             enriched_vector, fixed_reference["observables"]
         )
         audit = (
-            initial_audit
-            if cycle_index == 0
-            else refinements[-1]["refined_mesh_audit"]
+            initial_audit if cycle_index == 0 else refinements[-1]["refined_mesh_audit"]
         )
         marker = (
             result["DWR"]["combined_relative_R_T"]
@@ -148,6 +165,7 @@ def run_target_dwr_adaptive_cycles(
         cycles.append(
             {
                 "cycle_index": cycle_index,
+                "theta": cycle_theta,
                 "mesh_audit": audit,
                 "coarse_observables": coarse_vector,
                 "enriched_observables": enriched_vector,
@@ -157,9 +175,7 @@ def run_target_dwr_adaptive_cycles(
                 "marker": {
                     "kind": marker_policy,
                     "marked_count": marker["marking"]["count"],
-                    "marked_geometry_sha256": marker[
-                        "marked_geometry_sha256"
-                    ],
+                    "marked_geometry_sha256": marker["marked_geometry_sha256"],
                 },
                 "goal_dwr": result,
             }
@@ -182,21 +198,15 @@ def run_target_dwr_adaptive_cycles(
                     "coarse_fixed_reference_error_previous_l2": (
                         previous_coarse_reference_error
                     ),
-                    "coarse_fixed_reference_error_current_l2": (
-                        coarse_reference_error
-                    ),
-                    "coarse_fixed_reference_reduction_fraction": (
-                        coarse_reduction
-                    ),
+                    "coarse_fixed_reference_error_current_l2": (coarse_reference_error),
+                    "coarse_fixed_reference_reduction_fraction": (coarse_reduction),
                     "enriched_fixed_reference_error_previous_l2": (
                         previous_enriched_reference_error
                     ),
                     "enriched_fixed_reference_error_current_l2": (
                         enriched_reference_error
                     ),
-                    "enriched_fixed_reference_reduction_fraction": (
-                        enriched_reduction
-                    ),
+                    "enriched_fixed_reference_reduction_fraction": (enriched_reduction),
                     "internal_p_gap_previous_l2": previous_delta,
                     "internal_p_gap_current_l2": delta,
                     "internal_p_gap_reduction_fraction": internal_gap_reduction,
@@ -206,9 +216,7 @@ def run_target_dwr_adaptive_cycles(
             )
             if stop_on_nonpositive_signal and not positive:
                 stopped_early = True
-                stop_reason = (
-                    "nonpositive_fixed_reference_observable_error_reduction"
-                )
+                stop_reason = "nonpositive_fixed_reference_observable_error_reduction"
                 break
 
         previous_delta = delta
@@ -270,6 +278,7 @@ def run_target_dwr_adaptive_cycles(
         "enriched_degree": enriched_degree,
         "h_nm": h_nm,
         "theta": theta,
+        "theta_schedule": list(resolved_theta_schedule),
         "marker_policy": marker_policy,
         "fixed_observable_reference": fixed_reference,
         "initial_mesh_audit": initial_audit,
@@ -288,4 +297,7 @@ def run_target_dwr_adaptive_cycles(
     }
 
 
-__all__ = ["run_target_dwr_adaptive_cycles"]
+__all__ = [
+    "_resolve_theta_schedule",
+    "run_target_dwr_adaptive_cycles",
+]

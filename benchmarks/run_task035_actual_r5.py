@@ -32,6 +32,20 @@ DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks/artifacts/task035/actual_global_r5"
 GIB = 1024**3
 
 
+def _parse_theta_schedule(value: str) -> tuple[float, ...]:
+    try:
+        schedule = tuple(float(item.strip()) for item in value.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "theta schedule must be comma-separated floating-point values"
+        ) from exc
+    if not schedule or any(not 0.0 < item <= 1.0 for item in schedule):
+        raise argparse.ArgumentTypeError(
+            "every theta schedule value must lie in (0, 1]"
+        )
+    return schedule
+
+
 def _sha256(path: Path) -> str | None:
     if not path.is_file():
         return None
@@ -90,6 +104,7 @@ def _worker(args: argparse.Namespace) -> int:
             enriched_degree=args.enriched_degree,
             h_nm=args.h_nm,
             theta=args.theta,
+            theta_schedule=args.theta_schedule,
             polarization_kind=args.polarization_kind,
             marker_policy=args.dwr_marker_policy,
             progress_observer=progress,
@@ -170,6 +185,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("combined_relative_R_T", "R_total", "T_total"),
         default="combined_relative_R_T",
     )
+    parser.add_argument(
+        "--theta-schedule",
+        type=_parse_theta_schedule,
+        help=("comma-separated DWR theta values; exactly one per marked cycle"),
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -213,9 +233,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "R5 adaptive, DWR adaptive, and uniform control are mutually exclusive."
         )
-    if (
-        active_cycles
-    ) and args.mesh_cell_type != "tetrahedron":
+    if args.theta_schedule is not None:
+        if not args.dwr_adaptive_cycles:
+            parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
+        if len(args.theta_schedule) != args.dwr_adaptive_cycles:
+            parser.error(
+                "--theta-schedule must contain exactly one value per DWR marked cycle."
+            )
+    if (active_cycles) and args.mesh_cell_type != "tetrahedron":
         parser.error(
             "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
         )
@@ -313,16 +338,13 @@ def _compact_dwr_cycle(entry: dict[str, Any]) -> dict[str, Any]:
     result = entry["goal_dwr"]
     return {
         "cycle_index": entry["cycle_index"],
+        "theta": entry.get("theta"),
         "mesh_audit": entry["mesh_audit"],
         "coarse_observables": entry["coarse_observables"],
         "enriched_observables": entry["enriched_observables"],
         "official_observable_delta_l2": entry["official_observable_delta_l2"],
-        "coarse_fixed_reference_error_l2": entry[
-            "coarse_fixed_reference_error_l2"
-        ],
-        "enriched_fixed_reference_error_l2": entry[
-            "enriched_fixed_reference_error_l2"
-        ],
+        "coarse_fixed_reference_error_l2": entry["coarse_fixed_reference_error_l2"],
+        "enriched_fixed_reference_error_l2": entry["enriched_fixed_reference_error_l2"],
         "marker": entry["marker"],
         "coarse": _compact_solve(result["coarse"]),
         "enriched": _compact_solve(result["enriched"]),
@@ -496,6 +518,9 @@ def _qualify_dwr_adaptive(
         else report["goals"][args.dwr_marker_policy]
         for report in dwr_reports
     ]
+    requested_theta_schedule = tuple(
+        args.theta_schedule or (float(args.theta),) * int(args.dwr_adaptive_cycles)
+    )
     checks = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
@@ -505,8 +530,7 @@ def _qualify_dwr_adaptive(
             sampler.get("max_observed_worker_rank_count") == args.mpi_size
         ),
         "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
-        "result_status": result.get("status")
-        == "actual_dwr_adaptive_cycles_pass",
+        "result_status": result.get("status") == "actual_dwr_adaptive_cycles_pass",
         "result_pass": result.get("pass") is True,
         "requested_cycle_count_completed": (
             result.get("marked_cycles_completed") == args.dwr_adaptive_cycles
@@ -514,6 +538,12 @@ def _qualify_dwr_adaptive(
         ),
         "requested_marker_policy": result.get("marker_policy")
         == args.dwr_marker_policy,
+        "requested_theta_schedule": tuple(
+            float(value) for value in result.get("theta_schedule", [])
+        )
+        == requested_theta_schedule,
+        "all_cycle_theta_values_bound": bool(cycles)
+        and all(isinstance(cycle.get("theta"), (int, float)) for cycle in cycles),
         "fixed_reference_identity": (
             (result.get("fixed_observable_reference") or {}).get("identity")
             == "best_available_discrete_reference_for_case093"
@@ -540,13 +570,15 @@ def _qualify_dwr_adaptive(
         ),
         "all_tetra_meshes": bool(solves)
         and all(
-            summary.get("mesh_cell_type_actual") == "tetrahedron"
-            for summary in solves
+            summary.get("mesh_cell_type_actual") == "tetrahedron" for summary in solves
         ),
         "all_actual_adjoint_qualifications_pass": bool(dwr_reports)
         and all(report["adjoint_qualification"]["pass"] for report in dwr_reports),
         "all_goal_effectivities_unity": bool(goal_reports)
-        and all(abs(report["absolute_effectivity"] - 1.0) <= 1.0e-8 for report in goal_reports),
+        and all(
+            abs(report["absolute_effectivity"] - 1.0) <= 1.0e-8
+            for report in goal_reports
+        ),
         "all_goal_marking_geometry_hashes_present": bool(goal_reports)
         and all(bool(report.get("marked_geometry_sha256")) for report in goal_reports),
         "all_selected_marker_geometry_hashes_match": bool(cycles)
@@ -559,14 +591,13 @@ def _qualify_dwr_adaptive(
         "all_selected_marker_counts_match": bool(cycles)
         and all(
             cycle["marker"].get("marked_count", 0) > 0
-            and cycle["marker"]["marked_count"]
-            == report["marking"].get("count")
+            and cycle["marker"]["marked_count"] == report["marking"].get("count")
             for cycle, report in zip(cycles, marker_reports, strict=True)
         ),
         "all_dorfler_targets_captured": bool(marker_reports)
         and all(
-            report["marking"]["captured_fraction"] >= args.theta
-            for report in marker_reports
+            report["marking"]["captured_fraction"] >= float(cycle["theta"])
+            for report, cycle in zip(marker_reports, cycles, strict=True)
         ),
         "algebraic_localization_rejected": bool(dwr_reports)
         and all(
@@ -574,8 +605,7 @@ def _qualify_dwr_adaptive(
             == "controlled_negative_partition_dependent"
             for report in dwr_reports
         ),
-        "ordinary_default_unchanged": result.get("ordinary_default_changed")
-        is False,
+        "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
     }
     failures = [name for name, passed in checks.items() if not passed]
     return {"pass": not failures, "checks": checks, "failures": failures}
@@ -678,9 +708,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
     )
     if args.dwr_adaptive_cycles:
-        run_label += (
-            f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
-        )
+        run_label += f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
+        if args.theta_schedule is not None:
+            schedule_label = "-".join(f"{value:g}" for value in args.theta_schedule)
+            run_label += f"_theta{schedule_label}"
     elif args.adaptive_marked_cycles:
         run_label += f"_adaptive{args.adaptive_marked_cycles}"
     elif args.uniform_refinement_levels:
@@ -724,6 +755,13 @@ def _run_parent(args: argparse.Namespace) -> int:
                 args.dwr_marker_policy,
             ]
         )
+        if args.theta_schedule is not None:
+            command.extend(
+                [
+                    "--theta-schedule",
+                    ",".join(f"{value:g}" for value in args.theta_schedule),
+                ]
+            )
     elif args.adaptive_marked_cycles:
         command.extend(["--adaptive-marked-cycles", str(args.adaptive_marked_cycles)])
     elif args.uniform_refinement_levels:
@@ -918,6 +956,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         record.update(
             {
                 "dwr_marker_policy": result.get("marker_policy"),
+                "theta_schedule": result.get("theta_schedule"),
                 "marked_cycles_requested": result.get("marked_cycles_requested"),
                 "marked_cycles_completed": result.get("marked_cycles_completed"),
                 "fixed_observable_reference": result.get("fixed_observable_reference"),

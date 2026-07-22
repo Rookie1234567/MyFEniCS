@@ -8,12 +8,21 @@ from mpi4py import MPI
 from src.adaptivity.goal_weighted_two_level import (
     run_target_goal_weighted_two_level,
 )
+from src.adaptivity.target_dwr_adaptive_cycles import (
+    _resolve_theta_schedule,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
+    def test_theta_schedule_resolution_is_fail_closed(self) -> None:
+        self.assertEqual(_resolve_theta_schedule(2, 0.5, None), (0.5, 0.5))
+        self.assertEqual(_resolve_theta_schedule(2, 0.5, (0.5, 0.15)), (0.5, 0.15))
+        with self.assertRaises(ValueError):
+            _resolve_theta_schedule(2, 0.5, (0.5,))
+
     def test_actual_midpoint_dwr_and_physical_marking_are_mpi_stable(self) -> None:
         out_dir = (
             ROOT
@@ -24,9 +33,7 @@ class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
         self.assertTrue(result["pass"], result["DWR"])
         self.assertEqual(result["coarse"]["h_nm"], 50.0)
         self.assertEqual(result["enriched"]["h_nm"], 50.0)
-        self.assertEqual(
-            result["status"], "target_goal_weighted_two_level_pass"
-        )
+        self.assertEqual(result["status"], "target_goal_weighted_two_level_pass")
         dwr = result["DWR"]
         self.assertTrue(dwr["adjoint_qualification"]["pass"])
         self.assertEqual(
@@ -55,9 +62,7 @@ class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
             self.assertEqual(report["marked_geometry_sha256"], geometry_hash)
             self.assertGreaterEqual(report["marking"]["captured_fraction"], 0.5)
             self.assertLess(
-                report["adjoint_solve"]["adjoint_residual"][
-                    "relative_residual"
-                ],
+                report["adjoint_solve"]["adjoint_residual"]["relative_residual"],
                 1.0e-9,
             )
         combined_report = dwr["combined_relative_R_T"]

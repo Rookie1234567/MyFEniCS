@@ -12,6 +12,7 @@ from benchmarks.run_task035_actual_r5 import (
     _qualify_adaptive,
     _compact_dwr_cycle,
     _qualify_dwr_adaptive,
+    _parse_args,
 )
 from src.adaptivity.global_two_level_r5 import run_target_global_two_level_r5
 from src.adaptivity.target_r5_adaptive_cycles import (
@@ -99,6 +100,7 @@ def _dwr_adaptive_result() -> dict:
         "ordinary_default_changed": False,
         "marked_cycles_completed": 1,
         "marker_policy": "R_total",
+        "theta_schedule": [0.5],
         "fixed_observable_reference": {
             "identity": "best_available_discrete_reference_for_case093",
             "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
@@ -106,6 +108,7 @@ def _dwr_adaptive_result() -> dict:
         "all_fixed_reference_error_reductions_positive": True,
         "cycles": [
             {
+                "theta": 0.5,
                 "mesh_audit": {"pass": True},
                 "marker": {
                     "marked_count": 10,
@@ -134,9 +137,7 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
             run_stage4b_block_grating_3d_case,
             run_target_global_two_level_r5,
         ):
-            parameter = inspect.signature(function).parameters[
-                "mesh_data_override"
-            ]
+            parameter = inspect.signature(function).parameters["mesh_data_override"]
             self.assertIsNone(parameter.default)
 
     def test_adaptive_qualification_requires_measured_reduction(self) -> None:
@@ -180,6 +181,7 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
         args = Namespace(
             mpi_size=2,
             theta=0.5,
+            theta_schedule=None,
             dwr_adaptive_cycles=1,
             dwr_marker_policy="R_total",
         )
@@ -213,6 +215,29 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
         self.assertFalse(failed["pass"])
         self.assertIn("all_goal_effectivities_unity", failed["failures"])
 
+    def test_theta_schedule_parser_is_fail_closed(self) -> None:
+        args = _parse_args(
+            [
+                "--mesh-cell-type",
+                "tetrahedron",
+                "--dwr-adaptive-cycles",
+                "2",
+                "--theta-schedule",
+                "0.5,0.15",
+            ]
+        )
+        self.assertEqual(args.theta_schedule, (0.5, 0.15))
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--mesh-cell-type",
+                    "tetrahedron",
+                    "--dwr-adaptive-cycles",
+                    "2",
+                    "--theta-schedule",
+                    "0.5",
+                ]
+            )
 
     def test_dwr_cycle_compactor_accepts_actual_result_shape(self) -> None:
         summary = {
@@ -253,27 +278,23 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
             },
         }
         compact = _compact_dwr_cycle(cycle)
+        self.assertIsNone(compact["theta"])
         self.assertEqual(compact["coarse"]["h_nm"], 50.0)
         self.assertEqual(compact["enriched"]["degree"], 3)
-    def test_initial_moving_gap_failure_has_positive_fixed_reference_signal(self) -> None:
+
+    def test_initial_moving_gap_failure_has_positive_fixed_reference_signal(
+        self,
+    ) -> None:
         reference = task034_best_available_observable_reference()
         self.assertEqual(reference["key"], "p4_h5")
         self.assertFalse(reference["continuum_reference"])
         record = json.loads(INITIAL_RECORD.read_text(encoding="utf-8"))
         self.assertEqual(record["status"], "formal_not_pass")
         cycle0, cycle1 = record["cycles"]
-        coarse0 = self._norm(
-            cycle0["coarse_observables"], reference["observables"]
-        )
-        coarse1 = self._norm(
-            cycle1["coarse_observables"], reference["observables"]
-        )
-        enriched0 = self._norm(
-            cycle0["enriched_observables"], reference["observables"]
-        )
-        enriched1 = self._norm(
-            cycle1["enriched_observables"], reference["observables"]
-        )
+        coarse0 = self._norm(cycle0["coarse_observables"], reference["observables"])
+        coarse1 = self._norm(cycle1["coarse_observables"], reference["observables"])
+        enriched0 = self._norm(cycle0["enriched_observables"], reference["observables"])
+        enriched1 = self._norm(cycle1["enriched_observables"], reference["observables"])
         self.assertLess(coarse1, coarse0)
         self.assertLess(enriched1, enriched0)
         self.assertGreater(
