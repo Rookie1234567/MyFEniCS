@@ -1723,4 +1723,11 @@ def solve_stage4_dtn_port_total_field(
         "ksp": ksp,
         "solver_info": solver_info,
         "port_metrics": port_metrics,
+        "goal_context": {
+            "num_fem_dofs_after_mpc": int(n_fe),
+            "modes": modes,
+            "auxiliary_values": aux_values,
+            "incident_projections": incident_projections,
+            "normalization": "finite-port outgoing modal power / incident power",
+        },
     }

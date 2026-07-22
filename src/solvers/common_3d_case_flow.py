@@ -1670,6 +1670,13 @@ def run_prepared_3d_case_flow(
             config=cfg,
             floquet_data=floquet_data,
             summary=summary,
+            linear_system={
+                "A": system_A,
+                "b": system_b,
+                "x": system_x,
+                "ksp": system_ksp,
+            },
+            dtn_result=dtn_result,
         )
 
     if summary.get("case_status") == "completed":
