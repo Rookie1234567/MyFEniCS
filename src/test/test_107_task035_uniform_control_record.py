@@ -12,6 +12,10 @@ UNIFORM_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p2_p3_mpi2.json"
 ADAPTIVE_RECORD = (
     RECORDS / "actual_r5_adaptive_tetra_p2_p3_h50_cycle2_deterministic_mpi2.json"
 )
+DWR_R_RECORD = (
+    RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
+)
+
 
 
 class Task035UniformControlRecordTests(unittest.TestCase):
@@ -22,6 +26,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             UNIFORM_LEVEL1_RECORD.read_text(encoding="utf-8")
         )
         cls.adaptive = json.loads(ADAPTIVE_RECORD.read_text(encoding="utf-8"))
+        cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
         record = self.uniform
@@ -120,6 +125,70 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
         self.assertLess(record["resource_authority"]["memory_authority_gib"], 1.1)
+
+    def test_dwr_r_watchdog_and_discrete_adjoint_gates_pass(self) -> None:
+        record = self.dwr_r
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "dfb219f00466dd5ca56c51baea127273c23aaf0a",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["dwr_marker_policy"], "R_total")
+        self.assertEqual(record["marked_cycles_completed"], 1)
+        self.assertEqual(len(record["cycles"]), 2)
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1276],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in record["cycles"]],
+            [46, 260],
+        )
+        self.assertEqual(
+            record["cycles"][0]["marker"]["marked_geometry_sha256"],
+            "8fae8171771a02ed262dd51a3304ba85cd187719f0394ec92bd1333bc5cbd9e5",
+        )
+        for cycle in record["cycles"]:
+            dwr = cycle["DWR"]
+            self.assertTrue(dwr["adjoint_qualification"]["pass"])
+            for goal in ("R_total", "T_total"):
+                self.assertAlmostEqual(
+                    dwr["goals"][goal]["absolute_effectivity"], 1.0
+                )
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 2)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(authority["memory_authority_gib"], 1.1)
+
+    def test_dwr_r_is_a_mixed_not_production_signal(self) -> None:
+        dwr_final = self.dwr_r["cycles"][-1]
+        uniform = self.uniform_level1
+        r5_final = self.adaptive["cycles"][1]
+        self.assertAlmostEqual(
+            dwr_final["coarse_fixed_reference_error_l2"], 1.0234845059305149
+        )
+        self.assertAlmostEqual(
+            dwr_final["enriched_fixed_reference_error_l2"], 0.17165330581454807
+        )
+        self.assertLess(
+            dwr_final["coarse_fixed_reference_error_l2"],
+            uniform["coarse_fixed_reference_error_l2"],
+        )
+        self.assertLess(
+            dwr_final["coarse_fixed_reference_error_l2"],
+            r5_final["coarse_fixed_reference_error_l2"],
+        )
+        self.assertGreater(
+            dwr_final["enriched_fixed_reference_error_l2"],
+            2.5 * uniform["enriched_fixed_reference_error_l2"],
+        )
+        self.assertGreater(
+            dwr_final["enriched_fixed_reference_error_l2"],
+            r5_final["enriched_fixed_reference_error_l2"],
+        )
 
 
 if __name__ == "__main__":
