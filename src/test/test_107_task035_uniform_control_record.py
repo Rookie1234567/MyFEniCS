@@ -38,6 +38,10 @@ P3_P4_DWR_R_THETA_SCHEDULE_RECORD = (
 P3_P4_DWR_R_CANONICAL_CONNECTIVITY_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_canonical_connectivity_mpi8.json"
 )
+P3_P4_DWR_R_CANONICAL_CONNECTIVITY_REPEAT_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_"
+    "canonical_connectivity_repeat_mpi8.json"
+)
 
 
 class Task035UniformControlRecordTests(unittest.TestCase):
@@ -71,6 +75,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_canonical_connectivity = json.loads(
             P3_P4_DWR_R_CANONICAL_CONNECTIVITY_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_canonical_connectivity_repeat = json.loads(
+            P3_P4_DWR_R_CANONICAL_CONNECTIVITY_REPEAT_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -707,6 +714,44 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             abs(
                 final["enriched_fixed_reference_error_l2"]
                 - old_stable["enriched_fixed_reference_error_l2"]
+            ),
+            1.0e-12,
+        )
+
+    def test_canonical_connectivity_alone_leaves_partition_nnz_drift(self) -> None:
+        first = self.p3_p4_dwr_r_canonical_connectivity
+        repeat = self.p3_p4_dwr_r_canonical_connectivity_repeat
+        self.assertEqual(repeat["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(repeat["qualification"]["pass"])
+        self.assertEqual(repeat["qualification"]["failures"], [])
+        self.assertEqual(
+            repeat["source"]["commit_sha"],
+            "42642cbcbf3bd4922bdbdff61aaba13db5085d1a",
+        )
+        self.assertTrue(repeat["source"]["stable_and_clean_after"])
+        for rebuild_name in ("serial_rebuild", "orientation_rebuild"):
+            first_hash = first["refinements"][0][rebuild_name][
+                "canonical_connectivity_sha256"
+            ]
+            repeat_hash = repeat["refinements"][0][rebuild_name][
+                "canonical_connectivity_sha256"
+            ]
+            self.assertEqual(first_hash, repeat_hash)
+        first_final = first["cycles"][-1]
+        repeat_final = repeat["cycles"][-1]
+        self.assertEqual(
+            first_final["mesh_audit"]["partition_independent_mesh_sha256"],
+            repeat_final["mesh_audit"]["partition_independent_mesh_sha256"],
+        )
+        for field in ("coarse", "enriched"):
+            self.assertNotEqual(
+                first_final[field]["matrix_stats"]["matrix_nnz_used"],
+                repeat_final[field]["matrix_stats"]["matrix_nnz_used"],
+            )
+        self.assertLess(
+            abs(
+                first_final["enriched_fixed_reference_error_l2"]
+                - repeat_final["enriched_fixed_reference_error_l2"]
             ),
             1.0e-12,
         )
