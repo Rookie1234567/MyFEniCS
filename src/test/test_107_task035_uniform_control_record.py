@@ -18,6 +18,9 @@ DWR_R_RECORD = (
 P3_P4_LEVEL1_RECORD = (
     RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
 )
+P3_P4_LEVEL1_MPI8_RECORD = (
+    RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
+)
 
 
 
@@ -32,6 +35,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
         cls.p3_p4_level1 = json.loads(
             P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_level1_mpi8 = json.loads(
+            P3_P4_LEVEL1_MPI8_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -243,6 +249,53 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertEqual(
             record["resource_authority"]["max_process_tree_swap_mb"], 0.0
         )
+
+    def test_p3_p4_mpi8_identity_and_resource_tradeoff(self) -> None:
+        mpi2 = self.p3_p4_level1
+        mpi8 = self.p3_p4_level1_mpi8
+        self.assertEqual(mpi8["status"], "actual_uniform_tetra_control_pass")
+        self.assertTrue(mpi8["qualification"]["pass"])
+        self.assertEqual(mpi8["qualification"]["failures"], [])
+        self.assertEqual(
+            mpi8["source"]["commit_sha"],
+            "73c494d4113430df4744e4566afa3495ddf419ab",
+        )
+        self.assertTrue(mpi8["source"]["stable_and_clean_after"])
+        self.assertEqual(
+            mpi8["final_mesh_audit"]["partition_independent_mesh_sha256"],
+            mpi2["final_mesh_audit"]["partition_independent_mesh_sha256"],
+        )
+        for level in ("coarse", "enriched"):
+            self.assertEqual(
+                mpi8[level]["num_nedelec_dofs"],
+                mpi2[level]["num_nedelec_dofs"],
+            )
+            self.assertLess(
+                mpi8[level]["linear_system_relative_residual"], 1.0e-9
+            )
+            for observable in ("R_total", "T_total", "A_volume_total"):
+                self.assertAlmostEqual(
+                    mpi8[level][observable], mpi2[level][observable], places=12
+                )
+        self.assertAlmostEqual(
+            mpi8["coarse_fixed_reference_error_l2"],
+            mpi2["coarse_fixed_reference_error_l2"],
+            places=12,
+        )
+        self.assertAlmostEqual(
+            mpi8["enriched_fixed_reference_error_l2"],
+            mpi2["enriched_fixed_reference_error_l2"],
+            places=12,
+        )
+        authority = mpi8["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(mpi8["elapsed_seconds"], 0.5 * mpi2["elapsed_seconds"])
+        self.assertGreater(
+            authority["memory_authority_gib"],
+            mpi2["resource_authority"]["memory_authority_gib"],
+        )
+        self.assertLess(authority["memory_authority_gib"], 5.0)
 
 
 if __name__ == "__main__":
