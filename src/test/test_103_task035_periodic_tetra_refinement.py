@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+from dataclasses import replace
+from pathlib import Path
+import tempfile
+import unittest
+
+import numpy as np
+
+from src.adaptivity.periodic_tetra_refinement import (
+    close_periodic_marked_cells,
+    refine_periodic_marked_tetra_mesh,
+)
+from src.common.config_3d import target_stage4_config
+from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.geometry.tetra_mesh_audit import (
+    audit_periodic_tetra_mesh,
+    mesh_coordinate_tolerance,
+    owned_tetra_cell_geometry,
+)
+
+
+def _target_mesh_data():
+    cfg = replace(
+        target_stage4_config(degree=2, h_nm=50.0),
+        case_name="task035_periodic_tetra_refinement_fixture",
+        mesh_cell_type="tetrahedron",
+    )
+    out_dir = Path(tempfile.mkdtemp(prefix="task035_tetra_refinement_"))
+    return cfg, build_airbox_mesh_3d(cfg, out_dir)
+
+
+def _canonical_x_min_cell(mesh_data, cfg) -> int:
+    msh = mesh_data.mesh
+    tolerance = mesh_coordinate_tolerance(msh)
+    local_candidates = []
+    for record in owned_tetra_cell_geometry(msh, tolerance=tolerance):
+        on_x_min = np.count_nonzero(
+            np.isclose(
+                record.coordinates[:, 0],
+                cfg.x_min,
+                atol=tolerance,
+                rtol=0.0,
+            )
+        )
+        if on_x_min >= 3:
+            local_candidates.append((record.key, record.global_index))
+    candidates = [
+        candidate
+        for packet in msh.comm.allgather(local_candidates)
+        for candidate in packet
+    ]
+    if not candidates:
+        raise RuntimeError("target fixture has no x-min boundary tetrahedron")
+    return int(min(candidates, key=lambda item: item[0])[1])
+
+
+class Task035PeriodicTetraRefinementTests(unittest.TestCase):
+    def test_target_tetra_audit_is_orientation_and_partition_strict(self) -> None:
+        cfg, mesh_data = _target_mesh_data()
+        audit = audit_periodic_tetra_mesh(
+            mesh_data.mesh,
+            mesh_data.cell_tags,
+            mesh_data.facet_tags,
+            cfg,
+        )
+        self.assertEqual(
+            audit["partition_independent_mesh_sha256"],
+            "67478577ac6a06120df59fbd7b73620b8241faa2fb3890dc98245da6006ee824",
+        )
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["global_cell_count"], 180)
+        self.assertEqual(audit["orientation"]["nonpositive_count"], 0)
+        self.assertGreater(
+            audit["orientation"]["determinant_quantiles"]["minimum"], 0.0
+        )
+        self.assertGreater(
+            audit["shape_quality"]["quantiles"]["minimum"], 0.0
+        )
+        self.assertTrue(audit["periodic_x"]["pass"])
+        self.assertTrue(audit["periodic_y"]["pass"])
+
+    def test_periodic_closure_and_marked_refinement_pass(self) -> None:
+        cfg, mesh_data = _target_mesh_data()
+        marked = [_canonical_x_min_cell(mesh_data, cfg)]
+        closure = close_periodic_marked_cells(mesh_data.mesh, cfg, marked)
+        self.assertEqual(closure["status"], "pass")
+        self.assertEqual(closure["initial_count"], 1)
+        self.assertGreater(closure["periodic_mates_added"], 0)
+        refined, report = refine_periodic_marked_tetra_mesh(
+            mesh_data, cfg, marked
+        )
+        self.assertEqual(
+            closure["closed_geometry_sha256"],
+            "2b4fa13e795819392b8243bbda48b7c59fce1c2d593c9122785c5ed24a8a27fd",
+        )
+        self.assertEqual(
+            report["refined_mesh_audit"]["partition_independent_mesh_sha256"],
+            "c4be7bfb5242f46840d4be81ac4752cb1232b4517b5624bf32e6a8c43c0062f2",
+        )
+        self.assertTrue(report["pass"], report)
+        self.assertEqual(report["periodic_edge_closure"]["status"], "pass")
+        self.assertGreater(
+            report["orientation_rebuild"]["input_negative_oriented_cell_count"],
+            0,
+        )
+        self.assertGreater(report["refined_global_cells"], 180)
+        self.assertTrue(report["refined_mesh_audit"]["pass"])
+        self.assertEqual(
+            report["periodic_closure"]["closed_geometry_sha256"],
+            closure["closed_geometry_sha256"],
+        )
+        for tag in (cfg.tags.air, cfg.tags.substrate, cfg.tags.grating):
+            self.assertGreater(
+                report["refined_mesh_audit"]["cell_tag_counts"][str(tag)], 0
+            )
+        self.assertEqual(refined.mesh.topology.cell_type.name, "tetrahedron")
+
+
+if __name__ == "__main__":
+    unittest.main()

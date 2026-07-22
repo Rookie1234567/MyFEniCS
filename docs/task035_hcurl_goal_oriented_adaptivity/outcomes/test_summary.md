@@ -158,6 +158,10 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | target tetra p2/p3 h50 MPI2 watchdog | `actual_global_r5_pass` |
 | tetra true residual / energy closure | `9.388e-14`, `9.134e-13` / `5.810e-16` |
 | process-tree peak / swap | `2.870 GiB` / `0` |
+| periodic tetra audit/refinement serial | 2 passed |
+| periodic tetra audit/refinement MPI2 | 2 passed per rank |
+| initial / refined mesh hash identity | `67478577...e824` / `c4be7bfb...62f2` |
+| refined orientation / x-y periodic closure | zero nonpositive / pass |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
 观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。

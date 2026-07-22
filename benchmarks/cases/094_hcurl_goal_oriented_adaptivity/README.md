@@ -65,6 +65,9 @@ Review V3 已完成 Phase C/D 低成本执行，新增：
 - `records/actual_global_r5_tetra_p2_p3_h50_mpi2.json`：matching periodic tetra、exact
   material planes、triangular N1curl trace 下的真实 target p2→p3 R5；用于解锁 estimator-marked
   tetra refinement research lane，不代表 adaptive cycle 或 production qualification 已通过。
+- estimator-marked tetra mechanism 已新增 facet-authoritative periodic cell closure、实际 refinement
+  edge closure、正 orientation 重建及 partition-independent mesh/tag hashes；serial/MPI2 fixture
+  identity 通过，但真实 adaptive cycle 仍须由后续 clean-SHA watchdog run 证明。
 
 这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
 staging 字段。Phase C/D 历史分类仍是 `phase_cd_complete_controlled_negative`；Review V4 的

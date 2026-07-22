@@ -829,3 +829,33 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
         else {"all_aligned": None, "missing": [], "checked": {"x": [], "y": [], "z": []}},
         local_refinement_regions=hexa_axis_plan.local_refinement_regions if hexa_axis_plan is not None else {},
     )
+
+
+def rebuild_airbox_mesh_data_3d(
+    refined_mesh: mesh.Mesh,
+    cfg: SimulationConfig3D,
+    template: AirBox3DMesh,
+) -> AirBox3DMesh:
+    """Rebuild material and boundary tags after conforming tetra refinement."""
+
+    if refined_mesh.topology.cell_type != mesh.CellType.tetrahedron:
+        raise ValueError("Task035 marked refinement requires a tetrahedron mesh.")
+    refined_mesh.name = cfg.case_name
+    refined_mesh.topology.create_connectivity(
+        refined_mesh.topology.dim - 1, refined_mesh.topology.dim
+    )
+    cell_tags = _mark_cells(refined_mesh, cfg)
+    facet_tags, boundary_facets = _mark_boundary_facets(refined_mesh, cfg)
+    return AirBox3DMesh(
+        mesh=refined_mesh,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        boundary_facets=boundary_facets,
+        mesh_cell_type_resolved="tetrahedron",
+        mesh_cells_resolved=template.mesh_cells_resolved,
+        z_alignment_warnings=list(template.z_alignment_warnings),
+        mesh_spacing_mode_resolved="estimator_marked_tetra_refinement",
+        mesh_axis_cell_stats=dict(template.mesh_axis_cell_stats),
+        material_plane_alignment=dict(template.material_plane_alignment),
+        local_refinement_regions=dict(template.local_refinement_regions),
+    )

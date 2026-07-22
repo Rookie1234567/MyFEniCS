@@ -89,6 +89,12 @@ local-error reference 测 correlation/effectivity；当前 dimensionful effectiv
 该结果是实际 target Maxwell/DtN PDE，不再只是 tetra manufactured refine control；下一 Gate 是
 periodic-mate closure 后的 estimator-marked refinement 与连续 cycle observable reduction。
 
+周期 refinement mechanism 现在使用 translated triangular facet 的 incident-cell closure，并在
+实际传给 `dolfinx.mesh.refine` 的 edge 集上再次执行 x/y periodic closure。refine 返回的混合局部
+orientation 被显式重建为全正 affine determinant；最终 mesh、cell/facet tags、shape-quality quantile
+及 periodic face set 均以 canonical coordinate hash 绑定。serial/MPI2 的初始 mesh、closed marking
+和 refined mesh hashes 完全一致。该结果资格化 mesh mechanism，不代替真实 adaptive PDE cycle。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
