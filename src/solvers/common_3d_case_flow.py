@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from mpi4py import MPI
@@ -634,12 +634,15 @@ def run_prepared_3d_case_flow(
     solve_stage4_dtn_port: bool = False,
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
+    solution_observer: Callable[..., None] | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
 
     This helper contains shared FEM bookkeeping only.  It does not dispatch on
     ``cfg.stage_case``; each stage solver validates and chooses the formulation
-    before entering this flow.
+    before entering this flow.  ``solution_observer`` is an explicit research
+    hook invoked only after the official solve and postprocess have completed;
+    the ordinary solver path leaves it unset.
     """
 
     if cfg.stage_case != expected_stage_case:
@@ -1645,6 +1648,15 @@ def run_prepared_3d_case_flow(
         summary["case_status"] = "failed_stage4_energy_balance"
         summary["postprocess_skipped"] = False
         summary["postprocess_skip_reason"] = None
+
+    if solution_observer is not None:
+        solution_observer(
+            field=E_total,
+            mesh_data=mesh_data,
+            config=cfg,
+            floquet_data=floquet_data,
+            summary=summary,
+        )
 
     if summary.get("case_status") == "completed":
         summary["mumps_ooc_runtime"] = {
