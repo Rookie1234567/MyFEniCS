@@ -168,6 +168,12 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | old moving p-gap Gate | `formal_not_pass`，`5.538e-2`→`8.894e-1` |
 | fixed p4/h5 reference p2 reduction | 1.060% |
 | fixed p4/h5 reference p3 reduction | 62.832% |
+| second distributed-refine attempt | controlled stop before cycle2 PDE |
+| second-refine orientation / minimum quality | zero nonpositive / `0.0456` |
+| second-refine periodic x / y | fail, `6/6` / `8/16` unmatched |
+| deterministic full-boundary two-level serial | 2 passed |
+| deterministic full-boundary two-level MPI2 | 2 passed per rank |
+| first / second deterministic mesh hashes | `65c11dbe...b0ac` / `f4c0533e...49fc` |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
 观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。

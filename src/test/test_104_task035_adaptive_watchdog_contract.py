@@ -24,6 +24,11 @@ INITIAL_RECORD = (
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
     / "actual_r5_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
 )
+SECOND_STOP_RECORD = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_r5_adaptive_tetra_p2_p3_h50_cycle2_reference_gate_mpi2.json"
+)
 
 
 def _adaptive_result() -> dict:
@@ -146,6 +151,26 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
                 "result_pass",
                 "all_observable_error_reductions_positive",
             ],
+        )
+
+    def test_second_refinement_periodic_propagation_stop_is_preserved(self) -> None:
+        record = json.loads(SECOND_STOP_RECORD.read_text(encoding="utf-8"))
+        self.assertEqual(record["status"], "formal_not_pass")
+        self.assertTrue(record["all_fixed_reference_error_reductions_positive"])
+        self.assertEqual(len(record["cycles"]), 2)
+        self.assertEqual(len(record["refinements"]), 2)
+        failed = record["refinements"][1]
+        audit = failed["refined_mesh_audit"]
+        self.assertFalse(failed["pass"])
+        self.assertEqual(audit["orientation"]["nonpositive_count"], 0)
+        self.assertGreater(audit["shape_quality"]["quantiles"]["minimum"], 0.0)
+        self.assertFalse(audit["periodic_x"]["pass"])
+        self.assertFalse(audit["periodic_y"]["pass"])
+        self.assertEqual(failed["parent_global_cells"], 1142)
+        self.assertEqual(failed["refined_global_cells"], 6560)
+        self.assertIn(
+            "all_refinement_audits_pass",
+            record["qualification"]["failures"],
         )
 
 

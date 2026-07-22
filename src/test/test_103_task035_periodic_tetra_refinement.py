@@ -96,7 +96,7 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         )
         self.assertEqual(
             report["refined_mesh_audit"]["partition_independent_mesh_sha256"],
-            "c4be7bfb5242f46840d4be81ac4752cb1232b4517b5624bf32e6a8c43c0062f2",
+            "65c11dbeb106e9f080a7bdce6cab1452de6cc54bc1c9a60710d6f54a7729b0ac",
         )
         self.assertTrue(report["pass"], report)
         self.assertEqual(report["periodic_edge_closure"]["status"], "pass")
@@ -115,6 +115,21 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
                 report["refined_mesh_audit"]["cell_tag_counts"][str(tag)], 0
             )
         self.assertEqual(refined.mesh.topology.cell_type.name, "tetrahedron")
+        second_marked = [_canonical_x_min_cell(refined, cfg)]
+        refined_twice, second_report = refine_periodic_marked_tetra_mesh(
+            refined, cfg, second_marked
+        )
+        self.assertTrue(second_report["pass"], second_report)
+        self.assertTrue(
+            second_report["periodic_edge_closure"][
+                "full_periodic_boundary_synchronization"
+            ]
+        )
+        self.assertEqual(
+            second_report["refined_mesh_audit"]["partition_independent_mesh_sha256"],
+            "f4c0533e59ae45e308c1c2ca2904d88975226fcaae2b245fe6c241e44fa349fc",
+        )
+        self.assertEqual(refined_twice.mesh.topology.cell_type.name, "tetrahedron")
 
 
 if __name__ == "__main__":

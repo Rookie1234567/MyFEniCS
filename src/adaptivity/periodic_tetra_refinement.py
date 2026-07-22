@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import ufl
 from basix.ufl import element
+from mpi4py import MPI
 
 from dolfinx import default_real_type, mesh
 
@@ -191,6 +192,7 @@ def _closed_periodic_edge_indices(
     integer_bounds = _integer_bounds(cfg, tolerance)
     closed_keys = set(initial_keys)
     missing: list[dict[str, int]] = []
+    periodic_mates_added = 0
     changed = True
     while changed:
         changed = False
@@ -214,11 +216,24 @@ def _closed_periodic_edge_indices(
                         missing.append({"axis": axis, "side": side})
                     elif mate_key not in closed_keys:
                         closed_keys.add(mate_key)
+                        periodic_mates_added += 1
                         changed = True
     if missing:
         raise RuntimeError(
             f"periodic refinement edge has no translated mate: {missing[:8]}"
         )
+    closed_before_boundary_sleeve = set(closed_keys)
+    periodic_boundary_keys = {
+        key
+        for key in global_edge_keys
+        if any(
+            np.all(np.asarray(key, dtype=np.int64)[:, axis] == boundary)
+            for axis, bounds in enumerate(integer_bounds)
+            for boundary in bounds
+        )
+    }
+    closed_keys.update(periodic_boundary_keys)
+    boundary_sleeve_edges_added = len(closed_keys - closed_before_boundary_sleeve)
     local_closed_edges = np.asarray(
         [
             edge
@@ -232,7 +247,10 @@ def _closed_periodic_edge_indices(
         "status": "pass",
         "initial_edge_count": len(initial_keys),
         "closed_edge_count": len(closed_keys),
-        "periodic_edge_mates_added": len(closed_keys - initial_keys),
+        "periodic_edge_mates_added": periodic_mates_added,
+        "full_periodic_boundary_synchronization": True,
+        "periodic_boundary_edge_count": len(periodic_boundary_keys),
+        "boundary_sleeve_edges_added": boundary_sleeve_edges_added,
         "initial_geometry_sha256": geometry_key_sha256(initial_keys),
         "closed_geometry_sha256": geometry_key_sha256(closed_keys),
         "owned_closed_edge_counts_by_rank": msh.comm.allgather(
@@ -243,9 +261,12 @@ def _closed_periodic_edge_indices(
 
 def _positively_oriented_tetra_copy(
     msh: mesh.Mesh,
+    *,
+    target_comm: MPI.Intracomm | None = None,
 ) -> tuple[mesh.Mesh, dict[str, Any]]:
     """Rebuild a refined mesh with an explicitly positive affine map per cell."""
 
+    output_comm = msh.comm if target_comm is None else target_comm
     tolerance = mesh_coordinate_tolerance(msh)
     local_records = owned_tetra_cell_geometry(msh, tolerance=tolerance)
     packets = msh.comm.allgather(
@@ -292,8 +313,8 @@ def _positively_oriented_tetra_copy(
     points = np.asarray(
         [point_coordinates[key] for key in point_keys], dtype=default_real_type
     )
-    start = len(oriented_cells) * msh.comm.rank // msh.comm.size
-    stop = len(oriented_cells) * (msh.comm.rank + 1) // msh.comm.size
+    start = len(oriented_cells) * output_comm.rank // output_comm.size
+    stop = len(oriented_cells) * (output_comm.rank + 1) // output_comm.size
     local_cells = np.asarray(
         [
             [point_index[key] for key in oriented_cells[index]]
@@ -307,12 +328,13 @@ def _positively_oriented_tetra_copy(
     domain = ufl.Mesh(coordinate_element)
     partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
     rebuilt = mesh.create_mesh(
-        msh.comm, local_cells, domain, points, partitioner=partitioner
+        output_comm, local_cells, domain, points, partitioner=partitioner
     )
     return rebuilt, {
         "input_negative_oriented_cell_count": negative_input_count,
         "reconstructed_global_cell_count": len(oriented_cells),
         "coordinate_tolerance": tolerance,
+        "target_mpi_size": output_comm.size,
     }
 
 
@@ -334,17 +356,44 @@ def refine_periodic_marked_tetra_mesh(
     owned_cells = np.unique(
         local_cells[(local_cells >= 0) & (local_cells < cell_map.size_local)]
     ).astype(np.int32)
-    edges, edge_closure = _closed_periodic_edge_indices(
-        msh, cfg, owned_cells
+    current_records = [
+        record
+        for packet in msh.comm.allgather(
+            owned_tetra_cell_geometry(
+                msh, tolerance=mesh_coordinate_tolerance(msh)
+            )
+        )
+        for record in packet
+    ]
+    key_by_global_id = {
+        record.global_index: record.key for record in current_records
+    }
+    closed_keys = {
+        key_by_global_id[int(global_id)] for global_id in closed_ids
+    }
+    serial_mesh, serial_rebuild = _positively_oriented_tetra_copy(
+        msh, target_comm=MPI.COMM_SELF
     )
-    refined_mesh, parent_cells, _ = mesh.refine(msh, edges)
-    oriented_mesh, orientation_rebuild = _positively_oriented_tetra_copy(refined_mesh)
+    serial_records = owned_tetra_cell_geometry(serial_mesh)
+    serial_marked_cells = np.asarray(
+        [record.local_index for record in serial_records if record.key in closed_keys],
+        dtype=np.int32,
+    )
+    if len(serial_marked_cells) != len(closed_keys):
+        raise RuntimeError("replicated serial mesh lost a periodic-closed marked cell")
+    edges, edge_closure = _closed_periodic_edge_indices(
+        serial_mesh, cfg, serial_marked_cells
+    )
+    refined_serial_mesh, parent_cells, _ = mesh.refine(serial_mesh, edges)
+    oriented_mesh, orientation_rebuild = _positively_oriented_tetra_copy(
+        refined_serial_mesh, target_comm=msh.comm
+    )
     rebuilt = rebuild_airbox_mesh_data_3d(oriented_mesh, cfg, mesh_data)
     audit = audit_periodic_tetra_mesh(
         rebuilt.mesh, rebuilt.cell_tags, rebuilt.facet_tags, cfg
     )
     local_edge_count = int(len(edges))
-    refined_count = int(refined_mesh.topology.index_map(tdim).size_global)
+    refined_count = int(oriented_mesh.topology.index_map(tdim).size_global)
     passed = (
         closure["status"] == "pass"
         and len(closure["closed_global_cell_ids"]) > 0
@@ -364,6 +413,8 @@ def refine_periodic_marked_tetra_mesh(
         "parent_cell_map_entries_by_rank": msh.comm.allgather(
             int(len(parent_cells))
         ),
+        "refinement_execution": "replicated_comm_self_then_distribute",
+        "serial_rebuild": serial_rebuild,
         "periodic_closure": closure,
         "periodic_edge_closure": edge_closure,
         "orientation_rebuild": orientation_rebuild,

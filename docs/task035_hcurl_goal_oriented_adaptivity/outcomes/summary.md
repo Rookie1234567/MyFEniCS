@@ -110,6 +110,18 @@ reference error：对 Task034 accepted p4/h5 best-available discrete reference
 formal Gate 使用 hash-bound fixed reference，moving p-gap 只作 enrichment diagnostic；reference
 仍明确不是 continuum truth，阈值没有放宽。
 
+第二次 formal attempt 正确通过上述 fixed-reference reduction，但从 1142 cells 继续 refine 到
+6560 cells 时，DOLFINx 的 distributed conformity propagation 在两个周期面产生不同的额外 edge
+选择；x/y normalized triangle sets 分别出现 6/6 和 8/16 unmatched。所有 determinant 为正、
+minimum quality `0.0456`、material tags 和 no-swap Gate 均通过，但 periodic Gate fail-closed，
+因此 cycle2 PDE 未启动，原始记录永久保留。
+
+修复后的 research backend 每轮同步 refine 当前 x/y periodic boundary sleeve 的全部 edges，并在每个
+rank 的 `COMM_SELF` 上执行相同 deterministic refine，再将 canonical positive-orientation mesh 分发到
+工作 communicator。这牺牲分布式 mesh-refine scalability 以换取多层 topology identity；serial/MPI2
+两层 fixtures 的 first/second refined mesh hashes 分别为 `65c11dbe...b0ac` 和 `f4c0533e...49fc`。
+该 backend 仍须重新跑 actual cycles 和量化 boundary-sleeve overhead，尚未提升为 ordinary default。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
