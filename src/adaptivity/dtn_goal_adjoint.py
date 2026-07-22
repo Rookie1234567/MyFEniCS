@@ -168,6 +168,46 @@ def _normalized_rhs_direction(
     return direction
 
 
+def solve_hermitian_discrete_adjoint(
+    matrix: PETSc.Mat,
+    solver: PETSc.KSP,
+    goal_gradient: PETSc.Vec,
+    *,
+    template: PETSc.Vec,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Reuse a complex direct factor to solve ``A^H z = g``."""
+
+    if not np.issubdtype(PETSc.ScalarType, np.complexfloating):
+        raise RuntimeError("the discrete adjoint requires complex PETSc scalars")
+    if matrix.getSize()[0] != template.getSize():
+        raise ValueError("matrix and adjoint template sizes do not match")
+    conjugated_gradient = goal_gradient.copy()
+    conjugated_gradient.getArray()[:] = np.conj(
+        goal_gradient.getArray(readonly=True)
+    )
+    transpose_solution = template.duplicate()
+    solver.solveTranspose(conjugated_gradient, transpose_solution)
+    transpose_reason = int(solver.getConvergedReason())
+    adjoint = transpose_solution.copy()
+    adjoint.getArray()[:] = np.conj(
+        transpose_solution.getArray(readonly=True)
+    )
+    residual = _linear_residual(
+        matrix, goal_gradient, adjoint, hermitian=True
+    )
+    conjugated_gradient.destroy()
+    transpose_solution.destroy()
+    return adjoint, {
+        "transpose_converged_reason": transpose_reason,
+        "adjoint_residual": residual,
+        "complex_adjoint_equation": "A^H z = g",
+        "adjoint_solve_method": (
+            "z=conj(KSPSolveTranspose(conj(g))); reuse_forward_direct_factor"
+        ),
+        "forward_factor_reused": True,
+    }
+
+
 def verify_hermitian_discrete_adjoint(
     matrix: PETSc.Mat,
     right_hand_side: PETSc.Vec,
@@ -177,29 +217,15 @@ def verify_hermitian_discrete_adjoint(
     goal_evaluator: Callable[[PETSc.Vec], float],
     *,
     finite_difference_relative_step: float = 1.0e-5,
+    adjoint_observer: Callable[[PETSc.Vec], None] | None = None,
 ) -> dict[str, Any]:
     """Solve and independently verify a real functional's complex adjoint."""
 
-    if not np.issubdtype(PETSc.ScalarType, np.complexfloating):
-        raise RuntimeError("the DtN discrete adjoint requires complex PETSc scalars")
     if matrix.getSize()[0] != state.getSize():
         raise ValueError("matrix and state sizes do not match")
-
-    conjugated_gradient = goal_gradient.copy()
-    conjugated_gradient.getArray()[:] = np.conj(
-        goal_gradient.getArray(readonly=True)
+    adjoint, solve_report = solve_hermitian_discrete_adjoint(
+        matrix, solver, goal_gradient, template=state
     )
-    transpose_solution = state.duplicate()
-    solver.solveTranspose(conjugated_gradient, transpose_solution)
-    transpose_reason = int(solver.getConvergedReason())
-    adjoint = transpose_solution.copy()
-    adjoint.getArray()[:] = np.conj(
-        transpose_solution.getArray(readonly=True)
-    )
-    adjoint_residual = _linear_residual(
-        matrix, goal_gradient, adjoint, hermitian=True
-    )
-
     direction = _normalized_rhs_direction(right_hand_side)
     rhs_norm = float(right_hand_side.norm())
     step = float(finite_difference_relative_step) * rhs_norm
@@ -232,10 +258,11 @@ def verify_hermitian_discrete_adjoint(
     )
 
     passed = bool(
-        transpose_reason > 0
+        solve_report["transpose_converged_reason"] > 0
         and minus_reason > 0
         and plus_reason > 0
-        and adjoint_residual["relative_residual"] <= 1.0e-9
+        and solve_report["adjoint_residual"]["relative_residual"]
+        <= 1.0e-9
         and minus_residual["relative_residual"] <= 1.0e-9
         and plus_residual["relative_residual"] <= 1.0e-9
         and direct_adjoint_relative_error <= 1.0e-8
@@ -244,17 +271,11 @@ def verify_hermitian_discrete_adjoint(
     report = {
         "pass": passed,
         "actual_discrete_system": True,
-        "complex_adjoint_equation": "A^H z = g",
-        "adjoint_solve_method": (
-            "z=conj(KSPSolveTranspose(conj(g))); reuse_forward_direct_factor"
-        ),
-        "forward_factor_reused": True,
+        **solve_report,
         "matrix_rows": int(matrix.getSize()[0]),
         "mpi_size": int(matrix.getComm().getSize()),
-        "transpose_converged_reason": transpose_reason,
         "minus_converged_reason": minus_reason,
         "plus_converged_reason": plus_reason,
-        "adjoint_residual": adjoint_residual,
         "minus_primal_residual": minus_residual,
         "plus_primal_residual": plus_residual,
         "finite_difference_relative_step": float(
@@ -269,9 +290,9 @@ def verify_hermitian_discrete_adjoint(
         "direct_adjoint_relative_error": direct_adjoint_relative_error,
         "finite_difference_relative_error": finite_difference_relative_error,
     }
+    if adjoint_observer is not None:
+        adjoint_observer(adjoint)
     for vector in (
-        conjugated_gradient,
-        transpose_solution,
         adjoint,
         direction,
         rhs_minus,
@@ -292,6 +313,7 @@ def evaluate_actual_dtn_power_adjoints(
     communicator: MPI.Intracomm,
     official_summary: dict[str, Any],
     goals: tuple[str, ...] = SUPPORTED_GOALS,
+    adjoint_observer: Callable[[str, PETSc.Vec], None] | None = None,
 ) -> dict[str, Any]:
     """Evaluate actual discrete adjoints while forward objects are alive."""
 
@@ -330,6 +352,13 @@ def evaluate_actual_dtn_power_adjoints(
             solver,
             gradient,
             evaluate,
+            adjoint_observer=(
+                None
+                if adjoint_observer is None
+                else lambda vector, selected_goal=goal: adjoint_observer(
+                    selected_goal, vector
+                )
+            ),
         )
         official_value = float(official_summary[goal])
         functional_value = float(metadata["goal_value_from_quadratic_form"])
@@ -470,5 +499,6 @@ __all__ = [
     "dtn_power_goal_value",
     "evaluate_actual_dtn_power_adjoints",
     "run_target_actual_dtn_adjoint",
+    "solve_hermitian_discrete_adjoint",
     "verify_hermitian_discrete_adjoint",
 ]
