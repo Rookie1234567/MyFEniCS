@@ -82,6 +82,11 @@ Review V3 已完成 Phase C/D 低成本执行，新增：
   error `1.2026→1.0877→0.19535`，p3 `1.1473→0.14211→0.007041`；所有 true residual、
   R5 closure、Dörfler、orientation、periodic、source、memory 与 no-swap Gates 通过。该结果是
   research backend success；完成 cost-matched uniform control 前不宣称 adaptive efficiency 胜出。
+- `records/actual_uniform_tetra_level2_p2_p3_mpi2.json`：同一 h50 起点连续两次全单元
+  tetra refinement 的 true-uniform cost control，11,520 cells；所有 watchdog/PDE/mesh Gates 通过。
+  对照显示 adaptive 使用 76.3% cells、75.5% peak memory 和 56.5% wall time，但 p2/p3
+  fixed-reference error 是 uniform 的 18.26/5.74 倍。因此关闭 pure R5 production-marking lane，
+  保留其 actual convergence evidence，下一主线转 actual goal-weighted DWR/adjoint。
 
 这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
 staging 字段。Phase C/D 历史分类仍是 `phase_cd_complete_controlled_negative`；Review V4 的

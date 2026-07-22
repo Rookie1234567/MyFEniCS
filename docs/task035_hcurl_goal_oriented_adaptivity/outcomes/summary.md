@@ -142,6 +142,28 @@ periodic sleeve overhead：第一次 initial estimator edges 174，加入全部 
 第二次 911→1256。该成功证明 actual R5+tetra 路线有强正信号，但 8,785-cell adaptive mesh
 与候选 uniform h5 的 10,080 cells（p2/p3 DoF 69,290/197,871）仍需正式 cost-matched 对照。
 
+### True-uniform cost control 与 R5 决策
+
+从相同 180-cell h50 tetra mesh 连续两次全单元 refinement，得到 1,440 和 11,520 cells；
+boundary-sleeve added edges 为 0，两层 serial/MPI2 hashes 分别为 `22204e1b...91af`、
+`37d4f643...28a8`。clean SHA `e1743b632aeda845e151efaef7bdf2c81e347f36` 的 MPI2
+control 全部 qualification 通过，最终对比如下：
+
+| route | cells | p2 / p3 DoF | p2 fixed-ref error | p3 fixed-ref error | peak GiB | wall s |
+|---|---:|---:|---:|---:|---:|---:|
+| R5 adaptive cycle2 | 8,785 | 60,330 / 172,257 | 0.195353 | 0.007041 | 6.401 | 295.96 |
+| uniform level2 | 11,520 | 78,000 / 223,656 | 0.010697 | 0.001227 | 8.473 | 523.44 |
+
+adaptive/control 比值：cells `0.7626`、memory `0.7554`、time `0.5654`；但 p2/p3 error
+比值为 `18.263` / `5.738`。这不是资源或 PDE 失败，而是明确的方法级 negative：当前
+`R5_actual_global_two_level_correction_energy` 能驱动收敛，却没有在 comparable cost 上击败
+uniform refinement，故不得作为 production marking。继续第三轮纯 R5 会放大已证实的低效率，
+不再执行；下一主线必须引入 official-goal sensitivity 的 actual DWR/discrete adjoint，再与同一
+uniform record 比较。R5 保留为 diagnostic/two-level correction magnitude。
+
+前文 “候选 uniform h5” 只用于运行前 cost probe；本节 11,520-cell 同拓扑全单元 refinement
+才是正式 cost-matched uniform authority。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |

@@ -181,6 +181,13 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | final p2 / p3 true residual | `4.798e-12` / `2.341e-11` |
 | two-cycle process-tree peak / swap | `6.401 GiB` / 0 |
 | watchdog qualification failures | `[]` |
+| true-uniform mechanism serial / MPI2 | 3 passed / 3 passed per rank |
+| uniform cells / p2 / p3 DoF | 11,520 / 78,000 / 223,656 |
+| uniform p2 / p3 fixed-ref error | 0.010697 / 0.001227 |
+| uniform p2 / p3 true residual | `7.943e-12` / `8.721e-12` |
+| uniform peak / swap / wall | `8.473 GiB` / 0 / `523.44 s` |
+| adaptive/uniform error ratio p2 / p3 | 18.263 / 5.738 |
+| pure R5 production marking | controlled negative；diagnostic only |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
 观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。
