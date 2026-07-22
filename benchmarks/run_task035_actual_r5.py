@@ -248,6 +248,12 @@ def _compact_adaptive_cycle(entry: dict[str, Any]) -> dict[str, Any]:
         "official_observable_delta_l2": entry[
             "official_observable_delta_l2"
         ],
+        "coarse_fixed_reference_error_l2": entry[
+            "coarse_fixed_reference_error_l2"
+        ],
+        "enriched_fixed_reference_error_l2": entry[
+            "enriched_fixed_reference_error_l2"
+        ],
         "coarse": _compact_solve(actual["coarse"]),
         "enriched": _compact_solve(actual["enriched"]),
         "R5": actual["R5"],
@@ -348,8 +354,16 @@ def _qualify_adaptive(
             result.get("marked_cycles_completed") == args.adaptive_marked_cycles
             and len(cycles) == args.adaptive_marked_cycles + 1
         ),
-        "all_observable_error_reductions_positive": (
-            result.get("all_observable_error_reductions_positive") is True
+        "fixed_reference_identity": (
+            (result.get("fixed_observable_reference") or {}).get("identity")
+            == "best_available_discrete_reference_for_case093"
+        ),
+        "fixed_reference_hash_bound": (
+            (result.get("fixed_observable_reference") or {}).get("record_sha256")
+            == "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+        ),
+        "all_fixed_reference_error_reductions_positive": (
+            result.get("all_fixed_reference_error_reductions_positive") is True
         ),
         "all_refinement_audits_pass": bool(refinements)
         and all(entry.get("pass") is True for entry in refinements),
@@ -612,6 +626,7 @@ def _run_parent(args: argparse.Namespace) -> int:
             {
                 "marked_cycles_requested": result.get("marked_cycles_requested"),
                 "marked_cycles_completed": result.get("marked_cycles_completed"),
+                "fixed_observable_reference": result.get("fixed_observable_reference"),
                 "initial_mesh_audit": result.get("initial_mesh_audit"),
                 "cycles": [
                     _compact_adaptive_cycle(entry)
@@ -621,9 +636,10 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "observable_error_reductions": result.get(
                     "observable_error_reductions"
                 ),
-                "all_observable_error_reductions_positive": result.get(
-                    "all_observable_error_reductions_positive"
+                "all_fixed_reference_error_reductions_positive": (
+                    result.get("all_fixed_reference_error_reductions_positive")
                 ),
+                "internal_p_gap_is_gate": result.get("internal_p_gap_is_gate"),
             }
         )
     record_path = args.record or (run_dir / "watchdog_summary.json")

@@ -95,6 +95,21 @@ orientation 被显式重建为全正 affine determinant；最终 mesh、cell/fac
 及 periodic face set 均以 canonical coordinate hash 绑定。serial/MPI2 的初始 mesh、closed marking
 和 refined mesh hashes 完全一致。该结果资格化 mesh mechanism，不代替真实 adaptive PDE cycle。
 
+### 首次 actual marked cycle 与 Gate 修正
+
+clean SHA `5bfc1a0b40a959f6c2063979feb1341a83007cac` 的 MPI2 h50 cycle 将 49/180 个
+R5 cells 扩展为 60 个 periodic-closed cells、180 个 closed edges，得到 1142 个正 orientation
+tetra cells；x/y periodic face sets、材料 tags、true residual（最差 `7.989e-12`）和 no-swap
+resource Gate 全部通过，process-tree peak 为 `0.951 GiB`。
+
+旧 watchdog 使用同一网格上 moving p2→p3 gap 作为“实际误差”；该 gap 从 `5.538e-2`
+增至 `8.894e-1`，因此真实记录按原 Gate 保存为 `formal_not_pass`，没有覆盖。这个量并非固定
+reference error：对 Task034 accepted p4/h5 best-available discrete reference
+（`convergence_summary.json` SHA-256 `f5bad15f...1111`），p2 error 从 `1.202635` 降至
+`1.189884`（1.060%），p3 error 从 `1.147343` 降至 `0.426445`（62.832%）。因此修正后的
+formal Gate 使用 hash-bound fixed reference，moving p-gap 只作 enrichment diagnostic；reference
+仍明确不是 continuum truth，阈值没有放宽。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |

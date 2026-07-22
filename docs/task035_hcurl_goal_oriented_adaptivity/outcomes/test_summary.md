@@ -162,6 +162,12 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | periodic tetra audit/refinement MPI2 | 2 passed per rank |
 | initial / refined mesh hash identity | `67478577...e824` / `c4be7bfb...62f2` |
 | refined orientation / x-y periodic closure | zero nonpositive / pass |
+| first actual marked cycle MPI2 / clean SHA | completed / `5bfc1a0...7cac` |
+| cells / marked / periodic-closed | 180→1142 / 49 / 60 |
+| first-cycle residual max / peak / swap | `7.989e-12` / `0.951 GiB` / 0 |
+| old moving p-gap Gate | `formal_not_pass`，`5.538e-2`→`8.894e-1` |
+| fixed p4/h5 reference p2 reduction | 1.060% |
+| fixed p4/h5 reference p3 reduction | 62.832% |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
 观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。

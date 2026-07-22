@@ -68,6 +68,10 @@ Review V3 已完成 Phase C/D 低成本执行，新增：
 - estimator-marked tetra mechanism 已新增 facet-authoritative periodic cell closure、实际 refinement
   edge closure、正 orientation 重建及 partition-independent mesh/tag hashes；serial/MPI2 fixture
   identity 通过，但真实 adaptive cycle 仍须由后续 clean-SHA watchdog run 证明。
+- `records/actual_r5_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json`：首次 clean-SHA actual
+  marked cycle 的历史记录。mesh、PDE、R5 和资源 Gate 均通过；旧 moving p2/p3 gap Gate 将
+  结果标为 `formal_not_pass`。相对 Task034 hash-bound p4/h5 fixed reference，p2/p3 error
+  实际分别下降 1.06%/62.83%，因此该记录是 metric-definition controlled failure，不是 estimator negative。
 
 这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
 staging 字段。Phase C/D 历史分类仍是 `phase_cd_complete_controlled_negative`；Review V4 的

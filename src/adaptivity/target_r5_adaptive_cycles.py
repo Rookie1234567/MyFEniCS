@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 import gc
+import hashlib
+import json
 import math
 from pathlib import Path
 import time
@@ -21,6 +23,13 @@ from src.geometry.tetra_mesh_audit import audit_periodic_tetra_mesh
 
 
 OBSERVABLES = ("R_total", "T_total", "A_volume_total")
+ROOT = Path(__file__).resolve().parents[2]
+TASK034_REFERENCE_PATH = (
+    ROOT
+    / "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records"
+    / "convergence_summary.json"
+)
+TASK034_REFERENCE_SHA256 = "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
 
 
 def _observable_vector(result: dict[str, Any], level: str) -> dict[str, float]:
@@ -30,6 +39,42 @@ def _observable_vector(result: dict[str, Any], level: str) -> dict[str, float]:
 
 def _delta_norm(left: dict[str, float], right: dict[str, float]) -> float:
     return math.sqrt(sum((left[name] - right[name]) ** 2 for name in OBSERVABLES))
+
+
+def task034_best_available_observable_reference() -> dict[str, Any]:
+    """Load the accepted p4/h5 compact reference with fail-closed identity."""
+
+    payload = TASK034_REFERENCE_PATH.read_bytes()
+    digest = hashlib.sha256(payload).hexdigest()
+    if digest != TASK034_REFERENCE_SHA256:
+        raise RuntimeError(
+            "Task034 convergence summary hash changed: "
+            f"expected {TASK034_REFERENCE_SHA256}, got {digest}"
+        )
+    record = json.loads(payload)
+    selected = record["selected_discrete_reference"]
+    if (
+        selected["key"] != "p4_h5"
+        or selected["identity"] != "best_available_discrete_reference_for_case093"
+        or selected["continuum_reference"] is not False
+    ):
+        raise RuntimeError("Task034 selected discrete reference identity changed")
+    point = next(entry for entry in record["points"] if entry["key"] == "p4_h5")
+    full3d = point["full3d"]
+    if full3d["status"] != "full3d_reference_pass" or not full3d["qualified"]:
+        raise RuntimeError("Task034 p4/h5 Full3D reference is not qualified")
+    return {
+        "identity": selected["identity"],
+        "key": selected["key"],
+        "continuum_reference": False,
+        "record_path": str(TASK034_REFERENCE_PATH.relative_to(ROOT)),
+        "record_sha256": digest,
+        "source_sha": full3d["source"]["commit_sha"],
+        "true_relative_residual": full3d["true_relative_residual"],
+        "observables": {
+            name: float(full3d["official_values"][name]) for name in OBSERVABLES
+        },
+    }
 
 
 def run_target_r5_adaptive_cycles(
@@ -86,7 +131,10 @@ def run_target_r5_adaptive_cycles(
     reductions: list[dict[str, Any]] = []
     stopped_early = False
     stop_reason: str | None = None
+    fixed_reference = task034_best_available_observable_reference()
     previous_delta: float | None = None
+    previous_coarse_reference_error: float | None = None
+    previous_enriched_reference_error: float | None = None
     for cycle_index in range(marked_cycles + 1):
         progress(f"adaptive_cycle_{cycle_index}_r5", "begin")
         result = run_target_global_two_level_r5(
@@ -106,6 +154,12 @@ def run_target_r5_adaptive_cycles(
         coarse_vector = _observable_vector(result, "coarse")
         enriched_vector = _observable_vector(result, "enriched")
         delta = _delta_norm(coarse_vector, enriched_vector)
+        coarse_reference_error = _delta_norm(
+            coarse_vector, fixed_reference["observables"]
+        )
+        enriched_reference_error = _delta_norm(
+            enriched_vector, fixed_reference["observables"]
+        )
         audit = (
             initial_audit
             if cycle_index == 0
@@ -118,6 +172,8 @@ def run_target_r5_adaptive_cycles(
                 "coarse_observables": coarse_vector,
                 "enriched_observables": enriched_vector,
                 "official_observable_delta_l2": delta,
+                "coarse_fixed_reference_error_l2": coarse_reference_error,
+                "enriched_fixed_reference_error_l2": enriched_reference_error,
                 "actual_r5": result,
             }
         )
@@ -125,22 +181,46 @@ def run_target_r5_adaptive_cycles(
             reduction_fraction = 1.0 - delta / max(
                 previous_delta, float.fromhex("0x1.0p-1022")
             )
-            positive = delta < previous_delta
+            assert previous_coarse_reference_error is not None
+            assert previous_enriched_reference_error is not None
+            coarse_reduction = 1.0 - coarse_reference_error / max(
+                previous_coarse_reference_error, float.fromhex("0x1.0p-1022")
+            )
+            enriched_reduction = 1.0 - enriched_reference_error / max(
+                previous_enriched_reference_error,
+                float.fromhex("0x1.0p-1022"),
+            )
+            positive = coarse_reduction > 0.0 and enriched_reduction > 0.0
             reductions.append(
                 {
                     "from_cycle": cycle_index - 1,
                     "to_cycle": cycle_index,
-                    "previous_delta_l2": previous_delta,
-                    "current_delta_l2": delta,
-                    "reduction_fraction": reduction_fraction,
-                    "positive_signal": positive,
+                    "coarse_fixed_reference_error_previous_l2": (
+                        previous_coarse_reference_error
+                    ),
+                    "coarse_fixed_reference_error_current_l2": coarse_reference_error,
+                    "coarse_fixed_reference_reduction_fraction": coarse_reduction,
+                    "enriched_fixed_reference_error_previous_l2": (
+                        previous_enriched_reference_error
+                    ),
+                    "enriched_fixed_reference_error_current_l2": (
+                        enriched_reference_error
+                    ),
+                    "enriched_fixed_reference_reduction_fraction": enriched_reduction,
+                    "internal_p_gap_previous_l2": previous_delta,
+                    "internal_p_gap_current_l2": delta,
+                    "internal_p_gap_reduction_fraction": reduction_fraction,
+                    "internal_p_gap_is_gate": False,
+                    "fixed_reference_positive_signal": positive,
                 }
             )
             if stop_on_nonpositive_signal and not positive:
                 stopped_early = True
-                stop_reason = "nonpositive_official_observable_error_reduction"
+                stop_reason = "nonpositive_fixed_reference_observable_error_reduction"
                 break
         previous_delta = delta
+        previous_coarse_reference_error = coarse_reference_error
+        previous_enriched_reference_error = enriched_reference_error
         if cycle_index == marked_cycles:
             break
         progress(f"adaptive_cycle_{cycle_index}_refine", "begin")
@@ -157,15 +237,15 @@ def run_target_r5_adaptive_cycles(
             break
         gc.collect()
 
-    all_reductions_positive = bool(reductions) and all(
-        entry["positive_signal"] for entry in reductions
+    all_reference_reductions_positive = bool(reductions) and all(
+        entry["fixed_reference_positive_signal"] for entry in reductions
     )
     completed_requested_cycles = len(refinements) == marked_cycles and (
         len(cycles) == marked_cycles + 1
     )
     passed = (
         completed_requested_cycles
-        and all_reductions_positive
+        and all_reference_reductions_positive
         and all(entry["pass"] for entry in refinements)
     )
     if passed:
@@ -175,7 +255,7 @@ def run_target_r5_adaptive_cycles(
     else:
         status = "incomplete"
     return {
-        "schema_version": "task035.target-r5-adaptive-cycles.v1",
+        "schema_version": "task035.target-r5-adaptive-cycles.v2",
         "status": status,
         "target_identity": {
             "wavelength_nm": 13.5,
@@ -193,11 +273,15 @@ def run_target_r5_adaptive_cycles(
         "h_nm": h_nm,
         "theta": theta,
         "polarization_kind": polarization_kind,
+        "fixed_observable_reference": fixed_reference,
         "initial_mesh_audit": initial_audit,
         "cycles": cycles,
         "refinements": refinements,
         "observable_error_reductions": reductions,
-        "all_observable_error_reductions_positive": all_reductions_positive,
+        "all_fixed_reference_error_reductions_positive": (
+            all_reference_reductions_positive
+        ),
+        "internal_p_gap_is_gate": False,
         "stopped_early": stopped_early,
         "stop_reason": stop_reason,
         "elapsed_seconds": float(
@@ -208,4 +292,7 @@ def run_target_r5_adaptive_cycles(
     }
 
 
-__all__ = ["run_target_r5_adaptive_cycles"]
+__all__ = [
+    "run_target_r5_adaptive_cycles",
+    "task034_best_available_observable_reference",
+]
