@@ -17,32 +17,24 @@ UNIFORM_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p2_p3_mpi2.json"
 ADAPTIVE_RECORD = (
     RECORDS / "actual_r5_adaptive_tetra_p2_p3_h50_cycle2_deterministic_mpi2.json"
 )
-DWR_R_RECORD = (
-    RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
-)
-P3_P4_LEVEL1_RECORD = (
-    RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
-)
-P3_P4_LEVEL1_MPI8_RECORD = (
-    RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
-)
+DWR_R_RECORD = RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
+P3_P4_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
+P3_P4_LEVEL1_MPI8_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
 P3_P4_DWR_R_MPI8_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_mpi8.json"
 )
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
 )
-P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD = (
-    RECORDS
-    / (
-        "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_tie_stable_mpi8.json"
-    )
+P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_tie_stable_mpi8.json"
 )
 P3_P4_DWR_R_THETA03_RECORD = (
-    RECORDS
-    / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json"
+    RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json"
 )
-
+P3_P4_DWR_R_THETA_SCHEDULE_RECORD = (
+    RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p5_0p15_cycle2_mpi8.json"
+)
 
 
 class Task035UniformControlRecordTests(unittest.TestCase):
@@ -54,9 +46,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.adaptive = json.loads(ADAPTIVE_RECORD.read_text(encoding="utf-8"))
         cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
-        cls.p3_p4_level1 = json.loads(
-            P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8")
-        )
+        cls.p3_p4_level1 = json.loads(P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8"))
         cls.p3_p4_level1_mpi8 = json.loads(
             P3_P4_LEVEL1_MPI8_RECORD.read_text(encoding="utf-8")
         )
@@ -69,11 +59,12 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         cls.p3_p4_dwr_r_cycle2_tie_v1 = json.loads(
             P3_P4_DWR_R_CYCLE2_TIE_V1_RECORD.read_text(encoding="utf-8")
         )
-        cls.case093 = json.loads(
-            CASE093_CONVERGENCE.read_text(encoding="utf-8")
-        )
+        cls.case093 = json.loads(CASE093_CONVERGENCE.read_text(encoding="utf-8"))
         cls.p3_p4_dwr_r_theta03 = json.loads(
             P3_P4_DWR_R_THETA03_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_theta_schedule = json.loads(
+            P3_P4_DWR_R_THETA_SCHEDULE_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -203,9 +194,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             dwr = cycle["DWR"]
             self.assertTrue(dwr["adjoint_qualification"]["pass"])
             for goal in ("R_total", "T_total"):
-                self.assertAlmostEqual(
-                    dwr["goals"][goal]["absolute_effectivity"], 1.0
-                )
+                self.assertAlmostEqual(dwr["goals"][goal]["absolute_effectivity"], 1.0)
         authority = record["resource_authority"]
         self.assertEqual(authority["max_observed_worker_rank_count"], 2)
         self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
@@ -282,9 +271,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertEqual(
             record["resource_authority"]["max_observed_worker_rank_count"], 2
         )
-        self.assertEqual(
-            record["resource_authority"]["max_process_tree_swap_mb"], 0.0
-        )
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
 
     def test_p3_p4_mpi8_identity_and_resource_tradeoff(self) -> None:
         mpi2 = self.p3_p4_level1
@@ -306,9 +293,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
                 mpi8[level]["num_nedelec_dofs"],
                 mpi2[level]["num_nedelec_dofs"],
             )
-            self.assertLess(
-                mpi8[level]["linear_system_relative_residual"], 1.0e-9
-            )
+            self.assertLess(mpi8[level]["linear_system_relative_residual"], 1.0e-9)
             for observable in ("R_total", "T_total", "A_volume_total"):
                 self.assertAlmostEqual(
                     mpi8[level][observable], mpi2[level][observable], places=12
@@ -412,8 +397,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             cycle["coarse_fixed_reference_error_l2"] for cycle in record["cycles"]
         ]
         enriched_errors = [
-            cycle["enriched_fixed_reference_error_l2"]
-            for cycle in record["cycles"]
+            cycle["enriched_fixed_reference_error_l2"] for cycle in record["cycles"]
         ]
         self.assertTrue(
             all(right < left for left, right in zip(coarse_errors, coarse_errors[1:]))
@@ -431,9 +415,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         final = record["cycles"][-1]
         self.assertEqual(final["enriched"]["num_nedelec_dofs"], 315768)
-        self.assertEqual(
-            final["mesh_audit"]["orientation"]["nonpositive_count"], 0
-        )
+        self.assertEqual(final["mesh_audit"]["orientation"]["nonpositive_count"], 0)
         self.assertEqual(
             final["mesh_audit"]["partition_independent_mesh_sha256"],
             "5414a0fcf8e3f2186fcf4aa3dff133bf2546b16b68e6e8c7751eb6f03c93f635",
@@ -444,9 +426,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             ]
         )
         repeated_marker = set(
-            record["cycles"][1]["DWR"]["goals"]["R_total"][
-                "marked_canonical_cell_ids"
-            ]
+            record["cycles"][1]["DWR"]["goals"]["R_total"]["marked_canonical_cell_ids"]
         )
         self.assertEqual(len(previous_marker), 215)
         self.assertEqual(len(repeated_marker), 215)
@@ -459,9 +439,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         for cycle in record["cycles"]:
             self.assertTrue(cycle["DWR"]["adjoint_qualification"]["pass"])
-            self.assertEqual(
-                cycle["mesh_audit"]["orientation"]["nonpositive_count"], 0
-            )
+            self.assertEqual(cycle["mesh_audit"]["orientation"]["nonpositive_count"], 0)
         authority = record["resource_authority"]
         self.assertEqual(authority["max_observed_worker_rank_count"], 8)
         self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
@@ -488,9 +466,7 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             0.0005363453435066528,
         )
         self.assertEqual(final["enriched"]["num_nedelec_dofs"], 315444)
-        self.assertEqual(
-            final["mesh_audit"]["orientation"]["nonpositive_count"], 0
-        )
+        self.assertEqual(final["mesh_audit"]["orientation"]["nonpositive_count"], 0)
         self.assertEqual(
             final["mesh_audit"]["partition_independent_mesh_sha256"],
             "f64e68fb2e683d212f373e1cf2c91cb5b7cab2a996e586193f714fd5e19675af",
@@ -507,12 +483,8 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             self.assertEqual(report["marking"]["count"], 215)
         for left_index in range(len(marker_reports)):
             for right_index in range(left_index + 1, len(marker_reports)):
-                left = set(
-                    marker_reports[left_index]["marked_canonical_cell_ids"]
-                )
-                right = set(
-                    marker_reports[right_index]["marked_canonical_cell_ids"]
-                )
+                left = set(marker_reports[left_index]["marked_canonical_cell_ids"])
+                right = set(marker_reports[right_index]["marked_canonical_cell_ids"])
                 overlap = len(left & right) / len(left | right)
                 self.assertGreaterEqual(overlap, 0.99)
                 self.assertNotEqual(
@@ -539,7 +511,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
         self.assertLess(authority["memory_authority_gib"], 19.0)
 
-    def test_one_dwr_cycle_is_engineering_positive_but_cycle2_is_dominated(self) -> None:
+    def test_one_dwr_cycle_is_engineering_positive_but_cycle2_is_dominated(
+        self,
+    ) -> None:
         points = {entry["key"]: entry for entry in self.case093["points"]}
         reference = points["p4_h5"]["full3d"]["official_values"]
 
@@ -620,15 +594,77 @@ class Task035UniformControlRecordTests(unittest.TestCase):
                 for name in ("R_total", "T_total", "A_volume_total")
             )
         )
-        self.assertGreater(
-            final03["enriched_fixed_reference_error_l2"], p4_h10_error
-        )
+        self.assertGreater(final03["enriched_fixed_reference_error_l2"], p4_h10_error)
         self.assertLess(
             final03["enriched"]["num_nedelec_dofs"],
             1.01 * p4_h10["resource"]["dofs"],
         )
+        self.assertEqual(final03["mesh_audit"]["orientation"]["nonpositive_count"], 0)
+
+    def test_theta015_second_cycle_is_cost_negative_and_exposes_repeat_drift(
+        self,
+    ) -> None:
+        record = self.p3_p4_dwr_r_theta_schedule
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
         self.assertEqual(
-            final03["mesh_audit"]["orientation"]["nonpositive_count"], 0
+            record["source"]["commit_sha"],
+            "8c4c62ae5c3047718bd0733a1a3083e3cc99e446",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["theta_schedule"], [0.5, 0.15])
+        self.assertEqual(
+            [cycle["theta"] for cycle in record["cycles"]],
+            [0.5, 0.15, 0.15],
+        )
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1268, 6110],
+        )
+        self.assertEqual(record["cycles"][1]["marker"]["marked_count"], 35)
+        final = record["cycles"][-1]
+        self.assertEqual(final["enriched"]["num_nedelec_dofs"], 265152)
+        self.assertAlmostEqual(
+            final["enriched_fixed_reference_error_l2"],
+            0.002045169163347349,
+        )
+        theta05 = self.p3_p4_dwr_r_cycle2_tie_v1
+        self.assertLess(
+            final["enriched"]["num_nedelec_dofs"],
+            theta05["cycles"][-1]["enriched"]["num_nedelec_dofs"],
+        )
+        self.assertGreater(
+            final["enriched_fixed_reference_error_l2"],
+            3.5 * theta05["cycles"][-1]["enriched_fixed_reference_error_l2"],
+        )
+        points = {entry["key"]: entry for entry in self.case093["points"]}
+        p4_h7p5 = points["p4_h7p5"]["full3d"]
+        reference = points["p4_h5"]["full3d"]["official_values"]
+        structured_error = math.sqrt(
+            sum(
+                (p4_h7p5["official_values"][name] - reference[name]) ** 2
+                for name in ("R_total", "T_total", "A_volume_total")
+            )
+        )
+        self.assertGreater(final["enriched_fixed_reference_error_l2"], structured_error)
+        self.assertGreater(
+            final["enriched"]["num_nedelec_dofs"],
+            p4_h7p5["resource"]["dofs"],
+        )
+        self.assertGreater(
+            record["resource_authority"]["memory_authority_gib"],
+            p4_h7p5["resource"]["peak_memory_gib"],
+        )
+        old_cycle1 = self.p3_p4_dwr_r_mpi8["cycles"][-1]
+        new_cycle1 = record["cycles"][1]
+        self.assertEqual(
+            new_cycle1["mesh_audit"]["partition_independent_mesh_sha256"],
+            old_cycle1["mesh_audit"]["partition_independent_mesh_sha256"],
+        )
+        self.assertGreater(
+            new_cycle1["enriched_fixed_reference_error_l2"],
+            6.0 * old_cycle1["enriched_fixed_reference_error_l2"],
         )
 
 
