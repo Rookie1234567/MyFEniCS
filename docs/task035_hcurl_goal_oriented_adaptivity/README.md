@@ -82,4 +82,4 @@ R4 仅完成公式与局部 SPD precursor，保持 `formula_defined`。serial/MP
 identity、Task035 focused suite 和正确 complex activation 下的 full pytest 均通过，
 Phase C 已解锁。没有启动真实 PDE 或 adaptive mesh。详见
 [`outcomes/estimator_definitions.md`](outcomes/estimator_definitions.md) 和
-[`response_v4.md`](response_v4.md)。
+[`response_v2.md`](response_v2.md)。

@@ -96,3 +96,79 @@ Phase A checker 也 fail-closed 检查 manifest 最终 status 和 `full_regressi
 
 Phase B 已按用户与 Review V1 授权解锁。下一阶段只执行 estimator 数学定义和
 analytic/manufactured fixtures；不得跳过 fixture 启动真实 p4 adaptive 或其他重型 PDE。
+
+## Review V1 后续：Phase B estimator fixtures
+
+Phase A Gate 通过并按用户授权进入 Phase B 后，只实现 estimator 数学定义与
+analytic/manufactured fixtures，没有启动真实 PDE、adaptive mesh 或 p4 heavy case。
+
+新增内容：
+
+- 纯验证层 `src/validation/task035_hcurl_estimator_fixtures.py`；
+- hermetic serial/MPI component runner；
+- 四类 fixture：homogeneous periodic analytic field、flat lossy layer、material
+  interface manufactured corner、Hybrid analytic interface；
+- R1–R5、G1/G2、B1/M1 状态矩阵与 compact evidence；
+- `outcomes/estimator_definitions.md`、`fixture_matrix.csv/json` 和 Case094
+  `records/fixture_summary.json`。
+
+R1、R2、R3、R5、G1、G2、B1、M1 得到 `fixture_pass`。R4 只有局部 SPD
+precursor，维持 `formula_defined`，没有宣称 constrained equilibration、
+guaranteed bound 或 production qualification。
+
+Phase B 定向结果：
+
+| 检查 | 结果 |
+|---|---:|
+| estimator fixture targeted | 12 passed |
+| Task035 focused suite | 35 passed |
+| serial / MPI2 / MPI4 component identity | pass / pass / pass |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+
+### Full regression 首次错误启动与受控停止
+
+首次 full pytest 错误地直接调用 `.venv/bin/python`，遗漏了任务规定的：
+
+```bash
+source .venv/bin/activate-myfenics
+```
+
+完成的错误环境 run 为：
+
+```text
+36 failed, 453 passed, 18 skipped, 17 errors in 10.71s
+```
+
+代表性症状是 real-valued DOLFINx array 拒绝 complex 材料值。另有一次相同命令被外层
+5 秒 timeout 终止，没有形成测试结论。错误启动被分类为
+`operator_launch_environment_mismatch`，并保存为
+`records/phase_b_regression_failure.json`；该历史记录不得删除或改写为通过。
+
+### 用户授权后的正确 activation 恢复
+
+用户随后明确授权“使用正确 activation 重跑一次 full pytest”。执行：
+
+```bash
+source .venv/bin/activate-myfenics
+pytest -q
+```
+
+正确 complex 环境结果：
+
+```text
+506 passed, 18 skipped in 248.08s
+```
+
+恢复证据保存在 `records/phase_b_regression_recovery.json`，绑定测试源码
+`8c85469a5720573f51b784049de7d25bcbe012f4`。首次失败 JSON 保持原样。
+
+```text
+phase_b_full_regression_gate = pass
+phase_c_unlocked = true
+task035_pde_started = false
+heavy_p4_started = false
+thresholds_relaxed = false
+```
+
+Phase C 已解锁但尚未启动。后续只能先执行低成本 estimator bake-off，不得跳过
+low-cost point 与 refinement Gate 直接运行真实 p4 adaptive 或其他重型 PDE。
