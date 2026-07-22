@@ -7,14 +7,18 @@ phase_a = accepted
 phase_b_algebraic_precursor = pass
 phase_b_real_fixture_minimum_gate = pass
 phase_c_low_cost_unlocked = true
-phase_c_low_cost = in_progress
-phase_c_formal_completion = pending_B3_B4
-phase_d_production_backend_unlocked = false
+phase_c_internal_gate = complete_controlled_negative
+B3_B4 = pass
+phase_d_internal_gate = complete
+production_estimator_selected = false
+production_backend_selected = false
+phase_e_unlocked = false
 heavy_p4_authorized = false
 ```
 
-Task035 当前只完成低成本真实 FE 最低 Gate，没有运行目标光栅、adaptive cycle、p4/h5
-heavy case，也没有选择 production mesh backend。
+Task035 已完成 Review V3 授权的 Phase C estimator 与 Phase D mesh-backend bake-off。
+完成 Gate 不等于方法资格化：没有选择 production estimator/backend，没有运行新的目标光栅 PDE、
+adaptive cycle 或 p4/h5 heavy case，Phase E 仍锁定。
 
 ## Phase B 证据
 
@@ -25,8 +29,8 @@ heavy case，也没有选择 production mesh backend。
 | B1 real periodic Nédélec | p1/p2 pass；实际 UFL volume/jump、Floquet trace 与 fault injection | `records/real_fe_mpi1.json` |
 | B2 real flat lossy layer | 三个实际 h/p 点 pass；piecewise-complex DG0、field/goal/estimator trend、DtN perturbation | `records/real_fe_mpi1.json` |
 | serial/MPI2 identity | pass；scalar metrics differences = `{}` | `records/real_fe_mpi_identity.json` |
-| B3 material-interface/corner | pending | Phase C-low-cost 并行项 |
-| B4 Hybrid Et/Ht、M/DtN | pending | Phase C-low-cost 并行项 |
+| B3 material-interface/corner | pass；actual Nédélec、DG0 tags、interface facets、fault/enrichment/directional metrics | `records/phase_cd_mpi1.json` |
+| B4 Hybrid Et/Ht、M/DtN/QEP | pass；复用 accepted target traces、M80/120/160 与 matched-trace QEP | `records/phase_cd_mpi1.json` |
 | R4 equilibrated | `formula_defined` | research lane |
 
 ## B1/B2 代表数值
@@ -47,3 +51,42 @@ heavy case，也没有选择 production mesh backend。
 Phase C-low-cost 只允许 estimator bake-off 和低成本 component work。B3/B4 必须在
 Phase D backend 决策或任何 p4/h5 adaptive heavy case 前通过或形成明确
 `controlled_negative`。R4 不阻塞低成本主线，但不得提升为 production estimator。
+
+## Phase C 目标 artifact screen
+
+| 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
+|---|---:|---:|---:|---:|---:|
+| p2/h5 → p2/h3 | 0.9086 | 0.9903 / 0.9918 | -0.0356 | 0.0998 | 87.46% |
+| p2/h3 → p2/h2 | 0.8106 | 0.9981 / 0.9949 | -0.0768 | 0.1358 | 81.55% |
+| p3/h10 → p3/h7.5 | 0.9894 | 0.9892 / 0.9836 | -0.0202 | 0.1035 | 94.00% |
+
+所有 marked set 均以 Dörfler `theta=0.5` 的 global sample ID SHA-256 锁定。R5 是 accepted
+field-pair difference proxy，不是 formal hierarchical FE solve；R1 是 sample-grid strong residual，
+不是 cell-integrated production R1。后者相关性为负，所以不能进入 production marking。Task034
+strip/tensor PDE 对照的 observable error 从 `3.577e-6` 恶化到 `2.378e-2`，且不是 Task035
+estimator-marked refinement，故 Phase C 受控收口而不选 estimator。
+
+## Phase D backend 决策
+
+| backend | 结果 | 关键证据 |
+|---|---|---|
+| Task034 strip/tensor | `controlled_negative` | actual PDE；middle E/H 与 A_volume gates fail |
+| multi-block conforming hexa | `hexa_backend_blocker` | strip leakage ratio 6.071；无 qualified transition-cell/hanging-node support |
+| tetra marked refine control | `control_pass`，research control only | 384→1392 cells；min volume `3.255e-4`；Nédélec proxy error 0.3523→0.2749 |
+
+B3/B4 通过；serial/MPI2 compact identity 通过。首次 MPI2 tetra volume measurement 因错误的
+topology-to-geometry indexing 产生伪零体积，失败 record 永久保留；改用
+`geometry.dofmap[cell]` 后 targeted serial 与 MPI2 均通过。
+
+## 最终边界
+
+```text
+phase_c_internal_gate = complete_controlled_negative
+phase_d_internal_gate = complete
+production_estimator_selected = false
+production_backend_selected = false
+ordinary_default_changed = false
+phase_e_unlocked = false
+```
+
+Review V3 没有授权 Phase E/F、p4/h5 heavy adaptive 或 ordinary-default change，本轮均未执行。

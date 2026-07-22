@@ -2174,3 +2174,35 @@ Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assem
 # 46. 当前一句话状态（Task031）
 
 > Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
+
+---
+
+# 47. Task035 Phase C/D：estimator 与 mesh-backend bake-off
+
+Review V3 接受 B1/B2 real-FE minimum Gate 后，Phase C/D 在同一执行分支连续完成。Phase C
+复用 Task034 accepted p2/p3/p4 field samples，对固定 13.5 nm、10° grazing、S 入射结构筛选
+sampled R1、discrete two-level R5 proxy、external DtN split 与 R2 diagnostic。R5 proxy 对
+p4/h5 best-available discrete error 的局部相关性为 0.989–0.998，但不是 formal hierarchical FE
+solve；sampled R1 相关性为负。Task034 strip/tensor actual PDE 细化证据继续失败 physical gates，
+且不是 estimator-marked refinement，所以没有 production estimator。
+
+B3 actual material-interface/corner Nédélec fixture 与 B4 accepted Hybrid Et/Ht、M80/120/160、
+DtN/QEP microfixture 均通过 serial/MPI2。Phase D 比较三条 backend：strip/tensor 保留
+`controlled_negative`；conforming multi-block hexa 因 Cartesian axis-cut leakage 记录
+`hexa_backend_blocker`；tetra actual marked-refine control 从 384 到 1392 cells，正体积、局部性与
+Nédélec proxy improvement 通过，但只作为 research control。
+
+首次 MPI2 tetra volume measurement 因 topology vertex ID 错用于 refined geometry indexing
+产生伪零值，失败 record 已保留；改用 `geometry.dofmap[cell]` 后 final serial/MPI2 identity 通过。
+最终状态为：
+
+```text
+phase_c_internal_gate = complete_controlled_negative
+phase_d_internal_gate = complete
+production_estimator_selected = false
+production_backend_selected = false
+ordinary_default_changed = false
+phase_e_unlocked = false
+```
+
+未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。

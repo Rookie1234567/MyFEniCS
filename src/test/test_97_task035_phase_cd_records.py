@@ -27,7 +27,7 @@ class Task035PhaseCDRecordTests(unittest.TestCase):
             self.assertTrue(record["provenance"]["tracked_and_nonignored_untracked_clean_at_start"])
             self.assertEqual(
                 record["provenance"]["git_head_at_run"],
-                "8e8c6b89e6964311e6cfc57f2d98a0a862b8d2a8",
+                "db2d1e7a49f5754de8d0dec6dda3622a9635e6bb",
             )
         self.assertEqual(compare_serial_mpi2(self.serial, self.mpi2), self.identity)
         self.assertTrue(self.identity["pass"])

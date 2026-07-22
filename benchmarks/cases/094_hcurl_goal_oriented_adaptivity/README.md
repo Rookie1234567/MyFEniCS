@@ -50,3 +50,19 @@ adaptive results、robust common mesh 和任何 production qualification。
 4. 宣称 Phase B 或后续 measured results 可用。
 
 升级前不得把本 staging scaffold 冒充 canonical Case094。
+
+## Task execution evidence（不改变 staging contract）
+
+Review V3 已完成 Phase C/D 低成本执行，新增：
+
+- `records/phase_cd_mpi1.json`：clean-SHA serial C+D record；
+- `records/phase_cd_mpi2.json`：clean-SHA MPI2 C+D record；
+- `records/phase_cd_mpi_identity.json`：compact metric identity；
+- `records/phase_cd_mpi2_initial_volume_measurement_failure.json`：首次伪零体积 measurement failure 历史。
+
+这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
+staging 字段。其最终分类是 `phase_cd_complete_controlled_negative`：B3/B4 与 tetra control
+通过，但没有 production estimator/backend，Phase E 未解锁。Case094 仍不是 canonical benchmark；
+`config.json`、`expected.json` 和 ordinary checker 的 `phase_b_or_later_results = not_available`
+继续表示“staging ordinary contract 不提供后续正式 benchmark 结果”，不是否认 branch 上存在
+noncanonical task evidence。

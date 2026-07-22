@@ -101,3 +101,12 @@ same-degree closure 与 M funnel 均由 Case093 compact record 绑定；没有�
 - 未运行 Task035 PDE、p4 重型求解、adaptive cycle 或 Task034 重型矩阵。
 - 首次文档合同失败历史保留；Review V1 staging contract 修正与最终 full pytest 均通过。
 - Phase B 已解锁，但只允许 estimator 定义与 analytic/manufactured fixtures；真实 p4/heavy PDE 仍锁定。
+
+## Review V3 后续身份
+
+Phase C/D 只复用了上述 qualified environment、Task034 compact records 与明确 hash-bound 的小型
+field samples；没有重新安装环境、重复 ABI/MPI/MUMPS/PEP 全量资格化或重跑 Task034 heavy PDE。
+最终 C+D serial/MPI2 records 均绑定 clean commit
+`db2d1e7a49f5754de8d0dec6dda3622a9635e6bb`，PETSc scalar/int 为
+`complex128`/`int32`，MPI compact identity 通过。Phase C/D 受控完成不改变 Phase A 的
+environment/base 结论，也不授权 Phase E、p4/h5 heavy 或 ordinary-default change。

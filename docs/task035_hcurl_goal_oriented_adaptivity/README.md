@@ -3,14 +3,19 @@
 ## 当前身份
 
 ```text
-status = phase_c_low_cost_in_progress
+status = phase_cd_complete_controlled_negative
 execution_lock_released_by_Task034_final_selective_merge = true
 execution_branch_created_by_codex = true
 base_sha = 5002636852ffb67b4711443da70eb536c303e34e
 phase_b_algebraic_precursor = pass
 phase_b_real_fixture_minimum_gate = pass
 phase_c_low_cost_unlocked = true
-phase_c_formal_completion = pending_B3_B4
+phase_c_internal_gate = complete_controlled_negative
+B3_B4 = pass
+phase_d_internal_gate = complete
+production_estimator_selected = false
+production_backend_selected = false
+phase_e_unlocked = false
 task035_pde_started = false
 heavy_p4_started = false
 ```
@@ -94,10 +99,29 @@ Fresnel 场误差、零级反射目标方向导数和 external DtN 扰动完成�
 ```text
 phase_b_real_fixture_minimum_gate = pass
 phase_c_low_cost_unlocked = true
-phase_c_formal_completion = pending_B3_B4
+phase_c_internal_gate = complete_controlled_negative
 ```
 
-Phase C-low-cost 已进入执行；B3/B4 与其并行，仍禁止 Phase D backend 选择和 p4/h5 heavy。
-没有启动目标光栅 PDE 或 adaptive mesh。详见
+## Phase C/D 状态
+
+Review V3 授权的 Phase C/D 已连续完成。Phase C 复用 Task034 的 p2/h5、p2/h3、p2/h2、
+p3/h10、p3/h7.5 与 p4/h5 hash-bound 场样本，在固定 13.5 nm、10° grazing、S 入射、
+Task034 geometry 上筛选 sampled R1、discrete two-level R5 proxy、external DtN split；R2 仍只作
+`kh/p` diagnostic。R5 proxy 的 local correlation 很高，但不是 formal hierarchical FE R5；
+R1 sampled strong residual 与局部误差相关性为负。Task034 strip/tensor 实际 PDE 细化证据仍是
+`controlled_negative`，且不是 estimator-marked refinement，因此没有选择 production estimator。
+
+B3 actual material-interface/corner Nédélec fixture 与 B4 measured Hybrid Et/Ht、M/DtN、QEP
+microfixture 均通过 serial/MPI2。Phase D 的 strip/tensor 保留负结果；conforming Cartesian
+multi-block hexa 因 axis-cut strip leakage 记录 `hexa_backend_blocker`；tetra actual marked-refine
+control 通过，但只证明 backend/orientation 机制，不是目标 Maxwell PDE。因此：
+
+```text
+phase_cd_complete_controlled_negative = true
+ordinary_default_changed = false
+phase_e_unlocked = false
+```
+
+没有启动 Task035 目标 PDE、adaptive cycle 或 p4/h5 heavy。详见
 [`outcomes/estimator_definitions.md`](outcomes/estimator_definitions.md) 和
 [`outcomes/summary.md`](outcomes/summary.md)。

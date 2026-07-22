@@ -75,8 +75,8 @@
   "mpi_size": 1,
   "ordinary_default_changed": false,
   "phase_c": {
-    "B3": "pending_parallel_fixture",
-    "B4": "pending_parallel_fixture",
+    "B3": "component_fixture_pass",
+    "B4": "component_fixture_pass",
     "actual_refinement_evidence": {
       "actual_pde_run": true,
       "estimator_marked_refinement": false,
@@ -174,9 +174,9 @@
       "sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
     },
     "estimator_cost": {
-      "process_peak_rss_kib_after": 91500,
-      "process_peak_rss_kib_before": 87216,
-      "wall_seconds": 0.048740917000031914
+      "process_peak_rss_kib_after": 91280,
+      "process_peak_rss_kib_before": 86984,
+      "wall_seconds": 0.04733471299914527
     },
     "mpi_partition_identity": {
       "count_sum_sumsq": [
@@ -451,7 +451,7 @@
   "production_backend_selected": false,
   "production_estimator_selected": false,
   "provenance": {
-    "git_head_at_run": "8e8c6b89e6964311e6cfc57f2d98a0a862b8d2a8",
+    "git_head_at_run": "db2d1e7a49f5754de8d0dec6dda3622a9635e6bb",
     "petsc_int_dtype": "int32",
     "petsc_scalar_dtype": "complex128",
     "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
@@ -459,7 +459,7 @@
     "status_porcelain_at_start": "",
     "tracked_and_nonignored_untracked_clean_at_start": true,
     "tracked_content_bindings": {
-      "benchmarks/task035_phase_cd.py": "39c22696c0cf7351e6c77d0a019bd2cf31ea9509de735087c4e2f7e6aca82259",
+      "benchmarks/task035_phase_cd.py": "69d598e8257ab10d786ce00e8ecbfba62543061ab09b5c7d83d8b98671039da1",
       "src/validation/task035_component_fixtures.py": "7638f534976dd5bdf76480ba2f53a97b09c9683ce31f17d5dbce5bc3b04dd079",
       "src/validation/task035_mesh_backend_bakeoff.py": "72b4d1f6eec53b513d5fe113b1c834207a657d9326f8d10782dfa5880d33144b",
       "src/validation/task035_target_artifact_bakeoff.py": "bd9bd9debd3dabfb3d2be22b215434f452328fceda91bf2080d57212f5b12bbd"

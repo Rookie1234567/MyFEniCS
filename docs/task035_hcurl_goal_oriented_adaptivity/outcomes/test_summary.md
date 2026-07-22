@@ -1,4 +1,4 @@
-# Task035 测试摘要：Phase A staging contract 恢复
+# Task035 测试摘要
 
 ## 结论
 
@@ -115,3 +115,28 @@ thresholds_relaxed = false
 
 本轮没有重跑 Phase A、Task034 heavy PDE、MPI 全量资格化或 full repository pytest。
 Phase C-low-cost 已按 Review V2 自动解锁；B3/B4 继续并行且在 Phase D/p4 heavy 前仍为强制待办。
+
+## Review V3：Phase C/D
+
+| 检查 | 结果 |
+|---|---:|
+| Phase C 新增 targeted | 3 passed |
+| B3/B4 targeted | 2 passed |
+| Phase D backend targeted | 3 passed |
+| Phase C focused test88–test94 | 25 passed |
+| 新增 C/D direct tests（formatter 后） | 10 passed |
+| final record contract | 3 passed |
+| serial C+D | `phase_cd_complete_controlled_negative` |
+| MPI2 C+D | `phase_cd_complete_controlled_negative` |
+| serial/MPI2 identity | pass；failures = `[]` |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+| C+D focused test88–test97 | 33 passed |
+| full repository pytest（本 Phase 唯一一次） | 527 passed, 18 skipped in 245.98s |
+
+首次 MPI2 C+D run 在 tetra volume measurement 得到伪零值并按 Gate 返回 2；原始失败保存在
+`records/phase_cd_mpi2_initial_volume_measurement_failure.json`。根因是 refined mesh 的 topology
+vertex ID 被错误用于 geometry indexing；修复为 `geometry.dofmap[cell]` 后 serial/MPI2 与 identity
+均通过。失败证据没有删除、覆盖或改写。
+
+本轮没有运行 Phase A full pytest、环境/MPI/MUMPS/PEP 全量资格化、Task034 artifact 全量 hash、
+Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy case。
