@@ -134,6 +134,9 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
             rebuild = report[rebuild_name]
             self.assertTrue(rebuild["canonical_positive_vertex_ordering"])
             self.assertEqual(len(rebuild["canonical_connectivity_sha256"]), 64)
+            self.assertEqual(rebuild["partitioner"], "scotch")
+            self.assertEqual(rebuild["partitioner_imbalance"], 0.025)
+            self.assertEqual(rebuild["partitioner_seed"], 0)
 
         self.assertGreater(report["refined_global_cells"], 180)
         self.assertTrue(report["refined_mesh_audit"]["pass"])

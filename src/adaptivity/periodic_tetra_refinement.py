@@ -11,7 +11,7 @@ import ufl
 from basix.ufl import element
 from mpi4py import MPI
 
-from dolfinx import default_real_type, mesh
+from dolfinx import default_real_type, graph, mesh
 
 from src.geometry.mesh_builder_3d import (
     AirBox3DMesh,
@@ -359,7 +359,10 @@ def _positively_oriented_tetra_copy(
         "Lagrange", "tetrahedron", 1, shape=(3,), dtype=default_real_type
     )
     domain = ufl.Mesh(coordinate_element)
-    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    partitioner = mesh.create_cell_partitioner(
+        graph.partitioner_scotch(imbalance=0.025, seed=0),
+        mesh.GhostMode.shared_facet,
+    )
     rebuilt = mesh.create_mesh(
         output_comm, local_cells, domain, points, partitioner=partitioner
     )
@@ -369,6 +372,9 @@ def _positively_oriented_tetra_copy(
         "coordinate_tolerance": tolerance,
         "target_mpi_size": output_comm.size,
         "canonical_positive_vertex_ordering": True,
+        "partitioner": "scotch",
+        "partitioner_imbalance": 0.025,
+        "partitioner_seed": 0,
         "canonical_connectivity_sha256": hashlib.sha256(
             connectivity_values.tobytes()
         ).hexdigest(),
