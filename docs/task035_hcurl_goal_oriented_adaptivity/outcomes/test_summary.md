@@ -9,7 +9,14 @@ final_phase_a_gate = pass
 phase_b_unlocked = true
 task035_target_pde_started = true
 actual_global_two_level_R5 = pass_hexa_control_mpi8
-heavy_p4_started = false
+actual_discrete_DtN_adjoint = pass
+actual_goal_weighted_DWR = pass
+high_order_dwr_mpi8 = pass
+high_order_stage_full_regression = fail_one_task034_classifier
+classifier_fix_targeted = pass
+second_full_regression = not_run_phase_limit
+selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+heavy_p4_started = true
 thresholds_relaxed = false
 ```
 
@@ -194,3 +201,44 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 原始 field、timeline、stdout 与 solver outputs 位于 ignored artifact 目录；tracked record 只保存
 轻量指标、路径与 SHA-256。没有重跑 Review V4 已接受的 Phase A/full pytest/Task034 heavy matrix，
 没有放宽 residual、energy、marking 或 resource Gate。
+
+## Actual adjoint/DWR 与 p3/p4 高阶收口
+
+| 检查 | 结果 |
+|---|---:|
+| actual DtN adjoint / R,T gradient / true adjoint residual | pass |
+| p2/p3 DWR fixture serial / MPI2 | pass / pass per rank |
+| p2/p3 DWR formal cycle1 MPI2 | mixed research result；record contract pass |
+| uniform level1 p3/p4 MPI2 | pass；2.549 GiB，73.40 s |
+| uniform level1 p3/p4 MPI8 | pass；4.020 GiB，27.81 s；MPI identity pass |
+| p3/p4 DWR theta=.5 cycle1 MPI8 | pass；3.983 GiB，37.80 s；p4 engineering positive |
+| p3/p4 DWR theta=.5 cycle2 pre-tie MPI8 | pass；19.283 GiB，554.15 s；历史 drift evidence |
+| Dörfler cutoff tie expansion unit serial / MPI2 | 3 passed / 3 passed per rank |
+| actual marker identity p2/p3 serial / MPI8 | 1 passed / 1 passed per rank |
+| p3/p4 DWR theta=.5 cycle2 tie-policy-v1 MPI8 | pass；18.831 GiB，583.87 s；cost negative |
+| p3/p4 DWR theta=.3 cycle1 MPI8 | pass internal Gates；engineering controlled negative |
+| final high-order record/cost contract test107 | 13 passed |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+
+首次 DWR watchdog 的 numerical worker 已通过，但 parent compactor 未映射新 record 字段；原始失败
+永久保存在 `records/actual_dwr_r_adaptive_watchdog_compaction_failure.json`，修复 mapper 后只重跑
+正式 case。p3/p4 repeat runs 的 cycle1 marked sets 均为 215 cells，pairwise overlap
+`214/216=0.9907407`；exact hashes 不同，测试明确锁定 overlap ≥0.99 而不是虚假 exact identity。
+
+正式高阶 runs 全部使用 clean SHA、MPI8、one-heavy-at-a-time watchdog、warning/termination preflight、
+full true residual、adjoint residual、orientation、periodic、memory 和 no-swap Gates。两轮 run 的
+warning 16 GiB 被实测跨过，但 32 GiB termination 未触发；没有降低 residual、marking、资源或
+repeatability 阈值。第二轮保存为“数值通过、工程成本判负”，未继续第三轮。
+
+本高阶阶段没有重跑 Task034 p4/h5 reference、M funnel 或既有 MPI heavy matrix；结构化 p4/h10、
+p4/h7.5 与 p4/h5 数字全部从已接受、hash-bound Case093 records 读取。
+
+本阶段唯一一次 full repository pytest 真实结果为
+`1 failed, 571 passed, 18 skipped in 322.08s`。唯一失败是 Task034 fail-closed numerical-blob checker
+尚未分类 Task035 在 `src/geometry/mesh_builder_3d.py` 新增的 opt-in periodic-tetra/retagging 路径；
+环境、ABI、MPI、PDE 和数值 Gate 均未失败。证据永久保存在
+`records/high_order_full_regression_classifier_failure.json`。修复只新增显式
+`requires_corresponding_pde_rerun=true` 分类并更新精确路径合同；已有 Task035 tetra PDE records
+就是对应 rerun evidence，ordinary hexa default 未改变。原失败测试随后 `1 passed`，完整 test73
+与关键 Task035 合同组合 `50 passed`。按每阶段最多一次 full pytest 的固定节奏不执行第二次全仓
+回归，因此不得把 targeted recovery 写成当前 HEAD 的 full-regression pass。

@@ -3,7 +3,7 @@
 ## 当前身份
 
 ```text
-status = phase_cd_complete_controlled_negative
+status = continuous_autonomous_research
 execution_lock_released_by_Task034_final_selective_merge = true
 execution_branch_created_by_codex = true
 base_sha = 5002636852ffb67b4711443da70eb536c303e34e
@@ -13,11 +13,16 @@ phase_c_low_cost_unlocked = true
 phase_c_internal_gate = complete_controlled_negative
 B3_B4 = pass
 phase_d_internal_gate = complete
+actual_discrete_dtn_adjoint = pass
+actual_goal_weighted_dwr = pass
+periodic_tetra_target_pipeline = research_pass
+actual_adaptive_cycles = two_consecutive_pass
+selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
 production_estimator_selected = false
 production_backend_selected = false
-phase_e_unlocked = false
-task035_pde_started = false
-heavy_p4_started = false
+ordinary_default_changed = false
+task035_pde_started = true
+heavy_p4_started = true
 ```
 
 Task035 专门处理 Task034 尚未解决的核心问题：
@@ -125,3 +130,18 @@ phase_e_unlocked = false
 没有启动 Task035 目标 PDE、adaptive cycle 或 p4/h5 heavy。详见
 [`outcomes/estimator_definitions.md`](outcomes/estimator_definitions.md) 和
 [`outcomes/summary.md`](outcomes/summary.md)。
+
+## Review V4 后连续研究状态
+
+上节是 Phase C/D 收口时的历史边界。Review V4 解除阶段审批锁后，已完成 actual global R5、
+periodic tetra target、两轮 p2/p3 adaptive、cost-matched uniform、actual DtN discrete adjoint、
+R/T goal-weighted DWR 以及 p3/p4 MPI8 高阶路线。pure R5 marking 虽然收敛，但在相近成本下
+被 uniform level2 明确击败，保留为 diagnostic；DWR `theta=0.5` 的 p3/p4 单轮局部细化则在
+约 11% 更少 p4 DoF 下，比 uniform level1 的 observable error 低约 23%，形成当前最佳研究策略。
+第二轮 DWR 虽继续收敛，却被 Task034 structured p4/h7.5 在误差、DoF 和内存上同时支配；
+`theta=0.3` 又只节省约 4.9% DoF 而误差恶化 2.30 倍。因此固定结构、S、10° grazing 的当前
+停止规则是：`p3/p4 + R_total DWR + theta=0.5 + exactly one tetra refinement`。
+
+这是 hash-bound 的 research selection，不是跨角度、P 入射、Hybrid 或普通默认的生产资格化。
+Case094 仍保持 staging，`production_estimator_selected=false`、
+`production_backend_selected=false` 与 `ordinary_default_changed=false` 不变。

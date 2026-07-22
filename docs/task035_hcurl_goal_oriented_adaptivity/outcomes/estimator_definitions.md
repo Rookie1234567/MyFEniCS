@@ -11,7 +11,8 @@ cell 汇总只归约标量平方和，并以 global cell ID 排序，不使用 f
 `algebraic_precursor_pass`，R2 = `resolution_diagnostic_pass`，R4 =
 `formula_defined`。真实 B1 periodic Nédélec 和 B2 flat-lossy-layer/official-goal
 最低 Gate 已通过。Review V3 的 Phase C/D 已完成；B3/B4 通过，但 target estimator 与
-production mesh backend 均受控判负，未提升 ordinary default。
+production mesh backend 均未提升 ordinary default。Review V4 后 pure R5 production marking
+受控判负，actual R/T DWR 在限定高阶点形成 research positive。
 
 ## 2. 公共残差分解
 
@@ -88,3 +89,40 @@ Review V3 未授权的 target adaptive cycle、真实 p4 heavy PDE 与 ordinary-
 `benchmarks/task035_estimator_fixtures.py`；真实 FE 实现和 runner 分别见
 `src/validation/task035_real_fe_fixtures.py` 与
 `benchmarks/task035_real_fe_fixtures.py`。compact records 见 Case094 `records/`。
+
+## 6. Actual discrete adjoint、DWR 与 marking policy
+
+对 official real-valued goal `R_total` 或 `T_total`，实现从零级 modal amplitude 解析构造状态梯度
+`g`，并解离散共轭转置系统
+
+$$
+A^H z=g.
+$$
+
+资格化同时检查 full explicit primal residual、`A^H z-g` true adjoint residual、解析梯度与中心
+有限差分、以及 midpoint identity。对于本问题的 quadratic R/T，global correction identity 接近 1
+是代数性质，不单独证明局部 marking 有效；局部指标由 correction field 与 adjoint sensitivity 的
+cell/face contribution 形成，最终价值必须由 refine 后 official observable error reduction 和 uniform
+control 判断。
+
+Dörfler 排序使用 canonical global cell ID，并把最小前缀 cutoff 附近 relative `1e-10` 内的非负
+等值贡献全部纳入。record 同时保存 `minimal_count_before_tie_expansion`、
+`cutoff_tie_expansion_count`、cutoff、容差、global-ID hash 与 geometry hash。该 policy 消除了明确
+cutoff tie 的任意截断，但不能消除不同高阶并行解中大于 tolerance 的微小 cell contribution 漂移：
+p2/p3 serial/MPI identity 仍要求 exact hash；三个独立 p3/p4 MPI8 runs 的 215-cell sets 则实测
+pairwise Jaccard `214/216=0.9907407`，故高阶 repeat Gate 是逐次 hash-bound 且 overlap ≥0.99，
+不得把 `tie_stable` 文件名解释为 exact repeat hash。
+
+固定 Task034 geometry、S、10° grazing 的 measured 选择为：
+
+| route | decision |
+|---|---|
+| pure global R5 correction-energy marking | 收敛但被 cost-matched uniform level2 显著击败；diagnostic only |
+| p2/p3 R-total DWR one cycle | p2 微弱正信号、p3 明显落后 uniform1；mixed，不选择 |
+| p3/p4 R-total DWR, theta=0.5, one cycle | p4 在更少 DoF 下击败 uniform1；selected research strategy |
+| 同路线第二 cycle | 继续收敛但被 structured p4/h7.5 在误差/DoF/内存上支配；controlled negative |
+| theta=0.3 one cycle | DoF 节省很小、误差 2.30 倍；controlled negative |
+
+因此当前停止规则是一次 `theta=0.5` tetra local refinement。R2 仍不进入 marking，p4/h5 仍只称
+best-available discrete reference。该结论尚未跨 robust angle、P 入射或 Hybrid 验证，故
+`production_estimator_selected=false`、`production_backend_selected=false` 和 ordinary default 不变。

@@ -46,6 +46,11 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "explicit factorization-only Gate flag defaults off; physical and full-solve configuration unchanged",
         "requires_corresponding_pde_rerun": False,
     },
+    "src/geometry/mesh_builder_3d.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "opt-in Task035 periodic tetra construction and post-refinement retagging; the ordinary hexa path remains selected by its existing configuration, and Task035 tetra PDE anchors were rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/constraints/floquet_3d_high_order.py": {
         "classification": "lifecycle only",
         "reason": "weak-owner cache lookup and explicit clear; topology coefficients unchanged",

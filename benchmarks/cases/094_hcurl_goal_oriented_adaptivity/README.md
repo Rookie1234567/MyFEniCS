@@ -87,6 +87,33 @@ Review V3 已完成 Phase C/D 低成本执行，新增：
   对照显示 adaptive 使用 76.3% cells、75.5% peak memory 和 56.5% wall time，但 p2/p3
   fixed-reference error 是 uniform 的 18.26/5.74 倍。因此关闭 pure R5 production-marking lane，
   保留其 actual convergence evidence，下一主线转 actual goal-weighted DWR/adjoint。
+- actual DtN discrete adjoint 已实现 official R/T gradient、`A^H z=g`、full true adjoint
+  residual 和 correction-adjoint cell localization；p2/p3 serial/MPI2 identity 与独立共轭检查通过。
+- `records/actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json`：首次 actual R-total
+  DWR marked cycle，180→1276 cells。p2 fixed-reference error `1.202635→1.023485`，在比
+  uniform level1 少 11.4% cells 时仅改善约 0.16%；p3 error `0.171653` 是 uniform 的 2.54 倍，
+  因而保存为 mixed research result，不提升 production。
+- `records/actual_uniform_tetra_level1_p3_p4_mpi2.json` 与
+  `records/actual_uniform_tetra_level1_p3_p4_mpi8.json`：1440-cell p3/p4 uniform control。
+  MPI2/MPI8 observable identity 通过；p4 error `0.00597711`，MPI8 wall `27.81 s`，并证明
+  p4/uniform1 以 63,104 DoF、4.020 GiB MPI8 peak 胜过旧 p2/uniform2 的误差和资源。
+- `records/actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_mpi8.json`：当前主要正结果。
+  180→1268 cells，p4 DoF 55,884、error `0.00460020`、peak 3.983 GiB；相对 uniform1
+  约少 11% p4 DoF 且 error 低约 23%。p3 同时仍较差，结论只限定为 high-order p4 positive。
+- 两份 p3/p4 cycle2 record 保存连续收敛与复现实验：tie-policy-v1 run 最终 7348 cells、
+  p4 DoF 315,444、error `0.000536345`、peak 18.831 GiB。它继续降低误差，但被 Task034
+  structured p4/h7.5（147,844 DoF、约 `0.000328` error、12.724 GiB）同时支配，故第二轮为
+  cost-dominated controlled negative。
+- `records/actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json`：theta=0.3
+  只少约 4.9% p4 DoF，error 却为 theta=0.5 的 2.30 倍，关闭更低 theta/cycle2 sweep。
+- Dörfler cutoff 已采用 near-tie expansion policy。低阶 fixture 的 serial/MPI hash 仍精确一致；
+  三个独立高阶 MPI8 run 各标记 215 cells，pairwise overlap 为 `214/216=0.9907407`，但 solve-level
+  浮点漂移使 exact marker hash 不同。因此 record 逐次绑定实际 hash，高阶重复性 Gate 使用
+  overlap ≥0.99，文件名中的 `tie_stable` 不表示 exact-hash identity。
+
+固定 Task034 geometry、S、10° grazing 上的当前 research stop rule 是
+`p3/p4 + R_total DWR + theta=0.5 + exactly one tetra refinement`。尚未覆盖 robust-angle、
+P 入射、Hybrid common mesh 或 production backend qualification，ordinary default 未改变。
 
 这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
 staging 字段。Phase C/D 历史分类仍是 `phase_cd_complete_controlled_negative`；Review V4 的

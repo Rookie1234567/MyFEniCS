@@ -1,0 +1,45 @@
+{
+  "schema_version": "task035.high_order_full_regression.v1",
+  "record_type": "high_order_full_regression_classifier_failure",
+  "timestamp_utc": "2026-07-22T14:54:01Z",
+  "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+  "source_commit_before_fix": "b0cf0c177c4166f0fff7f1697c5dfbdf8381aa60",
+  "command": "source scripts/activate_myfenics_wsl.sh && pytest -q",
+  "working_tree_at_run": {
+    "clean": false,
+    "tracked_changes": "Task035 documentation-only closeout edits",
+    "numerical_source_changes_uncommitted": false
+  },
+  "result": {
+    "status": "fail_one_task034_classifier",
+    "failed": 1,
+    "passed": 571,
+    "skipped": 18,
+    "elapsed_seconds": 322.08,
+    "failed_test": "src/test/test_73_task034_hardening.py::Task034HardeningTests::test_numerical_blob_checker_classifies_every_required_path",
+    "failure": "unclassified_change:src/geometry/mesh_builder_3d.py"
+  },
+  "classification": {
+    "environment_failure": false,
+    "abi_failure": false,
+    "mpi_failure": false,
+    "pde_failure": false,
+    "numerical_gate_failure": false,
+    "metadata_contract_failure": true,
+    "root_cause": "The fail-closed Task034 numerical-blob checker had not classified the opt-in Task035 periodic-tetra and post-refinement retagging changes in mesh_builder_3d.py."
+  },
+  "fix": {
+    "classification": "numerical kernel intentionally changed and requires PDE rerun",
+    "corresponding_pde_evidence": "Task035 periodic-tetra target and adaptive PDE records already passed before this regression run",
+    "ordinary_hexa_default_changed": false,
+    "thresholds_relaxed": false
+  },
+  "recovery": {
+    "original_failed_test": "1 passed in 0.55s",
+    "hardening_and_key_task035_contracts": "50 passed in 5.71s",
+    "second_full_repository_pytest_run": false,
+    "reason_no_second_full_run": "Task035 cadence permits at most one full repository pytest in this high-order closeout stage."
+  },
+  "formal_pass": false,
+  "historical_failure_preserved": true
+}

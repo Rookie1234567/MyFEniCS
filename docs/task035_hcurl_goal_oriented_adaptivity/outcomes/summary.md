@@ -12,8 +12,12 @@ B3_B4 = pass
 phase_d_internal_gate = complete
 execution_mode = continuous_autonomous_research
 actual_global_two_level_R5 = pass_hexa_control
-periodic_tetra_target_pipeline = in_progress
-actual_adaptive_cycles = pending
+actual_discrete_DtN_adjoint = pass
+actual_goal_weighted_DWR = pass
+periodic_tetra_target_pipeline = research_pass
+actual_adaptive_cycles = two_consecutive_pass
+selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false
 heavy_p4_authorized = true_by_review_v4_measured_evidence_required
@@ -164,6 +168,69 @@ uniform record 比较。R5 保留为 diagnostic/two-level correction magnitude�
 前文 “候选 uniform h5” 只用于运行前 cost probe；本节 11,520-cell 同拓扑全单元 refinement
 才是正式 cost-matched uniform authority。
 
+## Actual DtN adjoint 与 R-total DWR
+
+official R/T amplitude 的解析 real-valued gradient、`A^H z=g` discrete adjoint、full true adjoint
+residual、midpoint identity 和 actual cell/face localization 均已通过。首次 p2/p3 DWR cycle
+显示阶次依赖的 mixed result：
+
+| route | cells | p2 / p3 DoF | p2 error | p3 error | decision |
+|---|---:|---:|---:|---:|---|
+| DWR theta=0.5 cycle1 | 1,276 | 9,338 / 26,214 | 1.023485 | 0.171653 | p2 比 uniform1 约好 0.16%，p3 差 2.54 倍 |
+| uniform level1 | 1,440 | 10,400 / 29,304 | 1.025085 | 0.067615 | p2/p3 authority |
+
+因此 actual DWR mechanism 通过，但 p2/p3 不是 production 选择；随后按 measured signal 转入
+p3/p4，而不是扩大低阶重型路线。首次 watchdog parent compaction failure 原样保存在
+`actual_dwr_r_adaptive_watchdog_compaction_failure.json`；worker 数值已通过，修复 record mapper
+后才进行正式 clean-SHA rerun。
+
+## p3/p4、MPI8 与最终 research strategy
+
+| route | cells | p3 / p4 DoF | p3 error | p4 error | peak GiB | wall s | decision |
+|---|---:|---:|---:|---:|---:|---:|---|
+| uniform level1 MPI8 | 1,440 | 29,304 / 63,104 | 0.067615 | 0.00597711 | 4.020 | 27.81 | high-order control |
+| DWR theta=.5 cycle1 MPI8 | 1,268 | 25,995 / 55,884 | 0.157261 | 0.00460020 | 3.983 | 37.80 | p4 positive；当前选择 |
+| DWR theta=.5 cycle2 MPI8 | 7,348 | 145,710 / 315,444 | 0.0205361 | 0.000536345 | 18.831 | 583.87 | cost-dominated negative |
+| DWR theta=.3 cycle1 MPI8 | 1,200 | 24,744 / 53,128 | 0.191653 | 0.0105970 | 3.899 | 34.90 | controlled negative |
+
+uniform1 p3/p4 的 MPI2/MPI8 observables、DoF 与 mesh hashes 一致；MPI8 wall `27.81 s`，相对
+MPI2 `73.40 s` 加速约 2.64 倍，代价是 process-tree peak 从 2.549 增至 4.020 GiB。p4/uniform1
+已经以 63,104 DoF 和 `0.005977` error 胜过 p2/uniform2 的 78,000 DoF、`0.010697` error，
+证明此目标上提高 p 比继续低阶全局 h-refine 更有效。
+
+DWR theta=.5 cycle1 又以约 11% 更少 p4 DoF，把 error 比 uniform1 降低约 23%，是实际工程
+正信号。第二 cycle 继续把 error 降到 `5.36e-4`，但与复用的 Task034 accepted structured 结果相比：
+
+| accepted/actual route | DoF | observable error vs p4/h5 reference | peak GiB |
+|---|---:|---:|---:|
+| structured p4/h10 | 53,084 | 约 0.0079 | 5.640 |
+| DWR theta=.5 cycle1 | 55,884 | 0.004600 | 3.983 |
+| structured p4/h7.5 | 147,844 | 约 0.000328 | 12.724 |
+| DWR theta=.5 cycle2 | 315,444 | 0.000536 | 18.831 |
+
+一轮 DWR 在近似相同 DoF 下优于 p4/h10 且内存更低；第二轮则在误差、DoF、内存上被
+p4/h7.5 同时支配。因此固定 geometry、S、10° grazing 的当前最优 research algorithm/stop rule 是：
+
+```text
+p3/p4 + actual R_total discrete-adjoint DWR
+Dorfler theta = 0.5
+exactly one periodic-tetra local refinement
+stop before cycle 2
+MPI8 formal execution
+```
+
+### Marked-set repeatability boundary
+
+Dörfler cutoff near-tie expansion policy 已记录 minimal count、tie expansion、cutoff 与 tolerance。
+低阶 fixture 继续满足 serial/MPI exact marker hash；三个独立 p3/p4 MPI8 runs 各选 215 cells，
+两两 overlap 均为 `214/216=0.9907407`，但 solve-level cell contribution 漂移大于 tie tolerance，
+exact hash 不同。每次正式 record 均绑定其实际 hash，高阶复现只宣称 overlap ≥0.99；
+`tie_stable` record 名称表示 tie policy v1 evidence，不表示 exact repeat hash。
+
+上述结论只对 Task034 fixed geometry、S、10° grazing 与当前 best-available p4/h5 reference 成立；
+没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
+所以这是 selected research strategy，而不是 ordinary production default。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
@@ -196,8 +263,12 @@ topology-to-geometry indexing 产生伪零体积，失败 record 永久保留；
 phase_c_internal_gate = complete_controlled_negative
 phase_d_internal_gate = complete
 actual_global_two_level_R5 = pass_hexa_control
-periodic_tetra_target_pipeline = in_progress
-actual_adaptive_cycles = pending
+actual_discrete_DtN_adjoint = pass
+actual_goal_weighted_DWR = pass
+periodic_tetra_target_pipeline = research_pass
+actual_adaptive_cycles = two_consecutive_pass
+selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false
 ordinary_default_changed = false
