@@ -3,10 +3,14 @@
 ## 当前身份
 
 ```text
-status = phase_b_gate_pass_phase_c_unlocked
+status = phase_c_low_cost_in_progress
 execution_lock_released_by_Task034_final_selective_merge = true
 execution_branch_created_by_codex = true
 base_sha = 5002636852ffb67b4711443da70eb536c303e34e
+phase_b_algebraic_precursor = pass
+phase_b_real_fixture_minimum_gate = pass
+phase_c_low_cost_unlocked = true
+phase_c_formal_completion = pending_B3_B4
 task035_pde_started = false
 heavy_p4_started = false
 ```
@@ -77,9 +81,23 @@ Phase B 已解锁。仍未启动真实 Task035 PDE 或重型 p4。详见
 
 ## Phase B 状态
 
-R1、R2、R3、R5、G1、G2、B1、M1 的 analytic/manufactured fixture decision 已通过；
-R4 仅完成公式与局部 SPD precursor，保持 `formula_defined`。serial/MPI2/MPI4 component
-identity、Task035 focused suite 和正确 complex activation 下的 full pytest 均通过，
-Phase C 已解锁。没有启动真实 PDE 或 adaptive mesh。详见
+原 NumPy 小向量/小矩阵结果已按 Review V2 准确重命名：R1、R3、R5、G1、G2、B1、M1
+为 `algebraic_precursor_pass`，R2 为 `resolution_diagnostic_pass`，只记录
+`chi=|k|h/p`，不再缩放 R1；R4 保持 `formula_defined`。
+
+B1 已在真实 3D hexahedral Nédélec p1/p2 空间上装配 UFL cell curl-curl residual 和
+interior curl jump，并验证实际 FE Floquet trace、phase/orientation fault injection、真实分布式
+cell identity。B2 已使用界面对齐网格、piecewise-complex DG0 材料、三个实际 h/p 点、
+Fresnel 场误差、零级反射目标方向导数和 external DtN 扰动完成最低 Gate。serial/MPI2
+标量 identity 通过。因此：
+
+```text
+phase_b_real_fixture_minimum_gate = pass
+phase_c_low_cost_unlocked = true
+phase_c_formal_completion = pending_B3_B4
+```
+
+Phase C-low-cost 已进入执行；B3/B4 与其并行，仍禁止 Phase D backend 选择和 p4/h5 heavy。
+没有启动目标光栅 PDE 或 adaptive mesh。详见
 [`outcomes/estimator_definitions.md`](outcomes/estimator_definitions.md) 和
-[`response_v2.md`](response_v2.md)。
+[`outcomes/summary.md`](outcomes/summary.md)。

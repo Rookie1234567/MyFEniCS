@@ -1,0 +1,77 @@
+{
+  "candidate_readiness": {
+    "B1_dtn_split": "bakeoff_active_real_FE_boundary_component",
+    "G1_dwr_total_rta": "pending_actual_discrete_residual_and_adjoint",
+    "G2_dwr_r00": "real_goal_derivative_pass_adjoint_pending",
+    "R1_standard_residual": "bakeoff_active_real_FE",
+    "R2_kh_over_p": "diagnostic_only_excluded_from_marking",
+    "R3_recovery_hcurl": "post_C1_independent_validation",
+    "R4_equilibrated_patch": "research_lane_formula_defined",
+    "R5_hierarchical_two_level": "pending_real_enriched_fixture"
+  },
+  "heavy_p4_authorized": false,
+  "initial_measured_screen": {
+    "B1": {
+      "component_decreases": true,
+      "external_dtn_norms": [
+        1.3388364894681843,
+        0.7287490869049894,
+        0.05858164778446566
+      ],
+      "fault_detection": true
+    },
+    "G2": {
+      "decision": "controlled_not_rankable_on_machine_precision_fixture_goal",
+      "next_gate": "actual_discrete_adjoint_on_nontrivial_low_cost_goal",
+      "r00_errors": [
+        5.551115123125783e-17,
+        1.3877787807814457e-16,
+        4.0939474033052647e-16
+      ]
+    },
+    "R1": {
+      "field_error_decreases": true,
+      "field_errors": [
+        0.17331056256637642,
+        0.04516105398389498,
+        0.0022355429219698734
+      ],
+      "fine_to_coarse_field_error_ratio": 0.012899057558097072,
+      "fine_to_coarse_indicator_ratio": 0.06270418186311046,
+      "indicator_decreases": true,
+      "indicators": [
+        9.45756708857487,
+        5.279829352667947,
+        0.5930290067045667
+      ]
+    },
+    "periodic_R1": {
+      "p1": 1.5326229134115985,
+      "p2": 0.10031337583974555
+    },
+    "scope": "B1/B2 real FE fixtures; not the target p2/h5-p2/h3-p3 screen"
+  },
+  "next_low_cost_gate": {
+    "B3": "pending_parallel",
+    "B4": "pending_parallel",
+    "required_metrics": [
+      "effectivity",
+      "local_error_correlation",
+      "top_marked_overlap",
+      "observable_error_reduction_after_refinement",
+      "assembly_time_and_memory",
+      "mpi_partition_stability"
+    ],
+    "required_points": [
+      "p2_h5",
+      "p2_h3",
+      "p3_coarse"
+    ]
+  },
+  "phase_b_real_fixture_minimum_gate": "pass",
+  "phase_c_formal_completion": "pending_B3_B4",
+  "phase_c_low_cost_unlocked": true,
+  "production_estimator_selected": false,
+  "schema_version": "task035.phase-c-low-cost-entry.v1",
+  "status": "phase_c_low_cost_in_progress"
+}

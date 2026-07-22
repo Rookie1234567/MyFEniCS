@@ -126,20 +126,21 @@
     }
   ],
   "limitations": [
-    "analytic/manufactured validation only",
+    "NumPy/small-matrix algebraic precursor validation only",
+    "R2 records chi=abs(k)h/p only and does not rescale an estimator",
     "R4 has only a local SPD precursor; constrained equilibration is pending",
     "no adaptive mesh backend or production runner is selected"
   ],
   "method_status": {
-    "B1_dtn_truncation_split": "fixture_pass",
-    "G1_dwr_total_rta": "fixture_pass",
-    "G2_dwr_r00_order_amplitudes": "fixture_pass",
-    "M1_internal_mode_truncation_split": "fixture_pass",
-    "R1_standard_residual_jump": "fixture_pass",
-    "R2_frequency_scaled_residual": "fixture_pass",
-    "R3_recovery_hcurl": "fixture_pass",
+    "B1_dtn_truncation_split": "algebraic_precursor_pass",
+    "G1_dwr_total_rta": "algebraic_precursor_pass",
+    "G2_dwr_r00_order_amplitudes": "algebraic_precursor_pass",
+    "M1_internal_mode_truncation_split": "algebraic_precursor_pass",
+    "R1_standard_residual_jump": "algebraic_precursor_pass",
+    "R2_frequency_scaled_residual": "resolution_diagnostic_pass",
+    "R3_recovery_hcurl": "algebraic_precursor_pass",
     "R4_equilibrated_patch": "formula_defined",
-    "R5_hierarchical_two_level": "fixture_pass"
+    "R5_hierarchical_two_level": "algebraic_precursor_pass"
   },
   "mpi_identity": {
     "absolute_difference": 0.0,
@@ -152,6 +153,6 @@
   "pde_run": false,
   "production_qualified": false,
   "schema_version": "task035.estimator-fixtures.v1",
-  "status": "fixture_pass",
+  "status": "algebraic_precursor_pass",
   "target_grating_run": false
 }

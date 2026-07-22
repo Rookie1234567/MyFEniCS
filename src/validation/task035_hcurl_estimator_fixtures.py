@@ -77,15 +77,18 @@ def standard_residual_indicator(
 
 def frequency_scaled_indicator(
     indicator: float, *, wave_number: float, cell_size: float, degree: int
-) -> dict[str, float]:
+) -> dict[str, float | str]:
     eta = float(indicator)
     k_abs = abs(float(wave_number))
     h = float(cell_size)
     if not math.isfinite(eta) or eta < 0.0 or h <= 0.0 or degree < 1:
         raise ValueError("indicator, cell_size, and degree are outside their domain")
     chi = k_abs * h / degree
-    scale = 1.0 / math.sqrt(1.0 + chi * chi)
-    return {"chi": chi, "scale": scale, "indicator": eta * scale}
+    return {
+        "chi": chi,
+        "unscaled_indicator": eta,
+        "status": "resolution_diagnostic_pass",
+    }
 
 
 def trace_residual(
@@ -355,11 +358,14 @@ def build_fixture_summary() -> dict[str, Any]:
         material_interface_fixture(),
         hybrid_interface_fixture(),
     ]
-    method_status = {name: "fixture_pass" for name in CANDIDATE_METHODS}
+    method_status = {
+        name: "algebraic_precursor_pass" for name in CANDIDATE_METHODS
+    }
+    method_status["R2_frequency_scaled_residual"] = "resolution_diagnostic_pass"
     method_status["R4_equilibrated_patch"] = "formula_defined"
     return {
         "schema_version": "task035.estimator-fixtures.v1",
-        "status": "fixture_pass",
+        "status": "algebraic_precursor_pass",
         "canonical": False,
         "production_qualified": False,
         "pde_run": False,
@@ -367,7 +373,8 @@ def build_fixture_summary() -> dict[str, Any]:
         "method_status": method_status,
         "fixtures": fixtures,
         "limitations": [
-            "analytic/manufactured validation only",
+            "NumPy/small-matrix algebraic precursor validation only",
+            "R2 records chi=abs(k)h/p only and does not rescale an estimator",
             "R4 has only a local SPD precursor; constrained equilibration is pending",
             "no adaptive mesh backend or production runner is selected",
         ],

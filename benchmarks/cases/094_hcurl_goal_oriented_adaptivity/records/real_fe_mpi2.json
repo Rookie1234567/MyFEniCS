@@ -1,0 +1,234 @@
+{
+  "b1": {
+    "floquet_check": "fixed tangential FE probes with scalar-size allreduce",
+    "mpi_size": 2,
+    "name": "B1_real_periodic_nedelec_hcurl",
+    "pde_run": false,
+    "points": [
+      {
+        "cell_identity": {
+          "actual_count_sum_sumsq": [
+            8,
+            28,
+            140
+          ],
+          "expected_count_sum_sumsq": [
+            8,
+            28,
+            140
+          ],
+          "global_cell_count": 8,
+          "pass": true,
+          "reduction": "owned_cell_scalar_allreduce_no_cell_or_field_gather"
+        },
+        "degree": 1,
+        "floquet_pair_residual": 9.279350711091397e-12,
+        "global_cells": 8,
+        "global_nedelec_dofs": 54,
+        "mesh_cells_per_axis": 2,
+        "orientation_fault_residual": 2.7101597089107714,
+        "phase_fault_residual": 0.25707807652581455,
+        "r1_curl_jump_squared": 0.4328455614820201,
+        "r1_indicator": 1.5326229134115985,
+        "r1_volume_squared": 1.9160874332322357,
+        "relative_l2_field_error": 0.0608365430854145
+      },
+      {
+        "cell_identity": {
+          "actual_count_sum_sumsq": [
+            8,
+            28,
+            140
+          ],
+          "expected_count_sum_sumsq": [
+            8,
+            28,
+            140
+          ],
+          "global_cell_count": 8,
+          "pass": true,
+          "reduction": "owned_cell_scalar_allreduce_no_cell_or_field_gather"
+        },
+        "degree": 2,
+        "floquet_pair_residual": 4.794503605176424e-12,
+        "global_cells": 8,
+        "global_nedelec_dofs": 300,
+        "mesh_cells_per_axis": 2,
+        "orientation_fault_residual": 2.8081122941415013,
+        "phase_fault_residual": 0.2663695814347611,
+        "r1_curl_jump_squared": 0.00011076298386284545,
+        "r1_indicator": 0.10031337583974535,
+        "r1_volume_squared": 0.009952010388503161,
+        "relative_l2_field_error": 0.0016904610209189023
+      }
+    ],
+    "real_fe": true,
+    "residual": "actual UFL cell curl-curl residual plus interior curl jump",
+    "space": "Basix N1curl on a 3D hexahedral mesh",
+    "status": "real_fe_fixture_pass"
+  },
+  "b2": {
+    "material": "actual piecewise-complex DG0 epsilon on an interface-aligned mesh",
+    "mpi_size": 2,
+    "name": "B2_real_flat_lossy_layer_official_goal",
+    "official_goal": "fixture-normalized zero-order reflected power from the actual FE trace",
+    "pde_run": false,
+    "points": [
+      {
+        "cell_identity": {
+          "actual_count_sum_sumsq": [
+            2,
+            1,
+            1
+          ],
+          "expected_count_sum_sumsq": [
+            2,
+            1,
+            1
+          ],
+          "global_cell_count": 2,
+          "pass": true,
+          "reduction": "owned_cell_scalar_allreduce_no_cell_or_field_gather"
+        },
+        "degree": 1,
+        "dtn_operator_perturbation_norm": 0.08733759142221746,
+        "dtn_perturbation_ratio": 0.9527639156907186,
+        "effective_h_over_p": 0.5,
+        "exact_r00": 0.03604846349449049,
+        "external_dtn_boundary_squared": 1.7924831455314916,
+        "global_cells": 2,
+        "global_nedelec_dofs": 20,
+        "goal_derivative_absolute_error": 1.420008555186314e-11,
+        "goal_derivative_analytic": -0.09974598159966408,
+        "goal_derivative_finite_difference": -0.099745981585464,
+        "material_interface_jump_squared": 10.614123321931544,
+        "material_values": {
+          "bottom_epsilon_imag": 0.348,
+          "bottom_epsilon_real": 2.0881,
+          "top_epsilon_imag": 0.0,
+          "top_epsilon_real": 1.0
+        },
+        "official_fixture_r00": 0.03604846349449055,
+        "official_fixture_r00_error": 5.551115123125783e-17,
+        "r1_indicator": 9.45756708857487,
+        "r1_volume_squared": 77.0389687674315,
+        "r2_kh_over_p_diagnostic": 1.6732006006453617,
+        "reflection_amplitude_error": 1.6711069443220838e-16,
+        "reflection_amplitude_imag": -0.03988764978643499,
+        "reflection_amplitude_real": -0.18562715019362136,
+        "relative_l2_field_error": 0.17331056256637642,
+        "transverse_cells": 1
+      },
+      {
+        "cell_identity": {
+          "actual_count_sum_sumsq": [
+            16,
+            120,
+            1240
+          ],
+          "expected_count_sum_sumsq": [
+            16,
+            120,
+            1240
+          ],
+          "global_cell_count": 16,
+          "pass": true,
+          "reduction": "owned_cell_scalar_allreduce_no_cell_or_field_gather"
+        },
+        "degree": 1,
+        "dtn_operator_perturbation_norm": 0.08733759142221736,
+        "dtn_perturbation_ratio": 0.9297232856919693,
+        "effective_h_over_p": 0.25,
+        "exact_r00": 0.03604846349449049,
+        "external_dtn_boundary_squared": 0.5310752316648558,
+        "global_cells": 16,
+        "global_nedelec_dofs": 96,
+        "goal_derivative_absolute_error": 3.784157709407765e-11,
+        "goal_derivative_analytic": -0.09974598159966412,
+        "goal_derivative_finite_difference": -0.0997459816375057,
+        "material_interface_jump_squared": 1.824969289061101,
+        "material_values": {
+          "bottom_epsilon_imag": 0.348,
+          "bottom_epsilon_real": 2.0881,
+          "top_epsilon_imag": 0.0,
+          "top_epsilon_real": 1.0
+        },
+        "official_fixture_r00": 0.03604846349449063,
+        "official_fixture_r00_error": 1.3877787807814457e-16,
+        "r1_indicator": 5.279829352667942,
+        "r1_volume_squared": 25.520553472568025,
+        "r2_kh_over_p_diagnostic": 0.8366003003226808,
+        "reflection_amplitude_error": 4.034117999026819e-16,
+        "reflection_amplitude_imag": -0.03988764978643513,
+        "reflection_amplitude_real": -0.18562715019362155,
+        "relative_l2_field_error": 0.045161053983895,
+        "transverse_cells": 2
+      },
+      {
+        "cell_identity": {
+          "actual_count_sum_sumsq": [
+            16,
+            120,
+            1240
+          ],
+          "expected_count_sum_sumsq": [
+            16,
+            120,
+            1240
+          ],
+          "global_cell_count": 16,
+          "pass": true,
+          "reduction": "owned_cell_scalar_allreduce_no_cell_or_field_gather"
+        },
+        "degree": 2,
+        "dtn_operator_perturbation_norm": 0.08733759142221746,
+        "dtn_perturbation_ratio": 2.1675810316308506,
+        "effective_h_over_p": 0.125,
+        "exact_r00": 0.03604846349449049,
+        "external_dtn_boundary_squared": 0.00343180945714319,
+        "global_cells": 16,
+        "global_nedelec_dofs": 560,
+        "goal_derivative_absolute_error": 2.3971412355106025e-10,
+        "goal_derivative_analytic": -0.09974598159966407,
+        "goal_derivative_finite_difference": -0.09974598135994994,
+        "material_interface_jump_squared": 0.004221778156241432,
+        "material_values": {
+          "bottom_epsilon_imag": 0.348,
+          "bottom_epsilon_real": 2.0881,
+          "top_epsilon_imag": 0.0,
+          "top_epsilon_real": 1.0
+        },
+        "official_fixture_r00": 0.0360484634944909,
+        "official_fixture_r00_error": 4.0939474033052647e-16,
+        "r1_indicator": 0.5930290067045645,
+        "r1_volume_squared": 0.3440298151796178,
+        "r2_kh_over_p_diagnostic": 0.4183001501613404,
+        "reflection_amplitude_error": 1.5565409952966684e-15,
+        "reflection_amplitude_imag": -0.0398876497864362,
+        "reflection_amplitude_real": -0.18562715019362205,
+        "relative_l2_field_error": 0.0022355429219698673,
+        "transverse_cells": 2
+      }
+    ],
+    "r2_policy": "diagnostic_only_kh_over_p_never_rescales_R1",
+    "real_fe": true,
+    "status": "real_fe_official_goal_fixture_pass"
+  },
+  "canonical": false,
+  "mpi_size": 2,
+  "production_qualified": false,
+  "provenance": {
+    "git_head_at_run": "ad038f6a27db96ffe6d94a400b80a5ccc05f06d7",
+    "petsc_int_dtype": "int32",
+    "petsc_scalar_dtype": "complex128",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "qualified_activation": "1",
+    "tracked_content_bindings": {
+      "benchmarks/task035_real_fe_fixtures.py": "3ea25b56c8eea9d10d4fb28e257cf03c10c277b7580d9376f62878a0e3b53070",
+      "src/validation/task035_real_fe_fixtures.py": "2f2974c21b786aa4e171a53d9db78046777701a595f7cea6ae5028f0bdadb92b"
+    }
+  },
+  "schema_version": "task035.real-fe-fixtures.v1",
+  "status": "real_fe_fixture_minimum_pass",
+  "target_grating_run": false
+}

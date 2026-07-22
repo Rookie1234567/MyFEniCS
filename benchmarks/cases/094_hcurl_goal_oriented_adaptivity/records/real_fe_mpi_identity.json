@@ -1,0 +1,8 @@
+{
+  "comparison": "scalar fixture metrics only; no field/vector gather",
+  "differences": {},
+  "failures": [],
+  "pass": true,
+  "schema_version": "task035.real-fe-mpi-identity.v1",
+  "status": "serial_mpi2_identity_pass"
+}

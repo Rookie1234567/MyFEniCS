@@ -47,7 +47,8 @@ test_numbered_benchmark_cases_use_case_contained_contracts
 ```
 
 直接原因是新增编号目录 `094_hcurl_goal_oriented_adaptivity` 只有 Phase A
-`records/base_manifest.json`，尚未进入项目的完整 numbered-case contract 集合。当时按
+`records/base_manifest.json`，尚未进入项目的完整 numbered-case contract 集合。当时按 Gate
+规则保存证据并停止；Review V1 随后授权局部 staging lifecycle 修正。
 
 ## Review V1 合同修正与最终验证
 
@@ -79,7 +80,7 @@ Gate 规则保存证据并停止；Review V1 随后授权局部 staging lifecycl
 
 | 检查 | 结果 |
 |---|---:|
-| estimator fixture targeted | 12 passed |
+| algebraic precursor targeted（历史） | 12 passed |
 | Task035 focused suite | 35 passed |
 | serial / MPI2 / MPI4 component identity | pass / pass / pass |
 | scoped Ruff / compileall / diff-check | pass / pass / pass |
@@ -91,9 +92,26 @@ Gate 规则保存证据并停止；Review V1 随后授权局部 staging lifecycl
 恢复记录为 `records/phase_b_regression_recovery.json`。
 
 ```text
-phase_b_full_regression_gate = pass
-phase_c_unlocked = true
+phase_b_algebraic_precursor = pass
+phase_b_real_fixture_minimum_gate = pass
+phase_c_low_cost_unlocked = true
+phase_c_formal_completion = pending_B3_B4
 task035_pde_started = false
 heavy_p4_started = false
 thresholds_relaxed = false
 ```
+
+## Review V2：真实 B1/B2 最低 Gate
+
+| 检查 | 结果 |
+|---|---:|
+| lightweight ABI rank probe（不含 solver microfixture） | pass；Linux venv、complex128、ABI identity |
+| B1/B2 serial targeted | 3 passed |
+| algebraic precursor + B1/B2 + record tests | 17 passed |
+| B1 real periodic Nédélec p1/p2 | pass |
+| B2 real flat lossy layer，三个 h/p 点与 official fixture goal | pass |
+| serial/MPI2 scalar metric identity | pass；differences = `{}` |
+| R2 policy | diagnostic only；未缩放 R1 |
+
+本轮没有重跑 Phase A、Task034 heavy PDE、MPI 全量资格化或 full repository pytest。
+Phase C-low-cost 已按 Review V2 自动解锁；B3/B4 继续并行且在 Phase D/p4 heavy 前仍为强制待办。

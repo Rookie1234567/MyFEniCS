@@ -1,10 +1,10 @@
 method_id,method,status,fixtures,serial,mpi2,mpi4,canonical,production_qualified,pde_run,decision
-R1,standard residual/jump,fixture_pass,1;2;3;4,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-R2,frequency-scaled residual,fixture_pass,1;2,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-R3,recovery H(curl),fixture_pass,3,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
+R1,standard residual/jump,real_fe_fixture_pass_B1_B2,1;2,pass,pass,not_required,false,false,false,eligible_for_phase_c_low_cost_screen
+R2,kh/p resolution diagnostic,resolution_diagnostic_pass,1;2,pass,pass,not_required,false,false,false,diagnostic_only_never_rescales_R1
+R3,recovery H(curl),algebraic_precursor_pass,3,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
 R4,equilibrated patch estimator,formula_defined,3,pass,pass,pass,false,false,false,constrained_equilibration_pending
-R5,hierarchical/two-level estimator,fixture_pass,2;3,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-G1,DWR total R/T/A,fixture_pass,2,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-G2,DWR R00/order amplitudes,fixture_pass,2,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-B1,DtN truncation split,fixture_pass,2;4,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
-M1,internal mode truncation split,fixture_pass,4,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
+R5,hierarchical/two-level estimator,algebraic_precursor_pass,2;3,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
+G1,DWR total R/T/A,algebraic_precursor_pass,2,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen
+G2,DWR R00/order amplitudes,real_fe_goal_derivative_pass_B2,2,pass,pass,not_required,false,false,false,eligible_for_phase_c_low_cost_screen
+B1,DtN truncation split,real_fe_boundary_perturbation_pass_B2,2,pass,pass,not_required,false,false,false,eligible_for_phase_c_low_cost_screen
+M1,internal mode truncation split,algebraic_precursor_pass,4,pass,pass,pass,false,false,false,eligible_for_phase_c_low_cost_screen

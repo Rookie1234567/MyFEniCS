@@ -72,7 +72,7 @@ def main() -> int:
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(payload, encoding="utf-8")
         print(payload, end="")
-    return 0 if record["status"] == "fixture_pass" else 1
+    return 0 if record["status"] == "algebraic_precursor_pass" else 1
 
 
 if __name__ == "__main__":

@@ -32,10 +32,18 @@ class Task035EstimatorFixtureTests(unittest.TestCase):
         self.assertEqual(
             summary["method_status"]["R4_equilibrated_patch"], "formula_defined"
         )
-        decided = set(summary["method_status"]) - {"R4_equilibrated_patch"}
-        self.assertTrue(
-            all(summary["method_status"][name] == "fixture_pass" for name in decided)
+        self.assertEqual(
+            summary["method_status"]["R2_frequency_scaled_residual"],
+            "resolution_diagnostic_pass",
         )
+        algebraic = set(summary["method_status"]) - {
+            "R2_frequency_scaled_residual",
+            "R4_equilibrated_patch",
+        }
+        self.assertTrue(all(
+            summary["method_status"][name] == "algebraic_precursor_pass"
+            for name in algebraic
+        ))
         self.assertFalse(summary["canonical"])
         self.assertFalse(summary["production_qualified"])
         self.assertFalse(summary["pde_run"])
@@ -71,15 +79,18 @@ class Task035EstimatorFixtureTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unique"):
             canonical_partition_sum([2, 2], [0.1, 0.2], 2)
 
-    def test_frequency_screen_is_finite_nonnegative_and_resolution_aware(self) -> None:
+    def test_frequency_screen_is_diagnostic_only_and_never_rescales(self) -> None:
         resolved = frequency_scaled_indicator(
             2.0, wave_number=3.0, cell_size=0.1, degree=4
         )
         unresolved = frequency_scaled_indicator(
             2.0, wave_number=30.0, cell_size=1.0, degree=1
         )
-        self.assertGreaterEqual(resolved["indicator"], 0.0)
-        self.assertLess(unresolved["scale"], resolved["scale"])
+        self.assertEqual(resolved["unscaled_indicator"], 2.0)
+        self.assertEqual(unresolved["unscaled_indicator"], 2.0)
+        self.assertGreater(unresolved["chi"], resolved["chi"])
+        self.assertNotIn("scale", resolved)
+        self.assertNotIn("indicator", resolved)
 
     def test_flat_lossy_fixture_derivatives_and_refinement(self) -> None:
         fixture = flat_lossy_layer_fixture()
@@ -137,7 +148,7 @@ class Task035EstimatorFixtureTests(unittest.TestCase):
 
     def test_serial_runner_uses_scalar_allreduce_and_is_hermetic(self) -> None:
         record = build_record()
-        self.assertEqual(record["status"], "fixture_pass")
+        self.assertEqual(record["status"], "algebraic_precursor_pass")
         self.assertTrue(record["mpi_identity"]["pass"])
         self.assertEqual(
             record["mpi_identity"]["reduction"],

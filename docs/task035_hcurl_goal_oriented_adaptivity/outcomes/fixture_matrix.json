@@ -1,10 +1,18 @@
 {
   "schema_version": "task035.fixture-matrix.v1",
-  "status": "fixture_pass",
+  "status": "phase_b_real_fixture_minimum_pass",
   "canonical": false,
   "production_qualified": false,
   "pde_run": false,
   "target_grating_run": false,
+  "phase_b_algebraic_precursor": "pass",
+  "phase_b_real_fixture_minimum_gate": "pass",
+  "phase_c_low_cost_unlocked": true,
+  "phase_c_formal_completion": "pending_B3_B4",
+  "real_fe_fixture_identity": {
+    "1": "pass",
+    "2": "pass"
+  },
   "mpi_component_tests": {
     "1": "pass",
     "2": "pass",
@@ -14,21 +22,21 @@
     {
       "id": "R1",
       "name": "standard residual/jump",
-      "status": "fixture_pass",
-      "fixtures": [1, 2, 3, 4],
-      "decision": "eligible_for_phase_c_low_cost_screen"
-    },
-    {
-      "id": "R2",
-      "name": "frequency-scaled residual",
-      "status": "fixture_pass",
+      "status": "real_fe_fixture_pass_B1_B2",
       "fixtures": [1, 2],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
     {
+      "id": "R2",
+      "name": "kh/p resolution diagnostic",
+      "status": "resolution_diagnostic_pass",
+      "fixtures": [1, 2],
+      "decision": "diagnostic_only_never_rescales_R1"
+    },
+    {
       "id": "R3",
       "name": "recovery H(curl)",
-      "status": "fixture_pass",
+      "status": "algebraic_precursor_pass",
       "fixtures": [3],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
@@ -42,42 +50,44 @@
     {
       "id": "R5",
       "name": "hierarchical/two-level estimator",
-      "status": "fixture_pass",
+      "status": "algebraic_precursor_pass",
       "fixtures": [2, 3],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
     {
       "id": "G1",
       "name": "DWR total R/T/A",
-      "status": "fixture_pass",
+      "status": "algebraic_precursor_pass",
       "fixtures": [2],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
     {
       "id": "G2",
       "name": "DWR R00/order amplitudes",
-      "status": "fixture_pass",
+      "status": "real_fe_goal_derivative_pass_B2",
       "fixtures": [2],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
     {
       "id": "B1",
       "name": "DtN truncation split",
-      "status": "fixture_pass",
-      "fixtures": [2, 4],
+      "status": "real_fe_boundary_perturbation_pass_B2",
+      "fixtures": [2],
       "decision": "eligible_for_phase_c_low_cost_screen"
     },
     {
       "id": "M1",
       "name": "internal mode truncation split",
-      "status": "fixture_pass",
+      "status": "algebraic_precursor_pass",
       "fixtures": [4],
       "decision": "eligible_for_phase_c_low_cost_screen"
     }
   ],
   "limitations": [
-    "analytic/manufactured fixtures only",
+    "algebraic precursor and low-cost real FE fixtures only",
     "R4 constrained equilibration is not implemented",
-    "no production or real-PDE qualification"
+    "B3 material-interface/corner real FE fixture is pending",
+    "B4 Hybrid Et/Ht and M/DtN real microfixture is pending",
+    "no production, target-grating PDE, adaptive mesh, or heavy qualification"
   ]
 }
