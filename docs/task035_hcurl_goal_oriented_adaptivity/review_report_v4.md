@@ -1,19 +1,15 @@
-# Task035 Review V4：Phase C/D 受控结论与 Phase E 最小自适应闭环
+# Task035 Review V4：连续自主自适应研究授权
 
 ## 1. 审查结论
 
 ```text
-review_status = PHASE_CD_ACCEPTED_PHASE_E_RECOVERY_BATCH_AUTHORIZED
-phase_a = accepted
-phase_b = accepted_with_scope
-phase_c = complete_controlled_negative
-phase_d = complete_controlled_negative_with_tetra_control_signal
-production_estimator_selected = false
-production_backend_selected = false
-phase_e = authorized_as_two-part_recovery_batch
-phase_f_p4_h5_heavy = not_authorized
-review_checkpoint = after_phase_e_recovery_batch
-additional_review_inside_phase_e = false
+review_status = CONTINUOUS_AUTONOMOUS_ADAPTIVITY_RESEARCH_AUTHORIZED
+phase_boundaries = planning_guidance_not_review_stop_gates
+review_waiting_during_research = not_required
+negative_lane_policy = preserve_evidence_then_switch_direction
+heavy_p4_and_later_phases = authorized_by_internal_evidence_and_resource_preflight
+ordinary_default_change = not_authorized_without_final_review
+master_merge = not_authorized_without_final_review_and_user_confirmation
 ```
 
 本轮审查对象：
@@ -26,26 +22,28 @@ final_phase_cd_record_source = db2d1e7a49f5754de8d0dec6dda3622a9635e6bb
 base_master = 5002636852ffb67b4711443da70eb536c303e34e
 ```
 
-Review V3 授权的 Phase C estimator bake-off 与 Phase D mesh-backend bake-off 已连续执行完成。代码、记录和测试没有显示 WSL、complex ABI、MPI、PETSc/DOLFINx 或既有 Maxwell/Floquet/DtN/QEP/Hybrid production core 回归。
+Phase C/D 的结果和测试继续接受。此前将 Task035 按 Phase 分段等待审查的执行方式现已取消。`task.md` 中的 Phase A–K 仍用于组织研究问题、证据和交付物，但不再是必须停下来等待 ChatGPT 的审批关卡。
 
-本轮最重要的结论不是“自适应已经成功”，而是把阻塞精确缩小为：
+Codex 获得在当前 Task035 分支上持续研究、实现、试验和切换路线的授权。基本策略是：
 
 ```text
-1. sampled strong-residual proxy 不适合作为当前目标问题的 marking 主线；
-2. coarse/enriched field-difference R5 proxy 有很强正信号，但还不是 formal two-level FE estimator；
-3. Cartesian axis-cut hexa 会产生严重 strip leakage；
-4. DOLFINx tetra marked refinement 机制可工作，但尚未与目标周期 Maxwell 求解闭环。
+提出候选
+→ 做最小可信实现
+→ 在低成本真实问题上测量
+→ 出现正信号则加深并扩大规模
+→ 出现明确负信号则保存证据、关闭该 lane、切换下一候选
+→ 直到形成可信 adaptive 主线，或所有合理路线均被证据排除
 ```
 
-因此，Phase C/D 的 `complete_controlled_negative` 接受。下一步不继续堆积更多 sampled proxy，也不直接进入 p4/h5 heavy。Review V4 授权一个连续的 **Phase E recovery batch**：先完成正式 estimator 与周期 tetra backend 接入，再连续完成低成本 p2/p3 adaptive cycles；两个内部部分之间不等待额外审查。
+不再因为完成某个 Phase、单个候选失败、局部测试失败、文档或 schema 问题而停止等待审阅。Codex 应主动选择下一步，不需要逐阶段取得新授权。
 
 ---
 
-## 2. 已接受的 Phase C/D 结果
+## 2. 已接受的当前结论
 
-### 2.1 Phase C target-artifact screen
+### 2.1 Estimator
 
-以下结果接受为低成本方向性证据：
+以下结果接受为方向性证据：
 
 | coarse → enriched | R5 effectivity proxy | R5 Pearson / Spearman | sampled R1 Pearson / Spearman | observable error reduction |
 |---|---:|---:|---:|---:|
@@ -53,57 +51,47 @@ Review V3 授权的 Phase C estimator bake-off 与 Phase D mesh-backend bake-off
 | p2/h3 → p2/h2 | 0.8106 | 0.9981 / 0.9949 | -0.0768 / -0.0622 | 81.55% |
 | p3/h10 → p3/h7.5 | 0.9894 | 0.9892 / 0.9836 | -0.0202 / -0.0361 | 94.00% |
 
-接受的解释是：
+准确解释为：
 
-- coarse/enriched field difference 与相对 p4/h5 best-available discrete reference 的局部 field difference 高度相关；
-- sampled strong Maxwell residual 与该 local-error proxy 基本无相关或轻微负相关；
-- R1/R5 Dörfler marked sets overlap 很低，说明两者定位的区域显著不同；
-- R5 路线值得进入正式 FE two-level 实现；
-- sampled R1 路线应作为负向 diagnostic 保留，不得直接用于 production marking。
+- coarse/enriched field-difference R5 proxy 有很强正信号；
+- sampled-grid strong residual proxy 对当前局部误差无有效相关性；
+- 当前 R5 仍不是 formal hierarchical/local two-level FE estimator；
+- 81%–94% 的下降来自全局 enriched 离散点，不是 estimator-marked local refinement 的因果结果；
+- 下一优先方向应是 actual FE two-level estimator，而不是继续调 sampled R1 的归一化。
 
-### 2.2 B3 material-interface component fixture
+### 2.2 Component fixtures
 
-B3 接受为 component-level positive：
+B3 material-interface/corner component fixture 与 B4 Hybrid Et/Ht、M/DtN、QEP component fixture 接受。它们支持材料界面、方向性、Hybrid error split 和 MPI compact identity，但不构成新的目标 PDE adaptive qualification。
 
-- actual 3D hexa N1curl p1/p2；
-- actual DG0 complex material tags 与 interface facets；
-- material-tag fault detection；
-- p1/p2 error difference；
-- computed directional preference；
-- serial/MPI2 compact identity。
+### 2.3 Mesh backend
 
-它不是目标光栅 corner adaptive qualification，但足以关闭 Phase B 的材料界面 fixture 待办。
-
-### 2.3 B4 Hybrid component fixture
-
-B4 接受为 measured component split：
-
-- accepted target Et/Ht samples；
-- external DtN perturbation；
-- M80/M120/M160 funnel；
-- QEP MPI diagnostic；
-- spatial、DtN、internal M 与 QEP residual 分列；
-- serial/MPI2 compact identity。
-
-它不构成新的 Hybrid PDE、adjoint 或 adaptive qualification。
-
-### 2.4 Phase D backend screen
-
-接受以下工程结论：
+当前工程结论为：
 
 ```text
 Task034 strip/tensor = controlled_negative
-Cartesian axis-cut multi-block hexa = locality blocker signal
-tetra marked-refine = research control positive
+Cartesian axis-cut hexa = locality blocker for that implementation family
+tetra marked refinement = positive research-control signal
 ```
 
-Task034 strip/tensor 已有 actual PDE 证据，但 physical same-error gates 失败；不能继续提升。
+`cartesian_axis_cut_hexa` 的负结果不得扩大为“所有局部六面体自适应均不可能”。但在 tetra 最小闭环尚未成功前，不应继续把主要精力投入复杂 transition-cell/hexa 基础设施。
 
-DOLFINx tetra control 实际完成 marked refine，并观察到局部尺寸下降和 Nédélec interpolation-error proxy 下降；它证明 simplex refinement/orientation 机制值得进入目标 pipeline qualification。
+### 2.4 Tetra quality audit
+
+此前体积字段采用 `abs(det(J))/6`，只能证明最小绝对体积为正，不能检测反转单元。后续正式 positive record 必须增加真正的 orientation/Jacobian audit：
+
+```text
+minimum_absolute_tetra_volume
+minimum_oriented_jacobian_determinant
+nonpositive_jacobian_count
+quality quantiles
+serial/MPI identity
+```
+
+首次 MPI2 topology-to-geometry indexing failure record 必须保留。
 
 ### 2.5 测试
 
-接受最终测试：
+以下结果接受，不要求因本 Review 重跑：
 
 ```text
 C+D focused test88-test97 = 33 passed
@@ -114,505 +102,323 @@ compileall = pass
 git diff --check = pass
 ```
 
-Phase A 环境、MUMPS/PEP、Task034 heavy references 和完整 artifact inventory 不得因本 Review 重跑。
+Phase A 环境、MUMPS/PEP、Task034 heavy references 和完整 artifact inventory 继续有效，除非其绑定输入发生变化。
 
 ---
 
-## 3. 必须保持准确的资格边界
+## 3. “解决自适应问题”的目标定义
 
-### 3.1 当前 R5 不是 formal hierarchical estimator
-
-当前 R5 是：
-
-```text
-accepted coarse field sample - accepted globally enriched field sample
-```
-
-它具有很强 correlation/effectivity 信号，但没有完成：
-
-- 当前 solve 上的 enriched FE correction；
-- cell/patch local enriched space；
-- local correction equation；
-- coarse-cell indicator assembly；
-- estimator-marked local refinement；
-- refinement 后重新 solve 的因果验证。
-
-表中的 81%–94% observable reduction 来自“整个 enriched 离散点相对 coarse 点更接近 p4/h5”，不是“按 R5 marked set 局部细化后得到的下降”。因此不得将其写为 `R5_real_case_screen_pass` 或 production estimator。
-
-### 3.2 sampled R1 negative 不等于 residual estimator 理论失败
-
-当前 R1 通过规则采样数组和 `numpy.gradient` 计算，不是实际 FE mesh 上的：
-
-- cell-integrated volume residual；
-- facet jump；
-- material/interface contribution；
-- periodic/Floquet contribution；
-- DtN boundary contribution。
-
-因此准确结论是：
-
-```text
-sample_grid_strong_residual_proxy = real_case_negative
-formal_cell_face_R1 = not_yet_implemented_on_target_solve
-```
-
-下一阶段不应继续调 sampled R1 的归一化来追求相关性，但可以实现一个真实 cell/face R1 作为 R5 的独立 baseline。
-
-### 3.3 当前 hexa blocker 只适用于 Cartesian axis-cut 路线
-
-`multi_block_conforming_hexa` 当前并未生成和求解一个实际 transition-cell multi-block mesh，而是量化 Cartesian axis cuts 贯穿 tensor product 后的 cell leakage。
-
-因此建议把状态准确化为：
-
-```text
-cartesian_axis_cut_hexa_locality_blocker
-```
-
-不得扩大为“所有 conforming hexa local refinement 不可行”。具有 octree/transition template、prism/pyramid、qualified hanging-node H(curl) constraint 或 nonmatching interface 的路线仍未实现；但这些路线不应继续阻塞当前 Task035 的最小 adaptive MVP。
-
-### 3.4 tetra 的 Jacobian 证据当前不完整
-
-当前 `_cell_volumes` 使用：
-
-```python
-abs(det(J)) / 6
-```
-
-但输出字段称为：
-
-```text
-minimum_signed_volume_proxy
-```
-
-取绝对值后不能检测负 Jacobian/反转单元，因此当前只证明：
-
-```text
-minimum_absolute_tetra_volume > 0
-```
-
-不能声称已经通过 signed/positive Jacobian Gate。
-
-Phase E 前必须：
-
-1. 将现有字段改名为 `minimum_absolute_tetra_volume`；
-2. 增加独立 Jacobian determinant/orientation audit；
-3. 报告 minimum determinant、nonpositive count 和质量分布；
-4. serial/MPI2 一致；
-5. 不删除首次 MPI2 topology-to-geometry indexing failure record。
-
-### 3.5 Phase C 的 MPI identity 不是 distributed estimator scalability
-
-target-artifact screen 在每个 rank 读取 compact sample arrays，再按 `global_sample_id % mpi_size` 做标量分区。这足以验证 deterministic compact reduction，但不是实际 distributed mesh/cell ownership 上的 estimator assembly。
-
-Phase E 的正式 estimator record 必须来自实际分布式 mesh ownership，不能用 modulo sample partition 代替。
-
----
-
-## 4. Phase E recovery batch：总体路线
-
-本 Review 将 Phase E 拆成两个连续内部部分：
-
-```text
-Phase E0  formal estimator + periodic tetra backend integration
-Phase E1  p2/p3 low-cost adaptive cycles
-```
-
-E0 完成后不等待审查，内部 Gate 通过即直接进入 E1。E1 完成后提交 `response_v5.md`，再集中等待 Review V5。
-
-本批次目标是第一次形成真实闭环：
+Task035 不以“代码能 refine 一次”作为完成。可信解法至少需要形成以下闭环：
 
 ```text
 TARGET SOLVE
-→ FORMAL ESTIMATE
+→ ACTUAL FE ESTIMATE
 → MARK
-→ PERIODIC CLOSURE
-→ ACTUAL LOCAL REFINE
+→ PERIODIC/MATERIAL/INTERFACE CLOSURE
+→ LOCAL REFINE OR hp CHANGE
 → REBUILD TAGS/FLOQUET/DtN
 → TARGET RE-SOLVE
-→ OBSERVABLE ERROR AUDIT
+→ PHYSICAL AND COST AUDIT
 ```
+
+### 3.1 研究级成功
+
+至少一个 p2 或 p3 Full3D sequence 满足：
+
+- 至少两个连续 estimator-marked cycles 的目标误差下降；
+- full true residual 和 official R/T/A/energy gates 通过；
+- field/interface error 不隐藏恶化；
+- periodic/Floquet、material tags、DtN 和 mesh-quality audits 通过；
+- 相近 DoF/rows 成本下不劣于 uniform refinement control；
+- serial/MPI2 一致，必要时 MPI4 一致。
+
+### 3.2 工程级成功
+
+在研究级成功基础上，将最佳路线推进到 p4/h5 或同等可信高阶点，并证明：
+
+- same-error 或 improved-error；
+- DoF/rows、factor fill、峰值内存或总时间至少一项有明确工程收益；
+- 没有依靠放宽物理误差换取压缩；
+- 不规则网格导致的 fill、负载不均衡和 field transfer 成本已实测。
+
+### 3.3 扩展级成功
+
+若 Full3D 主线成功，继续尝试：
+
+- Hybrid spatial / external DtN / internal M error separation；
+- selected mesh 的 Full3D–Hybrid closure；
+- 1°/5°/10° S common-mesh robustness；
+- global-p 与条件 hp；
+- recovery/equilibrated independent audit。
+
+这些不是开始研究前的审批锁，而是沿正信号自然推进的后续目标。
 
 ---
 
-# 5. Phase E0：正式 estimator 接入
+## 4. 自主研究决策规则
 
-## 5.1 优先主线：actual two-level R5
+### 4.1 候选组合
 
-R5 是当前唯一具有强真实方向信号的候选。第一版允许采用比 patch-local solve 更快的全局 two-level 实现，但命名必须准确。
-
-优先级：
-
-### 路线 E0-R5A：same-mesh p-enriched two-level
+Codex 同时保持最多：
 
 ```text
-coarse solve: p2
-+
-enriched solve: p3 on the same mesh
+2 条主候选 lane
++ 1 条独立 control/audit lane
+```
+
+避免无界组合爆炸。当前优先候选为：
+
+1. actual global two-level R5 + tetra local refinement；
+2. actual cell/face R1 或 goal-oriented DWR + tetra local refinement；
+3. uniform tetra refinement 作为 cost-matched control。
+
+可根据证据切换到：
+
+- local patch R5；
+- recovery R3；
+- DWR G1/G2；
+- equilibrated R4；
+- global-p / local-hp；
+- improved hexa、prism/pyramid、octree 或 nonmatching-interface backend；
+- Hybrid adaptive。
+
+### 4.2 正信号
+
+出现以下任一组合时，应继续加深该 lane：
+
+- local indicator 与独立 error proxy 稳定相关；
+- estimator-marked refinement 后目标 observable 实际下降；
+- 连续两个 cycle 正向；
+- 相近成本下优于 uniform control；
+- p2 正信号可迁移到 p3；
+- Full3D 正信号可迁移到 Hybrid 或 p4；
+- 网格局部性、质量、周期闭合与 MPI identity 同时通过。
+
+### 4.3 负信号
+
+出现以下情况时保存完整证据并切换路线，不等待审阅：
+
+- estimator 与误差无相关且 refinement 不改善 observable；
+- 连续两个 cycle 无改善或明显反弹；
+- backend 无法满足周期闭合、质量或局部性；
+- 资源收益被 factor fill、transfer 或 imbalance 抵消；
+- 某候选只能通过放宽 residual/physics Gate；
+- 经过合理参数和实现修正后仍无正信号。
+
+单个 lane 的 controlled negative 不等于 Task035 失败。
+
+### 4.4 探索顺序
+
+建议但不强制的路线：
+
+```text
+A. actual global two-level R5 + periodic tetra MVP
+B. p2 真实 adaptive cycles + uniform control
+C. p3 transfer/smoke
+D. actual R1 / DWR / recovery independent comparison
+E. p4 Full3D heavy mainline when lower-cost evidence is positive
+F. Hybrid / M-DtN split / robust-angle extension
+G. alternative hexa or hp route if tetra succeeds but production geometry requires it
+```
+
+Codex 可以根据 measured evidence 调整顺序，不需要因任务书字母阶段顺序停下来。
+
+---
+
+## 5. 立即优先实现的内容
+
+### 5.1 Actual two-level R5
+
+第一版优先选择实现速度快且可审查的路线：
+
+```text
+p2 coarse solve
++ p3 same-mesh enriched solve
 → project/compare fields
 → localize correction energy to coarse cells
 ```
 
-若 p3 same-mesh 资源不适合，可采用：
-
-### 路线 E0-R5B：same-degree uniformly refined two-level
+资源不合适时可改为：
 
 ```text
-coarse p2 mesh
-+
-uniformly refined p2 reference mesh
-→ transfer/project enriched field
-→ localize correction to coarse cells
+p2 coarse mesh
++ uniformly refined p2 enriched solve
+→ transfer/project
+→ localize to coarse cells
 ```
 
-两者都必须明确：
+必须记录：
 
-- 是 global two-level estimator，不冒充 patch-local estimator；
-- enriched solve 的 residual 和 official observables 通过；
-- correction 的 local cell contributions finite/nonnegative；
-- global indicator 与 correction norm 闭合；
-- cell IDs、marked-set hash 和 MPI ownership canonical；
-- 不使用保存的 sample-grid difference作为最终 indicator。
+- enriched solve residual 与 official observables；
+- finite/nonnegative cell contributions；
+- global indicator/correction closure；
+- actual distributed cell ownership；
+- marked-set hash；
+- estimator time/memory；
+- 不得使用保存的 sample-grid field difference 作为最终 indicator。
 
-### 后续增强：local patch R5
+Global two-level MVP 成功后，再决定是否值得实现 local patch R5。
 
-只有 global two-level MVP 工作后，再考虑：
+### 5.2 Actual cell/face R1 baseline
 
-- edge/cell star patch；
-- enriched N1curl space；
-- zero tangential correction boundary；
-- local defect solve；
-- overlap assembly。
-
-不要让 patch infrastructure 阻塞第一版 adaptive closure。
-
-## 5.2 actual cell/face R1 baseline
-
-实现真实 FE baseline，用于对照 R5，不以 sampled R1 为基础。
-
-至少分列：
+实现实际 FE mesh 上的：
 
 ```text
 volume curl-curl residual
 interior curl-flux jump
-material/interface term
-external DtN boundary term
-Floquet/periodic consistency diagnostic
+material/interface contribution
+external DtN boundary contribution
+Floquet/periodic diagnostic
 ```
 
-建议通过 DG0/cellwise accumulator 或可审查 cell kernel 生成每个 owned cell 的平方贡献。不得只输出 global scalar。
+每个 owned cell 必须有独立贡献。R1 可以得到负结果，不阻塞其他 lane。
 
-R1 可以得到 `real_case_negative`；只要 R5 主线仍工作，不阻塞 E1。
+### 5.3 Periodic tetra backend
 
-## 5.3 goal-oriented lane
+建立 Task034 fixed geometry 的 tetra pipeline：
 
-actual DWR adjoint 当前不是 E0 的硬 blocker。优先策略：
+- x/y periodic surfaces geometrically matching；
+- material cell tags；
+- top/bottom DtN tags；
+- periodic marker closure including edges/corners；
+- refine 后 rebuild tags/Floquet/DtN；
+- actual Jacobian/orientation audit；
+- serial/MPI2，必要时 MPI4；
+- deterministic mesh/closure/tag hashes。
 
-```text
-R5 closes first adaptive loop
-→ G1/G2 actual adjoint remains parallel research lane
-```
+### 5.4 Actual adaptive cycles
 
-若实现成本可控，可在 p2 coarse target 上加入一个离散 adjoint：
-
-- goal 选 total R/T/A 中一个，或非平凡 R00/order amplitude；
-- 明确 complex adjoint、实值 functional 和 normalization；
-- 与 coefficient directional finite difference 比较。
-
-但不得因 G1/G2 未完成而阻塞 R5+tетра MVP。
-
-## 5.4 代码位置
-
-正式候选不得继续只放在 `src/validation/task035_*`。
-
-推荐最小模块：
-
-```text
-src/adaptivity/hcurl_cell_residual.py
-src/adaptivity/hcurl_two_level.py
-src/adaptivity/marking.py
-src/adaptivity/adaptive_cycle.py
-```
-
-benchmark runner 只负责参数、provenance、watchdog 和 record，不复制 estimator 数值核心。
-
----
-
-# 6. Phase E0：周期 tetra backend 接入
-
-## 6.1 当前主 backend 决定
-
-Phase E research MVP 采用：
-
-```text
-DOLFINx tetra marked refinement
-```
-
-身份为：
-
-```text
-research adaptive backend
-not production default
-```
-
-Cartesian hexa axis-cut 路线本批次停止继续投入。未来 transition-cell/hexa route 另行决定，不阻塞 tetra MVP。
-
-## 6.2 目标几何 tetra 初始网格
-
-建立 Task034 fixed geometry 的 tetra mesh，至少保持：
-
-- x/y 周期面几何一致；
-- grating/substrate/air material tags；
-- top/bottom DtN 面 tags；
-- target physical dimensions；
-- deterministic mesh hash；
-- MPI repartition/ghost consistency。
-
-第一步可以使用低成本 coarse target-shaped mesh 做 pipeline smoke；正式 E1 起点再使用可审查的 p2 coarse/h5-like mesh。
-
-## 6.3 periodic marker closure
-
-Dörfler marking 后，refine 前必须扩展 marked entities，保证：
-
-```text
-master periodic boundary refinement
-↔ slave periodic boundary refinement
-```
-
-至少完成：
-
-- x-periodic mate closure；
-- y-periodic mate closure；
-- x/y periodic corner and edge closure；
-- translated boundary facet signature identity；
-- refined boundary trace isomorphism；
-- deterministic closure hash。
-
-不得先单边 refine，再依赖 coordinate tolerance 强行配对不匹配 trace。
-
-## 6.4 tag rebuild 与 Floquet requalification
-
-每轮 refinement 后：
-
-- rebuild/transfer cell material tags；
-- rebuild exterior and interface facet tags；
-- rebuild Floquet constraints；
-- check slave/master DoF count and phase/orientation；
-- check top/bottom DtN trace；
-- serial/MPI2，必要时 MPI4 identity。
-
-若当前 high-order tetra Floquet 路径不支持 p2，先完成 p1 topology smoke，再实现/资格化 p2；但 E1 的正式物理序列仍以 p2 为目标。
-
-## 6.5 mesh quality
-
-每轮至少记录：
-
-```text
-cells
-vertices
-minimum/quantile absolute volume
-minimum Jacobian determinant
-nonpositive Jacobian count
-radius ratio or equivalent quality
-marked-region vs outside size
-partition imbalance
-periodic boundary signature hash
-```
-
-任何 nonpositive Jacobian、周期 trace 非同构或未资格化 hanging node 都禁止作为正结果继续求解。
-
-## 6.6 field transfer
-
-优先每轮重新从物理参数组装并求解；若使用前一轮解作 initial guess，应有可审查的 H(curl) transfer/projection，并且 transfer error 单独记录，不能混入 estimator error。
-
----
-
-# 7. Phase E1：低成本实际 adaptive cycles
-
-## 7.1 首个闭环：Full3D p2 target
-
-第一条正式序列：
+首个主线建议为：
 
 ```text
 13.5 nm
-10 deg grazing
+10° grazing
 S polarization
 Task034 fixed geometry
-Full3D
-p2
+Full3D p2
 research tetra backend
-R5 global two-level marking
+actual R5 marking
 Dörfler theta = 0.5
 ```
 
-先完成至少 3 个 cycle；满足明确终止条件可在第 2 个 cycle 后受控停止，最多不超过 4 个 cycle。本批次不遍历大量 theta。
+运行 2–4 cycles。若有正信号，继续 p3、p4、Hybrid 或 angle robustness；若无正信号，切换 estimator/backend 组合。
 
-每轮：
-
-```text
-SOLVE
-→ R5 ESTIMATE
-→ R1 BASELINE ESTIMATE
-→ MARK
-→ PERIODIC CLOSURE
-→ REFINE
-→ REBUILD TAGS/FLOQUET/DtN
-→ SOLVE
-→ COMPARE
-```
-
-## 7.2 reference 与对照
-
-reference 必须明确为 best-available discrete reference，不称 continuum truth。
-
-至少同时做两个对照：
-
-1. Task034 accepted p4/h5 or p3/h3 observables/field samples；
-2. 相近 DoF/rows 的 uniform tetra refinement control。
-
-不能只证明 adaptive cycle 比自己的 coarse mesh 好；还要判断相同成本下是否优于 uniform refinement。
-
-## 7.3 每轮必须输出
+每轮必须输出：
 
 ```text
 mesh/closure/tag hashes
 cells, DoF, rows, NNZ
-estimator total and components
-R5 effectivity/proxy
-R1/R5 correlation and marked overlap
-marked-set hash and periodic-closure expansion ratio
-full explicit true residual
-R/T/A/A_volume
-R00 and significant diffraction orders
-selected-plane E/H
-interface Et/Ht when available
+estimator totals/components
+marked-set hash and closure expansion
+full true residual
+official R/T/A/A_volume/R00/orders
+field/interface errors
 energy closure
-memory and stage time
-mesh quality and partition imbalance
+memory/time/fill/imbalance
+mesh quality/Jacobian
 ```
-
-official R/T/A 只能来自 residual Gate 通过的场。
-
-## 7.4 成功 Gate
-
-至少需要两个连续 estimator-marked cycle 满足：
-
-- target observable error 实际下降；
-- field/interface error 不隐藏恶化；
-- residual/energy gates 通过；
-- periodic/Floquet and tag rebuild 通过；
-- estimator global/local consistency 通过；
-- adaptive sequence 在相近成本下不劣于 uniform tetra control。
-
-若只有第一个 cycle positive、第二个反弹，不能宣称 adaptive mainline 通过。
-
-## 7.5 p3 smoke
-
-只有 p2 至少两个 cycle positive 后，继续一个低成本 p3 smoke：
-
-- 同一 backend/marking policy；
-- 至少一个 marked refinement；
-- 检查高阶 orientation、MPI identity 和 observable trend。
-
-p3 smoke 失败只关闭 p3 lane，不取消已通过的 p2 controlled result。
 
 ---
 
-# 8. Phase E 内部停止规则
+## 6. Heavy run 与资源授权
 
-Codex 不得因以下情况停止整个 batch：
+本 Review 允许 Codex在内部证据支持时自行运行 p4/h5、Hybrid 和后续 heavy cases，不需要新的阶段授权。但必须遵守：
 
-- actual R1 lane 失败；
-- G1/G2 adjoint 未完成；
-- p3 smoke 失败；
-- 一个 theta candidate 为负；
-- 一个局部 test、README、schema、record 或 lint 问题；
-- Cartesian hexa 路线保持 blocker；
-- 单个 cycle 可解释地 negative。
+- one-heavy-case-at-a-time；
+- 运行前做 rows/NNZ/memory/swap/disk/OOC preflight；
+- 使用 watchdog 和完整进程组终止；
+- 不设置任意短 timeout；
+- 先跑最低成本可区分实验，再扩展规模；
+- 正式 heavy record 绑定 clean committed source SHA；
+- OOM、swap thrashing、磁盘不足或进程异常时保留证据并调整方案；
+- 不得把资源终止写成数值方法失败或成功。
 
-处理方式：
-
-```text
-局部修复并 targeted rerun
-或
-关闭该 lane、保存 controlled negative、继续 R5+tетра 主线
-```
-
-只有以下情况停止整个 Phase E batch：
-
-1. WSL complex ABI、source SHA 或 baseline hash 不一致；
-2. production/accepted numerical core 被意外改变且旧证据失效；
-3. periodic boundary trace 无法形成同构配对；
-4. nonpositive Jacobian 或不合格 mesh 被用于正式 solve；
-5. full true residual 或 official physical observables 系统性失败；
-6. MPI identity 出现无法局部解释的系统性偏差；
-7. 内存、swap、磁盘或进程资源 Gate；
-8. 工作准备越过本 Review 进入 p4/h5 heavy adaptive 或 ordinary-default change。
+Codex可以在 p2/p3 未完全成功前运行少量 p4 diagnostic，以解决明确歧义，但不得无证据地进行大规模参数遍历。
 
 ---
 
-# 9. 测试与运行节奏
+## 7. 测试与提交节奏
 
-继续使用 Windows Codex 客户端编排、WSL Ubuntu 后端执行。
-
-不得重复：
-
-- Phase A 环境完整资格化；
-- MPI1/2/4/8 MUMPS/PEP matrix；
-- Task034 六份 artifact 全量 hash；
-- Task034 p3/p4/M heavy matrix；
-- 每次小改动后的 full pytest。
-
-测试金字塔：
+### 7.1 测试金字塔
 
 ```text
-每个 estimator/backend 小步：targeted unit/fixture test
-周期 tetra pipeline 收口：serial + MPI2 topology tests
-每个 adaptive cycle：cycle-specific physics/evidence checker
-E0 收口：Task035 E0 focused suite
-E1 收口：Task035 Phase E focused suite
-整个 Phase E batch 结束：正确 activation 下 full pytest 一次
+小改动：targeted unit/fixture tests
+一个 lane 收口：serial + MPI2，必要时 MPI4
+数值核心发生变化：相关 regression/anchor
+重大里程碑或最终交付：full repository pytest
 ```
 
-正式 measured records 优先在 clean committed source SHA 上运行。低成本 cycle 若在提交前运行，最终必须在 clean commit 上重跑 accepted records。
+不再要求每个 Phase 或每几个提交都运行 full pytest。文档、schema、record、lint 小问题只做 targeted rerun。
+
+### 7.2 持续提交而不等待
+
+Codex 应在以下时机提交并推送，但提交后继续工作：
+
+- 一个候选实现可运行；
+- 一个 measured experiment 完成；
+- 一个 lane 得到 positive/controlled-negative 决定；
+- 一个重型 record 完成；
+- 一个重大 bug 修复并通过 targeted regression。
+
+提交和推送不是等待审阅的停止点。
+
+### 7.3 文档收敛
+
+不要为普通进展创建新的 addendum 或 review。持续更新：
+
+```text
+docs/task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md
+docs/task035_hcurl_goal_oriented_adaptivity/outcomes/test_summary.md
+Case094 machine-readable records
+```
+
+只有在以下情况创建下一份 `response_vN.md`：
+
+1. 已形成研究级或工程级 adaptive success；
+2. 所有合理路线均被证据排除，需要架构决策；
+3. 出现真正需要用户处理的硬 blocker；
+4. 用户明确要求阶段总结；
+5. 准备最终 selective merge。
+
+创建 response 后也不必自动停止，除非属于第 2、3、5 类。
 
 ---
 
-# 10. Phase E 后交付
+## 8. 真正的硬停止条件
 
-完成 E0+E1 后新增：
+只有以下情况需要停止整个 Task035 并请求用户或审阅：
+
+1. 需要用户输入 sudo 密码、SSH passphrase、凭据或进行系统级人工操作；
+2. WSL complex ABI、source/base hash 或 accepted evidence 身份发生无法解释的不一致；
+3. 发现 accepted production core 或历史 evidence 被错误修改/污染；
+4. MPI、true residual、official physics 或 mesh orientation 出现系统性错误且继续运行会制造虚假结论；
+5. 内存、swap、磁盘、OOC 或进程状态存在工作站安全风险；
+6. 所有合理 estimator/backend/hp/Hybrid 路线均已形成可审计负结果，继续只会重复已有实验；
+7. 准备改变 ordinary default；
+8. 准备合并 `master` 或结束 Task035。
+
+以下情况不得停止整个任务：
+
+- 单个 estimator 或 backend 失败；
+- 一个 heavy case 资源终止；
+- 一个 MPI/fixture bug 原因明确且可局部修复；
+- 某个 Phase 得到 pass 或 controlled negative；
+- README、schema、record、lint、链接或 metadata 问题；
+- 某条路线需要换参数、换实现或换候选。
+
+---
+
+## 9. 最终边界
+
+本 Review 授权 Task035 剩余研究阶段的持续执行，包括低成本和重型 Full3D、Hybrid、p/h/hp、robust-angle 和独立 estimator audit。Phase 名称不再构成审批锁。
+
+但以下事项仍必须在最终审阅和用户确认后执行：
 
 ```text
-docs/task035_hcurl_goal_oriented_adaptivity/response_v5.md
+将 research capability 宣称为 production default
+改变 ordinary user-facing default
+把 Task035 分支合并到 master
+删除或改写 controlled-negative/failed evidence
 ```
 
-不要创建额外 addendum 或平行 review 文件。
-
-Response V5 至少包含：
-
-- exact base、implementation 和 final branch HEAD；
-- actual R5 数学定义和实现身份；
-- actual cell/face R1 decision；
-- tetra periodic closure/Floquet/tag/Jacobian qualification；
-- 每个 adaptive cycle 的完整表；
-- uniform tetra cost-matched control；
-- p2 sequence decision；
-- p3 smoke decision；
-- all controlled negatives；
-- memory/time and MPI identity；
-- focused/full tests；
-- 是否满足进入 Phase F 的前置条件；
-- evidence index 和 clean worktree status。
-
-完成后停止等待 Review V5。
-
-本 Review **不授权**：
-
-```text
-Phase F p4/h5 heavy adaptive
-Phase G Hybrid adaptive campaign
-production estimator/backend promotion
-ordinary-default change
-master merge
-```
-
-只有 Phase E 形成至少一个真实 estimator-marked、周期闭合、物理误差持续下降的 p2/p3 sequence 后，才讨论 Phase F。
+Codex 应以解决自适应问题为目标持续探索，但不能保证预先存在一个一定成功的方法。若最终没有路线满足研究级成功标准，也必须给出“哪些路线已排除、根因在哪里、下一架构应是什么”的完整工程结论。
