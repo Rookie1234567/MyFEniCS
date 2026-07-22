@@ -739,10 +739,12 @@ def run_target_goal_weighted_two_level(
             "h_nm": float(h_nm),
         },
         "coarse": {
+            "h_nm": float(h_nm),
             "degree": int(coarse_degree),
             "summary": coarse_summary,
         },
         "enriched": {
+            "h_nm": float(h_nm),
             "degree": int(enriched_degree),
             "summary": enriched_summary,
         },

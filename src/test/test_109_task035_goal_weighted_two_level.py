@@ -22,6 +22,8 @@ class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
         )
         result = run_target_goal_weighted_two_level(out_dir)
         self.assertTrue(result["pass"], result["DWR"])
+        self.assertEqual(result["coarse"]["h_nm"], 50.0)
+        self.assertEqual(result["enriched"]["h_nm"], 50.0)
         self.assertEqual(
             result["status"], "target_goal_weighted_two_level_pass"
         )

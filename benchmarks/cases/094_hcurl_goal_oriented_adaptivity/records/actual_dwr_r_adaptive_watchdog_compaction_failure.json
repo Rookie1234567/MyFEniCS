@@ -1,0 +1,39 @@
+{
+  "schema_version": "task035.watchdog-compaction-failure.v1",
+  "status": "runner_record_compaction_failure",
+  "classification": "infrastructure_metadata_failure",
+  "canonical": false,
+  "production_qualified": false,
+  "source_sha": "ca471f3cc3ff104965bd4ec160a7cc786870db8f",
+  "started_at_utc": "2026-07-22T12:30:07Z",
+  "command": "python -m benchmarks.run_task035_actual_r5 --coarse-degree 2 --enriched-degree 3 --h-nm 50 --theta 0.5 --polarization-kind s --mesh-cell-type tetrahedron --mpi-size 2 --dwr-adaptive-cycles 1 --dwr-marker-policy R_total --warning-gib 8 --terminate-gib 16 --timeout-seconds 1800 --verified-clean-sha ca471f3cc3ff104965bd4ec160a7cc786870db8f --record benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json",
+  "numerical_worker": {
+    "status": "actual_dwr_adaptive_cycles_pass",
+    "pass": true,
+    "marked_cycles_completed": 1,
+    "all_fixed_reference_error_reductions_positive": true,
+    "pde_or_adjoint_failure": false
+  },
+  "parent_failure": {
+    "exception": "KeyError: h_nm",
+    "location": "benchmarks.run_task035_actual_r5._compact_dwr_cycle -> _compact_solve",
+    "reason": "The DWR coarse/enriched result metadata omitted h_nm, so the parent failed while compacting an otherwise completed worker result.",
+    "formal_pass_record_written": false
+  },
+  "artifact_evidence": {
+    "run_directory": "benchmarks/artifacts/task035/actual_global_r5/tetrahedron_p2_p3_h50_pols_mpi2_20260722T123007Z_dwr_R_total_1",
+    "raw_result": {
+      "path": "actual_r5_result.json",
+      "sha256": "e932155378226c52ab03d6e2fc08d06f65a656c612909a98decf328c6f4abbe3"
+    },
+    "memory_timeline": {
+      "path": "memory_timeline.csv",
+      "sha256": "7c7258ec9a68756bbfd7eff87efd9b48590be746f9f0b740378315e52453980d"
+    },
+    "worker_stdout": {
+      "path": "worker_stdout.txt",
+      "sha256": "5a73490e0227b081a5239efce2dcf353b45b9c4bd0418fddc8c6b8fe64d77d37"
+    }
+  },
+  "decision": "preserve_failure_fix_metadata_contract_and_rerun_from_a_new_clean_sha"
+}

@@ -7,8 +7,10 @@ import math
 from pathlib import Path
 import unittest
 
+
 from benchmarks.run_task035_actual_r5 import (
     _qualify_adaptive,
+    _compact_dwr_cycle,
     _qualify_dwr_adaptive,
 )
 from src.adaptivity.global_two_level_r5 import run_target_global_two_level_r5
@@ -211,6 +213,48 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
         self.assertFalse(failed["pass"])
         self.assertIn("all_goal_effectivities_unity", failed["failures"])
 
+
+    def test_dwr_cycle_compactor_accepts_actual_result_shape(self) -> None:
+        summary = {
+            "case_status": "completed",
+            "official_result": True,
+            "mpi_size": 2,
+            "num_mesh_cells": 180,
+            "mesh_cell_type_actual": "tetrahedron",
+            "num_nedelec_dofs": 100,
+            "linear_system_relative_residual": 1.0e-12,
+        }
+        cycle = {
+            "cycle_index": 0,
+            "mesh_audit": {"pass": True},
+            "coarse_observables": {},
+            "enriched_observables": {},
+            "official_observable_delta_l2": 1.0,
+            "coarse_fixed_reference_error_l2": 2.0,
+            "enriched_fixed_reference_error_l2": 1.0,
+            "marker": {
+                "kind": "R_total",
+                "marked_count": 10,
+                "marked_geometry_sha256": "a" * 64,
+            },
+            "goal_dwr": {
+                "coarse": {
+                    "degree": 2,
+                    "h_nm": 50.0,
+                    "summary": summary,
+                },
+                "enriched": {
+                    "degree": 3,
+                    "h_nm": 50.0,
+                    "summary": summary,
+                },
+                "DWR": {"adjoint_qualification": {"pass": True}},
+                "R5_control": {"formal_hierarchical_fe_r5": True},
+            },
+        }
+        compact = _compact_dwr_cycle(cycle)
+        self.assertEqual(compact["coarse"]["h_nm"], 50.0)
+        self.assertEqual(compact["enriched"]["degree"], 3)
     def test_initial_moving_gap_failure_has_positive_fixed_reference_signal(self) -> None:
         reference = task034_best_available_observable_reference()
         self.assertEqual(reference["key"], "p4_h5")
