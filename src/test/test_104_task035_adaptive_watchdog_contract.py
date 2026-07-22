@@ -7,7 +7,10 @@ import math
 from pathlib import Path
 import unittest
 
-from benchmarks.run_task035_actual_r5 import _qualify_adaptive
+from benchmarks.run_task035_actual_r5 import (
+    _qualify_adaptive,
+    _qualify_dwr_adaptive,
+)
 from src.adaptivity.global_two_level_r5 import run_target_global_two_level_r5
 from src.adaptivity.target_r5_adaptive_cycles import (
     task034_best_available_observable_reference,
@@ -58,6 +61,58 @@ def _adaptive_result() -> dict:
                     "coarse": {"summary": summary},
                     "enriched": {"summary": summary},
                     "R5": estimate,
+                },
+            }
+            for _ in range(2)
+        ],
+        "refinements": [{"pass": True}],
+    }
+
+
+def _dwr_adaptive_result() -> dict:
+    summary = {
+        "official_result": True,
+        "linear_system_relative_residual": 1.0e-12,
+        "mesh_cell_type_actual": "tetrahedron",
+    }
+    goal = {
+        "absolute_effectivity": 1.0,
+        "marked_geometry_sha256": "a" * 64,
+        "marking": {"captured_fraction": 0.51, "count": 10},
+    }
+    dwr = {
+        "adjoint_qualification": {"pass": True},
+        "goals": {"R_total": dict(goal), "T_total": dict(goal)},
+        "combined_relative_R_T": {
+            "marked_geometry_sha256": "b" * 64,
+            "marking": {"captured_fraction": 0.51, "count": 12},
+        },
+        "rejected_localization": {
+            "decision": "controlled_negative_partition_dependent"
+        },
+    }
+    return {
+        "status": "actual_dwr_adaptive_cycles_pass",
+        "pass": True,
+        "ordinary_default_changed": False,
+        "marked_cycles_completed": 1,
+        "marker_policy": "R_total",
+        "fixed_observable_reference": {
+            "identity": "best_available_discrete_reference_for_case093",
+            "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
+        },
+        "all_fixed_reference_error_reductions_positive": True,
+        "cycles": [
+            {
+                "mesh_audit": {"pass": True},
+                "marker": {
+                    "marked_count": 10,
+                    "marked_geometry_sha256": "a" * 64,
+                },
+                "goal_dwr": {
+                    "coarse": {"summary": summary},
+                    "enriched": {"summary": summary},
+                    "DWR": dwr,
                 },
             }
             for _ in range(2)
@@ -118,6 +173,43 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
             "all_fixed_reference_error_reductions_positive",
             failed["failures"],
         )
+
+    def test_dwr_adaptive_qualification_is_fail_closed(self) -> None:
+        args = Namespace(
+            mpi_size=2,
+            theta=0.5,
+            dwr_adaptive_cycles=1,
+            dwr_marker_policy="R_total",
+        )
+        sampler = {
+            "max_observed_worker_rank_count": 2,
+            "max_process_tree_swap_mb": 0.0,
+        }
+        result = _dwr_adaptive_result()
+        qualified = _qualify_dwr_adaptive(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertTrue(qualified["pass"], qualified)
+        result["cycles"][0]["goal_dwr"]["DWR"]["goals"]["R_total"][
+            "absolute_effectivity"
+        ] = 1.1
+        failed = _qualify_dwr_adaptive(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(failed["pass"])
+        self.assertIn("all_goal_effectivities_unity", failed["failures"])
 
     def test_initial_moving_gap_failure_has_positive_fixed_reference_signal(self) -> None:
         reference = task034_best_available_observable_reference()

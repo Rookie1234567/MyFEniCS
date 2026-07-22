@@ -78,7 +78,23 @@ def _worker(args: argparse.Namespace) -> int:
     def progress(stage: str, status: str) -> None:
         _append_progress(progress_path, stage, status)
 
-    if args.uniform_refinement_levels:
+    if args.dwr_adaptive_cycles:
+        from src.adaptivity.target_dwr_adaptive_cycles import (
+            run_target_dwr_adaptive_cycles,
+        )
+
+        result = run_target_dwr_adaptive_cycles(
+            args.run_dir,
+            marked_cycles=args.dwr_adaptive_cycles,
+            coarse_degree=args.coarse_degree,
+            enriched_degree=args.enriched_degree,
+            h_nm=args.h_nm,
+            theta=args.theta,
+            polarization_kind=args.polarization_kind,
+            marker_policy=args.dwr_marker_policy,
+            progress_observer=progress,
+        )
+    elif args.uniform_refinement_levels:
         from src.adaptivity.target_uniform_tetra_control import (
             run_target_uniform_tetra_control,
         )
@@ -148,6 +164,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--mpi-size", type=int, default=8)
     parser.add_argument("--adaptive-marked-cycles", type=int, default=0)
     parser.add_argument("--uniform-refinement-levels", type=int, default=0)
+    parser.add_argument("--dwr-adaptive-cycles", type=int, default=0)
+    parser.add_argument(
+        "--dwr-marker-policy",
+        choices=("combined_relative_R_T", "R_total", "T_total"),
+        default="combined_relative_R_T",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -177,12 +199,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--adaptive-marked-cycles must be non-negative.")
     if args.uniform_refinement_levels < 0:
         parser.error("--uniform-refinement-levels must be non-negative.")
-    if args.adaptive_marked_cycles and args.uniform_refinement_levels:
+    if args.dwr_adaptive_cycles < 0:
+        parser.error("--dwr-adaptive-cycles must be non-negative.")
+    active_cycles = sum(
+        bool(value)
+        for value in (
+            args.adaptive_marked_cycles,
+            args.uniform_refinement_levels,
+            args.dwr_adaptive_cycles,
+        )
+    )
+    if active_cycles > 1:
         parser.error(
-            "adaptive marked cycles and uniform refinement control are mutually exclusive."
+            "R5 adaptive, DWR adaptive, and uniform control are mutually exclusive."
         )
     if (
-        args.adaptive_marked_cycles or args.uniform_refinement_levels
+        active_cycles
     ) and args.mesh_cell_type != "tetrahedron":
         parser.error(
             "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
@@ -274,6 +306,28 @@ def _compact_adaptive_cycle(entry: dict[str, Any]) -> dict[str, Any]:
         "enriched": _compact_solve(actual["enriched"]),
         "R5": actual["R5"],
         "elapsed_seconds": actual["elapsed_seconds"],
+    }
+
+
+def _compact_dwr_cycle(entry: dict[str, Any]) -> dict[str, Any]:
+    result = entry["goal_dwr"]
+    return {
+        "cycle_index": entry["cycle_index"],
+        "mesh_audit": entry["mesh_audit"],
+        "coarse_observables": entry["coarse_observables"],
+        "enriched_observables": entry["enriched_observables"],
+        "official_observable_delta_l2": entry["official_observable_delta_l2"],
+        "coarse_fixed_reference_error_l2": entry[
+            "coarse_fixed_reference_error_l2"
+        ],
+        "enriched_fixed_reference_error_l2": entry[
+            "enriched_fixed_reference_error_l2"
+        ],
+        "marker": entry["marker"],
+        "coarse": _compact_solve(result["coarse"]),
+        "enriched": _compact_solve(result["enriched"]),
+        "DWR": result["DWR"],
+        "R5_control": result["R5_control"],
     }
 
 
@@ -413,6 +467,120 @@ def _qualify_adaptive(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _qualify_dwr_adaptive(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    cycles = result.get("cycles") or []
+    refinements = result.get("refinements") or []
+    solves = [
+        cycle["goal_dwr"][level]["summary"]
+        for cycle in cycles
+        for level in ("coarse", "enriched")
+    ]
+    dwr_reports = [cycle["goal_dwr"]["DWR"] for cycle in cycles]
+    goal_reports = [
+        report["goals"][goal]
+        for report in dwr_reports
+        for goal in ("R_total", "T_total")
+    ]
+    marker_reports = [
+        report["combined_relative_R_T"]
+        if args.dwr_marker_policy == "combined_relative_R_T"
+        else report["goals"][args.dwr_marker_policy]
+        for report in dwr_reports
+    ]
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status": result.get("status")
+        == "actual_dwr_adaptive_cycles_pass",
+        "result_pass": result.get("pass") is True,
+        "requested_cycle_count_completed": (
+            result.get("marked_cycles_completed") == args.dwr_adaptive_cycles
+            and len(cycles) == args.dwr_adaptive_cycles + 1
+        ),
+        "requested_marker_policy": result.get("marker_policy")
+        == args.dwr_marker_policy,
+        "fixed_reference_identity": (
+            (result.get("fixed_observable_reference") or {}).get("identity")
+            == "best_available_discrete_reference_for_case093"
+        ),
+        "fixed_reference_hash_bound": (
+            (result.get("fixed_observable_reference") or {}).get("record_sha256")
+            == "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+        ),
+        "all_fixed_reference_error_reductions_positive": result.get(
+            "all_fixed_reference_error_reductions_positive"
+        )
+        is True,
+        "all_refinement_audits_pass": bool(refinements)
+        and all(entry.get("pass") is True for entry in refinements),
+        "all_cycle_mesh_audits_pass": bool(cycles)
+        and all(cycle["mesh_audit"].get("pass") is True for cycle in cycles),
+        "all_official_solves": bool(solves)
+        and all(summary.get("official_result") is True for summary in solves),
+        "all_true_residuals_le_1e-9": bool(solves)
+        and all(
+            isinstance(summary.get("linear_system_relative_residual"), (int, float))
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+            for summary in solves
+        ),
+        "all_tetra_meshes": bool(solves)
+        and all(
+            summary.get("mesh_cell_type_actual") == "tetrahedron"
+            for summary in solves
+        ),
+        "all_actual_adjoint_qualifications_pass": bool(dwr_reports)
+        and all(report["adjoint_qualification"]["pass"] for report in dwr_reports),
+        "all_goal_effectivities_unity": bool(goal_reports)
+        and all(abs(report["absolute_effectivity"] - 1.0) <= 1.0e-8 for report in goal_reports),
+        "all_goal_marking_geometry_hashes_present": bool(goal_reports)
+        and all(bool(report.get("marked_geometry_sha256")) for report in goal_reports),
+        "all_selected_marker_geometry_hashes_match": bool(cycles)
+        and all(
+            bool(cycle["marker"].get("marked_geometry_sha256"))
+            and cycle["marker"]["marked_geometry_sha256"]
+            == report.get("marked_geometry_sha256")
+            for cycle, report in zip(cycles, marker_reports, strict=True)
+        ),
+        "all_selected_marker_counts_match": bool(cycles)
+        and all(
+            cycle["marker"].get("marked_count", 0) > 0
+            and cycle["marker"]["marked_count"]
+            == report["marking"].get("count")
+            for cycle, report in zip(cycles, marker_reports, strict=True)
+        ),
+        "all_dorfler_targets_captured": bool(marker_reports)
+        and all(
+            report["marking"]["captured_fraction"] >= args.theta
+            for report in marker_reports
+        ),
+        "algebraic_localization_rejected": bool(dwr_reports)
+        and all(
+            report["rejected_localization"]["decision"]
+            == "controlled_negative_partition_dependent"
+            for report in dwr_reports
+        ),
+        "ordinary_default_unchanged": result.get("ordinary_default_changed")
+        is False,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
 def _qualify_uniform(
     result: dict[str, Any],
     *,
@@ -509,7 +677,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         f"p{args.enriched_degree}_h{args.h_nm:g}_"
         f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
     )
-    if args.adaptive_marked_cycles:
+    if args.dwr_adaptive_cycles:
+        run_label += (
+            f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
+        )
+    elif args.adaptive_marked_cycles:
         run_label += f"_adaptive{args.adaptive_marked_cycles}"
     elif args.uniform_refinement_levels:
         run_label += f"_uniform{args.uniform_refinement_levels}"
@@ -543,7 +715,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--run-dir",
         str(run_dir),
     ]
-    if args.adaptive_marked_cycles:
+    if args.dwr_adaptive_cycles:
+        command.extend(
+            [
+                "--dwr-adaptive-cycles",
+                str(args.dwr_adaptive_cycles),
+                "--dwr-marker-policy",
+                args.dwr_marker_policy,
+            ]
+        )
+    elif args.adaptive_marked_cycles:
         command.extend(["--adaptive-marked-cycles", str(args.adaptive_marked_cycles)])
     elif args.uniform_refinement_levels:
         command.extend(
@@ -617,7 +798,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     sampler = _sampler_summary(rows)
-    if args.adaptive_marked_cycles:
+    if args.dwr_adaptive_cycles:
+        qualifier = _qualify_dwr_adaptive
+    elif args.adaptive_marked_cycles:
         qualifier = _qualify_adaptive
     elif args.uniform_refinement_levels:
         qualifier = _qualify_uniform
@@ -647,7 +830,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["pass"] = False
     if qualification["pass"]:
         status = (
-            "actual_r5_adaptive_cycles_pass"
+            "actual_dwr_adaptive_cycles_pass"
+            if args.dwr_adaptive_cycles
+            else "actual_r5_adaptive_cycles_pass"
             if args.adaptive_marked_cycles
             else "actual_uniform_tetra_control_pass"
             if args.uniform_refinement_levels
@@ -657,14 +842,18 @@ def _run_parent(args: argparse.Namespace) -> int:
         status = "formal_not_pass"
     record = {
         "schema_version": (
-            "task035.actual-r5-adaptive-watchdog.v1"
+            "task035.actual-dwr-adaptive-watchdog.v1"
+            if args.dwr_adaptive_cycles
+            else "task035.actual-r5-adaptive-watchdog.v1"
             if args.adaptive_marked_cycles
             else "task035.actual-uniform-tetra-watchdog.v1"
             if args.uniform_refinement_levels
             else "task035.actual-global-r5-watchdog.v1"
         ),
         "benchmark_id": (
-            "task035_target_actual_r5_adaptive_cycles"
+            "task035_target_actual_dwr_adaptive_cycles"
+            if args.dwr_adaptive_cycles
+            else "task035_target_actual_r5_adaptive_cycles"
             if args.adaptive_marked_cycles
             else "task035_target_actual_uniform_tetra_control"
             if args.uniform_refinement_levels
@@ -696,14 +885,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         "target_identity": result.get("target_identity") if result else None,
         "coarse": (
             None
-            if args.adaptive_marked_cycles
+            if args.dwr_adaptive_cycles
+            or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
             or not result
             else _compact_solve(result["coarse"])
         ),
         "enriched": (
             None
-            if args.adaptive_marked_cycles
+            if args.dwr_adaptive_cycles
+            or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
             or not result
             else _compact_solve(result["enriched"])
@@ -723,7 +914,28 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stdout_sha256": _sha256(stdout_path),
         },
     }
-    if args.adaptive_marked_cycles:
+    if args.dwr_adaptive_cycles:
+        record.update(
+            {
+                "dwr_marker_policy": result.get("marker_policy"),
+                "marked_cycles_requested": result.get("marked_cycles_requested"),
+                "marked_cycles_completed": result.get("marked_cycles_completed"),
+                "fixed_observable_reference": result.get("fixed_observable_reference"),
+                "initial_mesh_audit": result.get("initial_mesh_audit"),
+                "cycles": [
+                    _compact_dwr_cycle(entry) for entry in result.get("cycles", [])
+                ],
+                "refinements": result.get("refinements"),
+                "observable_error_reductions": result.get(
+                    "observable_error_reductions"
+                ),
+                "all_fixed_reference_error_reductions_positive": result.get(
+                    "all_fixed_reference_error_reductions_positive"
+                ),
+                "internal_p_gap_is_gate": result.get("internal_p_gap_is_gate"),
+            }
+        )
+    elif args.adaptive_marked_cycles:
         record.update(
             {
                 "marked_cycles_requested": result.get("marked_cycles_requested"),

@@ -17,6 +17,33 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                     "2",
                 ]
             )
+    def test_argument_contract_accepts_one_dwr_adaptive_mode(self) -> None:
+        args = _parse_args(
+            [
+                "--mesh-cell-type",
+                "tetrahedron",
+                "--dwr-adaptive-cycles",
+                "1",
+                "--dwr-marker-policy",
+                "R_total",
+            ]
+        )
+        self.assertEqual(args.dwr_adaptive_cycles, 1)
+        self.assertEqual(args.dwr_marker_policy, "R_total")
+
+    def test_argument_contract_rejects_multiple_cycle_modes(self) -> None:
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--mesh-cell-type",
+                    "tetrahedron",
+                    "--adaptive-marked-cycles",
+                    "1",
+                    "--dwr-adaptive-cycles",
+                    "1",
+                ]
+            )
+
 
     def test_positive_record_requires_all_numerical_and_resource_gates(self) -> None:
         args = Namespace(mpi_size=2, theta=0.5, mesh_cell_type="tetrahedron")
