@@ -1,0 +1,53 @@
+{
+  "schema_version": "task035.phase-b-regression-failure.v1",
+  "status": "controlled_stop",
+  "classification": "operator_launch_environment_mismatch",
+  "base_git_sha": "7e5aa23037a3c40a8cd23195e95daab5ea4f209e",
+  "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+  "phase_a_full_regression_gate": "pass",
+  "phase_b_targeted_fixture_tests": "12_passed",
+  "phase_b_focused_suite": "35_passed",
+  "phase_b_component_identity": {
+    "serial": "pass",
+    "mpi2": "pass",
+    "mpi4": "pass"
+  },
+  "aborted_attempt": {
+    "command": ".venv/bin/python -m pytest -q",
+    "result": "launcher_timeout_no_test_conclusion",
+    "duration_seconds": 5
+  },
+  "full_regression_attempt": {
+    "command": ".venv/bin/python -m pytest -q",
+    "required_activation_omitted": "source .venv/bin/activate-myfenics",
+    "result": {
+      "failed": 36,
+      "passed": 453,
+      "skipped": 18,
+      "errors": 17,
+      "duration_seconds": 10.71
+    },
+    "representative_observation": "DOLFINx real-valued array rejected a complex material value",
+    "representative_exception": "TypeError: float() argument must be a string or a real number, not 'complex'"
+  },
+  "activation_evidence": {
+    "entry": ".venv/bin/activate-myfenics",
+    "implementation": "scripts/activate_myfenics_wsl.sh",
+    "sets_complex_petsc_dir": true,
+    "sets_complex_slepc_dir": true,
+    "sets_pythonpath_and_ld_library_path": true,
+    "sets_qualified_activation_marker": true
+  },
+  "interpretation": [
+    "This is not a Task035 fixture failure or Maxwell PDE result.",
+    "The command bypassed the already-qualified complex PETSc/DOLFINx activation contract.",
+    "No threshold was relaxed and no retry was performed after the completed failure."
+  ],
+  "gates": {
+    "phase_b_full_regression_gate": "fail",
+    "phase_c_unlocked": false,
+    "task035_pde_started": false,
+    "heavy_p4_started": false
+  },
+  "next_action": "stop_and_request_explicit_authorization_for_one_correctly_activated_full_pytest"
+}

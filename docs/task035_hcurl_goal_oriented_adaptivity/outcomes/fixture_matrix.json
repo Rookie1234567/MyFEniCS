@@ -1,0 +1,83 @@
+{
+  "schema_version": "task035.fixture-matrix.v1",
+  "status": "fixture_pass",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": false,
+  "target_grating_run": false,
+  "mpi_component_tests": {
+    "1": "pass",
+    "2": "pass",
+    "4": "pass"
+  },
+  "methods": [
+    {
+      "id": "R1",
+      "name": "standard residual/jump",
+      "status": "fixture_pass",
+      "fixtures": [1, 2, 3, 4],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "R2",
+      "name": "frequency-scaled residual",
+      "status": "fixture_pass",
+      "fixtures": [1, 2],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "R3",
+      "name": "recovery H(curl)",
+      "status": "fixture_pass",
+      "fixtures": [3],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "R4",
+      "name": "equilibrated patch estimator",
+      "status": "formula_defined",
+      "fixtures": [3],
+      "decision": "constrained_equilibration_pending"
+    },
+    {
+      "id": "R5",
+      "name": "hierarchical/two-level estimator",
+      "status": "fixture_pass",
+      "fixtures": [2, 3],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "G1",
+      "name": "DWR total R/T/A",
+      "status": "fixture_pass",
+      "fixtures": [2],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "G2",
+      "name": "DWR R00/order amplitudes",
+      "status": "fixture_pass",
+      "fixtures": [2],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "B1",
+      "name": "DtN truncation split",
+      "status": "fixture_pass",
+      "fixtures": [2, 4],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    },
+    {
+      "id": "M1",
+      "name": "internal mode truncation split",
+      "status": "fixture_pass",
+      "fixtures": [4],
+      "decision": "eligible_for_phase_c_low_cost_screen"
+    }
+  ],
+  "limitations": [
+    "analytic/manufactured fixtures only",
+    "R4 constrained equilibration is not implemented",
+    "no production or real-PDE qualification"
+  ]
+}
