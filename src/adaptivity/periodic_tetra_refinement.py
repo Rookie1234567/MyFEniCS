@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from itertools import combinations
+from itertools import combinations, permutations
 from typing import Any
 
 import numpy as np
@@ -42,6 +42,54 @@ def _integer_bounds(cfg: Any, tolerance: float) -> tuple[tuple[int, int], ...]:
 def _id_sha256(global_cell_ids: list[int]) -> str:
     values = np.asarray(sorted(global_cell_ids), dtype="<i8")
     return hashlib.sha256(values.tobytes()).hexdigest()
+
+
+def _canonical_positive_tetra_coordinates(
+    coordinates: np.ndarray,
+    *,
+    tolerance: float,
+) -> tuple[np.ndarray, bool]:
+    """Return the unique geometry-key-minimal positive tetra ordering."""
+
+    points = np.asarray(coordinates, dtype=np.float64)
+    if points.shape != (4, 3):
+        raise ValueError("tetra coordinates must have shape (4, 3)")
+    keys = [
+        tuple(int(value) for value in np.rint(point / tolerance)) for point in points
+    ]
+    if len(set(keys)) != 4:
+        raise ValueError("quantized tetra vertices must be unique")
+    input_determinant = float(
+        np.linalg.det(
+            np.column_stack(
+                (
+                    points[1] - points[0],
+                    points[2] - points[0],
+                    points[3] - points[0],
+                )
+            )
+        )
+    )
+    candidates: list[tuple[tuple[tuple[int, int, int], ...], tuple[int, ...]]] = []
+    for order in permutations(range(4)):
+        ordered = points[np.asarray(order)]
+        determinant = float(
+            np.linalg.det(
+                np.column_stack(
+                    (
+                        ordered[1] - ordered[0],
+                        ordered[2] - ordered[0],
+                        ordered[3] - ordered[0],
+                    )
+                )
+            )
+        )
+        if determinant > 0.0:
+            candidates.append((tuple(keys[index] for index in order), order))
+    if not candidates:
+        raise ValueError("tetra coordinates do not define a positive-volume cell")
+    _, canonical_order = min(candidates)
+    return points[np.asarray(canonical_order)].copy(), input_determinant < 0.0
 
 
 def close_periodic_marked_cells(
@@ -86,8 +134,7 @@ def close_periodic_marked_cells(
                     normalized_key = tuple(
                         component
                         for point in sorted(
-                            tuple(int(value) for value in row)
-                            for row in normalized
+                            tuple(int(value) for value in row) for row in normalized
                         )
                         for component in point
                     )
@@ -128,8 +175,7 @@ def close_periodic_marked_cells(
                     changed = True
     if missing_mates:
         raise RuntimeError(
-            "periodic boundary cell has no translated tetra mate: "
-            f"{missing_mates[:8]}"
+            f"periodic boundary cell has no translated tetra mate: {missing_mates[:8]}"
         )
     initial_keys = [id_to_key[index] for index in sorted(initial)]
     closed_keys = [id_to_key[index] for index in sorted(closed)]
@@ -174,18 +220,11 @@ def _closed_periodic_edge_indices(
         int(edge): canonical_entity_key(msh.geometry.x[indices], tolerance)
         for edge, indices in zip(all_local_edges, edge_geometry, strict=True)
     }
-    initial_local_keys = {
-        local_key_by_edge[int(edge)] for edge in initial_local_edges
-    }
+    initial_local_keys = {local_key_by_edge[int(edge)] for edge in initial_local_edges}
     initial_keys = {
-        key
-        for packet in msh.comm.allgather(initial_local_keys)
-        for key in packet
+        key for packet in msh.comm.allgather(initial_local_keys) for key in packet
     }
-    owned_keys = {
-        local_key_by_edge[int(edge)]
-        for edge in range(edge_map.size_local)
-    }
+    owned_keys = {local_key_by_edge[int(edge)] for edge in range(edge_map.size_local)}
     global_edge_keys = {
         key for packet in msh.comm.allgather(owned_keys) for key in packet
     }
@@ -279,20 +318,10 @@ def _positively_oriented_tetra_copy(
     oriented_cells: list[list[tuple[int, int, int]]] = []
     negative_input_count = 0
     for _, coordinate_values in global_records:
-        coordinates = np.asarray(coordinate_values, dtype=np.float64)
-        determinant = float(
-            np.linalg.det(
-                np.column_stack(
-                    (
-                        coordinates[1] - coordinates[0],
-                        coordinates[2] - coordinates[0],
-                        coordinates[3] - coordinates[0],
-                    )
-                )
-            )
+        coordinates, input_was_negative = _canonical_positive_tetra_coordinates(
+            np.asarray(coordinate_values, dtype=np.float64), tolerance=tolerance
         )
-        if determinant < 0.0:
-            coordinates[[1, 2]] = coordinates[[2, 1]]
+        if input_was_negative:
             negative_input_count += 1
         keys = [
             tuple(int(value) for value in np.rint(point / tolerance))
@@ -308,6 +337,10 @@ def _positively_oriented_tetra_copy(
             if previous is None or value < previous:
                 point_coordinates[key] = value
         oriented_cells.append(keys)
+    connectivity_values = np.asarray(
+        [value for cell in oriented_cells for key in cell for value in key],
+        dtype="<i8",
+    )
     point_keys = sorted(point_coordinates)
     point_index = {key: index for index, key in enumerate(point_keys)}
     points = np.asarray(
@@ -335,6 +368,10 @@ def _positively_oriented_tetra_copy(
         "reconstructed_global_cell_count": len(oriented_cells),
         "coordinate_tolerance": tolerance,
         "target_mpi_size": output_comm.size,
+        "canonical_positive_vertex_ordering": True,
+        "canonical_connectivity_sha256": hashlib.sha256(
+            connectivity_values.tobytes()
+        ).hexdigest(),
     }
 
 
@@ -349,9 +386,7 @@ def refine_periodic_marked_tetra_mesh(
     closure = close_periodic_marked_cells(msh, cfg, marked_global_cell_ids)
     tdim = msh.topology.dim
     cell_map = msh.topology.index_map(tdim)
-    closed_ids = np.asarray(
-        closure["closed_global_cell_ids"], dtype=np.int64
-    )
+    closed_ids = np.asarray(closure["closed_global_cell_ids"], dtype=np.int64)
     local_cells = cell_map.global_to_local(closed_ids)
     owned_cells = np.unique(
         local_cells[(local_cells >= 0) & (local_cells < cell_map.size_local)]
@@ -359,18 +394,12 @@ def refine_periodic_marked_tetra_mesh(
     current_records = [
         record
         for packet in msh.comm.allgather(
-            owned_tetra_cell_geometry(
-                msh, tolerance=mesh_coordinate_tolerance(msh)
-            )
+            owned_tetra_cell_geometry(msh, tolerance=mesh_coordinate_tolerance(msh))
         )
         for record in packet
     ]
-    key_by_global_id = {
-        record.global_index: record.key for record in current_records
-    }
-    closed_keys = {
-        key_by_global_id[int(global_id)] for global_id in closed_ids
-    }
+    key_by_global_id = {record.global_index: record.key for record in current_records}
+    closed_keys = {key_by_global_id[int(global_id)] for global_id in closed_ids}
     serial_mesh, serial_rebuild = _positively_oriented_tetra_copy(
         msh, target_comm=MPI.COMM_SELF
     )
@@ -406,13 +435,9 @@ def refine_periodic_marked_tetra_mesh(
         "mpi_size": msh.comm.size,
         "parent_global_cells": int(cell_map.size_global),
         "refined_global_cells": refined_count,
-        "locally_owned_marked_cells_by_rank": msh.comm.allgather(
-            int(len(owned_cells))
-        ),
+        "locally_owned_marked_cells_by_rank": msh.comm.allgather(int(len(owned_cells))),
         "incident_edge_counts_by_rank": msh.comm.allgather(local_edge_count),
-        "parent_cell_map_entries_by_rank": msh.comm.allgather(
-            int(len(parent_cells))
-        ),
+        "parent_cell_map_entries_by_rank": msh.comm.allgather(int(len(parent_cells))),
         "refinement_execution": "replicated_comm_self_then_distribute",
         "serial_rebuild": serial_rebuild,
         "periodic_closure": closure,

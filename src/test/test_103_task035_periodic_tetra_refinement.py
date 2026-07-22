@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from itertools import permutations
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ import unittest
 import numpy as np
 
 from src.adaptivity.periodic_tetra_refinement import (
+    _canonical_positive_tetra_coordinates,
     close_periodic_marked_cells,
     refine_periodic_marked_tetra_mesh,
 )
@@ -56,6 +58,34 @@ def _canonical_x_min_cell(mesh_data, cfg) -> int:
 
 
 class Task035PeriodicTetraRefinementTests(unittest.TestCase):
+    def test_positive_orientation_is_canonical_across_all_input_orders(self) -> None:
+        coordinates = np.asarray(
+            (
+                (0.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (0.0, 1.0, 0.0),
+                (0.0, 0.0, 1.0),
+            )
+        )
+        outputs = []
+        for order in permutations(range(4)):
+            canonical, _ = _canonical_positive_tetra_coordinates(
+                coordinates[np.asarray(order)], tolerance=1.0e-12
+            )
+            determinant = np.linalg.det(
+                np.column_stack(
+                    (
+                        canonical[1] - canonical[0],
+                        canonical[2] - canonical[0],
+                        canonical[3] - canonical[0],
+                    )
+                )
+            )
+            self.assertGreater(determinant, 0.0)
+            outputs.append(canonical)
+        for output in outputs[1:]:
+            np.testing.assert_array_equal(output, outputs[0])
+
     def test_target_tetra_audit_is_orientation_and_partition_strict(self) -> None:
         cfg, mesh_data = _target_mesh_data()
         audit = audit_periodic_tetra_mesh(
@@ -74,9 +104,7 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         self.assertGreater(
             audit["orientation"]["determinant_quantiles"]["minimum"], 0.0
         )
-        self.assertGreater(
-            audit["shape_quality"]["quantiles"]["minimum"], 0.0
-        )
+        self.assertGreater(audit["shape_quality"]["quantiles"]["minimum"], 0.0)
         self.assertTrue(audit["periodic_x"]["pass"])
         self.assertTrue(audit["periodic_y"]["pass"])
 
@@ -87,9 +115,7 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         self.assertEqual(closure["status"], "pass")
         self.assertEqual(closure["initial_count"], 1)
         self.assertGreater(closure["periodic_mates_added"], 0)
-        refined, report = refine_periodic_marked_tetra_mesh(
-            mesh_data, cfg, marked
-        )
+        refined, report = refine_periodic_marked_tetra_mesh(mesh_data, cfg, marked)
         self.assertEqual(
             closure["closed_geometry_sha256"],
             "2b4fa13e795819392b8243bbda48b7c59fce1c2d593c9122785c5ed24a8a27fd",
@@ -104,6 +130,11 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
             report["orientation_rebuild"]["input_negative_oriented_cell_count"],
             0,
         )
+        for rebuild_name in ("serial_rebuild", "orientation_rebuild"):
+            rebuild = report[rebuild_name]
+            self.assertTrue(rebuild["canonical_positive_vertex_ordering"])
+            self.assertEqual(len(rebuild["canonical_connectivity_sha256"]), 64)
+
         self.assertGreater(report["refined_global_cells"], 180)
         self.assertTrue(report["refined_mesh_audit"]["pass"])
         self.assertEqual(
