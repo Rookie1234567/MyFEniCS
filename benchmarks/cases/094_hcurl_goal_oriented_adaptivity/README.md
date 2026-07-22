@@ -59,10 +59,14 @@ Review V3 已完成 Phase C/D 低成本执行，新增：
 - `records/phase_cd_mpi2.json`：clean-SHA MPI2 C+D record；
 - `records/phase_cd_mpi_identity.json`：compact metric identity；
 - `records/phase_cd_mpi2_initial_volume_measurement_failure.json`：首次伪零体积 measurement failure 历史。
+- `records/actual_global_r5_p2_p3_h10_mpi8.json`：Review V4 clean-SHA、watchdog 保护的
+  target Full3D p2/h10→p3/h10 actual global two-level R5；包含 true residual、official
+  R/T/A、逐 owned cell correction energy、Dörfler hash、资源峰值与 raw artifact SHA-256。
 
 这些 record 是 Task execution evidence，不由 ordinary Phase A checker 读取，也不改变顶部冻结的
-staging 字段。其最终分类是 `phase_cd_complete_controlled_negative`：B3/B4 与 tetra control
-通过，但没有 production estimator/backend，Phase E 未解锁。Case094 仍不是 canonical benchmark；
+staging 字段。Phase C/D 历史分类仍是 `phase_cd_complete_controlled_negative`；Review V4 的
+actual global R5 mechanism 已通过，但 periodic tetra target backend、adaptive cycles 与
+production estimator/backend 尚未资格化。Case094 仍不是 canonical benchmark；
 `config.json`、`expected.json` 和 ordinary checker 的 `phase_b_or_later_results = not_available`
 继续表示“staging ordinary contract 不提供后续正式 benchmark 结果”，不是否认 branch 上存在
 noncanonical task evidence。

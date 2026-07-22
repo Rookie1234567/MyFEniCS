@@ -7,7 +7,8 @@ initial_full_regression = fail_one_document_contract
 contract_fix = pass
 final_phase_a_gate = pass
 phase_b_unlocked = true
-task035_pde_started = false
+task035_target_pde_started = true
+actual_global_two_level_R5 = pass_hexa_control_mpi8
 heavy_p4_started = false
 thresholds_relaxed = false
 ```
@@ -140,3 +141,23 @@ vertex ID 被错误用于 geometry indexing；修复为 `geometry.dofmap[cell]` 
 
 本轮没有运行 Phase A full pytest、环境/MPI/MUMPS/PEP 全量资格化、Task034 artifact 全量 hash、
 Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy case。
+
+## Review V4：actual global R5 首个目标运行
+
+| 检查 | 结果 |
+|---|---:|
+| manufactured actual-R5 serial | 2 passed |
+| manufactured actual-R5 MPI2 | 2 passed per rank |
+| Stage-4 entrypoint + R5 + watchdog targeted | 8 passed |
+| actual-R5 record contract | 3 passed |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+| target p2/p3 h10 MPI8 watchdog | `actual_global_r5_pass` |
+| true residual p2 / p3 | `2.304e-13` / `2.765e-12` |
+| cell-energy closure | `5.106e-16` |
+| process-tree peak / swap | `2.870 GiB` / `0` |
+
+正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog
+观测 8 个 rank，完整进程组 termination policy 已启用，全部 qualification checks 为 true。
+原始 field、timeline、stdout 与 solver outputs 位于 ignored artifact 目录；tracked record 只保存
+轻量指标、路径与 SHA-256。没有重跑 Review V4 已接受的 Phase A/full pytest/Task034 heavy matrix，
+没有放宽 residual、energy、marking 或 resource Gate。

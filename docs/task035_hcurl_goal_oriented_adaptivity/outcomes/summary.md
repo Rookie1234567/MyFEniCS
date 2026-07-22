@@ -10,15 +10,19 @@ phase_c_low_cost_unlocked = true
 phase_c_internal_gate = complete_controlled_negative
 B3_B4 = pass
 phase_d_internal_gate = complete
+execution_mode = continuous_autonomous_research
+actual_global_two_level_R5 = pass_hexa_control
+periodic_tetra_target_pipeline = in_progress
+actual_adaptive_cycles = pending
 production_estimator_selected = false
 production_backend_selected = false
-phase_e_unlocked = false
-heavy_p4_authorized = false
+heavy_p4_authorized = true_by_review_v4_measured_evidence_required
 ```
 
-Task035 已完成 Review V3 授权的 Phase C estimator 与 Phase D mesh-backend bake-off。
-完成 Gate 不等于方法资格化：没有选择 production estimator/backend，没有运行新的目标光栅 PDE、
-adaptive cycle 或 p4/h5 heavy case，Phase E 仍锁定。
+Review V4 已把 Task035 切换为连续自主研究。首个真实目标 `p2/h10 -> p3/h10`
+global two-level R5 已通过 clean-SHA、watchdog、MPI8、true residual、official R/T/A、
+逐 owned cell 非负性与全局能量闭合 Gate。该正结果首先资格化 estimator mechanism；
+它仍在 accepted hexa control 上，还没有选择 production mesh backend 或完成 adaptive cycle。
 
 ## Phase B 证据
 
@@ -46,11 +50,28 @@ adaptive cycle 或 p4/h5 heavy case，Phase E 仍锁定。
 这些值来自解析/制造场在真实 Nédélec 空间中的离散与 UFL quadrature，不是 PDE solve，
 也不是目标 13.5 nm 光栅的正式 R/T/A。
 
-## 下一步约束
+## Review V4：actual global two-level R5
 
-Phase C-low-cost 只允许 estimator bake-off 和低成本 component work。B3/B4 必须在
-Phase D backend 决策或任何 p4/h5 adaptive heavy case 前通过或形成明确
-`controlled_negative`。R4 不阻塞低成本主线，但不得提升为 production estimator。
+| 项目 | measured result |
+|---|---:|
+| target | 13.5 nm、10° grazing、S、Task034 fixed geometry |
+| pair | Full3D p2/h10 → p3/h10，同一 252-cell hexa control |
+| MPI / clean SHA | MPI8 / `307907a1bb5a7a0a08c46ec75881d890fb3d1549` |
+| true residual p2 / p3 | `2.304e-13` / `2.765e-12` |
+| p2 R/T/A_volume | `0.9976471 / 0.00191059 / 0.000442293` |
+| p3 R/T/A_volume | `0.0553985 / 0.4060679 / 0.5385336` |
+| correction energy / norm | `1.0943224e7` / `3308.0544` |
+| cell sum closure | relative error `5.106e-16` |
+| Dörfler theta=0.5 | 99/252 cells；captured `0.501807` |
+| marked hash | `4a4545a59164a813e4b08e47a4be94d652c5df0ee342afba988507e24e9c7e7b` |
+| estimator time | `4.190 s` |
+| watchdog peak / swap | `2.870 GiB` / `0` |
+
+p2 与 p3 的 official observable 差异很大，说明 p2/h10 尚不在可信离散区间；这不是
+adaptive 成功，但正是 actual R5 应识别的强 enrichment signal。下一步把这一 estimator
+接到周期 tetra target pipeline，完成 orientation/tag/periodic closure，然后执行 p2 marked
+cycles 和 cost-matched uniform control。若 tetra 路线通过，再用 p4 或细化解作为独立
+local-error reference 测 correlation/effectivity；当前 dimensionful effectivity 只标记为 proxy。
 
 ## Phase C 目标 artifact screen
 
@@ -83,10 +104,12 @@ topology-to-geometry indexing 产生伪零体积，失败 record 永久保留；
 ```text
 phase_c_internal_gate = complete_controlled_negative
 phase_d_internal_gate = complete
+actual_global_two_level_R5 = pass_hexa_control
+periodic_tetra_target_pipeline = in_progress
+actual_adaptive_cycles = pending
 production_estimator_selected = false
 production_backend_selected = false
 ordinary_default_changed = false
-phase_e_unlocked = false
 ```
 
-Review V3 没有授权 Phase E/F、p4/h5 heavy adaptive 或 ordinary-default change，本轮均未执行。
+Review V4 已授权按 measured evidence 连续推进；ordinary default 与 master merge 仍未改变。
