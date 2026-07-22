@@ -117,14 +117,12 @@ def _nedelec_error(msh: mesh.Mesh) -> float:
 
 def _cell_volumes(msh: mesh.Mesh) -> tuple[np.ndarray, np.ndarray]:
     tdim = msh.topology.dim
-    msh.topology.create_connectivity(tdim, 0)
-    cell_vertices = msh.topology.connectivity(tdim, 0)
     cell_map = msh.topology.index_map(tdim)
     cells = np.arange(cell_map.size_local, dtype=np.int32)
     centers = mesh.compute_midpoints(msh, tdim, cells)
     volumes = np.empty(len(cells), dtype=float)
     for index, cell in enumerate(cells):
-        vertices = msh.geometry.x[cell_vertices.links(int(cell))]
+        vertices = msh.geometry.x[msh.geometry.dofmap[int(cell)]]
         matrix = np.column_stack(
             (
                 vertices[1] - vertices[0],
