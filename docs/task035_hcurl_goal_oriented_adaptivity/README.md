@@ -3,7 +3,7 @@
 ## 当前身份
 
 ```text
-status = phase_a_gate_pass_phase_b_unlocked
+status = phase_b_gate_pass_phase_c_unlocked
 execution_lock_released_by_Task034_final_selective_merge = true
 execution_branch_created_by_codex = true
 base_sha = 5002636852ffb67b4711443da70eb536c303e34e
@@ -74,3 +74,12 @@ MUMPS/PEP microfixture、Task034 compact baseline 与六份必需 ignored artifa
 Phase B 已解锁。仍未启动真实 Task035 PDE 或重型 p4。详见
 [`outcomes/environment_and_base.md`](outcomes/environment_and_base.md) 和
 [`base_manifest.json`](../../benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json)。
+
+## Phase B 状态
+
+R1、R2、R3、R5、G1、G2、B1、M1 的 analytic/manufactured fixture decision 已通过；
+R4 仅完成公式与局部 SPD precursor，保持 `formula_defined`。serial/MPI2/MPI4 component
+identity、Task035 focused suite 和正确 complex activation 下的 full pytest 均通过，
+Phase C 已解锁。没有启动真实 PDE 或 adaptive mesh。详见
+[`outcomes/estimator_definitions.md`](outcomes/estimator_definitions.md) 和
+[`response_v4.md`](response_v4.md)。

@@ -1,0 +1,28 @@
+{
+  "schema_version": "task035.phase-b-regression-recovery.v1",
+  "status": "phase_b_full_regression_gate_pass",
+  "classification": "authorized_correct_activation_recovery",
+  "tested_git_sha": "8c85469a5720573f51b784049de7d25bcbe012f4",
+  "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+  "authorization": "授权使用正确 activation 重跑一次 full pytest",
+  "command": "source .venv/bin/activate-myfenics && pytest -q",
+  "result": {
+    "passed": 506,
+    "skipped": 18,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 248.08
+  },
+  "prior_failure_evidence": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/phase_b_regression_failure.json",
+  "interpretation": [
+    "The prior failure remains preserved as operator launch history.",
+    "The correctly activated complex PETSc/DOLFINx full regression passed.",
+    "No threshold was relaxed and no environment or artifact qualification was repeated."
+  ],
+  "gates": {
+    "phase_b_full_regression_gate": "pass",
+    "phase_c_unlocked": true,
+    "task035_pde_started": false,
+    "heavy_p4_started": false
+  }
+}

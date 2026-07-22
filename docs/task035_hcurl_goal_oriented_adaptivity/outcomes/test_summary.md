@@ -74,3 +74,26 @@ phase_b_unlocked = true
 
 `records/phase_a_regression_failure.json` 继续保存首次失败历史，未删除、覆盖或改写为通过。
 Gate 规则保存证据并停止；Review V1 随后授权局部 staging lifecycle 修正。
+
+## Phase B fixture 与 full regression 恢复
+
+| 检查 | 结果 |
+|---|---:|
+| estimator fixture targeted | 12 passed |
+| Task035 focused suite | 35 passed |
+| serial / MPI2 / MPI4 component identity | pass / pass / pass |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+| 首次错误 launcher full pytest | controlled stop；36 failed, 453 passed, 18 skipped, 17 errors |
+| 正确 sourced complex activation full pytest | 506 passed, 18 skipped in 248.08s |
+
+首次 Phase B full failure 由遗漏 `source .venv/bin/activate-myfenics` 引起，已原样保存到
+`records/phase_b_regression_failure.json`。用户明确授权后，仅用正确 activation 重跑一次；
+恢复记录为 `records/phase_b_regression_recovery.json`。
+
+```text
+phase_b_full_regression_gate = pass
+phase_c_unlocked = true
+task035_pde_started = false
+heavy_p4_started = false
+thresholds_relaxed = false
+```
