@@ -248,6 +248,7 @@ def run_target_global_two_level_r5(
     h_nm: float = 10.0,
     theta: float = 0.5,
     polarization_kind: str = "s",
+    progress_observer=None,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -283,25 +284,35 @@ def run_target_global_two_level_r5(
             unique_output=False,
         )
 
+    def progress(stage: str, status: str) -> None:
+        if progress_observer is not None:
+            progress_observer(stage, status)
+
     started = time.perf_counter()
+    progress("actual_r5_coarse_solve", "begin")
     coarse_summary = run_stage4b_block_grating_3d_case(
         config(int(coarse_degree)),
         out_dir / f"coarse_p{coarse_degree}",
         solution_observer=observer("coarse"),
     )
     _require_official_summary(coarse_summary, "coarse")
+    progress("actual_r5_coarse_solve", "end")
     gc.collect()
+    progress("actual_r5_enriched_solve", "begin")
     enriched_summary = run_stage4b_block_grating_3d_case(
         config(int(enriched_degree)),
         out_dir / f"enriched_p{enriched_degree}",
         solution_observer=observer("enriched"),
     )
     _require_official_summary(enriched_summary, "enriched")
+    progress("actual_r5_enriched_solve", "end")
+    progress("actual_r5_localization", "begin")
     estimate = localize_global_two_level_correction(
         captures["coarse"]["field"],
         captures["enriched"]["field"],
         theta=float(theta),
     )
+    progress("actual_r5_localization", "end")
     observable_names = ("R_total", "T_total", "A_volume_total")
     observable_delta = math.sqrt(
         sum(
