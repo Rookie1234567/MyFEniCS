@@ -31,6 +31,19 @@ class HighOrderTraceLayout:
     quadrilateral_n1curl_dimension: int
 
 
+@dataclass(frozen=True)
+class TetrahedralTraceLayout:
+    """Degree-generic simplex N1curl trace layout."""
+
+    degree: int
+    tetrahedron_dimension: int
+    edge_dofs: int
+    face_interior_dofs: int
+    cell_interior_dofs: int
+    face_trace_dofs: int
+    triangle_n1curl_dimension: int
+
+
 @lru_cache(maxsize=4)
 def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
     """Read and cross-check the p1--p4 Basix entity layout.
@@ -90,6 +103,61 @@ def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
     )
 
 
+@lru_cache(maxsize=4)
+def tetrahedral_trace_layout(degree: int) -> TetrahedralTraceLayout:
+    """Read and cross-check the p1--p4 tetrahedral N1curl entity layout."""
+
+    degree = int(degree)
+    if degree not in {1, 2, 3, 4}:
+        raise ValueError(f"Task035 qualifies tetra N1curl degrees 1--4, got {degree}.")
+    tetrahedron = element("N1curl", "tetrahedron", degree).basix_element
+    triangle = element("N1curl", "triangle", degree).basix_element
+    edge_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[1]}
+    face_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[2]}
+    cell_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[3]}
+    if len(edge_counts) != 1 or len(face_counts) != 1 or len(cell_counts) != 1:
+        raise RuntimeError(
+            "Basix returned a non-uniform tetrahedron N1curl entity layout."
+        )
+    edge_dofs = edge_counts.pop()
+    face_interior_dofs = face_counts.pop()
+    cell_interior_dofs = cell_counts.pop()
+    face_trace_dofs = 3 * edge_dofs + face_interior_dofs
+    expected = {
+        "tetrahedron_dimension": degree * (degree + 2) * (degree + 3) // 2,
+        "edge_dofs": degree,
+        "face_interior_dofs": degree * (degree - 1),
+        "cell_interior_dofs": degree * (degree - 1) * (degree - 2) // 2,
+        "face_trace_dofs": degree * (degree + 2),
+    }
+    observed = {
+        "tetrahedron_dimension": int(tetrahedron.dim),
+        "edge_dofs": int(edge_dofs),
+        "face_interior_dofs": int(face_interior_dofs),
+        "cell_interior_dofs": int(cell_interior_dofs),
+        "face_trace_dofs": int(face_trace_dofs),
+    }
+    if observed != expected:
+        raise RuntimeError(
+            "Basix simplex N1curl semantics changed; refusing to infer a trace layout: "
+            f"observed={observed}, expected={expected}."
+        )
+    if int(triangle.dim) != face_trace_dofs:
+        raise RuntimeError(
+            "The tetrahedron face trace and triangle N1curl degree semantics disagree: "
+            f"3D trace={face_trace_dofs}, 2D dimension={triangle.dim}."
+        )
+    return TetrahedralTraceLayout(
+        degree=degree,
+        tetrahedron_dimension=int(tetrahedron.dim),
+        edge_dofs=int(edge_dofs),
+        face_interior_dofs=int(face_interior_dofs),
+        cell_interior_dofs=int(cell_interior_dofs),
+        face_trace_dofs=int(face_trace_dofs),
+        triangle_n1curl_dimension=int(triangle.dim),
+    )
+
+
 @lru_cache(maxsize=1)
 def quadrilateral_d4_vertex_permutations() -> dict[tuple[int, int, int, int], int]:
     """Return Basix's eight quadrilateral orientation permutations.
@@ -143,6 +211,44 @@ def quadrilateral_face_info(vertex_permutation: Iterable[int]) -> int:
         ) from exc
 
 
+@lru_cache(maxsize=1)
+def triangle_s3_vertex_permutations() -> dict[tuple[int, int, int], int]:
+    """Return Basix's six triangle orientation permutations."""
+
+    p1 = basix.create_element(
+        ElementFamily.P,
+        CellType.tetrahedron,
+        1,
+        LagrangeVariant.equispaced,
+    )
+    reference = np.asarray(p1.entity_closure_dofs[2][0], dtype=np.int32)
+    if reference.shape != (3,):
+        raise RuntimeError(f"Expected three P1 triangle closure dofs, got {reference}.")
+    mapping: dict[tuple[int, int, int], int] = {}
+    for face_info in range(6):
+        permuted = reference.copy()
+        p1.permute_subentity_closure(permuted, face_info, CellType.triangle)
+        local_permutation = tuple(
+            int(np.where(reference == value)[0][0]) for value in permuted
+        )
+        if local_permutation in mapping:
+            raise RuntimeError("Basix returned duplicate triangle S3 permutations.")
+        mapping[local_permutation] = face_info  # type: ignore[index]
+    if len(mapping) != 6:
+        raise RuntimeError(f"Expected six triangle S3 permutations, got {len(mapping)}.")
+    return mapping
+
+
+def triangle_face_info(vertex_permutation: Iterable[int]) -> int:
+    permutation = tuple(int(value) for value in vertex_permutation)
+    if len(permutation) != 3 or sorted(permutation) != [0, 1, 2]:
+        raise ValueError(f"Expected a triangle vertex permutation, got {permutation}.")
+    try:
+        return triangle_s3_vertex_permutations()[permutation]  # type: ignore[index]
+    except KeyError as exc:  # pragma: no cover - every S3 permutation is valid
+        raise ValueError(f"Permutation {permutation} is not a triangle symmetry.") from exc
+
+
 @lru_cache(maxsize=4)
 def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     high_order_trace_layout(degree)
@@ -157,12 +263,36 @@ def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.nda
     return interval, quadrilateral[0], quadrilateral[1]
 
 
+@lru_cache(maxsize=4)
+def _tetrahedral_entity_transformations(
+    degree: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    tetrahedral_trace_layout(degree)
+    tetrahedron = element("N1curl", "tetrahedron", int(degree)).basix_element
+    transformations = tetrahedron.entity_transformations()
+    interval = np.asarray(transformations["interval"][0], dtype=np.float64)
+    triangle = np.asarray(transformations["triangle"], dtype=np.float64)
+    if triangle.shape[0] != 2:
+        raise RuntimeError(
+            "Basix must provide rotation and reflection generators for triangle faces."
+        )
+    return interval, triangle[0], triangle[1]
+
+
 def edge_coefficient_transform(
-    degree: int, *, reversed_orientation: bool
+    degree: int,
+    *,
+    reversed_orientation: bool,
+    cell_type: str = "hexahedron",
 ) -> np.ndarray:
     """Map canonical master edge coefficients into slave coefficient ordering."""
 
-    interval, _rotation, _reflection = _entity_transformations(int(degree))
+    if cell_type == "tetrahedron":
+        interval, _rotation, _reflection = _tetrahedral_entity_transformations(
+            int(degree)
+        )
+    else:
+        interval, _rotation, _reflection = _entity_transformations(int(degree))
     if not reversed_orientation:
         return np.eye(interval.shape[0], dtype=np.complex128)
     # Basix T matrices transform basis data.  Coefficients therefore use T^T.
@@ -191,6 +321,34 @@ def face_coefficient_transform(
     face_info = quadrilateral_face_info(vertex_permutation)
     return np.asarray(
         face_basis_transform(int(degree), face_info).T, dtype=np.complex128
+    )
+
+
+def triangle_face_basis_transform(degree: int, face_info: int) -> np.ndarray:
+    """Compose the Basix triangle face basis transform for one S3 orientation."""
+
+    if not 0 <= int(face_info) < 6:
+        raise ValueError(f"Triangle face_info must be in [0, 5], got {face_info}.")
+    _interval, rotation, reflection = _tetrahedral_entity_transformations(
+        int(degree)
+    )
+    transform = np.eye(rotation.shape[0], dtype=np.float64)
+    if int(face_info) & 1:
+        transform = reflection @ transform
+    for _ in range((int(face_info) >> 1) % 3):
+        transform = rotation @ transform
+    return transform
+
+
+def triangle_face_coefficient_transform(
+    degree: int, vertex_permutation: Iterable[int]
+) -> np.ndarray:
+    """Map canonical master triangle-face coefficients into slave ordering."""
+
+    face_info = triangle_face_info(vertex_permutation)
+    return np.asarray(
+        triangle_face_basis_transform(int(degree), face_info).T,
+        dtype=np.complex128,
     )
 
 

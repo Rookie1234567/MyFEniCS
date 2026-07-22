@@ -20,6 +20,8 @@ from .high_order_floquet_trace import (
     edge_coefficient_transform,
     face_coefficient_transform,
     high_order_trace_layout,
+    tetrahedral_trace_layout,
+    triangle_face_coefficient_transform,
 )
 
 
@@ -117,11 +119,13 @@ def _build_entity_dof_map(
     cell_to_entity = msh.topology.connectivity(tdim, entity_dim)
     cell_map = msh.topology.index_map(tdim)
     num_cells = cell_map.size_local + cell_map.num_ghosts
-    local_entity_count = {1: 12, 2: 6}[int(entity_dim)]
     entity_dofs = [
         V.dofmap.dof_layout.entity_dofs(entity_dim, local_entity)
-        for local_entity in range(local_entity_count)
+        for local_entity in range(
+            len(V.element.basix_element.entity_dofs[int(entity_dim)])
+        )
     ]
+    local_entity_count = len(entity_dofs)
 
     records: dict[int, dict[str, object]] = {}
     for cell in range(num_cells):
@@ -129,7 +133,8 @@ def _build_entity_dof_map(
         cell_dofs = V.dofmap.cell_dofs(cell)
         if len(cell_entities) != local_entity_count:
             raise RuntimeError(
-                "Task033 high-order Floquet requires hexahedral entity topology."
+                "Basix and DOLFINx disagree on the local trace entity count: "
+                f"Basix={local_entity_count}, DOLFINx={len(cell_entities)}."
             )
         for local_entity, entity in enumerate(cell_entities):
             reference_dofs = np.asarray(entity_dofs[local_entity], dtype=np.int32)
@@ -232,6 +237,7 @@ def _build_periodic_entity_records(
         )
         record = {
             **dof_record,
+            "cell_type": str(msh.basix_cell()).lower(),
             "midpoint": np.asarray(midpoint, dtype=np.float64),
             "geometry_coords": coords,
         }
@@ -243,9 +249,9 @@ def _build_periodic_entity_records(
                 raise RuntimeError("A periodic edge has a near-zero tangent.")
             record["tangent"] = tangent
         else:
-            if coords.shape[0] != 4:
+            if coords.shape[0] not in {3, 4}:
                 raise RuntimeError(
-                    "Task033 currently requires linear quadrilateral face geometry."
+                    "Periodic faces require linear triangle or quadrilateral geometry."
                 )
             normal = np.cross(coords[1] - coords[0], coords[2] - coords[0])
             record["normal_axis"] = int(np.argmax(np.abs(normal)))
@@ -386,9 +392,16 @@ def _face_vertex_permutation(
     shifted_slave_coords: np.ndarray,
     master_coords: np.ndarray,
     tol: float,
-) -> tuple[int, int, int, int]:
-    if shifted_slave_coords.shape != (4, 3) or master_coords.shape != (4, 3):
-        raise RuntimeError("A high-order quadrilateral pairing needs four vertices.")
+) -> tuple[int, ...]:
+    if (
+        shifted_slave_coords.ndim != 2
+        or shifted_slave_coords.shape != master_coords.shape
+        or shifted_slave_coords.shape[0] not in {3, 4}
+        or shifted_slave_coords.shape[1] != 3
+    ):
+        raise RuntimeError(
+            "A high-order face pairing needs matching triangle or quadrilateral vertices."
+        )
     permutation: list[int] = []
     used: set[int] = set()
     for slave_point in shifted_slave_coords:
@@ -400,7 +413,7 @@ def _face_vertex_permutation(
             )
         used.add(master_index)
         permutation.append(master_index)
-    return tuple(permutation)  # type: ignore[return-value]
+    return tuple(permutation)
 
 
 def _pair_entity_blocks(
@@ -476,7 +489,13 @@ def _pair_entity_blocks(
             if tangent_norm <= 1.0e-30 or abs(tangent_dot) / tangent_norm < 0.99:
                 raise RuntimeError("Periodic edge tangents are not collinear.")
             transform = edge_coefficient_transform(
-                degree, reversed_orientation=tangent_dot < 0.0
+                degree,
+                reversed_orientation=tangent_dot < 0.0,
+                cell_type=(
+                    "tetrahedron"
+                    if "tetrahedron" in str(record.get("cell_type", ""))
+                    else "hexahedron"
+                ),
             )
             entity_kind = "edge"
         else:
@@ -485,7 +504,11 @@ def _pair_entity_blocks(
             )
             master_coords = np.asarray(master["geometry_coords"], dtype=np.float64)
             permutation = _face_vertex_permutation(shifted_coords, master_coords, tol)
-            transform = face_coefficient_transform(degree, permutation)
+            transform = (
+                triangle_face_coefficient_transform(degree, permutation)
+                if len(permutation) == 3
+                else face_coefficient_transform(degree, permutation)
+            )
             entity_kind = "face"
         blocks.append(
             PhaseIndependentConstraintBlock(
@@ -536,11 +559,12 @@ def _topology_key(
         str(dolfinx.__version__),
         str(basix.__version__),
     )
+    cell_kind = "tetra-s3" if "tetrahedron" in str(msh.basix_cell()) else "hexa-d4"
     return FloquetTopologyKey(
         mesh_token=mesh_token,
         element_family=str(V.element.basix_element.family),
         degree=int(degree),
-        orientation_schema="basix-0.10-d4-dolfinx-global-v1",
+        orientation_schema=f"basix-0.10-{cell_kind}-dolfinx-global-v1",
     )
 
 
@@ -551,7 +575,12 @@ def _build_trace_topology(
     comm.barrier()
     started = time.perf_counter()
     degree = int(cfg.nedelec_degree)
-    layout = high_order_trace_layout(degree)
+    cell_name = str(V.mesh.basix_cell()).lower()
+    layout = (
+        tetrahedral_trace_layout(degree)
+        if "tetrahedron" in cell_name
+        else high_order_trace_layout(degree)
+    )
     edge_records = _build_periodic_entity_records(
         V,
         mesh_data,
@@ -657,10 +686,14 @@ def build_high_order_constraint_data(
     """
 
     degree = int(cfg.nedelec_degree)
-    layout = high_order_trace_layout(degree)
-    if "hexahedron" not in str(V.mesh.basix_cell()).lower():
+    cell_name = str(V.mesh.basix_cell()).lower()
+    if "tetrahedron" in cell_name:
+        layout = tetrahedral_trace_layout(degree)
+    elif "hexahedron" in cell_name:
+        layout = high_order_trace_layout(degree)
+    else:
         raise NotImplementedError(
-            "Task033 high-order Floquet constraints require hexahedra."
+            "High-order Floquet constraints support tetrahedra and hexahedra."
         )
     if int(V.element.basix_element.degree) != degree:
         raise RuntimeError("Config and function-space N1curl degrees disagree.")

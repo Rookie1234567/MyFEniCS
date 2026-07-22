@@ -480,6 +480,68 @@ def _structured_hexa_cell_vertices(cell_id: int, nx: int, ny: int, node) -> list
     ]
 
 
+def _structured_tet_mesh_from_axes(
+    msh_comm: MPI.Intracomm,
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    z_values: np.ndarray,
+) -> mesh.Mesh:
+    """Split matching tensor boxes into periodic-compatible tetrahedra."""
+
+    nx = len(x_values) - 1
+    ny = len(y_values) - 1
+    nz = len(z_values) - 1
+    points = np.asarray(
+        [(x, y, z) for z in z_values for y in y_values for x in x_values],
+        dtype=default_real_type,
+    )
+
+    def node(i: int, j: int, k: int) -> int:
+        return k * len(y_values) * len(x_values) + j * len(x_values) + i
+
+    cells: list[list[int]] = []
+    cells_per_layer = nx * ny
+    for cell_id in _rank_cell_ids(nx * ny * nz, msh_comm.rank, msh_comm.size):
+        k = int(cell_id) // cells_per_layer
+        layer_cell = int(cell_id) - k * cells_per_layer
+        j = layer_cell // nx
+        i = layer_cell - j * nx
+        v000 = node(i, j, k)
+        v100 = node(i + 1, j, k)
+        v010 = node(i, j + 1, k)
+        v110 = node(i + 1, j + 1, k)
+        v001 = node(i, j, k + 1)
+        v101 = node(i + 1, j, k + 1)
+        v011 = node(i, j + 1, k + 1)
+        v111 = node(i + 1, j + 1, k + 1)
+        cells.extend(
+            [
+                [v000, v100, v110, v111],
+                [v000, v110, v010, v111],
+                [v000, v010, v011, v111],
+                [v000, v011, v001, v111],
+                [v000, v001, v101, v111],
+                [v000, v101, v100, v111],
+            ]
+        )
+    coordinate_element = element(
+        "Lagrange",
+        "tetrahedron",
+        1,
+        shape=(3,),
+        dtype=default_real_type,
+    )
+    domain = ufl.Mesh(coordinate_element)
+    partitioner = mesh.create_cell_partitioner(mesh.GhostMode.shared_facet)
+    return mesh.create_mesh(
+        msh_comm,
+        np.asarray(cells, dtype=np.int64),
+        domain,
+        points,
+        partitioner=partitioner,
+    )
+
+
 def _structured_tet_mesh(msh_comm: MPI.Intracomm, cfg: SimulationConfig3D) -> mesh.Mesh:
     """Create a structured tet mesh with z breaks at Stage-2 material planes.
 
@@ -584,14 +646,16 @@ def _grid_contains(grid: np.ndarray, value: float, tol: float) -> bool:
 
 
 def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
-    """Validate Stage-4 assumptions before building uniform or fitted hexa axes."""
+    """Validate Stage-4 assumptions before building fitted tensor axes."""
     if cfg.geometry_kind != "rectangular_block_grating":
         return
-    if cfg.mesh_cell_type_resolved != "hexahedron":
-        raise ValueError("stage4_block_grating requires a hexahedron mesh for explicit edge Floquet constraints.")
+    if cfg.mesh_cell_type_resolved not in {"hexahedron", "tetrahedron"}:
+        raise ValueError(
+            "stage4_block_grating requires a tetrahedron or hexahedron mesh."
+        )
     if int(cfg.nedelec_degree) not in {1, 2, 3, 4}:
         raise NotImplementedError(
-            "Task033 Stage-4 hexahedral Floquet supports N1curl degree 1 through 4. "
+            "Stage-4 Floquet supports N1curl degree 1 through 4. "
             f"Requested degree={cfg.nedelec_degree}; higher degrees remain fail-closed."
         )
     if cfg.scattering_background.lower() != "layered":
@@ -617,7 +681,13 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     comm = MPI.COMM_WORLD
     mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
     hexa_axis_plan: HexaAxisPlan | None = None
-    if mesh_cell_type_resolved == "hexahedron":
+    if cfg.geometry_kind == "rectangular_block_grating" and (
+        mesh_cell_type_resolved in {"hexahedron", "tetrahedron"}
+    ):
+        hexa_axis_plan = _stage4_axis_plan(cfg, comm.size)
+        mesh_cells_resolved = hexa_axis_plan.mesh_cells_resolved
+        z_alignment_warnings = []
+    elif mesh_cell_type_resolved == "hexahedron":
         if cfg.geometry_kind == "rectangular_block_grating":
             hexa_axis_plan = _stage4_axis_plan(cfg, comm.size)
             mesh_cells_resolved = hexa_axis_plan.mesh_cells_resolved
@@ -681,6 +751,28 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
                 note_lines.append(f"local_refinement_regions = {hexa_axis_plan.local_refinement_regions}")
             note_lines.extend(f"WARNING: {message}" for message in z_alignment_warnings)
             (out_dir / "mesh_3d_partition_note.txt").write_text("\n".join(note_lines) + "\n", encoding="utf-8")
+    elif (
+        mesh_cell_type_resolved == "tetrahedron"
+        and cfg.geometry_kind == "rectangular_block_grating"
+    ):
+        assert hexa_axis_plan is not None
+        msh = _structured_tet_mesh_from_axes(
+            comm,
+            hexa_axis_plan.x_values,
+            hexa_axis_plan.y_values,
+            hexa_axis_plan.z_values,
+        )
+        if comm.rank == 0:
+            (out_dir / "mesh_3d_partition_note.txt").write_text(
+                "Using matching tensor axes split into six conforming tetrahedra per box.\n"
+                "Opposite x/y faces use translated-identical triangle patterns.\n"
+                "Stage-4 material planes are exact mesh facets.\n"
+                f"mesh_spacing_mode_resolved = {hexa_axis_plan.mesh_spacing_mode_resolved}\n"
+                f"mesh_cells_resolved = {mesh_cells_resolved}\n"
+                f"axis_cell_stats = {hexa_axis_plan.axis_cell_stats}\n"
+                f"material_plane_alignment = {hexa_axis_plan.material_plane_alignment}\n",
+                encoding="utf-8",
+            )
     elif comm.size > 1:
         points = [
             np.asarray((cfg.x_min, cfg.y_min, cfg.domain_z_min), dtype=np.float64),
