@@ -147,32 +147,41 @@
 
 每项应说明数值行为是否改变、依赖文件、对应测试、fresh PDE evidence 和建议合入顺序。研究负结果可以保留为文档证据，但不得把未资格化研究路径提升为 production default。
 
-## 11. Windows / WSL 执行边界
+## 11. Windows Codex 客户端与 WSL 执行后端
 
 当当前任务指定 WSL/Linux 环境时：
 
-- Codex CLI、Git、Python、MPI 和所有求解命令都必须**从 WSL Ubuntu 终端内部启动**；不得由 Windows `cmd.exe`、PowerShell、Windows Python、Windows Git 或 Windows 版 Codex 通过嵌套 `wsl.exe` 间接驱动长时间测试/PDE。
-- 仓库必须位于 WSL Linux 文件系统（优先 `/home/...`），不得在 `/mnt/c`、`/mnt/d` 或 Windows 网络映射目录执行正式测试和 MPI/PDE。
-- 启动时检查 `uname -r`、`pwd -P`、`command -v codex python git mpiexec`。任一关键入口位于 `/mnt/c`、`/mnt/d`、Windows `AppData`，或以 `.exe` 结尾时，停止并报告环境混用。
-- 不得从 WSL 内再次调用 `wsl.exe`，也不得从 Windows 外层给 WSL 内的 pytest/MPI/PDE 设置未经论证的短超时。
-- 每个工具调用可能启动新的非交互 shell；不得假设上一次 `source`、`cd`、`ssh-agent` 或环境变量会自动延续到下一次调用。
+- 用户可以并将继续使用 **Windows Codex 客户端**作为唯一交互界面；不得要求用户改用 Linux Codex CLI、VS Code、浏览器或其他前端。
+- Windows Codex 客户端可以通过其 WSL 执行能力，或显式调用 `wsl.exe -d Ubuntu -- bash -lc '...'`，在 WSL 中运行项目命令。Windows 客户端本身是 `.exe` 不构成环境混用。
+- 仓库和重型 artifact 必须位于 WSL Linux 文件系统（优先 `/home/...`），不得在 `/mnt/c`、`/mnt/d` 或 Windows 网络映射目录执行正式测试和 MPI/PDE。
+- 实际执行项目命令的 `python`、`git`、`mpiexec`、PETSc/SLEPc、DOLFINx 必须是 WSL/Linux 版本；不得使用 Windows Python、Windows Git、Windows MPI 或 Windows 仓库副本。
+- Windows Codex 客户端每次启动 WSL 命令时，都应把 `cd`、activation、ABI preflight 和实际命令放在同一个 WSL shell 中；不得依赖上一次命令中的 `source`、`cd`、`ssh-agent` 或环境变量继续有效。
+- 不得从已经位于 WSL 内的 shell 再嵌套调用 `wsl.exe`。
+- 不得从 Windows 外层给正常需要数分钟的 pytest、MPI 或 PDE 设置未经论证的短 timeout。
+- 不得把“用户没有使用 Linux Codex CLI”或“Windows Codex 客户端本身是 Windows 程序”作为任务 blocker。
 
 ## 12. 单一 Python 与资格化 activation
 
 - WSL 任务的仓库级权威入口是 tracked 脚本 `scripts/activate_myfenics_wsl.sh`；本地别名可以调用它，但不得成为唯一、不可审查的入口。
-- 每个依赖 DOLFINx/PETSc/SLEPc/MPI 的命令，必须在**同一个 shell**中完成 `cd`、activation、ABI probe 和实际命令。例如：
+- 从 Windows Codex 客户端执行时，推荐把完整命令封装为：
+
+```powershell
+wsl.exe -d Ubuntu -- bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
+```
+
+- 若命令已经在 WSL shell 中，则使用：
 
 ```bash
 bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && python -m pytest -q ...'
 ```
 
-- 禁止直接使用 `.venv/bin/python -m pytest`、系统 `/usr/bin/python3` 或裸 `pytest` 来替代资格化 activation；直接调用虚拟环境解释器并不会自动设置 complex PETSc/SLEPc、`PYTHONPATH`、`LD_LIBRARY_PATH` 或项目 marker。
+- 禁止直接使用 `.venv/bin/python -m pytest`、系统 `/usr/bin/python3`、Windows Python 或未 activation 的裸 `pytest` 来替代资格化 activation；直接调用虚拟环境解释器并不会自动设置 complex PETSc/SLEPc、`PYTHONPATH`、`LD_LIBRARY_PATH` 或项目 marker。
 - 在任何耗时测试前先运行轻量 ABI preflight，并确认：
   - `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1`；
   - `sys.executable` 位于当前仓库 `.venv`；
   - `PETSc.ScalarType` 为 `numpy.complex128`；
   - `petsc4py`、`slepc4py`、`dolfinx`、`mpi4py` 来自同一 Linux ABI 栈；
-  - PATH 中不存在 Windows Python/MPI/Git 污染。
+  - 实际执行路径中不存在 Windows Python/MPI/Git 污染。
 - preflight 失败时，必须在启动 pytest、MPI 或 PDE 前立即停止；不得先运行整套测试，再用大量 real/complex 错误反推环境问题。
 
 ## 13. 密钥、密码与交互提示
@@ -186,8 +195,8 @@ ssh-add -l
 env GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD
 ```
 
-- 若探针失败，立即停止并向用户给出一段可直接复制的**人工准备命令**，说明将出现哪一种提示以及应输入哪一种凭据；用户准备完成后再继续。
-- `sudo` 提示只由用户在 WSL 终端输入 Ubuntu 账户密码；SSH 提示只由用户输入对应私钥的 passphrase；Codex/ChatGPT 对话中不得粘贴这些内容。
+- 若探针失败，立即停止并向用户给出一段可直接复制的人工准备命令，说明将出现哪一种提示以及应输入哪一种凭据；用户准备完成后再继续。
+- `sudo` 提示只由用户在 WSL Ubuntu 终端输入 Ubuntu 账户密码；SSH 提示只由用户输入对应私钥的 passphrase；Codex/ChatGPT 对话中不得粘贴这些内容。
 - 优先使用 WSL 内的 `ssh-agent` 缓存 Git SSH key passphrase，避免每次 push 重复输入。不得混用 Windows ssh-agent 与 WSL ssh-agent。
 - 若任务不需要安装系统包，不得主动运行 `sudo`。若不需要网络或 push，不得主动触发认证。
 
@@ -208,3 +217,10 @@ env GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD
   4. 只有在阶段 Gate 或最终交付前运行一次 full repository pytest。
 - 已通过且由相同 source SHA、环境 ID、artifact hash 和 ABI 绑定的昂贵 Gate，不得因无关文档/元数据修改重复执行。只有相关输入变化时才重新资格化。
 - 明确、局部、无歧义的文档、schema、scaffold、lint 或元数据错误，应先局部修复并 targeted rerun；不得自动触发环境重装、全量 artifact 校验或重型 PDE。
+
+## 15. 文档收敛
+
+- 当前任务的执行规则优先维护在任务目录的 `AGENTS.md`，审查要求优先维护在最新 `review_report_vN.md`。
+- 用户或 ChatGPT 对尚未执行完的最新 review 作澄清时，应直接合并回该 review；不要为每次措辞修正创建新的 addendum、补充说明或平行权威文件。
+- 临时补充文件的内容一旦并入主 review，应删除临时文件，避免 Codex同时读取多个相互覆盖的执行权威。
+- 只有新增独立任务范围、需要保留不可变历史或主 review 已被后续 response正式回应时，才新建 addendum 或下一版 review。
