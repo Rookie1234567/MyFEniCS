@@ -19,10 +19,11 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             )
 
     def test_positive_record_requires_all_numerical_and_resource_gates(self) -> None:
-        args = Namespace(mpi_size=2, theta=0.5)
+        args = Namespace(mpi_size=2, theta=0.5, mesh_cell_type="tetrahedron")
         solve_summary = {
             "official_result": True,
             "linear_system_relative_residual": 1.0e-12,
+            "mesh_cell_type_actual": "tetrahedron",
         }
         result = {
             "status": "actual_global_r5_pass",

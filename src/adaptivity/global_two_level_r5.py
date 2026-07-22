@@ -248,6 +248,7 @@ def run_target_global_two_level_r5(
     h_nm: float = 10.0,
     theta: float = 0.5,
     polarization_kind: str = "s",
+    mesh_cell_type: str = "hexahedron",
     progress_observer=None,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
@@ -277,6 +278,7 @@ def run_target_global_two_level_r5(
             case_name=f"task035_actual_r5_p{degree}_h{h_nm:g}".replace(".", "p"),
             polarization_kind=polarization_kind,
             custom_polarization=None,
+            mesh_cell_type=mesh_cell_type,
             matrix_diagnostics_assemble_only=False,
             matrix_diagnostics_factorization_only=False,
             full3d_reference_export=False,
@@ -336,7 +338,7 @@ def run_target_global_two_level_r5(
             "grazing_angle_deg": 10.0,
             "polarization": polarization_kind.upper(),
             "geometry": "Task034 fixed rectangular block grating",
-            "mesh_backend": "accepted boundary-fitted conforming hexa control",
+            "mesh_backend": f"boundary-fitted conforming {mesh_cell_type}",
         },
         "coarse": {
             "degree": int(coarse_degree),

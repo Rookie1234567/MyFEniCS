@@ -87,6 +87,7 @@ def _worker(args: argparse.Namespace) -> int:
         h_nm=args.h_nm,
         theta=args.theta,
         polarization_kind=args.polarization_kind,
+        mesh_cell_type=args.mesh_cell_type,
         progress_observer=progress,
     )
     if MPI.COMM_WORLD.rank == 0:
@@ -108,6 +109,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--h-nm", type=float, default=10.0)
     parser.add_argument("--theta", type=float, default=0.5)
     parser.add_argument("--polarization-kind", choices=("s", "p"), default="s")
+    parser.add_argument(
+        "--mesh-cell-type",
+        choices=("hexahedron", "tetrahedron"),
+        default="hexahedron",
+    )
     parser.add_argument("--mpi-size", type=int, default=8)
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
@@ -192,6 +198,7 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "official_result": summary.get("official_result"),
         "mpi_size": summary.get("mpi_size"),
         "num_mesh_cells": summary.get("num_mesh_cells"),
+        "mesh_cell_type_actual": summary.get("mesh_cell_type_actual"),
         "num_nedelec_dofs": summary.get("num_nedelec_dofs"),
         "matrix_stats": summary.get("matrix_stats"),
         "linear_system_relative_residual": summary.get(
@@ -253,6 +260,10 @@ def _qualify(
         "both_official_solves": all(
             summary.get("official_result") is True for summary in summaries
         ),
+        "requested_mesh_backend_used": all(
+            summary.get("mesh_cell_type_actual") == args.mesh_cell_type
+            for summary in summaries
+        ),
         "both_true_residuals_le_1e-9": all(
             isinstance(summary.get("linear_system_relative_residual"), (int, float))
             and float(summary["linear_system_relative_residual"]) <= 1.0e-9
@@ -285,7 +296,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         args.run_dir
         or args.artifact_root
         / (
-            f"p{args.coarse_degree}_p{args.enriched_degree}_h{args.h_nm:g}_"
+            f"{args.mesh_cell_type}_p{args.coarse_degree}_"
+            f"p{args.enriched_degree}_h{args.h_nm:g}_"
             f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
         )
     ).resolve()
@@ -313,6 +325,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         str(args.theta),
         "--polarization-kind",
         args.polarization_kind,
+        "--mesh-cell-type",
+        args.mesh_cell_type,
         "--run-dir",
         str(run_dir),
     ]
