@@ -78,7 +78,22 @@ def _worker(args: argparse.Namespace) -> int:
     def progress(stage: str, status: str) -> None:
         _append_progress(progress_path, stage, status)
 
-    if args.adaptive_marked_cycles:
+    if args.uniform_refinement_levels:
+        from src.adaptivity.target_uniform_tetra_control import (
+            run_target_uniform_tetra_control,
+        )
+
+        result = run_target_uniform_tetra_control(
+            args.run_dir,
+            refinement_levels=args.uniform_refinement_levels,
+            coarse_degree=args.coarse_degree,
+            enriched_degree=args.enriched_degree,
+            initial_h_nm=args.h_nm,
+            theta=args.theta,
+            polarization_kind=args.polarization_kind,
+            progress_observer=progress,
+        )
+    elif args.adaptive_marked_cycles:
         from src.adaptivity.target_r5_adaptive_cycles import (
             run_target_r5_adaptive_cycles,
         )
@@ -132,6 +147,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--mpi-size", type=int, default=8)
     parser.add_argument("--adaptive-marked-cycles", type=int, default=0)
+    parser.add_argument("--uniform-refinement-levels", type=int, default=0)
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -159,9 +175,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--timeout-seconds must be positive.")
     if args.adaptive_marked_cycles < 0:
         parser.error("--adaptive-marked-cycles must be non-negative.")
-    if args.adaptive_marked_cycles and args.mesh_cell_type != "tetrahedron":
+    if args.uniform_refinement_levels < 0:
+        parser.error("--uniform-refinement-levels must be non-negative.")
+    if args.adaptive_marked_cycles and args.uniform_refinement_levels:
         parser.error(
-            "adaptive marked cycles require --mesh-cell-type tetrahedron."
+            "adaptive marked cycles and uniform refinement control are mutually exclusive."
+        )
+    if (
+        args.adaptive_marked_cycles or args.uniform_refinement_levels
+    ) and args.mesh_cell_type != "tetrahedron":
+        parser.error(
+            "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
         )
     return args
 
@@ -184,9 +208,7 @@ def _terminate_process_group(process: subprocess.Popen[str]) -> None:
 def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     def maximum(name: str) -> float | None:
         values = [
-            float(row[name])
-            for row in rows
-            if isinstance(row.get(name), (int, float))
+            float(row[name]) for row in rows if isinstance(row.get(name), (int, float))
         ]
         return max(values) if values else None
 
@@ -245,15 +267,9 @@ def _compact_adaptive_cycle(entry: dict[str, Any]) -> dict[str, Any]:
         "mesh_audit": entry["mesh_audit"],
         "coarse_observables": entry["coarse_observables"],
         "enriched_observables": entry["enriched_observables"],
-        "official_observable_delta_l2": entry[
-            "official_observable_delta_l2"
-        ],
-        "coarse_fixed_reference_error_l2": entry[
-            "coarse_fixed_reference_error_l2"
-        ],
-        "enriched_fixed_reference_error_l2": entry[
-            "enriched_fixed_reference_error_l2"
-        ],
+        "official_observable_delta_l2": entry["official_observable_delta_l2"],
+        "coarse_fixed_reference_error_l2": entry["coarse_fixed_reference_error_l2"],
+        "enriched_fixed_reference_error_l2": entry["enriched_fixed_reference_error_l2"],
         "coarse": _compact_solve(actual["coarse"]),
         "enriched": _compact_solve(actual["enriched"]),
         "R5": actual["R5"],
@@ -379,8 +395,7 @@ def _qualify_adaptive(
         ),
         "all_tetra_meshes": bool(solves)
         and all(
-            summary.get("mesh_cell_type_actual") == "tetrahedron"
-            for summary in solves
+            summary.get("mesh_cell_type_actual") == "tetrahedron" for summary in solves
         ),
         "all_r5_energy_closures_le_1e-10": bool(estimates)
         and all(
@@ -391,6 +406,78 @@ def _qualify_adaptive(
         and all(
             estimate["marking"]["captured_fraction"] >= args.theta
             for estimate in estimates
+        ),
+        "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
+def _qualify_uniform(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    refinements = result.get("refinements") or []
+    pair = result.get("actual_r5_pair") or {}
+    solves = [
+        (pair.get(level) or {}).get("summary") or {} for level in ("coarse", "enriched")
+    ]
+    r5 = pair.get("R5") or {}
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status": result.get("status") == "actual_uniform_tetra_control_pass",
+        "result_pass": result.get("pass") is True,
+        "requested_uniform_levels_completed": (
+            result.get("refinement_levels") == args.uniform_refinement_levels
+            and len(refinements) == args.uniform_refinement_levels
+        ),
+        "all_parent_cells_uniformly_marked": bool(refinements)
+        and all(
+            entry.get("uniform_all_parent_cells_marked") is True
+            for entry in refinements
+        ),
+        "all_refinement_audits_pass": bool(refinements)
+        and all(entry.get("pass") is True for entry in refinements),
+        "final_mesh_audit_pass": (result.get("final_mesh_audit") or {}).get("pass")
+        is True,
+        "fixed_reference_identity": (
+            (result.get("fixed_observable_reference") or {}).get("identity")
+            == "best_available_discrete_reference_for_case093"
+        ),
+        "fixed_reference_hash_bound": (
+            (result.get("fixed_observable_reference") or {}).get("record_sha256")
+            == "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+        ),
+        "both_official_solves": all(
+            summary.get("official_result") is True for summary in solves
+        ),
+        "both_true_residuals_le_1e-9": all(
+            isinstance(summary.get("linear_system_relative_residual"), (int, float))
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+            for summary in solves
+        ),
+        "both_tetra_meshes": all(
+            summary.get("mesh_cell_type_actual") == "tetrahedron" for summary in solves
+        ),
+        "r5_energy_closure_le_1e-10": (
+            (r5.get("correction_energy") or {}).get("relative_closure_error", 1.0)
+            <= 1.0e-10
+        ),
+        "dorfler_target_captured": (
+            (r5.get("marking") or {}).get("captured_fraction", 0.0) >= args.theta
         ),
         "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
     }
@@ -412,7 +499,9 @@ def _run_parent(args: argparse.Namespace) -> int:
     preflight = _memory_snapshot()
     free_bytes = preflight["artifact_filesystem_free_bytes"]
     if free_bytes < 10 * GIB:
-        raise SystemExit("Task035 actual R5 requires at least 10 GiB free artifact space.")
+        raise SystemExit(
+            "Task035 actual R5 requires at least 10 GiB free artifact space."
+        )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_label = (
@@ -422,11 +511,9 @@ def _run_parent(args: argparse.Namespace) -> int:
     )
     if args.adaptive_marked_cycles:
         run_label += f"_adaptive{args.adaptive_marked_cycles}"
-    run_dir = (
-        args.run_dir
-        or args.artifact_root
-        / run_label
-    ).resolve()
+    elif args.uniform_refinement_levels:
+        run_label += f"_uniform{args.uniform_refinement_levels}"
+    run_dir = (args.run_dir or args.artifact_root / run_label).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
     progress_path = run_dir / "progress_3d.jsonl"
@@ -457,8 +544,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         str(run_dir),
     ]
     if args.adaptive_marked_cycles:
+        command.extend(["--adaptive-marked-cycles", str(args.adaptive_marked_cycles)])
+    elif args.uniform_refinement_levels:
         command.extend(
-            ["--adaptive-marked-cycles", str(args.adaptive_marked_cycles)]
+            ["--uniform-refinement-levels", str(args.uniform_refinement_levels)]
         )
     environment = os.environ.copy()
     environment.update(
@@ -528,7 +617,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     sampler = _sampler_summary(rows)
-    qualifier = _qualify_adaptive if args.adaptive_marked_cycles else _qualify
+    if args.adaptive_marked_cycles:
+        qualifier = _qualify_adaptive
+    elif args.uniform_refinement_levels:
+        qualifier = _qualify_uniform
+    else:
+        qualifier = _qualify
     qualification = qualifier(
         result,
         args=args,
@@ -555,6 +649,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         status = (
             "actual_r5_adaptive_cycles_pass"
             if args.adaptive_marked_cycles
+            else "actual_uniform_tetra_control_pass"
+            if args.uniform_refinement_levels
             else "actual_global_r5_pass"
         )
     else:
@@ -563,11 +659,15 @@ def _run_parent(args: argparse.Namespace) -> int:
         "schema_version": (
             "task035.actual-r5-adaptive-watchdog.v1"
             if args.adaptive_marked_cycles
+            else "task035.actual-uniform-tetra-watchdog.v1"
+            if args.uniform_refinement_levels
             else "task035.actual-global-r5-watchdog.v1"
         ),
         "benchmark_id": (
             "task035_target_actual_r5_adaptive_cycles"
             if args.adaptive_marked_cycles
+            else "task035_target_actual_uniform_tetra_control"
+            if args.uniform_refinement_levels
             else "task035_target_actual_global_r5"
         ),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -596,17 +696,19 @@ def _run_parent(args: argparse.Namespace) -> int:
         "target_identity": result.get("target_identity") if result else None,
         "coarse": (
             None
-            if args.adaptive_marked_cycles or not result
+            if args.adaptive_marked_cycles
+            or args.uniform_refinement_levels
+            or not result
             else _compact_solve(result["coarse"])
         ),
         "enriched": (
             None
-            if args.adaptive_marked_cycles or not result
+            if args.adaptive_marked_cycles
+            or args.uniform_refinement_levels
+            or not result
             else _compact_solve(result["enriched"])
         ),
-        "official_observable_delta_l2": result.get(
-            "official_observable_delta_l2"
-        ),
+        "official_observable_delta_l2": result.get("official_observable_delta_l2"),
         "R5": result.get("R5"),
         "elapsed_seconds": result.get("elapsed_seconds"),
         "raw_evidence": {
@@ -629,8 +731,7 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "fixed_observable_reference": result.get("fixed_observable_reference"),
                 "initial_mesh_audit": result.get("initial_mesh_audit"),
                 "cycles": [
-                    _compact_adaptive_cycle(entry)
-                    for entry in result.get("cycles", [])
+                    _compact_adaptive_cycle(entry) for entry in result.get("cycles", [])
                 ],
                 "refinements": result.get("refinements"),
                 "observable_error_reductions": result.get(
@@ -642,13 +743,34 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "internal_p_gap_is_gate": result.get("internal_p_gap_is_gate"),
             }
         )
+    elif args.uniform_refinement_levels:
+        pair = result.get("actual_r5_pair") or {}
+        record.update(
+            {
+                "uniform_refinement_levels": result.get("refinement_levels"),
+                "initial_mesh_audit": result.get("initial_mesh_audit"),
+                "refinements": result.get("refinements"),
+                "final_mesh_audit": result.get("final_mesh_audit"),
+                "fixed_observable_reference": result.get("fixed_observable_reference"),
+                "coarse_observables": result.get("coarse_observables"),
+                "enriched_observables": result.get("enriched_observables"),
+                "coarse_fixed_reference_error_l2": result.get(
+                    "coarse_fixed_reference_error_l2"
+                ),
+                "enriched_fixed_reference_error_l2": result.get(
+                    "enriched_fixed_reference_error_l2"
+                ),
+                "coarse": _compact_solve(pair["coarse"]) if pair else None,
+                "enriched": _compact_solve(pair["enriched"]) if pair else None,
+                "R5": pair.get("R5"),
+            }
+        )
     record_path = args.record or (run_dir / "watchdog_summary.json")
     if not record_path.is_absolute():
         record_path = ROOT / record_path
     record_path.parent.mkdir(parents=True, exist_ok=True)
     record_path.write_text(
-        json.dumps(record, ensure_ascii=False, indent=2, default=_json_default)
-        + "\n",
+        json.dumps(record, ensure_ascii=False, indent=2, default=_json_default) + "\n",
         encoding="utf-8",
     )
     print(
