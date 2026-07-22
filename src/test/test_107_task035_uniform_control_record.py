@@ -35,6 +35,9 @@ P3_P4_DWR_R_THETA03_RECORD = (
 P3_P4_DWR_R_THETA_SCHEDULE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p5_0p15_cycle2_mpi8.json"
 )
+P3_P4_DWR_R_CANONICAL_CONNECTIVITY_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_canonical_connectivity_mpi8.json"
+)
 
 
 class Task035UniformControlRecordTests(unittest.TestCase):
@@ -65,6 +68,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_theta_schedule = json.loads(
             P3_P4_DWR_R_THETA_SCHEDULE_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_canonical_connectivity = json.loads(
+            P3_P4_DWR_R_CANONICAL_CONNECTIVITY_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -665,6 +671,44 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertGreater(
             new_cycle1["enriched_fixed_reference_error_l2"],
             6.0 * old_cycle1["enriched_fixed_reference_error_l2"],
+        )
+
+    def test_canonical_tetra_connectivity_recovers_stable_p4_anchor(self) -> None:
+        record = self.p3_p4_dwr_r_canonical_connectivity
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "8671bf60f81e606385d129dcc6599ba823ac2aa3",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["marked_cycles_completed"], 1)
+        refinement = record["refinements"][0]
+        for rebuild_name in ("serial_rebuild", "orientation_rebuild"):
+            rebuild = refinement[rebuild_name]
+            self.assertTrue(rebuild["canonical_positive_vertex_ordering"])
+            self.assertEqual(len(rebuild["canonical_connectivity_sha256"]), 64)
+        final = record["cycles"][-1]
+        self.assertEqual(
+            final["mesh_audit"]["partition_independent_mesh_sha256"],
+            "68c06aaad8855926afe82989d89faef32420406693d3b29d8836d7b90aace2e8",
+        )
+        self.assertEqual(final["coarse"]["matrix_stats"]["matrix_nnz_used"], 2391697.0)
+        self.assertEqual(
+            final["enriched"]["matrix_stats"]["matrix_nnz_used"], 8572192.0
+        )
+        self.assertAlmostEqual(
+            final["enriched_fixed_reference_error_l2"],
+            0.004600195243301677,
+        )
+        old_stable = self.p3_p4_dwr_r_mpi8["cycles"][-1]
+        self.assertLess(
+            abs(
+                final["enriched_fixed_reference_error_l2"]
+                - old_stable["enriched_fixed_reference_error_l2"]
+            ),
+            1.0e-12,
         )
 
 
