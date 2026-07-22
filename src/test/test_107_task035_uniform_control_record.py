@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 RECORDS = ROOT / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
 UNIFORM_RECORD = RECORDS / "actual_uniform_tetra_level2_p2_p3_mpi2.json"
+UNIFORM_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p2_p3_mpi2.json"
 ADAPTIVE_RECORD = (
     RECORDS / "actual_r5_adaptive_tetra_p2_p3_h50_cycle2_deterministic_mpi2.json"
 )
@@ -17,6 +18,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.uniform = json.loads(UNIFORM_RECORD.read_text(encoding="utf-8"))
+        cls.uniform_level1 = json.loads(
+            UNIFORM_LEVEL1_RECORD.read_text(encoding="utf-8")
+        )
         cls.adaptive = json.loads(ADAPTIVE_RECORD.read_text(encoding="utf-8"))
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -87,6 +91,35 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertLess(time_ratio, 0.6)
         self.assertGreater(p2_error_ratio, 18.0)
         self.assertGreater(p3_error_ratio, 5.0)
+
+    def test_level1_cost_matched_anchor_is_clean_sha_mpi2(self) -> None:
+        record = self.uniform_level1
+        self.assertEqual(record["status"], "actual_uniform_tetra_control_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "75781dda90afad40cba0a7861538d733581a9e53",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["final_mesh_audit"]["global_cell_count"], 1440)
+        self.assertEqual(
+            record["final_mesh_audit"]["partition_independent_mesh_sha256"],
+            "22204e1bdaef3321585f54d111ea1f8d070c0c202931817eb6d5b245a21891af",
+        )
+        self.assertAlmostEqual(
+            record["coarse_fixed_reference_error_l2"],
+            1.0250853958921506,
+        )
+        self.assertAlmostEqual(
+            record["enriched_fixed_reference_error_l2"],
+            0.06761458409703112,
+        )
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"], 2
+        )
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(record["resource_authority"]["memory_authority_gib"], 1.1)
 
 
 if __name__ == "__main__":
