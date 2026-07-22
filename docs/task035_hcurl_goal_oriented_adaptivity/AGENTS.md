@@ -1,38 +1,27 @@
-# Task035 执行规则：Windows Codex 客户端，WSL 计算后端
+# Task035 执行规则：Windows Codex 客户端、WSL 后端、连续自主研究
 
 本文件只作用于 Task035，并在本目录内优先于根 `AGENTS.md` 的通用执行建议。
 
-用户将继续使用 **Windows Codex 客户端本身**与 Codex 对话和下达任务；不要求用户改用 Linux Codex CLI、VS Code、浏览器或其他前端。必须固定的是项目命令的执行后端，而不是对话界面。
+用户继续使用 **Windows Codex 客户端本身**与 Codex 对话和下达任务；不要求用户改用 Linux Codex CLI、VS Code、浏览器或其他前端。项目命令仍在 WSL Ubuntu 中执行。
 
-## 1. 允许的工作方式
+## 1. 执行架构
 
 ```text
 Windows Codex 客户端
-→ 通过客户端的 WSL 执行能力，或显式 wsl.exe 命令
-→ WSL Ubuntu 中的 /home/Projects/MyFEniCS
+→ 客户端 WSL 执行能力或显式 wsl.exe
+→ WSL Ubuntu /home/Projects/MyFEniCS
 → Linux Git/Python/MPI/PETSc/SLEPc/DOLFINx
 ```
 
-Windows Codex 客户端本身是 Windows 程序不构成环境混用，也不得因此停止任务。真正禁止的是用 Windows Python、Windows Git、Windows MPI、Windows 文件副本或 `/mnt/c`、`/mnt/d` 上的仓库执行本项目。
+Windows Codex 客户端本身是 Windows 程序，不构成环境混用，也不得因此停止任务。真正禁止的是用 Windows Python、Windows Git、Windows MPI、Windows 仓库副本或 `/mnt/c`、`/mnt/d` 上的仓库执行本项目。
 
-## 2. WSL 命令合同
-
-每个依赖 DOLFINx、PETSc、SLEPc、MPI 或项目 Git 状态的命令，都必须在同一个 WSL shell 内完成：
-
-```text
-cd
-+ activation
-+ 必要的轻量 ABI preflight
-+ 实际命令
-```
-
-Windows Codex 客户端可使用：
+每个环境敏感命令必须在同一个 WSL shell 中完成：
 
 ```powershell
 wsl.exe -d Ubuntu -- bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && <command>'
 ```
 
-若客户端已经提供原生 WSL shell，则使用等价的：
+若已经位于 WSL shell，则使用：
 
 ```bash
 bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh && <command>'
@@ -42,14 +31,14 @@ bash -lc 'cd /home/Projects/MyFEniCS && source scripts/activate_myfenics_wsl.sh 
 
 - `.venv/bin/python -m pytest`；
 - 未 activation 的裸 `pytest`；
-- `/usr/bin/python3` 直接运行项目测试；
-- Windows `python.exe`、`git.exe` 或 `mpiexec.exe`；
-- 依赖上一次 shell 中已经执行过的 `source` 或 `cd`；
-- 给正常需要数分钟的测试或 PDE 设置 5 秒、30 秒等短 timeout。
+- `/usr/bin/python3` 直接运行项目；
+- Windows `python.exe`、`git.exe`、`mpiexec.exe`；
+- 依赖上一次 shell 的 `source`、`cd` 或环境变量；
+- 给正常需要数分钟的测试或 PDE 设置任意短 timeout。
 
-新的 shell/session 首次执行环境敏感命令时做一次轻量 ABI preflight。只要 source SHA、activation 脚本和 ABI 未改变，同一阶段不重复完整环境资格化。
+新的 shell/session 首次运行时做一次轻量 ABI preflight。只要 source SHA、activation 脚本和 ABI 未改变，不重复完整环境资格化。
 
-## 3. 密码、密钥与人工交互
+## 2. 密码、密钥与人工交互
 
 Codex 不得静默等待密码。执行可能交互的命令前先探测：
 
@@ -59,7 +48,7 @@ ssh-add -l
 env GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD
 ```
 
-探针失败时，停止该操作并给用户一段可直接复制到 WSL Ubuntu 终端的命令：
+探针失败时，只暂停该操作并给用户可复制命令：
 
 ```bash
 sudo -v
@@ -76,108 +65,180 @@ ssh-add ~/.ssh/id_ed25519
 
 若任务不需要系统包，不运行 `sudo`；若不需要网络或 push，不主动触发认证。
 
-## 4. 测试节奏
+## 3. 连续自主研究模式
 
-- 小修改：只运行直接相关的 pure-Python 或单 fixture test；
-- 一个真实 fixture 收口：serial + MPI2，必要时 MPI4；
-- 一个 Phase 收口：Task035 focused suite；
-- full repository pytest：每个审查批次最多一次，只在批次完成或最终交付前运行。
+Task035 不再采用：
 
-Phase A 已接受。只要 source SHA、环境、ABI、baseline descriptor 和 artifact hash 未改变，不得重复：
+```text
+完成一个或两个 Phase
+→ 停止
+→ 等待 ChatGPT 审阅
+```
+
+新的默认模式是：
+
+```text
+持续实现和试验
+→ measured positive 则加深该路线
+→ measured negative 则保存证据并切换路线
+→ 直到形成可信 adaptive solution 或排除所有合理路线
+```
+
+`task.md` 的 Phase A–K 只用于组织范围和证据，不是审批锁。Codex 可以根据 measured evidence 调整顺序、跨 Phase 迭代和返回前一步修正，不需要逐阶段请求授权。
+
+当前最新 `review_report_v4.md` 授权剩余 Task035 研究持续执行，包括：
+
+- actual R1/R5/DWR/recovery/equilibrated estimator；
+- tetra、hexa、hp 或其他可审查 backend；
+- p2/p3/p4 Full3D adaptive cycles；
+- Hybrid、M/DtN split；
+- robust angle/common mesh；
+- heavy cases，只要内部证据和资源 preflight 支持。
+
+## 4. 候选管理
+
+同时保持最多：
+
+```text
+2 条主候选 lane
++ 1 条 control/audit lane
+```
+
+避免无边界的参数和方法组合爆炸。
+
+当前优先顺序为：
+
+1. actual global two-level R5 + periodic tetra refinement；
+2. actual cell/face R1 或 actual DWR + periodic tetra refinement；
+3. cost-matched uniform tetra control。
+
+若出现正信号，可以继续：
+
+- local patch R5；
+- recovery R3；
+- equilibrated R4；
+- global-p/local-hp；
+- p3/p4 heavy；
+- Hybrid adaptive；
+- alternative hexa/octree/prism/pyramid/nonmatching backend。
+
+若路线无正信号，记录 controlled negative 并切换，不等待审阅。
+
+## 5. 正负信号规则
+
+正信号包括：
+
+- indicator 与独立 error proxy 稳定相关；
+- estimator-marked refinement 后 observable 实际改善；
+- 至少两个连续 cycle 正向；
+- 相近成本下优于 uniform refinement；
+- p2 结果可迁移到 p3/p4；
+- Full3D 结果可迁移到 Hybrid；
+- 网格质量、周期闭合、residual、physics、MPI 同时通过。
+
+负信号包括：
+
+- refinement 后目标误差不降或连续反弹；
+- backend 无法满足周期闭合、质量或局部性；
+- 收益被 factor fill、transfer 或 imbalance 抵消；
+- 只能通过放宽 residual/physics Gate 得到“成功”；
+- 合理修正后仍无可复现正信号。
+
+单个 lane 失败只关闭该 lane，不停止整个 Task035。
+
+## 6. Heavy run 与资源规则
+
+Codex 可以自行推进到 p4/h5、Hybrid 和后续 heavy cases，不需要阶段审批，但必须：
+
+- one-heavy-case-at-a-time；
+- 运行前检查 rows/NNZ/memory/swap/disk/OOC；
+- 使用 watchdog 和完整进程组终止；
+- 先运行最低成本可区分实验；
+- 正式 record 绑定 clean committed source SHA；
+- OOM、swap thrashing、磁盘不足或进程异常时保留证据并调整方案；
+- 不把资源终止写成数值成功或方法失败；
+- 不进行无证据的大规模参数遍历。
+
+## 7. 测试节奏
+
+```text
+小改动：targeted unit/fixture test
+一个 lane 收口：serial + MPI2，必要时 MPI4
+数值核心变化：相关 anchor/regression
+重大里程碑或最终交付：full repository pytest
+```
+
+不再要求每个 Phase 或每几个提交运行 full pytest。README、schema、record、lint、链接或 metadata 问题只做 targeted rerun。
+
+Phase A 已接受。只要绑定输入不变，不得重复：
 
 - 环境安装或完整资格化；
 - MPI1/2/4/8、MUMPS/PEP microfixture；
 - Task034 六份 artifact 全量哈希；
-- Task034 p3/h3、p4/h5、M funnel 或 MPI 重型 PDE。
+- Task034 p3/h3、p4/h5、M funnel 或 MPI heavy runs。
 
-README、schema、record、lint 或 metadata 的局部问题直接修复并 targeted rerun，不得因此重新开始整个前置阶段。
+## 8. 持续提交与报告
 
-## 5. 当前科学开发边界
+在以下时机提交并推送，但提交后继续工作：
 
-Phase A 已通过。现有 NumPy 和小矩阵测试保留为：
+- 一个候选实现可运行；
+- 一个 measured experiment 完成；
+- 一个 lane 得到 positive/controlled-negative 决定；
+- 一个 heavy record 完成；
+- 一个重大 bug 修复完成。
 
-```text
-algebraic_precursor_pass
-```
+提交和 push 不是等待点。
 
-不得称为正式 H(curl) finite-element fixture qualification。
-
-Phase B 的最低真实 FE Gate 为：
-
-```text
-B1 real periodic Nedelec/H(curl) fixture pass
-+
-B2 real flat-lossy-layer/official-goal fixture pass
-+
-serial/MPI2 identity
-+
-Task035 focused tests pass
-```
-
-达到后可进入 **Phase C-low-cost estimator bake-off**。
-
-以下项目可与 Phase C-low-cost 并行：
+持续更新现有文件：
 
 ```text
-B3 material-interface/corner fixture
-B4 Hybrid Et/Ht、M/DtN microfixture
-R4 equilibrated estimator research lane
+docs/task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md
+docs/task035_hcurl_goal_oriented_adaptivity/outcomes/test_summary.md
+benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/
 ```
 
-B3/B4 必须在正式完成 Phase D backend 决策或运行任何 p4/h5 adaptive heavy case 前完成，或者形成明确 controlled-negative 决定。
+不要为普通进展创建新的 addendum、平行 review 或大量状态文档。
 
-R2 暂时只记录：
+只有以下情况创建下一份 `response_vN.md`：
+
+1. 已形成研究级或工程级 adaptive success；
+2. 所有合理路线均被排除，需要架构决策；
+3. 出现需要用户处理的硬 blocker；
+4. 用户明确要求总结；
+5. 准备最终 merge。
+
+创建 response 后也不自动停止，除非属于第 2、3、5 类。
+
+## 9. 真正停止条件
+
+只有以下情况停止整个 Task035：
+
+- 需要用户输入密码、SSH passphrase、凭据或系统级人工操作；
+- WSL complex ABI、source/base hash 或 evidence identity 无法解释地不一致；
+- accepted production core 或历史 evidence 被污染；
+- MPI、true residual、official physics、periodic topology 或 mesh orientation 出现系统性错误，继续会制造虚假结论；
+- 内存、swap、磁盘、OOC 或进程状态存在安全风险；
+- 所有合理 estimator/backend/hp/Hybrid 路线均形成可审计负结果；
+- 准备改变 ordinary default；
+- 准备 merge `master` 或结束 Task035。
+
+以下情况不得停止整个任务：
+
+- 单个 estimator、fixture、backend 或 heavy case 失败；
+- 一个明确且可局部修复的 bug；
+- 某个 Phase pass 或 controlled negative；
+- 文档、schema、record、lint 或链接问题；
+- 需要换方法、参数、后端或求解策略。
+
+## 10. 最终边界
+
+Codex以解决自适应问题为目标持续探索，但不得伪造确定性成功。若最终没有路线满足可信成功标准，也必须给出完整的负结果地图和下一架构建议。
+
+以下事项仍需要最终 ChatGPT review 和用户确认：
 
 ```text
-chi = |k|h/p
-resolved / pre-asymptotic diagnostic
+将 research capability 宣称为 production default
+改变 ordinary user-facing default
+把 Task035 分支合并到 master
+删除或改写 controlled-negative/failed evidence
 ```
-
-在没有可审查推导前，不得使用未经证明的缩放修改 R1 marking 权重。
-
-## 6. 自动继续与真正停止条件
-
-满足当前 review 的局部 Gate 后，Codex可在同一分支继续下一低成本步骤，不因明确、局部可修复的问题反复停下等待。
-
-只有以下情况必须停止并报告：
-
-- WSL complex ABI、source SHA 或 baseline hash 不一致；
-- MPI identity、full true residual 或正式物理 Gate 发生系统性失败；
-- 数学定义存在不明确且无法局部修复的问题；
-- 需要启动尚未被 review 授权的目标 p4/h5 heavy case；
-- 需要改变 ordinary default、任务范围或核心数值架构；
-- 内存、swap、磁盘或进程终止 Gate 触发。
-
-单个 estimator、fixture 或 mesh backend lane 失败时，应保留负结果并停止该 lane；只要其他主线仍满足当前 review 的最低 Gate，不得自动停止整个 Task035。
-
-## 7. 文档规则
-
-Task035 的执行规则只维护在本 `AGENTS.md`；当前审查要求只维护在最新 `review_report_vN.md`。不要为普通澄清继续创建新的 addendum 或平行说明文件。需要纠正时，由 ChatGPT直接更新当前 review，并删除已被合并吸收的临时补充文件。
-
-## 8. 两阶段批次审查节奏
-
-除非最新 review 另有规定，Task035 默认采用：
-
-```text
-连续完成两个相邻 Phase
-→ 提交一个 response
-→ 集中等待一次 ChatGPT review
-```
-
-在一个两阶段批次内：
-
-- Phase 之间不因正常的 pass、controlled negative 或局部可修复错误停下来等待 review；
-- 前一 Phase 的内部 Gate 通过后，自动进入下一 Phase；
-- 某个方法 lane 失败只关闭该 lane，不阻塞其他候选；
-- 每个 Phase 运行 focused tests，两个 Phase 完成后只运行一次 full repository pytest；
-- 不得把“批次连续执行”解释为可以跳过 true residual、物理、MPI、网格质量、资源或证据 Gate。
-
-当前批次由最新 Review V3 具体授权为：
-
-```text
-Phase C estimator bake-off
-+
-Phase D mesh-backend bake-off
-```
-
-完成 Phase D 后提交下一份 response 并停止等待集中审查。Phase E adaptive cycles、p4/h5 heavy mainline 和后续阶段不因本条自动获得授权。
