@@ -60,11 +60,22 @@ class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
                 ],
                 1.0e-9,
             )
-        combined = dwr["combined_relative_R_T"]["marking"]
-        self.assertEqual(combined["count"], 49)
+        combined_report = dwr["combined_relative_R_T"]
+        combined = combined_report["marking"]
+        self.assertEqual(combined["count"], 50)
+        self.assertEqual(combined["minimal_count_before_tie_expansion"], 49)
+        self.assertEqual(combined["cutoff_tie_expansion_count"], 1)
+        self.assertEqual(
+            combined["tie_policy"],
+            "include_all_cutoff_contributions_within_relative_1e-10",
+        )
         self.assertEqual(
             combined["global_cell_ids_sha256"],
-            "ad59503356833a4e139962684369ae82f91e8bdaf48d9230bfb8e61a65a7b54b",
+            "82e2d5252d209d66f0aed63ca159620ad088a87594d9016cb447ec0195e2bb47",
+        )
+        self.assertEqual(
+            combined_report["marked_geometry_sha256"],
+            "2e009aedc501bffb9233f89e0b023209eef54edbe23927a9a88e3d8577e920c2",
         )
 
 

@@ -50,19 +50,41 @@ def _global_dorfler_mark(
         raise RuntimeError("owned-cell identifiers are not globally unique.")
     order = np.lexsort((all_ids, -all_values))
     total = float(np.sum(all_values))
+    minimal_count = 0
+    tie_tolerance = 0.0
+    cutoff_normalized_contribution = 0.0
     if total <= TINY:
         marked = np.asarray([], dtype=np.int64)
     else:
         cutoff = float(theta) * total
-        count = int(
+        minimal_count = int(
             np.searchsorted(np.cumsum(all_values[order]), cutoff, side="left")
             + 1
         )
+        count = minimal_count
+        normalized = all_values / total
+        cutoff_normalized_contribution = float(
+            normalized[order[minimal_count - 1]]
+        )
+        tie_tolerance = max(
+            1.0e-10 * abs(cutoff_normalized_contribution),
+            64.0 * np.finfo(np.float64).eps,
+        )
+        while count < len(order) and (
+            cutoff_normalized_contribution - normalized[order[count]]
+            <= tie_tolerance
+        ):
+            count += 1
         marked = np.sort(all_ids[order[:count]])
     digest = hashlib.sha256(marked.astype("<i8", copy=False).tobytes()).hexdigest()
     return marked, {
         "theta": float(theta),
         "count": int(len(marked)),
+        "minimal_count_before_tie_expansion": int(minimal_count),
+        "cutoff_tie_expansion_count": int(len(marked) - minimal_count),
+        "cutoff_normalized_contribution": cutoff_normalized_contribution,
+        "cutoff_tie_absolute_tolerance": tie_tolerance,
+        "tie_policy": "include_all_cutoff_contributions_within_relative_1e-10",
         "fraction": float(len(marked) / max(len(all_ids), 1)),
         "captured_fraction": (
             0.0

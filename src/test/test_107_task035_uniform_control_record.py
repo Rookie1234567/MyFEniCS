@@ -24,6 +24,9 @@ P3_P4_LEVEL1_MPI8_RECORD = (
 P3_P4_DWR_R_MPI8_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_mpi8.json"
 )
+P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
+    RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
+)
 
 
 
@@ -44,6 +47,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_mpi8 = json.loads(
             P3_P4_DWR_R_MPI8_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
+            P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -362,6 +368,81 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             authority["memory_authority_gib"],
             uniform["resource_authority"]["memory_authority_gib"],
         )
+
+    def test_pre_tie_policy_cycle2_preserves_positive_and_drift_evidence(self) -> None:
+        record = self.p3_p4_dwr_r_cycle2_pre_tie
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "9e0483b18d593d644d790d2f4d8d0a7f1009daf0",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["marked_cycles_completed"], 2)
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1268, 7356],
+        )
+        coarse_errors = [
+            cycle["coarse_fixed_reference_error_l2"] for cycle in record["cycles"]
+        ]
+        enriched_errors = [
+            cycle["enriched_fixed_reference_error_l2"]
+            for cycle in record["cycles"]
+        ]
+        self.assertTrue(
+            all(right < left for left, right in zip(coarse_errors, coarse_errors[1:]))
+        )
+        self.assertTrue(
+            all(
+                right < left
+                for left, right in zip(enriched_errors, enriched_errors[1:])
+            )
+        )
+        self.assertAlmostEqual(enriched_errors[-1], 0.0005363437843649089)
+        self.assertLess(
+            enriched_errors[-1],
+            self.uniform["enriched_fixed_reference_error_l2"],
+        )
+        final = record["cycles"][-1]
+        self.assertEqual(final["enriched"]["num_nedelec_dofs"], 315768)
+        self.assertEqual(
+            final["mesh_audit"]["orientation"]["nonpositive_count"], 0
+        )
+        self.assertEqual(
+            final["mesh_audit"]["partition_independent_mesh_sha256"],
+            "5414a0fcf8e3f2186fcf4aa3dff133bf2546b16b68e6e8c7751eb6f03c93f635",
+        )
+        previous_marker = set(
+            self.p3_p4_dwr_r_mpi8["cycles"][1]["DWR"]["goals"]["R_total"][
+                "marked_canonical_cell_ids"
+            ]
+        )
+        repeated_marker = set(
+            record["cycles"][1]["DWR"]["goals"]["R_total"][
+                "marked_canonical_cell_ids"
+            ]
+        )
+        self.assertEqual(len(previous_marker), 215)
+        self.assertEqual(len(repeated_marker), 215)
+        self.assertEqual(len(previous_marker & repeated_marker), 214)
+        self.assertEqual(len(previous_marker ^ repeated_marker), 2)
+        self.assertAlmostEqual(
+            len(previous_marker & repeated_marker)
+            / len(previous_marker | repeated_marker),
+            214 / 216,
+        )
+        for cycle in record["cycles"]:
+            self.assertTrue(cycle["DWR"]["adjoint_qualification"]["pass"])
+            self.assertEqual(
+                cycle["mesh_audit"]["orientation"]["nonpositive_count"], 0
+            )
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertGreater(authority["memory_authority_gib"], 16.0)
+        self.assertLess(authority["memory_authority_gib"], 20.0)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from mpi4py import MPI
 from dolfinx import default_real_type, fem, mesh
 
 from src.adaptivity.global_two_level_r5 import (
+    _global_dorfler_mark,
     localize_global_two_level_correction,
 )
 
@@ -76,6 +77,30 @@ class Task035ActualGlobalR5Tests(unittest.TestCase):
         self.assertEqual(len(marking["global_cell_ids_sha256"]), 64)
         self.assertEqual(
             marking["count"], len(self.record["marked_global_cell_ids"])
+        )
+
+    def test_dorfler_cutoff_ties_are_expanded_deterministically(self) -> None:
+        if MPI.COMM_WORLD.rank == 0:
+            cell_ids = np.asarray([10, 11, 12], dtype=np.int64)
+            contributions = np.asarray(
+                [0.5, 0.25 + 5.0e-13, 0.25 - 5.0e-13],
+                dtype=np.float64,
+            )
+        else:
+            cell_ids = np.asarray([], dtype=np.int64)
+            contributions = np.asarray([], dtype=np.float64)
+        marked, report = _global_dorfler_mark(
+            MPI.COMM_WORLD,
+            cell_ids,
+            contributions,
+            theta=0.75,
+        )
+        self.assertEqual(marked.tolist(), [10, 11, 12])
+        self.assertEqual(report["minimal_count_before_tie_expansion"], 2)
+        self.assertEqual(report["cutoff_tie_expansion_count"], 1)
+        self.assertEqual(
+            report["tie_policy"],
+            "include_all_cutoff_contributions_within_relative_1e-10",
         )
 
 
