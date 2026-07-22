@@ -73,6 +73,22 @@ adaptive 成功，但正是 actual R5 应识别的强 enrichment signal。下一
 cycles 和 cost-matched uniform control。若 tetra 路线通过，再用 p4 或细化解作为独立
 local-error reference 测 correlation/effectivity；当前 dimensionful effectivity 只标记为 proxy。
 
+### Periodic tetra target Gate
+
+| 项目 | measured result |
+|---|---:|
+| pair | boundary-fitted tetra p2/h50 → p3/h50 |
+| MPI / clean SHA | MPI2 / `5f38c4469b8c212e283b1e2b5772c3ee017f8448` |
+| cells / DoF | 180；p2 `1470`，p3 `4011` |
+| true residual p2 / p3 | `9.388e-14` / `9.134e-13` |
+| observable delta L2 | `5.5384e-2` |
+| cell energy closure | `5.810e-16` |
+| Dörfler theta=0.5 | 49/180 cells；captured `0.507945` |
+| watchdog peak / swap | `0.569 GiB` / `0` |
+
+该结果是实际 target Maxwell/DtN PDE，不再只是 tetra manufactured refine control；下一 Gate 是
+periodic-mate closure 后的 estimator-marked refinement 与连续 cycle observable reduction。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |

@@ -154,6 +154,9 @@ Task034 p3/p4/M heavy matrix、新 Task035 PDE、adaptive cycle 或 p4/h5 heavy 
 | target p2/p3 h10 MPI8 watchdog | `actual_global_r5_pass` |
 | true residual p2 / p3 | `2.304e-13` / `2.765e-12` |
 | cell-energy closure | `5.106e-16` |
+| periodic tetra trace/tag/orientation serial + MPI2 | 3 passed per rank |
+| target tetra p2/p3 h50 MPI2 watchdog | `actual_global_r5_pass` |
+| tetra true residual / energy closure | `9.388e-14`, `9.134e-13` / `5.810e-16` |
 | process-tree peak / swap | `2.870 GiB` / `0` |
 
 正式运行绑定 clean SHA `307907a1bb5a7a0a08c46ec75881d890fb3d1549`，watchdog

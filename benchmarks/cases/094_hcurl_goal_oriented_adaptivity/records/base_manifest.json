@@ -69,7 +69,7 @@
       {
         "role": "geometry_implementation",
         "path": "src/geometry/mesh_builder_3d.py",
-        "sha256": "357f393b2778d0b2db41954018cba92a81abf82f7f9445fec9e65f0b8039b123"
+        "sha256": "4d8af1ef7b8639b829bd7916e8354bd2082f23598aa95c31571135476461a330"
       }
     ],
     "theory_documents": [
