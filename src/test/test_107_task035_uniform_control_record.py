@@ -15,6 +15,9 @@ ADAPTIVE_RECORD = (
 DWR_R_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
 )
+P3_P4_LEVEL1_RECORD = (
+    RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
+)
 
 
 
@@ -27,6 +30,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.adaptive = json.loads(ADAPTIVE_RECORD.read_text(encoding="utf-8"))
         cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
+        cls.p3_p4_level1 = json.loads(
+            P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8")
+        )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
         record = self.uniform
@@ -188,6 +194,54 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertGreater(
             dwr_final["enriched_fixed_reference_error_l2"],
             r5_final["enriched_fixed_reference_error_l2"],
+        )
+
+    def test_p3_p4_uniform1_is_a_strong_global_p_signal(self) -> None:
+        record = self.p3_p4_level1
+        self.assertEqual(record["status"], "actual_uniform_tetra_control_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "1f05c380861dd286510d069a8739927bc97dc5fa",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["final_mesh_audit"]["global_cell_count"], 1440)
+        self.assertEqual(
+            record["final_mesh_audit"]["partition_independent_mesh_sha256"],
+            self.uniform_level1["final_mesh_audit"][
+                "partition_independent_mesh_sha256"
+            ],
+        )
+        self.assertAlmostEqual(
+            record["coarse_fixed_reference_error_l2"],
+            self.uniform_level1["enriched_fixed_reference_error_l2"],
+            places=12,
+        )
+        self.assertAlmostEqual(
+            record["enriched_fixed_reference_error_l2"],
+            0.0059771134455638905,
+        )
+        self.assertLess(
+            record["enriched_fixed_reference_error_l2"],
+            0.09 * record["coarse_fixed_reference_error_l2"],
+        )
+        p4_dofs = record["enriched"]["num_nedelec_dofs"]
+        uniform2_p2_dofs = self.uniform["coarse"]["num_nedelec_dofs"]
+        self.assertLess(p4_dofs, uniform2_p2_dofs)
+        self.assertLess(
+            record["enriched_fixed_reference_error_l2"],
+            self.uniform["coarse_fixed_reference_error_l2"],
+        )
+        self.assertLess(
+            record["resource_authority"]["memory_authority_gib"],
+            0.31 * self.uniform["resource_authority"]["memory_authority_gib"],
+        )
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"], 2
+        )
+        self.assertEqual(
+            record["resource_authority"]["max_process_tree_swap_mb"], 0.0
         )
 
 
