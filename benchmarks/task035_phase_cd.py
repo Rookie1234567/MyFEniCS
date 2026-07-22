@@ -65,6 +65,8 @@ def run_phase_cd_suite() -> dict[str, Any]:
     provenance = _provenance()
     phase_c = run_target_artifact_bakeoff()
     components = run_component_fixture_suite()
+    phase_c["B3"] = components["b3"]["status"]
+    phase_c["B4"] = components["b4"]["status"]
     phase_d = run_mesh_backend_bakeoff()
     complete = (
         phase_c["phase_c_internal_gate"] == "complete_controlled_negative"

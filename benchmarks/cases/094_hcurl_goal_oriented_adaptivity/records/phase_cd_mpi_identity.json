@@ -1,0 +1,7 @@
+{
+  "comparison": "compact scalar/metadata identity; wall/RSS/provenance/mpi_size excluded",
+  "failures": [],
+  "pass": true,
+  "schema_version": "task035.phase-cd-mpi-identity.v1",
+  "status": "serial_mpi2_identity_pass"
+}

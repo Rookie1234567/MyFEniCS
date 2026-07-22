@@ -1,0 +1,470 @@
+{
+  "B3_B4": {
+    "b3": {
+      "actual_cell_meshtags_dim": 3,
+      "actual_cell_tags": {
+        "1": 48,
+        "2": 16
+      },
+      "actual_material_interface_facets": 16,
+      "compact_scalar_rows_gathered": 64,
+      "directional_scores": {
+        "x": 0.22537486333955678,
+        "y": 0.2513915501846155,
+        "z": 0.2254691681973878
+      },
+      "enriched_proxy_improves": true,
+      "interface_curl_jump_norm": 2.344259470606957,
+      "local_error_correlation": 0.7390176883090749,
+      "material_tag_fault_detected": true,
+      "material_tag_fault_norm": 4.2539067151217544,
+      "mesh": "4x4x4 conforming hexahedra",
+      "mpi_size": 2,
+      "name": "B3_real_material_interface_corner",
+      "p1_center_error_l2": 0.6190456182725353,
+      "p2_center_error_l2": 0.0031041197904489153,
+      "pde_run": false,
+      "r1_global_norm": 6.00181616554267,
+      "real_fe": true,
+      "selected_direction": "y",
+      "selection_rule": "argmax indicator-weighted coordinate absolute deviation",
+      "status": "component_fixture_pass"
+    },
+    "b4": {
+      "DtN_operator_fault_residual": 0.8775277883365187,
+      "DtN_trace_residual": 0.8727186530529621,
+      "Et_norm": 37.648277808143995,
+      "Ht_impedance_scaled_norm": 6.042982441675285,
+      "M_perturbations": [
+        {
+          "current_M": 120,
+          "max_absolute_total_delta": 1.2033374297004684e-11,
+          "previous_M": 80
+        },
+        {
+          "current_M": 160,
+          "max_absolute_total_delta": 2.4574960122425438e-14,
+          "previous_M": 120
+        }
+      ],
+      "QEP_diagnostic": {
+        "p3_beta_assignment_max_relative_delta": 4.8426845559540727e-14,
+        "p4_beta_assignment_max_relative_delta": 6.718574084938673e-13,
+        "policy": "diagnostic_only_not_an_estimator_marking_term",
+        "status": "passed"
+      },
+      "artifact_bindings": {
+        "benchmarks/artifacts/task034/phase_c/matched_trace_32464ab/task034_matched_trace_aggregate.json": "970e57dc4048be6eef39f1516af708bc1cfbbc13100c8e13dbc78ce85cc8ee1b",
+        "benchmarks/artifacts/task034/phase_f/full3d/p2_h3_full-solve_mpi8_20260719T022046Z/full3d_reference_samples.npz": "2cfd685ae8eff2b08b2ece0eedea0604618811f5d235e7afd34206bd4d49042d",
+        "benchmarks/artifacts/task034/phase_f/records/p2_h3_hybrid_funnel_mpi8_2141788.json": "9c171902661e09ff1968cf6ddcbb8c6ce2078982d3e1c4081001b4b6ab682f24"
+      },
+      "mpi_size": 2,
+      "name": "B4_measured_Hybrid_Et_Ht_M_DtN_microfixture",
+      "new_pde_run": false,
+      "real_target_trace": true,
+      "spatial_perturbation": 0.5576489854950609,
+      "status": "component_fixture_pass"
+    },
+    "mpi_size": 2,
+    "ordinary_default_changed": false,
+    "production_qualified": false,
+    "schema_version": "task035.phase-c-component-fixtures.v1",
+    "status": "B3_B4_pass"
+  },
+  "canonical": false,
+  "mpi_size": 2,
+  "ordinary_default_changed": false,
+  "phase_c": {
+    "B3": "pending_parallel_fixture",
+    "B4": "pending_parallel_fixture",
+    "actual_refinement_evidence": {
+      "actual_pde_run": true,
+      "estimator_marked_refinement": false,
+      "evidence": "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_summary.json",
+      "evidence_sha256": "f1e7dc38e166035b8b8a9574a13538335eb0e65052825e4cbcf6f5a2a5ca3031",
+      "failed_gates": [
+        "middle_plane_e_relative_l2_le_5e-3",
+        "middle_plane_h_relative_l2_le_5e-3",
+        "volume_absorption_full3d_abs_delta_le_1e-5"
+      ],
+      "observable_error_after": 0.023777653262743,
+      "observable_error_before": 3.5770668330710846e-06,
+      "observable_error_reduction_fraction": -6646.248813723935,
+      "physical_gates_pass_after": false,
+      "reason": "Task034 strip/tensor refinement was geometry-driven, not a Task035 marked set",
+      "status": "controlled_negative"
+    },
+    "artifact_bindings": {
+      "p2_h2": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p2_h2_full-solve_mpi8_20260719T030543Z/full3d_reference_samples.npz",
+        "archive_sha256": "9ad52a8bccf988d491e322f6e3813838ee6aa4b691ec686af5b785e1c52f55ab",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p2_h2_full-solve_mpi8_20260719T030543Z/full3d_reference_samples.json",
+        "descriptor_sha256": "5f7d97da6a14fb2a9af521f4803a9cadd04d3cfef1bdc9acdc1d8ec5fa13e72b",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "p2_h3": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p2_h3_full-solve_mpi8_20260719T022046Z/full3d_reference_samples.npz",
+        "archive_sha256": "2cfd685ae8eff2b08b2ece0eedea0604618811f5d235e7afd34206bd4d49042d",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p2_h3_full-solve_mpi8_20260719T022046Z/full3d_reference_samples.json",
+        "descriptor_sha256": "85e7b9b6bc6de01b2fad66975abab9020b3d5c47636974cacd703765ac04c37e",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "p2_h5": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p2_h5_full-solve_mpi8_20260719T011823Z/full3d_reference_samples.npz",
+        "archive_sha256": "062f7c811671dea2ec09deede50585c7352fefa2a1933d857c8966d503b005ea",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p2_h5_full-solve_mpi8_20260719T011823Z/full3d_reference_samples.json",
+        "descriptor_sha256": "77854fdd5367bdb0f816f9bd8bec8410355b58a227cc59fb120fa6e0a3b5d960",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "p3_h10": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p3_h10_full-solve_mpi8_20260719T063149Z/full3d_reference_samples.npz",
+        "archive_sha256": "f4c9bfe92edfc642fa468fe043f307fd40982dc4c0e8403f525d6a8f5360067a",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p3_h10_full-solve_mpi8_20260719T063149Z/full3d_reference_samples.json",
+        "descriptor_sha256": "c8418549c9deda7d42fc1f413e3ec7306ac4da967f46dc47a14f8d4907fd07fa",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "p3_h7p5": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p3_h7.5_full-solve_mpi8_20260719T063508Z/full3d_reference_samples.npz",
+        "archive_sha256": "c8b3171d6e4990fbc83d003bafff0f5510816f3ea3f23ca23f184d819a8af6fd",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p3_h7.5_full-solve_mpi8_20260719T063508Z/full3d_reference_samples.json",
+        "descriptor_sha256": "06b82ff576fd6c350df29edfda8dff33c555b022d89fccd7c4e03fe1157dae8c",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      },
+      "p4_h5": {
+        "archive": "benchmarks/artifacts/task034/phase_f/full3d/p4_h5_full-solve_mpi8_20260719T093000Z/full3d_reference_samples.npz",
+        "archive_sha256": "02e81b35bbf511cc64aeb0e4e31016e44065685c2525ed8c3ef524b594687b15",
+        "descriptor": "benchmarks/artifacts/task034/phase_f/full3d/p4_h5_full-solve_mpi8_20260719T093000Z/full3d_reference_samples.json",
+        "descriptor_sha256": "54dd592e4e71b56142b3611cb9d77ff52b501b9fd9b5b81dcb3c8cf83aedd27b",
+        "source_shape": [
+          5,
+          20,
+          40,
+          3
+        ]
+      }
+    },
+    "convergence_record": {
+      "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json",
+      "physical_identity_sha256": "abb8613b3c0a9f78ce11def2695d2e3b590ba0c37b15534027fe3348345f4551",
+      "sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+    },
+    "estimator_cost": {
+      "process_peak_rss_kib_after": 92732,
+      "process_peak_rss_kib_before": 88080,
+      "wall_seconds": 0.04949740899974131
+    },
+    "mpi_partition_identity": {
+      "count_sum_sumsq": [
+        4000,
+        7998000,
+        21325334000
+      ],
+      "full_field_gather": false,
+      "partition": "global_sample_id_mod_mpi_size"
+    },
+    "mpi_size": 2,
+    "phase_c_internal_gate": "complete_controlled_negative",
+    "phase_d_low_cost_unlocked": true,
+    "points": [
+      {
+        "R1_R5_marked_set_jaccard": 0.0998104864181933,
+        "R1_sampled_strong_residual_proxy": {
+          "local_error_correlation": {
+            "pearson": -0.035609082255079756,
+            "spearman": -0.03591808536988033
+          },
+          "marked_set": {
+            "count": 678,
+            "fraction": 0.1695,
+            "global_sample_ids_sha256": "b708354210ffbb230350b025f2952048adecd846e35bde5324100a2f090a7b22",
+            "theta": 0.5
+          },
+          "norm": 6.996570066379587
+        },
+        "R2_kh_over_p": {
+          "policy": "diagnostic_only_excluded_from_marking",
+          "value": 1.1635528346628863
+        },
+        "R5_discrete_two_level_proxy": {
+          "effectivity_proxy": 0.9085964372215821,
+          "formal_hierarchical_FE_R5": false,
+          "local_error_correlation": {
+            "pearson": 0.9902906891446668,
+            "spearman": 0.99177488129843
+          },
+          "marked_set": {
+            "count": 1063,
+            "fraction": 0.26575,
+            "global_sample_ids_sha256": "a5d83a68220340852122ce7e035963ace7075cb64f6719bd5fef13178e818c5f",
+            "theta": 0.5
+          },
+          "norm": 112.3585950360219
+        },
+        "enriched_point": "p2_h3",
+        "external_DtN_sample_split": {
+          "bottom_sample_plane_l2": 3.0268970281977094,
+          "interior_sample_planes_l2": 5.416753968483116,
+          "top_sample_plane_l2": 3.232439252231846
+        },
+        "observable_error": {
+          "after_enriched": 0.024638822200905436,
+          "before": 0.1964120231286629,
+          "positive_reduction": true,
+          "reduction_fraction": 0.8745554278784381,
+          "reference": "accepted Task034 p4/h5 best-available discrete reference"
+        },
+        "point": "p2_h5",
+        "target_identity": {
+          "geometry": "Task034 fixed rectangular block grating",
+          "grazing_angle_deg": 10.0,
+          "incidence_theta_deg": 80.0,
+          "polarization": "S",
+          "wavelength_nm": 13.5
+        }
+      },
+      {
+        "R1_R5_marked_set_jaccard": 0.13582342954159593,
+        "R1_sampled_strong_residual_proxy": {
+          "local_error_correlation": {
+            "pearson": -0.07683989187106585,
+            "spearman": -0.062223402513962654
+          },
+          "marked_set": {
+            "count": 1114,
+            "fraction": 0.2785,
+            "global_sample_ids_sha256": "efbf757c5ba87ae02721455b4f37097e731c69362fcc86f9d27f58c176afd9fd",
+            "theta": 0.5
+          },
+          "norm": 4.175828192021319
+        },
+        "R2_kh_over_p": {
+          "policy": "diagnostic_only_excluded_from_marking",
+          "value": 0.6981317007977318
+        },
+        "R5_discrete_two_level_proxy": {
+          "effectivity_proxy": 0.8106233976565687,
+          "formal_hierarchical_FE_R5": false,
+          "local_error_correlation": {
+            "pearson": 0.9980997161768831,
+            "spearman": 0.9949494715593418
+          },
+          "marked_set": {
+            "count": 893,
+            "fraction": 0.22325,
+            "global_sample_ids_sha256": "1a9e2d813b1d0000dc70002881a066be79d55dacfc345d0a939d55a1661049d6",
+            "theta": 0.5
+          },
+          "norm": 22.917545600892048
+        },
+        "enriched_point": "p2_h2",
+        "external_DtN_sample_split": {
+          "bottom_sample_plane_l2": 1.9087879927383373,
+          "interior_sample_planes_l2": 3.0910821145077785,
+          "top_sample_plane_l2": 2.0589513955963374
+        },
+        "observable_error": {
+          "after_enriched": 0.004546710547222957,
+          "before": 0.024638822200905436,
+          "positive_reduction": true,
+          "reduction_fraction": 0.8154655888114704,
+          "reference": "accepted Task034 p4/h5 best-available discrete reference"
+        },
+        "point": "p2_h3",
+        "target_identity": {
+          "geometry": "Task034 fixed rectangular block grating",
+          "grazing_angle_deg": 10.0,
+          "incidence_theta_deg": 80.0,
+          "polarization": "S",
+          "wavelength_nm": 13.5
+        }
+      },
+      {
+        "R1_R5_marked_set_jaccard": 0.10353227771010962,
+        "R1_sampled_strong_residual_proxy": {
+          "local_error_correlation": {
+            "pearson": -0.020150025987246196,
+            "spearman": -0.036053995503374715
+          },
+          "marked_set": {
+            "count": 570,
+            "fraction": 0.1425,
+            "global_sample_ids_sha256": "fd123667ff7a72bd879ac893aab885c4e03d943830b34848a984312cbb563ce1",
+            "theta": 0.5
+          },
+          "norm": 8.516398585232881
+        },
+        "R2_kh_over_p": {
+          "policy": "diagnostic_only_excluded_from_marking",
+          "value": 1.5514037795505151
+        },
+        "R5_discrete_two_level_proxy": {
+          "effectivity_proxy": 0.9894009597276772,
+          "formal_hierarchical_FE_R5": false,
+          "local_error_correlation": {
+            "pearson": 0.9892119340476561,
+            "spearman": 0.9836392878524554
+          },
+          "marked_set": {
+            "count": 1242,
+            "fraction": 0.3105,
+            "global_sample_ids_sha256": "aeb1c4af2bfdf9acce2df534be6a16677ab785ccb2a00fcb5dc670710df744f5",
+            "theta": 0.5
+          },
+          "norm": 135.61239631421702
+        },
+        "enriched_point": "p3_h7p5",
+        "external_DtN_sample_split": {
+          "bottom_sample_plane_l2": 3.4915504803896673,
+          "interior_sample_planes_l2": 6.748322839105356,
+          "top_sample_plane_l2": 3.84685052538519
+        },
+        "observable_error": {
+          "after_enriched": 0.014917574891867468,
+          "before": 0.24859131392424752,
+          "positive_reduction": true,
+          "reduction_fraction": 0.9399915682636713,
+          "reference": "accepted Task034 p4/h5 best-available discrete reference"
+        },
+        "point": "p3_h10",
+        "target_identity": {
+          "geometry": "Task034 fixed rectangular block grating",
+          "grazing_angle_deg": 10.0,
+          "incidence_theta_deg": 80.0,
+          "polarization": "S",
+          "wavelength_nm": 13.5
+        }
+      }
+    ],
+    "production_estimator_selected": false,
+    "reason": "sampled R1/R5 proxies rank target artifacts, but no formal hierarchical FE R5 or estimator-marked target refinement is available",
+    "schema_version": "task035.target-artifact-estimator-bakeoff.v1",
+    "status": "controlled_negative_provisional_R1",
+    "target_artifact_screen_pass": true
+  },
+  "phase_d": {
+    "multi_block_conforming_hexa": {
+      "actual_added_cells": 1275,
+      "backend": "multi_block_conforming_hexa_candidate",
+      "base_axis_cells": [
+        10,
+        5,
+        20
+      ],
+      "base_cells": 1000,
+      "candidate_cells": 2275,
+      "conforming": true,
+      "hanging_nodes": false,
+      "ideal_local_added_cells_proxy": 210,
+      "marked_axis_intervals": [
+        3,
+        2,
+        5
+      ],
+      "periodic_axis_cuts_synchronized": true,
+      "reason": "axis cuts propagate through the Cartesian product; no qualified transition-cell or hanging-node constraint implementation exists",
+      "status": "hexa_backend_blocker",
+      "strip_leakage_ratio": 6.071428571428571,
+      "tensor_product_axis_cells": [
+        13,
+        7,
+        25
+      ],
+      "transition_cell_support": false
+    },
+    "ordinary_default_changed": false,
+    "phase_d_internal_gate": "complete",
+    "phase_e_unlocked": false,
+    "production_backend_selected": false,
+    "reason": "tetra control works, but target conforming-hexa locality is blocked and the accepted strip backend failed physical same-error gates",
+    "schema_version": "task035.phase-d-mesh-backend-bakeoff.v1",
+    "status": "phase_d_complete_controlled_negative",
+    "strip_tensor_negative_control": {
+      "actual_pde_run": true,
+      "backend": "Task034_strip_tensor",
+      "evidence": {
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_mechanism_qualification.json": "531737e539eb3b06bc0d538949f6b768e1eb7f3b3f16abdd3a47374a41eb68fb",
+        "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/adaptive_summary.json": "f1e7dc38e166035b8b8a9574a13538335eb0e65052825e4cbcf6f5a2a5ca3031"
+      },
+      "failed_gates": [
+        "middle_plane_e_relative_l2_le_5e-3",
+        "middle_plane_h_relative_l2_le_5e-3",
+        "volume_absorption_full3d_abs_delta_le_1e-5"
+      ],
+      "mechanism_pass": true,
+      "mesh_cells": [
+        17,
+        6,
+        39
+      ],
+      "mesh_elements": 3978,
+      "no_hanging_nodes": true,
+      "periodic_mate_refinement_synchronized": true,
+      "physical_gates_pass": false,
+      "status": "controlled_negative",
+      "stop_reason": "critical_observable_exceeded_same_error_tolerance"
+    },
+    "tetra_marked_refinement_control": {
+      "backend": "tetra_marked_refinement_control",
+      "coarse_Nedelec_interpolation_error": 0.3522704223925382,
+      "coarse_cells": 384,
+      "inside_marked_region_mean_volume": 0.0003255208333333336,
+      "locality_pass": true,
+      "marked_coarse_cells": 48,
+      "minimum_signed_volume_proxy": 0.00032552083333333364,
+      "mpi_size": 2,
+      "observable_proxy_reduction_fraction": 0.21966639404425936,
+      "outside_marked_region_mean_volume": 0.0008513621794871801,
+      "pde_run": false,
+      "real_dolfinx_refine": true,
+      "refined_Nedelec_interpolation_error": 0.2748884489771212,
+      "refined_cells": 1392,
+      "scope": "marked-refinement backend/orientation control; not target Maxwell PDE evidence",
+      "status": "control_pass"
+    }
+  },
+  "phase_e_unlocked": false,
+  "production_backend_selected": false,
+  "production_estimator_selected": false,
+  "provenance": {
+    "git_head_at_run": "8e8c6b89e6964311e6cfc57f2d98a0a862b8d2a8",
+    "petsc_int_dtype": "int32",
+    "petsc_scalar_dtype": "complex128",
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "qualified_activation": "1",
+    "status_porcelain_at_start": "",
+    "tracked_and_nonignored_untracked_clean_at_start": true,
+    "tracked_content_bindings": {
+      "benchmarks/task035_phase_cd.py": "39c22696c0cf7351e6c77d0a019bd2cf31ea9509de735087c4e2f7e6aca82259",
+      "src/validation/task035_component_fixtures.py": "7638f534976dd5bdf76480ba2f53a97b09c9683ce31f17d5dbce5bc3b04dd079",
+      "src/validation/task035_mesh_backend_bakeoff.py": "72b4d1f6eec53b513d5fe113b1c834207a657d9326f8d10782dfa5880d33144b",
+      "src/validation/task035_target_artifact_bakeoff.py": "bd9bd9debd3dabfb3d2be22b215434f452328fceda91bf2080d57212f5b12bbd"
+    }
+  },
+  "schema_version": "task035.phase-cd-closeout.v1",
+  "status": "phase_cd_complete_controlled_negative"
+}
