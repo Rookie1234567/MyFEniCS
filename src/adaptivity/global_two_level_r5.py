@@ -250,6 +250,7 @@ def run_target_global_two_level_r5(
     polarization_kind: str = "s",
     mesh_cell_type: str = "hexahedron",
     progress_observer=None,
+    mesh_data_override=None,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -296,6 +297,7 @@ def run_target_global_two_level_r5(
         config(int(coarse_degree)),
         out_dir / f"coarse_p{coarse_degree}",
         solution_observer=observer("coarse"),
+        mesh_data_override=mesh_data_override,
     )
     _require_official_summary(coarse_summary, "coarse")
     progress("actual_r5_coarse_solve", "end")
@@ -305,6 +307,7 @@ def run_target_global_two_level_r5(
         config(int(enriched_degree)),
         out_dir / f"enriched_p{enriched_degree}",
         solution_observer=observer("enriched"),
+        mesh_data_override=mesh_data_override,
     )
     _require_official_summary(enriched_summary, "enriched")
     progress("actual_r5_enriched_solve", "end")

@@ -14,6 +14,7 @@ def run_stage4b_block_grating_3d_case(
     out_dir: Path,
     *,
     solution_observer=None,
+    mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
 
@@ -39,6 +40,7 @@ def run_stage4b_block_grating_3d_case(
         solve_stage4_dtn_port=True,
         apply_strong_boundary_bc=False,
         solution_observer=solution_observer,
+        mesh_data_override=mesh_data_override,
     )
 
 

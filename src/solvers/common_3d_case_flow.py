@@ -14,7 +14,7 @@ from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import SimulationConfig3D
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
-from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
+from ..geometry.mesh_builder_3d import AirBox3DMesh, build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
@@ -635,6 +635,7 @@ def run_prepared_3d_case_flow(
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
+    mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
 
@@ -643,6 +644,8 @@ def run_prepared_3d_case_flow(
     before entering this flow.  ``solution_observer`` is an explicit research
     hook invoked only after the official solve and postprocess have completed;
     the ordinary solver path leaves it unset.
+    ``mesh_data_override`` is a default-off research hook for solving on an
+    already audited conforming mesh; ordinary callers continue to build a mesh.
     """
 
     if cfg.stage_case != expected_stage_case:
@@ -747,7 +750,18 @@ def run_prepared_3d_case_flow(
         started=started,
         petsc_options=petsc_options,
     )
-    mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    if mesh_data_override is None:
+        mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    else:
+        relation = MPI.Comm.Compare(comm, mesh_data_override.mesh.comm)
+        if relation not in (MPI.IDENT, MPI.CONGRUENT):
+            raise ValueError("mesh_data_override must use the solver communicator")
+        if mesh_data_override.mesh_cell_type_resolved != cfg.mesh_cell_type_resolved:
+            raise ValueError(
+                "mesh_data_override cell type does not match the requested config"
+            )
+        mesh_data = mesh_data_override
+        log("mesh source = explicit audited mesh_data_override")
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
     _write_progress_event(
         out_dir,
