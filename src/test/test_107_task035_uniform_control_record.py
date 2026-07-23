@@ -18,6 +18,9 @@ ADAPTIVE_RECORD = (
     RECORDS / "actual_r5_adaptive_tetra_p2_p3_h50_cycle2_deterministic_mpi2.json"
 )
 DWR_R_RECORD = RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json"
+DWR_R_CYCLE2_CANONICAL_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle2_canonical_contiguous_mpi8.json"
+)
 P3_P4_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
 P3_P4_LEVEL1_MPI8_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
 P3_P4_DWR_R_MPI8_RECORD = (
@@ -61,6 +64,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.adaptive = json.loads(ADAPTIVE_RECORD.read_text(encoding="utf-8"))
         cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
+        cls.dwr_r_cycle2_canonical = json.loads(
+            DWR_R_CYCLE2_CANONICAL_RECORD.read_text(encoding="utf-8")
+        )
         cls.p3_p4_level1 = json.loads(P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8"))
         cls.p3_p4_level1_mpi8 = json.loads(
             P3_P4_LEVEL1_MPI8_RECORD.read_text(encoding="utf-8")
@@ -252,6 +258,64 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertGreater(
             dwr_final["enriched_fixed_reference_error_l2"],
             r5_final["enriched_fixed_reference_error_l2"],
+        )
+
+    def test_p2_p3_cycle2_is_time_positive_but_dof_efficiency_negative(self) -> None:
+        record = self.dwr_r_cycle2_canonical
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "375cfac622ce8e76611bb5b09e5ce7af190856e1",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1276, 7662],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in record["cycles"]],
+            [46, 260, 987],
+        )
+        self.assertEqual(
+            [cycle["enriched_fixed_reference_error_l2"] for cycle in record["cycles"]],
+            [
+                1.1473425924493463,
+                0.17165330581451946,
+                0.014373484111754159,
+            ],
+        )
+        self.assertTrue(record["all_fixed_reference_error_reductions_positive"])
+        final = record["cycles"][-1]
+        self.assertEqual(final["enriched"]["num_nedelec_dofs"], 151518)
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(authority["memory_authority_gib"], 7.4)
+        self.assertLess(
+            record["elapsed_seconds"],
+            0.3 * self.uniform["elapsed_seconds"],
+        )
+        self.assertLess(
+            authority["memory_authority_gib"],
+            self.uniform["resource_authority"]["memory_authority_gib"],
+        )
+
+        level1_dofs = self.uniform_level1["enriched"]["num_nedelec_dofs"]
+        level2_dofs = self.uniform["enriched"]["num_nedelec_dofs"]
+        level1_error = self.uniform_level1["enriched_fixed_reference_error_l2"]
+        level2_error = self.uniform["enriched_fixed_reference_error_l2"]
+        convergence_slope = math.log(level1_error / level2_error) / math.log(
+            level2_dofs / level1_dofs
+        )
+        interpolated_uniform_error = level1_error * (
+            final["enriched"]["num_nedelec_dofs"] / level1_dofs
+        ) ** (-convergence_slope)
+        self.assertGreater(convergence_slope, 1.9)
+        self.assertGreater(
+            final["enriched_fixed_reference_error_l2"],
+            5.0 * interpolated_uniform_error,
         )
 
     def test_p3_p4_uniform1_is_a_strong_global_p_signal(self) -> None:
