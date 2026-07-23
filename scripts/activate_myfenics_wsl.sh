@@ -46,6 +46,11 @@ if [[ ! -d "${TMPDIR}" || ! -w "${TMPDIR}" ]]; then
   echo "Qualified WSL temporary directory ${TMPDIR} is unavailable." >&2
   return 2
 fi
+export MPLCONFIGDIR="${TMPDIR}/myfenics-matplotlib-${UID}"
+if ! mkdir -p -- "${MPLCONFIGDIR}"; then
+  echo "Unable to create WSL Matplotlib cache ${MPLCONFIGDIR}." >&2
+  return 2
+fi
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
