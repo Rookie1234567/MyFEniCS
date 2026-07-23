@@ -54,6 +54,15 @@ HP_RECOVERY_RECORD = (
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
     / "actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8_recovered.json"
 )
+THETA04_AUTHORITY = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / (
+        "actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_"
+        "full_periodic_closure_mpi8.json"
+    )
+)
+THETA04_AUTHORITY_SHA256 = "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468"
 
 
 class Task035CommonMeshAngleSweepTests(unittest.TestCase):
@@ -159,6 +168,35 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         )
         self.assertEqual(evaluation["checks"], record["evaluation"]["checks"])
         self.assertFalse(evaluation["pass"])
+
+    def test_theta04_authority_has_a_sub_half_p6_dof_preflight(self) -> None:
+        payload = THETA04_AUTHORITY.read_bytes()
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), THETA04_AUTHORITY_SHA256)
+        record = json.loads(payload)
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "e2162663fdfea49756c6ddf00f21b20e0372be1d",
+        )
+        self.assertEqual(record["theta_schedule"], [0.4])
+        self.assertEqual(record["cycles"][0]["marker"]["kind"], "R_total")
+        self.assertEqual(record["cycles"][0]["marker"]["marked_count"], 38)
+        final_cycle = record["cycles"][1]
+        cells = final_cycle["mesh_audit"]["global_cell_count"]
+        p4_dofs = final_cycle["coarse"]["num_nedelec_dofs"]
+        p5_dofs = final_cycle["enriched"]["num_nedelec_dofs"]
+        self.assertEqual((cells, p4_dofs, p5_dofs), (1248, 55072, 101210))
+        edge_plus_three_faces = (p4_dofs - 12 * cells) // 4
+        edge_plus_four_faces = (p5_dofs - 30 * cells) // 5
+        faces = edge_plus_four_faces - edge_plus_three_faces
+        edges = edge_plus_three_faces - 3 * faces
+        self.assertEqual((edges, faces), (1834, 2730))
+        p6_dofs = 6 * edges + 30 * faces + 60 * cells
+        self.assertEqual(p6_dofs, 167784)
+        reference_dofs = 339892
+        self.assertLessEqual(p6_dofs, reference_dofs // 2)
+        self.assertGreaterEqual(1.0 - p6_dofs / reference_dofs, 0.5)
 
     def test_replay_authority_rejects_wrong_hash(self) -> None:
         with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
