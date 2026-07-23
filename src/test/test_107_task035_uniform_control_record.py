@@ -41,6 +41,9 @@ P3_P4_DWR_R_MINIMAL_CYCLE2_RECORD = RECORDS / (
 P3_P4_DWR_R_MINIMAL_CYCLE3_FAILURE_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle3_minimal_periodic_closure_mpi8.json"
 )
+P4_P5_DWR_R_MINIMAL_CYCLE2_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p4_p5_h50_cycle2_minimal_periodic_closure_mpi8.json"
+)
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
 )
@@ -103,6 +106,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_minimal_cycle3_failure = json.loads(
             P3_P4_DWR_R_MINIMAL_CYCLE3_FAILURE_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p4_p5_dwr_r_minimal_cycle2 = json.loads(
+            P4_P5_DWR_R_MINIMAL_CYCLE2_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
             P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
@@ -954,6 +960,74 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertEqual(audit["periodic_x"]["missing_at_minimum_count"], 13)
         self.assertEqual(audit["periodic_y"]["missing_at_maximum_count"], 9)
         self.assertEqual(audit["periodic_y"]["missing_at_minimum_count"], 10)
+
+    def test_p4_p5_minimal_cycle2_is_accurate_but_cost_limited(self) -> None:
+        record = self.p4_p5_dwr_r_minimal_cycle2
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "f3b38cc15359e22ae1548ed40b838f14caefaf3e",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["periodic_edge_closure_policy"], "minimal_periodic_mates_only")
+        self.assertEqual(record["marked_cycles_completed"], 2)
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 972, 4344],
+        )
+        self.assertEqual(
+            [cycle["coarse"]["num_nedelec_dofs"] for cycle in record["cycles"]],
+            [8476, 42336, 183528],
+        )
+        self.assertEqual(
+            [cycle["enriched"]["num_nedelec_dofs"] for cycle in record["cycles"]],
+            [15405, 77980, 339850],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in record["cycles"]],
+            [49, 238, 563],
+        )
+        self.assertEqual(
+            [cycle["enriched_fixed_reference_error_l2"] for cycle in record["cycles"]],
+            [
+                0.022032154657776432,
+                0.00715449826860017,
+                0.0002203362518629887,
+            ],
+        )
+        for cycle in record["cycles"]:
+            self.assertLess(cycle["coarse"]["linear_system_relative_residual"], 1.0e-9)
+            self.assertLess(cycle["enriched"]["linear_system_relative_residual"], 1.0e-9)
+            self.assertEqual(cycle["mesh_audit"]["orientation"]["nonpositive_count"], 0)
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertAlmostEqual(authority["memory_authority_gib"], 27.76752471923828)
+        selected_cycle1 = self.p3_p4_dwr_r_mpi8["cycles"][-1]
+        p5_cycle1 = record["cycles"][1]
+        self.assertGreater(
+            p5_cycle1["enriched_fixed_reference_error_l2"],
+            selected_cycle1["enriched_fixed_reference_error_l2"],
+        )
+        self.assertGreater(
+            p5_cycle1["enriched"]["num_nedelec_dofs"],
+            selected_cycle1["enriched"]["num_nedelec_dofs"],
+        )
+        points = {entry["key"]: entry for entry in self.case093["points"]}
+        reference = points["p4_h5"]["full3d"]["official_values"]
+        p4_h7p5 = points["p4_h7p5"]["full3d"]
+        structured_error = math.sqrt(
+            sum(
+                (p4_h7p5["official_values"][name] - reference[name]) ** 2
+                for name in ("R_total", "T_total", "A_volume_total")
+            )
+        )
+        final = record["cycles"][-1]
+        self.assertLess(final["enriched_fixed_reference_error_l2"], structured_error)
+        self.assertGreater(final["enriched"]["num_nedelec_dofs"], 2.2 * p4_h7p5["resource"]["dofs"])
+        self.assertGreater(authority["memory_authority_gib"], 2.0 * p4_h7p5["resource"]["peak_memory_gib"])
 
     def test_theta03_is_a_controlled_negative_cost_screen(self) -> None:
         theta03 = self.p3_p4_dwr_r_theta03

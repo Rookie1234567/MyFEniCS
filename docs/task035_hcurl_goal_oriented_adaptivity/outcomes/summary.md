@@ -227,6 +227,27 @@ Dörfler cutoff near-tie expansion policy 已记录 minimal count、tie expansio
 exact hash 不同。每次正式 record 均绑定其实际 hash，高阶复现只宣称 overlap ≥0.99；
 `tie_stable` record 名称表示 tie policy v1 evidence，不表示 exact repeat hash。
 
+### p4/p5 minimal-closure hp audit
+
+clean SHA `f3b38cc15359e22ae1548ed40b838f14caefaf3e` 将 tetra high-order Floquet
+research capability 从 p4 扩展到 p5；hexa 与 ordinary default 继续 fail-closed 于 p4。serial 与
+MPI8 的 Basix layout、S3 face transform、refined-tetra ownership 和 sparse MPC component Gate 均通过。
+正式 MPI8 `p4 -> p5`、`R_total` DWR、minimal periodic closure 两周期结果为：
+
+| cycle | cells | p4 / p5 DoF | p4 / p5 fixed-ref error | marked cells |
+|---:|---:|---:|---:|---:|
+| 0 | 180 | 8,476 / 15,405 | 0.300154 / 0.0220322 | 49 |
+| 1 | 972 | 42,336 / 77,980 | 0.254695 / 0.00715450 | 238 |
+| 2 | 4,344 | 183,528 / 339,850 | 0.00414856 / 0.000220336 | 563 |
+
+全部 forward/adjoint residual、periodic、orientation、Dörfler、official-result 与 no-swap Gate 通过；
+wall time `778.93 s`，process-tree peak `27.768 GiB`，16 GiB warning 触发但 32 GiB termination 未触发。
+最终 p5 error 比 p3/p4 两周期的 `0.000536345` 低约 59%，证明 global-p 可以避开第三层
+minimal-closure h-refine 的周期拓扑失败并继续提高精度。但第一周期 p5 已同时被当前选择的一周期
+p3/p4 DWR 在 error 与 DoF 上支配；最终点相对 structured p4/h7.5 只进一步降低约三分之一误差，
+却使用约 2.30 倍 DoF 和 2.18 倍内存。因此该结果分类为
+`numerical_positive_cost_limited_hp_audit`，不替代当前一周期 p3/p4 research stop rule。
+
 上述结论只对 Task034 fixed geometry、S、10° grazing 与当前 best-available p4/h5 reference 成立；
 没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
 所以这是 selected research strategy，而不是 ordinary production default。

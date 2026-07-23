@@ -230,6 +230,14 @@ full true residual、adjoint residual、orientation、periodic、memory 和 no-s
 warning 16 GiB 被实测跨过，但 32 GiB termination 未触发；没有降低 residual、marking、资源或
 repeatability 阈值。第二轮保存为“数值通过、工程成本判负”，未继续第三轮。
 
+| p4/p5 hp audit 检查 | 结果 |
+|---|---:|
+| p5 Basix layout/S3 transform serial | 2 passed |
+| p5 refined-tetra sparse MPC MPI8 | 1 passed per rank |
+| related p1--p5 serial regression | 17 passed, 2 skipped |
+| p4/p5 minimal-closure cycle2 MPI8 | pass；27.768 GiB，778.93 s，swap 0 |
+| p4/p5 final p5 error / DoF | `0.000220336` / `339,850`；数值正、成本受限 |
+
 本高阶阶段没有重跑 Task034 p4/h5 reference、M funnel 或既有 MPI heavy matrix；结构化 p4/h10、
 p4/h7.5 与 p4/h5 数字全部从已接受、hash-bound Case093 records 读取。
 
