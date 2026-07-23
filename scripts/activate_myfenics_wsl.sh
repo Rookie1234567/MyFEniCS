@@ -37,6 +37,15 @@ _MYFENICS_VENV_SITE="${VIRTUAL_ENV}/lib/python3.12/site-packages"
 export PYTHONPATH="${_MYFENICS_VENV_SITE}:${PETSC_DIR}/lib/python3/dist-packages:${SLEPC_DIR}/lib/python3/dist-packages:/usr/lib/python3/dist-packages"
 export PATH="${VIRTUAL_ENV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 unset PYTHONHOME
+# Windows Codex may pass TMP/TEMP through as /mnt/c paths.  Keep Python,
+# OpenMPI, PETSc, and test scratch data on the WSL Linux filesystem.
+export TMPDIR=/tmp
+export TMP=/tmp
+export TEMP=/tmp
+if [[ ! -d "${TMPDIR}" || ! -w "${TMPDIR}" ]]; then
+  echo "Qualified WSL temporary directory ${TMPDIR} is unavailable." >&2
+  return 2
+fi
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
