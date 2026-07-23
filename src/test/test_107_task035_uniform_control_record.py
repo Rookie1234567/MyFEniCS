@@ -32,6 +32,9 @@ P3_P4_LEVEL1_MPI8_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.jso
 P3_P4_DWR_R_MPI8_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_mpi8.json"
 )
+P3_P4_DWR_COMBINED_CYCLE2_RECORD = RECORDS / (
+    "actual_dwr_combined_adaptive_tetra_p3_p4_h50_cycle2_canonical_contiguous_mpi8.json"
+)
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
 )
@@ -85,6 +88,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_mpi8 = json.loads(
             P3_P4_DWR_R_MPI8_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_combined_cycle2 = json.loads(
+            P3_P4_DWR_COMBINED_CYCLE2_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
             P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
@@ -750,6 +756,57 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             cycle2_record["resource_authority"]["memory_authority_gib"],
             1.4 * p4_h7p5["resource"]["peak_memory_gib"],
         )
+
+    def test_p3_p4_combined_cycle2_is_dominated_by_r_only(self) -> None:
+        combined = self.p3_p4_dwr_combined_cycle2
+        self.assertEqual(combined["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(combined["qualification"]["pass"])
+        self.assertEqual(combined["qualification"]["failures"], [])
+        self.assertEqual(
+            combined["source"]["commit_sha"],
+            "d798799426bfb2b40f3990be2941d23cdecb9d3e",
+        )
+        self.assertTrue(combined["source"]["stable_and_clean_after"])
+        self.assertEqual(combined["dwr_marker_policy"], "combined_relative_R_T")
+        self.assertEqual(combined["theta_schedule"], [0.5, 0.5])
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in combined["cycles"]],
+            [180, 1276, 7228],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in combined["cycles"]],
+            [45, 213, 750],
+        )
+        self.assertEqual(
+            [cycle["enriched_fixed_reference_error_l2"] for cycle in combined["cycles"]],
+            [0.30015433924512436, 0.004602313329000693, 0.0011346469030368734],
+        )
+        self.assertTrue(combined["all_fixed_reference_error_reductions_positive"])
+        combined_final = combined["cycles"][-1]
+        r_only = self.p3_p4_dwr_r_cycle2_tie_v1
+        r_only_final = r_only["cycles"][-1]
+        self.assertEqual(combined_final["enriched"]["num_nedelec_dofs"], 310560)
+        self.assertLess(
+            combined_final["enriched"]["num_nedelec_dofs"],
+            r_only_final["enriched"]["num_nedelec_dofs"],
+        )
+        self.assertGreater(
+            combined_final["enriched"]["num_nedelec_dofs"],
+            0.98 * r_only_final["enriched"]["num_nedelec_dofs"],
+        )
+        self.assertGreater(
+            combined_final["enriched_fixed_reference_error_l2"],
+            2.0 * r_only_final["enriched_fixed_reference_error_l2"],
+        )
+        authority = combined["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertLess(authority["memory_authority_gib"], 20.0)
+        self.assertGreater(
+            authority["memory_authority_gib"],
+            r_only["resource_authority"]["memory_authority_gib"],
+        )
+        self.assertLess(combined["elapsed_seconds"], r_only["elapsed_seconds"])
 
     def test_theta03_is_a_controlled_negative_cost_screen(self) -> None:
         theta03 = self.p3_p4_dwr_r_theta03
