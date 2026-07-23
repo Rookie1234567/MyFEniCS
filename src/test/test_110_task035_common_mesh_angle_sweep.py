@@ -33,9 +33,7 @@ SWEEP_RECORD = (
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
     / "actual_common_mesh_grazing_1_5_10_p4_p5_h50_mpi8.json"
 )
-SWEEP_RECORD_SHA256 = (
-    "18a58264aa8508a5687a1b0a94a5c6a07c870a1dcb18ddd05cd0a0e4cc6744c0"
-)
+SWEEP_RECORD_SHA256 = "18a58264aa8508a5687a1b0a94a5c6a07c870a1dcb18ddd05cd0a0e4cc6744c0"
 THETA03_AUTHORITY = (
     ROOT
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
@@ -62,7 +60,9 @@ THETA04_AUTHORITY = (
         "full_periodic_closure_mpi8.json"
     )
 )
-THETA04_AUTHORITY_SHA256 = "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468"
+THETA04_AUTHORITY_SHA256 = (
+    "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468"
+)
 THETA04_HP_RECORD = (
     ROOT
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
@@ -70,6 +70,17 @@ THETA04_HP_RECORD = (
 )
 THETA04_HP_RECORD_SHA256 = (
     "8a579b5141e12ac3f029b2ff72ba3d597da46ea2d0a96757593ef191e77c938c"
+)
+H37P5_AUTHORITY = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / (
+        "actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_"
+        "full_periodic_closure_mpi8.json"
+    )
+)
+H37P5_AUTHORITY_SHA256 = (
+    "95097cc9e7378497ed2c6f2e535967b08954dfbc8608b5fdd51db560de8e7676"
 )
 
 
@@ -79,13 +90,52 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
             AUTHORITY,
             expected_sha256=AUTHORITY_SHA256,
         )
-        self.assertEqual(contract["source_sha"], "c2898da89b055f0e6a13df3f039c6a0c24942d04")
+        self.assertEqual(
+            contract["source_sha"], "c2898da89b055f0e6a13df3f039c6a0c24942d04"
+        )
         self.assertEqual(contract["theta"], 0.7)
         self.assertEqual(contract["marker_policy"], "R_total")
         self.assertEqual(contract["marked_count"], 72)
         self.assertEqual(contract["initial_mesh_identity"]["global_cell_count"], 180)
         self.assertEqual(contract["final_mesh_identity"]["global_cell_count"], 1316)
         self.assertEqual(contract["source_mpi_size"], 8)
+        self.assertEqual(
+            len(contract["marked_canonical_cell_ids"]),
+            contract["marked_count"],
+        )
+
+    def test_h37p5_authority_has_stable_canonical_marker_identity(self) -> None:
+        contract = load_common_mesh_replay_contract(
+            H37P5_AUTHORITY,
+            expected_sha256=H37P5_AUTHORITY_SHA256,
+            expected_final_cells=1600,
+        )
+        self.assertEqual(
+            contract["source_sha"],
+            "7136be8043fa6ddfe026e3185d56f9384c19401c",
+        )
+        self.assertEqual(contract["marked_count"], 98)
+        self.assertEqual(len(contract["marked_canonical_cell_ids"]), 98)
+        self.assertEqual(contract["initial_mesh_identity"]["global_cell_count"], 216)
+        self.assertEqual(contract["final_mesh_identity"]["global_cell_count"], 1600)
+
+    def test_h37p5_p6_preflight_exceeds_half_reference_dof_budget(self) -> None:
+        record = json.loads(H37P5_AUTHORITY.read_text(encoding="utf-8"))
+        final_cycle = record["cycles"][1]
+        cells = final_cycle["mesh_audit"]["global_cell_count"]
+        p4_dofs = final_cycle["coarse"]["num_nedelec_dofs"]
+        p5_dofs = final_cycle["enriched"]["num_nedelec_dofs"]
+        self.assertEqual((cells, p4_dofs, p5_dofs), (1600, 70108, 129005))
+        edge_plus_three_faces = (p4_dofs - 12 * cells) // 4
+        edge_plus_four_faces = (p5_dofs - 30 * cells) // 5
+        faces = edge_plus_four_faces - edge_plus_three_faces
+        edges = edge_plus_three_faces - 3 * faces
+        self.assertEqual((edges, faces), (2305, 3474))
+        p6_dofs = 6 * edges + 30 * faces + 60 * cells
+        self.assertEqual(p6_dofs, 214050)
+        reference_dofs = 339892
+        self.assertGreater(p6_dofs, reference_dofs // 2)
+        self.assertLess(1.0 - p6_dofs / reference_dofs, 0.5)
 
     def test_legacy_theta03_authority_is_explicitly_bound(self) -> None:
         contract = load_common_mesh_replay_contract(
@@ -94,7 +144,9 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
             expected_theta=0.3,
             expected_final_cells=1200,
         )
-        self.assertEqual(contract["source_sha"], "6c4b2aee9d7ef2673a66996540c5022defd270a9")
+        self.assertEqual(
+            contract["source_sha"], "6c4b2aee9d7ef2673a66996540c5022defd270a9"
+        )
         self.assertEqual(contract["theta"], 0.3)
         self.assertEqual(contract["marked_count"], 23)
         self.assertEqual(contract["final_mesh_identity"]["global_cell_count"], 1200)
@@ -160,9 +212,7 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
                         "enriched": {
                             "degree": candidate["degree"],
                             "summary": {
-                                "num_nedelec_dofs": candidate[
-                                    "num_nedelec_dofs"
-                                ],
+                                "num_nedelec_dofs": candidate["num_nedelec_dofs"],
                                 "R_total": candidate["R_total"],
                                 "T_total": candidate["T_total"],
                                 "A_volume_total": candidate["A_volume_total"],
@@ -225,9 +275,7 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         self.assertFalse(evaluation["pass"])
         self.assertTrue(evaluation["checks"]["candidate_dofs_within_ceiling"])
         self.assertTrue(evaluation["checks"]["minimum_50_percent_dof_saving"])
-        self.assertFalse(
-            evaluation["checks"]["r_total_error_no_worse_than_control"]
-        )
+        self.assertFalse(evaluation["checks"]["r_total_error_no_worse_than_control"])
         self.assertTrue(
             evaluation["checks"]["observable_vector_error_no_worse_than_control"]
         )
@@ -308,6 +356,43 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         MPI.COMM_WORLD.size == 8,
         "accepted compact marker authority requires MPI8",
     )
+    def test_replayed_h37p5_mesh_matches_accepted_final_identity(self) -> None:
+        directory = MPI.COMM_WORLD.bcast(
+            tempfile.mkdtemp(prefix="task035-common-mesh-h37p5-")
+            if MPI.COMM_WORLD.rank == 0
+            else None,
+            root=0,
+        )
+        try:
+            mesh_data, _, replay = build_replayed_common_mesh(
+                Path(directory),
+                replay_record=H37P5_AUTHORITY,
+                replay_record_sha256=H37P5_AUTHORITY_SHA256,
+                coarse_degree=4,
+                h_nm=37.5,
+                polarization_kind="s",
+                replay_expected_final_cells=1600,
+            )
+        finally:
+            MPI.COMM_WORLD.barrier()
+            if MPI.COMM_WORLD.rank == 0:
+                shutil.rmtree(directory)
+        self.assertTrue(replay["pass"])
+        self.assertEqual(
+            replay["final_mesh_audit"]["partition_independent_mesh_sha256"],
+            replay["contract"]["final_mesh_identity"][
+                "partition_independent_mesh_sha256"
+            ],
+        )
+        self.assertEqual(
+            mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global,
+            1600,
+        )
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 8,
+        "accepted compact marker authority requires MPI8",
+    )
     def test_replayed_theta03_mesh_matches_accepted_final_identity(self) -> None:
         directory = MPI.COMM_WORLD.bcast(
             tempfile.mkdtemp(prefix="task035-common-mesh-theta03-")
@@ -360,7 +445,9 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
             "782d9d1527796a4cae15255c630a02b69ff02f5c",
         )
         self.assertTrue(record["source"]["stable_and_clean_after"])
-        self.assertEqual(record["resource_authority"]["max_observed_worker_rank_count"], 8)
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"], 8
+        )
         self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
         self.assertTrue(record["warning_triggered"])
         self.assertFalse(record["terminated_for_memory"])

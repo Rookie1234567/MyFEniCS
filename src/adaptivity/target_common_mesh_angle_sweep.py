@@ -23,7 +23,11 @@ from src.adaptivity.target_r5_adaptive_cycles import (
 )
 from src.common.config_3d import target_stage4_config
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
-from src.geometry.tetra_mesh_audit import audit_periodic_tetra_mesh
+from src.geometry.tetra_mesh_audit import (
+    audit_periodic_tetra_mesh,
+    geometry_key_sha256,
+    owned_tetra_cell_geometry,
+)
 
 
 _AUDIT_IDENTITY_FIELDS = (
@@ -40,6 +44,40 @@ def _sha256_bytes(payload: bytes) -> str:
 
 def _audit_identity(audit: dict[str, Any]) -> dict[str, Any]:
     return {name: audit.get(name) for name in _AUDIT_IDENTITY_FIELDS}
+
+
+def _resolve_canonical_cell_ids(
+    msh,
+    canonical_cell_ids: list[int],
+    *,
+    expected_geometry_sha256: str,
+) -> list[int]:
+    """Resolve stable geometry-ordered cell IDs to this run's global IDs."""
+
+    local_records = owned_tetra_cell_geometry(msh)
+    records = [
+        record for packet in msh.comm.allgather(local_records) for record in packet
+    ]
+    ordered = sorted(records, key=lambda record: record.key)
+    if len({record.key for record in ordered}) != len(ordered):
+        raise RuntimeError("canonical tetra cell geometry is not unique")
+    if len({record.global_index for record in ordered}) != len(ordered):
+        raise RuntimeError("current global tetra cell IDs are not unique")
+    if (
+        not canonical_cell_ids
+        or len(set(canonical_cell_ids)) != len(canonical_cell_ids)
+        or min(canonical_cell_ids) < 0
+        or max(canonical_cell_ids) >= len(ordered)
+    ):
+        raise ValueError("canonical marked cell IDs are invalid for this mesh")
+    selected = [ordered[index] for index in canonical_cell_ids]
+    actual_geometry_sha256 = geometry_key_sha256(record.key for record in selected)
+    if actual_geometry_sha256 != expected_geometry_sha256:
+        raise RuntimeError(
+            "canonical marker geometry identity mismatch: "
+            f"expected {expected_geometry_sha256}, got {actual_geometry_sha256}"
+        )
+    return sorted(record.global_index for record in selected)
 
 
 def load_common_mesh_replay_contract(
@@ -126,12 +164,22 @@ def load_common_mesh_replay_contract(
     r_goal = ((cycle_zero.get("DWR") or {}).get("goals") or {}).get("R_total") or {}
     marker = cycle_zero.get("marker") or {}
     marked_ids = r_goal.get("marked_global_cell_ids")
+    marked_canonical_ids = r_goal.get("marked_canonical_cell_ids")
     if (
         not isinstance(marked_ids, list)
         or not marked_ids
         or any(not isinstance(value, int) for value in marked_ids)
     ):
         raise ValueError("common-mesh replay authority has no integer R_total marker")
+    if (
+        not isinstance(marked_canonical_ids, list)
+        or len(marked_canonical_ids) != len(marked_ids)
+        or any(not isinstance(value, int) for value in marked_canonical_ids)
+        or len(set(marked_canonical_ids)) != len(marked_canonical_ids)
+    ):
+        raise ValueError(
+            "common-mesh replay authority has no unique canonical R_total marker"
+        )
     marker_hash = r_goal.get("marked_geometry_sha256")
     if (
         marker.get("kind") != "R_total"
@@ -161,6 +209,7 @@ def load_common_mesh_replay_contract(
         "theta": recorded_theta,
         "marker_policy": "R_total",
         "marked_global_cell_ids": marked_ids,
+        "marked_canonical_cell_ids": marked_canonical_ids,
         "marked_count": len(marked_ids),
         "marked_geometry_sha256": marker_hash,
         "initial_mesh_identity": _audit_identity(initial_audit),
@@ -219,10 +268,15 @@ def build_replayed_common_mesh(
     if _audit_identity(initial_audit) != contract["initial_mesh_identity"]:
         raise RuntimeError("common-mesh replay initial mesh identity mismatch")
 
+    replay_marked_global_cell_ids = _resolve_canonical_cell_ids(
+        mesh_data.mesh,
+        contract["marked_canonical_cell_ids"],
+        expected_geometry_sha256=contract["marked_geometry_sha256"],
+    )
     mesh_data, refinement = refine_periodic_marked_tetra_mesh(
         mesh_data,
         mesh_cfg,
-        contract["marked_global_cell_ids"],
+        replay_marked_global_cell_ids,
         full_boundary_synchronization=True,
     )
     final_audit = refinement.get("refined_mesh_audit") or {}
@@ -260,8 +314,7 @@ def _evaluate_hp_budget(
     enriched = angle_results[0]["actual_r5_pair"]["enriched"]
     summary = enriched["summary"]
     observables = {
-        name: float(summary[name])
-        for name in ("R_total", "T_total", "A_volume_total")
+        name: float(summary[name]) for name in ("R_total", "T_total", "A_volume_total")
     }
     candidate_dofs = int(summary["num_nedelec_dofs"])
     reference_dofs = int(reference["resource"]["dofs"])
