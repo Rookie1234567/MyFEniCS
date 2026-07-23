@@ -24,6 +24,9 @@ DWR_R_CYCLE2_CANONICAL_RECORD = RECORDS / (
 DWR_COMBINED_CYCLE2_CANONICAL_RECORD = RECORDS / (
     "actual_dwr_combined_adaptive_tetra_p2_p3_h50_cycle2_canonical_contiguous_mpi8.json"
 )
+DWR_COMBINED_CYCLE3_MEMORY_STOP_RECORD = RECORDS / (
+    "actual_dwr_combined_adaptive_tetra_p2_p3_h50_theta0p5_0p5_0p15_cycle3_mpi8.json"
+)
 P3_P4_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
 P3_P4_LEVEL1_MPI8_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
 P3_P4_DWR_R_MPI8_RECORD = (
@@ -72,6 +75,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.dwr_combined_cycle2_canonical = json.loads(
             DWR_COMBINED_CYCLE2_CANONICAL_RECORD.read_text(encoding="utf-8")
+        )
+        cls.dwr_combined_cycle3_memory_stop = json.loads(
+            DWR_COMBINED_CYCLE3_MEMORY_STOP_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_level1 = json.loads(P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8"))
         cls.p3_p4_level1_mpi8 = json.loads(
@@ -375,6 +381,45 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         self.assertLess(record["elapsed_seconds"], self.uniform["elapsed_seconds"])
         self.assertLess(record["resource_authority"]["memory_authority_gib"], 8.8)
+
+    def test_combined_cycle3_is_a_controlled_memory_stop(self) -> None:
+        record = self.dwr_combined_cycle3_memory_stop
+        self.assertEqual(record["status"], "formal_not_pass")
+        self.assertFalse(record["qualification"]["pass"])
+        self.assertIn(
+            "not_terminated_for_memory",
+            record["qualification"]["failures"],
+        )
+        self.assertNotIn(
+            "not_terminated_for_timeout",
+            record["qualification"]["failures"],
+        )
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "4482beb71bfb7e5f57ef5e9c3828294b3999a409",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertTrue(record["warning_triggered"])
+        self.assertTrue(record["terminated_for_memory"])
+        self.assertFalse(record["terminated_for_timeout"])
+        policy = record["resource_policy"]
+        self.assertTrue(policy["one_heavy_case_at_a_time"])
+        self.assertEqual(policy["termination_gib"], 32.0)
+        self.assertEqual(policy["timeout_seconds"], 1800.0)
+        self.assertFalse(policy["swap_allowed"])
+        authority = record["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertGreaterEqual(authority["memory_authority_gib"], 32.0)
+        self.assertLess(authority["memory_authority_gib"], 32.1)
+        self.assertEqual(
+            authority["stage_peaks"][-1]["stage"],
+            "dwr_adaptive_cycle_3_goal_dwr_enriched_solve_and_adjoint",
+        )
+        self.assertIsNone(record["raw_evidence"]["actual_r5_result_sha256"])
+        self.assertEqual(len(record["raw_evidence"]["memory_timeline_sha256"]), 64)
+        self.assertEqual(len(record["raw_evidence"]["progress_sha256"]), 64)
+        self.assertEqual(len(record["raw_evidence"]["stdout_sha256"]), 64)
 
     def test_p3_p4_uniform1_is_a_strong_global_p_signal(self) -> None:
         record = self.p3_p4_level1
