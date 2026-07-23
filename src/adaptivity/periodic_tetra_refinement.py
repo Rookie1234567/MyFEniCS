@@ -92,6 +92,65 @@ def _canonical_positive_tetra_coordinates(
     return points[np.asarray(canonical_order)].copy(), input_determinant < 0.0
 
 
+def _contiguous_partition_owner(
+    global_index: int,
+    *,
+    global_count: int,
+    partition_count: int,
+) -> int:
+    """Return the rank for the canonical contiguous cell partition."""
+
+    if global_count <= 0 or partition_count <= 0:
+        raise ValueError("partition and global cell counts must be positive")
+    if global_index < 0 or global_index >= global_count:
+        raise ValueError("global cell index is outside the partition range")
+    return min(
+        partition_count - 1,
+        ((global_index + 1) * partition_count - 1) // global_count,
+    )
+
+
+def _canonical_contiguous_graph_partitioner(
+    comm: MPI.Intracomm,
+    partition_count: int,
+    local_graph: Any,
+    ghosting: bool,
+) -> Any:
+    """Assign canonical cell indices contiguously and deterministically."""
+
+    if partition_count != comm.size:
+        raise ValueError("canonical partition count must equal communicator size")
+    local_count = int(local_graph.num_nodes)
+    counts = [int(value) for value in comm.allgather(local_count)]
+    global_count = sum(counts)
+    offset = sum(counts[: comm.rank])
+    destinations: list[int] = []
+    offsets = [0]
+    for local_index in range(local_count):
+        owner = _contiguous_partition_owner(
+            offset + local_index,
+            global_count=global_count,
+            partition_count=partition_count,
+        )
+        ghost_ranks: set[int] = set()
+        if ghosting:
+            ghost_ranks = {
+                _contiguous_partition_owner(
+                    int(neighbor),
+                    global_count=global_count,
+                    partition_count=partition_count,
+                )
+                for neighbor in local_graph.links(local_index)
+            }
+            ghost_ranks.discard(owner)
+        destinations.extend((owner, *sorted(ghost_ranks)))
+        offsets.append(len(destinations))
+    return graph.adjacencylist(
+        np.asarray(destinations, dtype=np.int32),
+        np.asarray(offsets, dtype=np.int32),
+    )._cpp_object
+
+
 def close_periodic_marked_cells(
     msh: mesh.Mesh,
     cfg: Any,
@@ -360,7 +419,7 @@ def _positively_oriented_tetra_copy(
     )
     domain = ufl.Mesh(coordinate_element)
     partitioner = mesh.create_cell_partitioner(
-        graph.partitioner_scotch(imbalance=0.025, seed=0),
+        _canonical_contiguous_graph_partitioner,
         mesh.GhostMode.shared_facet,
     )
     rebuilt = mesh.create_mesh(
@@ -372,12 +431,17 @@ def _positively_oriented_tetra_copy(
         "coordinate_tolerance": tolerance,
         "target_mpi_size": output_comm.size,
         "canonical_positive_vertex_ordering": True,
-        "partitioner": "scotch",
-        "partitioner_imbalance": 0.025,
-        "partitioner_seed": 0,
+        "partitioner": "canonical_contiguous_v1",
+        "partition_owner_rule": "ceil((global_cell_index+1)*mpi_size/N)-1",
         "canonical_connectivity_sha256": hashlib.sha256(
             connectivity_values.tobytes()
         ).hexdigest(),
+        "owned_cell_counts_by_rank": output_comm.allgather(
+            int(rebuilt.topology.index_map(rebuilt.topology.dim).size_local)
+        ),
+        "ghost_cell_counts_by_rank": output_comm.allgather(
+            int(rebuilt.topology.index_map(rebuilt.topology.dim).num_ghosts)
+        ),
     }
 
 

@@ -10,6 +10,7 @@ import numpy as np
 
 from src.adaptivity.periodic_tetra_refinement import (
     _canonical_positive_tetra_coordinates,
+    _contiguous_partition_owner,
     close_periodic_marked_cells,
     refine_periodic_marked_tetra_mesh,
 )
@@ -86,6 +87,23 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         for output in outputs[1:]:
             np.testing.assert_array_equal(output, outputs[0])
 
+    def test_contiguous_partition_owner_has_exact_rank_blocks(self) -> None:
+        owners = [
+            _contiguous_partition_owner(
+                index,
+                global_count=10,
+                partition_count=3,
+            )
+            for index in range(10)
+        ]
+        self.assertEqual(owners, [0, 0, 0, 1, 1, 1, 2, 2, 2, 2])
+        with self.assertRaises(ValueError):
+            _contiguous_partition_owner(-1, global_count=10, partition_count=3)
+        with self.assertRaises(ValueError):
+            _contiguous_partition_owner(10, global_count=10, partition_count=3)
+        with self.assertRaises(ValueError):
+            _contiguous_partition_owner(0, global_count=0, partition_count=3)
+
     def test_target_tetra_audit_is_orientation_and_partition_strict(self) -> None:
         cfg, mesh_data = _target_mesh_data()
         audit = audit_periodic_tetra_mesh(
@@ -134,9 +152,15 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
             rebuild = report[rebuild_name]
             self.assertTrue(rebuild["canonical_positive_vertex_ordering"])
             self.assertEqual(len(rebuild["canonical_connectivity_sha256"]), 64)
-            self.assertEqual(rebuild["partitioner"], "scotch")
-            self.assertEqual(rebuild["partitioner_imbalance"], 0.025)
-            self.assertEqual(rebuild["partitioner_seed"], 0)
+            self.assertEqual(rebuild["partitioner"], "canonical_contiguous_v1")
+            self.assertEqual(
+                rebuild["partition_owner_rule"],
+                "ceil((global_cell_index+1)*mpi_size/N)-1",
+            )
+            self.assertEqual(
+                sum(rebuild["owned_cell_counts_by_rank"]),
+                rebuild["reconstructed_global_cell_count"],
+            )
 
         self.assertGreater(report["refined_global_cells"], 180)
         self.assertTrue(report["refined_mesh_audit"]["pass"])
