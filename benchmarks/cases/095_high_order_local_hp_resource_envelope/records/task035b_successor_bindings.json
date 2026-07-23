@@ -1,0 +1,42 @@
+{
+  "schema_version": "task035b.case095-successor-bindings.v1",
+  "record_type": "frozen_task035_binding_successor",
+  "status": "active_research_successor_binding",
+  "task": "Task035b",
+  "predecessor_manifest": {
+    "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json",
+    "sha256": "eeb98e20634b540a7053d58e30c6b2d5ce1c357b49f27935e6e2bf2641403727"
+  },
+  "approved_replacements": [
+    {
+      "binding_group": "identity_files",
+      "binding_index": 3,
+      "role": "geometry_implementation",
+      "path": "src/geometry/mesh_builder_3d.py",
+      "predecessor_sha256": "ca8c57629207d939ed86924713ce49b9dcc83e5a9f33518a726c34d5d12068bb",
+      "successor_sha256": "c35b5f65c0aa9e6ca5d4cb5d44050f70c4446b6364ec04610ef886eb5fa9a630",
+      "introduced_by_commit": "c2a3c91989a01b2c2c5d20530ee99993d156fdb4",
+      "change_class": "fixed_target_high_order_qualification",
+      "ordinary_default_changed": false,
+      "authorization": "docs/task035b_high_order_local_hp_resource_envelope/task_scope_addendum_v1.md"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_mpi8.json",
+      "sha256": "7acd6080cd186c2c1e934a4734b5504ae3f0789d7eadb92b4b9ea337dd2d65d6",
+      "source_sha": "2e91d2bf0195056e55be670af226b7716096284c"
+    },
+    {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_mpi8.json",
+      "sha256": "3e49dc7992e78ae26a1bfc1c1ba2ed48cffe8b15534ddcfc22b99e549599614b",
+      "source_sha": "c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2"
+    }
+  ],
+  "interpretation": {
+    "task035_base_manifest_rewritten": false,
+    "task035_phase_a_history_preserved": true,
+    "task035b_current_tree_change_explicitly_bound": true,
+    "case095_production_qualified": false
+  }
+}

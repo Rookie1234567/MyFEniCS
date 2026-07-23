@@ -275,6 +275,7 @@ def run_target_global_two_level_r5(
     progress_observer=None,
     mesh_data_override=None,
     reuse_single_mesh: bool = False,
+    static_condensation_degrees: tuple[int, ...] = (),
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -289,6 +290,15 @@ def run_target_global_two_level_r5(
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    requested_condensation = {
+        int(value) for value in static_condensation_degrees
+    }
+    if not requested_condensation.issubset(
+        {int(coarse_degree), int(enriched_degree)}
+    ):
+        raise ValueError(
+            "static condensation degrees must belong to the global-p pair"
+        )
     captures: dict[str, dict[str, Any]] = {}
 
     def observer(label: str):
@@ -313,6 +323,9 @@ def run_target_global_two_level_r5(
             matrix_diagnostics_factorization_only=False,
             full3d_reference_export=False,
             direct_release_base_after_augmentation=True,
+            stage4_cell_static_condensation=(
+                int(degree) in requested_condensation
+            ),
             unique_output=False,
         )
 
@@ -424,6 +437,9 @@ def run_target_global_two_level_r5(
         "same_mesh_hashes": same_mesh_hashes,
         "single_in_memory_mesh_instance": single_in_memory_mesh_instance,
         "reuse_single_mesh_requested": bool(reuse_single_mesh),
+        "static_condensation_degrees": [
+            int(value) for value in static_condensation_degrees
+        ],
         "official_observable_delta_l2": float(observable_delta),
         "R5": estimate,
         "elapsed_seconds": float(

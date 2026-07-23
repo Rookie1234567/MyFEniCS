@@ -158,6 +158,7 @@ def hcurl_entity_dof_inventory(
     num_auxiliary_dofs: int,
     floquet_num_constraints: int | None,
     active_matrix_rows: int | None,
+    cell_static_condensation: bool = False,
 ) -> dict[str, Any]:
     """Decompose the actual global N1curl dimension by mesh-entity ownership."""
 
@@ -186,9 +187,11 @@ def hcurl_entity_dof_inventory(
     auxiliary = int(num_auxiliary_dofs)
     projected_rows = trace_total + auxiliary
     current_expected_rows = actual_total + auxiliary
-    active_rows_match = (
-        active_matrix_rows is None
-        or int(active_matrix_rows) == current_expected_rows
+    expected_active_rows = (
+        projected_rows if cell_static_condensation else current_expected_rows
+    )
+    active_rows_match = active_matrix_rows is None or (
+        int(active_matrix_rows) == expected_active_rows
     )
     passed = decomposed_total == actual_total and active_rows_match
     return {
@@ -223,8 +226,11 @@ def hcurl_entity_dof_inventory(
             else int(floquet_num_constraints)
         ),
         "current_backend_row_semantics": (
-            "dolfinx_mpc retains the full FE row layout; constraints do not "
-            "constitute static condensation"
+            "exact cell-interior elimination; measured global matrix retains "
+            "only edge/face trace and DtN auxiliary rows"
+            if cell_static_condensation
+            else "dolfinx_mpc retains the full FE row layout; constraints do "
+            "not constitute static condensation"
         ),
         "num_auxiliary_dofs": auxiliary,
         "current_expected_augmented_rows": int(current_expected_rows),
@@ -239,9 +245,14 @@ def hcurl_entity_dof_inventory(
             else float(current_expected_rows / projected_rows)
         ),
         "static_condensation_projection_semantics": (
-            "derived_not_measured; assumes exact cell-interior elimination "
-            "with all edge/face trace and DtN auxiliary unknowns retained"
+            "measured_active_rows; exact cell-interior elimination with all "
+            "edge/face trace and DtN auxiliary unknowns retained"
+            if cell_static_condensation
+            else "derived_not_measured; assumes exact cell-interior "
+            "elimination with all edge/face trace and DtN auxiliary unknowns "
+            "retained"
         ),
+        "cell_static_condensation_active": bool(cell_static_condensation),
         "pass": passed,
     }
 
@@ -268,6 +279,8 @@ def matrix_factor_resource_audit(summary: dict[str, Any]) -> dict[str, Any]:
         "stage4_dtn_modal_vector_assembly_seconds",
         "stage4_dtn_modal_block_insert_seconds",
         "stage4_dtn_augmented_matrix_finalize_seconds",
+        "stage4_dtn_cell_static_condensation_build_seconds",
+        "stage4_dtn_cell_static_condensation_recovery_seconds",
         "stage4_dtn_ksp_setup_seconds",
         "stage4_dtn_ksp_solve_seconds",
         "stage4_dtn_linear_solve_seconds",
@@ -320,6 +333,9 @@ def build_high_order_resource_audit(
             ),
             floquet_num_constraints=summary.get("floquet_num_constraints"),
             active_matrix_rows=matrix_stats.get("matrix_rows"),
+            cell_static_condensation=bool(
+                summary.get("stage4_cell_static_condensation")
+            ),
         ),
         "matrix_factor_resource": matrix_factor_resource_audit(summary),
     }

@@ -192,6 +192,9 @@ def _worker(args: argparse.Namespace) -> int:
             mesh_cell_type=args.mesh_cell_type,
             progress_observer=progress,
             reuse_single_mesh=args.single_mesh_pair,
+            static_condensation_degrees=tuple(
+                args.static_condensation_degree
+            ),
         )
     if MPI.COMM_WORLD.rank == 0:
         (args.run_dir / "actual_r5_result.json").write_text(
@@ -223,6 +226,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "build the fixed target mesh once and reuse that exact in-memory "
             "mesh for both global-p solves"
+        ),
+    )
+    parser.add_argument(
+        "--static-condensation-degree",
+        type=int,
+        action="append",
+        default=[],
+        help=(
+            "research-only global-p pair degree whose cell-interior modes are "
+            "exactly condensed; may be repeated"
         ),
     )
     parser.add_argument("--mpi-size", type=int, default=8)
@@ -338,6 +351,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--single-mesh-pair is valid only for the plain global-p pair."
         )
+    invalid_condensation_degrees = set(args.static_condensation_degree) - {
+        args.coarse_degree,
+        args.enriched_degree,
+    }
+    if invalid_condensation_degrees:
+        parser.error(
+            "--static-condensation-degree must equal coarse-degree or "
+            "enriched-degree."
+        )
+    if args.static_condensation_degree and (
+        common_mesh_mode or active_cycles or args.mesh_cell_type != "hexahedron"
+    ):
+        parser.error(
+            "Task035b static condensation is restricted to the plain "
+            "fixed-target hexahedron global-p pair."
+        )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
             parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
@@ -443,6 +472,15 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         ),
         "floquet_num_constraints": summary.get("floquet_num_constraints"),
         "elapsed_seconds": summary.get("elapsed_seconds"),
+        "stage4_cell_static_condensation": summary.get(
+            "stage4_cell_static_condensation"
+        ),
+        "stage4_dtn_condensed_matrix_stats": summary.get(
+            "stage4_dtn_condensed_matrix_stats"
+        ),
+        "cell_static_condensation": summary.get(
+            "cell_static_condensation"
+        ),
         "high_order_resource_audit": entry.get(
             "high_order_resource_audit"
         ),
@@ -563,11 +601,61 @@ def _qualify(
         ),
         "same_actual_mesh_hashes": result.get("same_mesh_hashes") is True,
         "single_mesh_instance_when_requested": (
-            not args.single_mesh_pair
+            not getattr(args, "single_mesh_pair", False)
             or result.get("single_in_memory_mesh_instance") is True
         ),
         "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
     }
+    static_condensation_degrees = getattr(
+        args, "static_condensation_degree", []
+    )
+    if static_condensation_degrees:
+        requested = set(static_condensation_degrees)
+        requested_entries = [
+            entry
+            for entry in solves
+            if int(entry.get("degree", -1)) in requested
+        ]
+        checks.update(
+            {
+                "requested_static_condensation_active": (
+                    len(requested_entries) == len(requested)
+                    and all(
+                        (entry.get("summary") or {}).get(
+                            "stage4_cell_static_condensation"
+                        )
+                        is True
+                        for entry in requested_entries
+                    )
+                ),
+                "requested_condensed_rows_physically_measured": all(
+                    (
+                        (
+                            entry.get("high_order_resource_audit") or {}
+                        ).get("entity_dof_inventory")
+                        or {}
+                    ).get("static_condensation_projection_semantics", "").startswith(
+                        "measured_active_rows"
+                    )
+                    for entry in requested_entries
+                ),
+                "requested_full_residual_audit_present": all(
+                    isinstance(
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "cell_static_condensation"
+                                )
+                                or {}
+                            ).get("full_explicit_true_residual")
+                            or {}
+                        ).get("linear_system_relative_residual"),
+                        (int, float),
+                    )
+                    for entry in requested_entries
+                ),
+            }
+        )
     failures = [name for name, passed in checks.items() if not passed]
     return {"pass": not failures, "checks": checks, "failures": failures}
 
@@ -1036,6 +1124,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += f"_uniform{args.uniform_refinement_levels}"
     elif args.single_mesh_pair:
         run_label += "_single_mesh_pair"
+    if args.static_condensation_degree:
+        run_label += "_condense_" + "-".join(
+            f"p{degree}" for degree in args.static_condensation_degree
+        )
     run_dir = (args.run_dir or args.artifact_root / run_label).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
@@ -1068,6 +1160,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     ]
     if args.single_mesh_pair:
         command.append("--single-mesh-pair")
+    for degree in args.static_condensation_degree:
+        command.extend(["--static-condensation-degree", str(degree)])
     if args.common_mesh_replay_record is not None:
         command.extend(
             [

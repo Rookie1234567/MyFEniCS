@@ -138,6 +138,9 @@ class SimulationConfig3D:
     # default; explicit callers may release the copied base Mat/Vec once the
     # augmented system owns every entry needed by residual and official R/T/A.
     direct_release_base_after_augmentation: bool = False
+    # Task035b research-only exact cell-interior Schur path.  False preserves
+    # the reviewed ordinary full augmented system.
+    stage4_cell_static_condensation: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
     matrix_diagnostics_factorization_only: bool = False

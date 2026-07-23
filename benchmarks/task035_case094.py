@@ -18,6 +18,11 @@ DEFAULT_MANIFEST = (
     ROOT
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json"
 )
+DEFAULT_SUCCESSOR_BINDINGS = (
+    ROOT
+    / "benchmarks/cases/095_high_order_local_hp_resource_envelope/records"
+    / "task035b_successor_bindings.json"
+)
 REQUIRED_BASELINE_ROLES = {
     "p4_h5_full3d",
     "p4_h5_hybrid_m160",
@@ -56,8 +61,10 @@ def _validate_tracked_bindings(
     *,
     repo_root: Path,
     label: str,
-) -> list[str]:
+    approved_successors: Sequence[Mapping[str, Any]],
+) -> tuple[list[str], list[dict[str, Any]]]:
     failures: list[str] = []
+    successor_results: list[dict[str, Any]] = []
     for index, binding in enumerate(bindings):
         path = _repo_path(binding.get("path"), repo_root)
         expected = binding.get("sha256")
@@ -66,9 +73,92 @@ def _validate_tracked_bindings(
             failures.append(f"{item}:invalid_sha256")
         elif not path.is_file():
             failures.append(f"{item}:tracked_file_missing")
-        elif _sha256(path) != expected:
-            failures.append(f"{item}:tracked_hash_mismatch")
-    return failures
+        else:
+            actual = _sha256(path)
+            if actual == expected:
+                continue
+            matches = [
+                replacement
+                for replacement in approved_successors
+                if replacement.get("binding_group") == label
+                and replacement.get("binding_index") == index
+                and replacement.get("path") == binding.get("path")
+                and replacement.get("predecessor_sha256") == expected
+                and replacement.get("successor_sha256") == actual
+            ]
+            if len(matches) != 1:
+                failures.append(f"{item}:tracked_hash_mismatch")
+                continue
+            successor_results.append(
+                {
+                    "binding": item,
+                    "path": str(binding.get("path")),
+                    "status": "approved_successor_hash_match",
+                    "predecessor_sha256": expected,
+                    "current_sha256": actual,
+                    "introduced_by_commit": matches[0].get(
+                        "introduced_by_commit"
+                    ),
+                }
+            )
+    return failures, successor_results
+
+
+def _load_approved_successors(
+    *,
+    repo_root: Path,
+    predecessor_manifest: Mapping[str, Any],
+) -> list[Mapping[str, Any]]:
+    """Load exact, evidence-bound Task035b replacements for frozen bindings."""
+
+    path = repo_root / DEFAULT_SUCCESSOR_BINDINGS.relative_to(ROOT)
+    if not path.is_file():
+        return []
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if record.get("schema_version") != "task035b.case095-successor-bindings.v1":
+        return []
+    if record.get("status") != "active_research_successor_binding":
+        return []
+    predecessor = record.get("predecessor_manifest", {})
+    manifest_path = _repo_path(predecessor.get("path"), repo_root)
+    if not manifest_path.is_file():
+        return []
+    if predecessor.get("sha256") != _sha256(manifest_path):
+        return []
+    frozen_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if (
+        frozen_manifest.get("schema_version")
+        != predecessor_manifest.get("schema_version")
+        or frozen_manifest.get("source") != predecessor_manifest.get("source")
+        or frozen_manifest.get("tracked_bindings")
+        != predecessor_manifest.get("tracked_bindings")
+    ):
+        return []
+    evidence = record.get("evidence", [])
+    if not isinstance(evidence, list) or not evidence:
+        return []
+    for item in evidence:
+        evidence_path = _repo_path(item.get("path"), repo_root)
+        if (
+            not evidence_path.is_file()
+            or not _valid_sha256(item.get("sha256"))
+            or _sha256(evidence_path) != item["sha256"]
+        ):
+            return []
+    replacements = record.get("approved_replacements", [])
+    if not isinstance(replacements, list):
+        return []
+    for replacement in replacements:
+        if (
+            not isinstance(replacement, Mapping)
+            or not _valid_sha256(replacement.get("predecessor_sha256"))
+            or not _valid_sha256(replacement.get("successor_sha256"))
+            or not isinstance(replacement.get("introduced_by_commit"), str)
+            or len(replacement["introduced_by_commit"]) != 40
+            or replacement.get("ordinary_default_changed") is not False
+        ):
+            return []
+    return replacements
 
 
 def validate_base_manifest(
@@ -92,14 +182,24 @@ def validate_base_manifest(
         failures.append("task035_base_sha")
 
     bindings = manifest.get("tracked_bindings", {})
+    approved_successors = _load_approved_successors(
+        repo_root=repo_root,
+        predecessor_manifest=manifest,
+    )
+    successor_binding_results: list[dict[str, Any]] = []
     for key in ("case093_compact_records", "identity_files", "theory_documents"):
         value = bindings.get(key)
         if not isinstance(value, list) or not value:
             failures.append(f"tracked_bindings:{key}")
             continue
-        failures.extend(
-            _validate_tracked_bindings(value, repo_root=repo_root, label=key)
+        binding_failures, binding_successors = _validate_tracked_bindings(
+            value,
+            repo_root=repo_root,
+            label=key,
+            approved_successors=approved_successors,
         )
+        failures.extend(binding_failures)
+        successor_binding_results.extend(binding_successors)
 
     artifacts = manifest.get("baseline_artifacts", [])
     roles = {item.get("role") for item in artifacts if isinstance(item, Mapping)}
@@ -171,6 +271,7 @@ def validate_base_manifest(
         "verify_artifacts": verify_artifacts,
         "failures": failures,
         "artifact_results": artifact_results,
+        "successor_binding_results": successor_binding_results,
     }
 
 

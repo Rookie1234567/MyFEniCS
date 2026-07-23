@@ -30,6 +30,11 @@ from .common_3d_solve import (
     _petsc_matrix_stats,
 )
 from .common_3d_utils import _write_progress_event
+from .hcurl_cell_static_condensation import (
+    build_explicit_cell_static_condensation,
+    owned_hcurl_cell_interior_dofs,
+    recover_full_solution,
+)
 from .solve_vector_maxwell import _json_default
 
 
@@ -1202,6 +1207,14 @@ def solve_stage4_dtn_port_total_field(
         raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
     if floquet_data is None:
         raise ValueError("stage4_boundary_model='dtn_port' requires x/y Floquet constraints.")
+    if cfg.stage4_cell_static_condensation and (
+        cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "Task035b cell static condensation requires a complete solve; "
+            "assemble-only/factorization-only diagnostics are unsupported."
+        )
     if _use_zero_order_local_robin_dtn(cfg):
         return _solve_zero_order_local_robin_dtn(
             a=a,
@@ -1549,19 +1562,76 @@ def solve_stage4_dtn_port_total_field(
             },
         }
 
-    t0 = time.perf_counter()
-    try:
-        x_aug, ksp, ksp_telemetry = _solve_augmented_system(
+    condensed_system = None
+    condensed_matrix_stats = None
+    condensation_recovery = None
+    solve_A = A_aug
+    solve_b = b_aug
+    solve_dofs = int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs)
+    solve_prefix = f"stage4_3d_dtn_{cfg.case_name}_"
+    if cfg.stage4_cell_static_condensation:
+        condensation_started = time.perf_counter()
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_dtn_cell_static_condensation",
+            status="begin",
+            started=started,
+            dofs=solve_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=augmented_matrix_stats_after_finalize,
+            petsc_options=petsc_options,
+        )
+        condensed_system = build_explicit_cell_static_condensation(
             A_aug,
             b_aug,
+            owned_hcurl_cell_interior_dofs(V),
+        )
+        condensed_matrix_stats = _petsc_matrix_stats(condensed_system.matrix)
+        timing_details["stage4_dtn_cell_static_condensation_build_seconds"] = (
+            float(
+                comm.allreduce(
+                    time.perf_counter() - condensation_started,
+                    op=MPI.MAX,
+                )
+            )
+        )
+        solve_A = condensed_system.matrix
+        solve_b = condensed_system.rhs
+        solve_dofs = int(condensed_system.trace_rows)
+        solve_prefix = f"stage4_3d_dtn_cell_condensed_{cfg.case_name}_"
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_dtn_cell_static_condensation",
+            status="end",
+            started=started,
+            dofs=solve_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=condensed_matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "cell_static_condensation": condensed_system.build_audit,
+            },
+        )
+
+    t0 = time.perf_counter()
+    try:
+        solve_x, ksp, ksp_telemetry = _solve_augmented_system(
+            solve_A,
+            solve_b,
             petsc_options,
-            f"stage4_3d_dtn_{cfg.case_name}_",
+            solve_prefix,
             out_dir=out_dir,
             comm=comm,
             started=started,
-            dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
+            dofs=solve_dofs,
             constraints=floquet_data.num_constraints,
-            matrix_stats=augmented_matrix_stats_after_finalize,
+            matrix_stats=(
+                condensed_matrix_stats
+                if condensed_matrix_stats is not None
+                else augmented_matrix_stats_after_finalize
+            ),
             factorization_only=cfg.matrix_diagnostics_factorization_only,
         )
     except DirectSolveFailure as exc:
@@ -1573,6 +1643,12 @@ def solve_stage4_dtn_port_total_field(
                 "dtn_base_matrix_stats": base_matrix_stats,
                 "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
                 "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
+                "cell_static_condensation": (
+                    None
+                    if condensed_system is None
+                    else condensed_system.build_audit
+                ),
+                "dtn_condensed_matrix_stats": condensed_matrix_stats,
             }
         )
         raise
@@ -1615,7 +1691,7 @@ def solve_stage4_dtn_port_total_field(
             "E_total": E_total,
             "A": A_aug,
             "b": b_aug,
-            "x": x_aug,
+            "x": solve_x,
             "ksp": ksp,
             "solver_info": solver_info,
             "port_metrics": {
@@ -1630,6 +1706,25 @@ def solve_stage4_dtn_port_total_field(
             },
         }
     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
+
+    if condensed_system is not None:
+        recovery_started = time.perf_counter()
+        x_aug, condensation_recovery = recover_full_solution(
+            A_aug,
+            b_aug,
+            condensed_system,
+            solve_x,
+        )
+        timing_details["stage4_dtn_cell_static_condensation_recovery_seconds"] = (
+            float(
+                comm.allreduce(
+                    time.perf_counter() - recovery_started,
+                    op=MPI.MAX,
+                )
+            )
+        )
+    else:
+        x_aug = solve_x
 
     linear_residual = _linear_residual(A_aug, b_aug, x_aug)
     _write_progress_event(
@@ -1690,11 +1785,34 @@ def solve_stage4_dtn_port_total_field(
         },
     )
 
+    cell_static_condensation_audit = None
+    if condensed_system is not None:
+        cell_static_condensation_audit = {
+            **condensed_system.build_audit,
+            "condensed_matrix_stats": condensed_matrix_stats,
+            "recovery": condensation_recovery,
+            "full_explicit_true_residual": linear_residual,
+            "same_full_operator_used_for_recovery_and_residual": True,
+            "ordinary_default_changed": False,
+        }
     solver_info = {
-        "solver_backend": "PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+        "solver_backend": (
+            "PETSc exact cell-interior trace Schur + auxiliary Fourier-DtN "
+            "port with dolfinx_mpc Floquet constraints"
+            if condensed_system is not None
+            else "PETSc augmented auxiliary Fourier-DtN port with "
+            "dolfinx_mpc Floquet constraints"
+        ),
         "num_auxiliary_dofs": int(n_aux),
         "num_fem_dofs_after_mpc": int(n_fe),
         "num_total_augmented_dofs": int(n_fe + n_aux),
+        "num_active_condensed_dofs": (
+            None if condensed_system is None else int(condensed_system.trace_rows)
+        ),
+        "stage4_cell_static_condensation": bool(
+            condensed_system is not None
+        ),
+        "cell_static_condensation": cell_static_condensation_audit,
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
         "ksp_converged_reason": int(ksp.getConvergedReason()),
         "ksp_iterations": int(ksp.getIterationNumber()),
@@ -1703,6 +1821,7 @@ def solve_stage4_dtn_port_total_field(
         "actual_pc_factor_solver_type": None,
         "dtn_base_matrix_stats": base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
+        "dtn_condensed_matrix_stats": condensed_matrix_stats,
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
@@ -1715,11 +1834,23 @@ def solve_stage4_dtn_port_total_field(
     except Exception:
         solver_info["actual_pc_factor_solver_type"] = None
 
+    if condensed_system is not None:
+        returned_A = condensed_system.matrix
+        returned_b = condensed_system.rhs
+        returned_x = solve_x
+        A_aug.destroy()
+        b_aug.destroy()
+        x_aug.destroy()
+    else:
+        returned_A = A_aug
+        returned_b = b_aug
+        returned_x = x_aug
+
     return {
         "E_total": E_total,
-        "A": A_aug,
-        "b": b_aug,
-        "x": x_aug,
+        "A": returned_A,
+        "b": returned_b,
+        "x": returned_x,
         "ksp": ksp,
         "solver_info": solver_info,
         "port_metrics": port_metrics,

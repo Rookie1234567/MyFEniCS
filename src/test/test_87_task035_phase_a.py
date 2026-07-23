@@ -6,6 +6,7 @@ import unittest
 
 from benchmarks.task035_case094 import DEFAULT_MANIFEST, ROOT, validate_base_manifest
 from src.test.test_26_documentation_contract import (
+    ACTIVE_RESEARCH_CASES,
     QUALIFIED_OR_FROZEN_CASES,
     STAGING_OR_IN_PROGRESS_CASES,
 )
@@ -21,6 +22,10 @@ class Task035PhaseATests(unittest.TestCase):
         result = validate_base_manifest(_manifest(), repo_root=ROOT)
         self.assertEqual(result["failures"], [])
         self.assertEqual(result["status"], "phase_a_gate_pass")
+        self.assertEqual(
+            result["successor_binding_results"][0]["status"],
+            "approved_successor_hash_match",
+        )
         self.assertTrue(
             all(row["status"] == "descriptor_only" for row in result["artifact_results"])
         )
@@ -86,7 +91,9 @@ class Task035PhaseATests(unittest.TestCase):
         observed = {path.name for path in cases_root.iterdir() if path.is_dir()}
         self.assertEqual(
             observed,
-            QUALIFIED_OR_FROZEN_CASES | STAGING_OR_IN_PROGRESS_CASES,
+            QUALIFIED_OR_FROZEN_CASES
+            | STAGING_OR_IN_PROGRESS_CASES
+            | ACTIVE_RESEARCH_CASES,
         )
 
     def test_initial_regression_failure_history_is_preserved(self) -> None:

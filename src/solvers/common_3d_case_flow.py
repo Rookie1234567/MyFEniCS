@@ -1089,6 +1089,11 @@ def run_prepared_3d_case_flow(
     dtn_augmented_matrix_stats = (
         None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
     )
+    dtn_condensed_matrix_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dtn_condensed_matrix_stats")
+    )
     dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
     explicit_chac_constructed = False
     chac_before_stats = None
@@ -1106,6 +1111,7 @@ def run_prepared_3d_case_flow(
         "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
         "dtn_base_matrix_stats": dtn_base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats),
         "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats),
@@ -1139,6 +1145,13 @@ def run_prepared_3d_case_flow(
     pc = system_ksp.getPC()
     pc_type = pc.getType()
     pc_factor_solver_type = _pc_factor_solver_type(pc)
+    condensed_full_residual = (
+        None
+        if dtn_solver_info is None
+        else (
+            dtn_solver_info.get("cell_static_condensation") or {}
+        ).get("full_explicit_true_residual")
+    )
     linear_system_diagnostics = (
         {
             "linear_system_rhs_norm": None,
@@ -1147,6 +1160,8 @@ def run_prepared_3d_case_flow(
             "linear_system_relative_residual": None,
         }
         if diagnostic_only_result
+        else condensed_full_residual
+        if condensed_full_residual is not None
         else _linear_system_diagnostics(system_A, system_b, system_x)
     )
     log(f"solver converged reason = {reason}")
@@ -1234,6 +1249,13 @@ def run_prepared_3d_case_flow(
         else dtn_solver_info.get("ksp_solve_seconds"),
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "stage4_dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
+        "stage4_cell_static_condensation": False
+        if dtn_solver_info is None
+        else bool(dtn_solver_info.get("stage4_cell_static_condensation")),
+        "cell_static_condensation": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("cell_static_condensation"),
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),

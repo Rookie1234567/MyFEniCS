@@ -21,6 +21,46 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                     "2",
                 ]
             )
+
+    def test_static_condensation_is_explicit_fixed_hexa_pair_opt_in(self) -> None:
+        args = _parse_args(
+            [
+                "--coarse-degree",
+                "3",
+                "--enriched-degree",
+                "4",
+                "--mesh-cell-type",
+                "hexahedron",
+                "--static-condensation-degree",
+                "4",
+            ]
+        )
+        self.assertEqual(args.static_condensation_degree, [4])
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "3",
+                    "--enriched-degree",
+                    "4",
+                    "--static-condensation-degree",
+                    "5",
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "3",
+                    "--enriched-degree",
+                    "4",
+                    "--mesh-cell-type",
+                    "tetrahedron",
+                    "--static-condensation-degree",
+                    "4",
+                ]
+            )
+
     def test_argument_contract_accepts_one_dwr_adaptive_mode(self) -> None:
         args = _parse_args(
             [
@@ -276,8 +316,19 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         result = {
             "status": "actual_global_r5_pass",
             "ordinary_default_changed": False,
-            "coarse": {"summary": solve_summary},
-            "enriched": {"summary": solve_summary},
+            "same_mesh_hashes": True,
+            "coarse": {
+                "summary": solve_summary,
+                "high_order_resource_audit": {
+                    "entity_dof_inventory": {"pass": True}
+                },
+            },
+            "enriched": {
+                "summary": solve_summary,
+                "high_order_resource_audit": {
+                    "entity_dof_inventory": {"pass": True}
+                },
+            },
             "R5": {
                 "formal_hierarchical_fe_r5": True,
                 "finite_cell_contributions": True,

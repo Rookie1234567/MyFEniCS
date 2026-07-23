@@ -18,6 +18,9 @@ from src.adaptivity.high_order_resource_audit import (
 from src.common.config_3d import target_stage4_config
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.solvers.common_3d_solve import _petsc_matrix_stats
+from src.solvers.hcurl_cell_static_condensation import (
+    owned_hcurl_cell_interior_dofs,
+)
 
 
 class Task035bHighOrderResourceAuditTests(unittest.TestCase):
@@ -80,6 +83,18 @@ class Task035bHighOrderResourceAuditTests(unittest.TestCase):
                     "derived_not_measured",
                     audit["static_condensation_projection_semantics"],
                 )
+                owned_interiors = owned_hcurl_cell_interior_dofs(V)
+                self.assertEqual(
+                    sum(len(values) for values in owned_interiors),
+                    self.mesh_data.mesh.topology.index_map(3).size_local
+                    * audit["entity_dofs_per_entity"]["cell_interior"],
+                )
+                local_flat = [
+                    int(value)
+                    for cell_values in owned_interiors
+                    for value in cell_values
+                ]
+                self.assertEqual(len(local_flat), len(set(local_flat)))
 
     def test_matrix_maximum_row_width_and_factor_fill_are_explicit(self) -> None:
         A = PETSc.Mat().createAIJ([3, 3], comm=PETSc.COMM_SELF)

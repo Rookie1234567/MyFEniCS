@@ -68,6 +68,9 @@ QUALIFIED_OR_FROZEN_CASES = {
 STAGING_OR_IN_PROGRESS_CASES = {
     "094_hcurl_goal_oriented_adaptivity",
 }
+ACTIVE_RESEARCH_CASES = {
+    "095_high_order_local_hp_resource_envelope",
+}
 
 
 RECORDED_CASES = {
@@ -272,7 +275,9 @@ class DocumentationContractTests(unittest.TestCase):
         observed = {path.name for path in cases_root.iterdir() if path.is_dir()}
         self.assertEqual(
             observed,
-            QUALIFIED_OR_FROZEN_CASES | STAGING_OR_IN_PROGRESS_CASES,
+            QUALIFIED_OR_FROZEN_CASES
+            | STAGING_OR_IN_PROGRESS_CASES
+            | ACTIVE_RESEARCH_CASES,
         )
         required_sections = (
             "## 物理问题",
@@ -327,6 +332,28 @@ class DocumentationContractTests(unittest.TestCase):
                 self.assertEqual(command, "python -m benchmarks.task035_case094")
                 self.assertNotIn("mpiexec", command)
                 self.assertNotIn("run_3d", command)
+
+        for case in sorted(ACTIVE_RESEARCH_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in ("README.md", "config.json", "test_command.txt", "records"):
+                    self.assertTrue((folder / name).exists(), name)
+                config = _load(folder / "config.json")
+                self.assertEqual(config["geometry_scope"], "fixed_only")
+                self.assertEqual(config["degrees"], [4, 5, 6])
+                self.assertEqual(config["mpi_size"], 8)
+                self.assertFalse(config["ordinary_default_changed"])
+                irregular = config["irregular_geometry"]
+                self.assertEqual(
+                    irregular["status"], "out_of_scope_by_user"
+                )
+                self.assertFalse(irregular["run"])
+                self.assertFalse(irregular["completion_gate"])
+                records = sorted((folder / "records").glob("*.json"))
+                self.assertGreaterEqual(len(records), 2)
+                readme = _read(folder / "README.md")
+                self.assertIn("fixed rectangular block grating", readme)
+                self.assertIn("MPI8", readme)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"

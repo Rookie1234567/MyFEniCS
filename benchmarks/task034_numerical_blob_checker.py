@@ -35,6 +35,7 @@ NUMERICAL_KERNELS = (
     "src/solvers/common_3d_fields.py",
     "src/solvers/common_3d_postprocess.py",
     "src/solvers/dtn_port_3d.py",
+    "src/solvers/hcurl_cell_static_condensation.py",
     "src/solvers/hybrid_local_dtn.py",
     "src/solvers/hybrid_fem_modal_schur_direct.py",
     "src/solvers/common_3d_solve.py",
@@ -43,7 +44,7 @@ NUMERICAL_KERNELS = (
 INTENTIONAL_CLASSIFICATIONS = {
     "src/common/config_3d.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
-        "reason": "Task035b enables p5/p6 only for the fixed rectangular target; the ordinary default remains unchanged and the new high-order path requires its own PDE anchors",
+        "reason": "Task035b enables p5/p6 and the opt-in exact cell-interior Schur path only for explicit research callers; the ordinary default remains unchanged and both paths require PDE anchors",
         "requires_corresponding_pde_rerun": True,
     },
     "src/geometry/mesh_builder_3d.py": {
@@ -72,9 +73,9 @@ INTENTIONAL_CLASSIFICATIONS = {
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/common_3d_case_flow.py": {
-        "classification": "diagnostic only",
-        "reason": "factorization-only status and postprocess skip path; ordinary solve path unchanged",
-        "requires_corresponding_pde_rerun": False,
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b opt-in condensation returns the physically smaller trace system while preserving the recovered full-system residual; the flag defaults off",
+        "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/common_3d_solve.py": {
         "classification": "diagnostic only",
@@ -82,9 +83,14 @@ INTENTIONAL_CLASSIFICATIONS = {
         "requires_corresponding_pde_rerun": False,
     },
     "src/solvers/dtn_port_3d.py": {
-        "classification": "diagnostic only",
-        "reason": "explicit return after KSPSetUp for staged Gate; KSPSolve path unchanged when the flag is false",
-        "requires_corresponding_pde_rerun": False,
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b adds an opt-in exact cell-interior Schur solve, recovery, and full explicit residual path; the ordinary augmented solve remains selected when the flag is false",
+        "requires_corresponding_pde_rerun": True,
+    },
+    "src/solvers/hcurl_cell_static_condensation.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b introduces exact per-cell interior elimination into a physically smaller trace matrix without max-p zero masking",
+        "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/hybrid_fem_modal_schur_direct.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
@@ -119,14 +125,25 @@ def build_record() -> dict[str, Any]:
     failures = []
     requires_rerun = []
     for relative in NUMERICAL_KERNELS:
-        baseline = _git_bytes("show", f"{BASELINE_COMMIT}:{relative}")
         current_path = ROOT / relative
         if not current_path.is_file():
             rows.append({"path": relative, "classification": "missing", "pass": False})
             failures.append(f"missing:{relative}")
             continue
+        baseline_probe = subprocess.run(
+            ["git", "cat-file", "-e", f"{BASELINE_COMMIT}:{relative}"],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        baseline = (
+            _git_bytes("show", f"{BASELINE_COMMIT}:{relative}")
+            if baseline_probe.returncode == 0
+            else None
+        )
         current = current_path.read_bytes()
-        unchanged = current == baseline
+        unchanged = baseline is not None and current == baseline
         classification = (
             {"classification": "numerical kernel unchanged", "reason": "byte-identical to Task034 base",
              "requires_corresponding_pde_rerun": False}
@@ -145,7 +162,8 @@ def build_record() -> dict[str, Any]:
             requires_rerun.append(relative)
         rows.append({
             "path": relative,
-            "baseline_sha256": _sha256(baseline),
+            "baseline_sha256": None if baseline is None else _sha256(baseline),
+            "baseline_path_present": baseline is not None,
             "current_sha256": _sha256(current),
             "byte_identical": unchanged,
             **classification,
