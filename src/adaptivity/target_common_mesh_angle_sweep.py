@@ -257,7 +257,8 @@ def _evaluate_hp_budget(
         raise ValueError("hp budget evaluation requires exactly the 10-degree target")
     reference = task034_best_available_observable_reference()
     control = task034_observable_control(accuracy_control_key)
-    summary = angle_results[0]["actual_r5_pair"]["enriched"]["summary"]
+    enriched = angle_results[0]["actual_r5_pair"]["enriched"]
+    summary = enriched["summary"]
     observables = {
         name: float(summary[name])
         for name in ("R_total", "T_total", "A_volume_total")
@@ -289,7 +290,7 @@ def _evaluate_hp_budget(
         "pass": passed,
         "checks": checks,
         "candidate": {
-            "degree": int(summary["degree"]),
+            "degree": int(enriched["degree"]),
             "dofs": candidate_dofs,
             "observables": observables,
             "reference_r_total_absolute_error": r_error,

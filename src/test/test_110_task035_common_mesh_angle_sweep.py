@@ -44,6 +44,16 @@ THETA03_AUTHORITY = (
 THETA03_AUTHORITY_SHA256 = (
     "2dfab0433836c347d317497b60ec83e33c868507d8f1a4f6fa3b45c0277d0010"
 )
+HP_FAILURE_RECORD = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8.json"
+)
+HP_RECOVERY_RECORD = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8_recovered.json"
+)
 
 
 class Task035CommonMeshAngleSweepTests(unittest.TestCase):
@@ -81,7 +91,6 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
 
     def test_hp_budget_requires_both_dof_and_full_observable_accuracy(self) -> None:
         summary = {
-            "degree": 6,
             "num_nedelec_dofs": 161700,
             "R_total": 0.0007663133771040101,
             "T_total": 0.602677530502972,
@@ -91,7 +100,10 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
             {
                 "grazing_angle_deg": 10.0,
                 "actual_r5_pair": {
-                    "enriched": {"summary": summary},
+                    "enriched": {
+                        "degree": 6,
+                        "summary": summary,
+                    },
                 },
             }
         ]
@@ -112,6 +124,41 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         self.assertFalse(
             failed["checks"]["observable_vector_error_no_worse_than_control"]
         )
+
+    def test_theta03_p6_failure_is_preserved_and_recovery_recomputes(self) -> None:
+        record = json.loads(HP_RECOVERY_RECORD.read_bytes())
+        self.assertEqual(record["status"], "controlled_negative")
+        self.assertFalse(record["recovery"]["pde_rerun"])
+        self.assertFalse(record["recovery"]["thresholds_relaxed"])
+        self.assertEqual(
+            hashlib.sha256(HP_FAILURE_RECORD.read_bytes()).hexdigest(),
+            record["failure_record"]["sha256"],
+        )
+        candidate = record["candidate_p6"]
+        evaluation = _evaluate_hp_budget(
+            [
+                {
+                    "grazing_angle_deg": 10.0,
+                    "actual_r5_pair": {
+                        "enriched": {
+                            "degree": candidate["degree"],
+                            "summary": {
+                                "num_nedelec_dofs": candidate[
+                                    "num_nedelec_dofs"
+                                ],
+                                "R_total": candidate["R_total"],
+                                "T_total": candidate["T_total"],
+                                "A_volume_total": candidate["A_volume_total"],
+                            },
+                        }
+                    },
+                }
+            ],
+            dof_ceiling=record["evaluation"]["dof_ceiling"],
+            accuracy_control_key=record["accuracy_control"]["key"],
+        )
+        self.assertEqual(evaluation["checks"], record["evaluation"]["checks"])
+        self.assertFalse(evaluation["pass"])
 
     def test_replay_authority_rejects_wrong_hash(self) -> None:
         with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):

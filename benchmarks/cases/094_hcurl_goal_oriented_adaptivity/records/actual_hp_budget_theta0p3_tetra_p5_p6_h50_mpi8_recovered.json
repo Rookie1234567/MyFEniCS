@@ -1,0 +1,115 @@
+{
+  "schema_version": "task035.hp-budget-artifact-recovery.v1",
+  "status": "controlled_negative",
+  "decision": "p6_r_total_accuracy_control_not_met",
+  "source": {
+    "commit_sha": "d896beb6378883b8a64316f082eefa765335273f",
+    "clean": true,
+    "stable": true
+  },
+  "failure_record": {
+    "path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8.json",
+    "sha256": "3d41a577e7ef08521cc8364633f6c24f8c6a72e5a6370e19ba2aa2a7093cb0a2",
+    "status": "formal_not_pass",
+    "failure_kind": "post_solve_metadata_key_error",
+    "preserved_without_rewrite": true
+  },
+  "recovery": {
+    "scope": "postprocess_only_from_completed_official_run_summaries",
+    "pde_rerun": false,
+    "reason": "Both MPI8 solves and localization completed before the hp evaluator read degree from the wrong nesting level.",
+    "thresholds_relaxed": false
+  },
+  "raw_evidence": {
+    "coarse_p5_run_summary": {
+      "path": "benchmarks/artifacts/task035/actual_global_r5/tetrahedron_p5_p6_h50_pols_mpi8_20260723T070805Z_common_mesh_theta0.3_grazing10/grazing_10deg/coarse_p5/run_summary.json",
+      "sha256": "175026bfeeee1c34de442ecd6c9224b5bafb021f64d4617115ad3b40934c6e07"
+    },
+    "enriched_p6_run_summary": {
+      "path": "benchmarks/artifacts/task035/actual_global_r5/tetrahedron_p5_p6_h50_pols_mpi8_20260723T070805Z_common_mesh_theta0.3_grazing10/grazing_10deg/enriched_p6/run_summary.json",
+      "sha256": "ec69449af6c04312af218265472c5f390753102d1802fd99c1f7d30fe79c5cfd"
+    },
+    "memory_timeline_sha256": "8c05a8e7429c7e9d97b3e865abdf966a40e00c0902178dd80bfdf4b36c544c7c",
+    "progress_sha256": "890ddff218c62c935b463dcaad28128fec898f9dd493791d53819c2ad70e705c",
+    "worker_stdout_sha256": "83efb1e0be4a838fdccc225eed0fe1cfacaed4013136d426bbc0ca9c8afbec85"
+  },
+  "target_identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "grazing_angle_deg": 10.0,
+    "incidence_theta_deg": 80.0,
+    "polarization": "S",
+    "mesh_backend": "SHA-bound theta=0.3 full-periodic-sleeve tetra replay",
+    "global_cell_count": 1200,
+    "mpi_size": 8
+  },
+  "mesh_authority": {
+    "record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json",
+    "record_sha256": "2dfab0433836c347d317497b60ec83e33c868507d8f1a4f6fa3b45c0277d0010",
+    "theta": 0.3,
+    "partition_independent_mesh_sha256": "5e3a6eb874c0b577a19a50f19f574b6c55930c88e0b1aa671463e9ddf1e7f87a"
+  },
+  "resource_authority": {
+    "memory_authority_gib": 13.326431274414062,
+    "max_process_tree_swap_mb": 0.0,
+    "max_observed_worker_rank_count": 8,
+    "warning_gib": 16.0,
+    "termination_gib": 32.0,
+    "warning_triggered": false,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false
+  },
+  "coarse_p5": {
+    "degree": 5,
+    "official_result": true,
+    "case_status": "completed",
+    "num_nedelec_dofs": 97580,
+    "linear_system_relative_residual": 1.1539764480606466e-11,
+    "R_total": 0.0011745274819607862,
+    "T_total": 0.6024423365040869,
+    "A_volume_total": 0.39638313601370107,
+    "reference_r_total_absolute_error": 0.0004082141048567761,
+    "reference_observable_error_l2": 0.0005018873675361964,
+    "dof_saving_fraction": 0.7129088063267155
+  },
+  "candidate_p6": {
+    "degree": 6,
+    "official_result": true,
+    "case_status": "completed",
+    "num_nedelec_dofs": 161700,
+    "linear_system_relative_residual": 2.529086199910735e-11,
+    "R_total": 0.0008194492274642393,
+    "T_total": 0.6026849321251826,
+    "A_volume_total": 0.3964956186478612,
+    "reference_r_total_absolute_error": 0.000053135850360229117,
+    "reference_observable_error_l2": 0.00008088873923727516,
+    "dof_saving_fraction": 0.5242606474997941
+  },
+  "fixed_reference": {
+    "key": "p4_h5",
+    "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
+    "num_nedelec_dofs": 339892,
+    "R_total": 0.0007663133771040101,
+    "T_total": 0.602677530502972,
+    "A_volume_total": 0.3965561561199801
+  },
+  "accuracy_control": {
+    "key": "p4_h7p5",
+    "num_nedelec_dofs": 147844,
+    "R_total": 0.0008024690153384762,
+    "T_total": 0.602429772906308,
+    "A_volume_total": 0.3967677580783896,
+    "reference_r_total_absolute_error": 0.0000361556382344661,
+    "reference_observable_error_l2": 0.00032782075236879356
+  },
+  "evaluation": {
+    "dof_ceiling": 169946,
+    "checks": {
+      "candidate_dofs_within_ceiling": true,
+      "minimum_50_percent_dof_saving": true,
+      "r_total_error_no_worse_than_control": false,
+      "observable_vector_error_no_worse_than_control": true
+    },
+    "pass": false,
+    "thresholds_relaxed": false
+  }
+}
