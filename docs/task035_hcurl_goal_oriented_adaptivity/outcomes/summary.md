@@ -444,3 +444,33 @@ p4 hexa/h5 的 `R/T=0.000766316/0.602677531` 与仓库 p4/h5 离散参考
   global cell IDs；h37.5 MPI8 重放精确恢复同一 1,600-cell mesh hash；
 - 新增 tolerance-normalized R/T multi-goal policy 和 research-only h/p correction-decay
   classifier，ordinary default 保持不变。
+
+### h37.5 tolerance-normalized multi-goal 实测
+
+clean SHA `4e334a527ad57452ca3b12ab38d3059406f5a4c9` 的 MPI8 formal run 使用同一 h37.5
+base、p4/p5、`theta=0.7`、full sleeve 和一次 refinement。全部 forward/adjoint true residual、
+normalization authority hash、Dörfler、periodic mesh、watchdog 与 no-swap Gate 通过，峰值
+`9.452 GiB`，wall `129.21 s`。
+
+初始 216-cell mesh 上，tolerance-normalized R/T 和 strict-R 恰好选中同一 98-cell canonical set，
+geometry hash 都为
+`e9318d732afb9e96db417d971c034830b263e3a297537594cba1c134e66ac17a`。因此允许的一次
+refinement 仍生成同一 1,600-cell mesh；p5 observables 与 R-only 的 L2 差仅 `3.42e-14`：
+
+```text
+R/T/A_volume = 0.000880846043661 / 0.602567554773250 / 0.396551599183092
+vector error = 1.588494838e-4   (beats structured p4/h7.5 control)
+strict-R error = 1.145326666e-4 (fails structured p4/h7.5 control)
+```
+
+在 refined mesh 的只读 estimator evaluation 上，两种候选已分化：normalized marker 655 cells、
+R-only marker 687 cells，intersection/union 为 `517/825`。但 Review V5 明确限制每个 base 最多
+一次 local-h，故不执行第二次 refinement，也不据此扩展 theta scan。分类为：
+
+```text
+tolerance_normalized_multigoal_mechanism = pass
+one_cycle_mesh_differentiation_vs_R_only = controlled_neutral_identical
+second_h_cycle = not_run_by_contract
+strict_R_gate = controlled_negative
+normalized_RTA_vector_gate = pass
+```

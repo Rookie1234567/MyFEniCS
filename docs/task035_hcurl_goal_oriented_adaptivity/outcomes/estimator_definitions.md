@@ -163,3 +163,8 @@ $$
 都低于全局显著性 floor 时为 `undetermined`。该 classifier 只输出 canonical-cell decision，
 不创建 variable-p space、不改变 mesh，也不提升 production；真实 cell-level p4/p5/p6 验证仍需
 同一 mesh 的两组 local indicator snapshot。
+
+h37.5 formal run 的初始 normalized 与 R-only marker 都是同一 98-cell set，所以允许的一次
+refinement 没有产生新 mesh；refined-mesh 的只读 estimator evaluation 才分化为 655 与 687
+cells。该证据说明 tolerance normalization 已实际参与排序，但当前一次-h合同下分类为
+`controlled_neutral_identical`，不得据此启动第二次 h 或宣称 multi-goal 优于 R-only。

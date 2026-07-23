@@ -324,10 +324,22 @@ official residual、DoF、R/T/A 和 resource authority。
 | h37.5 p6 topology preflight | 214,050 DoF；50% budget fail；heavy not run |
 | normalized multi-goal / watchdog / DWR targeted | 23 passed |
 | h/p correction-decay classifier targeted aggregate | 25 passed |
-| scoped Ruff / compileall / diff-check | pass / pass / pending final |
+| normalized record/replay/classifier targeted | 17 passed, 3 skipped |
+| final Task035 focused suite | 136 passed, 3 skipped, 502 deselected |
+| scoped Ruff / compileall / JSON / diff-check | pass / pass / pass / pass |
 
 首次普通 pytest 因 Windows 继承的 `TMP/TEMP` 指向 `/mnt/c`，pytest capture file 在 collection
 阶段消失；该基础设施失败保留在执行日志中。activation 修复后使用普通 capture 重跑通过，没有
 以 `-s` 结果替代最终 Gate。common-mesh 首次 h37.5 replay 同样真实暴露 global cell ID 跨进程
 漂移；修复后由 `marked_canonical_cell_ids` 解析当前 IDs，并同时验证 marker geometry hash 与
 最终 mesh/tag hash。
+
+formal normalized multi-goal record 绑定 clean SHA
+`4e334a527ad57452ca3b12ab38d3059406f5a4c9`，状态
+`actual_dwr_adaptive_cycles_pass`，qualification 无 failures，峰值 `9.452 GiB`、swap 0。
+`test_112_task035_review_v5_records.py` 从 compact records 独立验证：
+
+- normalization authority、source SHA、一次 refinement 和 resource Gate；
+- 初始 normalized/R-only canonical marker 与最终 mesh hash 完全相同；
+- refined-mesh 两种候选已分化但没有第二次 h；
+- normalized `(R,T,A_volume)` vector Gate pass，strict-R Gate fail。

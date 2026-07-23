@@ -137,3 +137,7 @@ noncanonical task evidence。
 - 新 `tolerance_normalized_R_T` policy 使用 structured p4/h7.5 的 accepted component errors
   归一化独立 R/T adjoint indicators；`A_volume` 保留在 post-solve R/T/A vector audit。
   h/p classifier 当前仅输出 correction-decay candidate，不改变 FE 空间或 ordinary default。
+- `records/actual_dwr_multigoal_normalized_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json`：
+  normalized policy 的正式 MPI8 一周期 record；峰值 9.452 GiB、swap 0、全部 Gate pass。初始
+  normalized marker 与 R-only 同为 98-cell identical set，因此最终 1,600-cell mesh 与 observables
+  相同；refined-mesh 的候选集合已经分化，但按“一次 local-h”合同不继续第二轮。
