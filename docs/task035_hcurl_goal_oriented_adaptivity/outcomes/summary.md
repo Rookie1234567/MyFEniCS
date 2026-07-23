@@ -17,8 +17,11 @@ actual_goal_weighted_DWR = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
 selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+adaptive_50pct_dof_accuracy_gate = controlled_negative
+strict_RTA_resource_solution_10deg = structured_p4_h7p5
+R_priority_resource_candidate_10deg = uniform_tetra_p5
 robust_angle_common_mesh = controlled_negative
-multi_angle_lane = active
+multi_angle_lane = closed_by_user_scope_10deg
 second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false
@@ -312,6 +315,50 @@ next_lane = multi_angle_marking_or_independent_angle_reference
 thresholds_relaxed = false
 ```
 
+## 10°、S 入射与 50% DoF 硬约束
+
+用户把最终资源目标收敛到 Task034 fixed geometry、S、10° grazing：以 p4/h5 best-available
+discrete reference 的 339,892 DoF 为基准，候选必须不超过 169,946 DoF。精度 Gate 没有只看
+字符串形式的 `0.0007xxx`；同时记录 R absolute error 和完整 `(R,T,A_volume)` L2 error，
+并用已接受的 p4/h7.5 作为不放宽的 accuracy control。
+
+| route | cells | DoF | DoF saving | R | R abs error | R/T/A error L2 | peak GiB |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| structured p4/h5 reference | — | 339,892 | 0% | 0.0007663134 | 0 | 0 | 28.888 |
+| structured p4/h7.5 | — | 147,844 | 56.50% | 0.0008024690 | 3.616e-5 | 3.278e-4 | 12.724 |
+| uniform tetra p5 | 1,440 | 116,120 | 65.84% | 0.0007956866 | 2.937e-5 | 7.352e-4 | 8.011 |
+| DWR theta=.3 tetra p6 | 1,200 | 161,700 | 52.43% | 0.0008194492 | 5.314e-5 | 8.089e-5 | 13.326 |
+| DWR theta=.4 tetra p6 | 1,248 | 167,784 | 50.64% | 0.0008176842 | 5.137e-5 | 1.022e-4 | 13.994 |
+
+theta=.3 首次正式 run 的 p5、p6 solve 和 localization 已全部结束，但 post-solve evaluator
+错误地从 summary 而不是 solve entry 读取 `degree`，因此原 `formal_not_pass` record 永久保留。
+修复后没有重跑已知 R 不合格的 PDE；recovered record 以 run-summary、timeline、progress 和
+stdout SHA 绑定并独立重算出 DoF pass、vector pass、R fail。
+
+theta=.4 使用 clean SHA `74f5d23cd2771390322947dc82d6edf6c0f81e86`、MPI8 和
+SHA-bound 1,248-cell replay。全部 official solve、true residual、periodic mesh、R5 localization、
+resource、no-swap 和 watchdog Gate 通过；p6 residual 小于 `1e-9`，process-tree peak
+`13.994 GiB`。其 hp evaluation 仍为：
+
+```text
+candidate_dofs_within_ceiling = true
+minimum_50_percent_dof_saving = true
+r_total_error_no_worse_than_control = false
+observable_vector_error_no_worse_than_control = true
+thresholds_relaxed = false
+```
+
+从 theta=.3 到 theta=.4，48 个额外 cells 只改善 R 约 `1.77e-6`，而剩余预算仅 2,162 DoF；
+要补足约 `1.52e-5` 的 R-control 差距没有可信外推路径。因此 full-periodic-sleeve adaptive
+p6 在 50% DoF 约束下关闭，不再继续 theta 扫描。
+
+最终 measured decision：
+
+- 严格 R/T/A 口径：选择已接受 structured p4/h7.5；它已经节约 56.50% DoF。
+- R≈0.0007xxx 优先口径：uniform tetra p5 以 65.84% DoF 节约和 8.011 GiB 给出
+  `R=0.0007956866`，是更省的 research candidate；但完整向量误差不如 p4/h7.5。
+- 当前 adaptive p6 不作为资源方案，也不提升为 ordinary default。
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
@@ -349,8 +396,11 @@ actual_goal_weighted_DWR = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
 selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+adaptive_50pct_dof_accuracy_gate = controlled_negative
+strict_RTA_resource_solution_10deg = structured_p4_h7p5
+R_priority_resource_candidate_10deg = uniform_tetra_p5
 robust_angle_common_mesh = controlled_negative
-multi_angle_lane = active
+multi_angle_lane = closed_by_user_scope_10deg
 second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false

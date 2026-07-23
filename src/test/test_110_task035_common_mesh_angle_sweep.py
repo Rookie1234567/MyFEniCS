@@ -63,6 +63,14 @@ THETA04_AUTHORITY = (
     )
 )
 THETA04_AUTHORITY_SHA256 = "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468"
+THETA04_HP_RECORD = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json"
+)
+THETA04_HP_RECORD_SHA256 = (
+    "8a579b5141e12ac3f029b2ff72ba3d597da46ea2d0a96757593ef191e77c938c"
+)
 
 
 class Task035CommonMeshAngleSweepTests(unittest.TestCase):
@@ -197,6 +205,40 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         reference_dofs = 339892
         self.assertLessEqual(p6_dofs, reference_dofs // 2)
         self.assertGreaterEqual(1.0 - p6_dofs / reference_dofs, 0.5)
+
+    def test_theta04_p6_is_a_qualified_r_accuracy_controlled_negative(self) -> None:
+        payload = THETA04_HP_RECORD.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(payload).hexdigest(),
+            THETA04_HP_RECORD_SHA256,
+        )
+        record = json.loads(payload)
+        self.assertEqual(record["status"], "actual_common_mesh_angle_sweep_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "74f5d23cd2771390322947dc82d6edf6c0f81e86",
+        )
+        evaluation = record["hp_budget_evaluation"]
+        self.assertEqual(evaluation["status"], "controlled_negative")
+        self.assertFalse(evaluation["pass"])
+        self.assertTrue(evaluation["checks"]["candidate_dofs_within_ceiling"])
+        self.assertTrue(evaluation["checks"]["minimum_50_percent_dof_saving"])
+        self.assertFalse(
+            evaluation["checks"]["r_total_error_no_worse_than_control"]
+        )
+        self.assertTrue(
+            evaluation["checks"]["observable_vector_error_no_worse_than_control"]
+        )
+        self.assertEqual(evaluation["candidate"]["dofs"], 167784)
+        self.assertAlmostEqual(
+            evaluation["candidate"]["observables"]["R_total"],
+            0.0008176842066200944,
+        )
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
+        self.assertFalse(record["terminated_for_memory"])
+        self.assertFalse(record["terminated_for_timeout"])
 
     def test_replay_authority_rejects_wrong_hash(self) -> None:
         with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):

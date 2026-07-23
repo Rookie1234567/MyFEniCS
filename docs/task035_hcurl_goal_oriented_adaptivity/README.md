@@ -18,8 +18,11 @@ actual_goal_weighted_dwr = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
 selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+adaptive_50pct_dof_accuracy_gate = controlled_negative
+strict_RTA_resource_solution_10deg = structured_p4_h7p5
+R_priority_resource_candidate_10deg = uniform_tetra_p5
 robust_angle_common_mesh = controlled_negative
-multi_angle_lane = active
+multi_angle_lane = closed_by_user_scope_10deg
 production_estimator_selected = false
 production_backend_selected = false
 ordinary_default_changed = false
@@ -154,3 +157,39 @@ marking 或独立 angle reference，不提升 ordinary default。
 这是 hash-bound 的 research selection，不是跨角度、P 入射、Hybrid 或普通默认的生产资格化。
 Case094 仍保持 staging，`production_estimator_selected=false`、
 `production_backend_selected=false` 与 `ordinary_default_changed=false` 不变。
+
+## 10° 与至少 50% DoF 节约的最终资源决策
+
+按用户最新目标，主线只比较 Task034 fixed geometry、S、10° grazing，并以 accepted
+p4/h5 的 339,892 DoF 和 `(R,T,A_volume)=(0.0007663134,0.6026775305,0.3965561561)`
+为 best-available discrete reference。研究型 tetra p6 已在 serial/MPI8 periodic MPC Gate
+通过，但普通 hexa/default 仍保持 p4 上限。
+
+两个 p6 adaptive 候选都满足 DoF 下限且完整 R/T/A 向量误差优于 p4/h7.5，却都没有满足
+预先锁定的 R-only accuracy control：
+
+| route | DoF | saving | R | peak GiB | decision |
+|---|---:|---:|---:|---:|---|
+| p4/h5 structured reference | 339,892 | 0% | 0.0007663134 | 28.888 | reference |
+| p4/h7.5 structured | 147,844 | 56.50% | 0.0008024690 | 12.724 | strict R/T/A resource solution |
+| uniform tetra p5 | 116,120 | 65.84% | 0.0007956866 | 8.011 | R-priority candidate |
+| DWR theta=.3 tetra p6 | 161,700 | 52.43% | 0.0008194492 | 13.326 | controlled negative |
+| DWR theta=.4 tetra p6 | 167,784 | 50.64% | 0.0008176842 | 13.994 | controlled negative |
+
+theta=.4 相对 theta=.3 增加 48 cells 和 6,084 p6 DoF，只把 R 改善约 `1.77e-6`；
+剩余 2,162 DoF 预算不足以补足相对 p4/h7.5 R control 的约 `1.52e-5` 差距。因此继续
+扫描 theta 或增加 full-periodic sleeve cells 没有合理的 50% DoF 成功路径，lane 已关闭。
+
+工程选择分两种口径：
+
+```text
+需要 R/T/A 整体可信且至少节约 50% DoF:
+    采用已接受的 structured p4/h7.5
+
+只把 R≈0.0007xxx 作为主目标并优先最低资源:
+    uniform tetra p5 是 measured research candidate
+    但其完整 R/T/A vector error 不如 p4/h7.5，不能冒充同精度 production replacement
+```
+
+当前 full-sleeve DWR adaptive p6 在 DoF、内存和 R 上均未击败上述可用点，故不推荐作为
+资源解决方案。ordinary default、production estimator/backend 与 master 均未改变。

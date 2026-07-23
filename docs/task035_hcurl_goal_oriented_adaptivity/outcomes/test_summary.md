@@ -17,6 +17,8 @@ classifier_fix_targeted = pass
 second_full_regression = not_run_phase_limit
 selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
 heavy_p4_started = true
+adaptive_50pct_dof_accuracy_gate = controlled_negative
+strict_RTA_resource_solution_10deg = structured_p4_h7p5
 thresholds_relaxed = false
 ```
 
@@ -277,3 +279,33 @@ SHA256 `ca21d21c...e900f`。所有 requested angles 在同一个 1,316-cell mesh
 1°/5°/10° 的 p4→p5 observable gap 分别为 `0.423752`、`0.0246384`、`0.00587184`。
 运行 Gate 通过不等于 robust-angle 数值资格化；10° 网格直接复用到 1°/5° 的路线按 measured
 evidence 保存为 controlled negative。没有运行 MPI2，没有放宽 residual、memory 或 estimator Gate。
+
+## 10° / 50% DoF hp-budget 收口
+
+| 检查 | 结果 |
+|---|---:|
+| tetra p6 Basix layout / S3 transforms serial | pass |
+| refined tetra p6 sparse MPC MPI8 | pass per rank |
+| theta=.3 1,200-cell replay MPI8 | exact mesh/tag hash pass |
+| theta=.3 p5/p6 official solves | pass；post-solve metadata failure preserved |
+| theta=.3 recovered hp evaluation | DoF pass；R/T/A vector pass；R control fail |
+| metadata degree nesting fix targeted | 1 passed |
+| failure preservation/recovery recomputation targeted | 1 passed |
+| theta=.4 p4/p5 DWR authority MPI8 | pass；7.732 GiB；115.1 s |
+| theta=.4 p6 DoF topology preflight | 167,784；50.64% saving |
+| theta=.4 p5/p6 MPI8 | all solve/watchdog Gates pass；13.994 GiB；207 s |
+| theta=.4 hp evaluation | DoF pass；R/T/A vector pass；R control fail |
+| focused test99/test110 before theta=.4 heavy | 20 passed, 2 skipped |
+| final test99/test110 | 21 passed, 2 skipped |
+| final governance/documentation/Phase-A contracts | 29 passed |
+| final Task035 focused suite | 125 passed, 2 skipped, 502 deselected |
+| final scoped Ruff / compileall / JSON / diff-check | pass / pass / pass / pass |
+| thresholds relaxed | false |
+
+theta=.3 首次 heavy 的 worker 已完成 p5、p6 和 localization，失败仅为 evaluator 的
+`KeyError: degree`；原 record 未删除或改写，另建 recovered compact evidence，且没有重跑
+该已知 R-negative PDE。theta=.4 record 绑定 clean SHA、authority SHA、MPI8、mesh hash、
+official residual、DoF、R/T/A 和 resource authority。
+
+本收口没有重跑 Task034 p4/h5、p4/h7.5、M funnel、环境资格化或 full repository pytest。
+最终 scoped Ruff、compileall、Task035 focused suite 与 diff-check 在文档/record 最终改动后执行。
