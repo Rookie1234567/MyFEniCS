@@ -38,6 +38,9 @@ P3_P4_DWR_COMBINED_CYCLE2_RECORD = RECORDS / (
 P3_P4_DWR_R_MINIMAL_CYCLE2_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_minimal_periodic_closure_mpi8.json"
 )
+P3_P4_DWR_R_MINIMAL_CYCLE3_FAILURE_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle3_minimal_periodic_closure_mpi8.json"
+)
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
 )
@@ -97,6 +100,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_minimal_cycle2 = json.loads(
             P3_P4_DWR_R_MINIMAL_CYCLE2_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_minimal_cycle3_failure = json.loads(
+            P3_P4_DWR_R_MINIMAL_CYCLE3_FAILURE_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
             P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
@@ -886,6 +892,68 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             final["enriched"]["num_nedelec_dofs"],
             p4_h10["resource"]["dofs"],
         )
+
+    def test_minimal_cycle3_preserves_periodic_refinement_failure(self) -> None:
+        record = self.p3_p4_dwr_r_minimal_cycle3_failure
+        self.assertEqual(record["status"], "formal_not_pass")
+        self.assertFalse(record["qualification"]["pass"])
+        self.assertEqual(
+            record["qualification"]["failures"],
+            [
+                "result_status",
+                "result_pass",
+                "requested_cycle_count_completed",
+                "all_refinement_audits_pass",
+            ],
+        )
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "67efe602bec5941a89b49b916bd8a4d8541da949",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(
+            record["periodic_edge_closure_policy"],
+            "minimal_periodic_mates_only",
+        )
+        self.assertFalse(record["terminated_for_memory"])
+        self.assertFalse(record["terminated_for_timeout"])
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"],
+            8,
+        )
+        self.assertEqual(
+            record["resource_authority"]["max_process_tree_swap_mb"],
+            0.0,
+        )
+        self.assertLess(record["resource_authority"]["memory_authority_gib"], 7.2)
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 960, 1968],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in record["cycles"]],
+            [42, 68, 292],
+        )
+        self.assertTrue(record["all_fixed_reference_error_reductions_positive"])
+        self.assertEqual(len(record["refinements"]), 3)
+        failed = record["refinements"][-1]
+        self.assertFalse(failed["pass"])
+        self.assertEqual(failed["parent_global_cells"], 1968)
+        self.assertEqual(failed["refined_global_cells"], 6670)
+        edge = failed["periodic_edge_closure"]
+        self.assertFalse(edge["full_periodic_boundary_synchronization"])
+        self.assertEqual(edge["boundary_sleeve_edges_added"], 0)
+        self.assertEqual(edge["initial_edge_count"], 632)
+        self.assertEqual(edge["closed_edge_count"], 637)
+        audit = failed["refined_mesh_audit"]
+        self.assertEqual(audit["orientation"]["nonpositive_count"], 0)
+        self.assertGreater(audit["shape_quality"]["quantiles"]["minimum"], 0.0)
+        self.assertFalse(audit["periodic_x"]["pass"])
+        self.assertFalse(audit["periodic_y"]["pass"])
+        self.assertEqual(audit["periodic_x"]["missing_at_maximum_count"], 16)
+        self.assertEqual(audit["periodic_x"]["missing_at_minimum_count"], 13)
+        self.assertEqual(audit["periodic_y"]["missing_at_maximum_count"], 9)
+        self.assertEqual(audit["periodic_y"]["missing_at_minimum_count"], 10)
 
     def test_theta03_is_a_controlled_negative_cost_screen(self) -> None:
         theta03 = self.p3_p4_dwr_r_theta03
