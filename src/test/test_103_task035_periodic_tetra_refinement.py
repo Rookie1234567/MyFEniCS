@@ -7,6 +7,9 @@ import tempfile
 import unittest
 
 import numpy as np
+from basix.ufl import element
+
+from dolfinx import default_real_type, fem
 
 from src.adaptivity.periodic_tetra_refinement import (
     _canonical_positive_tetra_coordinates,
@@ -15,6 +18,7 @@ from src.adaptivity.periodic_tetra_refinement import (
     refine_periodic_marked_tetra_mesh,
 )
 from src.common.config_3d import target_stage4_config
+from src.constraints.floquet_3d_high_order import build_high_order_constraint_data
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.tetra_mesh_audit import (
     audit_periodic_tetra_mesh,
@@ -193,6 +197,30 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
             "f4c0533e59ae45e308c1c2ca2904d88975226fcaae2b245fe6c241e44fa349fc",
         )
         self.assertEqual(refined_twice.mesh.topology.cell_type.name, "tetrahedron")
+
+    def test_refined_p3_floquet_ownership_coverage_is_partition_robust(self) -> None:
+        cfg, mesh_data = _target_mesh_data()
+        marked = [_canonical_x_min_cell(mesh_data, cfg)]
+        refined, report = refine_periodic_marked_tetra_mesh(mesh_data, cfg, marked)
+        self.assertTrue(report["pass"], report)
+        p3_cfg = replace(cfg, nedelec_degree=3)
+        V = fem.functionspace(
+            refined.mesh,
+            element(
+                "N1curl",
+                refined.mesh.basix_cell(),
+                3,
+                dtype=default_real_type,
+            ),
+        )
+        constraints = build_high_order_constraint_data(V, refined, p3_cfg)
+        self.assertEqual(constraints.global_constraint_rows, 2160)
+        self.assertEqual(
+            constraints.global_constraint_rows,
+            constraints.num_edge_constraints + constraints.num_face_constraints,
+        )
+        if refined.mesh.comm.size > 1:
+            self.assertGreater(constraints.num_global_ghost_slave_constraints, 0)
 
 
 if __name__ == "__main__":

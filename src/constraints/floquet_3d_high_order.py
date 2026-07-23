@@ -183,22 +183,53 @@ def _periodic_boundary_entities(
     mesh_data, cfg: SimulationConfig3D, entity_dim: int
 ) -> np.ndarray:
     msh = mesh_data.mesh
-    facets: list[int] = []
+    tagged_facets: list[int] = []
     for tag in (cfg.tags.x_min, cfg.tags.x_max, cfg.tags.y_min, cfg.tags.y_max):
-        facets.extend(
+        tagged_facets.extend(
             int(value)
             for value in np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32)
         )
-    if not facets:
-        return np.asarray([], dtype=np.int32)
+    tagged_entities: list[int] = []
     if int(entity_dim) == msh.topology.dim - 1:
-        return np.unique(np.asarray(facets, dtype=np.int32))
-    msh.topology.create_connectivity(msh.topology.dim - 1, entity_dim)
-    facet_to_entity = msh.topology.connectivity(msh.topology.dim - 1, entity_dim)
-    return np.unique(
-        np.concatenate([facet_to_entity.links(int(facet)) for facet in facets]).astype(
-            np.int32
+        tagged_entities.extend(tagged_facets)
+    elif tagged_facets:
+        msh.topology.create_connectivity(msh.topology.dim - 1, entity_dim)
+        facet_to_entity = msh.topology.connectivity(msh.topology.dim - 1, entity_dim)
+        tagged_entities.extend(
+            int(entity)
+            for facet in tagged_facets
+            for entity in facet_to_entity.links(int(facet))
         )
+
+    msh.topology.create_entities(entity_dim)
+    msh.topology.create_connectivity(entity_dim, msh.topology.dim)
+    msh.topology.create_entity_permutations()
+    entity_map = msh.topology.index_map(entity_dim)
+    local_entities = np.arange(
+        entity_map.size_local + entity_map.num_ghosts, dtype=np.int32
+    )
+    geometry = cpp.mesh.entities_to_geometry(
+        msh._cpp_object, entity_dim, local_entities, True
+    )
+    tolerance = _geometry_tolerance(cfg)
+    geometric_entities = []
+    for entity, geometry_dofs in zip(local_entities, geometry, strict=True):
+        coordinates = np.asarray(
+            msh.geometry.x[np.asarray(geometry_dofs, dtype=np.int64)],
+            dtype=np.float64,
+        )
+        if any(
+            np.all(np.abs(coordinates[:, axis] - boundary) <= tolerance)
+            for axis, boundary in (
+                (0, cfg.x_min),
+                (0, cfg.x_max),
+                (1, cfg.y_min),
+                (1, cfg.y_max),
+            )
+        ):
+            geometric_entities.append(int(entity))
+    return np.unique(
+        np.asarray((*tagged_entities, *geometric_entities), dtype=np.int32)
     )
 
 
