@@ -268,6 +268,18 @@ compression。但它仍比 structured p4/h7.5 error 高约 64%，所以预先声
 Gate 未通过。该 theta lane 在此停止，不继续扫参；下一步只做独立 p5 uniform-level1 control，
 区分收益来自 DWR marking 还是 global p5。
 
+clean SHA `fc54cc698422d9d13477167cab4bc8566c9004b3` 的独立 p4/p5 uniform-level1 MPI8
+control 从同一初始网格全量细化到 1,440 cells，得到 p5 `116,120` DoF、error `0.000735191`、
+峰值 `8.011 GiB`、swap 0，全部 Gate 通过。与之相比，DWR `theta=0.7` 使用 1,316 cells、
+`106,355` DoF，把 error 降至 `0.000538286`：约少 8.4% DoF且误差低 26.8%，峰值内存只高约
+0.9%（包含 adjoint）。因此 goal-oriented marking 的收益不只是 global p5，满足 same-degree
+tetra adaptive-vs-uniform causal control：
+
+```text
+p4_p5_DWR_theta0p7_vs_uniform_tetra = clear_positive
+p4_p5_DWR_theta0p7_vs_structured_p4_h7p5 = pareto_tradeoff_not_same_error
+```
+
 上述结论只对 Task034 fixed geometry、S、10° grazing 与当前 best-available p4/h5 reference 成立；
 没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
 所以这是 selected research strategy，而不是 ordinary production default。

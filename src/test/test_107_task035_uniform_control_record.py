@@ -50,6 +50,7 @@ P4_P5_DWR_R_FULL_CYCLE1_RECORD = RECORDS / (
 P4_P5_DWR_R_THETA07_FULL_CYCLE1_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p7_cycle1_full_periodic_closure_mpi8.json"
 )
+P4_P5_UNIFORM_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p4_p5_mpi8.json"
 P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD = (
     RECORDS / "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle2_mpi8.json"
 )
@@ -121,6 +122,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p4_p5_dwr_r_theta07_full_cycle1 = json.loads(
             P4_P5_DWR_R_THETA07_FULL_CYCLE1_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p4_p5_uniform_level1 = json.loads(
+            P4_P5_UNIFORM_LEVEL1_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_dwr_r_cycle2_pre_tie = json.loads(
             P3_P4_DWR_R_CYCLE2_PRE_TIE_RECORD.read_text(encoding="utf-8")
@@ -1158,6 +1162,52 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         self.assertGreater(final["enriched_fixed_reference_error_l2"], structured_error)
         self.assertLess(final["enriched"]["num_nedelec_dofs"], p4_h7p5["resource"]["dofs"])
         self.assertLess(authority["memory_authority_gib"], p4_h7p5["resource"]["peak_memory_gib"])
+
+    def test_p4_p5_dwr_beats_same_degree_uniform_tetra_control(self) -> None:
+        uniform = self.p4_p5_uniform_level1
+        self.assertEqual(uniform["status"], "actual_uniform_tetra_control_pass")
+        self.assertTrue(uniform["qualification"]["pass"])
+        self.assertEqual(uniform["qualification"]["failures"], [])
+        self.assertEqual(
+            uniform["source"]["commit_sha"],
+            "fc54cc698422d9d13477167cab4bc8566c9004b3",
+        )
+        self.assertTrue(uniform["source"]["stable_and_clean_after"])
+        self.assertEqual(uniform["final_mesh_audit"]["global_cell_count"], 1440)
+        self.assertEqual(uniform["coarse"]["num_nedelec_dofs"], 63104)
+        self.assertEqual(uniform["enriched"]["num_nedelec_dofs"], 116120)
+        self.assertAlmostEqual(
+            uniform["coarse_fixed_reference_error_l2"],
+            0.005977113445581951,
+        )
+        self.assertAlmostEqual(
+            uniform["enriched_fixed_reference_error_l2"],
+            0.0007351906785512254,
+        )
+        self.assertLess(uniform["coarse"]["linear_system_relative_residual"], 1.0e-9)
+        self.assertLess(uniform["enriched"]["linear_system_relative_residual"], 1.0e-9)
+        authority = uniform["resource_authority"]
+        self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+        self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+        self.assertAlmostEqual(authority["memory_authority_gib"], 8.01089859008789)
+        adaptive = self.p4_p5_dwr_r_theta07_full_cycle1
+        adaptive_final = adaptive["cycles"][-1]
+        self.assertLess(
+            adaptive_final["mesh_audit"]["global_cell_count"],
+            uniform["final_mesh_audit"]["global_cell_count"],
+        )
+        self.assertLess(
+            adaptive_final["enriched"]["num_nedelec_dofs"],
+            0.92 * uniform["enriched"]["num_nedelec_dofs"],
+        )
+        self.assertLess(
+            adaptive_final["enriched_fixed_reference_error_l2"],
+            0.75 * uniform["enriched_fixed_reference_error_l2"],
+        )
+        self.assertLess(
+            adaptive["resource_authority"]["memory_authority_gib"],
+            1.02 * authority["memory_authority_gib"],
+        )
 
     def test_theta03_is_a_controlled_negative_cost_screen(self) -> None:
         theta03 = self.p3_p4_dwr_r_theta03
