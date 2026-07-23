@@ -21,6 +21,9 @@ DWR_R_RECORD = RECORDS / "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle1_mpi2.json
 DWR_R_CYCLE2_CANONICAL_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p2_p3_h50_cycle2_canonical_contiguous_mpi8.json"
 )
+DWR_COMBINED_CYCLE2_CANONICAL_RECORD = RECORDS / (
+    "actual_dwr_combined_adaptive_tetra_p2_p3_h50_cycle2_canonical_contiguous_mpi8.json"
+)
 P3_P4_LEVEL1_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi2.json"
 P3_P4_LEVEL1_MPI8_RECORD = RECORDS / "actual_uniform_tetra_level1_p3_p4_mpi8.json"
 P3_P4_DWR_R_MPI8_RECORD = (
@@ -66,6 +69,9 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         cls.dwr_r = json.loads(DWR_R_RECORD.read_text(encoding="utf-8"))
         cls.dwr_r_cycle2_canonical = json.loads(
             DWR_R_CYCLE2_CANONICAL_RECORD.read_text(encoding="utf-8")
+        )
+        cls.dwr_combined_cycle2_canonical = json.loads(
+            DWR_COMBINED_CYCLE2_CANONICAL_RECORD.read_text(encoding="utf-8")
         )
         cls.p3_p4_level1 = json.loads(P3_P4_LEVEL1_RECORD.read_text(encoding="utf-8"))
         cls.p3_p4_level1_mpi8 = json.loads(
@@ -317,6 +323,58 @@ class Task035UniformControlRecordTests(unittest.TestCase):
             final["enriched_fixed_reference_error_l2"],
             5.0 * interpolated_uniform_error,
         )
+
+    def test_p2_p3_combined_cycle2_is_current_strongest_but_not_dof_win(self) -> None:
+        record = self.dwr_combined_cycle2_canonical
+        self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "755f8037ab246df8b3673b818c46f74c9b738637",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["dwr_marker_policy"], "combined_relative_R_T")
+        self.assertEqual(
+            [cycle["mesh_audit"]["global_cell_count"] for cycle in record["cycles"]],
+            [180, 1316, 8842],
+        )
+        self.assertEqual(
+            [cycle["marker"]["marked_count"] for cycle in record["cycles"]],
+            [50, 376, 1561],
+        )
+        self.assertEqual(
+            [cycle["enriched_fixed_reference_error_l2"] for cycle in record["cycles"]],
+            [1.1473425924493446, 0.130301000462057, 0.004984756092733831],
+        )
+        self.assertTrue(record["all_fixed_reference_error_reductions_positive"])
+        final = record["cycles"][-1]
+        r_only_final = self.dwr_r_cycle2_canonical["cycles"][-1]
+        self.assertEqual(final["enriched"]["num_nedelec_dofs"], 173325)
+        self.assertLess(
+            final["enriched_fixed_reference_error_l2"],
+            0.35 * r_only_final["enriched_fixed_reference_error_l2"],
+        )
+        self.assertLess(
+            final["enriched"]["num_nedelec_dofs"],
+            1.15 * r_only_final["enriched"]["num_nedelec_dofs"],
+        )
+        level1_dofs = self.uniform_level1["enriched"]["num_nedelec_dofs"]
+        level2_dofs = self.uniform["enriched"]["num_nedelec_dofs"]
+        level1_error = self.uniform_level1["enriched_fixed_reference_error_l2"]
+        level2_error = self.uniform["enriched_fixed_reference_error_l2"]
+        slope = math.log(level1_error / level2_error) / math.log(
+            level2_dofs / level1_dofs
+        )
+        interpolated_uniform_error = level1_error * (
+            final["enriched"]["num_nedelec_dofs"] / level1_dofs
+        ) ** (-slope)
+        self.assertGreater(
+            final["enriched_fixed_reference_error_l2"],
+            2.0 * interpolated_uniform_error,
+        )
+        self.assertLess(record["elapsed_seconds"], self.uniform["elapsed_seconds"])
+        self.assertLess(record["resource_authority"]["memory_authority_gib"], 8.8)
 
     def test_p3_p4_uniform1_is_a_strong_global_p_signal(self) -> None:
         record = self.p3_p4_level1
