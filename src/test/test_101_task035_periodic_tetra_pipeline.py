@@ -114,6 +114,7 @@ class Task035PeriodicTetraPipelineTests(unittest.TestCase):
             2: (20, 2, 2, 0, 8),
             3: (45, 3, 6, 3, 15),
             4: (84, 4, 12, 12, 24),
+            5: (140, 5, 20, 30, 35),
         }
         for degree, values in expected.items():
             layout = tetrahedral_trace_layout(degree)
@@ -133,7 +134,7 @@ class Task035PeriodicTetraPipelineTests(unittest.TestCase):
             )
         mapping = triangle_s3_vertex_permutations()
         self.assertEqual(len(mapping), 6)
-        for degree in range(2, 5):
+        for degree in range(2, 6):
             for permutation, face_info in mapping.items():
                 np.testing.assert_allclose(
                     triangle_face_coefficient_transform(degree, permutation),

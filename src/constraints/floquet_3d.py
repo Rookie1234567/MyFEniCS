@@ -63,32 +63,39 @@ def _mesh_is_hexahedron(msh) -> bool:
     return "hexahedron" in str(msh.basix_cell()).lower()
 
 
-def _qualified_constraint_mode(degree: int) -> str:
+def _mesh_is_tetrahedron(msh) -> bool:
+    return "tetrahedron" in str(msh.basix_cell()).lower()
+
+
+def _qualified_constraint_mode(degree: int, *, tetrahedral: bool = False) -> str:
     """Return the stable public mode name for a qualified N1curl degree."""
 
     if degree == 1:
         return "topological_edges_p1"
-    if degree in {2, 3, 4}:
+    if degree in {2, 3, 4} or (degree == 5 and tetrahedral):
         return f"topological_trace_p{degree}"
     raise NotImplementedError(
-        "3D explicit Floquet constraints qualify N1curl degree=1--4 on "
-        f"hexahedra. Requested degree={degree}."
+        "3D explicit Floquet constraints qualify N1curl degree=1--4 generally "
+        "and Task035 research degree=5 on tetrahedra. "
+        f"Requested degree={degree}, tetrahedral={tetrahedral}."
     )
 
 
 def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     requested = cfg.floquet_constraint_mode_requested
     degree = int(cfg.nedelec_degree)
+    tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
     if requested in {"topological_edges", "sparse_facet"}:
         requested = "topological_edges_p1"
     if requested == "auto":
-        return _qualified_constraint_mode(degree)
+        return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
     if requested == "topological_trace":
-        if degree not in {1, 2, 3, 4}:
+        if degree not in {1, 2, 3, 4} and not (degree == 5 and tetrahedral):
             raise NotImplementedError(
-                "floquet_constraint_mode='topological_trace' requires degree=1--4."
+                "floquet_constraint_mode='topological_trace' requires degree=1--4 "
+                "or Task035 tetrahedral research degree=5."
             )
-        return _qualified_constraint_mode(degree)
+        return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
     if requested == "topological_edges_p1":
         if degree != 1:
             raise NotImplementedError(
@@ -101,12 +108,17 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
                 "floquet_constraint_mode='topological_trace_p2' requires nedelec_degree=2."
             )
         return requested
-    if requested in {"topological_trace_p3", "topological_trace_p4"}:
+    if requested in {"topological_trace_p3", "topological_trace_p4", "topological_trace_p5"}:
         requested_degree = int(requested[-1])
         if degree != requested_degree:
             raise NotImplementedError(
                 f"floquet_constraint_mode={requested!r} requires "
                 f"nedelec_degree={requested_degree}."
+            )
+        if degree == 5 and not tetrahedral:
+            raise NotImplementedError(
+                "floquet_constraint_mode='topological_trace_p5' is a Task035 "
+                "tetrahedral research capability."
             )
         return requested
     raise RuntimeError(
@@ -1802,12 +1814,18 @@ def _build_double_floquet_mpc_high_order(
     dolfinx_mpc,
     log=None,
 ) -> DoubleFloquet3DData:
-    """Create the Task033 distributed, phase-cacheable p1--p4 Floquet MPC."""
+    """Create the p1--p4 and Task035 tetra-p5 phase-cacheable Floquet MPC."""
 
     degree = int(cfg.nedelec_degree)
-    if degree not in {1, 2, 3, 4}:
+    tetrahedral = _mesh_is_tetrahedron(V.mesh)
+    if degree not in {1, 2, 3, 4} and not (degree == 5 and tetrahedral):
         raise NotImplementedError(
-            "The Task033 public generalized dispatcher is restricted to p1--p4."
+            "The public generalized dispatcher qualifies p1--p4 generally and "
+            "Task035 research p5 on tetrahedra."
+        )
+    if degree == 5 and cfg.stage_case != "stage4_block_grating":
+        raise NotImplementedError(
+            "Task035 tetrahedral p5 is restricted to the fixed-geometry target."
         )
     allowed_stage_cases = {
         "floquet_airbox",
@@ -1838,7 +1856,9 @@ def _build_double_floquet_mpc_high_order(
             "The generalized Floquet topology violated its sparse distributed "
             "contract (full boundary gather or dense boundary square detected)."
         )
-    constraint_mode_resolved = _qualified_constraint_mode(degree)
+    constraint_mode_resolved = _qualified_constraint_mode(
+        degree, tetrahedral=tetrahedral
+    )
 
     if log is not None:
         log(
@@ -2177,7 +2197,7 @@ def _build_double_floquet_mpc_p1_legacy(
 def build_double_floquet_mpc(
     V, mesh_data, cfg: SimulationConfig3D, log=None
 ) -> DoubleFloquet3DData:
-    """Create distributed sparse double-periodic p1--p4 Floquet constraints."""
+    """Create qualified distributed sparse double-periodic Floquet constraints."""
 
     try:
         import dolfinx_mpc
@@ -2198,6 +2218,7 @@ def build_double_floquet_mpc(
         "topological_trace_p2",
         "topological_trace_p3",
         "topological_trace_p4",
+        "topological_trace_p5",
     }:
         raise RuntimeError(
             f"Unsupported qualified Floquet mode {constraint_mode_resolved!r}."

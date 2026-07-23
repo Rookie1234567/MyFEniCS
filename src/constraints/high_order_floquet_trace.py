@@ -103,13 +103,13 @@ def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
     )
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=5)
 def tetrahedral_trace_layout(degree: int) -> TetrahedralTraceLayout:
-    """Read and cross-check the p1--p4 tetrahedral N1curl entity layout."""
+    """Read and cross-check the p1--p5 tetrahedral N1curl entity layout."""
 
     degree = int(degree)
-    if degree not in {1, 2, 3, 4}:
-        raise ValueError(f"Task035 qualifies tetra N1curl degrees 1--4, got {degree}.")
+    if degree not in {1, 2, 3, 4, 5}:
+        raise ValueError(f"Task035 qualifies tetra N1curl degrees 1--5, got {degree}.")
     tetrahedron = element("N1curl", "tetrahedron", degree).basix_element
     triangle = element("N1curl", "triangle", degree).basix_element
     edge_counts = {len(dofs) for dofs in tetrahedron.entity_dofs[1]}
@@ -263,7 +263,7 @@ def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.nda
     return interval, quadrilateral[0], quadrilateral[1]
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=5)
 def _tetrahedral_entity_transformations(
     degree: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

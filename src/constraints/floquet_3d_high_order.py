@@ -709,7 +709,7 @@ def _nonzero_terms(
 def build_high_order_constraint_data(
     V, mesh_data, cfg: SimulationConfig3D
 ) -> HighOrderFloquetConstraintData:
-    """Build phase-materialized p1--p4 sparse local Floquet MPC arrays.
+    """Build phase-materialized qualified sparse local Floquet MPC arrays.
 
     The public 3D dispatcher uses this distributed exact-topology path for every
     qualified degree.  The topology is phase independent and can therefore be

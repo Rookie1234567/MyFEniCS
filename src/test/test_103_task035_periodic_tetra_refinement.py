@@ -18,6 +18,7 @@ from src.adaptivity.periodic_tetra_refinement import (
     refine_periodic_marked_tetra_mesh,
 )
 from src.common.config_3d import target_stage4_config
+from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.constraints.floquet_3d_high_order import build_high_order_constraint_data
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.tetra_mesh_audit import (
@@ -228,13 +229,31 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         )
         self.assertEqual(edge["initial_edge_count"], 18)
         self.assertEqual(edge["closed_edge_count"], 19)
-        p3_cfg = replace(cfg, nedelec_degree=3)
-        V = fem.functionspace(
-            refined.mesh,
-            element("N1curl", refined.mesh.basix_cell(), 3, dtype=default_real_type),
-        )
-        constraints = build_high_order_constraint_data(V, refined, p3_cfg)
-        self.assertGreater(constraints.global_constraint_rows, 0)
+        constraint_rows = {}
+        for degree in (3, 5):
+            degree_cfg = replace(cfg, nedelec_degree=degree)
+            space = fem.functionspace(
+                refined.mesh,
+                element(
+                    "N1curl",
+                    refined.mesh.basix_cell(),
+                    degree,
+                    dtype=default_real_type,
+                ),
+            )
+            constraints = build_high_order_constraint_data(
+                space, refined, degree_cfg
+            )
+            constraint_rows[degree] = constraints.global_constraint_rows
+            if degree == 5:
+                mpc_data = build_double_floquet_mpc(
+                    space, refined, degree_cfg
+                )
+                self.assertEqual(
+                    mpc_data.constraint_mode_resolved, "topological_trace_p5"
+                )
+        self.assertGreater(constraint_rows[3], 0)
+        self.assertGreater(constraint_rows[5], constraint_rows[3])
 
     def test_refined_p3_floquet_ownership_coverage_is_partition_robust(self) -> None:
         cfg, mesh_data = _target_mesh_data()
