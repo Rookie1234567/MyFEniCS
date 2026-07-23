@@ -408,3 +408,39 @@ ordinary_default_changed = false
 ```
 
 Review V4 已授权按 measured evidence 连续推进；ordinary default 与 master merge 仍未改变。
+
+## Review V5 连续研究：适度更细 base 与独立 COMSOL 对照
+
+cheap axis-plan preflight 证明 nominal `h40` 与 `h50` 都解析为 `(3,2,5)`、180 tetra，不能作为
+独立候选；`h37.5` 与 `h35` 都解析为 `(3,2,6)`、216 tetra。因此只执行一个可区分的 `h37.5`
+点，保持 `p4/p5`、`R_total`、`theta=0.7`、full periodic sleeve 和恰好一次 local-h。
+
+正式 MPI8 record
+`actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json`
+绑定 clean SHA `7136be8043fa6ddfe026e3185d56f9384c19401c`：
+
+| route | cells | p5 DoF | R/T/A_volume | vector error | strict-R error | peak GiB | wall s |
+|---|---:|---:|---|---:|---:|---:|---:|
+| h50 DWR authority | 1,316 | 106,355 | 0.000962369 / 0.602920160 / 0.396117471 | 5.383e-4 | 1.961e-4 | 8.080 | 109.79 |
+| h37.5 DWR | 1,600 | 129,005 | 0.000880846 / 0.602567555 / 0.396551599 | 1.588e-4 | 1.145e-4 | 9.491 | 129.66 |
+| structured p4/h7.5 control | — | 147,844 | 0.000802469 / 0.602429773 / 0.396767758 | 3.278e-4 | 3.616e-5 | 12.724 | — |
+
+h37.5 相对 h50 将完整向量误差降低 `70.49%`，代价为 DoF 增加 `21.30%`、内存增加 `17.45%`；
+并以 p5 `62.05%` DoF 节约超过 structured p4/h7.5 的向量精度，是明确正信号。但 strict-R
+仍未达到 control。拓扑公式从 p4/p5 DoF 反解出 2,305 edges、3,474 faces，固定该 mesh 的
+p6 将为 `214,050` DoF，只节约 `37.02%`，超过 50% 上限 `169,946`，故按 preflight
+受控停止，不启动该 p6 heavy。
+
+用户新增的 `docs/COMSOL_direct_solver_report.md` 提供独立 MUMPS 直接法收敛表。尤其 COMSOL
+p4 hexa/h5 的 `R/T=0.000766316/0.602677531` 与仓库 p4/h5 离散参考
+`0.000766313/0.602677531` 高度一致；`A_total` 与仓库严格能量闭合的 `A_volume` 定义不同，
+因此仅作 cross-solver sanity reference，不替代仓库 residual/observable Gate。
+
+基础设施同时完成：
+
+- WSL 系统 `bubblewrap` 恢复 Codex 受审计文件沙盒；
+- activation 把 `TMPDIR/TMP/TEMP` 固定到 `/tmp`，OpenMPI 不再访问 `/mnt/c` FIFO；
+- common-mesh replay 改用 stable canonical geometry IDs，不再依赖跨进程漂移的 DOLFINx
+  global cell IDs；h37.5 MPI8 重放精确恢复同一 1,600-cell mesh hash；
+- 新增 tolerance-normalized R/T multi-goal policy 和 research-only h/p correction-decay
+  classifier，ordinary default 保持不变。

@@ -222,7 +222,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dwr-adaptive-cycles", type=int, default=0)
     parser.add_argument(
         "--dwr-marker-policy",
-        choices=("combined_relative_R_T", "R_total", "T_total"),
+        choices=(
+            "combined_relative_R_T",
+            "tolerance_normalized_R_T",
+            "R_total",
+            "T_total",
+        ),
         default="combined_relative_R_T",
     )
     parser.add_argument(
@@ -639,11 +644,30 @@ def _qualify_dwr_adaptive(
         for goal in ("R_total", "T_total")
     ]
     marker_reports = [
-        report["combined_relative_R_T"]
-        if args.dwr_marker_policy == "combined_relative_R_T"
+        report[args.dwr_marker_policy]
+        if args.dwr_marker_policy
+        in {"combined_relative_R_T", "tolerance_normalized_R_T"}
         else report["goals"][args.dwr_marker_policy]
         for report in dwr_reports
     ]
+
+    def normalized_authority_is_bound(report: dict[str, Any]) -> bool:
+        authority = report.get("normalization_authority") or {}
+        tolerances = authority.get("absolute_error_tolerances") or {}
+        return bool(
+            authority.get("control_key") == "p4_h7p5"
+            and authority.get("record_sha256")
+            == "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+            and authority.get("independent_adjoint_goals")
+            == ["R_total", "T_total"]
+            and set(tolerances)
+            == {"R_total", "T_total", "A_volume_total"}
+            and all(
+                isinstance(value, (int, float)) and float(value) > 0.0
+                for value in tolerances.values()
+            )
+        )
+
     requested_theta_schedule = tuple(
         args.theta_schedule or (float(args.theta),) * int(args.dwr_adaptive_cycles)
     )
@@ -732,6 +756,10 @@ def _qualify_dwr_adaptive(
         and all(
             report["marking"]["captured_fraction"] >= float(cycle["theta"])
             for report, cycle in zip(marker_reports, cycles, strict=True)
+        ),
+        "selected_multi_goal_normalization_bound": (
+            args.dwr_marker_policy != "tolerance_normalized_R_T"
+            or all(normalized_authority_is_bound(report) for report in marker_reports)
         ),
         "algebraic_localization_rejected": bool(dwr_reports)
         and all(

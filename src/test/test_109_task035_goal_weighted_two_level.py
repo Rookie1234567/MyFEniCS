@@ -3,9 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
+import numpy as np
 from mpi4py import MPI
 
 from src.adaptivity.goal_weighted_two_level import (
+    _tolerance_normalized_multi_goal_values,
     run_target_goal_weighted_two_level,
 )
 from src.adaptivity.target_dwr_adaptive_cycles import (
@@ -17,6 +19,47 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
+    def test_tolerance_normalized_multi_goal_values_are_fail_closed(self) -> None:
+        values = _tolerance_normalized_multi_goal_values(
+            {
+                "R_total": np.array([2.0, 6.0]),
+                "T_total": np.array([3.0, 8.0]),
+            },
+            {
+                "R_total": 2.0,
+                "T_total": 1.0,
+                "A_volume_total": 4.0,
+            },
+        )
+        np.testing.assert_allclose(
+            values,
+            np.array([np.sqrt(10.0), np.sqrt(73.0)]),
+        )
+        with self.assertRaisesRegex(ValueError, "tolerances"):
+            _tolerance_normalized_multi_goal_values(
+                {
+                    "R_total": np.array([1.0]),
+                    "T_total": np.array([1.0]),
+                },
+                {
+                    "R_total": 0.0,
+                    "T_total": 1.0,
+                    "A_volume_total": 1.0,
+                },
+            )
+        with self.assertRaisesRegex(ValueError, "aligned"):
+            _tolerance_normalized_multi_goal_values(
+                {
+                    "R_total": np.array([1.0]),
+                    "T_total": np.array([1.0, 2.0]),
+                },
+                {
+                    "R_total": 1.0,
+                    "T_total": 1.0,
+                    "A_volume_total": 1.0,
+                },
+            )
+
     def test_theta_schedule_resolution_is_fail_closed(self) -> None:
         self.assertEqual(_resolve_theta_schedule(2, 0.5, None), (0.5, 0.5))
         self.assertEqual(_resolve_theta_schedule(2, 0.5, (0.5, 0.15)), (0.5, 0.15))
@@ -81,6 +124,27 @@ class Task035GoalWeightedTwoLevelTests(unittest.TestCase):
         self.assertEqual(
             combined_report["marked_geometry_sha256"],
             "2e009aedc501bffb9233f89e0b023209eef54edbe23927a9a88e3d8577e920c2",
+        )
+        normalized_report = dwr["tolerance_normalized_R_T"]
+        self.assertEqual(normalized_report["marking"]["count"], 46)
+        self.assertEqual(
+            normalized_report["marked_geometry_sha256"],
+            "828b0353a44e32d9dbd1baa345143e73c3037818fea5325eb0eb43bed9fed4e1",
+        )
+        self.assertEqual(
+            normalized_report["normalization_authority"][
+                "independent_adjoint_goals"
+            ],
+            ["R_total", "T_total"],
+        )
+        tolerances = normalized_report["normalization_authority"][
+            "absolute_error_tolerances"
+        ]
+        self.assertAlmostEqual(tolerances["R_total"], 3.61556382344661e-05)
+        self.assertAlmostEqual(tolerances["T_total"], 0.0002477575966640666)
+        self.assertAlmostEqual(
+            tolerances["A_volume_total"],
+            0.00021160195840952412,
         )
 
 

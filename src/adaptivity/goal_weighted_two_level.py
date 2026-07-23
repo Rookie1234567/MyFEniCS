@@ -461,6 +461,107 @@ def _marked_overlap(left: list[int], right: list[int]) -> dict[str, Any]:
     }
 
 
+def _tolerance_normalized_multi_goal_values(
+    indicators: dict[str, np.ndarray],
+    tolerances: dict[str, float],
+) -> np.ndarray:
+    """Combine independent R/T indicators using accepted component errors."""
+
+    required_goals = ("R_total", "T_total")
+    required_tolerances = (*required_goals, "A_volume_total")
+    if any(goal not in indicators for goal in required_goals):
+        raise ValueError("tolerance-normalized DWR requires R_total and T_total")
+    arrays = {
+        goal: np.asarray(indicators[goal], dtype=np.float64)
+        for goal in required_goals
+    }
+    if (
+        arrays["R_total"].ndim != 1
+        or arrays["T_total"].shape != arrays["R_total"].shape
+        or any(
+            not np.all(np.isfinite(values)) or np.any(values < 0.0)
+            for values in arrays.values()
+        )
+    ):
+        raise ValueError("multi-goal cell indicators must be aligned and nonnegative")
+    if any(
+        goal not in tolerances
+        or not np.isfinite(float(tolerances[goal]))
+        or float(tolerances[goal]) <= 0.0
+        for goal in required_tolerances
+    ):
+        raise ValueError("multi-goal tolerances must be finite and positive")
+    return np.hypot(
+        arrays["R_total"] / float(tolerances["R_total"]),
+        arrays["T_total"] / float(tolerances["T_total"]),
+    )
+
+
+def _marker_report_from_local_values(
+    msh,
+    canonical_cell_ids: np.ndarray,
+    cell_values: np.ndarray,
+    *,
+    theta: float,
+    metadata: dict[str, Any],
+) -> dict[str, Any]:
+    """Build one partition-independent marker report from owned-cell values."""
+
+    ids = np.asarray(canonical_cell_ids, dtype=np.int64)
+    values = np.asarray(cell_values, dtype=np.float64)
+    cell_map = msh.topology.index_map(msh.topology.dim)
+    if (
+        ids.ndim != 1
+        or values.shape != ids.shape
+        or len(ids) != int(cell_map.size_local)
+        or not np.all(np.isfinite(values))
+        or np.any(values < 0.0)
+    ):
+        raise ValueError("marker values must cover all owned cells and be nonnegative")
+    marked_canonical, marking = _global_dorfler_mark(
+        msh.comm,
+        ids,
+        values,
+        theta=float(theta),
+    )
+    marked_set = set(int(value) for value in marked_canonical)
+    records = owned_tetra_cell_geometry(msh)
+    record_by_local = {record.local_index: record for record in records}
+    owned_cells = np.arange(cell_map.size_local, dtype=np.int32)
+    local_marked_global = [
+        record_by_local[int(cell)].global_index
+        for cell, canonical_id in zip(owned_cells, ids, strict=True)
+        if int(canonical_id) in marked_set
+    ]
+    marked_global = sorted(
+        value
+        for packet in msh.comm.allgather(local_marked_global)
+        for value in packet
+    )
+    local_marked_keys = [
+        record_by_local[int(cell)].key
+        for cell, canonical_id in zip(owned_cells, ids, strict=True)
+        if int(canonical_id) in marked_set
+    ]
+    marked_keys = [
+        key for packet in msh.comm.allgather(local_marked_keys) for key in packet
+    ]
+    return {
+        **metadata,
+        "finite_nonnegative_cell_contributions": True,
+        "cell_contribution_sum": float(
+            msh.comm.allreduce(float(np.sum(values)), op=MPI.SUM)
+        ),
+        "marking": marking,
+        "marked_global_cell_ids": marked_global,
+        "marked_canonical_cell_ids": marked_canonical.tolist(),
+        "marked_geometry_sha256": geometry_key_sha256(marked_keys),
+        "partition_independent_marking_identity": (
+            "sorted canonical quantized tetra geometry"
+        ),
+    }
+
+
 def run_target_goal_weighted_two_level(
     out_dir: Path,
     *,
@@ -479,11 +580,41 @@ def run_target_goal_weighted_two_level(
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
+    from src.adaptivity.target_r5_adaptive_cycles import (
+        task034_best_available_observable_reference,
+        task034_observable_control,
+    )
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     captures: dict[str, Any] = {}
     started = time.perf_counter()
+    normalization_reference = task034_best_available_observable_reference()
+    normalization_control = task034_observable_control("p4_h7p5")
+    multi_goal_tolerances = {
+        name: abs(
+            normalization_control["observables"][name]
+            - normalization_reference["observables"][name]
+        )
+        for name in ("R_total", "T_total", "A_volume_total")
+    }
+    multi_goal_authority = {
+        "definition": (
+            "absolute component error of structured p4/h7.5 against the "
+            "p4/h5 best available discrete reference"
+        ),
+        "reference_key": normalization_reference["key"],
+        "control_key": normalization_control["key"],
+        "record_path": normalization_reference["record_path"],
+        "record_sha256": normalization_reference["record_sha256"],
+        "absolute_error_tolerances": multi_goal_tolerances,
+        "independent_adjoint_goals": ["R_total", "T_total"],
+        "A_volume_total_treatment": (
+            "audited in the post-solve R/T/A vector; no third adjoint because "
+            "qualified fields enforce R+T+A_volume=1 and an independent "
+            "A_volume goal gradient is not implemented"
+        ),
+    }
 
     def progress(stage: str, status: str) -> None:
         if progress_observer is not None:
@@ -607,39 +738,37 @@ def run_target_goal_weighted_two_level(
                 float(np.sum(t_values)), op=MPI.SUM
             )
         )
-        combined = r_values / max(r_sum, TINY) + t_values / max(t_sum, TINY)
-        combined_marked, combined_marking = _global_dorfler_mark(
-            state["field"].function_space.mesh.comm,
-            r_ids,
-            combined,
-            theta=float(theta),
-        )
-        marked_combined_set = set(int(value) for value in combined_marked)
         msh = state["field"].function_space.mesh
-        records = owned_tetra_cell_geometry(msh)
-        record_by_local = {record.local_index: record for record in records}
-        owned_cells = np.arange(
-            msh.topology.index_map(msh.topology.dim).size_local,
-            dtype=np.int32,
+        relative_values = (
+            r_values / max(r_sum, TINY) + t_values / max(t_sum, TINY)
         )
-        local_combined_global = [
-            record_by_local[int(cell)].global_index
-            for cell, canonical_id in zip(owned_cells, r_ids, strict=True)
-            if int(canonical_id) in marked_combined_set
-        ]
-        combined_global = sorted(
-            value
-            for packet in msh.comm.allgather(local_combined_global)
-            for value in packet
+        relative_report = _marker_report_from_local_values(
+            msh,
+            r_ids,
+            relative_values,
+            theta=float(theta),
+            metadata={
+                "combination": "eta_R/sum(eta_R) + eta_T/sum(eta_T)",
+                "normalization": "per-goal global indicator mass",
+            },
         )
-        local_combined_keys = [
-            record_by_local[int(cell)].key
-            for cell, canonical_id in zip(owned_cells, r_ids, strict=True)
-            if int(canonical_id) in marked_combined_set
-        ]
-        combined_keys = [
-            key for packet in msh.comm.allgather(local_combined_keys) for key in packet
-        ]
+        tolerance_values = _tolerance_normalized_multi_goal_values(
+            {"R_total": r_values, "T_total": t_values},
+            multi_goal_tolerances,
+        )
+        tolerance_report = _marker_report_from_local_values(
+            msh,
+            r_ids,
+            tolerance_values,
+            theta=float(theta),
+            metadata={
+                "combination": (
+                    "sqrt((eta_R/tol_R)^2 + (eta_T/tol_T)^2)"
+                ),
+                "normalization": "accepted structured p4/h7.5 component errors",
+                "normalization_authority": multi_goal_authority,
+            },
+        )
         captures["dwr"] = {
             "residual": residual_report,
             "adjoint_qualification": adjoints,
@@ -653,13 +782,8 @@ def run_target_goal_weighted_two_level(
                 ),
                 "replacement": "reconstructed physical-adjoint Hcurl cell form",
             },
-            "combined_relative_R_T": {
-                "combination": "eta_R/sum(eta_R) + eta_T/sum(eta_T)",
-                "marking": combined_marking,
-                "marked_global_cell_ids": combined_global,
-                "marked_canonical_cell_ids": combined_marked.tolist(),
-                "marked_geometry_sha256": geometry_key_sha256(combined_keys),
-            },
+            "combined_relative_R_T": relative_report,
+            "tolerance_normalized_R_T": tolerance_report,
         }
         residual.destroy()
 
@@ -702,6 +826,10 @@ def run_target_goal_weighted_two_level(
         dwr["combined_relative_R_T"]["marked_global_cell_ids"],
         r5["marked_global_cell_ids"],
     )
+    dwr["marked_overlap_with_R5"]["tolerance_normalized_R_T"] = _marked_overlap(
+        dwr["tolerance_normalized_R_T"]["marked_global_cell_ids"],
+        r5["marked_global_cell_ids"],
+    )
     passed = bool(
         dwr["adjoint_qualification"]["pass"]
         and dwr["residual"]["enriched_solution_relative_residual_recomputed"]
@@ -717,6 +845,13 @@ def run_target_goal_weighted_two_level(
             )
             <= 1.0e-9
             for goal in ("R_total", "T_total")
+        )
+        and all(
+            dwr[name]["finite_nonnegative_cell_contributions"]
+            and dwr[name]["marking"]["captured_fraction"]
+            >= float(theta) - 1.0e-12
+            and bool(dwr[name]["marked_geometry_sha256"])
+            for name in ("combined_relative_R_T", "tolerance_normalized_R_T")
         )
     )
     return {
@@ -758,6 +893,8 @@ def run_target_goal_weighted_two_level(
 
 
 __all__ = [
+    "_marker_report_from_local_values",
+    "_tolerance_normalized_multi_goal_values",
     "build_enriched_discrete_residual",
     "localize_algebraic_dwr_products",
     "localize_physical_adjoint_weighted_correction",

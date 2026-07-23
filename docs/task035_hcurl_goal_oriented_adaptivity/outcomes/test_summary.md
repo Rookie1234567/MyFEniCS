@@ -309,3 +309,25 @@ official residual、DoF、R/T/A 和 resource authority。
 
 本收口没有重跑 Task034 p4/h5、p4/h7.5、M funnel、环境资格化或 full repository pytest。
 最终 scoped Ruff、compileall、Task035 focused suite 与 diff-check 在文档/record 最终改动后执行。
+
+## Review V5 连续研究：环境、replay 与 multi-goal pre-heavy Gate
+
+| 检查 | 结果 |
+|---|---:|
+| WSL `bubblewrap 0.9.0` sandbox smoke | pass |
+| activation Python temp identity | `TMPDIR/TMP/TEMP/tempfile=/tmp` |
+| activation MPI2 temp identity / FIFO | 每 rank 全为 `/tmp`；无 `/mnt/c` FIFO warning |
+| ordinary pytest capture after temp fix | 18 passed, 2 skipped |
+| h37.5 record invariant audit | pass |
+| canonical h37.5 replay targeted MPI8 | 1 passed per rank |
+| full test110 common-mesh MPI8 | 13 passed, 1 skipped per rank |
+| h37.5 p6 topology preflight | 214,050 DoF；50% budget fail；heavy not run |
+| normalized multi-goal / watchdog / DWR targeted | 23 passed |
+| h/p correction-decay classifier targeted aggregate | 25 passed |
+| scoped Ruff / compileall / diff-check | pass / pass / pending final |
+
+首次普通 pytest 因 Windows 继承的 `TMP/TEMP` 指向 `/mnt/c`，pytest capture file 在 collection
+阶段消失；该基础设施失败保留在执行日志中。activation 修复后使用普通 capture 重跑通过，没有
+以 `-s` 结果替代最终 Gate。common-mesh 首次 h37.5 replay 同样真实暴露 global cell ID 跨进程
+漂移；修复后由 `marked_canonical_cell_ids` 解析当前 IDs，并同时验证 marker geometry hash 与
+最终 mesh/tag hash。

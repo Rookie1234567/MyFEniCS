@@ -37,6 +37,22 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         self.assertEqual(args.dwr_marker_policy, "R_total")
         self.assertTrue(args.minimal_periodic_edge_closure)
 
+    def test_argument_contract_accepts_tolerance_normalized_multi_goal(self) -> None:
+        args = _parse_args(
+            [
+                "--mesh-cell-type",
+                "tetrahedron",
+                "--dwr-adaptive-cycles",
+                "1",
+                "--dwr-marker-policy",
+                "tolerance_normalized_R_T",
+            ]
+        )
+        self.assertEqual(
+            args.dwr_marker_policy,
+            "tolerance_normalized_R_T",
+        )
+
     def test_argument_contract_rejects_multiple_cycle_modes(self) -> None:
         with self.assertRaises(SystemExit):
             _parse_args(

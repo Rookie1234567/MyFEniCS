@@ -122,3 +122,18 @@ production estimator/backend 尚未资格化。Case094 仍不是 canonical bench
 `config.json`、`expected.json` 和 ordinary checker 的 `phase_b_or_later_results = not_available`
 继续表示“staging ordinary contract 不提供后续正式 benchmark 结果”，不是否认 branch 上存在
 noncanonical task evidence。
+
+### Review V5 continuous evidence
+
+- `records/actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json`：
+  从 216-cell nominal h37.5 base 做恰好一次 `R_total` DWR/full-sleeve refine，得到 1,600 cells、
+  p5 129,005 DoF、`R/T/A_volume=0.000880846/0.602567555/0.396551599`、
+  fixed-reference vector error `1.58849e-4`、peak `9.491 GiB`、swap 0。
+- 该点相对 h50 selected authority 明显改善完整向量误差，且 p5 保持 62.05% DoF 节约；
+  strict-R 仍不及 structured p4/h7.5。固定 mesh p6 topology preflight 为 214,050 DoF，违反
+  169,946 上限，故不运行该 heavy case。
+- h37.5 record 的 compact global IDs 在新 MPI 进程中不可重放；replay 现由同一 record 已保存的
+  canonical geometry IDs 重建并复核 hash。原失败诊断未被解释为 PDE failure。
+- 新 `tolerance_normalized_R_T` policy 使用 structured p4/h7.5 的 accepted component errors
+  归一化独立 R/T adjoint indicators；`A_volume` 保留在 post-solve R/T/A vector audit。
+  h/p classifier 当前仅输出 correction-decay candidate，不改变 FE 空间或 ordinary default。

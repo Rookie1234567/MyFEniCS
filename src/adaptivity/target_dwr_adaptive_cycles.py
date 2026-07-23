@@ -80,6 +80,7 @@ def run_target_dwr_adaptive_cycles(
     )
     if marker_policy not in {
         "combined_relative_R_T",
+        "tolerance_normalized_R_T",
         "R_total",
         "T_total",
     }:
@@ -159,8 +160,9 @@ def run_target_dwr_adaptive_cycles(
             initial_audit if cycle_index == 0 else refinements[-1]["refined_mesh_audit"]
         )
         marker = (
-            result["DWR"]["combined_relative_R_T"]
-            if marker_policy == "combined_relative_R_T"
+            result["DWR"][marker_policy]
+            if marker_policy
+            in {"combined_relative_R_T", "tolerance_normalized_R_T"}
             else result["DWR"]["goals"][marker_policy]
         )
         cycles.append(

@@ -90,6 +90,22 @@ def _dwr_adaptive_result() -> dict:
             "marked_geometry_sha256": "b" * 64,
             "marking": {"captured_fraction": 0.51, "count": 12},
         },
+        "tolerance_normalized_R_T": {
+            "marked_geometry_sha256": "c" * 64,
+            "marking": {"captured_fraction": 0.51, "count": 11},
+            "normalization_authority": {
+                "control_key": "p4_h7p5",
+                "record_sha256": (
+                    "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+                ),
+                "independent_adjoint_goals": ["R_total", "T_total"],
+                "absolute_error_tolerances": {
+                    "R_total": 1.0e-5,
+                    "T_total": 2.0e-4,
+                    "A_volume_total": 2.0e-4,
+                },
+            },
+        },
         "rejected_localization": {
             "decision": "controlled_negative_partition_dependent"
         },
@@ -257,6 +273,53 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
                     "0.5",
                 ]
             )
+
+    def test_normalized_multi_goal_qualification_is_hash_bound(self) -> None:
+        args = Namespace(
+            mpi_size=2,
+            theta=0.5,
+            theta_schedule=None,
+            dwr_adaptive_cycles=1,
+            dwr_marker_policy="tolerance_normalized_R_T",
+        )
+        sampler = {
+            "max_observed_worker_rank_count": 2,
+            "max_process_tree_swap_mb": 0.0,
+        }
+        result = _dwr_adaptive_result()
+        result["marker_policy"] = "tolerance_normalized_R_T"
+        for cycle in result["cycles"]:
+            cycle["marker"] = {
+                "marked_count": 11,
+                "marked_geometry_sha256": "c" * 64,
+            }
+        qualified = _qualify_dwr_adaptive(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertTrue(qualified["pass"], qualified)
+        result["cycles"][0]["goal_dwr"]["DWR"]["tolerance_normalized_R_T"][
+            "normalization_authority"
+        ]["control_key"] = "changed"
+        failed = _qualify_dwr_adaptive(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(failed["pass"])
+        self.assertIn(
+            "selected_multi_goal_normalization_bound",
+            failed["failures"],
+        )
 
     def test_dwr_cycle_compactor_accepts_actual_result_shape(self) -> None:
         summary = {

@@ -126,3 +126,40 @@ pairwise Jaccard `214/216=0.9907407`，故高阶 repeat Gate 是逐次 hash-boun
 因此当前停止规则是一次 `theta=0.5` tetra local refinement。R2 仍不进入 marking，p4/h5 仍只称
 best-available discrete reference。该结论尚未跨 robust angle、P 入射或 Hybrid 验证，故
 `production_estimator_selected=false`、`production_backend_selected=false` 和 ordinary default 不变。
+
+## 7. Review V5：tolerance-normalized multi-goal 与 h/p classifier
+
+新增 research-only marker `tolerance_normalized_R_T`。它继续分别求解 `R_total` 和
+`T_total` 的真实离散伴随，再按已接受的 structured p4/h7.5 相对 p4/h5 离散参考的分量误差
+冻结归一化尺度：
+
+| observable | absolute tolerance |
+|---|---:|
+| `R_total` | `3.61556382344661e-05` |
+| `T_total` | `2.477575966640666e-04` |
+| `A_volume_total` | `2.1160195840952412e-04` |
+
+每个 cell 的组合指标定义为
+
+$$
+\eta_K^{multi} =
+\sqrt{\left(\frac{\eta_{K,R}}{\tau_R}\right)^2+
+      \left(\frac{\eta_{K,T}}{\tau_T}\right)^2}.
+$$
+
+`A_volume_total` 继续进入最终 `(R,T,A_volume)` 向量审计；当前 qualified field 满足
+`R+T+A_volume=1`，且尚未实现独立的 volume-absorption goal gradient，所以不伪造第三个独立
+伴随。record 明确保存该依赖关系、control/reference hash、三项 tolerance、canonical marker 与
+geometry hash。原 `combined_relative_R_T` 与 ordinary default 均不改变。
+
+新增 `src/adaptivity/hp_smoothness_classifier.py`，只对同一固定网格上的连续
+`p4→p5`、`p5→p6` goal-indicator correction 做候选分类：
+
+$$
+\rho_K = \frac{\eta_K^{p5\to p6}}{\eta_K^{p4\to p5}}.
+$$
+
+`rho_K <= 0.5` 视为快速 p-decay 的 `p_candidate`，更慢的衰减视为 `h_candidate`，两级 correction
+都低于全局显著性 floor 时为 `undetermined`。该 classifier 只输出 canonical-cell decision，
+不创建 variable-p space、不改变 mesh，也不提升 production；真实 cell-level p4/p5/p6 验证仍需
+同一 mesh 的两组 local indicator snapshot。
