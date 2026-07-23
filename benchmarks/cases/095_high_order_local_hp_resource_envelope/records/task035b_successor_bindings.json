@@ -31,6 +31,11 @@
       "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_mpi8.json",
       "sha256": "3e49dc7992e78ae26a1bfc1c1ba2ed48cffe8b15534ddcfc22b99e549599614b",
       "source_sha": "c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2"
+    },
+    {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json",
+      "sha256": "e2d4f3b3560e9adbdd68f8821347770673bb4c0f2dd12accb45d7d3ecba30f15",
+      "source_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161"
     }
   ],
   "interpretation": {

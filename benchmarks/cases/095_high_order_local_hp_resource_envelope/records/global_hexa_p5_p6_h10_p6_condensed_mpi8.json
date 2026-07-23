@@ -1,0 +1,957 @@
+{
+  "schema_version": "task035.actual-global-r5-watchdog.v1",
+  "benchmark_id": "task035_target_actual_global_r5",
+  "timestamp_utc": "2026-07-23T15:25:33.683965+00:00",
+  "status": "actual_global_r5_pass",
+  "command": [
+    "mpiexec",
+    "-n",
+    "8",
+    "/home/Projects/MyFEniCS/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task035_actual_r5",
+    "--worker",
+    "--coarse-degree",
+    "5",
+    "--enriched-degree",
+    "6",
+    "--h-nm",
+    "10.0",
+    "--theta",
+    "0.5",
+    "--polarization-kind",
+    "s",
+    "--mesh-cell-type",
+    "hexahedron",
+    "--run-dir",
+    "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6",
+    "--single-mesh-pair",
+    "--static-condensation-degree",
+    "6"
+  ],
+  "source": {
+    "commit_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161",
+    "tracked_source_dirty": false,
+    "tracked_source_verification": "host_git_clean_attestation",
+    "verified_clean_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161",
+    "head_after_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161",
+    "status_after_before_record_write": "",
+    "stable_and_clean_after": true
+  },
+  "resource_preflight": {
+    "timestamp_utc": "2026-07-23T14:31:52.270109+00:00",
+    "effective_limit": {
+      "mem_total_bytes": 244883718144,
+      "mem_available_bytes": 240324947968,
+      "user_limit_bytes": 236223201280,
+      "wsl_total_85_percent_bytes": 208151160422,
+      "available_minus_reserve_bytes": 214555144192,
+      "effective_limit_bytes": 208151160422,
+      "effective_limit_gib": 193.85587463341653,
+      "warning_bytes": 166520928337,
+      "termination_bytes": 197743602400,
+      "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)"
+    },
+    "artifact_filesystem_free_bytes": 1001381593088
+  },
+  "resource_policy": {
+    "one_heavy_case_at_a_time": true,
+    "warning_gib": 48.0,
+    "termination_gib": 96.0,
+    "timeout_seconds": 14400.0,
+    "swap_allowed": false,
+    "termination_scope": "complete_process_group"
+  },
+  "resource_authority": {
+    "sample_count": 12298,
+    "max_process_tree_rss_mb": 29912.78125,
+    "max_process_tree_swap_mb": 0.0,
+    "memory_authority_gib": 29.211700439453125,
+    "max_observed_worker_rank_count": 8,
+    "stage_peaks": [
+      {
+        "stage": "process_start",
+        "samples": 7,
+        "max_worker_rank_rss_sum_mb": 1423.421875,
+        "max_mpi_process_tree_rss_mb": 1438.08203125,
+        "max_container_cgroup_current_mb": 5455.41796875,
+        "max_worker_rank_thread_count_sum": 24,
+        "max_worker_rank_cpu_core_equivalents": 8.342937046128384,
+        "mean_worker_rank_cpu_core_equivalents": 4.437858305201886
+      },
+      {
+        "stage": "actual_r5_shared_mesh_build",
+        "samples": 12,
+        "max_worker_rank_rss_sum_mb": 1508.25,
+        "max_mpi_process_tree_rss_mb": 1522.91015625,
+        "max_container_cgroup_current_mb": 5499.2265625,
+        "max_worker_rank_thread_count_sum": 32,
+        "max_worker_rank_cpu_core_equivalents": 8.133093985262292,
+        "mean_worker_rank_cpu_core_equivalents": 1.8258215470684638
+      },
+      {
+        "stage": "actual_r5_coarse_solve",
+        "samples": 2400,
+        "max_worker_rank_rss_sum_mb": 12442.21484375,
+        "max_mpi_process_tree_rss_mb": 12456.875,
+        "max_container_cgroup_current_mb": 16008.21875,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 11.03111925633656,
+        "mean_worker_rank_cpu_core_equivalents": 8.326880047010427
+      },
+      {
+        "stage": "actual_r5_enriched_solve",
+        "samples": 9810,
+        "max_worker_rank_rss_sum_mb": 29127.546875,
+        "max_mpi_process_tree_rss_mb": 29142.20703125,
+        "max_container_cgroup_current_mb": 31841.7734375,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 9.739607164669936,
+        "mean_worker_rank_cpu_core_equivalents": 8.207526904932633
+      },
+      {
+        "stage": "actual_r5_localization",
+        "samples": 69,
+        "max_worker_rank_rss_sum_mb": 29898.12109375,
+        "max_mpi_process_tree_rss_mb": 29912.78125,
+        "max_container_cgroup_current_mb": 31948.921875,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 8.485047454823333,
+        "mean_worker_rank_cpu_core_equivalents": 7.713012296059211
+      }
+    ]
+  },
+  "warning_triggered": false,
+  "terminated_for_memory": false,
+  "terminated_for_timeout": false,
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "process_completed": true,
+      "not_terminated_for_memory": true,
+      "not_terminated_for_timeout": true,
+      "resource_authority_readable": true,
+      "all_expected_mpi_ranks_observed": true,
+      "no_process_tree_swap": true,
+      "result_status": true,
+      "formal_hierarchical_fe_r5": true,
+      "finite_cell_contributions": true,
+      "nonnegative_cell_contributions": true,
+      "positive_correction_energy": true,
+      "cell_energy_closure_le_1e-10": true,
+      "dorfler_target_captured": true,
+      "both_official_solves": true,
+      "requested_mesh_backend_used": true,
+      "both_true_residuals_le_1e-9": true,
+      "both_entity_dof_audits_pass": true,
+      "same_actual_mesh_hashes": true,
+      "single_mesh_instance_when_requested": true,
+      "ordinary_default_unchanged": true,
+      "requested_static_condensation_active": true,
+      "requested_condensed_rows_physically_measured": true,
+      "requested_full_residual_audit_present": true,
+      "source_stable_and_clean_after": true
+    },
+    "failures": []
+  },
+  "target_identity": {
+    "wavelength_nm": 13.5,
+    "incidence_theta_deg": 80.0,
+    "grazing_angle_deg": 10.0,
+    "polarization": "S",
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_backend": "boundary-fitted conforming hexahedron"
+  },
+  "coarse": {
+    "degree": 5,
+    "h_nm": 10.0,
+    "case_status": "completed",
+    "official_result": true,
+    "mpi_size": 8,
+    "num_mesh_cells": 252,
+    "mesh_cell_type_actual": "hexahedron",
+    "num_nedelec_dofs": 101815,
+    "matrix_stats": {
+      "matrix_rows": 101895,
+      "matrix_cols": 101895,
+      "matrix_nnz_used": 79436433.0,
+      "matrix_nnz_allocated": 79436433.0,
+      "matrix_nnz_unneeded": 0.0,
+      "matrix_mallocs": 0.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 12425,
+      "matrix_local_cols": 12425,
+      "matrix_row_ownership_range": [
+        0,
+        12425
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        12425
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 779.5910790519653,
+      "matrix_maximum_nnz_per_row": 2260,
+      "matrix_average_allocated_nnz_per_row": 779.5910790519653,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1907289560.0,
+      "matrix_memory_estimate_mb": 1818.9330673217773,
+      "matrix_norm_frobenius": 319305.7078761813,
+      "matrix_norm_infinity": 18178.116674016157,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 79436433.0,
+        "nz_used": 79436433.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 79436433.0,
+        "nz_used": 79436433.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "linear_system_relative_residual": 8.82249337424433e-12,
+    "R_total": 0.0007948860603446394,
+    "T_total": 0.6024839538853596,
+    "A_volume_total": 0.39672116005426605,
+    "energy_closure_error_port_volume": -2.9753977059954195e-14,
+    "floquet_num_constraints": 6415,
+    "elapsed_seconds": 609.865566440003,
+    "stage4_cell_static_condensation": false,
+    "stage4_dtn_condensed_matrix_stats": null,
+    "cell_static_condensation": null,
+    "high_order_resource_audit": {
+      "schema_version": "task035b.high-order-resource-audit.v1",
+      "mesh_identity": {
+        "schema_version": "task035b.partition-independent-linear-mesh.v1",
+        "mesh_cell_type": "hexahedron",
+        "coordinate_tolerance": 1.4000000000000001e-08,
+        "global_cell_count": 252,
+        "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+        "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+        "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+        "mesh_cells_resolved": [
+          6,
+          3,
+          14
+        ],
+        "material_plane_alignment": {
+          "all_aligned": true,
+          "missing": [],
+          "checked": {
+            "x": [
+              {
+                "name": "grating_x_min",
+                "value": 16.5,
+                "aligned": true
+              },
+              {
+                "name": "grating_x_max",
+                "value": 33.5,
+                "aligned": true
+              }
+            ],
+            "y": [
+              {
+                "name": "grating_y_min",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_y_max",
+                "value": 25.0,
+                "aligned": true
+              }
+            ],
+            "z": [
+              {
+                "name": "interface_z",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_max",
+                "value": 120.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_min",
+                "value": 0.0,
+                "aligned": true
+              }
+            ]
+          }
+        }
+      },
+      "entity_dof_inventory": {
+        "schema_version": "task035b.hcurl-entity-dof-inventory.v1",
+        "status": "pass",
+        "mesh_cell_type": "hexahedron",
+        "degree": 5,
+        "basix_element_dimension": 540,
+        "global_entity_counts": {
+          "vertices": 420,
+          "edges": 1067,
+          "faces": 900,
+          "cells": 252
+        },
+        "entity_dofs_per_entity": {
+          "edge": 5,
+          "face_interior": 40,
+          "cell_interior": 240
+        },
+        "global_dof_contributions": {
+          "edge": 5335,
+          "face_interior": 36000,
+          "cell_interior": 60480
+        },
+        "decomposed_nedelec_dofs": 101815,
+        "actual_nedelec_dofs": 101815,
+        "cell_interior_fraction": 0.5940185630800963,
+        "floquet_constraint_rows": 6415,
+        "current_backend_row_semantics": "dolfinx_mpc retains the full FE row layout; constraints do not constitute static condensation",
+        "num_auxiliary_dofs": 80,
+        "current_expected_augmented_rows": 101895,
+        "active_matrix_rows_measured": 101895,
+        "theoretical_static_condensed_trace_dofs": 41335,
+        "theoretical_static_condensed_augmented_rows": 41415,
+        "theoretical_row_compression_factor": 2.4603404563563926,
+        "static_condensation_projection_semantics": "derived_not_measured; assumes exact cell-interior elimination with all edge/face trace and DtN auxiliary unknowns retained",
+        "cell_static_condensation_active": false,
+        "pass": true
+      },
+      "matrix_factor_resource": {
+        "schema_version": "task035b.matrix-factor-resource-audit.v1",
+        "active_rows": 101895,
+        "matrix_nnz": 79436433.0,
+        "matrix_average_row_width": 779.5910790519653,
+        "matrix_maximum_row_width": 2260,
+        "factor_nnz": 176015125.0,
+        "factor_average_row_width": 1727.4167034692575,
+        "factor_maximum_row_width": null,
+        "factor_fill_ratio": 2.215798448553197,
+        "factor_solver_type": "mumps",
+        "factor_inventory_available": true,
+        "timings_seconds": {
+          "stage4_dtn_base_matrix_assembly_seconds": 538.448980160003,
+          "stage4_dtn_base_rhs_assembly_seconds": 0.007669176000490552,
+          "stage4_dtn_augmented_block_copy_seconds": 3.039320219999354,
+          "stage4_dtn_incident_source_vector_seconds": 0.02042034300029627,
+          "stage4_dtn_modal_loop_seconds": 0.1881311770011962,
+          "stage4_dtn_modal_vector_assembly_seconds": 0.17838543099787785,
+          "stage4_dtn_modal_block_insert_seconds": 0.005097755005408544,
+          "stage4_dtn_augmented_matrix_finalize_seconds": 1.9476960339998186,
+          "stage4_dtn_cell_static_condensation_build_seconds": null,
+          "stage4_dtn_cell_static_condensation_recovery_seconds": null,
+          "stage4_dtn_ksp_setup_seconds": 62.03509405699879,
+          "stage4_dtn_ksp_solve_seconds": 0.14381899499858264,
+          "stage4_dtn_linear_solve_seconds": 62.18411743499746,
+          "stage4_dtn_solution_backsubstitution_seconds": 0.0028005099993606564,
+          "elapsed_seconds": 609.865566440003
+        },
+        "sum_rank_historical_peaks_mb_upper_bound": 12307.55859375,
+        "peak_memory_semantics": "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+      }
+    }
+  },
+  "enriched": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "case_status": "completed",
+    "official_result": true,
+    "mpi_size": 8,
+    "num_mesh_cells": 252,
+    "mesh_cell_type_actual": "hexahedron",
+    "num_nedelec_dofs": 173802,
+    "matrix_stats": {
+      "matrix_rows": 60482,
+      "matrix_cols": 60482,
+      "matrix_nnz_used": 52058162.0,
+      "matrix_nnz_allocated": 52058504.0,
+      "matrix_nnz_unneeded": 342.0,
+      "matrix_mallocs": 5492.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 7290,
+      "matrix_local_cols": 7290,
+      "matrix_row_ownership_range": [
+        0,
+        7290
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        7290
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 860.7215700539003,
+      "matrix_maximum_nnz_per_row": 4882,
+      "matrix_average_allocated_nnz_per_row": 860.7272246288152,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1249879752.0,
+      "matrix_memory_estimate_mb": 1191.9782180786133,
+      "matrix_norm_frobenius": 23338.410905719724,
+      "matrix_norm_infinity": 1891.1469934513582,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 52058504.0,
+        "nz_used": 52058162.0,
+        "nz_unneeded": 342.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 5492.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 52058504.0,
+        "nz_used": 52058162.0,
+        "nz_unneeded": 342.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 5492.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "linear_system_relative_residual": 1.9587857431644154e-11,
+    "R_total": 0.0007628814751313214,
+    "T_total": 0.6027016339835153,
+    "A_volume_total": 0.3965354845418344,
+    "energy_closure_error_port_volume": 4.809486142676178e-13,
+    "floquet_num_constraints": 9210,
+    "elapsed_seconds": 2495.2594130219986,
+    "stage4_cell_static_condensation": true,
+    "stage4_dtn_condensed_matrix_stats": {
+      "matrix_rows": 60482,
+      "matrix_cols": 60482,
+      "matrix_nnz_used": 52058162.0,
+      "matrix_nnz_allocated": 52058504.0,
+      "matrix_nnz_unneeded": 342.0,
+      "matrix_mallocs": 5492.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 7290,
+      "matrix_local_cols": 7290,
+      "matrix_row_ownership_range": [
+        0,
+        7290
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        7290
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 860.7215700539003,
+      "matrix_maximum_nnz_per_row": 4882,
+      "matrix_average_allocated_nnz_per_row": 860.7272246288152,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1249879752.0,
+      "matrix_memory_estimate_mb": 1191.9782180786133,
+      "matrix_norm_frobenius": 23338.410905719724,
+      "matrix_norm_infinity": 1891.1469934513582,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 52058504.0,
+        "nz_used": 52058162.0,
+        "nz_unneeded": 342.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 5492.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 52058504.0,
+        "nz_used": 52058162.0,
+        "nz_unneeded": 342.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 5492.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "cell_static_condensation": {
+      "schema_version": "task035b.cell-static-condensation-build.v1",
+      "status": "explicit_trace_schur_built",
+      "full_rows": 173882,
+      "trace_rows": 60482,
+      "interior_rows": 113400,
+      "physical_row_compression_factor": 2.874937998082074,
+      "owned_cell_count_global": 252,
+      "maximum_cell_interior_rows": 450,
+      "maximum_cell_trace_rows": 454,
+      "maximum_cell_trace_columns": 454,
+      "dense_scalar_entries_processed_sum": 196657512,
+      "all_cell_dense_factor_cache_retained": false,
+      "full_matrix_required_as_input": true,
+      "assembly_cost_avoided": false,
+      "transpose_seconds": 1.690068744999735,
+      "local_dense_solve_seconds_max": 15.222741296012828,
+      "schur_insert_seconds_max": 26.143116973995348,
+      "final_assembly_seconds": 57.98710660800134,
+      "total_build_seconds": 84.58039746599752,
+      "condensed_matrix_stats": {
+        "matrix_rows": 60482,
+        "matrix_cols": 60482,
+        "matrix_nnz_used": 52058162.0,
+        "matrix_nnz_allocated": 52058504.0,
+        "matrix_nnz_unneeded": 342.0,
+        "matrix_mallocs": 5492.0,
+        "matrix_type": "mpiaij",
+        "matrix_local_rows": 7290,
+        "matrix_local_cols": 7290,
+        "matrix_row_ownership_range": [
+          0,
+          7290
+        ],
+        "matrix_column_ownership_range": [
+          0,
+          7290
+        ],
+        "matrix_row_block_size": 1,
+        "matrix_column_block_size": 1,
+        "matrix_average_nnz_per_row": 860.7215700539003,
+        "matrix_maximum_nnz_per_row": 4882,
+        "matrix_average_allocated_nnz_per_row": 860.7272246288152,
+        "matrix_memory_bytes": 0.0,
+        "matrix_memory_mb": 0.0,
+        "matrix_memory_estimate_bytes": 1249879752.0,
+        "matrix_memory_estimate_mb": 1191.9782180786133,
+        "matrix_norm_frobenius": 23338.410905719724,
+        "matrix_norm_infinity": 1891.1469934513582,
+        "matrix_petsc_info": {
+          "block_size": 1.0,
+          "nz_allocated": 52058504.0,
+          "nz_used": 52058162.0,
+          "nz_unneeded": 342.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 5492.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        },
+        "matrix_petsc_info_global_sum": {
+          "block_size": 1.0,
+          "nz_allocated": 52058504.0,
+          "nz_used": 52058162.0,
+          "nz_unneeded": 342.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 5492.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        }
+      },
+      "recovery": {
+        "schema_version": "task035b.cell-static-condensation-recovery.v1",
+        "status": "full_solution_recovered",
+        "recovered_interior_rows": 113400,
+        "all_cell_dense_factor_cache_retained": false,
+        "local_dense_solve_seconds_max": 2.147498203015857,
+        "total_recovery_seconds": 7.752569191001385
+      },
+      "full_explicit_true_residual": {
+        "linear_system_rhs_norm": 13.19739941836903,
+        "linear_system_solution_norm": 742.1374458842274,
+        "linear_system_residual_norm": 2.5850877827547604e-10,
+        "linear_system_relative_residual": 1.9587857431644154e-11
+      },
+      "same_full_operator_used_for_recovery_and_residual": true,
+      "ordinary_default_changed": false
+    },
+    "high_order_resource_audit": {
+      "schema_version": "task035b.high-order-resource-audit.v1",
+      "mesh_identity": {
+        "schema_version": "task035b.partition-independent-linear-mesh.v1",
+        "mesh_cell_type": "hexahedron",
+        "coordinate_tolerance": 1.4000000000000001e-08,
+        "global_cell_count": 252,
+        "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+        "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+        "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+        "mesh_cells_resolved": [
+          6,
+          3,
+          14
+        ],
+        "material_plane_alignment": {
+          "all_aligned": true,
+          "missing": [],
+          "checked": {
+            "x": [
+              {
+                "name": "grating_x_min",
+                "value": 16.5,
+                "aligned": true
+              },
+              {
+                "name": "grating_x_max",
+                "value": 33.5,
+                "aligned": true
+              }
+            ],
+            "y": [
+              {
+                "name": "grating_y_min",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_y_max",
+                "value": 25.0,
+                "aligned": true
+              }
+            ],
+            "z": [
+              {
+                "name": "interface_z",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_max",
+                "value": 120.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_min",
+                "value": 0.0,
+                "aligned": true
+              }
+            ]
+          }
+        }
+      },
+      "entity_dof_inventory": {
+        "schema_version": "task035b.hcurl-entity-dof-inventory.v1",
+        "status": "pass",
+        "mesh_cell_type": "hexahedron",
+        "degree": 6,
+        "basix_element_dimension": 882,
+        "global_entity_counts": {
+          "vertices": 420,
+          "edges": 1067,
+          "faces": 900,
+          "cells": 252
+        },
+        "entity_dofs_per_entity": {
+          "edge": 6,
+          "face_interior": 60,
+          "cell_interior": 450
+        },
+        "global_dof_contributions": {
+          "edge": 6402,
+          "face_interior": 54000,
+          "cell_interior": 113400
+        },
+        "decomposed_nedelec_dofs": 173802,
+        "actual_nedelec_dofs": 173802,
+        "cell_interior_fraction": 0.6524665999240515,
+        "floquet_constraint_rows": 9210,
+        "current_backend_row_semantics": "exact cell-interior elimination; measured global matrix retains only edge/face trace and DtN auxiliary rows",
+        "num_auxiliary_dofs": 80,
+        "current_expected_augmented_rows": 173882,
+        "active_matrix_rows_measured": 60482,
+        "theoretical_static_condensed_trace_dofs": 60402,
+        "theoretical_static_condensed_augmented_rows": 60482,
+        "theoretical_row_compression_factor": 2.874937998082074,
+        "static_condensation_projection_semantics": "measured_active_rows; exact cell-interior elimination with all edge/face trace and DtN auxiliary unknowns retained",
+        "cell_static_condensation_active": true,
+        "pass": true
+      },
+      "matrix_factor_resource": {
+        "schema_version": "task035b.matrix-factor-resource-audit.v1",
+        "active_rows": 60482,
+        "matrix_nnz": 52058162.0,
+        "matrix_average_row_width": 860.7215700539003,
+        "matrix_maximum_row_width": 4882,
+        "factor_nnz": 243270308.0,
+        "factor_average_row_width": 4022.1935121193083,
+        "factor_maximum_row_width": null,
+        "factor_fill_ratio": 4.673048349267498,
+        "factor_solver_type": "mumps",
+        "factor_inventory_available": true,
+        "timings_seconds": {
+          "stage4_dtn_base_matrix_assembly_seconds": 2195.580417702,
+          "stage4_dtn_base_rhs_assembly_seconds": 0.01087499400091474,
+          "stage4_dtn_augmented_block_copy_seconds": 8.509767571002158,
+          "stage4_dtn_incident_source_vector_seconds": 0.027922504999878583,
+          "stage4_dtn_modal_loop_seconds": 0.2854558669969265,
+          "stage4_dtn_modal_vector_assembly_seconds": 0.27493112998854485,
+          "stage4_dtn_modal_block_insert_seconds": 0.007621391014254186,
+          "stage4_dtn_augmented_matrix_finalize_seconds": 6.481982097000582,
+          "stage4_dtn_cell_static_condensation_build_seconds": 84.69139256300332,
+          "stage4_dtn_cell_static_condensation_recovery_seconds": 7.752655693999259,
+          "stage4_dtn_ksp_setup_seconds": 178.19753732299796,
+          "stage4_dtn_ksp_solve_seconds": 0.23647473600067315,
+          "stage4_dtn_linear_solve_seconds": 178.43918484900132,
+          "stage4_dtn_solution_backsubstitution_seconds": 0.004136474999540951,
+          "elapsed_seconds": 2495.2594130219986
+        },
+        "sum_rank_historical_peaks_mb_upper_bound": 28856.70703125,
+        "peak_memory_semantics": "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+      }
+    }
+  },
+  "official_observable_delta_l2": 0.00028789636073508937,
+  "R5": {
+    "schema_version": "task035.actual-global-two-level-r5.v1",
+    "estimator": "R5_actual_global_two_level_correction_energy",
+    "formal_hierarchical_fe_r5": true,
+    "coarse_global_dofs": 101815,
+    "enriched_global_dofs": 173802,
+    "owned_cell_contribution_count": 252,
+    "owned_cell_counts_by_rank": [
+      31,
+      32,
+      31,
+      32,
+      31,
+      32,
+      31,
+      32
+    ],
+    "distributed_ownership_unique": true,
+    "finite_cell_contributions": true,
+    "nonnegative_cell_contributions": true,
+    "correction_energy": {
+      "direct_global_energy": 541.8396160507683,
+      "cell_sum_global_energy": 541.8396160507679,
+      "relative_closure_error": 8.392656007711625e-16,
+      "minimum_raw_cell_contribution": 1.5017660548059908,
+      "maximum_imaginary_cell_contribution": 0.0
+    },
+    "correction_energy_norm": 23.27744865853576,
+    "marking": {
+      "theta": 0.5,
+      "count": 105,
+      "minimal_count_before_tie_expansion": 105,
+      "cutoff_tie_expansion_count": 0,
+      "cutoff_normalized_contribution": 0.004003667851520829,
+      "cutoff_tie_absolute_tolerance": 4.0036678515208297e-13,
+      "tie_policy": "include_all_cutoff_contributions_within_relative_1e-10",
+      "fraction": 0.4166666666666667,
+      "captured_fraction": 0.501888455449807,
+      "global_cell_ids_sha256": "56b4cd5c04daa2e5a2ee58eb73517175ece9c448bb85cc9b103018f81ab5f649"
+    },
+    "marked_global_cell_ids": [
+      11,
+      19,
+      20,
+      26,
+      27,
+      30,
+      35,
+      37,
+      38,
+      40,
+      41,
+      46,
+      77,
+      84,
+      107,
+      114,
+      115,
+      120,
+      121,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      153,
+      154,
+      156,
+      157,
+      158,
+      159,
+      160,
+      161,
+      162,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      170,
+      172,
+      173,
+      174,
+      175,
+      176,
+      177,
+      178,
+      179,
+      180,
+      181,
+      182,
+      183,
+      184,
+      185,
+      186,
+      187,
+      188,
+      189,
+      190,
+      191,
+      193,
+      194,
+      196,
+      199,
+      201,
+      206,
+      220,
+      222,
+      225,
+      226,
+      230,
+      231,
+      232,
+      233,
+      236,
+      238,
+      240,
+      241,
+      243,
+      245,
+      247,
+      248
+    ],
+    "estimator_wall_seconds": 16.412475473000086,
+    "process_peak_rss_kib_before": 4461968,
+    "process_peak_rss_kib_after": 4547296,
+    "interpolation": {
+      "method": "dolfinx_nonmatching_hcurl_interpolation",
+      "padding": 1e-10,
+      "same_communicator": true
+    },
+    "effectivity_proxy": 80853.57035810096,
+    "effectivity_proxy_semantics": "global correction energy norm divided by coarse-to-enriched official R/T/A-volume change"
+  },
+  "common_mesh_identity": {
+    "schema_version": "task035b.partition-independent-linear-mesh.v1",
+    "mesh_cell_type": "hexahedron",
+    "coordinate_tolerance": 1.4000000000000001e-08,
+    "global_cell_count": 252,
+    "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+    "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+    "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+    "mesh_cells_resolved": [
+      6,
+      3,
+      14
+    ],
+    "material_plane_alignment": {
+      "all_aligned": true,
+      "missing": [],
+      "checked": {
+        "x": [
+          {
+            "name": "grating_x_min",
+            "value": 16.5,
+            "aligned": true
+          },
+          {
+            "name": "grating_x_max",
+            "value": 33.5,
+            "aligned": true
+          }
+        ],
+        "y": [
+          {
+            "name": "grating_y_min",
+            "value": 0.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_y_max",
+            "value": 25.0,
+            "aligned": true
+          }
+        ],
+        "z": [
+          {
+            "name": "interface_z",
+            "value": 0.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_z_max",
+            "value": 120.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_z_min",
+            "value": 0.0,
+            "aligned": true
+          }
+        ]
+      }
+    }
+  },
+  "same_mesh_hashes": true,
+  "single_in_memory_mesh_instance": true,
+  "reuse_single_mesh_requested": true,
+  "elapsed_seconds": 3127.781335861997,
+  "raw_evidence": {
+    "run_directory": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6",
+    "actual_r5_result": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/actual_r5_result.json",
+    "actual_r5_result_sha256": "8ff71bdf0198a74960aabd21b7cb23bc620b0eb0c548509e4d55955ee53319e5",
+    "memory_timeline": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/memory_timeline.csv",
+    "memory_timeline_sha256": "898b6b187a38a82b01a737bcdef785a27478a0bc4446a867a6d740a345cb7628",
+    "progress": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/progress_3d.jsonl",
+    "progress_sha256": "674c15ac8915c9337c29ccc8c68dcb0c28cae165df0c39e41a0dff232d7f459e",
+    "stdout": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/worker_stdout.txt",
+    "stdout_sha256": "d98f1c5e89f0f2da5a4d60c593ef2cbe64ef3c3fa22e0a0c8b18fdebca875f56"
+  }
+}

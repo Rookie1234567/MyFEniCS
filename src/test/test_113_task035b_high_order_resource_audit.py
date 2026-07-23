@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -21,6 +22,8 @@ from src.solvers.common_3d_solve import _petsc_matrix_stats
 from src.solvers.hcurl_cell_static_condensation import (
     owned_hcurl_cell_interior_dofs,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class Task035bHighOrderResourceAuditTests(unittest.TestCase):
@@ -121,6 +124,62 @@ class Task035bHighOrderResourceAuditTests(unittest.TestCase):
         self.assertEqual(audit["factor_maximum_row_width"], 5)
         self.assertEqual(audit["factor_fill_ratio"], 2.0)
         A.destroy()
+
+    def test_formal_mpi8_p6_condensation_record_is_full_system_qualified(
+        self,
+    ) -> None:
+        records = (
+            ROOT
+            / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+            / "records"
+        )
+        control = json.loads(
+            (records / "global_hexa_p5_p6_h10_mpi8.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        condensed = json.loads(
+            (
+                records
+                / "global_hexa_p5_p6_h10_p6_condensed_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(condensed["status"], "actual_global_r5_pass")
+        self.assertTrue(condensed["qualification"]["pass"])
+        self.assertEqual(
+            condensed["source"]["commit_sha"],
+            "0f4b786d618c37e1c572a4f596a9235e53d73161",
+        )
+        self.assertTrue(condensed["source"]["stable_and_clean_after"])
+        p6 = condensed["enriched"]
+        p6_control = control["enriched"]
+        self.assertEqual(p6["mpi_size"], 8)
+        self.assertEqual(p6["num_nedelec_dofs"], 173802)
+        self.assertEqual(p6["matrix_stats"]["matrix_rows"], 60482)
+        self.assertEqual(p6["matrix_stats"]["matrix_nnz_used"], 52058162.0)
+        self.assertLessEqual(p6["linear_system_relative_residual"], 1.0e-9)
+        self.assertTrue(p6["stage4_cell_static_condensation"])
+        audit = p6["cell_static_condensation"]
+        self.assertEqual(audit["full_rows"], 173882)
+        self.assertEqual(audit["interior_rows"], 113400)
+        self.assertEqual(audit["trace_rows"], 60482)
+        self.assertFalse(audit["all_cell_dense_factor_cache_retained"])
+        self.assertLessEqual(
+            audit["full_explicit_true_residual"][
+                "linear_system_relative_residual"
+            ],
+            1.0e-9,
+        )
+        for observable in ("R_total", "T_total", "A_volume_total"):
+            self.assertLess(
+                abs(p6[observable] - p6_control[observable]),
+                1.0e-12,
+                observable,
+            )
+        self.assertLess(
+            condensed["resource_authority"]["memory_authority_gib"],
+            control["resource_authority"]["memory_authority_gib"],
+        )
 
 
 if __name__ == "__main__":

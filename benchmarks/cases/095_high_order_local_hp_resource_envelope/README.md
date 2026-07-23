@@ -11,8 +11,8 @@
 - 保存 H(curl) edge、face-interior、cell-interior DoF 分解；
 - 实测 augmented rows、NNZ、average/max row width、MUMPS factor NNZ/fill、
   simultaneous peak memory 和分阶段时间；
-- 只把 static-condensation trace rows 报告为
-  `derived_not_measured`，直到真正 condensation 系统完成装配与求解；
+- 未启用 condensation 的 global-p records 继续把 trace rows 报告为
+  `derived_not_measured`；opt-in exact Schur record 报告实测 active rows；
 - ordinary default 保持不变。
 
 ## 固定网格身份
@@ -33,6 +33,7 @@
 |---|---|---|---:|
 | `records/global_hexa_p4_p5_h10_mpi8.json` | `2e91d2bf0195056e55be670af226b7716096284c` | `actual_global_r5_pass` | 14.928 GiB |
 | `records/global_hexa_p5_p6_h10_mpi8.json` | `c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2` | `actual_global_r5_pass` | 35.024 GiB |
+| `records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json` | `0f4b786d618c37e1c572a4f596a9235e53d73161` | `actual_global_r5_pass` | 29.212 GiB |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -62,6 +63,34 @@ p6 的 full explicit true residual 为 `2.018e-11`，官方
 `8.67e-7 / 5.87e-6 / 4.98e-6`。因此它作为 Task035b 的可信
 global-p6 基线保留，但不把 COMSOL 值当作同离散系统的逐位等价结果。
 
+## MPI8 p6 exact cell-interior condensation
+
+Task035b 已实现 opt-in exact per-cell Schur path。它真正求解 60,482-row
+trace + auxiliary 系统，不保留完整 p6 矩阵后把系数设零，也不保存所有 cell
+dense factors。恢复后的完整 173,882-row augmented operator 用于 full explicit
+true-residual Gate 和 official R/T/A。
+
+| metric | global p6 full | p6 condensed | change |
+|---|---:|---:|---:|
+| active rows | 173,882 | 60,482 | -65.22% |
+| matrix NNZ | 210,353,120 | 52,058,162 | -75.25% |
+| factor NNZ | 386,625,292 | 243,270,308 | -37.08% |
+| factor fill | 1.838 | 4.673 | +154.25% |
+| formal memory authority | 35.024 GiB | 29.212 GiB | -16.59% |
+| p6 elapsed | 2,526.7 s | 2,495.3 s | -31.4 s |
+
+condensed p6 的 Schur build 为 84.69 s，其中 final parallel assembly
+57.99 s；recovery 为 7.75 s。full p6 base matrix assembly 仍需
+2,195.58 s，因此当前原型的主要时间和峰值仍来自完整高阶装配。行数下降没有
+转化成同倍率内存下降的直接证据是：Schur fill 从 1.838 上升到 4.673，
+factor NNZ 只下降 37.08%，同时 full matrix 在 Schur build 前仍必须存在。
+
+恢复解的 full explicit true residual 为 `1.959e-11`。相对冻结 global-p6
+control，`|ΔR|=9.41e-16`、`|ΔT|=4.38e-13`、
+`|ΔA_volume|=1.94e-13`；几何、mesh/tag hashes、periodic mapping 和 MPI8
+身份相同。该结果资格化的是 exact static condensation，不等价于
+cellwise/regionwise local-p 已完成。
+
 ## 复现
 
 必须先使用仓库资格化 activation；正式运行还必须把
@@ -82,6 +111,10 @@ p5/p6 复现时把 degree 改为 `5/6`、timeout 改为 `10800`，record 改为
 `global_hexa_p5_p6_h10_mpi8.json`。Task035b 后续正式 heavy PDE 与
 static-condensation/Hybrid control 均固定为 MPI8；轻量 pure-Python 或最小
 MPI2 单元测试不属于正式资源对照。
+
+p6 condensation 复现时另外加入
+`--static-condensation-degree 6`，timeout 使用 `14400`，record 使用
+`global_hexa_p5_p6_h10_p6_condensed_mpi8.json`。
 
 原始 mesh、field、长日志和 memory timeline 位于 gitignored
 `benchmarks/artifacts/task035/actual_global_r5/`；tracked JSON 通过 SHA-256
