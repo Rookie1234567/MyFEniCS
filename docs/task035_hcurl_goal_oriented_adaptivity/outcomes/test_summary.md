@@ -239,6 +239,8 @@ repeatability 阈值。第二轮保存为“数值通过、工程成本判负”
 | p4/p5 final p5 error / DoF | `0.000220336` / `339,850`；数值正、成本受限 |
 | p4/p5 full-sleeve cycle1 MPI8 | pass；7.901 GiB，109.57 s，swap 0 |
 | full-sleeve p5 error / DoF | `0.000589604` / `103,330`；strong hp tradeoff signal |
+| p4/p5 theta=.7 full-sleeve cycle1 MPI8 | pass；8.080 GiB，109.79 s，swap 0 |
+| theta=.7 p5 error / DoF | `0.000538286` / `106,355`；adaptive-control compression，structured same-error 未通过 |
 
 本高阶阶段没有重跑 Task034 p4/h5 reference、M funnel 或既有 MPI heavy matrix；结构化 p4/h10、
 p4/h7.5 与 p4/h5 数字全部从已接受、hash-bound Case093 records 读取。

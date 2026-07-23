@@ -259,6 +259,15 @@ p4/h7.5，它使用更少 DoF/内存但 error 仍约高 1.8 倍，因此尚未�
 full-sleeve 单周期 record 绑定 clean SHA `96c80e9bea3ea2aa2624926d6791fc7d51268dbe`；
 没有重跑 Task034 p4/h5、p4/h7.5、M funnel 或其他 accepted heavy reference。
 
+预先限定的唯一 `theta=0.7` 判别点绑定 clean SHA
+`c2898da89b055f0e6a13df3f039c6a0c24942d04`。它得到 1,316 cells、p5 `106,355` DoF、
+error `0.000538286`、峰值 `8.080 GiB`、worker wall `109.79 s`，所有 Gate 通过。相对
+`theta=0.5` 只增加约 2.9% DoF，error 改善约 8.7%；相对 p3/p4 full-sleeve 两周期则以
+约 33.7% DoF、42.9% 内存和 18.8% 时间达到只差约 0.36% 的 error，构成 clear adaptive-control
+compression。但它仍比 structured p4/h7.5 error 高约 64%，所以预先声明的 structured same-error
+Gate 未通过。该 theta lane 在此停止，不继续扫参；下一步只做独立 p5 uniform-level1 control，
+区分收益来自 DWR marking 还是 global p5。
+
 上述结论只对 Task034 fixed geometry、S、10° grazing 与当前 best-available p4/h5 reference 成立；
 没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
 所以这是 selected research strategy，而不是 ordinary production default。
