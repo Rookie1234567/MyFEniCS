@@ -44,17 +44,19 @@ class TetrahedralTraceLayout:
     triangle_n1curl_dimension: int
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=6)
 def high_order_trace_layout(degree: int) -> HighOrderTraceLayout:
-    """Read and cross-check the p1--p4 Basix entity layout.
+    """Read and cross-check the p1--p6 Basix entity layout.
 
     Formulas are checks, not the source of the production layout.  The actual
     entity sizes come from the Basix element shipped in the qualified image.
     """
 
     degree = int(degree)
-    if degree not in {1, 2, 3, 4}:
-        raise ValueError(f"Task033 qualifies N1curl degrees 1--4, got {degree}.")
+    if degree not in {1, 2, 3, 4, 5, 6}:
+        raise ValueError(
+            f"Task033/Task035b qualifies hexa N1curl degrees 1--6, got {degree}."
+        )
     hexa = element("N1curl", "hexahedron", degree).basix_element
     quadrilateral = element("N1curl", "quadrilateral", degree).basix_element
     edge_counts = {len(dofs) for dofs in hexa.entity_dofs[1]}
@@ -249,7 +251,7 @@ def triangle_face_info(vertex_permutation: Iterable[int]) -> int:
         raise ValueError(f"Permutation {permutation} is not a triangle symmetry.") from exc
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=6)
 def _entity_transformations(degree: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     high_order_trace_layout(degree)
     hexa = element("N1curl", "hexahedron", int(degree)).basix_element

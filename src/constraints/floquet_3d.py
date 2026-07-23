@@ -67,17 +67,26 @@ def _mesh_is_tetrahedron(msh) -> bool:
     return "tetrahedron" in str(msh.basix_cell()).lower()
 
 
-def _qualified_constraint_mode(degree: int, *, tetrahedral: bool = False) -> str:
+def _qualified_constraint_mode(
+    degree: int,
+    *,
+    tetrahedral: bool = False,
+    fixed_target_high_order: bool = False,
+) -> str:
     """Return the stable public mode name for a qualified N1curl degree."""
 
     if degree == 1:
         return "topological_edges_p1"
-    if degree in {2, 3, 4} or (degree in {5, 6} and tetrahedral):
+    if degree in {2, 3, 4} or (
+        degree in {5, 6} and (tetrahedral or fixed_target_high_order)
+    ):
         return f"topological_trace_p{degree}"
     raise NotImplementedError(
         "3D explicit Floquet constraints qualify N1curl degree=1--4 generally "
-        "and Task035 research degrees=5--6 on tetrahedra. "
-        f"Requested degree={degree}, tetrahedral={tetrahedral}."
+        "and research degrees=5--6 only on Task035 tetrahedra or the fixed "
+        "Task034 rectangular target used by Task035b. "
+        f"Requested degree={degree}, tetrahedral={tetrahedral}, "
+        f"fixed_target_high_order={fixed_target_high_order}."
     )
 
 
@@ -85,17 +94,32 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     requested = cfg.floquet_constraint_mode_requested
     degree = int(cfg.nedelec_degree)
     tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
+    fixed_target_high_order = (
+        cfg.stage_case == "stage4_block_grating"
+        and cfg.geometry_kind == "rectangular_block_grating"
+    )
     if requested in {"topological_edges", "sparse_facet"}:
         requested = "topological_edges_p1"
     if requested == "auto":
-        return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
+        return _qualified_constraint_mode(
+            degree,
+            tetrahedral=tetrahedral,
+            fixed_target_high_order=fixed_target_high_order,
+        )
     if requested == "topological_trace":
-        if degree not in {1, 2, 3, 4} and not (degree in {5, 6} and tetrahedral):
+        if degree not in {1, 2, 3, 4} and not (
+            degree in {5, 6}
+            and (tetrahedral or fixed_target_high_order)
+        ):
             raise NotImplementedError(
                 "floquet_constraint_mode='topological_trace' requires degree=1--4 "
-                "or Task035 tetrahedral research degree=5--6."
+                "or a qualified fixed-target research degree=5--6."
             )
-        return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
+        return _qualified_constraint_mode(
+            degree,
+            tetrahedral=tetrahedral,
+            fixed_target_high_order=fixed_target_high_order,
+        )
     if requested == "topological_edges_p1":
         if degree != 1:
             raise NotImplementedError(
@@ -120,10 +144,10 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
                 f"floquet_constraint_mode={requested!r} requires "
                 f"nedelec_degree={requested_degree}."
             )
-        if degree in {5, 6} and not tetrahedral:
+        if degree in {5, 6} and not (tetrahedral or fixed_target_high_order):
             raise NotImplementedError(
-                f"floquet_constraint_mode={requested!r} is a Task035 tetrahedral "
-                "research capability."
+                f"floquet_constraint_mode={requested!r} is restricted to "
+                "Task035 tetrahedra or the Task035b fixed rectangular target."
             )
         return requested
     raise RuntimeError(
@@ -1819,18 +1843,25 @@ def _build_double_floquet_mpc_high_order(
     dolfinx_mpc,
     log=None,
 ) -> DoubleFloquet3DData:
-    """Create the p1--p4 and Task035 tetra-p5/p6 phase-cacheable Floquet MPC."""
+    """Create the qualified phase-cacheable high-order Floquet MPC."""
 
     degree = int(cfg.nedelec_degree)
     tetrahedral = _mesh_is_tetrahedron(V.mesh)
-    if degree not in {1, 2, 3, 4} and not (degree in {5, 6} and tetrahedral):
+    fixed_target_high_order = (
+        cfg.stage_case == "stage4_block_grating"
+        and cfg.geometry_kind == "rectangular_block_grating"
+    )
+    if degree not in {1, 2, 3, 4} and not (
+        degree in {5, 6}
+        and (tetrahedral or fixed_target_high_order)
+    ):
         raise NotImplementedError(
             "The public generalized dispatcher qualifies p1--p4 generally and "
-            "Task035 research p5/p6 on tetrahedra."
+            "p5/p6 only on Task035 tetrahedra or the Task035b fixed target."
         )
-    if degree in {5, 6} and cfg.stage_case != "stage4_block_grating":
+    if degree in {5, 6} and not fixed_target_high_order:
         raise NotImplementedError(
-            "Task035 tetrahedral p5/p6 is restricted to the fixed-geometry target."
+            "Research p5/p6 is restricted to the fixed-geometry target."
         )
     allowed_stage_cases = {
         "floquet_airbox",
@@ -1862,7 +1893,9 @@ def _build_double_floquet_mpc_high_order(
             "contract (full boundary gather or dense boundary square detected)."
         )
     constraint_mode_resolved = _qualified_constraint_mode(
-        degree, tetrahedral=tetrahedral
+        degree,
+        tetrahedral=tetrahedral,
+        fixed_target_high_order=fixed_target_high_order,
     )
 
     if log is not None:

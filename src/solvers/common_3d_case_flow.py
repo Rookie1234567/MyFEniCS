@@ -1226,6 +1226,12 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_factor_inventory": None
         if dtn_solver_info is None
         else dtn_solver_info.get("factor_inventory"),
+        "stage4_dtn_ksp_setup_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("ksp_setup_seconds"),
+        "stage4_dtn_ksp_solve_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("ksp_solve_seconds"),
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),

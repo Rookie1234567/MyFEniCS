@@ -274,12 +274,17 @@ def run_target_global_two_level_r5(
     mesh_cell_type: str = "hexahedron",
     progress_observer=None,
     mesh_data_override=None,
+    reuse_single_mesh: bool = False,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
     from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
+    )
+    from src.adaptivity.high_order_resource_audit import (
+        build_high_order_resource_audit,
     )
 
     out_dir = Path(out_dir)
@@ -316,12 +321,20 @@ def run_target_global_two_level_r5(
             progress_observer(stage, status)
 
     started = time.perf_counter()
+    shared_mesh_data = mesh_data_override
+    if reuse_single_mesh and shared_mesh_data is None:
+        progress("actual_r5_shared_mesh_build", "begin")
+        shared_mesh_data = build_airbox_mesh_3d(
+            config(int(coarse_degree)),
+            out_dir / "shared_mesh",
+        )
+        progress("actual_r5_shared_mesh_build", "end")
     progress("actual_r5_coarse_solve", "begin")
     coarse_summary = run_stage4b_block_grating_3d_case(
         config(int(coarse_degree)),
         out_dir / f"coarse_p{coarse_degree}",
         solution_observer=observer("coarse"),
-        mesh_data_override=mesh_data_override,
+        mesh_data_override=shared_mesh_data,
     )
     _require_official_summary(coarse_summary, "coarse")
     progress("actual_r5_coarse_solve", "end")
@@ -331,7 +344,7 @@ def run_target_global_two_level_r5(
         config(int(enriched_degree)),
         out_dir / f"enriched_p{enriched_degree}",
         solution_observer=observer("enriched"),
-        mesh_data_override=mesh_data_override,
+        mesh_data_override=shared_mesh_data,
     )
     _require_official_summary(enriched_summary, "enriched")
     progress("actual_r5_enriched_solve", "end")
@@ -356,8 +369,36 @@ def run_target_global_two_level_r5(
         "global correction energy norm divided by coarse-to-enriched official "
         "R/T/A-volume change"
     )
+    coarse_audit = build_high_order_resource_audit(
+        captures["coarse"]["field"],
+        captures["coarse"]["mesh_data"],
+        coarse_summary,
+    )
+    enriched_audit = build_high_order_resource_audit(
+        captures["enriched"]["field"],
+        captures["enriched"]["mesh_data"],
+        enriched_summary,
+    )
+    common_mesh_identity = coarse_audit["mesh_identity"]
+    same_mesh_hashes = (
+        common_mesh_identity == enriched_audit["mesh_identity"]
+    )
+    if not same_mesh_hashes:
+        raise RuntimeError(
+            "Coarse and enriched high-order solves do not share one exact "
+            "geometry/tag identity."
+        )
+    single_in_memory_mesh_instance = (
+        captures["coarse"]["mesh_data"].mesh
+        is captures["enriched"]["mesh_data"].mesh
+    )
+    if reuse_single_mesh and not single_in_memory_mesh_instance:
+        raise RuntimeError("Requested single-mesh pair rebuilt the mesh.")
     return {
         "schema_version": "task035.target-actual-global-r5.v1",
+        "task035b_extension_schema_version": (
+            "task035b.high-order-resource-extension.v1"
+        ),
         "status": "actual_global_r5_pass",
         "target_identity": {
             "wavelength_nm": 13.5,
@@ -371,12 +412,18 @@ def run_target_global_two_level_r5(
             "degree": int(coarse_degree),
             "h_nm": float(h_nm),
             "summary": coarse_summary,
+            "high_order_resource_audit": coarse_audit,
         },
         "enriched": {
             "degree": int(enriched_degree),
             "h_nm": float(h_nm),
             "summary": enriched_summary,
+            "high_order_resource_audit": enriched_audit,
         },
+        "common_mesh_identity": common_mesh_identity,
+        "same_mesh_hashes": same_mesh_hashes,
+        "single_in_memory_mesh_instance": single_in_memory_mesh_instance,
+        "reuse_single_mesh_requested": bool(reuse_single_mesh),
         "official_observable_delta_l2": float(observable_delta),
         "R5": estimate,
         "elapsed_seconds": float(

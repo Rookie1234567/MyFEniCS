@@ -201,7 +201,9 @@ class Task034HardeningTests(unittest.TestCase):
         self.assertIn("libdolfinx_mpc.so", text)
         self.assertIn("LD_LIBRARY_PATH", text)
         self.assertIn("OMP_NUM_THREADS=1", text)
-        self.assertNotIn("/mnt/c", text.lower())
+        self.assertIn("export TMPDIR=/tmp", text)
+        self.assertIn('XDG_CACHE_HOME="${TMPDIR}/myfenics-xdg-cache-${UID}"', text)
+        self.assertNotIn("export TMPDIR=/mnt/c", text.lower())
 
 
 if __name__ == "__main__":

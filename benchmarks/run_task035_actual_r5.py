@@ -191,6 +191,7 @@ def _worker(args: argparse.Namespace) -> int:
             polarization_kind=args.polarization_kind,
             mesh_cell_type=args.mesh_cell_type,
             progress_observer=progress,
+            reuse_single_mesh=args.single_mesh_pair,
         )
     if MPI.COMM_WORLD.rank == 0:
         (args.run_dir / "actual_r5_result.json").write_text(
@@ -215,6 +216,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--mesh-cell-type",
         choices=("hexahedron", "tetrahedron"),
         default="hexahedron",
+    )
+    parser.add_argument(
+        "--single-mesh-pair",
+        action="store_true",
+        help=(
+            "build the fixed target mesh once and reuse that exact in-memory "
+            "mesh for both global-p solves"
+        ),
     )
     parser.add_argument("--mpi-size", type=int, default=8)
     parser.add_argument("--adaptive-marked-cycles", type=int, default=0)
@@ -325,6 +334,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "common-mesh replay and adaptive/uniform cycle modes are mutually exclusive."
         )
+    if args.single_mesh_pair and (common_mesh_mode or active_cycles):
+        parser.error(
+            "--single-mesh-pair is valid only for the plain global-p pair."
+        )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
             parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
@@ -430,6 +443,9 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         ),
         "floquet_num_constraints": summary.get("floquet_num_constraints"),
         "elapsed_seconds": summary.get("elapsed_seconds"),
+        "high_order_resource_audit": entry.get(
+            "high_order_resource_audit"
+        ),
     }
 
 
@@ -499,6 +515,9 @@ def _qualify(
     marking = r5.get("marking") or {}
     solves = [result.get("coarse") or {}, result.get("enriched") or {}]
     summaries = [entry.get("summary") or {} for entry in solves]
+    resource_audits = [
+        entry.get("high_order_resource_audit") or {} for entry in solves
+    ]
     checks = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
@@ -537,6 +556,15 @@ def _qualify(
             isinstance(summary.get("linear_system_relative_residual"), (int, float))
             and float(summary["linear_system_relative_residual"]) <= 1.0e-9
             for summary in summaries
+        ),
+        "both_entity_dof_audits_pass": all(
+            (audit.get("entity_dof_inventory") or {}).get("pass") is True
+            for audit in resource_audits
+        ),
+        "same_actual_mesh_hashes": result.get("same_mesh_hashes") is True,
+        "single_mesh_instance_when_requested": (
+            not args.single_mesh_pair
+            or result.get("single_in_memory_mesh_instance") is True
         ),
         "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
     }
@@ -1006,6 +1034,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += f"_adaptive{args.adaptive_marked_cycles}"
     elif args.uniform_refinement_levels:
         run_label += f"_uniform{args.uniform_refinement_levels}"
+    elif args.single_mesh_pair:
+        run_label += "_single_mesh_pair"
     run_dir = (args.run_dir or args.artifact_root / run_label).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
@@ -1036,6 +1066,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--run-dir",
         str(run_dir),
     ]
+    if args.single_mesh_pair:
+        command.append("--single-mesh-pair")
     if args.common_mesh_replay_record is not None:
         command.extend(
             [
@@ -1261,6 +1293,14 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "official_observable_delta_l2": result.get("official_observable_delta_l2"),
         "R5": result.get("R5"),
+        "common_mesh_identity": result.get("common_mesh_identity"),
+        "same_mesh_hashes": result.get("same_mesh_hashes"),
+        "single_in_memory_mesh_instance": result.get(
+            "single_in_memory_mesh_instance"
+        ),
+        "reuse_single_mesh_requested": result.get(
+            "reuse_single_mesh_requested"
+        ),
         "elapsed_seconds": result.get("elapsed_seconds"),
         "raw_evidence": {
             "run_directory": _path_from_root(run_dir),

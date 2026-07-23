@@ -654,13 +654,13 @@ def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
             "stage4_block_grating requires a tetrahedron or hexahedron mesh."
         )
     degree = int(cfg.nedelec_degree)
-    task035_tetra_high_order = (
-        cfg.mesh_cell_type_resolved == "tetrahedron" and degree in {5, 6}
+    task035_fixed_target_high_order = (
+        cfg.stage_case == "stage4_block_grating" and degree in {5, 6}
     )
-    if degree not in {1, 2, 3, 4} and not task035_tetra_high_order:
+    if degree not in {1, 2, 3, 4} and not task035_fixed_target_high_order:
         raise NotImplementedError(
             "Stage-4 Floquet supports N1curl degree 1 through 4 generally and "
-            "Task035 research degrees 5 through 6 on tetrahedra; "
+            "Task035/Task035b research degrees 5 through 6 on the fixed target; "
             f"requested degree={degree}, cell_type={cfg.mesh_cell_type_resolved}."
         )
     if cfg.scattering_background.lower() != "layered":

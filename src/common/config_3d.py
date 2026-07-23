@@ -272,12 +272,14 @@ class SimulationConfig3D:
             "topological_trace_p2",
             "topological_trace_p3",
             "topological_trace_p4",
+            "topological_trace_p5",
+            "topological_trace_p6",
             "topological_trace",
             "sparse_facet",
         }:
             raise ValueError(
                 "floquet_constraint_mode must be 'auto', 'topological_edges_p1', "
-                "'topological_trace', 'topological_trace_p2/p3/p4', or legacy "
+                "'topological_trace', 'topological_trace_p2/p3/p4/p5/p6', or legacy "
                 "aliases 'topological_edges'/'sparse_facet'."
             )
         return mode

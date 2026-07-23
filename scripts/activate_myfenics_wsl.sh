@@ -46,9 +46,13 @@ if [[ ! -d "${TMPDIR}" || ! -w "${TMPDIR}" ]]; then
   echo "Qualified WSL temporary directory ${TMPDIR} is unavailable." >&2
   return 2
 fi
+# DOLFINx/FFCx resolves its JIT cache from XDG_CACHE_HOME at import time.
+# Windows Codex sessions may inherit a Linux HOME that the managed sandbox can
+# read but not write, so all generated compiler/cache files stay under /tmp.
+export XDG_CACHE_HOME="${TMPDIR}/myfenics-xdg-cache-${UID}"
 export MPLCONFIGDIR="${TMPDIR}/myfenics-matplotlib-${UID}"
-if ! mkdir -p -- "${MPLCONFIGDIR}"; then
-  echo "Unable to create WSL Matplotlib cache ${MPLCONFIGDIR}." >&2
+if ! mkdir -p -- "${XDG_CACHE_HOME}" "${MPLCONFIGDIR}"; then
+  echo "Unable to create qualified WSL cache directories." >&2
   return 2
 fi
 export OMP_NUM_THREADS=1
