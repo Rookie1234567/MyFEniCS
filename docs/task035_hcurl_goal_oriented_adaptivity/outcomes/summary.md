@@ -16,7 +16,9 @@ actual_discrete_DtN_adjoint = pass
 actual_goal_weighted_DWR = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
-selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+robust_angle_common_mesh = controlled_negative
+multi_angle_lane = active
 second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false
@@ -284,6 +286,32 @@ p4_p5_DWR_theta0p7_vs_structured_p4_h7p5 = pareto_tradeoff_not_same_error
 没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
 所以这是 selected research strategy，而不是 ordinary production default。
 
+### MPI8 common-mesh robust-angle 判别
+
+clean SHA `782d9d1527796a4cae15255c630a02b69ff02f5c` 从上述 `theta=0.7` authority
+record 重放 72 个 `R_total` marker，并严格匹配 1,316-cell mesh、cell-tag 和 facet-tag 哈希。
+随后在同一个内存 mesh 实例上连续求解 S 入射 1°/5°/10° grazing 的 p4/p5 pair：
+
+| grazing | p4 / p5 DoF | p4 R/T/A_volume | p5 R/T/A_volume | p4→p5 observable gap |
+|---:|---:|---|---|---:|
+| 1° | 57,828 / 106,355 | 0.729030 / 0.005488 / 0.265482 | 0.426387 / 0.011593 / 0.562020 | 0.423752 |
+| 5° | 57,828 / 106,355 | 0.020312 / 0.325020 / 0.654668 | 0.000567 / 0.338232 / 0.661201 | 0.0246384 |
+| 10° | 57,828 / 106,355 | 0.004986 / 0.603166 / 0.391848 | 0.000962 / 0.602920 / 0.396117 | 0.00587184 |
+
+六次 forward solve 均为 official result，最大 true residual 小于 `4.68e-11`；公共网格身份和
+全部 watchdog Gate 通过。worker wall `198.47 s`，process-tree peak `16.519 GiB`，swap 0；
+16 GiB warning 触发但 32 GiB termination 未触发。
+
+该 run 的“公共网格重放与同网格比较”是 positive infrastructure result，但 10°-优化网格在
+1° 和 5° 的 p4→p5 gap 明显增大，不能被称为 robust-angle qualification。因此：
+
+```text
+common_mesh_replay_MPI8 = pass
+theta0p7_10deg_mesh_direct_robust_angle_reuse = controlled_negative
+next_lane = multi_angle_marking_or_independent_angle_reference
+thresholds_relaxed = false
+```
+
 ## Phase C 目标 artifact screen
 
 | 目标点 → enriched 点 | R5 effectivity proxy | R5 Pearson/Spearman | R1 Pearson | R1/R5 marked Jaccard | observable error reduction |
@@ -320,7 +348,9 @@ actual_discrete_DtN_adjoint = pass
 actual_goal_weighted_DWR = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
-selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+robust_angle_common_mesh = controlled_negative
+multi_angle_lane = active
 second_cycle = controlled_negative_cost_dominated
 production_estimator_selected = false
 production_backend_selected = false

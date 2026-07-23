@@ -17,7 +17,9 @@ actual_discrete_dtn_adjoint = pass
 actual_goal_weighted_dwr = pass
 periodic_tetra_target_pipeline = research_pass
 actual_adaptive_cycles = two_consecutive_pass
-selected_research_strategy = p3_p4_R_total_DWR_theta0p5_one_cycle
+selected_research_strategy_10deg = p4_p5_R_total_DWR_theta0p7_one_cycle
+robust_angle_common_mesh = controlled_negative
+multi_angle_lane = active
 production_estimator_selected = false
 production_backend_selected = false
 ordinary_default_changed = false
@@ -140,7 +142,14 @@ R/T goal-weighted DWR 以及 p3/p4 MPI8 高阶路线。pure R5 marking 虽然收
 约 11% 更少 p4 DoF 下，比 uniform level1 的 observable error 低约 23%，形成当前最佳研究策略。
 第二轮 DWR 虽继续收敛，却被 Task034 structured p4/h7.5 在误差、DoF 和内存上同时支配；
 `theta=0.3` 又只节省约 4.9% DoF 而误差恶化 2.30 倍。因此固定结构、S、10° grazing 的当前
-停止规则是：`p3/p4 + R_total DWR + theta=0.5 + exactly one tetra refinement`。
+最新 hp 停止规则是：`p4/p5 + R_total DWR + theta=0.7 + exactly one full-sleeve tetra refinement`；
+它相对同阶 uniform tetra 以约少 8.4% DoF 获得低 26.8% 的误差，但仍是相对 structured
+p4/h7.5 的 Pareto tradeoff，不是 same-error replacement。
+
+同一网格 MPI8 robust-angle 判别已完成。公共网格 SHA 重放与六次 official solve 全部通过，
+但 p4→p5 observable gap 从 10° 的 `0.00587` 增大到 5° 的 `0.02464` 和 1° 的 `0.42375`。
+因此 10°-优化网格直接覆盖 1°/5° 是 controlled negative；下一研究 lane 转入 multi-angle
+marking 或独立 angle reference，不提升 ordinary default。
 
 这是 hash-bound 的 research selection，不是跨角度、P 入射、Hybrid 或普通默认的生产资格化。
 Case094 仍保持 staging，`production_estimator_selected=false`、

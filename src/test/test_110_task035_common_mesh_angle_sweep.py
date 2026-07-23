@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 import shutil
 import tempfile
@@ -25,6 +27,14 @@ AUTHORITY = (
     )
 )
 AUTHORITY_SHA256 = "ca21d21ccbb9d7ed79b8be3d0b99153f59e77b414ae754a284d47a26ee0e900f"
+SWEEP_RECORD = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_common_mesh_grazing_1_5_10_p4_p5_h50_mpi8.json"
+)
+SWEEP_RECORD_SHA256 = (
+    "18a58264aa8508a5687a1b0a94a5c6a07c870a1dcb18ddd05cd0a0e4cc6744c0"
+)
 
 
 class Task035CommonMeshAngleSweepTests(unittest.TestCase):
@@ -104,6 +114,55 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         self.assertEqual(mesh_cfg.mesh_cell_type, "tetrahedron")
         self.assertTrue(replay["single_in_memory_mesh_instance"])
         self.assertFalse(replay["ordinary_default_changed"])
+
+    def test_formal_mpi8_common_mesh_record_and_negative_boundary(self) -> None:
+        payload = SWEEP_RECORD.read_bytes()
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), SWEEP_RECORD_SHA256)
+        record = json.loads(payload)
+        self.assertEqual(record["status"], "actual_common_mesh_angle_sweep_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "782d9d1527796a4cae15255c630a02b69ff02f5c",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        self.assertEqual(record["resource_authority"]["max_observed_worker_rank_count"], 8)
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
+        self.assertTrue(record["warning_triggered"])
+        self.assertFalse(record["terminated_for_memory"])
+        self.assertFalse(record["terminated_for_timeout"])
+        self.assertLess(record["resource_authority"]["memory_authority_gib"], 32.0)
+        self.assertEqual(record["common_mesh_identity"]["global_cell_count"], 1316)
+        self.assertEqual(
+            record["common_mesh_identity"]["partition_independent_mesh_sha256"],
+            "49543a772e47d10f55bf19d7c3421ef57bf6bdc16794c1b77a3c2e4e2384d176",
+        )
+
+        angles = record["angle_results"]
+        self.assertEqual(
+            [entry["grazing_angle_deg"] for entry in angles],
+            [1.0, 5.0, 10.0],
+        )
+        self.assertTrue(
+            all(entry["coarse"]["num_nedelec_dofs"] == 57828 for entry in angles)
+        )
+        self.assertTrue(
+            all(entry["enriched"]["num_nedelec_dofs"] == 106355 for entry in angles)
+        )
+        self.assertTrue(
+            all(
+                entry[level]["linear_system_relative_residual"] <= 1.0e-9
+                for entry in angles
+                for level in ("coarse", "enriched")
+            )
+        )
+        gaps = [entry["official_observable_delta_l2"] for entry in angles]
+        self.assertAlmostEqual(gaps[0], 0.42375154748116367)
+        self.assertAlmostEqual(gaps[1], 0.024638437652910242)
+        self.assertAlmostEqual(gaps[2], 0.005871836205650593)
+        self.assertGreater(gaps[0], gaps[1])
+        self.assertGreater(gaps[1], gaps[2])
 
 
 if __name__ == "__main__":

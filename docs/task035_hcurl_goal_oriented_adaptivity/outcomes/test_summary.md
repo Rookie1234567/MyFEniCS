@@ -256,3 +256,24 @@ p4/h7.5 与 p4/h5 数字全部从已接受、hash-bound Case093 records 读取�
 就是对应 rerun evidence，ordinary hexa default 未改变。原失败测试随后 `1 passed`，完整 test73
 与关键 Task035 合同组合 `50 passed`。按每阶段最多一次 full pytest 的固定节奏不执行第二次全仓
 回归，因此不得把 targeted recovery 写成当前 HEAD 的 full-regression pass。
+
+## MPI8 common-mesh robust-angle
+
+| 检查 | 结果 |
+|---|---:|
+| common-mesh parser/watchdog targeted | 10 passed |
+| Task035 focused suite | 116 passed, 1 skipped, 502 deselected |
+| SHA-bound replay serial contracts | 12 passed, 1 skipped |
+| accepted marker replay MPI8 | 1 passed per rank |
+| replay mesh/cell-tag/facet-tag hashes | exact pass |
+| p4/p5 × 1°/5°/10° same-mesh MPI8 | `actual_common_mesh_angle_sweep_pass` |
+| all six true residuals | ≤ `4.68e-11` |
+| process-tree peak / swap | `16.519 GiB` / 0 |
+| watchdog qualification failures | `[]` |
+| scoped Ruff / compileall / diff-check | pass / pass / pass |
+
+正式 run 绑定 clean SHA `782d9d1527796a4cae15255c630a02b69ff02f5c` 和 authority record
+SHA256 `ca21d21c...e900f`。所有 requested angles 在同一个 1,316-cell mesh 实例上完成；
+1°/5°/10° 的 p4→p5 observable gap 分别为 `0.423752`、`0.0246384`、`0.00587184`。
+运行 Gate 通过不等于 robust-angle 数值资格化；10° 网格直接复用到 1°/5° 的路线按 measured
+evidence 保存为 controlled negative。没有运行 MPI2，没有放宽 residual、memory 或 estimator Gate。
