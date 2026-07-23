@@ -281,6 +281,8 @@ def _closed_periodic_edge_indices(
     msh: mesh.Mesh,
     cfg: Any,
     marked_owned_cells: np.ndarray,
+    *,
+    full_boundary_synchronization: bool = True,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Close the actual refinement-edge set across both periodic axes."""
 
@@ -352,7 +354,8 @@ def _closed_periodic_edge_indices(
             for boundary in bounds
         )
     }
-    closed_keys.update(periodic_boundary_keys)
+    if full_boundary_synchronization:
+        closed_keys.update(periodic_boundary_keys)
     boundary_sleeve_edges_added = len(closed_keys - closed_before_boundary_sleeve)
     local_closed_edges = np.asarray(
         [
@@ -368,7 +371,9 @@ def _closed_periodic_edge_indices(
         "initial_edge_count": len(initial_keys),
         "closed_edge_count": len(closed_keys),
         "periodic_edge_mates_added": periodic_mates_added,
-        "full_periodic_boundary_synchronization": True,
+        "full_periodic_boundary_synchronization": bool(
+            full_boundary_synchronization
+        ),
         "periodic_boundary_edge_count": len(periodic_boundary_keys),
         "boundary_sleeve_edges_added": boundary_sleeve_edges_added,
         "initial_geometry_sha256": geometry_key_sha256(initial_keys),
@@ -473,6 +478,8 @@ def refine_periodic_marked_tetra_mesh(
     mesh_data: AirBox3DMesh,
     cfg: Any,
     marked_global_cell_ids: list[int] | np.ndarray,
+    *,
+    full_boundary_synchronization: bool = True,
 ) -> tuple[AirBox3DMesh, dict[str, Any]]:
     """Refine a Dörfler cell set after fail-closed periodic-mate expansion."""
 
@@ -505,7 +512,10 @@ def refine_periodic_marked_tetra_mesh(
     if len(serial_marked_cells) != len(closed_keys):
         raise RuntimeError("replicated serial mesh lost a periodic-closed marked cell")
     edges, edge_closure = _closed_periodic_edge_indices(
-        serial_mesh, cfg, serial_marked_cells
+        serial_mesh,
+        cfg,
+        serial_marked_cells,
+        full_boundary_synchronization=full_boundary_synchronization,
     )
     refined_serial_mesh, parent_cells, _ = mesh.refine(serial_mesh, edges)
     oriented_mesh, orientation_rebuild = _positively_oriented_tetra_copy(

@@ -107,6 +107,9 @@ def _worker(args: argparse.Namespace) -> int:
             theta_schedule=args.theta_schedule,
             polarization_kind=args.polarization_kind,
             marker_policy=args.dwr_marker_policy,
+            full_boundary_synchronization=(
+                not args.minimal_periodic_edge_closure
+            ),
             progress_observer=progress,
         )
     elif args.uniform_refinement_levels:
@@ -186,6 +189,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="combined_relative_R_T",
     )
     parser.add_argument(
+        "--minimal-periodic-edge-closure",
+        action="store_true",
+        help="research-only DWR refinement without the full periodic boundary sleeve",
+    )
+    parser.add_argument(
         "--theta-schedule",
         type=_parse_theta_schedule,
         help=("comma-separated DWR theta values; exactly one per marked cycle"),
@@ -240,6 +248,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--theta-schedule must contain exactly one value per DWR marked cycle."
             )
+    if args.minimal_periodic_edge_closure and not args.dwr_adaptive_cycles:
+        parser.error(
+            "--minimal-periodic-edge-closure requires --dwr-adaptive-cycles."
+        )
     if (active_cycles) and args.mesh_cell_type != "tetrahedron":
         parser.error(
             "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
@@ -538,6 +550,14 @@ def _qualify_dwr_adaptive(
         ),
         "requested_marker_policy": result.get("marker_policy")
         == args.dwr_marker_policy,
+        "requested_periodic_edge_closure_policy": result.get(
+            "periodic_edge_closure_policy"
+        )
+        == (
+            "minimal_periodic_mates_only"
+            if getattr(args, "minimal_periodic_edge_closure", False)
+            else "full_periodic_boundary_synchronization"
+        ),
         "requested_theta_schedule": tuple(
             float(value) for value in result.get("theta_schedule", [])
         )
@@ -709,6 +729,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     )
     if args.dwr_adaptive_cycles:
         run_label += f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
+        if args.minimal_periodic_edge_closure:
+            run_label += "_minimal_periodic_edge_closure"
         if args.theta_schedule is not None:
             schedule_label = "-".join(f"{value:g}" for value in args.theta_schedule)
             run_label += f"_theta{schedule_label}"
@@ -755,6 +777,8 @@ def _run_parent(args: argparse.Namespace) -> int:
                 args.dwr_marker_policy,
             ]
         )
+        if args.minimal_periodic_edge_closure:
+            command.append("--minimal-periodic-edge-closure")
         if args.theta_schedule is not None:
             command.extend(
                 [
@@ -956,6 +980,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         record.update(
             {
                 "dwr_marker_policy": result.get("marker_policy"),
+                "periodic_edge_closure_policy": result.get(
+                    "periodic_edge_closure_policy"
+                ),
                 "theta_schedule": result.get("theta_schedule"),
                 "marked_cycles_requested": result.get("marked_cycles_requested"),
                 "marked_cycles_completed": result.get("marked_cycles_completed"),

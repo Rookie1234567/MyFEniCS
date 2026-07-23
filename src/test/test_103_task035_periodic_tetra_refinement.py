@@ -205,6 +205,37 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         )
         self.assertEqual(refined_twice.mesh.topology.cell_type.name, "tetrahedron")
 
+    def test_minimal_periodic_edge_closure_research_probe(self) -> None:
+        cfg, mesh_data = _target_mesh_data()
+        marked = [_canonical_x_min_cell(mesh_data, cfg)]
+        refined, report = refine_periodic_marked_tetra_mesh(
+            mesh_data,
+            cfg,
+            marked,
+            full_boundary_synchronization=False,
+        )
+        edge = report["periodic_edge_closure"]
+        self.assertFalse(edge["full_periodic_boundary_synchronization"])
+        self.assertEqual(edge["boundary_sleeve_edges_added"], 0)
+        self.assertGreater(edge["periodic_edge_mates_added"], 0)
+        self.assertTrue(report["pass"], report)
+        self.assertTrue(report["refined_mesh_audit"]["periodic_x"]["pass"])
+        self.assertTrue(report["refined_mesh_audit"]["periodic_y"]["pass"])
+        self.assertEqual(report["refined_global_cells"], 310)
+        self.assertEqual(
+            report["refined_mesh_audit"]["partition_independent_mesh_sha256"],
+            "c4be7bfb5242f46840d4be81ac4752cb1232b4517b5624bf32e6a8c43c0062f2",
+        )
+        self.assertEqual(edge["initial_edge_count"], 18)
+        self.assertEqual(edge["closed_edge_count"], 19)
+        p3_cfg = replace(cfg, nedelec_degree=3)
+        V = fem.functionspace(
+            refined.mesh,
+            element("N1curl", refined.mesh.basix_cell(), 3, dtype=default_real_type),
+        )
+        constraints = build_high_order_constraint_data(V, refined, p3_cfg)
+        self.assertGreater(constraints.global_constraint_rows, 0)
+
     def test_refined_p3_floquet_ownership_coverage_is_partition_robust(self) -> None:
         cfg, mesh_data = _target_mesh_data()
         marked = [_canonical_x_min_cell(mesh_data, cfg)]

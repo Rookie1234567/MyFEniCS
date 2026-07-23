@@ -100,6 +100,7 @@ def _dwr_adaptive_result() -> dict:
         "ordinary_default_changed": False,
         "marked_cycles_completed": 1,
         "marker_policy": "R_total",
+        "periodic_edge_closure_policy": "full_periodic_boundary_synchronization",
         "theta_schedule": [0.5],
         "fixed_observable_reference": {
             "identity": "best_available_discrete_reference_for_case093",
@@ -200,6 +201,24 @@ class Task035AdaptiveWatchdogContractTests(unittest.TestCase):
             sampler=sampler,
         )
         self.assertTrue(qualified["pass"], qualified)
+        result["periodic_edge_closure_policy"] = "minimal_periodic_mates_only"
+        policy_failed = _qualify_dwr_adaptive(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(policy_failed["pass"])
+        self.assertIn(
+            "requested_periodic_edge_closure_policy",
+            policy_failed["failures"],
+        )
+        result["periodic_edge_closure_policy"] = (
+            "full_periodic_boundary_synchronization"
+        )
         result["cycles"][0]["goal_dwr"]["DWR"]["goals"]["R_total"][
             "absolute_effectivity"
         ] = 1.1

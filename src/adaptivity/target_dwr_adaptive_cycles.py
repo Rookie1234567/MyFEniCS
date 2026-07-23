@@ -69,6 +69,7 @@ def run_target_dwr_adaptive_cycles(
     theta_schedule: tuple[float, ...] | None = None,
     polarization_kind: str = "s",
     marker_policy: str = "combined_relative_R_T",
+    full_boundary_synchronization: bool = True,
     stop_on_nonpositive_signal: bool = True,
     progress_observer=None,
 ) -> dict[str, Any]:
@@ -230,6 +231,7 @@ def run_target_dwr_adaptive_cycles(
             mesh_data,
             mesh_cfg,
             marker["marked_global_cell_ids"],
+            full_boundary_synchronization=full_boundary_synchronization,
         )
         refinements.append(refinement)
         progress(f"dwr_adaptive_cycle_{cycle_index}_refine", "end")
@@ -280,6 +282,11 @@ def run_target_dwr_adaptive_cycles(
         "theta": theta,
         "theta_schedule": list(resolved_theta_schedule),
         "marker_policy": marker_policy,
+        "periodic_edge_closure_policy": (
+            "full_periodic_boundary_synchronization"
+            if full_boundary_synchronization
+            else "minimal_periodic_mates_only"
+        ),
         "fixed_observable_reference": fixed_reference,
         "initial_mesh_audit": initial_audit,
         "cycles": cycles,

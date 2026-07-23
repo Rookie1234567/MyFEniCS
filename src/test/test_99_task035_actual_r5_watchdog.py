@@ -26,10 +26,12 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                 "1",
                 "--dwr-marker-policy",
                 "R_total",
+                "--minimal-periodic-edge-closure",
             ]
         )
         self.assertEqual(args.dwr_adaptive_cycles, 1)
         self.assertEqual(args.dwr_marker_policy, "R_total")
+        self.assertTrue(args.minimal_periodic_edge_closure)
 
     def test_argument_contract_rejects_multiple_cycle_modes(self) -> None:
         with self.assertRaises(SystemExit):
@@ -41,6 +43,14 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                     "1",
                     "--dwr-adaptive-cycles",
                     "1",
+                ]
+            )
+
+    def test_minimal_periodic_closure_requires_dwr_mode(self) -> None:
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--minimal-periodic-edge-closure",
                 ]
             )
 
