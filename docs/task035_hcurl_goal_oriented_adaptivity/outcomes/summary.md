@@ -248,6 +248,17 @@ p3/p4 DWR 在 error 与 DoF 上支配；最终点相对 structured p4/h7.5 只�
 却使用约 2.30 倍 DoF 和 2.18 倍内存。因此该结果分类为
 `numerical_positive_cost_limited_hp_audit`，不替代当前一周期 p3/p4 research stop rule。
 
+同一 p4/p5 与 `theta=0.5` 改用已资格化 full periodic boundary sleeve、只做一次 refinement，得到
+1,276 cells、p5 `103,330` DoF、fixed-reference error `0.000589604`、峰值 `7.901 GiB`、
+worker wall `109.57 s`，全部 Gate 通过。它相对 p3/p4 full-sleeve 两周期的 error 只高约 10%，
+却减少约 67% DoF、58% 内存和 81% 时间，形成 `strong_hp_tradeoff_signal`。相对 structured
+p4/h7.5，它使用更少 DoF/内存但 error 仍约高 1.8 倍，因此尚未完成 same-error replacement。
+下一最小判别点只提高单周期 Dörfler `theta` 至 `0.7`；若能在仍低于 structured 成本时达到或
+优于 p4/h7.5 error，则升级为工程 hp success，否则保存为精度/成本 Pareto 点并关闭该局部扫描。
+
+full-sleeve 单周期 record 绑定 clean SHA `96c80e9bea3ea2aa2624926d6791fc7d51268dbe`；
+没有重跑 Task034 p4/h5、p4/h7.5、M funnel 或其他 accepted heavy reference。
+
 上述结论只对 Task034 fixed geometry、S、10° grazing 与当前 best-available p4/h5 reference 成立；
 没有冒充 continuum convergence，也未覆盖 robust-angle、P incidence、Hybrid common mesh。
 所以这是 selected research strategy，而不是 ordinary production default。
