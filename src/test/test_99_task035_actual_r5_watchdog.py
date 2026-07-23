@@ -75,6 +75,61 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         self.assertEqual(args.common_mesh_replay_sha256, "a" * 64)
         self.assertEqual(args.common_mesh_grazing_angles, (1.0, 5.0, 10.0))
 
+    def test_argument_contract_accepts_sha_bound_hp_budget_mode(self) -> None:
+        args = _parse_args(
+            [
+                "--mesh-cell-type",
+                "tetrahedron",
+                "--coarse-degree",
+                "5",
+                "--enriched-degree",
+                "6",
+                "--common-mesh-replay-record",
+                "authority.json",
+                "--common-mesh-replay-sha256",
+                "a" * 64,
+                "--common-mesh-replay-theta",
+                "0.3",
+                "--common-mesh-replay-expected-final-cells",
+                "1200",
+                "--common-mesh-grazing-angles",
+                "10",
+                "--hp-dof-ceiling",
+                "169946",
+                "--hp-accuracy-control-key",
+                "p4_h7p5",
+            ]
+        )
+        self.assertEqual(args.common_mesh_replay_theta, 0.3)
+        self.assertEqual(args.common_mesh_replay_expected_final_cells, 1200)
+        self.assertEqual(args.common_mesh_grazing_angles, (10.0,))
+        self.assertEqual(args.hp_dof_ceiling, 169946)
+        self.assertEqual(args.hp_accuracy_control_key, "p4_h7p5")
+
+    def test_hp_budget_mode_requires_paired_control_and_ten_degrees(self) -> None:
+        common = [
+            "--mesh-cell-type",
+            "tetrahedron",
+            "--common-mesh-replay-record",
+            "authority.json",
+            "--common-mesh-replay-sha256",
+            "a" * 64,
+        ]
+        with self.assertRaises(SystemExit):
+            _parse_args([*common, "--hp-dof-ceiling", "169946"])
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    *common,
+                    "--hp-dof-ceiling",
+                    "169946",
+                    "--hp-accuracy-control-key",
+                    "p4_h7p5",
+                    "--common-mesh-grazing-angles",
+                    "1,5,10",
+                ]
+            )
+
     def test_common_mesh_record_requires_sha_authority(self) -> None:
         with self.assertRaises(SystemExit):
             _parse_args(
@@ -152,7 +207,13 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             "mesh_replay": {
                 "pass": True,
                 "single_in_memory_mesh_instance": True,
-                "contract": {"record_sha256": authority_sha},
+                "contract": {
+                    "record_sha256": authority_sha,
+                    "theta": 0.7,
+                    "final_mesh_identity": {
+                        "global_cell_count": 1316,
+                    },
+                },
             },
             "single_in_memory_mesh_instance": True,
             "angle_results": angles,

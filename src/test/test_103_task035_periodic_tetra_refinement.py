@@ -230,7 +230,7 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
         self.assertEqual(edge["initial_edge_count"], 18)
         self.assertEqual(edge["closed_edge_count"], 19)
         constraint_rows = {}
-        for degree in (3, 5):
+        for degree in (3, 5, 6):
             degree_cfg = replace(cfg, nedelec_degree=degree)
             space = fem.functionspace(
                 refined.mesh,
@@ -245,15 +245,17 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
                 space, refined, degree_cfg
             )
             constraint_rows[degree] = constraints.global_constraint_rows
-            if degree == 5:
+            if degree in {5, 6}:
                 mpc_data = build_double_floquet_mpc(
                     space, refined, degree_cfg
                 )
                 self.assertEqual(
-                    mpc_data.constraint_mode_resolved, "topological_trace_p5"
+                    mpc_data.constraint_mode_resolved,
+                    f"topological_trace_p{degree}",
                 )
         self.assertGreater(constraint_rows[3], 0)
         self.assertGreater(constraint_rows[5], constraint_rows[3])
+        self.assertGreater(constraint_rows[6], constraint_rows[5])
 
     def test_refined_p3_floquet_ownership_coverage_is_partition_robust(self) -> None:
         cfg, mesh_data = _target_mesh_data()

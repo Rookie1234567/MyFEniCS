@@ -72,11 +72,11 @@ def _qualified_constraint_mode(degree: int, *, tetrahedral: bool = False) -> str
 
     if degree == 1:
         return "topological_edges_p1"
-    if degree in {2, 3, 4} or (degree == 5 and tetrahedral):
+    if degree in {2, 3, 4} or (degree in {5, 6} and tetrahedral):
         return f"topological_trace_p{degree}"
     raise NotImplementedError(
         "3D explicit Floquet constraints qualify N1curl degree=1--4 generally "
-        "and Task035 research degree=5 on tetrahedra. "
+        "and Task035 research degrees=5--6 on tetrahedra. "
         f"Requested degree={degree}, tetrahedral={tetrahedral}."
     )
 
@@ -90,10 +90,10 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     if requested == "auto":
         return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
     if requested == "topological_trace":
-        if degree not in {1, 2, 3, 4} and not (degree == 5 and tetrahedral):
+        if degree not in {1, 2, 3, 4} and not (degree in {5, 6} and tetrahedral):
             raise NotImplementedError(
                 "floquet_constraint_mode='topological_trace' requires degree=1--4 "
-                "or Task035 tetrahedral research degree=5."
+                "or Task035 tetrahedral research degree=5--6."
             )
         return _qualified_constraint_mode(degree, tetrahedral=tetrahedral)
     if requested == "topological_edges_p1":
@@ -108,17 +108,22 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
                 "floquet_constraint_mode='topological_trace_p2' requires nedelec_degree=2."
             )
         return requested
-    if requested in {"topological_trace_p3", "topological_trace_p4", "topological_trace_p5"}:
+    if requested in {
+        "topological_trace_p3",
+        "topological_trace_p4",
+        "topological_trace_p5",
+        "topological_trace_p6",
+    }:
         requested_degree = int(requested[-1])
         if degree != requested_degree:
             raise NotImplementedError(
                 f"floquet_constraint_mode={requested!r} requires "
                 f"nedelec_degree={requested_degree}."
             )
-        if degree == 5 and not tetrahedral:
+        if degree in {5, 6} and not tetrahedral:
             raise NotImplementedError(
-                "floquet_constraint_mode='topological_trace_p5' is a Task035 "
-                "tetrahedral research capability."
+                f"floquet_constraint_mode={requested!r} is a Task035 tetrahedral "
+                "research capability."
             )
         return requested
     raise RuntimeError(
@@ -1814,18 +1819,18 @@ def _build_double_floquet_mpc_high_order(
     dolfinx_mpc,
     log=None,
 ) -> DoubleFloquet3DData:
-    """Create the p1--p4 and Task035 tetra-p5 phase-cacheable Floquet MPC."""
+    """Create the p1--p4 and Task035 tetra-p5/p6 phase-cacheable Floquet MPC."""
 
     degree = int(cfg.nedelec_degree)
     tetrahedral = _mesh_is_tetrahedron(V.mesh)
-    if degree not in {1, 2, 3, 4} and not (degree == 5 and tetrahedral):
+    if degree not in {1, 2, 3, 4} and not (degree in {5, 6} and tetrahedral):
         raise NotImplementedError(
             "The public generalized dispatcher qualifies p1--p4 generally and "
-            "Task035 research p5 on tetrahedra."
+            "Task035 research p5/p6 on tetrahedra."
         )
-    if degree == 5 and cfg.stage_case != "stage4_block_grating":
+    if degree in {5, 6} and cfg.stage_case != "stage4_block_grating":
         raise NotImplementedError(
-            "Task035 tetrahedral p5 is restricted to the fixed-geometry target."
+            "Task035 tetrahedral p5/p6 is restricted to the fixed-geometry target."
         )
     allowed_stage_cases = {
         "floquet_airbox",
@@ -2219,6 +2224,7 @@ def build_double_floquet_mpc(
         "topological_trace_p3",
         "topological_trace_p4",
         "topological_trace_p5",
+        "topological_trace_p6",
     }:
         raise RuntimeError(
             f"Unsupported qualified Floquet mode {constraint_mode_resolved!r}."

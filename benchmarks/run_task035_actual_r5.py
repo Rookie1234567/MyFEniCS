@@ -124,6 +124,10 @@ def _worker(args: argparse.Namespace) -> int:
             theta=args.theta,
             polarization_kind=args.polarization_kind,
             progress_observer=progress,
+            replay_expected_theta=args.common_mesh_replay_theta,
+            replay_expected_final_cells=args.common_mesh_replay_expected_final_cells,
+            dof_ceiling=args.hp_dof_ceiling,
+            accuracy_control_key=args.hp_accuracy_control_key,
         )
     elif args.dwr_adaptive_cycles:
         from src.adaptivity.target_dwr_adaptive_cycles import (
@@ -246,6 +250,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=(1.0, 5.0, 10.0),
         help="comma-separated grazing angles solved on the one replayed mesh",
     )
+    parser.add_argument(
+        "--common-mesh-replay-theta", type=float, default=0.7,
+        help="DWR theta bound into the replay authority",
+    )
+    parser.add_argument(
+        "--common-mesh-replay-expected-final-cells", type=int, default=1316,
+        help="exact final global cell count bound into the replay authority",
+    )
+    parser.add_argument(
+        "--hp-dof-ceiling", type=int,
+        help="optional hard DoF ceiling for the enriched 10-degree candidate",
+    )
+    parser.add_argument(
+        "--hp-accuracy-control-key",
+        choices=("p4_h7p5",),
+        help="qualified Task034 accuracy control for the enriched candidate",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -314,6 +335,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
         )
+    if not 0.0 < args.common_mesh_replay_theta <= 1.0:
+        parser.error("--common-mesh-replay-theta must lie in (0, 1].")
+    if args.common_mesh_replay_expected_final_cells < 1:
+        parser.error(
+            "--common-mesh-replay-expected-final-cells must be positive."
+        )
+    hp_budget_mode = args.hp_dof_ceiling is not None
+    if hp_budget_mode != (args.hp_accuracy_control_key is not None):
+        parser.error(
+            "--hp-dof-ceiling and --hp-accuracy-control-key must be provided together."
+        )
+    if hp_budget_mode:
+        if args.hp_dof_ceiling < 1:
+            parser.error("--hp-dof-ceiling must be positive.")
+        if not common_mesh_mode:
+            parser.error("hp budget evaluation requires common-mesh replay mode.")
+        if args.common_mesh_grazing_angles != (10.0,):
+            parser.error(
+                "hp budget evaluation requires exactly --common-mesh-grazing-angles 10."
+            )
     return args
 
 
@@ -796,6 +837,8 @@ def _qualify_common_mesh_sweep(
         for level in ("coarse", "enriched")
     ]
     requested = [float(value) for value in args.common_mesh_grazing_angles]
+    hp_budget = result.get("hp_budget_evaluation")
+    hp_budget_requested = getattr(args, "hp_dof_ceiling", None) is not None
     checks = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
@@ -811,6 +854,14 @@ def _qualify_common_mesh_sweep(
         "replay_pass": replay.get("pass") is True,
         "replay_record_hash_bound": (
             contract.get("record_sha256") == args.common_mesh_replay_sha256
+        ),
+        "replay_theta_bound": (
+            contract.get("theta")
+            == getattr(args, "common_mesh_replay_theta", 0.7)
+        ),
+        "replay_final_cell_count_bound": (
+            (contract.get("final_mesh_identity") or {}).get("global_cell_count")
+            == getattr(args, "common_mesh_replay_expected_final_cells", 1316)
         ),
         "single_in_memory_mesh_instance": (
             result.get("single_in_memory_mesh_instance") is True
@@ -855,6 +906,25 @@ def _qualify_common_mesh_sweep(
             and all(pair.get("ordinary_default_changed") is False for pair in pairs)
         ),
     }
+    if hp_budget_requested:
+        checks.update(
+            {
+                "hp_budget_evaluation_present": isinstance(hp_budget, dict),
+                "hp_dof_ceiling_bound": (
+                    isinstance(hp_budget, dict)
+                    and hp_budget.get("dof_ceiling") == args.hp_dof_ceiling
+                ),
+                "hp_accuracy_control_bound": (
+                    isinstance(hp_budget, dict)
+                    and (hp_budget.get("accuracy_control") or {}).get("key")
+                    == args.hp_accuracy_control_key
+                ),
+                "hp_thresholds_not_relaxed": (
+                    isinstance(hp_budget, dict)
+                    and hp_budget.get("thresholds_relaxed") is False
+                ),
+            }
+        )
     failures = [name for name, passed in checks.items() if not passed]
     return {"pass": not failures, "checks": checks, "failures": failures}
 
@@ -894,7 +964,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         angle_label = "-".join(
             f"{value:g}" for value in args.common_mesh_grazing_angles
         )
-        run_label += f"_common_mesh_grazing{angle_label}"
+        run_label += (
+            f"_common_mesh_theta{args.common_mesh_replay_theta:g}_grazing{angle_label}"
+        )
     elif args.dwr_adaptive_cycles:
         run_label += f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
         if args.minimal_periodic_edge_closure:
@@ -947,8 +1019,15 @@ def _run_parent(args: argparse.Namespace) -> int:
                 ",".join(
                     f"{value:g}" for value in args.common_mesh_grazing_angles
                 ),
+                "--common-mesh-replay-theta",
+                str(args.common_mesh_replay_theta),
+                "--common-mesh-replay-expected-final-cells",
+                str(args.common_mesh_replay_expected_final_cells),
             ]
         )
+        if args.hp_dof_ceiling is not None:
+            command.extend(["--hp-dof-ceiling", str(args.hp_dof_ceiling)])
+            command.extend(["--hp-accuracy-control-key", args.hp_accuracy_control_key])
     elif args.dwr_adaptive_cycles:
         command.extend(
             [
@@ -1171,6 +1250,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         record.update(
             {
                 "common_mesh_replay": result.get("mesh_replay"),
+                "hp_budget_evaluation": result.get("hp_budget_evaluation"),
                 "common_mesh_identity": result.get("common_mesh_identity"),
                 "single_in_memory_mesh_instance": result.get(
                     "single_in_memory_mesh_instance"

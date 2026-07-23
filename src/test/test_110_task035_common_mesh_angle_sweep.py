@@ -12,6 +12,7 @@ import unittest
 from mpi4py import MPI
 
 from src.adaptivity.target_common_mesh_angle_sweep import (
+    _evaluate_hp_budget,
     build_replayed_common_mesh,
     load_common_mesh_replay_contract,
 )
@@ -35,6 +36,14 @@ SWEEP_RECORD = (
 SWEEP_RECORD_SHA256 = (
     "18a58264aa8508a5687a1b0a94a5c6a07c870a1dcb18ddd05cd0a0e4cc6744c0"
 )
+THETA03_AUTHORITY = (
+    ROOT
+    / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+    / "actual_dwr_r_adaptive_tetra_p3_p4_h50_theta0p3_cycle1_mpi8.json"
+)
+THETA03_AUTHORITY_SHA256 = (
+    "2dfab0433836c347d317497b60ec83e33c868507d8f1a4f6fa3b45c0277d0010"
+)
 
 
 class Task035CommonMeshAngleSweepTests(unittest.TestCase):
@@ -50,6 +59,59 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         self.assertEqual(contract["initial_mesh_identity"]["global_cell_count"], 180)
         self.assertEqual(contract["final_mesh_identity"]["global_cell_count"], 1316)
         self.assertEqual(contract["source_mpi_size"], 8)
+
+    def test_legacy_theta03_authority_is_explicitly_bound(self) -> None:
+        contract = load_common_mesh_replay_contract(
+            THETA03_AUTHORITY,
+            expected_sha256=THETA03_AUTHORITY_SHA256,
+            expected_theta=0.3,
+            expected_final_cells=1200,
+        )
+        self.assertEqual(contract["source_sha"], "6c4b2aee9d7ef2673a66996540c5022defd270a9")
+        self.assertEqual(contract["theta"], 0.3)
+        self.assertEqual(contract["marked_count"], 23)
+        self.assertEqual(contract["final_mesh_identity"]["global_cell_count"], 1200)
+        with self.assertRaisesRegex(ValueError, "requested_theta"):
+            load_common_mesh_replay_contract(
+                THETA03_AUTHORITY,
+                expected_sha256=THETA03_AUTHORITY_SHA256,
+                expected_theta=0.7,
+                expected_final_cells=1200,
+            )
+
+    def test_hp_budget_requires_both_dof_and_full_observable_accuracy(self) -> None:
+        summary = {
+            "degree": 6,
+            "num_nedelec_dofs": 161700,
+            "R_total": 0.0007663133771040101,
+            "T_total": 0.602677530502972,
+            "A_volume_total": 0.3965561561199801,
+        }
+        angle_results = [
+            {
+                "grazing_angle_deg": 10.0,
+                "actual_r5_pair": {
+                    "enriched": {"summary": summary},
+                },
+            }
+        ]
+        evaluation = _evaluate_hp_budget(
+            angle_results,
+            dof_ceiling=169946,
+            accuracy_control_key="p4_h7p5",
+        )
+        self.assertTrue(evaluation["pass"])
+        self.assertGreater(evaluation["candidate"]["dof_saving_fraction"], 0.5)
+        summary["T_total"] = 0.61
+        failed = _evaluate_hp_budget(
+            angle_results,
+            dof_ceiling=169946,
+            accuracy_control_key="p4_h7p5",
+        )
+        self.assertFalse(failed["pass"])
+        self.assertFalse(
+            failed["checks"]["observable_vector_error_no_worse_than_control"]
+        )
 
     def test_replay_authority_rejects_wrong_hash(self) -> None:
         with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
@@ -114,6 +176,50 @@ class Task035CommonMeshAngleSweepTests(unittest.TestCase):
         self.assertEqual(mesh_cfg.mesh_cell_type, "tetrahedron")
         self.assertTrue(replay["single_in_memory_mesh_instance"])
         self.assertFalse(replay["ordinary_default_changed"])
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 8,
+        "accepted compact marker authority requires MPI8",
+    )
+    def test_replayed_theta03_mesh_matches_accepted_final_identity(self) -> None:
+        directory = MPI.COMM_WORLD.bcast(
+            tempfile.mkdtemp(prefix="task035-common-mesh-theta03-")
+            if MPI.COMM_WORLD.rank == 0
+            else None,
+            root=0,
+        )
+        try:
+            mesh_data, _, replay = build_replayed_common_mesh(
+                Path(directory),
+                replay_record=THETA03_AUTHORITY,
+                replay_record_sha256=THETA03_AUTHORITY_SHA256,
+                coarse_degree=5,
+                h_nm=50.0,
+                polarization_kind="s",
+                replay_expected_theta=0.3,
+                replay_expected_final_cells=1200,
+            )
+        finally:
+            MPI.COMM_WORLD.barrier()
+            if MPI.COMM_WORLD.rank == 0:
+                shutil.rmtree(directory)
+        self.assertTrue(replay["pass"])
+        self.assertEqual(
+            replay["final_mesh_audit"]["partition_independent_mesh_sha256"],
+            "5e3a6eb874c0b577a19a50f19f574b6c55930c88e0b1aa671463e9ddf1e7f87a",
+        )
+        self.assertEqual(
+            replay["final_mesh_audit"]["cell_tag_sha256"],
+            "5d9f511275f2107bb402dca18a7e03714125f23775b142b3d0dfe01164054b5f",
+        )
+        self.assertEqual(
+            replay["final_mesh_audit"]["facet_tag_sha256"],
+            "d1a04a4e450b671506c662ed7a8e47cccb92e902e01c0d1b92141ed3d5c075aa",
+        )
+        self.assertEqual(
+            mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global,
+            1200,
+        )
 
     def test_formal_mpi8_common_mesh_record_and_negative_boundary(self) -> None:
         payload = SWEEP_RECORD.read_bytes()

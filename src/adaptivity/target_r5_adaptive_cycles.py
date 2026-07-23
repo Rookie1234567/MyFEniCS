@@ -71,9 +71,52 @@ def task034_best_available_observable_reference() -> dict[str, Any]:
         "record_sha256": digest,
         "source_sha": full3d["source"]["commit_sha"],
         "true_relative_residual": full3d["true_relative_residual"],
+        "resource": dict(full3d["resource"]),
         "observables": {
             name: float(full3d["official_values"][name]) for name in OBSERVABLES
         },
+    }
+
+
+def task034_observable_control(key: str = "p4_h7p5") -> dict[str, Any]:
+    """Load a qualified Task034 comparison point with fail-closed identity."""
+
+    if key != "p4_h7p5":
+        raise ValueError(f"unsupported Task034 observable control: {key}")
+    reference = task034_best_available_observable_reference()
+    record = json.loads(TASK034_REFERENCE_PATH.read_bytes())
+    point = next((entry for entry in record["points"] if entry["key"] == key), None)
+    if point is None:
+        raise RuntimeError(f"Task034 observable control is missing: {key}")
+    full3d = point["full3d"]
+    if (
+        full3d["degree"] != 4
+        or float(full3d["h_nm"]) != 7.5
+        or full3d["status"] != "full3d_reference_pass"
+        or full3d["qualified"] is not True
+        or full3d["polarization_kind"] != "s"
+        or full3d["mpi_size"] != 8
+    ):
+        raise RuntimeError("Task034 p4/h7.5 Full3D control identity changed")
+    observables = {
+        name: float(full3d["official_values"][name]) for name in OBSERVABLES
+    }
+    return {
+        "identity": "qualified_case093_full3d_accuracy_control",
+        "key": key,
+        "record_path": reference["record_path"],
+        "record_sha256": reference["record_sha256"],
+        "source_sha": full3d["source"]["commit_sha"],
+        "true_relative_residual": float(full3d["true_relative_residual"]),
+        "resource": dict(full3d["resource"]),
+        "observables": observables,
+        "reference_key": reference["key"],
+        "reference_observable_error_l2": _delta_norm(
+            observables, reference["observables"]
+        ),
+        "reference_r_total_absolute_error": abs(
+            observables["R_total"] - reference["observables"]["R_total"]
+        ),
     }
 
 
@@ -295,4 +338,5 @@ def run_target_r5_adaptive_cycles(
 __all__ = [
     "run_target_r5_adaptive_cycles",
     "task034_best_available_observable_reference",
+    "task034_observable_control",
 ]

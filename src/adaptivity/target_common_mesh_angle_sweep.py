@@ -6,6 +6,7 @@ from dataclasses import replace
 import gc
 import hashlib
 import json
+import math
 from pathlib import Path
 import time
 from typing import Any
@@ -15,6 +16,10 @@ from mpi4py import MPI
 from src.adaptivity.global_two_level_r5 import run_target_global_two_level_r5
 from src.adaptivity.periodic_tetra_refinement import (
     refine_periodic_marked_tetra_mesh,
+)
+from src.adaptivity.target_r5_adaptive_cycles import (
+    task034_best_available_observable_reference,
+    task034_observable_control,
 )
 from src.common.config_3d import target_stage4_config
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
@@ -41,8 +46,10 @@ def load_common_mesh_replay_contract(
     record_path: Path,
     *,
     expected_sha256: str,
+    expected_theta: float = 0.7,
+    expected_final_cells: int = 1316,
 ) -> dict[str, Any]:
-    """Load and fail-closed validate the accepted theta=0.7 DWR marker record."""
+    """Load and fail-closed validate an accepted DWR marker record."""
 
     path = Path(record_path)
     payload = path.read_bytes()
@@ -58,6 +65,33 @@ def load_common_mesh_replay_contract(
     qualification = record.get("qualification") or {}
     target = record.get("target_identity") or {}
     failures: list[str] = []
+    theta_schedule = record.get("theta_schedule")
+    if theta_schedule is not None:
+        recorded_theta = (
+            float(theta_schedule[0])
+            if isinstance(theta_schedule, list) and len(theta_schedule) == 1
+            else None
+        )
+    else:
+        command = record.get("command") or []
+        try:
+            theta_index = command.index("--theta")
+            recorded_theta = float(command[theta_index + 1])
+        except (AttributeError, IndexError, TypeError, ValueError):
+            recorded_theta = None
+    refinements = record.get("refinements") or []
+    recorded_closure_policy = record.get("periodic_edge_closure_policy")
+    if recorded_closure_policy is not None:
+        full_periodic_closure = (
+            recorded_closure_policy == "full_periodic_boundary_synchronization"
+        )
+    else:
+        full_periodic_closure = bool(refinements) and (
+            (refinements[0].get("periodic_edge_closure") or {}).get(
+                "full_periodic_boundary_synchronization"
+            )
+            is True
+        )
     requirements = {
         "accepted_status": record.get("status") == "actual_dwr_adaptive_cycles_pass",
         "accepted_qualification": qualification.get("pass") is True,
@@ -67,16 +101,16 @@ def load_common_mesh_replay_contract(
             and source.get("commit_sha") == source.get("head_after_sha")
         ),
         "r_total_marker": record.get("dwr_marker_policy") == "R_total",
-        "theta_0p7": record.get("theta_schedule") == [0.7],
+        "requested_theta": (
+            recorded_theta is not None
+            and math.isclose(recorded_theta, expected_theta, abs_tol=1.0e-12)
+        ),
         "one_refinement": (
             record.get("marked_cycles_requested") == 1
             and record.get("marked_cycles_completed") == 1
             and len(cycles) == 2
         ),
-        "full_periodic_closure": (
-            record.get("periodic_edge_closure_policy")
-            == "full_periodic_boundary_synchronization"
-        ),
+        "full_periodic_closure": full_periodic_closure,
         "fixed_target": (
             target.get("grazing_angle_deg") == 10.0
             and target.get("polarization") == "S"
@@ -114,12 +148,17 @@ def load_common_mesh_replay_contract(
         or _audit_identity(initial_audit) != _audit_identity(cycle_zero_audit)
     ):
         raise ValueError("common-mesh replay audit authority is inconsistent")
+    if final_audit.get("global_cell_count") != expected_final_cells:
+        raise ValueError(
+            "common-mesh replay final cell count mismatch: "
+            f"expected {expected_final_cells}, got {final_audit.get('global_cell_count')}"
+        )
     return {
-        "schema_version": "task035.common-mesh-replay-contract.v1",
+        "schema_version": "task035.common-mesh-replay-contract.v2",
         "record_path": str(path),
         "record_sha256": actual_sha256,
         "source_sha": source["commit_sha"],
-        "theta": 0.7,
+        "theta": recorded_theta,
         "marker_policy": "R_total",
         "marked_global_cell_ids": marked_ids,
         "marked_count": len(marked_ids),
@@ -138,12 +177,16 @@ def build_replayed_common_mesh(
     coarse_degree: int = 4,
     h_nm: float = 50.0,
     polarization_kind: str = "s",
+    replay_expected_theta: float = 0.7,
+    replay_expected_final_cells: int = 1316,
 ) -> tuple[Any, Any, dict[str, Any]]:
-    """Rebuild and exactly replay the accepted full-sleeve theta=0.7 mesh."""
+    """Rebuild and exactly replay an accepted full-sleeve DWR mesh."""
 
     contract = load_common_mesh_replay_contract(
         replay_record,
         expected_sha256=replay_record_sha256,
+        expected_theta=replay_expected_theta,
+        expected_final_cells=replay_expected_final_cells,
     )
     if MPI.COMM_WORLD.size != contract["source_mpi_size"]:
         raise RuntimeError(
@@ -204,6 +247,62 @@ def build_replayed_common_mesh(
     return mesh_data, mesh_cfg, report
 
 
+def _evaluate_hp_budget(
+    angle_results: list[dict[str, Any]],
+    *,
+    dof_ceiling: int,
+    accuracy_control_key: str,
+) -> dict[str, Any]:
+    if len(angle_results) != 1 or angle_results[0]["grazing_angle_deg"] != 10.0:
+        raise ValueError("hp budget evaluation requires exactly the 10-degree target")
+    reference = task034_best_available_observable_reference()
+    control = task034_observable_control(accuracy_control_key)
+    summary = angle_results[0]["actual_r5_pair"]["enriched"]["summary"]
+    observables = {
+        name: float(summary[name])
+        for name in ("R_total", "T_total", "A_volume_total")
+    }
+    candidate_dofs = int(summary["num_nedelec_dofs"])
+    reference_dofs = int(reference["resource"]["dofs"])
+    vector_error = math.sqrt(
+        sum(
+            (observables[name] - reference["observables"][name]) ** 2
+            for name in observables
+        )
+    )
+    r_error = abs(observables["R_total"] - reference["observables"]["R_total"])
+    saving_fraction = 1.0 - candidate_dofs / reference_dofs
+    checks = {
+        "candidate_dofs_within_ceiling": candidate_dofs <= dof_ceiling,
+        "minimum_50_percent_dof_saving": saving_fraction >= 0.5,
+        "r_total_error_no_worse_than_control": (
+            r_error <= control["reference_r_total_absolute_error"]
+        ),
+        "observable_vector_error_no_worse_than_control": (
+            vector_error <= control["reference_observable_error_l2"]
+        ),
+    }
+    passed = all(checks.values())
+    return {
+        "schema_version": "task035.hp-budget-evaluation.v1",
+        "status": "candidate_pass" if passed else "controlled_negative",
+        "pass": passed,
+        "checks": checks,
+        "candidate": {
+            "degree": int(summary["degree"]),
+            "dofs": candidate_dofs,
+            "observables": observables,
+            "reference_r_total_absolute_error": r_error,
+            "reference_observable_error_l2": vector_error,
+            "dof_saving_fraction": saving_fraction,
+        },
+        "dof_ceiling": dof_ceiling,
+        "fixed_reference": reference,
+        "accuracy_control": control,
+        "thresholds_relaxed": False,
+    }
+
+
 def run_target_common_mesh_angle_sweep(
     out_dir: Path,
     *,
@@ -216,6 +315,10 @@ def run_target_common_mesh_angle_sweep(
     theta: float = 0.7,
     polarization_kind: str = "s",
     progress_observer=None,
+    replay_expected_theta: float = 0.7,
+    replay_expected_final_cells: int = 1316,
+    dof_ceiling: int | None = None,
+    accuracy_control_key: str | None = None,
 ) -> dict[str, Any]:
     """Solve all requested angles on one SHA-bound replayed tetra mesh."""
 
@@ -227,6 +330,10 @@ def run_target_common_mesh_angle_sweep(
         grazing_angles_deg
     ):
         raise ValueError("grazing angles must be unique")
+    if (dof_ceiling is None) != (accuracy_control_key is None):
+        raise ValueError("dof ceiling and accuracy control must be provided together")
+    if dof_ceiling is not None and dof_ceiling <= 0:
+        raise ValueError("dof ceiling must be positive")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -243,6 +350,8 @@ def run_target_common_mesh_angle_sweep(
         coarse_degree=coarse_degree,
         h_nm=h_nm,
         polarization_kind=polarization_kind,
+        replay_expected_theta=replay_expected_theta,
+        replay_expected_final_cells=replay_expected_final_cells,
     )
     progress("common_mesh_replay", "end")
     angle_results: list[dict[str, Any]] = []
@@ -274,6 +383,15 @@ def run_target_common_mesh_angle_sweep(
         )
         progress(f"common_mesh_{label}", "end")
         gc.collect()
+    hp_budget_evaluation = (
+        None
+        if dof_ceiling is None
+        else _evaluate_hp_budget(
+            angle_results,
+            dof_ceiling=dof_ceiling,
+            accuracy_control_key=accuracy_control_key,
+        )
+    )
     return {
         "schema_version": "task035.target-common-mesh-angle-sweep.v1",
         "status": "actual_common_mesh_angle_sweep_pass",
@@ -289,6 +407,7 @@ def run_target_common_mesh_angle_sweep(
         "common_mesh_identity": replay["contract"]["final_mesh_identity"],
         "single_in_memory_mesh_instance": True,
         "angle_results": angle_results,
+        "hp_budget_evaluation": hp_budget_evaluation,
         "elapsed_seconds": float(
             MPI.COMM_WORLD.allreduce(time.perf_counter() - started, op=MPI.MAX)
         ),
