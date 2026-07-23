@@ -42,9 +42,9 @@ NUMERICAL_KERNELS = (
 )
 INTENTIONAL_CLASSIFICATIONS = {
     "src/common/config_3d.py": {
-        "classification": "diagnostic only",
-        "reason": "explicit factorization-only Gate flag defaults off; physical and full-solve configuration unchanged",
-        "requires_corresponding_pde_rerun": False,
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b enables p5/p6 only for the fixed rectangular target; the ordinary default remains unchanged and the new high-order path requires its own PDE anchors",
+        "requires_corresponding_pde_rerun": True,
     },
     "src/geometry/mesh_builder_3d.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
@@ -56,10 +56,15 @@ INTENTIONAL_CLASSIFICATIONS = {
         "reason": "weak-owner cache lookup and explicit clear; topology coefficients unchanged",
         "requires_corresponding_pde_rerun": False,
     },
+    "src/constraints/floquet_3d.py": {
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b fail-closed dispatch admits hexa p5/p6 only for the fixed rectangular target; sparse topology and physical anchors must be rerun",
+        "requires_corresponding_pde_rerun": True,
+    },
     "src/constraints/high_order_floquet_trace.py": {
-        "classification": "lifecycle only",
-        "reason": "cache ownership storage changed from strong to weak references",
-        "requires_corresponding_pde_rerun": False,
+        "classification": "numerical kernel intentionally changed and requires PDE rerun",
+        "reason": "Task035b extends exact Basix D4 entity transforms and trace layouts from hexa p4 through p6",
+        "requires_corresponding_pde_rerun": True,
     },
     "src/modes/mode_classification.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
@@ -69,6 +74,11 @@ INTENTIONAL_CLASSIFICATIONS = {
     "src/solvers/common_3d_case_flow.py": {
         "classification": "diagnostic only",
         "reason": "factorization-only status and postprocess skip path; ordinary solve path unchanged",
+        "requires_corresponding_pde_rerun": False,
+    },
+    "src/solvers/common_3d_solve.py": {
+        "classification": "diagnostic only",
+        "reason": "PETSc CSR row-width telemetry is read-only and does not alter assembly, factorization, solve, or postprocess",
         "requires_corresponding_pde_rerun": False,
     },
     "src/solvers/dtn_port_3d.py": {
