@@ -32,11 +32,35 @@
 | record | source SHA | 状态 | simultaneous peak |
 |---|---|---|---:|
 | `records/global_hexa_p4_p5_h10_mpi8.json` | `2e91d2bf0195056e55be670af226b7716096284c` | `actual_global_r5_pass` | 14.928 GiB |
+| `records/global_hexa_p5_p6_h10_mpi8.json` | `c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2` | `actual_global_r5_pass` | 35.024 GiB |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
 理论上消去全部 cell-interior 后为 41,415 rows（2.460x row projection），
 但这不是当前矩阵实测值。
+
+p6/h10 的 173,802 FE DoF 分解为 edge 6,402、face-interior 54,000、
+cell-interior 113,400；加 80 个 DtN auxiliary 后实测为 173,882 rows。
+理论上消去全部 cell-interior 后为 60,482 rows（2.875x row projection），
+同样只是 `derived_not_measured`，不能当作已实现的静态凝聚结果。
+
+## MPI8 global-p5/p6 资源对照
+
+| degree | FE DoF | rows | NNZ | avg/max row width | factor NNZ | fill | assembly | factor/setup | solve | total |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| p5 | 101,815 | 101,895 | 79,436,433 | 779.6 / 2,260 | 166,314,925 | 2.094 | 531.6 s | 47.5 s | 0.13 s | 588.7 s |
+| p6 | 173,802 | 173,882 | 210,353,120 | 1,209.7 / 3,672 | 386,625,292 | 1.838 | 2,265.9 s | 166.3 s | 0.32 s | 2,526.7 s |
+
+p6 相对 p5 只有 1.706x rows，但有 2.648x matrix NNZ、2.325x factor
+NNZ、4.262x assembly time 和 4.292x total time。当前 p6 慢的主因是高阶
+cell tensor/积分和全矩阵装配，不是 MUMPS solve。
+
+p6 的 full explicit true residual 为 `2.018e-11`，官方
+`R/T/A_volume = 0.000762881475 / 0.602701633983 / 0.396535484542`；
+与 COMSOL 直接法收敛中心
+`0.000762014 / 0.6027075 / 0.3965305` 的绝对差分别为
+`8.67e-7 / 5.87e-6 / 4.98e-6`。因此它作为 Task035b 的可信
+global-p6 基线保留，但不把 COMSOL 值当作同离散系统的逐位等价结果。
 
 ## 复现
 
@@ -53,6 +77,11 @@ python -m benchmarks.run_task035_actual_r5 \
   --timeout-seconds 7200 --verified-clean-sha <FULL_SHA> \
   --record benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_mpi8.json
 ```
+
+p5/p6 复现时把 degree 改为 `5/6`、timeout 改为 `10800`，record 改为
+`global_hexa_p5_p6_h10_mpi8.json`。Task035b 后续正式 heavy PDE 与
+static-condensation/Hybrid control 均固定为 MPI8；轻量 pure-Python 或最小
+MPI2 单元测试不属于正式资源对照。
 
 原始 mesh、field、长日志和 memory timeline 位于 gitignored
 `benchmarks/artifacts/task035/actual_global_r5/`；tracked JSON 通过 SHA-256
