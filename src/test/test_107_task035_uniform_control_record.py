@@ -42,6 +42,14 @@ P3_P4_DWR_R_CANONICAL_CONNECTIVITY_REPEAT_RECORD = RECORDS / (
     "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_"
     "canonical_connectivity_repeat_mpi8.json"
 )
+P3_P4_DWR_R_BALANCED_CONTIGUOUS_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_"
+    "canonical_contiguous_balanced_mpi8.json"
+)
+P3_P4_DWR_R_BALANCED_CONTIGUOUS_REPEAT_RECORD = RECORDS / (
+    "actual_dwr_r_adaptive_tetra_p3_p4_h50_cycle1_"
+    "canonical_contiguous_balanced_repeat_mpi8.json"
+)
 
 
 class Task035UniformControlRecordTests(unittest.TestCase):
@@ -78,6 +86,12 @@ class Task035UniformControlRecordTests(unittest.TestCase):
         )
         cls.p3_p4_dwr_r_canonical_connectivity_repeat = json.loads(
             P3_P4_DWR_R_CANONICAL_CONNECTIVITY_REPEAT_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_balanced_contiguous = json.loads(
+            P3_P4_DWR_R_BALANCED_CONTIGUOUS_RECORD.read_text(encoding="utf-8")
+        )
+        cls.p3_p4_dwr_r_balanced_contiguous_repeat = json.loads(
+            P3_P4_DWR_R_BALANCED_CONTIGUOUS_REPEAT_RECORD.read_text(encoding="utf-8")
         )
 
     def test_uniform_watchdog_and_numerical_gates_pass(self) -> None:
@@ -754,6 +768,75 @@ class Task035UniformControlRecordTests(unittest.TestCase):
                 - repeat_final["enriched_fixed_reference_error_l2"]
             ),
             1.0e-12,
+        )
+
+    def test_balanced_contiguous_mpi8_repeats_exact_structure(self) -> None:
+        first = self.p3_p4_dwr_r_balanced_contiguous
+        repeat = self.p3_p4_dwr_r_balanced_contiguous_repeat
+        for record, source_sha in (
+            (first, "0c81f688c5c4a8e8bcdea8c4ad67f9633bf8bcc2"),
+            (repeat, "96b45267eae3df801fad9dda960a59a4639ca1d1"),
+        ):
+            self.assertEqual(record["status"], "actual_dwr_adaptive_cycles_pass")
+            self.assertTrue(record["qualification"]["pass"])
+            self.assertEqual(record["qualification"]["failures"], [])
+            self.assertEqual(record["source"]["commit_sha"], source_sha)
+            self.assertTrue(record["source"]["stable_and_clean_after"])
+            authority = record["resource_authority"]
+            self.assertEqual(authority["max_observed_worker_rank_count"], 8)
+            self.assertEqual(authority["max_process_tree_swap_mb"], 0.0)
+            self.assertLess(authority["memory_authority_gib"], 4.2)
+
+        first_refinement = first["refinements"][0]["orientation_rebuild"]
+        repeat_refinement = repeat["refinements"][0]["orientation_rebuild"]
+        for field in (
+            "canonical_connectivity_sha256",
+            "owned_cell_counts_by_rank",
+            "ghost_cell_counts_by_rank",
+        ):
+            self.assertEqual(first_refinement[field], repeat_refinement[field])
+        self.assertEqual(
+            first_refinement["owned_cell_counts_by_rank"],
+            [158, 159, 158, 159, 158, 159, 158, 159],
+        )
+        self.assertEqual(
+            first_refinement["ghost_cell_counts_by_rank"],
+            [71, 127, 149, 136, 142, 139, 134, 70],
+        )
+        for first_cycle, repeat_cycle in zip(
+            first["cycles"], repeat["cycles"], strict=True
+        ):
+            self.assertEqual(
+                first_cycle["mesh_audit"]["partition_independent_mesh_sha256"],
+                repeat_cycle["mesh_audit"]["partition_independent_mesh_sha256"],
+            )
+            for field in ("coarse", "enriched"):
+                self.assertEqual(
+                    first_cycle[field]["num_nedelec_dofs"],
+                    repeat_cycle[field]["num_nedelec_dofs"],
+                )
+                self.assertEqual(
+                    first_cycle[field]["matrix_stats"]["matrix_nnz_used"],
+                    repeat_cycle[field]["matrix_stats"]["matrix_nnz_used"],
+                )
+        first_final = first["cycles"][-1]
+        repeat_final = repeat["cycles"][-1]
+        self.assertEqual(
+            first_final["coarse"]["matrix_stats"]["matrix_nnz_used"], 2391617.0
+        )
+        self.assertEqual(
+            first_final["enriched"]["matrix_stats"]["matrix_nnz_used"], 8571936.0
+        )
+        self.assertLess(
+            abs(
+                first_final["enriched_fixed_reference_error_l2"]
+                - repeat_final["enriched_fixed_reference_error_l2"]
+            ),
+            1.0e-12,
+        )
+        self.assertEqual(
+            first["cycles"][0]["marker"]["marked_geometry_sha256"],
+            repeat["cycles"][0]["marker"]["marked_geometry_sha256"],
         )
 
 
