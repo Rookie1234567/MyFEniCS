@@ -46,6 +46,22 @@ def _parse_theta_schedule(value: str) -> tuple[float, ...]:
     return schedule
 
 
+def _parse_grazing_angles(value: str) -> tuple[float, ...]:
+    try:
+        angles = tuple(float(item.strip()) for item in value.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "grazing angles must be comma-separated floating-point values"
+        ) from exc
+    if (
+        not angles
+        or any(not 0.0 < item < 90.0 for item in angles)
+        or len(set(angles)) != len(angles)
+    ):
+        raise argparse.ArgumentTypeError("grazing angles must be unique and in (0, 90)")
+    return angles
+
+
 def _sha256(path: Path) -> str | None:
     if not path.is_file():
         return None
@@ -92,7 +108,24 @@ def _worker(args: argparse.Namespace) -> int:
     def progress(stage: str, status: str) -> None:
         _append_progress(progress_path, stage, status)
 
-    if args.dwr_adaptive_cycles:
+    if args.common_mesh_replay_record is not None:
+        from src.adaptivity.target_common_mesh_angle_sweep import (
+            run_target_common_mesh_angle_sweep,
+        )
+
+        result = run_target_common_mesh_angle_sweep(
+            args.run_dir,
+            replay_record=args.common_mesh_replay_record,
+            replay_record_sha256=args.common_mesh_replay_sha256,
+            grazing_angles_deg=args.common_mesh_grazing_angles,
+            coarse_degree=args.coarse_degree,
+            enriched_degree=args.enriched_degree,
+            h_nm=args.h_nm,
+            theta=args.theta,
+            polarization_kind=args.polarization_kind,
+            progress_observer=progress,
+        )
+    elif args.dwr_adaptive_cycles:
         from src.adaptivity.target_dwr_adaptive_cycles import (
             run_target_dwr_adaptive_cycles,
         )
@@ -198,6 +231,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=_parse_theta_schedule,
         help=("comma-separated DWR theta values; exactly one per marked cycle"),
     )
+    parser.add_argument(
+        "--common-mesh-replay-record",
+        type=Path,
+        help="accepted theta=0.7 DWR record whose marker deterministically rebuilds the mesh",
+    )
+    parser.add_argument(
+        "--common-mesh-replay-sha256",
+        help="required SHA256 authority for --common-mesh-replay-record",
+    )
+    parser.add_argument(
+        "--common-mesh-grazing-angles",
+        type=_parse_grazing_angles,
+        default=(1.0, 5.0, 10.0),
+        help="comma-separated grazing angles solved on the one replayed mesh",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -241,6 +289,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "R5 adaptive, DWR adaptive, and uniform control are mutually exclusive."
         )
+    common_mesh_mode = args.common_mesh_replay_record is not None
+    if common_mesh_mode != (args.common_mesh_replay_sha256 is not None):
+        parser.error(
+            "--common-mesh-replay-record and --common-mesh-replay-sha256 "
+            "must be provided together."
+        )
+    if common_mesh_mode and active_cycles:
+        parser.error(
+            "common-mesh replay and adaptive/uniform cycle modes are mutually exclusive."
+        )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
             parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
@@ -252,7 +310,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--minimal-periodic-edge-closure requires --dwr-adaptive-cycles."
         )
-    if (active_cycles) and args.mesh_cell_type != "tetrahedron":
+    if (active_cycles or common_mesh_mode) and args.mesh_cell_type != "tetrahedron":
         parser.error(
             "adaptive/uniform refinement requires --mesh-cell-type tetrahedron."
         )
@@ -362,6 +420,21 @@ def _compact_dwr_cycle(entry: dict[str, Any]) -> dict[str, Any]:
         "enriched": _compact_solve(result["enriched"]),
         "DWR": result["DWR"],
         "R5_control": result["R5_control"],
+    }
+
+
+def _compact_common_mesh_angle(entry: dict[str, Any]) -> dict[str, Any]:
+    pair = entry["actual_r5_pair"]
+    return {
+        "grazing_angle_deg": entry["grazing_angle_deg"],
+        "incident_theta_deg": entry["incident_theta_deg"],
+        "target_identity": pair["target_identity"],
+        "coarse": _compact_solve(pair["coarse"]),
+        "enriched": _compact_solve(pair["enriched"]),
+        "official_observable_delta_l2": pair["official_observable_delta_l2"],
+        "R5": pair["R5"],
+        "elapsed_seconds": pair["elapsed_seconds"],
+        "ordinary_default_changed": pair["ordinary_default_changed"],
     }
 
 
@@ -703,6 +776,89 @@ def _qualify_uniform(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _qualify_common_mesh_sweep(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    angles = result.get("angle_results") or []
+    replay = result.get("mesh_replay") or {}
+    contract = replay.get("contract") or {}
+    pairs = [entry.get("actual_r5_pair") or {} for entry in angles]
+    summaries = [
+        (pair.get(level) or {}).get("summary") or {}
+        for pair in pairs
+        for level in ("coarse", "enriched")
+    ]
+    requested = [float(value) for value in args.common_mesh_grazing_angles]
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status": result.get("status")
+        == "actual_common_mesh_angle_sweep_pass",
+        "result_pass": result.get("pass") is True,
+        "replay_pass": replay.get("pass") is True,
+        "replay_record_hash_bound": (
+            contract.get("record_sha256") == args.common_mesh_replay_sha256
+        ),
+        "single_in_memory_mesh_instance": (
+            result.get("single_in_memory_mesh_instance") is True
+            and replay.get("single_in_memory_mesh_instance") is True
+        ),
+        "requested_angles_completed": (
+            [entry.get("grazing_angle_deg") for entry in angles] == requested
+        ),
+        "all_pairs_pass": bool(pairs)
+        and all(pair.get("status") == "actual_global_r5_pass" for pair in pairs),
+        "angle_identities_exact": bool(angles)
+        and all(
+            (pair.get("target_identity") or {}).get("grazing_angle_deg")
+            == entry.get("grazing_angle_deg")
+            and (pair.get("target_identity") or {}).get("incidence_theta_deg")
+            == entry.get("incident_theta_deg")
+            for entry, pair in zip(angles, pairs, strict=True)
+        ),
+        "all_official_solves": bool(summaries)
+        and all(summary.get("official_result") is True for summary in summaries),
+        "all_true_residuals_le_1e-9": bool(summaries)
+        and all(
+            isinstance(summary.get("linear_system_relative_residual"), (int, float))
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+            for summary in summaries
+        ),
+        "all_tetra_meshes": bool(summaries)
+        and all(
+            summary.get("mesh_cell_type_actual") == "tetrahedron"
+            for summary in summaries
+        ),
+        "all_r5_energy_closures_le_1e-10": bool(pairs)
+        and all(
+            ((pair.get("R5") or {}).get("correction_energy") or {}).get(
+                "relative_closure_error", 1.0
+            )
+            <= 1.0e-10
+            for pair in pairs
+        ),
+        "ordinary_default_unchanged": (
+            result.get("ordinary_default_changed") is False
+            and all(pair.get("ordinary_default_changed") is False for pair in pairs)
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
 def _run_parent(args: argparse.Namespace) -> int:
     effective = effective_memory_limit()
     if effective["effective_limit_bytes"] is None:
@@ -720,6 +876,13 @@ def _run_parent(args: argparse.Namespace) -> int:
         raise SystemExit(
             "Task035 actual R5 requires at least 10 GiB free artifact space."
         )
+    if args.common_mesh_replay_record is not None:
+        replay_path = args.common_mesh_replay_record
+        if not replay_path.is_absolute():
+            replay_path = ROOT / replay_path
+        if not replay_path.is_file():
+            raise SystemExit(f"common-mesh replay record not found: {replay_path}")
+        args.common_mesh_replay_record = replay_path.resolve()
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_label = (
@@ -727,7 +890,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         f"p{args.enriched_degree}_h{args.h_nm:g}_"
         f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
     )
-    if args.dwr_adaptive_cycles:
+    if args.common_mesh_replay_record is not None:
+        angle_label = "-".join(
+            f"{value:g}" for value in args.common_mesh_grazing_angles
+        )
+        run_label += f"_common_mesh_grazing{angle_label}"
+    elif args.dwr_adaptive_cycles:
         run_label += f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
         if args.minimal_periodic_edge_closure:
             run_label += "_minimal_periodic_edge_closure"
@@ -768,7 +936,20 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--run-dir",
         str(run_dir),
     ]
-    if args.dwr_adaptive_cycles:
+    if args.common_mesh_replay_record is not None:
+        command.extend(
+            [
+                "--common-mesh-replay-record",
+                str(args.common_mesh_replay_record),
+                "--common-mesh-replay-sha256",
+                args.common_mesh_replay_sha256,
+                "--common-mesh-grazing-angles",
+                ",".join(
+                    f"{value:g}" for value in args.common_mesh_grazing_angles
+                ),
+            ]
+        )
+    elif args.dwr_adaptive_cycles:
         command.extend(
             [
                 "--dwr-adaptive-cycles",
@@ -860,7 +1041,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     sampler = _sampler_summary(rows)
-    if args.dwr_adaptive_cycles:
+    if args.common_mesh_replay_record is not None:
+        qualifier = _qualify_common_mesh_sweep
+    elif args.dwr_adaptive_cycles:
         qualifier = _qualify_dwr_adaptive
     elif args.adaptive_marked_cycles:
         qualifier = _qualify_adaptive
@@ -892,7 +1075,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["pass"] = False
     if qualification["pass"]:
         status = (
-            "actual_dwr_adaptive_cycles_pass"
+            "actual_common_mesh_angle_sweep_pass"
+            if args.common_mesh_replay_record is not None
+            else "actual_dwr_adaptive_cycles_pass"
             if args.dwr_adaptive_cycles
             else "actual_r5_adaptive_cycles_pass"
             if args.adaptive_marked_cycles
@@ -904,7 +1089,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         status = "formal_not_pass"
     record = {
         "schema_version": (
-            "task035.actual-dwr-adaptive-watchdog.v1"
+            "task035.actual-common-mesh-angle-sweep-watchdog.v1"
+            if args.common_mesh_replay_record is not None
+            else "task035.actual-dwr-adaptive-watchdog.v1"
             if args.dwr_adaptive_cycles
             else "task035.actual-r5-adaptive-watchdog.v1"
             if args.adaptive_marked_cycles
@@ -913,7 +1100,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             else "task035.actual-global-r5-watchdog.v1"
         ),
         "benchmark_id": (
-            "task035_target_actual_dwr_adaptive_cycles"
+            "task035_target_actual_common_mesh_angle_sweep"
+            if args.common_mesh_replay_record is not None
+            else "task035_target_actual_dwr_adaptive_cycles"
             if args.dwr_adaptive_cycles
             else "task035_target_actual_r5_adaptive_cycles"
             if args.adaptive_marked_cycles
@@ -947,7 +1136,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "target_identity": result.get("target_identity") if result else None,
         "coarse": (
             None
-            if args.dwr_adaptive_cycles
+            if args.common_mesh_replay_record is not None
+            or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
             or not result
@@ -955,7 +1145,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "enriched": (
             None
-            if args.dwr_adaptive_cycles
+            if args.common_mesh_replay_record is not None
+            or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
             or not result
@@ -976,7 +1167,21 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stdout_sha256": _sha256(stdout_path),
         },
     }
-    if args.dwr_adaptive_cycles:
+    if args.common_mesh_replay_record is not None:
+        record.update(
+            {
+                "common_mesh_replay": result.get("mesh_replay"),
+                "common_mesh_identity": result.get("common_mesh_identity"),
+                "single_in_memory_mesh_instance": result.get(
+                    "single_in_memory_mesh_instance"
+                ),
+                "angle_results": [
+                    _compact_common_mesh_angle(entry)
+                    for entry in result.get("angle_results", [])
+                ],
+            }
+        )
+    elif args.dwr_adaptive_cycles:
         record.update(
             {
                 "dwr_marker_policy": result.get("marker_policy"),

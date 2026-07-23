@@ -269,6 +269,7 @@ def run_target_global_two_level_r5(
     enriched_degree: int = 3,
     h_nm: float = 10.0,
     theta: float = 0.5,
+    incident_theta_deg: float = 80.0,
     polarization_kind: str = "s",
     mesh_cell_type: str = "hexahedron",
     progress_observer=None,
@@ -299,6 +300,7 @@ def run_target_global_two_level_r5(
         return replace(
             base,
             case_name=f"task035_actual_r5_p{degree}_h{h_nm:g}".replace(".", "p"),
+            incident_theta_deg=float(incident_theta_deg),
             polarization_kind=polarization_kind,
             custom_polarization=None,
             mesh_cell_type=mesh_cell_type,
@@ -359,8 +361,8 @@ def run_target_global_two_level_r5(
         "status": "actual_global_r5_pass",
         "target_identity": {
             "wavelength_nm": 13.5,
-            "incidence_theta_deg": 80.0,
-            "grazing_angle_deg": 10.0,
+            "incidence_theta_deg": float(incident_theta_deg),
+            "grazing_angle_deg": float(90.0 - incident_theta_deg),
             "polarization": polarization_kind.upper(),
             "geometry": "Task034 fixed rectangular block grating",
             "mesh_backend": f"boundary-fitted conforming {mesh_cell_type}",
