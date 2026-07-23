@@ -170,6 +170,13 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
                 sum(rebuild["owned_cell_counts_by_rank"]),
                 rebuild["reconstructed_global_cell_count"],
             )
+            if rebuild["target_mpi_size"] > 1:
+                ghost_counts = rebuild["ghost_cell_counts_by_rank"]
+                self.assertTrue(all(count > 0 for count in ghost_counts))
+                self.assertLess(
+                    max(ghost_counts),
+                    rebuild["reconstructed_global_cell_count"],
+                )
 
         self.assertGreater(report["refined_global_cells"], 180)
         self.assertTrue(report["refined_mesh_audit"]["pass"])

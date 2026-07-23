@@ -146,7 +146,11 @@ def _canonical_contiguous_graph_partitioner(
         raise RuntimeError("distributed dual graph cell identity is not complete")
     if ghosting:
         for source_global_index, neighbors in global_rows:
-            source_owner = next(iter(destinations_by_global_index[source_global_index]))
+            source_owner = _contiguous_partition_owner(
+                source_global_index,
+                global_count=global_count,
+                partition_count=partition_count,
+            )
             for neighbor_global_index in neighbors:
                 if neighbor_global_index not in destinations_by_global_index:
                     raise RuntimeError("dual graph neighbor is outside the cell range")
