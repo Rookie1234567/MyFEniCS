@@ -1,0 +1,4 @@
+cd /home/Projects/MyFEniCS
+source scripts/activate_myfenics_wsl.sh
+python -m pytest -q src/test/test_43_task033_high_order_entity_transform.py src/test/test_46_task033_high_order_floquet_topology.py src/test/test_113_task035b_high_order_resource_audit.py
+mpiexec -n 2 python -m pytest -q src/test/test_46_task033_high_order_floquet_topology.py src/test/test_113_task035b_high_order_resource_audit.py

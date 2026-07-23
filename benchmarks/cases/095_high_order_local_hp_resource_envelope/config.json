@@ -1,0 +1,18 @@
+{
+  "schema_version": "task035b.case095-config.v1",
+  "geometry": "Task034 fixed rectangular block grating",
+  "geometry_scope": "fixed_only",
+  "mesh_cell_type": "hexahedron",
+  "mesh_target_size_nm": 10.0,
+  "mesh_cells_resolved": [6, 3, 14],
+  "degrees": [4, 5, 6],
+  "mpi_size": 8,
+  "same_in_memory_mesh_required": true,
+  "true_residual_max": 1e-09,
+  "ordinary_default_changed": false,
+  "irregular_geometry": {
+    "status": "out_of_scope_by_user",
+    "run": false,
+    "completion_gate": false
+  }
+}
