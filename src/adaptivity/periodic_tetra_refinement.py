@@ -124,25 +124,43 @@ def _canonical_contiguous_graph_partitioner(
     counts = [int(value) for value in comm.allgather(local_count)]
     global_count = sum(counts)
     offset = sum(counts[: comm.rank])
+    local_rows = [
+        (
+            offset + local_index,
+            tuple(int(neighbor) for neighbor in local_graph.links(local_index)),
+        )
+        for local_index in range(local_count)
+    ]
+    global_rows = [row for packet in comm.allgather(local_rows) for row in packet]
+    destinations_by_global_index = {
+        global_index: {
+            _contiguous_partition_owner(
+                global_index,
+                global_count=global_count,
+                partition_count=partition_count,
+            )
+        }
+        for global_index, _ in global_rows
+    }
+    if len(destinations_by_global_index) != global_count:
+        raise RuntimeError("distributed dual graph cell identity is not complete")
+    if ghosting:
+        for source_global_index, neighbors in global_rows:
+            source_owner = next(iter(destinations_by_global_index[source_global_index]))
+            for neighbor_global_index in neighbors:
+                if neighbor_global_index not in destinations_by_global_index:
+                    raise RuntimeError("dual graph neighbor is outside the cell range")
+                destinations_by_global_index[neighbor_global_index].add(source_owner)
     destinations: list[int] = []
     offsets = [0]
     for local_index in range(local_count):
+        global_index = offset + local_index
         owner = _contiguous_partition_owner(
-            offset + local_index,
+            global_index,
             global_count=global_count,
             partition_count=partition_count,
         )
-        ghost_ranks: set[int] = set()
-        if ghosting:
-            ghost_ranks = {
-                _contiguous_partition_owner(
-                    int(neighbor),
-                    global_count=global_count,
-                    partition_count=partition_count,
-                )
-                for neighbor in local_graph.links(local_index)
-            }
-            ghost_ranks.discard(owner)
+        ghost_ranks = destinations_by_global_index[global_index] - {owner}
         destinations.extend((owner, *sorted(ghost_ranks)))
         offsets.append(len(destinations))
     return graph.adjacencylist(
@@ -433,6 +451,8 @@ def _positively_oriented_tetra_copy(
         "canonical_positive_vertex_ordering": True,
         "partitioner": "canonical_contiguous_v1",
         "partition_owner_rule": "ceil((global_cell_index+1)*mpi_size/N)-1",
+        "partition_ghost_rule": "official_incoming_dual_graph_owner_destinations",
+        "partition_graph_replication": True,
         "canonical_connectivity_sha256": hashlib.sha256(
             connectivity_values.tobytes()
         ).hexdigest(),

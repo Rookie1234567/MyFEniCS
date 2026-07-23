@@ -158,6 +158,11 @@ class Task035PeriodicTetraRefinementTests(unittest.TestCase):
                 "ceil((global_cell_index+1)*mpi_size/N)-1",
             )
             self.assertEqual(
+                rebuild["partition_ghost_rule"],
+                "official_incoming_dual_graph_owner_destinations",
+            )
+            self.assertTrue(rebuild["partition_graph_replication"])
+            self.assertEqual(
                 sum(rebuild["owned_cell_counts_by_rank"]),
                 rebuild["reconstructed_global_cell_count"],
             )
