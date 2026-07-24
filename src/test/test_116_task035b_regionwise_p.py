@@ -14,6 +14,8 @@ from src.adaptivity.hcurl_regionwise_p import (
     reduced_trace_hcurl_ufl_element,
     regionwise_interior_p_dof_budget,
 )
+from src.common.config_3d import SimulationConfig3D
+from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 class Task035bRegionwisePTests(unittest.TestCase):
@@ -123,6 +125,37 @@ class Task035bRegionwisePTests(unittest.TestCase):
         )
         error = float(comm.allreduce(float(np.real(local_error)), op=MPI.SUM))
         self.assertLess(error, 1.0e-20)
+
+    def test_config_opt_in_creates_reduced_trace_space(self) -> None:
+        cfg = SimulationConfig3D(
+            nedelec_degree=6,
+            nedelec_trace_degree=4,
+            nedelec_interior_degree=6,
+        )
+        self.assertTrue(cfg.nedelec_reduced_trace_enabled)
+        self.assertEqual(cfg.nedelec_trace_degree_resolved, 4)
+        self.assertEqual(cfg.nedelec_interior_degree_resolved, 6)
+        snapshot = cfg.as_jsonable()
+        self.assertEqual(snapshot["nedelec_trace_degree_resolved"], 4)
+        self.assertEqual(snapshot["nedelec_interior_degree_resolved"], 6)
+        self.assertTrue(snapshot["nedelec_reduced_trace_enabled"])
+
+        msh = mesh.create_box(
+            MPI.COMM_WORLD,
+            ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+            (1, 1, 1),
+            cell_type=mesh.CellType.hexahedron,
+        )
+        space = _create_nedelec_space(msh, cfg)
+        self.assertEqual(space.element.space_dimension, 642)
+        self.assertEqual(
+            [len(dofs) for dofs in space.element.basix_element.entity_dofs[1]],
+            [4] * 12,
+        )
+        self.assertEqual(
+            [len(dofs) for dofs in space.element.basix_element.entity_dofs[2]],
+            [24] * 6,
+        )
 
     def test_classifier_lane_hits_task035b_90k_active_dof_gate(self) -> None:
         budget = regionwise_interior_p_dof_budget(

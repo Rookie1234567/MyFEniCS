@@ -169,21 +169,56 @@ def hcurl_entity_dof_inventory(
         )
     msh = V.mesh
     degree = int(V.element.basix_element.degree)
+    basix_element = V.element.basix_element
     cell_name = str(msh.basix_cell()).lower()
     if "tetrahedron" in cell_name:
-        layout = tetrahedral_trace_layout(degree)
-        element_dimension = layout.tetrahedron_dimension
+        layout_builder = tetrahedral_trace_layout
+        standard_layout = layout_builder(degree)
+        standard_dimension = standard_layout.tetrahedron_dimension
     elif "hexahedron" in cell_name:
-        layout = high_order_trace_layout(degree)
-        element_dimension = layout.hexahedron_dimension
+        layout_builder = high_order_trace_layout
+        standard_layout = layout_builder(degree)
+        standard_dimension = standard_layout.hexahedron_dimension
     else:
         raise NotImplementedError(
             "Task035b entity inventory supports tetrahedra and hexahedra."
         )
+    entity_dofs = basix_element.entity_dofs
+
+    def uniform_entity_dofs(dimension: int) -> int:
+        values = {len(dofs) for dofs in entity_dofs[dimension]}
+        if len(values) != 1:
+            raise RuntimeError(
+                "Task035b entity inventory requires uniform entity DoF "
+                f"counts in topological dimension {dimension}"
+            )
+        return int(next(iter(values)))
+
+    edge_per_entity = uniform_entity_dofs(1)
+    face_per_entity = uniform_entity_dofs(2)
+    cell_per_entity = uniform_entity_dofs(msh.topology.dim)
+    element_dimension = int(basix_element.dim)
+    trace_degree_candidates = [
+        candidate
+        for candidate in range(1, 7)
+        if layout_builder(candidate).edge_dofs == edge_per_entity
+        and layout_builder(candidate).face_interior_dofs == face_per_entity
+    ]
+    trace_degree = (
+        int(trace_degree_candidates[0])
+        if len(trace_degree_candidates) == 1
+        else None
+    )
+    uniform_standard_layout = (
+        edge_per_entity == standard_layout.edge_dofs
+        and face_per_entity == standard_layout.face_interior_dofs
+        and cell_per_entity == standard_layout.cell_interior_dofs
+        and element_dimension == standard_dimension
+    )
     counts = _global_entity_counts(msh)
-    edge_dofs = counts["edges"] * layout.edge_dofs
-    face_dofs = counts["faces"] * layout.face_interior_dofs
-    cell_interior_dofs = counts["cells"] * layout.cell_interior_dofs
+    edge_dofs = counts["edges"] * edge_per_entity
+    face_dofs = counts["faces"] * face_per_entity
+    cell_interior_dofs = counts["cells"] * cell_per_entity
     decomposed_total = edge_dofs + face_dofs + cell_interior_dofs
     actual_total = int(
         V.dofmap.index_map.size_global * V.dofmap.index_map_bs
@@ -217,12 +252,14 @@ def hcurl_entity_dof_inventory(
             "tetrahedron" if "tetrahedron" in cell_name else "hexahedron"
         ),
         "degree": degree,
+        "trace_degree_inferred": trace_degree,
+        "uniform_standard_n1curl_layout": uniform_standard_layout,
         "basix_element_dimension": int(element_dimension),
         "global_entity_counts": counts,
         "entity_dofs_per_entity": {
-            "edge": int(layout.edge_dofs),
-            "face_interior": int(layout.face_interior_dofs),
-            "cell_interior": int(layout.cell_interior_dofs),
+            "edge": edge_per_entity,
+            "face_interior": face_per_entity,
+            "cell_interior": cell_per_entity,
         },
         "global_dof_contributions": {
             "edge": int(edge_dofs),

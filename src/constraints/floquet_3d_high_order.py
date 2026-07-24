@@ -605,7 +605,7 @@ def _build_trace_topology(
     comm = V.mesh.comm
     comm.barrier()
     started = time.perf_counter()
-    degree = int(cfg.nedelec_degree)
+    degree = cfg.nedelec_trace_degree_resolved
     cell_name = str(V.mesh.basix_cell()).lower()
     layout = (
         tetrahedral_trace_layout(degree)
@@ -676,7 +676,12 @@ def _build_trace_topology(
 def _get_or_build_topology(
     V, mesh_data, cfg: SimulationConfig3D
 ) -> tuple[FloquetTraceTopology, bool]:
-    key = _topology_key(V, mesh_data, cfg, int(cfg.nedelec_degree))
+    key = _topology_key(
+        V,
+        mesh_data,
+        cfg,
+        cfg.nedelec_trace_degree_resolved,
+    )
     cached = _TOPOLOGY_CACHE.get(key, mesh=mesh_data.mesh, space=V)
     hit_count = int(V.mesh.comm.allreduce(cached is not None, op=MPI.SUM))
     if hit_count == int(V.mesh.comm.size):
@@ -716,7 +721,7 @@ def build_high_order_constraint_data(
     reused when only the incident angle (and hence the Floquet phase) changes.
     """
 
-    degree = int(cfg.nedelec_degree)
+    degree = cfg.nedelec_trace_degree_resolved
     cell_name = str(V.mesh.basix_cell()).lower()
     if "tetrahedron" in cell_name:
         layout = tetrahedral_trace_layout(degree)
@@ -726,8 +731,17 @@ def build_high_order_constraint_data(
         raise NotImplementedError(
             "High-order Floquet constraints support tetrahedra and hexahedra."
         )
-    if int(V.element.basix_element.degree) != degree:
-        raise RuntimeError("Config and function-space N1curl degrees disagree.")
+    entity_dofs = V.element.basix_element.entity_dofs
+    if (
+        any(len(dofs) != layout.edge_dofs for dofs in entity_dofs[1])
+        or any(
+            len(dofs) != layout.face_interior_dofs
+            for dofs in entity_dofs[2]
+        )
+    ):
+        raise RuntimeError(
+            "Config trace degree and function-space edge/face layout disagree."
+        )
     topology, cache_hit = _get_or_build_topology(V, mesh_data, cfg)
 
     comm = V.mesh.comm

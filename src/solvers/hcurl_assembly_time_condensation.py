@@ -27,6 +27,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy import sparse
+from scipy.linalg import lu_factor, lu_solve
 
 
 def _idx(values) -> np.ndarray:
@@ -67,13 +68,25 @@ class AssemblyTimeCondensedSystem:
     trace_constraints: TraceConstraintMap
     cell_recovery_maps: tuple[CellRecoveryMap, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
-    interior_inverse_by_class: dict[tuple[Any, ...], np.ndarray]
+    interior_lu_by_class: dict[
+        tuple[Any, ...], tuple[np.ndarray, np.ndarray]
+    ]
+    interior_rhs_projection_by_class: dict[
+        tuple[Any, ...], np.ndarray
+    ]
+    interior_solution_embedding_by_class: dict[
+        tuple[Any, ...], np.ndarray
+    ]
     trace_from_interior_rhs_by_class: dict[tuple[Any, ...], np.ndarray]
+    interior_residual_projection_by_class: dict[
+        tuple[Any, ...], np.ndarray
+    ]
     full_rows: int
     trace_rows: int
     active_rows: int
     appended_rows: int
     interior_rows: int
+    active_interior_rows: int
     build_audit: dict[str, Any]
 
     def destroy(self) -> None:
@@ -506,10 +519,51 @@ def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> N
     """Apply the same ``T A T^T`` transformation as DOLFINx assembly."""
 
     dimension = tensor.shape[0]
-    element.T_apply(tensor.ravel(), cell_info, dimension)
+    if hasattr(element, "space_dimension"):
+        element.T_apply(tensor.ravel(), cell_info, dimension)
+    else:
+        element.T_apply(
+            tensor.ravel(),
+            dimension,
+            int(cell_info[0]),
+        )
     transpose = np.ascontiguousarray(tensor.T)
-    element.T_apply(transpose.ravel(), cell_info, dimension)
+    if hasattr(element, "space_dimension"):
+        element.T_apply(transpose.ravel(), cell_info, dimension)
+    else:
+        element.T_apply(
+            transpose.ravel(),
+            dimension,
+            int(cell_info[0]),
+        )
     tensor[:] = transpose.T
+
+
+def _orient_embedding(
+    high_element,
+    low_element,
+    embedding: np.ndarray,
+    cell_info: int,
+) -> np.ndarray:
+    """Map a reference embedding into DOLFINx-oriented coefficients.
+
+    Basix applies the sparse entity transforms in-place.  Using these runtime
+    kernels avoids constructing and solving with dense 642-by-642 orientation
+    matrices on every class.
+    """
+
+    oriented = np.ascontiguousarray(embedding.copy())
+    low_element.Tt_apply_right(
+        oriented.ravel(),
+        high_element.dim,
+        int(cell_info),
+    )
+    high_element.Tt_inv_apply(
+        oriented.ravel(),
+        low_element.dim,
+        int(cell_info),
+    )
+    return oriented
 
 
 def build_unconstrained_assembly_time_condensation(
@@ -520,6 +574,10 @@ def build_unconstrained_assembly_time_condensation(
     mpc=None,
     appended_global_rows: int = 0,
     geometry_tolerance: float = 1.0e-11,
+    regionwise_element=None,
+    regionwise_low_compiled_form=None,
+    regionwise_high_canonical_cell_ids: tuple[int, ...] = (),
+    regionwise_mesh_geometry_sha256: str | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -571,6 +629,100 @@ def build_unconstrained_assembly_time_condensation(
         interior_positions,
         assume_unique=True,
     )
+    regionwise_p = regionwise_element is not None
+    local_high_interior = np.ones(owned_cells, dtype=bool)
+    regionwise_geometry_hash = None
+    low_element = None
+    low_orientation_element = None
+    low_to_reduced = None
+    low_interior_positions = None
+    low_trace_positions = None
+    high_canonical_ids = tuple(
+        sorted({int(value) for value in regionwise_high_canonical_cell_ids})
+    )
+    low_kernels = None
+    if regionwise_p:
+        from ..geometry.tetra_mesh_audit import (
+            canonical_owned_cell_ids,
+            geometry_key_sha256,
+        )
+
+        if regionwise_element.element.hash() != basix_element.hash():
+            raise ValueError(
+                "regionwise-p element differs from the function-space element"
+            )
+        low_element = regionwise_element.low_element
+        if regionwise_low_compiled_form is None:
+            raise ValueError(
+                "regionwise-p requires a separately compiled low-order "
+                "cell form; projecting every low cell from the high kernel "
+                "is deliberately disabled"
+            )
+        if np.dtype(regionwise_low_compiled_form.dtype) != np.dtype(
+            np.complex128
+        ):
+            raise TypeError("regionwise-p low cell form requires complex128")
+        low_kernels = _cell_integral_kernels(
+            regionwise_low_compiled_form
+        )
+        low_orientation_element = (
+            regionwise_low_compiled_form.function_spaces[0].element
+        )
+        low_unknown_tags = (
+            []
+            if -1 in low_kernels
+            else sorted(set(map(int, tags)) - set(low_kernels))
+        )
+        if low_unknown_tags:
+            raise ValueError(
+                "compiled low-order form has no cell integral for tags "
+                f"{low_unknown_tags}"
+            )
+        low_to_reduced = np.asarray(
+            regionwise_element.low_to_reduced,
+            dtype=np.float64,
+        )
+        if low_to_reduced.shape != (
+            dimension,
+            int(low_element.dim),
+        ):
+            raise ValueError("regionwise-p embedding has the wrong shape")
+        low_interior_positions = np.asarray(
+            low_element.entity_dofs[tdim][0],
+            dtype=np.int32,
+        )
+        low_trace_positions = np.setdiff1d(
+            np.arange(low_element.dim, dtype=np.int32),
+            low_interior_positions,
+            assume_unique=True,
+        )
+        if len(low_trace_positions) != len(trace_positions):
+            raise ValueError(
+                "regionwise-p low and high trace dimensions disagree"
+            )
+        canonical_ids, _records, ordered_keys = canonical_owned_cell_ids(mesh)
+        regionwise_geometry_hash = geometry_key_sha256(ordered_keys)
+        if (
+            regionwise_mesh_geometry_sha256 is not None
+            and regionwise_geometry_hash
+            != str(regionwise_mesh_geometry_sha256)
+        ):
+            raise ValueError(
+                "regionwise-p classifier mesh geometry hash differs from "
+                "the actual solve mesh"
+            )
+        invalid_ids = set(high_canonical_ids) - set(
+            range(len(ordered_keys))
+        )
+        if invalid_ids:
+            raise ValueError(
+                "regionwise-p high-cell IDs are outside the actual mesh: "
+                f"{sorted(invalid_ids)[:8]}"
+            )
+        local_high_interior = np.isin(
+            canonical_ids,
+            np.asarray(high_canonical_ids, dtype=np.int64),
+        )
 
     local_cell_dofs: list[np.ndarray] = []
     local_interiors: list[np.ndarray] = []
@@ -622,8 +774,11 @@ def build_unconstrained_assembly_time_condensation(
     raw_cache: dict[tuple[Any, ...], np.ndarray] = {}
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
-    inverse_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
+    rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
     local_kernel_seconds = 0.0
     local_schur_seconds = 0.0
@@ -636,25 +791,53 @@ def build_unconstrained_assembly_time_condensation(
         )
         tag = int(tags[cell])
         raw_key = (tag, *widths)
-        tensor = raw_cache.get(raw_key)
+        interior_policy = (
+            "high"
+            if bool(local_high_interior[cell])
+            else "low"
+        )
+        selected_kernels = (
+            kernels
+            if interior_policy == "high"
+            else low_kernels
+        )
+        selected_dimension = (
+            dimension
+            if interior_policy == "high"
+            else int(low_element.dim)
+        )
+        assert selected_kernels is not None
+        policy_raw_key = (interior_policy, *raw_key)
+        tensor = raw_cache.get(policy_raw_key)
         if tensor is None:
             kernel_started = perf_counter()
-            tensor = np.zeros((dimension, dimension), dtype=np.complex128)
-            default_kernel = kernels.get(-1)
+            tensor = np.zeros(
+                (selected_dimension, selected_dimension),
+                dtype=np.complex128,
+            )
+            default_kernel = selected_kernels.get(-1)
             if default_kernel is not None:
                 tensor += _tabulate_cell_tensor(
-                    compiled_form,
+                    (
+                        compiled_form
+                        if interior_policy == "high"
+                        else regionwise_low_compiled_form
+                    ),
                     default_kernel,
                     canonical_coordinates,
-                    dimension,
+                    selected_dimension,
                 )
-            tagged_kernel = kernels.get(tag)
+            tagged_kernel = selected_kernels.get(tag)
             if tagged_kernel is not None:
                 tensor += _tabulate_cell_tensor(
-                    compiled_form,
+                    (
+                        compiled_form
+                        if interior_policy == "high"
+                        else regionwise_low_compiled_form
+                    ),
                     tagged_kernel,
                     canonical_coordinates,
-                    dimension,
+                    selected_dimension,
                 )
             if default_kernel is None and tagged_kernel is None:
                 condensed.destroy()
@@ -662,33 +845,158 @@ def build_unconstrained_assembly_time_condensation(
                     f"compiled form has no default or tagged kernel for tag {tag}"
                 )
             local_kernel_seconds += perf_counter() - kernel_started
-            raw_cache[raw_key] = tensor
-        class_key = (*raw_key, int(cell_permutations[cell]))
+            raw_cache[policy_raw_key] = tensor
+        class_key = (
+            *raw_key,
+            int(cell_permutations[cell]),
+            interior_policy,
+        )
         schur = schur_cache.get(class_key)
         if schur is None:
             schur_started = perf_counter()
             oriented = tensor.copy()
-            _orient_cell_tensor(
-                element,
-                oriented,
-                np.asarray(cell_permutations[cell : cell + 1], dtype=np.uint32),
+            if interior_policy == "low":
+                assert low_element is not None
+                assert low_orientation_element is not None
+                assert low_to_reduced is not None
+                assert low_interior_positions is not None
+                assert low_trace_positions is not None
+                oriented_embedding = _orient_embedding(
+                    basix_element,
+                    low_element,
+                    low_to_reduced,
+                    int(cell_permutations[cell]),
+                )
+                _orient_cell_tensor(
+                    low_orientation_element,
+                    oriented,
+                    np.asarray(
+                        cell_permutations[cell : cell + 1],
+                        dtype=np.uint32,
+                    ),
+                )
+                trace_identity_error = float(
+                    np.max(
+                        np.abs(
+                            oriented_embedding[
+                                np.ix_(
+                                    trace_positions,
+                                    low_trace_positions,
+                                )
+                            ]
+                            - np.eye(len(trace_positions))
+                        ),
+                        initial=0.0,
+                    )
+                )
+                trace_interior_leakage = float(
+                    np.max(
+                        np.abs(
+                            oriented_embedding[
+                                np.ix_(
+                                    trace_positions,
+                                    low_interior_positions,
+                                )
+                            ]
+                        ),
+                        initial=0.0,
+                    )
+                )
+                if (
+                    trace_identity_error > 2.0e-11
+                    or trace_interior_leakage > 2.0e-11
+                ):
+                    raise RuntimeError(
+                        "regionwise-p orientation does not preserve the "
+                        "shared low-order trace"
+                    )
+                active_tensor = oriented
+                active_interior_positions = low_interior_positions
+                active_trace_positions = low_trace_positions
+                interior_embedding_from_trace = oriented_embedding[
+                    np.ix_(interior_positions, low_trace_positions)
+                ]
+                interior_embedding_from_interior = oriented_embedding[
+                    np.ix_(interior_positions, low_interior_positions)
+                ]
+            else:
+                _orient_cell_tensor(
+                    element,
+                    oriented,
+                    np.asarray(
+                        cell_permutations[cell : cell + 1],
+                        dtype=np.uint32,
+                    ),
+                )
+                active_tensor = oriented
+                active_interior_positions = interior_positions
+                active_trace_positions = trace_positions
+                interior_embedding_from_trace = np.zeros(
+                    (len(interior_positions), len(trace_positions)),
+                    dtype=np.float64,
+                )
+                interior_embedding_from_interior = np.eye(
+                    len(interior_positions),
+                    dtype=np.float64,
+                )
+            A_ii = active_tensor[
+                np.ix_(
+                    active_interior_positions,
+                    active_interior_positions,
+                )
+            ]
+            A_it = active_tensor[
+                np.ix_(
+                    active_interior_positions,
+                    active_trace_positions,
+                )
+            ]
+            A_ti = active_tensor[
+                np.ix_(
+                    active_trace_positions,
+                    active_interior_positions,
+                )
+            ]
+            A_tt = active_tensor[
+                np.ix_(active_trace_positions, active_trace_positions)
+            ]
+            active_interior_lu = lu_factor(A_ii)
+            active_interior_from_trace = -lu_solve(
+                active_interior_lu,
+                A_it,
             )
-            A_ii = oriented[np.ix_(interior_positions, interior_positions)]
-            A_it = oriented[np.ix_(interior_positions, trace_positions)]
-            A_ti = oriented[np.ix_(trace_positions, interior_positions)]
-            A_tt = oriented[np.ix_(trace_positions, trace_positions)]
-            interior_from_trace = -np.linalg.solve(A_ii, A_it)
-            interior_inverse = np.linalg.solve(
-                A_ii,
-                np.eye(len(interior_positions), dtype=np.complex128),
+            interior_from_trace = (
+                interior_embedding_from_trace
+                + interior_embedding_from_interior
+                @ active_interior_from_trace
             )
-            trace_from_interior_rhs = -(A_ti @ interior_inverse)
-            schur = A_tt + A_ti @ interior_from_trace
+            adjoint_trace_solution = lu_solve(
+                active_interior_lu,
+                A_ti.conj().T,
+                trans=2,
+            )
+            trace_from_interior_rhs = (
+                interior_embedding_from_trace.conj().T
+                - (
+                    interior_embedding_from_interior
+                    @ adjoint_trace_solution
+                ).conj().T
+            )
+            schur = A_tt + A_ti @ active_interior_from_trace
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
-            inverse_cache[class_key] = interior_inverse
+            lu_cache[class_key] = active_interior_lu
+            rhs_projection_cache[class_key] = (
+                interior_embedding_from_interior.conj().T
+            )
+            solution_embedding_cache[class_key] = (
+                interior_embedding_from_interior
+            )
             rhs_trace_cache[class_key] = trace_from_interior_rhs
+            residual_projection_cache[class_key] = (
+                interior_embedding_from_interior.conj().T
+            )
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = (
             _cell_trace_expansion(
@@ -723,6 +1031,20 @@ def build_unconstrained_assembly_time_condensation(
     )
     interior_rows = full_rows - trace_rows
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
+    local_high_cells = int(np.count_nonzero(local_high_interior))
+    global_high_cells = int(
+        comm.allreduce(local_high_cells, op=MPI.SUM)
+    )
+    global_low_cells = global_cells - global_high_cells
+    low_interior_dimension = (
+        len(interior_positions)
+        if low_interior_positions is None
+        else len(low_interior_positions)
+    )
+    active_interior_rows = (
+        global_high_cells * len(interior_positions)
+        + global_low_cells * low_interior_dimension
+    )
     raw_class_count = int(comm.allreduce(len(raw_cache), op=MPI.SUM))
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
     return AssemblyTimeCondensedSystem(
@@ -732,13 +1054,17 @@ def build_unconstrained_assembly_time_condensation(
         trace_constraints=trace_constraints,
         cell_recovery_maps=tuple(recovery_maps),
         interior_from_trace_by_class=recovery_cache,
-        interior_inverse_by_class=inverse_cache,
+        interior_lu_by_class=lu_cache,
+        interior_rhs_projection_by_class=rhs_projection_cache,
+        interior_solution_embedding_by_class=solution_embedding_cache,
         trace_from_interior_rhs_by_class=rhs_trace_cache,
+        interior_residual_projection_by_class=residual_projection_cache,
         full_rows=full_rows,
         trace_rows=trace_rows,
         active_rows=active_rows,
         appended_rows=appended_global_rows,
         interior_rows=interior_rows,
+        active_interior_rows=active_interior_rows,
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
@@ -752,6 +1078,28 @@ def build_unconstrained_assembly_time_condensation(
             "local_tensor_dimension": dimension,
             "local_trace_dimension": int(len(trace_positions)),
             "local_interior_dimension": int(len(interior_positions)),
+            "regionwise_interior_p_active": regionwise_p,
+            "regionwise_high_cell_count": global_high_cells,
+            "regionwise_low_cell_count": global_low_cells,
+            "regionwise_high_interior_dimension": int(
+                len(interior_positions)
+            ),
+            "regionwise_low_interior_dimension": int(
+                low_interior_dimension
+            ),
+            "active_cell_interior_modes": int(active_interior_rows),
+            "active_full3d_equivalent_dofs": int(
+                trace_rows + active_interior_rows
+            ),
+            "storage_function_space_dofs": int(full_rows),
+            "inactive_max_p_rows_retained_in_matrix": False,
+            "regionwise_mesh_geometry_sha256": regionwise_geometry_hash,
+            "regionwise_high_canonical_cell_ids": list(
+                high_canonical_ids
+            ),
+            "regionwise_low_cell_kernel_compiled_directly": bool(
+                regionwise_p
+            ),
             "full_global_matrix_allocated": False,
             "full_trace_matrix_allocated": False,
             "embedded_mpc_slave_identity_rows_allocated": False,
@@ -936,10 +1284,17 @@ def cell_interior_schur_bilinear(
             or not np.any(right_values)
         ):
             continue
+        projection = condensed.interior_rhs_projection_by_class[
+            cell.class_key
+        ]
+        projected_left = projection @ left_values
+        projected_right = projection @ right_values
         local += np.vdot(
-            left_values,
-            condensed.interior_inverse_by_class[cell.class_key]
-            @ right_values,
+            projected_left,
+            lu_solve(
+                condensed.interior_lu_by_class[cell.class_key],
+                projected_right,
+            ),
         )
     return complex(
         condensed.matrix.getComm().tompi4py().allreduce(
@@ -1000,8 +1355,16 @@ def recover_owned_cell_interiors(
                 )
             values = (
                 values
-                + condensed.interior_inverse_by_class[cell.class_key]
-                @ rhs_values[rows - rhs_start]
+                + condensed.interior_solution_embedding_by_class[
+                    cell.class_key
+                ]
+                @ lu_solve(
+                    condensed.interior_lu_by_class[cell.class_key],
+                    condensed.interior_rhs_projection_by_class[
+                        cell.class_key
+                    ]
+                    @ rhs_values[rows - rhs_start],
+                )
             )
         result.append((cell.interior_original_dofs, values))
     return tuple(result)

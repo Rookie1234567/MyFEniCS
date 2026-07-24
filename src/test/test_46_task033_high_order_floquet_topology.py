@@ -21,6 +21,7 @@ from src.constraints import floquet_3d_high_order
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.constraints.floquet_3d_high_order import build_high_order_constraint_data
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 def _fixture(degree: int, h_nm: float = 5.0):
@@ -197,6 +198,54 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                 first_block.coefficient_transform,
                 second_block.coefficient_transform,
             )
+
+    def test_reduced_p4_trace_p6_interior_uses_exact_p4_constraints(
+        self,
+    ) -> None:
+        base_cfg, mesh_data, _ = _fixture(4)
+        cfg = replace(
+            base_cfg,
+            nedelec_degree=6,
+            nedelec_trace_degree=4,
+            nedelec_interior_degree=6,
+        )
+        V = _create_nedelec_space(mesh_data.mesh, cfg)
+        data = build_high_order_constraint_data(V, mesh_data, cfg)
+        self.assertEqual(data.topology.key.degree, 4)
+        self.assertGreater(data.global_constraint_rows, 0)
+        self.assertEqual(
+            data.global_constraint_rows,
+            data.num_edge_constraints + data.num_face_constraints,
+        )
+        self.assertLessEqual(data.max_masters_per_slave, 6)
+
+        field = fem.Function(V)
+        field.interpolate(
+            lambda x: electric_field_code_values(cfg, x.T).T
+        )
+        field.x.scatter_forward()
+        global_values = _global_owned_coefficients(field)
+        max_error = 0.0
+        for slave_local, start, stop in zip(
+            data.slave_local_dofs,
+            data.offsets[:-1],
+            data.offsets[1:],
+            strict=True,
+        ):
+            predicted = sum(
+                coefficient * global_values[int(master)]
+                for master, coefficient in zip(
+                    data.master_global_dofs[int(start) : int(stop)],
+                    data.coefficients[int(start) : int(stop)],
+                    strict=True,
+                )
+            )
+            max_error = max(
+                max_error,
+                abs(complex(field.x.array[int(slave_local)]) - predicted),
+            )
+        global_error = V.mesh.comm.allreduce(max_error, op=MPI.MAX)
+        self.assertLessEqual(global_error, 2.0e-11)
 
     def test_p1_to_p4_public_dispatcher_finalizes_sparse_mpc(self) -> None:
         for degree in range(1, 5):

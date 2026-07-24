@@ -19,6 +19,7 @@ from src.adaptivity.high_order_resource_audit import (
 from src.common.config_3d import target_stage4_config
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.solvers.common_3d_solve import _petsc_matrix_stats
+from src.solvers.common_3d_solve import _create_nedelec_space
 from src.solvers.hcurl_cell_static_condensation import (
     owned_hcurl_cell_interior_dofs,
 )
@@ -151,6 +152,49 @@ class Task035bHighOrderResourceAuditTests(unittest.TestCase):
         self.assertIn(
             "Floquet-slave elimination",
             audit["static_condensation_projection_semantics"],
+        )
+
+    def test_reduced_p4_trace_p6_interior_inventory_uses_actual_layout(
+        self,
+    ) -> None:
+        cfg = replace(
+            self.cfg,
+            nedelec_degree=6,
+            nedelec_trace_degree=4,
+            nedelec_interior_degree=6,
+        )
+        V = _create_nedelec_space(self.mesh_data.mesh, cfg)
+        audit = hcurl_entity_dof_inventory(
+            V,
+            num_auxiliary_dofs=80,
+            floquet_num_constraints=4124,
+            active_matrix_rows=21824,
+            cell_static_condensation=True,
+            floquet_slave_elimination=True,
+        )
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["degree"], 6)
+        self.assertEqual(audit["trace_degree_inferred"], 4)
+        self.assertFalse(audit["uniform_standard_n1curl_layout"])
+        self.assertEqual(audit["basix_element_dimension"], 642)
+        self.assertEqual(
+            audit["global_dof_contributions"],
+            {
+                "edge": 4268,
+                "face_interior": 21600,
+                "cell_interior": 113400,
+            },
+        )
+        self.assertEqual(audit["actual_nedelec_dofs"], 139268)
+        self.assertEqual(
+            audit["theoretical_static_condensed_augmented_rows"],
+            25948,
+        )
+        self.assertEqual(
+            audit[
+                "theoretical_static_condensed_periodic_independent_rows"
+            ],
+            21824,
         )
 
     def test_formal_mpi8_p6_condensation_record_is_full_system_qualified(

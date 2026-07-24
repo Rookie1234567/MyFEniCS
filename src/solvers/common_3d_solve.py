@@ -622,5 +622,40 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
 
 
 def _create_nedelec_space(msh, cfg: SimulationConfig3D):
-    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
+    if cfg.nedelec_reduced_trace_enabled:
+        if "hexahedron" not in str(msh.basix_cell()).lower():
+            raise NotImplementedError(
+                "Task035b reduced-trace H(curl) currently supports "
+                "hexahedra only"
+            )
+        if (
+            cfg.nedelec_trace_degree_resolved
+            >= cfg.nedelec_interior_degree_resolved
+        ):
+            raise ValueError(
+                "reduced-trace H(curl) requires trace degree below "
+                "interior degree"
+            )
+        if (
+            int(cfg.nedelec_degree)
+            != cfg.nedelec_interior_degree_resolved
+        ):
+            raise ValueError(
+                "nedelec_degree must equal the reduced-trace interior degree"
+            )
+        from ..adaptivity.hcurl_regionwise_p import (
+            reduced_trace_hcurl_ufl_element,
+        )
+
+        curl_el = reduced_trace_hcurl_ufl_element(
+            cfg.nedelec_trace_degree_resolved,
+            cfg.nedelec_interior_degree_resolved,
+        )
+    else:
+        curl_el = element(
+            "N1curl",
+            msh.basix_cell(),
+            cfg.nedelec_degree,
+            dtype=default_real_type,
+        )
     return fem.functionspace(msh, curl_el)

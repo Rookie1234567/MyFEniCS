@@ -101,6 +101,12 @@ class SimulationConfig3D:
     incident_e0_v_per_m: float = 1.0
 
     nedelec_degree: int = 2
+    # Task035b research-only reduced-trace element.  When both values are
+    # unset, ``nedelec_degree`` retains the ordinary uniform-p semantics.
+    # A distinct trace/interior pair is currently qualified only for the fixed
+    # rectangular hexahedral target and assembly-time cell condensation.
+    nedelec_trace_degree: int | None = None
+    nedelec_interior_degree: int | None = None
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
@@ -145,6 +151,12 @@ class SimulationConfig3D:
     # condense cell interiors, and apply Floquet constraints before global
     # insertion. The full FE and full-trace matrices are never allocated.
     stage4_assembly_time_cell_static_condensation: bool = False
+    # Task035b local-p lane. The FE container uses the reduced-trace custom
+    # element, while assembly projects cells outside this canonical-ID set to
+    # the embedded low-order interior space before Schur elimination.
+    stage4_regionwise_interior_p: bool = False
+    stage4_regionwise_high_canonical_cell_ids: tuple[int, ...] = ()
+    stage4_regionwise_mesh_geometry_sha256: str | None = None
     # Task035b lifecycle opt-in. After the recovered field and true residual
     # are available, release KSP/MUMPS factors and the reduced Mat/Vec objects
     # before field and power postprocessing. The ordinary lifecycle remains
@@ -298,6 +310,35 @@ class SimulationConfig3D:
                 "aliases 'topological_edges'/'sparse_facet'."
             )
         return mode
+
+    @property
+    def nedelec_trace_degree_resolved(self) -> int:
+        degree = (
+            int(self.nedelec_degree)
+            if self.nedelec_trace_degree is None
+            else int(self.nedelec_trace_degree)
+        )
+        if degree < 1:
+            raise ValueError("nedelec_trace_degree must be positive")
+        return degree
+
+    @property
+    def nedelec_interior_degree_resolved(self) -> int:
+        degree = (
+            int(self.nedelec_degree)
+            if self.nedelec_interior_degree is None
+            else int(self.nedelec_interior_degree)
+        )
+        if degree < 1:
+            raise ValueError("nedelec_interior_degree must be positive")
+        return degree
+
+    @property
+    def nedelec_reduced_trace_enabled(self) -> bool:
+        return (
+            self.nedelec_trace_degree_resolved
+            != self.nedelec_interior_degree_resolved
+        )
 
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
@@ -484,6 +525,15 @@ class SimulationConfig3D:
         data["mesh_refinement_radius_resolved"] = self.mesh_refinement_radius_resolved
         data["floquet_constraint_mode_requested"] = (
             self.floquet_constraint_mode_requested
+        )
+        data["nedelec_trace_degree_resolved"] = (
+            self.nedelec_trace_degree_resolved
+        )
+        data["nedelec_interior_degree_resolved"] = (
+            self.nedelec_interior_degree_resolved
+        )
+        data["nedelec_reduced_trace_enabled"] = (
+            self.nedelec_reduced_trace_enabled
         )
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [

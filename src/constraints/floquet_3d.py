@@ -92,7 +92,7 @@ def _qualified_constraint_mode(
 
 def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     requested = cfg.floquet_constraint_mode_requested
-    degree = int(cfg.nedelec_degree)
+    degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = V is not None and _mesh_is_tetrahedron(V.mesh)
     fixed_target_high_order = (
         cfg.stage_case == "stage4_block_grating"
@@ -156,7 +156,7 @@ def _resolve_constraint_mode(V, cfg: SimulationConfig3D) -> str:
     )
 
 def _require_supported_topological_edges(V, cfg: SimulationConfig3D) -> None:
-    if int(cfg.nedelec_degree) != 1:
+    if cfg.nedelec_trace_degree_resolved != 1:
         raise NotImplementedError(
             "3D explicit Floquet edge topology constraints currently support only degree=1 N1curl. "
             f"Requested degree={cfg.nedelec_degree}."
@@ -164,7 +164,7 @@ def _require_supported_topological_edges(V, cfg: SimulationConfig3D) -> None:
 
 
 def _require_supported_topological_trace_p2(V, cfg: SimulationConfig3D) -> None:
-    if int(cfg.nedelec_degree) != 2:
+    if cfg.nedelec_trace_degree_resolved != 2:
         raise NotImplementedError(
             "3D explicit high-order Floquet trace constraints currently support only degree=2 N1curl. "
             f"Requested degree={cfg.nedelec_degree}."
@@ -1845,7 +1845,7 @@ def _build_double_floquet_mpc_high_order(
 ) -> DoubleFloquet3DData:
     """Create the qualified phase-cacheable high-order Floquet MPC."""
 
-    degree = int(cfg.nedelec_degree)
+    degree = cfg.nedelec_trace_degree_resolved
     tetrahedral = _mesh_is_tetrahedron(V.mesh)
     fixed_target_high_order = (
         cfg.stage_case == "stage4_block_grating"

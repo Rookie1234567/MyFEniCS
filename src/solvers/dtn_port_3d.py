@@ -299,6 +299,12 @@ def _assembly_time_full_operator_residual(
                 full_rhs.getValues(cell.interior_original_dofs),
                 dtype=np.complex128,
             )
+            values = (
+                condensed.interior_residual_projection_by_class[
+                    cell.class_key
+                ]
+                @ values
+            )
             local_interior_sq += float(np.vdot(values, values).real)
             local_interior_max = max(
                 local_interior_max,
@@ -373,8 +379,9 @@ def _assembly_time_full_operator_residual(
             "eliminated_cell_interior_max_abs_residual": interior_max,
             "full_operator_residual_method": (
                 "explicit reduced trace+DtN Mat action combined with "
-                "matrix-free dolfinx_mpc UFL action on every eliminated "
-                "cell-interior equation, including condensed full-space RHS"
+                "matrix-free dolfinx_mpc UFL action projected onto every "
+                "active eliminated cell-interior test space, including "
+                "condensed full-space RHS"
             ),
             "full_global_matrix_allocated_for_residual": False,
             "full_trace_matrix_allocated_for_residual": False,
@@ -1517,6 +1524,16 @@ def solve_stage4_dtn_port_total_field(
             "assembly-time cell condensation directly builds the Floquet-"
             "independent trace system and requires both Task035b flags"
         )
+    if cfg.stage4_regionwise_interior_p and (
+        not cfg.stage4_assembly_time_cell_static_condensation
+        or not cfg.nedelec_reduced_trace_enabled
+        or cfg.stage_case != "stage4_block_grating"
+        or cfg.geometry_kind != "rectangular_block_grating"
+    ):
+        raise ValueError(
+            "Task035b regionwise interior-p requires the fixed rectangular "
+            "target, a reduced-trace element, and assembly-time condensation"
+        )
     if _use_zero_order_local_robin_dtn(cfg):
         return _solve_zero_order_local_robin_dtn(
             a=a,
@@ -1547,6 +1564,38 @@ def solve_stage4_dtn_port_total_field(
 
     t0 = time.perf_counter()
     if cfg.stage4_assembly_time_cell_static_condensation:
+        regionwise_element = None
+        regionwise_low_compiled_form = None
+        if cfg.stage4_regionwise_interior_p:
+            import basix.ufl
+
+            from ..adaptivity.hcurl_regionwise_p import (
+                create_reduced_trace_hcurl_element,
+            )
+
+            regionwise_element = create_reduced_trace_hcurl_element(
+                cfg.nedelec_trace_degree_resolved,
+                cfg.nedelec_interior_degree_resolved,
+            )
+            low_space = fem.functionspace(
+                mesh_data.mesh,
+                basix.ufl.wrap_element(regionwise_element.low_element),
+            )
+            low_test = ufl.TestFunction(low_space)
+            low_trial = ufl.TrialFunction(low_space)
+            arguments = a.arguments()
+            if len(arguments) != 2:
+                raise ValueError(
+                    "regionwise-p requires a bilinear form with two arguments"
+                )
+            low_form = ufl.replace(
+                a,
+                {
+                    arguments[0]: low_test,
+                    arguments[1]: low_trial,
+                },
+            )
+            regionwise_low_compiled_form = fem.form(low_form)
         assembly_time_system = (
             build_unconstrained_assembly_time_condensation(
                 fem.form(a),
@@ -1554,6 +1603,16 @@ def solve_stage4_dtn_port_total_field(
                 mesh_data.cell_tags,
                 mpc=floquet_data.mpc,
                 appended_global_rows=n_aux,
+                regionwise_element=regionwise_element,
+                regionwise_low_compiled_form=(
+                    regionwise_low_compiled_form
+                ),
+                regionwise_high_canonical_cell_ids=(
+                    cfg.stage4_regionwise_high_canonical_cell_ids
+                ),
+                regionwise_mesh_geometry_sha256=(
+                    cfg.stage4_regionwise_mesh_geometry_sha256
+                ),
             )
         )
         A_base = None

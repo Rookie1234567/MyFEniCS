@@ -24,6 +24,7 @@ class ReducedTraceHcurlElement:
     """One custom element and the lower-interior embedding it contains."""
 
     element: basix.finite_element.FiniteElement
+    low_element: basix.finite_element.FiniteElement
     trace_degree: int
     interior_degree: int
     trace_dofs: np.ndarray
@@ -208,6 +209,7 @@ def create_reduced_trace_hcurl_element(
     }
     return ReducedTraceHcurlElement(
         element=custom,
+        low_element=trace_element,
         trace_degree=trace_degree,
         interior_degree=interior_degree,
         trace_dofs=custom_trace_dofs,
