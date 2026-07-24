@@ -32,6 +32,7 @@ def build_record(
     *,
     base_source: dict[str, str] | None = None,
     dwr_source: dict[str, str] | None = None,
+    generator_source_commit: str | None = None,
 ) -> dict[str, Any]:
     """Rebuild the fixed h10 hexa mesh and join all available cell signals."""
 
@@ -56,6 +57,10 @@ def build_record(
             "base_p4_p5_p6_classifier": base_source,
             "p4_p5_multigoal_dwr": dwr_source,
         },
+        "generator_source": {
+            "commit_sha": generator_source_commit,
+            "verified_clean_sha": generator_source_commit,
+        },
         "cell_geometry_priors": priors,
     }
 
@@ -64,12 +69,21 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-classifier-record", type=Path, required=True)
     parser.add_argument("--dwr-record", type=Path, required=True)
+    parser.add_argument("--verified-clean-sha", required=True)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
 
 def main() -> int:
     args = _parse_args()
+    if (
+        len(args.verified_clean_sha) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in args.verified_clean_sha.lower()
+        )
+    ):
+        raise ValueError("--verified-clean-sha must be a full 40-hex commit")
     base_path = args.base_classifier_record.resolve()
     dwr_path = args.dwr_record.resolve()
     record = build_record(
@@ -77,6 +91,7 @@ def main() -> int:
         json.loads(dwr_path.read_text(encoding="utf-8")),
         base_source={"path": str(base_path), "sha256": _sha256(base_path)},
         dwr_source={"path": str(dwr_path), "sha256": _sha256(dwr_path)},
+        generator_source_commit=args.verified_clean_sha,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
