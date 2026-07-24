@@ -1,0 +1,206 @@
+{
+  "schema_version": "task035b.missing-p6-trace-complement-preflight.v1",
+  "benchmark_id": "task035b_missing_p6_trace_complement_preflight",
+  "status": "missing_p6_trace_complement_preflight_pass",
+  "pass": true,
+  "classification": "lightweight_structural_evidence",
+  "source": {
+    "commit_sha": "1c798c391cf6eea999f68b5643f1b73ea226d557",
+    "verified_clean_sha": "1c798c391cf6eea999f68b5643f1b73ea226d557",
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "tracked_source_dirty": false,
+    "stable_and_clean_before": true,
+    "cleanliness_command": "git status --short --untracked-files=all",
+    "checks": {
+      "full_verified_sha": true,
+      "head_matches_verified_sha": true,
+      "expected_branch": true,
+      "tracked_and_untracked_worktree_clean": true
+    }
+  },
+  "source_file_sha256": {
+    "benchmarks/task035b_missing_p6_trace_preflight.py": "0796d4899b8361b4b567459001419e48095d95d4c7343088a68e99363155b0e4",
+    "src/adaptivity/missing_p6_trace_sensitivity.py": "fe3513a29841daf488f860e120a160da640f3f772f5dc9266e9c34c6208cc7ea",
+    "src/adaptivity/hcurl_regionwise_p.py": "68e61e755606ef14f7193ec0c0ac569a2dcd34e25283be2548e6df23411b94fd"
+  },
+  "environment": {
+    "schema_version": "task035b.missing-p6-trace-environment.v1",
+    "pass": true,
+    "checks": {
+      "qualified_activation_marker": true,
+      "repo_virtualenv_python": true,
+      "working_directory_is_repo_root": true,
+      "linux_runtime": true,
+      "complex128_petsc": true,
+      "int32_petsc": true,
+      "serial_preflight_only": true
+    },
+    "python_executable": "/usr/bin/python3.12",
+    "python_version": "3.12.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "uname": [
+      "Linux",
+      "DESKTOP-O598DT1",
+      "6.18.33.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+      "x86_64",
+      "x86_64"
+    ],
+    "git_executable": "/usr/bin/git",
+    "mpiexec_executable": "/usr/bin/mpiexec",
+    "basix_version": "0.10.0",
+    "dolfinx_version": "0.10.0.post2",
+    "numpy_version": "1.26.4",
+    "scipy_version": "1.11.4",
+    "petsc4py_version": "3.19.6",
+    "mpi4py_version": "3.1.5",
+    "petsc_version": [
+      3,
+      19,
+      6
+    ],
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_world_size": 1,
+    "mpi_library_version": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "qualified_activation_marker": "1"
+  },
+  "scope": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "cell_type": "hexahedron",
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "enriched_trace_degree": 6,
+    "ordinary_default_changed": false,
+    "scientific_gate_relaxed": false
+  },
+  "pde": {
+    "status": "not_run",
+    "heavy_case_started": false,
+    "mesh_built": false,
+    "form_compiled": false,
+    "global_matrix_assembled": false,
+    "factorization_started": false,
+    "solver_started": false,
+    "solver_failure": false
+  },
+  "missing_trace_mode_inventory": {
+    "reference_cell_missing_trace_modes": 132,
+    "missing_edge_modes": 12,
+    "missing_face_modes": 120,
+    "missing_cell_interior_modes": 0,
+    "edge_count": 12,
+    "face_count": 6,
+    "missing_modes_per_edge": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "missing_modes_per_face": [
+      20,
+      20,
+      20,
+      20,
+      20,
+      20
+    ]
+  },
+  "complement_audit": {
+    "schema_version": "task035b.missing-p6-trace-entity-complement.v1",
+    "status": "missing_p6_trace_entity_complement_pass",
+    "pass": true,
+    "canonical": false,
+    "production_qualified": false,
+    "ordinary_default_changed": false,
+    "cell_type": "hexahedron",
+    "trace_degree": 5,
+    "enriched_degree": 6,
+    "retained_local_dimension": 750,
+    "enriched_local_dimension": 882,
+    "retained_local_trace_dimension": 300,
+    "enriched_local_trace_dimension": 432,
+    "missing_local_trace_dimension": 132,
+    "missing_edge_modes_per_entity": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "missing_face_modes_per_entity": [
+      20,
+      20,
+      20,
+      20,
+      20,
+      20
+    ],
+    "retained_embedding_rank": 750,
+    "direct_sum_rank": 882,
+    "direct_sum_condition_number": 240.45945569486435,
+    "missing_interior_leakage_max": 0.0,
+    "entity_orientation_equivariance_error_max": 1.217799726847945e-13,
+    "missing_orientation_invariance_error_max": 1.8111186738824325e-14,
+    "missing_induced_unitarity_error_max": 1.1938366961672386e-14,
+    "retained_to_enriched_sha256": "1736a04236e3167c257bb105cf3f16b4102d76cd0ae87b29f0a5e528b0fbb36c",
+    "missing_to_enriched_sha256": "e35791eebef59c2a2eced2569c931fe0432448331abd3617eee7fa4982f3187f",
+    "checks": {
+      "retained_embedding_full_column_rank": true,
+      "missing_dimension_closes_enriched_space": true,
+      "direct_sum_full_rank": true,
+      "missing_modes_are_trace_only": true,
+      "entity_embedding_orientation_equivariant": true,
+      "missing_entity_subspaces_orientation_invariant": true,
+      "induced_missing_transformations_unitary": true,
+      "candidate_matrix_not_constructed": true,
+      "no_inactive_p6_rows_retained_in_candidate_matrix": true
+    },
+    "candidate_matrix_constructed": false,
+    "inactive_p6_rows_retained_in_candidate_matrix": false,
+    "actual_dwr_indicator": false,
+    "lane_b_formal_selection_authorized": false,
+    "scope": "reference-cell entity complement and orientation closure; global active numbering, periodic orbit closure, exact-sequence closure of a selected subset, and candidate assembly remain separate gates"
+  },
+  "diagnostic_semantics": {
+    "candidate_matrix_constructed": false,
+    "inactive_p6_rows_retained_in_candidate_matrix": false,
+    "actual_missing_trace_residual_computed": false,
+    "actual_missing_trace_adjoint_residual_computed": false,
+    "actual_dwr_indicator": false,
+    "lane_b_formal_selection_authorized": false,
+    "reason": "This record qualifies only the reference-cell p5/p6 entity complement. No target operator, residual, adjoint correction, or selected trace candidate is run."
+  },
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "clean_source_identity_hash_bound": true,
+      "qualified_environment": true,
+      "complete_complement_audit_pass": true,
+      "retained_dimension_is_750": true,
+      "enriched_dimension_is_882": true,
+      "missing_trace_mode_count_is_132": true,
+      "missing_modes_are_edge_face_trace_only": true,
+      "candidate_matrix_not_constructed": true,
+      "inactive_p6_rows_not_retained": true,
+      "actual_dwr_not_claimed": true,
+      "lane_b_selection_not_authorized": true,
+      "pde_not_run": true
+    }
+  }
+}
