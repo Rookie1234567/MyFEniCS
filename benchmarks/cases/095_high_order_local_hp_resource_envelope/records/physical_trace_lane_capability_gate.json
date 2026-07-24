@@ -1,0 +1,284 @@
+{
+  "schema_version": "task035b.physical-trace-lane-capability-gate.v1",
+  "benchmark_id": "task035b_physical_trace_lane_capability_gate",
+  "status": "capability_stop_not_run",
+  "pass": true,
+  "audit_completed": true,
+  "classification": "controlled_stop_missing_physical_trace_dwr_capabilities",
+  "record_semantics": "pass means the fail-closed capability audit completed; it does not authorize a trace subset, a PDE, or a candidate",
+  "candidate_count": 0,
+  "candidate_authorized": false,
+  "pde_run_count": 0,
+  "pde_authorized": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "commit_sha": "4a9bf317562c5713f1da0cf5597fcaecedce38e0",
+    "verified_clean_sha": "4a9bf317562c5713f1da0cf5597fcaecedce38e0",
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "tracked_source_dirty": false,
+    "stable_and_clean_before": true,
+    "status_before": "",
+    "source_files_sha256_before": {
+      "benchmarks/task035b_physical_trace_lane_capability_gate.py": "be963e6306e5d1d8712e128b99d1e736797866bfcb2da41c599728875f9eb44d",
+      "src/adaptivity/hcurl_regionwise_p.py": "68e61e755606ef14f7193ec0c0ac569a2dcd34e25283be2548e6df23411b94fd",
+      "src/adaptivity/inverse_trace_interior_budget_audit.py": "476cb974f2ef3a8b94e9ecb8ba249c9de68d44d23952ab4ae1e915ea3d9eadd8",
+      "src/adaptivity/missing_p6_trace_sensitivity.py": "eb5740029da6f3ecb2caa3b828a3b45f40c08632d64f3dbbfa130a9ec66411f3"
+    },
+    "checks": {
+      "full_verified_sha": true,
+      "head_matches_verified_sha": true,
+      "expected_branch": true,
+      "tracked_and_untracked_worktree_clean": true
+    },
+    "head_after_build": "4a9bf317562c5713f1da0cf5597fcaecedce38e0",
+    "status_after_build_before_write": "",
+    "source_files_sha256_after": {
+      "benchmarks/task035b_physical_trace_lane_capability_gate.py": "be963e6306e5d1d8712e128b99d1e736797866bfcb2da41c599728875f9eb44d",
+      "src/adaptivity/hcurl_regionwise_p.py": "68e61e755606ef14f7193ec0c0ac569a2dcd34e25283be2548e6df23411b94fd",
+      "src/adaptivity/inverse_trace_interior_budget_audit.py": "476cb974f2ef3a8b94e9ecb8ba249c9de68d44d23952ab4ae1e915ea3d9eadd8",
+      "src/adaptivity/missing_p6_trace_sensitivity.py": "eb5740029da6f3ecb2caa3b828a3b45f40c08632d64f3dbbfa130a9ec66411f3"
+    },
+    "stable_and_clean_after_build": true,
+    "closure_checks": {
+      "head_stable_after_build": true,
+      "branch_stable_after_build": true,
+      "worktree_still_clean_before_exclusive_write": true,
+      "source_files_stable_after_build": true
+    }
+  },
+  "environment": {
+    "checks": {
+      "qualified_activation_marker": true,
+      "repo_virtualenv_python": true,
+      "linux_runtime": true,
+      "complex128_petsc": true,
+      "int32_petsc": true,
+      "serial_postprocess_only": true
+    },
+    "python_executable": "/usr/bin/python3.12",
+    "python_version": "3.12.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_world_size": 1
+  },
+  "authorities": {
+    "missing_complement": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/missing_p6_trace_complement_preflight_v2.json",
+      "expected_sha256": "899b320ed6659f745cb1ed8532cb6752cdfca338c703f1608cd4233473370a32",
+      "actual_sha256": "899b320ed6659f745cb1ed8532cb6752cdfca338c703f1608cd4233473370a32",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.missing-p6-trace-complement-preflight.v2",
+      "actual_schema_version": "task035b.missing-p6-trace-complement-preflight.v2",
+      "schema_match": true,
+      "source_commit_sha": "5c2045305049008082021326a74311a64c190d4c"
+    },
+    "inverse_budget": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/inverse_trace_interior_budget_exchange_preflight.json",
+      "expected_sha256": "d010d69d26429993c1f07725a4b63653cf6d79d1155ea4eef76d0077c3b189f9",
+      "actual_sha256": "d010d69d26429993c1f07725a4b63653cf6d79d1155ea4eef76d0077c3b189f9",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.inverse-trace-interior-budget-exchange-audit.v1",
+      "actual_schema_version": "task035b.inverse-trace-interior-budget-exchange-audit.v1",
+      "schema_match": true,
+      "source_commit_sha": "a6e572f991674540a8b760d4ebe23fe663594c70"
+    },
+    "global_p6_h14_discriminator": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_p6_h14_trace_discriminator.json",
+      "expected_sha256": "a16bb533222a73cbe5dede8b3abe93d2e047ef168a6ebc74e85790433f767cad",
+      "actual_sha256": "a16bb533222a73cbe5dede8b3abe93d2e047ef168a6ebc74e85790433f767cad",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.global-p6-h14-trace-discriminator.v1",
+      "actual_schema_version": "task035b.global-p6-h14-trace-discriminator.v1",
+      "schema_match": true,
+      "source_commit_sha": "03496d4d7b419e2826332cf5bf0573fde4aab409"
+    },
+    "fixed_h14": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_directional_z_mpi8.json",
+      "expected_sha256": "e93f50155b3c8517292794cb9735730ebf738410aecafe00f43f7959c150a127",
+      "actual_sha256": "e93f50155b3c8517292794cb9735730ebf738410aecafe00f43f7959c150a127",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "actual_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "schema_match": true,
+      "source_commit_sha": "d958b2bfc5eaf9920f3220a519d20b11e5da3248"
+    },
+    "fixed_h13": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json",
+      "expected_sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+      "actual_sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "actual_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "schema_match": true,
+      "source_commit_sha": "df4046f8ba9f319a2501c6a0376a7c81063b5905"
+    },
+    "h15_channel_adjoint_proxy": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_channel_adjoints_verification_v2_mpi8.json",
+      "expected_sha256": "56023fcbf5a85d8d5d2db062283cae8b66771c1543d025731a0c9eefa4a8d0e5",
+      "actual_sha256": "56023fcbf5a85d8d5d2db062283cae8b66771c1543d025731a0c9eefa4a8d0e5",
+      "sha256_match": true,
+      "expected_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "actual_schema_version": "task035b.fixed-trace-watchdog.v1",
+      "schema_match": true,
+      "source_commit_sha": "572c4ff3eb2bf360a72a593a105f5cd628c985c8"
+    }
+  },
+  "execution_scope": {
+    "pure_postprocess": true,
+    "mesh_built": false,
+    "form_compiled": false,
+    "matrix_assembled": false,
+    "solver_started": false,
+    "pde_run": false,
+    "subset_selected": false
+  },
+  "local_missing_block_audit": {
+    "retained_local_dimension": 750,
+    "enriched_local_dimension": 882,
+    "retained_local_trace_dimension": 300,
+    "enriched_local_trace_dimension": 432,
+    "missing_local_trace_dimension": 132,
+    "edge_block_count": 12,
+    "edge_block_dimension": 1,
+    "face_block_count": 6,
+    "face_block_dimension": 20,
+    "recomputed_complement_rank": 132,
+    "recomputed_complement_nullity": 0,
+    "recomputed_reference_riesz_rank": 132,
+    "recomputed_reference_riesz_nullity": 0,
+    "rank_nullity_closure_pass": true,
+    "reference_entity_riesz_pass": true,
+    "physical_mesh_riesz": false
+  },
+  "inverse_budget_exact_sequence_audit": {
+    "p6_trace_p5_interior": {
+      "dimension": 672,
+      "curl_rank": 492,
+      "curl_nullity": 180,
+      "expected_gradient_dimension": 281,
+      "missing_gradient_modes": 101,
+      "rank_plus_nullity_closes": true,
+      "exact_sequence_pass": false,
+      "pde_authorized": false
+    },
+    "p6_trace_p4_interior": {
+      "dimension": 540,
+      "curl_rank": 445,
+      "curl_nullity": 95,
+      "expected_gradient_dimension": 244,
+      "missing_gradient_modes": 149,
+      "rank_plus_nullity_closes": true,
+      "exact_sequence_pass": false,
+      "pde_authorized": false
+    }
+  },
+  "mesh_budget_audit": {
+    "full3d_equivalent_dof_limit": 90000,
+    "h14": {
+      "axis_cells": [
+        6,
+        2,
+        11
+      ],
+      "fixed_dofs": 82315,
+      "global_edges": 615,
+      "global_faces": 496,
+      "edge_shell_increment": 615,
+      "face_shell_increment": 9920,
+      "full_trace_increment": 10535,
+      "recomputed_global_p6_dofs": 92850,
+      "available_headroom": 7685,
+      "full_trace_over_limit_by": 2850,
+      "full_trace_fits": false
+    },
+    "h13": {
+      "axis_cells": [
+        6,
+        2,
+        12
+      ],
+      "fixed_dofs": 89740,
+      "global_edges": 668,
+      "global_faces": 540,
+      "edge_shell_increment": 668,
+      "face_shell_increment": 10800,
+      "full_trace_increment": 11468,
+      "recomputed_global_p6_dofs": 101208,
+      "available_headroom": 260,
+      "full_trace_over_limit_by": 11208,
+      "full_trace_fits": false
+    }
+  },
+  "global_h14_discriminator_audit": {
+    "scalar_pass": true,
+    "selected_field_interface_pass": true,
+    "significant_power_pass_count": 9,
+    "significant_complex_amplitude_pass_count": 12,
+    "all_12_power_pass": false,
+    "all_12_complex_amplitude_pass": true,
+    "formal_candidate_eligible": false,
+    "selective_trace_lane_physically_supported": false
+  },
+  "h15_adjoint_proxy_audit": {
+    "goal_count": 16,
+    "actual_hermitian_adjoint_solves_available": true,
+    "exact_full_dual_recovery_available": true,
+    "coefficient_proxy_periodic_components_available": true,
+    "actual_enriched_residual_available": false,
+    "residual_weighted": false,
+    "actual_dwr_indicator": false,
+    "proxy_is_dwr": false,
+    "lane_b_selection_authorized": false
+  },
+  "physical_prerequisites": {
+    "reference_entity_complement_available": true,
+    "reference_entity_riesz_available": true,
+    "actual_hermitian_channel_adjoints_available": true,
+    "physical_piola_riesz_available": false,
+    "missing_p6_trace_closed_floquet_orbits_available": false,
+    "missing_mode_orientation_phase_pullbacks_available": false,
+    "actual_global_missing_trace_residual_available": false,
+    "complement_schur_inverse_available": false,
+    "true_active_global_numbering_available": false,
+    "actual_residual_weighted_dwr_available": false,
+    "selected_subset_exact_sequence_proved": false,
+    "selected_candidate_physically_reduced_rows_proved": false,
+    "all_required_capabilities_available": false
+  },
+  "selection_contract": {
+    "subset_selected": false,
+    "coordinatewise_mode_ranking_authorized": false,
+    "partial_face_mode_selection_authorized": false,
+    "minimum_local_edge_block_dimension": 1,
+    "minimum_local_face_selection_unit": "whole_missing_p6_face_shell",
+    "minimum_local_face_selection_unit_dofs": 20,
+    "global_orbit_closed_selection_unit_dofs": null,
+    "global_orbit_cost_status": "unknown_without_true_numbering_and_missing-mode Floquet-orbit pullbacks",
+    "exact_sequence_closure_required_for_any_entity_combination": true
+  },
+  "decision": {
+    "classification": "controlled_stop",
+    "reason": "reference-cell complement/Riesz and recovered-adjoint coefficient proxies do not supply physical Piola/Riesz, missing-mode Floquet-orbit pullbacks, a complement Schur solve, actual enriched residual-weighted DWR, or true active numbering",
+    "subset_may_not_be_claimed": true,
+    "next_pde_authorized": false,
+    "lane_b_not_currently_executable": true,
+    "selection_not_authorized": true
+  },
+  "qualification": {
+    "pass": true,
+    "evidence_valid": true,
+    "checks": {
+      "all_authorities_sha_bound": true,
+      "all_schemas_match": true,
+      "budgets_recomputed_from_entity_counts": true,
+      "local_rank_nullity_recomputed": true,
+      "local_algebra_matches_sha_bound_authority": true,
+      "inverse_algebra_matches_sha_bound_authority": true,
+      "inverse_budget_record_is_controlled_negative": true,
+      "proxy_not_mislabeled_as_dwr": true,
+      "no_subset_selected": true,
+      "pde_denied_when_capabilities_missing": true
+    }
+  }
+}
