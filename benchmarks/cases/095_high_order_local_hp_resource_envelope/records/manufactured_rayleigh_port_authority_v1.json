@@ -1,0 +1,936 @@
+{
+  "schema_version": "task035b.manufactured-rayleigh-port-authority.v1",
+  "benchmark_id": "task035b_manufactured_rayleigh_port_authority",
+  "status": "manufactured_rayleigh_port_authority_pass",
+  "pass": true,
+  "classification": "independent_manufactured_physics_authority",
+  "source": {
+    "commit_sha": "c8874ad4d6d73679f2bfd4a828186b41386f1004",
+    "verified_clean_sha": "c8874ad4d6d73679f2bfd4a828186b41386f1004",
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "tracked_source_dirty": false,
+    "stable_and_clean_before": true,
+    "checks": {
+      "full_verified_sha": true,
+      "head_matches_verified_sha": true,
+      "expected_branch": true,
+      "tracked_and_untracked_worktree_clean": true,
+      "head_stable_after_build": true,
+      "branch_stable_after_build": true,
+      "worktree_still_clean_before_exclusive_write": true
+    },
+    "head_after_sha": "c8874ad4d6d73679f2bfd4a828186b41386f1004",
+    "branch_after": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "status_after_before_record_write": "",
+    "stable_and_clean_after": true
+  },
+  "source_file_sha256": {
+    "benchmarks/task035b_manufactured_rayleigh_port_authority.py": "44eca06d45150967247f3137b8eca1c01e13eb74ab949fa7e5b768ccc57686ea",
+    "src/solvers/manufactured_rayleigh_port_authority.py": "0153ebb7939986a8f44e55b5f5067cc878ed8dd08a53e54ea220a9d7080dd9dc",
+    "src/common/modes_3d.py": "7646129d324a6be3a2a9579bf5222bbb032a5a80e83f45c26512597e4d94e362",
+    "src/solvers/dtn_port_3d.py": "0626a201369d5ca83b4fd55f19ea0d63bd9bfe0af25b09c80a92e961659ef03e"
+  },
+  "environment": {
+    "pass": true,
+    "checks": {
+      "qualified_activation_marker": true,
+      "repo_virtualenv_python": true,
+      "working_directory_is_repo_root": true,
+      "linux_runtime": true,
+      "complex128_petsc": true,
+      "int32_petsc": true,
+      "serial_lightweight_authority": true
+    },
+    "python_executable": "/usr/bin/python3.12",
+    "python_version": "3.12.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "git_executable": "/usr/bin/git",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_world_size": 1,
+    "qualified_activation_marker": "1"
+  },
+  "scope": {
+    "geometry": "manufactured homogeneous periodic cell",
+    "purpose": "independent authority for the Task035b finite-port Rayleigh convention",
+    "ordinary_default_changed": false,
+    "scientific_gate_relaxed": false
+  },
+  "pde": {
+    "status": "not_run",
+    "heavy_case_started": false,
+    "mesh_built": false,
+    "form_compiled": false,
+    "global_matrix_assembled": false,
+    "factorization_started": false,
+    "solver_started": false
+  },
+  "physics": {
+    "schema_version": "task035b.manufactured-rayleigh-port-physics.v1",
+    "method": "closed_form_maxwell_rayleigh_modes_plus_tensor_gauss_plane_assembly",
+    "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+    "projection_inner_product": "integral E_t dot conjugate(reference_t) dS",
+    "coordinate_convention": "a_boundary=exp(i*kz*z_port)*a_global_z",
+    "plane_lengths": {
+      "x": 50.0,
+      "y": 40.0
+    },
+    "quadrature_points_per_axis": 12,
+    "tolerance": 5e-12,
+    "propagating_cases": [
+      {
+        "side": "top",
+        "polarization": "s",
+        "direction": "outgoing",
+        "vertical_sign": 1,
+        "outward_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "k_vector": [
+          [
+            0.12566370614359174,
+            0.0
+          ],
+          [
+            -0.15707963267948966,
+            0.0
+          ],
+          [
+            0.23586992592429762,
+            0.0
+          ]
+        ],
+        "e_vector": [
+          [
+            0.7808688094430303,
+            -0.0
+          ],
+          [
+            0.6246950475544243,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "h_vector": [
+          [
+            -0.4753121761030246,
+            0.0
+          ],
+          [
+            0.5941402201287808,
+            0.0
+          ],
+          [
+            0.6489034859465092,
+            0.0
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "z_planes": [
+          0.75,
+          4.25
+        ],
+        "expected_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627606
+        ],
+        "assembled_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627605
+        ],
+        "assembled_global_projections": [
+          [
+            0.37,
+            -0.20999999999999996
+          ],
+          [
+            0.37000000000000005,
+            -0.21
+          ]
+        ],
+        "assembled_boundary_projections": [
+          [
+            0.40118165850773785,
+            -0.1416095931672032
+          ],
+          [
+            0.3761353818152813,
+            0.19880184744280557
+          ]
+        ],
+        "outgoing_power_at_planes": [
+          137.71760191063828,
+          137.71760191063825
+        ],
+        "analytic_outgoing_power": 137.71760191063828,
+        "analytic_projection_denominator": 1999.9999999999998,
+        "incoming_power_at_plane_1": -137.71760191063828,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 1.4440986272439598e-16,
+            "k_dot_e": 0.0,
+            "k_dot_h": 8.953411488912551e-17,
+            "faraday": 8.953411488912553e-17,
+            "ampere": 2.002043671973607e-16
+          },
+          "maximum_scale_normalized_residual": 2.002043671973607e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_plane_1_relative": 6.523954914104241e-17,
+          "global_projection_plane_2_relative": 1.3047909828208483e-16,
+          "two_plane_phase_ratio_relative": 1.1102230246251565e-16,
+          "boundary_projection_plane_1_relative": 6.523954914104241e-17,
+          "boundary_projection_plane_2_relative": 1.4588006670080884e-16,
+          "power_invariance_relative": 2.0637673787586127e-16,
+          "power_normalization_relative": 0.0,
+          "global_denominator_analytic_relative": 1.1368683772161603e-16,
+          "local_denominator_analytic_relative": 0.0,
+          "global_denominator_invariance_relative": 1.1368683772161603e-16,
+          "local_denominator_invariance_relative": 0.0
+        },
+        "checks": {
+          "outgoing_vertical_sign_matches_port": true,
+          "outgoing_kz_points_outward": true,
+          "outgoing_power_is_positive": true,
+          "incoming_power_is_negative": true,
+          "global_projection_recovers_plane_independent_amplitude": true,
+          "two_plane_phase_propagation_matches_exp_i_kz_dz": true,
+          "power_is_reference_plane_invariant": true,
+          "power_normalization_matches_analytic_poynting_flux": true,
+          "projection_normalization_matches_analytic_area_norm": true
+        },
+        "pass": true
+      },
+      {
+        "side": "top",
+        "polarization": "p",
+        "direction": "outgoing",
+        "vertical_sign": 1,
+        "outward_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "k_vector": [
+          [
+            0.12566370614359174,
+            0.0
+          ],
+          [
+            -0.15707963267948966,
+            0.0
+          ],
+          [
+            0.23586992592429762,
+            0.0
+          ]
+        ],
+        "e_vector": [
+          [
+            -0.4753121761030246,
+            0.0
+          ],
+          [
+            0.5941402201287808,
+            0.0
+          ],
+          [
+            0.6489034859465092,
+            0.0
+          ]
+        ],
+        "h_vector": [
+          [
+            -0.7808688094430305,
+            0.0
+          ],
+          [
+            -0.6246950475544244,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "z_planes": [
+          0.75,
+          4.25
+        ],
+        "expected_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627606
+        ],
+        "assembled_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627604
+        ],
+        "assembled_global_projections": [
+          [
+            0.37000000000000005,
+            -0.21
+          ],
+          [
+            0.37000000000000005,
+            -0.21
+          ]
+        ],
+        "assembled_boundary_projections": [
+          [
+            0.4011816585077379,
+            -0.1416095931672032
+          ],
+          [
+            0.37613538181528133,
+            0.1988018474428056
+          ]
+        ],
+        "outgoing_power_at_planes": [
+          137.7176019106383,
+          137.7176019106383
+        ],
+        "analytic_outgoing_power": 137.7176019106383,
+        "analytic_projection_denominator": 1157.8485318529374,
+        "incoming_power_at_plane_1": -137.7176019106383,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 1.4440986272439598e-16,
+            "k_dot_e": 8.953411488912551e-17,
+            "k_dot_h": 4.476705744456275e-17,
+            "faraday": 8.953411488912551e-17,
+            "ampere": 2.1931289605008355e-16
+          },
+          "maximum_scale_normalized_residual": 2.1931289605008355e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_plane_1_relative": 1.3047909828208483e-16,
+          "global_projection_plane_2_relative": 1.3047909828208483e-16,
+          "two_plane_phase_ratio_relative": 2.220446049250313e-16,
+          "boundary_projection_plane_1_relative": 1.4588006670080887e-16,
+          "boundary_projection_plane_2_relative": 0.0,
+          "power_invariance_relative": 0.0,
+          "power_normalization_relative": 0.0,
+          "global_denominator_analytic_relative": 0.0,
+          "local_denominator_analytic_relative": 0.0,
+          "global_denominator_invariance_relative": 0.0,
+          "local_denominator_invariance_relative": 0.0
+        },
+        "checks": {
+          "outgoing_vertical_sign_matches_port": true,
+          "outgoing_kz_points_outward": true,
+          "outgoing_power_is_positive": true,
+          "incoming_power_is_negative": true,
+          "global_projection_recovers_plane_independent_amplitude": true,
+          "two_plane_phase_propagation_matches_exp_i_kz_dz": true,
+          "power_is_reference_plane_invariant": true,
+          "power_normalization_matches_analytic_poynting_flux": true,
+          "projection_normalization_matches_analytic_area_norm": true
+        },
+        "pass": true
+      },
+      {
+        "side": "bottom",
+        "polarization": "s",
+        "direction": "outgoing",
+        "vertical_sign": -1,
+        "outward_normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "k_vector": [
+          [
+            0.12566370614359174,
+            0.0
+          ],
+          [
+            -0.15707963267948966,
+            0.0
+          ],
+          [
+            -0.23586992592429762,
+            0.0
+          ]
+        ],
+        "e_vector": [
+          [
+            0.7808688094430303,
+            -0.0
+          ],
+          [
+            0.6246950475544243,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "h_vector": [
+          [
+            0.4753121761030246,
+            0.0
+          ],
+          [
+            -0.5941402201287808,
+            0.0
+          ],
+          [
+            0.6489034859465092,
+            0.0
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "z_planes": [
+          -0.75,
+          -4.25
+        ],
+        "expected_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627606
+        ],
+        "assembled_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627605
+        ],
+        "assembled_global_projections": [
+          [
+            0.37,
+            -0.20999999999999996
+          ],
+          [
+            0.37000000000000005,
+            -0.21
+          ]
+        ],
+        "assembled_boundary_projections": [
+          [
+            0.40118165850773785,
+            -0.1416095931672032
+          ],
+          [
+            0.3761353818152813,
+            0.19880184744280557
+          ]
+        ],
+        "outgoing_power_at_planes": [
+          137.71760191063828,
+          137.71760191063825
+        ],
+        "analytic_outgoing_power": 137.71760191063828,
+        "analytic_projection_denominator": 1999.9999999999998,
+        "incoming_power_at_plane_1": -137.71760191063828,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 1.4440986272439598e-16,
+            "k_dot_e": 0.0,
+            "k_dot_h": 8.953411488912551e-17,
+            "faraday": 8.953411488912553e-17,
+            "ampere": 2.002043671973607e-16
+          },
+          "maximum_scale_normalized_residual": 2.002043671973607e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_plane_1_relative": 6.523954914104241e-17,
+          "global_projection_plane_2_relative": 1.3047909828208483e-16,
+          "two_plane_phase_ratio_relative": 1.1102230246251565e-16,
+          "boundary_projection_plane_1_relative": 6.523954914104241e-17,
+          "boundary_projection_plane_2_relative": 1.4588006670080884e-16,
+          "power_invariance_relative": 2.0637673787586127e-16,
+          "power_normalization_relative": 0.0,
+          "global_denominator_analytic_relative": 1.1368683772161603e-16,
+          "local_denominator_analytic_relative": 0.0,
+          "global_denominator_invariance_relative": 1.1368683772161603e-16,
+          "local_denominator_invariance_relative": 0.0
+        },
+        "checks": {
+          "outgoing_vertical_sign_matches_port": true,
+          "outgoing_kz_points_outward": true,
+          "outgoing_power_is_positive": true,
+          "incoming_power_is_negative": true,
+          "global_projection_recovers_plane_independent_amplitude": true,
+          "two_plane_phase_propagation_matches_exp_i_kz_dz": true,
+          "power_is_reference_plane_invariant": true,
+          "power_normalization_matches_analytic_poynting_flux": true,
+          "projection_normalization_matches_analytic_area_norm": true
+        },
+        "pass": true
+      },
+      {
+        "side": "bottom",
+        "polarization": "p",
+        "direction": "outgoing",
+        "vertical_sign": -1,
+        "outward_normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "k_vector": [
+          [
+            0.12566370614359174,
+            0.0
+          ],
+          [
+            -0.15707963267948966,
+            0.0
+          ],
+          [
+            -0.23586992592429762,
+            0.0
+          ]
+        ],
+        "e_vector": [
+          [
+            0.4753121761030246,
+            0.0
+          ],
+          [
+            -0.5941402201287808,
+            0.0
+          ],
+          [
+            0.6489034859465092,
+            0.0
+          ]
+        ],
+        "h_vector": [
+          [
+            -0.7808688094430305,
+            0.0
+          ],
+          [
+            -0.6246950475544244,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "z_planes": [
+          -0.75,
+          -4.25
+        ],
+        "expected_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627606
+        ],
+        "assembled_boundary_amplitude_ratio": [
+          0.6781567268664733,
+          0.7349173108627604
+        ],
+        "assembled_global_projections": [
+          [
+            0.37000000000000005,
+            -0.21
+          ],
+          [
+            0.37000000000000005,
+            -0.21
+          ]
+        ],
+        "assembled_boundary_projections": [
+          [
+            0.4011816585077379,
+            -0.1416095931672032
+          ],
+          [
+            0.37613538181528133,
+            0.1988018474428056
+          ]
+        ],
+        "outgoing_power_at_planes": [
+          137.7176019106383,
+          137.7176019106383
+        ],
+        "analytic_outgoing_power": 137.7176019106383,
+        "analytic_projection_denominator": 1157.8485318529374,
+        "incoming_power_at_plane_1": -137.7176019106383,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 1.4440986272439598e-16,
+            "k_dot_e": 8.953411488912551e-17,
+            "k_dot_h": 4.476705744456275e-17,
+            "faraday": 8.953411488912551e-17,
+            "ampere": 2.1931289605008355e-16
+          },
+          "maximum_scale_normalized_residual": 2.1931289605008355e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_plane_1_relative": 1.3047909828208483e-16,
+          "global_projection_plane_2_relative": 1.3047909828208483e-16,
+          "two_plane_phase_ratio_relative": 2.220446049250313e-16,
+          "boundary_projection_plane_1_relative": 1.4588006670080887e-16,
+          "boundary_projection_plane_2_relative": 0.0,
+          "power_invariance_relative": 0.0,
+          "power_normalization_relative": 0.0,
+          "global_denominator_analytic_relative": 0.0,
+          "local_denominator_analytic_relative": 0.0,
+          "global_denominator_invariance_relative": 0.0,
+          "local_denominator_invariance_relative": 0.0
+        },
+        "checks": {
+          "outgoing_vertical_sign_matches_port": true,
+          "outgoing_kz_points_outward": true,
+          "outgoing_power_is_positive": true,
+          "incoming_power_is_negative": true,
+          "global_projection_recovers_plane_independent_amplitude": true,
+          "two_plane_phase_propagation_matches_exp_i_kz_dz": true,
+          "power_is_reference_plane_invariant": true,
+          "power_normalization_matches_analytic_poynting_flux": true,
+          "projection_normalization_matches_analytic_area_norm": true
+        },
+        "pass": true
+      }
+    ],
+    "evanescent_cases": [
+      {
+        "side": "top",
+        "polarization": "s",
+        "direction": "outgoing_evanescent",
+        "vertical_sign": 1,
+        "port_z": 12.0,
+        "k_vector": [
+          [
+            0.37699111843077515,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.2145280946069459
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "coordinate_scale_s": [
+          0.0762043192150789,
+          0.0
+        ],
+        "abs_coordinate_scale": 0.0762043192150789,
+        "assembled_global_projection": [
+          0.36999999999999994,
+          -0.20999999999999996
+        ],
+        "assembled_boundary_projection": [
+          0.0281955981095792,
+          -0.01600290703516657
+        ],
+        "global_projection_denominator": 11.61419653406729,
+        "boundary_projection_denominator": 2000.0,
+        "analytic_boundary_projection_denominator": 2000.0,
+        "eliminated_operator_global_z": [
+          -8.479999999999999e-05,
+          -3.789999999999998e-05
+        ],
+        "eliminated_operator_boundary_referenced": [
+          -8.48e-05,
+          -3.789999999999999e-05
+        ],
+        "outward_real_power": -3.2511575127000547e-18,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 7.376128419218239e-17,
+            "k_dot_e": 0.0,
+            "k_dot_h": 9.146399239830615e-17,
+            "faraday": 1.4308343373367903e-16,
+            "ampere": 1.7906822977825102e-16
+          },
+          "maximum_scale_normalized_residual": 1.7906822977825102e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_relative": 1.4588006670080887e-16,
+          "boundary_projection_relative": 1.070141919333182e-16,
+          "coordinate_round_trip_relative": 1.4588006670080887e-16,
+          "denominator_coordinate_scaling_relative": 0.0,
+          "boundary_denominator_analytic_relative": 0.0,
+          "eliminated_operator_relative": 2.063450516243926e-16,
+          "absolute_outward_real_power": 3.2511575127000547e-18
+        },
+        "checks": {
+          "outgoing_evanescent_sign_matches_port": true,
+          "coordinate_scale_is_finite_nonzero": true,
+          "global_projection_recovers_global_z_amplitude": true,
+          "boundary_projection_equals_s_times_global_amplitude": true,
+          "boundary_to_global_coordinate_round_trip": true,
+          "global_denominator_equals_abs_s_sq_times_boundary_denominator": true,
+          "eliminated_operator_is_coordinate_invariant": true,
+          "evanescent_mode_carries_zero_real_power": true
+        },
+        "pass": true
+      },
+      {
+        "side": "bottom",
+        "polarization": "s",
+        "direction": "outgoing_evanescent",
+        "vertical_sign": -1,
+        "port_z": -12.0,
+        "k_vector": [
+          [
+            0.37699111843077515,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.0,
+            -0.2145280946069459
+          ]
+        ],
+        "global_amplitude": [
+          0.37,
+          -0.21
+        ],
+        "coordinate_scale_s": [
+          0.0762043192150789,
+          0.0
+        ],
+        "abs_coordinate_scale": 0.0762043192150789,
+        "assembled_global_projection": [
+          0.36999999999999994,
+          -0.20999999999999996
+        ],
+        "assembled_boundary_projection": [
+          0.0281955981095792,
+          -0.01600290703516657
+        ],
+        "global_projection_denominator": 11.61419653406729,
+        "boundary_projection_denominator": 2000.0,
+        "analytic_boundary_projection_denominator": 2000.0,
+        "eliminated_operator_global_z": [
+          -8.479999999999999e-05,
+          -3.789999999999998e-05
+        ],
+        "eliminated_operator_boundary_referenced": [
+          -8.48e-05,
+          -3.789999999999999e-05
+        ],
+        "outward_real_power": -3.2511575127000547e-18,
+        "source_free_maxwell_identities": {
+          "phasor_convention": "exp(+i*k dot x) with implicit exp(-i*omega*t)",
+          "epsilon_r": [
+            1.0,
+            0.0
+          ],
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "scale_normalized_residuals": {
+            "dispersion": 7.376128419218239e-17,
+            "k_dot_e": 0.0,
+            "k_dot_h": 9.146399239830615e-17,
+            "faraday": 1.4308343373367903e-16,
+            "ampere": 1.7906822977825102e-16
+          },
+          "maximum_scale_normalized_residual": 1.7906822977825102e-16,
+          "checks": {
+            "all_residuals_finite": true,
+            "dispersion_identity": true,
+            "electric_transversality": true,
+            "magnetic_transversality": true,
+            "faraday_identity_k_cross_e_eq_k0_mu_h": true,
+            "ampere_identity_k_cross_h_eq_minus_k0_epsilon_e": true
+          },
+          "pass": true
+        },
+        "errors": {
+          "global_projection_relative": 1.4588006670080887e-16,
+          "boundary_projection_relative": 1.070141919333182e-16,
+          "coordinate_round_trip_relative": 1.4588006670080887e-16,
+          "denominator_coordinate_scaling_relative": 0.0,
+          "boundary_denominator_analytic_relative": 0.0,
+          "eliminated_operator_relative": 2.063450516243926e-16,
+          "absolute_outward_real_power": 3.2511575127000547e-18
+        },
+        "checks": {
+          "outgoing_evanescent_sign_matches_port": true,
+          "coordinate_scale_is_finite_nonzero": true,
+          "global_projection_recovers_global_z_amplitude": true,
+          "boundary_projection_equals_s_times_global_amplitude": true,
+          "boundary_to_global_coordinate_round_trip": true,
+          "global_denominator_equals_abs_s_sq_times_boundary_denominator": true,
+          "eliminated_operator_is_coordinate_invariant": true,
+          "evanescent_mode_carries_zero_real_power": true
+        },
+        "pass": true
+      }
+    ],
+    "maximum_reported_error": 2.220446049250313e-16,
+    "maximum_source_free_maxwell_residual": 2.1931289605008355e-16,
+    "checks": {
+      "four_top_bottom_s_p_propagating_cases_pass": true,
+      "two_top_bottom_evanescent_coordinate_cases_pass": true,
+      "all_reported_errors_are_finite": true,
+      "maximum_reported_error_within_tolerance": true,
+      "all_modes_satisfy_source_free_maxwell_identities": true
+    },
+    "pass": true
+  },
+  "production_contract_bridge": {
+    "schema_version": "task035b.manufactured-rayleigh-production-bridge.v1",
+    "default_mode_identity_sha256": "f039dd14264f7bc2987e75e311ef338682388b1f17a4ea194702ff888f4c7a21",
+    "buffer1_mode_identity_sha256": "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629",
+    "default_mode_count": 80,
+    "default_propagating_mode_count": 80,
+    "buffer1_mode_count": 340,
+    "buffer1_scaled_evanescent_mode_count": 260,
+    "maximum_formula_relative_error": 5.363586903888954e-16,
+    "maximum_production_mode_physics_relative_error": 2.567743460921774e-16,
+    "checks": {
+      "ordinary_default_buffer_is_zero": true,
+      "default_mode_count_is_80": true,
+      "default_ordered_mode_identity_is_frozen": true,
+      "default_top_bottom_sign_and_global_z_coordinate_match": true,
+      "default_propagating_modes_carry_positive_outward_power": true,
+      "buffer1_mode_count_is_340": true,
+      "buffer1_ordered_mode_identity_is_frozen": true,
+      "buffer1_scaled_evanescent_mode_count_is_260": true,
+      "buffer1_scaled_modes_are_finite_evanescent": true,
+      "all_default_and_buffer_modes_pass_production_maxwell_bridge": true,
+      "buffer1_top_bottom_sign_kz_and_power_magnitude_verified": true,
+      "production_formulas_match_independent_coordinate_algebra": true
+    },
+    "pass": true
+  },
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "clean_source_identity_hash_bound": true,
+      "qualified_environment": true,
+      "independent_manufactured_physics_pass": true,
+      "source_free_maxwell_identities_proved": true,
+      "production_contract_bridge_pass": true,
+      "top_bottom_outgoing_sign_proved": true,
+      "two_plane_phase_propagation_proved": true,
+      "projection_normalization_proved": true,
+      "propagating_power_invariance_proved": true,
+      "evanescent_coordinate_algebra_proved": true,
+      "ordinary_default_unchanged": true,
+      "pde_not_run": true,
+      "source_stable_and_clean_after_build": true
+    }
+  },
+  "decision": {
+    "ordinary_default_changed": false,
+    "formal_pde_result_claimed": false,
+    "interpretation": "The manufactured authority independently proves the outgoing sign, finite-plane phase, projection, power, and evanescent coordinate algebra. It does not establish a Task035b same-error candidate or replace full residual and 12-channel gates."
+  }
+}
