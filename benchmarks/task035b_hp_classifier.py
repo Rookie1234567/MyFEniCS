@@ -13,6 +13,9 @@ import numpy as np
 from src.adaptivity.hp_smoothness_classifier import (
     classify_hp_correction_decay,
 )
+from src.adaptivity.hcurl_regionwise_p import (
+    regionwise_interior_p_dof_budget,
+)
 
 
 def _sha256(path: Path) -> str:
@@ -85,6 +88,33 @@ def build_hp_classifier_record(
         p_decay_ratio_threshold=float(p_decay_ratio_threshold),
         p_down_indicator_fraction=float(p_down_indicator_fraction),
     )
+    entity_counts = (
+        (
+            (
+                (
+                    lower_payload.get("coarse") or {}
+                ).get("high_order_resource_audit")
+                or {}
+            ).get("entity_dof_inventory")
+            or {}
+        ).get("global_entity_counts")
+        or {}
+    )
+    regionwise_budget = (
+        regionwise_interior_p_dof_budget(
+            global_edges=int(entity_counts["edges"]),
+            global_faces=int(entity_counts["faces"]),
+            global_cells=int(entity_counts["cells"]),
+            high_interior_cells=int(
+                classifier["local_order_action_counts"]["p_up"]
+            ),
+            trace_degree=4,
+            low_interior_degree=4,
+            high_interior_degree=6,
+        )
+        if {"edges", "faces", "cells"}.issubset(entity_counts)
+        else None
+    )
     return {
         "schema_version": "task035b.same-mesh-p4-p5-p6-classifier.v1",
         "status": "same_mesh_hp_classifier_pass",
@@ -116,6 +146,9 @@ def build_hp_classifier_record(
             "p5_p6": higher_source,
         },
         "classifier": classifier,
+        "candidate_fixed_p4_trace_regionwise_p6_interior_dof_budget": (
+            regionwise_budget
+        ),
         "scope_note": (
             "R5 correction-decay research classification only; DWR R00/R/T "
             "and conformity closure remain separate gates before local-p use"

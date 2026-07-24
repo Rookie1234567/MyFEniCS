@@ -3284,5 +3284,27 @@
     ],
     "decision_scope": "research-only p-down/p-keep/p-up/h-refine candidates; no variable-p space or mesh mutation"
   },
+  "candidate_fixed_p4_trace_regionwise_p6_interior_dof_budget": {
+    "schema_version": "task035b.regionwise-interior-p-dof-budget.v1",
+    "status": "active_mode_count_complete",
+    "pass": true,
+    "trace_degree": 4,
+    "low_interior_degree": 4,
+    "high_interior_degree": 6,
+    "global_edges": 1067,
+    "global_faces": 900,
+    "global_cells": 252,
+    "high_interior_cells": 105,
+    "low_interior_cells": 147,
+    "edge_dofs_per_entity": 4,
+    "face_interior_dofs_per_entity": 24,
+    "low_cell_interior_dofs": 108,
+    "high_cell_interior_dofs": 450,
+    "active_trace_dofs": 25868,
+    "active_cell_interior_dofs": 63126,
+    "active_full3d_equivalent_dofs": 88994,
+    "inactive_max_p_rows_retained_in_matrix": false,
+    "matrix_semantics": "cell interiors are local Schur modes; only the shared low-order trace is globally numbered"
+  },
   "scope_note": "R5 correction-decay research classification only; DWR R00/R/T and conformity closure remain separate gates before local-p use"
 }
