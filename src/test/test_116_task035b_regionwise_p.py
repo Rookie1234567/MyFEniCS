@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 import basix
@@ -16,12 +17,41 @@ from src.adaptivity.hcurl_regionwise_p import (
     reduced_trace_hcurl_ufl_element,
     regionwise_interior_p_dof_budget,
 )
-from src.adaptivity.target_regionwise_p_candidate import _select_high_cells
+from src.adaptivity.target_regionwise_p_candidate import (
+    _complete_control_observables,
+    _select_high_cells,
+)
 from src.common.config_3d import SimulationConfig3D
 from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 class Task035bRegionwisePTests(unittest.TestCase):
+    def test_compact_control_is_completed_from_hashable_raw_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            (run_dir / "run_summary.json").write_text(
+                json.dumps(
+                    {
+                        "R00_total": 0.1,
+                        "R_total": 0.2,
+                        "T_total": 0.3,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            complete, authority = _complete_control_observables(
+                {"degree": 5, "R_total": 0.2, "T_total": 0.3},
+                run_dir,
+            )
+            self.assertEqual(complete["R00_total"], 0.1)
+            self.assertEqual(len(authority["run_summary_sha256"]), 64)
+
+            with self.assertRaises(ValueError):
+                _complete_control_observables(
+                    {"R_total": 0.4, "T_total": 0.3},
+                    run_dir,
+                )
+
     def test_high_cell_selector_is_deterministic_eta_p5p6_ranking(self) -> None:
         actions = [
             {

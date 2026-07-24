@@ -188,6 +188,36 @@ def _observable_comparison(
     }
 
 
+def _complete_control_observables(
+    compact: dict[str, Any],
+    run_dir: Path,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Bind compact control metadata to its complete raw solver summary."""
+
+    summary_path = Path(run_dir) / "run_summary.json"
+    raw = json.loads(summary_path.read_text(encoding="utf-8"))
+    complete = dict(compact)
+    keys = ("R00_total", "R_total", "T_total")
+    for key in keys:
+        if key not in raw:
+            raise ValueError(f"raw p-control summary is missing {key}")
+        if key in compact and not math.isclose(
+            float(compact[key]),
+            float(raw[key]),
+            rel_tol=0.0,
+            abs_tol=1.0e-14,
+        ):
+            raise ValueError(
+                f"compact and raw p-control summaries disagree for {key}"
+            )
+        complete[key] = float(raw[key])
+    return complete, {
+        "run_summary": str(summary_path),
+        "run_summary_sha256": _sha256(summary_path),
+        "observable_keys": list(keys),
+    }
+
+
 def _select_high_cells(
     actions: list[dict[str, Any]],
     high_cell_count: int | None,
@@ -439,6 +469,10 @@ def run_target_regionwise_p_candidate(
         for degree_dir in ("coarse_p5", "enriched_p6")
         for rank in range(8)
     )
+    required_control_artifacts.extend(
+        control_run_dir / degree_dir / "run_summary.json"
+        for degree_dir in ("coarse_p5", "enriched_p6")
+    )
     missing_control_artifacts = [
         str(path) for path in required_control_artifacts if not path.is_file()
     ]
@@ -447,6 +481,14 @@ def run_target_regionwise_p_candidate(
             "Task035b p5/p6 raw field/channel authorities are incomplete: "
             + ", ".join(missing_control_artifacts)
         )
+    p5, p5_observable_authority = _complete_control_observables(
+        p5,
+        control_run_dir / "coarse_p5",
+    )
+    p6, p6_observable_authority = _complete_control_observables(
+        p6,
+        control_run_dir / "enriched_p6",
+    )
     if (
         classifier.get("pass") is not True
         or classifier.get("geometry")
@@ -615,6 +657,10 @@ def run_target_regionwise_p_candidate(
         "control_authority": {
             "path": str(control_record),
             "sha256": control_sha256,
+            "raw_observable_summaries": {
+                "p5": p5_observable_authority,
+                "p6": p6_observable_authority,
+            },
         },
         "candidate": {
             "degree": 6,
