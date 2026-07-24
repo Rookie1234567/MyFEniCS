@@ -437,6 +437,361 @@ def _cell_trace_expansion(
     return unique_active, expansion, identity
 
 
+def _collective_preallocation_error(
+    errors: list[str | None],
+    *,
+    context: str,
+) -> None:
+    """Raise the same preallocation validation error on every MPI rank."""
+
+    if not any(error is not None for error in errors):
+        return
+    error_class = (
+        ValueError
+        if all(
+            error is None or error.startswith("ValueError:")
+            for error in errors
+        )
+        else TypeError
+        if all(
+            error is None or error.startswith("TypeError:")
+            for error in errors
+        )
+        else RuntimeError
+    )
+    raise error_class(
+        f"{context}: "
+        + "; ".join(
+            f"rank {rank}: {error}"
+            for rank, error in enumerate(errors)
+            if error is not None
+        )
+    )
+
+
+def _distributed_trace_preallocation(
+    comm,
+    cell_active_ids: tuple[np.ndarray, ...],
+    *,
+    active_counts: tuple[int, ...],
+    appended_global_rows: int,
+    appended_support_owned_cell_groups: tuple[np.ndarray, ...],
+    appended_support_group_by_row: tuple[int, ...],
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Build exact base and support-safe appended AIJ preallocation."""
+
+    local_validation_error = None
+    local_contract = None
+    try:
+        normalized_active_counts = tuple(
+            int(count) for count in active_counts
+        )
+        normalized_appended_rows = int(appended_global_rows)
+        normalized_group_by_row = tuple(
+            int(group) for group in appended_support_group_by_row
+        )
+        if len(normalized_active_counts) != comm.size:
+            raise ValueError(
+                "active row counts do not match the MPI communicator"
+            )
+        if any(count < 0 for count in normalized_active_counts):
+            raise ValueError("active row counts must be nonnegative")
+        if normalized_appended_rows < 0:
+            raise ValueError("appended row count must be nonnegative")
+        active_rows_for_validation = int(sum(normalized_active_counts))
+        for ids in cell_active_ids:
+            active = np.asarray(ids, dtype=np.int64)
+            if len(active) == 0:
+                raise ValueError(
+                    "a cell has no active constrained trace rows"
+                )
+            if (
+                int(active.min()) < 0
+                or int(active.max()) >= active_rows_for_validation
+            ):
+                raise ValueError(
+                    "a cell contains an out-of-range active trace row"
+                )
+        if normalized_appended_rows == 0:
+            if (
+                appended_support_owned_cell_groups
+                or normalized_group_by_row
+            ):
+                raise ValueError(
+                    "appended support was provided without appended rows"
+                )
+        elif (
+            len(normalized_group_by_row) != normalized_appended_rows
+            or not appended_support_owned_cell_groups
+        ):
+            raise ValueError(
+                "every appended row requires an explicit support group"
+            )
+        group_count = len(appended_support_owned_cell_groups)
+        invalid_groups = [
+            group
+            for group in normalized_group_by_row
+            if group < 0 or group >= group_count
+        ]
+        if invalid_groups:
+            raise ValueError(
+                f"invalid appended-row support groups {invalid_groups[:8]}"
+            )
+        for local_cells in appended_support_owned_cell_groups:
+            cells = np.asarray(local_cells, dtype=np.int64)
+            if len(cells) and (
+                int(cells.min()) < 0
+                or int(cells.max()) >= len(cell_active_ids)
+            ):
+                raise ValueError(
+                    "appended support group contains a non-owned cell"
+                )
+        local_contract = (
+            normalized_active_counts,
+            normalized_appended_rows,
+            group_count,
+            normalized_group_by_row,
+        )
+    except Exception as error:
+        local_validation_error = f"{type(error).__name__}: {error}"
+    validation_packets = comm.allgather(
+        (local_validation_error, local_contract)
+    )
+    _collective_preallocation_error(
+        [packet[0] for packet in validation_packets],
+        context="trace preallocation input validation failed",
+    )
+    contracts = [packet[1] for packet in validation_packets]
+    if any(contract != contracts[0] for contract in contracts[1:]):
+        raise RuntimeError(
+            "trace preallocation contract differs across MPI ranks"
+        )
+    assert local_contract is not None
+    (
+        normalized_active_counts,
+        normalized_appended_rows,
+        _group_count,
+        normalized_group_by_row,
+    ) = local_contract
+    active_offsets = np.concatenate(
+        (
+            np.asarray([0], dtype=np.int64),
+            np.cumsum(
+                np.asarray(normalized_active_counts, dtype=np.int64)
+            ),
+        )
+    )
+    active_rows = int(active_offsets[-1])
+    local_active_start = int(active_offsets[comm.rank])
+    local_active_end = int(active_offsets[comm.rank + 1])
+    local_active_rows = local_active_end - local_active_start
+    local_appended_rows = (
+        normalized_appended_rows if comm.rank == comm.size - 1 else 0
+    )
+    local_rows = local_active_rows + local_appended_rows
+    local_end = local_active_start + local_rows
+
+    send_packets: list[list[np.ndarray]] = [
+        [] for _rank in range(comm.size)
+    ]
+    for ids in cell_active_ids:
+        active = np.asarray(ids, dtype=PETSc.IntType)
+        owners = np.searchsorted(
+            active_offsets[1:],
+            np.asarray(active, dtype=np.int64),
+            side="right",
+        )
+        for owner in np.unique(owners):
+            send_packets[int(owner)].append(active)
+    received_packets = comm.alltoall(send_packets)
+    incident: list[list[np.ndarray]] = [
+        [] for _row in range(local_active_rows)
+    ]
+    received_cell_graphs = 0
+    local_receive_error = None
+    try:
+        for packet in received_packets:
+            for ids in packet:
+                active = np.asarray(ids, dtype=PETSc.IntType)
+                local_mask = (active >= local_active_start) & (
+                    active < local_active_end
+                )
+                for row in active[local_mask]:
+                    incident[int(row) - local_active_start].append(active)
+                received_cell_graphs += 1
+    except Exception as error:
+        local_receive_error = f"{type(error).__name__}: {error}"
+    _collective_preallocation_error(
+        comm.allgather(local_receive_error),
+        context="trace preallocation graph exchange failed",
+    )
+
+    local_supports: list[np.ndarray] = []
+    local_support_error = None
+    try:
+        for local_cells in appended_support_owned_cell_groups:
+            cells = np.asarray(local_cells, dtype=np.int64)
+            local_parts = [
+                np.asarray(
+                    cell_active_ids[int(cell)],
+                    dtype=PETSc.IntType,
+                )
+                for cell in cells
+            ]
+            local_supports.append(
+                np.unique(np.concatenate(local_parts)).astype(
+                    PETSc.IntType,
+                    copy=False,
+                )
+                if local_parts
+                else np.empty(0, dtype=PETSc.IntType)
+            )
+    except Exception as error:
+        local_support_error = f"{type(error).__name__}: {error}"
+    _collective_preallocation_error(
+        comm.allgather(local_support_error),
+        context="trace preallocation local support construction failed",
+    )
+
+    support_groups: list[np.ndarray] = []
+    for local_support in local_supports:
+        support_packets = comm.allgather(local_support)
+        nonempty = [packet for packet in support_packets if len(packet)]
+        support = (
+            np.unique(np.concatenate(nonempty)).astype(
+                PETSc.IntType,
+                copy=False,
+            )
+            if nonempty
+            else np.empty(0, dtype=PETSc.IntType)
+        )
+        if normalized_appended_rows and len(support) == 0:
+            raise ValueError("an appended-row support group is empty")
+        support_groups.append(support)
+
+    appended_columns_by_local_active: list[list[np.ndarray]] = [
+        [] for _row in range(local_active_rows)
+    ]
+    group_rows: list[np.ndarray] = []
+    row_groups = np.asarray(
+        normalized_group_by_row,
+        dtype=np.int64,
+    )
+    for group_index, support in enumerate(support_groups):
+        appended_indices = np.flatnonzero(row_groups == group_index)
+        appended_columns = (
+            active_rows + appended_indices
+        ).astype(PETSc.IntType)
+        group_rows.append(appended_columns)
+        local_support = support[
+            (support >= local_active_start)
+            & (support < local_active_end)
+        ]
+        for row in local_support:
+            appended_columns_by_local_active[
+                int(row) - local_active_start
+            ].append(appended_columns)
+
+    diagonal_nnz = np.zeros(local_rows, dtype=PETSc.IntType)
+    off_diagonal_nnz = np.zeros(local_rows, dtype=PETSc.IntType)
+    structural_nnz_local = 0
+    local_row_error = None
+    try:
+        for local_row in range(local_active_rows):
+            if not incident[local_row]:
+                raise RuntimeError(
+                    "an owned active trace row has no incident cell graph"
+                )
+            parts = [
+                *incident[local_row],
+                *appended_columns_by_local_active[local_row],
+            ]
+            columns = np.unique(np.concatenate(parts))
+            diagonal = int(
+                np.count_nonzero(
+                    (columns >= local_active_start)
+                    & (columns < local_end)
+                )
+            )
+            diagonal_nnz[local_row] = diagonal
+            off_diagonal_nnz[local_row] = len(columns) - diagonal
+            structural_nnz_local += len(columns)
+
+        if local_appended_rows:
+            for appended_index in range(normalized_appended_rows):
+                local_row = local_active_rows + appended_index
+                group = normalized_group_by_row[appended_index]
+                columns = np.unique(
+                    np.concatenate(
+                        (
+                            support_groups[group],
+                            np.asarray(
+                                [active_rows + appended_index],
+                                dtype=PETSc.IntType,
+                            ),
+                        )
+                    )
+                )
+                diagonal = int(
+                    np.count_nonzero(
+                        (columns >= local_active_start)
+                        & (columns < local_end)
+                    )
+                )
+                diagonal_nnz[local_row] = diagonal
+                off_diagonal_nnz[local_row] = len(columns) - diagonal
+                structural_nnz_local += len(columns)
+    except Exception as error:
+        local_row_error = f"{type(error).__name__}: {error}"
+    _collective_preallocation_error(
+        comm.allgather(local_row_error),
+        context="trace preallocation row construction failed",
+    )
+
+    preallocated_nnz = int(
+        comm.allreduce(structural_nnz_local, op=MPI.SUM)
+    )
+    return diagonal_nnz, off_diagonal_nnz, {
+        "schema_version": "task035b.exact-trace-preallocation.v1",
+        "policy": (
+            "distributed_exact_constrained_cell_graph_plus_"
+            "support_safe_appended_upper_bound"
+        ),
+        "base_graph_preallocation": "exact",
+        "appended_graph_preallocation": (
+            "support_safe_upper_bound"
+            if normalized_appended_rows
+            else "not_applicable"
+        ),
+        "active_rows": active_rows,
+        "appended_rows": normalized_appended_rows,
+        "local_row_count": local_rows,
+        "received_cell_graph_count": received_cell_graphs,
+        "preallocated_structural_nnz": preallocated_nnz,
+        "maximum_diagonal_nnz": int(
+            comm.allreduce(
+                int(diagonal_nnz.max(initial=0)),
+                op=MPI.MAX,
+            )
+        ),
+        "maximum_off_diagonal_nnz": int(
+            comm.allreduce(
+                int(off_diagonal_nnz.max(initial=0)),
+                op=MPI.MAX,
+            )
+        ),
+        "appended_support_group_count": len(support_groups),
+        "appended_support_active_row_counts": [
+            int(len(support)) for support in support_groups
+        ],
+        "appended_rows_per_support_group": [
+            int(len(rows)) for rows in group_rows
+        ],
+        "new_nonzero_allocation_error_enabled": True,
+        "ordinary_default_changed": False,
+    }
+
+
 def _constrain_local_schur(
     schur: np.ndarray,
     expansion: sparse.csr_matrix,
@@ -822,6 +1177,9 @@ def build_unconstrained_assembly_time_condensation(
     *,
     mpc=None,
     appended_global_rows: int = 0,
+    appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
+    appended_support_group_by_row: tuple[int, ...] = (),
+    defer_final_assembly: bool = False,
     geometry_tolerance: float = 1.0e-11,
     regionwise_element=None,
     regionwise_low_compiled_form=None,
@@ -996,19 +1354,51 @@ def build_unconstrained_assembly_time_condensation(
     )
     active_rows = trace_constraints.active_rows
     owned_active = trace_constraints.owned_active_original_dofs
-    active_start = int(sum(comm.allgather(len(owned_active))[: comm.rank]))
+    active_counts = tuple(comm.allgather(len(owned_active)))
+    active_start = int(sum(active_counts[: comm.rank]))
     local_appended = appended_global_rows if comm.rank == comm.size - 1 else 0
     matrix_rows = active_rows + appended_global_rows
-    initial_nnz = min(
-        matrix_rows,
-        max(32, int(2 * len(trace_positions))),
+    cell_trace_data: list[
+        tuple[np.ndarray, sparse.csr_matrix, bool]
+    ] = []
+    for original_dofs in local_cell_dofs:
+        cell_trace_data.append(
+            _cell_trace_expansion(
+                original_dofs[trace_positions],
+                trace_constraints,
+            )
+        )
+    preallocation_started = perf_counter()
+    diagonal_nnz, off_diagonal_nnz, preallocation_audit = (
+        _distributed_trace_preallocation(
+            comm,
+            tuple(data[0] for data in cell_trace_data),
+            active_counts=active_counts,
+            appended_global_rows=appended_global_rows,
+            appended_support_owned_cell_groups=(
+                appended_support_owned_cell_groups
+            ),
+            appended_support_group_by_row=(
+                appended_support_group_by_row
+            ),
+        )
+    )
+    preallocation_audit["build_seconds"] = float(
+        comm.allreduce(
+            perf_counter() - preallocation_started,
+            op=MPI.MAX,
+        )
     )
     condensed = PETSc.Mat().createAIJ(
         size=(
             (len(owned_active) + local_appended, matrix_rows),
             (len(owned_active) + local_appended, matrix_rows),
         ),
-        nnz=initial_nnz,
+        nnz=(
+            diagonal_nnz
+            if comm.size == 1
+            else (diagonal_nnz, off_diagonal_nnz)
+        ),
         comm=comm,
     )
     if condensed.getOwnershipRange()[0] != active_start:
@@ -1016,7 +1406,7 @@ def build_unconstrained_assembly_time_condensation(
         raise RuntimeError(
             "PETSc active-trace ownership disagrees with trace numbering"
         )
-    condensed.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+    condensed.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
 
     mesh.topology.create_entity_permutations()
     cell_permutations = mesh.topology.get_cell_permutation_info()
@@ -1274,12 +1664,7 @@ def build_unconstrained_assembly_time_condensation(
                 interior_embedding_from_interior.conj().T
             )
         trace_original = original_dofs[trace_positions]
-        active_ids, local_expansion, identity_expansion = (
-            _cell_trace_expansion(
-                trace_original,
-                trace_constraints,
-            )
-        )
+        active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
         active_schur = _constrain_local_schur(
             schur,
             local_expansion,
@@ -1308,11 +1693,17 @@ def build_unconstrained_assembly_time_condensation(
             op=MPI.MAX,
         )
     )
-    assembly_started = perf_counter()
-    condensed.assemble()
-    final_assembly_seconds = float(
-        comm.allreduce(perf_counter() - assembly_started, op=MPI.MAX)
-    )
+    if defer_final_assembly:
+        final_assembly_seconds = 0.0
+    else:
+        assembly_started = perf_counter()
+        condensed.assemble()
+        final_assembly_seconds = float(
+            comm.allreduce(
+                perf_counter() - assembly_started,
+                op=MPI.MAX,
+            )
+        )
     interior_rows = full_rows - trace_rows
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
     local_high_cells = int(np.count_nonzero(local_high_interior))
@@ -1403,6 +1794,9 @@ def build_unconstrained_assembly_time_condensation(
             "full_trace_matrix_allocated": False,
             "embedded_mpc_slave_identity_rows_allocated": False,
             "assembly_cost_avoided": True,
+            "final_matrix_assembly_deferred_for_appended_rows": bool(
+                defer_final_assembly
+            ),
             "axis_aligned_affine_geometry_verified": True,
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
@@ -1422,6 +1816,10 @@ def build_unconstrained_assembly_time_condensation(
                 preassembly_sync_seconds
             ),
             "final_assembly_seconds": final_assembly_seconds,
+            "trace_preallocation_seconds": float(
+                preallocation_audit["build_seconds"]
+            ),
+            "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
             "total_build_seconds": float(
                 comm.allreduce(perf_counter() - started, op=MPI.MAX)

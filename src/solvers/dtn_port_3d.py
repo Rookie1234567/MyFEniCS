@@ -67,6 +67,53 @@ def _idx(values) -> np.ndarray:
     return np.fromiter(values, dtype=PETSc.IntType)
 
 
+def _deferred_preallocation_matrix_stats(
+    matrix,
+    preallocation: dict[str, Any],
+) -> dict[str, Any]:
+    """Describe planned preallocation before the sole final assembly."""
+
+    rows, cols = matrix.getSize()
+    local_rows, local_cols = matrix.getLocalSize()
+    row_ownership = matrix.getOwnershipRange()
+    column_ownership = matrix.getOwnershipRangeColumn()
+    allocated = int(preallocation["preallocated_structural_nnz"])
+    return {
+        "matrix_rows": int(rows),
+        "matrix_cols": int(cols),
+        "matrix_nnz_used": None,
+        "matrix_nnz_allocated": None,
+        "matrix_nnz_unneeded": None,
+        "matrix_mallocs": None,
+        "matrix_type": matrix.getType(),
+        "matrix_local_rows": int(local_rows),
+        "matrix_local_cols": int(local_cols),
+        "matrix_row_ownership_range": list(map(int, row_ownership)),
+        "matrix_column_ownership_range": list(
+            map(int, column_ownership)
+        ),
+        "matrix_average_nnz_per_row": None,
+        "matrix_maximum_nnz_per_row": None,
+        "matrix_average_allocated_nnz_per_row": None,
+        "matrix_memory_bytes": None,
+        "matrix_memory_mb": None,
+        "matrix_memory_estimate_bytes": None,
+        "matrix_memory_estimate_mb": None,
+        "matrix_norm_frobenius": None,
+        "matrix_norm_infinity": None,
+        "matrix_preallocated_structural_nnz_planned": float(allocated),
+        "matrix_average_preallocated_nnz_per_row_planned": (
+            float(allocated) / float(rows) if rows else 0.0
+        ),
+        "matrix_stats_measurement_status": "derived_pre_final_assembly",
+        "matrix_stats_semantics": (
+            "exact base constrained-cell graph plus a support-safe DtN "
+            "upper bound; measured allocation and numerical NNZ are "
+            "deferred until the sole augmented-matrix final assembly"
+        ),
+    }
+
+
 def _as_ufl_vector(values: np.ndarray, phase):
     return ufl.as_vector(tuple(PETSc.ScalarType(value) * phase for value in values))
 
@@ -676,6 +723,30 @@ def _surface_diagnostics(
         diagnostics[f"stage4_dtn_{side}_Et_l2_integral"] = float(np.real(energy))
         diagnostics[f"stage4_dtn_{side}_Et_l2_mean"] = float(np.real(energy) / max(float(np.real(area)), 1.0e-30))
     return diagnostics
+
+
+def _owned_cells_adjacent_to_facet_tag(mesh_data, tag: int) -> np.ndarray:
+    """Return locally owned cells touching a tagged exterior facet."""
+
+    msh = mesh_data.mesh
+    tdim = msh.topology.dim
+    fdim = tdim - 1
+    msh.topology.create_connectivity(fdim, tdim)
+    facet_to_cell = msh.topology.connectivity(fdim, tdim)
+    if facet_to_cell is None:
+        raise RuntimeError("facet-to-cell connectivity is unavailable")
+    owned_cells = int(msh.topology.index_map(tdim).size_local)
+    tagged_facets = np.asarray(
+        mesh_data.facet_tags.find(int(tag)),
+        dtype=np.int32,
+    )
+    cells = [
+        int(cell)
+        for facet in tagged_facets
+        for cell in facet_to_cell.links(int(facet))
+        if 0 <= int(cell) < owned_cells
+    ]
+    return np.asarray(sorted(set(cells)), dtype=np.int32)
 
 
 def _zero_order_local_robin_forms(a, L, V, mesh_data, cfg: SimulationConfig3D):
@@ -1604,6 +1675,20 @@ def solve_stage4_dtn_port_total_field(
                 mesh_data.cell_tags,
                 mpc=floquet_data.mpc,
                 appended_global_rows=n_aux,
+                appended_support_owned_cell_groups=(
+                    _owned_cells_adjacent_to_facet_tag(
+                        mesh_data,
+                        cfg.tags.z_max,
+                    ),
+                    _owned_cells_adjacent_to_facet_tag(
+                        mesh_data,
+                        cfg.tags.z_min,
+                    ),
+                ),
+                appended_support_group_by_row=tuple(
+                    0 if mode.side == "top" else 1 for mode in modes
+                ),
+                defer_final_assembly=True,
                 regionwise_element=regionwise_element,
                 regionwise_low_compiled_form=(
                     regionwise_low_compiled_form
@@ -1619,7 +1704,13 @@ def solve_stage4_dtn_port_total_field(
         A_base = None
         A_aug = assembly_time_system.matrix
         n_fe = int(assembly_time_system.active_rows)
-        base_matrix_stats = _petsc_matrix_stats(A_aug)
+        base_matrix_stats = _deferred_preallocation_matrix_stats(
+            A_aug,
+            assembly_time_system.build_audit["trace_preallocation"],
+        )
+        base_matrix_lifecycle = (
+            "preallocated_values_pending_augmented_final_assembly"
+        )
         timing_details.update(
             {
                 f"stage4_dtn_assembly_time_{key}": value
@@ -1637,6 +1728,7 @@ def solve_stage4_dtn_port_total_field(
         A_aug = None
         n_fe = A_base.getSize()[0]
         base_matrix_stats = _petsc_matrix_stats(A_base)
+        base_matrix_lifecycle = "assembled"
     _write_progress_event(
         out_dir,
         comm,
@@ -1647,6 +1739,9 @@ def solve_stage4_dtn_port_total_field(
         constraints=floquet_data.num_constraints,
         matrix_stats=base_matrix_stats,
         petsc_options=petsc_options,
+        extra={
+            "stage4_dtn_base_matrix_lifecycle": base_matrix_lifecycle,
+        },
     )
     _write_progress_event(
         out_dir,
@@ -1658,6 +1753,9 @@ def solve_stage4_dtn_port_total_field(
         constraints=floquet_data.num_constraints,
         matrix_stats=base_matrix_stats,
         petsc_options=petsc_options,
+        extra={
+            "stage4_dtn_base_matrix_lifecycle": base_matrix_lifecycle,
+        },
     )
     timing_details["stage4_dtn_base_matrix_assembly_seconds"] = float(
         comm.allreduce(time.perf_counter() - t0, op=MPI.MAX)
@@ -1874,6 +1972,12 @@ def solve_stage4_dtn_port_total_field(
     modal_block_insert_seconds_local = 0.0
     traction_rows_total_local = 0
     ell_cols_total_local = 0
+    matrix_insert_mode = (
+        PETSc.InsertMode.ADD_VALUES
+        if assembly_time_system is not None
+        else PETSc.InsertMode.INSERT_VALUES
+    )
+    matrix_row_start, matrix_row_end = A_aug.getOwnershipRange()
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
         mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
@@ -1972,6 +2076,7 @@ def solve_stage4_dtn_port_total_field(
                 traction_rows,
                 _idx([aux_global]),
                 (-traction_values).reshape((len(traction_rows), 1)),
+                addv=matrix_insert_mode,
             )
             if incident_projection != 0.0:
                 b_aug.setValues(
@@ -2002,6 +2107,7 @@ def solve_stage4_dtn_port_total_field(
                 _idx([aux_global]),
                 ell_cols,
                 (-np.conj(ell_values) / denominator).reshape((1, len(ell_cols))),
+                addv=matrix_insert_mode,
             )
         auxiliary_diagonal = 1.0 + 0.0j
         if component_interior_bilinear is not None:
@@ -2020,11 +2126,13 @@ def solve_stage4_dtn_port_total_field(
                 )
                 / denominator
             )
-        A_aug.setValue(
-            aux_global,
-            aux_global,
-            PETSc.ScalarType(auxiliary_diagonal),
-        )
+        if matrix_row_start <= aux_global < matrix_row_end:
+            A_aug.setValue(
+                aux_global,
+                aux_global,
+                PETSc.ScalarType(auxiliary_diagonal),
+                addv=matrix_insert_mode,
+            )
         modal_block_insert_seconds_local += time.perf_counter() - t_insert
 
         if log is not None and (aux_index + 1) % 50 == 0:

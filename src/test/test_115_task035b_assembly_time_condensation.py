@@ -453,6 +453,70 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(audit["raw_tensor_class_use_count_sum"], 1)
         self.assertFalse(audit["raw_tensor_cross_rank_dedup_active"])
         self.assertEqual(audit["cell_kernel_evaluation_fraction"], 0.5)
+        matrix_info = candidate.matrix.getInfo(
+            PETSc.Mat.InfoType.GLOBAL_SUM
+        )
+        self.assertEqual(matrix_info["mallocs"], 0.0)
+        self.assertEqual(matrix_info["nz_unneeded"], 0.0)
+        candidate.destroy()
+
+    def test_exact_preallocation_covers_appended_support(self) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=False
+        )
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+            appended_global_rows=2,
+            appended_support_owned_cell_groups=(
+                np.asarray([0], dtype=np.int32),
+                np.asarray([1], dtype=np.int32),
+            ),
+            appended_support_group_by_row=(0, 1),
+            defer_final_assembly=True,
+        )
+        audit = candidate.build_audit["trace_preallocation"]
+        self.assertEqual(audit["appended_support_group_count"], 2)
+        self.assertEqual(audit["appended_rows_per_support_group"], [1, 1])
+        for appended_index, recovery in enumerate(
+            candidate.cell_recovery_maps
+        ):
+            support = np.unique(
+                np.concatenate(
+                    [
+                        candidate.trace_constraints.expansion_by_original[
+                            int(original)
+                        ][0]
+                        for original in recovery.trace_original_dofs
+                    ]
+                )
+            ).astype(PETSc.IntType)
+            auxiliary = candidate.active_rows + appended_index
+            candidate.matrix.setValues(
+                support,
+                np.asarray([auxiliary], dtype=PETSc.IntType),
+                np.ones((len(support), 1), dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            candidate.matrix.setValues(
+                np.asarray([auxiliary], dtype=PETSc.IntType),
+                support,
+                np.ones((1, len(support)), dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            candidate.matrix.setValue(
+                auxiliary,
+                auxiliary,
+                PETSc.ScalarType(1.0),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+        candidate.matrix.assemble()
+        matrix_info = candidate.matrix.getInfo(
+            PETSc.Mat.InfoType.GLOBAL_SUM
+        )
+        self.assertEqual(matrix_info["mallocs"], 0.0)
+        self.assertEqual(matrix_info["nz_unneeded"], 0.0)
         candidate.destroy()
 
     def test_nonzero_interior_rhs_and_auxiliary_schur_terms(self) -> None:
@@ -899,6 +963,11 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                 "raw_tensor_policy_signatures_identical"
             ]
         )
+        matrix_info = candidate.matrix.getInfo(
+            PETSc.Mat.InfoType.GLOBAL_SUM
+        )
+        self.assertEqual(matrix_info["mallocs"], 0.0)
+        self.assertEqual(matrix_info["nz_unneeded"], 0.0)
 
         difference.destroy()
         manual_difference.destroy()
@@ -962,6 +1031,60 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
                     V,
                     cell_tags,
                 )
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 collective trace-preallocation validation check",
+    )
+    def test_mpi2_preallocation_input_failure_is_collective(self) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        tdim = msh.topology.dim
+        owned_cells = msh.topology.index_map(tdim).size_local
+        cell_tags = mesh.meshtags(
+            msh,
+            tdim,
+            np.arange(owned_cells, dtype=np.int32),
+            np.ones(owned_cells, dtype=np.int32),
+        )
+        V = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                2,
+                dtype=default_real_type,
+            ),
+        )
+        u = ufl.TrialFunction(V)
+        v = ufl.TestFunction(V)
+        dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+        compiled = fem.form(ufl.inner(u, v) * dx(1))
+        support_cell = owned_cells if comm.rank == 0 else 0
+        with self.assertRaisesRegex(
+            ValueError,
+            (
+                "rank 0: ValueError: appended support group contains "
+                "a non-owned cell"
+            ),
+        ):
+            build_unconstrained_assembly_time_condensation(
+                compiled,
+                V,
+                cell_tags,
+                appended_global_rows=1,
+                appended_support_owned_cell_groups=(
+                    np.asarray([support_cell], dtype=np.int32),
+                ),
+                appended_support_group_by_row=(0,),
+                defer_final_assembly=True,
+            )
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size in {2, 8},
@@ -1028,6 +1151,14 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             0.00010870177442776466,
             places=13,
         )
+        self.assertEqual(
+            summary["matrix_stats"]["matrix_mallocs"],
+            0.0,
+        )
+        self.assertGreaterEqual(
+            summary["matrix_stats"]["matrix_nnz_allocated"],
+            summary["matrix_stats"]["matrix_nnz_used"],
+        )
         audit = summary["cell_static_condensation"]
         self.assertFalse(audit["full_global_matrix_allocated"])
         self.assertFalse(audit["full_trace_matrix_allocated"])
@@ -1038,6 +1169,14 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(audit["trace_rows"], 658)
         self.assertEqual(audit["active_rows"], 480)
         self.assertEqual(audit["appended_rows"], 80)
+        preallocation = audit["trace_preallocation"]
+        self.assertTrue(
+            preallocation["new_nonzero_allocation_error_enabled"]
+        )
+        self.assertEqual(
+            preallocation["preallocated_structural_nnz"],
+            summary["matrix_stats"]["matrix_nnz_allocated"],
+        )
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size == 2,
