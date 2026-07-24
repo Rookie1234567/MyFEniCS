@@ -107,4 +107,3 @@ stopped_by_gate_architecture_and_budget
 
 这不是 solver 失败，也不是 local-h 数学上无效；它只是当前代码架构和预算下
 没有可执行、可同误差资格化的组合。历史 Task035 heavy references 不重复运行。
-

@@ -25,4 +25,3 @@ grating，不创建、不运行、也不推断以下几何的数值结果：
 0.7 nm 资源敏感性中的 `f_H=0.40` 只保留为
 `conservative unknown-future-geometry planning envelope`。它不授权不规则
 几何 PDE，也不能证明 classifier 或 local-p 对未知结构可迁移。
-
