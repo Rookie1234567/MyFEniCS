@@ -159,9 +159,14 @@ def hcurl_entity_dof_inventory(
     floquet_num_constraints: int | None,
     active_matrix_rows: int | None,
     cell_static_condensation: bool = False,
+    floquet_slave_elimination: bool = False,
 ) -> dict[str, Any]:
     """Decompose the actual global N1curl dimension by mesh-entity ownership."""
 
+    if floquet_slave_elimination and not cell_static_condensation:
+        raise ValueError(
+            "Floquet slave elimination audit requires cell static condensation"
+        )
     msh = V.mesh
     degree = int(V.element.basix_element.degree)
     cell_name = str(msh.basix_cell()).lower()
@@ -187,8 +192,19 @@ def hcurl_entity_dof_inventory(
     auxiliary = int(num_auxiliary_dofs)
     projected_rows = trace_total + auxiliary
     current_expected_rows = actual_total + auxiliary
+    periodic_independent_rows = projected_rows - int(
+        0 if floquet_num_constraints is None else floquet_num_constraints
+    )
+    if floquet_slave_elimination and periodic_independent_rows <= 0:
+        raise ValueError(
+            "Floquet slave elimination removed all projected trace rows"
+        )
     expected_active_rows = (
-        projected_rows if cell_static_condensation else current_expected_rows
+        periodic_independent_rows
+        if floquet_slave_elimination
+        else projected_rows
+        if cell_static_condensation
+        else current_expected_rows
     )
     active_rows_match = active_matrix_rows is None or (
         int(active_matrix_rows) == expected_active_rows
@@ -239,20 +255,30 @@ def hcurl_entity_dof_inventory(
         ),
         "theoretical_static_condensed_trace_dofs": int(trace_total),
         "theoretical_static_condensed_augmented_rows": int(projected_rows),
+        "theoretical_static_condensed_periodic_independent_rows": int(
+            periodic_independent_rows
+        ),
         "theoretical_row_compression_factor": (
             None
             if projected_rows == 0
             else float(current_expected_rows / projected_rows)
         ),
         "static_condensation_projection_semantics": (
-            "measured_active_rows; exact cell-interior elimination with all "
-            "edge/face trace and DtN auxiliary unknowns retained"
+            "measured_active_rows; exact cell-interior and Floquet-slave "
+            "elimination with independent edge/face trace and DtN auxiliary "
+            "unknowns retained"
+            if floquet_slave_elimination
+            else "measured_active_rows; exact cell-interior elimination with "
+            "all edge/face trace and DtN auxiliary unknowns retained"
             if cell_static_condensation
             else "derived_not_measured; assumes exact cell-interior "
             "elimination with all edge/face trace and DtN auxiliary unknowns "
             "retained"
         ),
         "cell_static_condensation_active": bool(cell_static_condensation),
+        "floquet_slave_elimination_active": bool(
+            floquet_slave_elimination
+        ),
         "pass": passed,
     }
 
@@ -281,6 +307,7 @@ def matrix_factor_resource_audit(summary: dict[str, Any]) -> dict[str, Any]:
         "stage4_dtn_augmented_matrix_finalize_seconds",
         "stage4_dtn_cell_static_condensation_build_seconds",
         "stage4_dtn_cell_static_condensation_recovery_seconds",
+        "stage4_dtn_floquet_slave_elimination_build_seconds",
         "stage4_dtn_ksp_setup_seconds",
         "stage4_dtn_ksp_solve_seconds",
         "stage4_dtn_linear_solve_seconds",
@@ -335,6 +362,9 @@ def build_high_order_resource_audit(
             active_matrix_rows=matrix_stats.get("matrix_rows"),
             cell_static_condensation=bool(
                 summary.get("stage4_cell_static_condensation")
+            ),
+            floquet_slave_elimination=bool(
+                summary.get("stage4_floquet_slave_elimination")
             ),
         ),
         "matrix_factor_resource": matrix_factor_resource_audit(summary),

@@ -44,7 +44,7 @@ NUMERICAL_KERNELS = (
 INTENTIONAL_CLASSIFICATIONS = {
     "src/common/config_3d.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
-        "reason": "Task035b enables p5/p6 and the opt-in exact cell-interior Schur path only for explicit research callers; the ordinary default remains unchanged and both paths require PDE anchors",
+        "reason": "Task035b enables p5/p6 plus opt-in exact cell-interior and Floquet-slave elimination only for explicit research callers; the ordinary default remains unchanged and the new paths require PDE anchors",
         "requires_corresponding_pde_rerun": True,
     },
     "src/geometry/mesh_builder_3d.py": {
@@ -74,7 +74,7 @@ INTENTIONAL_CLASSIFICATIONS = {
     },
     "src/solvers/common_3d_case_flow.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
-        "reason": "Task035b opt-in condensation returns the physically smaller trace system while preserving the recovered full-system residual; the flag defaults off",
+        "reason": "Task035b opt-in condensation returns the physically smaller periodic-independent trace system while preserving the recovered full-system residual; both flags default off",
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/common_3d_solve.py": {
@@ -84,12 +84,12 @@ INTENTIONAL_CLASSIFICATIONS = {
     },
     "src/solvers/dtn_port_3d.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
-        "reason": "Task035b adds an opt-in exact cell-interior Schur solve, recovery, and full explicit residual path; the ordinary augmented solve remains selected when the flag is false",
+        "reason": "Task035b adds opt-in exact cell-interior Schur and embedded Floquet-slave elimination with full recovery/residual; the ordinary augmented solve remains selected when the flags are false",
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/hcurl_cell_static_condensation.py": {
         "classification": "numerical kernel intentionally changed and requires PDE rerun",
-        "reason": "Task035b introduces exact per-cell interior elimination into a physically smaller trace matrix without max-p zero masking",
+        "reason": "Task035b introduces exact per-cell interior elimination and verified zero-RHS identity Floquet-slave removal into a physically smaller trace matrix without max-p zero masking",
         "requires_corresponding_pde_rerun": True,
     },
     "src/solvers/hybrid_fem_modal_schur_direct.py": {

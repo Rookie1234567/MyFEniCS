@@ -32,6 +32,8 @@ from .common_3d_solve import (
 from .common_3d_utils import _write_progress_event
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
+    build_floquet_independent_trace_system,
+    expand_floquet_independent_trace_solution,
     owned_hcurl_cell_interior_dofs,
     recover_full_solution,
 )
@@ -1215,6 +1217,14 @@ def solve_stage4_dtn_port_total_field(
             "Task035b cell static condensation requires a complete solve; "
             "assemble-only/factorization-only diagnostics are unsupported."
         )
+    if (
+        cfg.stage4_floquet_slave_elimination
+        and not cfg.stage4_cell_static_condensation
+    ):
+        raise ValueError(
+            "Task035b Floquet slave elimination currently requires "
+            "stage4_cell_static_condensation=True."
+        )
     if _use_zero_order_local_robin_dtn(cfg):
         return _solve_zero_order_local_robin_dtn(
             a=a,
@@ -1564,6 +1574,8 @@ def solve_stage4_dtn_port_total_field(
 
     condensed_system = None
     condensed_matrix_stats = None
+    independent_trace_system = None
+    independent_trace_matrix_stats = None
     condensation_recovery = None
     solve_A = A_aug
     solve_b = b_aug
@@ -1614,6 +1626,68 @@ def solve_stage4_dtn_port_total_field(
                 "cell_static_condensation": condensed_system.build_audit,
             },
         )
+        if cfg.stage4_floquet_slave_elimination:
+            independent_started = time.perf_counter()
+            dofmap = V.dofmap
+            if int(dofmap.index_map_bs) != 1:
+                raise NotImplementedError(
+                    "Floquet slave elimination requires scalar-blocked H(curl)"
+                )
+            local_slaves = np.unique(
+                np.asarray(
+                    floquet_data.local_slave_dofs,
+                    dtype=np.int64,
+                )
+            )
+            owned_slaves = local_slaves[
+                (local_slaves >= 0)
+                & (local_slaves < int(dofmap.index_map.size_local))
+            ]
+            owned_slave_original_dofs = (
+                owned_slaves + int(dofmap.index_map.local_range[0])
+            ).astype(PETSc.IntType)
+            independent_trace_system = (
+                build_floquet_independent_trace_system(
+                    condensed_system.matrix,
+                    condensed_system.rhs,
+                    owned_slave_original_dofs=owned_slave_original_dofs,
+                    original_to_trace=condensed_system.original_to_trace,
+                )
+            )
+            independent_trace_matrix_stats = _petsc_matrix_stats(
+                independent_trace_system.matrix
+            )
+            timing_details[
+                "stage4_dtn_floquet_slave_elimination_build_seconds"
+            ] = float(
+                comm.allreduce(
+                    time.perf_counter() - independent_started,
+                    op=MPI.MAX,
+                )
+            )
+            solve_A = independent_trace_system.matrix
+            solve_b = independent_trace_system.rhs
+            solve_dofs = int(independent_trace_system.active_rows)
+            solve_prefix = (
+                f"stage4_3d_dtn_cell_condensed_floquet_independent_"
+                f"{cfg.case_name}_"
+            )
+            _write_progress_event(
+                out_dir,
+                comm,
+                stage="stage4_dtn_floquet_slave_elimination",
+                status="end",
+                started=started,
+                dofs=solve_dofs,
+                constraints=floquet_data.num_constraints,
+                matrix_stats=independent_trace_matrix_stats,
+                petsc_options=petsc_options,
+                extra={
+                    "floquet_slave_elimination": (
+                        independent_trace_system.build_audit
+                    ),
+                },
+            )
 
     t0 = time.perf_counter()
     try:
@@ -1628,7 +1702,9 @@ def solve_stage4_dtn_port_total_field(
             dofs=solve_dofs,
             constraints=floquet_data.num_constraints,
             matrix_stats=(
-                condensed_matrix_stats
+                independent_trace_matrix_stats
+                if independent_trace_matrix_stats is not None
+                else condensed_matrix_stats
                 if condensed_matrix_stats is not None
                 else augmented_matrix_stats_after_finalize
             ),
@@ -1649,6 +1725,14 @@ def solve_stage4_dtn_port_total_field(
                     else condensed_system.build_audit
                 ),
                 "dtn_condensed_matrix_stats": condensed_matrix_stats,
+                "dtn_floquet_independent_matrix_stats": (
+                    independent_trace_matrix_stats
+                ),
+                "floquet_slave_elimination": (
+                    None
+                    if independent_trace_system is None
+                    else independent_trace_system.build_audit
+                ),
             }
         )
         raise
@@ -1709,12 +1793,27 @@ def solve_stage4_dtn_port_total_field(
 
     if condensed_system is not None:
         recovery_started = time.perf_counter()
+        expanded_trace_solution = (
+            expand_floquet_independent_trace_solution(
+                condensed_system.rhs,
+                independent_trace_system,
+                solve_x,
+            )
+            if independent_trace_system is not None
+            else None
+        )
         x_aug, condensation_recovery = recover_full_solution(
             A_aug,
             b_aug,
             condensed_system,
-            solve_x,
+            (
+                expanded_trace_solution
+                if expanded_trace_solution is not None
+                else solve_x
+            ),
         )
+        if expanded_trace_solution is not None:
+            expanded_trace_solution.destroy()
         timing_details["stage4_dtn_cell_static_condensation_recovery_seconds"] = (
             float(
                 comm.allreduce(
@@ -1790,6 +1889,14 @@ def solve_stage4_dtn_port_total_field(
         cell_static_condensation_audit = {
             **condensed_system.build_audit,
             "condensed_matrix_stats": condensed_matrix_stats,
+            "floquet_independent_matrix_stats": (
+                independent_trace_matrix_stats
+            ),
+            "floquet_slave_elimination": (
+                None
+                if independent_trace_system is None
+                else independent_trace_system.build_audit
+            ),
             "recovery": condensation_recovery,
             "full_explicit_true_residual": linear_residual,
             "same_full_operator_used_for_recovery_and_residual": True,
@@ -1812,6 +1919,9 @@ def solve_stage4_dtn_port_total_field(
         "stage4_cell_static_condensation": bool(
             condensed_system is not None
         ),
+        "stage4_floquet_slave_elimination": bool(
+            independent_trace_system is not None
+        ),
         "cell_static_condensation": cell_static_condensation_audit,
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
         "ksp_converged_reason": int(ksp.getConvergedReason()),
@@ -1822,6 +1932,9 @@ def solve_stage4_dtn_port_total_field(
         "dtn_base_matrix_stats": base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": augmented_matrix_stats_after_finalize,
         "dtn_condensed_matrix_stats": condensed_matrix_stats,
+        "dtn_floquet_independent_matrix_stats": (
+            independent_trace_matrix_stats
+        ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
@@ -1835,8 +1948,13 @@ def solve_stage4_dtn_port_total_field(
         solver_info["actual_pc_factor_solver_type"] = None
 
     if condensed_system is not None:
-        returned_A = condensed_system.matrix
-        returned_b = condensed_system.rhs
+        if independent_trace_system is not None:
+            returned_A = independent_trace_system.matrix
+            returned_b = independent_trace_system.rhs
+            condensed_system.destroy()
+        else:
+            returned_A = condensed_system.matrix
+            returned_b = condensed_system.rhs
         returned_x = solve_x
         A_aug.destroy()
         b_aug.destroy()

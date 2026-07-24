@@ -141,6 +141,9 @@ class SimulationConfig3D:
     # Task035b research-only exact cell-interior Schur path.  False preserves
     # the reviewed ordinary full augmented system.
     stage4_cell_static_condensation: bool = False
+    # Task035b research-only exact removal of the identity rows used to embed
+    # Floquet MPC slaves.  This currently requires cell static condensation.
+    stage4_floquet_slave_elimination: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
     matrix_diagnostics_factorization_only: bool = False

@@ -276,6 +276,7 @@ def run_target_global_two_level_r5(
     mesh_data_override=None,
     reuse_single_mesh: bool = False,
     static_condensation_degrees: tuple[int, ...] = (),
+    floquet_slave_elimination_degrees: tuple[int, ...] = (),
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -293,11 +294,19 @@ def run_target_global_two_level_r5(
     requested_condensation = {
         int(value) for value in static_condensation_degrees
     }
+    requested_slave_elimination = {
+        int(value) for value in floquet_slave_elimination_degrees
+    }
     if not requested_condensation.issubset(
         {int(coarse_degree), int(enriched_degree)}
     ):
         raise ValueError(
             "static condensation degrees must belong to the global-p pair"
+        )
+    if not requested_slave_elimination.issubset(requested_condensation):
+        raise ValueError(
+            "Floquet slave elimination degrees must also request static "
+            "condensation"
         )
     captures: dict[str, dict[str, Any]] = {}
 
@@ -325,6 +334,9 @@ def run_target_global_two_level_r5(
             direct_release_base_after_augmentation=True,
             stage4_cell_static_condensation=(
                 int(degree) in requested_condensation
+            ),
+            stage4_floquet_slave_elimination=(
+                int(degree) in requested_slave_elimination
             ),
             unique_output=False,
         )
@@ -439,6 +451,9 @@ def run_target_global_two_level_r5(
         "reuse_single_mesh_requested": bool(reuse_single_mesh),
         "static_condensation_degrees": [
             int(value) for value in static_condensation_degrees
+        ],
+        "floquet_slave_elimination_degrees": [
+            int(value) for value in floquet_slave_elimination_degrees
         ],
         "official_observable_delta_l2": float(observable_delta),
         "R5": estimate,

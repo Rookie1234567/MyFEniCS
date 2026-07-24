@@ -1094,6 +1094,13 @@ def run_prepared_3d_case_flow(
         if dtn_solver_info is None
         else dtn_solver_info.get("dtn_condensed_matrix_stats")
     )
+    dtn_floquet_independent_matrix_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "dtn_floquet_independent_matrix_stats"
+        )
+    )
     dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
     explicit_chac_constructed = False
     chac_before_stats = None
@@ -1112,6 +1119,9 @@ def run_prepared_3d_case_flow(
         "dtn_base_matrix_stats": dtn_base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
+        "dtn_floquet_independent_matrix_stats": (
+            dtn_floquet_independent_matrix_stats
+        ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats),
         "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats),
@@ -1250,9 +1260,17 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "stage4_dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
+        "stage4_dtn_floquet_independent_matrix_stats": (
+            dtn_floquet_independent_matrix_stats
+        ),
         "stage4_cell_static_condensation": False
         if dtn_solver_info is None
         else bool(dtn_solver_info.get("stage4_cell_static_condensation")),
+        "stage4_floquet_slave_elimination": False
+        if dtn_solver_info is None
+        else bool(
+            dtn_solver_info.get("stage4_floquet_slave_elimination")
+        ),
         "cell_static_condensation": None
         if dtn_solver_info is None
         else dtn_solver_info.get("cell_static_condensation"),

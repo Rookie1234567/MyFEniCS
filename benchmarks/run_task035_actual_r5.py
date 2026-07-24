@@ -195,6 +195,9 @@ def _worker(args: argparse.Namespace) -> int:
             static_condensation_degrees=tuple(
                 args.static_condensation_degree
             ),
+            floquet_slave_elimination_degrees=tuple(
+                args.floquet_slave_elimination_degree
+            ),
         )
     if MPI.COMM_WORLD.rank == 0:
         (args.run_dir / "actual_r5_result.json").write_text(
@@ -236,6 +239,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "research-only global-p pair degree whose cell-interior modes are "
             "exactly condensed; may be repeated"
+        ),
+    )
+    parser.add_argument(
+        "--floquet-slave-elimination-degree",
+        type=int,
+        action="append",
+        default=[],
+        help=(
+            "research-only global-p pair degree whose embedded Floquet "
+            "identity rows are physically removed after cell condensation; "
+            "may be repeated"
         ),
     )
     parser.add_argument("--mpi-size", type=int, default=8)
@@ -367,6 +381,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task035b static condensation is restricted to the plain "
             "fixed-target hexahedron global-p pair."
         )
+    if not set(args.floquet_slave_elimination_degree).issubset(
+        set(args.static_condensation_degree)
+    ):
+        parser.error(
+            "--floquet-slave-elimination-degree must also be listed in "
+            "--static-condensation-degree."
+        )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
             parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
@@ -477,6 +498,12 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         ),
         "stage4_dtn_condensed_matrix_stats": summary.get(
             "stage4_dtn_condensed_matrix_stats"
+        ),
+        "stage4_floquet_slave_elimination": summary.get(
+            "stage4_floquet_slave_elimination"
+        ),
+        "stage4_dtn_floquet_independent_matrix_stats": summary.get(
+            "stage4_dtn_floquet_independent_matrix_stats"
         ),
         "cell_static_condensation": summary.get(
             "cell_static_condensation"
@@ -651,6 +678,45 @@ def _qualify(
                             or {}
                         ).get("linear_system_relative_residual"),
                         (int, float),
+                    )
+                    for entry in requested_entries
+                ),
+            }
+        )
+    slave_elimination_degrees = getattr(
+        args, "floquet_slave_elimination_degree", []
+    )
+    if slave_elimination_degrees:
+        requested = set(slave_elimination_degrees)
+        requested_entries = [
+            entry
+            for entry in solves
+            if int(entry.get("degree", -1)) in requested
+        ]
+        checks.update(
+            {
+                "requested_floquet_slave_elimination_active": (
+                    len(requested_entries) == len(requested)
+                    and all(
+                        (entry.get("summary") or {}).get(
+                            "stage4_floquet_slave_elimination"
+                        )
+                        is True
+                        for entry in requested_entries
+                    )
+                ),
+                "requested_floquet_slave_rows_physically_removed": all(
+                    (
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "cell_static_condensation"
+                                )
+                                or {}
+                            ).get("floquet_slave_elimination")
+                            or {}
+                        ).get("status")
+                        == "exact_identity_slave_rows_removed"
                     )
                     for entry in requested_entries
                 ),
@@ -1128,6 +1194,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += "_condense_" + "-".join(
             f"p{degree}" for degree in args.static_condensation_degree
         )
+    if args.floquet_slave_elimination_degree:
+        run_label += "_independent_" + "-".join(
+            f"p{degree}"
+            for degree in args.floquet_slave_elimination_degree
+        )
     run_dir = (args.run_dir or args.artifact_root / run_label).resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     args.run_dir = run_dir
@@ -1162,6 +1233,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         command.append("--single-mesh-pair")
     for degree in args.static_condensation_degree:
         command.extend(["--static-condensation-degree", str(degree)])
+    for degree in args.floquet_slave_elimination_degree:
+        command.extend(
+            ["--floquet-slave-elimination-degree", str(degree)]
+        )
     if args.common_mesh_replay_record is not None:
         command.extend(
             [

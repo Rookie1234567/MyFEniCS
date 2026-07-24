@@ -73,6 +73,23 @@ class CellStaticCondensationSystem:
         self.matrix.destroy()
 
 
+@dataclass
+class FloquetIndependentTraceSystem:
+    """Physically smaller trace system with embedded MPC slave rows removed."""
+
+    matrix: PETSc.Mat
+    rhs: PETSc.Vec
+    owned_active_trace_ids: np.ndarray
+    full_trace_rows: int
+    active_rows: int
+    removed_slave_rows: int
+    build_audit: dict[str, Any]
+
+    def destroy(self) -> None:
+        self.rhs.destroy()
+        self.matrix.destroy()
+
+
 def _validated_owned_cell_interiors(
     A: PETSc.Mat,
     owned_cell_interiors: Iterable[Iterable[int] | np.ndarray],
@@ -448,9 +465,195 @@ def recover_full_solution(
     }
 
 
+def build_floquet_independent_trace_system(
+    trace_matrix: PETSc.Mat,
+    trace_rhs: PETSc.Vec,
+    *,
+    owned_slave_original_dofs: Iterable[int] | np.ndarray,
+    original_to_trace: dict[int, int],
+    identity_tolerance: float = 1.0e-12,
+) -> FloquetIndependentTraceSystem:
+    """Remove exact identity rows used to embed Floquet MPC slaves.
+
+    ``dolfinx_mpc`` assembles ``C^H A C`` in the original full-size layout,
+    with one identity row/column and a zero RHS entry for each slave.  This
+    routine verifies that algebraic contract before extracting the genuinely
+    independent trace system.  It never drops a coupled or nonzero-RHS row.
+    """
+
+    if (
+        trace_matrix.getSize()[0] != trace_matrix.getSize()[1]
+        or trace_rhs.getSize() != trace_matrix.getSize()[0]
+    ):
+        raise ValueError(
+            "Floquet slave elimination requires a square trace system and aligned RHS"
+        )
+    comm = trace_matrix.getComm().tompi4py()
+    started = perf_counter()
+    original_slaves = np.unique(_idx(owned_slave_original_dofs))
+    missing = [
+        int(value)
+        for value in original_slaves
+        if int(value) not in original_to_trace
+    ]
+    if missing:
+        raise ValueError(
+            "Floquet slave elimination found non-trace slave DoFs: "
+            f"{missing[:8]}"
+        )
+    owned_slave_trace = _idx(
+        sorted(original_to_trace[int(value)] for value in original_slaves)
+    )
+    row_start, row_end = trace_matrix.getOwnershipRange()
+    if len(owned_slave_trace) and (
+        int(owned_slave_trace[0]) < row_start
+        or int(owned_slave_trace[-1]) >= row_end
+    ):
+        raise ValueError(
+            "owned Floquet slave trace IDs must belong to the local row range"
+        )
+
+    local_max_off_diagonal = 0.0
+    local_max_diagonal_error = 0.0
+    local_max_rhs = 0.0
+    for row in owned_slave_trace:
+        columns, values = trace_matrix.getRow(int(row))
+        values = np.asarray(values, dtype=np.complex128)
+        diagonal = columns == int(row)
+        diagonal_value = (
+            complex(values[diagonal][0])
+            if np.count_nonzero(diagonal) == 1
+            else complex(np.nan)
+        )
+        off_diagonal = values[~diagonal]
+        local_max_off_diagonal = max(
+            local_max_off_diagonal,
+            float(np.max(np.abs(off_diagonal), initial=0.0)),
+        )
+        local_max_diagonal_error = max(
+            local_max_diagonal_error,
+            float(abs(diagonal_value - 1.0)),
+        )
+        local_max_rhs = max(
+            local_max_rhs,
+            float(abs(trace_rhs.getValue(int(row)))),
+        )
+    max_off_diagonal = float(
+        comm.allreduce(local_max_off_diagonal, op=MPI.MAX)
+    )
+    max_diagonal_error = float(
+        comm.allreduce(local_max_diagonal_error, op=MPI.MAX)
+    )
+    max_slave_rhs = float(comm.allreduce(local_max_rhs, op=MPI.MAX))
+    if (
+        not np.isfinite(max_diagonal_error)
+        or max_off_diagonal > identity_tolerance
+        or max_diagonal_error > identity_tolerance
+        or max_slave_rhs > identity_tolerance
+    ):
+        raise RuntimeError(
+            "Floquet slave rows are not exact zero-RHS identity rows: "
+            f"offdiag={max_off_diagonal:.3e}, "
+            f"diag_error={max_diagonal_error:.3e}, "
+            f"rhs={max_slave_rhs:.3e}"
+        )
+
+    owned_rows = np.arange(row_start, row_end, dtype=PETSc.IntType)
+    owned_active = owned_rows[
+        ~np.isin(owned_rows, owned_slave_trace, assume_unique=True)
+    ]
+    active_is = PETSc.IS().createGeneral(
+        owned_active,
+        comm=trace_matrix.getComm(),
+    )
+    try:
+        independent = trace_matrix.createSubMatrix(active_is, active_is)
+    finally:
+        active_is.destroy()
+    independent_rhs = independent.createVecRight()
+    if len(owned_active):
+        independent_rhs.getArray()[:] = np.asarray(
+            trace_rhs.getValues(owned_active),
+            dtype=PETSc.ScalarType,
+        )
+    independent_rhs.assemble()
+
+    full_trace_rows = int(trace_matrix.getSize()[0])
+    active_rows = int(independent.getSize()[0])
+    removed = int(
+        comm.allreduce(len(owned_slave_trace), op=MPI.SUM)
+    )
+    if active_rows != full_trace_rows - removed:
+        independent_rhs.destroy()
+        independent.destroy()
+        raise RuntimeError(
+            "Floquet-independent trace row count does not close"
+        )
+    return FloquetIndependentTraceSystem(
+        matrix=independent,
+        rhs=independent_rhs,
+        owned_active_trace_ids=owned_active,
+        full_trace_rows=full_trace_rows,
+        active_rows=active_rows,
+        removed_slave_rows=removed,
+        build_audit={
+            "schema_version": "task035b.floquet-independent-trace.v1",
+            "status": "exact_identity_slave_rows_removed",
+            "full_trace_rows": full_trace_rows,
+            "active_rows": active_rows,
+            "removed_slave_rows": removed,
+            "physical_row_compression_factor": float(
+                full_trace_rows / active_rows
+            ),
+            "maximum_slave_off_diagonal": max_off_diagonal,
+            "maximum_slave_diagonal_error": max_diagonal_error,
+            "maximum_slave_rhs": max_slave_rhs,
+            "identity_tolerance": float(identity_tolerance),
+            "full_trace_matrix_retained_after_build": True,
+            "total_build_seconds": float(
+                comm.allreduce(perf_counter() - started, op=MPI.MAX)
+            ),
+        },
+    )
+
+
+def expand_floquet_independent_trace_solution(
+    full_trace_template: PETSc.Vec,
+    independent: FloquetIndependentTraceSystem,
+    active_solution: PETSc.Vec,
+) -> PETSc.Vec:
+    """Expand an independent solution with zero embedded slave entries."""
+
+    if active_solution.getSize() != independent.active_rows:
+        raise ValueError(
+            "active trace solution size does not match independent system"
+        )
+    full = full_trace_template.duplicate()
+    full.set(PETSc.ScalarType(0.0))
+    local_values = np.asarray(
+        active_solution.getArray(readonly=True),
+        dtype=PETSc.ScalarType,
+    )
+    if len(independent.owned_active_trace_ids) != len(local_values):
+        full.destroy()
+        raise RuntimeError(
+            "active trace ownership does not match reduced solution"
+        )
+    if len(local_values):
+        full.setValues(
+            independent.owned_active_trace_ids,
+            local_values,
+        )
+    full.assemble()
+    return full
+
+
 __all__ = [
     "CellStaticCondensationSystem",
+    "FloquetIndependentTraceSystem",
     "build_explicit_cell_static_condensation",
+    "build_floquet_independent_trace_system",
+    "expand_floquet_independent_trace_solution",
     "owned_hcurl_cell_interior_dofs",
     "recover_full_solution",
 ]

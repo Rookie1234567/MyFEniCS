@@ -125,6 +125,34 @@ class Task035bHighOrderResourceAuditTests(unittest.TestCase):
         self.assertEqual(audit["factor_fill_ratio"], 2.0)
         A.destroy()
 
+    def test_p6_periodic_independent_trace_inventory_is_physical(self) -> None:
+        V = self._space(6)
+        audit = hcurl_entity_dof_inventory(
+            V,
+            num_auxiliary_dofs=80,
+            floquet_num_constraints=9210,
+            active_matrix_rows=51272,
+            cell_static_condensation=True,
+            floquet_slave_elimination=True,
+        )
+        self.assertTrue(audit["pass"])
+        self.assertEqual(
+            audit["theoretical_static_condensed_augmented_rows"],
+            60482,
+        )
+        self.assertEqual(
+            audit[
+                "theoretical_static_condensed_periodic_independent_rows"
+            ],
+            51272,
+        )
+        self.assertTrue(audit["cell_static_condensation_active"])
+        self.assertTrue(audit["floquet_slave_elimination_active"])
+        self.assertIn(
+            "Floquet-slave elimination",
+            audit["static_condensation_projection_semantics"],
+        )
+
     def test_formal_mpi8_p6_condensation_record_is_full_system_qualified(
         self,
     ) -> None:

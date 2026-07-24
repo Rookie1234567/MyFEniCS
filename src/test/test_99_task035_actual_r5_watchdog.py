@@ -33,9 +33,12 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                 "hexahedron",
                 "--static-condensation-degree",
                 "4",
+                "--floquet-slave-elimination-degree",
+                "4",
             ]
         )
         self.assertEqual(args.static_condensation_degree, [4])
+        self.assertEqual(args.floquet_slave_elimination_degree, [4])
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
@@ -57,6 +60,19 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                     "--mesh-cell-type",
                     "tetrahedron",
                     "--static-condensation-degree",
+                    "4",
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "3",
+                    "--enriched-degree",
+                    "4",
+                    "--mesh-cell-type",
+                    "hexahedron",
+                    "--floquet-slave-elimination-degree",
                     "4",
                 ]
             )

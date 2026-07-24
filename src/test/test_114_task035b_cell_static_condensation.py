@@ -8,6 +8,8 @@ from petsc4py import PETSc
 
 from src.solvers.hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
+    build_floquet_independent_trace_system,
+    expand_floquet_independent_trace_solution,
     recover_full_solution,
 )
 
@@ -130,6 +132,84 @@ class Task035bCellStaticCondensationTests(unittest.TestCase):
         trace_solution.destroy()
         ksp.destroy()
         condensed.destroy()
+
+    def test_exact_embedded_slave_rows_are_physically_removed(self) -> None:
+        comm = MPI.COMM_WORLD
+        rows_per_rank = 5
+        rows = rows_per_rank * comm.size
+        values = np.zeros((rows, rows), dtype=np.complex128)
+        for row in range(rows):
+            values[row, row] = 5.0 + 0.25j
+            if row + 1 < rows:
+                values[row, row + 1] = -0.3 + 0.1j
+                values[row + 1, row] = 0.2 - 0.05j
+        slave_rows = np.arange(
+            rows_per_rank - 1,
+            rows,
+            rows_per_rank,
+            dtype=np.int64,
+        )
+        for slave in slave_rows:
+            values[slave, :] = 0.0
+            values[:, slave] = 0.0
+            values[slave, slave] = 1.0
+        rhs_values = np.arange(1, rows + 1, dtype=np.float64).astype(
+            np.complex128
+        )
+        rhs_values[slave_rows] = 0.0
+        matrix = _distributed_matrix(values)
+        rhs = _distributed_vector(rhs_values)
+        row_start, _row_end = matrix.getOwnershipRange()
+        local_slave = np.asarray(
+            [row_start + rows_per_rank - 1],
+            dtype=PETSc.IntType,
+        )
+        identity_map = {index: index for index in range(rows)}
+        independent = build_floquet_independent_trace_system(
+            matrix,
+            rhs,
+            owned_slave_original_dofs=local_slave,
+            original_to_trace=identity_map,
+        )
+        ksp = PETSc.KSP().create(comm)
+        ksp.setOperators(independent.matrix)
+        ksp.setType("preonly")
+        ksp.getPC().setType("lu")
+        if comm.size > 1:
+            ksp.getPC().setFactorSolverType("mumps")
+        active_solution = independent.rhs.duplicate()
+        ksp.solve(independent.rhs, active_solution)
+        expanded = expand_floquet_independent_trace_solution(
+            rhs,
+            independent,
+            active_solution,
+        )
+
+        expected = np.linalg.solve(values, rhs_values)
+        start, end = expanded.getOwnershipRange()
+        np.testing.assert_allclose(
+            expanded.getArray(readonly=True),
+            expected[start:end],
+            rtol=2.0e-12,
+            atol=2.0e-12,
+        )
+        self.assertEqual(independent.removed_slave_rows, comm.size)
+        self.assertEqual(independent.active_rows, rows - comm.size)
+        self.assertLessEqual(
+            independent.build_audit["maximum_slave_off_diagonal"],
+            1.0e-12,
+        )
+        self.assertLessEqual(
+            independent.build_audit["maximum_slave_rhs"],
+            1.0e-12,
+        )
+
+        expanded.destroy()
+        active_solution.destroy()
+        ksp.destroy()
+        independent.destroy()
+        rhs.destroy()
+        matrix.destroy()
 
 
 if __name__ == "__main__":
