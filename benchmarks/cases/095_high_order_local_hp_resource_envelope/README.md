@@ -39,6 +39,7 @@
 | `records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json` | `e9d35bb77636302e18112bf1ab81fdc40f64efba` | `actual_global_r5_pass` | 20.581 GiB |
 | `records/same_mesh_p4_p5_p6_r5_hp_classifier_mpi8.json` | record commit `650fc141` | `same_mesh_hp_classifier_pass` | lightweight |
 | `records/regionwise_p4trace_p6interior_h10_mpi8.json` | `eb1742dde4d31c54cf66fc5d2d1d37203f9f7e34` | `actual_regionwise_p_controlled_negative` | 6.072 GiB |
+| `records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json` | `6c113cbd6c3dfadd7399ec2d198f0d36bed7533d` | `actual_regionwise_p_controlled_negative` | 9.271 GiB |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -126,6 +127,27 @@ interior。active Full3D-equivalent DoF 为 88,994；完整 p6 matrix、
 full explicit true residual `1.1657e-11`，geometry、tag、periodic 和
 orientation 均通过，所以这是明确的算法精度负结果，而不是求解器失败。
 `p4 trace + p4/p6 interior` lane 已关闭且不会无理由重跑。
+
+第二个候选提高到 p5 shared trace，但为保持 `<=90k`，190 cells 只能保留
+p4 interior，按 `eta_p5p6` 排名前 62 cells 保留 p6 interior。
+
+| metric | p5-trace N62 |
+|---|---:|
+| Full3D-equivalent active DoF / solved rows | 89,755 / 35,000 |
+| matrix / factor NNZ | 20,140,928 / 101,062,900 |
+| average / max row width | 575.46 / 965 |
+| factor fill | 5.018 |
+| formal peak / swap | 9.271 GiB / 0 |
+| condensed build / MUMPS setup / solve | 344.16 / 37.20 / 0.074 s |
+| true residual | `1.5721e-12` |
+
+该候选 `R00/R/T/Aclosure =
+0.94396245/0.96089508/0.01608446/0.02302046`，normalized multi-goal
+error 为 `30187.729`，volume/interface complex-E errors 为
+`101.720%/101.039%`；全部 strict Gate 失败。它是预算内 high-interior
+最多的候选，因此不再运行更弱的 N18。两个独立 regionwise-p 精度负信号
+关闭当前 fixed-mesh local-interior lane；下一路线转 p5 base +
+multi-goal DWR + one local-h + selected p6。
 
 ## 复现
 

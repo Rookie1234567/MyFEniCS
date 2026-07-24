@@ -1,5 +1,47 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-24 p5-trace N62：资源继续下降、精度路线关闭
+
+第二个 physical local-p 候选使用 p5 shared trace、190-cell p4 interior 和
+按 `eta_p5p6` 排名选出的 62-cell p6 interior。这是 `<=90k` 合同内 p6
+interior 最多的候选：
+
+| MPI8 h10 metric | global p6 canonical | p5-trace N62 | change |
+|---|---:|---:|---:|
+| Full3D-equivalent active DoF | 173,802 | **89,755** | -48.36% |
+| solved rows（含 80 DtN） | 51,272 | **35,000** | -31.74% |
+| matrix NNZ | 41,989,040 | **20,140,928** | -52.03% |
+| factor NNZ | 211,651,232 | **101,062,900** | -52.25% |
+| process-tree peak | 15.964 GiB | **9.271 GiB** | -41.93% |
+| direct condensed build | 770.89 s | **344.16 s** | -55.36% |
+| MUMPS setup / solve | 142.12 / 0.202 s | **37.20 / 0.074 s** | -73.82% / -63.21% |
+| total solve-case elapsed | 967.09 s | **438.17 s** | -54.69% |
+
+矩阵 35,000 rows、20,140,928 NNZ，average/max row width
+`575.46/965`；factor fill 为 `5.018`。full explicit true residual
+`1.5721e-12`、MPI8、0 swap，完整 p6 matrix、inactive p6 rows 和完整 trace
+matrix 均未分配。
+
+正式精度却严重失败：
+
+| observable / Gate | global p6 | candidate | p5-p6 tolerance |
+|---|---:|---:|---:|
+| R00_total | 0.0007537612 | 0.9439624498 | 0.0000319529 |
+| R_total | 0.0007628815 | 0.9608950795 | 0.0000320046 |
+| T_total | 0.6027016340 | 0.0160844643 | 0.0002176801 |
+| A_closure | 0.3965354845 | 0.0230204562 | 0.0001856755 |
+| normalized R/T/Aclosure | radius 1.732 | 30187.729 | — |
+| volume/interface complex-E | bands 0.4666%/0.4862% | 101.720%/101.039% | — |
+
+12 个 significant diffraction channels 的 power 和 complex amplitude Gate
+也失败。p5 trace 本身不能补偿 190 cells 缺失的 p5/p6 interior modes；
+该空间虽共形且 linear solve 精确，但不是 same-error 子空间。
+
+结合此前 p4-trace N105 的独立精度负信号，fixed-mesh
+regionwise-interior-p `<=90k` lane 已关闭。N18 会从 N62 继续删除 44 个
+p6 interior blocks，因而不再无理由运行。正式记录：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json`。
+
 ## 2026-07-24 真实 regionwise-p 候选：资源正信号、精度受控负结果
 
 Task035b 已在同一 h10 hexa 网格和 classifier geometry hash 上正式运行

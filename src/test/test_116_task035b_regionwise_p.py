@@ -124,6 +124,41 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertFalse(record["diffraction_channel_comparison"]["pass"])
         self.assertFalse(record["selected_field_interface_error_gate"]["pass"])
 
+    def test_p5_trace_n62_controlled_negative_record_is_preserved(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        record = json.loads(
+            (
+                root
+                / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+                / "records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            record["status"], "actual_regionwise_p_controlled_negative"
+        )
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertFalse(record["candidate_accuracy_pass"])
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"], 8
+        )
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
+        candidate = record["candidate"]
+        self.assertLessEqual(candidate["linear_system_relative_residual"], 1.0e-9)
+        self.assertEqual(candidate["matrix_stats"]["matrix_rows"], 35000)
+        self.assertEqual(candidate["matrix_stats"]["matrix_nnz_used"], 20140928.0)
+        cell_audit = candidate["cell_static_condensation"]
+        self.assertEqual(cell_audit["active_full3d_equivalent_dofs"], 89755)
+        self.assertEqual(cell_audit["regionwise_high_cell_count"], 62)
+        self.assertEqual(cell_audit["regionwise_low_cell_count"], 190)
+        self.assertFalse(cell_audit["inactive_max_p_rows_retained_in_matrix"])
+        self.assertFalse(
+            record["observable_comparison"][
+                "all_scalar_same_code_bands_pass"
+            ]
+        )
+        self.assertFalse(record["diffraction_channel_comparison"]["pass"])
+        self.assertFalse(record["selected_field_interface_error_gate"]["pass"])
+
     def test_p4_trace_p6_interior_custom_element_contains_p4(self) -> None:
         reduced = create_reduced_trace_hcurl_element(4, 6)
         audit = reduced.audit
