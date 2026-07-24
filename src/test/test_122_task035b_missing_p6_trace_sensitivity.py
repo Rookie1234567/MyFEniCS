@@ -9,8 +9,12 @@ from petsc4py import PETSc
 from src.adaptivity.missing_p6_trace_sensitivity import (
     MissingTraceResidualDiagnostic,
     REVIEW_V1_MISSING_TRACE_GOAL_LABELS,
+    audit_trace_riesz_basis_change,
     build_missing_p6_trace_complement,
+    build_missing_p6_trace_riesz_metric,
+    prepare_periodic_orbit_svd_qr_payload,
     split_enriched_local_operator,
+    whiten_trace_dual_covectors,
 )
 
 
@@ -214,6 +218,194 @@ class TestTask035bMissingP6TraceSensitivity(unittest.TestCase):
             transformed[5:, 5:],
             rtol=2.0e-13,
             atol=2.0e-11,
+        )
+
+    def test_reference_entity_riesz_whitening_is_basis_invariant(
+        self,
+    ) -> None:
+        complement = build_missing_p6_trace_complement()
+        metric = build_missing_p6_trace_riesz_metric(complement)
+        audit = metric.audit
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["entity_block_count"], 18)
+        self.assertEqual(audit["edge_block_count"], 12)
+        self.assertEqual(audit["face_block_count"], 6)
+        self.assertEqual(metric.block_diagonal_gram.shape, (132, 132))
+        self.assertEqual(
+            np.linalg.matrix_rank(metric.block_diagonal_gram),
+            132,
+        )
+        self.assertGreater(audit["minimum_block_eigenvalue"], 0.0)
+        self.assertLess(
+            audit["orientation_metric_isometry_relative_error_max"],
+            5.0e-10,
+        )
+        self.assertLess(
+            audit[
+                "basis_change_dual_goal_gram_relative_error_max"
+            ],
+            5.0e-10,
+        )
+        self.assertLess(
+            audit[
+                "basis_change_singular_values_relative_error_max"
+            ],
+            5.0e-10,
+        )
+        self.assertTrue(audit["basis_rotation_scaling_invariant"])
+        self.assertFalse(
+            audit["individual_whitened_coordinates_basis_invariant"]
+        )
+        self.assertFalse(audit["physical_mesh_riesz_metric_available"])
+        self.assertEqual(
+            audit["physical_mesh_riesz_metric_status"],
+            "controlled_stop_missing_actual_mesh_pullbacks",
+        )
+        self.assertFalse(
+            audit["actual_global_missing_trace_residual_available"]
+        )
+        self.assertFalse(audit["periodic_orbit_svd_qr_performed"])
+        self.assertFalse(
+            audit["coordinatewise_missing_mode_ranking_authorized"]
+        )
+        self.assertFalse(audit["entity_orbit_ranking_authorized"])
+        self.assertFalse(audit["actual_dwr_indicator"])
+        self.assertFalse(audit["lane_b_formal_selection_authorized"])
+
+        face = next(
+            block
+            for block in metric.entity_blocks
+            if block.entity_dimension == 2
+        )
+        dimension = face.missing_dimension
+        rng = np.random.default_rng(2026072502)
+        covectors = (
+            rng.standard_normal((dimension, 4))
+            + 1j * rng.standard_normal((dimension, 4))
+        )
+        rotation_raw = rng.standard_normal((dimension, dimension))
+        rotation, _upper = np.linalg.qr(rotation_raw)
+        change = rotation @ np.diag(
+            np.geomspace(0.2, 5.0, dimension)
+        )
+        original_euclidean = covectors.conj().T @ covectors
+        transformed_covectors = change.conj().T @ covectors
+        transformed_euclidean = (
+            transformed_covectors.conj().T @ transformed_covectors
+        )
+        self.assertGreater(
+            np.linalg.norm(original_euclidean - transformed_euclidean),
+            1.0,
+        )
+        invariance = audit_trace_riesz_basis_change(
+            face.gram,
+            covectors,
+            change,
+        )
+        self.assertTrue(invariance["pass"])
+        self.assertLess(
+            invariance["dual_goal_gram_relative_error"],
+            5.0e-10,
+        )
+        self.assertLess(
+            invariance["singular_values_relative_error"],
+            5.0e-10,
+        )
+        whitened = whiten_trace_dual_covectors(face.gram, covectors)
+        expected = (
+            covectors.conj().T
+            @ np.linalg.solve(face.gram, covectors)
+        )
+        np.testing.assert_allclose(
+            whitened.dual_goal_gram,
+            expected,
+            rtol=2.0e-11,
+            atol=2.0e-11,
+        )
+        self.assertFalse(
+            whitened.audit[
+                "coordinatewise_missing_mode_ranking_authorized"
+            ]
+        )
+
+    def test_riesz_and_periodic_orbit_interfaces_fail_closed(
+        self,
+    ) -> None:
+        with self.assertRaisesRegex(
+            FloatingPointError,
+            "NaN or Inf",
+        ):
+            whiten_trace_dual_covectors(
+                np.eye(2),
+                np.asarray([[np.nan], [1.0]]),
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "positive definite",
+        ):
+            whiten_trace_dual_covectors(
+                np.diag([1.0, 0.0]),
+                np.ones((2, 1)),
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "shape",
+        ):
+            whiten_trace_dual_covectors(
+                np.eye(2),
+                np.ones((3, 1)),
+            )
+        covectors = np.ones(
+            (2, len(REVIEW_V1_MISSING_TRACE_GOAL_LABELS)),
+            dtype=np.complex128,
+        )
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "actual_global_residual",
+        ):
+            prepare_periodic_orbit_svd_qr_payload(
+                np.eye(2),
+                covectors,
+                orbit_id="periodic_x_0",
+                orbit_member_ids=(10, 20),
+                goal_labels=REVIEW_V1_MISSING_TRACE_GOAL_LABELS,
+                actual_global_residual=False,
+                periodic_orbit_closed=True,
+                orientation_phase_pullbacks_verified=True,
+                physical_entity_gram_verified=True,
+            )
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "periodic_orbit_closed",
+        ):
+            prepare_periodic_orbit_svd_qr_payload(
+                np.eye(2),
+                covectors,
+                orbit_id="periodic_x_0",
+                orbit_member_ids=(10, 20),
+                goal_labels=REVIEW_V1_MISSING_TRACE_GOAL_LABELS,
+                actual_global_residual=True,
+                periodic_orbit_closed=False,
+                orientation_phase_pullbacks_verified=True,
+                physical_entity_gram_verified=True,
+            )
+        payload = prepare_periodic_orbit_svd_qr_payload(
+            np.diag([2.0, 5.0]),
+            covectors,
+            orbit_id="periodic_x_0",
+            orbit_member_ids=(10, 20),
+            goal_labels=REVIEW_V1_MISSING_TRACE_GOAL_LABELS,
+            actual_global_residual=True,
+            periodic_orbit_closed=True,
+            orientation_phase_pullbacks_verified=True,
+            physical_entity_gram_verified=True,
+        )
+        self.assertEqual(payload.whitened_covectors.shape, (2, 16))
+        self.assertEqual(payload.dual_goal_gram.shape, (16, 16))
+        self.assertFalse(
+            payload.audit[
+                "coordinatewise_missing_mode_ranking_authorized"
+            ]
         )
 
     def test_serial_actual_residuals_are_exact_and_proxy_is_not_dwr(

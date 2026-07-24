@@ -45,6 +45,10 @@ def test_preflight_freezes_complete_132_mode_audit(
 ) -> None:
     assert preflight_record["pass"] is True
     assert (
+        preflight_record["schema_version"]
+        == "task035b.missing-p6-trace-complement-preflight.v2"
+    )
+    assert (
         preflight_record["status"]
         == "missing_p6_trace_complement_preflight_pass"
     )
@@ -68,6 +72,65 @@ def test_preflight_freezes_complete_132_mode_audit(
     assert len(audit["retained_to_enriched_sha256"]) == 64
     assert len(audit["missing_to_enriched_sha256"]) == 64
     assert all(audit["checks"].values())
+
+
+def test_preflight_freezes_reference_riesz_and_physical_controlled_stop(
+    preflight_record: dict[str, object],
+) -> None:
+    evidence = preflight_record["reference_entity_trace_riesz"]
+    audit = evidence["audit"]
+    assert audit["pass"] is True
+    assert audit["canonical"] is False
+    assert audit["production_qualified"] is False
+    assert (
+        audit["metric"]
+        == "reference_entity_tangential_l2_direct_sum"
+    )
+    assert audit["metric_scope"] == "reference_cell_only"
+    assert audit["entity_block_count"] == 18
+    assert audit["edge_block_count"] == 12
+    assert audit["face_block_count"] == 6
+    assert audit["missing_trace_dimension"] == 132
+    assert audit["minimum_block_eigenvalue"] > 0.0
+    assert audit["basis_rotation_scaling_invariant"] is True
+    assert (
+        audit["individual_whitened_coordinates_basis_invariant"]
+        is False
+    )
+    assert audit["cross_entity_trace_gram_couplings_included"] is False
+    assert audit["physical_mesh_riesz_metric_available"] is False
+    assert (
+        audit["physical_mesh_riesz_metric_status"]
+        == "controlled_stop_missing_actual_mesh_pullbacks"
+    )
+    assert (
+        audit["actual_global_missing_trace_residual_available"]
+        is False
+    )
+    assert audit["periodic_orbit_svd_qr_performed"] is False
+    assert audit["coordinatewise_missing_mode_ranking_authorized"] is False
+    assert audit["entity_orbit_ranking_authorized"] is False
+    assert audit["actual_dwr_indicator"] is False
+    assert audit["lane_b_formal_selection_authorized"] is False
+    assert len(evidence["entity_blocks"]) == 18
+    assert all(block["pass"] is True for block in evidence["entity_blocks"])
+    identity = evidence["theoretical_identity"]
+    assert identity["basis_change"] == "B_new = B S"
+    assert identity["dual_covector_change"] == "r_new = S^H r"
+    assert identity["coordinatewise_mode_ranking_invariant"] is False
+    controlled_stop = evidence["physical_metric_controlled_stop"]
+    assert controlled_stop["physical_mesh_riesz_metric_available"] is False
+    assert controlled_stop["missing_inputs"]
+    contract = evidence["periodic_orbit_svd_qr_future_contract"]
+    assert contract["implemented"] is True
+    assert contract["status"] == "not_run_missing_actual_global_residual"
+    assert contract["required_goal_count"] == 16
+    assert contract["requires_actual_global_residual"] is True
+    assert contract["requires_closed_periodic_orbit"] is True
+    assert contract["requires_orientation_phase_pullbacks"] is True
+    assert contract["requires_physical_entity_gram"] is True
+    assert contract["individual_coordinate_ranking_authorized"] is False
+    assert contract["entity_orbit_ranking_authorized"] is False
 
 
 def test_preflight_is_explicitly_not_pde_not_candidate_not_dwr(
@@ -96,6 +159,14 @@ def test_preflight_is_explicitly_not_pde_not_candidate_not_dwr(
     )
     assert semantics["actual_dwr_indicator"] is False
     assert semantics["lane_b_formal_selection_authorized"] is False
+    assert semantics["reference_entity_trace_riesz_available"] is True
+    assert semantics["physical_mesh_trace_riesz_available"] is False
+    assert semantics["periodic_orbit_svd_qr_performed"] is False
+    assert (
+        semantics["coordinatewise_missing_mode_ranking_authorized"]
+        is False
+    )
+    assert semantics["entity_orbit_ranking_authorized"] is False
     assert preflight_record["qualification"]["pass"] is True
     assert all(
         preflight_record["qualification"]["checks"].values()

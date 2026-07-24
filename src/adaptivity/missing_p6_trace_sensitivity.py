@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 from types import MappingProxyType
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import basix
 import basix.ufl
@@ -118,6 +118,53 @@ class MissingP6TraceComplement:
     retained_to_enriched: np.ndarray
     missing_to_enriched: np.ndarray
     entity_blocks: tuple[MissingTraceEntityBlock, ...]
+    audit: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
+class MissingTraceEntityRieszBlock:
+    """Reference-entity tangential-L2 Riesz metric for one trace block.
+
+    ``gram`` acts on primal trace coefficients.  Residual and goal-gradient
+    vectors are dual covectors, so ``dual_inverse_sqrt`` is the whitening map
+    used for invariant residual norms and pairings.
+    """
+
+    entity_dimension: int
+    local_entity_index: int
+    missing_column_start: int
+    missing_column_stop: int
+    gram: np.ndarray
+    sqrt: np.ndarray
+    dual_inverse_sqrt: np.ndarray
+    eigenvalues: np.ndarray
+    quadrature_degree: int
+    audit: Mapping[str, Any]
+
+    @property
+    def missing_dimension(self) -> int:
+        return int(self.missing_column_stop - self.missing_column_start)
+
+
+@dataclass(frozen=True)
+class MissingP6TraceRieszMetric:
+    """Entity-direct-sum reference-cell metric for missing trace modes."""
+
+    trace_degree: int
+    enriched_degree: int
+    missing_dimension: int
+    block_diagonal_gram: np.ndarray
+    entity_blocks: tuple[MissingTraceEntityRieszBlock, ...]
+    audit: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
+class WhitenedTraceDualCovectors:
+    """Basis-invariant algebra exposed to future SVD/QR analysis."""
+
+    whitened_covectors: np.ndarray
+    dual_goal_gram: np.ndarray
+    singular_values: np.ndarray
     audit: Mapping[str, Any]
 
 
@@ -435,6 +482,679 @@ def build_missing_p6_trace_complement(
         entity_blocks=tuple(blocks),
         audit=audit,
     )
+
+
+def _relative_matrix_error(left: np.ndarray, right: np.ndarray) -> float:
+    left_array = np.asarray(left)
+    right_array = np.asarray(right)
+    norm_order: str | int | None = (
+        "fro" if left_array.ndim >= 2 else None
+    )
+    difference = float(
+        np.linalg.norm(left_array - right_array, ord=norm_order)
+    )
+    scale = max(
+        1.0,
+        float(np.linalg.norm(left_array, ord=norm_order)),
+        float(np.linalg.norm(right_array, ord=norm_order)),
+    )
+    return difference / scale
+
+
+def _spectral_riesz_factors(
+    gram: np.ndarray,
+    *,
+    tolerance: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    matrix = np.asarray(gram, dtype=np.complex128)
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError("trace Gram matrix must be square")
+    if matrix.shape[0] == 0:
+        raise ValueError("trace Gram matrix must be nonempty")
+    if not np.all(np.isfinite(matrix)):
+        raise FloatingPointError("trace Gram matrix contains NaN or Inf")
+    hermitian_error = _relative_matrix_error(matrix, matrix.conj().T)
+    if hermitian_error > tolerance:
+        raise ValueError("trace Gram matrix is not Hermitian")
+    matrix = 0.5 * (matrix + matrix.conj().T)
+    eigenvalues, eigenvectors = np.linalg.eigh(matrix)
+    maximum = float(np.max(eigenvalues))
+    minimum = float(np.min(eigenvalues))
+    if (
+        not np.all(np.isfinite(eigenvalues))
+        or maximum <= 0.0
+        or minimum <= tolerance * maximum
+    ):
+        raise ValueError(
+            "trace Gram matrix is not numerically positive definite"
+        )
+    sqrt_values = np.sqrt(eigenvalues)
+    inverse_sqrt_values = 1.0 / sqrt_values
+    sqrt = (eigenvectors * sqrt_values) @ eigenvectors.conj().T
+    inverse_sqrt = (
+        eigenvectors * inverse_sqrt_values
+    ) @ eigenvectors.conj().T
+    return matrix, sqrt, inverse_sqrt, eigenvalues
+
+
+def whiten_trace_dual_covectors(
+    gram: np.ndarray,
+    dual_covectors: np.ndarray,
+    *,
+    tolerance: float = 5.0e-12,
+) -> WhitenedTraceDualCovectors:
+    """Whiten dual covectors using a Hermitian positive trace Gram matrix.
+
+    If trace basis columns change as ``B_new = B S``, Galerkin residual
+    covectors change as ``r_new = S**H r`` and the Gram matrix changes as
+    ``G_new = S**H G S``.  Consequently ``r**H G**-1 r`` and all singular
+    values returned here are invariant under arbitrary nonsingular rotations
+    *and scalings*, up to roundoff.  Individual whitened coordinates may still
+    rotate unitarily and must never be ranked as physical modes.
+    """
+
+    tolerance = float(tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("Riesz tolerance must be positive and finite")
+    matrix, _sqrt, inverse_sqrt, _eigenvalues = _spectral_riesz_factors(
+        gram,
+        tolerance=tolerance,
+    )
+    covectors = np.asarray(dual_covectors, dtype=np.complex128)
+    if covectors.ndim == 1:
+        covectors = covectors[:, None]
+    if covectors.ndim != 2 or covectors.shape[0] != matrix.shape[0]:
+        raise ValueError(
+            "dual covectors must have shape (trace modes, goals)"
+        )
+    if covectors.shape[1] == 0:
+        raise ValueError("at least one dual covector is required")
+    if not np.all(np.isfinite(covectors)):
+        raise FloatingPointError("trace dual covectors contain NaN or Inf")
+    whitened = inverse_sqrt @ covectors
+    dual_goal_gram = whitened.conj().T @ whitened
+    singular_values = np.linalg.svd(
+        whitened,
+        compute_uv=False,
+        full_matrices=False,
+    )
+    finite = bool(
+        np.all(np.isfinite(whitened))
+        and np.all(np.isfinite(dual_goal_gram))
+        and np.all(np.isfinite(singular_values))
+    )
+    if not finite:
+        raise FloatingPointError(
+            "trace Riesz whitening produced NaN or Inf"
+        )
+    reconstruction_error = _relative_matrix_error(
+        dual_goal_gram,
+        covectors.conj().T @ np.linalg.solve(matrix, covectors),
+    )
+    if reconstruction_error > 50.0 * tolerance:
+        raise RuntimeError("trace Riesz whitening reconstruction failed")
+    audit = MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.missing-trace-dual-riesz-whitening.v1"
+            ),
+            "pass": True,
+            "trace_mode_count": int(matrix.shape[0]),
+            "goal_column_count": int(covectors.shape[1]),
+            "dual_goal_gram_reconstruction_relative_error": (
+                reconstruction_error
+            ),
+            "basis_rotation_scaling_invariant_quantities": (
+                "dual_goal_gram",
+                "singular_values",
+            ),
+            "individual_whitened_coordinates_basis_invariant": False,
+            "coordinatewise_missing_mode_ranking_authorized": False,
+            "entity_orbit_ranking_authorized": False,
+            "actual_dwr_indicator": False,
+            "lane_b_formal_selection_authorized": False,
+        }
+    )
+    return WhitenedTraceDualCovectors(
+        whitened_covectors=whitened,
+        dual_goal_gram=dual_goal_gram,
+        singular_values=singular_values,
+        audit=audit,
+    )
+
+
+def audit_trace_riesz_basis_change(
+    gram: np.ndarray,
+    dual_covectors: np.ndarray,
+    change_of_basis: np.ndarray,
+    *,
+    tolerance: float = 5.0e-12,
+) -> Mapping[str, Any]:
+    """Audit a nonsingular trace-basis rotation/scaling transformation."""
+
+    matrix = np.asarray(gram, dtype=np.complex128)
+    change = np.asarray(change_of_basis, dtype=np.complex128)
+    covectors = np.asarray(dual_covectors, dtype=np.complex128)
+    if covectors.ndim == 1:
+        covectors = covectors[:, None]
+    if (
+        change.ndim != 2
+        or change.shape[0] != change.shape[1]
+        or change.shape != matrix.shape
+    ):
+        raise ValueError("trace change of basis has the wrong shape")
+    if not np.all(np.isfinite(change)):
+        raise FloatingPointError(
+            "trace change of basis contains NaN or Inf"
+        )
+    singular_values = np.linalg.svd(change, compute_uv=False)
+    if (
+        not np.all(np.isfinite(singular_values))
+        or float(np.min(singular_values))
+        <= tolerance * float(np.max(singular_values))
+    ):
+        raise ValueError("trace change of basis is numerically singular")
+    original = whiten_trace_dual_covectors(
+        matrix,
+        covectors,
+        tolerance=tolerance,
+    )
+    transformed_gram = change.conj().T @ matrix @ change
+    transformed_covectors = change.conj().T @ covectors
+    transformed = whiten_trace_dual_covectors(
+        transformed_gram,
+        transformed_covectors,
+        tolerance=tolerance,
+    )
+    goal_gram_error = _relative_matrix_error(
+        original.dual_goal_gram,
+        transformed.dual_goal_gram,
+    )
+    singular_value_error = _relative_matrix_error(
+        original.singular_values,
+        transformed.singular_values,
+    )
+    passed = bool(
+        goal_gram_error <= 100.0 * tolerance
+        and singular_value_error <= 100.0 * tolerance
+    )
+    if not passed:
+        raise RuntimeError(
+            "trace Riesz basis rotation/scaling invariance audit failed"
+        )
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.trace-riesz-basis-change-audit.v1"
+            ),
+            "pass": True,
+            "change_condition_number": float(
+                np.max(singular_values) / np.min(singular_values)
+            ),
+            "dual_goal_gram_relative_error": goal_gram_error,
+            "singular_values_relative_error": singular_value_error,
+            "arbitrary_nonsingular_rotation_scaling_invariance": True,
+            "coordinatewise_mode_invariance": False,
+            "coordinatewise_missing_mode_ranking_authorized": False,
+        }
+    )
+
+
+def _reference_entity_quadrature(
+    *,
+    entity_dimension: int,
+    local_entity_index: int,
+    quadrature_degree: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    geometry = np.asarray(
+        basix.geometry(basix.CellType.hexahedron),
+        dtype=np.float64,
+    )
+    topology = basix.topology(basix.CellType.hexahedron)
+    vertices = geometry[
+        np.asarray(
+            topology[entity_dimension][local_entity_index],
+            dtype=np.int32,
+        )
+    ]
+    if entity_dimension == 1:
+        entity_points, entity_weights = basix.make_quadrature(
+            basix.CellType.interval,
+            quadrature_degree,
+        )
+        tangent = vertices[1] - vertices[0]
+        measure = float(np.linalg.norm(tangent))
+        unit_tangent = tangent / measure
+        points = (
+            vertices[0]
+            + np.asarray(entity_points)[:, 0, None] * tangent
+        )
+        projector = np.outer(unit_tangent, unit_tangent)
+    elif entity_dimension == 2:
+        entity_points, entity_weights = basix.make_quadrature(
+            basix.CellType.quadrilateral,
+            quadrature_degree,
+        )
+        tangent_0 = vertices[1] - vertices[0]
+        tangent_1 = vertices[2] - vertices[0]
+        tangents = np.column_stack((tangent_0, tangent_1))
+        measure = float(
+            np.linalg.norm(np.cross(tangent_0, tangent_1))
+        )
+        points = (
+            vertices[0]
+            + np.asarray(entity_points)[:, 0, None] * tangent_0
+            + np.asarray(entity_points)[:, 1, None] * tangent_1
+        )
+        projector = (
+            tangents
+            @ np.linalg.inv(tangents.T @ tangents)
+            @ tangents.T
+        )
+    else:
+        raise ValueError("missing trace Riesz entities must be edges or faces")
+    weights = np.asarray(entity_weights, dtype=np.float64) * measure
+    return points, weights, projector
+
+
+def _deterministic_basis_change_and_covectors(
+    dimension: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    indices = np.arange(dimension, dtype=np.float64)
+    raw = (
+        np.sin((indices[:, None] + 1.0) * (indices[None, :] + 1.5))
+        + np.cos((indices[:, None] + 0.5) * (indices[None, :] + 2.0))
+    )
+    orthogonal, _upper = np.linalg.qr(raw)
+    scales = np.geomspace(0.5, 2.0, dimension)
+    change = orthogonal @ np.diag(scales)
+    columns = np.arange(1, 5, dtype=np.float64)[None, :]
+    covectors = (
+        np.sin((indices[:, None] + 1.0) * columns)
+        + 1j
+        * np.cos((indices[:, None] + 0.75) * (columns + 0.5))
+    )
+    return change, covectors
+
+
+def build_missing_p6_trace_riesz_metric(
+    complement: MissingP6TraceComplement | None = None,
+    *,
+    quadrature_degree: int = 16,
+    tolerance: float = 5.0e-12,
+) -> MissingP6TraceRieszMetric:
+    """Build reference-entity tangential-L2 direct-sum Gram/Riesz blocks.
+
+    This is a lightweight reference-cell result.  It does not include the
+    cross-entity trace couplings, actual mesh Jacobian/Piola maps, material
+    scaling, shared-entity assembly, periodic-orbit closure, or Floquet phase
+    pullbacks.  Therefore it proves the entity-local algebra needed for
+    physical Riesz whitening but does not itself authorize a Lane B candidate
+    or any residual/DWR ranking.
+    """
+
+    quadrature_degree = int(quadrature_degree)
+    tolerance = float(tolerance)
+    if quadrature_degree < 14:
+        raise ValueError(
+            "p6 trace Gram quadrature degree must be at least 14"
+        )
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("Riesz tolerance must be positive and finite")
+    if complement is None:
+        complement = build_missing_p6_trace_complement()
+    if (
+        complement.trace_degree != 5
+        or complement.enriched_degree != 6
+        or complement.missing_dimension != 132
+        or complement.audit.get("pass") is not True
+    ):
+        raise ValueError("unqualified p5/p6 missing trace complement")
+
+    enriched = basix.ufl.element(
+        "N1curl",
+        "hexahedron",
+        complement.enriched_degree,
+    ).basix_element
+    block_diagonal = np.zeros(
+        (complement.missing_dimension, complement.missing_dimension),
+        dtype=np.complex128,
+    )
+    blocks: list[MissingTraceEntityRieszBlock] = []
+    minimum_eigenvalue = np.inf
+    maximum_eigenvalue = 0.0
+    maximum_condition_number = 0.0
+    maximum_orientation_error = 0.0
+    maximum_sqrt_error = 0.0
+    maximum_inverse_sqrt_error = 0.0
+    maximum_basis_goal_gram_error = 0.0
+    maximum_basis_singular_value_error = 0.0
+
+    for entity in complement.entity_blocks:
+        points, weights, projector = _reference_entity_quadrature(
+            entity_dimension=entity.entity_dimension,
+            local_entity_index=entity.local_entity_index,
+            quadrature_degree=quadrature_degree,
+        )
+        tabulated = np.asarray(
+            enriched.tabulate(0, points),
+            dtype=np.float64,
+        )[0][:, entity.enriched_entity_dofs, :]
+        values = np.einsum(
+            "piv,ij->pjv",
+            tabulated,
+            entity.missing_embedding,
+        )
+        gram = np.einsum(
+            "p,pia,ab,pjb->ij",
+            weights,
+            values.conj(),
+            projector,
+            values,
+        )
+        matrix, sqrt, inverse_sqrt, eigenvalues = (
+            _spectral_riesz_factors(gram, tolerance=tolerance)
+        )
+        identity = np.eye(entity.missing_dimension, dtype=np.complex128)
+        sqrt_error = _relative_matrix_error(sqrt @ sqrt, matrix)
+        inverse_sqrt_error = _relative_matrix_error(
+            inverse_sqrt @ matrix @ inverse_sqrt,
+            identity,
+        )
+        orientation_error = 0.0
+        for transformation in entity.induced_transformations:
+            oriented = (
+                transformation.conj().T
+                @ matrix
+                @ transformation
+            )
+            orientation_error = max(
+                orientation_error,
+                _relative_matrix_error(oriented, matrix),
+            )
+        change, covectors = _deterministic_basis_change_and_covectors(
+            entity.missing_dimension
+        )
+        basis_audit = audit_trace_riesz_basis_change(
+            matrix,
+            covectors,
+            change,
+            tolerance=tolerance,
+        )
+        condition_number = float(
+            np.max(eigenvalues) / np.min(eigenvalues)
+        )
+        block_checks = {
+            "finite_positive_definite": bool(
+                np.all(np.isfinite(eigenvalues))
+                and float(np.min(eigenvalues)) > 0.0
+            ),
+            "sqrt_reconstructs_gram": (
+                sqrt_error <= 50.0 * tolerance
+            ),
+            "dual_inverse_sqrt_whitens_gram": (
+                inverse_sqrt_error <= 50.0 * tolerance
+            ),
+            "entity_orientation_is_metric_isometry": (
+                orientation_error <= 100.0 * tolerance
+            ),
+            "arbitrary_basis_rotation_scaling_invariant": (
+                basis_audit["pass"] is True
+            ),
+        }
+        if not all(block_checks.values()):
+            failed = [
+                name for name, passed in block_checks.items() if not passed
+            ]
+            raise RuntimeError(
+                "missing trace entity Riesz audit failed for "
+                f"({entity.entity_dimension}, "
+                f"{entity.local_entity_index}): {', '.join(failed)}"
+            )
+        start = entity.missing_column_start
+        stop = entity.missing_column_stop
+        block_diagonal[start:stop, start:stop] = matrix
+        block_audit = MappingProxyType(
+            {
+                "schema_version": (
+                    "task035b.reference-entity-trace-riesz-block.v1"
+                ),
+                "pass": True,
+                "canonical": False,
+                "production_qualified": False,
+                "metric": "reference_entity_tangential_l2_direct_sum",
+                "entity_dimension": entity.entity_dimension,
+                "local_entity_index": entity.local_entity_index,
+                "dimension": entity.missing_dimension,
+                "quadrature_degree": quadrature_degree,
+                "minimum_eigenvalue": float(np.min(eigenvalues)),
+                "maximum_eigenvalue": float(np.max(eigenvalues)),
+                "condition_number": condition_number,
+                "sqrt_reconstruction_relative_error": sqrt_error,
+                "dual_whitening_relative_error": inverse_sqrt_error,
+                "orientation_metric_isometry_relative_error_max": (
+                    orientation_error
+                ),
+                "basis_change_audit": dict(basis_audit),
+                "gram_sha256": _array_sha256(matrix),
+                "dual_inverse_sqrt_sha256": _array_sha256(
+                    inverse_sqrt
+                ),
+                "checks": block_checks,
+            }
+        )
+        blocks.append(
+            MissingTraceEntityRieszBlock(
+                entity_dimension=entity.entity_dimension,
+                local_entity_index=entity.local_entity_index,
+                missing_column_start=start,
+                missing_column_stop=stop,
+                gram=matrix,
+                sqrt=sqrt,
+                dual_inverse_sqrt=inverse_sqrt,
+                eigenvalues=eigenvalues,
+                quadrature_degree=quadrature_degree,
+                audit=block_audit,
+            )
+        )
+        minimum_eigenvalue = min(
+            minimum_eigenvalue,
+            float(np.min(eigenvalues)),
+        )
+        maximum_eigenvalue = max(
+            maximum_eigenvalue,
+            float(np.max(eigenvalues)),
+        )
+        maximum_condition_number = max(
+            maximum_condition_number,
+            condition_number,
+        )
+        maximum_orientation_error = max(
+            maximum_orientation_error,
+            orientation_error,
+        )
+        maximum_sqrt_error = max(maximum_sqrt_error, sqrt_error)
+        maximum_inverse_sqrt_error = max(
+            maximum_inverse_sqrt_error,
+            inverse_sqrt_error,
+        )
+        maximum_basis_goal_gram_error = max(
+            maximum_basis_goal_gram_error,
+            float(basis_audit["dual_goal_gram_relative_error"]),
+        )
+        maximum_basis_singular_value_error = max(
+            maximum_basis_singular_value_error,
+            float(basis_audit["singular_values_relative_error"]),
+        )
+
+    checks = {
+        "all_18_edge_face_entity_blocks_present": len(blocks) == 18,
+        "block_dimensions_close_132_modes": (
+            sum(block.missing_dimension for block in blocks) == 132
+        ),
+        "block_diagonal_gram_full_rank": (
+            int(np.linalg.matrix_rank(block_diagonal)) == 132
+        ),
+        "all_blocks_positive_definite": minimum_eigenvalue > 0.0,
+        "all_orientation_maps_metric_isometries": (
+            maximum_orientation_error <= 100.0 * tolerance
+        ),
+        "all_dual_whitening_reconstructions_pass": (
+            maximum_inverse_sqrt_error <= 50.0 * tolerance
+        ),
+        "basis_rotation_scaling_invariance_proved_numerically": (
+            maximum_basis_goal_gram_error <= 100.0 * tolerance
+            and maximum_basis_singular_value_error <= 100.0 * tolerance
+        ),
+        "candidate_matrix_not_constructed": True,
+        "actual_global_residual_not_claimed": True,
+        "actual_dwr_not_claimed": True,
+        "ranking_not_authorized": True,
+    }
+    if not all(checks.values()):
+        failed = [name for name, passed in checks.items() if not passed]
+        raise RuntimeError(
+            "missing-p6-trace Riesz metric audit failed: "
+            + ", ".join(failed)
+        )
+    audit = MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.reference-cell-missing-trace-riesz.v1"
+            ),
+            "status": "reference_entity_trace_riesz_pass",
+            "pass": True,
+            "canonical": False,
+            "production_qualified": False,
+            "metric": "reference_entity_tangential_l2_direct_sum",
+            "metric_scope": "reference_cell_only",
+            "quadrature_degree": quadrature_degree,
+            "polynomial_product_exactness_degree_required": 12,
+            "quadrature_exactness_margin": quadrature_degree - 12,
+            "entity_block_count": len(blocks),
+            "edge_block_count": sum(
+                block.entity_dimension == 1 for block in blocks
+            ),
+            "face_block_count": sum(
+                block.entity_dimension == 2 for block in blocks
+            ),
+            "missing_trace_dimension": complement.missing_dimension,
+            "minimum_block_eigenvalue": minimum_eigenvalue,
+            "maximum_block_eigenvalue": maximum_eigenvalue,
+            "maximum_block_condition_number": maximum_condition_number,
+            "sqrt_reconstruction_relative_error_max": maximum_sqrt_error,
+            "dual_whitening_relative_error_max": (
+                maximum_inverse_sqrt_error
+            ),
+            "orientation_metric_isometry_relative_error_max": (
+                maximum_orientation_error
+            ),
+            "basis_change_dual_goal_gram_relative_error_max": (
+                maximum_basis_goal_gram_error
+            ),
+            "basis_change_singular_values_relative_error_max": (
+                maximum_basis_singular_value_error
+            ),
+            "block_diagonal_gram_sha256": _array_sha256(
+                block_diagonal
+            ),
+            "basis_rotation_scaling_invariant": True,
+            "individual_whitened_coordinates_basis_invariant": False,
+            "cross_entity_trace_gram_couplings_included": False,
+            "physical_mesh_riesz_metric_available": False,
+            "physical_mesh_riesz_metric_status": (
+                "controlled_stop_missing_actual_mesh_pullbacks"
+            ),
+            "physical_mesh_riesz_metric_missing_inputs": (
+                "cross-entity trace Gram couplings",
+                "cell Jacobian and Hcurl Piola maps",
+                "physical entity measures",
+                "shared active entity numbering",
+                "periodic entity orbits",
+                "orientation and Floquet phase pullbacks",
+            ),
+            "actual_global_missing_trace_residual_available": False,
+            "periodic_orbit_svd_qr_performed": False,
+            "coordinatewise_missing_mode_ranking_authorized": False,
+            "entity_orbit_ranking_authorized": False,
+            "actual_dwr_indicator": False,
+            "lane_b_formal_selection_authorized": False,
+            "candidate_matrix_constructed": False,
+            "ordinary_default_changed": False,
+            "checks": checks,
+        }
+    )
+    return MissingP6TraceRieszMetric(
+        trace_degree=complement.trace_degree,
+        enriched_degree=complement.enriched_degree,
+        missing_dimension=complement.missing_dimension,
+        block_diagonal_gram=block_diagonal,
+        entity_blocks=tuple(blocks),
+        audit=audit,
+    )
+
+
+def prepare_periodic_orbit_svd_qr_payload(
+    gram: np.ndarray,
+    pulled_back_dual_covectors: np.ndarray,
+    *,
+    orbit_id: str,
+    orbit_member_ids: Sequence[int],
+    goal_labels: Sequence[str],
+    actual_global_residual: bool,
+    periodic_orbit_closed: bool,
+    orientation_phase_pullbacks_verified: bool,
+    physical_entity_gram_verified: bool,
+    tolerance: float = 5.0e-12,
+) -> WhitenedTraceDualCovectors:
+    """Fail-closed future interface for periodic-orbit SVD/QR inputs.
+
+    The caller must first pull every member covector to one representative
+    physical entity, including orientation and Floquet phase.  This function
+    exposes an invariant goal Gram matrix and singular values.  A future
+    column-pivoted QR may act on the *goal columns* because left-unitary
+    whitening changes do not affect their Gram matrix.  QR over individual
+    trace coordinate axes remains forbidden.
+    """
+
+    gates = {
+        "nonempty_orbit_id": bool(str(orbit_id)),
+        "unique_nonempty_orbit_members": (
+            len(tuple(orbit_member_ids)) > 0
+            and len(set(map(int, orbit_member_ids)))
+            == len(tuple(orbit_member_ids))
+        ),
+        "exact_review_v1_goal_labels": (
+            tuple(map(str, goal_labels))
+            == REVIEW_V1_MISSING_TRACE_GOAL_LABELS
+        ),
+        "actual_global_residual": actual_global_residual is True,
+        "periodic_orbit_closed": periodic_orbit_closed is True,
+        "orientation_phase_pullbacks_verified": (
+            orientation_phase_pullbacks_verified is True
+        ),
+        "physical_entity_gram_verified": (
+            physical_entity_gram_verified is True
+        ),
+    }
+    if not all(gates.values()):
+        failed = [name for name, passed in gates.items() if not passed]
+        raise RuntimeError(
+            "periodic-orbit trace SVD/QR gate failed: "
+            + ", ".join(failed)
+        )
+    result = whiten_trace_dual_covectors(
+        gram,
+        pulled_back_dual_covectors,
+        tolerance=tolerance,
+    )
+    if result.whitened_covectors.shape[1] != len(
+        REVIEW_V1_MISSING_TRACE_GOAL_LABELS
+    ):
+        raise ValueError(
+            "periodic-orbit trace payload requires exactly 16 goal columns"
+        )
+    return result
 
 
 def split_enriched_local_operator(
@@ -819,10 +1539,12 @@ class MissingTraceResidualDiagnostic:
             "entity_orbit_ranking_authorized": False,
             "basis_invariant_riesz_metric_available": False,
             "basis_invariant_riesz_metric_missing_reason": (
-                "no trace Gram/Riesz operator has been assembled; only "
-                "unitary-rotation-invariant Euclidean residual metrics are "
-                "reported"
+                "this residual diagnostic has not been supplied an actual "
+                "physical-cell/periodic-orbit trace Gram; the separate "
+                "reference-entity direct-sum metric does not close that gate"
             ),
+            "reference_entity_riesz_module_available": True,
+            "reference_entity_riesz_applied_to_this_residual": False,
             "candidate_matrix_constructed": False,
             "inactive_p6_rows_retained_in_candidate_matrix": False,
             "ordinary_default_changed": False,
@@ -843,9 +1565,16 @@ class MissingTraceResidualDiagnostic:
 
 __all__ = [
     "MissingP6TraceComplement",
+    "MissingP6TraceRieszMetric",
     "MissingTraceEntityBlock",
+    "MissingTraceEntityRieszBlock",
     "MissingTraceResidualDiagnostic",
     "REVIEW_V1_MISSING_TRACE_GOAL_LABELS",
+    "WhitenedTraceDualCovectors",
+    "audit_trace_riesz_basis_change",
     "build_missing_p6_trace_complement",
+    "build_missing_p6_trace_riesz_metric",
+    "prepare_periodic_orbit_svd_qr_payload",
     "split_enriched_local_operator",
+    "whiten_trace_dual_covectors",
 ]

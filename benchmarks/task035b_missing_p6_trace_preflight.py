@@ -30,6 +30,7 @@ import scipy
 
 from src.adaptivity.missing_p6_trace_sensitivity import (
     build_missing_p6_trace_complement,
+    build_missing_p6_trace_riesz_metric,
 )
 
 
@@ -39,7 +40,7 @@ EXPECTED_BRANCH = (
 )
 DEFAULT_OUTPUT = Path(
     "benchmarks/cases/095_high_order_local_hp_resource_envelope/"
-    "records/missing_p6_trace_complement_preflight_v1.json"
+    "records/missing_p6_trace_complement_preflight_v2.json"
 )
 SOURCE_FILES = (
     "benchmarks/task035b_missing_p6_trace_preflight.py",
@@ -71,7 +72,7 @@ def _verified_source_identity(
     repo_root: Path,
     verified_clean_sha: str,
 ) -> dict[str, Any]:
-    verified = str(verified_clean_sha).lower()
+    verified = str(verified_clean_sha).strip().lower()
     head = _git(repo_root, "rev-parse", "HEAD")
     branch = _git(repo_root, "branch", "--show-current")
     status = _git(
@@ -108,6 +109,43 @@ def _verified_source_identity(
         "cleanliness_command": (
             "git status --short --untracked-files=all"
         ),
+        "checks": checks,
+    }
+
+
+def _stable_source_identity(
+    repo_root: Path,
+    source_before: Mapping[str, Any],
+) -> dict[str, Any]:
+    head = _git(repo_root, "rev-parse", "HEAD")
+    branch = _git(repo_root, "branch", "--show-current")
+    status = _git(
+        repo_root,
+        "status",
+        "--short",
+        "--untracked-files=all",
+    )
+    checks = {
+        "head_stable_after_build": (
+            head == source_before.get("commit_sha")
+        ),
+        "branch_stable_after_build": (
+            branch == source_before.get("branch") == EXPECTED_BRANCH
+        ),
+        "worktree_still_clean_before_exclusive_write": status == "",
+    }
+    if not all(checks.values()):
+        raise SystemExit(
+            "missing-p6-trace source changed during preflight: "
+            + ", ".join(
+                name for name, passed in checks.items() if not passed
+            )
+        )
+    return {
+        "head_after_sha": head,
+        "branch_after": branch,
+        "status_after_before_record_write": status,
+        "stable_and_clean_after": True,
         "checks": checks,
     }
 
@@ -175,7 +213,9 @@ def build_missing_p6_trace_preflight_record(
     """Build complete structural evidence without starting a PDE."""
 
     complement = build_missing_p6_trace_complement()
+    reference_riesz = build_missing_p6_trace_riesz_metric(complement)
     audit = dict(complement.audit)
+    riesz_audit = dict(reference_riesz.audit)
     edge_missing = int(
         sum(audit["missing_edge_modes_per_entity"])
     )
@@ -200,7 +240,15 @@ def build_missing_p6_trace_preflight_record(
     )
     qualification_checks = {
         "clean_source_identity_hash_bound": source_identity_pass,
-        "qualified_environment": environment.get("pass") is True,
+        "qualified_environment": (
+            environment.get("pass") is True
+            and isinstance(environment.get("checks"), Mapping)
+            and bool(environment["checks"])
+            and all(
+                value is True
+                for value in environment["checks"].values()
+            )
+        ),
         "complete_complement_audit_pass": audit["pass"] is True,
         "retained_dimension_is_750": (
             complement.retained_dimension == 750
@@ -211,6 +259,24 @@ def build_missing_p6_trace_preflight_record(
         "missing_trace_mode_count_is_132": missing_total == 132,
         "missing_modes_are_edge_face_trace_only": (
             edge_missing == 12 and face_missing == 120
+        ),
+        "reference_entity_trace_riesz_pass": (
+            riesz_audit["pass"] is True
+        ),
+        "reference_entity_riesz_is_basis_rotation_scaling_invariant": (
+            riesz_audit["basis_rotation_scaling_invariant"] is True
+        ),
+        "physical_mesh_riesz_is_controlled_stop": (
+            riesz_audit["physical_mesh_riesz_metric_available"] is False
+            and riesz_audit["physical_mesh_riesz_metric_status"]
+            == "controlled_stop_missing_actual_mesh_pullbacks"
+        ),
+        "periodic_orbit_svd_qr_not_performed_without_residual": (
+            riesz_audit[
+                "actual_global_missing_trace_residual_available"
+            ]
+            is False
+            and riesz_audit["periodic_orbit_svd_qr_performed"] is False
         ),
         "candidate_matrix_not_constructed": (
             audit["candidate_matrix_constructed"] is False
@@ -232,7 +298,7 @@ def build_missing_p6_trace_preflight_record(
     passed = all(qualification_checks.values())
     return {
         "schema_version": (
-            "task035b.missing-p6-trace-complement-preflight.v1"
+            "task035b.missing-p6-trace-complement-preflight.v2"
         ),
         "benchmark_id": (
             "task035b_missing_p6_trace_complement_preflight"
@@ -287,6 +353,62 @@ def build_missing_p6_trace_preflight_record(
             ),
         },
         "complement_audit": audit,
+        "reference_entity_trace_riesz": {
+            "audit": riesz_audit,
+            "entity_blocks": [
+                dict(block.audit) for block in reference_riesz.entity_blocks
+            ],
+            "theoretical_identity": {
+                "basis_change": "B_new = B S",
+                "dual_covector_change": "r_new = S^H r",
+                "gram_change": "G_new = S^H G S",
+                "invariant_dual_goal_gram": (
+                    "R^H G^-1 R = "
+                    "R_new^H G_new^-1 R_new"
+                ),
+                "invariant_singular_values": (
+                    "svd(G^-1/2 R) is invariant up to a left-unitary "
+                    "whitening rotation"
+                ),
+                "coordinatewise_mode_ranking_invariant": False,
+            },
+            "physical_metric_controlled_stop": {
+                "status": (
+                    riesz_audit["physical_mesh_riesz_metric_status"]
+                ),
+                "physical_mesh_riesz_metric_available": False,
+                "missing_inputs": list(
+                    riesz_audit[
+                        "physical_mesh_riesz_metric_missing_inputs"
+                    ]
+                ),
+                "reason": (
+                    "Reference-entity tangential-L2 direct-sum blocks prove "
+                    "the Riesz algebra, but cross-entity couplings, actual "
+                    "physical-cell Piola/Jacobian maps, and assembled "
+                    "periodic-orbit pullbacks are absent."
+                ),
+            },
+            "periodic_orbit_svd_qr_future_contract": {
+                "interface": "prepare_periodic_orbit_svd_qr_payload",
+                "implemented": True,
+                "status": "not_run_missing_actual_global_residual",
+                "required_goal_count": 16,
+                "requires_exact_review_v1_goal_labels": True,
+                "requires_actual_global_residual": True,
+                "requires_closed_periodic_orbit": True,
+                "requires_orientation_phase_pullbacks": True,
+                "requires_physical_entity_gram": True,
+                "basis_invariant_outputs": [
+                    "dual_goal_gram",
+                    "singular_values",
+                ],
+                "individual_coordinate_ranking_authorized": False,
+                "entity_orbit_ranking_authorized": False,
+                "actual_dwr_indicator": False,
+                "lane_b_formal_selection_authorized": False,
+            },
+        },
         "diagnostic_semantics": {
             "candidate_matrix_constructed": False,
             "inactive_p6_rows_retained_in_candidate_matrix": False,
@@ -294,10 +416,17 @@ def build_missing_p6_trace_preflight_record(
             "actual_missing_trace_adjoint_residual_computed": False,
             "actual_dwr_indicator": False,
             "lane_b_formal_selection_authorized": False,
+            "reference_entity_trace_riesz_available": True,
+            "physical_mesh_trace_riesz_available": False,
+            "periodic_orbit_svd_qr_performed": False,
+            "coordinatewise_missing_mode_ranking_authorized": False,
+            "entity_orbit_ranking_authorized": False,
             "reason": (
-                "This record qualifies only the reference-cell p5/p6 "
-                "entity complement. No target operator, residual, adjoint "
-                "correction, or selected trace candidate is run."
+                "This record qualifies the reference-cell p5/p6 entity "
+                "complement and reference-entity tangential-L2 direct-sum "
+                "Riesz algebra. No cross-entity/physical-cell Gram, target "
+                "operator, global residual, adjoint correction, periodic-"
+                "orbit analysis, or selected trace candidate is run."
             ),
         },
         "qualification": {
@@ -353,6 +482,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         source=source,
         environment=environment,
     )
+    source_after = _stable_source_identity(repo_root, source)
+    record["source"].update(
+        {
+            key: value
+            for key, value in source_after.items()
+            if key != "checks"
+        }
+    )
+    record["source"]["checks"].update(source_after["checks"])
+    current_hashes = {
+        path: _sha256(repo_root / path) for path in SOURCE_FILES
+    }
+    if current_hashes != record["source_file_sha256"]:
+        raise SystemExit(
+            "missing-p6-trace source files changed before evidence write"
+        )
+    record["qualification"]["checks"][
+        "source_stable_and_clean_after_build"
+    ] = True
     _write_record_exclusive(output, record)
     return 0 if record["pass"] else 2
 
