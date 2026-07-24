@@ -8,6 +8,7 @@ from benchmarks.run_task035_actual_r5 import (
     _parse_args,
     _qualify,
     _qualify_common_mesh_sweep,
+    _qualify_regionwise_p,
 )
 
 
@@ -239,6 +240,57 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                     "tetrahedron",
                     "--common-mesh-replay-record",
                     "authority.json",
+                ]
+            )
+
+    def test_regionwise_p_mode_requires_four_bound_authorities(self) -> None:
+        args = _parse_args(
+            [
+                "--coarse-degree",
+                "5",
+                "--enriched-degree",
+                "6",
+                "--regionwise-p-classifier-record",
+                "classifier.json",
+                "--regionwise-p-classifier-sha256",
+                "a" * 64,
+                "--regionwise-p-control-record",
+                "control.json",
+                "--regionwise-p-control-sha256",
+                "b" * 64,
+            ]
+        )
+        self.assertEqual(
+            args.regionwise_p_classifier_record.name, "classifier.json"
+        )
+        self.assertEqual(args.regionwise_p_control_sha256, "b" * 64)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "5",
+                    "--enriched-degree",
+                    "6",
+                    "--regionwise-p-classifier-record",
+                    "classifier.json",
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "5",
+                    "--enriched-degree",
+                    "6",
+                    "--regionwise-p-classifier-record",
+                    "classifier.json",
+                    "--regionwise-p-classifier-sha256",
+                    "a" * 64,
+                    "--regionwise-p-control-record",
+                    "control.json",
+                    "--regionwise-p-control-sha256",
+                    "b" * 64,
+                    "--single-mesh-pair",
                 ]
             )
 
@@ -536,6 +588,127 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         )
         self.assertFalse(failed["pass"])
         self.assertIn("requested_heap_trim_reduced_rss", failed["failures"])
+
+    def test_regionwise_controlled_negative_preserves_valid_execution(self) -> None:
+        classifier_sha = "a" * 64
+        control_sha = "b" * 64
+        geometry_sha = "c" * 64
+        args = Namespace(
+            mpi_size=8,
+            regionwise_p_classifier_sha256=classifier_sha,
+            regionwise_p_control_sha256=control_sha,
+        )
+        summary = {
+            "official_result": True,
+            "num_mesh_cells": 252,
+            "mesh_cell_type_actual": "hexahedron",
+            "linear_system_relative_residual": 1.0e-12,
+            "matrix_stats": {
+                "matrix_rows": 21824,
+                "matrix_nnz_used": 8_000_000.0,
+                "matrix_average_nnz_per_row": 366.0,
+                "matrix_maximum_nnz_per_row": 700,
+            },
+            "stage4_dtn_factor_inventory": {"available": True},
+            "cell_static_condensation": {
+                "matrix_rows": 21824,
+                "regionwise_mesh_geometry_sha256": geometry_sha,
+                "regionwise_interior_p_active": True,
+                "regionwise_high_cell_count": 105,
+                "regionwise_low_cell_count": 147,
+                "active_full3d_equivalent_dofs": 88994,
+                "inactive_max_p_rows_retained_in_matrix": False,
+                "full_global_matrix_allocated": False,
+                "full_trace_matrix_allocated": False,
+                "regionwise_low_cell_kernel_compiled_directly": True,
+                "full_explicit_true_residual": {
+                    "linear_system_relative_residual": 1.0e-12,
+                },
+            },
+            "floquet_num_constraints": 6000,
+            "floquet_x_face_mismatch": 0.0,
+            "floquet_y_face_mismatch": 0.0,
+            "floquet_edge_corner_mismatch": 0.0,
+            "max_face_pairing_coordinate_error": 0.0,
+            "nedelec_orientation_factor_stats": {
+                "uses_exact_basix_entity_transforms": True,
+                "uses_local_moment_fit": False,
+            },
+            "mesh_material_plane_alignment": {"all_aligned": True},
+            "domain_tag_volumes": {
+                "air": 1.0,
+                "substrate": 1.0,
+                "grating": 1.0,
+            },
+        }
+        result = {
+            "status": "actual_regionwise_p_controlled_negative",
+            "pass": True,
+            "candidate_accuracy_pass": False,
+            "ordinary_default_changed": False,
+            "target_identity": {
+                "geometry": "Task034 fixed rectangular block grating",
+                "mesh_geometry_sha256": geometry_sha,
+            },
+            "classifier_authority": {
+                "sha256": classifier_sha,
+                "active_full3d_equivalent_dofs": 88994,
+            },
+            "control_authority": {"sha256": control_sha},
+            "candidate": {
+                "degree": 6,
+                "h_nm": 10.0,
+                "summary": summary,
+                "high_order_resource_audit": {
+                    "entity_dof_inventory": {"pass": True}
+                },
+            },
+            "observable_comparison": {
+                "schema_version": (
+                    "task035b.regionwise-p-observable-comparison.v1"
+                ),
+                "all_scalar_same_code_bands_pass": False,
+                "normalized_R_T_Aclosure_vector_pass": False,
+            },
+            "diffraction_channel_comparison": {
+                "channel_count": 80,
+                "pass": False,
+            },
+            "selected_field_interface_error_gate": {
+                "status": "measured_common_native_visualization_points",
+                "no_threshold_relaxation": True,
+                "pass": False,
+            },
+        }
+        sampler = {
+            "max_observed_worker_rank_count": 8,
+            "max_process_tree_swap_mb": 0.0,
+        }
+        qualification = _qualify_regionwise_p(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertTrue(qualification["pass"], qualification)
+
+        summary["cell_static_condensation"][
+            "inactive_max_p_rows_retained_in_matrix"
+        ] = True
+        failed = _qualify_regionwise_p(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(failed["pass"])
+        self.assertIn("inactive_p6_rows_not_retained", failed["failures"])
 
 
 if __name__ == "__main__":

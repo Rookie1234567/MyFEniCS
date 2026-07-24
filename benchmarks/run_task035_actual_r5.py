@@ -108,7 +108,23 @@ def _worker(args: argparse.Namespace) -> int:
     def progress(stage: str, status: str) -> None:
         _append_progress(progress_path, stage, status)
 
-    if args.common_mesh_replay_record is not None:
+    if args.regionwise_p_classifier_record is not None:
+        from src.adaptivity.target_regionwise_p_candidate import (
+            run_target_regionwise_p_candidate,
+        )
+
+        result = run_target_regionwise_p_candidate(
+            args.run_dir,
+            classifier_record=args.regionwise_p_classifier_record,
+            classifier_sha256=args.regionwise_p_classifier_sha256,
+            control_record=args.regionwise_p_control_record,
+            control_sha256=args.regionwise_p_control_sha256,
+            h_nm=args.h_nm,
+            incident_theta_deg=80.0,
+            polarization_kind=args.polarization_kind,
+            progress_observer=progress,
+        )
+    elif args.common_mesh_replay_record is not None:
         from src.adaptivity.target_common_mesh_angle_sweep import (
             run_target_common_mesh_angle_sweep,
         )
@@ -321,6 +337,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("p4_h7p5",),
         help="qualified Task034 accuracy control for the enriched candidate",
     )
+    parser.add_argument(
+        "--regionwise-p-classifier-record",
+        type=Path,
+        help="Task035b same-mesh p4/p5/p6 classifier authority",
+    )
+    parser.add_argument(
+        "--regionwise-p-classifier-sha256",
+        help="required SHA256 for --regionwise-p-classifier-record",
+    )
+    parser.add_argument(
+        "--regionwise-p-control-record",
+        type=Path,
+        help="Task035b qualified same-mesh p5/p6 control watchdog record",
+    )
+    parser.add_argument(
+        "--regionwise-p-control-sha256",
+        help="required SHA256 for --regionwise-p-control-record",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -374,7 +408,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "common-mesh replay and adaptive/uniform cycle modes are mutually exclusive."
         )
-    if args.single_mesh_pair and (common_mesh_mode or active_cycles):
+    regionwise_values = (
+        args.regionwise_p_classifier_record,
+        args.regionwise_p_classifier_sha256,
+        args.regionwise_p_control_record,
+        args.regionwise_p_control_sha256,
+    )
+    regionwise_mode = any(value is not None for value in regionwise_values)
+    if regionwise_mode and not all(value is not None for value in regionwise_values):
+        parser.error(
+            "regionwise-p mode requires classifier/control records and both SHA256 values."
+        )
+    if regionwise_mode and (common_mesh_mode or active_cycles):
+        parser.error(
+            "regionwise-p, common-mesh, and adaptive/uniform modes are mutually exclusive."
+        )
+    if args.single_mesh_pair and (
+        common_mesh_mode or active_cycles or regionwise_mode
+    ):
         parser.error(
             "--single-mesh-pair is valid only for the plain global-p pair."
         )
@@ -388,7 +439,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "enriched-degree."
         )
     if args.static_condensation_degree and (
-        common_mesh_mode or active_cycles or args.mesh_cell_type != "hexahedron"
+        common_mesh_mode
+        or active_cycles
+        or regionwise_mode
+        or args.mesh_cell_type != "hexahedron"
     ):
         parser.error(
             "Task035b static condensation is restricted to the plain "
@@ -449,6 +503,27 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         if args.common_mesh_grazing_angles != (10.0,):
             parser.error(
                 "hp budget evaluation requires exactly --common-mesh-grazing-angles 10."
+            )
+    if regionwise_mode:
+        for value in (
+            args.regionwise_p_classifier_sha256,
+            args.regionwise_p_control_sha256,
+        ):
+            if len(value) != 64 or any(
+                character not in "0123456789abcdefABCDEF" for character in value
+            ):
+                parser.error("regionwise-p authority SHA256 values must be 64 hex.")
+        if (
+            args.mpi_size != 8
+            or args.mesh_cell_type != "hexahedron"
+            or args.coarse_degree != 5
+            or args.enriched_degree != 6
+            or abs(args.h_nm - 10.0) > 1.0e-12
+            or args.polarization_kind != "s"
+        ):
+            parser.error(
+                "formal regionwise-p mode requires MPI8, hexa h10, p5/p6 "
+                "controls, and s polarization."
             )
     return args
 
@@ -529,6 +604,19 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "stage4_dtn_ksp_solve_seconds": summary.get(
             "stage4_dtn_ksp_solve_seconds"
         ),
+        "stage4_dtn_factor_inventory": summary.get(
+            "stage4_dtn_factor_inventory"
+        ),
+        "stage4_dtn_base_matrix_assembly_seconds": summary.get(
+            "stage4_dtn_base_matrix_assembly_seconds"
+        ),
+        "stage4_dtn_assembly_time_total_build_seconds": summary.get(
+            "stage4_dtn_assembly_time_total_build_seconds"
+        ),
+        "stage4_dtn_linear_solve_seconds": summary.get(
+            "stage4_dtn_linear_solve_seconds"
+        ),
+        "timings_seconds": summary.get("timings_seconds"),
         "solver_objects_released_before_postprocess": summary.get(
             "solver_objects_released_before_postprocess"
         ),
@@ -1364,6 +1452,166 @@ def _qualify_common_mesh_sweep(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _qualify_regionwise_p(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    candidate = result.get("candidate") or {}
+    summary = candidate.get("summary") or {}
+    resource_audit = candidate.get("high_order_resource_audit") or {}
+    entity_audit = resource_audit.get("entity_dof_inventory") or {}
+    cell_audit = summary.get("cell_static_condensation") or {}
+    matrix_stats = summary.get("matrix_stats") or {}
+    orientation = summary.get("nedelec_orientation_factor_stats") or {}
+    field_gate = result.get("selected_field_interface_error_gate") or {}
+    scalar_comparison = result.get("observable_comparison") or {}
+    channel_comparison = result.get("diffraction_channel_comparison") or {}
+    classifier = result.get("classifier_authority") or {}
+    control = result.get("control_authority") or {}
+    accepted_statuses = {
+        "actual_regionwise_p_candidate_pass",
+        "actual_regionwise_p_controlled_negative",
+    }
+    true_residual = cell_audit.get("full_explicit_true_residual") or {}
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status_is_positive_or_controlled_negative": (
+            result.get("status") in accepted_statuses
+        ),
+        "execution_integrity_pass": result.get("pass") is True,
+        "official_candidate": summary.get("official_result") is True,
+        "fixed_rectangular_hexa_h10_identity": (
+            (result.get("target_identity") or {}).get("geometry")
+            == "Task034 fixed rectangular block grating"
+            and summary.get("mesh_cell_type_actual") == "hexahedron"
+            and summary.get("num_mesh_cells") == 252
+            and abs(float(candidate.get("h_nm", -1.0)) - 10.0) <= 1.0e-12
+        ),
+        "classifier_authority_hash_bound": (
+            classifier.get("sha256") == args.regionwise_p_classifier_sha256
+        ),
+        "control_authority_hash_bound": (
+            control.get("sha256") == args.regionwise_p_control_sha256
+        ),
+        "regionwise_geometry_hash_bound": (
+            cell_audit.get("regionwise_mesh_geometry_sha256")
+            == (result.get("target_identity") or {}).get(
+                "mesh_geometry_sha256"
+            )
+        ),
+        "regionwise_cell_classification_exact": (
+            cell_audit.get("regionwise_interior_p_active") is True
+            and cell_audit.get("regionwise_high_cell_count") == 105
+            and cell_audit.get("regionwise_low_cell_count") == 147
+        ),
+        "active_full3d_equivalent_budget_exact": (
+            cell_audit.get("active_full3d_equivalent_dofs") == 88994
+            and classifier.get("active_full3d_equivalent_dofs") == 88994
+        ),
+        "inactive_p6_rows_not_retained": (
+            cell_audit.get("inactive_max_p_rows_retained_in_matrix") is False
+        ),
+        "no_full_global_or_trace_matrix_allocated": (
+            cell_audit.get("full_global_matrix_allocated") is False
+            and cell_audit.get("full_trace_matrix_allocated") is False
+        ),
+        "low_cells_use_direct_p4_kernel": (
+            cell_audit.get("regionwise_low_cell_kernel_compiled_directly") is True
+        ),
+        "physically_reduced_matrix_rows": (
+            isinstance(matrix_stats.get("matrix_rows"), int)
+            and matrix_stats.get("matrix_rows") == cell_audit.get("matrix_rows")
+            and matrix_stats.get("matrix_rows") < 88994
+        ),
+        "matrix_nnz_and_row_width_measured": (
+            isinstance(matrix_stats.get("matrix_nnz_used"), (int, float))
+            and matrix_stats.get("matrix_nnz_used", 0.0) > 0.0
+            and isinstance(
+                matrix_stats.get("matrix_average_nnz_per_row"), (int, float)
+            )
+            and isinstance(
+                matrix_stats.get("matrix_maximum_nnz_per_row"), (int, float)
+            )
+        ),
+        "factor_inventory_measured": (
+            (summary.get("stage4_dtn_factor_inventory") or {}).get("available")
+            is True
+        ),
+        "full_true_residual_le_1e-9": (
+            isinstance(
+                true_residual.get("linear_system_relative_residual"),
+                (int, float),
+            )
+            and float(true_residual["linear_system_relative_residual"]) <= 1.0e-9
+            and isinstance(
+                summary.get("linear_system_relative_residual"), (int, float)
+            )
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+        ),
+        "entity_dof_audit_pass": entity_audit.get("pass") is True,
+        "periodic_trace_identity_pass": (
+            summary.get("floquet_num_constraints", 0) > 0
+            and summary.get("floquet_x_face_mismatch") == 0.0
+            and summary.get("floquet_y_face_mismatch") == 0.0
+            and summary.get("floquet_edge_corner_mismatch") == 0.0
+            and summary.get("max_face_pairing_coordinate_error") == 0.0
+        ),
+        "exact_orientation_path": (
+            orientation.get("uses_exact_basix_entity_transforms") is True
+            and orientation.get("uses_local_moment_fit") is False
+        ),
+        "material_tag_geometry_alignment_pass": (
+            (summary.get("mesh_material_plane_alignment") or {}).get(
+                "all_aligned"
+            )
+            is True
+            and set((summary.get("domain_tag_volumes") or {}))
+            >= {"air", "substrate", "grating"}
+        ),
+        "scalar_same_code_comparison_recorded": (
+            scalar_comparison.get("schema_version")
+            == "task035b.regionwise-p-observable-comparison.v1"
+            and isinstance(
+                scalar_comparison.get("all_scalar_same_code_bands_pass"), bool
+            )
+            and isinstance(
+                scalar_comparison.get(
+                    "normalized_R_T_Aclosure_vector_pass"
+                ),
+                bool,
+            )
+        ),
+        "diffraction_power_and_amplitude_comparison_recorded": (
+            channel_comparison.get("channel_count") == 80
+            and isinstance(channel_comparison.get("pass"), bool)
+        ),
+        "selected_field_interface_comparison_recorded": (
+            field_gate.get("status")
+            == "measured_common_native_visualization_points"
+            and field_gate.get("no_threshold_relaxation") is True
+            and isinstance(field_gate.get("pass"), bool)
+        ),
+        "ordinary_default_unchanged": (
+            result.get("ordinary_default_changed") is False
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
 def _run_parent(args: argparse.Namespace) -> int:
     effective = effective_memory_limit()
     if effective["effective_limit_bytes"] is None:
@@ -1388,13 +1636,43 @@ def _run_parent(args: argparse.Namespace) -> int:
         if not replay_path.is_file():
             raise SystemExit(f"common-mesh replay record not found: {replay_path}")
         args.common_mesh_replay_record = replay_path.resolve()
+    if args.regionwise_p_classifier_record is not None:
+        for path_name, sha_name in (
+            (
+                "regionwise_p_classifier_record",
+                "regionwise_p_classifier_sha256",
+            ),
+            ("regionwise_p_control_record", "regionwise_p_control_sha256"),
+        ):
+            authority_path = getattr(args, path_name)
+            if not authority_path.is_absolute():
+                authority_path = ROOT / authority_path
+            if not authority_path.is_file():
+                raise SystemExit(
+                    f"regionwise-p authority not found: {authority_path}"
+                )
+            expected_sha = getattr(args, sha_name).lower()
+            actual_sha = _sha256(authority_path)
+            if actual_sha != expected_sha:
+                raise SystemExit(
+                    f"regionwise-p authority SHA256 mismatch for {authority_path}: "
+                    f"expected {expected_sha}, got {actual_sha}"
+                )
+            setattr(args, path_name, authority_path.resolve())
+            setattr(args, sha_name, expected_sha)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_label = (
-        f"{args.mesh_cell_type}_p{args.coarse_degree}_"
-        f"p{args.enriched_degree}_h{args.h_nm:g}_"
-        f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
-    )
+    if args.regionwise_p_classifier_record is not None:
+        run_label = (
+            f"hexahedron_regionwise_p4trace_p6interior_h{args.h_nm:g}_"
+            f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
+        )
+    else:
+        run_label = (
+            f"{args.mesh_cell_type}_p{args.coarse_degree}_"
+            f"p{args.enriched_degree}_h{args.h_nm:g}_"
+            f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
+        )
     if args.common_mesh_replay_record is not None:
         angle_label = "-".join(
             f"{value:g}" for value in args.common_mesh_grazing_angles
@@ -1471,7 +1749,20 @@ def _run_parent(args: argparse.Namespace) -> int:
         command.extend(
             ["--floquet-slave-elimination-degree", str(degree)]
         )
-    if args.common_mesh_replay_record is not None:
+    if args.regionwise_p_classifier_record is not None:
+        command.extend(
+            [
+                "--regionwise-p-classifier-record",
+                str(args.regionwise_p_classifier_record),
+                "--regionwise-p-classifier-sha256",
+                args.regionwise_p_classifier_sha256,
+                "--regionwise-p-control-record",
+                str(args.regionwise_p_control_record),
+                "--regionwise-p-control-sha256",
+                args.regionwise_p_control_sha256,
+            ]
+        )
+    elif args.common_mesh_replay_record is not None:
         command.extend(
             [
                 "--common-mesh-replay-record",
@@ -1583,7 +1874,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     sampler = _sampler_summary(rows)
-    if args.common_mesh_replay_record is not None:
+    if args.regionwise_p_classifier_record is not None:
+        qualifier = _qualify_regionwise_p
+    elif args.common_mesh_replay_record is not None:
         qualifier = _qualify_common_mesh_sweep
     elif args.dwr_adaptive_cycles:
         qualifier = _qualify_dwr_adaptive
@@ -1617,7 +1910,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["pass"] = False
     if qualification["pass"]:
         status = (
-            "actual_common_mesh_angle_sweep_pass"
+            result.get("status")
+            if args.regionwise_p_classifier_record is not None
+            else "actual_common_mesh_angle_sweep_pass"
             if args.common_mesh_replay_record is not None
             else "actual_dwr_adaptive_cycles_pass"
             if args.dwr_adaptive_cycles
@@ -1631,7 +1926,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         status = "formal_not_pass"
     record = {
         "schema_version": (
-            "task035.actual-common-mesh-angle-sweep-watchdog.v1"
+            "task035b.regionwise-p-watchdog.v1"
+            if args.regionwise_p_classifier_record is not None
+            else "task035.actual-common-mesh-angle-sweep-watchdog.v1"
             if args.common_mesh_replay_record is not None
             else "task035.actual-dwr-adaptive-watchdog.v1"
             if args.dwr_adaptive_cycles
@@ -1642,7 +1939,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             else "task035.actual-global-r5-watchdog.v1"
         ),
         "benchmark_id": (
-            "task035_target_actual_common_mesh_angle_sweep"
+            "task035b_target_regionwise_p_candidate"
+            if args.regionwise_p_classifier_record is not None
+            else "task035_target_actual_common_mesh_angle_sweep"
             if args.common_mesh_replay_record is not None
             else "task035_target_actual_dwr_adaptive_cycles"
             if args.dwr_adaptive_cycles
@@ -1678,7 +1977,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "target_identity": result.get("target_identity") if result else None,
         "coarse": (
             None
-            if args.common_mesh_replay_record is not None
+            if args.regionwise_p_classifier_record is not None
+            or args.common_mesh_replay_record is not None
             or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
@@ -1687,7 +1987,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "enriched": (
             None
-            if args.common_mesh_replay_record is not None
+            if args.regionwise_p_classifier_record is not None
+            or args.common_mesh_replay_record is not None
             or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
             or args.uniform_refinement_levels
@@ -1717,7 +2018,30 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stdout_sha256": _sha256(stdout_path),
         },
     }
-    if args.common_mesh_replay_record is not None:
+    if args.regionwise_p_classifier_record is not None:
+        candidate = result.get("candidate") or {}
+        record.update(
+            {
+                "candidate_accuracy_pass": result.get(
+                    "candidate_accuracy_pass"
+                ),
+                "classifier_authority": result.get("classifier_authority"),
+                "control_authority": result.get("control_authority"),
+                "candidate": (
+                    _compact_solve(candidate) if candidate else None
+                ),
+                "observable_comparison": result.get(
+                    "observable_comparison"
+                ),
+                "diffraction_channel_comparison": result.get(
+                    "diffraction_channel_comparison"
+                ),
+                "selected_field_interface_error_gate": result.get(
+                    "selected_field_interface_error_gate"
+                ),
+            }
+        )
+    elif args.common_mesh_replay_record is not None:
         record.update(
             {
                 "common_mesh_replay": result.get("mesh_replay"),
