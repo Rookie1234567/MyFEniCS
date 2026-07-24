@@ -1,0 +1,302 @@
+{
+  "schema_version": "task035b.actual-h-vs-p-competition.v1",
+  "status": "actual_sequential_h_vs_p_proxy_pass",
+  "pass": true,
+  "canonical": false,
+  "production_qualified": false,
+  "ordinary_default_changed": false,
+  "scope": "comparable_sequential_global_marginal_proxy",
+  "head_to_head_same_origin": false,
+  "same_patch": false,
+  "cell_decision_authority": false,
+  "geometry": "Task034 fixed rectangular block grating",
+  "target": {
+    "wavelength_nm": 13.5,
+    "grazing_angle_deg": 10.0,
+    "polarization": "S",
+    "mesh_backend": "audited periodic tetrahedron"
+  },
+  "source_records": {
+    "one_local_h": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_full_periodic_closure_mpi8.json",
+      "sha256": "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468"
+    },
+    "fixed_mesh_p_up": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json",
+      "sha256": "8a579b5141e12ac3f029b2ff72ba3d597da46ea2d0a96757593ef191e77c938c"
+    }
+  },
+  "source_commits": {
+    "one_local_h": "e2162663fdfea49756c6ddf00f21b20e0372be1d",
+    "fixed_mesh_p_up": "74f5d23cd2771390322947dc82d6edf6c0f81e86",
+    "generator": "659c2a20c6ef56798098470cdeef4d7e45d50b4c"
+  },
+  "common_refined_mesh_identity": {
+    "global_cell_count": 1248,
+    "partition_independent_mesh_sha256": "ffe347854e0e416936f36159cd41846171a01ead1ebf6fe38744a29099a4ec36",
+    "cell_tag_sha256": "723e89985a1662b4da5f7d40231ee804a6f76dabe52b0a5d4f66bf778094ca0f",
+    "facet_tag_sha256": "d1a04a4e450b671506c662ed7a8e47cccb92e902e01c0d1b92141ed3d5c075aa"
+  },
+  "fixed_reference": {
+    "identity": "best_available_discrete_reference_for_case093",
+    "key": "p4_h5",
+    "continuum_reference": false,
+    "record_path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json",
+    "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
+    "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
+    "true_relative_residual": 2.4014742229534507e-11,
+    "resource": {
+      "peak_memory_gib": 28.888458251953125,
+      "elapsed_seconds": null,
+      "dofs": 339892,
+      "rows": 339972,
+      "nnz": 155421000.0,
+      "no_swap": true
+    },
+    "observables": {
+      "R_total": 0.0007663133771040101,
+      "T_total": 0.602677530502972,
+      "A_volume_total": 0.3965561561199801
+    }
+  },
+  "accuracy_control": {
+    "identity": "qualified_case093_full3d_accuracy_control",
+    "key": "p4_h7p5",
+    "record_path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json",
+    "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
+    "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
+    "true_relative_residual": 1.2715167394801048e-11,
+    "resource": {
+      "peak_memory_gib": 12.724395751953125,
+      "elapsed_seconds": null,
+      "dofs": 147844,
+      "rows": 147924,
+      "nnz": 68065896.0,
+      "no_swap": true
+    },
+    "observables": {
+      "R_total": 0.0008024690153384762,
+      "T_total": 0.602429772906308,
+      "A_volume_total": 0.3967677580783896
+    },
+    "reference_key": "p4_h5",
+    "reference_observable_error_l2": 0.00032782075236879356,
+    "reference_r_total_absolute_error": 3.61556382344661e-05
+  },
+  "p5_replay_closure": {
+    "pass": true,
+    "resource_identity_exact": true,
+    "observable_absolute_deltas": {
+      "R_total": 6.555953696585348e-15,
+      "T_total": 2.4424906541753444e-14,
+      "A_volume_total": 6.827871601444713e-15
+    },
+    "observable_tolerance": 1e-12
+  },
+  "endpoints": {
+    "B_base_p5": {
+      "name": "B_base_p5",
+      "degree": 5,
+      "mesh_cells": 180,
+      "observables": {
+        "R_total": 0.0022792775605210724,
+        "T_total": 0.586397159595339,
+        "A_volume_total": 0.4113235628440658
+      },
+      "true_relative_residual": 4.379626335417676e-12,
+      "reference_errors": {
+        "R_T_A_volume_l2": 0.022032154657794557,
+        "strict_R_total_absolute": 0.0015129641834170622
+      },
+      "accuracy_control_ratios": {
+        "R_T_A_volume_l2": 67.20793146435314,
+        "strict_R_total_absolute": 41.845871274782205
+      },
+      "resource": {
+        "dofs": 15405,
+        "active_rows": 15485,
+        "matrix_nnz": 3726879,
+        "matrix_average_row_width": 240.67671940587667,
+        "solve_elapsed_seconds": 6.0263795999926515,
+        "factor_nnz": null,
+        "peak_memory_gib": null
+      }
+    },
+    "H_one_local_h_p5": {
+      "name": "H_one_local_h_p5",
+      "degree": 5,
+      "mesh_cells": 1248,
+      "observables": {
+        "R_total": 0.0012039538575243922,
+        "T_total": 0.6027005378087522,
+        "A_volume_total": 0.3960955083334708
+      },
+      "true_relative_residual": 1.054274622368817e-11,
+      "reference_errors": {
+        "R_T_A_volume_l2": 0.0006358104351437999,
+        "strict_R_total_absolute": 0.00043764048042038207
+      },
+      "accuracy_control_ratios": {
+        "R_T_A_volume_l2": 1.9395063630032867,
+        "strict_R_total_absolute": 12.104349467773808
+      },
+      "resource": {
+        "dofs": 101210,
+        "active_rows": 101290,
+        "matrix_nnz": 23913006,
+        "matrix_average_row_width": 236.08456905913712,
+        "solve_elapsed_seconds": 47.14238665001176,
+        "factor_nnz": null,
+        "peak_memory_gib": null
+      }
+    },
+    "P_fixed_mesh_p6": {
+      "name": "P_fixed_mesh_p6",
+      "degree": 6,
+      "mesh_cells": 1248,
+      "observables": {
+        "R_total": 0.0008176842066200944,
+        "T_total": 0.6027088314537524,
+        "A_volume_total": 0.39647348433957663
+      },
+      "true_relative_residual": 1.3064413755969607e-11,
+      "reference_errors": {
+        "R_T_A_volume_l2": 0.00010224155182704992,
+        "strict_R_total_absolute": 5.1370829516084204e-05
+      },
+      "accuracy_control_ratios": {
+        "R_T_A_volume_l2": 0.3118824878787102,
+        "strict_R_total_absolute": 1.4208248567747288
+      },
+      "resource": {
+        "dofs": 167784,
+        "active_rows": 167864,
+        "matrix_nnz": 57609056,
+        "matrix_average_row_width": 343.18886717819186,
+        "solve_elapsed_seconds": 146.23150754599192,
+        "factor_nnz": null,
+        "peak_memory_gib": null
+      }
+    }
+  },
+  "actions": {
+    "one_local_h_at_p5": {
+      "name": "one_local_h_at_p5",
+      "origin": "B_base_p5",
+      "result": "H_one_local_h_p5",
+      "added_resource": {
+        "dofs": 85805,
+        "active_rows": 85805,
+        "matrix_nnz": 20186127
+      },
+      "benefits": {
+        "R_T_A_volume_l2": {
+          "absolute_error_reduction": 0.021396344222650757,
+          "relative_error_reduction": 0.9711417042491184,
+          "log10_error_gain": 1.5397293200839108,
+          "log10_gain_per_1k_added_dofs": 0.01794451745334084,
+          "log10_gain_per_1k_added_rows": 0.01794451745334084,
+          "log10_gain_per_1m_added_matrix_nnz": 0.07627660918233155
+        },
+        "strict_R_total_absolute": {
+          "absolute_error_reduction": 0.0010753237029966802,
+          "relative_error_reduction": 0.7107396954817783,
+          "log10_error_gain": 0.5387111609304396,
+          "log10_gain_per_1k_added_dofs": 0.006278318989924125,
+          "log10_gain_per_1k_added_rows": 0.006278318989924125,
+          "log10_gain_per_1m_added_matrix_nnz": 0.02668719764472103
+        }
+      },
+      "action_peak_memory": {
+        "status": "not_available_nonisolated",
+        "value_gib": null
+      },
+      "action_wall_time": {
+        "status": "not_available_nonisolated",
+        "value_seconds": null
+      },
+      "factor_nnz": {
+        "status": "not_available_in_source_records",
+        "value": null
+      }
+    },
+    "fixed_mesh_global_p5_to_p6": {
+      "name": "fixed_mesh_global_p5_to_p6",
+      "origin": "H_one_local_h_p5",
+      "result": "P_fixed_mesh_p6",
+      "added_resource": {
+        "dofs": 66574,
+        "active_rows": 66574,
+        "matrix_nnz": 33696050
+      },
+      "benefits": {
+        "R_T_A_volume_l2": {
+          "absolute_error_reduction": 0.0005335688833167499,
+          "relative_error_reduction": 0.8391949138048888,
+          "log10_error_gain": 0.7937002188242781,
+          "log10_gain_per_1k_added_dofs": 0.0119220749665677,
+          "log10_gain_per_1k_added_rows": 0.0119220749665677,
+          "log10_gain_per_1m_added_matrix_nnz": 0.023554696138695132
+        },
+        "strict_R_total_absolute": {
+          "absolute_error_reduction": 0.00038626965090429787,
+          "relative_error_reduction": 0.8826186520343383,
+          "log10_error_gain": 0.9304009075104049,
+          "log10_gain_per_1k_added_dofs": 0.013975439473524273,
+          "log10_gain_per_1k_added_rows": 0.013975439473524273,
+          "log10_gain_per_1m_added_matrix_nnz": 0.02761157190562113
+        }
+      },
+      "action_peak_memory": {
+        "status": "not_available_nonisolated",
+        "value_gib": null
+      },
+      "action_wall_time": {
+        "status": "not_available_nonisolated",
+        "value_seconds": null
+      },
+      "factor_nnz": {
+        "status": "not_available_in_source_records",
+        "value": null
+      }
+    }
+  },
+  "cost_normalized_conclusion": {
+    "single_winner": false,
+    "R_T_A_volume_l2_dof_efficiency_preference": "one_local_h_at_p5",
+    "strict_R_total_dof_efficiency_preference": "fixed_mesh_global_p5_to_p6",
+    "reason": "the observable-vector and strict-R objectives prefer different sequential actions"
+  },
+  "engineering_gate": {
+    "minimum_equivalent_dof_target": 90000,
+    "final_dofs": 167784,
+    "final_dof_target_pass": false,
+    "final_vector_control_pass": true,
+    "final_strict_R_control_pass": false,
+    "status": "controlled_negative"
+  },
+  "workflow_resource_context": {
+    "one_local_h_record": {
+      "wall_seconds": 106.99180269900535,
+      "peak_memory_gib": 7.731742858886719
+    },
+    "fixed_mesh_p_up_record": {
+      "wall_seconds": 202.5644259969995,
+      "peak_memory_gib": 13.993633270263672
+    },
+    "semantics": "whole-record workflow context only; not isolated action costs and therefore excluded from normalized scores"
+  },
+  "unavailable_accuracy_fields": [
+    "R00",
+    "A_closure",
+    "significant_diffraction_orders",
+    "complex_amplitudes",
+    "selected_field_and_interface_errors"
+  ],
+  "limitations": [
+    "the h and p actions are sequential, not head-to-head from one origin",
+    "the evidence is global tetra routing, not a same-hexa-cell patch test",
+    "time and memory cannot be isolated per action from the source records",
+    "the record informs route selection but cannot authorize cellwise hp"
+  ]
+}

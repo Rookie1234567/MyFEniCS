@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -16,6 +17,7 @@ from src.adaptivity.cell_indicator_snapshot import (
 )
 from src.adaptivity.hp_smoothness_classifier import (
     classify_hp_correction_decay,
+    classify_hp_signals_v3,
 )
 from src.adaptivity.global_two_level_r5 import (
     localize_p6_hcurl_projection_signals,
@@ -23,6 +25,7 @@ from src.adaptivity.global_two_level_r5 import (
 from src.adaptivity.multigoal_hp_classifier import (
     build_cell_geometry_priors,
     classify_multigoal_hp_candidates,
+    upgrade_multigoal_hp_classifier_v3,
 )
 from src.common.config_3d import target_stage4_config
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
@@ -37,6 +40,168 @@ from benchmarks.task035b_hp_competition import (
 
 
 class Task035HpSmoothnessClassifierTests(unittest.TestCase):
+    def test_actual_target_v3_uses_projection_signals_fail_closed(
+        self,
+    ) -> None:
+        root = Path(__file__).resolve().parents[2]
+        records = (
+            root
+            / (
+                "benchmarks/cases/095_high_order_local_hp_"
+                "resource_envelope/records"
+            )
+        )
+        v2 = json.loads(
+            (
+                records
+                / "same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json"
+            ).read_text(encoding="utf-8")
+        )
+        projection = json.loads(
+            (
+                records
+                / "global_hexa_p5_p6_h10_projection_signals_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        competition = json.loads(
+            (
+                records
+                / "actual_sequential_h_vs_p_competition_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        report = upgrade_multigoal_hp_classifier_v3(
+            v2,
+            projection,
+            competition,
+        )
+        self.assertTrue(report["pass"])
+        self.assertFalse(report["production_qualified"])
+        self.assertEqual(
+            report["action_counts"],
+            {
+                "p_down_candidate": 0,
+                "p_keep_candidate": 150,
+                "p_up_candidate": 102,
+                "h_refine_candidate": 0,
+                "undetermined": 0,
+            },
+        )
+        self.assertEqual(
+            report["actual_target_signal_summary"][
+                "physically_resolved_cell_count"
+            ],
+            252,
+        )
+        self.assertTrue(report["periodic_decision_audit"]["pass"])
+        self.assertIn(
+            "actual_same_patch_local_h_vs_p_cost_normalized_competition",
+            report["missing_required_signals"],
+        )
+        self.assertEqual(
+            report["signal_coverage"]["coefficient_decay"],
+            "actual_same_mesh_diagnostic_only_not_physical_gram",
+        )
+
+        projection["R5"]["p6_local_hp_signals"]["snapshots"][
+            "shell_p5_energy"
+        ]["canonical_ids_and_values_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "content validation"):
+            upgrade_multigoal_hp_classifier_v3(
+                v2,
+                projection,
+                competition,
+            )
+
+    def test_v3_fault_table_is_conservative_and_resolution_aware(
+        self,
+    ) -> None:
+        ids = np.arange(6, dtype=np.int64)
+        report = classify_hp_signals_v3(
+            ids,
+            np.array([0.10, np.nan, 0.75, 0.65, 0.01, 0.10]),
+            np.array([0.024, 0.0, 0.705, 0.586, 0.0, 0.10]),
+            np.array([True, False, True, True, True, True]),
+            np.array([0.022, 0.0, 0.622, 0.454, 0.0, 0.10]),
+            np.array([True, False, True, True, True, True]),
+            np.array([0.0103, 0.0, 0.188, 0.0636, 0.964, 0.20]),
+            np.array(
+                [0.00030, 0.0, 0.121, 0.0365, 3.1e-15, 0.02]
+            ),
+            ids.tolist(),
+            base_actions=["p_keep_candidate"] * len(ids),
+            material_interface=np.array(
+                [False, True, True, False, False, True]
+            ),
+            corner_or_edge=np.array(
+                [False, False, False, True, False, False]
+            ),
+            periodic_mate_groups=[],
+            phase_resolution_ratio=np.array(
+                [0.2, 0.2, 0.2, 0.2, 4.0 * np.pi / 7.0, 0.2]
+            ),
+        )
+        self.assertEqual(
+            [row["action"] for row in report["decisions"]],
+            [
+                "p_up_candidate",
+                "p_keep_candidate",
+                "h_refine_candidate",
+                "h_refine_candidate",
+                "undetermined",
+                "p_up_candidate",
+            ],
+        )
+        self.assertEqual(
+            report["decisions"][4]["reason"],
+            "independent resolution gate failed",
+        )
+        self.assertIn(
+            "raw_cell_coefficient_shell_decay",
+            report["advisory_signals"],
+        )
+        self.assertFalse(report["production_qualified"])
+
+    def test_v3_periodic_components_aggregate_before_decision(
+        self,
+    ) -> None:
+        ids = np.arange(4, dtype=np.int64)
+        report = classify_hp_signals_v3(
+            ids,
+            np.array([0.2, 0.2, 0.8, 0.2]),
+            np.array([0.2, 0.2, 0.8, 0.2]),
+            np.ones(4, dtype=bool),
+            np.array([0.2, 0.2, 0.2, 0.2]),
+            np.ones(4, dtype=bool),
+            np.full(4, 0.2),
+            np.array([0.04, 0.04, 0.16, 0.04]),
+            [0],
+            base_actions=["p_keep_candidate"] * 4,
+            material_interface=np.zeros(4, dtype=bool),
+            corner_or_edge=np.zeros(4, dtype=bool),
+            periodic_mate_groups=[
+                {"min_cell_id": 0, "max_cell_id": 1},
+                {"min_cell_id": 1, "max_cell_id": 2},
+            ],
+            phase_resolution_ratio=np.full(4, 0.2),
+        )
+        self.assertEqual(
+            [row["action"] for row in report["decisions"]],
+            [
+                "h_refine_candidate",
+                "h_refine_candidate",
+                "h_refine_candidate",
+                "p_keep_candidate",
+            ],
+        )
+        self.assertEqual(
+            [
+                row["periodic_component_id"]
+                for row in report["decisions"][:3]
+            ],
+            [0, 0, 0],
+        )
+        self.assertEqual(len(report["decision_identity_sha256"]), 64)
+
     def test_actual_sequential_h_vs_p_competition_is_fail_closed(
         self,
     ) -> None:
@@ -45,7 +210,7 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
             root
             / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
         )
-        dwr = __import__("json").loads(
+        dwr = json.loads(
             (
                 records
                 / (
@@ -54,7 +219,7 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
                 )
             ).read_text(encoding="utf-8")
         )
-        p_up = __import__("json").loads(
+        p_up = json.loads(
             (
                 records
                 / "actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json"
@@ -200,6 +365,145 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
             snapshots["p4_relative_projection_defect"][
                 "indicator_values"
             ][0],
+        )
+
+    def test_projection_fault_fields_expose_slow_and_alias_lanes(
+        self,
+    ) -> None:
+        def signals(
+            msh: mesh.Mesh,
+            expression,
+        ) -> dict:
+            p5_space = fem.functionspace(
+                msh,
+                element(
+                    "N1curl",
+                    msh.basix_cell(),
+                    5,
+                    dtype=default_real_type,
+                ),
+            )
+            p6_space = fem.functionspace(
+                msh,
+                element(
+                    "N1curl",
+                    msh.basix_cell(),
+                    6,
+                    dtype=default_real_type,
+                ),
+            )
+            p5_field = fem.Function(p5_space)
+            p6_field = fem.Function(p6_space)
+            p6_field.interpolate(expression)
+            p6_field.x.scatter_forward()
+            return localize_p6_hcurl_projection_signals(
+                p5_field,
+                p6_field,
+            )
+
+        one_cell = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        corner = signals(
+            one_cell,
+            lambda x: np.vstack(
+                (
+                    np.zeros(x.shape[1]),
+                    (x[0] ** 2 + x[1] ** 2) ** (1.0 / 3.0),
+                    np.zeros(x.shape[1]),
+                )
+            ),
+        )
+        corner_snapshots = corner["snapshots"]
+        corner_hierarchical = corner_snapshots[
+            "hierarchical_decay_ratio"
+        ]["indicator_values"][0]
+        corner_defect_decay = (
+            corner_snapshots["p5_relative_projection_defect"][
+                "indicator_values"
+            ][0]
+            / corner_snapshots["p4_relative_projection_defect"][
+                "indicator_values"
+            ][0]
+        )
+        self.assertGreater(corner_hierarchical, 0.55)
+        self.assertGreater(corner_defect_decay, 0.55)
+        self.assertLess(
+            corner_snapshots["coefficient_decay_ratio"][
+                "indicator_values"
+            ][0],
+            0.55,
+        )
+
+        high_frequency = signals(
+            one_cell,
+            lambda x: np.vstack(
+                (
+                    np.zeros(x.shape[1]),
+                    np.sin(4.0 * np.pi * x[0]),
+                    np.zeros(x.shape[1]),
+                )
+            ),
+        )
+        high_frequency_snapshots = high_frequency["snapshots"]
+        self.assertLess(
+            high_frequency_snapshots["hierarchical_decay_ratio"][
+                "indicator_values"
+            ][0],
+            0.35,
+        )
+        self.assertGreater(
+            high_frequency_snapshots["p4_relative_projection_defect"][
+                "indicator_values"
+            ][0],
+            0.5,
+        )
+
+        two_cells = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        normal_jump = signals(
+            two_cells,
+            lambda x: np.vstack(
+                (
+                    np.where(x[0] < 0.5, 1.0, 2.0),
+                    np.zeros(x.shape[1]),
+                    np.zeros(x.shape[1]),
+                )
+            ),
+        )
+        self.assertEqual(
+            normal_jump["snapshots"]["hierarchical_decay_resolved"][
+                "indicator_values"
+            ],
+            [0.0, 0.0],
+        )
+
+        interface_low_regularity = signals(
+            two_cells,
+            lambda x: np.vstack(
+                (
+                    np.zeros(x.shape[1]),
+                    np.abs(x[0] - 0.5) ** (2.0 / 3.0),
+                    np.zeros(x.shape[1]),
+                )
+            ),
+        )
+        self.assertTrue(
+            all(
+                value > 0.55
+                for value in interface_low_regularity["snapshots"][
+                    "hierarchical_decay_ratio"
+                ]["indicator_values"]
+            )
         )
 
     def test_fixed_target_cell_priors_match_formal_hexa_identity(self) -> None:
@@ -439,6 +743,35 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
                     indicator_name="rank_local_failure_fixture",
                     mesh_geometry_sha256="a" * 64,
                 )
+
+        mpi_identity = classify_hp_signals_v3(
+            np.arange(2, dtype=np.int64),
+            np.array([0.2, 0.8]),
+            np.array([0.2, 0.8]),
+            np.ones(2, dtype=bool),
+            np.array([0.2, 0.2]),
+            np.ones(2, dtype=bool),
+            np.array([0.2, 0.2]),
+            np.array([0.04, 0.16]),
+            [0],
+            base_actions=["p_keep_candidate", "p_keep_candidate"],
+            material_interface=np.zeros(2, dtype=bool),
+            corner_or_edge=np.zeros(2, dtype=bool),
+            periodic_mate_groups=[
+                {"min_cell_id": 0, "max_cell_id": 1},
+            ],
+            phase_resolution_ratio=np.full(2, 0.2),
+        )
+        hashes = comm.allgather(
+            mpi_identity["decision_identity_sha256"]
+        )
+        self.assertEqual(len(set(hashes)), 1)
+        self.assertEqual(
+            [
+                row["action"] for row in mpi_identity["decisions"]
+            ],
+            ["h_refine_candidate", "h_refine_candidate"],
+        )
 
     def test_p6_projection_rejects_non_hcurl_contract(self) -> None:
         msh = mesh.create_unit_cube(
