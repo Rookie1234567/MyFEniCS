@@ -415,6 +415,41 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
 
     _validate_stage4_hexa_geometry(cfg)
     explicit_counts = cfg.mesh_axis_cell_counts_requested
+    explicit_z_values = cfg.mesh_axis_z_values_requested
+    explicit_z_profile = cfg.mesh_axis_z_profile
+    if (explicit_z_values is None) != (explicit_z_profile is None):
+        raise ValueError(
+            "mesh_axis_z_values and mesh_axis_z_profile must be supplied "
+            "together."
+        )
+    if explicit_z_values is not None and explicit_counts is None:
+        raise ValueError(
+            "mesh_axis_z_values requires mesh_axis_cell_counts so the exact "
+            "tensor topology is explicit."
+        )
+    if explicit_z_profile is not None:
+        from .research_axis_profiles import (
+            TASK035B_R5_SLAB_BISECT_PROFILE,
+            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+        )
+
+        if (
+            explicit_z_profile != TASK035B_R5_SLAB_BISECT_PROFILE
+            or tuple(explicit_z_values or ())
+            != TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+            or explicit_counts != (6, 2, 12)
+            or not np.isclose(
+                float(cfg.mesh_target_size),
+                14.0,
+                rtol=0.0,
+                atol=1.0e-12,
+            )
+            or cfg.geometry_kind != "rectangular_block_grating"
+        ):
+            raise ValueError(
+                "the only qualified explicit z authority is the Task035b "
+                "h14_max-R5_slab_bisect profile on exact counts (6,2,12)."
+            )
     if explicit_counts is not None:
         if cfg.mesh_cell_type_resolved != "hexahedron":
             raise ValueError(
@@ -462,7 +497,34 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                 spans.items()
             )
         }
-        mode = "boundary_fitted_exact_counts"
+        if explicit_z_values is not None:
+            if len(explicit_z_values) != explicit_counts[2] + 1:
+                raise ValueError(
+                    "mesh_axis_z_values length must equal NZ + 1 from "
+                    "mesh_axis_cell_counts."
+                )
+            if not (
+                np.isclose(
+                    explicit_z_values[0],
+                    cfg.domain_z_min,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+                and np.isclose(
+                    explicit_z_values[-1],
+                    cfg.domain_z_max,
+                    rtol=0.0,
+                    atol=1.0e-12,
+                )
+            ):
+                raise ValueError(
+                    "mesh_axis_z_values endpoints must equal the Stage-4 "
+                    "domain z bounds."
+                )
+            axes["z"] = np.asarray(explicit_z_values, dtype=np.float64)
+            mode = "boundary_fitted_exact_counts_explicit_z"
+        else:
+            mode = "boundary_fitted_exact_counts"
         regions: dict[str, list[list[float]]] = {
             "x": [],
             "y": [],

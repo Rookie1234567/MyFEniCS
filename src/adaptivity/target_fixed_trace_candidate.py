@@ -16,6 +16,10 @@ from .high_order_same_error import (
     compare_observables,
     compare_significant_channels_to_reference_v1,
 )
+from src.geometry.research_axis_profiles import (
+    TASK035B_R5_SLAB_BISECT_PROFILE,
+    TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+)
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -663,6 +667,7 @@ def run_target_fixed_trace_candidate(
     directional_recovery: bool = False,
     directional_axis: str | None = None,
     mesh_axis_cell_counts: tuple[int, int, int] | None = None,
+    explicit_z_profile: str | None = None,
     channel_adjoint_diagnostic: bool = False,
     dtn_quadrature_degree: int | None = None,
     dtn_evanescent_buffer: int = 0,
@@ -730,6 +735,18 @@ def run_target_fixed_trace_candidate(
         if directional_recovery
         else None
     )
+    if explicit_z_profile is not None:
+        if explicit_z_profile != TASK035B_R5_SLAB_BISECT_PROFILE:
+            raise ValueError("unknown explicit z profile")
+        if mesh_axis_cell_counts is not None:
+            raise ValueError(
+                "explicit z profile and mesh_axis_cell_counts are mutually "
+                "exclusive"
+            )
+        mesh_axis_cell_counts = (6, 2, 12)
+        mesh_axis_z_values = TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+    else:
+        mesh_axis_z_values = None
     if mesh_axis_cell_counts is not None:
         if (
             not isinstance(mesh_axis_cell_counts, tuple)
@@ -743,6 +760,9 @@ def run_target_fixed_trace_candidate(
                 "mesh_axis_cell_counts must contain exactly three integers"
             )
         mesh_axis_cell_counts = tuple(mesh_axis_cell_counts)
+    explicit_r5_slab_bisect = (
+        explicit_z_profile == TASK035B_R5_SLAB_BISECT_PROFILE
+    )
     if directional_recovery:
         if channel_adjoint_diagnostic:
             raise ValueError(
@@ -755,18 +775,29 @@ def run_target_fixed_trace_candidate(
                 "global-p6 baseline"
             )
         if resolved_directional_axis == "z":
-            if (
+            if mesh_axis_z_values is not None:
+                if (
+                    not explicit_r5_slab_bisect
+                    or abs(float(h_nm) - 14.0) > 1.0e-12
+                    or mesh_axis_cell_counts != (6, 2, 12)
+                    or directional_parent_record is not None
+                ):
+                    raise ValueError(
+                        "explicit z recovery is limited to the reviewed h14 "
+                        "R5-slab bisect on exact axis cells (6, 2, 12)"
+                    )
+            elif (
                 not any(
                     abs(float(h_nm) - allowed) <= 1.0e-12
                     for allowed in (14.0, 13.0)
                 )
                 or mesh_axis_cell_counts is not None
-            ):
-                raise ValueError(
-                    "z-directional fixed-trace recovery requires legacy "
-                    "h14 or h13 without an explicit axis override"
-                )
-            if abs(float(h_nm) - 13.0) <= 1.0e-12:
+                ):
+                    raise ValueError(
+                        "z-directional fixed-trace recovery requires legacy "
+                        "h14 or h13, or the reviewed explicit R5-slab bisect"
+                    )
+            elif abs(float(h_nm) - 13.0) <= 1.0e-12:
                 if directional_parent_record is None:
                     raise ValueError(
                         "h13 directional escalation requires a positive "
@@ -781,6 +812,7 @@ def run_target_fixed_trace_candidate(
             if (
                 abs(float(h_nm) - 15.0) > 1.0e-12
                 or mesh_axis_cell_counts != (7, 2, 10)
+                or mesh_axis_z_values is not None
                 or directional_parent_record is not None
             ):
                 raise ValueError(
@@ -795,6 +827,7 @@ def run_target_fixed_trace_candidate(
         abs(float(h_nm) - 15.0) > 1.0e-12
         or global_p6_baseline_record is None
         or mesh_axis_cell_counts is not None
+        or mesh_axis_z_values is not None
     ):
         raise ValueError(
             "the accepted fixed-trace seed requires h15 and a qualified "
@@ -892,12 +925,15 @@ def run_target_fixed_trace_candidate(
                     str(value) for value in mesh_axis_cell_counts
                 )
             )
+            + ("_r5slabbisect" if explicit_r5_slab_bisect else "")
         ).replace(".", "p"),
         incident_theta_deg=float(incident_theta_deg),
         polarization_kind=polarization_kind,
         custom_polarization=None,
         mesh_cell_type="hexahedron",
         mesh_axis_cell_counts=mesh_axis_cell_counts,
+        mesh_axis_z_values=mesh_axis_z_values,
+        mesh_axis_z_profile=explicit_z_profile,
         nedelec_trace_degree=int(trace_degree),
         nedelec_interior_degree=int(interior_degree),
         matrix_diagnostics_assemble_only=False,
@@ -1118,6 +1154,12 @@ def run_target_fixed_trace_candidate(
                 "a z/h13 escalation or changes the formal 12-channel Gate"
                 if resolved_directional_axis == "x"
                 else (
+                    "classifies the one reviewed h14 R5-slab bisect; never "
+                    "authorizes another split-position scan and never changes "
+                    "the formal 12-channel acceptance Gate"
+                )
+                if explicit_r5_slab_bisect
+                else (
                     "authorizes at most one z/h13 escalation when true; "
                     "never changes the formal 12-channel acceptance Gate"
                 )
@@ -1223,8 +1265,17 @@ def run_target_fixed_trace_candidate(
                 if mesh_axis_cell_counts is None
                 else list(mesh_axis_cell_counts)
             ),
+            "mesh_axis_z_values_requested": (
+                None
+                if mesh_axis_z_values is None
+                else list(mesh_axis_z_values)
+            ),
+            "explicit_z_profile": explicit_z_profile,
+            "r5_slab_bisect": explicit_r5_slab_bisect,
             "directional_mesh_change_semantics": (
-                "exact_material_fitted_remeshing_not_nested_refinement"
+                "exact_h14_r5_slab_bisect_not_nested_refinement"
+                if explicit_r5_slab_bisect
+                else "exact_material_fitted_remeshing_not_nested_refinement"
                 if directional_recovery
                 else "not_applicable"
             ),
@@ -1402,4 +1453,8 @@ def run_target_fixed_trace_candidate(
     }
 
 
-__all__ = ["run_target_fixed_trace_candidate"]
+__all__ = [
+    "TASK035B_R5_SLAB_BISECT_PROFILE",
+    "TASK035B_R5_SLAB_BISECT_Z_VALUES_NM",
+    "run_target_fixed_trace_candidate",
+]

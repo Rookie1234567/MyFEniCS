@@ -714,6 +714,59 @@ def test_directional_fixed_trace_cli_keeps_z_and_adds_exact_x_lane() -> None:
         == 19680
     )
     assert x_preflight["predicted_resources"]["base_schur_nnz"] == 10650850
+
+    explicit_z_args = _parse_args(
+        [
+            *arguments("14"),
+            "--fixed-trace-directional-axis",
+            "z",
+            "--fixed-trace-explicit-z-profile",
+            "h14_max-R5_slab_bisect",
+        ]
+    )
+    explicit_z_preflight = _fixed_trace_resource_preflight(
+        explicit_z_args
+    )
+    assert explicit_z_preflight["pass"] is True
+    assert explicit_z_preflight["explicit_z_profile"] == (
+        "h14_max-R5_slab_bisect"
+    )
+    assert explicit_z_preflight["axis_plan"]["mesh_cells_resolved"] == [
+        6,
+        2,
+        12,
+    ]
+    assert explicit_z_preflight["axis_plan"]["axis_sha256"]["z"] == (
+        "9048a25cdb01a0ef2aa123bc5f7ec66116a2320ed42376e63ec22679e5f3c6d8"
+    )
+    assert (
+        explicit_z_preflight["predicted_resources"]["candidate_dofs"]
+        == 89740
+    )
+    assert (
+        explicit_z_preflight["predicted_resources"][
+            "expected_active_rows"
+        ]
+        == 20120
+    )
+    with pytest.raises(SystemExit):
+        _parse_args(
+            [
+                *arguments("13"),
+                "--fixed-trace-explicit-z-profile",
+                "h14_max-R5_slab_bisect",
+            ]
+        )
+    with pytest.raises(SystemExit):
+        _parse_args(
+            [
+                *arguments("14"),
+                "--fixed-trace-explicit-z-profile",
+                "h14_max-R5_slab_bisect",
+                "--structured-axis-cells",
+                "6,2,12",
+            ]
+        )
     with pytest.raises(SystemExit):
         _parse_args(arguments("12"))
     with pytest.raises(SystemExit):

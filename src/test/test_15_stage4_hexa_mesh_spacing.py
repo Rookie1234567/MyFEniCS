@@ -43,6 +43,8 @@ class Stage4HexaMeshSpacingTests(unittest.TestCase):
     ):
         default_cfg = target_stage4_config(degree=6, h_nm=15.0)
         self.assertIsNone(default_cfg.mesh_axis_cell_counts_requested)
+        self.assertIsNone(default_cfg.mesh_axis_z_values_requested)
+        self.assertIsNone(default_cfg.mesh_axis_z_profile)
         default_plan = _stage4_axis_plan(default_cfg, comm_size=8)
         self.assertEqual(default_plan.mesh_cells_resolved, (6, 2, 10))
         self.assertEqual(
@@ -132,6 +134,42 @@ class Stage4HexaMeshSpacingTests(unittest.TestCase):
                     expected["geometry_sha256"],
                 )
 
+    def test_frozen_explicit_z_profile_preserves_h14_except_one_bisect(
+        self,
+    ):
+        from src.adaptivity.target_fixed_trace_candidate import (
+            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM,
+        )
+
+        parent_cfg = target_stage4_config(degree=6, h_nm=14.0)
+        parent = _stage4_axis_plan(parent_cfg, comm_size=8)
+        cfg = target_stage4_config(degree=6, h_nm=14.0)
+        cfg.mesh_axis_cell_counts = (6, 2, 12)
+        cfg.mesh_axis_z_values = (
+            TASK035B_R5_SLAB_BISECT_Z_VALUES_NM
+        )
+        cfg.mesh_axis_z_profile = "h14_max-R5_slab_bisect"
+        plan = _stage4_axis_plan(cfg, comm_size=8)
+
+        expected_z = list(parent.z_values)
+        expected_z.insert(
+            2,
+            0.5 * (float(parent.z_values[1]) + float(parent.z_values[2])),
+        )
+        self.assertEqual(
+            plan.mesh_spacing_mode_resolved,
+            "boundary_fitted_exact_counts_explicit_z",
+        )
+        self.assertEqual(plan.mesh_cells_resolved, (6, 2, 12))
+        self.assertEqual(list(plan.x_values), list(parent.x_values))
+        self.assertEqual(list(plan.y_values), list(parent.y_values))
+        self.assertEqual(list(plan.z_values), expected_z)
+        self.assertEqual(
+            _axis_sha256(plan.z_values),
+            "9048a25cdb01a0ef2aa123bc5f7ec66116a2320ed42376e63ec22679e5f3c6d8",
+        )
+        self.assertTrue(plan.material_plane_alignment["all_aligned"])
+
     def test_exact_axis_counts_fail_closed(self):
         cfg = target_stage4_config(degree=6, h_nm=15.0)
         cfg.mesh_axis_cell_counts = (1, 2, 10)
@@ -167,6 +205,47 @@ class Stage4HexaMeshSpacingTests(unittest.TestCase):
 
         cfg.mesh_axis_cell_counts = (7, 0, 10)
         with self.assertRaisesRegex(ValueError, "positive"):
+            _stage4_axis_plan(cfg, comm_size=8)
+
+        cfg = target_stage4_config(degree=6, h_nm=14.0)
+        cfg.mesh_axis_z_values = (-10.0, 0.0, 120.0, 130.0)
+        with self.assertRaisesRegex(
+            ValueError,
+            "must be supplied together",
+        ):
+            _stage4_axis_plan(cfg, comm_size=8)
+
+        cfg.mesh_axis_z_profile = "h14_max-R5_slab_bisect"
+        with self.assertRaisesRegex(
+            ValueError,
+            "requires mesh_axis_cell_counts",
+        ):
+            _stage4_axis_plan(cfg, comm_size=8)
+
+        cfg.mesh_axis_cell_counts = (6, 2, 12)
+        with self.assertRaisesRegex(ValueError, "only qualified"):
+            _stage4_axis_plan(cfg, comm_size=8)
+
+        cfg.mesh_axis_z_values = (
+            -9.0,
+            0.0,
+            6.0,
+            13.0,
+            26.0,
+            40.0,
+            53.0,
+            66.0,
+            80.0,
+            93.0,
+            106.0,
+            120.0,
+            130.0,
+        )
+        with self.assertRaisesRegex(ValueError, "only qualified"):
+            _stage4_axis_plan(cfg, comm_size=8)
+
+        cfg.mesh_axis_z_values = (-10.0, 0.0, 0.0, 130.0)
+        with self.assertRaisesRegex(ValueError, "strictly increasing"):
             _stage4_axis_plan(cfg, comm_size=8)
 
     def test_auto_keeps_uniform_when_material_planes_align(self):
