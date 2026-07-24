@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import time
 from pathlib import Path
@@ -1184,23 +1185,74 @@ def run_prepared_3d_case_flow(
     log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
     log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
-    _write_progress_event(
-        out_dir,
-        comm,
-        stage="solver_objects_retained_for_postprocess",
-        status="end",
-        started=started,
-        dofs=num_dofs,
-        constraints=None if floquet_data is None else floquet_data.num_constraints,
-        matrix_stats=matrix_stats,
-        petsc_options=petsc_options,
-        extra={
-            "lifecycle_note": (
-                "Telemetry-only baseline preserves the Task28 lifecycle: KSP/factor, "
-                "system Mat, RHS Vec, and solution Vec remain referenced during postprocess."
-            )
-        },
+    solver_objects_released_before_postprocess = bool(
+        cfg.direct_release_solver_before_postprocess
+        and solve_stage4_dtn_port
+        and not diagnostic_only_result
+        and reason > 0
     )
+    if solver_objects_released_before_postprocess:
+        system_ksp.destroy()
+        system_x.destroy()
+        system_b.destroy()
+        system_A.destroy()
+        system_A = None
+        system_b = None
+        system_x = None
+        system_ksp = None
+        if dtn_result is not None:
+            dtn_result["A"] = None
+            dtn_result["b"] = None
+            dtn_result["x"] = None
+            dtn_result["ksp"] = None
+        gc.collect()
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="solver_objects_released_before_postprocess",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=(
+                None
+                if floquet_data is None
+                else floquet_data.num_constraints
+            ),
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "released_objects": [
+                    "KSP/MUMPS factor",
+                    "system Mat",
+                    "RHS Vec",
+                    "solution Vec",
+                ],
+                "ordinary_default_changed": False,
+            },
+        )
+    else:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="solver_objects_retained_for_postprocess",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=(
+                None
+                if floquet_data is None
+                else floquet_data.num_constraints
+            ),
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "lifecycle_note": (
+                    "Telemetry-only baseline preserves the Task28 lifecycle: "
+                    "KSP/factor, system Mat, RHS Vec, and solution Vec remain "
+                    "referenced during postprocess."
+                )
+            },
+        )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     converged = (reason > 0) and not diagnostic_only_result
@@ -1277,6 +1329,12 @@ def run_prepared_3d_case_flow(
         if dtn_solver_info is None
         else bool(
             dtn_solver_info.get("stage4_floquet_slave_elimination")
+        ),
+        "direct_release_solver_before_postprocess": bool(
+            cfg.direct_release_solver_before_postprocess
+        ),
+        "solver_objects_released_before_postprocess": (
+            solver_objects_released_before_postprocess
         ),
         "cell_static_condensation": None
         if dtn_solver_info is None

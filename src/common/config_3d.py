@@ -145,6 +145,11 @@ class SimulationConfig3D:
     # condense cell interiors, and apply Floquet constraints before global
     # insertion. The full FE and full-trace matrices are never allocated.
     stage4_assembly_time_cell_static_condensation: bool = False
+    # Task035b lifecycle opt-in. After the recovered field and true residual
+    # are available, release KSP/MUMPS factors and the reduced Mat/Vec objects
+    # before field and power postprocessing. The ordinary lifecycle remains
+    # unchanged.
+    direct_release_solver_before_postprocess: bool = False
     # Task035b research-only exact removal of the identity rows used to embed
     # Floquet MPC slaves.  This currently requires cell static condensation.
     stage4_floquet_slave_elimination: bool = False

@@ -353,6 +353,7 @@ def run_target_global_two_level_r5(
             stage4_assembly_time_cell_static_condensation=(
                 use_assembly_time
             ),
+            direct_release_solver_before_postprocess=use_assembly_time,
             stage4_floquet_slave_elimination=(
                 int(degree) in requested_slave_elimination
             ),

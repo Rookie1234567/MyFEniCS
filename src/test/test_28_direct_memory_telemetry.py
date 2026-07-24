@@ -85,6 +85,9 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertFalse(
             ordinary.stage4_assembly_time_cell_static_condensation
         )
+        self.assertFalse(
+            ordinary.direct_release_solver_before_postprocess
+        )
         self.assertTrue(candidate.direct_release_base_after_augmentation)
 
     def test_ooc_scratch_usage_is_measured_recursively(self) -> None:

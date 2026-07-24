@@ -619,6 +619,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             stage4_assembly_time_cell_static_condensation=True,
             stage4_floquet_slave_elimination=True,
             direct_release_base_after_augmentation=True,
+            direct_release_solver_before_postprocess=True,
             unique_output=False,
         )
         summary = run_stage4b_block_grating_3d_case(
@@ -630,6 +631,9 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(summary["case_status"], "completed")
         self.assertTrue(
             summary["stage4_assembly_time_cell_static_condensation"]
+        )
+        self.assertTrue(
+            summary["solver_objects_released_before_postprocess"]
         )
         self.assertEqual(summary["num_nedelec_dofs"], 802)
         self.assertEqual(summary["matrix_stats"]["matrix_rows"], 560)
