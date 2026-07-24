@@ -1,5 +1,88 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-24 assembly-time condensation 与生命周期闭环
+
+旧 prototype “自由度下降但内存没有同比下降”的主因已经消除。当前
+research-only 路径在 cell assembly 时直接形成
+`C_K^H (A_tt - A_ti A_ii^-1 A_it) C_K`，只分配最终 Floquet-independent
+trace + DtN 系统；不再先装配 173,802-row full FE matrix，也不分配
+60,402-row full trace Schur、embedded slave identity rows 或
+base-to-augmented matrix copy。
+
+| MPI8 p6/h10 路径 | active rows | matrix NNZ | formal peak | peak 所在阶段 |
+|---|---:|---:|---:|---|
+| global full p6 | 173,882 | 210,353,120 | 35.024 GiB | R5 localization，factor 仍保留 |
+| post-assembly exact condensation | 60,482 | 52,058,162 | 29.212 GiB | R5 localization，full/Schur 生命周期重叠 |
+| assembly-time，factor 保留 | 51,272 | 41,989,040 | 16.998 GiB | R5 localization |
+| assembly-time，销毁 factor、未 trim heap | 51,272 | 41,989,040 | 16.351 GiB | R5 localization |
+| assembly-time，销毁 factor + heap trim | 51,272 | 41,989,040 | **15.964 GiB** | **MUMPS/求解验证阶段** |
+
+相对 global full p6，最终 active rows 减少 70.51%，assembled NNZ
+减少 80.04%，全程进程树 memory authority 减少 54.42%。最终系统仍由
+173,802 个 p6 FE unknown 的 exact cell Schur 得到；`51,272 =
+51,192 independent trace + 80 DtN auxiliary`，不是 zero masking。
+
+最后一条正式记录绑定 clean source
+`0f8924ac4bacc8a17dc67fb0af2871ea61471c56`，固定 mesh、tag 和 geometry
+hash，使用 MPI8、0 swap。MUMPS/求解验证阶段外部采样峰值为
+16,347.64 MiB；释放 KSP/MUMPS factor、system Mat、RHS 和 solution 后，
+8 个 rank 的 `glibc malloc_trim(0)` 均成功：
+
+| lifecycle 点 | simultaneous MPI rank RSS |
+|---|---:|
+| heap trim 前 | 16,182.89 MiB |
+| heap trim 后 | 11,233.94 MiB |
+| 实际归还 Linux | **4,948.95 MiB** |
+| field output 后 | 12,146.61 MiB |
+| R/T/Avolume 后 | 12,548.60 MiB |
+| 随后的 R5 localization 外部峰值 | 13,311.62 MiB |
+
+因此后处理不再与已释放的 MUMPS factor heap pages 叠加，也不再超过
+MUMPS 阶段。`malloc_trim` 只在
+`direct_release_solver_before_postprocess=True` 的资格化
+assembly-time research 路径执行；ordinary default 仍为 `False`。
+
+### 当前正式数值与成本
+
+| 项目 | MPI8 p6/h10 assembly-time + trim |
+|---|---:|
+| full FE / solved rows | 173,802 / 51,272 |
+| matrix / factor NNZ | 41,989,040 / 211,651,232 |
+| average / maximum row width | 818.95 / 1,398 |
+| direct condensed build | 770.89 s |
+| compiled cell-kernel evaluations | 285.37 s |
+| local Schur | 26.30 s |
+| local sparse insertion | 260.84 s |
+| final parallel Mat assembly | 396.33 s |
+| MUMPS setup / solve | 142.12 s / 0.202 s |
+| p6 elapsed | 967.09 s |
+| full explicit true residual | `1.3574e-11` |
+| R / T / A_volume | `0.000762881475137` / `0.602701633985772` / `0.396535484542744` |
+| port-volume closure error | `3.653e-12` |
+
+装配仍比 MUMPS 慢，但已经从旧 full p6 base assembly 的约
+2,195.6 s 降到 direct condensed build 770.9 s。剩余热点不是矩阵规模
+错误，而是 Python 驱动的逐 cell kernel/Schur/Mat insertion 以及 PETSc
+final assembly；后续性能 lane 应把这些操作编译化或批量化，不能通过
+放宽 residual/R/T/A Gate 换取时间。
+
+### 新 evidence
+
+- canonical pass:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json`
+- retained-factor lifecycle:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_retained_postprocess_mpi8.json`
+- factor destroyed but allocator not trimmed:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_released_without_heap_trim_mpi8.json`
+- raw canonical evidence:
+  `benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T030451Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/`
+
+## 历史 post-assembly prototype
+
+以下部分保留最初 post-assembly condensation 的真实对照，用于解释为什么
+仅降低 solved rows、但保留 full assembly 和 factor 生命周期时，内存收益
+有限；它不再代表当前最优实现。
+
 | 项目 | global p6 full | exact p6 condensed | 结论 |
 |---|---:|---:|---|
 | source SHA | `c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2` | `0f4b786d618c37e1c572a4f596a9235e53d73161` | 两者均为 clean committed SHA |
@@ -78,9 +161,9 @@ Schur build 共 84.69 s：
 | T_total | 0.602701633983078 | 0.602701633983515 | `4.38e-13` |
 | A_volume | 0.396535484541640 | 0.396535484541834 | `1.94e-13` |
 
-该 lane 是明确正信号：物理等价、full residual、rows、NNZ、factor NNZ 和
-memory 均通过。但它尚未达到“完整 p6 assembly 不存在”的最终工程目标，
-也不构成 local-p/regionwise-p 完成证明。
+该历史 lane 是明确正信号：物理等价、full residual、rows、NNZ、
+factor NNZ 和 memory 均通过。后续 assembly-time 路径已经达到“完整 p6
+global matrix 不存在”，但仍不构成 local-p/regionwise-p 完成证明。
 
 ## Evidence
 

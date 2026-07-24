@@ -520,6 +520,16 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         ),
         "floquet_num_constraints": summary.get("floquet_num_constraints"),
         "elapsed_seconds": summary.get("elapsed_seconds"),
+        "stage4_dtn_ksp_setup_seconds": summary.get(
+            "stage4_dtn_ksp_setup_seconds"
+        ),
+        "stage4_dtn_ksp_solve_seconds": summary.get(
+            "stage4_dtn_ksp_solve_seconds"
+        ),
+        "solver_objects_released_before_postprocess": summary.get(
+            "solver_objects_released_before_postprocess"
+        ),
+        "solver_release_audit": summary.get("solver_release_audit"),
         "stage4_cell_static_condensation": summary.get(
             "stage4_cell_static_condensation"
         ),
@@ -824,6 +834,75 @@ def _qualify(
                         .get("petsc_extra_options", {})
                         .get("mat_mumps_icntl_14")
                         == 100
+                    )
+                    for entry in requested_entries
+                ),
+                "requested_solver_objects_released_before_postprocess": all(
+                    (entry.get("summary") or {}).get(
+                        "solver_objects_released_before_postprocess"
+                    )
+                    is True
+                    for entry in requested_entries
+                ),
+                "requested_heap_trim_succeeded": all(
+                    (
+                        (
+                            (entry.get("summary") or {}).get(
+                                "solver_release_audit"
+                            )
+                            or {}
+                        ).get("process_heap_trim")
+                        or {}
+                    ).get("succeeded_on_all_ranks")
+                    is True
+                    for entry in requested_entries
+                ),
+                "requested_heap_trim_reduced_rss": all(
+                    isinstance(
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "solver_release_audit"
+                                )
+                                or {}
+                            ).get("process_heap_trim")
+                            or {}
+                        ).get("sum_rss_before_mb"),
+                        (int, float),
+                    )
+                    and isinstance(
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "solver_release_audit"
+                                )
+                                or {}
+                            ).get("process_heap_trim")
+                            or {}
+                        ).get("sum_rss_after_mb"),
+                        (int, float),
+                    )
+                    and float(
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "solver_release_audit"
+                                )
+                                or {}
+                            ).get("process_heap_trim")
+                            or {}
+                        )["sum_rss_after_mb"]
+                    )
+                    < float(
+                        (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "solver_release_audit"
+                                )
+                                or {}
+                            ).get("process_heap_trim")
+                            or {}
+                        )["sum_rss_before_mb"]
                     )
                     for entry in requested_entries
                 ),

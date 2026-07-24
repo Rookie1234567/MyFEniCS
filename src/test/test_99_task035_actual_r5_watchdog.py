@@ -4,6 +4,7 @@ from argparse import Namespace
 import unittest
 
 from benchmarks.run_task035_actual_r5 import (
+    _compact_solve,
     _parse_args,
     _qualify,
     _qualify_common_mesh_sweep,
@@ -11,6 +12,34 @@ from benchmarks.run_task035_actual_r5 import (
 
 
 class Task035ActualR5WatchdogTests(unittest.TestCase):
+    def test_compact_solve_preserves_solver_lifecycle_audit(self) -> None:
+        release_audit = {
+            "petsc_garbage_cleanup_called": True,
+            "process_heap_trim": {
+                "succeeded_on_all_ranks": True,
+                "sum_rss_before_mb": 16000.0,
+                "sum_rss_after_mb": 11000.0,
+            },
+        }
+        compact = _compact_solve(
+            {
+                "degree": 6,
+                "h_nm": 10.0,
+                "summary": {
+                    "stage4_dtn_ksp_setup_seconds": 120.0,
+                    "stage4_dtn_ksp_solve_seconds": 0.2,
+                    "solver_objects_released_before_postprocess": True,
+                    "solver_release_audit": release_audit,
+                },
+            }
+        )
+        self.assertEqual(compact["stage4_dtn_ksp_setup_seconds"], 120.0)
+        self.assertEqual(compact["stage4_dtn_ksp_solve_seconds"], 0.2)
+        self.assertTrue(
+            compact["solver_objects_released_before_postprocess"]
+        )
+        self.assertEqual(compact["solver_release_audit"], release_audit)
+
     def test_argument_contract_rejects_non_enriched_degree(self) -> None:
         with self.assertRaises(SystemExit):
             _parse_args(
@@ -382,6 +411,97 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         )
         self.assertFalse(failed["pass"])
         self.assertIn("cell_energy_closure_le_1e-10", failed["failures"])
+
+    def test_assembly_time_record_requires_effective_heap_trim(self) -> None:
+        args = Namespace(
+            mpi_size=8,
+            theta=0.5,
+            mesh_cell_type="hexahedron",
+            assembly_time_condensation_degree=[6],
+        )
+        base_summary = {
+            "official_result": True,
+            "linear_system_relative_residual": 1.0e-12,
+            "mesh_cell_type_actual": "hexahedron",
+        }
+        enriched_summary = {
+            **base_summary,
+            "stage4_assembly_time_cell_static_condensation": True,
+            "cell_static_condensation": {
+                "full_global_matrix_allocated": False,
+                "full_trace_matrix_allocated": False,
+                "full_explicit_true_residual": {
+                    "eliminated_cell_interior_residual_norm": 1.0e-12,
+                },
+            },
+            "config": {
+                "petsc_extra_options": {"mat_mumps_icntl_14": 100},
+            },
+            "solver_objects_released_before_postprocess": True,
+            "solver_release_audit": {
+                "process_heap_trim": {
+                    "succeeded_on_all_ranks": True,
+                    "sum_rss_before_mb": 16000.0,
+                    "sum_rss_after_mb": 11000.0,
+                },
+            },
+        }
+        result = {
+            "status": "actual_global_r5_pass",
+            "ordinary_default_changed": False,
+            "same_mesh_hashes": True,
+            "coarse": {
+                "degree": 1,
+                "summary": base_summary,
+                "high_order_resource_audit": {
+                    "entity_dof_inventory": {"pass": True},
+                },
+            },
+            "enriched": {
+                "degree": 6,
+                "summary": enriched_summary,
+                "high_order_resource_audit": {
+                    "entity_dof_inventory": {"pass": True},
+                },
+            },
+            "R5": {
+                "formal_hierarchical_fe_r5": True,
+                "finite_cell_contributions": True,
+                "nonnegative_cell_contributions": True,
+                "correction_energy_norm": 1.0,
+                "correction_energy": {"relative_closure_error": 1.0e-14},
+                "marking": {"captured_fraction": 0.51},
+            },
+        }
+        sampler = {
+            "max_observed_worker_rank_count": 8,
+            "max_process_tree_swap_mb": 0.0,
+        }
+        qualification = _qualify(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertTrue(qualification["pass"], qualification)
+
+        enriched_summary["solver_release_audit"]["process_heap_trim"][
+            "sum_rss_after_mb"
+        ] = 16000.0
+        failed = _qualify(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(failed["pass"])
+        self.assertIn("requested_heap_trim_reduced_rss", failed["failures"])
 
 
 if __name__ == "__main__":
