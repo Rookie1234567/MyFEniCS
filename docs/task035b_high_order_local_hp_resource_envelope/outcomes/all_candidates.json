@@ -392,7 +392,7 @@
       "scope": "case095",
       "classification": "governance_record",
       "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/task035b_successor_bindings.json",
-      "record_sha256": "e45cd4b4bebe60af5c47f627b86dc0d6d708e7a18ca247c790590b9a7ff82c9f",
+      "record_sha256": "64e53981d27248bcd9b8b4e0ebc256fe30b7c08d4a55169a6a815c58bb7dcd5b",
       "source_sha": null,
       "mesh_p_h": null,
       "resources": [null, null, null, null],

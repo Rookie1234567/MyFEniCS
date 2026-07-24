@@ -14,9 +14,9 @@
       "role": "geometry_implementation",
       "path": "src/geometry/mesh_builder_3d.py",
       "predecessor_sha256": "ca8c57629207d939ed86924713ce49b9dcc83e5a9f33518a726c34d5d12068bb",
-      "successor_sha256": "c35b5f65c0aa9e6ca5d4cb5d44050f70c4446b6364ec04610ef886eb5fa9a630",
-      "introduced_by_commit": "c2a3c91989a01b2c2c5d20530ee99993d156fdb4",
-      "change_class": "fixed_target_high_order_qualification",
+      "successor_sha256": "8e248eed4d617400e797cccc9f4ef1379b86548a89ba90429d46a3705270e303",
+      "introduced_by_commit": "6ee517bf96a9022ae129070b822e281da030f617",
+      "change_class": "fixed_target_high_order_qualification_and_research_axis_profiles",
       "ordinary_default_changed": false,
       "authorization": "docs/task035b_high_order_local_hp_resource_envelope/task_scope_addendum_v1.md"
     }
@@ -36,6 +36,16 @@
       "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json",
       "sha256": "e2d4f3b3560e9adbdd68f8821347770673bb4c0f2dd12accb45d7d3ecba30f15",
       "source_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161"
+    },
+    {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json",
+      "sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
+      "source_sha": "df4046f8ba9f319a2501c6a0376a7c81063b5905"
+    },
+    {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_r5_slab_bisect_mpi8.json",
+      "sha256": "eb9f1d8e30e6d0aab0c3fe377939c4335485634044fa3be4b8956ac748b411e3",
+      "source_sha": "6ee517bf96a9022ae129070b822e281da030f617"
     }
   ],
   "interpretation": {
