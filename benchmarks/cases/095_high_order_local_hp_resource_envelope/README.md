@@ -34,6 +34,11 @@
 | `records/global_hexa_p4_p5_h10_mpi8.json` | `2e91d2bf0195056e55be670af226b7716096284c` | `actual_global_r5_pass` | 14.928 GiB |
 | `records/global_hexa_p5_p6_h10_mpi8.json` | `c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2` | `actual_global_r5_pass` | 35.024 GiB |
 | `records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json` | `0f4b786d618c37e1c572a4f596a9235e53d73161` | `actual_global_r5_pass` | 29.212 GiB |
+| `records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json` | `0f8924ac4bacc8a17dc67fb0af2871ea61471c56` | `actual_global_r5_pass` | 15.964 GiB |
+| `records/global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json` | `a5cf24758e31143d25ddb8ae8cb2e731abfffdae` | `actual_global_r5_pass` | 10.590 GiB |
+| `records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json` | `e9d35bb77636302e18112bf1ab81fdc40f64efba` | `actual_global_r5_pass` | 20.581 GiB |
+| `records/same_mesh_p4_p5_p6_r5_hp_classifier_mpi8.json` | record commit `650fc141` | `same_mesh_hp_classifier_pass` | lightweight |
+| `records/regionwise_p4trace_p6interior_h10_mpi8.json` | `eb1742dde4d31c54cf66fc5d2d1d37203f9f7e34` | `actual_regionwise_p_controlled_negative` | 6.072 GiB |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -91,6 +96,37 @@ control，`|ΔR|=9.41e-16`、`|ΔT|=4.38e-13`、
 身份相同。该结果资格化的是 exact static condensation，不等价于
 cellwise/regionwise local-p 已完成。
 
+## MPI8 physical regionwise-p controlled negative
+
+首个真实 local-p 候选固定 p4 shared edge/face trace，并依据同网格
+p4/p5/p6 classifier 在 105 cells 保留 p6 interior、147 cells 使用 p4
+interior。active Full3D-equivalent DoF 为 88,994；完整 p6 matrix、
+完整 trace matrix 和 inactive p6 rows 均未分配。
+
+| metric | global p6 assembly-time | regionwise candidate |
+|---|---:|---:|
+| active rows | 51,272 | 21,824 |
+| matrix NNZ | 41,989,040 | 8,184,464 |
+| factor NNZ | 211,651,232 | 42,888,832 |
+| formal peak | 15.964 GiB | 6.072 GiB |
+| condensed build | 770.89 s | 175.43 s |
+| MUMPS setup | 142.12 s | 11.45 s |
+| case elapsed | 967.09 s | 222.34 s |
+
+该成本 lane 是正信号，但候选不是 same-error 压缩。相对 global p6：
+
+- `R00_total` absolute error `2.9281e-4`，超过 p5-p6 band `3.1953e-5`；
+- `R_total` absolute error `2.9770e-4`，超过 band `3.2005e-5`；
+- `T_total` absolute error `3.8558e-3`，超过 band `2.1768e-4`；
+- normalized R/T/Aclosure vector 为 `27.704`，reference radius 为 `1.732`；
+- 12 个 significant diffraction channels 的 power/amplitude 全部失败；
+- selected volume/interface complex-E errors 为 `9.8467% / 9.7778%`，
+  对应 p5-p6 bands 仅为 `0.5183% / 0.5220%`。
+
+full explicit true residual `1.1657e-11`，geometry、tag、periodic 和
+orientation 均通过，所以这是明确的算法精度负结果，而不是求解器失败。
+`p4 trace + p4/p6 interior` lane 已关闭且不会无理由重跑。
+
 ## 复现
 
 必须先使用仓库资格化 activation；正式运行还必须把
@@ -115,6 +151,16 @@ MPI2 单元测试不属于正式资源对照。
 p6 condensation 复现时另外加入
 `--static-condensation-degree 6`，timeout 使用 `14400`，record 使用
 `global_hexa_p5_p6_h10_p6_condensed_mpi8.json`。
+
+regionwise-p 负候选复现必须使用记录内绑定的 classifier/control SHA，并加入：
+
+```text
+--coarse-degree 5 --enriched-degree 6
+--regionwise-p-classifier-record <CLASSIFIER_RECORD>
+--regionwise-p-classifier-sha256 <CLASSIFIER_SHA256>
+--regionwise-p-control-record <P5_P6_CONTROL_RECORD>
+--regionwise-p-control-sha256 <P5_P6_CONTROL_SHA256>
+```
 
 原始 mesh、field、长日志和 memory timeline 位于 gitignored
 `benchmarks/artifacts/task035/actual_global_r5/`；tracked JSON 通过 SHA-256

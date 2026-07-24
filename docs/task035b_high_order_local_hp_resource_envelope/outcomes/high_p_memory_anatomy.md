@@ -1,5 +1,60 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-24 真实 regionwise-p 候选：资源正信号、精度受控负结果
+
+Task035b 已在同一 h10 hexa 网格和 classifier geometry hash 上正式运行
+`p4 shared trace + 147-cell p4 interior + 105-cell p6 interior`。这是真实
+physical local-p：inactive p6 interior modes 没有进入矩阵，完整 p6 matrix
+和完整 trace matrix 都未分配；低阶 cell 直接调用 p4 kernel，不是先算 p6
+再把系数置零。
+
+| MPI8 h10 metric | global p6 canonical | regionwise candidate | change |
+|---|---:|---:|---:|
+| Full3D-equivalent active DoF | 173,802 | **88,994** | -48.80% |
+| solved rows（含 80 DtN） | 51,272 | **21,824** | -57.44% |
+| matrix NNZ | 41,989,040 | **8,184,464** | -80.51% |
+| factor NNZ | 211,651,232 | **42,888,832** | -79.74% |
+| process-tree peak | 15.964 GiB | **6.072 GiB** | -61.97% |
+| direct condensed build | 770.89 s | **175.43 s** | -77.24% |
+| MUMPS setup / solve | 142.12 / 0.202 s | **11.45 / 0.038 s** | -91.95% / -81.16% |
+| total solve-case elapsed | 967.09 s | **222.34 s** | -77.01% |
+
+candidate 达到 `<=90,000` minimum DoF 目标；相对 global p6 为
+`1.953x` 压缩，略低于单独的 `>=2x` 表述，但 minimum 合同是二者满足其一。
+MUMPS factor 释放后，8-rank simultaneous RSS 从 6,162.70 MiB 降到
+4,310.28 MiB，实际归还 1,852.42 MiB。由此确认此前“rows 下降但内存不降”
+不是不可避免的高阶现象；当完整 matrix、inactive rows 和 factor 生命周期
+真正移除后，NNZ、factor、memory 与时间都按正确方向下降。
+
+资源通过不等于精度通过。本候选 full explicit true residual 为
+`1.1657e-11`，geometry/tag/periodic/orientation Gate 全部通过，但所有正式
+精度层级均为负：
+
+| observable / Gate | global p6 | candidate | same-code p5-p6 tolerance | status |
+|---|---:|---:|---:|---|
+| R00_total | 0.0007537612 | 0.0010465702 | 0.0000319529 | fail |
+| R_total | 0.0007628815 | 0.0010605766 | 0.0000320046 | fail |
+| T_total | 0.6027016340 | 0.5988458026 | 0.0002176801 | fail |
+| A_closure | 0.3965354845 | 0.4000936209 | 0.0001856755 | fail |
+| normalized R/T/Aclosure vector | reference radius 1.732 | 27.704 | — | fail |
+| significant orders / complex amplitudes | 12 channels | 12/12 fail | p5-p6 spread | fail |
+| selected volume complex-E relative L2 | — | 9.8467% | 0.5183% | fail |
+| material-interface complex-E relative L2 | — | 9.7778% | 0.5220% | fail |
+
+因此 `p4 fixed trace + p4/p6 interior` lane 已按连续研究规则关闭，记录状态为
+`actual_regionwise_p_controlled_negative`，不得接入 Hybrid。负结果表明当前
+主要精度瓶颈是 p4 shared trace，而不是 MUMPS 或 residual。
+
+下一条可检验路线改为 `p5 shared trace + p4 low interior + selected p6
+interior`。其 Full3D-equivalent 预算为
+`68,551 + 342 * N_p6_cells`：`N_p6_cells <= 62` 可保持 `<=90k`，
+`N_p6_cells <= 18` 可保持 `<=75k`。这需要先资格化 p5-trace/p4-interior
+低阶 local kernel 与对 p5-trace/p6-interior空间的 exact embedding；在通过
+单元/MPI 等价测试前不得启动下一次 heavy PDE。
+
+正式记录：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p4trace_p6interior_h10_mpi8.json`。
+
 ## 2026-07-24 assembly-time condensation 与生命周期闭环
 
 旧 prototype “自由度下降但内存没有同比下降”的主因已经消除。当前

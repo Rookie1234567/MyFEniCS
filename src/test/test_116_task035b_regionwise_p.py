@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import unittest
 
 import basix
@@ -19,6 +21,43 @@ from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 class Task035bRegionwisePTests(unittest.TestCase):
+    def test_formal_h10_controlled_negative_record_is_preserved(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        record = json.loads(
+            (
+                root
+                / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+                / "records/regionwise_p4trace_p6interior_h10_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            record["status"], "actual_regionwise_p_controlled_negative"
+        )
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertFalse(record["candidate_accuracy_pass"])
+        self.assertEqual(
+            record["resource_authority"]["max_observed_worker_rank_count"], 8
+        )
+        self.assertEqual(record["resource_authority"]["max_process_tree_swap_mb"], 0.0)
+        candidate = record["candidate"]
+        self.assertLessEqual(candidate["linear_system_relative_residual"], 1.0e-9)
+        self.assertEqual(candidate["matrix_stats"]["matrix_rows"], 21824)
+        self.assertEqual(candidate["matrix_stats"]["matrix_nnz_used"], 8184464.0)
+        cell_audit = candidate["cell_static_condensation"]
+        self.assertEqual(cell_audit["active_full3d_equivalent_dofs"], 88994)
+        self.assertEqual(cell_audit["regionwise_high_cell_count"], 105)
+        self.assertEqual(cell_audit["regionwise_low_cell_count"], 147)
+        self.assertFalse(cell_audit["full_global_matrix_allocated"])
+        self.assertFalse(cell_audit["full_trace_matrix_allocated"])
+        self.assertFalse(cell_audit["inactive_max_p_rows_retained_in_matrix"])
+        self.assertFalse(
+            record["observable_comparison"][
+                "all_scalar_same_code_bands_pass"
+            ]
+        )
+        self.assertFalse(record["diffraction_channel_comparison"]["pass"])
+        self.assertFalse(record["selected_field_interface_error_gate"]["pass"])
+
     def test_p4_trace_p6_interior_custom_element_contains_p4(self) -> None:
         reduced = create_reduced_trace_hcurl_element(4, 6)
         audit = reduced.audit

@@ -4,7 +4,7 @@
 
 ```text
 task = Task035b
-status = ready_for_execution
+status = in_progress
 execution_branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 stacked_base = Task035 Review V6 commit 81c714b236e9c362df8783382f1d40a5cd888cd5
 geometry_scope = Task034 fixed rectangular block grating only
