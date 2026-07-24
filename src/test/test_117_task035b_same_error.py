@@ -13,6 +13,7 @@ import pyvista as pv
 import pytest
 
 from benchmarks.run_task035_actual_r5 import (
+    _compact_channel_adjoint_diagnostic,
     _compact_solve,
     _fixed_trace_resource_preflight,
     _parse_args,
@@ -453,6 +454,77 @@ def test_buffer1_preflight_is_a_preserved_controlled_stop() -> None:
         1.314525165643265e-164
     )
     assert record["resource_projection"]["dtn_auxiliary_rows"] == 340
+
+
+def test_channel_adjoint_record_compaction_preserves_top_proxy_rows() -> None:
+    localization = {
+        "schema_version": "proxy.v1",
+        "actual_dwr_indicator": False,
+        "lane_b_formal_selection_authorized": False,
+        "entities": {
+            "cell": {
+                "canonical_entity_count": 3,
+                "rows": [
+                    {
+                        "canonical_cell_id": index,
+                        "normalized_sensitivity_proxy": value,
+                    }
+                    for index, value in enumerate((1.0, 4.0, 2.0))
+                ],
+            }
+        },
+        "periodic_transitive_aggregation": {
+            "axes": ["x"],
+            "edge_trace": {
+                "component_count": 2,
+                "member_to_component": {"0": 0, "1": 1},
+                "components": [
+                    {
+                        "periodic_component_id": 0,
+                        "component_proxy_sum": 2.0,
+                    },
+                    {
+                        "periodic_component_id": 1,
+                        "component_proxy_sum": 5.0,
+                    },
+                ],
+            },
+            "face_trace": {
+                "component_count": 0,
+                "member_to_component": {},
+                "components": [],
+            },
+        },
+    }
+    compact = _compact_channel_adjoint_diagnostic(
+        {
+            "pass": True,
+            "recovered_full_duals": {
+                "goal": {
+                    "full_fe_rows": 10,
+                    "entity_sensitivity_proxy": localization,
+                }
+            },
+        }
+    )
+    assert compact is not None
+    proxy = compact["recovered_full_duals"]["goal"][
+        "entity_sensitivity_proxy"
+    ]
+    assert proxy["raw_payload_sha256"]
+    assert proxy["entities"]["cell"]["raw_row_count"] == 3
+    assert [
+        row["normalized_sensitivity_proxy"]
+        for row in proxy["entities"]["cell"][
+            "top_normalized_sensitivity_rows"
+        ]
+    ] == [4.0, 2.0, 1.0]
+    assert "member_to_component" not in (
+        proxy["periodic_transitive_aggregation"]["edge_trace"]
+    )
+    assert proxy["periodic_transitive_aggregation"]["edge_trace"][
+        "top_component_proxy_rows"
+    ][0]["component_proxy_sum"] == 5.0
 
 
 def test_directional_fixed_trace_cli_allows_only_hash_bound_h14_h13() -> None:

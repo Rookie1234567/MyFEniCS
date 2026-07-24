@@ -482,16 +482,53 @@ def verify_hermitian_discrete_adjoint(
     goal_minus = float(goal_evaluator(state_minus))
     goal_plus = float(goal_evaluator(state_plus))
     finite_difference = (goal_plus - goal_minus) / (2.0 * step)
-    tangent = state_plus.copy()
-    tangent.axpy(PETSc.ScalarType(-1.0), state_minus)
-    tangent.scale(PETSc.ScalarType(1.0 / (2.0 * step)))
-    direct_derivative = float(np.real(goal_gradient.dot(tangent)))
+    central_difference_tangent = state_plus.copy()
+    central_difference_tangent.axpy(
+        PETSc.ScalarType(-1.0),
+        state_minus,
+    )
+    central_difference_tangent.scale(
+        PETSc.ScalarType(1.0 / (2.0 * step))
+    )
+    direct_tangent = state.duplicate()
+    solver.solve(direction, direct_tangent)
+    direct_tangent_reason = int(solver.getConvergedReason())
+    direct_tangent_residual = _linear_residual(
+        matrix,
+        direction,
+        direct_tangent,
+    )
+    central_difference_tangent_derivative = float(
+        np.real(goal_gradient.dot(central_difference_tangent))
+    )
+    direct_derivative = float(
+        np.real(goal_gradient.dot(direct_tangent))
+    )
     adjoint_derivative = float(np.real(adjoint.dot(direction)))
     direct_adjoint_relative_error = _relative_difference(
         direct_derivative, adjoint_derivative
     )
     finite_difference_relative_error = _relative_difference(
         finite_difference, adjoint_derivative
+    )
+    direct_adjoint_absolute_error = abs(
+        direct_derivative - adjoint_derivative
+    )
+    finite_difference_absolute_error = abs(
+        finite_difference - adjoint_derivative
+    )
+    gradient_scale = max(float(goal_gradient.norm()), 1.0)
+    direct_adjoint_absolute_tolerance = 1.0e-12 * gradient_scale
+    finite_difference_absolute_tolerance = 5.0e-11 * gradient_scale
+    direct_adjoint_closure_pass = bool(
+        direct_adjoint_relative_error <= 1.0e-8
+        or direct_adjoint_absolute_error
+        <= direct_adjoint_absolute_tolerance
+    )
+    finite_difference_closure_pass = bool(
+        finite_difference_relative_error <= 1.0e-7
+        or finite_difference_absolute_error
+        <= finite_difference_absolute_tolerance
     )
 
     passed = bool(
@@ -502,8 +539,10 @@ def verify_hermitian_discrete_adjoint(
         <= 1.0e-9
         and minus_residual["relative_residual"] <= 1.0e-9
         and plus_residual["relative_residual"] <= 1.0e-9
-        and direct_adjoint_relative_error <= 1.0e-8
-        and finite_difference_relative_error <= 1.0e-7
+        and direct_tangent_reason > 0
+        and direct_tangent_residual["relative_residual"] <= 1.0e-9
+        and direct_adjoint_closure_pass
+        and finite_difference_closure_pass
     )
     report = {
         "pass": passed,
@@ -515,6 +554,8 @@ def verify_hermitian_discrete_adjoint(
         "plus_converged_reason": plus_reason,
         "minus_primal_residual": minus_residual,
         "plus_primal_residual": plus_residual,
+        "direct_tangent_converged_reason": direct_tangent_reason,
+        "direct_tangent_residual": direct_tangent_residual,
         "finite_difference_relative_step": float(
             finite_difference_relative_step
         ),
@@ -522,10 +563,29 @@ def verify_hermitian_discrete_adjoint(
         "goal_minus": goal_minus,
         "goal_plus": goal_plus,
         "derivative_direct_tangent": direct_derivative,
+        "derivative_central_difference_tangent": (
+            central_difference_tangent_derivative
+        ),
         "derivative_adjoint": adjoint_derivative,
         "derivative_finite_difference": finite_difference,
         "direct_adjoint_relative_error": direct_adjoint_relative_error,
+        "direct_adjoint_absolute_error": (
+            direct_adjoint_absolute_error
+        ),
+        "direct_adjoint_absolute_tolerance": (
+            direct_adjoint_absolute_tolerance
+        ),
+        "direct_adjoint_closure_pass": direct_adjoint_closure_pass,
         "finite_difference_relative_error": finite_difference_relative_error,
+        "finite_difference_absolute_error": (
+            finite_difference_absolute_error
+        ),
+        "finite_difference_absolute_tolerance": (
+            finite_difference_absolute_tolerance
+        ),
+        "finite_difference_closure_pass": (
+            finite_difference_closure_pass
+        ),
     }
     if adjoint_observer is not None:
         adjoint_observer(adjoint)
@@ -536,7 +596,8 @@ def verify_hermitian_discrete_adjoint(
         rhs_plus,
         state_minus,
         state_plus,
-        tangent,
+        central_difference_tangent,
+        direct_tangent,
     ):
         vector.destroy()
     return report

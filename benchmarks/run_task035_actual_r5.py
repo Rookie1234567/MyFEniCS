@@ -1459,6 +1459,130 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _canonical_payload_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=_json_default,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _top_proxy_rows(
+    rows: list[dict[str, Any]],
+    *,
+    count: int = 12,
+) -> list[dict[str, Any]]:
+    return sorted(
+        rows,
+        key=lambda row: float(
+            row.get(
+                "normalized_sensitivity_proxy",
+                row.get("component_proxy_sum", 0.0),
+            )
+        ),
+        reverse=True,
+    )[:count]
+
+
+def _compact_entity_sensitivity_proxy(
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    entities: dict[str, Any] = {}
+    for name, payload in (report.get("entities") or {}).items():
+        rows = list(payload.get("rows") or [])
+        entities[name] = {
+            key: value
+            for key, value in payload.items()
+            if key != "rows"
+        }
+        entities[name].update(
+            {
+                "raw_row_count": len(rows),
+                "top_normalized_sensitivity_rows": (
+                    _top_proxy_rows(rows)
+                ),
+            }
+        )
+    periodic: dict[str, Any] = {
+        "axes": (
+            report.get("periodic_transitive_aggregation") or {}
+        ).get("axes")
+    }
+    for name in ("edge_trace", "face_trace"):
+        payload = (
+            report.get("periodic_transitive_aggregation") or {}
+        ).get(name) or {}
+        components = list(payload.get("components") or [])
+        periodic[name] = {
+            key: value
+            for key, value in payload.items()
+            if key not in {"components", "member_to_component"}
+        }
+        periodic[name].update(
+            {
+                "raw_component_count": len(components),
+                "top_component_proxy_rows": (
+                    _top_proxy_rows(components)
+                ),
+            }
+        )
+    return {
+        key: value
+        for key, value in report.items()
+        if key
+        not in {
+            "entities",
+            "periodic_transitive_aggregation",
+        }
+    } | {
+        "raw_payload_sha256": _canonical_payload_sha256(report),
+        "entities": entities,
+        "periodic_transitive_aggregation": periodic,
+        "compact_record_semantics": (
+            "top-12 proxy rows per entity/component group; the complete "
+            "hash-bound payload remains in raw actual_r5_result evidence"
+        ),
+    }
+
+
+def _compact_channel_adjoint_diagnostic(
+    diagnostic: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if diagnostic is None:
+        return None
+    recovered = {
+        label: {
+            key: value
+            for key, value in row.items()
+            if key != "entity_sensitivity_proxy"
+        }
+        | {
+            "entity_sensitivity_proxy": (
+                _compact_entity_sensitivity_proxy(
+                    row["entity_sensitivity_proxy"]
+                )
+            )
+        }
+        for label, row in (
+            diagnostic.get("recovered_full_duals") or {}
+        ).items()
+    }
+    return {
+        key: value
+        for key, value in diagnostic.items()
+        if key != "recovered_full_duals"
+    } | {
+        "raw_payload_sha256": _canonical_payload_sha256(diagnostic),
+        "recovered_full_duals": recovered,
+        "compact_record_semantics": (
+            "complete channel adjoint and entity payload remains in the "
+            "hash-bound raw actual_r5_result artifact"
+        ),
+    }
+
+
 def _compact_adaptive_cycle(entry: dict[str, Any]) -> dict[str, Any]:
     actual = entry["actual_r5"]
     return {
@@ -3938,8 +4062,10 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "directional_recovery_signal": result.get(
                     "directional_recovery_signal"
                 ),
-                "channel_adjoint_diagnostic": result.get(
-                    "channel_adjoint_diagnostic"
+                "channel_adjoint_diagnostic": (
+                    _compact_channel_adjoint_diagnostic(
+                        result.get("channel_adjoint_diagnostic")
+                    )
                 ),
                 "port_diagnostic": result.get("port_diagnostic"),
             }
