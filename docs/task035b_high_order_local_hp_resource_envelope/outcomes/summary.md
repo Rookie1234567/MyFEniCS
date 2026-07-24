@@ -107,6 +107,20 @@ authority，并保留 strict R00 独立 audit，避免只优化 `R_total`。该 
 pair 总时长 877.03 s、process-tree peak 15.485 GiB、0 swap；p5 base
 assembly 553.89 s，MUMPS setup/solve 78.61/0.17 s。
 
+classifier v2 将上述 DWR 与 `eta_p4p5/eta_p5p6`、R5 和实际
+material/interface/corner tags 对齐。strict-R00 ∪ normalized-R/T 原始集合
+为 99 cells；为满足周期一致性补入 x-periodic mates
+`[213, 227, 241]`，得到 102 cells，126 个 periodic groups 全部通过。
+这 102 cells 均呈快速 p-correction decay，screening actions 为
+`p-up=102 / p-keep=150 / h-refine=0 / p-down=0`。界面先验没有覆盖测得
+指标。
+
+该记录仍为 `production_qualified=false`，因为 target-cell hierarchical
+coefficient decay、local projection defect 和 actual local-h-vs-p
+cost-normalized competition 尚缺。当前证据不是 hexa local-h 的正信号；
+下一步必须补齐 classifier 的实测通道或在既有 conforming tetra one-cycle
+架构上进行一次受控 h/p competition，不能为了阶段名称强行声明 h-refine。
+
 两条 fixed-mesh regionwise-interior 路线都已关闭。下一研究路线按任务书
 Lane B 转为：
 
@@ -131,6 +145,7 @@ p5 base
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_postprocess_failure.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_wrong_control_preflight_failure.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json`
 - ignored raw evidence:
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p4trace_p6interior_h10_pols_mpi8_20260724T061121Z/`
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p5trace_p4low_p6high_n62_h10_pols_mpi8_20260724T073056Z/`

@@ -41,6 +41,7 @@
 | `records/regionwise_p4trace_p6interior_h10_mpi8.json` | `eb1742dde4d31c54cf66fc5d2d1d37203f9f7e34` | `actual_regionwise_p_controlled_negative` | 6.072 GiB |
 | `records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json` | `6c113cbd6c3dfadd7399ec2d198f0d36bed7533d` | `actual_regionwise_p_controlled_negative` | 9.271 GiB |
 | `records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json` | `56310afa46465ae2e0316c957cf00fd385fa0997` | `target_goal_weighted_two_level_pass` | 15.485 GiB |
+| `records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json` | `ac31b6b62cee0185214f2f44a985024393535ea0` | `multigoal_hp_screening_pass` | lightweight |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -177,6 +178,32 @@ local-h 的研究 marker，但 marker 仍只是 classifier 输入，不等价于
 0 swap。p5 阶段 645.13 s 中 base matrix assembly 为 553.89 s，
 MUMPS setup/solve 为 78.61/0.17 s，再次确认当前高阶时间瓶颈是 assembly，
 不是直接法回代。
+
+## multi-goal hp screening v2
+
+classifier v2 在同一 canonical cell ID 上合并 `eta_p4p5`、`eta_p5p6`、
+strict `DWR_R00/R/T`、tolerance-normalized `R/T`、R5 以及实际
+material/interface/corner tags。原始 strict-R00 与 normalized-R/T 并集为
+99 cells；周期审计发现 3 个 x-periodic mates 未同时进入原始 Dörfler 集合，
+因此显式加入 `[213, 227, 241]`，形成 102-cell periodic-closed screening
+set。闭合后 126 个 x/y periodic mate groups 的 action 全部一致。
+
+所有 102 个 goal-important cells 的 `eta_p5p6/eta_p4p5` 都远小于 0.5，
+所以 measured screening 给出：
+
+| action | cells |
+|---|---:|
+| `p_down_candidate` | 0 |
+| `p_keep_candidate` | 150 |
+| `p_up_candidate` | 102 |
+| `h_refine_candidate` | 0 |
+| `undetermined` | 0 |
+
+界面/corner prior 没有覆盖该 measured p-decay 结论。此记录明确保持
+`production_qualified=false`：target-cell hierarchical coefficient decay、
+local projection defect 和 actual local-h-vs-p cost competition 尚未取得。
+因此它是 screening 正结果和 hexa local-h 的零信号，不是最终 local-hp
+decision authority，也不能据此把未运行的 local-h 写成通过。
 
 ## 复现
 

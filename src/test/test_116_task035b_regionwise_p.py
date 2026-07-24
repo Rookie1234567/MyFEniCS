@@ -234,6 +234,62 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertEqual(record["R5_control"]["marking"]["count"], 63)
         self.assertTrue(record["R5_control"]["correction_energy"])
 
+    def test_multigoal_hp_screening_record_is_preserved(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        record = json.loads(
+            (
+                root
+                / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+                / "records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(record["status"], "multigoal_hp_screening_pass")
+        self.assertTrue(record["pass"])
+        self.assertFalse(record["production_qualified"])
+        self.assertEqual(
+            record["generator_source"]["verified_clean_sha"],
+            "ac31b6b62cee0185214f2f44a985024393535ea0",
+        )
+        self.assertEqual(record["cell_count"], 252)
+        self.assertEqual(record["raw_goal_important_cell_count"], 99)
+        self.assertEqual(record["goal_important_cell_count"], 102)
+        self.assertEqual(
+            record[
+                "periodic_goal_marker_closure_added_canonical_cell_ids"
+            ],
+            [213, 227, 241],
+        )
+        self.assertEqual(
+            record["action_counts"],
+            {
+                "h_refine_candidate": 0,
+                "p_down_candidate": 0,
+                "p_keep_candidate": 150,
+                "p_up_candidate": 102,
+                "undetermined": 0,
+            },
+        )
+        self.assertTrue(record["periodic_decision_audit"]["pass"])
+        self.assertEqual(
+            record["periodic_decision_audit"]["mate_group_count"],
+            126,
+        )
+        priors = record["cell_geometry_priors"]
+        self.assertEqual(
+            priors["material_counts"],
+            {"air": 162, "grating": 72, "substrate": 18},
+        )
+        self.assertEqual(priors["material_interface_cell_count"], 174)
+        self.assertEqual(priors["corner_or_edge_junction_cell_count"], 18)
+        self.assertEqual(
+            record["signal_coverage"]["target_cell_local_projection_defect"],
+            "not_available",
+        )
+        self.assertIn(
+            "actual_local_h_vs_p_cost_normalized_competition",
+            record["missing_required_signals"],
+        )
+
     def test_p4_trace_p6_interior_custom_element_contains_p4(self) -> None:
         reduced = create_reduced_trace_hcurl_element(4, 6)
         audit = reduced.audit
