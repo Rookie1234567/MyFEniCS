@@ -635,6 +635,18 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertTrue(
             summary["solver_objects_released_before_postprocess"]
         )
+        release_audit = summary["solver_release_audit"]
+        self.assertTrue(release_audit["petsc_garbage_cleanup_called"])
+        heap_trim = release_audit["process_heap_trim"]
+        self.assertEqual(heap_trim["implementation"], "glibc_malloc_trim")
+        self.assertTrue(heap_trim["supported_on_all_ranks"])
+        self.assertTrue(heap_trim["succeeded_on_all_ranks"])
+        self.assertEqual(len(heap_trim["return_codes_by_rank"]), comm.size)
+        self.assertTrue(all(heap_trim["return_codes_by_rank"]))
+        self.assertGreaterEqual(heap_trim["sum_rss_before_mb"], 0.0)
+        self.assertGreaterEqual(heap_trim["sum_rss_after_mb"], 0.0)
+        self.assertGreaterEqual(heap_trim["sum_rss_released_mb"], 0.0)
+        self.assertFalse(heap_trim["ordinary_default_changed"])
         self.assertEqual(summary["num_nedelec_dofs"], 802)
         self.assertEqual(summary["matrix_stats"]["matrix_rows"], 560)
         self.assertEqual(

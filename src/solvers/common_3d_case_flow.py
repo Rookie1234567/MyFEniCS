@@ -69,6 +69,7 @@ from .common_3d_utils import (
     _stage_label,
     _start_timed_stage,
     _summary_base_fields,
+    _trim_process_heap,
     _write_case_outputs,
     _write_progress_event,
 )
@@ -1191,6 +1192,7 @@ def run_prepared_3d_case_flow(
         and not diagnostic_only_result
         and reason > 0
     )
+    solver_release_audit = None
     if solver_objects_released_before_postprocess:
         system_ksp.destroy()
         system_x.destroy()
@@ -1206,6 +1208,58 @@ def run_prepared_3d_case_flow(
             dtn_result["x"] = None
             dtn_result["ksp"] = None
         gc.collect()
+        PETSc.garbage_cleanup(comm)
+        gc.collect()
+        local_heap_trim = _trim_process_heap()
+        local_before_mb = local_heap_trim.get("rss_before_mb")
+        local_after_mb = local_heap_trim.get("rss_after_mb")
+        local_released_mb = local_heap_trim.get("rss_released_mb")
+        solver_release_audit = {
+            "petsc_garbage_cleanup_called": True,
+            "process_heap_trim": {
+                "implementation": local_heap_trim["implementation"],
+                "supported_on_all_ranks": bool(
+                    comm.allreduce(
+                        bool(local_heap_trim["supported"]),
+                        op=MPI.LAND,
+                    )
+                ),
+                "succeeded_on_all_ranks": bool(
+                    comm.allreduce(
+                        bool(local_heap_trim["succeeded"]),
+                        op=MPI.LAND,
+                    )
+                ),
+                "return_codes_by_rank": [
+                    int(value)
+                    for value in comm.allgather(
+                        int(local_heap_trim["return_code"] or 0)
+                    )
+                ],
+                "sum_rss_before_mb": (
+                    None
+                    if local_before_mb is None
+                    else float(
+                        comm.allreduce(float(local_before_mb), op=MPI.SUM)
+                    )
+                ),
+                "sum_rss_after_mb": (
+                    None
+                    if local_after_mb is None
+                    else float(
+                        comm.allreduce(float(local_after_mb), op=MPI.SUM)
+                    )
+                ),
+                "sum_rss_released_mb": (
+                    None
+                    if local_released_mb is None
+                    else float(
+                        comm.allreduce(float(local_released_mb), op=MPI.SUM)
+                    )
+                ),
+                "ordinary_default_changed": False,
+            },
+        }
         _write_progress_event(
             out_dir,
             comm,
@@ -1228,6 +1282,7 @@ def run_prepared_3d_case_flow(
                     "solution Vec",
                 ],
                 "ordinary_default_changed": False,
+                **solver_release_audit,
             },
         )
     else:
@@ -1336,6 +1391,7 @@ def run_prepared_3d_case_flow(
         "solver_objects_released_before_postprocess": (
             solver_objects_released_before_postprocess
         ),
+        "solver_release_audit": solver_release_audit,
         "cell_static_condensation": None
         if dtn_solver_info is None
         else dtn_solver_info.get("cell_static_condensation"),
