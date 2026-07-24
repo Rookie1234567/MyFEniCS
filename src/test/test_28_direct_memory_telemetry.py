@@ -82,6 +82,9 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             _parse_args(["--h-nm", "5", "--release-base-after-augmentation"])
         )
         self.assertFalse(ordinary.direct_release_base_after_augmentation)
+        self.assertFalse(
+            ordinary.stage4_assembly_time_cell_static_condensation
+        )
         self.assertTrue(candidate.direct_release_base_after_augmentation)
 
     def test_ooc_scratch_usage_is_measured_recursively(self) -> None:

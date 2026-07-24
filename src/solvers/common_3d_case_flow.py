@@ -1266,6 +1266,13 @@ def run_prepared_3d_case_flow(
         "stage4_cell_static_condensation": False
         if dtn_solver_info is None
         else bool(dtn_solver_info.get("stage4_cell_static_condensation")),
+        "stage4_assembly_time_cell_static_condensation": False
+        if dtn_solver_info is None
+        else bool(
+            dtn_solver_info.get(
+                "stage4_assembly_time_cell_static_condensation"
+            )
+        ),
         "stage4_floquet_slave_elimination": False
         if dtn_solver_info is None
         else bool(

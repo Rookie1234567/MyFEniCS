@@ -14,7 +14,12 @@ from petsc4py import PETSc
 class MpcFormActionContext:
     """Public-API MPC action for a bilinear form without a retained matrix."""
 
-    def __init__(self, bilinear_form: Any, mpc: Any, reference: PETSc.Mat) -> None:
+    def __init__(
+        self,
+        bilinear_form: Any,
+        mpc: Any,
+        reference: PETSc.Mat | None = None,
+    ) -> None:
         self.mpc = mpc
         self.field = fem.Function(mpc.function_space)
         self.action_form = fem.form(ufl.action(bilinear_form, self.field))
@@ -22,9 +27,14 @@ class MpcFormActionContext:
         block_size = mpc.function_space.dofmap.index_map_bs
         self.input_vector = create_vector([(index_map, block_size)])
         self.action_vector = dolfinx_mpc.assemble_vector(self.action_form, mpc)
-        if reference.getSize()[0] != self.input_vector.getSize():
-            raise ValueError("MPC form-action vector size differs from assembled matrix")
-        owned_size = reference.getLocalSize()[0]
+        if (
+            reference is not None
+            and reference.getSize()[0] != self.input_vector.getSize()
+        ):
+            raise ValueError(
+                "MPC form-action vector size differs from assembled matrix"
+            )
+        owned_size = int(index_map.size_local * block_size)
         slaves = np.asarray(mpc.slaves, dtype=PETSc.IntType)
         self.owned_slaves = slaves[(slaves >= 0) & (slaves < owned_size)]
         self.apply_count = 0

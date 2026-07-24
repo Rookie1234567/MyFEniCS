@@ -276,6 +276,7 @@ def run_target_global_two_level_r5(
     mesh_data_override=None,
     reuse_single_mesh: bool = False,
     static_condensation_degrees: tuple[int, ...] = (),
+    assembly_time_condensation_degrees: tuple[int, ...] = (),
     floquet_slave_elimination_degrees: tuple[int, ...] = (),
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
@@ -297,6 +298,9 @@ def run_target_global_two_level_r5(
     requested_slave_elimination = {
         int(value) for value in floquet_slave_elimination_degrees
     }
+    requested_assembly_time = {
+        int(value) for value in assembly_time_condensation_degrees
+    }
     if not requested_condensation.issubset(
         {int(coarse_degree), int(enriched_degree)}
     ):
@@ -307,6 +311,16 @@ def run_target_global_two_level_r5(
         raise ValueError(
             "Floquet slave elimination degrees must also request static "
             "condensation"
+        )
+    if not requested_assembly_time.issubset(requested_condensation):
+        raise ValueError(
+            "assembly-time condensation degrees must also request static "
+            "condensation"
+        )
+    if not requested_assembly_time.issubset(requested_slave_elimination):
+        raise ValueError(
+            "assembly-time condensation directly builds the Floquet-"
+            "independent trace system and requires slave elimination"
         )
     captures: dict[str, dict[str, Any]] = {}
 
@@ -321,6 +335,7 @@ def run_target_global_two_level_r5(
 
     def config(degree: int):
         base = target_stage4_config(degree=degree, h_nm=h_nm)
+        use_assembly_time = int(degree) in requested_assembly_time
         return replace(
             base,
             case_name=f"task035_actual_r5_p{degree}_h{h_nm:g}".replace(".", "p"),
@@ -335,9 +350,20 @@ def run_target_global_two_level_r5(
             stage4_cell_static_condensation=(
                 int(degree) in requested_condensation
             ),
+            stage4_assembly_time_cell_static_condensation=(
+                use_assembly_time
+            ),
             stage4_floquet_slave_elimination=(
                 int(degree) in requested_slave_elimination
             ),
+            petsc_extra_options={
+                **base.petsc_extra_options,
+                **(
+                    {"mat_mumps_icntl_14": 100}
+                    if use_assembly_time
+                    else {}
+                ),
+            },
             unique_output=False,
         )
 
@@ -451,6 +477,9 @@ def run_target_global_two_level_r5(
         "reuse_single_mesh_requested": bool(reuse_single_mesh),
         "static_condensation_degrees": [
             int(value) for value in static_condensation_degrees
+        ],
+        "assembly_time_condensation_degrees": [
+            int(value) for value in assembly_time_condensation_degrees
         ],
         "floquet_slave_elimination_degrees": [
             int(value) for value in floquet_slave_elimination_degrees

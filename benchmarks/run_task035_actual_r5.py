@@ -195,6 +195,9 @@ def _worker(args: argparse.Namespace) -> int:
             static_condensation_degrees=tuple(
                 args.static_condensation_degree
             ),
+            assembly_time_condensation_degrees=tuple(
+                args.assembly_time_condensation_degree
+            ),
             floquet_slave_elimination_degrees=tuple(
                 args.floquet_slave_elimination_degree
             ),
@@ -239,6 +242,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "research-only global-p pair degree whose cell-interior modes are "
             "exactly condensed; may be repeated"
+        ),
+    )
+    parser.add_argument(
+        "--assembly-time-condensation-degree",
+        type=int,
+        action="append",
+        default=[],
+        help=(
+            "research-only global-p pair degree assembled directly into the "
+            "cell-condensed Floquet-independent trace matrix; may be repeated"
         ),
     )
     parser.add_argument(
@@ -381,12 +394,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task035b static condensation is restricted to the plain "
             "fixed-target hexahedron global-p pair."
         )
+    if not set(args.assembly_time_condensation_degree).issubset(
+        set(args.static_condensation_degree)
+    ):
+        parser.error(
+            "--assembly-time-condensation-degree must also be listed in "
+            "--static-condensation-degree."
+        )
     if not set(args.floquet_slave_elimination_degree).issubset(
         set(args.static_condensation_degree)
     ):
         parser.error(
             "--floquet-slave-elimination-degree must also be listed in "
             "--static-condensation-degree."
+        )
+    if not set(args.assembly_time_condensation_degree).issubset(
+        set(args.floquet_slave_elimination_degree)
+    ):
+        parser.error(
+            "--assembly-time-condensation-degree must also be listed in "
+            "--floquet-slave-elimination-degree."
         )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
@@ -495,6 +522,9 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "elapsed_seconds": summary.get("elapsed_seconds"),
         "stage4_cell_static_condensation": summary.get(
             "stage4_cell_static_condensation"
+        ),
+        "stage4_assembly_time_cell_static_condensation": summary.get(
+            "stage4_assembly_time_cell_static_condensation"
         ),
         "stage4_dtn_condensed_matrix_stats": summary.get(
             "stage4_dtn_condensed_matrix_stats"
@@ -716,7 +746,84 @@ def _qualify(
                             ).get("floquet_slave_elimination")
                             or {}
                         ).get("status")
-                        == "exact_identity_slave_rows_removed"
+                        in {
+                            "exact_identity_slave_rows_removed",
+                            "exact_mpc_trace_expansion_built",
+                        }
+                    )
+                    for entry in requested_entries
+                ),
+            }
+        )
+    assembly_time_degrees = getattr(
+        args,
+        "assembly_time_condensation_degree",
+        [],
+    )
+    if assembly_time_degrees:
+        requested = set(assembly_time_degrees)
+        requested_entries = [
+            entry
+            for entry in solves
+            if int(entry.get("degree", -1)) in requested
+        ]
+        checks.update(
+            {
+                "requested_assembly_time_condensation_active": (
+                    len(requested_entries) == len(requested)
+                    and all(
+                        (entry.get("summary") or {}).get(
+                            "stage4_assembly_time_cell_static_condensation"
+                        )
+                        is True
+                        for entry in requested_entries
+                    )
+                ),
+                "requested_full_matrices_never_allocated": all(
+                    (
+                        (
+                            (entry.get("summary") or {}).get(
+                                "cell_static_condensation"
+                            )
+                            or {}
+                        ).get("full_global_matrix_allocated")
+                        is False
+                        and (
+                            (
+                                (entry.get("summary") or {}).get(
+                                    "cell_static_condensation"
+                                )
+                                or {}
+                            ).get("full_trace_matrix_allocated")
+                            is False
+                        )
+                    )
+                    for entry in requested_entries
+                ),
+                "requested_matrix_free_full_residual_present": all(
+                    isinstance(
+                        (
+                            (
+                                (
+                                    (entry.get("summary") or {}).get(
+                                        "cell_static_condensation"
+                                    )
+                                    or {}
+                                ).get("full_explicit_true_residual")
+                                or {}
+                            ).get("eliminated_cell_interior_residual_norm")
+                        ),
+                        (int, float),
+                    )
+                    for entry in requested_entries
+                ),
+                "requested_mumps_workspace_is_explicit": all(
+                    (
+                        (entry.get("summary") or {})
+                        .get("config", {})
+                        .get("petsc_extra_options", {})
+                        .get("mat_mumps_icntl_14")
+                        == 100
                     )
                     for entry in requested_entries
                 ),
@@ -1194,6 +1301,11 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += "_condense_" + "-".join(
             f"p{degree}" for degree in args.static_condensation_degree
         )
+    if args.assembly_time_condensation_degree:
+        run_label += "_assembly_time_" + "-".join(
+            f"p{degree}"
+            for degree in args.assembly_time_condensation_degree
+        )
     if args.floquet_slave_elimination_degree:
         run_label += "_independent_" + "-".join(
             f"p{degree}"
@@ -1233,6 +1345,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         command.append("--single-mesh-pair")
     for degree in args.static_condensation_degree:
         command.extend(["--static-condensation-degree", str(degree)])
+    for degree in args.assembly_time_condensation_degree:
+        command.extend(
+            ["--assembly-time-condensation-degree", str(degree)]
+        )
     for degree in args.floquet_slave_elimination_degree:
         command.extend(
             ["--floquet-slave-elimination-degree", str(degree)]
