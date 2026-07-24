@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from pathlib import Path
+import tempfile
 import unittest
 
 import numpy as np
@@ -12,6 +15,12 @@ from src.adaptivity.cell_indicator_snapshot import (
 from src.adaptivity.hp_smoothness_classifier import (
     classify_hp_correction_decay,
 )
+from src.adaptivity.multigoal_hp_classifier import (
+    build_cell_geometry_priors,
+    classify_multigoal_hp_candidates,
+)
+from src.common.config_3d import target_stage4_config
+from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.tetra_mesh_audit import (
     canonical_owned_cell_ids,
     geometry_key_sha256,
@@ -20,6 +29,125 @@ from benchmarks.task035b_hp_classifier import build_hp_classifier_record
 
 
 class Task035HpSmoothnessClassifierTests(unittest.TestCase):
+    def test_fixed_target_cell_priors_match_formal_hexa_identity(self) -> None:
+        cfg = replace(
+            target_stage4_config(degree=4, h_nm=10.0),
+            mesh_cell_type="hexahedron",
+            unique_output=False,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            mesh_data = build_airbox_mesh_3d(cfg, Path(directory))
+            priors = build_cell_geometry_priors(mesh_data, cfg)
+        self.assertTrue(priors["pass"])
+        self.assertEqual(priors["cell_count"], 252)
+        self.assertEqual(
+            priors["mesh_geometry_sha256"],
+            "b68a588e99032c9972740621bf01f15807d92d6025919bb097a53e92e75852a7",
+        )
+        self.assertEqual(
+            priors["material_counts"],
+            {"air": 162, "grating": 72, "substrate": 18},
+        )
+        self.assertEqual(priors["material_interface_cell_count"], 174)
+        self.assertEqual(priors["corner_or_edge_junction_cell_count"], 18)
+        self.assertEqual(priors["periodic_mate_group_count"], 126)
+        self.assertEqual(len(priors["canonical_priors_sha256"]), 64)
+
+    def test_multigoal_classifier_closes_periodic_goal_markers(self) -> None:
+        mesh_sha256 = "b" * 64
+        base = {
+            "pass": True,
+            "mesh_geometry_sha256": mesh_sha256,
+            "cell_count": 4,
+            "classifier": {
+                "p_decay_ratio_threshold": 0.5,
+                "local_order_actions": [
+                    {
+                        "canonical_cell_id": cell_id,
+                        "lower_pair_indicator": 10.0,
+                        "higher_pair_indicator": 2.0,
+                        "higher_to_lower_ratio": 0.2,
+                        "action": "p_keep",
+                    }
+                    for cell_id in range(4)
+                ],
+            },
+        }
+
+        def report(marked: list[int], values: list[float]) -> dict:
+            return {
+                "marked_canonical_cell_ids": marked,
+                "cell_indicator_snapshot": {
+                    "storage": "inline_complete_vector",
+                    "mesh_geometry_sha256": mesh_sha256,
+                    "canonical_cell_ids": list(range(4)),
+                    "indicator_values": values,
+                },
+            }
+
+        dwr = {
+            "qualification": {"pass": True},
+            "DWR": {
+                "goals": {
+                    "R00_total": report([0], [4.0, 4.0, 1.0, 1.0]),
+                    "R_total": report([0], [4.0, 4.0, 1.0, 1.0]),
+                    "T_total": report([2], [1.0, 1.0, 4.0, 4.0]),
+                },
+                "combined_relative_R_T": report(
+                    [0, 2],
+                    [4.0, 4.0, 4.0, 4.0],
+                ),
+                "tolerance_normalized_R_T": report(
+                    [2],
+                    [1.0, 1.0, 4.0, 4.0],
+                ),
+            },
+            "R5_control": report([0], [4.0, 4.0, 1.0, 1.0]),
+        }
+        priors = {
+            "pass": True,
+            "mesh_geometry_sha256": mesh_sha256,
+            "periodic_mate_groups": [
+                {"axis": "x", "min_cell_id": 0, "max_cell_id": 1},
+                {"axis": "x", "min_cell_id": 2, "max_cell_id": 3},
+            ],
+            "cells": [
+                {
+                    "canonical_cell_id": cell_id,
+                    "material_tag": 1,
+                    "material_name": "air",
+                    "material_interface": False,
+                    "material_interface_facet_count": 0,
+                    "corner_or_edge_junction_prior": False,
+                    "periodic_boundary_axes": ["x"],
+                }
+                for cell_id in range(4)
+            ],
+        }
+        result = classify_multigoal_hp_candidates(base, dwr, priors)
+        self.assertTrue(result["pass"])
+        self.assertEqual(result["raw_goal_important_cell_count"], 2)
+        self.assertEqual(result["goal_important_cell_count"], 4)
+        self.assertEqual(
+            result["periodic_goal_marker_closure_added_canonical_cell_ids"],
+            [1, 3],
+        )
+        self.assertEqual(
+            result["action_counts"],
+            {
+                "h_refine_candidate": 0,
+                "p_down_candidate": 0,
+                "p_keep_candidate": 0,
+                "p_up_candidate": 4,
+                "undetermined": 0,
+            },
+        )
+        self.assertTrue(result["periodic_decision_audit"]["pass"])
+        self.assertIn(
+            "target_cell_local_projection_defect",
+            result["missing_required_signals"],
+        )
+
     def test_consecutive_correction_decay_classifies_h_p_and_floor(self) -> None:
         report = classify_hp_correction_decay(
             np.array([7, 2, 5, 9]),
