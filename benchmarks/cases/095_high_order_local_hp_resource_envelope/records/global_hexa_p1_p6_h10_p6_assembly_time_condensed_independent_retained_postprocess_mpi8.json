@@ -1,0 +1,1137 @@
+{
+  "schema_version": "task035.actual-global-r5-watchdog.v1",
+  "benchmark_id": "task035_target_actual_global_r5",
+  "timestamp_utc": "2026-07-24T02:36:47.715732+00:00",
+  "status": "actual_global_r5_pass",
+  "command": [
+    "mpiexec",
+    "-n",
+    "8",
+    "/home/Projects/MyFEniCS/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task035_actual_r5",
+    "--worker",
+    "--coarse-degree",
+    "1",
+    "--enriched-degree",
+    "6",
+    "--h-nm",
+    "10.0",
+    "--theta",
+    "0.5",
+    "--polarization-kind",
+    "s",
+    "--mesh-cell-type",
+    "hexahedron",
+    "--run-dir",
+    "/home/Projects/MyFEniCS/benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6",
+    "--single-mesh-pair",
+    "--static-condensation-degree",
+    "6",
+    "--assembly-time-condensation-degree",
+    "6",
+    "--floquet-slave-elimination-degree",
+    "6"
+  ],
+  "source": {
+    "commit_sha": "c3b2836971a9391183fd8f1c050059f277118e81",
+    "tracked_source_dirty": false,
+    "tracked_source_verification": "local_git_status",
+    "verified_clean_sha": null,
+    "head_after_sha": "c3b2836971a9391183fd8f1c050059f277118e81",
+    "status_after_before_record_write": "",
+    "stable_and_clean_after": true
+  },
+  "resource_preflight": {
+    "timestamp_utc": "2026-07-24T02:19:03.845310+00:00",
+    "effective_limit": {
+      "mem_total_bytes": 244883718144,
+      "mem_available_bytes": 238176821248,
+      "user_limit_bytes": 236223201280,
+      "wsl_total_85_percent_bytes": 208151160422,
+      "available_minus_reserve_bytes": 212407017472,
+      "effective_limit_bytes": 208151160422,
+      "effective_limit_gib": 193.85587463341653,
+      "warning_bytes": 166520928337,
+      "termination_bytes": 197743602400,
+      "formula": "min(user 220 GiB, 0.85*WSL total, available-24 GiB)"
+    },
+    "artifact_filesystem_free_bytes": 1001242439680
+  },
+  "resource_policy": {
+    "one_heavy_case_at_a_time": true,
+    "warning_gib": 155.08469970617443,
+    "termination_gib": 184.16308090090752,
+    "timeout_seconds": 14400.0,
+    "swap_allowed": false,
+    "termination_scope": "complete_process_group"
+  },
+  "resource_authority": {
+    "sample_count": 4171,
+    "max_process_tree_rss_mb": 17406.453125,
+    "max_process_tree_swap_mb": 0.0,
+    "memory_authority_gib": 16.998489379882812,
+    "max_observed_worker_rank_count": 8,
+    "stage_peaks": [
+      {
+        "stage": "process_start",
+        "samples": 7,
+        "max_worker_rank_rss_sum_mb": 1421.97265625,
+        "max_mpi_process_tree_rss_mb": 1436.62890625,
+        "max_container_cgroup_current_mb": 1470.62890625,
+        "max_worker_rank_thread_count_sum": 24,
+        "max_worker_rank_cpu_core_equivalents": 8.077334058702814,
+        "mean_worker_rank_cpu_core_equivalents": 4.375229140261547
+      },
+      {
+        "stage": "actual_r5_shared_mesh_build",
+        "samples": 9,
+        "max_worker_rank_rss_sum_mb": 1507.69140625,
+        "max_mpi_process_tree_rss_mb": 1522.34765625,
+        "max_container_cgroup_current_mb": 1520.171875,
+        "max_worker_rank_thread_count_sum": 32,
+        "max_worker_rank_cpu_core_equivalents": 7.277871670043175,
+        "mean_worker_rank_cpu_core_equivalents": 1.7122974061429486
+      },
+      {
+        "stage": "actual_r5_coarse_solve",
+        "samples": 3,
+        "max_worker_rank_rss_sum_mb": 1662.33984375,
+        "max_mpi_process_tree_rss_mb": 1676.99609375,
+        "max_container_cgroup_current_mb": 1579.92578125,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 8.85211190901031,
+        "mean_worker_rank_cpu_core_equivalents": 6.6621701444351125
+      },
+      {
+        "stage": "actual_r5_enriched_solve",
+        "samples": 4142,
+        "max_worker_rank_rss_sum_mb": 16711.96875,
+        "max_mpi_process_tree_rss_mb": 17141.2421875,
+        "max_container_cgroup_current_mb": 16912.36328125,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 9.973845396783926,
+        "mean_worker_rank_cpu_core_equivalents": 7.971672506208602
+      },
+      {
+        "stage": "actual_r5_localization",
+        "samples": 10,
+        "max_worker_rank_rss_sum_mb": 17391.796875,
+        "max_mpi_process_tree_rss_mb": 17406.453125,
+        "max_container_cgroup_current_mb": 15700.10546875,
+        "max_worker_rank_thread_count_sum": 400,
+        "max_worker_rank_cpu_core_equivalents": 8.056644673034487,
+        "mean_worker_rank_cpu_core_equivalents": 6.052065193474812
+      }
+    ]
+  },
+  "warning_triggered": false,
+  "terminated_for_memory": false,
+  "terminated_for_timeout": false,
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "process_completed": true,
+      "not_terminated_for_memory": true,
+      "not_terminated_for_timeout": true,
+      "resource_authority_readable": true,
+      "all_expected_mpi_ranks_observed": true,
+      "no_process_tree_swap": true,
+      "result_status": true,
+      "formal_hierarchical_fe_r5": true,
+      "finite_cell_contributions": true,
+      "nonnegative_cell_contributions": true,
+      "positive_correction_energy": true,
+      "cell_energy_closure_le_1e-10": true,
+      "dorfler_target_captured": true,
+      "both_official_solves": true,
+      "requested_mesh_backend_used": true,
+      "both_true_residuals_le_1e-9": true,
+      "both_entity_dof_audits_pass": true,
+      "same_actual_mesh_hashes": true,
+      "single_mesh_instance_when_requested": true,
+      "ordinary_default_unchanged": true,
+      "requested_static_condensation_active": true,
+      "requested_condensed_rows_physically_measured": true,
+      "requested_full_residual_audit_present": true,
+      "requested_floquet_slave_elimination_active": true,
+      "requested_floquet_slave_rows_physically_removed": true,
+      "requested_assembly_time_condensation_active": true,
+      "requested_full_matrices_never_allocated": true,
+      "requested_matrix_free_full_residual_present": true,
+      "requested_mumps_workspace_is_explicit": true,
+      "source_stable_and_clean_after": true
+    },
+    "failures": []
+  },
+  "target_identity": {
+    "wavelength_nm": 13.5,
+    "incidence_theta_deg": 80.0,
+    "grazing_angle_deg": 10.0,
+    "polarization": "S",
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_backend": "boundary-fitted conforming hexahedron"
+  },
+  "coarse": {
+    "degree": 1,
+    "h_nm": 10.0,
+    "case_status": "completed",
+    "official_result": true,
+    "mpi_size": 8,
+    "num_mesh_cells": 252,
+    "mesh_cell_type_actual": "hexahedron",
+    "num_nedelec_dofs": 1067,
+    "matrix_stats": {
+      "matrix_rows": 1147,
+      "matrix_cols": 1147,
+      "matrix_nnz_used": 41941.0,
+      "matrix_nnz_allocated": 41941.0,
+      "matrix_nnz_unneeded": 0.0,
+      "matrix_mallocs": 0.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 125,
+      "matrix_local_cols": 125,
+      "matrix_row_ownership_range": [
+        0,
+        125
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        125
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 36.56582388840453,
+      "matrix_maximum_nnz_per_row": 63,
+      "matrix_average_allocated_nnz_per_row": 36.56582388840453,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1015768.0,
+      "matrix_memory_estimate_mb": 0.9687118530273438,
+      "matrix_norm_frobenius": 97.36941296036505,
+      "matrix_norm_infinity": 57.06278065085577,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 41941.0,
+        "nz_used": 41941.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 41941.0,
+        "nz_used": 41941.0,
+        "nz_unneeded": 0.0,
+        "memory": 0.0,
+        "assemblies": 5.0,
+        "mallocs": 0.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "linear_system_relative_residual": 1.224377885270903e-14,
+    "R_total": 0.967675059895676,
+    "T_total": 0.0281090244149961,
+    "A_volume_total": 0.0042159156893256545,
+    "energy_closure_error_port_volume": -2.220446049250313e-15,
+    "floquet_num_constraints": 275,
+    "elapsed_seconds": 0.36494717100140406,
+    "stage4_cell_static_condensation": false,
+    "stage4_assembly_time_cell_static_condensation": false,
+    "stage4_dtn_condensed_matrix_stats": null,
+    "stage4_floquet_slave_elimination": false,
+    "stage4_dtn_floquet_independent_matrix_stats": null,
+    "cell_static_condensation": null,
+    "high_order_resource_audit": {
+      "schema_version": "task035b.high-order-resource-audit.v1",
+      "mesh_identity": {
+        "schema_version": "task035b.partition-independent-linear-mesh.v1",
+        "mesh_cell_type": "hexahedron",
+        "coordinate_tolerance": 1.4000000000000001e-08,
+        "global_cell_count": 252,
+        "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+        "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+        "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+        "mesh_cells_resolved": [
+          6,
+          3,
+          14
+        ],
+        "material_plane_alignment": {
+          "all_aligned": true,
+          "missing": [],
+          "checked": {
+            "x": [
+              {
+                "name": "grating_x_min",
+                "value": 16.5,
+                "aligned": true
+              },
+              {
+                "name": "grating_x_max",
+                "value": 33.5,
+                "aligned": true
+              }
+            ],
+            "y": [
+              {
+                "name": "grating_y_min",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_y_max",
+                "value": 25.0,
+                "aligned": true
+              }
+            ],
+            "z": [
+              {
+                "name": "interface_z",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_max",
+                "value": 120.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_min",
+                "value": 0.0,
+                "aligned": true
+              }
+            ]
+          }
+        }
+      },
+      "entity_dof_inventory": {
+        "schema_version": "task035b.hcurl-entity-dof-inventory.v1",
+        "status": "pass",
+        "mesh_cell_type": "hexahedron",
+        "degree": 1,
+        "basix_element_dimension": 12,
+        "global_entity_counts": {
+          "vertices": 420,
+          "edges": 1067,
+          "faces": 900,
+          "cells": 252
+        },
+        "entity_dofs_per_entity": {
+          "edge": 1,
+          "face_interior": 0,
+          "cell_interior": 0
+        },
+        "global_dof_contributions": {
+          "edge": 1067,
+          "face_interior": 0,
+          "cell_interior": 0
+        },
+        "decomposed_nedelec_dofs": 1067,
+        "actual_nedelec_dofs": 1067,
+        "cell_interior_fraction": 0.0,
+        "floquet_constraint_rows": 275,
+        "current_backend_row_semantics": "dolfinx_mpc retains the full FE row layout; constraints do not constitute static condensation",
+        "num_auxiliary_dofs": 80,
+        "current_expected_augmented_rows": 1147,
+        "active_matrix_rows_measured": 1147,
+        "theoretical_static_condensed_trace_dofs": 1067,
+        "theoretical_static_condensed_augmented_rows": 1147,
+        "theoretical_static_condensed_periodic_independent_rows": 872,
+        "theoretical_row_compression_factor": 1.0,
+        "static_condensation_projection_semantics": "derived_not_measured; assumes exact cell-interior elimination with all edge/face trace and DtN auxiliary unknowns retained",
+        "cell_static_condensation_active": false,
+        "floquet_slave_elimination_active": false,
+        "pass": true
+      },
+      "matrix_factor_resource": {
+        "schema_version": "task035b.matrix-factor-resource-audit.v1",
+        "active_rows": 1147,
+        "matrix_nnz": 41941.0,
+        "matrix_average_row_width": 36.56582388840453,
+        "matrix_maximum_row_width": 63,
+        "factor_nnz": 190129.0,
+        "factor_average_row_width": 165.76198779424587,
+        "factor_maximum_row_width": null,
+        "factor_fill_ratio": 4.5332490880045775,
+        "factor_solver_type": "mumps",
+        "factor_inventory_available": true,
+        "timings_seconds": {
+          "stage4_dtn_base_matrix_assembly_seconds": 0.022429807999287732,
+          "stage4_dtn_base_rhs_assembly_seconds": 0.002890414005378261,
+          "stage4_dtn_augmented_block_copy_seconds": 0.002197911002440378,
+          "stage4_dtn_incident_source_vector_seconds": 0.006337230006465688,
+          "stage4_dtn_modal_loop_seconds": 0.050208243999804836,
+          "stage4_dtn_modal_vector_assembly_seconds": 0.04052269697422162,
+          "stage4_dtn_modal_block_insert_seconds": 0.0012313030092627741,
+          "stage4_dtn_augmented_matrix_finalize_seconds": 0.001969510005437769,
+          "stage4_dtn_cell_static_condensation_build_seconds": null,
+          "stage4_dtn_cell_static_condensation_recovery_seconds": null,
+          "stage4_dtn_floquet_slave_elimination_build_seconds": null,
+          "stage4_dtn_ksp_setup_seconds": 0.019284693997178692,
+          "stage4_dtn_ksp_solve_seconds": 0.0016201079997699708,
+          "stage4_dtn_linear_solve_seconds": 0.026045926002552733,
+          "stage4_dtn_solution_backsubstitution_seconds": 0.0010158049990423024,
+          "elapsed_seconds": 0.36494717100140406
+        },
+        "sum_rank_historical_peaks_mb_upper_bound": 1612.78125,
+        "peak_memory_semantics": "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+      }
+    }
+  },
+  "enriched": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "case_status": "completed",
+    "official_result": true,
+    "mpi_size": 8,
+    "num_mesh_cells": 252,
+    "mesh_cell_type_actual": "hexahedron",
+    "num_nedelec_dofs": 173802,
+    "matrix_stats": {
+      "matrix_rows": 51272,
+      "matrix_cols": 51272,
+      "matrix_nnz_used": 41989040.0,
+      "matrix_nnz_allocated": 54294096.0,
+      "matrix_nnz_unneeded": 12305056.0,
+      "matrix_mallocs": 76304.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 6624,
+      "matrix_local_cols": 6624,
+      "matrix_row_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 818.9467935715401,
+      "matrix_maximum_nnz_per_row": 1398,
+      "matrix_average_allocated_nnz_per_row": 1058.9424247152442,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1008147144.0,
+      "matrix_memory_estimate_mb": 961.4440383911133,
+      "matrix_norm_frobenius": 23338.21359068066,
+      "matrix_norm_infinity": 1891.1469934513718,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 3.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "linear_system_relative_residual": 1.572564533767399e-11,
+    "R_total": 0.0007628814751163684,
+    "T_total": 0.6027016339859931,
+    "A_volume_total": 0.39653548454291343,
+    "energy_closure_error_port_volume": 4.023004152031717e-12,
+    "floquet_num_constraints": 9210,
+    "elapsed_seconds": 1054.1349620480032,
+    "stage4_cell_static_condensation": true,
+    "stage4_assembly_time_cell_static_condensation": true,
+    "stage4_dtn_condensed_matrix_stats": {
+      "matrix_rows": 51272,
+      "matrix_cols": 51272,
+      "matrix_nnz_used": 41989040.0,
+      "matrix_nnz_allocated": 54294096.0,
+      "matrix_nnz_unneeded": 12305056.0,
+      "matrix_mallocs": 76304.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 6624,
+      "matrix_local_cols": 6624,
+      "matrix_row_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 818.9467935715401,
+      "matrix_maximum_nnz_per_row": 1398,
+      "matrix_average_allocated_nnz_per_row": 1058.9424247152442,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1008147144.0,
+      "matrix_memory_estimate_mb": 961.4440383911133,
+      "matrix_norm_frobenius": 23338.21359068066,
+      "matrix_norm_infinity": 1891.1469934513718,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "stage4_floquet_slave_elimination": true,
+    "stage4_dtn_floquet_independent_matrix_stats": {
+      "matrix_rows": 51272,
+      "matrix_cols": 51272,
+      "matrix_nnz_used": 41989040.0,
+      "matrix_nnz_allocated": 54294096.0,
+      "matrix_nnz_unneeded": 12305056.0,
+      "matrix_mallocs": 76304.0,
+      "matrix_type": "mpiaij",
+      "matrix_local_rows": 6624,
+      "matrix_local_cols": 6624,
+      "matrix_row_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_column_ownership_range": [
+        0,
+        6624
+      ],
+      "matrix_row_block_size": 1,
+      "matrix_column_block_size": 1,
+      "matrix_average_nnz_per_row": 818.9467935715401,
+      "matrix_maximum_nnz_per_row": 1398,
+      "matrix_average_allocated_nnz_per_row": 1058.9424247152442,
+      "matrix_memory_bytes": 0.0,
+      "matrix_memory_mb": 0.0,
+      "matrix_memory_estimate_bytes": 1008147144.0,
+      "matrix_memory_estimate_mb": 961.4440383911133,
+      "matrix_norm_frobenius": 23338.21359068066,
+      "matrix_norm_infinity": 1891.1469934513718,
+      "matrix_petsc_info": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      },
+      "matrix_petsc_info_global_sum": {
+        "block_size": 1.0,
+        "nz_allocated": 54294096.0,
+        "nz_used": 41989040.0,
+        "nz_unneeded": 12305056.0,
+        "memory": 0.0,
+        "assemblies": 2.0,
+        "mallocs": 76304.0,
+        "fill_ratio_given": 0.0,
+        "fill_ratio_needed": 0.0,
+        "factor_mallocs": 0.0
+      }
+    },
+    "cell_static_condensation": {
+      "schema_version": "task035b.assembly-time-cell-condensation.v1",
+      "status": "unconstrained_trace_schur_built_without_full_matrix",
+      "full_rows": 173802,
+      "trace_rows": 60402,
+      "active_rows": 51192,
+      "appended_rows": 80,
+      "matrix_rows": 51272,
+      "interior_rows": 113400,
+      "owned_cell_count_global": 252,
+      "local_tensor_dimension": 882,
+      "local_trace_dimension": 432,
+      "local_interior_dimension": 450,
+      "full_global_matrix_allocated": false,
+      "full_trace_matrix_allocated": false,
+      "embedded_mpc_slave_identity_rows_allocated": false,
+      "assembly_cost_avoided": true,
+      "axis_aligned_affine_geometry_verified": true,
+      "raw_tensor_class_count_sum": 22,
+      "oriented_schur_class_count_sum": 190,
+      "cell_kernel_evaluation_fraction": 0.0873015873015873,
+      "kernel_seconds_max": 285.48164749799616,
+      "local_schur_seconds_max": 26.16368315101863,
+      "local_insert_seconds_max": 269.927144560992,
+      "final_assembly_seconds": 397.7458244640002,
+      "trace_constraints": {
+        "schema_version": "task035b.trace-constraint-map.v1",
+        "status": "exact_mpc_trace_expansion_built",
+        "full_trace_rows": 60402,
+        "active_rows": 51192,
+        "slave_rows": 9210,
+        "maximum_masters_per_slave": 10,
+        "constraint_applied_before_global_matrix_insertion": true,
+        "embedded_identity_slave_rows_allocated": false
+      },
+      "total_build_seconds": 778.6156780230012,
+      "condensed_matrix_stats": {
+        "matrix_rows": 51272,
+        "matrix_cols": 51272,
+        "matrix_nnz_used": 41989040.0,
+        "matrix_nnz_allocated": 54294096.0,
+        "matrix_nnz_unneeded": 12305056.0,
+        "matrix_mallocs": 76304.0,
+        "matrix_type": "mpiaij",
+        "matrix_local_rows": 6624,
+        "matrix_local_cols": 6624,
+        "matrix_row_ownership_range": [
+          0,
+          6624
+        ],
+        "matrix_column_ownership_range": [
+          0,
+          6624
+        ],
+        "matrix_row_block_size": 1,
+        "matrix_column_block_size": 1,
+        "matrix_average_nnz_per_row": 818.9467935715401,
+        "matrix_maximum_nnz_per_row": 1398,
+        "matrix_average_allocated_nnz_per_row": 1058.9424247152442,
+        "matrix_memory_bytes": 0.0,
+        "matrix_memory_mb": 0.0,
+        "matrix_memory_estimate_bytes": 1008147144.0,
+        "matrix_memory_estimate_mb": 961.4440383911133,
+        "matrix_norm_frobenius": 23338.21359068066,
+        "matrix_norm_infinity": 1891.1469934513718,
+        "matrix_petsc_info": {
+          "block_size": 1.0,
+          "nz_allocated": 54294096.0,
+          "nz_used": 41989040.0,
+          "nz_unneeded": 12305056.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 76304.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        },
+        "matrix_petsc_info_global_sum": {
+          "block_size": 1.0,
+          "nz_allocated": 54294096.0,
+          "nz_used": 41989040.0,
+          "nz_unneeded": 12305056.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 76304.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        }
+      },
+      "floquet_independent_matrix_stats": {
+        "matrix_rows": 51272,
+        "matrix_cols": 51272,
+        "matrix_nnz_used": 41989040.0,
+        "matrix_nnz_allocated": 54294096.0,
+        "matrix_nnz_unneeded": 12305056.0,
+        "matrix_mallocs": 76304.0,
+        "matrix_type": "mpiaij",
+        "matrix_local_rows": 6624,
+        "matrix_local_cols": 6624,
+        "matrix_row_ownership_range": [
+          0,
+          6624
+        ],
+        "matrix_column_ownership_range": [
+          0,
+          6624
+        ],
+        "matrix_row_block_size": 1,
+        "matrix_column_block_size": 1,
+        "matrix_average_nnz_per_row": 818.9467935715401,
+        "matrix_maximum_nnz_per_row": 1398,
+        "matrix_average_allocated_nnz_per_row": 1058.9424247152442,
+        "matrix_memory_bytes": 0.0,
+        "matrix_memory_mb": 0.0,
+        "matrix_memory_estimate_bytes": 1008147144.0,
+        "matrix_memory_estimate_mb": 961.4440383911133,
+        "matrix_norm_frobenius": 23338.21359068066,
+        "matrix_norm_infinity": 1891.1469934513718,
+        "matrix_petsc_info": {
+          "block_size": 1.0,
+          "nz_allocated": 54294096.0,
+          "nz_used": 41989040.0,
+          "nz_unneeded": 12305056.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 76304.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        },
+        "matrix_petsc_info_global_sum": {
+          "block_size": 1.0,
+          "nz_allocated": 54294096.0,
+          "nz_used": 41989040.0,
+          "nz_unneeded": 12305056.0,
+          "memory": 0.0,
+          "assemblies": 2.0,
+          "mallocs": 76304.0,
+          "fill_ratio_given": 0.0,
+          "fill_ratio_needed": 0.0,
+          "factor_mallocs": 0.0
+        }
+      },
+      "floquet_slave_elimination": {
+        "schema_version": "task035b.trace-constraint-map.v1",
+        "status": "exact_mpc_trace_expansion_built",
+        "full_trace_rows": 60402,
+        "active_rows": 51192,
+        "slave_rows": 9210,
+        "maximum_masters_per_slave": 10,
+        "constraint_applied_before_global_matrix_insertion": true,
+        "embedded_identity_slave_rows_allocated": false
+      },
+      "recovery": {
+        "schema_version": "task035b.assembly-time-cell-condensation-recovery.v1",
+        "status": "full_field_recovered_without_full_global_matrix",
+        "recovered_interior_rows": 113400,
+        "full_global_matrix_allocated": false,
+        "full_trace_matrix_allocated": false,
+        "total_recovery_seconds": 0.0896310940006515
+      },
+      "full_operator_true_residual": {
+        "linear_system_rhs_norm": 13.197399020662454,
+        "linear_system_solution_norm": 742.1374458850489,
+        "linear_system_residual_norm": 2.075376163787038e-10,
+        "linear_system_relative_residual": 1.572564533767399e-11,
+        "reduced_trace_dtn_residual_norm": 2.0298297836834312e-10,
+        "eliminated_cell_interior_residual_norm": 4.324086845648191e-11,
+        "eliminated_cell_interior_max_abs_residual": 1.212713046204925e-12,
+        "full_operator_residual_method": "explicit reduced trace+DtN Mat action combined with matrix-free dolfinx_mpc UFL action on every eliminated cell-interior equation, including condensed full-space RHS",
+        "full_global_matrix_allocated_for_residual": false,
+        "full_trace_matrix_allocated_for_residual": false
+      },
+      "full_explicit_true_residual": {
+        "linear_system_rhs_norm": 13.197399020662454,
+        "linear_system_solution_norm": 742.1374458850489,
+        "linear_system_residual_norm": 2.075376163787038e-10,
+        "linear_system_relative_residual": 1.572564533767399e-11,
+        "reduced_trace_dtn_residual_norm": 2.0298297836834312e-10,
+        "eliminated_cell_interior_residual_norm": 4.324086845648191e-11,
+        "eliminated_cell_interior_max_abs_residual": 1.212713046204925e-12,
+        "full_operator_residual_method": "explicit reduced trace+DtN Mat action combined with matrix-free dolfinx_mpc UFL action on every eliminated cell-interior equation, including condensed full-space RHS",
+        "full_global_matrix_allocated_for_residual": false,
+        "full_trace_matrix_allocated_for_residual": false
+      },
+      "true_residual_semantics": "exact physically reduced C_t^H Schur C_t plus DtN operator residual; full FE matrix deliberately not allocated",
+      "same_full_operator_used_for_recovery_and_residual": false,
+      "ordinary_default_changed": false
+    },
+    "high_order_resource_audit": {
+      "schema_version": "task035b.high-order-resource-audit.v1",
+      "mesh_identity": {
+        "schema_version": "task035b.partition-independent-linear-mesh.v1",
+        "mesh_cell_type": "hexahedron",
+        "coordinate_tolerance": 1.4000000000000001e-08,
+        "global_cell_count": 252,
+        "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+        "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+        "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+        "mesh_cells_resolved": [
+          6,
+          3,
+          14
+        ],
+        "material_plane_alignment": {
+          "all_aligned": true,
+          "missing": [],
+          "checked": {
+            "x": [
+              {
+                "name": "grating_x_min",
+                "value": 16.5,
+                "aligned": true
+              },
+              {
+                "name": "grating_x_max",
+                "value": 33.5,
+                "aligned": true
+              }
+            ],
+            "y": [
+              {
+                "name": "grating_y_min",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_y_max",
+                "value": 25.0,
+                "aligned": true
+              }
+            ],
+            "z": [
+              {
+                "name": "interface_z",
+                "value": 0.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_max",
+                "value": 120.0,
+                "aligned": true
+              },
+              {
+                "name": "grating_z_min",
+                "value": 0.0,
+                "aligned": true
+              }
+            ]
+          }
+        }
+      },
+      "entity_dof_inventory": {
+        "schema_version": "task035b.hcurl-entity-dof-inventory.v1",
+        "status": "pass",
+        "mesh_cell_type": "hexahedron",
+        "degree": 6,
+        "basix_element_dimension": 882,
+        "global_entity_counts": {
+          "vertices": 420,
+          "edges": 1067,
+          "faces": 900,
+          "cells": 252
+        },
+        "entity_dofs_per_entity": {
+          "edge": 6,
+          "face_interior": 60,
+          "cell_interior": 450
+        },
+        "global_dof_contributions": {
+          "edge": 6402,
+          "face_interior": 54000,
+          "cell_interior": 113400
+        },
+        "decomposed_nedelec_dofs": 173802,
+        "actual_nedelec_dofs": 173802,
+        "cell_interior_fraction": 0.6524665999240515,
+        "floquet_constraint_rows": 9210,
+        "current_backend_row_semantics": "exact cell-interior elimination; measured global matrix retains only edge/face trace and DtN auxiliary rows",
+        "num_auxiliary_dofs": 80,
+        "current_expected_augmented_rows": 173882,
+        "active_matrix_rows_measured": 51272,
+        "theoretical_static_condensed_trace_dofs": 60402,
+        "theoretical_static_condensed_augmented_rows": 60482,
+        "theoretical_static_condensed_periodic_independent_rows": 51272,
+        "theoretical_row_compression_factor": 2.874937998082074,
+        "static_condensation_projection_semantics": "measured_active_rows; exact cell-interior and Floquet-slave elimination with independent edge/face trace and DtN auxiliary unknowns retained",
+        "cell_static_condensation_active": true,
+        "floquet_slave_elimination_active": true,
+        "pass": true
+      },
+      "matrix_factor_resource": {
+        "schema_version": "task035b.matrix-factor-resource-audit.v1",
+        "active_rows": 51272,
+        "matrix_nnz": 41989040.0,
+        "matrix_average_row_width": 818.9467935715401,
+        "matrix_maximum_row_width": 1398,
+        "factor_nnz": 205445192.0,
+        "factor_average_row_width": 4006.966609455453,
+        "factor_maximum_row_width": null,
+        "factor_fill_ratio": 4.892828985849641,
+        "factor_solver_type": "mumps",
+        "factor_inventory_available": true,
+        "timings_seconds": {
+          "stage4_dtn_base_matrix_assembly_seconds": 778.7509912509995,
+          "stage4_dtn_base_rhs_assembly_seconds": 0.011977951005974319,
+          "stage4_dtn_augmented_block_copy_seconds": 0.0,
+          "stage4_dtn_incident_source_vector_seconds": 0.03704535900033079,
+          "stage4_dtn_modal_loop_seconds": 16.40241993199743,
+          "stage4_dtn_modal_vector_assembly_seconds": 16.321410459990148,
+          "stage4_dtn_modal_block_insert_seconds": 6.6135111249896,
+          "stage4_dtn_augmented_matrix_finalize_seconds": 19.80795228199713,
+          "stage4_dtn_cell_static_condensation_build_seconds": null,
+          "stage4_dtn_cell_static_condensation_recovery_seconds": 0.08967709400167223,
+          "stage4_dtn_floquet_slave_elimination_build_seconds": null,
+          "stage4_dtn_ksp_setup_seconds": 117.40885976600111,
+          "stage4_dtn_ksp_solve_seconds": 0.1481195519954781,
+          "stage4_dtn_linear_solve_seconds": 117.56283634399733,
+          "stage4_dtn_solution_backsubstitution_seconds": 1.8999999156221747e-06,
+          "elapsed_seconds": 1054.1349620480032
+        },
+        "sum_rank_historical_peaks_mb_upper_bound": 16364.65234375,
+        "peak_memory_semantics": "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+      }
+    }
+  },
+  "official_observable_delta_l2": 1.1912138648693884,
+  "R5": {
+    "schema_version": "task035.actual-global-two-level-r5.v1",
+    "estimator": "R5_actual_global_two_level_correction_energy",
+    "formal_hierarchical_fe_r5": true,
+    "coarse_global_dofs": 1067,
+    "enriched_global_dofs": 173802,
+    "owned_cell_contribution_count": 252,
+    "owned_cell_counts_by_rank": [
+      31,
+      32,
+      31,
+      32,
+      31,
+      32,
+      31,
+      32
+    ],
+    "distributed_ownership_unique": true,
+    "finite_cell_contributions": true,
+    "nonnegative_cell_contributions": true,
+    "correction_energy": {
+      "direct_global_energy": 7803520.261750802,
+      "cell_sum_global_energy": 7803520.2617507875,
+      "relative_closure_error": 1.909543474486273e-15,
+      "minimum_raw_cell_contribution": 24279.616768487547,
+      "maximum_imaginary_cell_contribution": 0.0
+    },
+    "correction_energy_norm": 2793.4781656119676,
+    "marking": {
+      "theta": 0.5,
+      "count": 111,
+      "minimal_count_before_tie_expansion": 111,
+      "cutoff_tie_expansion_count": 0,
+      "cutoff_normalized_contribution": 0.0040590617229346124,
+      "cutoff_tie_absolute_tolerance": 4.0590617229346125e-13,
+      "tie_policy": "include_all_cutoff_contributions_within_relative_1e-10",
+      "fraction": 0.44047619047619047,
+      "captured_fraction": 0.5004311061252886,
+      "global_cell_ids_sha256": "01f2ca89fa799d654b2d371ff5afcac3a7c180515b4af3724104b87d5218168d"
+    },
+    "marked_global_cell_ids": [
+      3,
+      6,
+      8,
+      9,
+      11,
+      13,
+      14,
+      15,
+      16,
+      17,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      44,
+      45,
+      46,
+      47,
+      49,
+      50,
+      52,
+      54,
+      55,
+      57,
+      60,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      226,
+      232,
+      240
+    ],
+    "estimator_wall_seconds": 1.7483178460024646,
+    "process_peak_rss_kib_before": 2633732,
+    "process_peak_rss_kib_after": 2719060,
+    "interpolation": {
+      "method": "dolfinx_nonmatching_hcurl_interpolation",
+      "padding": 1e-10,
+      "same_communicator": true
+    },
+    "effectivity_proxy": 2345.0685456202787,
+    "effectivity_proxy_semantics": "global correction energy norm divided by coarse-to-enriched official R/T/A-volume change"
+  },
+  "common_mesh_identity": {
+    "schema_version": "task035b.partition-independent-linear-mesh.v1",
+    "mesh_cell_type": "hexahedron",
+    "coordinate_tolerance": 1.4000000000000001e-08,
+    "global_cell_count": 252,
+    "partition_independent_mesh_sha256": "f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857",
+    "cell_tag_sha256": "42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131",
+    "facet_tag_sha256": "0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd",
+    "mesh_cells_resolved": [
+      6,
+      3,
+      14
+    ],
+    "material_plane_alignment": {
+      "all_aligned": true,
+      "missing": [],
+      "checked": {
+        "x": [
+          {
+            "name": "grating_x_min",
+            "value": 16.5,
+            "aligned": true
+          },
+          {
+            "name": "grating_x_max",
+            "value": 33.5,
+            "aligned": true
+          }
+        ],
+        "y": [
+          {
+            "name": "grating_y_min",
+            "value": 0.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_y_max",
+            "value": 25.0,
+            "aligned": true
+          }
+        ],
+        "z": [
+          {
+            "name": "interface_z",
+            "value": 0.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_z_max",
+            "value": 120.0,
+            "aligned": true
+          },
+          {
+            "name": "grating_z_min",
+            "value": 0.0,
+            "aligned": true
+          }
+        ]
+      }
+    }
+  },
+  "same_mesh_hashes": true,
+  "single_in_memory_mesh_instance": true,
+  "reuse_single_mesh_requested": true,
+  "elapsed_seconds": 1061.2247809719993,
+  "raw_evidence": {
+    "run_directory": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6",
+    "actual_r5_result": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/actual_r5_result.json",
+    "actual_r5_result_sha256": "274407c45063d99eb58f707d5487130c89d5358202941d2b03b2d569ba8310bf",
+    "memory_timeline": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/memory_timeline.csv",
+    "memory_timeline_sha256": "1046619d2270b40bf6a0e6def9d986d839f3f8d68b2bc8dfcc8450b90ef8a0ef",
+    "progress": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/progress_3d.jsonl",
+    "progress_sha256": "745125a8bc3ce47352af07ffbda3e7d2716895c424122f36cd083c15e65325b6",
+    "stdout": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T021903Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/worker_stdout.txt",
+    "stdout_sha256": "0d38fd46108c89f1fb74c53e2e0169f8d76fc4a88e22326e7459b4c74de6cd7f"
+  }
+}
