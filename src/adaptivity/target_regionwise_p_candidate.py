@@ -434,6 +434,7 @@ def run_target_regionwise_p_candidate(
         build_high_order_resource_audit,
     )
     from src.adaptivity.hcurl_regionwise_p import (
+        create_reduced_trace_hcurl_element,
         regionwise_interior_p_dof_budget,
     )
     from src.common.config_3d import target_stage4_config
@@ -523,6 +524,20 @@ def run_target_regionwise_p_candidate(
     )
     if budget["active_full3d_equivalent_dofs"] > 90000:
         raise ValueError("regionwise-p candidate exceeds the Task035b 90k budget")
+    element_audit = create_reduced_trace_hcurl_element(
+        int(trace_degree),
+        6,
+        int(low_interior_degree),
+    ).audit
+    if element_audit["both_high_and_low_exact_sequence_pass"] is not True:
+        low_audit = element_audit["low_exact_sequence"]
+        raise ValueError(
+            "regionwise-p candidate fails the local tensor exact-sequence "
+            "preflight: "
+            f"trace p{trace_degree}, interior p{low_interior_degree}, "
+            f"missing gradient modes "
+            f"{low_audit['missing_gradient_mode_count']}"
+        )
     base = target_stage4_config(degree=6, h_nm=float(h_nm))
     cfg = replace(
         base,

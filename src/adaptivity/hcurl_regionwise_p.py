@@ -17,6 +17,7 @@ from typing import Any
 import basix
 import basix.ufl
 import numpy as np
+from scipy.linalg import qr
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,128 @@ class ReducedTraceHcurlElement:
     low_to_reduced: np.ndarray
     low_interior_embedding: np.ndarray
     audit: dict[str, Any]
+
+
+def audit_tensor_product_exact_sequence(
+    element: basix.finite_element.FiniteElement,
+    *,
+    trace_degree: int,
+    interior_degree: int,
+) -> dict[str, Any]:
+    """Audit the local curl kernel against the mixed scalar companion.
+
+    A tensor-product scalar companion with Q(trace) boundary modes and
+    Q(interior) cell-bubble modes has
+
+    ``[(t+1)^3-(t-1)^3] + (i-1)^3 - 1``
+
+    nonconstant gradients. The H(curl) polynomial space must expose exactly
+    that many curl-null modes as a prerequisite for a local de Rham sequence.
+    """
+
+    trace_degree = int(trace_degree)
+    interior_degree = int(interior_degree)
+    if trace_degree < 1 or interior_degree < 1:
+        raise ValueError("exact-sequence audit requires positive degrees")
+    points_per_axis = max(trace_degree, interior_degree) + 1
+    axis_points = (
+        np.polynomial.legendre.leggauss(points_per_axis)[0] + 1.0
+    ) / 2.0
+    points = np.asarray(
+        [
+            (x, y, z)
+            for x in axis_points
+            for y in axis_points
+            for z in axis_points
+        ],
+        dtype=np.float64,
+    )
+    derivatives = element.tabulate(1, points)
+    derivative_x = derivatives[1]
+    derivative_y = derivatives[2]
+    derivative_z = derivatives[3]
+    curl_values = np.stack(
+        (
+            derivative_y[:, :, 2] - derivative_z[:, :, 1],
+            derivative_z[:, :, 0] - derivative_x[:, :, 2],
+            derivative_x[:, :, 1] - derivative_y[:, :, 0],
+        ),
+        axis=1,
+    )
+    curl_matrix = curl_values.reshape(-1, int(element.dim))
+    _orthogonal, upper, _pivots = qr(
+        curl_matrix,
+        mode="economic",
+        pivoting=True,
+        check_finite=False,
+    )
+    diagonal = np.abs(np.diag(upper))
+    rank_tolerance = (
+        0.0
+        if len(diagonal) == 0
+        else float(
+            diagonal[0]
+            * max(curl_matrix.shape)
+            * np.finfo(np.float64).eps
+        )
+    )
+    curl_rank = int(np.count_nonzero(diagonal > rank_tolerance))
+    curl_nullity = int(element.dim - curl_rank)
+    scalar_trace_boundary_dimension = int(
+        (trace_degree + 1) ** 3 - max(trace_degree - 1, 0) ** 3
+    )
+    scalar_cell_interior_dimension = int(
+        max(interior_degree - 1, 0) ** 3
+    )
+    expected_gradient_dimension = int(
+        scalar_trace_boundary_dimension
+        + scalar_cell_interior_dimension
+        - 1
+    )
+    difference = curl_nullity - expected_gradient_dimension
+    return {
+        "schema_version": "task035b.local-tensor-exact-sequence-audit.v1",
+        "status": (
+            "local_tensor_exact_sequence_pass"
+            if difference == 0
+            else "local_tensor_exact_sequence_fail"
+        ),
+        "pass": difference == 0,
+        "cell_type": "hexahedron",
+        "trace_degree": trace_degree,
+        "interior_degree": interior_degree,
+        "vector_space_dimension": int(element.dim),
+        "scalar_trace_boundary_dimension": (
+            scalar_trace_boundary_dimension
+        ),
+        "scalar_cell_interior_dimension": (
+            scalar_cell_interior_dimension
+        ),
+        "expected_nonconstant_gradient_dimension": (
+            expected_gradient_dimension
+        ),
+        "measured_curl_rank": curl_rank,
+        "measured_curl_nullity": curl_nullity,
+        "curl_nullity_minus_expected_gradient_dimension": difference,
+        "missing_gradient_mode_count": max(-difference, 0),
+        "unmatched_curl_null_mode_count": max(difference, 0),
+        "points_per_axis": points_per_axis,
+        "sample_point_count": len(points),
+        "rank_method": "pivoted_QR_of_sampled_polynomial_curl_map",
+        "rank_tolerance": rank_tolerance,
+        "smallest_accepted_qr_diagonal": (
+            None if curl_rank == 0 else float(diagonal[curl_rank - 1])
+        ),
+        "largest_rejected_qr_diagonal": (
+            None
+            if curl_rank >= len(diagonal)
+            else float(diagonal[curl_rank])
+        ),
+        "scope": (
+            "local polynomial exact-sequence prerequisite; global topology, "
+            "orientation, periodicity, and inf-sup stability remain separate"
+        ),
+    }
 
 
 def _standard_hexa_hcurl(degree: int) -> basix.finite_element.FiniteElement:
@@ -250,6 +373,16 @@ def create_reduced_trace_hcurl_element(
         [len(entity) for entity in dimension]
         for dimension in custom.entity_dofs
     ]
+    high_exact_sequence = audit_tensor_product_exact_sequence(
+        custom,
+        trace_degree=trace_degree,
+        interior_degree=interior_degree,
+    )
+    low_exact_sequence = audit_tensor_product_exact_sequence(
+        low_element,
+        trace_degree=trace_degree,
+        interior_degree=low_interior_degree,
+    )
     audit = {
         "schema_version": "task035b.reduced-trace-hcurl-element.v2",
         "status": "reduced_trace_hcurl_element_built",
@@ -284,6 +417,11 @@ def create_reduced_trace_hcurl_element(
         "low_interior_embedding_rank": low_embedding_rank,
         "low_trace_identity_error_max": low_trace_identity_error,
         "low_interior_trace_leakage_max": low_interior_trace_leakage,
+        "high_exact_sequence": high_exact_sequence,
+        "low_exact_sequence": low_exact_sequence,
+        "both_high_and_low_exact_sequence_pass": bool(
+            high_exact_sequence["pass"] and low_exact_sequence["pass"]
+        ),
         "map_type": str(custom.map_type),
         "sobolev_space": str(custom.sobolev_space),
         "continuity_policy": (
@@ -398,6 +536,7 @@ def regionwise_interior_p_dof_budget(
 
 __all__ = [
     "ReducedTraceHcurlElement",
+    "audit_tensor_product_exact_sequence",
     "create_reduced_trace_hcurl_element",
     "regionwise_interior_p_dof_budget",
     "reduced_trace_hcurl_ufl_element",

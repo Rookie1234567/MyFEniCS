@@ -12,6 +12,9 @@ from mpi4py import MPI
 
 from dolfinx import fem, mesh
 
+from benchmarks.task035b_regionwise_space_audit import (
+    build_regionwise_space_audit,
+)
 from src.adaptivity.hcurl_regionwise_p import (
     create_reduced_trace_hcurl_element,
     reduced_trace_hcurl_ufl_element,
@@ -26,6 +29,40 @@ from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 class Task035bRegionwisePTests(unittest.TestCase):
+    def test_structural_audit_reclassifies_only_non_exact_candidate(
+        self,
+    ) -> None:
+        root = Path(__file__).resolve().parents[2]
+        records = (
+            root
+            / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+            / "records"
+        )
+        p4 = json.loads(
+            (records / "regionwise_p4trace_p6interior_h10_mpi8.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        p5 = json.loads(
+            (
+                records
+                / "regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        audit = build_regionwise_space_audit(p4, p5)
+        self.assertTrue(audit["pass"])
+        self.assertEqual(
+            audit["independent_exact_sequence_valid_accuracy_negative_count"],
+            1,
+        )
+        self.assertFalse(audit["previous_two_negative_lane_closure_supported"])
+        self.assertEqual(
+            audit["candidates"]["p5_trace_p4_low_p6_high"][
+                "missing_gradient_mode_count"
+            ],
+            66,
+        )
+
     def test_compact_control_is_completed_from_hashable_raw_summary(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             run_dir = Path(directory)
@@ -301,6 +338,17 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertEqual(audit["low_space_embedding_rank"], 300)
         self.assertEqual(audit["low_interior_embedding_rank"], 108)
         self.assertLess(audit["low_interior_trace_leakage_max"], 1.0e-11)
+        self.assertTrue(audit["high_exact_sequence"]["pass"])
+        self.assertEqual(
+            audit["high_exact_sequence"]["measured_curl_nullity"],
+            222,
+        )
+        self.assertTrue(audit["low_exact_sequence"]["pass"])
+        self.assertEqual(
+            audit["low_exact_sequence"]["measured_curl_nullity"],
+            124,
+        )
+        self.assertTrue(audit["both_high_and_low_exact_sequence_pass"])
         self.assertEqual(
             audit["entity_dofs"],
             [
@@ -358,6 +406,27 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertEqual(audit["low_interior_embedding_rank"], 108)
         self.assertLess(audit["low_trace_identity_error_max"], 1.0e-11)
         self.assertLess(audit["low_interior_trace_leakage_max"], 1.0e-11)
+        self.assertTrue(audit["high_exact_sequence"]["pass"])
+        self.assertEqual(
+            audit["high_exact_sequence"]["measured_curl_nullity"],
+            276,
+        )
+        self.assertFalse(audit["low_exact_sequence"]["pass"])
+        self.assertEqual(
+            audit["low_exact_sequence"][
+                "expected_nonconstant_gradient_dimension"
+            ],
+            178,
+        )
+        self.assertEqual(
+            audit["low_exact_sequence"]["measured_curl_nullity"],
+            112,
+        )
+        self.assertEqual(
+            audit["low_exact_sequence"]["missing_gradient_mode_count"],
+            66,
+        )
+        self.assertFalse(audit["both_high_and_low_exact_sequence_pass"])
         self.assertEqual(
             audit["entity_dofs"],
             [
