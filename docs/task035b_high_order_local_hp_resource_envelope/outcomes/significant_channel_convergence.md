@@ -14,6 +14,7 @@
 | 未收敛通道 | 无 |
 | production qualified | `false` |
 | ordinary default changed | `false` |
+| record SHA256 | `83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3` |
 | authority manifest SHA256 | `c8538133617ffbeffb1de2f18f8a7134082018f9f85d6a50ea72e0e83ff718b2` |
 | reference payload SHA256 | `bb78f17a0eb3a664620b9acf7cad47dd75c1881899cf885cc243328e320177ba` |
 
@@ -96,5 +97,25 @@ numerical band 对每个分量分别取以下三项绝对差的最大值：`|p4/
 
 - global p5/p6 h15 与 fixed p5-trace/p6-interior h15 仅作为 underresolved/trace diagnostic，不进入 numerical band 或 v0 Gate；
 - Task035 tetra theta0p4 p5/p6 h50 保留为 `excluded_controlled_negative`，不作为 structured-hexa same-error authority；
-- 本次只聚合既有记录，没有运行新 PDE；
+- reference v1 本身只聚合既有记录，没有运行新 PDE；
 - 所有 12 通道的 power、复振幅 Re/Im、magnitude、unwrap phase、p/h 差、绝对/相对 spread 均保存在对应 JSON channel 对象中。
+
+## Review V1 恢复点对 reference v1 的使用
+
+reference v1 冻结后，所有恢复点仍使用不变 v0 tolerance 作接受 Gate；numerical
+band 只用于 adjoint 归一化与 spread 报告。
+
+| candidate | power pass | amplitude pass | 解释 |
+|---|---:|---:|---|
+| fixed h15 seed | 6/12 | 7/12 | underresolved recovery seed |
+| fixed h14 directional-z | 7/12 | 9/12 | z-resolution positive signal |
+| fixed h13 directional-z | 10/12 | 10/12 | 当前最佳预算内点 |
+| fixed x-only | 5/12 | 6/12 | directional control negative |
+| h14 R5-slab bisect | 5/12 | 9/12 | aggregate error 下降但 count regression |
+| global p6/h14 | 9/12 | 12/12 | trace signal；DoF 超限 |
+
+h13 仍失败的 power 为 `T(-4,0)_s`、`R(-4,0)_s`，amplitude 为
+`R(-5,0)_s`、`R(-4,0)_s`。channel phase diagnostic 将
+`T(-4,0)_s`、`R(-5,0)_s`、`R(-4,0)_s` 标记为剩余 phase-bearing
+labels；它只授权 physical periodic trace-orbit Riesz/DWR 调查，不授权
+阈值变化或矩阵候选。

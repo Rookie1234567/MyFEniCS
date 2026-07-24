@@ -19,6 +19,11 @@ Task035b 证明了 high-p condensation、真实物理减行和内存生命周期
 |---|---:|---:|---:|---:|---:|---|
 | global p6/h15 | 84,492 | 24,704 | 19,207,136 / 59,616,320 | 12.000 GiB pair | 396.93 / 21.53 / 0.057 s | scalar/field pass；channels 6/12、8/12 |
 | fixed p5-trace/p6-interior h15 | 74,890 | 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | 61.65 / 6.56 / 0.036 s | scalar/field pass；channels 6/12、7/12 |
+| fixed h14 directional-z | 82,315 | 18,500 | 10,104,512 / 31,347,000 | 6.376 GiB | 62.31 / 11.47 / 0.031 s | scalar/field pass；channels 7/12、9/12 |
+| fixed h13 directional-z | 89,740 | 20,120 | 11,013,212 / 36,273,200 | 6.411 GiB | 59.86 / 13.34 / 0.033 s | scalar/field pass；channels 10/12、10/12 |
+| fixed h15 x-only | 87,195 | 19,680 | 10,728,434 / 33,056,800 | 6.590 GiB | 63.13 / 7.64 / 0.033 s | scalar/field pass；channels 5/12、6/12 |
+| h14 R5-slab bisect | 89,740 | 20,120 | 11,013,212 / 36,273,200 | 6.463 GiB | 60.07 / 13.57 / 0.035 s | scalar/field pass；channels 5/12、9/12 |
+| global p6/h14 diagnostic | 92,850 | 27,080 | 21,110,096 / 67,325,792 | 12.587 GiB pair | 89.48 / 25.36 / 0.063 s | channels 9/12、12/12；over cap |
 | p4-trace p4/p6-interior h10 | 88,994 | 21,824 | 8,184,464 / 42,888,832 | 6.072 GiB | 175.52 / 11.45 / 0.038 s | scalar/vector/orders/fields fail |
 | p5-trace p4/p6 N62 h10 | 89,755 | 35,000 | 20,140,928 / 101,062,900 | 9.271 GiB | 344.16 / 37.20 / 0.074 s | non-exact-sequence + accuracy fail |
 
@@ -48,6 +53,30 @@ exact preallocation 是独立工程正结果：
 
 used NNZ、factor NNZ 和物理结果不变，因此优化结论可信，但不能改变 accuracy
 分类。
+
+### Review V1 structured-h 与 trace 判别
+
+h15→h14→h13 的 z-direction 序列把通道通过数从 `6/7` 提升到
+`7/9`、再到 `10/10`，提供连续但未闭合的 topology/refinement response；
+它支持 z-resolution 相关候选原因，不单独证明 phase 机制或唯一因果。
+h13 仍失败：
+
+- power：`T(-4,0)_s`、`R(-4,0)_s`；
+- amplitude：`R(-5,0)_s`、`R(-4,0)_s`。
+
+x-only 退化到 5/6；y-only global-p5 mechanism control 保持 3/1，但不是
+same-space fixed-trace y 排除。q31 与 scaled buffer1 仍为 6/7，只覆盖这
+两个已测试 DtN 扰动。只二分最大 R5 slab 虽降低 aggregate error，却退化到
+5/9 并新增 `R(-7,0)_s` power failure，因此预先指定的 split lane 关闭；
+其他 node distributions 未被证明无效且未运行。
+
+global p6/h14 的 9/12 power、12/12 amplitude 是 same-mesh full-trace
+measured positive marginal；它不定位 missing-mode subset，也不建立 trace
+相对 mesh/DtN 的唯一或次级因果排序。92,850 DoF 超上限 2,850。当前仅有
+reference-cell complement/Riesz 和 recovered-dual coefficient proxy，没有
+physical Piola/Riesz、missing-mode Floquet orbit、actual enriched
+residual/DWR 或真实 active numbering。因此 selective trace 记为
+`capability_stop_not_run`，不是一个失败 PDE。
 
 ### h10 regionwise candidates
 
@@ -88,13 +117,16 @@ authority，仍为 `production_qualified=false`。
 - final p6 为 167,784 DoF，vector control pass 但 strict-R control fail。
 
 该记录不是 same-patch head-to-head cell authority。structured hexa 缺少
-hanging-node/transition conformity，tetra selected-p6 又未实现；结合
-classifier 的零 local-h 信号与既有 h50/h37.5 预算证据，Lane B 以
+hanging-node/transition conformity，tetra selected-p6 又未实现；结合既有
+h50/h37.5 预算证据，Task035 继承的 tetra local-h + selected-p6 组合以
 `stopped_by_gate_architecture_and_budget` 收口，不重复 Task035 heavy cases。
+classifier 的零 `h_refine` 分类不覆盖 Review V1 后来实测的 global
+directional-z topology/refinement response；两种证据的 scope 不同。
 
 ## Hybrid 决定
 
-四个主要候选都未通过完整 same-error Gate，因此：
+所有预算内恢复候选都未通过完整 same-error Gate；global p6/h14 又超预算，
+因此：
 
 ```text
 selected candidate = null

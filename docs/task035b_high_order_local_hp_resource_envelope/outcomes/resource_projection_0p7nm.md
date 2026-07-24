@@ -28,6 +28,10 @@ Task035b 只允许把通过完整 same-error Gate 的最佳 1–2 个候选接�
 |---|---:|---|---|---|
 | global p6/h15 | 84,492 | `<=90k`，12.000 GiB pair peak | scalar/field 通过；significant power 6/12、amplitude 8/12 | stopped |
 | fixed p5-trace/p6-interior h15 | 74,890 | preferred DoF；5.803 GiB | scalar/field 通过；significant power 6/12、amplitude 7/12 | stopped |
+| fixed directional-z h14 | 82,315 | 18,500 rows；6.376 GiB | scalar/field 通过；significant power 7/12、amplitude 9/12 | stopped |
+| fixed directional-z h13 | 89,740 | 20,120 rows；6.411 GiB | **预算内最佳测得点**；scalar/field 通过；significant power 10/12、amplitude 10/12 | stopped |
+| h14 R5-slab bisect | 89,740 | 20,120 rows；6.463 GiB | scalar/field 通过；significant power 5/12、amplitude 9/12，计数回退 | stopped |
+| global p6/h14 discriminator | 92,850 | 27,080 rows；12.587 GiB pair peak；超 cap 2,850 | scalar/field 通过；significant power 9/12、amplitude 12/12 | diagnostic only |
 | p4-trace regionwise h10 | 88,994 | rows/NNZ/factor/peak 显著下降 | R00/R/T/Aclosure、orders、field 全失败 | stopped |
 | p5-trace N62 h10 | 89,755 | 预算内物理减行 | low space 非 exact-sequence，且全部精度 Gate 失败 | stopped |
 
@@ -35,9 +39,44 @@ Task035b 只允许把通过完整 same-error Gate 的最佳 1–2 个候选接�
 normalized vector、significant orders、complex amplitudes、selected
 field/interface error、periodic/tag/orientation/geometry identity 必须同时通过。
 
+方向性 z 从 h15 的 `6/12 + 7/12` 推进到 h13 的
+`10/12 + 10/12`，但未达到 Review V1 不可放宽的 `12/12 + 12/12`。
+完整 p6 trace 在 h14 上把复振幅推进到 12/12，也仍有 3 个功率通道失败，
+而且超出 DoF 上限。R5 slab 二分则出现功率计数回退。因此既不能用 h13
+作为 selected `N_equiv,13.5`，也不能用 over-cap global p6/h14 替它获得
+accuracy credit。
+
+## Review V1 capability 与资源分支边界
+
+`significant_channel_reference_v1` 已冻结为 best-available same-code
+reference；其 `production_qualified=false`，且没有修改原 h10 p5→p6
+12 通道 acceptance bands。它为恢复候选提供固定比较坐标，不会自动产生
+Hybrid eligibility。
+
+物理 selective-trace audit 的状态是：
+
+```text
+status = capability_stop_not_run
+candidate_count = 0
+pde_run_count = 0
+```
+
+h14 完整 p6 trace 的增量为 10,535 DoF，而预算 headroom 只有 7,685；
+h13 增量为 11,468，而 headroom 只有 260。当前缺少 physical
+Piola/Riesz、Floquet-orbit phase pullback、真实 residual-weighted DWR 和
+active numbering，因此没有可用于资源模型的实际 selective-trace rows/NNZ/
+peak，也不能按比例从 global p6/h14 库存中扣除。
+
+condensed iterative 同样是 `capability_stop_not_run`，不是失败的 GMRES
+实测。`24 bytes/factor-NNZ + 8 bytes/row-pointer = 0.6241 GiB` 只是规划
+代理；非同时阶段峰值差 `2.8491 GiB` 不是 factor 上界。正式 iterative
+peak、Krylov/preconditioner 库存和 factor-free simultaneous lifecycle 均为
+`unknown/null`，故不得用于填充下文 component ledger。
+
 ## 继承的 Task034 current-layout authority
 
-Task034 resource model v2.1 仍是当前 Hybrid layout 的 stress-test authority。
+Task034 resource model v2.1 仍是当前 Hybrid layout 的 stress-test authority，
+其 authority 与数值均未因上述 Review V1 诊断而改变。
 它将 largest component、local subtotal、modal/runtime subtotal、cumulative
 component envelope、measured simultaneous peak 和 unknown predicted peak
 严格分开。0.7 nm 三个 current-layout stress scenarios 均有单组件超过
@@ -161,3 +200,10 @@ dense multi-RHS 分量按 `s^5` 外推，在 p2/h3、p3/h3、p4/h5 三种场景�
 - `docs/task034_workstation_wsl_adaptive_scalability/outcomes/resource_model_v2.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p6_h15_vs_h10_same_error_audit.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_directional_z_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_r5_slab_bisect_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_p6_h14_trace_discriminator.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_trace_lane_capability_gate.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/condensed_trace_iterative_capability_gate.json`

@@ -258,6 +258,100 @@ same-error Gate 不允许忽略 significant channels，因此没有进入 Hybrid
 fixed h15 的 tensor dedup + exact preallocation 将 PETSc mallocs 降至 0、
 build 降至 61.61 s，证明工程优化有效，但不改变 accuracy 分类。
 
+## Review V1：显著通道参考、伴随与根因假设判别
+
+`records/significant_channel_reference_v1.json` 已在不重跑既有 heavy
+authority 的前提下冻结 12 通道 reference v1。它保存逐通道 power、复振幅、
+magnitude、unwrapped phase、绝对/相对 spread、source SHA、mesh hash 与
+qualification；12/12 均有可审计 numerical band。该 reference 是
+best-available same-code convergence authority，不是 continuum truth，也没有
+改变 Review V1 冻结的 12 通道 acceptance Gate。
+
+`records/fixed_p5trace_p6interior_h15_channel_adjoints_verification_v2_mpi8.json`
+实际完成 16 个独立 Hermitian adjoint，覆盖 6 个失败功率目标及 5 个失败复振幅
+目标的 real/imag：
+
+- 16/16 direct-adjoint verification 通过；
+- 最大 direct-adjoint 相对误差 `2.514e-11`；
+- 最大 finite-difference 相对误差 `5.575e-7`；
+- 最大 adjoint residual `4.207e-13`；
+- adjoint 总时间 `10.334 s`，诊断运行峰值 `7.190 GiB`。
+
+当前 entity localization 是 recovered-dual coefficient sensitivity proxy，
+不是 enriched residual-weighted DWR。它没有提供 physical Piola/Riesz、
+missing-trace complement Schur solve 或 true active numbering，因而不能单独
+选择 p6 trace modes。
+
+DtN/port 根因假设判别保留了三类独立证据：
+
+| record | 判别结果 |
+|---|---|
+| `records/fixed_p5trace_p6interior_h15_dtn_q31_mpi8.json` | 更高 trace quadrature 无通道恢复，controlled negative |
+| `records/fixed_trace_h15_evanescent_buffer1_preflight_controlled_stop.json` | 未缩放 evanescent 坐标在 PDE 前安全停止 |
+| `records/fixed_p5trace_p6interior_h15_dtn_evanescent_buffer1_scaled_mpi8.json` | 安全缩放后仍为 6/12 power、7/12 amplitude，controlled negative |
+| `records/manufactured_rayleigh_port_authority_v1.json` | manufactured amplitude/phase/normalization algebra 通过 |
+| `records/dtn_port_phase_authority_v1.json` | phase convention 与 reference-plane 变换审计通过 |
+
+这些记录排除了已测试的 quadrature 和一个 bounded buffer 解释；manufactured
+authority 支持当前 port convention，但不能数学上排除所有共同的 port 误差。
+
+## Review V1：方向性 structured-h 恢复
+
+所有 formal PDE 均为 MPI8，且实际 topology、geometry/tag/orientation/Floquet
+identity 与完整 true residual 均通过：
+
+| candidate | topology | DoF / rows | matrix/factor NNZ | peak | 12通道 power / amplitude | 分类 |
+|---|---|---:|---:|---:|---:|---|
+| fixed h15 seed | `(6,2,10)` | 74,890 / 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | 6/12 / 7/12 | controlled negative |
+| z-only h14 | `(6,2,11)` | 82,315 / 18,500 | 10,104,512 / 31,347,000 | 6.376 GiB | 7/12 / 9/12 | positive signal, not candidate |
+| z-only h13 | `(6,2,12)` | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.411 GiB | 10/12 / 10/12 | best measured, still negative |
+| x-only h15 | `(7,2,10)` | 87,195 / 19,680 | 10,728,434 / 33,056,800 | 6.590 GiB | 5/12 / 6/12 | controlled negative |
+| y-only global-p5 control | `(6,3,10)` | 72,995 / 25,280 | 14,433,128 / 70,293,600 | 8.868 GiB pair | 3/12 / 1/12 | control negative |
+| global p6/h14 discriminator | `(6,2,11)` | 92,850 / 27,080 | 21,110,096 / 67,325,792 | 12.587 GiB pair | 9/12 / 12/12 | over DoF cap and power negative |
+| h14 R5-slab bisect | `(6,2,12)` | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.463 GiB | 5/12 / 9/12 | controlled negative |
+
+z-only h13 是当前最强测得候选，但仍失败 `T(-4,0)`、`R(-4,0)` power
+以及 `r(-5,0)`、`r(-4,0)` complex-amplitude Gate，不能接入 Hybrid。
+R5-slab 只二分一个最大 proxy slab 后反而使 `R(-7,0)` power 回退；该点已按
+预注册停止条件关闭指定 R5-slab split lane，不能继续盲扫该 split。其他
+node distributions 未被证明无效且未运行。x-only 是 same-space negative
+control；y-only 是 global-p5 mechanism control，不是 same-space fixed-trace
+y 排除。方向性证据支持 z-resolution 为当前最强预算内恢复杠杆，但没有证明
+z、mesh 或 numerical phase 是唯一根因。
+
+`records/channel_response_matrix_directionality_v1.json` 与
+`records/channel_phase_dispersion_diagnostic_v1.json` 进一步显示：h13 剩余
+三项失败的 power response 近似 rank 2、complex response rank 3。现有线性
+response 诊断不支持预期单一 scalar mesh knob 闭合全部通道；它不是实际组合
+PDE，也不证明所有其他 topology 无效。这是停止大规模盲扫的判别依据。
+
+## Review V1：选择性 trace 与迭代路径的 fail-closed 边界
+
+`records/missing_p6_trace_complement_preflight_v2.json` 证明 reference-cell
+p5/p6 missing trace complement 为 132 维：每条 edge 1 mode、每个 face
+20 modes；reference-entity Riesz 与 orientation-closed block algebra 通过。
+`records/inverse_trace_interior_budget_exchange_preflight.json` 则证明用降低
+cell-interior order 换取完整 p6 trace 的 p6-trace/p5-interior 与
+p6-trace/p4-interior 空间均不满足冻结的 local exact-sequence prerequisite，
+因此两条预算交换在 PDE 前关闭。
+
+`records/physical_trace_lane_capability_gate.json` 的
+`pass=true` 只表示 SHA-bound capability audit 有效。其正式状态是
+`capability_stop_not_run`，candidate/PDE count 均为 0；physical Piola/Riesz、
+missing-mode Floquet phase pullback、complement Schur solve、actual enriched
+residual-weighted DWR、selected exact-sequence closure 和 true active global
+numbering尚未闭合。因此 Lane B 是 `not_currently_executable`，不是被数值
+证伪，也没有授权从 coefficient proxy 选择 mode subset。
+
+`records/condensed_trace_iterative_capability_gate.json` 同样是
+`capability_stop_not_run`。它冻结了未来唯一低成本 screen 的合同：
+MPI8、GMRES restart 30、最多 200 iteration、unpreconditioned residual norm、
+至少 3 decades residual reduction、最终显式 reduced-system residual
+`<=1e-3`、peak `<=5.2 GiB`、无 factor、无 swap。当前 public path 仍是 direct
+provenance，且缺少 dedicated iterative hook、residual history 和 factor-free
+inventory，所以没有伪造迭代实测值。`24 byte/NNZ` 只是一项 planning proxy；
+不同阶段 peak 的差也不是 factor-memory upper bound。
+
 ## Lane B 与 Hybrid stop
 
 Task035 tetra h50 的顺序代理
@@ -267,9 +361,25 @@ strict-R-cost 偏向 p，最终 p6 为 167,784 DoF 且 strict-R control 失败�
 
 structured hexa 缺少 conforming hanging-node/transition implementation，
 tetra selected-p6 physical reduction 未实现，classifier v3 又无 target
-h-refine signal。因此 Lane B 为
-`stopped_by_gate_architecture_and_budget`；不存在 Hybrid-eligible candidate，
-Hybrid closure、M funnel 和 0.7 nm PDE 均未运行。
+h-refine signal。Review V1 后，方向性 Lane A 已以 h13 与 R5-slab stop
+耗尽预算内最少判别点；选择性 trace Lane B 停在上述真实 capability gap。
+不存在 Hybrid-eligible candidate，故 Hybrid closure、M funnel、external
+DtN funnel 和 0.7 nm resource model v3 均为
+`not_run_by_selected_candidate_gate`。
+
+## 不应无理由重复的 heavy authorities
+
+以下 MPI8 PDE 已有 source/artifact/hash-bound 证据；除非对应数值核心、输入
+identity 或 review Gate 改变，不应重跑：
+
+- global p4/p5/p6 h10 与 assembly-time condensation controls；
+- global p6/h15 与 fixed p5-trace/p6-interior h15；
+- h15 的 16-goal adjoint verification v2；
+- DtN q31、unsafe buffer preflight、scaled buffer-1；
+- z-only h14、z-only h13、x-only h15、y-only control；
+- global p5/p6 h14 discriminator；
+- h14 R5-slab bisect；
+- Task034 p4/h5、structured p4/h7.5 及 Task035 tetra heavy references。
 
 ## 复现
 
@@ -305,6 +415,20 @@ regionwise-p 负候选复现必须使用记录内绑定的 classifier/control SH
 --regionwise-p-control-record <P5_P6_CONTROL_RECORD>
 --regionwise-p-control-sha256 <P5_P6_CONTROL_SHA256>
 ```
+
+Review V1 的两个 capability audit 都是 serial、pure-postprocess，不启动 PDE。
+已冻结 record 的无写入复核使用对应 targeted tests：
+
+```bash
+python -m pytest -q \
+  src/test/test_132_task035b_physical_trace_lane_capability_gate.py \
+  src/test/test_133_task035b_condensed_iterative_capability_gate.py
+```
+
+正式 tracked evidence 只能写入 Case095 `records/`，且生成器使用 exclusive
+create。若未来补齐 physical trace 或 iterative capability，必须先提交干净
+源码，再以新的 source SHA 和新的 record 文件名运行；不得覆盖现有
+controlled-stop records。
 
 原始 mesh、field、长日志和 memory timeline 位于 gitignored
 `benchmarks/artifacts/task035/actual_global_r5/`；tracked JSON 通过 SHA-256

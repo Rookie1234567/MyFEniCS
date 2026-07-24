@@ -1,6 +1,6 @@
 # 项目开发进度：Task000–Task035b
 
-## 2026-07-24：Task035b high-p local-hp 资源包络收口
+## 2026-07-24：Task035b Review V1 显著通道恢复批次
 
 Task035b 只研究 Task034 fixed rectangular block grating；原 G1/G2/Phase F
 不规则几何全部为
@@ -14,22 +14,34 @@ Task035b 只研究 Task034 fixed rectangular block grating；原 G1/G2/Phase F
 | assembly optimization | latest p6 build 102.32 s；fixed h15 preallocation mallocs=0、build 61.61 s、peak 5.803 GiB | measured MPI8；tensor dedup/preallocation positive |
 | p6/h15 | 84,492 DoF，scalar/vector/field/resource pass，significant channels 6/12 power、8/12 amplitude | controlled negative |
 | fixed p5-trace/p6-interior h15 | 74,890 DoF preferred band；channels 6/12 power、7/12 amplitude | controlled negative |
+| significant channel reference v1 | 机械聚合既有高阶 authority；12/12 通道冻结 power/complex amplitude/magnitude/phase numerical bands | best-available same-code convergence authority；不是 continuum truth |
+| 失败通道 adjoint | 16/16 Hermitian adjoint、direct-adjoint 与 finite-difference verification 通过 | measured MPI8；entity localization 仍是 coefficient proxy，不是 actual DWR |
+| DtN/port 根因 | q31 与安全 scaled buffer-1 均无恢复；manufactured phase/normalization authority 通过 | 两个 independent negative + algebra authority；不宣称排除所有共同 port error |
+| Lane A directional h | z-only h14 7/12+9/12，z-only h13 10/12+10/12；x/y controls 负 | h13 89,740 DoF、20,120 rows、6.411 GiB，是最强实测但未通过 |
+| R5 slab 判别 | h14 最大 R5 slab 单次二分得到 89,740 DoF，退化为 5/12+9/12 | controlled negative；按预注册条件关闭 split-position scan |
+| global p6/h14 discriminator | complex amplitude 12/12，但 power 9/12 且 92,850 DoF | controlled negative；超过 90k cap 2,850 DoF |
+| Lane B selective trace | reference complement/Riesz 与预算审计完成；physical selection 所需能力未闭合 | `capability_stop_not_run`；candidate/PDE count=0，不把审计 pass 写成候选 pass |
+| condensed iterative parallel direction | h15 direct authority已绑定，未来唯一 GMRES screen contract 已冻结 | `capability_stop_not_run`；当前无 dedicated hook/history/factor-free inventory，不伪造实测 |
 | regionwise h10 | p4-trace N105 为有效 accuracy negative；p5-trace N62 缺 66 gradient modes | measured PDE + structural audit |
 | multi-goal DWR | independent R00/R/T adjoints 与 normalized R/T marker pass | measured MPI8 |
 | classifier v3 | 252-cell projection/decay；p-up102、p-keep150、h-refine0 | research-qualified；production_qualified=false |
-| Lane B | tetra 顺序代理无单一 h/p winner；hexa local-h 与 tetra selected-p6 架构不相交 | stopped_by_gate_architecture_and_budget |
 | Hybrid / 0.7 nm | eligible candidate=0；Hybrid、M funnel、0.7 nm PDE 未运行 | fail-closed；planning sensitivity only |
 
 最终分类为 `PARTIAL_WITH_CONTROLLED_NEGATIVES`。Task035b 解决了“rows 下降但
 内存不降”的工程问题：只有同时消除完整 matrix、inactive rows、tensor
 重复、preallocation 浪费和 factor 生命周期后，NNZ、factor、peak 和时间才
-按正确方向下降。剩余 blocker 是完整 diffraction-channel accuracy，不是
-环境、MPI、MUMPS 或 residual。
+按正确方向下降。Review V1 又证明预算内 structured z-resolution 是当前最强
+精度杠杆，但单一方向性 knob 仍不能闭合全部弱通道；选择性 trace 和
+factor-free iterative 的下一步受可明确实现的 research capability gap 阻挡。
+剩余 blocker 是完整 diffraction-channel accuracy 与相应算法能力，不是环境、
+MPI、MUMPS 或 residual，也没有需要用户处理的密码/ABI硬 blocker。
 
 详细证据见
 [`task035b_high_order_local_hp_resource_envelope/outcomes/summary.md`](task035b_high_order_local_hp_resource_envelope/outcomes/summary.md)
 与
-[`../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md`](../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md)。
+[`../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md`](../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md)，
+集中回应见
+[`task035b_high_order_local_hp_resource_envelope/response_v2.md`](task035b_high_order_local_hp_resource_envelope/response_v2.md)。
 
 ## 2026-07-21：Task034 WSL、固定几何高阶矩阵与 adaptive 决策收口
 
@@ -109,8 +121,8 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-21
-current branch = codex/20260717-task34-workstation-wsl-adaptive-scalability
+2026-07-24
+current branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
@@ -119,7 +131,7 @@ Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
 Task035 status = Review V6 research baseline; Task035b successor active
-Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; implementation and formal MPI8 research complete; review pending
+Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; Review V1 continuation complete; response_v2 pending review
 ```
 
 ## 1.1 2026-07-15 最新更新

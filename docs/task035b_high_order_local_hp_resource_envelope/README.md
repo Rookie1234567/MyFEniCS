@@ -30,6 +30,8 @@ Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和�
 
 - [`task.md`](task.md)
 - [`task_scope_addendum_v1.md`](task_scope_addendum_v1.md)
+- [`review_report_v1.md`](review_report_v1.md)
+- [`response_v2.md`](response_v2.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md`](../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md`](../task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/response_v5.md`](../task035_hcurl_goal_oriented_adaptivity/response_v5.md)
@@ -46,10 +48,23 @@ Task035b 继续采用 measured-evidence 驱动的连续自主研究：有正信�
 
 ## 当前结论与交付
 
-当前没有 Hybrid-eligible same-error candidate。global p6/h15 为 84,492 DoF，
-fixed p5-trace/p6-interior h15 为 74,890 DoF；两者 scalar/vector、selected
-field、residual 和资源均通过，但 significant diffraction channel Gate 失败。
-因此 Hybrid、M funnel 和 0.7 nm PDE 保持 `stopped_by_gate/not_run`。
+Review V1 连续批次已经冻结 12 通道 reference v1，并完成 16/16 独立
+Hermitian channel adjoint、mesh/topology、phase、trace 与 DtN/port
+根因假设判别和最小 MPI8 方向性恢复。当前最强预算内点为 fixed
+p5-trace/p6-interior h13：
+89,740 Full3D-equivalent DoF、20,120 rows、10/12 significant powers、
+10/12 complex amplitudes；它仍未达到强制 12/12 + 12/12。
+
+global p6/h14 提供了 same-mesh full-trace positive marginal（9/12 power、
+12/12 amplitude），但 92,850 DoF 超上限 2,850；reference-cell trace Riesz
+和 recovered-dual
+coefficient proxy 又不足以授权真实 selective-trace subset。physical
+trace lane 与 condensed iterative prototype 均以 SHA-bound
+`capability_stop_not_run` 保存，未用代理量或 raw PETSc option 冒充结果。
+
+因此当前仍没有 Hybrid-eligible same-error candidate；Hybrid closure、
+M funnel、external DtN funnel 和 0.7 nm resource model v3 保持
+`not_run_by_selected_candidate_gate`。
 
 - [`outcomes/summary.md`](outcomes/summary.md)
 - [`outcomes/regular_geometry_compression.md`](outcomes/regular_geometry_compression.md)
@@ -58,3 +73,4 @@ field、residual 和资源均通过，但 significant diffraction channel Gate �
 - [`outcomes/resource_projection_0p7nm.md`](outcomes/resource_projection_0p7nm.md)
 - [`outcomes/all_candidates.json`](outcomes/all_candidates.json)
 - [`outcomes/negative_results.md`](outcomes/negative_results.md)
+- [`outcomes/significant_channel_convergence.md`](outcomes/significant_channel_convergence.md)

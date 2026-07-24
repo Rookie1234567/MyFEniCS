@@ -10,6 +10,12 @@
 | physically reduced regionwise interior-p | implemented | 两个 actual MPI8 PDE，精度负 |
 | exact-sequence structural audit | pass/fail closed | p4/p6 组合 pass；p5-trace/p4-interior fail |
 | DWR R00/R/T multi-goal | pass | three independent Hermitian adjoints |
+| failed-channel adjoints | pass | 6 power + 10 amplitude-component Hermitian adjoints |
+| failed-channel entity localization | proxy only | recovered-dual coefficients；not residual-weighted DWR |
+| p5/p6 missing-trace complement/Riesz | reference-cell pass | physical Piola/Riesz 与 Floquet orbit 未闭合 |
+| physical selective p6 trace | `capability_stop_not_run` | subset/PDE/candidate count 均为 0 |
+| inverse p6-trace/p5-or-p4-interior | exact-sequence fail | 分别缺 101/149 gradient modes |
+| condensed trace iterative prototype | `capability_stop_not_run` | dedicated provenance/history/factor-free contract 缺失 |
 | target p4/p5/p6 smoothness signals | pass with limitations | actual p6 projection on 252 cells |
 | classifier v3 | research-qualified | 102 p-up、150 p-keep |
 | structured-hexa local-h | architecture unavailable | no hanging-node/transition constraint path |
@@ -89,7 +95,7 @@ cell_decision_authority=false`。它不能清除同 patch local h/p competition 
 所有 fixture 都是 `target_physics_evidence=false`。特别是 p6 离散投影不能
 排除所有高频 alias；目标网格尚无独立 phase-resolution authority。
 
-## Lane B 受控停止
+## Task035 inherited sequential h/p 受控停止
 
 structured hexa backend 没有 hanging-node/transition-cell conformity，不能在
 当前目标 mesh 上做一次真实 local-h；现有 periodic tetra 能做 local-h，但
@@ -107,3 +113,46 @@ stopped_by_gate_architecture_and_budget
 
 这不是 solver 失败，也不是 local-h 数学上无效；它只是当前代码架构和预算下
 没有可执行、可同误差资格化的组合。历史 Task035 heavy references 不重复运行。
+
+## Review V1 Lane A：方向性 structured-h
+
+Review V1 没有采用 hanging-node local-h，而是在全共形 structured hexa 上做
+最小方向性 topology 判别：
+
+| point | axis plan | DoF / rows | power / amplitude | disposition |
+|---|---|---:|---:|---|
+| fixed h15 seed | `(6,2,10)` | 74,890 / 16,880 | 6/12；7/12 | seed negative |
+| fixed h14 z | `(6,2,11)` | 82,315 / 18,500 | 7/12；9/12 | positive signal |
+| fixed h13 z | `(6,2,12)` | 89,740 / 20,120 | 10/12；10/12 | best budget-in negative |
+| fixed x-only | `(7,2,10)` | 87,195 / 19,680 | 5/12；6/12 | controlled negative |
+| frozen R5-slab bisect | `(6,2,12)` | 89,740 / 20,120 | 5/12；9/12 | count regression |
+
+z 序列提供连续、但未闭合的 topology/refinement response，是当前最强
+预算内恢复方向；它支持 z-resolution 相关候选原因，但不单独证明 phase
+机制或唯一主因。h13 已到 90k 边界仍缺 2 power + 2 amplitude；预先指定的
+R5 slab split 还让 `R(-7,0)_s` power 回退，因此该 split lane 关闭，其他
+node distributions 未被证明无效且未运行。
+
+## Review V1 Lane B：selective trace 能力边界
+
+现有正信号与缺口必须同时报告：
+
+- global p6/h14 从 fixed h14 的 7/9 提升到 9/12，且 amplitude 达 12/12；
+- full trace 增量为 615 edge + `496×20` face = 10,535 DoF，使总量
+  92,850，超上限 2,850；
+- p5trace/p6interior 到 global p6 的 reference-cell complement 为
+  12 edge blocks × 1 + 6 face blocks × 20 = 132 modes，reference-cell
+  orientation/Riesz 均通过；
+- 16 个实际 channel adjoint 和完整 retained-space dual recovery 已通过；
+- 但 localization 仍是 coefficient proxy，没有 actual enriched residual、
+  physical Riesz、missing-mode Floquet phase pullback、complement Schur
+  solve、selected-subset exact sequence 或真实 active numbering。
+
+因此 `physical_trace_lane_capability_gate.json` 的 `pass=true` 只表示
+fail-closed 审计完成；`candidate_count=0 / pde_run_count=0 /
+selection_not_authorized=true`。这不是“trace 无效”，也不是可以继续按 mode
+index 挑列的许可。
+
+inverse budget exchange 不能绕过预算：p6-trace/p5-interior 与
+p6-trace/p4-interior 的 local curl nullity 分别少 101、149 个 gradient
+modes，均在 PDE 前受控停止。

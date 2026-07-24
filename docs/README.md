@@ -44,7 +44,7 @@
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 reduced scope complete：p3/h5 闭合、p3/h7.5 fixed-p clear success、p4 resource negative、variable-p fail closed；adaptive/1 TiB 已移交 |
 | [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 final findings 由 Response V5 关闭，等待最终 file-level selective merge Gate |
 | [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 Review V6 research baseline：periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up 证据 |
-| [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b PARTIAL_WITH_CONTROLLED_NEGATIVES：exact high-p condensation/preallocation 与 classifier v3 完成；无 Hybrid-eligible same-error candidate |
+| [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b Review V1 continuation：reference v1、16-goal adjoint、方向性恢复与 capability stops 已完成；h13 为 10/12 power + 10/12 amplitude，仍无 Hybrid-eligible candidate |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -68,7 +68,7 @@
 | Task033 | high-order Floquet + Hybrid fixed-p feasibility | Review V6 reduced scope accepted；F0 完成；p3/h7.5 fixed-p clear success；adaptive 移交 |
 | Task034 | WSL + fixed-geometry high-order + controlled graded-h | PASS_WITH_QUALIFICATIONS；Review V4 pending；未合并 master |
 | Task035 | H(curl) field/goal-oriented adaptivity | Review V6 research baseline；Task035b 从其 stacked branch 继续 |
-| Task035b | high-order local-hp resource envelope | PARTIAL_WITH_CONTROLLED_NEGATIVES；Hybrid/resource v3 stopped by Gate |
+| Task035b | high-order local-hp resource envelope | PARTIAL_WITH_CONTROLLED_NEGATIVES；Review V1 最强 h13 仍为 10/12 + 10/12，Hybrid/resource v3 stopped by Gate |
 
 ## 当前任务
 
@@ -84,7 +84,7 @@
 | Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | reduced scope complete；original full scope partial by transfer；已按 exact manifest 选择性合并，whole branch 禁止 |
 | Task034 | `task034_workstation_wsl_adaptive_scalability/` | 实现完成；Review V4/用户 merge 授权待定；adaptive code 仍 research-only |
 | Task035 | `task035_hcurl_goal_oriented_adaptivity/` | Review V6 research baseline；不再继续该分支开发 |
-| Task035b | `task035b_high_order_local_hp_resource_envelope/` | 实现/正式 MPI8 研究完成；等待 review，ordinary default 不变 |
+| Task035b | `task035b_high_order_local_hp_resource_envelope/` | Review V1 连续研究批次完成并形成 `response_v2.md`；等待集中审阅，ordinary default 不变 |
 
 ## Task28 审计入口
 
@@ -174,6 +174,6 @@
 
 ## Task034 / Task035 入口
 
-Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](task034_workstation_wsl_adaptive_scalability/outcomes/summary.md)、[`all_model_results.json`](task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json)、Review V1–V3 与 Response V1–V4。Task035 当前只有 [`task.md`](task035_hcurl_goal_oriented_adaptivity/task.md) 和 [`H(curl) adaptive 理论笔记`](../notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md)，不代表可执行能力。
+Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](task034_workstation_wsl_adaptive_scalability/outcomes/summary.md)、[`all_model_results.json`](task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json)、Review V1–V3 与 Response V1–V4。Task035 已形成 [`README.md`](task035_hcurl_goal_oriented_adaptivity/README.md)、[`Review V6`](task035_hcurl_goal_oriented_adaptivity/review_report_v6.md)、[`Response V5`](task035_hcurl_goal_oriented_adaptivity/response_v5.md) 和 [`outcomes summary`](task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md) 所冻结的 periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up research baseline；其普通默认仍未提升，后续实现范围已转入 Task035b。
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 已从 Task032 clean master 建立独立执行分支；后续阶段继续绑定 clean SHA 与独立审阅。

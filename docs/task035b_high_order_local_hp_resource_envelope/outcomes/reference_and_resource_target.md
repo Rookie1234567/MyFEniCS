@@ -64,6 +64,35 @@ reference。COMSOL p6/h10 的 `173,882 DoF` 与 FEniCS 的
 峰值 `19.977 GiB`。这些时间不能与旧 source 上的未优化记录直接解释为纯
 p 阶倍率。
 
+## Significant channel reference v1
+
+Review V1 已将 12 个显著通道的 best-available same-code 参考冻结为：
+
+```text
+record = significant_channel_reference_v1.json
+record SHA-256 = 83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3
+reference center = global structured-hexa p6/h10 MPI8
+status = significant_channel_reference_v1_frozen
+canonical = false
+production_qualified = false
+new PDE run = false
+```
+
+12 个通道全部为 `n=0`、S polarization，并由
+`m=0,-1,-2,-4,-5,-7` 的上下端口各 6 个通道组成。机械聚合得到 11 个
+`reference_converged_monotone_p_and_h` 和 1 个
+`reference_converged_with_bounded_final_h_confirmation`；没有把它们提升为
+continuum truth。COMSOL 只提供 scalar `R00/R/T` 跨软件趋势，不含逐通道
+复振幅，因此没有进入 channel band。
+
+reference v1 的 numerical convergence bands 用于描述 p/h spread，但正式
+候选 Gate 仍使用预先冻结的 h10 p5→p6 absolute correction。也就是说：
+
+```text
+reference v1 frozen != production reference
+reference v1 frozen != threshold relaxation
+```
+
 ## Same-error 合同
 
 正式 scalar bands 来自同一 h10 p5/p6 control：
@@ -85,16 +114,35 @@ identity 和实测资源 Gate。DoF 或 scalar-only pass 不能补偿其他失�
 
 | target | contract | 当前状态 |
 |---|---|---|
-| minimum | `N_equiv<=90,000` | 两个 h15 和两个 regionwise 候选达到数值门槛 |
-| preferred | `65,000–75,000` | fixed p5-trace/p6-interior h15 为 74,890 |
+| minimum | `N_equiv<=90,000` | h15、directional h14/h13、R5-slab 和两个 regionwise 点达到 DoF 门槛，但均未通过完整精度 Gate |
+| preferred | `65,000–75,000` | fixed p5-trace/p6-interior h15 为 74,890，但只有 6/12 power、7/12 amplitude |
 | stretch | `<=60,000` 且所有 Gate 不放宽 | 未达到 |
 | Hybrid selection | 完整 same-error + resource pass | 0 个候选 |
 
-global p6/h15 的 84,492 DoF 和 fixed p5-trace/p6-interior h15 的 74,890
-DoF 都通过 scalar/vector、selected field、residual 和资源 Gate，但分别只有
-significant power `6/12`、amplitude `8/12` 与 power `6/12`、amplitude
-`7/12` 通过，因此均为 controlled negative。当前没有合法 selected
-`N_equiv,13.5`。
+Review V1 恢复序列的统一状态为：
+
+| candidate | Full3D-equivalent DoF / rows | matrix / factor NNZ | peak | significant power / amplitude | decision |
+|---|---:|---:|---:|---:|---|
+| global p6/h15 | 84,492 / 24,704 | 19,207,136 / 59,616,320 | 12.000 GiB pair | 6/12；8/12 | controlled negative |
+| fixed p5-trace/p6-interior h15 | 74,890 / 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | 6/12；7/12 | controlled negative |
+| fixed directional-z h14 | 82,315 / 18,500 | 10,104,512 / 31,347,000 | 6.376 GiB | 7/12；9/12 | positive z signal；仍 negative |
+| fixed directional-z h13 | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.411 GiB | **10/12；10/12** | 最佳预算内实测点；仍 negative |
+| h14 R5-slab bisect | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.463 GiB | 5/12；9/12 | count regression；预先指定 R5-slab lane closed |
+| global p6/h14 trace discriminator | 92,850 / 27,080 | 21,110,096 / 67,325,792 | 12.587 GiB pair | 9/12；12/12 | 超 cap 2,850；diagnostic only |
+
+这些点均通过 scalar/vector、selected field/interface、full residual 和
+geometry/tag/periodic/orientation identity。h13 仍失败
+`T(-4,0)`、`R(-4,0)` 功率以及 `r(-5,0)`、`r(-4,0)` 复振幅，因此
+“最佳测得”不等于 eligible。global p6/h14 说明完整 trace 对复振幅有正
+信号，但超过 90k 且功率仍未全过；physical selective-trace audit 又确认
+当前缺少把该信号转换为合法、物理减行 subset 所需的 DWR/Riesz/Floquet
+orbit/numbering 能力。当前仍没有合法 selected `N_equiv,13.5`。
+
+condensed iterative 方向只完成 SHA-bound capability audit：
+`status=capability_stop_not_run`、正式 MPI8 iterative PDE 为 0、
+`iterative_peak=null`。`24 B/factor-NNZ + 8 B/row-pointer` planning proxy
+和非同时阶段峰值差都不是 factor-only 内存 authority，不能用于降低当前
+资源目标。
 
 ## 0.7 nm 规划映射
 

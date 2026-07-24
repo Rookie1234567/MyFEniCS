@@ -1,5 +1,87 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-24 Review V1：方向性恢复与 trace 判别的资源闭环
+
+Review V1 的正式 MPI8 恢复批次没有改变已经接受的 condensation、Floquet
+物理消元、tensor dedup 和 exact preallocation 结论。它在同一
+`p5 trace + p6 cell interior` 路径上只改变 structured z topology，并保留
+完整矩阵/因子/峰值/时间库存：
+
+| MPI8 路径 | Full3D-equivalent DoF / rows | matrix NNZ；avg/max width | factor NNZ / fill | process-tree peak | build / MUMPS setup / solve | significant power / amplitude |
+|---|---:|---:|---:|---:|---:|---:|
+| fixed h15 seed `(6,2,10)` | 74,890 / 16,880 | 9,195,812；544.78/965 | 27,916,600 / 3.036 | 5.803 GiB | 61.613 / 6.557 / 0.0358 s | 6/12；7/12 |
+| fixed directional-z h14 `(6,2,11)` | 82,315 / 18,500 | 10,104,512；546.19/965 | 31,347,000 / 3.102 | 6.376 GiB | 62.312 / 11.474 / 0.0315 s | 7/12；9/12 |
+| fixed directional-z h13 `(6,2,12)` | 89,740 / 20,120 | 11,013,212；547.38/965 | 36,273,200 / 3.294 | 6.411 GiB | 59.855 / 13.342 / 0.0334 s | **10/12；10/12** |
+| h14 最大 R5 slab 二分 `(6,2,12)` | 89,740 / 20,120 | 11,013,212；547.38/965 | 36,273,200 / 3.294 | 6.463 GiB | 60.068 / 13.570 / 0.0348 s | 5/12；9/12 |
+| global p6/h14 `(6,2,11)` | 92,850 / 27,080 | 21,110,096；779.55/1,398 | 67,325,792 / 3.189 | 12.587 GiB pair | 89.482 / 25.356 / 0.0627 s | 9/12；12/12 |
+
+表中 fixed 各点的 peak 是对应单候选全程 process-tree authority；global
+p6/h14 的 `12.587 GiB` 是同一进程内 p5/p6 pair 的全程峰值，其隔离的
+p6 solve-stage peak 为 `11.803 GiB`，两种口径不得直接混称为相同生命周期。
+所有点均为 0 swap、full explicit true residual `<=1.47e-11`，标量、
+normalized vector 和 selected field/interface Gate 通过。
+
+方向性 z 是明确正信号，但 h13 仍在 `T(-4,0)`、`R(-4,0)` 功率和
+`r(-5,0)`、`r(-4,0)` 复振幅上失败。因此 h13 是当前
+`<=90,000` 预算内**最佳测得恢复点**，不是 same-error candidate。
+R5-slab 二分虽然沿用相同 DoF/rows/NNZ，却使功率通过数退化到 5/12，并
+新增 `R(-7,0)` 功率失败；预先指定的 R5-slab split lane 已作为 controlled
+negative 关闭，不得用其局部误差下降掩盖通道计数回退。其他 node
+distributions 未被证明无效且未运行。
+
+global p6/h14 是完整 trace 的物理判别点：相对 fixed h14 增加 10,535
+Full3D-equivalent DoF、8,580 rows、11,005,584 matrix NNZ 和 35,978,792
+factor NNZ；复振幅达到 12/12，但功率仍仅 9/12，且 DoF 超过 90k 上限
+2,850。global p6/h14 的 pair peak 与 fixed h14 单候选 peak 生命周期不同，
+不得用两者之差声称 trace 的独立峰值增量。该点给出 same-mesh full-trace
+measured positive marginal，不构成候选，不定位 missing-mode subset，也不
+建立 trace 相对 mesh/DtN 的因果排序或授权把完整 p6 trace 截成任意 subset。
+
+物理 selective-trace capability audit 进一步冻结了这个边界。h14 只有
+7,685 DoF headroom，而完整 p6 trace 需要 10,535；h13 只有 260 DoF
+headroom，而完整 trace 需要 11,468。当前实现具有 reference-cell
+complement/Riesz、实际 Hermitian channel adjoint 和 coefficient proxy，
+但缺少 physical Piola/Riesz、missing-mode Floquet orbit/phase pullback、
+complement Schur、真实 enriched residual-weighted DWR 和 active global
+numbering。因此：
+
+```text
+status = capability_stop_not_run
+candidate_count = 0
+pde_run_count = 0
+selection_not_authorized = true
+```
+
+该 `pass=true` 只表示 SHA-bound fail-closed audit 有效，不表示 Lane B
+物理失败、subset 已选出或 PDE 已运行。
+
+## Condensed trace iterative：只完成 capability audit
+
+16,880-row h15 direct authority 确实适合作为低存储迭代研究起点，但本轮没有
+把 raw PETSc 选项覆盖伪装成正式迭代结果。当前 PETSc build 中
+`hypre=false`，公开 solver profile 仍为 `preonly+lu/MUMPS`，并缺少专用
+condensed-iterative hook、迭代 residual history、factor-free inventory
+和正确 provenance/失败语义。因此正式状态为：
+
+```text
+status = capability_stop_not_run
+MPI8 iterative PDE run count = 0
+iterative peak = null
+factor-only peak contribution = unknown
+```
+
+对 27,916,600 factor NNZ 与 16,880 rows 使用既有
+`factor_nnz × 24 bytes + (rows + 1) × 8 bytes` 规划代理得到
+`670,133,448 bytes = 0.6241 GiB`；这不是精确 MUMPS factor 占用。direct
+authority 中两个非同时阶段峰值之差 `2.8491 GiB` 还包含与 factor 无关的
+分配和释放，不能写成 factor 上界，更不能写成预测迭代峰值。
+
+若未来补齐独立迭代 profile，只运行冻结的一次 MPI8 screen：
+GMRES restart 30、最多 200 iterations、unpreconditioned norm 至少下降
+3 decades、终端显式 reduced-system residual `<=1e-3`、0 swap、无 factor
+matrix 且 process-tree peak `<=5.2 GiB`。在该 screen 实测前，Task035b
+只有 direct baseline 和 capability stop，没有 factor-free memory positive。
+
 ## 2026-07-24 最终工程 authority：h15、tensor dedup 与 exact preallocation
 
 最新 MPI8 projection-signal run 同时提供了 h10 p5/p6 的当前工程 control。
