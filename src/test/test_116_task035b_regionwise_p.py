@@ -63,6 +63,41 @@ class Task035bRegionwisePTests(unittest.TestCase):
             66,
         )
 
+    def test_regionwise_exact_sequence_structural_record_is_preserved(
+        self,
+    ) -> None:
+        root = Path(__file__).resolve().parents[2]
+        record = json.loads(
+            (
+                root
+                / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+                / "records/regionwise_p_exact_sequence_structural_audit.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            record["status"],
+            "regionwise_space_structural_audit_complete",
+        )
+        self.assertTrue(record["pass"])
+        self.assertEqual(
+            record["generator_source"]["verified_clean_sha"],
+            "e418e96f05cba144b64e6a25e3b445838c9cfaf9",
+        )
+        self.assertEqual(
+            record["independent_exact_sequence_valid_accuracy_negative_count"],
+            1,
+        )
+        self.assertFalse(record["previous_two_negative_lane_closure_supported"])
+        p4 = record["candidates"]["p4_trace_p4_p6_interior"]
+        p5 = record["candidates"]["p5_trace_p4_low_p6_high"]
+        self.assertTrue(
+            p4["exact_sequence_valid_for_accuracy_interpretation"]
+        )
+        self.assertFalse(
+            p5["exact_sequence_valid_for_accuracy_interpretation"]
+        )
+        self.assertEqual(p5["missing_gradient_mode_count"], 66)
+
     def test_compact_control_is_completed_from_hashable_raw_summary(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             run_dir = Path(directory)

@@ -1,6 +1,6 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
-## 2026-07-24 p5-trace N62：资源继续下降、精度路线关闭
+## 2026-07-24 p5-trace N62：资源下降、非 exact-sequence 受控负结果
 
 第二个 physical local-p 候选使用 p5 shared trace、190-cell p4 interior 和
 按 `eta_p5p6` 排名选出的 62-cell p6 interior。这是 `<=90k` 合同内 p6
@@ -34,13 +34,19 @@ matrix 均未分配。
 | volume/interface complex-E | bands 0.4666%/0.4862% | 101.720%/101.039% | — |
 
 12 个 significant diffraction channels 的 power 和 complex amplitude Gate
-也失败。p5 trace 本身不能补偿 190 cells 缺失的 p5/p6 interior modes；
-该空间虽共形且 linear solve 精确，但不是 same-error 子空间。
+也失败。后续 local tensor de Rham 审计查明 `p5 trace + p4 interior`
+low space 的 expected gradient dimension 为 178，但 measured curl nullity
+只有 112，缺失 66 个 gradient modes。它虽共享 trace 且 linear solve
+精确，却没有通过 Maxwell 离散所需的 local exact-sequence prerequisite。
 
-结合此前 p4-trace N105 的独立精度负信号，fixed-mesh
-regionwise-interior-p `<=90k` lane 已关闭。N18 会从 N62 继续删除 44 个
-p6 interior blocks，因而不再无理由运行。正式记录：
+因此该 PDE 保留为 `controlled_negative_non_exact_sequence_space`，不能再
+作为与 p4-trace N105 独立的有效 accuracy negative。N18 使用相同的错误
+low space，仍不运行。fixed-mesh lane 只对新的 exact-sequence-conforming、
+物理减行 trace/local-p 构造重新开放；p4 fixed-trace 子路线保持关闭。正式
+记录：
 `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json`。
+结构审计：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p_exact_sequence_structural_audit.json`。
 
 ## 2026-07-24 真实 regionwise-p 候选：资源正信号、精度受控负结果
 

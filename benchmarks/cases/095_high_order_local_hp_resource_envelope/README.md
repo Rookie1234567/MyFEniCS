@@ -42,6 +42,7 @@
 | `records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json` | `6c113cbd6c3dfadd7399ec2d198f0d36bed7533d` | `actual_regionwise_p_controlled_negative` | 9.271 GiB |
 | `records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json` | `56310afa46465ae2e0316c957cf00fd385fa0997` | `target_goal_weighted_two_level_pass` | 15.485 GiB |
 | `records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json` | `ac31b6b62cee0185214f2f44a985024393535ea0` | `multigoal_hp_screening_pass` | lightweight |
+| `records/regionwise_p_exact_sequence_structural_audit.json` | `e418e96f05cba144b64e6a25e3b445838c9cfaf9` | `regionwise_space_structural_audit_complete` | lightweight |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -147,9 +148,22 @@ p4 interior，按 `eta_p5p6` 排名前 62 cells 保留 p6 interior。
 0.94396245/0.96089508/0.01608446/0.02302046`，normalized multi-goal
 error 为 `30187.729`，volume/interface complex-E errors 为
 `101.720%/101.039%`；全部 strict Gate 失败。它是预算内 high-interior
-最多的候选，因此不再运行更弱的 N18。两个独立 regionwise-p 精度负信号
-关闭当前 fixed-mesh local-interior lane；下一路线转 p5 base +
-multi-goal DWR + one local-h + selected p6。
+最多的候选，因此不再运行同一非 exact-sequence 空间的更弱 N18。
+
+后续 local polynomial de Rham 审计改变了对该负结果的解释：
+
+- `p4 trace + p4/p6 interior` 的 low/high curl nullity 为 `124/222`，
+  与 mixed scalar companion 的 expected gradient dimensions 完全一致；
+  它仍是有效的独立精度负结果，p4 trace 子路线保持关闭；
+- `p5 trace + p4 interior` 的 low-space expected gradient dimension 为
+  `178`，实测 curl nullity 只有 `112`，缺失 66 个 gradient modes；
+- `p5 trace + p6 interior` high space 为 `276/276`，问题仅在低空间。
+
+因此 N62 保留为 `controlled_negative_non_exact_sequence_space` 证据；
+小线性残差只证明该错误离散系统被准确求解，不能资格化其 Maxwell 空间。
+此前“两个独立精度负信号关闭全部 fixed-mesh lane”的依据不成立。lane 只对
+新的 exact-sequence-conforming、物理减行 trace/local-p 构造重新开放，
+不重跑 p5-trace/p4-interior。
 
 ## MPI8 same-mesh multi-goal DWR
 

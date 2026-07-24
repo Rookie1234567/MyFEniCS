@@ -14,8 +14,10 @@ Task035b 已冻结可信的同网格 global p4/p5/p6 controls，完成高阶 ent
 assembly-time exact cell condensation、MUMPS 生命周期优化、连续 p
 smoothness classifier、两个真实 physical regionwise-p 候选和 MPI8
 same-mesh `DWR_R00/R/T` authority。两个 regionwise-p 候选资源均显著改善，
-但 same-error Gate 明确失败，已作为 controlled-negative 保留；`<=90k`
-fixed-mesh regionwise-interior-p lane 已按两个独立精度负信号关闭。
+但 same-error Gate 明确失败，已作为 controlled-negative 保留。后续
+exact-sequence 审计确认只有 p4-trace N105 是有效 accuracy negative；
+p5-trace/p4-interior N62 缺失 66 个 gradient modes，属于
+non-exact-sequence space negative，不能作为第二个独立精度信号。
 
 ## 正式结果
 
@@ -25,7 +27,7 @@ fixed-mesh regionwise-interior-p lane 已按两个独立精度负信号关闭。
 | global p5 assembly-time | 101,815 | 35,000 | 20,140,928 / 98,588,300–101,062,900 | pair peak 10.590–20.581 GiB | 187.89–198.19 / 37.26–42.15 s | `9.87e-12–1.04e-11` | control |
 | global p6 assembly-time canonical | 173,802 | 51,272 | 41,989,040 / 211,651,232 | 15.964 GiB | 770.89 / 142.12 s | `1.36e-11` | accepted discrete baseline |
 | p4-trace, p4/p6-interior regionwise | **88,994** | **21,824** | **8,184,464 / 42,888,832** | **6.072 GiB** | **175.43 / 11.45 s** | `1.17e-11` | **controlled negative accuracy** |
-| p5-trace, p4-low/p6-high N62 | **89,755** | **35,000** | **20,140,928 / 101,062,900** | **9.271 GiB** | **344.16 / 37.20 s** | `1.57e-12` | **controlled negative accuracy** |
+| p5-trace, p4-low/p6-high N62 | **89,755** | **35,000** | **20,140,928 / 101,062,900** | **9.271 GiB** | **344.16 / 37.20 s** | `1.57e-12` | **controlled negative non-exact space** |
 | p4/p5 same-mesh multi-goal DWR | 53,084 / 101,815 | 53,164 / 101,895 | 24,730,144 / 79,436,433 matrix | 15.485 GiB | 98.72 / 553.89 assembly | `5.27e-12 / 2.04e-11` | **DWR authority pass** |
 
 pair peak 包含顺序执行的两个 field 生命周期，不冒充单个 p5/p6 阶段峰值。
@@ -75,9 +77,28 @@ p5-trace/p4-interior kernel。
 | selected interface complex-E | 101.039%, band 0.4862% | fail |
 
 candidate 的 `R00/R/T/Aclosure =
-0.94396245/0.96089508/0.01608446/0.02302046`。这是数值空间精度负结果，
-不是 linear solver 失败。N18 是 N62 的严格更小 high-interior 子集；在最强
-预算内候选已跨多个独立 Gate 严重失败后不再运行 N18。
+0.94396245/0.96089508/0.01608446/0.02302046`。它不是 linear solver
+失败，但后续结构审计证明也不是可用于评判 local-p 科学路线的合格 Maxwell
+空间。N18 复用同一 non-exact low space，故不再运行。
+
+## regionwise exact-sequence 结构审计
+
+对 custom hexa H(curl) polynomial curl map 做 pivoted-QR rank audit，并与
+mixed Q(trace-boundary) + Q(interior-bubble) scalar companion 的非恒定
+gradient dimension 比较：
+
+| space | expected gradients | measured curl nullity | status |
+|---|---:|---:|---|
+| p4 trace / p4 interior | 124 | 124 | pass |
+| p4 trace / p6 interior | 222 | 222 | pass |
+| p5 trace / p6 interior | 276 | 276 | pass |
+| p5 trace / p4 interior | 178 | 112 | **fail，missing 66** |
+
+由此，p4-trace N105 保持有效 controlled-negative，p4 fixed-trace 子路线
+关闭；N62 重分类为 `controlled_negative_non_exact_sequence_space`。此前
+“两个独立 accuracy negatives 关闭整个 fixed-mesh lane”不再成立。新
+preflight 已禁止再次启动该错误空间；只允许 exact-sequence-conforming、
+physically reduced trace/local-p 构造继续竞争。
 
 ## multi-goal DWR 与下一 lane
 
@@ -146,6 +167,7 @@ p5 base
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_wrong_control_preflight_failure.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p_exact_sequence_structural_audit.json`
 - ignored raw evidence:
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p4trace_p6interior_h10_pols_mpi8_20260724T061121Z/`
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p5trace_p4low_p6high_n62_h10_pols_mpi8_20260724T073056Z/`
