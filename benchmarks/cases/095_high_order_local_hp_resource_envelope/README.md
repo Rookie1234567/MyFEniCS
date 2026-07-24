@@ -43,6 +43,12 @@
 | `records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json` | `56310afa46465ae2e0316c957cf00fd385fa0997` | `target_goal_weighted_two_level_pass` | 15.485 GiB |
 | `records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json` | `ac31b6b62cee0185214f2f44a985024393535ea0` | `multigoal_hp_screening_pass` | lightweight |
 | `records/regionwise_p_exact_sequence_structural_audit.json` | `e418e96f05cba144b64e6a25e3b445838c9cfaf9` | `regionwise_space_structural_audit_complete` | lightweight |
+| `records/global_hexa_p5_p6_h15_assembly_time_condensed_independent_mpi8.json` | `5d75c5ed8ae0dd4382eccf0c47e22fce01391184` | same-error controlled negative | 12.000 GiB pair |
+| `records/global_hexa_p6_h15_vs_h10_same_error_audit.json` | `2f334425e20454f04d0edb5d9442708e7e38ea1e` | `controlled_negative_full_same_error_gate` | audit |
+| `records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json` | `7f61d554b0441d7b224c096aba402d3b3ac2baa6` | `actual_fixed_trace_controlled_negative` | 5.803 GiB |
+| `records/global_hexa_p5_p6_h10_projection_signals_mpi8.json` | `65bf6fb034d6717e190a5d1ab4a2025fb1c4ff3b` | 252-cell projection signals | 19.977 GiB pair |
+| `records/actual_sequential_h_vs_p_competition_mpi8.json` | generator `659c2a20c6ef56798098470cdeef4d7e45d50b4c` | sequential proxy pass with limitations | derived |
+| `records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v3.json` | `5f353e53b519016239374331207d13041b36676e` | v3 pass with limitations | lightweight |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -218,6 +224,52 @@ set。闭合后 126 个 x/y periodic mate groups 的 action 全部一致。
 local projection defect 和 actual local-h-vs-p cost competition 尚未取得。
 因此它是 screening 正结果和 hexa local-h 的零信号，不是最终 local-hp
 decision authority，也不能据此把未运行的 local-h 写成通过。
+
+## Projection signals 与 classifier v3
+
+最新 MPI8 p5/p6 authority 在 252/252 cells 上保存 physical hierarchical
+decay、coefficient diagnostic 和 p4/p5 projection defect：
+
+| signal | min | median | max |
+|---|---:|---:|---:|
+| physical p6/p5 hierarchical decay | 0.16201 | 0.16289 | 0.16783 |
+| coefficient decay，diagnostic only | 0.14644 | 0.14723 | 0.15164 |
+| p4 projection defect | 0.03436 | 0.03448 | 0.03848 |
+| p5 projection defect | 0.00655 | 0.00657 | 0.00755 |
+| p5/p4 defect decay | 0.18988 | 0.19086 | 0.19644 |
+
+v3 对 periodic transitive components 先聚合 worst signal/goal OR，再决策，
+结果为 `p-up=102 / p-keep=150 / h-refine=0 / p-down=0`。它还通过
+smooth/interface/corner/high-frequency synthetic fixtures 和 MPI2
+rank-local-invalid collective fail-fast。旧 signal record 不含后来新增的
+N1E/Piola、p5 round-trip 与 explicit hash-scope 字段，target phase-resolution
+和 same-patch h-vs-p authority 也缺失，因此仍为
+`production_qualified=false`。
+
+## h15 资源候选与最终 Gate
+
+| candidate | DoF / rows | matrix/factor NNZ | peak | same-error |
+|---|---:|---:|---:|---|
+| global p6/h15 | 84,492 / 24,704 | 19,207,136 / 59,616,320 | 12.000 GiB pair | channels 6/12 power、8/12 amplitude；negative |
+| fixed p5-trace/p6-interior h15 | 74,890 / 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | channels 6/12 power、7/12 amplitude；negative |
+
+两者 scalar/vector、selected fields、full residual 和资源均通过，但完整
+same-error Gate 不允许忽略 significant channels，因此没有进入 Hybrid。
+fixed h15 的 tensor dedup + exact preallocation 将 PETSc mallocs 降至 0、
+build 降至 61.61 s，证明工程优化有效，但不改变 accuracy 分类。
+
+## Lane B 与 Hybrid stop
+
+Task035 tetra h50 的顺序代理
+`base p5 -> one local-h p5 -> fixed-mesh p6` 显示 vector-cost 偏向 h、
+strict-R-cost 偏向 p，最终 p6 为 167,784 DoF 且 strict-R control 失败。
+它不是 same-patch cell-decision authority。
+
+structured hexa 缺少 conforming hanging-node/transition implementation，
+tetra selected-p6 physical reduction 未实现，classifier v3 又无 target
+h-refine signal。因此 Lane B 为
+`stopped_by_gate_architecture_and_budget`；不存在 Hybrid-eligible candidate，
+Hybrid closure、M funnel 和 0.7 nm PDE 均未运行。
 
 ## 复现
 

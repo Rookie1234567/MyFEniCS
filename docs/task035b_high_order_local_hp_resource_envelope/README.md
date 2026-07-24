@@ -4,7 +4,7 @@
 
 ```text
 task = Task035b
-status = in_progress
+status = PARTIAL_WITH_CONTROLLED_NEGATIVES
 execution_branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 stacked_base = Task035 Review V6 commit 81c714b236e9c362df8783382f1d40a5cd888cd5
 geometry_scope = Task034 fixed rectangular block grating only
@@ -43,3 +43,18 @@ Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和�
 Task035b 继续采用 measured-evidence 驱动的连续自主研究：有正信号就加深，有明确负信号就保留记录并切换路线。阶段名称用于组织，不是逐阶段等待审批的锁。
 
 普通默认、production 声明和 `master` 合并仍需最终审阅和用户确认。
+
+## 当前结论与交付
+
+当前没有 Hybrid-eligible same-error candidate。global p6/h15 为 84,492 DoF，
+fixed p5-trace/p6-interior h15 为 74,890 DoF；两者 scalar/vector、selected
+field、residual 和资源均通过，但 significant diffraction channel Gate 失败。
+因此 Hybrid、M funnel 和 0.7 nm PDE 保持 `stopped_by_gate/not_run`。
+
+- [`outcomes/summary.md`](outcomes/summary.md)
+- [`outcomes/regular_geometry_compression.md`](outcomes/regular_geometry_compression.md)
+- [`outcomes/local_hp_capability.md`](outcomes/local_hp_capability.md)
+- [`outcomes/high_p_memory_anatomy.md`](outcomes/high_p_memory_anatomy.md)
+- [`outcomes/resource_projection_0p7nm.md`](outcomes/resource_projection_0p7nm.md)
+- [`outcomes/all_candidates.json`](outcomes/all_candidates.json)
+- [`outcomes/negative_results.md`](outcomes/negative_results.md)

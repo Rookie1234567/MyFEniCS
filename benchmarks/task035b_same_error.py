@@ -25,15 +25,15 @@ def _git(*args: str) -> str:
 
 def _source_preflight(verified_clean_sha: str) -> dict:
     head = _git("rev-parse", "HEAD")
-    tracked_status = _git("status", "--short", "--untracked-files=no")
+    complete_status = _git("status", "--short", "--untracked-files=all")
     if head != str(verified_clean_sha):
         raise ValueError(
             f"verified clean SHA {verified_clean_sha} does not match HEAD {head}"
         )
-    if tracked_status:
+    if complete_status:
         raise ValueError(
-            "Task035b same-error audit requires clean tracked sources: "
-            + tracked_status
+            "Task035b same-error audit requires a fully clean worktree: "
+            + complete_status
         )
     return {
         "commit_sha": head,
@@ -52,7 +52,7 @@ def run(args: argparse.Namespace) -> dict:
         candidate_record_sha256=args.candidate_sha256,
     )
     head_after = _git("rev-parse", "HEAD")
-    status_after = _git("status", "--short", "--untracked-files=no")
+    status_after = _git("status", "--short", "--untracked-files=all")
     source.update(
         {
             "head_after_sha": head_after,

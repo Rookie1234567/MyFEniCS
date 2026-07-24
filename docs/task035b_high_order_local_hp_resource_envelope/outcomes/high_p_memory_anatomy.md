@@ -1,5 +1,63 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-24 最终工程 authority：h15、tensor dedup 与 exact preallocation
+
+最新 MPI8 projection-signal run 同时提供了 h10 p5/p6 的当前工程 control。
+它在不改变物理结果的前提下使用 tensor dedup 和 exact PETSc preallocation：
+
+| h10 metric | p5 | p6 |
+|---|---:|---:|
+| FE DoF / active rows | 101,815 / 35,000 | 173,802 / 51,272 |
+| matrix / factor NNZ | 20,140,928 / 101,062,900 | 41,989,040 / 202,441,352 |
+| condensed build | 24.72 s | 102.32 s |
+| MUMPS setup / solve | 36.48 / 0.077 s | 102.54 / 0.167 s |
+| solver elapsed | 68.43 s | 227.61 s |
+
+完整 p5/p6 + projection/localization 总时长 `324.783 s`、process-tree peak
+`19.977 GiB`、0 swap。与旧 assembly-time pair 的 `1202.851 s` 相比，
+当前加速来自 tensor reuse、批量路径和 preallocation，不能解释为仅由矩阵
+rows 变化造成。
+
+h15 global p6 首次把 Full3D-equivalent DoF 降至 84,492：
+
+| h15 global p6 | value |
+|---|---:|
+| FE DoF / active rows | 84,492 / 24,704 |
+| matrix / factor NNZ | 19,207,136 / 59,616,320 |
+| average / maximum row width | 777.48 / 1,398 |
+| factor fill | 3.104 |
+| p6-stage / pair peak | 10.958 / 12.000 GiB |
+| build / MUMPS setup / solve | 396.93 / 21.53 / 0.057 s |
+| p6 elapsed | 446.71 s |
+| full explicit residual | `7.87e-12` |
+
+相对 h10 global p6 的 DoF/rows/matrix-NNZ/factor-NNZ 分别压缩
+`2.057x/2.075x/2.186x/3.401x`。但 significant diffraction power
+只有 `6/12`、complex amplitude `8/12` 通过，因此它是
+`controlled_negative_full_same_error_gate`，不是 selected candidate。
+
+同一 h15 mesh 上，fixed p5 trace + p6 interior 进一步得到 74,890 DoF：
+
+| fixed p5-trace/p6-interior h15 | original | tensor dedup | dedup + exact preallocation |
+|---|---:|---:|---:|
+| used matrix NNZ | 9,195,812 | 9,195,812 | 9,195,812 |
+| allocated / unused NNZ | 12,694,691 / 3,498,879 | 12,694,691 / 3,498,879 | **9,484,580 / 288,768** |
+| PETSc mallocs | 13,856 | 13,856 | **0** |
+| factor NNZ | 27,916,600 | 27,916,600 | 27,916,600 |
+| build | 231.15 s | 83.71 s | **61.61 s** |
+| total elapsed | 269.72 s | 121.65 s | **95.96 s** |
+| process-tree peak | 6.105 GiB | 6.001 GiB | **5.803 GiB** |
+
+它处于 65k–75k 优选带，且 relative h10-control 的 scalar/vector 与 frozen
+field probes 通过；但 significant power/amplitude 只有 `6/12`、`7/12`
+通过。exact preallocation 是明确工程正结果，却不改变
+`actual_fixed_trace_controlled_negative` 的科学分类。
+
+当前结论是：rows 较少但内存较高并非理论必然。真正移除完整 matrix、
+inactive trace/interior rows、重复 tensor、preallocation 浪费和 factor
+生命周期后，NNZ、factor、peak 与时间都下降；剩余 blocker 是 diffraction
+channel 精度，而不是 MUMPS 内存异常。
+
 ## 2026-07-24 p5-trace N62：资源下降、非 exact-sequence 受控负结果
 
 第二个 physical local-p 候选使用 p5 shared trace、190-cell p4 interior 和

@@ -43,7 +43,8 @@
 | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | Task032 新本地目录迁移、Hybrid FEM–Modal direct 路线、内存约束和执行入口 |
 | [`task033_high_order_floquet_hybrid_hp_adaptivity/README.md`](task033_high_order_floquet_hybrid_hp_adaptivity/README.md) | Task033 reduced scope complete：p3/h5 闭合、p3/h7.5 fixed-p clear success、p4 resource negative、variable-p fail closed；adaptive/1 TiB 已移交 |
 | [`task034_workstation_wsl_adaptive_scalability/README.md`](task034_workstation_wsl_adaptive_scalability/README.md) | Task034 PASS_WITH_QUALIFICATIONS：WSL、Case093、p3/h3+p4/h5 closure、representative MPI、graded-h negative；Review V4 final findings 由 Response V5 关闭，等待最终 file-level selective merge Gate |
-| [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 planning package only；须待 Task034 最终 selective merge 后从 clean master 启动 |
+| [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 Review V6 research baseline：periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up 证据 |
+| [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b PARTIAL_WITH_CONTROLLED_NEGATIVES：exact high-p condensation/preallocation 与 classifier v3 完成；无 Hybrid-eligible same-error candidate |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -66,7 +67,8 @@
 | Task032 | Hybrid FEM–Modal direct baseline | `hybrid_direct_engineering_success` at 13.5 nm；Review V2 PASS_WITH_QUALIFICATIONS；允许选择性合并；h2 not_run |
 | Task033 | high-order Floquet + Hybrid fixed-p feasibility | Review V6 reduced scope accepted；F0 完成；p3/h7.5 fixed-p clear success；adaptive 移交 |
 | Task034 | WSL + fixed-geometry high-order + controlled graded-h | PASS_WITH_QUALIFICATIONS；Review V4 pending；未合并 master |
-| Task035 | H(curl) field/goal-oriented adaptivity | planning package only；execution not started |
+| Task035 | H(curl) field/goal-oriented adaptivity | Review V6 research baseline；Task035b 从其 stacked branch 继续 |
+| Task035b | high-order local-hp resource envelope | PARTIAL_WITH_CONTROLLED_NEGATIVES；Hybrid/resource v3 stopped by Gate |
 
 ## 当前任务
 
@@ -81,7 +83,8 @@
 | Task032 | `task032_hybrid_fem_modal_direct_baseline/` | Review V2 PASS_WITH_QUALIFICATIONS；按 manifest 选择性合并获批 |
 | Task033 | `task033_high_order_floquet_hybrid_hp_adaptivity/` | reduced scope complete；original full scope partial by transfer；已按 exact manifest 选择性合并，whole branch 禁止 |
 | Task034 | `task034_workstation_wsl_adaptive_scalability/` | 实现完成；Review V4/用户 merge 授权待定；adaptive code 仍 research-only |
-| Task035 | `task035_hcurl_goal_oriented_adaptivity/` | 仅任务书/理论规划；Task034 最终 selective merge 前不得启动 |
+| Task035 | `task035_hcurl_goal_oriented_adaptivity/` | Review V6 research baseline；不再继续该分支开发 |
+| Task035b | `task035b_high_order_local_hp_resource_envelope/` | 实现/正式 MPI8 研究完成；等待 review，ordinary default 不变 |
 
 ## Task28 审计入口
 

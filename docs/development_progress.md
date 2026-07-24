@@ -1,4 +1,35 @@
-# 项目开发进度：Task000–Task034
+# 项目开发进度：Task000–Task035b
+
+## 2026-07-24：Task035b high-p local-hp 资源包络收口
+
+Task035b 只研究 Task034 fixed rectangular block grating；原 G1/G2/Phase F
+不规则几何全部为
+`out_of_scope_by_user / not_run / not_a_completion_gate`。
+
+| 主线 | 结果 | 数据身份 / 边界 |
+|---|---|---|
+| p4/p5/p6 baseline | 同一 h10 hexa mesh/hash 上资格化；p6 为 173,802 FE DoF、51,272 active rows | measured MPI8；best available discrete，不是 continuum |
+| high-p condensation | assembly-time exact cell Schur + Floquet slave elimination；full p6 matrix 不再分配 | measured；opt-in research path |
+| memory lifecycle | p6 full 35.024 GiB 降至 isolated 15.964 GiB；factor release/heap trim 后后处理不再叠峰 | measured process-tree；ordinary default unchanged |
+| assembly optimization | latest p6 build 102.32 s；fixed h15 preallocation mallocs=0、build 61.61 s、peak 5.803 GiB | measured MPI8；tensor dedup/preallocation positive |
+| p6/h15 | 84,492 DoF，scalar/vector/field/resource pass，significant channels 6/12 power、8/12 amplitude | controlled negative |
+| fixed p5-trace/p6-interior h15 | 74,890 DoF preferred band；channels 6/12 power、7/12 amplitude | controlled negative |
+| regionwise h10 | p4-trace N105 为有效 accuracy negative；p5-trace N62 缺 66 gradient modes | measured PDE + structural audit |
+| multi-goal DWR | independent R00/R/T adjoints 与 normalized R/T marker pass | measured MPI8 |
+| classifier v3 | 252-cell projection/decay；p-up102、p-keep150、h-refine0 | research-qualified；production_qualified=false |
+| Lane B | tetra 顺序代理无单一 h/p winner；hexa local-h 与 tetra selected-p6 架构不相交 | stopped_by_gate_architecture_and_budget |
+| Hybrid / 0.7 nm | eligible candidate=0；Hybrid、M funnel、0.7 nm PDE 未运行 | fail-closed；planning sensitivity only |
+
+最终分类为 `PARTIAL_WITH_CONTROLLED_NEGATIVES`。Task035b 解决了“rows 下降但
+内存不降”的工程问题：只有同时消除完整 matrix、inactive rows、tensor
+重复、preallocation 浪费和 factor 生命周期后，NNZ、factor、peak 和时间才
+按正确方向下降。剩余 blocker 是完整 diffraction-channel accuracy，不是
+环境、MPI、MUMPS 或 residual。
+
+详细证据见
+[`task035b_high_order_local_hp_resource_envelope/outcomes/summary.md`](task035b_high_order_local_hp_resource_envelope/outcomes/summary.md)
+与
+[`../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md`](../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md)。
 
 ## 2026-07-21：Task034 WSL、固定几何高阶矩阵与 adaptive 决策收口
 
@@ -87,7 +118,8 @@ Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 pass
 Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
-Task035 status = planning package only; execution not started
+Task035 status = Review V6 research baseline; Task035b successor active
+Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; implementation and formal MPI8 research complete; review pending
 ```
 
 ## 1.1 2026-07-15 最新更新
