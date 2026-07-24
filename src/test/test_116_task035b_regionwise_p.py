@@ -159,6 +159,81 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertFalse(record["diffraction_channel_comparison"]["pass"])
         self.assertFalse(record["selected_field_interface_error_gate"]["pass"])
 
+    def test_formal_hexa_p4_p5_multi_goal_dwr_record_is_preserved(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        record = json.loads(
+            (
+                root
+                / "benchmarks/cases/095_high_order_local_hp_resource_envelope"
+                / "records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(record["status"], "target_goal_weighted_two_level_pass")
+        self.assertTrue(record["qualification"]["pass"])
+        self.assertEqual(record["qualification"]["failures"], [])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "56310afa46465ae2e0316c957cf00fd385fa0997",
+        )
+        self.assertTrue(record["source"]["stable_and_clean_after"])
+        resource = record["resource_authority"]
+        self.assertEqual(resource["max_observed_worker_rank_count"], 8)
+        self.assertEqual(resource["max_process_tree_swap_mb"], 0.0)
+        self.assertAlmostEqual(resource["memory_authority_gib"], 15.484783172607422)
+
+        coarse = record["coarse"]
+        enriched = record["enriched"]
+        self.assertEqual((coarse["degree"], enriched["degree"]), (4, 5))
+        self.assertEqual(
+            (coarse["num_mesh_cells"], enriched["num_mesh_cells"]),
+            (252, 252),
+        )
+        self.assertLessEqual(coarse["linear_system_relative_residual"], 1.0e-9)
+        self.assertLessEqual(enriched["linear_system_relative_residual"], 1.0e-9)
+        self.assertLessEqual(
+            record["DWR"]["residual"][
+                "enriched_solution_relative_residual_recomputed"
+            ],
+            1.0e-9,
+        )
+
+        expected_marked_counts = {
+            "R00_total": 84,
+            "R_total": 84,
+            "T_total": 78,
+        }
+        for goal, expected_count in expected_marked_counts.items():
+            report = record["DWR"]["goals"][goal]
+            self.assertEqual(report["marking"]["count"], expected_count)
+            self.assertGreaterEqual(report["marking"]["captured_fraction"], 0.5)
+            self.assertAlmostEqual(report["absolute_effectivity"], 1.0, places=9)
+            self.assertEqual(
+                len(report["marked_canonical_cell_ids"]),
+                expected_count,
+            )
+            self.assertEqual(
+                report["cell_indicator_snapshot"]["cell_count"],
+                252,
+            )
+
+        combined = record["DWR"]["combined_relative_R_T"]
+        normalized = record["DWR"]["tolerance_normalized_R_T"]
+        self.assertEqual(combined["marking"]["count"], 81)
+        self.assertEqual(normalized["marking"]["count"], 78)
+        self.assertGreaterEqual(normalized["marking"]["captured_fraction"], 0.5)
+        self.assertEqual(
+            normalized["normalization_authority"]["record_path"],
+            "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi"
+            "/records/convergence_summary.json",
+        )
+        self.assertTrue(record["DWR"]["adjoint_qualification"]["pass"])
+        self.assertEqual(
+            record["DWR"]["adjoint_qualification"]["official_goals"],
+            ["R00_total", "R_total", "T_total"],
+        )
+        self.assertEqual(record["R5_control"]["marking"]["count"], 63)
+        self.assertTrue(record["R5_control"]["correction_energy"])
+
     def test_p4_trace_p6_interior_custom_element_contains_p4(self) -> None:
         reduced = create_reduced_trace_hcurl_element(4, 6)
         audit = reduced.audit

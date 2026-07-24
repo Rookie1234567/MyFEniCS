@@ -40,6 +40,7 @@
 | `records/same_mesh_p4_p5_p6_r5_hp_classifier_mpi8.json` | record commit `650fc141` | `same_mesh_hp_classifier_pass` | lightweight |
 | `records/regionwise_p4trace_p6interior_h10_mpi8.json` | `eb1742dde4d31c54cf66fc5d2d1d37203f9f7e34` | `actual_regionwise_p_controlled_negative` | 6.072 GiB |
 | `records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json` | `6c113cbd6c3dfadd7399ec2d198f0d36bed7533d` | `actual_regionwise_p_controlled_negative` | 9.271 GiB |
+| `records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json` | `56310afa46465ae2e0316c957cf00fd385fa0997` | `target_goal_weighted_two_level_pass` | 15.485 GiB |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -148,6 +149,34 @@ error 为 `30187.729`，volume/interface complex-E errors 为
 最多的候选，因此不再运行更弱的 N18。两个独立 regionwise-p 精度负信号
 关闭当前 fixed-mesh local-interior lane；下一路线转 p5 base +
 multi-goal DWR + one local-h + selected p6。
+
+## MPI8 same-mesh multi-goal DWR
+
+同一 252-cell hexa h10 网格上的 p4/p5 pair 已完成三个独立 Hermitian
+adjoint：`R00_total`、`R_total`、`T_total`。p4/p5 full explicit true
+residual 分别为 `5.273e-12 / 2.038e-11`，三目标 direct-adjoint 与
+finite-difference 相对误差均在 `2.4e-10` 以内；DWR absolute effectivity
+均与 1 的差小于 `1.7e-11`。
+
+| indicator, theta=0.5 | marked cells | captured fraction | 与 R5 的 Jaccard |
+|---|---:|---:|---:|
+| strict `DWR_R00` | 84 | 0.5055 | 0.6897 |
+| strict `DWR_R` | 84 | 0.5059 | 0.6897 |
+| `DWR_T` | 78 | 0.5160 | 0.8077 |
+| relative `R/T` multi-goal | 81 | 0.5091 | 0.7778 |
+| tolerance-normalized `R/T` multi-goal | 78 | 0.5126 | 0.8077 |
+| R5 correction energy | 63 | 0.5115 | — |
+
+tolerance normalization 绑定 Case093 structured p4/h7.5 相对 p4/h5 的独立
+`R/T/A_volume` error authority。normalized DWR 的 78 cells 包含全部 63 个
+R5 marked cells；因此它比只优化 `R_total` 更适合作为下一步 one-cycle
+local-h 的研究 marker，但 marker 仍只是 classifier 输入，不等价于已完成
+网格变异。
+
+该 pair 总时长 877.03 s，simultaneous process-tree peak 15.485 GiB，
+0 swap。p5 阶段 645.13 s 中 base matrix assembly 为 553.89 s，
+MUMPS setup/solve 为 78.61/0.17 s，再次确认当前高阶时间瓶颈是 assembly，
+不是直接法回代。
 
 ## 复现
 

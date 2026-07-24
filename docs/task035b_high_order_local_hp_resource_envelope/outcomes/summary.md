@@ -12,9 +12,10 @@ irregular_geometry = out_of_scope_by_user / not_run / not_a_completion_gate
 
 Task035b 已冻结可信的同网格 global p4/p5/p6 controls，完成高阶 entity DoF、
 assembly-time exact cell condensation、MUMPS 生命周期优化、连续 p
-smoothness classifier 和两个真实 physical regionwise-p 候选。两个候选资源
-均显著改善，但 same-error Gate 明确失败，已作为 controlled-negative 保留；
-`<=90k` fixed-mesh regionwise-interior-p lane 已按两个独立精度负信号关闭。
+smoothness classifier、两个真实 physical regionwise-p 候选和 MPI8
+same-mesh `DWR_R00/R/T` authority。两个 regionwise-p 候选资源均显著改善，
+但 same-error Gate 明确失败，已作为 controlled-negative 保留；`<=90k`
+fixed-mesh regionwise-interior-p lane 已按两个独立精度负信号关闭。
 
 ## 正式结果
 
@@ -25,6 +26,7 @@ smoothness classifier 和两个真实 physical regionwise-p 候选。两个候�
 | global p6 assembly-time canonical | 173,802 | 51,272 | 41,989,040 / 211,651,232 | 15.964 GiB | 770.89 / 142.12 s | `1.36e-11` | accepted discrete baseline |
 | p4-trace, p4/p6-interior regionwise | **88,994** | **21,824** | **8,184,464 / 42,888,832** | **6.072 GiB** | **175.43 / 11.45 s** | `1.17e-11` | **controlled negative accuracy** |
 | p5-trace, p4-low/p6-high N62 | **89,755** | **35,000** | **20,140,928 / 101,062,900** | **9.271 GiB** | **344.16 / 37.20 s** | `1.57e-12` | **controlled negative accuracy** |
+| p4/p5 same-mesh multi-goal DWR | 53,084 / 101,815 | 53,164 / 101,895 | 24,730,144 / 79,436,433 matrix | 15.485 GiB | 98.72 / 553.89 assembly | `5.27e-12 / 2.04e-11` | **DWR authority pass** |
 
 pair peak 包含顺序执行的两个 field 生命周期，不冒充单个 p5/p6 阶段峰值。
 global p6 canonical 与 regionwise candidate 使用独立 MPI8 process-tree
@@ -77,7 +79,7 @@ candidate 的 `R00/R/T/Aclosure =
 不是 linear solver 失败。N18 是 N62 的严格更小 high-interior 子集；在最强
 预算内候选已跨多个独立 Gate 严重失败后不再运行 N18。
 
-## classifier 与下一 lane
+## multi-goal DWR 与下一 lane
 
 同网格 classifier 在 252 cells 上得到：
 
@@ -87,6 +89,23 @@ candidate 的 `R00/R/T/Aclosure =
 | p-keep | 147 |
 | p-up | 105 |
 | h-refine | 0 |
+
+新增的正式 MPI8 p4/p5 DWR authority 使用三个独立 Hermitian adjoint，
+三目标 effectivity 与 1 的最大差小于 `1.7e-11`：
+
+| marker, theta=0.5 | cells | captured | R5 overlap |
+|---|---:|---:|---:|
+| strict R00 | 84 | 0.5055 | Jaccard 0.6897 |
+| strict R | 84 | 0.5059 | Jaccard 0.6897 |
+| T | 78 | 0.5160 | Jaccard 0.8077 |
+| relative R/T multi-goal | 81 | 0.5091 | Jaccard 0.7778 |
+| tolerance-normalized R/T | 78 | 0.5126 | Jaccard 0.8077 |
+| R5 | 63 | 0.5115 | normalized DWR contains 63/63 |
+
+tolerance-normalized marker 使用 Case093 structured p4/h7.5 component-error
+authority，并保留 strict R00 独立 audit，避免只优化 `R_total`。该 formal
+pair 总时长 877.03 s、process-tree peak 15.485 GiB、0 swap；p5 base
+assembly 553.89 s，MUMPS setup/solve 78.61/0.17 s。
 
 两条 fixed-mesh regionwise-interior 路线都已关闭。下一研究路线按任务书
 Lane B 转为：
@@ -111,14 +130,16 @@ p5 base
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_postprocess_failure.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_wrong_control_preflight_failure.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json`
 - ignored raw evidence:
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p4trace_p6interior_h10_pols_mpi8_20260724T061121Z/`
   - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_regionwise_p5trace_p4low_p6high_n62_h10_pols_mpi8_20260724T073056Z/`
+  - `benchmarks/artifacts/task035/actual_global_r5/hexahedron_p4_p5_h10_pols_mpi8_20260724T075022Z_goal_dwr_only_theta0p5/`
 
 ## 尚未完成
 
 - >=2x or <=90k 的 same-error positive candidate；
-- 同网格 `DWR_R00(K)`、`DWR_R(K)`、`DWR_T(K)` 与 multi-goal classifier；
+- DWR 与 p4/p5/p6 correction、material/interface tags 的 classifier v2；
 - p5 base + one local-h + selected p6 Lane B；
 - best 1–2 candidates 的 Hybrid closure；
 - 0.7 nm / 2 TiB resource model v3 更新；
