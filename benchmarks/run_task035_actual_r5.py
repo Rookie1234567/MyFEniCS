@@ -736,6 +736,179 @@ def _preflight_artifact_evidence(
     }
 
 
+def _solve_artifact_file_evidence(
+    path: Path,
+    *,
+    run_dir: Path,
+) -> dict[str, Any]:
+    """Hash one raw solve artifact without permitting path escape."""
+
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(run_dir.resolve())
+    except ValueError as error:
+        raise ValueError(
+            f"solve artifact escaped the run directory: {resolved}"
+        ) from error
+    return {
+        "path": _path_from_root(resolved),
+        "sha256": _sha256(resolved),
+        "size_bytes": resolved.stat().st_size if resolved.is_file() else None,
+    }
+
+
+def _global_pair_solve_artifact_manifest(
+    *,
+    run_dir: Path,
+    result: dict[str, Any],
+    coarse_degree: int,
+    enriched_degree: int,
+    mpi_size: int,
+) -> dict[str, Any]:
+    """Bind summaries, DtN orders, and field shards used by postprocessors."""
+
+    levels: dict[str, Any] = {}
+    all_files: list[dict[str, Any]] = []
+    for result_key, directory_name, degree in (
+        ("coarse", f"coarse_p{int(coarse_degree)}", coarse_degree),
+        ("enriched", f"enriched_p{int(enriched_degree)}", enriched_degree),
+    ):
+        directory = (run_dir / directory_name).resolve()
+        worker_summary = (
+            (result.get(result_key) or {}).get("summary") or {}
+        )
+        summary_path = directory / "run_summary.json"
+        orders_filename = worker_summary.get("dtn_port_orders_json")
+        orders_path = directory / str(orders_filename)
+        field_paths = sorted(
+            directory.glob("fields_3d_for_paraview_rank*.vtu")
+        )
+        summary_evidence = _solve_artifact_file_evidence(
+            summary_path,
+            run_dir=run_dir,
+        )
+        orders_evidence = _solve_artifact_file_evidence(
+            orders_path,
+            run_dir=run_dir,
+        )
+        field_evidence = [
+            _solve_artifact_file_evidence(path, run_dir=run_dir)
+            for path in field_paths
+        ]
+        raw_summary: Any = None
+        raw_orders: Any = None
+        try:
+            raw_summary = json.loads(
+                summary_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            pass
+        try:
+            raw_orders = json.loads(
+                orders_path.read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            pass
+        order_rows = (
+            raw_orders.get("orders")
+            if isinstance(raw_orders, dict)
+            else None
+        )
+        checks = {
+            "canonical_directory": directory == (
+                run_dir.resolve() / directory_name
+            ),
+            "summary_sha256_present": (
+                summary_evidence["sha256"] is not None
+            ),
+            "summary_matches_worker_result": (
+                isinstance(raw_summary, dict)
+                and raw_summary == worker_summary
+            ),
+            "canonical_dtn_orders_filename": (
+                orders_filename
+                == "dtn_port_diffraction_orders_3d.json"
+            ),
+            "orders_sha256_present": (
+                orders_evidence["sha256"] is not None
+            ),
+            "orders_have_80_rows": (
+                isinstance(order_rows, list) and len(order_rows) == 80
+            ),
+            "field_shard_count_matches_mpi": len(field_evidence)
+            == int(mpi_size),
+            "all_field_shards_hash_bound": (
+                len(field_evidence) == int(mpi_size)
+                and all(row["sha256"] is not None for row in field_evidence)
+            ),
+        }
+        files = [
+            {"role": "run_summary", **summary_evidence},
+            {"role": "dtn_port_orders", **orders_evidence},
+            *[
+                {"role": "field_shard", **row}
+                for row in field_evidence
+            ],
+        ]
+        manifest_sha256 = hashlib.sha256(
+            json.dumps(
+                files,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        level = {
+            "degree": int(degree),
+            "directory": _path_from_root(directory),
+            "pass": all(checks.values()),
+            "checks": checks,
+            "run_summary": summary_evidence,
+            "dtn_port_orders": {
+                **orders_evidence,
+                "order_count": (
+                    len(order_rows) if isinstance(order_rows, list) else None
+                ),
+            },
+            "field_shards": {
+                "shard_count": len(field_evidence),
+                "shards": field_evidence,
+            },
+            "files_manifest_sha256": manifest_sha256,
+        }
+        levels[directory_name] = level
+        all_files.extend(
+            {
+                "level": directory_name,
+                **row,
+            }
+            for row in files
+        )
+    checks = {
+        "two_global_pair_levels_present": set(levels)
+        == {
+            f"coarse_p{int(coarse_degree)}",
+            f"enriched_p{int(enriched_degree)}",
+        },
+        "all_levels_pass": all(
+            level["pass"] is True for level in levels.values()
+        ),
+    }
+    return {
+        "schema_version": "task035b.global-pair-solve-artifact-manifest.v1",
+        "requested": True,
+        "pass": all(checks.values()),
+        "checks": checks,
+        "levels": levels,
+        "files_manifest_sha256": hashlib.sha256(
+            json.dumps(
+                all_files,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
 def _structured_axis_orders_evidence(
     *,
     run_dir: Path,
@@ -1072,6 +1245,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "build the fixed target mesh once and reuse that exact in-memory "
             "mesh for both global-p solves"
+        ),
+    )
+    parser.add_argument(
+        "--bind-global-pair-solve-artifacts",
+        action="store_true",
+        help=(
+            "research-only watchdog manifest binding both raw run summaries, "
+            "DtN order JSON files, and every MPI field shard"
         ),
     )
     parser.add_argument(
@@ -1548,6 +1729,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "--single-mesh-pair is valid only for the plain global-p pair."
+        )
+    if args.bind_global_pair_solve_artifacts and (
+        not args.single_mesh_pair
+        or common_mesh_mode
+        or active_cycles
+        or regionwise_mode
+        or fixed_trace_mode
+        or args.goal_dwr_only
+    ):
+        parser.error(
+            "--bind-global-pair-solve-artifacts requires a plain "
+            "single-mesh global-p pair."
         )
     if args.p6_projection_signals and (
         not args.single_mesh_pair
@@ -4714,6 +4907,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += f"_uniform{args.uniform_refinement_levels}"
     elif args.single_mesh_pair:
         run_label += "_single_mesh_pair"
+    if args.bind_global_pair_solve_artifacts:
+        run_label += "_bound_solve_artifacts"
     if args.structured_axis_cells is not None:
         run_label += "_axis" + "x".join(
             str(value) for value in args.structured_axis_cells
@@ -4790,6 +4985,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     ]
     if args.single_mesh_pair:
         command.append("--single-mesh-pair")
+    if args.bind_global_pair_solve_artifacts:
+        command.append("--bind-global-pair-solve-artifacts")
     if args.structured_axis_cells is not None:
         command.extend(
             [
@@ -5023,6 +5220,17 @@ def _run_parent(args: argparse.Namespace) -> int:
         and args.fixed_trace_control_record is None
         else None
     )
+    solve_artifact_manifest = (
+        _global_pair_solve_artifact_manifest(
+            run_dir=run_dir,
+            result=result,
+            coarse_degree=int(args.coarse_degree),
+            enriched_degree=int(args.enriched_degree),
+            mpi_size=int(args.mpi_size),
+        )
+        if args.bind_global_pair_solve_artifacts
+        else None
+    )
     sampler = _sampler_summary(rows)
     qualifier = _select_qualifier(args)
     qualification = qualifier(
@@ -5034,6 +5242,19 @@ def _run_parent(args: argparse.Namespace) -> int:
         authority_readable=authority_readable,
         sampler=sampler,
     )
+    if args.bind_global_pair_solve_artifacts:
+        manifest_pass = bool(
+            isinstance(solve_artifact_manifest, dict)
+            and solve_artifact_manifest.get("pass") is True
+        )
+        qualification["checks"][
+            "requested_global_pair_solve_artifacts_hash_bound"
+        ] = manifest_pass
+        if not manifest_pass:
+            qualification["failures"].append(
+                "requested_global_pair_solve_artifacts_hash_bound"
+            )
+            qualification["pass"] = False
     head_after = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
@@ -5190,6 +5411,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             "progress_sha256": _sha256(progress_path),
             "stdout": _path_from_root(stdout_path),
             "stdout_sha256": _sha256(stdout_path),
+            "global_pair_solve_artifact_manifest": (
+                solve_artifact_manifest
+            ),
             **_preflight_artifact_evidence(
                 fixed_trace_path=fixed_trace_preflight_path,
                 structured_axis_path=structured_axis_preflight_path,
