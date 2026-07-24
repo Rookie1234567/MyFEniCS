@@ -1,0 +1,3288 @@
+{
+  "schema_version": "task035b.same-mesh-p4-p5-p6-classifier.v1",
+  "status": "same_mesh_hp_classifier_pass",
+  "pass": true,
+  "canonical": false,
+  "production_qualified": false,
+  "ordinary_default_changed": false,
+  "geometry": "Task034 fixed rectangular block grating",
+  "mesh_geometry_sha256": "b68a588e99032c9972740621bf01f15807d92d6025919bb097a53e92e75852a7",
+  "cell_count": 252,
+  "indicator_pairs": {
+    "eta_p4p5": {
+      "snapshot_sha256": "9844a30aa22e4c7bb2c1a3f20f09a94d71534859a1e303e1e1c68572ae1738cf",
+      "indicator_sum": 117844.33878175699
+    },
+    "eta_p5p6": {
+      "snapshot_sha256": "cfdf47d8ddb329709c05ee4716c226fcabae82501d14cbf455afba2f3525dced",
+      "indicator_sum": 541.8396159898596
+    }
+  },
+  "marked_policy": "union_of_p4p5_and_p5p6_Dorfler_sets",
+  "marked_canonical_cell_ids": [
+    0,
+    1,
+    2,
+    5,
+    14,
+    15,
+    16,
+    19,
+    28,
+    29,
+    30,
+    33,
+    42,
+    43,
+    44,
+    47,
+    56,
+    57,
+    58,
+    61,
+    70,
+    71,
+    72,
+    75,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    92,
+    93,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    106,
+    107,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    120,
+    121,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    132,
+    134,
+    135,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    148,
+    149,
+    153,
+    154,
+    155,
+    156,
+    157,
+    158,
+    159,
+    160,
+    162,
+    163,
+    167,
+    168,
+    169,
+    170,
+    182,
+    183,
+    184,
+    196,
+    197,
+    198,
+    210,
+    211,
+    212,
+    224,
+    225,
+    226,
+    238,
+    239,
+    240
+  ],
+  "source_records": {
+    "p4_p5": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json",
+      "sha256": "6e2bb2e6779f2d037fd17495f2beee2a8ef69d4dea076dbc98a71aea35d1abd4"
+    },
+    "p5_p6": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json",
+      "sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded"
+    }
+  },
+  "classifier": {
+    "schema_version": "task035b.hp-correction-decay-classifier.v2",
+    "status": "hp_candidate_classification_pass",
+    "pass": true,
+    "canonical": false,
+    "production_qualified": false,
+    "ordinary_default_changed": false,
+    "method": "consecutive_goal_indicator_p_correction_decay",
+    "degrees": [
+      4,
+      5,
+      6
+    ],
+    "lower_pair": "p4_p5",
+    "higher_pair": "p5_p6",
+    "p_decay_ratio_threshold": 0.5,
+    "significance_floor_fraction": 1e-12,
+    "absolute_significance_floor": 1.1508655676450812e-09,
+    "p_down_indicator_fraction": 0.001,
+    "absolute_p_down_floor": 1.1508655676450812,
+    "marked_cell_count": 105,
+    "counts": {
+      "h_candidate": 0,
+      "p_candidate": 105,
+      "undetermined": 0
+    },
+    "classified_cell_count": 105,
+    "p_candidate_fraction_of_classified": 1.0,
+    "decisions": [
+      {
+        "canonical_cell_id": 0,
+        "lower_pair_indicator": 1087.1460039221229,
+        "higher_pair_indicator": 2.7227535052780105,
+        "higher_to_lower_ratio": 0.002504496631965777,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 1,
+        "lower_pair_indicator": 1056.3767206976881,
+        "higher_pair_indicator": 2.7395565325628244,
+        "higher_to_lower_ratio": 0.0025933518591298318,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 2,
+        "lower_pair_indicator": 816.3438332983075,
+        "higher_pair_indicator": 2.3625539227534174,
+        "higher_to_lower_ratio": 0.002894067213330802,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 5,
+        "lower_pair_indicator": 606.3334941159329,
+        "higher_pair_indicator": 2.169345851234288,
+        "higher_to_lower_ratio": 0.003577809691013873,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 14,
+        "lower_pair_indicator": 1087.1460039191184,
+        "higher_pair_indicator": 2.722753505233336,
+        "higher_to_lower_ratio": 0.0025044966319316057,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 15,
+        "lower_pair_indicator": 1056.3767206966947,
+        "higher_pair_indicator": 2.7395565326328715,
+        "higher_to_lower_ratio": 0.0025933518591985793,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 16,
+        "lower_pair_indicator": 816.3438333002704,
+        "higher_pair_indicator": 2.3625539227984858,
+        "higher_to_lower_ratio": 0.0028940672133790507,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 19,
+        "lower_pair_indicator": 606.3334941232062,
+        "higher_pair_indicator": 2.169345851087691,
+        "higher_to_lower_ratio": 0.003577809690729179,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 28,
+        "lower_pair_indicator": 1087.1460039202311,
+        "higher_pair_indicator": 2.7227535053228995,
+        "higher_to_lower_ratio": 0.002504496632011426,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 29,
+        "lower_pair_indicator": 1056.376720700327,
+        "higher_pair_indicator": 2.739556532560268,
+        "higher_to_lower_ratio": 0.0025933518591209335,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 30,
+        "lower_pair_indicator": 816.3438333023471,
+        "higher_pair_indicator": 2.3625539228960117,
+        "higher_to_lower_ratio": 0.002894067213491155,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 33,
+        "lower_pair_indicator": 606.3334941170539,
+        "higher_pair_indicator": 2.169345851132404,
+        "higher_to_lower_ratio": 0.0035778096908392256,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 42,
+        "lower_pair_indicator": 1086.6750675436315,
+        "higher_pair_indicator": 2.7208177348958578,
+        "higher_to_lower_ratio": 0.002503800644884689,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 43,
+        "lower_pair_indicator": 1060.0732770530376,
+        "higher_pair_indicator": 2.74868132117302,
+        "higher_to_lower_ratio": 0.0025929163395329116,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 44,
+        "lower_pair_indicator": 817.9746449572972,
+        "higher_pair_indicator": 2.3669632988769402,
+        "higher_to_lower_ratio": 0.002893687858748371,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 47,
+        "lower_pair_indicator": 607.8684204001183,
+        "higher_pair_indicator": 2.1727511788906795,
+        "higher_to_lower_ratio": 0.0035743774573130573,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 56,
+        "lower_pair_indicator": 1086.6750675408102,
+        "higher_pair_indicator": 2.7208177349127762,
+        "higher_to_lower_ratio": 0.0025038006449067587,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 57,
+        "lower_pair_indicator": 1060.073277054518,
+        "higher_pair_indicator": 2.7486813212731134,
+        "higher_to_lower_ratio": 0.0025929163396237113,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 58,
+        "lower_pair_indicator": 817.974644961394,
+        "higher_pair_indicator": 2.366963298903376,
+        "higher_to_lower_ratio": 0.0028936878587661964,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 61,
+        "lower_pair_indicator": 607.8684204003976,
+        "higher_pair_indicator": 2.172751178961935,
+        "higher_to_lower_ratio": 0.003574377457428637,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 70,
+        "lower_pair_indicator": 1086.6750675447813,
+        "higher_pair_indicator": 2.7208177349225102,
+        "higher_to_lower_ratio": 0.0025038006449065666,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 71,
+        "lower_pair_indicator": 1060.0732770584207,
+        "higher_pair_indicator": 2.748681321267939,
+        "higher_to_lower_ratio": 0.0025929163396092845,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 72,
+        "lower_pair_indicator": 817.9746449564218,
+        "higher_pair_indicator": 2.3669632988713825,
+        "higher_to_lower_ratio": 0.0028936878587446733,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 75,
+        "lower_pair_indicator": 607.868420400614,
+        "higher_pair_indicator": 2.1727511789851044,
+        "higher_to_lower_ratio": 0.00357437745746548,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 84,
+        "lower_pair_indicator": 1147.6856350063872,
+        "higher_pair_indicator": 3.203975217602216,
+        "higher_to_lower_ratio": 0.002791683645656491,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 85,
+        "lower_pair_indicator": 1114.5007675846962,
+        "higher_pair_indicator": 3.245670059296961,
+        "higher_to_lower_ratio": 0.002912218774268639,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 86,
+        "lower_pair_indicator": 861.9993417726298,
+        "higher_pair_indicator": 2.8444068475822313,
+        "higher_to_lower_ratio": 0.003299778444996194,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 87,
+        "lower_pair_indicator": 671.780661881138,
+        "higher_pair_indicator": 2.544892130796129,
+        "higher_to_lower_ratio": 0.0037882783402395873,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 88,
+        "lower_pair_indicator": 677.4694708006307,
+        "higher_pair_indicator": 2.6501631160848222,
+        "higher_to_lower_ratio": 0.003911856150437112,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 89,
+        "lower_pair_indicator": 643.9577849578054,
+        "higher_pair_indicator": 2.6913715107571914,
+        "higher_to_lower_ratio": 0.004179422275224983,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 90,
+        "lower_pair_indicator": 451.9399499209874,
+        "higher_pair_indicator": 2.389873589181861,
+        "higher_to_lower_ratio": 0.005288033486749031,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 92,
+        "lower_pair_indicator": 296.18433994921776,
+        "higher_pair_indicator": 2.2754532625926154,
+        "higher_to_lower_ratio": 0.007682557636176014,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 93,
+        "lower_pair_indicator": 272.23899518957046,
+        "higher_pair_indicator": 2.336984746113529,
+        "higher_to_lower_ratio": 0.008584313002206743,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 96,
+        "lower_pair_indicator": 77.32220665555315,
+        "higher_pair_indicator": 2.1819003455689043,
+        "higher_to_lower_ratio": 0.028218288638458097,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 97,
+        "lower_pair_indicator": 76.72157251402241,
+        "higher_pair_indicator": 2.2936489120509775,
+        "higher_to_lower_ratio": 0.029895749485997138,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 98,
+        "lower_pair_indicator": 1147.6856350067308,
+        "higher_pair_indicator": 3.2039752176569407,
+        "higher_to_lower_ratio": 0.002791683645703338,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 99,
+        "lower_pair_indicator": 1114.5007675881998,
+        "higher_pair_indicator": 3.245670059332245,
+        "higher_to_lower_ratio": 0.0029122187742911428,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 100,
+        "lower_pair_indicator": 861.999341775308,
+        "higher_pair_indicator": 2.844406847540676,
+        "higher_to_lower_ratio": 0.003299778444937734,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 101,
+        "lower_pair_indicator": 671.7806618779314,
+        "higher_pair_indicator": 2.544892130731303,
+        "higher_to_lower_ratio": 0.0037882783401611713,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 102,
+        "lower_pair_indicator": 677.4694707985741,
+        "higher_pair_indicator": 2.65016311603816,
+        "higher_to_lower_ratio": 0.003911856150380109,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 103,
+        "lower_pair_indicator": 643.9577849564484,
+        "higher_pair_indicator": 2.6913715107304323,
+        "higher_to_lower_ratio": 0.004179422275192236,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 104,
+        "lower_pair_indicator": 451.9399499228924,
+        "higher_pair_indicator": 2.3898735891409006,
+        "higher_to_lower_ratio": 0.005288033486636107,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 106,
+        "lower_pair_indicator": 296.1843399504984,
+        "higher_pair_indicator": 2.2754532625847763,
+        "higher_to_lower_ratio": 0.00768255763611633,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 107,
+        "lower_pair_indicator": 272.2389951882036,
+        "higher_pair_indicator": 2.3369847460977673,
+        "higher_to_lower_ratio": 0.008584313002191948,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 110,
+        "lower_pair_indicator": 77.32220665587894,
+        "higher_pair_indicator": 2.181900345569303,
+        "higher_to_lower_ratio": 0.028218288638344354,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 111,
+        "lower_pair_indicator": 76.72157251452902,
+        "higher_pair_indicator": 2.2936489120505423,
+        "higher_to_lower_ratio": 0.029895749485794057,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 112,
+        "lower_pair_indicator": 1147.6856350111257,
+        "higher_pair_indicator": 3.2039752175951506,
+        "higher_to_lower_ratio": 0.0027916836456388086,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 113,
+        "lower_pair_indicator": 1114.5007675872967,
+        "higher_pair_indicator": 3.2456700592912413,
+        "higher_to_lower_ratio": 0.0029122187742567115,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 114,
+        "lower_pair_indicator": 861.9993417685045,
+        "higher_pair_indicator": 2.8444068475387367,
+        "higher_to_lower_ratio": 0.0032997784449615283,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 115,
+        "lower_pair_indicator": 671.7806618779236,
+        "higher_pair_indicator": 2.5448921307883876,
+        "higher_to_lower_ratio": 0.00378827834024619,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 116,
+        "lower_pair_indicator": 677.4694708022139,
+        "higher_pair_indicator": 2.650163116106252,
+        "higher_to_lower_ratio": 0.003911856150459602,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 117,
+        "lower_pair_indicator": 643.9577849570505,
+        "higher_pair_indicator": 2.691371510791989,
+        "higher_to_lower_ratio": 0.004179422275283919,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 118,
+        "lower_pair_indicator": 451.9399499215126,
+        "higher_pair_indicator": 2.38987358915537,
+        "higher_to_lower_ratio": 0.0052880334866842685,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 120,
+        "lower_pair_indicator": 296.1843399496812,
+        "higher_pair_indicator": 2.2754532626110384,
+        "higher_to_lower_ratio": 0.007682557636226195,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 121,
+        "lower_pair_indicator": 272.23899518892625,
+        "higher_pair_indicator": 2.336984746121474,
+        "higher_to_lower_ratio": 0.008584313002256242,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 124,
+        "lower_pair_indicator": 77.32220665539776,
+        "higher_pair_indicator": 2.1819003455689656,
+        "higher_to_lower_ratio": 0.028218288638515596,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 125,
+        "lower_pair_indicator": 76.72157251474327,
+        "higher_pair_indicator": 2.2936489120482317,
+        "higher_to_lower_ratio": 0.029895749485680453,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 126,
+        "lower_pair_indicator": 1150.865567640614,
+        "higher_pair_indicator": 3.212791625581735,
+        "higher_to_lower_ratio": 0.0027916306786102477,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 127,
+        "lower_pair_indicator": 1106.7139717481625,
+        "higher_pair_indicator": 3.2258464512570435,
+        "higher_to_lower_ratio": 0.0029147968974869857,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 128,
+        "lower_pair_indicator": 857.4220700082193,
+        "higher_pair_indicator": 2.8265606999987583,
+        "higher_to_lower_ratio": 0.0032965802944303294,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 129,
+        "lower_pair_indicator": 667.6472805362398,
+        "higher_pair_indicator": 2.5276476909002166,
+        "higher_to_lower_ratio": 0.0037859027731979447,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 130,
+        "lower_pair_indicator": 673.0384987906906,
+        "higher_pair_indicator": 2.6336541969237928,
+        "higher_to_lower_ratio": 0.003913081052058565,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 131,
+        "lower_pair_indicator": 640.911254379878,
+        "higher_pair_indicator": 2.6788152046533944,
+        "higher_to_lower_ratio": 0.0041796975577302305,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 132,
+        "lower_pair_indicator": 448.89336030066113,
+        "higher_pair_indicator": 2.3746147923798255,
+        "higher_to_lower_ratio": 0.005289930755022415,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 134,
+        "lower_pair_indicator": 295.29854759231296,
+        "higher_pair_indicator": 2.260599118941373,
+        "higher_to_lower_ratio": 0.007655300499690707,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 135,
+        "lower_pair_indicator": 270.7510376332492,
+        "higher_pair_indicator": 2.3201987012896503,
+        "higher_to_lower_ratio": 0.008569491447092875,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 139,
+        "lower_pair_indicator": 77.30023188437343,
+        "higher_pair_indicator": 2.293370113218118,
+        "higher_to_lower_ratio": 0.029668347135731327,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 140,
+        "lower_pair_indicator": 1150.865567643475,
+        "higher_pair_indicator": 3.212791625658901,
+        "higher_to_lower_ratio": 0.002791630678670358,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 141,
+        "lower_pair_indicator": 1106.7139717518044,
+        "higher_pair_indicator": 3.225846451200794,
+        "higher_to_lower_ratio": 0.002914796897426568,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 142,
+        "lower_pair_indicator": 857.422070004554,
+        "higher_pair_indicator": 2.826560699907644,
+        "higher_to_lower_ratio": 0.003296580294338156,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 143,
+        "lower_pair_indicator": 667.6472805328808,
+        "higher_pair_indicator": 2.527647690876497,
+        "higher_to_lower_ratio": 0.003785902773181465,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 144,
+        "lower_pair_indicator": 673.0384987932945,
+        "higher_pair_indicator": 2.6336541969416167,
+        "higher_to_lower_ratio": 0.003913081052069909,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 145,
+        "lower_pair_indicator": 640.9112543775037,
+        "higher_pair_indicator": 2.6788152046239144,
+        "higher_to_lower_ratio": 0.004179697557699717,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 146,
+        "lower_pair_indicator": 448.8933603018281,
+        "higher_pair_indicator": 2.374614792339973,
+        "higher_to_lower_ratio": 0.0052899307549198835,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 148,
+        "lower_pair_indicator": 295.2985475927938,
+        "higher_pair_indicator": 2.260599118918367,
+        "higher_to_lower_ratio": 0.007655300499600334,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 149,
+        "lower_pair_indicator": 270.7510376322477,
+        "higher_pair_indicator": 2.3201987012557246,
+        "higher_to_lower_ratio": 0.008569491446999271,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 153,
+        "lower_pair_indicator": 77.30023188494457,
+        "higher_pair_indicator": 2.2933701132100808,
+        "higher_to_lower_ratio": 0.029668347135408148,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 154,
+        "lower_pair_indicator": 1150.8655676450812,
+        "higher_pair_indicator": 3.212791625611379,
+        "higher_to_lower_ratio": 0.0027916306786251693,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 155,
+        "lower_pair_indicator": 1106.7139717449334,
+        "higher_pair_indicator": 3.2258464511934526,
+        "higher_to_lower_ratio": 0.0029147968974380313,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 156,
+        "lower_pair_indicator": 857.4220700038599,
+        "higher_pair_indicator": 2.826560699943035,
+        "higher_to_lower_ratio": 0.003296580294382101,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 157,
+        "lower_pair_indicator": 667.6472805350953,
+        "higher_pair_indicator": 2.5276476908775964,
+        "higher_to_lower_ratio": 0.0037859027731705543,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 158,
+        "lower_pair_indicator": 673.0384987951328,
+        "higher_pair_indicator": 2.633654196939735,
+        "higher_to_lower_ratio": 0.003913081052056425,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 159,
+        "lower_pair_indicator": 640.9112543778353,
+        "higher_pair_indicator": 2.6788152046377354,
+        "higher_to_lower_ratio": 0.004179697557719119,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 160,
+        "lower_pair_indicator": 448.89336029996633,
+        "higher_pair_indicator": 2.3746147923655863,
+        "higher_to_lower_ratio": 0.005289930754998883,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 162,
+        "lower_pair_indicator": 295.2985475922122,
+        "higher_pair_indicator": 2.2605991189542483,
+        "higher_to_lower_ratio": 0.007655300499736919,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 163,
+        "lower_pair_indicator": 270.75103763383447,
+        "higher_pair_indicator": 2.3201987012815857,
+        "higher_to_lower_ratio": 0.008569491447044565,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 167,
+        "lower_pair_indicator": 77.3002318847203,
+        "higher_pair_indicator": 2.2933701132628883,
+        "higher_to_lower_ratio": 0.02966834713617737,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 168,
+        "lower_pair_indicator": 1090.867456502888,
+        "higher_pair_indicator": 2.734879502598636,
+        "higher_to_lower_ratio": 0.002507068559333629,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 169,
+        "lower_pair_indicator": 1048.7070656686144,
+        "higher_pair_indicator": 2.7262859554944883,
+        "higher_to_lower_ratio": 0.002599663952637065,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 170,
+        "lower_pair_indicator": 811.8232475060818,
+        "higher_pair_indicator": 2.34912726132928,
+        "higher_to_lower_ratio": 0.0028936437439378475,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 182,
+        "lower_pair_indicator": 1090.8674565075885,
+        "higher_pair_indicator": 2.7348795026078108,
+        "higher_to_lower_ratio": 0.002507068559331237,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 183,
+        "lower_pair_indicator": 1048.707065665139,
+        "higher_pair_indicator": 2.7262859554082617,
+        "higher_to_lower_ratio": 0.0025996639525634586,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 184,
+        "lower_pair_indicator": 811.8232475016019,
+        "higher_pair_indicator": 2.349127261103388,
+        "higher_to_lower_ratio": 0.002893643743675562,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 196,
+        "lower_pair_indicator": 1090.8674565009858,
+        "higher_pair_indicator": 2.734879502601538,
+        "higher_to_lower_ratio": 0.0025070685593406613,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 197,
+        "lower_pair_indicator": 1048.7070656637943,
+        "higher_pair_indicator": 2.726285955456343,
+        "higher_to_lower_ratio": 0.0025996639526126397,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 198,
+        "lower_pair_indicator": 811.8232475051368,
+        "higher_pair_indicator": 2.3491272613248726,
+        "higher_to_lower_ratio": 0.0028936437439357862,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 210,
+        "lower_pair_indicator": 1088.2585882230849,
+        "higher_pair_indicator": 2.728726308723562,
+        "higher_to_lower_ratio": 0.0025074245572268283,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 211,
+        "lower_pair_indicator": 1052.3495766886372,
+        "higher_pair_indicator": 2.7338880730468835,
+        "higher_to_lower_ratio": 0.002597889649606207,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 212,
+        "lower_pair_indicator": 814.510227806796,
+        "higher_pair_indicator": 2.35891387455967,
+        "higher_to_lower_ratio": 0.0028961132641777097,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 224,
+        "lower_pair_indicator": 1088.2585882224798,
+        "higher_pair_indicator": 2.728726308698148,
+        "higher_to_lower_ratio": 0.0025074245572048693,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 225,
+        "lower_pair_indicator": 1052.3495766836825,
+        "higher_pair_indicator": 2.733888073019616,
+        "higher_to_lower_ratio": 0.002597889649592527,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 226,
+        "lower_pair_indicator": 814.5102278052451,
+        "higher_pair_indicator": 2.3589138744833114,
+        "higher_to_lower_ratio": 0.0028961132640894765,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 238,
+        "lower_pair_indicator": 1088.258588218034,
+        "higher_pair_indicator": 2.728726308668592,
+        "higher_to_lower_ratio": 0.002507424557187954,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 239,
+        "lower_pair_indicator": 1052.3495766851881,
+        "higher_pair_indicator": 2.7338880730685307,
+        "higher_to_lower_ratio": 0.0025978896496352912,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      },
+      {
+        "canonical_cell_id": 240,
+        "lower_pair_indicator": 814.5102278087058,
+        "higher_pair_indicator": 2.358913874600947,
+        "higher_to_lower_ratio": 0.002896113264221596,
+        "decision": "p_candidate",
+        "reason": "higher-order correction decays sufficiently fast"
+      }
+    ],
+    "local_order_action_counts": {
+      "p_down": 0,
+      "p_keep": 147,
+      "p_up": 105,
+      "h_refine": 0
+    },
+    "local_order_actions": [
+      {
+        "canonical_cell_id": 0,
+        "marked": true,
+        "lower_pair_indicator": 1087.1460039221229,
+        "higher_pair_indicator": 2.7227535052780105,
+        "higher_to_lower_ratio": 0.002504496631965777,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 1,
+        "marked": true,
+        "lower_pair_indicator": 1056.3767206976881,
+        "higher_pair_indicator": 2.7395565325628244,
+        "higher_to_lower_ratio": 0.0025933518591298318,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 2,
+        "marked": true,
+        "lower_pair_indicator": 816.3438332983075,
+        "higher_pair_indicator": 2.3625539227534174,
+        "higher_to_lower_ratio": 0.002894067213330802,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 3,
+        "marked": false,
+        "lower_pair_indicator": 632.9877356501134,
+        "higher_pair_indicator": 2.079429456545916,
+        "higher_to_lower_ratio": 0.0032851022846599495,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 4,
+        "marked": false,
+        "lower_pair_indicator": 640.1243568613254,
+        "higher_pair_indicator": 2.16555509433514,
+        "higher_to_lower_ratio": 0.003383022487932418,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 5,
+        "marked": true,
+        "lower_pair_indicator": 606.3334941159329,
+        "higher_pair_indicator": 2.169345851234288,
+        "higher_to_lower_ratio": 0.003577809691013873,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 6,
+        "marked": false,
+        "lower_pair_indicator": 423.30944372201463,
+        "higher_pair_indicator": 1.8757125887086235,
+        "higher_to_lower_ratio": 0.004431067193342361,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 7,
+        "marked": false,
+        "lower_pair_indicator": 281.55358079187937,
+        "higher_pair_indicator": 1.6722901838945605,
+        "higher_to_lower_ratio": 0.00593950955690631,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 8,
+        "marked": false,
+        "lower_pair_indicator": 273.6354982828937,
+        "higher_pair_indicator": 1.7463574018362924,
+        "higher_to_lower_ratio": 0.006382057199431225,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 9,
+        "marked": false,
+        "lower_pair_indicator": 251.2689171193487,
+        "higher_pair_indicator": 1.7806739670701404,
+        "higher_to_lower_ratio": 0.007086725996532029,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 10,
+        "marked": false,
+        "lower_pair_indicator": 146.2599379650396,
+        "higher_pair_indicator": 1.6110299378549193,
+        "higher_to_lower_ratio": 0.011014840839328147,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 11,
+        "marked": false,
+        "lower_pair_indicator": 71.31355581990381,
+        "higher_pair_indicator": 1.509224502241239,
+        "higher_to_lower_ratio": 0.021163220440902627,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 12,
+        "marked": false,
+        "lower_pair_indicator": 64.32597085128565,
+        "higher_pair_indicator": 1.5944914098129517,
+        "higher_to_lower_ratio": 0.024787677336409505,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 13,
+        "marked": false,
+        "lower_pair_indicator": 63.14550391547136,
+        "higher_pair_indicator": 1.6651173668102555,
+        "higher_to_lower_ratio": 0.026369531693645778,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 14,
+        "marked": true,
+        "lower_pair_indicator": 1087.1460039191184,
+        "higher_pair_indicator": 2.722753505233336,
+        "higher_to_lower_ratio": 0.0025044966319316057,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 15,
+        "marked": true,
+        "lower_pair_indicator": 1056.3767206966947,
+        "higher_pair_indicator": 2.7395565326328715,
+        "higher_to_lower_ratio": 0.0025933518591985793,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 16,
+        "marked": true,
+        "lower_pair_indicator": 816.3438333002704,
+        "higher_pair_indicator": 2.3625539227984858,
+        "higher_to_lower_ratio": 0.0028940672133790507,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 17,
+        "marked": false,
+        "lower_pair_indicator": 632.9877356510127,
+        "higher_pair_indicator": 2.079429456395934,
+        "higher_to_lower_ratio": 0.00328510228441834,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 18,
+        "marked": false,
+        "lower_pair_indicator": 640.1243568593627,
+        "higher_pair_indicator": 2.1655550940533574,
+        "higher_to_lower_ratio": 0.003383022487502591,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 19,
+        "marked": true,
+        "lower_pair_indicator": 606.3334941232062,
+        "higher_pair_indicator": 2.169345851087691,
+        "higher_to_lower_ratio": 0.003577809690729179,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 20,
+        "marked": false,
+        "lower_pair_indicator": 423.30944372418736,
+        "higher_pair_indicator": 1.8757125887389339,
+        "higher_to_lower_ratio": 0.004431067193391221,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 21,
+        "marked": false,
+        "lower_pair_indicator": 281.55358078983653,
+        "higher_pair_indicator": 1.672290183939674,
+        "higher_to_lower_ratio": 0.005939509557109635,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 22,
+        "marked": false,
+        "lower_pair_indicator": 273.6354982822462,
+        "higher_pair_indicator": 1.7463574018240788,
+        "higher_to_lower_ratio": 0.006382057199401692,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 23,
+        "marked": false,
+        "lower_pair_indicator": 251.26891712053038,
+        "higher_pair_indicator": 1.780673967089727,
+        "higher_to_lower_ratio": 0.007086725996576652,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 24,
+        "marked": false,
+        "lower_pair_indicator": 146.25993796532583,
+        "higher_pair_indicator": 1.6110299378722974,
+        "higher_to_lower_ratio": 0.011014840839425406,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 25,
+        "marked": false,
+        "lower_pair_indicator": 71.31355581946009,
+        "higher_pair_indicator": 1.5092245022483866,
+        "higher_to_lower_ratio": 0.021163220441134535,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 26,
+        "marked": false,
+        "lower_pair_indicator": 64.3259708514741,
+        "higher_pair_indicator": 1.5944914098107812,
+        "higher_to_lower_ratio": 0.024787677336303146,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 27,
+        "marked": false,
+        "lower_pair_indicator": 63.14550391497243,
+        "higher_pair_indicator": 1.6651173668450392,
+        "higher_to_lower_ratio": 0.02636953169440498,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 28,
+        "marked": true,
+        "lower_pair_indicator": 1087.1460039202311,
+        "higher_pair_indicator": 2.7227535053228995,
+        "higher_to_lower_ratio": 0.002504496632011426,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 29,
+        "marked": true,
+        "lower_pair_indicator": 1056.376720700327,
+        "higher_pair_indicator": 2.739556532560268,
+        "higher_to_lower_ratio": 0.0025933518591209335,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 30,
+        "marked": true,
+        "lower_pair_indicator": 816.3438333023471,
+        "higher_pair_indicator": 2.3625539228960117,
+        "higher_to_lower_ratio": 0.002894067213491155,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 31,
+        "marked": false,
+        "lower_pair_indicator": 632.9877356517255,
+        "higher_pair_indicator": 2.0794294565221145,
+        "higher_to_lower_ratio": 0.0032851022846139815,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 32,
+        "marked": false,
+        "lower_pair_indicator": 640.1243568719304,
+        "higher_pair_indicator": 2.165555094353718,
+        "higher_to_lower_ratio": 0.0033830224879053935,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 33,
+        "marked": true,
+        "lower_pair_indicator": 606.3334941170539,
+        "higher_pair_indicator": 2.169345851132404,
+        "higher_to_lower_ratio": 0.0035778096908392256,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 34,
+        "marked": false,
+        "lower_pair_indicator": 423.3094437216314,
+        "higher_pair_indicator": 1.875712588592881,
+        "higher_to_lower_ratio": 0.0044310671930729495,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 35,
+        "marked": false,
+        "lower_pair_indicator": 281.55358078988866,
+        "higher_pair_indicator": 1.6722901839129307,
+        "higher_to_lower_ratio": 0.0059395095570135515,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 36,
+        "marked": false,
+        "lower_pair_indicator": 273.6354982824252,
+        "higher_pair_indicator": 1.7463574017997607,
+        "higher_to_lower_ratio": 0.006382057199308647,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 37,
+        "marked": false,
+        "lower_pair_indicator": 251.26891712002333,
+        "higher_pair_indicator": 1.780673967077988,
+        "higher_to_lower_ratio": 0.007086725996544235,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 38,
+        "marked": false,
+        "lower_pair_indicator": 146.25993796582335,
+        "higher_pair_indicator": 1.6110299378598176,
+        "higher_to_lower_ratio": 0.011014840839302611,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 39,
+        "marked": false,
+        "lower_pair_indicator": 71.31355581963317,
+        "higher_pair_indicator": 1.5092245022593413,
+        "higher_to_lower_ratio": 0.02116322044123679,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 40,
+        "marked": false,
+        "lower_pair_indicator": 64.32597085148988,
+        "higher_pair_indicator": 1.594491409815692,
+        "higher_to_lower_ratio": 0.024787677336373402,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 41,
+        "marked": false,
+        "lower_pair_indicator": 63.14550391507081,
+        "higher_pair_indicator": 1.6651173668188617,
+        "higher_to_lower_ratio": 0.026369531693949337,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 42,
+        "marked": true,
+        "lower_pair_indicator": 1086.6750675436315,
+        "higher_pair_indicator": 2.7208177348958578,
+        "higher_to_lower_ratio": 0.002503800644884689,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 43,
+        "marked": true,
+        "lower_pair_indicator": 1060.0732770530376,
+        "higher_pair_indicator": 2.74868132117302,
+        "higher_to_lower_ratio": 0.0025929163395329116,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 44,
+        "marked": true,
+        "lower_pair_indicator": 817.9746449572972,
+        "higher_pair_indicator": 2.3669632988769402,
+        "higher_to_lower_ratio": 0.002893687858748371,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 45,
+        "marked": false,
+        "lower_pair_indicator": 635.5295753916951,
+        "higher_pair_indicator": 2.0855580228620494,
+        "higher_to_lower_ratio": 0.0032816065587139044,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 46,
+        "marked": false,
+        "lower_pair_indicator": 641.4840129470803,
+        "higher_pair_indicator": 2.167560811178254,
+        "higher_to_lower_ratio": 0.00337897869226722,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 47,
+        "marked": true,
+        "lower_pair_indicator": 607.8684204001183,
+        "higher_pair_indicator": 2.1727511788906795,
+        "higher_to_lower_ratio": 0.0035743774573130573,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 48,
+        "marked": false,
+        "lower_pair_indicator": 424.7956009545764,
+        "higher_pair_indicator": 1.881430941589536,
+        "higher_to_lower_ratio": 0.004429026424383143,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 49,
+        "marked": false,
+        "lower_pair_indicator": 281.63585631397035,
+        "higher_pair_indicator": 1.6756237899167792,
+        "higher_to_lower_ratio": 0.005949611004249323,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 50,
+        "marked": false,
+        "lower_pair_indicator": 274.3290922592938,
+        "higher_pair_indicator": 1.7502705774313563,
+        "higher_to_lower_ratio": 0.006380185794429027,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 51,
+        "marked": false,
+        "lower_pair_indicator": 251.7553892402158,
+        "higher_pair_indicator": 1.7830134966139,
+        "higher_to_lower_ratio": 0.007082325037787427,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 52,
+        "marked": false,
+        "lower_pair_indicator": 146.3462877932285,
+        "higher_pair_indicator": 1.6126822154163862,
+        "higher_to_lower_ratio": 0.011019631859025575,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 53,
+        "marked": false,
+        "lower_pair_indicator": 71.52591175646639,
+        "higher_pair_indicator": 1.5131634818183004,
+        "higher_to_lower_ratio": 0.021155458835259114,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 54,
+        "marked": false,
+        "lower_pair_indicator": 64.3718692504789,
+        "higher_pair_indicator": 1.5975672498863889,
+        "higher_to_lower_ratio": 0.024817785602435395,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 55,
+        "marked": false,
+        "lower_pair_indicator": 62.82920849107861,
+        "higher_pair_indicator": 1.6633570473455814,
+        "higher_to_lower_ratio": 0.026474263917900042,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 56,
+        "marked": true,
+        "lower_pair_indicator": 1086.6750675408102,
+        "higher_pair_indicator": 2.7208177349127762,
+        "higher_to_lower_ratio": 0.0025038006449067587,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 57,
+        "marked": true,
+        "lower_pair_indicator": 1060.073277054518,
+        "higher_pair_indicator": 2.7486813212731134,
+        "higher_to_lower_ratio": 0.0025929163396237113,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 58,
+        "marked": true,
+        "lower_pair_indicator": 817.974644961394,
+        "higher_pair_indicator": 2.366963298903376,
+        "higher_to_lower_ratio": 0.0028936878587661964,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 59,
+        "marked": false,
+        "lower_pair_indicator": 635.5295754026819,
+        "higher_pair_indicator": 2.0855580228179584,
+        "higher_to_lower_ratio": 0.0032816065585877965,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 60,
+        "marked": false,
+        "lower_pair_indicator": 641.4840129152907,
+        "higher_pair_indicator": 2.1675608111446167,
+        "higher_to_lower_ratio": 0.0033789786923822335,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 61,
+        "marked": true,
+        "lower_pair_indicator": 607.8684204003976,
+        "higher_pair_indicator": 2.172751178961935,
+        "higher_to_lower_ratio": 0.003574377457428637,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 62,
+        "marked": false,
+        "lower_pair_indicator": 424.79560095820125,
+        "higher_pair_indicator": 1.8814309414802246,
+        "higher_to_lower_ratio": 0.0044290264240880225,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 63,
+        "marked": false,
+        "lower_pair_indicator": 281.6358563153657,
+        "higher_pair_indicator": 1.675623789906112,
+        "higher_to_lower_ratio": 0.00594961100418197,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 64,
+        "marked": false,
+        "lower_pair_indicator": 274.3290922601427,
+        "higher_pair_indicator": 1.7502705774328384,
+        "higher_to_lower_ratio": 0.006380185794414686,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 65,
+        "marked": false,
+        "lower_pair_indicator": 251.75538923953673,
+        "higher_pair_indicator": 1.7830134966173947,
+        "higher_to_lower_ratio": 0.007082325037820413,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 66,
+        "marked": false,
+        "lower_pair_indicator": 146.34628779430327,
+        "higher_pair_indicator": 1.6126822154094376,
+        "higher_to_lower_ratio": 0.011019631858897165,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 67,
+        "marked": false,
+        "lower_pair_indicator": 71.52591175634342,
+        "higher_pair_indicator": 1.5131634818266846,
+        "higher_to_lower_ratio": 0.021155458835412703,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 68,
+        "marked": false,
+        "lower_pair_indicator": 64.37186925102796,
+        "higher_pair_indicator": 1.5975672498887854,
+        "higher_to_lower_ratio": 0.02481778560226094,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 69,
+        "marked": false,
+        "lower_pair_indicator": 62.829208490854505,
+        "higher_pair_indicator": 1.6633570473458446,
+        "higher_to_lower_ratio": 0.02647426391799866,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 70,
+        "marked": true,
+        "lower_pair_indicator": 1086.6750675447813,
+        "higher_pair_indicator": 2.7208177349225102,
+        "higher_to_lower_ratio": 0.0025038006449065666,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 71,
+        "marked": true,
+        "lower_pair_indicator": 1060.0732770584207,
+        "higher_pair_indicator": 2.748681321267939,
+        "higher_to_lower_ratio": 0.0025929163396092845,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 72,
+        "marked": true,
+        "lower_pair_indicator": 817.9746449564218,
+        "higher_pair_indicator": 2.3669632988713825,
+        "higher_to_lower_ratio": 0.0028936878587446733,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 73,
+        "marked": false,
+        "lower_pair_indicator": 635.5295753969406,
+        "higher_pair_indicator": 2.0855580228335087,
+        "higher_to_lower_ratio": 0.0032816065586419104,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 74,
+        "marked": false,
+        "lower_pair_indicator": 641.4840129315683,
+        "higher_pair_indicator": 2.167560811200297,
+        "higher_to_lower_ratio": 0.0033789786923832917,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 75,
+        "marked": true,
+        "lower_pair_indicator": 607.868420400614,
+        "higher_pair_indicator": 2.1727511789851044,
+        "higher_to_lower_ratio": 0.00357437745746548,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 76,
+        "marked": false,
+        "lower_pair_indicator": 424.7956009560596,
+        "higher_pair_indicator": 1.8814309414808508,
+        "higher_to_lower_ratio": 0.0044290264241118255,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 77,
+        "marked": false,
+        "lower_pair_indicator": 281.6358563137837,
+        "higher_pair_indicator": 1.6756237898715394,
+        "higher_to_lower_ratio": 0.005949611004092634,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 78,
+        "marked": false,
+        "lower_pair_indicator": 274.3290922602642,
+        "higher_pair_indicator": 1.7502705773960403,
+        "higher_to_lower_ratio": 0.006380185794277723,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 79,
+        "marked": false,
+        "lower_pair_indicator": 251.7553892392968,
+        "higher_pair_indicator": 1.7830134966077378,
+        "higher_to_lower_ratio": 0.007082325037788805,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 80,
+        "marked": false,
+        "lower_pair_indicator": 146.34628779422476,
+        "higher_pair_indicator": 1.6126822154279161,
+        "higher_to_lower_ratio": 0.011019631859029343,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 81,
+        "marked": false,
+        "lower_pair_indicator": 71.5259117566217,
+        "higher_pair_indicator": 1.5131634818144992,
+        "higher_to_lower_ratio": 0.02115545883516003,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 82,
+        "marked": false,
+        "lower_pair_indicator": 64.37186925078775,
+        "higher_pair_indicator": 1.597567249884243,
+        "higher_to_lower_ratio": 0.024817785602282982,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 83,
+        "marked": false,
+        "lower_pair_indicator": 62.82920849104107,
+        "higher_pair_indicator": 1.6633570473396921,
+        "higher_to_lower_ratio": 0.026474263917822125,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 84,
+        "marked": true,
+        "lower_pair_indicator": 1147.6856350063872,
+        "higher_pair_indicator": 3.203975217602216,
+        "higher_to_lower_ratio": 0.002791683645656491,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 85,
+        "marked": true,
+        "lower_pair_indicator": 1114.5007675846962,
+        "higher_pair_indicator": 3.245670059296961,
+        "higher_to_lower_ratio": 0.002912218774268639,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 86,
+        "marked": true,
+        "lower_pair_indicator": 861.9993417726298,
+        "higher_pair_indicator": 2.8444068475822313,
+        "higher_to_lower_ratio": 0.003299778444996194,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 87,
+        "marked": true,
+        "lower_pair_indicator": 671.780661881138,
+        "higher_pair_indicator": 2.544892130796129,
+        "higher_to_lower_ratio": 0.0037882783402395873,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 88,
+        "marked": true,
+        "lower_pair_indicator": 677.4694708006307,
+        "higher_pair_indicator": 2.6501631160848222,
+        "higher_to_lower_ratio": 0.003911856150437112,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 89,
+        "marked": true,
+        "lower_pair_indicator": 643.9577849578054,
+        "higher_pair_indicator": 2.6913715107571914,
+        "higher_to_lower_ratio": 0.004179422275224983,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 90,
+        "marked": true,
+        "lower_pair_indicator": 451.9399499209874,
+        "higher_pair_indicator": 2.389873589181861,
+        "higher_to_lower_ratio": 0.005288033486749031,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 91,
+        "marked": false,
+        "lower_pair_indicator": 302.21897627976756,
+        "higher_pair_indicator": 2.1688405005843103,
+        "higher_to_lower_ratio": 0.0071763875560765245,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 92,
+        "marked": true,
+        "lower_pair_indicator": 296.18433994921776,
+        "higher_pair_indicator": 2.2754532625926154,
+        "higher_to_lower_ratio": 0.007682557636176014,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 93,
+        "marked": true,
+        "lower_pair_indicator": 272.23899518957046,
+        "higher_pair_indicator": 2.336984746113529,
+        "higher_to_lower_ratio": 0.008584313002206743,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 94,
+        "marked": false,
+        "lower_pair_indicator": 162.297139543676,
+        "higher_pair_indicator": 2.164510854134778,
+        "higher_to_lower_ratio": 0.013336715977993461,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 95,
+        "marked": false,
+        "lower_pair_indicator": 84.19728575788466,
+        "higher_pair_indicator": 2.062871438540296,
+        "higher_to_lower_ratio": 0.02450045057832661,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 96,
+        "marked": true,
+        "lower_pair_indicator": 77.32220665555315,
+        "higher_pair_indicator": 2.1819003455689043,
+        "higher_to_lower_ratio": 0.028218288638458097,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 97,
+        "marked": true,
+        "lower_pair_indicator": 76.72157251402241,
+        "higher_pair_indicator": 2.2936489120509775,
+        "higher_to_lower_ratio": 0.029895749485997138,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 98,
+        "marked": true,
+        "lower_pair_indicator": 1147.6856350067308,
+        "higher_pair_indicator": 3.2039752176569407,
+        "higher_to_lower_ratio": 0.002791683645703338,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 99,
+        "marked": true,
+        "lower_pair_indicator": 1114.5007675881998,
+        "higher_pair_indicator": 3.245670059332245,
+        "higher_to_lower_ratio": 0.0029122187742911428,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 100,
+        "marked": true,
+        "lower_pair_indicator": 861.999341775308,
+        "higher_pair_indicator": 2.844406847540676,
+        "higher_to_lower_ratio": 0.003299778444937734,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 101,
+        "marked": true,
+        "lower_pair_indicator": 671.7806618779314,
+        "higher_pair_indicator": 2.544892130731303,
+        "higher_to_lower_ratio": 0.0037882783401611713,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 102,
+        "marked": true,
+        "lower_pair_indicator": 677.4694707985741,
+        "higher_pair_indicator": 2.65016311603816,
+        "higher_to_lower_ratio": 0.003911856150380109,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 103,
+        "marked": true,
+        "lower_pair_indicator": 643.9577849564484,
+        "higher_pair_indicator": 2.6913715107304323,
+        "higher_to_lower_ratio": 0.004179422275192236,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 104,
+        "marked": true,
+        "lower_pair_indicator": 451.9399499228924,
+        "higher_pair_indicator": 2.3898735891409006,
+        "higher_to_lower_ratio": 0.005288033486636107,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 105,
+        "marked": false,
+        "lower_pair_indicator": 302.218976278687,
+        "higher_pair_indicator": 2.1688405005682583,
+        "higher_to_lower_ratio": 0.007176387556049069,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 106,
+        "marked": true,
+        "lower_pair_indicator": 296.1843399504984,
+        "higher_pair_indicator": 2.2754532625847763,
+        "higher_to_lower_ratio": 0.00768255763611633,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 107,
+        "marked": true,
+        "lower_pair_indicator": 272.2389951882036,
+        "higher_pair_indicator": 2.3369847460977673,
+        "higher_to_lower_ratio": 0.008584313002191948,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 108,
+        "marked": false,
+        "lower_pair_indicator": 162.2971395439599,
+        "higher_pair_indicator": 2.1645108541199978,
+        "higher_to_lower_ratio": 0.013336715977879061,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 109,
+        "marked": false,
+        "lower_pair_indicator": 84.19728575788383,
+        "higher_pair_indicator": 2.062871438538502,
+        "higher_to_lower_ratio": 0.024500450578305542,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 110,
+        "marked": true,
+        "lower_pair_indicator": 77.32220665587894,
+        "higher_pair_indicator": 2.181900345569303,
+        "higher_to_lower_ratio": 0.028218288638344354,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 111,
+        "marked": true,
+        "lower_pair_indicator": 76.72157251452902,
+        "higher_pair_indicator": 2.2936489120505423,
+        "higher_to_lower_ratio": 0.029895749485794057,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 112,
+        "marked": true,
+        "lower_pair_indicator": 1147.6856350111257,
+        "higher_pair_indicator": 3.2039752175951506,
+        "higher_to_lower_ratio": 0.0027916836456388086,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 113,
+        "marked": true,
+        "lower_pair_indicator": 1114.5007675872967,
+        "higher_pair_indicator": 3.2456700592912413,
+        "higher_to_lower_ratio": 0.0029122187742567115,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 114,
+        "marked": true,
+        "lower_pair_indicator": 861.9993417685045,
+        "higher_pair_indicator": 2.8444068475387367,
+        "higher_to_lower_ratio": 0.0032997784449615283,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 115,
+        "marked": true,
+        "lower_pair_indicator": 671.7806618779236,
+        "higher_pair_indicator": 2.5448921307883876,
+        "higher_to_lower_ratio": 0.00378827834024619,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 116,
+        "marked": true,
+        "lower_pair_indicator": 677.4694708022139,
+        "higher_pair_indicator": 2.650163116106252,
+        "higher_to_lower_ratio": 0.003911856150459602,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 117,
+        "marked": true,
+        "lower_pair_indicator": 643.9577849570505,
+        "higher_pair_indicator": 2.691371510791989,
+        "higher_to_lower_ratio": 0.004179422275283919,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 118,
+        "marked": true,
+        "lower_pair_indicator": 451.9399499215126,
+        "higher_pair_indicator": 2.38987358915537,
+        "higher_to_lower_ratio": 0.0052880334866842685,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 119,
+        "marked": false,
+        "lower_pair_indicator": 302.2189762787043,
+        "higher_pair_indicator": 2.1688405005168194,
+        "higher_to_lower_ratio": 0.007176387555878455,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 120,
+        "marked": true,
+        "lower_pair_indicator": 296.1843399496812,
+        "higher_pair_indicator": 2.2754532626110384,
+        "higher_to_lower_ratio": 0.007682557636226195,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 121,
+        "marked": true,
+        "lower_pair_indicator": 272.23899518892625,
+        "higher_pair_indicator": 2.336984746121474,
+        "higher_to_lower_ratio": 0.008584313002256242,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 122,
+        "marked": false,
+        "lower_pair_indicator": 162.29713954387225,
+        "higher_pair_indicator": 2.1645108541583564,
+        "higher_to_lower_ratio": 0.013336715978122613,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 123,
+        "marked": false,
+        "lower_pair_indicator": 84.19728575794322,
+        "higher_pair_indicator": 2.062871438538955,
+        "higher_to_lower_ratio": 0.02450045057829364,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 124,
+        "marked": true,
+        "lower_pair_indicator": 77.32220665539776,
+        "higher_pair_indicator": 2.1819003455689656,
+        "higher_to_lower_ratio": 0.028218288638515596,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 125,
+        "marked": true,
+        "lower_pair_indicator": 76.72157251474327,
+        "higher_pair_indicator": 2.2936489120482317,
+        "higher_to_lower_ratio": 0.029895749485680453,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 126,
+        "marked": true,
+        "lower_pair_indicator": 1150.865567640614,
+        "higher_pair_indicator": 3.212791625581735,
+        "higher_to_lower_ratio": 0.0027916306786102477,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 127,
+        "marked": true,
+        "lower_pair_indicator": 1106.7139717481625,
+        "higher_pair_indicator": 3.2258464512570435,
+        "higher_to_lower_ratio": 0.0029147968974869857,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 128,
+        "marked": true,
+        "lower_pair_indicator": 857.4220700082193,
+        "higher_pair_indicator": 2.8265606999987583,
+        "higher_to_lower_ratio": 0.0032965802944303294,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 129,
+        "marked": true,
+        "lower_pair_indicator": 667.6472805362398,
+        "higher_pair_indicator": 2.5276476909002166,
+        "higher_to_lower_ratio": 0.0037859027731979447,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 130,
+        "marked": true,
+        "lower_pair_indicator": 673.0384987906906,
+        "higher_pair_indicator": 2.6336541969237928,
+        "higher_to_lower_ratio": 0.003913081052058565,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 131,
+        "marked": true,
+        "lower_pair_indicator": 640.911254379878,
+        "higher_pair_indicator": 2.6788152046533944,
+        "higher_to_lower_ratio": 0.0041796975577302305,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 132,
+        "marked": true,
+        "lower_pair_indicator": 448.89336030066113,
+        "higher_pair_indicator": 2.3746147923798255,
+        "higher_to_lower_ratio": 0.005289930755022415,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 133,
+        "marked": false,
+        "lower_pair_indicator": 301.12457716021186,
+        "higher_pair_indicator": 2.153415269904977,
+        "higher_to_lower_ratio": 0.007151243814812441,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 134,
+        "marked": true,
+        "lower_pair_indicator": 295.29854759231296,
+        "higher_pair_indicator": 2.260599118941373,
+        "higher_to_lower_ratio": 0.007655300499690707,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 135,
+        "marked": true,
+        "lower_pair_indicator": 270.7510376332492,
+        "higher_pair_indicator": 2.3201987012896503,
+        "higher_to_lower_ratio": 0.008569491447092875,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 136,
+        "marked": false,
+        "lower_pair_indicator": 161.94044470257612,
+        "higher_pair_indicator": 2.153192466558752,
+        "higher_to_lower_ratio": 0.013296199541216273,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 137,
+        "marked": false,
+        "lower_pair_indicator": 83.78850195778365,
+        "higher_pair_indicator": 2.049520947959225,
+        "higher_to_lower_ratio": 0.024460646748307592,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 138,
+        "marked": false,
+        "lower_pair_indicator": 77.05905403535563,
+        "higher_pair_indicator": 2.1687205250766577,
+        "higher_to_lower_ratio": 0.028143617284500044,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 139,
+        "marked": true,
+        "lower_pair_indicator": 77.30023188437343,
+        "higher_pair_indicator": 2.293370113218118,
+        "higher_to_lower_ratio": 0.029668347135731327,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 140,
+        "marked": true,
+        "lower_pair_indicator": 1150.865567643475,
+        "higher_pair_indicator": 3.212791625658901,
+        "higher_to_lower_ratio": 0.002791630678670358,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 141,
+        "marked": true,
+        "lower_pair_indicator": 1106.7139717518044,
+        "higher_pair_indicator": 3.225846451200794,
+        "higher_to_lower_ratio": 0.002914796897426568,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 142,
+        "marked": true,
+        "lower_pair_indicator": 857.422070004554,
+        "higher_pair_indicator": 2.826560699907644,
+        "higher_to_lower_ratio": 0.003296580294338156,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 143,
+        "marked": true,
+        "lower_pair_indicator": 667.6472805328808,
+        "higher_pair_indicator": 2.527647690876497,
+        "higher_to_lower_ratio": 0.003785902773181465,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 144,
+        "marked": true,
+        "lower_pair_indicator": 673.0384987932945,
+        "higher_pair_indicator": 2.6336541969416167,
+        "higher_to_lower_ratio": 0.003913081052069909,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 145,
+        "marked": true,
+        "lower_pair_indicator": 640.9112543775037,
+        "higher_pair_indicator": 2.6788152046239144,
+        "higher_to_lower_ratio": 0.004179697557699717,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 146,
+        "marked": true,
+        "lower_pair_indicator": 448.8933603018281,
+        "higher_pair_indicator": 2.374614792339973,
+        "higher_to_lower_ratio": 0.0052899307549198835,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 147,
+        "marked": false,
+        "lower_pair_indicator": 301.1245771598092,
+        "higher_pair_indicator": 2.1534152698889586,
+        "higher_to_lower_ratio": 0.0071512438147688095,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 148,
+        "marked": true,
+        "lower_pair_indicator": 295.2985475927938,
+        "higher_pair_indicator": 2.260599118918367,
+        "higher_to_lower_ratio": 0.007655300499600334,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 149,
+        "marked": true,
+        "lower_pair_indicator": 270.7510376322477,
+        "higher_pair_indicator": 2.3201987012557246,
+        "higher_to_lower_ratio": 0.008569491446999271,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 150,
+        "marked": false,
+        "lower_pair_indicator": 161.94044470200274,
+        "higher_pair_indicator": 2.1531924665429587,
+        "higher_to_lower_ratio": 0.013296199541165827,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 151,
+        "marked": false,
+        "lower_pair_indicator": 83.78850195818545,
+        "higher_pair_indicator": 2.049520947963958,
+        "higher_to_lower_ratio": 0.02446064674824678,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 152,
+        "marked": false,
+        "lower_pair_indicator": 77.05905403523484,
+        "higher_pair_indicator": 2.1687205250809525,
+        "higher_to_lower_ratio": 0.028143617284599895,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 153,
+        "marked": true,
+        "lower_pair_indicator": 77.30023188494457,
+        "higher_pair_indicator": 2.2933701132100808,
+        "higher_to_lower_ratio": 0.029668347135408148,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 154,
+        "marked": true,
+        "lower_pair_indicator": 1150.8655676450812,
+        "higher_pair_indicator": 3.212791625611379,
+        "higher_to_lower_ratio": 0.0027916306786251693,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 155,
+        "marked": true,
+        "lower_pair_indicator": 1106.7139717449334,
+        "higher_pair_indicator": 3.2258464511934526,
+        "higher_to_lower_ratio": 0.0029147968974380313,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 156,
+        "marked": true,
+        "lower_pair_indicator": 857.4220700038599,
+        "higher_pair_indicator": 2.826560699943035,
+        "higher_to_lower_ratio": 0.003296580294382101,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 157,
+        "marked": true,
+        "lower_pair_indicator": 667.6472805350953,
+        "higher_pair_indicator": 2.5276476908775964,
+        "higher_to_lower_ratio": 0.0037859027731705543,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 158,
+        "marked": true,
+        "lower_pair_indicator": 673.0384987951328,
+        "higher_pair_indicator": 2.633654196939735,
+        "higher_to_lower_ratio": 0.003913081052056425,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 159,
+        "marked": true,
+        "lower_pair_indicator": 640.9112543778353,
+        "higher_pair_indicator": 2.6788152046377354,
+        "higher_to_lower_ratio": 0.004179697557719119,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 160,
+        "marked": true,
+        "lower_pair_indicator": 448.89336029996633,
+        "higher_pair_indicator": 2.3746147923655863,
+        "higher_to_lower_ratio": 0.005289930754998883,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 161,
+        "marked": false,
+        "lower_pair_indicator": 301.12457715999057,
+        "higher_pair_indicator": 2.153415269886128,
+        "higher_to_lower_ratio": 0.007151243814755102,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 162,
+        "marked": true,
+        "lower_pair_indicator": 295.2985475922122,
+        "higher_pair_indicator": 2.2605991189542483,
+        "higher_to_lower_ratio": 0.007655300499736919,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 163,
+        "marked": true,
+        "lower_pair_indicator": 270.75103763383447,
+        "higher_pair_indicator": 2.3201987012815857,
+        "higher_to_lower_ratio": 0.008569491447044565,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 164,
+        "marked": false,
+        "lower_pair_indicator": 161.9404447013112,
+        "higher_pair_indicator": 2.1531924665484334,
+        "higher_to_lower_ratio": 0.013296199541256413,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 165,
+        "marked": false,
+        "lower_pair_indicator": 83.78850195807512,
+        "higher_pair_indicator": 2.049520947950789,
+        "higher_to_lower_ratio": 0.024460646748121824,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 166,
+        "marked": false,
+        "lower_pair_indicator": 77.05905403515983,
+        "higher_pair_indicator": 2.1687205250763615,
+        "higher_to_lower_ratio": 0.028143617284567712,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 167,
+        "marked": true,
+        "lower_pair_indicator": 77.3002318847203,
+        "higher_pair_indicator": 2.2933701132628883,
+        "higher_to_lower_ratio": 0.02966834713617737,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 168,
+        "marked": true,
+        "lower_pair_indicator": 1090.867456502888,
+        "higher_pair_indicator": 2.734879502598636,
+        "higher_to_lower_ratio": 0.002507068559333629,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 169,
+        "marked": true,
+        "lower_pair_indicator": 1048.7070656686144,
+        "higher_pair_indicator": 2.7262859554944883,
+        "higher_to_lower_ratio": 0.002599663952637065,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 170,
+        "marked": true,
+        "lower_pair_indicator": 811.8232475060818,
+        "higher_pair_indicator": 2.34912726132928,
+        "higher_to_lower_ratio": 0.0028936437439378475,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 171,
+        "marked": false,
+        "lower_pair_indicator": 629.4148146042762,
+        "higher_pair_indicator": 2.0674210954853374,
+        "higher_to_lower_ratio": 0.0032846718054851632,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 172,
+        "marked": false,
+        "lower_pair_indicator": 635.0345390744556,
+        "higher_pair_indicator": 2.150609150391061,
+        "higher_to_lower_ratio": 0.0033866018587359226,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 173,
+        "marked": false,
+        "lower_pair_indicator": 603.8319339991302,
+        "higher_pair_indicator": 2.162605122925475,
+        "higher_to_lower_ratio": 0.0035814686192608518,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 174,
+        "marked": false,
+        "lower_pair_indicator": 420.3242431453652,
+        "higher_pair_indicator": 1.8668582438460468,
+        "higher_to_lower_ratio": 0.004441471731147355,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 175,
+        "marked": false,
+        "lower_pair_indicator": 280.0239808522774,
+        "higher_pair_indicator": 1.6609835094823433,
+        "higher_to_lower_ratio": 0.005931575947270641,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 176,
+        "marked": false,
+        "lower_pair_indicator": 273.234580322213,
+        "higher_pair_indicator": 1.7373348836429594,
+        "higher_to_lower_ratio": 0.00635840046890917,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 177,
+        "marked": false,
+        "lower_pair_indicator": 249.41075613849716,
+        "higher_pair_indicator": 1.7668642757933892,
+        "higher_to_lower_ratio": 0.007084154280869322,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 178,
+        "marked": false,
+        "lower_pair_indicator": 146.1065042382811,
+        "higher_pair_indicator": 1.6048107429716973,
+        "higher_to_lower_ratio": 0.010983841899019468,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 179,
+        "marked": false,
+        "lower_pair_indicator": 70.91104842467064,
+        "higher_pair_indicator": 1.5017660548037004,
+        "higher_to_lower_ratio": 0.021178167410668566,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 180,
+        "marked": false,
+        "lower_pair_indicator": 64.00322484057365,
+        "higher_pair_indicator": 1.5852294994756881,
+        "higher_to_lower_ratio": 0.024767962917874125,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 181,
+        "marked": false,
+        "lower_pair_indicator": 63.6684166654429,
+        "higher_pair_indicator": 1.6641489200869248,
+        "higher_to_lower_ratio": 0.02613774626800433,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 182,
+        "marked": true,
+        "lower_pair_indicator": 1090.8674565075885,
+        "higher_pair_indicator": 2.7348795026078108,
+        "higher_to_lower_ratio": 0.002507068559331237,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 183,
+        "marked": true,
+        "lower_pair_indicator": 1048.707065665139,
+        "higher_pair_indicator": 2.7262859554082617,
+        "higher_to_lower_ratio": 0.0025996639525634586,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 184,
+        "marked": true,
+        "lower_pair_indicator": 811.8232475016019,
+        "higher_pair_indicator": 2.349127261103388,
+        "higher_to_lower_ratio": 0.002893643743675562,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 185,
+        "marked": false,
+        "lower_pair_indicator": 629.4148146035901,
+        "higher_pair_indicator": 2.067421095331756,
+        "higher_to_lower_ratio": 0.0032846718052447375,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 186,
+        "marked": false,
+        "lower_pair_indicator": 635.03453907623,
+        "higher_pair_indicator": 2.150609150535618,
+        "higher_to_lower_ratio": 0.003386601858954096,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 187,
+        "marked": false,
+        "lower_pair_indicator": 603.83193400099,
+        "higher_pair_indicator": 2.1626051229079275,
+        "higher_to_lower_ratio": 0.003581468619220761,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 188,
+        "marked": false,
+        "lower_pair_indicator": 420.3242431463642,
+        "higher_pair_indicator": 1.8668582437444559,
+        "higher_to_lower_ratio": 0.004441471730895102,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 189,
+        "marked": false,
+        "lower_pair_indicator": 280.02398085374915,
+        "higher_pair_indicator": 1.6609835093702918,
+        "higher_to_lower_ratio": 0.005931575946839317,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 190,
+        "marked": false,
+        "lower_pair_indicator": 273.23458032112825,
+        "higher_pair_indicator": 1.7373348836395037,
+        "higher_to_lower_ratio": 0.006358400468921766,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 191,
+        "marked": false,
+        "lower_pair_indicator": 249.41075613942638,
+        "higher_pair_indicator": 1.7668642757771216,
+        "higher_to_lower_ratio": 0.0070841542807777045,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 192,
+        "marked": false,
+        "lower_pair_indicator": 146.10650423723004,
+        "higher_pair_indicator": 1.604810742983242,
+        "higher_to_lower_ratio": 0.010983841899177497,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 193,
+        "marked": false,
+        "lower_pair_indicator": 70.91104842507237,
+        "higher_pair_indicator": 1.501766054804212,
+        "higher_to_lower_ratio": 0.021178167410555802,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 194,
+        "marked": false,
+        "lower_pair_indicator": 64.00322484009541,
+        "higher_pair_indicator": 1.5852294994777538,
+        "higher_to_lower_ratio": 0.024767962918091465,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 195,
+        "marked": false,
+        "lower_pair_indicator": 63.66841666626038,
+        "higher_pair_indicator": 1.6641489200704587,
+        "higher_to_lower_ratio": 0.026137746267410108,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 196,
+        "marked": true,
+        "lower_pair_indicator": 1090.8674565009858,
+        "higher_pair_indicator": 2.734879502601538,
+        "higher_to_lower_ratio": 0.0025070685593406613,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 197,
+        "marked": true,
+        "lower_pair_indicator": 1048.7070656637943,
+        "higher_pair_indicator": 2.726285955456343,
+        "higher_to_lower_ratio": 0.0025996639526126397,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 198,
+        "marked": true,
+        "lower_pair_indicator": 811.8232475051368,
+        "higher_pair_indicator": 2.3491272613248726,
+        "higher_to_lower_ratio": 0.0028936437439357862,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 199,
+        "marked": false,
+        "lower_pair_indicator": 629.4148146056735,
+        "higher_pair_indicator": 2.067421095488997,
+        "higher_to_lower_ratio": 0.0032846718054836857,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 200,
+        "marked": false,
+        "lower_pair_indicator": 635.0345390765219,
+        "higher_pair_indicator": 2.150609150298206,
+        "higher_to_lower_ratio": 0.0033866018585786825,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 201,
+        "marked": false,
+        "lower_pair_indicator": 603.8319339992798,
+        "higher_pair_indicator": 2.162605122794048,
+        "higher_to_lower_ratio": 0.00358146861904231,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 202,
+        "marked": false,
+        "lower_pair_indicator": 420.32424314443045,
+        "higher_pair_indicator": 1.8668582436307068,
+        "higher_to_lower_ratio": 0.004441471730644913,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 203,
+        "marked": false,
+        "lower_pair_indicator": 280.0239808549053,
+        "higher_pair_indicator": 1.6609835093013308,
+        "higher_to_lower_ratio": 0.0059315759465685585,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 204,
+        "marked": false,
+        "lower_pair_indicator": 273.2345803218852,
+        "higher_pair_indicator": 1.7373348836640863,
+        "higher_to_lower_ratio": 0.00635840046899412,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 205,
+        "marked": false,
+        "lower_pair_indicator": 249.41075613940032,
+        "higher_pair_indicator": 1.76686427579994,
+        "higher_to_lower_ratio": 0.007084154280869935,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 206,
+        "marked": false,
+        "lower_pair_indicator": 146.1065042376324,
+        "higher_pair_indicator": 1.604810742952817,
+        "higher_to_lower_ratio": 0.01098384189893901,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 207,
+        "marked": false,
+        "lower_pair_indicator": 70.91104842481063,
+        "higher_pair_indicator": 1.501766054800213,
+        "higher_to_lower_ratio": 0.021178167410577577,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 208,
+        "marked": false,
+        "lower_pair_indicator": 64.00322484031864,
+        "higher_pair_indicator": 1.5852294994775393,
+        "higher_to_lower_ratio": 0.02476796291800173,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 209,
+        "marked": false,
+        "lower_pair_indicator": 63.66841666590511,
+        "higher_pair_indicator": 1.6641489200944235,
+        "higher_to_lower_ratio": 0.026137746267932353,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 210,
+        "marked": true,
+        "lower_pair_indicator": 1088.2585882230849,
+        "higher_pair_indicator": 2.728726308723562,
+        "higher_to_lower_ratio": 0.0025074245572268283,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 211,
+        "marked": true,
+        "lower_pair_indicator": 1052.3495766886372,
+        "higher_pair_indicator": 2.7338880730468835,
+        "higher_to_lower_ratio": 0.002597889649606207,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 212,
+        "marked": true,
+        "lower_pair_indicator": 814.510227806796,
+        "higher_pair_indicator": 2.35891387455967,
+        "higher_to_lower_ratio": 0.0028961132641777097,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 213,
+        "marked": false,
+        "lower_pair_indicator": 630.7402310467115,
+        "higher_pair_indicator": 2.074931420764491,
+        "higher_to_lower_ratio": 0.0032896766666067083,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 214,
+        "marked": false,
+        "lower_pair_indicator": 637.8071664300328,
+        "higher_pair_indicator": 2.161916991072067,
+        "higher_to_lower_ratio": 0.0033896091246087123,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 215,
+        "marked": false,
+        "lower_pair_indicator": 605.0875047791311,
+        "higher_pair_indicator": 2.1690661359757284,
+        "higher_to_lower_ratio": 0.003584714803799296,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 216,
+        "marked": false,
+        "lower_pair_indicator": 421.6216491784937,
+        "higher_pair_indicator": 1.872981366217677,
+        "higher_to_lower_ratio": 0.004442327309015268,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 217,
+        "marked": false,
+        "lower_pair_indicator": 280.89160011608965,
+        "higher_pair_indicator": 1.668957526044362,
+        "higher_to_lower_ratio": 0.00594164270257494,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 218,
+        "marked": false,
+        "lower_pair_indicator": 273.2974153460511,
+        "higher_pair_indicator": 1.7442699446906647,
+        "higher_to_lower_ratio": 0.006382314089879181,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 219,
+        "marked": false,
+        "lower_pair_indicator": 250.21908976315805,
+        "higher_pair_indicator": 1.7769893543501094,
+        "higher_to_lower_ratio": 0.007101733748740346,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 220,
+        "marked": false,
+        "lower_pair_indicator": 146.2224912061913,
+        "higher_pair_indicator": 1.611409227868109,
+        "higher_to_lower_ratio": 0.011020255602100418,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 221,
+        "marked": false,
+        "lower_pair_indicator": 70.96300929109051,
+        "higher_pair_indicator": 1.507611046270723,
+        "higher_to_lower_ratio": 0.021245026970128863,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 222,
+        "marked": false,
+        "lower_pair_indicator": 64.10198989631073,
+        "higher_pair_indicator": 1.5917458585546187,
+        "higher_to_lower_ratio": 0.024831457824154517,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 223,
+        "marked": false,
+        "lower_pair_indicator": 63.42661526949055,
+        "higher_pair_indicator": 1.665830760226678,
+        "higher_to_lower_ratio": 0.026263907559134336,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 224,
+        "marked": true,
+        "lower_pair_indicator": 1088.2585882224798,
+        "higher_pair_indicator": 2.728726308698148,
+        "higher_to_lower_ratio": 0.0025074245572048693,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 225,
+        "marked": true,
+        "lower_pair_indicator": 1052.3495766836825,
+        "higher_pair_indicator": 2.733888073019616,
+        "higher_to_lower_ratio": 0.002597889649592527,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 226,
+        "marked": true,
+        "lower_pair_indicator": 814.5102278052451,
+        "higher_pair_indicator": 2.3589138744833114,
+        "higher_to_lower_ratio": 0.0028961132640894765,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 227,
+        "marked": false,
+        "lower_pair_indicator": 630.7402310410062,
+        "higher_pair_indicator": 2.0749314206974825,
+        "higher_to_lower_ratio": 0.0032896766665302273,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 228,
+        "marked": false,
+        "lower_pair_indicator": 637.8071664435769,
+        "higher_pair_indicator": 2.161916990903452,
+        "higher_to_lower_ratio": 0.0033896091242723663,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 229,
+        "marked": false,
+        "lower_pair_indicator": 605.0875047855352,
+        "higher_pair_indicator": 2.1690661358897625,
+        "higher_to_lower_ratio": 0.003584714803619284,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 230,
+        "marked": false,
+        "lower_pair_indicator": 421.6216491810351,
+        "higher_pair_indicator": 1.8729813660419234,
+        "higher_to_lower_ratio": 0.004442327308571639,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 231,
+        "marked": false,
+        "lower_pair_indicator": 280.8916001247561,
+        "higher_pair_indicator": 1.6689575259263907,
+        "higher_to_lower_ratio": 0.005941642701971631,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 232,
+        "marked": false,
+        "lower_pair_indicator": 273.2974153445334,
+        "higher_pair_indicator": 1.74426994469916,
+        "higher_to_lower_ratio": 0.006382314089945708,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 233,
+        "marked": false,
+        "lower_pair_indicator": 250.21908976477442,
+        "higher_pair_indicator": 1.7769893543424988,
+        "higher_to_lower_ratio": 0.007101733748664053,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 234,
+        "marked": false,
+        "lower_pair_indicator": 146.22249120589717,
+        "higher_pair_indicator": 1.6114092278790022,
+        "higher_to_lower_ratio": 0.011020255602197085,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 235,
+        "marked": false,
+        "lower_pair_indicator": 70.96300929110387,
+        "higher_pair_indicator": 1.507611046268146,
+        "higher_to_lower_ratio": 0.021245026970088548,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 236,
+        "marked": false,
+        "lower_pair_indicator": 64.10198989612391,
+        "higher_pair_indicator": 1.5917458585539825,
+        "higher_to_lower_ratio": 0.02483145782421696,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 237,
+        "marked": false,
+        "lower_pair_indicator": 63.42661526909193,
+        "higher_pair_indicator": 1.6658307602202536,
+        "higher_to_lower_ratio": 0.026263907559198104,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 238,
+        "marked": true,
+        "lower_pair_indicator": 1088.258588218034,
+        "higher_pair_indicator": 2.728726308668592,
+        "higher_to_lower_ratio": 0.002507424557187954,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 239,
+        "marked": true,
+        "lower_pair_indicator": 1052.3495766851881,
+        "higher_pair_indicator": 2.7338880730685307,
+        "higher_to_lower_ratio": 0.0025978896496352912,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 240,
+        "marked": true,
+        "lower_pair_indicator": 814.5102278087058,
+        "higher_pair_indicator": 2.358913874600947,
+        "higher_to_lower_ratio": 0.002896113264221596,
+        "action": "p_up",
+        "reason": "goal-important cell with fast consecutive p-decay"
+      },
+      {
+        "canonical_cell_id": 241,
+        "marked": false,
+        "lower_pair_indicator": 630.7402310522433,
+        "higher_pair_indicator": 2.074931420809223,
+        "higher_to_lower_ratio": 0.0032896766666487766,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 242,
+        "marked": false,
+        "lower_pair_indicator": 637.8071664392705,
+        "higher_pair_indicator": 2.1619169908767217,
+        "higher_to_lower_ratio": 0.0033896091242533424,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 243,
+        "marked": false,
+        "lower_pair_indicator": 605.0875047793699,
+        "higher_pair_indicator": 2.169066135951159,
+        "higher_to_lower_ratio": 0.003584714803757277,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 244,
+        "marked": false,
+        "lower_pair_indicator": 421.62164917666416,
+        "higher_pair_indicator": 1.8729813660611558,
+        "higher_to_lower_ratio": 0.004442327308663308,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 245,
+        "marked": false,
+        "lower_pair_indicator": 280.89160012009523,
+        "higher_pair_indicator": 1.6689575259318765,
+        "higher_to_lower_ratio": 0.005941642702089751,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 246,
+        "marked": false,
+        "lower_pair_indicator": 273.29741534509355,
+        "higher_pair_indicator": 1.7442699446859695,
+        "higher_to_lower_ratio": 0.006382314089884363,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 247,
+        "marked": false,
+        "lower_pair_indicator": 250.2190897640423,
+        "higher_pair_indicator": 1.77698935434425,
+        "higher_to_lower_ratio": 0.0071017337486918315,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 248,
+        "marked": false,
+        "lower_pair_indicator": 146.22249120670162,
+        "higher_pair_indicator": 1.6114092278499117,
+        "higher_to_lower_ratio": 0.01102025560193751,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 249,
+        "marked": false,
+        "lower_pair_indicator": 70.96300929087457,
+        "higher_pair_indicator": 1.507611046266514,
+        "higher_to_lower_ratio": 0.0212450269701342,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 250,
+        "marked": false,
+        "lower_pair_indicator": 64.10198989640352,
+        "higher_pair_indicator": 1.5917458585609658,
+        "higher_to_lower_ratio": 0.024831457824217584,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      },
+      {
+        "canonical_cell_id": 251,
+        "marked": false,
+        "lower_pair_indicator": 63.426615269117626,
+        "higher_pair_indicator": 1.6658307602676554,
+        "higher_to_lower_ratio": 0.026263907559934817,
+        "action": "p_keep",
+        "reason": "unmarked cell retains non-negligible correction"
+      }
+    ],
+    "decision_scope": "research-only p-down/p-keep/p-up/h-refine candidates; no variable-p space or mesh mutation"
+  },
+  "scope_note": "R5 correction-decay research classification only; DWR R00/R/T and conformity closure remain separate gates before local-p use"
+}
