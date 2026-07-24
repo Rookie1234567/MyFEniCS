@@ -1,0 +1,129 @@
+{
+  "schema_version": "task035b.fixed-trace-port-preflight-controlled-stop.v1",
+  "benchmark_id": "task035b_fixed_trace_h15_evanescent_buffer1_preflight",
+  "status": "controlled_stop_unscaled_evanescent_port_basis",
+  "pass": true,
+  "classification": "controlled_negative_safety_evidence",
+  "pde": {
+    "status": "not_run",
+    "mpi_size_planned": 8,
+    "heavy_case_started": false,
+    "solver_failure": false
+  },
+  "scope": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "dtn_order_policy": "auto_propagating",
+    "dtn_evanescent_buffer": 1,
+    "effective_surface_quadrature_degree": 25,
+    "ordinary_default_changed": false,
+    "scientific_gate_relaxed": false
+  },
+  "source": {
+    "commit_sha": "7139a6e2ee0bcec4459e7591864235bbbc7d7377",
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "tracked_source_dirty": false,
+    "stable_and_clean_before": true,
+    "checks": {
+      "head_matches_verified_sha": true,
+      "expected_branch": true,
+      "tracked_and_untracked_worktree_clean": true
+    }
+  },
+  "source_file_sha256": {
+    "benchmarks/run_task035_actual_r5.py": "d27a13044149909d93e632df8d64419ad23cbfca17802cbbd03e939f82a08c0c",
+    "src/common/config_3d.py": "0bb3ff0cde84fb30edf7bda8715238472fbfae770d147fd392f83260cbda8025",
+    "src/common/modes_3d.py": "7646129d324a6be3a2a9579bf5222bbb032a5a80e83f45c26512597e4d94e362",
+    "src/solvers/dtn_port_3d.py": "cd57c6ca1e9b8aae131e2e4f898f5d1b1b1279bee33e35cbdc5bb60bb933b6be"
+  },
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "preflight_stopped_before_pde": true,
+      "only_failed_check_is_unscaled_basis_safety": true,
+      "buffer1_mode_count_is_340": true,
+      "buffer1_evanescent_count_is_260": true,
+      "buffer1_ordered_identity_frozen": true,
+      "pde_not_authorized": true,
+      "ordinary_default_unchanged": true
+    }
+  },
+  "resource_projection": {
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "num_mesh_cells": 120,
+    "candidate_dofs": 74890,
+    "global_p6_dofs": 84492,
+    "active_rows_with_dtn": 16880,
+    "base_schur_nnz": 9129300,
+    "predicted_used_nnz": 9195812,
+    "safe_allocated_nnz_upper": 9484580,
+    "reviewed_default_dtn_auxiliary_rows": 80,
+    "dtn_auxiliary_rows": 340,
+    "dtn_propagating_rows": 80,
+    "dtn_evanescent_rows": 260,
+    "dtn_mode_identity_sha256": "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629",
+    "expected_dtn_mode_identity_sha256": "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629",
+    "dtn_surface_quadrature_degree": 25,
+    "expected_active_rows": 17140,
+    "port_diagnostic_predicted_used_nnz": 9411976,
+    "port_diagnostic_safe_allocated_nnz_upper": 10639240
+  },
+  "port_basis_scaling_preflight": {
+    "schema_version": "task035b.dtn-port-basis-scaling-preflight.v1",
+    "status": "controlled_stop_unscaled_evanescent_port_basis",
+    "pde_authorized": false,
+    "mode_count": 340,
+    "mode_identity_sha256": "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629",
+    "minimum_abs_boundary_phase": 4.698738560873268e-84,
+    "boundary_phase_safety_floor": 1.4901161193847656e-08,
+    "minimum_projection_denominator": 1.3145251656432648e-164,
+    "maximum_projection_denominator": 1250.0,
+    "denominator_dynamic_range": 9.509137083642752e+166,
+    "criterion": "all values finite and positive, and minimum absolute boundary phase >= sqrt(machine epsilon), preventing the unscaled augmented row/column ratio from exceeding approximately 1/epsilon",
+    "ordinary_default_changed": false,
+    "worst_boundary_phase_mode": {
+      "side": "top",
+      "m": 8,
+      "n": -2,
+      "polarization": "s",
+      "propagating": false,
+      "abs_boundary_phase": 4.698738560873268e-84,
+      "projection_denominator": 2.7597680079296743e-164
+    },
+    "worst_projection_denominator_mode": {
+      "side": "top",
+      "m": 8,
+      "n": -2,
+      "polarization": "p",
+      "propagating": false,
+      "abs_boundary_phase": 4.698738560873268e-84,
+      "projection_denominator": 1.3145251656432648e-164
+    },
+    "by_side": {
+      "top": {
+        "mode_count": 170,
+        "minimum_abs_boundary_phase": 4.698738560873268e-84,
+        "minimum_projection_denominator": 1.3145251656432648e-164,
+        "maximum_projection_denominator": 1250.0
+      },
+      "bottom": {
+        "mode_count": 170,
+        "minimum_abs_boundary_phase": 3.8861150505991735e-07,
+        "minimum_projection_denominator": 8.992549542402884e-11,
+        "maximum_projection_denominator": 1228.8319226246622
+      }
+    }
+  },
+  "decision": {
+    "buffer1_pde_authorized": false,
+    "reason": "The current global-z evanescent basis produces an augmented row/column scale ratio far beyond machine precision. A MUMPS failure would not classify physical buffer convergence.",
+    "reopen_condition": "Normalize evanescent modes at each port plane (or prove an equivalent equilibration), freeze the 80 propagating channel convention, and pass operator-equivalence tests.",
+    "next_safe_port_case": "h15 fixed trace with DtN quadrature q31"
+  }
+}
