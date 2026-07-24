@@ -5,8 +5,9 @@
 ```text
 execution_branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 review_v1_commit = a0081afac258480b31fbfc3e94c358fa39d2eacd
-evidence_through_head = 0851b14f83f724f7102444277c176caf09e15bf6
-final_delivery_head = <TO_BE_FILLED_BY_MAIN_AGENT_AFTER_FINAL_COMMIT>
+final_tested_head = aa87534158bc84be7362d14e55ad56e7286a5e2a
+evidence_through_head = aa87534158bc84be7362d14e55ad56e7286a5e2a
+final_delivery_head = reported in the post-commit handoff to avoid a self-referential SHA
 geometry_scope = Task034 fixed rectangular block grating only
 formal_MPI = 8
 final_status = PARTIAL_WITH_CONTROLLED_NEGATIVES
@@ -390,9 +391,10 @@ planning factor 或 DoF projection 写成 simultaneous peak。
 | item | final classification |
 |---|---|
 | initial channel-adjoint implementation | `formal_not_pass`；保留，未删除 |
-| x-only、y-only、q31、scaled buffer1 | `controlled_negative` |
+| x-only、q31、scaled buffer1 | `controlled_negative` |
+| y-only global-p5 mechanism control | `diagnostic_control_negative`；`not_same_space_y_exclusion` |
 | h14/h13 z | positive recovery signal，但 formal candidate 仍 `controlled_negative` |
-| h14 R5 slab bisect | `controlled_negative`；不再扫描 split position |
+| h14 R5 slab bisect | `controlled_negative`；预先指定 R5-slab lane closed，其他 node distributions 未运行 |
 | global p6/h14 | physics discriminator；`not_candidate_over_dof_cap` |
 | unscaled buffer1 | `controlled_stop_before_PDE` |
 | p7/h10 | `controlled_stop_before_PDE` |
@@ -435,25 +437,28 @@ planning factor 或 DoF projection 写成 simultaneous peak。
 | [`physical_trace_lane_capability_gate.json`](../../benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_trace_lane_capability_gate.json) | `4f26763ffc182925b0f92a20674f9572235205237d0e1a6677b92cc992d9d2bc` | `4a9bf317562c5713f1da0cf5597fcaecedce38e0` |
 | [`condensed_trace_iterative_capability_gate.json`](../../benchmarks/cases/095_high_order_local_hp_resource_envelope/records/condensed_trace_iterative_capability_gate.json) | `3597379e4a62dfefd3ac53ded8d2a12d91422cc8f9ebfac4af2d657a43cd7048` | `5b652793047b58bdd25aaa96385c2a739c69fce9` |
 
-## 10. Final-HEAD 测试与交付占位
+## 10. Final-HEAD 测试与交付
 
-本节不复用旧 HEAD 的计数，也不虚构尚未由主智能体在最终文档/ledger
-收口后执行的结果。以下项目必须在最终改动完成后由主智能体填写。
+完整 source/evidence regression 绑定
+`aa87534158bc84be7362d14e55ad56e7286a5e2a`。随后只写回本节和
+`outcomes/test_summary.md` 的测试/交付 metadata；按测试金字塔无需重复
+full pytest 或 heavy PDE。包含自身内容的 Git commit SHA 无法非自指地写入
+本文件，故最终 metadata commit 与远端 SHA 由提交后的集中 handoff 精确报告。
 
 | final check | command/scope | result | status |
 |---|---|---|---|
-| focused Task035b tests | final changed components | `<TO_BE_FILLED>` | `pending_final_head` |
-| MPI regression | required MPI2/MPI8 focused set | `<TO_BE_FILLED>` | `pending_final_head` |
-| Task034/035/035b regression | task-focused suite | `<TO_BE_FILLED>` | `pending_final_head` |
-| full repository pytest | qualified WSL activation | `<TO_BE_FILLED>` | `pending_final_head` |
-| Ruff | final scoped/full result with inherited findings separated | `<TO_BE_FILLED>` | `pending_final_head` |
-| compileall | final touched Python scope | `<TO_BE_FILLED>` | `pending_final_head` |
-| tracked JSON parse/hash audit | final record and candidate ledger count | `<TO_BE_FILLED>` | `pending_final_head` |
-| Markdown/link/doc-contract checks | final docs | `<TO_BE_FILLED>` | `pending_final_head` |
-| `git diff --check` | final worktree | `<TO_BE_FILLED>` | `pending_final_head` |
-| final branch / HEAD | exact full SHA | `<TO_BE_FILLED>` | `pending_final_head` |
-| final `git status --short --untracked-files=all` | must be reported exactly | `<TO_BE_FILLED>` | `pending_final_head` |
-| remote push identity | branch and remote full SHA | `<TO_BE_FILLED>` | `pending_final_head` |
+| focused Task035b tests | DtN modes、structured axis、全部 Task035b tests | `216 passed, 10 skipped in 414.24 s` | pass |
+| MPI regression | MPI2 focused + MPI8 end-to-end smoke | each MPI2 rank `13 passed in 668.12/668.16 s`；each MPI8 rank `1 passed in 5.03 s` | pass |
+| Task034/035 regression | final stacked task-focused suite | `245 passed, 3 skipped in 66.28 s` | pass |
+| discovered provenance regression | stale Task035b geometry successor binding | initial `2 failed`；targeted `9 passed` after evidence-bound repair | fixed and preserved |
+| full repository pytest | qualified WSL activation at final tested HEAD | `845 passed, 31 skipped in 778.93 s` | pass |
+| Ruff | Review V1 changed Python / full `src benchmarks` | scoped pass；15 inherited findings in five untouched files | pass with inherited findings |
+| compileall | `src benchmarks` | pass | pass |
+| tracked JSON parse/hash audit | tracked JSON / ledger / direct record SHA | `970 / 58-of-58 / 44` pass | pass |
+| Markdown/link/doc-contract checks | response links + final metadata docs | 26 response links；28 doc tests；modified Markdown link/table audit pass | pass |
+| `git diff --check` | final metadata diff | pass | pass |
+| final tested branch / HEAD | exact full SHA | `codex/20260723-task35b-high-order-local-hp-resource-envelope` / `aa87534158bc84be7362d14e55ad56e7286a5e2a` | clean source/evidence authority |
+| final metadata commit / status / remote | post-commit identity | reported exactly in concentrated handoff | no self-referential placeholder |
 
 最终提交和 push 是交付步骤，不是新的研究 Gate；未经后续 Review 和用户
 明确授权，不得合并 `master`。

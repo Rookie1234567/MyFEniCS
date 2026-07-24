@@ -292,8 +292,9 @@ DtN/port 根因假设判别保留了三类独立证据：
 | `records/manufactured_rayleigh_port_authority_v1.json` | manufactured amplitude/phase/normalization algebra 通过 |
 | `records/dtn_port_phase_authority_v1.json` | phase convention 与 reference-plane 变换审计通过 |
 
-这些记录排除了已测试的 quadrature 和一个 bounded buffer 解释；manufactured
-authority 支持当前 port convention，但不能数学上排除所有共同的 port 误差。
+已测试的 q31 与 bounded buffer 没有支持其作为 material recovery 机制；
+这不排除小贡献或其他 DtN/port 离散效应。manufactured authority 支持当前
+port convention，但不能数学上排除所有共同的 port 误差。
 
 ## Review V1：方向性 structured-h 恢复
 
@@ -349,8 +350,9 @@ MPI8、GMRES restart 30、最多 200 iteration、unpreconditioned residual norm�
 至少 3 decades residual reduction、最终显式 reduced-system residual
 `<=1e-3`、peak `<=5.2 GiB`、无 factor、无 swap。当前 public path 仍是 direct
 provenance，且缺少 dedicated iterative hook、residual history 和 factor-free
-inventory，所以没有伪造迭代实测值。`24 byte/NNZ` 只是一项 planning proxy；
-不同阶段 peak 的差也不是 factor-memory upper bound。
+inventory，所以没有伪造迭代实测值。`24 byte/factor-NNZ +
+8 byte/row-pointer` 只是一项 planning proxy；不同阶段 peak 的差也不是
+factor-memory upper bound。
 
 ## Lane B 与 Hybrid stop
 
@@ -360,9 +362,11 @@ strict-R-cost 偏向 p，最终 p6 为 167,784 DoF 且 strict-R control 失败�
 它不是 same-patch cell-decision authority。
 
 structured hexa 缺少 conforming hanging-node/transition implementation，
-tetra selected-p6 physical reduction 未实现，classifier v3 又无 target
-h-refine signal。Review V1 后，方向性 Lane A 已以 h13 与 R5-slab stop
-耗尽预算内最少判别点；选择性 trace Lane B 停在上述真实 capability gap。
+tetra selected-p6 physical reduction 未实现；classifier v3 没有 target
+same-patch h-refine signal，但该 scope 不覆盖后续 directional-z
+topology/refinement response。Review V1 后，方向性 Lane A 已以 h13 与
+R5-slab stop 完成预先指定的预算内最少判别点；选择性 trace Lane B 停在
+上述真实 capability gap。
 不存在 Hybrid-eligible candidate，故 Hybrid closure、M funnel、external
 DtN funnel 和 0.7 nm resource model v3 均为
 `not_run_by_selected_candidate_gate`。
