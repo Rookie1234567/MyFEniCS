@@ -481,6 +481,66 @@ def build_capability_gate(
         "h14": _mesh_budget(records["fixed_h14"]),
         "h13": _mesh_budget(records["fixed_h13"]),
     }
+    complement_authority = complement_record["complement_audit"]
+    inventory_authority = complement_record["missing_trace_mode_inventory"]
+    local_authority_match = (
+        local["retained_local_dimension"]
+        == int(complement_authority["retained_local_dimension"])
+        == 750
+        and local["enriched_local_dimension"]
+        == int(complement_authority["enriched_local_dimension"])
+        == 882
+        and local["retained_local_trace_dimension"]
+        == int(complement_authority["retained_local_trace_dimension"])
+        == 300
+        and local["enriched_local_trace_dimension"]
+        == int(complement_authority["enriched_local_trace_dimension"])
+        == 432
+        and local["missing_local_trace_dimension"]
+        == int(complement_authority["missing_local_trace_dimension"])
+        == int(inventory_authority["reference_cell_missing_trace_modes"])
+        == 132
+        and local["edge_block_count"]
+        == int(inventory_authority["edge_count"])
+        == 12
+        and local["edge_block_dimension"]
+        == len(set(inventory_authority["missing_modes_per_edge"]))
+        == 1
+        and set(inventory_authority["missing_modes_per_edge"]) == {1}
+        and local["face_block_count"]
+        == int(inventory_authority["face_count"])
+        == 6
+        and local["face_block_dimension"] == 20
+        and set(inventory_authority["missing_modes_per_face"]) == {20}
+        and local["recomputed_complement_rank"] == 132
+        and local["recomputed_complement_nullity"] == 0
+        and local["recomputed_reference_riesz_rank"] == 132
+        and local["recomputed_reference_riesz_nullity"] == 0
+    )
+    inverse_authority_match = True
+    for output_name, source_name in (
+        ("p6_trace_p5_interior", "p6_trace_p5_cell_interior"),
+        ("p6_trace_p4_interior", "p6_trace_p4_cell_interior"),
+    ):
+        recomputed = inverse[output_name]
+        recorded_pair = inverse_record["inverse_budget_exchange_pairs"][
+            source_name
+        ]
+        recorded_exact = recorded_pair["exact_sequence"]
+        inverse_authority_match = inverse_authority_match and (
+            recomputed["dimension"]
+            == int(recorded_pair["mixed_vector_space_dimension"])
+            and recomputed["curl_rank"]
+            == int(recorded_exact["measured_curl_rank"])
+            and recomputed["curl_nullity"]
+            == int(recorded_exact["measured_curl_nullity"])
+            and recomputed["expected_gradient_dimension"]
+            == int(recorded_exact["expected_nonconstant_gradient_dimension"])
+            and recomputed["missing_gradient_modes"]
+            == int(recorded_exact["missing_gradient_mode_count"])
+            and recomputed["exact_sequence_pass"] is False
+            and recorded_pair["exact_sequence_pass"] is False
+        )
     prerequisites = {
         "reference_entity_complement_available": (
             complement_record["complement_audit"]["pass"] is True
@@ -525,6 +585,10 @@ def build_capability_gate(
         ),
         "local_rank_nullity_recomputed": (
             local["rank_nullity_closure_pass"] is True
+        ),
+        "local_algebra_matches_sha_bound_authority": local_authority_match,
+        "inverse_algebra_matches_sha_bound_authority": (
+            inverse_authority_match
         ),
         "inverse_budget_record_is_controlled_negative": (
             inverse_record["controlled_negative"] is True

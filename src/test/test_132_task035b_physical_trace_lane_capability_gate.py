@@ -189,6 +189,24 @@ def test_missing_authority_evidence_fails_closed() -> None:
         )
 
 
+def test_local_algebra_drift_fails_closed() -> None:
+    records, authorities = _load_authorities(ROOT)
+    drifted = _local_algebra()
+    drifted["face_block_dimension"] = 21
+    with pytest.raises(
+        RuntimeError,
+        match="local_algebra_matches_sha_bound_authority",
+    ):
+        build_capability_gate(
+            records=records,
+            authority_evidence=authorities,
+            source_identity={},
+            environment_identity={},
+            local_algebra=drifted,
+            inverse_audit=_inverse_audit(),
+        )
+
+
 def test_output_is_exclusive_and_case095_scoped(tmp_path: Path) -> None:
     resolved = _resolve_output(DEFAULT_OUTPUT)
     assert resolved.name == "physical_trace_lane_capability_gate.json"
