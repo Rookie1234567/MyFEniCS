@@ -1576,6 +1576,7 @@ def solve_stage4_dtn_port_total_field(
             regionwise_element = create_reduced_trace_hcurl_element(
                 cfg.nedelec_trace_degree_resolved,
                 cfg.nedelec_interior_degree_resolved,
+                cfg.stage4_regionwise_low_interior_degree_resolved,
             )
             low_space = fem.functionspace(
                 mesh_data.mesh,

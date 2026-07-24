@@ -110,6 +110,60 @@ class Task035bRegionwisePTests(unittest.TestCase):
             atol=2.0e-12,
         )
 
+    def test_p5_trace_p4_interior_embeds_exactly_in_p6_interior(self) -> None:
+        reduced = create_reduced_trace_hcurl_element(5, 6, 4)
+        audit = reduced.audit
+        self.assertTrue(audit["pass"])
+        self.assertEqual(audit["trace_degree"], 5)
+        self.assertEqual(audit["low_interior_degree"], 4)
+        self.assertEqual(audit["interior_degree"], 6)
+        self.assertEqual(audit["custom_dimension"], 750)
+        self.assertEqual(audit["standard_low_dimension"], 408)
+        self.assertEqual(audit["trace_dimension"], 300)
+        self.assertEqual(audit["low_interior_dimension"], 108)
+        self.assertEqual(audit["high_interior_dimension"], 450)
+        self.assertEqual(audit["low_space_embedding_rank"], 408)
+        self.assertEqual(audit["low_interior_embedding_rank"], 108)
+        self.assertLess(audit["low_trace_identity_error_max"], 1.0e-11)
+        self.assertLess(audit["low_interior_trace_leakage_max"], 1.0e-11)
+        self.assertEqual(
+            audit["entity_dofs"],
+            [
+                [0] * 8,
+                [5] * 12,
+                [40] * 6,
+                [450],
+            ],
+        )
+
+        points = np.asarray(
+            (
+                (0.13, 0.22, 0.31),
+                (0.61, 0.47, 0.72),
+                (0.89, 0.18, 0.54),
+            ),
+            dtype=np.float64,
+        )
+        rng = np.random.default_rng(2026072402)
+        coefficients = rng.standard_normal(reduced.low_element.dim)
+        high_coefficients = reduced.low_to_reduced @ coefficients
+        low_values = np.einsum(
+            "qiv,i->qv",
+            reduced.low_element.tabulate(0, points)[0],
+            coefficients,
+        )
+        high_values = np.einsum(
+            "qiv,i->qv",
+            reduced.element.tabulate(0, points)[0],
+            high_coefficients,
+        )
+        np.testing.assert_allclose(
+            high_values,
+            low_values,
+            rtol=2.0e-11,
+            atol=2.0e-11,
+        )
+
     def test_two_cell_space_has_one_shared_conforming_p4_trace(self) -> None:
         comm = MPI.COMM_WORLD
         msh = mesh.create_box(
@@ -178,6 +232,10 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertEqual(snapshot["nedelec_trace_degree_resolved"], 4)
         self.assertEqual(snapshot["nedelec_interior_degree_resolved"], 6)
         self.assertTrue(snapshot["nedelec_reduced_trace_enabled"])
+        self.assertEqual(
+            snapshot["stage4_regionwise_low_interior_degree_resolved"],
+            4,
+        )
 
         msh = mesh.create_box(
             MPI.COMM_WORLD,
@@ -196,6 +254,17 @@ class Task035bRegionwisePTests(unittest.TestCase):
             [24] * 6,
         )
 
+        mixed_cfg = SimulationConfig3D(
+            nedelec_degree=6,
+            nedelec_trace_degree=5,
+            nedelec_interior_degree=6,
+            stage4_regionwise_low_interior_degree=4,
+        )
+        self.assertEqual(
+            mixed_cfg.stage4_regionwise_low_interior_degree_resolved,
+            4,
+        )
+
     def test_classifier_lane_hits_task035b_90k_active_dof_gate(self) -> None:
         budget = regionwise_interior_p_dof_budget(
             global_edges=1067,
@@ -211,6 +280,28 @@ class Task035bRegionwisePTests(unittest.TestCase):
         self.assertEqual(budget["active_cell_interior_dofs"], 63126)
         self.assertEqual(budget["active_full3d_equivalent_dofs"], 88994)
         self.assertFalse(budget["inactive_max_p_rows_retained_in_matrix"])
+
+        minimum = regionwise_interior_p_dof_budget(
+            global_edges=1067,
+            global_faces=900,
+            global_cells=252,
+            high_interior_cells=62,
+            trace_degree=5,
+            low_interior_degree=4,
+            high_interior_degree=6,
+        )
+        self.assertEqual(minimum["active_trace_dofs"], 41335)
+        self.assertEqual(minimum["active_full3d_equivalent_dofs"], 89755)
+        preferred = regionwise_interior_p_dof_budget(
+            global_edges=1067,
+            global_faces=900,
+            global_cells=252,
+            high_interior_cells=18,
+            trace_degree=5,
+            low_interior_degree=4,
+            high_interior_degree=6,
+        )
+        self.assertEqual(preferred["active_full3d_equivalent_dofs"], 74707)
 
 
 if __name__ == "__main__":

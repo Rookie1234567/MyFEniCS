@@ -1087,6 +1087,21 @@ def build_unconstrained_assembly_time_condensation(
             "regionwise_low_interior_dimension": int(
                 low_interior_dimension
             ),
+            "regionwise_trace_degree": (
+                None
+                if regionwise_element is None
+                else int(regionwise_element.trace_degree)
+            ),
+            "regionwise_low_interior_degree": (
+                None
+                if regionwise_element is None
+                else int(regionwise_element.low_interior_degree)
+            ),
+            "regionwise_high_interior_degree": (
+                None
+                if regionwise_element is None
+                else int(regionwise_element.interior_degree)
+            ),
             "active_cell_interior_modes": int(active_interior_rows),
             "active_full3d_equivalent_dofs": int(
                 trace_rows + active_interior_rows

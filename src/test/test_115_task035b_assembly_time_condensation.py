@@ -7,7 +7,7 @@ import unittest
 import dolfinx_mpc
 import numpy as np
 import ufl
-from basix.ufl import element
+from basix.ufl import element, wrap_element
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -189,6 +189,103 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         mixed.destroy()
         difference.destroy()
         p4.destroy()
+        all_low.destroy()
+
+    def test_p5_trace_p4_low_kernel_matches_direct_mixed_space(self) -> None:
+        msh = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        cell_tags = mesh.meshtags(
+            msh,
+            msh.topology.dim,
+            np.asarray([0, 1], dtype=np.int32),
+            np.asarray([1, 1], dtype=np.int32),
+        )
+
+        def compiled_form(V):
+            u = ufl.TrialFunction(V)
+            v = ufl.TestFunction(V)
+            dx = ufl.Measure(
+                "dx",
+                domain=msh,
+                subdomain_data=cell_tags,
+            )
+            return fem.form(
+                (
+                    ufl.inner(ufl.curl(u), ufl.curl(v))
+                    + PETSc.ScalarType(2.5 - 0.2j) * ufl.inner(u, v)
+                )
+                * dx(1)
+            )
+
+        reduced = create_reduced_trace_hcurl_element(5, 6, 4)
+        V_high = fem.functionspace(msh, wrap_element(reduced.element))
+        V_low = fem.functionspace(msh, wrap_element(reduced.low_element))
+        low_compiled = compiled_form(V_low)
+        all_low = build_unconstrained_assembly_time_condensation(
+            compiled_form(V_high),
+            V_high,
+            cell_tags,
+            regionwise_element=reduced,
+            regionwise_low_compiled_form=low_compiled,
+            regionwise_high_canonical_cell_ids=(),
+        )
+        independent_low = build_unconstrained_assembly_time_condensation(
+            low_compiled,
+            V_low,
+            cell_tags,
+        )
+        difference = all_low.matrix.copy()
+        difference.axpy(
+            PETSc.ScalarType(-1.0),
+            independent_low.matrix,
+            structure=PETSc.Mat.Structure.SAME_NONZERO_PATTERN,
+        )
+        self.assertLess(
+            difference.norm()
+            / max(independent_low.matrix.norm(), 1.0e-30),
+            3.0e-11,
+        )
+        self.assertEqual(all_low.trace_rows, 540)
+        self.assertEqual(all_low.active_interior_rows, 216)
+        self.assertEqual(
+            all_low.build_audit["active_full3d_equivalent_dofs"],
+            756,
+        )
+        self.assertEqual(
+            all_low.build_audit["regionwise_trace_degree"],
+            5,
+        )
+        self.assertEqual(
+            all_low.build_audit["regionwise_low_interior_degree"],
+            4,
+        )
+
+        one_high = build_unconstrained_assembly_time_condensation(
+            compiled_form(V_high),
+            V_high,
+            cell_tags,
+            regionwise_element=reduced,
+            regionwise_low_compiled_form=low_compiled,
+            regionwise_high_canonical_cell_ids=(0,),
+        )
+        self.assertEqual(one_high.active_interior_rows, 558)
+        self.assertEqual(
+            one_high.build_audit["active_full3d_equivalent_dofs"],
+            1098,
+        )
+        self.assertEqual(one_high.matrix.getSize(), (540, 540))
+        self.assertFalse(
+            one_high.build_audit["inactive_max_p_rows_retained_in_matrix"]
+        )
+
+        one_high.destroy()
+        difference.destroy()
+        independent_low.destroy()
         all_low.destroy()
 
     def test_reduced_p4_trace_p6_interior_kernel_condenses_exactly(
@@ -918,6 +1015,64 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             audit["inactive_max_p_rows_retained_in_matrix"]
         )
         self.assertFalse(audit["full_global_matrix_allocated"])
+        for observable in ("R00_total", "R_total", "T_total"):
+            self.assertTrue(np.isfinite(summary[observable]), observable)
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 p5-trace/p4-low/p6-high end-to-end check",
+    )
+    def test_mpi2_end_to_end_mixed_trace_and_interior_orders(self) -> None:
+        cfg = replace(
+            target_stage4_config(degree=6, h_nm=100.0),
+            case_name="task035b_p5trace_p4low_p6high_smoke_mpi2",
+            nedelec_trace_degree=5,
+            nedelec_interior_degree=6,
+            stage4_regionwise_low_interior_degree=4,
+            matrix_diagnostics_assemble_only=False,
+            matrix_diagnostics_factorization_only=False,
+            stage4_cell_static_condensation=True,
+            stage4_assembly_time_cell_static_condensation=True,
+            stage4_floquet_slave_elimination=True,
+            stage4_regionwise_interior_p=True,
+            stage4_regionwise_high_canonical_cell_ids=(0,),
+            direct_release_base_after_augmentation=True,
+            direct_release_solver_before_postprocess=True,
+            unique_output=False,
+        )
+        summary = run_stage4b_block_grating_3d_case(
+            cfg,
+            Path("/tmp/task035b_p5trace_p4low_p6high_smoke_mpi2"),
+        )
+        self.assertEqual(summary["case_status"], "completed")
+        self.assertTrue(summary["official_result"])
+        self.assertLessEqual(
+            summary["linear_system_relative_residual"],
+            1.0e-9,
+        )
+        audit = summary["cell_static_condensation"]
+        self.assertEqual(audit["regionwise_trace_degree"], 5)
+        self.assertEqual(audit["regionwise_low_interior_degree"], 4)
+        self.assertEqual(audit["regionwise_high_interior_degree"], 6)
+        self.assertEqual(audit["regionwise_high_cell_count"], 1)
+        expected_active_modes = (
+            audit["trace_rows"]
+            + 450
+            + 108 * audit["regionwise_low_cell_count"]
+        )
+        self.assertEqual(
+            audit["active_full3d_equivalent_dofs"],
+            expected_active_modes,
+        )
+        self.assertEqual(
+            summary["matrix_stats"]["matrix_rows"],
+            audit["active_rows"] + audit["appended_rows"],
+        )
+        self.assertFalse(
+            audit["inactive_max_p_rows_retained_in_matrix"]
+        )
+        self.assertFalse(audit["full_global_matrix_allocated"])
+        self.assertFalse(audit["full_trace_matrix_allocated"])
         for observable in ("R00_total", "R_total", "T_total"):
             self.assertTrue(np.isfinite(summary[observable]), observable)
 

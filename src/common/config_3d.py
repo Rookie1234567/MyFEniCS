@@ -155,6 +155,7 @@ class SimulationConfig3D:
     # element, while assembly projects cells outside this canonical-ID set to
     # the embedded low-order interior space before Schur elimination.
     stage4_regionwise_interior_p: bool = False
+    stage4_regionwise_low_interior_degree: int | None = None
     stage4_regionwise_high_canonical_cell_ids: tuple[int, ...] = ()
     stage4_regionwise_mesh_geometry_sha256: str | None = None
     # Task035b lifecycle opt-in. After the recovered field and true residual
@@ -339,6 +340,20 @@ class SimulationConfig3D:
             self.nedelec_trace_degree_resolved
             != self.nedelec_interior_degree_resolved
         )
+
+    @property
+    def stage4_regionwise_low_interior_degree_resolved(self) -> int:
+        degree = (
+            self.nedelec_trace_degree_resolved
+            if self.stage4_regionwise_low_interior_degree is None
+            else int(self.stage4_regionwise_low_interior_degree)
+        )
+        if not 1 <= degree <= self.nedelec_trace_degree_resolved:
+            raise ValueError(
+                "stage4_regionwise_low_interior_degree must lie in "
+                "[1, nedelec trace degree]"
+            )
+        return degree
 
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
@@ -534,6 +549,9 @@ class SimulationConfig3D:
         )
         data["nedelec_reduced_trace_enabled"] = (
             self.nedelec_reduced_trace_enabled
+        )
+        data["stage4_regionwise_low_interior_degree_resolved"] = (
+            self.stage4_regionwise_low_interior_degree_resolved
         )
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [
