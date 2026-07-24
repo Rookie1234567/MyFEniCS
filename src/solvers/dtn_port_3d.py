@@ -40,7 +40,8 @@ from .hcurl_cell_static_condensation import (
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
     build_unconstrained_assembly_time_condensation,
-    project_mpc_vector_to_active_trace,
+    cell_interior_schur_bilinear,
+    condense_unconstrained_vector_to_active_trace,
     recover_owned_cell_interiors,
 )
 from .mpc_form_action import MpcFormActionContext
@@ -83,11 +84,40 @@ def _assemble_mpc_form_vector(linear_form, mpc) -> PETSc.Vec:
     return vec
 
 
+def _assemble_unconstrained_form_vector(linear_form) -> PETSc.Vec:
+    vec = fem_petsc.assemble_vector(linear_form)
+    vec.ghostUpdate(
+        addv=PETSc.InsertMode.ADD_VALUES,
+        mode=PETSc.ScatterMode.REVERSE,
+    )
+    vec.ghostUpdate(
+        addv=PETSc.InsertMode.INSERT_VALUES,
+        mode=PETSc.ScatterMode.FORWARD,
+    )
+    return vec
+
+
 def _assemble_mpc_vector(linear_form, mpc, *, quadrature_degree: int | None = None) -> PETSc.Vec:
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
     return _assemble_mpc_form_vector(fem.form(linear_form, form_compiler_options=form_options), mpc)
+
+
+def _assemble_unconstrained_vector(
+    linear_form,
+    *,
+    quadrature_degree: int | None = None,
+) -> PETSc.Vec:
+    form_options: dict[str, int] = {}
+    if quadrature_degree is not None:
+        form_options["quadrature_degree"] = int(quadrature_degree)
+    return _assemble_unconstrained_form_vector(
+        fem.form(
+            linear_form,
+            form_compiler_options=form_options,
+        )
+    )
 
 
 def _vec_nonzero_owned_entries(vec: PETSc.Vec, *, relative_tol: float = 1.0e-13) -> tuple[np.ndarray, np.ndarray]:
@@ -129,33 +159,6 @@ def _combine_owned_entries(
     return _idx(unique_rows[keep]), summed_values[keep].copy()
 
 
-def _remap_mpc_entries_to_active_trace(
-    entries: tuple[np.ndarray, np.ndarray],
-    condensed: AssemblyTimeCondensedSystem,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Drop verified-zero slave/interior rows from an MPC surface vector."""
-
-    rows, values = entries
-    if len(rows) == 0:
-        return _idx([]), np.asarray([], dtype=np.complex128)
-    missing = [
-        int(row)
-        for row in rows
-        if int(row)
-        not in condensed.trace_constraints.original_to_active
-    ]
-    if missing:
-        raise ValueError(
-            "DtN surface vector has nonzero eliminated trace/interior rows: "
-            f"{missing[:8]}"
-        )
-    active_rows = _idx(
-        condensed.trace_constraints.original_to_active[int(row)]
-        for row in rows
-    )
-    return active_rows, np.asarray(values, dtype=np.complex128)
-
-
 def _active_trace_values_from_augmented(
     x_aug: PETSc.Vec,
     condensed: AssemblyTimeCondensedSystem,
@@ -187,12 +190,17 @@ def _assign_fe_solution_from_assembly_time_condensation(
     x_aug: PETSc.Vec,
     condensed: AssemblyTimeCondensedSystem,
     floquet_data: DoubleFloquet3DData,
+    full_rhs: PETSc.Vec,
 ) -> tuple[Any, PETSc.Vec, dict[str, Any]]:
     """Recover cell interiors without allocating the full global matrix."""
 
     recovery_started = time.perf_counter()
     active = _active_trace_values_from_augmented(x_aug, condensed)
-    recovered = recover_owned_cell_interiors(condensed, active)
+    recovered = recover_owned_cell_interiors(
+        condensed,
+        active,
+        full_rhs=full_rhs,
+    )
     mpc = floquet_data.mpc
     E_total = fem.Function(mpc.function_space, name="E_total")
     index_map = E_total.function_space.dofmap.index_map
@@ -258,6 +266,7 @@ def _assembly_time_full_operator_residual(
     reduced_rhs: PETSc.Vec,
     reduced_solution: PETSc.Vec,
     condensed: AssemblyTimeCondensedSystem,
+    full_rhs: PETSc.Vec,
 ) -> dict[str, Any]:
     """Audit all eliminated FE equations without allocating the full matrix."""
 
@@ -286,6 +295,10 @@ def _assembly_time_full_operator_residual(
                 action.getValues(cell.interior_original_dofs),
                 dtype=np.complex128,
             )
+            values -= np.asarray(
+                full_rhs.getValues(cell.interior_original_dofs),
+                dtype=np.complex128,
+            )
             local_interior_sq += float(np.vdot(values, values).real)
             local_interior_max = max(
                 local_interior_max,
@@ -302,7 +315,27 @@ def _assembly_time_full_operator_residual(
             reduced["linear_system_residual_norm"] or 0.0
         )
         full_norm = float(np.hypot(reduced_norm, interior_norm))
-        rhs_norm = float(reduced_rhs.norm())
+        local_aux_rhs_sq = 0.0
+        if comm.rank == comm.size - 1 and condensed.appended_rows:
+            aux_start = condensed.active_rows
+            aux_rhs = np.asarray(
+                reduced_rhs.getValues(
+                    _idx(
+                        range(
+                            aux_start,
+                            aux_start + condensed.appended_rows,
+                        )
+                    )
+                ),
+                dtype=np.complex128,
+            )
+            local_aux_rhs_sq = float(np.vdot(aux_rhs, aux_rhs).real)
+        rhs_norm = float(
+            np.sqrt(
+                full_rhs.norm() ** 2
+                + comm.allreduce(local_aux_rhs_sq, op=MPI.SUM)
+            )
+        )
 
         local_aux_sq = 0.0
         if comm.rank == comm.size - 1 and condensed.appended_rows:
@@ -341,7 +374,7 @@ def _assembly_time_full_operator_residual(
             "full_operator_residual_method": (
                 "explicit reduced trace+DtN Mat action combined with "
                 "matrix-free dolfinx_mpc UFL action on every eliminated "
-                "cell-interior equation"
+                "cell-interior equation, including condensed full-space RHS"
             ),
             "full_global_matrix_allocated_for_residual": False,
             "full_trace_matrix_allocated_for_residual": False,
@@ -403,6 +436,12 @@ class _ReusableSurfaceComponentAssembler:
             return _vec_nonzero_owned_entries(vec)
         finally:
             vec.destroy()
+
+    def assemble_unconstrained_vector(self, mode: PortMode3D) -> PETSc.Vec:
+        _set_scalar_constant(self.alpha, mode.alpha)
+        _set_scalar_constant(self.gamma, mode.gamma)
+        _set_scalar_constant(self.kz, mode.k_vector[2])
+        return _assemble_unconstrained_form_vector(self.form)
 
 
 def _copy_base_matrix_to_augmented(
@@ -1490,6 +1529,7 @@ def solve_stage4_dtn_port_total_field(
         dtn_quadrature_degree
     )
     assembly_time_system = None
+    assembly_time_full_rhs = None
 
     t0 = time.perf_counter()
     if cfg.stage4_assembly_time_cell_static_condensation:
@@ -1550,15 +1590,17 @@ def solve_stage4_dtn_port_total_field(
     )
 
     t0 = time.perf_counter()
-    full_b_base = _assemble_mpc_vector(L, floquet_data.mpc)
     if assembly_time_system is not None:
-        b_aug = project_mpc_vector_to_active_trace(
+        full_b_base = _assemble_unconstrained_vector(L)
+        assembly_time_full_rhs = full_b_base
+        b_aug = condense_unconstrained_vector_to_active_trace(
             assembly_time_system,
             full_b_base,
+            side="right",
         )
-        full_b_base.destroy()
         b_base = None
     else:
+        full_b_base = _assemble_mpc_vector(L, floquet_data.mpc)
         b_base = full_b_base
         b_aug = None
     timing_details["stage4_dtn_base_rhs_assembly_seconds"] = float(
@@ -1684,14 +1726,35 @@ def solve_stage4_dtn_port_total_field(
         )
 
     t0 = time.perf_counter()
-    incident_traction_vec = _assemble_mpc_vector(_incident_top_traction_form(V, mesh_data, cfg), floquet_data.mpc)
-    inc_rows, inc_values = _vec_nonzero_owned_entries(incident_traction_vec)
-    incident_traction_vec.destroy()
     if assembly_time_system is not None:
-        inc_rows, inc_values = _remap_mpc_entries_to_active_trace(
-            (inc_rows, inc_values),
-            assembly_time_system,
+        if assembly_time_full_rhs is None:
+            raise RuntimeError("assembly-time full RHS was not initialized")
+        incident_traction_vec = _assemble_unconstrained_vector(
+            _incident_top_traction_form(V, mesh_data, cfg)
         )
+        reduced_incident = condense_unconstrained_vector_to_active_trace(
+            assembly_time_system,
+            incident_traction_vec,
+            side="right",
+        )
+        inc_rows, inc_values = _vec_nonzero_owned_entries(
+            reduced_incident
+        )
+        assembly_time_full_rhs.axpy(
+            PETSc.ScalarType(1.0),
+            incident_traction_vec,
+        )
+        reduced_incident.destroy()
+        incident_traction_vec.destroy()
+    else:
+        incident_traction_vec = _assemble_mpc_vector(
+            _incident_top_traction_form(V, mesh_data, cfg),
+            floquet_data.mpc,
+        )
+        inc_rows, inc_values = _vec_nonzero_owned_entries(
+            incident_traction_vec
+        )
+        incident_traction_vec.destroy()
     if len(inc_rows):
         b_aug.setValues(inc_rows, inc_values, addv=PETSc.InsertMode.ADD_VALUES)
     timing_details["stage4_dtn_incident_source_vector_seconds"] = float(
@@ -1714,7 +1777,22 @@ def solve_stage4_dtn_port_total_field(
         ),
     }
     component_key: tuple[str, int, int, complex] | None = None
-    component_entries: tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]] | None = None
+    component_right_entries: (
+        tuple[
+            tuple[np.ndarray, np.ndarray],
+            tuple[np.ndarray, np.ndarray],
+        ]
+        | None
+    ) = None
+    component_left_entries: (
+        tuple[
+            tuple[np.ndarray, np.ndarray],
+            tuple[np.ndarray, np.ndarray],
+        ]
+        | None
+    ) = None
+    component_full_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
+    component_interior_bilinear: np.ndarray | None = None
     unique_surface_orders = 0
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
@@ -1725,23 +1803,71 @@ def solve_stage4_dtn_port_total_field(
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
         mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
-        if mode_key != component_key or component_entries is None:
+        if mode_key != component_key or component_right_entries is None:
             t_component = time.perf_counter()
-            component_entries = (
-                surface_assemblers[(mode.side, 0)].assemble_entries(mode, floquet_data.mpc),
-                surface_assemblers[(mode.side, 1)].assemble_entries(mode, floquet_data.mpc),
-            )
             if assembly_time_system is not None:
-                component_entries = (
-                    _remap_mpc_entries_to_active_trace(
-                        component_entries[0],
-                        assembly_time_system,
-                    ),
-                    _remap_mpc_entries_to_active_trace(
-                        component_entries[1],
-                        assembly_time_system,
-                    ),
+                if component_full_vectors is not None:
+                    for vector in component_full_vectors:
+                        vector.destroy()
+                component_full_vectors = (
+                    surface_assemblers[
+                        (mode.side, 0)
+                    ].assemble_unconstrained_vector(mode),
+                    surface_assemblers[
+                        (mode.side, 1)
+                    ].assemble_unconstrained_vector(mode),
                 )
+                right_vectors = tuple(
+                    condense_unconstrained_vector_to_active_trace(
+                        assembly_time_system,
+                        vector,
+                        side="right",
+                    )
+                    for vector in component_full_vectors
+                )
+                left_vectors = tuple(
+                    condense_unconstrained_vector_to_active_trace(
+                        assembly_time_system,
+                        vector,
+                        side="left",
+                    )
+                    for vector in component_full_vectors
+                )
+                component_right_entries = tuple(
+                    _vec_nonzero_owned_entries(vector)
+                    for vector in right_vectors
+                )
+                component_left_entries = tuple(
+                    _vec_nonzero_owned_entries(vector)
+                    for vector in left_vectors
+                )
+                for vector in (*right_vectors, *left_vectors):
+                    vector.destroy()
+                component_interior_bilinear = np.asarray(
+                    [
+                        [
+                            cell_interior_schur_bilinear(
+                                assembly_time_system,
+                                left,
+                                right,
+                            )
+                            for right in component_full_vectors
+                        ]
+                        for left in component_full_vectors
+                    ],
+                    dtype=np.complex128,
+                )
+            else:
+                component_right_entries = (
+                    surface_assemblers[
+                        (mode.side, 0)
+                    ].assemble_entries(mode, floquet_data.mpc),
+                    surface_assemblers[
+                        (mode.side, 1)
+                    ].assemble_entries(mode, floquet_data.mpc),
+                )
+                component_left_entries = component_right_entries
+                component_interior_bilinear = None
             modal_vector_assembly_seconds_local += time.perf_counter() - t_component
             component_key = mode_key
             unique_surface_orders += 1
@@ -1749,13 +1875,15 @@ def solve_stage4_dtn_port_total_field(
         else:
             component_vector_cache_hits += 1
 
+        if component_left_entries is None:
+            raise RuntimeError("DtN left component cache is unavailable")
         traction_vector = _traction_vector(mode, cfg)
         ell_cols, ell_values = _combine_owned_entries(
-            component_entries,
+            component_left_entries,
             (mode.e_vector[0], mode.e_vector[1]),
         )
         traction_rows, traction_values = _combine_owned_entries(
-            component_entries,
+            component_right_entries,
             (traction_vector[0], traction_vector[1]),
         )
         aux_global = n_fe + aux_index
@@ -1777,6 +1905,22 @@ def solve_stage4_dtn_port_total_field(
                     -traction_values * incident_projection,
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
+        if (
+            incident_projection != 0.0
+            and assembly_time_full_rhs is not None
+            and component_full_vectors is not None
+        ):
+            for coefficient, vector in zip(
+                traction_vector[:2],
+                component_full_vectors,
+                strict=True,
+            ):
+                assembly_time_full_rhs.axpy(
+                    PETSc.ScalarType(
+                        -incident_projection * coefficient
+                    ),
+                    vector,
+                )
 
         if len(ell_cols):
             ell_cols_total_local += int(len(ell_cols))
@@ -1785,7 +1929,28 @@ def solve_stage4_dtn_port_total_field(
                 ell_cols,
                 (-np.conj(ell_values) / denominator).reshape((1, len(ell_cols))),
             )
-        A_aug.setValue(aux_global, aux_global, PETSc.ScalarType(1.0))
+        auxiliary_diagonal = 1.0 + 0.0j
+        if component_interior_bilinear is not None:
+            electric = np.asarray(
+                mode.e_vector[:2],
+                dtype=np.complex128,
+            )
+            traction = np.asarray(
+                traction_vector[:2],
+                dtype=np.complex128,
+            )
+            auxiliary_diagonal -= complex(
+                np.vdot(
+                    electric,
+                    component_interior_bilinear @ traction,
+                )
+                / denominator
+            )
+        A_aug.setValue(
+            aux_global,
+            aux_global,
+            PETSc.ScalarType(auxiliary_diagonal),
+        )
         modal_block_insert_seconds_local += time.perf_counter() - t_insert
 
         if log is not None and (aux_index + 1) % 50 == 0:
@@ -1794,6 +1959,10 @@ def solve_stage4_dtn_port_total_field(
                 f"Stage-4 DtN prepared {aux_index + 1}/{n_aux} auxiliary modes "
                 f"in {elapsed:.3f} seconds; unique surface orders = {unique_surface_orders}"
             )
+
+    if component_full_vectors is not None:
+        for vector in component_full_vectors:
+            vector.destroy()
 
     timing_details["stage4_dtn_modal_loop_seconds"] = float(
         comm.allreduce(time.perf_counter() - modal_loop_start, op=MPI.MAX)
@@ -2154,6 +2323,10 @@ def solve_stage4_dtn_port_total_field(
     assembly_time_field = None
     embedded_fe_solution = None
     if assembly_time_system is not None:
+        if assembly_time_full_rhs is None:
+            raise RuntimeError(
+                "assembly-time recovery requires the full-space RHS"
+            )
         recovery_started = time.perf_counter()
         (
             assembly_time_field,
@@ -2164,6 +2337,7 @@ def solve_stage4_dtn_port_total_field(
                 solve_x,
                 assembly_time_system,
                 floquet_data,
+                assembly_time_full_rhs,
             )
         )
         x_aug = solve_x
@@ -2222,9 +2396,12 @@ def solve_stage4_dtn_port_total_field(
             b_aug,
             x_aug,
             assembly_time_system,
+            assembly_time_full_rhs,
         )
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
+        assembly_time_full_rhs.destroy()
+        assembly_time_full_rhs = None
         timing_details[
             "stage4_dtn_matrix_free_full_residual_seconds"
         ] = float(

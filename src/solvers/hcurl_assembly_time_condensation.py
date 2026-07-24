@@ -67,6 +67,8 @@ class AssemblyTimeCondensedSystem:
     trace_constraints: TraceConstraintMap
     cell_recovery_maps: tuple[CellRecoveryMap, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
+    interior_inverse_by_class: dict[tuple[Any, ...], np.ndarray]
+    trace_from_interior_rhs_by_class: dict[tuple[Any, ...], np.ndarray]
     full_rows: int
     trace_rows: int
     active_rows: int
@@ -620,6 +622,8 @@ def build_unconstrained_assembly_time_condensation(
     raw_cache: dict[tuple[Any, ...], np.ndarray] = {}
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    inverse_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
     local_kernel_seconds = 0.0
     local_schur_seconds = 0.0
@@ -674,10 +678,17 @@ def build_unconstrained_assembly_time_condensation(
             A_ti = oriented[np.ix_(trace_positions, interior_positions)]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
             interior_from_trace = -np.linalg.solve(A_ii, A_it)
+            interior_inverse = np.linalg.solve(
+                A_ii,
+                np.eye(len(interior_positions), dtype=np.complex128),
+            )
+            trace_from_interior_rhs = -(A_ti @ interior_inverse)
             schur = A_tt + A_ti @ interior_from_trace
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
+            inverse_cache[class_key] = interior_inverse
+            rhs_trace_cache[class_key] = trace_from_interior_rhs
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = (
             _cell_trace_expansion(
@@ -721,6 +732,8 @@ def build_unconstrained_assembly_time_condensation(
         trace_constraints=trace_constraints,
         cell_recovery_maps=tuple(recovery_maps),
         interior_from_trace_by_class=recovery_cache,
+        interior_inverse_by_class=inverse_cache,
+        trace_from_interior_rhs_by_class=rhs_trace_cache,
         full_rows=full_rows,
         trace_rows=trace_rows,
         active_rows=active_rows,
@@ -767,15 +780,197 @@ def build_unconstrained_assembly_time_condensation(
     )
 
 
+def _add_original_trace_values(
+    target: PETSc.Vec,
+    constraints: TraceConstraintMap,
+    original_rows: np.ndarray,
+    values: np.ndarray,
+) -> None:
+    """Accumulate ``C_t^H values`` into an independent-trace vector."""
+
+    for original, value in zip(original_rows, values, strict=True):
+        if value == 0.0:
+            continue
+        expansion = constraints.expansion_by_original.get(int(original))
+        if expansion is None:
+            raise ValueError(
+                "trace projection received a cell-interior or unknown row: "
+                f"{int(original)}"
+            )
+        active_ids, coefficients = expansion
+        target.setValues(
+            active_ids,
+            np.asarray(
+                np.conj(coefficients) * value,
+                dtype=PETSc.ScalarType,
+            ),
+            addv=PETSc.InsertMode.ADD_VALUES,
+        )
+
+
+def condense_unconstrained_vector_to_active_trace(
+    condensed: AssemblyTimeCondensedSystem,
+    full_vector: PETSc.Vec,
+    *,
+    side: str,
+    relative_tolerance: float = 1.0e-14,
+) -> PETSc.Vec:
+    """Apply the cell Schur and Floquet reductions to a full FE vector.
+
+    ``side='right'`` computes
+    ``C_t^H (b_t - A_ti A_ii^{-1} b_i)`` for a load or auxiliary
+    column. ``side='left'`` returns the column representation of a reduced
+    row functional,
+    ``C_t^H (l_t - A_it^H A_ii^{-H} l_i)``.
+
+    The input must be assembled in the original unconstrained FE numbering.
+    Boundary forms may have nonzero cell-interior entries at high order, so
+    merely dropping interior rows is not algebraically valid.
+    """
+
+    if side not in {"right", "left"}:
+        raise ValueError("vector condensation side must be 'right' or 'left'")
+    if full_vector.getSize() != condensed.full_rows:
+        raise ValueError("full vector size differs from the FE space")
+    row_start, row_end = map(int, full_vector.getOwnershipRange())
+    owned_values = np.asarray(
+        full_vector.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    cutoff = max(
+        1.0e-30,
+        float(relative_tolerance)
+        * float(np.max(np.abs(owned_values), initial=0.0)),
+    )
+    active = condensed.matrix.createVecRight()
+    owned_trace = condensed.owned_trace_original_dofs
+    if len(owned_trace):
+        trace_values = owned_values[
+            np.asarray(owned_trace, dtype=np.int64) - row_start
+        ]
+        nonzero = np.abs(trace_values) > cutoff
+        _add_original_trace_values(
+            active,
+            condensed.trace_constraints,
+            owned_trace[nonzero],
+            trace_values[nonzero],
+        )
+
+    for cell in condensed.cell_recovery_maps:
+        interior_rows = np.asarray(
+            cell.interior_original_dofs,
+            dtype=np.int64,
+        )
+        if len(interior_rows) and (
+            int(interior_rows.min()) < row_start
+            or int(interior_rows.max()) >= row_end
+        ):
+            active.destroy()
+            raise ValueError(
+                "owned cell-interior vector rows are outside local ownership"
+            )
+        interior_values = owned_values[interior_rows - row_start]
+        if float(np.max(np.abs(interior_values), initial=0.0)) <= cutoff:
+            continue
+        if side == "right":
+            correction = (
+                condensed.trace_from_interior_rhs_by_class[cell.class_key]
+                @ interior_values
+            )
+        else:
+            correction = (
+                condensed.interior_from_trace_by_class[
+                    cell.class_key
+                ].conj().T
+                @ interior_values
+            )
+        nonzero = np.abs(correction) > cutoff
+        _add_original_trace_values(
+            active,
+            condensed.trace_constraints,
+            cell.trace_original_dofs[nonzero],
+            correction[nonzero],
+        )
+    active.assemble()
+    return active
+
+
+def cell_interior_schur_bilinear(
+    condensed: AssemblyTimeCondensedSystem,
+    left_vector: PETSc.Vec,
+    right_vector: PETSc.Vec,
+) -> complex:
+    """Return ``sum_K left_i(K)^H A_ii(K)^{-1} right_i(K)``."""
+
+    if (
+        left_vector.getSize() != condensed.full_rows
+        or right_vector.getSize() != condensed.full_rows
+    ):
+        raise ValueError("Schur bilinear vectors differ from the FE space")
+    left_start, left_end = map(int, left_vector.getOwnershipRange())
+    right_start, right_end = map(int, right_vector.getOwnershipRange())
+    if (left_start, left_end) != (right_start, right_end):
+        raise ValueError("Schur bilinear vector ownership ranges disagree")
+    left = np.asarray(
+        left_vector.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    right = np.asarray(
+        right_vector.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    local = 0.0 + 0.0j
+    for cell in condensed.cell_recovery_maps:
+        rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
+        if len(rows) and (
+            int(rows.min()) < left_start or int(rows.max()) >= left_end
+        ):
+            raise ValueError(
+                "owned cell-interior bilinear rows are outside local ownership"
+            )
+        local_rows = rows - left_start
+        left_values = left[local_rows]
+        right_values = right[local_rows]
+        if (
+            not np.any(left_values)
+            or not np.any(right_values)
+        ):
+            continue
+        local += np.vdot(
+            left_values,
+            condensed.interior_inverse_by_class[cell.class_key]
+            @ right_values,
+        )
+    return complex(
+        condensed.matrix.getComm().tompi4py().allreduce(
+            local,
+            op=MPI.SUM,
+        )
+    )
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
     active_trace_values: np.ndarray,
+    *,
+    full_rhs: PETSc.Vec | None = None,
 ) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
     """Return ``(original interior DoFs, values)`` for locally owned cells."""
 
     active = np.asarray(active_trace_values, dtype=np.complex128)
     if active.shape != (condensed.active_rows,):
         raise ValueError("active trace value array has the wrong global length")
+    rhs_values = None
+    rhs_start = 0
+    rhs_end = 0
+    if full_rhs is not None:
+        if full_rhs.getSize() != condensed.full_rows:
+            raise ValueError("full recovery RHS differs from the FE space")
+        rhs_start, rhs_end = map(int, full_rhs.getOwnershipRange())
+        rhs_values = np.asarray(
+            full_rhs.getArray(readonly=True),
+            dtype=np.complex128,
+        )
     result: list[tuple[np.ndarray, np.ndarray]] = []
     for cell in condensed.cell_recovery_maps:
         recovery = condensed.interior_from_trace_by_class[cell.class_key]
@@ -794,6 +989,20 @@ def recover_owned_cell_interiors(
                 active[active_ids],
             )
         values = recovery @ local_trace
+        if rhs_values is not None:
+            rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
+            if len(rows) and (
+                int(rows.min()) < rhs_start or int(rows.max()) >= rhs_end
+            ):
+                raise ValueError(
+                    "owned cell-interior recovery RHS rows are outside "
+                    "local ownership"
+                )
+            values = (
+                values
+                + condensed.interior_inverse_by_class[cell.class_key]
+                @ rhs_values[rows - rhs_start]
+            )
         result.append((cell.interior_original_dofs, values))
     return tuple(result)
 
@@ -857,6 +1066,8 @@ __all__ = [
     "CellRecoveryMap",
     "TraceConstraintMap",
     "build_unconstrained_assembly_time_condensation",
+    "cell_interior_schur_bilinear",
+    "condense_unconstrained_vector_to_active_trace",
     "project_mpc_vector_to_active_trace",
     "recover_owned_cell_interiors",
 ]

@@ -18,6 +18,8 @@ from src.common.config_3d import target_stage4_config
 from src.solvers import hcurl_assembly_time_condensation as assembly_time
 from src.solvers.hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
+    cell_interior_schur_bilinear,
+    condense_unconstrained_vector_to_active_trace,
     project_mpc_vector_to_active_trace,
     recover_owned_cell_interiors,
 )
@@ -165,6 +167,134 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(audit["owned_cell_count_global"], 2)
         self.assertEqual(audit["raw_tensor_class_count_sum"], 1)
         self.assertEqual(audit["cell_kernel_evaluation_fraction"], 0.5)
+        candidate.destroy()
+
+    def test_nonzero_interior_rhs_and_auxiliary_schur_terms(self) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=True
+        )
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        full = fem_petsc.assemble_matrix(compiled, bcs=[])
+        full.assemble()
+        full_dense = full.convert("dense").getDenseArray().copy()
+        rng = np.random.default_rng(2026072401)
+        right_values = (
+            rng.standard_normal(candidate.full_rows)
+            + 1j * rng.standard_normal(candidate.full_rows)
+        )
+        left_values = (
+            rng.standard_normal(candidate.full_rows)
+            + 1j * rng.standard_normal(candidate.full_rows)
+        )
+        right = full.createVecRight()
+        right.getArray()[:] = np.asarray(
+            right_values,
+            dtype=PETSc.ScalarType,
+        )
+        right.assemble()
+        left = full.createVecLeft()
+        left.getArray()[:] = np.asarray(
+            left_values,
+            dtype=PETSc.ScalarType,
+        )
+        left.assemble()
+
+        reduced_right = condense_unconstrained_vector_to_active_trace(
+            candidate,
+            right,
+            side="right",
+        )
+        reduced_left = condense_unconstrained_vector_to_active_trace(
+            candidate,
+            left,
+            side="left",
+        )
+        trace = np.asarray(
+            [
+                original
+                for original, _trace in sorted(
+                    candidate.original_to_trace.items(),
+                    key=lambda item: item[1],
+                )
+            ],
+            dtype=np.int64,
+        )
+        interior = np.asarray(
+            sorted(set(range(candidate.full_rows)) - set(trace)),
+            dtype=np.int64,
+        )
+        A_ii = full_dense[np.ix_(interior, interior)]
+        A_it = full_dense[np.ix_(interior, trace)]
+        A_ti = full_dense[np.ix_(trace, interior)]
+        expected_right = (
+            right_values[trace]
+            - A_ti @ np.linalg.solve(A_ii, right_values[interior])
+        )
+        expected_left = (
+            left_values[trace]
+            - A_it.conj().T
+            @ np.linalg.solve(
+                A_ii.conj().T,
+                left_values[interior],
+            )
+        )
+        np.testing.assert_allclose(
+            reduced_right.getArray(readonly=True),
+            expected_right,
+            rtol=2.0e-13,
+            atol=2.0e-12,
+        )
+        np.testing.assert_allclose(
+            reduced_left.getArray(readonly=True),
+            expected_left,
+            rtol=2.0e-13,
+            atol=2.0e-12,
+        )
+        expected_bilinear = np.vdot(
+            left_values[interior],
+            np.linalg.solve(A_ii, right_values[interior]),
+        )
+        self.assertAlmostEqual(
+            cell_interior_schur_bilinear(
+                candidate,
+                left,
+                right,
+            ),
+            expected_bilinear,
+            places=11,
+        )
+
+        trace_solution = np.linalg.solve(
+            candidate.matrix.convert("dense").getDenseArray(),
+            expected_right,
+        )
+        recovered_values = np.zeros(
+            candidate.full_rows,
+            dtype=np.complex128,
+        )
+        recovered_values[trace] = trace_solution
+        for rows, values in recover_owned_cell_interiors(
+            candidate,
+            trace_solution,
+            full_rhs=right,
+        ):
+            recovered_values[rows] = values
+        np.testing.assert_allclose(
+            recovered_values,
+            np.linalg.solve(full_dense, right_values),
+            rtol=3.0e-12,
+            atol=3.0e-11,
+        )
+
+        reduced_left.destroy()
+        reduced_right.destroy()
+        left.destroy()
+        right.destroy()
+        full.destroy()
         candidate.destroy()
 
     def test_rejects_non_axis_aligned_geometry(self) -> None:
@@ -505,7 +635,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(summary["matrix_stats"]["matrix_rows"], 560)
         self.assertEqual(
             summary["matrix_stats"]["matrix_nnz_used"],
-            48392.0,
+            {2: 48412.0, 8: 48716.0}[comm.size],
         )
         self.assertLess(
             summary["linear_system_relative_residual"],
