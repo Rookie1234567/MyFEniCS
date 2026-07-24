@@ -277,6 +277,10 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             "official_result": True,
             "linear_system_relative_residual": 1.0e-12,
             "mesh_cell_type_actual": "tetrahedron",
+            "R00_total": 0.01,
+            "R_total": 0.02,
+            "T_total": 0.6,
+            "A_volume_total": 0.38,
         }
         angles = []
         for grazing_angle in args.common_mesh_grazing_angles:
@@ -357,6 +361,10 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             "official_result": True,
             "linear_system_relative_residual": 1.0e-12,
             "mesh_cell_type_actual": "tetrahedron",
+            "R00_total": 0.01,
+            "R_total": 0.02,
+            "T_total": 0.6,
+            "A_volume_total": 0.38,
         }
         result = {
             "status": "actual_global_r5_pass",
@@ -381,6 +389,17 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                 "correction_energy_norm": 1.0,
                 "correction_energy": {"relative_closure_error": 1.0e-14},
                 "marking": {"captured_fraction": 0.51},
+                "canonical_marking": {"captured_fraction": 0.51},
+                "owned_cell_contribution_count": 2,
+                "mesh_geometry_sha256": "a" * 64,
+                "cell_indicator_snapshot": {
+                    "storage": "inline_complete_vector",
+                    "cell_count": 2,
+                    "canonical_cell_ids": [0, 1],
+                    "indicator_values": [0.6, 0.4],
+                    "mesh_geometry_sha256": "a" * 64,
+                    "canonical_ids_and_values_sha256": "b" * 64,
+                },
             },
         }
         sampler = {
@@ -423,6 +442,10 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             "official_result": True,
             "linear_system_relative_residual": 1.0e-12,
             "mesh_cell_type_actual": "hexahedron",
+            "R00_total": 0.01,
+            "R_total": 0.02,
+            "T_total": 0.6,
+            "A_volume_total": 0.38,
         }
         enriched_summary = {
             **base_summary,
@@ -471,6 +494,17 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                 "correction_energy_norm": 1.0,
                 "correction_energy": {"relative_closure_error": 1.0e-14},
                 "marking": {"captured_fraction": 0.51},
+                "canonical_marking": {"captured_fraction": 0.51},
+                "owned_cell_contribution_count": 2,
+                "mesh_geometry_sha256": "a" * 64,
+                "cell_indicator_snapshot": {
+                    "storage": "inline_complete_vector",
+                    "cell_count": 2,
+                    "canonical_cell_ids": [0, 1],
+                    "indicator_values": [0.6, 0.4],
+                    "mesh_geometry_sha256": "a" * 64,
+                    "canonical_ids_and_values_sha256": "b" * 64,
+                },
             },
         }
         sampler = {

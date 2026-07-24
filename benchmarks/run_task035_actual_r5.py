@@ -512,6 +512,9 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "linear_system_relative_residual": summary.get(
             "linear_system_relative_residual"
         ),
+        "R00_s": summary.get("R00_s"),
+        "R00_p": summary.get("R00_p"),
+        "R00_total": summary.get("R00_total"),
         "R_total": summary.get("R_total"),
         "T_total": summary.get("T_total"),
         "A_volume_total": summary.get("A_volume_total"),
@@ -618,6 +621,8 @@ def _qualify(
     r5 = result.get("R5") or {}
     energy = r5.get("correction_energy") or {}
     marking = r5.get("marking") or {}
+    canonical_marking = r5.get("canonical_marking") or {}
+    indicator_snapshot = r5.get("cell_indicator_snapshot") or {}
     solves = [result.get("coarse") or {}, result.get("enriched") or {}]
     summaries = [entry.get("summary") or {} for entry in solves]
     resource_audits = [
@@ -650,8 +655,42 @@ def _qualify(
             isinstance(marking.get("captured_fraction"), (int, float))
             and float(marking["captured_fraction"]) >= args.theta
         ),
+        "canonical_dorfler_target_captured": (
+            isinstance(
+                canonical_marking.get("captured_fraction"), (int, float)
+            )
+            and float(canonical_marking["captured_fraction"]) >= args.theta
+        ),
+        "complete_cell_indicator_snapshot": (
+            indicator_snapshot.get("storage") == "inline_complete_vector"
+            and indicator_snapshot.get("cell_count")
+            == r5.get("owned_cell_contribution_count")
+            and len(indicator_snapshot.get("canonical_cell_ids") or [])
+            == indicator_snapshot.get("cell_count")
+            and len(indicator_snapshot.get("indicator_values") or [])
+            == indicator_snapshot.get("cell_count")
+            and indicator_snapshot.get("mesh_geometry_sha256")
+            == r5.get("mesh_geometry_sha256")
+            and bool(
+                indicator_snapshot.get(
+                    "canonical_ids_and_values_sha256"
+                )
+            )
+        ),
         "both_official_solves": all(
             summary.get("official_result") is True for summary in summaries
+        ),
+        "both_full_observable_vectors_present": all(
+            all(
+                isinstance(summary.get(name), (int, float))
+                for name in (
+                    "R00_total",
+                    "R_total",
+                    "T_total",
+                    "A_volume_total",
+                )
+            )
+            for summary in summaries
         ),
         "requested_mesh_backend_used": all(
             summary.get("mesh_cell_type_actual") == args.mesh_cell_type
