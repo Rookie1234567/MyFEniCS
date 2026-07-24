@@ -459,6 +459,7 @@ class _ReusableSurfaceComponentAssembler:
         component: int,
         *,
         quadrature_degree: int | None = None,
+        boundary_reference_z: float | None = None,
     ):
         if component not in {0, 1}:
             raise ValueError("Stage-4 DtN port component assembly only supports x/y tangential components.")
@@ -466,11 +467,22 @@ class _ReusableSurfaceComponentAssembler:
         self.gamma = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         self.kz = fem.Constant(mesh_data.mesh, PETSc.ScalarType(0.0))
         x = ufl.SpatialCoordinate(mesh_data.mesh)
-        phase = ufl.exp(
-            PETSc.ScalarType(1j) * self.alpha * x[0]
-            + PETSc.ScalarType(1j) * self.gamma * x[1]
-            + PETSc.ScalarType(1j) * self.kz * x[2]
-        )
+        if boundary_reference_z is None:
+            # Keep the reviewed ordinary global-z expression byte-for-byte on
+            # the default (zero evanescent-buffer) path.
+            phase = ufl.exp(
+                PETSc.ScalarType(1j) * self.alpha * x[0]
+                + PETSc.ScalarType(1j) * self.gamma * x[1]
+                + PETSc.ScalarType(1j) * self.kz * x[2]
+            )
+        else:
+            phase = ufl.exp(
+                PETSc.ScalarType(1j) * self.alpha * x[0]
+                + PETSc.ScalarType(1j) * self.gamma * x[1]
+                + PETSc.ScalarType(1j)
+                * self.kz
+                * (x[2] - PETSc.ScalarType(boundary_reference_z))
+            )
         vector = [PETSc.ScalarType(0.0), PETSc.ScalarType(0.0), PETSc.ScalarType(0.0)]
         vector[component] = phase
         v = ufl.TestFunction(V)
@@ -579,6 +591,73 @@ def _mode_boundary_z(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
 
 def _mode_boundary_phase(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
     return complex(np.exp(1j * complex(mode.k_vector[2]) * _mode_boundary_z(mode, cfg)))
+
+
+def _mode_uses_boundary_referenced_auxiliary(
+    mode: PortMode3D,
+    cfg: SimulationConfig3D,
+) -> bool:
+    """Return whether one opt-in buffer mode uses a port-plane coordinate.
+
+    A nonzero ``stage4_dtn_evanescent_buffer`` is already an explicit
+    research-only opt-in.  The ordinary 80-mode operator has buffer zero and
+    therefore retains the reviewed global-z basis and auxiliary coordinates.
+    """
+
+    return bool(
+        int(cfg.stage4_dtn_evanescent_buffer) > 0
+        and not mode.propagating
+    )
+
+
+def _mode_auxiliary_coordinate_scale(
+    mode: PortMode3D,
+    cfg: SimulationConfig3D,
+) -> complex:
+    """Return ``s`` in ``a_solver = s * a_global`` for one port mode."""
+
+    if not _mode_uses_boundary_referenced_auxiliary(mode, cfg):
+        return 1.0 + 0.0j
+    scale = _mode_boundary_phase(mode, cfg)
+    if not np.isfinite(scale) or abs(scale) <= 0.0:
+        raise FloatingPointError(
+            "evanescent DtN boundary-reference scale is non-finite or zero"
+        )
+    return scale
+
+
+def _mode_assembly_projection_denominator(
+    mode: PortMode3D,
+    cfg: SimulationConfig3D,
+) -> float:
+    """Projection denominator in the actual auxiliary coordinate basis."""
+
+    if not _mode_uses_boundary_referenced_auxiliary(mode, cfg):
+        return _mode_projection_denominator(mode, cfg)
+    area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
+    return float(area * mode.electric_tangential_norm_sq)
+
+
+def _global_auxiliary_values_from_solver_coordinates(
+    modes: list[PortMode3D],
+    cfg: SimulationConfig3D,
+    solver_values: np.ndarray,
+) -> np.ndarray:
+    """Restore the historical global-z amplitudes used by output artifacts."""
+
+    values = np.asarray(solver_values, dtype=np.complex128)
+    if values.shape != (len(modes),):
+        raise ValueError("DtN auxiliary values do not match the mode count")
+    scales = np.asarray(
+        [_mode_auxiliary_coordinate_scale(mode, cfg) for mode in modes],
+        dtype=np.complex128,
+    )
+    restored = values / scales
+    if not np.all(np.isfinite(restored)):
+        raise FloatingPointError(
+            "global-z DtN amplitudes overflowed during coordinate restoration"
+        )
+    return restored
 
 
 def _mode_projection_denominator(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
@@ -1959,7 +2038,48 @@ def solve_stage4_dtn_port_total_field(
             V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
         ),
     }
-    component_key: tuple[str, int, int, complex] | None = None
+    boundary_surface_assemblers = (
+        {
+            ("top", 0): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_max,
+                0,
+                quadrature_degree=dtn_quadrature_degree,
+                boundary_reference_z=float(cfg.physical_z_max),
+            ),
+            ("top", 1): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_max,
+                1,
+                quadrature_degree=dtn_quadrature_degree,
+                boundary_reference_z=float(cfg.physical_z_max),
+            ),
+            ("bottom", 0): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_min,
+                0,
+                quadrature_degree=dtn_quadrature_degree,
+                boundary_reference_z=float(cfg.physical_z_min),
+            ),
+            ("bottom", 1): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_min,
+                1,
+                quadrature_degree=dtn_quadrature_degree,
+                boundary_reference_z=float(cfg.physical_z_min),
+            ),
+        }
+        if any(
+            _mode_uses_boundary_referenced_auxiliary(mode, cfg)
+            for mode in modes
+        )
+        else None
+    )
+    component_key: tuple[str, int, int, complex, bool] | None = None
     component_right_entries: (
         tuple[
             tuple[np.ndarray, np.ndarray],
@@ -1991,7 +2111,26 @@ def solve_stage4_dtn_port_total_field(
     matrix_row_start, matrix_row_end = A_aug.getOwnershipRange()
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
-        mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
+        boundary_referenced = _mode_uses_boundary_referenced_auxiliary(
+            mode,
+            cfg,
+        )
+        selected_surface_assemblers = (
+            boundary_surface_assemblers
+            if boundary_referenced
+            else surface_assemblers
+        )
+        if selected_surface_assemblers is None:
+            raise RuntimeError(
+                "boundary-referenced DtN surface assemblers are unavailable"
+            )
+        mode_key = (
+            mode.side,
+            int(mode.m),
+            int(mode.n),
+            complex(mode.k_vector[2]),
+            boundary_referenced,
+        )
         if mode_key != component_key or component_right_entries is None:
             t_component = time.perf_counter()
             if assembly_time_system is not None:
@@ -1999,10 +2138,10 @@ def solve_stage4_dtn_port_total_field(
                     for vector in component_full_vectors:
                         vector.destroy()
                 component_full_vectors = (
-                    surface_assemblers[
+                    selected_surface_assemblers[
                         (mode.side, 0)
                     ].assemble_unconstrained_vector(mode),
-                    surface_assemblers[
+                    selected_surface_assemblers[
                         (mode.side, 1)
                     ].assemble_unconstrained_vector(mode),
                 )
@@ -2048,10 +2187,10 @@ def solve_stage4_dtn_port_total_field(
                 )
             else:
                 component_right_entries = (
-                    surface_assemblers[
+                    selected_surface_assemblers[
                         (mode.side, 0)
                     ].assemble_entries(mode, floquet_data.mpc),
-                    surface_assemblers[
+                    selected_surface_assemblers[
                         (mode.side, 1)
                     ].assemble_entries(mode, floquet_data.mpc),
                 )
@@ -2076,9 +2215,13 @@ def solve_stage4_dtn_port_total_field(
             (traction_vector[0], traction_vector[1]),
         )
         aux_global = n_fe + aux_index
-        denominator = _mode_projection_denominator(mode, cfg)
+        denominator = _mode_assembly_projection_denominator(mode, cfg)
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
         incident_projections.append(incident_projection)
+        incident_projection_solver = (
+            _mode_auxiliary_coordinate_scale(mode, cfg)
+            * incident_projection
+        )
         if (
             assembly_time_system is not None
             and cfg.stage4_retain_dual_recovery_context
@@ -2108,14 +2251,14 @@ def solve_stage4_dtn_port_total_field(
                 (-traction_values).reshape((len(traction_rows), 1)),
                 addv=matrix_insert_mode,
             )
-            if incident_projection != 0.0:
+            if incident_projection_solver != 0.0:
                 b_aug.setValues(
                     traction_rows,
-                    -traction_values * incident_projection,
+                    -traction_values * incident_projection_solver,
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
         if (
-            incident_projection != 0.0
+            incident_projection_solver != 0.0
             and assembly_time_full_rhs is not None
             and component_full_vectors is not None
         ):
@@ -2126,7 +2269,7 @@ def solve_stage4_dtn_port_total_field(
             ):
                 assembly_time_full_rhs.axpy(
                     PETSc.ScalarType(
-                        -incident_projection * coefficient
+                        -incident_projection_solver * coefficient
                     ),
                     vector,
                 )
@@ -2671,8 +2814,45 @@ def solve_stage4_dtn_port_total_field(
         matrix_stats=augmented_matrix_stats_after_finalize,
         petsc_options=petsc_options,
     )
-    aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
+    auxiliary_values_solver_coordinates = _gather_auxiliary_values(
+        x_aug,
+        n_fe,
+        n_aux,
+        comm,
+    )
+    aux_values = _global_auxiliary_values_from_solver_coordinates(
+        modes,
+        cfg,
+        auxiliary_values_solver_coordinates,
+    )
     port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
+    if boundary_surface_assemblers is not None:
+        port_metrics["dtn_auxiliary_coordinate_scaling"] = {
+            "status": "boundary_referenced_evanescent_buffer_active",
+            "ordinary_default_changed": False,
+            "scaled_mode_count": int(
+                sum(
+                    _mode_uses_boundary_referenced_auxiliary(mode, cfg)
+                    for mode in modes
+                )
+            ),
+            "solver_coordinate": (
+                "a_solver=exp(i*kz*z_port)*a_global_z"
+            ),
+            "official_output_coordinate": "historical_global_z",
+            "minimum_abs_coordinate_scale": float(
+                min(
+                    abs(_mode_auxiliary_coordinate_scale(mode, cfg))
+                    for mode in modes
+                )
+            ),
+            "minimum_assembly_projection_denominator": float(
+                min(
+                    _mode_assembly_projection_denominator(mode, cfg)
+                    for mode in modes
+                )
+            ),
+        }
     port_metrics.update(timing_details)
     _write_port_outputs(out_dir, cfg, modes, aux_values, incident_projections, port_metrics, comm)
     _write_progress_event(
@@ -2803,6 +2983,10 @@ def solve_stage4_dtn_port_total_field(
         solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()
     except Exception:
         solver_info["actual_pc_factor_solver_type"] = None
+    if boundary_surface_assemblers is not None:
+        solver_info["dtn_auxiliary_coordinate_scaling"] = port_metrics[
+            "dtn_auxiliary_coordinate_scaling"
+        ]
 
     if condensed_system is not None:
         if independent_trace_system is not None:
@@ -2821,6 +3005,50 @@ def solve_stage4_dtn_port_total_field(
         returned_b = b_aug
         returned_x = x_aug
 
+    goal_context = {
+        "num_fem_dofs_after_mpc": int(n_fe),
+        "modes": modes,
+        "auxiliary_values": aux_values,
+        "incident_projections": incident_projections,
+        "normalization": "finite-port outgoing modal power / incident power",
+        "state_layout": (
+            "floquet_independent_active_trace_plus_dtn_auxiliary"
+            if assembly_time_system is not None
+            else "mpc_fe_plus_dtn_auxiliary"
+        ),
+        "assembly_time_dual_recovery": (
+            None
+            if (
+                assembly_time_system is None
+                or not cfg.stage4_retain_dual_recovery_context
+            )
+            else assembly_time_dual_recovery_context(
+                assembly_time_system
+            )
+        ),
+    }
+    if boundary_surface_assemblers is not None:
+        goal_context.update(
+            {
+                "auxiliary_values_solver_coordinates": (
+                    auxiliary_values_solver_coordinates
+                ),
+                "auxiliary_coordinate_scales": np.asarray(
+                    [
+                        _mode_auxiliary_coordinate_scale(mode, cfg)
+                        for mode in modes
+                    ],
+                    dtype=np.complex128,
+                ),
+                "auxiliary_coordinate_convention": (
+                    "propagating modes retain global-z amplitudes; opt-in "
+                    "evanescent-buffer modes solve for boundary-plane "
+                    "amplitudes a_solver=boundary_phase*a_global and are "
+                    "restored before official output"
+                ),
+            }
+        )
+
     return {
         "E_total": E_total,
         "A": returned_A,
@@ -2829,26 +3057,5 @@ def solve_stage4_dtn_port_total_field(
         "ksp": ksp,
         "solver_info": solver_info,
         "port_metrics": port_metrics,
-        "goal_context": {
-            "num_fem_dofs_after_mpc": int(n_fe),
-            "modes": modes,
-            "auxiliary_values": aux_values,
-            "incident_projections": incident_projections,
-            "normalization": "finite-port outgoing modal power / incident power",
-            "state_layout": (
-                "floquet_independent_active_trace_plus_dtn_auxiliary"
-                if assembly_time_system is not None
-                else "mpc_fe_plus_dtn_auxiliary"
-            ),
-            "assembly_time_dual_recovery": (
-                None
-                if (
-                    assembly_time_system is None
-                    or not cfg.stage4_retain_dual_recovery_context
-                )
-                else assembly_time_dual_recovery_context(
-                    assembly_time_system
-                )
-            ),
-        },
+        "goal_context": goal_context,
     }

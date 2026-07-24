@@ -201,6 +201,38 @@ def _outgoing_channel_amplitude(
     )
 
 
+def _goal_context_auxiliary_coordinate_scales(
+    goal_context: dict[str, Any],
+) -> np.ndarray:
+    """Map global-z modal coefficients into the solved auxiliary coordinates."""
+
+    modes = list(goal_context["modes"])
+    raw = goal_context.get("auxiliary_coordinate_scales")
+    if raw is None:
+        return np.ones(len(modes), dtype=np.complex128)
+    scales = np.asarray(raw, dtype=np.complex128)
+    if scales.shape != (len(modes),):
+        raise ValueError(
+            "DtN auxiliary-coordinate scales do not match the mode count"
+        )
+    if not np.all(np.isfinite(scales)) or np.any(np.abs(scales) <= 0.0):
+        raise ValueError("DtN auxiliary-coordinate scales are invalid")
+    return scales
+
+
+def _global_auxiliary_from_solver_coordinates(
+    solver_values: np.ndarray,
+    goal_context: dict[str, Any],
+) -> np.ndarray:
+    values = np.asarray(solver_values, dtype=np.complex128)
+    scales = _goal_context_auxiliary_coordinate_scales(goal_context)
+    if values.shape != scales.shape:
+        raise ValueError(
+            "DtN solver-coordinate values do not match the mode count"
+        )
+    return values / scales
+
+
 def dtn_channel_goal_value(
     config,
     modes,
@@ -256,6 +288,9 @@ def build_dtn_channel_goal_gradient(
     incident = np.asarray(
         goal_context["incident_projections"], dtype=np.complex128
     )
+    coordinate_scales = _goal_context_auxiliary_coordinate_scales(
+        goal_context
+    )
     n_fe = int(goal_context["num_fem_dofs_after_mpc"])
     if auxiliary.shape != incident.shape or len(modes) != len(auxiliary):
         raise ValueError("DtN channel goal context arrays are not compatible")
@@ -288,6 +323,7 @@ def build_dtn_channel_goal_gradient(
         convention = "g_aux=i*conj(boundary_phase)"
     else:  # pragma: no cover - protected by DtnChannelGoal validation.
         raise AssertionError("validated DtN channel goal became unsupported")
+    derivative /= np.conj(coordinate_scales[mode_index])
 
     gradient = state.duplicate()
     gradient.set(PETSc.ScalarType(0.0))
@@ -323,6 +359,10 @@ def build_dtn_channel_goal_gradient(
         "power_weight": weight,
         "gradient_norm": float(gradient.norm()),
         "gradient_convention": f"dJ=Re(g^H dx), {convention}",
+        "auxiliary_coordinate_scale": [
+            float(coordinate_scales[mode_index].real),
+            float(coordinate_scales[mode_index].imag),
+        ],
         "canonical_channel_identity": {
             "side": mode.side,
             "m": int(mode.m),
@@ -348,6 +388,9 @@ def build_dtn_power_goal_gradient(
     incident = np.asarray(
         goal_context["incident_projections"], dtype=np.complex128
     )
+    coordinate_scales = _goal_context_auxiliary_coordinate_scales(
+        goal_context
+    )
     n_fe = int(goal_context["num_fem_dofs_after_mpc"])
     if auxiliary.shape != incident.shape or len(modes) != len(auxiliary):
         raise ValueError("DtN goal context arrays are not shape-compatible.")
@@ -359,7 +402,9 @@ def build_dtn_power_goal_gradient(
     for index, mode in enumerate(modes):
         if mode.side == "top":
             outgoing[index] -= incident[index]
-    auxiliary_gradient = 2.0 * weights * outgoing
+    auxiliary_gradient = (
+        2.0 * weights * outgoing / np.conj(coordinate_scales)
+    )
 
     gradient = state.duplicate()
     gradient.set(PETSc.ScalarType(0.0))
@@ -632,8 +677,14 @@ def evaluate_actual_dtn_power_adjoints(
         )
 
         def evaluate(candidate: PETSc.Vec, selected_goal: str = goal) -> float:
-            auxiliary = _gather_auxiliary_values(
-                candidate, n_fe, n_aux, communicator
+            auxiliary = _global_auxiliary_from_solver_coordinates(
+                _gather_auxiliary_values(
+                    candidate,
+                    n_fe,
+                    n_aux,
+                    communicator,
+                ),
+                goal_context,
             )
             return dtn_power_goal_value(
                 config,
@@ -745,11 +796,14 @@ def evaluate_actual_dtn_channel_adjoints(
             candidate: PETSc.Vec,
             selected_goal: DtnChannelGoal = goal,
         ) -> float:
-            auxiliary = _gather_auxiliary_values(
-                candidate,
-                n_fe,
-                n_aux,
-                communicator,
+            auxiliary = _global_auxiliary_from_solver_coordinates(
+                _gather_auxiliary_values(
+                    candidate,
+                    n_fe,
+                    n_aux,
+                    communicator,
+                ),
+                goal_context,
             )
             return dtn_channel_goal_value(
                 config,

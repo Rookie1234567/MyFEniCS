@@ -67,6 +67,82 @@ _FIXED_TRACE_TOPOLOGY_CONTRACTS = {
         "safe_allocated_nnz_upper": 11301980,
     },
 }
+_FIXED_TRACE_EXPLICIT_TOPOLOGY_CONTRACTS = {
+    (7, 2, 10): {
+        "mesh_cells_resolved": [7, 2, 10],
+        "num_mesh_cells": 140,
+        "candidate_dofs": 87195,
+        "global_p6_dofs": 98322,
+        "active_rows_with_dtn": 19680,
+        "base_schur_nnz": 10650850,
+        "predicted_used_nnz": 10728434,
+        "safe_allocated_nnz_upper": 11065344,
+    },
+}
+_EXPLICIT_AXIS_IDENTITY_CONTRACTS = {
+    (7, 2, 10): {
+        "axis_sha256": {
+            "x": "f99cf720acdbd78d426ef4f36cb22c0944de3a6b23f744750d48a51d85d342cd",
+            "y": "d3aac691ebe8875dc45e5817b42b4f33c45277f999f2d010fd29fecd7ec1401f",
+            "z": "f5aef6ea431298d9ebb46c16f2b674faf765046d3705d8b32dda6a2244bd6464",
+        },
+        "partition_independent_mesh_sha256": (
+            "326019d01cf2b98a83422e9c0aa520795daaa5bbc1fdeb73d567799504c705b1"
+        ),
+        "cell_tag_sha256": (
+            "1434790f1ba5bb102c57561dd9a925f8f6f46aa4ebcb7c37194e205ee2e3d11c"
+        ),
+        "facet_tag_sha256": (
+            "d2fa4745b79663b1838fa51473545f3b8290b0ed17212c28d162e27ae0e6c693"
+        ),
+    },
+    (6, 3, 10): {
+        "axis_sha256": {
+            "x": "86dc23ef348c79d9ed51d79c199cbaddf95416e04c51e5569c666234c6613cc3",
+            "y": "d7841480e80baeda07536ebc44681af4488f7d61a2eaa7de4d33cdacb9fa19fb",
+            "z": "f5aef6ea431298d9ebb46c16f2b674faf765046d3705d8b32dda6a2244bd6464",
+        },
+        "partition_independent_mesh_sha256": (
+            "59d053ac70baaa80c6de82fcd2388d0076291f033cf074197c218055756eec8f"
+        ),
+        "cell_tag_sha256": (
+            "60209a26ca68027775dc54783cc44a67314804ced204928025d35607c4d999e0"
+        ),
+        "facet_tag_sha256": (
+            "270b60e1c061cd539e64219e349e29abe0deb6e414c35c979abb25e2660b9c75"
+        ),
+    },
+}
+_Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT = {
+    "mesh_cells_resolved": [6, 3, 10],
+    "num_mesh_cells": 180,
+    "coarse_p4_dofs": 38092,
+    "coarse_p4_active_rows_with_dtn": 15776,
+    "coarse_p4_base_schur_nnz": 5808384,
+    "coarse_p4_predicted_used_nnz": 5872400,
+    "enriched_p5_dofs": 72995,
+    "enriched_p5_active_rows_with_dtn": 25280,
+    "enriched_p5_base_schur_nnz": 14333400,
+    "enriched_p5_predicted_used_nnz": 14433128,
+}
+
+
+def _fixed_trace_topology_contract(
+    args: argparse.Namespace,
+) -> dict[str, Any] | None:
+    explicit = getattr(args, "structured_axis_cells", None)
+    if explicit is not None:
+        return _FIXED_TRACE_EXPLICIT_TOPOLOGY_CONTRACTS.get(
+            tuple(explicit)
+        )
+    return next(
+        (
+            contract
+            for h_nm, contract in _FIXED_TRACE_TOPOLOGY_CONTRACTS.items()
+            if abs(float(args.h_nm) - h_nm) <= 1.0e-12
+        ),
+        None,
+    )
 
 
 def _axis_sha256(values: Any) -> str:
@@ -97,14 +173,7 @@ def _fixed_trace_resource_preflight(
     from src.common.modes_3d import outgoing_port_modes_3d
     from src.geometry.mesh_builder_3d import stage4_axis_plan
 
-    topology = next(
-        (
-            contract
-            for h_nm, contract in _FIXED_TRACE_TOPOLOGY_CONTRACTS.items()
-            if abs(float(args.h_nm) - h_nm) <= 1.0e-12
-        ),
-        None,
-    )
+    topology = _fixed_trace_topology_contract(args)
     if topology is None:
         raise SystemExit(
             "fixed-trace resource preflight has no reviewed topology contract"
@@ -112,6 +181,11 @@ def _fixed_trace_resource_preflight(
     cfg = target_stage4_config(
         degree=int(args.fixed_interior_degree),
         h_nm=float(args.h_nm),
+    )
+    cfg.mesh_axis_cell_counts = getattr(
+        args,
+        "structured_axis_cells",
+        None,
     )
     cfg.stage4_dtn_quadrature_degree = (
         args.fixed_trace_dtn_quadrature_degree
@@ -174,6 +248,18 @@ def _fixed_trace_resource_preflight(
             * float(mode.electric_tangential_norm_sq)
             * abs(boundary_phase) ** 2
         )
+        boundary_referenced = bool(
+            int(args.fixed_trace_dtn_evanescent_buffer) > 0
+            and not mode.propagating
+        )
+        assembly_denominator = (
+            float(
+                port_area
+                * float(mode.electric_tangential_norm_sq)
+            )
+            if boundary_referenced
+            else denominator
+        )
         mode_scaling_rows.append(
             {
                 "side": mode.side,
@@ -183,6 +269,15 @@ def _fixed_trace_resource_preflight(
                 "propagating": bool(mode.propagating),
                 "abs_boundary_phase": float(abs(boundary_phase)),
                 "projection_denominator": denominator,
+                "boundary_referenced_auxiliary": boundary_referenced,
+                "auxiliary_coordinate_scale_abs": (
+                    float(abs(boundary_phase))
+                    if boundary_referenced
+                    else 1.0
+                ),
+                "assembly_projection_denominator": (
+                    assembly_denominator
+                ),
             }
         )
     minimum_abs_boundary_phase = min(
@@ -193,6 +288,14 @@ def _fixed_trace_resource_preflight(
     )
     maximum_projection_denominator = max(
         row["projection_denominator"] for row in mode_scaling_rows
+    )
+    minimum_assembly_projection_denominator = min(
+        row["assembly_projection_denominator"]
+        for row in mode_scaling_rows
+    )
+    maximum_assembly_projection_denominator = max(
+        row["assembly_projection_denominator"]
+        for row in mode_scaling_rows
     )
     boundary_phase_safety_floor = math.sqrt(
         sys.float_info.epsilon
@@ -208,6 +311,30 @@ def _fixed_trace_resource_preflight(
         mode_scaling_finite_positive
         and minimum_abs_boundary_phase
         >= boundary_phase_safety_floor
+    )
+    boundary_referenced_mode_count = sum(
+        row["boundary_referenced_auxiliary"]
+        for row in mode_scaling_rows
+    )
+    assembly_scaling_finite_positive = all(
+        math.isfinite(row["auxiliary_coordinate_scale_abs"])
+        and row["auxiliary_coordinate_scale_abs"] > 0.0
+        and math.isfinite(row["assembly_projection_denominator"])
+        and row["assembly_projection_denominator"] > 0.0
+        for row in mode_scaling_rows
+    )
+    assembly_dynamic_range_safe = bool(
+        minimum_assembly_projection_denominator
+        / maximum_assembly_projection_denominator
+        >= boundary_phase_safety_floor
+    )
+    actual_port_basis_numerically_safe = bool(
+        assembly_scaling_finite_positive
+        and assembly_dynamic_range_safe
+        and (
+            int(args.fixed_trace_dtn_evanescent_buffer) == 0
+            or boundary_referenced_mode_count == dtn_evanescent_count
+        )
     )
     expected_active_rows = int(
         topology["active_rows_with_dtn"] - 80 + dtn_mode_count
@@ -238,6 +365,27 @@ def _fixed_trace_resource_preflight(
         )
     )
     directional = bool(args.fixed_trace_directional_recovery)
+    directional_axis = getattr(
+        args,
+        "fixed_trace_directional_axis",
+        None,
+    )
+    axis_sha256 = {
+        axis: _axis_sha256(values)
+        for axis, values in axes.items()
+    }
+    seed_axis_sha256 = {
+        axis: _axis_sha256(values)
+        for axis, values in seed_axes.items()
+    }
+    changed_axes = [
+        axis
+        for axis in ("x", "y", "z")
+        if axis_sha256[axis] != seed_axis_sha256[axis]
+    ]
+    explicit_identity = _EXPLICIT_AXIS_IDENTITY_CONTRACTS.get(
+        tuple(actual_cells)
+    )
     checks = {
         "reviewed_topology_contract": actual_cells
         == topology["mesh_cells_resolved"],
@@ -251,39 +399,53 @@ def _fixed_trace_resource_preflight(
             dtn_mode_identity_sha256
             == expected_mode_identity_sha256
         ),
-        "unscaled_port_basis_numerically_safe": (
-            unscaled_port_basis_numerically_safe
+        "actual_port_basis_numerically_safe": (
+            actual_port_basis_numerically_safe
         ),
-        "directional_x_axis_matches_h15": (
-            (not directional) or axes["x"] == seed_axes["x"]
+        "directional_exactly_one_axis_changed": (
+            (not directional)
+            or changed_axes == [directional_axis]
         ),
-        "directional_y_axis_matches_h15": (
-            (not directional) or axes["y"] == seed_axes["y"]
+        "directional_nonselected_axes_match_h15": (
+            (not directional)
+            or all(
+                axis_sha256[axis] == seed_axis_sha256[axis]
+                for axis in ("x", "y", "z")
+                if axis != directional_axis
+            )
         ),
-        "directional_z_axis_differs_from_h15": (
-            (not directional) or axes["z"] != seed_axes["z"]
+        "explicit_axis_hash_identity_frozen": (
+            explicit_identity is None
+            or axis_sha256 == explicit_identity["axis_sha256"]
         ),
     }
     return {
-        "schema_version": "task035b.fixed-trace-resource-preflight.v1",
+        "schema_version": "task035b.fixed-trace-resource-preflight.v2",
         "pass": all(checks.values()),
         "checks": checks,
         "nominal_h_nm": float(args.h_nm),
         "directional_recovery": directional,
+        "directional_axis": directional_axis,
+        "directional_mesh_change_semantics": (
+            "exact_material_fitted_remeshing_not_nested_refinement"
+            if directional
+            else "not_applicable"
+        ),
+        "structured_axis_cells_requested": (
+            None
+            if getattr(args, "structured_axis_cells", None) is None
+            else list(args.structured_axis_cells)
+        ),
         "axis_plan": {
             "mesh_cells_resolved": actual_cells,
             "mesh_spacing_mode_resolved": (
                 plan.mesh_spacing_mode_resolved
             ),
             "axis_values_nm": axes,
-            "axis_sha256": {
-                axis: _axis_sha256(values)
-                for axis, values in axes.items()
-            },
-            "h15_axis_sha256": {
-                axis: _axis_sha256(values)
-                for axis, values in seed_axes.items()
-            },
+            "axis_sha256": axis_sha256,
+            "h15_axis_sha256": seed_axis_sha256,
+            "changed_axes_from_h15": changed_axes,
+            "expected_mesh_identity": explicit_identity,
             "material_plane_alignment": (
                 plan.material_plane_alignment
             ),
@@ -311,16 +473,27 @@ def _fixed_trace_resource_preflight(
         },
         "port_basis_scaling_preflight": {
             "schema_version": (
-                "task035b.dtn-port-basis-scaling-preflight.v1"
+                "task035b.dtn-port-basis-scaling-preflight.v2"
             ),
             "status": (
-                "safe_for_pde"
-                if unscaled_port_basis_numerically_safe
-                else "controlled_stop_unscaled_evanescent_port_basis"
+                "safe_boundary_referenced_evanescent_basis"
+                if (
+                    actual_port_basis_numerically_safe
+                    and boundary_referenced_mode_count > 0
+                )
+                else "safe_for_pde"
+                if actual_port_basis_numerically_safe
+                else "controlled_stop_port_basis_scaling_not_safe"
             ),
-            "pde_authorized": unscaled_port_basis_numerically_safe,
+            "pde_authorized": actual_port_basis_numerically_safe,
             "mode_count": dtn_mode_count,
             "mode_identity_sha256": dtn_mode_identity_sha256,
+            "boundary_referenced_mode_count": (
+                boundary_referenced_mode_count
+            ),
+            "historical_unscaled_basis_numerically_safe": (
+                unscaled_port_basis_numerically_safe
+            ),
             "minimum_abs_boundary_phase": (
                 minimum_abs_boundary_phase
             ),
@@ -337,11 +510,26 @@ def _fixed_trace_resource_preflight(
                 maximum_projection_denominator
                 / minimum_projection_denominator
             ),
+            "minimum_assembly_projection_denominator": (
+                minimum_assembly_projection_denominator
+            ),
+            "maximum_assembly_projection_denominator": (
+                maximum_assembly_projection_denominator
+            ),
+            "assembly_denominator_dynamic_range": (
+                maximum_assembly_projection_denominator
+                / minimum_assembly_projection_denominator
+            ),
+            "assembly_dynamic_range_safe": (
+                assembly_dynamic_range_safe
+            ),
             "criterion": (
-                "all values finite and positive, and minimum absolute "
-                "boundary phase >= sqrt(machine epsilon), preventing the "
-                "unscaled augmented row/column ratio from exceeding "
-                "approximately 1/epsilon"
+                "the actual opt-in assembly basis has finite positive "
+                "coordinate scales and projection denominators, every "
+                "evanescent buffer mode is port-plane referenced, and the "
+                "assembly denominator minimum/maximum ratio is at least "
+                "sqrt(machine epsilon); the historical unscaled metrics "
+                "remain recorded separately"
             ),
             "ordinary_default_changed": False,
             "mode_rows": mode_scaling_rows,
@@ -350,12 +538,106 @@ def _fixed_trace_resource_preflight(
             "dofs_and_rows": "exact tensor-entity count",
             "base_schur_nnz": "exact cell-clique structural union",
             "predicted_used_nnz": (
-                "exact for the 80-mode default; linear support-count "
+                "topology-scaled port-support prediction for the explicit "
+                "axis lane"
+                if explicit_identity is not None
+                else "exact for the 80-mode default; linear support-count "
                 "prediction for an opt-in evanescent-buffer diagnostic"
             ),
             "safe_allocated_nnz_upper": (
-                "support-safe exact default upper; linear conservative "
+                "topology-scaled conservative port-support upper for the "
+                "explicit axis lane"
+                if explicit_identity is not None
+                else "support-safe exact default upper; linear conservative "
                 "port-support projection for a buffer diagnostic"
+            ),
+            "measured": False,
+        },
+    }
+
+
+def _structured_axis_global_control_preflight(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """Freeze the y-only global-p5 control before any MPI solve."""
+
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import stage4_axis_plan
+
+    requested = tuple(args.structured_axis_cells)
+    if requested != (6, 3, 10):
+        raise ValueError(
+            "the reviewed y-only global-p5 control requires exact axis "
+            "counts (6, 3, 10)"
+        )
+    cfg = target_stage4_config(
+        degree=int(args.enriched_degree),
+        h_nm=float(args.h_nm),
+    )
+    cfg.mesh_axis_cell_counts = requested
+    plan = stage4_axis_plan(cfg, int(args.mpi_size))
+    actual = tuple(plan.mesh_cells_resolved)
+    axes = {
+        "x": [float(value) for value in plan.x_values],
+        "y": [float(value) for value in plan.y_values],
+        "z": [float(value) for value in plan.z_values],
+    }
+    axis_sha256 = {
+        axis: _axis_sha256(values)
+        for axis, values in axes.items()
+    }
+    expected_identity = _EXPLICIT_AXIS_IDENTITY_CONTRACTS[(6, 3, 10)]
+    checks = {
+        "reviewed_y_only_topology": actual == (6, 3, 10),
+        "requested_topology_resolved_exactly": actual == requested,
+        "material_planes_aligned": (
+            plan.material_plane_alignment["all_aligned"] is True
+        ),
+        "axis_hash_identity_frozen": (
+            axis_sha256 == expected_identity["axis_sha256"]
+        ),
+        "global_p5_dofs_le_90000": (
+            _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT["enriched_p5_dofs"]
+            <= 90000
+        ),
+        "global_p5_active_rows_positive": (
+            _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT[
+                "enriched_p5_active_rows_with_dtn"
+            ]
+            > 0
+        ),
+    }
+    return {
+        "schema_version": (
+            "task035b.structured-axis-global-control-preflight.v1"
+        ),
+        "status": "pass" if all(checks.values()) else "fail",
+        "pass": all(checks.values()),
+        "checks": checks,
+        "control_role": "y_only_global_p5_directional_control",
+        "ordinary_default_changed": False,
+        "nominal_h_nm": float(args.h_nm),
+        "axis_plan": {
+            "mesh_cells_resolved": list(actual),
+            "mesh_spacing_mode_resolved": (
+                plan.mesh_spacing_mode_resolved
+            ),
+            "axis_values_nm": axes,
+            "axis_sha256": axis_sha256,
+            "material_plane_alignment": (
+                plan.material_plane_alignment
+            ),
+            "expected_mesh_identity": expected_identity,
+        },
+        "predicted_resources": dict(
+            _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT
+        ),
+        "prediction_semantics": {
+            "dofs_and_rows": "exact tensor-entity count",
+            "base_schur_nnz": "exact cell-clique structural union",
+            "predicted_used_nnz": (
+                "exact base plus the measured same-x/y h10 DtN support "
+                "correction"
             ),
             "measured": False,
         },
@@ -374,6 +656,22 @@ def _parse_theta_schedule(value: str) -> tuple[float, ...]:
             "every theta schedule value must lie in (0, 1]"
         )
     return schedule
+
+
+def _parse_axis_cell_counts(value: str) -> tuple[int, int, int]:
+    try:
+        counts = tuple(
+            int(item.strip()) for item in value.split(",")
+        )
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "structured axis cells must be three comma-separated integers"
+        ) from exc
+    if len(counts) != 3 or any(item <= 0 for item in counts):
+        raise argparse.ArgumentTypeError(
+            "structured axis cells must be three positive integers"
+        )
+    return counts
 
 
 def _parse_grazing_angles(value: str) -> tuple[float, ...]:
@@ -407,6 +705,98 @@ def _path_from_root(path: Path) -> str:
         return str(path.resolve().relative_to(ROOT))
     except ValueError:
         return str(path.resolve())
+
+
+def _preflight_artifact_evidence(
+    *,
+    fixed_trace_path: Path,
+    structured_axis_path: Path,
+) -> dict[str, str | None]:
+    """Describe only preflight artifacts that were actually written."""
+
+    fixed_exists = fixed_trace_path.is_file()
+    structured_exists = structured_axis_path.is_file()
+    return {
+        "fixed_trace_resource_preflight": (
+            _path_from_root(fixed_trace_path) if fixed_exists else None
+        ),
+        "fixed_trace_resource_preflight_sha256": (
+            _sha256(fixed_trace_path) if fixed_exists else None
+        ),
+        "structured_axis_resource_preflight": (
+            _path_from_root(structured_axis_path)
+            if structured_exists
+            else None
+        ),
+        "structured_axis_resource_preflight_sha256": (
+            _sha256(structured_axis_path)
+            if structured_exists
+            else None
+        ),
+    }
+
+
+def _structured_axis_orders_evidence(
+    *,
+    run_dir: Path,
+    enriched_summary: dict[str, Any],
+    enriched_degree: int,
+) -> dict[str, Any]:
+    """Bind the y-control enriched DtN orders to the watchdog record."""
+
+    filename = enriched_summary.get("dtn_port_orders_json")
+    canonical_filename = "dtn_port_diffraction_orders_3d.json"
+    if filename != canonical_filename:
+        return {
+            "pass": False,
+            "path": None,
+            "sha256": None,
+            "order_count": None,
+            "reason": "noncanonical_or_missing_orders_filename",
+        }
+    path = (
+        run_dir
+        / f"enriched_p{int(enriched_degree)}"
+        / canonical_filename
+    ).resolve()
+    try:
+        path.relative_to(run_dir.resolve())
+    except ValueError:
+        return {
+            "pass": False,
+            "path": None,
+            "sha256": None,
+            "order_count": None,
+            "reason": "orders_path_escaped_run_directory",
+        }
+    if not path.is_file():
+        return {
+            "pass": False,
+            "path": _path_from_root(path),
+            "sha256": None,
+            "order_count": None,
+            "reason": "orders_file_missing",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {
+            "pass": False,
+            "path": _path_from_root(path),
+            "sha256": _sha256(path),
+            "order_count": None,
+            "reason": "orders_file_unreadable",
+        }
+    orders = payload.get("orders")
+    order_count = len(orders) if isinstance(orders, list) else None
+    passed = order_count == 80
+    return {
+        "pass": passed,
+        "path": _path_from_root(path),
+        "sha256": _sha256(path),
+        "order_count": order_count,
+        "reason": None if passed else "orders_count_is_not_80",
+    }
 
 
 def _resolve_new_record_path(
@@ -499,6 +889,8 @@ def _worker(args: argparse.Namespace) -> int:
             trace_degree=args.fixed_trace_degree,
             interior_degree=args.fixed_interior_degree,
             directional_recovery=args.fixed_trace_directional_recovery,
+            directional_axis=args.fixed_trace_directional_axis,
+            mesh_axis_cell_counts=args.structured_axis_cells,
             channel_adjoint_diagnostic=(
                 args.fixed_trace_channel_adjoint_diagnostic
             ),
@@ -640,6 +1032,7 @@ def _worker(args: argparse.Namespace) -> int:
             include_p6_projection_signals=(
                 args.p6_projection_signals
             ),
+            mesh_axis_cell_counts=args.structured_axis_cells,
         )
     if MPI.COMM_WORLD.rank == 0:
         (args.run_dir / "actual_r5_result.json").write_text(
@@ -664,6 +1057,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--mesh-cell-type",
         choices=("hexahedron", "tetrahedron"),
         default="hexahedron",
+    )
+    parser.add_argument(
+        "--structured-axis-cells",
+        type=_parse_axis_cell_counts,
+        help=(
+            "research-only exact material-fitted tensor counts NX,NY,NZ; "
+            "ordinary target-size meshing remains unchanged when omitted"
+        ),
     )
     parser.add_argument(
         "--single-mesh-pair",
@@ -854,9 +1255,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--fixed-trace-directional-recovery",
         action="store_true",
         help=(
-            "Review-V1 z-only fixed-trace recovery topology; permits only the "
-            "prequalified nominal h14 or h13 discriminator and does not require "
-            "an otherwise unnecessary same-mesh global-p6 resource solve"
+            "Review-V1 single-axis fixed-trace recovery topology; legacy "
+            "calls resolve to z and the x lane requires an exact axis plan"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-directional-axis",
+        choices=("x", "z"),
+        help=(
+            "axis changed by directional recovery; omitted legacy calls "
+            "resolve to z"
         ),
     )
     parser.add_argument(
@@ -1027,6 +1435,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "--fixed-trace-directional-recovery requires fixed-trace mode."
         )
     if (
+        args.fixed_trace_directional_axis is not None
+        and not args.fixed_trace_directional_recovery
+    ):
+        parser.error(
+            "--fixed-trace-directional-axis requires directional recovery."
+        )
+    if args.fixed_trace_directional_recovery:
+        args.fixed_trace_directional_axis = (
+            args.fixed_trace_directional_axis or "z"
+        )
+    if (
         args.fixed_trace_channel_adjoint_diagnostic
         and not fixed_trace_mode
     ):
@@ -1078,6 +1497,37 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "fixed-trace, regionwise-p, common-mesh, and cycle modes "
             "are mutually exclusive."
+        )
+    structured_axis_mode = args.structured_axis_cells is not None
+    if structured_axis_mode and (
+        args.mesh_cell_type != "hexahedron"
+        or args.mpi_size != 8
+        or common_mesh_mode
+        or active_cycles
+        or regionwise_mode
+        or args.goal_dwr_only
+    ):
+        parser.error(
+            "structured-axis controls require MPI8 fixed-target hexahedra "
+            "without adaptive, replay, regionwise-p, or goal-DWR modes."
+        )
+    if fixed_trace_mode and structured_axis_mode and (
+        not args.fixed_trace_directional_recovery
+        or args.fixed_trace_directional_axis != "x"
+        or args.structured_axis_cells != (7, 2, 10)
+    ):
+        parser.error(
+            "the only reviewed fixed-trace explicit-axis lane is x-only "
+            "(7,2,10)."
+        )
+    if (
+        fixed_trace_mode
+        and args.fixed_trace_directional_axis == "x"
+        and not structured_axis_mode
+    ):
+        parser.error(
+            "x-only fixed-trace recovery requires "
+            "--structured-axis-cells 7,2,10."
         )
     if args.goal_dwr_only and (
         common_mesh_mode
@@ -1154,6 +1604,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "--assembly-time-condensation-degree must also be listed in "
             "--floquet-slave-elimination-degree."
         )
+    if structured_axis_mode and not fixed_trace_mode:
+        reviewed_degrees = {
+            int(args.coarse_degree),
+            int(args.enriched_degree),
+        }
+        if (
+            args.structured_axis_cells != (6, 3, 10)
+            or reviewed_degrees != {4, 5}
+            or abs(args.h_nm - 15.0) > 1.0e-12
+            or args.polarization_kind != "s"
+            or not args.single_mesh_pair
+            or set(args.static_condensation_degree)
+            != reviewed_degrees
+            or set(args.assembly_time_condensation_degree)
+            != reviewed_degrees
+            or set(args.floquet_slave_elimination_degree)
+            != reviewed_degrees
+        ):
+            parser.error(
+                "the only reviewed plain structured-axis control is the "
+                "y-only (6,3,10) h15 global p4/p5 MPI8 single-mesh pair "
+                "with assembly-time static condensation and Floquet slave "
+                "elimination on both degrees."
+            )
     if args.theta_schedule is not None:
         if not args.dwr_adaptive_cycles:
             parser.error("--theta-schedule is valid only with --dwr-adaptive-cycles.")
@@ -1276,42 +1750,58 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             value is not None for value in fixed_trace_baseline_values
         )
         if args.fixed_trace_directional_recovery:
-            if (
-                not any(
-                    abs(args.h_nm - allowed) <= 1.0e-12
-                    for allowed in (14.0, 13.0)
-                )
-                or baseline_bound
-            ):
+            if baseline_bound:
                 parser.error(
-                    "directional fixed-trace recovery requires nominal h14 "
-                    "or h13 and must omit a same-mesh global-p6 baseline."
+                    "directional fixed-trace recovery must omit a same-mesh "
+                    "global-p6 baseline."
                 )
             parent_bound = all(
                 value is not None
                 for value in fixed_trace_directional_parent_values
             )
-            if (
-                abs(args.h_nm - 13.0) <= 1.0e-12
-                and not parent_bound
-            ):
-                parser.error(
-                    "h13 escalation requires a SHA-bound positive h14 "
-                    "directional parent."
-                )
-            if (
-                abs(args.h_nm - 14.0) <= 1.0e-12
-                and parent_bound
-            ):
-                parser.error(
-                    "the primary h14 directional point must not provide a "
-                    "parent record."
-                )
+            if args.fixed_trace_directional_axis == "x":
+                if (
+                    abs(args.h_nm - 15.0) > 1.0e-12
+                    or args.structured_axis_cells != (7, 2, 10)
+                    or parent_bound
+                ):
+                    parser.error(
+                        "x-only fixed-trace recovery requires nominal h15, "
+                        "exact axes (7,2,10), and no directional parent."
+                    )
+            else:
+                if (
+                    not any(
+                        abs(args.h_nm - allowed) <= 1.0e-12
+                        for allowed in (14.0, 13.0)
+                    )
+                    or args.structured_axis_cells is not None
+                ):
+                    parser.error(
+                        "legacy z recovery requires nominal h14 or h13 "
+                        "without an explicit axis override."
+                    )
+                if (
+                    abs(args.h_nm - 13.0) <= 1.0e-12
+                    and not parent_bound
+                ):
+                    parser.error(
+                        "h13 escalation requires a SHA-bound positive h14 "
+                        "directional parent."
+                    )
+                if (
+                    abs(args.h_nm - 14.0) <= 1.0e-12
+                    and parent_bound
+                ):
+                    parser.error(
+                        "the primary h14 directional point must not provide "
+                        "a parent record."
+                    )
         elif abs(args.h_nm - 15.0) > 1.0e-12 or not baseline_bound:
             parser.error(
                 "the accepted fixed-trace seed requires h15 and a SHA-bound "
-                "same-mesh global-p6 baseline; use the explicit directional "
-                "flag only for Review-V1 h14/h13 recovery."
+                "same-mesh global-p6 baseline; use the directional flag for "
+                "the reviewed z h14/h13 or exact x (7,2,10) recovery."
             )
         elif any(
             value is not None
@@ -1389,8 +1879,12 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "official_result": summary.get("official_result"),
         "mpi_size": summary.get("mpi_size"),
         "num_mesh_cells": summary.get("num_mesh_cells"),
+        "mesh_cells_resolved": summary.get("mesh_cells_resolved"),
         "mesh_cell_type_actual": summary.get("mesh_cell_type_actual"),
         "num_nedelec_dofs": summary.get("num_nedelec_dofs"),
+        "mesh_axis_cell_counts_requested": resolved_config.get(
+            "mesh_axis_cell_counts_requested"
+        ),
         "nedelec_trace_degree_resolved": resolved_config.get(
             "nedelec_trace_degree_resolved"
         ),
@@ -1456,6 +1950,18 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "high_order_resource_audit": entry.get(
             "high_order_resource_audit"
         ),
+    }
+
+
+def _watchdog_ordinary_default_identity(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """Project the solver's ordinary-default identity into every watchdog."""
+
+    return {
+        "ordinary_default_changed": result.get(
+            "ordinary_default_changed"
+        )
     }
 
 
@@ -1632,6 +2138,123 @@ def _compact_common_mesh_angle(entry: dict[str, Any]) -> dict[str, Any]:
         "elapsed_seconds": pair["elapsed_seconds"],
         "ordinary_default_changed": pair["ordinary_default_changed"],
     }
+
+
+def _structured_axis_y_contract_checks(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    preflight: dict[str, Any],
+) -> dict[str, bool]:
+    """Pure identity/resource checks for the one reviewed y-control."""
+
+    solves = [result.get("coarse") or {}, result.get("enriched") or {}]
+    entries = {
+        int(entry.get("degree", -1)): entry for entry in solves
+    }
+    p4 = entries.get(4, {}).get("summary") or {}
+    p5 = entries.get(5, {}).get("summary") or {}
+    common = result.get("common_mesh_identity") or {}
+    expected_identity = _EXPLICIT_AXIS_IDENTITY_CONTRACTS[(6, 3, 10)]
+    orders = _structured_axis_orders_evidence(
+        run_dir=Path(args.run_dir),
+        enriched_summary=p5,
+        enriched_degree=5,
+    )
+
+    def matrix(summary: dict[str, Any]) -> dict[str, Any]:
+        return (
+            summary.get(
+                "stage4_dtn_floquet_independent_matrix_stats"
+            )
+            or summary.get("matrix_stats")
+            or {}
+        )
+
+    checks: dict[str, bool] = {
+        "cli_identity": (
+            tuple(args.structured_axis_cells or ()) == (6, 3, 10)
+            and int(args.mpi_size) == 8
+            and int(args.coarse_degree) == 4
+            and int(args.enriched_degree) == 5
+            and abs(float(args.h_nm) - 15.0) <= 1.0e-12
+            and args.polarization_kind == "s"
+        ),
+        "preflight_identity": (
+            preflight.get("pass") is True
+            and preflight.get("control_role")
+            == "y_only_global_p5_directional_control"
+            and preflight.get("predicted_resources")
+            == _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT
+        ),
+        "mesh_and_tag_identity": (
+            all(
+                common.get(key) == expected_identity[key]
+                for key in (
+                    "partition_independent_mesh_sha256",
+                    "cell_tag_sha256",
+                    "facet_tag_sha256",
+                )
+            )
+            and common.get("mesh_cells_resolved") == [6, 3, 10]
+            and common.get("global_cell_count") == 180
+        ),
+        "topology_and_dofs": (
+            set(entries) == {4, 5}
+            and all(
+                summary.get("mesh_cells_resolved") == [6, 3, 10]
+                and summary.get("num_mesh_cells") == 180
+                and (
+                    summary.get("config") or {}
+                ).get("mesh_axis_cell_counts_requested")
+                == [6, 3, 10]
+                for summary in (p4, p5)
+            )
+            and p4.get("num_nedelec_dofs") == 38092
+            and p5.get("num_nedelec_dofs") == 72995
+            and p5.get("num_nedelec_dofs", 90001) <= 90000
+        ),
+        "matrix_rows_and_nnz": (
+            matrix(p4).get("matrix_rows") == 15776
+            and matrix(p4).get("matrix_nnz_used") == 5872400
+            and matrix(p5).get("matrix_rows") == 25280
+            and matrix(p5).get("matrix_nnz_used") == 14433128
+        ),
+        "full_true_residuals": all(
+            isinstance(
+                (
+                    (
+                        summary.get("cell_static_condensation") or {}
+                    ).get("full_explicit_true_residual")
+                    or {}
+                ).get("linear_system_relative_residual"),
+                (int, float),
+            )
+            and math.isfinite(
+                float(
+                    (
+                        (
+                            summary.get("cell_static_condensation")
+                            or {}
+                        ).get("full_explicit_true_residual")
+                        or {}
+                    )["linear_system_relative_residual"]
+                )
+            )
+            and float(
+                (
+                    (
+                        summary.get("cell_static_condensation") or {}
+                    ).get("full_explicit_true_residual")
+                    or {}
+                )["linear_system_relative_residual"]
+            )
+            <= 1.0e-9
+            for summary in (p4, p5)
+        ),
+        "orders_sha_bound": orders.get("pass") is True,
+    }
+    return checks
 
 
 def _qualify(
@@ -2100,6 +2723,165 @@ def _qualify(
                     )
                     for entry in requested_entries
                 ),
+            }
+        )
+    structured_axis_cells = getattr(
+        args,
+        "structured_axis_cells",
+        None,
+    )
+    if structured_axis_cells is not None:
+        requested_axis_cells = tuple(structured_axis_cells)
+        expected_identity = _EXPLICIT_AXIS_IDENTITY_CONTRACTS.get(
+            requested_axis_cells
+        )
+        structured_preflight = getattr(
+            args,
+            "structured_axis_resource_preflight",
+            {},
+        )
+        entries_by_degree = {
+            int(entry.get("degree", -1)): entry for entry in solves
+        }
+        p4_summary = (
+            entries_by_degree.get(4, {}).get("summary") or {}
+        )
+        p5_summary = (
+            entries_by_degree.get(5, {}).get("summary") or {}
+        )
+        structured_orders = _structured_axis_orders_evidence(
+            run_dir=Path(args.run_dir),
+            enriched_summary=p5_summary,
+            enriched_degree=5,
+        )
+        p4_matrix = (
+            p4_summary.get(
+                "stage4_dtn_floquet_independent_matrix_stats"
+            )
+            or p4_summary.get("matrix_stats")
+            or {}
+        )
+        p5_matrix = (
+            p5_summary.get(
+                "stage4_dtn_floquet_independent_matrix_stats"
+            )
+            or p5_summary.get("matrix_stats")
+            or {}
+        )
+        common_identity = result.get("common_mesh_identity") or {}
+        expected_resources = _Y_ONLY_GLOBAL_P5_CONTROL_CONTRACT
+        checks.update(
+            {
+                "structured_axis_preflight_pass": (
+                    requested_axis_cells == (6, 3, 10)
+                    and structured_preflight.get("pass") is True
+                    and structured_preflight.get("predicted_resources")
+                    == expected_resources
+                ),
+                "structured_axis_exact_mesh_and_tag_identity": (
+                    expected_identity is not None
+                    and all(
+                        common_identity.get(key)
+                        == expected_identity.get(key)
+                        for key in (
+                            "partition_independent_mesh_sha256",
+                            "cell_tag_sha256",
+                            "facet_tag_sha256",
+                        )
+                    )
+                ),
+                "structured_axis_exact_topology_recorded": (
+                    set(entries_by_degree) == {4, 5}
+                    and all(
+                        summary.get("mesh_cells_resolved")
+                        == list(requested_axis_cells)
+                        and summary.get("num_mesh_cells")
+                        == expected_resources["num_mesh_cells"]
+                        and (
+                            summary.get("config") or {}
+                        ).get("mesh_axis_cell_counts_requested")
+                        == list(requested_axis_cells)
+                        for summary in summaries
+                    )
+                ),
+                "structured_axis_material_planes_aligned": all(
+                    (
+                        (audit.get("mesh_identity") or {}).get(
+                            "material_plane_alignment"
+                        )
+                        or {}
+                    ).get("all_aligned")
+                    is True
+                    for audit in resource_audits
+                ),
+                "structured_axis_global_p4_resources_exact": (
+                    p4_summary.get("num_nedelec_dofs")
+                    == expected_resources["coarse_p4_dofs"]
+                    and p4_matrix.get("matrix_rows")
+                    == expected_resources[
+                        "coarse_p4_active_rows_with_dtn"
+                    ]
+                    and p4_matrix.get("matrix_nnz_used")
+                    == expected_resources[
+                        "coarse_p4_predicted_used_nnz"
+                    ]
+                ),
+                "structured_axis_global_p5_resources_exact": (
+                    p5_summary.get("num_nedelec_dofs")
+                    == expected_resources["enriched_p5_dofs"]
+                    and p5_matrix.get("matrix_rows")
+                    == expected_resources[
+                        "enriched_p5_active_rows_with_dtn"
+                    ]
+                    and p5_matrix.get("matrix_nnz_used")
+                    == expected_resources[
+                        "enriched_p5_predicted_used_nnz"
+                    ]
+                    and p5_summary.get("num_nedelec_dofs") <= 90000
+                ),
+                "structured_axis_full_explicit_true_residuals_le_1e-9": all(
+                    isinstance(
+                        (
+                            (
+                                summary.get("cell_static_condensation")
+                                or {}
+                            ).get("full_explicit_true_residual")
+                            or {}
+                        ).get("linear_system_relative_residual"),
+                        (int, float),
+                    )
+                    and float(
+                        (
+                            (
+                                summary.get("cell_static_condensation")
+                                or {}
+                            ).get("full_explicit_true_residual")
+                            or {}
+                        )["linear_system_relative_residual"]
+                    )
+                    <= 1.0e-9
+                    for summary in summaries
+                ),
+                "structured_axis_enriched_orders_hash_bound": (
+                    structured_orders.get("pass") is True
+                    and isinstance(
+                        structured_orders.get("sha256"),
+                        str,
+                    )
+                    and len(structured_orders["sha256"]) == 64
+                    and structured_orders.get("order_count") == 80
+                ),
+            }
+        )
+        focused_checks = _structured_axis_y_contract_checks(
+            result,
+            args=args,
+            preflight=structured_preflight,
+        )
+        checks.update(
+            {
+                f"structured_axis_contract_{name}": passed
+                for name, passed in focused_checks.items()
             }
         )
     failures = [name for name, passed in checks.items() if not passed]
@@ -2655,6 +3437,116 @@ def _qualify_common_mesh_sweep(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _fixed_trace_x_contract_checks(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    preflight: dict[str, Any],
+) -> dict[str, bool]:
+    """Pure identity/resource checks for the reviewed x-only candidate."""
+
+    topology = _FIXED_TRACE_EXPLICIT_TOPOLOGY_CONTRACTS[(7, 2, 10)]
+    identity = _EXPLICIT_AXIS_IDENTITY_CONTRACTS[(7, 2, 10)]
+    candidate = result.get("candidate") or {}
+    summary = candidate.get("summary") or {}
+    config = summary.get("config") or {}
+    target = result.get("target_identity") or {}
+    resource = candidate.get("high_order_resource_audit") or {}
+    mesh_identity = resource.get("mesh_identity") or {}
+    matrix = summary.get("matrix_stats") or {}
+    factor = resource.get("matrix_factor_resource") or {}
+    dof_target = result.get("dof_target") or {}
+    parent = result.get("directional_parent_authority") or {}
+    predicted = preflight.get("predicted_resources") or {}
+
+    def finite_positive(name: str, source: dict[str, Any]) -> bool:
+        value = source.get(name)
+        return bool(
+            isinstance(value, (int, float))
+            and math.isfinite(float(value))
+            and float(value) > 0.0
+        )
+
+    return {
+        "cli_identity": (
+            bool(args.fixed_trace_directional_recovery)
+            and args.fixed_trace_directional_axis == "x"
+            and tuple(args.structured_axis_cells or ()) == (7, 2, 10)
+            and int(args.mpi_size) == 8
+            and abs(float(args.h_nm) - 15.0) <= 1.0e-12
+        ),
+        "preflight_identity": (
+            preflight.get("pass") is True
+            and preflight.get("directional_axis") == "x"
+            and preflight.get("structured_axis_cells_requested")
+            == [7, 2, 10]
+            and all(
+                predicted.get(key) == value
+                for key, value in topology.items()
+            )
+        ),
+        "target_identity": (
+            target.get("directional_axis") == "x"
+            and target.get("mesh_axis_cell_counts_requested")
+            == [7, 2, 10]
+            and target.get("actual_mesh_cells_resolved")
+            == [7, 2, 10]
+            and target.get("directional_mesh_change_semantics")
+            == "exact_material_fitted_remeshing_not_nested_refinement"
+        ),
+        "summary_topology_and_dofs": (
+            summary.get("mesh_cells_resolved") == [7, 2, 10]
+            and summary.get("num_mesh_cells") == 140
+            and summary.get("num_nedelec_dofs") == 87195
+            and config.get("mesh_axis_cell_counts_requested")
+            == [7, 2, 10]
+        ),
+        "mesh_and_tag_identity": all(
+            mesh_identity.get(key) == identity[key]
+            for key in (
+                "partition_independent_mesh_sha256",
+                "cell_tag_sha256",
+                "facet_tag_sha256",
+            )
+        ),
+        "dof_target": (
+            dof_target.get("active_full3d_equivalent_dofs") == 87195
+            and dof_target.get("same_mesh_global_p6_dofs") == 98322
+            and dof_target.get("minimum_le_90000") is True
+            and dof_target.get(
+                "inactive_p6_trace_modes_physically_absent"
+            )
+            is True
+        ),
+        "matrix_structure": (
+            matrix.get("matrix_rows") == 19680
+            and matrix.get("matrix_nnz_used") == 10728434
+            and finite_positive("matrix_average_nnz_per_row", matrix)
+            and finite_positive("matrix_maximum_nnz_per_row", matrix)
+            and isinstance(
+                matrix.get("matrix_nnz_allocated"),
+                (int, float),
+            )
+            and int(matrix["matrix_nnz_allocated"]) <= 11065344
+            and matrix.get("matrix_mallocs") == 0
+        ),
+        "factor_resource": (
+            factor.get("factor_inventory_available") is True
+            and finite_positive("factor_nnz", factor)
+            and finite_positive("factor_average_row_width", factor)
+            and finite_positive("factor_fill_ratio", factor)
+        ),
+        "no_parent_or_same_mesh_p6": (
+            parent.get("status") == "not_required_primary_x"
+            and parent.get("required") is False
+            and result.get("same_mesh_global_p6_baseline", {}).get(
+                "required"
+            )
+            is False
+        ),
+    }
+
+
 def _qualify_fixed_trace(
     result: dict[str, Any],
     *,
@@ -2667,6 +3559,11 @@ def _qualify_fixed_trace(
 ) -> dict[str, Any]:
     directional_recovery = bool(
         getattr(args, "fixed_trace_directional_recovery", False)
+    )
+    directional_axis = getattr(
+        args,
+        "fixed_trace_directional_axis",
+        None,
     )
     channel_adjoint_mode = bool(
         getattr(
@@ -2683,13 +3580,13 @@ def _qualify_fixed_trace(
         )
         > 0
     )
-    topology = next(
-        (
-            contract
-            for h_nm, contract in _FIXED_TRACE_TOPOLOGY_CONTRACTS.items()
-            if abs(float(args.h_nm) - h_nm) <= 1.0e-12
-        ),
-        None,
+    topology = _fixed_trace_topology_contract(args)
+    explicit_identity = (
+        None
+        if getattr(args, "structured_axis_cells", None) is None
+        else _EXPLICIT_AXIS_IDENTITY_CONTRACTS.get(
+            tuple(args.structured_axis_cells)
+        )
     )
     resource_preflight = getattr(
         args,
@@ -2704,6 +3601,12 @@ def _qualify_fixed_trace(
     cell_audit = summary.get("cell_static_condensation") or {}
     true_residual = cell_audit.get("full_explicit_true_residual") or {}
     matrix_stats = summary.get("matrix_stats") or {}
+    predicted_resources = (
+        resource_preflight.get("predicted_resources") or {}
+    )
+    matrix_factor_resource = (
+        resource_audit.get("matrix_factor_resource") or {}
+    )
     orientation = summary.get("nedelec_orientation_factor_stats") or {}
     element_audit = result.get("element_audit") or {}
     dof_target = result.get("dof_target") or {}
@@ -2722,6 +3625,37 @@ def _qualify_fixed_trace(
     directional_signal = result.get("directional_recovery_signal")
     channel_adjoint = result.get("channel_adjoint_diagnostic")
     port_diagnostic = result.get("port_diagnostic")
+    port_scaling_contract = (
+        (port_diagnostic or {}).get(
+            "auxiliary_coordinate_scaling_contract"
+        )
+        or {}
+    )
+    actual_port_scaling = (
+        port_scaling_contract.get("actual_scaling") or {}
+    )
+    preflight_port_scaling = (
+        resource_preflight.get("port_basis_scaling_preflight") or {}
+    )
+
+    def positive_close(left: Any, right: Any) -> bool:
+        return bool(
+            isinstance(left, (int, float))
+            and isinstance(right, (int, float))
+            and not isinstance(left, bool)
+            and not isinstance(right, bool)
+            and math.isfinite(float(left))
+            and math.isfinite(float(right))
+            and float(left) > 0.0
+            and float(right) > 0.0
+            and math.isclose(
+                float(left),
+                float(right),
+                rel_tol=2.0e-12,
+                abs_tol=0.0,
+            )
+        )
+
     accepted_statuses = {
         "actual_fixed_trace_candidate_pass",
         "actual_fixed_trace_controlled_negative",
@@ -2869,6 +3803,56 @@ def _qualify_fixed_trace(
                 and port_diagnostic is None
             )
         ),
+        "port_auxiliary_scaling_execution_identity": (
+            (
+                port_scaling_contract.get("pass") is True
+                and port_scaling_contract.get("status")
+                == "actual_boundary_referenced_scaling_pass"
+                and port_scaling_contract.get("evanescent_buffer")
+                == args.fixed_trace_dtn_evanescent_buffer
+                and actual_port_scaling.get("status")
+                == "boundary_referenced_evanescent_buffer_active"
+                and actual_port_scaling.get("ordinary_default_changed")
+                is False
+                and actual_port_scaling.get("solver_coordinate")
+                == "a_solver=exp(i*kz*z_port)*a_global_z"
+                and actual_port_scaling.get(
+                    "official_output_coordinate"
+                )
+                == "historical_global_z"
+                and actual_port_scaling.get("scaled_mode_count")
+                == preflight_port_scaling.get(
+                    "boundary_referenced_mode_count"
+                )
+                and positive_close(
+                    actual_port_scaling.get(
+                        "minimum_abs_coordinate_scale"
+                    ),
+                    preflight_port_scaling.get(
+                        "minimum_abs_boundary_phase"
+                    ),
+                )
+                and positive_close(
+                    actual_port_scaling.get(
+                        "minimum_assembly_projection_denominator"
+                    ),
+                    preflight_port_scaling.get(
+                        "minimum_assembly_projection_denominator"
+                    ),
+                )
+            )
+            if args.fixed_trace_dtn_evanescent_buffer > 0
+            else (
+                (
+                    port_scaling_contract.get("pass") is True
+                    and port_scaling_contract.get("status")
+                    == "not_requested"
+                    and port_scaling_contract.get("actual_scaling") is None
+                )
+                if port_diagnostic_mode
+                else True
+            )
+        ),
         "directional_signal_classified": (
             isinstance(directional_signal, dict)
             and isinstance(directional_signal.get("positive_signal"), bool)
@@ -2896,6 +3880,32 @@ def _qualify_fixed_trace(
             == args.fixed_trace_degree
             and target_identity.get("interior_degree")
             == args.fixed_interior_degree
+            and target_identity.get("directional_axis")
+            == directional_axis
+            and target_identity.get(
+                "directional_mesh_change_semantics"
+            )
+            == (
+                "exact_material_fitted_remeshing_not_nested_refinement"
+                if directional_recovery
+                else "not_applicable"
+            )
+            and target_identity.get(
+                "mesh_axis_cell_counts_requested"
+            )
+            == (
+                None
+                if args.structured_axis_cells is None
+                else list(args.structured_axis_cells)
+            )
+            and resolved_config.get(
+                "mesh_axis_cell_counts_requested"
+            )
+            == (
+                None
+                if args.structured_axis_cells is None
+                else list(args.structured_axis_cells)
+            )
         ),
         "control_authority_hash_bound": (
             control.get("sha256") == args.fixed_trace_control_sha256
@@ -2912,6 +3922,13 @@ def _qualify_fixed_trace(
         ),
         "directional_parent_requirement_classified": (
             (
+                directional_parent.get("status")
+                == "not_required_primary_x"
+                and directional_parent.get("required") is False
+                and args.fixed_trace_directional_parent_record is None
+            )
+            if directional_recovery and directional_axis == "x"
+            else (
                 directional_parent.get("status")
                 == "qualified_positive_h14_parent"
                 and directional_parent.get("required") is True
@@ -2971,6 +3988,18 @@ def _qualify_fixed_trace(
                 "facet_tag_sha256",
             )
         ),
+        "explicit_mesh_and_tag_hashes_match_frozen_identity": (
+            explicit_identity is None
+            or all(
+                (resource_audit.get("mesh_identity") or {}).get(key)
+                == explicit_identity[key]
+                for key in (
+                    "partition_independent_mesh_sha256",
+                    "cell_tag_sha256",
+                    "facet_tag_sha256",
+                )
+            )
+        ),
         "exact_sequence_space": (
             element_audit.get("pass") is True
             and element_audit.get("both_high_and_low_exact_sequence_pass")
@@ -3023,20 +4052,85 @@ def _qualify_fixed_trace(
             and matrix_stats.get("matrix_rows") < topology["candidate_dofs"]
         ),
         "matrix_nnz_and_row_width_measured": (
-            isinstance(matrix_stats.get("matrix_nnz_used"), (int, float))
-            and matrix_stats.get("matrix_nnz_used", 0.0) > 0.0
+            all(
+                isinstance(matrix_stats.get(name), (int, float))
+                and math.isfinite(float(matrix_stats[name]))
+                and float(matrix_stats[name]) > 0.0
+                for name in (
+                    "matrix_nnz_used",
+                    "matrix_nnz_allocated",
+                    "matrix_average_nnz_per_row",
+                    "matrix_maximum_nnz_per_row",
+                )
+            )
             and isinstance(
-                matrix_stats.get("matrix_average_nnz_per_row"),
+                predicted_resources.get("dtn_auxiliary_rows"),
                 (int, float),
             )
             and isinstance(
-                matrix_stats.get("matrix_maximum_nnz_per_row"),
+                predicted_resources.get(
+                    "port_diagnostic_predicted_used_nnz"
+                ),
                 (int, float),
             )
+            and isinstance(
+                predicted_resources.get(
+                    "port_diagnostic_safe_allocated_nnz_upper"
+                ),
+                (int, float),
+            )
+            and (
+                int(predicted_resources["dtn_auxiliary_rows"])
+                != 80
+                or int(matrix_stats["matrix_nnz_used"])
+                == int(
+                    predicted_resources[
+                        "port_diagnostic_predicted_used_nnz"
+                    ]
+                )
+            )
+            and int(matrix_stats["matrix_nnz_used"])
+            <= int(
+                predicted_resources[
+                    "port_diagnostic_safe_allocated_nnz_upper"
+                ]
+            )
+            and int(matrix_stats["matrix_nnz_allocated"])
+            <= int(
+                predicted_resources[
+                    "port_diagnostic_safe_allocated_nnz_upper"
+                ]
+            )
+            and isinstance(
+                matrix_stats.get("matrix_mallocs"),
+                (int, float),
+            )
+            and int(matrix_stats["matrix_mallocs"]) == 0
         ),
         "factor_inventory_measured": (
-            (summary.get("stage4_dtn_factor_inventory") or {}).get("available")
+            (
+                summary.get("stage4_dtn_factor_inventory") or {}
+            ).get("available")
             is True
+            and matrix_factor_resource.get(
+                "factor_inventory_available"
+            )
+            is True
+            and all(
+                isinstance(
+                    matrix_factor_resource.get(name),
+                    (int, float),
+                )
+                and math.isfinite(
+                    float(matrix_factor_resource[name])
+                )
+                and float(matrix_factor_resource[name]) > 0.0
+                for name in (
+                    "factor_nnz",
+                    "factor_average_row_width",
+                    "factor_fill_ratio",
+                )
+            )
         ),
         "resource_comparison_authority_classified": (
             (
@@ -3186,6 +4280,18 @@ def _qualify_fixed_trace(
             result.get("ordinary_default_changed") is False
         ),
     }
+    if directional_recovery and directional_axis == "x":
+        focused_checks = _fixed_trace_x_contract_checks(
+            result,
+            args=args,
+            preflight=resource_preflight,
+        )
+        checks.update(
+            {
+                f"x_directional_contract_{name}": passed
+                for name, passed in focused_checks.items()
+            }
+        )
     failures = [name for name, passed in checks.items() if not passed]
     return {"pass": not failures, "checks": checks, "failures": failures}
 
@@ -3529,9 +4635,25 @@ def _run_parent(args: argparse.Namespace) -> int:
             raise SystemExit(
                 "fixed-trace topology/resource preflight failed: "
                 f"{failed_checks}; port basis status={scaling_status}. "
-                "The buffer1 controlled-stop evidence is tracked in "
-                "Case095 records; do not start the PDE before port-plane "
-                "normalization is qualified."
+                "Do not start the PDE until the selected port-coordinate "
+                "basis is qualified."
+            )
+    elif args.structured_axis_cells is not None:
+        args.structured_axis_resource_preflight = (
+            _structured_axis_global_control_preflight(args)
+        )
+        if args.structured_axis_resource_preflight["pass"] is not True:
+            failed_checks = [
+                name
+                for name, passed in (
+                    args.structured_axis_resource_preflight.get("checks")
+                    or {}
+                ).items()
+                if not passed
+            ]
+            raise SystemExit(
+                "structured-axis global-p control preflight failed: "
+                f"{failed_checks}. Do not start the PDE."
             )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -3542,7 +4664,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
         )
         if args.fixed_trace_directional_recovery:
-            run_label += "_directional_z"
+            run_label += (
+                f"_directional_{args.fixed_trace_directional_axis}"
+            )
         if args.fixed_trace_channel_adjoint_diagnostic:
             run_label += "_channel_adjoints"
         if args.fixed_trace_dtn_quadrature_degree is not None:
@@ -3590,6 +4714,10 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += f"_uniform{args.uniform_refinement_levels}"
     elif args.single_mesh_pair:
         run_label += "_single_mesh_pair"
+    if args.structured_axis_cells is not None:
+        run_label += "_axis" + "x".join(
+            str(value) for value in args.structured_axis_cells
+        )
     if args.static_condensation_degree:
         run_label += "_condense_" + "-".join(
             f"p{degree}" for degree in args.static_condensation_degree
@@ -3614,10 +4742,23 @@ def _run_parent(args: argparse.Namespace) -> int:
     fixed_trace_preflight_path = (
         run_dir / "fixed_trace_resource_preflight.json"
     )
+    structured_axis_preflight_path = (
+        run_dir / "structured_axis_resource_preflight.json"
+    )
     if args.fixed_trace_control_record is not None:
         fixed_trace_preflight_path.write_text(
             json.dumps(
                 args.fixed_trace_resource_preflight,
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+    elif args.structured_axis_cells is not None:
+        structured_axis_preflight_path.write_text(
+            json.dumps(
+                args.structured_axis_resource_preflight,
                 ensure_ascii=False,
                 indent=2,
             )
@@ -3649,6 +4790,15 @@ def _run_parent(args: argparse.Namespace) -> int:
     ]
     if args.single_mesh_pair:
         command.append("--single-mesh-pair")
+    if args.structured_axis_cells is not None:
+        command.extend(
+            [
+                "--structured-axis-cells",
+                ",".join(
+                    str(value) for value in args.structured_axis_cells
+                ),
+            ]
+        )
     if args.p6_projection_signals:
         command.append("--p6-projection-signals")
     for degree in args.static_condensation_degree:
@@ -3691,6 +4841,12 @@ def _run_parent(args: argparse.Namespace) -> int:
             )
         if args.fixed_trace_directional_recovery:
             command.append("--fixed-trace-directional-recovery")
+            command.extend(
+                [
+                    "--fixed-trace-directional-axis",
+                    args.fixed_trace_directional_axis,
+                ]
+            )
         if args.fixed_trace_channel_adjoint_diagnostic:
             command.append(
                 "--fixed-trace-channel-adjoint-diagnostic"
@@ -3855,6 +5011,18 @@ def _run_parent(args: argparse.Namespace) -> int:
         if result_path.is_file()
         else {}
     )
+    structured_axis_orders = (
+        _structured_axis_orders_evidence(
+            run_dir=run_dir,
+            enriched_summary=(
+                (result.get("enriched") or {}).get("summary") or {}
+            ),
+            enriched_degree=int(args.enriched_degree),
+        )
+        if args.structured_axis_cells is not None
+        and args.fixed_trace_control_record is None
+        else None
+    )
     sampler = _sampler_summary(rows)
     qualifier = _select_qualifier(args)
     qualification = qualifier(
@@ -3957,6 +5125,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         "terminated_for_timeout": terminated_for_timeout,
         "qualification": qualification,
         "target_identity": result.get("target_identity") if result else None,
+        **_watchdog_ordinary_default_identity(result),
         "coarse": (
             None
             if args.fixed_trace_control_record is not None
@@ -3993,6 +5162,24 @@ def _run_parent(args: argparse.Namespace) -> int:
         "fixed_trace_resource_preflight": (
             getattr(args, "fixed_trace_resource_preflight", None)
         ),
+        "structured_axis_resource_preflight": (
+            getattr(args, "structured_axis_resource_preflight", None)
+        ),
+        "structured_axis_control_classification": (
+            {
+                "role": "y_only_global_p5_directional_control",
+                "diagnostic_only": True,
+                "formal_candidate_eligible": False,
+                "reference_v1_gate_evaluated_in_this_record": False,
+                "required_followup": (
+                    "SHA-bound frozen-reference-v1 channel comparator"
+                ),
+                "thresholds_relaxed": False,
+            }
+            if args.structured_axis_cells is not None
+            and args.fixed_trace_control_record is None
+            else None
+        ),
         "raw_evidence": {
             "run_directory": _path_from_root(run_dir),
             "actual_r5_result": _path_from_root(result_path),
@@ -4003,13 +5190,29 @@ def _run_parent(args: argparse.Namespace) -> int:
             "progress_sha256": _sha256(progress_path),
             "stdout": _path_from_root(stdout_path),
             "stdout_sha256": _sha256(stdout_path),
-            "fixed_trace_resource_preflight": (
-                _path_from_root(fixed_trace_preflight_path)
-                if fixed_trace_preflight_path.is_file()
-                else None
+            **_preflight_artifact_evidence(
+                fixed_trace_path=fixed_trace_preflight_path,
+                structured_axis_path=structured_axis_preflight_path,
             ),
-            "fixed_trace_resource_preflight_sha256": (
-                _sha256(fixed_trace_preflight_path)
+            "structured_axis_enriched_orders": (
+                None
+                if structured_axis_orders is None
+                else structured_axis_orders.get("path")
+            ),
+            "structured_axis_enriched_orders_sha256": (
+                None
+                if structured_axis_orders is None
+                else structured_axis_orders.get("sha256")
+            ),
+            "structured_axis_enriched_orders_count": (
+                None
+                if structured_axis_orders is None
+                else structured_axis_orders.get("order_count")
+            ),
+            "structured_axis_enriched_orders_qualified": (
+                None
+                if structured_axis_orders is None
+                else structured_axis_orders.get("pass")
             ),
         },
     }

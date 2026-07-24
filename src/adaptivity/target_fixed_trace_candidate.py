@@ -578,6 +578,72 @@ def _execution_integrity_pass(
     )
 
 
+def _dtn_auxiliary_scaling_contract(
+    summary: dict[str, Any],
+    *,
+    evanescent_buffer: int,
+) -> dict[str, Any]:
+    """Fail closed on the actual auxiliary basis used by a port diagnostic."""
+
+    evanescent_buffer = int(evanescent_buffer)
+    scaling = summary.get("dtn_auxiliary_coordinate_scaling")
+    if evanescent_buffer == 0:
+        return {
+            "status": "not_requested",
+            "pass": scaling is None,
+            "evanescent_buffer": 0,
+            "actual_scaling": scaling,
+            "ordinary_default_changed": False,
+        }
+    if not isinstance(scaling, dict):
+        return {
+            "status": "missing_boundary_referenced_scaling",
+            "pass": False,
+            "evanescent_buffer": evanescent_buffer,
+            "actual_scaling": scaling,
+            "ordinary_default_changed": False,
+        }
+    scaled_mode_count = scaling.get("scaled_mode_count")
+    expected_mode_count = summary.get("dtn_port_evanescent_mode_count")
+    minimum_scale = scaling.get("minimum_abs_coordinate_scale")
+    minimum_denominator = scaling.get(
+        "minimum_assembly_projection_denominator"
+    )
+    passed = bool(
+        scaling.get("status")
+        == "boundary_referenced_evanescent_buffer_active"
+        and scaling.get("ordinary_default_changed") is False
+        and scaling.get("solver_coordinate")
+        == "a_solver=exp(i*kz*z_port)*a_global_z"
+        and scaling.get("official_output_coordinate")
+        == "historical_global_z"
+        and isinstance(scaled_mode_count, int)
+        and not isinstance(scaled_mode_count, bool)
+        and scaled_mode_count > 0
+        and scaled_mode_count == expected_mode_count
+        and isinstance(minimum_scale, (int, float))
+        and not isinstance(minimum_scale, bool)
+        and math.isfinite(float(minimum_scale))
+        and float(minimum_scale) > 0.0
+        and isinstance(minimum_denominator, (int, float))
+        and not isinstance(minimum_denominator, bool)
+        and math.isfinite(float(minimum_denominator))
+        and float(minimum_denominator) > 0.0
+    )
+    return {
+        "status": (
+            "actual_boundary_referenced_scaling_pass"
+            if passed
+            else "actual_boundary_referenced_scaling_fail"
+        ),
+        "pass": passed,
+        "evanescent_buffer": evanescent_buffer,
+        "expected_scaled_mode_count": expected_mode_count,
+        "actual_scaling": scaling,
+        "ordinary_default_changed": False,
+    }
+
+
 def run_target_fixed_trace_candidate(
     out_dir: Path,
     *,
@@ -595,6 +661,8 @@ def run_target_fixed_trace_candidate(
     trace_degree: int = 5,
     interior_degree: int = 6,
     directional_recovery: bool = False,
+    directional_axis: str | None = None,
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None,
     channel_adjoint_diagnostic: bool = False,
     dtn_quadrature_degree: int | None = None,
     dtn_evanescent_buffer: int = 0,
@@ -653,41 +721,84 @@ def run_target_fixed_trace_candidate(
             "DtN/port diagnostic, directional recovery, and channel-adjoint "
             "seed diagnostic are mutually exclusive"
         )
+    if directional_axis is not None and not directional_recovery:
+        raise ValueError(
+            "directional_axis requires directional fixed-trace recovery"
+        )
+    resolved_directional_axis = (
+        ("z" if directional_axis is None else str(directional_axis).lower())
+        if directional_recovery
+        else None
+    )
+    if mesh_axis_cell_counts is not None:
+        if (
+            not isinstance(mesh_axis_cell_counts, tuple)
+            or len(mesh_axis_cell_counts) != 3
+            or any(
+                type(value) is not int
+                for value in mesh_axis_cell_counts
+            )
+        ):
+            raise ValueError(
+                "mesh_axis_cell_counts must contain exactly three integers"
+            )
+        mesh_axis_cell_counts = tuple(mesh_axis_cell_counts)
     if directional_recovery:
         if channel_adjoint_diagnostic:
             raise ValueError(
                 "channel-adjoint seed diagnostic and directional recovery "
                 "are mutually exclusive"
             )
-        if (
-            not any(
-                abs(float(h_nm) - allowed) <= 1.0e-12
-                for allowed in (14.0, 13.0)
-            )
-            or global_p6_baseline_record is not None
-        ):
+        if global_p6_baseline_record is not None:
             raise ValueError(
-                "directional fixed-trace recovery requires h14 or h13 and "
-                "must omit a same-mesh global-p6 baseline"
+                "directional fixed-trace recovery must omit a same-mesh "
+                "global-p6 baseline"
             )
-        if abs(float(h_nm) - 13.0) <= 1.0e-12:
-            if directional_parent_record is None:
-                raise ValueError(
-                    "h13 directional escalation requires a positive "
-                    "SHA-bound h14 parent"
+        if resolved_directional_axis == "z":
+            if (
+                not any(
+                    abs(float(h_nm) - allowed) <= 1.0e-12
+                    for allowed in (14.0, 13.0)
                 )
-        elif directional_parent_record is not None:
+                or mesh_axis_cell_counts is not None
+            ):
+                raise ValueError(
+                    "z-directional fixed-trace recovery requires legacy "
+                    "h14 or h13 without an explicit axis override"
+                )
+            if abs(float(h_nm) - 13.0) <= 1.0e-12:
+                if directional_parent_record is None:
+                    raise ValueError(
+                        "h13 directional escalation requires a positive "
+                        "SHA-bound h14 parent"
+                    )
+            elif directional_parent_record is not None:
+                raise ValueError(
+                    "the primary h14 directional point must not provide a "
+                    "parent record"
+                )
+        elif resolved_directional_axis == "x":
+            if (
+                abs(float(h_nm) - 15.0) > 1.0e-12
+                or mesh_axis_cell_counts != (7, 2, 10)
+                or directional_parent_record is not None
+            ):
+                raise ValueError(
+                    "x-directional fixed-trace recovery requires nominal "
+                    "h15, exact axis cells (7, 2, 10), and no parent"
+                )
+        else:
             raise ValueError(
-                "the primary h14 directional point must not provide a "
-                "parent record"
+                "directional_axis must be 'x' or legacy 'z'"
             )
     elif (
         abs(float(h_nm) - 15.0) > 1.0e-12
         or global_p6_baseline_record is None
+        or mesh_axis_cell_counts is not None
     ):
         raise ValueError(
             "the accepted fixed-trace seed requires h15 and a qualified "
-            "same-mesh global-p6 baseline"
+            "same-mesh global-p6 baseline without an axis override"
         )
     elif directional_parent_record is not None:
         raise ValueError(
@@ -774,11 +885,19 @@ def run_target_fixed_trace_candidate(
         case_name=(
             f"task035b_fixed_p{trace_degree}trace_"
             f"p{interior_degree}interior_h{h_nm:g}"
+            + (
+                ""
+                if mesh_axis_cell_counts is None
+                else "_axis" + "x".join(
+                    str(value) for value in mesh_axis_cell_counts
+                )
+            )
         ).replace(".", "p"),
         incident_theta_deg=float(incident_theta_deg),
         polarization_kind=polarization_kind,
         custom_polarization=None,
         mesh_cell_type="hexahedron",
+        mesh_axis_cell_counts=mesh_axis_cell_counts,
         nedelec_trace_degree=int(trace_degree),
         nedelec_interior_degree=int(interior_degree),
         matrix_diagnostics_assemble_only=False,
@@ -994,6 +1113,15 @@ def run_target_fixed_trace_candidate(
         _candidate_recovery_signal(
             significant_channel_reference,
             channel_comparison,
+            decision_use=(
+                "classifies the x-only recovery lane and never authorizes "
+                "a z/h13 escalation or changes the formal 12-channel Gate"
+                if resolved_directional_axis == "x"
+                else (
+                    "authorizes at most one z/h13 escalation when true; "
+                    "never changes the formal 12-channel acceptance Gate"
+                )
+            ),
         )
         if directional_recovery
         else None
@@ -1010,6 +1138,10 @@ def run_target_fixed_trace_candidate(
         )
         if port_diagnostic
         else None
+    )
+    port_scaling_contract = _dtn_auxiliary_scaling_contract(
+        summary,
+        evanescent_buffer=dtn_evanescent_buffer,
     )
     actual_dofs = int(summary["num_nedelec_dofs"])
     execution_pass = _execution_integrity_pass(
@@ -1037,6 +1169,7 @@ def run_target_fixed_trace_candidate(
     )
     result_execution_pass = bool(
         execution_pass
+        and port_scaling_contract["pass"]
         and (
             channel_adjoint_pass
             if channel_adjoint_diagnostic
@@ -1084,6 +1217,17 @@ def run_target_fixed_trace_candidate(
         "target_identity": {
             "geometry": "Task034 fixed rectangular block grating",
             "h_nm": float(h_nm),
+            "directional_axis": resolved_directional_axis,
+            "mesh_axis_cell_counts_requested": (
+                None
+                if mesh_axis_cell_counts is None
+                else list(mesh_axis_cell_counts)
+            ),
+            "directional_mesh_change_semantics": (
+                "exact_material_fitted_remeshing_not_nested_refinement"
+                if directional_recovery
+                else "not_applicable"
+            ),
             "actual_mesh_cells_resolved": summary.get(
                 "mesh_cells_resolved"
             ),
@@ -1115,7 +1259,11 @@ def run_target_fixed_trace_candidate(
         },
         "directional_parent_authority": (
             {
-                "status": "not_required_primary_h14",
+                "status": (
+                    "not_required_primary_x"
+                    if resolved_directional_axis == "x"
+                    else "not_required_primary_h14"
+                ),
                 "required": False,
             }
             if directional_recovery and directional_parent is None
@@ -1213,6 +1361,9 @@ def run_target_fixed_trace_candidate(
                 ),
                 "evanescent_mode_count": (
                     summary.get("dtn_port_evanescent_mode_count")
+                ),
+                "auxiliary_coordinate_scaling_contract": (
+                    port_scaling_contract
                 ),
                 "seed_recovery_signal": port_signal,
                 "thresholds_relaxed": False,

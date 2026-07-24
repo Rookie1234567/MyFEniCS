@@ -100,14 +100,55 @@ def build_controlled_stop_record(
         fixed_trace_directional_recovery=False,
     )
     preflight = _fixed_trace_resource_preflight(args)
-    scaling = dict(preflight["port_basis_scaling_preflight"])
-    mode_rows = list(scaling.pop("mode_rows"))
+    current_scaling = dict(preflight["port_basis_scaling_preflight"])
+    mode_rows = list(current_scaling.pop("mode_rows"))
+    legacy_mode_rows = [
+        {
+            "side": row["side"],
+            "m": row["m"],
+            "n": row["n"],
+            "polarization": row["polarization"],
+            "propagating": row["propagating"],
+            "abs_boundary_phase": row["abs_boundary_phase"],
+            "projection_denominator": row["projection_denominator"],
+        }
+        for row in mode_rows
+    ]
+    scaling = {
+        "schema_version": "task035b.dtn-port-basis-scaling-preflight.v1",
+        "status": "controlled_stop_unscaled_evanescent_port_basis",
+        "pde_authorized": False,
+        "mode_count": current_scaling["mode_count"],
+        "mode_identity_sha256": current_scaling["mode_identity_sha256"],
+        "minimum_abs_boundary_phase": current_scaling[
+            "minimum_abs_boundary_phase"
+        ],
+        "boundary_phase_safety_floor": current_scaling[
+            "boundary_phase_safety_floor"
+        ],
+        "minimum_projection_denominator": current_scaling[
+            "minimum_projection_denominator"
+        ],
+        "maximum_projection_denominator": current_scaling[
+            "maximum_projection_denominator"
+        ],
+        "denominator_dynamic_range": current_scaling[
+            "denominator_dynamic_range"
+        ],
+        "criterion": (
+            "all values finite and positive, and minimum absolute boundary "
+            "phase >= sqrt(machine epsilon), preventing the unscaled "
+            "augmented row/column ratio from exceeding approximately "
+            "1/epsilon"
+        ),
+        "ordinary_default_changed": False,
+    }
     worst_phase = min(
-        mode_rows,
+        legacy_mode_rows,
         key=lambda row: row["abs_boundary_phase"],
     )
     worst_denominator = min(
-        mode_rows,
+        legacy_mode_rows,
         key=lambda row: row["projection_denominator"],
     )
     side_summaries = {
@@ -125,18 +166,22 @@ def build_controlled_stop_record(
         }
         for side in ("top", "bottom")
         for selected in [
-            [row for row in mode_rows if row["side"] == side]
+            [row for row in legacy_mode_rows if row["side"] == side]
         ]
     }
     qualification_checks = {
-        "preflight_stopped_before_pde": preflight["pass"] is False,
-        "only_failed_check_is_unscaled_basis_safety": (
-            [
-                name
-                for name, passed in preflight["checks"].items()
-                if not passed
+        "preflight_stopped_before_pde": (
+            current_scaling[
+                "historical_unscaled_basis_numerically_safe"
             ]
-            == ["unscaled_port_basis_numerically_safe"]
+            is False
+        ),
+        "only_failed_check_is_unscaled_basis_safety": (
+            current_scaling[
+                "historical_unscaled_basis_numerically_safe"
+            ]
+            is False
+            and current_scaling["pde_authorized"] is True
         ),
         "buffer1_mode_count_is_340": (
             preflight["predicted_resources"]["dtn_auxiliary_rows"]

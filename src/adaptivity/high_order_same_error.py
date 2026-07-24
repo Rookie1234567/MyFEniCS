@@ -885,8 +885,37 @@ def compare_significant_channels_to_reference_v1(
         candidate_amplitude = _complex_pair(
             candidate["outgoing_amplitude_at_boundary"]
         )
+        finite_values = (
+            power_tolerance,
+            amplitude_tolerance,
+            reference_power,
+            candidate_power,
+            reference_amplitude.real,
+            reference_amplitude.imag,
+            candidate_amplitude.real,
+            candidate_amplitude.imag,
+        )
+        if (
+            not all(math.isfinite(value) for value in finite_values)
+            or power_tolerance <= 0.0
+            or amplitude_tolerance <= 0.0
+            or reference_power <= 0.0
+            or candidate_power < 0.0
+        ):
+            raise ValueError(
+                "significant-channel reference/candidate values are not "
+                f"finite physical Gate inputs for {key}"
+            )
         power_error = abs(candidate_power - reference_power)
         amplitude_error = abs(candidate_amplitude - reference_amplitude)
+        if not (
+            math.isfinite(power_error)
+            and math.isfinite(amplitude_error)
+        ):
+            raise ValueError(
+                "significant-channel errors are not finite for "
+                f"{key}"
+            )
         rows.append(
             {
                 "side": key[0],

@@ -253,6 +253,79 @@ def _subdivide_piecewise_axis(
     return np.asarray(axis, dtype=np.float64)
 
 
+def _subdivide_piecewise_axis_exact_count(
+    start: float,
+    stop: float,
+    breakpoints: list[float],
+    *,
+    num_cells: int,
+) -> np.ndarray:
+    """Fit required planes while producing exactly ``num_cells`` intervals."""
+
+    if stop <= start:
+        raise ValueError("Axis stop must be greater than start.")
+    if isinstance(num_cells, bool) or not isinstance(
+        num_cells, (int, np.integer)
+    ):
+        raise ValueError("Exact axis cell count must be an integer.")
+    num_cells = int(num_cells)
+    tol = _axis_tolerance(start, stop)
+    points = _deduplicate_sorted([start, stop, *breakpoints], tol)
+    if abs(points[0] - start) > tol or abs(points[-1] - stop) > tol:
+        raise ValueError("Axis breakpoints must stay inside the domain bounds.")
+    interval_lengths = np.diff(np.asarray(points, dtype=np.float64))
+    if np.any(interval_lengths <= tol):
+        raise ValueError("Exact axis authority contains a degenerate interval.")
+    if num_cells < len(interval_lengths):
+        raise ValueError(
+            "Exact axis cell count cannot place at least one cell in every "
+            "material interval."
+        )
+
+    quotas = (
+        float(num_cells)
+        * interval_lengths
+        / float(np.sum(interval_lengths))
+    )
+    allocations = np.maximum(
+        1,
+        np.floor(quotas).astype(np.int64),
+    )
+    while int(np.sum(allocations)) < num_cells:
+        deficits = quotas - allocations
+        index = int(np.argmax(deficits))
+        allocations[index] += 1
+    while int(np.sum(allocations)) > num_cells:
+        removable = allocations > 1
+        if not np.any(removable):
+            raise RuntimeError(
+                "Exact axis interval allocation cannot satisfy its count."
+            )
+        excess = allocations.astype(np.float64) - quotas
+        excess[~removable] = -np.inf
+        index = int(np.argmax(excess))
+        allocations[index] -= 1
+
+    axis: list[float] = [float(start)]
+    for low, high, count in zip(
+        points[:-1],
+        points[1:],
+        allocations,
+        strict=True,
+    ):
+        segment = np.linspace(
+            low,
+            high,
+            int(count) + 1,
+            dtype=np.float64,
+        )
+        axis.extend(float(value) for value in segment[1:])
+    values = np.asarray(axis, dtype=np.float64)
+    if len(values) - 1 != num_cells:
+        raise RuntimeError("Exact axis generator produced the wrong count.")
+    return values
+
+
 def _uniform_axis(start: float, stop: float, num_cells: int) -> np.ndarray:
     return np.linspace(start, stop, num_cells + 1, dtype=np.float64)
 
@@ -341,53 +414,115 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
     """Resolve the Stage-4 hexa spacing mode and build periodic-compatible axes."""
 
     _validate_stage4_hexa_geometry(cfg)
-    uniform_cells = _hexa_mesh_cells(cfg, comm_size)
-    uniform_axes = _uniform_axes(cfg, uniform_cells)
-    uniform_alignment = _material_plane_alignment_report(cfg, uniform_axes)
-    requested = cfg.mesh_spacing_mode_requested
-    if requested == "auto":
-        mode = "uniform_strict" if uniform_alignment["all_aligned"] else "boundary_fitted"
-    else:
-        mode = requested
-
-    min_axis_cells = 2 if cfg.use_floquet_xy else 1
-    required = _stage4_required_planes_by_axis(cfg)
-    if mode == "uniform_strict":
-        if not uniform_alignment["all_aligned"]:
-            hint = (
-                "Stage-4 uniform_strict hexa meshes require every material boundary to be a grid plane. "
-                "Use mesh_spacing_mode='auto', 'boundary_fitted', or 'local_refined' to generate a fitted nonuniform hexa mesh."
+    explicit_counts = cfg.mesh_axis_cell_counts_requested
+    if explicit_counts is not None:
+        if cfg.mesh_cell_type_resolved != "hexahedron":
+            raise ValueError(
+                "mesh_axis_cell_counts is currently qualified only for "
+                "Stage-4 hexahedra."
             )
-            raise ValueError(hint + " " + " ".join(str(message) for message in uniform_alignment["missing"]))
-        axes = uniform_axes
-        regions: dict[str, list[list[float]]] = {"x": [], "y": [], "z": []}
-    else:
+        if cfg.geometry_kind != "rectangular_block_grating":
+            raise ValueError(
+                "mesh_axis_cell_counts is currently qualified only for the "
+                "fixed rectangular block grating."
+            )
+        if cfg.mesh_spacing_mode_requested not in {
+            "auto",
+            "boundary_fitted",
+        }:
+            raise ValueError(
+                "mesh_axis_cell_counts requires mesh_spacing_mode='auto' or "
+                "'boundary_fitted'."
+            )
+        if cfg.use_floquet_xy and (
+            explicit_counts[0] < 2 or explicit_counts[1] < 2
+        ):
+            raise ValueError(
+                "Floquet exact-axis plans require at least two x and y cells."
+            )
+        if int(np.prod(explicit_counts)) < int(comm_size):
+            raise ValueError(
+                "Exact axis plan has fewer cells than MPI ranks; it will not "
+                "be silently refined."
+            )
+        required = _stage4_required_planes_by_axis(cfg)
         spans = {
             "x": (cfg.x_min, cfg.x_max),
             "y": (cfg.y_min, cfg.y_max),
             "z": (cfg.domain_z_min, cfg.domain_z_max),
         }
-        regions = _stage4_refinement_regions(cfg) if mode == "local_refined" else {"x": [], "y": [], "z": []}
-        refined_size = cfg.mesh_refined_size_resolved
-        axes = {}
-        for axis_name, (start, stop) in spans.items():
-            breakpoints = [value for _, value in required[axis_name]]
-            for low, high in regions[axis_name]:
-                breakpoints.extend([low, high])
-
-            def target_size(midpoint: float, *, axis: str = axis_name) -> float:
-                if mode == "local_refined" and _interval_in_regions(midpoint, regions[axis]):
-                    return refined_size
-                return float(cfg.mesh_target_size)
-
-            axes[axis_name] = _subdivide_piecewise_axis(
+        axes = {
+            axis_name: _subdivide_piecewise_axis_exact_count(
                 start,
                 stop,
-                breakpoints,
-                target_size,
-                min_cells=min_axis_cells,
+                [value for _, value in required[axis_name]],
+                num_cells=explicit_counts[index],
             )
-        axes = _refine_axes_until_enough_cells(axes, comm_size)
+            for index, (axis_name, (start, stop)) in enumerate(
+                spans.items()
+            )
+        }
+        mode = "boundary_fitted_exact_counts"
+        regions: dict[str, list[list[float]]] = {
+            "x": [],
+            "y": [],
+            "z": [],
+        }
+    else:
+        uniform_cells = _hexa_mesh_cells(cfg, comm_size)
+        uniform_axes = _uniform_axes(cfg, uniform_cells)
+        uniform_alignment = _material_plane_alignment_report(
+            cfg,
+            uniform_axes,
+        )
+        requested = cfg.mesh_spacing_mode_requested
+        if requested == "auto":
+            mode = (
+                "uniform_strict"
+                if uniform_alignment["all_aligned"]
+                else "boundary_fitted"
+            )
+        else:
+            mode = requested
+
+        min_axis_cells = 2 if cfg.use_floquet_xy else 1
+        required = _stage4_required_planes_by_axis(cfg)
+        if mode == "uniform_strict":
+            if not uniform_alignment["all_aligned"]:
+                hint = (
+                    "Stage-4 uniform_strict hexa meshes require every material boundary to be a grid plane. "
+                    "Use mesh_spacing_mode='auto', 'boundary_fitted', or 'local_refined' to generate a fitted nonuniform hexa mesh."
+                )
+                raise ValueError(hint + " " + " ".join(str(message) for message in uniform_alignment["missing"]))
+            axes = uniform_axes
+            regions = {"x": [], "y": [], "z": []}
+        else:
+            spans = {
+                "x": (cfg.x_min, cfg.x_max),
+                "y": (cfg.y_min, cfg.y_max),
+                "z": (cfg.domain_z_min, cfg.domain_z_max),
+            }
+            regions = _stage4_refinement_regions(cfg) if mode == "local_refined" else {"x": [], "y": [], "z": []}
+            refined_size = cfg.mesh_refined_size_resolved
+            axes = {}
+            for axis_name, (start, stop) in spans.items():
+                breakpoints = [value for _, value in required[axis_name]]
+                for low, high in regions[axis_name]:
+                    breakpoints.extend([low, high])
+
+                def target_size(midpoint: float, *, axis: str = axis_name) -> float:
+                    if mode == "local_refined" and _interval_in_regions(midpoint, regions[axis]):
+                        return refined_size
+                    return float(cfg.mesh_target_size)
+
+                axes[axis_name] = _subdivide_piecewise_axis(
+                    start,
+                    stop,
+                    breakpoints,
+                    target_size,
+                    min_cells=min_axis_cells,
+                )
+            axes = _refine_axes_until_enough_cells(axes, comm_size)
 
     alignment = _material_plane_alignment_report(cfg, axes)
     if not alignment["all_aligned"]:

@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 
 import numpy as np
 import pyvista as pv
@@ -15,10 +16,14 @@ import pytest
 from benchmarks.run_task035_actual_r5 import (
     _compact_channel_adjoint_diagnostic,
     _compact_solve,
+    _fixed_trace_x_contract_checks,
     _fixed_trace_resource_preflight,
     _parse_args,
+    _preflight_artifact_evidence,
     _resolve_new_record_path,
     _select_qualifier,
+    _structured_axis_global_control_preflight,
+    _structured_axis_y_contract_checks,
 )
 from benchmarks.task035b_fixed_trace_port_preflight import (
     build_controlled_stop_record,
@@ -255,6 +260,87 @@ def test_reference_v1_gate_requires_exact_12_of_12(
     assert failed["significant_complex_amplitude_pass_count"] == 11
 
 
+def test_reference_v1_gate_rejects_nonfinite_and_zero_tolerance(
+    tmp_path: Path,
+) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    reference_path = (
+        repo_root
+        / "benchmarks/cases/095_high_order_local_hp_resource_envelope/"
+        "records/significant_channel_reference_v1.json"
+    )
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference_sha256 = hashlib.sha256(
+        reference_path.read_bytes()
+    ).hexdigest()
+    p6_authority = next(
+        row
+        for row in reference["authorities"]
+        if row["sample_id"] == "p6_h10"
+    )
+    authoritative_candidate = json.loads(
+        (
+            repo_root
+            / p6_authority["raw_dtn_port_orders"]["path"]
+        ).read_text(encoding="utf-8")
+    )
+    frozen_key = (
+        reference["channels"][0]["channel"]["side"],
+        reference["channels"][0]["channel"]["m"],
+        reference["channels"][0]["channel"]["n"],
+        reference["channels"][0]["channel"]["polarization"],
+    )
+
+    for field, invalid_value in (
+        ("power_ratio", float("nan")),
+        ("outgoing_amplitude_at_boundary", [float("inf"), 0.0]),
+    ):
+        candidate = json.loads(json.dumps(authoritative_candidate))
+        selected = next(
+            order
+            for order in candidate["orders"]
+            if (
+                order["side"],
+                order["m"],
+                order["n"],
+                order["polarization"],
+            )
+            == frozen_key
+        )
+        selected[field] = invalid_value
+        candidate_path = tmp_path / f"invalid_{field}.json"
+        candidate_path.write_text(json.dumps(candidate), encoding="utf-8")
+        with pytest.raises(ValueError, match="finite physical Gate"):
+            compare_significant_channels_to_reference_v1(
+                candidate_path=candidate_path,
+                reference_record_path=reference_path,
+                reference_record_sha256=reference_sha256,
+            )
+
+    invalid_reference = json.loads(json.dumps(reference))
+    invalid_reference["channels"][0]["unchanged_v0_acceptance_gate"][
+        "power_absolute_tolerance"
+    ] = 0.0
+    invalid_reference_path = tmp_path / "zero_tolerance_reference.json"
+    invalid_reference_path.write_text(
+        json.dumps(invalid_reference),
+        encoding="utf-8",
+    )
+    valid_candidate_path = tmp_path / "valid_candidate.json"
+    valid_candidate_path.write_text(
+        json.dumps(authoritative_candidate),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="finite physical Gate"):
+        compare_significant_channels_to_reference_v1(
+            candidate_path=valid_candidate_path,
+            reference_record_path=invalid_reference_path,
+            reference_record_sha256=hashlib.sha256(
+                invalid_reference_path.read_bytes()
+            ).hexdigest(),
+        )
+
+
 def test_shard_sampler_fails_closed_on_missing_or_duplicate_ownership(
     monkeypatch,
 ) -> None:
@@ -371,16 +457,25 @@ def test_fixed_trace_watchdog_cli_is_narrow_and_sha_bound() -> None:
     )
     assert evanescent.fixed_trace_dtn_evanescent_buffer == 1
     evanescent_preflight = _fixed_trace_resource_preflight(evanescent)
-    assert evanescent_preflight["pass"] is False
+    assert evanescent_preflight["pass"] is True
     assert evanescent_preflight["checks"][
-        "unscaled_port_basis_numerically_safe"
-    ] is False
+        "actual_port_basis_numerically_safe"
+    ] is True
     assert evanescent_preflight["port_basis_scaling_preflight"][
         "status"
-    ] == "controlled_stop_unscaled_evanescent_port_basis"
+    ] == "safe_boundary_referenced_evanescent_basis"
     assert evanescent_preflight["port_basis_scaling_preflight"][
         "pde_authorized"
+    ] is True
+    assert evanescent_preflight["port_basis_scaling_preflight"][
+        "historical_unscaled_basis_numerically_safe"
     ] is False
+    assert evanescent_preflight["port_basis_scaling_preflight"][
+        "boundary_referenced_mode_count"
+    ] == 260
+    assert evanescent_preflight["port_basis_scaling_preflight"][
+        "minimum_assembly_projection_denominator"
+    ] == pytest.approx(32.1362606996094)
     assert evanescent_preflight["predicted_resources"][
         "dtn_surface_quadrature_degree"
     ] == 25
@@ -527,7 +622,7 @@ def test_channel_adjoint_record_compaction_preserves_top_proxy_rows() -> None:
     ][0]["component_proxy_sum"] == 5.0
 
 
-def test_directional_fixed_trace_cli_allows_only_hash_bound_h14_h13() -> None:
+def test_directional_fixed_trace_cli_keeps_z_and_adds_exact_x_lane() -> None:
     sha = "b" * 64
 
     def arguments(h_nm: str) -> list[str]:
@@ -581,14 +676,44 @@ def test_directional_fixed_trace_cli_allows_only_hash_bound_h14_h13() -> None:
             [6, 2, 11] if h_nm == "14" else [6, 2, 12]
         )
         assert preflight["checks"][
-            "directional_x_axis_matches_h15"
+            "directional_exactly_one_axis_changed"
         ]
         assert preflight["checks"][
-            "directional_y_axis_matches_h15"
+            "directional_nonselected_axes_match_h15"
         ]
-        assert preflight["checks"][
-            "directional_z_axis_differs_from_h15"
+        assert preflight["directional_axis"] == "z"
+        assert preflight["axis_plan"]["changed_axes_from_h15"] == ["z"]
+
+    x_args = _parse_args(
+        [
+            *arguments("15"),
+            "--fixed-trace-directional-axis",
+            "x",
+            "--structured-axis-cells",
+            "7,2,10",
         ]
+    )
+    assert x_args.fixed_trace_directional_axis == "x"
+    assert x_args.structured_axis_cells == (7, 2, 10)
+    x_preflight = _fixed_trace_resource_preflight(x_args)
+    assert x_preflight["pass"] is True
+    assert x_preflight["axis_plan"]["mesh_cells_resolved"] == [7, 2, 10]
+    assert x_preflight["axis_plan"]["changed_axes_from_h15"] == ["x"]
+    assert x_preflight["directional_mesh_change_semantics"] == (
+        "exact_material_fitted_remeshing_not_nested_refinement"
+    )
+    assert x_preflight["axis_plan"]["axis_sha256"]["x"] == (
+        "f99cf720acdbd78d426ef4f36cb22c0944de3a6b23f744750d48a51d85d342cd"
+    )
+    assert x_preflight["axis_plan"]["expected_mesh_identity"][
+        "partition_independent_mesh_sha256"
+    ] == "326019d01cf2b98a83422e9c0aa520795daaa5bbc1fdeb73d567799504c705b1"
+    assert x_preflight["predicted_resources"]["candidate_dofs"] == 87195
+    assert (
+        x_preflight["predicted_resources"]["expected_active_rows"]
+        == 19680
+    )
+    assert x_preflight["predicted_resources"]["base_schur_nnz"] == 10650850
     with pytest.raises(SystemExit):
         _parse_args(arguments("12"))
     with pytest.raises(SystemExit):
@@ -603,6 +728,374 @@ def test_directional_fixed_trace_cli_allows_only_hash_bound_h14_h13() -> None:
                 if item != "--fixed-trace-directional-recovery"
             ]
         )
+    with pytest.raises(SystemExit):
+        _parse_args(
+            [
+                *arguments("15"),
+                "--fixed-trace-directional-axis",
+                "x",
+            ]
+        )
+    with pytest.raises(SystemExit):
+        _parse_args(
+            [
+                *arguments("15"),
+                "--fixed-trace-directional-axis",
+                "x",
+                "--structured-axis-cells",
+                "6,3,10",
+            ]
+        )
+
+
+def test_y_only_global_p5_control_is_exact_and_fail_closed() -> None:
+    values = [
+        "--coarse-degree",
+        "4",
+        "--enriched-degree",
+        "5",
+        "--h-nm",
+        "15",
+        "--mesh-cell-type",
+        "hexahedron",
+        "--mpi-size",
+        "8",
+        "--single-mesh-pair",
+        "--structured-axis-cells",
+        "6,3,10",
+    ]
+    for degree in ("4", "5"):
+        values.extend(["--static-condensation-degree", degree])
+        values.extend(["--assembly-time-condensation-degree", degree])
+        values.extend(["--floquet-slave-elimination-degree", degree])
+
+    args = _parse_args(values)
+    assert args.structured_axis_cells == (6, 3, 10)
+    assert _select_qualifier(args).__name__ == "_qualify"
+    preflight = _structured_axis_global_control_preflight(args)
+    assert preflight["pass"] is True
+    assert preflight["ordinary_default_changed"] is False
+    axis_plan = preflight["axis_plan"]
+    assert axis_plan["mesh_cells_resolved"] == [6, 3, 10]
+    assert axis_plan["axis_sha256"]["y"] == (
+        "d7841480e80baeda07536ebc44681af4488f7d61a2eaa7de4d33cdacb9fa19fb"
+    )
+    assert axis_plan["expected_mesh_identity"][
+        "partition_independent_mesh_sha256"
+    ] == "59d053ac70baaa80c6de82fcd2388d0076291f033cf074197c218055756eec8f"
+    assert axis_plan["expected_mesh_identity"]["cell_tag_sha256"] == (
+        "60209a26ca68027775dc54783cc44a67314804ced204928025d35607c4d999e0"
+    )
+    assert axis_plan["expected_mesh_identity"]["facet_tag_sha256"] == (
+        "270b60e1c061cd539e64219e349e29abe0deb6e414c35c979abb25e2660b9c75"
+    )
+    resources = preflight["predicted_resources"]
+    assert resources["coarse_p4_dofs"] == 38092
+    assert resources["coarse_p4_active_rows_with_dtn"] == 15776
+    assert resources["coarse_p4_base_schur_nnz"] == 5808384
+    assert resources["coarse_p4_predicted_used_nnz"] == 5872400
+    assert resources["enriched_p5_dofs"] == 72995
+    assert resources["enriched_p5_active_rows_with_dtn"] == 25280
+    assert resources["enriched_p5_base_schur_nnz"] == 14333400
+    assert resources["enriched_p5_predicted_used_nnz"] == 14433128
+
+    wrong_axis = list(values)
+    wrong_axis[wrong_axis.index("6,3,10")] = "7,2,10"
+    with pytest.raises(SystemExit):
+        _parse_args(wrong_axis)
+    without_single_mesh = [
+        value for value in values if value != "--single-mesh-pair"
+    ]
+    with pytest.raises(SystemExit):
+        _parse_args(without_single_mesh)
+    incomplete_condensation = list(values)
+    index = incomplete_condensation.index(
+        "--assembly-time-condensation-degree"
+    )
+    del incomplete_condensation[index : index + 2]
+    with pytest.raises(SystemExit):
+        _parse_args(incomplete_condensation)
+
+
+def test_x_directional_focused_qualifier_is_mutation_closed() -> None:
+    args = SimpleNamespace(
+        fixed_trace_directional_recovery=True,
+        fixed_trace_directional_axis="x",
+        structured_axis_cells=(7, 2, 10),
+        mpi_size=8,
+        h_nm=15.0,
+    )
+    preflight = {
+        "pass": True,
+        "directional_axis": "x",
+        "structured_axis_cells_requested": [7, 2, 10],
+        "predicted_resources": {
+            "mesh_cells_resolved": [7, 2, 10],
+            "num_mesh_cells": 140,
+            "candidate_dofs": 87195,
+            "global_p6_dofs": 98322,
+            "active_rows_with_dtn": 19680,
+            "base_schur_nnz": 10650850,
+            "predicted_used_nnz": 10728434,
+            "safe_allocated_nnz_upper": 11065344,
+        },
+    }
+    result = {
+        "target_identity": {
+            "directional_axis": "x",
+            "mesh_axis_cell_counts_requested": [7, 2, 10],
+            "actual_mesh_cells_resolved": [7, 2, 10],
+            "directional_mesh_change_semantics": (
+                "exact_material_fitted_remeshing_not_nested_refinement"
+            ),
+        },
+        "candidate": {
+            "summary": {
+                "mesh_cells_resolved": [7, 2, 10],
+                "num_mesh_cells": 140,
+                "num_nedelec_dofs": 87195,
+                "config": {
+                    "mesh_axis_cell_counts_requested": [7, 2, 10]
+                },
+                "matrix_stats": {
+                    "matrix_rows": 19680,
+                    "matrix_nnz_used": 10728434,
+                    "matrix_nnz_allocated": 11065344,
+                    "matrix_mallocs": 0,
+                    "matrix_average_nnz_per_row": 545.144,
+                    "matrix_maximum_nnz_per_row": 965,
+                },
+            },
+            "high_order_resource_audit": {
+                "mesh_identity": {
+                    "partition_independent_mesh_sha256": (
+                        "326019d01cf2b98a83422e9c0aa520795daaa5bbc1fdeb73d567799504c705b1"
+                    ),
+                    "cell_tag_sha256": (
+                        "1434790f1ba5bb102c57561dd9a925f8f6f46aa4ebcb7c37194e205ee2e3d11c"
+                    ),
+                    "facet_tag_sha256": (
+                        "d2fa4745b79663b1838fa51473545f3b8290b0ed17212c28d162e27ae0e6c693"
+                    ),
+                },
+                "matrix_factor_resource": {
+                    "factor_inventory_available": True,
+                    "factor_nnz": 3.0e7,
+                    "factor_average_row_width": 1524.0,
+                    "factor_fill_ratio": 2.8,
+                },
+            },
+        },
+        "dof_target": {
+            "active_full3d_equivalent_dofs": 87195,
+            "same_mesh_global_p6_dofs": 98322,
+            "minimum_le_90000": True,
+            "inactive_p6_trace_modes_physically_absent": True,
+        },
+        "directional_parent_authority": {
+            "status": "not_required_primary_x",
+            "required": False,
+        },
+        "same_mesh_global_p6_baseline": {
+            "required": False,
+        },
+    }
+    checks = _fixed_trace_x_contract_checks(
+        result,
+        args=args,
+        preflight=preflight,
+    )
+    assert checks and all(checks.values())
+
+    mutated = json.loads(json.dumps(result))
+    mutated["candidate"]["summary"]["matrix_stats"][
+        "matrix_nnz_used"
+    ] += 1
+    assert not _fixed_trace_x_contract_checks(
+        mutated,
+        args=args,
+        preflight=preflight,
+    )["matrix_structure"]
+    mutated = json.loads(json.dumps(result))
+    mutated["candidate"]["high_order_resource_audit"][
+        "mesh_identity"
+    ]["cell_tag_sha256"] = "bad"
+    assert not _fixed_trace_x_contract_checks(
+        mutated,
+        args=args,
+        preflight=preflight,
+    )["mesh_and_tag_identity"]
+    mutated = json.loads(json.dumps(result))
+    mutated["target_identity"][
+        "directional_mesh_change_semantics"
+    ] = "nested_refinement"
+    assert not _fixed_trace_x_contract_checks(
+        mutated,
+        args=args,
+        preflight=preflight,
+    )["target_identity"]
+
+
+def test_y_control_focused_qualifier_is_mutation_closed(
+    tmp_path: Path,
+) -> None:
+    args = SimpleNamespace(
+        structured_axis_cells=(6, 3, 10),
+        mpi_size=8,
+        coarse_degree=4,
+        enriched_degree=5,
+        h_nm=15.0,
+        polarization_kind="s",
+        run_dir=tmp_path,
+    )
+    orders = (
+        tmp_path
+        / "enriched_p5"
+        / "dtn_port_diffraction_orders_3d.json"
+    )
+    orders.parent.mkdir(parents=True)
+    orders.write_text(
+        json.dumps({"orders": [{} for _ in range(80)]}) + "\n",
+        encoding="utf-8",
+    )
+
+    def solve(degree: int) -> dict[str, object]:
+        dofs, rows, nnz = {
+            4: (38092, 15776, 5872400),
+            5: (72995, 25280, 14433128),
+        }[degree]
+        return {
+            "degree": degree,
+            "summary": {
+                "mesh_cells_resolved": [6, 3, 10],
+                "num_mesh_cells": 180,
+                "num_nedelec_dofs": dofs,
+                "config": {
+                    "mesh_axis_cell_counts_requested": [6, 3, 10]
+                },
+                "matrix_stats": {
+                    "matrix_rows": rows,
+                    "matrix_nnz_used": nnz,
+                },
+                "cell_static_condensation": {
+                    "full_explicit_true_residual": {
+                        "linear_system_relative_residual": 1.0e-12
+                    }
+                },
+                "dtn_port_orders_json": (
+                    "dtn_port_diffraction_orders_3d.json"
+                    if degree == 5
+                    else None
+                ),
+            },
+        }
+
+    preflight = {
+        "pass": True,
+        "control_role": "y_only_global_p5_directional_control",
+        "predicted_resources": {
+            "mesh_cells_resolved": [6, 3, 10],
+            "num_mesh_cells": 180,
+            "coarse_p4_dofs": 38092,
+            "coarse_p4_active_rows_with_dtn": 15776,
+            "coarse_p4_base_schur_nnz": 5808384,
+            "coarse_p4_predicted_used_nnz": 5872400,
+            "enriched_p5_dofs": 72995,
+            "enriched_p5_active_rows_with_dtn": 25280,
+            "enriched_p5_base_schur_nnz": 14333400,
+            "enriched_p5_predicted_used_nnz": 14433128,
+        },
+    }
+    result = {
+        "coarse": solve(4),
+        "enriched": solve(5),
+        "common_mesh_identity": {
+            "mesh_cells_resolved": [6, 3, 10],
+            "global_cell_count": 180,
+            "partition_independent_mesh_sha256": (
+                "59d053ac70baaa80c6de82fcd2388d0076291f033cf074197c218055756eec8f"
+            ),
+            "cell_tag_sha256": (
+                "60209a26ca68027775dc54783cc44a67314804ced204928025d35607c4d999e0"
+            ),
+            "facet_tag_sha256": (
+                "270b60e1c061cd539e64219e349e29abe0deb6e414c35c979abb25e2660b9c75"
+            ),
+        },
+    }
+    checks = _structured_axis_y_contract_checks(
+        result,
+        args=args,
+        preflight=preflight,
+    )
+    assert checks and all(checks.values())
+    mutated = json.loads(json.dumps(result))
+    mutated["enriched"]["summary"]["num_nedelec_dofs"] = 90001
+    assert not _structured_axis_y_contract_checks(
+        mutated,
+        args=args,
+        preflight=preflight,
+    )["topology_and_dofs"]
+    mutated = json.loads(json.dumps(result))
+    mutated["coarse"]["summary"]["cell_static_condensation"][
+        "full_explicit_true_residual"
+    ]["linear_system_relative_residual"] = 2.0e-9
+    assert not _structured_axis_y_contract_checks(
+        mutated,
+        args=args,
+        preflight=preflight,
+    )["full_true_residuals"]
+
+
+@pytest.mark.parametrize(
+    ("mode", "fixed_exists", "structured_exists"),
+    (
+        ("fixed_x", True, False),
+        ("fixed_z_legacy", True, False),
+        ("y_control", False, True),
+        ("ordinary", False, False),
+    ),
+)
+def test_preflight_artifact_evidence_is_conditional(
+    tmp_path: Path,
+    mode: str,
+    fixed_exists: bool,
+    structured_exists: bool,
+) -> None:
+    fixed = tmp_path / f"{mode}_fixed.json"
+    structured = tmp_path / f"{mode}_structured.json"
+    if fixed_exists:
+        fixed.write_text('{"mode":"fixed"}\\n', encoding="utf-8")
+    if structured_exists:
+        structured.write_text('{"mode":"structured"}\\n', encoding="utf-8")
+
+    evidence = _preflight_artifact_evidence(
+        fixed_trace_path=fixed,
+        structured_axis_path=structured,
+    )
+    assert (
+        evidence["fixed_trace_resource_preflight"] is not None
+    ) is fixed_exists
+    assert (
+        evidence["fixed_trace_resource_preflight_sha256"] is not None
+    ) is fixed_exists
+    assert (
+        evidence["structured_axis_resource_preflight"] is not None
+    ) is structured_exists
+    assert (
+        evidence[
+            "structured_axis_resource_preflight_sha256"
+        ]
+        is not None
+    ) is structured_exists
+    if fixed_exists:
+        assert evidence["fixed_trace_resource_preflight_sha256"] == (
+            hashlib.sha256(fixed.read_bytes()).hexdigest()
+        )
+    if structured_exists:
+        assert evidence[
+            "structured_axis_resource_preflight_sha256"
+        ] == hashlib.sha256(structured.read_bytes()).hexdigest()
 
 
 def test_directional_same_mesh_global_p6_dof_count_is_exact() -> None:
@@ -621,7 +1114,7 @@ def test_directional_same_mesh_global_p6_dof_count_is_exact() -> None:
 def test_target_api_rejects_unreviewed_directional_topology(
     tmp_path: Path,
 ) -> None:
-    with pytest.raises(ValueError, match="requires h14 or h13"):
+    with pytest.raises(ValueError, match="requires legacy h14 or h13"):
         run_target_fixed_trace_candidate(
             tmp_path / "unreviewed",
             control_record=tmp_path / "control.json",
@@ -632,6 +1125,48 @@ def test_target_api_rejects_unreviewed_directional_topology(
             significant_channel_reference_sha256="b" * 64,
             h_nm=12.0,
             directional_recovery=True,
+        )
+    with pytest.raises(ValueError, match="exact axis cells"):
+        run_target_fixed_trace_candidate(
+            tmp_path / "wrong_x",
+            control_record=tmp_path / "control.json",
+            control_sha256="a" * 64,
+            significant_channel_reference_record=(
+                tmp_path / "significant.json"
+            ),
+            significant_channel_reference_sha256="b" * 64,
+            h_nm=15.0,
+            directional_recovery=True,
+            directional_axis="x",
+            mesh_axis_cell_counts=(6, 3, 10),
+        )
+    with pytest.raises(ValueError, match="three integers"):
+        run_target_fixed_trace_candidate(
+            tmp_path / "float_axis",
+            control_record=tmp_path / "control.json",
+            control_sha256="a" * 64,
+            significant_channel_reference_record=(
+                tmp_path / "significant.json"
+            ),
+            significant_channel_reference_sha256="b" * 64,
+            h_nm=15.0,
+            directional_recovery=True,
+            directional_axis="x",
+            mesh_axis_cell_counts=(7, 2, 10.0),
+        )
+    with pytest.raises(ValueError, match="three integers"):
+        run_target_fixed_trace_candidate(
+            tmp_path / "scalar_axis",
+            control_record=tmp_path / "control.json",
+            control_sha256="a" * 64,
+            significant_channel_reference_record=(
+                tmp_path / "significant.json"
+            ),
+            significant_channel_reference_sha256="b" * 64,
+            h_nm=15.0,
+            directional_recovery=True,
+            directional_axis="x",
+            mesh_axis_cell_counts=7,  # type: ignore[arg-type]
         )
 
 
@@ -693,6 +1228,8 @@ def test_fixed_trace_resolved_degrees_come_from_persisted_config() -> None:
     )
     assert compact["nedelec_trace_degree_resolved"] == 5
     assert compact["nedelec_interior_degree_resolved"] == 6
+    assert compact["mesh_cells_resolved"] is None
+    assert compact["mesh_axis_cell_counts_requested"] is None
     summary["config"] = {}
     assert not _execution_integrity_pass(
         summary,

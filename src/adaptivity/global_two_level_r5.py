@@ -770,6 +770,7 @@ def run_target_global_two_level_r5(
     assembly_time_condensation_degrees: tuple[int, ...] = (),
     floquet_slave_elimination_degrees: tuple[int, ...] = (),
     include_p6_projection_signals: bool = False,
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -838,6 +839,7 @@ def run_target_global_two_level_r5(
             matrix_diagnostics_assemble_only=False,
             matrix_diagnostics_factorization_only=False,
             full3d_reference_export=False,
+            mesh_axis_cell_counts=mesh_axis_cell_counts,
             direct_release_base_after_augmentation=True,
             stage4_cell_static_condensation=(
                 int(degree) in requested_condensation

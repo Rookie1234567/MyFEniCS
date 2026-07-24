@@ -115,6 +115,10 @@ class SimulationConfig3D:
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
     mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
+    # Research-only exact tensor-axis authority.  ``None`` preserves the
+    # ordinary target-size policy.  Explicit counts are converted into a
+    # material-fitted axis plan without silent MPI-driven refinement.
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = (
@@ -275,6 +279,32 @@ class SimulationConfig3D:
                 "mesh_spacing_mode must be 'auto', 'uniform_strict', 'boundary_fitted', or 'local_refined'."
             )
         return mode
+
+    @property
+    def mesh_axis_cell_counts_requested(
+        self,
+    ) -> tuple[int, int, int] | None:
+        values = self.mesh_axis_cell_counts
+        if values is None:
+            return None
+        if (
+            not isinstance(values, (tuple, list, np.ndarray))
+            or len(values) != 3
+            or any(
+                isinstance(value, (bool, np.bool_))
+                or not isinstance(value, (int, np.integer))
+                for value in values
+            )
+        ):
+            raise ValueError(
+                "mesh_axis_cell_counts must contain exactly three integers."
+            )
+        counts = tuple(int(value) for value in values)
+        if any(value <= 0 for value in counts):
+            raise ValueError(
+                "mesh_axis_cell_counts values must all be positive."
+            )
+        return counts
 
     @property
     def mesh_refined_size_resolved(self) -> float:
@@ -545,6 +575,11 @@ class SimulationConfig3D:
         data["domain_z_max"] = self.domain_z_max
         data["mesh_cell_type_resolved"] = self.mesh_cell_type_resolved
         data["mesh_spacing_mode_requested"] = self.mesh_spacing_mode_requested
+        data["mesh_axis_cell_counts_requested"] = (
+            None
+            if self.mesh_axis_cell_counts_requested is None
+            else list(self.mesh_axis_cell_counts_requested)
+        )
         data["mesh_refined_size_resolved"] = self.mesh_refined_size_resolved
         data["mesh_refinement_radius_resolved"] = self.mesh_refinement_radius_resolved
         data["floquet_constraint_mode_requested"] = (
