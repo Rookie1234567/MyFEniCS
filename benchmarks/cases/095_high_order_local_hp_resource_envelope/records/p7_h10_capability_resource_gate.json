@@ -1,0 +1,315 @@
+{
+  "schema_version": "task035b.p7-h10-capability-resource-controlled-stop.v1",
+  "benchmark_id": "task035b_p7_h10_capability_resource_gate",
+  "status": "p7_not_run_by_capability_or_resource_gate",
+  "pass": true,
+  "classification": "controlled_stop_before_pde",
+  "candidate": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh": "structured hexa h10",
+    "axis_cells": [
+      6,
+      3,
+      14
+    ],
+    "nedelec_degree": 7,
+    "planned_mpi_size_if_qualified": 8
+  },
+  "pde": {
+    "status": "not_run",
+    "heavy_case_started": false,
+    "mesh_built": false,
+    "form_compiled": false,
+    "matrix_assembled": false,
+    "factorization_started": false,
+    "solver_failure": false
+  },
+  "source": {
+    "commit_sha": "fd8cb45ecf4ca9b2e424315e757606a7a0d8e312",
+    "verified_clean_sha": "fd8cb45ecf4ca9b2e424315e757606a7a0d8e312",
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "tracked_source_dirty": false,
+    "stable_and_clean_before": true,
+    "checks": {
+      "full_verified_sha": true,
+      "head_matches_verified_sha": true,
+      "expected_branch": true,
+      "tracked_and_untracked_worktree_clean": true
+    }
+  },
+  "source_file_sha256": {
+    "benchmarks/task035b_p7_capability_resource_gate.py": "a75450d2606037ca6aab312011fdb0c25c3a9782347a16634ee3ca5efa0b04a5",
+    "src/common/config_3d.py": "01bef0535181384749a1e581b616bd3fb8ac07934ac636db170222e18cb52682",
+    "src/constraints/floquet_3d.py": "6d82334a413c23cf07e61236f7ff0885c4c9a03f8b67315c4f628b658e6033b2",
+    "src/constraints/high_order_floquet_trace.py": "6a94667d911c76e7471ed1fc75164c8bdddf6948b88c433bb4ac77c71ca4e7b8",
+    "src/solvers/hcurl_assembly_time_condensation.py": "3b7167573202f80f0b9963713f3fcca51c923d1a93784b593dcbe63ffffcabc5"
+  },
+  "environment": {
+    "checks": {
+      "qualified_activation_marker": true,
+      "repo_virtualenv_python": true,
+      "linux_runtime": true,
+      "complex128_petsc": true,
+      "int32_petsc": true,
+      "serial_preflight_only": true
+    },
+    "python_executable": "/usr/bin/python3.12",
+    "python_version": "3.12.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "basix_version": "0.10.0",
+    "dolfinx_version": "0.10.0.post2",
+    "petsc4py_version": "3.19.6",
+    "mpi4py_version": "3.1.5",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_world_size": 1
+  },
+  "capability_gate": {
+    "candidate_capability_pass": false,
+    "checks": {
+      "raw_basix_hexa_n1curl_p7_available": true,
+      "qualified_trace_layout_rejects_p7": true,
+      "fixed_target_floquet_dispatcher_rejects_p7": true,
+      "explicit_p7_floquet_mode_rejected": true,
+      "end_to_end_p7_floquet_qualified": false,
+      "end_to_end_p7_assembly_time_condensation_qualified": false
+    },
+    "raw_basix_layout": {
+      "available": true,
+      "element_dimension": 1344,
+      "edge_dofs_per_entity": 7,
+      "face_dofs_per_entity": 84,
+      "cell_interior_dofs_per_entity": 756,
+      "local_trace_dimension": 588,
+      "dof_transformations_are_identity": false,
+      "dof_transformations_are_permutations": false
+    },
+    "qualified_trace_layout_probe": {
+      "rejected": true,
+      "exception_type": "ValueError",
+      "message": "Task033/Task035b qualifies hexa N1curl degrees 1--6, got 7."
+    },
+    "fixed_target_floquet_dispatcher_probe": {
+      "rejected": true,
+      "exception_type": "NotImplementedError",
+      "message": "3D explicit Floquet constraints qualify N1curl degree=1--4 generally and research degrees=5--6 only on Task035 tetrahedra or the fixed Task034 rectangular target used by Task035b. Requested degree=7, tetrahedral=False, fixed_target_high_order=True."
+    },
+    "explicit_p7_floquet_mode_probe": {
+      "rejected": true,
+      "exception_type": "ValueError",
+      "message": "floquet_constraint_mode must be 'auto', 'topological_edges_p1', 'topological_trace', 'topological_trace_p2/p3/p4/p5/p6', or legacy aliases 'topological_edges'/'sparse_facet'."
+    },
+    "assembly_time_condensation_interpretation": "The local Schur implementation is written in entity-layout terms, but no p7 end-to-end Floquet transform, orientation, preallocation, residual, or MPI8 qualification exists. The Floquet capability gate is reached before a formal condensed p7 solve could be authorized."
+  },
+  "resource_gate": {
+    "candidate_resource_pass": false,
+    "checks": {
+      "h10_axis_plan_is_frozen_6_3_14": true,
+      "cell_count_is_252": true,
+      "p4_p5_p6_calibration_authorities_pass": true,
+      "full3d_equivalent_dofs_le_90000": false
+    },
+    "mesh": {
+      "h_nm": 10.0,
+      "axis_cells": [
+        6,
+        3,
+        14
+      ],
+      "entity_counts_before_periodic_identification": {
+        "vertices": 420,
+        "edges": 1067,
+        "faces": 900,
+        "cells": 252
+      },
+      "periodic_quotient_entity_counts": {
+        "vertices": 270,
+        "edges": 792,
+        "faces": 774,
+        "cells": 252
+      }
+    },
+    "p7_layout": {
+      "edge_dofs_per_entity": 7,
+      "face_dofs_per_entity": 84,
+      "cell_interior_dofs_per_entity": 756,
+      "local_element_dimension": 1344,
+      "local_trace_dimension": 588,
+      "local_interior_dimension": 756,
+      "one_dense_local_tensor_entries": 1806336,
+      "one_dense_complex128_local_tensor_mib": 27.5625,
+      "one_dense_complex128_trace_schur_mib": 5.275634765625,
+      "interior_lu_cubic_work_ratio_vs_p6": 4.741631999999999
+    },
+    "row_projection": {
+      "full3d_equivalent_dofs": 273581,
+      "full_trace_rows_before_floquet": 83069,
+      "floquet_slave_rows_projected": 12509,
+      "periodic_independent_trace_rows": 70560,
+      "dtn_auxiliary_rows": 80,
+      "active_matrix_rows_with_dtn": 70640,
+      "full3d_equivalent_dof_limit": 90000,
+      "dof_limit_excess": 183581,
+      "dof_to_limit_ratio": 3.039788888888889
+    },
+    "matrix_projection": {
+      "semantics": "predicted_not_measured_no_matrix_assembled",
+      "base_trace_schur_nnz_exact_topology": 77905296,
+      "dtn_port_nnz_correction_projected": 188432,
+      "matrix_nnz_used_projected": 78093728,
+      "matrix_nnz_conservative_structural_upper": 78190736,
+      "average_row_width_projected": 1105.517100792752,
+      "maximum_base_row_width_exact": 1911,
+      "factor_nnz_planning_envelope": {
+        "semantics": "derived_not_measured; p4/p5/p6 measured fill-ratio envelope applied to the projected p7 matrix NNZ",
+        "lower": 377111379,
+        "upper": 383117864
+      },
+      "used_structure_storage_planning_assumption_gib": 1.7455308437347412,
+      "used_structure_storage_planning_assumption": {
+        "bytes_per_nnz": 24,
+        "semantics": "conservative planning convention, not a lower bound and not a measured PETSc allocation",
+        "components": "complex128 value plus column-index and sparse-structure/allocator allowance"
+      },
+      "peak_memory": null,
+      "peak_memory_reason": "No p7 factorization or lifecycle was authorized; matrix storage and factor-NNZ projections cannot be promoted to a simultaneous process-tree peak.",
+      "projection_method": "Exact periodic-quotient cell-trace adjacency plus a second-finite-difference extrapolation of the measured p4/p5/p6 DtN-port NNZ corrections."
+    },
+    "calibration": [
+      {
+        "degree": 4,
+        "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json",
+        "record_sha256": "6e2bb2e6779f2d037fd17495f2beee2a8ef69d4dea076dbc98a71aea35d1abd4",
+        "record_field": "coarse",
+        "checks": {
+          "record_sha256_frozen": true,
+          "source_commit_and_cleanliness_frozen": true,
+          "formal_record_pass": true,
+          "fixed_geometry": true,
+          "degree": true,
+          "h10": true,
+          "frozen_mesh_and_tag_identity": true,
+          "mpi8_official_result": true,
+          "assembly_time_condensation": true,
+          "floquet_slave_elimination": true,
+          "eighty_appended_rows": true,
+          "full_explicit_true_residual_le_1e-9": true,
+          "measured_rows_and_nnz_frozen": true
+        },
+        "full3d_equivalent_dofs": 53084,
+        "active_rows_with_dtn": 21824,
+        "matrix_nnz_measured": 8184464,
+        "base_trace_schur_nnz_exact": 8120448,
+        "dtn_port_nnz_correction_measured": 64016,
+        "matrix_max_row_width_measured": 612,
+        "base_max_row_width_exact": 612,
+        "factor_nnz_measured": 40151936,
+        "factor_fill_ratio_measured": 4.905872394331504
+      },
+      {
+        "degree": 5,
+        "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json",
+        "record_sha256": "6e2bb2e6779f2d037fd17495f2beee2a8ef69d4dea076dbc98a71aea35d1abd4",
+        "record_field": "enriched",
+        "checks": {
+          "record_sha256_frozen": true,
+          "source_commit_and_cleanliness_frozen": true,
+          "formal_record_pass": true,
+          "fixed_geometry": true,
+          "degree": true,
+          "h10": true,
+          "frozen_mesh_and_tag_identity": true,
+          "mpi8_official_result": true,
+          "assembly_time_condensation": true,
+          "floquet_slave_elimination": true,
+          "eighty_appended_rows": true,
+          "full_explicit_true_residual_le_1e-9": true,
+          "measured_rows_and_nnz_frozen": true,
+          "duplicate_p5_authority_closure": true
+        },
+        "full3d_equivalent_dofs": 101815,
+        "active_rows_with_dtn": 35000,
+        "matrix_nnz_measured": 20140928,
+        "base_trace_schur_nnz_exact": 20041200,
+        "dtn_port_nnz_correction_measured": 99728,
+        "matrix_max_row_width_measured": 965,
+        "base_max_row_width_exact": 965,
+        "factor_nnz_measured": 98588300,
+        "factor_fill_ratio_measured": 4.894923411671995,
+        "duplicate_p5_authority_closure": {
+          "pass": true,
+          "p4_p5_record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json",
+          "p5_p6_record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json",
+          "fields": [
+            "degree",
+            "h_nm",
+            "mpi_size",
+            "num_mesh_cells",
+            "num_nedelec_dofs",
+            "official_result",
+            "stage4_assembly_time_cell_static_condensation",
+            "stage4_floquet_slave_elimination"
+          ]
+        }
+      },
+      {
+        "degree": 6,
+        "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json",
+        "record_sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded",
+        "record_field": "enriched",
+        "checks": {
+          "record_sha256_frozen": true,
+          "source_commit_and_cleanliness_frozen": true,
+          "formal_record_pass": true,
+          "fixed_geometry": true,
+          "degree": true,
+          "h10": true,
+          "frozen_mesh_and_tag_identity": true,
+          "mpi8_official_result": true,
+          "assembly_time_condensation": true,
+          "floquet_slave_elimination": true,
+          "eighty_appended_rows": true,
+          "full_explicit_true_residual_le_1e-9": true,
+          "measured_rows_and_nnz_frozen": true
+        },
+        "full3d_equivalent_dofs": 173802,
+        "active_rows_with_dtn": 51272,
+        "matrix_nnz_measured": 41989040,
+        "base_trace_schur_nnz_exact": 41847840,
+        "dtn_port_nnz_correction_measured": 141200,
+        "matrix_max_row_width_measured": 1398,
+        "base_max_row_width_exact": 1398,
+        "factor_nnz_measured": 202763336,
+        "factor_fill_ratio_measured": 4.828958604435824
+      }
+    ]
+  },
+  "qualification": {
+    "evidence_valid": true,
+    "candidate_capability_pass": false,
+    "candidate_resource_pass": false,
+    "p7_pde_authorized": false,
+    "checks": {
+      "clean_source_identity_hash_bound": true,
+      "environment_qualified": true,
+      "raw_basix_probe_complete": true,
+      "capability_blocker_reproduced": true,
+      "resource_blocker_reproduced": true,
+      "formal_pde_not_authorized": true,
+      "ordinary_default_unchanged": true
+    }
+  },
+  "decision": {
+    "status": "p7_not_run_by_capability_or_resource_gate",
+    "independent_stop_reasons": [
+      "The current qualified high-order trace/Floquet path ends at p6; raw Basix p7 availability is not an end-to-end solver qualification.",
+      "Global p7/h10 has 273581 Full3D-equivalent DoF, which exceeds the Task035b 90000-DoF ceiling before accuracy or factor-memory testing."
+    ],
+    "reopen_conditions": [
+      "Qualify p7 trace transformations, double-Floquet constraints, assembly-time Schur recovery, full explicit residual, MPI identity, and all physics gates.",
+      "Provide a physically reduced local/regionwise p7 candidate whose Full3D-equivalent DoF is <=90000; retaining a global p7 storage space and zeroing coefficients does not satisfy this condition."
+    ],
+    "ordinary_default_changed": false,
+    "scientific_gate_relaxed": false
+  }
+}
