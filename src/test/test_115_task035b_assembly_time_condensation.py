@@ -1076,6 +1076,61 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         for observable in ("R00_total", "R_total", "T_total"):
             self.assertTrue(np.isfinite(summary[observable]), observable)
 
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 fixed p5-trace/p6-interior end-to-end check",
+    )
+    def test_mpi2_end_to_end_fixed_p5_trace_p6_interior(self) -> None:
+        cfg = replace(
+            target_stage4_config(degree=6, h_nm=100.0),
+            case_name="task035b_fixed_p5trace_p6interior_smoke_mpi2",
+            nedelec_trace_degree=5,
+            nedelec_interior_degree=6,
+            matrix_diagnostics_assemble_only=False,
+            matrix_diagnostics_factorization_only=False,
+            stage4_cell_static_condensation=True,
+            stage4_assembly_time_cell_static_condensation=True,
+            stage4_floquet_slave_elimination=True,
+            direct_release_base_after_augmentation=True,
+            direct_release_solver_before_postprocess=True,
+            unique_output=False,
+        )
+        summary = run_stage4b_block_grating_3d_case(
+            cfg,
+            Path("/tmp/task035b_fixed_p5trace_p6interior_smoke_mpi2"),
+        )
+        self.assertEqual(summary["case_status"], "completed")
+        self.assertTrue(summary["official_result"])
+        self.assertEqual(
+            summary["config"]["nedelec_trace_degree_resolved"],
+            5,
+        )
+        self.assertEqual(
+            summary["config"]["nedelec_interior_degree_resolved"],
+            6,
+        )
+        self.assertLessEqual(
+            summary["linear_system_relative_residual"],
+            1.0e-9,
+        )
+        audit = summary["cell_static_condensation"]
+        self.assertFalse(audit["regionwise_interior_p_active"])
+        self.assertEqual(audit["full_rows"], summary["num_nedelec_dofs"])
+        self.assertEqual(
+            summary["matrix_stats"]["matrix_rows"],
+            audit["active_rows"] + audit["appended_rows"],
+        )
+        self.assertFalse(audit["full_global_matrix_allocated"])
+        self.assertFalse(audit["full_trace_matrix_allocated"])
+        self.assertIsInstance(
+            audit["full_explicit_true_residual"][
+                "eliminated_cell_interior_residual_norm"
+            ],
+            float,
+        )
+        for observable in ("R00_total", "R_total", "T_total"):
+            self.assertTrue(np.isfinite(summary[observable]), observable)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -109,7 +109,29 @@ def _worker(args: argparse.Namespace) -> int:
     def progress(stage: str, status: str) -> None:
         _append_progress(progress_path, stage, status)
 
-    if args.regionwise_p_classifier_record is not None:
+    if args.fixed_trace_control_record is not None:
+        from src.adaptivity.target_fixed_trace_candidate import (
+            run_target_fixed_trace_candidate,
+        )
+
+        result = run_target_fixed_trace_candidate(
+            args.run_dir,
+            control_record=args.fixed_trace_control_record,
+            control_sha256=args.fixed_trace_control_sha256,
+            global_p6_baseline_record=(
+                args.fixed_trace_global_p6_baseline_record
+            ),
+            global_p6_baseline_sha256=(
+                args.fixed_trace_global_p6_baseline_sha256
+            ),
+            h_nm=args.h_nm,
+            incident_theta_deg=80.0,
+            polarization_kind=args.polarization_kind,
+            trace_degree=args.fixed_trace_degree,
+            interior_degree=args.fixed_interior_degree,
+            progress_observer=progress,
+        )
+    elif args.regionwise_p_classifier_record is not None:
         from src.adaptivity.target_regionwise_p_candidate import (
             run_target_regionwise_p_candidate,
         )
@@ -399,6 +421,36 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         help="number of largest eta_p5p6 classifier cells retaining p6 interior",
     )
+    parser.add_argument(
+        "--fixed-trace-control-record",
+        type=Path,
+        help="qualified h10 p5/p6 authority for the h15 fixed-trace upper envelope",
+    )
+    parser.add_argument(
+        "--fixed-trace-control-sha256",
+        help="required SHA256 for --fixed-trace-control-record",
+    )
+    parser.add_argument(
+        "--fixed-trace-global-p6-baseline-record",
+        type=Path,
+        help="qualified same-mesh h15 global-p6 resource baseline",
+    )
+    parser.add_argument(
+        "--fixed-trace-global-p6-baseline-sha256",
+        help="required SHA256 for the same-mesh global-p6 baseline",
+    )
+    parser.add_argument(
+        "--fixed-trace-degree",
+        type=int,
+        default=5,
+        help="shared edge/face trace degree for the fixed-trace candidate",
+    )
+    parser.add_argument(
+        "--fixed-interior-degree",
+        type=int,
+        default=6,
+        help="cell-interior degree retained on every candidate cell",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -467,8 +519,32 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "regionwise-p, common-mesh, and adaptive/uniform modes are mutually exclusive."
         )
-    if args.goal_dwr_only and (
+    fixed_trace_values = (
+        args.fixed_trace_control_record,
+        args.fixed_trace_control_sha256,
+        args.fixed_trace_global_p6_baseline_record,
+        args.fixed_trace_global_p6_baseline_sha256,
+    )
+    fixed_trace_mode = any(value is not None for value in fixed_trace_values)
+    if fixed_trace_mode and not all(
+        value is not None for value in fixed_trace_values
+    ):
+        parser.error(
+            "fixed-trace mode requires SHA-bound h10 accuracy control and "
+            "same-mesh h15 global-p6 baseline records."
+        )
+    if fixed_trace_mode and (
         common_mesh_mode or active_cycles or regionwise_mode
+    ):
+        parser.error(
+            "fixed-trace, regionwise-p, common-mesh, and cycle modes "
+            "are mutually exclusive."
+        )
+    if args.goal_dwr_only and (
+        common_mesh_mode
+        or active_cycles
+        or regionwise_mode
+        or fixed_trace_mode
     ):
         parser.error(
             "goal-DWR-only, regionwise-p, common-mesh, and cycle modes "
@@ -478,6 +554,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         common_mesh_mode
         or active_cycles
         or regionwise_mode
+        or fixed_trace_mode
         or args.goal_dwr_only
     ):
         parser.error(
@@ -496,6 +573,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         common_mesh_mode
         or active_cycles
         or regionwise_mode
+        or fixed_trace_mode
         or args.goal_dwr_only
         or args.mesh_cell_type != "hexahedron"
     ):
@@ -604,6 +682,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "p5-trace regionwise-p requires an explicit high-cell count."
             )
+    if fixed_trace_mode:
+        value = args.fixed_trace_control_sha256
+        if len(value) != 64 or any(
+            character not in "0123456789abcdefABCDEF" for character in value
+        ):
+            parser.error("fixed-trace control SHA256 must be 64 hex.")
+        if (
+            args.mpi_size != 8
+            or args.mesh_cell_type != "hexahedron"
+            or args.coarse_degree != 5
+            or args.enriched_degree != 6
+            or abs(args.h_nm - 15.0) > 1.0e-12
+            or args.polarization_kind != "s"
+            or args.fixed_trace_degree != 5
+            or args.fixed_interior_degree != 6
+        ):
+            parser.error(
+                "formal fixed-trace mode requires MPI8, hexa h15, p5/p6 "
+                "controls, p5 trace, p6 interior, and s polarization."
+            )
     if args.goal_dwr_only and (
         args.mpi_size != 8
         or args.mesh_cell_type != "hexahedron"
@@ -665,6 +763,7 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
     summary = entry["summary"]
+    resolved_config = summary.get("config") or {}
     return {
         "degree": entry["degree"],
         "h_nm": entry["h_nm"],
@@ -674,6 +773,12 @@ def _compact_solve(entry: dict[str, Any]) -> dict[str, Any]:
         "num_mesh_cells": summary.get("num_mesh_cells"),
         "mesh_cell_type_actual": summary.get("mesh_cell_type_actual"),
         "num_nedelec_dofs": summary.get("num_nedelec_dofs"),
+        "nedelec_trace_degree_resolved": resolved_config.get(
+            "nedelec_trace_degree_resolved"
+        ),
+        "nedelec_interior_degree_resolved": resolved_config.get(
+            "nedelec_interior_degree_resolved"
+        ),
         "matrix_stats": summary.get("matrix_stats"),
         "linear_system_relative_residual": summary.get(
             "linear_system_relative_residual"
@@ -1679,6 +1784,237 @@ def _qualify_common_mesh_sweep(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _qualify_fixed_trace(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    candidate = result.get("candidate") or {}
+    summary = candidate.get("summary") or {}
+    resolved_config = summary.get("config") or {}
+    resource_audit = candidate.get("high_order_resource_audit") or {}
+    entity_audit = resource_audit.get("entity_dof_inventory") or {}
+    cell_audit = summary.get("cell_static_condensation") or {}
+    true_residual = cell_audit.get("full_explicit_true_residual") or {}
+    matrix_stats = summary.get("matrix_stats") or {}
+    orientation = summary.get("nedelec_orientation_factor_stats") or {}
+    element_audit = result.get("element_audit") or {}
+    dof_target = result.get("dof_target") or {}
+    scalar_comparison = result.get("observable_comparison") or {}
+    channel_comparison = result.get("diffraction_channel_comparison") or {}
+    field_gate = result.get("selected_field_interface_error_gate") or {}
+    control = result.get("control_authority") or {}
+    global_p6_baseline = result.get("global_p6_baseline_authority") or {}
+    same_mesh_baseline = result.get("same_mesh_global_p6_baseline") or {}
+    resource_comparison = result.get("same_mesh_resource_comparison") or {}
+    target_identity = result.get("target_identity") or {}
+    accepted_statuses = {
+        "actual_fixed_trace_candidate_pass",
+        "actual_fixed_trace_controlled_negative",
+    }
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status_is_positive_or_controlled_negative": (
+            result.get("status") in accepted_statuses
+        ),
+        "execution_integrity_pass": result.get("pass") is True,
+        "accuracy_classification_recorded": isinstance(
+            result.get("candidate_accuracy_pass"),
+            bool,
+        ),
+        "official_candidate": summary.get("official_result") is True,
+        "fixed_rectangular_hexa_h15_identity": (
+            target_identity.get("geometry")
+            == "Task034 fixed rectangular block grating"
+            and summary.get("mesh_cell_type_actual") == "hexahedron"
+            and summary.get("num_mesh_cells") == 120
+            and abs(float(candidate.get("h_nm", -1.0)) - 15.0) <= 1.0e-12
+            and target_identity.get("trace_degree")
+            == args.fixed_trace_degree
+            and target_identity.get("interior_degree")
+            == args.fixed_interior_degree
+        ),
+        "control_authority_hash_bound": (
+            control.get("sha256") == args.fixed_trace_control_sha256
+        ),
+        "global_p6_baseline_hash_bound": (
+            global_p6_baseline.get("sha256")
+            == args.fixed_trace_global_p6_baseline_sha256
+        ),
+        "same_mesh_and_tag_hashes_match_global_p6": (
+            same_mesh_baseline.get("pass") is True
+            and same_mesh_baseline.get("checks")
+            == {
+                "partition_independent_mesh_sha256": True,
+                "cell_tag_sha256": True,
+                "facet_tag_sha256": True,
+            }
+        ),
+        "exact_sequence_space": (
+            element_audit.get("pass") is True
+            and element_audit.get("both_high_and_low_exact_sequence_pass")
+            is True
+            and element_audit.get("trace_degree") == args.fixed_trace_degree
+            and element_audit.get("interior_degree")
+            == args.fixed_interior_degree
+            and element_audit.get("low_interior_degree")
+            == args.fixed_trace_degree
+        ),
+        "physical_p5_trace_p6_interior_space": (
+            resolved_config.get("nedelec_trace_degree_resolved")
+            == args.fixed_trace_degree
+            and resolved_config.get("nedelec_interior_degree_resolved")
+            == args.fixed_interior_degree
+            and isinstance(element_audit.get("custom_dimension"), int)
+            and isinstance(element_audit.get("standard_high_dimension"), int)
+            and element_audit.get("custom_dimension")
+            < element_audit.get("standard_high_dimension")
+        ),
+        "preferred_full3d_equivalent_dof_target": (
+            summary.get("num_nedelec_dofs") == 74890
+            and dof_target.get("active_full3d_equivalent_dofs") == 74890
+            and dof_target.get("same_mesh_global_p6_dofs") == 84492
+            and dof_target.get("minimum_le_90000") is True
+            and dof_target.get("preferred_65000_to_75000") is True
+            and dof_target.get("inactive_p6_trace_modes_physically_absent")
+            is True
+        ),
+        "no_full_global_or_trace_matrix_allocated": (
+            cell_audit.get("full_global_matrix_allocated") is False
+            and cell_audit.get("full_trace_matrix_allocated") is False
+            and cell_audit.get("inactive_max_p_rows_retained_in_matrix")
+            is False
+            and cell_audit.get("assembly_cost_avoided") is True
+        ),
+        "physically_reduced_matrix_rows": (
+            isinstance(matrix_stats.get("matrix_rows"), int)
+            and matrix_stats.get("matrix_rows") == cell_audit.get("matrix_rows")
+            and matrix_stats.get("matrix_rows") < 74890
+        ),
+        "matrix_nnz_and_row_width_measured": (
+            isinstance(matrix_stats.get("matrix_nnz_used"), (int, float))
+            and matrix_stats.get("matrix_nnz_used", 0.0) > 0.0
+            and isinstance(
+                matrix_stats.get("matrix_average_nnz_per_row"),
+                (int, float),
+            )
+            and isinstance(
+                matrix_stats.get("matrix_maximum_nnz_per_row"),
+                (int, float),
+            )
+        ),
+        "factor_inventory_measured": (
+            (summary.get("stage4_dtn_factor_inventory") or {}).get("available")
+            is True
+        ),
+        "same_mesh_resource_comparison_measured": (
+            resource_comparison.get("schema_version")
+            == "task035b.fixed-trace-resource-comparison.v1"
+            and (
+                (resource_comparison.get("metrics") or {}).get(
+                    "full3d_equivalent_dofs"
+                )
+                or {}
+            ).get("global_p6")
+            == 84492
+            and (
+                (resource_comparison.get("metrics") or {}).get("active_rows")
+                or {}
+            ).get("candidate")
+            == matrix_stats.get("matrix_rows")
+            and isinstance(
+                (
+                    (resource_comparison.get("metrics") or {}).get(
+                        "factor_nnz"
+                    )
+                    or {}
+                ).get("compression_ratio"),
+                (int, float),
+            )
+        ),
+        "solver_released_before_postprocess": (
+            summary.get("direct_release_solver_before_postprocess") is True
+            and summary.get("solver_objects_released_before_postprocess")
+            is True
+            and (summary.get("solver_release_audit") or {}).get(
+                "petsc_garbage_cleanup_called"
+            )
+            is True
+        ),
+        "full_true_residual_le_1e-9": (
+            isinstance(
+                true_residual.get("linear_system_relative_residual"),
+                (int, float),
+            )
+            and float(true_residual["linear_system_relative_residual"])
+            <= 1.0e-9
+            and isinstance(
+                summary.get("linear_system_relative_residual"),
+                (int, float),
+            )
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+        ),
+        "entity_dof_audit_pass": entity_audit.get("pass") is True,
+        "periodic_trace_identity_pass": (
+            summary.get("floquet_constraint_mode_resolved")
+            == "topological_trace_p5"
+            and summary.get("floquet_num_constraints", 0) > 0
+            and summary.get("floquet_x_face_mismatch") == 0.0
+            and summary.get("floquet_y_face_mismatch") == 0.0
+            and summary.get("floquet_edge_corner_mismatch") == 0.0
+            and summary.get("max_face_pairing_coordinate_error") == 0.0
+        ),
+        "exact_orientation_path": (
+            orientation.get("uses_exact_basix_entity_transforms") is True
+            and orientation.get("uses_local_moment_fit") is False
+            and orientation.get("mapping_kind")
+            == "distributed_exact_topological_trace_p5"
+        ),
+        "material_tag_geometry_alignment_pass": (
+            (summary.get("mesh_material_plane_alignment") or {}).get(
+                "all_aligned"
+            )
+            is True
+            and set((summary.get("domain_tag_volumes") or {}))
+            >= {"air", "substrate", "grating"}
+        ),
+        "scalar_same_code_comparison_recorded": (
+            scalar_comparison.get("schema_version")
+            == "task035b.cross-mesh-observable-comparison.v1"
+            and isinstance(scalar_comparison.get("pass"), bool)
+        ),
+        "diffraction_power_and_amplitude_comparison_recorded": (
+            channel_comparison.get("schema_version")
+            == "task035b.cross-mesh-channel-comparison.v1"
+            and channel_comparison.get("channel_count") == 80
+            and isinstance(channel_comparison.get("pass"), bool)
+        ),
+        "selected_field_interface_comparison_recorded": (
+            field_gate.get("status")
+            == "measured_frozen_physical_gauss_probes"
+            and field_gate.get("no_threshold_relaxation") is True
+            and isinstance(field_gate.get("pass"), bool)
+        ),
+        "ordinary_default_unchanged": (
+            result.get("ordinary_default_changed") is False
+        ),
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
 def _qualify_regionwise_p(
     result: dict[str, Any],
     *,
@@ -1857,6 +2193,26 @@ def _qualify_regionwise_p(
     return {"pass": not failures, "checks": checks, "failures": failures}
 
 
+def _select_qualifier(args: argparse.Namespace):
+    """Select the formal record qualifier for the mutually exclusive mode."""
+
+    if args.fixed_trace_control_record is not None:
+        return _qualify_fixed_trace
+    if args.regionwise_p_classifier_record is not None:
+        return _qualify_regionwise_p
+    if args.common_mesh_replay_record is not None:
+        return _qualify_common_mesh_sweep
+    if args.goal_dwr_only:
+        return _qualify_goal_dwr
+    if args.dwr_adaptive_cycles:
+        return _qualify_dwr_adaptive
+    if args.adaptive_marked_cycles:
+        return _qualify_adaptive
+    if args.uniform_refinement_levels:
+        return _qualify_uniform
+    return _qualify
+
+
 def _run_parent(args: argparse.Namespace) -> int:
     effective = effective_memory_limit()
     if effective["effective_limit_bytes"] is None:
@@ -1905,9 +2261,42 @@ def _run_parent(args: argparse.Namespace) -> int:
                 )
             setattr(args, path_name, authority_path.resolve())
             setattr(args, sha_name, expected_sha)
+    if args.fixed_trace_control_record is not None:
+        for path_name, sha_name in (
+            (
+                "fixed_trace_control_record",
+                "fixed_trace_control_sha256",
+            ),
+            (
+                "fixed_trace_global_p6_baseline_record",
+                "fixed_trace_global_p6_baseline_sha256",
+            ),
+        ):
+            authority_path = getattr(args, path_name)
+            if not authority_path.is_absolute():
+                authority_path = ROOT / authority_path
+            if not authority_path.is_file():
+                raise SystemExit(
+                    f"fixed-trace authority not found: {authority_path}"
+                )
+            expected_sha = getattr(args, sha_name).lower()
+            actual_sha = _sha256(authority_path)
+            if actual_sha != expected_sha:
+                raise SystemExit(
+                    "fixed-trace authority SHA256 mismatch for "
+                    f"{authority_path}: expected {expected_sha}, got {actual_sha}"
+                )
+            setattr(args, path_name, authority_path.resolve())
+            setattr(args, sha_name, expected_sha)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    if args.regionwise_p_classifier_record is not None:
+    if args.fixed_trace_control_record is not None:
+        run_label = (
+            f"hexahedron_fixed_p{args.fixed_trace_degree}trace_"
+            f"p{args.fixed_interior_degree}interior_h{args.h_nm:g}_"
+            f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
+        )
+    elif args.regionwise_p_classifier_record is not None:
         run_label = (
             f"hexahedron_regionwise_p{args.regionwise_p_trace_degree}trace_"
             f"p{args.regionwise_p_low_interior_degree}low_p6high_"
@@ -1999,7 +2388,24 @@ def _run_parent(args: argparse.Namespace) -> int:
         command.extend(
             ["--floquet-slave-elimination-degree", str(degree)]
         )
-    if args.regionwise_p_classifier_record is not None:
+    if args.fixed_trace_control_record is not None:
+        command.extend(
+            [
+                "--fixed-trace-control-record",
+                str(args.fixed_trace_control_record),
+                "--fixed-trace-control-sha256",
+                args.fixed_trace_control_sha256,
+                "--fixed-trace-global-p6-baseline-record",
+                str(args.fixed_trace_global_p6_baseline_record),
+                "--fixed-trace-global-p6-baseline-sha256",
+                args.fixed_trace_global_p6_baseline_sha256,
+                "--fixed-trace-degree",
+                str(args.fixed_trace_degree),
+                "--fixed-interior-degree",
+                str(args.fixed_interior_degree),
+            ]
+        )
+    elif args.regionwise_p_classifier_record is not None:
         command.extend(
             [
                 "--regionwise-p-classifier-record",
@@ -2137,20 +2543,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         else {}
     )
     sampler = _sampler_summary(rows)
-    if args.regionwise_p_classifier_record is not None:
-        qualifier = _qualify_regionwise_p
-    elif args.common_mesh_replay_record is not None:
-        qualifier = _qualify_common_mesh_sweep
-    elif args.goal_dwr_only:
-        qualifier = _qualify_goal_dwr
-    elif args.dwr_adaptive_cycles:
-        qualifier = _qualify_dwr_adaptive
-    elif args.adaptive_marked_cycles:
-        qualifier = _qualify_adaptive
-    elif args.uniform_refinement_levels:
-        qualifier = _qualify_uniform
-    else:
-        qualifier = _qualify
+    qualifier = _select_qualifier(args)
     qualification = qualifier(
         result,
         args=args,
@@ -2176,7 +2569,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     if qualification["pass"]:
         status = (
             result.get("status")
-            if args.regionwise_p_classifier_record is not None
+            if args.fixed_trace_control_record is not None
+            or args.regionwise_p_classifier_record is not None
             else "actual_common_mesh_angle_sweep_pass"
             if args.common_mesh_replay_record is not None
             else "target_goal_weighted_two_level_pass"
@@ -2193,7 +2587,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         status = "formal_not_pass"
     record = {
         "schema_version": (
-            "task035b.regionwise-p-watchdog.v1"
+            "task035b.fixed-trace-watchdog.v1"
+            if args.fixed_trace_control_record is not None
+            else "task035b.regionwise-p-watchdog.v1"
             if args.regionwise_p_classifier_record is not None
             else "task035.actual-common-mesh-angle-sweep-watchdog.v1"
             if args.common_mesh_replay_record is not None
@@ -2208,7 +2604,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             else "task035.actual-global-r5-watchdog.v1"
         ),
         "benchmark_id": (
-            "task035b_target_regionwise_p_candidate"
+            "task035b_target_fixed_trace_candidate"
+            if args.fixed_trace_control_record is not None
+            else "task035b_target_regionwise_p_candidate"
             if args.regionwise_p_classifier_record is not None
             else "task035_target_actual_common_mesh_angle_sweep"
             if args.common_mesh_replay_record is not None
@@ -2248,7 +2646,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "target_identity": result.get("target_identity") if result else None,
         "coarse": (
             None
-            if args.regionwise_p_classifier_record is not None
+            if args.fixed_trace_control_record is not None
+            or args.regionwise_p_classifier_record is not None
             or args.common_mesh_replay_record is not None
             or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
@@ -2258,7 +2657,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "enriched": (
             None
-            if args.regionwise_p_classifier_record is not None
+            if args.fixed_trace_control_record is not None
+            or args.regionwise_p_classifier_record is not None
             or args.common_mesh_replay_record is not None
             or args.dwr_adaptive_cycles
             or args.adaptive_marked_cycles
@@ -2289,7 +2689,40 @@ def _run_parent(args: argparse.Namespace) -> int:
             "stdout_sha256": _sha256(stdout_path),
         },
     }
-    if args.regionwise_p_classifier_record is not None:
+    if args.fixed_trace_control_record is not None:
+        candidate = result.get("candidate") or {}
+        record.update(
+            {
+                "candidate_accuracy_pass": result.get(
+                    "candidate_accuracy_pass"
+                ),
+                "element_audit": result.get("element_audit"),
+                "control_authority": result.get("control_authority"),
+                "global_p6_baseline_authority": result.get(
+                    "global_p6_baseline_authority"
+                ),
+                "same_mesh_global_p6_baseline": result.get(
+                    "same_mesh_global_p6_baseline"
+                ),
+                "same_mesh_resource_comparison": result.get(
+                    "same_mesh_resource_comparison"
+                ),
+                "dof_target": result.get("dof_target"),
+                "candidate": (
+                    _compact_solve(candidate) if candidate else None
+                ),
+                "observable_comparison": result.get(
+                    "observable_comparison"
+                ),
+                "diffraction_channel_comparison": result.get(
+                    "diffraction_channel_comparison"
+                ),
+                "selected_field_interface_error_gate": result.get(
+                    "selected_field_interface_error_gate"
+                ),
+            }
+        )
+    elif args.regionwise_p_classifier_record is not None:
         candidate = result.get("candidate") or {}
         record.update(
             {

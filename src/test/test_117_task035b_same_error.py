@@ -8,13 +8,24 @@ import tempfile
 
 import numpy as np
 import pyvista as pv
+import pytest
 
+from benchmarks.run_task035_actual_r5 import (
+    _compact_solve,
+    _parse_args,
+    _select_qualifier,
+)
 from src.adaptivity.high_order_same_error import (
     ProbeSet,
     build_task034_fixed_probe_sets,
     compare_diffraction_channels,
     compare_observables,
     sample_owned_vtu_shards,
+)
+from src.adaptivity.target_fixed_trace_candidate import (
+    _execution_integrity_pass,
+    _same_mesh_identity,
+    _same_mesh_resource_comparison,
 )
 
 
@@ -170,3 +181,135 @@ def test_shard_sampler_fails_closed_on_missing_or_duplicate_ownership(
             assert "unique MPI-shard ownership" in str(error)
         else:
             raise AssertionError("multi-hit probe was not rejected")
+
+
+def test_fixed_trace_watchdog_cli_is_narrow_and_sha_bound() -> None:
+    sha = "a" * 64
+    args = _parse_args(
+        [
+            "--coarse-degree",
+            "5",
+            "--enriched-degree",
+            "6",
+            "--h-nm",
+            "15",
+            "--mesh-cell-type",
+            "hexahedron",
+            "--mpi-size",
+            "8",
+            "--fixed-trace-control-record",
+            "control.json",
+            "--fixed-trace-control-sha256",
+            sha,
+            "--fixed-trace-global-p6-baseline-record",
+            "h15.json",
+            "--fixed-trace-global-p6-baseline-sha256",
+            sha,
+            "--fixed-trace-degree",
+            "5",
+            "--fixed-interior-degree",
+            "6",
+        ]
+    )
+    assert args.fixed_trace_control_sha256 == sha
+    assert args.fixed_trace_degree == 5
+    assert args.fixed_interior_degree == 6
+    assert args.fixed_trace_global_p6_baseline_sha256 == sha
+    assert _select_qualifier(args).__name__ == "_qualify_fixed_trace"
+    with pytest.raises(SystemExit):
+        _parse_args(
+            [
+                "--coarse-degree",
+                "5",
+                "--enriched-degree",
+                "6",
+                "--h-nm",
+                "15",
+                "--fixed-trace-control-record",
+                "control.json",
+            ]
+        )
+
+
+def test_fixed_trace_resolved_degrees_come_from_persisted_config() -> None:
+    summary = {
+        "official_result": True,
+        "mesh_cell_type_actual": "hexahedron",
+        "nedelec_trace_degree_resolved": 4,
+        "nedelec_interior_degree_resolved": 5,
+        "config": {
+            "nedelec_trace_degree_resolved": 5,
+            "nedelec_interior_degree_resolved": 6,
+        },
+        "cell_static_condensation": {
+            "full_global_matrix_allocated": False,
+            "full_trace_matrix_allocated": False,
+            "full_explicit_true_residual": {
+                "linear_system_relative_residual": 1.0e-12,
+            },
+        },
+    }
+    resource_audit = {"entity_dof_inventory": {"pass": True}}
+    assert _execution_integrity_pass(
+        summary,
+        resource_audit,
+        trace_degree=5,
+        interior_degree=6,
+    )
+    compact = _compact_solve(
+        {
+            "degree": 6,
+            "h_nm": 15.0,
+            "summary": summary,
+        }
+    )
+    assert compact["nedelec_trace_degree_resolved"] == 5
+    assert compact["nedelec_interior_degree_resolved"] == 6
+    summary["config"] = {}
+    assert not _execution_integrity_pass(
+        summary,
+        resource_audit,
+        trace_degree=5,
+        interior_degree=6,
+    )
+
+
+def test_fixed_trace_same_mesh_resource_baseline_is_explicit() -> None:
+    mesh_identity = {
+        "partition_independent_mesh_sha256": "mesh",
+        "cell_tag_sha256": "cell-tags",
+        "facet_tag_sha256": "facet-tags",
+    }
+    candidate_audit = {"mesh_identity": dict(mesh_identity)}
+    baseline = {
+        "num_nedelec_dofs": 84492,
+        "matrix_stats": {
+            "matrix_rows": 24704,
+            "matrix_nnz_used": 19207136.0,
+        },
+        "stage4_dtn_factor_inventory": {
+            "matrix_stats": {"matrix_nnz_used": 59616320.0},
+        },
+        "high_order_resource_audit": {
+            "mesh_identity": dict(mesh_identity),
+        },
+    }
+    summary = {
+        "num_nedelec_dofs": 74890,
+        "matrix_stats": {
+            "matrix_rows": 16880,
+            "matrix_nnz_used": 9195812.0,
+        },
+        "stage4_dtn_factor_inventory": {
+            "matrix_stats": {"matrix_nnz_used": 30000000.0},
+        },
+    }
+    identity = _same_mesh_identity(candidate_audit, baseline)
+    assert identity["pass"] is True
+    comparison = _same_mesh_resource_comparison(summary, baseline)
+    dofs = comparison["metrics"]["full3d_equivalent_dofs"]
+    assert dofs["global_p6"] == 84492
+    assert dofs["candidate"] == 74890
+    assert dofs["compression_ratio"] == pytest.approx(84492 / 74890)
+    candidate_audit["mesh_identity"]["facet_tag_sha256"] = "wrong"
+    assert _same_mesh_identity(candidate_audit, baseline)["pass"] is False
