@@ -8,6 +8,7 @@ from benchmarks.run_task035_actual_r5 import (
     _parse_args,
     _qualify,
     _qualify_common_mesh_sweep,
+    _qualify_goal_dwr,
     _qualify_regionwise_p,
 )
 
@@ -138,6 +139,50 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             args.dwr_marker_policy,
             "tolerance_normalized_R_T",
         )
+
+    def test_argument_contract_accepts_formal_hexa_goal_dwr_only(self) -> None:
+        args = _parse_args(
+            [
+                "--coarse-degree",
+                "4",
+                "--enriched-degree",
+                "5",
+                "--mesh-cell-type",
+                "hexahedron",
+                "--mpi-size",
+                "8",
+                "--h-nm",
+                "10",
+                "--goal-dwr-only",
+            ]
+        )
+        self.assertTrue(args.goal_dwr_only)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "5",
+                    "--enriched-degree",
+                    "6",
+                    "--mesh-cell-type",
+                    "hexahedron",
+                    "--goal-dwr-only",
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "4",
+                    "--enriched-degree",
+                    "5",
+                    "--mesh-cell-type",
+                    "hexahedron",
+                    "--goal-dwr-only",
+                    "--dwr-adaptive-cycles",
+                    "1",
+                ]
+            )
 
     def test_argument_contract_rejects_multiple_cycle_modes(self) -> None:
         with self.assertRaises(SystemExit):
@@ -763,6 +808,95 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
         )
         self.assertFalse(failed["pass"])
         self.assertIn("inactive_p6_rows_not_retained", failed["failures"])
+
+    def test_goal_dwr_only_qualification_requires_all_three_goals(self) -> None:
+        summary = {
+            "official_result": True,
+            "linear_system_relative_residual": 1.0e-12,
+            "mesh_cell_type_actual": "hexahedron",
+            "num_mesh_cells": 252,
+        }
+        goal = {
+            "finite_nonnegative_cell_contributions": True,
+            "marking": {"captured_fraction": 0.6},
+            "absolute_effectivity": 1.0,
+            "signed_goal_change_closure": 0.0,
+            "mesh_geometry_sha256": "a" * 64,
+            "marked_geometry_sha256": "b" * 64,
+        }
+        marker = {
+            "finite_nonnegative_cell_contributions": True,
+            "marking": {"captured_fraction": 0.6},
+            "mesh_geometry_sha256": "a" * 64,
+            "marked_geometry_sha256": "c" * 64,
+        }
+        result = {
+            "status": "target_goal_weighted_two_level_pass",
+            "pass": True,
+            "ordinary_default_changed": False,
+            "target_identity": {
+                "geometry": "Task034 fixed rectangular block grating",
+                "mesh_backend": "boundary-fitted conforming hexahedron",
+                "h_nm": 10.0,
+            },
+            "coarse": {"degree": 4, "summary": dict(summary)},
+            "enriched": {"degree": 5, "summary": dict(summary)},
+            "DWR": {
+                "residual": {
+                    "enriched_solution_relative_residual_recomputed": 1.0e-12
+                },
+                "adjoint_qualification": {"pass": True},
+                "goals": {
+                    "R00_total": dict(goal),
+                    "R_total": dict(goal),
+                    "T_total": dict(goal),
+                },
+                "combined_relative_R_T": dict(marker),
+                "tolerance_normalized_R_T": {
+                    **marker,
+                    "normalization_authority": {
+                        "independent_adjoint_goals": ["R_total", "T_total"]
+                    },
+                },
+                "rejected_localization": {
+                    "decision": "controlled_negative_partition_dependent"
+                },
+            },
+            "R5_control": {
+                "correction_energy": {"relative_closure_error": 1.0e-12}
+            },
+        }
+        args = Namespace(mpi_size=8, theta=0.5)
+        sampler = {
+            "max_observed_worker_rank_count": 8,
+            "max_process_tree_swap_mb": 0.0,
+        }
+        qualification = _qualify_goal_dwr(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertTrue(qualification["pass"], qualification)
+
+        del result["DWR"]["goals"]["R00_total"]
+        failed = _qualify_goal_dwr(
+            result,
+            args=args,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            authority_readable=True,
+            sampler=sampler,
+        )
+        self.assertFalse(failed["pass"])
+        self.assertIn(
+            "all_R00_R_T_goal_reports_qualified",
+            failed["failures"],
+        )
 
 
 if __name__ == "__main__":

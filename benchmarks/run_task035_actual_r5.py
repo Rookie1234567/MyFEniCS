@@ -5,6 +5,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -148,6 +149,21 @@ def _worker(args: argparse.Namespace) -> int:
             dof_ceiling=args.hp_dof_ceiling,
             accuracy_control_key=args.hp_accuracy_control_key,
         )
+    elif args.goal_dwr_only:
+        from src.adaptivity.goal_weighted_two_level import (
+            run_target_goal_weighted_two_level,
+        )
+
+        result = run_target_goal_weighted_two_level(
+            args.run_dir,
+            coarse_degree=args.coarse_degree,
+            enriched_degree=args.enriched_degree,
+            h_nm=args.h_nm,
+            theta=args.theta,
+            polarization_kind=args.polarization_kind,
+            mesh_cell_type=args.mesh_cell_type,
+            progress_observer=progress,
+        )
     elif args.dwr_adaptive_cycles:
         from src.adaptivity.target_dwr_adaptive_cycles import (
             run_target_dwr_adaptive_cycles,
@@ -288,6 +304,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--adaptive-marked-cycles", type=int, default=0)
     parser.add_argument("--uniform-refinement-levels", type=int, default=0)
     parser.add_argument("--dwr-adaptive-cycles", type=int, default=0)
+    parser.add_argument(
+        "--goal-dwr-only",
+        action="store_true",
+        help=(
+            "run one same-mesh R00/R/T goal-adjoint localization pair "
+            "without refining the mesh"
+        ),
+    )
     parser.add_argument(
         "--dwr-marker-policy",
         choices=(
@@ -443,8 +467,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "regionwise-p, common-mesh, and adaptive/uniform modes are mutually exclusive."
         )
-    if args.single_mesh_pair and (
+    if args.goal_dwr_only and (
         common_mesh_mode or active_cycles or regionwise_mode
+    ):
+        parser.error(
+            "goal-DWR-only, regionwise-p, common-mesh, and cycle modes "
+            "are mutually exclusive."
+        )
+    if args.single_mesh_pair and (
+        common_mesh_mode
+        or active_cycles
+        or regionwise_mode
+        or args.goal_dwr_only
     ):
         parser.error(
             "--single-mesh-pair is valid only for the plain global-p pair."
@@ -462,6 +496,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         common_mesh_mode
         or active_cycles
         or regionwise_mode
+        or args.goal_dwr_only
         or args.mesh_cell_type != "hexahedron"
     ):
         parser.error(
@@ -569,6 +604,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "p5-trace regionwise-p requires an explicit high-cell count."
             )
+    if args.goal_dwr_only and (
+        args.mpi_size != 8
+        or args.mesh_cell_type != "hexahedron"
+        or args.coarse_degree != 4
+        or args.enriched_degree != 5
+        or abs(args.h_nm - 10.0) > 1.0e-12
+        or args.polarization_kind != "s"
+    ):
+        parser.error(
+            "formal goal-DWR-only mode requires MPI8, hexa h10, p4/p5, "
+            "and s polarization."
+        )
     return args
 
 
@@ -1079,6 +1126,142 @@ def _qualify(
                 ),
             }
         )
+    failures = [name for name, passed in checks.items() if not passed]
+    return {"pass": not failures, "checks": checks, "failures": failures}
+
+
+def _qualify_goal_dwr(
+    result: dict[str, Any],
+    *,
+    args: argparse.Namespace,
+    return_code: int,
+    terminated_for_memory: bool,
+    terminated_for_timeout: bool,
+    authority_readable: bool,
+    sampler: dict[str, Any],
+) -> dict[str, Any]:
+    """Qualify one fixed-hexa p4/p5 multi-goal localization run."""
+
+    coarse = (result.get("coarse") or {}).get("summary") or {}
+    enriched = (result.get("enriched") or {}).get("summary") or {}
+    dwr = result.get("DWR") or {}
+    goals = dwr.get("goals") or {}
+    combined_reports = [
+        dwr.get("combined_relative_R_T") or {},
+        dwr.get("tolerance_normalized_R_T") or {},
+    ]
+    r5 = result.get("R5_control") or {}
+    target = result.get("target_identity") or {}
+    goal_reports = [
+        goals.get(name) or {}
+        for name in ("R00_total", "R_total", "T_total")
+    ]
+    enriched_residual = (dwr.get("residual") or {}).get(
+        "enriched_solution_relative_residual_recomputed"
+    )
+    r5_closure = (r5.get("correction_energy") or {}).get(
+        "relative_closure_error"
+    )
+
+    def qualified_goal(report: dict[str, Any]) -> bool:
+        effectivity = report.get("absolute_effectivity")
+        closure = report.get("signed_goal_change_closure")
+        return bool(
+            report.get("finite_nonnegative_cell_contributions") is True
+            and (report.get("marking") or {}).get("captured_fraction", 0.0)
+            >= float(args.theta) - 1.0e-12
+            and isinstance(effectivity, (int, float))
+            and math.isfinite(float(effectivity))
+            and abs(float(effectivity) - 1.0) <= 1.0e-8
+            and isinstance(closure, (int, float))
+            and math.isfinite(float(closure))
+            and abs(float(closure)) <= 1.0e-9
+            and bool(report.get("mesh_geometry_sha256"))
+            and bool(report.get("marked_geometry_sha256"))
+        )
+
+    def qualified_marker(report: dict[str, Any]) -> bool:
+        return bool(
+            report.get("finite_nonnegative_cell_contributions") is True
+            and (report.get("marking") or {}).get("captured_fraction", 0.0)
+            >= float(args.theta) - 1.0e-12
+            and bool(report.get("mesh_geometry_sha256"))
+            and bool(report.get("marked_geometry_sha256"))
+        )
+
+    checks = {
+        "process_completed": return_code == 0,
+        "not_terminated_for_memory": not terminated_for_memory,
+        "not_terminated_for_timeout": not terminated_for_timeout,
+        "resource_authority_readable": authority_readable,
+        "all_expected_mpi_ranks_observed": (
+            sampler.get("max_observed_worker_rank_count") == args.mpi_size
+        ),
+        "no_process_tree_swap": sampler.get("max_process_tree_swap_mb") == 0.0,
+        "result_status": (
+            result.get("status") == "target_goal_weighted_two_level_pass"
+        ),
+        "result_pass": result.get("pass") is True,
+        "fixed_rectangular_hexa_h10_identity": (
+            target.get("geometry") == "Task034 fixed rectangular block grating"
+            and target.get("mesh_backend")
+            == "boundary-fitted conforming hexahedron"
+            and abs(float(target.get("h_nm", -1.0)) - 10.0) <= 1.0e-12
+        ),
+        "p4_p5_pair_identity": (
+            (result.get("coarse") or {}).get("degree") == 4
+            and (result.get("enriched") or {}).get("degree") == 5
+        ),
+        "both_official_solves": (
+            coarse.get("official_result") is True
+            and enriched.get("official_result") is True
+        ),
+        "both_true_residuals_le_1e-9": all(
+            isinstance(summary.get("linear_system_relative_residual"), (int, float))
+            and float(summary["linear_system_relative_residual"]) <= 1.0e-9
+            for summary in (coarse, enriched)
+        ),
+        "same_actual_hexa_mesh_cell_count": (
+            coarse.get("mesh_cell_type_actual") == "hexahedron"
+            and enriched.get("mesh_cell_type_actual") == "hexahedron"
+            and coarse.get("num_mesh_cells") == 252
+            and enriched.get("num_mesh_cells") == 252
+        ),
+        "enriched_residual_recomputed_le_1e-9": (
+            isinstance(enriched_residual, (int, float))
+            and float(enriched_residual) <= 1.0e-9
+        ),
+        "actual_adjoint_qualification_pass": (
+            (dwr.get("adjoint_qualification") or {}).get("pass") is True
+        ),
+        "all_R00_R_T_goal_reports_qualified": (
+            len(goals) >= 3
+            and all(qualified_goal(report) for report in goal_reports)
+        ),
+        "both_multi_goal_reports_qualified": all(
+            qualified_marker(report) for report in combined_reports
+        ),
+        "tolerance_normalization_authority_bound": (
+            (
+                (dwr.get("tolerance_normalized_R_T") or {}).get(
+                    "normalization_authority"
+                )
+                or {}
+            ).get("independent_adjoint_goals")
+            == ["R_total", "T_total"]
+        ),
+        "R5_control_energy_closure": (
+            isinstance(r5_closure, (int, float))
+            and float(r5_closure) <= 1.0e-10
+        ),
+        "algebraic_localization_rejected": (
+            (dwr.get("rejected_localization") or {}).get("decision")
+            == "controlled_negative_partition_dependent"
+        ),
+        "ordinary_default_unchanged": (
+            result.get("ordinary_default_changed") is False
+        ),
+    }
     failures = [name for name, passed in checks.items() if not passed]
     return {"pass": not failures, "checks": checks, "failures": failures}
 
@@ -1745,6 +1928,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         run_label += (
             f"_common_mesh_theta{args.common_mesh_replay_theta:g}_grazing{angle_label}"
         )
+    elif args.goal_dwr_only:
+        run_label += f"_goal_dwr_only_theta{args.theta:g}"
     elif args.dwr_adaptive_cycles:
         run_label += f"_dwr_{args.dwr_marker_policy}_{args.dwr_adaptive_cycles}"
         if args.minimal_periodic_edge_closure:
@@ -1858,6 +2043,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         if args.hp_dof_ceiling is not None:
             command.extend(["--hp-dof-ceiling", str(args.hp_dof_ceiling)])
             command.extend(["--hp-accuracy-control-key", args.hp_accuracy_control_key])
+    elif args.goal_dwr_only:
+        command.append("--goal-dwr-only")
     elif args.dwr_adaptive_cycles:
         command.extend(
             [
@@ -1954,6 +2141,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualifier = _qualify_regionwise_p
     elif args.common_mesh_replay_record is not None:
         qualifier = _qualify_common_mesh_sweep
+    elif args.goal_dwr_only:
+        qualifier = _qualify_goal_dwr
     elif args.dwr_adaptive_cycles:
         qualifier = _qualify_dwr_adaptive
     elif args.adaptive_marked_cycles:
@@ -1990,6 +2179,8 @@ def _run_parent(args: argparse.Namespace) -> int:
             if args.regionwise_p_classifier_record is not None
             else "actual_common_mesh_angle_sweep_pass"
             if args.common_mesh_replay_record is not None
+            else "target_goal_weighted_two_level_pass"
+            if args.goal_dwr_only
             else "actual_dwr_adaptive_cycles_pass"
             if args.dwr_adaptive_cycles
             else "actual_r5_adaptive_cycles_pass"
@@ -2006,6 +2197,8 @@ def _run_parent(args: argparse.Namespace) -> int:
             if args.regionwise_p_classifier_record is not None
             else "task035.actual-common-mesh-angle-sweep-watchdog.v1"
             if args.common_mesh_replay_record is not None
+            else "task035b.actual-goal-dwr-only-watchdog.v1"
+            if args.goal_dwr_only
             else "task035.actual-dwr-adaptive-watchdog.v1"
             if args.dwr_adaptive_cycles
             else "task035.actual-r5-adaptive-watchdog.v1"
@@ -2019,6 +2212,8 @@ def _run_parent(args: argparse.Namespace) -> int:
             if args.regionwise_p_classifier_record is not None
             else "task035_target_actual_common_mesh_angle_sweep"
             if args.common_mesh_replay_record is not None
+            else "task035b_target_actual_goal_dwr_only"
+            if args.goal_dwr_only
             else "task035_target_actual_dwr_adaptive_cycles"
             if args.dwr_adaptive_cycles
             else "task035_target_actual_r5_adaptive_cycles"
@@ -2130,6 +2325,14 @@ def _run_parent(args: argparse.Namespace) -> int:
                     _compact_common_mesh_angle(entry)
                     for entry in result.get("angle_results", [])
                 ],
+            }
+        )
+    elif args.goal_dwr_only:
+        record.update(
+            {
+                "goal_changes": result.get("goal_changes"),
+                "DWR": result.get("DWR"),
+                "R5_control": result.get("R5_control"),
             }
         )
     elif args.dwr_adaptive_cycles:
