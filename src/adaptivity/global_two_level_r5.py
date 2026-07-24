@@ -20,6 +20,7 @@ from typing import Any
 
 import numpy as np
 import ufl
+from basix import ElementFamily, MapType, SobolevSpace
 from basix.ufl import element
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -27,7 +28,10 @@ from petsc4py import PETSc
 from dolfinx import default_real_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
-from .cell_indicator_snapshot import build_cell_indicator_snapshot
+from .cell_indicator_snapshot import (
+    build_cell_indicator_snapshot,
+    validate_cell_indicator_snapshot,
+)
 from src.geometry.tetra_mesh_audit import (
     canonical_owned_cell_ids,
     geometry_key_sha256,
@@ -37,6 +41,22 @@ from src.geometry.tetra_mesh_audit import (
 TINY = np.finfo(float).tiny
 
 
+def _collective_fail_if_any(
+    comm: MPI.Intracomm,
+    local_error: str | None,
+    *,
+    context: str,
+) -> None:
+    errors = comm.allgather(local_error)
+    failures = [
+        f"rank {rank}: {error}"
+        for rank, error in enumerate(errors)
+        if error is not None
+    ]
+    if failures:
+        raise ValueError(f"{context}: " + "; ".join(failures))
+
+
 def _global_dorfler_mark(
     comm: MPI.Intracomm,
     global_cell_ids: np.ndarray,
@@ -44,12 +64,20 @@ def _global_dorfler_mark(
     *,
     theta: float,
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    if not 0.0 < float(theta) <= 1.0:
-        raise ValueError("Dorfler theta must lie in (0, 1].")
     ids = np.asarray(global_cell_ids, dtype=np.int64)
     values = np.asarray(contributions, dtype=np.float64)
-    if ids.shape != values.shape:
-        raise ValueError("global cell ids and contributions must have equal shapes.")
+    local_error = None
+    if not 0.0 < float(theta) <= 1.0:
+        local_error = "Dorfler theta must lie in (0, 1]"
+    elif ids.shape != values.shape:
+        local_error = "global cell ids and contributions have unequal shapes"
+    elif not np.all(np.isfinite(values)) or np.any(values < 0.0):
+        local_error = "Dorfler contributions must be finite and nonnegative"
+    _collective_fail_if_any(
+        comm,
+        local_error,
+        context="Dorfler local validation failed",
+    )
     packets = comm.allgather((ids, values))
     all_ids = np.concatenate([packet[0] for packet in packets])
     all_values = np.concatenate([packet[1] for packet in packets])
@@ -130,15 +158,23 @@ def _owned_cell_contributions(
     owned_dof_count = int(scalar_space.dofmap.index_map.size_local)
     contributions = np.empty(len(owned_cells), dtype=np.float64)
     max_imaginary = 0.0
+    local_ownership_error = None
     for index, cell in enumerate(owned_cells):
         dofs = scalar_space.dofmap.cell_dofs(int(cell))
         if len(dofs) != 1 or int(dofs[0]) >= owned_dof_count:
-            vector.destroy()
-            raise RuntimeError("DG0 owned-cell/dof ownership is not one-to-one.")
+            local_ownership_error = (
+                "DG0 owned-cell/dof ownership is not one-to-one"
+            )
+            break
         value = complex(values[int(dofs[0])])
         max_imaginary = max(max_imaginary, abs(value.imag))
         contributions[index] = value.real
     vector.destroy()
+    _collective_fail_if_any(
+        comm,
+        local_ownership_error,
+        context="cell-energy ownership validation failed",
+    )
 
     direct_local = fem.assemble_scalar(fem.form(density * ufl.dx))
     direct_global = float(comm.allreduce(float(np.real(direct_local)), op=MPI.SUM))
@@ -204,16 +240,46 @@ def localize_p6_hcurl_projection_signals(
     p6_space = p6_field.function_space
     msh = p6_space.mesh
     comm = msh.comm
-    if p5_space.mesh is not msh:
-        raise ValueError(
-            "p4/p5/p6 projection signals require one in-memory mesh"
-        )
-    p5_element = p5_space.element.basix_element
-    p6_element = p6_space.element.basix_element
-    if int(p5_element.degree) != 5 or int(p6_element.degree) != 6:
-        raise ValueError(
-            "projection signals require a global N1curl p5/p6 pair"
-        )
+    local_contract_error = None
+    try:
+        p5_element = p5_space.element.basix_element
+        p6_element = p6_space.element.basix_element
+        elements = (p5_element, p6_element)
+        if p5_space.mesh is not msh:
+            local_contract_error = "p5/p6 fields do not share one mesh object"
+        elif tuple(int(item.degree) for item in elements) != (5, 6):
+            local_contract_error = "field degrees are not p5/p6"
+        elif any(item.family != ElementFamily.N1E for item in elements):
+            local_contract_error = "element family is not N1E"
+        elif any(item.map_type != MapType.covariantPiola for item in elements):
+            local_contract_error = "element map is not covariant Piola"
+        elif any(
+            item.sobolev_space != SobolevSpace.HCurl for item in elements
+        ):
+            local_contract_error = "element Sobolev space is not HCurl"
+        elif any(bool(item.discontinuous) for item in elements):
+            local_contract_error = "projection input is discontinuous"
+        elif any(
+            list(item.value_shape) != [msh.topology.dim]
+            for item in elements
+        ):
+            local_contract_error = "element value shape is not the mesh dimension"
+        elif any(item.cell_type != msh.basix_cell() for item in elements):
+            local_contract_error = "element cell type differs from the mesh"
+        elif p5_field.x.array.dtype != p6_field.x.array.dtype:
+            local_contract_error = "p5/p6 scalar dtypes differ"
+        elif not np.issubdtype(
+            p6_field.x.array.dtype,
+            np.complexfloating,
+        ):
+            local_contract_error = "projection signals require complex fields"
+    except (AttributeError, TypeError, ValueError) as exc:
+        local_contract_error = f"element contract inspection failed: {exc}"
+    _collective_fail_if_any(
+        comm,
+        local_contract_error,
+        context="p6 projection input contract failed",
+    )
 
     p4_space = fem.functionspace(
         msh,
@@ -243,6 +309,31 @@ def localize_p6_hcurl_projection_signals(
     p5_lift.interpolate(p5_projection)
     p4_lift.x.scatter_forward()
     p5_lift.x.scatter_forward()
+
+    p5_input_lift = fem.Function(
+        p6_space,
+        name="E_p5_input_lifted_to_p6",
+    )
+    p5_roundtrip = fem.Function(
+        p5_space,
+        name="E_p5_input_roundtrip",
+    )
+    p5_input_lift.interpolate(p5_field)
+    p5_input_lift.x.scatter_forward()
+    p5_roundtrip.interpolate(p5_input_lift)
+    p5_roundtrip.x.scatter_forward()
+    local_roundtrip_error = float(
+        np.linalg.norm(p5_field.x.array - p5_roundtrip.x.array)
+    )
+    local_p5_norm = float(np.linalg.norm(p5_field.x.array))
+    roundtrip_error = math.sqrt(
+        comm.allreduce(local_roundtrip_error**2, op=MPI.SUM)
+    )
+    p5_norm = math.sqrt(comm.allreduce(local_p5_norm**2, op=MPI.SUM))
+    p5_roundtrip_relative_error = roundtrip_error / max(
+        p5_norm,
+        np.finfo(float).tiny,
+    )
 
     shell_p5 = fem.Function(p6_space, name="E_hierarchical_shell_p5")
     shell_p6 = fem.Function(p6_space, name="E_hierarchical_shell_p6")
@@ -402,14 +493,85 @@ def localize_p6_hcurl_projection_signals(
         name: value["canonical_ids_and_values_sha256"]
         for name, value in snapshots.items()
     }
+    snapshot_validation = {
+        name: validate_cell_indicator_snapshot(
+            value,
+            expected_mesh_geometry_sha256=mesh_geometry_sha256,
+            expected_cell_count=len(ordered_keys),
+        )
+        for name, value in snapshots.items()
+    }
+    energy_closures = {
+        "p6_field": high_closure,
+        "shell_p5": shell5_closure,
+        "shell_p6": shell6_closure,
+        "p4_projection_defect": defect4_closure,
+    }
+    element_contract = {
+        "family": "N1E",
+        "map_type": "covariantPiola",
+        "sobolev_space": "HCurl",
+        "value_shape": [int(msh.topology.dim)],
+        "cell_type": str(p6_element.cell_type.name),
+        "scalar_dtype": str(p6_field.x.array.dtype),
+        "continuous": True,
+    }
+    checks = {
+        "element_contract": True,
+        "p5_roundtrip_interpolation_le_1e-12": (
+            p5_roundtrip_relative_error <= 1.0e-12
+        ),
+        "reconstruction_le_1e-12": (
+            reconstruction_relative_error <= 1.0e-12
+        ),
+        "all_energy_closures_le_1e-10": all(
+            math.isfinite(float(closure["relative_closure_error"]))
+            and float(closure["relative_closure_error"]) <= 1.0e-10
+            and math.isfinite(float(closure["direct_global_energy"]))
+            and float(closure["direct_global_energy"]) >= 0.0
+            and math.isfinite(
+                float(closure["minimum_raw_cell_contribution"])
+            )
+            and float(closure["maximum_imaginary_cell_contribution"])
+            <= 1.0e-12
+            for closure in energy_closures.values()
+        ),
+        "all_snapshots_content_valid": all(
+            all(validation.values())
+            for validation in snapshot_validation.values()
+        ),
+        "all_cells_physically_resolved": all(
+            value == 1.0
+            for value in snapshots["hierarchical_decay_resolved"][
+                "indicator_values"
+            ]
+        ),
+        "projection_defect_decreases_p4_to_p5": all(
+            p5 <= p4
+            for p4, p5 in zip(
+                snapshots["p4_relative_projection_defect"][
+                    "indicator_values"
+                ],
+                snapshots["p5_relative_projection_defect"][
+                    "indicator_values"
+                ],
+                strict=True,
+            )
+        ),
+    }
+    passed = all(checks.values())
     elapsed = float(
         comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
     )
     rss_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return {
         "schema_version": "task035b.p6-hcurl-local-hp-signals.v1",
-        "status": "p6_hcurl_projection_signals_pass",
-        "pass": bool(reconstruction_relative_error <= 1.0e-12),
+        "status": (
+            "p6_hcurl_projection_signals_pass"
+            if passed
+            else "p6_hcurl_projection_signals_failed"
+        ),
+        "pass": passed,
         "ordinary_default_changed": False,
         "mesh_geometry_sha256": mesh_geometry_sha256,
         "cell_count": int(len(ordered_keys)),
@@ -422,6 +584,7 @@ def localize_p6_hcurl_projection_signals(
             "shell_p6": shell6_dimension,
         },
         "positive_gram": "L2_plus_cell_diameter_squared_curl_energy",
+        "element_contract": element_contract,
         "hierarchy_definition": (
             "global conforming nested interpolation shells; no Basix "
             "basis-index hierarchy is assumed"
@@ -435,14 +598,14 @@ def localize_p6_hcurl_projection_signals(
         "reconstruction_relative_coefficient_error": (
             reconstruction_relative_error
         ),
-        "energy_closures": {
-            "p6_field": high_closure,
-            "shell_p5": shell5_closure,
-            "shell_p6": shell6_closure,
-            "p4_projection_defect": defect4_closure,
-        },
+        "p5_roundtrip_relative_coefficient_error": (
+            p5_roundtrip_relative_error
+        ),
+        "energy_closures": energy_closures,
         "snapshots": snapshots,
         "snapshot_hashes": snapshot_hashes,
+        "snapshot_validation": snapshot_validation,
+        "qualification_checks": checks,
         "diagnostic_wall_seconds": elapsed,
         "process_peak_rss_kib_before": int(rss_before),
         "process_peak_rss_kib_after": int(rss_after),
@@ -450,6 +613,11 @@ def localize_p6_hcurl_projection_signals(
             "global p6 is the discrete reference, not continuum truth",
             "interpolation shells are nested but not G-orthogonalized",
             "projection defect is a primal smoothness signal, not goal error",
+            (
+                "raw coefficient-shell decay is diagnostic only because "
+                "cell coefficient Euclidean norms are not orientation-"
+                "canonical physical Gram energies"
+            ),
         ],
     }
 

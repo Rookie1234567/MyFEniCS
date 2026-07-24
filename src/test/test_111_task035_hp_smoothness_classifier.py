@@ -12,6 +12,7 @@ from dolfinx import default_real_type, fem, mesh
 
 from src.adaptivity.cell_indicator_snapshot import (
     build_cell_indicator_snapshot,
+    validate_cell_indicator_snapshot,
 )
 from src.adaptivity.hp_smoothness_classifier import (
     classify_hp_correction_decay,
@@ -30,9 +31,66 @@ from src.geometry.tetra_mesh_audit import (
     geometry_key_sha256,
 )
 from benchmarks.task035b_hp_classifier import build_hp_classifier_record
+from benchmarks.task035b_hp_competition import (
+    build_actual_hp_competition_record,
+)
 
 
 class Task035HpSmoothnessClassifierTests(unittest.TestCase):
+    def test_actual_sequential_h_vs_p_competition_is_fail_closed(
+        self,
+    ) -> None:
+        root = Path(__file__).resolve().parents[2]
+        records = (
+            root
+            / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records"
+        )
+        dwr = __import__("json").loads(
+            (
+                records
+                / (
+                    "actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_"
+                    "cycle1_full_periodic_closure_mpi8.json"
+                )
+            ).read_text(encoding="utf-8")
+        )
+        p_up = __import__("json").loads(
+            (
+                records
+                / "actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json"
+            ).read_text(encoding="utf-8")
+        )
+        report = build_actual_hp_competition_record(dwr, p_up)
+        self.assertTrue(report["pass"])
+        self.assertFalse(report["head_to_head_same_origin"])
+        self.assertFalse(report["same_patch"])
+        self.assertFalse(report["cell_decision_authority"])
+        self.assertFalse(
+            report["engineering_gate"]["final_dof_target_pass"]
+        )
+        self.assertTrue(
+            report["engineering_gate"]["final_vector_control_pass"]
+        )
+        self.assertFalse(
+            report["engineering_gate"]["final_strict_R_control_pass"]
+        )
+        self.assertEqual(
+            report["cost_normalized_conclusion"][
+                "R_T_A_volume_l2_dof_efficiency_preference"
+            ],
+            "one_local_h_at_p5",
+        )
+        self.assertEqual(
+            report["cost_normalized_conclusion"][
+                "strict_R_total_dof_efficiency_preference"
+            ],
+            "fixed_mesh_global_p5_to_p6",
+        )
+
+        p_up["common_mesh_identity"]["cell_tag_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "mesh identity mismatch"):
+            build_actual_hp_competition_record(dwr, p_up)
+
     def test_p6_projection_signals_resolve_nested_smooth_decay(
         self,
     ) -> None:
@@ -63,6 +121,16 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
         )
         p5_field = fem.Function(p5_space)
         p6_field = fem.Function(p6_space)
+        p5_field.interpolate(
+            lambda x: np.vstack(
+                (
+                    x[1] ** 4 + 0.2 * x[2] ** 5,
+                    x[0] ** 3 - x[2],
+                    x[0] * x[1],
+                )
+            )
+        )
+        p5_field.x.scatter_forward()
         p6_field.interpolate(
             lambda x: np.vstack(
                 (
@@ -91,6 +159,15 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
         self.assertLess(
             report["reconstruction_relative_coefficient_error"],
             1.0e-12,
+        )
+        self.assertLess(
+            report["p5_roundtrip_relative_coefficient_error"],
+            1.0e-12,
+        )
+        self.assertTrue(all(report["qualification_checks"].values()))
+        self.assertEqual(
+            report["element_contract"]["family"],
+            "N1E",
         )
         snapshots = report["snapshots"]
         self.assertEqual(
@@ -329,6 +406,73 @@ class Task035HpSmoothnessClassifierTests(unittest.TestCase):
         self.assertEqual(report["cell_count"], comm.size * 2)
         self.assertEqual(len(report["canonical_ids_and_values_sha256"]), 64)
         self.assertTrue(report["partition_independent"])
+        self.assertEqual(
+            report["partition_independence_scope"],
+            (
+                "canonical_cell_id_ordering_only; floating values are not "
+                "claimed byte-identical across MPI partition counts"
+            ),
+        )
+        self.assertFalse(report["floating_values_bitwise_mpi_invariant"])
+        self.assertTrue(
+            all(
+                validate_cell_indicator_snapshot(
+                    report,
+                    expected_mesh_geometry_sha256="a" * 64,
+                    expected_cell_count=comm.size * 2,
+                ).values()
+            )
+        )
+
+        if comm.size > 1:
+            invalid_values = local_values.copy()
+            if comm.rank == 1:
+                invalid_values[0] = np.nan
+            with self.assertRaisesRegex(
+                ValueError,
+                "rank 1: indicator values are not finite",
+            ):
+                build_cell_indicator_snapshot(
+                    comm,
+                    local_ids,
+                    invalid_values,
+                    indicator_name="rank_local_failure_fixture",
+                    mesh_geometry_sha256="a" * 64,
+                )
+
+    def test_p6_projection_rejects_non_hcurl_contract(self) -> None:
+        msh = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        p5_space = fem.functionspace(
+            msh,
+            element(
+                "Lagrange",
+                msh.basix_cell(),
+                5,
+                shape=(3,),
+                dtype=default_real_type,
+            ),
+        )
+        p6_space = fem.functionspace(
+            msh,
+            element(
+                "Lagrange",
+                msh.basix_cell(),
+                6,
+                shape=(3,),
+                dtype=default_real_type,
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "family is not N1E"):
+            localize_p6_hcurl_projection_signals(
+                fem.Function(p5_space),
+                fem.Function(p6_space),
+            )
 
     def test_hexa_cell_geometry_has_partition_independent_ids(self) -> None:
         comm = MPI.COMM_WORLD

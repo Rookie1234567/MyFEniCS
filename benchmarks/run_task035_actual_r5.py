@@ -25,6 +25,9 @@ from benchmarks.run_direct_memory_forensics import (
     _stage_peaks,
 )
 from benchmarks.task034_wsl_resources import effective_memory_limit
+from src.adaptivity.cell_indicator_snapshot import (
+    validate_cell_indicator_snapshot,
+)
 from src.solvers.solve_vector_maxwell import _json_default
 
 
@@ -1033,6 +1036,17 @@ def _qualify(
             "p4_relative_projection_defect",
             "p5_relative_projection_defect",
         }
+        energy_closures = signals.get("energy_closures") or {}
+        snapshot_validations = {
+            name: validate_cell_indicator_snapshot(
+                snapshot,
+                expected_mesh_geometry_sha256=signals.get(
+                    "mesh_geometry_sha256"
+                ),
+                expected_cell_count=signals.get("cell_count"),
+            )
+            for name, snapshot in snapshots.items()
+        }
         checks.update(
             {
                 "p6_projection_signals_requested": (
@@ -1046,17 +1060,81 @@ def _qualify(
                 "p6_projection_signal_snapshots_complete": (
                     set(snapshots) == expected_snapshots
                     and all(
-                        snapshot.get("storage")
-                        == "inline_complete_vector"
-                        and snapshot.get("cell_count")
-                        == signals.get("cell_count")
-                        and bool(
-                            snapshot.get(
-                                "canonical_ids_and_values_sha256"
-                            )
-                        )
-                        for snapshot in snapshots.values()
+                        all(validation.values())
+                        for validation in snapshot_validations.values()
                     )
+                ),
+                "p6_projection_element_contract": (
+                    (signals.get("element_contract") or {}).get("family")
+                    == "N1E"
+                    and (signals.get("element_contract") or {}).get(
+                        "map_type"
+                    )
+                    == "covariantPiola"
+                    and (signals.get("element_contract") or {}).get(
+                        "sobolev_space"
+                    )
+                    == "HCurl"
+                    and (signals.get("element_contract") or {}).get(
+                        "continuous"
+                    )
+                    is True
+                ),
+                "p6_projection_energy_closures_le_1e-10": (
+                    set(energy_closures)
+                    == {
+                        "p6_field",
+                        "shell_p5",
+                        "shell_p6",
+                        "p4_projection_defect",
+                    }
+                    and all(
+                        isinstance(
+                            closure.get("relative_closure_error"),
+                            (int, float),
+                        )
+                        and float(closure["relative_closure_error"])
+                        <= 1.0e-10
+                        for closure in energy_closures.values()
+                    )
+                ),
+                "p6_projection_all_cells_resolved": (
+                    len(
+                        (
+                            snapshots.get(
+                                "hierarchical_decay_resolved"
+                            )
+                            or {}
+                        ).get("indicator_values")
+                        or []
+                    )
+                    == signals.get("cell_count")
+                    and all(
+                        value == 1.0
+                        for value in (
+                            (
+                                snapshots.get(
+                                    "hierarchical_decay_resolved"
+                                )
+                                or {}
+                            ).get("indicator_values")
+                            or []
+                        )
+                    )
+                ),
+                "p6_projection_p5_roundtrip_le_1e-12": (
+                    isinstance(
+                        signals.get(
+                            "p5_roundtrip_relative_coefficient_error"
+                        ),
+                        (int, float),
+                    )
+                    and float(
+                        signals[
+                            "p5_roundtrip_relative_coefficient_error"
+                        ]
+                    )
+                    <= 1.0e-12
                 ),
                 "p6_projection_reconstruction_le_1e-12": (
                     isinstance(
