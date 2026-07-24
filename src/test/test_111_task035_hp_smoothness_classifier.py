@@ -6,14 +6,18 @@ import tempfile
 import unittest
 
 import numpy as np
+from basix.ufl import element
 from mpi4py import MPI
-from dolfinx import mesh
+from dolfinx import default_real_type, fem, mesh
 
 from src.adaptivity.cell_indicator_snapshot import (
     build_cell_indicator_snapshot,
 )
 from src.adaptivity.hp_smoothness_classifier import (
     classify_hp_correction_decay,
+)
+from src.adaptivity.global_two_level_r5 import (
+    localize_p6_hcurl_projection_signals,
 )
 from src.adaptivity.multigoal_hp_classifier import (
     build_cell_geometry_priors,
@@ -29,6 +33,98 @@ from benchmarks.task035b_hp_classifier import build_hp_classifier_record
 
 
 class Task035HpSmoothnessClassifierTests(unittest.TestCase):
+    def test_p6_projection_signals_resolve_nested_smooth_decay(
+        self,
+    ) -> None:
+        msh = mesh.create_unit_cube(
+            MPI.COMM_SELF,
+            1,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        p5_space = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                5,
+                dtype=default_real_type,
+            ),
+        )
+        p6_space = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                6,
+                dtype=default_real_type,
+            ),
+        )
+        p5_field = fem.Function(p5_space)
+        p6_field = fem.Function(p6_space)
+        p6_field.interpolate(
+            lambda x: np.vstack(
+                (
+                    x[1] ** 5 + 0.1 * x[2] ** 6,
+                    x[0] ** 4 - x[2],
+                    x[0] * x[1],
+                )
+            )
+        )
+        p6_field.x.scatter_forward()
+        report = localize_p6_hcurl_projection_signals(
+            p5_field,
+            p6_field,
+        )
+        self.assertTrue(report["pass"])
+        self.assertEqual(
+            report["element_dimensions"],
+            {
+                "p4": 300,
+                "p5": 540,
+                "p6": 882,
+                "shell_p5": 240,
+                "shell_p6": 342,
+            },
+        )
+        self.assertLess(
+            report["reconstruction_relative_coefficient_error"],
+            1.0e-12,
+        )
+        snapshots = report["snapshots"]
+        self.assertEqual(
+            set(snapshots),
+            {
+                "shell_p5_energy",
+                "shell_p6_energy",
+                "hierarchical_decay_ratio",
+                "hierarchical_decay_resolved",
+                "coefficient_decay_ratio",
+                "coefficient_decay_resolved",
+                "p4_relative_projection_defect",
+                "p5_relative_projection_defect",
+            },
+        )
+        self.assertEqual(
+            snapshots["hierarchical_decay_resolved"][
+                "indicator_values"
+            ],
+            [1.0],
+        )
+        self.assertLess(
+            snapshots["hierarchical_decay_ratio"]["indicator_values"][0],
+            0.1,
+        )
+        self.assertLess(
+            snapshots["p5_relative_projection_defect"][
+                "indicator_values"
+            ][0],
+            snapshots["p4_relative_projection_defect"][
+                "indicator_values"
+            ][0],
+        )
+
     def test_fixed_target_cell_priors_match_formal_hexa_identity(self) -> None:
         cfg = replace(
             target_stage4_config(degree=4, h_nm=10.0),

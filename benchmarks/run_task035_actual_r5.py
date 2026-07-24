@@ -258,6 +258,9 @@ def _worker(args: argparse.Namespace) -> int:
             floquet_slave_elimination_degrees=tuple(
                 args.floquet_slave_elimination_degree
             ),
+            include_p6_projection_signals=(
+                args.p6_projection_signals
+            ),
         )
     if MPI.COMM_WORLD.rank == 0:
         (args.run_dir / "actual_r5_result.json").write_text(
@@ -289,6 +292,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "build the fixed target mesh once and reuse that exact in-memory "
             "mesh for both global-p solves"
+        ),
+    )
+    parser.add_argument(
+        "--p6-projection-signals",
+        action="store_true",
+        help=(
+            "opt-in Task035b p4/p5/p6 nested H(curl) shell and global "
+            "conforming projection-defect diagnostics"
         ),
     )
     parser.add_argument(
@@ -559,6 +570,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "--single-mesh-pair is valid only for the plain global-p pair."
+        )
+    if args.p6_projection_signals and (
+        not args.single_mesh_pair
+        or fixed_trace_mode
+        or regionwise_mode
+        or common_mesh_mode
+        or active_cycles
+        or args.goal_dwr_only
+        or args.coarse_degree != 5
+        or args.enriched_degree != 6
+    ):
+        parser.error(
+            "--p6-projection-signals requires a plain single-mesh p5/p6 pair"
         )
     invalid_condensation_degrees = set(args.static_condensation_degree) - {
         args.coarse_degree,
@@ -996,6 +1020,60 @@ def _qualify(
         ),
         "ordinary_default_unchanged": result.get("ordinary_default_changed") is False,
     }
+    if getattr(args, "p6_projection_signals", False):
+        signals = r5.get("p6_local_hp_signals") or {}
+        snapshots = signals.get("snapshots") or {}
+        expected_snapshots = {
+            "shell_p5_energy",
+            "shell_p6_energy",
+            "hierarchical_decay_ratio",
+            "hierarchical_decay_resolved",
+            "coefficient_decay_ratio",
+            "coefficient_decay_resolved",
+            "p4_relative_projection_defect",
+            "p5_relative_projection_defect",
+        }
+        checks.update(
+            {
+                "p6_projection_signals_requested": (
+                    result.get("p6_projection_signals_requested") is True
+                ),
+                "p6_projection_signals_pass": signals.get("pass") is True,
+                "p6_projection_signal_mesh_identity": (
+                    signals.get("mesh_geometry_sha256")
+                    == r5.get("mesh_geometry_sha256")
+                ),
+                "p6_projection_signal_snapshots_complete": (
+                    set(snapshots) == expected_snapshots
+                    and all(
+                        snapshot.get("storage")
+                        == "inline_complete_vector"
+                        and snapshot.get("cell_count")
+                        == signals.get("cell_count")
+                        and bool(
+                            snapshot.get(
+                                "canonical_ids_and_values_sha256"
+                            )
+                        )
+                        for snapshot in snapshots.values()
+                    )
+                ),
+                "p6_projection_reconstruction_le_1e-12": (
+                    isinstance(
+                        signals.get(
+                            "reconstruction_relative_coefficient_error"
+                        ),
+                        (int, float),
+                    )
+                    and float(
+                        signals[
+                            "reconstruction_relative_coefficient_error"
+                        ]
+                    )
+                    <= 1.0e-12
+                ),
+            }
+        )
     static_condensation_degrees = getattr(
         args, "static_condensation_degree", []
     )
@@ -2378,6 +2456,8 @@ def _run_parent(args: argparse.Namespace) -> int:
     ]
     if args.single_mesh_pair:
         command.append("--single-mesh-pair")
+    if args.p6_projection_signals:
+        command.append("--p6-projection-signals")
     for degree in args.static_condensation_degree:
         command.extend(["--static-condensation-degree", str(degree)])
     for degree in args.assembly_time_condensation_degree:

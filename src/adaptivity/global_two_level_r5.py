@@ -20,10 +20,11 @@ from typing import Any
 
 import numpy as np
 import ufl
+from basix.ufl import element
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from dolfinx import fem
+from dolfinx import default_real_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
 from .cell_indicator_snapshot import build_cell_indicator_snapshot
@@ -167,12 +168,299 @@ def _owned_cell_contributions(
     }
 
 
+def _cell_coefficient_energies(
+    field: fem.Function,
+) -> np.ndarray:
+    """Return the squared local coefficient norm on every owned cell."""
+
+    msh = field.function_space.mesh
+    owned_cells = int(msh.topology.index_map(msh.topology.dim).size_local)
+    values = np.asarray(field.x.array, dtype=np.complex128)
+    energies = np.empty(owned_cells, dtype=np.float64)
+    for cell in range(owned_cells):
+        dofs = field.function_space.dofmap.cell_dofs(cell)
+        coefficients = values[dofs]
+        energies[cell] = float(np.vdot(coefficients, coefficients).real)
+    return energies
+
+
+def localize_p6_hcurl_projection_signals(
+    p5_field: fem.Function,
+    p6_field: fem.Function,
+) -> dict[str, Any]:
+    """Build nested p4/p5/p6 shell and conforming projection sensors.
+
+    The standard Basix basis is not assumed to be ordered hierarchically.
+    Instead, the p6 field is interpolated into globally conforming p4 and p5
+    spaces and lifted back to p6.  The two physical shell fields
+    ``I6(I5(u6))-I6(I4(u6))`` and ``u6-I6(I5(u6))`` define the measured
+    hierarchy.  Cell energies use the positive
+    ``L2 + h_K^2 curl`` Gram form.
+    """
+
+    started = time.perf_counter()
+    rss_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    p5_space = p5_field.function_space
+    p6_space = p6_field.function_space
+    msh = p6_space.mesh
+    comm = msh.comm
+    if p5_space.mesh is not msh:
+        raise ValueError(
+            "p4/p5/p6 projection signals require one in-memory mesh"
+        )
+    p5_element = p5_space.element.basix_element
+    p6_element = p6_space.element.basix_element
+    if int(p5_element.degree) != 5 or int(p6_element.degree) != 6:
+        raise ValueError(
+            "projection signals require a global N1curl p5/p6 pair"
+        )
+
+    p4_space = fem.functionspace(
+        msh,
+        element(
+            "N1curl",
+            msh.basix_cell(),
+            4,
+            dtype=default_real_type,
+        ),
+    )
+    p4_projection = fem.Function(
+        p4_space,
+        name="E_p6_interpolated_to_p4",
+    )
+    p5_projection = fem.Function(
+        p5_space,
+        name="E_p6_interpolated_to_p5",
+    )
+    p4_projection.interpolate(p6_field)
+    p5_projection.interpolate(p6_field)
+    p4_projection.x.scatter_forward()
+    p5_projection.x.scatter_forward()
+
+    p4_lift = fem.Function(p6_space, name="E_p4_projection_lifted_to_p6")
+    p5_lift = fem.Function(p6_space, name="E_p5_projection_lifted_to_p6")
+    p4_lift.interpolate(p4_projection)
+    p5_lift.interpolate(p5_projection)
+    p4_lift.x.scatter_forward()
+    p5_lift.x.scatter_forward()
+
+    shell_p5 = fem.Function(p6_space, name="E_hierarchical_shell_p5")
+    shell_p6 = fem.Function(p6_space, name="E_hierarchical_shell_p6")
+    defect_p4 = fem.Function(p6_space, name="E_projection_defect_p4")
+    shell_p5.x.array[:] = p5_lift.x.array - p4_lift.x.array
+    shell_p6.x.array[:] = p6_field.x.array - p5_lift.x.array
+    defect_p4.x.array[:] = p6_field.x.array - p4_lift.x.array
+    for field in (shell_p5, shell_p6, defect_p4):
+        field.x.scatter_forward()
+
+    global_ids, high_energy, high_closure = _owned_cell_contributions(
+        p6_field
+    )
+    shell5_ids, shell5_energy, shell5_closure = (
+        _owned_cell_contributions(shell_p5)
+    )
+    shell6_ids, shell6_energy, shell6_closure = (
+        _owned_cell_contributions(shell_p6)
+    )
+    defect4_ids, defect4_energy, defect4_closure = (
+        _owned_cell_contributions(defect_p4)
+    )
+    if not (
+        np.array_equal(global_ids, shell5_ids)
+        and np.array_equal(global_ids, shell6_ids)
+        and np.array_equal(global_ids, defect4_ids)
+    ):
+        raise RuntimeError("projection sensor cell identities are not aligned")
+
+    canonical_ids, _records, ordered_keys = canonical_owned_cell_ids(msh)
+    mesh_geometry_sha256 = geometry_key_sha256(ordered_keys)
+    shell5_dimension = int(p5_element.dim) - int(
+        p4_space.element.basix_element.dim
+    )
+    shell6_dimension = int(p6_element.dim) - int(p5_element.dim)
+    if shell5_dimension <= 0 or shell6_dimension <= 0:
+        raise RuntimeError("p4/p5/p6 element dimensions are not nested")
+    shell5_rms = np.sqrt(shell5_energy / shell5_dimension)
+    shell6_rms = np.sqrt(shell6_energy / shell6_dimension)
+    local_high_scale = float(np.max(np.sqrt(high_energy), initial=0.0))
+    global_high_scale = float(comm.allreduce(local_high_scale, op=MPI.MAX))
+    shell_floor = max(
+        1.0e-12 * global_high_scale,
+        np.finfo(np.float64).tiny,
+    )
+    shell_ratio_resolved = (shell5_rms > shell_floor) | (
+        shell6_rms > shell_floor
+    )
+    hierarchical_decay_ratio = np.where(
+        shell_ratio_resolved,
+        shell6_rms / np.maximum(shell5_rms, shell_floor),
+        0.0,
+    )
+    p4_relative_defect = np.sqrt(
+        defect4_energy / np.maximum(high_energy, np.finfo(float).tiny)
+    )
+    p5_relative_defect = np.sqrt(
+        shell6_energy / np.maximum(high_energy, np.finfo(float).tiny)
+    )
+
+    high_coefficient_energy = _cell_coefficient_energies(p6_field)
+    shell5_coefficient_energy = _cell_coefficient_energies(shell_p5)
+    shell6_coefficient_energy = _cell_coefficient_energies(shell_p6)
+    shell5_coefficient_rms = np.sqrt(
+        shell5_coefficient_energy / shell5_dimension
+    )
+    shell6_coefficient_rms = np.sqrt(
+        shell6_coefficient_energy / shell6_dimension
+    )
+    coefficient_floor = max(
+        1.0e-12
+        * float(
+            comm.allreduce(
+                float(
+                    np.max(
+                        np.sqrt(high_coefficient_energy),
+                        initial=0.0,
+                    )
+                ),
+                op=MPI.MAX,
+            )
+        ),
+        np.finfo(np.float64).tiny,
+    )
+    coefficient_ratio_resolved = (
+        shell5_coefficient_rms > coefficient_floor
+    ) | (shell6_coefficient_rms > coefficient_floor)
+    coefficient_decay_ratio = np.where(
+        coefficient_ratio_resolved,
+        shell6_coefficient_rms
+        / np.maximum(shell5_coefficient_rms, coefficient_floor),
+        0.0,
+    )
+
+    reconstructed = (
+        p4_lift.x.array + shell_p5.x.array + shell_p6.x.array
+    )
+    local_reconstruction_error = float(
+        np.linalg.norm(p6_field.x.array - reconstructed)
+    )
+    local_field_norm = float(np.linalg.norm(p6_field.x.array))
+    reconstruction_error = math.sqrt(
+        comm.allreduce(local_reconstruction_error**2, op=MPI.SUM)
+    )
+    field_norm = math.sqrt(
+        comm.allreduce(local_field_norm**2, op=MPI.SUM)
+    )
+    reconstruction_relative_error = reconstruction_error / max(
+        field_norm,
+        np.finfo(float).tiny,
+    )
+
+    def snapshot(name: str, values: np.ndarray) -> dict[str, Any]:
+        return build_cell_indicator_snapshot(
+            comm,
+            canonical_ids,
+            np.asarray(values, dtype=np.float64),
+            indicator_name=name,
+            mesh_geometry_sha256=mesh_geometry_sha256,
+        )
+
+    snapshots = {
+        "shell_p5_energy": snapshot(
+            "hierarchical_shell_p5_L2_plus_h2curl_energy",
+            shell5_energy,
+        ),
+        "shell_p6_energy": snapshot(
+            "hierarchical_shell_p6_L2_plus_h2curl_energy",
+            shell6_energy,
+        ),
+        "hierarchical_decay_ratio": snapshot(
+            "hierarchical_shell_p6_over_p5_rms_decay",
+            hierarchical_decay_ratio,
+        ),
+        "hierarchical_decay_resolved": snapshot(
+            "hierarchical_shell_decay_resolved_mask",
+            shell_ratio_resolved.astype(np.float64),
+        ),
+        "coefficient_decay_ratio": snapshot(
+            "hierarchical_coefficient_shell_p6_over_p5_rms_decay",
+            coefficient_decay_ratio,
+        ),
+        "coefficient_decay_resolved": snapshot(
+            "hierarchical_coefficient_decay_resolved_mask",
+            coefficient_ratio_resolved.astype(np.float64),
+        ),
+        "p4_relative_projection_defect": snapshot(
+            "global_conforming_p4_relative_projection_defect",
+            p4_relative_defect,
+        ),
+        "p5_relative_projection_defect": snapshot(
+            "global_conforming_p5_relative_projection_defect",
+            p5_relative_defect,
+        ),
+    }
+    snapshot_hashes = {
+        name: value["canonical_ids_and_values_sha256"]
+        for name, value in snapshots.items()
+    }
+    elapsed = float(
+        comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
+    )
+    rss_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return {
+        "schema_version": "task035b.p6-hcurl-local-hp-signals.v1",
+        "status": "p6_hcurl_projection_signals_pass",
+        "pass": bool(reconstruction_relative_error <= 1.0e-12),
+        "ordinary_default_changed": False,
+        "mesh_geometry_sha256": mesh_geometry_sha256,
+        "cell_count": int(len(ordered_keys)),
+        "degrees": {"lower": 4, "intermediate": 5, "high": 6},
+        "element_dimensions": {
+            "p4": int(p4_space.element.basix_element.dim),
+            "p5": int(p5_element.dim),
+            "p6": int(p6_element.dim),
+            "shell_p5": shell5_dimension,
+            "shell_p6": shell6_dimension,
+        },
+        "positive_gram": "L2_plus_cell_diameter_squared_curl_energy",
+        "hierarchy_definition": (
+            "global conforming nested interpolation shells; no Basix "
+            "basis-index hierarchy is assumed"
+        ),
+        "projection_definition": (
+            "p6 field interpolated to a global conforming p4/p5 space and "
+            "lifted back to p6, preserving shared trace moments"
+        ),
+        "shell_significance_floor": shell_floor,
+        "coefficient_significance_floor": coefficient_floor,
+        "reconstruction_relative_coefficient_error": (
+            reconstruction_relative_error
+        ),
+        "energy_closures": {
+            "p6_field": high_closure,
+            "shell_p5": shell5_closure,
+            "shell_p6": shell6_closure,
+            "p4_projection_defect": defect4_closure,
+        },
+        "snapshots": snapshots,
+        "snapshot_hashes": snapshot_hashes,
+        "diagnostic_wall_seconds": elapsed,
+        "process_peak_rss_kib_before": int(rss_before),
+        "process_peak_rss_kib_after": int(rss_after),
+        "limitations": [
+            "global p6 is the discrete reference, not continuum truth",
+            "interpolation shells are nested but not G-orthogonalized",
+            "projection defect is a primal smoothness signal, not goal error",
+        ],
+    }
+
+
 def localize_global_two_level_correction(
     coarse_field: fem.Function,
     enriched_field: fem.Function,
     *,
     theta: float = 0.5,
     interpolation_padding: float = 1.0e-10,
+    include_p6_projection_signals: bool = False,
 ) -> dict[str, Any]:
     """Interpolate a solved coarse H(curl) field and localize its correction."""
 
@@ -235,7 +523,7 @@ def localize_global_two_level_correction(
     ownership_counts = [int(value) for value in comm.allgather(len(ids))]
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     rss_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    return {
+    result = {
         "schema_version": "task035.actual-global-two-level-r5.v2",
         "estimator": "R5_actual_global_two_level_correction_energy",
         "formal_hierarchical_fe_r5": True,
@@ -271,6 +559,14 @@ def localize_global_two_level_correction(
             "same_communicator": True,
         },
     }
+    if include_p6_projection_signals:
+        result["p6_local_hp_signals"] = (
+            localize_p6_hcurl_projection_signals(
+                coarse_field,
+                enriched_field,
+            )
+        )
+    return result
 
 
 def _require_official_summary(summary: dict[str, Any], label: str) -> None:
@@ -305,6 +601,7 @@ def run_target_global_two_level_r5(
     static_condensation_degrees: tuple[int, ...] = (),
     assembly_time_condensation_degrees: tuple[int, ...] = (),
     floquet_slave_elimination_degrees: tuple[int, ...] = (),
+    include_p6_projection_signals: bool = False,
 ) -> dict[str, Any]:
     """Solve the fixed Task034 target twice and compute an actual global R5."""
 
@@ -434,6 +731,15 @@ def run_target_global_two_level_r5(
         theta=float(theta),
     )
     progress("actual_r5_localization", "end")
+    if include_p6_projection_signals:
+        progress("actual_r5_p6_projection_signals", "begin")
+        estimate["p6_local_hp_signals"] = (
+            localize_p6_hcurl_projection_signals(
+                captures["coarse"]["field"],
+                captures["enriched"]["field"],
+            )
+        )
+        progress("actual_r5_p6_projection_signals", "end")
     observable_names = ("R_total", "T_total", "A_volume_total")
     observable_delta = math.sqrt(
         sum(
@@ -512,6 +818,9 @@ def run_target_global_two_level_r5(
         "floquet_slave_elimination_degrees": [
             int(value) for value in floquet_slave_elimination_degrees
         ],
+        "p6_projection_signals_requested": bool(
+            include_p6_projection_signals
+        ),
         "official_observable_delta_l2": float(observable_delta),
         "R5": estimate,
         "elapsed_seconds": float(
