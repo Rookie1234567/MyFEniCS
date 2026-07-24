@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 import unittest
+from unittest import mock
 
 import dolfinx_mpc
 import numpy as np
@@ -448,6 +449,9 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         audit = candidate.build_audit
         self.assertEqual(audit["owned_cell_count_global"], 2)
         self.assertEqual(audit["raw_tensor_class_count_sum"], 1)
+        self.assertEqual(audit["raw_tensor_class_count_global_unique"], 1)
+        self.assertEqual(audit["raw_tensor_class_use_count_sum"], 1)
+        self.assertFalse(audit["raw_tensor_cross_rank_dedup_active"])
         self.assertEqual(audit["cell_kernel_evaluation_fraction"], 0.5)
         candidate.destroy()
 
@@ -875,6 +879,26 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             candidate.build_audit["owned_cell_count_global"],
             2,
         )
+        self.assertEqual(
+            candidate.build_audit["raw_tensor_class_count_sum"],
+            1,
+        )
+        self.assertEqual(
+            candidate.build_audit["raw_tensor_class_count_global_unique"],
+            1,
+        )
+        self.assertEqual(
+            candidate.build_audit["raw_tensor_class_use_count_sum"],
+            2,
+        )
+        self.assertTrue(
+            candidate.build_audit["raw_tensor_cross_rank_dedup_active"]
+        )
+        self.assertTrue(
+            candidate.build_audit[
+                "raw_tensor_policy_signatures_identical"
+            ]
+        )
 
         difference.destroy()
         manual_difference.destroy()
@@ -883,6 +907,61 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         zero_rhs.destroy()
         full.destroy()
         candidate.destroy()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 collective raw-tensor owner failure check",
+    )
+    def test_mpi2_raw_tensor_owner_failure_is_collective(self) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        tdim = msh.topology.dim
+        owned_cells = msh.topology.index_map(tdim).size_local
+        cell_tags = mesh.meshtags(
+            msh,
+            tdim,
+            np.arange(owned_cells, dtype=np.int32),
+            np.ones(owned_cells, dtype=np.int32),
+        )
+        V = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                2,
+                dtype=default_real_type,
+            ),
+        )
+        u = ufl.TrialFunction(V)
+        v = ufl.TestFunction(V)
+        dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+        compiled = fem.form(ufl.inner(u, v) * dx(1))
+        original = assembly_time._tabulate_raw_tensor_class
+
+        def injected_failure(*args, **kwargs):
+            raise RuntimeError("injected owner failure")
+
+        replacement = injected_failure if comm.rank == 0 else original
+        with mock.patch.object(
+            assembly_time,
+            "_tabulate_raw_tensor_class",
+            replacement,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "rank 0: RuntimeError: injected owner failure",
+            ):
+                build_unconstrained_assembly_time_condensation(
+                    compiled,
+                    V,
+                    cell_tags,
+                )
 
     @unittest.skipUnless(
         MPI.COMM_WORLD.size in {2, 8},

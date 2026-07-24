@@ -20,6 +20,7 @@ the default elsewhere.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from time import perf_counter
 from typing import Any
 
@@ -515,6 +516,254 @@ def _tabulate_cell_tensor(
     return tensor
 
 
+def _tabulate_raw_tensor_class(
+    compiled_form,
+    kernels: dict[int, Any],
+    coordinates: np.ndarray,
+    *,
+    tag: int,
+    dimension: int,
+) -> np.ndarray:
+    tensor = np.zeros((dimension, dimension), dtype=np.complex128)
+    default_kernel = kernels.get(-1)
+    if default_kernel is not None:
+        tensor += _tabulate_cell_tensor(
+            compiled_form,
+            default_kernel,
+            coordinates,
+            dimension,
+        )
+    tagged_kernel = kernels.get(int(tag))
+    if tagged_kernel is not None:
+        tensor += _tabulate_cell_tensor(
+            compiled_form,
+            tagged_kernel,
+            coordinates,
+            dimension,
+        )
+    if default_kernel is None and tagged_kernel is None:
+        raise ValueError(
+            f"compiled form has no default or tagged kernel for tag {tag}"
+        )
+    return tensor
+
+
+def _global_raw_tensor_cache(
+    comm,
+    local_class_coordinates: dict[tuple[Any, ...], np.ndarray],
+    policy_forms: dict[
+        str,
+        tuple[Any, dict[int, Any], int],
+    ],
+) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
+    """Evaluate each raw tensor class once globally, then broadcast it.
+
+    Every rank participates in the deterministic class order.  Only ranks
+    owning cells in a class retain its tensor after the broadcast.
+    """
+
+    local_policy_signature = {
+        policy: {
+            "dimension": int(dimension),
+            "kernel_ids": tuple(sorted(int(key) for key in kernels)),
+            "dtype": str(np.dtype(compiled_form.dtype)),
+            "element_hash": int(
+                compiled_form.function_spaces[0].element.basix_element.hash()
+            ),
+            "ufcx_form_signature": compiled_form.module.ffi.string(
+                compiled_form.ufcx_form.signature
+            ).decode(
+                "ascii"
+            ),
+        }
+        for policy, (compiled_form, kernels, dimension) in policy_forms.items()
+    }
+    policy_signatures = comm.allgather(local_policy_signature)
+    if any(
+        signature != policy_signatures[0]
+        for signature in policy_signatures[1:]
+    ):
+        raise RuntimeError(
+            "raw tensor FFCx policy signatures differ across MPI ranks"
+        )
+    packets = comm.allgather(
+        tuple(
+            (key, np.asarray(coordinates, dtype=np.float64))
+            for key, coordinates in local_class_coordinates.items()
+        )
+    )
+    global_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
+    ranks_by_class: dict[tuple[Any, ...], list[int]] = {}
+    for rank, packet in enumerate(packets):
+        for key, coordinates in packet:
+            canonical = np.asarray(coordinates, dtype=np.float64)
+            previous = global_coordinates.get(key)
+            if previous is not None and not np.array_equal(
+                previous,
+                canonical,
+            ):
+                raise RuntimeError(
+                    "raw tensor class has inconsistent canonical geometry "
+                    "across MPI ranks"
+                )
+            global_coordinates.setdefault(key, canonical)
+            ranks_by_class.setdefault(key, []).append(rank)
+
+    ordered_keys = sorted(global_coordinates)
+    owner_loads = [0] * comm.size
+    owner_by_class: dict[tuple[Any, ...], int] = {}
+    for key in sorted(
+        ordered_keys,
+        key=lambda value: (
+            -(
+                int(policy_forms[str(value[0])][2]) ** 2
+                * (
+                    int(-1 in policy_forms[str(value[0])][1])
+                    + int(int(value[1]) in policy_forms[str(value[0])][1])
+                )
+            ),
+            value,
+        ),
+    ):
+        owner = min(range(comm.size), key=lambda rank: (owner_loads[rank], rank))
+        owner_by_class[key] = int(owner)
+        owner_loads[owner] += (
+            int(policy_forms[str(key[0])][2]) ** 2
+            * (
+                int(-1 in policy_forms[str(key[0])][1])
+                + int(int(key[1]) in policy_forms[str(key[0])][1])
+            )
+        )
+    cache: dict[tuple[Any, ...], np.ndarray] = {}
+    local_kernel_seconds = 0.0
+    local_broadcast_seconds = 0.0
+    local_evaluations = 0
+    logical_broadcast_bytes = 0
+    local_keys = set(local_class_coordinates)
+    locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
+    local_kernel_error = None
+    try:
+        for key in ordered_keys:
+            if comm.rank != owner_by_class[key]:
+                continue
+            policy = str(key[0])
+            if policy not in policy_forms:
+                raise RuntimeError(f"unknown raw tensor policy {policy!r}")
+            compiled_form, kernels, dimension = policy_forms[policy]
+            kernel_started = perf_counter()
+            locally_evaluated[key] = _tabulate_raw_tensor_class(
+                compiled_form,
+                kernels,
+                global_coordinates[key],
+                tag=int(key[1]),
+                dimension=int(dimension),
+            )
+            local_kernel_seconds += perf_counter() - kernel_started
+            local_evaluations += 1
+    except Exception as error:
+        local_kernel_error = f"{type(error).__name__}: {error}"
+    owner_sync_started = perf_counter()
+    kernel_errors = comm.allgather(local_kernel_error)
+    owner_sync_seconds = perf_counter() - owner_sync_started
+    if any(error is not None for error in kernel_errors):
+        raise RuntimeError(
+            "global raw tensor evaluation failed before broadcast: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(kernel_errors)
+                if error is not None
+            )
+        )
+
+    for key in ordered_keys:
+        policy = str(key[0])
+        if policy not in policy_forms:
+            raise RuntimeError(f"unknown raw tensor policy {policy!r}")
+        _compiled_form, _kernels, dimension = policy_forms[policy]
+        owner = owner_by_class[key]
+        if comm.rank == owner:
+            tensor = locally_evaluated.pop(key)
+        else:
+            tensor = np.empty(
+                (int(dimension), int(dimension)),
+                dtype=np.complex128,
+            )
+        broadcast_started = perf_counter()
+        comm.Bcast(tensor, root=owner)
+        local_broadcast_seconds += perf_counter() - broadcast_started
+        logical_broadcast_bytes += int(tensor.nbytes * (comm.size - 1))
+        if key in local_keys:
+            cache[key] = tensor
+
+    evaluation_count = int(
+        comm.allreduce(local_evaluations, op=MPI.SUM)
+    )
+    use_count = int(
+        comm.allreduce(len(local_class_coordinates), op=MPI.SUM)
+    )
+    unique_count = len(global_coordinates)
+    if evaluation_count != unique_count:
+        raise RuntimeError(
+            "global raw tensor evaluation count does not match unique classes"
+        )
+    if set(cache) != local_keys:
+        raise RuntimeError("global raw tensor cache is incomplete on this rank")
+    return cache, {
+        "raw_tensor_class_count_sum": evaluation_count,
+        "raw_tensor_class_use_count_sum": use_count,
+        "raw_tensor_class_count_global_unique": unique_count,
+        "raw_tensor_global_owner_policy": (
+            "deterministic_dimension_squared_greedy_all_mpi_ranks"
+        ),
+        "raw_tensor_owner_cost_loads": owner_loads,
+        "raw_tensor_policy_signatures_identical": True,
+        "raw_tensor_owner_evaluation_sync_seconds_max": float(
+            comm.allreduce(owner_sync_seconds, op=MPI.MAX)
+        ),
+        "raw_tensor_cross_rank_dedup_active": bool(
+            comm.size > 1 and use_count > unique_count
+        ),
+        "raw_tensor_class_owner_ranks": {
+            repr(key): int(owner_by_class[key])
+            for key in sorted(global_coordinates)
+        },
+        "raw_tensor_class_user_rank_counts": {
+            repr(key): len(ranks_by_class[key])
+            for key in sorted(global_coordinates)
+        },
+        "raw_tensor_classes": [
+            {
+                "policy": str(key[0]),
+                "material_tag": int(key[1]),
+                "cell_widths": [float(value) for value in key[2:]],
+                "dimension": int(policy_forms[str(key[0])][2]),
+                "active_kernel_ids": [
+                    kernel_id
+                    for kernel_id in dict.fromkeys((-1, int(key[1])))
+                    if kernel_id in policy_forms[str(key[0])][1]
+                ],
+                "owner_rank": int(owner_by_class[key]),
+                "consumer_rank_count": len(ranks_by_class[key]),
+                "tensor_bytes": int(
+                    int(policy_forms[str(key[0])][2]) ** 2
+                    * np.dtype(np.complex128).itemsize
+                ),
+                "canonical_coordinates_sha256": hashlib.sha256(
+                    np.ascontiguousarray(
+                        global_coordinates[key],
+                        dtype=np.float64,
+                    ).tobytes()
+                ).hexdigest(),
+            }
+            for key in ordered_keys
+        ],
+        "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
+        "raw_tensor_broadcast_seconds_max": float(
+            comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
+        ),
+    }, local_kernel_seconds
+
+
 def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> None:
     """Apply the same ``T A T^T`` transformation as DOLFINx assembly."""
 
@@ -771,7 +1020,93 @@ def build_unconstrained_assembly_time_condensation(
 
     mesh.topology.create_entity_permutations()
     cell_permutations = mesh.topology.get_cell_permutation_info()
-    raw_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    local_class_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
+    cell_raw_metadata: list[
+        tuple[tuple[Any, ...], str, tuple[Any, ...]]
+    ] = []
+    local_metadata_error = None
+    try:
+        for cell in range(owned_cells):
+            canonical_coordinates, widths = (
+                _canonical_axis_aligned_coordinates(
+                    mesh,
+                    cell,
+                    tolerance=geometry_tolerance,
+                )
+            )
+            tag = int(tags[cell])
+            raw_key = (tag, *widths)
+            interior_policy = (
+                "high"
+                if bool(local_high_interior[cell])
+                else "low"
+            )
+            policy_raw_key = (interior_policy, *raw_key)
+            previous = local_class_coordinates.get(policy_raw_key)
+            if previous is not None and not np.array_equal(
+                previous,
+                canonical_coordinates,
+            ):
+                raise RuntimeError(
+                    "raw tensor class has inconsistent canonical geometry "
+                    "on one MPI rank"
+                )
+            local_class_coordinates.setdefault(
+                policy_raw_key,
+                canonical_coordinates,
+            )
+            cell_raw_metadata.append(
+                (raw_key, interior_policy, policy_raw_key)
+            )
+    except Exception as error:
+        local_metadata_error = f"{type(error).__name__}: {error}"
+    metadata_errors = comm.allgather(local_metadata_error)
+    if any(error is not None for error in metadata_errors):
+        condensed.destroy()
+        error_class = (
+            ValueError
+            if all(
+                error is None or error.startswith("ValueError:")
+                for error in metadata_errors
+            )
+            else TypeError
+            if all(
+                error is None or error.startswith("TypeError:")
+                for error in metadata_errors
+            )
+            else RuntimeError
+        )
+        raise error_class(
+            "raw tensor class metadata failed before global dedup: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(metadata_errors)
+                if error is not None
+            )
+        )
+    policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
+        "high": (compiled_form, kernels, dimension),
+    }
+    if regionwise_p:
+        assert regionwise_low_compiled_form is not None
+        assert low_kernels is not None
+        assert low_element is not None
+        policy_forms["low"] = (
+            regionwise_low_compiled_form,
+            low_kernels,
+            int(low_element.dim),
+        )
+    try:
+        raw_cache, raw_cache_audit, local_kernel_seconds = (
+            _global_raw_tensor_cache(
+                comm,
+                local_class_coordinates,
+                policy_forms,
+            )
+        )
+    except Exception:
+        condensed.destroy()
+        raise
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
@@ -780,72 +1115,13 @@ def build_unconstrained_assembly_time_condensation(
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
-    local_kernel_seconds = 0.0
     local_schur_seconds = 0.0
     local_insert_seconds = 0.0
-    for cell, original_dofs in enumerate(local_cell_dofs):
-        canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
-            mesh,
-            cell,
-            tolerance=geometry_tolerance,
-        )
-        tag = int(tags[cell])
-        raw_key = (tag, *widths)
-        interior_policy = (
-            "high"
-            if bool(local_high_interior[cell])
-            else "low"
-        )
-        selected_kernels = (
-            kernels
-            if interior_policy == "high"
-            else low_kernels
-        )
-        selected_dimension = (
-            dimension
-            if interior_policy == "high"
-            else int(low_element.dim)
-        )
-        assert selected_kernels is not None
-        policy_raw_key = (interior_policy, *raw_key)
-        tensor = raw_cache.get(policy_raw_key)
-        if tensor is None:
-            kernel_started = perf_counter()
-            tensor = np.zeros(
-                (selected_dimension, selected_dimension),
-                dtype=np.complex128,
-            )
-            default_kernel = selected_kernels.get(-1)
-            if default_kernel is not None:
-                tensor += _tabulate_cell_tensor(
-                    (
-                        compiled_form
-                        if interior_policy == "high"
-                        else regionwise_low_compiled_form
-                    ),
-                    default_kernel,
-                    canonical_coordinates,
-                    selected_dimension,
-                )
-            tagged_kernel = selected_kernels.get(tag)
-            if tagged_kernel is not None:
-                tensor += _tabulate_cell_tensor(
-                    (
-                        compiled_form
-                        if interior_policy == "high"
-                        else regionwise_low_compiled_form
-                    ),
-                    tagged_kernel,
-                    canonical_coordinates,
-                    selected_dimension,
-                )
-            if default_kernel is None and tagged_kernel is None:
-                condensed.destroy()
-                raise ValueError(
-                    f"compiled form has no default or tagged kernel for tag {tag}"
-                )
-            local_kernel_seconds += perf_counter() - kernel_started
-            raw_cache[policy_raw_key] = tensor
+    for cell, (original_dofs, metadata) in enumerate(
+        zip(local_cell_dofs, cell_raw_metadata, strict=True)
+    ):
+        raw_key, interior_policy, policy_raw_key = metadata
+        tensor = raw_cache[policy_raw_key]
         class_key = (
             *raw_key,
             int(cell_permutations[cell]),
@@ -1024,6 +1300,14 @@ def build_unconstrained_assembly_time_condensation(
                 class_key=class_key,
             )
         )
+    preassembly_sync_started = perf_counter()
+    comm.Barrier()
+    preassembly_sync_seconds = float(
+        comm.allreduce(
+            perf_counter() - preassembly_sync_started,
+            op=MPI.MAX,
+        )
+    )
     assembly_started = perf_counter()
     condensed.assemble()
     final_assembly_seconds = float(
@@ -1045,7 +1329,7 @@ def build_unconstrained_assembly_time_condensation(
         global_high_cells * len(interior_positions)
         + global_low_cells * low_interior_dimension
     )
-    raw_class_count = int(comm.allreduce(len(raw_cache), op=MPI.SUM))
+    raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
@@ -1120,7 +1404,7 @@ def build_unconstrained_assembly_time_condensation(
             "embedded_mpc_slave_identity_rows_allocated": False,
             "assembly_cost_avoided": True,
             "axis_aligned_affine_geometry_verified": True,
-            "raw_tensor_class_count_sum": raw_class_count,
+            **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(
                 raw_class_count / max(global_cells, 1)
@@ -1133,6 +1417,9 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "local_insert_seconds_max": float(
                 comm.allreduce(local_insert_seconds, op=MPI.MAX)
+            ),
+            "pre_final_assembly_sync_seconds_max": (
+                preassembly_sync_seconds
             ),
             "final_assembly_seconds": final_assembly_seconds,
             "trace_constraints": trace_constraints.build_audit,
