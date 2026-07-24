@@ -459,7 +459,27 @@ def _channel_key(entry: dict[str, Any]) -> tuple[str, int, int, str]:
 
 def _load_channels(path: Path) -> dict[tuple[str, int, int, str], dict]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    return {_channel_key(entry): entry for entry in payload["orders"]}
+    orders = payload["orders"]
+    channels = {_channel_key(entry): entry for entry in orders}
+    if len(channels) != len(orders):
+        raise ValueError(
+            f"diffraction authority contains duplicate identities: {path}"
+        )
+    return channels
+
+
+def _ordered_channel_identity_sha256(path: Path) -> tuple[int, str]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    identities = [
+        _channel_key(entry) for entry in payload["orders"]
+    ]
+    digest = hashlib.sha256(
+        json.dumps(
+            identities,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return len(identities), digest
 
 
 def _values_close(left: Any, right: Any, *, tolerance: float = 1.0e-13) -> bool:
@@ -484,6 +504,8 @@ def compare_diffraction_channels(
     global_p6_path: Path,
     candidate_p6_path: Path,
     significant_power_floor: float = _SIGNIFICANT_POWER_FLOOR,
+    allow_candidate_extra_modes: bool = False,
+    expected_candidate_ordered_identity_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Apply the frozen h10 p5-to-p6 band to every significant channel."""
 
@@ -494,8 +516,24 @@ def compare_diffraction_channels(
     }
     channels = {label: _load_channels(path) for label, path in paths.items()}
     identities = {label: set(values) for label, values in channels.items()}
-    if len({frozenset(value) for value in identities.values()}) != 1:
-        raise ValueError("p5, p6, and candidate diffraction identities differ")
+    reference_identities = identities["global_p6_reference"]
+    if identities["global_p5_control"] != reference_identities:
+        raise ValueError("p5 and p6 diffraction identities differ")
+    candidate_extra_identities = (
+        identities["candidate_p6"] - reference_identities
+    )
+    if allow_candidate_extra_modes:
+        if not reference_identities.issubset(
+            identities["candidate_p6"]
+        ):
+            raise ValueError(
+                "candidate diffraction identities omit frozen reference "
+                "modes"
+            )
+    elif identities["candidate_p6"] != reference_identities:
+        raise ValueError(
+            "p5, p6, and candidate diffraction identities differ"
+        )
     analytic_fields = (
         "direction",
         "medium",
@@ -514,7 +552,7 @@ def compare_diffraction_channels(
     )
     rows: list[dict[str, Any]] = []
     analytic_identity_pass = True
-    for key in sorted(identities["global_p6_reference"]):
+    for key in sorted(reference_identities):
         p5 = channels["global_p5_control"][key]
         p6 = channels["global_p6_reference"][key]
         candidate = channels["candidate_p6"][key]
@@ -589,6 +627,104 @@ def compare_diffraction_channels(
     amplitude_gate = all(
         row["complex_amplitude_pass"] for row in significant_rows
     )
+    candidate_extra_rows = [
+        channels["candidate_p6"][key]
+        for key in sorted(candidate_extra_identities)
+    ]
+
+    def finite_value(value: Any) -> bool:
+        if isinstance(value, (int, float)):
+            return math.isfinite(float(value))
+        if isinstance(value, list):
+            return all(finite_value(item) for item in value)
+        return False
+
+    extra_analytic_fields = (
+        "alpha",
+        "gamma",
+        "beta",
+        "kz",
+        "refractive_index",
+        "boundary_phase",
+    )
+    extra_mode_audit = {
+        "allowed": bool(allow_candidate_extra_modes),
+        "count": len(candidate_extra_rows),
+        "all_nonpropagating": all(
+            row.get("propagating") is False
+            for row in candidate_extra_rows
+        ),
+        "side_medium_identity_pass": all(
+            (
+                row.get("side") == "top"
+                and row.get("medium") == "air"
+            )
+            or (
+                row.get("side") == "bottom"
+                and row.get("medium") == "substrate"
+            )
+            for row in candidate_extra_rows
+        ),
+        "analytic_fields_finite": all(
+            all(
+                finite_value(row.get(field))
+                for field in extra_analytic_fields
+            )
+            for row in candidate_extra_rows
+        ),
+        "power_carrying_count_diagnostic_only": sum(
+            row.get("power_carrying") is True
+            for row in candidate_extra_rows
+        ),
+        "nonzero_power_count_diagnostic_only": sum(
+            abs(float(row.get("power_ratio", 0.0)))
+            > _POWER_TOLERANCE_FLOOR
+            for row in candidate_extra_rows
+        ),
+        "identities": [
+            {
+                "side": key[0],
+                "m": key[1],
+                "n": key[2],
+                "polarization": key[3],
+            }
+            for key in sorted(candidate_extra_identities)
+        ],
+    }
+    extra_mode_audit["pass"] = bool(
+        (
+            allow_candidate_extra_modes
+            and extra_mode_audit["count"] > 0
+            and extra_mode_audit["all_nonpropagating"]
+            and extra_mode_audit["side_medium_identity_pass"]
+            and extra_mode_audit["analytic_fields_finite"]
+        )
+        or (
+            not allow_candidate_extra_modes
+            and extra_mode_audit["count"] == 0
+        )
+    )
+    candidate_order_count, candidate_ordered_identity_sha256 = (
+        _ordered_channel_identity_sha256(paths["candidate_p6"])
+    )
+    ordered_identity_audit = {
+        "order_count": candidate_order_count,
+        "unique_identity_count": len(identities["candidate_p6"]),
+        "ordered_identity_sha256": (
+            candidate_ordered_identity_sha256
+        ),
+        "expected_ordered_identity_sha256": (
+            expected_candidate_ordered_identity_sha256
+        ),
+        "pass": (
+            candidate_order_count == len(identities["candidate_p6"])
+            and (
+                expected_candidate_ordered_identity_sha256 is None
+                or candidate_ordered_identity_sha256
+                == expected_candidate_ordered_identity_sha256
+            )
+        ),
+    }
     return {
         "schema_version": "task035b.cross-mesh-channel-comparison.v1",
         "same_code_band_definition": (
@@ -606,6 +742,8 @@ def compare_diffraction_channels(
             row["complex_amplitude_pass"] for row in significant_rows
         ),
         "analytic_channel_identity_pass": analytic_identity_pass,
+        "candidate_extra_mode_audit": extra_mode_audit,
+        "candidate_ordered_identity_audit": ordered_identity_audit,
         "significant_order_power_gate_pass": power_gate,
         "significant_complex_amplitude_gate_pass": amplitude_gate,
         "authorities": {
@@ -616,7 +754,217 @@ def compare_diffraction_channels(
             for label, path in paths.items()
         },
         "channels": rows,
-        "pass": analytic_identity_pass and power_gate and amplitude_gate,
+        "pass": (
+            analytic_identity_pass
+            and power_gate
+            and amplitude_gate
+            and extra_mode_audit["pass"]
+            and ordered_identity_audit["pass"]
+        ),
+    }
+
+
+def compare_significant_channels_to_reference_v1(
+    *,
+    candidate_path: Path,
+    reference_record_path: Path,
+    reference_record_sha256: str,
+) -> dict[str, Any]:
+    """Apply the exact frozen 12-channel v0 gate carried by reference v1.
+
+    The broader 80-channel comparison remains a useful diagnostic, but it
+    cannot define the formal Review-V1 channel identity.  This function binds
+    the candidate to the mechanically validated reference record and uses only
+    each channel's unchanged h10 p5-to-p6 acceptance tolerance.  The wider
+    numerical convergence band is never consumed as a Gate.
+    """
+
+    reference_path = Path(reference_record_path).resolve()
+    candidate_path = Path(candidate_path).resolve()
+    actual_sha256 = _sha256(reference_path)
+    if actual_sha256 != str(reference_record_sha256).lower():
+        raise ValueError("significant-channel reference v1 SHA256 mismatch")
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    convergence = reference.get("reference_convergence_summary") or {}
+    selection = reference.get("significant_channel_selection") or {}
+    manifest = reference.get("authority_manifest") or {}
+    if (
+        reference.get("schema_version")
+        != "task035b.significant-channel-reference.v1"
+        or reference.get("status")
+        != "significant_channel_reference_v1_frozen"
+        or reference.get("pass") is not True
+        or reference.get("mechanical_validation_pass") is not True
+        or selection.get("channel_count") != 12
+        or selection.get("expected_and_observed_identity_match") is not True
+        or convergence.get("all_12_channels_converged") is not True
+        or manifest.get("mechanically_validated") is not True
+    ):
+        raise ValueError(
+            "significant-channel reference v1 is not a qualified frozen "
+            "12-channel authority"
+        )
+    reference_rows: dict[
+        tuple[str, int, int, str],
+        dict[str, Any],
+    ] = {}
+    for row in reference.get("channels") or []:
+        channel = row.get("channel") or {}
+        key = (
+            str(channel.get("side")),
+            int(channel.get("m")),
+            int(channel.get("n")),
+            str(channel.get("polarization")),
+        )
+        if key in reference_rows:
+            raise ValueError(
+                "significant-channel reference v1 contains a duplicate "
+                f"channel {key}"
+            )
+        reference_rows[key] = row
+    if len(reference_rows) != 12:
+        raise ValueError(
+            "significant-channel reference v1 does not contain exactly "
+            "12 unique channels"
+        )
+
+    candidate_rows = _load_channels(candidate_path)
+    analytic_fields = (
+        "direction",
+        "medium",
+        "order_m",
+        "order_n",
+        "alpha",
+        "gamma",
+        "beta",
+        "kz",
+        "vertical_sign",
+        "propagating",
+        "power_carrying",
+        "rayleigh_warning",
+        "refractive_index",
+        "boundary_phase",
+    )
+    rows: list[dict[str, Any]] = []
+    for key in sorted(reference_rows):
+        if key not in candidate_rows:
+            raise ValueError(
+                "candidate is missing frozen significant channel "
+                f"{key}"
+            )
+        reference_row = reference_rows[key]
+        candidate = candidate_rows[key]
+        analytic_identity = reference_row.get("analytic_identity") or {}
+        analytic_match = all(
+            _values_close(
+                candidate.get(field),
+                analytic_identity.get(field),
+            )
+            for field in analytic_fields
+        )
+        center = reference_row.get("reference_center") or {}
+        gate = reference_row.get("unchanged_v0_acceptance_gate") or {}
+        if (
+            gate.get("unchanged_v0_formula_verified") is not True
+            or gate.get("uses_numerical_convergence_band") is not False
+            or gate.get("uses_h15_or_fixed_diagnostics") is not False
+        ):
+            raise ValueError(
+                "reference v1 channel does not preserve the unchanged v0 "
+                f"Gate for {key}"
+            )
+        power_tolerance = float(gate["power_absolute_tolerance"])
+        amplitude_tolerance = float(
+            gate["complex_amplitude_absolute_tolerance"]
+        )
+        reference_power = float(center["power"])
+        reference_amplitude = _complex_pair(
+            center["complex_amplitude"]
+        )
+        candidate_power = float(candidate["power_ratio"])
+        candidate_amplitude = _complex_pair(
+            candidate["outgoing_amplitude_at_boundary"]
+        )
+        power_error = abs(candidate_power - reference_power)
+        amplitude_error = abs(candidate_amplitude - reference_amplitude)
+        rows.append(
+            {
+                "side": key[0],
+                "m": key[1],
+                "n": key[2],
+                "polarization": key[3],
+                "analytic_identity_pass": analytic_match,
+                "reference_power_ratio": reference_power,
+                "candidate_power_ratio": candidate_power,
+                "candidate_vs_reference_power_absolute_error": power_error,
+                "unchanged_v0_power_tolerance": power_tolerance,
+                "power_pass": (
+                    analytic_match and power_error <= power_tolerance
+                ),
+                "reference_outgoing_amplitude_at_boundary": [
+                    reference_amplitude.real,
+                    reference_amplitude.imag,
+                ],
+                "candidate_outgoing_amplitude_at_boundary": [
+                    candidate_amplitude.real,
+                    candidate_amplitude.imag,
+                ],
+                "candidate_vs_reference_amplitude_absolute_error": (
+                    amplitude_error
+                ),
+                "unchanged_v0_complex_amplitude_tolerance": (
+                    amplitude_tolerance
+                ),
+                "complex_amplitude_pass": (
+                    analytic_match
+                    and amplitude_error <= amplitude_tolerance
+                ),
+            }
+        )
+    power_count = sum(row["power_pass"] for row in rows)
+    amplitude_count = sum(
+        row["complex_amplitude_pass"] for row in rows
+    )
+    analytic_pass = all(
+        row["analytic_identity_pass"] for row in rows
+    )
+    return {
+        "schema_version": (
+            "task035b.significant-channel-reference-v1-comparison.v1"
+        ),
+        "status": (
+            "all_12_significant_channels_pass"
+            if analytic_pass and power_count == 12 and amplitude_count == 12
+            else "significant_channel_controlled_negative"
+        ),
+        "reference_authority": {
+            "path": str(reference_path),
+            "sha256": actual_sha256,
+            "reference_payload_sha256": reference.get(
+                "reference_payload_sha256"
+            ),
+        },
+        "candidate_authority": {
+            "path": str(candidate_path),
+            "sha256": _sha256(candidate_path),
+        },
+        "frozen_significant_channel_count": 12,
+        "significant_power_pass_count": power_count,
+        "significant_complex_amplitude_pass_count": amplitude_count,
+        "all_12_significant_powers_pass": power_count == 12,
+        "all_12_significant_complex_amplitudes_pass": (
+            amplitude_count == 12
+        ),
+        "analytic_channel_identity_pass": analytic_pass,
+        "acceptance_gate": (
+            "unchanged v0 h10 p5-to-p6 absolute corrections only"
+        ),
+        "numerical_convergence_band_used_as_gate": False,
+        "thresholds_relaxed": False,
+        "channels": rows,
+        "pass": (
+            analytic_pass and power_count == 12 and amplitude_count == 12
+        ),
     }
 
 
@@ -1296,6 +1644,7 @@ __all__ = [
     "build_task034_fixed_probe_sets",
     "compare_cross_mesh_fields",
     "compare_diffraction_channels",
+    "compare_significant_channels_to_reference_v1",
     "compare_observables",
     "compare_resources",
     "sample_owned_vtu_shards",

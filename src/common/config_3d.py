@@ -78,6 +78,10 @@ class SimulationConfig3D:
     stage4_dtn_assembly: str = (
         "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
     )
+    # Research-only port convergence controls.  Zero/None preserve the
+    # reviewed ordinary auto-propagating operator exactly.
+    stage4_dtn_evanescent_buffer: int = 0
+    stage4_dtn_quadrature_degree: int | None = None
     stage4_pml_outer_bc: str = "natural"  # "natural" or "zero_tangential"
     use_floquet_xy: bool = False
     use_pml: bool = False
@@ -166,6 +170,11 @@ class SimulationConfig3D:
     # Task035b research-only exact removal of the identity rows used to embed
     # Floquet MPC slaves.  This currently requires cell static condensation.
     stage4_floquet_slave_elimination: bool = False
+    # Task035b channel-adjoint diagnostics may retain the local Schur/LU
+    # recovery cache until the solution observer runs.  Keep this disabled for
+    # ordinary and resource-authority runs so post-solve lifecycle release is
+    # not defeated by a callback closure in ``goal_context``.
+    stage4_retain_dual_recovery_context: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
     matrix_diagnostics_factorization_only: bool = False

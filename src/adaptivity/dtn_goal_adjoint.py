@@ -11,6 +11,7 @@ this code only through the explicit solution-observer research hook.
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 from dataclasses import replace
 import math
 from pathlib import Path
@@ -23,6 +24,7 @@ from petsc4py import PETSc
 from ..common.modes_3d import incident_power_3d
 from ..solvers.dtn_port_3d import (
     _gather_auxiliary_values,
+    _mode_boundary_phase,
     _mode_carries_outward_power,
     _mode_power_at_boundary,
 )
@@ -30,6 +32,69 @@ from ..solvers.dtn_port_3d import (
 
 TINY = np.finfo(float).tiny
 SUPPORTED_GOALS = ("R00_total", "R_total", "T_total")
+SUPPORTED_CHANNEL_QUANTITIES = (
+    "power",
+    "amplitude_real",
+    "amplitude_imag",
+)
+
+
+@dataclass(frozen=True)
+class DtnChannelGoal:
+    """One real-valued functional of a single canonical DtN port channel.
+
+    A complex amplitude is deliberately represented by two independent real
+    functionals.  This avoids treating a complex quantity as though it had one
+    real adjoint and makes the Hermitian-gradient convention explicit.
+    """
+
+    side: str
+    m: int
+    n: int
+    polarization: str
+    quantity: str
+
+    def __post_init__(self) -> None:
+        if self.side not in {"top", "bottom"}:
+            raise ValueError("DtN channel side must be 'top' or 'bottom'")
+        if self.quantity not in SUPPORTED_CHANNEL_QUANTITIES:
+            raise ValueError(
+                f"unsupported DtN channel quantity: {self.quantity!r}"
+            )
+        if not self.polarization:
+            raise ValueError("DtN channel polarization must be non-empty")
+
+    @property
+    def label(self) -> str:
+        prefix = "R" if self.side == "top" else "T"
+        order = f"{prefix}_m{int(self.m)}_n{int(self.n)}_{self.polarization}"
+        return f"{order}_{self.quantity}"
+
+    def as_dict(self) -> dict[str, Any]:
+        return {**asdict(self), "label": self.label}
+
+
+def task035b_failed_channel_goals() -> tuple[DtnChannelGoal, ...]:
+    """Return the independent Review-V1 failed-channel recovery goals."""
+
+    power = tuple(
+        DtnChannelGoal(side, m, 0, "s", "power")
+        for side in ("top", "bottom")
+        for m in (-2, -4, -5)
+    )
+    complex_amplitudes = (
+        ("top", -4),
+        ("top", -5),
+        ("bottom", -2),
+        ("bottom", -4),
+        ("bottom", -5),
+    )
+    components = tuple(
+        DtnChannelGoal(side, m, 0, "s", quantity)
+        for side, m in complex_amplitudes
+        for quantity in ("amplitude_real", "amplitude_imag")
+    )
+    return power + components
 
 
 def _relative_difference(left: float, right: float) -> float:
@@ -103,6 +168,168 @@ def dtn_power_goal_value(
             outgoing[index] -= incident[index]
     weights = _normalized_goal_weights(config, selected_modes, goal)
     return float(np.sum(weights * np.abs(outgoing) ** 2))
+
+
+def _channel_mode_index(modes, goal: DtnChannelGoal) -> int:
+    matches = [
+        index
+        for index, mode in enumerate(modes)
+        if (
+            mode.side == goal.side
+            and int(mode.m) == int(goal.m)
+            and int(mode.n) == int(goal.n)
+            and mode.polarization == goal.polarization
+        )
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "DtN channel goal must resolve to exactly one auxiliary mode: "
+            f"{goal.as_dict()}, matches={matches}"
+        )
+    return int(matches[0])
+
+
+def _outgoing_channel_amplitude(
+    mode,
+    auxiliary_value: complex,
+    incident_projection: complex,
+) -> complex:
+    return complex(
+        auxiliary_value - incident_projection
+        if mode.side == "top"
+        else auxiliary_value
+    )
+
+
+def dtn_channel_goal_value(
+    config,
+    modes,
+    auxiliary_values: np.ndarray,
+    incident_projections,
+    *,
+    goal: DtnChannelGoal,
+) -> float:
+    """Evaluate one Review-V1 single-channel real functional."""
+
+    selected_modes = list(modes)
+    auxiliary = np.asarray(auxiliary_values, dtype=np.complex128)
+    incident = np.asarray(incident_projections, dtype=np.complex128)
+    if (
+        len(selected_modes) != len(auxiliary)
+        or auxiliary.shape != incident.shape
+    ):
+        raise ValueError("DtN channel goal arrays are not shape-compatible")
+    index = _channel_mode_index(selected_modes, goal)
+    mode = selected_modes[index]
+    outgoing = _outgoing_channel_amplitude(
+        mode,
+        auxiliary[index],
+        incident[index],
+    )
+    if goal.quantity == "power":
+        incident_power = float(incident_power_3d(config))
+        return float(
+            _mode_power_at_boundary(mode, config, outgoing)
+            / incident_power
+        )
+    boundary_amplitude = outgoing * _mode_boundary_phase(mode, config)
+    if goal.quantity == "amplitude_real":
+        return float(boundary_amplitude.real)
+    if goal.quantity == "amplitude_imag":
+        return float(boundary_amplitude.imag)
+    raise AssertionError("validated DtN channel goal became unsupported")
+
+
+def build_dtn_channel_goal_gradient(
+    state: PETSc.Vec,
+    config,
+    goal_context: dict[str, Any],
+    *,
+    goal: DtnChannelGoal,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Build ``g`` for one channel with ``dJ(x)[dx] = Re(g^H dx)``."""
+
+    modes = list(goal_context["modes"])
+    auxiliary = np.asarray(
+        goal_context["auxiliary_values"], dtype=np.complex128
+    )
+    incident = np.asarray(
+        goal_context["incident_projections"], dtype=np.complex128
+    )
+    n_fe = int(goal_context["num_fem_dofs_after_mpc"])
+    if auxiliary.shape != incident.shape or len(modes) != len(auxiliary):
+        raise ValueError("DtN channel goal context arrays are not compatible")
+    if state.getSize() != n_fe + len(auxiliary):
+        raise ValueError(
+            "DtN channel goal context does not match the augmented system"
+        )
+    mode_index = _channel_mode_index(modes, goal)
+    mode = modes[mode_index]
+    outgoing = _outgoing_channel_amplitude(
+        mode,
+        auxiliary[mode_index],
+        incident[mode_index],
+    )
+    boundary_phase = _mode_boundary_phase(mode, config)
+    if goal.quantity == "power":
+        weight = float(
+            _mode_power_at_boundary(mode, config, 1.0 + 0.0j)
+            / incident_power_3d(config)
+        )
+        derivative = 2.0 * weight * outgoing
+        convention = "g_aux=2*w*outgoing_amplitude"
+    elif goal.quantity == "amplitude_real":
+        weight = None
+        derivative = np.conj(boundary_phase)
+        convention = "g_aux=conj(boundary_phase)"
+    elif goal.quantity == "amplitude_imag":
+        weight = None
+        derivative = 1j * np.conj(boundary_phase)
+        convention = "g_aux=i*conj(boundary_phase)"
+    else:  # pragma: no cover - protected by DtnChannelGoal validation.
+        raise AssertionError("validated DtN channel goal became unsupported")
+
+    gradient = state.duplicate()
+    gradient.set(PETSc.ScalarType(0.0))
+    global_index = int(n_fe + mode_index)
+    row_start, row_end = gradient.getOwnershipRange()
+    if row_start <= global_index < row_end:
+        gradient.setValue(
+            global_index,
+            PETSc.ScalarType(derivative),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    gradient.assemble()
+    functional_value = dtn_channel_goal_value(
+        config,
+        modes,
+        auxiliary,
+        incident,
+        goal=goal,
+    )
+    return gradient, {
+        "goal": goal.as_dict(),
+        "goal_value": functional_value,
+        "auxiliary_mode_index": mode_index,
+        "augmented_global_index": global_index,
+        "outgoing_amplitude": [
+            float(outgoing.real),
+            float(outgoing.imag),
+        ],
+        "boundary_phase": [
+            float(boundary_phase.real),
+            float(boundary_phase.imag),
+        ],
+        "power_weight": weight,
+        "gradient_norm": float(gradient.norm()),
+        "gradient_convention": f"dJ=Re(g^H dx), {convention}",
+        "canonical_channel_identity": {
+            "side": mode.side,
+            "m": int(mode.m),
+            "n": int(mode.n),
+            "polarization": mode.polarization,
+        },
+    }
 
 
 def build_dtn_power_goal_gradient(
@@ -407,6 +634,126 @@ def evaluate_actual_dtn_power_adjoints(
     }
 
 
+def evaluate_actual_dtn_channel_adjoints(
+    *,
+    linear_system: dict[str, Any],
+    dtn_result: dict[str, Any],
+    config,
+    communicator: MPI.Intracomm,
+    goals: tuple[DtnChannelGoal, ...] | None = None,
+    adjoint_observer: (
+        Callable[[DtnChannelGoal, PETSc.Vec], None] | None
+    ) = None,
+) -> dict[str, Any]:
+    """Solve and verify independent Review-V1 diffraction-channel adjoints."""
+
+    selected_goals = (
+        task035b_failed_channel_goals() if goals is None else tuple(goals)
+    )
+    if not selected_goals:
+        raise ValueError("at least one DtN channel goal is required")
+    if len({goal.label for goal in selected_goals}) != len(selected_goals):
+        raise ValueError("DtN channel adjoint labels must be unique")
+    goal_context = dtn_result.get("goal_context")
+    if not isinstance(goal_context, dict):
+        raise RuntimeError("the solved DtN system did not retain goal context")
+    matrix = linear_system.get("A")
+    right_hand_side = linear_system.get("b")
+    state = linear_system.get("x")
+    solver = linear_system.get("ksp")
+    if any(
+        value is None
+        for value in (matrix, right_hand_side, state, solver)
+    ):
+        raise RuntimeError(
+            "channel adjoints require live matrix/vector/direct-factor objects"
+        )
+    n_fe = int(goal_context["num_fem_dofs_after_mpc"])
+    n_aux = len(goal_context["modes"])
+
+    reports: dict[str, Any] = {}
+    for goal in selected_goals:
+        gradient, metadata = build_dtn_channel_goal_gradient(
+            state,
+            config,
+            goal_context,
+            goal=goal,
+        )
+
+        def evaluate(
+            candidate: PETSc.Vec,
+            selected_goal: DtnChannelGoal = goal,
+        ) -> float:
+            auxiliary = _gather_auxiliary_values(
+                candidate,
+                n_fe,
+                n_aux,
+                communicator,
+            )
+            return dtn_channel_goal_value(
+                config,
+                goal_context["modes"],
+                auxiliary,
+                goal_context["incident_projections"],
+                goal=selected_goal,
+            )
+
+        verification = verify_hermitian_discrete_adjoint(
+            matrix,
+            right_hand_side,
+            state,
+            solver,
+            gradient,
+            evaluate,
+            adjoint_observer=(
+                None
+                if adjoint_observer is None
+                else lambda vector, selected_goal=goal: adjoint_observer(
+                    selected_goal,
+                    vector,
+                )
+            ),
+        )
+        reports[goal.label] = {
+            **metadata,
+            **verification,
+            "pass": bool(verification["pass"]),
+        }
+        gradient.destroy()
+
+    passed = all(report["pass"] for report in reports.values())
+    power_count = sum(
+        goal.quantity == "power" for goal in selected_goals
+    )
+    component_count = len(selected_goals) - power_count
+    return {
+        "schema_version": "task035b.actual-dtn-channel-adjoint.v1",
+        "status": (
+            "actual_dtn_channel_adjoint_pass"
+            if passed
+            else "actual_dtn_channel_adjoint_fail"
+        ),
+        "pass": passed,
+        "canonical": False,
+        "production_qualified": False,
+        "ordinary_default_changed": False,
+        "goal_count": len(selected_goals),
+        "independent_power_goal_count": int(power_count),
+        "independent_complex_amplitude_component_goal_count": int(
+            component_count
+        ),
+        "complex_amplitude_semantics": (
+            "each complex channel uses independent real and imaginary "
+            "real-valued Hermitian adjoints"
+        ),
+        "complex_conjugation": "Hermitian A^H, never plain transpose",
+        "normalization": goal_context["normalization"],
+        "field_gather": False,
+        "auxiliary_scalar_gather_only": True,
+        "goals": reports,
+    }
+
+
 def run_target_actual_dtn_adjoint(
     out_dir: Path,
     *,
@@ -504,11 +851,17 @@ def run_target_actual_dtn_adjoint(
 
 
 __all__ = [
+    "DtnChannelGoal",
     "SUPPORTED_GOALS",
+    "SUPPORTED_CHANNEL_QUANTITIES",
+    "build_dtn_channel_goal_gradient",
     "build_dtn_power_goal_gradient",
+    "dtn_channel_goal_value",
     "dtn_power_goal_value",
+    "evaluate_actual_dtn_channel_adjoints",
     "evaluate_actual_dtn_power_adjoints",
     "run_target_actual_dtn_adjoint",
     "solve_hermitian_discrete_adjoint",
+    "task035b_failed_channel_goals",
     "verify_hermitian_discrete_adjoint",
 ]

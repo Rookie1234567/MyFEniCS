@@ -202,6 +202,14 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
     """Select outgoing top/bottom DtN modes according to the Stage-4 policy."""
 
     policy = cfg.stage4_dtn_order_policy.lower()
+    evanescent_buffer = int(cfg.stage4_dtn_evanescent_buffer)
+    if evanescent_buffer < 0:
+        raise ValueError("stage4_dtn_evanescent_buffer must be non-negative")
+    if evanescent_buffer and policy != "auto_propagating":
+        raise ValueError(
+            "stage4_dtn_evanescent_buffer is qualified only with "
+            "stage4_dtn_order_policy='auto_propagating'"
+        )
     if policy == "zero_order":
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=0, max_n_override=0)
     elif policy in {"auto_propagating", "manual"}:
@@ -212,8 +220,16 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
         auto_max_n = int(
             np.floor((n_max * cfg.k0 + abs(cfg.ky)) * (cfg.y_max - cfg.y_min) / (2.0 * np.pi) + 1.0e-12)
         )
-        max_m = auto_max_m if cfg.diffraction_order_max_m is None else max(int(cfg.diffraction_order_max_m), auto_max_m)
-        max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
+        max_m = (
+            auto_max_m
+            if cfg.diffraction_order_max_m is None
+            else max(int(cfg.diffraction_order_max_m), auto_max_m)
+        ) + evanescent_buffer
+        max_n = (
+            auto_max_n
+            if cfg.diffraction_order_max_n is None
+            else max(int(cfg.diffraction_order_max_n), auto_max_n)
+        ) + evanescent_buffer
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n)
     else:
         raise ValueError("stage4_dtn_order_policy must be 'auto_propagating', 'zero_order', or 'manual'.")
@@ -228,7 +244,14 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
             beta = order.beta_top if side == "top" else order.beta_bottom
             propagating = order.top_propagating if side == "top" else order.bottom_propagating
             rayleigh_warning = order.rayleigh_warning_top if side == "top" else order.rayleigh_warning_bottom
-            selected = (order.m == 0 and order.n == 0) or bool(propagating)
+            selected = (
+                (order.m == 0 and order.n == 0)
+                or bool(propagating)
+                or (
+                    policy == "auto_propagating"
+                    and evanescent_buffer > 0
+                )
+            )
             if policy == "manual":
                 selected = True
             if not selected:

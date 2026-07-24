@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,7 +10,10 @@ import unittest
 from mpi4py import MPI
 import numpy as np
 
-from src.common.config_3d import SI_SUBSTRATE_INDEX_EUV_13P5_NM
+from src.common.config_3d import (
+    SI_SUBSTRATE_INDEX_EUV_13P5_NM,
+    target_stage4_config,
+)
 from src.common.modes_3d import (
     incident_power_3d,
     outgoing_port_modes_3d,
@@ -84,6 +89,123 @@ class Stage4DtnModeTests(unittest.TestCase):
         self.assertIn((0, 0), propagating_orders)
         self.assertTrue(any(order != (0, 0) for order in propagating_orders))
         self.assertGreater(len(modes), 4)
+
+    def test_opt_in_evanescent_buffer_expands_operator_without_changing_default(self):
+        default_cfg = target_stage4_config(degree=6, h_nm=15.0)
+        buffered_cfg = target_stage4_config(degree=6, h_nm=15.0)
+        buffered_cfg.stage4_dtn_evanescent_buffer = 1
+        default_modes = outgoing_port_modes_3d(default_cfg)
+        buffered_modes = outgoing_port_modes_3d(buffered_cfg)
+        self.assertTrue(all(mode.propagating for mode in default_modes))
+        self.assertGreater(len(buffered_modes), len(default_modes))
+        self.assertTrue(any(not mode.propagating for mode in buffered_modes))
+        default_ids = {
+            (mode.side, mode.m, mode.n, mode.polarization)
+            for mode in default_modes
+        }
+        buffered_ids = {
+            (mode.side, mode.m, mode.n, mode.polarization)
+            for mode in buffered_modes
+        }
+        self.assertLess(default_ids, buffered_ids)
+        extra_modes = [
+            mode
+            for mode in buffered_modes
+            if (
+                mode.side,
+                mode.m,
+                mode.n,
+                mode.polarization,
+            )
+            not in default_ids
+        ]
+        self.assertEqual(len(default_modes), 80)
+        self.assertEqual(len(extra_modes), 260)
+        self.assertTrue(
+            all(not mode.propagating for mode in extra_modes)
+        )
+        self.assertEqual(
+            sum(
+                mode.side == "top"
+                and mode.power_per_unit_amplitude > 0.0
+                for mode in extra_modes
+            ),
+            0,
+        )
+        self.assertEqual(
+            sum(
+                mode.side == "bottom"
+                and mode.power_per_unit_amplitude > 0.0
+                for mode in extra_modes
+            ),
+            130,
+        )
+        ordered_ids = [
+            (mode.side, mode.m, mode.n, mode.polarization)
+            for mode in buffered_modes
+        ]
+        digest = hashlib.sha256(
+            json.dumps(
+                ordered_ids,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual(
+            digest,
+            "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629",
+        )
+        self.assertTrue(
+            math.isclose(
+            min(
+                abs(_mode_boundary_phase(mode, buffered_cfg))
+                for mode in buffered_modes
+            ),
+            4.698738560873268e-84,
+                rel_tol=1.0e-12,
+                abs_tol=0.0,
+            )
+        )
+        self.assertTrue(
+            math.isclose(
+            min(
+                _mode_projection_denominator(mode, buffered_cfg)
+                for mode in buffered_modes
+            ),
+            1.314525165643265e-164,
+                rel_tol=1.0e-12,
+                abs_tol=0.0,
+            )
+        )
+
+    def test_task034_target_default_mode_identity_is_frozen(self):
+        cfg = target_stage4_config(degree=6, h_nm=15.0)
+        modes = outgoing_port_modes_3d(cfg)
+        ordered_ids = [
+            (mode.side, mode.m, mode.n, mode.polarization)
+            for mode in modes
+        ]
+        digest = hashlib.sha256(
+            json.dumps(
+                ordered_ids,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual(len(ordered_ids), 80)
+        self.assertEqual(
+            digest,
+            "f039dd14264f7bc2987e75e311ef338682388b1f17a4ea194702ff888f4c7a21",
+        )
+        self.assertEqual(cfg.stage4_dtn_evanescent_buffer, 0)
+        self.assertIsNone(cfg.stage4_dtn_quadrature_degree)
+        self.assertFalse(cfg.stage4_retain_dual_recovery_context)
+
+    def test_evanescent_buffer_rejects_incompatible_policy(self):
+        cfg = _dtn_cfg(
+            stage4_dtn_order_policy="zero_order",
+            stage4_dtn_evanescent_buffer=1,
+        )
+        with self.assertRaisesRegex(ValueError, "qualified only"):
+            outgoing_port_modes_3d(cfg)
 
     def test_zero_order_policy_keeps_only_zero_order_ports(self):
         cfg = _dtn_cfg(stage4_dtn_order_policy="zero_order", diffraction_zero_order_only=False)

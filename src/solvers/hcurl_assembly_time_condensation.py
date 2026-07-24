@@ -22,7 +22,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 from time import perf_counter
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Mapping
 
 import numpy as np
 from mpi4py import MPI
@@ -78,6 +79,13 @@ class AssemblyTimeCondensedSystem:
     interior_solution_embedding_by_class: dict[
         tuple[Any, ...], np.ndarray
     ]
+    dual_interior_from_trace_by_class: dict[
+        tuple[Any, ...], np.ndarray
+    ]
+    appended_dual_interior_by_cell: tuple[
+        dict[int, np.ndarray], ...
+    ]
+    appended_dual_rows_registered: set[int]
     trace_from_interior_rhs_by_class: dict[tuple[Any, ...], np.ndarray]
     interior_residual_projection_by_class: dict[
         tuple[Any, ...], np.ndarray
@@ -1502,6 +1510,7 @@ def build_unconstrained_assembly_time_condensation(
     lu_cache: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]] = {}
     rhs_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    dual_recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
@@ -1641,12 +1650,13 @@ def build_unconstrained_assembly_time_condensation(
                 A_ti.conj().T,
                 trans=2,
             )
+            dual_interior_from_trace = (
+                interior_embedding_from_trace
+                - interior_embedding_from_interior
+                @ adjoint_trace_solution
+            )
             trace_from_interior_rhs = (
-                interior_embedding_from_trace.conj().T
-                - (
-                    interior_embedding_from_interior
-                    @ adjoint_trace_solution
-                ).conj().T
+                dual_interior_from_trace.conj().T
             )
             schur = A_tt + A_ti @ active_interior_from_trace
             local_schur_seconds += perf_counter() - schur_started
@@ -1659,6 +1669,7 @@ def build_unconstrained_assembly_time_condensation(
             solution_embedding_cache[class_key] = (
                 interior_embedding_from_interior
             )
+            dual_recovery_cache[class_key] = dual_interior_from_trace
             rhs_trace_cache[class_key] = trace_from_interior_rhs
             residual_projection_cache[class_key] = (
                 interior_embedding_from_interior.conj().T
@@ -1732,6 +1743,11 @@ def build_unconstrained_assembly_time_condensation(
         interior_lu_by_class=lu_cache,
         interior_rhs_projection_by_class=rhs_projection_cache,
         interior_solution_embedding_by_class=solution_embedding_cache,
+        dual_interior_from_trace_by_class=dual_recovery_cache,
+        appended_dual_interior_by_cell=tuple(
+            {} for _cell in recovery_maps
+        ),
+        appended_dual_rows_registered=set(),
         trace_from_interior_rhs_by_class=rhs_trace_cache,
         interior_residual_projection_by_class=residual_projection_cache,
         full_rows=full_rows,
@@ -2070,6 +2086,338 @@ def recover_owned_cell_interiors(
     return tuple(result)
 
 
+def _global_reduced_dual_values(
+    condensed: AssemblyTimeCondensedSystem,
+    reduced_adjoint: PETSc.Vec | np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return active-trace and appended adjoint values on every rank."""
+
+    reduced_rows = int(condensed.active_rows + condensed.appended_rows)
+    if isinstance(reduced_adjoint, np.ndarray):
+        values = np.asarray(reduced_adjoint, dtype=np.complex128)
+        if values.shape != (reduced_rows,):
+            raise ValueError(
+                "reduced adjoint array must contain the active trace and "
+                "every appended row"
+            )
+        return (
+            values[: condensed.active_rows].copy(),
+            values[condensed.active_rows :].copy(),
+        )
+
+    if int(reduced_adjoint.getSize()) != reduced_rows:
+        raise ValueError(
+            "reduced adjoint must contain the active trace followed by "
+            "every appended row"
+        )
+    comm = condensed.matrix.getComm().tompi4py()
+    row_start, row_end = map(
+        int,
+        reduced_adjoint.getOwnershipRange(),
+    )
+    local_ids = np.arange(row_start, row_end, dtype=np.int64)
+    local_values = np.asarray(
+        reduced_adjoint.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    packets = comm.allgather((local_ids, local_values))
+    global_values = np.empty(reduced_rows, dtype=np.complex128)
+    seen = np.zeros(reduced_rows, dtype=bool)
+    for ids, packet_values in packets:
+        if len(ids):
+            global_values[ids] = packet_values
+            seen[ids] = True
+    if not np.all(seen):
+        raise RuntimeError(
+            "distributed reduced adjoint does not close globally"
+        )
+    return (
+        global_values[: condensed.active_rows],
+        global_values[condensed.active_rows :],
+    )
+
+
+def register_appended_dual_interior_coupling(
+    condensed: AssemblyTimeCondensedSystem,
+    appended_row: int,
+    full_left_vectors: tuple[PETSc.Vec, ...],
+    coefficients: tuple[complex, ...],
+    *,
+    row_scale: complex,
+) -> None:
+    """Cache one exact auxiliary-row contribution to eliminated duals.
+
+    If the full augmented row is
+    ``C = row_scale * (sum_j coefficients[j] * l_j)^H``, this stores the
+    nonzero owned-cell columns
+
+    ``-E_ii A_ii^{-H} C_i^H``.
+
+    The cache is deliberately populated by the caller only for an explicit
+    adjoint-recovery retain opt-in.  No full FE or trace matrix is allocated.
+    """
+
+    appended_row = int(appended_row)
+    if not 0 <= appended_row < condensed.appended_rows:
+        raise ValueError("appended dual row is outside the reduced system")
+    if appended_row in condensed.appended_dual_rows_registered:
+        raise ValueError("appended dual row was already registered")
+    if (
+        not full_left_vectors
+        or len(full_left_vectors) != len(coefficients)
+    ):
+        raise ValueError(
+            "full left vectors and coefficients must be nonempty and aligned"
+        )
+    ownership = None
+    local_arrays: list[np.ndarray] = []
+    for vector in full_left_vectors:
+        if int(vector.getSize()) != int(condensed.full_rows):
+            raise ValueError(
+                "appended left vector differs from the full FE space"
+            )
+        vector_ownership = tuple(map(int, vector.getOwnershipRange()))
+        if ownership is None:
+            ownership = vector_ownership
+        elif vector_ownership != ownership:
+            raise ValueError(
+                "appended left vectors have different ownership ranges"
+            )
+        local_arrays.append(
+            np.asarray(
+                vector.getArray(readonly=True),
+                dtype=np.complex128,
+            )
+        )
+    assert ownership is not None
+    row_start, row_end = ownership
+    conjugate_scale = np.conj(complex(row_scale))
+    for cell_index, cell in enumerate(condensed.cell_recovery_maps):
+        rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
+        if len(rows) and (
+            int(rows.min()) < row_start or int(rows.max()) >= row_end
+        ):
+            raise ValueError(
+                "owned cell-interior appended coupling rows are outside "
+                "local ownership"
+            )
+        local_rows = rows - row_start
+        combined = np.zeros(len(rows), dtype=np.complex128)
+        for coefficient, values in zip(
+            coefficients,
+            local_arrays,
+            strict=True,
+        ):
+            combined += complex(coefficient) * values[local_rows]
+        if not np.any(combined):
+            continue
+        projected = (
+            condensed.interior_rhs_projection_by_class[cell.class_key]
+            @ combined
+        )
+        recovered = (
+            -conjugate_scale
+            * (
+                condensed.interior_solution_embedding_by_class[
+                    cell.class_key
+                ]
+                @ lu_solve(
+                    condensed.interior_lu_by_class[cell.class_key],
+                    projected,
+                    trans=2,
+                )
+            )
+        )
+        if np.any(recovered):
+            condensed.appended_dual_interior_by_cell[cell_index][
+                appended_row
+            ] = np.asarray(recovered, dtype=np.complex128)
+    condensed.appended_dual_rows_registered.add(appended_row)
+
+
+def _assert_appended_dual_recovery_complete(
+    condensed: AssemblyTimeCondensedSystem,
+) -> None:
+    expected = tuple(range(condensed.appended_rows))
+    local = tuple(sorted(condensed.appended_dual_rows_registered))
+    packets = (
+        condensed.matrix.getComm().tompi4py().allgather(local)
+    )
+    if any(packet != expected for packet in packets):
+        raise RuntimeError(
+            "exact augmented dual recovery is unavailable because appended "
+            "interior coupling rows are incomplete"
+        )
+
+
+def recover_full_dual_from_active_trace(
+    condensed: AssemblyTimeCondensedSystem,
+    reduced_adjoint: PETSc.Vec | np.ndarray,
+) -> PETSc.Vec:
+    """Recover the full oriented complex-Hermitian dual without a full matrix.
+
+    The physically active trace is expanded with the exact Floquet constraint
+    map ``z_t_full = C_t z_t``.  On every owned cell, the eliminated dual is
+
+    ``z_i = -A_ii^{-H}(A_ti^H z_t_full + C_i^H z_aux)``.
+
+    Regionwise reduced-interior embeddings and DOLFINx/Basix cell orientation
+    transforms are already incorporated in the cached class recovery matrix.
+    The returned PETSc vector uses the original unconstrained global FE
+    numbering and contains owned trace and cell-interior values only; it does
+    not allocate or assemble a full global operator.
+    """
+
+    _assert_appended_dual_recovery_complete(condensed)
+    active, appended = _global_reduced_dual_values(
+        condensed,
+        reduced_adjoint,
+    )
+    comm = condensed.matrix.getComm().tompi4py()
+    local_interior = [
+        np.asarray(cell.interior_original_dofs, dtype=np.int64)
+        for cell in condensed.cell_recovery_maps
+    ]
+    local_original = np.concatenate(
+        (
+            np.asarray(
+                condensed.owned_trace_original_dofs,
+                dtype=np.int64,
+            ),
+            *local_interior,
+        )
+    )
+    if len(np.unique(local_original)) != len(local_original):
+        raise RuntimeError(
+            "owned trace and cell-interior dual rows are not disjoint"
+        )
+    local_original.sort()
+    counts = comm.allgather(int(len(local_original)))
+    expected_start = int(sum(counts[: comm.rank]))
+    expected_end = expected_start + int(len(local_original))
+    if (
+        expected_end > expected_start
+        and not np.array_equal(
+            local_original,
+            np.arange(expected_start, expected_end, dtype=np.int64),
+        )
+    ):
+        raise RuntimeError(
+            "original FE dual numbering does not match PETSc ownership"
+        )
+    if int(sum(counts)) != int(condensed.full_rows):
+        raise RuntimeError(
+            "owned full dual rows do not cover the original FE space"
+        )
+
+    full_dual = PETSc.Vec().createMPI(
+        (len(local_original), int(condensed.full_rows)),
+        comm=condensed.matrix.getComm(),
+    )
+    full_dual.setName("assembly_time_recovered_full_dual")
+    owned_trace = np.asarray(
+        condensed.owned_trace_original_dofs,
+        dtype=np.int64,
+    )
+    if len(owned_trace):
+        trace_values = np.empty(len(owned_trace), dtype=np.complex128)
+        for index, original in enumerate(owned_trace):
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[
+                    int(original)
+                ]
+            )
+            trace_values[index] = np.dot(
+                coefficients,
+                active[active_ids],
+            )
+        full_dual.setValues(
+            _idx(owned_trace),
+            np.asarray(trace_values, dtype=PETSc.ScalarType),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+
+    for cell_index, cell in enumerate(condensed.cell_recovery_maps):
+        local_trace = np.empty(
+            len(cell.trace_original_dofs),
+            dtype=np.complex128,
+        )
+        for row, original in enumerate(cell.trace_original_dofs):
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[
+                    int(original)
+                ]
+            )
+            local_trace[row] = np.dot(
+                coefficients,
+                active[active_ids],
+            )
+        interior_values = (
+            condensed.dual_interior_from_trace_by_class[cell.class_key]
+            @ local_trace
+        )
+        for appended_row, column in (
+            condensed.appended_dual_interior_by_cell[cell_index].items()
+        ):
+            interior_values += column * appended[appended_row]
+        full_dual.setValues(
+            _idx(cell.interior_original_dofs),
+            np.asarray(interior_values, dtype=PETSc.ScalarType),
+            addv=PETSc.InsertMode.INSERT_VALUES,
+        )
+    full_dual.assemble()
+    return full_dual
+
+
+def assembly_time_dual_recovery_context(
+    condensed: AssemblyTimeCondensedSystem,
+) -> Mapping[str, Any]:
+    """Expose immutable metadata and the matrix-free dual recovery callable."""
+
+    _assert_appended_dual_recovery_complete(condensed)
+    comm = condensed.matrix.getComm().tompi4py()
+    local_blocks = sum(
+        len(block)
+        for block in condensed.appended_dual_interior_by_cell
+    )
+    local_bytes = sum(
+        int(column.nbytes)
+        for block in condensed.appended_dual_interior_by_cell
+        for column in block.values()
+    )
+    global_blocks = int(comm.allreduce(local_blocks, op=MPI.SUM))
+    global_bytes = int(comm.allreduce(local_bytes, op=MPI.SUM))
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.assembly-time-hermitian-dual-recovery.v2"
+            ),
+            "state_layout": (
+                "floquet_independent_active_trace_plus_appended_rows"
+            ),
+            "active_trace_rows": int(condensed.active_rows),
+            "full_trace_rows": int(condensed.trace_rows),
+            "full_fe_rows": int(condensed.full_rows),
+            "appended_rows": int(condensed.appended_rows),
+            "exact_augmented_interior_coupling": True,
+            "appended_coupling_rows_registered": int(
+                len(condensed.appended_dual_rows_registered)
+            ),
+            "appended_nonzero_cell_blocks_global": global_blocks,
+            "appended_recovery_storage_bytes_global": global_bytes,
+            "full_global_matrix_required": False,
+            "recover_full_fe_dual": (
+                lambda reduced_adjoint: (
+                    recover_full_dual_from_active_trace(
+                        condensed,
+                        reduced_adjoint,
+                    )
+                )
+            ),
+        }
+    )
+
+
 def project_mpc_vector_to_active_trace(
     condensed: AssemblyTimeCondensedSystem,
     full_vector: PETSc.Vec,
@@ -2128,9 +2476,12 @@ __all__ = [
     "AssemblyTimeCondensedSystem",
     "CellRecoveryMap",
     "TraceConstraintMap",
+    "assembly_time_dual_recovery_context",
     "build_unconstrained_assembly_time_condensation",
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
     "project_mpc_vector_to_active_trace",
+    "recover_full_dual_from_active_trace",
     "recover_owned_cell_interiors",
+    "register_appended_dual_interior_coupling",
 ]

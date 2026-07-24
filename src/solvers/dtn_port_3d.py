@@ -39,10 +39,12 @@ from .hcurl_cell_static_condensation import (
 )
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
+    assembly_time_dual_recovery_context,
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
     recover_owned_cell_interiors,
+    register_appended_dual_interior_coupling,
 )
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
@@ -1522,11 +1524,20 @@ def _port_power_metrics(
         ),
         "incident_power_code_units": float(incident_power),
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy,
+        "stage4_dtn_evanescent_buffer": int(
+            cfg.stage4_dtn_evanescent_buffer
+        ),
+        "stage4_retain_dual_recovery_context": bool(
+            cfg.stage4_retain_dual_recovery_context
+        ),
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly,
         "dtn_port_mode_count": int(len(modes)),
         "dtn_port_top_mode_count": int(rows_by_side["top"]),
         "dtn_port_bottom_mode_count": int(rows_by_side["bottom"]),
         "dtn_port_propagating_mode_count": int(sum(1 for mode in modes if mode.propagating)),
+        "dtn_port_evanescent_mode_count": int(
+            sum(1 for mode in modes if not mode.propagating)
+        ),
         "dtn_port_rayleigh_warning_count": int(sum(1 for mode in modes if mode.rayleigh_warning)),
         "port_power_file": "port_power.json",
         "dtn_port_power_metrics_file": "dtn_port_power_metrics_3d.json",
@@ -2068,6 +2079,25 @@ def solve_stage4_dtn_port_total_field(
         denominator = _mode_projection_denominator(mode, cfg)
         incident_projection = _incident_projection_onto_top_mode(mode, cfg)
         incident_projections.append(incident_projection)
+        if (
+            assembly_time_system is not None
+            and cfg.stage4_retain_dual_recovery_context
+        ):
+            if component_full_vectors is None:
+                raise RuntimeError(
+                    "exact augmented dual recovery requires full DtN "
+                    "surface component vectors"
+                )
+            register_appended_dual_interior_coupling(
+                assembly_time_system,
+                aux_index,
+                component_full_vectors,
+                (
+                    complex(mode.e_vector[0]),
+                    complex(mode.e_vector[1]),
+                ),
+                row_scale=-1.0 / denominator,
+            )
 
         t_insert = time.perf_counter()
         if len(traction_rows):
@@ -2805,5 +2835,20 @@ def solve_stage4_dtn_port_total_field(
             "auxiliary_values": aux_values,
             "incident_projections": incident_projections,
             "normalization": "finite-port outgoing modal power / incident power",
+            "state_layout": (
+                "floquet_independent_active_trace_plus_dtn_auxiliary"
+                if assembly_time_system is not None
+                else "mpc_fe_plus_dtn_auxiliary"
+            ),
+            "assembly_time_dual_recovery": (
+                None
+                if (
+                    assembly_time_system is None
+                    or not cfg.stage4_retain_dual_recovery_context
+                )
+                else assembly_time_dual_recovery_context(
+                    assembly_time_system
+                )
+            ),
         },
     }

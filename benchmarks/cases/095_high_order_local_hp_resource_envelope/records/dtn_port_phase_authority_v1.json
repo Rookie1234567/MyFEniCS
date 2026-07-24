@@ -1,0 +1,2043 @@
+{
+  "schema_version": "task035b.dtn-port-phase-authority.v1",
+  "benchmark_id": "task035b_dtn_port_phase_authority",
+  "status": "artifact_convention_consistency_pass",
+  "pass": true,
+  "scope": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "method": "pure_artifact_recomputation",
+    "heavy_pde_run": false,
+    "ordinary_default_changed": false,
+    "scientific_gate_relaxed": false,
+    "significant_channel_count": 12,
+    "significant_power_floor": 1e-08
+  },
+  "authorities": [
+    {
+      "sample_id": "p6_h10",
+      "degree": 6,
+      "h_nm": 10.0,
+      "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json",
+      "record_sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded",
+      "raw_path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260724T043120Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "d2a1b882bd76f947056cd930261c6c8b6f338c6e37aeff39a5e649f96288edff",
+      "source_sha": "e9d35bb77636302e18112bf1ab81fdc40f64efba",
+      "record_status": "actual_global_r5_pass"
+    },
+    {
+      "sample_id": "p5_h15",
+      "degree": 5,
+      "h_nm": 15.0,
+      "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h15_assembly_time_condensed_independent_mpi8.json",
+      "record_sha256": "59859ef7b49ac6c40e2e3d803a366c71742a29411f7d9591384c62dc8fa923f9",
+      "raw_path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h15_pols_mpi8_20260724T084709Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/coarse_p5/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "0bb1f7835132eedef825698f4e12d49aee979574a09f3da0b239363331a3daa3",
+      "source_sha": "5d75c5ed8ae0dd4382eccf0c47e22fce01391184",
+      "record_status": "actual_global_r5_pass"
+    },
+    {
+      "sample_id": "p6_h15",
+      "degree": 6,
+      "h_nm": 15.0,
+      "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h15_assembly_time_condensed_independent_mpi8.json",
+      "record_sha256": "59859ef7b49ac6c40e2e3d803a366c71742a29411f7d9591384c62dc8fa923f9",
+      "raw_path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h15_pols_mpi8_20260724T084709Z_single_mesh_pair_condense_p5-p6_assembly_time_p5-p6_independent_p5-p6/enriched_p6/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "e803ae7454b5e5088de76795f23d961f806c73274aac28b733bceb6e6a29c6c3",
+      "source_sha": "5d75c5ed8ae0dd4382eccf0c47e22fce01391184",
+      "record_status": "actual_global_r5_pass"
+    },
+    {
+      "sample_id": "fixed_p5trace_p6interior_h15",
+      "degree": "p5_trace_p6_interior",
+      "h_nm": 15.0,
+      "record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json",
+      "record_sha256": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
+      "raw_path": "benchmarks/artifacts/task035/actual_global_r5/hexahedron_fixed_p5trace_p6interior_h15_pols_mpi8_20260724T104432Z/candidate/dtn_port_diffraction_orders_3d.json",
+      "raw_sha256": "e585cdce2dfc10e10eb52198a56009d2ff5725fbb09d869706d88d9eb9e1d06e",
+      "source_sha": "7f61d554b0441d7b224c096aba402d3b3ac2baa6",
+      "record_status": "actual_fixed_trace_controlled_negative"
+    }
+  ],
+  "source_audits": [
+    {
+      "sample_id": "p6_h10",
+      "pass": true,
+      "checks": [
+        {
+          "name": "declared_complex_amplitude_convention",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase."
+        },
+        {
+          "name": "declared_reference_planes_and_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+            "top_z": 130.0,
+            "bottom_z": -10.0
+          }
+        },
+        {
+          "name": "declared_modal_power_source",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "dtn_port_modal_amplitudes"
+        },
+        {
+          "name": "declared_dtn_policy_and_assembly",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "stage4_dtn_order_policy": "auto_propagating",
+            "stage4_dtn_assembly": "auxiliary",
+            "stage4_dtn_evanescent_buffer": null
+          }
+        },
+        {
+          "name": "side_direction_vertical_sign_and_power_side",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "reference_plane_phase_exp_i_kz_z",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "top_phase_unit_modulus_bottom_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "incoming_subtraction_top_only",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "nonzero_incident_projection_channels": [
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "outgoing_boundary_amplitude_phase_application",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "modal_power_ratio_normalization",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "incident_power_code_units": 108.5301110418315
+          }
+        },
+        {
+          "name": "channel_sums_reproduce_R_R00_T_A_balance",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "R_total": 0.0,
+            "R_total_dtn_port_modal": 0.0,
+            "T_total": 0.0,
+            "T_total_dtn_port_modal": 0.0,
+            "R00_total": 0.0,
+            "A_balance": 0.0
+          }
+        },
+        {
+          "name": "power_floor_selects_exactly_12_significant_channels",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "power_floor": 1e-08,
+            "selected": [
+              "T(-7,0)_s",
+              "T(-5,0)_s",
+              "T(-4,0)_s",
+              "T(-2,0)_s",
+              "T(-1,0)_s",
+              "T(0,0)_s",
+              "R(-7,0)_s",
+              "R(-5,0)_s",
+              "R(-4,0)_s",
+              "R(-2,0)_s",
+              "R(-1,0)_s",
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "all_12_significant_channels_present",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": [
+            "T(-7,0)_s",
+            "T(-5,0)_s",
+            "T(-4,0)_s",
+            "T(-2,0)_s",
+            "T(-1,0)_s",
+            "T(0,0)_s",
+            "R(-7,0)_s",
+            "R(-5,0)_s",
+            "R(-4,0)_s",
+            "R(-2,0)_s",
+            "R(-1,0)_s",
+            "R(0,0)_s"
+          ]
+        }
+      ],
+      "significant_channel_checks": [
+        {
+          "channel": "T(-7,0)_s",
+          "side": "bottom",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.19671843459811364,
+            -0.0020092399134300416
+          ],
+          "boundary_phase": [
+            -0.3784089148566385,
+            0.9041120486362078
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0009812210508833305,
+            -8.723749953096563e-05
+          ],
+          "power_ratio": 2.3620104494459646e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-5,0)_s",
+          "side": "bottom",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.43277677653747604,
+            -0.0009132988458029711
+          ],
+          "boundary_phase": [
+            -0.3717968824649255,
+            -0.9185134256628944
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00013403269659126977,
+            0.00014700578431855172
+          ],
+          "power_ratio": 2.1192082574975485e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-4,0)_s",
+          "side": "bottom",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.4628411517004591,
+            -0.00085397447709621
+          ],
+          "boundary_phase": [
+            -0.08316554001348853,
+            -0.9880025460766761
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.00026213220752181716,
+            8.743226904798043e-05
+          ],
+          "power_ratio": 4.372888971897781e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-2,0)_s",
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.416324990847281,
+            -0.0009493893933621607
+          ],
+          "boundary_phase": [
+            -0.5170211544939234,
+            -0.8449144752070306
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.000697002780556262,
+            0.0002979420807086229
+          ],
+          "power_ratio": 2.9598413950788308e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-1,0)_s",
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.3248155990663659,
+            -0.0012168582162867408
+          ],
+          "boundary_phase": [
+            -0.9823012622583617,
+            -0.1050753381922756
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0020910133852626916,
+            -0.001023379862806093
+          ],
+          "power_ratio": 2.1781673984560284e-05,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(0,0)_s",
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.07825958528525695,
+            -0.00505055743729411
+          ],
+          "boundary_phase": [
+            0.6741621000760819,
+            0.6703942258428018
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.6313787033481678,
+            0.4730209810384135
+          ],
+          "power_ratio": 0.6026738723469857,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-7,0)_s",
+          "side": "top",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.19780507480427703,
+            0.0
+          ],
+          "boundary_phase": [
+            0.8354097295657328,
+            0.5496276773843446
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0005052091111719671,
+            -2.608886163645355e-05
+          ],
+          "power_ratio": 6.263542420285324e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-5,0)_s",
+          "side": "top",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.43327548551471246,
+            0.0
+          ],
+          "boundary_phase": [
+            0.9752705051862537,
+            -0.2210145735324926
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -9.81780791964023e-05,
+            -6.53550324651131e-05
+          ],
+          "power_ratio": 7.457300538323353e-08,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-4,0)_s",
+          "side": "top",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.46330761334951415,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.8578478176943101,
+            -0.5139038058597248
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00021022333613158372,
+            -4.973043613499208e-05
+          ],
+          "power_ratio": 2.675239609866006e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-2,0)_s",
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.4168433024727534,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.7091148973412497,
+            -0.7050929459076364
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0004942316170695809,
+            -0.00020551576975678574
+          ],
+          "power_ratio": 1.4776908513297531e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-1,0)_s",
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.32547877781131396,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.09909679572606045,
+            -0.9950777985046332
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0010327077159120708,
+            0.0007678339217512412
+          ],
+          "power_ratio": 6.669309654168915e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(0,0)_s",
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.08081953174336039,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.46977436003003803,
+            -0.8827865260969767
+          ],
+          "incident_projection": [
+            -0.558624101316757,
+            -0.8294209506806816
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.025252304353616,
+            0.010774151702144635
+          ],
+          "power_ratio": 0.0007537612200684781,
+          "status": "proved_from_artifact"
+        }
+      ],
+      "reported_dtn_evanescent_buffer": null,
+      "reported_surface_quadrature_degree": 25
+    },
+    {
+      "sample_id": "p5_h15",
+      "pass": true,
+      "checks": [
+        {
+          "name": "declared_complex_amplitude_convention",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase."
+        },
+        {
+          "name": "declared_reference_planes_and_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+            "top_z": 130.0,
+            "bottom_z": -10.0
+          }
+        },
+        {
+          "name": "declared_modal_power_source",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "dtn_port_modal_amplitudes"
+        },
+        {
+          "name": "declared_dtn_policy_and_assembly",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "stage4_dtn_order_policy": "auto_propagating",
+            "stage4_dtn_assembly": "auxiliary",
+            "stage4_dtn_evanescent_buffer": null
+          }
+        },
+        {
+          "name": "side_direction_vertical_sign_and_power_side",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "reference_plane_phase_exp_i_kz_z",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "top_phase_unit_modulus_bottom_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "incoming_subtraction_top_only",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "nonzero_incident_projection_channels": [
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "outgoing_boundary_amplitude_phase_application",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "modal_power_ratio_normalization",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "incident_power_code_units": 108.5301110418315
+          }
+        },
+        {
+          "name": "channel_sums_reproduce_R_R00_T_A_balance",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "R_total": 0.0,
+            "R_total_dtn_port_modal": 0.0,
+            "T_total": 0.0,
+            "T_total_dtn_port_modal": 0.0,
+            "R00_total": 0.0,
+            "A_balance": 0.0
+          }
+        },
+        {
+          "name": "power_floor_selects_exactly_12_significant_channels",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "power_floor": 1e-08,
+            "selected": [
+              "T(-7,0)_s",
+              "T(-5,0)_s",
+              "T(-4,0)_s",
+              "T(-2,0)_s",
+              "T(-1,0)_s",
+              "T(0,0)_s",
+              "R(-7,0)_s",
+              "R(-5,0)_s",
+              "R(-4,0)_s",
+              "R(-2,0)_s",
+              "R(-1,0)_s",
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "all_12_significant_channels_present",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": [
+            "T(-7,0)_s",
+            "T(-5,0)_s",
+            "T(-4,0)_s",
+            "T(-2,0)_s",
+            "T(-1,0)_s",
+            "T(0,0)_s",
+            "R(-7,0)_s",
+            "R(-5,0)_s",
+            "R(-4,0)_s",
+            "R(-2,0)_s",
+            "R(-1,0)_s",
+            "R(0,0)_s"
+          ]
+        }
+      ],
+      "significant_channel_checks": [
+        {
+          "channel": "T(-7,0)_s",
+          "side": "bottom",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.19671843459811364,
+            -0.0020092399134300416
+          ],
+          "boundary_phase": [
+            -0.3784089148566385,
+            0.9041120486362078
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.000980496208320805,
+            -9.942652696478215e-05
+          ],
+          "power_ratio": 2.3640874614815997e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-5,0)_s",
+          "side": "bottom",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.43277677653747604,
+            -0.0009132988458029711
+          ],
+          "boundary_phase": [
+            -0.3717968824649255,
+            -0.9185134256628944
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00014815425341922853,
+            0.00014367001902365959
+          ],
+          "power_ratio": 2.2806727781994597e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-4,0)_s",
+          "side": "bottom",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.4628411517004591,
+            -0.00085397447709621
+          ],
+          "boundary_phase": [
+            -0.08316554001348853,
+            -0.9880025460766761
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.00022572478829701947,
+            0.00011499929421183328
+          ],
+          "power_ratio": 3.675291446678232e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-2,0)_s",
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.416324990847281,
+            -0.0009493893933621607
+          ],
+          "boundary_phase": [
+            -0.5170211544939234,
+            -0.8449144752070306
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.000682239007558627,
+            0.0003158773833671514
+          ],
+          "power_ratio": 2.911657371673677e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-1,0)_s",
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.3248155990663659,
+            -0.0012168582162867408
+          ],
+          "boundary_phase": [
+            -0.9823012622583617,
+            -0.1050753381922756
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0020819611094954013,
+            -0.001044153947984519
+          ],
+          "power_ratio": 2.180247728464926e-05,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(0,0)_s",
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.07825958528525695,
+            -0.00505055743729411
+          ],
+          "boundary_phase": [
+            0.6741621000760819,
+            0.6703942258428018
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.6353051526428346,
+            0.4674940878047369
+          ],
+          "power_ratio": 0.6024564287009717,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-7,0)_s",
+          "side": "top",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.19780507480427703,
+            0.0
+          ],
+          "boundary_phase": [
+            0.8354097295657328,
+            0.5496276773843446
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0005047250406542065,
+            -2.542436873780748e-05
+          ],
+          "power_ratio": 6.250739361890363e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-5,0)_s",
+          "side": "top",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.43327548551471246,
+            0.0
+          ],
+          "boundary_phase": [
+            0.9752705051862537,
+            -0.2210145735324926
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0001002550077047938,
+            -6.718628514819217e-05
+          ],
+          "power_ratio": 7.808366140641893e-08,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-4,0)_s",
+          "side": "top",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.46330761334951415,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.8578478176943101,
+            -0.5139038058597248
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00018629882103484964,
+            -7.040693674776874e-05
+          ],
+          "power_ratio": 2.27380835958865e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-2,0)_s",
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.4168433024727534,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.7091148973412497,
+            -0.7050929459076364
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0005023554465936905,
+            -0.00020139186045496705
+          ],
+          "power_ratio": 1.5107932766276247e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-1,0)_s",
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.32547877781131396,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.09909679572606045,
+            -0.9950777985046332
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0010348074497838317,
+            0.0007826556381629272
+          ],
+          "power_ratio": 6.779342207006307e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(0,0)_s",
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.08081953174336039,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.46977436003003803,
+            -0.8827865260969767
+          ],
+          "incident_projection": [
+            -0.558624101316757,
+            -0.8294209506806816
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.025537302408440272,
+            0.011556872903053418
+          ],
+          "power_ratio": 0.0007857151255974579,
+          "status": "proved_from_artifact"
+        }
+      ],
+      "reported_dtn_evanescent_buffer": null,
+      "reported_surface_quadrature_degree": 23
+    },
+    {
+      "sample_id": "p6_h15",
+      "pass": true,
+      "checks": [
+        {
+          "name": "declared_complex_amplitude_convention",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase."
+        },
+        {
+          "name": "declared_reference_planes_and_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+            "top_z": 130.0,
+            "bottom_z": -10.0
+          }
+        },
+        {
+          "name": "declared_modal_power_source",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "dtn_port_modal_amplitudes"
+        },
+        {
+          "name": "declared_dtn_policy_and_assembly",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "stage4_dtn_order_policy": "auto_propagating",
+            "stage4_dtn_assembly": "auxiliary",
+            "stage4_dtn_evanescent_buffer": null
+          }
+        },
+        {
+          "name": "side_direction_vertical_sign_and_power_side",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "reference_plane_phase_exp_i_kz_z",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "top_phase_unit_modulus_bottom_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "incoming_subtraction_top_only",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "nonzero_incident_projection_channels": [
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "outgoing_boundary_amplitude_phase_application",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "modal_power_ratio_normalization",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "incident_power_code_units": 108.5301110418315
+          }
+        },
+        {
+          "name": "channel_sums_reproduce_R_R00_T_A_balance",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "R_total": 0.0,
+            "R_total_dtn_port_modal": 0.0,
+            "T_total": 0.0,
+            "T_total_dtn_port_modal": 0.0,
+            "R00_total": 0.0,
+            "A_balance": 0.0
+          }
+        },
+        {
+          "name": "power_floor_selects_exactly_12_significant_channels",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "power_floor": 1e-08,
+            "selected": [
+              "T(-7,0)_s",
+              "T(-5,0)_s",
+              "T(-4,0)_s",
+              "T(-2,0)_s",
+              "T(-1,0)_s",
+              "T(0,0)_s",
+              "R(-7,0)_s",
+              "R(-5,0)_s",
+              "R(-4,0)_s",
+              "R(-2,0)_s",
+              "R(-1,0)_s",
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "all_12_significant_channels_present",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": [
+            "T(-7,0)_s",
+            "T(-5,0)_s",
+            "T(-4,0)_s",
+            "T(-2,0)_s",
+            "T(-1,0)_s",
+            "T(0,0)_s",
+            "R(-7,0)_s",
+            "R(-5,0)_s",
+            "R(-4,0)_s",
+            "R(-2,0)_s",
+            "R(-1,0)_s",
+            "R(0,0)_s"
+          ]
+        }
+      ],
+      "significant_channel_checks": [
+        {
+          "channel": "T(-7,0)_s",
+          "side": "bottom",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.19671843459811364,
+            -0.0020092399134300416
+          ],
+          "boundary_phase": [
+            -0.3784089148566385,
+            0.9041120486362078
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0009812230382102865,
+            -8.72401059198375e-05
+          ],
+          "power_ratio": 2.362021049166224e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-5,0)_s",
+          "side": "bottom",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.43277677653747604,
+            -0.0009132988458029711
+          ],
+          "boundary_phase": [
+            -0.3717968824649255,
+            -0.9185134256628944
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0001362106448677477,
+            0.00014693505220596742
+          ],
+          "power_ratio": 2.149612312177651e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-4,0)_s",
+          "side": "bottom",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.4628411517004591,
+            -0.00085397447709621
+          ],
+          "boundary_phase": [
+            -0.08316554001348853,
+            -0.9880025460766761
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.00025926933133895363,
+            8.99468661602117e-05
+          ],
+          "power_ratio": 4.3129477183133535e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-2,0)_s",
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.416324990847281,
+            -0.0009493893933621607
+          ],
+          "boundary_phase": [
+            -0.5170211544939234,
+            -0.8449144752070306
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.000694660272761638,
+            0.00030176228149316674
+          ],
+          "power_ratio": 2.954849842394772e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-1,0)_s",
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.3248155990663659,
+            -0.0012168582162867408
+          ],
+          "boundary_phase": [
+            -0.9823012622583617,
+            -0.1050753381922756
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.002091070978168154,
+            -0.001023947084786309
+          ],
+          "power_ratio": 2.17873092472772e-05,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(0,0)_s",
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.07825958528525695,
+            -0.00505055743729411
+          ],
+          "boundary_phase": [
+            0.6741621000760819,
+            0.6703942258428018
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.6313787209877572,
+            0.47302097960502565
+          ],
+          "power_ratio": 0.6026738926028735,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-7,0)_s",
+          "side": "top",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.19780507480427703,
+            0.0
+          ],
+          "boundary_phase": [
+            0.8354097295657328,
+            0.5496276773843446
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0005052111862171821,
+            -2.608723803692014e-05
+          ],
+          "power_ratio": 6.263591662695389e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-5,0)_s",
+          "side": "top",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.43327548551471246,
+            0.0
+          ],
+          "boundary_phase": [
+            0.9752705051862537,
+            -0.2210145735324926
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0001000128261611027,
+            -6.537391479488348e-05
+          ],
+          "power_ratio": 7.653566908420204e-08,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-4,0)_s",
+          "side": "top",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.46330761334951415,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.8578478176943101,
+            -0.5139038058597248
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00020915428243871182,
+            -5.1209056650365026e-05
+          ],
+          "power_ratio": 2.658094148634962e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-2,0)_s",
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.4168433024727534,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.7091148973412497,
+            -0.7050929459076364
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0004920039412682731,
+            -0.0002092883851357393
+          ],
+          "power_ratio": 1.4744305806240591e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-1,0)_s",
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.32547877781131396,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.09909679572606045,
+            -0.9950777985046332
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0010327772875166866,
+            0.0007680705220397097
+          ],
+          "power_ratio": 6.671351840107179e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(0,0)_s",
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.08081953174336039,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.46977436003003803,
+            -0.8827865260969767
+          ],
+          "incident_projection": [
+            -0.558624101316757,
+            -0.8294209506806816
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.025252322111987663,
+            0.010774152556766742
+          ],
+          "power_ratio": 0.0007537621353640628,
+          "status": "proved_from_artifact"
+        }
+      ],
+      "reported_dtn_evanescent_buffer": null,
+      "reported_surface_quadrature_degree": 25
+    },
+    {
+      "sample_id": "fixed_p5trace_p6interior_h15",
+      "pass": true,
+      "checks": [
+        {
+          "name": "declared_complex_amplitude_convention",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "auxiliary unknown a_j is the total-field port projection. top outgoing amplitude = a_j - incident_projection_j; bottom outgoing amplitude = a_j. Power uses boundary-plane outgoing amplitude after applying boundary_phase."
+        },
+        {
+          "name": "declared_reference_planes_and_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "reference": "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation",
+            "top_z": 130.0,
+            "bottom_z": -10.0
+          }
+        },
+        {
+          "name": "declared_modal_power_source",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": "dtn_port_modal_amplitudes"
+        },
+        {
+          "name": "declared_dtn_policy_and_assembly",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "stage4_dtn_order_policy": "auto_propagating",
+            "stage4_dtn_assembly": "auxiliary",
+            "stage4_dtn_evanescent_buffer": null
+          }
+        },
+        {
+          "name": "side_direction_vertical_sign_and_power_side",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "reference_plane_phase_exp_i_kz_z",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "top_phase_unit_modulus_bottom_lossy_attenuation",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "incoming_subtraction_top_only",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "nonzero_incident_projection_channels": [
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "outgoing_boundary_amplitude_phase_application",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "name": "modal_power_ratio_normalization",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "incident_power_code_units": 108.5301110418315
+          }
+        },
+        {
+          "name": "channel_sums_reproduce_R_R00_T_A_balance",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "maximum_error": 0.0,
+          "tolerance": 1e-12,
+          "detail": {
+            "R_total": 0.0,
+            "R_total_dtn_port_modal": 0.0,
+            "T_total": 0.0,
+            "T_total_dtn_port_modal": 0.0,
+            "R00_total": 0.0,
+            "A_balance": 0.0
+          }
+        },
+        {
+          "name": "power_floor_selects_exactly_12_significant_channels",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": {
+            "power_floor": 1e-08,
+            "selected": [
+              "T(-7,0)_s",
+              "T(-5,0)_s",
+              "T(-4,0)_s",
+              "T(-2,0)_s",
+              "T(-1,0)_s",
+              "T(0,0)_s",
+              "R(-7,0)_s",
+              "R(-5,0)_s",
+              "R(-4,0)_s",
+              "R(-2,0)_s",
+              "R(-1,0)_s",
+              "R(0,0)_s"
+            ]
+          }
+        },
+        {
+          "name": "all_12_significant_channels_present",
+          "status": "proved_from_artifact",
+          "pass": true,
+          "detail": [
+            "T(-7,0)_s",
+            "T(-5,0)_s",
+            "T(-4,0)_s",
+            "T(-2,0)_s",
+            "T(-1,0)_s",
+            "T(0,0)_s",
+            "R(-7,0)_s",
+            "R(-5,0)_s",
+            "R(-4,0)_s",
+            "R(-2,0)_s",
+            "R(-1,0)_s",
+            "R(0,0)_s"
+          ]
+        }
+      ],
+      "significant_channel_checks": [
+        {
+          "channel": "T(-7,0)_s",
+          "side": "bottom",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.19671843459811364,
+            -0.0020092399134300416
+          ],
+          "boundary_phase": [
+            -0.3784089148566385,
+            0.9041120486362078
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0009811761813939047,
+            -8.820420410005791e-05
+          ],
+          "power_ratio": 2.362208942306952e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-5,0)_s",
+          "side": "bottom",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.43277677653747604,
+            -0.0009132988458029711
+          ],
+          "boundary_phase": [
+            -0.3717968824649255,
+            -0.9185134256628944
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00013959824198797735,
+            0.00014431312513134785
+          ],
+          "power_ratio": 2.1587529356549444e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-4,0)_s",
+          "side": "bottom",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.4628411517004591,
+            -0.00085397447709621
+          ],
+          "boundary_phase": [
+            -0.08316554001348853,
+            -0.9880025460766761
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0002499013080659037,
+            9.801788006753327e-05
+          ],
+          "power_ratio": 4.1266615901300497e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-2,0)_s",
+          "side": "bottom",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.416324990847281,
+            -0.0009493893933621607
+          ],
+          "boundary_phase": [
+            -0.5170211544939234,
+            -0.8449144752070306
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0006919800213370216,
+            0.00030462247384042057
+          ],
+          "power_ratio": 2.944639118765086e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(-1,0)_s",
+          "side": "bottom",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.3248155990663659,
+            -0.0012168582162867408
+          ],
+          "boundary_phase": [
+            -0.9823012622583617,
+            -0.1050753381922756
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.002090511240452885,
+            -0.0010271225885810748
+          ],
+          "power_ratio": 2.180407898565263e-05,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "T(0,0)_s",
+          "side": "bottom",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_down",
+          "vertical_sign": -1,
+          "kz": [
+            -0.07825958528525695,
+            -0.00505055743729411
+          ],
+          "boundary_phase": [
+            0.6741621000760819,
+            0.6703942258428018
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.6316854641481355,
+            0.47259324667776575
+          ],
+          "power_ratio": 0.6026573981123964,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-7,0)_s",
+          "side": "top",
+          "m": -7,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.19780507480427703,
+            0.0
+          ],
+          "boundary_phase": [
+            0.8354097295657328,
+            0.5496276773843446
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0005054590084015411,
+            -2.6363010067961443e-05
+          ],
+          "power_ratio": 6.270075820288958e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-5,0)_s",
+          "side": "top",
+          "m": -5,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.43327548551471246,
+            0.0
+          ],
+          "boundary_phase": [
+            0.9752705051862537,
+            -0.2210145735324926
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.00010013897534369803,
+            -6.698293100303748e-05
+          ],
+          "power_ratio": 7.781273638941532e-08,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-4,0)_s",
+          "side": "top",
+          "m": -4,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.46330761334951415,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.8578478176943101,
+            -0.5139038058597248
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.00020605436175803263,
+            -5.410824648266004e-05
+          ],
+          "power_ratio": 2.6018124949964496e-07,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-2,0)_s",
+          "side": "top",
+          "m": -2,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.4168433024727534,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.7091148973412497,
+            -0.7050929459076364
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            0.0004946453230575031,
+            -0.00020684034649679997
+          ],
+          "power_ratio": 1.4826180153258934e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(-1,0)_s",
+          "side": "top",
+          "m": -1,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.32547877781131396,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.09909679572606045,
+            -0.9950777985046332
+          ],
+          "incident_projection": [
+            0.0,
+            0.0
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.0010321632935310452,
+            0.0007708690591277655
+          ],
+          "power_ratio": 6.683590260997421e-06,
+          "status": "proved_from_artifact"
+        },
+        {
+          "channel": "R(0,0)_s",
+          "side": "top",
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "direction": "outgoing_up",
+          "vertical_sign": 1,
+          "kz": [
+            0.08081953174336039,
+            0.0
+          ],
+          "boundary_phase": [
+            -0.46977436003003803,
+            -0.8827865260969767
+          ],
+          "incident_projection": [
+            -0.558624101316757,
+            -0.8294209506806816
+          ],
+          "outgoing_amplitude_at_boundary": [
+            -0.025267948997315385,
+            0.010836007894650723
+          ],
+          "power_ratio": 0.0007558883136238627,
+          "status": "proved_from_artifact"
+        }
+      ],
+      "reported_dtn_evanescent_buffer": null,
+      "reported_surface_quadrature_degree": 25
+    }
+  ],
+  "cross_artifact_audit": {
+    "reference_sample": "p6_h10",
+    "pass": true,
+    "checks": [
+      {
+        "name": "same_80_channel_set",
+        "status": "proved_from_artifact",
+        "pass": true,
+        "detail": {
+          "reference_sample": "p6_h10"
+        }
+      },
+      {
+        "name": "same_channel_kinematics_phase_and_incident_projection",
+        "status": "proved_from_artifact",
+        "pass": true,
+        "detail": {
+          "identity_fields": [
+            "auxiliary_index",
+            "side",
+            "direction",
+            "medium",
+            "m",
+            "n",
+            "order_m",
+            "order_n",
+            "polarization",
+            "alpha",
+            "gamma",
+            "beta",
+            "kz",
+            "vertical_sign",
+            "propagating",
+            "power_carrying",
+            "rayleigh_warning",
+            "refractive_index",
+            "boundary_phase",
+            "incident_projection",
+            "power_source"
+          ]
+        }
+      },
+      {
+        "name": "same_declared_modal_convention_and_reference",
+        "status": "proved_from_artifact",
+        "pass": true
+      }
+    ]
+  },
+  "root_cause_decision": {
+    "classification": "no_artifact_level_convention_mismatch_found",
+    "artifact_level_convention_change_explains_h15_channel_error": false,
+    "common_mode_physical_convention_error_excluded": false,
+    "conclusion": "The four accepted artifacts use the same recorded channel kinematics, reference-plane phase, incoming subtraction, power normalization, and boundary-amplitude convention. Therefore an artifact-level convention change does not explain their h15 channel differences. A common-mode implementation or physical-convention error is not excluded without an independent field/projection authority."
+  },
+  "not_observable": [
+    {
+      "item": "physical_correctness_of_top_bottom_outgoing_sign",
+      "status": "not_observable",
+      "reason": "Artifacts prove internal side/direction/kz consistency but provide no independent outward-flux or analytic-field authority."
+    },
+    {
+      "item": "absolute_modal_basis_phase_normalization",
+      "status": "not_observable",
+      "reason": "The modal basis vectors and raw projection integrals are not stored; only their resulting amplitudes are stored."
+    },
+    {
+      "item": "modal_power_prefactor_from_field_basis",
+      "status": "not_observable",
+      "reason": "Power ratios and channel sums are recomputable, but the electric/magnetic modal basis needed to independently recompute modal_power_code_units is absent."
+    },
+    {
+      "item": "reference_plane_phase_against_independent_field_probe",
+      "status": "not_observable",
+      "reason": "The recorded boundary phase is algebraically consistent with exp(i*kz*z), but no independent complex field projection at a second plane is bound to these records."
+    },
+    {
+      "item": "dtn_evanescent_buffer_convergence",
+      "status": "not_observable",
+      "reason": "All four artifacts report auto_propagating with 80 power-carrying modes and do not bind a buffer sweep. The recorded buffer values are [None]."
+    },
+    {
+      "item": "surface_projection_quadrature_convergence",
+      "status": "not_observable",
+      "reason": "A quadrature degree is recorded, but no independent quadrature sweep or raw integral samples are bound."
+    },
+    {
+      "item": "incident_source_assembly_sign_before_solve",
+      "status": "not_observable",
+      "reason": "Artifacts expose post-solve incident subtraction, not the independently assembled matrix/RHS source terms."
+    }
+  ]
+}

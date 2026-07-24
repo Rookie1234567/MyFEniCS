@@ -26,7 +26,9 @@ from src.solvers.hcurl_assembly_time_condensation import (
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
     project_mpc_vector_to_active_trace,
+    recover_full_dual_from_active_trace,
     recover_owned_cell_interiors,
+    register_appended_dual_interior_coupling,
 )
 from src.solvers.hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
@@ -80,6 +82,15 @@ def _two_cell_problem(*, distinct_materials: bool):
             + PETSc.ScalarType(1.7 + 0.1j) * ufl.inner(u, v)
         ) * dx(2)
     return msh, cell_tags, V, fem.form(a)
+
+
+def _set_owned_values(vector: PETSc.Vec, values: np.ndarray) -> None:
+    start, end = map(int, vector.getOwnershipRange())
+    vector.getArray()[:] = np.asarray(
+        values[start:end],
+        dtype=PETSc.ScalarType,
+    )
+    vector.assemble()
 
 
 class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
@@ -437,6 +448,127 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         full.destroy()
         candidate.destroy()
 
+    def test_complex_nonhermitian_dual_recovery_closes_schur_pairing(
+        self,
+    ) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=True
+        )
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        full = fem_petsc.assemble_matrix(compiled, bcs=[])
+        full.assemble()
+        diagonal = full.createVecRight()
+        full.getDiagonal(diagonal)
+        self.assertGreater(
+            np.linalg.norm(
+                np.asarray(
+                    diagonal.getArray(readonly=True),
+                    dtype=np.complex128,
+                ).imag
+            ),
+            1.0e-6,
+        )
+        diagonal.destroy()
+
+        rng = np.random.default_rng(2026072402)
+        active_primal = (
+            rng.standard_normal(candidate.active_rows)
+            + 1j * rng.standard_normal(candidate.active_rows)
+        )
+        active_dual = (
+            rng.standard_normal(candidate.active_rows)
+            + 1j * rng.standard_normal(candidate.active_rows)
+        )
+        full_primal_values = np.zeros(
+            candidate.full_rows,
+            dtype=np.complex128,
+        )
+        for original, (active_ids, coefficients) in (
+            candidate.trace_constraints.expansion_by_original.items()
+        ):
+            full_primal_values[original] = np.dot(
+                coefficients,
+                active_primal[active_ids],
+            )
+        for rows, values in recover_owned_cell_interiors(
+            candidate,
+            active_primal,
+        ):
+            full_primal_values[rows] = values
+        full_primal = full.createVecRight()
+        _set_owned_values(full_primal, full_primal_values)
+        full_dual = recover_full_dual_from_active_trace(
+            candidate,
+            active_dual,
+        )
+
+        full_action = full.createVecLeft()
+        full.mult(full_primal, full_action)
+        full_adjoint_action = full.createVecRight()
+        full.multHermitian(full_dual, full_adjoint_action)
+        interior_rows = np.concatenate(
+            [
+                cell.interior_original_dofs
+                for cell in candidate.cell_recovery_maps
+            ]
+        )
+        self.assertLess(
+            np.linalg.norm(
+                full_adjoint_action.getValues(
+                    np.asarray(interior_rows, dtype=PETSc.IntType)
+                )
+            ),
+            2.0e-10,
+        )
+
+        reduced_primal = candidate.matrix.createVecRight()
+        reduced_dual = candidate.matrix.createVecLeft()
+        _set_owned_values(reduced_primal, active_primal)
+        _set_owned_values(reduced_dual, active_dual)
+        reduced_action = candidate.matrix.createVecLeft()
+        candidate.matrix.mult(reduced_primal, reduced_action)
+        reduced_adjoint_action = candidate.matrix.createVecRight()
+        candidate.matrix.multHermitian(
+            reduced_dual,
+            reduced_adjoint_action,
+        )
+        self.assertLess(
+            abs(full_dual.dot(full_action) - reduced_dual.dot(reduced_action))
+            / max(abs(reduced_dual.dot(reduced_action)), 1.0e-30),
+            2.0e-12,
+        )
+        trace_rows = np.asarray(
+            [
+                original
+                for original, _trace in sorted(
+                    candidate.original_to_trace.items(),
+                    key=lambda item: item[1],
+                )
+            ],
+            dtype=PETSc.IntType,
+        )
+        np.testing.assert_allclose(
+            full_adjoint_action.getValues(trace_rows),
+            reduced_adjoint_action.getArray(readonly=True),
+            rtol=3.0e-12,
+            atol=3.0e-11,
+        )
+
+        reduced_adjoint_action.destroy()
+        reduced_action.destroy()
+        reduced_dual.destroy()
+        reduced_primal.destroy()
+        full_adjoint_action.destroy()
+        full_action.destroy()
+        full_dual.destroy()
+        full_primal.destroy()
+        full.destroy()
+        candidate.destroy()
+
     def test_reuses_raw_tensor_for_equal_material_and_width(self) -> None:
         _msh, cell_tags, V, compiled = _two_cell_problem(
             distinct_materials=False
@@ -647,6 +779,208 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         full.destroy()
         candidate.destroy()
 
+    def test_augmented_nonhermitian_dual_recovery_is_exact_and_fail_closed(
+        self,
+    ) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=True
+        )
+        auxiliary_count = 2
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+            appended_global_rows=auxiliary_count,
+            appended_support_owned_cell_groups=(
+                np.arange(2, dtype=np.int32),
+            ),
+            appended_support_group_by_row=(0, 0),
+        )
+        full = fem_petsc.assemble_matrix(compiled, bcs=[])
+        full.assemble()
+        all_rows = np.arange(candidate.full_rows, dtype=PETSc.IntType)
+        full_dense = np.asarray(
+            full.getValues(all_rows, all_rows),
+            dtype=np.complex128,
+        )
+        trace = np.asarray(
+            [
+                original
+                for original, _trace in sorted(
+                    candidate.original_to_trace.items(),
+                    key=lambda item: item[1],
+                )
+            ],
+            dtype=np.int64,
+        )
+        interior = np.asarray(
+            sorted(set(range(candidate.full_rows)) - set(trace)),
+            dtype=np.int64,
+        )
+        rng = np.random.default_rng(2026072404)
+        left_values = (
+            rng.standard_normal((auxiliary_count, candidate.full_rows))
+            + 1j
+            * rng.standard_normal(
+                (auxiliary_count, candidate.full_rows)
+            )
+        )
+        left_vectors: list[PETSc.Vec] = []
+        row_scales = np.asarray(
+            (0.7 - 0.2j, -0.4 + 0.5j),
+            dtype=np.complex128,
+        )
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "appended interior coupling rows are incomplete",
+        ):
+            recover_full_dual_from_active_trace(
+                candidate,
+                np.zeros(
+                    candidate.active_rows + auxiliary_count,
+                    dtype=np.complex128,
+                ),
+            )
+        for auxiliary in range(auxiliary_count):
+            vector = full.createVecLeft()
+            _set_owned_values(vector, left_values[auxiliary])
+            left_vectors.append(vector)
+            register_appended_dual_interior_coupling(
+                candidate,
+                auxiliary,
+                (vector,),
+                (1.0 + 0.0j,),
+                row_scale=row_scales[auxiliary],
+            )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "active trace and every appended row",
+        ):
+            recover_full_dual_from_active_trace(
+                candidate,
+                np.zeros(candidate.active_rows, dtype=np.complex128),
+            )
+        right_coupling = (
+            rng.standard_normal(
+                (candidate.full_rows, auxiliary_count)
+            )
+            + 1j
+            * rng.standard_normal(
+                (candidate.full_rows, auxiliary_count)
+            )
+        )
+        left_coupling = np.asarray(
+            [
+                row_scales[row] * np.conj(left_values[row])
+                for row in range(auxiliary_count)
+            ],
+            dtype=np.complex128,
+        )
+        auxiliary_block = np.asarray(
+            (
+                (1.1 + 0.4j, -0.3 + 0.2j),
+                (0.6 - 0.7j, 0.9 - 0.1j),
+            ),
+            dtype=np.complex128,
+        )
+        augmented = np.block(
+            [
+                [full_dense, right_coupling],
+                [left_coupling, auxiliary_block],
+            ]
+        )
+        kept = np.concatenate(
+            (
+                trace,
+                candidate.full_rows
+                + np.arange(auxiliary_count, dtype=np.int64),
+            )
+        )
+        reduced = (
+            augmented[np.ix_(kept, kept)]
+            - augmented[np.ix_(kept, interior)]
+            @ np.linalg.solve(
+                augmented[np.ix_(interior, interior)],
+                augmented[np.ix_(interior, kept)],
+            )
+        )
+        reduced_dual = (
+            rng.standard_normal(len(kept))
+            + 1j * rng.standard_normal(len(kept))
+        )
+        recovered_fe = recover_full_dual_from_active_trace(
+            candidate,
+            reduced_dual,
+        )
+        full_dual = np.concatenate(
+            (
+                np.asarray(
+                    recovered_fe.getArray(readonly=True),
+                    dtype=np.complex128,
+                ),
+                reduced_dual[candidate.active_rows :],
+            )
+        )
+        full_adjoint_action = augmented.conj().T @ full_dual
+        self.assertLess(
+            np.linalg.norm(full_adjoint_action[interior]),
+            3.0e-10,
+        )
+        np.testing.assert_allclose(
+            full_adjoint_action[kept],
+            reduced.conj().T @ reduced_dual,
+            rtol=4.0e-12,
+            atol=4.0e-10,
+        )
+
+        reduced_primal = (
+            rng.standard_normal(len(kept))
+            + 1j * rng.standard_normal(len(kept))
+        )
+        full_primal = np.zeros(
+            candidate.full_rows + auxiliary_count,
+            dtype=np.complex128,
+        )
+        full_primal[kept] = reduced_primal
+        full_primal[interior] = -np.linalg.solve(
+            augmented[np.ix_(interior, interior)],
+            augmented[np.ix_(interior, kept)] @ reduced_primal,
+        )
+        self.assertLess(
+            abs(
+                np.vdot(full_dual, augmented @ full_primal)
+                - np.vdot(reduced_dual, reduced @ reduced_primal)
+            )
+            / max(
+                abs(np.vdot(reduced_dual, reduced @ reduced_primal)),
+                1.0e-30,
+            ),
+            5.0e-12,
+        )
+        context = assembly_time.assembly_time_dual_recovery_context(
+            candidate
+        )
+        self.assertTrue(context["exact_augmented_interior_coupling"])
+        self.assertEqual(
+            context["appended_coupling_rows_registered"],
+            auxiliary_count,
+        )
+        self.assertEqual(
+            context["appended_nonzero_cell_blocks_global"],
+            auxiliary_count * 2,
+        )
+        self.assertGreater(
+            context["appended_recovery_storage_bytes_global"],
+            0,
+        )
+
+        recovered_fe.destroy()
+        for vector in left_vectors:
+            vector.destroy()
+        full.destroy()
+        candidate.destroy()
+
     def test_rejects_non_axis_aligned_geometry(self) -> None:
         msh, cell_tags, V, compiled = _two_cell_problem(
             distinct_materials=True
@@ -798,6 +1132,62 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             1.0e-10,
         )
 
+        dual_active_values = (
+            rng.standard_normal(candidate.active_rows)
+            + 1j * rng.standard_normal(candidate.active_rows)
+        )
+        dual_full = recover_full_dual_from_active_trace(
+            candidate,
+            dual_active_values,
+        )
+        full_action = unconstrained.createVecLeft()
+        unconstrained.mult(x, full_action)
+        full_adjoint_action = unconstrained.createVecRight()
+        unconstrained.multHermitian(dual_full, full_adjoint_action)
+        self.assertLess(
+            float(
+                np.linalg.norm(
+                    full_adjoint_action.getValues(
+                        np.asarray(
+                            np.concatenate(interior_rows),
+                            dtype=PETSc.IntType,
+                        )
+                    )
+                )
+            ),
+            2.0e-10,
+        )
+        active_primal = candidate.matrix.createVecRight()
+        active_dual = candidate.matrix.createVecLeft()
+        _set_owned_values(active_primal, active_values)
+        _set_owned_values(active_dual, dual_active_values)
+        reduced_action = candidate.matrix.createVecLeft()
+        candidate.matrix.mult(active_primal, reduced_action)
+        self.assertLess(
+            abs(dual_full.dot(full_action) - active_dual.dot(reduced_action))
+            / max(abs(active_dual.dot(reduced_action)), 1.0e-30),
+            3.0e-12,
+        )
+        slave_value = complex(
+            dual_full.getValues(
+                np.asarray([slave], dtype=PETSc.IntType)
+            )[0]
+        )
+        master_active = (
+            candidate.trace_constraints.original_to_active[master]
+        )
+        self.assertAlmostEqual(
+            slave_value,
+            coefficient * dual_active_values[master_active],
+            places=12,
+        )
+
+        reduced_action.destroy()
+        active_dual.destroy()
+        active_primal.destroy()
+        full_adjoint_action.destroy()
+        full_action.destroy()
+        dual_full.destroy()
         residual.destroy()
         x.destroy()
         unconstrained.destroy()
@@ -969,11 +1359,387 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(matrix_info["mallocs"], 0.0)
         self.assertEqual(matrix_info["nz_unneeded"], 0.0)
 
+        rng = np.random.default_rng(2026072403)
+        active_primal_values = (
+            rng.standard_normal(candidate.active_rows)
+            + 1j * rng.standard_normal(candidate.active_rows)
+        )
+        active_dual_values = (
+            rng.standard_normal(candidate.active_rows)
+            + 1j * rng.standard_normal(candidate.active_rows)
+        )
+        full_primal_values = np.zeros(
+            candidate.full_rows,
+            dtype=np.complex128,
+        )
+        for original, (active_ids, coefficients) in (
+            candidate.trace_constraints.expansion_by_original.items()
+        ):
+            full_primal_values[original] = np.dot(
+                coefficients,
+                active_primal_values[active_ids],
+            )
+        for rows, values in recover_owned_cell_interiors(
+            candidate,
+            active_primal_values,
+        ):
+            full_primal_values[rows] = values
+        full_primal = full.createVecRight()
+        _set_owned_values(full_primal, full_primal_values)
+        full_dual = recover_full_dual_from_active_trace(
+            candidate,
+            active_dual_values,
+        )
+        full_action = full.createVecLeft()
+        full.mult(full_primal, full_action)
+        full_adjoint_action = full.createVecRight()
+        full.multHermitian(full_dual, full_adjoint_action)
+        local_interior = np.concatenate(
+            [
+                cell.interior_original_dofs
+                for cell in candidate.cell_recovery_maps
+            ]
+        )
+        local_dual_residual = float(
+            np.linalg.norm(
+                full_adjoint_action.getValues(
+                    np.asarray(local_interior, dtype=PETSc.IntType)
+                )
+            )
+        )
+        self.assertLess(
+            comm.allreduce(local_dual_residual, op=MPI.MAX),
+            2.0e-10,
+        )
+
+        reduced_primal = candidate.matrix.createVecRight()
+        reduced_dual = candidate.matrix.createVecLeft()
+        _set_owned_values(reduced_primal, active_primal_values)
+        _set_owned_values(reduced_dual, active_dual_values)
+        reduced_action = candidate.matrix.createVecLeft()
+        candidate.matrix.mult(reduced_primal, reduced_action)
+        reduced_adjoint_action = candidate.matrix.createVecRight()
+        candidate.matrix.multHermitian(
+            reduced_dual,
+            reduced_adjoint_action,
+        )
+        full_pairing = complex(full_dual.dot(full_action))
+        reduced_pairing = complex(reduced_dual.dot(reduced_action))
+        self.assertLess(
+            abs(full_pairing - reduced_pairing)
+            / max(abs(reduced_pairing), 1.0e-30),
+            3.0e-12,
+        )
+        owned_active_original = (
+            candidate.trace_constraints.owned_active_original_dofs
+        )
+        owned_active_ids = np.asarray(
+            [
+                candidate.trace_constraints.original_to_active[
+                    int(original)
+                ]
+                for original in owned_active_original
+            ],
+            dtype=PETSc.IntType,
+        )
+        local_trace_error = float(
+            np.max(
+                np.abs(
+                    full_adjoint_action.getValues(
+                        owned_active_original
+                    )
+                    - reduced_adjoint_action.getValues(
+                        owned_active_ids
+                    )
+                ),
+                initial=0.0,
+            )
+        )
+        self.assertLess(
+            comm.allreduce(local_trace_error, op=MPI.MAX),
+            3.0e-11,
+        )
+
+        reduced_adjoint_action.destroy()
+        reduced_action.destroy()
+        reduced_dual.destroy()
+        reduced_primal.destroy()
+        full_adjoint_action.destroy()
+        full_action.destroy()
+        full_dual.destroy()
+        full_primal.destroy()
         difference.destroy()
         manual_difference.destroy()
         manual_full.destroy()
         reference.destroy()
         zero_rhs.destroy()
+        full.destroy()
+        candidate.destroy()
+
+    @unittest.skipUnless(
+        MPI.COMM_WORLD.size == 2,
+        "MPI2 augmented Hermitian dual recovery check",
+    )
+    def test_mpi2_augmented_dual_recovery_closes_full_schur_pairing(
+        self,
+    ) -> None:
+        comm = MPI.COMM_WORLD
+        msh = mesh.create_unit_cube(
+            comm,
+            2,
+            1,
+            1,
+            cell_type=mesh.CellType.hexahedron,
+        )
+        tdim = msh.topology.dim
+        owned_cells = int(msh.topology.index_map(tdim).size_local)
+        cell_tags = mesh.meshtags(
+            msh,
+            tdim,
+            np.arange(owned_cells, dtype=np.int32),
+            np.ones(owned_cells, dtype=np.int32),
+        )
+        V = fem.functionspace(
+            msh,
+            element(
+                "N1curl",
+                msh.basix_cell(),
+                2,
+                dtype=default_real_type,
+            ),
+        )
+        u = ufl.TrialFunction(V)
+        v = ufl.TestFunction(V)
+        compiled = fem.form(
+            (
+                ufl.inner(ufl.curl(u), ufl.curl(v))
+                + PETSc.ScalarType(2.2 - 0.3j) * ufl.inner(u, v)
+            )
+            * ufl.dx
+        )
+        candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+            appended_global_rows=1,
+            appended_support_owned_cell_groups=(
+                np.arange(owned_cells, dtype=np.int32),
+            ),
+            appended_support_group_by_row=(0,),
+        )
+        full = fem_petsc.assemble_matrix(compiled, bcs=[])
+        full.assemble()
+        rng = np.random.default_rng(2026072405)
+        left_values = (
+            rng.standard_normal(candidate.full_rows)
+            + 1j * rng.standard_normal(candidate.full_rows)
+        )
+        right_values = (
+            rng.standard_normal(candidate.full_rows)
+            + 1j * rng.standard_normal(candidate.full_rows)
+        )
+        left = full.createVecLeft()
+        right = full.createVecRight()
+        _set_owned_values(left, left_values)
+        _set_owned_values(right, right_values)
+        row_scale = 0.6 - 0.35j
+        auxiliary_diagonal = 1.2 + 0.45j
+        register_appended_dual_interior_coupling(
+            candidate,
+            0,
+            (left,),
+            (1.0 + 0.0j,),
+            row_scale=row_scale,
+        )
+        reduced_left = condense_unconstrained_vector_to_active_trace(
+            candidate,
+            left,
+            side="left",
+        )
+        reduced_right = condense_unconstrained_vector_to_active_trace(
+            candidate,
+            right,
+            side="right",
+        )
+        interior_bilinear = cell_interior_schur_bilinear(
+            candidate,
+            left,
+            right,
+        )
+        auxiliary_schur = (
+            auxiliary_diagonal - row_scale * interior_bilinear
+        )
+
+        reduced_dual_values = (
+            rng.standard_normal(candidate.active_rows + 1)
+            + 1j * rng.standard_normal(candidate.active_rows + 1)
+        )
+        z_aux = complex(reduced_dual_values[-1])
+        recovered_dual = recover_full_dual_from_active_trace(
+            candidate,
+            reduced_dual_values,
+        )
+        full_adjoint_action = full.createVecRight()
+        full.multHermitian(recovered_dual, full_adjoint_action)
+        full_adjoint_action.axpy(
+            PETSc.ScalarType(np.conj(row_scale) * z_aux),
+            left,
+        )
+        local_interior = np.concatenate(
+            [
+                cell.interior_original_dofs
+                for cell in candidate.cell_recovery_maps
+            ]
+        )
+        local_interior_error = float(
+            np.linalg.norm(
+                full_adjoint_action.getValues(
+                    np.asarray(local_interior, dtype=PETSc.IntType)
+                )
+            )
+        )
+        self.assertLess(
+            comm.allreduce(local_interior_error, op=MPI.MAX),
+            3.0e-10,
+        )
+
+        reduced_dual = candidate.matrix.createVecLeft()
+        _set_owned_values(reduced_dual, reduced_dual_values)
+        reduced_adjoint_action = candidate.matrix.createVecRight()
+        candidate.matrix.multHermitian(
+            reduced_dual,
+            reduced_adjoint_action,
+        )
+        reduced_adjoint_action.axpy(
+            PETSc.ScalarType(np.conj(row_scale) * z_aux),
+            reduced_left,
+        )
+        owned_active_original = (
+            candidate.trace_constraints.owned_active_original_dofs
+        )
+        owned_active_ids = np.asarray(
+            [
+                candidate.trace_constraints.original_to_active[
+                    int(original)
+                ]
+                for original in owned_active_original
+            ],
+            dtype=PETSc.IntType,
+        )
+        local_trace_error = float(
+            np.max(
+                np.abs(
+                    full_adjoint_action.getValues(
+                        owned_active_original
+                    )
+                    - reduced_adjoint_action.getValues(
+                        owned_active_ids
+                    )
+                ),
+                initial=0.0,
+            )
+        )
+        self.assertLess(
+            comm.allreduce(local_trace_error, op=MPI.MAX),
+            4.0e-10,
+        )
+        full_right_pairing = recovered_dual.dot(right)
+        reduced_right_pairing = reduced_dual.dot(reduced_right)
+        full_auxiliary_adjoint = (
+            full_right_pairing
+            + np.conj(auxiliary_diagonal) * z_aux
+        )
+        reduced_auxiliary_adjoint = (
+            reduced_right_pairing
+            + np.conj(auxiliary_schur) * z_aux
+        )
+        self.assertLess(
+            abs(full_auxiliary_adjoint - reduced_auxiliary_adjoint),
+            5.0e-10,
+        )
+
+        reduced_primal_values = (
+            rng.standard_normal(candidate.active_rows + 1)
+            + 1j * rng.standard_normal(candidate.active_rows + 1)
+        )
+        x_aux = complex(reduced_primal_values[-1])
+        full_primal_values = np.zeros(
+            candidate.full_rows,
+            dtype=np.complex128,
+        )
+        for original, (active_ids, coefficients) in (
+            candidate.trace_constraints.expansion_by_original.items()
+        ):
+            full_primal_values[original] = np.dot(
+                coefficients,
+                reduced_primal_values[active_ids],
+            )
+        interior_rhs = right.copy()
+        interior_rhs.scale(PETSc.ScalarType(-x_aux))
+        for rows, values in recover_owned_cell_interiors(
+            candidate,
+            reduced_primal_values[: candidate.active_rows],
+            full_rhs=interior_rhs,
+        ):
+            full_primal_values[rows] = values
+        full_primal = full.createVecRight()
+        _set_owned_values(full_primal, full_primal_values)
+        full_action = full.createVecLeft()
+        full.mult(full_primal, full_action)
+        full_action.axpy(PETSc.ScalarType(x_aux), right)
+        full_auxiliary_action = (
+            row_scale * full_primal.dot(left)
+            + auxiliary_diagonal * x_aux
+        )
+        full_pairing = (
+            full_action.dot(recovered_dual)
+            + np.conj(z_aux) * full_auxiliary_action
+        )
+
+        reduced_primal = candidate.matrix.createVecRight()
+        _set_owned_values(reduced_primal, reduced_primal_values)
+        reduced_action = candidate.matrix.createVecLeft()
+        candidate.matrix.mult(reduced_primal, reduced_action)
+        reduced_action.axpy(PETSc.ScalarType(x_aux), reduced_right)
+        reduced_auxiliary_action = (
+            row_scale * reduced_primal.dot(reduced_left)
+            + auxiliary_schur * x_aux
+        )
+        reduced_pairing = (
+            reduced_action.dot(reduced_dual)
+            + np.conj(z_aux) * reduced_auxiliary_action
+        )
+        self.assertLess(
+            abs(full_pairing - reduced_pairing)
+            / max(abs(reduced_pairing), 1.0e-30),
+            6.0e-12,
+        )
+        context = assembly_time.assembly_time_dual_recovery_context(
+            candidate
+        )
+        self.assertTrue(context["exact_augmented_interior_coupling"])
+        self.assertEqual(
+            context["appended_nonzero_cell_blocks_global"],
+            2,
+        )
+        self.assertGreater(
+            context["appended_recovery_storage_bytes_global"],
+            0,
+        )
+
+        reduced_action.destroy()
+        reduced_primal.destroy()
+        full_action.destroy()
+        full_primal.destroy()
+        interior_rhs.destroy()
+        reduced_adjoint_action.destroy()
+        reduced_dual.destroy()
+        full_adjoint_action.destroy()
+        recovered_dual.destroy()
+        reduced_right.destroy()
+        reduced_left.destroy()
+        right.destroy()
+        left.destroy()
         full.destroy()
         candidate.destroy()
 

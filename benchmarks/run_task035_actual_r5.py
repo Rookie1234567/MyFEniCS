@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import cmath
 import csv
 from datetime import datetime, timezone
 import hashlib
@@ -34,6 +35,331 @@ from src.solvers.solve_vector_maxwell import _json_default
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks/artifacts/task035/actual_global_r5"
 GIB = 1024**3
+_FIXED_TRACE_TOPOLOGY_CONTRACTS = {
+    15.0: {
+        "mesh_cells_resolved": [6, 2, 10],
+        "num_mesh_cells": 120,
+        "candidate_dofs": 74890,
+        "global_p6_dofs": 84492,
+        "active_rows_with_dtn": 16880,
+        "base_schur_nnz": 9129300,
+        "predicted_used_nnz": 9195812,
+        "safe_allocated_nnz_upper": 9484580,
+    },
+    14.0: {
+        "mesh_cells_resolved": [6, 2, 11],
+        "num_mesh_cells": 132,
+        "candidate_dofs": 82315,
+        "global_p6_dofs": 92850,
+        "active_rows_with_dtn": 18500,
+        "base_schur_nnz": 10038000,
+        "predicted_used_nnz": 10104512,
+        "safe_allocated_nnz_upper": 10393280,
+    },
+    13.0: {
+        "mesh_cells_resolved": [6, 2, 12],
+        "num_mesh_cells": 144,
+        "candidate_dofs": 89740,
+        "global_p6_dofs": 101208,
+        "active_rows_with_dtn": 20120,
+        "base_schur_nnz": 10946700,
+        "predicted_used_nnz": 11013212,
+        "safe_allocated_nnz_upper": 11301980,
+    },
+}
+
+
+def _axis_sha256(values: Any) -> str:
+    encoded = json.dumps(
+        [float(value) for value in values],
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _mode_identity_sha256(modes: Any) -> str:
+    encoded = json.dumps(
+        [
+            (mode.side, int(mode.m), int(mode.n), mode.polarization)
+            for mode in modes
+        ],
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _fixed_trace_resource_preflight(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """Resolve the actual tensor axes and resource envelope before MPI."""
+
+    from src.common.config_3d import target_stage4_config
+    from src.common.modes_3d import outgoing_port_modes_3d
+    from src.geometry.mesh_builder_3d import stage4_axis_plan
+
+    topology = next(
+        (
+            contract
+            for h_nm, contract in _FIXED_TRACE_TOPOLOGY_CONTRACTS.items()
+            if abs(float(args.h_nm) - h_nm) <= 1.0e-12
+        ),
+        None,
+    )
+    if topology is None:
+        raise SystemExit(
+            "fixed-trace resource preflight has no reviewed topology contract"
+        )
+    cfg = target_stage4_config(
+        degree=int(args.fixed_interior_degree),
+        h_nm=float(args.h_nm),
+    )
+    cfg.stage4_dtn_quadrature_degree = (
+        args.fixed_trace_dtn_quadrature_degree
+    )
+    cfg.stage4_dtn_evanescent_buffer = int(
+        args.fixed_trace_dtn_evanescent_buffer
+    )
+    seed_cfg = target_stage4_config(
+        degree=int(args.fixed_interior_degree),
+        h_nm=15.0,
+    )
+    plan = stage4_axis_plan(cfg, int(args.mpi_size))
+    seed_plan = stage4_axis_plan(seed_cfg, int(args.mpi_size))
+    axes = {
+        "x": [float(value) for value in plan.x_values],
+        "y": [float(value) for value in plan.y_values],
+        "z": [float(value) for value in plan.z_values],
+    }
+    seed_axes = {
+        "x": [float(value) for value in seed_plan.x_values],
+        "y": [float(value) for value in seed_plan.y_values],
+        "z": [float(value) for value in seed_plan.z_values],
+    }
+    actual_cells = list(plan.mesh_cells_resolved)
+    dtn_modes = outgoing_port_modes_3d(cfg)
+    dtn_mode_count = len(dtn_modes)
+    dtn_propagating_count = sum(
+        1 for mode in dtn_modes if mode.propagating
+    )
+    dtn_evanescent_count = (
+        dtn_mode_count - dtn_propagating_count
+    )
+    dtn_mode_identity_sha256 = _mode_identity_sha256(dtn_modes)
+    expected_mode_identity_sha256 = (
+        "74f785341325c2f88a6512747bb4cf0d2cad1d8b8dc66fd0c7e2a63ee758f629"
+        if int(args.fixed_trace_dtn_evanescent_buffer) == 1
+        else "f039dd14264f7bc2987e75e311ef338682388b1f17a4ea194702ff888f4c7a21"
+    )
+    effective_quadrature_degree = (
+        int(args.fixed_trace_dtn_quadrature_degree)
+        if args.fixed_trace_dtn_quadrature_degree is not None
+        else 25
+    )
+    port_area = (
+        float(cfg.x_max - cfg.x_min)
+        * float(cfg.y_max - cfg.y_min)
+    )
+    mode_scaling_rows = []
+    for mode in dtn_modes:
+        boundary_z = float(
+            cfg.physical_z_max
+            if mode.side == "top"
+            else cfg.physical_z_min
+        )
+        boundary_phase = cmath.exp(
+            1j * complex(mode.k_vector[2]) * boundary_z
+        )
+        denominator = float(
+            port_area
+            * float(mode.electric_tangential_norm_sq)
+            * abs(boundary_phase) ** 2
+        )
+        mode_scaling_rows.append(
+            {
+                "side": mode.side,
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": mode.polarization,
+                "propagating": bool(mode.propagating),
+                "abs_boundary_phase": float(abs(boundary_phase)),
+                "projection_denominator": denominator,
+            }
+        )
+    minimum_abs_boundary_phase = min(
+        row["abs_boundary_phase"] for row in mode_scaling_rows
+    )
+    minimum_projection_denominator = min(
+        row["projection_denominator"] for row in mode_scaling_rows
+    )
+    maximum_projection_denominator = max(
+        row["projection_denominator"] for row in mode_scaling_rows
+    )
+    boundary_phase_safety_floor = math.sqrt(
+        sys.float_info.epsilon
+    )
+    mode_scaling_finite_positive = all(
+        math.isfinite(row["abs_boundary_phase"])
+        and row["abs_boundary_phase"] > 0.0
+        and math.isfinite(row["projection_denominator"])
+        and row["projection_denominator"] > 0.0
+        for row in mode_scaling_rows
+    )
+    unscaled_port_basis_numerically_safe = bool(
+        mode_scaling_finite_positive
+        and minimum_abs_boundary_phase
+        >= boundary_phase_safety_floor
+    )
+    expected_active_rows = int(
+        topology["active_rows_with_dtn"] - 80 + dtn_mode_count
+    )
+    default_appended_used = int(
+        topology["predicted_used_nnz"]
+        - topology["base_schur_nnz"]
+    )
+    predicted_appended_used = int(
+        round(
+            (default_appended_used - 80)
+            * dtn_mode_count
+            / 80
+        )
+        + dtn_mode_count
+    )
+    predicted_used_nnz = int(
+        topology["base_schur_nnz"] + predicted_appended_used
+    )
+    default_safe_increment = int(
+        topology["safe_allocated_nnz_upper"]
+        - topology["base_schur_nnz"]
+    )
+    predicted_safe_upper = int(
+        topology["base_schur_nnz"]
+        + math.ceil(
+            default_safe_increment * dtn_mode_count / 80
+        )
+    )
+    directional = bool(args.fixed_trace_directional_recovery)
+    checks = {
+        "reviewed_topology_contract": actual_cells
+        == topology["mesh_cells_resolved"],
+        "material_planes_aligned": (
+            plan.material_plane_alignment["all_aligned"] is True
+        ),
+        "candidate_dofs_le_90000": topology["candidate_dofs"] <= 90000,
+        "active_rows_positive": expected_active_rows > 0,
+        "predicted_nnz_positive": predicted_used_nnz > 0,
+        "dtn_mode_identity_frozen": (
+            dtn_mode_identity_sha256
+            == expected_mode_identity_sha256
+        ),
+        "unscaled_port_basis_numerically_safe": (
+            unscaled_port_basis_numerically_safe
+        ),
+        "directional_x_axis_matches_h15": (
+            (not directional) or axes["x"] == seed_axes["x"]
+        ),
+        "directional_y_axis_matches_h15": (
+            (not directional) or axes["y"] == seed_axes["y"]
+        ),
+        "directional_z_axis_differs_from_h15": (
+            (not directional) or axes["z"] != seed_axes["z"]
+        ),
+    }
+    return {
+        "schema_version": "task035b.fixed-trace-resource-preflight.v1",
+        "pass": all(checks.values()),
+        "checks": checks,
+        "nominal_h_nm": float(args.h_nm),
+        "directional_recovery": directional,
+        "axis_plan": {
+            "mesh_cells_resolved": actual_cells,
+            "mesh_spacing_mode_resolved": (
+                plan.mesh_spacing_mode_resolved
+            ),
+            "axis_values_nm": axes,
+            "axis_sha256": {
+                axis: _axis_sha256(values)
+                for axis, values in axes.items()
+            },
+            "h15_axis_sha256": {
+                axis: _axis_sha256(values)
+                for axis, values in seed_axes.items()
+            },
+            "material_plane_alignment": (
+                plan.material_plane_alignment
+            ),
+        },
+        "predicted_resources": {
+            **topology,
+            "reviewed_default_dtn_auxiliary_rows": 80,
+            "dtn_auxiliary_rows": dtn_mode_count,
+            "dtn_propagating_rows": dtn_propagating_count,
+            "dtn_evanescent_rows": dtn_evanescent_count,
+            "dtn_mode_identity_sha256": dtn_mode_identity_sha256,
+            "expected_dtn_mode_identity_sha256": (
+                expected_mode_identity_sha256
+            ),
+            "dtn_surface_quadrature_degree": (
+                effective_quadrature_degree
+            ),
+            "expected_active_rows": expected_active_rows,
+            "port_diagnostic_predicted_used_nnz": (
+                predicted_used_nnz
+            ),
+            "port_diagnostic_safe_allocated_nnz_upper": (
+                predicted_safe_upper
+            ),
+        },
+        "port_basis_scaling_preflight": {
+            "schema_version": (
+                "task035b.dtn-port-basis-scaling-preflight.v1"
+            ),
+            "status": (
+                "safe_for_pde"
+                if unscaled_port_basis_numerically_safe
+                else "controlled_stop_unscaled_evanescent_port_basis"
+            ),
+            "pde_authorized": unscaled_port_basis_numerically_safe,
+            "mode_count": dtn_mode_count,
+            "mode_identity_sha256": dtn_mode_identity_sha256,
+            "minimum_abs_boundary_phase": (
+                minimum_abs_boundary_phase
+            ),
+            "boundary_phase_safety_floor": (
+                boundary_phase_safety_floor
+            ),
+            "minimum_projection_denominator": (
+                minimum_projection_denominator
+            ),
+            "maximum_projection_denominator": (
+                maximum_projection_denominator
+            ),
+            "denominator_dynamic_range": (
+                maximum_projection_denominator
+                / minimum_projection_denominator
+            ),
+            "criterion": (
+                "all values finite and positive, and minimum absolute "
+                "boundary phase >= sqrt(machine epsilon), preventing the "
+                "unscaled augmented row/column ratio from exceeding "
+                "approximately 1/epsilon"
+            ),
+            "ordinary_default_changed": False,
+            "mode_rows": mode_scaling_rows,
+        },
+        "prediction_semantics": {
+            "dofs_and_rows": "exact tensor-entity count",
+            "base_schur_nnz": "exact cell-clique structural union",
+            "predicted_used_nnz": (
+                "exact for the 80-mode default; linear support-count "
+                "prediction for an opt-in evanescent-buffer diagnostic"
+            ),
+            "safe_allocated_nnz_upper": (
+                "support-safe exact default upper; linear conservative "
+                "port-support projection for a buffer diagnostic"
+            ),
+            "measured": False,
+        },
+    }
 
 
 def _parse_theta_schedule(value: str) -> tuple[float, ...]:
@@ -83,6 +409,34 @@ def _path_from_root(path: Path) -> str:
         return str(path.resolve())
 
 
+def _resolve_new_record_path(
+    path: Path,
+    *,
+    input_authorities: tuple[Path | None, ...],
+) -> Path:
+    """Resolve an output record without permitting evidence replacement."""
+
+    record_path = (
+        path if path.is_absolute() else ROOT / path
+    ).resolve()
+    protected = {
+        authority.resolve()
+        for authority in input_authorities
+        if authority is not None
+    }
+    if record_path in protected:
+        raise SystemExit(
+            "output record path must not alias an input authority: "
+            f"{record_path}"
+        )
+    if record_path.exists():
+        raise SystemExit(
+            "output record already exists; historical evidence will not "
+            f"be overwritten: {record_path}"
+        )
+    return record_path
+
+
 def _memory_snapshot() -> dict[str, Any]:
     effective = effective_memory_limit()
     return {
@@ -121,17 +475,39 @@ def _worker(args: argparse.Namespace) -> int:
             args.run_dir,
             control_record=args.fixed_trace_control_record,
             control_sha256=args.fixed_trace_control_sha256,
+            significant_channel_reference_record=(
+                args.fixed_trace_significant_channel_reference_record
+            ),
+            significant_channel_reference_sha256=(
+                args.fixed_trace_significant_channel_reference_sha256
+            ),
             global_p6_baseline_record=(
                 args.fixed_trace_global_p6_baseline_record
             ),
             global_p6_baseline_sha256=(
                 args.fixed_trace_global_p6_baseline_sha256
             ),
+            directional_parent_record=(
+                args.fixed_trace_directional_parent_record
+            ),
+            directional_parent_sha256=(
+                args.fixed_trace_directional_parent_sha256
+            ),
             h_nm=args.h_nm,
             incident_theta_deg=80.0,
             polarization_kind=args.polarization_kind,
             trace_degree=args.fixed_trace_degree,
             interior_degree=args.fixed_interior_degree,
+            directional_recovery=args.fixed_trace_directional_recovery,
+            channel_adjoint_diagnostic=(
+                args.fixed_trace_channel_adjoint_diagnostic
+            ),
+            dtn_quadrature_degree=(
+                args.fixed_trace_dtn_quadrature_degree
+            ),
+            dtn_evanescent_buffer=(
+                args.fixed_trace_dtn_evanescent_buffer
+            ),
             progress_observer=progress,
         )
     elif args.regionwise_p_classifier_record is not None:
@@ -454,6 +830,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="required SHA256 for the same-mesh global-p6 baseline",
     )
     parser.add_argument(
+        "--fixed-trace-significant-channel-reference-record",
+        type=Path,
+        help="qualified frozen Task035b significant-channel reference v1",
+    )
+    parser.add_argument(
+        "--fixed-trace-significant-channel-reference-sha256",
+        help="required SHA256 for the frozen 12-channel reference v1",
+    )
+    parser.add_argument(
         "--fixed-trace-degree",
         type=int,
         default=5,
@@ -464,6 +849,55 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         default=6,
         help="cell-interior degree retained on every candidate cell",
+    )
+    parser.add_argument(
+        "--fixed-trace-directional-recovery",
+        action="store_true",
+        help=(
+            "Review-V1 z-only fixed-trace recovery topology; permits only the "
+            "prequalified nominal h14 or h13 discriminator and does not require "
+            "an otherwise unnecessary same-mesh global-p6 resource solve"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-directional-parent-record",
+        type=Path,
+        help=(
+            "qualified positive h14 watchdog authority required only before "
+            "the one permitted h13 escalation"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-directional-parent-sha256",
+        help="required SHA256 for the positive h14 directional parent",
+    )
+    parser.add_argument(
+        "--fixed-trace-channel-adjoint-diagnostic",
+        action="store_true",
+        help=(
+            "retain the accepted h15 reduced direct factor only long enough "
+            "to run the 16 independent Review-V1 channel adjoints and exact "
+            "augmented dual recovery; never a resource-authority run"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-dtn-quadrature-degree",
+        type=int,
+        choices=(31, 37),
+        help=(
+            "h15 root-cause diagnostic using one reviewed raised DtN trace "
+            "quadrature degree; the frozen default remains unchanged"
+        ),
+    )
+    parser.add_argument(
+        "--fixed-trace-dtn-evanescent-buffer",
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help=(
+            "h15 root-cause diagnostic adding exactly one rectangular "
+            "evanescent order buffer; zero preserves the ordinary default"
+        ),
     )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
@@ -533,19 +967,110 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "regionwise-p, common-mesh, and adaptive/uniform modes are mutually exclusive."
         )
-    fixed_trace_values = (
+    fixed_trace_control_values = (
         args.fixed_trace_control_record,
         args.fixed_trace_control_sha256,
+    )
+    fixed_trace_baseline_values = (
         args.fixed_trace_global_p6_baseline_record,
         args.fixed_trace_global_p6_baseline_sha256,
     )
-    fixed_trace_mode = any(value is not None for value in fixed_trace_values)
+    fixed_trace_channel_reference_values = (
+        args.fixed_trace_significant_channel_reference_record,
+        args.fixed_trace_significant_channel_reference_sha256,
+    )
+    fixed_trace_directional_parent_values = (
+        args.fixed_trace_directional_parent_record,
+        args.fixed_trace_directional_parent_sha256,
+    )
+    fixed_trace_port_diagnostic = bool(
+        args.fixed_trace_dtn_quadrature_degree is not None
+        or args.fixed_trace_dtn_evanescent_buffer > 0
+    )
+    fixed_trace_mode = any(
+        value is not None for value in fixed_trace_control_values
+    )
     if fixed_trace_mode and not all(
-        value is not None for value in fixed_trace_values
+        value is not None for value in fixed_trace_control_values
     ):
         parser.error(
-            "fixed-trace mode requires SHA-bound h10 accuracy control and "
-            "same-mesh h15 global-p6 baseline records."
+            "fixed-trace mode requires a SHA-bound h10 accuracy control."
+        )
+    if any(value is not None for value in fixed_trace_baseline_values) and not (
+        fixed_trace_mode
+        and all(value is not None for value in fixed_trace_baseline_values)
+    ):
+        parser.error(
+            "fixed-trace global-p6 baseline path and SHA256 must be paired "
+            "with the fixed-trace control."
+        )
+    if fixed_trace_mode and not all(
+        value is not None for value in fixed_trace_channel_reference_values
+    ):
+        parser.error(
+            "fixed-trace mode requires the SHA-bound frozen significant-"
+            "channel reference v1."
+        )
+    if (
+        any(
+            value is not None
+            for value in fixed_trace_channel_reference_values
+        )
+        and not fixed_trace_mode
+    ):
+        parser.error(
+            "fixed-trace significant-channel reference is valid only with "
+            "fixed-trace mode."
+        )
+    if args.fixed_trace_directional_recovery and not fixed_trace_mode:
+        parser.error(
+            "--fixed-trace-directional-recovery requires fixed-trace mode."
+        )
+    if (
+        args.fixed_trace_channel_adjoint_diagnostic
+        and not fixed_trace_mode
+    ):
+        parser.error(
+            "--fixed-trace-channel-adjoint-diagnostic requires fixed-trace "
+            "mode."
+        )
+    if (
+        args.fixed_trace_channel_adjoint_diagnostic
+        and args.fixed_trace_directional_recovery
+    ):
+        parser.error(
+            "fixed-trace channel-adjoint seed diagnostic and directional "
+            "recovery are mutually exclusive."
+        )
+    if fixed_trace_port_diagnostic and not fixed_trace_mode:
+        parser.error(
+            "fixed-trace DtN/port diagnostic requires fixed-trace mode."
+        )
+    if fixed_trace_port_diagnostic and (
+        args.fixed_trace_directional_recovery
+        or args.fixed_trace_channel_adjoint_diagnostic
+    ):
+        parser.error(
+            "fixed-trace DtN/port, directional, and channel-adjoint "
+            "diagnostics are mutually exclusive."
+        )
+    if (
+        args.fixed_trace_dtn_quadrature_degree is not None
+        and args.fixed_trace_dtn_evanescent_buffer > 0
+    ):
+        parser.error(
+            "change only one fixed-trace DtN/port diagnostic control per "
+            "run."
+        )
+    if any(
+        value is not None
+        for value in fixed_trace_directional_parent_values
+    ) and not all(
+        value is not None
+        for value in fixed_trace_directional_parent_values
+    ):
+        parser.error(
+            "fixed-trace directional parent path and SHA256 must be paired."
         )
     if fixed_trace_mode and (
         common_mesh_mode or active_cycles or regionwise_mode
@@ -710,24 +1235,90 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "p5-trace regionwise-p requires an explicit high-cell count."
             )
     if fixed_trace_mode:
-        value = args.fixed_trace_control_sha256
-        if len(value) != 64 or any(
-            character not in "0123456789abcdefABCDEF" for character in value
+        for label, value in (
+            ("control", args.fixed_trace_control_sha256),
+            (
+                "significant-channel reference",
+                args.fixed_trace_significant_channel_reference_sha256,
+            ),
         ):
-            parser.error("fixed-trace control SHA256 must be 64 hex.")
-        if (
+            if len(value) != 64 or any(
+                character not in "0123456789abcdefABCDEF"
+                for character in value
+            ):
+                parser.error(
+                    f"fixed-trace {label} SHA256 must be 64 hex."
+                )
+        if args.fixed_trace_directional_parent_sha256 is not None:
+            value = args.fixed_trace_directional_parent_sha256
+            if len(value) != 64 or any(
+                character not in "0123456789abcdefABCDEF"
+                for character in value
+            ):
+                parser.error(
+                    "fixed-trace directional parent SHA256 must be 64 hex."
+                )
+        fixed_identity = (
             args.mpi_size != 8
             or args.mesh_cell_type != "hexahedron"
             or args.coarse_degree != 5
             or args.enriched_degree != 6
-            or abs(args.h_nm - 15.0) > 1.0e-12
             or args.polarization_kind != "s"
             or args.fixed_trace_degree != 5
             or args.fixed_interior_degree != 6
+        )
+        if fixed_identity:
+            parser.error(
+                "formal fixed-trace mode requires MPI8, hexa, p5/p6 "
+                "controls, p5 trace, p6 interior, and s polarization."
+            )
+        baseline_bound = all(
+            value is not None for value in fixed_trace_baseline_values
+        )
+        if args.fixed_trace_directional_recovery:
+            if (
+                not any(
+                    abs(args.h_nm - allowed) <= 1.0e-12
+                    for allowed in (14.0, 13.0)
+                )
+                or baseline_bound
+            ):
+                parser.error(
+                    "directional fixed-trace recovery requires nominal h14 "
+                    "or h13 and must omit a same-mesh global-p6 baseline."
+                )
+            parent_bound = all(
+                value is not None
+                for value in fixed_trace_directional_parent_values
+            )
+            if (
+                abs(args.h_nm - 13.0) <= 1.0e-12
+                and not parent_bound
+            ):
+                parser.error(
+                    "h13 escalation requires a SHA-bound positive h14 "
+                    "directional parent."
+                )
+            if (
+                abs(args.h_nm - 14.0) <= 1.0e-12
+                and parent_bound
+            ):
+                parser.error(
+                    "the primary h14 directional point must not provide a "
+                    "parent record."
+                )
+        elif abs(args.h_nm - 15.0) > 1.0e-12 or not baseline_bound:
+            parser.error(
+                "the accepted fixed-trace seed requires h15 and a SHA-bound "
+                "same-mesh global-p6 baseline; use the explicit directional "
+                "flag only for Review-V1 h14/h13 recovery."
+            )
+        elif any(
+            value is not None
+            for value in fixed_trace_directional_parent_values
         ):
             parser.error(
-                "formal fixed-trace mode requires MPI8, hexa h15, p5/p6 "
-                "controls, p5 trace, p6 interior, and s polarization."
+                "directional parent is valid only for h13 recovery."
             )
     if args.goal_dwr_only and (
         args.mpi_size != 8
@@ -1950,6 +2541,37 @@ def _qualify_fixed_trace(
     authority_readable: bool,
     sampler: dict[str, Any],
 ) -> dict[str, Any]:
+    directional_recovery = bool(
+        getattr(args, "fixed_trace_directional_recovery", False)
+    )
+    channel_adjoint_mode = bool(
+        getattr(
+            args,
+            "fixed_trace_channel_adjoint_diagnostic",
+            False,
+        )
+    )
+    port_diagnostic_mode = bool(
+        getattr(args, "fixed_trace_dtn_quadrature_degree", None)
+        is not None
+        or int(
+            getattr(args, "fixed_trace_dtn_evanescent_buffer", 0)
+        )
+        > 0
+    )
+    topology = next(
+        (
+            contract
+            for h_nm, contract in _FIXED_TRACE_TOPOLOGY_CONTRACTS.items()
+            if abs(float(args.h_nm) - h_nm) <= 1.0e-12
+        ),
+        None,
+    )
+    resource_preflight = getattr(
+        args,
+        "fixed_trace_resource_preflight",
+        {},
+    )
     candidate = result.get("candidate") or {}
     summary = candidate.get("summary") or {}
     resolved_config = summary.get("config") or {}
@@ -1965,19 +2587,49 @@ def _qualify_fixed_trace(
     channel_comparison = result.get("diffraction_channel_comparison") or {}
     field_gate = result.get("selected_field_interface_error_gate") or {}
     control = result.get("control_authority") or {}
+    channel_reference = (
+        result.get("significant_channel_reference_authority") or {}
+    )
+    directional_parent = result.get("directional_parent_authority") or {}
     global_p6_baseline = result.get("global_p6_baseline_authority") or {}
     same_mesh_baseline = result.get("same_mesh_global_p6_baseline") or {}
     resource_comparison = result.get("same_mesh_resource_comparison") or {}
     target_identity = result.get("target_identity") or {}
+    directional_signal = result.get("directional_recovery_signal")
+    channel_adjoint = result.get("channel_adjoint_diagnostic")
+    port_diagnostic = result.get("port_diagnostic")
     accepted_statuses = {
         "actual_fixed_trace_candidate_pass",
         "actual_fixed_trace_controlled_negative",
     }
+    if channel_adjoint_mode:
+        accepted_statuses = {
+            "actual_fixed_trace_channel_adjoint_diagnostic_pass",
+        }
+    elif port_diagnostic_mode:
+        accepted_statuses = {
+            "actual_fixed_trace_port_diagnostic_positive",
+            "actual_fixed_trace_port_diagnostic_controlled_negative",
+        }
     checks = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
         "not_terminated_for_timeout": not terminated_for_timeout,
         "resource_authority_readable": authority_readable,
+        "resource_preflight_pass": (
+            resource_preflight.get("pass") is True
+            and topology is not None
+            and all(
+                (
+                    resource_preflight.get(
+                        "predicted_resources"
+                    )
+                    or {}
+                ).get(key)
+                == value
+                for key, value in topology.items()
+            )
+        ),
         "all_expected_mpi_ranks_observed": (
             sampler.get("max_observed_worker_rank_count") == args.mpi_size
         ),
@@ -1990,13 +2642,132 @@ def _qualify_fixed_trace(
             result.get("candidate_accuracy_pass"),
             bool,
         ),
+        "channel_adjoint_mode_classified": (
+            (
+                result.get("channel_adjoint_diagnostic_only") is True
+                and result.get("formal_candidate_eligible") is False
+                and isinstance(channel_adjoint, dict)
+                and channel_adjoint.get("pass") is True
+                and (
+                    channel_adjoint.get("adjoints") or {}
+                ).get("goal_count")
+                == 16
+                and len(
+                    channel_adjoint.get("recovered_full_duals") or {}
+                )
+                == 16
+                and all(
+                    (
+                        row.get("entity_sensitivity_proxy") or {}
+                    ).get("actual_dwr_indicator")
+                    is False
+                    and (
+                        row.get("entity_sensitivity_proxy") or {}
+                    ).get("lane_b_formal_selection_authorized")
+                    is False
+                    for row in (
+                        channel_adjoint.get(
+                            "recovered_full_duals"
+                        )
+                        or {}
+                    ).values()
+                )
+            )
+            if channel_adjoint_mode
+            else (
+                result.get("channel_adjoint_diagnostic_only") is False
+                and channel_adjoint is None
+            )
+        ),
+        "port_diagnostic_mode_classified": (
+            (
+                result.get("port_diagnostic_only") is True
+                and result.get("formal_candidate_eligible")
+                == bool(
+                    result.get("pass")
+                    and result.get("candidate_accuracy_pass")
+                )
+                and isinstance(port_diagnostic, dict)
+                and port_diagnostic.get("pass") is True
+                and port_diagnostic.get("formal_candidate_eligible")
+                == bool(
+                    result.get("pass")
+                    and result.get("candidate_accuracy_pass")
+                )
+                and port_diagnostic.get("classification_complete")
+                is True
+                and port_diagnostic.get(
+                    "operator_identity_with_frozen_reference"
+                )
+                is False
+                and port_diagnostic.get("requested_quadrature_degree")
+                == args.fixed_trace_dtn_quadrature_degree
+                and port_diagnostic.get("effective_quadrature_degree")
+                == (
+                    args.fixed_trace_dtn_quadrature_degree
+                    if args.fixed_trace_dtn_quadrature_degree
+                    is not None
+                    else 25
+                )
+                and port_diagnostic.get("evanescent_buffer")
+                == args.fixed_trace_dtn_evanescent_buffer
+                and port_diagnostic.get("mode_count")
+                == (
+                    resource_preflight.get("predicted_resources")
+                    or {}
+                ).get("dtn_auxiliary_rows")
+                and port_diagnostic.get("evanescent_mode_count")
+                == (
+                    resource_preflight.get("predicted_resources")
+                    or {}
+                ).get("dtn_evanescent_rows")
+                and summary.get("stage4_dtn_surface_quadrature_degree")
+                == port_diagnostic.get("effective_quadrature_degree")
+                and summary.get("stage4_dtn_evanescent_buffer")
+                == args.fixed_trace_dtn_evanescent_buffer
+                and isinstance(
+                    (
+                        port_diagnostic.get("seed_recovery_signal")
+                        or {}
+                    ).get("positive_signal"),
+                    bool,
+                )
+                and (
+                    port_diagnostic.get("seed_recovery_signal")
+                    or {}
+                ).get("thresholds_relaxed")
+                is False
+                and port_diagnostic.get("thresholds_relaxed") is False
+            )
+            if port_diagnostic_mode
+            else (
+                result.get("port_diagnostic_only") is False
+                and port_diagnostic is None
+            )
+        ),
+        "directional_signal_classified": (
+            isinstance(directional_signal, dict)
+            and isinstance(directional_signal.get("positive_signal"), bool)
+            and directional_signal.get("thresholds_relaxed") is False
+            if directional_recovery
+            else directional_signal is None
+        ),
         "official_candidate": summary.get("official_result") is True,
-        "fixed_rectangular_hexa_h15_identity": (
+        "candidate_mpi8": summary.get("mpi_size") == 8,
+        "fixed_rectangular_directional_topology_identity": (
+            topology is not None
+            and
             target_identity.get("geometry")
             == "Task034 fixed rectangular block grating"
             and summary.get("mesh_cell_type_actual") == "hexahedron"
-            and summary.get("num_mesh_cells") == 120
-            and abs(float(candidate.get("h_nm", -1.0)) - 15.0) <= 1.0e-12
+            and summary.get("num_mesh_cells")
+            == topology["num_mesh_cells"]
+            and summary.get("mesh_cells_resolved")
+            == topology["mesh_cells_resolved"]
+            and abs(
+                float(candidate.get("h_nm", -1.0)) - float(args.h_nm)
+            )
+            <= 1.0e-12
             and target_identity.get("trace_degree")
             == args.fixed_trace_degree
             and target_identity.get("interior_degree")
@@ -2005,18 +2776,76 @@ def _qualify_fixed_trace(
         "control_authority_hash_bound": (
             control.get("sha256") == args.fixed_trace_control_sha256
         ),
-        "global_p6_baseline_hash_bound": (
-            global_p6_baseline.get("sha256")
-            == args.fixed_trace_global_p6_baseline_sha256
+        "significant_channel_reference_v1_hash_bound": (
+            channel_reference.get("sha256")
+            == args.fixed_trace_significant_channel_reference_sha256
+            and channel_reference.get("frozen_channel_count") == 12
+            and channel_reference.get("unchanged_v0_gate") is True
+            and channel_reference.get(
+                "numerical_convergence_band_used_as_gate"
+            )
+            is False
         ),
-        "same_mesh_and_tag_hashes_match_global_p6": (
-            same_mesh_baseline.get("pass") is True
-            and same_mesh_baseline.get("checks")
-            == {
-                "partition_independent_mesh_sha256": True,
-                "cell_tag_sha256": True,
-                "facet_tag_sha256": True,
-            }
+        "directional_parent_requirement_classified": (
+            (
+                directional_parent.get("status")
+                == "qualified_positive_h14_parent"
+                and directional_parent.get("required") is True
+                and directional_parent.get("sha256")
+                == args.fixed_trace_directional_parent_sha256
+            )
+            if directional_recovery
+            and abs(float(args.h_nm) - 13.0) <= 1.0e-12
+            else (
+                directional_parent.get("status")
+                == "not_required_primary_h14"
+                and directional_parent.get("required") is False
+            )
+            if directional_recovery
+            else (
+                directional_parent.get("status")
+                == "not_applicable_h15_seed"
+                and directional_parent.get("required") is False
+            )
+        ),
+        "global_p6_baseline_requirement_classified": (
+            (
+                global_p6_baseline.get("status")
+                == "not_run_directional_recovery"
+                and global_p6_baseline.get("required") is False
+                and args.fixed_trace_global_p6_baseline_record is None
+            )
+            if directional_recovery
+            else (
+                global_p6_baseline.get("sha256")
+                == args.fixed_trace_global_p6_baseline_sha256
+            )
+        ),
+        "same_mesh_baseline_requirement_classified": (
+            (
+                same_mesh_baseline.get("status")
+                == "not_run_directional_recovery"
+                and same_mesh_baseline.get("required") is False
+                and same_mesh_baseline.get("pass") is None
+            )
+            if directional_recovery
+            else (
+                same_mesh_baseline.get("pass") is True
+                and same_mesh_baseline.get("checks")
+                == {
+                    "partition_independent_mesh_sha256": True,
+                    "cell_tag_sha256": True,
+                    "facet_tag_sha256": True,
+                }
+            )
+        ),
+        "candidate_mesh_and_tag_hashes_present": all(
+            (resource_audit.get("mesh_identity") or {}).get(key)
+            for key in (
+                "partition_independent_mesh_sha256",
+                "cell_tag_sha256",
+                "facet_tag_sha256",
+            )
         ),
         "exact_sequence_space": (
             element_audit.get("pass") is True
@@ -2038,12 +2867,17 @@ def _qualify_fixed_trace(
             and element_audit.get("custom_dimension")
             < element_audit.get("standard_high_dimension")
         ),
-        "preferred_full3d_equivalent_dof_target": (
-            summary.get("num_nedelec_dofs") == 74890
-            and dof_target.get("active_full3d_equivalent_dofs") == 74890
-            and dof_target.get("same_mesh_global_p6_dofs") == 84492
+        "full3d_equivalent_dof_target": (
+            topology is not None
+            and summary.get("num_nedelec_dofs")
+            == topology["candidate_dofs"]
+            and dof_target.get("active_full3d_equivalent_dofs")
+            == topology["candidate_dofs"]
+            and dof_target.get("same_mesh_global_p6_dofs")
+            == topology["global_p6_dofs"]
             and dof_target.get("minimum_le_90000") is True
-            and dof_target.get("preferred_65000_to_75000") is True
+            and dof_target.get("preferred_65000_to_75000")
+            == (not directional_recovery)
             and dof_target.get("inactive_p6_trace_modes_physically_absent")
             is True
         ),
@@ -2057,7 +2891,12 @@ def _qualify_fixed_trace(
         "physically_reduced_matrix_rows": (
             isinstance(matrix_stats.get("matrix_rows"), int)
             and matrix_stats.get("matrix_rows") == cell_audit.get("matrix_rows")
-            and matrix_stats.get("matrix_rows") < 74890
+            and topology is not None
+            and matrix_stats.get("matrix_rows")
+            == (
+                resource_preflight.get("predicted_resources") or {}
+            ).get("expected_active_rows")
+            and matrix_stats.get("matrix_rows") < topology["candidate_dofs"]
         ),
         "matrix_nnz_and_row_width_measured": (
             isinstance(matrix_stats.get("matrix_nnz_used"), (int, float))
@@ -2075,39 +2914,77 @@ def _qualify_fixed_trace(
             (summary.get("stage4_dtn_factor_inventory") or {}).get("available")
             is True
         ),
-        "same_mesh_resource_comparison_measured": (
-            resource_comparison.get("schema_version")
-            == "task035b.fixed-trace-resource-comparison.v1"
-            and (
-                (resource_comparison.get("metrics") or {}).get(
-                    "full3d_equivalent_dofs"
+        "resource_comparison_authority_classified": (
+            (
+                resource_comparison.get("status")
+                == "derived_dof_only_directional_recovery"
+                and resource_comparison.get(
+                    "same_mesh_global_p6_measured"
                 )
-                or {}
-            ).get("global_p6")
-            == 84492
-            and (
-                (resource_comparison.get("metrics") or {}).get("active_rows")
-                or {}
-            ).get("candidate")
-            == matrix_stats.get("matrix_rows")
-            and isinstance(
-                (
+                is False
+            )
+            if directional_recovery
+            else (
+                resource_comparison.get("schema_version")
+                == "task035b.fixed-trace-resource-comparison.v1"
+                and (
                     (resource_comparison.get("metrics") or {}).get(
-                        "factor_nnz"
+                        "full3d_equivalent_dofs"
                     )
                     or {}
-                ).get("compression_ratio"),
-                (int, float),
+                ).get("global_p6")
+                == topology["global_p6_dofs"]
+                and (
+                    (resource_comparison.get("metrics") or {}).get(
+                        "active_rows"
+                    )
+                    or {}
+                ).get("candidate")
+                == matrix_stats.get("matrix_rows")
+                and isinstance(
+                    (
+                        (resource_comparison.get("metrics") or {}).get(
+                            "factor_nnz"
+                        )
+                        or {}
+                    ).get("compression_ratio"),
+                    (int, float),
+                )
             )
         ),
-        "solver_released_before_postprocess": (
-            summary.get("direct_release_solver_before_postprocess") is True
-            and summary.get("solver_objects_released_before_postprocess")
-            is True
-            and (summary.get("solver_release_audit") or {}).get(
-                "petsc_garbage_cleanup_called"
+        "solver_lifecycle_matches_mode": (
+            (
+                summary.get(
+                    "direct_release_solver_before_postprocess"
+                )
+                is False
+                and summary.get(
+                    "solver_objects_released_before_postprocess"
+                )
+                is False
+                and (
+                    (channel_adjoint or {}).get(
+                        "dual_recovery_context_audit"
+                    )
+                    or {}
+                ).get("exact_augmented_interior_coupling")
+                is True
             )
-            is True
+            if channel_adjoint_mode
+            else (
+                summary.get(
+                    "direct_release_solver_before_postprocess"
+                )
+                is True
+                and summary.get(
+                    "solver_objects_released_before_postprocess"
+                )
+                is True
+                and (summary.get("solver_release_audit") or {}).get(
+                    "petsc_garbage_cleanup_called"
+                )
+                is True
+            )
         ),
         "full_true_residual_le_1e-9": (
             isinstance(
@@ -2153,9 +3030,27 @@ def _qualify_fixed_trace(
         ),
         "diffraction_power_and_amplitude_comparison_recorded": (
             channel_comparison.get("schema_version")
-            == "task035b.cross-mesh-channel-comparison.v1"
-            and channel_comparison.get("channel_count") == 80
+            == (
+                "task035b.significant-channel-reference-v1-comparison.v1"
+            )
+            and channel_comparison.get(
+                "frozen_significant_channel_count"
+            )
+            == 12
+            and channel_comparison.get(
+                "significant_power_pass_count"
+            )
+            in range(13)
+            and channel_comparison.get(
+                "significant_complex_amplitude_pass_count"
+            )
+            in range(13)
             and isinstance(channel_comparison.get("pass"), bool)
+            and channel_comparison.get(
+                "numerical_convergence_band_used_as_gate"
+            )
+            is False
+            and channel_comparison.get("thresholds_relaxed") is False
         ),
         "selected_field_interface_comparison_recorded": (
             field_gate.get("status")
@@ -2380,6 +3275,22 @@ def _run_parent(args: argparse.Namespace) -> int:
     if not 0.0 < args.warning_gib < args.terminate_gib:
         raise SystemExit("Require 0 < warning-gib < terminate-gib.")
     source_before = _source_provenance(args)
+    pre_run_status = subprocess.check_output(
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+        ],
+        cwd=ROOT,
+        text=True,
+    ).strip()
+    if pre_run_status:
+        raise SystemExit(
+            "Task035 formal run requires a clean local worktree even when "
+            "--verified-clean-sha is supplied."
+        )
+    source_before["local_git_clean_preflight"] = True
     preflight = _memory_snapshot()
     free_bytes = preflight["artifact_filesystem_free_bytes"]
     if free_bytes < 10 * GIB:
@@ -2418,16 +3329,31 @@ def _run_parent(args: argparse.Namespace) -> int:
             setattr(args, path_name, authority_path.resolve())
             setattr(args, sha_name, expected_sha)
     if args.fixed_trace_control_record is not None:
-        for path_name, sha_name in (
+        authority_pairs = [
             (
                 "fixed_trace_control_record",
                 "fixed_trace_control_sha256",
             ),
             (
+                "fixed_trace_significant_channel_reference_record",
+                "fixed_trace_significant_channel_reference_sha256",
+            ),
+        ]
+        if args.fixed_trace_global_p6_baseline_record is not None:
+            authority_pairs.append(
+                (
                 "fixed_trace_global_p6_baseline_record",
                 "fixed_trace_global_p6_baseline_sha256",
-            ),
-        ):
+                )
+            )
+        if args.fixed_trace_directional_parent_record is not None:
+            authority_pairs.append(
+                (
+                    "fixed_trace_directional_parent_record",
+                    "fixed_trace_directional_parent_sha256",
+                )
+            )
+        for path_name, sha_name in authority_pairs:
             authority_path = getattr(args, path_name)
             if not authority_path.is_absolute():
                 authority_path = ROOT / authority_path
@@ -2444,6 +3370,45 @@ def _run_parent(args: argparse.Namespace) -> int:
                 )
             setattr(args, path_name, authority_path.resolve())
             setattr(args, sha_name, expected_sha)
+    if args.record is not None:
+        args.record = _resolve_new_record_path(
+            args.record,
+            input_authorities=(
+                args.fixed_trace_control_record,
+                args.fixed_trace_global_p6_baseline_record,
+                args.fixed_trace_significant_channel_reference_record,
+                args.fixed_trace_directional_parent_record,
+                args.regionwise_p_classifier_record,
+                args.regionwise_p_control_record,
+                args.common_mesh_replay_record,
+            ),
+        )
+    if args.fixed_trace_control_record is not None:
+        args.fixed_trace_resource_preflight = (
+            _fixed_trace_resource_preflight(args)
+        )
+        if args.fixed_trace_resource_preflight["pass"] is not True:
+            failed_checks = [
+                name
+                for name, passed in (
+                    args.fixed_trace_resource_preflight.get("checks")
+                    or {}
+                ).items()
+                if not passed
+            ]
+            scaling_status = (
+                args.fixed_trace_resource_preflight.get(
+                    "port_basis_scaling_preflight"
+                )
+                or {}
+            ).get("status")
+            raise SystemExit(
+                "fixed-trace topology/resource preflight failed: "
+                f"{failed_checks}; port basis status={scaling_status}. "
+                "The buffer1 controlled-stop evidence is tracked in "
+                "Case095 records; do not start the PDE before port-plane "
+                "normalization is qualified."
+            )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     if args.fixed_trace_control_record is not None:
@@ -2452,6 +3417,19 @@ def _run_parent(args: argparse.Namespace) -> int:
             f"p{args.fixed_interior_degree}interior_h{args.h_nm:g}_"
             f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
         )
+        if args.fixed_trace_directional_recovery:
+            run_label += "_directional_z"
+        if args.fixed_trace_channel_adjoint_diagnostic:
+            run_label += "_channel_adjoints"
+        if args.fixed_trace_dtn_quadrature_degree is not None:
+            run_label += (
+                f"_dtn_q{args.fixed_trace_dtn_quadrature_degree}"
+            )
+        if args.fixed_trace_dtn_evanescent_buffer:
+            run_label += (
+                "_dtn_evanescent_buffer"
+                f"{args.fixed_trace_dtn_evanescent_buffer}"
+            )
     elif args.regionwise_p_classifier_record is not None:
         run_label = (
             f"hexahedron_regionwise_p{args.regionwise_p_trace_degree}trace_"
@@ -2509,6 +3487,19 @@ def _run_parent(args: argparse.Namespace) -> int:
     timeline_path = run_dir / "memory_timeline.csv"
     stdout_path = run_dir / "worker_stdout.txt"
     result_path = run_dir / "actual_r5_result.json"
+    fixed_trace_preflight_path = (
+        run_dir / "fixed_trace_resource_preflight.json"
+    )
+    if args.fixed_trace_control_record is not None:
+        fixed_trace_preflight_path.write_text(
+            json.dumps(
+                args.fixed_trace_resource_preflight,
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     command = [
         "mpiexec",
         "-n",
@@ -2553,16 +3544,56 @@ def _run_parent(args: argparse.Namespace) -> int:
                 str(args.fixed_trace_control_record),
                 "--fixed-trace-control-sha256",
                 args.fixed_trace_control_sha256,
-                "--fixed-trace-global-p6-baseline-record",
-                str(args.fixed_trace_global_p6_baseline_record),
-                "--fixed-trace-global-p6-baseline-sha256",
-                args.fixed_trace_global_p6_baseline_sha256,
+                "--fixed-trace-significant-channel-reference-record",
+                str(
+                    args.fixed_trace_significant_channel_reference_record
+                ),
+                "--fixed-trace-significant-channel-reference-sha256",
+                args.fixed_trace_significant_channel_reference_sha256,
                 "--fixed-trace-degree",
                 str(args.fixed_trace_degree),
                 "--fixed-interior-degree",
                 str(args.fixed_interior_degree),
             ]
         )
+        if args.fixed_trace_global_p6_baseline_record is not None:
+            command.extend(
+                [
+                    "--fixed-trace-global-p6-baseline-record",
+                    str(args.fixed_trace_global_p6_baseline_record),
+                    "--fixed-trace-global-p6-baseline-sha256",
+                    args.fixed_trace_global_p6_baseline_sha256,
+                ]
+            )
+        if args.fixed_trace_directional_recovery:
+            command.append("--fixed-trace-directional-recovery")
+        if args.fixed_trace_channel_adjoint_diagnostic:
+            command.append(
+                "--fixed-trace-channel-adjoint-diagnostic"
+            )
+        if args.fixed_trace_dtn_quadrature_degree is not None:
+            command.extend(
+                [
+                    "--fixed-trace-dtn-quadrature-degree",
+                    str(args.fixed_trace_dtn_quadrature_degree),
+                ]
+            )
+        if args.fixed_trace_dtn_evanescent_buffer:
+            command.extend(
+                [
+                    "--fixed-trace-dtn-evanescent-buffer",
+                    str(args.fixed_trace_dtn_evanescent_buffer),
+                ]
+            )
+        if args.fixed_trace_directional_parent_record is not None:
+            command.extend(
+                [
+                    "--fixed-trace-directional-parent-record",
+                    str(args.fixed_trace_directional_parent_record),
+                    "--fixed-trace-directional-parent-sha256",
+                    args.fixed_trace_directional_parent_sha256,
+                ]
+            )
     elif args.regionwise_p_classifier_record is not None:
         command.extend(
             [
@@ -2835,6 +3866,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             "reuse_single_mesh_requested"
         ),
         "elapsed_seconds": result.get("elapsed_seconds"),
+        "fixed_trace_resource_preflight": (
+            getattr(args, "fixed_trace_resource_preflight", None)
+        ),
         "raw_evidence": {
             "run_directory": _path_from_root(run_dir),
             "actual_r5_result": _path_from_root(result_path),
@@ -2845,6 +3879,14 @@ def _run_parent(args: argparse.Namespace) -> int:
             "progress_sha256": _sha256(progress_path),
             "stdout": _path_from_root(stdout_path),
             "stdout_sha256": _sha256(stdout_path),
+            "fixed_trace_resource_preflight": (
+                _path_from_root(fixed_trace_preflight_path)
+                if fixed_trace_preflight_path.is_file()
+                else None
+            ),
+            "fixed_trace_resource_preflight_sha256": (
+                _sha256(fixed_trace_preflight_path)
+            ),
         },
     }
     if args.fixed_trace_control_record is not None:
@@ -2854,8 +3896,23 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "candidate_accuracy_pass": result.get(
                     "candidate_accuracy_pass"
                 ),
+                "channel_adjoint_diagnostic_only": result.get(
+                    "channel_adjoint_diagnostic_only"
+                ),
+                "port_diagnostic_only": result.get(
+                    "port_diagnostic_only"
+                ),
+                "formal_candidate_eligible": result.get(
+                    "formal_candidate_eligible"
+                ),
                 "element_audit": result.get("element_audit"),
                 "control_authority": result.get("control_authority"),
+                "significant_channel_reference_authority": result.get(
+                    "significant_channel_reference_authority"
+                ),
+                "directional_parent_authority": result.get(
+                    "directional_parent_authority"
+                ),
                 "global_p6_baseline_authority": result.get(
                     "global_p6_baseline_authority"
                 ),
@@ -2878,6 +3935,13 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "selected_field_interface_error_gate": result.get(
                     "selected_field_interface_error_gate"
                 ),
+                "directional_recovery_signal": result.get(
+                    "directional_recovery_signal"
+                ),
+                "channel_adjoint_diagnostic": result.get(
+                    "channel_adjoint_diagnostic"
+                ),
+                "port_diagnostic": result.get("port_diagnostic"),
             }
         )
     elif args.regionwise_p_classifier_record is not None:
@@ -2997,10 +4061,16 @@ def _run_parent(args: argparse.Namespace) -> int:
     if not record_path.is_absolute():
         record_path = ROOT / record_path
     record_path.parent.mkdir(parents=True, exist_ok=True)
-    record_path.write_text(
-        json.dumps(record, ensure_ascii=False, indent=2, default=_json_default) + "\n",
-        encoding="utf-8",
-    )
+    with record_path.open("x", encoding="utf-8") as stream:
+        stream.write(
+            json.dumps(
+                record,
+                ensure_ascii=False,
+                indent=2,
+                default=_json_default,
+            )
+            + "\n"
+        )
     print(
         json.dumps(
             {
