@@ -8,9 +8,13 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.adaptivity.dtn_goal_adjoint import (
+    dtn_power_goal_value,
     run_target_actual_dtn_adjoint,
     verify_hermitian_discrete_adjoint,
 )
+from src.common.config_3d import target_stage4_config
+from src.common.modes_3d import outgoing_port_modes_3d
+from src.solvers.dtn_port_3d import _port_power_metrics
 
 
 def _idx(values) -> np.ndarray:
@@ -18,6 +22,37 @@ def _idx(values) -> np.ndarray:
 
 
 class Task035ActualDtnAdjointTests(unittest.TestCase):
+    def test_r00_goal_matches_official_zero_order_modal_power(self) -> None:
+        config = target_stage4_config(degree=2, h_nm=50.0)
+        modes = outgoing_port_modes_3d(config)
+        auxiliary = np.asarray(
+            [
+                complex(0.02 * (index + 1), -0.01 * index)
+                for index in range(len(modes))
+            ],
+            dtype=np.complex128,
+        )
+        incident = np.zeros(len(modes), dtype=np.complex128)
+        metrics = _port_power_metrics(
+            config,
+            modes,
+            auxiliary,
+            incident.tolist(),
+        )
+        functional = dtn_power_goal_value(
+            config,
+            modes,
+            auxiliary,
+            incident,
+            goal="R00_total",
+        )
+        self.assertAlmostEqual(functional, metrics["R00_total"])
+        self.assertLessEqual(metrics["R00_total"], metrics["R_total"])
+        self.assertAlmostEqual(
+            metrics["R00_total"],
+            metrics["R00_s"] + metrics["R00_p"],
+        )
+
     def test_target_p2_h50_official_r_t_adjoints(self) -> None:
         out_dir = (
             Path(__file__).resolve().parents[2]
@@ -30,7 +65,7 @@ class Task035ActualDtnAdjointTests(unittest.TestCase):
             result["adjoint"]["status"],
             "actual_discrete_dtn_adjoint_pass",
         )
-        for goal in ("R_total", "T_total"):
+        for goal in ("R00_total", "R_total", "T_total"):
             report = result["adjoint"]["goals"][goal]
             self.assertTrue(report["pass"], report)
             self.assertLess(

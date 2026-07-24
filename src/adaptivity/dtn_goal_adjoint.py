@@ -2,7 +2,7 @@
 
 The Stage-4 auxiliary DtN formulation stores each finite-port modal
 projection as an algebraic unknown.  This module differentiates the official
-modal ``R_total``/``T_total`` definitions with respect to those unknowns and
+modal ``R00_total``/``R_total``/``T_total`` definitions with respect to those unknowns and
 solves ``A^H z = g`` without assembling a second matrix: a complex Hermitian
 solve is obtained from the existing direct factorization by conjugating a
 ``KSPSolveTranspose``.  The ordinary solver path is unchanged; callers reach
@@ -25,12 +25,11 @@ from ..solvers.dtn_port_3d import (
     _gather_auxiliary_values,
     _mode_carries_outward_power,
     _mode_power_at_boundary,
-    _port_power_metrics,
 )
 
 
 TINY = np.finfo(float).tiny
-SUPPORTED_GOALS = ("R_total", "T_total")
+SUPPORTED_GOALS = ("R00_total", "R_total", "T_total")
 
 
 def _relative_difference(left: float, right: float) -> float:
@@ -63,11 +62,18 @@ def _linear_residual(
 def _normalized_goal_weights(config, modes, goal: str) -> np.ndarray:
     if goal not in SUPPORTED_GOALS:
         raise ValueError(f"unsupported DtN power goal: {goal!r}")
-    side = "top" if goal == "R_total" else "bottom"
+    side = "bottom" if goal == "T_total" else "top"
     incident_power = float(incident_power_3d(config))
     weights = np.zeros(len(modes), dtype=np.float64)
     for index, mode in enumerate(modes):
-        if mode.side != side or not _mode_carries_outward_power(mode):
+        if (
+            mode.side != side
+            or not _mode_carries_outward_power(mode)
+            or (
+                goal == "R00_total"
+                and (int(mode.m) != 0 or int(mode.n) != 0)
+            )
+        ):
             continue
         weights[index] = float(
             _mode_power_at_boundary(mode, config, 1.0 + 0.0j)
@@ -86,13 +92,17 @@ def dtn_power_goal_value(
     *,
     goal: str,
 ) -> float:
-    metrics = _port_power_metrics(
-        config,
-        list(modes),
-        np.asarray(auxiliary_values, dtype=np.complex128),
-        [complex(value) for value in incident_projections],
-    )
-    return float(metrics[goal])
+    selected_modes = list(modes)
+    auxiliary = np.asarray(auxiliary_values, dtype=np.complex128)
+    incident = np.asarray(incident_projections, dtype=np.complex128)
+    if len(selected_modes) != len(auxiliary) or auxiliary.shape != incident.shape:
+        raise ValueError("DtN goal arrays are not shape-compatible")
+    outgoing = auxiliary.copy()
+    for index, mode in enumerate(selected_modes):
+        if mode.side == "top":
+            outgoing[index] -= incident[index]
+    weights = _normalized_goal_weights(config, selected_modes, goal)
+    return float(np.sum(weights * np.abs(outgoing) ** 2))
 
 
 def build_dtn_power_goal_gradient(

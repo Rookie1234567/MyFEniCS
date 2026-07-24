@@ -1,4 +1,4 @@
-"""Partition-independent geometry audits for Task035 tetrahedral meshes."""
+"""Partition-independent geometry audits for Task035 research meshes."""
 
 from __future__ import annotations
 
@@ -11,6 +11,16 @@ import numpy as np
 from mpi4py import MPI
 
 from dolfinx import mesh
+
+
+@dataclass(frozen=True)
+class OwnedCellGeometry:
+    """Canonical geometry and ownership identity for one owned affine cell."""
+
+    local_index: int
+    global_index: int
+    key: tuple[tuple[int, int, int], ...]
+    coordinates: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -97,6 +107,78 @@ def owned_tetra_cell_geometry(
             )
         )
     return records
+
+
+def owned_cell_geometry(
+    msh: mesh.Mesh,
+    *,
+    tolerance: float | None = None,
+) -> list[OwnedCellGeometry]:
+    """Describe owned tetrahedra or hexahedra by canonical vertex geometry."""
+
+    vertex_count_by_type = {
+        mesh.CellType.tetrahedron: 4,
+        mesh.CellType.hexahedron: 8,
+    }
+    vertex_count = vertex_count_by_type.get(msh.topology.cell_type)
+    if vertex_count is None:
+        raise ValueError(
+            "generic cell geometry audit supports tetrahedron and hexahedron meshes"
+        )
+    resolved_tolerance = (
+        mesh_coordinate_tolerance(msh) if tolerance is None else float(tolerance)
+    )
+    tdim = msh.topology.dim
+    index_map = msh.topology.index_map(tdim)
+    local_indices = np.arange(index_map.size_local, dtype=np.int32)
+    global_indices = index_map.local_to_global(local_indices)
+    records: list[OwnedCellGeometry] = []
+    for local_index, global_index in zip(
+        local_indices, global_indices, strict=True
+    ):
+        geometry_indices = msh.geometry.dofmap[int(local_index)]
+        coordinates = np.asarray(
+            msh.geometry.x[geometry_indices][:vertex_count],
+            dtype=np.float64,
+        ).copy()
+        if coordinates.shape != (vertex_count, 3):
+            raise RuntimeError(
+                f"{msh.topology.cell_type.name} must expose {vertex_count} "
+                "three-dimensional geometry vertices"
+            )
+        records.append(
+            OwnedCellGeometry(
+                local_index=int(local_index),
+                global_index=int(global_index),
+                key=canonical_entity_key(coordinates, resolved_tolerance),
+                coordinates=coordinates,
+            )
+        )
+    return records
+
+
+def canonical_owned_cell_ids(
+    msh: mesh.Mesh,
+    *,
+    tolerance: float | None = None,
+) -> tuple[np.ndarray, list[OwnedCellGeometry], list[tuple[tuple[int, int, int], ...]]]:
+    """Return partition-independent IDs aligned with locally owned cells."""
+
+    records = owned_cell_geometry(msh, tolerance=tolerance)
+    local_keys = [record.key for record in records]
+    ordered_keys = sorted(
+        key for packet in msh.comm.allgather(local_keys) for key in packet
+    )
+    if len(set(ordered_keys)) != len(ordered_keys):
+        raise RuntimeError("canonical cell geometry is not globally unique")
+    canonical_id_by_key = {
+        key: index for index, key in enumerate(ordered_keys)
+    }
+    canonical_ids = np.asarray(
+        [canonical_id_by_key[key] for key in local_keys],
+        dtype=np.int64,
+    )
+    return canonical_ids, records, ordered_keys
 
 
 def geometry_key_sha256(
@@ -377,11 +459,14 @@ def audit_periodic_tetra_mesh(
 
 
 __all__ = [
+    "OwnedCellGeometry",
     "OwnedTetraCellGeometry",
     "audit_periodic_tetra_mesh",
+    "canonical_owned_cell_ids",
     "canonical_entity_key",
     "canonical_point_key",
     "geometry_key_sha256",
     "mesh_coordinate_tolerance",
+    "owned_cell_geometry",
     "owned_tetra_cell_geometry",
 ]

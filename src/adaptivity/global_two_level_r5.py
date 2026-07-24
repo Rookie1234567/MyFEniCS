@@ -26,6 +26,12 @@ from petsc4py import PETSc
 from dolfinx import fem
 from dolfinx.fem import petsc as fem_petsc
 
+from .cell_indicator_snapshot import build_cell_indicator_snapshot
+from src.geometry.tetra_mesh_audit import (
+    canonical_owned_cell_ids,
+    geometry_key_sha256,
+)
+
 
 TINY = np.finfo(float).tiny
 
@@ -209,11 +215,28 @@ def localize_global_two_level_correction(
         contributions,
         theta=float(theta),
     )
+    canonical_ids, _geometry_records, ordered_geometry_keys = (
+        canonical_owned_cell_ids(fine_space.mesh)
+    )
+    mesh_geometry_sha256 = geometry_key_sha256(ordered_geometry_keys)
+    marked_canonical, canonical_marking = _global_dorfler_mark(
+        comm,
+        canonical_ids,
+        contributions,
+        theta=float(theta),
+    )
+    cell_indicator_snapshot = build_cell_indicator_snapshot(
+        comm,
+        canonical_ids,
+        contributions,
+        indicator_name="R5_actual_global_two_level_correction_energy",
+        mesh_geometry_sha256=mesh_geometry_sha256,
+    )
     ownership_counts = [int(value) for value in comm.allgather(len(ids))]
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     rss_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return {
-        "schema_version": "task035.actual-global-two-level-r5.v1",
+        "schema_version": "task035.actual-global-two-level-r5.v2",
         "estimator": "R5_actual_global_two_level_correction_energy",
         "formal_hierarchical_fe_r5": True,
         "coarse_global_dofs": int(
@@ -235,6 +258,10 @@ def localize_global_two_level_correction(
         ),
         "marking": marked_summary,
         "marked_global_cell_ids": marked.tolist(),
+        "canonical_marking": canonical_marking,
+        "marked_canonical_cell_ids": marked_canonical.tolist(),
+        "mesh_geometry_sha256": mesh_geometry_sha256,
+        "cell_indicator_snapshot": cell_indicator_snapshot,
         "estimator_wall_seconds": elapsed,
         "process_peak_rss_kib_before": int(rss_before),
         "process_peak_rss_kib_after": int(rss_after),
@@ -255,7 +282,7 @@ def _require_official_summary(summary: dict[str, Any], label: str) -> None:
         failures.append("case_status")
     if not isinstance(residual, (int, float)) or float(residual) > 1.0e-9:
         failures.append("true_residual_le_1e-9")
-    for name in ("R_total", "T_total", "A_volume_total"):
+    for name in ("R00_total", "R_total", "T_total", "A_volume_total"):
         if not isinstance(summary.get(name), (int, float)):
             failures.append(name)
     if failures:

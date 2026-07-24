@@ -16,6 +16,7 @@ def classify_hp_correction_decay(
     degrees: tuple[int, int, int] = (4, 5, 6),
     p_decay_ratio_threshold: float = 0.5,
     significance_floor_fraction: float = 1.0e-12,
+    p_down_indicator_fraction: float = 1.0e-3,
 ) -> dict[str, Any]:
     """Classify marked cells from consecutive p-correction decay.
 
@@ -61,6 +62,8 @@ def classify_hp_correction_decay(
         raise ValueError("p-decay ratio threshold must lie in (0, 1)")
     if not 0.0 <= float(significance_floor_fraction) < 1.0:
         raise ValueError("significance floor fraction must lie in [0, 1)")
+    if not 0.0 < float(p_down_indicator_fraction) < 1.0:
+        raise ValueError("p-down indicator fraction must lie in (0, 1)")
 
     value_by_id = {
         int(cell_id): (float(lower_value), float(higher_value))
@@ -102,8 +105,52 @@ def classify_hp_correction_decay(
         )
 
     classified = counts["h_candidate"] + counts["p_candidate"]
+    marked_set = set(int(value) for value in marked)
+    p_down_floor = float(p_down_indicator_fraction) * global_scale
+    action_counts = {
+        "p_down": 0,
+        "p_keep": 0,
+        "p_up": 0,
+        "h_refine": 0,
+    }
+    local_order_actions: list[dict[str, Any]] = []
+    for cell_id in sorted(int(value) for value in ids):
+        lower_value, higher_value = value_by_id[cell_id]
+        ratio = higher_value / max(
+            lower_value,
+            absolute_floor,
+            np.finfo(float).tiny,
+        )
+        is_marked = cell_id in marked_set
+        if is_marked and max(lower_value, higher_value) <= absolute_floor:
+            action = "p_keep"
+            reason = "marked but below numerical significance floor"
+        elif is_marked and ratio <= float(p_decay_ratio_threshold):
+            action = "p_up"
+            reason = "goal-important cell with fast consecutive p-decay"
+        elif is_marked:
+            action = "h_refine"
+            reason = "goal-important cell with slow or stalled p-decay"
+        elif max(lower_value, higher_value) <= p_down_floor:
+            action = "p_down"
+            reason = "unmarked cell below the conservative p-down floor"
+        else:
+            action = "p_keep"
+            reason = "unmarked cell retains non-negligible correction"
+        action_counts[action] += 1
+        local_order_actions.append(
+            {
+                "canonical_cell_id": cell_id,
+                "marked": is_marked,
+                "lower_pair_indicator": lower_value,
+                "higher_pair_indicator": higher_value,
+                "higher_to_lower_ratio": ratio,
+                "action": action,
+                "reason": reason,
+            }
+        )
     return {
-        "schema_version": "task035.hp-correction-decay-classifier.v1",
+        "schema_version": "task035b.hp-correction-decay-classifier.v2",
         "status": "hp_candidate_classification_pass",
         "pass": True,
         "canonical": False,
@@ -116,6 +163,8 @@ def classify_hp_correction_decay(
         "p_decay_ratio_threshold": float(p_decay_ratio_threshold),
         "significance_floor_fraction": float(significance_floor_fraction),
         "absolute_significance_floor": absolute_floor,
+        "p_down_indicator_fraction": float(p_down_indicator_fraction),
+        "absolute_p_down_floor": p_down_floor,
         "marked_cell_count": len(marked),
         "counts": counts,
         "classified_cell_count": classified,
@@ -123,8 +172,11 @@ def classify_hp_correction_decay(
             counts["p_candidate"] / max(classified, 1)
         ),
         "decisions": decisions,
+        "local_order_action_counts": action_counts,
+        "local_order_actions": local_order_actions,
         "decision_scope": (
-            "research-only h/p candidates; no variable-p space or mesh mutation"
+            "research-only p-down/p-keep/p-up/h-refine candidates; no "
+            "variable-p space or mesh mutation"
         ),
     }
 

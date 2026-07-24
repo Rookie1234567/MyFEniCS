@@ -29,6 +29,7 @@ from .dtn_goal_adjoint import (
     evaluate_actual_dtn_power_adjoints,
     solve_hermitian_discrete_adjoint,
 )
+from .cell_indicator_snapshot import build_cell_indicator_snapshot
 from src.solvers.dtn_port_3d import _assign_fe_solution_from_augmented
 from .global_two_level_r5 import (
     _global_dorfler_mark,
@@ -36,9 +37,8 @@ from .global_two_level_r5 import (
     localize_global_two_level_correction,
 )
 from src.geometry.tetra_mesh_audit import (
+    canonical_owned_cell_ids,
     geometry_key_sha256,
-    mesh_coordinate_tolerance,
-    owned_tetra_cell_geometry,
 )
 
 
@@ -237,27 +237,14 @@ def localize_algebraic_dwr_products(
         ],
         dtype=np.float64,
     )
-    tolerance = mesh_coordinate_tolerance(msh)
-    geometry_records = owned_tetra_cell_geometry(
-        msh, tolerance=tolerance
-    )
+    (
+        canonical_cell_ids,
+        geometry_records,
+        global_keys,
+    ) = canonical_owned_cell_ids(msh)
     record_by_local = {
         record.local_index: record for record in geometry_records
     }
-    local_keys = [record_by_local[int(cell)].key for cell in owned_cells]
-    global_keys = sorted(
-        key
-        for packet in comm.allgather(local_keys)
-        for key in packet
-    )
-    if len(set(global_keys)) != len(global_keys):
-        raise RuntimeError("canonical tetra cell geometry is not unique")
-    canonical_id_by_key = {
-        key: index for index, key in enumerate(global_keys)
-    }
-    canonical_cell_ids = np.asarray(
-        [canonical_id_by_key[key] for key in local_keys], dtype=np.int64
-    )
     marked_canonical, marking = _global_dorfler_mark(
         comm,
         canonical_cell_ids,
@@ -288,6 +275,7 @@ def localize_algebraic_dwr_products(
         comm.allreduce(float(np.sum(cell_values)), op=MPI.SUM)
     )
     signed_dwr = complex(adjoint.dot(residual))
+    mesh_geometry_sha256 = geometry_key_sha256(global_keys)
     localization = {
         "estimator": "actual_adjoint_enriched_algebraic_residual_DWR",
         "formal_strong_cell_face_residual": False,
@@ -315,8 +303,18 @@ def localize_algebraic_dwr_products(
         "marked_global_cell_ids": marked_global,
         "marked_canonical_cell_ids": marked_canonical.tolist(),
         "marked_geometry_sha256": geometry_key_sha256(marked_keys),
+        "mesh_geometry_sha256": mesh_geometry_sha256,
+        "cell_indicator_snapshot": build_cell_indicator_snapshot(
+            comm,
+            canonical_cell_ids,
+            cell_values,
+            indicator_name=(
+                "actual_adjoint_enriched_algebraic_residual_DWR"
+            ),
+            mesh_geometry_sha256=mesh_geometry_sha256,
+        ),
         "partition_independent_marking_identity": (
-            "sorted canonical quantized tetra geometry"
+            "sorted canonical quantized cell geometry"
         ),
     }
     return localization, canonical_cell_ids, cell_values
@@ -375,25 +373,14 @@ def localize_physical_adjoint_weighted_correction(
     vector.destroy()
     cell_values = np.abs(complex_cells).astype(np.float64)
 
-    tolerance = mesh_coordinate_tolerance(msh)
-    geometry_records = owned_tetra_cell_geometry(msh, tolerance=tolerance)
+    (
+        canonical_cell_ids,
+        geometry_records,
+        global_keys,
+    ) = canonical_owned_cell_ids(msh)
     record_by_local = {
         record.local_index: record for record in geometry_records
     }
-    local_keys = [record_by_local[int(cell)].key for cell in owned_cells]
-    global_keys = sorted(
-        key
-        for packet in comm.allgather(local_keys)
-        for key in packet
-    )
-    if len(set(global_keys)) != len(global_keys):
-        raise RuntimeError("canonical tetra cell geometry is not unique")
-    canonical_id_by_key = {
-        key: index for index, key in enumerate(global_keys)
-    }
-    canonical_cell_ids = np.asarray(
-        [canonical_id_by_key[key] for key in local_keys], dtype=np.int64
-    )
     marked_canonical, marking = _global_dorfler_mark(
         comm,
         canonical_cell_ids,
@@ -418,6 +405,7 @@ def localize_physical_adjoint_weighted_correction(
     absolute_sum = float(
         comm.allreduce(float(np.sum(cell_values)), op=MPI.SUM)
     )
+    mesh_geometry_sha256 = geometry_key_sha256(global_keys)
     return {
         "estimator": "physical_adjoint_weighted_two_level_Hcurl_pairing",
         "formal_strong_cell_face_residual": False,
@@ -437,8 +425,18 @@ def localize_physical_adjoint_weighted_correction(
         "marked_global_cell_ids": marked_global,
         "marked_canonical_cell_ids": marked_canonical.tolist(),
         "marked_geometry_sha256": geometry_key_sha256(marked_keys),
+        "mesh_geometry_sha256": mesh_geometry_sha256,
+        "cell_indicator_snapshot": build_cell_indicator_snapshot(
+            comm,
+            canonical_cell_ids,
+            cell_values,
+            indicator_name=(
+                "physical_adjoint_weighted_two_level_Hcurl_pairing"
+            ),
+            mesh_geometry_sha256=mesh_geometry_sha256,
+        ),
         "partition_independent_marking_identity": (
-            "canonical tetra geometry plus assembled physical FE cell forms"
+            "canonical cell geometry plus assembled physical FE cell forms"
         ),
     }, canonical_cell_ids, cell_values
 
@@ -525,7 +523,13 @@ def _marker_report_from_local_values(
         theta=float(theta),
     )
     marked_set = set(int(value) for value in marked_canonical)
-    records = owned_tetra_cell_geometry(msh)
+    canonical_from_geometry, records, ordered_keys = (
+        canonical_owned_cell_ids(msh)
+    )
+    if not np.array_equal(ids, canonical_from_geometry):
+        raise ValueError(
+            "marker canonical cell IDs do not match the current mesh geometry"
+        )
     record_by_local = {record.local_index: record for record in records}
     owned_cells = np.arange(cell_map.size_local, dtype=np.int32)
     local_marked_global = [
@@ -546,6 +550,7 @@ def _marker_report_from_local_values(
     marked_keys = [
         key for packet in msh.comm.allgather(local_marked_keys) for key in packet
     ]
+    mesh_geometry_sha256 = geometry_key_sha256(ordered_keys)
     return {
         **metadata,
         "finite_nonnegative_cell_contributions": True,
@@ -556,8 +561,18 @@ def _marker_report_from_local_values(
         "marked_global_cell_ids": marked_global,
         "marked_canonical_cell_ids": marked_canonical.tolist(),
         "marked_geometry_sha256": geometry_key_sha256(marked_keys),
+        "mesh_geometry_sha256": mesh_geometry_sha256,
+        "cell_indicator_snapshot": build_cell_indicator_snapshot(
+            msh.comm,
+            ids,
+            values,
+            indicator_name=str(
+                metadata.get("combination", "combined_goal_indicator")
+            ),
+            mesh_geometry_sha256=mesh_geometry_sha256,
+        ),
         "partition_independent_marking_identity": (
-            "sorted canonical quantized tetra geometry"
+            "sorted canonical quantized cell geometry"
         ),
     }
 
@@ -609,6 +624,7 @@ def run_target_goal_weighted_two_level(
         "record_sha256": normalization_reference["record_sha256"],
         "absolute_error_tolerances": multi_goal_tolerances,
         "independent_adjoint_goals": ["R_total", "T_total"],
+        "separate_strict_adjoint_goal": "R00_total",
         "A_volume_total_treatment": (
             "audited in the post-solve R/T/A vector; no third adjoint because "
             "qualified fields enforce R+T+A_volume=1 and an independent "
@@ -687,7 +703,7 @@ def run_target_goal_weighted_two_level(
                 )
             ),
         }
-        for goal in ("R_total", "T_total"):
+        for goal in ("R00_total", "R_total", "T_total"):
             gradient, gradient_metadata = build_dtn_power_goal_gradient(
                 state["linear_system"]["x"],
                 state["config"],
@@ -723,11 +739,15 @@ def run_target_goal_weighted_two_level(
             local_arrays[goal] = (ids, values)
             adjoint.destroy()
             gradient.destroy()
+        r00_ids, _r00_values = local_arrays["R00_total"]
         r_ids, r_values = local_arrays["R_total"]
         t_ids, t_values = local_arrays["T_total"]
-        if not np.array_equal(r_ids, t_ids):
+        if (
+            not np.array_equal(r00_ids, r_ids)
+            or not np.array_equal(r_ids, t_ids)
+        ):
             residual.destroy()
-            raise RuntimeError("R/T DWR local cell identities differ")
+            raise RuntimeError("R00/R/T DWR local cell identities differ")
         r_sum = float(
             state["field"].function_space.mesh.comm.allreduce(
                 float(np.sum(r_values)), op=MPI.SUM
@@ -804,7 +824,7 @@ def run_target_goal_weighted_two_level(
     dwr = captures["dwr"]
     goal_deltas = {
         goal: float(enriched_summary[goal] - coarse_summary[goal])
-        for goal in ("R_total", "T_total")
+        for goal in ("R00_total", "R_total", "T_total")
     }
     for goal, delta in goal_deltas.items():
         estimate = dwr["goals"][goal]["global_dwr_absolute"]
@@ -822,6 +842,10 @@ def run_target_goal_weighted_two_level(
         )
         for goal in ("R_total", "T_total")
     }
+    dwr["marked_overlap_with_R5"]["R00_total"] = _marked_overlap(
+        dwr["goals"]["R00_total"]["marked_global_cell_ids"],
+        r5["marked_global_cell_ids"],
+    )
     dwr["marked_overlap_with_R5"]["combined_relative_R_T"] = _marked_overlap(
         dwr["combined_relative_R_T"]["marked_global_cell_ids"],
         r5["marked_global_cell_ids"],
@@ -844,7 +868,7 @@ def run_target_goal_weighted_two_level(
                 dwr["goals"][goal]["signed_goal_change_closure"]
             )
             <= 1.0e-9
-            for goal in ("R_total", "T_total")
+            for goal in ("R00_total", "R_total", "T_total")
         )
         and all(
             dwr[name]["finite_nonnegative_cell_contributions"]

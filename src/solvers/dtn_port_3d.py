@@ -1306,6 +1306,9 @@ def _write_port_outputs(
             "bottom_reference": "physical_z_min",
         },
         "R_total": metrics["R_total"],
+        "R00_total": metrics["R00_total"],
+        "R00_s": metrics["R00_s"],
+        "R00_p": metrics["R00_p"],
         "T_total": metrics["T_total"],
         "A_balance": metrics["A_balance"],
         "R_plus_T": metrics["R_plus_T"],
@@ -1389,6 +1392,7 @@ def _port_power_metrics(
     rows_by_side = {"top": 0, "bottom": 0}
     R_total = 0.0
     T_total = 0.0
+    R00_by_polarization: dict[str, float] = {}
     for mode, aux_value, inc_proj in zip(modes, aux_values, incident_projections):
         rows_by_side[mode.side] += 1
         outgoing_amplitude = complex(aux_value - inc_proj) if mode.side == "top" else complex(aux_value)
@@ -1397,10 +1401,20 @@ def _port_power_metrics(
         power = _mode_power_at_boundary(mode, cfg, outgoing_amplitude) / incident_power
         if mode.side == "top":
             R_total += float(power)
+            if mode.m == 0 and mode.n == 0:
+                R00_by_polarization[mode.polarization] = (
+                    R00_by_polarization.get(mode.polarization, 0.0)
+                    + float(power)
+                )
         else:
             T_total += float(power)
+    R00_total = float(sum(R00_by_polarization.values()))
     return {
         "R_total": float(R_total),
+        "R00_total": R00_total,
+        "R00_s": float(R00_by_polarization.get("s", 0.0)),
+        "R00_p": float(R00_by_polarization.get("p", 0.0)),
+        "R00_by_polarization": R00_by_polarization,
         "T_total": float(T_total),
         "R_plus_T": float(R_total + T_total),
         "A_balance": float(1.0 - R_total - T_total),
