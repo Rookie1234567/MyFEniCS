@@ -294,6 +294,53 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
                 ]
             )
 
+        mixed = _parse_args(
+            [
+                "--coarse-degree",
+                "5",
+                "--enriched-degree",
+                "6",
+                "--regionwise-p-classifier-record",
+                "classifier.json",
+                "--regionwise-p-classifier-sha256",
+                "a" * 64,
+                "--regionwise-p-control-record",
+                "control.json",
+                "--regionwise-p-control-sha256",
+                "b" * 64,
+                "--regionwise-p-trace-degree",
+                "5",
+                "--regionwise-p-low-interior-degree",
+                "4",
+                "--regionwise-p-high-cell-count",
+                "62",
+            ]
+        )
+        self.assertEqual(mixed.regionwise_p_trace_degree, 5)
+        self.assertEqual(mixed.regionwise_p_low_interior_degree, 4)
+        self.assertEqual(mixed.regionwise_p_high_cell_count, 62)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    "--coarse-degree",
+                    "5",
+                    "--enriched-degree",
+                    "6",
+                    "--regionwise-p-classifier-record",
+                    "classifier.json",
+                    "--regionwise-p-classifier-sha256",
+                    "a" * 64,
+                    "--regionwise-p-control-record",
+                    "control.json",
+                    "--regionwise-p-control-sha256",
+                    "b" * 64,
+                    "--regionwise-p-trace-degree",
+                    "5",
+                    "--regionwise-p-low-interior-degree",
+                    "4",
+                ]
+            )
+
     def test_common_mesh_mode_rejects_adaptive_cycle_mode(self) -> None:
         with self.assertRaises(SystemExit):
             _parse_args(
@@ -597,6 +644,9 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             mpi_size=8,
             regionwise_p_classifier_sha256=classifier_sha,
             regionwise_p_control_sha256=control_sha,
+            regionwise_p_trace_degree=4,
+            regionwise_p_low_interior_degree=4,
+            regionwise_p_high_cell_count=None,
         )
         summary = {
             "official_result": True,
@@ -649,9 +699,13 @@ class Task035ActualR5WatchdogTests(unittest.TestCase):
             "target_identity": {
                 "geometry": "Task034 fixed rectangular block grating",
                 "mesh_geometry_sha256": geometry_sha,
+                "trace_degree": 4,
+                "low_interior_degree": 4,
+                "high_interior_degree": 6,
             },
             "classifier_authority": {
                 "sha256": classifier_sha,
+                "high_canonical_cell_count": 105,
                 "active_full3d_equivalent_dofs": 88994,
             },
             "control_authority": {"sha256": control_sha},

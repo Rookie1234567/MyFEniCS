@@ -188,6 +188,39 @@ def _observable_comparison(
     }
 
 
+def _select_high_cells(
+    actions: list[dict[str, Any]],
+    high_cell_count: int | None,
+) -> tuple[tuple[int, ...], int]:
+    p_up_actions = [
+        entry for entry in actions if entry.get("action") == "p_up"
+    ]
+    ranked = sorted(
+        p_up_actions,
+        key=lambda entry: (
+            -float(entry["higher_pair_indicator"]),
+            -float(entry["lower_pair_indicator"]),
+            int(entry["canonical_cell_id"]),
+        ),
+    )
+    selected_count = (
+        len(ranked) if high_cell_count is None else int(high_cell_count)
+    )
+    if not 0 <= selected_count <= len(ranked):
+        raise ValueError(
+            "requested high-cell count exceeds classifier p-up actions"
+        )
+    return (
+        tuple(
+            sorted(
+                int(entry["canonical_cell_id"])
+                for entry in ranked[:selected_count]
+            )
+        ),
+        len(ranked),
+    )
+
+
 def _selected_field_interface_comparison(
     *,
     p5_dir: Path,
@@ -360,12 +393,18 @@ def run_target_regionwise_p_candidate(
     h_nm: float = 10.0,
     incident_theta_deg: float = 80.0,
     polarization_kind: str = "s",
+    trace_degree: int = 4,
+    low_interior_degree: int = 4,
+    high_cell_count: int | None = None,
     progress_observer=None,
 ) -> dict[str, Any]:
-    """Run one p4-trace, classifier-selected p4/p6-interior candidate."""
+    """Run one classifier-selected physical regionwise-interior candidate."""
 
     from src.adaptivity.high_order_resource_audit import (
         build_high_order_resource_audit,
+    )
+    from src.adaptivity.hcurl_regionwise_p import (
+        regionwise_interior_p_dof_budget,
     )
     from src.common.config_3d import target_stage4_config
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
@@ -418,30 +457,42 @@ def run_target_regionwise_p_candidate(
     actions = (classifier.get("classifier") or {}).get(
         "local_order_actions"
     ) or []
-    high_ids = tuple(
-        int(entry["canonical_cell_id"])
-        for entry in actions
-        if entry.get("action") == "p_up"
+    high_ids, available_p_up_count = _select_high_cells(
+        actions,
+        high_cell_count,
     )
-    budget = classifier.get(
+    classifier_budget = classifier.get(
         "candidate_fixed_p4_trace_regionwise_p6_interior_dof_budget"
     ) or {}
     if (
-        len(high_ids) != int(budget.get("high_interior_cells", -1))
-        or budget.get("active_full3d_equivalent_dofs") != 88994
+        available_p_up_count
+        != int(classifier_budget.get("high_interior_cells", -1))
+        or classifier_budget.get("active_full3d_equivalent_dofs") != 88994
     ):
         raise ValueError("classifier actions and regionwise-p DoF budget disagree")
+    budget = regionwise_interior_p_dof_budget(
+        global_edges=int(classifier_budget["global_edges"]),
+        global_faces=int(classifier_budget["global_faces"]),
+        global_cells=int(classifier_budget["global_cells"]),
+        high_interior_cells=len(high_ids),
+        trace_degree=int(trace_degree),
+        low_interior_degree=int(low_interior_degree),
+        high_interior_degree=6,
+    )
+    if budget["active_full3d_equivalent_dofs"] > 90000:
+        raise ValueError("regionwise-p candidate exceeds the Task035b 90k budget")
     base = target_stage4_config(degree=6, h_nm=float(h_nm))
     cfg = replace(
         base,
         case_name=(
-            f"task035b_regionwise_p4trace_p6interior_h{h_nm:g}"
+            f"task035b_regionwise_p{trace_degree}trace_"
+            f"p{low_interior_degree}low_p6high_h{h_nm:g}"
         ).replace(".", "p"),
         incident_theta_deg=float(incident_theta_deg),
         polarization_kind=polarization_kind,
         custom_polarization=None,
         mesh_cell_type="hexahedron",
-        nedelec_trace_degree=4,
+        nedelec_trace_degree=int(trace_degree),
         nedelec_interior_degree=6,
         matrix_diagnostics_assemble_only=False,
         matrix_diagnostics_factorization_only=False,
@@ -451,6 +502,7 @@ def run_target_regionwise_p_candidate(
         stage4_assembly_time_cell_static_condensation=True,
         stage4_floquet_slave_elimination=True,
         stage4_regionwise_interior_p=True,
+        stage4_regionwise_low_interior_degree=int(low_interior_degree),
         stage4_regionwise_high_canonical_cell_ids=high_ids,
         stage4_regionwise_mesh_geometry_sha256=str(
             classifier["mesh_geometry_sha256"]
@@ -494,7 +546,8 @@ def run_target_regionwise_p_candidate(
         cell_audit.get("regionwise_mesh_geometry_sha256")
         != classifier["mesh_geometry_sha256"]
         or cell_audit.get("regionwise_high_cell_count") != len(high_ids)
-        or cell_audit.get("active_full3d_equivalent_dofs") != 88994
+        or cell_audit.get("active_full3d_equivalent_dofs")
+        != budget["active_full3d_equivalent_dofs"]
     ):
         raise RuntimeError("regionwise-p actual solve identity/budget did not close")
     observable_comparison = _observable_comparison(summary, p5, p6)
@@ -540,15 +593,24 @@ def run_target_regionwise_p_candidate(
             "geometry": "Task034 fixed rectangular block grating",
             "h_nm": float(h_nm),
             "mesh_geometry_sha256": classifier["mesh_geometry_sha256"],
-            "trace_degree": 4,
-            "low_interior_degree": 4,
+            "trace_degree": int(trace_degree),
+            "low_interior_degree": int(low_interior_degree),
             "high_interior_degree": 6,
         },
         "classifier_authority": {
             "path": str(classifier_record),
             "sha256": classifier_sha256,
             "high_canonical_cell_count": len(high_ids),
-            "active_full3d_equivalent_dofs": 88994,
+            "available_p_up_cell_count": available_p_up_count,
+            "selection_method": (
+                "largest eta_p5p6 R5 correction energy, deterministic "
+                "eta_p4p5 and canonical-ID tie breaks"
+            ),
+            "selected_high_canonical_cell_ids": list(high_ids),
+            "active_full3d_equivalent_dofs": budget[
+                "active_full3d_equivalent_dofs"
+            ],
+            "dof_budget": budget,
         },
         "control_authority": {
             "path": str(control_record),

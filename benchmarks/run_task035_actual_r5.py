@@ -122,6 +122,9 @@ def _worker(args: argparse.Namespace) -> int:
             h_nm=args.h_nm,
             incident_theta_deg=80.0,
             polarization_kind=args.polarization_kind,
+            trace_degree=args.regionwise_p_trace_degree,
+            low_interior_degree=args.regionwise_p_low_interior_degree,
+            high_cell_count=args.regionwise_p_high_cell_count,
             progress_observer=progress,
         )
     elif args.common_mesh_replay_record is not None:
@@ -355,6 +358,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--regionwise-p-control-sha256",
         help="required SHA256 for --regionwise-p-control-record",
     )
+    parser.add_argument(
+        "--regionwise-p-trace-degree",
+        type=int,
+        default=4,
+        help="shared edge/face trace degree for the physical local-p candidate",
+    )
+    parser.add_argument(
+        "--regionwise-p-low-interior-degree",
+        type=int,
+        default=4,
+        help="cell-interior degree outside the selected high-cell set",
+    )
+    parser.add_argument(
+        "--regionwise-p-high-cell-count",
+        type=int,
+        help="number of largest eta_p5p6 classifier cells retaining p6 interior",
+    )
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-dir", type=Path)
     parser.add_argument("--record", type=Path)
@@ -524,6 +544,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "formal regionwise-p mode requires MPI8, hexa h10, p5/p6 "
                 "controls, and s polarization."
+            )
+        if not (
+            1
+            <= args.regionwise_p_low_interior_degree
+            <= args.regionwise_p_trace_degree
+            < 6
+        ):
+            parser.error(
+                "regionwise-p requires 1 <= low interior degree "
+                "<= trace degree < 6."
+            )
+        if (
+            args.regionwise_p_high_cell_count is not None
+            and not 0 <= args.regionwise_p_high_cell_count <= 105
+        ):
+            parser.error(
+                "--regionwise-p-high-cell-count must lie in [0, 105]."
+            )
+        if (
+            args.regionwise_p_trace_degree == 5
+            and args.regionwise_p_high_cell_count is None
+        ):
+            parser.error(
+                "p5-trace regionwise-p requires an explicit high-cell count."
             )
     return args
 
@@ -1474,6 +1518,15 @@ def _qualify_regionwise_p(
     channel_comparison = result.get("diffraction_channel_comparison") or {}
     classifier = result.get("classifier_authority") or {}
     control = result.get("control_authority") or {}
+    target_identity = result.get("target_identity") or {}
+    expected_high_cells = getattr(
+        args,
+        "regionwise_p_high_cell_count",
+        None,
+    )
+    if expected_high_cells is None:
+        expected_high_cells = classifier.get("high_canonical_cell_count")
+    active_dof_budget = classifier.get("active_full3d_equivalent_dofs")
     accepted_statuses = {
         "actual_regionwise_p_candidate_pass",
         "actual_regionwise_p_controlled_negative",
@@ -1494,11 +1547,16 @@ def _qualify_regionwise_p(
         "execution_integrity_pass": result.get("pass") is True,
         "official_candidate": summary.get("official_result") is True,
         "fixed_rectangular_hexa_h10_identity": (
-            (result.get("target_identity") or {}).get("geometry")
+            target_identity.get("geometry")
             == "Task034 fixed rectangular block grating"
             and summary.get("mesh_cell_type_actual") == "hexahedron"
             and summary.get("num_mesh_cells") == 252
             and abs(float(candidate.get("h_nm", -1.0)) - 10.0) <= 1.0e-12
+            and target_identity.get("trace_degree")
+            == getattr(args, "regionwise_p_trace_degree", 4)
+            and target_identity.get("low_interior_degree")
+            == getattr(args, "regionwise_p_low_interior_degree", 4)
+            and target_identity.get("high_interior_degree") == 6
         ),
         "classifier_authority_hash_bound": (
             classifier.get("sha256") == args.regionwise_p_classifier_sha256
@@ -1508,18 +1566,21 @@ def _qualify_regionwise_p(
         ),
         "regionwise_geometry_hash_bound": (
             cell_audit.get("regionwise_mesh_geometry_sha256")
-            == (result.get("target_identity") or {}).get(
-                "mesh_geometry_sha256"
-            )
+            == target_identity.get("mesh_geometry_sha256")
         ),
         "regionwise_cell_classification_exact": (
-            cell_audit.get("regionwise_interior_p_active") is True
-            and cell_audit.get("regionwise_high_cell_count") == 105
-            and cell_audit.get("regionwise_low_cell_count") == 147
+            isinstance(expected_high_cells, int)
+            and cell_audit.get("regionwise_interior_p_active") is True
+            and cell_audit.get("regionwise_high_cell_count")
+            == expected_high_cells
+            and cell_audit.get("regionwise_low_cell_count")
+            == 252 - expected_high_cells
         ),
-        "active_full3d_equivalent_budget_exact": (
-            cell_audit.get("active_full3d_equivalent_dofs") == 88994
-            and classifier.get("active_full3d_equivalent_dofs") == 88994
+        "active_full3d_equivalent_budget_le_90k": (
+            isinstance(active_dof_budget, int)
+            and active_dof_budget <= 90000
+            and cell_audit.get("active_full3d_equivalent_dofs")
+            == active_dof_budget
         ),
         "inactive_p6_rows_not_retained": (
             cell_audit.get("inactive_max_p_rows_retained_in_matrix") is False
@@ -1534,7 +1595,8 @@ def _qualify_regionwise_p(
         "physically_reduced_matrix_rows": (
             isinstance(matrix_stats.get("matrix_rows"), int)
             and matrix_stats.get("matrix_rows") == cell_audit.get("matrix_rows")
-            and matrix_stats.get("matrix_rows") < 88994
+            and isinstance(active_dof_budget, int)
+            and matrix_stats.get("matrix_rows") < active_dof_budget
         ),
         "matrix_nnz_and_row_width_measured": (
             isinstance(matrix_stats.get("matrix_nnz_used"), (int, float))
@@ -1664,7 +1726,10 @@ def _run_parent(args: argparse.Namespace) -> int:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     if args.regionwise_p_classifier_record is not None:
         run_label = (
-            f"hexahedron_regionwise_p4trace_p6interior_h{args.h_nm:g}_"
+            f"hexahedron_regionwise_p{args.regionwise_p_trace_degree}trace_"
+            f"p{args.regionwise_p_low_interior_degree}low_p6high_"
+            f"n{105 if args.regionwise_p_high_cell_count is None else args.regionwise_p_high_cell_count}_"
+            f"h{args.h_nm:g}_"
             f"pol{args.polarization_kind}_mpi{args.mpi_size}_{timestamp}"
         )
     else:
@@ -1760,8 +1825,19 @@ def _run_parent(args: argparse.Namespace) -> int:
                 str(args.regionwise_p_control_record),
                 "--regionwise-p-control-sha256",
                 args.regionwise_p_control_sha256,
+                "--regionwise-p-trace-degree",
+                str(args.regionwise_p_trace_degree),
+                "--regionwise-p-low-interior-degree",
+                str(args.regionwise_p_low_interior_degree),
             ]
         )
+        if args.regionwise_p_high_cell_count is not None:
+            command.extend(
+                [
+                    "--regionwise-p-high-cell-count",
+                    str(args.regionwise_p_high_cell_count),
+                ]
+            )
     elif args.common_mesh_replay_record is not None:
         command.extend(
             [

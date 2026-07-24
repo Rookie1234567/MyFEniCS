@@ -16,11 +16,47 @@ from src.adaptivity.hcurl_regionwise_p import (
     reduced_trace_hcurl_ufl_element,
     regionwise_interior_p_dof_budget,
 )
+from src.adaptivity.target_regionwise_p_candidate import _select_high_cells
 from src.common.config_3d import SimulationConfig3D
 from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 class Task035bRegionwisePTests(unittest.TestCase):
+    def test_high_cell_selector_is_deterministic_eta_p5p6_ranking(self) -> None:
+        actions = [
+            {
+                "canonical_cell_id": 7,
+                "action": "p_up",
+                "higher_pair_indicator": 2.0,
+                "lower_pair_indicator": 3.0,
+            },
+            {
+                "canonical_cell_id": 2,
+                "action": "p_up",
+                "higher_pair_indicator": 4.0,
+                "lower_pair_indicator": 1.0,
+            },
+            {
+                "canonical_cell_id": 5,
+                "action": "p_up",
+                "higher_pair_indicator": 2.0,
+                "lower_pair_indicator": 4.0,
+            },
+            {
+                "canonical_cell_id": 1,
+                "action": "p_keep",
+                "higher_pair_indicator": 10.0,
+                "lower_pair_indicator": 10.0,
+            },
+        ]
+        selected, available = _select_high_cells(actions, 2)
+        self.assertEqual(available, 3)
+        self.assertEqual(selected, (2, 5))
+        all_selected, _ = _select_high_cells(actions, None)
+        self.assertEqual(all_selected, (2, 5, 7))
+        with self.assertRaises(ValueError):
+            _select_high_cells(actions, 4)
+
     def test_formal_h10_controlled_negative_record_is_preserved(self) -> None:
         root = Path(__file__).resolve().parents[2]
         record = json.loads(
