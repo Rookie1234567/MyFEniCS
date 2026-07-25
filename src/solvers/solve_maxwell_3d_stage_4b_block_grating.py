@@ -14,6 +14,7 @@ def run_stage4b_block_grating_3d_case(
     out_dir: Path,
     *,
     solution_observer=None,
+    stage4_pre_release_numerical_capture=None,
     mesh_data_override=None,
     actual_selective_trace_expansion_factory=None,
 ) -> dict[str, object]:
@@ -41,6 +42,9 @@ def run_stage4b_block_grating_3d_case(
         solve_stage4_dtn_port=True,
         apply_strong_boundary_bc=False,
         solution_observer=solution_observer,
+        stage4_pre_release_numerical_capture=(
+            stage4_pre_release_numerical_capture
+        ),
         mesh_data_override=mesh_data_override,
         actual_selective_trace_expansion_factory=(
             actual_selective_trace_expansion_factory

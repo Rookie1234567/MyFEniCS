@@ -4,6 +4,7 @@ import gc
 import json
 import time
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Callable
 
 import numpy as np
@@ -704,6 +705,219 @@ def _invoke_actual_selective_trace_expansion_factory(
     return expansion
 
 
+def _borrowed_petsc_object_identity(
+    value: Any,
+    *,
+    label: str,
+) -> tuple[int, int, str]:
+    """Return a live-object identity without taking PETSc ownership."""
+
+    if value is None:
+        raise RuntimeError(
+            f"Stage-4 pre-release capture requires live {label}"
+        )
+    try:
+        handle = int(value.handle)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"Stage-4 pre-release capture received invalid {label}"
+        ) from exc
+    if handle == 0:
+        raise RuntimeError(
+            f"Stage-4 pre-release capture received destroyed {label}"
+        )
+    return (id(value), handle, type(value).__qualname__)
+
+
+def _stage4_pre_release_capture_default_audit() -> dict[str, Any]:
+    return {
+        "schema_version": (
+            "task035b.stage4-pre-release-numerical-capture.v1"
+        ),
+        "requested": False,
+        "invoked": False,
+        "completed_collectively": False,
+        "solver_objects_live_at_entry": None,
+        "solver_objects_live_after_return": None,
+        "petsc_object_identity_unchanged": None,
+        "callback_returned_none_on_all_ranks": None,
+        "borrowed_petsc_objects_only": True,
+        "invoked_before_solver_release": None,
+        "invoked_before_postprocess": None,
+        "ordinary_default_changed": False,
+    }
+
+
+def _invoke_stage4_pre_release_numerical_capture(
+    capture: Callable[..., None] | None,
+    *,
+    communicator: MPI.Intracomm,
+    function_space: Any,
+    mesh_data: AirBox3DMesh,
+    config: SimulationConfig3D,
+    floquet_data: DoubleFloquet3DData,
+    system_A: PETSc.Mat,
+    system_b: PETSc.Vec,
+    system_x: PETSc.Vec,
+    system_ksp: PETSc.KSP,
+    dtn_result: dict[str, Any],
+    residual_diagnostics: dict[str, Any],
+    solver_diagnostics: dict[str, Any],
+    run_output_identity: dict[str, Any],
+    solver_release_scheduled_after_capture: bool,
+) -> dict[str, Any]:
+    """Invoke a collective Stage-4 hook while solver objects are still live.
+
+    The Mat/Vec/KSP arguments are borrowed only for the duration of the
+    callback.  Returning them, destroying them, or replacing entries in the
+    read-only views is forbidden.  A callback must return ``None``.  Any
+    rank-local exception is gathered and re-raised with identical text on
+    every rank.
+    """
+
+    default_audit = _stage4_pre_release_capture_default_audit()
+    if capture is None:
+        return default_audit
+    if not callable(capture):
+        raise TypeError(
+            "stage4_pre_release_numerical_capture must be callable"
+        )
+    if not isinstance(dtn_result, dict):
+        raise RuntimeError(
+            "Stage-4 pre-release capture requires a live DtN result"
+        )
+    goal_context = dtn_result.get("goal_context")
+    if not isinstance(goal_context, dict):
+        raise RuntimeError(
+            "Stage-4 pre-release capture requires DtN goal_context"
+        )
+
+    borrowed = {
+        "A": system_A,
+        "b": system_b,
+        "x": system_x,
+        "ksp": system_ksp,
+    }
+    before = {
+        name: _borrowed_petsc_object_identity(value, label=name)
+        for name, value in borrowed.items()
+    }
+    borrowed_contract = MappingProxyType(
+        {
+            "semantics": "borrowed_until_callback_returns",
+            "callback_must_return_none": True,
+            "callback_must_not_destroy_petsc_objects": True,
+            "callback_cannot_replace_solver_bindings": True,
+            "solver_objects_released_at_entry": False,
+            "postprocess_started_at_entry": False,
+            "solver_release_scheduled_after_capture": bool(
+                solver_release_scheduled_after_capture
+            ),
+        }
+    )
+    dtn_view = MappingProxyType(dict(dtn_result))
+    goal_view = MappingProxyType(dict(goal_context))
+    residual_view = MappingProxyType(dict(residual_diagnostics))
+    solver_view = MappingProxyType(dict(solver_diagnostics))
+    identity_view = MappingProxyType(dict(run_output_identity))
+
+    communicator.barrier()
+    capture_started = time.perf_counter()
+    local_failure: dict[str, Any] | None = None
+    local_returned_none = False
+    try:
+        callback_result = capture(
+            function_space=function_space,
+            mesh=mesh_data.mesh,
+            mesh_data=mesh_data,
+            config=config,
+            floquet_data=floquet_data,
+            A=system_A,
+            b=system_b,
+            x=system_x,
+            ksp=system_ksp,
+            dtn_result=dtn_view,
+            goal_context=goal_view,
+            residual_diagnostics=residual_view,
+            solver_diagnostics=solver_view,
+            run_output_identity=identity_view,
+            borrowed_object_contract=borrowed_contract,
+        )
+        if callback_result is not None:
+            raise TypeError(
+                "stage4_pre_release_numerical_capture must return None"
+            )
+        local_returned_none = True
+        after = {
+            name: _borrowed_petsc_object_identity(value, label=name)
+            for name, value in borrowed.items()
+        }
+        if after != before:
+            raise RuntimeError(
+                "Stage-4 pre-release capture changed a borrowed PETSc "
+                "object identity"
+            )
+    except Exception as exc:
+        local_failure = {
+            "rank": int(communicator.rank),
+            "exception_type": type(exc).__name__,
+            "message": str(exc),
+        }
+
+    failures = [
+        failure
+        for failure in communicator.allgather(local_failure)
+        if failure is not None
+    ]
+    elapsed_seconds = float(
+        communicator.allreduce(
+            time.perf_counter() - capture_started,
+            op=MPI.MAX,
+        )
+    )
+    if failures:
+        raise RuntimeError(
+            "Stage-4 pre-release numerical capture failed collectively: "
+            + json.dumps(
+                failures,
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
+    returned_none_on_all_ranks = bool(
+        communicator.allreduce(local_returned_none, op=MPI.LAND)
+    )
+    if not returned_none_on_all_ranks:
+        raise RuntimeError(
+            "Stage-4 pre-release numerical capture did not complete "
+            "collectively"
+        )
+    return {
+        **default_audit,
+        "requested": True,
+        "invoked": True,
+        "completed_collectively": True,
+        "communicator_size": int(communicator.size),
+        "callback_name": getattr(
+            capture,
+            "__qualname__",
+            type(capture).__qualname__,
+        ),
+        "elapsed_seconds": elapsed_seconds,
+        "solver_objects_live_at_entry": True,
+        "solver_objects_live_after_return": True,
+        "petsc_object_identity_unchanged": True,
+        "callback_returned_none_on_all_ranks": True,
+        "invoked_before_solver_release": True,
+        "invoked_before_postprocess": True,
+        "solver_release_scheduled_after_capture": bool(
+            solver_release_scheduled_after_capture
+        ),
+        "run_output_identity": dict(run_output_identity),
+    }
+
+
 def run_prepared_3d_case_flow(
     cfg: SimulationConfig3D,
     out_dir: Path,
@@ -717,6 +931,9 @@ def run_prepared_3d_case_flow(
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
+    stage4_pre_release_numerical_capture: (
+        Callable[..., None] | None
+    ) = None,
     mesh_data_override: AirBox3DMesh | None = None,
     actual_selective_trace_expansion_factory: (
         Callable[..., Any] | None
@@ -729,6 +946,9 @@ def run_prepared_3d_case_flow(
     before entering this flow.  ``solution_observer`` is an explicit research
     hook invoked only after the official solve and postprocess have completed;
     the ordinary solver path leaves it unset.
+    ``stage4_pre_release_numerical_capture`` is a default-off, Stage-4-DtN-only
+    research hook invoked after full true-residual diagnostics and before any
+    solver release or postprocess.  Its PETSc arguments are borrowed.
     ``mesh_data_override`` is a default-off research hook for solving on an
     already audited conforming mesh; ordinary callers continue to build a mesh.
     ``actual_selective_trace_expansion_factory`` is a default-off research hook
@@ -747,6 +967,14 @@ def run_prepared_3d_case_flow(
     ):
         raise ValueError(
             "actual selective trace expansion factory requires the Stage-4 "
+            "DtN flow and must be callable"
+        )
+    if stage4_pre_release_numerical_capture is not None and (
+        not solve_stage4_dtn_port
+        or not callable(stage4_pre_release_numerical_capture)
+    ):
+        raise ValueError(
+            "stage4_pre_release_numerical_capture requires the Stage-4 "
             "DtN flow and must be callable"
         )
 
@@ -1334,6 +1562,128 @@ def run_prepared_3d_case_flow(
         and not diagnostic_only_result
         and reason > 0
     )
+    pre_release_numerical_capture_audit = (
+        _stage4_pre_release_capture_default_audit()
+    )
+    if stage4_pre_release_numerical_capture is not None:
+        if (
+            diagnostic_only_result
+            or dtn_result is None
+            or floquet_data is None
+            or linear_system_diagnostics.get(
+                "linear_system_relative_residual"
+            )
+            is None
+        ):
+            raise RuntimeError(
+                "stage4_pre_release_numerical_capture requires a completed "
+                "Stage-4 DtN solve with full true-residual diagnostics"
+            )
+        run_output_identity = {
+            "schema_version": (
+                "task035b.stage4-pre-release-run-output-identity.v1"
+            ),
+            "case_name": cfg.case_name,
+            "stage_case": cfg.stage_case,
+            "stage_label": _stage_label(cfg),
+            "geometry_kind": cfg.geometry_kind,
+            "output_directory": str(out_dir.resolve()),
+            "unique_output": bool(cfg.unique_output),
+            "mpi_size": int(comm.size),
+            "configured_condensed_cache_source_sha": (
+                cfg.stage4_condensed_cache_source_sha
+            ),
+            "formal_source_identity_provided": False,
+            "identity_constructed_by_case_flow": True,
+        }
+        solver_diagnostics = {
+            "ksp_converged_reason": reason,
+            "ksp_converged_reason_name": reason_name,
+            "ksp_iterations": iterations,
+            "solver_residual_norm": residual_norm,
+            "actual_ksp_type": ksp_type,
+            "actual_pc_type": pc_type,
+            "actual_pc_factor_solver_type": pc_factor_solver_type,
+            "diagnostic_only_result": diagnostic_only_result,
+            "matrix_stats": matrix_stats,
+            "solver_objects_released": False,
+            "postprocess_started": False,
+        }
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_pre_release_numerical_capture",
+            status="begin",
+            started=started,
+            dofs=num_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "run_output_identity": run_output_identity,
+                "solver_objects_released": False,
+                "postprocess_started": False,
+            },
+        )
+        try:
+            pre_release_numerical_capture_audit = (
+                _invoke_stage4_pre_release_numerical_capture(
+                    stage4_pre_release_numerical_capture,
+                    communicator=comm,
+                    function_space=V,
+                    mesh_data=mesh_data,
+                    config=cfg,
+                    floquet_data=floquet_data,
+                    system_A=system_A,
+                    system_b=system_b,
+                    system_x=system_x,
+                    system_ksp=system_ksp,
+                    dtn_result=dtn_result,
+                    residual_diagnostics=linear_system_diagnostics,
+                    solver_diagnostics=solver_diagnostics,
+                    run_output_identity=run_output_identity,
+                    solver_release_scheduled_after_capture=(
+                        solver_objects_released_before_postprocess
+                    ),
+                )
+            )
+        except Exception as exc:
+            _write_progress_event(
+                out_dir,
+                comm,
+                stage="stage4_pre_release_numerical_capture",
+                status="failed",
+                started=started,
+                dofs=num_dofs,
+                constraints=floquet_data.num_constraints,
+                matrix_stats=matrix_stats,
+                petsc_options=petsc_options,
+                extra={
+                    "error": str(exc),
+                    "solver_objects_released": False,
+                    "postprocess_started": False,
+                },
+            )
+            raise
+        timings["stage4_pre_release_numerical_capture"] = float(
+            pre_release_numerical_capture_audit["elapsed_seconds"]
+        )
+        log(
+            "stage4_pre_release_numerical_capture seconds = "
+            f"{timings['stage4_pre_release_numerical_capture']:.3f}"
+        )
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_pre_release_numerical_capture",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=floquet_data.num_constraints,
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra=pre_release_numerical_capture_audit,
+        )
     solver_release_audit = None
     if solver_objects_released_before_postprocess:
         system_ksp.destroy()
@@ -1568,6 +1918,9 @@ def run_prepared_3d_case_flow(
         ),
         "solver_objects_released_before_postprocess": (
             solver_objects_released_before_postprocess
+        ),
+        "stage4_pre_release_numerical_capture": (
+            pre_release_numerical_capture_audit
         ),
         "solver_release_audit": solver_release_audit,
         "cell_static_condensation": None
