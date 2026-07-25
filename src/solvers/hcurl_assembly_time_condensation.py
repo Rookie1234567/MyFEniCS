@@ -69,6 +69,27 @@ class TraceConstraintMap:
     active_rows: int
     slave_rows: int
     build_audit: dict[str, Any]
+    owned_active_rows: np.ndarray | None = None
+    active_coordinates_are_original_trace_dofs: bool = True
+
+
+@dataclass(frozen=True)
+class CallerTraceExpansion:
+    """Opt-in owner-aware storage-trace expansion supplied by the caller.
+
+    ``expansion_by_original`` describes the rows of ``C_t`` in
+    ``u_storage_trace = C_t q_active``.  Active coordinates are independent
+    PETSc rows and therefore need not be original finite-element DoFs.
+    """
+
+    owned_active_rows: np.ndarray
+    expansion_by_original: Mapping[
+        int,
+        tuple[np.ndarray, np.ndarray],
+    ]
+    full_trace_rows: int
+    active_rows: int
+    qualification_audit: Mapping[str, Any]
 
 
 @dataclass
@@ -261,6 +282,11 @@ def _trace_constraint_map(
                 "slave_rows": 0,
                 "constraint_applied_before_global_matrix_insertion": False,
             },
+            owned_active_rows=np.arange(
+                active_start,
+                active_start + len(owned_trace),
+                dtype=PETSc.IntType,
+            ),
         )
 
     if int(index_map.size_global) != int(
@@ -409,6 +435,289 @@ def _trace_constraint_map(
             "constraint_applied_before_global_matrix_insertion": True,
             "embedded_identity_slave_rows_allocated": False,
         },
+        owned_active_rows=np.arange(
+            active_start,
+            active_start + len(owned_active),
+            dtype=PETSc.IntType,
+        ),
+    )
+
+
+def _caller_trace_constraint_map(
+    comm,
+    *,
+    owned_trace: np.ndarray,
+    original_to_trace: dict[int, int],
+    trace_rows: int,
+    caller: CallerTraceExpansion,
+) -> TraceConstraintMap:
+    """Validate an explicit generalized trace expansion collectively."""
+
+    local_error: str | None = None
+    normalized_owned = np.empty(0, dtype=PETSc.IntType)
+    normalized_expansion: dict[
+        int,
+        tuple[np.ndarray, np.ndarray],
+    ] = {}
+    active_rows = 0
+    try:
+        if not isinstance(caller, CallerTraceExpansion):
+            raise TypeError(
+                "caller_trace_expansion must be CallerTraceExpansion"
+            )
+        if isinstance(caller.full_trace_rows, bool):
+            raise TypeError("caller full_trace_rows must be an integer")
+        if isinstance(caller.active_rows, bool):
+            raise TypeError("caller active_rows must be an integer")
+        supplied_trace_rows = int(caller.full_trace_rows)
+        active_rows = int(caller.active_rows)
+        if supplied_trace_rows != int(trace_rows):
+            raise ValueError(
+                "caller trace expansion full_trace_rows differs from the "
+                "storage finite-element trace"
+            )
+        if active_rows <= 0 or active_rows > int(trace_rows):
+            raise ValueError(
+                "caller trace expansion active_rows must be positive and "
+                "no larger than the storage trace"
+            )
+
+        qualification = dict(caller.qualification_audit)
+        schema = qualification.get("schema_version")
+        if not isinstance(schema, str) or not schema:
+            raise ValueError(
+                "caller trace expansion qualification needs a schema_version"
+            )
+        required_true = (
+            "pass",
+            "owner_aware_contiguous_petsc_rows",
+            "inactive_modes_have_no_petsc_rows",
+        )
+        missing_true = [
+            key for key in required_true if qualification.get(key) is not True
+        ]
+        if missing_true:
+            raise ValueError(
+                "caller trace expansion is not qualified: "
+                + ", ".join(missing_true)
+            )
+        if qualification.get("full_trace_matrix_constructed") is not False:
+            raise ValueError(
+                "caller trace expansion must prove that no full trace "
+                "matrix was constructed"
+            )
+        if qualification.get("ordinary_default_changed", False) is not False:
+            raise ValueError(
+                "caller trace expansion may not change the ordinary default"
+            )
+
+        raw_owned = np.asarray(caller.owned_active_rows)
+        if raw_owned.ndim != 1:
+            raise ValueError("owned active rows must be one-dimensional")
+        if not np.issubdtype(raw_owned.dtype, np.integer):
+            raise TypeError("owned active rows must have integer dtype")
+        normalized_owned = np.asarray(
+            raw_owned,
+            dtype=PETSc.IntType,
+        ).copy()
+        if (
+            len(np.unique(normalized_owned)) != len(normalized_owned)
+            or np.any(np.diff(normalized_owned.astype(np.int64)) <= 0)
+        ):
+            raise ValueError(
+                "owned active rows must be strictly increasing and unique"
+            )
+        if len(normalized_owned) and (
+            int(normalized_owned[0]) < 0
+            or int(normalized_owned[-1]) >= active_rows
+        ):
+            raise ValueError(
+                "owned active rows are outside the active coordinate range"
+            )
+
+        expected_originals = set(map(int, original_to_trace))
+        raw_expansion = dict(caller.expansion_by_original)
+        raw_keys = set()
+        for key in raw_expansion:
+            if isinstance(key, bool) or not isinstance(key, (int, np.integer)):
+                raise TypeError(
+                    "caller trace expansion original row keys must be integers"
+                )
+            raw_keys.add(int(key))
+        if raw_keys != expected_originals:
+            missing = sorted(expected_originals - raw_keys)
+            extra = sorted(raw_keys - expected_originals)
+            raise ValueError(
+                "caller trace expansion must cover exactly every storage "
+                f"trace row: missing={missing[:8]}, extra={extra[:8]}"
+            )
+
+        referenced: set[int] = set()
+        for original in sorted(expected_originals):
+            block = raw_expansion[original]
+            if not isinstance(block, tuple) or len(block) != 2:
+                raise TypeError(
+                    "each caller trace expansion row must be an "
+                    "(active_ids, coefficients) tuple"
+                )
+            raw_ids, raw_coefficients = block
+            ids_array = np.asarray(raw_ids)
+            coefficients = np.asarray(
+                raw_coefficients,
+                dtype=np.complex128,
+            )
+            if ids_array.ndim != 1 or coefficients.ndim != 1:
+                raise ValueError(
+                    "caller trace expansion IDs and coefficients must be "
+                    "one-dimensional"
+                )
+            if not np.issubdtype(ids_array.dtype, np.integer):
+                raise TypeError(
+                    "caller trace expansion active IDs must have integer dtype"
+                )
+            ids = np.asarray(ids_array, dtype=PETSc.IntType).copy()
+            coefficients = coefficients.copy()
+            if len(ids) != len(coefficients):
+                raise ValueError(
+                    "caller trace expansion ID and coefficient counts disagree"
+                )
+            if len(np.unique(ids)) != len(ids):
+                raise ValueError(
+                    "caller trace expansion row contains duplicate active IDs"
+                )
+            if len(ids) and (
+                int(ids.min()) < 0 or int(ids.max()) >= active_rows
+            ):
+                raise ValueError(
+                    "caller trace expansion references an active ID outside "
+                    "the global active range"
+                )
+            if not np.all(
+                np.isfinite(coefficients.real)
+                & np.isfinite(coefficients.imag)
+            ):
+                raise ValueError(
+                    "caller trace expansion coefficients must be finite"
+                )
+            if np.any(coefficients == 0.0):
+                raise ValueError(
+                    "caller trace expansion must omit explicit zero "
+                    "coefficients"
+                )
+            referenced.update(map(int, ids))
+            normalized_expansion[original] = (ids, coefficients)
+        expected_active = set(range(active_rows))
+        if referenced != expected_active:
+            missing_active = sorted(expected_active - referenced)
+            extra_active = sorted(referenced - expected_active)
+            raise ValueError(
+                "caller trace expansion active-coordinate coverage does not "
+                f"close: missing={missing_active[:8]}, "
+                f"extra={extra_active[:8]}"
+            )
+    except Exception as error:
+        local_error = f"{type(error).__name__}: {error}"
+
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        error_class = (
+            TypeError
+            if all(
+                error is None or error.startswith("TypeError:")
+                for error in errors
+            )
+            else ValueError
+        )
+        raise error_class(
+            "caller trace expansion validation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(errors)
+                if error is not None
+            )
+        )
+
+    owned_packets = comm.allgather(
+        np.asarray(normalized_owned, dtype=np.int64)
+    )
+    ownership_error: str | None = None
+    expected_start = int(
+        sum(len(packet) for packet in owned_packets[: comm.rank])
+    )
+    expected_stop = expected_start + len(normalized_owned)
+    if not np.array_equal(
+        normalized_owned.astype(np.int64, copy=False),
+        np.arange(expected_start, expected_stop, dtype=np.int64),
+    ):
+        ownership_error = (
+            "owned active rows differ from the contiguous PETSc ownership "
+            f"range [{expected_start}, {expected_stop})"
+        )
+    elif sum(map(len, owned_packets)) != active_rows:
+        ownership_error = (
+            "owned active row counts do not close the global active rows"
+        )
+    ownership_errors = comm.allgather(ownership_error)
+    if any(error is not None for error in ownership_errors):
+        raise ValueError(
+            "caller trace expansion ownership validation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(ownership_errors)
+                if error is not None
+            )
+        )
+
+    qualification = dict(caller.qualification_audit)
+    return TraceConstraintMap(
+        owned_active_original_dofs=np.empty(0, dtype=PETSc.IntType),
+        original_to_active={},
+        expansion_by_original=normalized_expansion,
+        full_trace_rows=int(trace_rows),
+        active_rows=active_rows,
+        slave_rows=0,
+        build_audit={
+            "schema_version": (
+                "task035b.generalized-caller-trace-expansion.v1"
+            ),
+            "status": "caller_qualified_generalized_trace_expansion",
+            "full_trace_rows": int(trace_rows),
+            "active_rows": active_rows,
+            "active_coordinate_kind": (
+                "caller_owned_not_original_storage_trace_dof"
+            ),
+            "owned_active_rows": normalized_owned.astype(
+                np.int64
+            ).tolist(),
+            "constraint_applied_before_global_matrix_insertion": True,
+            "inactive_mode_rows_allocated": False,
+            "full_trace_matrix_allocated": False,
+            "ordinary_default_changed": False,
+            "caller_qualification": qualification,
+        },
+        owned_active_rows=normalized_owned,
+        active_coordinates_are_original_trace_dofs=False,
+    )
+
+
+def _owned_active_rows(
+    constraints: TraceConstraintMap,
+    comm,
+) -> np.ndarray:
+    """Return explicit local PETSc rows for legacy and generalized maps."""
+
+    if constraints.owned_active_rows is not None:
+        return np.asarray(
+            constraints.owned_active_rows,
+            dtype=PETSc.IntType,
+        )
+    local_count = len(constraints.owned_active_original_dofs)
+    counts = comm.allgather(local_count)
+    start = int(sum(counts[: comm.rank]))
+    return np.arange(
+        start,
+        start + local_count,
+        dtype=PETSc.IntType,
     )
 
 
@@ -2317,6 +2626,7 @@ def build_unconstrained_assembly_time_condensation(
     cell_tags,
     *,
     mpc=None,
+    caller_trace_expansion: CallerTraceExpansion | None = None,
     appended_global_rows: int = 0,
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
@@ -2335,10 +2645,18 @@ def build_unconstrained_assembly_time_condensation(
     """Assemble only the independent H(curl) trace Schur matrix.
 
     When ``mpc`` is supplied, its trace constraints are applied to each local
-    Schur tensor before insertion.  No full-trace matrix or embedded slave
-    identity rows are allocated.
+    Schur tensor before insertion.  The opt-in ``caller_trace_expansion`` may
+    instead provide generalized owner-aware coordinates (for example selected
+    physical p6 trace orbits).  The two mechanisms are mutually exclusive.
+    No full-trace matrix or embedded inactive/slave identity rows are
+    allocated.
     """
 
+    if caller_trace_expansion is not None and mpc is not None:
+        raise ValueError(
+            "caller_trace_expansion already contains the complete trace "
+            "pullback and cannot be combined with mpc"
+        )
     if compiled_form is None:
         if affine_isotropic_tensor_spec is None:
             raise ValueError(
@@ -2506,16 +2824,26 @@ def build_unconstrained_assembly_time_condensation(
         function_space,
         tuple(local_interiors),
     )
-    trace_constraints = _trace_constraint_map(
-        function_space,
-        owned_trace,
-        mapping,
-        trace_rows,
-        mpc,
+    trace_constraints = (
+        _trace_constraint_map(
+            function_space,
+            owned_trace,
+            mapping,
+            trace_rows,
+            mpc,
+        )
+        if caller_trace_expansion is None
+        else _caller_trace_constraint_map(
+            comm,
+            owned_trace=owned_trace,
+            original_to_trace=mapping,
+            trace_rows=trace_rows,
+            caller=caller_trace_expansion,
+        )
     )
     active_rows = trace_constraints.active_rows
-    owned_active = trace_constraints.owned_active_original_dofs
-    active_counts = tuple(comm.allgather(len(owned_active)))
+    owned_active_rows = _owned_active_rows(trace_constraints, comm)
+    active_counts = tuple(comm.allgather(len(owned_active_rows)))
     active_start = int(sum(active_counts[: comm.rank]))
     local_appended = appended_global_rows if comm.rank == comm.size - 1 else 0
     matrix_rows = active_rows + appended_global_rows
@@ -2552,8 +2880,8 @@ def build_unconstrained_assembly_time_condensation(
     )
     condensed = PETSc.Mat().createAIJ(
         size=(
-            (len(owned_active) + local_appended, matrix_rows),
-            (len(owned_active) + local_appended, matrix_rows),
+            (len(owned_active_rows) + local_appended, matrix_rows),
+            (len(owned_active_rows) + local_appended, matrix_rows),
         ),
         nnz=(
             diagonal_nnz
@@ -2562,7 +2890,11 @@ def build_unconstrained_assembly_time_condensation(
         ),
         comm=comm,
     )
-    if condensed.getOwnershipRange()[0] != active_start:
+    expected_ownership = (
+        active_start,
+        active_start + len(owned_active_rows) + local_appended,
+    )
+    if tuple(map(int, condensed.getOwnershipRange())) != expected_ownership:
         condensed.destroy()
         raise RuntimeError(
             "PETSc active-trace ownership disagrees with trace numbering"
@@ -3538,6 +3870,7 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "trace_constraint_numbering": (
                 trace_constraints.owned_active_original_dofs,
+                owned_active_rows,
                 tuple(
                     trace_constraints.expansion_by_original.values()
                 ),
@@ -3575,6 +3908,13 @@ def build_unconstrained_assembly_time_condensation(
             "active_rows": active_rows,
             "appended_rows": appended_global_rows,
             "matrix_rows": matrix_rows,
+            "caller_supplied_trace_expansion": bool(
+                caller_trace_expansion is not None
+            ),
+            "active_coordinates_are_original_trace_dofs": bool(
+                trace_constraints.active_coordinates_are_original_trace_dofs
+            ),
+            "inactive_trace_modes_receive_petsc_rows": False,
             "interior_rows": interior_rows,
             "owned_cell_count_global": global_cells,
             "local_tensor_dimension": dimension,
@@ -4144,6 +4484,40 @@ def trim_warm_persistent_condensed_cache_heap(
     return audit
 
 
+def recover_owned_trace_values(
+    condensed: AssemblyTimeCondensedSystem,
+    active_trace_values: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Expand active coordinates into owned storage-space trace values.
+
+    This is the recovery entry point for generalized caller coordinates.  It
+    does not allocate a full matrix and returns only the physical trace rows
+    owned by this rank.
+    """
+
+    active = np.asarray(active_trace_values, dtype=np.complex128)
+    if active.shape != (condensed.active_rows,):
+        raise ValueError("active trace value array has the wrong global length")
+    owned_trace = np.asarray(
+        condensed.owned_trace_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    values = np.empty(len(owned_trace), dtype=np.complex128)
+    for index, original in enumerate(owned_trace):
+        expansion = (
+            condensed.trace_constraints.expansion_by_original.get(
+                int(original)
+            )
+        )
+        if expansion is None:
+            raise RuntimeError(
+                "owned storage trace row is absent from the expansion"
+            )
+        active_ids, coefficients = expansion
+        values[index] = np.dot(coefficients, active[active_ids])
+    return owned_trace.copy(), values
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
     active_trace_values: np.ndarray,
@@ -4449,22 +4823,12 @@ def recover_full_dual_from_active_trace(
         comm=condensed.matrix.getComm(),
     )
     full_dual.setName("assembly_time_recovered_full_dual")
-    owned_trace = np.asarray(
-        condensed.owned_trace_original_dofs,
-        dtype=np.int64,
+    owned_trace, trace_values = recover_owned_trace_values(
+        condensed,
+        active,
     )
+    owned_trace = np.asarray(owned_trace, dtype=np.int64)
     if len(owned_trace):
-        trace_values = np.empty(len(owned_trace), dtype=np.complex128)
-        for index, original in enumerate(owned_trace):
-            active_ids, coefficients = (
-                condensed.trace_constraints.expansion_by_original[
-                    int(original)
-                ]
-            )
-            trace_values[index] = np.dot(
-                coefficients,
-                active[active_ids],
-            )
         full_dual.setValues(
             _idx(owned_trace),
             np.asarray(trace_values, dtype=PETSc.ScalarType),
@@ -4565,6 +4929,15 @@ def project_mpc_vector_to_active_trace(
     cell-interior or slave entry is nonzero before physically dropping them.
     """
 
+    if not (
+        condensed.trace_constraints.active_coordinates_are_original_trace_dofs
+    ):
+        raise NotImplementedError(
+            "an already-MPC-assembled vector cannot be projected by dropping "
+            "rows when active coordinates are generalized; assemble the "
+            "unconstrained vector and apply "
+            "condense_unconstrained_vector_to_active_trace instead"
+        )
     if full_vector.getSize() != condensed.full_rows:
         raise ValueError("full MPC vector size differs from the FE space")
     comm = condensed.matrix.getComm().tompi4py()
@@ -4608,6 +4981,7 @@ def project_mpc_vector_to_active_trace(
 
 __all__ = [
     "AssemblyTimeCondensedSystem",
+    "CallerTraceExpansion",
     "CellRecoveryMap",
     "TraceConstraintMap",
     "assembly_time_dual_recovery_context",
@@ -4618,6 +4992,7 @@ __all__ = [
     "project_mpc_vector_to_active_trace",
     "recover_full_dual_from_active_trace",
     "recover_owned_cell_interiors",
+    "recover_owned_trace_values",
     "register_appended_dual_interior_coupling",
     "trim_warm_persistent_condensed_cache_heap",
 ]
