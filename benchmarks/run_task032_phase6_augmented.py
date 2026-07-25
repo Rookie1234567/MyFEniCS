@@ -1442,6 +1442,13 @@ def main() -> None:
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
         )
+        trace_modal_oracle = None
+        if reference_archive is not None:
+            mark_stage("full3d_trace_modal_oracle")
+            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
+                archive_path
+            )
+            mark_stage("middle_plane_reconstruction")
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
             sample_x,
@@ -1528,6 +1535,7 @@ def main() -> None:
             ),
             "full_middle_volume_reconstructed": False,
             "interface_continuity": interface_continuity,
+            "full3d_trace_modal_oracle": trace_modal_oracle,
             "volume_absorption": absorption,
             "selected_plane_full3d_comparison": field_reference,
         }
