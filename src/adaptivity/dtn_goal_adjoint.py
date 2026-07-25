@@ -13,9 +13,11 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from dataclasses import replace
+import hashlib
+import json
 import math
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from mpi4py import MPI
@@ -99,6 +101,249 @@ def task035b_failed_channel_goals() -> tuple[DtnChannelGoal, ...]:
 
 def _relative_difference(left: float, right: float) -> float:
     return float(abs(left - right) / max(abs(left), abs(right), 1.0e-14))
+
+
+def _owned_adjoint_content_sha256(
+    values: np.ndarray,
+    *,
+    rank: int,
+    ownership_start: int,
+    ownership_end: int,
+) -> str:
+    canonical = np.ascontiguousarray(values, dtype=np.dtype("<c16"))
+    if canonical.shape != (int(ownership_end) - int(ownership_start),):
+        raise ValueError("owned adjoint values differ from their PETSc range")
+    digest = hashlib.sha256()
+    digest.update(b"task035b.petsc-adjoint-owned-content.v1\0")
+    digest.update(
+        np.asarray(
+            [rank, ownership_start, ownership_end],
+            dtype=np.dtype("<i8"),
+        ).tobytes()
+    )
+    digest.update(canonical.tobytes())
+    return digest.hexdigest()
+
+
+def _global_adjoint_value_sha256(values: np.ndarray) -> str:
+    canonical = np.ascontiguousarray(values, dtype=np.dtype("<c16"))
+    if canonical.ndim != 1:
+        raise ValueError("global adjoint values must be a vector")
+    digest = hashlib.sha256()
+    digest.update(b"task035b.global-adjoint-value-content.v1\0")
+    digest.update(
+        np.asarray([len(canonical)], dtype=np.dtype("<i8")).tobytes()
+    )
+    digest.update(canonical.tobytes())
+    return digest.hexdigest()
+
+
+def _communicator_content_identity_from_world_ranks(
+    world_ranks: Sequence[int],
+) -> dict[str, Any]:
+    members = [int(rank) for rank in world_ranks]
+    if len(set(members)) != len(members):
+        raise RuntimeError("MPI communicator world-rank members are duplicated")
+    payload = {
+        "schema_version": "task035b.mpi-communicator-content.v1",
+        "size": len(members),
+        "ordered_world_ranks": members,
+    }
+    return {
+        **payload,
+        "content_sha256": hashlib.sha256(
+            json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def mpi_communicator_content_identity(
+    communicator: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Return a deterministic identity for communicator membership/order."""
+
+    return _communicator_content_identity_from_world_ranks(
+        communicator.allgather(int(MPI.COMM_WORLD.rank))
+    )
+
+
+def _adjoint_partition_content_identity(
+    *,
+    global_size: int,
+    packets: Sequence[Mapping[str, Any]],
+    global_value_sha256: str,
+) -> dict[str, Any]:
+    ordered = tuple(sorted(packets, key=lambda packet: int(packet["rank"])))
+    if tuple(int(packet["rank"]) for packet in ordered) != tuple(
+        range(len(ordered))
+    ):
+        raise RuntimeError("adjoint partition ranks are not contiguous")
+    cursor = 0
+    normalized: list[dict[str, Any]] = []
+    for packet in ordered:
+        start = int(packet["ownership_start"])
+        end = int(packet["ownership_end"])
+        content_hash = str(packet["owned_content_sha256"]).lower()
+        if (
+            start != cursor
+            or end < start
+            or len(content_hash) != 64
+        ):
+            raise RuntimeError("adjoint PETSc ownership partition is invalid")
+        try:
+            bytes.fromhex(content_hash)
+        except ValueError as exc:
+            raise RuntimeError(
+                "adjoint owned-content hash is not hexadecimal"
+            ) from exc
+        normalized.append(
+            {
+                "rank": int(packet["rank"]),
+                "world_rank": int(packet["world_rank"]),
+                "ownership_start": start,
+                "ownership_end": end,
+                "owned_value_count": end - start,
+                "owned_content_sha256": content_hash,
+            }
+        )
+        cursor = end
+    if cursor != int(global_size):
+        raise RuntimeError("adjoint ownership does not cover the global vector")
+    communicator_identity = _communicator_content_identity_from_world_ranks(
+        [packet["world_rank"] for packet in normalized]
+    )
+    value_hash = str(global_value_sha256).lower()
+    try:
+        value_hash_valid = (
+            len(value_hash) == 64 and len(bytes.fromhex(value_hash)) == 32
+        )
+    except ValueError:
+        value_hash_valid = False
+    if not value_hash_valid:
+        raise RuntimeError("global adjoint value hash is invalid")
+    payload = {
+        "schema_version": (
+            "task035b.petsc-adjoint-partition-content.v1"
+        ),
+        "global_size": int(global_size),
+        "scalar_dtype": "complex128",
+        "mpi_size": len(normalized),
+        "communicator_content_sha256": communicator_identity[
+            "content_sha256"
+        ],
+        "communicator_ordered_world_ranks": communicator_identity[
+            "ordered_world_ranks"
+        ],
+        "global_value_sha256": value_hash,
+        "partitions": normalized,
+    }
+    global_hash = hashlib.sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        **payload,
+        "global_content_sha256": global_hash,
+    }
+
+
+def petsc_adjoint_partition_content_identity(
+    adjoint: PETSc.Vec,
+) -> dict[str, Any]:
+    """Hash the live adjoint values and the exact PETSc MPI ownership."""
+
+    communicator = adjoint.getComm().tompi4py()
+    start, end = map(int, adjoint.getOwnershipRange())
+    owned = np.asarray(
+        adjoint.getArray(readonly=True),
+        dtype=np.complex128,
+    )
+    packet = {
+        "rank": int(communicator.rank),
+        "world_rank": int(MPI.COMM_WORLD.rank),
+        "ownership_start": start,
+        "ownership_end": end,
+        "owned_content_sha256": _owned_adjoint_content_sha256(
+            owned,
+            rank=communicator.rank,
+            ownership_start=start,
+            ownership_end=end,
+        ),
+    }
+    local_bytes = np.ascontiguousarray(
+        owned,
+        dtype=np.dtype("<c16"),
+    ).tobytes()
+    gathered_bytes = communicator.gather(local_bytes, root=0)
+    if communicator.rank == 0:
+        global_values = np.frombuffer(
+            b"".join(gathered_bytes),
+            dtype=np.dtype("<c16"),
+        )
+        global_value_hash = _global_adjoint_value_sha256(global_values)
+    else:
+        global_value_hash = None
+    global_value_hash = communicator.bcast(global_value_hash, root=0)
+    return _adjoint_partition_content_identity(
+        global_size=int(adjoint.getSize()),
+        packets=communicator.allgather(packet),
+        global_value_sha256=global_value_hash,
+    )
+
+
+def replicated_adjoint_partition_content_identity(
+    values: np.ndarray,
+    reported_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Rehash a replicated adjoint with a report's PETSc ownership ranges."""
+
+    replicated = np.asarray(values, dtype=np.complex128)
+    if replicated.ndim != 1 or not np.all(np.isfinite(replicated)):
+        raise ValueError("replicated retained adjoint must be a finite vector")
+    partitions = reported_identity.get("partitions")
+    if not isinstance(partitions, Sequence) or isinstance(
+        partitions,
+        (str, bytes),
+    ):
+        raise ValueError("adjoint content identity lacks PETSc partitions")
+    packets: list[dict[str, Any]] = []
+    for raw in partitions:
+        if not isinstance(raw, Mapping):
+            raise ValueError("adjoint partition record must be a mapping")
+        rank = int(raw["rank"])
+        world_rank = int(raw["world_rank"])
+        start = int(raw["ownership_start"])
+        end = int(raw["ownership_end"])
+        if start < 0 or end < start or end > len(replicated):
+            raise ValueError("adjoint ownership range is out of bounds")
+        packets.append(
+            {
+                "rank": rank,
+                "world_rank": world_rank,
+                "ownership_start": start,
+                "ownership_end": end,
+                "owned_content_sha256": _owned_adjoint_content_sha256(
+                    replicated[start:end],
+                    rank=rank,
+                    ownership_start=start,
+                    ownership_end=end,
+                ),
+            }
+        )
+    return _adjoint_partition_content_identity(
+        global_size=len(replicated),
+        packets=packets,
+        global_value_sha256=_global_adjoint_value_sha256(replicated),
+    )
 
 
 def _linear_residual(
@@ -632,6 +877,14 @@ def verify_hermitian_discrete_adjoint(
             finite_difference_closure_pass
         ),
     }
+    adjoint_content = petsc_adjoint_partition_content_identity(adjoint)
+    report["adjoint_content_identity"] = adjoint_content
+    report["adjoint_content_sha256"] = adjoint_content[
+        "global_value_sha256"
+    ]
+    report["adjoint_partition_content_sha256"] = adjoint_content[
+        "global_content_sha256"
+    ]
     if adjoint_observer is not None:
         adjoint_observer(adjoint)
     for vector in (
@@ -975,6 +1228,9 @@ __all__ = [
     "dtn_power_goal_value",
     "evaluate_actual_dtn_channel_adjoints",
     "evaluate_actual_dtn_power_adjoints",
+    "mpi_communicator_content_identity",
+    "petsc_adjoint_partition_content_identity",
+    "replicated_adjoint_partition_content_identity",
     "run_target_actual_dtn_adjoint",
     "solve_hermitian_discrete_adjoint",
     "task035b_failed_channel_goals",

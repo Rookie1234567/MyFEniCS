@@ -9,6 +9,7 @@ from petsc4py import PETSc
 
 from src.adaptivity.dtn_goal_adjoint import (
     dtn_power_goal_value,
+    replicated_adjoint_partition_content_identity,
     run_target_actual_dtn_adjoint,
     verify_hermitian_discrete_adjoint,
 )
@@ -148,6 +149,23 @@ class Task035ActualDtnAdjointTests(unittest.TestCase):
             )
         gradient.assemble()
 
+        captured_adjoint: dict[str, np.ndarray] = {}
+
+        def capture_adjoint(vector: PETSc.Vec) -> None:
+            local_start, local_end = vector.getOwnershipRange()
+            packet = (
+                int(local_start),
+                int(local_end),
+                np.asarray(
+                    vector.getArray(readonly=True),
+                    dtype=np.complex128,
+                ).copy(),
+            )
+            replicated = np.empty(vector.getSize(), dtype=np.complex128)
+            for owned_start, owned_end, owned_values in comm.allgather(packet):
+                replicated[owned_start:owned_end] = owned_values
+            captured_adjoint["values"] = replicated
+
         report = verify_hermitian_discrete_adjoint(
             matrix,
             right_hand_side,
@@ -156,6 +174,7 @@ class Task035ActualDtnAdjointTests(unittest.TestCase):
             gradient,
             lambda candidate: weight
             * abs(last_value(candidate) - incident) ** 2,
+            adjoint_observer=capture_adjoint,
         )
         self.assertTrue(report["pass"], report)
         self.assertLess(
@@ -165,6 +184,21 @@ class Task035ActualDtnAdjointTests(unittest.TestCase):
         self.assertLess(report["finite_difference_relative_error"], 1.0e-8)
         self.assertEqual(
             report["complex_adjoint_equation"], "A^H z = g"
+        )
+        identity = report["adjoint_content_identity"]
+        self.assertEqual(identity["mpi_size"], comm.size)
+        self.assertEqual(
+            identity["communicator_ordered_world_ranks"],
+            list(range(comm.size)),
+        )
+        recomputed = replicated_adjoint_partition_content_identity(
+            captured_adjoint["values"],
+            identity,
+        )
+        self.assertEqual(identity, recomputed)
+        self.assertEqual(
+            report["adjoint_content_sha256"],
+            recomputed["global_content_sha256"],
         )
 
         gradient.destroy()
