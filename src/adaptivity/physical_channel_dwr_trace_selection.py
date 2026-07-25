@@ -29,6 +29,7 @@ from dataclasses import dataclass
 import hashlib
 from itertools import pairwise
 import json
+import math
 from numbers import Integral
 from types import MappingProxyType
 from typing import Any, Literal, Mapping, Sequence
@@ -1086,6 +1087,396 @@ def select_rank_revealing_dwr_seed_orbits(
     )
 
 
+def audit_exact_sequence_closed_dwr_selection(
+    *,
+    analysis: PhysicalChannelDWRAnalysis,
+    seed_selection: RankRevealingDWRSeedSelection,
+    exact_sequence_numbering: ExactSequenceClosedP6TraceNumbering,
+    full3d_dof_limit: int,
+    regression_slack: float = 1.0e-12,
+) -> Mapping[str, Any]:
+    """Re-audit DWR safety over every exact-sequence-closed orbit.
+
+    RRQR chooses only the initial whole-orbit seeds.  Exact-sequence closure
+    may add physical trace orbits whose signed DWR contributions were not
+    individually eligible.  This pure audit therefore recomputes the joint
+    target/protected prediction, target rank, whole-orbit identity, and
+    Full3D-equivalent budget over the complete closed set.  A failed audit is
+    raised before an owner row plan or candidate matrix can be constructed.
+    """
+
+    slack = float(regression_slack)
+    if not np.isfinite(slack) or slack < 0.0:
+        raise ValueError("closed-selection regression slack must be finite")
+    if analysis.audit.get("pass") is not True:
+        raise RuntimeError("physical channel DWR analysis is unqualified")
+    if seed_selection.audit.get("pass") is not True:
+        raise RuntimeError("DWR seed selection is unqualified")
+    if exact_sequence_numbering.audit.get("pass") is not True:
+        raise RuntimeError("exact-sequence numbering is unqualified")
+
+    closure = exact_sequence_numbering.closure
+    layout_by_representative = {
+        orbit.representative_entity_id: orbit
+        for orbit in analysis.layout.orbits
+    }
+    ranked_by_id = {
+        orbit.orbit_id: orbit for orbit in analysis.algebraic.ranked_orbits
+    }
+    if len(ranked_by_id) != len(analysis.algebraic.ranked_orbits):
+        raise RuntimeError("DWR ranking contains duplicate whole-orbit ids")
+    layout_orbit_ids = {orbit.orbit_id for orbit in analysis.layout.orbits}
+    if set(ranked_by_id) != layout_orbit_ids:
+        raise RuntimeError(
+            "DWR ranking does not cover the complete physical orbit layout"
+        )
+
+    selected_representatives = tuple(
+        map(int, closure.selected_trace_representative_ids)
+    )
+    seed_representatives = tuple(
+        map(int, seed_selection.seed_representative_entity_ids)
+    )
+    closure_added_representatives = tuple(
+        map(int, closure.closure_added_trace_representative_ids)
+    )
+    unknown = set(selected_representatives) - set(layout_by_representative)
+    if unknown:
+        raise RuntimeError(
+            "exact-sequence closure contains unknown DWR orbits: "
+            f"{sorted(unknown)}"
+        )
+    selected_physical_orbits = tuple(
+        layout_by_representative[representative]
+        for representative in selected_representatives
+    )
+    selected_orbit_ids = tuple(
+        orbit.orbit_id for orbit in selected_physical_orbits
+    )
+    seed_orbit_ids_from_layout = tuple(
+        layout_by_representative[representative].orbit_id
+        for representative in seed_representatives
+        if representative in layout_by_representative
+    )
+
+    expected_closure_added = (
+        set(selected_representatives) - set(seed_representatives)
+    )
+    selected_physical_entities = tuple(
+        sorted(
+            entity
+            for orbit in selected_physical_orbits
+            for entity in orbit.member_entity_ids
+        )
+    )
+    recomputed_full3d_increment = int(
+        sum(
+            len(orbit.complement_indices) * len(orbit.member_entity_ids)
+            for orbit in selected_physical_orbits
+        )
+    )
+    recomputed_active_increment = int(
+        sum(
+            len(orbit.complement_indices)
+            for orbit in selected_physical_orbits
+        )
+    )
+    recomputed_full3d_total = int(
+        closure.full3d_base_dofs + recomputed_full3d_increment
+    )
+    limit = int(full3d_dof_limit)
+    if limit < 0:
+        raise ValueError("Full3D DoF limit must be nonnegative")
+
+    target_labels = tuple(seed_selection.target_goal_labels)
+    if not target_labels:
+        raise RuntimeError("closed DWR audit has no target goals")
+    if set(target_labels) - set(analysis.algebraic.goals):
+        raise RuntimeError("closed DWR audit contains unknown target goals")
+
+    def target_matrix(orbit_ids: Sequence[str]) -> np.ndarray:
+        return np.asarray(
+            [
+                [
+                    float(
+                        ranked_by_id[orbit_id].goals[label][
+                            "normalized_signed_correction"
+                        ]
+                    )
+                    for orbit_id in orbit_ids
+                ]
+                for label in target_labels
+            ],
+            dtype=np.float64,
+        )
+
+    seed_matrix = target_matrix(seed_selection.seed_orbit_ids)
+    closed_matrix = target_matrix(selected_orbit_ids)
+    seed_singular_values = np.linalg.svd(
+        seed_matrix,
+        compute_uv=False,
+    )
+    closed_singular_values = np.linalg.svd(
+        closed_matrix,
+        compute_uv=False,
+    )
+    rank_tolerance = float(seed_selection.rank_tolerance)
+    recomputed_seed_rank = int(
+        np.count_nonzero(seed_singular_values > rank_tolerance)
+    )
+    closed_target_rank = int(
+        np.count_nonzero(closed_singular_values > rank_tolerance)
+    )
+
+    goal_labels = tuple(analysis.algebraic.goals)
+    goal_aggregates: dict[str, Mapping[str, Any]] = {}
+    target_net_improvement = 0.0
+    target_regression_count = 0
+    target_gate_crossing_count = 0
+    protected_regression_count = 0
+    protected_gate_crossing_count = 0
+    complete_goal_reports = True
+    consistent_goal_metadata = True
+    finite_aggregate_dwr = True
+    for label in goal_labels:
+        reports: list[Mapping[str, Any]] = []
+        for orbit_id in selected_orbit_ids:
+            report = ranked_by_id[orbit_id].goals.get(label)
+            if report is None:
+                complete_goal_reports = False
+                continue
+            reports.append(report)
+        if len(reports) != len(selected_orbit_ids) or not reports:
+            continue
+
+        reference = reports[0]
+        selection_target = bool(reference["selection_target"])
+        protected = bool(reference["protected"])
+        selection_weight = float(reference["selection_weight"])
+        baseline = reference["baseline_normalized_signed_error"]
+        for report in reports[1:]:
+            consistent_goal_metadata = bool(
+                consistent_goal_metadata
+                and report["component"] == reference["component"]
+                and bool(report["selection_target"]) == selection_target
+                and bool(report["protected"]) == protected
+                and float(report["selection_weight"]) == selection_weight
+                and report["baseline_normalized_signed_error"] == baseline
+            )
+
+        corrections = tuple(
+            float(report["normalized_signed_correction"])
+            for report in reports
+        )
+        aggregate_correction = float(math.fsum(corrections))
+        finite_aggregate_dwr = bool(
+            finite_aggregate_dwr
+            and np.isfinite(aggregate_correction)
+            and np.isfinite(selection_weight)
+        )
+        predicted: float | None = None
+        improvement: float | None = None
+        target_regression = False
+        target_gate_crossing = False
+        protected_regression = False
+        protected_gate_crossing = False
+        if selection_target or protected:
+            if baseline is None:
+                consistent_goal_metadata = False
+            else:
+                baseline = float(baseline)
+                predicted = float(baseline + aggregate_correction)
+                improvement = float(abs(baseline) - abs(predicted))
+                finite_aggregate_dwr = bool(
+                    finite_aggregate_dwr
+                    and np.isfinite(baseline)
+                    and np.isfinite(predicted)
+                    and np.isfinite(improvement)
+                )
+                if selection_target:
+                    target_net_improvement += (
+                        selection_weight * improvement
+                    )
+                    target_regression = improvement < -slack
+                    target_gate_crossing = bool(
+                        abs(baseline) <= 1.0 + slack
+                        and abs(predicted) > 1.0 + slack
+                    )
+                    target_regression_count += int(target_regression)
+                    target_gate_crossing_count += int(
+                        target_gate_crossing
+                    )
+                if protected:
+                    protected_regression = bool(
+                        abs(predicted) > abs(baseline) + slack
+                    )
+                    protected_gate_crossing = bool(
+                        abs(baseline) <= 1.0 + slack
+                        and abs(predicted) > 1.0 + slack
+                    )
+                    protected_regression_count += int(
+                        protected_regression
+                    )
+                    protected_gate_crossing_count += int(
+                        protected_gate_crossing
+                    )
+        goal_aggregates[label] = MappingProxyType(
+            {
+                "component": reference["component"],
+                "selection_target": selection_target,
+                "protected": protected,
+                "selection_weight": selection_weight,
+                "baseline_normalized_signed_error": baseline,
+                "aggregate_normalized_signed_correction": (
+                    aggregate_correction
+                ),
+                "predicted_normalized_signed_error": predicted,
+                "normalized_absolute_error_improvement": improvement,
+                "target_regression": target_regression,
+                "target_gate_crossing": target_gate_crossing,
+                "protected_regression": protected_regression,
+                "protected_gate_crossing": protected_gate_crossing,
+                "selected_orbit_normalized_signed_corrections": (
+                    MappingProxyType(
+                        dict(zip(selected_orbit_ids, corrections, strict=True))
+                    )
+                ),
+            }
+        )
+
+    checks = MappingProxyType(
+        {
+            "selected_representatives_are_unique_and_known": (
+                bool(selected_representatives)
+                and len(selected_representatives)
+                == len(set(selected_representatives))
+                and not unknown
+            ),
+            "selected_set_contains_every_seed": (
+                set(seed_representatives).issubset(
+                    selected_representatives
+                )
+            ),
+            "seed_orbit_ids_match_physical_layout": (
+                len(seed_orbit_ids_from_layout)
+                == len(seed_representatives)
+                and seed_orbit_ids_from_layout
+                == seed_selection.seed_orbit_ids
+            ),
+            "closure_added_set_is_exact": (
+                set(closure_added_representatives)
+                == expected_closure_added
+                and len(closure_added_representatives)
+                == len(set(closure_added_representatives))
+            ),
+            "closed_selection_contains_only_whole_periodic_orbits": (
+                selected_physical_entities
+                == tuple(closure.selected_physical_entity_ids)
+                and len(selected_physical_entities)
+                == len(set(selected_physical_entities))
+            ),
+            "seed_rank_span_is_complete": (
+                seed_selection.rank_span_complete is True
+                and recomputed_seed_rank
+                == seed_selection.target_matrix_rank
+            ),
+            "closed_target_rank_is_complete": (
+                closed_target_rank >= seed_selection.target_matrix_rank
+            ),
+            "closed_goal_reports_are_complete": (
+                complete_goal_reports
+                and len(goal_aggregates) == len(goal_labels)
+            ),
+            "closed_goal_metadata_is_consistent": (
+                consistent_goal_metadata
+            ),
+            "aggregate_signed_dwr_is_finite": finite_aggregate_dwr,
+            "aggregate_target_improvement_is_positive": (
+                target_net_improvement > 0.0
+            ),
+            "aggregate_target_non_regression": (
+                target_regression_count == 0
+                and target_gate_crossing_count == 0
+            ),
+            "aggregate_protected_non_regression": (
+                protected_regression_count == 0
+                and protected_gate_crossing_count == 0
+            ),
+            "full3d_increment_recomputed_from_closed_whole_orbits": (
+                recomputed_full3d_increment
+                == closure.full3d_equivalent_increment
+            ),
+            "active_increment_recomputed_from_closed_whole_orbits": (
+                recomputed_active_increment == closure.active_row_increment
+            ),
+            "full3d_total_recomputed": (
+                recomputed_full3d_total
+                == closure.full3d_equivalent_dofs
+            ),
+            "full3d_limit_is_bound_and_respected": (
+                closure.full3d_dof_limit == limit
+                and recomputed_full3d_total <= limit
+            ),
+            "inactive_rows_not_allocated_by_audit": True,
+            "candidate_matrix_not_constructed_by_audit": True,
+        }
+    )
+    if not all(checks.values()):
+        failed = [name for name, passed in checks.items() if not passed]
+        raise RuntimeError(
+            "exact-sequence closed DWR selection audit failed: "
+            + ", ".join(failed)
+        )
+
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.exact-sequence-closed-channel-dwr-audit.v1"
+            ),
+            "status": "exact_sequence_closed_channel_dwr_audit_pass",
+            "pass": True,
+            "selected_orbit_ids": list(selected_orbit_ids),
+            "selected_representative_entity_ids": list(
+                selected_representatives
+            ),
+            "closure_added_orbit_ids": [
+                layout_by_representative[representative].orbit_id
+                for representative in closure_added_representatives
+            ],
+            "closure_added_representative_entity_ids": list(
+                closure_added_representatives
+            ),
+            "target_goal_labels": list(target_labels),
+            "target_matrix_rank": seed_selection.target_matrix_rank,
+            "recomputed_seed_target_rank": recomputed_seed_rank,
+            "closed_target_rank": closed_target_rank,
+            "rank_tolerance": rank_tolerance,
+            "regression_slack": slack,
+            "aggregate_target_net_absolute_error_improvement": (
+                target_net_improvement
+            ),
+            "target_regression_count": target_regression_count,
+            "target_gate_crossing_count": (
+                target_gate_crossing_count
+            ),
+            "protected_regression_count": protected_regression_count,
+            "protected_gate_crossing_count": (
+                protected_gate_crossing_count
+            ),
+            "goal_aggregates": MappingProxyType(goal_aggregates),
+            "full3d_base_dofs": closure.full3d_base_dofs,
+            "full3d_equivalent_increment": (
+                recomputed_full3d_increment
+            ),
+            "full3d_equivalent_dofs": recomputed_full3d_total,
+            "full3d_dof_limit": limit,
+            "full3d_headroom": limit - recomputed_full3d_total,
+            "ordinary_default_changed": False,
+            "checks": checks,
+        }
+    )
+
+
 @dataclass(frozen=True)
 class PhysicalDiscreteGradientAuthority:
     """Hash-bound exact-sequence rules on the same physical orbit catalog."""
@@ -1238,6 +1629,12 @@ def build_physical_channel_dwr_trace_row_plan(
         active_base_rows=active_base_rows,
         full3d_dof_limit=full3d_dof_limit,
     )
+    closed_selection_audit = audit_exact_sequence_closed_dwr_selection(
+        analysis=dwr_analysis,
+        seed_selection=seed_selection,
+        exact_sequence_numbering=closed,
+        full3d_dof_limit=full3d_dof_limit,
+    )
     owner_inputs = build_selected_p6_trace_orbit_owner_inputs(
         catalog,
         selected_physical_entity_ids=(
@@ -1276,6 +1673,25 @@ def build_physical_channel_dwr_trace_row_plan(
             "DWR_seeds_are_whole_physical_orbits": True,
             "exact_sequence_closure_pass": (
                 closed.audit.get("pass") is True
+            ),
+            "exact_sequence_closed_DWR_audit_pass": (
+                closed_selection_audit.get("pass") is True
+            ),
+            "closed_selection_rank_span_complete": (
+                closed_selection_audit["checks"][
+                    "closed_target_rank_is_complete"
+                ]
+                is True
+            ),
+            "closed_selection_target_and_protected_non_regression": (
+                closed_selection_audit["checks"][
+                    "aggregate_target_non_regression"
+                ]
+                is True
+                and closed_selection_audit["checks"][
+                    "aggregate_protected_non_regression"
+                ]
+                is True
             ),
             "full3d_budget_pass": (
                 closed.closure.full3d_equivalent_dofs
@@ -1343,6 +1759,7 @@ def build_physical_channel_dwr_trace_row_plan(
             ),
             "full3d_dof_limit": full3d_dof_limit,
             "full3d_headroom": closed.closure.full3d_headroom,
+            "closed_selection_dwr_audit": closed_selection_audit,
             "active_base_rows": active_base_rows,
             "selected_missing_rows": row_plan.quotient_active_increment,
             "active_rows": row_plan.active_rows,
@@ -1371,6 +1788,15 @@ def physical_channel_dwr_trace_row_plan_record(
     result: PhysicalChannelDWRTraceRowPlan,
 ) -> dict[str, Any]:
     """Return a compact JSON/checker input without solution vectors."""
+
+    def plain(value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {str(key): plain(item) for key, item in value.items()}
+        if isinstance(value, (tuple, list)):
+            return [plain(item) for item in value]
+        if isinstance(value, np.generic):
+            return value.item()
+        return value
 
     dwr = result.dwr_analysis
     physical_orbit_by_id = {
@@ -1454,6 +1880,23 @@ def physical_channel_dwr_trace_row_plan_record(
                 "protected_gate_crossing_count": (
                     orbit.protected_gate_crossing_count
                 ),
+                "goals": {
+                    label: {
+                        "component": report["component"],
+                        "normalized_signed_correction": report[
+                            "normalized_signed_correction"
+                        ],
+                        "selection_target": report[
+                            "selection_target"
+                        ],
+                        "selection_weight": report["selection_weight"],
+                        "protected": report["protected"],
+                        "baseline_normalized_signed_error": report[
+                            "baseline_normalized_signed_error"
+                        ],
+                    }
+                    for label, report in orbit.goals.items()
+                },
             }
             for orbit in dwr.algebraic.ranked_orbits
         ],
@@ -1464,6 +1907,10 @@ def physical_channel_dwr_trace_row_plan_record(
             "target_matrix_rank": (
                 result.seed_selection.target_matrix_rank
             ),
+            "target_goal_labels": list(
+                result.seed_selection.target_goal_labels
+            ),
+            "rank_tolerance": result.seed_selection.rank_tolerance,
             "rank_span_complete": (
                 result.seed_selection.rank_span_complete
             ),
@@ -1496,6 +1943,9 @@ def physical_channel_dwr_trace_row_plan_record(
             ),
             "full3d_dof_limit": result.row_plan.full3d_dof_limit,
         },
+        "closed_selection_dwr_audit": plain(
+            result.audit["closed_selection_dwr_audit"]
+        ),
         "row_plan": {
             "mpi_size": result.row_plan.mpi_size,
             "active_base_rows": result.row_plan.active_base_rows,
@@ -1536,6 +1986,22 @@ def check_physical_channel_dwr_trace_row_plan_record(
         checks[name] = value
         if not value:
             failures.append(name)
+
+    def same_optional_float(left: Any, right: Any) -> bool:
+        if left is None or right is None:
+            return left is None and right is None
+        left_value = float(left)
+        right_value = float(right)
+        return bool(
+            np.isfinite(left_value)
+            and np.isfinite(right_value)
+            and np.isclose(
+                left_value,
+                right_value,
+                rtol=2.0e-13,
+                atol=2.0e-15,
+            )
+        )
 
     try:
         check(
@@ -1599,6 +2065,7 @@ def check_physical_channel_dwr_trace_row_plan_record(
 
         ranked = tuple(record["ranked_orbits"])
         orbit_by_representative: dict[int, Mapping[str, Any]] = {}
+        orbit_by_id: dict[str, Mapping[str, Any]] = {}
         orbit_ids: set[str] = set()
         complement_indices: set[int] = set()
         ranked_valid = True
@@ -1623,6 +2090,7 @@ def check_physical_channel_dwr_trace_row_plan_record(
             orbit_ids.add(orbit_id)
             complement_indices.update(indices)
             orbit_by_representative[representative] = orbit
+            orbit_by_id[orbit_id] = orbit
         check(
             "ranked_whole_orbits_are_unique_and_nonoverlapping",
             ranked_valid,
@@ -1648,6 +2116,19 @@ def check_physical_channel_dwr_trace_row_plan_record(
                 for representative in seed_representatives
             )
             and all(orbit_id in orbit_ids for orbit_id in seed_orbit_ids),
+        )
+        check(
+            "seed_orbit_ids_match_representatives",
+            len(seed_representatives) == len(seed_orbit_ids)
+            and all(
+                str(orbit_by_representative[representative]["orbit_id"])
+                == orbit_id
+                for representative, orbit_id in zip(
+                    seed_representatives,
+                    seed_orbit_ids,
+                    strict=True,
+                )
+            ),
         )
         check(
             "seed_count_respects_bound",
@@ -1676,6 +2157,309 @@ def check_physical_channel_dwr_trace_row_plan_record(
             orbit_by_representative[representative]
             for representative in sorted(selected_representatives)
         ]
+        selected_orbit_ids = tuple(
+            str(orbit["orbit_id"]) for orbit in selected_orbits
+        )
+        closed_audit = record["closed_selection_dwr_audit"]
+        closure_added_representatives = tuple(
+            map(
+                int,
+                exact["closure_added_representative_entity_ids"],
+            )
+        )
+        expected_closure_added = (
+            set(selected_representatives) - set(seed_representatives)
+        )
+        check(
+            "closed_selection_audit_binds_complete_selected_orbits",
+            closed_audit.get("pass") is True
+            and tuple(map(str, closed_audit["selected_orbit_ids"]))
+            == selected_orbit_ids
+            and tuple(
+                map(
+                    int,
+                    closed_audit[
+                        "selected_representative_entity_ids"
+                    ],
+                )
+            )
+            == tuple(sorted(selected_representatives))
+            and set(closure_added_representatives)
+            == expected_closure_added
+            and len(closure_added_representatives)
+            == len(set(closure_added_representatives))
+            and set(
+                map(
+                    int,
+                    closed_audit[
+                        "closure_added_representative_entity_ids"
+                    ],
+                )
+            )
+            == expected_closure_added
+            and set(map(str, closed_audit["closure_added_orbit_ids"]))
+            == {
+                str(orbit_by_representative[representative]["orbit_id"])
+                for representative in expected_closure_added
+            },
+        )
+
+        target_goal_labels = tuple(
+            map(str, seeds["target_goal_labels"])
+        )
+        check(
+            "target_goal_labels_are_nonempty_known_and_unique",
+            bool(target_goal_labels)
+            and len(target_goal_labels) == len(set(target_goal_labels))
+            and set(target_goal_labels).issubset(goals),
+        )
+        rank_tolerance = float(seeds["rank_tolerance"])
+        target_rank = int(seeds["target_matrix_rank"])
+        seed_matrix = np.asarray(
+            [
+                [
+                    float(
+                        orbit_by_id[orbit_id]["goals"][label][
+                            "normalized_signed_correction"
+                        ]
+                    )
+                    for orbit_id in seed_orbit_ids
+                ]
+                for label in target_goal_labels
+            ],
+            dtype=np.float64,
+        )
+        closed_matrix = np.asarray(
+            [
+                [
+                    float(
+                        orbit_by_id[orbit_id]["goals"][label][
+                            "normalized_signed_correction"
+                        ]
+                    )
+                    for orbit_id in selected_orbit_ids
+                ]
+                for label in target_goal_labels
+            ],
+            dtype=np.float64,
+        )
+        recomputed_seed_rank = int(
+            np.count_nonzero(
+                np.linalg.svd(seed_matrix, compute_uv=False)
+                > rank_tolerance
+            )
+        )
+        recomputed_closed_rank = int(
+            np.count_nonzero(
+                np.linalg.svd(closed_matrix, compute_uv=False)
+                > rank_tolerance
+            )
+        )
+        check(
+            "closed_selection_rank_recomputed",
+            seeds.get("rank_span_complete") is True
+            and recomputed_seed_rank == target_rank
+            and recomputed_closed_rank >= target_rank
+            and tuple(
+                map(str, closed_audit["target_goal_labels"])
+            )
+            == target_goal_labels
+            and int(closed_audit["target_matrix_rank"])
+            == target_rank
+            and int(closed_audit["recomputed_seed_target_rank"])
+            == recomputed_seed_rank
+            and int(closed_audit["closed_target_rank"])
+            == recomputed_closed_rank
+            and same_optional_float(
+                closed_audit["rank_tolerance"],
+                rank_tolerance,
+            ),
+        )
+
+        regression_slack = float(closed_audit["regression_slack"])
+        stored_goal_aggregates = closed_audit["goal_aggregates"]
+        aggregate_reports_valid = bool(
+            np.isfinite(regression_slack)
+            and regression_slack >= 0.0
+            and set(stored_goal_aggregates) == set(goals)
+        )
+        recomputed_target_net_improvement = 0.0
+        recomputed_target_regressions = 0
+        recomputed_target_crossings = 0
+        recomputed_protected_regressions = 0
+        recomputed_protected_crossings = 0
+        for label in goals:
+            raw_reports = [
+                orbit["goals"][label] for orbit in selected_orbits
+            ]
+            raw_reference = raw_reports[0]
+            stored = stored_goal_aggregates[label]
+            selection_target = bool(
+                raw_reference["selection_target"]
+            )
+            protected = bool(raw_reference["protected"])
+            selection_weight = float(
+                raw_reference["selection_weight"]
+            )
+            baseline = raw_reference[
+                "baseline_normalized_signed_error"
+            ]
+            raw_metadata_consistent = all(
+                report["component"] == raw_reference["component"]
+                and bool(report["selection_target"])
+                == selection_target
+                and bool(report["protected"]) == protected
+                and float(report["selection_weight"])
+                == selection_weight
+                and report["baseline_normalized_signed_error"]
+                == baseline
+                for report in raw_reports
+            )
+            corrections = {
+                orbit_id: float(
+                    orbit_by_id[orbit_id]["goals"][label][
+                        "normalized_signed_correction"
+                    ]
+                )
+                for orbit_id in selected_orbit_ids
+            }
+            aggregate_correction = float(
+                math.fsum(corrections.values())
+            )
+            predicted: float | None = None
+            improvement: float | None = None
+            target_regression = False
+            target_crossing = False
+            protected_regression = False
+            protected_crossing = False
+            if selection_target or protected:
+                if baseline is None:
+                    raw_metadata_consistent = False
+                else:
+                    baseline = float(baseline)
+                    predicted = float(baseline + aggregate_correction)
+                    improvement = float(
+                        abs(baseline) - abs(predicted)
+                    )
+                    if selection_target:
+                        recomputed_target_net_improvement += (
+                            selection_weight * improvement
+                        )
+                        target_regression = bool(
+                            improvement < -regression_slack
+                        )
+                        target_crossing = bool(
+                            abs(baseline) <= 1.0 + regression_slack
+                            and abs(predicted)
+                            > 1.0 + regression_slack
+                        )
+                        recomputed_target_regressions += int(
+                            target_regression
+                        )
+                        recomputed_target_crossings += int(
+                            target_crossing
+                        )
+                    if protected:
+                        protected_regression = bool(
+                            abs(predicted)
+                            > abs(baseline) + regression_slack
+                        )
+                        protected_crossing = bool(
+                            abs(baseline) <= 1.0 + regression_slack
+                            and abs(predicted)
+                            > 1.0 + regression_slack
+                        )
+                        recomputed_protected_regressions += int(
+                            protected_regression
+                        )
+                        recomputed_protected_crossings += int(
+                            protected_crossing
+                        )
+            stored_corrections = stored[
+                "selected_orbit_normalized_signed_corrections"
+            ]
+            corrections_match = bool(
+                set(stored_corrections) == set(corrections)
+                and all(
+                    same_optional_float(
+                        stored_corrections[orbit_id],
+                        value,
+                    )
+                    for orbit_id, value in corrections.items()
+                )
+            )
+            aggregate_reports_valid = bool(
+                aggregate_reports_valid
+                and raw_metadata_consistent
+                and stored["component"] == raw_reference["component"]
+                and bool(stored["selection_target"])
+                == selection_target
+                and bool(stored["protected"]) == protected
+                and same_optional_float(
+                    stored["selection_weight"],
+                    selection_weight,
+                )
+                and same_optional_float(
+                    stored["baseline_normalized_signed_error"],
+                    baseline,
+                )
+                and same_optional_float(
+                    stored[
+                        "aggregate_normalized_signed_correction"
+                    ],
+                    aggregate_correction,
+                )
+                and same_optional_float(
+                    stored["predicted_normalized_signed_error"],
+                    predicted,
+                )
+                and same_optional_float(
+                    stored[
+                        "normalized_absolute_error_improvement"
+                    ],
+                    improvement,
+                )
+                and bool(stored["target_regression"])
+                == target_regression
+                and bool(stored["target_gate_crossing"])
+                == target_crossing
+                and bool(stored["protected_regression"])
+                == protected_regression
+                and bool(stored["protected_gate_crossing"])
+                == protected_crossing
+                and corrections_match
+            )
+        check(
+            "closed_selection_goal_aggregates_recomputed",
+            aggregate_reports_valid
+            and same_optional_float(
+                closed_audit[
+                    "aggregate_target_net_absolute_error_improvement"
+                ],
+                recomputed_target_net_improvement,
+            ),
+        )
+        check(
+            "closed_selection_non_regression_recomputed",
+            recomputed_target_net_improvement > 0.0
+            and recomputed_target_regressions == 0
+            and recomputed_target_crossings == 0
+            and recomputed_protected_regressions == 0
+            and recomputed_protected_crossings == 0
+            and int(closed_audit["target_regression_count"]) == 0
+            and int(closed_audit["target_gate_crossing_count"]) == 0
+            and int(closed_audit["protected_regression_count"]) == 0
+            and int(closed_audit["protected_gate_crossing_count"])
+            == 0,
+        )
+        check(
+            "closed_selection_claimed_checks_are_all_true",
+            bool(closed_audit["checks"])
+            and all(
+                value is True
+                for value in closed_audit["checks"].values()
+            ),
+        )
         recomputed_full3d_increment = sum(
             int(orbit["missing_mode_count"])
             * len(orbit["member_entity_ids"])
@@ -1702,7 +2486,18 @@ def check_physical_channel_dwr_trace_row_plan_record(
             == int(exact["full3d_base_dofs"])
             + recomputed_full3d_increment
             and int(exact["full3d_equivalent_dofs"])
-            <= int(exact["full3d_dof_limit"]),
+            <= int(exact["full3d_dof_limit"])
+            and int(closed_audit["full3d_base_dofs"])
+            == int(exact["full3d_base_dofs"])
+            and int(closed_audit["full3d_equivalent_increment"])
+            == recomputed_full3d_increment
+            and int(closed_audit["full3d_equivalent_dofs"])
+            == int(exact["full3d_equivalent_dofs"])
+            and int(closed_audit["full3d_dof_limit"])
+            == int(exact["full3d_dof_limit"])
+            and int(closed_audit["full3d_headroom"])
+            == int(exact["full3d_dof_limit"])
+            - int(exact["full3d_equivalent_dofs"]),
         )
         check(
             "active_rows_recompute",
@@ -1851,6 +2646,7 @@ __all__ = [
     "PhysicalMissingTraceDWRLayout",
     "PhysicalMissingTraceDWROrbit",
     "RankRevealingDWRSeedSelection",
+    "audit_exact_sequence_closed_dwr_selection",
     "build_physical_channel_dwr_trace_row_plan",
     "build_physical_missing_trace_dwr_layout",
     "check_physical_channel_dwr_trace_row_plan_record",

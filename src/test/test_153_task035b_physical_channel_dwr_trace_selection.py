@@ -38,6 +38,7 @@ from src.adaptivity.physical_channel_dwr_trace_selection import (
 )
 from src.adaptivity.selective_p6_trace_exact_sequence import (
     DiscreteGradientOrbitRule,
+    ExactSequenceTraceBudgetExceeded,
 )
 from src.common.config_3d import SimulationConfig3D
 from src.constraints.floquet_3d import build_double_floquet_mpc
@@ -127,6 +128,7 @@ def _focus_goals(
     high_dimension: int,
     low_dimension: int,
     target_indices: tuple[int, ...],
+    protected_index: int | None = None,
 ) -> tuple[ChannelGoal, ...]:
     specifications = (
         ("T_m-4_n0_s_power", "real_power"),
@@ -166,6 +168,8 @@ def _focus_goals(
         high_dimension,
         dtype=np.complex128,
     )
+    if protected_index is not None:
+        protected_gradient[int(protected_index)] = 1.0
     goals.append(
         ChannelGoal(
             label="T_m-2_n0_s_power",
@@ -186,20 +190,15 @@ def _focus_goals(
     return tuple(goals)
 
 
-def _analytic_dwr(physical_dwr_fixture):
+def _evaluate_analytic_dwr(
+    physical_dwr_fixture,
+    *,
+    target_indices: tuple[int, ...],
+    residual: np.ndarray,
+    protected_index: int | None = None,
+):
     fixture = physical_dwr_fixture
     layout = fixture.layout
-    target_orbit = next(
-        orbit
-        for orbit in layout.orbits
-        if orbit.entity_kind == "face"
-        and len(orbit.member_entity_ids) > 1
-    )
-    target_indices = target_orbit.complement_indices[:9]
-    residual = np.zeros(layout.high_dimension, dtype=np.complex128)
-    for index, component_index in enumerate(target_indices):
-        residual[component_index] = -0.2j if index % 3 == 2 else -0.2
-
     identity = np.eye(layout.high_dimension, dtype=np.complex128)
     operator = ComplementSchurOperator(
         low_dimension=1,
@@ -247,7 +246,29 @@ def _analytic_dwr(physical_dwr_fixture):
             high_dimension=layout.high_dimension,
             low_dimension=1,
             target_indices=target_indices,
+            protected_index=protected_index,
         ),
+    )
+    return dwr
+
+
+def _analytic_dwr(physical_dwr_fixture):
+    fixture = physical_dwr_fixture
+    layout = fixture.layout
+    target_orbit = next(
+        orbit
+        for orbit in layout.orbits
+        if orbit.entity_kind == "face"
+        and len(orbit.member_entity_ids) > 1
+    )
+    target_indices = target_orbit.complement_indices[:9]
+    residual = np.zeros(layout.high_dimension, dtype=np.complex128)
+    for index, component_index in enumerate(target_indices):
+        residual[component_index] = -0.2j if index % 3 == 2 else -0.2
+    dwr = _evaluate_analytic_dwr(
+        fixture,
+        target_indices=target_indices,
+        residual=residual,
     )
     return target_orbit, dwr
 
@@ -299,6 +320,35 @@ def _gradient_authority(physical_dwr_fixture):
         actual_discrete_gradient_coefficients=False,
         actual_periodic_floquet_pullback=False,
     )
+
+
+def _gradient_authority_with_dependency(
+    physical_dwr_fixture,
+    *,
+    anchor_representative: int,
+    required_representative: int,
+) -> PhysicalDiscreteGradientAuthority:
+    authority = _gradient_authority(physical_dwr_fixture)
+    rules = tuple(
+        replace(
+            rule,
+            required_trace_representative_ids=(
+                rule.anchor_trace_representative_id,
+                required_representative,
+            ),
+            gradient_map_sha256=_digest(
+                "fixture-gradient-with-closure-"
+                f"{anchor_representative}-{required_representative}"
+            ),
+        )
+        if (
+            rule.anchor_trace_representative_id
+            == anchor_representative
+        )
+        else rule
+        for rule in authority.rules
+    )
+    return replace(authority, rules=rules)
 
 
 def test_physical_layout_binds_actual_piola_riesz_floquet_orbits(
@@ -535,6 +585,262 @@ def test_fixture_dwr_to_exact_sequence_owner_row_plan_has_no_inactive_rows(
     assert "selection_sha256_recomputed" in (
         tampered_hash_check["failures"]
     )
+    tampered_seed_identity = json.loads(json.dumps(record))
+    alternate_orbit_id = next(
+        orbit["orbit_id"]
+        for orbit in tampered_seed_identity["ranked_orbits"]
+        if orbit["orbit_id"]
+        != tampered_seed_identity["seed_selection"]["seed_orbit_ids"][0]
+    )
+    tampered_seed_identity["seed_selection"]["seed_orbit_ids"][0] = (
+        alternate_orbit_id
+    )
+    tampered_seed_check = check_physical_channel_dwr_trace_row_plan_record(
+        tampered_seed_identity
+    )
+    assert tampered_seed_check["pass"] is False
+    assert "seed_orbit_ids_match_representatives" in (
+        tampered_seed_check["failures"]
+    )
+    tampered_closed_audit = json.loads(json.dumps(record))
+    first_goal = next(
+        iter(
+            tampered_closed_audit[
+                "closed_selection_dwr_audit"
+            ]["goal_aggregates"]
+        )
+    )
+    tampered_closed_audit["closed_selection_dwr_audit"][
+        "goal_aggregates"
+    ][first_goal]["aggregate_normalized_signed_correction"] += 0.1
+    tampered_closed_check = (
+        check_physical_channel_dwr_trace_row_plan_record(
+            tampered_closed_audit
+        )
+    )
+    assert tampered_closed_check["pass"] is False
+    assert "closed_selection_goal_aggregates_recomputed" in (
+        tampered_closed_check["failures"]
+    )
+
+
+def test_exact_sequence_closure_reaudits_the_complete_whole_orbit_set(
+    physical_dwr_fixture,
+) -> None:
+    fixture = physical_dwr_fixture
+    target_orbit, dwr = _analytic_dwr(fixture)
+    closure_orbit = next(
+        orbit
+        for orbit in fixture.layout.orbits
+        if orbit.representative_entity_id
+        != target_orbit.representative_entity_id
+    )
+    seeds = select_rank_revealing_dwr_seed_orbits(
+        dwr,
+        maximum_seed_orbits=2,
+    )
+    result = build_physical_channel_dwr_trace_row_plan(
+        catalog=fixture.catalog,
+        dwr_analysis=dwr,
+        seed_selection=seeds,
+        discrete_gradient=_gradient_authority_with_dependency(
+            fixture,
+            anchor_representative=(
+                target_orbit.representative_entity_id
+            ),
+            required_representative=(
+                closure_orbit.representative_entity_id
+            ),
+        ),
+        full3d_base_dofs=82_315,
+        full3d_dof_limit=90_000,
+    )
+
+    closed_audit = result.audit["closed_selection_dwr_audit"]
+    assert closed_audit["pass"] is True
+    assert closed_audit["closure_added_orbit_ids"] == [
+        closure_orbit.orbit_id
+    ]
+    assert set(closed_audit["selected_orbit_ids"]) == {
+        target_orbit.orbit_id,
+        closure_orbit.orbit_id,
+    }
+    assert all(closed_audit["checks"].values())
+    selected_physical_entities = {
+        member
+        for orbit in (target_orbit, closure_orbit)
+        for member in orbit.member_entity_ids
+    }
+    assert set(
+        result.exact_sequence_numbering.closure
+        .selected_physical_entity_ids
+    ) == selected_physical_entities
+    selected_descriptors = {
+        descriptor.representative_entity_id
+        for descriptor in result.row_plan.selected_row_descriptors
+    }
+    assert selected_descriptors == {
+        target_orbit.representative_entity_id,
+        closure_orbit.representative_entity_id,
+    }
+
+
+def test_closure_added_protected_regression_fails_before_owner_rows(
+    physical_dwr_fixture,
+    monkeypatch,
+) -> None:
+    fixture = physical_dwr_fixture
+    target_orbit = next(
+        orbit
+        for orbit in fixture.layout.orbits
+        if orbit.entity_kind == "face"
+        and len(orbit.member_entity_ids) > 1
+    )
+    closure_orbit = next(
+        orbit
+        for orbit in fixture.layout.orbits
+        if orbit.representative_entity_id
+        != target_orbit.representative_entity_id
+    )
+    target_indices = target_orbit.complement_indices[:9]
+    residual = np.zeros(
+        fixture.layout.high_dimension,
+        dtype=np.complex128,
+    )
+    for index, component_index in enumerate(target_indices):
+        residual[component_index] = -0.2j if index % 3 == 2 else -0.2
+    protected_index = closure_orbit.complement_indices[0]
+    residual[protected_index] = 0.4
+    dwr = _evaluate_analytic_dwr(
+        fixture,
+        target_indices=target_indices,
+        residual=residual,
+        protected_index=protected_index,
+    )
+    seeds = select_rank_revealing_dwr_seed_orbits(
+        dwr,
+        maximum_seed_orbits=2,
+    )
+    assert seeds.seed_orbit_ids == (target_orbit.orbit_id,)
+
+    def _owner_rows_must_not_be_built(*_args, **_kwargs):
+        raise AssertionError(
+            "owner row allocation ran before closed DWR audit"
+        )
+
+    monkeypatch.setattr(
+        "src.adaptivity.physical_channel_dwr_trace_selection."
+        "build_selected_p6_trace_orbit_owner_inputs",
+        _owner_rows_must_not_be_built,
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="aggregate_protected_non_regression",
+    ):
+        build_physical_channel_dwr_trace_row_plan(
+            catalog=fixture.catalog,
+            dwr_analysis=dwr,
+            seed_selection=seeds,
+            discrete_gradient=_gradient_authority_with_dependency(
+                fixture,
+                anchor_representative=(
+                    target_orbit.representative_entity_id
+                ),
+                required_representative=(
+                    closure_orbit.representative_entity_id
+                ),
+            ),
+            full3d_base_dofs=82_315,
+            full3d_dof_limit=90_000,
+        )
+
+
+def test_exact_sequence_closure_budget_overflow_fails_closed(
+    physical_dwr_fixture,
+) -> None:
+    fixture = physical_dwr_fixture
+    target_orbit, dwr = _analytic_dwr(fixture)
+    closure_orbit = next(
+        orbit
+        for orbit in fixture.layout.orbits
+        if orbit.representative_entity_id
+        != target_orbit.representative_entity_id
+    )
+    seeds = select_rank_revealing_dwr_seed_orbits(
+        dwr,
+        maximum_seed_orbits=2,
+    )
+    base_dofs = 1_000
+    seed_cost = len(target_orbit.complement_indices) * len(
+        target_orbit.member_entity_ids
+    )
+    with pytest.raises(ExactSequenceTraceBudgetExceeded):
+        build_physical_channel_dwr_trace_row_plan(
+            catalog=fixture.catalog,
+            dwr_analysis=dwr,
+            seed_selection=seeds,
+            discrete_gradient=_gradient_authority_with_dependency(
+                fixture,
+                anchor_representative=(
+                    target_orbit.representative_entity_id
+                ),
+                required_representative=(
+                    closure_orbit.representative_entity_id
+                ),
+            ),
+            full3d_base_dofs=base_dofs,
+            full3d_dof_limit=base_dofs + seed_cost,
+        )
+
+
+def test_incomplete_rrqr_target_rank_fails_closed(
+    physical_dwr_fixture,
+) -> None:
+    fixture = physical_dwr_fixture
+    target_orbits = tuple(
+        orbit
+        for orbit in fixture.layout.orbits
+        if orbit.entity_kind == "face"
+    )[:2]
+    assert len(target_orbits) == 2
+    target_indices = tuple(
+        (
+            target_orbits[0].complement_indices[index]
+            if index < 5
+            else target_orbits[1].complement_indices[index - 5]
+        )
+        for index in range(9)
+    )
+    residual = np.zeros(
+        fixture.layout.high_dimension,
+        dtype=np.complex128,
+    )
+    for index, component_index in enumerate(target_indices):
+        residual[component_index] = -0.2j if index % 3 == 2 else -0.2
+    dwr = _evaluate_analytic_dwr(
+        fixture,
+        target_indices=target_indices,
+        residual=residual,
+    )
+    seeds = select_rank_revealing_dwr_seed_orbits(
+        dwr,
+        maximum_seed_orbits=1,
+    )
+    assert seeds.target_matrix_rank == 2
+    assert seeds.rank_span_complete is False
+
+    with pytest.raises(
+        RuntimeError,
+        match="seed_rank_span_is_complete",
+    ):
+        build_physical_channel_dwr_trace_row_plan(
+            catalog=fixture.catalog,
+            dwr_analysis=dwr,
+            seed_selection=seeds,
+            discrete_gradient=_gradient_authority(fixture),
+            full3d_base_dofs=82_315,
+            full3d_dof_limit=90_000,
+        )
 
 
 def test_actual_pde_provenance_and_focus_goal_contract_fail_closed(
