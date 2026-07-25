@@ -155,6 +155,99 @@ class PhysicalSlabTwoLevelTests(unittest.TestCase):
             )
         matrix.destroy()
 
+    def test_complex_two_level_action_matches_exact_dense_formula(self) -> None:
+        """Protect the single Galerkin correction and complex-adjoint algebra."""
+
+        size = 6
+        values = np.diag(
+            2.5 + 0.2j * np.arange(1, size + 1)
+        ).astype(np.complex128)
+        values += np.diag(
+            np.asarray(
+                [-0.4 + 0.1j, 0.2 - 0.3j, -0.1j, 0.35, -0.25 + 0.05j],
+                dtype=np.complex128,
+            ),
+            1,
+        )
+        values += np.diag(
+            np.asarray(
+                [0.1 - 0.2j, -0.15, 0.3 + 0.1j, -0.2j, 0.4 - 0.1j],
+                dtype=np.complex128,
+            ),
+            -1,
+        )
+        dense_basis = np.asarray(
+            [
+                [1.0, 0.2j],
+                [0.3 + 0.1j, -0.4],
+                [-0.2j, 0.6 + 0.1j],
+                [0.5, -0.3j],
+                [-0.25 + 0.2j, 0.45],
+                [0.1j, -0.2 + 0.3j],
+            ],
+            dtype=np.complex128,
+        )
+        source_values = np.asarray(
+            [
+                0.4 + 0.1j,
+                -0.2 + 0.7j,
+                0.8 - 0.3j,
+                -0.5 - 0.2j,
+                0.3 + 0.6j,
+                -0.1 + 0.4j,
+            ],
+            dtype=np.complex128,
+        )
+
+        matrix = _distributed_matrix(values)
+        start, end = matrix.getOwnershipRange()
+        owned = np.arange(start, end, dtype=PETSc.IntType)
+        basis = tuple(
+            SparseCoarseVector(
+                indices=owned.copy(),
+                values=np.asarray(
+                    dense_basis[start:end, column],
+                    dtype=PETSc.ScalarType,
+                ),
+                slab=column,
+                eigenvalue=float("nan"),
+                eigenpair_residual=0.0,
+            )
+            for column in range(dense_basis.shape[1])
+        )
+        two_level = SparseGalerkinTwoLevelPc(
+            matrix,
+            _IdentitySmoother(),
+            basis,
+            post_smooth=True,
+        )
+        source = matrix.createVecRight()
+        actual = matrix.createVecLeft()
+        source.getArray()[:] = source_values[start:end]
+        try:
+            two_level.apply(None, source, actual)
+
+            pre_smoothed = source_values.copy()
+            residual = source_values - values @ pre_smoothed
+            coarse = dense_basis.conj().T @ values @ dense_basis
+            coefficients = np.linalg.solve(
+                coarse,
+                dense_basis.conj().T @ residual,
+            )
+            corrected = pre_smoothed + dense_basis @ coefficients
+            expected = corrected + (source_values - values @ corrected)
+            np.testing.assert_allclose(
+                actual.getArray(readonly=True),
+                expected[start:end],
+                rtol=5.0e-13,
+                atol=5.0e-13,
+            )
+        finally:
+            actual.destroy()
+            source.destroy()
+            two_level.destroy()
+            matrix.destroy()
+
     def test_two_step_inner_gmres_matches_explicit_small_reference(self) -> None:
         matrix, subdomains, source, source_values, diagonal = self._two_step_fixture()
         sm1 = DistributedPhysicalSlabSmoother(
