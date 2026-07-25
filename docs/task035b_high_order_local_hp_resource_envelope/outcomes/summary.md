@@ -15,18 +15,25 @@ master_merge = not_authorized
 Task035b 完成了同网格 p4/p5/p6 资格化、entity DoF 分解、exact
 assembly-time cell condensation、MUMPS 生命周期与 exact preallocation
 优化、multi-goal DWR、252-cell physical smoothness signal、classifier v3、
-真实 regionwise physical row reduction 和 tetra h-vs-p 顺序竞争。
+真实 regionwise physical row reduction、tetra h-vs-p 顺序竞争，以及
+Review V2 要求的 cold/warm setup、MPI1/2/4/8 direct memory 和三条
+assembled iterative screen。
 
 工程主线取得明确正结果：消除完整高阶矩阵、inactive rows、重复 tensor、
 preallocation 浪费和 factor 生命周期后，rows、NNZ、factor、peak memory
 与时间全部下降。Review V1 又完成了 12 通道 reference v1、16 个独立
 Hermitian adjoint、mesh/topology、phase、trace 与 DtN/port 根因假设判别
-和最小方向性恢复。
+和最小方向性恢复；Review V2 进一步完成了 setup cache、direct rank
+memory ledger、assembled iterative negatives 与 selective-trace
+fixture/correctness wiring。
 
-科学主线仍没有完整 same-error positive candidate。预算内最强点已经推进到
-fixed p5-trace/p6-interior h13 的 89,740 DoF、10/12 power、10/12
-amplitude，但仍未满足 12/12 + 12/12。因此按合同未接入 Hybrid，也没有
-发布成功的 0.7 nm resource model v3。
+科学主线仍没有完整 same-error positive candidate。预算内最强点仍是
+fixed p5-trace/p6-interior h13 directional-z 的 89,740 DoF、10/12
+power、10/12 complex amplitude，但仍未满足 12/12 + 12/12。随后两个
+有界 z-node 判别点 h13 top2 redistribution 与 h14 exact-reverse 的实际
+结果分别只有 8/12 + 8/12 和 7/12 + 8/12；任何先验投影都没有被写成
+实测。因此按合同 Hybrid eligible 仍为 0，Full3D–Hybrid closure、M funnel
+和 0.7 nm / 2 TiB resource model v3 均未运行。
 
 ## 权威基线
 
@@ -63,6 +70,63 @@ tensor reuse 与 exact preallocation，而非放宽数值 Gate。
 
 ordinary default 始终未修改；这些均为 opt-in research path。
 
+### Review V2 setup-only authority
+
+下表的 `non-KSP build` 是与 KSP 区间互斥的总 build envelope；它不是
+outer wall time。其内部 Python/function-space/tensor/Aii/Schur/
+preallocation/insertion/DtN phase clocks 允许嵌套，不能相加或直接换算成
+互斥占比。`common solver`、MUMPS symbolic+numeric、backsolve、residual
+和 postprocess 另行计时。当前已获得完整 inclusive phase ledger，但
+Review V2 所要求的内部互斥 phase-share 仍为 `partial_not_authoritative`。
+cold 为 `read_write` 重建/写入，warm 为同一 identity 下的 `read_only`
+命中；两者都不是 accuracy candidate，也不能单独获得 12-channel 或
+Hybrid credit。
+
+| setup-only pair | DoF / rows | matrix/factor NNZ | non-KSP build cold/warm | common solver cold/warm | MUMPS setup cold/warm | peak cold/warm | true residual cold/warm |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| h15 canonical orientation | 74,890 / 16,880 | 9,196,772 / 26,555,200 | 19.242 / 6.141 s | 37.595 / 19.489 s | 5.939 / 6.164 s | 4.602 / 4.453 GiB | `8.10e-12` / `1.28e-11` |
+| h13 canonical orientation | 89,740 / 20,120 | 11,014,172 / 35,746,600 | 19.410 / 6.696 s | 45.568 / 26.899 s | 13.421 / 12.834 s | 5.030 / 5.016 GiB | `3.94e-12` / `5.51e-12` |
+
+h15 cold non-KSP build 相对 Review V2 的 61.61 s authority 为
+`3.2019x` 加速，达到至少 2x 和 25–30 s 优选目标；warm build 也低于
+10 s。h13 在只剩 260 DoF 预算余量的真实最佳 accuracy 网格上仍达到
+19.410/6.696 s，但 factor NNZ 相对 h15 增长 `1.346x`，MUMPS numeric
+成本并没有随 rows/NNZ 线性增长。warm cache 复用消除了 tensor、Aii 和
+local-Schur 重建，却不会消除每个新数值系统仍需执行的 MUMPS numeric
+factorization。
+
+权威记录分别为：
+
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json`
+
+### Review V2 direct memory rank study
+
+冻结 h15、74,890 Full3D-equivalent DoF、16,880 active rows 和
+9,195,812 used NNZ 后，cold direct MPI rank study 为：
+
+| MPI | process-tree RSS peak | rank PSS sum | rank USS sum | factor NNZ | common solver | MUMPS symbolic+numeric | true residual |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1.295 GiB | 1.257 GiB | 1.243 GiB | 26,854,000 | 76.007 s | 29.969 s | `5.12e-12` |
+| 2 | 2.158 GiB | 2.013 GiB | 1.918 GiB | 28,507,400 | 74.913 s | 19.437 s | `1.37e-11` |
+| 4 | 3.100 GiB | 2.723 GiB | 2.612 GiB | 26,575,000 | 61.849 s | 12.400 s | `4.96e-12` |
+| 8 | 4.711 GiB | 3.876 GiB | 3.758 GiB | 27,916,600 | 53.901 s | 6.527 s | `7.41e-12` |
+
+四点均无 swap，且 R/T 与 operator identity 闭合。MPI1 是本 rank study
+最低实测 direct process-tree RSS，MPI8 是最快 common-solver 点。历史
+5.8–6.4 GiB 因而不是该 condensed 系统的内存下限；但 1.295 GiB 也只是
+同一 source/cache/profile 下的最低实测 direct 点，不是理论下限，更不是
+accuracy-qualified factor-free floor。solve 后出现的 50 threads/rank 位于
+solver release 之后的 PyVista/VTK/TBB postprocess pool；MUMPS 阶段仍是
+预期的约 3 threads/rank。
+CPU affinity 与 MUMPS ordering 在这批 rank records 中未记录，因此 rank
+study 对这两项的资格化状态为 `partial_not_recorded`。
+
+权威记录为：
+
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_direct_mpi1_2_4_8_resource_floor_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_memory_floor_factor_inventory_ledger_v2.json`
+
 ## 规则几何压缩候选
 
 | candidate | DoF / rows | matrix/factor NNZ | peak | scalar/vector + field | significant power/amplitude | decision |
@@ -71,6 +135,8 @@ ordinary default 始终未修改；这些均为 opt-in research path。
 | fixed p5-trace/p6-interior h15 | 74,890 / 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | pass | 6/12；7/12 | controlled negative |
 | fixed h14 directional-z | 82,315 / 18,500 | 10,104,512 / 31,347,000 | 6.376 GiB | pass | 7/12；9/12 | positive z signal，仍 negative |
 | fixed h13 directional-z | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.411 GiB | pass | 10/12；10/12 | best budget-in，仍 negative |
+| h13 top2 z redistribution | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 5.886 GiB | pass | 8/12；8/12 | bounded z-node controlled negative |
+| h14 exact-reverse of h13 top2 | 82,315 / 18,500 | 10,104,512 / 32,338,600 | 5.958 GiB | pass | 7/12；8/12 | bounded reverse controlled negative；z-node lane closed |
 | fixed h15 x-only | 87,195 / 19,680 | 10,728,434 / 33,056,800 | 6.590 GiB | pass | 5/12；6/12 | controlled negative |
 | h14 R5-slab bisect | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.463 GiB | pass | 5/12；9/12 | count regression；预先指定 R5-slab lane closed |
 | global p6/h14 discriminator | 92,850 / 27,080 | 21,110,096 / 67,325,792 | 12.587 GiB pair | pass | 9/12；12/12 | diagnostic only；over cap 2,850 |
@@ -85,8 +151,19 @@ unused NNZ 从 3,498,879 降至 288,768、build 从 231.15 s 降至
 fixed-trace x control 与 global-p5 y mechanism control 均无有效恢复，后者
 不是 same-space y 排除；DtN q31 和 scaled evanescent-buffer 也无有效恢复，
 但没有覆盖 external funnel。global p6/h14 给出 full-trace measured positive
-marginal，但完整 trace 超预算，且尚无合法 physical selective-trace
-DWR/numbering 实现。所有点仍不得越过 diffraction-channel Gate。
+marginal，但完整 trace 超预算。h13 top2 与 h14 exact-reverse 是一次正向和
+一次反向的有界 z-node 判别，不是扫描；其实际通道计数分别回退到 8/8 和
+7/8，因此 z-node lane 已关闭。Review V2 后 physical selective-trace 已有
+actual storage expansion、exact-sequence/periodic owner plan、Stage-4
+recovery/residual wiring 和 owner-aware MatShell 的 fixture/correctness
+能力，但 actual h14 channel-DWR selection、formal MPI8 PDE 和 measured
+candidate count 仍全部为 0。所有点仍不得越过 diffraction-channel Gate。
+
+预算内最佳点与两个 bounded z-node negative 的权威记录为：
+
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json`
 
 p4-trace h10 是结构合格的精度负结果；p5-trace/p4-interior 的 curl
 nullity `112` 小于 expected gradient dimension `178`，缺 66 个 gradient
@@ -155,33 +232,74 @@ p6 physical-reduction 又未实现。既有 h50/h37.5 refined p5 已为
 heavy cases。它与 Review V1 的 structured-z Lane A 和 selective-trace
 Lane B 不是同一命名空间。
 
-## Review V1 channel recovery 与并行方向
+## Review V1/V2 channel recovery 与 selective capability
 
 | batch | evidence | result |
 |---|---|---|
 | significant channel reference v1 | 12 通道 power/amplitude/phase 与 p/h spread | frozen best-available same-code；production false |
 | channel adjoints | 6 power + 10 amplitude-component goals | 16/16 Hermitian pass；localization 仍是 proxy |
 | z directional Lane A | h15→h14→h13 | 6/7→7/9→10/10；明确正信号 |
+| bounded z-node discriminators | h13 top2；h14 exact-reverse | actual 8/8 与 7/8；不能用 projected count 替代实测；lane closed |
 | x/y controls | fixed-trace x-only 与 global-p5 y-only | 5/6 与 3/1；指定 controls 不支持继续，y 不是 same-space 排除 |
 | port/DtN | q31、unsafe unscaled buffer stop、scaled buffer1 | tested q31/scaled buffer 为负；external funnel 未运行 |
 | frozen R5 slab split | 只二分最大 R5 slab | 5/9，新增 `R(-7,0)` power regression；关闭预先指定 split lane，其他 node distributions 未运行 |
 | full trace discriminator | global p6/h14 | 9/12 power、12/12 amplitude；92,850 DoF over cap |
 | inverse trace/interior exchange | p6 trace + p5/p4 interior | 分别缺 101/149 gradient modes；PDE 未运行 |
-| physical selective trace | SHA-bound capability audit | physical Riesz/orbits/residual/DWR/numbering 不闭合；PDE 0 |
-| condensed iterative | SHA-bound capability audit | HYPRE 与专用 provenance/history/factor-free contract 缺失；PDE 0 |
+| physical selective trace | actual storage/exact-sequence/Stage-4/MatShell fixtures | correctness capability；actual h14 DWR/PDE/candidate count 仍为 0 |
+| condensed iterative | three formal assembled screens | 三条均为 residual controlled negative；无 official outputs |
 | inversion-aware selection | no frozen parameters/noise/instrument authority | not run；12 通道 Gate 保持 |
 
-physical trace stop 不表示“没有 trace 信号”；它表示当前不能把正信号安全转换
-为实际减少 rows 的 subset。迭代 stop 也不是 GMRES 数值失败：没有启动
-MPI8 PDE，更没有把 raw `petsc_extra_options` 当作合格迭代证据。
+physical trace 的 fixture/correctness capability 不表示已经把 trace 信号转换成
+正式 subset。当前实现已证明 inactive missing rows 不进入矩阵，并在
+serial/MPI2 小 fixture 上验证 actual expansion、periodic/Floquet pullback、
+generalized recovery/residual 和 MatShell action；但没有 frozen h14
+actual-channel DWR selection，也没有 formal MPI8 selective PDE、12-channel
+结果、DoF、NNZ 或 memory measurement。相关能力证据为：
+
+- `src/test/test_147_task035b_actual_selective_trace_expansion.py`
+- `src/test/test_153_task035b_physical_channel_dwr_trace_selection.py`
+- `src/test/test_157_task035b_actual_physical_discrete_gradient_authority.py`
+- `src/test/test_171_task035b_actual_selective_trace_stage4_wiring.py`
+- `src/test/test_172_task035b_selective_p6_trace_matrix_free.py`
+- `src/test/test_174_task035b_stage4_pre_release_capture.py`
+
+### Review V2 assembled iterative controlled negatives
+
+三条正式 screen 均使用 programmatic opt-in profile，不使用 raw PETSc options；
+三者都没有 global MUMPS/direct factor，但“global factor-free”不等于完全没有
+factor storage：ASM 与 physical z-slab profile 仍分别使用 local ILU，后者
+还使用 80×80 dense coarse LU。
+
+| profile | iterations / reason | terminal reduced residual | recovered true residual | disclosed factor storage | peak / swap | official output |
+|---|---:|---:|---:|---|---:|---|
+| GMRES + Jacobi | 200 / `DIVERGED_MAX_IT` | 0.861662 | 0.861661 | global factor NNZ 0 | 3.921 GiB / 0 | none |
+| FGMRES + ASM/ILU(0) | 200 / `DIVERGED_MAX_IT` | 0.999661 | 0.999659 | global 0；local ILU active，v1 NNZ unavailable | 4.462 GiB / 0 | none |
+| FGMRES + z-slab ILU(0) + DtN trace Galerkin | 200 / `DIVERGED_MAX_IT` | 0.996265 | 0.996263 | global 0；local ILU 9,576,512；coarse 80×80 | 3.885 GiB / 0 | none |
+
+三条都未达到三 decade reduction、terminal `<=1e-3` 或 full true residual
+Gate。它们的较低 RSS 只能作为 controlled-negative resource evidence，
+不能称为 accuracy-qualified factor-free memory floor。历史前两条 screen
+曾在 common flow 拒绝未收敛 KSP 前写出带 `status=ok` 的 diagnostic port
+文件；这些文件已由 caveat record 明确取消 official authority，原始失败
+artifact 仍保留：
+
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_factor_free_iterative_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/condensed_iterative_failed_output_caveat_v1.json`
+
+owner-aware selected-p6 MatShell 当前只是 assembled-action oracle 下的
+serial/MPI2 correctness capability；没有 formal matrix-free PDE、独立
+低存储 preconditioner 或 accuracy-qualified matrix-free memory result。
 
 ## Hybrid 与 0.7 nm
 
 ```text
 selected candidate = null
+Hybrid eligible candidate count = 0
 Hybrid closure = not_run_by_selected_candidate_gate
 M funnel = not_run
 0.7 nm PDE = not_run
+0.7 nm / 2 TiB resource model v3 = not_run_by_selected_candidate_gate
 predicted simultaneous peak = null
 production feasibility = unknown
 ```
@@ -197,11 +315,13 @@ envelope 冒充 simultaneous peak，也不能宣称 0.7 nm 已可行或已证明
 
 | item | status |
 |---|---|
-| fixed rectangular block research | completed with controlled negatives |
+| fixed rectangular block Review V2 batch | `partial_with_controlled_negatives`；证据批次收口，完整研究 Gate 未通过 |
 | irregular G1/G2/Phase F | `out_of_scope_by_user / not_run / not_a_completion_gate` |
-| candidate ledger | 58 行 JSON/CSV，含 controls、failures 和 stopped lanes |
+| candidate ledger | 68 行 JSON/CSV，保留 controls、failures、capability-only 和 stopped lanes |
 | negative/failure preservation | complete |
-| Hybrid/resource bridge | stopped by selected-candidate Gate |
+| physical selective execution | fixture/correctness capability only；actual DWR/PDE count 0 |
+| assembled iterative | three formal controlled negatives；official output count 0 |
+| Hybrid/resource bridge | `Hybrid eligible = 0`；Hybrid、M funnel、resource model v3 not run |
 | ordinary default | unchanged |
 
 证据索引见：

@@ -1,5 +1,61 @@
 # Task035b 高阶 p6 内存构成与 exact static condensation
 
+## 2026-07-25 Review V2：setup/resource authority 与 accuracy authority 分离
+
+本轮新增 direct rank、cold/warm cache 和 iterative screen 的证据只回答
+setup、factor 生命周期、进程树内存与时间问题。它们没有重算或替代
+significant-channel accuracy authority。正式精度判断仍来自独立的
+same-error 记录；当前没有任何候选达到 `12/12 power + 12/12 complex
+amplitude`。因此下文的 `pass` 只能解释为 setup/resource profile pass，
+不能据此提升 candidate、启动 Hybrid 或形成 0.7 nm 正式资格。
+
+### h15 direct MPI1/2/4/8 实测 rank authority
+
+同一 h15 `(6,2,10)`、74,890 Full3D-equivalent DoF、16,880 rows、
+9,195,812 used matrix NNZ 的 cold direct 路径完成了 MPI1/2/4/8 对照：
+
+| MPI | process-tree peak GiB | PSS / USS sum GiB | common solver s | MUMPS symbolic+numeric s | true residual |
+|---:|---:|---:|---:|---:|---:|
+| 1 | **1.295** | 1.257 / 1.243 | 76.007 | 29.969 | `5.12e-12` |
+| 2 | 2.158 | 2.013 / 1.918 | 74.913 | 19.437 | `1.37e-11` |
+| 4 | 3.100 | 2.723 / 2.612 | 61.849 | 12.400 | `4.96e-12` |
+| 8 | 4.711 | 3.876 / 3.758 | **53.901** | **6.527** | `7.41e-12` |
+
+四点均为 0 swap，且 peak 出现在 MUMPS setup/solve 附近。MPI1 是该 rank
+study 的**最低实测 direct 点**，不是理论下限；MPI8 以相对 MPI1
+`3.64x` 的 process-tree RSS 换取 `1.41x` 的 wall-time 改善。此前
+`5.8–6.4 GiB` 是其他 source/lifecycle 上有效的全程测量，却不是
+74,890-DoF condensed 问题的最低内存，更不得当成 0.7 nm 外推锚点。
+
+该 rank record 不计算 12 个 significant channels。h15 的 `6/12 power +
+7/12 amplitude` 仍由独立 accuracy record 管理，不能因上述 residual、
+R/T closure 或资源 profile 通过而改写。
+
+### h13 MPI8 cold/warm 与 direct fill 非线性
+
+h13 `(6,2,12)` 的 canonical-orientation profile 在同一 setup identity 上
+测得 cold/warm process-tree peak 分别为 **5.030 / 5.016 GiB**，均为
+0 swap；这两个点同样不是内存下限。cold/warm 的 non-KSP build 分别为
+`19.410 / 6.696 s`，其 `2.899x` 只量化持久 cache reuse。因为不存在
+same-h13 pre-optimization cold baseline，不能把它写成 cold-code
+`2.899x` 优化结论。
+
+| MPI8 setup authority | rows | matrix NNZ | factor NNZ | fill | cold / warm peak GiB |
+|---|---:|---:|---:|---:|---:|
+| h15 canonical setup | 16,880 | 9,196,772 | 26,555,200 | 2.887 | 4.602 / 4.453 |
+| h13 canonical setup | 20,120 | 11,014,172 | 35,746,600 | 3.246 | 5.030 / 5.016 |
+
+h13/h15 的 rows 与 matrix NNZ 只增长 `1.192x / 1.198x`，factor NNZ 却
+增长 `1.346x`，fill 也从 2.887 升至 3.246。direct factor 成本因消元图、
+ordering 与 fill 非线性增长，不能只按 DoF 或 matrix NNZ 线性缩放。
+两行来自各自 hash-bound setup profile；它们不覆盖旧 accuracy-run 的
+source-stage-specific NNZ。
+
+h13 setup profile 只通过 residual、scalar closure、cache 和资源 Gate；
+它没有重算 significant channels。独立 accuracy authority 仍是
+`10/12 power + 10/12 amplitude`，所以 h13 仍非 candidate，且
+5.030/5.016 GiB 不能取得任何 accuracy credit。
+
 ## 2026-07-24 Review V1：方向性恢复与 trace 判别的资源闭环
 
 Review V1 的正式 MPI8 恢复批次没有改变已经接受的 condensation、Floquet
@@ -55,32 +111,31 @@ selection_not_authorized = true
 该 `pass=true` 只表示 SHA-bound fail-closed audit 有效，不表示 Lane B
 物理失败、subset 已选出或 PDE 已运行。
 
-## Condensed trace iterative：只完成 capability audit
+## Condensed trace iterative：三个 formal screen 均为 controlled-negative
 
-16,880-row h15 direct authority 确实适合作为低存储迭代研究起点，但本轮没有
-把 raw PETSc 选项覆盖伪装成正式迭代结果。当前 PETSc build 中
-`hypre=false`，公开 solver profile 仍为 `preonly+lu/MUMPS`，并缺少专用
-condensed-iterative hook、迭代 residual history、factor-free inventory
-和正确 provenance/失败语义。因此正式状态为：
+Review V2 后已经用专用、programmatic profile 完成三个 MPI8 assembled
+screen；没有使用 raw PETSc options。三者都达到 200 iterations 上限且没有
+收敛，所以全部是有效的 controlled-negative resource evidence，不是
+factor-free success：
 
-```text
-status = capability_stop_not_run
-MPI8 iterative PDE run count = 0
-iterative peak = null
-factor-only peak contribution = unknown
-```
+| screen | factor inventory | final/initial residual | full recovered residual | process-tree peak | decision |
+|---|---|---:|---:|---:|---|
+| GMRES + Jacobi | global direct factor `0`；无 MUMPS symbolic/numeric | 0.8617 | 0.8617 | 3.921 GiB | nonconverged |
+| FGMRES + ASM(1)/ILU(0) | global direct factor `0`；local subdomain ILU active | 0.9997 | 0.9997 | 4.462 GiB | nonconverged |
+| FGMRES + physical z-slab/ILU(0) + DtN trace correction | global factor `0`；22,280 local factor rows + 80-dimensional coarse dense LU | 0.9963 | 0.9963 | 3.885 GiB | nonconverged |
 
-对 27,916,600 factor NNZ 与 16,880 rows 使用既有
-`factor_nnz × 24 bytes + (rows + 1) × 8 bytes` 规划代理得到
-`670,133,448 bytes = 0.6241 GiB`；这不是精确 MUMPS factor 占用。direct
-authority 中两个非同时阶段峰值之差 `2.8491 GiB` 还包含与 factor 无关的
-分配和释放，不能写成 factor 上界，更不能写成预测迭代峰值。
+Jacobi 确实没有 global factor，但终端 residual 距离 screen 的 `<=1e-3`
+及正式 full residual `<=1e-9` Gate 很远，不能称为成功的 factor-free
+solver。ASM 与 physical profile 也不是 strictly factorless：前者含 local
+subdomain ILU，后者含 physical-slab ILU(0) 和 coarse dense LU。较低 RSS
+只能作为失败运行的资源观察值，不能叫“合格解的内存下限”，也不能进入
+0.7 nm resource model。
 
-若未来补齐独立迭代 profile，只运行冻结的一次 MPI8 screen：
-GMRES restart 30、最多 200 iterations、unpreconditioned norm 至少下降
-3 decades、终端显式 reduced-system residual `<=1e-3`、0 swap、无 factor
-matrix 且 process-tree peak `<=5.2 GiB`。在该 screen 实测前，Task035b
-只有 direct baseline 和 capability stop，没有 factor-free memory positive。
+因此当前结论不是“迭代法已证明不可行”，而是这三个 preconditioner lane
+已被可证伪地关闭。下一次 iterative PDE 必须先实现实质不同的
+spectral/auxiliary-space、block-Schur 或 Fourier/DtN harmonic
+preconditioner，并在小 fixture 上证明谱改善；单纯换成 matrix-free action
+不会修复已观测到的预条件器缺陷。
 
 ## 2026-07-24 最终工程 authority：h15、tensor dedup 与 exact preallocation
 
@@ -412,5 +467,10 @@ global matrix 不存在”，但仍不构成 local-p/regionwise-p 完成证明�
 
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_mpi8.json`
 - `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_direct_mpi1_2_4_8_resource_floor_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_factor_free_iterative_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json`
 - raw ignored evidence:
   `benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/`

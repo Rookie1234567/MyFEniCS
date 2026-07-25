@@ -73,13 +73,27 @@ _HISTORICAL_CAPABILITY_RECERTIFICATION_V2 = (
 _HISTORICAL_CAPABILITY_RECERTIFICATION_V2_SHA256 = (
     "2d99885b2d0c4280c77df636d3bba5f69c0f41af23761f439ddd8096a5c5527c"
 )
-_CURRENT_CAPABILITY_RECERTIFICATION_V3 = (
+_HISTORICAL_CAPABILITY_RECERTIFICATION_V3 = (
     _ROOT
     / "benchmarks"
     / "cases"
     / "095_high_order_local_hp_resource_envelope"
     / "records"
     / "h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v3.json"
+)
+_HISTORICAL_CAPABILITY_RECERTIFICATION_V3_SHA256 = (
+    "eff05339e70d3e2ee597ee5ab727d39991ff7568806da3a067e9c57d8753f192"
+)
+_CURRENT_CAPABILITY_RECERTIFICATION_V3_STAGE4 = (
+    _ROOT
+    / "benchmarks"
+    / "cases"
+    / "095_high_order_local_hp_resource_envelope"
+    / "records"
+    / (
+        "h15_physical_slab_dtn_and_trace_harmonic_iterative_"
+        "capability_v3_stage4_recertification.json"
+    )
 )
 
 
@@ -358,12 +372,15 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
             "not_run_no_official_physics",
         )
 
-    def test_v3_recertification_binds_current_distributed_apply_sources(
+    def test_v3_recertification_is_preserved_as_a_historical_snapshot(
         self,
     ) -> None:
-        record = json.loads(
-            _CURRENT_CAPABILITY_RECERTIFICATION_V3.read_text()
+        payload = _HISTORICAL_CAPABILITY_RECERTIFICATION_V3.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(payload).hexdigest(),
+            _HISTORICAL_CAPABILITY_RECERTIFICATION_V3_SHA256,
         )
+        record = json.loads(payload)
         self.assertEqual(
             record["status"],
             "capability_only_recertified_after_distributed_apply_no_pde",
@@ -391,11 +408,8 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
         )
 
         for source in record["source"]["files"]:
-            payload = (_ROOT / source["path"]).read_bytes()
-            self.assertEqual(
-                hashlib.sha256(payload).hexdigest(),
-                source["sha256"],
-            )
+            self.assertTrue((_ROOT / source["path"]).is_file())
+            self.assertRegex(source["sha256"], r"^[0-9a-f]{64}$")
 
         slab = record["capabilities"]["physical_slab_dtn"]
         self.assertTrue(slab["formal_screen_lane_closed"])
@@ -413,6 +427,146 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
             record["official_output_authority"]["status"],
             "not_run_no_official_physics",
         )
+
+    def test_v3_stage4_recertification_binds_current_wiring_sources(
+        self,
+    ) -> None:
+        record = json.loads(
+            _CURRENT_CAPABILITY_RECERTIFICATION_V3_STAGE4.read_text()
+        )
+        self.assertEqual(
+            record["schema_version"],
+            (
+                "task035b.h15-condensed-iterative-capability-"
+                "recertification.v3-stage4-recertification"
+            ),
+        )
+        self.assertEqual(
+            record["status"],
+            (
+                "capability_only_recertified_after_stage4_"
+                "selective_trace_wiring_no_pde"
+            ),
+        )
+        self.assertTrue(record["pass"])
+        self.assertFalse(record["formal_pde_started"])
+        self.assertFalse(record["heavy_pde_rerun"])
+        self.assertFalse(record["official_physics_result"])
+        self.assertFalse(record["diagnostic_physics_result"])
+        self.assertFalse(record["candidate_promotion"])
+        self.assertFalse(record["ordinary_default_changed"])
+        self.assertFalse(record["worktree_clean_claimed"])
+
+        source = record["source"]
+        self.assertEqual(
+            source["snapshot_commit_sha"],
+            "cf14e84f4a0f9216b6139a146eba78cdcfd45bb9",
+        )
+        self.assertEqual(
+            source["review_v2_commit_sha"],
+            "d547e9d7e903e9e8639346715770e56f9c17e86d",
+        )
+        self.assertTrue(source["tracked_numerical_sources_match_snapshot"])
+        self.assertTrue(source["file_hashes_are_authority"])
+        expected_paths = {
+            "src/common/config_3d.py",
+            "src/solvers/condensed_physical_slab_partition.py",
+            "src/solvers/physical_slab_two_level.py",
+            "src/solvers/condensed_iterative_profiles.py",
+            "src/solvers/condensed_trace_harmonic_pc.py",
+            "src/solvers/dtn_port_3d.py",
+            "src/solvers/common_3d_case_flow.py",
+            "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+            "benchmarks/run_task035b_condensed_iterative.py",
+        }
+        self.assertEqual(
+            {item["path"] for item in source["files"]},
+            expected_paths,
+        )
+        for item in source["files"]:
+            payload = (_ROOT / item["path"]).read_bytes()
+            self.assertEqual(
+                hashlib.sha256(payload).hexdigest(),
+                item["sha256"],
+            )
+
+        historical = record["historical_evidence"]
+        v3 = historical["baseline_capability_recertification_v3"]
+        self.assertEqual(
+            v3["sha256"],
+            _HISTORICAL_CAPABILITY_RECERTIFICATION_V3_SHA256,
+        )
+        self.assertTrue(v3["preserved_unmodified"])
+        self.assertEqual(
+            hashlib.sha256(
+                (_ROOT / v3["path"]).read_bytes()
+            ).hexdigest(),
+            v3["sha256"],
+        )
+        negative = historical[
+            "physical_slab_formal_screen_controlled_negative"
+        ]
+        self.assertTrue(negative["preserved_and_not_reclassified"])
+        self.assertEqual(
+            hashlib.sha256(
+                (_ROOT / negative["path"]).read_bytes()
+            ).hexdigest(),
+            negative["sha256"],
+        )
+
+        slab = record["capabilities"]["physical_slab_dtn"]
+        self.assertTrue(slab["formal_screen_lane_closed"])
+        self.assertEqual(slab["pde_execution_in_this_record"], "not_run")
+        harmonic = record["capabilities"]["trace_harmonic"]
+        self.assertFalse(harmonic["production_execution_enabled"])
+        self.assertFalse(harmonic["production_partition_builder_available"])
+        self.assertFalse(harmonic["replicated_full_vector_workspace"])
+        self.assertTrue(harmonic["replicated_interface_vector_workspace"])
+        self.assertEqual(
+            harmonic["distributed_apply"],
+            "block_rhs_to_declared_owner_and_solution_to_petsc_row_owner",
+        )
+        selective = record["capabilities"][
+            "stage4_selective_trace_integration"
+        ]
+        self.assertTrue(selective["default_off"])
+        self.assertTrue(selective["fixture_and_correctness_only"])
+        self.assertFalse(selective["formal_h14_runner_wired"])
+        self.assertFalse(selective["actual_channel_dwr_selection"])
+        self.assertEqual(selective["selective_candidate_count"], 0)
+        self.assertEqual(selective["selective_pde_run_count"], 0)
+        self.assertFalse(selective["ordinary_default_changed"])
+
+        official = record["official_output_authority"]
+        self.assertEqual(official["status"], "not_run_no_official_physics")
+        self.assertFalse(official["official_result"])
+        for key in (
+            "R00_total",
+            "R_total",
+            "T_total",
+            "A_closure",
+            "full_explicit_true_residual",
+            "significant_power_pass_count",
+            "significant_complex_amplitude_pass_count",
+        ):
+            self.assertIsNone(official[key])
+        self.assertFalse(official["twelve_of_twelve_gate_claimed"])
+        self.assertFalse(official["memory_floor_claimed"])
+
+        decision = record["decision"]
+        self.assertTrue(
+            decision["preserve_as_current_capability_recertification"]
+        )
+        self.assertTrue(decision["physical_slab_formal_screen_lane_closed"])
+        self.assertFalse(decision["trace_harmonic_formal_pde_lane_open"])
+        self.assertFalse(decision["selective_trace_formal_pde_lane_open"])
+        self.assertFalse(decision["historical_v3_deleted_or_modified"])
+        self.assertFalse(
+            decision[
+                "historical_controlled_negative_deleted_or_reclassified"
+            ]
+        )
+        self.assertFalse(decision["candidate_promotion"])
 
     def test_typed_profile_contract_discloses_both_factor_classes(self) -> None:
         profile = condensed_iterative_profile(PHYSICAL_SLAB_DTN_PROFILE)

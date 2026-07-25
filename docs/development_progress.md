@@ -1,5 +1,26 @@
 # 项目开发进度：Task000–Task035b
 
+## 2026-07-25：Task035b Review V2 setup、内存下限与最终通道续研
+
+Review V2 在同一 fixed rectangular block grating 和执行分支上并行推进
+精度、setup 与内存三条主线；普通默认未改变，未合并 `master`。
+
+| 主线 | Review V2 结果 | 数据身份 / 边界 |
+|---|---|---|
+| 最强精度点 | fixed p5-trace/p6-interior h13 仍为 89,740 DoF、20,120 rows、10/12 power + 10/12 amplitude | measured MPI8；未达 12/12 + 12/12 |
+| fixed-DoF z-node | h13 top2 为实际 8/12 + 8/12；h14 exact-reverse 为 7/12 + 8/12 | 两个 bounded controlled negatives；关闭该 lane；先验投影不作实测 |
+| physical selective trace | physical expansion、periodic/exact-sequence、Stage4 row omission、pre-release hook 和 owner-aware MatShell 已有 fixture/correctness 能力 | actual DWR、formal runner、candidate/PDE count 均为 0 |
+| setup/cache | h15 non-KSP cold/warm 19.242/6.141 s；h13 19.410/6.696 s | hash-bound setup/resource authority；不替代通道精度 |
+| direct rank memory | h15 MPI1/2/4/8 peak 为 1.295/2.158/3.100/4.711 GiB | measured、0 swap；MPI1 是最低实测 direct 点，不是理论下限 |
+| iterative | Jacobi、ASM/ILU、physical z-slab + DtN 三条 MPI8 screen 均在 200 iter 不收敛 | controlled negatives；无 official R/T/A/channel；后两条含 local factor |
+| Hybrid / 0.7 nm | eligible candidate=0；Hybrid、M/DtN funnel、resource model v3 未运行 | fail-closed；2 TiB feasibility unknown |
+
+当前 blocker 是数值/生产集成而非用户环境：reduced fixed-trace local-Schur
+捕获与 standard full-p6 generalized recovery 尚不能在同一次正式 run 中
+闭合。没有密码、ABI、MPI 或磁盘硬 blocker，也没有理由重复已经完成的 heavy
+PDE。集中回应见
+[`task035b_high_order_local_hp_resource_envelope/response_v3.md`](task035b_high_order_local_hp_resource_envelope/response_v3.md)。
+
 ## 2026-07-24：Task035b Review V1 显著通道恢复批次
 
 Task035b 只研究 Task034 fixed rectangular block grating；原 G1/G2/Phase F
@@ -131,7 +152,7 @@ Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
 Task035 status = Review V6 research baseline; Task035b successor active
-Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; Review V1 continuation complete; response_v2 pending review
+Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; Review V2 continuation complete; response_v3 pending review
 ```
 
 ## 1.1 2026-07-15 最新更新

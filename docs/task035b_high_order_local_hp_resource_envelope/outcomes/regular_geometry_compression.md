@@ -68,15 +68,48 @@ x-only 退化到 5/6；y-only global-p5 mechanism control 保持 3/1，但不是
 same-space fixed-trace y 排除。q31 与 scaled buffer1 仍为 6/7，只覆盖这
 两个已测试 DtN 扰动。只二分最大 R5 slab 虽降低 aggregate error，却退化到
 5/9 并新增 `R(-7,0)_s` power failure，因此预先指定的 split lane 关闭；
-其他 node distributions 未被证明无效且未运行。
+Review V2 随后只运行两个 adjoint-guided fixed-DoF node 判别点，结果见下表。
 
 global p6/h14 的 9/12 power、12/12 amplitude 是 same-mesh full-trace
 measured positive marginal；它不定位 missing-mode subset，也不建立 trace
 相对 mesh/DtN 的唯一或次级因果排序。92,850 DoF 超上限 2,850。当前仅有
-reference-cell complement/Riesz 和 recovered-dual coefficient proxy，没有
-physical Piola/Riesz、missing-mode Floquet orbit、actual enriched
-residual/DWR 或真实 active numbering。因此 selective trace 记为
-`capability_stop_not_run`，不是一个失败 PDE。
+reference-cell complement/Riesz 和 recovered-dual coefficient proxy。新增
+typed caller expansion、Stage4 pre-release hook、owner-aware MatShell 与
+row-omission fixture/correctness 能力仍未生成 actual enriched
+residual-weighted DWR、物理 row plan 或 selective PDE；因此它不是一个失败
+PDE，也不是已闭合的 formal runner。
+
+### Review V2 fixed-DoF node 判别与 lane 关闭
+
+| candidate | topology | DoF / rows | matrix/factor NNZ | peak | power / amplitude | conclusion |
+|---|---|---:|---:|---:|---:|---|
+| h13 top2 phase redistribution | `(6,2,12)` | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 5.886 GiB | 8/12 / 8/12 | controlled negative |
+| h14 exact reverse | `(6,2,11)` | 82,315 / 18,500 | 10,104,512 / 32,338,600 | 5.958 GiB | 7/12 / 8/12 | controlled negative |
+
+两点都通过 scalar/vector、identity、full residual 与资源 Gate，但 significant
+channels 比原 h13 `10/12 / 10/12` 更差。h14 record 中的 `9/12 / 11/12`
+只是 derived reverse projection forecast；正式结论使用实际 PDE 的
+`7/12 / 8/12`。连续两个负信号后，fixed-DoF z-node lane 关闭。
+
+### Review V2 selective-trace capability 与结构性 blocker
+
+`physical_selective_trace_execution_capability_v2.json` 只资格化 typed
+expansion、default-off Stage4 callback、owner-aware MatShell action 和
+inactive-row omission 的 fixture/correctness contract。其正式边界仍是：
+
+```text
+runner_wired = false
+actual_residual_weighted_channel_dwr_count = 0
+physical_row_plan_count = 0
+selective_candidate_count = 0
+selective_pde_run_count = 0
+```
+
+真正减行的 fixed-trace local-Schur path 使用 reduced
+p5-trace/p6-interior element，而现有 generalized-recovery path 要求 standard
+full-p6 storage；当前 Stage4 不能在一次运行中同时满足两者。这是必须先解除的
+结构性 blocker。不得把 fixture 能力写成新 runner wiring，也不得用 full-p6
+矩阵后置零冒充 physical selective trace。
 
 ### h10 regionwise candidates
 
@@ -101,6 +134,34 @@ R/T/A 与 global p6 等价。
 matrix 生命周期与稠密 Schur fill 仍存在；在完整 matrix、inactive rows、
 多余 tensor 和 factor 生命周期被真正消除后，内存与时间按正确方向下降。
 
+## Review V2 cold/warm setup 与 direct 内存下限
+
+| case, MPI8 | non-KSP build cold / warm | common solver cold / warm | MUMPS numeric cold / warm | process-tree RSS cold / warm |
+|---|---:|---:|---:|---:|
+| fixed h15 | 19.242 / 6.141 s | 37.595 / 19.489 s | 5.807 / 6.028 s | 4.602 / 4.453 GiB |
+| fixed h13 | 19.410 / 6.696 s | 45.568 / 26.899 s | 13.266 / 12.675 s | 5.030 / 5.016 GiB |
+
+h15 cold non-KSP build 相对 61.61 s Review V2 preoptimization authority 达到
+`3.202x`，通过 >=2x 和 25–30 s 目标；两个 warm build 均 <10 s。h13 的
+`2.899x` 只是 cold→warm persistent-cache reuse，因为不存在 same-h13
+preoptimization cold baseline。上述 setup records 不重新评估 12 通道，也不
+提升候选。
+
+h15 同 operator 的 direct rank study 给出：
+
+| MPI | RSS | PSS / USS | common solver | MUMPS symbolic+numeric |
+|---:|---:|---:|---:|---:|
+| 1 | 1.295 GiB | 1.257 / 1.243 GiB | 76.007 s | 29.969 s |
+| 2 | 2.158 GiB | 2.013 / 1.918 GiB | 74.913 s | 19.437 s |
+| 4 | 3.100 GiB | 2.723 / 2.612 GiB | 61.849 s | 12.400 s |
+| 8 | 4.711 GiB | 3.876 / 3.758 GiB | 53.901 s | 6.527 s |
+
+四点均 residual pass、0 swap。MPI1 是最低实测 direct memory point，但不是
+理论/软件/factor-free floor；MPI8 用 `3.64x` RSS 换取 `1.41x` wall-time
+改善。MPI4/8 的 50 tasks/rank 仅在 solver release 后的 VTK/TBB postprocess
+窗口出现，direct factor peak 在此之前且更高，不能把它归因于隐藏的 MUMPS
+solve threads。
+
 ## Smoothness、DWR 与 h/p 竞争
 
 252/252 cells 的 physical hierarchical p6/p5 decay 为
@@ -123,13 +184,34 @@ h50/h37.5 预算证据，Task035 继承的 tetra local-h + selected-p6 组合以
 classifier 的零 `h_refine` 分类不覆盖 Review V1 后来实测的 global
 directional-z topology/refinement response；两种证据的 scope 不同。
 
+## Review V2 iterative controlled negatives
+
+三个独立 opt-in MPI8 profiles 均在 200 iterations 后未收敛：
+
+| profile | final/initial residual | full recovered residual | peak | official physics |
+|---|---:|---:|---:|---|
+| GMRES + Jacobi | 0.861662 | 0.861661 | 3.921 GiB | none |
+| FGMRES + ASM-ILU(0) | 0.999661 | 0.999659 | 4.462 GiB | none |
+| FGMRES + z-slab ILU(0) + 80-D DtN correction | 0.996265 | 0.996263 | 3.885 GiB | none |
+
+前两者没有 global direct factor；第三者也没有 global MUMPS factor，但包含
+local ILU(0) 与 dense coarse LU，因此不称 strictly factorless。三者的较低
+RSS 都只是 controlled-negative resource evidence，不是合格 solution memory
+floor。当前 assembled iterative lane 只可由 materially different
+spectral/auxiliary-space preconditioner 重开；matrix-free 不会自动修复已暴露
+的 preconditioner 缺口。
+
 ## Hybrid 决定
 
-所有预算内恢复候选都未通过完整 same-error Gate；global p6/h14 又超预算，
+accuracy best 仍为 fixed h13：89,740 Full3D-equivalent DoF、
+`10/12` power + `10/12` complex amplitude。两个 fixed-DoF node follow-up
+均退化，formal selective runner 尚未闭合，三个 iterative profile 未收敛；
 因此：
 
 ```text
 selected candidate = null
+best measured accuracy = fixed h13, 10/12 power + 10/12 amplitude
+hybrid_eligible_candidate_count = 0
 Hybrid closure = not_run_by_selected_candidate_gate
 M funnel = not_run
 0.7 nm PDE = not_run

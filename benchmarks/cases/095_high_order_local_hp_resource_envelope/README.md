@@ -49,6 +49,15 @@
 | `records/global_hexa_p5_p6_h10_projection_signals_mpi8.json` | `65bf6fb034d6717e190a5d1ab4a2025fb1c4ff3b` | 252-cell projection signals | 19.977 GiB pair |
 | `records/actual_sequential_h_vs_p_competition_mpi8.json` | generator `659c2a20c6ef56798098470cdeef4d7e45d50b4c` | sequential proxy pass with limitations | derived |
 | `records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v3.json` | `5f353e53b519016239374331207d13041b36676e` | v3 pass with limitations | lightweight |
+| `records/fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json` | `7e4a2eb4ab5096d88b9e79b176b1e3778767caa4` | actual node-redistribution controlled negative；8/12 + 8/12 | 5.886 GiB |
+| `records/fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json` | `e8e6b25860b05ad7cd519aa7499888a98de830d2` | actual exact-reverse controlled negative；7/12 + 8/12 | 5.958 GiB |
+| `records/physical_selective_trace_execution_capability_v2.json` | snapshot `a20b8b404f66b983596326c912a88fb8be3b255c` | fixture/correctness capability；formal PDE count 0 | lightweight |
+| `records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json` | `beef7f9e82392c3aeca70639af6e59ef7645fc2a` | formal cold/warm setup authority；not accuracy promotion | 4.602 / 4.453 GiB |
+| `records/h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json` | `a20b8b404f66b983596326c912a88fb8be3b255c` | formal cold/warm setup authority；not accuracy promotion | 5.030 / 5.016 GiB |
+| `records/h15_direct_mpi1_2_4_8_resource_floor_v1.json` | `54622497c58758de74879f80a98c11ec8f83a61c` | formal rank/resource study；MPI1 lowest measured direct point | 1.295–4.711 GiB |
+| `records/h15_factor_free_iterative_mpi8_v1.json` | `54622497c58758de74879f80a98c11ec8f83a61c` | Jacobi + ASM-ILU controlled negatives | 3.921 / 4.462 GiB |
+| `records/h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json` | `71f53d0eccc1abaa0915fc3cfa02615267ad9cf2` | z-slab+DtN controlled negative | 3.885 GiB |
+| `records/h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v3_stage4_recertification.json` | snapshot `cf14e84f4a0f9216b6139a146eba78cdcfd45bb9` | current source-bound capability recertification；no PDE/candidate | lightweight |
 
 p5/h10 的 101,815 FE DoF 分解为 edge 5,335、face-interior 36,000、
 cell-interior 60,480；加 80 个 DtN auxiliary 后实测为 101,895 rows。
@@ -314,8 +323,8 @@ identity 与完整 true residual 均通过：
 z-only h13 是当前最强测得候选，但仍失败 `T(-4,0)`、`R(-4,0)` power
 以及 `r(-5,0)`、`r(-4,0)` complex-amplitude Gate，不能接入 Hybrid。
 R5-slab 只二分一个最大 proxy slab 后反而使 `R(-7,0)` power 回退；该点已按
-预注册停止条件关闭指定 R5-slab split lane，不能继续盲扫该 split。其他
-node distributions 未被证明无效且未运行。x-only 是 same-space negative
+预注册停止条件关闭指定 R5-slab split lane，不能继续盲扫该 split。Review V2
+随后运行两个最小 fixed-DoF node 判别点并关闭该 lane，见下节。x-only 是 same-space negative
 control；y-only 是 global-p5 mechanism control，不是 same-space fixed-trace
 y 排除。方向性证据支持 z-resolution 为当前最强预算内恢复杠杆，但没有证明
 z、mesh 或 numerical phase 是唯一根因。
@@ -327,6 +336,9 @@ response 诊断不支持预期单一 scalar mesh knob 闭合全部通道；它�
 PDE，也不证明所有其他 topology 无效。这是停止大规模盲扫的判别依据。
 
 ## Review V1：选择性 trace 与迭代路径的 fail-closed 边界
+
+本节保留 Review V1 当时的历史 stop；Review V2 的 capability successor 与
+正式 iterative screens 见后续小节，不用新证据覆盖或删除这些 stop。
 
 `records/missing_p6_trace_complement_preflight_v2.json` 证明 reference-cell
 p5/p6 missing trace complement 为 132 维：每条 edge 1 mode、每个 face
@@ -344,15 +356,113 @@ residual-weighted DWR、selected exact-sequence closure 和 true active global
 numbering尚未闭合。因此 Lane B 是 `not_currently_executable`，不是被数值
 证伪，也没有授权从 coefficient proxy 选择 mode subset。
 
-`records/condensed_trace_iterative_capability_gate.json` 同样是
-`capability_stop_not_run`。它冻结了未来唯一低成本 screen 的合同：
+`records/condensed_trace_iterative_capability_gate.json` 在 Review V1 时同样是
+`capability_stop_not_run`。它冻结了低成本 screen 的合同：
 MPI8、GMRES restart 30、最多 200 iteration、unpreconditioned residual norm、
 至少 3 decades residual reduction、最终显式 reduced-system residual
-`<=1e-3`、peak `<=5.2 GiB`、无 factor、无 swap。当前 public path 仍是 direct
-provenance，且缺少 dedicated iterative hook、residual history 和 factor-free
-inventory，所以没有伪造迭代实测值。`24 byte/factor-NNZ +
+`<=1e-3`、peak `<=5.2 GiB`、无 factor、无 swap。当时 public path 仍是
+direct provenance，且缺少 dedicated iterative hook、residual history 和
+factor-free inventory，所以该历史 record 没有伪造迭代实测值。Review V2
+新增的三个 opt-in formal screens 在后文单独报告。`24 byte/factor-NNZ +
 8 byte/row-pointer` 只是一项 planning proxy；不同阶段 peak 的差也不是
 factor-memory upper bound。
+
+## Review V2：fixed-DoF node 判别
+
+Review V2 没有盲扫 h/p，而是运行两个由失败通道诊断约束的 z-node 点：
+
+| candidate | topology | DoF / rows | matrix/factor NNZ | peak | power / amplitude | classification |
+|---|---|---:|---:|---:|---:|---|
+| h13 top2 phase redistribution | `(6,2,12)` | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 5.886 GiB | 8/12 / 8/12 | controlled negative |
+| h14 exact reverse of h13 top2 | `(6,2,11)` | 82,315 / 18,500 | 10,104,512 / 32,338,600 | 5.958 GiB | 7/12 / 8/12 | controlled negative |
+
+两者 scalar/vector、geometry/tag/orientation/Floquet、full explicit residual
+和资源 Gate 均通过，但 significant channels 比原 h13 的 `10/12 / 10/12`
+更差。h14 exact-reverse record 内的 `9/12 / 11/12` 是 derived projection
+forecast，不是 measured PDE；正式结论只能使用 `7/12 / 8/12`。连续两个
+负信号后，fixed-DoF node-redistribution lane 已关闭。
+
+## Review V2：physical selective trace 执行能力但非 formal runner
+
+`records/physical_selective_trace_execution_capability_v2.json` 资格化了：
+
+- typed physical caller expansion 与 complete periodic/Floquet pullback；
+- default-off Stage4 pre-release callback 的 borrowed-object/collective-failure
+  生命周期；
+- owner-aware PETSc MatShell correctness action；
+- fixture 中 inactive missing rows = 0，且没有先构造 full-p6 trace matrix
+  再置零。
+
+这些 pass 仅属于 fixture/correctness。当前没有声称新的 runner wiring：
+
+```text
+formal_h14_live_capture_and_channel_dwr_runner_wired = false
+formal_actual_pde_ready = false
+actual_residual_weighted_channel_dwr_count = 0
+physical_row_plan_count = 0
+selective_candidate_count = 0
+selective_pde_run_count = 0
+```
+
+结构性 blocker 已明确：actual row-omission 的 fixed-trace local-Schur path
+建立在 reduced p5-trace/p6-interior element 上；现有 generalized-recovery
+capture path 则要求 standard full-p6 storage 和 complete caller expansion。
+当前 Stage4 不能在同一运行中同时使用两种表示。下一步必须在 reduced element
+上实现 generalized recovery，或提供不分配 full-p6 trace rows 的 missing-mode
+residual/action；在此之前不能生成 actual channel DWR、physical row plan 或
+selective PDE。它是实现 blocker，不是 selective trace 的 accuracy negative。
+
+## Review V2：h15/h13 cold-warm setup
+
+| case, MPI8 | non-KSP build cold / warm | common solver cold / warm | MUMPS numeric cold / warm | process-tree RSS cold / warm |
+|---|---:|---:|---:|---:|
+| fixed h15 | 19.242 / 6.141 s | 37.595 / 19.489 s | 5.807 / 6.028 s | 4.602 / 4.453 GiB |
+| fixed h13 | 19.410 / 6.696 s | 45.568 / 26.899 s | 13.266 / 12.675 s | 5.030 / 5.016 GiB |
+
+h15 cold non-KSP build 相对 Review V2 的 61.61 s preoptimization authority
+为 `3.202x`，达到 >=2x 和 25–30 s 目标；warm build <10 s。h13
+cold→warm non-KSP 为 `2.899x` cache reuse，但没有同 h13 的 preoptimization
+cold control，所以不声称 h13 cold-code 2x 优化。两组 rows、NNZ、factor NNZ
+和物理闭合均一致，0 swap；setup profiles 没有重新评估或提升 12 通道状态。
+
+## Review V2：MPI rank 资源与 thread 归因
+
+同一 h15 operator 的 direct MPI1/2/4/8 对照为：
+
+| MPI | process-tree RSS | worker PSS / USS | common solver | MUMPS symbolic+numeric |
+|---:|---:|---:|---:|---:|
+| 1 | 1.295 GiB | 1.257 / 1.243 GiB | 76.007 s | 29.969 s |
+| 2 | 2.158 GiB | 2.013 / 1.918 GiB | 74.913 s | 19.437 s |
+| 4 | 3.100 GiB | 2.723 / 2.612 GiB | 61.849 s | 12.400 s |
+| 8 | 4.711 GiB | 3.876 / 3.758 GiB | 53.901 s | 6.527 s |
+
+全部 true residual `<=1e-9`、R/T MPI 闭合且 0 swap。MPI1 是最低实测
+direct-memory 点，但不是理论、软件栈或 factor-free floor；5.8–6.4 GiB 也
+不是该 DoF 规模的最低内存。MPI4/8 的 50 tasks/rank 只在 solver-object
+release 后的 VTK/TBB postprocess 窗口出现；每个 KSP 区间保持 3 Linux
+tasks/rank，factor peak 对所有 rank 都早于且高于 postprocess peak。没有证据
+支持“隐藏的 MUMPS threads 设置了 direct peak”。
+
+## Review V2：三个 iterative controlled negatives
+
+| profile, MPI8 | iterations | final/initial residual | recovered full residual | peak | factor inventory | result |
+|---|---:|---:|---:|---:|---|---|
+| GMRES + Jacobi | 200 | 0.861662 | 0.861661 | 3.921 GiB | no global factor | `DIVERGED_MAX_IT` |
+| FGMRES + ASM-ILU(0) | 200 | 0.999661 | 0.999659 | 4.462 GiB | local ILU；no global factor | `DIVERGED_MAX_IT` |
+| FGMRES + z-slab ILU(0) + 80-D DtN Galerkin | 200 | 0.996265 | 0.996263 | 3.885 GiB | local ILU + dense coarse LU；not strictly factorless | `DIVERGED_MAX_IT` |
+
+三者均无 official R00/R/T/A、diffraction 或 field output。较低 RSS 只是失败
+运行的 resource evidence，不是合格解内存下限。Jacobi/ASM lane 和 z-slab
+profile 已关闭；在 materially different spectral/auxiliary-space
+preconditioner 出现前不重复，matrix-free 也不因免 assembly 就被授权启动
+formal PDE。
+
+`records/h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v3_stage4_recertification.json`
+在后续 default-off Stage4 selective-trace wiring 之后重新绑定当前 9 个
+physical-slab、trace-harmonic、DtN 和入口源码。原
+`...capability_v3.json` 作为不可变历史快照保留；本次使用语义后缀而不新增
+`v4`。该 recertification 仍是 lightweight capability evidence，PDE、
+candidate 和 official output 数量均为 0。
 
 ## Lane B 与 Hybrid stop
 
@@ -364,9 +474,11 @@ strict-R-cost 偏向 p，最终 p6 为 167,784 DoF 且 strict-R control 失败�
 structured hexa 缺少 conforming hanging-node/transition implementation，
 tetra selected-p6 physical reduction 未实现；classifier v3 没有 target
 same-patch h-refine signal，但该 scope 不覆盖后续 directional-z
-topology/refinement response。Review V1 后，方向性 Lane A 已以 h13 与
-R5-slab stop 完成预先指定的预算内最少判别点；选择性 trace Lane B 停在
-上述真实 capability gap。
+topology/refinement response。方向性 Lane A 的 h13 仍是 accuracy best：
+89,740 Full3D-equivalent DoF、`10/12` power + `10/12` amplitude；两个
+Review V2 fixed-DoF node 点均退化。选择性 trace Lane B 仍停在上述
+formal-runner/space-representation blocker，actual DWR/row plan/candidate/PDE
+count 均为 0。
 不存在 Hybrid-eligible candidate，故 Hybrid closure、M funnel、external
 DtN funnel 和 0.7 nm resource model v3 均为
 `not_run_by_selected_candidate_gate`。
@@ -383,6 +495,10 @@ identity 或 review Gate 改变，不应重跑：
 - z-only h14、z-only h13、x-only h15、y-only control；
 - global p5/p6 h14 discriminator；
 - h14 R5-slab bisect；
+- h13 top2 phase redistribution 与 h14 exact reverse；
+- h15/h13 canonical-orientation cold/warm setup pairs；
+- h15 MPI1/2/4/8 direct rank study 与 solve-thread audit；
+- h15 Jacobi、ASM-ILU 和 z-slab+DtN iterative controlled negatives；
 - Task034 p4/h5、structured p4/h7.5 及 Task035 tetra heavy references。
 
 ## 复现
@@ -421,7 +537,9 @@ regionwise-p 负候选复现必须使用记录内绑定的 classifier/control SH
 ```
 
 Review V1 的两个 capability audit 都是 serial、pure-postprocess，不启动 PDE。
-已冻结 record 的无写入复核使用对应 targeted tests：
+Review V2 的 physical-selective-trace pass 也只覆盖 fixture/correctness，
+不能作为 actual selective runner 的复现命令。已冻结 record 的无写入复核
+使用对应 targeted tests：
 
 ```bash
 python -m pytest -q \
@@ -430,9 +548,10 @@ python -m pytest -q \
 ```
 
 正式 tracked evidence 只能写入 Case095 `records/`，且生成器使用 exclusive
-create。若未来补齐 physical trace 或 iterative capability，必须先提交干净
-源码，再以新的 source SHA 和新的 record 文件名运行；不得覆盖现有
-controlled-stop records。
+create。若未来补齐 formal physical-trace runner 或 materially different
+iterative preconditioner，必须先提交干净源码，再以新的 source SHA 和新的
+record 文件名运行；不得覆盖现有 controlled-stop/controlled-negative
+records。ordinary default 保持不变。
 
 原始 mesh、field、长日志和 memory timeline 位于 gitignored
 `benchmarks/artifacts/task035/actual_global_r5/`；tracked JSON 通过 SHA-256

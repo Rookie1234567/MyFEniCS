@@ -11,11 +11,12 @@
 | exact-sequence structural audit | pass/fail closed | p4/p6 组合 pass；p5-trace/p4-interior fail |
 | DWR R00/R/T multi-goal | pass | three independent Hermitian adjoints |
 | failed-channel adjoints | pass | 6 power + 10 amplitude-component Hermitian adjoints |
-| failed-channel entity localization | proxy only | recovered-dual coefficients；not residual-weighted DWR |
+| failed-channel entity localization | proxy only | recovered-dual coefficients；actual residual-weighted channel DWR count = 0 |
 | p5/p6 missing-trace complement/Riesz | reference-cell pass | physical Piola/Riesz 与 Floquet orbit 未闭合 |
-| physical selective p6 trace | `capability_stop_not_run` | subset/PDE/candidate count 均为 0 |
+| physical selective p6 trace | fixture/correctness capability only | typed expansion、Stage4 hook、owner-aware MatShell、row omission 已测；formal runner/PDE/candidate count 均为 0 |
 | inverse p6-trace/p5-or-p4-interior | exact-sequence fail | 分别缺 101/149 gradient modes |
-| condensed trace iterative prototype | `capability_stop_not_run` | dedicated provenance/history/factor-free contract 缺失 |
+| condensed trace iterative prototype | three controlled negatives | Jacobi、ASM-ILU、z-slab+DtN 均未收敛；没有 official physics |
+| fixed-DoF z-node redistribution | lane closed | h13 top2 与 h14 exact-reverse 两个 actual MPI8 负结果 |
 | target p4/p5/p6 smoothness signals | pass with limitations | actual p6 projection on 252 cells |
 | classifier v3 | research-qualified | 102 p-up、150 p-keep |
 | structured-hexa local-h | architecture unavailable | no hanging-node/transition constraint path |
@@ -131,7 +132,8 @@ z 序列提供连续、但未闭合的 topology/refinement response，是当前�
 预算内恢复方向；它支持 z-resolution 相关候选原因，但不单独证明 phase
 机制或唯一主因。h13 已到 90k 边界仍缺 2 power + 2 amplitude；预先指定的
 R5 slab split 还让 `R(-7,0)_s` power 回退，因此该 split lane 关闭，其他
-node distributions 未被证明无效且未运行。
+node distributions 当时尚未运行。Review V2 后的两个最小 fixed-DoF
+node 判别点见下节；它们也没有恢复通道。
 
 ## Review V1 Lane B：selective trace 能力边界
 
@@ -156,3 +158,96 @@ index 挑列的许可。
 inverse budget exchange 不能绕过预算：p6-trace/p5-interior 与
 p6-trace/p4-interior 的 local curl nullity 分别少 101、149 个 gradient
 modes，均在 PDE 前受控停止。
+
+## Review V2：fixed-DoF z-node lane 收口
+
+Review V2 只运行了两个由失败通道诊断指定的最小 node 判别点，没有做盲扫：
+
+| point | topology | DoF / rows | matrix / factor NNZ | simultaneous peak | power / amplitude | disposition |
+|---|---|---:|---:|---:|---:|---|
+| h13 top2 phase redistribution | `(6,2,12)` | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 5.886 GiB | 8/12；8/12 | controlled negative |
+| h14 exact reverse of h13 top2 | `(6,2,11)` | 82,315 / 18,500 | 10,104,512 / 32,338,600 | 5.958 GiB | 7/12；8/12 | controlled negative |
+
+h13 top2 相对原 h13 的 `10/12；10/12` 退化到 `8/12；8/12`；h14
+exact-reverse 的实际 PDE 为 `7/12；8/12`，不能用记录中的
+`9/12；11/12` derived projection forecast 替代。连续两个成本/精度负信号后，
+fixed-DoF z-node redistribution lane 关闭；历史记录保留，不放宽 12 通道
+Gate。
+
+## Review V2：physical selective trace 的真实能力边界
+
+`physical_selective_trace_execution_capability_v2.json` 的正结果严格限于：
+
+- typed physical caller expansion 可表达 complete periodic/Floquet pullback，
+  并在 fixture 中做到 inactive missing rows = 0；
+- default-off Stage4 pre-release callback 在 true-residual diagnostics 后、
+  solver release 前提供只读 borrowed-object 生命周期；
+- owner-aware PETSc MatShell 的分布式 action 通过 correctness test，不构造
+  global explicit matrix、global LU 或 replicated active vector。
+
+这些都是 fixture/correctness 能力，不是新的 formal runner wiring。
+当前权威仍为：
+
+```text
+runner_wired = false
+formal_actual_pde_ready = false
+actual_enriched_residual_weighted_channel_dwr = false
+actual_channel_dwr_count = 0
+physical_row_plan_count = 0
+selective_candidate_count = 0
+selective_pde_run_count = 0
+```
+
+当前结构性 blocker 是两条现有实现路径互不兼容：真正减行的 fixed-trace
+local-Schur path 使用 reduced p5-trace/p6-interior element；现有 generalized
+recovery/capture path 则要求 standard full-p6 storage 和完整 caller expansion。
+当前 Stage4 运行不能同时采用这两种空间表示。必须先在 reduced element 上实现
+generalized recovery，或实现不分配 full-p6 trace rows 的 missing-mode
+residual/action，才能生成 actual residual-weighted channel DWR、物理 row plan
+和 selective PDE。该 blocker 不是 selective trace 的数值负结果。
+
+## Review V2：setup、rank 资源与 iterative 受控负结果
+
+SHA-bound cold/warm setup 已分别覆盖 h15 与当前最强 h13：
+
+| case, MPI8 | non-KSP build cold / warm | common solver cold / warm | MUMPS numeric cold / warm | process-tree RSS cold / warm |
+|---|---:|---:|---:|---:|
+| fixed h15 | 19.242 / 6.141 s | 37.595 / 19.489 s | 5.807 / 6.028 s | 4.602 / 4.453 GiB |
+| fixed h13 | 19.410 / 6.696 s | 45.568 / 26.899 s | 13.266 / 12.675 s | 5.030 / 5.016 GiB |
+
+h15 cold non-KSP build 相对 Review V2 的 61.61 s preoptimization authority
+为 `3.202x`，且 warm build < 10 s。h13 cold→warm 为 `2.899x` cache-reuse
+speedup；因为没有 same-h13 preoptimization cold control，不把它写成 cold-code
+优化倍率。两组均 0 swap，rows/NNZ/factor NNZ 和物理闭合不变。
+
+h15 direct 的 MPI1/2/4/8 同身份资源对照为：
+
+| MPI | process-tree RSS | worker PSS / USS | common solver | MUMPS symbolic+numeric |
+|---:|---:|---:|---:|---:|
+| 1 | 1.295 GiB | 1.257 / 1.243 GiB | 76.007 s | 29.969 s |
+| 2 | 2.158 GiB | 2.013 / 1.918 GiB | 74.913 s | 19.437 s |
+| 4 | 3.100 GiB | 2.723 / 2.612 GiB | 61.849 s | 12.400 s |
+| 8 | 4.711 GiB | 3.876 / 3.758 GiB | 53.901 s | 6.527 s |
+
+四点 residual 均 `<=1e-9` 且 0 swap。MPI1 是本研究的最低**实测** direct
+memory 点，不是理论、软件栈或 factor-free 下限；历史 5.8–6.4 GiB 也不是
+74,890 DoF 的最低内存。MPI4/8 的 50 tasks/rank 峰值只在 solver release
+后的 VTK/TBB postprocess 窗口出现，factor 峰值更早且更高；没有发现
+MUMPS KSP 区间的额外 worker pool。
+
+三个 MPI8 iterative profile 均达到 200 iteration cap：
+
+| profile | final/initial residual | recovered full residual | peak | factor semantics | result |
+|---|---:|---:|---:|---|---|
+| GMRES + Jacobi | 0.861662 | 0.861661 | 3.921 GiB | no global factor | controlled negative |
+| FGMRES + ASM-ILU(0) | 0.999661 | 0.999659 | 4.462 GiB | local ILU | controlled negative |
+| FGMRES + z-slab ILU(0) + 80-D DtN coarse correction | 0.996265 | 0.996263 | 3.885 GiB | local ILU + dense coarse LU；not strictly factorless | controlled negative |
+
+三者均无 official R00/R/T/A 或 field result。较低 RSS 不能冒充合格解的内存
+下限；在出现 materially different spectral/auxiliary-space preconditioner
+前不重复这些 profile，也不据此启动 matrix-free PDE。
+
+综上，当前 accuracy best 仍是 fixed h13 的 89,740 Full3D-equivalent DoF、
+`10/12` power + `10/12` complex amplitude；完整 `12/12 + 12/12` 未达到，
+Hybrid-eligible candidate count 与 Hybrid run count 均为 0。ordinary
+default 未改变。

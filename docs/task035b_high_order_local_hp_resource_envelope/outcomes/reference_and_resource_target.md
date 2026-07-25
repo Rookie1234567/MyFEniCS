@@ -127,6 +127,8 @@ Review V1 恢复序列的统一状态为：
 | fixed p5-trace/p6-interior h15 | 74,890 / 16,880 | 9,195,812 / 27,916,600 | 5.803 GiB | 6/12；7/12 | controlled negative |
 | fixed directional-z h14 | 82,315 / 18,500 | 10,104,512 / 31,347,000 | 6.376 GiB | 7/12；9/12 | positive z signal；仍 negative |
 | fixed directional-z h13 | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.411 GiB | **10/12；10/12** | 最佳预算内实测点；仍 negative |
+| h13 top2 z redistribution | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 5.886 GiB | 8/12；8/12 | bounded controlled negative |
+| h14 exact-reverse h13 top2 | 82,315 / 18,500 | 10,104,512 / 32,338,600 | 5.958 GiB | 7/12；8/12 | second bounded negative；z-node lane closed |
 | h14 R5-slab bisect | 89,740 / 20,120 | 11,013,212 / 36,273,200 | 6.463 GiB | 5/12；9/12 | count regression；预先指定 R5-slab lane closed |
 | global p6/h14 trace discriminator | 92,850 / 27,080 | 21,110,096 / 67,325,792 | 12.587 GiB pair | 9/12；12/12 | 超 cap 2,850；diagnostic only |
 
@@ -134,15 +136,25 @@ Review V1 恢复序列的统一状态为：
 geometry/tag/periodic/orientation identity。h13 仍失败
 `T(-4,0)`、`R(-4,0)` 功率以及 `r(-5,0)`、`r(-4,0)` 复振幅，因此
 “最佳测得”不等于 eligible。global p6/h14 说明完整 trace 对复振幅有正
-信号，但超过 90k 且功率仍未全过；physical selective-trace audit 又确认
-当前缺少把该信号转换为合法、物理减行 subset 所需的 DWR/Riesz/Floquet
-orbit/numbering 能力。当前仍没有合法 selected `N_equiv,13.5`。
+信号，但超过 90k 且功率仍未全过。physical expansion、periodic/Floquet
+orbit、Stage4 row omission 和 owner-aware MatShell 已通过
+fixture/correctness qualification，但 actual residual-weighted channel
+DWR、formal runner、candidate 和 PDE 数量仍为 0。当前仍没有合法
+selected `N_equiv,13.5`。
 
-condensed iterative 方向只完成 SHA-bound capability audit：
-`status=capability_stop_not_run`、正式 MPI8 iterative PDE 为 0、
-`iterative_peak=null`。`24 B/factor-NNZ + 8 B/row-pointer` planning proxy
-和非同时阶段峰值差都不是 factor-only 内存 authority，不能用于降低当前
+Review V2 已完成三个 programmatic MPI8 assembled iterative screen：
+GMRES/Jacobi、FGMRES/ASM-ILU 与 physical z-slab ILU0 + DtN trace correction
+均在 200 iterations 以 `DIVERGED_MAX_IT` 停止，full recovered residual
+分别约为 `0.861661`、`0.999659` 和 `0.996263`。三者没有 official
+R/T/A/channel 输出；后两者还含 local factor，不能称为 strictly
+factorless。其 3.921/4.462/3.885 GiB peak 只属于失败证据，不能降低正式
 资源目标。
+
+同一 h15 direct rank study 的 MPI1/2/4/8 process-tree peaks 为
+1.295/2.158/3.100/4.711 GiB。MPI1 是当前最低实测 direct 点，不是理论或
+factor-free 下限。h15/h13 canonical setup 的 non-KSP cold/warm build 为
+19.242/6.141 s 与 19.410/6.696 s；这些 setup/resource authority 不替代
+12-channel accuracy authority。
 
 ## 0.7 nm 规划映射
 

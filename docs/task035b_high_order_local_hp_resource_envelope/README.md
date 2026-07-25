@@ -31,7 +31,9 @@ Task035b 从 Task035 已完成的真实 DWR、周期 tetra、自适应循环和�
 - [`task.md`](task.md)
 - [`task_scope_addendum_v1.md`](task_scope_addendum_v1.md)
 - [`review_report_v1.md`](review_report_v1.md)
+- [`review_report_v2.md`](review_report_v2.md)
 - [`response_v2.md`](response_v2.md)
+- [`response_v3.md`](response_v3.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md`](../task035_hcurl_goal_oriented_adaptivity/review_report_v6.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md`](../task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md)
 - [`../task035_hcurl_goal_oriented_adaptivity/response_v5.md`](../task035_hcurl_goal_oriented_adaptivity/response_v5.md)
@@ -48,19 +50,26 @@ Task035b 继续采用 measured-evidence 驱动的连续自主研究：有正信�
 
 ## 当前结论与交付
 
-Review V1 连续批次已经冻结 12 通道 reference v1，并完成 16/16 独立
+Review V1 连续批次冻结了 12 通道 reference v1，并完成 16/16 独立
 Hermitian channel adjoint、mesh/topology、phase、trace 与 DtN/port
 根因假设判别和最小 MPI8 方向性恢复。当前最强预算内点为 fixed
 p5-trace/p6-interior h13：
 89,740 Full3D-equivalent DoF、20,120 rows、10/12 significant powers、
 10/12 complex amplitudes；它仍未达到强制 12/12 + 12/12。
 
-global p6/h14 提供了 same-mesh full-trace positive marginal（9/12 power、
-12/12 amplitude），但 92,850 DoF 超上限 2,850；reference-cell trace Riesz
-和 recovered-dual
-coefficient proxy 又不足以授权真实 selective-trace subset。physical
-trace lane 与 condensed iterative prototype 均以 SHA-bound
-`capability_stop_not_run` 保存，未用代理量或 raw PETSc option 冒充结果。
+Review V2 完成了两个 fixed-DoF z-node 判别；h13 top2 redistribution 与
+h14 exact-reverse 的实际结果分别为 8/12 + 8/12 和 7/12 + 8/12，因此该
+lane 已按连续负信号关闭。physical selective-trace 已推进到
+fixture/correctness-qualified 的 physical expansion、Stage4 row omission、
+pre-release hook 和 owner-aware MatShell，但 actual channel DWR、formal
+runner、candidate 与 PDE 数量仍为 0。
+
+setup/resource 主线是正结果：h15/h13 non-KSP cold/warm build 分别降至
+19.242/6.141 s 与 19.410/6.696 s。h15 MPI1/2/4/8 direct study 的最低实测
+process-tree peak 是 MPI1 的 1.295 GiB，说明旧 5.8–6.4 GiB 不是内存
+下限，但该点也不是理论或 factor-free 下限。三种 programmatic assembled
+iterative screen 均在 200 iterations 不收敛，作为 controlled negatives
+保留，且没有 official R/T/A/channel 输出。
 
 因此当前仍没有 Hybrid-eligible same-error candidate；Hybrid closure、
 M funnel、external DtN funnel 和 0.7 nm resource model v3 保持
