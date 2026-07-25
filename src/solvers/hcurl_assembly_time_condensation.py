@@ -1665,6 +1665,7 @@ def _persistent_condensed_class_identity(
     low_to_reduced_content_sha256: str | None,
     mpi_size: int,
     mpi_rank: int,
+    canonical_orientation_class_reuse: bool = False,
 ) -> tuple[str, dict[str, Any]]:
     """Return the fixed, rank-independent oriented-class identity.
 
@@ -1704,9 +1705,14 @@ def _persistent_condensed_class_identity(
                 "condensed class regionwise embedding identity must be "
                 "a SHA256 digest"
             )
+    canonical_orientation_class_reuse = bool(
+        canonical_orientation_class_reuse
+    )
     payload = {
         "schema_version": (
-            "task035b.persistent-condensed-class-identity.v2"
+            "task035b.persistent-condensed-class-identity.v3"
+            if canonical_orientation_class_reuse
+            else "task035b.persistent-condensed-class-identity.v2"
         ),
         "source_commit_sha": str(source_sha),
         "operator_identity": dict(operator_identity),
@@ -1742,6 +1748,17 @@ def _persistent_condensed_class_identity(
             "scipy_version": scipy_version,
         },
     }
+    if canonical_orientation_class_reuse:
+        payload["construction_identity"] = {
+            "canonical_orientation_class_reuse": True,
+            "orientation_algebra": (
+                "T_block_diag_Ttrace_Iinterior_then_"
+                "S=Ttrace_S_TtraceT_and_R=R_TtraceT"
+            ),
+            "trace_interior_separation_qualification": (
+                "all_actual_transform_columns"
+            ),
+        }
     canonical = json.dumps(
         payload,
         ensure_ascii=True,
@@ -2624,6 +2641,222 @@ def _orient_embedding(
     return oriented
 
 
+def _apply_cell_dof_transform(
+    element,
+    values: np.ndarray,
+    *,
+    cell_info: int,
+) -> None:
+    """Apply one Basix/DOLFINx cell transform to matrix rows in place."""
+
+    if values.ndim != 2 or values.shape[0] != int(element.space_dimension):
+        raise ValueError(
+            "cell orientation values must have one row per element DoF"
+        )
+    block_size = int(values.shape[1])
+    if block_size < 1:
+        raise ValueError("cell orientation block size must be positive")
+    element.T_apply(
+        values.ravel(),
+        np.asarray([int(cell_info)], dtype=np.uint32),
+        block_size,
+    )
+
+
+def _qualified_trace_orientation_block(
+    element,
+    *,
+    trace_positions: np.ndarray,
+    interior_positions: np.ndarray,
+    cell_info: int,
+    tolerance: float = 2.0e-12,
+    interior_probe_columns: int = 32,
+) -> tuple[sparse.csr_matrix, dict[str, Any]]:
+    """Return ``T_t`` after proving ``T = diag(T_t, I_i)``.
+
+    DOLFINx cell permutation information only acts on edge/face entity DoFs,
+    but the canonical-orientation condensation optimization must not rely on
+    that statement implicitly.  This routine reconstructs every trace column
+    of the *actual* runtime transform and probes every interior basis column
+    in bounded-memory chunks.  It therefore fails closed unless, for the
+    requested high-order element and cell permutation,
+
+    ``T_it = 0``, ``T_ti = 0`` and ``T_ii = I``.
+    """
+
+    trace_positions = np.asarray(trace_positions, dtype=np.int32)
+    interior_positions = np.asarray(interior_positions, dtype=np.int32)
+    dimension = int(element.space_dimension)
+    if (
+        len(trace_positions) + len(interior_positions) != dimension
+        or len(np.unique(np.concatenate((trace_positions, interior_positions))))
+        != dimension
+    ):
+        raise ValueError(
+            "trace and interior positions must partition the element DoFs"
+        )
+    if tolerance <= 0.0:
+        raise ValueError("orientation qualification tolerance must be positive")
+    interior_probe_columns = int(interior_probe_columns)
+    if interior_probe_columns < 1:
+        raise ValueError("interior probe chunk size must be positive")
+
+    trace_injection = np.zeros(
+        (dimension, len(trace_positions)),
+        dtype=np.float64,
+    )
+    trace_injection[
+        trace_positions,
+        np.arange(len(trace_positions), dtype=np.int32),
+    ] = 1.0
+    _apply_cell_dof_transform(
+        element,
+        trace_injection,
+        cell_info=int(cell_info),
+    )
+    trace_from_trace = np.ascontiguousarray(
+        trace_injection[trace_positions, :],
+        dtype=np.float64,
+    )
+    interior_from_trace_error = float(
+        np.max(
+            np.abs(trace_injection[interior_positions, :]),
+            initial=0.0,
+        )
+    )
+
+    trace_from_interior_error = 0.0
+    interior_identity_error = 0.0
+    for start in range(0, len(interior_positions), interior_probe_columns):
+        stop = min(start + interior_probe_columns, len(interior_positions))
+        width = stop - start
+        interior_injection = np.zeros(
+            (dimension, width),
+            dtype=np.float64,
+        )
+        interior_injection[
+            interior_positions[start:stop],
+            np.arange(width, dtype=np.int32),
+        ] = 1.0
+        _apply_cell_dof_transform(
+            element,
+            interior_injection,
+            cell_info=int(cell_info),
+        )
+        trace_from_interior_error = max(
+            trace_from_interior_error,
+            float(
+                np.max(
+                    np.abs(interior_injection[trace_positions, :]),
+                    initial=0.0,
+                )
+            ),
+        )
+        expected = np.zeros(
+            (len(interior_positions), width),
+            dtype=np.float64,
+        )
+        expected[
+            np.arange(start, stop, dtype=np.int32),
+            np.arange(width, dtype=np.int32),
+        ] = 1.0
+        interior_identity_error = max(
+            interior_identity_error,
+            float(
+                np.max(
+                    np.abs(
+                        interior_injection[interior_positions, :] - expected
+                    ),
+                    initial=0.0,
+                )
+            ),
+        )
+
+    maximum_error = max(
+        interior_from_trace_error,
+        trace_from_interior_error,
+        interior_identity_error,
+    )
+    if not np.all(np.isfinite(trace_from_trace)) or maximum_error > tolerance:
+        raise RuntimeError(
+            "cell orientation does not preserve the trace/interior split: "
+            f"cell_info={int(cell_info)}, max_error={maximum_error:.3e}"
+        )
+    trace_transform = sparse.csr_matrix(trace_from_trace)
+    if (
+        trace_transform.shape != (len(trace_positions), len(trace_positions))
+        or np.any(np.diff(trace_transform.indptr) == 0)
+        or np.any(np.diff(trace_transform.tocsc().indptr) == 0)
+    ):
+        raise RuntimeError(
+            "qualified trace orientation block is structurally singular"
+        )
+    return trace_transform, {
+        "cell_permutation": int(cell_info),
+        "trace_dimension": int(len(trace_positions)),
+        "interior_dimension": int(len(interior_positions)),
+        "trace_transform_nnz": int(trace_transform.nnz),
+        "interior_from_trace_max_abs": interior_from_trace_error,
+        "trace_from_interior_max_abs": trace_from_interior_error,
+        "interior_identity_max_abs": interior_identity_error,
+        "qualification_tolerance": float(tolerance),
+        "block_diagonal_trace_interior_proven": True,
+    }
+
+
+def _right_apply_trace_orientation(
+    values: np.ndarray,
+    trace_transform: sparse.csr_matrix,
+) -> np.ndarray:
+    """Return ``values @ T_t.T`` without dense orientation products."""
+
+    values = np.asarray(values, dtype=np.complex128)
+    if values.ndim != 2 or values.shape[1] != trace_transform.shape[0]:
+        raise ValueError(
+            "right trace orientation requires one column per trace DoF"
+        )
+    return np.ascontiguousarray(
+        (trace_transform @ values.T).T,
+        dtype=np.complex128,
+    )
+
+
+def _orient_canonical_high_condensed_arrays(
+    *,
+    canonical_schur: np.ndarray,
+    canonical_primal_recovery: np.ndarray,
+    canonical_dual_recovery: np.ndarray,
+    trace_transform: sparse.csr_matrix,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Apply the exact block-diagonal orientation identities.
+
+    For ``A_o = T A T.T`` and ``T = diag(T_t, I_i)``,
+
+    ``S_o = T_t S T_t.T`` and
+    ``R_o = R T_t.T`` for both primal and Hermitian-dual recovery.
+    """
+
+    schur_right = _right_apply_trace_orientation(
+        canonical_schur,
+        trace_transform,
+    )
+    oriented_schur = np.ascontiguousarray(
+        trace_transform @ schur_right,
+        dtype=np.complex128,
+    )
+    return (
+        oriented_schur,
+        _right_apply_trace_orientation(
+            canonical_primal_recovery,
+            trace_transform,
+        ),
+        _right_apply_trace_orientation(
+            canonical_dual_recovery,
+            trace_transform,
+        ),
+    )
+
+
 def build_unconstrained_assembly_time_condensation(
     compiled_form,
     function_space,
@@ -2645,6 +2878,7 @@ def build_unconstrained_assembly_time_condensation(
     persistent_cache_mode: str = "off",
     bulk_cell_block_insertion: bool = False,
     affine_isotropic_tensor_spec=None,
+    canonical_orientation_class_reuse: bool = False,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -2719,7 +2953,16 @@ def build_unconstrained_assembly_time_condensation(
         interior_positions,
         assume_unique=True,
     )
+    canonical_orientation_class_reuse = bool(
+        canonical_orientation_class_reuse
+    )
     regionwise_p = regionwise_element is not None
+    if canonical_orientation_class_reuse and regionwise_p:
+        raise NotImplementedError(
+            "canonical orientation class reuse is currently qualified only "
+            "for one high-order fixed-trace element; regionwise-p embedding "
+            "orientation retains the established per-oriented-class path"
+        )
     local_high_interior = np.ones(owned_cells, dtype=bool)
     regionwise_geometry_hash = None
     low_element = None
@@ -3049,6 +3292,25 @@ def build_unconstrained_assembly_time_condensation(
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     dual_recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    canonical_condensed_cache: dict[
+        tuple[Any, ...],
+        tuple[
+            np.ndarray,
+            np.ndarray,
+            tuple[np.ndarray, np.ndarray],
+            np.ndarray,
+        ],
+    ] = {}
+    canonical_lu_alias_cache: dict[
+        tuple[Any, ...],
+        tuple[np.ndarray, np.ndarray],
+    ] = {}
+    trace_orientation_cache: dict[
+        int,
+        sparse.csr_matrix,
+    ] = {}
+    trace_orientation_audits: dict[int, dict[str, Any]] = {}
+    used_cell_permutations: set[int] = set()
     high_interior_identity = np.eye(
         len(interior_positions),
         dtype=np.float64,
@@ -3071,6 +3333,9 @@ def build_unconstrained_assembly_time_condensation(
     local_condensed_cache_read_bytes = 0
     local_condensed_cache_write_bytes = 0
     local_condensed_class_constructions = 0
+    local_canonical_condensed_class_constructions = 0
+    local_canonical_orientation_derived_classes = 0
+    local_canonical_orientation_lu_alias_restores = 0
     local_condensed_projection_alias_restore_count = 0
     local_condensed_projection_alias_bytes_elided = 0
     local_condensed_cache_miss_reasons: dict[str, int] = {}
@@ -3103,6 +3368,34 @@ def build_unconstrained_assembly_time_condensation(
             int(cell_permutations[cell]),
             interior_policy,
         )
+        canonical_class_key = (*raw_key, interior_policy)
+        cell_permutation = int(cell_permutations[cell])
+        trace_transform_for_class = None
+        if canonical_orientation_class_reuse:
+            used_cell_permutations.add(cell_permutation)
+            orientation_qualification_started = perf_counter()
+            trace_transform_for_class = trace_orientation_cache.get(
+                cell_permutation
+            )
+            if trace_transform_for_class is None:
+                (
+                    trace_transform_for_class,
+                    orientation_audit,
+                ) = _qualified_trace_orientation_block(
+                    element,
+                    trace_positions=trace_positions,
+                    interior_positions=interior_positions,
+                    cell_info=cell_permutation,
+                )
+                trace_orientation_cache[cell_permutation] = (
+                    trace_transform_for_class
+                )
+                trace_orientation_audits[cell_permutation] = (
+                    orientation_audit
+                )
+            local_orientation_seconds += (
+                perf_counter() - orientation_qualification_started
+            )
         schur = schur_cache.get(class_key)
         cache_path = None
         manifest_path = None
@@ -3171,6 +3464,9 @@ def build_unconstrained_assembly_time_condensation(
                     ),
                     mpi_size=comm.size,
                     mpi_rank=comm.rank,
+                    canonical_orientation_class_reuse=(
+                        canonical_orientation_class_reuse
+                    ),
                 )
             )
             local_condensed_cache_identity_seconds += (
@@ -3252,10 +3548,36 @@ def build_unconstrained_assembly_time_condensation(
                 recovery_cache[class_key] = class_arrays[
                     "interior_from_trace"
                 ]
-                lu_cache[class_key] = (
+                loaded_lu = (
                     class_arrays["lu_values"],
                     class_arrays["lu_pivots"],
                 )
+                if canonical_orientation_class_reuse:
+                    canonical_lu = canonical_lu_alias_cache.get(
+                        canonical_class_key
+                    )
+                    if canonical_lu is None:
+                        canonical_lu_alias_cache[canonical_class_key] = (
+                            loaded_lu
+                        )
+                    else:
+                        if (
+                            not np.array_equal(
+                                canonical_lu[0],
+                                loaded_lu[0],
+                            )
+                            or not np.array_equal(
+                                canonical_lu[1],
+                                loaded_lu[1],
+                            )
+                        ):
+                            raise RuntimeError(
+                                "canonical-orientation persistent classes "
+                                "contain different Aii LU factors"
+                            )
+                        loaded_lu = canonical_lu
+                        local_canonical_orientation_lu_alias_restores += 1
+                lu_cache[class_key] = loaded_lu
                 rhs_projection_cache[class_key] = class_arrays[
                     "rhs_projection"
                 ]
@@ -3275,144 +3597,253 @@ def build_unconstrained_assembly_time_condensation(
                 condensed_cache_enabled
             )
             schur_started = perf_counter()
-            orientation_started = perf_counter()
-            oriented = tensor.copy()
-            if interior_policy == "low":
-                assert low_element is not None
-                assert low_orientation_element is not None
-                assert low_to_reduced is not None
-                assert low_interior_positions is not None
-                assert low_trace_positions is not None
-                oriented_embedding = _orient_embedding(
-                    basix_element,
-                    low_element,
-                    low_to_reduced,
-                    int(cell_permutations[cell]),
+            if canonical_orientation_class_reuse:
+                canonical_arrays = canonical_condensed_cache.get(
+                    canonical_class_key
                 )
-                _orient_cell_tensor(
-                    low_orientation_element,
-                    oriented,
-                    np.asarray(
-                        cell_permutations[cell : cell + 1],
-                        dtype=np.uint32,
+                if canonical_arrays is None:
+                    local_canonical_condensed_class_constructions += 1
+                    A_ii = tensor[
+                        np.ix_(interior_positions, interior_positions)
+                    ]
+                    A_it = tensor[
+                        np.ix_(interior_positions, trace_positions)
+                    ]
+                    A_ti = tensor[
+                        np.ix_(trace_positions, interior_positions)
+                    ]
+                    A_tt = tensor[
+                        np.ix_(trace_positions, trace_positions)
+                    ]
+                    factor_started = perf_counter()
+                    canonical_lu = lu_factor(A_ii)
+                    local_aii_factor_seconds += (
+                        perf_counter() - factor_started
+                    )
+                    existing_lu = canonical_lu_alias_cache.get(
+                        canonical_class_key
+                    )
+                    if existing_lu is not None:
+                        if (
+                            not np.array_equal(
+                                existing_lu[0],
+                                canonical_lu[0],
+                            )
+                            or not np.array_equal(
+                                existing_lu[1],
+                                canonical_lu[1],
+                            )
+                        ):
+                            raise RuntimeError(
+                                "canonical Aii LU differs from an oriented "
+                                "persistent cache factor"
+                            )
+                        canonical_lu = existing_lu
+                        local_canonical_orientation_lu_alias_restores += 1
+                    solve_started = perf_counter()
+                    canonical_primal_recovery = -lu_solve(
+                        canonical_lu,
+                        A_it,
+                    )
+                    canonical_dual_recovery = -lu_solve(
+                        canonical_lu,
+                        A_ti.conj().T,
+                        trans=2,
+                    )
+                    local_aii_solve_seconds += (
+                        perf_counter() - solve_started
+                    )
+                    schur_product_started = perf_counter()
+                    canonical_schur = (
+                        A_tt + A_ti @ canonical_primal_recovery
+                    )
+                    local_schur_product_seconds += (
+                        perf_counter() - schur_product_started
+                    )
+                    canonical_arrays = (
+                        canonical_schur,
+                        canonical_primal_recovery,
+                        canonical_lu,
+                        canonical_dual_recovery,
+                    )
+                    canonical_condensed_cache[canonical_class_key] = (
+                        canonical_arrays
+                    )
+                    canonical_lu_alias_cache[canonical_class_key] = (
+                        canonical_lu
+                    )
+                (
+                    canonical_schur,
+                    canonical_primal_recovery,
+                    active_interior_lu,
+                    canonical_dual_recovery,
+                ) = canonical_arrays
+                orientation_started = perf_counter()
+                assert trace_transform_for_class is not None
+                (
+                    schur,
+                    interior_from_trace,
+                    dual_interior_from_trace,
+                ) = _orient_canonical_high_condensed_arrays(
+                    canonical_schur=canonical_schur,
+                    canonical_primal_recovery=(
+                        canonical_primal_recovery
                     ),
+                    canonical_dual_recovery=canonical_dual_recovery,
+                    trace_transform=trace_transform_for_class,
                 )
-                trace_identity_error = float(
-                    np.max(
-                        np.abs(
-                            oriented_embedding[
-                                np.ix_(
-                                    trace_positions,
-                                    low_trace_positions,
-                                )
-                            ]
-                            - np.eye(len(trace_positions))
-                        ),
-                        initial=0.0,
-                    )
+                local_orientation_seconds += (
+                    perf_counter() - orientation_started
                 )
-                trace_interior_leakage = float(
-                    np.max(
-                        np.abs(
-                            oriented_embedding[
-                                np.ix_(
-                                    trace_positions,
-                                    low_interior_positions,
-                                )
-                            ]
-                        ),
-                        initial=0.0,
-                    )
-                )
-                if (
-                    trace_identity_error > 2.0e-11
-                    or trace_interior_leakage > 2.0e-11
-                ):
-                    raise RuntimeError(
-                        "regionwise-p orientation does not preserve the "
-                        "shared low-order trace"
-                    )
-                active_tensor = oriented
-                active_interior_positions = low_interior_positions
-                active_trace_positions = low_trace_positions
-                interior_embedding_from_trace = oriented_embedding[
-                    np.ix_(interior_positions, low_trace_positions)
-                ]
-                interior_embedding_from_interior = oriented_embedding[
-                    np.ix_(interior_positions, low_interior_positions)
-                ]
-            else:
-                _orient_cell_tensor(
-                    element,
-                    oriented,
-                    np.asarray(
-                        cell_permutations[cell : cell + 1],
-                        dtype=np.uint32,
-                    ),
-                )
-                active_tensor = oriented
-                active_interior_positions = interior_positions
-                active_trace_positions = trace_positions
-                interior_embedding_from_trace = np.zeros(
-                    (len(interior_positions), len(trace_positions)),
-                    dtype=np.float64,
-                )
+                local_canonical_orientation_derived_classes += 1
                 interior_embedding_from_interior = high_interior_identity
-            local_orientation_seconds += (
-                perf_counter() - orientation_started
-            )
-            A_ii = active_tensor[
-                np.ix_(
-                    active_interior_positions,
-                    active_interior_positions,
+            else:
+                orientation_started = perf_counter()
+                oriented = tensor.copy()
+                if interior_policy == "low":
+                    assert low_element is not None
+                    assert low_orientation_element is not None
+                    assert low_to_reduced is not None
+                    assert low_interior_positions is not None
+                    assert low_trace_positions is not None
+                    oriented_embedding = _orient_embedding(
+                        basix_element,
+                        low_element,
+                        low_to_reduced,
+                        int(cell_permutations[cell]),
+                    )
+                    _orient_cell_tensor(
+                        low_orientation_element,
+                        oriented,
+                        np.asarray(
+                            cell_permutations[cell : cell + 1],
+                            dtype=np.uint32,
+                        ),
+                    )
+                    trace_identity_error = float(
+                        np.max(
+                            np.abs(
+                                oriented_embedding[
+                                    np.ix_(
+                                        trace_positions,
+                                        low_trace_positions,
+                                    )
+                                ]
+                                - np.eye(len(trace_positions))
+                            ),
+                            initial=0.0,
+                        )
+                    )
+                    trace_interior_leakage = float(
+                        np.max(
+                            np.abs(
+                                oriented_embedding[
+                                    np.ix_(
+                                        trace_positions,
+                                        low_interior_positions,
+                                    )
+                                ]
+                            ),
+                            initial=0.0,
+                        )
+                    )
+                    if (
+                        trace_identity_error > 2.0e-11
+                        or trace_interior_leakage > 2.0e-11
+                    ):
+                        raise RuntimeError(
+                            "regionwise-p orientation does not preserve the "
+                            "shared low-order trace"
+                        )
+                    active_tensor = oriented
+                    active_interior_positions = low_interior_positions
+                    active_trace_positions = low_trace_positions
+                    interior_embedding_from_trace = oriented_embedding[
+                        np.ix_(interior_positions, low_trace_positions)
+                    ]
+                    interior_embedding_from_interior = oriented_embedding[
+                        np.ix_(interior_positions, low_interior_positions)
+                    ]
+                else:
+                    _orient_cell_tensor(
+                        element,
+                        oriented,
+                        np.asarray(
+                            cell_permutations[cell : cell + 1],
+                            dtype=np.uint32,
+                        ),
+                    )
+                    active_tensor = oriented
+                    active_interior_positions = interior_positions
+                    active_trace_positions = trace_positions
+                    interior_embedding_from_trace = np.zeros(
+                        (
+                            len(interior_positions),
+                            len(trace_positions),
+                        ),
+                        dtype=np.float64,
+                    )
+                    interior_embedding_from_interior = (
+                        high_interior_identity
+                    )
+                local_orientation_seconds += (
+                    perf_counter() - orientation_started
                 )
-            ]
-            A_it = active_tensor[
-                np.ix_(
-                    active_interior_positions,
-                    active_trace_positions,
+                A_ii = active_tensor[
+                    np.ix_(
+                        active_interior_positions,
+                        active_interior_positions,
+                    )
+                ]
+                A_it = active_tensor[
+                    np.ix_(
+                        active_interior_positions,
+                        active_trace_positions,
+                    )
+                ]
+                A_ti = active_tensor[
+                    np.ix_(
+                        active_trace_positions,
+                        active_interior_positions,
+                    )
+                ]
+                A_tt = active_tensor[
+                    np.ix_(
+                        active_trace_positions,
+                        active_trace_positions,
+                    )
+                ]
+                factor_started = perf_counter()
+                active_interior_lu = lu_factor(A_ii)
+                local_aii_factor_seconds += (
+                    perf_counter() - factor_started
                 )
-            ]
-            A_ti = active_tensor[
-                np.ix_(
-                    active_trace_positions,
-                    active_interior_positions,
+                solve_started = perf_counter()
+                active_interior_from_trace = -lu_solve(
+                    active_interior_lu,
+                    A_it,
                 )
-            ]
-            A_tt = active_tensor[
-                np.ix_(active_trace_positions, active_trace_positions)
-            ]
-            factor_started = perf_counter()
-            active_interior_lu = lu_factor(A_ii)
-            local_aii_factor_seconds += (
-                perf_counter() - factor_started
-            )
-            solve_started = perf_counter()
-            active_interior_from_trace = -lu_solve(
-                active_interior_lu,
-                A_it,
-            )
-            interior_from_trace = (
-                interior_embedding_from_trace
-                + interior_embedding_from_interior
-                @ active_interior_from_trace
-            )
-            adjoint_trace_solution = lu_solve(
-                active_interior_lu,
-                A_ti.conj().T,
-                trans=2,
-            )
-            dual_interior_from_trace = (
-                interior_embedding_from_trace
-                - interior_embedding_from_interior
-                @ adjoint_trace_solution
-            )
-            local_aii_solve_seconds += perf_counter() - solve_started
-            schur_product_started = perf_counter()
-            schur = A_tt + A_ti @ active_interior_from_trace
-            local_schur_product_seconds += (
-                perf_counter() - schur_product_started
-            )
+                interior_from_trace = (
+                    interior_embedding_from_trace
+                    + interior_embedding_from_interior
+                    @ active_interior_from_trace
+                )
+                adjoint_trace_solution = lu_solve(
+                    active_interior_lu,
+                    A_ti.conj().T,
+                    trans=2,
+                )
+                dual_interior_from_trace = (
+                    interior_embedding_from_trace
+                    - interior_embedding_from_interior
+                    @ adjoint_trace_solution
+                )
+                local_aii_solve_seconds += perf_counter() - solve_started
+                schur_product_started = perf_counter()
+                schur = A_tt + A_ti @ active_interior_from_trace
+                local_schur_product_seconds += (
+                    perf_counter() - schur_product_started
+                )
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
@@ -3623,6 +4054,116 @@ def build_unconstrained_assembly_time_condensation(
         raw_cache_audit["raw_tensor_kernel_evaluation_count"]
     )
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    canonical_class_construction_count = int(
+        comm.allreduce(
+            local_canonical_condensed_class_constructions,
+            op=MPI.SUM,
+        )
+    )
+    canonical_orientation_derived_class_count = int(
+        comm.allreduce(
+            local_canonical_orientation_derived_classes,
+            op=MPI.SUM,
+        )
+    )
+    canonical_orientation_avoided_factorization_count = int(
+        canonical_orientation_derived_class_count
+        - canonical_class_construction_count
+    )
+    canonical_orientation_lu_alias_restore_count = int(
+        comm.allreduce(
+            local_canonical_orientation_lu_alias_restores,
+            op=MPI.SUM,
+        )
+    )
+    orientation_packets = comm.allgather(
+        tuple(trace_orientation_audits.values())
+    )
+    used_permutation_packets = comm.allgather(
+        tuple(sorted(used_cell_permutations))
+    )
+    global_used_cell_permutations = sorted(
+        {
+            int(permutation)
+            for packet in used_permutation_packets
+            for permutation in packet
+        }
+    )
+    orientation_audits_by_permutation: dict[int, dict[str, Any]] = {}
+    for packet in orientation_packets:
+        for audit in packet:
+            permutation = int(audit["cell_permutation"])
+            previous = orientation_audits_by_permutation.get(permutation)
+            if previous is not None and previous != audit:
+                raise RuntimeError(
+                    "canonical orientation qualification differs across "
+                    "MPI ranks"
+                )
+            orientation_audits_by_permutation[permutation] = dict(audit)
+    qualified_cell_permutations = sorted(
+        orientation_audits_by_permutation
+    )
+    orientation_coverage_exact = bool(
+        canonical_orientation_class_reuse
+        and global_used_cell_permutations == qualified_cell_permutations
+        and all(
+            bool(audit["block_diagonal_trace_interior_proven"])
+            for audit in orientation_audits_by_permutation.values()
+        )
+    )
+    if canonical_orientation_class_reuse and not orientation_coverage_exact:
+        raise RuntimeError(
+            "canonical orientation qualification does not exactly cover "
+            "the global used cell-permutation set"
+        )
+    canonical_orientation_audit = {
+        "schema_version": (
+            "task035b.canonical-orientation-condensation.v1"
+        ),
+        "enabled": canonical_orientation_class_reuse,
+        "ordinary_default_changed": False,
+        "supported_interior_policy": (
+            "high_fixed_trace_only"
+            if canonical_orientation_class_reuse
+            else None
+        ),
+        "regionwise_p_supported": False,
+        "canonical_class_construction_count_sum": (
+            canonical_class_construction_count
+        ),
+        "oriented_class_derived_count_sum": (
+            canonical_orientation_derived_class_count
+        ),
+        "aii_factorizations_avoided_sum": (
+            canonical_orientation_avoided_factorization_count
+        ),
+        "persistent_lu_alias_restore_count_sum": (
+            canonical_orientation_lu_alias_restore_count
+        ),
+        "used_cell_permutations": global_used_cell_permutations,
+        "qualified_cell_permutations": qualified_cell_permutations,
+        "orientation_qualification": [
+            orientation_audits_by_permutation[key]
+            for key in sorted(orientation_audits_by_permutation)
+        ],
+        "trace_interior_block_diagonal_proven_for_every_used_permutation": (
+            orientation_coverage_exact
+        ),
+        "used_set_equals_qualified_set": orientation_coverage_exact,
+        "algebraic_identities": {
+            "oriented_operator": "A_o=T_A_Tt",
+            "orientation_split": "T=diag(T_trace,I_interior)",
+            "oriented_schur": "S_o=T_trace_S_T_trace_t",
+            "primal_recovery": "R_o=R_T_trace_t",
+            "hermitian_dual_recovery": "D_o=D_T_trace_t",
+            "interior_lu": "LU(Aii_o)=LU(Aii)",
+            "rhs_projection_and_solution_embedding": "identity_unchanged",
+        },
+        "inactive_or_postzero_rows_created": False,
+    }
+    canonical_condensed_cache.clear()
+    canonical_lu_alias_cache.clear()
+    trace_orientation_cache.clear()
     condensed_cache_miss_reasons: dict[str, int] = {}
     if condensed_cache_enabled:
         condensed_class_construction_count = int(
@@ -3752,6 +4293,7 @@ def build_unconstrained_assembly_time_condensation(
             "cell_permutation",
             "interior_policy",
             "regionwise_embedding_content",
+            "canonical_orientation_construction_policy_when_enabled",
             "numpy_scipy_scalar_int_abi",
         ],
         "identity_excludes": [
@@ -3761,6 +4303,14 @@ def build_unconstrained_assembly_time_condensation(
         ],
         "identity_is_rank_partition_bound": False,
         "cross_mpi_identity_eligible": True,
+        "canonical_orientation_class_reuse": (
+            canonical_orientation_class_reuse
+        ),
+        "canonical_orientation_identity_schema": (
+            "task035b.persistent-condensed-class-identity.v3"
+            if canonical_orientation_class_reuse
+            else "task035b.persistent-condensed-class-identity.v2"
+        ),
         "hit_count_sum": condensed_cache_hit_count,
         "miss_count_sum": condensed_cache_miss_count,
         "read_attempt_count_sum": condensed_cache_read_attempt_count,
@@ -3973,6 +4523,9 @@ def build_unconstrained_assembly_time_condensation(
             "oriented_schur_class_count_sum": oriented_class_count,
             "oriented_schur_class_construction_count_sum": (
                 condensed_class_construction_count
+            ),
+            "canonical_orientation_class_reuse": (
+                canonical_orientation_audit
             ),
             "persistent_condensed_class_cache": (
                 persistent_condensed_class_cache_audit
