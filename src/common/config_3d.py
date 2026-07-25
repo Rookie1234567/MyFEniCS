@@ -200,6 +200,12 @@ class SimulationConfig3D:
     # Exact reference-Gram backend for the fixed rectangular affine,
     # isotropic, no-PML Maxwell operator.  General forms remain on FFCx.
     stage4_affine_isotropic_reference_tensor: bool = False
+    # Review-V2 setup research only.  Reuse one canonical high-interior
+    # condensation per raw tensor class and derive the actually oriented
+    # trace Schur/recovery arrays by qualified Basix entity transforms.
+    # This is valid only for assembly-time fixed-trace/high-interior spaces;
+    # ordinary and regionwise-p paths retain their established behaviour.
+    stage4_canonical_orientation_class_reuse: bool = False
     # Task035b local-p lane. The FE container uses the reduced-trace custom
     # element, while assembly projects cells outside this canonical-ID set to
     # the embedded low-order interior space before Schur elimination.

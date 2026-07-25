@@ -2173,6 +2173,90 @@ def _port_mode_count_metrics(modes: list[PortMode3D]) -> dict[str, int]:
     }
 
 
+def _canonical_orientation_class_reuse_request_audit(
+    cfg: SimulationConfig3D,
+) -> dict[str, Any]:
+    """Fail closed around the opt-in canonical high-interior reuse lane."""
+
+    requested = bool(cfg.stage4_canonical_orientation_class_reuse)
+    rejection_reasons: list[str] = []
+    if not cfg.stage4_assembly_time_cell_static_condensation:
+        rejection_reasons.append(
+            "assembly_time_cell_static_condensation_required"
+        )
+    if (
+        not cfg.nedelec_reduced_trace_enabled
+        or cfg.nedelec_interior_degree_resolved
+        <= cfg.nedelec_trace_degree_resolved
+    ):
+        rejection_reasons.append(
+            "fixed_trace_with_strictly_higher_interior_degree_required"
+        )
+    if cfg.stage4_regionwise_interior_p:
+        rejection_reasons.append("regionwise_p_conflict")
+    if _use_zero_order_local_robin_dtn(cfg):
+        rejection_reasons.append("zero_order_local_robin_path_unsupported")
+
+    eligible = not rejection_reasons
+    audit = {
+        "schema_version": (
+            "task035b.canonical-orientation-reuse-request.v1"
+        ),
+        "requested": requested,
+        "eligible": eligible,
+        "accepted": bool(requested and eligible),
+        "rejection_reasons": rejection_reasons,
+        "required_path": (
+            "assembly_time_fixed_trace_strictly_higher_interior"
+        ),
+        "regionwise_p_supported": False,
+        "ordinary_default_changed": False,
+    }
+    if requested and not eligible:
+        raise ValueError(
+            "canonical orientation class reuse is ineligible: "
+            + ", ".join(rejection_reasons)
+        )
+    return audit
+
+
+def _build_assembly_time_condensation_with_request(
+    compiled_form,
+    function_space,
+    cell_tags,
+    *,
+    canonical_orientation_request_audit: dict[str, Any],
+    **kwargs,
+):
+    """Forward the qualified request to the reusable condensation core."""
+
+    if "canonical_orientation_class_reuse" in kwargs:
+        raise TypeError(
+            "canonical orientation reuse is owned by the qualified "
+            "SimulationConfig3D request"
+        )
+    if (
+        canonical_orientation_request_audit.get("schema_version")
+        != "task035b.canonical-orientation-reuse-request.v1"
+        or not isinstance(
+            canonical_orientation_request_audit.get("accepted"),
+            bool,
+        )
+    ):
+        raise ValueError(
+            "canonical orientation reuse requires its typed request audit"
+        )
+    return build_unconstrained_assembly_time_condensation(
+        compiled_form,
+        function_space,
+        cell_tags,
+        canonical_orientation_class_reuse=(
+            canonical_orientation_request_audit["accepted"]
+        ),
+        **kwargs,
+    )
+
+
 def solve_stage4_dtn_port_total_field(
     *,
     a,
@@ -2194,6 +2278,9 @@ def solve_stage4_dtn_port_total_field(
         raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
     if floquet_data is None:
         raise ValueError("stage4_boundary_model='dtn_port' requires x/y Floquet constraints.")
+    canonical_orientation_request_audit = (
+        _canonical_orientation_class_reuse_request_audit(cfg)
+    )
     if cfg.stage4_cell_static_condensation and (
         cfg.matrix_diagnostics_assemble_only
         or cfg.matrix_diagnostics_factorization_only
@@ -2292,6 +2379,9 @@ def solve_stage4_dtn_port_total_field(
     comm = mesh_data.mesh.comm
     stage_start = time.perf_counter()
     timing_details: dict[str, Any] = {}
+    timing_details[
+        "stage4_canonical_orientation_class_reuse_request"
+    ] = canonical_orientation_request_audit
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
     if n_aux == 0:
@@ -2380,10 +2470,13 @@ def solve_stage4_dtn_port_total_field(
             "stage4_dtn_bilinear_form_compile_skipped_by_affine_backend"
         ] = bool(assembly_time_compiled_form is None)
         assembly_time_system = (
-            build_unconstrained_assembly_time_condensation(
+            _build_assembly_time_condensation_with_request(
                 assembly_time_compiled_form,
                 V,
                 mesh_data.cell_tags,
+                canonical_orientation_request_audit=(
+                    canonical_orientation_request_audit
+                ),
                 mpc=floquet_data.mpc,
                 appended_global_rows=n_aux,
                 appended_support_owned_cell_groups=(

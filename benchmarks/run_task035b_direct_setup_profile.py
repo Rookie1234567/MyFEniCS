@@ -152,6 +152,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--h-nm", type=float, default=15.0)
     parser.add_argument(
+        "--canonical-orientation-class-reuse",
+        action="store_true",
+        help=(
+            "explicitly reuse canonical high-interior condensed classes "
+            "and derive qualified oriented trace classes"
+        ),
+    )
+    parser.add_argument(
         "--artifact-root",
         type=Path,
         default=DEFAULT_ARTIFACT_ROOT,
@@ -216,6 +224,9 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "fast_fixed_trace_setup": True,
             "persistent_fixed_trace_element_cache": True,
             "affine_isotropic_reference_tensor": True,
+            "canonical_orientation_class_reuse": bool(
+                args.canonical_orientation_class_reuse
+            ),
             "persistent_sha_bound_raw_tensor_cache": True,
             "persistent_sha_bound_condensed_class_cache": True,
             "persistent_sha_mesh_mode_trace_bound_dtn_surface_cache": (
@@ -324,6 +335,7 @@ def _direct_config(
     cache_directory: Path,
     cache_state: str,
     h_nm: float,
+    canonical_orientation_class_reuse: bool = False,
 ):
     """Select only Review-V2 direct setup opt-ins; the common solver owns PDE."""
 
@@ -358,6 +370,9 @@ def _direct_config(
         stage4_fast_fixed_trace_setup=True,
         stage4_persistent_fixed_trace_element_cache=True,
         stage4_affine_isotropic_reference_tensor=True,
+        stage4_canonical_orientation_class_reuse=bool(
+            canonical_orientation_class_reuse
+        ),
         stage4_condensed_bulk_cell_insertion=False,
         stage4_condensed_cache_directory=str(cache_directory.resolve()),
         stage4_condensed_cache_source_sha=source_sha,
@@ -400,6 +415,9 @@ def _worker(args: argparse.Namespace) -> int:
             cache_directory=args.cache_directory,
             cache_state=args.cache_state,
             h_nm=float(args.h_nm),
+            canonical_orientation_class_reuse=(
+                args.canonical_orientation_class_reuse
+            ),
         )
         local_config_seconds = time.perf_counter() - config_started
         solver_started = time.perf_counter()
@@ -442,6 +460,9 @@ def _worker(args: argparse.Namespace) -> int:
             "cache_state": args.cache_state,
             "mpi_size": int(comm.size),
             "source_sha": args.source_sha,
+            "canonical_orientation_class_reuse_requested": bool(
+                args.canonical_orientation_class_reuse
+            ),
             "worker_timings_seconds": timing_max,
             "summary": summary,
             "rank_failures": failures,
@@ -687,6 +708,12 @@ def _extract_setup_evidence(
         summary.get("stage4_dtn_surface_vector_persistent_cache")
         or {}
     )
+    canonical_orientation_request = (
+        summary.get(
+            "stage4_canonical_orientation_class_reuse_request"
+        )
+        or {}
+    )
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
     factor = summary.get("stage4_dtn_factor_inventory") or {}
@@ -777,6 +804,10 @@ def _extract_setup_evidence(
             "affine_isotropic_reference_tensor": config.get(
                 "stage4_affine_isotropic_reference_tensor"
             ),
+            "canonical_orientation_class_reuse": config.get(
+                "stage4_canonical_orientation_class_reuse",
+                False,
+            ),
             "bulk_cell_insertion": config.get(
                 "stage4_condensed_bulk_cell_insertion"
             ),
@@ -803,6 +834,13 @@ def _extract_setup_evidence(
             "raw_tensor": raw_cache,
             "condensed_class": condensed_cache,
             "dtn_surface_vector": dtn_surface_cache,
+        },
+        "canonical_orientation_class_reuse": {
+            "request": canonical_orientation_request,
+            "core": cell.get(
+                "canonical_orientation_class_reuse",
+                {},
+            ),
         },
         "cell_static_raw_tensor_evaluations": cell.get(
             "raw_tensor_kernel_evaluation_count"
@@ -1079,6 +1117,7 @@ def _classify_profile(
     terminated_for_timeout: bool,
     telemetry_readable: bool,
     source_stable_and_clean_after: bool,
+    expected_canonical_orientation_class_reuse: bool = False,
 ) -> dict[str, Any]:
     config = evidence.get("configuration_identity") or {}
     cache = evidence.get("cache_audit") or {}
@@ -1086,6 +1125,14 @@ def _classify_profile(
     raw_cache = cache.get("raw_tensor") or {}
     condensed_cache = cache.get("condensed_class") or {}
     dtn_surface_cache = cache.get("dtn_surface_vector") or {}
+    canonical_orientation = (
+        evidence.get("canonical_orientation_class_reuse") or {}
+    )
+    canonical_request = canonical_orientation.get("request") or {}
+    canonical_core = canonical_orientation.get("core") or {}
+    expected_canonical_orientation_class_reuse = bool(
+        expected_canonical_orientation_class_reuse
+    )
     topology = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -1352,6 +1399,65 @@ def _classify_profile(
         "floquet_elimination_opt_in": (
             config.get("floquet_slave_elimination") is True
         ),
+        "canonical_orientation_request_identity": (
+            bool(
+                config.get(
+                    "canonical_orientation_class_reuse",
+                    False,
+                )
+            )
+            == expected_canonical_orientation_class_reuse
+        ),
+        "canonical_orientation_request_provenance": (
+            (
+                not expected_canonical_orientation_class_reuse
+                and not canonical_request
+            )
+            or (
+                canonical_request.get("schema_version")
+                == "task035b.canonical-orientation-reuse-request.v1"
+                and canonical_request.get("requested")
+                is expected_canonical_orientation_class_reuse
+                and canonical_request.get("eligible") is True
+                and canonical_request.get("accepted")
+                is expected_canonical_orientation_class_reuse
+                and canonical_request.get("rejection_reasons") == []
+                and canonical_request.get("ordinary_default_changed")
+                is False
+            )
+        ),
+        "canonical_orientation_core_audit": (
+            (
+                not expected_canonical_orientation_class_reuse
+                and not canonical_core
+            )
+            or (
+                canonical_core.get("schema_version")
+                == "task035b.canonical-orientation-condensation.v1"
+                and canonical_core.get("enabled")
+                is expected_canonical_orientation_class_reuse
+                and canonical_core.get("ordinary_default_changed")
+                is False
+                and (
+                    not expected_canonical_orientation_class_reuse
+                    or (
+                        canonical_core.get(
+                            "trace_interior_block_diagonal_proven_"
+                            "for_every_used_permutation"
+                        )
+                        is True
+                        and canonical_core.get(
+                            "used_set_equals_qualified_set"
+                        )
+                        is True
+                        and canonical_core.get(
+                            "inactive_or_postzero_rows_created"
+                        )
+                        is False
+                    )
+                )
+            )
+        ),
         "ordinary_default_unchanged": (
             config.get("ordinary_default_changed") is False
         ),
@@ -1534,6 +1640,8 @@ def _run_parent(args: argparse.Namespace) -> int:
         "--source-sha",
         source_before["commit_sha"],
     ]
+    if args.canonical_orientation_class_reuse:
+        command.append("--canonical-orientation-class-reuse")
     child_environment = os.environ.copy()
     child_environment.update(
         {
@@ -1642,6 +1750,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         terminated_for_timeout=terminated_for_timeout,
         telemetry_readable=telemetry_readable,
         source_stable_and_clean_after=source_stable,
+        expected_canonical_orientation_class_reuse=(
+            args.canonical_orientation_class_reuse
+        ),
     )
 
     record = {
@@ -1663,6 +1774,9 @@ def _run_parent(args: argparse.Namespace) -> int:
             "cache_directory": _path_from_root(cache_directory),
             "fast_fixed_trace_setup": True,
             "affine_isotropic_reference_tensor": True,
+            "canonical_orientation_class_reuse": bool(
+                args.canonical_orientation_class_reuse
+            ),
             "preserve_structured_input_partition": True,
             "direct_solver": "MUMPS",
         },
