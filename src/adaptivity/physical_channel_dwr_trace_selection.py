@@ -15,12 +15,12 @@ Physical entity residuals therefore enter an orbit block only through
 ``u_entity = P_entity u_representative``.
 
 The bridge remains fail closed about PDE provenance.  An analytic fixture can
-exercise every algebraic and MPI-numbering invariant, but only an
-``actual_pde`` provenance with physical enriched residuals, action-only
-complement Schur solves, actual DtN/port gradients, and qualified retained
-adjoints can become a formal selection input.  Even then, the returned row
-plan is not a successful candidate: it still requires an MPI8 PDE re-solve
-and the unchanged 12/12 power plus 12/12 complex-amplitude audit.
+exercise every algebraic and MPI-numbering invariant.  The legacy
+caller-supplied ``actual_pde`` provenance is disabled until production typed
+captures bind the live enriched residual, action-only complement, channel
+adjoints, communicator, and distributed reduced-matrix content.  A future
+derived provenance will still require an MPI8 PDE re-solve and the unchanged
+12/12 power plus 12/12 complex-amplitude audit.
 """
 
 from __future__ import annotations
@@ -665,7 +665,7 @@ def expand_missing_trace_complement_vector_to_full_p6_storage_entities(
 
 @dataclass(frozen=True)
 class PhysicalComplementDWRProvenance:
-    """Fail-closed caller evidence for a layout-bound complement system."""
+    """Caller evidence for fixtures; formal actual-PDE use is hard-disabled."""
 
     evidence_class: EvidenceClass
     source_commit: str
@@ -728,44 +728,15 @@ class PhysicalComplementDWRProvenance:
             int(self.inactive_p6_rows_allocated),
         )
         if self.evidence_class == "actual_pde":
-            required = {
-                "physical_missing_basis_tabulated": (
-                    self.physical_missing_basis_tabulated
-                ),
-                "physical_entity_residual_projection_used": (
-                    self.physical_entity_residual_projection_used
-                ),
-                "actual_enriched_residual_assembled": (
-                    self.actual_enriched_residual_assembled
-                ),
-                "actual_complement_schur_actions": (
-                    self.actual_complement_schur_actions
-                ),
-                "actual_complement_schur_inverse": (
-                    self.actual_complement_schur_inverse
-                ),
-                "actual_dtn_port_channel_gradients": (
-                    self.actual_dtn_port_channel_gradients
-                ),
-                "retained_adjoints_qualified": (
-                    self.retained_adjoints_qualified
-                ),
-                "action_only_complement_storage": (
-                    self.complement_storage_kind == "action_only"
-                ),
-            }
-            if not all(required.values()):
-                failed = [
-                    name for name, passed in required.items() if not passed
-                ]
-                raise RuntimeError(
-                    "actual PDE complement provenance is incomplete: "
-                    + ", ".join(failed)
-                )
+            raise RuntimeError(
+                "legacy caller-supplied actual PDE complement provenance is "
+                "disabled until production typed captures and distributed "
+                "matrix content identity are bound"
+            )
 
     @property
     def formal_actual_pde(self) -> bool:
-        return self.evidence_class == "actual_pde"
+        return False
 
 
 @dataclass(frozen=True)

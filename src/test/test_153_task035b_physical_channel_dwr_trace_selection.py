@@ -850,7 +850,7 @@ def test_actual_pde_provenance_and_focus_goal_contract_fail_closed(
     layout = fixture.layout
     with pytest.raises(
         RuntimeError,
-        match="actual PDE complement provenance is incomplete",
+        match="legacy caller-supplied actual PDE complement provenance is disabled",
     ):
         PhysicalComplementDWRProvenance(
             evidence_class="actual_pde",
@@ -859,6 +859,27 @@ def test_actual_pde_provenance_and_focus_goal_contract_fail_closed(
             significant_channel_reference_sha256=_digest("reference"),
             complement_layout_sha256=layout.layout_sha256,
             complement_storage_kind="analytic_fixture_dense",
+            physical_missing_basis_tabulated=True,
+            physical_entity_residual_projection_used=True,
+            actual_enriched_residual_assembled=True,
+            actual_complement_schur_actions=True,
+            actual_complement_schur_inverse=True,
+            actual_dtn_port_channel_gradients=True,
+            retained_adjoints_qualified=True,
+            full_p6_trace_matrix_materialized=False,
+            inactive_p6_rows_allocated=0,
+        )
+    with pytest.raises(
+        RuntimeError,
+        match="legacy caller-supplied actual PDE complement provenance is disabled",
+    ):
+        PhysicalComplementDWRProvenance(
+            evidence_class="actual_pde",
+            source_commit="2" * 40,
+            retained_candidate_record_sha256=_digest("candidate"),
+            significant_channel_reference_sha256=_digest("reference"),
+            complement_layout_sha256=layout.layout_sha256,
+            complement_storage_kind="action_only",
             physical_missing_basis_tabulated=True,
             physical_entity_residual_projection_used=True,
             actual_enriched_residual_assembled=True,
