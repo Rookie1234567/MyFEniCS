@@ -42,10 +42,8 @@ from src.solvers.hcurl_assembly_time_condensation import (
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
 )
-
-
-pytest_plugins = (
-    "src.test.test_147_task035b_actual_selective_trace_expansion",
+from src.test.test_147_task035b_actual_selective_trace_expansion import (
+    actual_selective_expansion_fixture as actual_selective_expansion_fixture,
 )
 
 
