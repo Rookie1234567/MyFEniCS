@@ -79,7 +79,9 @@ class CallerTraceExpansion:
 
     ``expansion_by_original`` describes the rows of ``C_t`` in
     ``u_storage_trace = C_t q_active``.  Active coordinates are independent
-    PETSc rows and therefore need not be original finite-element DoFs.
+    PETSc rows and therefore need not be original finite-element DoFs.  This
+    is the complete storage-trace pullback, including any periodic/Floquet
+    relations; it must not be followed by a second MPC backsubstitution.
     """
 
     owned_active_rows: np.ndarray
@@ -693,6 +695,8 @@ def _caller_trace_constraint_map(
             "inactive_mode_rows_allocated": False,
             "full_trace_matrix_allocated": False,
             "ordinary_default_changed": False,
+            "complete_storage_trace_pullback": True,
+            "post_recovery_mpc_backsubstitution_forbidden": True,
             "caller_qualification": qualification,
         },
         owned_active_rows=normalized_owned,
@@ -4486,18 +4490,19 @@ def trim_warm_persistent_condensed_cache_heap(
 
 def recover_owned_trace_values(
     condensed: AssemblyTimeCondensedSystem,
-    active_trace_values: np.ndarray,
+    active_trace_values: PETSc.Vec | np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Expand active coordinates into owned storage-space trace values.
 
     This is the recovery entry point for generalized caller coordinates.  It
     does not allocate a full matrix and returns only the physical trace rows
-    owned by this rank.
+    owned by this rank.  A distributed reduced PETSc vector is accepted
+    directly; its caller-owned active rows are gathered by their explicit
+    global IDs rather than by assuming that they occupy the first local
+    entries.
     """
 
-    active = np.asarray(active_trace_values, dtype=np.complex128)
-    if active.shape != (condensed.active_rows,):
-        raise ValueError("active trace value array has the wrong global length")
+    active = gather_active_trace_values(condensed, active_trace_values)
     owned_trace = np.asarray(
         condensed.owned_trace_original_dofs,
         dtype=PETSc.IntType,
@@ -4518,17 +4523,312 @@ def recover_owned_trace_values(
     return owned_trace.copy(), values
 
 
+def gather_active_trace_values(
+    condensed: AssemblyTimeCondensedSystem,
+    reduced_solution: PETSc.Vec | np.ndarray,
+) -> np.ndarray:
+    """Return the globally ordered active trace coordinates on every rank.
+
+    Generalized caller coordinates are numbered independently of the storage
+    finite-element trace.  In particular,
+    ``owned_active_original_dofs`` is intentionally empty for that path.
+    Therefore a distributed reduced vector must be read through
+    ``owned_active_rows``.  This helper also supports the ordinary active-only
+    NumPy input without changing its established semantics.
+    """
+
+    if not isinstance(reduced_solution, PETSc.Vec):
+        active = np.asarray(reduced_solution, dtype=np.complex128)
+        if active.shape != (condensed.active_rows,):
+            raise ValueError(
+                "active trace value array has the wrong global length"
+            )
+        return active.copy()
+
+    comm = condensed.matrix.getComm().tompi4py()
+    vector_comm = reduced_solution.getComm().tompi4py()
+    local_error: str | None = None
+    owned_active = _owned_active_rows(condensed.trace_constraints, comm)
+    expected_sizes = {
+        int(condensed.active_rows),
+        int(condensed.active_rows + condensed.appended_rows),
+    }
+    try:
+        communicator_relation = MPI.Comm.Compare(comm, vector_comm)
+        if communicator_relation not in {MPI.IDENT, MPI.CONGRUENT}:
+            raise ValueError(
+                "reduced solution communicator differs from the condensed "
+                "system"
+            )
+        if int(reduced_solution.getSize()) not in expected_sizes:
+            raise ValueError(
+                "reduced solution must contain the active trace and optional "
+                "appended rows"
+            )
+        row_start, row_end = map(
+            int,
+            reduced_solution.getOwnershipRange(),
+        )
+        if len(owned_active) and (
+            int(owned_active[0]) < row_start
+            or int(owned_active[-1]) >= row_end
+        ):
+            raise ValueError(
+                "caller-owned active rows are outside local reduced-vector "
+                "ownership"
+            )
+    except Exception as error:
+        local_error = f"{type(error).__name__}: {error}"
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        error_class = (
+            TypeError
+            if all(
+                error is None or error.startswith("TypeError:")
+                for error in errors
+            )
+            else ValueError
+        )
+        raise error_class(
+            "active trace recovery validation failed: "
+            + "; ".join(
+                f"rank {rank}: {error}"
+                for rank, error in enumerate(errors)
+                if error is not None
+            )
+        )
+
+    local_values = np.asarray(
+        reduced_solution.getValues(owned_active),
+        dtype=np.complex128,
+    )
+    packets = comm.allgather(
+        (
+            np.asarray(owned_active, dtype=np.int64),
+            local_values,
+        )
+    )
+    active = np.empty(condensed.active_rows, dtype=np.complex128)
+    seen = np.zeros(condensed.active_rows, dtype=bool)
+    for rows, values in packets:
+        if len(rows) != len(values):
+            raise RuntimeError(
+                "active trace row and value packet lengths disagree"
+            )
+        if len(rows):
+            if np.any(seen[rows]):
+                raise RuntimeError(
+                    "distributed active trace ownership overlaps"
+                )
+            active[rows] = values
+            seen[rows] = True
+    if not np.all(seen):
+        missing = np.flatnonzero(~seen)
+        raise RuntimeError(
+            "distributed active trace solution does not close globally: "
+            f"missing={missing[:8].tolist()}"
+        )
+    return active
+
+
+def validate_primal_recovery_mpc_backsubstitution(
+    condensed: AssemblyTimeCondensedSystem,
+    *,
+    requested: bool,
+) -> Mapping[str, Any]:
+    """Fail closed against applying Floquet pullback twice.
+
+    A generalized caller expansion is the complete storage-trace pullback
+    ``u_storage = C q`` and is mutually exclusive with the legacy MPC during
+    assembly.  Once :func:`recover_owned_trace_values` has applied ``C``, a
+    subsequent ``mpc.backsubstitution`` would apply the Floquet relation a
+    second time and is therefore forbidden.
+
+    The ordinary identity/MPC paths retain their existing behavior.  This
+    helper only exposes whether a legacy MPC backsubstitution is required; it
+    does not call or alter that path.
+    """
+
+    requested = bool(requested)
+    generalized = not bool(
+        condensed.trace_constraints.active_coordinates_are_original_trace_dofs
+    )
+    if generalized and requested:
+        raise RuntimeError(
+            "generalized caller trace expansion already contains the complete "
+            "Floquet/storage pullback; duplicate MPC backsubstitution is "
+            "forbidden"
+        )
+    legacy_required = bool(
+        not generalized and condensed.trace_constraints.slave_rows > 0
+    )
+    return MappingProxyType(
+        {
+            "schema_version": (
+                "task035b.primal-recovery-backsubstitution-policy.v1"
+            ),
+            "generalized_caller_trace_expansion": generalized,
+            "caller_expansion_already_contains_complete_pullback": generalized,
+            "mpc_backsubstitution_requested": requested,
+            "mpc_backsubstitution_required_for_legacy_path": legacy_required,
+            "mpc_backsubstitution_permitted": not generalized,
+            "ordinary_default_changed": False,
+        }
+    )
+
+
+def generalized_reduced_primal_residual(
+    condensed: AssemblyTimeCondensedSystem,
+    reduced_rhs: PETSc.Vec,
+    reduced_solution: PETSc.Vec,
+    *,
+    reduced_matrix: PETSc.Mat | None = None,
+) -> dict[str, Any]:
+    """Independently audit ``A_reduced x - b`` for caller coordinates.
+
+    This is deliberately a *reduced* residual foundation, not the full
+    recovered-field true residual.  It verifies the explicit caller-owned
+    active-row numbering, performs a fresh PETSc MatMult, and reports active
+    trace and appended-row residual norms separately.  A full true-residual
+    audit must additionally evaluate every eliminated cell-interior equation
+    after physical primal recovery.
+    """
+
+    if (
+        condensed.trace_constraints.active_coordinates_are_original_trace_dofs
+    ):
+        raise ValueError(
+            "generalized reduced residual requires a caller trace expansion"
+        )
+    matrix = condensed.matrix if reduced_matrix is None else reduced_matrix
+    expected_rows = int(condensed.active_rows + condensed.appended_rows)
+    condensed_comm = condensed.matrix.getComm().tompi4py()
+    for name, petsc_object in (
+        ("reduced matrix", matrix),
+        ("reduced RHS", reduced_rhs),
+        ("reduced solution", reduced_solution),
+    ):
+        relation = MPI.Comm.Compare(
+            condensed_comm,
+            petsc_object.getComm().tompi4py(),
+        )
+        if relation not in {MPI.IDENT, MPI.CONGRUENT}:
+            raise ValueError(f"{name} communicator differs from condensation")
+    if tuple(map(int, matrix.getSize())) != (expected_rows, expected_rows):
+        raise ValueError(
+            "generalized reduced matrix size differs from active plus "
+            "appended rows"
+        )
+    if (
+        int(reduced_rhs.getSize()) != expected_rows
+        or int(reduced_solution.getSize()) != expected_rows
+    ):
+        raise ValueError(
+            "generalized reduced vectors differ from the reduced matrix"
+        )
+    if tuple(map(int, reduced_rhs.getOwnershipRange())) != tuple(
+        map(int, matrix.getOwnershipRange())
+    ):
+        raise ValueError(
+            "generalized reduced RHS ownership differs from matrix rows"
+        )
+    if tuple(map(int, reduced_solution.getOwnershipRange())) != tuple(
+        map(int, matrix.getOwnershipRangeColumn())
+    ):
+        raise ValueError(
+            "generalized reduced solution ownership differs from matrix "
+            "columns"
+        )
+
+    active_solution = gather_active_trace_values(
+        condensed,
+        reduced_solution,
+    )
+    validate_primal_recovery_mpc_backsubstitution(
+        condensed,
+        requested=False,
+    )
+    residual = reduced_rhs.duplicate()
+    try:
+        matrix.mult(reduced_solution, residual)
+        residual.axpy(PETSc.ScalarType(-1.0), reduced_rhs)
+        comm = matrix.getComm().tompi4py()
+        owned_active = _owned_active_rows(
+            condensed.trace_constraints,
+            comm,
+        )
+        local_active_values = np.asarray(
+            residual.getValues(owned_active),
+            dtype=np.complex128,
+        )
+        local_active_sq = float(
+            np.vdot(local_active_values, local_active_values).real
+        )
+        row_start, row_end = map(int, residual.getOwnershipRange())
+        appended_start = max(row_start, condensed.active_rows)
+        appended_rows = np.arange(
+            appended_start,
+            row_end,
+            dtype=PETSc.IntType,
+        )
+        local_appended_values = np.asarray(
+            residual.getValues(appended_rows),
+            dtype=np.complex128,
+        )
+        local_appended_sq = float(
+            np.vdot(
+                local_appended_values,
+                local_appended_values,
+            ).real
+        )
+        active_norm = float(
+            np.sqrt(comm.allreduce(local_active_sq, op=MPI.SUM))
+        )
+        appended_norm = float(
+            np.sqrt(comm.allreduce(local_appended_sq, op=MPI.SUM))
+        )
+        residual_norm = float(residual.norm())
+        rhs_norm = float(reduced_rhs.norm())
+        return {
+            "schema_version": (
+                "task035b.generalized-reduced-primal-residual.v1"
+            ),
+            "status": "explicit_generalized_reduced_residual_computed",
+            "linear_system_rhs_norm": rhs_norm,
+            "linear_system_solution_norm": float(reduced_solution.norm()),
+            "linear_system_residual_norm": residual_norm,
+            "linear_system_relative_residual": (
+                residual_norm / max(rhs_norm, 1.0e-30)
+            ),
+            "active_trace_residual_norm": active_norm,
+            "appended_row_residual_norm": appended_norm,
+            "active_trace_solution_norm": float(
+                np.linalg.norm(active_solution)
+            ),
+            "active_rows": int(condensed.active_rows),
+            "appended_rows": int(condensed.appended_rows),
+            "caller_owned_active_rows_used": True,
+            "active_coordinate_kind": (
+                "caller_owned_not_original_storage_trace_dof"
+            ),
+            "fresh_explicit_petsc_matmult": True,
+            "full_recovered_true_residual": False,
+            "requires_eliminated_cell_interior_residual": True,
+            "ordinary_default_changed": False,
+        }
+    finally:
+        residual.destroy()
+
+
 def recover_owned_cell_interiors(
     condensed: AssemblyTimeCondensedSystem,
-    active_trace_values: np.ndarray,
+    active_trace_values: PETSc.Vec | np.ndarray,
     *,
     full_rhs: PETSc.Vec | None = None,
 ) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
     """Return ``(original interior DoFs, values)`` for locally owned cells."""
 
-    active = np.asarray(active_trace_values, dtype=np.complex128)
-    if active.shape != (condensed.active_rows,):
-        raise ValueError("active trace value array has the wrong global length")
+    active = gather_active_trace_values(condensed, active_trace_values)
     rhs_values = None
     rhs_start = 0
     rhs_end = 0
@@ -4988,6 +5288,8 @@ __all__ = [
     "build_unconstrained_assembly_time_condensation",
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
+    "gather_active_trace_values",
+    "generalized_reduced_primal_residual",
     "prepare_cell_interior_rhs_recovery",
     "project_mpc_vector_to_active_trace",
     "recover_full_dual_from_active_trace",
@@ -4995,4 +5297,5 @@ __all__ = [
     "recover_owned_trace_values",
     "register_appended_dual_interior_coupling",
     "trim_warm_persistent_condensed_cache_heap",
+    "validate_primal_recovery_mpc_backsubstitution",
 ]
