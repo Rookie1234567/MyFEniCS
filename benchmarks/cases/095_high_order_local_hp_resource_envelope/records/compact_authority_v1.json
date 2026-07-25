@@ -1,0 +1,35 @@
+{
+  "schema_version": "task035b.case095-compact-authority.v1",
+  "status": "review_v3_selective_merge_compact_authority",
+  "ordinary_default_changed": false,
+  "record_count": 19,
+  "records": [
+    {"name": "global_hexa_p4_p5_h10_mpi8.json", "sha256": "7acd6080cd186c2c1e934a4734b5504ae3f0789d7eadb92b4b9ea337dd2d65d6", "role": "standard_full_p4_p5"},
+    {"name": "global_hexa_p5_p6_h10_mpi8.json", "sha256": "3e49dc7992e78ae26a1bfc1c1ba2ed48cffe8b15534ddcfc22b99e549599614b", "role": "standard_full_p5_p6"},
+    {"name": "global_hexa_p4_p5_h10_assembly_time_condensed_independent_mpi8.json", "sha256": "6e2bb2e6779f2d037fd17495f2beee2a8ef69d4dea076dbc98a71aea35d1abd4", "role": "condensed_p4_p5"},
+    {"name": "global_hexa_p5_p6_h10_assembly_time_condensed_independent_mpi8.json", "sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded", "role": "condensed_p5_p6"},
+    {"name": "global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json", "sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8", "role": "global_p6_reference"},
+    {"name": "fixed_p5trace_p6interior_h15_mpi8.json", "sha256": "84c9b898100bc2f223913a144d9b7a9a324ef17d9164610c622b3ecc480d870a", "role": "fixed_trace_h15"},
+    {"name": "fixed_p5trace_p6interior_h15_tensor_dedup_preallocation_mpi8.json", "sha256": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3", "role": "dedup_preallocation"},
+    {"name": "fixed_p5trace_p6interior_h14_directional_z_mpi8.json", "sha256": "e93f50155b3c8517292794cb9735730ebf738410aecafe00f43f7959c150a127", "role": "directional_z_h14"},
+    {"name": "fixed_p5trace_p6interior_h13_directional_z_mpi8.json", "sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c", "role": "directional_z_h13"},
+    {"name": "h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json", "sha256": "2f7c2503677fccb81f08d1c640d245f5d58bc497fbeae56df174477f4bfd0678", "role": "h15_cold_warm"},
+    {"name": "h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json", "sha256": "bfc83e13a28018d2751a1dddb4f478cf424788c6725f32b26b964b718d1bcf66", "role": "h13_cold_warm"},
+    {"name": "h15_direct_mpi1_2_4_8_resource_floor_v1.json", "sha256": "f6b523fc72808886e025d2a7f1c0d8d26a0e176a5e46cd3d8f9208ac95d77654", "role": "direct_rank_floor"},
+    {"name": "h15_memory_floor_factor_inventory_ledger_v2.json", "sha256": "38da84058c8b504e855f82234ae21f578919f068e4e7c699774fd23da5037c8f", "role": "factor_memory_ledger"},
+    {"name": "h15_solve_thread_memory_semantics_audit_v1.json", "sha256": "a1cc741087dee7e36c9ea3cc9c5c3fa0ec92960ccf186beec2035008b3dbf1f7", "role": "thread_memory_semantics"},
+    {"name": "h15_factor_free_iterative_mpi8_v1.json", "sha256": "ce7a7bd6932725987a5d3583df29396a027c661bcc80514f8dd33af5118edc2b", "role": "controlled_negative_iterative_jacobi"},
+    {"name": "h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json", "sha256": "8d13e70906fecce6d729491c453c93cc0664a6fa46906a5f1f4d5eb59083d444", "role": "controlled_negative_iterative_slab"},
+    {"name": "condensed_iterative_failed_output_caveat_v1.json", "sha256": "002fb40f3aa4aa3154674c871e1b4442a29e112cb670d2292157b4d26aae2dfd", "role": "failed_output_caveat"},
+    {"name": "significant_channel_reference_v1.json", "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3", "role": "significant_channel_reference"},
+    {"name": "physical_selective_trace_execution_capability_v2.json", "sha256": "e8c0b1d3d758ee1fea71fa261ded1fdfb4946a909437bc4f69aec52975ecf3ef", "role": "incomplete_selective_trace_capability"}
+  ],
+  "not_promoted": [
+    "production_selective_trace",
+    "condensed_iterative_profiles",
+    "regionwise_or_non_exact_sequence_local_p",
+    "irregular_geometry",
+    "tetra_static_condensation",
+    "mixed_cell_mesh"
+  ]
+}

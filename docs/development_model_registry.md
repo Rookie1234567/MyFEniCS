@@ -2,7 +2,7 @@
 
 > **用途。** 本文是项目级“模型—方法—结果—资源—状态”总账。它不替代各 Task 的 `task.md`、`outcomes/summary.md`、`response_vN.md` 和正式 JSON record，而是把分散在不同任务中的重型计算统一登记，便于回答：已经算过什么、使用什么算法、得到什么物理结果、消耗多少资源、哪些结果可作为参考、哪些只是探索或负结果。
 >
-> **维护规则。** 从本文建立起，每次新增正式 PDE、QEP、Hybrid、迭代或自适应模型，都必须在对应 Task 收口时同步更新本文。历史记录没有保存的字段必须写“历史记录未保存”或“待回填”，不得猜测。
+> **维护规则。** 从本文建立起，每次新增正式 PDE、QEP、Hybrid、迭代或自适应模型，都必须在对应 Task 收口时同步更新本文。历史记录没有保存的字段必须写“历史未记录”，当前未执行的字段写 `not_run`，不得猜测。
 
 ---
 
@@ -99,10 +99,10 @@ Task035b 在 `p6/h10` 高阶参考上，以功率阈值 `1e-8` 冻结了 12 个�
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
 | Task032 full3D h5 | `F-STAGE4-S` | hexa；p2；h5 | 44,698 | 44,778 | 4,896,156 | 历史主表未保存 | `0.0890216029` | `0.4425882787` | `0.4683901184` | `9.7340e-12` | Task029 MPI4 baseline `2328.145 MiB` | Stage4 固定四核记录约 `18.311 s` | `success`；同网格 Hybrid 基线 |
 | Task032 full3D h3 | `F-STAGE4-S` | hexa；p2；h3 | 198,438 | 198,518 | 21,317,860 | `266,127,836`（Task029 h3） | `0.0046130314` | `0.5836533572` | `0.4117336114` | `9.9234e-12` | Task029 MPI4 baseline `8651.098 MiB` | 历史总时间口径未统一 | `success`；同网格 Hybrid 基线 |
-| Task033 full3D p3/h5 | `F-STAGE4-S` | hexa；p3；h5 | 历史主表待回填 | 历史主表待回填 | 历史主表待回填 | 历史主表待回填 | 见 Task033 record | 见 Task033 record | 见 Task033 record | `5.442e-12` | `7.781 GiB` | 历史主表待回填 | `success`；p3 same-degree closure |
-| Task033 full3D p3/h7.5 | `F-STAGE4-S` | hexa；p3；h7.5 | 历史主表待回填 | 历史主表待回填 | 历史主表待回填 | 历史主表待回填 | 见 Task033 Phase D record | 见 Task033 Phase D record | 见 Task033 Phase D record | `6.449e-12` | `3.667 GiB` | `44.487 s` | `success_with_qualifications`；等精度压缩成功 |
+| Task033 full3D p3/h5 | `F-STAGE4-S` | hexa；p3；h5 | 145,863 | 145,943 | 35,566,727 | 历史未记录 | `0.001090107012` | `0.600622478293` | `0.398287414695` | `5.442e-12` | `7.781 GiB` | `103.59 s` | `success`；p3 same-degree closure |
+| Task033 full3D p3/h7.5 | `F-STAGE4-S` | hexa；p3；h7.5 | 63,747 | 63,827 | 历史未记录 | 历史未记录 | `0.003090727450` | `0.591160863329` | `0.405748409221` | `6.449e-12` | `3.667 GiB` | `44.487 s` | `success_with_qualifications`；等精度压缩成功 |
 
-**衍射级数据状态：**Task032/Task033 的任务总结主要冻结 R/T/A、接口场和同网格 Hybrid 闭合；本文初版尚未从各 heavy JSON 逐项回填 12 个显著级。不得把缺失项视为零。后续 registry checker 应从原始 record 自动抽取。
+**衍射级数据状态：**Task032 的总结早于 Task035b 12 通道 reference v1，缺失项统一为“历史未记录”。Task033 的逐级功率与幅值保存在 Case091 record 中，Task035b 的 fixed reference band 不能追溯性改写当时 Gate。
 
 ### 1.2.2 Hybrid FEM–Modal
 
@@ -112,8 +112,8 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
 | Task032 Hybrid h5 M160 | `F-STAGE4-S` | 6,826 bottom + 6,826 top | 80 | 320 | 14,052 | 2,000,624 | `0.0890210691` | `0.4425867427` | `0.4683921882` | `2.5455e-12` | 见 Case080 M160 record | `success`；相对 full3D 最大 R/T/A 差 `2.07e-6` |
 | Task032 Hybrid h3 M160 | `F-STAGE4-S` | 34,198 bottom + 34,198 top | 80 | 320 | 68,796 | 8,594,673 | `0.0046128199` | `0.5836509402` | `0.4117362399` | `2.6036e-12` | 见 Case080 M160 record | `success`；相对 full3D 最大差 `2.63e-6` |
-| Task033 Hybrid p3/h5 M160 | `F-STAGE4-S` | 历史主表待回填 | 80 | 320 | 历史主表待回填 | 历史主表待回填 | 见 Task033 record | 见 Task033 record | 见 Task033 record | `2.277e-12`（Phase C M160） | 新 SHA `2.618 GiB`；Phase C 约 `106.98 s` | `success`；16 项 Gate 通过 |
-| Task033 Hybrid p3/h7.5 M160 | `F-STAGE4-S` | 历史主表待回填 | 80 | 320 | 历史主表待回填 | 历史主表待回填 | 见 Task033 Phase D record | 见 Task033 Phase D record | 见 Task033 Phase D record | 见 record | `2.008 GiB`；`74.908 s` | `success_with_qualifications`；固定 p 等精度压缩成功 |
+| Task033 Hybrid p3/h5 M160 | `F-STAGE4-S` | 21,847 bottom + 21,847 top | 80 | 320 | 44,094 | 10,313,006（两 local blocks） | `0.001090095685` | `0.600622368221` | `0.398287536096` | `2.343e-12` | `2.618 GiB`；`111.94 s` | `success`；16 项 Gate 通过 |
+| Task033 Hybrid p3/h7.5 M160 | `F-STAGE4-S` | 13,299 bottom + 13,299 top | 80 | 320 | 26,998 | 历史主表仅保存 factor inventory 17,057,414 | `0.003090647382` | `0.591159679406` | `0.405749673156` | 历史 summary 未单列 | `2.008 GiB`；`74.908 s` | `success_with_qualifications`；固定 p 等精度压缩成功 |
 
 ---
 
@@ -266,13 +266,267 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 ---
 
-# 2. 各 Task 的重型探索模型与处置
+# 3. Task000–Task035b 逐任务统一总账
 
-> 本节按 Task 记录“为什么算、实际算了什么、得到什么、为什么成功或失败”。Task000–026 的逐任务历史已有 Task028 归档表；本文初版先登记与当前 3D direct/iterative/Hybrid/hp 主线直接相关的 Task027–Task035b。旧 Task 的重型数值将由后续自动回填工具从 `task000_task027_progress.csv` 和历史 records 补齐。
+> 本节编号固定为 `3.1 Task000` 至 `3.37 Task035b`。每个 Task 先用通俗语言回答“研究什么、为什么研究、改变了哪段流程、最终结论是什么”，再用同一表头登记身份、物理、离散、算法、规模、总量、逐级结果、资源和处置。历史没有保存的字段统一写“历史未记录”，不填 0、不由功率反推复振幅。早期 `linear_system_relative_residual` 明确标成 legacy explicit residual，不冒充 Task035b 的 full explicit true residual。
 
-## 2.1 Task027：mesh-independent physical-slab Schwarz
+统一表头如下，后续 checker 会检查每个 Task 都存在这一表头：
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `schema_only` | source SHA、record/hash | 几何、材料、波长、入射、cell、p/h | Full3D/Hybrid、direct/iterative、DoF/rows/NNZ | R00/R/T/A/residual、12 通道/幅值、时间/内存 | 实际未通过值与状态 | tracked path |
+
+## 3.1 Task000
+
+研究对象是仓库结构和任务留痕流程，目的不是求解 PDE，而是建立 `task → outcomes → review` 闭环。它改变了协作、审查和轻量证据入库方式；最终形成可追溯工作流，但没有物理 benchmark。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task000_review_code_workflow` | branch=`codex/review_code`；精确 source SHA 历史未记录 | 无物理模型；离散不适用 | 无 PDE；DoF/rows/NNZ 不适用 | R/T/A、残差、逐级、时间和内存均 `not_run` | `documentation_success`；早期代码判断被 Task001–004 取代 | `docs/task000_review_code/outcomes/summary.md` |
+
+## 3.2 Task001
+
+研究对象是早期 Stage4 flat-layer 与 zero-contrast 小模型，目的是固定 13.5 nm 和 Si 复折射率入口并区分 sanity 与 benchmark。流程加入 `numerical_sanity_only`、材料标签和功率来源说明；两个极粗网格模型一致，只能算工程 smoke。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `Stage4A_flat_layer` | source SHA/geometry hash 历史未记录 | 13.5 nm normal-s；Si substrate；p1 h50 hexa，12 cells | 原始 Full3D direct；75 FE DoF | R/T/A=`0.999843746435/0.000132382785/2.387078e-5`；只启用零级，复振幅历史未记录；8.981 s，281.125 MB | `engineering_success; numerical_sanity_only` | `docs/task001_stage4_validation_cleanup/outcomes/summary.md` |
+| `Stage4B_zero_contrast` | 同一历史数据族 | block tag 保留但 `n_grating=1+0j`；27 cells | 原始 Full3D direct；144 FE DoF | 与 flat-layer 同一 R/T/A；8.537 s，280.5 MB；residual 历史未记录 | `engineering_success; numerical_sanity_only` | `docs/task001_stage4_validation_cleanup/outcomes/metrics.csv` |
+
+## 3.3 Task002
+
+研究对象是 flat-layer、zero-contrast 与 real-Si block 的 R/T/A、probe、net-flux 和体吸收接口。目的是建立多口径一致性 Gate；九个模型全部暴露错误归一化/参考面，物理数值不可用，但成功定位了问题并推动 Task003/007 修正 official 口径。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `flat_layer_h5` | source SHA 历史未记录；Task002 raw summary | 13.5 nm normal-s；p1 h5 hexa；尺寸历史表见 evidence | Full3D direct | port R/T/A=`0.0184287/1.0440977/-0.0625264`，Avolume=`0.0291011`，closure mismatch=`0.0916275`；逐级/幅值历史未记录 | `diagnostic_success; physical_gate_failed`；R/T 口径被 Task003/007 取代 | `docs/task002_rta_output_volume_absorption/outcomes/summary.md` |
+| `real_si_block_h3` | 同一数据族 | Si substrate+block；62,475 cells，197,136 DoF | Full3D direct | R/T/Aport=`0.00188633/1.09051232/-0.0923987`，Avolume=`0.0430043`，mismatch=`0.135403`；2623 s，13,213 MB | `diagnostic_success; physical_gate_failed`；失败值不得作参考 | `docs/task002_rta_output_volume_absorption/outcomes/metrics.csv` |
+
+## 3.4 Task003
+
+研究对象是 lossy flat layer 的解析闭合和 10 nm 小单元收敛，目的是修复 Task002 的吸收归一化、透射参考面和 DtN traction 符号。流程确立 DtN port R/T 与 Avolume 主口径，probe/net-flux 降为诊断；小单元机器精度闭合，但不是目标光栅基准。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `flat_layer_auto_h5` | source SHA 历史未记录 | 100×100×150 nm；13.5 nm normal-s；p1 h5 hexa | Full3D direct；39,270 FE + 708 modal rows | R/T/A=`0.0216956/0.918733/0.0595716`，closure `-5.1e-14`，legacy residual `9.26e-11`；12 通道/幅值历史未记录 | `engineering_success; not_converged_reference`；仍约2.17%伪反射 | `docs/task003_stage4_power_consistency/outcomes/summary.md` |
+| `small_cell_h1` | 同一算法版本 | 10×10×10 nm；p1 h1；1000 cells | Full3D direct；3630 FE + 4 modal rows | R/T/A=`6.61569e-5/0.99167204/0.00826180`，closure `-2.22e-15`，legacy residual `6.61e-14`；19.9 s | `engineering_success`；仅零级传播 | `docs/task003_stage4_power_consistency/outcomes/small_cell_metrics.csv` |
+
+## 3.5 Task004
+
+研究对象是 10 nm flat-layer 的 p1/p2 收敛、MPI1/4/8 一致性和 Stage1–4 smoke。目的是冻结小规模回归基线；流程加入统一 residual、MPI delta 和阶段 smoke，最终成为长期基础设施，但不代表目标光栅收敛。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `conv_p2_h1p5` | source SHA 历史未记录 | 13.5 nm normal-s；10 nm flat layer；p2 h1.5 hexa | Full3D direct；10,740 DoF | R/T/A=`1.240889e-6/0.991537318/0.008461442`；legacy residual `2.997e-13`；21.60 s，548.5 MB；仅零级 | `production_success`（回归基线） | `docs/task004_small_cell_p_convergence_mpi_regression/outcomes/metrics.csv` |
+| `mpi_p1_h1p5_and_p2_h3` | 同一 tracked metrics | 同一小单元 | MPI1/4/8 direct | official R/T/A delta `<1e-8`，closure `<1e-10`；PSS/cgroup 历史未记录 | `infrastructure_success` | `docs/task004_small_cell_p_convergence_mpi_regression/outcomes/mpi_consistency.csv` |
+| `stage1_to_stage4_smoke` | regression metrics | 极粗阶段模型 | serial/MPI staged smoke | 全路径通过；Stage2B/2C 不是精度 benchmark | `infrastructure_success` | `docs/task004_small_cell_p_convergence_mpi_regression/outcomes/regression_metrics.csv` |
+
+## 3.6 Task005
+
+研究对象是 100×100×150 nm、50×50×50 nm Si block 的 p2 full-matrix direct/OOC 资源边界，目的是区分矩阵存储与 LU fill。流程新增 assemble-only、default direct、OOC 和失败边界；h5 可完成，h4 在 factorization 失败。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `assemble_p2_h2` | source SHA 历史未记录 | 13.5 nm normal-s；规则 hexa p2；195,075 cells | MPI8 Full3D assemble-only；4,764,870 rows，523,627,904 NNZ | 无 official R/T/A；AIJ估计11.74 GiB | `diagnostic_success`；direct/OOC RAM 仅预测，未实测 | `docs/task005_stage4_real_grating_memory_estimation/outcomes/assemble_matrix_scale.csv` |
+| `direct_p2_h5` | Task005 record family | 同一模型；p2 h5 | MPI8 MUMPS；301,648 rows | legacy residual `8.90e-12`；R/T/A=`0.00019604/0.90542068/0.09438328`；RSS upper 18.67 GiB，698.63 s；逐级历史未记录 | `diagnostic_success`；非最终 benchmark | `docs/task005_stage4_real_grating_memory_estimation/outcomes/direct_default_scale.csv` |
+| `direct_or_ooc_p2_h4` | failure boundary | p2 h4 | direct / OOC | direct factor stage signal 9；OOC `INFOG(1)=-90`，调参90 min超时且 scratch约30.09 GiB | `controlled_negative`；fill-in主导 | `docs/task005_stage4_real_grating_memory_estimation/outcomes/failure_boundary.md` |
+
+## 3.7 Task006
+
+研究对象是同一 100 nm-period block 的 70 nm reduced-height 资源模型，目的是检验缩短端口距离并测真实 process-tree memory。流程加入独立采样、MPI1/8 与 tuned OOC；资源诊断成功，但物理量不能代替 150 nm 模型。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `reduced70_p2_h5_np8_direct` | source SHA 历史未记录 | 70 nm reduced-height；p2 h5；5,600 hexa cells | Full3D direct；142,188 FE，142,896 rows，18,803,220 NNZ | R/T/A=`0.000707967/0.964603346/0.034688687`；legacy residual `1.21e-12`；process-tree peak 13.646 GiB，119.94 s | `diagnostic_success` | `docs/task006_reduced_height_grating_convergence_memory/outcomes/memory_profile_summary.csv` |
+| `reduced70_p2_h3_ooc` | failure record | p2 h3；759,698 rows，91,259,656 NNZ | MUMPS OOC | `INFOG(1)=-90`，无 official R/T/A | `controlled_negative` | `docs/task006_reduced_height_grating_convergence_memory/outcomes/summary.md` |
+| `reduced_vs_original` | comparison CSV | 70 vs 150 nm domain | direct comparison | R `0.000708 vs 0.000196`，T `0.964603 vs 0.905421`，A `0.034689 vs 0.094383` | `negative_result_success`；证明 reduced-height 非物理替代 | `docs/task006_reduced_height_grating_convergence_memory/outcomes/reduced_vs_original_domain_comparison.csv` |
+
+## 3.8 Task007
+
+研究对象是 100 nm-period Si block 在 70/110/130/150 nm 域高下的 official DtN modal R/T，目的是替换不可靠 probe 并量化端口参考面影响。流程正式冻结 modal amplitudes + Avolume；能量闭合通过，但域高依赖说明这些不是 continuum 解。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `height70_p2_h5_np8` | source SHA 历史未记录 | 13.5 nm normal-s；p2 h5；5,600 cells | Full3D direct；142,188 FE + 708 aux | R/T/A=`0.0007079669/0.9646033456/0.0346886875`；closure `7.55e-15`；legacy residual `1.84e-12`；89.70 s，max-rank RSS 2.207 GB | `production_success`（当时口径） | `docs/task007_dtn_port_modal_official_rta/outcomes/height_scan_official_rta.csv` |
+| `height150_p2_h5_np8` | 同一数据族 | 12,000 cells | Full3D direct；300,940 FE，301,648 rows，35.634M NNZ | R/T/A=`0.0001960416/0.9054206822/0.0943832762`；closure `-3.08e-14`；617.12 s，max-rank RSS 2.620 GB | `success_with_qualifications`；R00/12通道/幅值历史未记录 | `docs/task007_dtn_port_modal_official_rta/outcomes/height_scan_resource.csv` |
+
+## 3.9 Task008
+
+研究对象是实际 `F-STAGE4-S` 固定目标：50×25×140 nm、17×25×120 nm Si block、13.5 nm、80°斜入射 s 偏振。目的是冻结 direct reference；流程加入双 Floquet 相位、p1/p2 h 扫描和内存 Gate，p2/h2 成为 best available discrete reference。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `target_p2_h2_direct_reference` | source SHA/geometry hash 历史未记录；raw summary tracked | `F-STAGE4-S`；hexa p2 h2；24,570 cells | MPI8 MUMPS；615,108 FE，615,188 rows，65,448,472 NNZ | R/T/A=`0.001342932846/0.599213229444/0.399443837710`；closure `-1.066e-14`；legacy residual `1.345e-11`；1665.78 s，RSS upper 20.533 GiB；12通道/幅值历史未记录 | `production_success; best_available_discrete_reference`，非 continuum | `docs/task008_70nm_official_convergence_benchmark/outcomes/raw_runs/direct_p2_p2_h2p0/run_summary.json` |
+| `target_p2_h1p5_direct` | failure record | 1,347,314 rows，142.656M NNZ | MPI8 MUMPS | KSP setup signal 9；最后 RSS upper 14.37 GiB；无 official output | `controlled_negative` | `docs/task008_70nm_official_convergence_benchmark/outcomes/failure_boundary.csv` |
+| `target_p2_h1_assemble` | failure record | 4,379,752 rows，459.939M base NNZ | assemble-only | base assembly后2400 s超时并大量 swap | `controlled_negative` | `docs/task008_70nm_official_convergence_benchmark/outcomes/summary.md` |
+
+## 3.10 Task009
+
+研究对象是目标系统上的黑盒 PETSc Krylov/PC 组合，目的是找 factor-free 低内存法。流程建立 profile 筛选和“不收敛不输出 official R/T/A”；所有组合失败。最终 review 纠正了一个关键口径：`0.00355849` 是 KSP ratio，true relative residual 是 `0.161741`。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `iter_gmres_jacobi_p2_h1p5` | source SHA 历史未记录；final review 纠偏 | `F-STAGE4-S`；p2 h1.5；1,347,314 rows，142.656M NNZ | MPI8 assembled GMRES/Jacobi，1000步 | terminal KSP ratio `0.00355849`，true relative residual `0.161741`（limit `1e-6`）；solve/total `360.86/551.03 s`，RSS upper 13.992 GiB；无 official R/T/A/通道 | `controlled_negative`；不得再写成 true residual `3.558e-3` | `docs/task009_iterative_solver_profile_screening/outcomes/iterative_failure_cases.csv` |
+| `black_box_profile_family` | profile summary | p2 h5/h4 | GMRES/FGMRES/BiCGStab + Jacobi/BJacobi/ASM/ILU/LU/GAMG/FieldSplit | 多数1000步停滞或恶化；无 official output | `negative_result_success`；排除黑盒 lane | `docs/task009_iterative_solver_profile_screening/outcomes/summary.md` |
+
+## 3.11 Task010
+
+研究对象是 MUMPS-BLR 和 shifted/positive Maxwell 原型，目的是检验近似直接法与最小物理 PC。BLR 可控但仍持有 MUMPS factors；shifted lane 失败，不能称低内存 iterative。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `fgmres_mumps_blr_1e-5_p2_h2` | source SHA 历史未记录 | `F-STAGE4-S`；615,188 rows，65.448M NNZ | MPI8 FGMRES + MUMPS-BLR，4 iterations | true residual `2.08534e-8`；R/T/A=`0.001342932839/0.599213228940/0.399443837551`；closure `-6.701e-10`；17.853 GiB，1357.57 s | `engineering_success; explicit_fallback`；不是 factor-free | `docs/task010_shifted_maxwell_preconditioner/outcomes/blr_profile_summary.csv` |
+| `blr_p2_h1p5` | failure record | 1.347M rows级 | MUMPS-BLR | setup signal 9，最后RSS upper 13.805 GiB | `controlled_negative` | `docs/task010_shifted_maxwell_preconditioner/outcomes/preconditioner_failure_cases.csv` |
+| `shifted_positive_asm_ilu` | profile summary | p2 h5/h4 | assembled FGMRES | 1000步失败；最佳 h4 positive+ASM/LU true residual约`0.1978` | `negative_result_success` | `docs/task010_shifted_maxwell_preconditioner/outcomes/shifted_positive_profile_summary.csv` |
+
+## 3.12 Task011
+
+研究对象是低-restart Krylov、FE-only AMS/HX 和 matrix-free action，目的是分离“低内存但不收敛”“AMS 可行性”和“矩阵存储可消除性”。流程引入 FE-only 正定代理与 matvec 等价 smoke；只得到研究信号，没有完整 Stage4 solver。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `low_memory_gmres40_p2_h4` | source SHA 历史未记录 | `F-STAGE4-S`；p2 h4 | MPI8 assembled Jacobi-GMRES | 1000步 true residual `0.234320`；RSS upper 3.284 GiB；无 official R/T/A | `controlled_negative` | `docs/task011_low_memory_ams_hx_iterative_solver/outcomes/low_memory_krylov_summary.csv` |
+| `real_fe_only_ams_p2_h5` | FE-only tracked CSV | 50×25×140 nm positive Maxwell；p2 h5 | MPI2 AMS；规模细节见 evidence | 7步 residual `4.024e-7`，RSS 6.930 GiB；无 Floquet/DtN/通道 | `research_only_positive` | `docs/task011_low_memory_ams_hx_iterative_solver/outcomes/ams_hx_smoke_summary.csv` |
+| `complex_fe_only_ams_p1_h10` | failure record | complex FE-only | hypre AMS setup | `malloc invalid size` + PETSc signal 11 | `failed` | `docs/task011_low_memory_ams_hx_iterative_solver/outcomes/summary.md` |
+| `matrix_free_fe_action_p2_h5` | feasibility record | p2 h5 | UFL action vs assembled matvec | relative action error `7.563e-16`，RSS约0.445 GiB；不是 solver residual | `research_only_positive` | `docs/task011_low_memory_ams_hx_iterative_solver/outcomes/matrix_free_matvec_feasibility.md` |
+
+## 3.13 Task012
+
+研究对象是周期 H(curl) Maxwell 预条件文献，目的是停止盲扫黑盒 PETSc profiles。流程形成 real/imag split AMS/HX、p-coarsened auxiliary、DtN/Floquet coarse 与 matrix-free 路线图；本 Task 没有运行 PDE。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task012_literature_route_registry` | 文献表与 scorecard；source SHA 不适用 | 周期 H(curl) 方法综述；无具体模型 | 无 PDE；DoF/rows/NNZ 不适用 | R/T/A、残差、通道、时间、内存均 `not_run/not_applicable` | `documentation_success`；理论建议需由后续实验限定 | `docs/task012_literature_review_maxwell_preconditioners/outcomes/summary.md` |
+
+## 3.14 Task013
+
+研究对象是 FE-only complex Maxwell 的 real-split AMS，目的是绕过 complex hypre AMS 崩溃。流程把复矩阵转成实 2×2 块并比较 H1 auxiliary；same-H1 有 B 档正信号，但没有 Floquet/DtN/R/T/A。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `fe_only_p2_h5_same` | source SHA 历史未记录 | 50×25×140 nm FE-only；hexa p2 h5 | serial FGMRES + same-H1 AMS；37,446 complex DoF，74,892 real rows，14,233,968 NNZ | 310 iterations，true residual `9.964e-7`，RSS 1.323 GiB；R/T/A/12通道不适用 | `research_only_positive`；不可推广为 Stage4 | `docs/task013_real_split_ams_hx_qualification/outcomes/fe_only_real_split_ams_summary.csv` |
+| `fe_only_p2_h4_same_equivalence` | equivalence CSV | p2 h4 | real split action；82,878 complex / 165,756 real rows | matvec error `1.671e-16`，assembly RSS 1.924 GiB；solve未运行 | `incomplete; equivalence_only` | `docs/task013_real_split_ams_hx_qualification/outcomes/real_split_equivalence.csv` |
+
+## 3.15 Task014a
+
+研究对象是 default100 p1/h5 Stage4 的 real-split FE/aux block PC，目的是把 Task013 信号接入 Floquet MPC + DtN。流程验证 split、索引与 AMS 数据；最小 `FE-AMS + aux identity` 太弱，p2 Gate 关闭。这里的 reduced 不是 cell-interior static condensation。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `tiny10_p1_h5` | source SHA 历史未记录 | tiny10 Stage4；p1 h5 | real-split FGMRES；144 FE+4 aux complex，296 real rows，18,600 NNZ | 37步 true residual `9.601e-7`，RSS 0.261 GiB；问题过小，无权威通道 | `diagnostic_success` | `docs/task014a_real_split_stage4_reduced_block_pc/outcomes/reduced_stage4_block_pc_summary.csv` |
+| `default100_p1_h5` | tracked CSV | 100×100×150 nm；p1 h5 | FE-AMS+aux identity；39,270 FE+708 aux complex，79,956 real rows，9,390,960 NNZ | 1000步 true residual `0.0214656`，limit `1e-6`，RSS 0.786 GiB；无 official R/T/A | `controlled_negative` | `docs/task014a_real_split_stage4_reduced_block_pc/outcomes/summary.md` |
+
+## 3.16 Task015
+
+研究对象是 Task014a 残差的 FE/aux、port、衍射级和 Schur 分解，目的是定位停滞。流程从强化 FE AMS 转向边界慢模态审计；确认残差集中在 top `(0,0),y` aux mode，但简单 correction 无效。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `default100_boundary_diagnostic` | source SHA 历史未记录 | 同 Task014a default100；79,956 real rows | FE-AMS+aux identity + residual decomposition | true residual `0.0214655595`；FE/aux fraction=`0.04331/0.999062`；top `(0,0),y` 占 aux `0.9999999989`；无 official R/T/A | `diagnostic_success` | `docs/task015_boundary_aware_pc_diagnostic/outcomes/boundary_residual_decomposition.csv` |
+| `aux_exact_diag_modal` | combined diagnostic | 同一模型 | aux exact/diag/modal corrections | residual仍约`0.02146556`；Schur-diag反而`0.442726` | `controlled_negative` | `docs/task015_boundary_aware_pc_diagnostic/outcomes/combined_boundary_pc_diagnostic.csv` |
+
+## 3.17 Task016
+
+研究对象是 top/bottom 零级模式的 right-only lifted coarse correction，目的是检验 Task015 dominant mode 能否形成低秩 PC。流程构造1–4维 coarse space；改善只有万分之几，关闭 right-only lane。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `top_y_diag_minres_one_shot` | source SHA 历史未记录 | default100 reduced Stage4 | right basis `[-P_FE^-1 C_j;e_j]` | residual `0.0214655595→0.0214645967`，improvement `1.00004486×`；目标≤0.002或≥10× | `controlled_negative` | `docs/task016_zero_order_lifted_coarse_correction/outcomes/one_shot_coarse_correction.csv` |
+| `lifted_ksp` | KSP summary | 同一规模 | additive/residual/minres，300步 | best residual `0.0214656363`，improvement `<1`；无 official R/T/A | `negative_result_success` | `docs/task016_zero_order_lifted_coarse_correction/outcomes/lifted_coarse_ksp_summary.csv` |
+
+## 3.18 Task017
+
+研究对象是 Petrov/adjoint left space 与 true-FE sampled lift，目的是判断 Task016 缺左空间还是 FE lift 不准。Petrov 无效，但 two-mode true-FE one-shot 把残差降约5.8倍，形成研究正信号，KSP 集成仍失败。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `true_fe_sampled_top_bottom_y` | source SHA 历史未记录 | default100 p1/h5 | SciPy GMRES近似解2个 selected FE RHS | residual `0.0214655595→0.00368878394`，5.819×，RSS约1.802 GiB；未达≤0.002或≥10× | `research_only_positive` | `docs/task017_petrov_adjoint_coarse_correction/outcomes/true_fe_sampled_lift_diagnostic.csv` |
+| `true_fe_lift_ksp` | KSP summary | 同一系统 | right-preconditioned FGMRES | 300步 residual `0.0235498770`，反而恶化；PETSc AMS RHS另报 error 101 | `controlled_negative / failed` | `docs/task017_petrov_adjoint_coarse_correction/outcomes/petrov_ksp_summary.csv` |
+
+## 3.19 Task018
+
+研究对象是把 Task017 one-shot 变成 residual-corrected solver-like 过程，目的是决定 sampled-Schur lane 是否继续。交替 FE-AMS 段和 selected correction 得到约12.9倍改善，但离 production `1e-6` 仍约1662倍。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `residual_outer_zero` | source SHA/artifact hash 历史未记录；轻量CSV保留 | default100；79,956 real rows，9.391M NNZ | bounded FE-AMS + sampled correction，3 cycles | residual `0.0214588→0.001661623468`，12.914×；limit `1e-6`；RSS upper 1.571 GiB，wall约21.7 min；无 official R/T/A | `research_only_positive; incomplete_for_production` | `docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/residual_corrected_loop_summary.csv` |
+| `projected_gmres` | prototype record | 同一系统 | projected prototype | residual约`0.00170842`，350.2 s；不是最优 | `research_only_positive_not_best` | `docs/task018_true_fe_sampled_schur_krylov_integration/outcomes/summary.md` |
+
+## 3.20 Task019
+
+研究对象是把 p1 sampled-Schur 信号迁移到目标 p2/h5，目的在于验证可扩展性。流程执行严格同口径比较；改善仅 `1.0018×/1.0804×`，因此关闭低维 sampled-Schur 主线。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `p2_h5_sampled_schur` | source SHA 历史未记录 | `F-STAGE4-S` p2/h5 | sampled response/coarse；规模见 evidence | two comparison ratios `1.0018×/1.0804×`，远低于研究 Gate；无合格 official R/T/A | `negative_result_success`；路线不迁移 | `docs/task019_p2_h5_true_fe_sampled_schur_qualification/outcomes/summary.md` |
+
+## 3.21 Task020
+
+研究对象是 default100 算法沙盒的四条 wave-aware route，目的是在分支卫生约束下快速排序。p1 Route C 达到 `1e-6`，但目标 p2 仅约 `0.0525`，所以只是路线排序，不能作为目标物理结论。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `route_c_p1_and_p2` | branch=`codex/20260709-task20-wave-solver-search`；精确 SHA 历史未记录 | default100 algorithm sandbox；p1/p2 | wave-aware route C | p1 residual达到`1e-6`；p2 residual约`0.0525`；official R/T/A与12通道历史未记录 | `research_only_positive`（p1）/`controlled_negative`（p2） | `docs/task028_stage_consolidation_master_integration_benchmarks/outcomes/task000_task027_progress.csv` |
+
+## 3.22 Task021
+
+研究对象是目标 p2/h5 的 DtN residual selector 与 FE-response Schur，目的是验证边界响应机制。serial SciPy h5 达到 `1e-6`，证明机制，但尚非 MPI 且 h2 未资格化。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `p2_h5_spilu_full_schur` | Task020 research branch；精确 SHA 历史未记录 | `F-STAGE4-S` p2/h5 | serial SciPy SPILU/full Schur | residual达到`1e-6`；资源与12通道历史未记录 | `research_only_positive`；证明机制，不是 production | `docs/task021_target_geometry_aux_residual_coarse_p2/outcomes/summary.md` |
+
+## 3.23 Task022
+
+研究对象是 p2/h2 Schur 资源 preflight，目的是在分解前判定内存。流程把 CSR 装配与 SPILU 估计分开；CSR在6.277 GB内完成，但 SPILU 估计27.79 GB，因此受控阻断，无 field/RTA 回填。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `p2_h2_csr_preflight` | Task020 research branch；source SHA 历史未记录 | `F-STAGE4-S` p2/h2 | CSR assemble + serial SPILU estimate | assembly/CSR peak 6.277 GB；SPILU estimated 27.79 GB；R/T/A、residual和通道 `not_run` | `diagnostic_success; controlled_negative`（内存 Gate） | `docs/task022_p2_h2_schur_pc_preflight/outcomes/summary.md` |
+
+## 3.24 Task023
+
+研究对象是 PETSc MPI FE-response PC，目的是把 Task021 serial 机制迁入 MPI 并建立 field/RTA 回填。h5 residual 和 official RTA 闭合，h2 residual约1失败；AMS auxiliary 接口未完成。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `p2_h5_petsc_fe_response` | Task020 research branch；source SHA 历史未记录 | `F-STAGE4-S` p2/h5 | PETSc MPI FieldSplit/selected response | h5 residual与 official R/T/A 闭合；精确数值/资源见 evidence；12通道历史未记录 | `infrastructure_success; diagnostic_success` | `docs/task023_petsc_mpi_fe_response_pc/outcomes/summary.md` |
+| `p2_h2_petsc_fe_response` | 同一数据族 | p2/h2 | 同算法 | terminal residual约`1`，limit `1e-6`；无 official output | `controlled_negative` | `docs/task023_petsc_mpi_fe_response_pc/outcomes/summary.md` |
+
+## 3.25 Task024
+
+研究对象是 p2 h2/h1.5 的低内存 FE-response 工程原型，目的是修复 complex dot、MPI CSR 导出并评估 manual FGMRES。基础设施可复现，但算法收益 Gate 失败，也不是完整80-aux production 解。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `manual_fgmres_fe_response_h2_h1p5` | branch=`codex/20260709-task20-wave-solver-search`；SHA历史未记录 | `F-STAGE4-S` p2 h2/h1.5 | manual FGMRES + MPI CSR export | complex-dot与导出回归通过；算法收益 Gate失败；official totals/12通道不合格 | `infrastructure_success; negative_result_success` | `docs/task024_engineering_iterative_solver_fast_track/outcomes/summary.md` |
+
+## 3.26 Task025
+
+研究对象是参数鲁棒 multilevel H(curl) 与 cached-Q augmented Schur，目的是跨 h5/h2 稳定。h5 有强信号，但 h2 residual `0.1185`，远超 `1e-6`，且 response 质量不足；后由 Task026 exact auxiliary condensation 取代架构。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `cached_q_augmented_schur_h5_h2` | branch=`codex/20260710-task25-parameter-robust-hcurl-pc`；精确 SHA 历史未记录 | `F-STAGE4-S` p2 h5/h2 | cached-Q multilevel H(curl) | h5 strong signal；h2 terminal residual `0.1185`，limit `1e-6`；无合格 official通道 | `research_only_positive / controlled_negative`；被 Task026取代 | `docs/task025_parameter_robust_multilevel_hcurl_pc/outcomes/summary.md` |
+
+## 3.27 Task026
+
+研究对象是 auxiliary-free 3D modal port，目的是精确消去80个 DtN auxiliary 并建立 matrix-free `F-C H^-1D`。h5 达到 `1e-9` 且 h2 action 等价通过，但初始 two-level PC 不鲁棒；精确算子基础进入后续稳定模块。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `auxiliary_free_h5` | branch=`codex/20260711-task26-auxiliary-free-3d-modal-port`；精确 SHA 历史未记录 | `F-STAGE4-S` p2/h5 | exact auxiliary Schur + matrix-free action | full residual达到`1e-9`；official R/T/A闭合；逐级和资源详见 evidence | `production_success; infrastructure_success` | `docs/task026_auxiliary_free_3d_modal_port/outcomes/summary.md` |
+| `auxiliary_free_h2_two_level` | 同一数据族 | p2/h2 | initial two-level PC | action/transpose等价通过，但 solver Gate 未过 | `controlled_negative`；PC仍不鲁棒 | `docs/task026_auxiliary_free_3d_modal_port/outcomes/summary.md` |
+
+## 3.28 Task027：mesh-independent physical-slab Schwarz
 
 **探索目的：**在 14 GB 工作站内，用同一 MPI4 迭代算法求解 h5/h3/h2，并使最大/最小迭代数比小于 2。
+
+它改变了迭代主线：以 owner-computes physical slabs、固定75维 coarse 和两步 shifted-F smoothing 替代失败的 spectral/GenEO 假设。三网格残差与资源 Gate 通过，但迭代数不单调，准确结论是 mesh-robust workstation candidate。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task027_h5_h3_h2_sm2` | branch=`codex/20260711-task27-mesh-independent-spectral-schwarz`；精确 SHA 历史未记录 | `F-STAGE4-S` p2 h5/h3/h2 | MPI4 right FGMRES100，16 slabs，ILU1，75D coarse；DoF `44,698/198,438/615,108` | iterations `1201/993/1804`，full residual `9.8395e-7/9.9326e-7/9.9974e-7`；h2 R/T/A=`0.0013429363/0.5992132418/0.3994438284`，RSS 12.958 GB；12通道/幅值历史未记录 | `success_with_qualifications`；spectral/GenEO residual `0.2187–0.2504` 为 controlled negative | `docs/task027_mesh_independent_spectral_schwarz_pc/outcomes/summary.md` |
 
 | 模型/候选 | 实际结果 | 具体不足或收益 | 最终状态 |
 |---|---|---|---|
@@ -280,9 +534,23 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | owner-slab + 两步全局平滑 | `1201/993/1804`；比值 `1.8167`；h2 RSS `12.958 GB`；h2 R/T/A=`0.0013429363/0.5992132418/0.3994438284` | 同一规则跨三网格通过；物理 R 跨网格仍未收敛 | `success_with_qualifications` |
 | spectral / GenEO / interface harmonic coarse | h5 100 步真残差约 `0.2187–0.2504`，远差于固定 75D coarse `6.272e-3` | 谱子空间代数正确，但没有捕获非正规 Floquet-DtN 慢误差 | `controlled_negative` |
 
-## 2.2 Task029：原始完整矩阵直接法内存剖析
+## 3.29 Task028：阶段整合、master 迁移与 benchmark 冻结
+
+研究对象是 Task000–027 的生产能力、研究负结果与依赖边界，目的是把历史分支中真正稳定的算子、回归和证据选择性迁入 master。流程建立 progress CSV、依赖分组和 selective-merge 规则；本 Task 主要是整合，不新增物理 PDE。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task000_task027_consolidation` | base/master 与 manifest 身份见 Task028 outcomes；逐历史 SHA 多数未记录 | 汇总 Task000–027 多种模型 | read-only audit + selective integration；无新增 PDE | 冻结 Task007 official RTA、Task026 exact auxiliary Schur、Task027 workstation iterative；本 Task R/T/A/资源 `not_run` | `documentation_success; integration_success`；失败 spectral/sampled-Schur 不进 ordinary API | `docs/task028_stage_consolidation_master_integration_benchmarks/outcomes/task000_task027_summary.md` |
+
+## 3.30 Task029：原始完整矩阵直接法内存剖析
 
 **探索目的：**确定 full3D p2 direct 的内存峰值，并测试 rank、对象生命周期、OOC、BLR、ordering 和线程。
+
+流程把 assembly、MUMPS setup/factor、solve 与生命周期分开采样，证明 h3 峰值来自 LU fill，而非 RHS 或 postprocess；ordinary direct default 保持不变。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `task029_h3_mpi4_direct` | Task029 fresh WSL record；source SHA见 outcomes | `F-STAGE4-S` p2/h3 | MPI4 MUMPS；198,518 rows，matrix/factor NNZ `21,317,860/266,127,836` | true residual `1.382e-11`，R/T/A Gate通过；worker RSS 8651.098 MiB；12通道/幅值历史未冻结 | `success`；MPI2只降15.119%、release只降5.462%、BLR residual `4.704e-3` 均为负结果 | `docs/task029_stage4_direct_memory_forensics/outcomes/summary.md` |
 
 | 模型/候选 | rows / NNZ | 数值结果 | 资源/时间 | 最终状态 |
 |---|---|---|---|---|
@@ -295,9 +563,15 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | MPI1×4 threaded | h5 | residual/RTA 通过 | KSPSetUp 仍约 1 核；Stage4 `48.273 s` | `controlled_negative`；当前镜像无线程因子化收益 |
 | h2 direct | 预测 `18.882–27.913 GiB` | 未启动 | 超安全 Gate | `not_run` |
 
-## 2.3 Task030：H(curl) 低内存迭代与层级基础设施
+## 3.31 Task030：H(curl) 低内存迭代与层级基础设施
 
 **探索目的：**在保持 h5/h3/h2 真残差和 R/T/A 的同时，进一步压低 Task027 的迭代内存。
+
+流程用 symmetric pre/post、ILU0、factor-only、local shift 和 restart90 压缩内存；p/h multilevel coarse 五类试验 residual `0.374864–0.680155` 失败，真正成功来自更紧凑的 physical-slab 配置。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `compact_physical_slab_h5_h3_h2` | Task030 records，source SHA见 outcomes | `F-STAGE4-S` p2 h5/h3/h2 | FGMRES90 + ILU0 symmetric pre/post + 75D coarse | iterations `855/962/1873`，residual `9.924905e-7/9.903890e-7/9.972228e-7`；RSS `1.688/3.793/9.375 GB`；h2 R/T/A=`0.00134293442/0.59921323601/0.39944383222` | `success_with_qualifications`；restart80 与 p/h coarse为 controlled negative | `docs/task030_multilevel_hcurl_low_memory_iterative_solver/outcomes/summary.md` |
 
 | 模型/候选 | 结果 | 具体原因 | 最终状态 |
 |---|---|---|---|
@@ -305,9 +579,15 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | symmetric pre/post + ILU0 + factor-only + local shift + restart90 | h5/h3/h2 full pass；内存 `1.688/3.793/9.375 GB`；R/T/A 见第 1.3 节 | 对称平滑是关键；不是 p/h multigrid 成功 | `success_with_qualifications` |
 | restart80 | weak-positive Gate 未过 | Krylov 内存继续下降不足以抵消收敛恶化 | `controlled_negative` |
 
-## 2.4 Task031：assembled-F-free 极限内存路线
+## 3.32 Task031：assembled-F-free 极限内存路线
 
 **探索目的：**不在 Krylov 过程中常驻 assembled `F`，并压缩 overlap 和对象生命周期。
+
+流程改为 public form action、overlap0.125 和 compact lifecycle。它把 h2 simultaneous peak 压到7.898 GiB，但每次 MatMult 重做 form action/通信，h2耗时约3.33小时。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `assembled_F_free_h5_h3_h2` | Task031 records，source SHA见 outcomes | `F-STAGE4-S` p2 h5/h3/h2 | matrix-free form action + Task030 PC | iterations `1157/1994/1977`，residual `9.959903e-7/9.973853e-7/9.998454e-7`；peak `1.620/3.474/7.898 GiB`；h2 total `12173.086 s` | `success_with_qualifications`；强内存成功、速度负担很大 | `docs/task031_compact_physical_slab_memory_optimization/outcomes/summary.md` |
 
 | 模型/候选 | 实际结果 | 代价/不足 | 最终状态 |
 |---|---|---|---|
@@ -316,9 +596,15 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | fixed Richardson linear PC | 200 步 residual `0.7703` | 恢复线性但失去有效平滑 | `controlled_negative` |
 | boundary Jacobi selective local solver | residual 恶化到 `0.0118`，RSS 无收益 | 破坏物理 slab 修正 | `controlled_negative` |
 
-## 2.5 Task032：Hybrid FEM–Modal direct baseline
+## 3.33 Task032：Hybrid FEM–Modal direct baseline
 
 **探索目的：**用上下两个短 3D FEM 区 + 中间二维模态传播，降低 Full3D 行数和 NNZ，并验证与同网格 Full3D 一致。
+
+流程建立同离散 Full3D–Hybrid closure 和 M160 基线；h5/h3 都把 rows/NNZ 显著压缩且 R/T/A 最大差约2–3e-6，但不等于跨网格 continuum convergence。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `hybrid_h5_h3_M160` | Case080 authority；source SHA见 Task032 summary | `F-STAGE4-S` p2 h5/h3 | direct Hybrid M160；rows `14,052/68,796`，NNZ `2,000,624/8,594,673` | h5 R/T/A=`0.0890210691/0.4425867427/0.4683921882`，residual `2.5455e-12`；h3=`0.0046128199/0.5836509402/0.4117362399`，residual `2.6036e-12`；same-grid max delta `2.07e-6/2.63e-6` | `success_with_qualifications`；QEP h5 beta误差29.5323%为离散负结果 | `docs/task032_hybrid_fem_modal_direct_baseline/outcomes/summary.md` |
 
 | 模型/候选 | 实际结果 | 具体不足或收益 | 最终状态 |
 |---|---|---|---|
@@ -329,7 +615,15 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | h2 Hybrid | 中心/上界资源 Gate 未满足 | 未运行 | `not_run` |
 | 0.7 nm current direct layout | 预测不满足资源 | 当前显式模态、多 RHS 和 local LU 不可扩展 | `predicted negative` |
 
-## 2.6 Task033：高阶 Floquet、Hybrid fixed-p 与 p4 资源 Gate
+## 3.34 Task033：高阶 Floquet、Hybrid fixed-p 与 p4 资源 Gate
+
+研究对象是高阶 p3 Floquet、同阶 Hybrid 和固定-p等精度压缩，目的在于证明高阶 local FEM 与 modal coupling 可共同工作。流程完成 p3/h5 closure、M80/120/160 漏斗和 p3/h7.5 等精度点；p4/h5 Full3D 在12.616 GiB assembly Gate受控停止。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `p3_h5_full_vs_hybrid_M160` | Task033 record identities | `F-STAGE4-S` hexa p3/h5 | Full3D direct vs Hybrid M160 | Full residual `5.442e-12/2.343e-12`；Full rows 145,943、NNZ 35,566,727、7.781 GiB、103.59 s；Hybrid local rows `21,847×2+320`、NNZ `5,156,503×2`、2.618 GiB、111.94 s；R/T/A与16项Gate通过 | `success` | `docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/hybrid_vs_full3d_summary.md` |
+| `p3_h7p5_hybrid_M160` | Phase D authority | 同物理 p3/h7.5 | Hybrid direct M160 | 26,998 rows，factor inventory 17,057,414，2.008 GiB，74.908 s；相对 p2/h3 物理误差不劣 | `success_with_qualifications`；固定-p等精度压缩 | `docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md` |
+| `p4_h5_full_assembly_gate` | controlled-stop record | p4/h5 | Full3D assembly-only Gate | 339,892 rows，155,205,040 base NNZ，12.616 GiB停止；未factor、无official物理 | `controlled_stop` | `docs/task033_high_order_floquet_hybrid_hp_adaptivity/outcomes/summary.md` |
 
 | 模型/候选 | 实际结果 | 具体不足或收益 | 最终状态 |
 |---|---|---|---|
@@ -340,9 +634,16 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | p4/h5 full3D assembly | 339,892 rows；155,205,040 base NNZ；12.616 GiB 时停止 | 未进入 factorization；目标资源 Gate 失败 | `controlled_stop` |
 | variable-p / hp | native cellwise variable-p H(curl) 未资格化 | 没有 target PDE | `not_run / incomplete` |
 
-## 2.7 Task034：WSL、高阶固定几何与 graded-h
+## 3.35 Task034：WSL、高阶固定几何与 graded-h
 
 **探索目的：**在工作站 WSL 环境资格化固定几何高阶 Full3D/Hybrid，并检查高阶 p 与 graded-h。
+
+流程资格化 complex128 WSL/MPI/MUMPS、Case093 fixed rectangular anchor、高阶 same-grid Hybrid 与 resource model v2.1。graded-h 为受控负结果；0.7 nm / 2 TiB 仍是预测模型，不是 production feasibility。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `case093_fixed_geometry_high_p` | Case093 records；geometry/source identity见 summary | `F-HO-S` fixed rectangular；p3/p4及Hybrid | Full3D/Hybrid direct | p4/h5 Full3D 339,892 FE、339,972 rows、28.888 GiB、917.47 s；Hybrid M160 100,920 rows、9.206 GiB、412.42 s；R/T/A/通道详见 Case093 | `success_with_qualifications`；fixed geometry authority | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/summary.md` |
+| `graded_h_and_resource_v2p1` | controlled-negative + prediction | fixed rectangular | graded-h + analytic resource model | graded-h未得到更优综合点；0.7 nm explicit layout仍超2 TiB；精确预测区间见 summary | `controlled_negative / predicted_unknown` | `docs/task034_workstation_wsl_adaptive_scalability/outcomes/summary.md` |
 
 | 模型/候选 | 已知结果 | 具体不足 | 最终状态 |
 |---|---|---|---|
@@ -351,9 +652,16 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | graded-h | 正式记录为受控负结果 | 没有得到更优物理/资源综合点 | `controlled_negative` |
 | 0.7 nm / 2 TiB | 形成 stress model v2.1 | 当前 modal core 与 explicit layout 仍不可宣称 production feasible | `predicted / unknown` |
 
-> Task034 的逐通道和完整资源明细需从 Case093 records 自动回填到本文，初版不复制未核对数字。
+> Task034 的逐通道与完整资源权威仍是 Case093 records；本总账保留其 evidence identity，不把未逐项复核的 heavy artifact 数字二次手抄为新 authority。
 
-## 2.8 Task035：H(curl) goal-oriented adaptivity
+## 3.36 Task035：H(curl) goal-oriented adaptivity
+
+研究对象是 periodic tetra 上真实 discrete adjoint/DWR、一次 local-h 与固定网格 p-up，目的是建立目标导向 h/p 判别而非无限 h-refine。流程完成周期闭合、normalized R/T/A multi-goal 与 strict-R audit；选定 p4/p5、theta0.7、每初始网格最多一次local-h，但预算内仍未获得 strict same-error 候选。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `h50_p4p5_one_local_h` | Case094 hash-bound record；source SHA见 summary | `F-HO-S` periodic tetra；base180 cells，p5 15,405 DoF | strict-R DWR theta0.7，一次 local-h；refined1,248 cells，101,210 DoF | base vector/strict-R error `2.2032e-2/1.5130e-3`；refined `6.3581e-4/4.3764e-4`；>90k | `controlled_negative`（预算与strict-R） | `docs/task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md` |
+| `refined_mesh_global_p6` | same-origin Case094 | 同refined mesh；p6 | fixed-mesh global p+1；167,784 DoF | vector/strict-R error `1.0224e-4/5.1371e-5`；精度正信号但远超90k | `controlled_negative`（预算） | `benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json` |
 
 | 模型/候选 | 实际结果 | 具体不足 | 最终状态 |
 |---|---|---|---|
@@ -362,9 +670,18 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | refined mesh global p6 | 167,784 DoF；vector error `1.0224e-4`；strict-R `5.1371e-5` | 精度更高但远超 90k | `controlled_negative`（预算） |
 | classifier/DWR | multi-goal DWR 和周期标记通过 | structured hexa 无 hanging-node transition；selected tetra p6 架构缺失 | `incomplete` |
 
-## 2.9 Task035b：高阶 local-hp、静态凝聚、通道恢复和资源
+## 3.37 Task035b：高阶 local-hp、静态凝聚、通道恢复和资源
 
-### 2.9.1 精度候选
+研究对象是 fixed rectangular hexa 的高阶 DoF 分解、assembly-time static condensation、setup/cache、方向性 h 和 local-p/selective-trace 研究。流程取得精确物理消元、显著内存/rows压缩与 setup 加速；但 `<=90k` 最强 h13 仍只通过10/12功率和10/12幅值，不能宣称 same-error 成功。selective trace与condensed iterative均不得提升为production。
+
+| Model ID | 身份/数据身份 | 物理与离散 | 算法/规模 | 总量/逐级/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|---|
+| `global_p6_h10_reference_v1` | Case095 source/geometry/tensor hashes见 record | `F-HO-S`；(6,3,14) hexa；global p6 | MPI8 assembly-time exact static-condensed direct；173,802 FE，51,272 active rows，41,989,040 NNZ，202,441,352 factor NNZ | R00/R/T/A=`7.537612e-4/7.628815e-4/0.602701634/0.396535485`，true residual `1.26e-11`；12 powers/amplitudes见1.4；direct peak15.964 GiB，build/setup/solve `102.32/102.54/0.167 s` | `success; best_available_same_code_reference` | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json` |
+| `fixed_p5trace_p6interior_h13` | Case095 hash-bound record | `(6,2,12)`；89,740 Full3D-equivalent DoF | MPI8 assembly-time static-condensed direct；20,120 rows，11,013,212 NNZ，36,273,200 factor NNZ | R00/R/T/A=`0.000756117570/0.000765246512/0.602682451672/0.396552301816`，residual `5.81e-12`；`T(-4)=4.354892e-7`、`R(-4)=2.723391e-7`、`r(-4)=2.127847e-4-4.721864e-5i`、`r(-5)=-1.009264e-4-5.936550e-5i`失败；peak 6.411 GiB | `controlled_negative`；10/12+10/12，不是same-error | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_directional_z_mpi8.json` |
+| `condensed_iterative_three_profiles` | Case095 negative records | h15 condensed trace | Jacobi GMRES30、ASM/ILU0 FGMRES30、z-slab/DtN coarse，均200步 | terminal residual ratios `0.861662/0.999661/0.996265`；peak `3.921/4.462/3.885 GiB`；无official R/T/A/channel | `controlled_negative`；不得提升production | `docs/task035b_high_order_local_hp_resource_envelope/outcomes/summary.md` |
+| `selective_p6_trace` | fixture/capability v2；无PDE record | p5trace/p6interior storage + research orbit | MatShell/action-only fixtures | actual DWR、row plan、正式PDE数量均0；资源/物理 `not_run` | `incomplete; research_only` | `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_selective_trace_execution_capability_v2.json` |
+
+### 3.37.1 精度候选
 
 | 模型 | 目的 | 具体结果 | 未满足项 | 状态 |
 |---|---|---|---|---|
@@ -377,7 +694,7 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | global p6/h14 trace discriminator | 判断 full p6 trace 是否有帮助 | 92,850 DoF；9/12 功率、12/12 幅值 | 超预算 2,850 DoF，且功率仍非12/12 | `diagnostic controlled_negative` |
 | selective p6 trace | 只激活关键 p6 edge/face orbit | fixture 中 inactive rows=0、Floquet pullback和MatShell action通过 | actual channel DWR、正式 row plan、runner 和 PDE 均为 0 | `incomplete` |
 
-### 2.9.2 Setup/cache 与 direct rank
+### 3.37.2 Setup/cache 与 direct rank
 
 | 研究点 | 实际结果 | 解释 | 状态 |
 |---|---|---|---|
@@ -385,7 +702,7 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 | h13 cold/warm setup | `19.410/6.696 s` | 无同 h13 旧 cold baseline，不能宣称 cold-code 2.9× | `engineering success_with_qualification` |
 | h15 MPI1/2/4/8 direct | RSS `1.295/2.158/3.100/4.711 GiB`；总时间 `76.007/74.913/61.849/53.901 s` | MPI1 是最低实测 direct 内存；MPI8 最快，但不是最低内存 | `engineering success` |
 
-### 2.9.3 静态凝聚迭代负结果
+### 3.37.3 静态凝聚迭代负结果
 
 | Profile | 200步后 residual ratio | 内存 | 具体结论 | 状态 |
 |---|---:|---:|---|---|
@@ -396,29 +713,29 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 ---
 
-# 3. 今后新增模型的登记模板
+# 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。
 
-## 3.1 主模型表模板
+## 4.1 主模型表模板
 
 | Task | Model ID | 配置 ID | 研究目的 | Full3D/Hybrid | 原始完整矩阵/静态凝聚/自适应 | direct/iterative | 网格类型 | p/h | cells | FE DoF | active rows | matrix NNZ | factor NNZ | MPI/threads | residual | R00 | Rtotal | Ttotal | Avolume | Aclosure | peak RSS/PSS/cgroup | build | MUMPS setup | iterations/solve | total | status | evidence |
 |---|---|---|---|---|---|---|---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---|---|---|
 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 |
 
-## 3.2 显著衍射功率模板
+## 4.2 显著衍射功率模板
 
 | Model ID | R(0,0) | R(-1,0) | R(-2,0) | R(-4,0) | R(-5,0) | R(-7,0) | Rtotal | T(0,0) | T(-1,0) | T(-2,0) | T(-4,0) | T(-5,0) | T(-7,0) | Ttotal | Avolume | Aclosure |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 |
 
-## 3.3 显著衍射复振幅模板
+## 4.3 显著衍射复振幅模板
 
 | Model ID | r(0,0) | r(-1,0) | r(-2,0) | r(-4,0) | r(-5,0) | r(-7,0) | t(0,0) | t(-1,0) | t(-2,0) | t(-4,0) | t(-5,0) | t(-7,0) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 |
 
-## 3.4 失败或未完成模型模板
+## 4.4 失败或未完成模型模板
 
 | Task / Model ID | 探索目的 | 实际运行到哪一步 | 实际数值 | 未满足的具体物理量/资源 Gate | 直观原因 | status | 下一步或停止理由 | evidence |
 |---|---|---|---|---|---|---|---|---|
@@ -426,10 +743,10 @@ Hybrid 把上下短 3D FEM 区保留为完整 FE 矩阵，中间长区域改用�
 
 ---
 
-# 4. 当前数据缺口与后续自动化
+# 5. 当前数据缺口与后续自动化
 
-1. Task000–026 的逐 Task 重型模型尚未从 Task028 归档 CSV 自动回填；本文初版只登记了与当前 3D 主线直接相关的 Task027–Task035b。
-2. Task032–034 的 heavy JSON 中包含比 summary 更细的衍射级、场误差和资源字段，需要后续编写只读 registry aggregator 自动抽取，避免人工复制错误。
+1. Task000–035b 已逐项回填；早期没有保存的 source SHA、geometry hash、12 通道、factor NNZ 或 PSS/cgroup 明确标成“历史未记录”。
+2. Task032–034 的 heavy JSON 包含比总账更细的衍射级、场误差和资源字段；总账保留权威 evidence path，不建立第二份易漂移的逐字段副本。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。
-5. 本文任何“待回填”均表示历史 summary 未提供该字段，不代表模型没有该结果。
+5. 新任务不得以未填写占位词收口；历史缺口必须说明“历史未记录”，当前未运行项必须写 `not_run`。

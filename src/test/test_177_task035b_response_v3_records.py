@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -18,13 +19,7 @@ RECORDS = (
 MANIFEST_PATH = OUTCOMES / "all_candidates.json"
 CSV_PATH = OUTCOMES / "all_candidates.csv"
 
-EXPECTED_NEW_RECORD_HASHES = {
-    "fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json": (
-        "ff12b909aa1c75dcf15246ba48a8169bf9653d13ddf36709c46367217d799b4b"
-    ),
-    "fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json": (
-        "6036acd898d02967d40299b48957791f0b2ae021338940dc59177eb090bf788b"
-    ),
+EXPECTED_RETAINED_RECORD_HASHES = {
     "physical_selective_trace_execution_capability_v2.json": (
         "e8c0b1d3d758ee1fea71fa261ded1fdfb4946a909437bc4f69aec52975ecf3ef"
     ),
@@ -39,6 +34,14 @@ EXPECTED_NEW_RECORD_HASHES = {
     ),
     "h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json": (
         "bfc83e13a28018d2751a1dddb4f478cf424788c6725f32b26b964b718d1bcf66"
+    ),
+}
+EXPECTED_ARCHIVED_RECORD_HASHES = {
+    "fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json": (
+        "ff12b909aa1c75dcf15246ba48a8169bf9653d13ddf36709c46367217d799b4b"
+    ),
+    "fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json": (
+        "6036acd898d02967d40299b48957791f0b2ae021338940dc59177eb090bf788b"
     ),
 }
 EXPECTED_NEW_IDS = (
@@ -80,7 +83,10 @@ def test_candidate_manifest_and_csv_have_same_68_unique_rows() -> None:
         csv_rows = list(csv.DictReader(stream))
     csv_ids = [row["candidate_id"] for row in csv_rows]
 
-    assert manifest["schema_version"] == "task035b.all-candidates.v2"
+    assert manifest["schema_version"] == "task035b.all-candidates.v3"
+    assert manifest["status"] == (
+        "review_v3_selective_merge_closeout_with_controlled_negatives"
+    )
     assert manifest["source_snapshot"] == (
         "cf14e84f4a0f9216b6139a146eba78cdcfd45bb9"
     )
@@ -89,18 +95,72 @@ def test_candidate_manifest_and_csv_have_same_68_unique_rows() -> None:
     assert len(candidates) == len(ids) == len(set(ids)) == 68
     assert csv_ids == ids
     assert tuple(ids[-10:]) == EXPECTED_NEW_IDS
-    for json_row, csv_row in zip(candidates[-10:], csv_rows[-10:], strict=True):
-        assert Path(json_row["record"]).name == csv_row["record"]
+    for json_row, csv_row in zip(candidates, csv_rows, strict=True):
+        for key in (
+            "candidate_id",
+            "record",
+            "record_sha256",
+            "source_sha",
+            "record_availability",
+            "archive_record_path",
+        ):
+            assert csv_row[key] == (
+                "" if json_row.get(key) is None else str(json_row.get(key, ""))
+            )
 
 
-def test_new_candidate_records_are_hash_bound() -> None:
+def test_candidate_record_references_are_three_state_and_hash_bound() -> None:
+    candidates = _manifest()["candidates"]
+    counts = {
+        availability: sum(
+            row["record_availability"] == availability
+            for row in candidates
+        )
+        for availability in (
+            "tracked_compact_authority",
+            "tracked_project_document",
+            "source_branch_archive_not_merged",
+        )
+    }
+    assert counts == {
+        "tracked_compact_authority": 18,
+        "tracked_project_document": 5,
+        "source_branch_archive_not_merged": 45,
+    }
+
+    for row in candidates:
+        availability = row["record_availability"]
+        if availability == "tracked_compact_authority":
+            path = ROOT / row["record"]
+            assert path.is_file()
+            assert _sha256(path) == row["record_sha256"]
+            assert row.get("archive_record_path") is None
+        elif availability == "tracked_project_document":
+            assert (ROOT / row["record"]).is_file()
+            assert row.get("archive_record_path") is None
+        else:
+            assert row["record"] is None
+            assert row["archive_record_path"]
+            assert re.fullmatch(r"[0-9a-f]{64}", row["record_sha256"])
+            assert re.fullmatch(r"[0-9a-f]{40}", row["source_sha"])
+
+
+def test_new_retained_and_archived_candidate_records_are_hash_bound() -> None:
     rows = _by_id()
-    for filename, expected_hash in EXPECTED_NEW_RECORD_HASHES.items():
+    for filename, expected_hash in EXPECTED_RETAINED_RECORD_HASHES.items():
         assert _sha256(RECORDS / filename) == expected_hash
     for candidate_id in EXPECTED_NEW_IDS:
         row = rows[candidate_id]
-        filename = Path(row["record"]).name
-        assert row["record_sha256"] == EXPECTED_NEW_RECORD_HASHES[filename]
+        locator = row["record"] or row["archive_record_path"]
+        filename = Path(locator).name
+        expected = {
+            **EXPECTED_RETAINED_RECORD_HASHES,
+            **EXPECTED_ARCHIVED_RECORD_HASHES,
+        }
+        assert row["record_sha256"] == expected[filename]
+        if filename in EXPECTED_ARCHIVED_RECORD_HASHES:
+            assert row["record"] is None
+            assert row["classification"] == "controlled_negative"
 
 
 def test_accuracy_setup_and_iterative_authorities_remain_separate() -> None:
@@ -128,19 +188,12 @@ def test_accuracy_setup_and_iterative_authorities_remain_separate() -> None:
 
 
 def test_records_do_not_promote_projection_fixture_or_failed_ksp() -> None:
-    h14 = json.loads(
-        (
-            RECORDS
-            / "fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json"
-        ).read_text(encoding="utf-8")
-    )
-    assert h14["diffraction_channel_comparison"][
-        "significant_power_pass_count"
-    ] == 7
-    assert h14["diffraction_channel_comparison"][
-        "significant_complex_amplitude_pass_count"
-    ] == 8
-    assert h14["candidate_accuracy_pass"] is False
+    rows = _by_id()
+    h14 = rows["c095_h14_exact_reverse_h13_top2"]
+    assert h14["record"] is None
+    assert "7/12 power and 8/12 amplitude" in h14["accuracy_gate"]
+    assert "is not measured" in h14["accuracy_gate"]
+    assert h14["classification"] == "controlled_negative"
 
     capability = json.loads(
         (

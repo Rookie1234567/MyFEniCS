@@ -15,6 +15,14 @@ SI_GRATING_INDEX_EUV_13P5_NM = 0.999002304859 + 0.00182649365j
 SI_SUBSTRATE_MATERIAL_LABEL = "Si / silicon"
 SI_SUBSTRATE_INDEX_EUV_13P5_NM = SI_GRATING_INDEX_EUV_13P5_NM
 NUMERICAL_SANITY_ONLY = "numerical_sanity_only"
+STANDARD_FULL_ASSEMBLY_BACKEND = "standard_full"
+ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND = (
+    "assembly_time_static_condensed"
+)
+STAGE4_FULL3D_ASSEMBLY_BACKENDS = (
+    STANDARD_FULL_ASSEMBLY_BACKEND,
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+)
 
 
 @dataclass(frozen=True)
@@ -163,8 +171,11 @@ class SimulationConfig3D:
     # default; explicit callers may release the copied base Mat/Vec once the
     # augmented system owns every entry needed by residual and official R/T/A.
     direct_release_base_after_augmentation: bool = False
-    # Task035b research-only exact cell-interior Schur path.  False preserves
-    # the reviewed ordinary full augmented system.
+    # Stable public selection port. The ordinary default remains the reviewed
+    # full FE assembly; assembly-time static condensation is explicit opt-in.
+    stage4_full3d_assembly_backend: str = STANDARD_FULL_ASSEMBLY_BACKEND
+    # Internal compatibility switches retained for historical research
+    # runners. New user-facing callers must use the single port above.
     stage4_cell_static_condensation: bool = False
     # Task035b opt-in memory path: call the compiled cell kernels directly,
     # condense cell interiors, and apply Floquet constraints before global
@@ -721,6 +732,147 @@ class SimulationConfig3D:
         data["magnetic_field_unit"] = "A/m"
         data["magnetic_field_scale_A_per_m"] = self.magnetic_field_scale_A_per_m
         return data
+
+
+def resolve_stage4_full3d_assembly_backend(
+    cfg: SimulationConfig3D,
+    *,
+    apply: bool = False,
+) -> dict[str, object]:
+    """Resolve the public backend and legacy internal compatibility switches."""
+
+    requested = str(cfg.stage4_full3d_assembly_backend).strip().lower()
+    if requested not in STAGE4_FULL3D_ASSEMBLY_BACKENDS:
+        choices = ", ".join(STAGE4_FULL3D_ASSEMBLY_BACKENDS)
+        raise ValueError(
+            "unknown stage4_full3d_assembly_backend="
+            f"{cfg.stage4_full3d_assembly_backend!r}; choose one of: {choices}"
+        )
+
+    legacy = {
+        "stage4_cell_static_condensation": bool(
+            cfg.stage4_cell_static_condensation
+        ),
+        "stage4_assembly_time_cell_static_condensation": bool(
+            cfg.stage4_assembly_time_cell_static_condensation
+        ),
+        "stage4_floquet_slave_elimination": bool(
+            cfg.stage4_floquet_slave_elimination
+        ),
+    }
+    legacy_values = tuple(legacy.values())
+    none_enabled = not any(legacy_values)
+    all_enabled = all(legacy_values)
+
+    if requested == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+        if not (none_enabled or all_enabled):
+            raise ValueError(
+                "stage4_full3d_assembly_backend="
+                "'assembly_time_static_condensed' conflicts with an "
+                "incomplete legacy internal flag combination"
+            )
+        if apply:
+            cfg.stage4_cell_static_condensation = True
+            cfg.stage4_assembly_time_cell_static_condensation = True
+            cfg.stage4_floquet_slave_elimination = True
+        actual = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        selection_source = "public_port"
+    elif none_enabled:
+        actual = STANDARD_FULL_ASSEMBLY_BACKEND
+        selection_source = "public_default"
+    elif legacy["stage4_assembly_time_cell_static_condensation"]:
+        if not all_enabled:
+            raise ValueError(
+                "legacy assembly-time condensation requires cell static "
+                "condensation and Floquet slave elimination"
+            )
+        actual = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        selection_source = "legacy_internal_compatibility"
+    elif legacy["stage4_floquet_slave_elimination"] and not legacy[
+        "stage4_cell_static_condensation"
+    ]:
+        raise ValueError(
+            "legacy Floquet slave elimination requires cell static "
+            "condensation"
+        )
+    else:
+        actual = (
+            "legacy_post_assembly_static_condensed_floquet_eliminated"
+            if legacy["stage4_floquet_slave_elimination"]
+            else "legacy_post_assembly_static_condensed"
+        )
+        selection_source = "legacy_internal_compatibility"
+
+    return {
+        "requested": requested,
+        "actual": actual,
+        "selection_source": selection_source,
+        "ordinary_default_unchanged": (
+            requested == STANDARD_FULL_ASSEMBLY_BACKEND
+            and none_enabled
+        ),
+        "legacy_internal_flags_before_resolution": legacy,
+    }
+
+
+def qualify_stage4_full3d_assembly_backend(
+    cfg: SimulationConfig3D,
+    audit: dict[str, object],
+    *,
+    selective_trace_active: bool = False,
+) -> dict[str, object]:
+    """Fail closed whenever assembly-time condensation leaves its qualification."""
+
+    if audit["actual"] != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+        return {
+            "status": "not_required_for_standard_or_post_assembly_legacy_backend",
+            "qualified_scope": False,
+        }
+
+    reasons: list[str] = []
+    if cfg.stage_case != "stage4_block_grating":
+        reasons.append("stage_case is not stage4_block_grating")
+    if cfg.geometry_kind != "rectangular_block_grating":
+        reasons.append("geometry is not the fixed rectangular target")
+    if cfg.mesh_cell_type_resolved != "hexahedron":
+        reasons.append("cell type is not hexahedron")
+    if cfg.use_pml or cfg.stage4_boundary_model.lower() != "dtn_port":
+        reasons.append("sparse auxiliary DtN without PML is required")
+    if not cfg.use_floquet_xy:
+        reasons.append("double Floquet constraints are required")
+    if cfg.stage4_dtn_assembly.lower() != "auxiliary":
+        reasons.append("sparse auxiliary DtN assembly is required")
+    if cfg.stage4_condensed_iterative_profile is not None:
+        reasons.append("condensed iterative profiles are not qualified")
+    if cfg.stage4_regionwise_interior_p:
+        reasons.append("regionwise-p is not qualified")
+    if cfg.stage4_live_full_p6_local_schur_capture:
+        reasons.append("live selective-p6 capture is research-only")
+    if selective_trace_active:
+        reasons.append("production selective trace is not qualified")
+    if (
+        cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        reasons.append("a complete direct solve and field recovery are required")
+    if reasons:
+        raise ValueError(
+            "assembly_time_static_condensed is outside its qualified scope: "
+            + "; ".join(reasons)
+            + "; use stage4_full3d_assembly_backend='standard_full'"
+        )
+    return {
+        "status": "qualified",
+        "qualified_scope": True,
+        "scalar_type": "complex128_required_at_runtime",
+        "element": "Hcurl_Nedelec",
+        "geometry": "first_order_axis_aligned_affine_hexahedron",
+        "material_tags": "explicit_for_every_owned_cell",
+        "target": "fixed_rectangular_block_grating",
+        "floquet": "slave_elimination_before_global_insertion",
+        "port": "sparse_auxiliary_DtN",
+        "recovery": "full_field_and_full_explicit_residual",
+    }
 
 
 def _complex_or_none(value: complex | None) -> list[float] | None:

@@ -17,7 +17,12 @@ from dolfinx import fem
 from dolfinx.fem import petsc as fem_petsc
 from dolfinx.la.petsc import _ghost_update, create_vector
 
-from ..common.config_3d import SimulationConfig3D
+from ..common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    SimulationConfig3D,
+    qualify_stage4_full3d_assembly_backend,
+    resolve_stage4_full3d_assembly_backend,
+)
 from ..common.modes_3d import (
     PortMode3D,
     incident_power_3d,
@@ -3167,6 +3172,25 @@ def solve_stage4_dtn_port_total_field(
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports."""
 
+    assembly_backend_audit = resolve_stage4_full3d_assembly_backend(
+        cfg,
+        apply=True,
+    )
+    assembly_backend_audit["qualification"] = (
+        qualify_stage4_full3d_assembly_backend(
+            cfg,
+            assembly_backend_audit,
+            selective_trace_active=(
+                actual_selective_trace_expansion is not None
+            ),
+        )
+    )
+    log(
+        "Stage-4 Full3D assembly backend: "
+        f"requested={assembly_backend_audit['requested']}, "
+        f"actual={assembly_backend_audit['actual']}, "
+        f"source={assembly_backend_audit['selection_source']}"
+    )
     if cfg.stage4_dtn_assembly.lower() != "auxiliary":
         raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
     if cfg.use_pml:
@@ -3269,6 +3293,16 @@ def solve_stage4_dtn_port_total_field(
             "actual selective-p6 trace expansion is unsupported by the "
             "zero-order local Robin shortcut"
         )
+    if (
+        assembly_backend_audit["actual"]
+        == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        and _use_zero_order_local_robin_dtn(cfg)
+    ):
+        raise ValueError(
+            "assembly_time_static_condensed is unavailable for the local "
+            "Robin shortcut; use stage4_full3d_assembly_backend="
+            "'standard_full'"
+        )
     if _use_zero_order_local_robin_dtn(cfg):
         return _solve_zero_order_local_robin_dtn(
             a=a,
@@ -3286,6 +3320,9 @@ def solve_stage4_dtn_port_total_field(
     comm = mesh_data.mesh.comm
     stage_start = time.perf_counter()
     timing_details: dict[str, Any] = {}
+    timing_details["stage4_full3d_assembly_backend"] = (
+        assembly_backend_audit
+    )
     timing_details[
         "stage4_canonical_orientation_class_reuse_request"
     ] = canonical_orientation_request_audit
@@ -4668,6 +4705,12 @@ def solve_stage4_dtn_port_total_field(
                     if assembly_time_system is None
                     else assembly_time_system.build_audit
                 ),
+                "stage4_full3d_assembly_backend_actual": (
+                    assembly_backend_audit["actual"]
+                ),
+                "stage4_full3d_assembly_backend_selection": (
+                    assembly_backend_audit
+                ),
             }
         )
         raise
@@ -5112,6 +5155,15 @@ def solve_stage4_dtn_port_total_field(
         "stage4_floquet_slave_elimination": bool(
             independent_trace_system is not None
             or assembly_time_system is not None
+        ),
+        "stage4_full3d_assembly_backend_requested": (
+            assembly_backend_audit["requested"]
+        ),
+        "stage4_full3d_assembly_backend_actual": (
+            assembly_backend_audit["actual"]
+        ),
+        "stage4_full3d_assembly_backend_selection": (
+            assembly_backend_audit
         ),
         "linear_solve_method": (
             "assembled_condensed_iterative"

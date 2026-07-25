@@ -18,6 +18,12 @@ DEFAULT_MANIFEST = (
     ROOT
     / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/base_manifest.json"
 )
+DEFAULT_CONFIG = (
+    ROOT / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/config.json"
+)
+DEFAULT_EXPECTED = (
+    ROOT / "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/expected.json"
+)
 DEFAULT_SUCCESSOR_BINDINGS = (
     ROOT
     / "benchmarks/cases/095_high_order_local_hp_resource_envelope/records"
@@ -289,21 +295,98 @@ def check_base_manifest(
     )
 
 
+def check_case094(
+    config_path: str | Path = DEFAULT_CONFIG,
+    expected_path: str | Path = DEFAULT_EXPECTED,
+) -> dict[str, Any]:
+    """Validate the compact Review-V6 authority without running a PDE."""
+
+    config = json.loads(Path(config_path).read_text(encoding="utf-8"))
+    expected = json.loads(Path(expected_path).read_text(encoding="utf-8"))
+    failures: list[str] = []
+    if config.get("schema_version") != "task035.case094.compact-authority.v2":
+        failures.append("config_schema")
+    if expected.get("schema_version") != "task035.case094.compact-expected.v2":
+        failures.append("expected_schema")
+    for key in (
+        "status",
+        "canonical",
+        "production_qualified",
+        "pde_run",
+        "ordinary_default_changed",
+    ):
+        if config.get(key) != expected.get(key):
+            failures.append(f"expected_mismatch:{key}")
+    if config.get("ordinary_default_changed") is not False:
+        failures.append("ordinary_default_changed")
+
+    records = config.get("authority_records")
+    if not isinstance(records, list) or len(records) != expected.get(
+        "authority_record_count"
+    ):
+        failures.append("authority_record_count")
+        records = []
+    record_results: list[dict[str, Any]] = []
+    for index, item in enumerate(records):
+        path = _repo_path(item.get("path"), ROOT)
+        result = {"path": str(item.get("path")), "status": "fail"}
+        if not path.is_file():
+            failures.append(f"record[{index}]:missing")
+        elif not _valid_sha256(item.get("sha256")):
+            failures.append(f"record[{index}]:invalid_sha256")
+        elif _sha256(path) != item["sha256"]:
+            failures.append(f"record[{index}]:hash_mismatch")
+        else:
+            record = json.loads(path.read_text(encoding="utf-8"))
+            if record.get("status") != item.get("expected_status"):
+                failures.append(f"record[{index}]:status_mismatch")
+            else:
+                result["status"] = "hash_and_status_match"
+        record_results.append(result)
+
+    base_result = check_base_manifest(DEFAULT_MANIFEST)
+    if base_result["status"] != "phase_a_gate_pass":
+        failures.append("base_manifest")
+    status = (
+        "case094_compact_authority_pass"
+        if not failures
+        else "case094_compact_authority_fail"
+    )
+    return {
+        "status": status,
+        "failures": failures,
+        "authority_record_count": len(records),
+        "record_results": record_results,
+        "base_manifest_status": base_result["status"],
+        "starts_pde": False,
+        "reads_ignored_artifacts": False,
+    }
+
+
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--manifest", type=Path, default=None)
     parser.add_argument("--verify-artifacts", action="store_true")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    result = check_base_manifest(
-        args.manifest,
-        verify_artifacts=args.verify_artifacts,
+    result = (
+        check_base_manifest(
+            args.manifest,
+            verify_artifacts=args.verify_artifacts,
+        )
+        if args.manifest is not None or args.verify_artifacts
+        else check_case094()
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result["status"] == "phase_a_gate_pass" else 2
+    return (
+        0
+        if result["status"]
+        in {"phase_a_gate_pass", "case094_compact_authority_pass"}
+        else 2
+    )
 
 
 if __name__ == "__main__":

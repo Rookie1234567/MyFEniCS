@@ -1,7 +1,8 @@
 {
-  "schema_version": "task035b.all-candidates.v2",
-  "status": "partial_with_controlled_negatives_review_v2_batch_complete",
+  "schema_version": "task035b.all-candidates.v3",
+  "status": "review_v3_selective_merge_closeout_with_controlled_negatives",
   "source_snapshot": "cf14e84f4a0f9216b6139a146eba78cdcfd45bb9",
+  "archive_branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
   "geometry": "Task034 fixed rectangular block grating",
   "formal_mpi": 8,
   "ordinary_default_changed": false,
@@ -23,12 +24,21 @@
       "record_sha256": "7acd6080cd186c2c1e934a4734b5504ae3f0789d7eadb92b4b9ea337dd2d65d6",
       "source_sha": "2e91d2bf0195056e55be670af226b7716096284c",
       "mesh_p_h": "hexa252 p4->p5 h10",
-      "resources": ["53084->101815", "53164->101895", "24730144->79436433", "54269104->176056675"],
+      "resources": [
+        "53084->101815",
+        "53164->101895",
+        "24730144->79436433",
+        "54269104->176056675"
+      ],
       "peak_gib": 14.928,
       "wall_seconds": 778.201,
       "accuracy_gate": "residual, identity, and R5 pass; historical full-matrix control",
       "successor": "c095_g45_asc",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_g45_asc",
@@ -38,12 +48,20 @@
       "record_sha256": "6e2bb2e6779f2d037fd17495f2beee2a8ef69d4dea076dbc98a71aea35d1abd4",
       "source_sha": "a5cf24758e31143d25ddb8ae8cb2e731abfffdae",
       "mesh_p_h": "hexa252 p4->p5 h10",
-      "resources": ["53084->101815", "21824->35000", "8184464->20140928", "40151936->98588300"],
+      "resources": [
+        "53084->101815",
+        "21824->35000",
+        "8184464->20140928",
+        "40151936->98588300"
+      ],
       "peak_gib": 10.59,
       "wall_seconds": 359.221,
       "accuracy_gate": "true residual, identity, and exact assembly-time condensation pass",
       "successor": "c095_dwr_g45",
-      "unavailable": ["L4/L5"]
+      "unavailable": [
+        "L4/L5"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_g56_full",
@@ -53,42 +71,76 @@
       "record_sha256": "3e49dc7992e78ae26a1bfc1c1ba2ed48cffe8b15534ddcfc22b99e549599614b",
       "source_sha": "c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2",
       "mesh_p_h": "hexa252 p5->p6 h10",
-      "resources": ["101815->173802", "101895->173882", "79436433->210353120", "166314925->386625292"],
+      "resources": [
+        "101815->173802",
+        "101895->173882",
+        "79436433->210353120",
+        "166314925->386625292"
+      ],
       "peak_gib": 35.024,
       "wall_seconds": 3240.345,
       "accuracy_gate": "residual, identity, and R5 pass; historical full-matrix baseline",
       "successor": "c095_g56_post_schur",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_g56_post_schur",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json",
+      "record": null,
       "record_sha256": "e2d4f3b3560e9adbdd68f8821347770673bb4c0f2dd12accb45d7d3ecba30f15",
       "source_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161",
       "mesh_p_h": "hexa252 p6 h10 post-assembly Schur",
-      "resources": [173802, 60482, 52058162, 243270308],
+      "resources": [
+        173802,
+        60482,
+        52058162,
+        243270308
+      ],
       "peak_gib": 29.212,
       "wall_seconds": 3127.781,
       "accuracy_gate": "numerical equivalence pass; full matrix still built",
       "successor": "c095_g56_independent_fail",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_g56_independent_fail",
       "scope": "case095",
       "classification": "formal_not_pass",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_independent_mpi8.json",
+      "record": null,
       "record_sha256": "1d45c72282ee9e05a8075e14e254e5133cb00979e4a20adf8ca86f036e227780",
       "source_sha": "1080dce6c5d74d1c97464dfe2a1d29189fd850f8",
       "mesh_p_h": "intended hexa252 p5/p6 h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": 28.158,
       "wall_seconds": null,
       "accuracy_gate": "process incomplete; formal qualification failed",
       "successor": "c095_g56_asc",
-      "unavailable": ["DoF", "rows", "NNZ", "factor", "residual", "time", "accuracy"]
+      "unavailable": [
+        "DoF",
+        "rows",
+        "NNZ",
+        "factor",
+        "residual",
+        "time",
+        "accuracy"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_independent_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_g56_asc",
@@ -98,42 +150,70 @@
       "record_sha256": "9f7f44efb52b44c587ef59a57524849e08da81a6fcd5d90ec18e7b69e4f33ded",
       "source_sha": "e9d35bb77636302e18112bf1ab81fdc40f64efba",
       "mesh_p_h": "hexa252 p5->p6 h10",
-      "resources": ["101815->173802", "35000->51272", "20140928->41989040", "101062900->202763336"],
+      "resources": [
+        "101815->173802",
+        "35000->51272",
+        "20140928->41989040",
+        "101062900->202763336"
+      ],
       "peak_gib": 20.581,
       "wall_seconds": 1202.851,
       "accuracy_gate": "accepted global-p6 discrete control",
       "successor": "lifecycle and projection-signal records",
-      "unavailable": ["L4/L5 outside downstream audit"]
+      "unavailable": [
+        "L4/L5 outside downstream audit"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_p6_lifecycle_retained",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_retained_postprocess_mpi8.json",
+      "record": null,
       "record_sha256": "a93f9e02007efd7f41e2e6192b7408485700f812f3983b632d600be2d08a3c57",
       "source_sha": "c3b2836971a9391183fd8f1c050059f277118e81",
       "mesh_p_h": "hexa252 p6 h10",
-      "resources": [173802, 51272, 41989040, 205445192],
+      "resources": [
+        173802,
+        51272,
+        41989040,
+        205445192
+      ],
       "peak_gib": 16.998,
       "wall_seconds": 1061.225,
       "accuracy_gate": "numerical pass; retained solver lifecycle control",
       "successor": "c095_p6_lifecycle_release",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_retained_postprocess_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_p6_lifecycle_release",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_released_without_heap_trim_mpi8.json",
+      "record": null,
       "record_sha256": "775f15078154cd8985c127f95cdd1cd68a2bc41868de86c147561b39ac495d0c",
       "source_sha": "178326daf3ad47d03541a1eed0924799b1ddc593",
       "mesh_p_h": "hexa252 p6 h10",
-      "resources": [173802, 51272, 41989040, 202763336],
+      "resources": [
+        173802,
+        51272,
+        41989040,
+        202763336
+      ],
       "peak_gib": 16.351,
       "wall_seconds": 955.715,
       "accuracy_gate": "solver release positive; heap not trimmed",
       "successor": "c095_p6_lifecycle_trim",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_released_without_heap_trim_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_p6_lifecycle_trim",
@@ -143,57 +223,92 @@
       "record_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
       "source_sha": "0f8924ac4bacc8a17dc67fb0af2871ea61471c56",
       "mesh_p_h": "hexa252 p6 h10",
-      "resources": [173802, 51272, 41989040, 211651232],
+      "resources": [
+        173802,
+        51272,
+        41989040,
+        211651232
+      ],
       "peak_gib": 15.964,
       "wall_seconds": 974.019,
       "accuracy_gate": "accepted isolated p6 resource and heap-trim authority",
       "successor": "projection signals and current controls",
-      "unavailable": ["R00", "L4/L5"]
+      "unavailable": [
+        "R00",
+        "L4/L5"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_g56_projection_signals",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_projection_signals_mpi8.json",
+      "record": null,
       "record_sha256": "7984c18b128134a58ce496106ea06b46b5820d0b5cea813e2d51a9ec59b8bf74",
       "source_sha": "65bf6fb034d6717e190a5d1ab4a2025fb1c4ff3b",
       "mesh_p_h": "hexa252 p5->p6 h10",
-      "resources": ["101815->173802", "35000->51272", "20140928->41989040", "101062900->202441352"],
+      "resources": [
+        "101815->173802",
+        "35000->51272",
+        "20140928->41989040",
+        "101062900->202441352"
+      ],
       "peak_gib": 19.977,
       "wall_seconds": 324.783,
       "accuracy_gate": "252-cell projection and decay signals pass; not production local-hp authority",
       "successor": "c095_classifier_v3",
-      "unavailable": ["same-patch h-vs-p", "independent phase-resolution authority"]
+      "unavailable": [
+        "same-patch h-vs-p",
+        "independent phase-resolution authority"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_projection_signals_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_g56_h15",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h15_assembly_time_condensed_independent_mpi8.json",
+      "record": null,
       "record_sha256": "59859ef7b49ac6c40e2e3d803a366c71742a29411f7d9591384c62dc8fa923f9",
       "source_sha": "5d75c5ed8ae0dd4382eccf0c47e22fce01391184",
       "mesh_p_h": "hexa120 p5->p6 h15",
-      "resources": ["49690->84492", "16880->24704", "9195812->19207136", "27916600->59616320"],
+      "resources": [
+        "49690->84492",
+        "16880->24704",
+        "9195812->19207136",
+        "27916600->59616320"
+      ],
       "peak_gib": 12.0,
       "wall_seconds": 567.684,
       "accuracy_gate": "resource, scalar/vector, and field pass; significant power 6/12 and amplitude 8/12",
       "successor": "c095_h15_same_error_audit then lane closed",
-      "unavailable": []
+      "unavailable": [],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h15_assembly_time_condensed_independent_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_same_error_audit",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p6_h15_vs_h10_same_error_audit.json",
+      "record": null,
       "record_sha256": "88a5e8107782022dafc90469475a083b8b03bfce6aa4afad79e6c78b73df9d13",
       "source_sha": "2f334425e20454f04d0edb5d9442708e7e38ea1e",
       "mesh_p_h": "hexa120 p6 h15 vs hexa252 p6 h10",
-      "resources": [84492, 24704, 19207136, 59616320],
+      "resources": [
+        84492,
+        24704,
+        19207136,
+        59616320
+      ],
       "peak_gib": 12.0,
       "wall_seconds": 567.684,
       "accuracy_gate": "failed significant diffraction channels",
       "successor": "lane closed",
-      "unavailable": ["independent PDE metrics; inherited from authority"]
+      "unavailable": [
+        "independent PDE metrics; inherited from authority"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p6_h15_vs_h10_same_error_audit.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_fixed_p5trace_p6int_h15_v1",
@@ -203,27 +318,40 @@
       "record_sha256": "84c9b898100bc2f223913a144d9b7a9a324ef17d9164610c622b3ecc480d870a",
       "source_sha": "954258144f6114f870ed6dd970d1e2457c53f521",
       "mesh_p_h": "hexa120 p5-trace/p6-interior h15",
-      "resources": [74890, 16880, 9195812, 27916600],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        27916600
+      ],
       "peak_gib": 6.105,
       "wall_seconds": 276.422,
       "accuracy_gate": "scalar/vector, field, resource, and exact-sequence pass; channels 6/12 and 7/12",
       "successor": "tensor dedup",
-      "unavailable": []
+      "unavailable": [],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_fixed_p5trace_p6int_h15_dedup",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_mpi8.json",
+      "record": null,
       "record_sha256": "c074efecd16d14734580d0c792a5df1fbed655b9391b0815ebd426157a7f5bc5",
       "source_sha": "3e315fedc86ea59c3898d5160c46a35f868da213",
       "mesh_p_h": "hexa120 p5-trace/p6-interior h15",
-      "resources": [74890, 16880, 9195812, 27916600],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        27916600
+      ],
       "peak_gib": 6.001,
       "wall_seconds": 129.811,
       "accuracy_gate": "same channel negative; tensor dedup engineering positive",
       "successor": "exact preallocation",
-      "unavailable": []
+      "unavailable": [],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_tensor_dedup_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_fixed_p5trace_p6int_h15_prealloc",
@@ -233,342 +361,566 @@
       "record_sha256": "1ffde81be08c24232e62c1d2dfbf1b7ad2dcb3623444ea40af68b5c6585758e3",
       "source_sha": "7f61d554b0441d7b224c096aba402d3b3ac2baa6",
       "mesh_p_h": "hexa120 p5-trace/p6-interior h15",
-      "resources": [74890, 16880, 9195812, 27916600],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        27916600
+      ],
       "peak_gib": 5.803,
       "wall_seconds": 102.643,
       "accuracy_gate": "same channel negative; current engineering authority with zero mallocs",
       "successor": "c095_h15_setup_canonical_cold",
-      "unavailable": []
+      "unavailable": [],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_region_p4trace_n105",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p4trace_p6interior_h10_mpi8.json",
+      "record": null,
       "record_sha256": "559ca48ebdf7151914eda4fd34a3c27a93c422cd63e688a7101321398ad6c3df",
       "source_sha": "eb1742dde4d31c54cf66fc5d2d1d37203f9f7e34",
       "mesh_p_h": "hexa252 p4-trace, 105 p6-interior cells, h10",
-      "resources": [88994, 21824, 8184464, 42888832],
+      "resources": [
+        88994,
+        21824,
+        8184464,
+        42888832
+      ],
       "peak_gib": 6.072,
       "wall_seconds": 226.593,
       "accuracy_gate": "residual, identity, exact-sequence, and resource pass; all scalar/vector/order/amplitude/field gates fail",
       "successor": "exact-sequence audit; p4-trace lane closed",
-      "unavailable": []
+      "unavailable": [],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p4trace_p6interior_h10_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_region_n62_wrong_control_fail",
       "scope": "case095",
       "classification": "formal_not_pass",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_wrong_control_preflight_failure.json",
+      "record": null,
       "record_sha256": "ad4c401c5c44f88c9dbd95c4b7e95240f0b957eef32b9964588f059756daa4a8",
       "source_sha": "115d647bec40eef8cd96836146a2a030fff54a42",
       "mesh_p_h": "intended hexa252 p5-trace/p4-low/p6-high h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": 1.507,
       "wall_seconds": null,
       "accuracy_gate": "wrong-control preflight; PDE not launched",
       "successor": "postprocess attempt",
-      "unavailable": ["all numerical metrics"]
+      "unavailable": [
+        "all numerical metrics"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_wrong_control_preflight_failure.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_region_n62_postprocess_fail",
       "scope": "case095",
       "classification": "formal_not_pass",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_postprocess_failure.json",
+      "record": null,
       "record_sha256": "42af14908ec06ae82caefdda5e149c2411c89546323ca25ff735c4f2de9fe7bc",
       "source_sha": "7ea98ce8077401491d908bce0526fb03491e68fb",
       "mesh_p_h": "intended hexa252 p5-trace/p4-low/p6-high h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": 9.613,
       "wall_seconds": null,
       "accuracy_gate": "postprocess failure; not a formal result",
       "successor": "successful N62 record",
-      "unavailable": ["tracked formal metrics"]
+      "unavailable": [
+        "tracked formal metrics"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8_postprocess_failure.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_region_n62",
       "scope": "case095",
       "classification": "controlled_negative_non_exact_sequence_space",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json",
+      "record": null,
       "record_sha256": "3ead03626aa12d3f13f7f8913aeac892ce7c9484072f9b8f1bd31dd163f52795",
       "source_sha": "6c113cbd6c3dfadd7399ec2d198f0d36bed7533d",
       "mesh_p_h": "hexa252 p5-trace/p4-low/62 p6-high h10",
-      "resources": [89755, 35000, 20140928, 101062900],
+      "resources": [
+        89755,
+        35000,
+        20140928,
+        101062900
+      ],
       "peak_gib": 9.271,
       "wall_seconds": 442.53,
       "accuracy_gate": "residual/resource pass; all accuracy gates fail; low space misses 66 gradient modes",
       "successor": "structural audit; N18 prohibited",
-      "unavailable": []
+      "unavailable": [],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_dwr_g45",
       "scope": "case095",
       "classification": "formal_pass_method",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json",
+      "record": null,
       "record_sha256": "240464359d87f82f923fac5b355e2e521cec22d1beed4f21b0f49905cf1c4d6d",
       "source_sha": "56310afa46465ae2e0316c957cf00fd385fa0997",
       "mesh_p_h": "hexa252 p4->p5 h10",
-      "resources": ["53084->101815", "53164->101895", "24730144->79436433", "54356304->180690025"],
+      "resources": [
+        "53084->101815",
+        "53164->101895",
+        "24730144->79436433",
+        "54356304->180690025"
+      ],
       "peak_gib": 15.485,
       "wall_seconds": 877.029,
       "accuracy_gate": "three adjoints, DWR_R00/R/T, normalized R/T, effectivity, and residual pass",
       "successor": "c095_classifier_v2",
-      "unavailable": ["same-error L4/L5"]
+      "unavailable": [
+        "same-error L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_hexa_p4_p5_goal_dwr_h10_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_classifier_v1",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_r5_hp_classifier_mpi8.json",
+      "record": null,
       "record_sha256": "639ef8d221b36f33b476b2715a3d00943cce1293d4dc71b56ce41ebab9c05906",
-      "source_sha": null,
+      "source_sha": "650fc141ebde8fb6adc695da964062bbb806aa36",
       "mesh_p_h": "hexa252 p4/p5/p6 h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "252-cell R5 screening; p-up 105; production_qualified=false",
       "successor": "classifier v2 and regionwise candidates",
-      "unavailable": ["independent PDE resources", "formal same-error accuracy"]
+      "unavailable": [
+        "independent PDE resources",
+        "formal same-error accuracy"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_r5_hp_classifier_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_classifier_v2",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json",
+      "record": null,
       "record_sha256": "06d3e0cee667d9208e91779b067f3275632e65ee684d3fc6e20f0e79b12ec2f3",
       "source_sha": "ac31b6b62cee0185214f2f44a985024393535ea0",
       "mesh_p_h": "hexa252 p4/p5/p6 h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "p-up 102 and p-keep 150; missing projection and actual h-vs-p",
       "successor": "c095_classifier_v3",
-      "unavailable": ["PDE rows", "NNZ", "factor", "memory", "time"]
+      "unavailable": [
+        "PDE rows",
+        "NNZ",
+        "factor",
+        "memory",
+        "time"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v2.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_exact_sequence_audit",
       "scope": "case095",
       "classification": "engineering_positive",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p_exact_sequence_structural_audit.json",
+      "record": null,
       "record_sha256": "6428a95ca756ea5ff05ac7fd2de7a9da235471c3dc92cbd570829e0baee64b6f",
       "source_sha": "e418e96f05cba144b64e6a25e3b445838c9cfaf9",
       "mesh_p_h": "local polynomial structural audit",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "N105 exact; N62 non-exact; fail-closed preflight",
       "successor": "new exact-sequence local-p designs only",
-      "unavailable": ["PDE resources not applicable"]
+      "unavailable": [
+        "PDE resources not applicable"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p_exact_sequence_structural_audit.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h_vs_p_proxy",
       "scope": "case095_derived_from_case094",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/actual_sequential_h_vs_p_competition_mpi8.json",
+      "record": null,
       "record_sha256": "a4417df900b202942aad00c7a2723eee72a80ce31d7b05082ec280e9854b94c9",
       "source_sha": "659c2a20c6ef56798098470cdeef4d7e45d50b4c",
       "mesh_p_h": "tetra h50 base p5 -> one local-h p5 -> fixed-mesh p6",
-      "resources": ["15405->101210->167784", "15485->101290->167864", "3726879->23913006->57609056", null],
+      "resources": [
+        "15405->101210->167784",
+        "15485->101290->167864",
+        "3726879->23913006->57609056",
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "vector favors h, strict-R favors p; final strict-R and 90k gates fail; not same-patch",
       "successor": "classifier v3",
-      "unavailable": ["isolated action memory/time", "factor", "same-patch authority"]
+      "unavailable": [
+        "isolated action memory/time",
+        "factor",
+        "same-patch authority"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/actual_sequential_h_vs_p_competition_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_classifier_v3",
       "scope": "case095",
       "classification": "engineering_positive_with_limitations",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v3.json",
+      "record": null,
       "record_sha256": "2e08e285dc1c151f3a7106583eee3b1b55fcac99a64b15caee5533fd0276daf9",
       "source_sha": "5f353e53b519016239374331207d13041b36676e",
       "mesh_p_h": "hexa252 p4/p5/p6 h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "measured decay/projection; p-up 102, p-keep 150, h-refine 0; production_qualified=false",
       "successor": null,
-      "unavailable": ["same-patch competition", "independent phase resolution", "new recorded element-contract audit"]
+      "unavailable": [
+        "same-patch competition",
+        "independent phase resolution",
+        "new recorded element-contract audit"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/same_mesh_p4_p5_p6_multigoal_hp_classifier_v3.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_successor_bindings",
       "scope": "case095",
       "classification": "governance_record",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/task035b_successor_bindings.json",
+      "record": null,
       "record_sha256": "b830a79262e05b50ee96ddf96033679ee0e49d67e2054695fa4c70981065d745",
-      "source_sha": null,
+      "source_sha": "0f4b786d618c37e1c572a4f596a9235e53d73161",
       "mesh_p_h": null,
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "provenance binding only; not a scientific candidate",
       "successor": null,
-      "unavailable": ["all numerical fields not applicable"]
+      "unavailable": [
+        "all numerical fields not applicable"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/task035b_successor_bindings.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x093_struct_p4_h5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json#p4_h5.full3d",
+      "record": null,
       "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
       "mesh_p_h": "structured p4 h5",
-      "resources": [339892, 339972, 155421000, null],
+      "resources": [
+        339892,
+        339972,
+        155421000,
+        null
+      ],
       "peak_gib": 28.888,
       "wall_seconds": null,
       "accuracy_gate": "best available discrete reference; not continuum",
       "successor": "accuracy comparisons",
-      "unavailable": ["factor", "time"]
+      "unavailable": [
+        "factor",
+        "time"
+      ],
+      "archive_record_path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json#p4_h5.full3d",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x093_struct_p4_h7p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json#p4_h7p5.full3d",
+      "record": null,
       "record_sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111",
       "source_sha": "e0917859aa53cd6cff6bc3bc411b29255aeac9e2",
       "mesh_p_h": "structured p4 h7.5",
-      "resources": [147844, 147924, 68065896, null],
+      "resources": [
+        147844,
+        147924,
+        68065896,
+        null
+      ],
       "peak_gib": 12.724,
       "wall_seconds": null,
       "accuracy_gate": "qualified accuracy/resource and tolerance-normalization control",
       "successor": "DWR normalization",
-      "unavailable": ["factor", "time"]
+      "unavailable": [
+        "factor",
+        "time"
+      ],
+      "archive_record_path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json#p4_h7p5.full3d",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t07_dwr_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record": null,
       "record_sha256": "ca21d21ccbb9d7ed79b8be3d0b99153f59e77b414ae754a284d47a26ee0e900f",
       "source_sha": "c2898da89b055f0e6a13df3f039c6a0c24942d04",
       "mesh_p_h": "tetra1316 p5 nominal h50",
-      "resources": [106355, 106435, 25081163, null],
+      "resources": [
+        106355,
+        106435,
+        25081163,
+        null
+      ],
       "peak_gib": 8.08,
       "wall_seconds": 109.79,
       "accuracy_gate": "DWR-vs-uniform positive; structured same-error negative",
       "successor": "Task035b comparison",
-      "unavailable": ["factor", "L4/L5"]
+      "unavailable": [
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_uniform_tetra_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_uniform_tetra_level1_p4_p5_mpi8.json#enriched",
+      "record": null,
       "record_sha256": "6a11852334052a91872674bf7db77d551ca553ec1e0563a1b88c76f5a90331f1",
       "source_sha": "fc54cc698422d9d13477167cab4bc8566c9004b3",
       "mesh_p_h": "uniform tetra1440 p5",
-      "resources": [116120, 116200, 27286864, null],
+      "resources": [
+        116120,
+        116200,
+        27286864,
+        null
+      ],
       "peak_gib": 8.011,
       "wall_seconds": 77.105,
       "accuracy_gate": "formal uniform causal control",
       "successor": "DWR comparison",
-      "unavailable": ["factor", "L4/L5"]
+      "unavailable": [
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_uniform_tetra_level1_p4_p5_mpi8.json#enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h37p5_r_dwr_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record": null,
       "record_sha256": "95097cc9e7378497ed2c6f2e535967b08954dfbc8608b5fdd51db560de8e7676",
       "source_sha": "7136be8043fa6ddfe026e3185d56f9384c19401c",
       "mesh_p_h": "tetra1600 p5 h37.5",
-      "resources": [129005, 129085, 30416777, null],
+      "resources": [
+        129005,
+        129085,
+        30416777,
+        null
+      ],
       "peak_gib": 9.491,
       "wall_seconds": 129.661,
       "accuracy_gate": "vector beats p4/h7.5; strict-R fails",
       "successor": "p6 preflight stop",
-      "unavailable": ["factor", "L4/L5"]
+      "unavailable": [
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h37p5_multigoal_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_multigoal_normalized_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record": null,
       "record_sha256": "f8411f43260fe0136ab148656afd2faa6d786a307ecb9fb7d854de6f2fe9de3d",
       "source_sha": "4e334a527ad57452ca3b12ab38d3059406f5a4c9",
       "mesh_p_h": "tetra1600 p5 h37.5",
-      "resources": [129005, 129085, 30416777, null],
+      "resources": [
+        129005,
+        129085,
+        30416777,
+        null
+      ],
       "peak_gib": 9.452,
       "wall_seconds": 129.207,
       "accuracy_gate": "normalized mechanism pass; strict-R fails",
       "successor": "classifier/multigoal control",
-      "unavailable": ["factor", "L4/L5"]
+      "unavailable": [
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_multigoal_normalized_tetra_p4_p5_h37p5_theta0p7_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t04_base_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_full_periodic_closure_mpi8.json#cycle0.enriched",
+      "record": null,
       "record_sha256": "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468",
       "source_sha": "e2162663fdfea49756c6ddf00f21b20e0372be1d",
       "mesh_p_h": "tetra180 p5 h50",
-      "resources": [15405, 15485, 3726879, null],
+      "resources": [
+        15405,
+        15485,
+        3726879,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "base endpoint for sequential proxy",
       "successor": "one-local-h p5",
-      "unavailable": ["isolated peak/time", "factor", "L4/L5"]
+      "unavailable": [
+        "isolated peak/time",
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_full_periodic_closure_mpi8.json#cycle0.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t04_localh_p5",
       "scope": "external_control",
       "classification": "external_control",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record": null,
       "record_sha256": "cf45f2fa22492ff5870158a3a8fc33ac01a8ba0487273a7987dd580d0b9c2468",
       "source_sha": "e2162663fdfea49756c6ddf00f21b20e0372be1d",
       "mesh_p_h": "tetra1248 p5 h50",
-      "resources": [101210, 101290, 23913006, null],
+      "resources": [
+        101210,
+        101290,
+        23913006,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "one-local-h endpoint; not same-error",
       "successor": "fixed-mesh p6",
-      "unavailable": ["isolated peak/time", "factor", "L4/L5"]
+      "unavailable": [
+        "isolated peak/time",
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_dwr_r_adaptive_tetra_p4_p5_h50_theta0p4_cycle1_full_periodic_closure_mpi8.json#cycle1.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t04_fixedmesh_p6",
       "scope": "external_control",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json#angle10.enriched",
+      "record": null,
       "record_sha256": "8a579b5141e12ac3f029b2ff72ba3d597da46ea2d0a96757593ef191e77c938c",
       "source_sha": "74f5d23cd2771390322947dc82d6edf6c0f81e86",
       "mesh_p_h": "tetra1248 p6 h50",
-      "resources": [167784, 167864, 57609056, null],
+      "resources": [
+        167784,
+        167864,
+        57609056,
+        null
+      ],
       "peak_gib": 13.994,
       "wall_seconds": 202.564,
       "accuracy_gate": "vector control pass; strict-R and 90k fail",
       "successor": "h-vs-p proxy",
-      "unavailable": ["factor", "L4/L5"]
+      "unavailable": [
+        "factor",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p4_tetra_p5_p6_h50_mpi8.json#angle10.enriched",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t03_p6_failure",
       "scope": "external_control",
       "classification": "formal_not_pass",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8.json",
+      "record": null,
       "record_sha256": "3d41a577e7ef08521cc8364633f6c24f8c6a72e5a6370e19ba2aa2a7093cb0a2",
       "source_sha": "d896beb6378883b8a64316f082eefa765335273f",
       "mesh_p_h": "tetra1200 p5/p6 h50",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": 13.326,
       "wall_seconds": null,
       "accuracy_gate": "post-solve evaluator metadata failure; preserved",
       "successor": "artifact-only recovery",
-      "unavailable": ["formal resources and observables"]
+      "unavailable": [
+        "formal resources and observables"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "x094_h50_t03_p6_recovered",
       "scope": "external_control",
       "classification": "external_control_with_limitations",
-      "record": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8_recovered.json",
+      "record": null,
       "record_sha256": "2858b7a2982306cf6d364e78f311cad869191cc84302daaad3cece7c5cbc4d6a",
       "source_sha": "d896beb6378883b8a64316f082eefa765335273f",
       "mesh_p_h": "tetra1200 p6 h50",
-      "resources": [161700, null, null, null],
+      "resources": [
+        161700,
+        null,
+        null,
+        null
+      ],
       "peak_gib": 13.326,
       "wall_seconds": null,
       "accuracy_gate": "artifact-only recovery; vector pass and strict-R fail",
       "successor": "lane closed",
-      "unavailable": ["rows", "NNZ", "factor", "time", "L4/L5"]
+      "unavailable": [
+        "rows",
+        "NNZ",
+        "factor",
+        "time",
+        "L4/L5"
+      ],
+      "archive_record_path": "benchmarks/cases/094_hcurl_goal_oriented_adaptivity/records/actual_hp_budget_theta0p3_tetra_p5_p6_h50_mpi8_recovered.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_region_n18_not_run",
@@ -578,12 +930,20 @@
       "record_sha256": null,
       "source_sha": null,
       "mesh_p_h": "intended p5-trace/p4-low/18 p6-high h10",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "not run; shares non-exact low space with N62",
       "successor": null,
-      "unavailable": ["all measured resources and accuracy"]
+      "unavailable": [
+        "all measured resources and accuracy"
+      ],
+      "record_availability": "tracked_project_document"
     },
     {
       "candidate_id": "x094_h37p5_fixedmesh_p6_not_run",
@@ -593,12 +953,25 @@
       "record_sha256": null,
       "source_sha": null,
       "mesh_p_h": "tetra h37.5 fixed-mesh p6",
-      "resources": [214050, null, null, null],
+      "resources": [
+        214050,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "topological DoF 214050 exceeds 169946 preflight gate",
       "successor": null,
-      "unavailable": ["rows", "NNZ", "factor", "memory", "time", "accuracy"]
+      "unavailable": [
+        "rows",
+        "NNZ",
+        "factor",
+        "memory",
+        "time",
+        "accuracy"
+      ],
+      "record_availability": "tracked_project_document"
     },
     {
       "candidate_id": "c095_hexa_local_h_not_run",
@@ -608,12 +981,20 @@
       "record_sha256": null,
       "source_sha": null,
       "mesh_p_h": "structured hexa same-patch hanging-node local-h",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "no conforming hanging-node/transition implementation and no measured target-physics same-patch local-h signal; Review V1 global directional-z evidence is a different scope",
       "successor": null,
-      "unavailable": ["all"]
+      "unavailable": [
+        "all"
+      ],
+      "record_availability": "tracked_project_document"
     },
     {
       "candidate_id": "c095_hybrid_integration_not_run",
@@ -623,12 +1004,20 @@
       "record_sha256": null,
       "source_sha": null,
       "mesh_p_h": null,
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "no Hybrid-eligible same-error positive candidate",
       "successor": null,
-      "unavailable": ["all new Hybrid metrics"]
+      "unavailable": [
+        "all new Hybrid metrics"
+      ],
+      "record_availability": "tracked_project_document"
     },
     {
       "candidate_id": "c095_resource_model_v3_not_run",
@@ -638,12 +1027,24 @@
       "record_sha256": null,
       "source_sha": null,
       "mesh_p_h": null,
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "controlled-negative candidate cannot seed a success projection",
       "successor": null,
-      "unavailable": ["selected N", "Hybrid fraction", "M funnel", "simultaneous peak", "production feasibility"]
+      "unavailable": [
+        "selected N",
+        "Hybrid fraction",
+        "M funnel",
+        "simultaneous peak",
+        "production feasibility"
+      ],
+      "record_availability": "tracked_project_document"
     },
     {
       "candidate_id": "c095_channel_reference_v1",
@@ -653,102 +1054,177 @@
       "record_sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
       "source_sha": null,
       "mesh_p_h": "multi-authority significant-channel reference v1",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "12/12 significant-channel reference bands frozen; governance authority, not a PDE candidate",
       "successor": "Review V1 channel-recovery batch",
-      "unavailable": ["candidate resources", "Hybrid eligibility not applicable"]
+      "unavailable": [
+        "candidate resources",
+        "Hybrid eligibility not applicable"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_p7_h10_not_run",
       "scope": "stopped_lane",
       "classification": "stopped_by_gate",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/p7_h10_capability_resource_gate.json",
+      "record": null,
       "record_sha256": "2671f93a5dc4b087df4c3911f022796a4312082bd98dcc954c725ac9607ffbb6",
       "source_sha": "fd8cb45ecf4ca9b2e424315e757606a7a0d8e312",
       "mesh_p_h": "projected hexa252 global p7 h10",
-      "resources": [273581, null, null, null],
+      "resources": [
+        273581,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "p7_not_run_by_capability_or_resource_gate; projected DoF exceeds 90k by 183581",
       "successor": null,
-      "unavailable": ["measured rows", "measured NNZ", "factor", "memory", "time", "accuracy"]
+      "unavailable": [
+        "measured rows",
+        "measured NNZ",
+        "factor",
+        "memory",
+        "time",
+        "accuracy"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/p7_h10_capability_resource_gate.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_channel_adjoints_v1_fail",
       "scope": "case095",
       "classification": "formal_not_pass",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_channel_adjoints_mpi8.json",
+      "record": null,
       "record_sha256": "a983acf954c1270d080b5c47430ddc3c348eb0041ad4c705c5486f07a72cfba3",
       "source_sha": "ab28bf878b8446e2699fa3cbff80e85f8013cad6",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, 16 channel goals",
-      "resources": [74890, 16880, 9195812, 27916600],
-      "peak_gib": 7.030,
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        27916600
+      ],
+      "peak_gib": 7.03,
       "wall_seconds": 115.416,
       "accuracy_gate": "adjoint/recovery qualification failed and is preserved; seed channels remain 6/12 power and 7/12 amplitude",
       "successor": "c095_h15_channel_adjoints_v2",
-      "unavailable": ["production-qualified localization", "Hybrid eligibility"]
+      "unavailable": [
+        "production-qualified localization",
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_channel_adjoints_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_channel_adjoints_v2",
       "scope": "case095",
       "classification": "formal_pass_method",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_channel_adjoints_verification_v2_mpi8.json",
+      "record": null,
       "record_sha256": "56023fcbf5a85d8d5d2db062283cae8b66771c1543d025731a0c9eefa4a8d0e5",
       "source_sha": "572c4ff3eb2bf360a72a593a105f5cd628c985c8",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, 16 verified channel goals",
-      "resources": [74890, 16880, 9195812, 26772800],
-      "peak_gib": 7.190,
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        26772800
+      ],
+      "peak_gib": 7.19,
       "wall_seconds": 115.215,
       "accuracy_gate": "16 Hermitian channel adjoints and exact dual recovery pass; localization remains a non-production proxy; seed channels 6/12 power and 7/12 amplitude",
       "successor": "c095_physical_trace_lane_not_run",
-      "unavailable": ["actual physical missing-mode DWR candidate", "Hybrid eligibility"]
+      "unavailable": [
+        "actual physical missing-mode DWR candidate",
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_channel_adjoints_verification_v2_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_dtn_q31",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_q31_mpi8.json",
+      "record": null,
       "record_sha256": "b4dc00a5ae0cd1076b14725789c66c71d9f66869b7f25a3b152992785fbf6a04",
       "source_sha": "ae86e7ad3722638245a425829427c0139c15ef77",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, DtN q31",
-      "resources": [74890, 16880, 9195812, 27916600],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        27916600
+      ],
       "peak_gib": 6.133,
       "wall_seconds": 120.863,
       "accuracy_gate": "scalar/vector/field/residual pass; no channel recovery, 6/12 power and 7/12 amplitude",
       "successor": "c095_h15_buffer1_scaled",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_q31_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_buffer1_unscaled_not_run",
       "scope": "stopped_lane",
       "classification": "stopped_by_gate",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_trace_h15_evanescent_buffer1_preflight_controlled_stop.json",
+      "record": null,
       "record_sha256": "1dbc1c4388c4c67a9b9d84a9e1f9c0ad1636cfd582e719b51f73d00dbb61e000",
       "source_sha": "7139a6e2ee0bcec4459e7591864235bbbc7d7377",
       "mesh_p_h": "planned hexa120 fixed p5-trace/p6-interior h15, unscaled buffer1",
-      "resources": [74890, null, null, null],
+      "resources": [
+        74890,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "controlled stop before PDE because the unscaled evanescent port basis is numerically unsafe",
       "successor": "c095_h15_buffer1_scaled",
-      "unavailable": ["measured rows", "NNZ", "factor", "memory", "time", "accuracy"]
+      "unavailable": [
+        "measured rows",
+        "NNZ",
+        "factor",
+        "memory",
+        "time",
+        "accuracy"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_trace_h15_evanescent_buffer1_preflight_controlled_stop.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h15_buffer1_scaled",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_evanescent_buffer1_scaled_mpi8.json",
+      "record": null,
       "record_sha256": "2f76568d7013662602293e18ce75e33f6ecd625d723bc1cf745964a1a4541206",
       "source_sha": "7d90a409dc7274dad6863df5093ed219d2ad2a22",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, scaled buffer1",
-      "resources": [74890, 17140, 9472792, 31655400],
+      "resources": [
+        74890,
+        17140,
+        9472792,
+        31655400
+      ],
       "peak_gib": 6.558,
       "wall_seconds": 144.914,
       "accuracy_gate": "boundary-referenced scaling passes but channels remain 6/12 power and 7/12 amplitude",
       "successor": "port/DtN lane closed",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_dtn_evanescent_buffer1_scaled_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_fixed_h14_z",
@@ -758,12 +1234,20 @@
       "record_sha256": "e93f50155b3c8517292794cb9735730ebf738410aecafe00f43f7959c150a127",
       "source_sha": "d958b2bfc5eaf9920f3220a519d20b11e5da3248",
       "mesh_p_h": "hexa132 fixed p5-trace/p6-interior h14 z-only (6,2,11)",
-      "resources": [82315, 18500, 10104512, 31347000],
+      "resources": [
+        82315,
+        18500,
+        10104512,
+        31347000
+      ],
       "peak_gib": 6.376,
-      "wall_seconds": 113.340,
+      "wall_seconds": 113.34,
       "accuracy_gate": "positive seed-direction signal but incomplete same-error Gate: 7/12 power and 9/12 amplitude",
       "successor": "c095_fixed_h13_z",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_fixed_h13_z",
@@ -773,147 +1257,245 @@
       "record_sha256": "81ba43d91c4c9a35121676ae40368d56116f3a381e4559d630fb547a94dc4a5c",
       "source_sha": "df4046f8ba9f319a2501c6a0376a7c81063b5905",
       "mesh_p_h": "hexa144 fixed p5-trace/p6-interior h13 z-only (6,2,12)",
-      "resources": [89740, 20120, 11013212, 36273200],
+      "resources": [
+        89740,
+        20120,
+        11013212,
+        36273200
+      ],
       "peak_gib": 6.411,
       "wall_seconds": 109.892,
       "accuracy_gate": "best budget-compliant directional signal but incomplete same-error Gate: 10/12 power and 10/12 amplitude",
       "successor": "c095_global_p6_h14_discriminator",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_fixed_h15_x",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_directional_x_mpi8.json",
+      "record": null,
       "record_sha256": "0e469bd9f952652f102c33d8d0d7c14827a0a492bb2611971cafdc66a3b7bd2c",
       "source_sha": "1550c204d1e6ec7518a830c027f22b529360866a",
       "mesh_p_h": "hexa140 fixed p5-trace/p6-interior h15 x-only (7,2,10)",
-      "resources": [87195, 19680, 10728434, 33056800],
-      "peak_gib": 6.590,
+      "resources": [
+        87195,
+        19680,
+        10728434,
+        33056800
+      ],
+      "peak_gib": 6.59,
       "wall_seconds": 109.265,
       "accuracy_gate": "directional control regresses channel recovery: 5/12 power and 6/12 amplitude",
       "successor": "x-direction lane closed",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h15_directional_x_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_y_only_p5_control",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/y_only_global_p5_directional_control_comparison_v1.json",
+      "record": null,
       "record_sha256": "6263db07dc6bc3d9b4a2d2be8af529a0f471f0b0e123a9c77044fef129cc9236",
       "source_sha": "589fd5fa876f9048b19f73a567c46ab4b427bca1",
       "mesh_p_h": "hexa180 global p4->p5 h15 y-only (6,3,10)",
-      "resources": ["38092->72995", "15776->25280", "5872400->14433128", "27795648->70293600"],
+      "resources": [
+        "38092->72995",
+        "15776->25280",
+        "5872400->14433128",
+        "27795648->70293600"
+      ],
       "peak_gib": 8.867,
       "wall_seconds": 85.228,
       "accuracy_gate": "derived comparison binds the raw MPI8 control; candidate remains 3/12 power and 1/12 amplitude",
       "successor": "y-direction control lane closed",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/y_only_global_p5_directional_control_comparison_v1.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_global_p6_h14_discriminator",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_p6_h14_trace_discriminator.json",
+      "record": null,
       "record_sha256": "a16bb533222a73cbe5dede8b3abe93d2e047ef168a6ebc74e85790433f767cad",
       "source_sha": "03496d4d7b419e2826332cf5bf0573fde4aab409",
       "mesh_p_h": "hexa132 global p5->p6 h14 (6,2,11)",
-      "resources": ["54595->92850", "18500->27080", "10104512->21110096", "32338600->67325792"],
+      "resources": [
+        "54595->92850",
+        "18500->27080",
+        "10104512->21110096",
+        "32338600->67325792"
+      ],
       "peak_gib": 12.587,
       "wall_seconds": 183.531,
       "accuracy_gate": "global p6 reaches 9/12 power and 12/12 amplitude but exceeds the 90k DoF cap by 2850",
       "successor": "c095_physical_trace_lane_not_run",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_p6_h14_trace_discriminator.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_inverse_trace_budget_not_run",
       "scope": "stopped_lane",
       "classification": "stopped_by_gate",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/inverse_trace_interior_budget_exchange_preflight.json",
+      "record": null,
       "record_sha256": "d010d69d26429993c1f07725a4b63653cf6d79d1155ea4eef76d0077c3b189f9",
       "source_sha": "a6e572f991674540a8b760d4ebe23fe663594c70",
       "mesh_p_h": "planned p6-trace/p5-or-p4-interior inverse budget exchange",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "candidate count 0 and PDE count 0; both inverse spaces fail the local exact-sequence audit",
       "successor": "c095_physical_trace_lane_not_run",
-      "unavailable": ["all measured resources", "accuracy", "Hybrid eligibility"]
+      "unavailable": [
+        "all measured resources",
+        "accuracy",
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/inverse_trace_interior_budget_exchange_preflight.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h14_r5_slab_bisect",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_r5_slab_bisect_mpi8.json",
+      "record": null,
       "record_sha256": "eb9f1d8e30e6d0aab0c3fe377939c4335485634044fa3be4b8956ac748b411e3",
       "source_sha": "6ee517bf96a9022ae129070b822e281da030f617",
       "mesh_p_h": "hexa144 fixed p5-trace/p6-interior h14 explicit R5-slab z bisect",
-      "resources": [89740, 20120, 11013212, 36273200],
+      "resources": [
+        89740,
+        20120,
+        11013212,
+        36273200
+      ],
       "peak_gib": 6.463,
       "wall_seconds": 110.418,
       "accuracy_gate": "failed no-count-regression rule: 5/12 power and 9/12 amplitude; specified R5-slab lane closed; other node distributions not run",
       "successor": null,
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_r5_slab_bisect_mpi8.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_physical_trace_lane_not_run",
       "scope": "stopped_lane",
       "classification": "stopped_by_gate",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_trace_lane_capability_gate.json",
+      "record": null,
       "record_sha256": "4f26763ffc182925b0f92a20674f9572235205237d0e1a6677b92cc992d9d2bc",
       "source_sha": "4a9bf317562c5713f1da0cf5597fcaecedce38e0",
       "mesh_p_h": "planned selective p6 trace restoration on fixed h14/h13",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "capability_stop_not_run; candidate count 0 and PDE count 0; physical Piola/Riesz, orbit DWR, complement Schur, and true numbering are missing",
       "successor": "c095_physical_selective_trace_execution_capability_v2",
-      "unavailable": ["all candidate resources", "channel result", "Hybrid eligibility"]
+      "unavailable": [
+        "all candidate resources",
+        "channel result",
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/physical_trace_lane_capability_gate.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_condensed_iterative_not_run",
       "scope": "stopped_lane",
       "classification": "stopped_by_gate",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/condensed_trace_iterative_capability_gate.json",
+      "record": null,
       "record_sha256": "3597379e4a62dfefd3ac53ded8d2a12d91422cc8f9ebfac4af2d657a43cd7048",
       "source_sha": "5b652793047b58bdd25aaa96385c2a739c69fce9",
       "mesh_p_h": "planned MPI8 factor-free solve on hexa120 fixed p5-trace/p6-interior h15",
-      "resources": [74890, 16880, 9195812, null],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "capability_stop_not_run; formal iterative screen count 0 because HYPRE and dedicated factor-free provenance are unavailable",
       "successor": "c095_h15_factor_free_gmres_jacobi",
-      "unavailable": ["iterative factor NNZ", "iterative peak", "iterations", "iterative time", "iterative accuracy", "Hybrid eligibility"]
+      "unavailable": [
+        "iterative factor NNZ",
+        "iterative peak",
+        "iterations",
+        "iterative time",
+        "iterative accuracy",
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/condensed_trace_iterative_capability_gate.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h13_top2_phase_redistribution",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json",
+      "record": null,
       "record_sha256": "ff12b909aa1c75dcf15246ba48a8169bf9653d13ddf36709c46367217d799b4b",
       "source_sha": "7e4a2eb4ab5096d88b9e79b176b1e3778767caa4",
       "mesh_p_h": "hexa144 fixed p5-trace/p6-interior h13, fixed-DoF top-two z-plane redistribution",
-      "resources": [89740, 20120, 11013212, 36273200],
+      "resources": [
+        89740,
+        20120,
+        11013212,
+        36273200
+      ],
       "peak_gib": 5.886,
       "wall_seconds": 160.614,
       "accuracy_gate": "true residual 4.262e-12 but actual significant channels regress to 8/12 power and 8/12 amplitude",
       "successor": "c095_h14_exact_reverse_h13_top2",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h13_top2_phase_redistribution_mpi8_v1.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_h14_exact_reverse_h13_top2",
       "scope": "case095",
       "classification": "controlled_negative",
-      "record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json",
+      "record": null,
       "record_sha256": "6036acd898d02967d40299b48957791f0b2ae021338940dc59177eb090bf788b",
       "source_sha": "e8e6b25860b05ad7cd519aa7499888a98de830d2",
       "mesh_p_h": "hexa132 fixed p5-trace/p6-interior h14, exact reverse of h13 top-two z-plane move",
-      "resources": [82315, 18500, 10104512, 32338600],
+      "resources": [
+        82315,
+        18500,
+        10104512,
+        32338600
+      ],
       "peak_gib": 5.958,
       "wall_seconds": 155.178,
       "accuracy_gate": "true residual 7.006e-12 but actual significant channels are only 7/12 power and 8/12 amplitude; the 9/12 plus 11/12 prior projection is not measured",
       "successor": "fixed-DoF z-node lane closed after two bounded negatives",
-      "unavailable": ["Hybrid eligibility"]
+      "unavailable": [
+        "Hybrid eligibility"
+      ],
+      "archive_record_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/fixed_p5trace_p6interior_h14_exact_reverse_h13_top2_mpi8_v1.json",
+      "record_availability": "source_branch_archive_not_merged"
     },
     {
       "candidate_id": "c095_physical_selective_trace_execution_capability_v2",
@@ -923,12 +1505,22 @@
       "record_sha256": "e8c0b1d3d758ee1fea71fa261ded1fdfb4946a909437bc4f69aec52975ecf3ef",
       "source_sha": "a20b8b404f66b983596326c912a88fb8be3b255c",
       "mesh_p_h": "fixture-only physical selective-p6 trace expansion, Stage4 row omission, pre-release hook, and owner-aware MatShell",
-      "resources": [null, null, null, null],
+      "resources": [
+        null,
+        null,
+        null,
+        null
+      ],
       "peak_gib": null,
       "wall_seconds": null,
       "accuracy_gate": "fixture/correctness capability only; actual channel DWR, formal runner, candidate and PDE counts remain zero",
       "successor": "production live-capture plus actual residual-weighted channel-DWR integration",
-      "unavailable": ["actual candidate resources", "channel result", "Hybrid eligibility"]
+      "unavailable": [
+        "actual candidate resources",
+        "channel result",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h15_factor_free_gmres_jacobi",
@@ -938,12 +1530,21 @@
       "record_sha256": "ce7a7bd6932725987a5d3583df29396a027c661bcc80514f8dd33af5118edc2b",
       "source_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, assembled GMRES/Jacobi MPI8",
-      "resources": [74890, 16880, 9195812, 0],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        0
+      ],
       "peak_gib": 3.921,
       "wall_seconds": 39.534,
       "accuracy_gate": "global factor absent but DIVERGED_MAX_IT at 200 iterations; reduced/full residual approximately 0.861662/0.861661; no official outputs",
       "successor": "c095_h15_factor_free_fgmres_asm_ilu",
-      "unavailable": ["official R/T/A/channel/field outputs", "Hybrid eligibility"]
+      "unavailable": [
+        "official R/T/A/channel/field outputs",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h15_factor_free_fgmres_asm_ilu",
@@ -953,12 +1554,22 @@
       "record_sha256": "ce7a7bd6932725987a5d3583df29396a027c661bcc80514f8dd33af5118edc2b",
       "source_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, assembled FGMRES/ASM-ILU MPI8",
-      "resources": [74890, 16880, 9195812, "global 0; local ILU NNZ unavailable"],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        "global 0; local ILU NNZ unavailable"
+      ],
       "peak_gib": 4.462,
       "wall_seconds": 46.073,
       "accuracy_gate": "global factor absent but local ILU active and DIVERGED_MAX_IT at 200 iterations; reduced/full residual approximately 0.999661/0.999659; no official outputs",
       "successor": "c095_h15_global_factor_free_physical_slab_dtn",
-      "unavailable": ["local ILU NNZ", "official R/T/A/channel/field outputs", "Hybrid eligibility"]
+      "unavailable": [
+        "local ILU NNZ",
+        "official R/T/A/channel/field outputs",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h15_global_factor_free_physical_slab_dtn",
@@ -968,12 +1579,21 @@
       "record_sha256": "8d13e70906fecce6d729491c453c93cc0664a6fa46906a5f1f4d5eb59083d444",
       "source_sha": "71f53d0eccc1abaa0915fc3cfa02615267ad9cf2",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, FGMRES physical z-slab ILU0 plus DtN-trace Galerkin MPI8",
-      "resources": [74890, 16880, 9195812, "global 0; local ILU 9576512; dense coarse 80x80"],
+      "resources": [
+        74890,
+        16880,
+        9195812,
+        "global 0; local ILU 9576512; dense coarse 80x80"
+      ],
       "peak_gib": 3.885,
       "wall_seconds": 49.946,
       "accuracy_gate": "not strictly factorless and DIVERGED_MAX_IT at 200 iterations; reduced/full residual approximately 0.996265/0.996263; no official outputs",
       "successor": "assembled iterative lane requires a materially different spectral or auxiliary-space preconditioner",
-      "unavailable": ["official R/T/A/channel/field outputs", "Hybrid eligibility"]
+      "unavailable": [
+        "official R/T/A/channel/field outputs",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h15_setup_canonical_cold",
@@ -983,12 +1603,21 @@
       "record_sha256": "2f7c2503677fccb81f08d1c640d245f5d58bc497fbeae56df174477f4bfd0678",
       "source_sha": "beef7f9e82392c3aeca70639af6e59ef7645fc2a",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, canonical-orientation cold setup",
-      "resources": [74890, 16880, 9196772, 26555200],
+      "resources": [
+        74890,
+        16880,
+        9196772,
+        26555200
+      ],
       "peak_gib": 4.602,
       "wall_seconds": 19.242,
       "accuracy_gate": "setup/resource authority passes with true residual 8.101e-12; non-KSP cold build is 3.202x faster than the 61.61 s preoptimization authority",
       "successor": "c095_h15_setup_canonical_warm",
-      "unavailable": ["significant-channel audit in setup profile", "Hybrid eligibility"]
+      "unavailable": [
+        "significant-channel audit in setup profile",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h15_setup_canonical_warm",
@@ -998,12 +1627,21 @@
       "record_sha256": "2f7c2503677fccb81f08d1c640d245f5d58bc497fbeae56df174477f4bfd0678",
       "source_sha": "beef7f9e82392c3aeca70639af6e59ef7645fc2a",
       "mesh_p_h": "hexa120 fixed p5-trace/p6-interior h15, persistent-cache warm setup",
-      "resources": [74890, 16880, 9196772, 26555200],
+      "resources": [
+        74890,
+        16880,
+        9196772,
+        26555200
+      ],
       "peak_gib": 4.453,
       "wall_seconds": 6.141,
       "accuracy_gate": "setup/resource authority passes with true residual 1.284e-11; warm non-KSP build is below 10 s",
       "successor": null,
-      "unavailable": ["significant-channel audit in setup profile", "Hybrid eligibility"]
+      "unavailable": [
+        "significant-channel audit in setup profile",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h13_setup_canonical_cold",
@@ -1013,12 +1651,22 @@
       "record_sha256": "bfc83e13a28018d2751a1dddb4f478cf424788c6725f32b26b964b718d1bcf66",
       "source_sha": "a20b8b404f66b983596326c912a88fb8be3b255c",
       "mesh_p_h": "hexa144 fixed p5-trace/p6-interior h13, canonical-orientation cold setup",
-      "resources": [89740, 20120, 11014172, 35746600],
-      "peak_gib": 5.030,
-      "wall_seconds": 19.410,
+      "resources": [
+        89740,
+        20120,
+        11014172,
+        35746600
+      ],
+      "peak_gib": 5.03,
+      "wall_seconds": 19.41,
       "accuracy_gate": "setup/resource authority passes with true residual 3.944e-12; no same-h13 preoptimization cold baseline exists, so no 2x cold-code claim",
       "successor": "c095_h13_setup_canonical_warm",
-      "unavailable": ["significant-channel audit in setup profile", "same-h13 preoptimization cold baseline", "Hybrid eligibility"]
+      "unavailable": [
+        "significant-channel audit in setup profile",
+        "same-h13 preoptimization cold baseline",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     },
     {
       "candidate_id": "c095_h13_setup_canonical_warm",
@@ -1028,12 +1676,28 @@
       "record_sha256": "bfc83e13a28018d2751a1dddb4f478cf424788c6725f32b26b964b718d1bcf66",
       "source_sha": "a20b8b404f66b983596326c912a88fb8be3b255c",
       "mesh_p_h": "hexa144 fixed p5-trace/p6-interior h13, persistent-cache warm setup",
-      "resources": [89740, 20120, 11014172, 35746600],
+      "resources": [
+        89740,
+        20120,
+        11014172,
+        35746600
+      ],
       "peak_gib": 5.016,
       "wall_seconds": 6.696,
       "accuracy_gate": "setup/resource authority passes with true residual 5.509e-12; 2.899x cold-to-warm ratio is cache reuse, not a cold-code optimization claim",
       "successor": null,
-      "unavailable": ["significant-channel audit in setup profile", "Hybrid eligibility"]
+      "unavailable": [
+        "significant-channel audit in setup profile",
+        "Hybrid eligibility"
+      ],
+      "record_availability": "tracked_compact_authority"
     }
-  ]
+  ],
+  "record_reference_semantics": {
+    "tracked_compact_authority": "record remains in master selective merge",
+    "tracked_project_document": "record is a retained project document",
+    "source_branch_archive_not_merged": "raw research record remains on the closed Task035b source branch; archive_record_path preserves its locator",
+    "archive_selector": "when archive_record_path contains '#', record_sha256 binds the base repository file before '#', while the suffix identifies the selected embedded result",
+    "source_binding": "source_sha is the introducing or evidence-producing commit for each raw record; source_snapshot is the response-v3 candidate-ledger snapshot, not a replacement for per-row source_sha"
+  }
 }

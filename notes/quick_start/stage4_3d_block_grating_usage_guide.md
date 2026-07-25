@@ -1,5 +1,33 @@
 # Stage 4 真实 3D 周期矩形柱使用指南
 
+## 2026-07-26 更新：Full3D 装配只使用一个公开选择项
+
+普通 direct 默认不变：
+
+```python
+Stage4GratingInputs3D(
+    stage4_full3d_assembly_backend="standard_full",
+)
+```
+
+固定规则矩形、仿射一阶 hexa 的高阶 direct 可显式选择：
+
+```python
+Stage4GratingInputs3D(
+    stage4_full3d_assembly_backend="assembly_time_static_condensed",
+)
+```
+
+或在同一个资格化 WSL shell 中使用：
+
+```bash
+python -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --stage4-full3d-assembly-backend assembly_time_static_condensed
+```
+
+不要再由用户组合 `stage4_cell_static_condensation`、`stage4_assembly_time_cell_static_condensation` 和 `stage4_floquet_slave_elimination`。新端口会一次性解析并记录实际 backend；超出 fixed rectangular affine-hexa direct 资格范围时明确拒绝，不自动降级。selective p6 trace、regionwise/non-exact-sequence local-p、condensed iterative、不规则几何、tetra static condensation 和 mixed mesh 都不是该 production backend 的能力。
+
 > **文档状态：历史验证长文。** 当前运行方式见 [`30_3d_stage4a_flat_layer.md`](30_3d_stage4a_flat_layer.md)、[`31_3d_stage4b_grating_direct.md`](31_3d_stage4b_grating_direct.md) 和 [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md)；旧 `ACTIVE_3D_INPUT_GROUP="stage4_grating"` 已被命名 preset 取代。
 
 ## 2026-07-02 更新：并行 ParaView 和 summary 指标避免 ghost 重复计数

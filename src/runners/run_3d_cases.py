@@ -7,6 +7,7 @@ from pathlib import Path
 from mpi4py import MPI
 
 from ..common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     EUV_REFERENCE_WAVELENGTH_NM,
     NUMERICAL_SANITY_ONLY,
     SimulationConfig3D,
@@ -14,6 +15,7 @@ from ..common.config_3d import (
     SI_GRATING_MATERIAL_LABEL,
     SI_SUBSTRATE_INDEX_EUV_13P5_NM,
     SI_SUBSTRATE_MATERIAL_LABEL,
+    STANDARD_FULL_ASSEMBLY_BACKEND,
     normal_incidence_airbox_config,
     oblique_incidence_airbox_config,
     project_root,
@@ -215,6 +217,10 @@ def _config_updates(args) -> dict[str, object]:
         updates["stage4_dtn_order_policy"] = args.stage4_dtn_order_policy
     if args.stage4_dtn_assembly is not None:
         updates["stage4_dtn_assembly"] = args.stage4_dtn_assembly
+    if args.stage4_full3d_assembly_backend is not None:
+        updates["stage4_full3d_assembly_backend"] = (
+            args.stage4_full3d_assembly_backend
+        )
     if args.stage4_pml_outer_bc is not None:
         updates["stage4_pml_outer_bc"] = args.stage4_pml_outer_bc
     if args.diffraction_zero_order_only is not None:
@@ -593,6 +599,19 @@ def main(argv: list[str] | None = None):
         choices=("auxiliary",),
         default=None,
         help="Stage-4 DtN assembly. 3D v1 supports only sparse auxiliary modal unknowns.",
+    )
+    parser.add_argument(
+        "--stage4-full3d-assembly-backend",
+        choices=(
+            STANDARD_FULL_ASSEMBLY_BACKEND,
+            ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        ),
+        default=None,
+        help=(
+            "Stage-4 Full3D assembly backend. The ordinary default is "
+            "standard_full; assembly_time_static_condensed is qualified only "
+            "for the fixed affine rectangular hexahedral target."
+        ),
     )
     parser.add_argument(
         "--stage4-pml-outer-bc",

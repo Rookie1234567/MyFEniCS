@@ -104,6 +104,10 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
     log(f"mesh cell type requested = {cfg.mesh_cell_type}")
     log(f"mesh cell type resolved = {cfg.mesh_cell_type_resolved}")
     log(f"Floquet constraint mode requested = {cfg.floquet_constraint_mode_requested}")
+    log(
+        "Stage-4 Full3D assembly backend requested = "
+        f"{cfg.stage4_full3d_assembly_backend}"
+    )
     log("linear solve method = direct_lu")
     log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
     log(f"divergence penalty = {cfg.divergence_penalty}")
@@ -412,6 +416,17 @@ def _linear_solve_failure_summary(
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "stage4_full3d_assembly_backend_actual": (
+            dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_actual",
+                cfg.stage4_full3d_assembly_backend,
+            )
+        ),
+        "stage4_full3d_assembly_backend_selection": (
+            dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_selection"
+            )
+        ),
         "strong_z_boundary_dirichlet_enabled": bool(boundary_dofs_global),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
@@ -995,7 +1010,13 @@ def run_prepared_3d_case_flow(
         stage="process_start",
         status="begin",
         started=started,
-        extra={"case_name": cfg.case_name, "stage_case": cfg.stage_case},
+        extra={
+            "case_name": cfg.case_name,
+            "stage_case": cfg.stage_case,
+            "stage4_full3d_assembly_backend_requested": (
+                cfg.stage4_full3d_assembly_backend
+            ),
+        },
     )
 
     stage_start = _start_timed_stage(comm)
@@ -1035,6 +1056,9 @@ def run_prepared_3d_case_flow(
             "case_name": cfg.case_name,
             "stage_case": cfg.stage_case,
             "solver_profile": cfg.petsc_direct_solver_profile_requested,
+            "stage4_full3d_assembly_backend_requested": (
+                cfg.stage4_full3d_assembly_backend
+            ),
             "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
             "matrix_diagnostics_factorization_only": (
                 cfg.matrix_diagnostics_factorization_only
@@ -1912,6 +1936,20 @@ def run_prepared_3d_case_flow(
         if dtn_solver_info is None
         else bool(
             dtn_solver_info.get("stage4_floquet_slave_elimination")
+        ),
+        "stage4_full3d_assembly_backend_actual": (
+            cfg.stage4_full3d_assembly_backend
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_actual"
+            )
+        ),
+        "stage4_full3d_assembly_backend_selection": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_selection"
+            )
         ),
         "direct_release_solver_before_postprocess": bool(
             cfg.direct_release_solver_before_postprocess

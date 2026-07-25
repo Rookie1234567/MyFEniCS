@@ -270,6 +270,10 @@ def _write_progress_event(
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log("Linear solve summary:")
+    log(
+        "  assembly backend     = "
+        f"{summary.get('stage4_full3d_assembly_backend_actual', summary.get('stage4_full3d_assembly_backend_requested'))}"
+    )
     log(f"  method               = {summary['linear_solve_method']}")
     log(f"  ksp_type             = {summary.get('actual_ksp_type')}")
     log(f"  pc_type              = {summary.get('actual_pc_type')}")
@@ -384,6 +388,9 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
         "mesh_refinement_radius": cfg.mesh_refinement_radius,
         "floquet_constraint_mode_requested": cfg.floquet_constraint_mode_requested,
         "nedelec_degree": cfg.nedelec_degree,
+        "stage4_full3d_assembly_backend_requested": (
+            cfg.stage4_full3d_assembly_backend
+        ),
         "visualization_degree": cfg.visualization_degree,
         "incident_theta_deg": cfg.incident_theta_deg,
         "incident_phi_deg": cfg.incident_phi_deg,
