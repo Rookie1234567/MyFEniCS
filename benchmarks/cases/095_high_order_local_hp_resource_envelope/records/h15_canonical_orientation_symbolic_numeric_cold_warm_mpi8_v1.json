@@ -1,0 +1,255 @@
+{
+  "schema_version": "task035b.canonical-orientation-symbolic-numeric-cold-warm.v1",
+  "benchmark_id": "task035b_h15_canonical_orientation_symbolic_numeric_mpi8",
+  "status": "formal_direct_setup_pair_completed",
+  "classification": "positive_setup_rearchitecture_and_factor_timing_authority",
+  "pass": true,
+  "pass_semantics": "Both clean-SHA MPI8 direct profiles pass their formal physics, cache, resource, raw-option and PETSc factor-event gates. This is setup/resource evidence, not a 12-channel accuracy-candidate pass.",
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7",
+    "clean_full_sha_gate": true,
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9196772,
+    "matrix_nnz_allocated": 9484580,
+    "preserve_structured_input_partition": true,
+    "canonical_orientation_class_reuse": true,
+    "petsc_factor_event_timing": true,
+    "direct_solver": "MUMPS",
+    "raw_petsc_options_used": false,
+    "typed_direct_options": {
+      "pc_factor_mat_solver_type": "mumps",
+      "mat_mumps_icntl_14": 100
+    },
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/cache"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_write",
+    "common_solver_seconds": 43.70339146401966,
+    "function_space_seconds": 13.408354637998855,
+    "tensor_seconds": 2.6710824070032686,
+    "local_schur_seconds": 2.009304767008871,
+    "dtn_non_ksp_build_seconds": 19.481443545024376,
+    "mumps": {
+      "symbolic_seconds_max": 0.14335475599999725,
+      "numeric_seconds_max": 5.895490622999997,
+      "pc_setup_seconds_max": 6.038850820999997,
+      "combined_ksp_setup_wall_seconds": 6.03887232899433,
+      "backsolve_seconds": 0.027934207988437265,
+      "symbolic_count_per_rank": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "numeric_count_per_rank": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "28efc0070b01ea19429fd02a08f117f31fdf35d1411b9c21349091f2d7bec6a5"
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": false,
+      "raw_tensor_hits": 0,
+      "raw_tensor_misses": 6,
+      "condensed_class_hits": 4,
+      "condensed_class_misses": 115,
+      "condensed_class_writes": 115,
+      "dtn_rank_bundle_hits": 0,
+      "dtn_rank_bundle_misses": 8
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 20,
+      "oriented_classes_derived": 115,
+      "aii_factorizations_avoided": 95,
+      "persistent_lu_alias_restores": 4,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "max_process_tree_rss_gib": 4.625080108642578,
+    "max_worker_rank_pss_sum_mb": 3892.66015625,
+    "max_worker_rank_uss_sum_mb": 3780.13671875,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 1.4243294872281675e-11,
+    "R00_total": 0.0007558883136427262,
+    "R_total": 0.000765024318159515,
+    "T_total": 0.602685146794916,
+    "A_closure": 0.39654982888692447,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/cold/watchdog_summary.json",
+        "sha256": "e01162a840f82856199d8e823911a4c9cd126bce075fb63d5192e24c7dbd4b96"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/cold/worker_result.json",
+        "sha256": "db0bc78f214021ac1e01be10f9a575df9a660ec0e0505cb70b130cc830cb6937"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/cold/solve/run_summary.json",
+        "sha256": "f8870bde9b7bbba4d43bb303eac0dde7ea472b5e53bba8cd1e86fb766ef96e88"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/cold/memory_timeline.csv",
+        "sha256": "fa338790103d7ffade1f971fd4ad0a78e90766539db3c67ba7d948b105140902"
+      }
+    ]
+  },
+  "warm": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_only",
+    "common_solver_seconds": 19.800466104992665,
+    "function_space_seconds": 2.81566764798481,
+    "tensor_seconds": 0.0,
+    "local_schur_seconds": 0.0,
+    "dtn_non_ksp_build_seconds": 6.255298750998918,
+    "mumps": {
+      "symbolic_seconds_max": 0.14693293200000035,
+      "numeric_seconds_max": 6.044782608000001,
+      "pc_setup_seconds_max": 6.191714270000001,
+      "combined_ksp_setup_wall_seconds": 6.191739480011165,
+      "backsolve_seconds": 0.029873171006329358,
+      "symbolic_count_per_rank": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "numeric_count_per_rank": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "6c7929b52bb30a06b75114b6b34e150410d4989ee8a45c2f8f81f5e5711b6a3d"
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": true,
+      "raw_tensor_hits": 6,
+      "raw_tensor_misses": 0,
+      "condensed_class_hits": 119,
+      "condensed_class_misses": 0,
+      "condensed_class_writes": 0,
+      "dtn_rank_bundle_hits": 8,
+      "dtn_rank_bundle_misses": 0,
+      "dtn_reduced_bundle_restores": 320,
+      "dtn_full_vectors_intentionally_not_materialized": 624
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 0,
+      "oriented_classes_derived": 0,
+      "aii_factorizations_avoided": 0,
+      "persistent_lu_alias_restores": 99,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "max_process_tree_rss_gib": 4.459781646728516,
+    "max_worker_rank_pss_sum_mb": 3727.53125,
+    "max_worker_rank_uss_sum_mb": 3616.15625,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 1.3601462211319252e-11,
+    "R00_total": 0.0007558883136439508,
+    "R_total": 0.0007650243181606812,
+    "T_total": 0.6026851467949075,
+    "A_closure": 0.3965498288869318,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/warm/watchdog_summary.json",
+        "sha256": "ce510feb739d589f0bd4901b978b08a4fe158235b6aa680d5520d92fd63c40d9"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/warm/worker_result.json",
+        "sha256": "561cf3c814365575f5401be923642ab8d4eaa0fc43240b3910c5e688d4499646"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/warm/solve/run_summary.json",
+        "sha256": "fd9174a972037e1bdc09adf7ada00778c71c406da62175aa165d71a15e7e7549"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7_v1/warm/memory_timeline.csv",
+        "sha256": "48f128c465e719b0d020354e33119d4dc82501455a257334c64573546220164c"
+      }
+    ]
+  },
+  "comparison": {
+    "review_v2_preoptimization_non_ksp_build_seconds": 61.61,
+    "previous_deterministic_v3_cold_non_ksp_seconds": 28.56849403999513,
+    "previous_deterministic_v3_warm_non_ksp_seconds": 5.973279725003522,
+    "cold_speedup_vs_review_v2_preoptimization": 3.162496652653617,
+    "cold_speedup_vs_previous_deterministic_v3": 1.4664464660418666,
+    "warm_speed_ratio_previous_over_current": 0.9549151787593901,
+    "cold_non_ksp_2x_target_pass": true,
+    "cold_non_ksp_at_or_below_30_seconds_pass": true,
+    "warm_non_ksp_below_10_seconds_pass": true,
+    "cold_to_warm_non_ksp_speedup": 3.114390586367015,
+    "cold_common_solver_speedup_vs_previous_v3": 1.1854604661662145,
+    "warm_common_solver_speedup_vs_previous_v3": 1.48791515481426,
+    "cold_to_warm_common_solver_speedup": 2.207190034430548,
+    "cold_rss_change_vs_previous_v3_gib": -0.027057647705078125,
+    "warm_rss_change_vs_previous_v3_gib": -0.12682342529296875,
+    "cold_warm_rows_and_nnz_identical": true,
+    "cold_warm_physical_closure_pass": true,
+    "zero_swap_both_runs": true
+  },
+  "scope_and_decision": {
+    "setup_targets_pass": true,
+    "symbolic_numeric_split_measured_not_inferred": true,
+    "positive_signal": "Canonical orientation reuse reduces the cold non-KSP build to 19.48 seconds, while the complete warm cache remains below 10 seconds and total warm common-solver time falls to 19.80 seconds.",
+    "remaining_setup_work": "The cold custom fixed-trace element build still costs 13.27 seconds. The existing DtN fields are not yet exposed as one explicitly mutually exclusive top-level ledger, although a raw-timeline audit attributes the apparent gap to base assembly, the modal loop and the full explicit residual. The warm non-KSP build is about 4.7 percent slower than deterministic v3 and remains under the gate.",
+    "memory_interpretation": "The direct peak remains in or after MUMPS setup/solve. The 4.46-4.63 GiB MPI8 peaks are measured rank-study points, not a lower bound for this 74,890-DoF problem.",
+    "significant_power_pass_count": null,
+    "significant_complex_amplitude_pass_count": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "not_a_12_of_12_candidate": true,
+    "heavy_pair_should_not_be_repeated_without_relevant_source_or_identity_change": true,
+    "candidate_promotion": false
+  }
+}

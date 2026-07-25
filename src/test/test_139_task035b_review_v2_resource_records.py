@@ -170,3 +170,61 @@ def test_rank_independent_warm_cache_reuses_every_condensed_class() -> None:
     assert record["decision"]["historical_rank_partition_negative_preserved"]
     assert record["decision"]["candidate_promotion"] is False
     assert record["ordinary_default_changed"] is False
+
+
+def test_canonical_orientation_pair_is_setup_authority_not_accuracy_pass() -> None:
+    record = _record(
+        "h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json"
+    )
+    identity = record["identity"]
+    cold = record["cold"]
+    warm = record["warm"]
+    comparison = record["comparison"]
+    decision = record["scope_and_decision"]
+
+    assert record["pass"] is True
+    assert record["candidate_promotion"] is False
+    assert record["ordinary_default_changed"] is False
+    assert record["source"]["commit_sha"] == (
+        "ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7"
+    )
+    assert record["source"]["clean_full_sha_gate"] is True
+    assert identity["mpi_size"] == 8
+    assert identity["full3d_equivalent_dofs"] == 74890
+    assert identity["active_rows_with_dtn"] == 16880
+    assert identity["raw_petsc_options_used"] is False
+
+    for run in (cold, warm):
+        mumps = run["mumps"]
+        assert run["formal_profile_pass"] is True
+        assert run["full_explicit_true_residual"] <= 1.0e-9
+        assert run["max_process_tree_swap_mb"] == 0.0
+        assert mumps["event_split_status"] == "measured_symbolic_numeric_split"
+        assert mumps["symbolic_count_per_rank"] == [1] * 8
+        assert mumps["numeric_count_per_rank"] == [1] * 8
+        assert mumps["symbolic_seconds_max"] > 0.0
+        assert mumps["numeric_seconds_max"] > 0.0
+        assert (
+            mumps["symbolic_seconds_max"] + mumps["numeric_seconds_max"]
+            <= mumps["combined_ksp_setup_wall_seconds"]
+        )
+        assert len(mumps["collective_rank_payload_sha256"]) == 64
+        canonical = run["canonical_orientation"]
+        assert canonical["used_set_equals_qualified_set"] is True
+        assert canonical["inactive_or_postzero_rows_created"] is False
+        assert len(run["artifacts"]) == 4
+        assert all(len(item["sha256"]) == 64 for item in run["artifacts"])
+
+    assert cold["cache"]["raw_tensor_misses"] == 6
+    assert cold["cache"]["condensed_class_misses"] == 115
+    assert warm["cache"]["raw_tensor_hits"] == 6
+    assert warm["cache"]["condensed_class_hits"] == 119
+    assert warm["cache"]["dtn_rank_bundle_hits"] == 8
+    assert comparison["cold_warm_rows_and_nnz_identical"] is True
+    assert comparison["cold_non_ksp_2x_target_pass"] is True
+    assert comparison["cold_non_ksp_at_or_below_30_seconds_pass"] is True
+    assert comparison["warm_non_ksp_below_10_seconds_pass"] is True
+    assert comparison["warm_speed_ratio_previous_over_current"] < 1.0
+    assert decision["setup_targets_pass"] is True
+    assert decision["twelve_of_twelve_gate_claimed"] is False
+    assert decision["not_a_12_of_12_candidate"] is True
