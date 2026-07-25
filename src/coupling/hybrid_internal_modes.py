@@ -26,7 +26,11 @@ from ..modes.mode_classification import (
     BiorthogonalModeBasis,
     ClassifiedBiorthogonalMode,
 )
-from ..modes.stable_propagation import TwoSidedPropagation, build_two_sided_propagation
+from ..modes.stable_propagation import (
+    AxialPropagationModel,
+    TwoSidedPropagation,
+    build_two_sided_propagation,
+)
 from ..solvers.dtn_port_3d import (
     _assemble_mpc_form_vector,
     _assemble_unconstrained_form_vector,
@@ -1015,6 +1019,7 @@ def build_hybrid_internal_mode_coupling(
     top_system: HybridLocalDtnSystem,
     *,
     length_nm: float = 100.0,
+    propagation_model: AxialPropagationModel = "continuous_beta",
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1069,6 +1074,9 @@ def build_hybrid_internal_mode_coupling(
     propagation = build_two_sided_propagation(
         [*positive_basis.modes, *negative_basis.modes],
         length_nm,
+        propagation_model=propagation_model,
+        axial_fem_degree=int(cfg.nedelec_degree),
+        axial_h_nm=float(cfg.mesh_target_size),
     )
     bottom = None
     top = None

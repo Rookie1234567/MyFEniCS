@@ -426,6 +426,49 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIn("--container-limit-gib", command)
         self.assertIn("9.25", command)
 
+    def test_hybrid_command_propagates_explicit_axial_model_only(self) -> None:
+        base = [
+            "--target",
+            "hybrid",
+            "--case-label",
+            "task035c_p2_h5",
+            "--degree",
+            "2",
+            "--h-nm",
+            "5",
+            "--mpi-size",
+            "1",
+            "--requested-modes",
+            "160",
+            "--candidate-modes",
+            "320",
+            "--verified-clean-sha",
+            "a" * 40,
+        ]
+        ordinary = _parse_args(base)
+        corrected = _parse_args(
+            [
+                *base,
+                "--internal-propagation-model",
+                "full3d_uniform_cg",
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            ordinary_command = _worker_command(
+                ordinary, root / "ordinary.json", root / "ordinary.jsonl"
+            )
+            corrected_command = _worker_command(
+                corrected, root / "corrected.json", root / "corrected.jsonl"
+            )
+        self.assertNotIn("--internal-propagation-model", ordinary_command)
+        self.assertEqual(
+            corrected_command[
+                corrected_command.index("--internal-propagation-model") + 1
+            ],
+            "full3d_uniform_cg",
+        )
+
     def test_twelve_gib_runtime_guard_fits_smaller_live_host_ceiling(self) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
         common = {

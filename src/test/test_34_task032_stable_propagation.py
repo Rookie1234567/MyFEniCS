@@ -8,6 +8,7 @@ import numpy as np
 from src.modes.stable_propagation import (
     build_two_sided_propagation,
     diagnose_reciprocity_and_passivity,
+    full3d_uniform_cg_discrete_beta,
 )
 
 
@@ -26,6 +27,110 @@ def _reciprocal_modes(*forward_beta: complex) -> list[_SyntheticMode]:
 
 
 class Task032StablePropagationTests(unittest.TestCase):
+    def test_full3d_uniform_cg2_matches_axial_dispersion_reference(self):
+        expected_phase_corrections = {
+            0.0557: -2.317531607315404e-05,
+            0.324456: -0.13485247283944735,
+            0.416629: -0.42455442084429196,
+            0.463140: -0.6744734820144815,
+        }
+        for beta, expected in expected_phase_corrections.items():
+            effective = full3d_uniform_cg_discrete_beta(
+                beta, degree=2, h_nm=5.0
+            )
+            self.assertAlmostEqual(
+                (effective.real - beta) * 100.0, expected, places=12
+            )
+            self.assertAlmostEqual(effective.imag, 0.0, places=14)
+
+    def test_full3d_uniform_cg_converges_to_continuous_small_q(self):
+        beta = 0.02 + 0.001j
+        errors = []
+        for h_nm in (4.0, 2.0, 1.0):
+            effective = full3d_uniform_cg_discrete_beta(
+                beta, degree=2, h_nm=h_nm
+            )
+            errors.append(abs(effective - beta))
+        self.assertLess(errors[1], errors[0] / 8.0)
+        self.assertLess(errors[2], errors[1] / 8.0)
+
+    def test_full3d_uniform_cg6_small_q_is_machine_close(self):
+        beta = 0.02 + 0.001j
+        for h_nm in (8.0, 4.0, 2.0, 1.0):
+            effective = full3d_uniform_cg_discrete_beta(
+                beta, degree=6, h_nm=h_nm
+            )
+            self.assertLess(abs(effective - beta), 1.0e-12)
+
+    def test_full3d_uniform_cg_pole_and_stop_band_select_passive_root(self):
+        pole = full3d_uniform_cg_discrete_beta(
+            np.sqrt(10.0), degree=2, h_nm=1.0
+        )
+        self.assertAlmostEqual(pole.real, np.pi, places=14)
+        self.assertAlmostEqual(pole.imag, 0.0, places=14)
+        forward = full3d_uniform_cg_discrete_beta(
+            3.25, degree=2, h_nm=1.0, direction="forward"
+        )
+        backward = full3d_uniform_cg_discrete_beta(
+            -3.25, degree=2, h_nm=1.0, direction="backward"
+        )
+        self.assertAlmostEqual(forward.real, np.pi, places=14)
+        self.assertGreater(forward.imag, 0.1)
+        self.assertAlmostEqual(backward.real, -forward.real, places=14)
+        self.assertAlmostEqual(backward.imag, -forward.imag, places=14)
+
+    def test_full3d_uniform_cg_is_opt_in_reciprocal_and_passive(self):
+        modes = _reciprocal_modes(0.08 + 0.01j, 0.0 + 10.0j)
+        ordinary = build_two_sided_propagation(modes, 100.0)
+        corrected = build_two_sided_propagation(
+            modes,
+            100.0,
+            propagation_model="full3d_uniform_cg",
+            axial_fem_degree=2,
+            axial_h_nm=5.0,
+        )
+
+        self.assertEqual(ordinary.propagation_model, "continuous_beta")
+        np.testing.assert_allclose(
+            ordinary.forward.effective_beta_per_nm,
+            ordinary.forward.beta_per_nm,
+        )
+        self.assertEqual(corrected.propagation_model, "full3d_uniform_cg")
+        self.assertTrue(corrected.passivity_valid)
+        self.assertTrue(
+            diagnose_reciprocity_and_passivity(corrected).reciprocity_valid
+        )
+        self.assertLessEqual(corrected.max_factor_magnitude, 1.0)
+        self.assertNotEqual(
+            corrected.forward.effective_beta_per_nm[0],
+            corrected.forward.beta_per_nm[0],
+        )
+
+    def test_full3d_uniform_cg_requires_explicit_degree_and_h(self):
+        modes = _reciprocal_modes(0.08 + 0.0j)
+        with self.assertRaisesRegex(ValueError, "axial_fem_degree"):
+            build_two_sided_propagation(
+                modes,
+                100.0,
+                propagation_model="full3d_uniform_cg",
+                axial_h_nm=5.0,
+            )
+        with self.assertRaisesRegex(ValueError, "axial_h_nm"):
+            build_two_sided_propagation(
+                modes,
+                100.0,
+                propagation_model="full3d_uniform_cg",
+                axial_fem_degree=2,
+            )
+        with self.assertRaisesRegex(ValueError, "integer number"):
+            build_two_sided_propagation(
+                modes,
+                102.0,
+                propagation_model="full3d_uniform_cg",
+                axial_fem_degree=2,
+                axial_h_nm=5.0,
+            )
+
     def test_single_lossless_mode_is_reflection_free_in_both_directions(self):
         propagation = build_two_sided_propagation(_reciprocal_modes(0.08 + 0.0j), 100.0)
         from_bottom = propagation.apply([2.0 - 0.5j], [0.0j])

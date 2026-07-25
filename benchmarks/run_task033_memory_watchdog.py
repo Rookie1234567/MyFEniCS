@@ -914,6 +914,13 @@ def _worker_command(
         command.extend(("--modal-h-nm", str(args.modal_h_nm)))
     if args.modal_degree is not None:
         command.extend(("--modal-degree", str(args.modal_degree)))
+    if args.internal_propagation_model != "continuous_beta":
+        command.extend(
+            (
+                "--internal-propagation-model",
+                args.internal_propagation_model,
+            )
+        )
     if args.full3d_reference is not None:
         command.extend(
             ("--full3d-reference", str(args.full3d_reference))
@@ -1116,6 +1123,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
                 "bottom_local_thickness_nm",
                 "top_local_thickness_nm",
                 "internal_unknown_count",
+                "internal_propagation",
                 "qep_to_interface_quadrature_degree",
                 "dense_interface_square_formed",
                 "full_field_or_mode_gathered",
@@ -1131,6 +1139,9 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         },
         "physical_field_reconstruction": {
             "interface_continuity": physical.get("interface_continuity"),
+            "full3d_trace_modal_oracle": physical.get(
+                "full3d_trace_modal_oracle"
+            ),
             "volume_absorption": physical.get("volume_absorption"),
             "selected_plane_full3d_comparison": physical.get(
                 "selected_plane_full3d_comparison"
@@ -1316,6 +1327,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--internal-propagation-model",
+        choices=("continuous_beta", "full3d_uniform_cg"),
+        default="continuous_beta",
+        help=(
+            "Explicit Hybrid middle-segment propagation model; the ordinary "
+            "default remains continuous_beta."
+        ),
+    )
+    parser.add_argument(
         "--mpi-size",
         type=int,
         choices=(1, 2, 4, 8, 16, 32),
@@ -1442,9 +1462,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--target qep requires --material-kind.")
     if (
         args.target != "hybrid"
-        and (args.modal_h_nm is not None or args.modal_degree is not None)
+        and (
+            args.modal_h_nm is not None
+            or args.modal_degree is not None
+            or args.internal_propagation_model != "continuous_beta"
+        )
     ):
-        parser.error("Independent modal h/p options are Hybrid-only.")
+        parser.error(
+            "Independent modal h/p and propagation options are Hybrid-only."
+        )
     if args.modal_h_nm is not None and args.modal_h_nm <= 0.0:
         parser.error("--modal-h-nm must be positive.")
     if (

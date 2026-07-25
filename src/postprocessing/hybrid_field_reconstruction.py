@@ -14,6 +14,7 @@ from petsc4py import PETSc
 from ..common.config_3d import SimulationConfig3D
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
 from ..modes.mode_classification import BiorthogonalModeBasis
+from ..modes.stable_propagation import TwoSidedPropagation
 from ..solvers.dtn_port_3d import _assign_fe_solution_from_augmented
 from ..solvers.hybrid_local_dtn import HybridLocalDtnSystem
 from .full3d_reference import _sample_distributed_function
@@ -178,6 +179,7 @@ class ModalFieldReconstructor:
         *,
         bottom_z_nm: float = 10.0,
         top_z_nm: float = 110.0,
+        propagation: TwoSidedPropagation | None = None,
     ) -> None:
         if len(positive.modes) != len(negative.modes):
             raise ValueError("Positive and negative modal bases must have equal sizes.")
@@ -191,6 +193,34 @@ class ModalFieldReconstructor:
         if self.top_z_nm <= self.bottom_z_nm:
             raise ValueError("The modal interval must have positive length.")
         self._modes = tuple([*positive.modes, *negative.modes])
+        if propagation is None:
+            self.propagation_model = "continuous_beta"
+            self._positive_propagation_beta = np.asarray(
+                [mode.beta for mode in positive.modes],
+                dtype=np.complex128,
+            )
+            self._negative_propagation_beta = np.asarray(
+                [mode.beta for mode in negative.modes],
+                dtype=np.complex128,
+            )
+        else:
+            count = len(positive.modes)
+            if (
+                propagation.forward.mode_count != count
+                or propagation.backward.mode_count != count
+            ):
+                raise ValueError(
+                    "Propagation and modal reconstruction sizes differ."
+                )
+            self.propagation_model = propagation.propagation_model
+            self._positive_propagation_beta = np.asarray(
+                propagation.forward.effective_beta_per_nm,
+                dtype=np.complex128,
+            )
+            self._negative_propagation_beta = np.asarray(
+                propagation.backward.effective_beta_per_nm,
+                dtype=np.complex128,
+            )
         msh = self.cross_section.mesh
         self._magnetic_space = fem.functionspace(
             msh,
@@ -250,6 +280,26 @@ class ModalFieldReconstructor:
     def mode_count_per_direction(self) -> int:
         return len(self.positive.modes)
 
+    def _effective_propagation_betas(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        positive = getattr(self, "_positive_propagation_beta", None)
+        negative = getattr(self, "_negative_propagation_beta", None)
+        if positive is None:
+            positive = np.asarray(
+                [mode.beta for mode in self.positive.modes],
+                dtype=np.complex128,
+            )
+        if negative is None:
+            negative = np.asarray(
+                [mode.beta for mode in self.negative.modes],
+                dtype=np.complex128,
+            )
+        return (
+            np.asarray(positive, dtype=np.complex128),
+            np.asarray(negative, dtype=np.complex128),
+        )
+
     def _sample_mode_bases(
         self, points: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -301,18 +351,21 @@ class ModalFieldReconstructor:
         count = self.mode_count_per_direction
         if modal.shape != (2 * count,):
             raise ValueError(f"Modal amplitudes must have shape ({2 * count},).")
-        positive_beta = np.asarray(
-            [mode.beta for mode in self.positive.modes], dtype=np.complex128
-        )
-        negative_beta = np.asarray(
-            [mode.beta for mode in self.negative.modes], dtype=np.complex128
-        )
+        positive_beta, negative_beta = self._effective_propagation_betas()
         return np.concatenate(
             (
                 modal[:count]
-                * np.exp(1j * positive_beta * (float(z_nm) - self.bottom_z_nm)),
+                * np.exp(
+                    1j
+                    * positive_beta
+                    * (float(z_nm) - self.bottom_z_nm)
+                ),
                 modal[count:]
-                * np.exp(1j * negative_beta * (float(z_nm) - self.top_z_nm)),
+                * np.exp(
+                    1j
+                    * negative_beta
+                    * (float(z_nm) - self.top_z_nm)
+                ),
             )
         )
 
@@ -357,8 +410,8 @@ class ModalFieldReconstructor:
 
         Electric-only projection cannot distinguish counter-propagating modes
         that share a tangential trace.  The joint normalized E/H fit resolves
-        both directions and lets us test the continuous ``exp(i beta L)``
-        propagation independently of the local Hybrid solve.
+        both directions and lets us compare continuous and selected propagation
+        independently of the local Hybrid solve.
         """
 
         with np.load(reference_npz) as archive:
@@ -464,14 +517,27 @@ class ModalFieldReconstructor:
                 interface_indices["bottom"]
             )
             top_coefficients, top_fit = fit(interface_indices["top"])
-            beta = np.asarray(
+            original_beta = np.asarray(
                 [mode.beta for mode in self._modes],
                 dtype=np.complex128,
             )
+            positive_beta, negative_beta = (
+                self._effective_propagation_betas()
+            )
+            effective_beta = np.concatenate(
+                (
+                    positive_beta,
+                    negative_beta,
+                )
+            )
             length_nm = self.top_z_nm - self.bottom_z_nm
             count = self.mode_count_per_direction
-            forward_factors = np.exp(1j * beta[:count] * length_nm)
-            backward_factors = np.exp(-1j * beta[count:] * length_nm)
+            forward_factors = np.exp(
+                1j * original_beta[:count] * length_nm
+            )
+            backward_factors = np.exp(
+                -1j * original_beta[count:] * length_nm
+            )
             predicted_top_forward = (
                 bottom_coefficients[:count] * forward_factors
             )
@@ -554,7 +620,7 @@ class ModalFieldReconstructor:
                 "largest_projected_modes": largest_mode_diagnostics(
                     predicted_top_forward,
                     top_coefficients[:count],
-                    beta[:count],
+                    original_beta[:count],
                     direction="forward",
                     offset=0,
                 ),
@@ -567,7 +633,7 @@ class ModalFieldReconstructor:
                 "largest_projected_modes": largest_mode_diagnostics(
                     predicted_bottom_backward,
                     bottom_coefficients[count:],
-                    beta[count:],
+                    original_beta[count:],
                     direction="backward",
                     offset=count,
                 ),
@@ -577,9 +643,96 @@ class ModalFieldReconstructor:
                 float(np.max(np.abs(backward_factors), initial=0.0)),
                 1.0e-30,
             )
+            selected_forward_factors = np.exp(
+                1j * effective_beta[:count] * length_nm
+            )
+            selected_backward_factors = np.exp(
+                -1j * effective_beta[count:] * length_nm
+            )
+            selected_top_forward = (
+                bottom_coefficients[:count] * selected_forward_factors
+            )
+            selected_bottom_backward = (
+                top_coefficients[count:] * selected_backward_factors
+            )
+            selected_top_coefficients = np.concatenate(
+                (selected_top_forward, top_coefficients[count:])
+            )
+            selected_bottom_coefficients = np.concatenate(
+                (bottom_coefficients[:count], selected_bottom_backward)
+            )
+            selected_top_electric = (
+                electric_matrix @ selected_top_coefficients
+            ).reshape(electric[interface_indices["top"], ..., :2].shape)
+            selected_top_magnetic = (
+                magnetic_matrix @ selected_top_coefficients
+            ).reshape(magnetic[interface_indices["top"], ..., :2].shape)
+            selected_bottom_electric = (
+                electric_matrix @ selected_bottom_coefficients
+            ).reshape(electric[interface_indices["bottom"], ..., :2].shape)
+            selected_bottom_magnetic = (
+                magnetic_matrix @ selected_bottom_coefficients
+            ).reshape(magnetic[interface_indices["bottom"], ..., :2].shape)
+            selected_propagation = {
+                "length_nm": float(length_nm),
+                "forward_bottom_to_top": {
+                    "coefficient_relative_l2": coefficient_error(
+                        selected_top_forward,
+                        top_coefficients[:count],
+                    ),
+                    "largest_projected_modes": largest_mode_diagnostics(
+                        selected_top_forward,
+                        top_coefficients[:count],
+                        effective_beta[:count],
+                        direction="forward",
+                        offset=0,
+                    ),
+                },
+                "backward_top_to_bottom": {
+                    "coefficient_relative_l2": coefficient_error(
+                        selected_bottom_backward,
+                        bottom_coefficients[count:],
+                    ),
+                    "largest_projected_modes": largest_mode_diagnostics(
+                        selected_bottom_backward,
+                        bottom_coefficients[count:],
+                        effective_beta[count:],
+                        direction="backward",
+                        offset=count,
+                    ),
+                },
+                "stable_two_sided_reconstruction": {
+                    "top_electric_tangential": relative_sample_error(
+                        selected_top_electric,
+                        electric[interface_indices["top"], ..., :2],
+                    ),
+                    "top_magnetic_tangential": relative_sample_error(
+                        selected_top_magnetic,
+                        magnetic[interface_indices["top"], ..., :2],
+                    ),
+                    "bottom_electric_tangential": relative_sample_error(
+                        selected_bottom_electric,
+                        electric[interface_indices["bottom"], ..., :2],
+                    ),
+                    "bottom_magnetic_tangential": relative_sample_error(
+                        selected_bottom_magnetic,
+                        magnetic[interface_indices["bottom"], ..., :2],
+                    ),
+                },
+                "max_stable_factor_magnitude": max(
+                    float(
+                        np.max(np.abs(selected_forward_factors), initial=0.0)
+                    ),
+                    float(
+                        np.max(np.abs(selected_backward_factors), initial=0.0)
+                    ),
+                    1.0e-30,
+                ),
+                "diagnostic_uses_growing_inverse_factors": False,
+            }
             payload = {
                 "schema_version": (
-                    "task035c.sampled-full3d-trace-modal-oracle.v1"
+                    "task035c.sampled-full3d-trace-modal-oracle.v2"
                 ),
                 "status": "measured_sampled_oracle",
                 "reference_npz": str(reference_npz),
@@ -615,6 +768,10 @@ class ModalFieldReconstructor:
                     "max_stable_factor_magnitude": max_stable_factor,
                     "diagnostic_uses_growing_inverse_factors": False,
                 },
+                "selected_propagation_model": getattr(
+                    self, "propagation_model", "continuous_beta"
+                ),
+                "selected_propagation": selected_propagation,
                 "authority_boundary": (
                     "bounded 40x20 sampled interface oracle; not an exact "
                     "FE mass/Riesz projection"

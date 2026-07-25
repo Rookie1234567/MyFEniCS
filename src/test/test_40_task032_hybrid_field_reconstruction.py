@@ -83,6 +83,13 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
             *reconstructor.positive.modes,
             *reconstructor.negative.modes,
         )
+        reconstructor.propagation_model = "full3d_uniform_cg"
+        reconstructor._positive_propagation_beta = np.asarray(
+            [0.011 + 0.0j]
+        )
+        reconstructor._negative_propagation_beta = np.asarray(
+            [-0.019 + 0.0j]
+        )
         electric_basis = np.zeros((2, 2, 3), dtype=np.complex128)
         magnetic_basis = np.zeros((2, 2, 3), dtype=np.complex128)
         electric_basis[0, 0, 0] = 1.0
@@ -157,6 +164,16 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
                 "top_magnetic_tangential"
             ]["relative_l2"],
             1.0e-12,
+        )
+        self.assertEqual(
+            report["selected_propagation_model"],
+            "full3d_uniform_cg",
+        )
+        self.assertGreater(
+            report["selected_propagation"]["forward_bottom_to_top"][
+                "coefficient_relative_l2"
+            ],
+            1.0e-3,
         )
 
 

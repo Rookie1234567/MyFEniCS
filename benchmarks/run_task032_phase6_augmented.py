@@ -635,6 +635,16 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--internal-propagation-model",
+        choices=("continuous_beta", "full3d_uniform_cg"),
+        default="continuous_beta",
+        help=(
+            "Axial propagation used between the two Hybrid interfaces. "
+            "full3d_uniform_cg is an explicit same-p/h Full3D closure audit; "
+            "continuous_beta remains the ordinary default."
+        ),
+    )
+    parser.add_argument(
         "--stage4-full3d-assembly-backend",
         choices=(
             STANDARD_FULL_ASSEMBLY_BACKEND,
@@ -798,6 +808,7 @@ def main() -> None:
         or args.graded_reference_h is not None
         or not np.isclose(args.incident_grazing_deg, 10.0)
         or args.polarization_kind != "s"
+        or args.internal_propagation_model != "continuous_beta"
     )
     comm = MPI.COMM_WORLD
     provenance = _source_provenance(
@@ -883,6 +894,9 @@ def main() -> None:
             "h_nm": args.h_nm,
             "modal_degree": modal_degree,
             "modal_h_nm": modal_h_nm,
+            "internal_propagation_model": (
+                args.internal_propagation_model
+            ),
             "requested_modes_per_direction": args.requested_modes,
             "candidate_modes_per_target_branch": candidate_modes,
             "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -945,6 +959,9 @@ def main() -> None:
                 "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
                 "full_field_or_mode_vector_gather": False,
                 "primary_solver_path": args.solver_path,
+                "internal_propagation_model_requested": (
+                    args.internal_propagation_model
+                ),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
@@ -1206,6 +1223,7 @@ def main() -> None:
             bottom,
             top,
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
+            propagation_model=args.internal_propagation_model,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1441,6 +1459,7 @@ def main() -> None:
             negative,
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
+            propagation=coupling.propagation,
         )
         trace_modal_oracle = None
         if reference_archive is not None:
@@ -1861,6 +1880,9 @@ def main() -> None:
                 "h_nm": args.h_nm,
                 "modal_degree": modal_degree,
                 "modal_h_nm": modal_h_nm,
+                "internal_propagation_model": (
+                    args.internal_propagation_model
+                ),
                 "requested_modes_per_direction": args.requested_modes,
                 "candidate_modes_per_target_branch": candidate_modes,
                 "near_degenerate_tolerance": args.near_degenerate_tolerance,
@@ -1984,6 +2006,56 @@ def main() -> None:
                 "bottom_matrix_stats": bottom.augmented_matrix_stats,
                 "top_matrix_stats": top.augmented_matrix_stats,
                 "internal_unknown_count": coupling.internal_unknown_count,
+                "internal_propagation": {
+                    "model": coupling.propagation.propagation_model,
+                    "authority_boundary": (
+                        "scalar_CG_axial_phase_oracle; final authority remains "
+                        "the measured 12-channel/field/residual closure"
+                    ),
+                    "modal_magnetic_and_traction_symbol": (
+                        "original_continuous_QEP_beta"
+                    ),
+                    "axial_fem_degree": int(cfg.nedelec_degree),
+                    "axial_h_nm": float(cfg.mesh_target_size),
+                    "forward_original_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.propagation.forward.beta_per_nm
+                    ],
+                    "forward_effective_beta_per_nm": [
+                        _complex_json(value)
+                        for value in (
+                            coupling.propagation.forward.effective_beta_per_nm
+                        )
+                    ],
+                    "forward_phase_corrections_rad": list(
+                        coupling.propagation.forward.phase_corrections_rad
+                    ),
+                    "forward_log_magnitude_corrections": list(
+                        coupling.propagation.forward.log_magnitude_corrections
+                    ),
+                    "backward_original_beta_per_nm": [
+                        _complex_json(value)
+                        for value in coupling.propagation.backward.beta_per_nm
+                    ],
+                    "backward_effective_beta_per_nm": [
+                        _complex_json(value)
+                        for value in (
+                            coupling.propagation.backward.effective_beta_per_nm
+                        )
+                    ],
+                    "backward_phase_corrections_rad": list(
+                        coupling.propagation.backward.phase_corrections_rad
+                    ),
+                    "backward_log_magnitude_corrections": list(
+                        coupling.propagation.backward.log_magnitude_corrections
+                    ),
+                    "max_factor_magnitude": float(
+                        coupling.propagation.max_factor_magnitude
+                    ),
+                    "passivity_valid": bool(
+                        coupling.propagation.passivity_valid
+                    ),
+                },
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
                 ),
