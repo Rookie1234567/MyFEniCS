@@ -152,6 +152,31 @@ def _mode_inventory(*, alpha: complex = 0.25 + 0.0j):
     ]
 
 
+def _reduced_operator_identity(
+    *,
+    content_sha256: str = "c" * 64,
+):
+    return {
+        "schema_version": (
+            "task035b.dtn-reduced-operator-identity.v1"
+        ),
+        "content_sha256": content_sha256,
+        "cell_recovery_map_content_sha256": "d" * 64,
+        "cell_recovery_map_count": 2,
+        "class_array_count": 5,
+        "dimensions": {
+            "full_rows": 1,
+            "trace_rows": 1,
+            "active_rows": 1,
+            "appended_rows": 0,
+            "interior_rows": 0,
+            "active_interior_rows": 0,
+        },
+        "material_and_tensor_content_bound": True,
+        "aii_factor_and_primal_dual_projection_content_bound": True,
+    }
+
+
 def _vector(V, component: int) -> tuple[PETSc.Vec, np.ndarray]:
     vector = fem_petsc.create_vector(V)
     start, stop = map(int, vector.getOwnershipRange())
@@ -167,6 +192,60 @@ def _vector(V, component: int) -> tuple[PETSc.Vec, np.ndarray]:
         mode=PETSc.ScatterMode.FORWARD,
     )
     return vector, expected
+
+
+def _reduced_modal_bundle(trace_constraints):
+    rows = np.asarray(
+        trace_constraints.owned_active_rows,
+        dtype=PETSc.IntType,
+    )
+    right = tuple(
+        (
+            rows.copy(),
+            np.asarray(
+                (component + 1) * 0.125 + 1j * (rows.astype(np.float64) + 0.25),
+                dtype=np.complex128,
+            ),
+        )
+        for component in range(2)
+    )
+    left = tuple(
+        (
+            rows.copy(),
+            np.asarray(
+                -(component + 1) * 0.375 + 1j * (rows.astype(np.float64) + 0.5),
+                dtype=np.complex128,
+            ),
+        )
+        for component in range(2)
+    )
+    bilinear = np.asarray(
+        [
+            [1.25 + 0.5j, -0.75 + 0.125j],
+            [0.25 - 0.375j, 2.0 + 0.0j],
+        ],
+        dtype=np.complex128,
+    )
+    return right, left, bilinear
+
+
+def _record_reduced_modal_bundle(
+    cache: PersistentDtnSurfaceVectorCache,
+    descriptors,
+    trace_constraints,
+) -> tuple[
+    tuple[tuple[np.ndarray, np.ndarray], ...],
+    tuple[tuple[np.ndarray, np.ndarray], ...],
+    np.ndarray,
+]:
+    right, left, bilinear = _reduced_modal_bundle(trace_constraints)
+    cache.record_reduced_modal_bundle(
+        descriptors,
+        right_entries=right,
+        left_entries=left,
+        interior_bilinear=bilinear,
+    )
+    return right, left, bilinear
 
 
 @contextmanager
@@ -197,11 +276,17 @@ def _cache(
     source_sha: str = "a" * 40,
     quadrature_degree: int = 12,
     mode_inventory=None,
+    reduced_operator_identity=None,
 ) -> PersistentDtnSurfaceVectorCache:
     return PersistentDtnSurfaceVectorCache(
         function_space=V,
         mesh_data=mesh_data,
         trace_constraints=trace_constraints,
+        reduced_operator_identity=(
+            _reduced_operator_identity()
+            if reduced_operator_identity is None
+            else reduced_operator_identity
+        ),
         descriptors=descriptors,
         mode_inventory=(
             _mode_inventory()
@@ -235,10 +320,16 @@ def _cold_then_warm_exact_roundtrip(comm: MPI.Intracomm) -> None:
             expected.append(owned)
             cold.record_vector(descriptor, vector)
             vector.destroy()
+        expected_right, expected_left, expected_bilinear = _record_reduced_modal_bundle(
+            cold,
+            descriptors,
+            constraints,
+        )
         cold_audit = cold.finalize()
         assert cold_audit["hit_count_sum"] == 0
         assert cold_audit["write_count_sum"] == comm.size
         assert cold_audit["record_count_sum"] == 2 * comm.size
+        assert cold_audit["reduced_bundle_record_count_sum"] == (comm.size)
         comm.barrier()
 
         warm = _cache(
@@ -261,19 +352,37 @@ def _cold_then_warm_exact_roundtrip(comm: MPI.Intracomm) -> None:
                 reference,
             )
             restored.destroy()
+        restored_right, restored_left, restored_bilinear = (
+            warm.restore_reduced_modal_bundle(descriptors)
+        )
+        for actual_entries, expected_entries in (
+            (restored_right, expected_right),
+            (restored_left, expected_left),
+        ):
+            for actual, reference in zip(
+                actual_entries,
+                expected_entries,
+                strict=True,
+            ):
+                assert np.array_equal(actual[0], reference[0])
+                assert np.array_equal(actual[1], reference[1])
+        assert np.array_equal(
+            restored_bilinear,
+            expected_bilinear,
+        )
         warm_audit = warm.finalize()
         assert warm_audit["hit_on_all_ranks"] is True
         assert warm_audit["hit_count_sum"] == comm.size
         assert warm_audit["restore_count_sum"] == 2 * comm.size
+        assert warm_audit["reduced_bundle_restore_count_sum"] == (comm.size)
+        assert warm_audit["material_and_tensor_identity_bound"] is True
+        assert warm_audit["legacy_v1_payload_compatible"] is False
+        assert warm_audit["trace_projection_recomputed_after_restore"] is False
         assert warm_audit["ordinary_default_changed"] is False
         comm.barrier()
         if comm.rank == 0:
-            assert len(
-                list(directory.glob("dtn_surface_vectors_*.npz"))
-            ) == comm.size
-            assert len(
-                list(directory.glob("dtn_surface_vectors_*.json"))
-            ) == comm.size
+            assert len(list(directory.glob("dtn_reduced_modal_*.npz"))) == comm.size
+            assert len(list(directory.glob("dtn_reduced_modal_*.json"))) == comm.size
 
 
 @pytest.mark.skipif(
@@ -282,6 +391,35 @@ def _cold_then_warm_exact_roundtrip(comm: MPI.Intracomm) -> None:
 )
 def test_serial_exact_roundtrip_and_manifest_last_cache() -> None:
     _cold_then_warm_exact_roundtrip(MPI.COMM_WORLD)
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="serial duplicate-record fail-closed control",
+)
+def test_duplicate_surface_vector_record_is_rejected() -> None:
+    comm = MPI.COMM_WORLD
+    mesh_data, V = _mesh_space_and_tags(comm)
+    descriptors = _descriptors()
+    constraints = _trace_constraints(V)
+    with _shared_temporary_directory(comm) as directory:
+        cold = _cache(
+            V=V,
+            mesh_data=mesh_data,
+            trace_constraints=constraints,
+            descriptors=descriptors,
+            directory=directory,
+            mode="read_write",
+        )
+        assert cold.load() is False
+        vector, _ = _vector(V, 0)
+        cold.record_vector(descriptors[0], vector)
+        with pytest.raises(
+            RuntimeError,
+            match="component was recorded twice",
+        ):
+            cold.record_vector(descriptors[0], vector)
+        vector.destroy()
 
 
 @pytest.mark.skipif(
@@ -307,6 +445,11 @@ def test_mpi2_single_rank_failure_forces_collective_rebuild() -> None:
             vector, _ = _vector(V, component)
             cache.record_vector(descriptor, vector)
             vector.destroy()
+        _record_reduced_modal_bundle(
+            cache,
+            descriptors,
+            constraints,
+        )
 
     with _shared_temporary_directory(comm) as directory:
         cold = _cache(
@@ -344,6 +487,7 @@ def test_mpi2_single_rank_failure_forces_collective_rebuild() -> None:
         assert deleted_audit["miss_count_sum"] == comm.size
         assert deleted_audit["local_artifact_hit_count_sum"] == 1
         assert deleted_audit["record_count_sum"] == 2 * comm.size
+        assert deleted_audit["reduced_bundle_record_count_sum"] == comm.size
         assert deleted_audit["write_count_sum"] == comm.size
         assert (
             "artifact_or_manifest_missing"
@@ -410,6 +554,7 @@ def test_mpi2_single_rank_failure_forces_collective_rebuild() -> None:
             )
             restored.destroy()
             expected_vector.destroy()
+        repaired.restore_reduced_modal_bundle(descriptors)
         repaired_audit = repaired.finalize()
         assert repaired_audit["hit_on_all_ranks"] is True
         assert repaired_audit[
@@ -472,19 +617,34 @@ def test_mpi2_small_dtn_cold_warm_numerical_equivalence() -> None:
         assert cold_cache["record_count_sum"] == (
             comm.size * cold_cache["descriptor_count_per_rank"]
         )
+        assert cold_cache["reduced_bundle_record_count_sum"] == (
+            comm.size * cold_cache["surface_order_count_per_rank"]
+        )
         assert cold["stage4_dtn_component_vector_assemblies"] > 0
         assert warm_cache["hit_on_all_ranks"] is True
         assert warm_cache["hit_count_sum"] == comm.size
         assert warm["stage4_dtn_component_vector_assemblies"] == 0
-        assert warm[
-            "stage4_dtn_persistent_component_vector_restores"
-        ] == warm_cache["descriptor_count_per_rank"]
-        assert cold["matrix_stats"]["matrix_rows"] == warm[
-            "matrix_stats"
-        ]["matrix_rows"]
-        assert cold["matrix_stats"]["matrix_nnz_used"] == warm[
-            "matrix_stats"
-        ]["matrix_nnz_used"]
+        assert (
+            warm["stage4_dtn_persistent_reduced_modal_bundle_restores"]
+            == warm_cache["surface_order_count_per_rank"]
+        )
+        assert warm_cache["reduced_bundle_restore_count_sum"] == (
+            comm.size * warm_cache["surface_order_count_per_rank"]
+        )
+        assert (
+            warm_cache["restore_count_sum"]
+            + warm_cache["unrestored_full_vector_array_count_sum"]
+            == comm.size * warm_cache["descriptor_count_per_rank"]
+        )
+        assert warm_cache["trace_projection_recomputed_after_restore"] is False
+        assert warm_cache["cell_interior_bilinear_recomputed_after_restore"] is False
+        assert (
+            cold["matrix_stats"]["matrix_rows"] == warm["matrix_stats"]["matrix_rows"]
+        )
+        assert (
+            cold["matrix_stats"]["matrix_nnz_used"]
+            == warm["matrix_stats"]["matrix_nnz_used"]
+        )
         assert cold["linear_system_relative_residual"] <= 1.0e-9
         assert warm["linear_system_relative_residual"] <= 1.0e-9
         for observable in ("R00_total", "R_total", "T_total"):
@@ -493,7 +653,55 @@ def test_mpi2_small_dtn_cold_warm_numerical_equivalence() -> None:
                 warm[observable],
                 rtol=1.0e-13,
                 atol=1.0e-13,
+        )
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="MPI2 collective reduced-bundle validation control",
+)
+def test_mpi2_single_rank_record_validation_fails_collectively() -> None:
+    comm = MPI.COMM_WORLD
+    mesh_data, V = _mesh_space_and_tags(comm)
+    descriptors = _descriptors()
+    constraints = _trace_constraints(V)
+    with _shared_temporary_directory(comm) as directory:
+        cold = _cache(
+            V=V,
+            mesh_data=mesh_data,
+            trace_constraints=constraints,
+            descriptors=descriptors,
+            directory=directory,
+            mode="read_write",
+        )
+        assert cold.load() is False
+        right, left, bilinear = _reduced_modal_bundle(constraints)
+        if comm.rank == 0:
+            invalid_rows = np.asarray(
+                [cold._active_ownership_range[1]],
+                dtype=PETSc.IntType,
             )
+            right = (
+                (
+                    invalid_rows,
+                    np.ones(1, dtype=np.complex128),
+                ),
+                right[1],
+            )
+        with pytest.raises(
+            RuntimeError,
+            match=(
+                "collective DtN reduced-modal bundle validation failed: "
+                "rank 0"
+            ),
+        ):
+            cold.record_reduced_modal_bundle(
+                descriptors,
+                right_entries=right,
+                left_entries=left,
+                interior_bilinear=bilinear,
+            )
+        assert not cold._recorded
 
 
 @pytest.mark.skipif(
@@ -519,6 +727,11 @@ def test_identity_changes_and_corruption_fail_closed_to_miss() -> None:
             vector, _ = _vector(V, component)
             cold.record_vector(descriptor, vector)
             vector.destroy()
+        _record_reduced_modal_bundle(
+            cold,
+            descriptors,
+            constraints,
+        )
         cold.finalize()
 
         controls = (
@@ -538,6 +751,13 @@ def test_identity_changes_and_corruption_fail_closed_to_miss() -> None:
                 "trace_constraints": _trace_constraints(
                     V,
                     coefficient=0.5 + 0.25j,
+                ),
+            },
+            {
+                "reduced_operator_identity": (
+                    _reduced_operator_identity(
+                        content_sha256="e" * 64,
+                    )
                 ),
             },
         )
@@ -561,6 +781,9 @@ def test_identity_changes_and_corruption_fail_closed_to_miss() -> None:
                     12,
                 ),
                 mode_inventory=overrides.get("mode_inventory"),
+                reduced_operator_identity=overrides.get(
+                    "reduced_operator_identity",
+                ),
             )
             assert candidate.load() is False
             audit = candidate.finalize()
@@ -665,4 +888,23 @@ def test_cache_source_sha_and_descriptor_contract_fail_closed() -> None:
                 descriptors=(descriptor, descriptor),
                 directory=Path(directory),
                 mode="read_only",
+            )
+        with pytest.raises(
+            ValueError,
+            match="qualified material/tensor-bound",
+        ):
+            _cache(
+                V=V,
+                mesh_data=mesh_data,
+                trace_constraints=constraints,
+                descriptors=_descriptors(),
+                directory=Path(directory),
+                mode="read_only",
+                reduced_operator_identity={
+                    "schema_version": (
+                        "task035b.dtn-reduced-operator-identity.v1"
+                    ),
+                    "content_sha256": "not-a-sha",
+                    "material_and_tensor_content_bound": True,
+                },
             )

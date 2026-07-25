@@ -48,6 +48,7 @@ from .condensed_iterative_profiles import (
 from .dtn_surface_vector_cache import (
     PersistentDtnSurfaceVectorCache,
     disabled_dtn_surface_vector_cache_audit,
+    dtn_reduced_operator_identity,
     dtn_surface_vector_descriptor,
 )
 from .hcurl_cell_static_condensation import (
@@ -2650,6 +2651,7 @@ def solve_stage4_dtn_port_total_field(
         tuple[str, int, int, complex, bool],
         tuple[dict[str, Any], dict[str, Any]],
     ] = {}
+    reduced_operator_identity_seconds_local = 0.0
     surface_setup_started = time.perf_counter()
     if cfg.stage4_condensed_persistent_dtn_surface_cache:
         if assembly_time_system is None:
@@ -2707,12 +2709,20 @@ def solve_stage4_dtn_port_total_field(
             raise RuntimeError(
                 "persistent DtN surface-vector cache identity is missing"
             )
+        operator_identity_started = time.perf_counter()
+        reduced_operator_identity = dtn_reduced_operator_identity(
+            assembly_time_system
+        )
+        reduced_operator_identity_seconds_local += (
+            time.perf_counter() - operator_identity_started
+        )
         surface_cache = PersistentDtnSurfaceVectorCache(
             function_space=V,
             mesh_data=mesh_data,
             trace_constraints=(
                 assembly_time_system.trace_constraints
             ),
+            reduced_operator_identity=reduced_operator_identity,
             descriptors=descriptors,
             mode_inventory=_dtn_surface_cache_mode_inventory(
                 modes,
@@ -2807,6 +2817,14 @@ def solve_stage4_dtn_port_total_field(
             op=MPI.MAX,
         )
     )
+    timing_details[
+        "stage4_dtn_reduced_operator_identity_seconds"
+    ] = float(
+        comm.allreduce(
+            reduced_operator_identity_seconds_local,
+            op=MPI.MAX,
+        )
+    )
     component_key: tuple[str, int, int, complex, bool] | None = None
     component_right_entries: (
         tuple[
@@ -2828,8 +2846,10 @@ def solve_stage4_dtn_port_total_field(
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
     persistent_component_vector_restores = 0
+    persistent_reduced_modal_bundle_restores = 0
     modal_vector_assembly_seconds_local = 0.0
     persistent_vector_restore_seconds_local = 0.0
+    persistent_reduced_modal_restore_seconds_local = 0.0
     modal_block_insert_seconds_local = 0.0
     traction_rows_total_local = 0
     ell_cols_total_local = 0
@@ -2870,24 +2890,28 @@ def solve_stage4_dtn_port_total_field(
                 if component_full_vectors is not None:
                     for vector in component_full_vectors:
                         vector.destroy()
+                    component_full_vectors = None
                 if surface_cache_hit:
                     if surface_cache is None:
                         raise RuntimeError(
-                            "persistent DtN surface-vector cache hit "
+                            "persistent DtN reduced-modal cache hit "
                             "lost its cache object"
                         )
                     restore_started = time.perf_counter()
                     descriptor_pair = (
                         surface_descriptors_by_key[mode_key]
                     )
-                    component_full_vectors = tuple(
-                        surface_cache.restore_vector(descriptor)
-                        for descriptor in descriptor_pair
+                    (
+                        component_right_entries,
+                        component_left_entries,
+                        component_interior_bilinear,
+                    ) = surface_cache.restore_reduced_modal_bundle(
+                        descriptor_pair
                     )
-                    persistent_vector_restore_seconds_local += (
+                    persistent_reduced_modal_restore_seconds_local += (
                         time.perf_counter() - restore_started
                     )
-                    persistent_component_vector_restores += 2
+                    persistent_reduced_modal_bundle_restores += 1
                 else:
                     if selected_surface_assemblers is None:
                         raise RuntimeError(
@@ -2920,46 +2944,59 @@ def solve_stage4_dtn_port_total_field(
                                 descriptor,
                                 vector,
                             )
-                right_vectors = tuple(
-                    condense_unconstrained_vector_to_active_trace(
-                        assembly_time_system,
-                        vector,
-                        side="right",
+                    right_vectors = tuple(
+                        condense_unconstrained_vector_to_active_trace(
+                            assembly_time_system,
+                            vector,
+                            side="right",
+                        )
+                        for vector in component_full_vectors
                     )
-                    for vector in component_full_vectors
-                )
-                left_vectors = tuple(
-                    condense_unconstrained_vector_to_active_trace(
-                        assembly_time_system,
-                        vector,
-                        side="left",
+                    left_vectors = tuple(
+                        condense_unconstrained_vector_to_active_trace(
+                            assembly_time_system,
+                            vector,
+                            side="left",
+                        )
+                        for vector in component_full_vectors
                     )
-                    for vector in component_full_vectors
-                )
-                component_right_entries = tuple(
-                    _vec_nonzero_owned_entries(vector)
-                    for vector in right_vectors
-                )
-                component_left_entries = tuple(
-                    _vec_nonzero_owned_entries(vector)
-                    for vector in left_vectors
-                )
-                for vector in (*right_vectors, *left_vectors):
-                    vector.destroy()
-                component_interior_bilinear = np.asarray(
-                    [
+                    component_right_entries = tuple(
+                        _vec_nonzero_owned_entries(vector)
+                        for vector in right_vectors
+                    )
+                    component_left_entries = tuple(
+                        _vec_nonzero_owned_entries(vector)
+                        for vector in left_vectors
+                    )
+                    for vector in (*right_vectors, *left_vectors):
+                        vector.destroy()
+                    component_interior_bilinear = np.asarray(
                         [
-                            cell_interior_schur_bilinear(
-                                assembly_time_system,
-                                left,
-                                right,
-                            )
-                            for right in component_full_vectors
-                        ]
-                        for left in component_full_vectors
-                    ],
-                    dtype=np.complex128,
-                )
+                            [
+                                cell_interior_schur_bilinear(
+                                    assembly_time_system,
+                                    left,
+                                    right,
+                                )
+                                for right in component_full_vectors
+                            ]
+                            for left in component_full_vectors
+                        ],
+                        dtype=np.complex128,
+                    )
+                    if (
+                        surface_cache is not None
+                        and surface_cache.mode
+                        in {"read_write", "refresh"}
+                    ):
+                        surface_cache.record_reduced_modal_bundle(
+                            surface_descriptors_by_key[mode_key],
+                            right_entries=component_right_entries,
+                            left_entries=component_left_entries,
+                            interior_bilinear=(
+                                component_interior_bilinear
+                            ),
+                        )
             else:
                 if selected_surface_assemblers is None:
                     raise RuntimeError(
@@ -3001,6 +3038,31 @@ def solve_stage4_dtn_port_total_field(
             _mode_auxiliary_coordinate_scale(mode, cfg)
             * incident_projection
         )
+        full_components_required = (
+            assembly_time_system is not None
+            and (
+                cfg.stage4_retain_dual_recovery_context
+                or (
+                    incident_projection_solver != 0.0
+                    and assembly_time_full_rhs is not None
+                )
+            )
+        )
+        if full_components_required and component_full_vectors is None:
+            if not surface_cache_hit or surface_cache is None:
+                raise RuntimeError(
+                    "DtN full component vectors required after an "
+                    "uncached modal reduction"
+                )
+            restore_started = time.perf_counter()
+            component_full_vectors = tuple(
+                surface_cache.restore_vector(descriptor)
+                for descriptor in surface_descriptors_by_key[mode_key]
+            )
+            persistent_vector_restore_seconds_local += (
+                time.perf_counter() - restore_started
+            )
+            persistent_component_vector_restores += 2
         if (
             assembly_time_system is not None
             and cfg.stage4_retain_dual_recovery_context
@@ -3121,6 +3183,14 @@ def solve_stage4_dtn_port_total_field(
             op=MPI.MAX,
         )
     )
+    timing_details[
+        "stage4_dtn_persistent_reduced_modal_bundle_restore_seconds"
+    ] = float(
+        comm.allreduce(
+            persistent_reduced_modal_restore_seconds_local,
+            op=MPI.MAX,
+        )
+    )
     timing_details["stage4_dtn_modal_block_insert_seconds"] = float(
         comm.allreduce(modal_block_insert_seconds_local, op=MPI.MAX)
     )
@@ -3139,6 +3209,14 @@ def solve_stage4_dtn_port_total_field(
             op=MPI.MAX,
         )
     )
+    timing_details[
+        "stage4_dtn_persistent_reduced_modal_bundle_restores"
+    ] = int(
+        comm.allreduce(
+            persistent_reduced_modal_bundle_restores,
+            op=MPI.MAX,
+        )
+    )
     traction_rows_total = int(comm.allreduce(traction_rows_total_local, op=MPI.SUM))
     ell_cols_total = int(comm.allreduce(ell_cols_total_local, op=MPI.SUM))
     dtn_auxiliary_block_stats = _local_augmented_dtn_coupling_stats(
@@ -3152,7 +3230,8 @@ def solve_stage4_dtn_port_total_field(
             "Stage-4 DtN modal cache summary: "
             f"unique surface orders = {timing_details['stage4_dtn_unique_surface_orders']}, "
             f"x/y component vector assemblies = {timing_details['stage4_dtn_component_vector_assemblies']}, "
-            f"persistent restores = {timing_details['stage4_dtn_persistent_component_vector_restores']}, "
+            f"persistent full-vector restores = {timing_details['stage4_dtn_persistent_component_vector_restores']}, "
+            f"persistent reduced-bundle restores = {timing_details['stage4_dtn_persistent_reduced_modal_bundle_restores']}, "
             f"polarization cache hits = {timing_details['stage4_dtn_component_vector_cache_hits']}"
         )
         log(f"Stage-4 DtN base matrix nnz = {base_matrix_stats.get('matrix_nnz_used')}")

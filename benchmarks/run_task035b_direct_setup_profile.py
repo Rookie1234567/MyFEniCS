@@ -60,6 +60,9 @@ EXPECTED_H15_TOPOLOGY = {
     "active_rows_with_dtn": 16880,
 }
 CACHE_MODES = {"cold": "read_write", "warm": "read_only"}
+DTN_REDUCED_MODAL_CACHE_SCHEMA = (
+    "task035b.dtn-reduced-modal-persistent-cache.v2"
+)
 
 
 def _json_default(value: Any) -> Any:
@@ -729,6 +732,9 @@ def _extract_setup_evidence(
         "stage4_dtn_persistent_component_vector_restores": summary.get(
             "stage4_dtn_persistent_component_vector_restores"
         ),
+        "stage4_dtn_persistent_reduced_modal_bundle_restores": (
+            summary.get("stage4_dtn_persistent_reduced_modal_bundle_restores")
+        ),
         "full_true_residual": _full_true_residual(summary),
         "R00_total": summary.get("R00_total"),
         "R_total": summary.get("R_total"),
@@ -933,6 +939,10 @@ def _extract_setup_evidence(
                     dtn_surface_cache,
                     "identity_and_key_seconds_max",
                 ),
+                "reduced_operator_identity": _number(
+                    summary,
+                    "stage4_dtn_reduced_operator_identity_seconds",
+                ),
                 "persistent_surface_cache_read": _number(
                     dtn_surface_cache,
                     "read_seconds_max",
@@ -944,6 +954,10 @@ def _extract_setup_evidence(
                 "persistent_surface_vector_restore": _number(
                     summary,
                     "stage4_dtn_persistent_vector_restore_seconds",
+                ),
+                "persistent_reduced_modal_bundle_restore": _number(
+                    summary,
+                    "stage4_dtn_persistent_reduced_modal_bundle_restore_seconds",
                 ),
                 "incident_source_vector": _number(
                     summary,
@@ -1070,6 +1084,27 @@ def _classify_profile(
         "dtn_surface_cache_collective_all_or_nothing": (
             dtn_surface_cache.get("collective_all_or_nothing") is True
         ),
+        "dtn_reduced_modal_cache_v2_identity": (
+            dtn_surface_cache.get("schema_version")
+            == DTN_REDUCED_MODAL_CACHE_SCHEMA
+            and dtn_surface_cache.get("source_commit_sha") == source_sha
+            and dtn_surface_cache.get("payload_kind")
+            == "full_surface_vectors_plus_reduced_modal_bundles"
+            and dtn_surface_cache.get("legacy_v1_payload_compatible")
+            is False
+            and dtn_surface_cache.get(
+                "material_and_tensor_identity_bound"
+            )
+            is True
+            and dtn_surface_cache.get("content_checksum_verified") is True
+            and dtn_surface_cache.get("pickle_used") is False
+            and dtn_surface_cache.get(
+                "identity_or_payload_mismatch_is_fail_closed"
+            )
+            is True
+            and dtn_surface_cache.get("inactive_modes_stored") is False
+            and dtn_surface_cache.get("ordinary_default_changed") is False
+        ),
         "cache_mode_identity": (
             raw_cache.get("mode") == CACHE_MODES[cache_state]
             and condensed_cache.get("mode") == CACHE_MODES[cache_state]
@@ -1113,6 +1148,14 @@ def _classify_profile(
                         -1,
                     )
                 )
+                and dtn_surface_cache.get("reduced_bundle_record_count_sum")
+                == int(expected_mpi_size)
+                * int(
+                    dtn_surface_cache.get(
+                        "surface_order_count_per_rank",
+                        -1,
+                    )
+                )
             )
         ),
         "warm_raw_tensor_cache_hit_without_recompute": (
@@ -1146,6 +1189,46 @@ def _classify_profile(
                     0,
                 )
                 == 0
+                and evidence.get(
+                    "stage4_dtn_persistent_reduced_modal_bundle_restores",
+                    0,
+                )
+                == int(
+                    dtn_surface_cache.get(
+                        "surface_order_count_per_rank",
+                        -1,
+                    )
+                )
+                and dtn_surface_cache.get(
+                    "reduced_bundle_restore_count_sum"
+                )
+                == int(expected_mpi_size)
+                * int(
+                    dtn_surface_cache.get(
+                        "surface_order_count_per_rank",
+                        -1,
+                    )
+                )
+                and (
+                    dtn_surface_cache.get("restore_count_sum", -1)
+                    + dtn_surface_cache.get(
+                        "unrestored_full_vector_array_count_sum",
+                        -1,
+                    )
+                    == int(expected_mpi_size)
+                    * int(
+                        dtn_surface_cache.get(
+                            "descriptor_count_per_rank",
+                            -1,
+                        )
+                    )
+                )
+                and dtn_surface_cache.get("trace_projection_recomputed_after_restore")
+                is False
+                and dtn_surface_cache.get(
+                    "cell_interior_bilinear_recomputed_after_restore"
+                )
+                is False
             )
         ),
     }
@@ -1281,10 +1364,10 @@ def _resolve_cache_directory(
                 "warm cache requires at least one complete SHA-bound "
                 f"condensed-class manifest/array pair: {resolved}"
             )
-        if not _cache_pairs(resolved, prefix="dtn_surface_vectors"):
+        if not _cache_pairs(resolved, prefix="dtn_reduced_modal"):
             raise SystemExit(
                 "warm cache requires at least one complete mesh/mode/trace-"
-                f"bound DtN surface-vector manifest/array pair: {resolved}"
+                f"bound DtN reduced-modal manifest/array pair: {resolved}"
             )
     return resolved
 
@@ -1538,9 +1621,9 @@ def _run_parent(args: argparse.Namespace) -> int:
                     cache_directory,
                     prefix="condensed_class",
                 ),
-                "dtn_surface_vectors": _cache_pairs(
+                "dtn_reduced_modal": _cache_pairs(
                     cache_directory,
-                    prefix="dtn_surface_vectors",
+                    prefix="dtn_reduced_modal",
                 ),
             },
         },

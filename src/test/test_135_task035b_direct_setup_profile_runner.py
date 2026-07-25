@@ -57,11 +57,14 @@ def _worker_result() -> dict:
             "skipped_by_affine_backend": True,
             "stage4_dtn_incident_source_vector_seconds": 0.2,
             "stage4_dtn_surface_form_and_cache_setup_seconds": 0.3,
+            "stage4_dtn_reduced_operator_identity_seconds": 0.01,
             "stage4_dtn_modal_loop_seconds": 2.0,
             "stage4_dtn_modal_vector_assembly_seconds": 1.7,
             "stage4_dtn_persistent_vector_restore_seconds": 0.05,
+            "stage4_dtn_persistent_reduced_modal_bundle_restore_seconds": 0.02,
             "stage4_dtn_component_vector_assemblies": 0,
-            "stage4_dtn_persistent_component_vector_restores": 160,
+            "stage4_dtn_persistent_component_vector_restores": 2,
+            "stage4_dtn_persistent_reduced_modal_bundle_restores": 80,
             "stage4_dtn_modal_block_insert_seconds": 0.1,
             "stage4_dtn_augmented_matrix_finalize_seconds": 0.3,
             "stage4_dtn_warm_persistent_cache_heap_trim_seconds": 0.07,
@@ -84,17 +87,36 @@ def _worker_result() -> dict:
                 "stage4_condensed_persistent_dtn_surface_cache": True,
             },
             "stage4_dtn_surface_vector_persistent_cache": {
+                "schema_version": (
+                    "task035b.dtn-reduced-modal-persistent-cache.v2"
+                ),
                 "enabled": True,
                 "mode": "read_only",
                 "source_commit_sha": "a" * 40,
+                "payload_kind": (
+                    "full_surface_vectors_plus_reduced_modal_bundles"
+                ),
+                "legacy_v1_payload_compatible": False,
+                "material_and_tensor_identity_bound": True,
+                "content_checksum_verified": True,
+                "pickle_used": False,
+                "identity_or_payload_mismatch_is_fail_closed": True,
+                "inactive_modes_stored": False,
+                "ordinary_default_changed": False,
                 "hit_count_sum": 8,
                 "miss_count_sum": 0,
                 "hit_on_all_ranks": True,
                 "collective_all_or_nothing": True,
-                "restore_count_sum": 1280,
+                "restore_count_sum": 16,
                 "record_count_sum": 0,
+                "reduced_bundle_restore_count_sum": 640,
+                "reduced_bundle_record_count_sum": 0,
+                "unrestored_full_vector_array_count_sum": 1264,
                 "write_count_sum": 0,
                 "descriptor_count_per_rank": 160,
+                "surface_order_count_per_rank": 80,
+                "trace_projection_recomputed_after_restore": False,
+                "cell_interior_bilinear_recomputed_after_restore": False,
                 "read_seconds_max": 0.15,
                 "identity_and_key_seconds_max": 0.03,
                 "write_seconds_max": 0.0,
@@ -164,8 +186,8 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             (root / "condensed_class_b.json").touch()
             (root / "condensed_class_b.npz").touch()
             (root / "condensed_class_incomplete.npz").touch()
-            (root / "dtn_surface_vectors_c.json").touch()
-            (root / "dtn_surface_vectors_c.npz").touch()
+            (root / "dtn_reduced_modal_c.json").touch()
+            (root / "dtn_reduced_modal_c.npz").touch()
             self.assertEqual(
                 _cache_pairs(root, prefix="raw_tensor"),
                 ["raw_tensor_a"],
@@ -175,8 +197,8 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 ["condensed_class_b"],
             )
             self.assertEqual(
-                _cache_pairs(root, prefix="dtn_surface_vectors"),
-                ["dtn_surface_vectors_c"],
+                _cache_pairs(root, prefix="dtn_reduced_modal"),
+                ["dtn_reduced_modal_c"],
             )
 
     def test_default_is_dry_run_and_describes_cold_warm_protocol(self) -> None:
@@ -308,6 +330,14 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             0.15,
         )
         self.assertEqual(
+            timings["dtn"]["reduced_operator_identity"],
+            0.01,
+        )
+        self.assertEqual(
+            timings["dtn"]["persistent_reduced_modal_bundle_restore"],
+            0.02,
+        )
+        self.assertEqual(
             timings["recovery"]["warm_persistent_cache_heap_trim"],
             0.07,
         )
@@ -385,6 +415,28 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertIn(
             "warm_dtn_surface_cache_hit_without_reassembly",
             invalid_dtn["failures"],
+        )
+
+        identity_evidence = _extract_setup_evidence(_worker_result())
+        identity_evidence["cache_audit"]["dtn_surface_vector"][
+            "material_and_tensor_identity_bound"
+        ] = False
+        invalid_identity = _classify_profile(
+            identity_evidence,
+            telemetry,
+            cache_state="warm",
+            source_sha="a" * 40,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+            source_stable_and_clean_after=True,
+        )
+        self.assertFalse(invalid_identity["formal_profile_pass"])
+        self.assertIn(
+            "dtn_reduced_modal_cache_v2_identity",
+            invalid_identity["failures"],
         )
 
     def test_watchdog_summary_preserves_pss_uss_and_cgroup(self) -> None:
