@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 import ufl
 from basix.ufl import element
 from dolfinx import default_real_type, fem, mesh
+from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.solvers.dtn_port_3d import (
+    _assign_fe_solution_from_assembly_time_condensation,
+)
 from src.solvers.hcurl_assembly_time_condensation import (
     CallerTraceExpansion,
     build_unconstrained_assembly_time_condensation,
@@ -133,7 +139,7 @@ def _generalized_system(
             qualification_audit=_qualification(),
         ),
     )
-    return ordinary, generalized, expansion_matrix
+    return ordinary, generalized, expansion_matrix, function_space
 
 
 def _distributed_vector(
@@ -192,11 +198,13 @@ def _assert_storage_trace_is_cq(
     reason="serial generalized recovery algebra test",
 )
 def test_generalized_primal_recovery_and_residual_are_independent() -> None:
-    ordinary, generalized, expansion_matrix = _generalized_system(
-        MPI.COMM_SELF,
-        nx=1,
-        active_rows=4,
-        owner_counts=(4,),
+    ordinary, generalized, expansion_matrix, _function_space = (
+        _generalized_system(
+            MPI.COMM_SELF,
+            nx=1,
+            active_rows=4,
+            owner_counts=(4,),
+        )
     )
     q = np.asarray(
         [0.3 + 0.2j, -0.6 + 0.1j, 0.4 - 0.8j, 1.1 + 0.05j],
@@ -378,6 +386,126 @@ def test_ordinary_array_recovery_and_backsubstitution_policy_are_unchanged() -> 
         ordinary.destroy()
 
 
+class _ForbiddenGeneralizedRecoveryMpc:
+    def __init__(self, function_space) -> None:
+        self.function_space = function_space
+        self.homogenize_calls = 0
+        self.backsubstitution_calls = 0
+
+    def homogenize(self, _function) -> None:
+        self.homogenize_calls += 1
+        raise AssertionError(
+            "generalized recovery must not homogenize through the legacy MPC"
+        )
+
+    def backsubstitution(self, _function) -> None:
+        self.backsubstitution_calls += 1
+        raise AssertionError(
+            "generalized recovery must not apply Floquet backsubstitution twice"
+        )
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="serial generalized DtN recovery wiring test",
+)
+def test_dtn_recovery_consumes_cq_without_duplicate_mpc_backsubstitution() -> None:
+    ordinary, generalized, expansion_matrix, function_space = (
+        _generalized_system(
+            MPI.COMM_SELF,
+            nx=1,
+            active_rows=4,
+            owner_counts=(4,),
+        )
+    )
+    q = np.asarray(
+        [0.2 - 0.3j, 0.4 + 0.1j, -0.7 + 0.5j, 0.9 - 0.2j],
+        dtype=np.complex128,
+    )
+    owned_active = np.asarray(
+        generalized.trace_constraints.owned_active_rows,
+        dtype=PETSc.IntType,
+    )
+    q_vector = _distributed_vector(
+        generalized.matrix,
+        owned_active,
+        q,
+    )
+    index_map = function_space.dofmap.index_map
+    block_size = function_space.dofmap.index_map_bs
+    full_rhs = create_vector([(index_map, block_size)])
+    full_rhs.set(PETSc.ScalarType(0.0))
+    full_rhs.assemble()
+    fake_mpc = _ForbiddenGeneralizedRecoveryMpc(function_space)
+    embedded = None
+    try:
+        field, embedded, audit = (
+            _assign_fe_solution_from_assembly_time_condensation(
+                q_vector,
+                generalized,
+                SimpleNamespace(mpc=fake_mpc),
+                full_rhs,
+            )
+        )
+        assert field.function_space is function_space
+        assert audit["generalized_caller_trace_expansion"] is True
+        assert audit["complete_storage_trace_pullback_applied"] is True
+        assert audit["post_recovery_mpc_backsubstitution_applied"] is False
+        assert (
+            audit["post_recovery_mpc_backsubstitution_policy"][
+                "mpc_backsubstitution_permitted"
+            ]
+            is False
+        )
+        assert fake_mpc.homogenize_calls == 0
+        assert fake_mpc.backsubstitution_calls == 0
+
+        owned_trace, trace_values = recover_owned_trace_values(
+            generalized,
+            q_vector,
+        )
+        np.testing.assert_allclose(
+            embedded.getValues(owned_trace),
+            trace_values,
+            rtol=0.0,
+            atol=0.0,
+        )
+        expected_trace = np.asarray(
+            [
+                expansion_matrix[
+                    generalized.original_to_trace[int(original)]
+                ]
+                @ q
+                for original in owned_trace
+            ],
+            dtype=np.complex128,
+        )
+        np.testing.assert_allclose(
+            trace_values,
+            expected_trace,
+            rtol=3.0e-14,
+            atol=3.0e-14,
+        )
+        for rows, values in recover_owned_cell_interiors(
+            generalized,
+            q_vector,
+            full_rhs=full_rhs,
+        ):
+            np.testing.assert_allclose(
+                embedded.getValues(rows),
+                values,
+                rtol=0.0,
+                atol=0.0,
+            )
+    finally:
+        if embedded is not None:
+            embedded.destroy()
+        full_rhs.destroy()
+        q_vector.destroy()
+        generalized.destroy()
+        ordinary.destroy()
+
+
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size != 2,
     reason="MPI2 uneven caller-row ownership test",
@@ -385,11 +513,13 @@ def test_ordinary_array_recovery_and_backsubstitution_policy_are_unchanged() -> 
 def test_mpi2_uneven_caller_owned_rows_drive_recovery_and_residual() -> None:
     comm = MPI.COMM_WORLD
     owner_counts = (1, 2)
-    ordinary, generalized, expansion_matrix = _generalized_system(
-        comm,
-        nx=2,
-        active_rows=3,
-        owner_counts=owner_counts,
+    ordinary, generalized, expansion_matrix, _function_space = (
+        _generalized_system(
+            comm,
+            nx=2,
+            active_rows=3,
+            owner_counts=owner_counts,
+        )
     )
     owner_start = int(sum(owner_counts[: comm.rank]))
     owner_stop = owner_start + owner_counts[comm.rank]

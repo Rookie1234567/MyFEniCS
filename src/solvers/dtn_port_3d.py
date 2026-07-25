@@ -64,10 +64,13 @@ from .hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
+    gather_active_trace_values,
     prepare_cell_interior_rhs_recovery,
     recover_owned_cell_interiors,
+    recover_owned_trace_values,
     register_appended_dual_interior_coupling,
     trim_warm_persistent_condensed_cache_heap,
+    validate_primal_recovery_mpc_backsubstitution,
     _orient_cell_tensor,
 )
 from .mpc_form_action import MpcFormActionContext
@@ -248,25 +251,7 @@ def _active_trace_values_from_augmented(
 ) -> np.ndarray:
     """Collect the small independent trace vector on every rank."""
 
-    comm = condensed.matrix.getComm().tompi4py()
-    local_active = len(
-        condensed.trace_constraints.owned_active_original_dofs
-    )
-    local_values = np.asarray(
-        x_aug.getArray(readonly=True)[:local_active],
-        dtype=np.complex128,
-    ).copy()
-    packets = comm.allgather(local_values)
-    active = (
-        np.concatenate(packets)
-        if packets
-        else np.empty(0, dtype=np.complex128)
-    )
-    if active.shape != (condensed.active_rows,):
-        raise RuntimeError(
-            "distributed active trace solution does not close globally"
-        )
-    return active
+    return gather_active_trace_values(condensed, x_aug)
 
 
 def _assign_fe_solution_from_assembly_time_condensation(
@@ -290,19 +275,43 @@ def _assign_fe_solution_from_assembly_time_condensation(
     block_size = E_total.function_space.dofmap.index_map_bs
     x_fe = create_vector([(index_map, block_size)])
     x_fe.set(PETSc.ScalarType(0.0))
-    owned_active = (
-        condensed.trace_constraints.owned_active_original_dofs
+    generalized = not bool(
+        condensed.trace_constraints.active_coordinates_are_original_trace_dofs
     )
-    if len(owned_active):
-        active_ids = _idx(
-            condensed.trace_constraints.original_to_active[int(original)]
-            for original in owned_active
+    recovery_policy = validate_primal_recovery_mpc_backsubstitution(
+        condensed,
+        requested=not generalized,
+    )
+    if generalized:
+        owned_trace, owned_trace_values = recover_owned_trace_values(
+            condensed,
+            x_aug,
         )
-        x_fe.setValues(
-            owned_active,
-            active[active_ids],
-            addv=PETSc.InsertMode.INSERT_VALUES,
+        if len(owned_trace):
+            x_fe.setValues(
+                owned_trace,
+                np.asarray(
+                    owned_trace_values,
+                    dtype=PETSc.ScalarType,
+                ),
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+        local_recovered_trace = len(owned_trace)
+    else:
+        owned_active = (
+            condensed.trace_constraints.owned_active_original_dofs
         )
+        if len(owned_active):
+            active_ids = _idx(
+                condensed.trace_constraints.original_to_active[int(original)]
+                for original in owned_active
+            )
+            x_fe.setValues(
+                owned_active,
+                active[active_ids],
+                addv=PETSc.InsertMode.INSERT_VALUES,
+            )
+        local_recovered_trace = len(owned_active)
     local_recovered = 0
     for original_rows, values in recovered:
         x_fe.setValues(
@@ -318,8 +327,9 @@ def _assign_fe_solution_from_assembly_time_condensation(
         PETSc.ScatterMode.FORWARD,
     )  # type: ignore[arg-type]
     fem_petsc.assign(x_fe, E_total)
-    mpc.homogenize(E_total)
-    mpc.backsubstitution(E_total)
+    if not generalized:
+        mpc.homogenize(E_total)
+        mpc.backsubstitution(E_total)
     E_total.x.scatter_forward()
     comm = E_total.function_space.mesh.comm
     return E_total, x_fe, {
@@ -329,6 +339,15 @@ def _assign_fe_solution_from_assembly_time_condensation(
         "status": "full_field_recovered_without_full_global_matrix",
         "recovered_interior_rows": int(
             comm.allreduce(local_recovered, op=MPI.SUM)
+        ),
+        "recovered_storage_trace_rows": int(
+            comm.allreduce(local_recovered_trace, op=MPI.SUM)
+        ),
+        "generalized_caller_trace_expansion": generalized,
+        "complete_storage_trace_pullback_applied": generalized,
+        "post_recovery_mpc_backsubstitution_applied": not generalized,
+        "post_recovery_mpc_backsubstitution_policy": dict(
+            recovery_policy
         ),
         "full_global_matrix_allocated": False,
         "full_trace_matrix_allocated": False,
