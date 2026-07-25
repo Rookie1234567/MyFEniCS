@@ -1,0 +1,182 @@
+{
+  "schema_version": "task035b.condensed-cache-deterministic-cold-warm.v3",
+  "benchmark_id": "task035b_h15_deterministic_condensed_and_dtn_cache_mpi8",
+  "status": "positive_deterministic_cold_warm_setup_evidence",
+  "classification": "positive_setup_rearchitecture_evidence",
+  "pass": true,
+  "pass_semantics": "Pass qualifies the deterministic structured partition and SHA-bound raw-tensor, condensed-class and reduced-modal DtN cold/warm setup caches. It is not a Task035b accuracy-candidate pass.",
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "d71fd32ae790b551c588ef94ac2c9e43c2b1434e",
+    "clean_full_sha_gate": true,
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9196772,
+    "preserve_structured_input_partition": true,
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/d71fd32_deterministic_dtnreducedmodal_mpi8_v3",
+    "raw_tensor_cache_schema": "task035b.raw-tensor-persistent-cache.v2",
+    "condensed_class_cache_schema": "task035b.persistent-condensed-class-cache.v2",
+    "dtn_cache_schema": "task035b.dtn-reduced-modal-persistent-cache.v2"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_write",
+    "common_solver_seconds": 51.80864281798131,
+    "condensed_build_non_ksp_seconds": 28.56849403999513,
+    "mumps_symbolic_numeric_seconds": 5.510586301010335,
+    "mumps_backsolve_seconds": 0.025558771012583748,
+    "function_space_seconds": 13.150508261984214,
+    "dtn_modal_vector_assembly_seconds": 6.199113161070272,
+    "raw_tensor_cache": {
+      "hits": 0,
+      "misses": 6
+    },
+    "condensed_class_cache": {
+      "hits": 3,
+      "misses": 116,
+      "constructions": 116
+    },
+    "dtn_reduced_modal_cache": {
+      "rank_bundle_hits": 0,
+      "rank_bundle_misses": 8,
+      "full_vector_records_written": 640,
+      "reduced_bundle_records_written": 320
+    },
+    "max_process_tree_rss_gib": 4.652137756347656,
+    "max_worker_rank_pss_sum_mb": 3916.876953125,
+    "max_worker_rank_uss_sum_mb": 3804.10546875,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 1.2103535534116379e-11,
+    "R00_total": 0.0007558883136133653,
+    "R_total": 0.0007650243181293667,
+    "T_total": 0.6026851467956115,
+    "A_closure": 0.3965498288862591,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/watchdog_summary.json",
+        "sha256": "2f6dc8884d1893b8f97bc730c617f26885787e68ecaa32a63b7417a7e2100f9b"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/worker_result.json",
+        "sha256": "eb93932bd4ae67652eaf1e7bbbf93b3a3f7c7e92c516151ef84b86533379feed"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/solve/run_summary.json",
+        "sha256": "8bdb1f31dd721d417ba4fe5b16336b8e851beed765054cd12deea8fa23d955cb"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/memory_timeline.csv",
+        "sha256": "1814b7fbeed62ccf714accf7ccd63c3ba4035cf3eebeacba8173b751cf0e550f"
+      }
+    ]
+  },
+  "warm": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_only",
+    "common_solver_seconds": 29.461413590004668,
+    "condensed_build_non_ksp_seconds": 5.973279725003522,
+    "mumps_symbolic_numeric_seconds": 5.914548319997266,
+    "mumps_backsolve_seconds": 0.027686640998581424,
+    "function_space_seconds": 12.92144441397977,
+    "dtn_modal_loop_seconds": 0.0364372139738407,
+    "dtn_reduced_bundle_restore_seconds": 0.004258939909050241,
+    "raw_tensor_cache": {
+      "hits": 6,
+      "misses": 0
+    },
+    "condensed_class_cache": {
+      "hits": 119,
+      "misses": 0,
+      "constructions": 0,
+      "projection_alias_restores": 119
+    },
+    "dtn_reduced_modal_cache": {
+      "rank_bundle_hits": 8,
+      "rank_bundle_misses": 0,
+      "full_vector_restores": 16,
+      "full_vectors_intentionally_not_materialized": 624,
+      "reduced_bundle_restores": 320,
+      "component_vector_assemblies": 0
+    },
+    "max_process_tree_rss_gib": 4.586605072021484,
+    "max_worker_rank_pss_sum_mb": 3857.2587890625,
+    "max_worker_rank_uss_sum_mb": 3745.75390625,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 8.773633419821966e-12,
+    "R00_total": 0.0007558883136125632,
+    "R_total": 0.0007650243181287884,
+    "T_total": 0.602685146795567,
+    "A_closure": 0.3965498288863043,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/watchdog_summary.json",
+        "sha256": "38b8e519fa91a374d417661a36c7488630f1364ce378fca0cdcc420d25b4dc88"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/worker_result.json",
+        "sha256": "209d66ace3c9719965fe2074a24204f4badcc6183a92196a5e0054f324727fcb"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/solve/run_summary.json",
+        "sha256": "9308d86a98da898e63a0a0424066a5b988fc3e2509b632570a0bad0ce1ff64e8"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_deterministic_dtnreducedmodal_mpi8_d71fd32_v3/memory_timeline.csv",
+        "sha256": "488cdc68b4e29b654739d0cb2fc472336d87788424ca64869a56212037c94b78"
+      }
+    ]
+  },
+  "comparison": {
+    "review_v2_accepted_preoptimization_condensed_build_seconds": 61.61,
+    "cold_build_speedup_vs_review_v2_baseline": 2.156571498439772,
+    "cold_build_2x_target_pass": true,
+    "cold_build_25_to_30_second_preferred_target_pass": true,
+    "cold_to_warm_build_speedup": 4.782714916298062,
+    "warm_build_10_second_preferred_target_pass": true,
+    "common_solver_cold_to_warm_speedup": 1.7585253558762826,
+    "warm_minus_cold_rss_gib": -0.06553268432617188,
+    "warm_rss_change_percent": -1.408657433601468,
+    "cold_warm_matrix_rows_and_nnz_identical": true,
+    "cold_warm_physical_closure_pass": true,
+    "zero_swap_both_runs": true,
+    "dtn_rank_identity_overlap": 8,
+    "dtn_rank_identity_count": 8
+  },
+  "scope_and_decision": {
+    "setup_targets_partially_achieved": true,
+    "achieved_scope": "The cold build exceeds the 2x target and lies in the preferred 25-30 second band; the warm build is below 10 seconds with complete raw/class/DtN cache hits.",
+    "remaining_scope": "Function-space construction still costs about 13 seconds, MUMPS setup is still about 6 seconds, and no 12-channel accuracy improvement was attempted.",
+    "significant_power_pass_count": null,
+    "significant_complex_amplitude_pass_count": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "not_a_12_of_12_candidate": true,
+    "historical_partition_drift_negatives_preserved": true,
+    "heavy_pair_should_not_be_repeated_without_relevant_source_or_identity_change": true,
+    "candidate_promotion": false
+  }
+}

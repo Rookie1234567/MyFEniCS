@@ -1,0 +1,139 @@
+{
+  "schema_version": "task035b.condensed-cache-partition-drift-negative.v2",
+  "benchmark_id": "task035b_h15_condensed_and_dtn_cache_partition_drift_mpi8",
+  "status": "controlled_negative_new_process_partition_drift",
+  "classification": "controlled_negative_setup_cache_identity",
+  "pass": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "4993da7f69be5fd6db4e844928851e1e8224df62",
+    "clean_full_sha_gate": true,
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/4993da7_dtnreducedmodal_mpi8_v2",
+    "deterministic_structured_partition_opt_in": false
+  },
+  "cold_control": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "common_solver_seconds": 54.77201563198469,
+    "condensed_build_non_ksp_seconds": 26.772913991007954,
+    "raw_tensor_cache_hits": 0,
+    "raw_tensor_cache_misses": 6,
+    "condensed_class_cache_hits": 4,
+    "condensed_class_cache_misses": 106,
+    "condensed_class_constructions": 106,
+    "dtn_rank_bundle_hits": 0,
+    "dtn_rank_bundle_misses": 8,
+    "max_process_tree_rss_gib": 4.557975769042969,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 8.24046671522802e-12,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_dtnreducedmodal_mpi8_4993da7_v2/watchdog_summary.json",
+        "sha256": "2ee4046bb89c9c3d078d449ad641467e5c0b0a67f102deeb0b12230add02e19c"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_dtnreducedmodal_mpi8_4993da7_v2/worker_result.json",
+        "sha256": "e24630784c971a9c10dc604e5002b01d1b04be7cb0c7928268550180a769b8ff"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_dtnreducedmodal_mpi8_4993da7_v2/solve/run_summary.json",
+        "sha256": "f18a637c8119c8e9b0937bce68ccdaa80b4dd1d5e48e7c613ea2602acca65afe"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_dtnreducedmodal_mpi8_4993da7_v2/memory_timeline.csv",
+        "sha256": "31bc1ad9e05d64faccfc7617c8afc32c1f5ab0bc1d07de2e905f2e9960d9f45f"
+      }
+    ]
+  },
+  "warm_negative": {
+    "status": "controlled_negative_direct_setup_profile",
+    "formal_profile_pass": false,
+    "profile_failures": [
+      "warm_condensed_class_cache_hit_without_recompute",
+      "warm_dtn_surface_cache_hit_without_reassembly"
+    ],
+    "official_physics_result": true,
+    "common_solver_seconds": 46.701451835018815,
+    "condensed_build_non_ksp_seconds": 18.73085965795326,
+    "raw_tensor_cache_hits": 6,
+    "raw_tensor_cache_misses": 0,
+    "condensed_class_cache_hits": 13,
+    "condensed_class_cache_misses": 101,
+    "condensed_class_constructions": 101,
+    "condensed_class_read_attempts": 114,
+    "dtn_rank_bundle_hits": 0,
+    "dtn_rank_bundle_misses": 8,
+    "dtn_reduced_bundle_restores": 0,
+    "dtn_component_vector_assemblies": 80,
+    "max_process_tree_rss_gib": 4.623695373535156,
+    "max_worker_rank_pss_sum_mb": 3878.4658203125,
+    "max_worker_rank_uss_sum_mb": 3758.30859375,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 7.391415587144556e-12,
+    "R00_total": 0.0007558883135964009,
+    "R_total": 0.0007650243181134756,
+    "T_total": 0.602685146795526,
+    "A_closure": 0.3965498288863606,
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_dtnreducedmodal_mpi8_4993da7_v2/watchdog_summary.json",
+        "sha256": "a626e54a515b4cef30a073946fa371c7669fa5e39c9a1a2538d1135013365075"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_dtnreducedmodal_mpi8_4993da7_v2/worker_result.json",
+        "sha256": "5d197e3edd2635143186a4d4e66fc0aa872b18566297c43352decbb20fbf5328"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_dtnreducedmodal_mpi8_4993da7_v2/solve/run_summary.json",
+        "sha256": "bd880a4126a2a6bb4283f3764de3c425a942bbe39611f34994f7fcb7480a73c7"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_dtnreducedmodal_mpi8_4993da7_v2/memory_timeline.csv",
+        "sha256": "099cb3d21d58472a71d18efac41e7e9c2e73af8e44163260ab035b9e0aed9073"
+      }
+    ]
+  },
+  "root_cause": {
+    "status": "measured_new_process_partition_drift",
+    "raw_tensor_cache_is_partition_independent": true,
+    "cold_dtn_rank_identity_count": 8,
+    "warm_dtn_rank_identity_count": 8,
+    "cold_warm_dtn_rank_identity_overlap": 0,
+    "dtn_identity_is_rank_partition_bound": true,
+    "cold_condensed_class_use_count": 110,
+    "warm_condensed_class_use_count": 114,
+    "warm_condensed_class_hit_fraction": 0.11403508771929824,
+    "warm_dtn_rank_bundle_hit_fraction": 0.0,
+    "explanation": "A fresh process produced a different structured-mesh partition and local ownership/orientation inventory. Rank-independent raw tensors still hit 6/6, but only 13 of 114 condensed-class requests matched and none of the eight rank-bound reduced-modal DtN bundles matched. The read-only warm run therefore recomputed both lanes.",
+    "physics_failure": false
+  },
+  "decision": {
+    "historical_artifacts_deleted": false,
+    "controlled_negative_preserved": true,
+    "subsequent_remedy": "The later d71fd32 deterministic structured-partition cold/warm v3 evidence closes this implementation defect for the qualified fixed h15 MPI8 profile.",
+    "do_not_repeat_this_pair_without_partition_or_identity_change": true,
+    "not_a_12_of_12_candidate": true,
+    "candidate_promotion": false
+  },
+  "scope_limit": "This is an actionable setup/cache negative with a valid direct physical solve. It is neither a diffraction-channel success nor a physics failure."
+}

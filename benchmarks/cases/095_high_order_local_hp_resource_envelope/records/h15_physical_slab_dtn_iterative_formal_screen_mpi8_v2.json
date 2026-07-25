@@ -1,0 +1,146 @@
+{
+  "schema_version": "task035b.h15-physical-slab-dtn-iterative-formal-screen.v2",
+  "benchmark_id": "task035b_h15_physical_zslab_dtn_iterative_mpi8",
+  "status": "controlled_negative_iterative_nonconvergence",
+  "classification": "controlled_negative",
+  "pass": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "71f53d0eccc1abaa0915fc3cfa02615267ad9cf2",
+    "verified_clean_sha": "71f53d0eccc1abaa0915fc3cfa02615267ad9cf2",
+    "tracked_source_dirty": false,
+    "stable_and_clean_after": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "assembled_reduced_operator": true,
+    "matrix_free": false
+  },
+  "profile": {
+    "name": "fgmres_zslab_ilu0_dtn_trace_galerkin",
+    "configured_programmatically": true,
+    "raw_petsc_options_used": false,
+    "outer_solver": "FGMRES",
+    "restart": 30,
+    "maximum_iterations": 200,
+    "preconditioner": "physical z-slab ILU(0) pre/post smoothing plus exact 80-dimensional DtN-trace Galerkin correction",
+    "global_fine_factor_free": true,
+    "strictly_factorless": false
+  },
+  "formal_screen": {
+    "ksp_converged": false,
+    "ksp_converged_reason": "DIVERGED_MAX_IT",
+    "iterations": 200,
+    "residual_history_sample_count": 201,
+    "unpreconditioned_residual_initial_norm": 10.146211673369631,
+    "unpreconditioned_residual_final_norm": 10.108310983050202,
+    "unpreconditioned_residual_final_to_initial": 0.9962645476420617,
+    "unpreconditioned_residual_reduction_decades": 0.0016253238999277327,
+    "terminal_explicit_reduced_relative_residual": 0.9962645476420614,
+    "full_recovered_true_residual": 0.9962634292597315,
+    "minimum_required_reduction_decades": 3.0,
+    "maximum_allowed_terminal_reduced_relative_residual": 0.001,
+    "full_true_residual_official_gate": 1e-09,
+    "formal_iterative_screen_pass": false,
+    "failed_checks": [
+      "unpreconditioned_residual_reduction_ge_3_decades",
+      "terminal_explicit_reduced_residual_le_1e-3"
+    ],
+    "elapsed_seconds": 49.94622812297894
+  },
+  "factor_inventory": {
+    "global_direct_factor_nnz": 0,
+    "global_fine_sparse_factor_nnz": 0,
+    "mumps_symbolic_or_numeric_created": false,
+    "local_physical_zslab_ilu0_active": true,
+    "local_subdomain_factor_rows": 22280,
+    "local_subdomain_extracted_matrix_nnz": 9576512,
+    "local_subdomain_factor_nnz": 9576512,
+    "local_subdomain_factor_only_storage": true,
+    "coarse_dense_lu_active": true,
+    "coarse_dimension": 80,
+    "coarse_rank": 80,
+    "coarse_condition": 919.5419996936084,
+    "coarse_dense_matrix_entries": 6400,
+    "coarse_dense_matrix_bytes": 102400,
+    "basis_storage_bytes": 938592,
+    "all_factor_storage_disclosed": true,
+    "factor_semantics": "No global sparse direct factor exists, but the local ILU(0) factors and small dense coarse LU mean this profile is not strictly factorless."
+  },
+  "resource_evidence": {
+    "max_process_tree_rss_gib": 3.8853378295898438,
+    "max_worker_rank_pss_sum_mb": 3139.25,
+    "max_worker_rank_uss_sum_mb": 3022.203125,
+    "max_process_tree_swap_mb": 0.0,
+    "max_worker_rank_smaps_swap_sum_mb": 0.0,
+    "same_sha_direct_cold_control_process_tree_rss_gib": 4.597347259521484,
+    "process_tree_rss_reduction_vs_direct_gib": 0.7120094299316406,
+    "process_tree_rss_reduction_vs_direct_percent": 15.487397182299212,
+    "memory_result_semantics": "The lower measured RSS is useful controlled-negative resource evidence only. Because the Krylov solve did not converge, it is not a qualified solution memory floor or a successful 0.7 nm projection anchor."
+  },
+  "official_output_authority": {
+    "official_result": false,
+    "diagnostic_only": true,
+    "postprocess_skipped": true,
+    "postprocess_skip_reason": "PETSc KSP did not converge.",
+    "R00_total": null,
+    "R_total": null,
+    "T_total": null,
+    "A_closure": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "not_a_12_of_12_candidate": true
+  },
+  "artifacts": [
+    {
+      "role": "iterative_watchdog_authority",
+      "path": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_zslab_dtn_mpi8_71f53d0_v1/watchdog_summary.json",
+      "sha256": "2093c4dc46e7b7a15c9ccb3c75f693452c794a551d4b717562d3a6075b79e6de"
+    },
+    {
+      "role": "iterative_worker_result",
+      "path": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_zslab_dtn_mpi8_71f53d0_v1/worker_result.json",
+      "sha256": "0fc19435918c0ee8558b576ce19071ef6381e986b2fcbd7c2be5e1dac0b8157d"
+    },
+    {
+      "role": "iterative_solve_summary",
+      "path": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_zslab_dtn_mpi8_71f53d0_v1/solve/run_summary.json",
+      "sha256": "48035a4b9ccbb9c982b3a99eceb36f45d6e051db8155e56e2b735923284700d7"
+    },
+    {
+      "role": "iterative_memory_timeline",
+      "path": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_zslab_dtn_mpi8_71f53d0_v1/memory_timeline.csv",
+      "sha256": "e735f2459036ddfc8b820b0c2e424dca1974fc37bf8e4be7600b172b3e33eda7"
+    },
+    {
+      "role": "no_official_field_output_marker",
+      "path": "benchmarks/artifacts/task035b/condensed_iterative/h15_fixed_p5trace_p6interior_zslab_dtn_mpi8_71f53d0_v1/solve/NO_OFFICIAL_FIELD_OUTPUT.txt",
+      "sha256": "e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38"
+    },
+    {
+      "role": "same_sha_direct_cold_watchdog_control",
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_dtncache_mpi8_71f53d0_v1/watchdog_summary.json",
+      "sha256": "23ab3728b092ce71876a972f77bc1f9e87106c1f72f480ebfec84a7ca7308603"
+    }
+  ],
+  "decision": {
+    "profile_closed_as_nonconvergent": true,
+    "assembled_iterative_lane_reopen_condition": "Use a materially different spectral/auxiliary-space or harmonic preconditioner; do not repeat this z-slab profile with relaxed residual gates.",
+    "matrix_free_not_justified_by_this_result": true,
+    "historical_failure_evidence_preserved": true,
+    "candidate_promotion": false
+  },
+  "scope_limit": "This is a formal 200-iteration controlled negative. The absence of a global MUMPS factor and the lower process-tree RSS do not compensate for the failed residual gates."
+}
