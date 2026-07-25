@@ -178,6 +178,8 @@ class Stage4GratingInputs3D:
     incident_phi_deg: float | None = None
     polarization_kind: str | None = None
     nedelec_degree: int = 2
+    nedelec_trace_degree: int | None = None
+    nedelec_interior_degree: int | None = None
     visualization_degree: int = 1
     mesh_target_size: float = 5.0
     mesh_cell_type: str = "auto"
@@ -208,6 +210,7 @@ class Stage4GratingInputs3D:
     stage4_boundary_model: str = "dtn_port"
     stage4_dtn_order_policy: str = "zero_order"
     stage4_dtn_assembly: str = "auxiliary"
+    stage4_full3d_assembly_backend: str = "standard_full"
     stage4_pml_outer_bc: str = "natural"
     diffraction_zero_order_only: bool = False
     diffraction_order_max_m: int | None = 2
@@ -590,6 +593,8 @@ def _pycharm_args_3d(preset_name: str | None = None) -> list[str]:
     ]
     value_names = (
         "nedelec_degree",
+        "nedelec_trace_degree",
+        "nedelec_interior_degree",
         "visualization_degree",
         "mesh_target_size",
         "mesh_cell_type",
@@ -621,6 +626,7 @@ def _pycharm_args_3d(preset_name: str | None = None) -> list[str]:
         "stage4_boundary_model",
         "stage4_dtn_order_policy",
         "stage4_dtn_assembly",
+        "stage4_full3d_assembly_backend",
         "stage4_pml_outer_bc",
         "diffraction_order_max_m",
         "diffraction_order_max_n",

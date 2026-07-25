@@ -15,6 +15,14 @@ SI_GRATING_INDEX_EUV_13P5_NM = 0.999002304859 + 0.00182649365j
 SI_SUBSTRATE_MATERIAL_LABEL = "Si / silicon"
 SI_SUBSTRATE_INDEX_EUV_13P5_NM = SI_GRATING_INDEX_EUV_13P5_NM
 NUMERICAL_SANITY_ONLY = "numerical_sanity_only"
+STANDARD_FULL_ASSEMBLY_BACKEND = "standard_full"
+ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND = "assembly_time_static_condensed"
+_STAGE4_FULL3D_ASSEMBLY_BACKENDS = frozenset(
+    {
+        STANDARD_FULL_ASSEMBLY_BACKEND,
+        ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -101,10 +109,20 @@ class SimulationConfig3D:
     incident_e0_v_per_m: float = 1.0
 
     nedelec_degree: int = 2
+    # Qualified fixed exact-sequence high-order split.  Both values must be
+    # set together; Task035b currently qualifies only p5 trace / p6 interior.
+    # This is a global element identity, not regionwise-p or selective trace.
+    nedelec_trace_degree: int | None = None
+    nedelec_interior_degree: int | None = None
     visualization_degree: int = 2
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
     mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
+    # Exact tensor-axis authority for a fixed rectangular hexahedral mesh.
+    # ``None`` preserves the ordinary target-size policy.
+    mesh_axis_cell_counts: tuple[int, int, int] | None = None
+    mesh_axis_z_values: tuple[float, ...] | None = None
+    mesh_axis_z_profile: str | None = None
     mesh_refined_size: float | None = None
     mesh_refinement_radius: float | None = None
     floquet_constraint_mode: str = (
@@ -138,6 +156,26 @@ class SimulationConfig3D:
     # default; explicit callers may release the copied base Mat/Vec once the
     # augmented system owns every entry needed by residual and official R/T/A.
     direct_release_base_after_augmentation: bool = False
+    # Task035b research-only exact cell-interior Schur path.  False preserves
+    # the reviewed ordinary full augmented system.  These three booleans are
+    # internal compatibility state, not public user-selection ports.
+    stage4_full3d_assembly_backend: str = STANDARD_FULL_ASSEMBLY_BACKEND
+    stage4_cell_static_condensation: bool = False
+    # Task035b opt-in memory path: call the compiled cell kernels directly,
+    # condense cell interiors, and apply Floquet constraints before global
+    # insertion. The full FE and full-trace matrices are never allocated.
+    stage4_assembly_time_cell_static_condensation: bool = False
+    # Task035b lifecycle opt-in. After the recovered field and true residual
+    # are available, release KSP/MUMPS factors and the reduced Mat/Vec objects
+    # before field and power postprocessing. The ordinary lifecycle remains
+    # unchanged.
+    direct_release_solver_before_postprocess: bool = False
+    # Deterministic structured ownership is an explicit reproducibility
+    # option.  Ordinary graph partitioning remains the default.
+    stage4_preserve_structured_input_partition: bool = False
+    # Task035b research-only exact removal of the identity rows used to embed
+    # Floquet MPC slaves.  This currently requires cell static condensation.
+    stage4_floquet_slave_elimination: bool = False
     matrix_diagnostics_assemble_unconstrained: bool = False
     matrix_diagnostics_assemble_only: bool = False
     matrix_diagnostics_factorization_only: bool = False
@@ -240,6 +278,65 @@ class SimulationConfig3D:
         return mode
 
     @property
+    def mesh_axis_cell_counts_requested(
+        self,
+    ) -> tuple[int, int, int] | None:
+        values = self.mesh_axis_cell_counts
+        if values is None:
+            return None
+        if (
+            not isinstance(values, (tuple, list, np.ndarray))
+            or len(values) != 3
+            or any(
+                isinstance(value, (bool, np.bool_))
+                or not isinstance(value, (int, np.integer))
+                for value in values
+            )
+        ):
+            raise ValueError(
+                "mesh_axis_cell_counts must contain exactly three integers."
+            )
+        counts = tuple(int(value) for value in values)
+        if any(value <= 0 for value in counts):
+            raise ValueError(
+                "mesh_axis_cell_counts values must all be positive."
+            )
+        return counts
+
+    @property
+    def mesh_axis_z_values_requested(
+        self,
+    ) -> tuple[float, ...] | None:
+        values = self.mesh_axis_z_values
+        if values is None:
+            return None
+        if (
+            not isinstance(values, (tuple, list, np.ndarray))
+            or len(values) < 2
+            or any(
+                isinstance(value, (bool, np.bool_))
+                or not isinstance(
+                    value,
+                    (int, float, np.integer, np.floating),
+                )
+                or not np.isfinite(float(value))
+                for value in values
+            )
+        ):
+            raise ValueError(
+                "mesh_axis_z_values must contain at least two finite numbers."
+            )
+        coordinates = tuple(float(value) for value in values)
+        if any(
+            right <= left
+            for left, right in zip(coordinates, coordinates[1:])
+        ):
+            raise ValueError(
+                "mesh_axis_z_values must be strictly increasing."
+            )
+        return coordinates
+
+    @property
     def mesh_refined_size_resolved(self) -> float:
         if self.mesh_refined_size is None:
             return 0.5 * float(self.mesh_target_size)
@@ -272,15 +369,64 @@ class SimulationConfig3D:
             "topological_trace_p2",
             "topological_trace_p3",
             "topological_trace_p4",
+            "topological_trace_p5",
+            "topological_trace_p6",
             "topological_trace",
             "sparse_facet",
         }:
             raise ValueError(
                 "floquet_constraint_mode must be 'auto', 'topological_edges_p1', "
-                "'topological_trace', 'topological_trace_p2/p3/p4', or legacy "
+                "'topological_trace', 'topological_trace_p2/p3/p4/p5/p6', or legacy "
                 "aliases 'topological_edges'/'sparse_facet'."
             )
         return mode
+
+    @property
+    def nedelec_fixed_trace_enabled(self) -> bool:
+        values = (
+            self.nedelec_trace_degree,
+            self.nedelec_interior_degree,
+        )
+        if (values[0] is None) != (values[1] is None):
+            raise ValueError(
+                "nedelec_trace_degree and nedelec_interior_degree must be "
+                "set together"
+            )
+        return values[0] is not None
+
+    @property
+    def nedelec_trace_degree_resolved(self) -> int:
+        if not self.nedelec_fixed_trace_enabled:
+            return int(self.nedelec_degree)
+        degree = int(self.nedelec_trace_degree)
+        if degree < 1:
+            raise ValueError("nedelec_trace_degree must be positive")
+        return degree
+
+    @property
+    def nedelec_interior_degree_resolved(self) -> int:
+        if not self.nedelec_fixed_trace_enabled:
+            return int(self.nedelec_degree)
+        degree = int(self.nedelec_interior_degree)
+        if degree < 1:
+            raise ValueError("nedelec_interior_degree must be positive")
+        return degree
+
+    @property
+    def nedelec_fixed_trace_contract(self) -> str:
+        if not self.nedelec_fixed_trace_enabled:
+            return "uniform_n1curl"
+        pair = (
+            self.nedelec_trace_degree_resolved,
+            self.nedelec_interior_degree_resolved,
+        )
+        if pair != (5, 6) or int(self.nedelec_degree) != pair[1]:
+            raise ValueError(
+                "the qualified fixed-trace contract is p5 trace / p6 "
+                "interior with nedelec_degree=6; regionwise, selective, "
+                "inverse, and non-exact spaces are not available"
+            )
+        return "fixed_p5_trace_p6_interior_exact_sequence"
 
     @property
     def petsc_direct_solver_profile_requested(self) -> str:
@@ -463,10 +609,33 @@ class SimulationConfig3D:
         data["domain_z_max"] = self.domain_z_max
         data["mesh_cell_type_resolved"] = self.mesh_cell_type_resolved
         data["mesh_spacing_mode_requested"] = self.mesh_spacing_mode_requested
+        data["mesh_axis_cell_counts_requested"] = (
+            None
+            if self.mesh_axis_cell_counts_requested is None
+            else list(self.mesh_axis_cell_counts_requested)
+        )
+        data["mesh_axis_z_values_requested"] = (
+            None
+            if self.mesh_axis_z_values_requested is None
+            else list(self.mesh_axis_z_values_requested)
+        )
+        data["mesh_axis_z_profile_requested"] = self.mesh_axis_z_profile
         data["mesh_refined_size_resolved"] = self.mesh_refined_size_resolved
         data["mesh_refinement_radius_resolved"] = self.mesh_refinement_radius_resolved
         data["floquet_constraint_mode_requested"] = (
             self.floquet_constraint_mode_requested
+        )
+        data["nedelec_fixed_trace_enabled"] = (
+            self.nedelec_fixed_trace_enabled
+        )
+        data["nedelec_trace_degree_resolved"] = (
+            self.nedelec_trace_degree_resolved
+        )
+        data["nedelec_interior_degree_resolved"] = (
+            self.nedelec_interior_degree_resolved
+        )
+        data["nedelec_fixed_trace_contract"] = (
+            self.nedelec_fixed_trace_contract
         )
         data["propagation_direction"] = list(self.direction_vector)
         data["polarization"] = [
@@ -498,6 +667,157 @@ class SimulationConfig3D:
         data["magnetic_field_unit"] = "A/m"
         data["magnetic_field_scale_A_per_m"] = self.magnetic_field_scale_A_per_m
         return data
+
+
+def resolve_stage4_full3d_assembly_backend(
+    cfg: SimulationConfig3D,
+    *,
+    apply: bool = False,
+) -> dict[str, object]:
+    """Resolve the one public Stage-4 assembly choice to internal state.
+
+    The three historical booleans remain available only so old records and
+    internal callers can be replayed.  Partial assembly-time combinations are
+    rejected: the public backend can never silently degrade to another path.
+    """
+
+    requested = str(cfg.stage4_full3d_assembly_backend).strip().lower()
+    if requested not in _STAGE4_FULL3D_ASSEMBLY_BACKENDS:
+        choices = ", ".join(sorted(_STAGE4_FULL3D_ASSEMBLY_BACKENDS))
+        raise ValueError(
+            "stage4_full3d_assembly_backend must be one of "
+            f"{choices}; got {cfg.stage4_full3d_assembly_backend!r}."
+        )
+
+    legacy_state = (
+        bool(cfg.stage4_cell_static_condensation),
+        bool(cfg.stage4_assembly_time_cell_static_condensation),
+        bool(cfg.stage4_floquet_slave_elimination),
+    )
+    ordinary = (False, False, False)
+    legacy_post_assembly = (True, False, False)
+    assembly_time = (True, True, True)
+
+    if requested == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+        if legacy_state not in {ordinary, assembly_time}:
+            raise ValueError(
+                "stage4_full3d_assembly_backend="
+                "'assembly_time_static_condensed' conflicts with a partial "
+                "legacy condensation state. Clear the three internal legacy "
+                "booleans and select only the public backend."
+            )
+        actual = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        selection_source = "public_port"
+        resolved_state = assembly_time
+    elif legacy_state == ordinary:
+        actual = STANDARD_FULL_ASSEMBLY_BACKEND
+        selection_source = "public_default"
+        resolved_state = ordinary
+    elif legacy_state == legacy_post_assembly:
+        actual = "legacy_post_assembly_static_condensed"
+        selection_source = "legacy_internal_compatibility"
+        resolved_state = legacy_post_assembly
+    elif legacy_state == assembly_time:
+        actual = ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        selection_source = "legacy_internal_compatibility"
+        resolved_state = assembly_time
+    else:
+        raise ValueError(
+            "The legacy Stage-4 condensation booleans form an unsupported "
+            "partial combination. Use stage4_full3d_assembly_backend="
+            "'standard_full' or 'assembly_time_static_condensed'."
+        )
+
+    if apply:
+        (
+            cfg.stage4_cell_static_condensation,
+            cfg.stage4_assembly_time_cell_static_condensation,
+            cfg.stage4_floquet_slave_elimination,
+        ) = resolved_state
+
+    return {
+        "requested": requested,
+        "actual": actual,
+        "selection_source": selection_source,
+        "ordinary_default_unchanged": actual == STANDARD_FULL_ASSEMBLY_BACKEND,
+        "legacy_internal_state": {
+            "stage4_cell_static_condensation": resolved_state[0],
+            "stage4_assembly_time_cell_static_condensation": resolved_state[1],
+            "stage4_floquet_slave_elimination": resolved_state[2],
+        },
+    }
+
+
+def qualify_stage4_full3d_assembly_backend(
+    cfg: SimulationConfig3D,
+    audit: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Fail closed when the assembly-time backend leaves its reviewed scope."""
+
+    resolved = (
+        resolve_stage4_full3d_assembly_backend(cfg, apply=False)
+        if audit is None
+        else audit
+    )
+    actual = str(resolved["actual"])
+    if actual != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND:
+        return {
+            "status": "not_required",
+            "qualified_scope": False,
+            "actual": actual,
+        }
+
+    failures: list[str] = []
+    if cfg.stage_case != "stage4_block_grating":
+        failures.append("stage_case must be 'stage4_block_grating'")
+    if cfg.geometry_kind != "rectangular_block_grating" or not cfg.has_grating_block:
+        failures.append("geometry must be the fixed rectangular block grating")
+    if cfg.mesh_cell_type_resolved != "hexahedron":
+        failures.append("mesh must contain only axis-aligned affine hexahedra")
+    if not cfg.use_floquet_xy:
+        failures.append("dual x/y Floquet constraints must be active")
+    if cfg.stage4_boundary_model != "dtn_port":
+        failures.append("stage4_boundary_model must be 'dtn_port'")
+    if cfg.stage4_dtn_assembly != "auxiliary":
+        failures.append("stage4_dtn_assembly must be sparse 'auxiliary'")
+    if cfg.use_pml or cfg.pml_top_thickness or cfg.pml_bottom_thickness:
+        failures.append("PML is outside the qualified condensed backend")
+    if (
+        cfg.matrix_diagnostics_assemble_unconstrained
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        failures.append(
+            "a complete direct solve with field recovery and explicit residual is required"
+        )
+    try:
+        element_contract = cfg.nedelec_fixed_trace_contract
+    except ValueError as exc:
+        failures.append(str(exc))
+
+    if failures:
+        raise ValueError(
+            "assembly_time_static_condensed is outside its qualified scope: "
+            + "; ".join(failures)
+            + ". Use stage4_full3d_assembly_backend='standard_full'."
+        )
+
+    return {
+        "status": "qualified",
+        "qualified_scope": True,
+        "actual": actual,
+        "element_contract": element_contract,
+        "contract": (
+            "complex128_hcurl_nedelec",
+            "axis_aligned_affine_hexahedron",
+            "explicit_owned_cell_material_tags",
+            "fixed_rectangular_block_grating",
+            "assembly_time_cell_interior_condensation",
+            "floquet_slave_elimination_before_global_insertion",
+            "sparse_auxiliary_dtn",
+            "full_recovery_and_explicit_residual",
+        ),
+    }
 
 
 def _complex_or_none(value: complex | None) -> list[float] | None:

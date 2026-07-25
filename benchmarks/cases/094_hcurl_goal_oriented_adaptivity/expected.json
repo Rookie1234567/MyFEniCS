@@ -1,0 +1,11 @@
+{
+  "schema_version": "task035.case094.compact-expected.v2",
+  "status": "accepted_research_infrastructure_with_controlled_negatives",
+  "canonical": false,
+  "production_qualified": false,
+  "pde_run": true,
+  "ordinary_default_changed": false,
+  "ordinary_checker_status": "case094_compact_authority_pass",
+  "authority_record_count": 6,
+  "ignored_artifact_verification_required": false
+}

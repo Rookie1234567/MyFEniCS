@@ -1,0 +1,335 @@
+{
+  "schema_version": "task035b.h15-solve-thread-memory-semantics-audit.v1",
+  "benchmark_id": "task035b_h15_direct_mpi1_2_4_8_thread_memory_semantics",
+  "status": "bounded_evidence_audit_completed",
+  "classification": "positive_attribution_audit_with_preserved_limitations",
+  "pass": true,
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "heavy_pde_rerun": false,
+  "authority": {
+    "formal_run_commit_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
+    "tracked_rank_study_record": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_direct_mpi1_2_4_8_resource_floor_v1.json",
+    "identity": {
+      "geometry": "Task034 fixed rectangular block grating",
+      "mesh_cell_type": "hexahedron",
+      "h_nm": 15.0,
+      "mesh_cells_resolved": [
+        6,
+        2,
+        10
+      ],
+      "trace_degree": 5,
+      "interior_degree": 6,
+      "full3d_equivalent_dofs": 74890,
+      "active_rows_with_dtn": 16880,
+      "direct_solver": "MUMPS",
+      "cache_state": "cold"
+    },
+    "evidence_sources": [
+      {
+        "mpi_size": 1,
+        "watchdog": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi1_20260725T021106Z/watchdog_summary.json",
+          "sha256": "c5184bbdf22594acd428b249433f751fa65a7c26d40ad30ce9868af286b2dcf2"
+        },
+        "timeline": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi1_20260725T021106Z/memory_timeline.csv",
+          "sha256": "21709c2587cb2d5328820f676337e810838a76f0ea5265aa792ec234f7931d98"
+        },
+        "worker_result": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi1_20260725T021106Z/worker_result.json",
+          "sha256": "cdb8890063dcdc212dac5481c56cd36c6cdb070520401b72896dd8549d8f35f3"
+        }
+      },
+      {
+        "mpi_size": 2,
+        "watchdog": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi2_20260725T021259Z/watchdog_summary.json",
+          "sha256": "a1b6db260b21b8cd239dbc2e0d22ca406b61c098c7711007d4eb42b357b8bc3f"
+        },
+        "timeline": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi2_20260725T021259Z/memory_timeline.csv",
+          "sha256": "0f889b6b893c5f94ec7fe8d42ba5926dcf83068d0050b94b05464a2c322c8120"
+        },
+        "worker_result": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi2_20260725T021259Z/worker_result.json",
+          "sha256": "876f16606411ab1963df7b1634164c3b4e77f67ad02a7629d872b4d62a7c2b00"
+        }
+      },
+      {
+        "mpi_size": 4,
+        "watchdog": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi4_20260725T021441Z/watchdog_summary.json",
+          "sha256": "2c0b5ee79c2d998762aa462e28872d51a91a89c85cab369043168e50b43356d2"
+        },
+        "timeline": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi4_20260725T021441Z/memory_timeline.csv",
+          "sha256": "72f15c73ad68f24a88b204db67e40840419d9ceab1edcd1749795ea82b47eaea"
+        },
+        "worker_result": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi4_20260725T021441Z/worker_result.json",
+          "sha256": "8e7bb16c602e34edccfca3b66e5740ca27aa5bb4bb6ef64f098c954b5fda2715"
+        }
+      },
+      {
+        "mpi_size": 8,
+        "watchdog": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020832Z/watchdog_summary.json",
+          "sha256": "13e327c9ba3c9579fd706bf3f914b8c422895914d0a2258248a8b761d0e57d4f"
+        },
+        "timeline": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020832Z/memory_timeline.csv",
+          "sha256": "d1e75ab1f5fb34ae30fd497d4e2b46c57a36e0e75e31a647d3bb5bc163288211"
+        },
+        "worker_result": {
+          "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020832Z/worker_result.json",
+          "sha256": "57b077be66ff2cd42f1a08f32b277bc7945123dfe58aefcecfb2188773c046c5"
+        }
+      }
+    ]
+  },
+  "formal_runtime": {
+    "qualified_activation": true,
+    "python_executable": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_implementation": "Open MPI 4.1.6",
+    "temporary_directories": {
+      "TMPDIR": "/tmp",
+      "TMP": "/tmp",
+      "TEMP": "/tmp"
+    },
+    "thread_environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "all_worker_ranks_observed": true,
+    "all_worker_smaps_rollup_samples_readable": true
+  },
+  "current_linkage_cross_check": {
+    "scope": "read_only_current_environment_cross_check_not_historical_run_provenance",
+    "activation_script_sha256": "d4d3150784f8c7d857ea14297fa9663e8f4619ed2e58ff85d82678c53422d053",
+    "packages": {
+      "openmpi": "4.1.6-7ubuntu2",
+      "mumps": "5.6.2-2.1build2",
+      "blas": "3.12.0-3build1.1",
+      "lapack": "3.12.0-3build1.1",
+      "tbb": "2021.11.0-2ubuntu2"
+    },
+    "mumps_direct_dependencies_observed": [
+      "libblas.so.3",
+      "liblapack.so.3",
+      "libmpi.so.40",
+      "libscalapack-openmpi.so.2.2",
+      "libmumps_common-5.6.so"
+    ],
+    "mumps_direct_dependency_not_observed": [
+      "libtbb",
+      "libgomp"
+    ],
+    "petsc_extension_dependencies_observed": [
+      "libpetsc_complex.so.3.19",
+      "libzmumps-5.6.so",
+      "libscalapack-openmpi.so.2.2",
+      "libgomp.so.1"
+    ],
+    "vtk_common_core_dependency_observed": "libtbb.so.12",
+    "source_path_observation": "The formal postprocess path imports PyVista and creates/saves rank-local VTK grids only after the solver-object release event.",
+    "limitation": "A loaded library and a matching postprocess window do not prove ownership of a Linux thread without a native stack trace or runtime-specific observer."
+  },
+  "measurement_definitions": {
+    "mpi_rank_processes": "Observed worker processes carrying OMPI_COMM_WORLD_RANK; one process per MPI rank.",
+    "worker_rank_kernel_threads": "Linux tasks reported by /proc/<rank-pid>/status Threads; this is not a count of simultaneously active compute workers.",
+    "process_tree_rss": "Simultaneous RSS sum for mpiexec and all live descendants; shared mappings can be counted once in each process.",
+    "worker_rank_pss": "Sum of rank smaps_rollup Pss; shared mappings are proportionally apportioned, but launcher processes are excluded.",
+    "worker_rank_uss": "Sum of rank Private_Clean, Private_Dirty and Private_Hugetlb; launcher processes are excluded.",
+    "native_object_ledger": "Unique NumPy backing-store bytes only; PETSc, MUMPS, DOLFINx, Python allocator and BLAS/LAPACK workspace bytes are explicitly excluded.",
+    "cgroup": "Readable /init.scope context, but not a dedicated job cgroup; memory.current and memory.peak include unrelated WSL processes and are diagnostic only.",
+    "independent_maxima": "RSS, PSS, USS, shared and cgroup maxima need not be from the same sample and must not be added."
+  },
+  "measurements": [
+    {
+      "mpi_size": 1,
+      "mpi_rank_processes": 1,
+      "worker_rank_threads_during_ksp_max": 3,
+      "process_tree_threads_during_ksp_max": 6,
+      "worker_rank_threads_overall_max": 3,
+      "large_postprocess_pool_observed": false,
+      "factor_peak": {
+        "stage": "after_ksp_solve",
+        "process_tree_rss_mb": 1326.30078125,
+        "worker_rank_pss_sum_mb": 1287.34375,
+        "worker_rank_uss_sum_mb": 1272.54296875
+      },
+      "postprocess_max_process_tree_rss_mb": 1176.16015625,
+      "max_worker_rank_shared_sum_mb": 39.3203125,
+      "max_process_tree_swap_mb": 0.0,
+      "native_numpy_ledger_rank_sum_bytes": 164846600,
+      "native_numpy_ledger_retained_rank_sum_bytes": 93566600,
+      "recovery_lifecycle_before_rank_sum_bytes": 93081600,
+      "recovery_lifecycle_after_rank_sum_bytes": 29124000,
+      "malloc_trim_sum_rss_released_mb": 310.58203125,
+      "cgroup": {
+        "path": "/init.scope",
+        "dedicated_job_cgroup": false,
+        "max_current_mb": 6502.875,
+        "observed_peak_mb": 38958.75390625,
+        "swap_current_mb": 0.0
+      }
+    },
+    {
+      "mpi_size": 2,
+      "mpi_rank_processes": 2,
+      "worker_rank_threads_during_ksp_max": 6,
+      "process_tree_threads_during_ksp_max": 9,
+      "worker_rank_threads_overall_max": 6,
+      "large_postprocess_pool_observed": false,
+      "factor_peak": {
+        "stage": "after_ksp_solve",
+        "process_tree_rss_mb": 2210.03515625,
+        "worker_rank_pss_sum_mb": 2061.2685546875,
+        "worker_rank_uss_sum_mb": 1963.84765625
+      },
+      "postprocess_max_process_tree_rss_mb": 1873.9453125,
+      "max_worker_rank_shared_sum_mb": 403.67578125,
+      "max_process_tree_swap_mb": 0.0,
+      "native_numpy_ledger_rank_sum_bytes": 463941920,
+      "native_numpy_ledger_retained_rank_sum_bytes": 330021920,
+      "recovery_lifecycle_before_rank_sum_bytes": 329117400,
+      "recovery_lifecycle_after_rank_sum_bytes": 97704000,
+      "malloc_trim_sum_rss_released_mb": 627.42578125,
+      "cgroup": {
+        "path": "/init.scope",
+        "dedicated_job_cgroup": false,
+        "max_current_mb": 7921.9765625,
+        "observed_peak_mb": 38958.75390625,
+        "swap_current_mb": 0.0
+      }
+    },
+    {
+      "mpi_size": 4,
+      "mpi_rank_processes": 4,
+      "worker_rank_threads_during_ksp_max": 12,
+      "process_tree_threads_during_ksp_max": 15,
+      "worker_rank_threads_overall_max": 200,
+      "large_postprocess_pool_observed": true,
+      "large_pool_first_sample": {
+        "latest_progress_stage": "solver_objects_released_before_postprocess",
+        "worker_rank_threads": 200,
+        "threads_per_rank": 50,
+        "process_tree_rss_mb": 2513.0,
+        "worker_rank_pss_sum_mb": 2039.955078125,
+        "worker_rank_uss_sum_mb": 1897.40234375,
+        "worker_rank_cpu_core_equivalents": 5.158296310771813
+      },
+      "large_pool_per_rank_thread_state": {
+        "python_named_kernel_tasks": 50,
+        "futex_do_wait": 47,
+        "do_epoll_wait": 1,
+        "poll_schedule_timeout": 1,
+        "running_or_unresolved_zero_wchan": 1
+      },
+      "factor_peak": {
+        "stage": "after_ksp_solve",
+        "process_tree_rss_mb": 3174.375,
+        "worker_rank_pss_sum_mb": 2788.41015625,
+        "worker_rank_uss_sum_mb": 2674.9140625
+      },
+      "postprocess_max_process_tree_rss_mb": 2790.66015625,
+      "max_worker_rank_shared_sum_mb": 851.4375,
+      "max_process_tree_swap_mb": 0.0,
+      "native_numpy_ledger_rank_sum_bytes": 837083760,
+      "native_numpy_ledger_retained_rank_sum_bytes": 598763760,
+      "recovery_lifecycle_before_rank_sum_bytes": 597020400,
+      "recovery_lifecycle_after_rank_sum_bytes": 176544000,
+      "malloc_trim_sum_rss_released_mb": 934.34375,
+      "cgroup": {
+        "path": "/init.scope",
+        "dedicated_job_cgroup": false,
+        "max_current_mb": 9769.46875,
+        "observed_peak_mb": 38958.75390625,
+        "swap_current_mb": 0.0
+      }
+    },
+    {
+      "mpi_size": 8,
+      "mpi_rank_processes": 8,
+      "worker_rank_threads_during_ksp_max": 24,
+      "process_tree_threads_during_ksp_max": 27,
+      "worker_rank_threads_overall_max": 400,
+      "large_postprocess_pool_observed": true,
+      "large_pool_first_sample": {
+        "latest_progress_stage": "after_field_output",
+        "worker_rank_threads": 400,
+        "threads_per_rank": 50,
+        "process_tree_rss_mb": 4202.6953125,
+        "worker_rank_pss_sum_mb": 2978.830078125,
+        "worker_rank_uss_sum_mb": 2805.9140625,
+        "worker_rank_cpu_core_equivalents": 10.370281017879778
+      },
+      "large_pool_per_rank_thread_state": {
+        "python_named_kernel_tasks": 50,
+        "futex_do_wait": 47,
+        "do_epoll_wait": 1,
+        "poll_schedule_timeout": 1,
+        "running_or_unresolved_zero_wchan": 1
+      },
+      "factor_peak": {
+        "stage": "after_ksp_solve",
+        "process_tree_rss_mb": 4824.171875,
+        "worker_rank_pss_sum_mb": 3968.8212890625,
+        "worker_rank_uss_sum_mb": 3848.65625
+      },
+      "postprocess_max_process_tree_rss_mb": 4446.28125,
+      "max_worker_rank_shared_sum_mb": 1604.6328125,
+      "max_process_tree_swap_mb": 0.0,
+      "native_numpy_ledger_rank_sum_bytes": 1187304080,
+      "native_numpy_ledger_retained_rank_sum_bytes": 848904080,
+      "recovery_lifecycle_before_rank_sum_bytes": 845478000,
+      "recovery_lifecycle_after_rank_sum_bytes": 252144000,
+      "malloc_trim_sum_rss_released_mb": 1370.33203125,
+      "cgroup": {
+        "path": "/init.scope",
+        "dedicated_job_cgroup": false,
+        "max_current_mb": 8948.61328125,
+        "observed_peak_mb": 38958.75390625,
+        "swap_current_mb": 0.0
+      }
+    }
+  ],
+  "thread_attribution": {
+    "observed_ksp_thread_count": "Every direct KSP setup/solve interval stayed at three Linux tasks per MPI rank. This is the same baseline seen outside KSP and is not evidence that MUMPS owns three worker threads.",
+    "mumps_or_blas_extra_worker_pool_observed_during_ksp": false,
+    "large_count_location": "The 50-task-per-rank state was sampled only in the interval after solver-object release and at field-output completion for MPI4/MPI8; it was absent from MPI1/MPI2 and from every KSP interval.",
+    "large_count_activity": "At the captured 50-task-per-rank state, 47 tasks per rank waited in futex_do_wait. Aggregate CPU use was about 5.16 cores for MPI4 and 10.37 cores for MPI8, not 200 or 400 active cores.",
+    "best_supported_owner_hypothesis": "The timing, PyVista/VTK source path, VTK-to-TBB linkage and futex-waiting state are consistent with a dormant VTK/TBB postprocess pool.",
+    "exact_native_thread_owner_proven": false,
+    "reason_exact_owner_not_proven": "The sampler records comm, wchan and loaded libraries, but no native stack traces or TBB runtime identities.",
+    "sticky_stage_caveat": "The timeline stage is the most recent progress event. A solver_objects_released_before_postprocess label after release covers field postprocess until the after_field_output event and must not be read as a solve-stage label."
+  },
+  "memory_interpretation": {
+    "factor_peak_before_large_postprocess_pool_for_all_rank_counts": true,
+    "postprocess_peak_below_factor_peak_for_all_rank_counts": true,
+    "large_thread_pool_sets_observed_direct_memory_peak": false,
+    "large_thread_pool_memory_contribution_quantified": false,
+    "cgroup_is_job_memory_authority": false,
+    "native_numpy_ledger_is_process_memory": false,
+    "rss_pss_uss_or_native_fields_additive": false,
+    "best_observed_direct_memory_point": "MPI1",
+    "best_observed_process_tree_peak_gib": 1.2952156066894531,
+    "best_observed_is_theoretical_or_software_floor": false,
+    "five_point_eight_to_six_point_four_gib_is_a_floor": false,
+    "conclusion": "The historical 200/400 task counts are postprocess observations, not hidden MUMPS or BLAS solve workers and not the direct-memory floor. The direct peak remains the factor/setup lifecycle peak. MPI1 is only the lowest measured point in this four-rank study; neither it nor the thread audit establishes a mathematical, software-stack or factor-free lower bound."
+  },
+  "limitations": [
+    "No new PDE, profiler stack trace, malloc_info capture or runtime-specific TBB observer was run.",
+    "PSS and USS cover worker ranks but not mpiexec or other launcher processes.",
+    "The non-dedicated /init.scope cgroup cannot isolate this job from other WSL processes.",
+    "MUMPS INFOG/RINFOG raw indices are not reinterpreted as factor-memory semantics.",
+    "The native-object ledger excludes most native solver and runtime allocations and cannot close the process RSS balance.",
+    "Thread stacks and allocator arenas were not separately measured, so a smaller postprocess-only thread-memory contribution is neither proved nor excluded."
+  ]
+}

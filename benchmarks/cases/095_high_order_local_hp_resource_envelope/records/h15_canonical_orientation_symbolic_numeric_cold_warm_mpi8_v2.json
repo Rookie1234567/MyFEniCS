@@ -1,0 +1,342 @@
+{
+  "schema_version": "task035b.canonical-orientation-symbolic-numeric-cold-warm.v2",
+  "benchmark_id": "task035b_h15_canonical_orientation_symbolic_numeric_mpi8",
+  "status": "formal_direct_setup_pair_completed",
+  "classification": "positive_fixed_trace_element_and_setup_cache_authority",
+  "pass": true,
+  "pass_semantics": "Both clean-SHA MPI8 direct profiles pass their formal physics, cache, resource, raw-option, timing-ledger and PETSc factor-event gates. This is setup/resource evidence, not a 12-channel accuracy-candidate pass.",
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "execution_source_sha": "beef7f9e82392c3aeca70639af6e59ef7645fc2a",
+    "comparison_record_commit_sha": null,
+    "comparison_record_commit_sha_semantics": "The later commit containing this record is reported by git history and response_v3; it is deliberately not made self-referential.",
+    "clean_full_sha_gate": true,
+    "clean_and_stable_for_both_runs": true,
+    "fixed_trace_element_optimization_commit": "5ebf5dcb4fb2519a22604efac243d4b311ea1ae6",
+    "optimization_commit_is_execution_ancestor": true,
+    "optimization_files_unchanged_since_commit": true,
+    "optimization_file_sha256": {
+      "src/adaptivity/fixed_trace_element_cache.py": "5b62ae3acd5071e9d5157316c47ca427598b5e140efeae9e8fd3893ebb48b372",
+      "src/adaptivity/hcurl_regionwise_p.py": "51602011287c238795b9d018b6116903e320eceaaebcc226c0c529c132234b55",
+      "src/test/test_160_task035b_fixed_trace_element_cache.py": "7200432a8c177770cd7607edaff6b791f0c3ecd5c7fcfac616da72a560e75f14"
+    }
+  },
+  "previous_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json",
+    "sha256": "55743322d63464ad6fea9f36bfba433c7b7ec9c655cce026fbdd6bb08bbb85a4",
+    "execution_source_sha": "ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7"
+  },
+  "thread_audit_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_solve_thread_memory_semantics_audit_v1.json",
+    "sha256": "a1cc741087dee7e36c9ea3cc9c5c3fa0ec92960ccf186beec2035008b3dbf1f7",
+    "classification": "bounded_evidence_audit_completed",
+    "large_pool_phase": "postprocess_after_solver_release",
+    "mumps_or_blas_extra_worker_pool_observed_during_ksp": false,
+    "exact_native_thread_owner_proven": false
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9196772,
+    "matrix_nnz_allocated": 9484580,
+    "factor_nnz": 26555200,
+    "canonical_orientation_class_reuse": true,
+    "direct_solver": "MUMPS",
+    "raw_petsc_options_used": false,
+    "typed_direct_options": {
+      "ksp_type": "preonly",
+      "pc_type": "lu",
+      "ksp_error_if_not_converged": true,
+      "pc_factor_mat_solver_type": "mumps",
+      "mat_mumps_icntl_14": 100
+    },
+    "cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cache"
+  },
+  "cold": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_write",
+    "timings_seconds": {
+      "common_solver": 37.59454128801008,
+      "function_space_total": 7.703822073992342,
+      "fixed_trace_element_read": 0.0,
+      "fixed_trace_element_reconstruct": 0.0,
+      "fixed_trace_element_cold_build": 7.568668558000354,
+      "fixed_trace_element_write": 0.08415352200972848,
+      "tensor_total": 2.6768766670138575,
+      "tensor_cache_read": 0.00015494300168938935,
+      "tensor_cache_write": 0.3268047940218821,
+      "local_schur_total": 1.9812170069781132,
+      "condensed_class_read": 0.06126366602256894,
+      "condensed_class_write": 3.2282912519585807,
+      "trace_preallocation": 0.05439358198782429,
+      "cell_block_insertion": 0.028516812075395137,
+      "dtn_outer": 25.211525644001085,
+      "dtn_non_ksp": 19.241666532994714,
+      "base_condensed_matrix_assembly": 8.741159724013414,
+      "dtn_surface_setup": 0.559088635025546,
+      "dtn_modal_loop": 6.158919712994248,
+      "full_explicit_residual": 3.4354452500119805,
+      "postprocess_total": 3.665098847966874
+    },
+    "mumps": {
+      "symbolic_seconds_max": 0.13236837999999906,
+      "numeric_seconds_max": 5.8068322939999995,
+      "combined_ksp_setup_wall_seconds": 5.9392277610022575,
+      "backsolve_seconds": 0.03063135000411421,
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "1287809795ad2ff151314778bb286c11f76ab354f13f869f0539cf5950e9dfc9"
+    },
+    "matrix": {
+      "active_rows": 16880,
+      "nnz_used": 9196772,
+      "nnz_allocated": 9484580,
+      "factor_nnz": 26555200,
+      "factor_fill_ratio": 2.887447900198026
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": false,
+      "fixed_trace_element_identity_sha256": "fdb9daf461fc6954bf09b8b3f34a8e9979c49d991bfacef0ad6e05dcca7de591",
+      "fixed_trace_element_payload_sha256": "f1dc4b02f034371faa26347ee24189d42bf4f886a2e436cb3356bb67361317c5",
+      "fixed_trace_element_signature_sha256": "6f73e28ff9fdc64a37068393ed0c5aa54ee01a7c530d745f0f5156a2f32f8236",
+      "raw_tensor_hits": 0,
+      "raw_tensor_misses": 6,
+      "raw_tensor_writes": 6,
+      "condensed_class_hits": 4,
+      "condensed_class_misses": 115,
+      "condensed_class_writes": 115,
+      "dtn_rank_bundle_hits": 0,
+      "dtn_rank_bundle_misses": 8,
+      "dtn_reduced_bundle_restores": 0,
+      "dtn_full_vectors_intentionally_not_materialized": 0
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 20,
+      "oriented_classes_derived": 115,
+      "aii_factorizations_avoided": 95,
+      "persistent_lu_alias_restores": 4,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "resource": {
+      "max_process_tree_rss_gib": 4.601772308349609,
+      "max_worker_rank_pss_sum_mb": 3866.9599609375,
+      "max_worker_rank_uss_sum_mb": 3754.3359375,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 400
+    },
+    "physics": {
+      "full_explicit_true_residual": 8.100890959375761e-12,
+      "R00_total": 0.0007558883136322962,
+      "R_total": 0.0007650243181496824,
+      "T_total": 0.6026851467953296,
+      "A_closure": 0.3965498288865207
+    },
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/watchdog_summary.json",
+        "sha256": "7613a691f70498aa403ddd5364134bacd0d758e09b43d490dd951c98f6adef2d"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/worker_result.json",
+        "sha256": "8ee001bf3c6603976f7f0aff5e9a0b8ab5e6be79b1b9486ebaa84f7fe48c2935"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/solve/run_summary.json",
+        "sha256": "194cc854d79c6958eeee3f361b7ec7da6356e29ed10c8078e35f173b6eb948a3"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/memory_timeline.csv",
+        "sha256": "8aa1a572e9564a0f8c320cd289ac2484e2a625ee7f8c3ec10b67e3ec0caa3fa7"
+      },
+      {
+        "role": "progress",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/solve/progress_3d.jsonl",
+        "sha256": "c6add451aebdae003afce40b591ba7cc16928e9d37db2f5cc220c05b80fb8cee"
+      },
+      {
+        "role": "stdout",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/cold/worker_stdout.txt",
+        "sha256": "b5c71f97c81481dfbcdb1fc31bec387c300c5852ad532ad579d9e8abe8599198"
+      }
+    ]
+  },
+  "warm": {
+    "status": "actual_direct_setup_resource_profile_pass",
+    "formal_profile_pass": true,
+    "cache_mode": "read_only",
+    "timings_seconds": {
+      "common_solver": 19.48921995598357,
+      "function_space_total": 2.673671958997147,
+      "fixed_trace_element_read": 0.04363705500145443,
+      "fixed_trace_element_reconstruct": 2.5323552199988626,
+      "fixed_trace_element_cold_build": 0.0,
+      "fixed_trace_element_write": 0.0,
+      "tensor_total": 0.0,
+      "tensor_cache_read": 0.18545276299118996,
+      "tensor_cache_write": 0.0,
+      "local_schur_total": 0.0,
+      "condensed_class_read": 0.8450151599827223,
+      "condensed_class_write": 0.0,
+      "trace_preallocation": 0.05528305802727118,
+      "cell_block_insertion": 0.03156859800219536,
+      "dtn_outer": 12.333441418013535,
+      "dtn_non_ksp": 6.141451365983812,
+      "base_condensed_matrix_assembly": 1.7699873579840641,
+      "dtn_surface_setup": 0.5546192819892894,
+      "dtn_modal_loop": 0.036882846005028114,
+      "full_explicit_residual": 3.4443075330054853,
+      "postprocess_total": 3.472953585005598
+    },
+    "mumps": {
+      "symbolic_seconds_max": 0.13606866699999998,
+      "numeric_seconds_max": 6.027858669999999,
+      "combined_ksp_setup_wall_seconds": 6.163946970016696,
+      "backsolve_seconds": 0.028043082013027743,
+      "event_split_status": "measured_symbolic_numeric_split",
+      "collective_rank_payload_sha256": "01a44494f9da23ac5687d7d576b829edf01146bcf5261167e1f46ae9accc0904"
+    },
+    "matrix": {
+      "active_rows": 16880,
+      "nnz_used": 9196772,
+      "nnz_allocated": 9484580,
+      "factor_nnz": 26555200,
+      "factor_fill_ratio": 2.887447900198026
+    },
+    "cache": {
+      "fixed_trace_element_hit_on_all_ranks": true,
+      "fixed_trace_element_identity_sha256": "fdb9daf461fc6954bf09b8b3f34a8e9979c49d991bfacef0ad6e05dcca7de591",
+      "fixed_trace_element_payload_sha256": "f1dc4b02f034371faa26347ee24189d42bf4f886a2e436cb3356bb67361317c5",
+      "fixed_trace_element_signature_sha256": "6f73e28ff9fdc64a37068393ed0c5aa54ee01a7c530d745f0f5156a2f32f8236",
+      "raw_tensor_hits": 6,
+      "raw_tensor_misses": 0,
+      "raw_tensor_writes": 0,
+      "condensed_class_hits": 119,
+      "condensed_class_misses": 0,
+      "condensed_class_writes": 0,
+      "dtn_rank_bundle_hits": 8,
+      "dtn_rank_bundle_misses": 0,
+      "dtn_reduced_bundle_restores": 320,
+      "dtn_full_vectors_intentionally_not_materialized": 624
+    },
+    "canonical_orientation": {
+      "canonical_class_constructions": 0,
+      "oriented_classes_derived": 0,
+      "aii_factorizations_avoided": 0,
+      "persistent_lu_alias_restores": 99,
+      "used_set_equals_qualified_set": true,
+      "trace_interior_block_diagonal_proven": true,
+      "inactive_or_postzero_rows_created": false
+    },
+    "resource": {
+      "max_process_tree_rss_gib": 4.452545166015625,
+      "max_worker_rank_pss_sum_mb": 3721.0341796875,
+      "max_worker_rank_uss_sum_mb": 3609.7265625,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 400
+    },
+    "physics": {
+      "full_explicit_true_residual": 1.284488717851579e-11,
+      "R00_total": 0.0007558883136337437,
+      "R_total": 0.000765024318151193,
+      "T_total": 0.6026851467953196,
+      "A_closure": 0.39654982888652923
+    },
+    "artifacts": [
+      {
+        "role": "watchdog_authority",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/watchdog_summary.json",
+        "sha256": "77d682f3ec2b1c86de0a36a802e6518b3d00ef7be0de2ff09a2321a4fc7e2b2f"
+      },
+      {
+        "role": "worker_result",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/worker_result.json",
+        "sha256": "e3b3e56c47e0ea6ec701465d075bf3ae0818a9025cab61db94c209235914d839"
+      },
+      {
+        "role": "solve_summary",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/solve/run_summary.json",
+        "sha256": "1fc639d45b5604fb26803c3891b6c06ca5ff33b0d3c71ee71905208c1a11b6c0"
+      },
+      {
+        "role": "memory_timeline",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/memory_timeline.csv",
+        "sha256": "bf13517c3756149310d85b3df4503587696242d860ca64739e0387791b6569af"
+      },
+      {
+        "role": "progress",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/solve/progress_3d.jsonl",
+        "sha256": "a534e1c01d46855e70945ff390a6d8c683299cc567839e9233da69aac3625a0a"
+      },
+      {
+        "role": "stdout",
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_canonical_orientation_mpi8_beef7f9e82392c3aeca70639af6e59ef7645fc2a_v2/warm/worker_stdout.txt",
+        "sha256": "b0a49f09ee7ff684d9fee417ef789daa6206f21b389be4cf27f2824132863c76"
+      }
+    ]
+  },
+  "comparison": {
+    "review_v2_preoptimization_cold_build_seconds": 61.61,
+    "v1_cold_non_ksp_seconds": 19.481443545024376,
+    "v2_cold_non_ksp_seconds": 19.241666532994714,
+    "v1_warm_non_ksp_seconds": 6.255298750998918,
+    "v2_warm_non_ksp_seconds": 6.141451365983812,
+    "v1_cold_fixed_trace_element_build_seconds": 13.270895964989904,
+    "v2_cold_fixed_trace_element_build_seconds": 7.568668558000354,
+    "cold_fixed_trace_build_speedup_v1_over_v2": 1.7533990111063975,
+    "cold_function_space_speedup_v1_over_v2": 1.7404808300628705,
+    "cold_common_solver_speedup_v1_over_v2": 1.16249301006787,
+    "v1_warm_fixed_trace_element_reconstruct_seconds": 2.6707713840005454,
+    "v2_warm_fixed_trace_element_reconstruct_seconds": 2.5323552199988626,
+    "warm_fixed_trace_reconstruct_speedup_v1_over_v2": 1.054659063194833,
+    "warm_function_space_speedup_v1_over_v2": 1.0531088671928637,
+    "warm_common_solver_speedup_v1_over_v2": 1.0159701696482488,
+    "cold_build_speedup_vs_review_v2_preoptimization": 3.2019056090777815,
+    "cold_build_minimum_2x_target_pass": true,
+    "cold_build_target_scope": "complete non-KSP build ledger; the fixed-trace element component alone improved by 1.753399x",
+    "cold_build_25_to_30_second_preferred_target_pass": true,
+    "warm_build_below_10_seconds_preferred_target_pass": true,
+    "cold_to_warm_common_solver_speedup": 1.9289915847282446,
+    "cold_to_warm_non_ksp_speedup": 3.1330813168317504,
+    "cold_rss_change_vs_v1_gib": -0.02330780029296875,
+    "warm_rss_change_vs_v1_gib": -0.007236480712890625,
+    "cold_warm_rows_nnz_and_factor_nnz_identical": true,
+    "max_cold_warm_physics_abs_delta": 4.743996219140028e-12,
+    "cold_warm_physical_closure_pass": true,
+    "zero_swap_both_runs": true
+  },
+  "scope_and_decision": {
+    "setup_targets_pass": true,
+    "fixed_trace_element_optimization_positive": true,
+    "fixed_trace_element_cold_build_improvement": "13.2709 s to 7.5687 s (1.753x); function-space setup 13.4084 s to 7.7038 s (1.740x).",
+    "complete_cold_common_solver_improvement": "43.7034 s to 37.5945 s (1.162x).",
+    "complete_warm_common_solver_improvement": "19.8005 s to 19.4892 s (1.016x).",
+    "non_ksp_build_interpretation": "The Review-V2 build target is evaluated on the explicitly non-overlapping non-KSP build ledger: cold 19.2417 s and warm 6.1415 s. MUMPS symbolic/numeric/backsolve and postprocess are reported separately and are not hidden.",
+    "memory_interpretation": "The MPI8 process-tree peaks are 4.602 GiB cold and 4.453 GiB warm with zero swap. They are measured points, not a lower bound for this 74,890-DoF problem.",
+    "thread_interpretation": "The bounded thread audit places the 50-thread-per-rank pool in postprocess after solver release and finds no extra MUMPS/BLAS worker pool during KSP. The exact native owner remains unproven, and 400 observed kernel tasks are not treated as useful parallelism.",
+    "significant_power_pass_count": null,
+    "significant_complex_amplitude_pass_count": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "not_a_12_of_12_candidate": true,
+    "heavy_pair_should_not_be_repeated_without_relevant_source_or_identity_change": true,
+    "historical_artifacts_deleted": false,
+    "candidate_promotion": false
+  }
+}

@@ -11,6 +11,7 @@ from mpi4py import MPI
 from dolfinx import cpp, mesh
 
 from ..common.config_3d import SimulationConfig3D
+from ..geometry.tetra_mesh_audit import canonical_entity_key
 from .high_order_floquet_trace import (
     FloquetTopologyCache,
     FloquetTopologyKey,
@@ -20,6 +21,8 @@ from .high_order_floquet_trace import (
     edge_coefficient_transform,
     face_coefficient_transform,
     high_order_trace_layout,
+    tetrahedral_trace_layout,
+    triangle_face_coefficient_transform,
 )
 
 
@@ -116,12 +119,15 @@ def _build_entity_dof_map(
     msh.topology.create_connectivity(entity_dim, tdim)
     cell_to_entity = msh.topology.connectivity(tdim, entity_dim)
     cell_map = msh.topology.index_map(tdim)
+    entity_map = msh.topology.index_map(entity_dim)
     num_cells = cell_map.size_local + cell_map.num_ghosts
-    local_entity_count = {1: 12, 2: 6}[int(entity_dim)]
     entity_dofs = [
         V.dofmap.dof_layout.entity_dofs(entity_dim, local_entity)
-        for local_entity in range(local_entity_count)
+        for local_entity in range(
+            len(V.element.basix_element.entity_dofs[int(entity_dim)])
+        )
     ]
+    local_entity_count = len(entity_dofs)
 
     records: dict[int, dict[str, object]] = {}
     for cell in range(num_cells):
@@ -129,7 +135,8 @@ def _build_entity_dof_map(
         cell_dofs = V.dofmap.cell_dofs(cell)
         if len(cell_entities) != local_entity_count:
             raise RuntimeError(
-                "Task033 high-order Floquet requires hexahedral entity topology."
+                "Basix and DOLFINx disagree on the local trace entity count: "
+                f"Basix={local_entity_count}, DOLFINx={len(cell_entities)}."
             )
         for local_entity, entity in enumerate(cell_entities):
             reference_dofs = np.asarray(entity_dofs[local_entity], dtype=np.int32)
@@ -144,8 +151,14 @@ def _build_entity_dof_map(
                 dtype=np.int32,
             )
             global_dofs, owners, owned = _local_dof_global_info(V, local_dofs)
+            global_entity_id = int(
+                entity_map.local_to_global(
+                    np.asarray([entity], dtype=np.int32)
+                )[0]
+            )
             record = {
                 "entity": int(entity),
+                "physical_global_entity_id": global_entity_id,
                 "local_dofs": local_dofs,
                 "global_dofs": global_dofs,
                 "owners": owners,
@@ -178,22 +191,53 @@ def _periodic_boundary_entities(
     mesh_data, cfg: SimulationConfig3D, entity_dim: int
 ) -> np.ndarray:
     msh = mesh_data.mesh
-    facets: list[int] = []
+    tagged_facets: list[int] = []
     for tag in (cfg.tags.x_min, cfg.tags.x_max, cfg.tags.y_min, cfg.tags.y_max):
-        facets.extend(
+        tagged_facets.extend(
             int(value)
             for value in np.asarray(mesh_data.facet_tags.find(tag), dtype=np.int32)
         )
-    if not facets:
-        return np.asarray([], dtype=np.int32)
+    tagged_entities: list[int] = []
     if int(entity_dim) == msh.topology.dim - 1:
-        return np.unique(np.asarray(facets, dtype=np.int32))
-    msh.topology.create_connectivity(msh.topology.dim - 1, entity_dim)
-    facet_to_entity = msh.topology.connectivity(msh.topology.dim - 1, entity_dim)
-    return np.unique(
-        np.concatenate([facet_to_entity.links(int(facet)) for facet in facets]).astype(
-            np.int32
+        tagged_entities.extend(tagged_facets)
+    elif tagged_facets:
+        msh.topology.create_connectivity(msh.topology.dim - 1, entity_dim)
+        facet_to_entity = msh.topology.connectivity(msh.topology.dim - 1, entity_dim)
+        tagged_entities.extend(
+            int(entity)
+            for facet in tagged_facets
+            for entity in facet_to_entity.links(int(facet))
         )
+
+    msh.topology.create_entities(entity_dim)
+    msh.topology.create_connectivity(entity_dim, msh.topology.dim)
+    msh.topology.create_entity_permutations()
+    entity_map = msh.topology.index_map(entity_dim)
+    local_entities = np.arange(
+        entity_map.size_local + entity_map.num_ghosts, dtype=np.int32
+    )
+    geometry = cpp.mesh.entities_to_geometry(
+        msh._cpp_object, entity_dim, local_entities, True
+    )
+    tolerance = _geometry_tolerance(cfg)
+    geometric_entities = []
+    for entity, geometry_dofs in zip(local_entities, geometry, strict=True):
+        coordinates = np.asarray(
+            msh.geometry.x[np.asarray(geometry_dofs, dtype=np.int64)],
+            dtype=np.float64,
+        )
+        if any(
+            np.all(np.abs(coordinates[:, axis] - boundary) <= tolerance)
+            for axis, boundary in (
+                (0, cfg.x_min),
+                (0, cfg.x_max),
+                (1, cfg.y_min),
+                (1, cfg.y_max),
+            )
+        ):
+            geometric_entities.append(int(entity))
+    return np.unique(
+        np.asarray((*tagged_entities, *geometric_entities), dtype=np.int32)
     )
 
 
@@ -217,6 +261,7 @@ def _build_periodic_entity_records(
     geometry = cpp.mesh.entities_to_geometry(
         msh._cpp_object, entity_dim, entities, True
     )
+    tolerance = _geometry_tolerance(cfg)
     records: list[dict[str, object]] = []
     for entity, midpoint, geometry_dofs in zip(
         entities, midpoints, geometry, strict=True
@@ -232,8 +277,13 @@ def _build_periodic_entity_records(
         )
         record = {
             **dof_record,
+            "cell_type": str(msh.basix_cell()).lower(),
             "midpoint": np.asarray(midpoint, dtype=np.float64),
             "geometry_coords": coords,
+            "entity_geometry_key": canonical_entity_key(
+                coords,
+                tolerance,
+            ),
         }
         if int(entity_dim) == 1:
             if coords.shape[0] < 2:
@@ -243,9 +293,9 @@ def _build_periodic_entity_records(
                 raise RuntimeError("A periodic edge has a near-zero tangent.")
             record["tangent"] = tangent
         else:
-            if coords.shape[0] != 4:
+            if coords.shape[0] not in {3, 4}:
                 raise RuntimeError(
-                    "Task033 currently requires linear quadrilateral face geometry."
+                    "Periodic faces require linear triangle or quadrilateral geometry."
                 )
             normal = np.cross(coords[1] - coords[0], coords[2] - coords[0])
             record["normal_axis"] = int(np.argmax(np.abs(normal)))
@@ -369,6 +419,14 @@ def _json_packet(
         "midpoint": [float(value) for value in midpoint],
         "entity_dim": int(entity_dim),
         "entity_kind": "edge" if int(entity_dim) == 1 else "face",
+        "physical_global_entity_id": int(
+            record["physical_global_entity_id"]
+        ),
+        "entity_geometry_key": [
+            list(point)
+            for point in record["entity_geometry_key"]  # type: ignore[union-attr]
+        ],
+        "cell_type": str(record["cell_type"]),
     }
     if int(entity_dim) == 1:
         packet["tangent"] = [
@@ -386,9 +444,16 @@ def _face_vertex_permutation(
     shifted_slave_coords: np.ndarray,
     master_coords: np.ndarray,
     tol: float,
-) -> tuple[int, int, int, int]:
-    if shifted_slave_coords.shape != (4, 3) or master_coords.shape != (4, 3):
-        raise RuntimeError("A high-order quadrilateral pairing needs four vertices.")
+) -> tuple[int, ...]:
+    if (
+        shifted_slave_coords.ndim != 2
+        or shifted_slave_coords.shape != master_coords.shape
+        or shifted_slave_coords.shape[0] not in {3, 4}
+        or shifted_slave_coords.shape[1] != 3
+    ):
+        raise RuntimeError(
+            "A high-order face pairing needs matching triangle or quadrilateral vertices."
+        )
     permutation: list[int] = []
     used: set[int] = set()
     for slave_point in shifted_slave_coords:
@@ -400,7 +465,7 @@ def _face_vertex_permutation(
             )
         used.add(master_index)
         permutation.append(master_index)
-    return tuple(permutation)  # type: ignore[return-value]
+    return tuple(permutation)
 
 
 def _pair_entity_blocks(
@@ -476,17 +541,31 @@ def _pair_entity_blocks(
             if tangent_norm <= 1.0e-30 or abs(tangent_dot) / tangent_norm < 0.99:
                 raise RuntimeError("Periodic edge tangents are not collinear.")
             transform = edge_coefficient_transform(
-                degree, reversed_orientation=tangent_dot < 0.0
+                degree,
+                reversed_orientation=tangent_dot < 0.0,
+                cell_type=(
+                    "tetrahedron"
+                    if "tetrahedron" in str(record.get("cell_type", ""))
+                    else "hexahedron"
+                ),
             )
             entity_kind = "edge"
+            vertex_permutation = (
+                (1, 0) if tangent_dot < 0.0 else (0, 1)
+            )
         else:
             shifted_coords = (
                 np.asarray(record["geometry_coords"], dtype=np.float64) - shift
             )
             master_coords = np.asarray(master["geometry_coords"], dtype=np.float64)
             permutation = _face_vertex_permutation(shifted_coords, master_coords, tol)
-            transform = face_coefficient_transform(degree, permutation)
+            transform = (
+                triangle_face_coefficient_transform(degree, permutation)
+                if len(permutation) == 3
+                else face_coefficient_transform(degree, permutation)
+            )
             entity_kind = "face"
+            vertex_permutation = permutation
         blocks.append(
             PhaseIndependentConstraintBlock(
                 kind=kind,  # type: ignore[arg-type]
@@ -507,6 +586,22 @@ def _pair_entity_blocks(
                 touches_owned_cell=bool(record["touches_owned_cell"]),
                 entity_kind=entity_kind,  # type: ignore[arg-type]
                 pair_error=pair_error,
+                slave_entity_id=int(record["physical_global_entity_id"]),
+                master_entity_id=int(master["physical_global_entity_id"]),
+                slave_entity_geometry_key=tuple(
+                    tuple(int(component) for component in point)
+                    for point in record["entity_geometry_key"]  # type: ignore[union-attr]
+                ),
+                master_entity_geometry_key=tuple(
+                    tuple(int(component) for component in point)
+                    for point in master["entity_geometry_key"]
+                ),
+                periodic_pair_key=tuple(
+                    int(value)
+                    for value in replies_by_token[token]["pair_key"]
+                ),
+                entity_vertex_permutation=vertex_permutation,
+                cell_type=str(record["cell_type"]),
             )
         )
     return blocks, metrics
@@ -536,11 +631,12 @@ def _topology_key(
         str(dolfinx.__version__),
         str(basix.__version__),
     )
+    cell_kind = "tetra-s3" if "tetrahedron" in str(msh.basix_cell()) else "hexa-d4"
     return FloquetTopologyKey(
         mesh_token=mesh_token,
         element_family=str(V.element.basix_element.family),
         degree=int(degree),
-        orientation_schema="basix-0.10-d4-dolfinx-global-v1",
+        orientation_schema=f"basix-0.10-{cell_kind}-dolfinx-global-v1",
     )
 
 
@@ -550,8 +646,13 @@ def _build_trace_topology(
     comm = V.mesh.comm
     comm.barrier()
     started = time.perf_counter()
-    degree = int(cfg.nedelec_degree)
-    layout = high_order_trace_layout(degree)
+    degree = cfg.nedelec_trace_degree_resolved
+    cell_name = str(V.mesh.basix_cell()).lower()
+    layout = (
+        tetrahedral_trace_layout(degree)
+        if "tetrahedron" in cell_name
+        else high_order_trace_layout(degree)
+    )
     edge_records = _build_periodic_entity_records(
         V,
         mesh_data,
@@ -616,7 +717,12 @@ def _build_trace_topology(
 def _get_or_build_topology(
     V, mesh_data, cfg: SimulationConfig3D
 ) -> tuple[FloquetTraceTopology, bool]:
-    key = _topology_key(V, mesh_data, cfg, int(cfg.nedelec_degree))
+    key = _topology_key(
+        V,
+        mesh_data,
+        cfg,
+        cfg.nedelec_trace_degree_resolved,
+    )
     cached = _TOPOLOGY_CACHE.get(key, mesh=mesh_data.mesh, space=V)
     hit_count = int(V.mesh.comm.allreduce(cached is not None, op=MPI.SUM))
     if hit_count == int(V.mesh.comm.size):
@@ -649,21 +755,34 @@ def _nonzero_terms(
 def build_high_order_constraint_data(
     V, mesh_data, cfg: SimulationConfig3D
 ) -> HighOrderFloquetConstraintData:
-    """Build phase-materialized p1--p4 sparse local Floquet MPC arrays.
+    """Build phase-materialized qualified sparse local Floquet MPC arrays.
 
     The public 3D dispatcher uses this distributed exact-topology path for every
     qualified degree.  The topology is phase independent and can therefore be
     reused when only the incident angle (and hence the Floquet phase) changes.
     """
 
-    degree = int(cfg.nedelec_degree)
-    layout = high_order_trace_layout(degree)
-    if "hexahedron" not in str(V.mesh.basix_cell()).lower():
+    degree = cfg.nedelec_trace_degree_resolved
+    cell_name = str(V.mesh.basix_cell()).lower()
+    if "tetrahedron" in cell_name:
+        layout = tetrahedral_trace_layout(degree)
+    elif "hexahedron" in cell_name:
+        layout = high_order_trace_layout(degree)
+    else:
         raise NotImplementedError(
-            "Task033 high-order Floquet constraints require hexahedra."
+            "High-order Floquet constraints support tetrahedra and hexahedra."
         )
-    if int(V.element.basix_element.degree) != degree:
-        raise RuntimeError("Config and function-space N1curl degrees disagree.")
+    entity_dofs = V.element.basix_element.entity_dofs
+    if (
+        any(len(dofs) != layout.edge_dofs for dofs in entity_dofs[1])
+        or any(
+            len(dofs) != layout.face_interior_dofs
+            for dofs in entity_dofs[2]
+        )
+    ):
+        raise RuntimeError(
+            "Config trace degree and function-space edge/face layout disagree."
+        )
     topology, cache_hit = _get_or_build_topology(V, mesh_data, cfg)
 
     comm = V.mesh.comm

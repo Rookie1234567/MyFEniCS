@@ -63,6 +63,58 @@ def _current_rss_mb() -> float | None:
     return None
 
 
+def _trim_process_heap() -> dict[str, Any]:
+    """Return unused glibc heap pages to Linux after a heavy solver release.
+
+    PETSc/MUMPS destruction releases its allocations, but glibc may retain the
+    freed pages in per-thread arenas.  That retained RSS can overlap with later
+    postprocessing allocations even though the factor no longer exists.
+    """
+
+    before_mb = _current_rss_mb()
+    audit: dict[str, Any] = {
+        "implementation": "glibc_malloc_trim",
+        "supported": False,
+        "succeeded": False,
+        "return_code": None,
+        "rss_before_mb": before_mb,
+        "rss_after_mb": before_mb,
+        "rss_released_mb": 0.0,
+        "reason": None,
+    }
+    if not sys.platform.startswith("linux"):
+        audit["reason"] = "non_linux_platform"
+        return audit
+
+    try:
+        import ctypes
+
+        malloc_trim = ctypes.CDLL(None).malloc_trim
+        malloc_trim.argtypes = [ctypes.c_size_t]
+        malloc_trim.restype = ctypes.c_int
+    except (AttributeError, OSError) as exc:
+        audit["reason"] = f"malloc_trim_unavailable:{type(exc).__name__}"
+        return audit
+
+    audit["supported"] = True
+    return_code = int(malloc_trim(0))
+    after_mb = _current_rss_mb()
+    audit.update(
+        {
+            "succeeded": return_code != 0,
+            "return_code": return_code,
+            "rss_after_mb": after_mb,
+            "rss_released_mb": (
+                None
+                if before_mb is None or after_mb is None
+                else max(float(before_mb) - float(after_mb), 0.0)
+            ),
+            "reason": None if return_code != 0 else "malloc_trim_returned_zero",
+        }
+    )
+    return audit
+
+
 def _cgroup_memory_fields() -> dict[str, float | str | None]:
     root = Path("/sys/fs/cgroup")
 
@@ -218,6 +270,10 @@ def _write_progress_event(
 
 def _log_solver_summary(summary: dict[str, Any], log) -> None:
     log("Linear solve summary:")
+    log(
+        "  assembly backend     = "
+        f"{summary.get('stage4_full3d_assembly_backend_actual', summary.get('stage4_full3d_assembly_backend_requested'))}"
+    )
     log(f"  method               = {summary['linear_solve_method']}")
     log(f"  ksp_type             = {summary.get('actual_ksp_type')}")
     log(f"  pc_type              = {summary.get('actual_pc_type')}")
@@ -273,6 +329,12 @@ def _clear_official_field_outputs(out_dir: Path, comm) -> None:
             "E_3d_numerical.bp",
             "H_3d_A_per_m_from_curl.bp",
             "vtx_3d_warning.txt",
+            "port_power.json",
+            "port_power.csv",
+            "dtn_port_power_metrics_3d.json",
+            "dtn_port_diffraction_orders_3d.json",
+            "dtn_port_diffraction_orders_3d.csv",
+            "dtn_auxiliary_amplitudes_3d.json",
         )
         for pattern in patterns:
             for path in out_dir.glob(pattern):
@@ -326,6 +388,9 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
         "mesh_refinement_radius": cfg.mesh_refinement_radius,
         "floquet_constraint_mode_requested": cfg.floquet_constraint_mode_requested,
         "nedelec_degree": cfg.nedelec_degree,
+        "stage4_full3d_assembly_backend_requested": (
+            cfg.stage4_full3d_assembly_backend
+        ),
         "visualization_degree": cfg.visualization_degree,
         "incident_theta_deg": cfg.incident_theta_deg,
         "incident_phi_deg": cfg.incident_phi_deg,

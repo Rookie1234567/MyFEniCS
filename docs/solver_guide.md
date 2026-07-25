@@ -26,6 +26,28 @@
 
 入口是 `python -m src.runners.run_3d_cases ...`。Stage4 DtN 组装完整 `[F C; D H]`，PETSc 默认 `preonly + LU/MUMPS`。这是 ordinary 默认，Task28 没有改变。
 
+### 2.1 Full3D assembly backend 单一选择端口
+
+Review V3 后，普通用户只通过一个字段选择 Full3D 装配：
+
+```python
+stage4_full3d_assembly_backend = "standard_full"
+# 显式 opt-in：
+# stage4_full3d_assembly_backend = "assembly_time_static_condensed"
+```
+
+CLI 对应：
+
+```bash
+python -m src.runners.run_3d_cases \
+  --stage-case stage4_block_grating \
+  --stage4-full3d-assembly-backend assembly_time_static_condensed
+```
+
+`standard_full` 始终是 ordinary default。`assembly_time_static_condensed` 只资格化于 `complex128`、H(curl) Nédélec、first-order axis-aligned affine hexahedron、逐 owned-cell 显式 material tag、fixed rectangular target、global insertion 前 Floquet slave elimination、sparse auxiliary DtN、完整场恢复与 full explicit true residual。curved/distorted hexa、未覆盖的 runtime coefficient/constant、tetra、mixed cell、irregular geometry、regionwise/non-exact local-p、production selective trace 与 condensed iterative profile 会 fail closed，并提示改用 `standard_full`；不会静默 fallback。
+
+旧的三个 condensation 布尔量仅供历史 research runner 内部兼容，不是用户 API。日志、progress 和 summary 会登记 requested/actual backend 与 qualification audit。
+
 适用于回归、可信 reference 与内存允许的生产案例。优点是残差口径直接、迭代调参少；代价是 3D p2 的因子 fill 和峰值 RSS 快速增加。
 
 ## 3. Explicit condensed direct

@@ -186,7 +186,14 @@ class Task034HardeningTests(unittest.TestCase):
         self.assertEqual(
             record["corresponding_pde_rerun_required_paths"],
             [
+                "src/common/config_3d.py",
+                "src/geometry/mesh_builder_3d.py",
+                "src/constraints/floquet_3d.py",
+                "src/constraints/high_order_floquet_trace.py",
                 "src/modes/mode_classification.py",
+                "src/solvers/common_3d_case_flow.py",
+                "src/solvers/dtn_port_3d.py",
+                "src/solvers/hcurl_cell_static_condensation.py",
                 "src/solvers/hybrid_fem_modal_schur_direct.py",
                 "src/solvers/hcurl_multilevel.py",
             ],

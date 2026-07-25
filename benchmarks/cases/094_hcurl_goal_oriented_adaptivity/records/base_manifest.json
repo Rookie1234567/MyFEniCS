@@ -1,0 +1,173 @@
+{
+  "schema_version": "task035.case094.base-manifest.v1",
+  "record_type": "task035_phase_a_environment_and_base_binding",
+  "status": "phase_a_gate_pass",
+  "task": "Task035",
+  "branch": "codex/20260721-task35-hcurl-goal-oriented-adaptivity",
+  "source": {
+    "task034_final_master_sha": "5002636852ffb67b4711443da70eb536c303e34e",
+    "task035_base_sha": "5002636852ffb67b4711443da70eb536c303e34e",
+    "origin_master_sha_at_branch_creation": "5002636852ffb67b4711443da70eb536c303e34e",
+    "clean_before_branch_creation": true,
+    "clean_before_and_after_environment_probe": true,
+    "source_stable_during_environment_probe": true
+  },
+  "environment_qualification": {
+    "status": "environment_gate_pass",
+    "qualification_timestamp_utc": "2026-07-21T22:37:40.144218+00:00",
+    "raw_json_path": "benchmarks/artifacts/task035/phase_a/5002636/wsl_environment_qualification.json",
+    "raw_json_sha256": "f47801cdb48af7d5958aa4ecc9c25cf3ccbc0c0d1816bf35db115ff806aa87fe",
+    "raw_markdown_path": "benchmarks/artifacts/task035/phase_a/5002636/wsl_environment_qualification.md",
+    "raw_markdown_sha256": "23ce84aeede055ccbec7a747696f485372b8075b037c1b009fbb74407542ad35",
+    "raw_artifact_gitignored": true,
+    "is_pde_run": false,
+    "mpi_sizes": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "distributed_mumps_pep_microfixture_sizes": [
+      8
+    ],
+    "threads_per_rank": 1,
+    "petsc_scalar_dtype": "complex128",
+    "petsc_int_bits": 32,
+    "thresholds_relaxed": false
+  },
+  "tracked_bindings": {
+    "case093_compact_records": [
+      {
+        "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/canonical_benchmark_manifest.json",
+        "sha256": "6ae9f4fa15d776d80c16c4d21d8723a966f7c24393574bcb7896f49a2743c85d"
+      },
+      {
+        "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/convergence_summary.json",
+        "sha256": "f5bad15f40ade652f6b4398e46852292ed323e3e5494b9fdb969c40bc6283111"
+      },
+      {
+        "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/records/mpi_identity_summary.json",
+        "sha256": "88a085bc6424892142e63aa4b8a8a65bdc1a86410b7cd9baae5fb3d9390c6111"
+      }
+    ],
+    "identity_files": [
+      {
+        "role": "case093_physical_config",
+        "path": "benchmarks/cases/093_fixed_geometry_ph_convergence_mpi/config.json",
+        "sha256": "ce83b99946d2fbd6542948e6af5fcebf74ec67ace48d1d59b9f32eaeeeada654"
+      },
+      {
+        "role": "material_implementation",
+        "path": "src/common/materials.py",
+        "sha256": "2eaf2679f12e698b049fec22e271f1b68a6105f9b13c3afb6e01e3433169f4c5"
+      },
+      {
+        "role": "configuration_implementation",
+        "path": "src/common/config.py",
+        "sha256": "4e8b01b4c5a4217912e4ec5b02b0ee4fdfaa17d4139f20a679445e505daea905"
+      },
+      {
+        "role": "geometry_implementation",
+        "path": "src/geometry/mesh_builder_3d.py",
+        "sha256": "ca8c57629207d939ed86924713ce49b9dcc83e5a9f33518a726c34d5d12068bb"
+      }
+    ],
+    "theory_documents": [
+      {
+        "path": "notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md",
+        "sha256": "610c6bef05d1b6aaf6779b6e40cb922459bc5d912dda7d4c73d9c40887701985"
+      }
+    ]
+  },
+  "baseline_artifacts": [
+    {
+      "role": "p4_h5_full3d",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_full_mpi8_e091785.json",
+      "expected_sha256": "879816e0c7c9f345deeb23435607560be9af7ad431142f8b2e3ea4f9a8022cab",
+      "observed_sha256": "879816e0c7c9f345deeb23435607560be9af7ad431142f8b2e3ea4f9a8022cab",
+      "materialization_status": "materialized_hash_match"
+    },
+    {
+      "role": "p4_h5_hybrid_m160",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_m160_mpi8_df6d56f.json",
+      "expected_sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb",
+      "observed_sha256": "0d6d65dd514695562c7ab4c20d71d90b3fae18ec1c5ecb74d3c6ec81b4c85deb",
+      "materialization_status": "materialized_hash_match"
+    },
+    {
+      "role": "p4_h5_hybrid_funnel",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p4_h5_hybrid_funnel_mpi8_df6d56f.json",
+      "expected_sha256": "18c09f43ac786f2db51070ff136a270b1af731575bc1560089f44ada145212b4",
+      "observed_sha256": "18c09f43ac786f2db51070ff136a270b1af731575bc1560089f44ada145212b4",
+      "materialization_status": "materialized_hash_match"
+    },
+    {
+      "role": "p3_h3_full3d",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_full_mpi8_3a1bc99_s.json",
+      "expected_sha256": "2c1ec18a3877a4452f7ac52cd411df0a4785204b811dc52e466e1f7c91ea393a",
+      "observed_sha256": "2c1ec18a3877a4452f7ac52cd411df0a4785204b811dc52e466e1f7c91ea393a",
+      "materialization_status": "materialized_hash_match"
+    },
+    {
+      "role": "p3_h3_hybrid_m160",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_m160_mpi8_8438cca_s.json",
+      "expected_sha256": "10d179b586ec4fb863b20e0e878d5919975652097cb8005f2ed0bf37ab96fae9",
+      "observed_sha256": "10d179b586ec4fb863b20e0e878d5919975652097cb8005f2ed0bf37ab96fae9",
+      "materialization_status": "materialized_hash_match"
+    },
+    {
+      "role": "p3_h3_hybrid_funnel",
+      "path": "benchmarks/artifacts/task034/phase_f/records/p3_h3_hybrid_funnel_mpi8_8438cca_s.json",
+      "expected_sha256": "615ff2e9e3541f4a45583608aa712462cbf0f896d9f63939d694327847c7cd08",
+      "observed_sha256": "615ff2e9e3541f4a45583608aa712462cbf0f896d9f63939d694327847c7cd08",
+      "materialization_status": "materialized_hash_match"
+    }
+  ],
+  "frozen_references": {
+    "replacement_reference": {
+      "key": "p4_h5",
+      "full3d_true_relative_residual": 2.4014742229534507e-11,
+      "full3d_R_total": 0.0007663133771040101,
+      "full3d_T_total": 0.602677530502972,
+      "full3d_A_volume_total": 0.3965561561199801,
+      "hybrid_m160_true_relative_residual": 4.082573238266721e-12,
+      "hybrid_mode_count_per_direction": 160,
+      "same_degree_closure_pass": true
+    },
+    "direction_independence_reference": {
+      "key": "p3_h3",
+      "full3d_true_relative_residual": 8.489277332587551e-11,
+      "full3d_R_total": 0.0007894679573742296,
+      "full3d_T_total": 0.6025149841382069,
+      "full3d_A_volume_total": 0.39669554790437317,
+      "hybrid_m160_true_relative_residual": 6.7184494022399546e-12,
+      "hybrid_mode_count_per_direction": 160,
+      "same_degree_closure_pass": true
+    }
+  },
+  "artifact_policy": {
+    "inventory_scope": "Task035 Phase A required Task034 baseline records only",
+    "ordinary_checker_reads_ignored_artifacts": false,
+    "formal_artifact_verification_is_explicit_opt_in": true,
+    "missing_artifact_status": "artifact_not_materialized",
+    "silent_substitution_allowed": false,
+    "research_only_task034_adaptive_mesh_promoted": false
+  },
+  "gates": {
+    "environment": true,
+    "source_and_abi": true,
+    "baseline_binding": true,
+    "required_artifacts": true,
+    "ordinary_checker_hermetic": true,
+    "full_regression": true,
+    "task035_pde_started": false,
+    "heavy_p4_started": false,
+    "thresholds_relaxed": false
+  },
+  "decision": {
+    "phase_a_gate_pass": true,
+    "phase_b_fixture_work_authorized_after_phase_a_review": true,
+    "task035_pde_authorized_by_phase_a_alone": false,
+    "heavy_p4_authorized_by_phase_a_alone": false
+  }
+}

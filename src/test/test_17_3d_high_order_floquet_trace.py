@@ -74,6 +74,18 @@ class Test3DHighOrderFloquetTrace(unittest.TestCase):
             floquet_3d._resolve_constraint_mode(None, p1_generic_trace),
             "topological_edges_p1",
         )
+        reduced_trace = normal_incidence_airbox_config(
+            stage_case="floquet_airbox",
+            use_floquet_xy=True,
+            nedelec_degree=6,
+            nedelec_trace_degree=4,
+            nedelec_interior_degree=6,
+            floquet_constraint_mode="auto",
+        )
+        self.assertEqual(
+            floquet_3d._resolve_constraint_mode(None, reduced_trace),
+            "topological_trace_p4",
+        )
 
     def test_p2_formal_path_has_no_probe_or_pinv_mapping(self):
         dispatcher_source = inspect.getsource(floquet_3d.build_double_floquet_mpc)

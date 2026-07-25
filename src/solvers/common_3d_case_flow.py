@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import gc
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from mpi4py import MPI
@@ -14,7 +15,7 @@ from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import SimulationConfig3D
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
-from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
+from ..geometry.mesh_builder_3d import AirBox3DMesh, build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
 from ..postprocessing.postprocess_3d import save_airbox_3d_fields
@@ -68,6 +69,7 @@ from .common_3d_utils import (
     _stage_label,
     _start_timed_stage,
     _summary_base_fields,
+    _trim_process_heap,
     _write_case_outputs,
     _write_progress_event,
 )
@@ -100,6 +102,10 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
     log(f"mesh cell type requested = {cfg.mesh_cell_type}")
     log(f"mesh cell type resolved = {cfg.mesh_cell_type_resolved}")
     log(f"Floquet constraint mode requested = {cfg.floquet_constraint_mode_requested}")
+    log(
+        "Stage-4 Full3D assembly backend requested = "
+        f"{cfg.stage4_full3d_assembly_backend}"
+    )
     log("linear solve method = direct_lu")
     log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
     log(f"divergence penalty = {cfg.divergence_penalty}")
@@ -326,6 +332,22 @@ def _direct_solve_failure_summary(
             pass
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     dtn_solver_info = failure.extra_summary.get("solver_info", {})
+    dtn_assembly_backend_requested = dtn_solver_info.get(
+        "stage4_full3d_assembly_backend_requested",
+        cfg.stage4_full3d_assembly_backend,
+    )
+    dtn_assembly_backend_actual = dtn_solver_info.get(
+        "stage4_full3d_assembly_backend_actual"
+    )
+    dtn_assembly_backend_selection_source = dtn_solver_info.get(
+        "stage4_full3d_assembly_backend_selection_source"
+    )
+    dtn_assembly_backend_qualification = dtn_solver_info.get(
+        "stage4_full3d_assembly_backend_qualification"
+    )
+    dtn_assembly_backend_audit = dtn_solver_info.get(
+        "stage4_full3d_assembly_backend_audit"
+    )
     dtn_base_matrix_stats = dtn_solver_info.get("dtn_base_matrix_stats")
     dtn_augmented_matrix_stats = dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
     dtn_auxiliary_block_stats = dtn_solver_info.get("dtn_auxiliary_block_stats")
@@ -384,6 +406,21 @@ def _direct_solve_failure_summary(
         "field_formulation": field_formulation,
         "stage4_boundary_model": cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None,
         "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
+        "stage4_full3d_assembly_backend_requested": (
+            dtn_assembly_backend_requested
+        ),
+        "stage4_full3d_assembly_backend_actual": (
+            dtn_assembly_backend_actual
+        ),
+        "stage4_full3d_assembly_backend_selection_source": (
+            dtn_assembly_backend_selection_source
+        ),
+        "stage4_full3d_assembly_backend_qualification": (
+            dtn_assembly_backend_qualification
+        ),
+        "stage4_full3d_assembly_backend_audit": (
+            dtn_assembly_backend_audit
+        ),
         "stage4_dtn_num_auxiliary_dofs": dtn_solver_info.get("num_auxiliary_dofs"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
@@ -465,7 +502,21 @@ def _direct_solve_failure_summary(
         constraints=None if floquet_data is None else floquet_data.num_constraints,
         matrix_stats=matrix_stats if isinstance(matrix_stats, dict) else None,
         petsc_options=petsc_options,
-        extra={"petsc_error": error_diagnostics},
+        extra={
+            "petsc_error": error_diagnostics,
+            "stage4_full3d_assembly_backend_requested": (
+                dtn_assembly_backend_requested
+            ),
+            "stage4_full3d_assembly_backend_actual": (
+                dtn_assembly_backend_actual
+            ),
+            "stage4_full3d_assembly_backend_selection_source": (
+                dtn_assembly_backend_selection_source
+            ),
+            "stage4_full3d_assembly_backend_qualification": (
+                dtn_assembly_backend_qualification
+            ),
+        },
     )
     try:
         _write_case_outputs(out_dir, summary, log_lines, comm)
@@ -634,12 +685,18 @@ def run_prepared_3d_case_flow(
     solve_stage4_dtn_port: bool = False,
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
+    solution_observer: Callable[..., None] | None = None,
+    mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
 
     This helper contains shared FEM bookkeeping only.  It does not dispatch on
     ``cfg.stage_case``; each stage solver validates and chooses the formulation
-    before entering this flow.
+    before entering this flow.  ``solution_observer`` is an explicit research
+    hook invoked only after the official solve and postprocess have completed;
+    the ordinary solver path leaves it unset.
+    ``mesh_data_override`` is a default-off research hook for solving on an
+    already audited conforming mesh; ordinary callers continue to build a mesh.
     """
 
     if cfg.stage_case != expected_stage_case:
@@ -703,6 +760,9 @@ def run_prepared_3d_case_flow(
         extra={
             "case_name": cfg.case_name,
             "stage_case": cfg.stage_case,
+            "stage4_full3d_assembly_backend_requested": (
+                cfg.stage4_full3d_assembly_backend
+            ),
             "solver_profile": cfg.petsc_direct_solver_profile_requested,
             "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
             "matrix_diagnostics_factorization_only": (
@@ -744,7 +804,18 @@ def run_prepared_3d_case_flow(
         started=started,
         petsc_options=petsc_options,
     )
-    mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    if mesh_data_override is None:
+        mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    else:
+        relation = MPI.Comm.Compare(comm, mesh_data_override.mesh.comm)
+        if relation not in (MPI.IDENT, MPI.CONGRUENT):
+            raise ValueError("mesh_data_override must use the solver communicator")
+        if mesh_data_override.mesh_cell_type_resolved != cfg.mesh_cell_type_resolved:
+            raise ValueError(
+                "mesh_data_override cell type does not match the requested config"
+            )
+        mesh_data = mesh_data_override
+        log("mesh source = explicit audited mesh_data_override")
     _finish_timed_stage(comm, timings, "mesh_build", stage_start, log)
     _write_progress_event(
         out_dir,
@@ -982,6 +1053,26 @@ def run_prepared_3d_case_flow(
                 ooc_info=ooc_info,
             )
         _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve", stage_start, log)
+        dtn_backend_progress = {
+            key: dtn_result["solver_info"].get(key)
+            for key in (
+                "stage4_full3d_assembly_backend_requested",
+                "stage4_full3d_assembly_backend_actual",
+                "stage4_full3d_assembly_backend_selection_source",
+                "stage4_full3d_assembly_backend_qualification",
+            )
+        }
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="stage4_dtn_port_assembly_and_solve",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=floquet_data.num_constraints,
+            petsc_options=petsc_options,
+            extra=dtn_backend_progress,
+        )
         E = dtn_result["E_total"]
         solver_backend = dtn_result["solver_info"]["solver_backend"]
         problem = None
@@ -1072,6 +1163,18 @@ def run_prepared_3d_case_flow(
     dtn_augmented_matrix_stats = (
         None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
     )
+    dtn_condensed_matrix_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dtn_condensed_matrix_stats")
+    )
+    dtn_floquet_independent_matrix_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get(
+            "dtn_floquet_independent_matrix_stats"
+        )
+    )
     dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
     explicit_chac_constructed = False
     chac_before_stats = None
@@ -1089,6 +1192,10 @@ def run_prepared_3d_case_flow(
         "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
         "dtn_base_matrix_stats": dtn_base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
+        "dtn_floquet_independent_matrix_stats": (
+            dtn_floquet_independent_matrix_stats
+        ),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats),
         "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats),
@@ -1122,6 +1229,13 @@ def run_prepared_3d_case_flow(
     pc = system_ksp.getPC()
     pc_type = pc.getType()
     pc_factor_solver_type = _pc_factor_solver_type(pc)
+    condensed_full_residual = (
+        None
+        if dtn_solver_info is None
+        else (
+            dtn_solver_info.get("cell_static_condensation") or {}
+        ).get("full_explicit_true_residual")
+    )
     linear_system_diagnostics = (
         {
             "linear_system_rhs_norm": None,
@@ -1130,6 +1244,8 @@ def run_prepared_3d_case_flow(
             "linear_system_relative_residual": None,
         }
         if diagnostic_only_result
+        else condensed_full_residual
+        if condensed_full_residual is not None
         else _linear_system_diagnostics(system_A, system_b, system_x)
     )
     log(f"solver converged reason = {reason}")
@@ -1142,23 +1258,128 @@ def run_prepared_3d_case_flow(
     log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
     log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
     log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
-    _write_progress_event(
-        out_dir,
-        comm,
-        stage="solver_objects_retained_for_postprocess",
-        status="end",
-        started=started,
-        dofs=num_dofs,
-        constraints=None if floquet_data is None else floquet_data.num_constraints,
-        matrix_stats=matrix_stats,
-        petsc_options=petsc_options,
-        extra={
-            "lifecycle_note": (
-                "Telemetry-only baseline preserves the Task28 lifecycle: KSP/factor, "
-                "system Mat, RHS Vec, and solution Vec remain referenced during postprocess."
-            )
-        },
+    solver_objects_released_before_postprocess = bool(
+        cfg.direct_release_solver_before_postprocess
+        and solve_stage4_dtn_port
+        and not diagnostic_only_result
+        and reason > 0
     )
+    solver_release_audit = None
+    if solver_objects_released_before_postprocess:
+        system_ksp.destroy()
+        system_x.destroy()
+        system_b.destroy()
+        system_A.destroy()
+        system_A = None
+        system_b = None
+        system_x = None
+        system_ksp = None
+        if dtn_result is not None:
+            dtn_result["A"] = None
+            dtn_result["b"] = None
+            dtn_result["x"] = None
+            dtn_result["ksp"] = None
+        gc.collect()
+        PETSc.garbage_cleanup(comm)
+        gc.collect()
+        local_heap_trim = _trim_process_heap()
+        local_before_mb = local_heap_trim.get("rss_before_mb")
+        local_after_mb = local_heap_trim.get("rss_after_mb")
+        local_released_mb = local_heap_trim.get("rss_released_mb")
+        solver_release_audit = {
+            "petsc_garbage_cleanup_called": True,
+            "process_heap_trim": {
+                "implementation": local_heap_trim["implementation"],
+                "supported_on_all_ranks": bool(
+                    comm.allreduce(
+                        bool(local_heap_trim["supported"]),
+                        op=MPI.LAND,
+                    )
+                ),
+                "succeeded_on_all_ranks": bool(
+                    comm.allreduce(
+                        bool(local_heap_trim["succeeded"]),
+                        op=MPI.LAND,
+                    )
+                ),
+                "return_codes_by_rank": [
+                    int(value)
+                    for value in comm.allgather(
+                        int(local_heap_trim["return_code"] or 0)
+                    )
+                ],
+                "sum_rss_before_mb": (
+                    None
+                    if local_before_mb is None
+                    else float(
+                        comm.allreduce(float(local_before_mb), op=MPI.SUM)
+                    )
+                ),
+                "sum_rss_after_mb": (
+                    None
+                    if local_after_mb is None
+                    else float(
+                        comm.allreduce(float(local_after_mb), op=MPI.SUM)
+                    )
+                ),
+                "sum_rss_released_mb": (
+                    None
+                    if local_released_mb is None
+                    else float(
+                        comm.allreduce(float(local_released_mb), op=MPI.SUM)
+                    )
+                ),
+                "ordinary_default_changed": False,
+            },
+        }
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="solver_objects_released_before_postprocess",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=(
+                None
+                if floquet_data is None
+                else floquet_data.num_constraints
+            ),
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "released_objects": [
+                    "KSP/MUMPS factor",
+                    "system Mat",
+                    "RHS Vec",
+                    "solution Vec",
+                ],
+                "ordinary_default_changed": False,
+                **solver_release_audit,
+            },
+        )
+    else:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="solver_objects_retained_for_postprocess",
+            status="end",
+            started=started,
+            dofs=num_dofs,
+            constraints=(
+                None
+                if floquet_data is None
+                else floquet_data.num_constraints
+            ),
+            matrix_stats=matrix_stats,
+            petsc_options=petsc_options,
+            extra={
+                "lifecycle_note": (
+                    "Telemetry-only baseline preserves the Task28 lifecycle: "
+                    "KSP/factor, system Mat, RHS Vec, and solution Vec remain "
+                    "referenced during postprocess."
+                )
+            },
+        )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     converged = (reason > 0) and not diagnostic_only_result
@@ -1200,6 +1421,42 @@ def run_prepared_3d_case_flow(
         "field_formulation": field_formulation,
         "stage4_boundary_model": stage4_boundary_model,
         "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
+        "stage4_full3d_assembly_backend_requested": (
+            cfg.stage4_full3d_assembly_backend
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_requested",
+                cfg.stage4_full3d_assembly_backend,
+            )
+        ),
+        "stage4_full3d_assembly_backend_actual": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_actual"
+            )
+        ),
+        "stage4_full3d_assembly_backend_selection_source": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_selection_source"
+            )
+        ),
+        "stage4_full3d_assembly_backend_qualification": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_qualification"
+            )
+        ),
+        "stage4_full3d_assembly_backend_audit": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_full3d_assembly_backend_audit"
+            )
+        ),
         "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy if solve_stage4_dtn_port else None,
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly if solve_stage4_dtn_port else None,
         "stage4_dtn_num_auxiliary_dofs": None
@@ -1209,8 +1466,43 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_factor_inventory": None
         if dtn_solver_info is None
         else dtn_solver_info.get("factor_inventory"),
+        "stage4_dtn_ksp_setup_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("ksp_setup_seconds"),
+        "stage4_dtn_ksp_solve_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("ksp_solve_seconds"),
         "stage4_dtn_base_matrix_stats": dtn_base_matrix_stats,
         "stage4_dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
+        "stage4_dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
+        "stage4_dtn_floquet_independent_matrix_stats": (
+            dtn_floquet_independent_matrix_stats
+        ),
+        "stage4_cell_static_condensation": False
+        if dtn_solver_info is None
+        else bool(dtn_solver_info.get("stage4_cell_static_condensation")),
+        "stage4_assembly_time_cell_static_condensation": False
+        if dtn_solver_info is None
+        else bool(
+            dtn_solver_info.get(
+                "stage4_assembly_time_cell_static_condensation"
+            )
+        ),
+        "stage4_floquet_slave_elimination": False
+        if dtn_solver_info is None
+        else bool(
+            dtn_solver_info.get("stage4_floquet_slave_elimination")
+        ),
+        "direct_release_solver_before_postprocess": bool(
+            cfg.direct_release_solver_before_postprocess
+        ),
+        "solver_objects_released_before_postprocess": (
+            solver_objects_released_before_postprocess
+        ),
+        "solver_release_audit": solver_release_audit,
+        "cell_static_condensation": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("cell_static_condensation"),
         "strong_z_boundary_dirichlet_enabled": bool(apply_strong_boundary_bc),
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
@@ -1645,6 +1937,22 @@ def run_prepared_3d_case_flow(
         summary["case_status"] = "failed_stage4_energy_balance"
         summary["postprocess_skipped"] = False
         summary["postprocess_skip_reason"] = None
+
+    if solution_observer is not None:
+        solution_observer(
+            field=E_total,
+            mesh_data=mesh_data,
+            config=cfg,
+            floquet_data=floquet_data,
+            summary=summary,
+            linear_system={
+                "A": system_A,
+                "b": system_b,
+                "x": system_x,
+                "ksp": system_ksp,
+            },
+            dtn_result=dtn_result,
+        )
 
     if summary.get("case_status") == "completed":
         summary["mumps_ooc_runtime"] = {

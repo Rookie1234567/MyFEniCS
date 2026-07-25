@@ -6,6 +6,7 @@ from typing import Any
 
 from basix.ufl import element
 from mpi4py import MPI
+import numpy as np
 from petsc4py import PETSc
 
 from dolfinx import default_real_type, fem
@@ -410,6 +411,20 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         row_block_size = column_block_size = None
     matrix_norm_frobenius = _petsc_object_norm(A, ("NORM_FROBENIUS", "FROBENIUS"))
     matrix_norm_infinity = _petsc_object_norm(A, ("NORM_INFINITY", "INFINITY"))
+    maximum_nnz_per_row = None
+    try:
+        row_offsets, _ = A.getRowIJ(compressed=False)
+        local_maximum = (
+            int(np.max(np.diff(np.asarray(row_offsets, dtype=np.int64))))
+            if len(row_offsets) > 1
+            else 0
+        )
+        maximum_nnz_per_row = int(
+            A.getComm().tompi4py().allreduce(local_maximum, op=MPI.MAX)
+        )
+    except Exception:
+        # Some factor matrix implementations do not expose a CSR row view.
+        maximum_nnz_per_row = None
     nnz_used = info.get("nz_used")
     nnz_allocated = info.get("nz_allocated")
     average_nnz_per_row = None
@@ -444,6 +459,7 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         "matrix_row_block_size": (None if row_block_size is None else int(row_block_size)),
         "matrix_column_block_size": (None if column_block_size is None else int(column_block_size)),
         "matrix_average_nnz_per_row": average_nnz_per_row,
+        "matrix_maximum_nnz_per_row": maximum_nnz_per_row,
         "matrix_average_allocated_nnz_per_row": average_allocated_nnz_per_row,
         "matrix_memory_bytes": matrix_memory_bytes,
         "matrix_memory_mb": None if matrix_memory_bytes is None else matrix_memory_bytes / (1024.0 * 1024.0),
@@ -606,5 +622,28 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
 
 
 def _create_nedelec_space(msh, cfg: SimulationConfig3D):
-    curl_el = element("N1curl", msh.basix_cell(), cfg.nedelec_degree, dtype=default_real_type)
+    if cfg.nedelec_fixed_trace_enabled:
+        if "hexahedron" not in str(msh.basix_cell()).lower():
+            raise NotImplementedError(
+                "the qualified fixed-trace H(curl) element supports "
+                "hexahedra only"
+            )
+        # Accessing the contract fails closed for every pair except the
+        # reviewed global p5-trace / p6-interior exact-sequence space.
+        _ = cfg.nedelec_fixed_trace_contract
+        from .hcurl_fixed_trace_element import (
+            fixed_trace_hcurl_ufl_element,
+        )
+
+        curl_el = fixed_trace_hcurl_ufl_element(
+            cfg.nedelec_trace_degree_resolved,
+            cfg.nedelec_interior_degree_resolved,
+        )
+    else:
+        curl_el = element(
+            "N1curl",
+            msh.basix_cell(),
+            cfg.nedelec_degree,
+            dtype=default_real_type,
+        )
     return fem.functionspace(msh, curl_el)

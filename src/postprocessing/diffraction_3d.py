@@ -7,8 +7,6 @@ from typing import Any
 
 import numpy as np
 import ufl
-from mpi4py import MPI
-from petsc4py import PETSc
 
 from dolfinx import fem, geometry
 
@@ -21,7 +19,6 @@ from ..common.modes_3d import (
     mode_eh_vectors,
     mode_power,
     polarization_basis_3d,
-    positive_sqrt,
 )
 
 
@@ -480,13 +477,7 @@ def fit_diffraction_amplitudes_from_samples(
 ) -> tuple[dict[tuple[int, int, str, str], complex], float]:
     """Fit up/down modal amplitudes from sampled tangential E and H."""
 
-    if side == "top":
-        n_medium = complex(cfg.n_air)
-        beta_getter = lambda order: order.beta_top
-    elif side == "bottom":
-        n_medium = complex(cfg.substrate_index)
-        beta_getter = lambda order: order.beta_bottom
-    else:
+    if side not in {"top", "bottom"}:
         raise ValueError("side must be 'top' or 'bottom'.")
 
     columns = _modal_columns(cfg, orders, points, side=side)
@@ -509,16 +500,14 @@ def _modal_columns(
 ) -> list[tuple[tuple[int, int, str, str], np.ndarray]]:
     if side == "top":
         n_medium = complex(cfg.n_air)
-        beta_getter = lambda order: order.beta_top
     elif side == "bottom":
         n_medium = complex(cfg.substrate_index)
-        beta_getter = lambda order: order.beta_bottom
     else:
         raise ValueError("side must be 'top' or 'bottom'.")
 
     columns: list[tuple[tuple[int, int, str, str], np.ndarray]] = []
     for order in orders:
-        beta = beta_getter(order)
+        beta = order.beta_top if side == "top" else order.beta_bottom
         for direction_name, vertical_sign in (("down", -1), ("up", 1)):
             for pol_name, pol_vec in polarization_basis_3d(
                 order.alpha,
@@ -570,15 +559,13 @@ def _mode_key_vectors(
 ) -> dict[tuple[int, int, str, str], tuple[np.ndarray, np.ndarray]]:
     if side == "top":
         n_medium = complex(cfg.n_air)
-        beta_getter = lambda order: order.beta_top
     elif side == "bottom":
         n_medium = complex(cfg.substrate_index)
-        beta_getter = lambda order: order.beta_bottom
     else:
         raise ValueError("side must be 'top' or 'bottom'.")
     vectors: dict[tuple[int, int, str, str], tuple[np.ndarray, np.ndarray]] = {}
     for order in orders:
-        beta = beta_getter(order)
+        beta = order.beta_top if side == "top" else order.beta_bottom
         for direction_name, vertical_sign in (("down", -1), ("up", 1)):
             for pol_name, pol_vec in polarization_basis_3d(order.alpha, order.gamma, beta, n_medium, vertical_sign, cfg):
                 kvec, e_vec, _ = mode_eh_vectors(order.alpha, order.gamma, beta, pol_vec, vertical_sign, cfg)

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 from dolfinx import geometry, mesh as dmesh
-from mpi4py import MPI
 
 from ..common.config_3d import SimulationConfig3D
 

@@ -48,7 +48,12 @@
 | p3/h7.5 fixed-p equal accuracy | experimental | Task033 Review V6 accepted，MPI4，M120/M160 | `fixed_p_equal_accuracy_clear_success_with_qualifications`；相对 provisional p3/h5 reference 全部物理误差不劣，DoF/rows/factor-NNZ/memory/指示性时间全降；不是 continuum/grid-converged 证明 |
 | native cellwise variable-p H(curl) | unavailable | Task033 Phase D2 runtime audit | DOLFINx/Basix 公开 mixed/submesh API 不构成 unequal-p conformity/periodic/MPI 证据；fail closed，不做 bespoke prototype |
 | conforming graded-h mechanism | research_only | Task034 explicit research runner | mesh/Floquet/marker mechanism pass；三档 same-error compression controlled negative；未进入 production selective merge |
-| field/goal-oriented h-adaptive / hp | not_verified | Task035 planning package only | 尚未运行 Task035 code/PDE；variable-p H(curl) 仍 unavailable，必须从 clean master 独立资格化 |
+| Task035 field/goal-oriented h-adaptive / hp | experimental | Case094，Task035 stacked research branch | actual DtN adjoint、R/DWR、periodic tetra one-cycle local-h 与 fixed-mesh p-up 已有证据；最佳 adaptive 候选仍未通过全部 strict control，不是 ordinary default |
+| Task035b assembly-time high-p condensation | supported_opt_in_fixed_target | `stage4_full3d_assembly_backend="assembly_time_static_condensed"` | fixed rectangular、first-order axis-aligned affine hexa、complex128 H(curl) direct 已资格化；包含cell-interior Schur、Floquet physical elimination、tensor dedup、exact preallocation、full recovery/true residual；ordinary default仍为`standard_full` |
+| Task035b fixed p5-trace/p6-interior | research_only | Case095 MPI8 | h15 74,890 DoF、16,880 rows、5.803 GiB；scalar/vector/field/residual pass，但 12 通道只有 6/12 power、7/12 amplitude |
+| Task035b Review V1 channel recovery | research_only | Case095 MPI8 + pure-postprocess | reference v1 与 16-goal adjoint通过；预算内最佳 z-only h13 为 89,740 DoF、10/12 power、10/12 amplitude，未达 same-error Gate |
+| selective physical p6 trace restoration | not_implemented | Case095 capability audit | reference-cell complement/Riesz 已有；physical Piola/Riesz、Floquet-orbit pullback、complement Schur/DWR、selected exact sequence 与 true active numbering未闭合；candidate/PDE 未运行 |
+| condensed trace factor-free iterative screen | controlled_negative_not_production | Case095 negative evidence | 三条MPI8 200步 terminal residual ratio=`0.861662/0.999661/0.996265`，均无official输出；不得通过public assembly backend选择，也不得把direct或NNZ proxy冒充迭代成功 |
 | p2/p3/p4 fixed-geometry S sequence | experimental | Case093，MPI8 | 9 个 same-degree closure positive，p3/h10 Hybrid formal negative；不是 continuum/grid-converged 证明 |
 | representative MPI-count identity | experimental | p3/h5 Full3D/Hybrid MPI1/8/16；MPI32 exploratory | identity 在阈值内；只关闭代表案例，不声明所有 p/h/M 对 MPI 数无关 |
 | complex material | supported | complex PETSc | substrate/grating 可吸收 |
@@ -120,6 +125,16 @@
 | accepted M funnels | p3/h3 S MPI8 与 p4/h5 S MPI4，M80/M120/M160 | 不把 p4/h5 MPI4 funnel 宣称为 MPI8 production matrix |
 | P-incidence capability | p2/h5 MPI8 单一 Full3D + Hybrid M160 sample | capability only，不重复整套 P 主矩阵 |
 
+### Task035b Case095 fixed-geometry qualification
+
+| 能力 | 已接受范围 | 边界 |
+|---|---|---|
+| same-mesh high-p | structured hexa h10 global p4/p5/p6，MPI8 | p6 是 best-available same-code high-p discrete reference，不是 continuum truth |
+| high-p physical reduction | assembly-time cell Schur、Floquet slave elimination、tensor dedup、exact preallocation、factor release | exact opt-in engineering result；没有改变 ordinary direct default |
+| significant-channel reference | 12 个 n=0 S 通道，power 与复振幅 numerical bands | reference v1 是 best-available convergence authority；冻结 Gate 不因弱功率放宽 |
+| Review V1 recovery | fixed-trace h15/h14/h13/x、global-p5 y control、global-p6 h14、R5 slab、q31/buffer | 最佳 h13 仅 10/12 power + 10/12 amplitude；eligible candidate=0 |
+| Hybrid continuation | 无 | selected Full3D candidate Gate 未通过，所以 Full3D–Hybrid、M/DtN funnel 与 resource model v3 均未运行 |
+
 ## 能力到使用、理论和证据的映射
 
 | 能力 | Quick Start | Theory / Code Walkthrough | Benchmark case |
@@ -138,4 +153,6 @@
 | Task30 H(curl) infrastructure + physical-slab low-memory research | [`iterative_solver_ports.md`](iterative_solver_ports.md) / solver guide Task030 | iterative theory、walkthrough 32/33/50 | [`060`](../benchmarks/cases/060_multilevel_hcurl_iterative_solver/README.md) |
 | Task31 assembled-F-free compact memory-first research | [`iterative_solver_ports.md`](iterative_solver_ports.md) / solver guide Task031 | iterative theory、walkthrough 31/32/33/50 | [`070`](../benchmarks/cases/070_compact_physical_slab_memory_optimization/README.md) |
 | Task32 Hybrid FEM–Modal direct reference | [`task032_hybrid_fem_modal_direct_baseline/README.md`](task032_hybrid_fem_modal_direct_baseline/README.md) | [`hybrid_fem_modal_domain_decomposition.md`](../notes/theory/hybrid_fem_modal_domain_decomposition.md)、walkthrough 41–51 | [`080`](../benchmarks/cases/080_hybrid_fem_modal_direct_baseline/README.md) |
+| Task035 H(curl) goal-oriented adaptivity | [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | [`hcurl_adaptive_error_estimators_and_hp_strategy.md`](../notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md) | [`094`](../benchmarks/cases/094_hcurl_goal_oriented_adaptivity/README.md) |
+| Task035b high-p/local-hp resource envelope | [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b outcomes、Review V1 与 response V2 | [`095`](../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md) |
 | MPI/p/algebra regression | 环境/验证章节 | walkthrough 50 | [`040`](../benchmarks/cases/040_mpi_p_algebra_regression/README.md) |

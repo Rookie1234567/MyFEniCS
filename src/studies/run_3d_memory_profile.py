@@ -8,7 +8,6 @@ import queue
 import re
 import signal
 import subprocess
-import sys
 import threading
 import time
 from collections import deque

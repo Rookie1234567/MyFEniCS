@@ -1,0 +1,41 @@
+{
+  "schema_version": "task035b.case095-config.v1",
+  "geometry": "Task034 fixed rectangular block grating",
+  "geometry_scope": "fixed_only",
+  "mesh_cell_type": "hexahedron",
+  "mesh_target_size_nm": 10.0,
+  "mesh_cells_resolved": [6, 3, 14],
+  "degrees": [4, 5, 6],
+  "mpi_size": 8,
+  "same_in_memory_mesh_required": true,
+  "true_residual_max": 1e-09,
+  "ordinary_default_changed": false,
+  "compact_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/compact_authority_v1.json",
+    "sha256": "fa5bb45973b048a603de762c9e50a3e304a252489b0cdfec67f1185aaf9fd141",
+    "record_count": 19
+  },
+  "candidate_ledger": {
+    "json_path": "docs/task035b_high_order_local_hp_resource_envelope/outcomes/all_candidates.json",
+    "json_sha256": "519577372f4e1f3ab90fdca4a0317abf1695b4ef0723e9fff1461f1f6cb83d86",
+    "csv_path": "docs/task035b_high_order_local_hp_resource_envelope/outcomes/all_candidates.csv",
+    "csv_sha256": "ac7cc0c5a298de94ab7494ca6330174e270fc609a4a98bd351e52ab51473614f",
+    "candidate_count": 68,
+    "availability_counts": {
+      "source_branch_archive_not_merged": 45,
+      "tracked_compact_authority": 18,
+      "tracked_project_document": 5
+    },
+    "compact_unique_record_count": 15
+  },
+  "checker": {
+    "command": "python -m benchmarks.check_case095_compact_evidence",
+    "starts_pde": false,
+    "reads_ignored_artifacts": false
+  },
+  "irregular_geometry": {
+    "status": "out_of_scope_by_user",
+    "run": false,
+    "completion_gate": false
+  }
+}

@@ -1,4 +1,68 @@
-# 项目开发进度：Task000–Task034
+# 项目开发进度：Task000–Task035b
+
+## 2026-07-25：Task035b Review V2 setup、内存下限与最终通道续研
+
+Review V2 在同一 fixed rectangular block grating 和执行分支上并行推进
+精度、setup 与内存三条主线；普通默认未改变，未合并 `master`。
+
+| 主线 | Review V2 结果 | 数据身份 / 边界 |
+|---|---|---|
+| 最强精度点 | fixed p5-trace/p6-interior h13 仍为 89,740 DoF、20,120 rows、10/12 power + 10/12 amplitude | measured MPI8；未达 12/12 + 12/12 |
+| fixed-DoF z-node | h13 top2 为实际 8/12 + 8/12；h14 exact-reverse 为 7/12 + 8/12 | 两个 bounded controlled negatives；关闭该 lane；先验投影不作实测 |
+| physical selective trace | physical expansion、periodic/exact-sequence、Stage4 row omission、pre-release hook 和 owner-aware MatShell 已有 fixture/correctness 能力 | actual DWR、formal runner、candidate/PDE count 均为 0 |
+| setup/cache | h15 non-KSP cold/warm 19.242/6.141 s；h13 19.410/6.696 s | hash-bound setup/resource authority；不替代通道精度 |
+| direct rank memory | h15 MPI1/2/4/8 peak 为 1.295/2.158/3.100/4.711 GiB | measured、0 swap；MPI1 是最低实测 direct 点，不是理论下限 |
+| iterative | Jacobi、ASM/ILU、physical z-slab + DtN 三条 MPI8 screen 均在 200 iter 不收敛 | controlled negatives；无 official R/T/A/channel；后两条含 local factor |
+| Hybrid / 0.7 nm | eligible candidate=0；Hybrid、M/DtN funnel、resource model v3 未运行 | fail-closed；2 TiB feasibility unknown |
+
+当前 blocker 是数值/生产集成而非用户环境：reduced fixed-trace local-Schur
+捕获与 standard full-p6 generalized recovery 尚不能在同一次正式 run 中
+闭合。没有密码、ABI、MPI 或磁盘硬 blocker，也没有理由重复已经完成的 heavy
+PDE。集中回应见
+[`task035b_high_order_local_hp_resource_envelope/response_v3.md`](task035b_high_order_local_hp_resource_envelope/response_v3.md)。
+
+## 2026-07-24：Task035b Review V1 显著通道恢复批次
+
+Task035b 只研究 Task034 fixed rectangular block grating；原 G1/G2/Phase F
+不规则几何全部为
+`out_of_scope_by_user / not_run / not_a_completion_gate`。
+
+| 主线 | 结果 | 数据身份 / 边界 |
+|---|---|---|
+| p4/p5/p6 baseline | 同一 h10 hexa mesh/hash 上资格化；p6 为 173,802 FE DoF、51,272 active rows | measured MPI8；best available discrete，不是 continuum |
+| high-p condensation | assembly-time exact cell Schur + Floquet slave elimination；full p6 matrix 不再分配 | measured；opt-in research path |
+| memory lifecycle | p6 full 35.024 GiB 降至 isolated 15.964 GiB；factor release/heap trim 后后处理不再叠峰 | measured process-tree；ordinary default unchanged |
+| assembly optimization | latest p6 build 102.32 s；fixed h15 preallocation mallocs=0、build 61.61 s、peak 5.803 GiB | measured MPI8；tensor dedup/preallocation positive |
+| p6/h15 | 84,492 DoF，scalar/vector/field/resource pass，significant channels 6/12 power、8/12 amplitude | controlled negative |
+| fixed p5-trace/p6-interior h15 | 74,890 DoF preferred band；channels 6/12 power、7/12 amplitude | controlled negative |
+| significant channel reference v1 | 机械聚合既有高阶 authority；12/12 通道冻结 power/complex amplitude/magnitude/phase numerical bands | best-available same-code convergence authority；不是 continuum truth |
+| 失败通道 adjoint | 16/16 Hermitian adjoint、direct-adjoint 与 finite-difference verification 通过 | measured MPI8；entity localization 仍是 coefficient proxy，不是 actual DWR |
+| DtN/port 根因 | q31 与安全 scaled buffer-1 均无恢复；manufactured phase/normalization authority 通过 | 两个 independent negative + algebra authority；不宣称排除所有共同 port error |
+| Lane A directional h | z-only h14 7/12+9/12，z-only h13 10/12+10/12；x/y controls 负 | h13 89,740 DoF、20,120 rows、6.411 GiB，是最强实测但未通过 |
+| R5 slab 判别 | h14 最大 R5 slab 单次二分得到 89,740 DoF，退化为 5/12+9/12 | controlled negative；按预注册条件关闭 split-position scan |
+| global p6/h14 discriminator | complex amplitude 12/12，但 power 9/12 且 92,850 DoF | controlled negative；超过 90k cap 2,850 DoF |
+| Lane B selective trace | reference complement/Riesz 与预算审计完成；physical selection 所需能力未闭合 | `capability_stop_not_run`；candidate/PDE count=0，不把审计 pass 写成候选 pass |
+| condensed iterative parallel direction | h15 direct authority已绑定，未来唯一 GMRES screen contract 已冻结 | `capability_stop_not_run`；当前无 dedicated hook/history/factor-free inventory，不伪造实测 |
+| regionwise h10 | p4-trace N105 为有效 accuracy negative；p5-trace N62 缺 66 gradient modes | measured PDE + structural audit |
+| multi-goal DWR | independent R00/R/T adjoints 与 normalized R/T marker pass | measured MPI8 |
+| classifier v3 | 252-cell projection/decay；p-up102、p-keep150、h-refine0 | research-qualified；production_qualified=false |
+| Hybrid / 0.7 nm | eligible candidate=0；Hybrid、M funnel、0.7 nm PDE 未运行 | fail-closed；planning sensitivity only |
+
+最终分类为 `PARTIAL_WITH_CONTROLLED_NEGATIVES`。Task035b 解决了“rows 下降但
+内存不降”的工程问题：只有同时消除完整 matrix、inactive rows、tensor
+重复、preallocation 浪费和 factor 生命周期后，NNZ、factor、peak 和时间才
+按正确方向下降。Review V1 又证明预算内 structured z-resolution 是当前最强
+精度杠杆，但单一方向性 knob 仍不能闭合全部弱通道；选择性 trace 和
+factor-free iterative 的下一步受可明确实现的 research capability gap 阻挡。
+剩余 blocker 是完整 diffraction-channel accuracy 与相应算法能力，不是环境、
+MPI、MUMPS 或 residual，也没有需要用户处理的密码/ABI硬 blocker。
+
+详细证据见
+[`task035b_high_order_local_hp_resource_envelope/outcomes/summary.md`](task035b_high_order_local_hp_resource_envelope/outcomes/summary.md)
+与
+[`../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md`](../benchmarks/cases/095_high_order_local_hp_resource_envelope/README.md)，
+集中回应见
+[`task035b_high_order_local_hp_resource_envelope/response_v2.md`](task035b_high_order_local_hp_resource_envelope/response_v2.md)。
 
 ## 2026-07-21：Task034 WSL、固定几何高阶矩阵与 adaptive 决策收口
 
@@ -78,8 +142,8 @@ docs/taskXXX_*/review_report*.md
 更新时间：
 
 ```text
-2026-07-21
-current branch = codex/20260717-task34-workstation-wsl-adaptive-scalability
+2026-07-24
+current branch = codex/20260723-task35b-high-order-local-hp-resource-envelope
 Task028 status = V4 closed and merged to master at 2f9e56d
 Task029 status = diagnostic_success; review V2 closed; merged to master at bfb6586e
 Task030 status = final review V3 passed and merged to master at 545165b
@@ -87,7 +151,8 @@ Task031 status = strong_memory_success_slow_but_memory_efficient; Review V2 pass
 Task032 status = hybrid_direct_engineering_success; Phase 0-10 complete; Case080 302/302; h2 locked by mandatory memory prediction gate
 Task033 status = review-v6 reduced scope complete; fixed-p p3/h7.5 clear success with qualifications; original full scope partial by transfer
 Task034 status = PASS_WITH_QUALIFICATIONS; Review V3 blockers closed; final Review V4 and user merge authorization pending
-Task035 status = planning package only; execution not started
+Task035 status = Review V6 research baseline; Task035b successor active
+Task035b status = PARTIAL_WITH_CONTROLLED_NEGATIVES; Review V2 continuation complete; response_v3 pending review
 ```
 
 ## 1.1 2026-07-15 最新更新
@@ -2174,3 +2239,35 @@ Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assem
 # 46. 当前一句话状态（Task031）
 
 > Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
+
+---
+
+# 47. Task035 Phase C/D：estimator 与 mesh-backend bake-off
+
+Review V3 接受 B1/B2 real-FE minimum Gate 后，Phase C/D 在同一执行分支连续完成。Phase C
+复用 Task034 accepted p2/p3/p4 field samples，对固定 13.5 nm、10° grazing、S 入射结构筛选
+sampled R1、discrete two-level R5 proxy、external DtN split 与 R2 diagnostic。R5 proxy 对
+p4/h5 best-available discrete error 的局部相关性为 0.989–0.998，但不是 formal hierarchical FE
+solve；sampled R1 相关性为负。Task034 strip/tensor actual PDE 细化证据继续失败 physical gates，
+且不是 estimator-marked refinement，所以没有 production estimator。
+
+B3 actual material-interface/corner Nédélec fixture 与 B4 accepted Hybrid Et/Ht、M80/120/160、
+DtN/QEP microfixture 均通过 serial/MPI2。Phase D 比较三条 backend：strip/tensor 保留
+`controlled_negative`；conforming multi-block hexa 因 Cartesian axis-cut leakage 记录
+`hexa_backend_blocker`；tetra actual marked-refine control 从 384 到 1392 cells，正体积、局部性与
+Nédélec proxy improvement 通过，但只作为 research control。
+
+首次 MPI2 tetra volume measurement 因 topology vertex ID 错用于 refined geometry indexing
+产生伪零值，失败 record 已保留；改用 `geometry.dofmap[cell]` 后 final serial/MPI2 identity 通过。
+最终状态为：
+
+```text
+phase_c_internal_gate = complete_controlled_negative
+phase_d_internal_gate = complete
+production_estimator_selected = false
+production_backend_selected = false
+ordinary_default_changed = false
+phase_e_unlocked = false
+```
+
+未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。

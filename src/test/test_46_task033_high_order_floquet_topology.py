@@ -13,11 +13,15 @@ from mpi4py import MPI
 from dolfinx import default_real_type, fem
 
 from src.common.analytic_fields_3d import electric_field_code_values
-from src.common.config_3d import oblique_incidence_airbox_config
+from src.common.config_3d import (
+    oblique_incidence_airbox_config,
+    target_stage4_config,
+)
 from src.constraints import floquet_3d_high_order
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.constraints.floquet_3d_high_order import build_high_order_constraint_data
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.solvers.common_3d_solve import _create_nedelec_space
 
 
 def _fixture(degree: int, h_nm: float = 5.0):
@@ -43,6 +47,27 @@ def _fixture(degree: int, h_nm: float = 5.0):
         floquet_constraint_mode="auto",
     )
     out_dir = Path(tempfile.mkdtemp(prefix=f"task033_p{degree}_"))
+    mesh_data = build_airbox_mesh_3d(cfg, out_dir)
+    V = fem.functionspace(
+        mesh_data.mesh,
+        element(
+            "N1curl",
+            mesh_data.mesh.basix_cell(),
+            degree,
+            dtype=default_real_type,
+        ),
+    )
+    return cfg, mesh_data, V
+
+
+def _fixed_target_fixture(degree: int, h_nm: float = 50.0):
+    cfg = replace(
+        target_stage4_config(degree=degree, h_nm=h_nm),
+        mesh_cell_type="hexahedron",
+        matrix_diagnostics_assemble_only=True,
+        unique_output=False,
+    )
+    out_dir = Path(tempfile.mkdtemp(prefix=f"task035b_p{degree}_"))
     mesh_data = build_airbox_mesh_3d(cfg, out_dir)
     V = fem.functionspace(
         mesh_data.mesh,
@@ -88,8 +113,8 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
         self.assertIn("distributed_match_periodic_records", source)
         self.assertIn("allreduce", source)
 
-    def test_p1_to_p4_plane_wave_coefficients_satisfy_sparse_constraints(self) -> None:
-        for degree in range(1, 5):
+    def test_p1_to_p6_plane_wave_coefficients_satisfy_sparse_constraints(self) -> None:
+        for degree in range(1, 7):
             with self.subTest(degree=degree):
                 cfg, mesh_data, V = _fixture(degree)
                 data = build_high_order_constraint_data(V, mesh_data, cfg)
@@ -101,12 +126,16 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                     data.num_edge_constraints + data.num_face_constraints,
                 )
                 # A partition-dependent Basix orientation can couple a trace
-                # row, but never beyond the degree-sized entity transform.
+                # row.  For p5/p6 the quadrilateral face transform reaches
+                # 2*(p-1) nonzeros, while edge transforms remain p-wide.
+                transform_row_width = max(degree, 2 * (degree - 1))
                 self.assertGreaterEqual(data.max_masters_per_slave, 1)
-                self.assertLessEqual(data.max_masters_per_slave, degree)
+                self.assertLessEqual(
+                    data.max_masters_per_slave, transform_row_width
+                )
                 self.assertLessEqual(
                     data.global_constraint_nnz,
-                    data.global_constraint_rows * degree,
+                    data.global_constraint_rows * transform_row_width,
                 )
 
                 field = fem.Function(V)
@@ -170,6 +199,22 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                 second_block.coefficient_transform,
             )
 
+    def test_non_exact_p4_trace_p6_interior_is_rejected(
+        self,
+    ) -> None:
+        base_cfg, mesh_data, _ = _fixture(4)
+        cfg = replace(
+            base_cfg,
+            nedelec_degree=6,
+            nedelec_trace_degree=4,
+            nedelec_interior_degree=6,
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "qualified fixed-trace contract is p5 trace / p6 interior",
+        ):
+            _create_nedelec_space(mesh_data.mesh, cfg)
+
     def test_p1_to_p4_public_dispatcher_finalizes_sparse_mpc(self) -> None:
         for degree in range(1, 5):
             with self.subTest(degree=degree):
@@ -202,6 +247,35 @@ class Task033HighOrderFloquetTopologyTests(unittest.TestCase):
                     result.orientation_factor_stats["mapping_kind"],
                     f"distributed_exact_{expected_mode}",
                 )
+                self.assertIsNotNone(result.phase_independent_topology)
+                self.assertEqual(
+                    result.phase_independent_topology.key.degree,
+                    degree,
+                )
+
+    def test_fixed_target_hexa_p5_p6_public_dispatcher_is_sparse(self) -> None:
+        for degree in (5, 6):
+            with self.subTest(degree=degree):
+                cfg, mesh_data, V = _fixed_target_fixture(degree)
+                result = build_double_floquet_mpc(V, mesh_data, cfg)
+                self.assertEqual(
+                    result.constraint_mode_resolved,
+                    f"topological_trace_p{degree}",
+                )
+                self.assertGreater(result.num_constraints, 0)
+                self.assertFalse(result.used_full_boundary_gather)
+                self.assertFalse(result.created_dense_boundary_square)
+                self.assertEqual(result.num_face_transform_fits, 0)
+                self.assertIsNotNone(result.phase_independent_topology)
+                self.assertEqual(
+                    result.phase_independent_topology.key.degree,
+                    degree,
+                )
+
+    def test_generic_hexa_p5_remains_fail_closed(self) -> None:
+        cfg, mesh_data, V = _fixture(5)
+        with self.assertRaises(NotImplementedError):
+            build_double_floquet_mpc(V, mesh_data, cfg)
 
 
 if __name__ == "__main__":

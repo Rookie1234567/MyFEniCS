@@ -1,0 +1,476 @@
+# Task035b 高阶 p6 内存构成与 exact static condensation
+
+## 2026-07-25 Review V2：setup/resource authority 与 accuracy authority 分离
+
+本轮新增 direct rank、cold/warm cache 和 iterative screen 的证据只回答
+setup、factor 生命周期、进程树内存与时间问题。它们没有重算或替代
+significant-channel accuracy authority。正式精度判断仍来自独立的
+same-error 记录；当前没有任何候选达到 `12/12 power + 12/12 complex
+amplitude`。因此下文的 `pass` 只能解释为 setup/resource profile pass，
+不能据此提升 candidate、启动 Hybrid 或形成 0.7 nm 正式资格。
+
+### h15 direct MPI1/2/4/8 实测 rank authority
+
+同一 h15 `(6,2,10)`、74,890 Full3D-equivalent DoF、16,880 rows、
+9,195,812 used matrix NNZ 的 cold direct 路径完成了 MPI1/2/4/8 对照：
+
+| MPI | process-tree peak GiB | PSS / USS sum GiB | common solver s | MUMPS symbolic+numeric s | true residual |
+|---:|---:|---:|---:|---:|---:|
+| 1 | **1.295** | 1.257 / 1.243 | 76.007 | 29.969 | `5.12e-12` |
+| 2 | 2.158 | 2.013 / 1.918 | 74.913 | 19.437 | `1.37e-11` |
+| 4 | 3.100 | 2.723 / 2.612 | 61.849 | 12.400 | `4.96e-12` |
+| 8 | 4.711 | 3.876 / 3.758 | **53.901** | **6.527** | `7.41e-12` |
+
+四点均为 0 swap，且 peak 出现在 MUMPS setup/solve 附近。MPI1 是该 rank
+study 的**最低实测 direct 点**，不是理论下限；MPI8 以相对 MPI1
+`3.64x` 的 process-tree RSS 换取 `1.41x` 的 wall-time 改善。此前
+`5.8–6.4 GiB` 是其他 source/lifecycle 上有效的全程测量，却不是
+74,890-DoF condensed 问题的最低内存，更不得当成 0.7 nm 外推锚点。
+
+该 rank record 不计算 12 个 significant channels。h15 的 `6/12 power +
+7/12 amplitude` 仍由独立 accuracy record 管理，不能因上述 residual、
+R/T closure 或资源 profile 通过而改写。
+
+### h13 MPI8 cold/warm 与 direct fill 非线性
+
+h13 `(6,2,12)` 的 canonical-orientation profile 在同一 setup identity 上
+测得 cold/warm process-tree peak 分别为 **5.030 / 5.016 GiB**，均为
+0 swap；这两个点同样不是内存下限。cold/warm 的 non-KSP build 分别为
+`19.410 / 6.696 s`，其 `2.899x` 只量化持久 cache reuse。因为不存在
+same-h13 pre-optimization cold baseline，不能把它写成 cold-code
+`2.899x` 优化结论。
+
+| MPI8 setup authority | rows | matrix NNZ | factor NNZ | fill | cold / warm peak GiB |
+|---|---:|---:|---:|---:|---:|
+| h15 canonical setup | 16,880 | 9,196,772 | 26,555,200 | 2.887 | 4.602 / 4.453 |
+| h13 canonical setup | 20,120 | 11,014,172 | 35,746,600 | 3.246 | 5.030 / 5.016 |
+
+h13/h15 的 rows 与 matrix NNZ 只增长 `1.192x / 1.198x`，factor NNZ 却
+增长 `1.346x`，fill 也从 2.887 升至 3.246。direct factor 成本因消元图、
+ordering 与 fill 非线性增长，不能只按 DoF 或 matrix NNZ 线性缩放。
+两行来自各自 hash-bound setup profile；它们不覆盖旧 accuracy-run 的
+source-stage-specific NNZ。
+
+h13 setup profile 只通过 residual、scalar closure、cache 和资源 Gate；
+它没有重算 significant channels。独立 accuracy authority 仍是
+`10/12 power + 10/12 amplitude`，所以 h13 仍非 candidate，且
+5.030/5.016 GiB 不能取得任何 accuracy credit。
+
+## 2026-07-24 Review V1：方向性恢复与 trace 判别的资源闭环
+
+Review V1 的正式 MPI8 恢复批次没有改变已经接受的 condensation、Floquet
+物理消元、tensor dedup 和 exact preallocation 结论。它在同一
+`p5 trace + p6 cell interior` 路径上只改变 structured z topology，并保留
+完整矩阵/因子/峰值/时间库存：
+
+| MPI8 路径 | Full3D-equivalent DoF / rows | matrix NNZ；avg/max width | factor NNZ / fill | process-tree peak | build / MUMPS setup / solve | significant power / amplitude |
+|---|---:|---:|---:|---:|---:|---:|
+| fixed h15 seed `(6,2,10)` | 74,890 / 16,880 | 9,195,812；544.78/965 | 27,916,600 / 3.036 | 5.803 GiB | 61.613 / 6.557 / 0.0358 s | 6/12；7/12 |
+| fixed directional-z h14 `(6,2,11)` | 82,315 / 18,500 | 10,104,512；546.19/965 | 31,347,000 / 3.102 | 6.376 GiB | 62.312 / 11.474 / 0.0315 s | 7/12；9/12 |
+| fixed directional-z h13 `(6,2,12)` | 89,740 / 20,120 | 11,013,212；547.38/965 | 36,273,200 / 3.294 | 6.411 GiB | 59.855 / 13.342 / 0.0334 s | **10/12；10/12** |
+| h14 最大 R5 slab 二分 `(6,2,12)` | 89,740 / 20,120 | 11,013,212；547.38/965 | 36,273,200 / 3.294 | 6.463 GiB | 60.068 / 13.570 / 0.0348 s | 5/12；9/12 |
+| global p6/h14 `(6,2,11)` | 92,850 / 27,080 | 21,110,096；779.55/1,398 | 67,325,792 / 3.189 | 12.587 GiB pair | 89.482 / 25.356 / 0.0627 s | 9/12；12/12 |
+
+表中 fixed 各点的 peak 是对应单候选全程 process-tree authority；global
+p6/h14 的 `12.587 GiB` 是同一进程内 p5/p6 pair 的全程峰值，其隔离的
+p6 solve-stage peak 为 `11.803 GiB`，两种口径不得直接混称为相同生命周期。
+所有点均为 0 swap、full explicit true residual `<=1.47e-11`，标量、
+normalized vector 和 selected field/interface Gate 通过。
+
+方向性 z 是明确正信号，但 h13 仍在 `T(-4,0)`、`R(-4,0)` 功率和
+`r(-5,0)`、`r(-4,0)` 复振幅上失败。因此 h13 是当前
+`<=90,000` 预算内**最佳测得恢复点**，不是 same-error candidate。
+R5-slab 二分虽然沿用相同 DoF/rows/NNZ，却使功率通过数退化到 5/12，并
+新增 `R(-7,0)` 功率失败；预先指定的 R5-slab split lane 已作为 controlled
+negative 关闭，不得用其局部误差下降掩盖通道计数回退。其他 node
+distributions 未被证明无效且未运行。
+
+global p6/h14 是完整 trace 的物理判别点：相对 fixed h14 增加 10,535
+Full3D-equivalent DoF、8,580 rows、11,005,584 matrix NNZ 和 35,978,792
+factor NNZ；复振幅达到 12/12，但功率仍仅 9/12，且 DoF 超过 90k 上限
+2,850。global p6/h14 的 pair peak 与 fixed h14 单候选 peak 生命周期不同，
+不得用两者之差声称 trace 的独立峰值增量。该点给出 same-mesh full-trace
+measured positive marginal，不构成候选，不定位 missing-mode subset，也不
+建立 trace 相对 mesh/DtN 的因果排序或授权把完整 p6 trace 截成任意 subset。
+
+物理 selective-trace capability audit 进一步冻结了这个边界。h14 只有
+7,685 DoF headroom，而完整 p6 trace 需要 10,535；h13 只有 260 DoF
+headroom，而完整 trace 需要 11,468。当前实现具有 reference-cell
+complement/Riesz、实际 Hermitian channel adjoint 和 coefficient proxy，
+但缺少 physical Piola/Riesz、missing-mode Floquet orbit/phase pullback、
+complement Schur、真实 enriched residual-weighted DWR 和 active global
+numbering。因此：
+
+```text
+status = capability_stop_not_run
+candidate_count = 0
+pde_run_count = 0
+selection_not_authorized = true
+```
+
+该 `pass=true` 只表示 SHA-bound fail-closed audit 有效，不表示 Lane B
+物理失败、subset 已选出或 PDE 已运行。
+
+## Condensed trace iterative：三个 formal screen 均为 controlled-negative
+
+Review V2 后已经用专用、programmatic profile 完成三个 MPI8 assembled
+screen；没有使用 raw PETSc options。三者都达到 200 iterations 上限且没有
+收敛，所以全部是有效的 controlled-negative resource evidence，不是
+factor-free success：
+
+| screen | factor inventory | final/initial residual | full recovered residual | process-tree peak | decision |
+|---|---|---:|---:|---:|---|
+| GMRES + Jacobi | global direct factor `0`；无 MUMPS symbolic/numeric | 0.8617 | 0.8617 | 3.921 GiB | nonconverged |
+| FGMRES + ASM(1)/ILU(0) | global direct factor `0`；local subdomain ILU active | 0.9997 | 0.9997 | 4.462 GiB | nonconverged |
+| FGMRES + physical z-slab/ILU(0) + DtN trace correction | global factor `0`；22,280 local factor rows + 80-dimensional coarse dense LU | 0.9963 | 0.9963 | 3.885 GiB | nonconverged |
+
+Jacobi 确实没有 global factor，但终端 residual 距离 screen 的 `<=1e-3`
+及正式 full residual `<=1e-9` Gate 很远，不能称为成功的 factor-free
+solver。ASM 与 physical profile 也不是 strictly factorless：前者含 local
+subdomain ILU，后者含 physical-slab ILU(0) 和 coarse dense LU。较低 RSS
+只能作为失败运行的资源观察值，不能叫“合格解的内存下限”，也不能进入
+0.7 nm resource model。
+
+因此当前结论不是“迭代法已证明不可行”，而是这三个 preconditioner lane
+已被可证伪地关闭。下一次 iterative PDE 必须先实现实质不同的
+spectral/auxiliary-space、block-Schur 或 Fourier/DtN harmonic
+preconditioner，并在小 fixture 上证明谱改善；单纯换成 matrix-free action
+不会修复已观测到的预条件器缺陷。
+
+## 2026-07-24 最终工程 authority：h15、tensor dedup 与 exact preallocation
+
+最新 MPI8 projection-signal run 同时提供了 h10 p5/p6 的当前工程 control。
+它在不改变物理结果的前提下使用 tensor dedup 和 exact PETSc preallocation：
+
+| h10 metric | p5 | p6 |
+|---|---:|---:|
+| FE DoF / active rows | 101,815 / 35,000 | 173,802 / 51,272 |
+| matrix / factor NNZ | 20,140,928 / 101,062,900 | 41,989,040 / 202,441,352 |
+| condensed build | 24.72 s | 102.32 s |
+| MUMPS setup / solve | 36.48 / 0.077 s | 102.54 / 0.167 s |
+| solver elapsed | 68.43 s | 227.61 s |
+
+完整 p5/p6 + projection/localization 总时长 `324.783 s`、process-tree peak
+`19.977 GiB`、0 swap。与旧 assembly-time pair 的 `1202.851 s` 相比，
+当前加速来自 tensor reuse、批量路径和 preallocation，不能解释为仅由矩阵
+rows 变化造成。
+
+h15 global p6 首次把 Full3D-equivalent DoF 降至 84,492：
+
+| h15 global p6 | value |
+|---|---:|
+| FE DoF / active rows | 84,492 / 24,704 |
+| matrix / factor NNZ | 19,207,136 / 59,616,320 |
+| average / maximum row width | 777.48 / 1,398 |
+| factor fill | 3.104 |
+| p6-stage / pair peak | 10.958 / 12.000 GiB |
+| build / MUMPS setup / solve | 396.93 / 21.53 / 0.057 s |
+| p6 elapsed | 446.71 s |
+| full explicit residual | `7.87e-12` |
+
+相对 h10 global p6 的 DoF/rows/matrix-NNZ/factor-NNZ 分别压缩
+`2.057x/2.075x/2.186x/3.401x`。但 significant diffraction power
+只有 `6/12`、complex amplitude `8/12` 通过，因此它是
+`controlled_negative_full_same_error_gate`，不是 selected candidate。
+
+同一 h15 mesh 上，fixed p5 trace + p6 interior 进一步得到 74,890 DoF：
+
+| fixed p5-trace/p6-interior h15 | original | tensor dedup | dedup + exact preallocation |
+|---|---:|---:|---:|
+| used matrix NNZ | 9,195,812 | 9,195,812 | 9,195,812 |
+| allocated / unused NNZ | 12,694,691 / 3,498,879 | 12,694,691 / 3,498,879 | **9,484,580 / 288,768** |
+| PETSc mallocs | 13,856 | 13,856 | **0** |
+| factor NNZ | 27,916,600 | 27,916,600 | 27,916,600 |
+| build | 231.15 s | 83.71 s | **61.61 s** |
+| total elapsed | 269.72 s | 121.65 s | **95.96 s** |
+| process-tree peak | 6.105 GiB | 6.001 GiB | **5.803 GiB** |
+
+它处于 65k–75k 优选带，且 relative h10-control 的 scalar/vector 与 frozen
+field probes 通过；但 significant power/amplitude 只有 `6/12`、`7/12`
+通过。exact preallocation 是明确工程正结果，却不改变
+`actual_fixed_trace_controlled_negative` 的科学分类。
+
+当前结论是：rows 较少但内存较高并非理论必然。真正移除完整 matrix、
+inactive trace/interior rows、重复 tensor、preallocation 浪费和 factor
+生命周期后，NNZ、factor、peak 与时间都下降；剩余 blocker 是 diffraction
+channel 精度，而不是 MUMPS 内存异常。
+
+## 2026-07-24 p5-trace N62：资源下降、非 exact-sequence 受控负结果
+
+第二个 physical local-p 候选使用 p5 shared trace、190-cell p4 interior 和
+按 `eta_p5p6` 排名选出的 62-cell p6 interior。这是 `<=90k` 合同内 p6
+interior 最多的候选：
+
+| MPI8 h10 metric | global p6 canonical | p5-trace N62 | change |
+|---|---:|---:|---:|
+| Full3D-equivalent active DoF | 173,802 | **89,755** | -48.36% |
+| solved rows（含 80 DtN） | 51,272 | **35,000** | -31.74% |
+| matrix NNZ | 41,989,040 | **20,140,928** | -52.03% |
+| factor NNZ | 211,651,232 | **101,062,900** | -52.25% |
+| process-tree peak | 15.964 GiB | **9.271 GiB** | -41.93% |
+| direct condensed build | 770.89 s | **344.16 s** | -55.36% |
+| MUMPS setup / solve | 142.12 / 0.202 s | **37.20 / 0.074 s** | -73.82% / -63.21% |
+| total solve-case elapsed | 967.09 s | **438.17 s** | -54.69% |
+
+矩阵 35,000 rows、20,140,928 NNZ，average/max row width
+`575.46/965`；factor fill 为 `5.018`。full explicit true residual
+`1.5721e-12`、MPI8、0 swap，完整 p6 matrix、inactive p6 rows 和完整 trace
+matrix 均未分配。
+
+正式精度却严重失败：
+
+| observable / Gate | global p6 | candidate | p5-p6 tolerance |
+|---|---:|---:|---:|
+| R00_total | 0.0007537612 | 0.9439624498 | 0.0000319529 |
+| R_total | 0.0007628815 | 0.9608950795 | 0.0000320046 |
+| T_total | 0.6027016340 | 0.0160844643 | 0.0002176801 |
+| A_closure | 0.3965354845 | 0.0230204562 | 0.0001856755 |
+| normalized R/T/Aclosure | radius 1.732 | 30187.729 | — |
+| volume/interface complex-E | bands 0.4666%/0.4862% | 101.720%/101.039% | — |
+
+12 个 significant diffraction channels 的 power 和 complex amplitude Gate
+也失败。后续 local tensor de Rham 审计查明 `p5 trace + p4 interior`
+low space 的 expected gradient dimension 为 178，但 measured curl nullity
+只有 112，缺失 66 个 gradient modes。它虽共享 trace 且 linear solve
+精确，却没有通过 Maxwell 离散所需的 local exact-sequence prerequisite。
+
+因此该 PDE 保留为 `controlled_negative_non_exact_sequence_space`，不能再
+作为与 p4-trace N105 独立的有效 accuracy negative。N18 使用相同的错误
+low space，仍不运行。fixed-mesh lane 只对新的 exact-sequence-conforming、
+物理减行 trace/local-p 构造重新开放；p4 fixed-trace 子路线保持关闭。正式
+记录：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p5trace_p4low_p6high_n62_h10_mpi8.json`。
+结构审计：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p_exact_sequence_structural_audit.json`。
+
+## 2026-07-24 真实 regionwise-p 候选：资源正信号、精度受控负结果
+
+Task035b 已在同一 h10 hexa 网格和 classifier geometry hash 上正式运行
+`p4 shared trace + 147-cell p4 interior + 105-cell p6 interior`。这是真实
+physical local-p：inactive p6 interior modes 没有进入矩阵，完整 p6 matrix
+和完整 trace matrix 都未分配；低阶 cell 直接调用 p4 kernel，不是先算 p6
+再把系数置零。
+
+| MPI8 h10 metric | global p6 canonical | regionwise candidate | change |
+|---|---:|---:|---:|
+| Full3D-equivalent active DoF | 173,802 | **88,994** | -48.80% |
+| solved rows（含 80 DtN） | 51,272 | **21,824** | -57.44% |
+| matrix NNZ | 41,989,040 | **8,184,464** | -80.51% |
+| factor NNZ | 211,651,232 | **42,888,832** | -79.74% |
+| process-tree peak | 15.964 GiB | **6.072 GiB** | -61.97% |
+| direct condensed build | 770.89 s | **175.43 s** | -77.24% |
+| MUMPS setup / solve | 142.12 / 0.202 s | **11.45 / 0.038 s** | -91.95% / -81.16% |
+| total solve-case elapsed | 967.09 s | **222.34 s** | -77.01% |
+
+candidate 达到 `<=90,000` minimum DoF 目标；相对 global p6 为
+`1.953x` 压缩，略低于单独的 `>=2x` 表述，但 minimum 合同是二者满足其一。
+MUMPS factor 释放后，8-rank simultaneous RSS 从 6,162.70 MiB 降到
+4,310.28 MiB，实际归还 1,852.42 MiB。由此确认此前“rows 下降但内存不降”
+不是不可避免的高阶现象；当完整 matrix、inactive rows 和 factor 生命周期
+真正移除后，NNZ、factor、memory 与时间都按正确方向下降。
+
+资源通过不等于精度通过。本候选 full explicit true residual 为
+`1.1657e-11`，geometry/tag/periodic/orientation Gate 全部通过，但所有正式
+精度层级均为负：
+
+| observable / Gate | global p6 | candidate | same-code p5-p6 tolerance | status |
+|---|---:|---:|---:|---|
+| R00_total | 0.0007537612 | 0.0010465702 | 0.0000319529 | fail |
+| R_total | 0.0007628815 | 0.0010605766 | 0.0000320046 | fail |
+| T_total | 0.6027016340 | 0.5988458026 | 0.0002176801 | fail |
+| A_closure | 0.3965354845 | 0.4000936209 | 0.0001856755 | fail |
+| normalized R/T/Aclosure vector | reference radius 1.732 | 27.704 | — | fail |
+| significant orders / complex amplitudes | 12 channels | 12/12 fail | p5-p6 spread | fail |
+| selected volume complex-E relative L2 | — | 9.8467% | 0.5183% | fail |
+| material-interface complex-E relative L2 | — | 9.7778% | 0.5220% | fail |
+
+因此 `p4 fixed trace + p4/p6 interior` lane 已按连续研究规则关闭，记录状态为
+`actual_regionwise_p_controlled_negative`，不得接入 Hybrid。负结果表明当前
+主要精度瓶颈是 p4 shared trace，而不是 MUMPS 或 residual。
+
+下一条可检验路线改为 `p5 shared trace + p4 low interior + selected p6
+interior`。其 Full3D-equivalent 预算为
+`68,551 + 342 * N_p6_cells`：`N_p6_cells <= 62` 可保持 `<=90k`，
+`N_p6_cells <= 18` 可保持 `<=75k`。这需要先资格化 p5-trace/p4-interior
+低阶 local kernel 与对 p5-trace/p6-interior空间的 exact embedding；在通过
+单元/MPI 等价测试前不得启动下一次 heavy PDE。
+
+正式记录：
+`benchmarks/cases/095_high_order_local_hp_resource_envelope/records/regionwise_p4trace_p6interior_h10_mpi8.json`。
+
+## 2026-07-24 assembly-time condensation 与生命周期闭环
+
+旧 prototype “自由度下降但内存没有同比下降”的主因已经消除。当前
+research-only 路径在 cell assembly 时直接形成
+`C_K^H (A_tt - A_ti A_ii^-1 A_it) C_K`，只分配最终 Floquet-independent
+trace + DtN 系统；不再先装配 173,802-row full FE matrix，也不分配
+60,402-row full trace Schur、embedded slave identity rows 或
+base-to-augmented matrix copy。
+
+| MPI8 p6/h10 路径 | active rows | matrix NNZ | formal peak | peak 所在阶段 |
+|---|---:|---:|---:|---|
+| global full p6 | 173,882 | 210,353,120 | 35.024 GiB | R5 localization，factor 仍保留 |
+| post-assembly exact condensation | 60,482 | 52,058,162 | 29.212 GiB | R5 localization，full/Schur 生命周期重叠 |
+| assembly-time，factor 保留 | 51,272 | 41,989,040 | 16.998 GiB | R5 localization |
+| assembly-time，销毁 factor、未 trim heap | 51,272 | 41,989,040 | 16.351 GiB | R5 localization |
+| assembly-time，销毁 factor + heap trim | 51,272 | 41,989,040 | **15.964 GiB** | **MUMPS/求解验证阶段** |
+
+相对 global full p6，最终 active rows 减少 70.51%，assembled NNZ
+减少 80.04%，全程进程树 memory authority 减少 54.42%。最终系统仍由
+173,802 个 p6 FE unknown 的 exact cell Schur 得到；`51,272 =
+51,192 independent trace + 80 DtN auxiliary`，不是 zero masking。
+
+最后一条正式记录绑定 clean source
+`0f8924ac4bacc8a17dc67fb0af2871ea61471c56`，固定 mesh、tag 和 geometry
+hash，使用 MPI8、0 swap。MUMPS/求解验证阶段外部采样峰值为
+16,347.64 MiB；释放 KSP/MUMPS factor、system Mat、RHS 和 solution 后，
+8 个 rank 的 `glibc malloc_trim(0)` 均成功：
+
+| lifecycle 点 | simultaneous MPI rank RSS |
+|---|---:|
+| heap trim 前 | 16,182.89 MiB |
+| heap trim 后 | 11,233.94 MiB |
+| 实际归还 Linux | **4,948.95 MiB** |
+| field output 后 | 12,146.61 MiB |
+| R/T/Avolume 后 | 12,548.60 MiB |
+| 随后的 R5 localization 外部峰值 | 13,311.62 MiB |
+
+因此后处理不再与已释放的 MUMPS factor heap pages 叠加，也不再超过
+MUMPS 阶段。`malloc_trim` 只在
+`direct_release_solver_before_postprocess=True` 的资格化
+assembly-time research 路径执行；ordinary default 仍为 `False`。
+
+### 当前正式数值与成本
+
+| 项目 | MPI8 p6/h10 assembly-time + trim |
+|---|---:|
+| full FE / solved rows | 173,802 / 51,272 |
+| matrix / factor NNZ | 41,989,040 / 211,651,232 |
+| average / maximum row width | 818.95 / 1,398 |
+| direct condensed build | 770.89 s |
+| compiled cell-kernel evaluations | 285.37 s |
+| local Schur | 26.30 s |
+| local sparse insertion | 260.84 s |
+| final parallel Mat assembly | 396.33 s |
+| MUMPS setup / solve | 142.12 s / 0.202 s |
+| p6 elapsed | 967.09 s |
+| full explicit true residual | `1.3574e-11` |
+| R / T / A_volume | `0.000762881475137` / `0.602701633985772` / `0.396535484542744` |
+| port-volume closure error | `3.653e-12` |
+
+装配仍比 MUMPS 慢，但已经从旧 full p6 base assembly 的约
+2,195.6 s 降到 direct condensed build 770.9 s。剩余热点不是矩阵规模
+错误，而是 Python 驱动的逐 cell kernel/Schur/Mat insertion 以及 PETSc
+final assembly；后续性能 lane 应把这些操作编译化或批量化，不能通过
+放宽 residual/R/T/A Gate 换取时间。
+
+### 新 evidence
+
+- canonical pass:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json`
+- retained-factor lifecycle:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_retained_postprocess_mpi8.json`
+- factor destroyed but allocator not trimmed:
+  `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_released_without_heap_trim_mpi8.json`
+- raw canonical evidence:
+  `benchmarks/artifacts/task035/actual_global_r5/hexahedron_p1_p6_h10_pols_mpi8_20260724T030451Z_single_mesh_pair_condense_p6_assembly_time_p6_independent_p6/`
+
+## 历史 post-assembly prototype
+
+以下部分保留最初 post-assembly condensation 的真实对照，用于解释为什么
+仅降低 solved rows、但保留 full assembly 和 factor 生命周期时，内存收益
+有限；它不再代表当前最优实现。
+
+| 项目 | global p6 full | exact p6 condensed | 结论 |
+|---|---:|---:|---|
+| source SHA | `c1040a0197d3e113576c9dc1e8d3ae13a5fa66b2` | `0f4b786d618c37e1c572a4f596a9235e53d73161` | 两者均为 clean committed SHA |
+| mesh | h10 hexa `(6,3,14)`, 252 cells | 相同 | mesh/cell-tag/facet-tag hashes 相同 |
+| MPI | 8 | 8 | formal resource identity 相同 |
+| FE / augmented rows | 173,802 / 173,882 | 173,802 / 60,482 active | 113,400 cell-interior rows 被物理消去 |
+| matrix NNZ | 210,353,120 | 52,058,162 | -75.25% |
+| factor NNZ | 386,625,292 | 243,270,308 | -37.08% |
+| fill | 1.838 | 4.673 | Schur 更稠密 |
+| formal memory authority | 35.024 GiB | 29.212 GiB | -16.59% |
+| full explicit residual | `2.018e-11` | `1.959e-11` | 均通过 `1e-9` Gate |
+| p6 elapsed | 2,526.7 s | 2,495.3 s | 无可信 wall-time 加速 |
+
+这是两个 clean SHA 上的单次 MPI8 实测对照。ordinary full-system path 在新
+SHA 上默认关闭 condensation，矩阵 rows/NNZ 和 official observables 均保持
+一致；但 MUMPS ordering/factor inventory 存在 run-to-run 波动，例如两次
+p5 control 的 factor NNZ 相差约 5.8%。因此 factor NNZ 和 peak-memory
+降幅是当前实测工程信号，不应写成统计置信区间或逐位确定量。
+
+## 身份与实现边界
+
+本结果只研究 Task034 fixed rectangular block grating，不含任何不规则几何。
+condensed solve 在同一实际 mesh instance 上执行，并保持：
+
+- mesh SHA-256
+  `f0eef2aa28e86014b661a921993bcfd45e6db1892da350402f2be11ec64dd857`；
+- cell-tag SHA-256
+  `42f511fc7ffddcbc2972d641018e16a845f48c11067ccd9a9686695ad5cfc131`；
+- facet-tag SHA-256
+  `0adbcfed35e1840460f826cb1ca1695ed87c0c3960e2073377d2f50871c3c0bd`；
+- exact Basix periodic orientation/mapping、80 个 DtN auxiliary unknowns；
+- ordinary `stage4_cell_static_condensation=False` default 不变。
+
+实现逐 cell 形成
+
+```text
+S = A_tt - sum_K A_ti(K) A_ii(K)^-1 A_it(K)
+g = b_t  - sum_K A_ti(K) A_ii(K)^-1 b_i(K)
+```
+
+求解 60,482-row trace system 后重新逐 cell 恢复 113,400 个 interior
+unknowns，再用原完整 173,882-row operator 显式重算 residual。没有
+max-p zero masking，也没有保留 all-cell dense factor cache。
+
+## 为什么 DoF 大降但 MUMPS 内存没有同比下降
+
+实测给出四个互补原因：
+
+1. 当前 prototype 从已经装配的完整 p6 sparse matrix 开始，未消除
+   2,195.58 s full base assembly 及其生命周期峰值。
+2. trace Schur 的 average row width 为 860.7；虽然低于 full p6 的
+   1,209.7，但相对 60,482 rows 已显著稠密。
+3. factor fill 从 1.838 增到 4.673，所以 rows -65.22% 只换来
+   factor NNZ -37.08%。
+4. Schur build 期间 full matrix、transpose copy 和 condensed matrix
+   存在生命周期重叠；正式 memory authority 因而只从 35.024 GiB 降到
+   29.212 GiB。
+
+Schur build 共 84.69 s：
+
+| 子阶段 | MPI8 max time |
+|---|---:|
+| transpose | 1.69 s |
+| local dense solves | 15.22 s |
+| Schur insertion | 26.14 s |
+| final parallel assembly | 57.99 s |
+| full recovery | 7.75 s |
+
+子阶段存在重叠，不能把这些 max-time 数简单相加解释为总 wall time。
+
+## 物理等价 Gate
+
+| observable | global p6 full | exact p6 condensed | absolute delta |
+|---|---:|---:|---:|
+| R_total | 0.000762881475130 | 0.000762881475131 | `9.41e-16` |
+| T_total | 0.602701633983078 | 0.602701633983515 | `4.38e-13` |
+| A_volume | 0.396535484541640 | 0.396535484541834 | `1.94e-13` |
+
+该历史 lane 是明确正信号：物理等价、full residual、rows、NNZ、
+factor NNZ 和 memory 均通过。后续 assembly-time 路径已经达到“完整 p6
+global matrix 不存在”，但仍不构成 local-p/regionwise-p 完成证明。
+
+## Evidence
+
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p5_p6_h10_p6_condensed_mpi8.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_direct_mpi1_2_4_8_resource_floor_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v2.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h13_canonical_orientation_symbolic_numeric_cold_warm_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_factor_free_iterative_mpi8_v1.json`
+- `benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json`
+- raw ignored evidence:
+  `benchmarks/artifacts/task035/actual_global_r5/hexahedron_p5_p6_h10_pols_mpi8_20260723T143152Z_single_mesh_pair_condense_p6/`
