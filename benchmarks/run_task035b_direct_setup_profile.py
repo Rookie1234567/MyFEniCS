@@ -319,6 +319,7 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "canonical_orientation_class_reuse": bool(
                 args.canonical_orientation_class_reuse
             ),
+            "petsc_direct_factor_event_timing": True,
             "persistent_sha_bound_raw_tensor_cache": True,
             "persistent_sha_bound_condensed_class_cache": True,
             "persistent_sha_mesh_mode_trace_bound_dtn_surface_cache": (
@@ -464,6 +465,7 @@ def _direct_config(
         stage4_floquet_slave_elimination=True,
         stage4_condensed_iterative_profile=None,
         stage4_retain_dual_recovery_context=False,
+        stage4_petsc_factor_event_timing=True,
         stage4_fast_fixed_trace_setup=True,
         stage4_persistent_fixed_trace_element_cache=True,
         stage4_affine_isotropic_reference_tensor=True,
@@ -897,6 +899,9 @@ def _extract_setup_evidence(
         )
         or {}
     )
+    petsc_factor_event_timing = (
+        summary.get("stage4_dtn_petsc_factor_event_timing") or {}
+    )
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
     factor = summary.get("stage4_dtn_factor_inventory") or {}
@@ -1013,6 +1018,9 @@ def _extract_setup_evidence(
             "condensed_iterative_profile": config.get(
                 "stage4_condensed_iterative_profile"
             ),
+            "petsc_factor_event_timing": config.get(
+                "stage4_petsc_factor_event_timing"
+            ),
             "typed_direct_petsc_options": config.get(
                 "petsc_extra_options"
             ),
@@ -1035,6 +1043,7 @@ def _extract_setup_evidence(
                 {},
             ),
         },
+        "petsc_factor_event_timing": petsc_factor_event_timing,
         "cell_static_raw_tensor_evaluations": cell.get(
             "raw_tensor_kernel_evaluation_count"
         ),
@@ -1052,8 +1061,9 @@ def _extract_setup_evidence(
                 "summed with it"
             ),
             "mumps_symbolic_numeric": (
-                "current common solver exposes their combined KSPSetUp time; "
-                "separate symbolic and numeric values are unavailable"
+                "explicit direct-profile PETSc built-in event deltas; "
+                "missing or inconsistent MatLUFactorSym/MatLUFactorNum "
+                "events fail the formal profile instead of being inferred"
             ),
             "deferred_surface_jit": (
                 "surface form/JIT plus persistent-cache setup is measured "
@@ -1298,6 +1308,305 @@ def _extract_setup_evidence(
     }
 
 
+def _petsc_factor_event_timing_formal_checks(
+    evidence: dict[str, Any],
+    *,
+    expected_mpi_size: int,
+) -> dict[str, bool]:
+    """Independently validate the PETSc symbolic/numeric split.
+
+    The profiler does not trust the core's ``split_available`` flag alone.
+    It rechecks every rank packet, the collective content hash, event counts,
+    finite time bounds, and the extracted common-summary maxima.
+    """
+
+    config = evidence.get("configuration_identity") or {}
+    audit = evidence.get("petsc_factor_event_timing") or {}
+    timings = evidence.get("timings_seconds") or {}
+    mumps = timings.get("mumps") or {}
+    event_names = {
+        "symbolic": "MatLUFactorSym",
+        "numeric": "MatLUFactorNum",
+        "pc_setup": "PCSetUp",
+    }
+    packets = audit.get("per_rank")
+    packets = packets if isinstance(packets, list) else []
+
+    def _finite_nonnegative(value: Any) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+        )
+
+    def _close(left: Any, right: Any) -> bool:
+        if not _finite_nonnegative(left) or not _finite_nonnegative(
+            right
+        ):
+            return False
+        return math.isclose(
+            float(left),
+            float(right),
+            rel_tol=1.0e-10,
+            abs_tol=1.0e-12,
+        )
+
+    packet_structure_valid = (
+        len(packets) == int(expected_mpi_size)
+        and [
+            packet.get("comm_rank")
+            if isinstance(packet, dict)
+            else None
+            for packet in packets
+        ]
+        == list(range(int(expected_mpi_size)))
+        and all(
+            isinstance(packet, dict)
+            and packet.get("comm_size") == int(expected_mpi_size)
+            and packet.get("world_rank") == index
+            and packet.get("factor_solver_type") == "mumps"
+            and packet.get("logging_active_after_begin") is True
+            and not packet.get("errors")
+            and _finite_nonnegative(packet.get("setup_wall_seconds"))
+            for index, packet in enumerate(packets)
+        )
+    )
+    counts_by_event: dict[str, list[int]] = {
+        role: [] for role in event_names
+    }
+    seconds_by_event: dict[str, list[float]] = {
+        role: [] for role in event_names
+    }
+    event_values_valid = packet_structure_valid
+    nested_time_bounds_valid = packet_structure_valid
+    for packet in packets:
+        if not isinstance(packet, dict):
+            event_values_valid = False
+            nested_time_bounds_valid = False
+            continue
+        packet_events = packet.get("events")
+        if not isinstance(packet_events, dict):
+            event_values_valid = False
+            nested_time_bounds_valid = False
+            continue
+        local_seconds: dict[str, float] = {}
+        for role, event_name in event_names.items():
+            event = packet_events.get(role)
+            if not isinstance(event, dict):
+                event_values_valid = False
+                continue
+            count = event.get("count")
+            seconds = event.get("seconds")
+            if (
+                event.get("event_name") != event_name
+                or isinstance(count, bool)
+                or not isinstance(count, int)
+                or count <= 0
+                or not _finite_nonnegative(seconds)
+            ):
+                event_values_valid = False
+                continue
+            counts_by_event[role].append(int(count))
+            seconds_by_event[role].append(float(seconds))
+            local_seconds[role] = float(seconds)
+        if set(local_seconds) != set(event_names):
+            nested_time_bounds_valid = False
+            continue
+        symbolic_numeric = (
+            local_seconds["symbolic"] + local_seconds["numeric"]
+        )
+        pc_setup = local_seconds["pc_setup"]
+        wall = float(packet["setup_wall_seconds"])
+        tolerance = max(
+            1.0e-12,
+            1.0e-8 * max(1.0, symbolic_numeric, pc_setup, wall),
+        )
+        nested_time_bounds_valid &= (
+            symbolic_numeric <= pc_setup + tolerance
+            and pc_setup <= wall + tolerance
+        )
+
+    counts_positive_consistent = (
+        event_values_valid
+        and all(
+            len(counts) == int(expected_mpi_size)
+            and len(set(counts)) == 1
+            for counts in counts_by_event.values()
+        )
+        and counts_by_event["symbolic"]
+        == counts_by_event["numeric"]
+    )
+    expected_hash = None
+    if packets:
+        try:
+            expected_hash = hashlib.sha256(
+                json.dumps(
+                    packets,
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+        except (TypeError, ValueError):
+            expected_hash = None
+    collective_hash_valid = (
+        isinstance(expected_hash, str)
+        and audit.get("collective_rank_payload_sha256")
+        == expected_hash
+    )
+    ordered_world_ranks = [
+        packet.get("world_rank") if isinstance(packet, dict) else None
+        for packet in packets
+    ]
+    rank_identity_valid = (
+        packet_structure_valid
+        and audit.get("rank_count") == int(expected_mpi_size)
+        and audit.get("ordered_world_ranks")
+        == ordered_world_ranks
+    )
+
+    event_summary_valid = event_values_valid
+    audit_event_summaries = audit.get("events")
+    if not isinstance(audit_event_summaries, dict):
+        event_summary_valid = False
+    else:
+        for role, event_name in event_names.items():
+            summary = audit_event_summaries.get(role)
+            counts = counts_by_event[role]
+            seconds = seconds_by_event[role]
+            if (
+                not isinstance(summary, dict)
+                or summary.get("event_name") != event_name
+                or summary.get("count_per_rank") != counts
+                or summary.get("seconds_per_rank") != seconds
+                or summary.get("count_min")
+                != (min(counts) if counts else None)
+                or summary.get("count_max")
+                != (max(counts) if counts else None)
+                or summary.get("count_sum")
+                != (sum(counts) if counts else None)
+                or summary.get("count_consistent_across_ranks")
+                is not True
+                or summary.get("count_positive_on_all_ranks") is not True
+                or summary.get(
+                    "seconds_finite_nonnegative_on_all_ranks"
+                )
+                is not True
+                or (
+                    seconds
+                    and not _close(
+                        summary.get("seconds_min"),
+                        min(seconds),
+                    )
+                )
+                or (
+                    seconds
+                    and not _close(
+                        summary.get("seconds_max"),
+                        max(seconds),
+                    )
+                )
+                or (
+                    seconds
+                    and not _close(
+                        summary.get("seconds_sum"),
+                        sum(seconds),
+                    )
+                )
+            ):
+                event_summary_valid = False
+
+    symbolic_max = (
+        max(seconds_by_event["symbolic"])
+        if seconds_by_event["symbolic"]
+        else None
+    )
+    numeric_max = (
+        max(seconds_by_event["numeric"])
+        if seconds_by_event["numeric"]
+        else None
+    )
+    pc_setup_max = (
+        max(seconds_by_event["pc_setup"])
+        if seconds_by_event["pc_setup"]
+        else None
+    )
+    summary_maxima_valid = (
+        _close(audit.get("symbolic_seconds_max"), symbolic_max)
+        and _close(audit.get("numeric_seconds_max"), numeric_max)
+        and _close(audit.get("pc_setup_seconds_max"), pc_setup_max)
+        and _close(mumps.get("symbolic"), symbolic_max)
+        and _close(mumps.get("numeric"), numeric_max)
+    )
+    combined_setup = mumps.get(
+        "symbolic_numeric_combined_ksp_setup"
+    )
+    combined_bounds_valid = (
+        _finite_nonnegative(combined_setup)
+        and _finite_nonnegative(pc_setup_max)
+        and float(pc_setup_max)
+        <= float(combined_setup)
+        + max(1.0e-12, 1.0e-8 * max(1.0, float(combined_setup)))
+    )
+
+    expected_core_checks = {
+        "requested_direct_only",
+        "logging_active_after_begin_on_all_ranks",
+        "no_snapshot_errors_on_any_rank",
+        "communicator_rank_identity_valid",
+        "event_values_finite_nonnegative_on_all_ranks",
+        "event_counts_consistent_across_ranks",
+        "event_counts_positive_on_all_ranks",
+        "symbolic_numeric_counts_match",
+        "symbolic_plus_numeric_within_pc_setup_on_all_ranks",
+        "pc_setup_within_setup_wall_on_all_ranks",
+    }
+    core_checks = audit.get("checks")
+    core_checks_valid = (
+        isinstance(core_checks, dict)
+        and expected_core_checks.issubset(core_checks)
+        and all(value is True for value in core_checks.values())
+    )
+    return {
+        "petsc_factor_event_timing_opt_in": (
+            config.get("petsc_factor_event_timing") is True
+        ),
+        "petsc_factor_event_timing_schema_and_status": (
+            audit.get("schema_version")
+            == "task035b.petsc-direct-factor-event-timing.v1"
+            and audit.get("requested") is True
+            and audit.get("enabled") is True
+            and audit.get("direct_only") is True
+            and audit.get("iterative_profile") is None
+            and audit.get("factor_solver_type") == "mumps"
+            and audit.get("status")
+            == "measured_symbolic_numeric_split"
+            and audit.get("split_available") is True
+            and audit.get("event_names") == event_names
+            and audit.get("ordinary_default_changed") is False
+        ),
+        "petsc_factor_event_rank_identity": rank_identity_valid,
+        "petsc_factor_event_collective_hash": collective_hash_valid,
+        "petsc_factor_event_values_finite_nonnegative": (
+            event_values_valid
+        ),
+        "petsc_factor_event_counts_positive_consistent": (
+            counts_positive_consistent
+        ),
+        "petsc_factor_event_nested_time_bounds": (
+            nested_time_bounds_valid
+        ),
+        "petsc_factor_event_summary_matches_rank_packets": (
+            event_summary_valid and summary_maxima_valid
+        ),
+        "petsc_factor_event_within_combined_ksp_setup": (
+            combined_bounds_valid
+        ),
+        "petsc_factor_event_core_checks_all_true": core_checks_valid,
+    }
+
+
 def _classify_profile(
     evidence: dict[str, Any],
     telemetry: dict[str, Any],
@@ -1328,6 +1637,10 @@ def _classify_profile(
     canonical_core = canonical_orientation.get("core") or {}
     expected_canonical_orientation_class_reuse = bool(
         expected_canonical_orientation_class_reuse
+    )
+    factor_event_checks = _petsc_factor_event_timing_formal_checks(
+        evidence,
+        expected_mpi_size=int(expected_mpi_size),
     )
     topology = {
         "fixed_rectangular_hexa_h15": (
@@ -1725,6 +2038,7 @@ def _classify_profile(
             isinstance(smaps_swap, (int, float))
             and float(smaps_swap) == 0.0
         ),
+        **factor_event_checks,
         **topology,
         **cache_checks,
     }

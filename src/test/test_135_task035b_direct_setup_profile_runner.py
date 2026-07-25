@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -12,13 +15,119 @@ from benchmarks.run_task035b_direct_setup_profile import (
     _dry_run_plan,
     _extract_setup_evidence,
     _parse_args,
+    _petsc_factor_event_timing_formal_checks,
     _telemetry_summary,
     _validate_source_snapshot,
 )
 from src.common.config_3d import target_stage4_config
 
 
+def _factor_event_audit() -> dict:
+    event_names = {
+        "symbolic": "MatLUFactorSym",
+        "numeric": "MatLUFactorNum",
+        "pc_setup": "PCSetUp",
+    }
+    packets = []
+    for rank in range(8):
+        symbolic = 0.50 + 1.0e-3 * rank
+        numeric = 0.70 + 1.0e-3 * rank
+        pc_setup = 1.30 + 2.0e-3 * rank
+        packets.append(
+            {
+                "comm_rank": rank,
+                "comm_size": 8,
+                "world_rank": rank,
+                "logging_active_before": False,
+                "logging_started_by_profile": True,
+                "logging_active_after_begin": True,
+                "setup_wall_seconds": 6.0,
+                "factor_solver_type": "mumps",
+                "events": {
+                    "symbolic": {
+                        "event_name": "MatLUFactorSym",
+                        "count": 1,
+                        "seconds": symbolic,
+                    },
+                    "numeric": {
+                        "event_name": "MatLUFactorNum",
+                        "count": 1,
+                        "seconds": numeric,
+                    },
+                    "pc_setup": {
+                        "event_name": "PCSetUp",
+                        "count": 1,
+                        "seconds": pc_setup,
+                    },
+                },
+                "errors": [],
+            }
+        )
+    events = {}
+    for role, event_name in event_names.items():
+        counts = [packet["events"][role]["count"] for packet in packets]
+        seconds = [
+            packet["events"][role]["seconds"] for packet in packets
+        ]
+        events[role] = {
+            "event_name": event_name,
+            "count_per_rank": counts,
+            "count_min": min(counts),
+            "count_max": max(counts),
+            "count_sum": sum(counts),
+            "count_consistent_across_ranks": True,
+            "count_positive_on_all_ranks": True,
+            "seconds_per_rank": seconds,
+            "seconds_min": min(seconds),
+            "seconds_max": max(seconds),
+            "seconds_sum": sum(seconds),
+            "seconds_finite_nonnegative_on_all_ranks": True,
+        }
+    packet_sha = hashlib.sha256(
+        json.dumps(
+            packets,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    checks = {
+        "requested_direct_only": True,
+        "logging_active_after_begin_on_all_ranks": True,
+        "no_snapshot_errors_on_any_rank": True,
+        "communicator_rank_identity_valid": True,
+        "event_values_finite_nonnegative_on_all_ranks": True,
+        "event_counts_consistent_across_ranks": True,
+        "event_counts_positive_on_all_ranks": True,
+        "symbolic_numeric_counts_match": True,
+        "symbolic_plus_numeric_within_pc_setup_on_all_ranks": True,
+        "pc_setup_within_setup_wall_on_all_ranks": True,
+    }
+    return {
+        "schema_version": "task035b.petsc-direct-factor-event-timing.v1",
+        "requested": True,
+        "enabled": True,
+        "direct_only": True,
+        "iterative_profile": None,
+        "factor_solver_type": "mumps",
+        "status": "measured_symbolic_numeric_split",
+        "split_available": True,
+        "event_names": event_names,
+        "rank_count": 8,
+        "ordered_world_ranks": list(range(8)),
+        "collective_rank_payload_sha256": packet_sha,
+        "per_rank": packets,
+        "events": events,
+        "symbolic_seconds_max": events["symbolic"]["seconds_max"],
+        "numeric_seconds_max": events["numeric"]["seconds_max"],
+        "pc_setup_seconds_max": events["pc_setup"]["seconds_max"],
+        "checks": checks,
+        "ordinary_default_changed": False,
+    }
+
+
 def _worker_result() -> dict:
+    factor_event_audit = _factor_event_audit()
     return {
         "status": "worker_completed_with_summary",
         "rank_failures": [],
@@ -65,6 +174,15 @@ def _worker_result() -> dict:
                 "factor_nnz": 123456,
             },
             "stage4_dtn_ksp_setup_seconds": 6.0,
+            "stage4_dtn_mumps_symbolic_seconds": (
+                factor_event_audit["symbolic_seconds_max"]
+            ),
+            "stage4_dtn_mumps_numeric_seconds": (
+                factor_event_audit["numeric_seconds_max"]
+            ),
+            "stage4_dtn_petsc_factor_event_timing": (
+                factor_event_audit
+            ),
             "stage4_dtn_ksp_solve_seconds": 0.5,
             "stage4_dtn_bilinear_form_compile_seconds": 0.0,
             "stage4_dtn_bilinear_form_compile_"
@@ -103,6 +221,7 @@ def _worker_result() -> dict:
                 "stage4_preserve_structured_input_partition": True,
                 "petsc_direct_solver_profile": "default",
                 "stage4_condensed_iterative_profile": None,
+                "stage4_petsc_factor_event_timing": True,
                 "petsc_extra_options": dict(
                     DIRECT_SETUP_TYPED_PETSC_OPTIONS
                 ),
@@ -272,6 +391,11 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 "persistent_sha_mesh_mode_trace_bound_dtn_surface_cache"
             ]
         )
+        self.assertTrue(
+            plan["explicit_opt_ins"][
+                "petsc_direct_factor_event_timing"
+            ]
+        )
 
     def test_direct_config_is_explicit_and_ordinary_default_stays_off(
         self,
@@ -281,6 +405,12 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 degree=6,
                 h_nm=15.0,
             ).stage4_preserve_structured_input_partition
+        )
+        self.assertFalse(
+            target_stage4_config(
+                degree=6,
+                h_nm=15.0,
+            ).stage4_petsc_factor_event_timing
         )
         with tempfile.TemporaryDirectory() as directory:
             cfg = _direct_config(
@@ -304,6 +434,7 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertEqual(cfg.stage4_condensed_cache_mode, "read_only")
         self.assertEqual(cfg.stage4_condensed_cache_source_sha, "a" * 40)
         self.assertIsNone(cfg.stage4_condensed_iterative_profile)
+        self.assertTrue(cfg.stage4_petsc_factor_event_timing)
         self.assertFalse(cfg.matrix_diagnostics_assemble_only)
         self.assertEqual(
             cfg.petsc_extra_options["pc_factor_mat_solver_type"],
@@ -365,8 +496,14 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             timings["mumps"]["symbolic_numeric_combined_ksp_setup"],
             6.0,
         )
-        self.assertIsNone(timings["mumps"]["symbolic"])
-        self.assertIsNone(timings["mumps"]["numeric"])
+        self.assertEqual(
+            timings["mumps"]["symbolic"],
+            _factor_event_audit()["symbolic_seconds_max"],
+        )
+        self.assertEqual(
+            timings["mumps"]["numeric"],
+            _factor_event_audit()["numeric_seconds_max"],
+        )
         self.assertEqual(timings["aii_and_schur"]["aii_factor"], 2.0)
         self.assertEqual(
             timings["aii_and_schur"]["persistent_class_read"],
@@ -491,6 +628,47 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertIn(
             "dtn_reduced_modal_cache_v2_identity",
             invalid_identity["failures"],
+        )
+
+    def test_factor_event_split_is_rechecked_from_rank_packets(self) -> None:
+        evidence = _extract_setup_evidence(_worker_result())
+        self.assertTrue(
+            all(
+                _petsc_factor_event_timing_formal_checks(
+                    evidence,
+                    expected_mpi_size=8,
+                ).values()
+            )
+        )
+
+        corrupted = copy.deepcopy(evidence)
+        corrupted["petsc_factor_event_timing"]["per_rank"][3][
+            "events"
+        ]["numeric"]["count"] = 0
+        result = _classify_profile(
+            corrupted,
+            {
+                "observed_worker_rank_count": 8,
+                "max_process_tree_swap_mb": 0.0,
+                "max_worker_rank_smaps_swap_sum_mb": 0.0,
+            },
+            cache_state="warm",
+            source_sha="a" * 40,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+            source_stable_and_clean_after=True,
+        )
+        self.assertFalse(result["formal_profile_pass"])
+        self.assertIn(
+            "petsc_factor_event_counts_positive_consistent",
+            result["failures"],
+        )
+        self.assertIn(
+            "petsc_factor_event_collective_hash",
+            result["failures"],
         )
 
     def test_watchdog_summary_preserves_pss_uss_and_cgroup(self) -> None:

@@ -154,6 +154,11 @@ class SimulationConfig3D:
     petsc_ksp_view: bool = False
     petsc_log_view: bool = False
     petsc_extra_options: dict[str, object] = field(default_factory=dict)
+    # Review-V2 direct-setup profiling only.  When explicitly enabled, the
+    # direct DtN path starts PETSc event logging before KSPSetUp and measures
+    # the built-in MatLUFactorSym/MatLUFactorNum events independently.  The
+    # ordinary direct path and every iterative profile leave logging untouched.
+    stage4_petsc_factor_event_timing: bool = False
     # Task29 low-risk lifecycle candidate. Keep False for the reviewed ordinary
     # default; explicit callers may release the copied base Mat/Vec once the
     # augmented system owns every entry needed by residual and official R/T/A.

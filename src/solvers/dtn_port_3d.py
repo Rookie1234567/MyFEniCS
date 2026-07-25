@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -81,6 +82,406 @@ DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = (
     "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
 )
+PETSC_DIRECT_FACTOR_EVENT_NAMES = {
+    "symbolic": "MatLUFactorSym",
+    "numeric": "MatLUFactorNum",
+    "pc_setup": "PCSetUp",
+}
+
+
+def _petsc_factor_event_snapshot() -> tuple[dict[str, dict[str, float | int]], list[str]]:
+    """Read the three PETSc events needed for the direct-factor split.
+
+    ``PETSc.Log.Event(name)`` may create a zero-count event when a PETSc build
+    does not expose that built-in event.  A complete snapshot therefore does
+    not by itself establish availability: the post-setup collective audit also
+    requires positive, rank-consistent deltas for both LU factor events.
+    """
+
+    snapshot: dict[str, dict[str, float | int]] = {}
+    errors: list[str] = []
+    for role, event_name in PETSC_DIRECT_FACTOR_EVENT_NAMES.items():
+        try:
+            info = PETSc.Log.Event(event_name).getPerfInfo()
+            count = info.get("count")
+            seconds = info.get("time")
+            if isinstance(count, bool) or not isinstance(count, (int, np.integer)):
+                raise TypeError(f"{event_name} count is not an integer")
+            if int(count) < 0:
+                raise ValueError(f"{event_name} count is negative")
+            if isinstance(seconds, bool) or not isinstance(
+                seconds,
+                (int, float, np.integer, np.floating),
+            ):
+                raise TypeError(f"{event_name} time is not numeric")
+            if not np.isfinite(float(seconds)) or float(seconds) < 0.0:
+                raise ValueError(
+                    f"{event_name} time is nonfinite or negative"
+                )
+            snapshot[role] = {
+                "count": int(count),
+                "seconds": float(seconds),
+            }
+        except Exception as exc:
+            errors.append(f"{role}:{type(exc).__name__}:{exc}")
+    return snapshot, errors
+
+
+def _begin_petsc_direct_factor_event_timing(
+    *,
+    requested: bool,
+    iterative_profile: str | None,
+    factor_solver_type: str | None,
+) -> dict[str, Any]:
+    """Start the opt-in PETSc event window without touching ordinary runs."""
+
+    if not requested:
+        return {
+            "requested": False,
+            "iterative_profile": iterative_profile,
+            "factor_solver_type": factor_solver_type,
+        }
+    if iterative_profile is not None:
+        raise ValueError(
+            "PETSc symbolic/numeric factor-event timing is direct-only and "
+            "cannot be enabled for a condensed iterative profile"
+        )
+    if factor_solver_type != "mumps":
+        raise ValueError(
+            "PETSc symbolic/numeric direct-factor timing requires an "
+            "explicit MUMPS factor solver"
+        )
+    errors: list[str] = []
+    try:
+        logging_active_before = bool(PETSc.Log.isActive())
+    except Exception as exc:
+        logging_active_before = False
+        errors.append(f"log_active_before:{type(exc).__name__}:{exc}")
+    logging_started_by_profile = False
+    if not logging_active_before:
+        try:
+            PETSc.Log.begin()
+            logging_started_by_profile = True
+        except Exception as exc:
+            errors.append(f"log_begin:{type(exc).__name__}:{exc}")
+    try:
+        logging_active_after_begin = bool(PETSc.Log.isActive())
+    except Exception as exc:
+        logging_active_after_begin = False
+        errors.append(f"log_active_after:{type(exc).__name__}:{exc}")
+    before, snapshot_errors = _petsc_factor_event_snapshot()
+    errors.extend(f"before:{message}" for message in snapshot_errors)
+    return {
+        "requested": True,
+        "iterative_profile": None,
+        "factor_solver_type": "mumps",
+        "logging_active_before": logging_active_before,
+        "logging_started_by_profile": logging_started_by_profile,
+        "logging_active_after_begin": logging_active_after_begin,
+        "before": before,
+        "errors": errors,
+    }
+
+
+def _finish_petsc_direct_factor_event_timing(
+    context: dict[str, Any],
+    comm: MPI.Intracomm,
+    *,
+    local_setup_wall_seconds: float,
+) -> dict[str, Any]:
+    """Create a fail-closed, rank-bound symbolic/numeric timing audit."""
+
+    if context.get("requested") is not True:
+        return {
+            "schema_version": (
+                "task035b.petsc-direct-factor-event-timing.v1"
+            ),
+            "requested": False,
+            "enabled": False,
+            "direct_only": True,
+            "split_available": False,
+            "status": "not_requested",
+            "event_names": dict(PETSC_DIRECT_FACTOR_EVENT_NAMES),
+            "symbolic_seconds_max": None,
+            "numeric_seconds_max": None,
+            "pc_setup_seconds_max": None,
+            "ordinary_default_changed": False,
+        }
+
+    after, after_errors = _petsc_factor_event_snapshot()
+    errors = [
+        str(message) for message in context.get("errors", ())
+    ]
+    errors.extend(f"after:{message}" for message in after_errors)
+    before = context.get("before")
+    events: dict[str, dict[str, float | int | str | None]] = {}
+    if isinstance(before, dict):
+        for role, event_name in PETSC_DIRECT_FACTOR_EVENT_NAMES.items():
+            before_event = before.get(role)
+            after_event = after.get(role)
+            if not isinstance(before_event, dict) or not isinstance(
+                after_event,
+                dict,
+            ):
+                events[role] = {
+                    "event_name": event_name,
+                    "count": None,
+                    "seconds": None,
+                }
+                errors.append(f"delta:{role}:snapshot_missing")
+                continue
+            events[role] = {
+                "event_name": event_name,
+                "count": int(after_event["count"])
+                - int(before_event["count"]),
+                "seconds": float(after_event["seconds"])
+                - float(before_event["seconds"]),
+            }
+    else:
+        errors.append("before_snapshot_not_a_mapping")
+        for role, event_name in PETSC_DIRECT_FACTOR_EVENT_NAMES.items():
+            events[role] = {
+                "event_name": event_name,
+                "count": None,
+                "seconds": None,
+            }
+
+    local_packet = {
+        "comm_rank": int(comm.rank),
+        "comm_size": int(comm.size),
+        "world_rank": int(MPI.COMM_WORLD.rank),
+        "logging_active_before": bool(
+            context.get("logging_active_before", False)
+        ),
+        "logging_started_by_profile": bool(
+            context.get("logging_started_by_profile", False)
+        ),
+        "logging_active_after_begin": bool(
+            context.get("logging_active_after_begin", False)
+        ),
+        "setup_wall_seconds": float(local_setup_wall_seconds),
+        "factor_solver_type": context.get("factor_solver_type"),
+        "events": events,
+        "errors": errors,
+    }
+    packets = list(comm.allgather(local_packet))
+    rank_count = len(packets)
+    ordered_world_ranks = [
+        int(packet.get("world_rank", -1)) for packet in packets
+    ]
+    comm_rank_identity = [
+        int(packet.get("comm_rank", -1)) for packet in packets
+    ] == list(range(int(comm.size)))
+    communicator_identity_valid = (
+        rank_count == int(comm.size)
+        and comm_rank_identity
+        and all(
+            int(packet.get("comm_size", -1)) == int(comm.size)
+            for packet in packets
+        )
+        and all(
+            packet.get("factor_solver_type") == "mumps"
+            for packet in packets
+        )
+        and len(set(ordered_world_ranks)) == rank_count
+    )
+
+    event_summaries: dict[str, dict[str, Any]] = {}
+    event_values_valid = True
+    event_counts_consistent = True
+    event_counts_positive = True
+    for role, event_name in PETSC_DIRECT_FACTOR_EVENT_NAMES.items():
+        counts: list[int] = []
+        seconds: list[float] = []
+        for packet in packets:
+            packet_events = packet.get("events")
+            event = (
+                packet_events.get(role)
+                if isinstance(packet_events, dict)
+                else None
+            )
+            count = event.get("count") if isinstance(event, dict) else None
+            elapsed = (
+                event.get("seconds") if isinstance(event, dict) else None
+            )
+            if (
+                isinstance(count, bool)
+                or not isinstance(count, int)
+                or count < 0
+                or isinstance(elapsed, bool)
+                or not isinstance(elapsed, (int, float))
+                or not np.isfinite(float(elapsed))
+                or float(elapsed) < 0.0
+                or (
+                    isinstance(event, dict)
+                    and event.get("event_name") != event_name
+                )
+            ):
+                event_values_valid = False
+                continue
+            counts.append(int(count))
+            seconds.append(float(elapsed))
+        count_consistent = (
+            len(counts) == rank_count and len(set(counts)) == 1
+        )
+        count_positive = (
+            len(counts) == rank_count and all(count > 0 for count in counts)
+        )
+        event_counts_consistent &= count_consistent
+        event_counts_positive &= count_positive
+        event_summaries[role] = {
+            "event_name": event_name,
+            "count_per_rank": counts,
+            "count_min": min(counts) if counts else None,
+            "count_max": max(counts) if counts else None,
+            "count_sum": sum(counts) if counts else None,
+            "count_consistent_across_ranks": count_consistent,
+            "count_positive_on_all_ranks": count_positive,
+            "seconds_per_rank": seconds,
+            "seconds_min": min(seconds) if seconds else None,
+            "seconds_max": max(seconds) if seconds else None,
+            "seconds_sum": sum(seconds) if seconds else None,
+            "seconds_finite_nonnegative_on_all_ranks": (
+                len(seconds) == rank_count
+            ),
+        }
+
+    symbolic_numeric_count_match = False
+    nested_time_bounds_valid = True
+    wall_time_bounds_valid = True
+    if event_values_valid and rank_count:
+        symbolic_counts = event_summaries["symbolic"][
+            "count_per_rank"
+        ]
+        numeric_counts = event_summaries["numeric"]["count_per_rank"]
+        symbolic_numeric_count_match = (
+            symbolic_counts == numeric_counts
+            and len(symbolic_counts) == rank_count
+        )
+        for packet in packets:
+            packet_events = packet["events"]
+            symbolic_seconds = float(
+                packet_events["symbolic"]["seconds"]
+            )
+            numeric_seconds = float(
+                packet_events["numeric"]["seconds"]
+            )
+            pc_setup_seconds = float(
+                packet_events["pc_setup"]["seconds"]
+            )
+            wall_seconds = float(packet["setup_wall_seconds"])
+            tolerance = max(
+                1.0e-12,
+                1.0e-8
+                * max(
+                    1.0,
+                    symbolic_seconds + numeric_seconds,
+                    pc_setup_seconds,
+                    wall_seconds,
+                ),
+            )
+            nested_time_bounds_valid &= (
+                symbolic_seconds + numeric_seconds
+                <= pc_setup_seconds + tolerance
+            )
+            wall_time_bounds_valid &= (
+                np.isfinite(wall_seconds)
+                and wall_seconds >= 0.0
+                and pc_setup_seconds <= wall_seconds + tolerance
+            )
+    else:
+        nested_time_bounds_valid = False
+        wall_time_bounds_valid = False
+
+    no_rank_errors = all(not packet.get("errors") for packet in packets)
+    logging_active_on_all_ranks = all(
+        packet.get("logging_active_after_begin") is True
+        for packet in packets
+    )
+    checks = {
+        "requested_direct_only": (
+            context.get("iterative_profile") is None
+        ),
+        "logging_active_after_begin_on_all_ranks": (
+            logging_active_on_all_ranks
+        ),
+        "no_snapshot_errors_on_any_rank": no_rank_errors,
+        "communicator_rank_identity_valid": communicator_identity_valid,
+        "event_values_finite_nonnegative_on_all_ranks": (
+            event_values_valid
+        ),
+        "event_counts_consistent_across_ranks": (
+            event_counts_consistent
+        ),
+        "event_counts_positive_on_all_ranks": event_counts_positive,
+        "symbolic_numeric_counts_match": (
+            symbolic_numeric_count_match
+        ),
+        "symbolic_plus_numeric_within_pc_setup_on_all_ranks": (
+            nested_time_bounds_valid
+        ),
+        "pc_setup_within_setup_wall_on_all_ranks": (
+            wall_time_bounds_valid
+        ),
+    }
+    split_available = all(checks.values())
+    collective_bytes = json.dumps(
+        packets,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return {
+        "schema_version": (
+            "task035b.petsc-direct-factor-event-timing.v1"
+        ),
+        "requested": True,
+        "enabled": True,
+        "direct_only": True,
+        "iterative_profile": None,
+        "factor_solver_type": "mumps",
+        "status": (
+            "measured_symbolic_numeric_split"
+            if split_available
+            else "factor_event_split_unavailable"
+        ),
+        "split_available": split_available,
+        "event_names": dict(PETSC_DIRECT_FACTOR_EVENT_NAMES),
+        "rank_count": rank_count,
+        "ordered_world_ranks": ordered_world_ranks,
+        "collective_rank_payload_sha256": hashlib.sha256(
+            collective_bytes
+        ).hexdigest(),
+        "per_rank": packets,
+        "events": event_summaries,
+        "symbolic_seconds_max": (
+            event_summaries["symbolic"]["seconds_max"]
+            if split_available
+            else None
+        ),
+        "numeric_seconds_max": (
+            event_summaries["numeric"]["seconds_max"]
+            if split_available
+            else None
+        ),
+        "pc_setup_seconds_max": (
+            event_summaries["pc_setup"]["seconds_max"]
+            if split_available
+            else None
+        ),
+        "checks": checks,
+        "ordinary_default_changed": False,
+        "limitations": [
+            (
+                "PETSc logging remains process-global after this explicit "
+                "profile because petsc4py exposes no matching Log.end API"
+            ),
+            (
+                "independent MPI maxima are reported for symbolic and "
+                "numeric events and must not be summed as one-rank wall time"
+            ),
+        ],
+    }
 
 
 def _petsc_solve_failure_type(iterative_profile: str | None):
@@ -1341,6 +1742,7 @@ def _solve_augmented_system(
     matrix_stats: dict[str, Any] | None = None,
     factorization_only: bool = False,
     iterative_profile: str | None = None,
+    petsc_factor_event_timing: bool = False,
     dtn_auxiliary_rows: int | None = None,
     physical_slab_partition: CondensedPhysicalSlabPartition | None = None,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
@@ -1353,6 +1755,11 @@ def _solve_augmented_system(
         raise ValueError(
             "factorization-only diagnostics are incompatible with the "
             "condensed iterative profile"
+        )
+    if petsc_factor_event_timing and iterative_profile is not None:
+        raise ValueError(
+            "PETSc symbolic/numeric factor-event timing is direct-only and "
+            "cannot be enabled for a condensed iterative profile"
         )
     if iterative_profile in PHYSICS_AWARE_PROFILES and (
         dtn_auxiliary_rows is None or int(dtn_auxiliary_rows) <= 0
@@ -1422,6 +1829,20 @@ def _solve_augmented_system(
             pc.setType("asm")
             pc.setASMType(PETSc.PC.ASMType.RESTRICT)
             pc.setASMOverlap(1)
+    factor_solver_type = None
+    if petsc_factor_event_timing:
+        try:
+            factor_solver_type = ksp.getPC().getFactorSolverType()
+        except Exception as exc:
+            raise ValueError(
+                "PETSc direct factor-event timing could not resolve the "
+                "configured factor solver before KSPSetUp"
+            ) from exc
+    factor_event_context = _begin_petsc_direct_factor_event_timing(
+        requested=bool(petsc_factor_event_timing),
+        iterative_profile=iterative_profile,
+        factor_solver_type=factor_solver_type,
+    )
     x_aug = b_aug.duplicate()
     if out_dir is not None:
         _write_progress_event(
@@ -1434,6 +1855,11 @@ def _solve_augmented_system(
             constraints=constraints,
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
+            extra={
+                "petsc_factor_event_timing_requested": bool(
+                    petsc_factor_event_timing
+                ),
+            },
         )
         _write_progress_event(
             out_dir,
@@ -1509,7 +1935,21 @@ def _solve_augmented_system(
                 "dolfinx_mpc Floquet constraints"
             ),
         ) from exc
-    setup_seconds = float(progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX))
+    local_setup_seconds = time.perf_counter() - setup_started
+    factor_event_timing = _finish_petsc_direct_factor_event_timing(
+        factor_event_context,
+        progress_comm,
+        local_setup_wall_seconds=local_setup_seconds,
+    )
+    setup_seconds = float(
+        progress_comm.allreduce(local_setup_seconds, op=MPI.MAX)
+    )
+    mumps_symbolic_seconds = factor_event_timing.get(
+        "symbolic_seconds_max"
+    )
+    mumps_numeric_seconds = factor_event_timing.get(
+        "numeric_seconds_max"
+    )
     if iterative_profile is None:
         factor_inventory = _petsc_factor_inventory(ksp)
     elif physics_aware_context is not None:
@@ -1621,6 +2061,11 @@ def _solve_augmented_system(
             constraints=constraints,
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
+            extra={
+                "petsc_factor_event_timing": factor_event_timing,
+                "mumps_symbolic_seconds": mumps_symbolic_seconds,
+                "mumps_numeric_seconds": mumps_numeric_seconds,
+            },
         )
         _write_progress_event(
             out_dir,
@@ -1634,6 +2079,9 @@ def _solve_augmented_system(
             petsc_options=petsc_options,
             extra={
                 "ksp_setup_seconds": setup_seconds,
+                "mumps_symbolic_seconds": mumps_symbolic_seconds,
+                "mumps_numeric_seconds": mumps_numeric_seconds,
+                "petsc_factor_event_timing": factor_event_timing,
                 "factor_inventory": factor_inventory,
             },
         )
@@ -1645,6 +2093,9 @@ def _solve_augmented_system(
             {
                 "ksp_setup_seconds": setup_seconds,
                 "ksp_solve_seconds": None,
+                "mumps_symbolic_seconds": mumps_symbolic_seconds,
+                "mumps_numeric_seconds": mumps_numeric_seconds,
+                "petsc_factor_event_timing": factor_event_timing,
                 "factor_inventory": factor_inventory,
                 "factorization_only": True,
             },
@@ -1845,6 +2296,9 @@ def _solve_augmented_system(
         {
             "ksp_setup_seconds": setup_seconds,
             "ksp_solve_seconds": solve_seconds,
+            "mumps_symbolic_seconds": mumps_symbolic_seconds,
+            "mumps_numeric_seconds": mumps_numeric_seconds,
+            "petsc_factor_event_timing": factor_event_timing,
             "factor_inventory": factor_inventory,
             "condensed_iterative": iterative_audit,
         },
@@ -3772,6 +4226,9 @@ def solve_stage4_dtn_port_total_field(
             ),
             factorization_only=cfg.matrix_diagnostics_factorization_only,
             iterative_profile=cfg.stage4_condensed_iterative_profile,
+            petsc_factor_event_timing=(
+                cfg.stage4_petsc_factor_event_timing
+            ),
             dtn_auxiliary_rows=int(n_aux),
             physical_slab_partition=physical_slab_partition,
         )

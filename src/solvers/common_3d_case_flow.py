@@ -1453,6 +1453,15 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_ksp_setup_seconds": None
         if dtn_solver_info is None
         else dtn_solver_info.get("ksp_setup_seconds"),
+        "stage4_dtn_mumps_symbolic_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("mumps_symbolic_seconds"),
+        "stage4_dtn_mumps_numeric_seconds": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("mumps_numeric_seconds"),
+        "stage4_dtn_petsc_factor_event_timing": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("petsc_factor_event_timing"),
         "stage4_dtn_ksp_solve_seconds": None
         if dtn_solver_info is None
         else dtn_solver_info.get("ksp_solve_seconds"),
