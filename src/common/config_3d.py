@@ -192,6 +192,11 @@ class SimulationConfig3D:
     # skips repeated qualification work during function-space construction.
     stage4_condensed_bulk_cell_insertion: bool = False
     stage4_fast_fixed_trace_setup: bool = False
+    # Review-V2 research-only offline/online cache for the numeric inputs of
+    # the fixed-trace custom Basix element.  A warm process reconstructs a
+    # fresh C++ element from checksum-bound JSON/NPZ and never unpickles code.
+    # It shares the SHA-bound condensed-cache directory/mode above.
+    stage4_persistent_fixed_trace_element_cache: bool = False
     # Exact reference-Gram backend for the fixed rectangular affine,
     # isotropic, no-PML Maxwell operator.  General forms remain on FFCx.
     stage4_affine_isotropic_reference_tensor: bool = False

@@ -183,30 +183,38 @@ def _flatten_entity_dofs(
 
 
 @lru_cache(maxsize=16)
-def _create_trace_interior_element(
+def _create_trace_interior_element_data(
     trace_degree: int,
     cell_interior_degree: int,
     qualification_audit: bool = True,
-) -> tuple[basix.finite_element.FiniteElement, dict[str, Any]]:
+) -> tuple[
+    basix.finite_element.FiniteElement,
+    dict[str, Any],
+    dict[str, Any] | None,
+]:
     """Build one H(curl) element with independent trace/interior orders."""
 
     trace_element = _standard_hexa_hcurl(trace_degree)
     interior_element = _standard_hexa_hcurl(cell_interior_degree)
     if trace_degree == cell_interior_degree:
-        return trace_element, {
-            "polynomial_subspace_rank": int(trace_element.dim),
-            "coefficient_matrix_condition_number": (
-                float(
-                    np.linalg.cond(trace_element.coefficient_matrix)
-                )
-                if qualification_audit
-                else None
-            ),
-            "custom": False,
-            "qualification_audit_executed": bool(
-                qualification_audit
-            ),
-        }
+        return (
+            trace_element,
+            {
+                "polynomial_subspace_rank": int(trace_element.dim),
+                "coefficient_matrix_condition_number": (
+                    float(
+                        np.linalg.cond(trace_element.coefficient_matrix)
+                    )
+                    if qualification_audit
+                    else None
+                ),
+                "custom": False,
+                "qualification_audit_executed": bool(
+                    qualification_audit
+                ),
+            },
+            None,
+        )
     polynomial_element = _standard_hexa_hcurl(
         max(trace_degree, cell_interior_degree)
     )
@@ -258,22 +266,36 @@ def _create_trace_interior_element(
         interpolation_matrices.append(
             [np.asarray(values).copy() for values in source.M[dimension]]
         )
-    custom = basix.create_custom_element(
-        basix.CellType.hexahedron,
-        polynomial_element.value_shape,
-        np.ascontiguousarray(orthogonal_columns.T),
-        interpolation_points,
-        interpolation_matrices,
-        polynomial_element.interpolation_nderivs,
-        polynomial_element.map_type,
-        polynomial_element.sobolev_space,
-        False,
-        min(
+    constructor = {
+        "cell_type": basix.CellType.hexahedron,
+        "value_shape": tuple(polynomial_element.value_shape),
+        "wcoeffs": np.ascontiguousarray(orthogonal_columns.T),
+        "x": interpolation_points,
+        "M": interpolation_matrices,
+        "interpolation_nderivs": polynomial_element.interpolation_nderivs,
+        "map_type": polynomial_element.map_type,
+        "sobolev_space": polynomial_element.sobolev_space,
+        "discontinuous": False,
+        "embedded_subdegree": min(
             trace_element.embedded_subdegree,
             interior_element.embedded_subdegree,
         ),
-        polynomial_element.embedded_superdegree,
-        polynomial_element.polyset_type,
+        "embedded_superdegree": polynomial_element.embedded_superdegree,
+        "polyset_type": polynomial_element.polyset_type,
+    }
+    custom = basix.create_custom_element(
+        constructor["cell_type"],
+        constructor["value_shape"],
+        constructor["wcoeffs"],
+        interpolation_points,
+        interpolation_matrices,
+        constructor["interpolation_nderivs"],
+        constructor["map_type"],
+        constructor["sobolev_space"],
+        constructor["discontinuous"],
+        constructor["embedded_subdegree"],
+        constructor["embedded_superdegree"],
+        constructor["polyset_type"],
     )
     if custom.dim != expected_dimension:
         raise RuntimeError("mixed trace/interior element dimension does not close")
@@ -292,18 +314,37 @@ def _create_trace_interior_element(
         raise RuntimeError(
             "mixed trace/interior element did not retain trace-first numbering"
         )
-    return custom, {
-        "polynomial_subspace_rank": polynomial_rank,
-        "coefficient_matrix_condition_number": (
-            float(np.linalg.cond(custom.coefficient_matrix))
-            if qualification_audit
-            else None
-        ),
-        "custom": True,
-        "qualification_audit_executed": bool(
-            qualification_audit
-        ),
-    }
+    return (
+        custom,
+        {
+            "polynomial_subspace_rank": polynomial_rank,
+            "coefficient_matrix_condition_number": (
+                float(np.linalg.cond(custom.coefficient_matrix))
+                if qualification_audit
+                else None
+            ),
+            "custom": True,
+            "qualification_audit_executed": bool(
+                qualification_audit
+            ),
+        },
+        constructor,
+    )
+
+
+def _create_trace_interior_element(
+    trace_degree: int,
+    cell_interior_degree: int,
+    qualification_audit: bool = True,
+) -> tuple[basix.finite_element.FiniteElement, dict[str, Any]]:
+    """Compatibility wrapper around the cached constructor-data path."""
+
+    element, audit, _ = _create_trace_interior_element_data(
+        trace_degree,
+        cell_interior_degree,
+        qualification_audit,
+    )
+    return element, audit
 
 
 @lru_cache(maxsize=16)
@@ -511,6 +552,57 @@ def fixed_trace_hcurl_ufl_element(
     return wrap_custom_element_fast(custom)
 
 
+def persistent_fixed_trace_hcurl_ufl_element(
+    trace_degree: int,
+    interior_degree: int,
+    *,
+    cache_directory: str,
+    source_sha: str,
+    cache_mode: str,
+    comm: Any,
+):
+    """Restore/build and byte-wrap an opt-in cached fixed-trace element."""
+
+    from .fixed_trace_element_cache import (
+        fixed_trace_element_build,
+        load_or_build_fixed_trace_element,
+    )
+    from .fast_custom_element_ufl import wrap_custom_element_fast
+
+    def build(
+        resolved_trace_degree: int,
+        resolved_interior_degree: int,
+    ):
+        custom, audit, constructor = _create_trace_interior_element_data(
+            resolved_trace_degree,
+            resolved_interior_degree,
+            False,
+        )
+        if audit["qualification_audit_executed"] is not False:
+            raise RuntimeError(
+                "persistent fixed-trace construction ran qualification audits"
+            )
+        if constructor is None:
+            raise RuntimeError(
+                "persistent fixed-trace construction lacks custom payload"
+            )
+        return fixed_trace_element_build(
+            custom,
+            **constructor,
+        )
+
+    custom, cache_audit = load_or_build_fixed_trace_element(
+        trace_degree=int(trace_degree),
+        interior_degree=int(interior_degree),
+        cache_directory=cache_directory,
+        source_sha=source_sha,
+        cache_mode=cache_mode,
+        comm=comm,
+        builder=build,
+    )
+    return wrap_custom_element_fast(custom), cache_audit
+
+
 def regionwise_interior_p_dof_budget(
     *,
     global_edges: int,
@@ -591,6 +683,7 @@ __all__ = [
     "audit_tensor_product_exact_sequence",
     "create_reduced_trace_hcurl_element",
     "fixed_trace_hcurl_ufl_element",
+    "persistent_fixed_trace_hcurl_ufl_element",
     "regionwise_interior_p_dof_budget",
     "reduced_trace_hcurl_ufl_element",
 ]

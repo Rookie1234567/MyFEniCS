@@ -214,6 +214,7 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "assembly_time_cell_static_condensation": True,
             "floquet_slave_elimination": True,
             "fast_fixed_trace_setup": True,
+            "persistent_fixed_trace_element_cache": True,
             "affine_isotropic_reference_tensor": True,
             "persistent_sha_bound_raw_tensor_cache": True,
             "persistent_sha_bound_condensed_class_cache": True,
@@ -355,6 +356,7 @@ def _direct_config(
         stage4_condensed_iterative_profile=None,
         stage4_retain_dual_recovery_context=False,
         stage4_fast_fixed_trace_setup=True,
+        stage4_persistent_fixed_trace_element_cache=True,
         stage4_affine_isotropic_reference_tensor=True,
         stage4_condensed_bulk_cell_insertion=False,
         stage4_condensed_cache_directory=str(cache_directory.resolve()),
@@ -688,6 +690,13 @@ def _extract_setup_evidence(
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
     factor = summary.get("stage4_dtn_factor_inventory") or {}
+    function_space_audit = summary.get("function_space_setup_audit") or {}
+    fixed_trace_element_cache = (
+        function_space_audit.get(
+            "persistent_fixed_trace_element_cache"
+        )
+        or {}
+    )
 
     ksp_setup = _number(summary, "stage4_dtn_ksp_setup_seconds")
     ksp_solve = _number(summary, "stage4_dtn_ksp_solve_seconds")
@@ -762,6 +771,9 @@ def _extract_setup_evidence(
             "fast_fixed_trace_setup": config.get(
                 "stage4_fast_fixed_trace_setup"
             ),
+            "persistent_fixed_trace_element_cache": config.get(
+                "stage4_persistent_fixed_trace_element_cache"
+            ),
             "affine_isotropic_reference_tensor": config.get(
                 "stage4_affine_isotropic_reference_tensor"
             ),
@@ -787,6 +799,7 @@ def _extract_setup_evidence(
             ),
         },
         "cache_audit": {
+            "fixed_trace_element": fixed_trace_element_cache,
             "raw_tensor": raw_cache,
             "condensed_class": condensed_cache,
             "dtn_surface_vector": dtn_surface_cache,
@@ -852,6 +865,22 @@ def _extract_setup_evidence(
                 "dolfinx_functionspace_and_dofmap": _number(
                     outer,
                     "function_space_dolfinx_dofmap",
+                ),
+                "persistent_element_cache_read": _number(
+                    fixed_trace_element_cache,
+                    "read_seconds_max",
+                ),
+                "persistent_element_reconstruct": _number(
+                    fixed_trace_element_cache,
+                    "reconstruct_seconds_max",
+                ),
+                "persistent_element_cold_build": _number(
+                    fixed_trace_element_cache,
+                    "build_seconds_max",
+                ),
+                "persistent_element_cache_write": _number(
+                    fixed_trace_element_cache,
+                    "write_seconds_max",
                 ),
             },
             "tensor": {
@@ -1053,6 +1082,7 @@ def _classify_profile(
 ) -> dict[str, Any]:
     config = evidence.get("configuration_identity") or {}
     cache = evidence.get("cache_audit") or {}
+    fixed_trace_element_cache = cache.get("fixed_trace_element") or {}
     raw_cache = cache.get("raw_tensor") or {}
     condensed_cache = cache.get("condensed_class") or {}
     dtn_surface_cache = cache.get("dtn_surface_vector") or {}
@@ -1078,6 +1108,18 @@ def _classify_profile(
         ),
     }
     cache_checks = {
+        "fixed_trace_element_cache_enabled": (
+            fixed_trace_element_cache.get("schema_version")
+            == "task035b.fixed-trace-custom-element-cache.v1"
+            and fixed_trace_element_cache.get("ordinary_default_changed")
+            is False
+            and fixed_trace_element_cache.get("serialization")
+            == "json_plus_npz_allow_pickle_false"
+            and fixed_trace_element_cache.get("identity", {}).get(
+                "source_sha"
+            )
+            == source_sha
+        ),
         "raw_tensor_cache_enabled": raw_cache.get("enabled") is True,
         "condensed_class_cache_enabled": (
             condensed_cache.get("enabled") is True
@@ -1110,7 +1152,9 @@ def _classify_profile(
             and dtn_surface_cache.get("ordinary_default_changed") is False
         ),
         "cache_mode_identity": (
-            raw_cache.get("mode") == CACHE_MODES[cache_state]
+            fixed_trace_element_cache.get("mode")
+            == CACHE_MODES[cache_state]
+            and raw_cache.get("mode") == CACHE_MODES[cache_state]
             and condensed_cache.get("mode") == CACHE_MODES[cache_state]
             and dtn_surface_cache.get("mode")
             == CACHE_MODES[cache_state]
@@ -1123,6 +1167,21 @@ def _classify_profile(
             or (
                 isinstance(raw_cache.get("write_count"), int)
                 and raw_cache["write_count"] > 0
+            )
+        ),
+        "cold_fixed_trace_element_cache_wrote_entry": (
+            cache_state != "cold"
+            or (
+                fixed_trace_element_cache.get("status")
+                == "persistent_fixed_trace_element_cache_cold_write"
+                and fixed_trace_element_cache.get(
+                    "cache_miss_on_all_ranks"
+                )
+                is True
+                and isinstance(
+                    fixed_trace_element_cache.get("payload_sha256"),
+                    str,
+                )
             )
         ),
         "cold_condensed_class_cache_wrote_entries": (
@@ -1169,6 +1228,19 @@ def _classify_profile(
                 and raw_cache["hit_count"] > 0
                 and evidence.get("cell_static_raw_tensor_evaluations", 0)
                 == 0
+            )
+        ),
+        "warm_fixed_trace_element_cache_hit_without_rederivation": (
+            cache_state != "warm"
+            or (
+                fixed_trace_element_cache.get("status")
+                == "persistent_fixed_trace_element_cache_hit"
+                and fixed_trace_element_cache.get(
+                    "cache_hit_on_all_ranks"
+                )
+                is True
+                and fixed_trace_element_cache.get("build_seconds_max")
+                == 0.0
             )
         ),
         "warm_condensed_class_cache_hit_without_recompute": (
@@ -1262,6 +1334,9 @@ def _classify_profile(
             and float(residual) <= 1.0e-9
         ),
         "fast_setup_opt_in": config.get("fast_fixed_trace_setup") is True,
+        "persistent_fixed_trace_element_cache_opt_in": (
+            config.get("persistent_fixed_trace_element_cache") is True
+        ),
         "affine_tensor_opt_in": (
             config.get("affine_isotropic_reference_tensor") is True
         ),
@@ -1375,6 +1450,11 @@ def _resolve_cache_directory(
             raise SystemExit(
                 "warm cache requires at least one complete mesh/mode/trace-"
                 f"bound DtN reduced-modal manifest/array pair: {resolved}"
+            )
+        if not _cache_pairs(resolved, prefix="fixed_trace_element"):
+            raise SystemExit(
+                "warm cache requires one complete SHA-bound fixed-trace "
+                f"custom-element manifest/array pair: {resolved}"
             )
     return resolved
 
@@ -1632,6 +1712,10 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "dtn_reduced_modal": _cache_pairs(
                     cache_directory,
                     prefix="dtn_reduced_modal",
+                ),
+                "fixed_trace_element": _cache_pairs(
+                    cache_directory,
+                    prefix="fixed_trace_element",
                 ),
             },
         },

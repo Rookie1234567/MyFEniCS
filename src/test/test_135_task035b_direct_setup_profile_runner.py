@@ -80,6 +80,7 @@ def _worker_result() -> dict:
                 "stage4_assembly_time_cell_static_condensation": True,
                 "stage4_floquet_slave_elimination": True,
                 "stage4_fast_fixed_trace_setup": True,
+                "stage4_persistent_fixed_trace_element_cache": True,
                 "stage4_affine_isotropic_reference_tensor": True,
                 "stage4_condensed_bulk_cell_insertion": False,
                 "stage4_condensed_cache_directory": "/tmp/cache",
@@ -87,6 +88,25 @@ def _worker_result() -> dict:
                 "stage4_condensed_cache_mode": "read_only",
                 "stage4_condensed_persistent_dtn_surface_cache": True,
                 "stage4_preserve_structured_input_partition": True,
+            },
+            "function_space_setup_audit": {
+                "persistent_fixed_trace_element_cache": {
+                    "schema_version": (
+                        "task035b.fixed-trace-custom-element-cache.v1"
+                    ),
+                    "status": "persistent_fixed_trace_element_cache_hit",
+                    "mode": "read_only",
+                    "cache_hit_on_all_ranks": True,
+                    "cache_miss_on_all_ranks": False,
+                    "identity": {"source_sha": "a" * 40},
+                    "read_seconds_max": 0.02,
+                    "reconstruct_seconds_max": 0.4,
+                    "build_seconds_max": 0.0,
+                    "write_seconds_max": 0.0,
+                    "payload_sha256": "b" * 64,
+                    "serialization": "json_plus_npz_allow_pickle_false",
+                    "ordinary_default_changed": False,
+                },
             },
             "stage4_dtn_surface_vector_persistent_cache": {
                 "schema_version": (
@@ -190,6 +210,8 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             (root / "condensed_class_incomplete.npz").touch()
             (root / "dtn_reduced_modal_c.json").touch()
             (root / "dtn_reduced_modal_c.npz").touch()
+            (root / "fixed_trace_element_d.json").touch()
+            (root / "fixed_trace_element_d.npz").touch()
             self.assertEqual(
                 _cache_pairs(root, prefix="raw_tensor"),
                 ["raw_tensor_a"],
@@ -197,6 +219,10 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             self.assertEqual(
                 _cache_pairs(root, prefix="condensed_class"),
                 ["condensed_class_b"],
+            )
+            self.assertEqual(
+                _cache_pairs(root, prefix="fixed_trace_element"),
+                ["fixed_trace_element_d"],
             )
             self.assertEqual(
                 _cache_pairs(root, prefix="dtn_reduced_modal"),
@@ -250,6 +276,7 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertTrue(cfg.stage4_assembly_time_cell_static_condensation)
         self.assertTrue(cfg.stage4_floquet_slave_elimination)
         self.assertTrue(cfg.stage4_fast_fixed_trace_setup)
+        self.assertTrue(cfg.stage4_persistent_fixed_trace_element_cache)
         self.assertTrue(cfg.stage4_affine_isotropic_reference_tensor)
         self.assertFalse(cfg.stage4_condensed_bulk_cell_insertion)
         self.assertTrue(

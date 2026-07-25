@@ -637,6 +637,14 @@ def _create_nedelec_space(
     setup_audit: dict[str, Any] | None = None,
 ):
     element_started = time.perf_counter()
+    if cfg.stage4_persistent_fixed_trace_element_cache and (
+        not cfg.stage4_fast_fixed_trace_setup
+        or not cfg.nedelec_reduced_trace_enabled
+    ):
+        raise ValueError(
+            "persistent fixed-trace element cache requires the opt-in fast "
+            "fixed-trace reduced element"
+        )
     if (
         cfg.stage4_fast_fixed_trace_setup
         and not cfg.nedelec_reduced_trace_enabled
@@ -666,14 +674,42 @@ def _create_nedelec_space(
                 "nedelec_degree must equal the reduced-trace interior degree"
             )
         if cfg.stage4_fast_fixed_trace_setup:
-            from ..adaptivity.hcurl_regionwise_p import (
-                fixed_trace_hcurl_ufl_element,
-            )
+            if cfg.stage4_persistent_fixed_trace_element_cache:
+                if (
+                    cfg.stage4_condensed_cache_directory is None
+                    or cfg.stage4_condensed_cache_source_sha is None
+                    or cfg.stage4_condensed_cache_mode == "off"
+                ):
+                    raise ValueError(
+                        "persistent fixed-trace element cache requires the "
+                        "SHA-bound condensed cache directory/source/mode"
+                    )
+                from ..adaptivity.hcurl_regionwise_p import (
+                    persistent_fixed_trace_hcurl_ufl_element,
+                )
 
-            curl_el = fixed_trace_hcurl_ufl_element(
-                cfg.nedelec_trace_degree_resolved,
-                cfg.nedelec_interior_degree_resolved,
-            )
+                curl_el, fixed_trace_element_cache_audit = (
+                    persistent_fixed_trace_hcurl_ufl_element(
+                        cfg.nedelec_trace_degree_resolved,
+                        cfg.nedelec_interior_degree_resolved,
+                        cache_directory=(
+                            cfg.stage4_condensed_cache_directory
+                        ),
+                        source_sha=cfg.stage4_condensed_cache_source_sha,
+                        cache_mode=cfg.stage4_condensed_cache_mode,
+                        comm=msh.comm,
+                    )
+                )
+            else:
+                from ..adaptivity.hcurl_regionwise_p import (
+                    fixed_trace_hcurl_ufl_element,
+                )
+
+                curl_el = fixed_trace_hcurl_ufl_element(
+                    cfg.nedelec_trace_degree_resolved,
+                    cfg.nedelec_interior_degree_resolved,
+                )
+                fixed_trace_element_cache_audit = None
         else:
             from ..adaptivity.hcurl_regionwise_p import (
                 reduced_trace_hcurl_ufl_element,
@@ -727,6 +763,11 @@ def _create_nedelec_space(
                     None
                     if fast_audit is None
                     else dict(fast_audit)
+                ),
+                "persistent_fixed_trace_element_cache": (
+                    fixed_trace_element_cache_audit
+                    if cfg.stage4_fast_fixed_trace_setup
+                    else None
                 ),
                 "ordinary_default_changed": False,
             }
