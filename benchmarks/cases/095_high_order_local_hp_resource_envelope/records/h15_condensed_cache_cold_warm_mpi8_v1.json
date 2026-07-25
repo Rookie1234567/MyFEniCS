@@ -1,0 +1,124 @@
+{
+  "schema_version": "task035b.condensed-cache-cold-warm.v1",
+  "benchmark_id": "task035b_h15_condensed_cache_cold_warm_mpi8",
+  "status": "controlled_negative_warm_resource_target",
+  "classification": "mixed_cache_signal",
+  "pass": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
+    "clean_and_stable_for_both_runs": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "mpi_size": 8,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "same_sha_bound_cache_directory": "benchmarks/artifacts/task035b/direct_setup_profile/condensed_setup_cache/54622497_mpi8"
+  },
+  "cold": {
+    "cache_mode": "read_write",
+    "status": "actual_direct_setup_resource_profile_pass",
+    "common_solver_seconds": 53.90120582198142,
+    "condensed_build_non_ksp_seconds": 25.875813282007584,
+    "max_process_tree_rss_gib": 4.7111053466796875,
+    "max_worker_rank_pss_sum_gib": 3.8758020401000977,
+    "max_worker_rank_uss_sum_gib": 3.758453369140625,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 7.410422249147878e-12,
+    "raw_tensor_cache": {
+      "hits": 0,
+      "misses": 6,
+      "writes": 6,
+      "write_bytes": 54010311
+    },
+    "condensed_class_cache": {
+      "hits": 0,
+      "misses": 110,
+      "constructions": 110,
+      "writes": 110,
+      "write_bytes": 1525929851,
+      "local_schur_seconds": 10.733047135989182
+    },
+    "native_ledger_before_release_rank_sum_bytes": 845478000,
+    "native_ledger_after_release_rank_sum_bytes": 252144000,
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020832Z/watchdog_summary.json",
+      "sha256": "13e327c9ba3c9579fd706bf3f914b8c422895914d0a2258248a8b761d0e57d4f"
+    }
+  },
+  "warm": {
+    "cache_mode": "read_only",
+    "status": "actual_direct_setup_resource_profile_pass",
+    "common_solver_seconds": 38.417672990995925,
+    "condensed_build_non_ksp_seconds": 10.168040044984082,
+    "max_process_tree_rss_gib": 5.3165283203125,
+    "max_worker_rank_pss_sum_gib": 4.484453201293945,
+    "max_worker_rank_uss_sum_gib": 4.367824554443359,
+    "max_process_tree_swap_mb": 0.0,
+    "full_explicit_true_residual": 8.033663045198473e-12,
+    "raw_tensor_cache": {
+      "hits": 6,
+      "misses": 0,
+      "writes": 0,
+      "read_bytes": 54010311
+    },
+    "condensed_class_cache": {
+      "hits": 110,
+      "misses": 0,
+      "constructions": 0,
+      "writes": 0,
+      "read_bytes": 1525929851,
+      "read_seconds_max": 0.9338469190697651,
+      "local_schur_seconds": 0.0
+    },
+    "native_ledger_before_release_rank_sum_bytes": 1367118000,
+    "native_ledger_after_release_rank_sum_bytes": 417384000,
+    "watchdog": {
+      "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_warm_mpi8_20260725T020952Z/watchdog_summary.json",
+      "sha256": "6b97ac660c888cf769875adb85737fa3f18733db773662b8423b1173c13ae614"
+    }
+  },
+  "comparison": {
+    "cache_numerical_closure_pass": true,
+    "all_raw_and_condensed_cache_hits_pass": true,
+    "dense_orientation_aii_solve_and_schur_skipped_on_warm": true,
+    "review_v2_accepted_preoptimization_condensed_build_seconds": 61.61,
+    "cold_condensed_build_speedup_vs_review_v2_baseline": 2.3809879646503602,
+    "cold_build_2x_target_pass": true,
+    "cold_build_25_30_second_preferred_target_pass": true,
+    "warm_build_seconds": 10.168040044984082,
+    "warm_build_10_second_preferred_target_pass": false,
+    "common_solver_speedup": 1.4030315119454118,
+    "common_solver_reduction_percent": 28.725763356988143,
+    "warm_minus_cold_rss_gib": 0.6054229736328125,
+    "warm_rss_increase_percent": 12.85097507020312,
+    "warm_memory_target_pass": false
+  },
+  "root_cause": {
+    "status": "measured_and_code_audited",
+    "all_110_condensed_artifacts_use_high_interior_policy": true,
+    "cold_projection_storage_semantics": "rhs_projection, solution_embedding and residual_projection alias one shared rank-local 450x450 identity",
+    "warm_projection_storage_semantics": "the v1 NPZ loader restores three independent 450x450 arrays for every class and loses the cold alias",
+    "warm_minus_cold_projection_unique_bytes": 521640000,
+    "warm_minus_cold_projection_unique_mib": 497.47467041015625,
+    "fraction_of_observed_rss_delta_explained": 0.802,
+    "remaining_mechanisms": [
+      "NPZ member temporary arrays",
+      "a redundant explicit array copy in the loader",
+      "checksum byte materialization",
+      "glibc retained allocator pages"
+    ]
+  },
+  "decision": {
+    "cache_lane_remains_open": true,
+    "reason": "The cache is correct and skips all intended dense stages, but its restored array ownership violates the cold alias invariant and raises memory. This is an actionable implementation defect, not a rejection of persistent setup reuse.",
+    "next_minimal_action": "Restore policy-derived projection aliases after checksum validation, treat alias mismatch as a cache miss, remove the redundant copy, trim only the opt-in warm-cache allocator lifecycle, then rerun a fresh SHA-bound cold/warm MPI8 pair.",
+    "historical_cache_deleted": false
+  }
+}

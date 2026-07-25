@@ -1,0 +1,150 @@
+{
+  "schema_version": "task035b.h15-direct-mpi-resource-floor.v1",
+  "benchmark_id": "task035b_h15_fixed_p5trace_p6interior_direct_mpi1_2_4_8",
+  "status": "formal_rank_study_completed",
+  "classification": "positive_resource_authority",
+  "pass": true,
+  "ordinary_default_changed": false,
+  "candidate_promotion": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "54622497c58758de74879f80a98c11ec8f83a61c",
+    "clean_and_stable_for_every_run": true
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_cell_type": "hexahedron",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "num_mesh_cells": 120,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "full3d_equivalent_dofs": 74890,
+    "active_rows_with_dtn": 16880,
+    "matrix_nnz_used": 9195812,
+    "matrix_nnz_allocated": 9484580,
+    "direct_solver": "MUMPS",
+    "cache_state": "cold",
+    "same_geometry_material_tensor_class": true
+  },
+  "measurements": [
+    {
+      "mpi_size": 1,
+      "status": "actual_direct_setup_resource_profile_pass",
+      "max_process_tree_rss_gib": 1.2952156066894531,
+      "max_worker_rank_pss_sum_gib": 1.2571754455566406,
+      "max_worker_rank_uss_sum_gib": 1.2427177429199219,
+      "max_worker_rank_shared_sum_gib": 0.03839874267578125,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 3,
+      "common_solver_seconds": 76.00693165400298,
+      "function_space_seconds": 10.499700000014855,
+      "local_schur_seconds": 8.457166248001158,
+      "dtn_outer_seconds": 57.42457393198856,
+      "mumps_symbolic_numeric_seconds": 29.968631886004005,
+      "full_explicit_true_residual": 5.117696380077406e-12,
+      "R_total": 0.0007650243181303305,
+      "T_total": 0.6026851467956497,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi1_20260725T021106Z/watchdog_summary.json",
+        "sha256": "c5184bbdf22594acd428b249433f751fa65a7c26d40ad30ce9868af286b2dcf2"
+      }
+    },
+    {
+      "mpi_size": 2,
+      "status": "actual_direct_setup_resource_profile_pass",
+      "max_process_tree_rss_gib": 2.1582374572753906,
+      "max_worker_rank_pss_sum_gib": 2.0129613876342773,
+      "max_worker_rank_uss_sum_gib": 1.9178657531738281,
+      "max_worker_rank_shared_sum_gib": 0.3942146301269531,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 6,
+      "common_solver_seconds": 74.91294650099007,
+      "function_space_seconds": 10.882077997986926,
+      "local_schur_seconds": 17.046910769015085,
+      "dtn_outer_seconds": 55.46716496697627,
+      "mumps_symbolic_numeric_seconds": 19.43677001298056,
+      "full_explicit_true_residual": 1.3664111036792113e-11,
+      "R_total": 0.0007650243181399868,
+      "T_total": 0.6026851467955252,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi2_20260725T021259Z/watchdog_summary.json",
+        "sha256": "a1b6db260b21b8cd239dbc2e0d22ca406b61c098c7711007d4eb42b357b8bc3f"
+      }
+    },
+    {
+      "mpi_size": 4,
+      "status": "actual_direct_setup_resource_profile_pass",
+      "max_process_tree_rss_gib": 3.0999755859375,
+      "max_worker_rank_pss_sum_gib": 2.7230567932128906,
+      "max_worker_rank_uss_sum_gib": 2.6122207641601562,
+      "max_worker_rank_shared_sum_gib": 0.83148193359375,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 200,
+      "max_worker_rank_thread_count_during_mumps": 12,
+      "common_solver_seconds": 61.84929648399702,
+      "function_space_seconds": 12.158993840013864,
+      "local_schur_seconds": 15.003699915978359,
+      "dtn_outer_seconds": 42.72902768201311,
+      "mumps_symbolic_numeric_seconds": 12.399663454008987,
+      "full_explicit_true_residual": 4.9636555868585196e-12,
+      "R_total": 0.0007650243181290842,
+      "T_total": 0.6026851467952531,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi4_20260725T021441Z/watchdog_summary.json",
+        "sha256": "2c0b5ee79c2d998762aa462e28872d51a91a89c85cab369043168e50b43356d2"
+      }
+    },
+    {
+      "mpi_size": 8,
+      "status": "actual_direct_setup_resource_profile_pass",
+      "max_process_tree_rss_gib": 4.7111053466796875,
+      "max_worker_rank_pss_sum_gib": 3.8758020401000977,
+      "max_worker_rank_uss_sum_gib": 3.758453369140625,
+      "max_worker_rank_shared_sum_gib": 1.5670242309570312,
+      "max_process_tree_swap_mb": 0.0,
+      "max_worker_rank_thread_count_sum": 400,
+      "max_worker_rank_thread_count_during_mumps": 24,
+      "common_solver_seconds": 53.90120582198142,
+      "function_space_seconds": 13.225454917002935,
+      "local_schur_seconds": 10.733047135989182,
+      "dtn_outer_seconds": 32.434423934988445,
+      "mumps_symbolic_numeric_seconds": 6.52719834598247,
+      "full_explicit_true_residual": 7.410422249147878e-12,
+      "R_total": 0.0007650243181062956,
+      "T_total": 0.6026851467955207,
+      "watchdog": {
+        "path": "benchmarks/artifacts/task035b/direct_setup_profile/h15_fixed_p5trace_p6interior_direct_cold_mpi8_20260725T020832Z/watchdog_summary.json",
+        "sha256": "13e327c9ba3c9579fd706bf3f914b8c422895914d0a2258248a8b761d0e57d4f"
+      }
+    }
+  ],
+  "qualification": {
+    "pass": true,
+    "checks": {
+      "all_four_mpi_sizes_completed": true,
+      "same_source_sha": true,
+      "same_mesh_geometry_and_operator_identity": true,
+      "same_rows_and_nnz": true,
+      "all_full_explicit_true_residuals_le_1e-9": true,
+      "R_and_T_close_across_mpi_sizes": true,
+      "all_process_tree_swap_zero": true,
+      "ordinary_default_unchanged": true
+    }
+  },
+  "interpretation": {
+    "best_observed_direct_memory_point": "MPI1",
+    "best_observed_process_tree_peak_gib": 1.2952156066894531,
+    "not_claimed_as_theoretical_minimum": true,
+    "mpi8_over_mpi1_rss_ratio": 3.637313604274106,
+    "mpi1_over_mpi8_time_ratio": 1.4101156086383255,
+    "conclusion": "The previously observed 5.8-6.4 GiB range is not a memory floor for this 74,890-DoF / 16,880-row condensed problem. MPI1 is the measured memory minimum in this rank study, while MPI8 trades 3.64x process-tree RSS for 1.41x lower wall time.",
+    "factor_peak_identity": "For every rank count the direct peak occurs during or immediately after MUMPS KSP setup/solve, not during Python cell assembly.",
+    "thread_audit": "MUMPS uses the expected three Linux threads per rank in this environment. The 50-thread-per-rank spikes at MPI4/MPI8 appear only after solver-object release during PyVista/VTK field output; loaded libtbb and futex-waiting workers identify a dormant VTK/TBB postprocess pool, not a 200/400-thread direct solve."
+  },
+  "scope_limit": "This is a direct resource/rank authority study only. It does not promote the h15 fixed-trace field to the Task035b 12/12 significant-channel candidate."
+}
