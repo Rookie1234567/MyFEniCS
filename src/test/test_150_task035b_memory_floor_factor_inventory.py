@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
+
+import pytest
 
 from src.solvers.condensed_iterative_profiles import (
     PHYSICS_AWARE_PROFILE,
@@ -35,6 +38,28 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _historical_blob_sha256(commit_sha: str, path: str) -> str:
+    """Hash a declared historical Git blob instead of the evolving worktree."""
+
+    if not (ROOT / ".git").exists():
+        pytest.skip(
+            "historical Task035b ledger source verification requires .git "
+            "metadata"
+        )
+    try:
+        payload = subprocess.check_output(
+            ["git", "show", f"{commit_sha}:{path}"],
+            cwd=ROOT,
+            stderr=subprocess.PIPE,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        pytest.fail(
+            "cannot resolve the historical source blob declared by the "
+            f"Task035b ledger: {commit_sha}:{path}: {exc}"
+        )
+    return hashlib.sha256(payload).hexdigest()
+
+
 def test_ledger_is_hash_bound_and_does_not_claim_a_pde_rerun() -> None:
     ledger = _json(LEDGER)
 
@@ -50,11 +75,17 @@ def test_ledger_is_hash_bound_and_does_not_claim_a_pde_rerun() -> None:
         assert _sha256(path) == authority["sha256"]
 
     typed = ledger["source"]["typed_physics_aware_profile"]
+    historical_commits = (
+        typed["introduced_commit_sha"],
+        ledger["source"]["ledger_audited_head_sha"],
+    )
     for field in ("profile_source", "runner_source"):
         source = typed[field]
-        path = ROOT / source["path"]
-        assert path.is_file()
-        assert _sha256(path) == source["sha256"]
+        for commit_sha in historical_commits:
+            assert (
+                _historical_blob_sha256(commit_sha, source["path"])
+                == source["sha256"]
+            )
 
 
 def test_direct_rank_ledger_recomputes_the_measured_not_theoretical_floor() -> None:

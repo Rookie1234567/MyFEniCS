@@ -1,4 +1,4 @@
-"""Formal watchdog for Task035b factor-free assembled condensed iteration.
+"""Formal watchdog for Task035b no-global-direct-factor condensed iteration.
 
 The ordinary Stage-4 direct profile remains untouched.  This runner is a thin,
 explicit opt-in around the existing fixed-p5-trace/p6-interior numerical core.
@@ -46,10 +46,16 @@ DEFAULT_ARTIFACT_ROOT = (
     / "condensed_iterative"
 )
 PHYSICS_AWARE_PROFILE = "fgmres_dtn_trace_deflation"
+PHYSICAL_SLAB_DTN_PROFILE = "fgmres_zslab_ilu0_dtn_trace_galerkin"
+PHYSICS_AWARE_PROFILES = (
+    PHYSICS_AWARE_PROFILE,
+    PHYSICAL_SLAB_DTN_PROFILE,
+)
 SUPPORTED_PROFILES = (
     "gmres_jacobi",
     "fgmres_asm_ilu",
     PHYSICS_AWARE_PROFILE,
+    PHYSICAL_SLAB_DTN_PROFILE,
 )
 EXPECTED_H15_TOPOLOGY = {
     "mesh_cells_resolved": [6, 2, 10],
@@ -114,8 +120,9 @@ def _exclusive_output_path(path: Path) -> Path:
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Task035b opt-in factor-free assembled condensed iterative "
-            "watchdog. The default action is a non-PDE execution plan."
+            "Task035b opt-in assembled condensed iterative watchdog with no "
+            "global sparse direct factor. The default action is a non-PDE "
+            "execution plan."
         )
     )
     parser.add_argument(
@@ -202,6 +209,9 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "fgmres_dtn_trace_deflation": (
                 "not_run_requires_formal_discriminator"
             ),
+            "fgmres_zslab_ilu0_dtn_trace_galerkin": (
+                "not_run_requires_formal_discriminator"
+            ),
         },
         "raw_petsc_options_accepted": False,
         "formal_first_screen": {
@@ -214,13 +224,27 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "swap_allowed": False,
         },
         "physics_aware_discriminator": {
-            "profile": "fgmres_dtn_trace_deflation",
+            "profiles": list(PHYSICS_AWARE_PROFILES),
             "coarse_basis": (
                 "one normalized [-diag(A_tt)^-1 B_j; e_j] vector per "
                 "physical DtN auxiliary mode"
             ),
             "fine_sparse_factor_nnz": 0,
             "small_dense_coarse_factor_reported_separately": True,
+            "physical_z_slab_followup": {
+                "profile": PHYSICAL_SLAB_DTN_PROFILE,
+                "slabs": 10,
+                "overlap_layers": 0.125,
+                "smoother": (
+                    "owner-computes physical active-trace z-slab ILU(0)"
+                ),
+                "local_sparse_factor_reported_separately": True,
+                "strictly_factorless_preconditioner": False,
+                "global_fine_factor_free": True,
+                "no_global_sparse_direct_factor": True,
+                "strictly_factorless": False,
+                "complete_factor_inventory_required": True,
+            },
             "status": "not_run",
         },
         "next_action": (
@@ -660,8 +684,37 @@ def _classify_screen(
     )
     process_swap = telemetry.get("max_process_tree_swap_mb")
     smaps_swap = telemetry.get("max_worker_rank_smaps_swap_sum_mb")
+    raw_inventory = evidence.get("factor_inventory")
+    raw_inventory = (
+        raw_inventory if isinstance(raw_inventory, dict) else {}
+    )
+    strictly_factorless = expected_profile == "gmres_jacobi"
+    retained_factor_kinds = {
+        "gmres_jacobi": [],
+        "fgmres_asm_ilu": ["local_asm_ilu0"],
+        PHYSICS_AWARE_PROFILE: ["small_dense_dtn_galerkin_lu"],
+        PHYSICAL_SLAB_DTN_PROFILE: [
+            "local_physical_z_slab_ilu0",
+            "small_dense_dtn_galerkin_lu",
+        ],
+    }[expected_profile]
+    factor_semantics = {
+        "global_fine_factor_free": True,
+        "no_global_sparse_direct_factor": True,
+        "strictly_factorless": strictly_factorless,
+        "retained_factor_kinds": retained_factor_kinds,
+        "complete_factor_inventory": (
+            raw_inventory.get("all_factor_storage_disclosed") is True
+            if expected_profile in PHYSICS_AWARE_PROFILES
+            else expected_profile == "gmres_jacobi"
+        ),
+        "legacy_compatibility_note": (
+            "legacy factor_free fields and status labels, when present, mean "
+            "only that the global fine sparse direct factor is absent"
+        ),
+    }
     physics_aware_checks: dict[str, bool] = {}
-    if expected_profile == PHYSICS_AWARE_PROFILE:
+    if expected_profile in PHYSICS_AWARE_PROFILES:
         contract = evidence.get("typed_profile_contract")
         physics = evidence.get("physics_aware_preconditioner")
         inventory = evidence.get("factor_inventory")
@@ -784,6 +837,107 @@ def _classify_screen(
                 )
             ),
         }
+        if expected_profile == PHYSICAL_SLAB_DTN_PROFILE:
+            partition = physics.get("physical_slab_partition")
+            partition = (
+                partition if isinstance(partition, dict) else {}
+            )
+            local_factor_nnz = physics.get(
+                "local_subdomain_factor_nnz"
+            )
+            inventory_local_factor_nnz = inventory.get(
+                "local_subdomain_factor_nnz"
+            )
+            partition_gate = contract.get(
+                "physical_slab_partition_gate"
+            )
+            partition_gate = (
+                partition_gate
+                if isinstance(partition_gate, dict)
+                else {}
+            )
+            physics_aware_checks.update(
+                {
+                    "physical_slab_contract_gate_required": (
+                        partition_gate.get("required") is True
+                    ),
+                    "physical_slab_contract_inactive_rows_forbidden": (
+                        partition_gate.get("inactive_rows_allowed")
+                        is False
+                    ),
+                    "physical_slab_partition_present": bool(partition),
+                    "physical_slab_partition_schema": (
+                        partition.get("schema_version")
+                        == (
+                            "task035b.condensed-physical-z-slab-"
+                            "partition.v1"
+                        )
+                    ),
+                    "physical_slab_partition_capability_pass": (
+                        partition.get("capability_pass") is True
+                    ),
+                    "physical_slab_partition_active_rows_complete": (
+                        partition.get("all_active_trace_rows_covered")
+                        is True
+                    ),
+                    "physical_slab_partition_auxiliary_sides_complete": (
+                        partition.get(
+                            "all_auxiliary_rows_covered_once_on_physical_side"
+                        )
+                        is True
+                    ),
+                    "physical_slab_partition_no_inactive_rows": (
+                        partition.get("inactive_trace_rows_added")
+                        is False
+                    ),
+                    "physical_slab_partition_h15_parameters": (
+                        partition.get("num_physical_z_slabs") == 10
+                        and _finite_number(
+                            partition.get("overlap_layers")
+                        )
+                        and abs(
+                            float(
+                                partition["overlap_layers"]
+                            )
+                            - 0.125
+                        )
+                        <= 1.0e-15
+                    ),
+                    "physical_slab_partition_matrix_rows_match": (
+                        partition.get("matrix_rows")
+                        == evidence.get("matrix_rows")
+                    ),
+                    "physical_slab_local_ilu_disclosed": (
+                        physics.get("local_subdomain_ilu_active") is True
+                        and physics.get("local_subdomain_ilu_levels") == 0
+                        and isinstance(local_factor_nnz, int)
+                        and not isinstance(local_factor_nnz, bool)
+                        and local_factor_nnz > 0
+                    ),
+                    "physical_slab_factor_only_storage_disclosed": (
+                        physics.get(
+                            "local_subdomain_factor_only_storage"
+                        )
+                        is True
+                    ),
+                    "physical_slab_factor_inventory_matches": (
+                        inventory.get("local_subdomain_ilu_active")
+                        is True
+                        and inventory.get("local_subdomain_ilu_levels")
+                        == 0
+                        and inventory_local_factor_nnz
+                        == local_factor_nnz
+                    ),
+                    "physical_slab_all_factor_storage_disclosed": (
+                        physics.get("all_factor_storage_disclosed")
+                        is True
+                        and inventory.get(
+                            "all_factor_storage_disclosed"
+                        )
+                        is True
+                    ),
+                }
+            )
     topology_checks = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -876,8 +1030,18 @@ def _classify_screen(
         "summary_available"
     ) is True
     if formal_pass:
-        status = "actual_factor_free_iterative_screen_pass"
-        classification = "positive_factor_free_iterative_screen"
+        if expected_profile == PHYSICAL_SLAB_DTN_PROFILE:
+            status = (
+                "actual_global_fine_factor_free_with_disclosed_"
+                "preconditioner_factors_iterative_screen_pass"
+            )
+            classification = (
+                "positive_no_global_sparse_direct_factor_"
+                "not_strictly_factorless_iterative_screen"
+            )
+        else:
+            status = "actual_factor_free_iterative_screen_pass"
+            classification = "positive_factor_free_iterative_screen"
     elif terminated_for_memory:
         status = "controlled_stop_memory"
         classification = "resource_controlled_stop"
@@ -903,6 +1067,7 @@ def _classify_screen(
             _finite_number(full_residual)
             and float(full_residual) <= 1.0e-9
         ),
+        "factor_semantics": factor_semantics,
         "checks": screen_checks,
         "failures": [
             name for name, passed in screen_checks.items() if not passed
@@ -919,7 +1084,14 @@ def _classify_screen(
         "memory_research_targets_not_qualification_gates": {
             "minimum_useful_direct_gib": 5.0,
             "preferred_direct_gib": 4.5,
+            "assembled_no_global_direct_factor_research_target_gib": [
+                4.0,
+                4.5,
+            ],
             "assembled_factor_free_research_target_gib": [4.0, 4.5],
+            "legacy_factor_free_key_semantics": (
+                "global fine sparse direct factor absent only"
+            ),
         },
     }
 
@@ -1110,6 +1282,14 @@ def _run_parent(args: argparse.Namespace) -> int:
     record = {
         "schema_version": "task035b.condensed-iterative-watchdog.v1",
         "benchmark_id": "task035b_factor_free_assembled_condensed_iterative",
+        "benchmark_semantics": {
+            "preferred_label": (
+                "task035b_no_global_sparse_direct_factor_"
+                "assembled_condensed_iterative"
+            ),
+            "legacy_benchmark_id_retained_for_compatibility": True,
+            "factor_scope": screen["factor_semantics"],
+        },
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "status": screen["status"],
         "classification": screen["classification"],

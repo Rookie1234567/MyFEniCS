@@ -214,6 +214,9 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "affine_isotropic_reference_tensor": True,
             "persistent_sha_bound_raw_tensor_cache": True,
             "persistent_sha_bound_condensed_class_cache": True,
+            "persistent_sha_mesh_mode_trace_bound_dtn_surface_cache": (
+                True
+            ),
             "direct_mumps": True,
             "solver_release_before_postprocess": True,
         },
@@ -354,6 +357,7 @@ def _direct_config(
         stage4_condensed_cache_directory=str(cache_directory.resolve()),
         stage4_condensed_cache_source_sha=source_sha,
         stage4_condensed_cache_mode=CACHE_MODES[cache_state],
+        stage4_condensed_persistent_dtn_surface_cache=True,
         petsc_direct_solver_profile="default",
         petsc_extra_options={
             "pc_factor_mat_solver_type": "mumps",
@@ -673,6 +677,10 @@ def _extract_setup_evidence(
     condensed_cache = (
         cell.get("persistent_condensed_class_cache") or {}
     )
+    dtn_surface_cache = (
+        summary.get("stage4_dtn_surface_vector_persistent_cache")
+        or {}
+    )
     matrix = summary.get("matrix_stats") or {}
     config = summary.get("config") or {}
     factor = summary.get("stage4_dtn_factor_inventory") or {}
@@ -715,6 +723,12 @@ def _extract_setup_evidence(
         "matrix_nnz_used": matrix.get("matrix_nnz_used"),
         "matrix_nnz_allocated": matrix.get("matrix_nnz_allocated"),
         "factor_inventory": factor,
+        "stage4_dtn_component_vector_assemblies": summary.get(
+            "stage4_dtn_component_vector_assemblies"
+        ),
+        "stage4_dtn_persistent_component_vector_restores": summary.get(
+            "stage4_dtn_persistent_component_vector_restores"
+        ),
         "full_true_residual": _full_true_residual(summary),
         "R00_total": summary.get("R00_total"),
         "R_total": summary.get("R_total"),
@@ -754,6 +768,9 @@ def _extract_setup_evidence(
                 "stage4_condensed_cache_source_sha"
             ),
             "cache_mode": config.get("stage4_condensed_cache_mode"),
+            "persistent_dtn_surface_cache": config.get(
+                "stage4_condensed_persistent_dtn_surface_cache"
+            ),
             "ordinary_default_changed": config.get(
                 "ordinary_default_changed",
                 False,
@@ -762,6 +779,7 @@ def _extract_setup_evidence(
         "cache_audit": {
             "raw_tensor": raw_cache,
             "condensed_class": condensed_cache,
+            "dtn_surface_vector": dtn_surface_cache,
         },
         "cell_static_raw_tensor_evaluations": cell.get(
             "raw_tensor_kernel_evaluation_count"
@@ -784,8 +802,8 @@ def _extract_setup_evidence(
                 "separate symbolic and numeric values are unavailable"
             ),
             "deferred_surface_jit": (
-                "surface-form JIT is included in DtN modal vector assembly "
-                "and is not yet separately exposed"
+                "surface form/JIT plus persistent-cache setup is measured "
+                "separately from modal vector assembly"
             ),
         },
         "timings_seconds": {
@@ -907,6 +925,26 @@ def _extract_setup_evidence(
             "dtn": {
                 "outer_assembly_solve_recovery": dtn_outer,
                 "non_ksp_derived": dtn_non_ksp,
+                "surface_form_and_cache_setup": _number(
+                    summary,
+                    "stage4_dtn_surface_form_and_cache_setup_seconds",
+                ),
+                "persistent_surface_cache_identity_and_key": _number(
+                    dtn_surface_cache,
+                    "identity_and_key_seconds_max",
+                ),
+                "persistent_surface_cache_read": _number(
+                    dtn_surface_cache,
+                    "read_seconds_max",
+                ),
+                "persistent_surface_cache_write": _number(
+                    dtn_surface_cache,
+                    "write_seconds_max",
+                ),
+                "persistent_surface_vector_restore": _number(
+                    summary,
+                    "stage4_dtn_persistent_vector_restore_seconds",
+                ),
                 "incident_source_vector": _number(
                     summary,
                     "stage4_dtn_incident_source_vector_seconds",
@@ -999,6 +1037,7 @@ def _classify_profile(
     cache = evidence.get("cache_audit") or {}
     raw_cache = cache.get("raw_tensor") or {}
     condensed_cache = cache.get("condensed_class") or {}
+    dtn_surface_cache = cache.get("dtn_surface_vector") or {}
     topology = {
         "fixed_rectangular_hexa_h15": (
             evidence.get("mesh_cell_type") == "hexahedron"
@@ -1025,9 +1064,17 @@ def _classify_profile(
         "condensed_class_cache_enabled": (
             condensed_cache.get("enabled") is True
         ),
+        "dtn_surface_vector_cache_enabled": (
+            dtn_surface_cache.get("enabled") is True
+        ),
+        "dtn_surface_cache_collective_all_or_nothing": (
+            dtn_surface_cache.get("collective_all_or_nothing") is True
+        ),
         "cache_mode_identity": (
             raw_cache.get("mode") == CACHE_MODES[cache_state]
             and condensed_cache.get("mode") == CACHE_MODES[cache_state]
+            and dtn_surface_cache.get("mode")
+            == CACHE_MODES[cache_state]
             and config.get("cache_mode") == CACHE_MODES[cache_state]
         ),
         "cache_source_sha_identity": config.get("cache_source_sha")
@@ -1049,6 +1096,25 @@ def _classify_profile(
                 and condensed_cache["write_count_sum"] > 0
             )
         ),
+        "cold_dtn_surface_cache_wrote_complete_rank_bundles": (
+            cache_state != "cold"
+            or (
+                isinstance(
+                    dtn_surface_cache.get("write_count_sum"),
+                    int,
+                )
+                and dtn_surface_cache["write_count_sum"]
+                == int(expected_mpi_size)
+                and dtn_surface_cache.get("record_count_sum")
+                == int(expected_mpi_size)
+                * int(
+                    dtn_surface_cache.get(
+                        "descriptor_count_per_rank",
+                        -1,
+                    )
+                )
+            )
+        ),
         "warm_raw_tensor_cache_hit_without_recompute": (
             cache_state != "warm"
             or (
@@ -1067,6 +1133,19 @@ def _classify_profile(
                 )
                 and condensed_cache["hit_count_sum"] > 0
                 and condensed_cache.get("construction_count_sum") == 0
+            )
+        ),
+        "warm_dtn_surface_cache_hit_without_reassembly": (
+            cache_state != "warm"
+            or (
+                dtn_surface_cache.get("hit_on_all_ranks") is True
+                and dtn_surface_cache.get("hit_count_sum")
+                == int(expected_mpi_size)
+                and evidence.get(
+                    "stage4_dtn_component_vector_assemblies",
+                    0,
+                )
+                == 0
             )
         ),
     }
@@ -1098,6 +1177,9 @@ def _classify_profile(
         "fast_setup_opt_in": config.get("fast_fixed_trace_setup") is True,
         "affine_tensor_opt_in": (
             config.get("affine_isotropic_reference_tensor") is True
+        ),
+        "persistent_dtn_surface_cache_opt_in": (
+            config.get("persistent_dtn_surface_cache") is True
         ),
         "assembly_time_condensation_opt_in": (
             config.get("assembly_time_cell_static_condensation") is True
@@ -1198,6 +1280,11 @@ def _resolve_cache_directory(
             raise SystemExit(
                 "warm cache requires at least one complete SHA-bound "
                 f"condensed-class manifest/array pair: {resolved}"
+            )
+        if not _cache_pairs(resolved, prefix="dtn_surface_vectors"):
+            raise SystemExit(
+                "warm cache requires at least one complete mesh/mode/trace-"
+                f"bound DtN surface-vector manifest/array pair: {resolved}"
             )
     return resolved
 
@@ -1450,6 +1537,10 @@ def _run_parent(args: argparse.Namespace) -> int:
                 "condensed_class": _cache_pairs(
                     cache_directory,
                     prefix="condensed_class",
+                ),
+                "dtn_surface_vectors": _cache_pairs(
+                    cache_directory,
+                    prefix="dtn_surface_vectors",
                 ),
             },
         },

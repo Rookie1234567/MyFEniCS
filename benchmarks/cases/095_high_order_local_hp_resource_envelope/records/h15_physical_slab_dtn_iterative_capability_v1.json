@@ -1,0 +1,168 @@
+{
+  "schema_version": "task035b.h15-physical-slab-dtn-iterative-capability.v1",
+  "benchmark_id": "task035b_h15_physical_zslab_dtn_two_level_iterative_capability",
+  "status": "implemented_unit_qualified_formal_pde_not_run",
+  "classification": "positive_typed_capability_not_formal_solver_evidence",
+  "pass": true,
+  "pass_semantics": "Pass qualifies the typed active-row partition, two-level preconditioner action, complete factor-inventory contract and opt-in runner only. It is not a formal h15 convergence, accuracy, memory or performance pass.",
+  "formal_pde_started": false,
+  "heavy_pde_rerun": false,
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "review_v2_commit_sha": "d547e9d7e903e9e8639346715770e56f9c17e86d",
+    "implementation_base_head_sha": "a3b2b80fc9ce9b8f0c0e71076a1b254165dd65ed",
+    "implementation_commit_sha": null,
+    "source_tree_clean_at_capability_capture": false,
+    "content_hash_bound": true,
+    "files": [
+      {
+        "role": "physical_active_trace_z_slab_partition",
+        "path": "src/solvers/condensed_physical_slab_partition.py",
+        "sha256": "71ec654b28a1e19b96bd50018aa80b21d66baa59740f171ad79d54dd700bca4d"
+      },
+      {
+        "role": "typed_iterative_profile_and_two_level_pc",
+        "path": "src/solvers/condensed_iterative_profiles.py",
+        "sha256": "e982bc36b622f81c93475ddc65d6fa07e72f210e739117252b2aff643071e3b4"
+      },
+      {
+        "role": "assembly_time_condensed_dtn_solver_wiring",
+        "path": "src/solvers/dtn_port_3d.py",
+        "sha256": "1d4cdc62dccc26cf27bcfbb51b5a4c8b68fe86f6652d281b4ee0f7ca82bbbd0b"
+      },
+      {
+        "role": "formal_opt_in_watchdog",
+        "path": "benchmarks/run_task035b_condensed_iterative.py",
+        "sha256": "dfdc009092d7225bd23578a92bc9f06cc8c262e73c2b0cccdd66ef7bb5b5f170"
+      }
+    ]
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_cell_type": "hexahedron",
+    "h_nm": 15.0,
+    "mesh_cells_resolved": [
+      6,
+      2,
+      10
+    ],
+    "num_mesh_cells": 120,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "full3d_equivalent_dofs": 74890,
+    "active_condensed_trace_rows": 16800,
+    "physical_dtn_auxiliary_rows": 80,
+    "active_rows_with_dtn": 16880,
+    "identity_authority": "h15_memory_floor_factor_inventory_ledger_v2.json"
+  },
+  "profile": {
+    "name": "fgmres_zslab_ilu0_dtn_trace_galerkin",
+    "configured_programmatically": true,
+    "raw_petsc_options_accepted": false,
+    "assembled_reduced_operator": true,
+    "matrix_free": false,
+    "outer_solver": "FGMRES",
+    "restart": 30,
+    "maximum_iterations": 200,
+    "relative_tolerance": 1e-10,
+    "residual_history_norm": "unpreconditioned",
+    "physical_z_slabs": 10,
+    "overlap_layers": 0.125,
+    "local_smoother": "owner-computes complete physical active-trace z-slab ILU(0), one local Krylov step per application",
+    "coarse_space": "one normalized [-diag(A_tt)^-1 B_j; e_j] vector per physical DtN auxiliary mode",
+    "coarse_correction": "exact sparse-basis Galerkin correction",
+    "pre_and_post_smoothing": true,
+    "inactive_trace_rows_in_operator": false
+  },
+  "partition_contract": {
+    "schema_version": "task035b.condensed-physical-z-slab-partition.v1",
+    "row_space": "active_condensed_trace_plus_physical_dtn_auxiliary",
+    "cell_interior_dofs_excluded": true,
+    "trace_rows_mapped_through_exact_constraint_expansion": true,
+    "periodic_slave_pullback_included": true,
+    "all_active_trace_rows_covered_required": true,
+    "physical_dtn_side_identity_required": true,
+    "inactive_modes_allowed": false,
+    "partition_sha256_required": true,
+    "mpi_invariant_partition_required": true
+  },
+  "factor_semantics": {
+    "global_fine_factor_free": true,
+    "no_global_sparse_direct_factor": true,
+    "global_fine_sparse_direct_factor_nnz_required": 0,
+    "mumps_symbolic_or_numeric_created_required": false,
+    "strictly_factorless": false,
+    "strictly_factorless_preconditioner": false,
+    "complete_factor_inventory_required": true,
+    "retained_factors": [
+      {
+        "kind": "local_physical_z_slab_ilu0",
+        "scope": "owner-computes complete physical slabs",
+        "factor_only_storage": true,
+        "formal_h15_factor_nnz": null,
+        "formal_h15_factor_rows": null,
+        "measurement_status": "required_at_formal_screen"
+      },
+      {
+        "kind": "small_replicated_dense_dtn_galerkin_lu",
+        "expected_dimension": 80,
+        "derived_dense_matrix_entries": 6400,
+        "derived_dense_matrix_payload_bytes_complex128": 102400,
+        "formal_h15_lu_and_workspace_bytes": null,
+        "measurement_status": "required_at_formal_screen"
+      }
+    ],
+    "terminology": "The profile is global_fine_factor_free because no global sparse direct factor is created. It is not strictly factorless because local ILU(0) and a small dense coarse LU are retained and must be measured separately."
+  },
+  "qualification": {
+    "unit_and_contract_tests": {
+      "command": "python -m pytest -q src/test/test_129_task035b_condensed_iterative_runner.py src/test/test_146_task035b_factor_free_profile_v2.py src/test/test_150_task035b_memory_floor_factor_inventory.py src/test/test_154_task035b_physical_slab_dtn_profile.py",
+      "result": "31 passed",
+      "status": "passed"
+    },
+    "mpi2_partition_and_pc_tests": {
+      "command": "mpiexec -n 2 python -m pytest -q src/test/test_154_task035b_physical_slab_dtn_profile.py",
+      "result": "11 passed on each rank",
+      "status": "passed"
+    },
+    "dry_plan": {
+      "command": "python -m benchmarks.run_task035b_condensed_iterative --profile fgmres_zslab_ilu0_dtn_trace_galerkin --mpi-size 8",
+      "status": "not_run_requires_explicit_execute_pde",
+      "pde_started": false
+    },
+    "formal_h15_mpi8_screen": {
+      "status": "not_run",
+      "iterations": null,
+      "residual_history": null,
+      "terminal_explicit_reduced_relative_residual": null,
+      "full_recovered_true_residual": null,
+      "process_tree_peak_gib": null,
+      "worker_rank_pss_peak_gib": null,
+      "worker_rank_uss_peak_gib": null,
+      "local_subdomain_factor_nnz": null,
+      "coarse_lu_workspace_bytes": null,
+      "formal_iterative_screen_pass": null
+    }
+  },
+  "formal_screen_contract": {
+    "source_must_be_clean_and_full_sha_bound": true,
+    "mpi_size": 8,
+    "minimum_unpreconditioned_residual_reduction_decades": 3.0,
+    "terminal_explicit_reduced_relative_residual_max": 0.001,
+    "full_explicit_true_residual_max": 1e-9,
+    "global_fine_sparse_direct_factor_nnz": 0,
+    "all_retained_factor_storage_disclosed": true,
+    "swap_allowed": false,
+    "command_after_clean_commit": "python -m benchmarks.run_task035b_condensed_iterative --execute-pde --profile fgmres_zslab_ilu0_dtn_trace_galerkin --mpi-size 8 --verified-clean-sha <clean-full-sha>"
+  },
+  "limitations": [
+    "No formal h15 PDE solve was started for this capability record.",
+    "No convergence, 12-channel accuracy, same-error, memory-floor or performance claim is made.",
+    "The local ILU factor NNZ and storage, dense coarse LU workspace, process-tree RSS, per-rank PSS/USS and native-object ledger remain formal-run measurements.",
+    "The operator is assembled; matrix-free Schur plus Floquet plus DtN action remains a separate later lane.",
+    "The legacy factor_free vocabulary is retained only where required by existing schema compatibility; its meaning is limited to absence of the global fine sparse direct factor."
+  ],
+  "next_action": "After the implementation is committed with a clean full SHA, run exactly one guarded h15 MPI8 formal screen and preserve either the positive result or the controlled negative without relaxing the residual and factor-inventory gates."
+}

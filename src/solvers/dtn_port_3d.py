@@ -31,12 +31,24 @@ from .common_3d_solve import (
     _petsc_matrix_stats,
 )
 from .common_3d_utils import _write_progress_event
+from .condensed_physical_slab_partition import (
+    CondensedPhysicalSlabPartition,
+    build_condensed_physical_z_slab_partition_from_space,
+)
 from .condensed_iterative_profiles import (
     PHYSICS_AWARE_PROFILE,
+    PHYSICS_AWARE_PROFILES,
+    PHYSICAL_SLAB_DTN_PROFILE,
     condensed_iterative_profile,
     condensed_iterative_profile_contract,
     configure_condensed_iterative_outer_ksp,
     configure_dtn_trace_deflation_pc,
+    configure_physical_slab_dtn_trace_pc,
+)
+from .dtn_surface_vector_cache import (
+    PersistentDtnSurfaceVectorCache,
+    disabled_dtn_surface_vector_cache_audit,
+    dtn_surface_vector_descriptor,
 )
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
@@ -841,6 +853,62 @@ def _dtn_surface_quadrature_degree(cfg: SimulationConfig3D, modes: list[PortMode
     return int(max(10, 2 * int(cfg.nedelec_degree) + max_order + 6))
 
 
+def _dtn_surface_cache_mode_inventory(
+    modes: list[PortMode3D],
+    cfg: SimulationConfig3D,
+) -> list[dict[str, Any]]:
+    """Return the complete selected-mode identity for persistent caching."""
+
+    return [
+        {
+            "schema_version": (
+                "task035b.dtn-surface-cache-mode-identity.v1"
+            ),
+            "side": mode.side,
+            "m": int(mode.m),
+            "n": int(mode.n),
+            "polarization": mode.polarization,
+            "alpha": complex(mode.alpha),
+            "gamma": complex(mode.gamma),
+            "beta": complex(mode.beta),
+            "refractive_index": complex(mode.refractive_index),
+            "vertical_sign": int(mode.vertical_sign),
+            "e_vector": np.asarray(
+                mode.e_vector,
+                dtype=np.complex128,
+            ),
+            "k_vector": np.asarray(
+                mode.k_vector,
+                dtype=np.complex128,
+            ),
+            "h_vector": np.asarray(
+                mode.h_vector,
+                dtype=np.complex128,
+            ),
+            "boundary_referenced": (
+                _mode_uses_boundary_referenced_auxiliary(mode, cfg)
+            ),
+            "boundary_reference_z": (
+                float(cfg.physical_z_max)
+                if (
+                    mode.side == "top"
+                    and _mode_uses_boundary_referenced_auxiliary(
+                        mode,
+                        cfg,
+                    )
+                )
+                else float(cfg.physical_z_min)
+                if _mode_uses_boundary_referenced_auxiliary(
+                    mode,
+                    cfg,
+                )
+                else None
+            ),
+        }
+        for mode in modes
+    ]
+
+
 def _use_zero_order_local_robin_dtn(cfg: SimulationConfig3D) -> bool:
     """Use the 2D-like local DtN sanity branch for normal-incidence order 0."""
 
@@ -1254,6 +1322,7 @@ def _solve_augmented_system(
     factorization_only: bool = False,
     iterative_profile: str | None = None,
     dtn_auxiliary_rows: int | None = None,
+    physical_slab_partition: CondensedPhysicalSlabPartition | None = None,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
     iterative_definition = (
         None
@@ -1265,12 +1334,32 @@ def _solve_augmented_system(
             "factorization-only diagnostics are incompatible with the "
             "condensed iterative profile"
         )
-    if iterative_profile == PHYSICS_AWARE_PROFILE and (
+    if iterative_profile in PHYSICS_AWARE_PROFILES and (
         dtn_auxiliary_rows is None or int(dtn_auxiliary_rows) <= 0
     ):
         raise ValueError(
-            "the DtN-trace deflation profile requires the positive physical "
+            "the physics-aware DtN-trace profile requires the positive physical "
             "DtN auxiliary-row count"
+        )
+    if iterative_profile == PHYSICAL_SLAB_DTN_PROFILE:
+        if physical_slab_partition is None:
+            raise ValueError(
+                "the physical z-slab/DtN profile requires its typed active-row "
+                "partition"
+            )
+        if (
+            physical_slab_partition.matrix_rows != int(A_aug.getSize()[0])
+            or physical_slab_partition.dtn_auxiliary_rows
+            != int(dtn_auxiliary_rows)
+        ):
+            raise ValueError(
+                "the physical z-slab partition does not match the augmented "
+                "condensed operator"
+            )
+    elif physical_slab_partition is not None:
+        raise ValueError(
+            "a physical z-slab partition was supplied to a different solver "
+            "profile"
         )
     progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
@@ -1302,6 +1391,9 @@ def _solve_augmented_system(
         configure_condensed_iterative_outer_ksp(
             ksp,
             iterative_definition,
+            physical_slab_partition_available=(
+                physical_slab_partition is not None
+            ),
         )
         pc = ksp.getPC()
         if iterative_profile == "gmres_jacobi":
@@ -1358,6 +1450,13 @@ def _solve_augmented_system(
                 trace_rows=matrix_rows - int(dtn_auxiliary_rows),
                 dtn_auxiliary_rows=int(dtn_auxiliary_rows),
             )
+        elif iterative_profile == PHYSICAL_SLAB_DTN_PROFILE:
+            assert physical_slab_partition is not None
+            physics_aware_context = configure_physical_slab_dtn_trace_pc(
+                ksp,
+                A_aug,
+                partition=physical_slab_partition,
+            )
         ksp.setUp()
         if iterative_profile == "fgmres_asm_ilu":
             sub_ksps = ksp.getPC().getASMSubKSP()
@@ -1395,6 +1494,9 @@ def _solve_augmented_system(
         factor_inventory = _petsc_factor_inventory(ksp)
     elif physics_aware_context is not None:
         physics_inventory = physics_aware_context.diagnostics
+        local_subdomain_ilu_active = bool(
+            physics_inventory.get("local_subdomain_ilu_active", False)
+        )
         factor_inventory = {
             "available": False,
             "factor_solver_type": None,
@@ -1405,7 +1507,24 @@ def _solve_augmented_system(
             "mumps_symbolic_or_numeric_created": False,
             "global_direct_factor_nnz": 0,
             "global_fine_sparse_factor_nnz": 0,
-            "local_subdomain_ilu_active": False,
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
+            "local_subdomain_ilu_active": local_subdomain_ilu_active,
+            "local_subdomain_ilu_levels": physics_inventory.get(
+                "local_subdomain_ilu_levels"
+            ),
+            "local_subdomain_factor_nnz": physics_inventory.get(
+                "local_subdomain_factor_nnz"
+            ),
+            "local_subdomain_extracted_matrix_nnz": physics_inventory.get(
+                "local_subdomain_extracted_matrix_nnz"
+            ),
+            "local_subdomain_factor_rows": physics_inventory.get(
+                "local_subdomain_factor_rows"
+            ),
+            "local_subdomain_factor_only_storage": physics_inventory.get(
+                "local_subdomain_factor_only_storage"
+            ),
             "coarse_dense_lu_active": True,
             "coarse_dense_matrix_entries": physics_inventory[
                 "coarse_dense_matrix_entries"
@@ -1418,13 +1537,34 @@ def _solve_augmented_system(
             ],
             "fine_operator_factor_free": True,
             "strictly_factorless_preconditioner": False,
+            "strictly_factorless": False,
+            "strictly_factorless_reason": physics_inventory[
+                "strictly_factorless_reason"
+            ],
+            "all_factor_storage_disclosed": physics_inventory.get(
+                "all_factor_storage_disclosed",
+                not local_subdomain_ilu_active,
+            ),
             "limitations": [
                 "global fine sparse direct factor deliberately absent",
+                *(
+                    [
+                        "owner-computes physical z-slab ILU(0) factors are "
+                        "reported separately"
+                    ]
+                    if local_subdomain_ilu_active
+                    else []
+                ),
                 (
                     "small replicated dense DtN-trace Galerkin LU is "
                     "reported separately"
                 ),
             ],
+            "factor_semantics": (
+                "global_fine_factor_free; no global sparse direct factor; "
+                "strictly_factorless=false; retained local and coarse "
+                "factors completely inventoried"
+            ),
         }
     else:
         factor_inventory = {
@@ -1435,6 +1575,8 @@ def _solve_augmented_system(
             "mumps_raw_rinfog": {},
             "mumps_api_available": False,
             "global_direct_factor_nnz": 0,
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
             "local_subdomain_ilu_active": (
                 iterative_profile == "fgmres_asm_ilu"
             ),
@@ -1609,7 +1751,27 @@ def _solve_augmented_system(
                 reduced_relative_residual
             ),
             "global_direct_factor_nnz": 0,
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
             "mumps_symbolic_or_numeric_created": False,
+            "factor_semantics": {
+                "global_fine_factor_free": True,
+                "no_global_sparse_direct_factor": True,
+                "strictly_factorless": (
+                    iterative_profile == "gmres_jacobi"
+                ),
+                "complete_factor_inventory": (
+                    physics_aware_context is not None
+                    and factor_inventory.get(
+                        "all_factor_storage_disclosed"
+                    )
+                    is True
+                ),
+                "legacy_compatibility_note": (
+                    "fine_operator_factor_free refers only to the absence "
+                    "of a global fine sparse direct factor"
+                ),
+            },
             "formal_first_screen_checks": {
                 "unpreconditioned_residual_reduction_ge_3_decades": (
                     history_reduction is not None
@@ -2062,6 +2224,14 @@ def solve_stage4_dtn_port_total_field(
         raise ValueError(
             "condensed cache identity was supplied while cache mode is off"
         )
+    if cfg.stage4_condensed_persistent_dtn_surface_cache and (
+        cache_mode == "off"
+        or not cfg.stage4_assembly_time_cell_static_condensation
+    ):
+        raise ValueError(
+            "the persistent DtN surface-vector cache requires the "
+            "SHA-bound condensed cache and assembly-time condensation"
+        )
     if cfg.stage4_affine_isotropic_reference_tensor and (
         not cfg.stage4_assembly_time_cell_static_condensation
         or cfg.stage_case != "stage4_block_grating"
@@ -2101,7 +2271,7 @@ def solve_stage4_dtn_port_total_field(
 
     comm = mesh_data.mesh.comm
     stage_start = time.perf_counter()
-    timing_details: dict[str, float | int] = {}
+    timing_details: dict[str, Any] = {}
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
     if n_aux == 0:
@@ -2470,20 +2640,127 @@ def solve_stage4_dtn_port_total_field(
     )
 
     incident_projections: list[complex] = []
-    surface_assemblers = {
-        ("top", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
-        ),
-        ("top", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree
-        ),
-        ("bottom", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree
-        ),
-        ("bottom", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
-        ),
-    }
+    boundary_referenced_modes_present = any(
+        _mode_uses_boundary_referenced_auxiliary(mode, cfg)
+        for mode in modes
+    )
+    surface_cache: PersistentDtnSurfaceVectorCache | None = None
+    surface_cache_hit = False
+    surface_descriptors_by_key: dict[
+        tuple[str, int, int, complex, bool],
+        tuple[dict[str, Any], dict[str, Any]],
+    ] = {}
+    surface_setup_started = time.perf_counter()
+    if cfg.stage4_condensed_persistent_dtn_surface_cache:
+        if assembly_time_system is None:
+            raise RuntimeError(
+                "persistent DtN surface-vector cache requires the "
+                "assembly-time condensed system"
+            )
+        descriptors: list[dict[str, Any]] = []
+        for mode in modes:
+            boundary_referenced = (
+                _mode_uses_boundary_referenced_auxiliary(mode, cfg)
+            )
+            mode_key = (
+                mode.side,
+                int(mode.m),
+                int(mode.n),
+                complex(mode.k_vector[2]),
+                boundary_referenced,
+            )
+            if mode_key in surface_descriptors_by_key:
+                continue
+            boundary_tag = (
+                int(cfg.tags.z_max)
+                if mode.side == "top"
+                else int(cfg.tags.z_min)
+            )
+            boundary_reference_z = (
+                float(cfg.physical_z_max)
+                if boundary_referenced and mode.side == "top"
+                else float(cfg.physical_z_min)
+                if boundary_referenced
+                else None
+            )
+            pair = tuple(
+                dtn_surface_vector_descriptor(
+                    side=mode.side,
+                    m=int(mode.m),
+                    n=int(mode.n),
+                    alpha=complex(mode.alpha),
+                    gamma=complex(mode.gamma),
+                    kz=complex(mode.k_vector[2]),
+                    boundary_referenced=boundary_referenced,
+                    boundary_reference_z=boundary_reference_z,
+                    boundary_tag=boundary_tag,
+                    component=component,
+                )
+                for component in (0, 1)
+            )
+            surface_descriptors_by_key[mode_key] = pair
+            descriptors.extend(pair)
+        if (
+            cfg.stage4_condensed_cache_directory is None
+            or cfg.stage4_condensed_cache_source_sha is None
+        ):
+            raise RuntimeError(
+                "persistent DtN surface-vector cache identity is missing"
+            )
+        surface_cache = PersistentDtnSurfaceVectorCache(
+            function_space=V,
+            mesh_data=mesh_data,
+            trace_constraints=(
+                assembly_time_system.trace_constraints
+            ),
+            descriptors=descriptors,
+            mode_inventory=_dtn_surface_cache_mode_inventory(
+                modes,
+                cfg,
+            ),
+            quadrature_degree=dtn_quadrature_degree,
+            directory=Path(
+                cfg.stage4_condensed_cache_directory
+            ),
+            source_sha=cfg.stage4_condensed_cache_source_sha,
+            mode=cache_mode,
+        )
+        surface_cache_hit = surface_cache.load()
+
+    surface_assemblers = (
+        None
+        if surface_cache_hit
+        else {
+            ("top", 0): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_max,
+                0,
+                quadrature_degree=dtn_quadrature_degree,
+            ),
+            ("top", 1): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_max,
+                1,
+                quadrature_degree=dtn_quadrature_degree,
+            ),
+            ("bottom", 0): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_min,
+                0,
+                quadrature_degree=dtn_quadrature_degree,
+            ),
+            ("bottom", 1): _ReusableSurfaceComponentAssembler(
+                V,
+                mesh_data,
+                cfg.tags.z_min,
+                1,
+                quadrature_degree=dtn_quadrature_degree,
+            ),
+        }
+    )
     boundary_surface_assemblers = (
         {
             ("top", 0): _ReusableSurfaceComponentAssembler(
@@ -2519,11 +2796,16 @@ def solve_stage4_dtn_port_total_field(
                 boundary_reference_z=float(cfg.physical_z_min),
             ),
         }
-        if any(
-            _mode_uses_boundary_referenced_auxiliary(mode, cfg)
-            for mode in modes
-        )
+        if boundary_referenced_modes_present and not surface_cache_hit
         else None
+    )
+    timing_details[
+        "stage4_dtn_surface_form_and_cache_setup_seconds"
+    ] = float(
+        comm.allreduce(
+            time.perf_counter() - surface_setup_started,
+            op=MPI.MAX,
+        )
     )
     component_key: tuple[str, int, int, complex, bool] | None = None
     component_right_entries: (
@@ -2545,7 +2827,9 @@ def solve_stage4_dtn_port_total_field(
     unique_surface_orders = 0
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
+    persistent_component_vector_restores = 0
     modal_vector_assembly_seconds_local = 0.0
+    persistent_vector_restore_seconds_local = 0.0
     modal_block_insert_seconds_local = 0.0
     traction_rows_total_local = 0
     ell_cols_total_local = 0
@@ -2566,7 +2850,10 @@ def solve_stage4_dtn_port_total_field(
             if boundary_referenced
             else surface_assemblers
         )
-        if selected_surface_assemblers is None:
+        if (
+            selected_surface_assemblers is None
+            and not surface_cache_hit
+        ):
             raise RuntimeError(
                 "boundary-referenced DtN surface assemblers are unavailable"
             )
@@ -2583,14 +2870,56 @@ def solve_stage4_dtn_port_total_field(
                 if component_full_vectors is not None:
                     for vector in component_full_vectors:
                         vector.destroy()
-                component_full_vectors = (
-                    selected_surface_assemblers[
-                        (mode.side, 0)
-                    ].assemble_unconstrained_vector(mode),
-                    selected_surface_assemblers[
-                        (mode.side, 1)
-                    ].assemble_unconstrained_vector(mode),
-                )
+                if surface_cache_hit:
+                    if surface_cache is None:
+                        raise RuntimeError(
+                            "persistent DtN surface-vector cache hit "
+                            "lost its cache object"
+                        )
+                    restore_started = time.perf_counter()
+                    descriptor_pair = (
+                        surface_descriptors_by_key[mode_key]
+                    )
+                    component_full_vectors = tuple(
+                        surface_cache.restore_vector(descriptor)
+                        for descriptor in descriptor_pair
+                    )
+                    persistent_vector_restore_seconds_local += (
+                        time.perf_counter() - restore_started
+                    )
+                    persistent_component_vector_restores += 2
+                else:
+                    if selected_surface_assemblers is None:
+                        raise RuntimeError(
+                            "DtN surface assemblers are unavailable on "
+                            "a cache miss"
+                        )
+                    component_full_vectors = (
+                        selected_surface_assemblers[
+                            (mode.side, 0)
+                        ].assemble_unconstrained_vector(mode),
+                        selected_surface_assemblers[
+                            (mode.side, 1)
+                        ].assemble_unconstrained_vector(mode),
+                    )
+                    component_vector_assemblies += 2
+                    if (
+                        surface_cache is not None
+                        and surface_cache.mode
+                        in {"read_write", "refresh"}
+                    ):
+                        descriptor_pair = (
+                            surface_descriptors_by_key[mode_key]
+                        )
+                        for descriptor, vector in zip(
+                            descriptor_pair,
+                            component_full_vectors,
+                            strict=True,
+                        ):
+                            surface_cache.record_vector(
+                                descriptor,
+                                vector,
+                            )
                 right_vectors = tuple(
                     condense_unconstrained_vector_to_active_trace(
                         assembly_time_system,
@@ -2632,6 +2961,10 @@ def solve_stage4_dtn_port_total_field(
                     dtype=np.complex128,
                 )
             else:
+                if selected_surface_assemblers is None:
+                    raise RuntimeError(
+                        "DtN surface assemblers are unavailable"
+                    )
                 component_right_entries = (
                     selected_surface_assemblers[
                         (mode.side, 0)
@@ -2642,10 +2975,10 @@ def solve_stage4_dtn_port_total_field(
                 )
                 component_left_entries = component_right_entries
                 component_interior_bilinear = None
+                component_vector_assemblies += 2
             modal_vector_assembly_seconds_local += time.perf_counter() - t_component
             component_key = mode_key
             unique_surface_orders += 1
-            component_vector_assemblies += 2
         else:
             component_vector_cache_hits += 1
 
@@ -2761,6 +3094,15 @@ def solve_stage4_dtn_port_total_field(
                 f"in {elapsed:.3f} seconds; unique surface orders = {unique_surface_orders}"
             )
 
+    surface_cache_audit = (
+        disabled_dtn_surface_vector_cache_audit()
+        if surface_cache is None
+        else surface_cache.finalize()
+    )
+    timing_details[
+        "stage4_dtn_surface_vector_persistent_cache"
+    ] = surface_cache_audit
+
     if component_full_vectors is not None:
         for vector in component_full_vectors:
             vector.destroy()
@@ -2771,6 +3113,14 @@ def solve_stage4_dtn_port_total_field(
     timing_details["stage4_dtn_modal_vector_assembly_seconds"] = float(
         comm.allreduce(modal_vector_assembly_seconds_local, op=MPI.MAX)
     )
+    timing_details[
+        "stage4_dtn_persistent_vector_restore_seconds"
+    ] = float(
+        comm.allreduce(
+            persistent_vector_restore_seconds_local,
+            op=MPI.MAX,
+        )
+    )
     timing_details["stage4_dtn_modal_block_insert_seconds"] = float(
         comm.allreduce(modal_block_insert_seconds_local, op=MPI.MAX)
     )
@@ -2780,6 +3130,14 @@ def solve_stage4_dtn_port_total_field(
     )
     timing_details["stage4_dtn_component_vector_cache_hits"] = int(
         comm.allreduce(component_vector_cache_hits, op=MPI.MAX)
+    )
+    timing_details[
+        "stage4_dtn_persistent_component_vector_restores"
+    ] = int(
+        comm.allreduce(
+            persistent_component_vector_restores,
+            op=MPI.MAX,
+        )
     )
     traction_rows_total = int(comm.allreduce(traction_rows_total_local, op=MPI.SUM))
     ell_cols_total = int(comm.allreduce(ell_cols_total_local, op=MPI.SUM))
@@ -2794,6 +3152,7 @@ def solve_stage4_dtn_port_total_field(
             "Stage-4 DtN modal cache summary: "
             f"unique surface orders = {timing_details['stage4_dtn_unique_surface_orders']}, "
             f"x/y component vector assemblies = {timing_details['stage4_dtn_component_vector_assemblies']}, "
+            f"persistent restores = {timing_details['stage4_dtn_persistent_component_vector_restores']}, "
             f"polarization cache hits = {timing_details['stage4_dtn_component_vector_cache_hits']}"
         )
         log(f"Stage-4 DtN base matrix nnz = {base_matrix_stats.get('matrix_nnz_used')}")
@@ -3073,6 +3432,47 @@ def solve_stage4_dtn_port_total_field(
                 },
             )
 
+    physical_slab_partition = None
+    if cfg.stage4_condensed_iterative_profile == PHYSICAL_SLAB_DTN_PROFILE:
+        if assembly_time_system is None:
+            raise ValueError(
+                "the physical z-slab/DtN profile requires the "
+                "assembly-time-condensed active trace system"
+            )
+        physical_slab_profile = condensed_iterative_profile(
+            PHYSICAL_SLAB_DTN_PROFILE
+        )
+        if (
+            physical_slab_profile.physical_z_slabs is None
+            or physical_slab_profile.physical_slab_overlap_layers is None
+        ):
+            raise RuntimeError(
+                "the physical z-slab/DtN profile lacks its frozen slab "
+                "parameters"
+            )
+        partition_started = time.perf_counter()
+        physical_slab_partition = (
+            build_condensed_physical_z_slab_partition_from_space(
+                V,
+                assembly_time_system,
+                dtn_side_by_aux=tuple(mode.side for mode in modes),
+                domain_z_min=float(cfg.domain_z_min),
+                domain_z_max=float(cfg.domain_z_max),
+                num_slabs=int(physical_slab_profile.physical_z_slabs),
+                overlap_layers=float(
+                    physical_slab_profile.physical_slab_overlap_layers
+                ),
+            )
+        )
+        timing_details[
+            "stage4_dtn_physical_slab_partition_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - partition_started,
+                op=MPI.MAX,
+            )
+        )
+
     t0 = time.perf_counter()
     try:
         solve_x, ksp, ksp_telemetry = _solve_augmented_system(
@@ -3095,6 +3495,7 @@ def solve_stage4_dtn_port_total_field(
             factorization_only=cfg.matrix_diagnostics_factorization_only,
             iterative_profile=cfg.stage4_condensed_iterative_profile,
             dtn_auxiliary_rows=int(n_aux),
+            physical_slab_partition=physical_slab_partition,
         )
     except (CondensedIterativeSolveFailure, DirectSolveFailure) as exc:
         exc.timing_details.update(timing_details)
@@ -3316,11 +3717,18 @@ def solve_stage4_dtn_port_total_field(
                 iterative_output_eligible
             ),
         }
-        condensed_iterative_audit["screen_status"] = (
-            "assembled_factor_free_first_screen_pass"
-            if checks["pass"]
-            else "controlled_negative_first_screen_failed"
-        )
+        if checks["pass"]:
+            condensed_iterative_audit["screen_status"] = (
+                "assembled_global_fine_factor_free_with_disclosed_"
+                "preconditioner_factors_first_screen_pass"
+                if cfg.stage4_condensed_iterative_profile
+                == PHYSICAL_SLAB_DTN_PROFILE
+                else "assembled_factor_free_first_screen_pass"
+            )
+        else:
+            condensed_iterative_audit["screen_status"] = (
+                "controlled_negative_first_screen_failed"
+            )
     _write_progress_event(
         out_dir,
         comm,
@@ -3380,7 +3788,7 @@ def solve_stage4_dtn_port_total_field(
         auxiliary_values_solver_coordinates,
     )
     port_metrics = _port_power_metrics(cfg, modes, aux_values, incident_projections)
-    if boundary_surface_assemblers is not None:
+    if boundary_referenced_modes_present:
         port_metrics["dtn_auxiliary_coordinate_scaling"] = {
             "status": "boundary_referenced_evanescent_buffer_active",
             "ordinary_default_changed": False,
@@ -3515,8 +3923,10 @@ def solve_stage4_dtn_port_total_field(
         }
     solver_info = {
         "solver_backend": (
-            "PETSc assembled factor-free condensed Krylov + direct "
-            "Floquet-independent insertion + auxiliary Fourier-DtN port"
+            "PETSc assembled condensed Krylov with no global sparse direct "
+            "factor and explicitly inventoried preconditioner factors + "
+            "direct Floquet-independent insertion + auxiliary Fourier-DtN "
+            "port"
             if cfg.stage4_condensed_iterative_profile is not None
             else
             "PETSc assembly-time exact cell-interior trace Schur + direct "
@@ -3601,7 +4011,7 @@ def solve_stage4_dtn_port_total_field(
         solver_info["actual_pc_factor_solver_type"] = ksp.getPC().getFactorSolverType()
     except Exception:
         solver_info["actual_pc_factor_solver_type"] = None
-    if boundary_surface_assemblers is not None:
+    if boundary_referenced_modes_present:
         solver_info["dtn_auxiliary_coordinate_scaling"] = port_metrics[
             "dtn_auxiliary_coordinate_scaling"
         ]
@@ -3645,7 +4055,7 @@ def solve_stage4_dtn_port_total_field(
             )
         ),
     }
-    if boundary_surface_assemblers is not None:
+    if boundary_referenced_modes_present:
         goal_context.update(
             {
                 "auxiliary_values_solver_coordinates": (

@@ -56,8 +56,12 @@ def _worker_result() -> dict:
             "stage4_dtn_bilinear_form_compile_"
             "skipped_by_affine_backend": True,
             "stage4_dtn_incident_source_vector_seconds": 0.2,
+            "stage4_dtn_surface_form_and_cache_setup_seconds": 0.3,
             "stage4_dtn_modal_loop_seconds": 2.0,
             "stage4_dtn_modal_vector_assembly_seconds": 1.7,
+            "stage4_dtn_persistent_vector_restore_seconds": 0.05,
+            "stage4_dtn_component_vector_assemblies": 0,
+            "stage4_dtn_persistent_component_vector_restores": 160,
             "stage4_dtn_modal_block_insert_seconds": 0.1,
             "stage4_dtn_augmented_matrix_finalize_seconds": 0.3,
             "stage4_dtn_warm_persistent_cache_heap_trim_seconds": 0.07,
@@ -77,6 +81,23 @@ def _worker_result() -> dict:
                 "stage4_condensed_cache_directory": "/tmp/cache",
                 "stage4_condensed_cache_source_sha": "a" * 40,
                 "stage4_condensed_cache_mode": "read_only",
+                "stage4_condensed_persistent_dtn_surface_cache": True,
+            },
+            "stage4_dtn_surface_vector_persistent_cache": {
+                "enabled": True,
+                "mode": "read_only",
+                "source_commit_sha": "a" * 40,
+                "hit_count_sum": 8,
+                "miss_count_sum": 0,
+                "hit_on_all_ranks": True,
+                "collective_all_or_nothing": True,
+                "restore_count_sum": 1280,
+                "record_count_sum": 0,
+                "write_count_sum": 0,
+                "descriptor_count_per_rank": 160,
+                "read_seconds_max": 0.15,
+                "identity_and_key_seconds_max": 0.03,
+                "write_seconds_max": 0.0,
             },
             "cell_static_condensation": {
                 "full_explicit_true_residual": {
@@ -143,6 +164,8 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             (root / "condensed_class_b.json").touch()
             (root / "condensed_class_b.npz").touch()
             (root / "condensed_class_incomplete.npz").touch()
+            (root / "dtn_surface_vectors_c.json").touch()
+            (root / "dtn_surface_vectors_c.npz").touch()
             self.assertEqual(
                 _cache_pairs(root, prefix="raw_tensor"),
                 ["raw_tensor_a"],
@@ -150,6 +173,10 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             self.assertEqual(
                 _cache_pairs(root, prefix="condensed_class"),
                 ["condensed_class_b"],
+            )
+            self.assertEqual(
+                _cache_pairs(root, prefix="dtn_surface_vectors"),
+                ["dtn_surface_vectors_c"],
             )
 
     def test_default_is_dry_run_and_describes_cold_warm_protocol(self) -> None:
@@ -172,6 +199,11 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
                 "persistent_sha_bound_condensed_class_cache"
             ]
         )
+        self.assertTrue(
+            plan["explicit_opt_ins"][
+                "persistent_sha_mesh_mode_trace_bound_dtn_surface_cache"
+            ]
+        )
 
     def test_direct_config_is_explicit_and_ordinary_default_stays_off(
         self,
@@ -190,6 +222,9 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertTrue(cfg.stage4_fast_fixed_trace_setup)
         self.assertTrue(cfg.stage4_affine_isotropic_reference_tensor)
         self.assertFalse(cfg.stage4_condensed_bulk_cell_insertion)
+        self.assertTrue(
+            cfg.stage4_condensed_persistent_dtn_surface_cache
+        )
         self.assertEqual(cfg.stage4_condensed_cache_mode, "read_only")
         self.assertEqual(cfg.stage4_condensed_cache_source_sha, "a" * 40)
         self.assertIsNone(cfg.stage4_condensed_iterative_profile)
@@ -269,6 +304,10 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         )
         self.assertEqual(timings["dtn"]["non_ksp_derived"], 13.5)
         self.assertEqual(
+            timings["dtn"]["persistent_surface_cache_read"],
+            0.15,
+        )
+        self.assertEqual(
             timings["recovery"]["warm_persistent_cache_heap_trim"],
             0.07,
         )
@@ -284,7 +323,7 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
             0,
         )
 
-    def test_warm_classification_requires_both_cache_layers(self) -> None:
+    def test_warm_classification_requires_all_cache_layers(self) -> None:
         evidence = _extract_setup_evidence(_worker_result())
         telemetry = {
             "observed_worker_rank_count": 8,
@@ -324,6 +363,28 @@ class Task035bDirectSetupProfileRunnerTests(unittest.TestCase):
         self.assertIn(
             "warm_condensed_class_cache_hit_without_recompute",
             invalid["failures"],
+        )
+
+        dtn_evidence = _extract_setup_evidence(_worker_result())
+        dtn_evidence["cache_audit"]["dtn_surface_vector"][
+            "hit_on_all_ranks"
+        ] = False
+        invalid_dtn = _classify_profile(
+            dtn_evidence,
+            telemetry,
+            cache_state="warm",
+            source_sha="a" * 40,
+            expected_mpi_size=8,
+            return_code=0,
+            terminated_for_memory=False,
+            terminated_for_timeout=False,
+            telemetry_readable=True,
+            source_stable_and_clean_after=True,
+        )
+        self.assertFalse(invalid_dtn["formal_profile_pass"])
+        self.assertIn(
+            "warm_dtn_surface_cache_hit_without_reassembly",
+            invalid_dtn["failures"],
         )
 
     def test_watchdog_summary_preserves_pss_uss_and_cgroup(self) -> None:

@@ -2,7 +2,7 @@
 
 The ordinary solver remains direct MUMPS.  This module owns only explicit
 research profiles so that a raw PETSc option cannot be relabelled as a
-qualified factor-free result.
+qualified no-global-direct-factor result.
 
 The Review-V2 physics-aware discriminator uses the actual block structure
 
@@ -16,9 +16,10 @@ built for every DtN auxiliary mode:
 
 These vectors retain the physical port-mode identity while lifting it into
 the trace space.  A fixed Jacobi smoother plus exact Galerkin correction on
-their span is applied through a PETSc Python PC.  The fine operator has no
-sparse direct factor.  The replicated dense coarse factor is deliberately
-reported separately; it must not be hidden by the phrase ``factor free``.
+their span is applied through a PETSc Python PC.  The global fine operator has
+no sparse direct factor.  Every retained local or coarse factor is reported
+separately; ``global_fine_factor_free`` must never be read as
+``strictly_factorless``.
 """
 
 from __future__ import annotations
@@ -32,7 +33,11 @@ from mpi4py import MPI
 import numpy as np
 from petsc4py import PETSc
 
+from .condensed_physical_slab_partition import (
+    CondensedPhysicalSlabPartition,
+)
 from .physical_slab_two_level import (
+    DistributedPhysicalSlabSmoother,
     SparseCoarseVector,
     SparseGalerkinTwoLevelPc,
 )
@@ -51,6 +56,11 @@ class CondensedIterativeProfile:
     absolute_tolerance: float = 1.0e-12
     norm_type: str = "unpreconditioned"
     evidence_status: str = "not_run"
+    requires_physical_slab_partition: bool = False
+    physical_z_slabs: int | None = None
+    physical_slab_overlap_layers: float | None = None
+    local_ilu_levels: int | None = None
+    factor_only_local_storage: bool = False
 
 
 _PROFILES = {
@@ -75,10 +85,32 @@ _PROFILES = {
         relative_tolerance=1.0e-10,
         evidence_status="not_run_requires_formal_discriminator",
     ),
+    "fgmres_zslab_ilu0_dtn_trace_galerkin": CondensedIterativeProfile(
+        name="fgmres_zslab_ilu0_dtn_trace_galerkin",
+        ksp_type="fgmres",
+        pc_strategy=(
+            "fixed_physical_z_slab_ilu0_pre_post_smoothing_plus_"
+            "diagonal_lifted_dtn_trace_galerkin"
+        ),
+        relative_tolerance=1.0e-10,
+        evidence_status=(
+            "not_run_requires_physical_slab_partition_and_formal_screen"
+        ),
+        requires_physical_slab_partition=True,
+        physical_z_slabs=10,
+        physical_slab_overlap_layers=0.125,
+        local_ilu_levels=0,
+        factor_only_local_storage=True,
+    ),
 }
 
 SUPPORTED_CONDENSED_ITERATIVE_PROFILES = tuple(_PROFILES)
 PHYSICS_AWARE_PROFILE = "fgmres_dtn_trace_deflation"
+PHYSICAL_SLAB_DTN_PROFILE = "fgmres_zslab_ilu0_dtn_trace_galerkin"
+PHYSICS_AWARE_PROFILES = (
+    PHYSICS_AWARE_PROFILE,
+    PHYSICAL_SLAB_DTN_PROFILE,
+)
 
 
 def condensed_iterative_profile(
@@ -118,6 +150,63 @@ def condensed_iterative_profile_contract(name: str) -> dict[str, Any]:
             "positive_ksp_converged_reason": True,
             "full_explicit_true_residual_max": 1.0e-9,
         },
+        "physical_slab_partition_gate": {
+            "required": profile.requires_physical_slab_partition,
+            "schema_version_required": (
+                "task035b.condensed-physical-z-slab-partition.v1"
+                if profile.requires_physical_slab_partition
+                else None
+            ),
+            "row_space_required": (
+                "active_condensed_trace_plus_physical_dtn_auxiliary"
+                if profile.requires_physical_slab_partition
+                else None
+            ),
+            "exact_trace_expansion_required": (
+                profile.requires_physical_slab_partition
+            ),
+            "periodic_slave_pullback_required": (
+                profile.requires_physical_slab_partition
+            ),
+            "all_active_rows_covered_required": (
+                profile.requires_physical_slab_partition
+            ),
+            "auxiliary_side_identity_required": (
+                profile.requires_physical_slab_partition
+            ),
+            "inactive_rows_allowed": False,
+        },
+        "factor_semantics": {
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
+            "global_fine_sparse_direct_factor_required_absent": True,
+            "local_physical_slab_ilu_disclosed": (
+                profile.requires_physical_slab_partition
+            ),
+            "local_sparse_factor_kind": (
+                "physical_z_slab_ilu0"
+                if profile.requires_physical_slab_partition
+                else "asm_overlap1_ilu0"
+                if profile.name == "fgmres_asm_ilu"
+                else None
+            ),
+            "small_dense_galerkin_lu_disclosed": (
+                profile.name in PHYSICS_AWARE_PROFILES
+            ),
+            "strictly_factorless_preconditioner": (
+                profile.name == "gmres_jacobi"
+            ),
+            "strictly_factorless": profile.name == "gmres_jacobi",
+            "complete_factor_inventory_required": (
+                profile.name in PHYSICS_AWARE_PROFILES
+            ),
+            "fine_operator_factor_free": True,
+            "legacy_compatibility_alias": {
+                "fine_operator_factor_free": (
+                    "means global_fine_factor_free only"
+                ),
+            },
+        },
         "ordinary_default_changed": False,
     }
 
@@ -125,9 +214,19 @@ def condensed_iterative_profile_contract(name: str) -> dict[str, Any]:
 def configure_condensed_iterative_outer_ksp(
     ksp: PETSc.KSP,
     profile: CondensedIterativeProfile,
+    *,
+    physical_slab_partition_available: bool = False,
 ) -> None:
     """Configure the common outer contract without consulting PETSc options."""
 
+    if (
+        profile.requires_physical_slab_partition
+        and not physical_slab_partition_available
+    ):
+        raise RuntimeError(
+            f"condensed iterative profile {profile.name!r} requires a "
+            "qualified physical active-trace z-slab partition"
+        )
     ksp.setType(profile.ksp_type)
     ksp.setGMRESRestart(profile.restart)
     ksp.setTolerances(
@@ -459,13 +558,22 @@ class DtnTraceDeflationPc:
             ),
             "coarse_apply_seconds": float(self._core.coarse_elapsed_s),
             "global_fine_sparse_factor_nnz": 0,
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
             "local_sparse_ilu_active": False,
             "mumps_symbolic_or_numeric_created": False,
             "fine_operator_factor_free": True,
             "strictly_factorless_preconditioner": False,
+            "strictly_factorless": False,
             "strictly_factorless_reason": (
                 "an explicitly inventoried small dense Galerkin coarse LU is "
                 "retained"
+            ),
+            "all_factor_storage_disclosed": True,
+            "factor_semantics": (
+                "global_fine_factor_free; no global sparse direct factor; "
+                "strictly_factorless=false; small dense coarse LU completely "
+                "inventoried"
             ),
             "ordinary_default_changed": False,
         }
@@ -498,14 +606,194 @@ def configure_dtn_trace_deflation_pc(
     return context
 
 
+class DtnTracePhysicalSlabPc:
+    """Physical z-slab trace smoother plus exact DtN Galerkin correction.
+
+    The global fine operator is never factored.  Each complete physical slab
+    owns an explicitly disclosed sequential ILU(0), and the DtN coarse space
+    retains the same small replicated dense Galerkin LU as
+    :class:`DtnTraceDeflationPc`.  Consequently only the global fine operator
+    is factor-free; the preconditioner is intentionally *not* described as
+    strictly factorless.
+    """
+
+    def __init__(
+        self,
+        operator: PETSc.Mat,
+        *,
+        partition: CondensedPhysicalSlabPartition,
+    ) -> None:
+        if operator.getSize() != (
+            partition.matrix_rows,
+            partition.matrix_rows,
+        ):
+            raise ValueError(
+                "physical z-slab partition size does not match the condensed "
+                "operator"
+            )
+        started = time.perf_counter()
+        basis, basis_audit = build_diagonal_lifted_dtn_trace_basis(
+            operator,
+            trace_rows=partition.trace_rows,
+            dtn_auxiliary_rows=partition.dtn_auxiliary_rows,
+        )
+        smoother = DistributedPhysicalSlabSmoother(
+            operator,
+            partition.subdomains,
+            ilu_levels=0,
+            local_ksp_iterations=1,
+            local_ksp_type="gmres",
+            smoother_iterations=1,
+            smoother_ksp_type="gmres",
+            factor_only_storage=True,
+            interpolation="basic",
+            assembly_order="two_color",
+        )
+        try:
+            core = SparseGalerkinTwoLevelPc(
+                operator,
+                smoother,
+                basis,
+                post_smooth=True,
+                post_smooth_weight=1.0,
+                condition_limit=1.0e12,
+            )
+        except Exception:
+            smoother.destroy()
+            raise
+        self._core = core
+        self._smoother = smoother
+        self._partition = partition
+        self._basis_audit = basis_audit
+        self._setup_seconds = float(time.perf_counter() - started)
+        self._destroyed = False
+
+    def apply(
+        self,
+        pc: PETSc.PC | None,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        self._core.apply(pc, source, target)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        dimension = int(self._basis_audit["basis_dimension"])
+        dense_entries = dimension * dimension
+        smoother = self._smoother.diagnostics
+        local_factor_nnz = int(smoother["global_stored_factor_nnz"])
+        return {
+            "schema_version": "task035b.zslab-dtn-trace-two-level-pc.v1",
+            "strategy": (
+                "fixed_physical_z_slab_ilu0_pre_and_post_smoothing_plus_"
+                "exact_dtn_trace_galerkin_correction"
+            ),
+            "physical_slab_partition": dict(self._partition.audit),
+            "basis": self._basis_audit,
+            "setup_seconds": self._setup_seconds,
+            "coarse_dimension": dimension,
+            "coarse_rank": int(self._core.coarse_rank),
+            "coarse_condition": float(self._core.coarse_condition),
+            "coarse_smallest_singular_value": float(
+                self._core.coarse_smallest_singular_value
+            ),
+            "coarse_largest_singular_value": float(
+                self._core.coarse_largest_singular_value
+            ),
+            "coarse_dense_lu_active": True,
+            "coarse_dense_matrix_entries": dense_entries,
+            "coarse_dense_matrix_bytes": dense_entries * 16,
+            "coarse_dense_lu_storage_semantics": (
+                "small replicated SciPy complex LU; not a global fine sparse "
+                "factor"
+            ),
+            "basis_storage_bytes": int(self._core.basis_storage_bytes),
+            "smoother": (
+                "owner_computes_complete_physical_z_slab_additive_schwarz_"
+                "ilu0"
+            ),
+            "smoother_diagnostics": smoother,
+            "preconditioner_apply_count": int(self._core.apply_count),
+            "preconditioner_apply_seconds": float(
+                self._core.apply_elapsed_s
+            ),
+            "smoother_apply_count": int(self._smoother.apply_count),
+            "smoother_apply_seconds": float(
+                self._core.smoother_elapsed_s
+            ),
+            "coarse_apply_seconds": float(self._core.coarse_elapsed_s),
+            "global_direct_factor_nnz": 0,
+            "global_fine_sparse_factor_nnz": 0,
+            "global_fine_factor_free": True,
+            "no_global_sparse_direct_factor": True,
+            "local_subdomain_ilu_active": True,
+            "local_subdomain_ilu_levels": 0,
+            "local_subdomain_factor_nnz": local_factor_nnz,
+            "local_subdomain_extracted_matrix_nnz": int(
+                smoother["global_factor_nnz"]
+            ),
+            "local_subdomain_factor_rows": int(
+                smoother["global_factor_rows"]
+            ),
+            "local_subdomain_factor_only_storage": bool(
+                smoother["factor_only_storage"]
+            ),
+            "mumps_symbolic_or_numeric_created": False,
+            "fine_operator_factor_free": True,
+            "strictly_factorless_preconditioner": False,
+            "strictly_factorless": False,
+            "strictly_factorless_reason": (
+                "owner-computes physical z-slab ILU(0) factors and an "
+                "explicitly inventoried small dense Galerkin coarse LU are "
+                "retained"
+            ),
+            "all_factor_storage_disclosed": True,
+            "factor_semantics": (
+                "global_fine_factor_free; no global sparse direct factor; "
+                "strictly_factorless=false; local slab ILU(0) and small "
+                "dense coarse LU completely inventoried"
+            ),
+            "ordinary_default_changed": False,
+        }
+
+    def destroy(self, _pc: PETSc.PC | None = None) -> None:
+        if self._destroyed:
+            return
+        self._core.destroy()
+        self._smoother.destroy()
+        self._destroyed = True
+
+
+def configure_physical_slab_dtn_trace_pc(
+    ksp: PETSc.KSP,
+    operator: PETSc.Mat,
+    *,
+    partition: CondensedPhysicalSlabPartition,
+) -> DtnTracePhysicalSlabPc:
+    """Attach the typed physical-slab/DtN Python PC."""
+
+    context = DtnTracePhysicalSlabPc(
+        operator,
+        partition=partition,
+    )
+    pc = ksp.getPC()
+    pc.setType(PETSc.PC.Type.PYTHON)
+    pc.setPythonContext(context)
+    return context
+
+
 __all__ = [
     "CondensedIterativeProfile",
+    "DtnTracePhysicalSlabPc",
     "DtnTraceDeflationPc",
     "PHYSICS_AWARE_PROFILE",
+    "PHYSICS_AWARE_PROFILES",
+    "PHYSICAL_SLAB_DTN_PROFILE",
     "SUPPORTED_CONDENSED_ITERATIVE_PROFILES",
     "build_diagonal_lifted_dtn_trace_basis",
     "condensed_iterative_profile",
     "condensed_iterative_profile_contract",
     "configure_condensed_iterative_outer_ksp",
     "configure_dtn_trace_deflation_pc",
+    "configure_physical_slab_dtn_trace_pc",
 ]

@@ -176,6 +176,11 @@ class SimulationConfig3D:
     stage4_condensed_cache_directory: str | None = None
     stage4_condensed_cache_source_sha: str | None = None
     stage4_condensed_cache_mode: str = "off"
+    # Review-V2 opt-in cache for the two unconstrained tangential DtN
+    # surface vectors of each selected Floquet order.  It shares the
+    # SHA-bound cache directory/mode above but has a stricter mesh, boundary,
+    # mode, trace-projection, partition, and ABI identity.
+    stage4_condensed_persistent_dtn_surface_cache: bool = False
     # Review-V2 setup research switches.  Both remain opt-in because the
     # already-qualified path is the authority baseline.  The bulk path changes
     # only how identical local Schur blocks reach PETSc; the fast-element path
