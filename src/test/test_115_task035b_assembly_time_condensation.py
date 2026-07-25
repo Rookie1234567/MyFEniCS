@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 from pathlib import Path
+import tempfile
 import unittest
 from unittest import mock
 
@@ -17,6 +19,7 @@ from dolfinx.fem import petsc as fem_petsc
 
 from src.adaptivity.hcurl_regionwise_p import (
     create_reduced_trace_hcurl_element,
+    fixed_trace_hcurl_ufl_element,
     reduced_trace_hcurl_ufl_element,
 )
 from src.common.config_3d import target_stage4_config
@@ -34,6 +37,9 @@ from src.solvers.hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
     build_floquet_independent_trace_system,
     owned_hcurl_cell_interior_dofs,
+)
+from src.solvers.hcurl_affine_isotropic_tensor import (
+    AffineIsotropicMaxwellTensorSpec,
 )
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
@@ -94,6 +100,27 @@ def _set_owned_values(vector: PETSc.Vec, values: np.ndarray) -> None:
 
 
 class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
+    def test_lightweight_fixed_trace_element_matches_qualified_element(
+        self,
+    ) -> None:
+        qualified = create_reduced_trace_hcurl_element(5, 6)
+        lightweight = fixed_trace_hcurl_ufl_element(
+            5,
+            6,
+        ).basix_element
+        self.assertEqual(lightweight.hash(), qualified.element.hash())
+        self.assertEqual(lightweight.dim, qualified.element.dim)
+        np.testing.assert_allclose(
+            lightweight.coefficient_matrix,
+            qualified.element.coefficient_matrix,
+            rtol=0.0,
+            atol=0.0,
+        )
+        self.assertEqual(
+            lightweight.entity_dofs,
+            qualified.element.entity_dofs,
+        )
+
     def test_regionwise_all_low_equals_standard_p4_and_mixed_counts(
         self,
     ) -> None:
@@ -585,12 +612,281 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(audit["raw_tensor_class_use_count_sum"], 1)
         self.assertFalse(audit["raw_tensor_cross_rank_dedup_active"])
         self.assertEqual(audit["cell_kernel_evaluation_fraction"], 0.5)
+        conventional = audit["bulk_cell_block_insertion"]
+        self.assertEqual(
+            conventional["schema_version"],
+            "task035b.dense-cell-block-bulk-insertion.v1",
+        )
+        self.assertFalse(conventional["enabled"])
+        self.assertEqual(conventional["cell_block_count_global"], 2)
+        self.assertEqual(conventional["ijv_call_count_sum"], 0)
+        self.assertFalse(
+            conventional[
+                "per_cell_petsc_mat_set_values_call_eliminated"
+            ]
+        )
         matrix_info = candidate.matrix.getInfo(
             PETSc.Mat.InfoType.GLOBAL_SUM
         )
         self.assertEqual(matrix_info["mallocs"], 0.0)
         self.assertEqual(matrix_info["nz_unneeded"], 0.0)
+        ledger = audit["native_object_ledger"]
+        self.assertEqual(
+            ledger["schema_version"],
+            "task035b.condensation-native-object-ledger.v1",
+        )
+        self.assertGreater(
+            ledger["rank_sum_total_bytes"],
+            0,
+        )
+        self.assertTrue(ledger["scope_not_claimed_as_process_memory"])
+
+        bulk_candidate = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+            bulk_cell_block_insertion=True,
+        )
+        bulk = bulk_candidate.build_audit[
+            "bulk_cell_block_insertion"
+        ]
+        self.assertTrue(bulk["enabled"])
+        self.assertEqual(bulk["cell_block_count_global"], 2)
+        self.assertEqual(bulk["ijv_call_count_sum"], 1)
+        self.assertTrue(
+            bulk[
+                "per_cell_petsc_mat_set_values_call_eliminated"
+            ]
+        )
+        difference = bulk_candidate.matrix.copy()
+        difference.axpy(
+            PETSc.ScalarType(-1.0),
+            candidate.matrix,
+            structure=PETSc.Mat.Structure.SAME_NONZERO_PATTERN,
+        )
+        self.assertLess(
+            difference.norm() / max(candidate.matrix.norm(), 1.0e-30),
+            1.0e-14,
+        )
+        difference.destroy()
+        bulk_candidate.destroy()
         candidate.destroy()
+
+    def test_affine_isotropic_reference_grams_match_ffcx_tensors(
+        self,
+    ) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=True
+        )
+        reference = build_unconstrained_assembly_time_condensation(
+            compiled,
+            V,
+            cell_tags,
+        )
+        analytic = build_unconstrained_assembly_time_condensation(
+            None,
+            V,
+            cell_tags,
+            affine_isotropic_tensor_spec=(
+                AffineIsotropicMaxwellTensorSpec(
+                    curl_coefficient=1.0,
+                    mass_coefficient_by_tag={
+                        1: 2.5 - 0.2j,
+                        2: 1.7 + 0.1j,
+                    },
+                )
+            ),
+        )
+        audit = analytic.build_audit
+        self.assertEqual(
+            audit["raw_tensor_backend"],
+            "affine_isotropic_reference_gram_v1",
+        )
+        self.assertEqual(
+            audit["raw_tensor_kernel_evaluation_count"],
+            2,
+        )
+        self.assertEqual(
+            audit["raw_tensor_class_construction_count"],
+            2,
+        )
+        analytic_cache = audit["raw_tensor_persistent_cache"]
+        self.assertTrue(analytic_cache["operator_identity_bound"])
+        self.assertFalse(analytic_cache["form_signature_bound"])
+        self.assertFalse(
+            analytic_cache[
+                "material_and_degree_invalidation_via_ufcx_signature"
+            ]
+        )
+        self.assertTrue(
+            analytic_cache[
+                "material_and_degree_invalidation_via_analytic_spec_"
+                "and_element_identity"
+            ]
+        )
+        self.assertEqual(
+            set(audit["affine_reference_gram_audits"]),
+            {"high"},
+        )
+        difference = analytic.matrix.copy()
+        difference.axpy(
+            PETSc.ScalarType(-1.0),
+            reference.matrix,
+            structure=PETSc.Mat.Structure.SAME_NONZERO_PATTERN,
+        )
+        self.assertLess(
+            difference.norm() / max(reference.matrix.norm(), 1.0e-30),
+            2.0e-12,
+        )
+        self.assertEqual(
+            set(analytic.interior_from_trace_by_class),
+            set(reference.interior_from_trace_by_class),
+        )
+        for class_key in analytic.interior_from_trace_by_class:
+            np.testing.assert_allclose(
+                analytic.interior_from_trace_by_class[class_key],
+                reference.interior_from_trace_by_class[class_key],
+                rtol=2.0e-10,
+                atol=2.0e-11,
+            )
+        difference.destroy()
+        analytic.destroy()
+        reference.destroy()
+
+    def test_persistent_raw_tensor_cache_hits_and_invalidates_by_source(
+        self,
+    ) -> None:
+        _msh, cell_tags, V, compiled = _two_cell_problem(
+            distinct_materials=False
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_directory = Path(tmp) / "raw_tensors"
+            cold = build_unconstrained_assembly_time_condensation(
+                compiled,
+                V,
+                cell_tags,
+                persistent_cache_directory=cache_directory,
+                persistent_cache_source_sha="a" * 40,
+                persistent_cache_mode="read_write",
+            )
+            cold_cache = cold.build_audit[
+                "raw_tensor_persistent_cache"
+            ]
+            self.assertEqual(cold_cache["hit_count"], 0)
+            self.assertEqual(cold_cache["miss_count"], 1)
+            self.assertEqual(cold_cache["write_count"], 1)
+            self.assertTrue(cold_cache["operator_identity_bound"])
+            self.assertTrue(cold_cache["form_signature_bound"])
+            self.assertTrue(
+                cold_cache[
+                    "material_and_degree_invalidation_via_ufcx_signature"
+                ]
+            )
+            self.assertFalse(
+                cold_cache[
+                    "material_and_degree_invalidation_via_analytic_spec_"
+                    "and_element_identity"
+                ]
+            )
+
+            warm = build_unconstrained_assembly_time_condensation(
+                compiled,
+                V,
+                cell_tags,
+                persistent_cache_directory=cache_directory,
+                persistent_cache_source_sha="a" * 40,
+                persistent_cache_mode="read_only",
+            )
+            warm_cache = warm.build_audit[
+                "raw_tensor_persistent_cache"
+            ]
+            self.assertEqual(warm_cache["hit_count"], 1)
+            self.assertEqual(warm_cache["miss_count"], 0)
+            self.assertEqual(
+                warm.build_audit["cell_kernel_evaluation_fraction"],
+                0.0,
+            )
+            difference = warm.matrix.copy()
+            difference.axpy(
+                PETSc.ScalarType(-1.0),
+                cold.matrix,
+                structure=PETSc.Mat.Structure.SAME_NONZERO_PATTERN,
+            )
+            self.assertLess(
+                difference.norm() / max(cold.matrix.norm(), 1.0e-30),
+                1.0e-14,
+            )
+
+            payloads = sorted(cache_directory.glob("raw_tensor_*.npy"))
+            manifests = sorted(
+                cache_directory.glob("raw_tensor_*.json")
+            )
+            self.assertEqual(len(payloads), 1)
+            self.assertEqual(len(manifests), 1)
+            with manifests[0].open("r", encoding="utf-8") as stream:
+                manifest = json.load(stream)
+            self.assertEqual(
+                manifest["schema_version"],
+                "task035b.raw-tensor-cache-manifest.v2",
+            )
+            self.assertFalse(manifest["pickle_used"])
+            tampered = np.load(payloads[0], allow_pickle=False)
+            tampered[0, 0] += 1.0
+            with payloads[0].open("wb") as stream:
+                np.save(stream, tampered, allow_pickle=False)
+            checksum_recovery = (
+                build_unconstrained_assembly_time_condensation(
+                    compiled,
+                    V,
+                    cell_tags,
+                    persistent_cache_directory=cache_directory,
+                    persistent_cache_source_sha="a" * 40,
+                    persistent_cache_mode="read_only",
+                )
+            )
+            checksum_audit = checksum_recovery.build_audit[
+                "raw_tensor_persistent_cache"
+            ]
+            self.assertEqual(checksum_audit["hit_count"], 0)
+            self.assertEqual(checksum_audit["miss_count"], 1)
+            self.assertEqual(
+                checksum_audit["miss_reasons"],
+                {"payload_checksum_mismatch": 1},
+            )
+            checksum_difference = checksum_recovery.matrix.copy()
+            checksum_difference.axpy(
+                PETSc.ScalarType(-1.0),
+                cold.matrix,
+                structure=PETSc.Mat.Structure.SAME_NONZERO_PATTERN,
+            )
+            self.assertLess(
+                checksum_difference.norm()
+                / max(cold.matrix.norm(), 1.0e-30),
+                1.0e-14,
+            )
+
+            invalidated = (
+                build_unconstrained_assembly_time_condensation(
+                    compiled,
+                    V,
+                    cell_tags,
+                    persistent_cache_directory=cache_directory,
+                    persistent_cache_source_sha="b" * 40,
+                    persistent_cache_mode="read_only",
+                )
+            )
+            invalidated_cache = invalidated.build_audit[
+                "raw_tensor_persistent_cache"
+            ]
+            self.assertEqual(invalidated_cache["hit_count"], 0)
+            self.assertEqual(invalidated_cache["miss_count"], 1)
+
+            invalidated.destroy()
+            checksum_difference.destroy()
+            checksum_recovery.destroy()
+            difference.destroy()
+            warm.destroy()
+            cold.destroy()
 
     def test_exact_preallocation_covers_appended_support(self) -> None:
         _msh, cell_tags, V, compiled = _two_cell_problem(
@@ -1868,6 +2164,7 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
             stage4_cell_static_condensation=True,
             stage4_assembly_time_cell_static_condensation=True,
             stage4_floquet_slave_elimination=True,
+            stage4_affine_isotropic_reference_tensor=True,
             direct_release_base_after_augmentation=True,
             direct_release_solver_before_postprocess=True,
             unique_output=False,
@@ -1935,6 +2232,22 @@ class TestTask035bAssemblyTimeCondensation(unittest.TestCase):
         self.assertEqual(audit["trace_rows"], 658)
         self.assertEqual(audit["active_rows"], 480)
         self.assertEqual(audit["appended_rows"], 80)
+        self.assertEqual(
+            audit["raw_tensor_backend"],
+            "affine_isotropic_reference_gram_v1",
+        )
+        self.assertTrue(
+            summary[
+                "stage4_dtn_bilinear_form_compile_"
+                "skipped_by_affine_backend"
+            ]
+        )
+        self.assertIn(
+            "independently regenerated affine/isotropic full cell tensors",
+            audit["full_explicit_true_residual"][
+                "full_operator_residual_method"
+            ],
+        )
         preallocation = audit["trace_preallocation"]
         self.assertTrue(
             preallocation["new_nonzero_allocation_error_enabled"]

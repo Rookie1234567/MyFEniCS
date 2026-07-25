@@ -165,6 +165,26 @@ class SimulationConfig3D:
     # condense cell interiors, and apply Floquet constraints before global
     # insertion. The full FE and full-trace matrices are never allocated.
     stage4_assembly_time_cell_static_condensation: bool = False
+    # Review-V2 research-only assembled reduced-system iterative profile.
+    # ``None`` preserves the direct MUMPS path.  Profiles are configured
+    # programmatically so raw PETSc options cannot masquerade as qualified
+    # iterative provenance.
+    stage4_condensed_iterative_profile: str | None = None
+    # Review-V2 offline/online raw tensor cache.  It is opt-in and requires a
+    # full clean-source Git SHA; the FFCx form signature and affine geometry
+    # class complete the invalidation identity.
+    stage4_condensed_cache_directory: str | None = None
+    stage4_condensed_cache_source_sha: str | None = None
+    stage4_condensed_cache_mode: str = "off"
+    # Review-V2 setup research switches.  Both remain opt-in because the
+    # already-qualified path is the authority baseline.  The bulk path changes
+    # only how identical local Schur blocks reach PETSc; the fast-element path
+    # skips repeated qualification work during function-space construction.
+    stage4_condensed_bulk_cell_insertion: bool = False
+    stage4_fast_fixed_trace_setup: bool = False
+    # Exact reference-Gram backend for the fixed rectangular affine,
+    # isotropic, no-PML Maxwell operator.  General forms remain on FFCx.
+    stage4_affine_isotropic_reference_tensor: bool = False
     # Task035b local-p lane. The FE container uses the reduced-trace custom
     # element, while assembly projects cells outside this canonical-ID set to
     # the embedded low-order interior space before Schur elimination.

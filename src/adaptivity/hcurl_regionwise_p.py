@@ -186,6 +186,7 @@ def _flatten_entity_dofs(
 def _create_trace_interior_element(
     trace_degree: int,
     cell_interior_degree: int,
+    qualification_audit: bool = True,
 ) -> tuple[basix.finite_element.FiniteElement, dict[str, Any]]:
     """Build one H(curl) element with independent trace/interior orders."""
 
@@ -194,10 +195,17 @@ def _create_trace_interior_element(
     if trace_degree == cell_interior_degree:
         return trace_element, {
             "polynomial_subspace_rank": int(trace_element.dim),
-            "coefficient_matrix_condition_number": float(
-                np.linalg.cond(trace_element.coefficient_matrix)
+            "coefficient_matrix_condition_number": (
+                float(
+                    np.linalg.cond(trace_element.coefficient_matrix)
+                )
+                if qualification_audit
+                else None
             ),
             "custom": False,
+            "qualification_audit_executed": bool(
+                qualification_audit
+            ),
         }
     polynomial_element = _standard_hexa_hcurl(
         max(trace_degree, cell_interior_degree)
@@ -225,9 +233,15 @@ def _create_trace_interior_element(
         )
     )
     expected_dimension = len(trace_dofs) + len(interior_dofs)
-    polynomial_rank = int(np.linalg.matrix_rank(nodal_coefficients))
-    if polynomial_rank != expected_dimension:
-        raise RuntimeError("mixed trace/interior polynomial subspace is rank deficient")
+    polynomial_rank = (
+        int(np.linalg.matrix_rank(nodal_coefficients))
+        if qualification_audit
+        else expected_dimension
+    )
+    if qualification_audit and polynomial_rank != expected_dimension:
+        raise RuntimeError(
+            "mixed trace/interior polynomial subspace is rank deficient"
+        )
     orthogonal_columns, _ = np.linalg.qr(
         nodal_coefficients.T,
         mode="reduced",
@@ -280,10 +294,15 @@ def _create_trace_interior_element(
         )
     return custom, {
         "polynomial_subspace_rank": polynomial_rank,
-        "coefficient_matrix_condition_number": float(
-            np.linalg.cond(custom.coefficient_matrix)
+        "coefficient_matrix_condition_number": (
+            float(np.linalg.cond(custom.coefficient_matrix))
+            if qualification_audit
+            else None
         ),
         "custom": True,
+        "qualification_audit_executed": bool(
+            qualification_audit
+        ),
     }
 
 
@@ -459,6 +478,39 @@ def reduced_trace_hcurl_ufl_element(
     )
 
 
+def fixed_trace_hcurl_ufl_element(
+    trace_degree: int,
+    interior_degree: int,
+):
+    """Build and byte-wrap the fixed-trace element without repeated audits.
+
+    The custom polynomial basis and entity moments are identical to
+    :func:`create_reduced_trace_hcurl_element`.  Only the repeated
+    matrix-rank/condition-number, lower-space embedding, and sampled curl-null
+    qualification are omitted from each new solver process.  The caller must
+    explicitly opt into this research path; ordinary reduced-trace runs retain
+    the legacy Basix UFL wrapper.
+    """
+
+    trace_degree = int(trace_degree)
+    interior_degree = int(interior_degree)
+    if not 1 <= trace_degree < interior_degree <= 6:
+        raise ValueError(
+            "fixed-trace H(curl) requires "
+            "1 <= trace_degree < interior_degree <= 6"
+        )
+    custom, audit = _create_trace_interior_element(
+        trace_degree,
+        interior_degree,
+        False,
+    )
+    if audit["qualification_audit_executed"] is not False:
+        raise RuntimeError("fixed-trace lightweight construction ran audits")
+    from .fast_custom_element_ufl import wrap_custom_element_fast
+
+    return wrap_custom_element_fast(custom)
+
+
 def regionwise_interior_p_dof_budget(
     *,
     global_edges: int,
@@ -538,6 +590,7 @@ __all__ = [
     "ReducedTraceHcurlElement",
     "audit_tensor_product_exact_sequence",
     "create_reduced_trace_hcurl_element",
+    "fixed_trace_hcurl_ufl_element",
     "regionwise_interior_p_dof_budget",
     "reduced_trace_hcurl_ufl_element",
 ]

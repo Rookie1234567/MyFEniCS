@@ -21,6 +21,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
+import os
+from pathlib import Path
 from time import perf_counter
 from types import MappingProxyType
 from typing import Any, Mapping
@@ -44,6 +47,10 @@ class CellRecoveryMap:
 
     interior_original_dofs: np.ndarray
     trace_original_dofs: np.ndarray
+    cell_local_dofs: np.ndarray
+    raw_key: tuple[Any, ...]
+    cell_permutation: int
+    interior_policy: str
     class_key: tuple[Any, ...]
 
 
@@ -97,6 +104,7 @@ class AssemblyTimeCondensedSystem:
     interior_rows: int
     active_interior_rows: int
     build_audit: dict[str, Any]
+    affine_isotropic_tensor_spec: Any | None = None
 
     def destroy(self) -> None:
         self.matrix.destroy()
@@ -815,6 +823,217 @@ def _constrain_local_schur(
     )
 
 
+def _python_visible_native_array_ledger(
+    comm,
+    categories: Mapping[str, Any],
+    *,
+    transient_categories: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """Count unique NumPy backing stores visible at the build-return boundary."""
+
+    seen: set[int] = set()
+    local_bytes: dict[str, int] = {}
+
+    def visit(value: Any, category: str) -> None:
+        if isinstance(value, np.ndarray):
+            storage = value
+            while isinstance(storage.base, np.ndarray):
+                storage = storage.base
+            identity = id(storage)
+            if identity not in seen:
+                seen.add(identity)
+                local_bytes[category] = (
+                    local_bytes.get(category, 0)
+                    + int(storage.nbytes)
+                )
+            return
+        if isinstance(value, Mapping):
+            for item in value.values():
+                visit(item, category)
+            return
+        if isinstance(value, (tuple, list)):
+            for item in value:
+                visit(item, category)
+
+    for category, values in categories.items():
+        local_bytes[str(category)] = 0
+        visit(values, str(category))
+    rank_sum_bytes = {
+        category: int(comm.allreduce(value, op=MPI.SUM))
+        for category, value in local_bytes.items()
+    }
+    rank_max_bytes = {
+        category: int(comm.allreduce(value, op=MPI.MAX))
+        for category, value in local_bytes.items()
+    }
+    local_total = int(sum(local_bytes.values()))
+    transient = {str(value) for value in transient_categories}
+    retained_local_total = int(
+        sum(
+            value
+            for category, value in local_bytes.items()
+            if category not in transient
+        )
+    )
+    return {
+        "schema_version": (
+            "task035b.condensation-native-object-ledger.v1"
+        ),
+        "measurement": "unique_numpy_backing_store_nbytes",
+        "rank_local_bytes": local_bytes,
+        "rank_sum_bytes": rank_sum_bytes,
+        "rank_max_bytes": rank_max_bytes,
+        "rank_local_total_bytes": local_total,
+        "rank_sum_total_bytes": int(
+            comm.allreduce(local_total, op=MPI.SUM)
+        ),
+        "rank_max_total_bytes": int(
+            comm.allreduce(local_total, op=MPI.MAX)
+        ),
+        "transient_categories_released_after_build": sorted(transient),
+        "retained_rank_local_total_bytes": retained_local_total,
+        "retained_rank_sum_total_bytes": int(
+            comm.allreduce(retained_local_total, op=MPI.SUM)
+        ),
+        "retained_rank_max_total_bytes": int(
+            comm.allreduce(retained_local_total, op=MPI.MAX)
+        ),
+        "excluded_objects": [
+            "PETSc Mat and Vec native allocations",
+            "KSP, preconditioner, and MUMPS allocations",
+            "DOLFINx and Basix C++ object storage",
+            "Python container and allocator overhead",
+            "temporary BLAS and LAPACK workspaces",
+        ],
+        "scope_not_claimed_as_process_memory": True,
+        "ordinary_default_changed": False,
+    }
+
+
+class _DenseBlockBatchInserter:
+    """Insert many dense cell blocks through bounded PETSc IJV payloads."""
+
+    def __init__(
+        self,
+        matrix: PETSc.Mat,
+        *,
+        maximum_payload_bytes: int = 64 * 1024 * 1024,
+    ) -> None:
+        if maximum_payload_bytes <= 0:
+            raise ValueError("maximum_payload_bytes must be positive")
+        self._matrix = matrix
+        self._maximum_payload_bytes = int(maximum_payload_bytes)
+        self._rows: list[np.ndarray] = []
+        self._values: list[np.ndarray] = []
+        self._pending_payload_bytes = 0
+        self.call_count = 0
+        self.cell_block_count = 0
+        self.scalar_entry_count = 0
+        self.peak_payload_bytes = 0
+
+    def add(self, rows: np.ndarray, values: np.ndarray) -> None:
+        row_ids = np.asarray(rows, dtype=PETSc.IntType)
+        block = np.asarray(values, dtype=PETSc.ScalarType)
+        if block.shape != (len(row_ids), len(row_ids)):
+            raise ValueError("batched cell block must be square on its row IDs")
+        payload_bytes = int(
+            row_ids.nbytes
+            + block.nbytes
+            + row_ids.nbytes * len(row_ids)
+        )
+        if (
+            self._rows
+            and self._pending_payload_bytes + payload_bytes
+            > self._maximum_payload_bytes
+        ):
+            self.flush()
+        self._rows.append(row_ids.copy())
+        self._values.append(np.ascontiguousarray(block))
+        self._pending_payload_bytes += payload_bytes
+        self.cell_block_count += 1
+        self.scalar_entry_count += int(block.size)
+        if self._pending_payload_bytes >= self._maximum_payload_bytes:
+            self.flush()
+
+    def flush(self) -> None:
+        if not self._rows:
+            return
+        row_map = np.concatenate(self._rows).astype(
+            PETSc.IntType,
+            copy=False,
+        )
+        row_lengths = np.concatenate(
+            [
+                np.full(len(rows), len(rows), dtype=PETSc.IntType)
+                for rows in self._rows
+            ]
+        )
+        row_pointer = np.empty(len(row_map) + 1, dtype=PETSc.IntType)
+        row_pointer[0] = 0
+        np.cumsum(row_lengths, out=row_pointer[1:])
+        columns = np.concatenate(
+            [
+                np.tile(rows, len(rows)).astype(
+                    PETSc.IntType,
+                    copy=False,
+                )
+                for rows in self._rows
+            ]
+        )
+        values = np.concatenate(
+            [block.reshape(-1) for block in self._values]
+        ).astype(PETSc.ScalarType, copy=False)
+        actual_payload_bytes = int(
+            row_map.nbytes
+            + row_pointer.nbytes
+            + columns.nbytes
+            + values.nbytes
+        )
+        self.peak_payload_bytes = max(
+            self.peak_payload_bytes,
+            actual_payload_bytes,
+        )
+        self._matrix.setValuesIJV(
+            row_pointer,
+            columns,
+            values,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            rowmap=row_map,
+        )
+        self.call_count += 1
+        self._rows.clear()
+        self._values.clear()
+        self._pending_payload_bytes = 0
+
+    def audit(self, comm) -> dict[str, Any]:
+        if self._rows:
+            raise RuntimeError("bulk insertion audit requires a flushed payload")
+        return {
+            "schema_version": "task035b.dense-cell-block-bulk-insertion.v1",
+            "enabled": True,
+            "backend": "petsc4py.Mat.setValuesIJV",
+            "add_values_semantics": True,
+            "maximum_payload_bytes": self._maximum_payload_bytes,
+            "cell_block_count_global": int(
+                comm.allreduce(self.cell_block_count, op=MPI.SUM)
+            ),
+            "scalar_entry_count_global": int(
+                comm.allreduce(self.scalar_entry_count, op=MPI.SUM)
+            ),
+            "ijv_call_count_sum": int(
+                comm.allreduce(self.call_count, op=MPI.SUM)
+            ),
+            "ijv_call_count_max_per_rank": int(
+                comm.allreduce(self.call_count, op=MPI.MAX)
+            ),
+            "peak_temporary_payload_bytes_max_per_rank": int(
+                comm.allreduce(self.peak_payload_bytes, op=MPI.MAX)
+            ),
+            "per_cell_petsc_mat_set_values_call_eliminated": True,
+            "ordinary_default_changed": False,
+        }
+
+
 def _canonical_axis_aligned_coordinates(
     mesh,
     cell: int,
@@ -911,13 +1130,181 @@ def _tabulate_raw_tensor_class(
     return tensor
 
 
+def _persistent_raw_tensor_identity(
+    *,
+    source_sha: str,
+    policy_signature: Mapping[str, Any],
+    class_key: tuple[Any, ...],
+    coordinates: np.ndarray,
+) -> tuple[str, dict[str, Any]]:
+    payload = {
+        "schema_version": "task035b.raw-tensor-persistent-cache.v1",
+        "source_commit_sha": source_sha,
+        "policy_signature": dict(policy_signature),
+        "class_key": list(class_key),
+        "canonical_coordinates_sha256": hashlib.sha256(
+            np.ascontiguousarray(
+                coordinates,
+                dtype=np.float64,
+            ).tobytes()
+        ).hexdigest(),
+        "scalar_dtype": str(np.dtype(np.complex128)),
+        "int_dtype": str(np.dtype(PETSc.IntType)),
+    }
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest(), payload
+
+
+def _raw_tensor_content_sha256(tensor: np.ndarray) -> str:
+    canonical = np.ascontiguousarray(
+        tensor,
+        dtype=np.complex128,
+    )
+    metadata = json.dumps(
+        {
+            "shape": list(canonical.shape),
+            "dtype": canonical.dtype.str,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("ascii")
+    digest = hashlib.sha256()
+    digest.update(b"task035b.raw-tensor-content.v1\0")
+    digest.update(metadata)
+    digest.update(b"\0")
+    digest.update(canonical.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def _load_persistent_raw_tensor(
+    path: Path,
+    *,
+    manifest_path: Path,
+    dimension: int,
+    expected_identity_sha256: str,
+) -> tuple[np.ndarray | None, str | None]:
+    if not path.is_file() or not manifest_path.is_file():
+        return None, "artifact_or_manifest_missing"
+    try:
+        with manifest_path.open("r", encoding="utf-8") as stream:
+            manifest = json.load(stream)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None, "manifest_unreadable"
+    if not isinstance(manifest, dict):
+        return None, "manifest_not_an_object"
+    if (
+        manifest.get("schema_version")
+        != "task035b.raw-tensor-cache-manifest.v2"
+    ):
+        return None, "manifest_schema_mismatch"
+    if (
+        manifest.get("identity_sha256")
+        != expected_identity_sha256
+    ):
+        return None, "identity_sha256_mismatch"
+    if manifest.get("payload_filename") != path.name:
+        return None, "payload_filename_mismatch"
+    try:
+        tensor = np.load(path, allow_pickle=False)
+    except (OSError, ValueError):
+        return None, "payload_unreadable"
+    if (
+        tensor.shape != (dimension, dimension)
+        or tensor.dtype != np.dtype(np.complex128)
+        or not np.all(np.isfinite(tensor))
+    ):
+        return None, "payload_shape_dtype_or_finite_mismatch"
+    tensor = np.ascontiguousarray(tensor)
+    if (
+        manifest.get("tensor_content_sha256")
+        != _raw_tensor_content_sha256(tensor)
+    ):
+        return None, "payload_checksum_mismatch"
+    return tensor, None
+
+
+def _write_persistent_raw_tensor(
+    path: Path,
+    tensor: np.ndarray,
+    *,
+    manifest_path: Path,
+    identity_sha256: str,
+    identity_payload: Mapping[str, Any],
+    rank: int,
+) -> None:
+    temporary_payload = path.with_name(
+        f".{path.name}.rank{rank}.tmp"
+    )
+    temporary_manifest = manifest_path.with_name(
+        f".{manifest_path.name}.rank{rank}.tmp"
+    )
+    canonical = np.ascontiguousarray(
+        tensor,
+        dtype=np.complex128,
+    )
+    try:
+        with temporary_payload.open("wb") as stream:
+            np.save(stream, canonical, allow_pickle=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+        manifest = {
+            "schema_version": "task035b.raw-tensor-cache-manifest.v2",
+            "identity_sha256": identity_sha256,
+            "identity": dict(identity_payload),
+            "payload_filename": path.name,
+            "shape": list(canonical.shape),
+            "dtype": canonical.dtype.str,
+            "tensor_content_sha256": _raw_tensor_content_sha256(
+                canonical
+            ),
+            "payload_size_bytes": int(
+                temporary_payload.stat().st_size
+            ),
+            "pickle_used": False,
+        }
+        with temporary_manifest.open(
+            "w",
+            encoding="utf-8",
+        ) as stream:
+            json.dump(
+                manifest,
+                stream,
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        # Publish the manifest last.  A reader either sees the previous
+        # checksum pair or rejects a partial update and recomputes.
+        os.replace(temporary_payload, path)
+        os.replace(temporary_manifest, manifest_path)
+    finally:
+        for temporary in (temporary_payload, temporary_manifest):
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+
+
 def _global_raw_tensor_cache(
     comm,
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray],
     policy_forms: dict[
         str,
-        tuple[Any, dict[int, Any], int],
+        tuple[Any | None, dict[int, Any], int, Any],
     ],
+    *,
+    persistent_cache_directory: Path | None = None,
+    persistent_cache_source_sha: str | None = None,
+    persistent_cache_mode: str = "off",
+    affine_isotropic_tensor_spec=None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each raw tensor class once globally, then broadcast it.
 
@@ -925,22 +1312,83 @@ def _global_raw_tensor_cache(
     owning cells in a class retain its tensor after the broadcast.
     """
 
-    local_policy_signature = {
-        policy: {
+    persistent_cache_mode = str(persistent_cache_mode).lower()
+    if persistent_cache_mode not in {
+        "off",
+        "read_only",
+        "read_write",
+        "refresh",
+    }:
+        raise ValueError(
+            "persistent_cache_mode must be off, read_only, read_write, "
+            "or refresh"
+        )
+    persistent_enabled = persistent_cache_mode != "off"
+    if persistent_enabled:
+        source_sha = str(persistent_cache_source_sha or "").lower()
+        if len(source_sha) != 40 or any(
+            character not in "0123456789abcdef"
+            for character in source_sha
+        ):
+            raise ValueError(
+                "persistent raw-tensor cache requires a full source Git SHA"
+            )
+        if persistent_cache_directory is None:
+            raise ValueError(
+                "persistent raw-tensor cache requires a cache directory"
+            )
+        cache_directory = Path(persistent_cache_directory).resolve()
+        if comm.rank == 0 and persistent_cache_mode in {
+            "read_write",
+            "refresh",
+        }:
+            cache_directory.mkdir(parents=True, exist_ok=True)
+        comm.Barrier()
+        if not cache_directory.is_dir():
+            raise ValueError(
+                "persistent raw-tensor cache directory is unavailable"
+            )
+    else:
+        source_sha = None
+        cache_directory = None
+
+    local_policy_signature = {}
+    for policy, (
+        policy_compiled_form,
+        kernels,
+        dimension,
+        policy_element,
+    ) in policy_forms.items():
+        signature = {
             "dimension": int(dimension),
             "kernel_ids": tuple(sorted(int(key) for key in kernels)),
-            "dtype": str(np.dtype(compiled_form.dtype)),
-            "element_hash": int(
-                compiled_form.function_spaces[0].element.basix_element.hash()
+            "dtype": str(
+                np.dtype(np.complex128)
+                if policy_compiled_form is None
+                else np.dtype(policy_compiled_form.dtype)
             ),
-            "ufcx_form_signature": compiled_form.module.ffi.string(
-                compiled_form.ufcx_form.signature
-            ).decode(
-                "ascii"
-            ),
+            "element_hash": int(policy_element.hash()),
         }
-        for policy, (compiled_form, kernels, dimension) in policy_forms.items()
-    }
+        if affine_isotropic_tensor_spec is None:
+            if policy_compiled_form is None:
+                raise ValueError(
+                    "FFCx raw tensor backend requires a compiled form"
+                )
+            signature["ufcx_form_signature"] = (
+                policy_compiled_form.module.ffi.string(
+                    policy_compiled_form.ufcx_form.signature
+                ).decode("ascii")
+            )
+            signature["raw_tensor_backend"] = "compiled_ffcx_cell_kernel"
+        else:
+            signature["ufcx_form_signature"] = None
+            signature["raw_tensor_backend"] = (
+                "affine_isotropic_reference_gram_v1"
+            )
+            signature["affine_isotropic_tensor_spec"] = (
+                affine_isotropic_tensor_spec.identity(policy_element)
+            )
+        local_policy_signature[policy] = signature
     policy_signatures = comm.allgather(local_policy_signature)
     if any(
         signature != policy_signatures[0]
@@ -988,7 +1436,14 @@ def _global_raw_tensor_cache(
             value,
         ),
     ):
-        owner = min(range(comm.size), key=lambda rank: (owner_loads[rank], rank))
+        owner = (
+            0
+            if affine_isotropic_tensor_spec is not None
+            else min(
+                range(comm.size),
+                key=lambda rank: (owner_loads[rank], rank),
+            )
+        )
         owner_by_class[key] = int(owner)
         owner_loads[owner] += (
             int(policy_forms[str(key[0])][2]) ** 2
@@ -999,8 +1454,19 @@ def _global_raw_tensor_cache(
         )
     cache: dict[tuple[Any, ...], np.ndarray] = {}
     local_kernel_seconds = 0.0
+    local_cache_read_seconds = 0.0
+    local_cache_write_seconds = 0.0
     local_broadcast_seconds = 0.0
     local_evaluations = 0
+    local_cache_hits = 0
+    local_cache_writes = 0
+    local_cache_read_bytes = 0
+    local_cache_write_bytes = 0
+    local_cache_miss_reasons: dict[str, int] = {}
+    local_reference_gram_seconds = 0.0
+    local_analytic_combination_seconds = 0.0
+    analytic_factories: dict[str, Any] = {}
+    analytic_factory_audits: dict[str, dict[str, Any]] = {}
     logical_broadcast_bytes = 0
     local_keys = set(local_class_coordinates)
     locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1012,17 +1478,116 @@ def _global_raw_tensor_cache(
             policy = str(key[0])
             if policy not in policy_forms:
                 raise RuntimeError(f"unknown raw tensor policy {policy!r}")
-            compiled_form, kernels, dimension = policy_forms[policy]
-            kernel_started = perf_counter()
-            locally_evaluated[key] = _tabulate_raw_tensor_class(
-                compiled_form,
-                kernels,
-                global_coordinates[key],
-                tag=int(key[1]),
-                dimension=int(dimension),
+            compiled_form, kernels, dimension, policy_element = (
+                policy_forms[policy]
             )
+            cache_path = None
+            if cache_directory is not None and source_sha is not None:
+                digest, identity = _persistent_raw_tensor_identity(
+                    source_sha=source_sha,
+                    policy_signature=local_policy_signature[policy],
+                    class_key=key,
+                    coordinates=global_coordinates[key],
+                )
+                cache_path = cache_directory / f"raw_tensor_{digest}.npy"
+                manifest_path = cache_path.with_suffix(".json")
+                if persistent_cache_mode != "refresh":
+                    cache_started = perf_counter()
+                    cached, miss_reason = _load_persistent_raw_tensor(
+                        cache_path,
+                        manifest_path=manifest_path,
+                        dimension=int(dimension),
+                        expected_identity_sha256=digest,
+                    )
+                    local_cache_read_seconds += (
+                        perf_counter() - cache_started
+                    )
+                    if cached is not None:
+                        locally_evaluated[key] = cached
+                        local_cache_hits += 1
+                        local_cache_read_bytes += int(
+                            cache_path.stat().st_size
+                            + manifest_path.stat().st_size
+                        )
+                        continue
+                    assert miss_reason is not None
+                    local_cache_miss_reasons[miss_reason] = (
+                        local_cache_miss_reasons.get(
+                            miss_reason,
+                            0,
+                        )
+                        + 1
+                    )
+                else:
+                    local_cache_miss_reasons["refresh_forced"] = (
+                        local_cache_miss_reasons.get(
+                            "refresh_forced",
+                            0,
+                        )
+                        + 1
+                    )
+            kernel_started = perf_counter()
+            if affine_isotropic_tensor_spec is None:
+                if compiled_form is None:
+                    raise RuntimeError(
+                        "compiled FFCx form is absent on the FFCx backend"
+                    )
+                locally_evaluated[key] = _tabulate_raw_tensor_class(
+                    compiled_form,
+                    kernels,
+                    global_coordinates[key],
+                    tag=int(key[1]),
+                    dimension=int(dimension),
+                )
+            else:
+                from .hcurl_affine_isotropic_tensor import (
+                    AffineIsotropicMaxwellTensorFactory,
+                )
+
+                factory = analytic_factories.get(policy)
+                if factory is None:
+                    factory = AffineIsotropicMaxwellTensorFactory(
+                        policy_element,
+                        affine_isotropic_tensor_spec,
+                    )
+                    analytic_factories[policy] = factory
+                    local_reference_gram_seconds += float(
+                        factory.build_seconds
+                    )
+                    analytic_factory_audits[policy] = dict(
+                        factory.audit
+                    )
+                combination_started = perf_counter()
+                locally_evaluated[key] = factory.tensor(
+                    tag=int(key[1]),
+                    widths=tuple(float(value) for value in key[2:]),
+                )
+                local_analytic_combination_seconds += (
+                    perf_counter() - combination_started
+                )
             local_kernel_seconds += perf_counter() - kernel_started
             local_evaluations += 1
+            if (
+                cache_path is not None
+                and persistent_cache_mode in {"read_write", "refresh"}
+            ):
+                cache_started = perf_counter()
+                _write_persistent_raw_tensor(
+                    cache_path,
+                    locally_evaluated[key],
+                    manifest_path=manifest_path,
+                    identity_sha256=digest,
+                    identity_payload=identity,
+                    rank=comm.rank,
+                )
+                local_cache_write_seconds += (
+                    perf_counter() - cache_started
+                )
+                local_cache_writes += 1
+                local_cache_write_bytes += int(
+                    cache_path.stat().st_size
+                    + manifest_path.stat().st_size
+                )
     except Exception as error:
         local_kernel_error = f"{type(error).__name__}: {error}"
     owner_sync_started = perf_counter()
@@ -1042,7 +1607,9 @@ def _global_raw_tensor_cache(
         policy = str(key[0])
         if policy not in policy_forms:
             raise RuntimeError(f"unknown raw tensor policy {policy!r}")
-        _compiled_form, _kernels, dimension = policy_forms[policy]
+        _compiled_form, _kernels, dimension, _element = (
+            policy_forms[policy]
+        )
         owner = owner_by_class[key]
         if comm.rank == owner:
             tensor = locally_evaluated.pop(key)
@@ -1061,27 +1628,124 @@ def _global_raw_tensor_cache(
     evaluation_count = int(
         comm.allreduce(local_evaluations, op=MPI.SUM)
     )
+    cache_hit_count = int(
+        comm.allreduce(local_cache_hits, op=MPI.SUM)
+    )
+    cache_write_count = int(
+        comm.allreduce(local_cache_writes, op=MPI.SUM)
+    )
+    cache_miss_reasons: dict[str, int] = {}
+    for rank_reasons in comm.allgather(local_cache_miss_reasons):
+        for reason, count in rank_reasons.items():
+            cache_miss_reasons[reason] = (
+                cache_miss_reasons.get(reason, 0) + int(count)
+            )
     use_count = int(
         comm.allreduce(len(local_class_coordinates), op=MPI.SUM)
     )
     unique_count = len(global_coordinates)
-    if evaluation_count != unique_count:
+    if evaluation_count + cache_hit_count != unique_count:
         raise RuntimeError(
-            "global raw tensor evaluation count does not match unique classes"
+            "raw tensor evaluation plus persistent hits does not match "
+            "unique classes"
         )
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
     return cache, {
-        "raw_tensor_class_count_sum": evaluation_count,
+        "raw_tensor_class_count_sum": unique_count,
+        "raw_tensor_class_construction_count": evaluation_count,
+        "raw_tensor_kernel_evaluation_count": evaluation_count,
+        "raw_tensor_persistent_cache_hit_count": cache_hit_count,
+        "raw_tensor_persistent_cache_write_count": cache_write_count,
         "raw_tensor_class_use_count_sum": use_count,
         "raw_tensor_class_count_global_unique": unique_count,
         "raw_tensor_global_owner_policy": (
-            "deterministic_dimension_squared_greedy_all_mpi_ranks"
+            "rank0_reference_gram_then_raw_tensor_broadcast"
+            if affine_isotropic_tensor_spec is not None
+            else "deterministic_dimension_squared_greedy_all_mpi_ranks"
         ),
         "raw_tensor_owner_cost_loads": owner_loads,
         "raw_tensor_policy_signatures_identical": True,
+        "raw_tensor_persistent_cache": {
+            "schema_version": (
+                "task035b.raw-tensor-persistent-cache.v2"
+            ),
+            "enabled": persistent_enabled,
+            "mode": persistent_cache_mode,
+            "source_commit_sha": source_sha,
+            "directory": (
+                None
+                if cache_directory is None
+                else str(cache_directory)
+            ),
+            "hit_count": cache_hit_count,
+            "miss_count": evaluation_count,
+            "miss_reasons": cache_miss_reasons,
+            "write_count": cache_write_count,
+            "read_seconds_max": float(
+                comm.allreduce(
+                    local_cache_read_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "write_seconds_max": float(
+                comm.allreduce(
+                    local_cache_write_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "read_bytes_sum": int(
+                comm.allreduce(
+                    local_cache_read_bytes,
+                    op=MPI.SUM,
+                )
+            ),
+            "write_bytes_sum": int(
+                comm.allreduce(
+                    local_cache_write_bytes,
+                    op=MPI.SUM,
+                )
+            ),
+            "operator_identity_bound": True,
+            "form_signature_bound": bool(
+                affine_isotropic_tensor_spec is None
+            ),
+            "material_and_degree_invalidation_via_ufcx_signature": bool(
+                affine_isotropic_tensor_spec is None
+            ),
+            (
+                "material_and_degree_invalidation_via_analytic_spec_"
+                "and_element_identity"
+            ): bool(affine_isotropic_tensor_spec is not None),
+            "geometry_class_invalidation_via_coordinate_sha256": True,
+            "manifest_published_after_payload": True,
+            "content_checksum_verified": True,
+            "pickle_used": False,
+            "ordinary_default_changed": False,
+        },
         "raw_tensor_owner_evaluation_sync_seconds_max": float(
             comm.allreduce(owner_sync_seconds, op=MPI.MAX)
+        ),
+        "raw_tensor_backend": (
+            "affine_isotropic_reference_gram_v1"
+            if affine_isotropic_tensor_spec is not None
+            else "compiled_ffcx_cell_kernel"
+        ),
+        "affine_reference_gram_seconds_max": float(
+            comm.allreduce(
+                local_reference_gram_seconds,
+                op=MPI.MAX,
+            )
+        ),
+        "affine_class_combination_seconds_max": float(
+            comm.allreduce(
+                local_analytic_combination_seconds,
+                op=MPI.MAX,
+            )
+        ),
+        "affine_reference_gram_audits": comm.bcast(
+            analytic_factory_audits if comm.rank == 0 else None,
+            root=0,
         ),
         "raw_tensor_cross_rank_dedup_active": bool(
             comm.size > 1 and use_count > unique_count
@@ -1193,6 +1857,11 @@ def build_unconstrained_assembly_time_condensation(
     regionwise_low_compiled_form=None,
     regionwise_high_canonical_cell_ids: tuple[int, ...] = (),
     regionwise_mesh_geometry_sha256: str | None = None,
+    persistent_cache_directory: Path | None = None,
+    persistent_cache_source_sha: str | None = None,
+    persistent_cache_mode: str = "off",
+    bulk_cell_block_insertion: bool = False,
+    affine_isotropic_tensor_spec=None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1201,7 +1870,13 @@ def build_unconstrained_assembly_time_condensation(
     identity rows are allocated.
     """
 
-    if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
+    if compiled_form is None:
+        if affine_isotropic_tensor_spec is None:
+            raise ValueError(
+                "assembly-time condensation requires a compiled form "
+                "unless the affine/isotropic tensor backend is explicit"
+            )
+    elif np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
         raise TypeError("assembly-time condensation requires complex128")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
@@ -1221,7 +1896,16 @@ def build_unconstrained_assembly_time_condensation(
     tdim = mesh.topology.dim
     owned_cells = int(mesh.topology.index_map(tdim).size_local)
     tags = _cell_tag_array(cell_tags, owned_cells)
-    kernels = _cell_integral_kernels(compiled_form)
+    kernels = (
+        {
+            int(tag): None
+            for tag in (
+                affine_isotropic_tensor_spec.mass_coefficient_by_tag
+            )
+        }
+        if compiled_form is None
+        else _cell_integral_kernels(compiled_form)
+    )
     unknown_tags = (
         []
         if -1 in kernels
@@ -1482,8 +2166,16 @@ def build_unconstrained_assembly_time_condensation(
                 if error is not None
             )
         )
-    policy_forms: dict[str, tuple[Any, dict[int, Any], int]] = {
-        "high": (compiled_form, kernels, dimension),
+    policy_forms: dict[
+        str,
+        tuple[Any | None, dict[int, Any], int, Any],
+    ] = {
+        "high": (
+            compiled_form,
+            kernels,
+            dimension,
+            basix_element,
+        ),
     }
     if regionwise_p:
         assert regionwise_low_compiled_form is not None
@@ -1493,6 +2185,7 @@ def build_unconstrained_assembly_time_condensation(
             regionwise_low_compiled_form,
             low_kernels,
             int(low_element.dim),
+            low_element,
         )
     try:
         raw_cache, raw_cache_audit, local_kernel_seconds = (
@@ -1500,6 +2193,12 @@ def build_unconstrained_assembly_time_condensation(
                 comm,
                 local_class_coordinates,
                 policy_forms,
+                persistent_cache_directory=persistent_cache_directory,
+                persistent_cache_source_sha=persistent_cache_source_sha,
+                persistent_cache_mode=persistent_cache_mode,
+                affine_isotropic_tensor_spec=(
+                    affine_isotropic_tensor_spec
+                ),
             )
         )
     except Exception:
@@ -1515,7 +2214,19 @@ def build_unconstrained_assembly_time_condensation(
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap] = []
     local_schur_seconds = 0.0
+    local_orientation_seconds = 0.0
+    local_aii_factor_seconds = 0.0
+    local_aii_solve_seconds = 0.0
+    local_schur_product_seconds = 0.0
+    local_constraint_seconds = 0.0
     local_insert_seconds = 0.0
+    bulk_inserter = (
+        _DenseBlockBatchInserter(condensed)
+        if bulk_cell_block_insertion
+        else None
+    )
+    conventional_insert_call_count = 0
+    conventional_scalar_entry_count = 0
     for cell, (original_dofs, metadata) in enumerate(
         zip(local_cell_dofs, cell_raw_metadata, strict=True)
     ):
@@ -1529,6 +2240,7 @@ def build_unconstrained_assembly_time_condensation(
         schur = schur_cache.get(class_key)
         if schur is None:
             schur_started = perf_counter()
+            orientation_started = perf_counter()
             oriented = tensor.copy()
             if interior_policy == "low":
                 assert low_element is not None
@@ -1614,6 +2326,9 @@ def build_unconstrained_assembly_time_condensation(
                     len(interior_positions),
                     dtype=np.float64,
                 )
+            local_orientation_seconds += (
+                perf_counter() - orientation_started
+            )
             A_ii = active_tensor[
                 np.ix_(
                     active_interior_positions,
@@ -1635,7 +2350,12 @@ def build_unconstrained_assembly_time_condensation(
             A_tt = active_tensor[
                 np.ix_(active_trace_positions, active_trace_positions)
             ]
+            factor_started = perf_counter()
             active_interior_lu = lu_factor(A_ii)
+            local_aii_factor_seconds += (
+                perf_counter() - factor_started
+            )
+            solve_started = perf_counter()
             active_interior_from_trace = -lu_solve(
                 active_interior_lu,
                 A_it,
@@ -1655,10 +2375,15 @@ def build_unconstrained_assembly_time_condensation(
                 - interior_embedding_from_interior
                 @ adjoint_trace_solution
             )
+            local_aii_solve_seconds += perf_counter() - solve_started
             trace_from_interior_rhs = (
                 dual_interior_from_trace.conj().T
             )
+            schur_product_started = perf_counter()
             schur = A_tt + A_ti @ active_interior_from_trace
+            local_schur_product_seconds += (
+                perf_counter() - schur_product_started
+            )
             local_schur_seconds += perf_counter() - schur_started
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
@@ -1676,26 +2401,78 @@ def build_unconstrained_assembly_time_condensation(
             )
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
+        constraint_started = perf_counter()
         active_schur = _constrain_local_schur(
             schur,
             local_expansion,
             identity_expansion,
         )
+        local_constraint_seconds += perf_counter() - constraint_started
         insert_started = perf_counter()
-        condensed.setValues(
-            active_ids,
-            active_ids,
-            np.asarray(active_schur, dtype=PETSc.ScalarType),
-            addv=PETSc.InsertMode.ADD_VALUES,
+        active_schur_values = np.asarray(
+            active_schur,
+            dtype=PETSc.ScalarType,
         )
+        if bulk_inserter is None:
+            condensed.setValues(
+                active_ids,
+                active_ids,
+                active_schur_values,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            conventional_insert_call_count += 1
+            conventional_scalar_entry_count += int(
+                active_schur_values.size
+            )
+        else:
+            bulk_inserter.add(active_ids, active_schur_values)
         local_insert_seconds += perf_counter() - insert_started
         recovery_maps.append(
             CellRecoveryMap(
                 interior_original_dofs=original_dofs[interior_positions].copy(),
                 trace_original_dofs=trace_original.copy(),
+                cell_local_dofs=np.asarray(
+                    dofmap.cell_dofs(cell),
+                    dtype=np.int32,
+                ).copy(),
+                raw_key=tuple(raw_key),
+                cell_permutation=int(cell_permutations[cell]),
+                interior_policy=interior_policy,
                 class_key=class_key,
             )
         )
+    if bulk_inserter is None:
+        bulk_insertion_audit = {
+            "schema_version": (
+                "task035b.dense-cell-block-bulk-insertion.v1"
+            ),
+            "enabled": False,
+            "backend": "petsc4py.Mat.setValues",
+            "add_values_semantics": True,
+            "maximum_payload_bytes": None,
+            "cell_block_count_global": int(
+                comm.allreduce(
+                    conventional_insert_call_count,
+                    op=MPI.SUM,
+                )
+            ),
+            "scalar_entry_count_global": int(
+                comm.allreduce(
+                    conventional_scalar_entry_count,
+                    op=MPI.SUM,
+                )
+            ),
+            "ijv_call_count_sum": 0,
+            "ijv_call_count_max_per_rank": 0,
+            "peak_temporary_payload_bytes_max_per_rank": 0,
+            "per_cell_petsc_mat_set_values_call_eliminated": False,
+            "ordinary_default_changed": False,
+        }
+    else:
+        insert_started = perf_counter()
+        bulk_inserter.flush()
+        local_insert_seconds += perf_counter() - insert_started
+        bulk_insertion_audit = bulk_inserter.audit(comm)
     preassembly_sync_started = perf_counter()
     comm.Barrier()
     preassembly_sync_seconds = float(
@@ -1731,8 +2508,51 @@ def build_unconstrained_assembly_time_condensation(
         global_high_cells * len(interior_positions)
         + global_low_cells * low_interior_dimension
     )
-    raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
+    raw_kernel_evaluation_count = int(
+        raw_cache_audit["raw_tensor_kernel_evaluation_count"]
+    )
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    native_object_ledger = _python_visible_native_array_ledger(
+        comm,
+        {
+            "raw_tensor_cache": tuple(raw_cache.values()),
+            "schur_cache": tuple(schur_cache.values()),
+            "interior_recovery_cache": tuple(
+                recovery_cache.values()
+            ),
+            "interior_lu_cache": tuple(lu_cache.values()),
+            "rhs_projection_cache": tuple(
+                rhs_projection_cache.values()
+            ),
+            "solution_embedding_cache": tuple(
+                solution_embedding_cache.values()
+            ),
+            "dual_recovery_cache": tuple(
+                dual_recovery_cache.values()
+            ),
+            "trace_from_interior_rhs_cache": tuple(
+                rhs_trace_cache.values()
+            ),
+            "residual_projection_cache": tuple(
+                residual_projection_cache.values()
+            ),
+            "cell_recovery_numbering": tuple(
+                (
+                    recovery.interior_original_dofs,
+                    recovery.trace_original_dofs,
+                    recovery.cell_local_dofs,
+                )
+                for recovery in recovery_maps
+            ),
+            "trace_constraint_numbering": (
+                trace_constraints.owned_active_original_dofs,
+                tuple(
+                    trace_constraints.expansion_by_original.values()
+                ),
+            ),
+        },
+        transient_categories=("raw_tensor_cache",),
+    )
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1817,7 +2637,7 @@ def build_unconstrained_assembly_time_condensation(
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(
-                raw_class_count / max(global_cells, 1)
+                raw_kernel_evaluation_count / max(global_cells, 1)
             ),
             "kernel_seconds_max": float(
                 comm.allreduce(local_kernel_seconds, op=MPI.MAX)
@@ -1825,9 +2645,40 @@ def build_unconstrained_assembly_time_condensation(
             "local_schur_seconds_max": float(
                 comm.allreduce(local_schur_seconds, op=MPI.MAX)
             ),
+            "orientation_seconds_max": float(
+                comm.allreduce(
+                    local_orientation_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "aii_factor_seconds_max": float(
+                comm.allreduce(
+                    local_aii_factor_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "aii_solve_seconds_max": float(
+                comm.allreduce(
+                    local_aii_solve_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "schur_product_seconds_max": float(
+                comm.allreduce(
+                    local_schur_product_seconds,
+                    op=MPI.MAX,
+                )
+            ),
+            "constraint_projection_seconds_max": float(
+                comm.allreduce(
+                    local_constraint_seconds,
+                    op=MPI.MAX,
+                )
+            ),
             "local_insert_seconds_max": float(
                 comm.allreduce(local_insert_seconds, op=MPI.MAX)
             ),
+            "bulk_cell_block_insertion": bulk_insertion_audit,
             "pre_final_assembly_sync_seconds_max": (
                 preassembly_sync_seconds
             ),
@@ -1837,10 +2688,12 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
+            "native_object_ledger": native_object_ledger,
             "total_build_seconds": float(
                 comm.allreduce(perf_counter() - started, op=MPI.MAX)
             ),
         },
+        affine_isotropic_tensor_spec=affine_isotropic_tensor_spec,
     )
 
 

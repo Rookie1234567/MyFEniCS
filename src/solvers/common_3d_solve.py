@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import time
 from typing import Any
 
 from basix.ufl import element
@@ -621,7 +622,20 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     log(f"matrix infinity norm = {matrix_stats['matrix_norm_infinity']}")
 
 
-def _create_nedelec_space(msh, cfg: SimulationConfig3D):
+def _create_nedelec_space(
+    msh,
+    cfg: SimulationConfig3D,
+    *,
+    setup_audit: dict[str, Any] | None = None,
+):
+    element_started = time.perf_counter()
+    if (
+        cfg.stage4_fast_fixed_trace_setup
+        and not cfg.nedelec_reduced_trace_enabled
+    ):
+        raise ValueError(
+            "fast fixed-trace setup requires a reduced-trace element"
+        )
     if cfg.nedelec_reduced_trace_enabled:
         if "hexahedron" not in str(msh.basix_cell()).lower():
             raise NotImplementedError(
@@ -643,14 +657,24 @@ def _create_nedelec_space(msh, cfg: SimulationConfig3D):
             raise ValueError(
                 "nedelec_degree must equal the reduced-trace interior degree"
             )
-        from ..adaptivity.hcurl_regionwise_p import (
-            reduced_trace_hcurl_ufl_element,
-        )
+        if cfg.stage4_fast_fixed_trace_setup:
+            from ..adaptivity.hcurl_regionwise_p import (
+                fixed_trace_hcurl_ufl_element,
+            )
 
-        curl_el = reduced_trace_hcurl_ufl_element(
-            cfg.nedelec_trace_degree_resolved,
-            cfg.nedelec_interior_degree_resolved,
-        )
+            curl_el = fixed_trace_hcurl_ufl_element(
+                cfg.nedelec_trace_degree_resolved,
+                cfg.nedelec_interior_degree_resolved,
+            )
+        else:
+            from ..adaptivity.hcurl_regionwise_p import (
+                reduced_trace_hcurl_ufl_element,
+            )
+
+            curl_el = reduced_trace_hcurl_ufl_element(
+                cfg.nedelec_trace_degree_resolved,
+                cfg.nedelec_interior_degree_resolved,
+            )
     else:
         curl_el = element(
             "N1curl",
@@ -658,4 +682,45 @@ def _create_nedelec_space(msh, cfg: SimulationConfig3D):
             cfg.nedelec_degree,
             dtype=default_real_type,
         )
-    return fem.functionspace(msh, curl_el)
+    element_seconds_local = time.perf_counter() - element_started
+    functionspace_started = time.perf_counter()
+    function_space = fem.functionspace(msh, curl_el)
+    functionspace_seconds_local = (
+        time.perf_counter() - functionspace_started
+    )
+    if setup_audit is not None:
+        fast_audit = getattr(curl_el, "fast_wrapper_audit", None)
+        setup_audit.update(
+            {
+                "schema_version": (
+                    "task035b.function-space-setup-breakdown.v1"
+                ),
+                "fast_fixed_trace_setup_enabled": bool(
+                    cfg.stage4_fast_fixed_trace_setup
+                ),
+                "reduced_trace_element": bool(
+                    cfg.nedelec_reduced_trace_enabled
+                ),
+                "element_build_and_ufl_wrap_seconds_max": float(
+                    msh.comm.allreduce(
+                        element_seconds_local,
+                        op=MPI.MAX,
+                    )
+                ),
+                "dolfinx_functionspace_and_dofmap_seconds_max": float(
+                    msh.comm.allreduce(
+                        functionspace_seconds_local,
+                        op=MPI.MAX,
+                    )
+                ),
+                "ufl_element_class": type(curl_el).__qualname__,
+                "basix_element_hash": int(curl_el.basix_hash()),
+                "fast_wrapper_audit": (
+                    None
+                    if fast_audit is None
+                    else dict(fast_audit)
+                ),
+                "ordinary_default_changed": False,
+            }
+        )
+    return function_space

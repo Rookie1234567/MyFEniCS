@@ -21,6 +21,7 @@ from benchmarks.run_direct_memory_forensics import (
     _latest_stage,
     _numeric_gate,
     _parse_args,
+    _read_smaps_rollup,
     _sample,
     _source_provenance,
     _task29_direct_config,
@@ -135,6 +136,16 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         self.assertEqual(set(TIMELINE_FIELDS), set(row))
         self.assertEqual(row["stage"], "process_start")
         self.assertGreaterEqual(float(row["container_process_rss_sum_mb"]), 0.0)
+        self.assertIn("worker_rank_smaps_rollup_json", row)
+        self.assertIn("worker_rank_uss_sum_mb", row)
+
+    def test_linux_smaps_rollup_reports_pss_and_uss(self) -> None:
+        rollup = _read_smaps_rollup(Path("/proc/self/smaps_rollup"))
+        self.assertIsInstance(rollup, dict)
+        assert rollup is not None
+        self.assertGreater(rollup["rss_mb"], 0.0)
+        self.assertGreater(rollup["pss_mb"], 0.0)
+        self.assertGreaterEqual(rollup["uss_mb"], 0.0)
 
     def test_stage_marker_reads_last_complete_json_event(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -213,6 +224,107 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
                 x.destroy()
             rhs.destroy()
             diagonal.destroy()
+            matrix.destroy()
+
+    def test_condensed_iterative_profile_is_programmatic_and_factor_free(
+        self,
+    ) -> None:
+        matrix = PETSc.Mat().createAIJ(
+            [3, 3],
+            nnz=1,
+            comm=PETSc.COMM_SELF,
+        )
+        diagonal = PETSc.Vec().createSeq(3, comm=PETSc.COMM_SELF)
+        rhs = PETSc.Vec().createSeq(3, comm=PETSc.COMM_SELF)
+        x = None
+        ksp = None
+        try:
+            diagonal.set(2.0)
+            rhs.set(1.0)
+            matrix.setDiagonal(diagonal)
+            matrix.assemble()
+            x, ksp, telemetry = _solve_augmented_system(
+                matrix,
+                rhs,
+                {"ksp_type": "preonly", "pc_type": "lu"},
+                "task035b_iterative_test_",
+                comm=MPI.COMM_SELF,
+                dofs=3,
+                constraints=0,
+                iterative_profile="gmres_jacobi",
+            )
+            audit = telemetry["condensed_iterative"]
+            self.assertEqual(ksp.getType(), "gmres")
+            self.assertEqual(ksp.getPC().getType(), "jacobi")
+            self.assertTrue(audit["configured_programmatically"])
+            self.assertFalse(
+                audit["raw_petsc_options_used_for_iterative_configuration"]
+            )
+            self.assertEqual(audit["global_direct_factor_nnz"], 0)
+            self.assertLess(
+                audit["terminal_explicit_reduced_relative_residual"],
+                1.0e-12,
+            )
+            self.assertFalse(
+                telemetry["factor_inventory"]["available"]
+            )
+        finally:
+            if ksp is not None:
+                ksp.destroy()
+            if x is not None:
+                x.destroy()
+            rhs.destroy()
+            diagonal.destroy()
+            matrix.destroy()
+
+    def test_condensed_fgmres_asm_ilu_profile_is_programmatic(self) -> None:
+        matrix = PETSc.Mat().createAIJ(
+            [4, 4],
+            nnz=3,
+            comm=PETSc.COMM_SELF,
+        )
+        rhs = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+        x = None
+        ksp = None
+        try:
+            for row in range(4):
+                matrix.setValue(row, row, 4.0)
+                if row:
+                    matrix.setValue(row, row - 1, -1.0)
+                if row + 1 < 4:
+                    matrix.setValue(row, row + 1, -1.0)
+            matrix.assemble()
+            rhs.set(1.0)
+            x, ksp, telemetry = _solve_augmented_system(
+                matrix,
+                rhs,
+                {},
+                "task035b_fgmres_asm_test_",
+                comm=MPI.COMM_SELF,
+                dofs=4,
+                constraints=0,
+                iterative_profile="fgmres_asm_ilu",
+            )
+            audit = telemetry["condensed_iterative"]
+            self.assertEqual(ksp.getType(), "fgmres")
+            self.assertEqual(ksp.getPC().getType(), "asm")
+            self.assertTrue(audit["configured_programmatically"])
+            self.assertEqual(audit["global_direct_factor_nnz"], 0)
+            self.assertTrue(
+                telemetry["factor_inventory"][
+                    "local_subdomain_ilu_active"
+                ]
+            )
+            self.assertLess(
+                audit["terminal_explicit_reduced_relative_residual"],
+                1.0e-12,
+            )
+        finally:
+            if ksp is not None:
+                ksp.destroy()
+            if x is not None:
+                x.destroy()
+            rhs.destroy()
             matrix.destroy()
 
     def test_factor_inventory_does_not_reassemble_factored_matrix(self) -> None:

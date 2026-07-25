@@ -799,9 +799,24 @@ def run_prepared_3d_case_flow(
 
     stage_start = _start_timed_stage(comm)
     _write_progress_event(out_dir, comm, stage="function_space_setup", status="begin", started=started)
-    V = _create_nedelec_space(msh, cfg)
+    function_space_setup_audit: dict[str, Any] = {}
+    V = _create_nedelec_space(
+        msh,
+        cfg,
+        setup_audit=function_space_setup_audit,
+    )
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
+    timings["function_space_element_build_and_ufl_wrap"] = float(
+        function_space_setup_audit[
+            "element_build_and_ufl_wrap_seconds_max"
+        ]
+    )
+    timings["function_space_dolfinx_dofmap"] = float(
+        function_space_setup_audit[
+            "dolfinx_functionspace_and_dofmap_seconds_max"
+        ]
+    )
     _write_progress_event(
         out_dir,
         comm,
@@ -1311,6 +1326,11 @@ def run_prepared_3d_case_flow(
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
     converged = (reason > 0) and not diagnostic_only_result
+    linear_solve_method = (
+        "direct_lu"
+        if dtn_solver_info is None
+        else dtn_solver_info.get("linear_solve_method", "direct_lu")
+    )
     stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
     summary = {
         "case_name": cfg.case_name,
@@ -1446,18 +1466,43 @@ def run_prepared_3d_case_flow(
         "rhs_source_norm": rhs_source_norm,
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
-        "linear_solve_method": "direct_lu",
-        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
+        "linear_solve_method": linear_solve_method,
+        "petsc_direct_solver_profile": (
+            cfg.petsc_direct_solver_profile_requested
+            if linear_solve_method == "direct_lu"
+            else None
+        ),
+        "stage4_condensed_iterative_profile": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get(
+                "stage4_condensed_iterative_profile"
+            )
+        ),
+        "stage4_condensed_iterative": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("condensed_iterative")
+        ),
         "matrix_diagnostics_assemble_only": bool(assemble_only_result),
         "matrix_diagnostics_factorization_only": bool(
             factorization_only_result
         ),
-        "linear_solve_petsc_options": petsc_options,
+        "linear_solve_petsc_options": (
+            petsc_options if linear_solve_method == "direct_lu" else {}
+        ),
+        "iterative_raw_petsc_options_ignored": (
+            linear_solve_method == "assembled_condensed_iterative"
+        ),
         "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,
         "actual_pc_type": pc_type,
         "actual_pc_factor_solver_type": pc_factor_solver_type,
-        "selected_parallel_lu_solver_type": selected_parallel_lu,
+        "selected_parallel_lu_solver_type": (
+            selected_parallel_lu
+            if linear_solve_method == "direct_lu"
+            else None
+        ),
         "ksp_converged": converged,
         "ksp_converged_reason": reason,
         "ksp_converged_reason_name": reason_name,
@@ -1536,6 +1581,7 @@ def run_prepared_3d_case_flow(
         "mesh_material_plane_alignment": mesh_data.material_plane_alignment,
         "mesh_local_refinement_regions": mesh_data.local_refinement_regions,
         "mesh_z_alignment_warnings": mesh_data.z_alignment_warnings,
+        "function_space_setup_audit": function_space_setup_audit,
         "max_face_pairing_coordinate_error": None
         if floquet_data is None
         else floquet_data.max_face_pairing_coordinate_error,

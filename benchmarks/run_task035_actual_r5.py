@@ -2155,6 +2155,8 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     process_tree = maximum("mpi_process_tree_rss_mb")
     process_swap = maximum("mpi_process_tree_swap_mb")
     worker_counts = []
+    smaps_readable_counts = []
+    per_rank_smaps_peaks: dict[int, dict[str, float]] = {}
     for row in rows:
         try:
             workers = json.loads(str(row.get("worker_rank_rss_mb_json", "[]")))
@@ -2162,10 +2164,73 @@ def _sampler_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         if isinstance(workers, list):
             worker_counts.append(len(workers))
+        if isinstance(
+            row.get("worker_rank_smaps_readable_count"),
+            (int, float),
+        ):
+            smaps_readable_counts.append(
+                int(row["worker_rank_smaps_readable_count"])
+            )
+        try:
+            smaps_rows = json.loads(
+                str(row.get("worker_rank_smaps_rollup_json", "[]"))
+            )
+        except json.JSONDecodeError:
+            smaps_rows = []
+        if not isinstance(smaps_rows, list):
+            continue
+        for entry in smaps_rows:
+            if not isinstance(entry, dict) or not isinstance(
+                entry.get("rank"),
+                int,
+            ):
+                continue
+            rank = int(entry["rank"])
+            peaks = per_rank_smaps_peaks.setdefault(rank, {})
+            for field in (
+                "rss_mb",
+                "pss_mb",
+                "uss_mb",
+                "shared_mb",
+                "anonymous_mb",
+                "swap_mb",
+                "swap_pss_mb",
+            ):
+                value = entry.get(field)
+                if isinstance(value, (int, float)):
+                    peaks[field] = max(
+                        peaks.get(field, 0.0),
+                        float(value),
+                    )
     return {
         "sample_count": len(rows),
         "max_process_tree_rss_mb": process_tree,
         "max_process_tree_swap_mb": process_swap,
+        "max_worker_rank_rss_sum_mb": maximum(
+            "worker_rank_rss_sum_mb"
+        ),
+        "max_worker_rank_pss_sum_mb": maximum(
+            "worker_rank_pss_sum_mb"
+        ),
+        "max_worker_rank_uss_sum_mb": maximum(
+            "worker_rank_uss_sum_mb"
+        ),
+        "max_worker_rank_shared_sum_mb": maximum(
+            "worker_rank_shared_sum_mb"
+        ),
+        "max_worker_rank_smaps_swap_sum_mb": maximum(
+            "worker_rank_smaps_swap_sum_mb"
+        ),
+        "per_rank_smaps_rollup_peaks_mb": {
+            str(rank): values
+            for rank, values in sorted(per_rank_smaps_peaks.items())
+        },
+        "smaps_rollup_all_ranks_readable_at_least_once": bool(
+            worker_counts
+            and smaps_readable_counts
+            and max(smaps_readable_counts)
+            == max(worker_counts)
+        ),
         "memory_authority_gib": (
             None if process_tree is None else process_tree / 1024.0
         ),

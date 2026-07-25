@@ -45,6 +45,7 @@ from .hcurl_assembly_time_condensation import (
     condense_unconstrained_vector_to_active_trace,
     recover_owned_cell_interiors,
     register_appended_dual_interior_coupling,
+    _orient_cell_tensor,
 )
 from .mpc_form_action import MpcFormActionContext
 from .solve_vector_maxwell import _json_default
@@ -316,6 +317,10 @@ def _assembly_time_full_operator_residual(
     reduced_solution: PETSc.Vec,
     condensed: AssemblyTimeCondensedSystem,
     full_rhs: PETSc.Vec,
+    *,
+    function_space=None,
+    affine_isotropic_tensor_spec=None,
+    recovered_field=None,
 ) -> dict[str, Any]:
     """Audit all eliminated FE equations without allocating the full matrix."""
 
@@ -324,40 +329,131 @@ def _assembly_time_full_operator_residual(
         reduced_rhs,
         reduced_solution,
     )
-    context = MpcFormActionContext(
-        bilinear_form,
-        floquet_data.mpc,
-        reference=None,
-    )
-    action = embedded_fe_solution.duplicate()
-    action.set(PETSc.ScalarType(0.0))
+    context = None
+    action = None
+    residual_reference_gram_seconds = 0.0
     try:
-        context.mult(
-            None,  # type: ignore[arg-type]
-            embedded_fe_solution,
-            action,
-        )
         local_interior_sq = 0.0
         local_interior_max = 0.0
-        for cell in condensed.cell_recovery_maps:
-            values = np.asarray(
-                action.getValues(cell.interior_original_dofs),
-                dtype=np.complex128,
+        if affine_isotropic_tensor_spec is None:
+            context = MpcFormActionContext(
+                bilinear_form,
+                floquet_data.mpc,
+                reference=None,
             )
-            values -= np.asarray(
-                full_rhs.getValues(cell.interior_original_dofs),
-                dtype=np.complex128,
+            action = embedded_fe_solution.duplicate()
+            action.set(PETSc.ScalarType(0.0))
+            context.mult(
+                None,  # type: ignore[arg-type]
+                embedded_fe_solution,
+                action,
             )
-            values = (
-                condensed.interior_residual_projection_by_class[
-                    cell.class_key
-                ]
-                @ values
+            for cell in condensed.cell_recovery_maps:
+                values = np.asarray(
+                    action.getValues(cell.interior_original_dofs),
+                    dtype=np.complex128,
+                )
+                values -= np.asarray(
+                    full_rhs.getValues(cell.interior_original_dofs),
+                    dtype=np.complex128,
+                )
+                values = (
+                    condensed.interior_residual_projection_by_class[
+                        cell.class_key
+                    ]
+                    @ values
+                )
+                local_interior_sq += float(
+                    np.vdot(values, values).real
+                )
+                local_interior_max = max(
+                    local_interior_max,
+                    float(np.max(np.abs(values), initial=0.0)),
+                )
+            residual_method = (
+                "explicit reduced trace+DtN Mat action combined with "
+                "matrix-free dolfinx_mpc UFL action projected onto every "
+                "active eliminated cell-interior test space, including "
+                "condensed full-space RHS"
             )
-            local_interior_sq += float(np.vdot(values, values).real)
-            local_interior_max = max(
-                local_interior_max,
-                float(np.max(np.abs(values), initial=0.0)),
+        else:
+            if function_space is None or recovered_field is None:
+                raise ValueError(
+                    "analytic full residual requires the H(curl) space "
+                    "and the Floquet-backsubstituted recovered field"
+                )
+            from .hcurl_affine_isotropic_tensor import (
+                AffineIsotropicMaxwellTensorFactory,
+            )
+
+            factory = AffineIsotropicMaxwellTensorFactory(
+                function_space.element.basix_element,
+                affine_isotropic_tensor_spec,
+            )
+            residual_reference_gram_seconds = float(
+                factory.build_seconds
+            )
+            interior_positions = np.asarray(
+                function_space.element.basix_element.entity_dofs[
+                    function_space.mesh.topology.dim
+                ][0],
+                dtype=np.int32,
+            )
+            with full_rhs.localForm() as local_rhs:
+                solution_values = np.asarray(
+                    recovered_field.x.array,
+                    dtype=np.complex128,
+                )
+                rhs_values = np.asarray(
+                    local_rhs.getArray(readonly=True),
+                    dtype=np.complex128,
+                )
+                for cell in condensed.cell_recovery_maps:
+                    if cell.interior_policy != "high":
+                        raise RuntimeError(
+                            "analytic full residual does not support "
+                            "regionwise-p"
+                        )
+                    raw = factory.tensor(
+                        tag=int(cell.raw_key[0]),
+                        widths=tuple(
+                            float(value)
+                            for value in cell.raw_key[1:4]
+                        ),
+                    )
+                    _orient_cell_tensor(
+                        function_space.element,
+                        raw,
+                        np.asarray(
+                            [cell.cell_permutation],
+                            dtype=np.uint32,
+                        ),
+                    )
+                    local_dofs = cell.cell_local_dofs
+                    values = (
+                        raw @ solution_values[local_dofs]
+                        - rhs_values[local_dofs]
+                    )[interior_positions]
+                    values = (
+                        condensed.interior_residual_projection_by_class[
+                            cell.class_key
+                        ]
+                        @ values
+                    )
+                    local_interior_sq += float(
+                        np.vdot(values, values).real
+                    )
+                    local_interior_max = max(
+                        local_interior_max,
+                        float(
+                            np.max(np.abs(values), initial=0.0)
+                        ),
+                    )
+            residual_method = (
+                "explicit reduced trace+DtN Mat action combined with "
+                "independently regenerated affine/isotropic full cell "
+                "tensors applied to recovered local coefficients and "
+                "projected onto every eliminated cell-interior test space"
             )
         comm = reduced_matrix.getComm().tompi4py()
         interior_norm = float(
@@ -426,18 +522,18 @@ def _assembly_time_full_operator_residual(
             "reduced_trace_dtn_residual_norm": reduced_norm,
             "eliminated_cell_interior_residual_norm": interior_norm,
             "eliminated_cell_interior_max_abs_residual": interior_max,
-            "full_operator_residual_method": (
-                "explicit reduced trace+DtN Mat action combined with "
-                "matrix-free dolfinx_mpc UFL action projected onto every "
-                "active eliminated cell-interior test space, including "
-                "condensed full-space RHS"
+            "full_operator_residual_method": residual_method,
+            "affine_residual_reference_gram_seconds": (
+                residual_reference_gram_seconds
             ),
             "full_global_matrix_allocated_for_residual": False,
             "full_trace_matrix_allocated_for_residual": False,
         }
     finally:
-        action.destroy()
-        context.destroy()
+        if action is not None:
+            action.destroy()
+        if context is not None:
+            context.destroy()
 
 
 def _set_scalar_constant(constant: fem.Constant, value: complex) -> None:
@@ -1136,7 +1232,26 @@ def _solve_augmented_system(
     constraints: int | None = None,
     matrix_stats: dict[str, Any] | None = None,
     factorization_only: bool = False,
+    iterative_profile: str | None = None,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
+    supported_iterative_profiles = {
+        "gmres_jacobi",
+        "fgmres_asm_ilu",
+    }
+    if (
+        iterative_profile is not None
+        and iterative_profile not in supported_iterative_profiles
+    ):
+        raise ValueError(
+            "unsupported condensed iterative profile "
+            f"{iterative_profile!r}; expected one of "
+            f"{sorted(supported_iterative_profiles)}"
+        )
+    if iterative_profile is not None and factorization_only:
+        raise ValueError(
+            "factorization-only diagnostics are incompatible with the "
+            "condensed iterative profile"
+        )
     progress_comm = comm if comm is not None else A_aug.getComm()
     if out_dir is not None:
         _write_progress_event(
@@ -1153,14 +1268,41 @@ def _solve_augmented_system(
     ksp = PETSc.KSP().create(A_aug.getComm())
     ksp.setOptionsPrefix(prefix)
     ksp.setOperators(A_aug)
-    opts = PETSc.Options()
-    opts.prefixPush(prefix)
-    for key, value in petsc_options.items():
-        opts[key] = value
-    ksp.setFromOptions()
-    for key in petsc_options.keys():
-        del opts[key]
-    opts.prefixPop()
+    if iterative_profile is None:
+        opts = PETSc.Options()
+        opts.prefixPush(prefix)
+        for key, value in petsc_options.items():
+            opts[key] = value
+        ksp.setFromOptions()
+        for key in petsc_options.keys():
+            del opts[key]
+        opts.prefixPop()
+    else:
+        ksp.setType(
+            "gmres"
+            if iterative_profile == "gmres_jacobi"
+            else "fgmres"
+        )
+        ksp.setGMRESRestart(30)
+        ksp.setTolerances(
+            rtol=1.0e-8,
+            atol=1.0e-12,
+            divtol=1.0e8,
+            max_it=200,
+        )
+        # Review V2 requires an unpreconditioned residual reduction screen.
+        # PETSc otherwise defaults GMRES history to a preconditioned norm,
+        # which cannot be relabelled as physical reduced-system progress.
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setInitialGuessNonzero(False)
+        ksp.setConvergenceHistory(length=201, reset=True)
+        pc = ksp.getPC()
+        if iterative_profile == "gmres_jacobi":
+            pc.setType("jacobi")
+        else:
+            pc.setType("asm")
+            pc.setASMType(PETSc.PC.ASMType.RESTRICT)
+            pc.setASMOverlap(1)
     x_aug = b_aug.duplicate()
     if out_dir is not None:
         _write_progress_event(
@@ -1200,19 +1342,60 @@ def _solve_augmented_system(
     setup_started = time.perf_counter()
     try:
         ksp.setUp()
+        if iterative_profile == "fgmres_asm_ilu":
+            sub_ksps = ksp.getPC().getASMSubKSP()
+            for sub_ksp in sub_ksps:
+                sub_ksp.setType("preonly")
+                sub_ksp.getPC().setType("ilu")
+                sub_ksp.getPC().setFactorLevels(0)
+            ksp.setUp()
     except PETSc.Error as exc:
         raise DirectSolveFailure(
-            "PETSc direct LU failed during Stage-4 augmented DtN KSPSetUp/LU factorization.",
+            (
+                "PETSc condensed iterative preconditioner setup failed."
+                if iterative_profile is not None
+                else "PETSc direct LU failed during Stage-4 augmented DtN "
+                "KSPSetUp/LU factorization."
+            ),
             failure_stage="stage4_dtn_augmented_ksp_setup",
             petsc_error=exc,
             A=A_aug,
             b=b_aug,
             x=x_aug,
             ksp=ksp,
-            solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            solver_backend=(
+                "PETSc assembled condensed iterative auxiliary Fourier-DtN"
+                if iterative_profile is not None
+                else "PETSc augmented auxiliary Fourier-DtN port with "
+                "dolfinx_mpc Floquet constraints"
+            ),
         ) from exc
     setup_seconds = float(progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX))
-    factor_inventory = _petsc_factor_inventory(ksp)
+    factor_inventory = (
+        _petsc_factor_inventory(ksp)
+        if iterative_profile is None
+        else {
+            "available": False,
+            "factor_solver_type": None,
+            "matrix_stats": None,
+            "mumps_raw_infog": {},
+            "mumps_raw_rinfog": {},
+            "mumps_api_available": False,
+            "global_direct_factor_nnz": 0,
+            "local_subdomain_ilu_active": (
+                iterative_profile == "fgmres_asm_ilu"
+            ),
+            "limitations": [
+                "global direct factor deliberately absent",
+                (
+                    "local ASM ILU factor storage is preconditioner memory "
+                    "and is not exposed as a global factor inventory"
+                    if iterative_profile == "fgmres_asm_ilu"
+                    else "Jacobi stores no sparse factor"
+                ),
+            ],
+        }
+    )
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -1292,16 +1475,97 @@ def _solve_augmented_system(
         ksp.solve(b_aug, x_aug)
     except PETSc.Error as exc:
         raise DirectSolveFailure(
-            "PETSc direct LU failed during Stage-4 augmented DtN KSPSolve.",
+            (
+                "PETSc condensed iterative solve raised an error."
+                if iterative_profile is not None
+                else "PETSc direct LU failed during Stage-4 augmented DtN "
+                "KSPSolve."
+            ),
             failure_stage="stage4_dtn_augmented_solve",
             petsc_error=exc,
             A=A_aug,
             b=b_aug,
             x=x_aug,
             ksp=ksp,
-            solver_backend="PETSc augmented auxiliary Fourier-DtN port with dolfinx_mpc Floquet constraints",
+            solver_backend=(
+                "PETSc assembled condensed iterative auxiliary Fourier-DtN"
+                if iterative_profile is not None
+                else "PETSc augmented auxiliary Fourier-DtN port with "
+                "dolfinx_mpc Floquet constraints"
+            ),
         ) from exc
     solve_seconds = float(progress_comm.allreduce(time.perf_counter() - solve_started, op=MPI.MAX))
+    convergence_history = [
+        float(value) for value in ksp.getConvergenceHistory()
+    ]
+    reduced_residual = b_aug.duplicate()
+    A_aug.mult(x_aug, reduced_residual)
+    reduced_residual.axpy(PETSc.ScalarType(-1.0), b_aug)
+    reduced_residual_norm = float(reduced_residual.norm())
+    reduced_residual.destroy()
+    reduced_rhs_norm = float(b_aug.norm())
+    reduced_relative_residual = float(
+        reduced_residual_norm / max(reduced_rhs_norm, 1.0e-30)
+    )
+    initial_history_norm = (
+        convergence_history[0] if convergence_history else None
+    )
+    final_history_norm = (
+        convergence_history[-1] if convergence_history else None
+    )
+    history_reduction = (
+        None
+        if initial_history_norm in (None, 0.0)
+        or final_history_norm is None
+        else float(final_history_norm / initial_history_norm)
+    )
+    iterative_audit = (
+        None
+        if iterative_profile is None
+        else {
+            "schema_version": "task035b.condensed-iterative-profile.v1",
+            "profile": iterative_profile,
+            "configured_programmatically": True,
+            "raw_petsc_options_used_for_iterative_configuration": False,
+            "assembled_reduced_operator": True,
+            "matrix_free": False,
+            "ksp_type": ksp.getType(),
+            "pc_type": ksp.getPC().getType(),
+            "restart": 30,
+            "maximum_iterations": 200,
+            "relative_tolerance": 1.0e-8,
+            "absolute_tolerance": 1.0e-12,
+            "converged_reason": int(ksp.getConvergedReason()),
+            "iterations": int(ksp.getIterationNumber()),
+            "residual_history": convergence_history,
+            "residual_history_norm_type": "unpreconditioned",
+            "residual_history_count": len(convergence_history),
+            "residual_history_initial_norm": initial_history_norm,
+            "residual_history_final_norm": final_history_norm,
+            "residual_history_final_to_initial": history_reduction,
+            "terminal_explicit_reduced_residual_norm": (
+                reduced_residual_norm
+            ),
+            "terminal_explicit_reduced_relative_residual": (
+                reduced_relative_residual
+            ),
+            "global_direct_factor_nnz": 0,
+            "mumps_symbolic_or_numeric_created": False,
+            "formal_first_screen_checks": {
+                "unpreconditioned_residual_reduction_ge_3_decades": (
+                    history_reduction is not None
+                    and history_reduction <= 1.0e-3
+                ),
+                "terminal_explicit_reduced_residual_le_1e-3": (
+                    reduced_relative_residual <= 1.0e-3
+                ),
+                "iteration_count_le_200": (
+                    int(ksp.getIterationNumber()) <= 200
+                ),
+            },
+            "ordinary_default_changed": False,
+        }
+    )
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -1333,6 +1597,7 @@ def _solve_augmented_system(
             "ksp_setup_seconds": setup_seconds,
             "ksp_solve_seconds": solve_seconds,
             "factor_inventory": factor_inventory,
+            "condensed_iterative": iterative_audit,
         },
     )
 
@@ -1685,6 +1950,45 @@ def solve_stage4_dtn_port_total_field(
             "assembly-time cell condensation directly builds the Floquet-"
             "independent trace system and requires both Task035b flags"
         )
+    if cfg.stage4_condensed_iterative_profile is not None and (
+        not cfg.stage4_assembly_time_cell_static_condensation
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "the Task035b condensed iterative profile requires a complete "
+            "assembly-time-condensed solve"
+        )
+    cache_mode = str(cfg.stage4_condensed_cache_mode).lower()
+    if cache_mode != "off" and (
+        not cfg.stage4_assembly_time_cell_static_condensation
+        or cfg.stage4_condensed_cache_directory is None
+        or cfg.stage4_condensed_cache_source_sha is None
+    ):
+        raise ValueError(
+            "the Task035b condensed cache requires assembly-time "
+            "condensation, a cache directory, and a clean-source SHA"
+        )
+    if cache_mode == "off" and (
+        cfg.stage4_condensed_cache_directory is not None
+        or cfg.stage4_condensed_cache_source_sha is not None
+    ):
+        raise ValueError(
+            "condensed cache identity was supplied while cache mode is off"
+        )
+    if cfg.stage4_affine_isotropic_reference_tensor and (
+        not cfg.stage4_assembly_time_cell_static_condensation
+        or cfg.stage_case != "stage4_block_grating"
+        or cfg.geometry_kind != "rectangular_block_grating"
+        or cfg.use_pml
+        or float(cfg.divergence_penalty) != 0.0
+        or cfg.stage4_regionwise_interior_p
+    ):
+        raise ValueError(
+            "affine/isotropic reference tensors require the fixed "
+            "rectangular no-PML zero-divergence-penalty assembly-time "
+            "condensation path without regionwise-p"
+        )
     if cfg.stage4_regionwise_interior_p and (
         not cfg.stage4_assembly_time_cell_static_condensation
         or not cfg.nedelec_reduced_trace_enabled
@@ -1725,6 +2029,30 @@ def solve_stage4_dtn_port_total_field(
 
     t0 = time.perf_counter()
     if cfg.stage4_assembly_time_cell_static_condensation:
+        affine_isotropic_tensor_spec = None
+        if cfg.stage4_affine_isotropic_reference_tensor:
+            from .hcurl_affine_isotropic_tensor import (
+                AffineIsotropicMaxwellTensorSpec,
+            )
+
+            affine_isotropic_tensor_spec = (
+                AffineIsotropicMaxwellTensorSpec(
+                    curl_coefficient=PETSc.ScalarType(
+                        1.0 / cfg.mu_r
+                    ),
+                    mass_coefficient_by_tag={
+                        int(cfg.tags.air): PETSc.ScalarType(
+                            -(cfg.k0**2) * cfg.eps_air
+                        ),
+                        int(cfg.tags.substrate): PETSc.ScalarType(
+                            -(cfg.k0**2) * cfg.eps_substrate
+                        ),
+                        int(cfg.tags.grating): PETSc.ScalarType(
+                            -(cfg.k0**2) * cfg.eps_grating
+                        ),
+                    },
+                )
+            )
         regionwise_element = None
         regionwise_low_compiled_form = None
         if cfg.stage4_regionwise_interior_p:
@@ -1758,9 +2086,26 @@ def solve_stage4_dtn_port_total_field(
                 },
             )
             regionwise_low_compiled_form = fem.form(low_form)
+        bilinear_compile_started = time.perf_counter()
+        assembly_time_compiled_form = (
+            None
+            if affine_isotropic_tensor_spec is not None
+            else fem.form(a)
+        )
+        timing_details[
+            "stage4_dtn_bilinear_form_compile_seconds"
+        ] = float(
+            comm.allreduce(
+                time.perf_counter() - bilinear_compile_started,
+                op=MPI.MAX,
+            )
+        )
+        timing_details[
+            "stage4_dtn_bilinear_form_compile_skipped_by_affine_backend"
+        ] = bool(assembly_time_compiled_form is None)
         assembly_time_system = (
             build_unconstrained_assembly_time_condensation(
-                fem.form(a),
+                assembly_time_compiled_form,
                 V,
                 mesh_data.cell_tags,
                 mpc=floquet_data.mpc,
@@ -1788,6 +2133,21 @@ def solve_stage4_dtn_port_total_field(
                 ),
                 regionwise_mesh_geometry_sha256=(
                     cfg.stage4_regionwise_mesh_geometry_sha256
+                ),
+                persistent_cache_directory=(
+                    None
+                    if cfg.stage4_condensed_cache_directory is None
+                    else Path(cfg.stage4_condensed_cache_directory)
+                ),
+                persistent_cache_source_sha=(
+                    cfg.stage4_condensed_cache_source_sha
+                ),
+                persistent_cache_mode=cache_mode,
+                bulk_cell_block_insertion=(
+                    cfg.stage4_condensed_bulk_cell_insertion
+                ),
+                affine_isotropic_tensor_spec=(
+                    affine_isotropic_tensor_spec
                 ),
             )
         )
@@ -2588,6 +2948,7 @@ def solve_stage4_dtn_port_total_field(
                 else augmented_matrix_stats_after_finalize
             ),
             factorization_only=cfg.matrix_diagnostics_factorization_only,
+            iterative_profile=cfg.stage4_condensed_iterative_profile,
         )
     except DirectSolveFailure as exc:
         exc.timing_details.update(timing_details)
@@ -2752,6 +3113,11 @@ def solve_stage4_dtn_port_total_field(
             x_aug,
             assembly_time_system,
             assembly_time_full_rhs,
+            function_space=V,
+            affine_isotropic_tensor_spec=(
+                affine_isotropic_tensor_spec
+            ),
+            recovered_field=assembly_time_field,
         )
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
@@ -2767,6 +3133,29 @@ def solve_stage4_dtn_port_total_field(
         )
     else:
         linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+    condensed_iterative_audit = ksp_telemetry.get(
+        "condensed_iterative"
+    )
+    if isinstance(condensed_iterative_audit, dict):
+        full_relative_residual = linear_residual.get(
+            "linear_system_relative_residual"
+        )
+        checks = condensed_iterative_audit[
+            "formal_first_screen_checks"
+        ]
+        checks["full_explicit_true_residual_le_1e-9"] = bool(
+            isinstance(full_relative_residual, (int, float))
+            and float(full_relative_residual) <= 1.0e-9
+        )
+        checks["pass"] = bool(all(checks.values()))
+        condensed_iterative_audit[
+            "full_explicit_true_residual"
+        ] = linear_residual
+        condensed_iterative_audit["screen_status"] = (
+            "assembled_factor_free_first_screen_pass"
+            if checks["pass"]
+            else "controlled_negative_first_screen_failed"
+        )
     _write_progress_event(
         out_dir,
         comm,
@@ -2912,6 +3301,10 @@ def solve_stage4_dtn_port_total_field(
         }
     solver_info = {
         "solver_backend": (
+            "PETSc assembled factor-free condensed Krylov + direct "
+            "Floquet-independent insertion + auxiliary Fourier-DtN port"
+            if cfg.stage4_condensed_iterative_profile is not None
+            else
             "PETSc assembly-time exact cell-interior trace Schur + direct "
             "Floquet-independent insertion + auxiliary Fourier-DtN port"
             if assembly_time_system is not None
@@ -2952,6 +3345,17 @@ def solve_stage4_dtn_port_total_field(
         "stage4_floquet_slave_elimination": bool(
             independent_trace_system is not None
             or assembly_time_system is not None
+        ),
+        "linear_solve_method": (
+            "assembled_condensed_iterative"
+            if cfg.stage4_condensed_iterative_profile is not None
+            else "direct_lu"
+        ),
+        "stage4_condensed_iterative_profile": (
+            cfg.stage4_condensed_iterative_profile
+        ),
+        "condensed_iterative": ksp_telemetry.get(
+            "condensed_iterative"
         ),
         "cell_static_condensation": cell_static_condensation_audit,
         "stage4_dtn_assembly_seconds": float(comm.allreduce(time.perf_counter() - stage_start, op=MPI.MAX)),
