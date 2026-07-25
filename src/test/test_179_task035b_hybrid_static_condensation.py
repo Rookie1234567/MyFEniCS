@@ -222,6 +222,24 @@ class Task035bHybridStaticCondensationTests(unittest.TestCase):
             self.assertEqual(block.positive_interior_correction.shape, (2, 2))
             self.assertEqual(block.negative_interior_correction.shape, (2, 2))
             self.assertEqual(block.modal_rhs_correction.shape, (2,))
+            self.assertTrue(
+                block.tangential_surface_trace_only_verified
+            )
+            self.assertFalse(
+                block.interior_modal_pairwise_schur_evaluated
+            )
+            self.assertEqual(
+                float(np.linalg.norm(block.positive_interior_correction)),
+                0.0,
+            )
+            self.assertEqual(
+                float(np.linalg.norm(block.negative_interior_correction)),
+                0.0,
+            )
+            self.assertEqual(
+                float(np.linalg.norm(block.modal_rhs_correction)),
+                0.0,
+            )
             self.assertFalse(block.full_surface_mode_vectors_retained)
             self.assertLess(block.positive_projection_identity_error, 1.0e-9)
 

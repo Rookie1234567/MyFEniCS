@@ -56,6 +56,8 @@ class HybridInterfaceModeBlocks:
     positive_interior_correction: np.ndarray
     negative_interior_correction: np.ndarray
     modal_rhs_correction: np.ndarray
+    tangential_surface_trace_only_verified: bool = False
+    interior_modal_pairwise_schur_evaluated: bool = False
     full_surface_mode_vectors_retained: bool = False
     full_field_or_mode_gathered: bool = False
 
@@ -501,6 +503,7 @@ class _InterfaceSurfaceLoadEntries:
     overlap_values: np.ndarray
     full_vector: PETSc.Vec | None
     queries: int
+    tangential_surface_trace_only_verified: bool
 
 
 class _ReusableInterfaceSurfaceLoad:
@@ -554,17 +557,16 @@ class _ReusableInterfaceSurfaceLoad:
                 overlap_values=overlap_values,
                 full_vector=None,
                 queries=queries,
+                tangential_surface_trace_only_verified=False,
             )
-        full_vector = _assemble_unconstrained_form_vector(self.form)
         try:
-            reduced = self.system.static_condensation.reduce_surface_vector(
-                full_vector,
-                role=role,
+            reduced = (
+                self.system.static_condensation
+                .reduce_tangential_surface_mpc_vector(overlap_vector)
             )
             matrix_rows, matrix_values = _vec_nonzero_owned_entries(reduced)
             reduced.destroy()
         except Exception:
-            full_vector.destroy()
             overlap_vector.destroy()
             raise
         overlap_vector.destroy()
@@ -573,8 +575,9 @@ class _ReusableInterfaceSurfaceLoad:
             matrix_values=matrix_values,
             overlap_rows=overlap_rows,
             overlap_values=overlap_values,
-            full_vector=full_vector,
+            full_vector=None,
             queries=queries,
+            tangential_surface_trace_only_verified=True,
         )
 
     def assemble_entries(
@@ -819,30 +822,28 @@ def _build_projection_matrix(
     if system.static_condensation is None:
         modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
     else:
-        if len(full_left_vectors) != mode_count:
+        if not all(
+            entries.tangential_surface_trace_only_verified
+            for entries in raw_entries
+        ):
             matrix.destroy()
             for vector in full_left_vectors:
                 vector.destroy()
             raise RuntimeError(
-                "Hybrid static projection lost a full-space left vector."
+                "Hybrid static projection did not verify trace-only "
+                "tangential surface loads."
             )
-        if system.full_fe_rhs is None:
+        if full_left_vectors:
             matrix.destroy()
             for vector in full_left_vectors:
                 vector.destroy()
             raise RuntimeError(
-                "Hybrid static projection requires the full local FE RHS."
+                "Hybrid trace-only projection unexpectedly retained "
+                "full-space left vectors."
             )
-        modal_rhs_correction = -inverse_gram @ np.asarray(
-            [
-                system.static_condensation.interior_cross_bilinear(
-                    vector,
-                    system.full_fe_rhs,
-                )
-                for vector in full_left_vectors
-            ],
-            dtype=np.complex128,
-        )
+        # The verified left vectors have exactly zero cell-interior entries,
+        # hence l_i^H A_ii^-1 b_i is identically zero for any local FE RHS.
+        modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
     return (
         matrix,
         int(sum(item.queries for item in raw_entries) + lift_queries),
@@ -904,6 +905,15 @@ def _build_traction_matrix(
                         )
                 finally:
                     entries.full_vector.destroy()
+            elif (
+                system.static_condensation is not None
+                and not entries.tangential_surface_trace_only_verified
+            ):
+                matrix.destroy()
+                raise RuntimeError(
+                    "Hybrid static traction did not verify a trace-only "
+                    "tangential surface load."
+                )
             if len(entries.matrix_rows):
                 # Existing Stage-4 DtN convention inserts -traction in the FE row.
                 matrix.setValues(
@@ -1019,6 +1029,10 @@ def _build_interface_blocks(
         positive_interior_correction=positive_interior_correction,
         negative_interior_correction=negative_interior_correction,
         modal_rhs_correction=modal_rhs_correction,
+        tangential_surface_trace_only_verified=bool(
+            system.static_condensation is not None
+        ),
+        interior_modal_pairwise_schur_evaluated=False,
         full_surface_mode_vectors_retained=False,
     )
 

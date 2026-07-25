@@ -1950,6 +1950,24 @@ def main() -> None:
                         ("top", coupling.top),
                     )
                 },
+                "tangential_surface_trace_only_audit": {
+                    side: {
+                        "verified": bool(
+                            block.tangential_surface_trace_only_verified
+                        ),
+                        "pairwise_interior_schur_evaluated": bool(
+                            block.interior_modal_pairwise_schur_evaluated
+                        ),
+                        "mathematical_contract": (
+                            "pure tangential ds coupling; H(curl) "
+                            "cell-interior tangential trace is zero"
+                        ),
+                    }
+                    for side, block in (
+                        ("bottom", coupling.bottom),
+                        ("top", coupling.top),
+                    )
+                },
                 "full_surface_mode_vectors_retained": bool(
                     coupling.bottom.full_surface_mode_vectors_retained
                     or coupling.top.full_surface_mode_vectors_retained

@@ -31,6 +31,7 @@ from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
+    project_mpc_vector_to_active_trace,
 )
 
 
@@ -198,6 +199,34 @@ class HybridLocalStaticCondensation:
                 for left in left_full_vectors
             ],
             dtype=np.complex128,
+        )
+
+    def reduce_tangential_surface_mpc_vector(
+        self,
+        full_mpc_vector: PETSc.Vec,
+        *,
+        eliminated_tolerance: float = 1.0e-12,
+    ) -> PETSc.Vec:
+        """Project a verified trace-only tangential surface vector.
+
+        Hybrid interface projection and modal traction are pure tangential
+        ``ds`` forms.  Cell-interior H(curl) basis functions have zero
+        tangential trace, so their entries must vanish.  The input has already
+        been assembled through the qualified Floquet MPC and therefore
+        contains ``C^H``.  The helper verifies every eliminated interior/slave
+        entry before dropping it; any nonzero volume-lifting contribution
+        fails closed instead of silently taking this fast path.
+        """
+
+        _require_vector_size(
+            full_mpc_vector,
+            self.metadata.full_fe_rows,
+            label="MPC tangential surface vector",
+        )
+        return project_mpc_vector_to_active_trace(
+            self.condensed,
+            full_mpc_vector,
+            eliminated_tolerance=eliminated_tolerance,
         )
 
     def recover_and_audit(
