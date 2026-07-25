@@ -259,6 +259,15 @@ def test_fixed_trace_element_optimized_pair_is_new_setup_authority() -> None:
     assert hashlib.sha256(previous_path.read_bytes()).hexdigest() == (
         previous["sha256"]
     )
+    thread_audit = record["thread_audit_authority"]
+    thread_audit_path = ROOT / thread_audit["path"]
+    assert hashlib.sha256(thread_audit_path.read_bytes()).hexdigest() == (
+        thread_audit["sha256"]
+    )
+    assert thread_audit[
+        "mumps_or_blas_extra_worker_pool_observed_during_ksp"
+    ] is False
+    assert thread_audit["exact_native_thread_owner_proven"] is False
     for relative_path, expected in source[
         "optimization_file_sha256"
     ].items():
@@ -294,8 +303,12 @@ def test_fixed_trace_element_optimized_pair_is_new_setup_authority() -> None:
     assert warm["cache"]["dtn_rank_bundle_hits"] == 8
     assert warm["cache"]["dtn_reduced_bundle_restores"] == 320
     assert comparison["cold_fixed_trace_build_speedup_v1_over_v2"] > 1.7
+    assert comparison["cold_fixed_trace_build_speedup_v1_over_v2"] < 2.0
     assert comparison["cold_function_space_speedup_v1_over_v2"] > 1.7
     assert comparison["cold_build_minimum_2x_target_pass"] is True
+    assert comparison["cold_build_target_scope"].startswith(
+        "complete non-KSP"
+    )
     assert comparison["cold_build_25_to_30_second_preferred_target_pass"] is True
     assert comparison["warm_build_below_10_seconds_preferred_target_pass"] is True
     assert comparison["cold_warm_rows_nnz_and_factor_nnz_identical"] is True

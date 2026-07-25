@@ -28,6 +28,14 @@
     "sha256": "55743322d63464ad6fea9f36bfba433c7b7ec9c655cce026fbdd6bb08bbb85a4",
     "execution_source_sha": "ce8ae56ef5732b3bb035d57bebfd66ddf4caccb7"
   },
+  "thread_audit_authority": {
+    "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_solve_thread_memory_semantics_audit_v1.json",
+    "sha256": "a1cc741087dee7e36c9ea3cc9c5c3fa0ec92960ccf186beec2035008b3dbf1f7",
+    "classification": "bounded_evidence_audit_completed",
+    "large_pool_phase": "postprocess_after_solver_release",
+    "mumps_or_blas_extra_worker_pool_observed_during_ksp": false,
+    "exact_native_thread_owner_proven": false
+  },
   "identity": {
     "geometry": "Task034 fixed rectangular block grating",
     "h_nm": 15.0,
@@ -300,8 +308,9 @@
     "warm_fixed_trace_reconstruct_speedup_v1_over_v2": 1.054659063194833,
     "warm_function_space_speedup_v1_over_v2": 1.0531088671928637,
     "warm_common_solver_speedup_v1_over_v2": 1.0159701696482488,
-    "cold_build_speedup_vs_review_v2_preoptimization": 3.201907286715477,
+    "cold_build_speedup_vs_review_v2_preoptimization": 3.2019056090777815,
     "cold_build_minimum_2x_target_pass": true,
+    "cold_build_target_scope": "complete non-KSP build ledger; the fixed-trace element component alone improved by 1.753399x",
     "cold_build_25_to_30_second_preferred_target_pass": true,
     "warm_build_below_10_seconds_preferred_target_pass": true,
     "cold_to_warm_common_solver_speedup": 1.9289915847282446,
@@ -321,7 +330,7 @@
     "complete_warm_common_solver_improvement": "19.8005 s to 19.4892 s (1.016x).",
     "non_ksp_build_interpretation": "The Review-V2 build target is evaluated on the explicitly non-overlapping non-KSP build ledger: cold 19.2417 s and warm 6.1415 s. MUMPS symbolic/numeric/backsolve and postprocess are reported separately and are not hidden.",
     "memory_interpretation": "The MPI8 process-tree peaks are 4.602 GiB cold and 4.453 GiB warm with zero swap. They are measured points, not a lower bound for this 74,890-DoF problem.",
-    "thread_interpretation": "The sampler still observes 400 worker-rank threads despite OMP/OPENBLAS/MKL/NUMEXPR=1; thread-source audit remains open and this count is not treated as useful parallelism.",
+    "thread_interpretation": "The bounded thread audit places the 50-thread-per-rank pool in postprocess after solver release and finds no extra MUMPS/BLAS worker pool during KSP. The exact native owner remains unproven, and 400 observed kernel tasks are not treated as useful parallelism.",
     "significant_power_pass_count": null,
     "significant_complex_amplitude_pass_count": null,
     "twelve_of_twelve_gate_claimed": false,
