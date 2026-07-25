@@ -65,10 +65,9 @@ QUALIFIED_OR_FROZEN_CASES = {
     "092_workstation_wsl_adaptive_scalability",
     "093_fixed_geometry_ph_convergence_mpi",
 }
-STAGING_OR_IN_PROGRESS_CASES = {
-    "094_hcurl_goal_oriented_adaptivity",
-}
+STAGING_OR_IN_PROGRESS_CASES: set[str] = set()
 ACTIVE_RESEARCH_CASES = {
+    "094_hcurl_goal_oriented_adaptivity",
     "095_high_order_local_hp_resource_envelope",
 }
 
@@ -339,20 +338,49 @@ class DocumentationContractTests(unittest.TestCase):
                 for name in ("README.md", "config.json", "test_command.txt", "records"):
                     self.assertTrue((folder / name).exists(), name)
                 config = _load(folder / "config.json")
-                self.assertEqual(config["geometry_scope"], "fixed_only")
-                self.assertEqual(config["degrees"], [4, 5, 6])
-                self.assertEqual(config["mpi_size"], 8)
                 self.assertFalse(config["ordinary_default_changed"])
-                irregular = config["irregular_geometry"]
-                self.assertEqual(
-                    irregular["status"], "out_of_scope_by_user"
-                )
-                self.assertFalse(irregular["run"])
-                self.assertFalse(irregular["completion_gate"])
+                if case.startswith("094_"):
+                    self.assertTrue(
+                        (folder / "expected.json").is_file(),
+                        "expected.json",
+                    )
+                    self.assertEqual(
+                        config["status"],
+                        (
+                            "accepted_research_infrastructure_with_"
+                            "controlled_negatives"
+                        ),
+                    )
+                    self.assertFalse(config["canonical"])
+                    self.assertFalse(config["production_qualified"])
+                    self.assertTrue(config["pde_run"])
+                    self.assertIn(
+                        "true_discrete_adjoint_and_DWR",
+                        config["accepted_capabilities"],
+                    )
+                    self.assertIn(
+                        "automatic_production_hp",
+                        config["not_promoted"],
+                    )
+                else:
+                    self.assertEqual(config["geometry_scope"], "fixed_only")
+                    self.assertEqual(config["degrees"], [4, 5, 6])
+                    self.assertEqual(config["mpi_size"], 8)
+                    irregular = config["irregular_geometry"]
+                    self.assertEqual(
+                        irregular["status"],
+                        "out_of_scope_by_user",
+                    )
+                    self.assertFalse(irregular["run"])
+                    self.assertFalse(irregular["completion_gate"])
                 records = sorted((folder / "records").glob("*.json"))
                 self.assertGreaterEqual(len(records), 2)
                 readme = _read(folder / "README.md")
-                self.assertIn("fixed rectangular block grating", readme)
+                if case.startswith("095_"):
+                    self.assertIn(
+                        "fixed rectangular block grating",
+                        readme,
+                    )
                 self.assertIn("MPI8", readme)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
