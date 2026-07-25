@@ -1,0 +1,225 @@
+{
+  "schema_version": "task035b.h15-condensed-iterative-capability-recertification.v2",
+  "benchmark_id": "task035b_h15_physical_slab_dtn_and_trace_harmonic_iterative_capability",
+  "status": "capability_only_recertified_no_pde",
+  "classification": "positive_lightweight_capability_recertification_not_solver_evidence",
+  "pass": true,
+  "pass_semantics": "Pass recertifies only the typed profile contracts, small analytic/PETSc/MPI actions, fail-closed gates and source/test identities. It is not an h15 PDE, convergence, accuracy, memory, timing or 12-channel pass.",
+  "formal_pde_started": false,
+  "heavy_pde_rerun": false,
+  "official_physics_result": false,
+  "diagnostic_physics_result": false,
+  "candidate_promotion": false,
+  "ordinary_default_changed": false,
+  "source": {
+    "branch": "codex/20260723-task35b-high-order-local-hp-resource-envelope",
+    "commit_sha": "243255a95beea168a4e49b2c25e074410d7a4ee2",
+    "commit_subject": "task035b: gate trace-harmonic iterative profile",
+    "review_v2_commit_sha": "d547e9d7e903e9e8639346715770e56f9c17e86d",
+    "implementation_sources_match_commit": true,
+    "current_related_source_and_test_sha256_bound": true,
+    "recertification_contract_test_updated_after_implementation_commit": true,
+    "unrelated_worktree_content_excluded": true,
+    "files": [
+      {
+        "role": "ordinary_default_and_typed_config_surface",
+        "kind": "implementation_source",
+        "path": "src/common/config_3d.py",
+        "sha256": "29dceca5d89c441273d2bd66edd1a5b45f3ad56b00f698920336c06e98884297"
+      },
+      {
+        "role": "physical_active_trace_z_slab_partition",
+        "kind": "implementation_source",
+        "path": "src/solvers/condensed_physical_slab_partition.py",
+        "sha256": "71ec654b28a1e19b96bd50018aa80b21d66baa59740f171ad79d54dd700bca4d"
+      },
+      {
+        "role": "physical_slab_sparse_two_level_core",
+        "kind": "implementation_source",
+        "path": "src/solvers/physical_slab_two_level.py",
+        "sha256": "aa55b216eff68cbb686642c79407cf84257b3c1771f4c973f2350053c0224677"
+      },
+      {
+        "role": "typed_iterative_profiles_and_fail_closed_gate",
+        "kind": "implementation_source",
+        "path": "src/solvers/condensed_iterative_profiles.py",
+        "sha256": "76605618528f8e93f7881e821fdeff5a8c8e318e80880d82c9ae439869e4cbad"
+      },
+      {
+        "role": "trace_harmonic_analytic_and_petsc_prototype",
+        "kind": "implementation_source",
+        "path": "src/solvers/condensed_trace_harmonic_pc.py",
+        "sha256": "39d737d8e2f0f30826b5b879a49d8117edf2206ad7a3776908e77d16f79dc1d7"
+      },
+      {
+        "role": "assembly_time_condensed_dtn_solver_wiring",
+        "kind": "implementation_source",
+        "path": "src/solvers/dtn_port_3d.py",
+        "sha256": "cf96e74da74928903d659a5aad27cd626efb875dfa7df6aa100787db2970c2af"
+      },
+      {
+        "role": "opt_in_iterative_watchdog_and_dry_plan",
+        "kind": "implementation_source",
+        "path": "benchmarks/run_task035b_condensed_iterative.py",
+        "sha256": "08b266a00963083a24059619b92b6dca56b78d6bb1bc4a4faa8873d232b80c70"
+      },
+      {
+        "role": "generic_iterative_runner_contract_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_129_task035b_condensed_iterative_runner.py",
+        "sha256": "27967eef7200a559b57b556b2992647197191af919d93272ce5d239ca17bb52e"
+      },
+      {
+        "role": "typed_factor_free_profile_contract_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_146_task035b_factor_free_profile_v2.py",
+        "sha256": "08a9ba032cb9726b6409a506769fbef50df9253abcd5fc52bdee48523d1e6fb8"
+      },
+      {
+        "role": "memory_floor_factor_inventory_contract_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_150_task035b_memory_floor_factor_inventory.py",
+        "sha256": "8b09b0bc4890da72ec9684d50b2f69be232301ecee7a8bce7e2b26216af8bb88"
+      },
+      {
+        "role": "physical_slab_profile_and_history_recertification_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_154_task035b_physical_slab_dtn_profile.py",
+        "sha256": "e88c50326b9e6b888b2623bb9d55a9563b9e9d973266ffb1201ee98c2b6d357c"
+      },
+      {
+        "role": "trace_harmonic_analytic_and_mpi_action_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_159_task035b_condensed_trace_harmonic_pc.py",
+        "sha256": "431294d43d36a6375df76792dfcff705da41df9268f660940963b4a7f73e13bc"
+      },
+      {
+        "role": "trace_harmonic_typed_profile_fail_closed_tests",
+        "kind": "qualification_test",
+        "path": "src/test/test_161_task035b_trace_harmonic_profile_gate.py",
+        "sha256": "640f7570466424b2f319d9697ac36d3fc27d7ff7ed3d68182b2bf9dd7a62a2a6"
+      }
+    ]
+  },
+  "historical_evidence": {
+    "v1_preserved_unmodified": true,
+    "physical_slab_capability_v1": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_physical_slab_dtn_iterative_capability_v1.json",
+      "sha256": "2be326fd21ee5c5cf4d2af337b62b3abe006b52fe4ed768f5850ef6b3572f52a",
+      "semantics": "immutable historical capability snapshot; its embedded source hashes describe that capture and are not expected to equal later source revisions"
+    },
+    "physical_slab_formal_screen_controlled_negative": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/h15_physical_slab_dtn_iterative_formal_screen_mpi8_v2.json",
+      "sha256": "8d13e70906fecce6d729491c453c93cc0664a6fa46906a5f1f4d5eb59083d444",
+      "preserved_and_not_reclassified": true
+    }
+  },
+  "identity": {
+    "geometry": "Task034 fixed rectangular block grating",
+    "mesh_cell_type": "hexahedron",
+    "h_nm": 15.0,
+    "trace_degree": 5,
+    "interior_degree": 6,
+    "full3d_equivalent_dofs": 74890,
+    "active_condensed_trace_rows": 16800,
+    "physical_dtn_auxiliary_rows": 80,
+    "active_rows_with_dtn": 16880,
+    "identity_semantics": "Planning identity only; no h15 matrix or field was assembled by this recertification."
+  },
+  "capabilities": {
+    "physical_slab_dtn": {
+      "status": "existing_typed_capability_lightweight_recertified",
+      "profile": "fgmres_zslab_ilu0_dtn_trace_galerkin",
+      "configured_programmatically": true,
+      "raw_petsc_options_accepted": false,
+      "ordinary_default_changed": false,
+      "assembled_reduced_operator": true,
+      "matrix_free": false,
+      "partition_schema": "task035b.condensed-physical-z-slab-partition.v1",
+      "periodic_slave_pullback_required": true,
+      "all_active_rows_covered_required": true,
+      "inactive_rows_allowed": false,
+      "global_fine_factor_free": true,
+      "strictly_factorless": false,
+      "retained_factor_kinds": [
+        "local_physical_z_slab_ilu0",
+        "small_replicated_dense_dtn_galerkin_lu"
+      ],
+      "pde_execution_in_this_record": "not_run",
+      "formal_screen_result_in_this_record": null
+    },
+    "trace_harmonic": {
+      "status": "capability_only_production_execution_blocked",
+      "profile": "fgmres_trace_harmonic_block_schur",
+      "configured_programmatically": true,
+      "raw_petsc_options_accepted": false,
+      "ordinary_default_changed": false,
+      "partition_schema": "task035b.trace-harmonic-partition.v1",
+      "production_partition_builder_available": false,
+      "production_execution_enabled": false,
+      "prototype_replicates_full_vectors": true,
+      "full_vector_replication_allowed_for_formal_pde": false,
+      "global_fine_factor_free": true,
+      "strictly_factorless": false,
+      "retained_factor_kinds": [
+        "owner_local_dense_trace_block_lu",
+        "small_replicated_dense_interface_schur_lu"
+      ],
+      "formal_pde_entry_fails_closed": true,
+      "pde_execution_in_this_record": "not_run",
+      "formal_screen_result_in_this_record": null
+    }
+  },
+  "qualification": {
+    "serial_unit_and_contract_tests": {
+      "command": "python -m pytest -q src/test/test_129_task035b_condensed_iterative_runner.py src/test/test_146_task035b_factor_free_profile_v2.py src/test/test_150_task035b_memory_floor_factor_inventory.py src/test/test_154_task035b_physical_slab_dtn_profile.py src/test/test_159_task035b_condensed_trace_harmonic_pc.py src/test/test_161_task035b_trace_harmonic_profile_gate.py",
+      "status": "passed",
+      "result": "42 passed in final recertification rerun (2.58s)"
+    },
+    "mpi2_small_capability_tests": {
+      "command": "mpiexec -n 2 python -m pytest -q src/test/test_154_task035b_physical_slab_dtn_profile.py src/test/test_159_task035b_condensed_trace_harmonic_pc.py src/test/test_161_task035b_trace_harmonic_profile_gate.py",
+      "status": "passed",
+      "result": "22 passed on each rank in 1.67s and 1.66s"
+    },
+    "static_checks": {
+      "command": "python -m ruff check <bound Python files>; python -m compileall -q <bound Python files>; git diff --check",
+      "status": "passed",
+      "result": "Ruff passed; compileall passed; git diff --check passed"
+    },
+    "heavy_pde": {
+      "status": "not_run",
+      "reason": "A heavy PDE is outside this lightweight capability recertification and the trace-harmonic production gate remains closed."
+    }
+  },
+  "official_output_authority": {
+    "status": "not_run_no_official_physics",
+    "official_result": false,
+    "diagnostic_only": false,
+    "R00_total": null,
+    "R_total": null,
+    "T_total": null,
+    "A_closure": null,
+    "full_explicit_true_residual": null,
+    "significant_power_pass_count": null,
+    "significant_complex_amplitude_pass_count": null,
+    "twelve_of_twelve_gate_claimed": false,
+    "memory_floor_claimed": false,
+    "performance_claimed": false
+  },
+  "limitations": [
+    "No h15 PDE, matrix assembly, Krylov solve, field recovery or diffraction postprocess was run for this record.",
+    "The physical-slab/DtN capability remains distinct from its preserved 200-iteration controlled-negative formal screen.",
+    "The trace-harmonic prototype has no qualified production partition builder and replicates full work vectors on every rank.",
+    "The trace-harmonic dense interface Schur and LU are replicated and have no production dimension or memory gate.",
+    "No convergence, 12-channel accuracy, same-error, memory-floor, time or 0.7 nm projection claim is made."
+  ],
+  "decision": {
+    "physical_slab_capability_recertified": true,
+    "trace_harmonic_capability_recertified": true,
+    "trace_harmonic_formal_pde_lane_open": false,
+    "historical_v1_deleted_or_modified": false,
+    "historical_controlled_negative_deleted_or_reclassified": false,
+    "candidate_promotion": false,
+    "next_action": "Before any trace-harmonic formal PDE, implement a hash-bound production partition builder and replace full-vector replication with interface/owner-neighborhood exchange; retain complete factor and workspace ledgers."
+  }
+}

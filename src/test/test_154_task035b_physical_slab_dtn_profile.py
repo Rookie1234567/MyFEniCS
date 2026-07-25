@@ -51,13 +51,24 @@ _VALUES = np.asarray(
 )
 
 _ROOT = Path(__file__).resolve().parents[2]
-_CAPABILITY_RECORD = (
+_HISTORICAL_CAPABILITY_RECORD_V1 = (
     _ROOT
     / "benchmarks"
     / "cases"
     / "095_high_order_local_hp_resource_envelope"
     / "records"
     / "h15_physical_slab_dtn_iterative_capability_v1.json"
+)
+_HISTORICAL_CAPABILITY_RECORD_V1_SHA256 = (
+    "2be326fd21ee5c5cf4d2af337b62b3abe006b52fe4ed768f5850ef6b3572f52a"
+)
+_CURRENT_CAPABILITY_RECERTIFICATION_V2 = (
+    _ROOT
+    / "benchmarks"
+    / "cases"
+    / "095_high_order_local_hp_resource_envelope"
+    / "records"
+    / "h15_physical_slab_dtn_and_trace_harmonic_iterative_capability_v2.json"
 )
 
 
@@ -236,10 +247,15 @@ def _partition(
 class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
     """Qualify the physical-slab/DtN typed opt-in iterative profile."""
 
-    def test_capability_record_is_hash_bound_and_not_formal_pde_evidence(
+    def test_historical_v1_is_preserved_as_an_immutable_snapshot(
         self,
     ) -> None:
-        record = json.loads(_CAPABILITY_RECORD.read_text())
+        payload = _HISTORICAL_CAPABILITY_RECORD_V1.read_bytes()
+        self.assertEqual(
+            hashlib.sha256(payload).hexdigest(),
+            _HISTORICAL_CAPABILITY_RECORD_V1_SHA256,
+        )
+        record = json.loads(payload)
         self.assertEqual(
             record["status"],
             "implemented_unit_qualified_formal_pde_not_run",
@@ -268,11 +284,66 @@ class Task035bPhysicalSlabDtnProfileTests(unittest.TestCase):
         self.assertEqual(formal["status"], "not_run")
         self.assertIsNone(formal["formal_iterative_screen_pass"])
         for source in record["source"]["files"]:
+            self.assertTrue((_ROOT / source["path"]).is_file())
+            self.assertRegex(source["sha256"], r"^[0-9a-f]{64}$")
+
+    def test_v2_recertification_binds_current_capability_sources_and_tests(
+        self,
+    ) -> None:
+        record = json.loads(_CURRENT_CAPABILITY_RECERTIFICATION_V2.read_text())
+        self.assertEqual(
+            record["status"],
+            "capability_only_recertified_no_pde",
+        )
+        self.assertTrue(record["pass"])
+        self.assertFalse(record["formal_pde_started"])
+        self.assertFalse(record["heavy_pde_rerun"])
+        self.assertFalse(record["official_physics_result"])
+        self.assertFalse(record["candidate_promotion"])
+        self.assertFalse(record["ordinary_default_changed"])
+        self.assertEqual(
+            record["source"]["commit_sha"],
+            "243255a95beea168a4e49b2c25e074410d7a4ee2",
+        )
+        historical = record["historical_evidence"]
+        self.assertEqual(
+            historical["physical_slab_capability_v1"]["path"],
+            (
+                "benchmarks/cases/095_high_order_local_hp_resource_envelope/"
+                "records/h15_physical_slab_dtn_iterative_capability_v1.json"
+            ),
+        )
+        self.assertEqual(
+            historical["physical_slab_capability_v1"]["sha256"],
+            _HISTORICAL_CAPABILITY_RECORD_V1_SHA256,
+        )
+        self.assertTrue(historical["v1_preserved_unmodified"])
+
+        for source in record["source"]["files"]:
             payload = (_ROOT / source["path"]).read_bytes()
             self.assertEqual(
                 hashlib.sha256(payload).hexdigest(),
                 source["sha256"],
             )
+
+        slab = record["capabilities"]["physical_slab_dtn"]
+        self.assertEqual(
+            slab["profile"],
+            PHYSICAL_SLAB_DTN_PROFILE,
+        )
+        self.assertEqual(slab["pde_execution_in_this_record"], "not_run")
+        harmonic = record["capabilities"]["trace_harmonic"]
+        self.assertEqual(
+            harmonic["profile"],
+            "fgmres_trace_harmonic_block_schur",
+        )
+        self.assertFalse(harmonic["production_execution_enabled"])
+        self.assertFalse(harmonic["production_partition_builder_available"])
+        self.assertTrue(harmonic["prototype_replicates_full_vectors"])
+        self.assertEqual(
+            record["official_output_authority"]["status"],
+            "not_run_no_official_physics",
+        )
 
     def test_typed_profile_contract_discloses_both_factor_classes(self) -> None:
         profile = condensed_iterative_profile(PHYSICAL_SLAB_DTN_PROFILE)
