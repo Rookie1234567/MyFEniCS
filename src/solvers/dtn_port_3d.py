@@ -2220,6 +2220,63 @@ def _canonical_orientation_class_reuse_request_audit(
     return audit
 
 
+def _live_full_p6_local_schur_capture_request(
+    cfg: SimulationConfig3D,
+):
+    """Create the typed live observer only for the qualified formal lane."""
+
+    requested = bool(cfg.stage4_live_full_p6_local_schur_capture)
+    rejection_reasons: list[str] = []
+    if not cfg.stage4_assembly_time_cell_static_condensation:
+        rejection_reasons.append(
+            "assembly_time_cell_static_condensation_required"
+        )
+    if not cfg.stage4_affine_isotropic_reference_tensor:
+        rejection_reasons.append(
+            "affine_isotropic_reference_tensor_required"
+        )
+    if (
+        not cfg.nedelec_reduced_trace_enabled
+        or cfg.nedelec_trace_degree_resolved != 5
+        or cfg.nedelec_interior_degree_resolved != 6
+    ):
+        rejection_reasons.append(
+            "fixed_p5_trace_p6_interior_required"
+        )
+    if cfg.stage4_regionwise_interior_p:
+        rejection_reasons.append("regionwise_p_conflict")
+    if _use_zero_order_local_robin_dtn(cfg):
+        rejection_reasons.append("zero_order_local_robin_path_unsupported")
+    eligible = not rejection_reasons
+    audit = {
+        "schema_version": (
+            "task035b.live-full-p6-local-schur-request.v1"
+        ),
+        "requested": requested,
+        "eligible": eligible,
+        "accepted": bool(requested and eligible),
+        "rejection_reasons": rejection_reasons,
+        "required_path": (
+            "assembly_time_affine_fixed_p5_trace_p6_interior_dtn"
+        ),
+        "full_p6_global_matrix_authorized": False,
+        "inactive_missing_p6_rows_authorized": 0,
+        "ordinary_default_changed": False,
+    }
+    if requested and not eligible:
+        raise ValueError(
+            "live full-p6 local Schur capture is ineligible: "
+            + ", ".join(rejection_reasons)
+        )
+    if not requested:
+        return None, audit
+    from ..adaptivity.physical_missing_p6_action_only_complement import (
+        FullP6LocalSchurClassCollector,
+    )
+
+    return FullP6LocalSchurClassCollector(), audit
+
+
 def _build_assembly_time_condensation_with_request(
     compiled_form,
     function_space,
@@ -2281,6 +2338,10 @@ def solve_stage4_dtn_port_total_field(
     canonical_orientation_request_audit = (
         _canonical_orientation_class_reuse_request_audit(cfg)
     )
+    (
+        full_p6_local_schur_collector,
+        full_p6_local_schur_request_audit,
+    ) = _live_full_p6_local_schur_capture_request(cfg)
     if cfg.stage4_cell_static_condensation and (
         cfg.matrix_diagnostics_assemble_only
         or cfg.matrix_diagnostics_factorization_only
@@ -2382,6 +2443,9 @@ def solve_stage4_dtn_port_total_field(
     timing_details[
         "stage4_canonical_orientation_class_reuse_request"
     ] = canonical_orientation_request_audit
+    timing_details[
+        "stage4_live_full_p6_local_schur_capture_request"
+    ] = full_p6_local_schur_request_audit
     modes = outgoing_port_modes_3d(cfg)
     n_aux = len(modes)
     if n_aux == 0:
@@ -2477,6 +2541,9 @@ def solve_stage4_dtn_port_total_field(
                 canonical_orientation_request_audit=(
                     canonical_orientation_request_audit
                 ),
+                full_p6_storage_local_schur_observer=(
+                    full_p6_local_schur_collector
+                ),
                 mpc=floquet_data.mpc,
                 appended_global_rows=n_aux,
                 appended_support_owned_cell_groups=(
@@ -2522,6 +2589,26 @@ def solve_stage4_dtn_port_total_field(
         )
         A_base = None
         A_aug = assembly_time_system.matrix
+        full_p6_local_schur_core_audit = (
+            assembly_time_system.build_audit[
+                "full_p6_storage_local_schur_capture"
+            ]
+        )
+        if full_p6_local_schur_collector is not None and (
+            full_p6_local_schur_core_audit.get("pass") is not True
+            or full_p6_local_schur_core_audit.get("enabled") is not True
+            or full_p6_local_schur_core_audit.get(
+                "full_p6_trace_matrix_materialized"
+            )
+            is not False
+            or full_p6_local_schur_core_audit.get(
+                "inactive_missing_p6_rows_allocated"
+            )
+            != 0
+        ):
+            raise RuntimeError(
+                "live full-p6 local Schur core capture did not pass"
+            )
         n_fe = int(assembly_time_system.active_rows)
         base_matrix_stats = _deferred_preallocation_matrix_stats(
             A_aug,
@@ -4244,6 +4331,21 @@ def solve_stage4_dtn_port_total_field(
             else assembly_time_dual_recovery_context(
                 assembly_time_system
             )
+        ),
+        "live_full_p6_local_schur_capture": (
+            None
+            if full_p6_local_schur_collector is None
+            else {
+                "collector": full_p6_local_schur_collector,
+                "request_audit": (
+                    full_p6_local_schur_request_audit
+                ),
+                "core_audit": (
+                    assembly_time_system.build_audit[
+                        "full_p6_storage_local_schur_capture"
+                    ]
+                ),
+            }
         ),
     }
     if boundary_referenced_modes_present:

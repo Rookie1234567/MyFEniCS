@@ -2649,18 +2649,36 @@ def _apply_cell_dof_transform(
 ) -> None:
     """Apply one Basix/DOLFINx cell transform to matrix rows in place."""
 
-    if values.ndim != 2 or values.shape[0] != int(element.space_dimension):
+    dimension = int(
+        getattr(element, "space_dimension", getattr(element, "dim", -1))
+    )
+    if values.ndim != 2 or values.shape[0] != dimension:
         raise ValueError(
             "cell orientation values must have one row per element DoF"
         )
     block_size = int(values.shape[1])
     if block_size < 1:
         raise ValueError("cell orientation block size must be positive")
-    element.T_apply(
-        values.ravel(),
-        np.asarray([int(cell_info)], dtype=np.uint32),
-        block_size,
+    cell_info_array = np.asarray(
+        [int(cell_info)],
+        dtype=np.uint32,
     )
+    if hasattr(element, "space_dimension"):
+        # DOLFINx FiniteElement wrapper:
+        # T_apply(data, cell_info, block_size).
+        element.T_apply(
+            values.ravel(),
+            cell_info_array,
+            block_size,
+        )
+    else:
+        # Basix FiniteElement:
+        # T_apply(data, block_size, cell_info).
+        element.T_apply(
+            values.ravel(),
+            block_size,
+            int(cell_info),
+        )
 
 
 def _qualified_trace_orientation_block(
@@ -2686,7 +2704,9 @@ def _qualified_trace_orientation_block(
 
     trace_positions = np.asarray(trace_positions, dtype=np.int32)
     interior_positions = np.asarray(interior_positions, dtype=np.int32)
-    dimension = int(element.space_dimension)
+    dimension = int(
+        getattr(element, "space_dimension", getattr(element, "dim", -1))
+    )
     if (
         len(trace_positions) + len(interior_positions) != dimension
         or len(np.unique(np.concatenate((trace_positions, interior_positions))))
@@ -2857,6 +2877,365 @@ def _orient_canonical_high_condensed_arrays(
     )
 
 
+def _capture_full_p6_storage_local_schur_classes(
+    *,
+    communicator,
+    observer,
+    cell_raw_metadata: list[
+        tuple[tuple[Any, ...], str, tuple[Any, ...]]
+    ],
+    cell_permutations: np.ndarray,
+    retained_trace_dimension: int,
+    retained_interior_dimension: int,
+    affine_isotropic_tensor_spec,
+) -> dict[str, Any]:
+    """Capture live standard-p6 local Schur classes without global rows.
+
+    The production fixed-trace operator has the complete p6 cell-interior
+    basis but only the p5 trace.  Review V2 needs the physically missing p6
+    trace action from the *same* material and geometry classes.  This
+    deliberately narrow hook constructs the standard N1curl-p6 local tensor
+    alongside the retained assembly, condenses its cell-interior block, and
+    sends one oriented 432x432 Schur tensor per actually used class to the
+    supplied observer.  It never creates a full-p6 function space, PETSc
+    vector, or PETSc matrix.
+    """
+
+    if observer is None:
+        return {
+            "schema_version": (
+                "task035b.live-full-p6-local-schur-core-capture.v1"
+            ),
+            "status": "disabled",
+            "enabled": False,
+            "ordinary_default_changed": False,
+        }
+    if affine_isotropic_tensor_spec is None:
+        raise ValueError(
+            "full-p6 local Schur live capture requires the qualified "
+            "affine/isotropic tensor backend"
+        )
+    observe = getattr(observer, "observe", None)
+    if not callable(observe):
+        raise TypeError(
+            "full-p6 local Schur observer must provide callable observe"
+        )
+    if any(policy != "high" for _raw, policy, _key in cell_raw_metadata):
+        raise NotImplementedError(
+            "full-p6 local Schur live capture is not qualified for "
+            "regionwise-p cells"
+        )
+
+    import basix
+
+    from .hcurl_affine_isotropic_tensor import (
+        AffineIsotropicMaxwellTensorFactory,
+    )
+
+    full_element = basix.create_element(
+        basix.ElementFamily.N1E,
+        basix.CellType.hexahedron,
+        6,
+        basix.LagrangeVariant.legendre,
+    )
+    full_dimension = int(full_element.dim)
+    full_interior_positions = np.asarray(
+        full_element.entity_dofs[3][0],
+        dtype=np.int32,
+    )
+    full_trace_positions = np.setdiff1d(
+        np.arange(full_dimension, dtype=np.int32),
+        full_interior_positions,
+        assume_unique=True,
+    )
+    if (
+        full_dimension != 882
+        or len(full_trace_positions) != 432
+        or len(full_interior_positions) != 450
+        or int(retained_trace_dimension) != 300
+        or int(retained_interior_dimension)
+        != len(full_interior_positions)
+    ):
+        raise RuntimeError(
+            "live full-p6 capture requires the qualified "
+            "p5-trace/p6-interior hexahedral dimensions"
+        )
+
+    started = perf_counter()
+    factory = AffineIsotropicMaxwellTensorFactory(
+        full_element,
+        affine_isotropic_tensor_spec,
+    )
+    factory_seconds = perf_counter() - started
+    canonical_schur_by_raw: dict[tuple[Any, ...], np.ndarray] = {}
+    oriented_schur_by_class: dict[tuple[Any, ...], np.ndarray] = {}
+    trace_transform_by_permutation: dict[int, sparse.csr_matrix] = {}
+    orientation_audit_by_permutation: dict[int, dict[str, Any]] = {}
+    expected_cell_classes: dict[int, tuple[Any, ...]] = {}
+    local_tensor_seconds = 0.0
+    local_condensation_seconds = 0.0
+    local_orientation_seconds = 0.0
+
+    for local_cell, metadata in enumerate(cell_raw_metadata):
+        raw_key, _interior_policy, _policy_raw_key = metadata
+        raw_key = tuple(raw_key)
+        permutation = int(cell_permutations[local_cell])
+        class_key = (
+            "standard_n1curl_p6_storage_schur",
+            *raw_key,
+            permutation,
+        )
+        expected_cell_classes[int(local_cell)] = class_key
+        oriented_schur = oriented_schur_by_class.get(class_key)
+        if oriented_schur is None:
+            canonical_schur = canonical_schur_by_raw.get(raw_key)
+            if canonical_schur is None:
+                tensor_started = perf_counter()
+                tensor = factory.tensor(
+                    tag=int(raw_key[0]),
+                    widths=tuple(float(value) for value in raw_key[1:]),
+                )
+                local_tensor_seconds += perf_counter() - tensor_started
+                if (
+                    tensor.shape != (full_dimension, full_dimension)
+                    or not np.all(np.isfinite(tensor))
+                ):
+                    raise RuntimeError(
+                        "full-p6 affine tensor capture is non-finite or "
+                        "has the wrong dimension"
+                    )
+                condensation_started = perf_counter()
+                A_ii = tensor[
+                    np.ix_(
+                        full_interior_positions,
+                        full_interior_positions,
+                    )
+                ]
+                A_it = tensor[
+                    np.ix_(full_interior_positions, full_trace_positions)
+                ]
+                A_ti = tensor[
+                    np.ix_(full_trace_positions, full_interior_positions)
+                ]
+                A_tt = tensor[
+                    np.ix_(full_trace_positions, full_trace_positions)
+                ]
+                factor = lu_factor(A_ii)
+                interior_from_trace = -lu_solve(factor, A_it)
+                canonical_schur = np.ascontiguousarray(
+                    A_tt + A_ti @ interior_from_trace,
+                    dtype=np.complex128,
+                )
+                local_condensation_seconds += (
+                    perf_counter() - condensation_started
+                )
+                if not np.all(np.isfinite(canonical_schur)):
+                    raise RuntimeError(
+                        "full-p6 local Schur capture is non-finite"
+                    )
+                canonical_schur.setflags(write=False)
+                canonical_schur_by_raw[raw_key] = canonical_schur
+
+            orientation_started = perf_counter()
+            trace_transform = trace_transform_by_permutation.get(
+                permutation
+            )
+            if trace_transform is None:
+                (
+                    trace_transform,
+                    orientation_audit,
+                ) = _qualified_trace_orientation_block(
+                    full_element,
+                    trace_positions=full_trace_positions,
+                    interior_positions=full_interior_positions,
+                    cell_info=permutation,
+                )
+                trace_transform_by_permutation[permutation] = (
+                    trace_transform
+                )
+                orientation_audit_by_permutation[permutation] = (
+                    orientation_audit
+                )
+            schur_right = _right_apply_trace_orientation(
+                canonical_schur,
+                trace_transform,
+            )
+            oriented_schur = np.ascontiguousarray(
+                trace_transform @ schur_right,
+                dtype=np.complex128,
+            )
+            local_orientation_seconds += (
+                perf_counter() - orientation_started
+            )
+            if not np.all(np.isfinite(oriented_schur)):
+                raise RuntimeError(
+                    "oriented full-p6 local Schur capture is non-finite"
+                )
+            oriented_schur.setflags(write=False)
+            oriented_schur_by_class[class_key] = oriented_schur
+        observe(
+            local_cell=int(local_cell),
+            class_key=class_key,
+            oriented_storage_schur=oriented_schur,
+        )
+
+    observed_classes = dict(
+        getattr(observer, "schur_by_class", {})
+    )
+    observed_cells = {
+        int(cell): key
+        for cell, key in dict(
+            getattr(observer, "cell_class_keys", {})
+        ).items()
+    }
+    if observed_cells != expected_cell_classes:
+        raise RuntimeError(
+            "full-p6 local Schur observer did not retain the exact live "
+            "cell-to-class map"
+        )
+    if set(observed_classes) != set(oriented_schur_by_class):
+        raise RuntimeError(
+            "full-p6 local Schur observer did not retain the exact live "
+            "oriented class set"
+        )
+    for class_key, expected in oriented_schur_by_class.items():
+        observed = np.asarray(
+            observed_classes[class_key],
+            dtype=np.complex128,
+        )
+        if (
+            observed.shape != expected.shape
+            or not np.all(np.isfinite(observed))
+            or not np.array_equal(observed, expected)
+        ):
+            raise RuntimeError(
+                "full-p6 local Schur observer payload differs from the "
+                "core-generated live tensor"
+            )
+
+    local_class_payload = [
+        {
+            "class_key": list(class_key),
+            "schur_sha256": _numeric_array_content_sha256(
+                matrix,
+                namespace=b"task035b.live-full-p6-local-schur.v1",
+            ),
+        }
+        for class_key, matrix in sorted(
+            oriented_schur_by_class.items(),
+            key=lambda item: repr(item[0]),
+        )
+    ]
+    world_rank = int(MPI.COMM_WORLD.rank)
+    communicator_ordered_world_ranks = tuple(
+        int(value) for value in communicator.allgather(world_rank)
+    )
+    local_payload = {
+        "rank": int(communicator.rank),
+        "world_rank": world_rank,
+        "cell_classes": [
+            [int(cell), list(class_key)]
+            for cell, class_key in sorted(expected_cell_classes.items())
+        ],
+        "classes": local_class_payload,
+    }
+    local_content_sha256 = hashlib.sha256(
+        json.dumps(
+            local_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    collective_payload = communicator.allgather(
+        {
+            **local_payload,
+            "local_content_sha256": local_content_sha256,
+        }
+    )
+    collective_content_sha256 = hashlib.sha256(
+        json.dumps(
+            collective_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    global_cells = int(
+        communicator.allreduce(
+            len(expected_cell_classes),
+            op=MPI.SUM,
+        )
+    )
+    global_classes = int(
+        communicator.allreduce(
+            len(oriented_schur_by_class),
+            op=MPI.SUM,
+        )
+    )
+    return {
+        "schema_version": (
+            "task035b.live-full-p6-local-schur-core-capture.v1"
+        ),
+        "status": "live_core_generated_full_p6_local_schur_captured",
+        "enabled": True,
+        "pass": True,
+        "evidence_class": "live_core_capture",
+        "standard_p6_element_hash": int(full_element.hash()),
+        "standard_p6_dimension": full_dimension,
+        "storage_trace_dimension": int(len(full_trace_positions)),
+        "cell_interior_dimension": int(len(full_interior_positions)),
+        "retained_trace_dimension": int(retained_trace_dimension),
+        "retained_interior_dimension": int(
+            retained_interior_dimension
+        ),
+        "owned_cell_count_local": int(len(expected_cell_classes)),
+        "owned_cell_count_global": global_cells,
+        "communicator_size": int(communicator.size),
+        "communicator_ordered_world_ranks": list(
+            communicator_ordered_world_ranks
+        ),
+        "oriented_class_count_local": int(
+            len(oriented_schur_by_class)
+        ),
+        "oriented_class_count_sum": global_classes,
+        "raw_class_count_local": int(len(canonical_schur_by_raw)),
+        "used_cell_permutations": sorted(
+            int(value) for value in trace_transform_by_permutation
+        ),
+        "orientation_audits": {
+            str(permutation): audit
+            for permutation, audit in sorted(
+                orientation_audit_by_permutation.items()
+            )
+        },
+        "local_content_sha256": local_content_sha256,
+        "collective_content_sha256": collective_content_sha256,
+        "reference_gram_build_seconds_local": float(factory_seconds),
+        "tensor_combination_seconds_local": float(
+            local_tensor_seconds
+        ),
+        "cell_interior_condensation_seconds_local": float(
+            local_condensation_seconds
+        ),
+        "orientation_seconds_local": float(
+            local_orientation_seconds
+        ),
+        "total_capture_seconds_max": float(
+            communicator.allreduce(
+                perf_counter() - started,
+                op=MPI.MAX,
+            )
+        ),
+        "full_p6_function_space_created": False,
+        "full_p6_global_vector_created": False,
+        "full_p6_trace_matrix_materialized": False,
+        "inactive_missing_p6_rows_allocated": 0,
+        "observer_payload_recomputed_and_matched": True,
+        "ordinary_default_changed": False,
+    }
+
+
 def build_unconstrained_assembly_time_condensation(
     compiled_form,
     function_space,
@@ -2879,6 +3258,7 @@ def build_unconstrained_assembly_time_condensation(
     bulk_cell_block_insertion: bool = False,
     affine_isotropic_tensor_spec=None,
     canonical_orientation_class_reuse: bool = False,
+    full_p6_storage_local_schur_observer=None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -2962,6 +3342,11 @@ def build_unconstrained_assembly_time_condensation(
             "canonical orientation class reuse is currently qualified only "
             "for one high-order fixed-trace element; regionwise-p embedding "
             "orientation retains the established per-oriented-class path"
+        )
+    if full_p6_storage_local_schur_observer is not None and regionwise_p:
+        raise NotImplementedError(
+            "full-p6 local Schur live capture is currently qualified only "
+            "for one fixed p5-trace/p6-interior element"
         )
     local_high_interior = np.ones(owned_cells, dtype=bool)
     regionwise_geometry_hash = None
@@ -3284,6 +3669,19 @@ def build_unconstrained_assembly_time_condensation(
         }
         if condensed_cache_enabled
         else {}
+    )
+    full_p6_local_schur_capture_audit = (
+        _capture_full_p6_storage_local_schur_classes(
+            communicator=comm,
+            observer=full_p6_storage_local_schur_observer,
+            cell_raw_metadata=cell_raw_metadata,
+            cell_permutations=cell_permutations,
+            retained_trace_dimension=len(trace_positions),
+            retained_interior_dimension=len(interior_positions),
+            affine_isotropic_tensor_spec=(
+                affine_isotropic_tensor_spec
+            ),
+        )
     )
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
@@ -4526,6 +4924,9 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "canonical_orientation_class_reuse": (
                 canonical_orientation_audit
+            ),
+            "full_p6_storage_local_schur_capture": (
+                full_p6_local_schur_capture_audit
             ),
             "persistent_condensed_class_cache": (
                 persistent_condensed_class_cache_audit

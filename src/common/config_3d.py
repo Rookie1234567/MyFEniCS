@@ -206,6 +206,12 @@ class SimulationConfig3D:
     # This is valid only for assembly-time fixed-trace/high-interior spaces;
     # ordinary and regionwise-p paths retain their established behaviour.
     stage4_canonical_orientation_class_reuse: bool = False
+    # Review-V2 selective-trace research only.  While the retained
+    # p5-trace/p6-interior operator is assembled, capture the same-cell
+    # standard-p6 432x432 local trace Schur classes for action-only DWR.
+    # No full-p6 global function space, vector, matrix, or inactive row is
+    # created.  The typed live payload is exposed only through goal_context.
+    stage4_live_full_p6_local_schur_capture: bool = False
     # Task035b local-p lane. The FE container uses the reduced-trace custom
     # element, while assembly projects cells outside this canonical-ID set to
     # the embedded low-order interior space before Schur elimination.
