@@ -53,12 +53,29 @@ EXPECTED_BRANCH = (
 DEFAULT_ARTIFACT_ROOT = (
     ROOT / "benchmarks" / "artifacts" / "task035b" / "direct_setup_profile"
 )
-EXPECTED_H15_TOPOLOGY = {
-    "mesh_cells_resolved": [6, 2, 10],
-    "num_mesh_cells": 120,
-    "full3d_equivalent_dofs": 74890,
-    "active_rows_with_dtn": 16880,
+EXPECTED_PROFILE_TOPOLOGIES = {
+    15.0: {
+        "profile_slug": "h15",
+        "mesh_lane": "review_v2_h15_seed",
+        "mesh_cells_resolved": [6, 2, 10],
+        "num_mesh_cells": 120,
+        "full3d_equivalent_dofs": 74890,
+        "active_rows_with_dtn": 16880,
+        "allowed_mpi_sizes": [1, 2, 4, 8],
+    },
+    13.0: {
+        "profile_slug": "h13_directional_z",
+        "mesh_lane": "review_v2_h13_directional_z_best_candidate",
+        "mesh_cells_resolved": [6, 2, 12],
+        "num_mesh_cells": 144,
+        "full3d_equivalent_dofs": 89740,
+        "active_rows_with_dtn": 20120,
+        "allowed_mpi_sizes": [8],
+    },
 }
+# Retain the public h15 constant used by earlier profile consumers.
+EXPECTED_H15_TOPOLOGY = EXPECTED_PROFILE_TOPOLOGIES[15.0]
+EXPECTED_H13_TOPOLOGY = EXPECTED_PROFILE_TOPOLOGIES[13.0]
 CACHE_MODES = {"cold": "read_write", "warm": "read_only"}
 DTN_REDUCED_MODAL_CACHE_SCHEMA = (
     "task035b.dtn-reduced-modal-persistent-cache.v2"
@@ -67,6 +84,56 @@ DIRECT_SETUP_TYPED_PETSC_OPTIONS = {
     "pc_factor_mat_solver_type": "mumps",
     "mat_mumps_icntl_14": 100,
 }
+
+
+def _normalize_profile_h_nm(h_nm: float) -> float:
+    value = float(h_nm)
+    for supported in EXPECTED_PROFILE_TOPOLOGIES:
+        if math.isclose(
+            value,
+            supported,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            return supported
+    raise ValueError(
+        "Review V2 direct setup profiler supports only h15 and the "
+        "directional-z h13 candidate"
+    )
+
+
+def _profile_contract(
+    h_nm: float,
+    *,
+    source_sha: str | None = None,
+) -> dict[str, Any]:
+    normalized_h = _normalize_profile_h_nm(h_nm)
+    expected = EXPECTED_PROFILE_TOPOLOGIES[normalized_h]
+    if source_sha is not None:
+        source_sha = source_sha.strip().lower()
+        if len(source_sha) != 40 or any(
+            char not in "0123456789abcdef" for char in source_sha
+        ):
+            raise ValueError("profile identity requires a full Git SHA")
+    return {
+        "schema_version": "task035b.direct-setup-profile-identity.v1",
+        "h_nm": normalized_h,
+        "profile_slug": expected["profile_slug"],
+        "mesh_lane": expected["mesh_lane"],
+        "mesh_cell_type": "hexahedron",
+        "mesh_cells_resolved": list(expected["mesh_cells_resolved"]),
+        "num_mesh_cells": int(expected["num_mesh_cells"]),
+        "full3d_equivalent_dofs": int(
+            expected["full3d_equivalent_dofs"]
+        ),
+        "active_rows_with_dtn": int(
+            expected["active_rows_with_dtn"]
+        ),
+        "allowed_mpi_sizes": list(expected["allowed_mpi_sizes"]),
+        "source_sha": source_sha,
+        "source_sha_bound": source_sha is not None,
+        "ordinary_default_changed": False,
+    }
 
 
 def _raw_petsc_option_provenance() -> dict[str, Any]:
@@ -219,14 +286,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--execute-pde",
         action="store_true",
-        help="explicitly authorize one reviewed h15 direct PDE profile",
+        help=(
+            "explicitly authorize one reviewed h15 or directional-z h13 "
+            "direct PDE profile"
+        ),
     )
     parser.add_argument(
         "--mpi-size",
         type=int,
         choices=(1, 2, 4, 8),
         default=8,
-        help="Review-V2 h15 resource-comparison rank count",
+        help=(
+            "Review-V2 rank count; h15 permits 1/2/4/8 and h13 requires 8"
+        ),
     )
     parser.add_argument(
         "--cache-state",
@@ -266,9 +338,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--source-sha", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
-    if abs(float(args.h_nm) - 15.0) > 1.0e-12:
+    try:
+        args.h_nm = _normalize_profile_h_nm(float(args.h_nm))
+    except ValueError as exc:
+        parser.error(str(exc))
+    allowed_mpi_sizes = EXPECTED_PROFILE_TOPOLOGIES[args.h_nm][
+        "allowed_mpi_sizes"
+    ]
+    if int(args.mpi_size) not in allowed_mpi_sizes:
         parser.error(
-            "Review V2 authorizes this direct rank-study runner only for h15"
+            f"h{args.h_nm:g} direct setup profiling permits MPI sizes "
+            f"{allowed_mpi_sizes}; got {args.mpi_size}"
         )
     if args.warning_gib <= 0.0:
         parser.error("--warning-gib must be positive")
@@ -293,7 +373,28 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
+def _dry_run_plan(
+    args: argparse.Namespace,
+    *,
+    source_sha: str | None = None,
+) -> dict[str, Any]:
+    resolved_source_sha = (
+        _git("rev-parse", "HEAD").lower()
+        if source_sha is None
+        else source_sha
+    )
+    profile = _profile_contract(
+        args.h_nm,
+        source_sha=resolved_source_sha,
+    )
+    cache_directory = (
+        args.cache_directory
+        if args.cache_directory is not None
+        else args.artifact_root
+        / "condensed_setup_cache"
+        / profile["profile_slug"]
+        / resolved_source_sha
+    )
     return {
         "schema_version": "task035b.direct-setup-profile-plan.v1",
         "status": "not_run_requires_explicit_execute_pde",
@@ -301,15 +402,14 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
         "ordinary_default_changed": False,
         "geometry": "Task034 fixed rectangular block grating",
         "space": "fixed p5 trace plus p6 cell interior",
-        "h_nm": 15.0,
+        "h_nm": float(args.h_nm),
+        "profile_identity": profile,
+        "source_sha": resolved_source_sha,
+        "source_sha_bound": True,
         "mpi_size": int(args.mpi_size),
         "cache_state": args.cache_state,
         "cache_core_mode": CACHE_MODES[args.cache_state],
-        "cache_directory": (
-            None
-            if args.cache_directory is None
-            else str(args.cache_directory)
-        ),
+        "cache_directory": str(cache_directory),
         "explicit_opt_ins": {
             "assembly_time_cell_static_condensation": True,
             "floquet_slave_elimination": True,
@@ -328,7 +428,7 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "direct_mumps": True,
             "solver_release_before_postprocess": True,
         },
-        "rank_study": [1, 2, 4, 8],
+        "rank_study": list(profile["allowed_mpi_sizes"]),
         "cold_warm_protocol": [
             "commit all source changes and start from a clean full SHA",
             "run cold once against a cache directory that does not exist",
@@ -336,7 +436,8 @@ def _dry_run_plan(args: argparse.Namespace) -> dict[str, Any]:
             "do not run more than one heavy case at a time",
         ],
         "next_action": (
-            "rerun with --execute-pde after committing all source changes"
+            f"rerun h{args.h_nm:g} with --execute-pde after committing "
+            "all source changes"
         ),
     }
 
@@ -441,12 +542,13 @@ def _direct_config(
 
     if cache_state not in CACHE_MODES:
         raise ValueError(f"unsupported cache state: {cache_state}")
-    base = target_stage4_config(degree=6, h_nm=float(h_nm))
+    normalized_h = _normalize_profile_h_nm(h_nm)
+    base = target_stage4_config(degree=6, h_nm=normalized_h)
     return replace(
         base,
         case_name=(
             f"task035b_direct_setup_fixed_p5trace_p6interior_"
-            f"h{h_nm:g}_{cache_state}"
+            f"h{normalized_h:g}_{cache_state}"
         ).replace(".", "p"),
         incident_theta_deg=80.0,
         incident_phi_deg=0.0,
@@ -631,6 +733,10 @@ def _worker(args: argparse.Namespace) -> int:
         and petsc_option_provenance["rank_audits_identical"]
     )
     if comm.rank == 0:
+        profile_identity = _profile_contract(
+            args.h_nm,
+            source_sha=args.source_sha,
+        )
         payload = {
             "schema_version": "task035b.direct-setup-profile-worker.v1",
             "status": (
@@ -639,8 +745,10 @@ def _worker(args: argparse.Namespace) -> int:
                 else "worker_exception_preserved"
             ),
             "cache_state": args.cache_state,
+            "h_nm": float(args.h_nm),
             "mpi_size": int(comm.size),
             "source_sha": args.source_sha,
+            "profile_identity": profile_identity,
             "canonical_orientation_class_reuse_requested": bool(
                 args.canonical_orientation_class_reuse
             ),
@@ -1300,10 +1408,17 @@ def _extract_setup_evidence(
         "actual_pc_factor_solver_type": summary.get(
             "actual_pc_factor_solver_type"
         ),
+        "worker_h_nm": worker_result.get("h_nm"),
+        "worker_profile_identity": worker_result.get("profile_identity"),
         "ksp_converged": summary.get("ksp_converged"),
         "ksp_converged_reason": summary.get("ksp_converged_reason"),
         "mpi_size": summary.get("mpi_size"),
+        "geometry_kind": summary.get("geometry_kind"),
         "mesh_cell_type": summary.get("mesh_cell_type_actual"),
+        "mesh_target_size": summary.get("mesh_target_size"),
+        "mesh_spacing_mode_resolved": summary.get(
+            "mesh_spacing_mode_resolved"
+        ),
         "mesh_cells_resolved": summary.get("mesh_cells_resolved"),
         "num_mesh_cells": summary.get("num_mesh_cells"),
         "full3d_equivalent_dofs": summary.get("num_nedelec_dofs"),
@@ -1333,6 +1448,14 @@ def _extract_setup_evidence(
             - float(summary["T_total"])
         ),
         "configuration_identity": {
+            "case_name": config.get("case_name"),
+            "mesh_target_size": config.get("mesh_target_size"),
+            "mesh_spacing_mode_requested": config.get(
+                "mesh_spacing_mode_requested"
+            ),
+            "mesh_axis_cell_counts_requested": config.get(
+                "mesh_axis_cell_counts_requested"
+            ),
             "trace_degree": config.get("nedelec_trace_degree_resolved"),
             "interior_degree": config.get(
                 "nedelec_interior_degree_resolved"
@@ -1992,6 +2115,7 @@ def _classify_profile(
     telemetry_readable: bool,
     source_stable_and_clean_after: bool,
     expected_canonical_orientation_class_reuse: bool = False,
+    expected_h_nm: float = 15.0,
 ) -> dict[str, Any]:
     config = evidence.get("configuration_identity") or {}
     cache = evidence.get("cache_audit") or {}
@@ -2010,6 +2134,30 @@ def _classify_profile(
     expected_canonical_orientation_class_reuse = bool(
         expected_canonical_orientation_class_reuse
     )
+    expected_profile = _profile_contract(
+        expected_h_nm,
+        source_sha=source_sha,
+    )
+    normalized_expected_h = float(expected_profile["h_nm"])
+    topology_check_name = (
+        f"fixed_rectangular_hexa_h{normalized_expected_h:g}"
+    ).replace(".", "p")
+    reported_h_values = [
+        evidence.get("worker_h_nm"),
+        evidence.get("mesh_target_size"),
+        config.get("mesh_target_size"),
+    ]
+    reported_h_values = [
+        value
+        for value in reported_h_values
+        if isinstance(value, (int, float))
+        and not isinstance(value, bool)
+    ]
+    expected_case_name = (
+        f"task035b_direct_setup_fixed_p5trace_p6interior_"
+        f"h{normalized_expected_h:g}_{cache_state}"
+    ).replace(".", "p")
+    worker_profile_identity = evidence.get("worker_profile_identity")
     factor_event_checks = _petsc_factor_event_timing_formal_checks(
         evidence,
         expected_mpi_size=int(expected_mpi_size),
@@ -2020,12 +2168,33 @@ def _classify_profile(
         )
     )
     topology = {
-        "fixed_rectangular_hexa_h15": (
+        topology_check_name: (
             evidence.get("mesh_cell_type") == "hexahedron"
             and evidence.get("mesh_cells_resolved")
-            == EXPECTED_H15_TOPOLOGY["mesh_cells_resolved"]
+            == expected_profile["mesh_cells_resolved"]
             and evidence.get("num_mesh_cells")
-            == EXPECTED_H15_TOPOLOGY["num_mesh_cells"]
+            == expected_profile["num_mesh_cells"]
+        ),
+        "expected_h_identity_if_reported": (
+            all(
+                math.isclose(
+                    float(value),
+                    normalized_expected_h,
+                    rel_tol=0.0,
+                    abs_tol=1.0e-12,
+                )
+                for value in reported_h_values
+            )
+        ),
+        "expected_case_name_identity_if_reported": (
+            config.get("case_name") in (None, expected_case_name)
+        ),
+        "worker_profile_identity_if_reported": (
+            worker_profile_identity in (None, expected_profile)
+        ),
+        "expected_h_mpi_policy": (
+            int(expected_mpi_size)
+            in expected_profile["allowed_mpi_sizes"]
         ),
         "fixed_p5_trace_p6_interior": (
             config.get("trace_degree") == 5
@@ -2033,11 +2202,11 @@ def _classify_profile(
         ),
         "full3d_equivalent_dof_identity": (
             evidence.get("full3d_equivalent_dofs")
-            == EXPECTED_H15_TOPOLOGY["full3d_equivalent_dofs"]
+            == expected_profile["full3d_equivalent_dofs"]
         ),
         "active_row_identity": (
             evidence.get("active_rows_with_dtn")
-            == EXPECTED_H15_TOPOLOGY["active_rows_with_dtn"]
+            == expected_profile["active_rows_with_dtn"]
         ),
     }
     cache_checks = {
@@ -2453,6 +2622,7 @@ def _classify_profile(
     return {
         "status": status,
         "classification": classification,
+        "expected_profile_identity": expected_profile,
         "evidence_valid": evidence_valid,
         "formal_profile_pass": passed,
         "checks": checks,
@@ -2470,14 +2640,84 @@ def _cache_pairs(cache_directory: Path, *, prefix: str) -> list[str]:
     return pairs
 
 
+def _default_run_directory(
+    artifact_root: Path,
+    *,
+    profile_identity: dict[str, Any],
+    cache_state: str,
+    mpi_size: int,
+    timestamp: str,
+) -> Path:
+    source_sha = profile_identity.get("source_sha")
+    if (
+        profile_identity.get("source_sha_bound") is not True
+        or not isinstance(source_sha, str)
+        or len(source_sha) != 40
+    ):
+        raise ValueError("formal run directory requires a SHA-bound profile")
+    if cache_state not in CACHE_MODES:
+        raise ValueError(f"unsupported cache state: {cache_state}")
+    if int(mpi_size) not in profile_identity["allowed_mpi_sizes"]:
+        raise ValueError(
+            "formal run directory rank count violates profile policy"
+        )
+    return artifact_root / (
+        f"{profile_identity['profile_slug']}_"
+        f"fixed_p5trace_p6interior_direct_{cache_state}_"
+        f"mpi{mpi_size}_{source_sha}_{timestamp}"
+    )
+
+
+def _profile_request(
+    *,
+    profile_identity: dict[str, Any],
+    mpi_size: int,
+    cache_state: str,
+    cache_directory: Path,
+    canonical_orientation_class_reuse: bool,
+) -> dict[str, Any]:
+    if (
+        profile_identity.get("source_sha_bound") is not True
+        or int(mpi_size) not in profile_identity["allowed_mpi_sizes"]
+    ):
+        raise ValueError("formal request requires an authorized SHA profile")
+    return {
+        "geometry": "Task034 fixed rectangular block grating",
+        "h_nm": float(profile_identity["h_nm"]),
+        "profile_identity": profile_identity,
+        "source_sha": profile_identity["source_sha"],
+        "source_sha_bound": True,
+        "trace_degree": 5,
+        "interior_degree": 6,
+        "mpi_size": int(mpi_size),
+        "cache_state": cache_state,
+        "cache_mode": CACHE_MODES[cache_state],
+        "cache_directory": _path_from_root(cache_directory),
+        "fast_fixed_trace_setup": True,
+        "affine_isotropic_reference_tensor": True,
+        "canonical_orientation_class_reuse": bool(
+            canonical_orientation_class_reuse
+        ),
+        "preserve_structured_input_partition": True,
+        "direct_solver": "MUMPS",
+    }
+
+
 def _resolve_cache_directory(
     args: argparse.Namespace,
     source_sha: str,
 ) -> Path:
+    profile = _profile_contract(
+        args.h_nm,
+        source_sha=source_sha,
+    )
     path = (
         args.cache_directory
         if args.cache_directory is not None
-        else args.artifact_root / "condensed_setup_cache" / source_sha
+        else args.artifact_root
+        / "condensed_setup_cache"
+        / profile["profile_slug"]
+        / source_sha
     )
     resolved = path.resolve()
     if str(resolved).startswith("/mnt/"):
@@ -2526,6 +2766,10 @@ def _resource_preflight(run_dir: Path) -> dict[str, Any]:
 
 def _run_parent(args: argparse.Namespace) -> int:
     source_before = _source_preflight()
+    profile_identity = _profile_contract(
+        args.h_nm,
+        source_sha=source_before["commit_sha"],
+    )
     environment = _environment_preflight()
     if environment["pass"] is not True:
         failures = [
@@ -2550,10 +2794,12 @@ def _run_parent(args: argparse.Namespace) -> int:
     run_dir = (
         args.run_dir.resolve()
         if args.run_dir is not None
-        else artifact_root
-        / (
-            f"h15_fixed_p5trace_p6interior_direct_{args.cache_state}_"
-            f"mpi{args.mpi_size}_{timestamp}"
+        else _default_run_directory(
+            artifact_root,
+            profile_identity=profile_identity,
+            cache_state=args.cache_state,
+            mpi_size=int(args.mpi_size),
+            timestamp=timestamp,
         )
     )
     if str(run_dir).startswith("/mnt/"):
@@ -2704,6 +2950,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         expected_canonical_orientation_class_reuse=(
             args.canonical_orientation_class_reuse
         ),
+        expected_h_nm=float(args.h_nm),
     )
 
     record = {
@@ -2714,23 +2961,15 @@ def _run_parent(args: argparse.Namespace) -> int:
         "classification": profile["classification"],
         "ordinary_default_changed": False,
         "command": command,
-        "request": {
-            "geometry": "Task034 fixed rectangular block grating",
-            "h_nm": 15.0,
-            "trace_degree": 5,
-            "interior_degree": 6,
-            "mpi_size": int(args.mpi_size),
-            "cache_state": args.cache_state,
-            "cache_mode": CACHE_MODES[args.cache_state],
-            "cache_directory": _path_from_root(cache_directory),
-            "fast_fixed_trace_setup": True,
-            "affine_isotropic_reference_tensor": True,
-            "canonical_orientation_class_reuse": bool(
+        "request": _profile_request(
+            profile_identity=profile_identity,
+            mpi_size=int(args.mpi_size),
+            cache_state=args.cache_state,
+            cache_directory=cache_directory,
+            canonical_orientation_class_reuse=(
                 args.canonical_orientation_class_reuse
             ),
-            "preserve_structured_input_partition": True,
-            "direct_solver": "MUMPS",
-        },
+        ),
         "source": source,
         "environment": environment,
         "resource_preflight": _resource_preflight(run_dir),
